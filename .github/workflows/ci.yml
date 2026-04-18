@@ -1,0 +1,227 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: "${{ github.workflow }}-${{ github.ref }}"
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+  SQLX_ARTIFACT_NAME: sqlx-offline-metadata
+  SQLX_CLI_VERSION: 0.8.6
+
+jobs:
+  # ── Tests backend + SQLx metadata ───────────────────────────
+  test-backend:
+    name: Backend — SQLx + test + lint
+    # runs-on: ${{ github.actor == github.repository_owner && 'large' || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
+    env:
+      RUSTC_WRAPPER: sccache
+      SCCACHE_GHA_ENABLED: "true"
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_DB: laruche_test
+          POSTGRES_USER: laruche
+          POSTGRES_PASSWORD: laruche
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Free disk space (CI runner)
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup /usr/local/lib/android
+          docker system prune -af || true
+          df -h
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Cache Cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          # Share all backend Cargo artifacts across workflow runs, including test-only crates and cargo-installed tools.
+          # rust-cache prunes stale build artifacts older than one week before saving the cache archive.
+          shared-key: backend-ci
+          workspaces: |
+            backend -> target
+          cache-all-crates: true
+          cache-workspace-crates: true
+
+      - name: Install sccache
+        uses: mozilla-actions/sccache-action@v0.0.11
+
+      - name: Reset sccache stats
+        run: sccache --zero-stats
+
+      - name: Install sqlx-cli
+        run: |
+          # rust-cache restores cargo-installed binaries when available; only install on a cold cache.
+          if ! command -v sqlx >/dev/null 2>&1; then
+            echo "Installing sqlx-cli (not restored from cache)"
+            cargo install sqlx-cli --version ${{ env.SQLX_CLI_VERSION }} --no-default-features --features postgres --locked
+          fi
+
+      - name: Run migrations
+        env:
+          DATABASE_URL: postgres://laruche:laruche@localhost:5432/laruche_test
+        run: sqlx migrate run
+
+      - name: Generate SQLx offline files
+        env:
+          DATABASE_URL: postgres://laruche:laruche@localhost:5432/laruche_test
+        run: cargo sqlx prepare
+
+      - name: Check formatting
+        env:
+          SQLX_OFFLINE: true
+        run: cargo fmt --check
+
+      - name: Clippy
+        env:
+          SQLX_OFFLINE: true
+        run: cargo clippy -- -D warnings
+
+      - name: Tests backend (lib + intégration)
+        env:
+          DATABASE_URL: postgres://laruche:laruche@localhost:5432/laruche_test
+          LA_RUCHE__APP__HOST: 127.0.0.1
+          LA_RUCHE__APP__PORT: "8080"
+          LA_RUCHE__APP__PUBLIC_URL: http://localhost
+          LA_RUCHE__APP__NAME: La Ruche CI
+          LA_RUCHE__DB__URL: postgres://laruche:laruche@localhost:5432/laruche_test
+          LA_RUCHE__DB__MAX_CONNECTIONS: "5"
+          LA_RUCHE__S3__ENDPOINT_URL: http://127.0.0.1:9000
+          LA_RUCHE__S3__PUBLIC_URL: http://127.0.0.1:9000
+          LA_RUCHE__S3__REGION: us-east-1
+          LA_RUCHE__S3__ACCESS_KEY_ID: s3admin
+          LA_RUCHE__S3__SECRET_ACCESS_KEY: s3admin
+          LA_RUCHE__S3__BUCKET_PREFIX: laruche-test
+          LA_RUCHE__S3__STAGING_BUCKET: laruche-test-staging
+          LA_RUCHE__S3__PRESIGNED_TTL_SECS: "900"
+          LA_RUCHE__AUTH__JWT_SECRET: test-secret-256-bits-minimum-for-hmac-sha256
+          LA_RUCHE__AUTH__ACCESS_TOKEN_TTL_SECS: "900"
+          LA_RUCHE__AUTH__REFRESH_TOKEN_TTL_DAYS: "30"
+          LA_RUCHE__AUTH__INVITATION_TTL_DAYS: "7"
+          LA_RUCHE__AUTH__RESET_TOKEN_TTL_SECS: "3600"
+          LA_RUCHE__AUTH__VENDOR_TOKEN_TTL_DAYS: "30"
+          LA_RUCHE__AUTH__ARGON2_MEMORY_KB: "65536"
+          LA_RUCHE__AUTH__ARGON2_ITERATIONS: "3"
+          SQLX_OFFLINE: false
+        # A single Cargo invocation reuses the compiled test profile once for unit and integration suites.
+        run: cargo test --lib --tests
+
+      - name: Upload SQLx offline files
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ env.SQLX_ARTIFACT_NAME }}
+          path: backend/.sqlx/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Show sccache stats
+        if: success() || failure()
+        run: sccache --show-stats
+
+  # ── Tests frontend ─────────────────────────────────────────────
+  test-frontend:
+    name: Frontend — typecheck + lint
+    # runs-on: ${{ github.actor == github.repository_owner && 'medium' || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest 
+    defaults:
+      run:
+        working-directory: ./frontend
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 25
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        # setup-node manages the npm cache; --prefer-offline uses cached packages when available and falls back to the registry otherwise.
+        run: npm ci --prefer-offline
+
+      - name: TypeScript check
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+  # ── Docker build + push ────────────────────────────────────────
+  docker:
+    name: Docker — build + push
+    # runs-on: ${{ github.actor == github.repository_owner && 'large' || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest 
+    needs: [test-backend, test-frontend]
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Download SQLx offline files
+        uses: actions/download-artifact@v8
+        with:
+          name: ${{ env.SQLX_ARTIFACT_NAME }}
+          path: backend/.sqlx/
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ vars.DOCKERHUB_USERNAME }}/${{ vars.DOCKERHUB_PROJECT }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=branch,suffix=.{{date 'YYYYMMDDHHmmss'}}
+            type=ref,event=pr
+            type=schedule,pattern=nightly
+            type=schedule,pattern={{date 'YYYYMMDD'}}
+            type=sha
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v4
+        with:
+          registry: docker.io
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          # Branch-scoped caches keep feature branches from evicting each other's layers while preserving warm rebuilds within the same branch.
+          cache-from: type=gha,scope=docker-${{ github.ref_name }}
+          cache-to: type=gha,mode=max,scope=docker-${{ github.ref_name }}
+          build-args: |
+            CARGO_PROFILE=release
+            SQLX_OFFLINE=true

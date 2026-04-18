@@ -1,0 +1,63 @@
+/* ⚠️ PARTIEL LEGACY — Les classes applicatives (`.view-container`, `.empty-state`, `.spinner`, etc.)
+   sont à migrer vers Tailwind inline ou composants (EP-020-S11, DESIGN.md §3.8).
+   Les resets navigateur (html, body, :focus-visible, scrollbar, a, img, button…) sont conservés.
+   ─────────────────────────────────────────────────────────────────────────────────────────────── */
+
+/* ── BASE ────────────────────────────────────────────────────────── */
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-body);
+  font-size: var(--text-md);
+  line-height: 1.5;
+  background: var(--color-surface);
+  color: var(--color-on-surface);
+  transition:
+    background var(--transition-base),
+    color var(--transition-base);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Focus visible — accessibility ──────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Subtle scrollbar ────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-outline-variant); border-radius: var(--radius-full); }
+::-webkit-scrollbar-thumb:hover { background: var(--color-secondary); }
+
+/* Links ─────────────────────────────────────────────────────────── */
+a { color: var(--color-primary); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* Images ────────────────────────────────────────────────────────── */
+img, svg { display: block; max-width: 100%; }
+
+/* Inputs reset ──────────────────────────────────────────────────── */
+button { cursor: pointer; font-family: inherit; font-size: inherit; }
+input, textarea, select { font-family: inherit; font-size: inherit; }
+
+/* Fixes radix select modal being behind modal overlay */
+[data-radix-popper-content-wrapper] {
+  z-index: var(--z-toast) !important;
+}
+
+/* Hide number input spinners globally */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+
+/* ── Utilitaires globaux ─────────────────────────────────────────── */
+
+/* Spinner animation (used by CIconSpinner and Tailwind animate-spin) */
+@keyframes spin { to { transform: rotate(360deg); } }

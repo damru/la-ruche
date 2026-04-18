@@ -1,0 +1,57 @@
+# Rust
+backend/.env
+backend/.sqlx/
+backend/target/
+backend/**/*.rs.bk
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.env.local
+docs/review-screenshots/*.png
+
+# IDE
+.idea/
+.venv/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude
+.claude/settings.local.json
+.claude/worktrees/**
+.claude/.mcp.json
+.mcp.json
+
+skills-lock.json
+
+# Others
+.worktrees/
+proxmox-jobs.sqlite3
+
+#################################
+#       ARTIFACTS FROM AI       #
+#################################
+
+# Added by code-review-graph
+.code-review-graph/
+# Generic AI outputs
+.outputs/
+# Impeccable
+.impeccable/
+# MemPalace per-project files (issue #185)
+mempalace.yaml
+entities.json
+# Graphify outputs 
+graphify-out/
+# Superpowers
+superpowers/
+# TokenSave
+.tokensave/
+# Serena
+.serena/

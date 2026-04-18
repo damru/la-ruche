@@ -1,0 +1,106 @@
+[package]
+name = "laruche"
+version = "0.1.0"
+edition = "2024"
+description = "Webapp OSS de gestion de copropriété"
+license = "AGPL-3.0"
+repository = "https://github.com/damru/la-ruche"
+
+[[bin]]
+name = "laruche"
+path = "src/main.rs"
+
+[dependencies]
+
+# ── HTTP framework ────────────────────────────────────────────
+axum = { version = "0.8.9", features = ["macros", "multipart"] }
+axum-extra = { version = "0.12.6", features = ["typed-header"] }
+tower = { version = "0.5.3", features = ["full"] }
+tower-http = { version = "0.7.0", features = [
+    "cors",
+    "trace",
+    "timeout",
+    "compression-gzip",
+    "sensitive-headers",
+] }
+
+# ── Runtime async ─────────────────────────────────────────────
+tokio = { version = "1.52.1", features = ["full"] }
+
+# ── Base de données ───────────────────────────────────────────
+sqlx = { version = "0.9.0", features = [
+    "runtime-tokio",
+    "postgres",
+    "uuid",
+    "chrono",
+    "json",
+    "migrate",
+    "rust_decimal",
+] }
+
+# ── Types monétaires (NUMERIC PostgreSQL) ─────────────────────
+rust_decimal = { version = "1.41.0", features = ["serde-with-str"] }
+
+# ── Sérialisation ─────────────────────────────────────────────
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.149"
+
+# ── Validation input ──────────────────────────────────────────
+validator = { version = "0.21.0", features = ["derive"] }
+
+# ── UUID ──────────────────────────────────────────────────────
+uuid = { version = "1.23.1", features = ["v4", "serde"] }
+
+# ── Dates ─────────────────────────────────────────────────────
+chrono = { version = "0.4.44", features = ["serde"] }
+
+# ── Auth : mots de passe ──────────────────────────────────────
+argon2 = "0.5.3"
+
+# ── Auth : JWT ────────────────────────────────────────────────
+jsonwebtoken = { version = "11.0.0", features = ["rust_crypto"] }
+
+# ── Auth : Passkeys (WebAuthn) ────────────────────────────────
+webauthn-rs = { version = "0.5.4", features = ["danger-allow-state-serialisation"] }
+url = "2.5.8"
+
+# ── Stockage S3 ───────────────────────────────────────────────
+aws-config = { version = "1.8.15", features = ["behavior-version-latest"] }
+aws-sdk-s3 = "1.129.0"
+
+# ── OpenAPI ───────────────────────────────────────────────────
+utoipa = { version = "6.0.0", features = ["axum_extras", "chrono", "uuid"] }
+
+# ── Configuration ─────────────────────────────────────────────
+dotenvy = "0.15.7"
+config = "0.15.22"
+
+# ── Logs / traces ─────────────────────────────────────────────
+tracing = "0.1.44"
+tracing-subscriber = { version = "0.3.23", features = ["env-filter", "json"] }
+
+# ── Utilitaires ───────────────────────────────────────────────
+anyhow = "1.0.102"
+
+# ── Gestion d'erreurs ─────────────────────────────────────────
+thiserror = "2.0.18"
+
+# ── Hachage SHA-256 (tokens invitation/reset) ─────────────────────
+sha2 = "0.11.0"
+hex = "0.4.3"
+
+# ── Génération PDF réglementaire (ADR-011) ────────────────────────
+genpdf = "0.2"
+
+[dev-dependencies]
+axum-test = "21.0.0"                      # tests d'intégration handlers
+tokio-test = "0.4.5"
+rstest = "0.26.1"                       # tests paramétrés
+postgresql_embedded = "0.21.0"            # base PostgreSQL éphémère embarquée pour tests
+wiremock = "0.6.5"                        # serveur HTTP mock (stub S3) pour tests
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true                          # strip symbols → binaire plus petit

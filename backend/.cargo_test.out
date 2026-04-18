@@ -1,0 +1,17 @@
+error: set `DATABASE_URL` to use query macros online, or run `cargo sqlx prepare` to update the query cache
+   --> src/db/budget.rs:160:8
+    |
+160 |       Ok(sqlx::query_as!(
+    |  ________^
+161 | |         BudgetRow,
+162 | |         r#"SELECT
+163 | |             b.id,
+...   |
+175 | |         fiscal_year
+176 | |     )
+    | |_____^
+    |
+    = note: this error originates in the macro `$crate::sqlx_macros::expand_query` which comes from the expansion of the macro `sqlx::query_as` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error: could not compile `laruche` (lib) due to 1 previous error
+error: could not compile `laruche` (lib test) due to 1 previous error

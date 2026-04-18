@@ -1,0 +1,70 @@
+/* ── Generic color tones ──────────────────────────────────────────────────────
+   Utility modifier classes — applicable to any element (icon badge, button,
+   chip, filter pill, …).  Each variant sets exactly two variables:
+     --tone-bg : background (color or gradient)
+     --tone-fg : foreground / text color
+   The consuming element is responsible for reading these variables.
+   ──────────────────────────────────────────────────────────────────────── */
+
+.toned {
+  background: var(--tone-bg, inherit);
+  color: var(--tone-fg, inherit);
+}
+
+.tone--default {
+  --tone-bg: var(--color-secondary-container);
+  --tone-fg: var(--color-primary);
+}
+.tone--info {
+  --tone-bg: var(--color-secondary-container);
+  --tone-fg: var(--color-on-secondary-container);
+}
+
+.tone--accent {
+  --tone-bg: var(--gradient-primary);
+  --tone-fg: var(--color-on-primary);
+}
+
+.tone--warn {
+  --tone-bg: var(--color-warning-container, #fff8e1);
+  --tone-fg: var(--color-warning, #e65100);
+}
+
+.tone--err {
+  --tone-bg: var(--color-error-container);
+  --tone-fg: var(--color-error);
+}
+
+.tone--disabled {
+  --tone-bg: var(--color-surface-container-high);
+  --tone-fg: var(--color-on-surface-variant);
+}
+.tone--muted {
+  --tone-bg: var(--color-surface-container);
+  --tone-fg: var(--color-on-surface-variant);
+}
+
+.tone--valid {
+  --tone-bg: var(--color-success-container, #e8f5e9);
+  --tone-fg: var(--color-success, #2e7d32);
+}
+
+.tone--manager {
+  --tone-bg: var(--color-role-manager-bg);
+  --tone-fg: var(--color-role-manager-fg);
+}
+
+.tone--board-member {
+  --tone-bg: var(--color-role-board-bg);
+  --tone-fg: var(--color-role-board-fg);
+}
+
+.tone--co-owner {
+  --tone-bg: var(--color-role-co-owner-bg);
+  --tone-fg: var(--color-role-co-owner-fg);
+}
+
+.tone--tenant {
+  --tone-bg: var(--color-role-tenant-bg);
+  --tone-fg: var(--color-role-tenant-fg);
+}

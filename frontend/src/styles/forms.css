@@ -1,0 +1,57 @@
+/* ⚠️ LEGACY — Ne plus étendre ce fichier.
+   Migration cible : `CFormRow`, `CFormGroup`, `CFormLabel` molecules + atoms existants + Tailwind inline (EP-020-S09, DESIGN.md §3.8).
+   ─────────────────────────────────────────────────────────────────────── */
+
+/*
+ * forms.css — Shared form & UI primitives
+ *
+ * Classes defined here are global (non-scoped) and reusable across all feature views.
+ * Do NOT duplicate these in component scoped styles.
+ *
+ *  Sections:
+ *   - Dropzone       (.dropzone, modifiers)
+ *
+ * Migrated to tailwind.css @utility: icon-btn, checkbox-label
+ * Migrated to Tailwind inline: section-title, form-actions, form-grid, form-field, field/*
+ */
+
+/* ── Dropzone ───────────────────────────────────────────────────── */
+
+.dropzone {
+  border: 1.5px dashed var(--dropzone-border-color, var(--color-outline));
+  border-radius: var(--dropzone-radius, var(--radius-lg));
+  padding: var(--dropzone-padding-block, var(--space-4)) var(--dropzone-padding-inline, var(--space-3));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: var(--dropzone-direction, row);
+  gap: var(--dropzone-gap, var(--space-2));
+  min-height: var(--dropzone-min-height, auto);
+  background: var(--dropzone-bg, transparent);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  user-select: none;
+  text-align: var(--dropzone-text-align, center);
+}
+
+.dropzone:hover,
+.dropzone--over {
+  background: var(--dropzone-active-bg, var(--color-surface-container));
+  border-color: var(--dropzone-active-border-color, var(--color-primary));
+}
+
+.dropzone__hint {
+  color: var(--dropzone-hint-color, var(--color-on-surface-variant));
+}
+
+.dropzone__icon {
+  width: 20px;
+  height: 20px;
+  color: var(--dropzone-icon-color, var(--color-on-surface-variant));
+  flex: 0 0 auto;
+}
+
+.dropzone__icon--lg {
+  width: 32px;
+  height: 32px;
+}

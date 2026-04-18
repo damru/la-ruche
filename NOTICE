@@ -1,0 +1,26 @@
+La Ruche — Logiciel de gestion participative de copropriété
+
+Copyright (C) 2026 Damien Rubio et contributeurs
+
+Ce logiciel est distribué sous double licence :
+
+  — AGPL-3.0 pour les usages non commerciaux (syndics bénévoles, associations
+    de résidents, usage personnel). Vous avez le droit d'utiliser, copier,
+    modifier et distribuer ce logiciel sous réserve de publier tout code
+    modifié sous la même licence, y compris lors d'un usage en tant que
+    service réseau (SaaS).
+
+  — Licence commerciale requise pour tout usage par un syndic professionnel
+    (titulaire d'une carte professionnelle G — art. 9 loi n°70-9 du
+    2 janvier 1970) ou toute structure facturant des prestations de gestion
+    immobilière. Voir LICENSE-COMMERCIAL.md.
+
+Texte complet AGPL-3.0 : https://www.gnu.org/licenses/agpl-3.0.html
+Code source : https://github.com/damru/la-ruche
+CLA (contributeurs) : voir CLA.md
+
+---
+
+Ce logiciel ne fournit aucun conseil juridique.
+Les textes légaux sont reproduits à titre informatif uniquement.
+Le syndic reste responsable de la conformité légale de sa copropriété.
