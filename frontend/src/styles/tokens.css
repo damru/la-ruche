@@ -1,0 +1,130 @@
+/* ── La Ruche — Design Tokens ───────────────────────────────────
+   Source of truth. Ne jamais hard-coder une couleur dans un composant.
+   Référence : DESIGN.md + DDR-001, DDR-002
+   ─────────────────────────────────────────────────────────────── */
+
+:root {
+  /* ── Couleurs sémantiques — Light ────────────────────────────── */
+  --color-primary:               #643fd5;
+  --color-primary-container:     #7d5bf0;
+  --color-on-primary:            #ffffff;
+  --color-secondary:             #5a6073;
+  --color-secondary-container:   #dde1f9;
+  --color-on-secondary-container:#1a1d2e;
+  --color-error:                 #ba1a1a;
+  --color-error-container:       #ffdad6;
+  --color-on-error:              #ffffff;
+  --color-success:               #2e7d32;
+  --color-success-container:     #e8f5e9;
+  --color-warning:               #e65100;
+  --color-warning-container:     #fff8e1;
+
+  /* ── Surfaces — Light ────────────────────────────────────────── */
+  --color-surface:                    #f8f9fa;
+  --color-surface-container-lowest:   #ffffff;
+  --color-surface-container-low:      #f3f4f5;
+  --color-surface-container:          #edeff0;
+  --color-surface-container-high:     #e7e9ea;
+  --color-surface-container-highest:  #e1e3e4;
+  --color-on-surface:                 #191c1d;
+  --color-on-surface-variant:         #42474e;
+  --color-outline:                    #74777f;
+  --color-outline-variant:            #c2c7cf;
+
+  /* ── Gradient signature ──────────────────────────────────────── */
+  --gradient-primary: linear-gradient(135deg, #643fd5, #7d5bf0);
+
+  /* ── Ombres ──────────────────────────────────────────────────── */
+  --shadow-sm:  0 2px 8px rgba(25, 28, 29, 0.04);
+  --shadow-md:  0 8px 32px rgba(25, 28, 29, 0.07), 0 2px 8px rgba(25, 28, 29, 0.04);
+  --shadow-lg:  0 16px 48px rgba(25, 28, 29, 0.10), 0 4px 16px rgba(25, 28, 29, 0.06);
+  --shadow-glass: 0 20px 60px rgba(25, 28, 29, 0.14), 0 4px 16px rgba(25, 28, 29, 0.08);
+
+  /* ── Border radius ───────────────────────────────────────────── */
+  --radius-sm:   8px;
+  --radius-md:   12px;
+  --radius-lg:   16px;
+  --radius-xl:   24px;
+  --radius-full: 9999px;
+
+  /* ── Typographie ─────────────────────────────────────────────── */
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-body:    'DM Sans', system-ui, sans-serif;
+  --font-mono:    'JetBrains Mono', ui-monospace, monospace;
+  /* Font weights — semantic scale
+     regular  400 : body text, secondary descriptions
+     medium   500 : form labels, buttons, nav items, UI controls
+     semibold 600 : section headings, component titles, alerts
+     bold     700 : page titles, KPI values, display numbers
+     display  800 : display-lg only (Fraunces) */
+  --fw-regular:  400;
+  --fw-medium:   500;
+  --fw-semibold: 600;
+  --fw-bold:     700;
+  --fw-display:  800;
+  /* ── Espacement ──────────────────────────────────────────────── */
+  --space-1:   4px;
+  --space-2:   8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+
+  /* ── Transitions ─────────────────────────────────────────────── */
+  --transition-fast:   150ms ease;
+  --transition-base:   250ms ease;
+  --transition-slow:   400ms ease;
+
+  /* ── Navigation ──────────────────────────────────────────────── */
+  --nav-sidebar-width:     240px;
+  --nav-bottom-height:      64px;
+  --nav-safe-area-bottom: env(safe-area-inset-bottom, 0px);
+
+  /* ── Z-index ─────────────────────────────────────────────────── */
+  --z-base:     0;
+  --z-raised:  10;
+  --z-nav:     100;
+  --z-overlay: 200;
+  --z-modal:   300;
+  --z-toast:   400;
+}
+
+/* ── Dark mode ───────────────────────────────────────────────────── */
+[data-theme="dark"] {
+  --color-primary:               #c4b5fd;
+  --color-primary-container:     #4c2fb8;
+  --color-on-primary:            #2a0084;
+  --color-secondary:             #bfc4dd;
+  --color-secondary-container:   #404659;
+  --color-on-secondary-container:#dde1f9;
+  --color-error:                 #ffb4ab;
+  --color-error-container:       #93000a;
+  --color-on-error:              #690005;
+  --color-success:               #81c784;
+  --color-success-container:     #1b4f23;
+  --color-warning:               #ffb74d;
+  --color-warning-container:     #4d3500;
+
+  --color-surface:                    #111318;
+  --color-surface-container-lowest:   #0c0e13;
+  --color-surface-container-low:      #191c21;
+  --color-surface-container:          #1e2026;
+  --color-surface-container-high:     #28292f;
+  --color-surface-container-highest:  #33353b;
+  --color-on-surface:                 #e2e3e8;
+  --color-on-surface-variant:         #c3c6cf;
+  --color-outline:                    #8e9099;
+  --color-outline-variant:            #43474f;
+
+  --gradient-primary: linear-gradient(135deg, #7d5bf0, #c4b5fd);
+
+  --shadow-sm:  0 2px 8px rgba(0, 0, 0, 0.16);
+  --shadow-md:  0 8px 32px rgba(0, 0, 0, 0.22), 0 2px 8px rgba(0, 0, 0, 0.16);
+  --shadow-lg:  0 16px 48px rgba(0, 0, 0, 0.32), 0 4px 16px rgba(0, 0, 0, 0.22);
+  --shadow-glass: 0 20px 60px rgba(0, 0, 0, 0.40), 0 4px 16px rgba(0, 0, 0, 0.28);
+}

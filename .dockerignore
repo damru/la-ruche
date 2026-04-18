@@ -1,0 +1,15 @@
+# Dockerfile helper — exclude dev files from the build context
+.git/
+.github/
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+.agents/
+Thumbs.db
+docs/
+backend/target/
+frontend/node_modules/
+frontend/dist/

@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LaRuche — Budget & Charges</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&family=DM+Sans:ital,opsz,wght@0,9..40,300..500;1,9..40,300..400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ── TOKENS ─────────────────────────────────────────────────────── */
+:root {
+  --cp:#643fd5; --cpc:#7d5bf0; --cs:#5a6073;
+  --csc:#dde1f9; --cosc:#1a1d2e;
+  --ce:#ba1a1a; --cec:#ffdad6;
+  --cok:#2e7d32; --cokc:#e8f5e9;
+  --cw:#e65100; --cwc:#fff8e1;
+  --sf:#f8f9fa; --s0:#fff; --s1:#f3f4f5; --s2:#edeff0; --s3:#e7e9ea; --s4:#e1e3e4;
+  --os:#191c1d; --osv:#42474e; --ov:#c2c7cf;
+  --grad:linear-gradient(135deg,#643fd5,#7d5bf0);
+  --shmd:0 8px 32px rgba(25,28,29,.07),0 2px 8px rgba(25,28,29,.04);
+  --shlg:0 16px 48px rgba(25,28,29,.10),0 4px 16px rgba(25,28,29,.06);
+  --rsm:8px; --rmd:12px; --rlg:16px; --rxl:24px; --rfull:9999px;
+  --fd:'Fraunces',Georgia,serif; --fb:'DM Sans',system-ui,sans-serif; --fm:'JetBrains Mono',ui-monospace,monospace;
+  --tr:.2s ease;
+}
+[data-theme=dark]{
+  --cp:#c4b5fd; --cpc:#4c2fb8; --cs:#bfc4dd; --csc:#404659; --cosc:#dde1f9;
+  --ce:#ffb4ab; --cec:#93000a; --cok:#81c784; --cokc:#1b4f23; --cw:#ffb74d; --cwc:#4d3500;
+  --sf:#111318; --s0:#0c0e13; --s1:#191c21; --s2:#1e2026; --s3:#28292f; --s4:#33353b;
+  --os:#e2e3e8; --osv:#c3c6cf; --ov:#43474f;
+  --grad:linear-gradient(135deg,#7d5bf0,#c4b5fd);
+  --shmd:0 8px 32px rgba(0,0,0,.22),0 2px 8px rgba(0,0,0,.16);
+  --shlg:0 16px 48px rgba(0,0,0,.32),0 4px 16px rgba(0,0,0,.22);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--fb);background:var(--sf);color:var(--os);-webkit-font-smoothing:antialiased;display:flex;min-height:100vh}
+
+/* ── SIDEBAR ─────────────────────────────────────────────────────── */
+.sidebar{width:240px;background:var(--s0);box-shadow:var(--shmd);display:flex;flex-direction:column;padding:20px 12px;flex-shrink:0;position:sticky;top:0;height:100vh;overflow-y:auto}
+.sb-logo{display:flex;align-items:center;gap:10px;padding:4px 8px 24px}
+.sb-logo-mark{width:32px;height:32px;border-radius:var(--rsm);background:var(--grad);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sb-logo-mark svg{width:18px;height:18px}
+.sb-logo-name{font-family:var(--fd);font-size:15px;font-weight:700;font-variation-settings:'opsz' 20;color:var(--os);letter-spacing:-.02em}
+.sb-logo-sub{font-size:10px;color:var(--osv);margin-top:1px}
+.sb-section{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--osv);padding:4px 10px;margin:8px 0 4px}
+.sb-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:var(--rsm);text-decoration:none;color:var(--osv);transition:background var(--tr);margin-bottom:2px;cursor:pointer;border:none;background:none;width:100%;font-family:var(--fb);font-size:13px;font-weight:500}
+.sb-item:hover{background:var(--s1);color:var(--os)}
+.sb-item.active{background:var(--csc);color:var(--cosc)}
+.sb-item.active svg{color:var(--cp)}
+.sb-item svg{width:18px;height:18px;flex-shrink:0;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+.sb-badge{margin-left:auto;min-width:18px;height:18px;padding:0 5px;border-radius:var(--rfull);background:var(--cp);color:#fff;font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center}
+.sb-spacer{flex:1}
+.sb-user{display:flex;align-items:center;gap:10px;padding:10px;border-radius:var(--rsm);background:var(--s1);margin-top:8px}
+.sb-avatar{width:32px;height:32px;border-radius:var(--rfull);background:var(--grad);color:#fff;font-family:var(--fd);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sb-user-name{font-size:12px;font-weight:500;color:var(--os)}
+.sb-user-role{font-size:10px;color:var(--cp);font-weight:500}
+
+/* ── MAIN ────────────────────────────────────────────────────────── */
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+
+/* ── TOPBAR ──────────────────────────────────────────────────────── */
+.topbar{
+  position:sticky;top:0;z-index:10;
+  background:rgba(248,249,250,.88);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border-bottom:1px solid rgba(194,199,207,.25);
+  padding:0 40px;height:60px;
+  display:flex;align-items:center;justify-content:space-between;
+  transition:background var(--tr);
+}
+[data-theme=dark] .topbar{background:rgba(17,19,24,.88)}
+.topbar-left{display:flex;align-items:center;gap:16px}
+.topbar-breadcrumb{font-size:13px;color:var(--osv);display:flex;align-items:center;gap:6px}
+.topbar-breadcrumb span{color:var(--os);font-weight:500}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:0 18px;height:38px;border-radius:var(--rmd);font-family:var(--fb);font-size:13px;font-weight:500;border:none;cursor:pointer;transition:all var(--tr);white-space:nowrap}
+.btn-primary{background:var(--grad);color:#fff;box-shadow:0 4px 14px rgba(100,63,213,.25)}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(100,63,213,.35)}
+.btn-secondary{background:var(--csc);color:var(--cosc)}
+.btn-secondary:hover{filter:brightness(.96)}
+.btn-ghost{background:transparent;color:var(--cp);padding:0 12px}
+.btn-ghost:hover{background:var(--csc)}
+.btn-icon{width:38px;padding:0;justify-content:center;border-radius:var(--rsm);background:var(--s2);color:var(--osv)}
+.btn-icon:hover{background:var(--s3);color:var(--os)}
+.btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;flex-shrink:0}
+.theme-btn{width:38px;height:38px;border-radius:var(--rfull);border:none;cursor:pointer;background:var(--s2);color:var(--osv);display:flex;align-items:center;justify-content:center;transition:background var(--tr)}
+.theme-btn:hover{background:var(--s3)}
+.theme-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+
+/* ── CONTENT ─────────────────────────────────────────────────────── */
+.content{padding:40px;flex:1}
+.page-header{margin-bottom:32px}
+.page-eyebrow{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--cp);margin-bottom:8px}
+.page-title{font-family:var(--fd);font-size:36px;font-weight:700;font-variation-settings:'opsz' 72;letter-spacing:-.03em;color:var(--os);line-height:1}
+.page-sub{font-size:14px;color:var(--osv);margin-top:6px}
+
+/* ── EXERCICE TABS ───────────────────────────────────────────────── */
+.tabs{display:flex;gap:4px;background:var(--s1);border-radius:var(--rmd);padding:4px;margin-bottom:32px;width:fit-content}
+.tab{padding:8px 18px;border-radius:var(--rsm);font-size:13px;font-weight:500;border:none;cursor:pointer;transition:all var(--tr);background:transparent;color:var(--osv);font-family:var(--fb)}
+.tab.active{background:var(--s0);color:var(--os);box-shadow:var(--shmd)}
+.tab:hover:not(.active){color:var(--os)}
+
+/* ── KPI ROW ─────────────────────────────────────────────────────── */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:32px}
+.kpi{background:var(--s0);border-radius:var(--rlg);padding:20px;box-shadow:var(--shmd)}
+.kpi-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}
+.kpi-label{font-size:12px;color:var(--osv)}
+.kpi-icon{width:36px;height:36px;border-radius:var(--rmd);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.kpi-icon svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+.kpi-icon-default{background:var(--csc);color:var(--cp)}
+.kpi-icon-accent{background:var(--grad);color:#fff}
+.kpi-icon-warn{background:var(--cwc);color:var(--cw)}
+.kpi-icon-err{background:var(--cec);color:var(--ce)}
+.kpi-value{font-family:var(--fd);font-size:28px;font-weight:700;font-variation-settings:'opsz' 72;letter-spacing:-.03em;color:var(--os);line-height:1;margin-bottom:4px}
+.kpi-delta{font-size:12px;font-weight:500;display:flex;align-items:center;gap:3px}
+.kpi-delta-up{color:var(--cok)} .kpi-delta-down{color:var(--ce)} .kpi-delta-neutral{color:var(--osv)}
+
+/* ── TWO COL ─────────────────────────────────────────────────────── */
+.two-col{display:grid;grid-template-columns:1fr 340px;gap:24px;align-items:start}
+
+/* ── SECTION ─────────────────────────────────────────────────────── */
+.section-card{background:var(--s0);border-radius:var(--rlg);box-shadow:var(--shmd);overflow:hidden}
+.section-head{display:flex;align-items:center;justify-content:space-between;padding:20px 24px 0}
+.section-title{font-family:var(--fd);font-size:17px;font-weight:600;font-variation-settings:'opsz' 36;letter-spacing:-.01em;color:var(--os)}
+.section-sub{font-size:12px;color:var(--osv);margin-top:2px}
+.section-actions{display:flex;gap:8px}
+
+/* ── PROGRESS BARS ───────────────────────────────────────────────── */
+.prog-list{padding:20px 24px;display:flex;flex-direction:column;gap:20px}
+.prog-item{}
+.prog-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.prog-label{font-size:13px;font-weight:500;color:var(--os)}
+.prog-meta{display:flex;align-items:center;gap:10px}
+.prog-pct{font-size:13px;font-weight:600}
+.prog-track{height:10px;border-radius:var(--rfull);background:var(--s4);overflow:hidden}
+.prog-fill{height:100%;border-radius:var(--rfull);transition:width .8s cubic-bezier(.34,1.3,.64,1)}
+.prog-fill-primary{background:var(--grad)}
+.prog-fill-warn{background:linear-gradient(135deg,#e65100,#ff9800)}
+.prog-fill-ok{background:linear-gradient(135deg,#1b5e20,#43a047)}
+.prog-foot{display:flex;justify-content:space-between;margin-top:5px}
+.prog-foot span{font-size:11px;color:var(--osv)}
+.prog-foot span b{color:var(--os);font-weight:500}
+
+/* ── TABLE ───────────────────────────────────────────────────────── */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:separate;border-spacing:0}
+thead th{
+  font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--osv);padding:10px 16px;text-align:left;background:var(--s1);
+  position:sticky;top:60px;
+}
+thead th:first-child{border-radius:0} /* pas de radius dans table */
+tbody td{font-size:13px;color:var(--os);padding:13px 16px;border-bottom:1px solid rgba(194,199,207,.12)}
+tbody tr:last-child td{border-bottom:none}
+tbody tr{transition:background var(--tr);cursor:pointer}
+tbody tr:hover td{background:var(--s1)}
+.td-mono{font-family:var(--fm);font-size:12px;color:var(--cp)}
+.td-muted{color:var(--osv);font-size:12px}
+.td-right{text-align:right}
+.td-amount{font-family:var(--fm);font-weight:500;text-align:right}
+.td-ecart-pos{color:var(--cok);font-weight:500;text-align:right}
+.td-ecart-neg{color:var(--ce);font-weight:500;text-align:right}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:var(--rfull);font-size:11px;font-weight:500}
+.chip-dot{width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.65;flex-shrink:0}
+.chip-ok{background:var(--cokc);color:var(--cok)}
+.chip-warn{background:var(--cwc);color:var(--cw)}
+.chip-err{background:var(--cec);color:var(--ce)}
+.chip-default{background:var(--s3);color:var(--osv)}
+.chip-primary{background:var(--csc);color:var(--cp)}
+.tfoot-row td{font-size:13px;font-weight:600;color:var(--os);padding:14px 16px;background:var(--s1);border-top:none}
+
+/* ── SIDEBAR DROITE ──────────────────────────────────────────────── */
+.right-col{display:flex;flex-direction:column;gap:20px}
+
+/* ── FONDS TRAVAUX ───────────────────────────────────────────────── */
+.ft-card{background:var(--s0);border-radius:var(--rlg);padding:24px;box-shadow:var(--shmd)}
+.ft-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px}
+.ft-title{font-family:var(--fd);font-size:16px;font-weight:600;font-variation-settings:'opsz' 36;color:var(--os)}
+.ft-badge{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:4px 8px;border-radius:var(--rfull);background:var(--csc);color:var(--cp)}
+.ft-amount{font-family:var(--fd);font-size:32px;font-weight:700;font-variation-settings:'opsz' 72;letter-spacing:-.03em;color:var(--os);margin-bottom:4px}
+.ft-sub{font-size:12px;color:var(--osv);margin-bottom:20px}
+.ft-legal{font-size:11px;color:var(--osv);background:var(--s1);border-radius:var(--rsm);padding:10px 12px;line-height:1.5;margin-top:16px}
+.ft-legal strong{color:var(--os);font-weight:500}
+
+/* ── APPELS MINI ─────────────────────────────────────────────────── */
+.mini-card{background:var(--s0);border-radius:var(--rlg);padding:20px;box-shadow:var(--shmd)}
+.mini-title{font-family:var(--fd);font-size:15px;font-weight:600;font-variation-settings:'opsz' 36;color:var(--os);margin-bottom:4px}
+.mini-sub{font-size:12px;color:var(--osv);margin-bottom:16px}
+.appel-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(194,199,207,.15)}
+.appel-item:last-child{border-bottom:none;padding-bottom:0}
+.appel-avatar{width:34px;height:34px;border-radius:var(--rfull);display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-size:12px;font-weight:700;flex-shrink:0}
+.appel-info{flex:1;min-width:0}
+.appel-name{font-size:13px;font-weight:500;color:var(--os)}
+.appel-lot{font-size:11px;color:var(--osv);margin-top:1px}
+.appel-right{text-align:right;flex-shrink:0}
+.appel-amount{font-family:var(--fm);font-size:13px;font-weight:500;color:var(--os)}
+.appel-date{font-size:11px;color:var(--osv);margin-top:1px}
+
+/* ── MODAL ───────────────────────────────────────────────────────── */
+.modal-overlay{position:fixed;inset:0;background:rgba(25,28,29,.4);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:200;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}
+.modal-overlay.show{opacity:1;pointer-events:all}
+.modal{background:rgba(255,255,255,.88);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(194,199,207,.3);box-shadow:0 20px 60px rgba(25,28,29,.14);border-radius:var(--rlg);padding:28px;width:520px;max-width:90vw;transform:translateY(8px) scale(.98);transition:transform .25s cubic-bezier(.34,1.3,.64,1)}
+[data-theme=dark] .modal{background:rgba(28,30,38,.92);border-color:rgba(67,71,79,.5)}
+.modal-overlay.show .modal{transform:translateY(0) scale(1)}
+.modal-title{font-family:var(--fd);font-size:20px;font-weight:600;font-variation-settings:'opsz' 36;letter-spacing:-.01em;color:var(--os);margin-bottom:6px}
+.modal-sub{font-size:13px;color:var(--osv);margin-bottom:24px;line-height:1.5}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:24px}
+.field{margin-bottom:16px}
+.field label{font-size:13px;font-weight:500;color:var(--os);display:block;margin-bottom:6px}
+.field input,.field select,.field textarea{width:100%;padding:0 14px;height:42px;background:var(--s3);border:none;border-radius:var(--rmd);font-family:var(--fb);font-size:14px;color:var(--os);outline:none;transition:background var(--tr),box-shadow var(--tr)}
+.field textarea{height:auto;padding:12px 14px;resize:vertical;min-height:72px}
+.field input:focus,.field select:focus,.field textarea:focus{background:var(--s2);box-shadow:0 0 0 2px rgba(100,63,213,.3)}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.field-hint{font-size:11px;color:var(--osv);margin-top:4px}
+
+/* ── DIVIDER ─────────────────────────────────────────────────────── */
+.divider{height:1px;background:rgba(194,199,207,.2);margin:0 24px}
+
+/* ── SCROLL ──────────────────────────────────────────────────────── */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--ov);border-radius:var(--rfull)}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sb-logo">
+    <div class="sb-logo-mark"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg></div>
+    <div><div class="sb-logo-name">LaRuche</div><div class="sb-logo-sub">Résidence Lumière · 24 lots</div></div>
+  </div>
+
+  <div class="sb-section">Principal</div>
+  <button class="sb-item" onclick=""><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>Tableau de bord</button>
+  <button class="sb-item"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>Assemblées générales<span class="sb-badge">1</span></button>
+  <button class="sb-item active"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 100 7h5a3.5 3.5 0 110 7H6"/></svg>Budget & Charges</button>
+  <button class="sb-item"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>Documents</button>
+
+  <div class="sb-section" style="margin-top:8px">Gestion</div>
+  <button class="sb-item"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>Tâches<span class="sb-badge">3</span></button>
+  <button class="sb-item"><svg viewBox="0 0 24 24"><path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/><polyline points="13,2 13,9 20,9"/></svg>Contrats</button>
+  <button class="sb-item"><svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Sinistres</button>
+  <button class="sb-item"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>Carnet d'entretien</button>
+  <button class="sb-item"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>Consultations</button>
+  <button class="sb-item"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="23" y1="11" x2="17" y2="11"/><line x1="20" y1="8" x2="20" y2="14"/></svg>Résidents</button>
+
+  <div class="sb-spacer"></div>
+  <div class="sb-user">
+    <div class="sb-avatar">ML</div>
+    <div><div class="sb-user-name">Martin Lefebvre</div><div class="sb-user-role">Syndic bénévole</div></div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-breadcrumb">
+        LaRuche
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        <span>Budget & Charges</span>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <button class="btn btn-secondary" onclick="openModal()">
+        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Nouvelle ligne
+      </button>
+      <button class="btn btn-primary" onclick="openModal('appels')">
+        <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        Générer les appels
+      </button>
+      <button class="theme-btn" onclick="toggleTheme()" aria-label="Thème">
+        <svg id="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        <svg id="icon-moon" viewBox="0 0 24 24" style="display:none"><path d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- Header -->
+    <div class="page-header">
+      <div class="page-eyebrow">Budget & Charges</div>
+      <h1 class="page-title">Exercice 2025</h1>
+      <p class="page-sub">Résidence Lumière · Approuvé en AG du 15 janvier 2025 · 1 000 tantièmes</p>
+    </div>
+
+    <!-- Tabs exercices -->
+    <div class="tabs">
+      <button class="tab">2023</button>
+      <button class="tab">2024</button>
+      <button class="tab active">2025</button>
+      <button class="tab">+ Nouvel exercice</button>
+    </div>
+
+    <!-- KPIs -->
+    <div class="kpi-grid">
+      <div class="kpi">
+        <div class="kpi-header">
+          <div class="kpi-label">Budget prévisionnel</div>
+          <div class="kpi-icon kpi-icon-default"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 100 7h5a3.5 3.5 0 110 7H6"/></svg></div>
+        </div>
+        <div class="kpi-value">50 800 €</div>
+        <div class="kpi-delta kpi-delta-up">↑ +3,2% vs 2024</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-header">
+          <div class="kpi-label">Réalisé à ce jour</div>
+          <div class="kpi-icon kpi-icon-accent"><svg viewBox="0 0 24 24" stroke="white"><polyline points="20 6 9 17 4 12"/></svg></div>
+        </div>
+        <div class="kpi-value">34 540 €</div>
+        <div class="kpi-delta kpi-delta-neutral">68% du budget · 9 mois écoulés</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-header">
+          <div class="kpi-label">Appels en retard</div>
+          <div class="kpi-icon kpi-icon-err"><svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg></div>
+        </div>
+        <div class="kpi-value" style="color:var(--ce)">3</div>
+        <div class="kpi-delta kpi-delta-down">↑ +1 ce mois · 1 248 €</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-header">
+          <div class="kpi-label">Fonds travaux</div>
+          <div class="kpi-icon kpi-icon-warn"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg></div>
+        </div>
+        <div class="kpi-value" style="color:var(--cw)">18 400 €</div>
+        <div class="kpi-delta kpi-delta-neutral">92% engagé · 1 600 € disponibles</div>
+      </div>
+    </div>
+
+    <!-- Deux colonnes -->
+    <div class="two-col">
+
+      <!-- Gauche : tableau budget -->
+      <div style="display:flex;flex-direction:column;gap:24px">
+
+        <!-- Consommation par poste -->
+        <div class="section-card">
+          <div class="section-head" style="padding-bottom:20px">
+            <div>
+              <div class="section-title">Consommation par poste</div>
+              <div class="section-sub">Prévisionnel vs réalisé — clés de répartition</div>
+            </div>
+            <div class="section-actions">
+              <button class="btn btn-ghost" style="height:34px;font-size:12px">
+                <svg viewBox="0 0 24 24" style="width:13px;height:13px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Exporter
+              </button>
+            </div>
+          </div>
+          <div class="prog-list">
+            <div class="prog-item">
+              <div class="prog-header">
+                <span class="prog-label">Entretien parties communes</span>
+                <div class="prog-meta">
+                  <span class="chip chip-primary" style="font-size:10px">Généraux</span>
+                  <span class="prog-pct" style="color:var(--cp)">74%</span>
+                </div>
+              </div>
+              <div class="prog-track"><div class="prog-fill prog-fill-primary" style="width:74%"></div></div>
+              <div class="prog-foot"><span>Réalisé : <b>11 100 €</b></span><span>Prévu : <b>15 000 €</b></span></div>
+            </div>
+            <div class="prog-item">
+              <div class="prog-header">
+                <span class="prog-label">Maintenance ascenseur</span>
+                <div class="prog-meta">
+                  <span class="chip chip-primary" style="font-size:10px">Ascenseur</span>
+                  <span class="prog-pct" style="color:var(--cp)">58%</span>
+                </div>
+              </div>
+              <div class="prog-track"><div class="prog-fill prog-fill-primary" style="width:58%"></div></div>
+              <div class="prog-foot"><span>Réalisé : <b>5 800 €</b></span><span>Prévu : <b>10 000 €</b></span></div>
+            </div>
+            <div class="prog-item">
+              <div class="prog-header">
+                <span class="prog-label">Assurance multirisque immeuble</span>
+                <div class="prog-meta">
+                  <span class="chip chip-primary" style="font-size:10px">Généraux</span>
+                  <span class="prog-pct" style="color:var(--cok)">100%</span>
+                </div>
+              </div>
+              <div class="prog-track"><div class="prog-fill prog-fill-ok" style="width:100%"></div></div>
+              <div class="prog-foot"><span>Réalisé : <b>8 200 €</b></span><span>Prévu : <b>8 200 €</b></span></div>
+            </div>
+            <div class="prog-item">
+              <div class="prog-header">
+                <span class="prog-label">Eau froide parties communes</span>
+                <div class="prog-meta">
+                  <span class="chip chip-primary" style="font-size:10px">Eau</span>
+                  <span class="prog-pct" style="color:var(--cw)">88%</span>
+                </div>
+              </div>
+              <div class="prog-track"><div class="prog-fill prog-fill-warn" style="width:88%"></div></div>
+              <div class="prog-foot"><span>Réalisé : <b>5 280 €</b></span><span>Prévu : <b>6 000 €</b></span></div>
+            </div>
+            <div class="prog-item">
+              <div class="prog-header">
+                <span class="prog-label">Honoraires syndic</span>
+                <div class="prog-meta">
+                  <span class="chip chip-primary" style="font-size:10px">Généraux</span>
+                  <span class="prog-pct" style="color:var(--cp)">75%</span>
+                </div>
+              </div>
+              <div class="prog-track"><div class="prog-fill prog-fill-primary" style="width:75%"></div></div>
+              <div class="prog-foot"><span>Réalisé : <b>2 850 €</b></span><span>Prévu : <b>3 800 €</b></span></div>
+            </div>
+            <div class="prog-item" style="padding-bottom:4px">
+              <div class="prog-header">
+                <span class="prog-label">Travaux imprévus</span>
+                <div class="prog-meta">
+                  <span class="chip chip-primary" style="font-size:10px">Généraux</span>
+                  <span class="prog-pct" style="color:var(--cp)">14%</span>
+                </div>
+              </div>
+              <div class="prog-track"><div class="prog-fill prog-fill-primary" style="width:14%"></div></div>
+              <div class="prog-foot"><span>Réalisé : <b>1 120 €</b></span><span>Prévu : <b>7 800 €</b></span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Appels de fonds — tableau -->
+        <div class="section-card">
+          <div class="section-head">
+            <div>
+              <div class="section-title">Appels de fonds T3 2025</div>
+              <div class="section-sub">24 lots · Échéance 1er octobre 2025</div>
+            </div>
+            <div class="section-actions">
+              <button class="btn btn-ghost" style="height:34px;font-size:12px">Filtrer</button>
+              <button class="btn btn-secondary" style="height:34px;font-size:12px" onclick="openModal('appels')">
+                <svg viewBox="0 0 24 24" style="width:13px;height:13px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Marquer payé
+              </button>
+            </div>
+          </div>
+          <div class="table-wrap" style="margin-top:16px">
+            <table>
+              <thead>
+                <tr>
+                  <th>Lot</th>
+                  <th>Copropriétaire</th>
+                  <th>Tantièmes</th>
+                  <th class="td-right">Montant</th>
+                  <th class="td-right">Échéance</th>
+                  <th>Statut</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="td-mono">Lot 3</td>
+                  <td>Sophie Caron</td>
+                  <td class="td-muted">72 / 1000</td>
+                  <td class="td-amount">432,00 €</td>
+                  <td class="td-right td-muted">01/10/2025</td>
+                  <td><span class="chip chip-ok"><span class="chip-dot"></span>Payé</span></td>
+                </tr>
+                <tr>
+                  <td class="td-mono">Lot 5</td>
+                  <td>Isabelle Moreau</td>
+                  <td class="td-muted">65 / 1000</td>
+                  <td class="td-amount">390,00 €</td>
+                  <td class="td-right td-muted">01/10/2025</td>
+                  <td><span class="chip chip-ok"><span class="chip-dot"></span>Payé</span></td>
+                </tr>
+                <tr>
+                  <td class="td-mono">Lot 8</td>
+                  <td>Martin Lefebvre</td>
+                  <td class="td-muted">85 / 1000</td>
+                  <td class="td-amount">510,00 €</td>
+                  <td class="td-right td-muted">01/10/2025</td>
+                  <td><span class="chip chip-ok"><span class="chip-dot"></span>Payé</span></td>
+                </tr>
+                <tr>
+                  <td class="td-mono">Lot 12</td>
+                  <td>Antoine Bernard</td>
+                  <td class="td-muted">65 / 1000</td>
+                  <td class="td-amount" style="color:var(--ce)">390,00 €</td>
+                  <td class="td-right td-muted">01/10/2025</td>
+                  <td><span class="chip chip-err"><span class="chip-dot"></span>En retard</span></td>
+                </tr>
+                <tr>
+                  <td class="td-mono">Lot 14</td>
+                  <td>Claire Dubois</td>
+                  <td class="td-muted">58 / 1000</td>
+                  <td class="td-amount" style="color:var(--ce)">348,00 €</td>
+                  <td class="td-right td-muted">01/10/2025</td>
+                  <td><span class="chip chip-err"><span class="chip-dot"></span>En retard</span></td>
+                </tr>
+                <tr>
+                  <td class="td-mono">Lot 19</td>
+                  <td>Thomas Petit</td>
+                  <td class="td-muted">85 / 1000</td>
+                  <td class="td-amount">510,00 €</td>
+                  <td class="td-right td-muted">01/10/2025</td>
+                  <td><span class="chip chip-warn"><span class="chip-dot"></span>Émis</span></td>
+                </tr>
+                <tr>
+                  <td class="td-mono">Lot 21</td>
+                  <td>Nathalie Simon</td>
+                  <td class="td-muted">72 / 1000</td>
+                  <td class="td-amount">432,00 €</td>
+                  <td class="td-right td-muted">01/10/2025</td>
+                  <td><span class="chip chip-warn"><span class="chip-dot"></span>Émis</span></td>
+                </tr>
+              </tbody>
+              <tfoot>
+                <tr class="tfoot-row">
+                  <td colspan="3">Total T3</td>
+                  <td class="td-right">12 700,00 €</td>
+                  <td colspan="2"></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Droite -->
+      <div class="right-col">
+
+        <!-- Fonds travaux -->
+        <div class="ft-card">
+          <div class="ft-header">
+            <div class="ft-title">Fonds travaux</div>
+            <span class="ft-badge">Art. 14-2 ALUR</span>
+          </div>
+          <div class="ft-amount">20 000 €</div>
+          <div class="ft-sub">Compte bancaire séparé · Exercice 2025</div>
+          <div style="margin-bottom:8px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+              <span style="font-size:13px;font-weight:500;color:var(--os)">Engagé</span>
+              <span style="font-size:13px;font-weight:600;color:var(--cw)">92%</span>
+            </div>
+            <div class="prog-track"><div class="prog-fill" style="background:linear-gradient(135deg,#e65100,#ff9800);width:92%"></div></div>
+            <div style="display:flex;justify-content:space-between;margin-top:5px">
+              <span style="font-size:11px;color:var(--osv)">Engagé : 18 400 €</span>
+              <span style="font-size:11px;color:var(--cw);font-weight:500">1 600 € restants</span>
+            </div>
+          </div>
+          <div class="ft-legal">
+            <strong>Obligation légale</strong> — Cotisation annuelle obligatoire ≥ 5% du budget prévisionnel voté en AG. Non récupérable par le copropriétaire en cas de vente.
+          </div>
+        </div>
+
+        <!-- Derniers appels en retard -->
+        <div class="mini-card">
+          <div class="mini-title">Retards de paiement</div>
+          <div class="mini-sub">3 lots · Total 1 248 €</div>
+          <div class="appel-item">
+            <div class="appel-avatar" style="background:#fce8e8;color:#ba1a1a">AB</div>
+            <div class="appel-info">
+              <div class="appel-name">Antoine Bernard</div>
+              <div class="appel-lot">Lot 12 · 65 tantièmes</div>
+            </div>
+            <div class="appel-right">
+              <div class="appel-amount" style="color:var(--ce)">390 €</div>
+              <div class="appel-date" style="color:var(--ce)">15j de retard</div>
+            </div>
+          </div>
+          <div class="appel-item">
+            <div class="appel-avatar" style="background:#fce8e8;color:#ba1a1a">CD</div>
+            <div class="appel-info">
+              <div class="appel-name">Claire Dubois</div>
+              <div class="appel-lot">Lot 14 · 58 tantièmes</div>
+            </div>
+            <div class="appel-right">
+              <div class="appel-amount" style="color:var(--ce)">348 €</div>
+              <div class="appel-date" style="color:var(--ce)">8j de retard</div>
+            </div>
+          </div>
+          <div class="appel-item">
+            <div class="appel-avatar" style="background:#fce8e8;color:#ba1a1a">RP</div>
+            <div class="appel-info">
+              <div class="appel-name">Renaud Pichon</div>
+              <div class="appel-lot">Lot 22 · 85 tantièmes</div>
+            </div>
+            <div class="appel-right">
+              <div class="appel-amount" style="color:var(--ce)">510 €</div>
+              <div class="appel-date" style="color:var(--ce)">32j de retard</div>
+            </div>
+          </div>
+          <div style="margin-top:16px">
+            <button class="btn btn-secondary" style="width:100%;justify-content:center;height:38px;font-size:13px">
+              Envoyer les relances
+            </button>
+          </div>
+        </div>
+
+        <!-- Répartition rapide -->
+        <div class="mini-card">
+          <div class="mini-title">Répartition T4 2025</div>
+          <div class="mini-sub">Simulation · 12 700 € à répartir</div>
+          <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(194,199,207,.15)">
+              <span style="font-size:13px;color:var(--os)">Lot 3 — Sophie Caron</span>
+              <span style="font-size:13px;font-weight:600">432 €</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(194,199,207,.15)">
+              <span style="font-size:13px;color:var(--os)">Lot 8 — M. Lefebvre</span>
+              <span style="font-size:13px;font-weight:600">510 €</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0">
+              <span style="font-size:12px;color:var(--osv)">+ 21 autres lots…</span>
+              <span style="font-size:12px;color:var(--osv)">11 758 €</span>
+            </div>
+          </div>
+          <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="openModal('appels')">
+            <svg viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            Générer les appels T4
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL Générer appels -->
+<div class="modal-overlay" id="modal-appels">
+  <div class="modal">
+    <div class="modal-title">Générer les appels de fonds</div>
+    <div class="modal-sub">Les appels seront calculés automatiquement selon les tantièmes de chaque lot et les clés de répartition du budget approuvé.</div>
+    <div class="field-row">
+      <div class="field">
+        <label>Trimestre</label>
+        <select><option>T4 2025 (oct–déc)</option><option>T1 2026</option></select>
+      </div>
+      <div class="field">
+        <label>Échéance</label>
+        <input type="date" value="2025-10-01">
+      </div>
+    </div>
+    <div class="field">
+      <label>Inclure fonds travaux</label>
+      <select><option>Oui — 5% du budget (2 540 €)</option><option>Non</option></select>
+      <div class="field-hint">Art. 14-2 ALUR — cotisation obligatoire ≥ 5% du budget prévisionnel</div>
+    </div>
+    <div style="background:var(--csc);border-radius:var(--rmd);padding:14px 16px;font-size:13px;color:var(--cosc)">
+      <strong style="display:block;margin-bottom:4px">Récapitulatif</strong>
+      24 lots · 12 700 € de charges + 2 540 € fonds travaux = <strong>15 240 €</strong> total à répartir
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Annuler</button>
+      <button class="btn btn-primary" onclick="closeModal()">
+        <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        Générer les appels
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+function toggleTheme(){
+  const h=document.documentElement,d=h.getAttribute('data-theme')==='dark'
+  h.setAttribute('data-theme',d?'light':'dark')
+  document.getElementById('icon-sun').style.display=d?'block':'none'
+  document.getElementById('icon-moon').style.display=d?'none':'block'
+}
+function openModal(t){document.getElementById('modal-appels').classList.add('show')}
+function closeModal(){document.getElementById('modal-appels').classList.remove('show')}
+document.getElementById('modal-appels').addEventListener('click',function(e){if(e.target===this)closeModal()})
+// Progress bars animation
+setTimeout(()=>{
+  document.querySelectorAll('.prog-fill').forEach(el=>{
+    const w=el.style.width;el.style.width='0';
+    setTimeout(()=>{el.style.width=w},200)
+  })
+},200)
+</script>
+</body>
+</html>

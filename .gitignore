@@ -1,0 +1,20 @@
+# Rust
+backend/.sqlx/
+backend/target/
+backend/**/*.rs.bk
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.env.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db

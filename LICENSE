@@ -1,0 +1,43 @@
+La Ruche — Dual License
+
+Copyright (C) 2026 Damien Rubio (@damru) and contributors
+
+================================================================================
+AGPL-3.0 LICENSE (free use)
+================================================================================
+
+La Ruche is free software for non-commercial use: you can redistribute it
+and/or modify it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, version 3.
+
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+details.
+
+The full text of the GNU Affero General Public License version 3 is available
+at: https://www.gnu.org/licenses/agpl-3.0.html
+
+NON-COMMERCIAL USE DEFINITION
+------------------------------
+Use by a volunteer property management association (syndic bénévole), a
+residents' association, or an individual for personal property management
+qualifies as non-commercial use and is covered by the AGPL-3.0 at no charge.
+
+================================================================================
+COMMERCIAL LICENSE (required for professional use)
+================================================================================
+
+Use of La Ruche by a professional property manager (syndic professionnel, as
+defined by article 9 of French law n°70-9 du 2 janvier 1970, holder of a
+carte professionnelle G) or any organization that charges fees for property
+management services requires a separate commercial license.
+
+See LICENSE-COMMERCIAL for terms and contact information.
+
+================================================================================
+CONTRIBUTOR LICENSE AGREEMENT
+================================================================================
+
+All external contributors must sign the Contributor License Agreement (CLA)
+before their contributions can be accepted. See CLA.md for details.

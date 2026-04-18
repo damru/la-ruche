@@ -1,0 +1,29 @@
+# ── Production override ───────────────────────────────────────────
+# Usage : docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+services:
+  laruche:
+    image: ghcr.io/${GITHUB_REPOSITORY:-laruche/laruche}:${IMAGE_TAG:-latest}
+    build:
+      args:
+        CARGO_PROFILE: release
+    restart: always
+    environment:
+      RUST_BACKTRACE: "${RUST_BACKTRACE:-0}"
+      RUST_LOG: "laruche=info,tower_http=warn"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+
+  postgres:
+    ports: []
+    volumes:
+      - ./scripts/pg_backup.sh:/pg_backup.sh:ro
+
+  minio:
+    ports: []   # Console web désactivée en prod
+    command: server /data
+    environment:
+      MINIO_BROWSER: "off"

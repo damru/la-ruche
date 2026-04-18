@@ -1,0 +1,42 @@
+# ── Caddyfile — La Ruche ─────────────────────────────────────────
+# Reverse proxy léger servant :
+#   - Les fichiers statiques Vue (SPA) depuis /usr/share/caddy
+#   - Le backend Rust sur localhost:8080 pour les routes API
+#
+# Port 80 par défaut (HTTP).
+# Pour activer le HTTPS automatique (Let's Encrypt), remplacer
+# `:80` par votre domaine, ex. : `laruche.example.com`
+
+:80 {
+    # ── Routes backend ───────────────────────────────────────────
+    # NOTE: `try_files` est un rewrite et Caddy trie les directives.
+    # On encapsule le flux dans `route` pour garantir l'ordre d'exécution.
+    route {
+        @backend path /api/* /vendor/* /swagger-ui/* /api-doc/* /notice
+        handle @backend {
+            reverse_proxy localhost:8080
+        }
+
+        # ── SPA Vue (fallback pour le routage côté client) ───────
+        handle {
+            root * /usr/share/caddy
+            try_files {path} /index.html
+            file_server
+        }
+    }
+
+    # ── En-têtes sécurité minimaux ────────────────────────────────
+    header {
+        X-Frame-Options "SAMEORIGIN"
+        X-Content-Type-Options "nosniff"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        -Server
+    }
+
+    # ── Logs structurés ──────────────────────────────────────────
+    log {
+        output stdout
+        format json
+        level INFO
+    }
+}
