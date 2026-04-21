@@ -1,6 +1,5 @@
 <script setup lang="ts">
-// Composant atomique — CInput
-// "Sunken pit in the page" — surface-container-high background, no border
+import { useI18n } from 'vue-i18n'
 
 const props = withDefaults(defineProps<{
   modelValue?: string | number
@@ -13,23 +12,38 @@ const props = withDefaults(defineProps<{
   disabled?: boolean
   id?: string
 }>(), {
+  modelValue: undefined,
+  label: undefined,
+  hint: undefined,
+  error: undefined,
+  placeholder: undefined,
   type: 'text',
   required: false,
   disabled: false,
+  id: undefined,
 })
 
 const emit = defineEmits<{
   'update:modelValue': [value: string]
 }>()
 
+const { t } = useI18n()
 const inputId = props.id ?? `c-input-${Math.random().toString(36).slice(2, 7)}`
 </script>
 
 <template>
   <div class="c-field">
-    <label v-if="label" :for="inputId" class="c-field__label">
+    <label
+      v-if="label"
+      :for="inputId"
+      class="c-field__label"
+    >
       {{ label }}
-      <span v-if="required" class="c-field__required" aria-label="obligatoire">*</span>
+      <span
+        v-if="required"
+        class="c-field__required"
+        :aria-label="t('common.requiredAria')"
+      >*</span>
     </label>
 
     <input
@@ -45,13 +59,26 @@ const inputId = props.id ?? `c-input-${Math.random().toString(36).slice(2, 7)}`
       @input="emit('update:modelValue', ($event.target as HTMLInputElement).value)"
     />
 
-    <p v-if="error" :id="`${inputId}-error`" class="c-field__error" role="alert">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
-        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-      </svg>
+    <p
+      v-if="error"
+      :id="`${inputId}-error`"
+      class="c-field__error"
+      role="alert"
+    >
+      <CIconAlertTriangle
+        width="12"
+        height="12"
+        aria-hidden="true"
+      />
       {{ error }}
     </p>
-    <p v-else-if="hint" :id="`${inputId}-hint`" class="c-field__hint">{{ hint }}</p>
+    <p
+      v-else-if="hint"
+      :id="`${inputId}-hint`"
+      class="c-field__hint"
+    >
+      {{ hint }}
+    </p>
   </div>
 </template>
 
@@ -60,21 +87,22 @@ const inputId = props.id ?? `c-input-${Math.random().toString(36).slice(2, 7)}`
 
 .c-field__label {
   font-family: var(--font-body);
-  font-size: 13px;
-  font-weight: 500;
+  font-size: var(--text-sm);
+  font-weight: var(--fw-medium);
   color: var(--color-on-surface);
 }
 
 .c-field__required { color: var(--color-error); margin-left: 2px; }
 
 .c-field__input {
+  box-sizing: border-box;
   height: 44px;
   padding: 0 var(--space-4);
   background: var(--color-surface-container-high);
   border: none;
   border-radius: var(--radius-md);
   font-family: var(--font-body);
-  font-size: 14px;
+  font-size: var(--text-md);
   color: var(--color-on-surface);
   outline: none;
   transition:
@@ -100,12 +128,12 @@ const inputId = props.id ?? `c-input-${Math.random().toString(36).slice(2, 7)}`
 }
 
 .c-field__hint {
-  font-size: 12px;
+  font-size: var(--text-xs);
   color: var(--color-on-surface-variant);
 }
 
 .c-field__error {
-  font-size: 12px;
+  font-size: var(--text-xs);
   color: var(--color-error);
   display: flex;
   align-items: center;

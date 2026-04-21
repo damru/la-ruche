@@ -5,9 +5,8 @@
 ///   - Fetches reminders with status='pending' AND reminder_date <= today
 ///   - Marks them 'sent' (real notifications will come post-MVP)
 ///   - Structured logging for external monitoring
-
 use std::sync::Arc;
-use tokio::time::{interval, Duration};
+use tokio::time::{Duration, interval};
 use tracing::{error, info};
 
 use crate::db::AppState;

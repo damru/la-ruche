@@ -7,9 +7,6 @@ import CBadge from '@/components/atoms/CBadge.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
-import CIconChevronRight from '@/components/atoms/CIconChevronRight.vue'
-import CIconPlus from '@/components/atoms/CIconPlus.vue'
-import CIconDotsHorizontal from '@/components/atoms/CIconDotsHorizontal.vue'
 import { mockTasks, mockBuildingStats } from '@/mock/data'
 import type { TaskStatus } from '@/types/domain'
 
@@ -60,84 +57,114 @@ function priorityColor(p: string): string {
       <template #left>
         <div class="topbar-breadcrumb">
           {{ mockBuildingStats.name }}
-          <CIconChevronRight width="14" height="14"/>
+          <CIconChevronRight
+            width="14"
+            height="14"
+          />
           <span>{{ t('tasks.title') }}</span>
         </div>
       </template>
       <template #right>
-        <CBtn variant="primary" size="sm">
-          <CIconPlus style="width:16px;height:16px"/>
-          Nouvelle tâche
+        <CBtn
+          variant="primary"
+          size="sm"
+        >
+          <CIconPlus style="width:16px;height:16px" />
+          <span class="btn-label">{{ t('tasks.newTask') }}</span>
         </CBtn>
       </template>
     </CTopbar>
 
     <div class="view-container">
-    <CMockBanner />
+      <CMockBanner />
 
-    <div class="view-header">
-      <div>
-        <h1 class="display-md">{{ t('tasks.title') }}</h1>
-        <p class="body-md" style="color:var(--color-on-surface-variant)">
-          {{ mockTasks.filter(t => t.status !== 'closed' && t.status !== 'cancelled').length }} tâche(s) actives
-        </p>
+      <div class="view-header">
+        <div>
+          <h1 class="display-md">
+            {{ t('tasks.title') }}
+          </h1>
+          <p
+            class="body-md"
+            style="color:var(--color-on-surface-variant)"
+          >
+            {{ t('tasks.activeSummary', { count: mockTasks.filter(t => t.status !== 'closed' && t.status !== 'cancelled').length }) }}
+          </p>
+        </div>
       </div>
-    </div>
 
-    <!-- Filtres -->
-    <div class="tabs">
-      <button
-        v-for="item in [{ key: 'all', label: 'Toutes', count: mockTasks.length }, { key: 'open', label: 'Ouvertes', count: counts.open }, { key: 'in_progress', label: 'En cours', count: counts.in_progress }, { key: 'awaiting_vendor', label: 'Prestataire', count: counts.awaiting_vendor }, { key: 'closed', label: 'Clôturées', count: counts.closed }]"
-        :key="item.key"
-        :class="['tab', { 'tab--active': statusFilter === item.key }]"
-        @click="statusFilter = item.key as typeof statusFilter"
-      >
-        {{ item.label }}
-        <span class="tab-count">{{ item.count }}</span>
-      </button>
-    </div>
+      <!-- Filtres -->
+      <div class="tabs">
+        <button
+          v-for="item in [
+            { key: 'all', label: t('tasks.filters.all'), count: mockTasks.length },
+            { key: 'open', label: t('tasks.filters.open'), count: counts.open },
+            { key: 'in_progress', label: t('tasks.filters.in_progress'), count: counts.in_progress },
+            { key: 'awaiting_vendor', label: t('tasks.filters.awaiting_vendor'), count: counts.awaiting_vendor },
+            { key: 'closed', label: t('tasks.filters.closed'), count: counts.closed },
+          ]"
+          :key="item.key"
+          :class="['tab', { 'tab--active': statusFilter === item.key }]"
+          @click="statusFilter = item.key as typeof statusFilter"
+        >
+          {{ item.label }}
+          <span class="tab-count">{{ item.count }}</span>
+        </button>
+      </div>
 
-    <!-- Liste -->
-    <div class="task-list">
-      <CCard v-for="task in tasks" :key="task.id" padding="none" class="task-card">
-        <div class="task-row">
-          <div class="prio-bar" :style="{ background: priorityColor(task.priority) }" />
-          <div class="task-body">
-            <div class="task-head">
-              <span class="title-sm">{{ task.title }}</span>
-              <div class="task-badges">
-                <CBadge :variant="priorityVariant(task.priority)">
-                  {{ t(`tasks.priorities.${task.priority}`) }}
-                </CBadge>
-                <CBadge :variant="statusVariant(task.status)">
-                  {{ t(`tasks.statuses.${task.status}`) }}
-                </CBadge>
+      <!-- Liste -->
+      <div class="task-list">
+        <CCard
+          v-for="task in tasks"
+          :key="task.id"
+          padding="none"
+          class="task-card"
+        >
+          <div class="task-row">
+            <div
+              class="prio-bar"
+              :style="{ background: priorityColor(task.priority) }"
+            ></div>
+            <div class="task-body">
+              <div class="task-head">
+                <span class="title-sm">{{ task.title }}</span>
+                <div class="task-badges">
+                  <CBadge :variant="priorityVariant(task.priority)">
+                    {{ t(`tasks.priorities.${task.priority}`) }}
+                  </CBadge>
+                  <CBadge :variant="statusVariant(task.status)">
+                    {{ t(`tasks.statuses.${task.status}`) }}
+                  </CBadge>
+                </div>
+              </div>
+              <p
+                v-if="task.description"
+                class="task-desc body-sm"
+              >
+                {{ task.description }}
+              </p>
+              <div class="task-meta">
+                <span>Créée {{ formatRelative(task.created_at) }}</span>
+                <span v-if="task.closed_at">• {{ t('tasks.closedAt', { date: formatDate(task.closed_at) }) }}</span>
               </div>
             </div>
-            <p v-if="task.description" class="task-desc body-sm">{{ task.description }}</p>
-            <div class="task-meta">
-              <span>Créée {{ formatRelative(task.created_at) }}</span>
-              <span v-if="task.closed_at">• Clôturée le {{ formatDate(task.closed_at) }}</span>
-            </div>
+            <button class="icon-btn">
+              <CIconDotsHorizontal />
+            </button>
           </div>
-          <button class="icon-btn">
-            <CIconDotsHorizontal/>
-          </button>
-        </div>
-      </CCard>
+        </CCard>
 
-      <div v-if="!tasks.length" class="empty-state">
-        Aucune tâche dans cette catégorie.
+        <div
+          v-if="!tasks.length"
+          class="empty-state"
+        >
+          {{ t('tasks.empty') }}
+        </div>
       </div>
     </div>
-  </div>
   </div>
 </template>
 
 <style scoped>
-.view-container { padding: 40px; max-width: 900px; display: flex; flex-direction: column; gap: 24px; }
-.view-header { display: flex; align-items: flex-start; justify-content: space-between; }
-
 .task-list { display: flex; flex-direction: column; gap: 10px; }
 
 .task-card { overflow: hidden; }
@@ -146,19 +173,11 @@ function priorityColor(p: string): string {
 .prio-bar { width: 4px; flex-shrink: 0; }
 
 .task-body { flex: 1; padding: 14px 16px; min-width: 0; }
-.task-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
+.task-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); margin-bottom: 6px; }
 .task-badges { display: flex; gap: 6px; flex-shrink: 0; }
-.task-desc { color: var(--color-on-surface-variant); margin-bottom: 8px; }
-.task-meta { font-size: 11px; color: var(--color-on-surface-variant); }
+.task-desc { color: var(--color-on-surface-variant); margin-bottom: var(--space-2); }
+.task-meta { font-size: var(--text-2xs); color: var(--color-on-surface-variant); }
 
-.icon-btn {
-  padding: 14px 12px; background: none; border: none;
-  color: var(--color-on-surface-variant); cursor: pointer;
-  transition: color var(--transition-fast);
-}
-.icon-btn:hover { color: var(--color-primary); }
-.icon-btn svg { width: 18px; height: 18px; }
-
-.empty-state { padding: 32px; text-align: center; font-size: 14px; color: var(--color-on-surface-variant); }
+.empty-state { padding: var(--space-8); text-align: center; font-size: var(--text-md); color: var(--color-on-surface-variant); }
 </style>
 

@@ -1,11 +1,19 @@
-use std::sync::Arc;
-use axum::{extract::{Path, State}, http::StatusCode, Json};
+use axum::{
+    Json,
+    extract::{Path, State},
+    http::StatusCode,
+};
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 use utoipa::ToSchema;
 use uuid::Uuid;
 use validator::Validate;
 
-use crate::{db::{self, AppState}, domain::AuthUser, errors::{AppError, AppResult}};
+use crate::{
+    db::{self, AppState},
+    domain::AuthUser,
+    errors::{AppError, AppResult},
+};
 
 #[derive(Deserialize, Validate, ToSchema)]
 pub struct GetUploadUrlInput {
@@ -21,6 +29,16 @@ pub struct UploadUrlResponse {
     pub url: String,
     pub key: String,
     pub bucket: String,
+}
+
+#[derive(Serialize, ToSchema)]
+pub struct DocumentListItem {
+    pub id: Uuid,
+    pub original_name: String,
+    pub mime_type: String,
+    pub size_bytes: i64,
+    pub visible_roles: Vec<String>,
+    pub created_at: chrono::DateTime<chrono::Utc>,
 }
 
 #[derive(Deserialize, Validate, ToSchema)]
@@ -43,7 +61,9 @@ pub async fn get_upload_url(
     State(state): State<Arc<AppState>>,
     Json(input): Json<GetUploadUrlInput>,
 ) -> AppResult<Json<UploadUrlResponse>> {
-    input.validate().map_err(|e| AppError::Validation(e.to_string()))?;
+    input
+        .validate()
+        .map_err(|e| AppError::Validation(e.to_string()))?;
 
     // Sanitize extension (prevent path traversal)
     let ext = input.extension.trim_start_matches('.').to_lowercase();
@@ -51,11 +71,28 @@ pub async fn get_upload_url(
         return Err(AppError::Validation("Invalid extension".into()));
     }
 
-    let upload = state.storage
-        .presigned_upload_url(auth.building_id, &ext, &input.content_type, state.cfg.s3.presigned_ttl_secs)
+    // Ensure bucket exists — idempotent, handles seeded data or transient S3 failures.
+    // Non-fatal: a dispatch error here must not block the presigned URL generation;
+    // the bucket may already exist and the PUT will succeed regardless.
+    if let Err(e) = state.storage.ensure_bucket(auth.building_id).await {
+        tracing::warn!(building_id = %auth.building_id, error = %e, "Could not ensure S3 bucket — proceeding anyway");
+    }
+
+    let upload = state
+        .storage
+        .presigned_upload_url(
+            auth.building_id,
+            &ext,
+            &input.content_type,
+            state.cfg.s3.presigned_ttl_secs,
+        )
         .await?;
 
-    Ok(Json(UploadUrlResponse { url: upload.url, key: upload.key, bucket: upload.bucket }))
+    Ok(Json(UploadUrlResponse {
+        url: upload.url,
+        key: upload.key,
+        bucket: upload.bucket,
+    }))
 }
 
 /// POST /api/v1/documents — confirms a successful S3 upload and records in DB
@@ -64,7 +101,9 @@ pub async fn confirm_upload(
     State(state): State<Arc<AppState>>,
     Json(input): Json<ConfirmUploadInput>,
 ) -> AppResult<(StatusCode, Json<serde_json::Value>)> {
-    input.validate().map_err(|e| AppError::Validation(e.to_string()))?;
+    input
+        .validate()
+        .map_err(|e| AppError::Validation(e.to_string()))?;
 
     // Verify the key belongs to the building's bucket
     let expected_bucket = state.storage.bucket_name(auth.building_id);
@@ -82,31 +121,49 @@ pub async fn confirm_upload(
         &input.mime_type,
         input.size_bytes,
         &input.visible_roles,
-    ).await?;
+    )
+    .await?;
 
-    Ok((StatusCode::CREATED, Json(serde_json::json!({
-        "id": doc.id,
-        "original_name": doc.original_name,
-        "size_bytes": doc.size_bytes,
-        "created_at": doc.created_at,
-    }))))
+    if let Err(e) = state
+        .storage
+        .set_original_name_metadata(&input.bucket, &input.key, &input.original_name)
+        .await
+    {
+        tracing::warn!(key = %input.key, error = %e, "Could not set S3 original-name metadata — non-fatal");
+    }
+
+    Ok((
+        StatusCode::CREATED,
+        Json(serde_json::json!({
+            "id": doc.id,
+            "original_name": doc.original_name,
+            "size_bytes": doc.size_bytes,
+            "created_at": doc.created_at,
+        })),
+    ))
 }
 
 /// GET /api/v1/documents
 pub async fn list(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,
-) -> AppResult<Json<Vec<serde_json::Value>>> {
-    // Filtre par rôles de l'utilisateur courant
-    let roles: Vec<String> = auth.roles.iter().map(|r| format!("{:?}", r).to_lowercase()).collect();
-    let docs = db::document::list(&state.pool, auth.building_id, &roles).await?;
-    Ok(Json(docs.into_iter().map(|d| serde_json::json!({
-        "id": d.id,
-        "original_name": d.original_name,
-        "mime_type": d.mime_type,
-        "size_bytes": d.size_bytes,
-        "created_at": d.created_at,
-    })).collect()))
+) -> AppResult<Json<Vec<DocumentListItem>>> {
+    // Filter by current user's roles
+    let roles: Vec<String> = auth.roles.iter().map(ToString::to_string).collect();
+    let rows = db::document::list(&state.pool, auth.building_id, &roles).await?;
+
+    Ok(Json(
+        rows.into_iter()
+            .map(|document| DocumentListItem {
+                id: document.id,
+                original_name: document.original_name,
+                mime_type: document.mime_type,
+                size_bytes: document.size_bytes,
+                visible_roles: document.visible_roles,
+                created_at: document.created_at,
+            })
+            .collect(),
+    ))
 }
 
 /// GET /api/v1/documents/:id/download-url
@@ -120,8 +177,14 @@ pub async fn get_download_url(
         .await?
         .ok_or(AppError::NotFound)?;
 
-    let url = state.storage
-        .presigned_download_url(&doc.bucket, &doc.storage_path, &doc.original_name, state.cfg.s3.presigned_ttl_secs)
+    let url = state
+        .storage
+        .presigned_download_url(
+            &doc.bucket,
+            &doc.storage_path,
+            &doc.original_name,
+            state.cfg.s3.presigned_ttl_secs,
+        )
         .await?;
 
     Ok(Json(serde_json::json!({ "url": url })))

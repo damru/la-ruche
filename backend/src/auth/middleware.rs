@@ -1,15 +1,10 @@
 use axum::{
     extract::FromRequestParts,
-    http::{request::Parts, header},
+    http::{header, request::Parts},
 };
 use std::sync::Arc;
 
-use crate::{
-    auth::jwt::validate_access_token,
-    db::AppState,
-    domain::AuthUser,
-    errors::AppError,
-};
+use crate::{auth::jwt::validate_access_token, db::AppState, domain::AuthUser, errors::AppError};
 
 /// Axum extractor — injects AuthUser into all protected handlers.
 /// Reads JWT from the `access_token` cookie (httpOnly).

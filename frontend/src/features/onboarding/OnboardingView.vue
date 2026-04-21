@@ -10,13 +10,6 @@ import CAlert from '@/components/atoms/CAlert.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CTooltip from '@/components/atoms/CTooltip.vue'
 import CAddressAutocomplete from '@/components/molecules/CAddressAutocomplete.vue'
-import CIconCheckCircle from '@/components/atoms/CIconCheckCircle.vue'
-import CIconEyeOff from '@/components/atoms/CIconEyeOff.vue'
-import CIconEye from '@/components/atoms/CIconEye.vue'
-import CIconCheck from '@/components/atoms/CIconCheck.vue'
-import CIconX from '@/components/atoms/CIconX.vue'
-import CIconArrowRight from '@/components/atoms/CIconArrowRight.vue'
-import CIconArrowLeft from '@/components/atoms/CIconArrowLeft.vue'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -152,7 +145,7 @@ async function handleSubmit() {
       address_line1: form.address_line1,
       postal_code: form.postal_code,
       city: form.city,
-      shares_total: String(form.shares_total).trim() || '1000',
+      shares_total: parseInt(String(form.shares_total).trim(), 10) || 1000,
     })
     auth.completeOnboarding({
       user_id: data.user_id,
@@ -178,7 +171,6 @@ async function handleSubmit() {
 
 <template>
   <div class="onboarding-root">
-
     <!-- Left panel — brand -->
     <AuthBrandPanel
       class="onboarding-brand"
@@ -191,31 +183,66 @@ async function handleSubmit() {
     <!-- Right panel — form -->
     <main class="onboarding-panel">
       <div class="onboarding-form-wrap">
-
         <!-- Already initialised -->
-        <div v-if="alreadyInitialized" class="already-init">
-          <div class="already-init-icon" aria-hidden="true">
-            <CIconCheckCircle/>
+        <div
+          v-if="alreadyInitialized"
+          class="already-init"
+        >
+          <div
+            class="already-init-icon"
+            aria-hidden="true"
+          >
+            <CIconCheckCircle />
           </div>
-          <h2 class="already-init-title">{{ t('onboarding.alreadyInitTitle') }}</h2>
-          <p class="already-init-text">{{ t('onboarding.alreadyInitText') }}</p>
-          <router-link to="/login" class="link-btn">{{ t('auth.login') }}</router-link>
+          <h2 class="already-init-title">
+            {{ t('onboarding.alreadyInitTitle') }}
+          </h2>
+          <p class="already-init-text">
+            {{ t('onboarding.alreadyInitText') }}
+          </p>
+          <router-link
+            to="/login"
+            class="link-btn"
+          >
+            {{ t('auth.login') }}
+          </router-link>
         </div>
 
         <template v-else>
           <div class="form-header">
-            <h2 class="form-title">{{ step === 1 ? t('onboarding.titleStep1') : t('onboarding.titleStep2') }}</h2>
-            <p class="form-sub">{{ step === 1 ? t('onboarding.subtitleStep1') : t('onboarding.subtitleStep2') }}</p>
+            <h2 class="form-title">
+              {{ step === 1 ? t('onboarding.titleStep1') : t('onboarding.titleStep2') }}
+            </h2>
+            <p class="form-sub">
+              {{ step === 1 ? t('onboarding.subtitleStep1') : t('onboarding.subtitleStep2') }}
+            </p>
           </div>
 
           <!-- API error -->
-          <CAlert v-if="error" variant="error" :title="t('errors.title')">{{ error }}</CAlert>
+          <CAlert
+            v-if="error"
+            variant="error"
+            :title="t('errors.title')"
+          >
+            {{ error }}
+          </CAlert>
 
           <!-- Step 1: Manager account -->
-          <form v-if="step === 1" class="form" @submit.prevent="goNext" novalidate>
+          <form
+            v-if="step === 1"
+            class="form"
+            novalidate
+            @submit.prevent="goNext"
+          >
             <div class="field-row">
               <div class="field">
-                <label for="last_name" class="field-label">{{ t('onboarding.lastName') }} <span class="required" aria-hidden="true">*</span></label>
+                <label
+                  for="last_name"
+                  class="field-label"
+                >{{ t('onboarding.lastName') }} <span
+                  class="required"
+                  aria-hidden="true"
+                >*</span></label>
                 <input
                   id="last_name"
                   v-model="form.last_name"
@@ -227,10 +254,22 @@ async function handleSubmit() {
                   :disabled="loading"
                   @blur="touch('last_name')"
                 />
-                <p v-if="err.last_name" class="field-error" role="alert">{{ t('onboarding.fieldRequired') }}</p>
+                <p
+                  v-if="err.last_name"
+                  class="field-error"
+                  role="alert"
+                >
+                  {{ t('onboarding.fieldRequired') }}
+                </p>
               </div>
               <div class="field">
-                <label for="first_name" class="field-label">{{ t('onboarding.firstName') }} <span class="required" aria-hidden="true">*</span></label>
+                <label
+                  for="first_name"
+                  class="field-label"
+                >{{ t('onboarding.firstName') }} <span
+                  class="required"
+                  aria-hidden="true"
+                >*</span></label>
                 <input
                   id="first_name"
                   v-model="form.first_name"
@@ -242,12 +281,24 @@ async function handleSubmit() {
                   :disabled="loading"
                   @blur="touch('first_name')"
                 />
-                <p v-if="err.first_name" class="field-error" role="alert">{{ t('onboarding.fieldRequired') }}</p>
+                <p
+                  v-if="err.first_name"
+                  class="field-error"
+                  role="alert"
+                >
+                  {{ t('onboarding.fieldRequired') }}
+                </p>
               </div>
             </div>
 
             <div class="field">
-              <label for="email" class="field-label">{{ t('auth.email') }} <span class="required" aria-hidden="true">*</span></label>
+              <label
+                for="email"
+                class="field-label"
+              >{{ t('auth.email') }} <span
+                class="required"
+                aria-hidden="true"
+              >*</span></label>
               <input
                 id="email"
                 v-model="form.email"
@@ -259,11 +310,23 @@ async function handleSubmit() {
                 :disabled="loading"
                 @blur="touch('email')"
               />
-              <p v-if="err.email" class="field-error" role="alert">{{ t('onboarding.fieldRequired') }}</p>
+              <p
+                v-if="err.email"
+                class="field-error"
+                role="alert"
+              >
+                {{ t('onboarding.fieldRequired') }}
+              </p>
             </div>
 
             <div class="field">
-              <label for="password" class="field-label">{{ t('auth.password') }} <span class="required" aria-hidden="true">*</span></label>
+              <label
+                for="password"
+                class="field-label"
+              >{{ t('auth.password') }} <span
+                class="required"
+                aria-hidden="true"
+              >*</span></label>
               <div class="field-input-wrap">
                 <input
                   id="password"
@@ -285,31 +348,85 @@ async function handleSubmit() {
                   @click="showPassword = !showPassword"
                 >
                   <!-- Eye-off -->
-                  <CIconEyeOff v-if="showPassword" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"/>
+                  <CIconEyeOff
+                    v-if="showPassword"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  />
                   <!-- Eye -->
-                  <CIconEye v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"/>
+                  <CIconEye
+                    v-else
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  />
                 </button>
               </div>
               <!-- Password rules — always visible, state changes on input -->
-              <ul class="pwd-rules" aria-live="polite">
+              <ul
+                class="pwd-rules"
+                aria-live="polite"
+              >
                 <li :class="!passwordDirty ? 'pwd-rule--idle' : form.password.length >= 8 ? 'pwd-rule--ok' : 'pwd-rule--err'">
-                  <CIconCheck v-if="form.password.length >= 8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"/>
-                  <CIconX v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"/>
+                  <CIconCheck
+                    v-if="form.password.length >= 8"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                    stroke-linecap="round"
+                    aria-hidden="true"
+                  />
+                  <CIconX
+                    v-else
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                    stroke-linecap="round"
+                    aria-hidden="true"
+                  />
                   {{ t('onboarding.passwordRuleLength') }}
                 </li>
               </ul>
             </div>
 
-            <CBtn type="submit" variant="primary" size="md" :disabled="loading" style="width:100%">
+            <CBtn
+              type="submit"
+              variant="primary"
+              size="md"
+              :disabled="loading"
+              style="width:100%"
+            >
               {{ t('onboarding.next') }}
-              <CIconArrowRight aria-hidden="true"/>
+              <CIconArrowRight aria-hidden="true" />
             </CBtn>
           </form>
 
           <!-- Step 2: Building -->
-          <form v-else class="form" @submit.prevent="handleSubmit" novalidate>
+          <form
+            v-else
+            class="form"
+            novalidate
+            @submit.prevent="handleSubmit"
+          >
             <div class="field">
-              <label for="building_name" class="field-label">{{ t('onboarding.buildingName') }} <span class="required" aria-hidden="true">*</span></label>
+              <label
+                for="building_name"
+                class="field-label"
+              >{{ t('onboarding.buildingName') }} <span
+                class="required"
+                aria-hidden="true"
+              >*</span></label>
               <input
                 id="building_name"
                 v-model="form.building_name"
@@ -320,7 +437,13 @@ async function handleSubmit() {
                 :disabled="loading"
                 @blur="touch('building_name')"
               />
-              <p v-if="err.building_name" class="field-error" role="alert">{{ t('onboarding.fieldRequired') }}</p>
+              <p
+                v-if="err.building_name"
+                class="field-error"
+                role="alert"
+              >
+                {{ t('onboarding.fieldRequired') }}
+              </p>
             </div>
 
             <CAddressAutocomplete
@@ -335,7 +458,10 @@ async function handleSubmit() {
 
             <div class="field">
               <div class="field-label-row">
-                <label for="shares_total" class="field-label">{{ t('onboarding.sharesTotal') }}</label>
+                <label
+                  for="shares_total"
+                  class="field-label"
+                >{{ t('onboarding.sharesTotal') }}</label>
                 <CTooltip :content="t('onboarding.sharesTotalHint')" />
               </div>
               <input
@@ -351,18 +477,31 @@ async function handleSubmit() {
             </div>
 
             <div class="form-actions">
-              <CBtn type="button" variant="ghost" :disabled="loading" @click="goBack">
-              <CIconArrowLeft aria-hidden="true"/>
+              <CBtn
+                type="button"
+                variant="ghost"
+                :disabled="loading"
+                @click="goBack"
+              >
+                <CIconArrowLeft aria-hidden="true" />
                 {{ t('onboarding.back') }}
               </CBtn>
-              <CBtn type="submit" variant="primary" :disabled="loading" :loading="loading" class="btn-submit">
-                <CIconArrowRight v-if="!loading" aria-hidden="true"/>
+              <CBtn
+                type="submit"
+                variant="primary"
+                :disabled="loading"
+                :loading="loading"
+                class="btn-submit"
+              >
+                <CIconArrowRight
+                  v-if="!loading"
+                  aria-hidden="true"
+                />
                 {{ loading ? t('onboarding.submitting') : t('onboarding.submit') }}
               </CBtn>
             </div>
           </form>
         </template>
-
       </div>
     </main>
   </div>
@@ -452,7 +591,6 @@ async function handleSubmit() {
 /* ── Form ───────────────────────────────────────────── */
 .form { display: flex; flex-direction: column; gap: var(--space-4); }
 
-.field { display: flex; flex-direction: column; gap: var(--space-1); }
 .field-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -460,25 +598,12 @@ async function handleSubmit() {
 }
 .field--narrow { max-width: 130px; }
 
-.field-label {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--color-on-surface-variant);
-}
 .required { color: var(--color-error); }
 
 /* ── Field error state ─────────────────────────────────────────── */
 .field-input--error {
   border-color: var(--color-error);
   box-shadow: 0 0 0 3px rgba(176, 0, 32, 0.1);
-}
-.field-error {
-  font-size: 12px;
-  color: var(--color-error);
-  line-height: 1.4;
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
 }
 
 /* ── Password checklist ────────────────────────────────────────── */
@@ -538,19 +663,6 @@ async function handleSubmit() {
 .pwd-toggle:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; opacity: 1; }
 .pwd-toggle svg { width: 16px; height: 16px; }
 
-.field-input {
-  height: 44px;
-  padding: 0 var(--space-3);
-  background: var(--color-surface-container-lowest);
-  border: 1.5px solid var(--color-outline-variant);
-  border-radius: var(--radius-sm);
-  font-family: var(--font-body);
-  font-size: 14px;
-  color: var(--color-on-surface);
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
-  outline: none;
-  width: 100%;
-}
 .field-input::placeholder { color: var(--color-on-surface-variant); opacity: 0.55; }
 .field-input:hover:not(:disabled) { border-color: var(--color-secondary); }
 .field-input:focus {
@@ -558,12 +670,6 @@ async function handleSubmit() {
   box-shadow: 0 0 0 3px rgba(100, 63, 213, 0.12);
 }
 .field-input:disabled { opacity: 0.5; cursor: not-allowed; }
-
-.field-hint {
-  font-size: 12px;
-  color: var(--color-on-surface-variant);
-  line-height: 1.5;
-}
 
 /* ── Label row (label + CTooltip) ────────────────────────────── */
 .field-label-row {
@@ -573,11 +679,6 @@ async function handleSubmit() {
 }
 
 /* ── Actions (Back + Submit side by side) ───────────────────── */
-.form-actions {
-  display: flex;
-  gap: var(--space-3);
-  margin-top: var(--space-2);
-}
 .btn-submit { flex: 1; }
 
 /* ── Link button (already-initialised state) ──────────────────── */

@@ -1,7 +1,7 @@
+use crate::errors::AppResult;
+use chrono::{DateTime, Utc};
 use sqlx::PgPool;
 use uuid::Uuid;
-use chrono::{DateTime, Utc};
-use crate::errors::AppResult;
 
 pub async fn list(pool: &PgPool, building_id: Uuid) -> AppResult<Vec<serde_json::Value>> {
     let rows = sqlx::query!(
@@ -9,26 +9,40 @@ pub async fn list(pool: &PgPool, building_id: Uuid) -> AppResult<Vec<serde_json:
            visible_to_roles::text[] as visible_to_roles, closed_at, created_at
            FROM consultation WHERE building_id = $1 ORDER BY created_at DESC"#,
         building_id
-    ).fetch_all(pool).await?;
+    )
+    .fetch_all(pool)
+    .await?;
 
-    Ok(rows.into_iter().map(|r| serde_json::json!({
-        "id": r.id,
-        "title": r.title,
-        "description": r.description,
-        "status": r.status,
-        "visible_to_roles": r.visible_to_roles,
-        "closed_at": r.closed_at,
-        "created_at": r.created_at,
-    })).collect())
+    Ok(rows
+        .into_iter()
+        .map(|r| {
+            serde_json::json!({
+                "id": r.id,
+                "title": r.title,
+                "description": r.description,
+                "status": r.status,
+                "visible_to_roles": r.visible_to_roles,
+                "closed_at": r.closed_at,
+                "created_at": r.created_at,
+            })
+        })
+        .collect())
 }
 
-pub async fn get_with_choices(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<Option<serde_json::Value>> {
+pub async fn get_with_choices(
+    pool: &PgPool,
+    id: Uuid,
+    building_id: Uuid,
+) -> AppResult<Option<serde_json::Value>> {
     let row = sqlx::query!(
         r#"SELECT id, title, description, status::text as status,
            visible_to_roles::text[] as visible_to_roles, closed_at, created_at
          FROM consultation WHERE id = $1 AND building_id = $2"#,
-        id, building_id
-    ).fetch_optional(pool).await?;
+        id,
+        building_id
+    )
+    .fetch_optional(pool)
+    .await?;
 
     let Some(r) = row else { return Ok(None) };
 
@@ -51,6 +65,7 @@ pub async fn get_with_choices(pool: &PgPool, id: Uuid, building_id: Uuid) -> App
     })))
 }
 
+#[allow(clippy::too_many_arguments)]
 pub async fn create(
     pool: &PgPool,
     building_id: Uuid,
@@ -93,15 +108,24 @@ pub async fn respond(
         id, building_id
     ).fetch_one(pool).await?.unwrap_or(false);
 
-    if !exists { return Err(crate::errors::AppError::Conflict("Consultation not found or closed".into())); }
+    if !exists {
+        return Err(crate::errors::AppError::Conflict(
+            "Consultation not found or closed".into(),
+        ));
+    }
 
     sqlx::query!(
         r#"INSERT INTO consultation_response (consultation_id, choice_id, user_id, comment)
            VALUES ($1, $2, $3, $4)
            ON CONFLICT (consultation_id, user_id)
            DO UPDATE SET choice_id = EXCLUDED.choice_id, comment = EXCLUDED.comment"#,
-        id, choice_id, user_id, comment
-    ).execute(pool).await?;
+        id,
+        choice_id,
+        user_id,
+        comment
+    )
+    .execute(pool)
+    .await?;
     Ok(())
 }
 
@@ -113,14 +137,19 @@ pub async fn results(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<se
            JOIN consultation c ON c.id = cc.consultation_id AND c.building_id = $2
            WHERE cc.consultation_id = $1
            GROUP BY cc.id, cc.label, cc.order_index ORDER BY cc.order_index"#,
-        id, building_id
-    ).fetch_all(pool).await?;
+        id,
+        building_id
+    )
+    .fetch_all(pool)
+    .await?;
 
     let total: i64 = rows.iter().map(|r| r.votes.unwrap_or(0)).sum();
-    Ok(serde_json::json!({ "total": total, "choices": rows.iter().map(|r| serde_json::json!({
+    Ok(
+        serde_json::json!({ "total": total, "choices": rows.iter().map(|r| serde_json::json!({
         "id": r.id, "label": r.label, "votes": r.votes.unwrap_or(0),
         "pct": if total > 0 { r.votes.unwrap_or(0) * 100 / total } else { 0 }
-    })).collect::<Vec<_>>() }))
+    })).collect::<Vec<_>>() }),
+    )
 }
 
 pub async fn close(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()> {

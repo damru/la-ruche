@@ -31,6 +31,8 @@
     "status": "Statut",
     "amount": "Montant",
     "total": "Total",
+    "date": "Date",
+    "paidAt": "Payé le",
     "active": "Actif",
     "inactive": "Inactif",
     "type": "Type",
@@ -40,7 +42,30 @@
     "dueDate": "Échéance",
     "coOwner": "Copropriétaire",
     "roles": "Rôle(s)",
-    "lot": "Lot"
+    "lot": "Lot",
+    "saved": "Enregistré",
+    "saving": "Enregistrement…",
+    "email": "Adresse e-mail",
+    "firstName": "Prénom",
+    "lastName": "Nom",
+    "loadError": "Impossible de charger les données",
+    "retry": "Réessayer",
+    "requiredAria": "obligatoire",
+    "fileDropzoneAria": "Zone de dépôt de fichier",
+    "fileDropzoneText": "Glissez un fichier ici",
+    "fileDropzoneHint": "ou cliquez pour parcourir · max {size} Mo",
+    "uploadInProgress": "Envoi en cours…",
+    "confirmDelete": "Confirmer la suppression",
+    "confirmArchive": "Confirmer l'archivage",
+    "deleteLabel": "Supprimer définitivement",
+    "archiveLabel": "Archiver"
+  },
+  "page": {
+    "onboarding": "Bienvenue",
+    "contractor": "Espace prestataire",
+    "unitCharges": "Charges de l'unité",
+    "forbidden": "Accès refusé",
+    "notFound": "Page introuvable"
   },
   "addressAutocomplete": {
     "searchLabel": "Rechercher une adresse",
@@ -51,6 +76,9 @@
     "city": "Ville"
   },
   "nav": {
+    "primary": "Navigation principale",
+    "appName": "La Ruche",
+    "appTagline": "Gestion participative",
     "dashboard": "Tableau de bord",
     "meetings": "Assemblées générales",
     "budget": "Budget & Charges",
@@ -61,9 +89,38 @@
     "maintenance": "Carnet d'entretien",
     "consultations": "Consultations",
     "reports": "Signalements",
-    "residents": "Résidents",
-    "settings": "Paramètres",
-    "logout": "Se déconnecter"
+    "residents": "Copropriétaires",
+    "registry": "Registre",
+    "myCharges": "Mes appels de fonds",
+    "residence-info": "Informations",
+    "residence-keys": "Clés de répartition",
+    "account": "Profil",
+    "myAccount": "Mon compte",
+    "mobile": {
+      "dashboard": "Accueil",
+      "assemblies": "AG",
+      "budget": "Budget",
+      "documents": "Docs",
+      "tasks": "Tâches",
+      "consultations": "Consult.",
+      "reports": "Signaux",
+      "contracts": "Contrats",
+      "claims": "Sinistres",
+      "maintenance": "Carnet",
+      "registry": "Registre",
+      "residents": "Copro.",
+      "residence-building": "Infos",
+      "residence-keys": "Clés"
+    },
+    "notifications": "Notifications",
+    "logout": "Se déconnecter",
+    "more": "Plus",
+    "groups": {
+      "governance": "Gouvernance",
+      "finance": "Finance",
+      "operations": "Opérations",
+      "residence": "Résidence"
+    }
   },
   "roles": {
     "manager": "Syndic bénévole",
@@ -109,7 +166,6 @@
     "inviteSuccessMessage": "Votre compte a bien été créé. Vous pouvez maintenant vous connecter.",
     "resetNewTitle": "Nouveau mot de passe",
     "resetNewSub": "Choisissez un nouveau mot de passe sécurisé.",
-    "resetSaving": "Enregistrement…",
     "resetSaveButton": "Enregistrer le mot de passe",
     "resetSuccessTitle": "Mot de passe mis à jour",
     "resetSuccessMessage": "Vous pouvez maintenant vous connecter avec votre nouveau mot de passe.",
@@ -117,9 +173,26 @@
     "welcomeSubtitle": "Bienvenue dans votre espace copropriété",
     "brandEyebrow": "Gestion participative",
     "brandTitle": "La copropriété, simplement.",
-    "brandSub": "Transparence, conformité légale et gestion collaborative pour syndics bénévoles et copropriétaires."
+    "brandSub": "Transparence, conformité légale et gestion collaborative pour syndics bénévoles, copropriétaires et locataires."
   },
   "dashboard": {
+    "newAction": "Nouvelle action",
+    "overview": "Vue d'ensemble",
+    "overdueLots": "{count} lot(s) en retard de paiement",
+    "overdueTotal": "Total : {amount}",
+    "overdueAmount": "{amount} en attente",
+    "lastClosedAg": "Dernière AG clôturée",
+    "newTask": "Nouvelle tâche",
+    "seeResidents": "Gérer",
+    "residentsTitle": "Résidents",
+    "lotsLabel": "Lots",
+    "paidLabel": "Payés",
+    "recoveryLabel": "Recouvrement",
+    "lateLabel": "En retard",
+    "activeConsultation": "Consultation active",
+    "closesPrefix": "Clôture",
+    "totalRealized": "Total réalisé",
+    "detailLink": "Détail",
     "title": "Tableau de bord",
     "hello": "Bonjour, {name}",
     "residenceSummary": "Résidence {name} · {lots} lots · Exercice {year}",
@@ -254,12 +327,14 @@
     },
     "minutes": "Procès-verbal",
     "uploadMinutes": "Déposer le PV signé",
+    "present": "présents",
+    "tantiemesShares": "% des tantièmes",
     "legalWarning": "Délai légal de convocation : 21 jours minimum (art. 9 décret 17/03/1967)"
   },
   "budget": {
     "title": "Budget & Charges",
     "fiscalYear": "Exercice {year}",
-    "newFiscalYear": "+ Nouvel exercice",
+    "newFiscalYear": "Nouvel exercice",
     "newLine": "Nouvelle ligne",
     "statuses": {
       "draft": "Prévisionnel",
@@ -320,9 +395,21 @@
       "other": "Autre"
     },
     "shares": "Tantièmes",
+    "generalShares": "Tantièmes généraux",
+    "generalSharesHint": "Tantièmes affectés à la clé Charges Générales. Les clés spéciales se configurent dans Clés de répartition.",
     "owner": "Propriétaire",
     "ownerHistory": "Historique des propriétaires",
-    "transfer": "Enregistrer une cession"
+    "transfer": "Enregistrer une cession",
+    "charges": {
+      "title": "Relevé de charges",
+      "history": "Historique des appels de fonds",
+      "totalIssued": "Total appelé",
+      "totalPaid": "Total payé",
+      "balance": "Solde dû",
+      "empty": "Aucun appel de fonds pour ce lot",
+      "legalNote": "Relevé individuel de charges — Décret 1967 art. 48. Les tantièmes affichés sont ceux en vigueur au moment de l'émission de chaque appel.",
+      "noUnit": "Aucun lot n'est associé à votre compte. Contactez votre syndic."
+    }
   },
   "contracts": {
     "title": "Contrats fournisseurs",
@@ -365,10 +452,14 @@
   "tasks": {
     "title": "Tâches",
     "create": "Nouvelle tâche",
+    "newTask": "Nouvelle tâche",
+    "activeSummary": "{count} tâche(s) active(s)",
     "activeCount": "{count} tâche active | {count} tâches actives",
     "createdRelative": "Créée {relative}",
     "closedOn": "Clôturée le {date}",
+    "closedAt": "Clôturée le {date}",
     "emptyState": "Aucune tâche dans cette catégorie.",
+    "empty": "Aucune tâche dans cette catégorie.",
     "statuses": {
       "open": "Ouverte",
       "in_progress": "En cours",
@@ -377,8 +468,11 @@
       "cancelled": "Annulée"
     },
     "filters": {
+      "all": "Toutes",
       "open": "Ouvertes",
+      "in_progress": "En cours",
       "inProgress": "En cours",
+      "awaiting_vendor": "Prestataire",
       "vendor": "Prestataire",
       "closed": "Clôturées"
     },
@@ -395,21 +489,40 @@
   "documents": {
     "title": "Documents",
     "upload": "Déposer un document",
+    "import": "Importer un document",
     "count": "{count} document | {count} documents",
     "searchPlaceholder": "Rechercher un document…",
     "fileName": "Nom du fichier",
+    "empty": "Aucun document trouvé.",
+    "emptyState": "Aucun document trouvé.",
+    "columns": {
+      "fileName": "Nom du fichier",
+      "type": "Type",
+      "visibility": "Visibilité",
+      "size": "Taille",
+      "addedDate": "Date d'ajout"
+    },
     "visibility": "Visibilité",
     "size": "Taille",
     "addedDate": "Date d'ajout",
-    "emptyState": "Aucun document trouvé.",
     "dropzone": "Glissez un fichier ici ou cliquez pour parcourir",
     "maxSize": "Taille maximale : 50 Mo",
-    "visiblePar": "Visible par"
+    "maxSizeExceeded": "Fichier trop volumineux (max {size} Mo)",
+    "visiblePar": "Visible par",
+    "fileTypeFallback": "Fichier",
+    "uploadFailed": "Impossible de déposer le fichier sur le stockage.",
+    "downloadNewTab": "Télécharger le document (ouvre dans un nouvel onglet)",
+    "confirmDeleteTitle": "Supprimer le document",
+    "confirmDeleteMessage": "Le document « {name} » sera supprimé définitivement. Cette action est irréversible."
   },
   "consultations": {
     "title": "Consultations",
     "create": "Nouvelle consultation",
     "openCount": "{count} consultation ouverte | {count} consultations ouvertes",
+    "openedAt": "Ouverte {date}",
+    "closedAt": "Clôturée le {date}",
+    "responseCount": "{count} réponses",
+    "responseCountOpen": "{count} réponse(s) reçue(s) — en cours",
     "statuses": {
       "draft": "Brouillon",
       "open": "Ouverte",
@@ -424,7 +537,7 @@
     "results": "Résultats",
     "close": "Clôturer la consultation",
     "informalNote": "Cette consultation est informelle et n'a aucune valeur décisionnelle légale.",
-    "informalNoteDetail": "Les consultations écrites permettent de recueillir l'avis des copropriétaires sans valeur de vote."
+    "informalNoteDetail": "Les consultations écrites permettent de recueillir l'avis des copropriétaires et des locataires sans valeur de vote."
   },
   "reports": {
     "title": "Signalements",
@@ -445,10 +558,14 @@
   "maintenance": {
     "title": "Carnet d'entretien",
     "create": "Ajouter une entrée",
+    "addEntry": "Ajouter une entrée",
     "interventionTotal": "{count} intervention — coût total : {amount} | {count} interventions — coût total : {amount}",
+    "summary": "{count} intervention(s) — coût total : {cost}",
     "searchPlaceholder": "Rechercher une intervention…",
     "sourceAuto": "Automatique",
     "sourceManual": "Manuel",
+    "automatic": "Automatique",
+    "manual": "Manuel",
     "sources": {
       "manual": "Saisie manuelle",
       "automatic": "Généré automatiquement"
@@ -458,6 +575,7 @@
     "title": "Sinistres",
     "create": "Déclarer un sinistre",
     "activeCount": "{count} sinistre en cours | {count} sinistres en cours",
+    "openedAt": "Ouvert {date}",
     "declaredOn": "Déclaré le {date}",
     "statuses": {
       "open": "Ouvert",
@@ -481,6 +599,15 @@
   "residents": {
     "title": "Résidents & Lots",
     "invite": "Inviter un résident",
+    "createUnit": "Créer un lot",
+    "unitNumberExists": "Un lot avec ce numéro existe déjà",
+    "unitNumberArchived": "Ce numéro est utilisé par un lot archivé — réactivez-le ou choisissez un autre numéro",
+    "editUnit": "Modifier le lot",
+    "archive": "Archiver",
+    "block": "Bâtiment",
+    "staircaseLabel": "Cage d'escalier",
+    "floorLabel": "Étage",
+    "description": "Description",
     "summary": "{units} lots · {users} utilisateurs",
     "tabs": {
       "units": "Lots ({count})",
@@ -491,8 +618,23 @@
     "location": "Emplacement",
     "currentOwner": "Propriétaire actuel",
     "staircase": "Cage {n}",
+    "staircaseShort": "esc. {n}",
+    "floorShort": "étg. {n}",
+    "blockShort": "bât. {n}",
     "vacant": "Vacant",
-    "deactivated": "Désactivé"
+    "unitNotFound": "Aucun lot trouvé.",
+    "userNotFound": "Aucun utilisateur trouvé.",
+    "deactivated": "Désactivé",
+    "confirmArchiveTitle": "Archiver le lot",
+    "confirmArchiveMessage": "Le lot {number} sera archivé. Cette action est réversible par un administrateur."
+  },
+  "registry": {
+    "title": "Registre de la copropriété",
+    "lots": "Lots",
+    "keys": "Clés de répartition",
+    "totalShares": "Tantièmes totaux",
+    "keyMismatch": "La clé « {key} » totalise {sum} tantièmes sur {total} attendus.",
+    "legalNote": "La quote-part des parties communes afférente à chaque lot est proportionnelle à la valeur relative de chaque partie privative par rapport à l'ensemble des valeurs desdites parties."
   },
   "settings": {
     "subtitle": "Configuration de la résidence",
@@ -502,13 +644,18 @@
     "tabs": {
       "building": "Bâtiment",
       "notifications": "Notifications",
-      "account": "Mon compte"
+      "account": "Mon compte",
+      "keys": "Clés de répartition"
     },
     "building": {
       "title": "Informations de la résidence",
+      "subtitle": "Gérez les informations générales de votre copropriété.",
       "name": "Nom de la résidence",
       "siret": "SIRET syndic",
-      "bylawsDate": "Date du règlement de copropriété"
+      "bylawsDate": "Date du règlement de copropriété",
+      "sharesTotal": "Total tantièmes",
+      "legalData": "Données légales",
+      "legalText": "Le syndic est tenu de tenir à jour les informations de la copropriété et de les communiquer à tout copropriétaire qui en fait la demande."
     },
     "notifications": {
       "title": "Préférences de notification",
@@ -530,6 +677,46 @@
       "dangerZone": "Zone dangereuse",
       "dangerDesc": "Ces actions sont irréversibles.",
       "resetApp": "Réinitialiser l'application"
+    },
+    "preferences": {
+      "title": "Préférences",
+      "subtitle": "Choisissez l'apparence qui vous convient.",
+      "label": "Préférences utilisateur",
+      "theme": {
+        "label": "Apparence",
+        "light": {
+          "label": "Clair",
+          "hint": "L'application reste en apparence claire."
+        },
+        "dark": {
+          "label": "Sombre",
+          "hint": "L'application reste en apparence sombre."
+        },
+        "auto": {
+          "label": "Auto",
+          "hint": "L'application suit automatiquement l'apparence de votre appareil."
+        }
+      }
+    },
+    "keys": {
+      "title": "Clés de répartition",
+      "newKey": "Nouvelle clé",
+      "editKey": "Modifier la clé",
+      "namePlaceholder": "Nom de la clé (ex: Général, Ascenseur…)",
+      "descriptionLabel": "Description",
+      "descriptionPlaceholder": "Description (optionnel)",
+      "empty": "Aucune clé de répartition définie.",
+      "showShares": "Tantièmes",
+      "hideShares": "Masquer tantièmes",
+      "noUnits": "Aucun lot associé",
+      "saveShares": "Enregistrer les tantièmes",
+      "sumMismatch": "La somme des tantièmes ne correspond pas au total de la copropriété. Vérifiez les valeurs avant d'enregistrer.",
+      "imbalance": "Déséquilibre",
+      "imbalanceDetail": "Écart de {delta} tantième(s) par rapport au total — les appels de fonds ne peuvent pas être générés tant que ce déséquilibre persiste.",
+      "general": "Clé système",
+      "generalProtected": "Cette clé est obligatoire et ne peut pas être supprimée (art. 10 loi 1965).",
+      "confirmDeleteTitle": "Supprimer la clé de répartition",
+      "confirmDeleteMessage": "La clé « {name} » sera archivée. L'historique des appels de fonds associés sera conservé."
     }
   },
   "errors": {

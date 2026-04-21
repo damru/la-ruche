@@ -1,4 +1,6 @@
-# DESIGN.md — La Ruche Design System "The Modern Registry"
+# DESIGN.md — l'Application Design System "The Modern Registry"
+
+> **Dénomination** — Dans le présent document, l'expression **« l'Application »** désigne exclusivement **La Ruche**, plateforme web open source de gestion participative de copropriété. Ces deux termes sont interchangeables et désignent la même entité logicielle.
 > Dernière mise à jour : 2026 (post-étapes C–F)
 
 ## Typographie — 3 polices, 3 rôles (DDR-001 v3)
@@ -56,7 +58,9 @@ Tout `font-weight` dans les composants doit référencer un token `--fw-*`, jama
 
 **Hiérarchie surfaces :** Page → `surface` · Section → `surface-container-low` · Carte → `surface-container-lowest` · Champ → `surface-container-high`
 
-**Règle No-Line :** Jamais de `1px solid` pour séparer du contenu. Décalage tonal, espacement, ou micro-ombre.
+**Règle No-Line :** Jamais de `1px solid` pour séparer du contenu hors structures tabulaires. Décalage tonal, espacement, ou micro-ombre.
+
+**Exception tableaux :** les tableaux de données peuvent utiliser des séparateurs discrets si cela améliore la lisibilité des lignes, des colonnes ou de l'en-tête. Dans ce cas, privilégier des bordures à faible contraste, cohérentes avec les tokens de surface, et éviter l'effet grille lourde.
 
 ## Élévation
 
@@ -77,14 +81,24 @@ Jamais 0px sur un élément interactif.
 
 Comportement attendu : flip vertical (au-dessus → en-dessous si espace insuffisant), clampage horizontal au viewport avec marge de 10px. L'atome de référence est `CTooltip.vue`.
 
-## Navigation (DDR-003)
+## Navigation (DDR-003 + DDR-004)
 
 | Breakpoint | Pattern |
 |---|---|
-| ≤ 1024px | Bottom nav — 4 items filtrés par rôle |
+| ≤ 1024px | Bottom nav — 4 items primaires filtrés par rôle + tiroir « Plus » + item Profil |
 | > 1024px | Sidebar fixe 240px |
 
 Mobile — 4 items par rôle : Syndic (Dashboard·AG·Budget·Tâches) · Conseil (Dashboard·AG·Budget·Documents) · Copropriétaire (Dashboard·AG·Budget·Consultations) · Locataire (Dashboard·Consultations·Signalements·—)
+
+La bottom nav mobile expose donc 6 actions visibles au total : 4 items primaires, 1 tiroir « Plus » pour les destinations secondaires, et 1 item Profil dédié. Le tiroir mobile est traité comme un panneau de navigation, pas comme une boîte de dialogue modale.
+
+**DDR-004 — Groupes sidebar (pattern B — labels fixes)** : la sidebar desktop est structurée en 5 sections non-cliquables : *(solo)* Tableau de bord · **Gouvernance** (AG, Consultations, Signalements) · **Finance** (Budget, Contrats) · **Opérations** (Tâches, Sinistres, Carnet, Documents) · **Résidence** (Bâtiment, Clés de répartition, Registre, Copropriétaires). Le bloc utilisateur en pied de sidebar est cliquable et ouvre un panel contextuel (Mon compte, Notifications, Déconnexion).
+
+Préférence d'apparence : le changement de thème n'est pas exposé dans la topbar. Il est configuré dans `Profil > Mon compte` via trois états exclusifs : `Clair`, `Sombre`, `Auto`, présentés sous forme de contrôle compact à pastilles avec icône SVG. Un court texte d'aide, contextuel à l'option sélectionnée, peut préciser l'effet du choix sans exposer de détails techniques de stockage.
+
+Breadcrumb de topbar : le bloc gauche doit rester fluide (`min-width: 0`) et les libellés du breadcrumb doivent tronquer proprement si l'espace disponible diminue, sans jamais forcer une largeur fixe sur le conteneur.
+
+Contrôles segmentés : tout conteneur doit rester utilisable sur écran étroit. Si les options dépassent la largeur disponible, le conteneur devient scrollable horizontalement sans casser la hauteur des boutons.
 
 ## Accessibilité
 - Contraste corps ≥ 4.5:1 (WCAG AA), critique ≥ 7:1
@@ -139,9 +153,29 @@ Mutualisés dans `frontend/src/styles/kpi.css`. Consomment `--tone-bg` / `--tone
 | `.kpi-filter--active` | Pill KPI actif — consomme la tonalité |
 | `.kpi-filter__count`  | Valeur numérique (Fraunces 24px) |
 | `.kpi-filter__label`  | Libellé secondaire (11px) |
+## États de chargement et d'erreur de page (DDR-005)
+
+Toute vue qui charge des données au montage doit utiliser le composable `usePageLoader` et le composant `CPageError`.
+
+```vue
+const { loading, error, reload } = usePageLoader(loadData)
+onMounted(reload)
+```
+
+Template conditionnel obligatoire :
+1. `v-if="error"` → `<CPageError :message="error" @retry="reload" />`
+2. `v-else-if="loading"` → spinner centré via `.c-btn__spinner`
+3. `v-else` → contenu normal
+
+Les appels non-critiques (données secondaires, endpoints optionnels) sont isolés dans un `try/catch` séparé après le `Promise.all` principal pour ne pas bloquer le chargement des données primaires.
+
+Références d'implémentation : `frontend/src/composables/usePageLoader.ts`, `frontend/src/components/molecules/CPageError.vue`, `frontend/src/components/molecules/CPageLoader.vue`.
+
 ## DDR
 | Ref | Décision |
 |---|---|
 | DDR-001 v3 | Fraunces (display) + DM Sans (corps) + JetBrains Mono (data tabulaire) |
 | DDR-002 | Lavande/charcoal, light+dark, tokens CSS vars uniquement |
 | DDR-003 | Bottom nav mobile, sidebar desktop, filtrage par rôle |
+| DDR-004 | Groupes sidebar (pattern B labels fixes), dropdown profil utilisateur, routes `/residence/*` et `/profile/*` |
+| DDR-005 | États de chargement et d'erreur de page — `usePageLoader` + `CPageError` |

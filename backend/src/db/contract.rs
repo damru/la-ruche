@@ -1,10 +1,10 @@
-use sqlx::PgPool;
-use uuid::Uuid;
 use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
+use sqlx::PgPool;
 use sqlx::types::Decimal;
+use uuid::Uuid;
 
-use crate::domain::reminders::{compute_reminders, ContractReminderSpec, ReminderKind};
+use crate::domain::reminders::{ContractReminderSpec, ReminderKind, compute_reminders};
 use crate::errors::AppResult;
 
 #[derive(Debug, Serialize, sqlx::FromRow)]
@@ -42,25 +42,36 @@ pub struct CreateVendorContractInput {
 }
 
 pub async fn list(pool: &PgPool, building_id: Uuid) -> AppResult<Vec<VendorContractRow>> {
-    Ok(sqlx::query_as!(VendorContractRow,
+    Ok(sqlx::query_as!(
+        VendorContractRow,
         r#"SELECT id, building_id, vendor_name, vendor_email, vendor_phone,
            subject, contract_type::text as "contract_type!", start_date, end_date, amount,
            payment_frequency::text as payment_frequency,
            auto_renewal, notice_days, status::text as "status!", created_at
            FROM vendor_contract WHERE building_id = $1 ORDER BY vendor_name"#,
         building_id
-    ).fetch_all(pool).await?)
+    )
+    .fetch_all(pool)
+    .await?)
 }
 
-pub async fn get(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<Option<VendorContractRow>> {
-    Ok(sqlx::query_as!(VendorContractRow,
+pub async fn get(
+    pool: &PgPool,
+    id: Uuid,
+    building_id: Uuid,
+) -> AppResult<Option<VendorContractRow>> {
+    Ok(sqlx::query_as!(
+        VendorContractRow,
         r#"SELECT id, building_id, vendor_name, vendor_email, vendor_phone,
            subject, contract_type::text as "contract_type!", start_date, end_date, amount,
            payment_frequency::text as payment_frequency,
            auto_renewal, notice_days, status::text as "status!", created_at
            FROM vendor_contract WHERE id = $1 AND building_id = $2"#,
-        id, building_id
-    ).fetch_optional(pool).await?)
+        id,
+        building_id
+    )
+    .fetch_optional(pool)
+    .await?)
 }
 
 /// Creates the contract and computes + inserts all reminders in a transaction.
@@ -117,7 +128,8 @@ pub async fn update(
 ) -> AppResult<Option<VendorContractRow>> {
     let mut tx = pool.begin().await?;
 
-    let row = sqlx::query_as!(VendorContractRow,
+    let row = sqlx::query_as!(
+        VendorContractRow,
         r#"UPDATE vendor_contract SET
            vendor_name=$3, vendor_email=$4, vendor_phone=$5,
            subject=$6, contract_type=$7::text::contract_type, start_date=$8, end_date=$9,
@@ -128,16 +140,30 @@ pub async fn update(
            subject, contract_type::text as "contract_type!", start_date, end_date, amount,
            payment_frequency::text as payment_frequency,
            auto_renewal, notice_days, status::text as "status!", created_at"#,
-        id, building_id, input.vendor_name, input.vendor_email, input.vendor_phone,
-        input.subject, input.contract_type, input.start_date, input.end_date, input.amount,
-        input.payment_frequency, input.auto_renewal, input.notice_days
-    ).fetch_optional(&mut *tx).await?;
+        id,
+        building_id,
+        input.vendor_name,
+        input.vendor_email,
+        input.vendor_phone,
+        input.subject,
+        input.contract_type,
+        input.start_date,
+        input.end_date,
+        input.amount,
+        input.payment_frequency,
+        input.auto_renewal,
+        input.notice_days
+    )
+    .fetch_optional(&mut *tx)
+    .await?;
 
     if let Some(ref row) = row {
         sqlx::query!(
             "DELETE FROM contract_reminder WHERE contract_id = $1 AND status = 'pending'",
             id
-        ).execute(&mut *tx).await?;
+        )
+        .execute(&mut *tx)
+        .await?;
 
         let spec = ContractReminderSpec {
             start_date: row.start_date,
@@ -169,7 +195,11 @@ pub async fn terminate(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<
     Ok(())
 }
 
-pub async fn list_reminders(pool: &PgPool, contract_id: Uuid, building_id: Uuid) -> AppResult<Vec<serde_json::Value>> {
+pub async fn list_reminders(
+    pool: &PgPool,
+    contract_id: Uuid,
+    building_id: Uuid,
+) -> AppResult<Vec<serde_json::Value>> {
     let rows = sqlx::query!(
         r#"SELECT cr.id, cr.reminder_type::text as reminder_type, cr.reminder_date, cr.status::text as status
            FROM contract_reminder cr
@@ -178,16 +208,26 @@ pub async fn list_reminders(pool: &PgPool, contract_id: Uuid, building_id: Uuid)
         contract_id, building_id
     ).fetch_all(pool).await?;
 
-    Ok(rows.into_iter().map(|r| serde_json::json!({
-        "id": r.id,
-        "contract_id": contract_id,
-        "reminder_type": r.reminder_type,
-        "reminder_date": r.reminder_date,
-        "status": r.status,
-    })).collect())
+    Ok(rows
+        .into_iter()
+        .map(|r| {
+            serde_json::json!({
+                "id": r.id,
+                "contract_id": contract_id,
+                "reminder_type": r.reminder_type,
+                "reminder_date": r.reminder_date,
+                "status": r.status,
+            })
+        })
+        .collect())
 }
 
-pub async fn acknowledge_reminder(pool: &PgPool, reminder_id: Uuid, contract_id: Uuid, building_id: Uuid) -> AppResult<()> {
+pub async fn acknowledge_reminder(
+    pool: &PgPool,
+    reminder_id: Uuid,
+    contract_id: Uuid,
+    building_id: Uuid,
+) -> AppResult<()> {
     sqlx::query!(
         r#"UPDATE contract_reminder cr SET status = 'acknowledged', updated_at = NOW()
            FROM vendor_contract vc
@@ -199,19 +239,19 @@ pub async fn acknowledge_reminder(pool: &PgPool, reminder_id: Uuid, contract_id:
 
 fn frequency_to_months(p: Option<&str>) -> Option<u32> {
     match p {
-        Some("monthly")   => Some(1),
+        Some("monthly") => Some(1),
         Some("quarterly") => Some(3),
-        Some("biannual")  => Some(6),
-        Some("annual")    => Some(12),
-        _                 => None,
+        Some("biannual") => Some(6),
+        Some("annual") => Some(12),
+        _ => None,
     }
 }
 
 fn reminder_kind_to_str(kind: &ReminderKind) -> &'static str {
     match kind {
-        ReminderKind::Renewal    => "renewal",
+        ReminderKind::Renewal => "renewal",
         ReminderKind::PaymentDue => "payment_due",
         ReminderKind::Expiration => "expiration",
-        ReminderKind::Termination=> "termination",
+        ReminderKind::Termination => "termination",
     }
 }

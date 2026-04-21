@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 description = "Webapp OSS de gestion de copropriété"
 license = "AGPL-3.0"
-repository = "https://github.com/damru/laruche"
+repository = "https://github.com/damru/la-ruche"
 
 [[bin]]
 name = "laruche"

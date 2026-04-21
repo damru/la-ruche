@@ -5,5 +5,7 @@ const { t } = useI18n()
 </script>
 
 <template>
-  <div class="view-stub">{{ t('contractor.title') }}</div>
+  <div class="view-stub">
+    {{ t('contractor.title') }}
+  </div>
 </template>

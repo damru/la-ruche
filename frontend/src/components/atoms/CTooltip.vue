@@ -3,7 +3,6 @@
 // Renders via Teleport to <body> with position:fixed — never overflows the screen.
 // Arrow shifts to always point at the trigger center even when the popup is clamped.
 import { ref, onUnmounted } from 'vue'
-import CIconInfo from '@/components/atoms/CIconInfo.vue'
 
 defineProps<{ content: string }>()
 
@@ -106,7 +105,7 @@ function recalc() {
     >
       <slot>
         <!-- Default: info circle icon -->
-        <CIconInfo aria-hidden="true"/>
+        <CIconInfo aria-hidden="true" />
       </slot>
     </button>
 
@@ -120,7 +119,10 @@ function recalc() {
         :aria-hidden="!visible"
       >
         {{ content }}
-        <span class="c-tooltip-arrow" :style="arrowStyle" />
+        <span
+          class="c-tooltip-arrow"
+          :style="arrowStyle"
+        ></span>
       </div>
     </Teleport>
   </span>

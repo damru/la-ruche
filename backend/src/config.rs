@@ -23,10 +23,10 @@ pub struct AppSettings {
 }
 
 impl AppSettings {
-    pub fn listen_addr(&self) -> SocketAddr {
+    pub fn listen_addr(&self) -> anyhow::Result<SocketAddr> {
         format!("{}:{}", self.host, self.port)
             .parse()
-            .expect("Invalid listen address")
+            .map_err(|e| anyhow::anyhow!("Invalid listen address {}:{}: {e}", self.host, self.port))
     }
 }
 
@@ -114,7 +114,7 @@ pub struct DbSettings {
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct S3Settings {
-    pub endpoint_url: String,  // e.g. http://localhost:9000 for MinIO
+    pub endpoint_url: String, // e.g. http://minio:9000 — internal Docker endpoint
     pub region: String,
     pub access_key_id: String,
     pub secret_access_key: String,
@@ -124,11 +124,15 @@ pub struct S3Settings {
     pub staging_bucket: String,
     /// Pre-signed URL TTL in seconds
     pub presigned_ttl_secs: u64,
+    /// Public-facing base URL rewriting presigned URLs for browser use.
+    /// Required when endpoint_url is an internal Docker hostname (e.g. http://minio:9000)
+    /// and the browser must reach MinIO on a different address (e.g. http://localhost:9000).
+    pub public_url: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct AuthSettings {
-    pub jwt_secret: String,       // min 256 bits
+    pub jwt_secret: String, // min 256 bits
     pub access_token_ttl_secs: u64,
     pub refresh_token_ttl_days: u64,
     pub invitation_ttl_days: u64,
@@ -143,7 +147,11 @@ impl AppConfig {
     pub fn load() -> anyhow::Result<Self> {
         let cfg = config::Config::builder()
             .add_source(config::File::with_name("config").required(false))
-            .add_source(config::Environment::with_prefix("LA_RUCHE").prefix_separator("__").separator("__"))
+            .add_source(
+                config::Environment::with_prefix("LA_RUCHE")
+                    .prefix_separator("__")
+                    .separator("__"),
+            )
             .build()?;
 
         if config_debug_enabled() {

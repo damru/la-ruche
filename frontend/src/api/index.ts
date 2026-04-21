@@ -6,9 +6,9 @@ import type {
   Task, Claim, MaintenanceEntry,
   Report, Consultation,
   Document, UploadUrlResponse, DownloadUrlResponse,
-  Building, Unit, User,
+  Building, Unit, User, AllocationKey, UnitShare,
   OnboardingStatus, BootstrapInput, BootstrapResponse,
-  LoginResponse, BuildingStats,
+  LoginResponse, BuildingStats, RegistryResponse, UnitChargesResponse,
 } from '@/types/domain'
 
 // ── Onboarding ────────────────────────────────────────────────────
@@ -53,6 +53,26 @@ export const buildingApi = {
     api.put<Building>('/building', data),
   stats: () =>
     api.get<BuildingStats>('/building/stats'),
+  registry: () =>
+    api.get<RegistryResponse>('/building/registry'),
+}
+
+// ── Allocation keys ───────────────────────────────────────────────
+export const allocationKeysApi = {
+  list: () =>
+    api.get<AllocationKey[]>('/building/keys'),
+  create: (data: { name: string; description?: string }) =>
+    api.post<AllocationKey>('/building/keys', data),
+  update: (id: string, data: { name: string; description?: string }) =>
+    api.put<AllocationKey>(`/building/keys/${id}`, data),
+  delete: (id: string) =>
+    api.delete(`/building/keys/${id}`),
+  listShares: (id: string) =>
+    api.get<{ shares: UnitShare[]; shares_sum: number; shares_total: number }>(`/building/keys/${id}/shares`),
+  setShares: (id: string, shares: { unit_id: string; share_value: number }[]) =>
+    api.put(`/building/keys/${id}/shares`, { shares }),
+  balance: (id: string) =>
+    api.get<{ shares_sum: number; shares_total: number; balanced: boolean; delta: number }>(`/building/keys/${id}/balance`),
 }
 
 // ── Units ─────────────────────────────────────────────────────────
@@ -71,6 +91,8 @@ export const unitsApi = {
     api.get(`/units/${id}/owners`),
   transfer: (id: string, data: { user_id: string; start_date: string }) =>
     api.post(`/units/${id}/transfer`, data),
+  charges: (id: string) =>
+    api.get<UnitChargesResponse>(`/units/${id}/charges`),
 }
 
 // ── Users ─────────────────────────────────────────────────────────
@@ -154,11 +176,15 @@ export const documentsApi = {
   delete: (id: string) =>
     api.delete(`/documents/${id}`),
   uploadToS3: async (file: File, signedUrl: string): Promise<void> => {
-    await fetch(signedUrl, {
+    const response = await fetch(signedUrl, {
       method: 'PUT',
       body: file,
       headers: { 'Content-Type': file.type },
     })
+
+    if (!response.ok) {
+      throw new Error(`S3 upload failed (${response.status})`)
+    }
   },
 }
 

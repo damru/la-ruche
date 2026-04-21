@@ -1,12 +1,11 @@
-use std::{str::FromStr, sync::Arc};
+use std::sync::Arc;
 
 use axum::{
-    extract::State,
-    http::{header, HeaderMap, HeaderValue, StatusCode},
-    response::{IntoResponse, Response},
     Json,
+    extract::State,
+    http::{HeaderMap, HeaderValue, StatusCode, header},
+    response::{IntoResponse, Response},
 };
-use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use utoipa::ToSchema;
@@ -41,8 +40,8 @@ pub struct BootstrapInput {
     pub postal_code: String,
     #[validate(length(min = 1, max = 100))]
     pub city: String,
-    /// Total shares — transmitted as a decimal string (e.g. "1000")
-    pub shares_total: String,
+    #[schema(value_type = i32)]
+    pub shares_total: i32,
 }
 
 #[derive(Serialize, ToSchema)]
@@ -52,8 +51,8 @@ pub struct OnboardingStatusResponse {
 
 #[derive(Serialize, ToSchema)]
 pub struct BootstrapResponse {
-    pub user_id: String,
-    pub building_id: String,
+    pub user_id: uuid::Uuid,
+    pub building_id: uuid::Uuid,
     pub roles: Vec<String>,
     pub last_name: String,
     pub first_name: String,
@@ -69,20 +68,50 @@ fn set_cookie(name: &str, value: &str, max_age_secs: u64, secure: bool) -> Strin
     )
 }
 
+fn append_set_cookie(headers: &mut HeaderMap, cookie: String) -> AppResult<()> {
+    let value = HeaderValue::from_str(&cookie).map_err(|e| AppError::Internal(e.into()))?;
+    headers.append(header::SET_COOKIE, value);
+    Ok(())
+}
+
+fn build_auth_cookie_headers(
+    access_token: &str,
+    refresh_token: &str,
+    access_ttl_secs: u64,
+    refresh_ttl_days: u64,
+    secure: bool,
+) -> AppResult<HeaderMap> {
+    let mut headers = HeaderMap::new();
+    append_set_cookie(
+        &mut headers,
+        set_cookie("access_token", access_token, access_ttl_secs, secure),
+    )?;
+    append_set_cookie(
+        &mut headers,
+        set_cookie(
+            "refresh_token",
+            refresh_token,
+            refresh_ttl_days * 86400,
+            secure,
+        ),
+    )?;
+    Ok(headers)
+}
+
 // ── Handlers ──────────────────────────────────────────────────────
 
 /// GET /onboarding/status
 ///
 /// Renvoie si l'instance nécessite un onboarding (aucun utilisateur en base).
 /// Route publique — aucune authentification requise.
-pub async fn status(
-    State(state): State<Arc<AppState>>,
-) -> AppResult<Response> {
+pub async fn status(State(state): State<Arc<AppState>>) -> AppResult<Response> {
     let count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM user_account")
         .fetch_one(&state.pool)
         .await?;
 
-    let body = Json(OnboardingStatusResponse { needs_onboarding: count == 0 });
+    let body = Json(OnboardingStatusResponse {
+        needs_onboarding: count == 0,
+    });
     let response = (
         [(header::CACHE_CONTROL, "no-store, no-cache, must-revalidate")],
         body,
@@ -102,13 +131,15 @@ pub async fn bootstrap(
     State(state): State<Arc<AppState>>,
     Json(input): Json<BootstrapInput>,
 ) -> AppResult<Response> {
-    input.validate().map_err(|e| AppError::Validation(e.to_string()))?;
+    input
+        .validate()
+        .map_err(|e| AppError::Validation(e.to_string()))?;
 
     // Validation métier : tantièmes > 0
-    let shares_total = Decimal::from_str(input.shares_total.trim())
-        .map_err(|_| AppError::Validation("Tantièmes totaux invalides".into()))?;
-    if shares_total <= Decimal::ZERO {
-        return Err(AppError::Validation("Les tantièmes totaux doivent être supérieurs à 0".into()));
+    if input.shares_total <= 0 {
+        return Err(AppError::Validation(
+            "Les tantièmes totaux doivent être supérieurs à 0".into(),
+        ));
     }
 
     let password_hash = password::hash_password(&input.password, &state.cfg.auth)?;
@@ -133,7 +164,7 @@ pub async fn bootstrap(
     .bind(&input.address_line1)
     .bind(&input.postal_code)
     .bind(&input.city)
-    .bind(shares_total)
+    .bind(input.shares_total)
     .fetch_one(&mut *tx)
     .await?;
     let building_id: uuid::Uuid = building_row.get("id");
@@ -161,6 +192,15 @@ pub async fn bootstrap(
     .execute(&mut *tx)
     .await?;
 
+    // Clé de répartition générale créée automatiquement (ADR-007 — non supprimable)
+    sqlx::query(
+        "INSERT INTO allocation_key (building_id, name, description, key_type) \
+         VALUES ($1, 'Charges Générales', 'Clé de répartition générale — non supprimable', 'general')",
+    )
+    .bind(building_id)
+    .execute(&mut *tx)
+    .await?;
+
     tx.commit().await?;
 
     tracing::info!(
@@ -179,9 +219,9 @@ pub async fn bootstrap(
         state.cfg.auth.access_token_ttl_secs,
     )?;
 
-    let (refresh_plain, refresh_hash, expire_at) = token::generate_token(
-        chrono::Duration::days(state.cfg.auth.refresh_token_ttl_days as i64),
-    );
+    let (refresh_plain, refresh_hash, expire_at) = token::generate_token(chrono::Duration::days(
+        state.cfg.auth.refresh_token_ttl_days as i64,
+    ));
 
     db::user::save_refresh_token(
         &state.pool,
@@ -195,15 +235,19 @@ pub async fn bootstrap(
 
     let secure = state.cfg.app.public_url.starts_with("https");
     let body = Json(BootstrapResponse {
-        user_id:     user_id.to_string(),
-        building_id: building_id.to_string(),
-        roles:       vec!["manager".to_string()],
-        last_name:   input.last_name.clone(),
-        first_name:  input.first_name.clone(),
+        user_id,
+        building_id,
+        roles: vec!["manager".to_string()],
+        last_name: input.last_name.clone(),
+        first_name: input.first_name.clone(),
     });
 
-    let mut headers = HeaderMap::new();
-    headers.append(header::SET_COOKIE, HeaderValue::from_str(&set_cookie("access_token",  &access_token,  state.cfg.auth.access_token_ttl_secs, secure)).unwrap());
-    headers.append(header::SET_COOKIE, HeaderValue::from_str(&set_cookie("refresh_token", &refresh_plain, state.cfg.auth.refresh_token_ttl_days * 86400, secure)).unwrap());
+    let headers = build_auth_cookie_headers(
+        &access_token,
+        &refresh_plain,
+        state.cfg.auth.access_token_ttl_secs,
+        state.cfg.auth.refresh_token_ttl_days,
+        secure,
+    )?;
     Ok((StatusCode::CREATED, headers, body).into_response())
 }

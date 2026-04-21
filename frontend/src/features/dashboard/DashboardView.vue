@@ -9,14 +9,6 @@ import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import CMockBanner from '@/components/atoms/CMockBanner.vue'
-import CIconChevronRight from '@/components/atoms/CIconChevronRight.vue'
-import CIconWarn from '@/components/atoms/CIconWarn.vue'
-import CIconCheck from '@/components/atoms/CIconCheck.vue'
-import CIconCurrency from '@/components/atoms/CIconCurrency.vue'
-import CIconCalendar from '@/components/atoms/CIconCalendar.vue'
-import CIconWrench from '@/components/atoms/CIconWrench.vue'
-import CIconPlus from '@/components/atoms/CIconPlus.vue'
-import CIconFile from '@/components/atoms/CIconFile.vue'
 import {
   mockBuildingStats, mockBudgets, mockBudgetLines, mockLevies, mockMeetings,
   mockTasks, mockReports, mockContracts, mockReminders, mockConsultations,
@@ -88,54 +80,76 @@ const todayStr = computed(() =>
 </script>
 
 <template>
-  <div class="dashboard-page">
-
+  <div class="dashboard-page view-page">
     <CTopbar>
       <template #left>
         <div>
-          <p class="topbar-greeting-title">Bonjour, {{ auth.user?.first_name }} 👋</p>
-          <p class="topbar-greeting-date">{{ todayStr }} · {{ stats.name }}</p>
+          <p class="topbar-greeting-title">
+            {{ t('dashboard.hello', { name: auth.user?.first_name }) }} 👋
+          </p>
+          <p class="topbar-greeting-date">
+            {{ todayStr }} · {{ stats.name }}
+          </p>
         </div>
       </template>
       <template #right>
         <RouterLink to="/tasks">
-          <CBtn variant="secondary" size="sm">
-            <CIconPlus/>
-            Nouvelle action
+          <CBtn
+            variant="secondary"
+            size="sm"
+          >
+            <CIconPlus />
+            <span class="btn-label">{{ t('dashboard.newAction') }}</span>
           </CBtn>
         </RouterLink>
       </template>
     </CTopbar>
 
-    <div class="dashboard-content">
+    <div class="dashboard-content view-container">
       <CMockBanner />
 
       <!-- Hero -->
       <div class="hero">
         <div class="hero-left">
-          <p class="hero-eyebrow">Vue d'ensemble</p>
-          <h1 class="hero-title">{{ stats.name }}</h1>
-          <p class="hero-sub">{{ stats.nb_lots }} lots · Exercice {{ new Date().getFullYear() }} en cours</p>
+          <p class="hero-eyebrow">
+            {{ t('dashboard.overview') }}
+          </p>
+          <h1 class="hero-title">
+            {{ stats.name }}
+          </h1>
+          <p class="hero-sub">
+            {{ t('dashboard.residenceSummary', { name: stats.name, lots: stats.nb_lots, year: new Date().getFullYear() }) }}
+          </p>
         </div>
         <div class="hero-right">
-          <div v-if="overdueLevies.length" class="hero-alert hero-alert--err">
-            <CIconWarn aria-hidden="true"/>
+          <div
+            v-if="overdueLevies.length"
+            class="hero-alert hero-alert--err"
+          >
+            <CIconWarn aria-hidden="true" />
             <div>
-              <strong>{{ overdueLevies.length }} lot{{ overdueLevies.length > 1 ? 's' : '' }} en retard de paiement</strong>
-              <span>Total : {{ formatCurrency(overdueAmount) }}</span>
+              <strong>{{ t('dashboard.overdueLots', { count: overdueLevies.length }) }}</strong>
+              <span>{{ t('dashboard.overdueTotal', { amount: formatCurrency(overdueAmount) }) }}</span>
             </div>
           </div>
-          <div v-for="r in reminders.slice(0, 2)" :key="r.id" class="hero-alert hero-alert--warn">
-            <CIconWarn aria-hidden="true"/>
+          <div
+            v-for="r in reminders.slice(0, 2)"
+            :key="r.id"
+            class="hero-alert hero-alert--warn"
+          >
+            <CIconWarn aria-hidden="true" />
             <div>
               <strong>{{ r.contract?.vendor_name }} — {{ t(`contracts.reminderTypes.${r.reminder_type}`) }}</strong>
               <span>{{ formatDate(r.reminder_date) }}</span>
             </div>
           </div>
-          <div v-if="nextMeeting && nextMeeting.status === 'closed'" class="hero-alert hero-alert--ok">
-            <CIconCheck aria-hidden="true"/>
+          <div
+            v-if="nextMeeting && nextMeeting.status === 'closed'"
+            class="hero-alert hero-alert--ok"
+          >
+            <CIconCheck aria-hidden="true" />
             <div>
-              <strong>Dernière AG clôturée</strong>
+              <strong>{{ t('dashboard.lastClosedAg') }}</strong>
               <span>{{ formatDate(nextMeeting.meeting_date, 'long') }}</span>
             </div>
           </div>
@@ -151,10 +165,15 @@ const todayStr = computed(() =>
           delta-variant="neutral"
         >
           <template #icon>
-            <CIconCurrency/>
+            <CIconCurrency />
           </template>
           <template #extra>
-            <div class="kpi-prog"><div class="kpi-prog__fill kpi-prog__fill--primary" :style="`width:${budgetExecutionRate}%`"/></div>
+            <div class="kpi-prog">
+              <div
+                class="kpi-prog__fill kpi-prog__fill--primary"
+                :style="`width:${budgetExecutionRate}%`"
+              ></div>
+            </div>
           </template>
         </CKpiCard>
 
@@ -166,22 +185,26 @@ const todayStr = computed(() =>
           :icon-accent="true"
         >
           <template #icon>
-            <CIconCalendar stroke="white"/>
+            <CIconCalendar stroke="white" />
           </template>
         </CKpiCard>
 
         <CKpiCard
           :label="t('dashboard.recoveryRate')"
           :value="String(overdueLevies.length)"
-          :delta="overdueLevies.length ? `${formatCurrency(overdueAmount)} en attente` : t('dashboard.unitsUpToDate')"
+          :delta="overdueLevies.length ? t('dashboard.overdueAmount', { amount: formatCurrency(overdueAmount) }) : t('dashboard.unitsUpToDate')"
           :delta-variant="overdueLevies.length ? 'down' : 'up'"
         >
           <template #icon>
-            <CIconWarn/>
+            <CIconWarn />
           </template>
           <template #extra>
             <div class="kpi-prog">
-              <div class="kpi-prog__fill" :class="overdueLevies.length ? 'kpi-prog__fill--error' : 'kpi-prog__fill--success'" :style="`width:${collectionRate}%`"/>
+              <div
+                class="kpi-prog__fill"
+                :class="overdueLevies.length ? 'kpi-prog__fill--error' : 'kpi-prog__fill--success'"
+                :style="`width:${collectionRate}%`"
+              ></div>
             </div>
           </template>
         </CKpiCard>
@@ -189,37 +212,57 @@ const todayStr = computed(() =>
         <CKpiCard
           :label="t('dashboard.worksFundLabel')"
           :value="formatCurrency(stats?.works_fund_available ?? 0)"
-          :delta="stats?.works_fund_pct ? `${100 - stats.works_fund_pct}% disponible` : ''"
+          :delta="stats?.works_fund_pct ? t('dashboard.worksFundPct', { pct: 100 - stats.works_fund_pct }) : ''"
           delta-variant="neutral"
         >
           <template #icon>
-            <CIconWrench/>
+            <CIconWrench />
           </template>
           <template #extra>
-            <div class="kpi-prog"><div class="kpi-prog__fill kpi-prog__fill--warning" :style="`width:${stats.works_fund_pct ?? 0}%`"/></div>
+            <div class="kpi-prog">
+              <div
+                class="kpi-prog__fill kpi-prog__fill--warning"
+                :style="`width:${stats.works_fund_pct ?? 0}%`"
+              ></div>
+            </div>
           </template>
         </CKpiCard>
       </div>
 
       <!-- Main 3-col grid -->
       <div class="grid3">
-
         <!-- Priority tasks -->
         <CCard padding="none">
           <div class="card-head">
             <div>
-              <h2 class="card-title">{{ t('dashboard.priorityTasks') }}</h2>
-              <p class="card-sub">{{ priorityTasks.length }} ouverte{{ priorityTasks.length !== 1 ? 's' : '' }}</p>
+              <h2 class="card-title">
+                {{ t('dashboard.priorityTasks') }}
+              </h2>
+              <p class="card-sub">
+                {{ t('dashboard.taskCount', { count: priorityTasks.length }) }}
+              </p>
             </div>
-            <RouterLink to="/tasks" class="card-link">
-              Toutes <CIconChevronRight/>
+            <RouterLink
+              to="/tasks"
+              class="card-link"
+            >
+              {{ t('dashboard.allTasks') }} <CIconChevronRight />
             </RouterLink>
           </div>
           <div class="task-list">
-            <div v-for="task in priorityTasks" :key="task.id" class="task-item">
-              <div :class="['task-prio', `task-prio--${task.priority}`]" aria-hidden="true"/>
+            <div
+              v-for="task in priorityTasks"
+              :key="task.id"
+              class="task-item"
+            >
+              <div
+                :class="['task-prio', `task-prio--${task.priority}`]"
+                aria-hidden="true"
+              ></div>
               <div class="task-body">
-                <p class="task-title">{{ task.title }}</p>
+                <p class="task-title">
+                  {{ task.title }}
+                </p>
                 <div class="task-meta">
                   <span class="task-date">{{ formatRelative(task.created_at) }}</span>
                 </div>
@@ -228,13 +271,22 @@ const todayStr = computed(() =>
                 {{ t(`tasks.statuses.${task.status}`) }}
               </CBadge>
             </div>
-            <div v-if="!priorityTasks.length" class="empty-state">{{ t('dashboard.noTasks') }}</div>
+            <div
+              v-if="!priorityTasks.length"
+              class="empty-state"
+            >
+              {{ t('dashboard.noTasks') }}
+            </div>
           </div>
           <div class="card-footer">
             <RouterLink to="/tasks">
-              <CBtn variant="primary" size="sm" style="width:100%;justify-content:center">
-                <CIconPlus/>
-                Nouvelle tâche
+              <CBtn
+                variant="primary"
+                size="sm"
+                style="width:100%;justify-content:center"
+              >
+                <CIconPlus />
+                {{ t('dashboard.newTask') }}
               </CBtn>
             </RouterLink>
           </div>
@@ -244,11 +296,18 @@ const todayStr = computed(() =>
         <CCard padding="none">
           <div class="card-head">
             <div>
-              <h2 class="card-title">{{ t('dashboard.contractReminders') }}</h2>
-              <p class="card-sub">{{ t('dashboard.nextDeadlines') }}</p>
+              <h2 class="card-title">
+                {{ t('dashboard.contractReminders') }}
+              </h2>
+              <p class="card-sub">
+                {{ t('dashboard.nextDeadlines') }}
+              </p>
             </div>
-            <RouterLink to="/contracts" class="card-link">
-              Contrats <CIconChevronRight/>
+            <RouterLink
+              to="/contracts"
+              class="card-link"
+            >
+              {{ t('dashboard.contracts') }} <CIconChevronRight />
             </RouterLink>
           </div>
           <div class="reminder-list">
@@ -257,42 +316,86 @@ const todayStr = computed(() =>
               :key="reminder.id"
               class="reminder-item"
             >
-              <div class="reminder-icon" :class="`reminder-icon--${reminderUrgency(reminder.reminder_date)}`">
-                <CIconFile/>
+              <div
+                class="reminder-icon"
+                :class="`reminder-icon--${reminderUrgency(reminder.reminder_date)}`"
+              >
+                <CIconFile />
               </div>
               <div class="reminder-body">
-                <p class="reminder-title">{{ (reminder as any).contract?.vendor_name }}</p>
-                <p class="reminder-sub">{{ t(`contracts.reminderTypes.${reminder.reminder_type}`) }}</p>
+                <p class="reminder-title">
+                  {{ (reminder as any).contract?.vendor_name }}
+                </p>
+                <p class="reminder-sub">
+                  {{ t(`contracts.reminderTypes.${reminder.reminder_type}`) }}
+                </p>
               </div>
-              <span class="reminder-date" :class="`reminder-date--${reminderUrgency(reminder.reminder_date)}`">
+              <span
+                class="reminder-date"
+                :class="`reminder-date--${reminderUrgency(reminder.reminder_date)}`"
+              >
                 {{ formatDate(reminder.reminder_date) }}
               </span>
             </div>
-            <div v-if="!reminders?.length" class="empty-state">{{ t('dashboard.noReminders') }}</div>
+            <div
+              v-if="!reminders?.length"
+              class="empty-state"
+            >
+              {{ t('dashboard.noReminders') }}
+            </div>
           </div>
 
-          <div class="section-divider"/>
-          <div class="card-head" style="padding-top:16px">
+          <div class="section-divider"></div>
+          <div
+            class="card-head"
+            style="padding-top:16px"
+          >
             <div>
-              <h2 class="card-title">{{ t('dashboard.reportsTitle') }}</h2>
-              <p class="card-sub">{{ openReports.length }} ouvert{{ openReports.length !== 1 ? 's' : '' }}</p>
+              <h2 class="card-title">
+                {{ t('dashboard.reportsTitle') }}
+              </h2>
+              <p class="card-sub">
+                {{ t('dashboard.openCount', { count: openReports.length }) }}
+              </p>
             </div>
-            <RouterLink to="/reports" class="card-link">
-              Voir <CIconChevronRight/>
+            <RouterLink
+              to="/reports"
+              class="card-link"
+            >
+              {{ t('dashboard.seeReports') }} <CIconChevronRight />
             </RouterLink>
           </div>
           <div class="signal-list">
-            <div v-for="r in openReports" :key="r.id" class="signal-item">
-              <span :class="['signal-dot', `signal-dot--${r.status}`]" aria-hidden="true"/>
+            <div
+              v-for="r in openReports"
+              :key="r.id"
+              class="signal-item"
+            >
+              <span
+                :class="['signal-dot', `signal-dot--${r.status}`]"
+                aria-hidden="true"
+              ></span>
               <div class="signal-body">
-                <p class="signal-title">{{ r.title }}</p>
-                <p class="signal-meta">{{ formatDate(r.created_at) }}</p>
+                <p class="signal-title">
+                  {{ r.title }}
+                </p>
+                <p class="signal-meta">
+                  {{ formatDate(r.created_at) }}
+                </p>
               </div>
-              <CBadge :variant="statusBadgeVariant(r.status)" dot>
+              <CBadge
+                :variant="statusBadgeVariant(r.status)"
+                dot
+              >
                 {{ t(`reports.statuses.${r.status}`) }}
               </CBadge>
             </div>
-            <div v-if="!openReports.length" class="empty-state">{{ t('dashboard.noReports') }}</div>
+            <div
+              v-if="!openReports.length"
+              class="empty-state"
+            >
+              {{ t('dashboard.noReports') }}
+            </div>
           </div>
         </CCard>
 
@@ -300,51 +403,112 @@ const todayStr = computed(() =>
         <div class="right-col">
           <CCard padding="none">
             <div class="card-head">
-              <h2 class="card-title">Résidents</h2>
-              <RouterLink to="/residents" class="card-link">
-                Gérer <CIconChevronRight/>
+              <h2 class="card-title">
+                {{ t('dashboard.residentsTitle') }}
+              </h2>
+              <RouterLink
+                to="/residents"
+                class="card-link"
+              >
+                {{ t('dashboard.seeResidents') }} <CIconChevronRight />
               </RouterLink>
             </div>
             <div class="residents-grid">
-              <div class="res-stat"><p class="res-stat-val">{{ stats.nb_lots }}</p><p class="res-stat-label">Lots</p></div>
-              <div class="res-stat"><p class="res-stat-val">{{ levies.filter(l => l.status === 'paid').length }}</p><p class="res-stat-label">Payés</p></div>
-              <div class="res-stat res-stat--ok"><p class="res-stat-val">{{ collectionRate }}%</p><p class="res-stat-label">Recouvrement</p></div>
-              <div class="res-stat res-stat--err"><p class="res-stat-val">{{ overdueLevies.length }}</p><p class="res-stat-label">En retard</p></div>
+              <div class="res-stat">
+                <p class="res-stat-val">
+                  {{ stats.nb_lots }}
+                </p><p class="res-stat-label">
+                  {{ t('dashboard.lotsLabel') }}
+                </p>
+              </div>
+              <div class="res-stat">
+                <p class="res-stat-val">
+                  {{ levies.filter(l => l.status === 'paid').length }}
+                </p><p class="res-stat-label">
+                  {{ t('dashboard.paidLabel') }}
+                </p>
+              </div>
+              <div class="res-stat res-stat--ok">
+                <p class="res-stat-val">
+                  {{ collectionRate }}%
+                </p><p class="res-stat-label">
+                  {{ t('dashboard.recoveryLabel') }}
+                </p>
+              </div>
+              <div class="res-stat res-stat--err">
+                <p class="res-stat-val">
+                  {{ overdueLevies.length }}
+                </p><p class="res-stat-label">
+                  {{ t('dashboard.lateLabel') }}
+                </p>
+              </div>
             </div>
           </CCard>
 
-          <CCard v-if="consultations.length" padding="none">
+          <CCard
+            v-if="consultations.length"
+            padding="none"
+          >
             <div class="card-head">
               <div>
-                <h2 class="card-title">Consultation active</h2>
-                <p v-if="consultations[0].closed_at" class="card-sub">Clôture {{ formatRelative(consultations[0].closed_at) }}</p>
+                <h2 class="card-title">
+                  {{ t('dashboard.activeConsultation') }}
+                </h2>
+                <p
+                  v-if="consultations[0].closed_at"
+                  class="card-sub"
+                >
+                  {{ t('dashboard.closesPrefix') }} {{ formatRelative(consultations[0].closed_at) }}
+                </p>
               </div>
             </div>
             <div class="consultation-body">
-              <p class="consultation-title">{{ consultations[0].title }}</p>
-              <p class="consultation-legal">⚠️ {{ t('consultations.informalNote') }}</p>
+              <p class="consultation-title">
+                {{ consultations[0].title }}
+              </p>
+              <p class="consultation-legal">
+                ⚠️ {{ t('consultations.informalNote') }}
+              </p>
             </div>
           </CCard>
         </div>
 
         <!-- Budget — spans 2 cols -->
-        <CCard v-if="currentBudget" padding="none" class="budget-wide">
+        <CCard
+          v-if="currentBudget"
+          padding="none"
+          class="budget-wide"
+        >
           <div class="card-head">
             <div>
-              <h2 class="card-title">Budget {{ currentBudget.fiscal_year }}</h2>
-              <p class="card-sub">{{ budgetExecutionRate }}% exécuté</p>
+              <h2 class="card-title">
+                {{ t('dashboard.budgetLabel', { exercice: currentBudget.fiscal_year }) }}
+              </h2>
+              <p class="card-sub">
+                {{ t('dashboard.budgetRealized', { pct: budgetExecutionRate }) }}
+              </p>
             </div>
-            <RouterLink to="/budget" class="card-link">
-              Détail <CIconChevronRight/>
+            <RouterLink
+              to="/budget"
+              class="card-link"
+            >
+              {{ t('dashboard.detailLink') }} <CIconChevronRight />
             </RouterLink>
           </div>
           <div class="budget-prog-list">
-            <div v-for="line in budgetLines.slice(0, 4)" :key="line.id" class="budget-prog-item">
+            <div
+              v-for="line in budgetLines.slice(0, 4)"
+              :key="line.id"
+              class="budget-prog-item"
+            >
               <div class="budget-prog-header">
                 <span class="budget-prog-label">{{ line.label }}</span>
                 <div class="budget-prog-meta">
                   <span class="budget-prog-amounts">{{ formatCurrency(line.actual_amount ?? 0) }} / {{ formatCurrency(line.budgeted_amount) }}</span>
-                  <span class="budget-prog-pct" :class="(line.actual_amount ?? 0) > line.budgeted_amount ? 'pct--over' : 'pct--normal'">
+                  <span
+                    class="budget-prog-pct"
+                    :class="(line.actual_amount ?? 0) > line.budgeted_amount ? 'pct--over' : 'pct--normal'"
+                  >
                     {{ line.budgeted_amount ? Math.round(((line.actual_amount ?? 0) / line.budgeted_amount) * 100) : 0 }}%
                   </span>
                 </div>
@@ -354,11 +518,11 @@ const todayStr = computed(() =>
                   class="prog-fill"
                   :class="(line.actual_amount ?? 0) > line.budgeted_amount ? 'prog-fill--over' : 'prog-fill--primary'"
                   :style="`width:${Math.min(100, line.budgeted_amount ? Math.round(((line.actual_amount ?? 0) / line.budgeted_amount) * 100) : 0)}%`"
-                />
+                ></div>
               </div>
             </div>
             <div class="budget-total-row">
-              <span>Total réalisé</span>
+              <span>{{ t('dashboard.totalRealized') }}</span>
               <span class="budget-total-val">{{ formatCurrency(totalActual) }} / {{ formatCurrency(totalForecast) }}</span>
             </div>
           </div>
@@ -372,7 +536,7 @@ const todayStr = computed(() =>
 .dashboard-page { display: flex; flex-direction: column; flex: 1; }
 
 .dashboard-content {
-  padding: var(--space-10);
+  padding: 0;
   display: flex;
   flex-direction: column;
   gap: 28px;

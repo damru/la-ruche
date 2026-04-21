@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" role="img" aria-label="La Ruche">
+  <defs>
+    <linearGradient id="lr-brand-grad" x1="9" y1="7.52" x2="71" y2="72.48" gradientUnits="userSpaceOnUse">
+      <stop offset="0%"   stop-color="var(--color-primary, #643fd5)" />
+      <stop offset="100%" stop-color="var(--color-primary-container, #7d5bf0)" />
+    </linearGradient>
+  </defs>
+  <polygon fill="url(#lr-brand-grad)" points="51.5,40 45.75,49.96 34.25,49.96 28.5,40 34.25,30.04 45.75,30.04" />
+  <polygon fill="url(#lr-brand-grad)" points="51.5,17.48 45.75,27.44 34.25,27.44 28.5,17.48 34.25,7.52 45.75,7.52" />
+  <polygon fill="url(#lr-brand-grad)" points="71,28.74 65.25,38.7 53.75,38.7 48,28.74 53.75,18.78 65.25,18.78" />
+  <polygon fill="url(#lr-brand-grad)" points="71,51.26 65.25,61.22 53.75,61.22 48,51.26 53.75,41.3 65.25,41.3" />
+  <polygon fill="url(#lr-brand-grad)" points="51.5,62.52 45.75,72.48 34.25,72.48 28.5,62.52 34.25,52.56 45.75,52.56" />
+  <polygon fill="url(#lr-brand-grad)" points="32,51.26 26.25,61.22 14.75,61.22 9,51.26 14.75,41.3 26.25,41.3" />
+  <polygon fill="url(#lr-brand-grad)" points="32,28.74 26.25,38.7 14.75,38.7 9,28.74 14.75,18.78 26.25,18.78" />
+</svg>

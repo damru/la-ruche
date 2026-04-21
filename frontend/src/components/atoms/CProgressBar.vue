@@ -1,6 +1,7 @@
 <script setup lang="ts">
 // Composant atomique — CProgressBar
 // "Architectural Progress Bar" — DDR-001
+import { computed } from 'vue'
 
 type Variant = 'primary' | 'warning' | 'success' | 'error'
 
@@ -11,6 +12,7 @@ const props = withDefaults(defineProps<{
   variant?: Variant
   animated?: boolean
 }>(), {
+  label: undefined,
   showValue: true,
   variant: 'primary',
   animated: true,
@@ -25,9 +27,19 @@ const fillStyle = computed(() => ({
 
 <template>
   <div class="c-progress">
-    <div v-if="label || showValue" class="c-progress__header">
-      <span v-if="label" class="c-progress__label">{{ label }}</span>
-      <span v-if="showValue" class="c-progress__value" :class="`c-progress__value--${variant}`">
+    <div
+      v-if="label || showValue"
+      class="c-progress__header"
+    >
+      <span
+        v-if="label"
+        class="c-progress__label"
+      >{{ label }}</span>
+      <span
+        v-if="showValue"
+        class="c-progress__value"
+        :class="`c-progress__value--${variant}`"
+      >
         {{ clampedValue }}%
       </span>
     </div>
@@ -43,7 +55,7 @@ const fillStyle = computed(() => ({
         class="c-progress__fill"
         :class="[`c-progress__fill--${variant}`, { 'c-progress__fill--animated': animated }]"
         :style="fillStyle"
-      />
+      ></div>
     </div>
   </div>
 </template>

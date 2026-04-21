@@ -18,8 +18,12 @@ withDefaults(defineProps<{
 
 <template>
   <span :class="['c-badge', `c-badge--${variant}`, { 'tone--default': variant === 'primary', 'tone--warn': variant === 'pending' }]">
-    <span v-if="dot" class="c-badge__dot" aria-hidden="true" />
-    <slot />
+    <span
+      v-if="dot"
+      class="c-badge__dot"
+      aria-hidden="true"
+    ></span>
+    <slot></slot>
   </span>
 </template>
 

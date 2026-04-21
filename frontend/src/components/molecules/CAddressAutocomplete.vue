@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { ref, watch, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import CIconSpinner from '@/components/atoms/CIconSpinner.vue'
-import CIconLocation from '@/components/atoms/CIconLocation.vue'
 
 interface AddressValue {
   address_line1: string
@@ -162,12 +160,17 @@ function updateField(field: keyof AddressValue, value: string) {
 
 <template>
   <div class="c-addr">
-
     <!-- address_line1 — doubles as BAN search trigger -->
     <div class="c-addr__field">
-      <label for="address_line1" class="c-addr__label">
+      <label
+        for="address_line1"
+        class="c-addr__label"
+      >
         {{ t('addressAutocomplete.addressLine1') }}
-        <span class="c-addr__required" aria-hidden="true">*</span>
+        <span
+          class="c-addr__required"
+          aria-hidden="true"
+        >*</span>
       </label>
       <div class="c-addr__input-wrap">
         <input
@@ -191,9 +194,17 @@ function updateField(field: keyof AddressValue, value: string) {
           @keydown.escape="closeDropdown"
           @blur="onAddress1Blur"
         />
-        <CIconSpinner v-if="searching" class="c-addr__spinner" aria-hidden="true"/>
+        <CIconSpinner
+          v-if="searching"
+          class="c-addr__spinner"
+          aria-hidden="true"
+        />
       </div>
-      <p v-if="errors?.address_line1" class="c-addr__error" role="alert">
+      <p
+        v-if="errors?.address_line1"
+        class="c-addr__error"
+        role="alert"
+      >
         {{ t('onboarding.fieldRequired') }}
       </p>
     </div>
@@ -216,7 +227,7 @@ function updateField(field: keyof AddressValue, value: string) {
           :class="['c-addr-suggestions__item', { 'c-addr-suggestions__item--active': i === activeIdx }]"
           @mousedown.prevent="selectSuggestion(s)"
         >
-          <CIconLocation aria-hidden="true"/>
+          <CIconLocation aria-hidden="true" />
           {{ s.label }}
         </li>
       </ul>
@@ -225,9 +236,15 @@ function updateField(field: keyof AddressValue, value: string) {
     <!-- postal_code + city — always editable -->
     <div class="c-addr__row">
       <div class="c-addr__field c-addr__field--narrow">
-        <label for="postal_code" class="c-addr__label">
+        <label
+          for="postal_code"
+          class="c-addr__label"
+        >
           {{ t('addressAutocomplete.postalCode') }}
-          <span class="c-addr__required" aria-hidden="true">*</span>
+          <span
+            class="c-addr__required"
+            aria-hidden="true"
+          >*</span>
         </label>
         <input
           id="postal_code"
@@ -243,14 +260,24 @@ function updateField(field: keyof AddressValue, value: string) {
           @input="updateField('postal_code', ($event.target as HTMLInputElement).value)"
           @blur="$emit('blur:postal_code')"
         />
-        <p v-if="errors?.postal_code" class="c-addr__error" role="alert">
+        <p
+          v-if="errors?.postal_code"
+          class="c-addr__error"
+          role="alert"
+        >
           {{ t('onboarding.fieldRequired') }}
         </p>
       </div>
       <div class="c-addr__field">
-        <label for="city" class="c-addr__label">
+        <label
+          for="city"
+          class="c-addr__label"
+        >
           {{ t('addressAutocomplete.city') }}
-          <span class="c-addr__required" aria-hidden="true">*</span>
+          <span
+            class="c-addr__required"
+            aria-hidden="true"
+          >*</span>
         </label>
         <input
           id="city"
@@ -264,7 +291,11 @@ function updateField(field: keyof AddressValue, value: string) {
           @input="updateField('city', ($event.target as HTMLInputElement).value)"
           @blur="$emit('blur:city')"
         />
-        <p v-if="errors?.city" class="c-addr__error" role="alert">
+        <p
+          v-if="errors?.city"
+          class="c-addr__error"
+          role="alert"
+        >
           {{ t('onboarding.fieldRequired') }}
         </p>
       </div>

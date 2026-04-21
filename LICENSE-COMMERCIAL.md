@@ -18,7 +18,7 @@
 
 **"Software"** means the La Ruche application, including all source code,
 binaries, documentation, and associated files available at
-https://github.com/[ORG]/laruche.
+https://github.com/damru/la-ruche.
 
 **"Commercial Use"** means use of the Software by or on behalf of a
 Professional Property Manager, as defined below.

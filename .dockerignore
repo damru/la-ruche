@@ -2,6 +2,7 @@
 .git/
 .github/
 .idea/
+.venv/
 .vscode/
 *.swp
 *.swo

@@ -5,16 +5,7 @@ import { useFormatters } from '@/composables/useFormatters'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CMockBanner from '@/components/atoms/CMockBanner.vue'
-import CIconChevronRight from '@/components/atoms/CIconChevronRight.vue'
-import CIconPlus from '@/components/atoms/CIconPlus.vue'
-import CIconCheckCircle from '@/components/atoms/CIconCheckCircle.vue'
-import CIconCurrency from '@/components/atoms/CIconCurrency.vue'
-import CIconCheck from '@/components/atoms/CIconCheck.vue'
-import CIconWarn from '@/components/atoms/CIconWarn.vue'
-import CIconWrench from '@/components/atoms/CIconWrench.vue'
-import CIconDownload from '@/components/atoms/CIconDownload.vue'
 import { mockBudgets, mockBudgetLines, mockLevies, mockWorksFund, mockBuildingStats } from '@/mock/data'
-import { Teleport } from 'vue'
 
 const { t } = useI18n()
 const { formatCurrency, formatDate } = useFormatters()
@@ -75,37 +66,50 @@ function initials(name: string): string {
 </script>
 
 <template>
-  <div class="budget-page">
-
+  <div class="budget-page view-page">
     <!-- Topbar -->
     <CTopbar>
       <template #left>
         <div class="topbar-breadcrumb">
           {{ mockBuildingStats.name }}
-          <CIconChevronRight width="14" height="14"/>
+          <CIconChevronRight
+            width="14"
+            height="14"
+          />
           <span>Budget &amp; Charges</span>
         </div>
       </template>
       <template #right>
-        <CBtn variant="secondary" size="sm">
-          <CIconPlus/>
-          {{ t('budget.newLine') }}
+        <CBtn
+          variant="secondary"
+          size="sm"
+        >
+          <CIconPlus />
+          <span class="btn-label">{{ t('budget.newLine') }}</span>
         </CBtn>
-        <CBtn variant="primary" size="sm" @click="showGenerateModal = true">
-          <CIconCheckCircle/>
-          {{ t('budget.generateLevies') }}
+        <CBtn
+          variant="primary"
+          size="sm"
+          @click="showGenerateModal = true"
+        >
+          <CIconCheckCircle />
+          <span class="btn-label">{{ t('budget.generateLevies') }}</span>
         </CBtn>
       </template>
     </CTopbar>
 
     <!-- Content -->
-    <div class="content">
+    <div class="content view-container">
       <CMockBanner />
 
       <!-- Page header -->
       <div class="page-header">
-        <p class="page-eyebrow">{{ t('budget.title') }}</p>
-        <h1 class="page-title">{{ t('budget.fiscalYear', { year: selectedBudget.fiscal_year }) }}</h1>
+        <p class="page-eyebrow">
+          {{ t('budget.title') }}
+        </p>
+        <h1 class="page-title">
+          {{ t('budget.fiscalYear', { year: selectedBudget.fiscal_year }) }}
+        </h1>
         <p class="page-sub">
           {{ mockBuildingStats.name }} ·
           {{ selectedBudget.status === 'approved' ? t('budget.statuses.approvedAG') : t('budget.statuses.draft') }}
@@ -122,7 +126,9 @@ function initials(name: string): string {
         >
           {{ b.fiscal_year }}
         </button>
-        <button class="tab tab--new">{{ t('budget.newFiscalYear') }}</button>
+        <button class="tab tab--new">
+          {{ t('budget.newFiscalYear') }}
+        </button>
       </div>
 
       <!-- KPI row -->
@@ -132,11 +138,15 @@ function initials(name: string): string {
           <div class="kpi-head">
             <span class="kpi-label">{{ t('budget.budgetForecastLabel') }}</span>
             <div class="kpi-icon tone--default">
-              <CIconCurrency/>
+              <CIconCurrency />
             </div>
           </div>
-          <div class="kpi-value">{{ formatCurrency(totalForecast) }}</div>
-          <div class="kpi-delta kpi-delta--neutral">{{ t('budget.budgetItems', budgetLines.length) }}</div>
+          <div class="kpi-value">
+            {{ formatCurrency(totalForecast) }}
+          </div>
+          <div class="kpi-delta kpi-delta--neutral">
+            {{ t('budget.budgetItems', budgetLines.length) }}
+          </div>
         </div>
 
         <!-- Réalisé -->
@@ -144,11 +154,15 @@ function initials(name: string): string {
           <div class="kpi-head">
             <span class="kpi-label">{{ t('budget.realizedToDate') }}</span>
             <div class="kpi-icon tone--accent">
-              <CIconCheck stroke="white"/>
+              <CIconCheck stroke="white" />
             </div>
           </div>
-          <div class="kpi-value">{{ formatCurrency(totalActual) }}</div>
-          <div class="kpi-delta kpi-delta--neutral">{{ t('budget.ofBudget', { pct: executionRate }) }}</div>
+          <div class="kpi-value">
+            {{ formatCurrency(totalActual) }}
+          </div>
+          <div class="kpi-delta kpi-delta--neutral">
+            {{ t('budget.ofBudget', { pct: executionRate }) }}
+          </div>
         </div>
 
         <!-- Appels en retard -->
@@ -156,11 +170,15 @@ function initials(name: string): string {
           <div class="kpi-head">
             <span class="kpi-label">{{ t('budget.overdueCallsLabel') }}</span>
             <div class="kpi-icon tone--err">
-              <CIconWarn/>
+              <CIconWarn />
             </div>
           </div>
-          <div class="kpi-value kpi-value--err">{{ overdueLevies.length }}</div>
-          <div class="kpi-delta kpi-delta--down">{{ t('budget.pendingAmount', { amount: formatCurrency(overdueTotal) }) }}</div>
+          <div class="kpi-value kpi-value--err">
+            {{ overdueLevies.length }}
+          </div>
+          <div class="kpi-delta kpi-delta--down">
+            {{ t('budget.pendingAmount', { amount: formatCurrency(overdueTotal) }) }}
+          </div>
         </div>
 
         <!-- Fonds travaux -->
@@ -168,34 +186,44 @@ function initials(name: string): string {
           <div class="kpi-head">
             <span class="kpi-label">{{ t('budget.worksFund') }}</span>
             <div class="kpi-icon tone--warn">
-              <CIconWrench/>
+              <CIconWrench />
             </div>
           </div>
-          <div class="kpi-value kpi-value--warn">{{ formatCurrency(mockWorksFund.levied_amount) }}</div>
-          <div class="kpi-delta kpi-delta--neutral">{{ t('budget.available', { amount: formatCurrency(mockWorksFund.available_amount) }) }}</div>
+          <div class="kpi-value kpi-value--warn">
+            {{ formatCurrency(mockWorksFund.levied_amount) }}
+          </div>
+          <div class="kpi-delta kpi-delta--neutral">
+            {{ t('budget.available', { amount: formatCurrency(mockWorksFund.available_amount) }) }}
+          </div>
         </div>
       </div>
 
       <!-- Two-col layout -->
       <div class="two-col">
-
         <!-- LEFT: sections -->
         <div class="left-col">
-
           <!-- Consommation par poste -->
           <div class="section-card">
             <div class="section-head">
               <div>
-                <h2 class="section-title">{{ t('budget.consumptionByLine') }}</h2>
-                <p class="section-sub">{{ t('budget.forecastVsActual') }}</p>
+                <h2 class="section-title">
+                  {{ t('budget.consumptionByLine') }}
+                </h2>
+                <p class="section-sub">
+                  {{ t('budget.forecastVsActual') }}
+                </p>
               </div>
               <button class="btn-ghost-sm">
-                <CIconDownload/>
+                <CIconDownload />
                 {{ t('common.export') }}
               </button>
             </div>
             <div class="prog-list">
-              <div v-for="line in budgetLines" :key="line.id" class="prog-item">
+              <div
+                v-for="line in budgetLines"
+                :key="line.id"
+                class="prog-item"
+              >
                 <div class="prog-header">
                   <span class="prog-label">{{ line.label }}</span>
                   <div class="prog-meta">
@@ -221,13 +249,22 @@ function initials(name: string): string {
           <div class="section-card">
             <div class="section-head">
               <div>
-                <h2 class="section-title">{{ t('budget.levies') }}</h2>
-                <p class="section-sub">{{ t('budget.collectionRate', { lots: mockLevies.length, pct: collectionRate }) }}</p>
+                <h2 class="section-title">
+                  {{ t('budget.levies') }}
+                </h2>
+                <p class="section-sub">
+                  {{ t('budget.collectionRate', { lots: mockLevies.length, pct: collectionRate }) }}
+                </p>
               </div>
               <div class="section-actions">
-                <button class="btn-ghost-sm">{{ t('common.filter') }}</button>
-                <CBtn variant="secondary" size="sm">
-                  <CIconPlus/>
+                <button class="btn-ghost-sm">
+                  {{ t('common.filter') }}
+                </button>
+                <CBtn
+                  variant="secondary"
+                  size="sm"
+                >
+                  <CIconPlus />
                   {{ t('budget.markPaid') }}
                 </CBtn>
               </div>
@@ -238,19 +275,30 @@ function initials(name: string): string {
                   <tr>
                     <th>{{ t('common.lot') }}</th>
                     <th>{{ t('common.coOwner') }}</th>
-                    <th class="td-right">{{ t('common.amount') }}</th>
-                    <th class="td-right">{{ t('common.dueDate') }}</th>
+                    <th class="td-right">
+                      {{ t('common.amount') }}
+                    </th>
+                    <th class="td-right">
+                      {{ t('common.dueDate') }}
+                    </th>
                     <th>{{ t('common.status') }}</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="levy in mockLevies" :key="levy.id">
-                    <td class="td-mono">{{ levy.unit_number }}</td>
+                  <tr
+                    v-for="levy in mockLevies"
+                    :key="levy.id"
+                  >
+                    <td class="td-mono">
+                      {{ levy.unit_number }}
+                    </td>
                     <td>{{ levy.owner_name }}</td>
                     <td :class="['td-amount', { 'td-amount--err': levy.status === 'overdue' }]">
                       {{ formatCurrency(levy.amount) }}
                     </td>
-                    <td class="td-right td-muted">{{ levy.due_date ? formatDate(levy.due_date) : '—' }}</td>
+                    <td class="td-right td-muted">
+                      {{ levy.due_date ? formatDate(levy.due_date) : '—' }}
+                    </td>
                     <td>
                       <span :class="['chip', levyChipClass(levy.status)]">
                         <span class="chip-dot"></span>
@@ -261,35 +309,46 @@ function initials(name: string): string {
                 </tbody>
                 <tfoot>
                   <tr class="tfoot-row">
-                    <td colspan="2">{{ t('common.total') }}</td>
-                    <td class="td-right">{{ formatCurrency(mockLevies.reduce((s, l) => s + l.amount, 0)) }}</td>
+                    <td colspan="2">
+                      {{ t('common.total') }}
+                    </td>
+                    <td class="td-right">
+                      {{ formatCurrency(mockLevies.reduce((s, l) => s + l.amount, 0)) }}
+                    </td>
                     <td colspan="2"></td>
                   </tr>
                 </tfoot>
               </table>
             </div>
           </div>
-
         </div><!-- /left-col -->
 
         <!-- RIGHT: sidebar -->
         <div class="right-col">
-
           <!-- Fonds travaux -->
           <div class="ft-card">
             <div class="ft-header">
-              <h3 class="ft-title">Fonds travaux</h3>
+              <h3 class="ft-title">
+                Fonds travaux
+              </h3>
               <span class="ft-badge tone--default">Art. 14-2 ALUR</span>
             </div>
-            <div class="ft-amount">{{ formatCurrency(mockWorksFund.levied_amount) }}</div>
-            <p class="ft-sub">{{ t('budget.separateBankAccount', { year: selectedBudget.fiscal_year }) }}</p>
+            <div class="ft-amount">
+              {{ formatCurrency(mockWorksFund.levied_amount) }}
+            </div>
+            <p class="ft-sub">
+              {{ t('budget.separateBankAccount', { year: selectedBudget.fiscal_year }) }}
+            </p>
             <div class="ft-prog">
               <div class="ft-prog-head">
                 <span>{{ t('budget.engaged') }}</span>
                 <span class="ft-prog-pct">{{ worksEngagedPct }}%</span>
               </div>
               <div class="prog-track">
-                <div class="prog-fill prog-fill--warn" :style="{ width: worksEngagedPct + '%' }"></div>
+                <div
+                  class="prog-fill prog-fill--warn"
+                  :style="{ width: worksEngagedPct + '%' }"
+                ></div>
               </div>
               <div class="ft-prog-foot">
                 <span>{{ t('budget.engagedAmount', { amount: formatCurrency(mockWorksFund.levied_amount - mockWorksFund.available_amount) }) }}</span>
@@ -302,62 +361,110 @@ function initials(name: string): string {
           </div>
 
           <!-- Retards de paiement -->
-          <div class="mini-card" v-if="overdueLevies.length">
-              <h3 class="mini-title">{{ t('budget.latePayments') }}</h3>
-              <p class="mini-sub">{{ t('budget.latePaymentsDesc', { count: overdueLevies.length, amount: formatCurrency(overdueTotal) }) }}</p>
+          <div
+            v-if="overdueLevies.length"
+            class="mini-card"
+          >
+            <h3 class="mini-title">
+              {{ t('budget.latePayments') }}
+            </h3>
+            <p class="mini-sub">
+              {{ t('budget.latePaymentsDesc', { count: overdueLevies.length, amount: formatCurrency(overdueTotal) }) }}
+            </p>
             <div
               v-for="levy in overdueLevies"
               :key="levy.id"
               class="overdue-item"
             >
-              <div class="overdue-avatar tone--err">{{ initials(levy.owner_name ?? '?') }}</div>
+              <div class="overdue-avatar tone--err">
+                {{ initials(levy.owner_name ?? '?') }}
+              </div>
               <div class="overdue-info">
-                <div class="overdue-name">{{ levy.owner_name ?? '—' }}</div>
-                <div class="overdue-lot">{{ levy.unit_number ?? '—' }}</div>
+                <div class="overdue-name">
+                  {{ levy.owner_name ?? '—' }}
+                </div>
+                <div class="overdue-lot">
+                  {{ levy.unit_number ?? '—' }}
+                </div>
               </div>
               <div class="overdue-right">
-                <div class="overdue-amount">{{ formatCurrency(levy.amount) }}</div>
-                <div class="overdue-date">{{ levy.due_date ? formatDate(levy.due_date) : '—' }}</div>
+                <div class="overdue-amount">
+                  {{ formatCurrency(levy.amount) }}
+                </div>
+                <div class="overdue-date">
+                  {{ levy.due_date ? formatDate(levy.due_date) : '—' }}
+                </div>
               </div>
             </div>
-            <CBtn variant="secondary" size="sm" style="width:100%;justify-content:center;margin-top:16px">
+            <CBtn
+              variant="secondary"
+              size="sm"
+              style="width:100%;justify-content:center;margin-top:16px"
+            >
               {{ t('budget.sendReminders') }}
             </CBtn>
           </div>
-
         </div><!-- /right-col -->
-
       </div><!-- /two-col -->
     </div><!-- /content -->
 
     <!-- Modal: Générer les appels -->
     <Teleport to="body">
-      <div :class="['modal-overlay', { 'modal-overlay--show': showGenerateModal }]" @click.self="showGenerateModal = false">
-        <div class="modal" role="dialog" aria-modal="true">
-          <h2 class="modal-title">{{ t('budget.generateLeviesTitle') }}</h2>
-          <p class="modal-sub">{{ t('budget.generateLeviesSub') }}</p>
+      <div
+        :class="['modal-overlay', { 'modal-overlay--show': showGenerateModal }]"
+        @click.self="showGenerateModal = false"
+      >
+        <div
+          class="modal"
+          role="dialog"
+          aria-modal="true"
+        >
+          <h2 class="modal-title">
+            {{ t('budget.generateLeviesTitle') }}
+          </h2>
+          <p class="modal-sub">
+            {{ t('budget.generateLeviesSub') }}
+          </p>
           <div class="field">
             <label>{{ t('budget.quarterLabel') }}</label>
             <select>
               <option>T1 2025 — Échéance 1er janvier</option>
               <option>T2 2025 — Échéance 1er avril</option>
               <option>T3 2025 — Échéance 1er juillet</option>
-              <option selected>T4 2025 — Échéance 1er octobre</option>
+              <option selected>
+                T4 2025 — Échéance 1er octobre
+              </option>
             </select>
           </div>
           <div class="field">
             <label>{{ t('budget.totalToShare') }}</label>
-            <input type="number" :value="Math.round(totalForecast / 4)" />
-            <p class="field-hint">{{ t('budget.totalToShareHint', { amount: formatCurrency(totalForecast) }) }}</p>
+            <input
+              type="number"
+              :value="Math.round(totalForecast / 4)"
+            />
+            <p class="field-hint">
+              {{ t('budget.totalToShareHint', { amount: formatCurrency(totalForecast) }) }}
+            </p>
           </div>
           <div class="modal-actions">
-            <CBtn variant="secondary" size="sm" @click="showGenerateModal = false">{{ t('common.cancel') }}</CBtn>
-            <CBtn variant="primary" size="sm" @click="showGenerateModal = false">{{ t('budget.generate') }}</CBtn>
+            <CBtn
+              variant="secondary"
+              size="sm"
+              @click="showGenerateModal = false"
+            >
+              {{ t('common.cancel') }}
+            </CBtn>
+            <CBtn
+              variant="primary"
+              size="sm"
+              @click="showGenerateModal = false"
+            >
+              {{ t('budget.generate') }}
+            </CBtn>
           </div>
         </div>
       </div>
     </Teleport>
-
   </div>
 </template>
 
@@ -369,7 +476,7 @@ function initials(name: string): string {
   background: var(--color-surface);
 }
 .content {
-  padding: 40px;
+  padding: 0;
   flex: 1;
 }
 
@@ -464,14 +571,6 @@ function initials(name: string): string {
   justify-content: space-between;
   padding: 20px 24px;
 }
-.section-title {
-  font-family: var(--font-display);
-  font-size: 17px;
-  font-weight: var(--fw-semibold);
-  font-variation-settings: 'opsz' 36;
-  letter-spacing: -.01em;
-  color: var(--color-on-surface);
-}
 .section-sub { font-size: 12px; color: var(--color-on-surface-variant); margin-top: 2px; }
 .section-actions { display: flex; gap: 8px; align-items: center; }
 .btn-ghost-sm {
@@ -539,7 +638,6 @@ function initials(name: string): string {
   color: var(--tone-fg, inherit);
 }
 .chip-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: .65; flex-shrink: 0; }
-
 
 /* Table */
 .table-wrap { overflow-x: auto; }
@@ -715,11 +813,9 @@ tbody tr:hover td { background: var(--color-surface-container-low); }
 }
 .modal-sub { font-size: 13px; color: var(--color-on-surface-variant); margin-bottom: 24px; line-height: 1.5; }
 .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 24px; }
-.field { margin-bottom: 16px; }
 .field label { font-size: 13px; font-weight: var(--fw-medium); color: var(--color-on-surface); display: block; margin-bottom: 6px; }
 .field input,
 .field select { width: 100%; padding: 0 14px; height: 42px; background: var(--color-surface-container); border: none; border-radius: var(--radius-md); font-family: var(--font-body); font-size: 14px; color: var(--color-on-surface); outline: none; transition: background .2s, box-shadow .2s; }
 .field input:focus,
 .field select:focus { background: var(--color-surface-container-low); box-shadow: 0 0 0 2px rgba(100,63,213,.3); }
-.field-hint { font-size: 11px; color: var(--color-on-surface-variant); margin-top: 4px; }
 </style>

@@ -1,43 +1,10 @@
-<script setup lang="ts">
-// Organism — CTopbar
-// Sticky page topbar with glassmorphism effect
-// Slots: #left (greeting or breadcrumb), #right (action buttons)
-// Ref: DESIGN.md — used by all authenticated views
-import { useUiStore } from '@/stores/ui'
-
-const ui = useUiStore()
-</script>
-
 <template>
   <div class="c-topbar">
     <div class="c-topbar__left">
-      <slot name="left" />
+      <slot name="left"></slot>
     </div>
     <div class="c-topbar__right">
-      <slot name="right" />
-      <!-- Theme toggle — always present -->
-      <button
-        class="c-topbar__theme-btn"
-        :aria-label="ui.isDark ? 'Passer en mode clair' : 'Passer en mode sombre'"
-        @click="ui.toggleTheme()"
-      >
-        <!-- Sun icon (visible in dark mode) -->
-        <svg v-if="ui.isDark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
-          <circle cx="12" cy="12" r="5"/>
-          <line x1="12" y1="1" x2="12" y2="3"/>
-          <line x1="12" y1="21" x2="12" y2="23"/>
-          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
-          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-          <line x1="1" y1="12" x2="3" y2="12"/>
-          <line x1="21" y1="12" x2="23" y2="12"/>
-          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
-          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
-        </svg>
-        <!-- Moon icon (visible in light mode) -->
-        <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
-          <path d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z"/>
-        </svg>
-      </button>
+      <slot name="right"></slot>
     </div>
   </div>
 </template>
@@ -47,7 +14,7 @@ const ui = useUiStore()
   position: sticky;
   top: 0;
   z-index: var(--z-nav);
-  height: 60px;
+  height: var(--topbar-height);
   padding: 0 var(--space-10);
   display: flex;
   align-items: center;
@@ -56,7 +23,7 @@ const ui = useUiStore()
   background: rgba(248, 249, 250, 0.88);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid rgba(194, 199, 207, 0.25);
+  box-shadow: 0 10px 24px rgba(25, 28, 29, 0.05);
   transition: background var(--transition-base);
 }
 
@@ -64,28 +31,32 @@ const ui = useUiStore()
   background: rgba(17, 19, 24, 0.88);
 }
 
-.c-topbar__left,
-.c-topbar__right {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
+.c-topbar__left {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
-/* Breadcrumb helper — for views using breadcrumb in left slot */
+.c-topbar__right {
+  flex: 0 0 auto;
+}
+
 .c-topbar :deep(.topbar-breadcrumb) {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 13px;
+  gap: var(--space-2);
+  min-width: 0;
   color: var(--color-on-surface-variant);
 }
 
 .c-topbar :deep(.topbar-breadcrumb span) {
-  color: var(--color-on-surface);
-  font-weight: var(--fw-medium);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .c-topbar :deep(.topbar-breadcrumb svg) {
+  flex: 0 0 auto;
   width: 14px;
   height: 14px;
   color: var(--color-outline-variant);
@@ -102,7 +73,7 @@ const ui = useUiStore()
 }
 
 .c-topbar :deep(.topbar-greeting-date) {
-  font-size: 12px;
+  font-size: var(--text-xs);
   color: var(--color-on-surface-variant);
 }
 
@@ -110,8 +81,8 @@ const ui = useUiStore()
 .c-topbar__theme-btn {
   width: 38px;
   height: 38px;
-  min-width: unset;
-  min-height: unset;
+  min-width: 38px;
+  min-height: 38px;
   border-radius: var(--radius-full);
   background: var(--color-surface-container);
   color: var(--color-on-surface-variant);
@@ -127,8 +98,21 @@ const ui = useUiStore()
   background: var(--color-surface-container-high);
 }
 
-.c-topbar__theme-btn svg {
-  width: 16px;
-  height: 16px;
+/* ── Mobile ──────────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .c-topbar {
+    padding: 0 20px;
+  }
+
+  /* Hide button labels, show icon only */
+  .c-topbar :deep(.btn-label) {
+    display: none;
+  }
+
+  /* Collapse sm buttons to square icon size */
+  .c-topbar :deep(.c-btn--sm) {
+    padding: 0;
+    width: 36px;
+  }
 }
 </style>

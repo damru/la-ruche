@@ -1,32 +1,23 @@
 // AGPL-3.0 — La Ruche
 
-mod api;
-mod auth;
-mod config;
-mod db;
-mod domain;
-mod errors;
-mod jobs;
-mod storage;
-
 use std::{env, path::Path, sync::Arc};
+
+use laruche::{
+    api, auth,
+    config::{AppConfig, config_debug_enabled},
+    db::AppState,
+    jobs,
+    storage::client::StorageClient,
+};
 
 use axum::Router;
 use sqlx::postgres::PgPoolOptions;
 use tower_http::{
-    cors::CorsLayer,
-    sensitive_headers::SetSensitiveHeadersLayer,
-    timeout::TimeoutLayer,
+    cors::CorsLayer, sensitive_headers::SetSensitiveHeadersLayer, timeout::TimeoutLayer,
     trace::TraceLayer,
 };
 use tracing::info;
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
-
-use crate::{
-    config::{config_debug_enabled, AppConfig},
-    db::AppState,
-    storage::client::StorageClient,
-};
+use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
 
 fn load_dotenv() {
     let candidates = [".env", "../.env", "../../.env", "../../../.env"];
@@ -93,7 +84,11 @@ async fn main() -> anyhow::Result<()> {
     let storage = StorageClient::new(&cfg.s3).await?;
 
     // ── State partagé ───────────────────────────────────────────
-    let state = Arc::new(AppState { pool, storage, cfg: cfg.clone() });
+    let state = Arc::new(AppState {
+        pool,
+        storage,
+        cfg: cfg.clone(),
+    });
 
     // ── Auth (WebAuthn) ─────────────────────────────────────────
     let webauthn = auth::passkey::build_webauthn(&cfg.app)?;
@@ -114,7 +109,7 @@ async fn main() -> anyhow::Result<()> {
     });
 
     // ── Serveur ─────────────────────────────────────────────────
-    let addr = cfg.app.listen_addr();
+    let addr = cfg.app.listen_addr()?;
     let listener = tokio::net::TcpListener::bind(&addr).await?;
     info!(addr = %addr, "Server started");
 

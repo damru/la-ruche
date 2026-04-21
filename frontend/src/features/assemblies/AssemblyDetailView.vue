@@ -6,17 +6,7 @@ import { useFormatters } from '@/composables/useFormatters'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CMockBanner from '@/components/atoms/CMockBanner.vue'
-import CIconChevronRight from '@/components/atoms/CIconChevronRight.vue'
-import CIconPlus from '@/components/atoms/CIconPlus.vue'
-import CIconCheck from '@/components/atoms/CIconCheck.vue'
-import CIconCalendar from '@/components/atoms/CIconCalendar.vue'
-import CIconLocation from '@/components/atoms/CIconLocation.vue'
-import CIconUser from '@/components/atoms/CIconUser.vue'
-import CIconDownload from '@/components/atoms/CIconDownload.vue'
-import CIconClock from '@/components/atoms/CIconClock.vue'
-import CIconAlertTriangle from '@/components/atoms/CIconAlertTriangle.vue'
 import { mockMeetings, mockResolutions, mockVoteResults, mockBuildingStats } from '@/mock/data'
-import { Teleport } from 'vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -94,31 +84,50 @@ function typeLabel(type: string): string {
 </script>
 
 <template>
-  <div class="detail-page">
-
+  <div class="detail-page view-page">
     <CTopbar>
       <template #left>
         <div class="topbar-breadcrumb">
-          <span @click="router.push('/')" style="cursor:pointer;color:var(--color-on-surface-variant)">{{ mockBuildingStats.name }}</span>
-          <CIconChevronRight width="14" height="14"/>
-          <span @click="router.push('/meetings')" style="cursor:pointer;color:var(--color-on-surface-variant)">Assemblées générales</span>
-          <CIconChevronRight width="14" height="14"/>
+          <span
+            style="cursor:pointer;color:var(--color-on-surface-variant)"
+            @click="router.push('/')"
+          >{{ mockBuildingStats.name }}</span>
+          <CIconChevronRight
+            width="14"
+            height="14"
+          />
+          <span
+            style="cursor:pointer;color:var(--color-on-surface-variant)"
+            @click="router.push('/meetings')"
+          >{{ t('meetings.eyebrow') }}</span>
+          <CIconChevronRight
+            width="14"
+            height="14"
+          />
           <span>{{ typeLabel(meeting.meeting_type) }} {{ new Date(meeting.meeting_date).getFullYear() }}</span>
         </div>
       </template>
       <template #right>
-        <CBtn variant="secondary" size="sm" @click="showAddResolutionModal = true">
-          <CIconPlus/>
-          {{ t('meetings.addResolution') }}
+        <CBtn
+          variant="secondary"
+          size="sm"
+          @click="showAddResolutionModal = true"
+        >
+          <CIconPlus />
+          <span class="btn-label">{{ t('meetings.addResolution') }}</span>
         </CBtn>
-        <CBtn variant="primary" size="sm" @click="showClotureModal = true">
-          <CIconCheck/>
-          {{ t('meetings.close') }}
+        <CBtn
+          variant="primary"
+          size="sm"
+          @click="showClotureModal = true"
+        >
+          <CIconCheck />
+          <span class="btn-label">{{ t('meetings.close') }}</span>
         </CBtn>
       </template>
     </CTopbar>
 
-    <div class="content">
+    <div class="content view-container">
       <CMockBanner />
 
       <!-- Page header -->
@@ -129,21 +138,23 @@ function typeLabel(type: string): string {
         </span>
         {{ t('meetings.assembly') }}
       </div>
-      <h1 class="page-title">{{ typeLabel(meeting.meeting_type) }} {{ new Date(meeting.meeting_date).getFullYear() }}</h1>
+      <h1 class="page-title">
+        {{ typeLabel(meeting.meeting_type) }} {{ new Date(meeting.meeting_date).getFullYear() }}
+      </h1>
       <div class="page-meta">
         <span class="meta-item">
-          <CIconCalendar/>
+          <CIconCalendar />
           {{ formatDate(meeting.meeting_date) }}
         </span>
         <span class="meta-sep"></span>
         <span class="meta-item">
-          <CIconLocation/>
+          <CIconLocation />
           {{ meeting.location }}
         </span>
         <span class="meta-sep"></span>
         <span class="meta-item">
-          <CIconUser/>
-          {{ participants.length }} présents · {{ t('meetings.calledAt', { date: meeting.notice_date ? formatDate(meeting.notice_date) : '—' }) }}
+          <CIconUser />
+          {{ participants.length }} {{ t('meetings.present') }} · {{ t('meetings.calledAt', { date: meeting.notice_date ? formatDate(meeting.notice_date) : '—' }) }}
         </span>
       </div>
 
@@ -151,8 +162,8 @@ function typeLabel(type: string): string {
       <div :class="['status-banner', meeting.status === 'closed' ? 'status-banner--closed' : 'status-banner--called']">
         <div class="banner-left">
           <div :class="['banner-icon', meeting.status === 'closed' ? 'banner-icon--closed' : 'banner-icon--called']">
-            <CIconCheck v-if="meeting.status === 'closed'"/>
-            <CIconCalendar v-else/>
+            <CIconCheck v-if="meeting.status === 'closed'" />
+            <CIconCalendar v-else />
           </div>
           <div>
             <div class="banner-title">
@@ -164,8 +175,12 @@ function typeLabel(type: string): string {
           </div>
         </div>
         <div class="banner-right">
-          <CBtn variant="secondary" size="sm" @click="showPvModal = true">
-            <CIconDownload/>
+          <CBtn
+            variant="secondary"
+            size="sm"
+            @click="showPvModal = true"
+          >
+            <CIconDownload />
             {{ t('meetings.depositMinutes') }}
           </CBtn>
         </div>
@@ -173,16 +188,22 @@ function typeLabel(type: string): string {
 
       <!-- Two-col layout -->
       <div class="layout">
-
         <!-- LEFT: résolutions -->
         <div class="res-col">
           <div class="res-col-head">
             <div>
-              <h2 class="section-title-lg">{{ t('meetings.resolutions') }}</h2>
-              <p class="section-sub">{{ t('meetings.resolutionCount', resolutions.length) }}</p>
+              <h2 class="section-title-lg">
+                {{ t('meetings.resolutions') }}
+              </h2>
+              <p class="section-sub">
+                {{ t('meetings.resolutionCount', resolutions.length) }}
+              </p>
             </div>
-            <button class="btn-ghost-sm" @click="showAddResolutionModal = true">
-              <CIconPlus/>
+            <button
+              class="btn-ghost-sm"
+              @click="showAddResolutionModal = true"
+            >
+              <CIconPlus />
               {{ t('common.add') }}
             </button>
           </div>
@@ -195,9 +216,13 @@ function typeLabel(type: string): string {
             >
               <!-- Header -->
               <div class="res-header">
-                <div :class="['res-num', resBadgeClass(res.status)]">{{ res.number }}</div>
+                <div :class="['res-num', resBadgeClass(res.status)]">
+                  {{ res.number }}
+                </div>
                 <div class="res-meta">
-                  <h3 class="res-title">{{ res.title }}</h3>
+                  <h3 class="res-title">
+                    {{ res.title }}
+                  </h3>
                   <div class="res-chips">
                     <span :class="['chip', voteTypeClass(res.vote_type)]">{{ voteTypeLabel(res.vote_type) }}</span>
                     <span :class="['chip', statusChipClass(res.status)]">
@@ -209,19 +234,29 @@ function typeLabel(type: string): string {
               </div>
 
               <!-- Description -->
-              <p v-if="res.description" class="res-desc">{{ res.description }}</p>
+              <p
+                v-if="res.description"
+                class="res-desc"
+              >
+                {{ res.description }}
+              </p>
 
               <div class="res-divider"></div>
 
               <!-- Vote section -->
               <div class="vote-section">
                 <template v-if="mockVoteResults[res.id]">
-                  <div class="vote-title">{{ t('meetings.vote.tally') }}</div>
+                  <div class="vote-title">
+                    {{ t('meetings.vote.tally') }}
+                  </div>
                   <div class="vote-bars">
                     <div class="vote-row">
                       <span class="vote-label">{{ t('meetings.vote.in_favor') }}</span>
                       <div class="vote-track">
-                        <div class="vote-fill vote-fill--for" :style="{ width: votePct(mockVoteResults[res.id].votes_for, mockVoteResults[res.id].shares_present) + '%' }"></div>
+                        <div
+                          class="vote-fill vote-fill--for"
+                          :style="{ width: votePct(mockVoteResults[res.id].votes_for, mockVoteResults[res.id].shares_present) + '%' }"
+                        ></div>
                       </div>
                       <span class="vote-pct vote-pct--for">{{ votePct(mockVoteResults[res.id].votes_for, mockVoteResults[res.id].shares_present) }}%</span>
                       <span class="vote-shares">{{ mockVoteResults[res.id].votes_for }} t.</span>
@@ -229,7 +264,10 @@ function typeLabel(type: string): string {
                     <div class="vote-row">
                       <span class="vote-label">{{ t('meetings.vote.against') }}</span>
                       <div class="vote-track">
-                        <div class="vote-fill vote-fill--against" :style="{ width: votePct(mockVoteResults[res.id].votes_against, mockVoteResults[res.id].shares_present) + '%' }"></div>
+                        <div
+                          class="vote-fill vote-fill--against"
+                          :style="{ width: votePct(mockVoteResults[res.id].votes_against, mockVoteResults[res.id].shares_present) + '%' }"
+                        ></div>
                       </div>
                       <span class="vote-pct vote-pct--against">{{ votePct(mockVoteResults[res.id].votes_against, mockVoteResults[res.id].shares_present) }}%</span>
                       <span class="vote-shares">{{ mockVoteResults[res.id].votes_against }} t.</span>
@@ -237,7 +275,10 @@ function typeLabel(type: string): string {
                     <div class="vote-row">
                       <span class="vote-label">{{ t('meetings.vote.abstain') }}</span>
                       <div class="vote-track">
-                        <div class="vote-fill vote-fill--abstain" :style="{ width: votePct(mockVoteResults[res.id].abstentions, mockVoteResults[res.id].shares_present) + '%' }"></div>
+                        <div
+                          class="vote-fill vote-fill--abstain"
+                          :style="{ width: votePct(mockVoteResults[res.id].abstentions, mockVoteResults[res.id].shares_present) + '%' }"
+                        ></div>
                       </div>
                       <span class="vote-pct vote-pct--abstain">{{ votePct(mockVoteResults[res.id].abstentions, mockVoteResults[res.id].shares_present) }}%</span>
                       <span class="vote-shares">{{ mockVoteResults[res.id].abstentions }} t.</span>
@@ -248,7 +289,9 @@ function typeLabel(type: string): string {
                       <div :class="['vote-result-text', mockVoteResults[res.id].adopted ? 'text--ok' : 'text--err']">
                         {{ mockVoteResults[res.id].adopted ? '✓ ' + t('meetings.vote.passed') : '✗ ' + t('meetings.vote.rejected') }}
                       </div>
-                      <div class="vote-result-sub">{{ mockVoteResults[res.id].explanation }}</div>
+                      <div class="vote-result-sub">
+                        {{ mockVoteResults[res.id].explanation }}
+                      </div>
                     </div>
                     <span class="vote-result-count">
                       {{ mockVoteResults[res.id].votes_for }} / {{ mockVoteResults[res.id].shares_present }}
@@ -257,7 +300,7 @@ function typeLabel(type: string): string {
                 </template>
                 <template v-else>
                   <div class="vote-pending">
-                    <CIconClock/>
+                    <CIconClock />
                     {{ t('meetings.vote.pendingVote') }}
                   </div>
                 </template>
@@ -268,10 +311,11 @@ function typeLabel(type: string): string {
 
         <!-- RIGHT: sidebar -->
         <div class="right-col">
-
           <!-- Infos card -->
           <div class="info-card">
-            <h3 class="info-title">{{ t('meetings.info') }}</h3>
+            <h3 class="info-title">
+              {{ t('meetings.info') }}
+            </h3>
             <div class="info-row">
               <span class="info-key">{{ t('meetings.infoFields.type') }}</span>
               <span class="info-val">{{ typeLabel(meeting.meeting_type) }}</span>
@@ -296,66 +340,116 @@ function typeLabel(type: string): string {
 
           <!-- Présence & quorum -->
           <div class="presence-card">
-            <h3 class="presence-title">{{ t('meetings.presenceQuorum') }}</h3>
-            <p class="presence-sub">{{ t('meetings.sharesRepresented') }}</p>
-            <div class="presence-big">{{ sharesPresent }} <span class="presence-unit">/ {{ totalShares }}</span></div>
-            <p class="presence-detail">{{ t('meetings.attendeesDetail', { count: participants.length }) }}</p>
+            <h3 class="presence-title">
+              {{ t('meetings.presenceQuorum') }}
+            </h3>
+            <p class="presence-sub">
+              {{ t('meetings.sharesRepresented') }}
+            </p>
+            <div class="presence-big">
+              {{ sharesPresent }} <span class="presence-unit">/ {{ totalShares }}</span>
+            </div>
+            <p class="presence-detail">
+              {{ t('meetings.attendeesDetail', { count: participants.length }) }}
+            </p>
             <div class="prog-track">
-              <div class="prog-fill prog-fill--primary" :style="{ width: quorumPct + '%' }"></div>
+              <div
+                class="prog-fill prog-fill--primary"
+                :style="{ width: quorumPct + '%' }"
+              ></div>
             </div>
             <div class="presence-legend">
               <span>0</span>
-              <span>{{ quorumPct }}% des tantièmes</span>
+              <span>{{ quorumPct }}{{ t('meetings.tantiemesShares') }}</span>
               <span>1000</span>
             </div>
-            <div v-if="quorumOk" class="quorum-alert tone--valid">
-              <CIconCheck/>
+            <div
+              v-if="quorumOk"
+              class="quorum-alert tone--valid"
+            >
+              <CIconCheck />
               {{ t('meetings.quorumOk') }}
             </div>
-            <div v-else class="quorum-alert quorum-alert--warn tone--warn">
-              <CIconAlertTriangle/>
+            <div
+              v-else
+              class="quorum-alert quorum-alert--warn tone--warn"
+            >
+              <CIconAlertTriangle />
               {{ t('meetings.quorumKo') }}
             </div>
 
             <!-- Participants -->
             <div class="part-list">
-              <div v-for="p in participants" :key="p.name" class="part-item">
-                <div class="part-avatar" :style="{ background: p.color, color: p.text }">{{ initials(p.name) }}</div>
+              <div
+                v-for="p in participants"
+                :key="p.name"
+                class="part-item"
+              >
+                <div
+                  class="part-avatar"
+                  :style="{ background: p.color, color: p.text }"
+                >
+                  {{ initials(p.name) }}
+                </div>
                 <div class="part-info">
-                  <div class="part-name">{{ p.name }}</div>
-                  <div class="part-lot">{{ p.lot }}</div>
+                  <div class="part-name">
+                    {{ p.name }}
+                  </div>
+                  <div class="part-lot">
+                    {{ p.lot }}
+                  </div>
                 </div>
                 <span class="part-shares">{{ p.tantièmes }} t.</span>
-                <span v-if="p.mandataire" class="part-power tone--warn">{{ t('meetings.mandate') }}</span>
+                <span
+                  v-if="p.mandataire"
+                  class="part-power tone--warn"
+                >{{ t('meetings.mandate') }}</span>
               </div>
             </div>
           </div>
 
           <!-- ODJ card -->
           <div class="odj-card">
-            <h3 class="info-title">{{ t('meetings.agenda') }}</h3>
+            <h3 class="info-title">
+              {{ t('meetings.agenda') }}
+            </h3>
             <div class="odj-list">
-              <div v-for="(item, i) in odjItems" :key="i" class="odj-item">
+              <div
+                v-for="(item, i) in odjItems"
+                :key="i"
+                class="odj-item"
+              >
                 <span class="odj-n">{{ i + 1 }}.</span>
                 <span class="odj-text">{{ item }}</span>
               </div>
             </div>
           </div>
-
         </div><!-- /right-col -->
-
       </div><!-- /layout -->
     </div><!-- /content -->
 
     <!-- Modal: Ajouter résolution -->
     <Teleport to="body">
-      <div :class="['modal-overlay', { 'modal-overlay--show': showAddResolutionModal }]" @click.self="showAddResolutionModal = false">
-        <div class="modal" role="dialog">
-          <h2 class="modal-title">{{ t('meetings.newResolution') }}</h2>
-          <p class="modal-sub">{{ t('meetings.newResolutionSub') }}</p>
+      <div
+        :class="['modal-overlay', { 'modal-overlay--show': showAddResolutionModal }]"
+        @click.self="showAddResolutionModal = false"
+      >
+        <div
+          class="modal"
+          role="dialog"
+        >
+          <h2 class="modal-title">
+            {{ t('meetings.newResolution') }}
+          </h2>
+          <p class="modal-sub">
+            {{ t('meetings.newResolutionSub') }}
+          </p>
           <div class="field">
             <label>{{ t('meetings.resolutionLabel') }}</label>
-            <input type="text" :placeholder="t('meetings.resolutionLabelPlaceholder')" />
+            <input
+              type="text"
+              :placeholder="t('meetings.resolutionLabelPlaceholder')"
+            />
           </div>
           <div class="field">
             <label>{{ t('meetings.resolutionDescription') }}</label>
@@ -364,47 +458,112 @@ function typeLabel(type: string): string {
           <div class="field">
             <label>{{ t('meetings.voteRule') }}</label>
             <select>
-              <option value="simple_majority">Article 24 — Majorité simple</option>
-              <option value="absolute_majority">Article 25 — Majorité absolue</option>
-              <option value="double_majority">Article 26 — Double majorité</option>
+              <option value="simple_majority">
+                {{ t('meetings.vote.types.simple_majority') }}
+              </option>
+              <option value="absolute_majority">
+                {{ t('meetings.vote.types.absolute_majority') }}
+              </option>
+              <option value="double_majority">
+                {{ t('meetings.vote.types.double_majority') }}
+              </option>
             </select>
           </div>
           <div class="modal-actions">
-            <CBtn variant="secondary" size="sm" @click="showAddResolutionModal = false">{{ t('common.cancel') }}</CBtn>
-            <CBtn variant="primary" size="sm" @click="showAddResolutionModal = false">{{ t('common.add') }}</CBtn>
+            <CBtn
+              variant="secondary"
+              size="sm"
+              @click="showAddResolutionModal = false"
+            >
+              {{ t('common.cancel') }}
+            </CBtn>
+            <CBtn
+              variant="primary"
+              size="sm"
+              @click="showAddResolutionModal = false"
+            >
+              {{ t('common.add') }}
+            </CBtn>
           </div>
         </div>
       </div>
 
       <!-- Modal: Clôturer AG -->
-      <div :class="['modal-overlay', { 'modal-overlay--show': showClotureModal }]" @click.self="showClotureModal = false">
-        <div class="modal" role="dialog">
-          <h2 class="modal-title">{{ t('meetings.closeMeetingTitle') }}</h2>
-          <p class="modal-sub">{{ t('meetings.closeMeetingSub') }}</p>
+      <div
+        :class="['modal-overlay', { 'modal-overlay--show': showClotureModal }]"
+        @click.self="showClotureModal = false"
+      >
+        <div
+          class="modal"
+          role="dialog"
+        >
+          <h2 class="modal-title">
+            {{ t('meetings.closeMeetingTitle') }}
+          </h2>
+          <p class="modal-sub">
+            {{ t('meetings.closeMeetingSub') }}
+          </p>
           <div class="modal-actions">
-            <CBtn variant="secondary" size="sm" @click="showClotureModal = false">{{ t('common.cancel') }}</CBtn>
-            <CBtn variant="primary" size="sm" @click="showClotureModal = false">{{ t('meetings.closeMeetingConfirm') }}</CBtn>
+            <CBtn
+              variant="secondary"
+              size="sm"
+              @click="showClotureModal = false"
+            >
+              {{ t('common.cancel') }}
+            </CBtn>
+            <CBtn
+              variant="primary"
+              size="sm"
+              @click="showClotureModal = false"
+            >
+              {{ t('meetings.closeMeetingConfirm') }}
+            </CBtn>
           </div>
         </div>
       </div>
 
       <!-- Modal: Déposer PV -->
-      <div :class="['modal-overlay', { 'modal-overlay--show': showPvModal }]" @click.self="showPvModal = false">
-        <div class="modal" role="dialog">
-          <h2 class="modal-title">{{ t('meetings.pvTitle') }}</h2>
-          <p class="modal-sub">{{ t('meetings.pvSub') }}</p>
+      <div
+        :class="['modal-overlay', { 'modal-overlay--show': showPvModal }]"
+        @click.self="showPvModal = false"
+      >
+        <div
+          class="modal"
+          role="dialog"
+        >
+          <h2 class="modal-title">
+            {{ t('meetings.pvTitle') }}
+          </h2>
+          <p class="modal-sub">
+            {{ t('meetings.pvSub') }}
+          </p>
           <div class="field">
             <label>{{ t('meetings.pvFileLabel') }}</label>
-            <input type="file" accept=".pdf" style="height:auto;padding:10px 14px" />
+            <input
+              type="file"
+              accept=".pdf"
+              style="height:auto;padding:10px 14px"
+            />
           </div>
           <div class="modal-actions">
-            <CBtn variant="secondary" size="sm" @click="showPvModal = false">{{ t('common.cancel') }}</CBtn>
-            <CBtn variant="primary" size="sm" @click="showPvModal = false">{{ t('meetings.pvSubmit') }}</CBtn>
+            <CBtn
+              variant="secondary"
+              size="sm"
+              @click="showPvModal = false"
+            >
+              {{ t('common.cancel') }}
+            </CBtn>
+            <CBtn
+              variant="primary"
+              size="sm"
+              @click="showPvModal = false"
+            >
+              {{ t('meetings.pvSubmit') }}
+            </CBtn>
           </div>
         </div>
       </div>
     </Teleport>
-
   </div>
 </template>
 
@@ -416,6 +575,7 @@ function typeLabel(type: string): string {
   background: var(--color-surface);
 }
 .content { padding: 40px; flex: 1; }
+.content { padding: 0; flex: 1; }
 
 /* Header */
 .page-eyebrow {
@@ -676,7 +836,6 @@ function typeLabel(type: string): string {
 }
 .quorum-alert svg { width: 14px; height: 14px; flex-shrink: 0; }
 
-
 /* Participants */
 .part-list { display: flex; flex-direction: column; }
 .part-item { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid rgba(194,199,207,.12); }
@@ -742,7 +901,6 @@ function typeLabel(type: string): string {
 }
 .modal-sub { font-size: 13px; color: var(--color-on-surface-variant); margin-bottom: 24px; line-height: 1.5; }
 .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 24px; }
-.field { margin-bottom: 16px; }
 .field label { font-size: 13px; font-weight: var(--fw-medium); color: var(--color-on-surface); display: block; margin-bottom: 6px; }
 .field input,
 .field select,

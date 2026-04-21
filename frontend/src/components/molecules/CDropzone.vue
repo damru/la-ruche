@@ -1,6 +1,6 @@
 <script setup lang="ts">
-// Molecule component — CDropzone
-// Upload direct vers S3 via pre-signed URL — DDR architecture
+import { computed, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 const props = withDefaults(defineProps<{
   accept?: string
@@ -13,7 +13,9 @@ const props = withDefaults(defineProps<{
   accept: '*/*',
   maxSizeMb: 50,
   multiple: false,
+  label: undefined,
   uploading: false,
+  progress: undefined,
 })
 
 const emit = defineEmits<{
@@ -21,15 +23,20 @@ const emit = defineEmits<{
   error: [message: string]
 }>()
 
+const { t } = useI18n()
 const isDragging = ref(false)
 const inputRef = ref<HTMLInputElement>()
+
+const resolvedAriaLabel = computed(() => props.label ?? t('common.fileDropzoneAria'))
+const resolvedLabel = computed(() => props.label ?? t('common.fileDropzoneText'))
+const resolvedHint = computed(() => t('common.fileDropzoneHint', { size: props.maxSizeMb }))
 
 function handleFiles(fileList: FileList | null) {
   if (!fileList?.length) return
   const files = Array.from(fileList)
   const oversized = files.filter(f => f.size > props.maxSizeMb * 1024 * 1024)
   if (oversized.length) {
-    emit('error', `Fichier trop volumineux (max ${props.maxSizeMb} Mo)`)
+    emit('error', t('documents.maxSizeExceeded', { size: props.maxSizeMb }))
     return
   }
   emit('files', files)
@@ -50,14 +57,15 @@ function onDragOver(e: DragEvent) {
   <div
     class="c-dropzone"
     :class="{ 'c-dropzone--dragging': isDragging, 'c-dropzone--uploading': uploading }"
+    role="button"
+    tabindex="0"
+    :aria-label="resolvedAriaLabel"
     @drop.prevent="onDrop"
     @dragover="onDragOver"
     @dragleave="isDragging = false"
     @click="inputRef?.click()"
     @keydown.enter="inputRef?.click()"
-    role="button"
-    tabindex="0"
-    :aria-label="label ?? 'Zone de dépôt de fichier'"
+    @keydown.space.prevent="inputRef?.click()"
   >
     <input
       ref="inputRef"
@@ -65,29 +73,39 @@ function onDragOver(e: DragEvent) {
       :accept="accept"
       :multiple="multiple"
       class="c-dropzone__input"
-      @change="handleFiles(($event.target as HTMLInputElement).files)"
       tabindex="-1"
+      @change="handleFiles(($event.target as HTMLInputElement).files)"
     />
 
     <template v-if="!uploading">
-      <svg class="c-dropzone__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
-        <polyline points="17 8 12 3 7 8"/>
-        <line x1="12" y1="3" x2="12" y2="15"/>
-      </svg>
+      <CIconUpload
+        class="c-dropzone__icon"
+        aria-hidden="true"
+      />
       <p class="c-dropzone__text">
-        {{ label ?? 'Glissez un fichier ici' }}
+        {{ resolvedLabel }}
       </p>
-      <p class="c-dropzone__hint">ou cliquez pour parcourir · max {{ maxSizeMb }} Mo</p>
+      <p class="c-dropzone__hint">
+        {{ resolvedHint }}
+      </p>
     </template>
 
     <template v-else>
-      <svg class="c-dropzone__icon c-dropzone__icon--spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-        <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4"/>
-      </svg>
-      <p class="c-dropzone__text">Envoi en cours…</p>
-      <div v-if="progress !== undefined" class="c-dropzone__progress-wrap">
-        <div class="c-dropzone__progress" :style="{ width: `${progress}%` }" />
+      <CIconSpinner
+        class="c-dropzone__icon c-dropzone__icon--spin"
+        aria-hidden="true"
+      />
+      <p class="c-dropzone__text">
+        {{ t('common.uploadInProgress') }}
+      </p>
+      <div
+        v-if="progress !== undefined"
+        class="c-dropzone__progress-wrap"
+      >
+        <div
+          class="c-dropzone__progress"
+          :style="{ width: `${progress}%` }"
+        ></div>
       </div>
     </template>
   </div>
@@ -146,13 +164,13 @@ function onDragOver(e: DragEvent) {
 }
 
 .c-dropzone__text {
-  font-size: 14px;
-  font-weight: 500;
+  font-size: var(--text-md);
+  font-weight: var(--fw-medium);
   color: var(--color-on-surface);
 }
 
 .c-dropzone__hint {
-  font-size: 12px;
+  font-size: var(--text-xs);
   color: var(--color-on-surface-variant);
 }
 

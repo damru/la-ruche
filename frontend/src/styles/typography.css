@@ -3,125 +3,149 @@
    Référence : DDR-001
    ─────────────────────────────────────────────────────────────── */
 
-.text-display-lg {
+.text-display-lg,
+.display-lg {
   font-family: var(--font-display);
   font-size: 56px;
-  font-weight: 800;
+  font-weight: var(--fw-display);
   font-variation-settings: 'opsz' 144;
   letter-spacing: -0.04em;
   line-height: 0.95;
 }
 
-.text-display-md {
+.text-display-md,
+.display-md {
   font-family: var(--font-display);
   font-size: 40px;
-  font-weight: 700;
+  font-weight: var(--fw-bold);
   font-variation-settings: 'opsz' 144;
   letter-spacing: -0.03em;
   line-height: 1.0;
 }
 
-.text-display-sm {
+.text-display-sm,
+.display-sm {
   font-family: var(--font-display);
   font-size: 32px;
-  font-weight: 700;
+  font-weight: var(--fw-bold);
   font-variation-settings: 'opsz' 72;
   letter-spacing: -0.02em;
   line-height: 1.05;
 }
 
-.text-headline-lg {
+.text-headline-lg,
+.headline-lg {
   font-family: var(--font-display);
   font-size: 28px;
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
   font-variation-settings: 'opsz' 72;
   letter-spacing: -0.02em;
   line-height: 1.1;
 }
 
 /* Italique — tension éditoriale avec DM Sans */
-.text-headline-md {
+.text-headline-md,
+.headline-md {
   font-family: var(--font-display);
   font-size: 24px;
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
   font-style: italic;
   font-variation-settings: 'opsz' 48;
   letter-spacing: -0.01em;
   line-height: 1.15;
 }
 
-.text-headline-sm {
+.text-headline-sm,
+.headline-sm {
   font-family: var(--font-display);
   font-size: 20px;
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
   font-variation-settings: 'opsz' 36;
   letter-spacing: 0;
   line-height: 1.2;
 }
 
-.text-title-lg {
+.text-title-lg,
+.title-lg {
   font-family: var(--font-body);
   font-size: 18px;
-  font-weight: 500;
+  font-weight: var(--fw-medium);
   line-height: 1.3;
 }
 
-.text-title-md {
+.text-title-md,
+.title-md {
   font-family: var(--font-body);
   font-size: 16px;
-  font-weight: 500;
+  font-weight: var(--fw-medium);
   line-height: 1.35;
 }
 
-.text-title-sm {
+.text-title-sm,
+.title-sm {
   font-family: var(--font-body);
   font-size: 14px;
-  font-weight: 500;
+  font-weight: var(--fw-medium);
   letter-spacing: 0.01em;
   line-height: 1.4;
 }
 
-.text-body-lg {
+.text-body-lg,
+.body-lg {
   font-family: var(--font-body);
   font-size: 16px;
-  font-weight: 400;
+  font-weight: var(--fw-regular);
   line-height: 1.6;
 }
 
-.text-body-md {
+.text-body-md,
+.body-md {
   font-family: var(--font-body);
   font-size: 14px;
-  font-weight: 400;
+  font-weight: var(--fw-regular);
   line-height: 1.55;
 }
 
-.text-body-sm {
+.text-body-sm,
+.body-sm {
   font-family: var(--font-body);
   font-size: 12px;
-  font-weight: 400;
+  font-weight: var(--fw-regular);
   line-height: 1.5;
 }
 
-.text-label-lg {
+.text-label-lg,
+.label-lg {
   font-family: var(--font-body);
   font-size: 14px;
-  font-weight: 500;
+  font-weight: var(--fw-medium);
   letter-spacing: 0.01em;
 }
 
-.text-label-md {
+.text-label-md,
+.label-md {
   font-family: var(--font-body);
   font-size: 12px;
-  font-weight: 500;
+  font-weight: var(--fw-medium);
   letter-spacing: 0.02em;
 }
 
-.text-label-sm {
+.text-label-sm,
+.label-sm {
   font-family: var(--font-body);
   font-size: 11px;
-  font-weight: 500;
+  font-weight: var(--fw-medium);
   letter-spacing: 0.06em;
   text-transform: uppercase;
+}
+
+.text-data-md,
+.data-md {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: var(--fw-medium);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.45;
 }
 
 /* Couleurs sémantiques rapides */

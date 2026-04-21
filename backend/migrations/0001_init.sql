@@ -118,7 +118,7 @@ CREATE TABLE building (
     postal_code     TEXT NOT NULL,
     city            TEXT NOT NULL,
     manager_siret   TEXT,                        -- optional for volunteer managers
-    shares_total    NUMERIC(10, 2) NOT NULL,      -- base 1000 or 10000
+    shares_total    INTEGER NOT NULL,              -- base 1000 or 10000
     bylaws_date     DATE,                         -- date of condominium bylaws
     active          BOOLEAN NOT NULL DEFAULT TRUE,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -160,7 +160,7 @@ CREATE TABLE allocation_key (
 CREATE TABLE unit_allocation_key (
     unit_id         UUID NOT NULL REFERENCES unit(id),
     key_id          UUID NOT NULL REFERENCES allocation_key(id),
-    share_value     NUMERIC(10, 4) NOT NULL,     -- shares of this unit for this key
+    share_value     INTEGER NOT NULL,              -- shares of this unit for this key
     PRIMARY KEY (unit_id, key_id)
 );
 
@@ -280,7 +280,7 @@ CREATE TABLE vote (
     user_id             UUID NOT NULL REFERENCES user_account(id),
     unit_id             UUID NOT NULL REFERENCES unit(id),
     position            vote_position NOT NULL,
-    shares_represented  NUMERIC(10, 4) NOT NULL,
+    shares_represented  INTEGER NOT NULL,
     proxy_for           UUID REFERENCES user_account(id),  -- NULL = direct vote
     created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     UNIQUE (resolution_id, unit_id)              -- one vote per unit per resolution

@@ -6,8 +6,8 @@ use uuid::Uuid;
 /// The plain token is sent by email/URL.
 /// The SHA-256 hash is stored in DB.
 pub fn generate_token(ttl: Duration) -> (String, String, chrono::DateTime<Utc>) {
-    let token_plain = Uuid::new_v4().to_string().replace('-', "")
-        + &Uuid::new_v4().to_string().replace('-', ""); // 64 chars hex
+    let token_plain =
+        Uuid::new_v4().to_string().replace('-', "") + &Uuid::new_v4().to_string().replace('-', ""); // 64 chars hex
     let token_hash = hash_token(&token_plain);
     let expire_at = Utc::now() + ttl;
     (token_plain, token_hash, expire_at)

@@ -44,10 +44,40 @@ img, svg { display: block; max-width: 100%; }
 button { cursor: pointer; font-family: inherit; border: none; background: none; }
 input, textarea, select { font-family: inherit; font-size: inherit; }
 
+/* Hide number input spinners globally */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+
+/* Page loading spinner ─────────────────────────────────────────── */
+
 /* Touch target minimum 44px ─────────────────────────────────────── */
 button, [role="button"], input[type="checkbox"], input[type="radio"] {
   min-height: 44px;
   min-width: 44px;
+}
+
+/* ── View layout ─────────────────────────────────────────────────── */
+/*
+ * Shared layout primitives used by all feature views.
+ * Per-view max-width / gap are overridden via CSS custom properties
+ * in each view's scoped <style>, keeping the template untouched.
+ */
+.view-container {
+  padding: 40px;
+  max-width: 1200px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+/* Header row: title on the left, optional action on the right */
+.view-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+@media (max-width: 640px) {
+  .view-container { padding: 20px; }
 }
 
 /* ── Utilitaires globaux ─────────────────────────────────────────── */

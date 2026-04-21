@@ -15,12 +15,14 @@ withDefaults(defineProps<{
 </script>
 
 <template>
-  <div :class="[
-    'c-card',
-    `c-card--pad-${padding}`,
-    { 'c-card--shadow': shadow, 'c-card--interactive': interactive }
-  ]">
-    <slot />
+  <div
+    :class="[
+      'c-card',
+      `c-card--pad-${padding}`,
+      { 'c-card--shadow': shadow, 'c-card--interactive': interactive }
+    ]"
+  >
+    <slot></slot>
   </div>
 </template>
 
@@ -28,6 +30,7 @@ withDefaults(defineProps<{
 .c-card {
   background: var(--color-surface-container-lowest);
   border-radius: var(--radius-lg);
+  overflow-x: auto;
 }
 
 .c-card--pad-none { padding: 0; }

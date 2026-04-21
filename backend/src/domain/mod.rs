@@ -3,8 +3,8 @@ pub mod processor;
 pub mod reminders;
 pub mod vote;
 
-use std::str::FromStr;
 use serde::{Deserialize, Serialize};
+use std::str::FromStr;
 use uuid::Uuid;
 
 /// User role — mirrors the PostgreSQL `user_role` enum

@@ -25,18 +25,24 @@ const emit = defineEmits<{ click: [] }>()
     @keydown.enter="interactive && emit('click')"
   >
     <!-- Avatar / icône gauche -->
-    <div v-if="$slots.leading" class="c-list-item__leading">
-      <slot name="leading" />
+    <div
+      v-if="$slots.leading"
+      class="c-list-item__leading"
+    >
+      <slot name="leading"></slot>
     </div>
 
     <!-- Contenu principal -->
     <div class="c-list-item__body">
-      <slot />
+      <slot></slot>
     </div>
 
     <!-- Actions / badge droit -->
-    <div v-if="$slots.trailing" class="c-list-item__trailing">
-      <slot name="trailing" />
+    <div
+      v-if="$slots.trailing"
+      class="c-list-item__trailing"
+    >
+      <slot name="trailing"></slot>
     </div>
   </div>
 </template>

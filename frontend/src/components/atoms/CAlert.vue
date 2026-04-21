@@ -1,5 +1,12 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
+import CIconInfo from '@/components/atoms/CIconInfo.svg'
+import CIconWarn from '@/components/atoms/CIconWarn.svg'
+import CIconAlertTriangle from '@/components/atoms/CIconAlertTriangle.svg'
+import CIconCheckCircle from '@/components/atoms/CIconCheckCircle.svg'
+import CIconX from '@/components/atoms/CIconX.svg'
+
+import { ref } from 'vue'
 
 const { t } = useI18n()
 
@@ -11,17 +18,18 @@ withDefaults(defineProps<{
   dismissible?: boolean
 }>(), {
   variant: 'info',
+  title: undefined,
   dismissible: false,
 })
 
 const emit = defineEmits<{ dismiss: [] }>()
 const visible = ref(true)
 
-const icons: Record<Variant, string> = {
-  info:    'M12 2a10 10 0 100 20A10 10 0 0012 2zm0 9v5m0-9v.01',
-  warning: 'M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0zM12 9v4m0 4h.01',
-  error:   'M12 2a10 10 0 100 20A10 10 0 0012 2zm4-4L8 16m0-8l8 8',
-  success: 'M22 11.08V12a10 10 0 11-5.93-9.14M22 4L12 14.01l-3-3',
+const iconMap: Record<Variant, typeof CIconInfo> = {
+  info:    CIconInfo,
+  warning: CIconWarn,
+  error:   CIconAlertTriangle,
+  success: CIconCheckCircle,
 }
 
 function dismiss() {
@@ -32,18 +40,38 @@ function dismiss() {
 
 <template>
   <Transition name="c-alert-fade">
-    <div v-if="visible" :class="['c-alert', `c-alert--${variant}`]" role="alert">
-      <svg class="c-alert__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
-        <path :d="icons[variant]" />
-      </svg>
+    <div
+      v-if="visible"
+      :class="['c-alert', `c-alert--${variant}`]"
+      role="alert"
+    >
+      <component
+        :is="iconMap[variant]"
+        class="c-alert__icon"
+        aria-hidden="true"
+      />
       <div class="c-alert__body">
-        <p v-if="title" class="c-alert__title">{{ title }}</p>
-        <p class="c-alert__text"><slot /></p>
+        <p
+          v-if="title"
+          class="c-alert__title"
+        >
+          {{ title }}
+        </p>
+        <p class="c-alert__text">
+          <slot></slot>
+        </p>
       </div>
-      <button v-if="dismissible" class="c-alert__close" @click="dismiss" :aria-label="t('common.close')">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-        </svg>
+      <button
+        v-if="dismissible"
+        class="c-alert__close"
+        :aria-label="t('common.close')"
+        @click="dismiss"
+      >
+        <CIconX
+          width="16"
+          height="16"
+          aria-hidden="true"
+        />
       </button>
     </div>
   </Transition>
@@ -67,12 +95,12 @@ function dismiss() {
 .c-alert__body { flex: 1; min-width: 0; }
 
 .c-alert__title {
-  font-size: 13px;
-  font-weight: 600;
+  font-size: var(--text-sm);
+  font-weight: var(--fw-semibold);
   margin-bottom: 2px;
 }
 
-.c-alert__text { font-size: 13px; opacity: 0.9; line-height: 1.4; }
+.c-alert__text { font-size: var(--text-sm); opacity: 0.9; line-height: 1.4; }
 
 .c-alert__close {
   flex-shrink: 0;

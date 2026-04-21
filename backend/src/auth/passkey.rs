@@ -1,7 +1,10 @@
 use url::Url;
 use webauthn_rs::{Webauthn, WebauthnBuilder};
 
-use crate::{config::AppSettings, errors::{AppError, AppResult}};
+use crate::{
+    config::AppSettings,
+    errors::{AppError, AppResult},
+};
 
 /// Builds the shared Webauthn instance (can be stored in AppState
 /// or rebuilt on demand — it is stateless).

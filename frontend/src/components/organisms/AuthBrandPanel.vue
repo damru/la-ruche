@@ -3,8 +3,6 @@
 // Shared editorial left panel used by LoginView and OnboardingView.
 // Accepts text via props (i18n keys resolved by the parent).
 
-import CIconHome from '@/components/atoms/CIconHome.vue'
-import CIconCheck from '@/components/atoms/CIconCheck.vue'
 
 type StepStatus = 'done' | 'active' | 'future'
 
@@ -19,49 +17,69 @@ withDefaults(defineProps<{
 </script>
 
 <template>
-  <div class="auth-brand" aria-hidden="true">
+  <div
+    class="auth-brand"
+    aria-hidden="true"
+  >
     <div class="auth-brand__inner">
       <!-- Logo -->
       <div class="auth-brand__logo">
         <div class="auth-brand__logo-mark">
-          <CIconHome stroke="white" stroke-width="2.5"/>
+          <CLogoMark />
         </div>
         <span class="auth-brand__name">La Ruche</span>
       </div>
 
       <!-- Contenu éditorial -->
       <div class="auth-brand__content">
-        <p class="auth-brand__eyebrow">{{ eyebrow }}</p>
-        <h1 class="auth-brand__title">{{ title }}</h1>
-        <p class="auth-brand__sub">{{ sub }}</p>
+        <p class="auth-brand__eyebrow">
+          {{ eyebrow }}
+        </p>
+        <h1 class="auth-brand__title">
+          {{ title }}
+        </h1>
+        <p class="auth-brand__sub">
+          {{ sub }}
+        </p>
       </div>
 
       <!-- Étapes (optionnel — onboarding only) -->
-      <div v-if="steps.length" class="auth-brand__steps">
+      <div
+        v-if="steps.length"
+        class="auth-brand__steps"
+      >
         <div
           v-for="(step, i) in steps"
           :key="i"
           class="auth-brand__step"
           :class="{
             'auth-brand__step--active': step.status === 'active',
-            'auth-brand__step--done':   step.status === 'done',
+            'auth-brand__step--done': step.status === 'done',
             'auth-brand__step--future': step.status === 'future',
           }"
         >
           <span class="auth-brand__step-num">
-            <CIconCheck v-if="step.status === 'done'" stroke-width="2.5" aria-hidden="true"/>
+            <CIconCheck
+              v-if="step.status === 'done'"
+              stroke-width="2.5"
+              aria-hidden="true"
+            />
             <template v-else>{{ i + 1 }}</template>
           </span>
           <span>{{ step.label }}</span>
         </div>
       </div>
 
-      <div class="auth-brand__spacer" />
+      <div class="auth-brand__spacer"></div>
 
       <!-- Pied de page légal -->
       <div class="auth-brand__footer">
         <p class="auth-brand__legal">
-          Logiciel libre — <a href="/notice" target="_blank" rel="noopener">AGPL-3.0</a>
+          Logiciel libre — <a
+            href="/notice"
+            target="_blank"
+            rel="noopener"
+          >AGPL-3.0</a>
         </p>
       </div>
     </div>
@@ -97,14 +115,13 @@ withDefaults(defineProps<{
 .auth-brand__logo-mark {
   width: 40px;
   height: 40px;
-  background: rgba(255, 255, 255, 0.2);
   border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
-.auth-brand__logo-mark svg { width: 22px; height: 22px; }
+.auth-brand__logo-mark svg { width: 40px; height: 40px; }
 
 .auth-brand__name {
   font-family: var(--font-display);

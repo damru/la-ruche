@@ -1,6 +1,5 @@
 /// Calculation of reminder dates for vendor contracts.
 /// Pure logic -- no I/O.
-
 use chrono::{Days, Months, NaiveDate};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -28,63 +27,65 @@ pub struct ContractReminderSpec {
 
 /// Generates all reminders to create/recreate for a contract.
 /// Called at contract creation and on every subsequent update.
-pub fn compute_reminders(contract: &ContractReminderSpec, today: NaiveDate) -> Vec<PendingReminder> {
+pub fn compute_reminders(
+    contract: &ContractReminderSpec,
+    today: NaiveDate,
+) -> Vec<PendingReminder> {
     let mut reminders = Vec::new();
 
-    if let Some(end_date) = contract.end_date {
-        if end_date > today {
-            // Expiration reminder -- 30 days before end_date
-            if let Some(date) = end_date.checked_sub_days(Days::new(30)) {
+    if let Some(end_date) = contract.end_date
+        && end_date > today
+    {
+        // Expiration reminder -- 30 days before end_date
+        if let Some(date) = end_date.checked_sub_days(Days::new(30)) {
+            reminders.push(PendingReminder {
+                kind: ReminderKind::Expiration,
+                reminder_date: date.max(today),
+            });
+        }
+
+        if contract.auto_renewal
+            && let Some(notice) = contract.notice_days
+        {
+            // Termination reminder = end_date - notice - 15-day margin
+            let margin = notice as u64 + 15;
+            if let Some(date) = end_date.checked_sub_days(Days::new(margin))
+                && date > today
+            {
                 reminders.push(PendingReminder {
-                    kind: ReminderKind::Expiration,
-                    reminder_date: date.max(today),
+                    kind: ReminderKind::Termination,
+                    reminder_date: date,
                 });
             }
 
-            if contract.auto_renewal {
-                if let Some(notice) = contract.notice_days {
-                    // Termination reminder = end_date - notice - 15-day margin
-                    let margin = notice as u64 + 15;
-                    if let Some(date) = end_date.checked_sub_days(Days::new(margin)) {
-                        if date > today {
-                            reminders.push(PendingReminder {
-                                kind: ReminderKind::Termination,
-                                reminder_date: date,
-                            });
-                        }
-                    }
-
-                    // Renewal reminder = end_date - notice
-                    if let Some(date) = end_date.checked_sub_days(Days::new(notice as u64)) {
-                        if date > today {
-                            reminders.push(PendingReminder {
-                                kind: ReminderKind::Renewal,
-                                reminder_date: date,
-                            });
-                        }
-                    }
-                }
+            // Renewal reminder = end_date - notice
+            if let Some(date) = end_date.checked_sub_days(Days::new(notice as u64))
+                && date > today
+            {
+                reminders.push(PendingReminder {
+                    kind: ReminderKind::Renewal,
+                    reminder_date: date,
+                });
             }
         }
     }
 
     // Payment due reminders
     if let Some(freq_months) = contract.payment_frequency_months {
-        let effective_end = contract.end_date.unwrap_or_else(|| {
-            today.checked_add_months(Months::new(12)).unwrap_or(today)
-        });
+        let effective_end = contract
+            .end_date
+            .unwrap_or_else(|| today.checked_add_months(Months::new(12)).unwrap_or(today));
 
         let mut next = contract.start_date;
         while next <= effective_end {
-            if next > today {
-                if let Some(reminder_date) = next.checked_sub_days(Days::new(7)) {
-                    if reminder_date > today {
-                        reminders.push(PendingReminder {
-                            kind: ReminderKind::PaymentDue,
-                            reminder_date,
-                        });
-                    }
-                }
+            if next > today
+                && let Some(reminder_date) = next.checked_sub_days(Days::new(7))
+                && reminder_date > today
+            {
+                reminders.push(PendingReminder {
+                    kind: ReminderKind::PaymentDue,
+                    reminder_date,
+                });
             }
             match next.checked_add_months(Months::new(freq_months)) {
                 Some(n) => next = n,
@@ -112,7 +113,11 @@ mod tests {
         };
         let reminders = compute_reminders(&spec, today);
         assert!(reminders.iter().any(|r| r.kind == ReminderKind::Renewal));
-        assert!(reminders.iter().any(|r| r.kind == ReminderKind::Termination));
+        assert!(
+            reminders
+                .iter()
+                .any(|r| r.kind == ReminderKind::Termination)
+        );
         assert!(reminders.iter().any(|r| r.kind == ReminderKind::Expiration));
     }
 }

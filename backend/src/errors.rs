@@ -1,7 +1,7 @@
 use axum::{
+    Json,
     http::StatusCode,
     response::{IntoResponse, Response},
-    Json,
 };
 use serde::Serialize;
 use thiserror::Error;
@@ -57,7 +57,10 @@ struct ErrorBody {
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         // Log 5xx errors
-        if matches!(self, AppError::Database(_) | AppError::Internal(_) | AppError::Storage(_)) {
+        if matches!(
+            self,
+            AppError::Database(_) | AppError::Internal(_) | AppError::Storage(_)
+        ) {
             tracing::error!(error = %self, "Internal error");
         }
 
@@ -70,14 +73,39 @@ impl IntoResponse for AppError {
             AppError::NotFound => (StatusCode::NOT_FOUND, "NOT_FOUND", self.to_string()),
             AppError::Conflict(msg) => (StatusCode::CONFLICT, "CONFLICT", msg.clone()),
             // 5xx: generic message to client, details in logs
-            AppError::Database(_) => (StatusCode::INTERNAL_SERVER_ERROR, "DB_ERROR", "Database error".into()),
-            AppError::Storage(_) => (StatusCode::INTERNAL_SERVER_ERROR, "STORAGE_ERROR", "Storage error".into()),
-            AppError::Internal(_) => (StatusCode::INTERNAL_SERVER_ERROR, "INTERNAL_ERROR", "Internal error".into()),
+            AppError::Database(_) => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "DB_ERROR",
+                "Database error".into(),
+            ),
+            AppError::Storage(_) => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "STORAGE_ERROR",
+                "Storage error".into(),
+            ),
+            AppError::Internal(_) => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "INTERNAL_ERROR",
+                "Internal error".into(),
+            ),
         };
 
-        (status, Json(ErrorBody { error: code, message })).into_response()
+        (
+            status,
+            Json(ErrorBody {
+                error: code,
+                message,
+            }),
+        )
+            .into_response()
     }
 }
 
 /// Result alias to reduce signature noise
 pub type AppResult<T> = Result<T, AppError>;
+
+pub fn json_value<T: Serialize>(value: T) -> AppResult<Json<serde_json::Value>> {
+    Ok(Json(
+        serde_json::to_value(value).map_err(|e| AppError::Internal(e.into()))?,
+    ))
+}

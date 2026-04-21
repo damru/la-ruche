@@ -2,7 +2,6 @@
 /// Default NoopProcessor — plug in a real lib post-MVP.
 ///
 /// ADR: anticipatory decision, zero refactoring needed when adding a real processor.
-
 use serde_json::Value;
 use uuid::Uuid;
 
@@ -17,10 +16,11 @@ pub struct DocumentMeta {
 
 #[derive(Debug, Clone)]
 pub struct ExtractionResult {
-    pub data: Value,      // flexible JSONB per document type
-    pub confidence: f32,  // 0.0 - 1.0
+    pub data: Value,     // flexible JSONB per document type
+    pub confidence: f32, // 0.0 - 1.0
 }
 
+#[allow(async_fn_in_trait)]
 pub trait DocumentProcessor: Send + Sync {
     async fn extract(&self, doc: &DocumentMeta) -> anyhow::Result<ExtractionResult>;
     fn supported_types(&self) -> &[&str];

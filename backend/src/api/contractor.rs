@@ -1,10 +1,17 @@
 // ── api/contractor.rs ─────────────────────────────────────────────
-use std::sync::Arc;
-use axum::{extract::{Path, State}, http::StatusCode, Json};
+use axum::{
+    Json,
+    extract::{Path, State},
+    http::StatusCode,
+};
 use serde::Deserialize;
+use std::sync::Arc;
 use uuid::Uuid;
 
-use crate::{db::{self, AppState}, errors::{AppError, AppResult}};
+use crate::{
+    db::{self, AppState},
+    errors::{AppError, AppResult},
+};
 
 /// GET /vendor/:token — public access, no JWT
 pub async fn get_task(
@@ -46,7 +53,8 @@ pub async fn submit(
     // Move each file from staging to the building's final bucket
     for key in &input.document_keys {
         let ext = key.rsplit('.').next().unwrap_or("bin");
-        let (bucket, final_key) = state.storage
+        let (bucket, final_key) = state
+            .storage
             .move_from_staging(key, task.building_id, ext)
             .await?;
 
@@ -54,10 +62,14 @@ pub async fn submit(
             &state.pool,
             task.building_id,
             task.id, // uploaded_by = task id as proxy (no user)
-            key, &final_key, &bucket,
-            "application/octet-stream", 0,
+            key,
+            &final_key,
+            &bucket,
+            "application/octet-stream",
+            0,
             &["manager".to_string(), "board_member".to_string()],
-        ).await?;
+        )
+        .await?;
 
         db::task::attach_submission_document(&state.pool, submission_id, doc.id).await?;
     }

@@ -1,0 +1,54 @@
+/* ── DATA TABLES ─────────────────────────────────────────────────── */
+/* Shared style for all data tables in the application.              */
+/* Reference: RegistryView — always add white-space:nowrap on th.    */
+
+.data-table { width: 100%; border-collapse: collapse; min-width: 600px; }
+
+.data-table th {
+  padding: 10px var(--space-4);
+  text-align: left;
+  font-size: var(--text-xs);
+  font-weight: var(--fw-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-on-surface-variant);
+  border-bottom: 1px solid var(--color-outline-variant);
+  white-space: nowrap;
+}
+
+.data-table td {
+  padding: 10px var(--space-4);
+  font-size: var(--text-sm);
+  border-bottom: 1px solid var(--color-surface-container-low);
+  vertical-align: middle;
+}
+
+.data-table tr:last-child td { border-bottom: none; }
+
+/* Column modifiers */
+.data-table .col-shrink { white-space: nowrap; width: 1%; }
+.data-table .col-right   { text-align: right; white-space: nowrap; width: 1%; }
+.data-table th.col-right { text-align: right; }
+
+/* Numeric cells */
+.data-table .cell-numeric {
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: var(--fw-medium);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Footer total row */
+.data-table .row-total td { border-top: 2px solid var(--color-outline-variant); }
+
+/* ── CARDS GRID ──────────────────────────────────────────────────── */
+/*
+ * Responsive auto-fill grid for card layouts.
+ */
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--space-4);
+}

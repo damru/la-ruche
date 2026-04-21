@@ -28,8 +28,12 @@ withDefaults(defineProps<{
     :class="['c-btn', `c-btn--${variant}`, `c-btn--${size}`, { 'c-btn--loading': loading, 'tone--accent': variant === 'primary', 'tone--err': variant === 'danger' }]"
     v-bind="$attrs"
   >
-    <span v-if="loading" class="c-btn__spinner" aria-hidden="true" />
-    <slot />
+    <span
+      v-if="loading"
+      class="c-btn__spinner"
+      aria-hidden="true"
+    ></span>
+    <slot></slot>
   </button>
 </template>
 
@@ -61,9 +65,9 @@ withDefaults(defineProps<{
 }
 
 /* ── Tailles ──────────────────────────────────────────────────── */
-.c-btn--sm  { height: 36px; padding: 0 var(--space-3); font-size: 13px; border-radius: var(--radius-sm); }
-.c-btn--md  { height: 44px; padding: 0 var(--space-5); font-size: 14px; }
-.c-btn--lg  { height: 52px; padding: 0 var(--space-6); font-size: 16px; }
+.c-btn--sm  { height: 36px; min-height: 36px; min-width: 36px; padding: 0 var(--space-3); font-size: var(--text-sm); border-radius: var(--radius-sm); }
+.c-btn--md  { height: 44px; min-height: 44px; min-width: 44px; padding: 0 var(--space-5); font-size: var(--text-md); }
+.c-btn--lg  { height: 52px; min-height: 52px; min-width: 52px; padding: 0 var(--space-6); font-size: var(--text-lg); }
 .c-btn--icon { width: 44px; height: 44px; padding: 0; border-radius: var(--radius-sm); }
 
 /* ── Variantes ────────────────────────────────────────────────── */

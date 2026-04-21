@@ -1,0 +1,43 @@
+#!/usr/bin/env sh
+# Run backend quality checks before every commit.
+set -e
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+
+run_checks_native() {
+  cd "$REPO_ROOT/backend"
+
+  cargo fmt --check || {
+    echo "[pre-commit] cargo fmt failed. Run 'cargo fmt' (or 'make fmt') then re-commit."
+    exit 1
+  }
+
+  export SQLX_OFFLINE=true
+  cargo clippy -- -D warnings || {
+    echo "[pre-commit] cargo clippy failed. Run 'cargo clippy --fix' (or 'make lint') then re-commit."
+    exit 1
+  }
+}
+
+run_checks_wsl() {
+  if ! command -v wsl >/dev/null 2>&1; then
+    echo "[pre-commit] WSL is required on Windows when link.exe is unavailable."
+    echo "[pre-commit] Install WSL or Visual Studio Build Tools, then retry."
+    exit 1
+  fi
+
+  WSL_REPO_ROOT="$(wsl wslpath -a "$REPO_ROOT")"
+  wsl -e bash -lc "set -e; cd '$WSL_REPO_ROOT/backend'; cargo fmt --check; SQLX_OFFLINE=true cargo clippy -- -D warnings" || {
+    echo "[pre-commit] WSL cargo checks failed. See output above."
+    exit 1
+  }
+}
+
+case "${OS:-}" in
+  Windows_NT)
+    run_checks_wsl
+    ;;
+  *)
+    run_checks_native
+    ;;
+esac

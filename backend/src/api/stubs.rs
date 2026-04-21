@@ -2,8 +2,8 @@
 // Each module follows the same pattern as api/assemblies.rs.
 // These stubs enable compilation — to be implemented iteratively.
 
-use axum::http::StatusCode;
 use crate::errors::AppResult;
+use axum::http::StatusCode;
 
 macro_rules! stub {
     ($name:ident) => {

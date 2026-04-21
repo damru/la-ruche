@@ -6,10 +6,6 @@ import { useFormatters } from '@/composables/useFormatters'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CMockBanner from '@/components/atoms/CMockBanner.vue'
-import CIconChevronRight from '@/components/atoms/CIconChevronRight.vue'
-import CIconPlus from '@/components/atoms/CIconPlus.vue'
-import CIconCalendar from '@/components/atoms/CIconCalendar.vue'
-import CIconLocation from '@/components/atoms/CIconLocation.vue'
 import { mockMeetings, mockResolutions, mockBuildingStats } from '@/mock/data'
 
 const router = useRouter()
@@ -46,19 +42,24 @@ function typeLabel(type: string): string {
 
 <template>
   <div class="assembly-list-page">
-
     <CTopbar>
       <template #left>
         <div class="topbar-breadcrumb">
           {{ mockBuildingStats.name }}
-          <CIconChevronRight width="14" height="14"/>
-          <span>Assemblées générales</span>
+          <CIconChevronRight
+            width="14"
+            height="14"
+          />
+          <span>{{ t('meetings.eyebrow') }}</span>
         </div>
       </template>
       <template #right>
-        <CBtn variant="primary" size="sm">
-          <CIconPlus/>
-          {{ t('meetings.callNew') }}
+        <CBtn
+          variant="primary"
+          size="sm"
+        >
+          <CIconPlus />
+          <span class="btn-label">{{ t('meetings.callNew') }}</span>
         </CBtn>
       </template>
     </CTopbar>
@@ -68,9 +69,15 @@ function typeLabel(type: string): string {
 
       <!-- Header -->
       <div class="page-header">
-        <p class="page-eyebrow">{{ t('meetings.eyebrow') }}</p>
-        <h1 class="page-title">{{ t('meetings.title') }}</h1>
-        <p class="page-sub">{{ mockBuildingStats.name }} · {{ t('meetings.count', mockMeetings.length) }}</p>
+        <p class="page-eyebrow">
+          {{ t('meetings.eyebrow') }}
+        </p>
+        <h1 class="page-title">
+          {{ t('meetings.title') }}
+        </h1>
+        <p class="page-sub">
+          {{ mockBuildingStats.name }} · {{ t('meetings.count', mockMeetings.length) }}
+        </p>
       </div>
 
       <!-- Filters -->
@@ -114,15 +121,17 @@ function typeLabel(type: string): string {
           <div class="meeting-info">
             <div class="meeting-top">
               <div>
-                <h2 class="meeting-title">{{ typeLabel(meeting.meeting_type) }} {{ new Date(meeting.meeting_date).getFullYear() }}</h2>
+                <h2 class="meeting-title">
+                  {{ typeLabel(meeting.meeting_type) }} {{ new Date(meeting.meeting_date).getFullYear() }}
+                </h2>
                 <div class="meeting-meta">
                   <span class="meta-item">
-                    <CIconCalendar/>
+                    <CIconCalendar />
                     {{ formatDate(meeting.meeting_date) }}
                   </span>
                   <span class="meta-sep"></span>
                   <span class="meta-item">
-                    <CIconLocation/>
+                    <CIconLocation />
                     {{ meeting.location }}
                   </span>
                 </div>
@@ -139,11 +148,17 @@ function typeLabel(type: string): string {
                 <span class="stat-value">{{ resolutionCount(meeting.id) }}</span>
                 <span class="stat-label">{{ t('meetings.statResolutions', resolutionCount(meeting.id)) }}</span>
               </div>
-              <div v-if="meeting.status === 'closed'" class="stat">
+              <div
+                v-if="meeting.status === 'closed'"
+                class="stat"
+              >
                 <span class="stat-value stat-value--ok">{{ passedCount(meeting.id) }}</span>
                 <span class="stat-label">{{ t('meetings.statPassed', passedCount(meeting.id)) }}</span>
               </div>
-              <div v-if="meeting.status !== 'closed'" class="stat">
+              <div
+                v-if="meeting.status !== 'closed'"
+                class="stat"
+              >
                 <span class="stat-value stat-value--muted">—</span>
                 <span class="stat-label">{{ t('meetings.statPendingVotes') }}</span>
               </div>
@@ -152,7 +167,7 @@ function typeLabel(type: string): string {
 
           <!-- Chevron -->
           <div class="meeting-chevron">
-            <CIconChevronRight/>
+            <CIconChevronRight />
           </div>
         </div>
       </div>
@@ -168,19 +183,19 @@ function typeLabel(type: string): string {
   background: var(--color-surface);
 }
 .content {
-  padding: 40px;
+  padding: var(--space-10);
   flex: 1;
   max-width: 900px;
 }
 
 /* Header */
 .page-eyebrow {
-  font-size: 11px;
+  font-size: var(--text-2xs);
   font-weight: var(--fw-semibold);
   letter-spacing: .1em;
   text-transform: uppercase;
   color: var(--color-primary);
-  margin-bottom: 8px;
+  margin-bottom: var(--space-2);
 }
 .page-title {
   font-family: var(--font-display);
@@ -191,11 +206,11 @@ function typeLabel(type: string): string {
   color: var(--color-on-surface);
   line-height: 1;
 }
-.page-sub { font-size: 14px; color: var(--color-on-surface-variant); margin-top: 6px; margin-bottom: 32px; }
-.tabs { margin-bottom: 32px; }
+.page-sub { font-size: var(--text-md); color: var(--color-on-surface-variant); margin-top: 6px; margin-bottom: var(--space-8); }
+.tabs { margin-bottom: var(--space-8); }
 
 /* Meeting list */
-.meeting-list { display: flex; flex-direction: column; gap: 12px; }
+.meeting-list { display: flex; flex-direction: column; gap: var(--space-3); }
 .meeting-card {
   display: flex;
   align-items: stretch;
@@ -218,13 +233,13 @@ function typeLabel(type: string): string {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 20px 12px;
-  gap: 4px;
+  padding: var(--space-5) var(--space-3);
+  gap: var(--space-1);
 }
 .meeting-badge--closed { background: linear-gradient(135deg, #1b5e20, #43a047); }
 .badge-type {
   font-family: var(--font-display);
-  font-size: 13px;
+  font-size: var(--text-sm);
   font-weight: var(--fw-bold);
   color: rgba(255,255,255,.9);
   letter-spacing: .02em;
@@ -237,8 +252,8 @@ function typeLabel(type: string): string {
 }
 
 /* Info */
-.meeting-info { flex: 1; padding: 20px 24px; display: flex; flex-direction: column; gap: 16px; }
-.meeting-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.meeting-info { flex: 1; padding: var(--space-5) var(--space-6); display: flex; flex-direction: column; gap: var(--space-4); }
+.meeting-top { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-4); }
 .meeting-title {
   font-family: var(--font-display);
   font-size: 17px;
@@ -246,15 +261,15 @@ function typeLabel(type: string): string {
   font-variation-settings: 'opsz' 36;
   letter-spacing: -.01em;
   color: var(--color-on-surface);
-  margin-bottom: 8px;
+  margin-bottom: var(--space-2);
 }
 .meeting-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.meta-item { display: flex; align-items: center; gap: 5px; font-size: 13px; color: var(--color-on-surface-variant); }
+.meta-item { display: flex; align-items: center; gap: 5px; font-size: var(--text-sm); color: var(--color-on-surface-variant); }
 .meta-item svg { width: 13px; height: 13px; flex-shrink: 0; }
 .meta-sep { width: 3px; height: 3px; border-radius: 50%; background: var(--color-outline); }
 
 /* Stats */
-.meeting-stats { display: flex; gap: 24px; }
+.meeting-stats { display: flex; gap: var(--space-6); }
 .stat { display: flex; align-items: baseline; gap: 5px; }
 .stat-value {
   font-family: var(--font-display);
@@ -266,19 +281,19 @@ function typeLabel(type: string): string {
 }
 .stat-value--ok { color: var(--color-success, #2e7d32); }
 .stat-value--muted { color: var(--color-on-surface-variant); }
-.stat-label { font-size: 12px; color: var(--color-on-surface-variant); }
+.stat-label { font-size: var(--text-xs); color: var(--color-on-surface-variant); }
 
 /* Chevron */
 .meeting-chevron {
   display: flex;
   align-items: center;
-  padding: 0 20px;
+  padding: 0 var(--space-5);
   color: var(--color-on-surface-variant);
 }
 .meeting-chevron svg { width: 18px; height: 18px; }
 
 /* Chips */
-.chip { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: var(--radius-full); font-size: 11px; font-weight: var(--fw-medium); white-space: nowrap; background: var(--tone-bg, transparent); color: var(--tone-fg, inherit); }
+.chip { display: inline-flex; align-items: center; gap: 5px; padding: var(--space-1) 10px; border-radius: var(--radius-full); font-size: var(--text-2xs); font-weight: var(--fw-medium); white-space: nowrap; background: var(--tone-bg, transparent); color: var(--tone-fg, inherit); }
 .chip-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: .65; flex-shrink: 0; }
 
 </style>

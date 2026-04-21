@@ -3,7 +3,7 @@
 
 services:
   laruche:
-    image: ghcr.io/${GITHUB_REPOSITORY:-laruche/laruche}:${IMAGE_TAG:-latest}
+    image: ${DOCKERHUB_IMAGE:-docker.io/damru/la-ruche}:${IMAGE_TAG:-latest}
     build:
       args:
         CARGO_PROFILE: release

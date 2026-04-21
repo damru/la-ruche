@@ -61,7 +61,13 @@
   --fw-medium:   500;
   --fw-semibold: 600;
   --fw-bold:     700;
-  --fw-display:  800;
+  --fw-display:  800;  
+  /* Font sizes — UI scale (11–16px). Display/hero sizes are hardcoded per component. */
+  --text-2xs: 11px;   /* eyebrows, footnotes, status chips */
+  --text-xs:  12px;   /* dates, captions, secondary labels */
+  --text-sm:  13px;   /* table rows, list items, default UI text */
+  --text-md:  14px;   /* body text (matches base font-size) */
+  --text-lg:  16px;   /* section titles, card headings */  
   /* ── Espacement ──────────────────────────────────────────────── */
   --space-1:   4px;
   --space-2:   8px;
@@ -82,6 +88,7 @@
 
   /* ── Navigation ──────────────────────────────────────────────── */
   --nav-sidebar-width:     240px;
+  --topbar-height:          60px;
   --nav-bottom-height:      64px;
   --nav-safe-area-bottom: env(safe-area-inset-bottom, 0px);
 

@@ -1,17 +1,18 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
-import { createI18n } from 'vue-i18n'
 
 import App from './App.vue'
 import router from './router'
-import fr from './i18n/locales/fr.json'
+import i18n from './i18n'
 import './styles/tokens.css'
 import './styles/base.css'
 import './styles/typography.css'
 import './styles/tones.css'
 import './styles/tabs.css'
 import './styles/kpi.css'
+import './styles/forms.css'
+import './styles/tables.css'
 
 // ── TanStack Query ────────────────────────────────────────────────
 const queryClient = new QueryClient({
@@ -23,14 +24,6 @@ const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
     },
   },
-})
-
-// ── i18n ──────────────────────────────────────────────────────────
-const i18n = createI18n({
-  legacy: false,
-  locale: 'fr',
-  fallbackLocale: 'fr',
-  messages: { fr },
 })
 
 // ── App ───────────────────────────────────────────────────────────

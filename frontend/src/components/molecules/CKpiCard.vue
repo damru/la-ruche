@@ -11,6 +11,7 @@ withDefaults(defineProps<{
   deltaVariant?: DeltaVariant
   iconAccent?: boolean    // gradient on the icon
 }>(), {
+  delta: undefined,
   deltaVariant: 'neutral',
   iconAccent: false,
 })
@@ -20,7 +21,9 @@ withDefaults(defineProps<{
   <div class="c-kpi">
     <div class="c-kpi__header">
       <div>
-        <p class="c-kpi__label">{{ label }}</p>
+        <p class="c-kpi__label">
+          {{ label }}
+        </p>
       </div>
       <div
         v-if="$slots.icon"
@@ -29,14 +32,19 @@ withDefaults(defineProps<{
           iconAccent ? 'tone--accent' : 'tone--default',
         ]"
       >
-        <slot name="icon" />
+        <slot name="icon"></slot>
       </div>
     </div>
-    <p class="c-kpi__value">{{ value }}</p>
-    <p v-if="delta" :class="['c-kpi__delta', `c-kpi__delta--${deltaVariant}`]">
+    <p class="c-kpi__value">
+      {{ value }}
+    </p>
+    <p
+      v-if="delta"
+      :class="['c-kpi__delta', `c-kpi__delta--${deltaVariant}`]"
+    >
       {{ delta }}
     </p>
-    <slot name="extra" />
+    <slot name="extra"></slot>
   </div>
 </template>
 

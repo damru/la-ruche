@@ -1,8 +1,11 @@
-use aws_sdk_s3::presigning::PresigningConfig;
+use aws_sdk_s3::{presigning::PresigningConfig, types::MetadataDirective};
 use std::time::Duration;
 use uuid::Uuid;
 
-use crate::{errors::{AppError, AppResult}, storage::client::StorageClient};
+use crate::{
+    errors::{AppError, AppResult},
+    storage::client::StorageClient,
+};
 
 #[derive(Debug)]
 pub struct UploadUrl {
@@ -35,7 +38,8 @@ impl StorageClient {
         let presigning_cfg = PresigningConfig::expires_in(Duration::from_secs(ttl_secs))
             .map_err(|e| AppError::Storage(e.to_string()))?;
 
-        let url = self.inner
+        let url = self
+            .presign_client
             .put_object()
             .bucket(&bucket)
             .key(&key)
@@ -64,7 +68,8 @@ impl StorageClient {
         // Content-Disposition to force download with original filename
         let disposition = format!("attachment; filename=\"{}\"", sanitize_filename(filename));
 
-        let url = self.inner
+        let url = self
+            .presign_client
             .get_object()
             .bucket(bucket)
             .key(key)
@@ -80,6 +85,7 @@ impl StorageClient {
 
     /// Pre-signed URL for upload to staging bucket (vendors).
     /// File is moved to final bucket after backend validation.
+    #[allow(dead_code)]
     pub async fn presigned_staging_upload_url(
         &self,
         extension: &str,
@@ -92,7 +98,8 @@ impl StorageClient {
         let presigning_cfg = PresigningConfig::expires_in(Duration::from_secs(ttl_secs))
             .map_err(|e| AppError::Storage(e.to_string()))?;
 
-        let url = self.inner
+        let url = self
+            .presign_client
             .put_object()
             .bucket(&bucket)
             .key(&key)
@@ -128,9 +135,34 @@ impl StorageClient {
             .map_err(|e| AppError::Storage(e.to_string()))?;
 
         // Delete from staging after successful copy
-        self.delete_object(&self.cfg.staging_bucket, staging_key).await?;
+        self.delete_object(&self.cfg.staging_bucket, staging_key)
+            .await?;
 
         Ok((dest_bucket, dest_key))
+    }
+
+    /// Tags an already-uploaded S3 object with the original filename as user metadata.
+    /// Uses a same-source copy with MetadataDirective::Replace — the only S3 way to
+    /// update metadata without re-uploading the object body.
+    /// Non-fatal: the object is usable even if this call fails.
+    pub async fn set_original_name_metadata(
+        &self,
+        bucket: &str,
+        key: &str,
+        original_name: &str,
+    ) -> AppResult<()> {
+        let copy_source = format!("{}/{}", bucket, key);
+        self.inner
+            .copy_object()
+            .copy_source(&copy_source)
+            .bucket(bucket)
+            .key(key)
+            .metadata_directive(MetadataDirective::Replace)
+            .metadata("original-name", sanitize_filename(original_name))
+            .send()
+            .await
+            .map_err(|e| AppError::Storage(e.to_string()))?;
+        Ok(())
     }
 }
 
@@ -138,6 +170,12 @@ impl StorageClient {
 /// Removes dangerous characters.
 fn sanitize_filename(name: &str) -> String {
     name.chars()
-        .map(|c| if c.is_alphanumeric() || "._ -".contains(c) { c } else { '_' })
+        .map(|c| {
+            if c.is_alphanumeric() || "._ -".contains(c) {
+                c
+            } else {
+                '_'
+            }
+        })
         .collect()
 }

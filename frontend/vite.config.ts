@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import svgLoader from 'vite-svg-loader'
 import Components from 'unplugin-vue-components/vite'
 import AutoImport from 'unplugin-auto-import/vite'
 import VueI18nPlugin from '@intlify/unplugin-vue-i18n/vite'
@@ -9,9 +10,13 @@ export default defineConfig({
   plugins: [
     vue(),
 
-    // Auto-import des composants src/components/**
+    // SVG files imported as Vue components (width/height/class pass-through via inheritAttrs)
+    svgLoader({ defaultImport: 'component' }),
+
+    // Auto-import des composants src/components/** (vue + svg)
     Components({
       dirs: ['src/components'],
+      extensions: ['vue', 'svg'],
       dts: 'src/types/components.d.ts',
     }),
 

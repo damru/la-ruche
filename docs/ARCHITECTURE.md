@@ -1,6 +1,8 @@
-# ARCHITECTURE.md — La Ruche
+# ARCHITECTURE.md — l'Application
 
-> Document vivant. Dernière mise à jour : 2026-04-19
+> **Dénomination** — Dans le présent document, l'expression **« l'Application »** désigne exclusivement **La Ruche**, plateforme web open source de gestion participative de copropriété. Ces deux termes sont interchangeables et désignent la même entité logicielle.
+
+> Document vivant. Dernière mise à jour : 2026-04-24
 
 ---
 
@@ -17,10 +19,14 @@
 | Stockage | S3-compatible — MinIO self-hosted | schema.sql |
 | API | REST JSON + OpenAPI (utoipa) | ADR-001 |
 | Edge runtime | Caddy sur Debian slim | ADR-005 |
+| Distribution image conteneur | Docker Hub (`docker.io/damru/la-ruche`) | CI GitHub Actions |
+| Versioning tantièmes + snapshot levy | `valid_from`/`valid_to` + colonnes snapshot `levy_call` | ADR-006 |
+| Clé générale système | `key_type` enum + soft delete sur `allocation_key` | ADR-007 |
 | Logs | tracing + tracing-subscriber (JSON) | — |
 | Config | dotenvy + config crate (LA_RUCHE__*) | — |
 | Frontend | Vue 3 + Vite + TypeScript | DDR-003 |
 | État UI | Pinia | — |
+| Préférences UI persistées | Cookie `laruche-theme` (`light` / `dark`), absence de cookie = `auto` | DDR-004 |
 | État serveur | TanStack Query | — |
 | HTTP client | Axios + intercepteurs refresh | — |
 | i18n | vue-i18n (fr uniquement MVP) | — |
@@ -84,7 +90,7 @@ laruche/
 │           ├── mod.rs
 │           └── presigned.rs
 ├── CONTRIBUTING.md             ← guide de contribution
-├── docker-compose.prod.yml     ← override production
+├── docker-compose.prod.yml     ← override production, image Docker Hub
 ├── docker-compose.yml          ← laruche + postgres + minio
 ├── docker/
 │   ├── Caddyfile               ← config Caddy (SPA + reverse proxy)
@@ -121,7 +127,7 @@ laruche/
 │   │   └── tasks/              ← TasksView
 │   ├── layouts/                ← AppLayout
 │   ├── router/index.ts         ← lazy routes, guards (403 vs 404)
-│   ├── stores/                 ← auth.ts, ui.ts (Pinia)
+│   ├── stores/                 ← auth.ts, ui.ts (Pinia + préférence d'apparence)
 │   ├── styles/                 ← tokens.css, base.css, typography.css
 │   ├── types/domain.ts         ← types TS miroir schéma Rust
 │   └── views/                  ← ForbiddenView, NotFoundView
@@ -214,3 +220,5 @@ HTTP → Tower (CORS, trace, timeout 30s)
 | ADR-003 | Structure | Single crate modulaire |
 | ADR-004 | Onboarding | First-run public wizard (status + bootstrap transactionnel) |
 | ADR-005 | Runtime edge | Caddy installé dans l'image Debian slim |
+| ADR-006 | Versioning tantièmes & snapshot levy | `valid_from`/`valid_to` sur `unit_allocation_key` ; colonnes `shares_snapshot`, `shares_total_snapshot`, `key_id` sur `levy_call` |
+| ADR-007 | Clé générale système | `key_type allocation_key_type` enum + `deleted_at` soft delete sur `allocation_key` ; clé Charges Générales créée à l'onboarding, indestructible |

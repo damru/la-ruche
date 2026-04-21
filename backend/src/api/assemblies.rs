@@ -2,13 +2,12 @@
 ///
 /// Rule: handler = validate input + check role + call db/ or domain/ + return.
 /// Zero business logic here.
-
 use std::sync::Arc;
 
 use axum::{
+    Json,
     extract::{Path, State},
     http::StatusCode,
-    Json,
 };
 use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
@@ -63,7 +62,7 @@ pub struct CreateResolutionInput {
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct VoteInput {
     pub unit_id: Uuid,
-    pub position: String,  // "in_favor" | "against" | "abstain"
+    pub position: String, // "in_favor" | "against" | "abstain"
     pub proxy_for: Option<Uuid>,
 }
 
@@ -83,9 +82,12 @@ pub async fn create(
     Json(input): Json<CreateMeetingInput>,
 ) -> AppResult<(StatusCode, Json<MeetingResponse>)> {
     auth.require_role(&Role::Manager)?;
-    input.validate().map_err(|e| AppError::Validation(e.to_string()))?;
+    input
+        .validate()
+        .map_err(|e| AppError::Validation(e.to_string()))?;
 
-    let meeting = crate::db::assembly::create(&state.pool, auth.building_id, auth.user_id, input).await?;
+    let meeting =
+        crate::db::assembly::create(&state.pool, auth.building_id, auth.user_id, input).await?;
     Ok((StatusCode::CREATED, Json(meeting)))
 }
 
@@ -94,7 +96,8 @@ pub async fn get(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
 ) -> AppResult<Json<MeetingResponse>> {
-    let meeting = crate::db::assembly::get(&state.pool, id, auth.building_id).await?
+    let meeting = crate::db::assembly::get(&state.pool, id, auth.building_id)
+        .await?
         .ok_or(AppError::NotFound)?;
     Ok(Json(meeting))
 }
@@ -106,9 +109,12 @@ pub async fn update(
     Json(input): Json<CreateMeetingInput>,
 ) -> AppResult<Json<MeetingResponse>> {
     auth.require_role(&Role::Manager)?;
-    input.validate().map_err(|e| AppError::Validation(e.to_string()))?;
+    input
+        .validate()
+        .map_err(|e| AppError::Validation(e.to_string()))?;
 
-    let meeting = crate::db::assembly::update(&state.pool, id, auth.building_id, input).await?
+    let meeting = crate::db::assembly::update(&state.pool, id, auth.building_id, input)
+        .await?
         .ok_or(AppError::NotFound)?;
     Ok(Json(meeting))
 }
@@ -138,7 +144,8 @@ pub async fn list_resolutions(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
 ) -> AppResult<Json<serde_json::Value>> {
-    let resolutions = crate::db::assembly::list_resolutions(&state.pool, id, auth.building_id).await?;
+    let resolutions =
+        crate::db::assembly::list_resolutions(&state.pool, id, auth.building_id).await?;
     Ok(Json(resolutions))
 }
 
@@ -149,9 +156,12 @@ pub async fn create_resolution(
     Json(input): Json<CreateResolutionInput>,
 ) -> AppResult<(StatusCode, Json<serde_json::Value>)> {
     auth.require_role(&Role::Manager)?;
-    input.validate().map_err(|e| AppError::Validation(e.to_string()))?;
+    input
+        .validate()
+        .map_err(|e| AppError::Validation(e.to_string()))?;
 
-    let resolution = crate::db::assembly::create_resolution(&state.pool, id, auth.building_id, input).await?;
+    let resolution =
+        crate::db::assembly::create_resolution(&state.pool, id, auth.building_id, input).await?;
     Ok((StatusCode::CREATED, Json(resolution)))
 }
 
@@ -163,8 +173,14 @@ pub async fn update_resolution(
 ) -> AppResult<Json<serde_json::Value>> {
     auth.require_role(&Role::Manager)?;
     let resolution = crate::db::assembly::update_resolution(
-        &state.pool, meeting_id, resolution_id, auth.building_id, input
-    ).await?.ok_or(AppError::NotFound)?;
+        &state.pool,
+        meeting_id,
+        resolution_id,
+        auth.building_id,
+        input,
+    )
+    .await?
+    .ok_or(AppError::NotFound)?;
     Ok(Json(resolution))
 }
 
@@ -183,7 +199,8 @@ pub async fn vote(
         auth.building_id,
         auth.user_id,
         input,
-    ).await?;
+    )
+    .await?;
 
     Ok(StatusCode::NO_CONTENT)
 }
@@ -193,22 +210,22 @@ pub async fn results(
     State(state): State<Arc<AppState>>,
     Path((meeting_id, resolution_id)): Path<(Uuid, Uuid)>,
 ) -> AppResult<Json<serde_json::Value>> {
-    let (resolution, tally) = crate::db::assembly::get_tally(
-        &state.pool, meeting_id, resolution_id, auth.building_id
-    ).await?;
+    let (resolution, tally) =
+        crate::db::assembly::get_tally(&state.pool, meeting_id, resolution_id, auth.building_id)
+            .await?;
 
     let rule = parse_vote_rule(&resolution.vote_type)?;
     let result = tally.compute(&rule);
 
-    Ok(Json(serde_json::to_value(result).unwrap()))
+    crate::errors::json_value(result)
 }
 
 fn parse_vote_rule(s: &str) -> AppResult<VoteRule> {
     match s {
-        "simple_majority"   => Ok(VoteRule::SimpleMajority),
+        "simple_majority" => Ok(VoteRule::SimpleMajority),
         "absolute_majority" => Ok(VoteRule::AbsoluteMajority),
-        "double_majority"   => Ok(VoteRule::DoubleMajority),
-        "unanimity"         => Ok(VoteRule::Unanimity),
+        "double_majority" => Ok(VoteRule::DoubleMajority),
+        "unanimity" => Ok(VoteRule::Unanimity),
         _ => Err(AppError::BadRequest(format!("Invalid vote type: {}", s))),
     }
 }

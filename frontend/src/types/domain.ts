@@ -44,6 +44,13 @@ export interface Building {
   created_at: string
 }
 
+export interface UnitOwner {
+  id: string
+  first_name: string
+  last_name: string
+  email: string
+}
+
 export interface Unit {
   id: string
   building_id: string
@@ -54,13 +61,22 @@ export interface Unit {
   floor?: string
   description?: string
   active: boolean
-  current_owner?: User
+  current_owner?: UnitOwner
 }
+
+export type AllocationKeyType = 'general' | 'special'
 
 export interface AllocationKey {
   id: string
   name: string
   description?: string
+  key_type: AllocationKeyType
+}
+
+export interface UnitShare {
+  unit_id: string
+  unit_number: string
+  share_value: number
 }
 
 export interface User {
@@ -284,8 +300,7 @@ export interface BootstrapInput {
   address_line1: string
   postal_code: string
   city: string
-  /** Transmitted as a decimal string (e.g. "1000") */
-  shares_total: string
+  shares_total: number
 }
 
 export interface BootstrapResponse {
@@ -310,7 +325,60 @@ export interface BuildingStats {
   nb_lots: number
   nb_users: number
   nb_tenants: number
-  shares_total: string
+  shares_total: number
   works_fund_available: string
   works_fund_pct: number | null
+}
+
+// ── Registry ─────────────────────────────────────────────────────
+
+export interface RegistryKey {
+  id: string
+  name: string
+  description?: string
+  shares_sum: number
+  shares: UnitShare[]
+}
+
+export interface RegistryResponse {
+  building: {
+    id: string
+    name: string
+    address_line1: string
+    postal_code: string
+    city: string
+    shares_total: number
+  }
+  units: {
+    id: string
+    unit_number: string
+    unit_type: UnitType
+    block?: string
+    staircase?: string
+    floor?: string
+    active: boolean
+  }[]
+  keys: RegistryKey[]
+}
+
+export interface UnitChargesLevy {
+  id: string
+  fiscal_year: number
+  amount: number
+  due_date: string
+  status: 'issued' | 'paid' | 'overdue'
+  issued_at: string
+  paid_at: string | null
+  key_id: string | null
+  key_name: string | null
+  shares_snapshot: number | null
+  shares_total_snapshot: number | null
+}
+
+export interface UnitChargesResponse {
+  unit: { id: string; unit_number: string; unit_type: string }
+  levies: UnitChargesLevy[]
+  total_issued: number
+  total_paid: number
+  balance: number
 }

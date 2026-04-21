@@ -14,6 +14,7 @@ const props = withDefaults(defineProps<{
   size?: 'sm' | 'md' | 'lg'
   closable?: boolean
 }>(), {
+  title: undefined,
   size: 'md',
   closable: true,
 })
@@ -26,39 +27,58 @@ function close() {
 </script>
 
 <template>
-  <DialogRoot :open="open" @update:open="emit('update:open', $event)">
+  <DialogRoot
+    :open="open"
+    @update:open="emit('update:open', $event)"
+  >
     <DialogPortal>
-      <DialogOverlay class="c-modal__overlay" @click="close" />
+      <DialogOverlay
+        class="c-modal__overlay"
+        @click="close"
+      />
       <DialogContent
         :class="['c-modal__content', `c-modal__content--${size}`]"
         @escape-key-down="close"
         @pointer-down-outside="close"
       >
         <!-- Header -->
-        <div v-if="title || $slots.header" class="c-modal__header">
-          <DialogTitle as="h2" class="c-modal__title">
-            <slot name="header">{{ title }}</slot>
+        <div
+          v-if="title || $slots.header"
+          class="c-modal__header"
+        >
+          <DialogTitle
+            as="h2"
+            class="c-modal__title"
+          >
+            <slot name="header">
+              {{ title }}
+            </slot>
           </DialogTitle>
           <button
             v-if="closable"
             class="c-modal__close"
-            @click="close"
             :aria-label="t('common.close')"
+            @click="close"
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-            </svg>
+            <CIconX
+              width="18"
+              height="18"
+              aria-hidden="true"
+            />
           </button>
         </div>
 
         <!-- Corps -->
         <div class="c-modal__body">
-          <slot />
+          <slot></slot>
         </div>
 
         <!-- Footer -->
-        <div v-if="$slots.footer" class="c-modal__footer">
-          <slot name="footer" />
+        <div
+          v-if="$slots.footer"
+          class="c-modal__footer"
+        >
+          <slot name="footer"></slot>
         </div>
       </DialogContent>
     </DialogPortal>
@@ -124,7 +144,7 @@ function close() {
 .c-modal__title {
   font-family: var(--font-display);
   font-size: 20px;
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
   font-variation-settings: 'opsz' 36;
   letter-spacing: -0.01em;
   color: var(--color-on-surface);

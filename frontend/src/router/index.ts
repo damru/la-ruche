@@ -1,29 +1,35 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import type { Role } from '@/types/domain'
+import i18n from '@/i18n'
 
 // ── Lazy imports ──────────────────────────────────────────────────
-const LoginView          = () => import('@/features/auth/LoginView.vue')
-const AcceptInviteView   = () => import('@/features/auth/AcceptInviteView.vue')
-const ResetPasswordView  = () => import('@/features/auth/ResetPasswordView.vue')
-const OnboardingView     = () => import('@/features/onboarding/OnboardingView.vue')
-const DashboardView      = () => import('@/features/dashboard/DashboardView.vue')
-const AssemblyListView   = () => import('@/features/assemblies/AssemblyListView.vue')
-const AssemblyDetailView = () => import('@/features/assemblies/AssemblyDetailView.vue')
-const BudgetView         = () => import('@/features/budget/BudgetView.vue')
-const DocumentsView      = () => import('@/features/documents/DocumentsView.vue')
-const TasksView          = () => import('@/features/tasks/TasksView.vue')
-const ContractsView      = () => import('@/features/contracts/ContractsView.vue')
-const ClaimsView         = () => import('@/features/claims/ClaimsView.vue')
-const MaintenanceView    = () => import('@/features/maintenance/MaintenanceView.vue')
-const ConsultationsView  = () => import('@/features/consultations/ConsultationsView.vue')
-const ReportsView        = () => import('@/features/reports/ReportsView.vue')
-const ResidentsView      = () => import('@/features/residents/ResidentsView.vue')
-const SettingsView       = () => import('@/features/settings/SettingsView.vue')
-const ContractorPage     = () => import('@/features/contractor/ContractorPage.vue')
-const AppLayout          = () => import('@/layouts/AppLayout.vue')
-const ForbiddenView      = () => import('@/views/ForbiddenView.vue')
-const NotFoundView       = () => import('@/views/NotFoundView.vue')
+const LoginView               = () => import('@/features/auth/LoginView.vue')
+const AcceptInviteView        = () => import('@/features/auth/AcceptInviteView.vue')
+const ResetPasswordView       = () => import('@/features/auth/ResetPasswordView.vue')
+const OnboardingView          = () => import('@/features/onboarding/OnboardingView.vue')
+const DashboardView           = () => import('@/features/dashboard/DashboardView.vue')
+const AssemblyListView        = () => import('@/features/assemblies/AssemblyListView.vue')
+const AssemblyDetailView      = () => import('@/features/assemblies/AssemblyDetailView.vue')
+const BudgetView              = () => import('@/features/budget/BudgetView.vue')
+const DocumentsView           = () => import('@/features/documents/DocumentsView.vue')
+const TasksView               = () => import('@/features/tasks/TasksView.vue')
+const ContractsView           = () => import('@/features/contracts/ContractsView.vue')
+const ClaimsView              = () => import('@/features/claims/ClaimsView.vue')
+const MaintenanceView         = () => import('@/features/maintenance/MaintenanceView.vue')
+const ConsultationsView       = () => import('@/features/consultations/ConsultationsView.vue')
+const ReportsView             = () => import('@/features/reports/ReportsView.vue')
+const ResidentsView           = () => import('@/features/residents/ResidentsView.vue')
+const RegistryView            = () => import('@/features/residents/RegistryView.vue')
+const UnitChargesView         = () => import('@/features/residents/UnitChargesView.vue')
+const MyChargesView           = () => import('@/features/residents/MyChargesView.vue')
+const BuildingView            = () => import('@/features/residence/BuildingView.vue')
+const AllocationKeysView      = () => import('@/features/residence/AllocationKeysView.vue')
+const ProfileView             = () => import('@/features/profile/ProfileView.vue')
+const ContractorPage          = () => import('@/features/contractor/ContractorPage.vue')
+const AppLayout               = () => import('@/layouts/AppLayout.vue')
+const ForbiddenView           = () => import('@/views/ForbiddenView.vue')
+const NotFoundView            = () => import('@/views/NotFoundView.vue')
 
 // ── Meta typage ───────────────────────────────────────────────────
 declare module 'vue-router' {
@@ -36,11 +42,12 @@ declare module 'vue-router' {
 
 const routes: RouteRecordRaw[] = [
   // ── Public ────────────────────────────────────────────────────
-  { path: '/login',          name: 'login',         component: LoginView,         meta: { title: 'Connexion' } },
-  { path: '/invite/:token',  name: 'invite',        component: AcceptInviteView,  meta: { title: 'Rejoindre' } },
-  { path: '/reset/:token',   name: 'reset',         component: ResetPasswordView, meta: { title: 'Nouveau mot de passe' } },  { path: '/onboarding',     name: 'onboarding',    component: OnboardingView,    meta: { title: 'Bienvenue' } },
+  { path: '/login',          name: 'login',         component: LoginView,         meta: { title: 'auth.login' } },
+  { path: '/invite/:token',  name: 'invite',        component: AcceptInviteView,  meta: { title: 'auth.acceptInvite' } },
+  { path: '/reset/:token',   name: 'reset',         component: ResetPasswordView, meta: { title: 'auth.resetPassword' } },
+  { path: '/onboarding',     name: 'onboarding',    component: OnboardingView,    meta: { title: 'page.onboarding' } },
   // ── Contractor (token URL, no JWT) ────────────────────────────
-  { path: '/vendor/:token', name: 'contractor', component: ContractorPage, meta: { title: 'Contractor' } },
+  { path: '/vendor/:token', name: 'contractor', component: ContractorPage, meta: { title: 'page.contractor' } },
 
   // ── App (layout with nav) ─────────────────────────────────────
   {
@@ -56,86 +63,126 @@ const routes: RouteRecordRaw[] = [
         path: 'dashboard',
         name: 'dashboard',
         component: DashboardView,
-        meta: { title: 'Dashboard', roles: [] },
+        meta: { title: 'nav.dashboard', roles: [] },
       },
       {
         path: 'meetings',
         name: 'assembly-list',
         component: AssemblyListView,
-        meta: { title: 'General Meetings', roles: ['manager', 'board_member', 'co_owner'] },
+        meta: { title: 'nav.meetings', roles: ['manager', 'board_member', 'co_owner'] },
       },
       {
         path: 'meetings/:id',
         name: 'assembly-detail',
         component: AssemblyDetailView,
-        meta: { title: 'General Meeting', roles: ['manager', 'board_member', 'co_owner'] },
+        meta: { title: 'nav.meetings', roles: ['manager', 'board_member', 'co_owner'] },
       },
       {
         path: 'budget',
         name: 'budget',
         component: BudgetView,
-        meta: { title: 'Budget', roles: ['manager', 'board_member', 'co_owner'] },
+        meta: { title: 'nav.budget', roles: ['manager', 'board_member', 'co_owner'] },
       },
       {
         path: 'documents',
         name: 'documents',
         component: DocumentsView,
-        meta: { title: 'Documents', roles: ['manager', 'board_member', 'co_owner'] },
+        meta: { title: 'nav.documents', roles: ['manager', 'board_member', 'co_owner', 'tenant'] },
       },
       {
         path: 'tasks',
         name: 'tasks',
         component: TasksView,
-        meta: { title: 'Tasks', roles: ['manager', 'board_member'] },
+        meta: { title: 'nav.tasks', roles: ['manager', 'board_member'] },
       },
       {
         path: 'contracts',
         name: 'contracts',
         component: ContractsView,
-        meta: { title: 'Contracts', roles: ['manager'] },
+        meta: { title: 'nav.contracts', roles: ['manager'] },
       },
       {
         path: 'claims',
         name: 'claims',
         component: ClaimsView,
-        meta: { title: 'Claims', roles: ['manager', 'board_member'] },
+        meta: { title: 'nav.claims', roles: ['manager', 'board_member'] },
       },
       {
         path: 'logbook',
         name: 'maintenance',
         component: MaintenanceView,
-        meta: { title: 'Maintenance Log', roles: ['manager', 'board_member'] },
+        meta: { title: 'nav.maintenance', roles: ['manager', 'board_member'] },
       },
       {
         path: 'consultations',
         name: 'consultations',
         component: ConsultationsView,
-        meta: { title: 'Consultations', roles: [] },
+        meta: { title: 'nav.consultations', roles: [] },
       },
       {
         path: 'reports',
         name: 'reports',
         component: ReportsView,
-        meta: { title: 'Reports', roles: [] },
+        meta: { title: 'nav.reports', roles: [] },
       },
       {
         path: 'residents',
         name: 'residents',
         component: ResidentsView,
-        meta: { title: 'Residents', roles: ['manager'] },
+        meta: { title: 'nav.residents', roles: ['manager'] },
       },
       {
+        path: 'residents/:id/charges',
+        name: 'unit-charges',
+        component: UnitChargesView,
+        meta: { title: 'page.unitCharges', roles: ['manager', 'board_member', 'co_owner'] },
+      },
+      {
+        path: 'my-charges',
+        name: 'my-charges',
+        component: MyChargesView,
+        meta: { title: 'nav.myCharges', roles: ['co_owner'] },
+      },
+      {
+        path: 'registry',
+        name: 'registry',
+        component: RegistryView,
+        meta: { title: 'nav.registry', roles: ['manager', 'board_member', 'co_owner'] },
+      },
+      // ── Residence ───────────────────────────────────────────
+      {
+        path: 'residence/building',
+        name: 'residence-building',
+        component: BuildingView,
+        meta: { title: 'nav.residence-info', roles: ['manager'] },
+      },
+      {
+        path: 'residence/keys',
+        name: 'residence-keys',
+        component: AllocationKeysView,
+        meta: { title: 'nav.residence-keys', roles: ['manager'] },
+      },
+      // ── Profile ──────────────────────────────────────────────
+      {
+        path: 'profile',
+        name: 'profile',
+        component: ProfileView,
+        meta: { title: 'nav.account', roles: [] },
+      },
+      // Legacy redirects
+      { path: 'profile/account',       redirect: '/profile' },
+      { path: 'profile/notifications', redirect: '/profile' },
+      // ── Legacy redirect ───────────────────────────────────────
+      {
         path: 'settings',
-        name: 'settings',
-        component: SettingsView,
-        meta: { title: 'Settings', roles: ['manager'] },
+        redirect: '/residence/building',
       },
     ],
   },
 
   // ── Errors ────────────────────────────────────────────────────
-  { path: '/403', name: 'forbidden', component: ForbiddenView, meta: { title: 'Forbidden' } },
-  { path: '/:pathMatch(.*)*', name: 'not-found', component: NotFoundView, meta: { title: 'Not Found' } },
+  { path: '/403', name: 'forbidden', component: ForbiddenView, meta: { title: 'page.forbidden' } },
+  { path: '/:pathMatch(.*)*', name: 'not-found', component: NotFoundView, meta: { title: 'page.notFound' } },
 ]
 
 const router = createRouter({
@@ -148,8 +195,8 @@ const router = createRouter({
 router.beforeEach(async (to) => {
   const auth = useAuthStore()
 
-  // Update page title
-  document.title = to.meta.title ? `${to.meta.title} — La Ruche` : 'La Ruche'
+  // Update page title using i18n
+  document.title = to.meta.title ? `${i18n.global.t(to.meta.title)} — La Ruche` : 'La Ruche'
 
   // Restore session from cookie (once per page load, no-op if already done)
   await auth.restoreSession()

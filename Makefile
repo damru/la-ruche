@@ -3,10 +3,10 @@
 
 .PHONY: help dev dev-frontend dev-full build build-frontend \
         test test-integration test-all test-frontend \
-        lint fmt check \
-        migrate migrate-test migrate-revert sqlx-prepare \
+        lint lint-fix check \
+        migrate migrate-test migrate-revert sqlx-prepare seed-dev \
         docker docker-up docker-down docker-prod docker-logs \
-        clean install-tools setup
+        clean install-tools setup setup-hooks
 
 # Variables
 DB_URL      := postgres://laruche:laruche@localhost:5432/laruche
@@ -47,12 +47,15 @@ test-frontend: ## Frontend TypeScript type check
 	cd frontend && npm run typecheck
 
 # ── Code quality ──────────────────────────────────────────────────
-lint: ## Clippy + fmt check
+lint: ## Clippy + fmt check + npm lint
 	cd backend && cargo fmt --check
 	cd backend && cargo clippy -- -D warnings
+	cd frontend && npm run lint
 
-fmt: ## Format Rust code
-	cd backend && cargo fmt
+lint-fix: ## Format Rust and Typescript code
+	cd backend && cargo fmt 
+	cd backend && cargo clippy --fix --allow-dirty
+	cd frontend && npm run lint -- --fix
 
 check: ## Quick check (no full build)
 	cd backend && SQLX_OFFLINE=true cargo check
@@ -66,6 +69,9 @@ migrate-test: ## Apply migrations on the test DB
 
 migrate-revert: ## Revert the last migration
 	cd backend && DATABASE_URL=$(DB_URL) sqlx migrate revert
+
+seed-dev: ## ⚠️  Inject dev seed data (resets DB — remove before v1.0)
+	docker compose exec -T postgres psql -U laruche -d laruche < backend/seeds/seed_dev.sql
 
 sqlx-prepare: ## Generate SQLx offline metadata (.sqlx/)
 	cd backend && DATABASE_URL=$(DB_URL) cargo sqlx prepare
@@ -96,8 +102,14 @@ install-tools: ## Install development tools
 	cargo install cargo-watch --locked
 	cd frontend && npm ci
 
+setup-hooks: ## Install git hooks (pre-commit: cargo fmt)
+	git config core.hooksPath .githooks
+	chmod +x .githooks/pre-commit
+	@echo "✅ Git hooks installés (.githooks/)"
+
 setup: ## Full initial setup
 	cp backend/.env.example backend/.env
+	$(MAKE) setup-hooks
 	docker compose up -d postgres minio
 	sleep 3
 	$(MAKE) migrate

@@ -2,7 +2,7 @@
 
 Merci de l'intérêt pour La Ruche. Ce guide explique comment contribuer efficacement.
 
----
+***
 
 ## Licence des contributions
 
@@ -13,18 +13,19 @@ Pour permettre cette double licence, tout contributeur externe doit signer le **
 **Signature :** Lors de votre première PR, un bot CLA Assistant vous demandera de signer en commentant la phrase indiquée. Vous ne signez qu'une seule fois, pour toutes vos contributions futures. Voir [CLA.md](CLA.md) pour le texte complet.
 
 ## Ce projet n'accepte pas les contributions qui :
-- Introduiraient une dépendance sous licence incompatible avec l'AGPL-3.0
-- Ajouteraient des mécanismes de télémétrie ou de tracking utilisateur
-- Restreindraient l'accès au code source de quelque manière que ce soit
-- Ajouteraient de la logique métier dans les handlers API (violation ADR-003)
-- Utiliseraient `unwrap()` hors des tests
 
----
+* Introduiraient une dépendance sous licence incompatible avec l'AGPL-3.0
+* Ajouteraient des mécanismes de télémétrie ou de tracking utilisateur
+* Restreindraient l'accès au code source de quelque manière que ce soit
+* Ajouteraient de la logique métier dans les handlers API (violation ADR-003)
+* Utiliseraient `unwrap()` hors des tests
+
+***
 
 ## Démarrage rapide
 
-```bash
-git clone https://github.com/damru/laruche
+```Shell
+git clone https://github.com/damru/la-ruche
 cd laruche
 make install-tools
 make setup        # copie .env, démarre postgres+minio, migrations
@@ -32,7 +33,7 @@ make dev          # backend hot-reload
 make dev-frontend # frontend Vite (autre terminal)
 ```
 
----
+***
 
 ## Structure du projet
 
@@ -63,7 +64,7 @@ api/      → point d'assemblage, dépend de tout
 jobs/     → dépend de db/ et domain/
 ```
 
----
+***
 
 ## Workflow de contribution
 
@@ -75,22 +76,23 @@ jobs/     → dépend de db/ et domain/
 6. **Commit** avec un message conventionnel (voir ci-dessous)
 7. **Pull Request** vers `develop` (pas `main`)
 
----
+***
 
 ## Messages de commit
 
 Format : `type(scope): description courte`
 
-| Type | Usage |
-|---|---|
-| `feat` | Nouvelle fonctionnalité |
-| `fix` | Correction de bug |
+| Type       | Usage                                       |
+| ---------- | ------------------------------------------- |
+| `feat`     | Nouvelle fonctionnalité                     |
+| `fix`      | Correction de bug                           |
 | `refactor` | Refactoring sans changement de comportement |
-| `test` | Ajout ou modification de tests |
-| `docs` | Documentation uniquement |
-| `chore` | Build, CI, dépendances |
+| `test`     | Ajout ou modification de tests              |
+| `docs`     | Documentation uniquement                    |
+| `chore`    | Build, CI, dépendances                      |
 
 Exemples :
+
 ```
 feat(ag): calcul automatique résultats art. 26
 fix(auth): rotation refresh token en cas de concurrence
@@ -100,36 +102,39 @@ feat(ui): composant CDataTable tri colonnes
 fix(i18n): clé manquante tableau de bord
 ```
 
----
+***
 
 ## Standards de code
 
 ### Rust (backend/)
-- `cargo fmt` avant tout commit
-- `cargo clippy -- -D warnings` sans erreurs
-- Pas de `unwrap()` hors `#[cfg(test)]`
-- `Decimal` pour tous les montants financiers, jamais `f64`
-- Toutes les erreurs remontent via `AppError` et `?`
+
+* `cargo fmt` avant tout commit
+* `cargo clippy -- -D warnings` sans erreurs
+* Pas de `unwrap()` hors `#[cfg(test)]`
+* `Decimal` pour tous les montants financiers, jamais `f64`
+* Toutes les erreurs remontent via `AppError` et `?`
 
 ### Vue 3 / TypeScript (frontend/)
-- `npm run typecheck` sans erreurs
-- Composants : props typées, pas de `any`
-- Traductions : toutes les chaînes dans `fr.json`, jamais en dur dans les templates
-- Styles : uniquement les tokens CSS `var(--...)`, jamais de couleur en dur
-- Design system atomique : atomes → molécules → organismes (voir [docs/DESIGN.md](docs/DESIGN.md))
+
+* `npm run typecheck` sans erreurs
+* Composants : props typées, pas de `any`
+* Traductions : toutes les chaînes dans `fr.json`, jamais en dur dans les templates
+* Styles : uniquement les tokens CSS `var(--...)`, jamais de couleur en dur
+* Design system atomique : atomes → molécules → organismes (voir [docs/DESIGN.md](docs/DESIGN.md))
 
 ### Tests
-- Toute logique dans `domain/` doit avoir des tests unitaires
-- Les handlers critiques (auth, votes, appels de fonds) doivent avoir des tests d'intégration
-- Les tests d'intégration utilisent une DB de test dédiée, jamais la DB de dev
 
----
+* Toute logique dans `domain/` doit avoir des tests unitaires
+* Les handlers critiques (auth, votes, appels de fonds) doivent avoir des tests d'intégration
+* Les tests d'intégration utilisent une DB de test dédiée, jamais la DB de dev
+
+***
 
 ## Signaler un bug
 
-Utilise les Issues GitHub avec le template fourni. Pour les failles de sécurité, **ne pas ouvrir une issue publique** — envoyer un email à security@[DOMAINE].
+Utilise les Issues GitHub avec le template fourni. Pour les failles de sécurité, **ne pas ouvrir une issue publique** — envoyer un email à security@\[DOMAINE].
 
----
+***
 
 ## Questions légales
 

@@ -107,7 +107,7 @@ This agreement is governed by French law.
 ## Signature record
 
 Signatures are recorded automatically by CLA Assistant on GitHub.
-The record is available at: https://cla-assistant.io/[ORG]/laruche
+The record is available at: https://cla-assistant.io/damru/la-ruche
 
 For manual signature (organizations or contributors without GitHub access),
 contact: [contact email to be defined]

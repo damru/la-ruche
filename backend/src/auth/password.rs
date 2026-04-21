@@ -1,9 +1,12 @@
 use argon2::{
-    password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
-    Argon2, Params, Algorithm, Version,
+    Algorithm, Argon2, Params, Version,
+    password_hash::{PasswordHash, PasswordHasher, PasswordVerifier, SaltString, rand_core::OsRng},
 };
 
-use crate::{config::AuthSettings, errors::{AppError, AppResult}};
+use crate::{
+    config::AuthSettings,
+    errors::{AppError, AppResult},
+};
 
 pub fn hash_password(password: &str, cfg: &AuthSettings) -> AppResult<String> {
     let salt = SaltString::generate(&mut OsRng);
@@ -24,8 +27,8 @@ pub fn hash_password(password: &str, cfg: &AuthSettings) -> AppResult<String> {
 }
 
 pub fn verify_password(password: &str, hash: &str) -> AppResult<()> {
-    let parsed = PasswordHash::new(hash)
-        .map_err(|_| AppError::Internal(anyhow::anyhow!("Invalid hash")))?;
+    let parsed =
+        PasswordHash::new(hash).map_err(|_| AppError::Internal(anyhow::anyhow!("Invalid hash")))?;
 
     Argon2::default()
         .verify_password(password.as_bytes(), &parsed)

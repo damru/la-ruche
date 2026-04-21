@@ -1,16 +1,17 @@
+use chrono::{DateTime, Utc};
 /// Repository for general meetings -- reference pattern for all other db/ modules.
 ///
 /// Rules:
 ///   - No business logic here (quorums, calculations -> domain/)
 ///   - All queries verify building_id (tenant isolation)
 ///   - SQLx errors surface via ? -> AppError::Database via From
-
 use sqlx::PgPool;
 use uuid::Uuid;
-use chrono::{DateTime, Utc};
 
 use crate::{
-    api::assemblies::{MeetingResponse, CreateMeetingInput, CreateResolutionInput, MeetingTypeDto, VoteInput},
+    api::assemblies::{
+        CreateMeetingInput, CreateResolutionInput, MeetingResponse, MeetingTypeDto, VoteInput,
+    },
     domain::vote::VoteTally,
     errors::{AppError, AppResult},
 };
@@ -61,11 +62,7 @@ pub async fn list(pool: &PgPool, building_id: Uuid) -> AppResult<Vec<MeetingResp
     Ok(rows.into_iter().map(Into::into).collect())
 }
 
-pub async fn get(
-    pool: &PgPool,
-    id: Uuid,
-    building_id: Uuid,
-) -> AppResult<Option<MeetingResponse>> {
+pub async fn get(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<Option<MeetingResponse>> {
     let row = sqlx::query_as!(
         MeetingRow,
         r#"
@@ -74,7 +71,8 @@ pub async fn get(
         FROM general_meeting
         WHERE id = $1 AND building_id = $2
         "#,
-        id, building_id
+        id,
+        building_id
     )
     .fetch_optional(pool)
     .await?;
@@ -89,7 +87,7 @@ pub async fn create(
     input: CreateMeetingInput,
 ) -> AppResult<MeetingResponse> {
     let meeting_type = match input.meeting_type {
-        MeetingTypeDto::Annual        => "annual",
+        MeetingTypeDto::Annual => "annual",
         MeetingTypeDto::Extraordinary => "extraordinary",
     };
 
@@ -135,8 +133,11 @@ pub async fn update(
         RETURNING id, meeting_type::text as "meeting_type!", status::text as "status!",
                   notice_date, meeting_date, location, created_at
         "#,
-        id, building_id,
-        input.meeting_date, input.location, input.agenda,
+        id,
+        building_id,
+        input.meeting_date,
+        input.location,
+        input.agenda,
     )
     .fetch_optional(pool)
     .await?;
@@ -151,7 +152,8 @@ pub async fn call(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()> {
         SET status = 'called', notice_date = CURRENT_DATE, updated_at = NOW()
         WHERE id = $1 AND building_id = $2 AND status = 'draft'
         "#,
-        id, building_id
+        id,
+        building_id
     )
     .execute(pool)
     .await?
@@ -159,7 +161,7 @@ pub async fn call(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()> {
 
     if affected == 0 {
         return Err(AppError::Conflict(
-            "Meeting not found or no longer in draft status".into()
+            "Meeting not found or no longer in draft status".into(),
         ));
     }
     Ok(())
@@ -172,7 +174,8 @@ pub async fn close(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()> 
         SET status = 'closed', updated_at = NOW()
         WHERE id = $1 AND building_id = $2 AND status = 'held'
         "#,
-        id, building_id
+        id,
+        building_id
     )
     .execute(pool)
     .await?;
@@ -186,7 +189,8 @@ pub async fn list_resolutions(
 ) -> AppResult<serde_json::Value> {
     let exists = sqlx::query_scalar!(
         "SELECT EXISTS(SELECT 1 FROM general_meeting WHERE id = $1 AND building_id = $2)",
-        meeting_id, building_id
+        meeting_id,
+        building_id
     )
     .fetch_one(pool)
     .await?
@@ -209,14 +213,19 @@ pub async fn list_resolutions(
     .fetch_all(pool)
     .await?;
 
-    Ok(serde_json::json!(resolutions.iter().map(|r| serde_json::json!({
-        "id": r.id,
-        "number": r.number,
-        "title": r.title,
-        "description": r.description,
-        "vote_type": r.vote_type,
-        "status": r.status,
-    })).collect::<Vec<_>>()))
+    Ok(serde_json::json!(
+        resolutions
+            .iter()
+            .map(|r| serde_json::json!({
+                "id": r.id,
+                "number": r.number,
+                "title": r.title,
+                "description": r.description,
+                "vote_type": r.vote_type,
+                "status": r.status,
+            }))
+            .collect::<Vec<_>>()
+    ))
 }
 
 pub async fn create_resolution(
@@ -234,7 +243,9 @@ pub async fn create_resolution(
     .unwrap_or(false);
 
     if !exists {
-        return Err(AppError::Conflict("Meeting not found or already closed".into()));
+        return Err(AppError::Conflict(
+            "Meeting not found or already closed".into(),
+        ));
     }
 
     let row = sqlx::query!(
@@ -280,43 +291,41 @@ pub async fn update_resolution(
         RETURNING resolution.id, resolution.number, resolution.title,
                   resolution.vote_type::text as vote_type, resolution.status::text as status
         "#,
-        resolution_id, meeting_id,
-        input.title, input.description, input.vote_type as _,
+        resolution_id,
+        meeting_id,
+        input.title,
+        input.description,
+        input.vote_type as _,
         building_id,
     )
     .fetch_optional(pool)
     .await?;
 
-    Ok(row.map(|r| serde_json::json!({
-        "id": r.id,
-        "number": r.number,
-        "title": r.title,
-        "vote_type": r.vote_type,
-        "status": r.status,
-    })))
+    Ok(row.map(|r| {
+        serde_json::json!({
+            "id": r.id,
+            "number": r.number,
+            "title": r.title,
+            "vote_type": r.vote_type,
+            "status": r.status,
+        })
+    }))
 }
 
 pub async fn cast_vote(
     pool: &PgPool,
-    meeting_id: Uuid,
+    _meeting_id: Uuid,
     resolution_id: Uuid,
     building_id: Uuid,
     user_id: Uuid,
     input: VoteInput,
 ) -> AppResult<()> {
-    let shares = sqlx::query_scalar!(
-        r#"
-        SELECT uak.share_value
-        FROM unit u
-        JOIN unit_allocation_key uak ON uak.unit_id = u.id
-        JOIN allocation_key ak ON ak.id = uak.key_id AND ak.name = 'General'
-        WHERE u.id = $1 AND u.building_id = $2
-        "#,
-        input.unit_id, building_id
-    )
-    .fetch_optional(pool)
-    .await?
-    .ok_or_else(|| AppError::BadRequest("Unit not found or has no general shares".into()))?;
+    let shares =
+        crate::db::allocation_key::get_unit_general_share(pool, input.unit_id, building_id)
+            .await?
+            .ok_or_else(|| {
+                AppError::BadRequest("Unit not found or has no general shares".into())
+            })?;
 
     sqlx::query!(
         r#"
@@ -358,7 +367,9 @@ pub async fn get_tally(
         JOIN general_meeting gm ON gm.id = r.meeting_id
         WHERE r.id = $1 AND r.meeting_id = $2 AND gm.building_id = $3
         "#,
-        resolution_id, meeting_id, building_id
+        resolution_id,
+        meeting_id,
+        building_id
     )
     .fetch_optional(pool)
     .await?
@@ -387,36 +398,40 @@ pub async fn get_tally(
         WHERE b.id = $2
         GROUP BY b.shares_total
         "#,
-        resolution_id, building_id
+        resolution_id,
+        building_id
     )
     .fetch_one(pool)
     .await?;
 
-    use rust_decimal::Decimal;
-
-    let mut for_votes   = Decimal::ZERO;
-    let mut against_votes = Decimal::ZERO;
-    let mut abstentions = Decimal::ZERO;
-    let mut shares_present = Decimal::ZERO;
+    let mut for_votes = 0i32;
+    let mut against_votes = 0i32;
+    let mut abstentions = 0i32;
+    let mut shares_present = 0i32;
 
     for v in &votes {
         shares_present += v.shares_represented;
         match v.position.as_str() {
-            "in_favor" => for_votes     += v.shares_represented,
-            "against"  => against_votes += v.shares_represented,
-            _          => abstentions   += v.shares_represented,
+            "in_favor" => for_votes += v.shares_represented,
+            "against" => against_votes += v.shares_represented,
+            _ => abstentions += v.shares_represented,
         }
     }
 
     let tally = VoteTally {
-        shares_total:   building.shares_total,
+        shares_total: building.shares_total,
         shares_present,
-        total_owners:   building.total_owners.unwrap_or(0) as u32,
+        total_owners: building.total_owners.unwrap_or(0) as u32,
         present_owners: building.present_owners.unwrap_or(0) as u32,
         for_votes,
         against_votes,
         abstentions,
     };
 
-    Ok((ResolutionInfo { vote_type: resolution.vote_type }, tally))
+    Ok((
+        ResolutionInfo {
+            vote_type: resolution.vote_type,
+        },
+        tally,
+    ))
 }

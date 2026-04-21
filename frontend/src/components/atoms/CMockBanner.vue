@@ -1,12 +1,15 @@
 <script setup lang="ts">
 // Bannière d'avertissement — mode démonstration
 // Données 100% fictives, aucune connexion au backend.
-import CIconLayers from '@/components/atoms/CIconLayers.vue'
 </script>
 
 <template>
-  <div class="mock-banner" role="status" aria-live="polite">
-    <CIconLayers aria-hidden="true"/>
+  <div
+    class="mock-banner"
+    role="status"
+    aria-live="polite"
+  >
+    <CIconLayers aria-hidden="true" />
     <span>
       <strong>Mode démonstration</strong> — Toutes les données sont fictives.
     </span>

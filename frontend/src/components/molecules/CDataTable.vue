@@ -9,6 +9,7 @@ export interface Column<T> {
 </script>
 
 <script setup lang="ts" generic="T extends Record<string, unknown>">
+import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
@@ -54,7 +55,10 @@ function getCellValue(row: T, key: string): unknown {
 
 <template>
   <div class="c-table-wrap">
-    <table class="c-table" role="table">
+    <table
+      class="c-table"
+      role="table"
+    >
       <thead>
         <tr>
           <th
@@ -66,15 +70,20 @@ function getCellValue(row: T, key: string): unknown {
           >
             <span class="c-table__th-inner">
               {{ col.label }}
-              <svg
-                v-if="col.sortable"
-                class="c-table__sort-icon"
-                :class="{ 'c-table__sort-icon--active': sortKey === String(col.key) }"
-                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"
-              >
-                <path v-if="sortKey === String(col.key) && sortDir === 'desc'" d="M6 9l6 6 6-6"/>
-                <path v-else d="M6 15l6-6 6 6"/>
-              </svg>
+              <template v-if="col.sortable">
+                <CIconChevronDown
+                  v-if="sortKey === String(col.key) && sortDir === 'desc'"
+                  class="c-table__sort-icon c-table__sort-icon--active"
+                  aria-hidden="true"
+                />
+                <CIconChevronRight
+                  v-else
+                  class="c-table__sort-icon"
+                  :class="{ 'c-table__sort-icon--active': sortKey === String(col.key) }"
+                  style="transform: rotate(-90deg)"
+                  aria-hidden="true"
+                />
+              </template>
             </span>
           </th>
         </tr>
@@ -83,11 +92,15 @@ function getCellValue(row: T, key: string): unknown {
       <tbody>
         <!-- Loading -->
         <tr v-if="loading">
-          <td :colspan="columns.length" class="c-table__empty">
+          <td
+            :colspan="columns.length"
+            class="c-table__empty"
+          >
             <div class="c-table__loading">
-              <svg class="c-table__spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/>
-              </svg>
+              <CIconSpinner
+                class="c-table__spinner"
+                aria-hidden="true"
+              />
               {{ t('common.loading') }}
             </div>
           </td>
@@ -95,13 +108,18 @@ function getCellValue(row: T, key: string): unknown {
 
         <!-- Vide -->
         <tr v-else-if="!rows.length">
-          <td :colspan="columns.length" class="c-table__empty">{{ emptyText ?? t('common.noData') }}</td>
+          <td
+            :colspan="columns.length"
+            class="c-table__empty"
+          >
+            {{ emptyText ?? t('common.noData') }}
+          </td>
         </tr>
 
         <!-- Données -->
         <tr
-          v-else
           v-for="row in rows"
+          v-else
           :key="String(getCellValue(row, String(rowKey)))"
           class="c-table__row"
           :class="{ 'c-table__row--striped': striped }"
@@ -113,7 +131,11 @@ function getCellValue(row: T, key: string): unknown {
             :class="['c-table__td', `c-table__cell--${col.align ?? 'left'}`]"
           >
             <!-- Slot nommé par colonne pour rendu custom -->
-            <slot :name="`cell-${String(col.key)}`" :row="row" :value="getCellValue(row, String(col.key))">
+            <slot
+              :name="`cell-${String(col.key)}`"
+              :row="row"
+              :value="getCellValue(row, String(col.key))"
+            >
               {{ getCellValue(row, String(col.key)) ?? '—' }}
             </slot>
           </td>
@@ -138,8 +160,8 @@ function getCellValue(row: T, key: string): unknown {
 }
 
 .c-table__th {
-  font-size: 11px;
-  font-weight: 600;
+  font-size: var(--text-2xs);
+  font-weight: var(--fw-semibold);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--color-on-surface-variant);
@@ -170,7 +192,7 @@ function getCellValue(row: T, key: string): unknown {
 .c-table__sort-icon--active { opacity: 1; color: var(--color-primary); }
 
 .c-table__td {
-  font-size: 13px;
+  font-size: var(--text-sm);
   color: var(--color-on-surface);
   padding: var(--space-4) var(--space-4);
   /* No-Line rule — subtle alternating background only when striped */
@@ -195,7 +217,7 @@ function getCellValue(row: T, key: string): unknown {
   text-align: center;
   padding: var(--space-12) var(--space-4);
   color: var(--color-on-surface-variant);
-  font-size: 14px;
+  font-size: var(--text-md);
 }
 
 .c-table__loading {

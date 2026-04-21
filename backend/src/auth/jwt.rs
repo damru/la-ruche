@@ -1,17 +1,20 @@
 use chrono::{Duration, Utc};
-use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
+use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation, decode, encode};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::{domain::Role, errors::{AppError, AppResult}};
+use crate::{
+    domain::Role,
+    errors::{AppError, AppResult},
+};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
-    pub sub: Uuid,               // user_id
+    pub sub: Uuid, // user_id
     pub building_id: Uuid,
     pub roles: Vec<Role>,
-    pub exp: i64,                // expiration UNIX timestamp
-    pub iat: i64,                // issued at
+    pub exp: i64, // expiration UNIX timestamp
+    pub iat: i64, // issued at
 }
 
 pub fn generate_access_token(

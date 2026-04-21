@@ -6,7 +6,6 @@ import AuthBrandPanel from '@/components/organisms/AuthBrandPanel.vue'
 import CAlert from '@/components/atoms/CAlert.vue'
 import CInput from '@/components/atoms/CInput.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
-import CIconCheck from '@/components/atoms/CIconCheck.vue'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -41,22 +40,33 @@ async function handleSubmit() {
 
     <main class="auth-panel">
       <div class="auth-form-wrap">
-
-        <CAlert v-if="error" variant="error" :title="t('errors.title')">
+        <CAlert
+          v-if="error"
+          variant="error"
+          :title="t('errors.title')"
+        >
           {{ error }}
         </CAlert>
 
         <!-- ── Formulaire ──────────────────────────────────────── -->
         <template v-if="!done">
           <div class="form-header">
-            <h2 class="form-title">{{ t('auth.resetNewTitle') }}</h2>
-            <p class="form-sub">{{ t('auth.resetNewSub') }}</p>
+            <h2 class="form-title">
+              {{ t('auth.resetNewTitle') }}
+            </h2>
+            <p class="form-sub">
+              {{ t('auth.resetNewSub') }}
+            </p>
           </div>
 
-          <form class="form" @submit.prevent="handleSubmit" novalidate>
+          <form
+            class="form"
+            novalidate
+            @submit.prevent="handleSubmit"
+          >
             <CInput
-              v-model="form.password"
               id="password"
+              v-model="form.password"
               type="password"
               :label="t('auth.newPassword')"
               :placeholder="t('auth.passwordPlaceholder')"
@@ -66,8 +76,8 @@ async function handleSubmit() {
             />
             <div>
               <CInput
-                v-model="form.confirm"
                 id="confirm"
+                v-model="form.confirm"
                 type="password"
                 :label="t('auth.confirmPassword')"
                 :placeholder="t('auth.passwordPlaceholder')"
@@ -75,7 +85,12 @@ async function handleSubmit() {
                 :required="true"
                 :disabled="loading"
               />
-              <p v-if="mismatch" class="field-error">{{ t('auth.passwordMismatch') }}</p>
+              <p
+                v-if="mismatch"
+                class="field-error"
+              >
+                {{ t('auth.passwordMismatch') }}
+              </p>
             </div>
 
             <CBtn
@@ -86,11 +101,14 @@ async function handleSubmit() {
               :loading="loading"
               style="width: 100%"
             >
-              {{ loading ? t('auth.resetSaving') : t('auth.resetSaveButton') }}
+              {{ loading ? t('common.saving') : t('auth.resetSaveButton') }}
             </CBtn>
           </form>
 
-          <button class="btn-text" @click="router.push({ name: 'login' })">
+          <button
+            class="btn-text"
+            @click="router.push({ name: 'login' })"
+          >
             {{ t('auth.backToLogin') }}
           </button>
         </template>
@@ -98,17 +116,27 @@ async function handleSubmit() {
         <!-- ── Succès ──────────────────────────────────────────── -->
         <template v-else>
           <div class="success-state">
-            <div class="success-icon" aria-hidden="true">
-              <CIconCheck aria-hidden="true"/>
+            <div
+              class="success-icon"
+              aria-hidden="true"
+            >
+              <CIconCheck aria-hidden="true" />
             </div>
-            <h2 class="form-title">{{ t('auth.resetSuccessTitle') }}</h2>
-            <p class="form-sub">{{ t('auth.resetSuccessMessage') }}</p>
-            <CBtn variant="primary" style="width: 100%" @click="router.push({ name: 'login' })">
+            <h2 class="form-title">
+              {{ t('auth.resetSuccessTitle') }}
+            </h2>
+            <p class="form-sub">
+              {{ t('auth.resetSuccessMessage') }}
+            </p>
+            <CBtn
+              variant="primary"
+              style="width: 100%"
+              @click="router.push({ name: 'login' })"
+            >
               {{ t('auth.loginButton') }}
             </CBtn>
           </div>
         </template>
-
       </div>
     </main>
   </div>
@@ -154,11 +182,6 @@ async function handleSubmit() {
   line-height: 1.5;
 }
 .form { display: flex; flex-direction: column; gap: var(--space-4); }
-.field-error {
-  font-size: 12px;
-  color: var(--color-error);
-  margin-top: var(--space-1);
-}
 .btn-text {
   background: none;
   border: none;

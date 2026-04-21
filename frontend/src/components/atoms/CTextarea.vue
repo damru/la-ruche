@@ -10,9 +10,15 @@ const props = withDefaults(defineProps<{
   rows?: number
   id?: string
 }>(), {
+  modelValue: undefined,
+  label: undefined,
+  hint: undefined,
+  error: undefined,
+  placeholder: undefined,
   required: false,
   disabled: false,
   rows: 4,
+  id: undefined,
 })
 
 const emit = defineEmits<{ 'update:modelValue': [value: string] }>()
@@ -21,9 +27,16 @@ const inputId = props.id ?? `c-textarea-${Math.random().toString(36).slice(2, 7)
 
 <template>
   <div class="c-field">
-    <label v-if="label" :for="inputId" class="c-field__label">
+    <label
+      v-if="label"
+      :for="inputId"
+      class="c-field__label"
+    >
       {{ label }}
-      <span v-if="required" class="c-field__required">*</span>
+      <span
+        v-if="required"
+        class="c-field__required"
+      >*</span>
     </label>
 
     <textarea
@@ -37,10 +50,23 @@ const inputId = props.id ?? `c-textarea-${Math.random().toString(36).slice(2, 7)
       :aria-invalid="!!error"
       :class="['c-field__textarea', { 'c-field__textarea--error': error }]"
       @input="emit('update:modelValue', ($event.target as HTMLTextAreaElement).value)"
-    />
+    ></textarea>
 
-    <p v-if="error" :id="`${inputId}-error`" class="c-field__error" role="alert">{{ error }}</p>
-    <p v-else-if="hint" :id="`${inputId}-hint`" class="c-field__hint">{{ hint }}</p>
+    <p
+      v-if="error"
+      :id="`${inputId}-error`"
+      class="c-field__error"
+      role="alert"
+    >
+      {{ error }}
+    </p>
+    <p
+      v-else-if="hint"
+      :id="`${inputId}-hint`"
+      class="c-field__hint"
+    >
+      {{ hint }}
+    </p>
   </div>
 </template>
 

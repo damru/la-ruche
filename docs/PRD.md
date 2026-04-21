@@ -1,16 +1,18 @@
-# PRD.md — La Ruche
+# PRD.md — l'Application
+
+> **Dénomination** — Dans le présent document, l'expression **« l'Application »** désigne exclusivement **La Ruche**, plateforme web open source de gestion participative de copropriété. Ces deux termes sont interchangeables et désignent la même entité logicielle.
 ## Product Requirements Document
 
 > Document produit. Vision, utilisateurs, fonctionnalités et contraintes centralisés ici.
 > Pour le backlog détaillé (epics, stories, statuts), voir [EPICS.md](EPICS.md).
 > Liens vers ADR/DDR pour les contraintes techniques associées.
-> Dernière mise à jour : avril 2026
+> Dernière mise à jour : 24 avril 2026
 
 ---
 
 ## Vision produit
 
-**La Ruche** est une webapp open source de gestion participative de copropriété, conçue pour les syndics bénévoles, les membres du conseil syndical et les copropriétaires. Elle vise à rendre la gestion d'immeuble transparente, collaborative et accessible — sans les coûts et la complexité des outils professionnels.
+**l'Application** est une webapp open source de gestion participative de copropriété, conçue pour les syndics bénévoles, les membres du conseil syndical et les copropriétaires. Elle vise à rendre la gestion d'immeuble transparente, collaborative et accessible — sans les coûts et la complexité des outils professionnels.
 
 **Principe directeur :** La gestion participative dans les limites légales. Tout ce qui peut être partagé avec les résidents l'est. Les décisions informelles (consultations, sondages) sont clairement distinguées des actes légaux (votes AG).
 
@@ -32,7 +34,7 @@
 
 ### Fondations légales (loi 10/07/1965 + décret 17/03/1967)
 
-**Registre de la copropriété** — La Ruche permet de constituer la fiche identitaire de la copropriété (nom, adresse, SIRET syndic), de déposer le règlement de copropriété, de configurer les clés de répartition et de gérer le registre des lots avec leurs tantièmes par clé. → EP-001
+**Registre de la copropriété** — l'Application permet de constituer la fiche identitaire de la copropriété (nom, adresse, SIRET syndic), de déposer le règlement de copropriété, de configurer les clés de répartition et de gérer le registre des lots avec leurs tantièmes par clé. → EP-001
 
 **Gestion des propriétaires** — L'historique de propriété est tracé avec les dates de cession. Les résidents sont invités par lien tokenisé. L'anonymisation RGPD à la demande efface le nom tout en conservant les données comptables (10 ans, art. L123-22 Code de commerce). → EP-002
 
@@ -43,6 +45,8 @@
 ### Gestion courante
 
 **Documents** — Upload direct vers S3 via pre-signed URL ; le backend ne manipule pas les fichiers. L'accès est contrôlé par rôle, le téléchargement se fait via une URL signée à courte durée de vie, sans exposition publique du bucket. → EP-005
+
+**Profil & préférences** — Chaque utilisateur gère ses informations personnelles, ses notifications et sa préférence d'apparence depuis son profil. Le thème peut être forcé en clair ou sombre, ou rester en mode automatique en suivant la préférence système de l'appareil. → DDR-004
 
 **Contrats fournisseurs** — Chaque contrat recense fournisseur, objet, dates, montant et périodicité. Les reconductions tacites et préavis sont configurables. Des rappels (reconduction, échéance, expiration, résiliation) sont calculés automatiquement et acquittables manuellement. → EP-006
 
@@ -60,7 +64,7 @@
 
 ### Fonctionnalités avancées
 
-**Paiement en ligne** — Les copropriétaires règlent leurs appels de fonds via une passerelle SEPA depuis l'interface. Un reçu PDF est généré à la confirmation. Les fonds sont versés sur le compte bancaire séparé de la copropriété (art. 18 loi 1965). → EP-012
+**Paiement en ligne** — Les copropriétaires règlent leurs appels de fonds via une passerelle SEPA depuis l'interface. Un reçu PDF est généré à la confirmation. Les fonds sont versés sur le compte bancaire séparé de la copropriété (art. 18 loi 1965). → EP-015
 
 **Tenue d'AG** — Module dédié à la conduite de séance : désignation des rôles (président, secrétaire, scrutateurs), feuille de présence numérique avec calcul du quorum en temps réel, prise de notes collaborative par résolution, génération du projet de PV et circuit de validation avec signature numérique (délai légal : art. 17 décret 1967). → EP-013
 
@@ -126,7 +130,7 @@
 - **Art. L123-22 Code de commerce** — conservation données comptables 10 ans
 - **RGPD** — droit à l'effacement (anonymisation avec conservation données légales)
 
-> ⚠️ La Ruche ne fournit aucun conseil juridique. Les textes sont affichés tels quels. Le syndic reste responsable de la conformité légale.
+> ⚠️ l'Application ne fournit aucun conseil juridique. Les textes sont affichés tels quels. Le syndic reste responsable de la conformité légale.
 
 ---
 

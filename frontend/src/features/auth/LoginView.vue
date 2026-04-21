@@ -8,9 +8,6 @@ import AuthBrandPanel from '@/components/organisms/AuthBrandPanel.vue'
 import CAlert from '@/components/atoms/CAlert.vue'
 import CInput from '@/components/atoms/CInput.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
-import CIconLogIn from '@/components/atoms/CIconLogIn.vue'
-import CIconUserPlus from '@/components/atoms/CIconUserPlus.vue'
-import CIconCheck from '@/components/atoms/CIconCheck.vue'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -96,28 +93,43 @@ async function handleResetRequest() {
     <!-- Panneau droit — formulaire -->
     <main class="login-panel">
       <div class="login-form-wrap">
-
         <!-- Session expirée -->
-        <CAlert v-if="sessionExpired" variant="warning" :title="t('auth.sessionExpiredTitle')">
+        <CAlert
+          v-if="sessionExpired"
+          variant="warning"
+          :title="t('auth.sessionExpiredTitle')"
+        >
           {{ t('auth.sessionExpiredMessage') }}
         </CAlert>
 
         <!-- Erreur API -->
-        <CAlert v-if="error" variant="error" :title="t('errors.title')">
+        <CAlert
+          v-if="error"
+          variant="error"
+          :title="t('errors.title')"
+        >
           {{ error }}
         </CAlert>
 
         <!-- ── Mode : connexion ─────────────────────────────────── -->
         <template v-if="mode === 'login'">
           <div class="form-header">
-            <h2 class="form-title">{{ t('auth.login') }}</h2>
-            <p class="form-sub">{{ t('auth.welcomeSubtitle') }}</p>
+            <h2 class="form-title">
+              {{ t('auth.login') }}
+            </h2>
+            <p class="form-sub">
+              {{ t('auth.welcomeSubtitle') }}
+            </p>
           </div>
 
-          <form class="form" @submit.prevent="handleLogin" novalidate>
+          <form
+            class="form"
+            novalidate
+            @submit.prevent="handleLogin"
+          >
             <CInput
-              v-model="form.email"
               id="email"
+              v-model="form.email"
               type="email"
               :label="t('auth.email')"
               :placeholder="t('auth.emailPlaceholder')"
@@ -128,7 +140,10 @@ async function handleResetRequest() {
 
             <div class="field">
               <div class="field-label-row">
-                <label for="password" class="field-label">{{ t('auth.password') }}</label>
+                <label
+                  for="password"
+                  class="field-label"
+                >{{ t('auth.password') }}</label>
                 <button
                   type="button"
                   class="forgot-link"
@@ -157,7 +172,10 @@ async function handleResetRequest() {
               :loading="loading"
               style="width: 100%"
             >
-              <CIconLogIn v-if="!loading" aria-hidden="true"/>
+              <CIconLogIn
+                v-if="!loading"
+                aria-hidden="true"
+              />
               {{ loading ? t('auth.loggingIn') : t('auth.loginButton') }}
             </CBtn>
           </form>
@@ -172,28 +190,45 @@ async function handleResetRequest() {
             :title="!passkeySupported ? t('auth.passkeyNotSupported') : undefined"
             @click="handlePasskey"
           >
-            <span v-if="passkeyLoading" class="spinner spinner-dark" aria-hidden="true" />
-            <CIconUserPlus v-else aria-hidden="true"/>
+            <span
+              v-if="passkeyLoading"
+              class="spinner spinner-dark"
+              aria-hidden="true"
+            ></span>
+            <CIconUserPlus
+              v-else
+              aria-hidden="true"
+            />
             {{ passkeyLoading ? t('auth.passkeyVerifying') : t('auth.loginWithPasskey') }}
           </button>
 
           <p class="login-notice">
             {{ t('auth.invitePrompt') }}
-            <router-link :to="{ name: 'invite', params: { token: '_' } }">{{ t('auth.inviteLink') }}</router-link>
+            <router-link :to="{ name: 'invite', params: { token: '_' } }">
+              {{ t('auth.inviteLink') }}
+            </router-link>
           </p>
         </template>
 
         <!-- ── Mode : demande reset ─────────────────────────────── -->
         <template v-else-if="mode === 'reset-request'">
           <div class="form-header">
-            <h2 class="form-title">{{ t('auth.forgotPassword') }}</h2>
-            <p class="form-sub">{{ t('auth.resetInstructions') }}</p>
+            <h2 class="form-title">
+              {{ t('auth.forgotPassword') }}
+            </h2>
+            <p class="form-sub">
+              {{ t('auth.resetInstructions') }}
+            </p>
           </div>
 
-          <form class="form" @submit.prevent="handleResetRequest" novalidate>
+          <form
+            class="form"
+            novalidate
+            @submit.prevent="handleResetRequest"
+          >
             <CInput
-              v-model="resetEmail"
               id="reset-email"
+              v-model="resetEmail"
               type="email"
               :label="t('auth.email')"
               :placeholder="t('auth.emailPlaceholder')"
@@ -213,7 +248,10 @@ async function handleResetRequest() {
             </CBtn>
           </form>
 
-          <button class="btn-text" @click="mode = 'login'">
+          <button
+            class="btn-text"
+            @click="mode = 'login'"
+          >
             {{ t('auth.backToLogin') }}
           </button>
         </template>
@@ -221,19 +259,27 @@ async function handleResetRequest() {
         <!-- ── Mode : reset envoyé ──────────────────────────────── -->
         <template v-else>
           <div class="success-state">
-            <div class="success-icon" aria-hidden="true">
-              <CIconCheck aria-hidden="true"/>
+            <div
+              class="success-icon"
+              aria-hidden="true"
+            >
+              <CIconCheck aria-hidden="true" />
             </div>
-            <h2 class="form-title">{{ t('auth.resetSentTitle') }}</h2>
+            <h2 class="form-title">
+              {{ t('auth.resetSentTitle') }}
+            </h2>
             <p class="form-sub">
               {{ t('auth.resetSentMessage', { email: resetEmail }) }}
             </p>
-            <CBtn variant="secondary" style="width: 100%" @click="mode = 'login'">
+            <CBtn
+              variant="secondary"
+              style="width: 100%"
+              @click="mode = 'login'"
+            >
               {{ t('auth.backToLogin') }}
             </CBtn>
           </div>
         </template>
-
       </div>
     </main>
   </div>
@@ -292,7 +338,6 @@ async function handleResetRequest() {
 .form { display: flex; flex-direction: column; gap: var(--space-4); }
 
 /* Password field (label row + forgot link — unique to Login) */
-.field { display: flex; flex-direction: column; gap: var(--space-1); }
 
 .field-label-row {
   display: flex;
@@ -300,25 +345,6 @@ async function handleResetRequest() {
   justify-content: space-between;
 }
 
-.field-label {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--color-on-surface);
-}
-
-.field-input {
-  height: 44px;
-  padding: 0 var(--space-4);
-  background: var(--color-surface-container-high);
-  border: none;
-  border-radius: var(--radius-md);
-  font-family: var(--font-body);
-  font-size: 14px;
-  color: var(--color-on-surface);
-  outline: none;
-  transition: background var(--transition-fast), box-shadow var(--transition-fast);
-  width: 100%;
-}
 .field-input::placeholder { color: var(--color-on-surface-variant); }
 .field-input:focus {
   background: var(--color-surface-container);
