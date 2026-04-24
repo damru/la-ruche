@@ -38,7 +38,7 @@ jobs:
     if: github.event_name == 'workflow_dispatch' || inputs.workflow_call
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
       - name: "Get Next Version"
@@ -59,7 +59,7 @@ jobs:
     steps:
       - name: Docker meta
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ${{ vars.DOCKERHUB_USERNAME }}/${{ vars.DOCKERHUB_PROJECT }}
           tags: |
