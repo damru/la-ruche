@@ -18,6 +18,7 @@ on:
       token:
         description: "GitHub token"
         required: false
+  workflow_dispatch:
 
 concurrency:
   group: "${{ github.workflow }}-${{ github.ref }}-release"
