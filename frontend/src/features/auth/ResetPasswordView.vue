@@ -149,8 +149,10 @@ async function handleSubmit() {
   grid-template-columns: 1fr 1fr;
 }
 @media (max-width: 768px) {
-  .auth-root { grid-template-columns: 1fr; }
-  .auth-brand { display: none; }
+  .auth-root {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(0, 1fr);
+  }
 }
 .auth-panel {
   background: var(--color-surface);
@@ -158,6 +160,8 @@ async function handleSubmit() {
   align-items: center;
   justify-content: center;
   padding: var(--space-10) var(--space-5);
+  min-height: 0;
+  overflow-y: auto;
 }
 .auth-form-wrap {
   width: 100%;
@@ -216,5 +220,16 @@ async function handleSubmit() {
   width: 24px;
   height: 24px;
   stroke: var(--color-success);
+}
+
+@media (max-width: 768px) {
+  .auth-panel {
+    align-items: flex-start;
+    padding: 0 var(--space-4) var(--space-5);
+  }
+
+  .auth-form-wrap {
+    padding-top: var(--space-3);
+  }
 }
 </style>

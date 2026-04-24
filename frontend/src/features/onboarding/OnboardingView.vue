@@ -515,8 +515,12 @@ async function handleSubmit() {
   background: var(--color-surface-container-lowest);
 }
 
-/* Left panel (AuthBrandPanel) is hidden on mobile */
-@media (max-width: 899px) { .onboarding-brand { display: none !important; } }
+@media (max-width: 899px) {
+  .onboarding-root {
+    flex-direction: column;
+  }
+}
+
 @media (min-width: 900px)  { .onboarding-brand { width: 400px; flex-shrink: 0; } }
 
 /* ── Form panel (right) ──────────────────────────── */
@@ -527,6 +531,7 @@ async function handleSubmit() {
   justify-content: center;
   padding: var(--space-10) var(--space-5);
   overflow-y: auto;
+  min-height: 0;
 }
 .onboarding-form-wrap {
   width: 100%;
@@ -731,5 +736,15 @@ async function handleSubmit() {
   color: var(--color-on-surface-variant);
   max-width: 340px;
   line-height: 1.6;
+}
+
+@media (max-width: 899px) {
+  .onboarding-panel {
+    padding: 0 var(--space-4) var(--space-5);
+  }
+
+  .onboarding-form-wrap {
+    padding-top: var(--space-3);
+  }
 }
 </style>

@@ -100,6 +100,12 @@ Breadcrumb de topbar : le bloc gauche doit rester fluide (`min-width: 0`) et les
 
 Contrôles segmentés : tout conteneur doit rester utilisable sur écran étroit. Si les options dépassent la largeur disponible, le conteneur devient scrollable horizontalement sans casser la hauteur des boutons.
 
+## Écrans publics d'authentification
+
+Sur mobile, les écrans publics (`/login`, `/onboarding`, invitation, reset) doivent conserver un bloc d'information de marque visible **sans** faire sortir le formulaire principal du viewport initial. Le panneau éditorial desktop devient donc un en-tête compact : logo + nom produit + message éditorial court, avec contenu secondaire tronqué ou masqué si nécessaire.
+
+Le formulaire ou wizard reste la zone scrollable principale. Les actions critiques et le début du formulaire doivent rester atteignables sans scroll initial ; l'éditorial ne doit jamais monopoliser la hauteur utile sur écran étroit.
+
 ## Accessibilité
 - Contraste corps ≥ 4.5:1 (WCAG AA), critique ≥ 7:1
 - Focus : `outline: 2px solid var(--color-primary); outline-offset: 2px`

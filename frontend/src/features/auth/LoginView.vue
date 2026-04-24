@@ -294,8 +294,10 @@ async function handleResetRequest() {
 }
 
 @media (max-width: 768px) {
-  .login-root { grid-template-columns: 1fr; }
-  .login-brand { display: none; }
+  .login-root {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(0, 1fr);
+  }
 }
 
 /* ── Panneau droit ────────────────────────────────────────────── */
@@ -305,6 +307,8 @@ async function handleResetRequest() {
   align-items: center;
   justify-content: center;
   padding: var(--space-10) var(--space-5);
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .login-form-wrap {
@@ -453,5 +457,16 @@ async function handleResetRequest() {
   width: 24px;
   height: 24px;
   stroke: var(--color-success);
+}
+
+@media (max-width: 768px) {
+  .login-panel {
+    align-items: flex-start;
+    padding: 0 var(--space-4) var(--space-5);
+  }
+
+  .login-form-wrap {
+    padding-top: var(--space-3);
+  }
 }
 </style>

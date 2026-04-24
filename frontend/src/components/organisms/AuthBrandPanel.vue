@@ -202,4 +202,57 @@ withDefaults(defineProps<{
 .auth-brand__footer { /* bottom pin via spacer */ }
 .auth-brand__legal { font-size: 11px; color: rgba(255, 255, 255, 0.5); }
 .auth-brand__legal a { color: rgba(255, 255, 255, 0.75); text-decoration: underline; }
+
+@media (max-width: 899px) {
+  .auth-brand {
+    position: relative;
+    top: auto;
+    height: auto;
+    padding: var(--space-5) var(--space-4) var(--space-4);
+    overflow: visible;
+  }
+
+  .auth-brand__inner {
+    gap: var(--space-4);
+    height: auto;
+  }
+
+  .auth-brand__logo {
+    gap: var(--space-2);
+  }
+
+  .auth-brand__logo-mark,
+  .auth-brand__logo-mark svg {
+    width: 32px;
+    height: 32px;
+  }
+
+  .auth-brand__name {
+    font-size: 18px;
+  }
+
+  .auth-brand__eyebrow {
+    margin-bottom: var(--space-1);
+  }
+
+  .auth-brand__title {
+    font-size: clamp(22px, 7vw, 28px);
+    margin-bottom: var(--space-2);
+  }
+
+  .auth-brand__sub {
+    font-size: 13px;
+    line-height: 1.45;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .auth-brand__steps,
+  .auth-brand__spacer,
+  .auth-brand__footer {
+    display: none;
+  }
+}
 </style>
