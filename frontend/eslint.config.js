@@ -27,7 +27,11 @@ export default ts.config(
 
   // ── Project-specific overrides ────────────────────────────────────
   {
+    files: ['**/*.{ts,tsx,vue}'],
     rules: {
+      // TypeScript handles symbol resolution for browser globals and DOM types.
+      'no-undef': 'off',
+
       // Atomic design uses single-word names: CCard, CBtn, CAlert…
       'vue/multi-word-component-names': 'off',
 
@@ -38,7 +42,7 @@ export default ts.config(
       'no-empty': ['error', { allowEmptyCatch: true }],
 
       // Consistent ordering of <script>, <template>, <style> in SFCs
-      'vue/component-tags-order': ['error', {
+      'vue/block-order': ['error', {
         order: ['script', 'template', 'style'],
       }],
 
