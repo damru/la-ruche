@@ -117,7 +117,7 @@ jobs:
         run: cargo check
 
       - name: Upload SQLx offline files
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: sqlx-files
           path: backend/.sqlx/
@@ -191,7 +191,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build and pushn us
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: .
           push: true
