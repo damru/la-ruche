@@ -92,10 +92,39 @@ const pendingReminderViews = computed<ContractReminderView[]>(() =>
   }),
 )
 
+const visibleReminderViews = computed<ContractReminderView[]>(() => {
+  const selectedByContract = new Map<string, {
+    nextPayment?: ContractReminderView
+    nextContractEnd?: ContractReminderView
+  }>()
+
+  for (const reminder of pendingReminderViews.value) {
+    const daysRemaining = daysUntil(reminder.targetDate)
+    if (daysRemaining < 0) continue
+
+    const selected = selectedByContract.get(reminder.contract_id) ?? {}
+
+    if (reminder.reminder_type === 'payment_due') {
+      if (daysRemaining <= 30 && !selected.nextPayment) {
+        selected.nextPayment = reminder
+      }
+    } else if (daysRemaining <= 90 && !selected.nextContractEnd) {
+      selected.nextContractEnd = reminder
+    }
+
+    selectedByContract.set(reminder.contract_id, selected)
+  }
+
+  return [...selectedByContract.values()]
+    .flatMap(selected => [selected.nextPayment, selected.nextContractEnd])
+    .filter((reminder): reminder is ContractReminderView => !!reminder)
+    .sort((left, right) => left.targetDate.localeCompare(right.targetDate))
+})
+
 const pendingRemindersByContract = computed(() => {
   const remindersByContract = new Map<string, ContractReminderView[]>()
 
-  for (const reminder of pendingReminderViews.value) {
+  for (const reminder of visibleReminderViews.value) {
     const contractReminders = remindersByContract.get(reminder.contract_id)
 
     if (contractReminders) {
@@ -300,7 +329,7 @@ async function terminateContract(contract: VendorContract) {
             </h2>
           </div>
           <div
-            v-if="pendingReminders.length === 0"
+            v-if="visibleReminderViews.length === 0"
             class="reminder-empty"
           >
             {{ t('contracts.reminders.empty') }}
@@ -310,7 +339,7 @@ async function terminateContract(contract: VendorContract) {
             class="reminder-list"
           >
             <div
-              v-for="reminder in pendingReminderViews"
+              v-for="reminder in visibleReminderViews"
               :key="reminder.id"
               class="reminder-row"
               :class="`reminder-row--${reminder.urgency}`"
