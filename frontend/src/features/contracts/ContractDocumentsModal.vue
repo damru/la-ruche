@@ -10,7 +10,6 @@ import { toErrorMessage } from '@/composables/usePageLoader'
 import { useFormatters } from '@/composables/useFormatters'
 import { useFormFeedback } from '@/composables/useFormFeedback'
 import type { Document, VendorContract } from '@/types/domain'
-import { buildDocumentDeleteMessage } from '@/utils/documents'
 import { extractFileExtension } from '@/utils/files'
 
 const props = defineProps<{
@@ -35,12 +34,14 @@ const error = ref('')
 const selectedFile = ref<File | null>(null)
 const fileInputRef = ref<HTMLInputElement | null>(null)
 const pendingDocument = ref<Document | null>(null)
+const deleteDocumentOnDetach = ref(false)
 
 watch(
   () => [props.open, props.contract?.id] as const,
   async ([open, contractId]) => {
     if (!open) {
       pendingDocument.value = null
+      deleteDocumentOnDetach.value = false
       return
     }
     if (!contractId) return
@@ -124,15 +125,18 @@ const showDocumentActionModal = computed(() => pendingDocument.value !== null)
 function closeDocumentActionModal() {
   if (deleting.value) return
   pendingDocument.value = null
+  deleteDocumentOnDetach.value = false
 }
 
 function openDocumentActionModal(document: Document) {
   pendingDocument.value = document
+  deleteDocumentOnDetach.value = false
 }
 
-async function detachDocument(deleteDocument = false) {
+async function detachDocument() {
   if (!props.contract?.id) return
   if (!pendingDocument.value) return
+  const deleteDocument = deleteDocumentOnDetach.value
 
   deleting.value = true
   error.value = ''
@@ -148,6 +152,7 @@ async function detachDocument(deleteDocument = false) {
     }
 
     pendingDocument.value = null
+    deleteDocumentOnDetach.value = false
     await loadDocuments()
     emit('changed')
   } catch (currentError: unknown) {
@@ -292,11 +297,22 @@ async function detachDocument(deleteDocument = false) {
       v-if="pendingDocument"
       class="documents-action-modal"
     >
-      <p class="documents-action-modal__message">
-        {{ t('contracts.documents.detachMessage', { name: pendingDocument.original_name }) }}
+      <p class="documents-action-modal__name">
+        {{ pendingDocument.original_name }}
       </p>
-      <p class="documents-action-modal__warning">
-        {{ buildDocumentDeleteMessage(pendingDocument, t) }}
+      <label class="checkbox-label documents-action-modal__checkbox">
+        <input
+          v-model="deleteDocumentOnDetach"
+          type="checkbox"
+          :disabled="deleting"
+        />
+        {{ t('contracts.documents.deleteAlso') }}
+      </label>
+      <p
+        v-if="deleteDocumentOnDetach"
+        class="documents-action-modal__warning"
+      >
+        {{ t('contracts.documents.deleteWarning', { name: pendingDocument.original_name }) }}
       </p>
     </div>
 
@@ -309,18 +325,11 @@ async function detachDocument(deleteDocument = false) {
         {{ t('common.cancel') }}
       </CBtn>
       <CBtn
-        variant="secondary"
+        :variant="deleteDocumentOnDetach ? 'danger' : 'secondary'"
         :loading="deleting"
-        @click.stop="detachDocument(false)"
+        @click.stop="detachDocument()"
       >
-        {{ t('contracts.documents.detachOnly') }}
-      </CBtn>
-      <CBtn
-        variant="danger"
-        :loading="deleting"
-        @click.stop="detachDocument(true)"
-      >
-        {{ t('contracts.documents.detachAndDelete') }}
+        {{ t('contracts.documents.detach') }}
       </CBtn>
     </template>
   </CModal>
@@ -438,12 +447,17 @@ async function detachDocument(deleteDocument = false) {
   gap: var(--space-3);
 }
 
-.documents-action-modal__message,
+.documents-action-modal__name,
 .documents-action-modal__warning {
   margin: 0;
 }
 
-.documents-action-modal__message {
+.documents-action-modal__name {
+  font-weight: var(--fw-medium);
+  word-break: break-word;
+}
+
+.documents-action-modal__checkbox {
   color: var(--color-on-surface-variant);
 }
 

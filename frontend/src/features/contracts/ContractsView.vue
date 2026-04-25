@@ -578,19 +578,15 @@ async function terminateContract(contract: VendorContract) {
   margin-left: auto;
 }
 .contract-type__icon {
-  width: 48px;
-  height: 48px;
-  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  background: var(--tone-bg, var(--color-secondary-container));
   color: var(--tone-fg, var(--color-primary));
 }
 .type-icon {
-  width: 24px;
-  height: 24px;
+  width: 32px;
+  height: 32px;
   flex-shrink: 0;
 }
 .contract-actions {
