@@ -30,6 +30,12 @@ interface ContractReminderView extends ContractReminder {
   daysLabel: string
 }
 
+const CONTRACT_END_REMINDER_TYPES = new Set<ContractReminder['reminder_type']>([
+  'renewal',
+  'expiration',
+  'termination',
+])
+
 const { t } = useI18n()
 const { formatCurrency, formatDate, daysUntil } = useFormatters()
 const { confirm } = useConfirm()
@@ -106,16 +112,21 @@ const visibleReminderViews = computed<ContractReminderView[]>(() => {
       nextPayment: undefined,
       nextContractEnd: undefined,
     }
+    let hasChanged = false
 
     if (reminder.reminder_type === 'payment_due') {
       if (daysRemaining <= 30 && !selected.nextPayment) {
         selected.nextPayment = reminder
+        hasChanged = true
       }
-    } else if (daysRemaining <= 90 && !selected.nextContractEnd) {
+    } else if (CONTRACT_END_REMINDER_TYPES.has(reminder.reminder_type) && daysRemaining <= 90 && !selected.nextContractEnd) {
       selected.nextContractEnd = reminder
+      hasChanged = true
     }
 
-    selectedByContract.set(reminder.contract_id, selected)
+    if (hasChanged) {
+      selectedByContract.set(reminder.contract_id, selected)
+    }
   }
 
   const reminders: ContractReminderView[] = []
