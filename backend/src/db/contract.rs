@@ -4,6 +4,7 @@ use sqlx::PgPool;
 use sqlx::types::Decimal;
 use uuid::Uuid;
 
+use crate::db::document::DocumentRow;
 use crate::domain::reminders::{ContractReminderSpec, ReminderKind, compute_reminders};
 use crate::errors::AppResult;
 
@@ -235,6 +236,106 @@ pub async fn acknowledge_reminder(
         reminder_id, contract_id, building_id
     ).execute(pool).await?;
     Ok(())
+}
+
+pub async fn list_documents(
+    pool: &PgPool,
+    contract_id: Uuid,
+    building_id: Uuid,
+) -> AppResult<Vec<DocumentRow>> {
+    Ok(sqlx::query_as::<_, DocumentRow>(
+        r#"
+        SELECT d.id,
+               d.building_id,
+               d.original_name,
+               d.storage_path,
+               d.bucket,
+               d.mime_type,
+               d.size_bytes,
+               d.uploaded_by,
+               d.extraction_status::text AS extraction_status,
+               d.visible_to_roles::text[] AS visible_roles,
+               d.created_at
+        FROM contract_document cd
+        JOIN vendor_contract vc ON vc.id = cd.contract_id
+        JOIN document d ON d.id = cd.document_id
+        WHERE cd.contract_id = $1
+          AND vc.building_id = $2
+        ORDER BY d.created_at DESC
+        "#,
+    )
+    .bind(contract_id)
+    .bind(building_id)
+    .fetch_all(pool)
+    .await?)
+}
+
+pub async fn attach_document(
+    pool: &PgPool,
+    contract_id: Uuid,
+    document_id: Uuid,
+    building_id: Uuid,
+) -> AppResult<bool> {
+    let pair_exists = sqlx::query_scalar::<_, bool>(
+        r#"
+        SELECT EXISTS(
+            SELECT 1
+            FROM vendor_contract vc
+            JOIN document d ON d.id = $2
+            WHERE vc.id = $1
+              AND vc.building_id = $3
+              AND d.building_id = $3
+        )
+        "#,
+    )
+    .bind(contract_id)
+    .bind(document_id)
+    .bind(building_id)
+    .fetch_one(pool)
+    .await?;
+
+    if !pair_exists {
+        return Ok(false);
+    }
+
+    sqlx::query(
+        r#"
+        INSERT INTO contract_document (contract_id, document_id)
+        VALUES ($1, $2)
+        ON CONFLICT (contract_id, document_id) DO NOTHING
+        "#,
+    )
+    .bind(contract_id)
+    .bind(document_id)
+    .execute(pool)
+    .await?;
+
+    Ok(true)
+}
+
+pub async fn detach_document(
+    pool: &PgPool,
+    contract_id: Uuid,
+    document_id: Uuid,
+    building_id: Uuid,
+) -> AppResult<bool> {
+    let result = sqlx::query(
+        r#"
+        DELETE FROM contract_document cd
+        USING vendor_contract vc
+        WHERE cd.contract_id = $1
+          AND cd.document_id = $2
+          AND vc.id = cd.contract_id
+          AND vc.building_id = $3
+        "#,
+    )
+    .bind(contract_id)
+    .bind(document_id)
+    .bind(building_id)
+    .execute(pool)
+    .await?;
+
+    Ok(result.rows_affected() > 0)
 }
 
 fn frequency_to_months(p: Option<&str>) -> Option<u32> {

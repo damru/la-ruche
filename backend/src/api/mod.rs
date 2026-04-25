@@ -159,6 +159,14 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
             "/contracts/{id}/reminders/{rid}/acknowledge",
             put(contracts::acknowledge_reminder),
         )
+        .route(
+            "/contracts/{id}/documents",
+            get(contracts::list_documents).post(contracts::attach_document),
+        )
+        .route(
+            "/contracts/{id}/documents/{document_id}",
+            delete(contracts::detach_document),
+        )
         // ── Tasks ───────────────────────────────────────────────
         .route("/tasks", get(tasks::list).post(tasks::create))
         .route("/tasks/{id}", get(tasks::get).put(tasks::update))
