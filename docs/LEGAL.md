@@ -258,7 +258,7 @@ Chaque copropriétaire doit pouvoir consulter le détail de ses charges sur l'ex
 **Référence :** Art. 9-1 loi 1965 (ALUR)  
 **Couverture :** ⚠️ assistance documentaire — EP-006-S05
 
-L'assurance est obligatoire depuis ALUR 2014. l'Application peut stocker le contrat, regrouper ses pièces justificatives et alerter sur l'échéance.
+L'assurance est obligatoire depuis ALUR 2014. L'Application peut stocker le contrat, regrouper ses pièces justificatives et alerter sur l'échéance.
 
 ---
 
