@@ -59,6 +59,23 @@ const pendingReminders = computed(() =>
     .sort((left, right) => left.reminder_date.localeCompare(right.reminder_date)),
 )
 
+const pendingRemindersByContract = computed(() => {
+  const remindersByContract = new Map<string, ContractReminder[]>()
+
+  for (const reminder of pendingReminders.value) {
+    const contractReminders = remindersByContract.get(reminder.contract_id)
+
+    if (contractReminders) {
+      contractReminders.push(reminder)
+      continue
+    }
+
+    remindersByContract.set(reminder.contract_id, [reminder])
+  }
+
+  return remindersByContract
+})
+
 function todayIso(): string {
   const today = new Date()
   const year = today.getFullYear()
@@ -83,10 +100,6 @@ function statusVariant(status: ContractStatus): 'open' | 'pending' | 'closed' | 
   if (status === 'active') return 'open'
   if (status === 'terminated' || status === 'expired') return 'closed'
   return 'default'
-}
-
-function reminderFor(contractId: string) {
-  return pendingReminders.value.filter(reminder => reminder.contract_id === contractId)
 }
 
 function freqLabel(freq?: string): string {
@@ -408,11 +421,11 @@ async function terminateContract(contract: VendorContract) {
             </div>
 
             <div
-              v-if="reminderFor(contract.id).length"
+              v-if="pendingRemindersByContract.get(contract.id)?.length"
               class="contract-reminders"
             >
               <CBadge
-                v-for="reminder in reminderFor(contract.id)"
+                v-for="reminder in pendingRemindersByContract.get(contract.id)"
                 :key="reminder.id"
                 variant="pending"
               >
