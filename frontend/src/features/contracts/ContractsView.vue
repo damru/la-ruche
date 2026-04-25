@@ -119,19 +119,18 @@ const visibleReminderViews = computed<ContractReminderView[]>(() => {
 
   for (const reminder of pendingReminderViews.value) {
     const daysRemaining = daysUntil(reminder.targetDate)
-    if (!selectedByContract.has(reminder.contract_id)) {
-      selectedByContract.set(reminder.contract_id, {
+    let selected = selectedByContract.get(reminder.contract_id)
+    if (!selected) {
+      selected = {
         nextPayment: undefined,
         nextContractEnd: undefined,
-      })
+      }
+      selectedByContract.set(reminder.contract_id, selected)
     }
-
-    const selected = selectedByContract.get(reminder.contract_id)!
 
     if (reminder.reminder_type === 'payment_due') {
       if (daysRemaining <= PAYMENT_REMINDER_DAYS_THRESHOLD && !selected.nextPayment) {
         selected.nextPayment = reminder
-        selectedByContract.set(reminder.contract_id, selected)
       }
       continue
     }
@@ -142,7 +141,6 @@ const visibleReminderViews = computed<ContractReminderView[]>(() => {
       && !selected.nextContractEnd
     ) {
       selected.nextContractEnd = reminder
-      selectedByContract.set(reminder.contract_id, selected)
     }
   }
 
