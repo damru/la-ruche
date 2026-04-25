@@ -102,7 +102,10 @@ const visibleReminderViews = computed<ContractReminderView[]>(() => {
     const daysRemaining = daysUntil(reminder.targetDate)
     if (daysRemaining < 0) continue
 
-    const selected = selectedByContract.get(reminder.contract_id) ?? {}
+    const selected = selectedByContract.get(reminder.contract_id) ?? {
+      nextPayment: undefined,
+      nextContractEnd: undefined,
+    }
 
     if (reminder.reminder_type === 'payment_due') {
       if (daysRemaining <= 30 && !selected.nextPayment) {
@@ -115,10 +118,14 @@ const visibleReminderViews = computed<ContractReminderView[]>(() => {
     selectedByContract.set(reminder.contract_id, selected)
   }
 
-  return [...selectedByContract.values()]
-    .flatMap(selected => [selected.nextPayment, selected.nextContractEnd])
-    .filter((reminder): reminder is ContractReminderView => !!reminder)
-    .sort((left, right) => left.targetDate.localeCompare(right.targetDate))
+  const reminders: ContractReminderView[] = []
+
+  for (const selected of selectedByContract.values()) {
+    if (selected.nextPayment) reminders.push(selected.nextPayment)
+    if (selected.nextContractEnd) reminders.push(selected.nextContractEnd)
+  }
+
+  return reminders.sort((left, right) => left.targetDate.localeCompare(right.targetDate))
 })
 
 const pendingRemindersByContract = computed(() => {
