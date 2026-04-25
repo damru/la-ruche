@@ -58,16 +58,18 @@ const form = ref<ContractFormState>(defaultFormState())
 
 const isEditing = computed(() => !!props.contract?.id)
 
-const contractTypeOptions = computed(() => [
-  { value: 'maintenance', label: t('contracts.types.maintenance') },
-  { value: 'insurance', label: t('contracts.types.insurance') },
-  { value: 'service', label: t('contracts.types.service') },
-  { value: 'energy', label: t('contracts.types.energy') },
-  { value: 'water', label: t('contracts.types.water') },
-  { value: 'cleaning', label: t('contracts.types.cleaning') },
-  { value: 'green_spaces', label: t('contracts.types.green_spaces') },
-  { value: 'other', label: t('contracts.types.other') },
-])
+const contractTypeOptions = computed(() =>
+  [
+    { value: 'maintenance', label: t('contracts.types.maintenance') },
+    { value: 'insurance', label: t('contracts.types.insurance') },
+    { value: 'service', label: t('contracts.types.service') },
+    { value: 'energy', label: t('contracts.types.energy') },
+    { value: 'water', label: t('contracts.types.water') },
+    { value: 'cleaning', label: t('contracts.types.cleaning') },
+    { value: 'green_spaces', label: t('contracts.types.green_spaces') },
+    { value: 'other', label: t('contracts.types.other') },
+  ].sort((left, right) => left.label.localeCompare(right.label, 'fr')),
+)
 
 const paymentFrequencyOptions = computed(() => [
   { value: 'monthly', label: t('contracts.frequencies.monthly') },
