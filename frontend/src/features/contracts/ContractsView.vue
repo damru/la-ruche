@@ -67,10 +67,9 @@ const pendingRemindersByContract = computed(() => {
 
     if (contractReminders) {
       contractReminders.push(reminder)
-      continue
+    } else {
+      remindersByContract.set(reminder.contract_id, [reminder])
     }
-
-    remindersByContract.set(reminder.contract_id, [reminder])
   }
 
   return remindersByContract
