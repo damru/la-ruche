@@ -42,19 +42,19 @@ pub async fn list(
                   d.size_bytes,
                   d.visible_to_roles::text[] AS visible_roles,
                   COALESCE(
-                      (
-                          SELECT array_agg(DISTINCT vc.vendor_name ORDER BY vc.vendor_name)
-                          FROM contract_document cd
-                          JOIN vendor_contract vc ON vc.id = cd.contract_id
-                          WHERE cd.document_id = d.id
-                            AND vc.building_id = $1
+                      array_remove(
+                          array_agg(DISTINCT vc.vendor_name ORDER BY vc.vendor_name),
+                          NULL
                       ),
                       ARRAY[]::text[]
                   ) AS linked_contract_names,
                   d.created_at
            FROM document d
+           LEFT JOIN contract_document cd ON cd.document_id = d.id
+           LEFT JOIN vendor_contract vc ON vc.id = cd.contract_id AND vc.building_id = $1
            WHERE d.building_id = $1
-             AND d.visible_to_roles::text[] && $2
+              AND d.visible_to_roles::text[] && $2
+           GROUP BY d.id, d.original_name, d.mime_type, d.size_bytes, d.visible_to_roles, d.created_at
            ORDER BY d.created_at DESC"#,
     )
     .bind(building_id)
