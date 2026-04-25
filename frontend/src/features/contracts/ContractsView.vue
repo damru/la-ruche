@@ -30,6 +30,14 @@ interface ContractReminderView extends ContractReminder {
   daysLabel: string
 }
 
+interface SelectedReminders {
+  nextPayment?: ContractReminderView
+  nextContractEnd?: ContractReminderView
+}
+
+const PAYMENT_REMINDER_DAYS_THRESHOLD = 30
+const CONTRACT_END_REMINDER_DAYS_THRESHOLD = 90
+
 const CONTRACT_END_REMINDER_TYPES = new Set<ContractReminder['reminder_type']>([
   'renewal',
   'expiration',
@@ -103,10 +111,7 @@ const pendingReminderViews = computed<ContractReminderView[]>(() =>
 )
 
 const visibleReminderViews = computed<ContractReminderView[]>(() => {
-  const selectedByContract = new Map<string, {
-    nextPayment?: ContractReminderView
-    nextContractEnd?: ContractReminderView
-  }>()
+  const selectedByContract = new Map<string, SelectedReminders>()
 
   for (const reminder of pendingReminderViews.value) {
     const daysRemaining = daysUntil(reminder.targetDate)
@@ -118,14 +123,18 @@ const visibleReminderViews = computed<ContractReminderView[]>(() => {
     }
 
     if (reminder.reminder_type === 'payment_due') {
-      if (daysRemaining <= 30 && !selected.nextPayment) {
+      if (daysRemaining <= PAYMENT_REMINDER_DAYS_THRESHOLD && !selected.nextPayment) {
         selected.nextPayment = reminder
         selectedByContract.set(reminder.contract_id, selected)
       }
       continue
     }
 
-    if (isContractEndReminder(reminder.reminder_type) && daysRemaining <= 90 && !selected.nextContractEnd) {
+    if (
+      isContractEndReminder(reminder.reminder_type)
+      && daysRemaining <= CONTRACT_END_REMINDER_DAYS_THRESHOLD
+      && !selected.nextContractEnd
+    ) {
       selected.nextContractEnd = reminder
       selectedByContract.set(reminder.contract_id, selected)
     }
