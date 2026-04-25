@@ -8,9 +8,10 @@ import CCard from '@/components/molecules/CCard.vue'
 import CPageError from '@/components/molecules/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
-import CIconCheckCircle from '@/components/atoms/CIconCheckCircle.svg'
 import CIconFile from '@/components/atoms/CIconFile.svg'
-import CIconLock from '@/components/atoms/CIconLock.svg'
+import CIconLayers from '@/components/atoms/CIconLayers.svg'
+import CIconSettings from '@/components/atoms/CIconSettings.svg'
+import CIconShield from '@/components/atoms/CIconShield.svg'
 import CIconWrench from '@/components/atoms/CIconWrench.svg'
 import { buildingApi, contractsApi } from '@/api'
 import ContractDocumentsModal from '@/features/contracts/ContractDocumentsModal.vue'
@@ -108,11 +109,22 @@ function freqLabel(freq?: string): string {
 function contractTypeIcon(type: ContractType) {
   const icons = {
     maintenance: CIconWrench,
-    insurance: CIconLock,
-    service: CIconCheckCircle,
-    other: CIconFile,
+    insurance: CIconShield,
+    service: CIconSettings,
+    other: CIconLayers,
   }
   return icons[type] ?? CIconFile
+}
+
+function contractTypeTone(type: ContractType) {
+  const tones = {
+    maintenance: 'tone--warn',
+    insurance: 'tone--accent',
+    service: 'tone--valid',
+    other: 'tone--default',
+  }
+
+  return tones[type] ?? 'tone--default'
 }
 
 const contracts = computed(() => {
@@ -336,11 +348,13 @@ async function terminateContract(contract: VendorContract) {
           >
             <div class="contract-header">
               <div class="contract-type">
-                <component
-                  :is="contractTypeIcon(contract.contract_type)"
-                  class="type-icon"
-                  aria-hidden="true"
-                />
+                <div :class="['contract-type__icon', contractTypeTone(contract.contract_type)]">
+                  <component
+                    :is="contractTypeIcon(contract.contract_type)"
+                    class="type-icon"
+                    aria-hidden="true"
+                  />
+                </div>
                 <div class="contract-type__meta">
                   <CBadge
                     variant="default"
@@ -354,36 +368,6 @@ async function terminateContract(contract: VendorContract) {
                     {{ t(`contracts.statuses.${effectiveStatus(contract)}`) }}
                   </CBadge>
                 </div>
-              </div>
-
-              <div class="contract-actions">
-                <CBtn
-                  variant="ghost"
-                  size="sm"
-                  @click="openEditModal(contract)"
-                >
-                  <CIconEdit />
-                  {{ t('common.edit') }}
-                </CBtn>
-                <CBtn
-                  variant="secondary"
-                  size="sm"
-                  @click="openDocumentsModal(contract)"
-                >
-                  <CIconFile />
-                  {{ t('contracts.documents.manage') }}
-                </CBtn>
-                <CBtn
-                  v-if="effectiveStatus(contract) === 'active'"
-                  variant="danger"
-                  size="sm"
-                  :loading="busyKey === `contract:${contract.id}`"
-                  :disabled="busyKey === `contract:${contract.id}`"
-                  @click="terminateContract(contract)"
-                >
-                  <CIconArchive />
-                  {{ t('contracts.terminate') }}
-                </CBtn>
               </div>
             </div>
 
@@ -446,6 +430,36 @@ async function terminateContract(contract: VendorContract) {
                 :href="`tel:${contract.vendor_phone}`"
                 class="contact-link"
               >{{ contract.vendor_phone }}</a>
+            </div>
+
+            <div class="contract-actions">
+              <CBtn
+                variant="ghost"
+                size="sm"
+                @click="openEditModal(contract)"
+              >
+                <CIconEdit />
+                {{ t('common.edit') }}
+              </CBtn>
+              <CBtn
+                variant="secondary"
+                size="sm"
+                @click="openDocumentsModal(contract)"
+              >
+                <CIconFile />
+                {{ t('contracts.documents.manage') }}
+              </CBtn>
+              <CBtn
+                v-if="effectiveStatus(contract) === 'active'"
+                variant="danger"
+                size="sm"
+                :loading="busyKey === `contract:${contract.id}`"
+                :disabled="busyKey === `contract:${contract.id}`"
+                @click="terminateContract(contract)"
+              >
+                <CIconArchive />
+                {{ t('contracts.terminate') }}
+              </CBtn>
             </div>
           </CCard>
         </div>
@@ -528,20 +542,31 @@ async function terminateContract(contract: VendorContract) {
 }
 
 .contract-card { display: flex; flex-direction: column; gap: 10px; }
-.contract-header { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); }
+.contract-header { display: flex; align-items: flex-start; gap: var(--space-3); }
 .contract-type { display: flex; align-items: center; gap: var(--space-3); }
 .contract-type__meta { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.contract-type__icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: var(--tone-bg, var(--color-secondary-container));
+  color: var(--tone-fg, var(--color-primary));
+}
 .type-icon {
-  width: 20px;
-  height: 20px;
-  color: var(--color-primary);
+  width: 24px;
+  height: 24px;
   flex-shrink: 0;
 }
 .contract-actions {
   display: flex;
   gap: var(--space-2);
   flex-wrap: wrap;
-  justify-content: flex-end;
+  margin-top: auto;
+  padding-top: var(--space-3);
 }
 .vendor-name { margin: 0; }
 .contract-subject { color: var(--color-on-surface-variant); }

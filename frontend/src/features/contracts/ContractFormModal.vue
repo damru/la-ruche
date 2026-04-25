@@ -264,7 +264,7 @@ async function saveContract() {
       </div>
 
       <div class="contract-form__renewal">
-        <label class="contract-form__checkbox">
+        <label class="checkbox-label contract-form__checkbox">
           <input
             v-model="form.auto_renewal"
             type="checkbox"
@@ -340,17 +340,7 @@ async function saveContract() {
 }
 
 .contract-form__checkbox {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
   font-weight: var(--fw-medium);
-  color: var(--color-on-surface);
-}
-
-.contract-form__checkbox input {
-  width: 16px;
-  height: 16px;
-  accent-color: var(--color-primary);
 }
 
 @media (max-width: 720px) {
