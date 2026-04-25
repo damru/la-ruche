@@ -355,19 +355,19 @@ async function terminateContract(contract: VendorContract) {
                     aria-hidden="true"
                   />
                 </div>
-                <div class="contract-type__meta">
-                  <CBadge
-                    variant="default"
-                  >
-                    {{ t(`contracts.types.${contract.contract_type}`) }}
-                  </CBadge>
-                  <CBadge
-                    :variant="statusVariant(effectiveStatus(contract))"
-                    dot
-                  >
-                    {{ t(`contracts.statuses.${effectiveStatus(contract)}`) }}
-                  </CBadge>
-                </div>
+              </div>
+              <div class="contract-header__chips">
+                <CBadge
+                  variant="default"
+                >
+                  {{ t(`contracts.types.${contract.contract_type}`) }}
+                </CBadge>
+                <CBadge
+                  :variant="statusVariant(effectiveStatus(contract))"
+                  dot
+                >
+                  {{ t(`contracts.statuses.${effectiveStatus(contract)}`) }}
+                </CBadge>
               </div>
             </div>
 
@@ -412,7 +412,7 @@ async function terminateContract(contract: VendorContract) {
                 :key="reminder.id"
                 variant="pending"
               >
-                {{ t(`contracts.reminderTypes.${reminder.reminder_type}`) }} — {{ formatDate(reminder.reminder_date) }}
+                🔔 {{ t(`contracts.reminderTypes.${reminder.reminder_type}`) }} — {{ formatDate(reminder.reminder_date) }}
               </CBadge>
             </div>
 
@@ -542,9 +542,9 @@ async function terminateContract(contract: VendorContract) {
 }
 
 .contract-card { display: flex; flex-direction: column; gap: 10px; }
-.contract-header { display: flex; align-items: flex-start; gap: var(--space-3); }
+.contract-header { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); }
 .contract-type { display: flex; align-items: center; gap: var(--space-3); }
-.contract-type__meta { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.contract-header__chips { display: flex; flex-wrap: wrap; gap: var(--space-2); justify-content: flex-end; }
 .contract-type__icon {
   width: 48px;
   height: 48px;
@@ -587,10 +587,25 @@ async function terminateContract(contract: VendorContract) {
   }
 
   .contract-header {
-    flex-direction: column;
+    flex-direction: row;
+    align-items: flex-start;
+  }
+
+  .contract-header__chips {
+    justify-content: flex-end;
   }
 
   .contract-actions {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 640px) {
+  .contract-header {
+    flex-direction: column;
+  }
+
+  .contract-header__chips {
     justify-content: flex-start;
   }
 }

@@ -210,7 +210,10 @@ async function detachDocument(documentId: string, originalName: string) {
           >
             <div class="documents-modal__meta">
               <div class="documents-modal__name">
-                <CIconFile aria-hidden="true" />
+                <CIconFile
+                  class="documents-modal__file-icon"
+                  aria-hidden="true"
+                />
                 <span>{{ document.original_name }}</span>
               </div>
               <div class="documents-modal__details">
@@ -330,6 +333,13 @@ async function detachDocument(documentId: string, originalName: string) {
   gap: var(--space-2);
   min-width: 0;
   font-weight: var(--fw-medium);
+}
+
+.documents-modal__file-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  color: var(--color-primary);
 }
 
 .documents-modal__name span {

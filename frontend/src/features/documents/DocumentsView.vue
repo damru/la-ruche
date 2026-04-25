@@ -378,6 +378,10 @@ async function deleteDoc(id: string) {
 .roles-list { display: flex; flex-wrap: wrap; gap: var(--space-1); }
 
 .action-btns { display: flex; gap: var(--space-1); }
+.action-btns .icon-btn {
+  min-width: 36px;
+  min-height: 36px;
+}
 
 .empty-state { padding: var(--space-8); text-align: center; font-size: var(--text-md); color: var(--color-on-surface-variant); }
 
@@ -396,4 +400,12 @@ async function deleteDoc(id: string) {
 .selected-file { color: var(--color-on-surface); font-weight: var(--fw-medium); }
 .visibility-section { display: flex; flex-direction: column; gap: var(--space-2); }
 .role-checkboxes { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+
+@media (max-width: 640px) {
+  .action-btns .icon-btn {
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0;
+  }
+}
 </style>
