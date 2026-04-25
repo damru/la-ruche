@@ -17,6 +17,7 @@ const { state, respond } = useConfirm()
     :open="state !== null"
     :title="state?.title ?? ''"
     size="sm"
+    :stack="20"
     :closable="false"
     @update:open="!$event && respond(false)"
   >

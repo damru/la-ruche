@@ -38,6 +38,7 @@ pub struct DocumentListItem {
     pub mime_type: String,
     pub size_bytes: i64,
     pub visible_roles: Vec<String>,
+    pub linked_contract_names: Vec<String>,
     pub created_at: chrono::DateTime<chrono::Utc>,
 }
 
@@ -49,6 +50,7 @@ impl From<db::document::DocumentListRow> for DocumentListItem {
             mime_type: document.mime_type,
             size_bytes: document.size_bytes,
             visible_roles: document.visible_roles,
+            linked_contract_names: document.linked_contract_names,
             created_at: document.created_at,
         }
     }

@@ -286,6 +286,16 @@ pub async fn list_documents(
                d.mime_type,
                d.size_bytes,
                d.visible_to_roles::text[] AS visible_roles,
+               COALESCE(
+                   (
+                       SELECT array_agg(DISTINCT vc_link.vendor_name ORDER BY vc_link.vendor_name)
+                       FROM contract_document cd_link
+                       JOIN vendor_contract vc_link ON vc_link.id = cd_link.contract_id
+                       WHERE cd_link.document_id = d.id
+                         AND vc_link.building_id = $2
+                   ),
+                   ARRAY[]::text[]
+               ) AS linked_contract_names,
                d.created_at
         FROM contract_document cd
         JOIN vendor_contract vc ON vc.id = cd.contract_id

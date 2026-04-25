@@ -165,6 +165,7 @@ export interface Document {
   mime_type: string
   size_bytes: number
   visible_roles: Role[]
+  linked_contract_names?: string[]
   created_at: string
 }
 

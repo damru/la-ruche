@@ -26,6 +26,7 @@ pub struct DocumentListRow {
     pub mime_type: String,
     pub size_bytes: i64,
     pub visible_roles: Vec<String>,
+    pub linked_contract_names: Vec<String>,
     pub created_at: DateTime<Utc>,
 }
 
@@ -35,13 +36,26 @@ pub async fn list(
     roles: &[String],
 ) -> AppResult<Vec<DocumentListRow>> {
     Ok(sqlx::query_as::<_, DocumentListRow>(
-        r#"SELECT id, original_name, mime_type, size_bytes,
-           visible_to_roles::text[] AS visible_roles,
-           created_at
-           FROM document
-           WHERE building_id = $1
-           AND visible_to_roles::text[] && $2
-           ORDER BY created_at DESC"#,
+        r#"SELECT d.id,
+                  d.original_name,
+                  d.mime_type,
+                  d.size_bytes,
+                  d.visible_to_roles::text[] AS visible_roles,
+                  COALESCE(
+                      (
+                          SELECT array_agg(DISTINCT vc.vendor_name ORDER BY vc.vendor_name)
+                          FROM contract_document cd
+                          JOIN vendor_contract vc ON vc.id = cd.contract_id
+                          WHERE cd.document_id = d.id
+                            AND vc.building_id = $1
+                      ),
+                      ARRAY[]::text[]
+                  ) AS linked_contract_names,
+                  d.created_at
+           FROM document d
+           WHERE d.building_id = $1
+             AND d.visible_to_roles::text[] && $2
+           ORDER BY d.created_at DESC"#,
     )
     .bind(building_id)
     .bind(roles)

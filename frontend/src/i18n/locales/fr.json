@@ -490,7 +490,8 @@
     "reminders": {
       "acknowledge": "Acquitter",
       "acknowledgeError": "Impossible d'acquitter ce rappel.",
-      "empty": "Aucun rappel en attente."
+      "empty": "Aucun rappel en attente.",
+      "dueNow": "échéance atteinte"
     },
     "reminderTypes": {
       "renewal": "Reconduction",
@@ -563,7 +564,8 @@
     "uploadFailed": "Impossible de déposer le fichier sur le stockage.",
     "downloadNewTab": "Télécharger le document (ouvre dans un nouvel onglet)",
     "confirmDeleteTitle": "Supprimer le document",
-    "confirmDeleteMessage": "Le document « {name} » sera supprimé définitivement. Cette action est irréversible."
+    "confirmDeleteMessage": "Le document « {name} » sera supprimé définitivement. Cette action est irréversible.",
+    "confirmDeleteLinkedMessage": "Le document « {name} » est actuellement lié aux contrats suivants : {links}. Il sera détaché de ces contrats puis supprimé définitivement. Cette action est irréversible."
   },
   "consultations": {
     "title": "Consultations",

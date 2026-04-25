@@ -96,6 +96,18 @@ function reminderUrgency(dateStr: string): 'high' | 'medium' | 'low' {
   return d <= 15 ? 'high' : d <= 45 ? 'medium' : 'low'
 }
 
+function reminderTargetDate(reminder: ContractReminder): string {
+  if (reminder.reminder_type === 'payment_due') return reminder.reminder_date
+  return contractsById.value.get(reminder.contract_id)?.end_date ?? reminder.reminder_date
+}
+
+function reminderDaysLabel(reminder: ContractReminder): string {
+  const remainingDays = daysUntil(reminderTargetDate(reminder))
+  return remainingDays > 0
+    ? t('format.daysLeft', { days: remainingDays })
+    : t('contracts.reminders.dueNow')
+}
+
 function statusVariant(status: ContractStatus): 'open' | 'pending' | 'closed' | 'default' {
   if (status === 'active') return 'open'
   if (status === 'terminated' || status === 'expired') return 'closed'
@@ -273,7 +285,7 @@ async function terminateContract(contract: VendorContract) {
               v-for="reminder in pendingReminders"
               :key="reminder.id"
               class="reminder-row"
-              :class="`reminder-row--${reminderUrgency(reminder.reminder_date)}`"
+              :class="`reminder-row--${reminderUrgency(reminderTargetDate(reminder))}`"
             >
               <div class="reminder-dot"></div>
               <div class="reminder-info">
@@ -282,12 +294,12 @@ async function terminateContract(contract: VendorContract) {
                   {{ t(`contracts.reminderTypes.${reminder.reminder_type}`) }}
                 </span>
               </div>
-              <span class="reminder-date">{{ formatDate(reminder.reminder_date) }}</span>
+              <span class="reminder-date">{{ formatDate(reminderTargetDate(reminder)) }}</span>
               <span
                 class="reminder-days"
-                :class="`urgency-${reminderUrgency(reminder.reminder_date)}`"
+                :class="`urgency-${reminderUrgency(reminderTargetDate(reminder))}`"
               >
-                {{ t('format.daysLeft', { days: daysUntil(reminder.reminder_date) }) }}
+                {{ reminderDaysLabel(reminder) }}
               </span>
               <CBtn
                 variant="secondary"
@@ -412,7 +424,7 @@ async function terminateContract(contract: VendorContract) {
                 :key="reminder.id"
                 variant="pending"
               >
-                🔔 {{ t(`contracts.reminderTypes.${reminder.reminder_type}`) }} — {{ formatDate(reminder.reminder_date) }}
+                🔔 {{ t(`contracts.reminderTypes.${reminder.reminder_type}`) }} — {{ formatDate(reminderTargetDate(reminder)) }}
               </CBadge>
             </div>
 
@@ -543,8 +555,16 @@ async function terminateContract(contract: VendorContract) {
 
 .contract-card { display: flex; flex-direction: column; gap: 10px; }
 .contract-header { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); }
-.contract-type { display: flex; align-items: center; gap: var(--space-3); }
-.contract-header__chips { display: flex; flex-wrap: wrap; gap: var(--space-2); justify-content: flex-end; }
+.contract-type { display: flex; align-items: center; gap: var(--space-3); flex-shrink: 0; }
+.contract-header__chips {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  justify-content: flex-end;
+  margin-left: auto;
+}
 .contract-type__icon {
   width: 48px;
   height: 48px;
@@ -600,13 +620,4 @@ async function terminateContract(contract: VendorContract) {
   }
 }
 
-@media (max-width: 640px) {
-  .contract-header {
-    flex-direction: column;
-  }
-
-  .contract-header__chips {
-    justify-content: flex-start;
-  }
-}
 </style>

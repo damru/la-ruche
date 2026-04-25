@@ -3,6 +3,7 @@
 // Glassmorphism (backdrop-filter blur) — DDR-002
 // Accessibility: Radix Vue Dialog handles focus trap, aria, and escape
 
+import { computed } from 'vue'
 import { DialogRoot, DialogPortal, DialogOverlay, DialogContent, DialogTitle } from 'radix-vue'
 import { useI18n } from 'vue-i18n'
 
@@ -13,13 +14,19 @@ const props = withDefaults(defineProps<{
   title?: string
   size?: 'sm' | 'md' | 'lg'
   closable?: boolean
+  stack?: number
 }>(), {
   title: undefined,
   size: 'md',
   closable: true,
+  stack: 0,
 })
 
 const emit = defineEmits<{ 'update:open': [value: boolean] }>()
+
+const stackStyle = computed(() => ({
+  '--c-modal-stack': String(props.stack),
+}))
 
 function close() {
   if (props.closable) emit('update:open', false)
@@ -34,10 +41,12 @@ function close() {
     <DialogPortal>
       <DialogOverlay
         class="c-modal__overlay"
+        :style="stackStyle"
         @click="close"
       />
       <DialogContent
         :class="['c-modal__content', `c-modal__content--${size}`]"
+        :style="stackStyle"
         @escape-key-down="close"
         @pointer-down-outside="close"
       >
@@ -92,7 +101,7 @@ function close() {
   background: rgba(25, 28, 29, 0.4);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
-  z-index: var(--z-overlay);
+  z-index: calc(var(--z-overlay) + var(--c-modal-stack, 0));
   animation: c-overlay-in 0.2s ease;
 }
 
@@ -105,7 +114,7 @@ function close() {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  z-index: var(--z-modal);
+  z-index: calc(var(--z-modal) + var(--c-modal-stack, 0));
 
   /* Glassmorphism */
   background: rgba(255, 255, 255, 0.85);
