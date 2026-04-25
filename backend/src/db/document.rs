@@ -97,14 +97,14 @@ pub async fn delete(
 ) -> AppResult<Option<(String, String)>> {
     let row = sqlx::query_as::<_, (String, String)>(
         r#"
-        WITH deleted_links AS (
-            DELETE FROM contract_document
-            WHERE document_id = $1
-        ),
-        deleted_document AS (
+        WITH deleted_document AS (
             DELETE FROM document
             WHERE id = $1 AND building_id = $2
-            RETURNING bucket, storage_path
+            RETURNING id, bucket, storage_path
+        ),
+        deleted_links AS (
+            DELETE FROM contract_document
+            WHERE document_id IN (SELECT id FROM deleted_document)
         )
         SELECT bucket, storage_path
         FROM deleted_document
