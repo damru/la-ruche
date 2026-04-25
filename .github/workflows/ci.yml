@@ -169,6 +169,7 @@ jobs:
           images: ${{ vars.DOCKERHUB_USERNAME }}/${{ vars.DOCKERHUB_PROJECT }}
           tags: |
             type=ref,event=branch
+            type=ref,event=branch,suffix=.{{date 'YYYYMMDDHHmmss'}}
             type=ref,event=pr
             type=schedule,pattern=nightly
             type=schedule,pattern={{date 'YYYYMMDD'}}
