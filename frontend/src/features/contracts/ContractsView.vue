@@ -295,6 +295,7 @@ async function terminateContract(contract: VendorContract) {
             <input
               v-model="search"
               type="search"
+              :aria-label="t('contracts.searchPlaceholder')"
               :placeholder="t('contracts.searchPlaceholder')"
               class="search-input"
             />
