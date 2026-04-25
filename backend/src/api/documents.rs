@@ -41,8 +41,8 @@ pub struct DocumentListItem {
     pub created_at: chrono::DateTime<chrono::Utc>,
 }
 
-impl From<db::document::DocumentRow> for DocumentListItem {
-    fn from(document: db::document::DocumentRow) -> Self {
+impl From<db::document::DocumentListRow> for DocumentListItem {
+    fn from(document: db::document::DocumentListRow) -> Self {
         Self {
             id: document.id,
             original_name: document.original_name,

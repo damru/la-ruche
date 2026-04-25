@@ -19,15 +19,23 @@ pub struct DocumentRow {
     pub created_at: DateTime<Utc>,
 }
 
+#[derive(Debug, Serialize, sqlx::FromRow)]
+pub struct DocumentListRow {
+    pub id: Uuid,
+    pub original_name: String,
+    pub mime_type: String,
+    pub size_bytes: i64,
+    pub visible_roles: Vec<String>,
+    pub created_at: DateTime<Utc>,
+}
+
 pub async fn list(
     pool: &PgPool,
     building_id: Uuid,
     roles: &[String],
-) -> AppResult<Vec<DocumentRow>> {
-    Ok(sqlx::query_as::<_, DocumentRow>(
-        r#"SELECT id, building_id, original_name, storage_path, bucket,
-           mime_type, size_bytes, uploaded_by,
-           extraction_status::text AS extraction_status,
+) -> AppResult<Vec<DocumentListRow>> {
+    Ok(sqlx::query_as::<_, DocumentListRow>(
+        r#"SELECT id, original_name, mime_type, size_bytes,
            visible_to_roles::text[] AS visible_roles,
            created_at
            FROM document

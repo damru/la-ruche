@@ -4,7 +4,7 @@ use sqlx::PgPool;
 use sqlx::types::Decimal;
 use uuid::Uuid;
 
-use crate::db::document::DocumentRow;
+use crate::db::document::DocumentListRow;
 use crate::domain::reminders::{ContractReminderSpec, ReminderKind, compute_reminders};
 use crate::errors::AppResult;
 
@@ -278,18 +278,13 @@ pub async fn list_documents(
     contract_id: Uuid,
     building_id: Uuid,
     roles: &[String],
-) -> AppResult<Vec<DocumentRow>> {
-    Ok(sqlx::query_as::<_, DocumentRow>(
+) -> AppResult<Vec<DocumentListRow>> {
+    Ok(sqlx::query_as::<_, DocumentListRow>(
         r#"
         SELECT d.id,
-               d.building_id,
                d.original_name,
-               d.storage_path,
-               d.bucket,
                d.mime_type,
                d.size_bytes,
-               d.uploaded_by,
-               d.extraction_status::text AS extraction_status,
                d.visible_to_roles::text[] AS visible_roles,
                d.created_at
         FROM contract_document cd
