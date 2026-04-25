@@ -2,7 +2,7 @@
 
 > **Dénomination** — Dans le présent document, l'expression **« l'Application »** désigne exclusivement **La Ruche**, plateforme web open source de gestion participative de copropriété. Ces deux termes sont interchangeables et désignent la même entité logicielle.
 
-> Document vivant. Dernière mise à jour : 2026-04-24
+> Document vivant. Dernière mise à jour : 2026-04-25
 
 ---
 
@@ -174,6 +174,15 @@ HTTP → Tower (CORS, trace, timeout 30s)
 2. Backend → pre-signed PUT S3 (TTL 15min)
 3. Client → PUT direct S3 (jamais via le backend)
 4. Client → POST /api/v1/documents (confirme key + métadonnées)
+```
+
+### Pièce justificative d’un contrat
+```
+1. Client → POST /api/v1/documents/upload-url
+2. Client → PUT direct S3
+3. Client → POST /api/v1/documents (crée le document)
+4. Client → POST /api/v1/contracts/{id}/documents (associe la pièce au contrat)
+5. Client → GET /api/v1/contracts/{id}/documents (liste les pièces liées)
 ```
 
 ### Token prestataire

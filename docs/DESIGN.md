@@ -1,7 +1,7 @@
 # DESIGN.md — l'Application Design System "The Modern Registry"
 
 > **Dénomination** — Dans le présent document, l'expression **« l'Application »** désigne exclusivement **La Ruche**, plateforme web open source de gestion participative de copropriété. Ces deux termes sont interchangeables et désignent la même entité logicielle.
-> Dernière mise à jour : 2026 (post-étapes C–F)
+> Dernière mise à jour : 2026-04-25
 
 ## Typographie — 3 polices, 3 rôles (DDR-001 v3)
 
@@ -176,6 +176,12 @@ Template conditionnel obligatoire :
 Les appels non-critiques (données secondaires, endpoints optionnels) sont isolés dans un `try/catch` séparé après le `Promise.all` principal pour ne pas bloquer le chargement des données primaires.
 
 Références d'implémentation : `frontend/src/composables/usePageLoader.ts`, `frontend/src/components/molecules/CPageError.vue`, `frontend/src/components/molecules/CPageLoader.vue`.
+
+## Règle UI — Vue Contrats
+
+La vue `Contrats` affiche en tête les rappels à traiter, avec une action d’acquittement visible sans navigation secondaire.
+
+Les pièces justificatives d’un contrat restent regroupées dans une modale dédiée au contrat courant, afin de garder la liste principale lisible tout en laissant l’upload documentaire dans le même parcours.
 
 ## DDR
 | Ref | Décision |

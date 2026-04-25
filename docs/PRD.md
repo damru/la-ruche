@@ -6,7 +6,7 @@
 > Document produit. Vision, utilisateurs, fonctionnalités et contraintes centralisés ici.
 > Pour le backlog détaillé (epics, stories, statuts), voir [EPICS.md](EPICS.md).
 > Liens vers ADR/DDR pour les contraintes techniques associées.
-> Dernière mise à jour : 24 avril 2026
+> Dernière mise à jour : 25 avril 2026
 
 ---
 
@@ -48,7 +48,7 @@
 
 **Profil & préférences** — Chaque utilisateur gère ses informations personnelles, ses notifications et sa préférence d'apparence depuis son profil. Le thème peut être forcé en clair ou sombre, ou rester en mode automatique en suivant la préférence système de l'appareil. → DDR-004
 
-**Contrats fournisseurs** — Chaque contrat recense fournisseur, objet, dates, montant et périodicité. Les reconductions tacites et préavis sont configurables. Des rappels (reconduction, échéance, expiration, résiliation) sont calculés automatiquement et acquittables manuellement. → EP-006
+**Contrats fournisseurs** — Chaque contrat recense fournisseur, objet, dates, montant et périodicité. Les reconductions tacites et préavis sont configurables. Des rappels (reconduction, échéance, expiration, résiliation) sont calculés automatiquement et acquittables manuellement. Le contrat d’assurance multirisque immeuble peut en plus regrouper ses pièces justificatives dans le même espace de suivi. → EP-006
 
 **Tâches & Prestataires** — Les tâches sont assignées en interne avec priorité et statut. Un lien tokenisé éphémère permet aux prestataires externes d'accéder sans compte, de déposer photos et documents, et de clôturer la tâche. Les fichiers transitent par un bucket staging avant validation. → EP-007
 
@@ -149,5 +149,4 @@
 | Stockage | S3-compatible (MinIO self-hosted) | schéma DB |
 | Licence | AGPL-3.0 + licence commerciale | LICENSE, LICENSE-COMMERCIAL.md |
 | Déploiement | Docker Compose (backend + postgres + minio + caddy) | Dockerfile |
-
 
