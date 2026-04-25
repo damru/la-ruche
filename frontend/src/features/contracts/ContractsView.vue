@@ -36,6 +36,10 @@ const CONTRACT_END_REMINDER_TYPES = new Set<ContractReminder['reminder_type']>([
   'termination',
 ])
 
+function isContractEndReminder(reminderType: ContractReminder['reminder_type']): boolean {
+  return CONTRACT_END_REMINDER_TYPES.has(reminderType)
+}
+
 const { t } = useI18n()
 const { formatCurrency, formatDate, daysUntil } = useFormatters()
 const { confirm } = useConfirm()
@@ -112,19 +116,17 @@ const visibleReminderViews = computed<ContractReminderView[]>(() => {
       nextPayment: undefined,
       nextContractEnd: undefined,
     }
-    let hasChanged = false
 
     if (reminder.reminder_type === 'payment_due') {
       if (daysRemaining <= 30 && !selected.nextPayment) {
         selected.nextPayment = reminder
-        hasChanged = true
+        selectedByContract.set(reminder.contract_id, selected)
       }
-    } else if (CONTRACT_END_REMINDER_TYPES.has(reminder.reminder_type) && daysRemaining <= 90 && !selected.nextContractEnd) {
-      selected.nextContractEnd = reminder
-      hasChanged = true
+      continue
     }
 
-    if (hasChanged) {
+    if (isContractEndReminder(reminder.reminder_type) && daysRemaining <= 90 && !selected.nextContractEnd) {
+      selected.nextContractEnd = reminder
       selectedByContract.set(reminder.contract_id, selected)
     }
   }
