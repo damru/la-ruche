@@ -287,7 +287,6 @@ async function detachDocument(deleteDocument = false) {
     :stack="20"
     :closable="false"
     :title="t('contracts.documents.detachTitle')"
-    @update:open="!$event && closeDocumentActionModal()"
   >
     <div
       v-if="pendingDocument"
@@ -312,7 +311,6 @@ async function detachDocument(deleteDocument = false) {
       <CBtn
         variant="secondary"
         :loading="deleting"
-        :disabled="deleting"
         @click.stop="detachDocument(false)"
       >
         {{ t('contracts.documents.detachOnly') }}
@@ -320,7 +318,6 @@ async function detachDocument(deleteDocument = false) {
       <CBtn
         variant="danger"
         :loading="deleting"
-        :disabled="deleting"
         @click.stop="detachDocument(true)"
       >
         {{ t('contracts.documents.detachAndDelete') }}
