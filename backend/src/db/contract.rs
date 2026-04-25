@@ -289,7 +289,7 @@ pub async fn list_documents(
                d.size_bytes,
                d.uploaded_by,
                d.extraction_status::text AS extraction_status,
-               d.visible_to_roles::text[] AS visible_to_roles,
+               d.visible_to_roles::text[] AS visible_roles,
                d.created_at
         FROM contract_document cd
         JOIN vendor_contract vc ON vc.id = cd.contract_id
