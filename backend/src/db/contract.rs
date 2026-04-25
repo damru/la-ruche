@@ -56,6 +56,41 @@ pub async fn list(pool: &PgPool, building_id: Uuid) -> AppResult<Vec<VendorContr
     .await?)
 }
 
+pub async fn list_all_reminders(
+    pool: &PgPool,
+    building_id: Uuid,
+) -> AppResult<Vec<serde_json::Value>> {
+    let rows = sqlx::query!(
+        r#"
+        SELECT cr.id,
+               cr.contract_id,
+               cr.reminder_type::text as reminder_type,
+               cr.reminder_date,
+               cr.status::text as status
+        FROM contract_reminder cr
+        JOIN vendor_contract vc ON vc.id = cr.contract_id
+        WHERE vc.building_id = $1
+        ORDER BY cr.reminder_date
+        "#,
+        building_id
+    )
+    .fetch_all(pool)
+    .await?;
+
+    Ok(rows
+        .into_iter()
+        .map(|row| {
+            serde_json::json!({
+                "id": row.id,
+                "contract_id": row.contract_id,
+                "reminder_type": row.reminder_type,
+                "reminder_date": row.reminder_date,
+                "status": row.status,
+            })
+        })
+        .collect())
+}
+
 pub async fn get(
     pool: &PgPool,
     id: Uuid,

@@ -200,6 +200,8 @@ export const contractsApi = {
     api.put<VendorContract>(`/contracts/${id}`, data),
   terminate: (id: string) =>
     api.delete(`/contracts/${id}`),
+  listAllReminders: () =>
+    api.get<ContractReminder[]>('/contracts/reminders'),
   listReminders: (id: string) =>
     api.get<ContractReminder[]>(`/contracts/${id}/reminders`),
   acknowledgeReminder: (id: string, rid: string) =>

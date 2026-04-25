@@ -35,22 +35,15 @@ const showDocumentsModal = ref(false)
 const busyKey = ref('')
 
 async function loadData() {
-  const [buildingResponse, contractsResponse] = await Promise.all([
+  const [buildingResponse, contractsResponse, remindersResponse] = await Promise.all([
     buildingApi.get(),
     contractsApi.list(),
+    contractsApi.listAllReminders(),
   ])
 
   buildingName.value = buildingResponse.data.name
   allContracts.value = contractsResponse.data
-
-  const remindersResponse = await Promise.all(
-    contractsResponse.data.map(async (contract) => {
-      const response = await contractsApi.listReminders(contract.id)
-      return response.data
-    }),
-  )
-
-  allReminders.value = remindersResponse.flat()
+  allReminders.value = remindersResponse.data
 }
 
 const { loading, error, reload } = usePageLoader(loadData, t('common.loadError'))

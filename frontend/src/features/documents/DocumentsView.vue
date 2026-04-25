@@ -14,6 +14,7 @@ import { toErrorMessage, usePageLoader } from '@/composables/usePageLoader'
 import { SUCCESS_AUTO_CLEAR_MS } from '@/composables/useFormFeedback'
 import { useConfirm } from '@/composables/useConfirm'
 import type { Document } from '@/types/domain'
+import { extractFileExtension } from '@/utils/files'
 
 const { t } = useI18n()
 const { formatDate, formatFileSize } = useFormatters()
@@ -86,7 +87,7 @@ async function uploadFile() {
 
   try {
     const file = selectedFile.value
-    const ext = file.name.split('.').pop() ?? ''
+    const ext = extractFileExtension(file.name)
 
     // 1. Get presigned upload URL
     const urlRes = await documentsApi.getUploadUrl(ext, file.type, file.size)
@@ -396,4 +397,3 @@ async function deleteDoc(id: string) {
 .visibility-section { display: flex; flex-direction: column; gap: var(--space-2); }
 .role-checkboxes { display: flex; flex-wrap: wrap; gap: var(--space-3); }
 </style>
-

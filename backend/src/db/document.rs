@@ -95,32 +95,24 @@ pub async fn delete(
     id: Uuid,
     building_id: Uuid,
 ) -> AppResult<Option<(String, String)>> {
-    let mut tx = pool.begin().await?;
-
     let row = sqlx::query_as::<_, (String, String)>(
-        "SELECT bucket, storage_path FROM document WHERE id = $1 AND building_id = $2",
+        r#"
+        WITH deleted_links AS (
+            DELETE FROM contract_document
+            WHERE document_id = $1
+        ),
+        deleted_document AS (
+            DELETE FROM document
+            WHERE id = $1 AND building_id = $2
+            RETURNING bucket, storage_path
+        )
+        SELECT bucket, storage_path
+        FROM deleted_document
+        "#,
     )
     .bind(id)
     .bind(building_id)
-    .fetch_optional(&mut *tx)
+    .fetch_optional(pool)
     .await?;
-
-    let Some((bucket, storage_path)) = row else {
-        tx.rollback().await?;
-        return Ok(None);
-    };
-
-    sqlx::query("DELETE FROM contract_document WHERE document_id = $1")
-        .bind(id)
-        .execute(&mut *tx)
-        .await?;
-
-    sqlx::query("DELETE FROM document WHERE id = $1 AND building_id = $2")
-        .bind(id)
-        .bind(building_id)
-        .execute(&mut *tx)
-        .await?;
-
-    tx.commit().await?;
-    Ok(Some((bucket, storage_path)))
+    Ok(row)
 }

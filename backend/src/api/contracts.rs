@@ -21,6 +21,14 @@ pub async fn list(
     json_value(db::contract::list(&state.pool, auth.building_id).await?)
 }
 
+pub async fn list_all_reminders(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+) -> AppResult<Json<serde_json::Value>> {
+    auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
+    json_value(db::contract::list_all_reminders(&state.pool, auth.building_id).await?)
+}
+
 pub async fn get(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,
@@ -95,7 +103,7 @@ pub async fn list_documents(
 }
 
 #[derive(Deserialize)]
-pub struct AttachContractDocumentInput {
+pub struct AttachDocumentInput {
     pub document_id: Uuid,
 }
 
@@ -103,7 +111,7 @@ pub async fn attach_document(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
-    Json(input): Json<AttachContractDocumentInput>,
+    Json(input): Json<AttachDocumentInput>,
 ) -> AppResult<StatusCode> {
     auth.require_role(&Role::Manager)?;
     let attached =

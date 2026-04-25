@@ -72,6 +72,10 @@ const paymentFrequencyOptions = computed(() => [
   { value: 'annual', label: t('contracts.frequencies.annual') },
 ])
 
+function normalizeAmountInput(value: string): string {
+  return value.trim().replace(',', '.')
+}
+
 function resetForm() {
   form.value = defaultFormState()
   fieldErrors.value = {}
@@ -116,7 +120,7 @@ function closeModal() {
 
 function validate(): boolean {
   const errors: Record<string, string> = {}
-  const normalizedAmount = form.value.amount.trim().replace(',', '.')
+  const normalizedAmount = normalizeAmountInput(form.value.amount)
 
   if (!form.value.vendor_name.trim()) errors.vendor_name = t('common.required')
   if (!form.value.subject.trim()) errors.subject = t('common.required')
@@ -155,7 +159,7 @@ async function saveContract() {
 
   try {
     const amount = form.value.amount.trim()
-      ? Number.parseFloat(form.value.amount.trim().replace(',', '.'))
+      ? Number.parseFloat(normalizeAmountInput(form.value.amount))
       : undefined
     const noticeDays = form.value.notice_days.trim()
       ? Number.parseInt(form.value.notice_days, 10)

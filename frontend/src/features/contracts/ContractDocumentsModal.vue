@@ -11,6 +11,7 @@ import { useConfirm } from '@/composables/useConfirm'
 import { useFormatters } from '@/composables/useFormatters'
 import { useFormFeedback } from '@/composables/useFormFeedback'
 import type { Document, VendorContract } from '@/types/domain'
+import { extractFileExtension } from '@/utils/files'
 
 const props = defineProps<{
   open: boolean
@@ -77,7 +78,7 @@ async function uploadDocument() {
 
   try {
     const file = selectedFile.value
-    const extension = file.name.includes('.') ? file.name.split('.').pop() ?? 'bin' : 'bin'
+    const extension = extractFileExtension(file.name)
     const uploadUrl = await documentsApi.getUploadUrl(extension, file.type, file.size)
 
     await documentsApi.uploadToS3(file, uploadUrl.data.url)
