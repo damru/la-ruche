@@ -277,6 +277,7 @@ pub async fn list_documents(
     pool: &PgPool,
     contract_id: Uuid,
     building_id: Uuid,
+    roles: &[String],
 ) -> AppResult<Vec<DocumentRow>> {
     Ok(sqlx::query_as::<_, DocumentRow>(
         r#"
@@ -297,11 +298,13 @@ pub async fn list_documents(
         WHERE cd.contract_id = $1
           AND vc.building_id = $2
           AND d.building_id = $2
+          AND d.visible_to_roles::text[] && $3
         ORDER BY d.created_at DESC
         "#,
     )
     .bind(contract_id)
     .bind(building_id)
+    .bind(roles)
     .fetch_all(pool)
     .await?)
 }

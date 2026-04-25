@@ -8,6 +8,7 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::{
+    api::documents::DocumentListItem,
     db::{self, AppState},
     domain::{AuthUser, Role},
     errors::{AppError, AppResult, json_value},
@@ -97,9 +98,13 @@ pub async fn list_documents(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
-) -> AppResult<Json<serde_json::Value>> {
+) -> AppResult<Json<Vec<DocumentListItem>>> {
     auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
-    json_value(db::contract::list_documents(&state.pool, id, auth.building_id).await?)
+    let roles: Vec<String> = auth.roles.iter().map(ToString::to_string).collect();
+    let documents = db::contract::list_documents(&state.pool, id, auth.building_id, &roles).await?;
+    Ok(Json(
+        documents.into_iter().map(DocumentListItem::from).collect(),
+    ))
 }
 
 #[derive(Deserialize)]
