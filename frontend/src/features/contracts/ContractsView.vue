@@ -20,6 +20,12 @@ import { useConfirm } from '@/composables/useConfirm'
 import { usePageLoader, toErrorMessage } from '@/composables/usePageLoader'
 import type { ContractReminder, ContractStatus, ContractType, VendorContract } from '@/types/domain'
 
+interface ContractReminderView extends ContractReminder {
+  targetDate: string
+  urgency: 'high' | 'medium' | 'low'
+  daysLabel: string
+}
+
 const { t } = useI18n()
 const { formatCurrency, formatDate, daysUntil } = useFormatters()
 const { confirm } = useConfirm()
@@ -60,10 +66,28 @@ const pendingReminders = computed(() =>
     .sort((left, right) => left.reminder_date.localeCompare(right.reminder_date)),
 )
 
-const pendingRemindersByContract = computed(() => {
-  const remindersByContract = new Map<string, ContractReminder[]>()
+const pendingReminderViews = computed<ContractReminderView[]>(() =>
+  pendingReminders.value.map((reminder) => {
+    const targetDate = reminder.reminder_type === 'payment_due'
+      ? reminder.reminder_date
+      : contractsById.value.get(reminder.contract_id)?.end_date ?? reminder.reminder_date
+    const remainingDays = daysUntil(targetDate)
 
-  for (const reminder of pendingReminders.value) {
+    return {
+      ...reminder,
+      targetDate,
+      urgency: reminderUrgency(targetDate),
+      daysLabel: remainingDays > 0
+        ? t('format.daysLeft', { days: remainingDays })
+        : t('contracts.reminders.dueNow'),
+    }
+  }),
+)
+
+const pendingRemindersByContract = computed(() => {
+  const remindersByContract = new Map<string, ContractReminderView[]>()
+
+  for (const reminder of pendingReminderViews.value) {
     const contractReminders = remindersByContract.get(reminder.contract_id)
 
     if (contractReminders) {
@@ -94,18 +118,6 @@ function effectiveStatus(contract: VendorContract): ContractStatus {
 function reminderUrgency(dateStr: string): 'high' | 'medium' | 'low' {
   const d = daysUntil(dateStr)
   return d <= 15 ? 'high' : d <= 45 ? 'medium' : 'low'
-}
-
-function reminderTargetDate(reminder: ContractReminder): string {
-  if (reminder.reminder_type === 'payment_due') return reminder.reminder_date
-  return contractsById.value.get(reminder.contract_id)?.end_date ?? reminder.reminder_date
-}
-
-function reminderDaysLabel(reminder: ContractReminder): string {
-  const remainingDays = daysUntil(reminderTargetDate(reminder))
-  return remainingDays > 0
-    ? t('format.daysLeft', { days: remainingDays })
-    : t('contracts.reminders.dueNow')
 }
 
 function statusVariant(status: ContractStatus): 'open' | 'pending' | 'closed' | 'default' {
@@ -282,10 +294,10 @@ async function terminateContract(contract: VendorContract) {
             class="reminder-list"
           >
             <div
-              v-for="reminder in pendingReminders"
+              v-for="reminder in pendingReminderViews"
               :key="reminder.id"
               class="reminder-row"
-              :class="`reminder-row--${reminderUrgency(reminderTargetDate(reminder))}`"
+              :class="`reminder-row--${reminder.urgency}`"
             >
               <div class="reminder-dot"></div>
               <div class="reminder-info">
@@ -294,12 +306,12 @@ async function terminateContract(contract: VendorContract) {
                   {{ t(`contracts.reminderTypes.${reminder.reminder_type}`) }}
                 </span>
               </div>
-              <span class="reminder-date">{{ formatDate(reminderTargetDate(reminder)) }}</span>
+              <span class="reminder-date">{{ formatDate(reminder.targetDate) }}</span>
               <span
                 class="reminder-days"
-                :class="`urgency-${reminderUrgency(reminderTargetDate(reminder))}`"
+                :class="`urgency-${reminder.urgency}`"
               >
-                {{ reminderDaysLabel(reminder) }}
+                {{ reminder.daysLabel }}
               </span>
               <CBtn
                 variant="secondary"
@@ -424,7 +436,7 @@ async function terminateContract(contract: VendorContract) {
                 :key="reminder.id"
                 variant="pending"
               >
-                🔔 {{ t(`contracts.reminderTypes.${reminder.reminder_type}`) }} — {{ formatDate(reminderTargetDate(reminder)) }}
+                🔔 {{ t(`contracts.reminderTypes.${reminder.reminder_type}`) }} — {{ formatDate(reminder.targetDate) }}
               </CBadge>
             </div>
 
