@@ -3,15 +3,19 @@ import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useFormatters } from '@/composables/useFormatters'
 import CBadge from '@/components/atoms/CBadge.vue'
+import CIconBolt from '@/components/atoms/CIconBolt.svg'
+import CIconDroplet from '@/components/atoms/CIconDroplet.svg'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CPageError from '@/components/molecules/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import CIconFile from '@/components/atoms/CIconFile.svg'
+import CIconLeaf from '@/components/atoms/CIconLeaf.svg'
 import CIconLayers from '@/components/atoms/CIconLayers.svg'
 import CIconSettings from '@/components/atoms/CIconSettings.svg'
 import CIconShield from '@/components/atoms/CIconShield.svg'
+import CIconSparkles from '@/components/atoms/CIconSparkles.svg'
 import CIconWrench from '@/components/atoms/CIconWrench.svg'
 import { buildingApi, contractsApi } from '@/api'
 import ContractDocumentsModal from '@/features/contracts/ContractDocumentsModal.vue'
@@ -62,7 +66,11 @@ const contractsById = computed(() =>
 
 const pendingReminders = computed(() =>
   [...allReminders.value]
-    .filter(reminder => reminder.status === 'pending')
+    .filter((reminder) => {
+      if (reminder.status !== 'pending') return false
+      const contract = contractsById.value.get(reminder.contract_id)
+      return !!contract && effectiveStatus(contract) === 'active'
+    })
     .sort((left, right) => left.reminder_date.localeCompare(right.reminder_date)),
 )
 
@@ -135,6 +143,10 @@ function contractTypeIcon(type: ContractType) {
     maintenance: CIconWrench,
     insurance: CIconShield,
     service: CIconSettings,
+    energy: CIconBolt,
+    water: CIconDroplet,
+    cleaning: CIconSparkles,
+    green_spaces: CIconLeaf,
     other: CIconLayers,
   }
   return icons[type] ?? CIconFile
@@ -145,6 +157,10 @@ function contractTypeTone(type: ContractType) {
     maintenance: 'tone--warn',
     insurance: 'tone--accent',
     service: 'tone--valid',
+    energy: 'tone--accent',
+    water: 'tone--default',
+    cleaning: 'tone--valid',
+    green_spaces: 'tone--warn',
     other: 'tone--default',
   }
 
@@ -578,15 +594,19 @@ async function terminateContract(contract: VendorContract) {
   margin-left: auto;
 }
 .contract-type__icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  background: var(--tone-bg, var(--color-secondary-container));
   color: var(--tone-fg, var(--color-primary));
 }
 .type-icon {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   flex-shrink: 0;
 }
 .contract-actions {

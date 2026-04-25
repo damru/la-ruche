@@ -62,6 +62,10 @@ const contractTypeOptions = computed(() => [
   { value: 'maintenance', label: t('contracts.types.maintenance') },
   { value: 'insurance', label: t('contracts.types.insurance') },
   { value: 'service', label: t('contracts.types.service') },
+  { value: 'energy', label: t('contracts.types.energy') },
+  { value: 'water', label: t('contracts.types.water') },
+  { value: 'cleaning', label: t('contracts.types.cleaning') },
+  { value: 'green_spaces', label: t('contracts.types.green_spaces') },
   { value: 'other', label: t('contracts.types.other') },
 ])
 

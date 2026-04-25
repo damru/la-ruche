@@ -422,6 +422,10 @@
       "maintenance": "Maintenance",
       "insurance": "Assurance",
       "service": "Prestation",
+      "energy": "Énergie",
+      "water": "Eau",
+      "cleaning": "Nettoyage",
+      "green_spaces": "Espaces verts",
       "other": "Autre"
     },
     "statuses": {
