@@ -93,21 +93,25 @@ const pendingReminders = computed(() =>
 )
 
 const pendingReminderViews = computed<ContractReminderView[]>(() =>
-  pendingReminders.value.map((reminder) => {
-    const targetDate = reminder.reminder_type === 'payment_due'
-      ? reminder.reminder_date
-      : contractsById.value.get(reminder.contract_id)?.end_date ?? reminder.reminder_date
-    const remainingDays = daysUntil(targetDate)
+  pendingReminders.value
+    .map((reminder) => {
+      const targetDate = reminder.reminder_type === 'payment_due'
+        ? reminder.reminder_date
+        : contractsById.value.get(reminder.contract_id)?.end_date ?? reminder.reminder_date
+      const remainingDays = daysUntil(targetDate)
 
-    return {
-      ...reminder,
-      targetDate,
-      urgency: reminderUrgency(targetDate),
-      daysLabel: remainingDays > 0
-        ? t('format.daysLeft', { days: remainingDays })
-        : t('contracts.reminders.dueNow'),
-    }
-  }),
+      if (remainingDays < 0) return null
+
+      return {
+        ...reminder,
+        targetDate,
+        urgency: reminderUrgency(targetDate),
+        daysLabel: remainingDays > 0
+          ? t('format.daysLeft', { days: remainingDays })
+          : t('contracts.reminders.dueNow'),
+      }
+    })
+    .filter((reminder): reminder is ContractReminderView => !!reminder),
 )
 
 const visibleReminderViews = computed<ContractReminderView[]>(() => {
@@ -115,12 +119,14 @@ const visibleReminderViews = computed<ContractReminderView[]>(() => {
 
   for (const reminder of pendingReminderViews.value) {
     const daysRemaining = daysUntil(reminder.targetDate)
-    if (daysRemaining < 0) continue
-
-    const selected = selectedByContract.get(reminder.contract_id) ?? {
-      nextPayment: undefined,
-      nextContractEnd: undefined,
+    if (!selectedByContract.has(reminder.contract_id)) {
+      selectedByContract.set(reminder.contract_id, {
+        nextPayment: undefined,
+        nextContractEnd: undefined,
+      })
     }
+
+    const selected = selectedByContract.get(reminder.contract_id)!
 
     if (reminder.reminder_type === 'payment_due') {
       if (daysRemaining <= PAYMENT_REMINDER_DAYS_THRESHOLD && !selected.nextPayment) {
