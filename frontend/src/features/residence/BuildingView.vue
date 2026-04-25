@@ -172,13 +172,7 @@ onMounted(reload)
             class="body-sm"
             style="color:var(--color-on-surface-variant); margin-bottom:12px"
           >
-            <CIconBook
-              width="16"
-              height="16"
-              style="vertical-align:-3px;margin-right:6px;display:inline"
-              aria-hidden="true"
-            />
-            <strong>Art. 18 loi 10/07/1965</strong> — {{ t('settings.building.legalText') }}
+            <strong>⚖️ Art. 18 loi 10/07/1965</strong> — {{ t('settings.building.legalText') }}
           </p>
           <div class="form-actions">
             <CBtn variant="secondary">
