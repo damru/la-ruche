@@ -483,8 +483,12 @@
       "detach": "Délier",
       "detachTitle": "Retirer la pièce du contrat",
       "detachMessage": "Le document « {name} » sera retiré de ce contrat, sans être supprimé du registre documentaire.",
+      "detachOnly": "Délier seulement",
+      "detachAndDelete": "Délier et supprimer",
       "detachSuccess": "Pièce retirée du contrat.",
       "detachError": "Impossible de retirer cette pièce.",
+      "deleteSuccess": "Pièce supprimée définitivement.",
+      "deleteError": "Impossible de supprimer cette pièce.",
       "empty": "Aucune pièce liée à ce contrat pour le moment."
     },
     "reminders": {

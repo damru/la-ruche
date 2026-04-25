@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
@@ -7,10 +7,10 @@ import CModal from '@/components/molecules/CModal.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import { contractsApi, documentsApi } from '@/api'
 import { toErrorMessage } from '@/composables/usePageLoader'
-import { useConfirm } from '@/composables/useConfirm'
 import { useFormatters } from '@/composables/useFormatters'
 import { useFormFeedback } from '@/composables/useFormFeedback'
 import type { Document, VendorContract } from '@/types/domain'
+import { buildDocumentDeleteMessage } from '@/utils/documents'
 import { extractFileExtension } from '@/utils/files'
 
 const props = defineProps<{
@@ -24,21 +24,26 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
-const { confirm } = useConfirm()
 const { formatDate, formatFileSize } = useFormatters()
 const feedback = useFormFeedback()
 
 const documents = ref<Document[]>([])
 const loading = ref(false)
 const uploading = ref(false)
+const deleting = ref(false)
 const error = ref('')
 const selectedFile = ref<File | null>(null)
 const fileInputRef = ref<HTMLInputElement | null>(null)
+const pendingDocument = ref<Document | null>(null)
 
 watch(
   () => [props.open, props.contract?.id] as const,
   async ([open, contractId]) => {
-    if (!open || !contractId) return
+    if (!open) {
+      pendingDocument.value = null
+      return
+    }
+    if (!contractId) return
     await loadDocuments()
   },
   { immediate: true },
@@ -114,25 +119,46 @@ async function downloadDocument(documentId: string) {
   }
 }
 
-async function detachDocument(documentId: string, originalName: string) {
+const showDocumentActionModal = computed(() => pendingDocument.value !== null)
+
+function closeDocumentActionModal() {
+  if (deleting.value) return
+  pendingDocument.value = null
+}
+
+function openDocumentActionModal(document: Document) {
+  pendingDocument.value = document
+}
+
+async function detachDocument(deleteDocument = false) {
   if (!props.contract?.id) return
+  if (!pendingDocument.value) return
 
-  const confirmed = await confirm({
-    title: t('contracts.documents.detachTitle'),
-    message: t('contracts.documents.detachMessage', { name: originalName }),
-    confirmLabel: t('contracts.documents.detach'),
-    variant: 'danger',
-  })
-
-  if (!confirmed) return
+  deleting.value = true
+  error.value = ''
+  feedback.reset()
 
   try {
-    await contractsApi.detachDocument(props.contract.id, documentId)
-    feedback.setSuccess(t('contracts.documents.detachSuccess'))
+    if (deleteDocument) {
+      await documentsApi.delete(pendingDocument.value.id)
+      feedback.setSuccess(t('contracts.documents.deleteSuccess'))
+    } else {
+      await contractsApi.detachDocument(props.contract.id, pendingDocument.value.id)
+      feedback.setSuccess(t('contracts.documents.detachSuccess'))
+    }
+
+    pendingDocument.value = null
     await loadDocuments()
     emit('changed')
   } catch (currentError: unknown) {
-    error.value = toErrorMessage(currentError, t('contracts.documents.detachError'))
+    error.value = toErrorMessage(
+      currentError,
+      deleteDocument
+        ? t('contracts.documents.deleteError')
+        : t('contracts.documents.detachError'),
+    )
+  } finally {
+    deleting.value = false
   }
 }
 </script>
@@ -234,7 +260,7 @@ async function detachDocument(documentId: string, originalName: string) {
               <CBtn
                 variant="danger"
                 size="sm"
-                @click="detachDocument(document.id, document.original_name)"
+                @click="openDocumentActionModal(document)"
               >
                 <CIconTrash />
                 {{ t('contracts.documents.detach') }}
@@ -251,6 +277,53 @@ async function detachDocument(documentId: string, originalName: string) {
         @click="emit('update:open', false)"
       >
         {{ t('common.close') }}
+      </CBtn>
+    </template>
+  </CModal>
+
+  <CModal
+    :open="showDocumentActionModal"
+    size="sm"
+    :stack="20"
+    :closable="false"
+    :title="t('contracts.documents.detachTitle')"
+    @update:open="!$event && closeDocumentActionModal()"
+  >
+    <div
+      v-if="pendingDocument"
+      class="documents-action-modal"
+    >
+      <p class="documents-action-modal__message">
+        {{ t('contracts.documents.detachMessage', { name: pendingDocument.original_name }) }}
+      </p>
+      <p class="documents-action-modal__warning">
+        {{ buildDocumentDeleteMessage(pendingDocument, t) }}
+      </p>
+    </div>
+
+    <template #footer>
+      <CBtn
+        variant="ghost"
+        :disabled="deleting"
+        @click.stop="closeDocumentActionModal()"
+      >
+        {{ t('common.cancel') }}
+      </CBtn>
+      <CBtn
+        variant="secondary"
+        :loading="deleting"
+        :disabled="deleting"
+        @click.stop="detachDocument(false)"
+      >
+        {{ t('contracts.documents.detachOnly') }}
+      </CBtn>
+      <CBtn
+        variant="danger"
+        :loading="deleting"
+        :disabled="deleting"
+        @click.stop="detachDocument(true)"
+      >
+        {{ t('contracts.documents.detachAndDelete') }}
       </CBtn>
     </template>
   </CModal>
@@ -360,6 +433,28 @@ async function detachDocument(documentId: string, originalName: string) {
   display: flex;
   gap: var(--space-2);
   flex-wrap: wrap;
+}
+
+.documents-action-modal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.documents-action-modal__message,
+.documents-action-modal__warning {
+  margin: 0;
+}
+
+.documents-action-modal__message {
+  color: var(--color-on-surface-variant);
+}
+
+.documents-action-modal__warning {
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-error-container);
+  color: var(--color-on-error-container);
 }
 
 @media (max-width: 720px) {

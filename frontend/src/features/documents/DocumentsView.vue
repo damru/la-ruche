@@ -14,6 +14,7 @@ import { toErrorMessage, usePageLoader } from '@/composables/usePageLoader'
 import { SUCCESS_AUTO_CLEAR_MS } from '@/composables/useFormFeedback'
 import { useConfirm } from '@/composables/useConfirm'
 import type { Document } from '@/types/domain'
+import { buildDocumentDeleteMessage } from '@/utils/documents'
 import { extractFileExtension } from '@/utils/files'
 
 const { t } = useI18n()
@@ -57,20 +58,6 @@ function mimeLabel(mime: string): string {
   if (mime.includes('sheet') || mime.includes('excel')) return 'Excel'
   if (mime.includes('word')) return 'Word'
   return t('documents.fileTypeFallback')
-}
-
-function deleteDocumentMessage(document: Document | undefined): string {
-  if (!document) return t('documents.confirmDeleteMessage', { name: '' })
-  const linkedContractNames = document.linked_contract_names ?? []
-
-  if (linkedContractNames.length === 0) {
-    return t('documents.confirmDeleteMessage', { name: document.original_name })
-  }
-
-  return t('documents.confirmDeleteLinkedMessage', {
-    name: document.original_name,
-    links: linkedContractNames.join(', '),
-  })
 }
 
 function openUploadModal() {
@@ -143,7 +130,7 @@ async function deleteDoc(id: string) {
   const doc = allDocuments.value.find(d => d.id === id)
   const ok = await confirm({
     title: t('documents.confirmDeleteTitle'),
-    message: deleteDocumentMessage(doc),
+    message: buildDocumentDeleteMessage(doc, t),
     confirmLabel: t('common.deleteLabel'),
     variant: 'danger',
   })
