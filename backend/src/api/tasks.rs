@@ -70,13 +70,13 @@ pub async fn update(
     Json(input): Json<UpdateTaskInput>,
 ) -> AppResult<StatusCode> {
     auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
-    if let Some(ref s) = input.status {
-        if !db::task::validate_status(s) {
-            return Err(AppError::Validation(format!(
-                "Invalid status '{}'. Valid values: open, in_progress, awaiting_vendor, closed, cancelled",
-                s
-            )));
-        }
+    if let Some(ref s) = input.status
+        && !db::task::validate_status(s)
+    {
+        return Err(AppError::Validation(format!(
+            "Invalid status '{}'. Valid values: open, in_progress, awaiting_vendor, closed, cancelled",
+            s
+        )));
     }
     db::task::update_fields(
         &state.pool,
