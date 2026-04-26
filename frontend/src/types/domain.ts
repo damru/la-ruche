@@ -210,6 +210,7 @@ export interface Task {
   status: TaskStatus
   priority: TaskPriority
   contract_id?: string
+  contractor_id?: string
   assigned_to?: string
   created_by?: string
   /** True when a vendor token is active — the raw token UUID is never returned by list/get. */
@@ -402,6 +403,19 @@ export interface VendorTask {
   building_address: string
   manager_name: string
   manager_email: string
+  manager_phone?: string
+}
+
+/// Contractor from the building's referential.
+export interface Contractor {
+  id: string
+  building_id: string
+  name: string
+  email?: string
+  phone?: string
+  domain?: string
+  created_at: string
+  updated_at: string
 }
 
 /// Document metadata sent in a vendor submission.

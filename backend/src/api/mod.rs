@@ -4,6 +4,7 @@ pub mod budget;
 pub mod building;
 pub mod consultations;
 pub mod contractor;
+pub mod contractors;
 pub mod contracts;
 pub mod documents;
 pub mod logbook;
@@ -183,6 +184,17 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
             get(tasks::get_vendor_token_url)
                 .post(tasks::generate_token)
                 .delete(tasks::revoke_token),
+        )
+        // ── Contractors referential ─────────────────────────────
+        .route(
+            "/contractors",
+            get(contractors::list).post(contractors::create),
+        )
+        .route(
+            "/contractors/{id}",
+            get(contractors::get)
+                .put(contractors::update)
+                .delete(contractors::delete),
         )
         // ── Claims ──────────────────────────────────────────────
         .route("/claims", get(claims::list).post(claims::create))

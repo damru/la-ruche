@@ -85,6 +85,17 @@ pub async fn create(
     .await?)
 }
 
+pub async fn get_phone(pool: &PgPool, id: Uuid) -> crate::errors::AppResult<Option<String>> {
+    let row = sqlx::query("SELECT phone FROM user_account WHERE id = $1")
+        .bind(id)
+        .fetch_optional(pool)
+        .await?;
+    Ok(row.and_then(|r| {
+        use sqlx::Row;
+        r.try_get::<Option<String>, _>("phone").ok().flatten()
+    }))
+}
+
 pub async fn update_password(pool: &PgPool, id: Uuid, hash: &str) -> crate::errors::AppResult<()> {
     sqlx::query!(
         "UPDATE user_account SET password_hash = $1, updated_at = NOW() WHERE id = $2",

@@ -15,6 +15,7 @@ pub struct TaskRow {
     pub status: String,
     pub priority: String,
     pub contract_id: Option<Uuid>,
+    pub contractor_id: Option<Uuid>,
     pub assigned_to: Option<Uuid>,
     pub created_by: Uuid,
     /// Raw token UUID — capability secret, never exposed in list/get responses.
@@ -35,6 +36,7 @@ pub struct TaskListItem {
     pub status: String,
     pub priority: String,
     pub contract_id: Option<Uuid>,
+    pub contractor_id: Option<Uuid>,
     pub assigned_to: Option<Uuid>,
     pub created_by: Uuid,
     pub has_vendor_token: bool,
@@ -54,6 +56,7 @@ impl From<TaskRow> for TaskListItem {
             status: r.status,
             priority: r.priority,
             contract_id: r.contract_id,
+            contractor_id: r.contractor_id,
             assigned_to: r.assigned_to,
             created_by: r.created_by,
             token_expires_at: r.token_expires_at,
@@ -69,6 +72,7 @@ pub struct CreateTaskInput {
     pub description: Option<String>,
     pub priority: Option<String>,
     pub contract_id: Option<Uuid>,
+    pub contractor_id: Option<Uuid>,
     pub assigned_to: Option<Uuid>,
 }
 
@@ -95,6 +99,7 @@ fn task_row_from_query(r: &sqlx::postgres::PgRow) -> Result<TaskRow, sqlx::Error
         status: r.try_get("status")?,
         priority: r.try_get("priority")?,
         contract_id: r.try_get("contract_id")?,
+        contractor_id: r.try_get("contractor_id")?,
         assigned_to: r.try_get("assigned_to")?,
         created_by: r.try_get("created_by")?,
         vendor_token: r.try_get("vendor_token")?,
@@ -108,7 +113,8 @@ pub async fn list(pool: &PgPool, building_id: Uuid) -> AppResult<Vec<TaskRow>> {
     let rows = sqlx::query(
         r#"SELECT id, building_id, title, description,
            status::text AS status, priority::text AS priority,
-           contract_id, assigned_to, created_by, vendor_token, token_expires_at, closed_at, created_at
+           contract_id, contractor_id, assigned_to, created_by, vendor_token,
+           token_expires_at, closed_at, created_at
            FROM task WHERE building_id = $1
            ORDER BY CASE status::text WHEN 'closed' THEN 1 ELSE 0 END ASC,
                     CASE priority::text WHEN 'urgent' THEN 1 WHEN 'high' THEN 2
@@ -127,7 +133,8 @@ pub async fn get(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<Option
     let row = sqlx::query(
         r#"SELECT id, building_id, title, description,
            status::text AS status, priority::text AS priority,
-           contract_id, assigned_to, created_by, vendor_token, token_expires_at, closed_at, created_at
+           contract_id, contractor_id, assigned_to, created_by, vendor_token,
+           token_expires_at, closed_at, created_at
            FROM task WHERE id = $1 AND building_id = $2"#,
     )
     .bind(id)
@@ -148,17 +155,19 @@ pub async fn create(
 ) -> AppResult<TaskRow> {
     let priority = input.priority.as_deref().unwrap_or("normal");
     let row = sqlx::query(
-        r#"INSERT INTO task (building_id, title, description, priority, contract_id, assigned_to, created_by)
-           VALUES ($1, $2, $3, $4::text::task_priority, $5, $6, $7)
+        r#"INSERT INTO task (building_id, title, description, priority, contract_id, contractor_id, assigned_to, created_by)
+           VALUES ($1, $2, $3, $4::text::task_priority, $5, $6, $7, $8)
            RETURNING id, building_id, title, description,
            status::text AS status, priority::text AS priority,
-           contract_id, assigned_to, created_by, vendor_token, token_expires_at, closed_at, created_at"#,
+           contract_id, contractor_id, assigned_to, created_by, vendor_token,
+           token_expires_at, closed_at, created_at"#,
     )
     .bind(building_id)
     .bind(&input.title)
     .bind(&input.description)
     .bind(priority)
     .bind(input.contract_id)
+    .bind(input.contractor_id)
     .bind(input.assigned_to)
     .bind(user_id)
     .fetch_one(pool)
@@ -265,6 +274,7 @@ pub async fn update_fields(
     description: Option<Option<&str>>,
     priority: Option<&str>,
     status: Option<&str>,
+    contractor_id: Option<Option<Uuid>>,
 ) -> AppResult<()> {
     let current = get(pool, id, building_id)
         .await?
@@ -277,6 +287,10 @@ pub async fn update_fields(
     };
     let new_priority = priority.unwrap_or(&current.priority).to_string();
     let new_status = status.unwrap_or(&current.status).to_string();
+    let new_contractor_id = match contractor_id {
+        Some(c) => c,
+        None => current.contractor_id,
+    };
     let closed_at = if new_status == "closed" && current.closed_at.is_none() {
         Some(Utc::now())
     } else if new_status != "closed" {
@@ -289,7 +303,8 @@ pub async fn update_fields(
         "UPDATE task SET title = $3, description = $4,
          priority = $5::text::task_priority,
          status = $6::text::task_status,
-         closed_at = $7, updated_at = NOW()
+         contractor_id = $7,
+         closed_at = $8, updated_at = NOW()
          WHERE id = $1 AND building_id = $2",
     )
     .bind(id)
@@ -298,6 +313,7 @@ pub async fn update_fields(
     .bind(&new_description)
     .bind(&new_priority)
     .bind(&new_status)
+    .bind(new_contractor_id)
     .bind(closed_at)
     .execute(pool)
     .await?;
@@ -329,7 +345,8 @@ pub async fn get_by_token(pool: &PgPool, token: Uuid) -> AppResult<Option<TaskRo
     let row = sqlx::query(
         r#"SELECT id, building_id, title, description,
            status::text AS status, priority::text AS priority,
-           contract_id, assigned_to, created_by, vendor_token, token_expires_at, closed_at, created_at
+           contract_id, contractor_id, assigned_to, created_by, vendor_token,
+           token_expires_at, closed_at, created_at
            FROM task
            WHERE vendor_token = $1 AND token_expires_at > NOW()
            AND status != 'closed'"#,

@@ -60,6 +60,8 @@ pub struct LoginResponse {
     pub first_name: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub email: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub phone: Option<String>,
 }
 
 // ── Helpers cookies ───────────────────────────────────────────────
@@ -195,6 +197,7 @@ pub async fn login(
         last_name: user.last_name.clone(),
         first_name: user.first_name.clone(),
         email: None,
+        phone: None,
     });
 
     let headers = build_auth_cookie_headers(
@@ -388,6 +391,7 @@ pub async fn me(
     let user = db::user::find_by_id(&state.pool, auth.user_id)
         .await?
         .ok_or(AppError::NotFound)?;
+    let phone = db::user::get_phone(&state.pool, auth.user_id).await?;
 
     Ok(Json(LoginResponse {
         user_id: auth.user_id,
@@ -396,6 +400,7 @@ pub async fn me(
         last_name: user.last_name,
         first_name: user.first_name,
         email: Some(user.email),
+        phone,
     }))
 }
 

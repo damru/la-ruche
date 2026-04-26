@@ -14,8 +14,8 @@ import CModal from '@/components/molecules/CModal.vue'
 import CPageError from '@/components/molecules/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
-import { buildingApi, tasksApi } from '@/api'
-import type { Task, TaskStatus, TaskPriority } from '@/types/domain'
+import { buildingApi, contractorsApi, tasksApi } from '@/api'
+import type { Contractor, Task, TaskStatus, TaskPriority } from '@/types/domain'
 
 const { t } = useI18n()
 const { formatDate, formatRelative } = useFormatters()
@@ -24,6 +24,7 @@ const { confirm } = useConfirm()
 // ── State ─────────────────────────────────────────────────────────
 const buildingName = ref('')
 const allTasks = ref<Task[]>([])
+const allContractors = ref<Contractor[]>([])
 const statusFilter = ref<'all' | TaskStatus>('all')
 
 // ── Task form modal ───────────────────────────────────────────────
@@ -31,6 +32,48 @@ const showTaskModal = ref(false)
 const taskFeedback = useFormFeedback()
 const savingTask = ref(false)
 const editingTask = ref<Task | null>(null)
+
+// Contractor autocomplete state
+const contractorSearch = ref('')
+const contractorSuggestions = ref<Contractor[]>([])
+const showSuggestions = ref(false)
+const selectedContractor = ref<Contractor | null>(null)
+
+function onContractorInput() {
+  const q = contractorSearch.value.trim().toLowerCase()
+  if (!q) {
+    contractorSuggestions.value = []
+    showSuggestions.value = false
+    selectedContractor.value = null
+    return
+  }
+  contractorSuggestions.value = allContractors.value
+    .filter(c => c.name.toLowerCase().includes(q))
+    .slice(0, 8)
+  showSuggestions.value = contractorSuggestions.value.length > 0
+}
+
+function selectContractorSuggestion(c: Contractor) {
+  selectedContractor.value = c
+  contractorSearch.value = c.name
+  showSuggestions.value = false
+}
+
+function hideSuggestions() {
+  // Delay to allow mousedown on suggestion to fire before hiding
+  window.setTimeout(() => { showSuggestions.value = false }, 150)
+}
+
+function clearContractor() {
+  selectedContractor.value = null
+  contractorSearch.value = ''
+  showSuggestions.value = false
+}
+
+// Map for looking up contractor name by id on task cards
+const contractorsById = computed(() =>
+  new Map(allContractors.value.map(c => [c.id, c])),
+)
 
 const defaultForm = () => ({
   title: '',
@@ -41,12 +84,14 @@ const taskForm = ref(defaultForm())
 
 // ── Load data ─────────────────────────────────────────────────────
 async function loadData() {
-  const [buildingRes, tasksRes] = await Promise.all([
+  const [buildingRes, tasksRes, contractorsRes] = await Promise.all([
     buildingApi.get(),
     tasksApi.list(),
+    contractorsApi.list(),
   ])
   buildingName.value = buildingRes.data.name
   allTasks.value = tasksRes.data
+  allContractors.value = contractorsRes.data
 }
 
 const { loading, error, reload } = usePageLoader(loadData, t('common.loadError'))
@@ -97,6 +142,8 @@ function priorityColor(p: string): string {
 function openCreateModal() {
   editingTask.value = null
   taskForm.value = defaultForm()
+  selectedContractor.value = null
+  contractorSearch.value = ''
   taskFeedback.reset()
   showTaskModal.value = true
 }
@@ -107,6 +154,15 @@ function openEditModal(task: Task) {
     title: task.title,
     description: task.description ?? '',
     priority: task.priority,
+  }
+  // Pre-fill contractor from loaded referential
+  if (task.contractor_id) {
+    const c = contractorsById.value.get(task.contractor_id)
+    selectedContractor.value = c ?? null
+    contractorSearch.value = c?.name ?? ''
+  } else {
+    selectedContractor.value = null
+    contractorSearch.value = ''
   }
   taskFeedback.reset()
   showTaskModal.value = true
@@ -122,12 +178,14 @@ async function saveTask() {
         title: taskForm.value.title,
         description: taskForm.value.description || null,
         priority: taskForm.value.priority,
+        contractor_id: selectedContractor.value?.id ?? null,
       })
     } else {
       await tasksApi.create({
         title: taskForm.value.title,
         description: taskForm.value.description || undefined,
         priority: taskForm.value.priority as TaskPriority,
+        contractor_id: selectedContractor.value?.id ?? null,
       })
     }
     taskFeedback.setSuccess(t('common.saved'))
@@ -432,6 +490,9 @@ function copyToClipboard(text: string) {
                 <div class="task-meta">
                   <span>{{ formatRelative(task.created_at) }}</span>
                   <span v-if="task.closed_at">· {{ t('tasks.closedAt', { date: formatDate(task.closed_at) }) }}</span>
+                  <span v-if="task.contractor_id && contractorsById.get(task.contractor_id)">
+                    · 🔧 {{ contractorsById.get(task.contractor_id)!.name }}
+                  </span>
                 </div>
               </div>
             </div>
@@ -490,6 +551,53 @@ function copyToClipboard(text: string) {
               {{ t(`tasks.priorities.${p}`) }}
             </option>
           </select>
+        </div>
+        <!-- Contractor assignment with autocomplete -->
+        <div class="form-field">
+          <label class="form-label">{{ t('tasks.contractorLabel') }}</label>
+          <div style="position:relative">
+            <input
+              v-model="contractorSearch"
+              type="text"
+              class="form-input"
+              :placeholder="t('tasks.contractorPlaceholder')"
+              autocomplete="off"
+              @input="onContractorInput"
+              @blur="hideSuggestions"
+            />
+            <button
+              v-if="selectedContractor"
+              type="button"
+              class="contractor-clear"
+              :aria-label="t('common.clear')"
+              @click="clearContractor"
+            >
+              ×
+            </button>
+            <ul
+              v-if="showSuggestions"
+              class="autocomplete-list"
+            >
+              <li
+                v-for="c in contractorSuggestions"
+                :key="c.id"
+                class="autocomplete-item"
+                @mousedown.prevent="selectContractorSuggestion(c)"
+              >
+                <span class="autocomplete-name">{{ c.name }}</span>
+                <span
+                  v-if="c.domain"
+                  class="autocomplete-meta"
+                >{{ t(`contractors.domains.${c.domain}`, c.domain) }}</span>
+              </li>
+            </ul>
+          </div>
+          <span
+            v-if="selectedContractor"
+            class="field-hint"
+          >
+            {{ selectedContractor.email || selectedContractor.phone || '' }}
+          </span>
         </div>
       </form>
       <template #footer>
@@ -576,4 +684,51 @@ function copyToClipboard(text: string) {
 .form-label { font-size: var(--text-sm); font-weight: var(--fw-medium); color: var(--color-on-surface-variant); }
 .form-input { padding: var(--space-2) var(--space-3); border: 1px solid var(--color-outline); border-radius: var(--radius-md); font-size: var(--text-sm); background: var(--color-surface); color: var(--color-on-surface); }
 .form-input:focus { outline: none; border-color: var(--color-primary); }
+
+/* Contractor autocomplete */
+.autocomplete-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--color-surface);
+  border: 1px solid var(--color-outline);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  list-style: none;
+  margin: 2px 0 0;
+  padding: 4px 0;
+  z-index: 100;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.autocomplete-item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: var(--text-sm);
+}
+
+.autocomplete-item:hover { background: var(--color-surface-container); }
+.autocomplete-name { font-weight: var(--fw-medium); }
+.autocomplete-meta { font-size: var(--text-xs); color: var(--color-on-surface-variant); }
+
+.contractor-clear {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  color: var(--color-on-surface-variant);
+  padding: 0 4px;
+}
+
+.field-hint { font-size: var(--text-xs); color: var(--color-on-surface-variant); }
 </style>

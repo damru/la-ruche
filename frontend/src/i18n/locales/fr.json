@@ -58,14 +58,16 @@
     "confirmDelete": "Confirmer la suppression",
     "confirmArchive": "Confirmer l'archivage",
     "deleteLabel": "Supprimer définitivement",
-    "archiveLabel": "Archiver"
+    "archiveLabel": "Archiver",
+    "clear": "Effacer"
   },
   "page": {
     "onboarding": "Bienvenue",
     "contractor": "Espace prestataire",
     "unitCharges": "Charges de l'unité",
     "forbidden": "Accès refusé",
-    "notFound": "Page introuvable"
+    "notFound": "Page introuvable",
+    "contractors": "Catalogue prestataires"
   },
   "addressAutocomplete": {
     "searchLabel": "Rechercher une adresse",
@@ -110,7 +112,8 @@
       "registry": "Registre",
       "residents": "Copro.",
       "residence-building": "Infos",
-      "residence-keys": "Clés"
+      "residence-keys": "Clés",
+      "contractors": "Presta."
     },
     "notifications": "Notifications",
     "logout": "Se déconnecter",
@@ -120,7 +123,8 @@
       "finance": "Finance",
       "operations": "Opérations",
       "residence": "Résidence"
-    }
+    },
+    "contractors": "Prestataires"
   },
   "roles": {
     "manager": "Syndic bénévole",
@@ -451,7 +455,12 @@
     "terminateMessage": "Le contrat « {name} » sera marqué comme résilié. Les rappels restent conservés pour l'historique.",
     "terminateError": "Impossible de résilier ce contrat.",
     "noticePeriod": "Préavis de résiliation",
-    "reminders": "Rappels",
+    "reminders": {
+      "acknowledge": "Acquitter",
+      "acknowledgeError": "Impossible d'acquitter ce rappel.",
+      "empty": "Aucun rappel en attente.",
+      "dueNow": "échéance atteinte"
+    },
     "form": {
       "createTitle": "Nouveau contrat",
       "editTitle": "Modifier le contrat",
@@ -493,12 +502,6 @@
       "deleteSuccess": "Pièce supprimée définitivement.",
       "deleteError": "Impossible de supprimer cette pièce.",
       "empty": "Aucune pièce liée à ce contrat pour le moment."
-    },
-    "reminders": {
-      "acknowledge": "Acquitter",
-      "acknowledgeError": "Impossible d'acquitter ce rappel.",
-      "empty": "Aucun rappel en attente.",
-      "dueNow": "échéance atteinte"
     },
     "reminderTypes": {
       "renewal": "Reconduction",
@@ -559,7 +562,9 @@
     "confirmStatusChange": "Confirmer le changement de statut vers \"{status}\" ?",
     "deleteTask": "Supprimer la tâche",
     "confirmDeleteTitle": "Supprimer la tâche",
-    "confirmDeleteMessage": "La tâche « {title} » sera supprimée définitivement. Cette action est irréversible."
+    "confirmDeleteMessage": "La tâche « {title} » sera supprimée définitivement. Cette action est irréversible.",
+    "contractorLabel": "Prestataire assigné",
+    "contractorPlaceholder": "Rechercher ou saisir le nom du prestataire…"
   },
   "documents": {
     "title": "Documents",
@@ -722,7 +727,8 @@
     "uploadError": "Erreur lors de l'envoi d'un fichier.",
     "contactTitle": "Contact syndic",
     "contactEmail": "E-mail",
-    "contactAddress": "Adresse"
+    "contactAddress": "Adresse",
+    "contactPhone": "Téléphone"
   },
   "residents": {
     "title": "Résidents & Lots",
@@ -845,7 +851,9 @@
       "generalProtected": "Cette clé est obligatoire et ne peut pas être supprimée (art. 10 loi 1965).",
       "confirmDeleteTitle": "Supprimer la clé de répartition",
       "confirmDeleteMessage": "La clé « {name} » sera archivée. L'historique des appels de fonds associés sera conservé."
-    }
+    },
+    "phone": "Téléphone",
+    "phonePlaceholder": "06 00 00 00 00"
   },
   "errors": {
     "title": "Erreur",
@@ -903,5 +911,34 @@
     "submitting": "Initialisation en cours…",
     "alreadyInitTitle": "Instance déjà configurée",
     "alreadyInitText": "Cette instance a déjà été initialisée. Connectez-vous avec votre compte existant."
+  },
+  "contractors": {
+    "title": "Prestataires",
+    "newContractor": "Nouveau prestataire",
+    "editContractor": "Modifier le prestataire",
+    "summary": "{count} prestataire(s) enregistré(s)",
+    "searchPlaceholder": "Rechercher par nom, domaine, email…",
+    "noContractors": "Aucun prestataire enregistré",
+    "noResults": "Aucun résultat",
+    "name": "Nom",
+    "namePlaceholder": "Nom de l'entreprise ou de l'intervenant",
+    "nameRequired": "Le nom est obligatoire",
+    "domain": "Domaine",
+    "email": "Email",
+    "emailPlaceholder": "contact@entreprise.fr",
+    "phone": "Téléphone",
+    "phonePlaceholder": "06 00 00 00 00",
+    "deleteTitle": "Supprimer le prestataire",
+    "deleteConfirm": "Supprimer définitivement « {name} » ? Cette action est irréversible.",
+    "domains": {
+      "maintenance": "Maintenance",
+      "insurance": "Assurance",
+      "service": "Prestation",
+      "energy": "Énergie",
+      "water": "Eau",
+      "cleaning": "Nettoyage",
+      "green_spaces": "Espaces verts",
+      "other": "Autre"
+    }
   }
 }

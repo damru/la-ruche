@@ -265,6 +265,16 @@ async function submit() {
               class="body-sm contact-value"
             >{{ task.manager_email }}</a>
           </div>
+          <div
+            v-if="task.manager_phone"
+            class="contact-row"
+          >
+            <span class="contact-label body-xs">{{ t('contractor.contactPhone') }}</span>
+            <a
+              :href="`tel:${task.manager_phone}`"
+              class="body-sm contact-value"
+            >{{ task.manager_phone }}</a>
+          </div>
           <div class="contact-row">
             <span class="contact-label body-xs">{{ t('contractor.contactAddress') }}</span>
             <span class="body-sm contact-value">{{ task.building_address }}</span>

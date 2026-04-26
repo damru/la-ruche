@@ -61,6 +61,7 @@ pub struct UpdateTaskInput {
     pub title: Option<String>,
     pub description: Option<Option<String>>,
     pub priority: Option<String>,
+    pub contractor_id: Option<Option<Uuid>>,
 }
 
 pub async fn update(
@@ -86,6 +87,7 @@ pub async fn update(
         input.description.as_ref().map(|d| d.as_deref()),
         input.priority.as_deref(),
         input.status.as_deref(),
+        input.contractor_id,
     )
     .await?;
     Ok(StatusCode::NO_CONTENT)

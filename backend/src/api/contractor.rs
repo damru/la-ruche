@@ -24,7 +24,8 @@ pub async fn get_task(
         r#"SELECT t.id, t.title, t.description, t.status::text AS status, t.token_expires_at,
                b.name AS building_name,
                b.address_line1, b.address_line2, b.postal_code, b.city,
-               u.first_name AS manager_first_name, u.last_name AS manager_last_name, u.email AS manager_email
+               u.first_name AS manager_first_name, u.last_name AS manager_last_name,
+               u.email AS manager_email, u.phone AS manager_phone
            FROM task t
            JOIN building b ON b.id = t.building_id
            JOIN user_account u ON u.id = t.created_by
@@ -60,6 +61,7 @@ pub async fn get_task(
             row.try_get::<String, _>("manager_last_name")?
         ),
         "manager_email": row.try_get::<String, _>("manager_email")?,
+        "manager_phone": row.try_get::<Option<String>, _>("manager_phone")?,
     })))
 }
 
@@ -193,10 +195,14 @@ pub async fn submit(
     .await?;
 
     // Auto-feed the maintenance log (idempotent via unique index on task_id)
+    // Includes contractor name if the task has one assigned.
     sqlx::query(
-        r#"INSERT INTO maintenance_log (building_id, created_by, title, task_id, intervention_date, source)
-           SELECT building_id, $3, title, id, CURRENT_DATE, 'automatic'::log_source
-           FROM task WHERE id = $1 AND building_id = $2
+        r#"INSERT INTO maintenance_log (building_id, created_by, title, task_id, intervention_date, source, vendor_name)
+           SELECT t.building_id, $3, t.title, t.id, CURRENT_DATE, 'automatic'::log_source,
+                  c.name AS vendor_name
+           FROM task t
+           LEFT JOIN contractor c ON c.id = t.contractor_id
+           WHERE t.id = $1 AND t.building_id = $2
            ON CONFLICT DO NOTHING"#,
     )
     .bind(task.id)

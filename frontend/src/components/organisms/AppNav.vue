@@ -53,8 +53,9 @@ const allGroups: NavGroup[] = [
   {
     label: t('nav.groups.operations'),
     items: [
-      { name: 'tasks',       route: '/tasks',     label: t('nav.tasks'),       mobileLabel: t('nav.mobile.tasks'),       roles: ['manager', 'board_member'], mobileOrder: 4 },
-      { name: 'claims',      route: '/claims',    label: t('nav.claims'),      mobileLabel: t('nav.mobile.claims'),      roles: ['manager', 'board_member'], mobileOrder: 7 },
+      { name: 'tasks',        route: '/tasks',        label: t('nav.tasks'),        mobileLabel: t('nav.mobile.tasks'),        roles: ['manager', 'board_member'], mobileOrder: 4 },
+      { name: 'contractors',  route: '/contractors',  label: t('nav.contractors'),  mobileLabel: t('nav.mobile.contractors'),  roles: [],                          mobileOrder: 9 },
+      { name: 'claims',       route: '/claims',       label: t('nav.claims'),       mobileLabel: t('nav.mobile.claims'),       roles: ['manager', 'board_member'], mobileOrder: 7 },
       { name: 'maintenance', route: '/logbook',   label: t('nav.maintenance'), mobileLabel: t('nav.mobile.maintenance'), roles: ['manager', 'board_member'], mobileOrder: 8 },
       { name: 'documents',   route: '/documents', label: t('nav.documents'),   mobileLabel: t('nav.mobile.documents'),   roles: ['manager', 'board_member', 'co_owner', 'tenant'], mobileOrder: 5 },
     ],

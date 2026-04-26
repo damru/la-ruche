@@ -10,6 +10,7 @@ import type {
   Building, Unit, User, AllocationKey, UnitShare,
   OnboardingStatus, BootstrapInput, BootstrapResponse,
   LoginResponse, BuildingStats, RegistryResponse, UnitChargesResponse,
+  Contractor,
 } from '@/types/domain'
 
 // Public axios instance — no JWT, no interceptors (vendor endpoints)
@@ -228,9 +229,9 @@ export const tasksApi = {
     api.get<Task[]>('/tasks'),
   get: (id: string) =>
     api.get<Task>(`/tasks/${id}`),
-  create: (data: { title: string; description?: string; priority?: string; contract_id?: string; assigned_to?: string }) =>
+  create: (data: { title: string; description?: string; priority?: string; contract_id?: string; contractor_id?: string | null; assigned_to?: string }) =>
     api.post<Task>('/tasks', data),
-  update: (id: string, data: { title?: string; description?: string | null; priority?: string; status?: string }) =>
+  update: (id: string, data: { title?: string; description?: string | null; priority?: string; status?: string; contractor_id?: string | null }) =>
     api.put<Task>(`/tasks/${id}`, data),
   delete: (id: string) =>
     api.delete(`/tasks/${id}`),
@@ -240,6 +241,20 @@ export const tasksApi = {
     api.get<{ url: string; expires_at: string }>(`/tasks/${id}/vendor-token`),
   revokeToken: (id: string) =>
     api.delete(`/tasks/${id}/vendor-token`),
+}
+
+// ── Contractors referential ───────────────────────────────────────
+export const contractorsApi = {
+  list: (q?: string) =>
+    api.get<Contractor[]>('/contractors', { params: q ? { q } : undefined }),
+  get: (id: string) =>
+    api.get<Contractor>(`/contractors/${id}`),
+  create: (data: { name: string; email?: string; phone?: string; domain?: string }) =>
+    api.post<Contractor>('/contractors', data),
+  update: (id: string, data: { name?: string; email?: string; phone?: string; domain?: string }) =>
+    api.put<Contractor>(`/contractors/${id}`, data),
+  delete: (id: string) =>
+    api.delete(`/contractors/${id}`),
 }
 
 // ── Claims ────────────────────────────────────────────────────────

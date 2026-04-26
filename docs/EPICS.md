@@ -147,11 +147,11 @@ Fiche contrat avec reconduction tacite et préavis configurables, rappels automa
 
 ### EP-007 — Tâches & Prestataires
 
-**Statut :** terminée | **MVP :** non | **Réf. PRD :** Gestion courante
+**Statut :** en cours | **MVP :** non | **Réf. PRD :** Gestion courante
 
-**État code actuel :** backend réel (CRUD tâches + token prestataire + upload staging + soumission en transaction) + frontend branché (liste, créer, token, page publique prestataire).
+**État code actuel :** backend réel (CRUD tâches + token prestataire + upload staging + soumission en transaction + assignation prestataire référentiel) + frontend branché (liste, créer, token, page publique prestataire, autocomplete prestataire).
 
-Tâches assignées en interne, lien tokenisé éphémère pour accès prestataire sans compte, flux de dépôt staging → validation → bucket final.
+Tâches assignées en interne, lien tokenisé éphémère pour accès prestataire sans compte, flux de dépôt staging → validation → bucket final. Les tâches peuvent être liées à un prestataire du référentiel (EP-015) pour consolider l'historique.
 
 **Stories :**
 
@@ -159,7 +159,8 @@ Tâches assignées en interne, lien tokenisé éphémère pour accès prestatair
 * `EP-007-S02` ✅ — Générer un lien tokenisé éphémère pour l'accès prestataire sans compte
 * `EP-007-S03` ✅ — Permettre au prestataire de déposer des documents via le lien tokenisé (zone staging) — `POST /vendor/:token/upload-url`
 * `EP-007-S04` ✅ — Valider et archiver les documents déposés par le prestataire (bucket final) — dans la transaction `POST /vendor/:token/submission`
-* `EP-007-S05` ✅ — Clôturer une tâche et l'alimenter automatiquement au carnet d'entretien (→ EP-009-S03) — idempotent via unique index
+* `EP-007-S05` ✅ — Clôturer une tâche et l'alimenter automatiquement au carnet d'entretien (→ EP-009-S03) — idempotent via unique index, inclut `vendor_name` du prestataire assigné
+* `EP-007-S06` ✅ — Assigner un prestataire du référentiel (EP-015) à une tâche via autocomplete — `contractor_id` FK sur `task`
 
 ***
 
@@ -308,6 +309,24 @@ Conduite de séance : désignation des rôles (président, secrétaire, scrutate
 Calendrier partagé centralisant AG, interventions et réunions avec liens contextuels vers les entités correspondantes, export iCal.
 
 **Stories :** _à définir_
+
+***
+
+### EP-015 — Référentiel prestataires
+
+**Statut :** en cours | **MVP :** non | **Réf. PRD :** Gestion courante
+
+**État code actuel :** backend réel (CRUD + recherche par nom) + frontend branché (catalogue, création, édition, suppression, autocomplete dans TasksView).
+
+Catalogue des prestataires de la résidence : nom, email, téléphone, domaine professionnel. Réutilisable lors de l'assignation d'une tâche (autocomplete) et pré-rempli à la migration vers le carnet d'entretien. Accessible en lecture à tous les utilisateurs, modifiable par les managers et membres du conseil syndical.
+
+**Stories :**
+
+* `EP-015-S01` ✅ — Gérer le référentiel prestataires (CRUD) : nom, email, téléphone, domaine — `GET/POST /contractors`, `GET/PUT/DELETE /contractors/:id`
+* `EP-015-S02` ✅ — Rechercher un prestataire par nom (autocomplete, `?q=`) pour l'assigner à une tâche
+* `EP-015-S03` ✅ — Catalogue accessible à tous les utilisateurs authentifiés de la résidence (lecture), modifiable par manager/conseil syndical
+* `EP-015-S04` ✅ — Propagation du nom de prestataire au carnet d'entretien lors de la clôture automatique d'une tâche (`vendor_name`)
+* `EP-015-S05` — Ajouter le numéro de téléphone au profil utilisateur (`user_account.phone`) et l'exposer dans la carte contact syndic sur la page prestataire — migration 0007
 
 ***
 

@@ -15,6 +15,7 @@ const BudgetView              = () => import('@/features/budget/BudgetView.vue')
 const DocumentsView           = () => import('@/features/documents/DocumentsView.vue')
 const TasksView               = () => import('@/features/tasks/TasksView.vue')
 const ContractsView           = () => import('@/features/contracts/ContractsView.vue')
+const ContractorsView         = () => import('@/features/contractors/ContractorsView.vue')
 const ClaimsView              = () => import('@/features/claims/ClaimsView.vue')
 const MaintenanceView         = () => import('@/features/maintenance/MaintenanceView.vue')
 const ConsultationsView       = () => import('@/features/consultations/ConsultationsView.vue')
@@ -95,6 +96,12 @@ const routes: RouteRecordRaw[] = [
         name: 'tasks',
         component: TasksView,
         meta: { title: 'nav.tasks', roles: ['manager', 'board_member'] },
+      },
+      {
+        path: 'contractors',
+        name: 'contractors',
+        component: ContractorsView,
+        meta: { title: 'nav.contractors', roles: [] },
       },
       {
         path: 'contracts',

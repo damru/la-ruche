@@ -5,6 +5,7 @@ pub mod building;
 pub mod claim;
 pub mod consultation;
 pub mod contract;
+pub mod contractor;
 pub mod document;
 pub mod maintenance_log;
 pub mod report;
