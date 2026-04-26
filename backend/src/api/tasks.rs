@@ -8,10 +8,16 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::{
+    config::AppSettings,
     db::{self, AppState},
     domain::{AuthUser, Role},
     errors::{AppError, AppResult, json_value},
 };
+
+/// Builds the public vendor submission URL for a given token.
+fn vendor_url(cfg: &AppSettings, token: Uuid) -> String {
+    format!("{}/vendor/{}", cfg.public_url, token)
+}
 
 pub async fn list(
     auth: AuthUser,
@@ -104,7 +110,7 @@ pub async fn get_vendor_token_url(
     let result = db::task::get_vendor_token(&state.pool, id, auth.building_id).await?;
     match result {
         Some((token, expires_at)) => {
-            let url = format!("{}/vendor/{}", state.cfg.app.public_url, token);
+            let url = vendor_url(&state.cfg.app, token);
             Ok(Json(
                 serde_json::json!({ "url": url, "expires_at": expires_at }),
             ))
@@ -126,7 +132,7 @@ pub async fn generate_token(
         state.cfg.auth.vendor_token_ttl_days,
     )
     .await?;
-    let url = format!("{}/vendor/{}", state.cfg.app.public_url, token);
+    let url = vendor_url(&state.cfg.app, token);
     Ok(Json(
         serde_json::json!({ "token": token, "expires_at": expires_at, "url": url }),
     ))

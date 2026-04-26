@@ -198,7 +198,9 @@ async function generateToken(task: Task) {
   pageError.value = ''
   try {
     const res = await tasksApi.generateToken(task.id)
-    // Build URL using the current origin so it always points to the frontend
+    // Rebuild with window.location.origin: the backend's public_url may differ from the
+    // actual frontend origin in dev/staging/multi-tenant deployments. The token UUID is
+    // what matters — the vendor route (/vendor/:token) is always on the frontend SPA.
     const tokenStr = res.data.token
     const url = `${window.location.origin}/vendor/${tokenStr}`
     vendorLinks.value[task.id] = { url, expires_at: res.data.expires_at }
@@ -215,12 +217,13 @@ async function showVendorLink(task: Task) {
   pageError.value = ''
   try {
     const res = await tasksApi.getVendorTokenUrl(task.id)
-    // Extract token segment and rebuild URL with current origin
-    const rawUrl = res.data.url
-    const tokenSegment = rawUrl.split('/vendor/')[1]
+    // Parse the token from the backend URL using URL API for robustness,
+    // then rebuild with window.location.origin (see generateToken for rationale).
+    const parsedPath = new URL(res.data.url).pathname
+    const tokenSegment = parsedPath.split('/vendor/')[1]
     const url = tokenSegment
       ? `${window.location.origin}/vendor/${tokenSegment}`
-      : rawUrl
+      : res.data.url
     vendorLinks.value[task.id] = { url, expires_at: res.data.expires_at }
   } catch (err) {
     pageError.value = toErrorMessage(err, t('common.error'))
