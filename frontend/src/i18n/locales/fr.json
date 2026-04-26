@@ -181,7 +181,7 @@
     "overdueLots": "{count} lot(s) en retard de paiement",
     "overdueTotal": "Total : {amount}",
     "overdueAmount": "{amount} en attente",
-    "lastClosedAg": "Dernière AG clôturée",
+    "lastClosedAg": "Dernière AG close",
     "newTask": "Nouvelle tâche",
     "seeResidents": "Gérer",
     "residentsTitle": "Résidents",
@@ -250,7 +250,7 @@
       "draft": "Brouillon",
       "called": "Convoquée",
       "held": "Tenue",
-      "closed": "Clôturée"
+      "closed": "Close"
     },
     "resolutionStatuses": {
       "passed": "Adoptée",
@@ -258,7 +258,7 @@
       "pending": "En attente"
     },
     "call": "Convoquer l'AG",
-    "close": "Clôturer l'AG",
+    "close": "Clore l'AG",
     "calledAt": "Convoquée le {date}",
     "meetingDate": "Date de l'AG",
     "location": "Lieu",
@@ -267,11 +267,11 @@
     "resolutionCount": "{count} résolution à l'ordre du jour | {count} résolutions à l'ordre du jour",
     "addResolution": "Ajouter résolution",
     "filterUpcoming": "À venir",
-    "filterClosed": "Clôturées",
+    "filterClosed": "Closes",
     "statResolutions": "résolution | résolutions",
     "statPassed": "adoptée | adoptées",
     "statPendingVotes": "votes en attente",
-    "bannerClosed": "AG clôturée · PV disponible",
+    "bannerClosed": "AG close · PV disponible",
     "bannerCalled": "AG convoquée · En attente de tenue",
     "depositMinutes": "Déposer le PV",
     "info": "Informations",
@@ -295,7 +295,7 @@
     "resolutionDescription": "Description",
     "resolutionDescriptionPlaceholder": "Détails de la résolution...",
     "voteRule": "Règle de vote",
-    "closeMeetingTitle": "Clôturer l'assemblée",
+    "closeMeetingTitle": "Clore l'assemblée",
     "closeMeetingSub": "La clôture est définitive. Assurez-vous que toutes les résolutions ont été votées et que le PV a été déposé.",
     "closeMeetingConfirm": "Confirmer la clôture",
     "pvTitle": "Déposer le procès-verbal",
@@ -340,7 +340,7 @@
       "draft": "Prévisionnel",
       "approved": "Approuvé",
       "approvedAG": "Approuvé en AG",
-      "closed": "Clôturé"
+      "closed": "Clos"
     },
     "forecast": "Prévisionnel",
     "budgetForecastLabel": "Budget prévisionnel",
@@ -515,8 +515,8 @@
     "activeSummary": "{count} tâche(s) active(s)",
     "activeCount": "{count} tâche active | {count} tâches actives",
     "createdRelative": "Créée {relative}",
-    "closedOn": "Clôturée le {date}",
-    "closedAt": "Clôturée le {date}",
+    "closedOn": "Close le {date}",
+    "closedAt": "Close le {date}",
     "emptyState": "Aucune tâche dans cette catégorie.",
     "empty": "Aucune tâche dans cette catégorie.",
     "titleLabel": "Titre",
@@ -532,7 +532,7 @@
       "open": "Ouverte",
       "in_progress": "En cours",
       "awaiting_vendor": "En attente prestataire",
-      "closed": "Clôturée",
+      "closed": "Close",
       "cancelled": "Annulée"
     },
     "filters": {
@@ -542,7 +542,7 @@
       "inProgress": "En cours",
       "awaiting_vendor": "Prestataire",
       "vendor": "Prestataire",
-      "closed": "Clôturées"
+      "closed": "Closes"
     },
     "priorities": {
       "low": "Basse",
@@ -596,29 +596,29 @@
     "create": "Nouvelle consultation",
     "openCount": "{count} consultation ouverte | {count} consultations ouvertes",
     "openedAt": "Ouverte {date}",
-    "closedAt": "Clôturée le {date}",
+    "closedAt": "Close le {date}",
     "responseCount": "{count} réponses",
     "responseCountOpen": "{count} réponse(s) reçue(s) — en cours",
     "statuses": {
       "draft": "Brouillon",
       "open": "Ouverte",
-      "closed": "Clôturée"
+      "closed": "Close"
     },
     "filters": {
       "open": "Ouvertes",
-      "closed": "Clôturées"
+      "closed": "Closes"
     },
     "respond": "Répondre",
     "updateVote": "Mettre à jour mon vote",
     "modifyVote": "Modifier mon vote",
     "myResponse": "Ma réponse",
     "results": "Résultats",
-    "close": "Clôturer",
+    "close": "Clore",
     "noOpen": "Aucune consultation en cours",
-    "noClosed": "Aucune consultation clôturée",
-    "closeAction": "Clôturer la consultation",
-    "confirmCloseTitle": "Clôturer la consultation",
-    "confirmCloseMessage": "La consultation sera clôturée et les réponses ne seront plus acceptées.",
+    "noClosed": "Aucune consultation close",
+    "closeAction": "Clore la consultation",
+    "confirmCloseTitle": "Clore la consultation",
+    "confirmCloseMessage": "La consultation sera close et les réponses ne seront plus acceptées.",
     "legalNote": "Art. 17 & 24 loi 10/07/1965",
     "informalNote": "Cette consultation est informelle et n'a aucune valeur décisionnelle légale.",
     "informalNoteDetail": "Les consultations écrites permettent de recueillir l'avis des copropriétaires et des locataires sans valeur de vote.",
@@ -652,12 +652,12 @@
     "statuses": {
       "open": "Ouvert",
       "in_progress": "En cours",
-      "closed": "Clôturé"
+      "closed": "Clos"
     },
     "filters": {
       "open": "Ouverts",
       "inProgress": "En cours",
-      "closed": "Clôturés"
+      "closed": "Clos"
     }
   },
   "maintenance": {
@@ -698,29 +698,31 @@
     "statuses": {
       "open": "Ouvert",
       "in_progress": "En cours",
-      "closed": "Clôturé"
+      "closed": "Clos"
     },
     "filters": {
       "open": "Ouverts",
       "inProgress": "En instruction",
-      "closed": "Clôturés"
+      "closed": "Clos"
     }
   },
   "contractor": {
     "title": "Dépôt prestataire",
-    "subtitle": "Déposez vos documents pour clôturer la tâche",
+    "subtitle": "Déposez vos documents et/ou un commentaire pour finaliser l'intervention.",
     "expiresAt": "Lien valide jusqu'au {date}",
     "comment": "Commentaire",
-    "commentPlaceholder": "Ajoutez un commentaire pour le syndic (optionnel)",
+    "commentPlaceholder": "Décrivez l'intervention réalisée (optionnel)",
     "selectFiles": "Sélectionner des fichiers",
     "dropzone": "Glissez vos fichiers ici ou cliquez pour parcourir",
     "filesSelected": "{count} fichier sélectionné | {count} fichiers sélectionnés",
     "submit": "Valider le dépôt",
     "submitting": "Envoi en cours…",
-    "success": "Dépôt enregistré avec succès. La tâche a été clôturée.",
+    "success": "Dépôt enregistré avec succès. La tâche a été close.",
     "expired": "Ce lien a expiré ou est invalide.",
-    "noFiles": "Veuillez sélectionner au moins un fichier.",
-    "uploadError": "Erreur lors de l'envoi d'un fichier."
+    "uploadError": "Erreur lors de l'envoi d'un fichier.",
+    "contactTitle": "Contact syndic",
+    "contactEmail": "E-mail",
+    "contactAddress": "Adresse"
   },
   "residents": {
     "title": "Résidents & Lots",

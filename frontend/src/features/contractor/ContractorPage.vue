@@ -58,15 +58,10 @@ function removeFile(idx: number) {
 }
 
 async function submit() {
-  if (!selectedFiles.value.length) {
-    error.value = t('contractor.noFiles')
-    return
-  }
   uploading.value = true
   error.value = ''
 
   try {
-    // 1. Upload each file to staging bucket
     const documents: { key: string; original_name: string; mime_type: string; size_bytes: number }[] = []
 
     for (const file of selectedFiles.value) {
@@ -96,10 +91,17 @@ async function submit() {
 <template>
   <div class="contractor-page">
     <header class="contractor-header">
-      <CLogoMark class="contractor-logo" />
-      <h1 class="display-sm">
-        {{ t('contractor.title') }}
-      </h1>
+      <div class="contractor-header-brand">
+        <CLogoMark class="contractor-logo" />
+        <span class="brand-name body-md">La Ruche</span>
+      </div>
+      <div
+        v-if="task"
+        class="contractor-header-building"
+      >
+        <span class="title-sm">{{ task.building_name }}</span>
+        <span class="body-xs building-address">{{ task.building_address }}</span>
+      </div>
     </header>
 
     <main class="contractor-main">
@@ -143,111 +145,131 @@ async function submit() {
       <!-- Task form -->
       <div
         v-else-if="task"
-        class="contractor-card"
+        class="contractor-content"
       >
-        <div class="task-info">
-          <h2 class="title-md">
-            {{ task.title }}
-          </h2>
-          <p
-            v-if="task.description"
-            class="body-sm"
-            style="color:var(--color-on-surface-variant)"
-          >
-            {{ task.description }}
-          </p>
-          <p
-            v-if="task.token_expires_at"
-            class="body-xs"
-            style="color:var(--color-on-surface-variant)"
-          >
-            {{ t('contractor.expiresAt', { date: formatDate(task.token_expires_at) }) }}
-          </p>
-        </div>
-
-        <p class="body-md">
-          {{ t('contractor.subtitle') }}
-        </p>
-
-        <!-- Dropzone -->
-        <div
-          :class="['dropzone', { 'dropzone--over': dragOver }]"
-          @dragover.prevent="dragOver = true"
-          @dragleave="dragOver = false"
-          @drop.prevent="onDrop"
-          @click="fileInputRef?.click()"
-        >
-          <CIconFile class="dropzone-icon" />
-          <p class="body-sm">
-            {{ t('contractor.dropzone') }}
-          </p>
-          <input
-            ref="fileInputRef"
-            type="file"
-            multiple
-            class="file-input-hidden"
-            @change="onFileChange"
-          />
-        </div>
-
-        <!-- Selected files -->
-        <ul
-          v-if="selectedFiles.length"
-          class="file-list"
-        >
-          <li
-            v-for="(file, idx) in selectedFiles"
-            :key="idx"
-            class="file-item"
-          >
-            <CIconFile
-              width="14"
-              height="14"
-            />
-            <span class="body-sm file-name">{{ file.name }}</span>
-            <button
-              class="icon-btn icon-btn--danger"
-              @click="removeFile(idx)"
+        <div class="contractor-card">
+          <div class="task-info">
+            <h2 class="title-md">
+              {{ task.title }}
+            </h2>
+            <p
+              v-if="task.description"
+              class="body-sm"
+              style="color:var(--color-on-surface-variant)"
             >
-              <CIconX
+              {{ task.description }}
+            </p>
+            <p
+              v-if="task.token_expires_at"
+              class="body-xs"
+              style="color:var(--color-on-surface-variant)"
+            >
+              {{ t('contractor.expiresAt', { date: formatDate(task.token_expires_at) }) }}
+            </p>
+          </div>
+
+          <p class="body-md">
+            {{ t('contractor.subtitle') }}
+          </p>
+
+          <!-- Dropzone -->
+          <div
+            :class="['dropzone', { 'dropzone--over': dragOver }]"
+            @dragover.prevent="dragOver = true"
+            @dragleave="dragOver = false"
+            @drop.prevent="onDrop"
+            @click="fileInputRef?.click()"
+          >
+            <CIconFile class="dropzone-icon" />
+            <p class="body-sm">
+              {{ t('contractor.dropzone') }}
+            </p>
+            <input
+              ref="fileInputRef"
+              type="file"
+              multiple
+              class="file-input-hidden"
+              @change="onFileChange"
+            />
+          </div>
+
+          <!-- Selected files -->
+          <ul
+            v-if="selectedFiles.length"
+            class="file-list"
+          >
+            <li
+              v-for="(file, idx) in selectedFiles"
+              :key="idx"
+              class="file-item"
+            >
+              <CIconFile
                 width="14"
                 height="14"
               />
-            </button>
-          </li>
-        </ul>
+              <span class="body-sm file-name">{{ file.name }}</span>
+              <button
+                class="icon-btn icon-btn--danger"
+                @click="removeFile(idx)"
+              >
+                <CIconX
+                  width="14"
+                  height="14"
+                />
+              </button>
+            </li>
+          </ul>
 
-        <!-- Comment -->
-        <div class="form-field">
-          <label class="form-label">{{ t('contractor.comment') }}</label>
-          <textarea
-            v-model="comment"
-            class="form-input"
-            rows="3"
-            :placeholder="t('contractor.commentPlaceholder')"
-          ></textarea>
+          <!-- Comment -->
+          <div class="form-field">
+            <label class="form-label">{{ t('contractor.comment') }}</label>
+            <textarea
+              v-model="comment"
+              class="form-input"
+              rows="3"
+              :placeholder="t('contractor.commentPlaceholder')"
+            ></textarea>
+          </div>
+
+          <!-- Error inline -->
+          <p
+            v-if="error"
+            class="error-msg body-sm"
+          >
+            {{ error }}
+          </p>
+
+          <!-- Submit -->
+          <button
+            class="submit-btn"
+            :disabled="uploading"
+            @click="submit"
+          >
+            <CIconSpinner
+              v-if="uploading"
+              class="spinner-sm"
+            />
+            {{ uploading ? t('contractor.submitting') : t('contractor.submit') }}
+          </button>
         </div>
 
-        <!-- Error inline -->
-        <p
-          v-if="error"
-          class="error-msg body-sm"
-        >
-          {{ error }}
-        </p>
-
-        <!-- Submit -->
-        <button
-          class="submit-btn"
-          :disabled="uploading || !selectedFiles.length"
-          @click="submit"
-        >
-          <CIconSpinner
-            v-if="uploading"
-            class="spinner-sm"
-          />
-          {{ uploading ? t('contractor.submitting') : t('contractor.submit') }}
-        </button>
+        <!-- Contact card -->
+        <div class="contact-card">
+          <h3 class="body-md contact-title">
+            {{ t('contractor.contactTitle') }}
+          </h3>
+          <div class="contact-row">
+            <span class="contact-label body-xs">{{ t('contractor.contactEmail') }}</span>
+            <a
+              :href="`mailto:${task.manager_email}`"
+              class="body-sm contact-value"
+            >{{ task.manager_email }}</a>
+          </div>
+          <div class="contact-row">
+            <span class="contact-label body-xs">{{ t('contractor.contactAddress') }}</span>
+            <span class="body-sm contact-value">{{ task.building_address }}</span>
+          </div>
+        </div>
       </div>
     </main>
   </div>
@@ -264,12 +286,28 @@ async function submit() {
 .contractor-header {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-5) var(--space-6);
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-6);
   border-bottom: 1px solid var(--color-outline-variant);
   background: var(--color-surface);
+  gap: var(--space-4);
 }
-.contractor-logo { width: 32px; height: 32px; }
+.contractor-header-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+.contractor-logo { width: 28px; height: 28px; }
+.brand-name { font-weight: var(--fw-semibold); color: var(--color-on-surface); }
+
+.contractor-header-building {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+}
+.building-address { color: var(--color-on-surface-variant); }
 
 .contractor-main {
   flex: 1;
@@ -289,9 +327,15 @@ async function submit() {
 }
 .state-icon { width: 48px; height: 48px; }
 
-.contractor-card {
+.contractor-content {
   width: 100%;
   max-width: 560px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.contractor-card {
   background: var(--color-surface);
   border: 1px solid var(--color-outline-variant);
   border-radius: var(--radius-lg);
@@ -367,6 +411,23 @@ async function submit() {
   transition: opacity var(--transition-fast);
 }
 .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Contact card */
+.contact-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4) var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.contact-title { font-weight: var(--fw-semibold); color: var(--color-on-surface); }
+.contact-row { display: flex; gap: var(--space-3); align-items: baseline; }
+.contact-label { color: var(--color-on-surface-variant); min-width: 60px; flex-shrink: 0; }
+.contact-value { color: var(--color-on-surface); }
+a.contact-value { color: var(--color-primary); text-decoration: none; }
+a.contact-value:hover { text-decoration: underline; }
 
 .spinner { width: 24px; height: 24px; animation: spin 1s linear infinite; }
 .spinner-sm { width: 16px; height: 16px; animation: spin 1s linear infinite; }

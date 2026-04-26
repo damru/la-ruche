@@ -398,6 +398,10 @@ export interface VendorTask {
   description?: string
   status: string
   token_expires_at?: string
+  building_name: string
+  building_address: string
+  manager_name: string
+  manager_email: string
 }
 
 /// Document metadata sent in a vendor submission.

@@ -18,17 +18,54 @@ pub async fn get_task(
     State(state): State<Arc<AppState>>,
     Path(token): Path<Uuid>,
 ) -> AppResult<Json<serde_json::Value>> {
-    let task = db::task::get_by_token(&state.pool, token)
-        .await?
-        .ok_or(AppError::NotFound)?;
+    use sqlx::Row;
 
-    // Only expose information needed by the vendor — no sensitive internal fields
+    let row = sqlx::query(
+        r#"SELECT t.id, t.title, t.description, t.status::text AS status, t.token_expires_at,
+               b.name AS building_name,
+               b.address_line1, b.address_line2, b.postal_code, b.city,
+               u.first_name AS manager_first_name, u.last_name AS manager_last_name, u.email AS manager_email
+           FROM task t
+           JOIN building b ON b.id = t.building_id
+           JOIN user_account u ON u.id = t.created_by
+           WHERE t.vendor_token = $1 AND t.token_expires_at > NOW() AND t.status != 'closed'"#,
+    )
+    .bind(token)
+    .fetch_optional(&state.pool)
+    .await?
+    .ok_or(AppError::NotFound)?;
+
+    let address_line2: Option<String> = row.try_get("address_line2").ok().flatten();
+    let building_address = match address_line2 {
+        Some(line2) if !line2.is_empty() => format!(
+            "{}, {}, {} {}",
+            row.try_get::<String, _>("address_line1")?,
+            line2,
+            row.try_get::<String, _>("postal_code")?,
+            row.try_get::<String, _>("city")?
+        ),
+        _ => format!(
+            "{}, {} {}",
+            row.try_get::<String, _>("address_line1")?,
+            row.try_get::<String, _>("postal_code")?,
+            row.try_get::<String, _>("city")?
+        ),
+    };
+
     Ok(Json(serde_json::json!({
-        "id": task.id,
-        "title": task.title,
-        "description": task.description,
-        "status": task.status,
-        "token_expires_at": task.token_expires_at,
+        "id": row.try_get::<Uuid, _>("id")?,
+        "title": row.try_get::<String, _>("title")?,
+        "description": row.try_get::<Option<String>, _>("description")?,
+        "status": row.try_get::<String, _>("status")?,
+        "token_expires_at": row.try_get::<Option<chrono::DateTime<chrono::Utc>>, _>("token_expires_at")?,
+        "building_name": row.try_get::<String, _>("building_name")?,
+        "building_address": building_address,
+        "manager_name": format!(
+            "{} {}",
+            row.try_get::<String, _>("manager_first_name")?,
+            row.try_get::<String, _>("manager_last_name")?
+        ),
+        "manager_email": row.try_get::<String, _>("manager_email")?,
     })))
 }
 
