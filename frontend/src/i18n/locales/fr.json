@@ -551,10 +551,15 @@
       "urgent": "Urgente"
     },
     "generateToken": "Générer un lien prestataire",
+    "showLink": "Afficher le lien",
     "tokenExpires": "Expire le {date}",
     "revokeToken": "Révoquer le lien",
-    "confirmRevokeToken": "Révoquer ce lien empêchera le prestataire d'accéder à la tâche. Confirmer ?",
-    "confirmStatusChange": "Confirmer le changement de statut vers \"{status}\" ?"
+    "confirmRevokeTitle": "Révoquer le lien prestataire",
+    "confirmRevokeToken": "Révoquer ce lien empêchera le prestataire d'accéder à la tâche. Cette action est irréversible.",
+    "confirmStatusChange": "Confirmer le changement de statut vers \"{status}\" ?",
+    "deleteTask": "Supprimer la tâche",
+    "confirmDeleteTitle": "Supprimer la tâche",
+    "confirmDeleteMessage": "La tâche « {title} » sera supprimée définitivement. Cette action est irréversible."
   },
   "documents": {
     "title": "Documents",
@@ -606,9 +611,11 @@
     "respond": "Répondre",
     "myResponse": "Ma réponse",
     "results": "Résultats",
-    "close": "Clôturer la consultation",
+    "close": "Clôturer",
+    "closeAction": "Clôturer la consultation",
     "confirmCloseTitle": "Clôturer la consultation",
     "confirmCloseMessage": "La consultation sera clôturée et les réponses ne seront plus acceptées.",
+    "legalNote": "Art. 17 & 24 loi 10/07/1965",
     "informalNote": "Cette consultation est informelle et n'a aucune valeur décisionnelle légale.",
     "informalNoteDetail": "Les consultations écrites permettent de recueillir l'avis des copropriétaires et des locataires sans valeur de vote.",
     "fields": {

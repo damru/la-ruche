@@ -230,10 +230,14 @@ export const tasksApi = {
     api.get<Task>(`/tasks/${id}`),
   create: (data: { title: string; description?: string; priority?: string; contract_id?: string; assigned_to?: string }) =>
     api.post<Task>('/tasks', data),
-  update: (id: string, data: Partial<Task>) =>
+  update: (id: string, data: { title?: string; description?: string | null; priority?: string; status?: string }) =>
     api.put<Task>(`/tasks/${id}`, data),
+  delete: (id: string) =>
+    api.delete(`/tasks/${id}`),
   generateToken: (id: string) =>
     api.post<{ token: string; expires_at: string; url: string }>(`/tasks/${id}/vendor-token`),
+  getVendorTokenUrl: (id: string) =>
+    api.get<{ url: string; expires_at: string }>(`/tasks/${id}/vendor-token`),
   revokeToken: (id: string) =>
     api.delete(`/tasks/${id}/vendor-token`),
 }

@@ -101,13 +101,28 @@ function openCreateModal() {
   showTaskModal.value = true
 }
 
+function openEditModal(task: Task) {
+  editingTask.value = task
+  taskForm.value = {
+    title: task.title,
+    description: task.description ?? '',
+    priority: task.priority,
+  }
+  taskFeedback.reset()
+  showTaskModal.value = true
+}
+
 async function saveTask() {
   if (!taskForm.value.title.trim()) return
   savingTask.value = true
   taskFeedback.reset()
   try {
     if (editingTask.value) {
-      await tasksApi.update(editingTask.value.id, { status: editingTask.value.status })
+      await tasksApi.update(editingTask.value.id, {
+        title: taskForm.value.title,
+        description: taskForm.value.description || null,
+        priority: taskForm.value.priority,
+      })
     } else {
       await tasksApi.create({
         title: taskForm.value.title,
@@ -127,18 +142,66 @@ async function saveTask() {
   }
 }
 
+// ── Delete task ───────────────────────────────────────────────────
+const pageError = ref('')
+
+async function deleteTask(task: Task) {
+  const ok = await confirm({
+    title: t('tasks.confirmDeleteTitle'),
+    message: t('tasks.confirmDeleteMessage', { title: task.title }),
+    confirmLabel: t('common.delete'),
+    variant: 'danger',
+  })
+  if (!ok) return
+  pageError.value = ''
+  try {
+    await tasksApi.delete(task.id)
+    await reload()
+  } catch (err) {
+    pageError.value = toErrorMessage(err, t('common.error'))
+  }
+}
+
 // ── Vendor token actions ───────────────────────────────────────────
 const generatingToken = ref<string | null>(null)
-const tokenData = ref<Record<string, { url: string; expires_at: string }>>({})
+// vendorLinks: task.id → { url, expires_at } — populated on demand
+const vendorLinks = ref<Record<string, { url: string; expires_at: string }>>({})
 
-const pageError = ref('')
+// ── Revoke token modal ─────────────────────────────────────────────
+const revokingTask = ref<Task | null>(null)
+const revokeFeedback = useFormFeedback()
+const revoking = ref(false)
+
+function openRevokeModal(task: Task) {
+  revokingTask.value = task
+  revokeFeedback.reset()
+}
+
+async function confirmRevoke() {
+  if (!revokingTask.value) return
+  revoking.value = true
+  revokeFeedback.reset()
+  try {
+    await tasksApi.revokeToken(revokingTask.value.id)
+    delete vendorLinks.value[revokingTask.value.id]
+    revokeFeedback.setSuccess(t('common.saved'))
+    setTimeout(() => { revokingTask.value = null; reload() }, SUCCESS_AUTO_CLEAR_MS)
+  } catch (err) {
+    revokeFeedback.setError(toErrorMessage(err, t('common.error')))
+  } finally {
+    revoking.value = false
+  }
+}
 
 async function generateToken(task: Task) {
   generatingToken.value = task.id
   pageError.value = ''
   try {
     const res = await tasksApi.generateToken(task.id)
-    tokenData.value[task.id] = { url: res.data.url, expires_at: res.data.expires_at }
+    // Build URL using the current origin so it always points to the frontend
+    const tokenStr = res.data.token
+    const url = `${window.location.origin}/vendor/${tokenStr}`
+    vendorLinks.value[task.id] = { url, expires_at: res.data.expires_at }
     await reload()
   } catch (err) {
     pageError.value = toErrorMessage(err, t('common.error'))
@@ -147,19 +210,18 @@ async function generateToken(task: Task) {
   }
 }
 
-async function revokeToken(task: Task) {
-  const ok = await confirm({
-    title: t('tasks.revokeToken'),
-    message: t('tasks.confirmRevokeToken'),
-    confirmLabel: t('tasks.revokeToken'),
-    variant: 'danger',
-  })
-  if (!ok) return
+async function showVendorLink(task: Task) {
+  if (vendorLinks.value[task.id]) return // already loaded
   pageError.value = ''
   try {
-    await tasksApi.revokeToken(task.id)
-    delete tokenData.value[task.id]
-    await reload()
+    const res = await tasksApi.getVendorTokenUrl(task.id)
+    // Extract token segment and rebuild URL with current origin
+    const rawUrl = res.data.url
+    const tokenSegment = rawUrl.split('/vendor/')[1]
+    const url = tokenSegment
+      ? `${window.location.origin}/vendor/${tokenSegment}`
+      : rawUrl
+    vendorLinks.value[task.id] = { url, expires_at: res.data.expires_at }
   } catch (err) {
     pageError.value = toErrorMessage(err, t('common.error'))
   }
@@ -217,7 +279,12 @@ function copyToClipboard(text: string) {
           </div>
         </div>
 
-        <CAlert v-if="pageError" variant="error">{{ pageError }}</CAlert>
+        <CAlert
+          v-if="pageError"
+          variant="error"
+        >
+          {{ pageError }}
+        </CAlert>
 
         <!-- Filtres -->
         <div class="tabs">
@@ -253,7 +320,6 @@ function copyToClipboard(text: string) {
               ></div>
               <div class="task-body">
                 <div class="task-head">
-                  <span class="title-sm">{{ task.title }}</span>
                   <div class="task-badges">
                     <CBadge :variant="priorityVariant(task.priority)">
                       {{ t(`tasks.priorities.${task.priority}`) }}
@@ -262,7 +328,44 @@ function copyToClipboard(text: string) {
                       {{ t(`tasks.statuses.${task.status}`) }}
                     </CBadge>
                   </div>
+                  <div class="task-actions">
+                    <button
+                      class="icon-btn"
+                      :title="t('tasks.editTask')"
+                      @click="openEditModal(task)"
+                    >
+                      <CIconEdit
+                        width="15"
+                        height="15"
+                      />
+                    </button>
+                    <button
+                      class="icon-btn icon-btn--danger"
+                      :title="t('tasks.deleteTask')"
+                      @click="deleteTask(task)"
+                    >
+                      <CIconTrash
+                        width="15"
+                        height="15"
+                      />
+                    </button>
+                    <!-- Generate link (only if no active token and task is active) -->
+                    <button
+                      v-if="!task.has_vendor_token && task.status !== 'closed' && task.status !== 'cancelled'"
+                      class="icon-btn"
+                      :title="t('tasks.generateToken')"
+                      :disabled="generatingToken === task.id"
+                      @click="generateToken(task)"
+                    >
+                      <CIconLink
+                        width="15"
+                        height="15"
+                      />
+                    </button>
+                  </div>
                 </div>
+
+                <span class="title-sm task-title">{{ task.title }}</span>
                 <p
                   v-if="task.description"
                   class="task-desc body-sm"
@@ -275,58 +378,58 @@ function copyToClipboard(text: string) {
                   v-if="task.has_vendor_token"
                   class="vendor-token"
                 >
-                  <span
-                    class="body-xs"
-                    style="color:var(--color-on-surface-variant)"
-                  >
-                    {{ t('tasks.vendorTokenActive', { date: formatDate(task.token_expires_at!) }) }}
-                  </span>
+                  <div class="vendor-token-header">
+                    <span
+                      class="body-xs"
+                      style="color:var(--color-on-surface-variant)"
+                    >
+                      {{ t('tasks.vendorTokenActive', { date: formatDate(task.token_expires_at!) }) }}
+                    </span>
+                    <div class="vendor-token-btns">
+                      <button
+                        class="icon-btn"
+                        :title="t('tasks.showLink')"
+                        @click="showVendorLink(task)"
+                      >
+                        <CIconEye
+                          width="14"
+                          height="14"
+                        />
+                      </button>
+                      <button
+                        class="icon-btn icon-btn--danger"
+                        :title="t('tasks.revokeToken')"
+                        @click="openRevokeModal(task)"
+                      >
+                        <CIconX
+                          width="14"
+                          height="14"
+                        />
+                      </button>
+                    </div>
+                  </div>
                   <div
-                    v-if="tokenData[task.id]"
+                    v-if="vendorLinks[task.id]"
                     class="token-url-row"
                   >
-                    <code class="token-url">{{ tokenData[task.id].url }}</code>
+                    <code class="token-url">{{ vendorLinks[task.id].url }}</code>
                     <button
                       class="icon-btn"
                       :title="t('tasks.vendorTokenCopied')"
-                      @click="copyToClipboard(tokenData[task.id].url)"
+                      @click="copyToClipboard(vendorLinks[task.id].url)"
                     >
-                      <CIconCheck
+                      <CIconCopy
                         width="14"
                         height="14"
                       />
                     </button>
                   </div>
-                  <CBtn
-                    variant="ghost"
-                    size="sm"
-                    class="icon-btn--danger"
-                    @click="revokeToken(task)"
-                  >
-                    {{ t('tasks.revokeToken') }}
-                  </CBtn>
                 </div>
 
                 <div class="task-meta">
                   <span>{{ formatRelative(task.created_at) }}</span>
                   <span v-if="task.closed_at">· {{ t('tasks.closedAt', { date: formatDate(task.closed_at) }) }}</span>
                 </div>
-              </div>
-
-              <!-- Actions -->
-              <div class="task-actions">
-                <button
-                  v-if="!task.has_vendor_token && task.status !== 'closed' && task.status !== 'cancelled'"
-                  class="icon-btn"
-                  :title="t('tasks.generateToken')"
-                  :disabled="generatingToken === task.id"
-                  @click="generateToken(task)"
-                >
-                  <CIconWrench
-                    width="16"
-                    height="16"
-                  />
-                </button>
               </div>
             </div>
           </CCard>
@@ -341,7 +444,7 @@ function copyToClipboard(text: string) {
       </template>
     </div>
 
-    <!-- Create task modal -->
+    <!-- Create / Edit task modal -->
     <CModal
       :open="showTaskModal"
       :title="editingTask ? t('tasks.editTask') : t('tasks.newTask')"
@@ -385,12 +488,12 @@ function copyToClipboard(text: string) {
             </option>
           </select>
         </div>
+      </form>
+      <template #footer>
         <CFormFeedback
           :status="taskFeedback.status.value"
           :message="taskFeedback.message.value"
         />
-      </form>
-      <template #footer>
         <CBtn
           variant="ghost"
           @click="showTaskModal = false"
@@ -406,6 +509,37 @@ function copyToClipboard(text: string) {
         </CBtn>
       </template>
     </CModal>
+
+    <!-- Revoke token modal -->
+    <CModal
+      :open="!!revokingTask"
+      :title="t('tasks.confirmRevokeTitle')"
+      size="sm"
+      @update:open="v => !v && (revokingTask = null)"
+    >
+      <p class="body-sm">
+        {{ t('tasks.confirmRevokeToken') }}
+      </p>
+      <template #footer>
+        <CFormFeedback
+          :status="revokeFeedback.status.value"
+          :message="revokeFeedback.message.value"
+        />
+        <CBtn
+          variant="ghost"
+          @click="revokingTask = null"
+        >
+          {{ t('common.cancel') }}
+        </CBtn>
+        <CBtn
+          variant="danger"
+          :loading="revoking"
+          @click="confirmRevoke"
+        >
+          {{ t('tasks.revokeToken') }}
+        </CBtn>
+      </template>
+    </CModal>
   </div>
 </template>
 
@@ -417,17 +551,20 @@ function copyToClipboard(text: string) {
 
 .prio-bar { width: 4px; flex-shrink: 0; }
 
-.task-body { flex: 1; padding: 14px 16px; min-width: 0; }
-.task-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); margin-bottom: 6px; }
-.task-badges { display: flex; gap: 6px; flex-shrink: 0; }
-.task-desc { color: var(--color-on-surface-variant); margin-bottom: var(--space-2); }
-.task-meta { font-size: var(--text-2xs); color: var(--color-on-surface-variant); }
+.task-body { flex: 1; padding: 14px 16px; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.task-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.task-badges { display: flex; gap: 6px; flex-wrap: wrap; }
+.task-title { display: block; margin-top: 4px; }
+.task-desc { color: var(--color-on-surface-variant); }
+.task-meta { font-size: var(--text-2xs); color: var(--color-on-surface-variant); margin-top: 4px; }
 
-.vendor-token { display: flex; flex-direction: column; gap: 4px; margin: 6px 0; padding: 8px; background: var(--color-surface-container); border-radius: var(--radius-sm); }
+.task-actions { display: flex; gap: 2px; flex-shrink: 0; }
+
+.vendor-token { display: flex; flex-direction: column; gap: 4px; margin: 4px 0; padding: 8px; background: var(--color-surface-container); border-radius: var(--radius-sm); }
+.vendor-token-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.vendor-token-btns { display: flex; gap: 2px; }
 .token-url-row { display: flex; align-items: center; gap: 6px; }
 .token-url { font-size: var(--text-2xs); word-break: break-all; flex: 1; }
-
-.task-actions { display: flex; flex-direction: column; justify-content: center; padding: 0 8px; gap: 4px; }
 
 .empty-state { padding: var(--space-8); text-align: center; font-size: var(--text-md); color: var(--color-on-surface-variant); }
 
@@ -437,4 +574,3 @@ function copyToClipboard(text: string) {
 .form-input { padding: var(--space-2) var(--space-3); border: 1px solid var(--color-outline); border-radius: var(--radius-md); font-size: var(--text-sm); background: var(--color-surface); color: var(--color-on-surface); }
 .form-input:focus { outline: none; border-color: var(--color-primary); }
 </style>
-

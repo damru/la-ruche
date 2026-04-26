@@ -222,6 +222,92 @@ pub async fn generate_token(
     Ok((token, expires_at))
 }
 
+/// Returns the raw vendor_token UUID and its expiry for an active token, or `None` if absent.
+pub async fn get_vendor_token(
+    pool: &PgPool,
+    id: Uuid,
+    building_id: Uuid,
+) -> AppResult<Option<(Uuid, DateTime<Utc>)>> {
+    use sqlx::Row;
+    let row = sqlx::query(
+        "SELECT vendor_token, token_expires_at FROM task WHERE id = $1 AND building_id = $2",
+    )
+    .bind(id)
+    .bind(building_id)
+    .fetch_optional(pool)
+    .await?;
+    Ok(row.and_then(|r| {
+        let token: Option<Uuid> = r.try_get("vendor_token").ok().flatten();
+        let expires_at: Option<DateTime<Utc>> = r.try_get("token_expires_at").ok().flatten();
+        token.zip(expires_at)
+    }))
+}
+
+/// Deletes a task. Returns 404 if not found.
+pub async fn delete(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()> {
+    let result = sqlx::query("DELETE FROM task WHERE id = $1 AND building_id = $2")
+        .bind(id)
+        .bind(building_id)
+        .execute(pool)
+        .await?;
+    if result.rows_affected() == 0 {
+        return Err(crate::errors::AppError::NotFound);
+    }
+    Ok(())
+}
+
+/// Updates mutable task fields. `None` values leave the existing field unchanged.
+pub async fn update_fields(
+    pool: &PgPool,
+    id: Uuid,
+    building_id: Uuid,
+    title: Option<&str>,
+    description: Option<Option<&str>>,
+    priority: Option<&str>,
+    status: Option<&str>,
+) -> AppResult<()> {
+    let current = get(pool, id, building_id)
+        .await?
+        .ok_or(crate::errors::AppError::NotFound)?;
+
+    let new_title = title.unwrap_or(&current.title).to_string();
+    let new_description = match description {
+        Some(d) => d.map(|s| s.to_string()),
+        None => current.description,
+    };
+    let new_priority = priority.unwrap_or(&current.priority).to_string();
+    let new_status = status.unwrap_or(&current.status).to_string();
+    let closed_at = if new_status == "closed" && current.closed_at.is_none() {
+        Some(Utc::now())
+    } else if new_status != "closed" {
+        None
+    } else {
+        current.closed_at
+    };
+
+    let result = sqlx::query(
+        "UPDATE task SET title = $3, description = $4,
+         priority = $5::text::task_priority,
+         status = $6::text::task_status,
+         closed_at = $7, updated_at = NOW()
+         WHERE id = $1 AND building_id = $2",
+    )
+    .bind(id)
+    .bind(building_id)
+    .bind(&new_title)
+    .bind(&new_description)
+    .bind(&new_priority)
+    .bind(&new_status)
+    .bind(closed_at)
+    .execute(pool)
+    .await?;
+
+    if result.rows_affected() == 0 {
+        return Err(crate::errors::AppError::NotFound);
+    }
+    Ok(())
+}
+
 /// Returns 404 if the task doesn't exist.
 pub async fn revoke_token(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()> {
     let result = sqlx::query(

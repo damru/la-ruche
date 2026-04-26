@@ -51,7 +51,10 @@ pub async fn create(
 
 #[derive(Deserialize)]
 pub struct UpdateTaskInput {
-    pub status: String,
+    pub status: Option<String>,
+    pub title: Option<String>,
+    pub description: Option<Option<String>>,
+    pub priority: Option<String>,
 }
 
 pub async fn update(
@@ -61,14 +64,53 @@ pub async fn update(
     Json(input): Json<UpdateTaskInput>,
 ) -> AppResult<StatusCode> {
     auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
-    if !db::task::validate_status(&input.status) {
-        return Err(AppError::Validation(format!(
-            "Invalid status '{}'. Valid values: open, in_progress, awaiting_vendor, closed, cancelled",
-            input.status
-        )));
+    if let Some(ref s) = input.status {
+        if !db::task::validate_status(s) {
+            return Err(AppError::Validation(format!(
+                "Invalid status '{}'. Valid values: open, in_progress, awaiting_vendor, closed, cancelled",
+                s
+            )));
+        }
     }
-    db::task::update_status(&state.pool, id, auth.building_id, &input.status).await?;
+    db::task::update_fields(
+        &state.pool,
+        id,
+        auth.building_id,
+        input.title.as_deref(),
+        input.description.as_ref().map(|d| d.as_deref()),
+        input.priority.as_deref(),
+        input.status.as_deref(),
+    )
+    .await?;
     Ok(StatusCode::NO_CONTENT)
+}
+
+pub async fn delete_task(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+) -> AppResult<StatusCode> {
+    auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
+    db::task::delete(&state.pool, id, auth.building_id).await?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
+pub async fn get_vendor_token_url(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+) -> AppResult<Json<serde_json::Value>> {
+    auth.require_role(&Role::Manager)?;
+    let result = db::task::get_vendor_token(&state.pool, id, auth.building_id).await?;
+    match result {
+        Some((token, expires_at)) => {
+            let url = format!("{}/vendor/{}", state.cfg.app.public_url, token);
+            Ok(Json(
+                serde_json::json!({ "url": url, "expires_at": expires_at }),
+            ))
+        }
+        None => Err(AppError::NotFound),
+    }
 }
 
 pub async fn generate_token(

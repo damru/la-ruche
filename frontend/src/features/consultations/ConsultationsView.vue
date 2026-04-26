@@ -4,7 +4,6 @@ import { useI18n } from 'vue-i18n'
 import { useFormatters } from '@/composables/useFormatters'
 import { usePageLoader, toErrorMessage } from '@/composables/usePageLoader'
 import { useFormFeedback, SUCCESS_AUTO_CLEAR_MS } from '@/composables/useFormFeedback'
-import { useConfirm } from '@/composables/useConfirm'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CCard from '@/components/molecules/CCard.vue'
@@ -18,8 +17,7 @@ import { buildingApi, consultationsApi } from '@/api'
 import type { Consultation, ConsultationResults } from '@/types/domain'
 
 const { t } = useI18n()
-const { formatDate } = useFormatters()
-const { confirm } = useConfirm()
+const { formatDate, formatRelative } = useFormatters()
 
 const buildingName = ref('')
 const allConsultations = ref<Consultation[]>([])
@@ -27,7 +25,7 @@ const statusFilter = ref<'open' | 'closed'>('open')
 const resultsCache = ref<Record<string, ConsultationResults>>({})
 const pageError = ref('')
 
-// Create modal
+// ── Create modal ───────────────────────────────────────────────────
 const showCreateModal = ref(false)
 const createFeedback = useFormFeedback()
 const saving = ref(false)
@@ -38,12 +36,17 @@ const defaultCreateForm = () => ({
 })
 const createForm = ref(defaultCreateForm())
 
-// Respond modal
+// ── Respond modal ──────────────────────────────────────────────────
 const respondingTo = ref<Consultation | null>(null)
 const respondFeedback = useFormFeedback()
 const responding = ref(false)
 const selectedChoice = ref('')
 const respondComment = ref('')
+
+// ── Close modal ────────────────────────────────────────────────────
+const closingConsultation = ref<Consultation | null>(null)
+const closeFeedback = useFormFeedback()
+const closing = ref(false)
 
 async function loadData() {
   const [buildingRes, listRes] = await Promise.all([
@@ -127,20 +130,23 @@ async function submitResponse() {
   }
 }
 
-async function closeConsultation(c: Consultation) {
-  const ok = await confirm({
-    title: t('consultations.confirmCloseTitle'),
-    message: t('consultations.confirmCloseMessage'),
-    confirmLabel: t('consultations.close'),
-    variant: 'danger',
-  })
-  if (!ok) return
-  pageError.value = ''
+function openCloseModal(c: Consultation) {
+  closingConsultation.value = c
+  closeFeedback.reset()
+}
+
+async function confirmClose() {
+  if (!closingConsultation.value) return
+  closing.value = true
+  closeFeedback.reset()
   try {
-    await consultationsApi.close(c.id)
-    await reload()
+    await consultationsApi.close(closingConsultation.value.id)
+    closeFeedback.setSuccess(t('common.saved'))
+    setTimeout(async () => { closingConsultation.value = null; await reload() }, SUCCESS_AUTO_CLEAR_MS)
   } catch (err) {
-    pageError.value = toErrorMessage(err, t('common.error'))
+    closeFeedback.setError(toErrorMessage(err, t('common.error')))
+  } finally {
+    closing.value = false
   }
 }
 </script>
@@ -192,20 +198,11 @@ async function closeConsultation(c: Consultation) {
           </div>
         </div>
 
-        <!-- Disclaimer légal obligatoire -->
-        <CAlert v-if="pageError" variant="error">{{ pageError }}</CAlert>
-
-        <!-- Legal info -->
-        <CAlert variant="info">
-          <CIconInfo
-            width="16"
-            height="16"
-            style="flex-shrink:0"
-          />
-          <div>
-            <strong>{{ t('consultations.informalNote') }}</strong>
-            <br /><span class="body-xs">{{ t('consultations.informalNoteDetail') }}</span>
-          </div>
+        <CAlert
+          v-if="pageError"
+          variant="error"
+        >
+          {{ pageError }}
         </CAlert>
 
         <div class="tabs">
@@ -227,32 +224,19 @@ async function closeConsultation(c: Consultation) {
             v-for="c in consultations"
             :key="c.id"
           >
-            <div class="card-head">
-              <div class="card-title-row">
-                <span class="title-sm">{{ c.title }}</span>
-                <CBadge :variant="c.status === 'open' ? 'open' : 'closed'">
-                  {{ t(`consultations.statuses.${c.status}`) }}
-                </CBadge>
-              </div>
-              <div class="card-actions">
-                <CBtn
-                  v-if="c.status === 'open'"
-                  variant="primary"
-                  size="sm"
-                  @click="openRespondModal(c)"
-                >
-                  {{ t('consultations.respond') }}
-                </CBtn>
-                <CBtn
-                  v-if="c.status === 'open'"
-                  variant="ghost"
-                  size="sm"
-                  @click="closeConsultation(c)"
-                >
-                  {{ t('consultations.close') }}
-                </CBtn>
-              </div>
-            </div>
+            <!-- Status badge top-left -->
+            <CBadge
+              :variant="c.status === 'open' ? 'open' : 'closed'"
+              class="status-badge"
+            >
+              {{ t(`consultations.statuses.${c.status}`) }}
+            </CBadge>
+
+            <!-- Title prominent, under status -->
+            <h3 class="consultation-title title-md">
+              {{ c.title }}
+            </h3>
+
             <p
               v-if="c.description"
               class="body-sm desc"
@@ -260,6 +244,19 @@ async function closeConsultation(c: Consultation) {
               {{ c.description }}
             </p>
 
+            <!-- Open choices pills -->
+            <div
+              v-if="c.status === 'open' && c.choices"
+              class="open-choices"
+            >
+              <span
+                v-for="ch in c.choices"
+                :key="ch.id"
+                class="choice-pill"
+              >{{ ch.label }}</span>
+            </div>
+
+            <!-- Closed results -->
             <div
               v-if="c.status === 'closed' && resultsCache[c.id]"
               class="results"
@@ -286,22 +283,33 @@ async function closeConsultation(c: Consultation) {
               </p>
             </div>
 
-            <div
-              v-else-if="c.status === 'open' && c.choices"
-              class="open-choices"
-            >
-              <span
-                v-for="ch in c.choices"
-                :key="ch.id"
-                class="choice-pill"
-              >{{ ch.label }}</span>
-            </div>
-
+            <!-- Date hint -->
             <p class="body-xs footer-meta">
               {{ c.status === 'open'
-                ? t('consultations.openedAt', { date: formatDate(c.created_at) })
+                ? t('consultations.openedAt', { date: formatRelative(c.created_at) })
                 : t('consultations.closedAt', { date: formatDate(c.closed_at!) }) }}
             </p>
+
+            <!-- Actions at bottom -->
+            <div
+              v-if="c.status === 'open'"
+              class="card-actions"
+            >
+              <CBtn
+                variant="primary"
+                size="sm"
+                @click="openRespondModal(c)"
+              >
+                {{ t('consultations.respond') }}
+              </CBtn>
+              <CBtn
+                variant="ghost"
+                size="sm"
+                @click="openCloseModal(c)"
+              >
+                {{ t('consultations.close') }}
+              </CBtn>
+            </div>
           </CCard>
 
           <div
@@ -311,6 +319,14 @@ async function closeConsultation(c: Consultation) {
             {{ t('common.noData') }}
           </div>
         </div>
+
+        <!-- Legal info — bottom of page, CCard pattern (cf. Registry) -->
+        <CCard>
+          <p class="body-sm dim">
+            ⚖️ <strong>{{ t('consultations.legalNote') }}</strong> — {{ t('consultations.informalNote') }}
+            <br /><span class="body-xs">{{ t('consultations.informalNoteDetail') }}</span>
+          </p>
+        </CCard>
       </template>
     </div>
 
@@ -379,12 +395,12 @@ async function closeConsultation(c: Consultation) {
             /> {{ t('consultations.fields.addChoice') }}
           </CBtn>
         </div>
+      </form>
+      <template #footer>
         <CFormFeedback
           :status="createFeedback.status.value"
           :message="createFeedback.message.value"
         />
-      </form>
-      <template #footer>
         <CBtn
           variant="ghost"
           @click="showCreateModal = false"
@@ -444,12 +460,12 @@ async function closeConsultation(c: Consultation) {
             rows="2"
           ></textarea>
         </div>
+      </div>
+      <template #footer>
         <CFormFeedback
           :status="respondFeedback.status.value"
           :message="respondFeedback.message.value"
         />
-      </div>
-      <template #footer>
         <CBtn
           variant="ghost"
           @click="respondingTo = null"
@@ -466,16 +482,48 @@ async function closeConsultation(c: Consultation) {
         </CBtn>
       </template>
     </CModal>
+
+    <!-- Close consultation modal -->
+    <CModal
+      :open="!!closingConsultation"
+      :title="t('consultations.confirmCloseTitle')"
+      size="sm"
+      @update:open="v => !v && (closingConsultation = null)"
+    >
+      <p class="body-sm">
+        {{ t('consultations.confirmCloseMessage') }}
+      </p>
+      <template #footer>
+        <CFormFeedback
+          :status="closeFeedback.status.value"
+          :message="closeFeedback.message.value"
+        />
+        <CBtn
+          variant="ghost"
+          @click="closingConsultation = null"
+        >
+          {{ t('common.cancel') }}
+        </CBtn>
+        <CBtn
+          variant="danger"
+          :loading="closing"
+          @click="confirmClose"
+        >
+          {{ t('consultations.closeAction') }}
+        </CBtn>
+      </template>
+    </CModal>
   </div>
 </template>
 
 <style scoped>
 .consultation-list { display: flex; flex-direction: column; gap: 12px; }
-.card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); margin-bottom: var(--space-3); }
-.card-title-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.card-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+.status-badge { margin-bottom: var(--space-2); }
+.consultation-title { margin-bottom: var(--space-2); }
 .desc { color: var(--color-on-surface-variant); margin-bottom: var(--space-3); }
 .footer-meta { color: var(--color-on-surface-variant); margin-top: var(--space-3); }
+.card-actions { display: flex; gap: 6px; margin-top: var(--space-3); }
 
 .results { display: flex; flex-direction: column; gap: 8px; margin-bottom: var(--space-2); }
 .result-row { display: grid; grid-template-columns: 1fr 100px 40px; gap: 8px; align-items: center; }
@@ -487,7 +535,7 @@ async function closeConsultation(c: Consultation) {
 .open-choices { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: var(--space-2); }
 .choice-pill { padding: 3px 10px; background: var(--color-surface-container); border-radius: var(--radius-full); font-size: var(--text-xs); }
 
-.choice-options { display: flex; flex-direction: column; gap: 6px; }
+.choice-options { display: flex; flex-direction: column; gap: 8px; }
 .choice-input-row { display: flex; align-items: center; gap: 8px; }
 .choice-input-row .form-input { flex: 1; }
 
@@ -497,4 +545,5 @@ async function closeConsultation(c: Consultation) {
 .form-input { padding: var(--space-2) var(--space-3); border: 1px solid var(--color-outline); border-radius: var(--radius-md); font-size: var(--text-sm); background: var(--color-surface); color: var(--color-on-surface); }
 .form-input:focus { outline: none; border-color: var(--color-primary); }
 .empty-state { padding: var(--space-8); text-align: center; font-size: var(--text-md); color: var(--color-on-surface-variant); }
+.dim { color: var(--color-on-surface-variant); }
 </style>

@@ -172,10 +172,17 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
         )
         // ── Tasks ───────────────────────────────────────────────
         .route("/tasks", get(tasks::list).post(tasks::create))
-        .route("/tasks/{id}", get(tasks::get).put(tasks::update))
+        .route(
+            "/tasks/{id}",
+            get(tasks::get)
+                .put(tasks::update)
+                .delete(tasks::delete_task),
+        )
         .route(
             "/tasks/{id}/vendor-token",
-            post(tasks::generate_token).delete(tasks::revoke_token),
+            get(tasks::get_vendor_token_url)
+                .post(tasks::generate_token)
+                .delete(tasks::revoke_token),
         )
         // ── Claims ──────────────────────────────────────────────
         .route("/claims", get(claims::list).post(claims::create))
