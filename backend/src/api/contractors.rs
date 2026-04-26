@@ -77,13 +77,13 @@ pub async fn update(
     json_value(c)
 }
 
-/// DELETE /contractors/:id — delete a contractor (Manager only)
+/// DELETE /contractors/:id — delete a contractor (Manager / BoardMember only)
 pub async fn delete(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
 ) -> AppResult<StatusCode> {
-    auth.require_any_role(&[Role::Manager])?;
+    auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
     if !db::contractor::delete(&state.pool, id, auth.building_id).await? {
         return Err(AppError::NotFound);
     }

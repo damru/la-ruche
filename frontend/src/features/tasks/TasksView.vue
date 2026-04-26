@@ -56,12 +56,15 @@ function onContractorInput() {
 function selectContractorSuggestion(c: Contractor) {
   selectedContractor.value = c
   contractorSearch.value = c.name
+  // Hide immediately — mousedown.prevent on the item ensures this fires before blur
   showSuggestions.value = false
 }
 
 function hideSuggestions() {
-  // Delay to allow mousedown on suggestion to fire before hiding
-  window.setTimeout(() => { showSuggestions.value = false }, 150)
+  // Small delay so mousedown on a suggestion item fires before the list is hidden.
+  // mousedown.prevent on each item prevents default focus steal, so the blur fires
+  // after the click is processed by selectContractorSuggestion.
+  window.setTimeout(() => { showSuggestions.value = false }, 100)
 }
 
 function clearContractor() {

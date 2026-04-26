@@ -509,7 +509,7 @@ async function confirmDelete() {
 }
 
 .data-table th {
-  font-weight: var(--font-medium);
+  font-weight: var(--fw-medium);
   color: var(--color-on-surface-variant);
   font-size: var(--text-xs);
   text-transform: uppercase;
@@ -521,7 +521,7 @@ async function confirmDelete() {
 }
 
 .font-medium {
-  font-weight: var(--font-medium);
+  font-weight: var(--fw-medium);
 }
 
 .link {
@@ -553,7 +553,7 @@ async function confirmDelete() {
 
 .form-label {
   font-size: var(--text-sm);
-  font-weight: var(--font-medium);
+  font-weight: var(--fw-medium);
   color: var(--color-on-surface);
 }
 
@@ -583,7 +583,7 @@ async function confirmDelete() {
 
 .topbar-breadcrumb span:last-child {
   color: var(--color-on-surface);
-  font-weight: var(--font-medium);
+  font-weight: var(--fw-medium);
 }
 
 .mb-4 {
