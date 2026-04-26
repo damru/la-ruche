@@ -41,7 +41,8 @@ pub struct CreateConsultationInput {
 
 #[derive(Deserialize)]
 pub struct RespondInput {
-    pub choice_id: Uuid,
+    /// One or more choice IDs selected by the user (multi-choice supported).
+    pub choice_ids: Vec<Uuid>,
     pub comment: Option<String>,
 }
 
@@ -50,7 +51,7 @@ pub async fn list(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,
 ) -> AppResult<Json<serde_json::Value>> {
-    let rows = db::consultation::list(&state.pool, auth.building_id).await?;
+    let rows = db::consultation::list(&state.pool, auth.building_id, auth.user_id).await?;
     Ok(Json(serde_json::json!({
         "disclaimer": INFORMAL_DISCLAIMER,
         "consultations": rows,
@@ -140,6 +141,12 @@ pub async fn respond(
     Path(id): Path<Uuid>,
     Json(input): Json<RespondInput>,
 ) -> AppResult<StatusCode> {
+    if input.choice_ids.is_empty() {
+        return Err(AppError::Validation(
+            "At least one choice is required".into(),
+        ));
+    }
+
     // visible_to_roles check: fetch consultation and verify caller role is allowed
     let c = db::consultation::get_with_choices(&state.pool, id, auth.building_id)
         .await?
@@ -166,7 +173,7 @@ pub async fn respond(
         id,
         auth.building_id,
         auth.user_id,
-        input.choice_id,
+        &input.choice_ids,
         input.comment.as_deref(),
     )
     .await?;

@@ -42,22 +42,13 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      // Proxy vers le backend Rust en dev
+      // All API calls (including public vendor endpoints under /api/v1/vendor/)
+      // are proxied to the backend.
+      // Browser navigations to /vendor/:token are NOT proxied — Vite's HTML
+      // history fallback serves index.html and Vue Router renders ContractorPage.
       '/api': {
         target: 'http://localhost:8080',
         changeOrigin: true,
-      },
-      '/vendor': {
-        target: 'http://localhost:8080',
-        changeOrigin: true,
-        // Browser navigations to /vendor/:token (Accept: text/html) must be handled
-        // by the SPA (ContractorPage), not proxied to the backend which returns JSON.
-        // API calls from ContractorPage JS (Accept: application/json) are proxied normally.
-        bypass(req) {
-          if ((req.headers.accept ?? '').startsWith('text/html')) {
-            return '/index.html'
-          }
-        },
       },
     },
   },

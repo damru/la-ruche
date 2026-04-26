@@ -261,12 +261,20 @@ export interface Consultation {
   closed_at?: string
   created_at: string
   choices: ConsultationChoice[]
+  /** IDs of the choices the current user has already selected (empty = not voted yet). */
+  my_choice_ids: string[]
+  /** Total number of distinct voters. */
+  total_responses: number
 }
 
 export interface ConsultationChoice {
   id: string
   label: string
   order_index: number
+  /** Number of voters who selected this choice (from list endpoint). */
+  votes: number
+  /** Percentage of voters who selected this choice (0–100). */
+  pct: number
 }
 
 // ── Auth ──────────────────────────────────────────────────────────

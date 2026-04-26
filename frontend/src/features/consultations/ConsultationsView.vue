@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useFormatters } from '@/composables/useFormatters'
 import { usePageLoader, toErrorMessage } from '@/composables/usePageLoader'
@@ -14,7 +14,7 @@ import CPageError from '@/components/molecules/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import { buildingApi, consultationsApi } from '@/api'
-import type { Consultation, ConsultationResults } from '@/types/domain'
+import type { Consultation } from '@/types/domain'
 
 const { t } = useI18n()
 const { formatDate, formatRelative } = useFormatters()
@@ -22,7 +22,6 @@ const { formatDate, formatRelative } = useFormatters()
 const buildingName = ref('')
 const allConsultations = ref<Consultation[]>([])
 const statusFilter = ref<'open' | 'closed'>('open')
-const resultsCache = ref<Record<string, ConsultationResults>>({})
 const pageError = ref('')
 
 // ── Create modal ───────────────────────────────────────────────────
@@ -36,12 +35,35 @@ const defaultCreateForm = () => ({
 })
 const createForm = ref(defaultCreateForm())
 
-// ── Respond modal ──────────────────────────────────────────────────
-const respondingTo = ref<Consultation | null>(null)
-const respondFeedback = useFormFeedback()
-const responding = ref(false)
-const selectedChoice = ref('')
-const respondComment = ref('')
+// ── Inline vote state (per consultation ID) ────────────────────────
+interface InlineVote {
+  selections: string[]   // choice IDs currently checked
+  comment: string
+  submitting: boolean
+  error: string
+}
+const inlineVotes = ref<Record<string, InlineVote>>({})
+
+function getInline(c: Consultation): InlineVote {
+  if (!inlineVotes.value[c.id]) {
+    inlineVotes.value[c.id] = {
+      selections: [...(c.my_choice_ids ?? [])],
+      comment: '',
+      submitting: false,
+      error: '',
+    }
+  }
+  return inlineVotes.value[c.id]
+}
+
+function hasVoted(c: Consultation): boolean {
+  return (c.my_choice_ids ?? []).length > 0
+}
+
+function barWidth(c: Consultation, pct: number): number {
+  // Only show filled bars if user has already voted OR consultation is closed
+  return hasVoted(c) || c.status === 'closed' ? pct : 0
+}
 
 // ── Close modal ────────────────────────────────────────────────────
 const closingConsultation = ref<Consultation | null>(null)
@@ -56,19 +78,28 @@ async function loadData() {
   buildingName.value = buildingRes.data.name
   allConsultations.value = listRes.data.consultations ?? []
 
-  // Pre-fetch results for closed consultations
-  await Promise.all(
-    allConsultations.value
-      .filter(c => c.status === 'closed' && !resultsCache.value[c.id])
-      .map(async (c) => {
-        const res = await consultationsApi.results(c.id)
-        resultsCache.value[c.id] = res.data.results
-      }),
-  )
+  // Re-initialize inline vote state for existing consultations
+  for (const c of allConsultations.value) {
+    inlineVotes.value[c.id] = {
+      selections: [...(c.my_choice_ids ?? [])],
+      comment: inlineVotes.value[c.id]?.comment ?? '',
+      submitting: false,
+      error: '',
+    }
+  }
 }
 
 const { loading, error, reload } = usePageLoader(loadData, t('common.loadError'))
 onMounted(reload)
+
+// Reset inline votes when filter changes so stale state doesn't linger
+watch(statusFilter, () => {
+  for (const c of allConsultations.value) {
+    if (inlineVotes.value[c.id]) {
+      inlineVotes.value[c.id].error = ''
+    }
+  }
+})
 
 const consultations = computed(() =>
   allConsultations.value.filter(c =>
@@ -108,25 +139,17 @@ async function saveConsultation() {
   }
 }
 
-function openRespondModal(c: Consultation) {
-  respondingTo.value = c
-  respondFeedback.reset()
-  selectedChoice.value = ''
-  respondComment.value = ''
-}
-
-async function submitResponse() {
-  if (!respondingTo.value || !selectedChoice.value) return
-  responding.value = true
-  respondFeedback.reset()
+async function submitVote(c: Consultation) {
+  const iv = getInline(c)
+  if (!iv.selections.length) return
+  iv.submitting = true
+  iv.error = ''
   try {
-    await consultationsApi.respond(respondingTo.value.id, selectedChoice.value, respondComment.value || undefined)
-    respondFeedback.setSuccess(t('common.saved'))
-    setTimeout(() => { respondingTo.value = null; reload() }, SUCCESS_AUTO_CLEAR_MS)
+    await consultationsApi.respond(c.id, iv.selections, iv.comment || undefined)
+    await reload()
   } catch (err) {
-    respondFeedback.setError(toErrorMessage(err, t('common.error')))
-  } finally {
-    responding.value = false
+    iv.error = toErrorMessage(err, t('common.error'))
+    iv.submitting = false
   }
 }
 
@@ -244,43 +267,81 @@ async function confirmClose() {
               {{ c.description }}
             </p>
 
-            <!-- Open choices pills -->
-            <div
-              v-if="c.status === 'open' && c.choices"
-              class="open-choices"
-            >
-              <span
-                v-for="ch in c.choices"
-                :key="ch.id"
-                class="choice-pill"
-              >{{ ch.label }}</span>
+            <!-- Choices + live result bars (always visible; dimmed until voted) -->
+            <div class="choices-results">
+              <div
+                v-for="choice in c.choices"
+                :key="choice.id"
+                class="choice-row"
+              >
+                <!-- Checkbox for open consultations, plain label for closed -->
+                <label
+                  v-if="c.status === 'open'"
+                  class="choice-label-cell checkbox-label"
+                >
+                  <input
+                    v-model="getInline(c).selections"
+                    type="checkbox"
+                    :value="choice.id"
+                  />
+                  <span class="choice-text">{{ choice.label }}</span>
+                </label>
+                <span
+                  v-else
+                  class="choice-label-cell choice-text"
+                >{{ choice.label }}</span>
+
+                <!-- Result bar -->
+                <div class="choice-bar-area">
+                  <div class="result-bar-bg">
+                    <div
+                      class="result-bar"
+                      :class="{ 'result-bar--dim': !hasVoted(c) && c.status === 'open' }"
+                      :style="{ width: barWidth(c, choice.pct) + '%' }"
+                    ></div>
+                  </div>
+                  <span class="result-pct">
+                    {{ hasVoted(c) || c.status === 'closed' ? choice.pct + '%' : '—' }}
+                  </span>
+                </div>
+              </div>
             </div>
 
-            <!-- Closed results -->
-            <div
-              v-if="c.status === 'closed' && resultsCache[c.id]"
-              class="results"
+            <!-- Response count -->
+            <p
+              v-if="hasVoted(c) || c.status === 'closed'"
+              class="body-xs response-count"
             >
-              <div
-                v-for="choice in resultsCache[c.id].choices"
-                :key="choice.id"
-                class="result-row"
-              >
-                <span class="result-label">{{ choice.label }}</span>
-                <div class="result-bar-bg">
-                  <div
-                    class="result-bar"
-                    :style="{ width: choice.pct + '%' }"
-                  ></div>
-                </div>
-                <span class="result-pct">{{ choice.pct }}%</span>
+              {{ t('consultations.responseCount', { count: c.total_responses }) }}
+            </p>
+
+            <!-- Inline vote form: comment + submit appear when ≥1 choice selected -->
+            <div
+              v-if="c.status === 'open' && getInline(c).selections.length > 0"
+              class="inline-vote-form"
+            >
+              <textarea
+                v-model="getInline(c).comment"
+                class="form-input"
+                rows="2"
+                :placeholder="t('consultations.respondModal.commentLabel')"
+              ></textarea>
+              <div class="inline-vote-actions">
+                <p
+                  v-if="getInline(c).error"
+                  class="body-xs error-text"
+                >
+                  {{ getInline(c).error }}
+                </p>
+                <CBtn
+                  variant="primary"
+                  size="sm"
+                  :loading="getInline(c).submitting"
+                  @click="submitVote(c)"
+                >
+                  {{ hasVoted(c) ? t('consultations.updateVote') : t('consultations.respondModal.submit') }}
+                </CBtn>
               </div>
-              <p
-                class="body-xs"
-                style="color:var(--color-on-surface-variant);margin-top:4px"
-              >
-                {{ t('consultations.responseCount', { count: resultsCache[c.id].total }) }}
-              </p>
             </div>
 
             <!-- Date hint -->
@@ -290,18 +351,11 @@ async function confirmClose() {
                 : t('consultations.closedAt', { date: formatDate(c.closed_at!) }) }}
             </p>
 
-            <!-- Actions at bottom -->
+            <!-- Manager close action -->
             <div
               v-if="c.status === 'open'"
               class="card-actions"
             >
-              <CBtn
-                variant="primary"
-                size="sm"
-                @click="openRespondModal(c)"
-              >
-                {{ t('consultations.respond') }}
-              </CBtn>
               <CBtn
                 variant="ghost"
                 size="sm"
@@ -417,72 +471,6 @@ async function confirmClose() {
       </template>
     </CModal>
 
-    <!-- Respond modal -->
-    <CModal
-      :open="!!respondingTo"
-      :title="t('consultations.respondModal.title')"
-      size="md"
-      @update:open="v => !v && (respondingTo = null)"
-    >
-      <div
-        v-if="respondingTo"
-        class="form-grid"
-      >
-        <p
-          class="body-md"
-          style="font-weight:var(--fw-medium)"
-        >
-          {{ respondingTo.title }}
-        </p>
-        <div class="form-field">
-          <label class="form-label">{{ t('consultations.respondModal.chooseOption') }} *</label>
-          <div class="choice-options">
-            <label
-              v-for="choice in respondingTo.choices"
-              :key="choice.id"
-              class="checkbox-label"
-            >
-              <input
-                v-model="selectedChoice"
-                type="radio"
-                :value="choice.id"
-                name="choice"
-              />
-              {{ choice.label }}
-            </label>
-          </div>
-        </div>
-        <div class="form-field">
-          <label class="form-label">{{ t('consultations.respondModal.commentLabel') }}</label>
-          <textarea
-            v-model="respondComment"
-            class="form-input"
-            rows="2"
-          ></textarea>
-        </div>
-      </div>
-      <template #footer>
-        <CFormFeedback
-          :status="respondFeedback.status.value"
-          :message="respondFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          @click="respondingTo = null"
-        >
-          {{ t('common.cancel') }}
-        </CBtn>
-        <CBtn
-          variant="primary"
-          :loading="responding"
-          :disabled="!selectedChoice"
-          @click="submitResponse"
-        >
-          {{ t('consultations.respondModal.submit') }}
-        </CBtn>
-      </template>
-    </CModal>
-
     <!-- Close consultation modal -->
     <CModal
       :open="!!closingConsultation"
@@ -524,26 +512,97 @@ async function confirmClose() {
 .desc { color: var(--color-on-surface-variant); margin-bottom: var(--space-3); }
 .footer-meta { font-size: var(--text-2xs); color: var(--color-on-surface-variant); margin-top: var(--space-3); }
 .card-actions { display: flex; gap: 6px; margin-top: var(--space-3); }
+.response-count { color: var(--color-on-surface-variant); margin-top: var(--space-1); }
 
-.results { display: flex; flex-direction: column; gap: 8px; margin-bottom: var(--space-2); }
-/* Label min space, bar max space, pct fixed */
-.result-row { display: grid; grid-template-columns: auto 1fr 36px; gap: 8px; align-items: center; min-width: 0; }
-.result-label { font-size: var(--text-xs); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; }
-.result-bar-bg { background: var(--color-surface-container); border-radius: var(--radius-full); height: 10px; overflow: hidden; }
-.result-bar { background: var(--color-primary); height: 100%; border-radius: var(--radius-full); }
-.result-pct { font-size: var(--text-xs); font-weight: var(--fw-semibold); text-align: right; }
+/* ── Choices + result bars ─────────────────────────────────────── */
+.choices-results { display: flex; flex-direction: column; gap: 8px; margin-bottom: var(--space-2); }
 
-.open-choices { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: var(--space-2); }
-.choice-pill { padding: 3px 10px; background: var(--color-surface-container); border-radius: var(--radius-full); font-size: var(--text-xs); }
+.choice-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
 
-.choice-options { display: flex; flex-direction: column; gap: 8px; }
+/* Label/checkbox area: content-width, max 50%, wraps when too long */
+.choice-label-cell {
+  flex: 0 1 auto;
+  max-width: 50%;
+  min-width: 0;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  white-space: normal;
+  font-size: var(--text-xs);
+}
+
+/* The global .checkbox-label uses inline-flex; override to work as a flex item */
+.choice-label-cell.checkbox-label {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.choice-text {
+  overflow-wrap: break-word;
+  word-break: break-word;
+  white-space: normal;
+}
+
+/* Bar area takes all remaining horizontal space */
+.choice-bar-area {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.result-bar-bg {
+  flex: 1;
+  background: var(--color-surface-container);
+  border-radius: var(--radius-full);
+  height: 10px;
+  overflow: hidden;
+}
+.result-bar {
+  background: var(--color-primary);
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width 0.3s ease;
+}
+.result-bar--dim { background: var(--color-outline-variant); }
+.result-pct {
+  flex: 0 0 32px;
+  font-size: var(--text-xs);
+  font-weight: var(--fw-semibold);
+  text-align: right;
+  color: var(--color-on-surface-variant);
+}
+
+/* ── Inline vote form ──────────────────────────────────────────── */
+.inline-vote-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-outline-variant);
+}
+.inline-vote-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+.error-text { color: var(--color-error); flex: 1; }
+
+/* ── Create-form styles ────────────────────────────────────────── */
 .choice-input-row { display: flex; align-items: center; gap: 8px; }
 .choice-input-row .form-input { flex: 1; }
 
 .form-grid { display: flex; flex-direction: column; gap: var(--space-4); }
 .form-field { display: flex; flex-direction: column; gap: var(--space-2); }
 .form-label { font-size: var(--text-sm); font-weight: var(--fw-medium); color: var(--color-on-surface-variant); }
-.form-input { padding: var(--space-2) var(--space-3); border: 1px solid var(--color-outline); border-radius: var(--radius-md); font-size: var(--text-sm); background: var(--color-surface); color: var(--color-on-surface); }
+.form-input { padding: var(--space-2) var(--space-3); border: 1px solid var(--color-outline); border-radius: var(--radius-md); font-size: var(--text-sm); background: var(--color-surface); color: var(--color-on-surface); resize: vertical; }
 .form-input:focus { outline: none; border-color: var(--color-primary); }
 .empty-state { padding: var(--space-8); text-align: center; font-size: var(--text-md); color: var(--color-on-surface-variant); }
 .dim { color: var(--color-on-surface-variant); }

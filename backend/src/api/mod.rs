@@ -213,13 +213,23 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
         .route("/consultations/{id}/close", post(consultations::close));
 
     // ── Public routes (vendor token, no JWT) ─────────────────────
+    // Vendor routes live under /api/v1 (without auth middleware) so that the
+    // SPA can serve /vendor/:token as a proper page and API calls go to
+    // /api/v1/vendor/:token — avoiding the JSON-page issue.
     let public = Router::new()
-        .route("/vendor/{token}", get(contractor::get_task))
-        .route("/vendor/{token}/upload-url", post(contractor::upload_url))
-        .route("/vendor/{token}/submission", post(contractor::submit))
         // ── Onboarding first-run (no JWT) ─────────────────────────
         .route("/api/v1/onboarding/status", get(onboarding::status))
-        .route("/api/v1/onboarding/bootstrap", post(onboarding::bootstrap));
+        .route("/api/v1/onboarding/bootstrap", post(onboarding::bootstrap))
+        // ── Contractor access (tokenized, no JWT) ─────────────────
+        .route("/api/v1/vendor/{token}", get(contractor::get_task))
+        .route(
+            "/api/v1/vendor/{token}/upload-url",
+            post(contractor::upload_url),
+        )
+        .route(
+            "/api/v1/vendor/{token}/submission",
+            post(contractor::submit),
+        );
 
     Router::new()
         .nest("/api/v1", api)

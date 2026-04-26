@@ -291,8 +291,8 @@ export const consultationsApi = {
   /** Opens a draft consultation (transitions draft → open). */
   openDraft: (id: string) =>
     api.put(`/consultations/${id}`),
-  respond: (id: string, choice_id: string, comment?: string) =>
-    api.post(`/consultations/${id}/respond`, { choice_id, comment }),
+  respond: (id: string, choice_ids: string[], comment?: string) =>
+    api.post(`/consultations/${id}/respond`, { choice_ids, comment }),
   results: (id: string) =>
     api.get<{ results: ConsultationResults }>(`/consultations/${id}/results`),
   close: (id: string) =>
@@ -300,13 +300,15 @@ export const consultationsApi = {
 }
 
 // ── Contractor (public, tokenized — no JWT) ───────────────────────
+// Vendor API routes now live under /api/v1/vendor/ so the SPA can serve
+// /vendor/:token as a real page without backend interference.
 export const vendorApi = {
   getTask: (token: string) =>
-    publicApi.get<VendorTask>(`/vendor/${token}`),
+    publicApi.get<VendorTask>(`/api/v1/vendor/${token}`),
   getUploadUrl: (token: string, extension: string, content_type: string) =>
-    publicApi.post<{ url: string; key: string }>(`/vendor/${token}/upload-url`, { extension, content_type }),
+    publicApi.post<{ url: string; key: string }>(`/api/v1/vendor/${token}/upload-url`, { extension, content_type }),
   submit: (token: string, data: { comment?: string; documents: VendorDocument[] }) =>
-    publicApi.post(`/vendor/${token}/submission`, data),
+    publicApi.post(`/api/v1/vendor/${token}/submission`, data),
   uploadToStaging: async (file: File, signedUrl: string): Promise<void> => {
     const response = await fetch(signedUrl, {
       method: 'PUT',

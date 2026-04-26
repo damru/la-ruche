@@ -3,25 +3,61 @@ use chrono::{DateTime, Utc};
 use sqlx::{PgPool, Row};
 use uuid::Uuid;
 
-pub async fn list(pool: &PgPool, building_id: Uuid) -> AppResult<Vec<serde_json::Value>> {
-    // Include choices in list so respond modal can display them without a separate fetch.
+/// List all consultations for a building, embedding choices (with live vote counts),
+/// total response count, and the current user's selected choice IDs.
+pub async fn list(
+    pool: &PgPool,
+    building_id: Uuid,
+    user_id: Uuid,
+) -> AppResult<Vec<serde_json::Value>> {
+    // Each consultation row includes:
+    //  - choices: [{id, label, order_index, votes, pct}]
+    //  - total_responses: number of distinct voters
+    //  - my_choice_ids: UUIDs (as text) of choices the current user has selected
     let rows = sqlx::query(
-        r#"SELECT c.id, c.title, c.description, c.status::text AS status,
+        r#"SELECT
+           c.id, c.title, c.description, c.status::text AS status,
            c.visible_to_roles::text[] AS visible_to_roles, c.closed_at, c.created_at,
-           COALESCE(
-               JSON_AGG(
-                   JSON_BUILD_OBJECT('id', cc.id, 'label', cc.label, 'order_index', cc.order_index)
-                   ORDER BY cc.order_index
-               ) FILTER (WHERE cc.id IS NOT NULL),
-               '[]'::json
-           ) AS choices
+           total_r.cnt AS total_responses,
+           COALESCE(my_c.choice_ids, '[]'::json) AS my_choice_ids,
+           COALESCE(choices_agg.data, '[]'::json) AS choices
            FROM consultation c
-           LEFT JOIN consultation_choice cc ON cc.consultation_id = c.id
+           LEFT JOIN LATERAL (
+               SELECT COUNT(*) AS cnt
+               FROM consultation_response cr
+               WHERE cr.consultation_id = c.id
+           ) total_r ON true
+           LEFT JOIN LATERAL (
+               SELECT COALESCE(JSON_AGG(crc.choice_id::text), '[]'::json) AS choice_ids
+               FROM consultation_response cr2
+               JOIN consultation_response_choice crc ON crc.response_id = cr2.id
+               WHERE cr2.consultation_id = c.id AND cr2.user_id = $2
+           ) my_c ON true
+           LEFT JOIN LATERAL (
+               SELECT COALESCE(JSON_AGG(JSON_BUILD_OBJECT(
+                   'id',          cc.id,
+                   'label',       cc.label,
+                   'order_index', cc.order_index,
+                   'votes',       COALESCE(vc.cnt, 0)::int,
+                   'pct',         CASE WHEN total_r.cnt > 0
+                                       THEN ROUND(COALESCE(vc.cnt, 0) * 100.0 / total_r.cnt)::int
+                                       ELSE 0 END
+               ) ORDER BY cc.order_index), '[]'::json) AS data
+               FROM consultation_choice cc
+               LEFT JOIN (
+                   SELECT crc2.choice_id, COUNT(*) AS cnt
+                   FROM consultation_response cr3
+                   JOIN consultation_response_choice crc2 ON crc2.response_id = cr3.id
+                   WHERE cr3.consultation_id = c.id
+                   GROUP BY crc2.choice_id
+               ) vc ON vc.choice_id = cc.id
+               WHERE cc.consultation_id = c.id
+           ) choices_agg ON true
            WHERE c.building_id = $1
-           GROUP BY c.id
            ORDER BY c.created_at DESC"#,
     )
     .bind(building_id)
+    .bind(user_id)
     .fetch_all(pool)
     .await?;
 
@@ -35,6 +71,8 @@ pub async fn list(pool: &PgPool, building_id: Uuid) -> AppResult<Vec<serde_json:
                 "visible_to_roles": r.try_get::<Vec<String>, _>("visible_to_roles")?,
                 "closed_at": r.try_get::<Option<DateTime<Utc>>, _>("closed_at")?,
                 "created_at": r.try_get::<DateTime<Utc>, _>("created_at")?,
+                "total_responses": r.try_get::<i64, _>("total_responses")?,
+                "my_choice_ids": r.try_get::<serde_json::Value, _>("my_choice_ids")?,
                 "choices": r.try_get::<serde_json::Value, _>("choices")?,
             }))
         })
@@ -97,7 +135,6 @@ pub async fn create(
 ) -> AppResult<serde_json::Value> {
     let mut tx = pool.begin().await?;
 
-    // Create as 'open' so it is immediately visible and respondable
     let id: Uuid = sqlx::query(
         r#"INSERT INTO consultation (building_id, created_by, title, description,
            visible_to_roles, status, closed_at)
@@ -128,53 +165,78 @@ pub async fn create(
     Ok(serde_json::json!({ "id": id, "title": title }))
 }
 
+/// Submit or update a multi-choice response.
+/// Each user may select one or more choices; calling again replaces the previous selection.
 pub async fn respond(
     pool: &PgPool,
     id: Uuid,
     building_id: Uuid,
     user_id: Uuid,
-    choice_id: Uuid,
+    choice_ids: &[Uuid],
     comment: Option<&str>,
 ) -> AppResult<()> {
-    // Verify consultation is open and choice belongs to this consultation
-    let valid_choice = sqlx::query(
-        r#"SELECT cc.id FROM consultation_choice cc
-           JOIN consultation c ON c.id = cc.consultation_id
-           WHERE cc.id = $1 AND cc.consultation_id = $2
-             AND c.building_id = $3 AND c.status = 'open'"#,
-    )
-    .bind(choice_id)
-    .bind(id)
-    .bind(building_id)
-    .fetch_optional(pool)
-    .await?;
+    // Validate each choice belongs to this open consultation
+    for &choice_id in choice_ids {
+        let valid = sqlx::query(
+            r#"SELECT cc.id FROM consultation_choice cc
+               JOIN consultation c ON c.id = cc.consultation_id
+               WHERE cc.id = $1 AND c.id = $2 AND c.building_id = $3 AND c.status = 'open'"#,
+        )
+        .bind(choice_id)
+        .bind(id)
+        .bind(building_id)
+        .fetch_optional(pool)
+        .await?;
 
-    if valid_choice.is_none() {
-        return Err(crate::errors::AppError::Conflict(
-            "Consultation not found, closed, or choice does not belong to it".into(),
-        ));
+        if valid.is_none() {
+            return Err(crate::errors::AppError::Conflict(
+                "Consultation not found, closed, or choice does not belong to it".into(),
+            ));
+        }
     }
 
-    sqlx::query(
-        r#"INSERT INTO consultation_response (consultation_id, choice_id, user_id, comment)
-           VALUES ($1, $2, $3, $4)
+    let mut tx = pool.begin().await?;
+
+    // Upsert response header (comment); get the response ID
+    let response_id: Uuid = sqlx::query(
+        r#"INSERT INTO consultation_response (consultation_id, user_id, comment)
+           VALUES ($1, $2, $3)
            ON CONFLICT (consultation_id, user_id)
-           DO UPDATE SET choice_id = EXCLUDED.choice_id, comment = EXCLUDED.comment"#,
+           DO UPDATE SET comment = EXCLUDED.comment
+           RETURNING id"#,
     )
     .bind(id)
-    .bind(choice_id)
     .bind(user_id)
     .bind(comment)
-    .execute(pool)
-    .await?;
+    .fetch_one(&mut *tx)
+    .await?
+    .try_get("id")?;
+
+    // Replace selected choices: delete existing, insert new
+    sqlx::query("DELETE FROM consultation_response_choice WHERE response_id = $1")
+        .bind(response_id)
+        .execute(&mut *tx)
+        .await?;
+
+    for &choice_id in choice_ids {
+        sqlx::query(
+            "INSERT INTO consultation_response_choice (response_id, choice_id) VALUES ($1, $2)",
+        )
+        .bind(response_id)
+        .bind(choice_id)
+        .execute(&mut *tx)
+        .await?;
+    }
+
+    tx.commit().await?;
     Ok(())
 }
 
 pub async fn results(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<serde_json::Value> {
     let rows = sqlx::query(
-        r#"SELECT cc.id, cc.label, COUNT(cr.id) AS votes
+        r#"SELECT cc.id, cc.label, COUNT(crc.response_id) AS votes
            FROM consultation_choice cc
-           LEFT JOIN consultation_response cr ON cr.choice_id = cc.id
+           LEFT JOIN consultation_response_choice crc ON crc.choice_id = cc.id
            JOIN consultation c ON c.id = cc.consultation_id AND c.building_id = $2
            WHERE cc.consultation_id = $1
            GROUP BY cc.id, cc.label, cc.order_index ORDER BY cc.order_index"#,
@@ -184,7 +246,19 @@ pub async fn results(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<se
     .fetch_all(pool)
     .await?;
 
-    use sqlx::Row;
+    // Count total voters (distinct response records)
+    let total_row = sqlx::query(
+        r#"SELECT COUNT(DISTINCT cr.id) AS total
+           FROM consultation_response cr
+           JOIN consultation c ON c.id = cr.consultation_id AND c.building_id = $2
+           WHERE cr.consultation_id = $1"#,
+    )
+    .bind(id)
+    .bind(building_id)
+    .fetch_one(pool)
+    .await?;
+    let total: i64 = total_row.try_get("total")?;
+
     let parsed: Vec<(Uuid, String, i64)> = rows
         .iter()
         .map(|r| {
@@ -196,7 +270,6 @@ pub async fn results(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<se
         })
         .collect::<Result<_, sqlx::Error>>()?;
 
-    let total: i64 = parsed.iter().map(|(_, _, v)| v).sum();
     Ok(serde_json::json!({
         "total": total,
         "choices": parsed.iter().map(|(choice_id, label, votes)| serde_json::json!({
