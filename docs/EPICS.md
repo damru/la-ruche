@@ -147,19 +147,19 @@ Fiche contrat avec reconduction tacite et préavis configurables, rappels automa
 
 ### EP-007 — Tâches & Prestataires
 
-**Statut :** en cours | **MVP :** non | **Réf. PRD :** Gestion courante
+**Statut :** terminée | **MVP :** non | **Réf. PRD :** Gestion courante
 
-**État code actuel :** backend partiel réel (CRUD tâches + token prestataire + endpoint public) ; frontend tâches encore en mock.
+**État code actuel :** backend réel (CRUD tâches + token prestataire + upload staging + soumission en transaction) + frontend branché (liste, créer, token, page publique prestataire).
 
 Tâches assignées en interne, lien tokenisé éphémère pour accès prestataire sans compte, flux de dépôt staging → validation → bucket final.
 
 **Stories :**
 
-* `EP-007-S01` — Créer et assigner une tâche à un intervenant interne ou à un prestataire externe
-* `EP-007-S02` — Générer un lien tokenisé éphémère pour l'accès prestataire sans compte
-* `EP-007-S03` — Permettre au prestataire de déposer des documents via le lien tokenisé (zone staging)
-* `EP-007-S04` — Valider et archiver les documents déposés par le prestataire (bucket final)
-* `EP-007-S05` — Clôturer une tâche et l'alimenter automatiquement au carnet d'entretien (→ EP-009-S03)
+* `EP-007-S01` ✅ — Créer et assigner une tâche à un intervenant interne ou à un prestataire externe
+* `EP-007-S02` ✅ — Générer un lien tokenisé éphémère pour l'accès prestataire sans compte
+* `EP-007-S03` ✅ — Permettre au prestataire de déposer des documents via le lien tokenisé (zone staging) — `POST /vendor/:token/upload-url`
+* `EP-007-S04` ✅ — Valider et archiver les documents déposés par le prestataire (bucket final) — dans la transaction `POST /vendor/:token/submission`
+* `EP-007-S05` ✅ — Clôturer une tâche et l'alimenter automatiquement au carnet d'entretien (→ EP-009-S03) — idempotent via unique index
 
 ***
 
@@ -183,35 +183,37 @@ Déclaration et suivi de sinistres (lot ou parties communes) avec documents asso
 
 ### EP-009 — Carnet d'entretien
 
-**Statut :** en cours | **MVP :** oui | **Réf. PRD :** Gestion courante
+**Statut :** terminée (S01-S03, S05) | **MVP :** oui | **Réf. PRD :** Gestion courante
 
-**État code actuel :** stub/mock ; API carnet non implémentée (`501`) et vue encore alimentée par données fictives.
+**État code actuel :** backend réel (list, get, create, update, delete + auto-feed depuis tâche) + frontend branché (timeline, modale création, suppression).
 
 Historique des interventions alimenté manuellement ou automatiquement depuis une tâche clôturée.
 
 **Stories :**
 
-* `EP-009-S01` — Consulter le carnet d'entretien (liste chronologique des interventions)
-* `EP-009-S02` — Ajouter manuellement une entrée d'intervention (date, description, prestataire, coût)
-* `EP-009-S03` — Alimenter automatiquement le carnet à la clôture d'une tâche (← EP-007-S05)
-* `EP-009-S04` — Attacher le Plan Pluriannuel de Travaux (PPT) et lier ses postes au carnet d'entretien (LEGAL.md §6.1)
-* `EP-009-S05` — Créer un registre minimal des contrats et diagnostics liés à l'entretien (date d'effet, échéance, pièce jointe) (LEGAL.md §1.4)
+* `EP-009-S01` ✅ — Consulter le carnet d'entretien (liste chronologique des interventions)
+* `EP-009-S02` ✅ — Ajouter manuellement une entrée d'intervention (date, description, prestataire, coût)
+* `EP-009-S03` ✅ — Alimenter automatiquement le carnet à la clôture d'une tâche (← EP-007-S05) — idempotent via `ON CONFLICT DO NOTHING`
+* `EP-009-S04` ❌ (hors scope) — PPT : attacher le Plan Pluriannuel de Travaux et lier ses postes au carnet d'entretien (LEGAL.md §6.1) — différé post-MVP
+* `EP-009-S05` ✅ — Registre minimal des contrats et diagnostics liés à l'entretien : champ `contract_id` sur `maintenance_log` + champ `task_id` pour la traçabilité prestataire (LEGAL.md §1.4)
 
 ***
 
 ### EP-010 — Consultations & Sondages
 
-**Statut :** en cours | **MVP :** oui | **Réf. PRD :** Participatif
+**Statut :** terminée | **MVP :** oui | **Réf. PRD :** Participatif
 
-**État code actuel :** stub/mock ; API consultations non implémentée (`501`) et vue encore alimentée par données fictives.
+**État code actuel :** backend réel (list, get, create as 'open', respond/upsert 1 réponse par utilisateur, results, close) + frontend branché (liste open/closed, modale create, modale respond, clôture, résultats).
 
 Consultations initiables par tout résident sans approbation préalable, résultats en temps réel, mention obligatoire "non décisionnelle".
 
+**Contrainte légale :** mention `INFORMAL_DISCLAIMER` obligatoire sur toutes les réponses API et dans la vue (loi 10 juillet 1965, art. 17 et 24).
+
 **Stories :**
 
-* `EP-010-S01` — Créer une consultation ou un sondage avec question(s) et options de réponse
-* `EP-010-S02` — Soumettre un vote depuis l'espace résident (une réponse par lot)
-* `EP-010-S03` — Afficher les résultats en temps réel avec mention obligatoire « non décisionnelle »
+* `EP-010-S01` ✅ — Créer une consultation ou un sondage avec question(s) et options de réponse (minimum 2 options, `visible_to_roles` requis)
+* `EP-010-S02` ✅ — Soumettre un vote depuis l'espace résident (une réponse par utilisateur — `UNIQUE(consultation_id, user_id)` + upsert) ; contrôle `visible_to_roles`
+* `EP-010-S03` ✅ — Afficher les résultats en temps réel avec mention obligatoire « non décisionnelle »
 
 ***
 

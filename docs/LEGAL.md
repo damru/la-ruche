@@ -61,9 +61,16 @@ Document annuel récapitulatif (nombre de lots, budget, données techniques) mis
 ### 1.4 Carnet d'entretien de l'immeuble
 
 **Référence :** Art. 18 loi 1965, décret n°2001-477 du 30 mai 2001  
-**Couverture :** ⚠️ partielle — EP-009
+**Couverture :** ✅ couverte (S01-S03, S05) — EP-009
 
 Le syndic doit tenir à jour un carnet d'entretien retraçant les interventions, contrats en cours et diagnostics réalisés.
+
+**Implémentation :**
+- Saisie manuelle d'interventions (titre, date, description, coût, prestataire, `contract_id`)
+- Alimentation automatique à la clôture d'une tâche prestataire (idempotent via `ON CONFLICT DO NOTHING` sur `task_id`)
+- Lien vers le contrat de prestation via `contract_id` (EP-009-S05)
+
+**Hors scope (EP-009-S04) :** Lien au Plan Pluriannuel de Travaux (PPT) — différé post-MVP.
 
 ---
 
@@ -384,7 +391,7 @@ Le syndicat des copropriétaires est responsable de traitement. Les données tra
 | 1.1 | Immatriculation RNC | ALUR art. 711-1 | ⚠️ | EP-001, EP-012-S01 |
 | 1.2 | Règlement de copropriété + EDD | Art. 8 loi 1965 | ⚠️ | EP-001, EP-005 |
 | 1.3 | Fiche synthétique annuelle | Art. 8-2 loi 1965 | ❌ | EP-012-S02 |
-| 1.4 | Carnet d'entretien | Décret 2001-477 | ⚠️ | EP-009 |
+| 1.4 | Carnet d'entretien | Décret 2001-477 | ✅ | EP-009 |
 | 2.1 | Intégrité somme tantièmes | EDD + art. 5 | ⚠️ | EP-001-S03, EP-001-S07 |
 | 2.2 | Historique tantièmes par lot | Art. 10 loi 1965 | ✅ | EP-001-S06 |
 | 2.3 | Snapshot tantièmes par appel de fonds | Art. 14-1 loi 1965 | ✅ | EP-004-S05 |
