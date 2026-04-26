@@ -230,7 +230,7 @@ function contractTypeTone(type: ContractType) {
 }
 
 function contractIconTone(contract: VendorContract): string {
-  if (effectiveStatus(contract) === 'expired') return 'tone--disabled'
+  if (effectiveStatus(contract) !== 'active') return 'tone--disabled'
   return contractTypeTone(contract.contract_type)
 }
 
