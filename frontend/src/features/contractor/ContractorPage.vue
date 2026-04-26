@@ -22,6 +22,8 @@ const comment = ref('')
 const selectedFiles = ref<File[]>([])
 const dragOver = ref(false)
 
+const fileInputRef = ref<HTMLInputElement | null>(null)
+
 async function loadTask() {
   loading.value = true
   error.value = ''
@@ -173,14 +175,14 @@ async function submit() {
           @dragover.prevent="dragOver = true"
           @dragleave="dragOver = false"
           @drop.prevent="onDrop"
-          @click="($refs.fileInput as HTMLInputElement).click()"
+          @click="fileInputRef?.click()"
         >
           <CIconFile class="dropzone-icon" />
           <p class="body-sm">
             {{ t('contractor.dropzone') }}
           </p>
           <input
-            ref="fileInput"
+            ref="fileInputRef"
             type="file"
             multiple
             class="file-input-hidden"

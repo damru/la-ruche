@@ -130,7 +130,9 @@ pub async fn submit(
             .move_from_staging(&doc_meta.key, task.building_id, ext)
             .await?;
 
-        // Use task.created_by as uploaded_by (the manager who opened the task)
+        // Vendor submissions have no authenticated user.
+        // task.created_by (the manager who opened the task) is used as the
+        // uploaded_by proxy to satisfy the FK constraint and maintain an audit trail.
         let doc = db::document::create(
             &state.pool,
             task.building_id,

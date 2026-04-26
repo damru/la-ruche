@@ -61,12 +61,13 @@ pub async fn get_with_choices(
         "visible_to_roles": r.try_get::<Vec<String>, _>("visible_to_roles")?,
         "closed_at": r.try_get::<Option<DateTime<Utc>>, _>("closed_at")?,
         "created_at": r.try_get::<DateTime<Utc>, _>("created_at")?,
-        "choices": choices.iter().map(|c| {
-            let choice_id: Uuid = c.try_get("id").unwrap_or_default();
-            let label: String = c.try_get("label").unwrap_or_default();
-            let order_index: i32 = c.try_get("order_index").unwrap_or(0);
-            serde_json::json!({ "id": choice_id, "label": label, "order_index": order_index })
-        }).collect::<Vec<_>>(),
+        "choices": choices.iter().map(|c| -> Result<_, sqlx::Error> {
+            Ok(serde_json::json!({
+                "id": c.try_get::<Uuid, _>("id")?,
+                "label": c.try_get::<String, _>("label")?,
+                "order_index": c.try_get::<i32, _>("order_index")?,
+            }))
+        }).collect::<Result<Vec<_>, _>>()?,
     })))
 }
 

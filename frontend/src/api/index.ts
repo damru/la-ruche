@@ -284,7 +284,8 @@ export const consultationsApi = {
     api.get<{ consultation: Consultation }>(`/consultations/${id}`),
   create: (data: { title: string; description?: string; visible_to_roles: string[]; choices: string[]; closed_at?: string }) =>
     api.post<Consultation>('/consultations', data),
-  update: (id: string) =>
+  /** Opens a draft consultation (transitions draft → open). */
+  openDraft: (id: string) =>
     api.put(`/consultations/${id}`),
   respond: (id: string, choice_id: string, comment?: string) =>
     api.post(`/consultations/${id}/respond`, { choice_id, comment }),

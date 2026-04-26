@@ -5,6 +5,7 @@ import { useFormatters } from '@/composables/useFormatters'
 import { usePageLoader, toErrorMessage } from '@/composables/usePageLoader'
 import { useFormFeedback, SUCCESS_AUTO_CLEAR_MS } from '@/composables/useFormFeedback'
 import { useConfirm } from '@/composables/useConfirm'
+import CAlert from '@/components/atoms/CAlert.vue'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CCard from '@/components/molecules/CCard.vue'
@@ -130,14 +131,17 @@ async function saveTask() {
 const generatingToken = ref<string | null>(null)
 const tokenData = ref<Record<string, { url: string; expires_at: string }>>({})
 
+const pageError = ref('')
+
 async function generateToken(task: Task) {
   generatingToken.value = task.id
+  pageError.value = ''
   try {
     const res = await tasksApi.generateToken(task.id)
     tokenData.value[task.id] = { url: res.data.url, expires_at: res.data.expires_at }
     await reload()
   } catch (err) {
-    alert(toErrorMessage(err, t('common.error')))
+    pageError.value = toErrorMessage(err, t('common.error'))
   } finally {
     generatingToken.value = null
   }
@@ -151,12 +155,13 @@ async function revokeToken(task: Task) {
     variant: 'danger',
   })
   if (!ok) return
+  pageError.value = ''
   try {
     await tasksApi.revokeToken(task.id)
     delete tokenData.value[task.id]
     await reload()
   } catch (err) {
-    alert(toErrorMessage(err, t('common.error')))
+    pageError.value = toErrorMessage(err, t('common.error'))
   }
 }
 
@@ -211,6 +216,8 @@ function copyToClipboard(text: string) {
             </p>
           </div>
         </div>
+
+        <CAlert v-if="pageError" variant="error">{{ pageError }}</CAlert>
 
         <!-- Filtres -->
         <div class="tabs">

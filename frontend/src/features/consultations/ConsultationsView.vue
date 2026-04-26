@@ -25,6 +25,7 @@ const buildingName = ref('')
 const allConsultations = ref<Consultation[]>([])
 const statusFilter = ref<'open' | 'closed'>('open')
 const resultsCache = ref<Record<string, ConsultationResults>>({})
+const pageError = ref('')
 
 // Create modal
 const showCreateModal = ref(false)
@@ -50,8 +51,7 @@ async function loadData() {
     consultationsApi.list(),
   ])
   buildingName.value = buildingRes.data.name
-  const raw = listRes.data as { consultations?: Consultation[] }
-  allConsultations.value = raw.consultations ?? (listRes.data as unknown as Consultation[])
+  allConsultations.value = listRes.data.consultations ?? []
 
   // Pre-fetch results for closed consultations
   await Promise.all(
@@ -59,8 +59,7 @@ async function loadData() {
       .filter(c => c.status === 'closed' && !resultsCache.value[c.id])
       .map(async (c) => {
         const res = await consultationsApi.results(c.id)
-        const data = res.data as { results?: ConsultationResults }
-        resultsCache.value[c.id] = data.results ?? (res.data as unknown as ConsultationResults)
+        resultsCache.value[c.id] = res.data.results
       }),
   )
 }
@@ -136,11 +135,12 @@ async function closeConsultation(c: Consultation) {
     variant: 'danger',
   })
   if (!ok) return
+  pageError.value = ''
   try {
     await consultationsApi.close(c.id)
     await reload()
   } catch (err) {
-    alert(toErrorMessage(err, t('common.error')))
+    pageError.value = toErrorMessage(err, t('common.error'))
   }
 }
 </script>
@@ -193,6 +193,9 @@ async function closeConsultation(c: Consultation) {
         </div>
 
         <!-- Disclaimer légal obligatoire -->
+        <CAlert v-if="pageError" variant="error">{{ pageError }}</CAlert>
+
+        <!-- Legal info -->
         <CAlert variant="info">
           <CIconInfo
             width="16"
