@@ -41,6 +41,7 @@ interface InlineVote {
   comment: string
   submitting: boolean
   error: string
+  unlocked: boolean      // true while the user is editing a previous vote
 }
 const inlineVotes = ref<Record<string, InlineVote>>({})
 
@@ -51,6 +52,7 @@ function getInline(c: Consultation): InlineVote {
       comment: '',
       submitting: false,
       error: '',
+      unlocked: false,
     }
   }
   return inlineVotes.value[c.id]
@@ -60,9 +62,28 @@ function hasVoted(c: Consultation): boolean {
   return (c.my_choice_ids ?? []).length > 0
 }
 
+function isVoteLocked(c: Consultation): boolean {
+  return hasVoted(c) && !getInline(c).unlocked
+}
+
 function barWidth(c: Consultation, pct: number): number {
   // Only show filled bars if user has already voted OR consultation is closed
   return hasVoted(c) || c.status === 'closed' ? pct : 0
+}
+
+// ── Unlock-vote modal ──────────────────────────────────────────────
+const unlockingVote = ref<Consultation | null>(null)
+const unlockFeedback = useFormFeedback()
+
+function openUnlockModal(c: Consultation) {
+  unlockingVote.value = c
+  unlockFeedback.reset()
+}
+
+function confirmUnlock() {
+  if (!unlockingVote.value) return
+  getInline(unlockingVote.value).unlocked = true
+  unlockingVote.value = null
 }
 
 // ── Close modal ────────────────────────────────────────────────────
@@ -85,6 +106,7 @@ async function loadData() {
       comment: inlineVotes.value[c.id]?.comment ?? '',
       submitting: false,
       error: '',
+      unlocked: false,
     }
   }
 }
@@ -267,44 +289,45 @@ async function confirmClose() {
               {{ c.description }}
             </p>
 
-            <!-- Choices + live result bars (always visible; dimmed until voted) -->
+            <!-- Choices + live result bars (CSS grid — 3 columns per choice row) -->
             <div class="choices-results">
-              <div
+              <template
                 v-for="choice in c.choices"
                 :key="choice.id"
-                class="choice-row"
               >
-                <!-- Checkbox for open consultations, plain label for closed -->
+                <!-- Column 1: checkbox (open) or plain label (closed) -->
                 <label
                   v-if="c.status === 'open'"
-                  class="choice-label-cell checkbox-label"
+                  class="choice-label checkbox-label"
+                  :class="{ 'choice-label--locked': isVoteLocked(c) }"
                 >
                   <input
                     v-model="getInline(c).selections"
                     type="checkbox"
                     :value="choice.id"
+                    :disabled="isVoteLocked(c)"
                   />
-                  <span class="choice-text">{{ choice.label }}</span>
+                  <span>{{ choice.label }}</span>
                 </label>
                 <span
                   v-else
-                  class="choice-label-cell choice-text"
+                  class="choice-label"
                 >{{ choice.label }}</span>
 
-                <!-- Result bar -->
-                <div class="choice-bar-area">
-                  <div class="result-bar-bg">
-                    <div
-                      class="result-bar"
-                      :class="{ 'result-bar--dim': !hasVoted(c) && c.status === 'open' }"
-                      :style="{ width: barWidth(c, choice.pct) + '%' }"
-                    ></div>
-                  </div>
-                  <span class="result-pct">
-                    {{ hasVoted(c) || c.status === 'closed' ? choice.pct + '%' : '—' }}
-                  </span>
+                <!-- Column 2: result bar -->
+                <div class="result-bar-bg">
+                  <div
+                    class="result-bar"
+                    :class="{ 'result-bar--dim': !hasVoted(c) && c.status === 'open' }"
+                    :style="{ width: barWidth(c, choice.pct) + '%' }"
+                  ></div>
                 </div>
-              </div>
+
+                <!-- Column 3: percentage -->
+                <span class="result-pct">
+                  {{ hasVoted(c) || c.status === 'closed' ? choice.pct + '%' : '—' }}
+                </span>
+              </template>
             </div>
 
             <!-- Response count -->
@@ -315,9 +338,9 @@ async function confirmClose() {
               {{ t('consultations.responseCount', { count: c.total_responses }) }}
             </p>
 
-            <!-- Inline vote form: comment + submit appear when ≥1 choice selected -->
+            <!-- Inline vote form: comment + submit appear when ≥1 choice selected AND not locked -->
             <div
-              v-if="c.status === 'open' && getInline(c).selections.length > 0"
+              v-if="c.status === 'open' && getInline(c).selections.length > 0 && !isVoteLocked(c)"
               class="inline-vote-form"
             >
               <textarea
@@ -342,6 +365,20 @@ async function confirmClose() {
                   {{ hasVoted(c) ? t('consultations.updateVote') : t('consultations.respondModal.submit') }}
                 </CBtn>
               </div>
+            </div>
+
+            <!-- Locked state: show "Modifier" button when already voted -->
+            <div
+              v-if="c.status === 'open' && isVoteLocked(c)"
+              class="vote-locked-actions"
+            >
+              <CBtn
+                variant="ghost"
+                size="sm"
+                @click="openUnlockModal(c)"
+              >
+                {{ t('consultations.modifyVote') }}
+              </CBtn>
             </div>
 
             <!-- Date hint -->
@@ -501,6 +538,36 @@ async function confirmClose() {
         </CBtn>
       </template>
     </CModal>
+
+    <!-- Modify vote confirmation modal -->
+    <CModal
+      :open="!!unlockingVote"
+      :title="t('consultations.modifyVoteTitle')"
+      size="sm"
+      @update:open="v => !v && (unlockingVote = null)"
+    >
+      <p class="body-sm">
+        {{ t('consultations.modifyVoteConfirm') }}
+      </p>
+      <template #footer>
+        <CFormFeedback
+          :status="unlockFeedback.status.value"
+          :message="unlockFeedback.message.value"
+        />
+        <CBtn
+          variant="ghost"
+          @click="unlockingVote = null"
+        >
+          {{ t('common.cancel') }}
+        </CBtn>
+        <CBtn
+          variant="primary"
+          @click="confirmUnlock"
+        >
+          {{ t('consultations.modifyVoteAction') }}
+        </CBtn>
+      </template>
+    </CModal>
   </div>
 </template>
 
@@ -514,50 +581,38 @@ async function confirmClose() {
 .card-actions { display: flex; gap: 6px; margin-top: var(--space-3); }
 .response-count { color: var(--color-on-surface-variant); margin-top: var(--space-1); }
 
-/* ── Choices + result bars ─────────────────────────────────────── */
-.choices-results { display: flex; flex-direction: column; gap: 8px; margin-bottom: var(--space-2); }
-
-.choice-row {
-  display: flex;
+/* ── Choices + result bars (CSS grid) ─────────────────────────── */
+/* 3 columns: [fit-content(50%)] [1fr] [36px]
+   Column 1 auto-sizes to the widest label, capped at 50%.
+   Each <template v-for> produces 3 direct grid children. */
+.choices-results {
+  display: grid;
+  grid-template-columns: fit-content(50%) 1fr 36px;
   align-items: center;
-  gap: 8px;
-  min-width: 0;
+  column-gap: 8px;
+  row-gap: 8px;
+  margin-bottom: var(--space-2);
 }
 
-/* Label/checkbox area: content-width, max 50%, wraps when too long */
-.choice-label-cell {
-  flex: 0 1 auto;
-  max-width: 50%;
-  min-width: 0;
+.choice-label {
+  font-size: var(--text-xs);
   overflow-wrap: break-word;
   word-break: break-word;
   white-space: normal;
-  font-size: var(--text-xs);
+  min-width: 0;
 }
 
-/* The global .checkbox-label uses inline-flex; override to work as a flex item */
-.choice-label-cell.checkbox-label {
+.choice-label.checkbox-label {
   display: inline-flex;
   align-items: flex-start;
   gap: var(--space-2);
 }
 
-.choice-text {
-  overflow-wrap: break-word;
-  word-break: break-word;
-  white-space: normal;
+.choice-label--locked {
+  opacity: 0.6;
 }
 
-/* Bar area takes all remaining horizontal space */
-.choice-bar-area {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-}
 .result-bar-bg {
-  flex: 1;
   background: var(--color-surface-container);
   border-radius: var(--radius-full);
   height: 10px;
@@ -571,7 +626,6 @@ async function confirmClose() {
 }
 .result-bar--dim { background: var(--color-outline-variant); }
 .result-pct {
-  flex: 0 0 32px;
   font-size: var(--text-xs);
   font-weight: var(--fw-semibold);
   text-align: right;
@@ -579,6 +633,9 @@ async function confirmClose() {
 }
 
 /* ── Inline vote form ──────────────────────────────────────────── */
+.vote-locked-actions {
+  margin-top: var(--space-2);
+}
 .inline-vote-form {
   display: flex;
   flex-direction: column;

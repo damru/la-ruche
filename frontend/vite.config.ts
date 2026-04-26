@@ -42,13 +42,20 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      // All API calls (including public vendor endpoints under /api/v1/vendor/)
-      // are proxied to the backend.
-      // Browser navigations to /vendor/:token are NOT proxied — Vite's HTML
-      // history fallback serves index.html and Vue Router renders ContractorPage.
+      // All API calls (including public vendor endpoints under /api/v1/vendor/) go to backend.
       '/api': {
         target: 'http://localhost:8080',
         changeOrigin: true,
+      },
+      // /vendor/:token is the SPA contractor page — always serve index.html so Vue Router
+      // can render ContractorPage. The target is required by Vite but never reached
+      // because the bypass always returns index.html first.
+      '/vendor': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        bypass() {
+          return '/index.html'
+        },
       },
     },
   },
