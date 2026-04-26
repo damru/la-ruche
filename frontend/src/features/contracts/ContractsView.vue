@@ -229,6 +229,11 @@ function contractTypeTone(type: ContractType) {
   return tones[type] ?? 'tone--default'
 }
 
+function contractIconTone(contract: VendorContract): string {
+  if (effectiveStatus(contract) === 'expired') return 'tone--disabled'
+  return contractTypeTone(contract.contract_type)
+}
+
 const contracts = computed(() => {
   const query = search.value.trim().toLowerCase()
 
@@ -450,7 +455,7 @@ async function terminateContract(contract: VendorContract) {
           >
             <div class="contract-header">
               <div class="contract-type">
-                <div :class="['contract-type__icon', contractTypeTone(contract.contract_type)]">
+                <div :class="['contract-type__icon', contractIconTone(contract)]">
                   <component
                     :is="contractTypeIcon(contract.contract_type)"
                     class="type-icon"
