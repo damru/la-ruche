@@ -50,6 +50,14 @@ export default defineConfig({
       '/vendor': {
         target: 'http://localhost:8080',
         changeOrigin: true,
+        // Browser navigations to /vendor/:token (Accept: text/html) must be handled
+        // by the SPA (ContractorPage), not proxied to the backend which returns JSON.
+        // API calls from ContractorPage JS (Accept: application/json) are proxied normally.
+        bypass(req) {
+          if ((req.headers.accept ?? '').startsWith('text/html')) {
+            return '/index.html'
+          }
+        },
       },
     },
   },

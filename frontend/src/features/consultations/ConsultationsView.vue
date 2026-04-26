@@ -522,7 +522,7 @@ async function confirmClose() {
 .status-badge { margin-bottom: var(--space-2); }
 .consultation-title { margin-bottom: var(--space-2); }
 .desc { color: var(--color-on-surface-variant); margin-bottom: var(--space-3); }
-.footer-meta { color: var(--color-on-surface-variant); margin-top: var(--space-3); }
+.footer-meta { font-size: var(--text-2xs); color: var(--color-on-surface-variant); margin-top: var(--space-3); }
 .card-actions { display: flex; gap: 6px; margin-top: var(--space-3); }
 
 .results { display: flex; flex-direction: column; gap: 8px; margin-bottom: var(--space-2); }
@@ -536,6 +536,8 @@ async function confirmClose() {
 .choice-pill { padding: 3px 10px; background: var(--color-surface-container); border-radius: var(--radius-full); font-size: var(--text-xs); }
 
 .choice-options { display: flex; flex-direction: column; gap: 8px; }
+/* Ensure radio labels are full-width in column layout (needed on mobile) */
+:deep(.choice-options .checkbox-label) { display: flex; width: 100%; }
 .choice-input-row { display: flex; align-items: center; gap: 8px; }
 .choice-input-row .form-input { flex: 1; }
 
