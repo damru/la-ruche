@@ -199,6 +199,7 @@ export interface ContractReminder {
   contract_id: string
   reminder_type: ReminderType
   reminder_date: string
+  target_date?: string
   status: ReminderStatus
 }
 

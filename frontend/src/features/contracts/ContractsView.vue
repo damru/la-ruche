@@ -30,24 +30,6 @@ interface ContractReminderView extends ContractReminder {
   daysLabel: string
 }
 
-interface SelectedReminders {
-  nextPayment?: ContractReminderView
-  nextContractEnd?: ContractReminderView
-}
-
-const PAYMENT_REMINDER_DAYS_THRESHOLD = 30
-const CONTRACT_END_REMINDER_DAYS_THRESHOLD = 90
-
-const CONTRACT_END_REMINDER_TYPES = new Set<ContractReminder['reminder_type']>([
-  'renewal',
-  'expiration',
-  'termination',
-])
-
-function isContractEndReminder(reminderType: ContractReminder['reminder_type']): boolean {
-  return CONTRACT_END_REMINDER_TYPES.has(reminderType)
-}
-
 const { t } = useI18n()
 const { formatCurrency, formatDate, daysUntil } = useFormatters()
 const { confirm } = useConfirm()
@@ -82,25 +64,11 @@ const contractsById = computed(() =>
   new Map(allContracts.value.map(contract => [contract.id, contract])),
 )
 
-const pendingReminders = computed(() =>
+const reminderViews = computed<ContractReminderView[]>(() =>
   [...allReminders.value]
-    .filter((reminder) => {
-      if (reminder.status !== 'pending') return false
-      const contract = contractsById.value.get(reminder.contract_id)
-      return !!contract && effectiveStatus(contract) === 'active'
-    })
-    .sort((left, right) => left.reminder_date.localeCompare(right.reminder_date)),
-)
-
-const pendingReminderViews = computed<ContractReminderView[]>(() =>
-  pendingReminders.value
     .map((reminder) => {
-      const targetDate = reminder.reminder_type === 'payment_due'
-        ? reminder.reminder_date
-        : contractsById.value.get(reminder.contract_id)?.end_date ?? reminder.reminder_date
+      const targetDate = reminder.target_date ?? reminder.reminder_date
       const remainingDays = daysUntil(targetDate)
-
-      if (remainingDays < 0) return null
 
       return {
         ...reminder,
@@ -111,53 +79,13 @@ const pendingReminderViews = computed<ContractReminderView[]>(() =>
           : t('contracts.reminders.dueNow'),
       }
     })
-    .filter((reminder): reminder is ContractReminderView => !!reminder),
+    .sort((left, right) => left.targetDate.localeCompare(right.targetDate)),
 )
-
-const visibleReminderViews = computed<ContractReminderView[]>(() => {
-  const selectedByContract = new Map<string, SelectedReminders>()
-
-  for (const reminder of pendingReminderViews.value) {
-    const daysRemaining = daysUntil(reminder.targetDate)
-    let selected = selectedByContract.get(reminder.contract_id)
-    if (!selected) {
-      selected = {
-        nextPayment: undefined,
-        nextContractEnd: undefined,
-      }
-      selectedByContract.set(reminder.contract_id, selected)
-    }
-
-    if (reminder.reminder_type === 'payment_due') {
-      if (daysRemaining <= PAYMENT_REMINDER_DAYS_THRESHOLD && !selected.nextPayment) {
-        selected.nextPayment = reminder
-      }
-      continue
-    }
-
-    if (
-      isContractEndReminder(reminder.reminder_type)
-      && daysRemaining <= CONTRACT_END_REMINDER_DAYS_THRESHOLD
-      && !selected.nextContractEnd
-    ) {
-      selected.nextContractEnd = reminder
-    }
-  }
-
-  const reminders: ContractReminderView[] = []
-
-  for (const selected of selectedByContract.values()) {
-    if (selected.nextPayment) reminders.push(selected.nextPayment)
-    if (selected.nextContractEnd) reminders.push(selected.nextContractEnd)
-  }
-
-  return reminders.sort((left, right) => left.targetDate.localeCompare(right.targetDate))
-})
 
 const pendingRemindersByContract = computed(() => {
   const remindersByContract = new Map<string, ContractReminderView[]>()
 
-  for (const reminder of visibleReminderViews.value) {
+  for (const reminder of reminderViews.value) {
     const contractReminders = remindersByContract.get(reminder.contract_id)
 
     if (contractReminders) {
@@ -367,7 +295,7 @@ async function terminateContract(contract: VendorContract) {
             </h2>
           </div>
           <div
-            v-if="visibleReminderViews.length === 0"
+            v-if="reminderViews.length === 0"
             class="reminder-empty"
           >
             {{ t('contracts.reminders.empty') }}
@@ -377,7 +305,7 @@ async function terminateContract(contract: VendorContract) {
             class="reminder-list"
           >
             <div
-              v-for="reminder in visibleReminderViews"
+              v-for="reminder in reminderViews"
               :key="reminder.id"
               class="reminder-row"
               :class="`reminder-row--${reminder.urgency}`"
