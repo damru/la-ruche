@@ -14,6 +14,8 @@ import { toErrorMessage, usePageLoader } from '@/composables/usePageLoader'
 import { SUCCESS_AUTO_CLEAR_MS } from '@/composables/useFormFeedback'
 import { useConfirm } from '@/composables/useConfirm'
 import type { Document } from '@/types/domain'
+import { buildDocumentDeleteMessage } from '@/utils/documents'
+import { extractFileExtension } from '@/utils/files'
 
 const { t } = useI18n()
 const { formatDate, formatFileSize } = useFormatters()
@@ -86,7 +88,7 @@ async function uploadFile() {
 
   try {
     const file = selectedFile.value
-    const ext = file.name.split('.').pop() ?? ''
+    const ext = extractFileExtension(file.name)
 
     // 1. Get presigned upload URL
     const urlRes = await documentsApi.getUploadUrl(ext, file.type, file.size)
@@ -128,7 +130,7 @@ async function deleteDoc(id: string) {
   const doc = allDocuments.value.find(d => d.id === id)
   const ok = await confirm({
     title: t('documents.confirmDeleteTitle'),
-    message: t('documents.confirmDeleteMessage', { name: doc?.original_name ?? id }),
+    message: buildDocumentDeleteMessage(doc, t),
     confirmLabel: t('common.deleteLabel'),
     variant: 'danger',
   })
@@ -377,6 +379,10 @@ async function deleteDoc(id: string) {
 .roles-list { display: flex; flex-wrap: wrap; gap: var(--space-1); }
 
 .action-btns { display: flex; gap: var(--space-1); }
+.action-btns .icon-btn {
+  min-width: 36px;
+  min-height: 36px;
+}
 
 .empty-state { padding: var(--space-8); text-align: center; font-size: var(--text-md); color: var(--color-on-surface-variant); }
 
@@ -395,5 +401,12 @@ async function deleteDoc(id: string) {
 .selected-file { color: var(--color-on-surface); font-weight: var(--fw-medium); }
 .visibility-section { display: flex; flex-direction: column; gap: var(--space-2); }
 .role-checkboxes { display: flex; flex-wrap: wrap; gap: var(--space-3); }
-</style>
 
+@media (max-width: 640px) {
+  .action-btns .icon-btn {
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0;
+  }
+}
+</style>

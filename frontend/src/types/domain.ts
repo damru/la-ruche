@@ -21,7 +21,15 @@ export type ClaimStatus = 'open' | 'in_progress' | 'closed'
 export type ReportStatus = 'open' | 'in_progress' | 'closed'
 export type PollStatus = 'draft' | 'open' | 'closed'
 
-export type ContractType = 'maintenance' | 'insurance' | 'service' | 'other'
+export type ContractType =
+  | 'maintenance'
+  | 'insurance'
+  | 'service'
+  | 'energy'
+  | 'water'
+  | 'cleaning'
+  | 'green_spaces'
+  | 'other'
 export type ContractStatus = 'active' | 'terminated' | 'expired'
 export type ReminderType = 'renewal' | 'payment_due' | 'expiration' | 'termination'
 export type ReminderStatus = 'pending' | 'sent' | 'acknowledged'
@@ -165,6 +173,7 @@ export interface Document {
   mime_type: string
   size_bytes: number
   visible_roles: Role[]
+  linked_contract_names?: string[]
   created_at: string
 }
 
@@ -190,6 +199,7 @@ export interface ContractReminder {
   contract_id: string
   reminder_type: ReminderType
   reminder_date: string
+  target_date?: string
   status: ReminderStatus
 }
 

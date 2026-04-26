@@ -1,48 +1,243 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useFormatters } from '@/composables/useFormatters'
-import CMockBanner from '@/components/atoms/CMockBanner.vue'
 import CBadge from '@/components/atoms/CBadge.vue'
-import CCard from '@/components/molecules/CCard.vue'
+import CIconBolt from '@/components/atoms/CIconBolt.svg'
+import CIconDroplet from '@/components/atoms/CIconDroplet.svg'
 import CBtn from '@/components/atoms/CBtn.vue'
+import CCard from '@/components/molecules/CCard.vue'
+import CPageError from '@/components/molecules/CPageError.vue'
+import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
-import { mockContracts, mockReminders, mockBuildingStats } from '@/mock/data'
+import CIconFile from '@/components/atoms/CIconFile.svg'
+import CIconLeaf from '@/components/atoms/CIconLeaf.svg'
+import CIconLayers from '@/components/atoms/CIconLayers.svg'
+import CIconSettings from '@/components/atoms/CIconSettings.svg'
+import CIconShield from '@/components/atoms/CIconShield.svg'
+import CIconSparkles from '@/components/atoms/CIconSparkles.svg'
+import CIconWrench from '@/components/atoms/CIconWrench.svg'
+import { buildingApi, contractsApi } from '@/api'
+import ContractDocumentsModal from '@/features/contracts/ContractDocumentsModal.vue'
+import ContractFormModal from '@/features/contracts/ContractFormModal.vue'
+import { useConfirm } from '@/composables/useConfirm'
+import { usePageLoader, toErrorMessage } from '@/composables/usePageLoader'
+import type { ContractReminder, ContractStatus, ContractType, VendorContract } from '@/types/domain'
+
+interface ContractReminderView extends ContractReminder {
+  targetDate: string
+  urgency: 'high' | 'medium' | 'low'
+  daysLabel: string
+}
 
 const { t } = useI18n()
 const { formatCurrency, formatDate, daysUntil } = useFormatters()
+const { confirm } = useConfirm()
 
 const filter = ref<'all' | 'active' | 'expired'>('all')
+const search = ref('')
+const buildingName = ref('')
+const allContracts = ref<VendorContract[]>([])
+const allReminders = ref<ContractReminder[]>([])
+const editingContract = ref<VendorContract | null>(null)
+const documentsContract = ref<VendorContract | null>(null)
+const showFormModal = ref(false)
+const showDocumentsModal = ref(false)
+const busyKey = ref('')
 
-const contracts = computed(() => {
-  if (filter.value === 'active') return mockContracts.filter(c => c.status === 'active')
-  if (filter.value === 'expired') return mockContracts.filter(c => c.status !== 'active')
-  return mockContracts
-})
+async function loadData() {
+  const [buildingResponse, contractsResponse, remindersResponse] = await Promise.all([
+    buildingApi.get(),
+    contractsApi.list(),
+    contractsApi.listAllReminders(),
+  ])
 
-function statusVariant(s: string): 'open' | 'pending' | 'closed' | 'default' {
-  if (s === 'active') return 'open'
-  if (s === 'terminated') return 'closed'
-  if (s === 'expired') return 'closed'
-  return 'default'
+  buildingName.value = buildingResponse.data.name
+  allContracts.value = contractsResponse.data
+  allReminders.value = remindersResponse.data
 }
 
-function typeIcon(type: string): string {
-  const icons: Record<string, string> = { maintenance: '🔧', insurance: '🛡️', service: '🧹', other: '📄' }
-  return icons[type] ?? '📄'
+const { loading, error, reload } = usePageLoader(loadData, t('common.loadError'))
+onMounted(reload)
+
+const contractsById = computed(() =>
+  new Map(allContracts.value.map(contract => [contract.id, contract])),
+)
+
+const reminderViews = computed<ContractReminderView[]>(() =>
+  [...allReminders.value]
+    .map((reminder) => {
+      const targetDate = reminder.target_date ?? reminder.reminder_date
+      const remainingDays = daysUntil(targetDate)
+
+      return {
+        ...reminder,
+        targetDate,
+        urgency: reminderUrgency(targetDate),
+        daysLabel: remainingDays > 0
+          ? t('format.daysLeft', { days: remainingDays })
+          : t('contracts.reminders.dueNow'),
+      }
+    })
+    .sort((left, right) => left.targetDate.localeCompare(right.targetDate)),
+)
+
+const pendingRemindersByContract = computed(() => {
+  const remindersByContract = new Map<string, ContractReminderView[]>()
+
+  for (const reminder of reminderViews.value) {
+    const contractReminders = remindersByContract.get(reminder.contract_id)
+
+    if (contractReminders) {
+      contractReminders.push(reminder)
+    } else {
+      remindersByContract.set(reminder.contract_id, [reminder])
+    }
+  }
+
+  return remindersByContract
+})
+
+function todayIso(): string {
+  const today = new Date()
+  const year = today.getFullYear()
+  const month = String(today.getMonth() + 1).padStart(2, '0')
+  const day = String(today.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+function effectiveStatus(contract: VendorContract): ContractStatus {
+  if (contract.status === 'terminated') return 'terminated'
+  if (contract.status === 'expired') return 'expired'
+  if (contract.end_date && contract.end_date < todayIso()) return 'expired'
+  return 'active'
 }
 
 function reminderUrgency(dateStr: string): 'high' | 'medium' | 'low' {
   const d = daysUntil(dateStr)
-  return d <= 30 ? 'high' : d <= 90 ? 'medium' : 'low'
+  return d <= 15 ? 'high' : d <= 45 ? 'medium' : 'low'
 }
 
-function reminderFor(contractId: string) {
-  return mockReminders.filter(r => r.contract_id === contractId && r.status === 'pending')
+function statusVariant(status: ContractStatus): 'open' | 'pending' | 'closed' | 'default' {
+  if (status === 'active') return 'open'
+  if (status === 'terminated' || status === 'expired') return 'closed'
+  return 'default'
 }
 
 function freqLabel(freq?: string): string {
   return freq ? t(`contracts.frequencies.${freq}`) : '—'
+}
+
+function contractTypeIcon(type: ContractType) {
+  const icons = {
+    maintenance: CIconWrench,
+    insurance: CIconShield,
+    service: CIconSettings,
+    energy: CIconBolt,
+    water: CIconDroplet,
+    cleaning: CIconSparkles,
+    green_spaces: CIconLeaf,
+    other: CIconLayers,
+  }
+  return icons[type] ?? CIconFile
+}
+
+function contractTypeTone(type: ContractType) {
+  const tones = {
+    maintenance: 'tone--warn',
+    insurance: 'tone--err',
+    service: 'tone--default',
+    energy: 'tone--accent',
+    water: 'tone--default',
+    cleaning: 'tone--valid',
+    green_spaces: 'tone--valid',
+    other: 'tone--default',
+  }
+
+  return tones[type] ?? 'tone--default'
+}
+
+function contractIconTone(contract: VendorContract): string {
+  if (effectiveStatus(contract) !== 'active') return 'tone--disabled'
+  return contractTypeTone(contract.contract_type)
+}
+
+const contracts = computed(() => {
+  const query = search.value.trim().toLowerCase()
+
+  return [...allContracts.value]
+    .filter((contract) => {
+      const currentStatus = effectiveStatus(contract)
+      if (filter.value === 'active' && currentStatus !== 'active') return false
+      if (filter.value === 'expired' && currentStatus === 'active') return false
+
+      if (!query) return true
+
+      return [
+        contract.vendor_name,
+        contract.subject,
+        contract.vendor_email ?? '',
+        contract.vendor_phone ?? '',
+      ]
+        .join(' ')
+        .toLowerCase()
+        .includes(query)
+    })
+    .sort((left, right) => left.vendor_name.localeCompare(right.vendor_name))
+})
+
+function openCreateModal() {
+  editingContract.value = null
+  showFormModal.value = true
+}
+
+function setFilter(nextFilter: 'all' | 'active' | 'expired') {
+  filter.value = nextFilter
+}
+
+function openEditModal(contract: VendorContract) {
+  editingContract.value = contract
+  showFormModal.value = true
+}
+
+function openDocumentsModal(contract: VendorContract) {
+  documentsContract.value = contract
+  showDocumentsModal.value = true
+}
+
+async function acknowledgeReminder(reminder: ContractReminder) {
+  busyKey.value = `reminder:${reminder.id}`
+
+  try {
+    await contractsApi.acknowledgeReminder(reminder.contract_id, reminder.id)
+    await reload()
+  } catch (currentError: unknown) {
+    error.value = toErrorMessage(currentError, t('contracts.reminders.acknowledgeError'))
+  } finally {
+    busyKey.value = ''
+  }
+}
+
+async function terminateContract(contract: VendorContract) {
+  const confirmed = await confirm({
+    title: t('contracts.terminateTitle'),
+    message: t('contracts.terminateMessage', { name: contract.vendor_name }),
+    confirmLabel: t('contracts.terminate'),
+    variant: 'danger',
+  })
+
+  if (!confirmed) return
+
+  busyKey.value = `contract:${contract.id}`
+
+  try {
+    await contractsApi.terminate(contract.id)
+    await reload()
+  } catch (currentError: unknown) {
+    error.value = toErrorMessage(currentError, t('contracts.terminateError'))
+  } finally {
+    busyKey.value = ''
+  }
 }
 </script>
 
@@ -51,7 +246,7 @@ function freqLabel(freq?: string): string {
     <CTopbar>
       <template #left>
         <div class="topbar-breadcrumb">
-          {{ mockBuildingStats.name }}
+          {{ buildingName || '...' }}
           <CIconChevronRight
             width="14"
             height="14"
@@ -63,6 +258,7 @@ function freqLabel(freq?: string): string {
         <CBtn
           variant="primary"
           size="sm"
+          @click="openCreateModal"
         >
           <CIconPlus style="width:16px;height:16px" />
           <span class="btn-label">{{ t('contracts.create') }}</span>
@@ -71,149 +267,261 @@ function freqLabel(freq?: string): string {
     </CTopbar>
 
     <div class="view-container">
-      <CMockBanner />
-
-      <div class="view-header">
-        <div>
-          <h1 class="display-md">
-            {{ t('contracts.title') }}
-          </h1>
-          <p
-            class="body-md"
-            style="color:var(--color-on-surface-variant)"
-          >
-            {{ t('contracts.count', mockContracts.length) }}
-          </p>
+      <CPageError
+        v-if="error"
+        :message="error"
+        @retry="reload"
+      />
+      <CPageLoader v-else-if="loading" />
+      <template v-else>
+        <div class="view-header">
+          <div>
+            <h1 class="display-md">
+              {{ t('contracts.title') }}
+            </h1>
+            <p
+              class="body-md"
+              style="color:var(--color-on-surface-variant)"
+            >
+              {{ t('contracts.count', { count: allContracts.length }) }}
+            </p>
+          </div>
         </div>
-      </div>
 
-      <!-- Rappels à venir -->
-      <CCard padding="none">
-        <div class="section-head">
-          <h2 class="section-title">
-            {{ t('contracts.upcomingReminders') }}
-          </h2>
-        </div>
-        <div class="reminder-list">
+        <CCard padding="none">
+          <div class="section-head">
+            <h2 class="section-title">
+              {{ t('contracts.upcomingReminders') }}
+            </h2>
+          </div>
           <div
-            v-for="r in mockReminders.filter(r => r.status === 'pending').sort((a,b) => new Date(a.reminder_date).getTime() - new Date(b.reminder_date).getTime())"
-            :key="r.id"
-            class="reminder-row"
-            :class="`reminder-row--${reminderUrgency(r.reminder_date)}`"
+            v-if="reminderViews.length === 0"
+            class="reminder-empty"
           >
-            <div class="reminder-dot"></div>
-            <div class="reminder-info">
-              <span class="reminder-contract">{{ mockContracts.find(c => c.id === r.contract_id)?.vendor_name }}</span>
-              <span class="reminder-type">{{ t(`contracts.reminderTypes.${r.reminder_type}`) }}</span>
-            </div>
-            <span class="reminder-date">{{ formatDate(r.reminder_date) }}</span>
-            <span
-              class="reminder-days"
-              :class="`urgency-${reminderUrgency(r.reminder_date)}`"
-            >
-              {{ t('format.daysLeft', { days: daysUntil(r.reminder_date) }) }}
-            </span>
+            {{ t('contracts.reminders.empty') }}
           </div>
-        </div>
-      </CCard>
-
-      <!-- Filtres -->
-      <div class="tabs">
-        <button
-          v-for="opt in [
-            { key: 'all', label: t('common.all') },
-            { key: 'active', label: t('contracts.filters.active') },
-            { key: 'expired', label: t('contracts.filters.expired') },
-          ]"
-          :key="opt.key"
-          :class="['tab', { 'tab--active': filter === opt.key }]"
-          @click="filter = opt.key as typeof filter"
-        >
-          {{ opt.label }}
-        </button>
-      </div>
-
-      <!-- Contracts grid -->
-      <div class="contracts-grid">
-        <CCard
-          v-for="c in contracts"
-          :key="c.id"
-          class="contract-card"
-        >
-          <div class="contract-header">
-            <span class="type-icon">{{ typeIcon(c.contract_type) }}</span>
-            <CBadge
-              :variant="statusVariant(c.status)"
-              dot
-            >
-              {{ t(`contracts.statuses.${c.status}`) }}
-            </CBadge>
-          </div>
-          <h3 class="title-md vendor-name">
-            {{ c.vendor_name }}
-          </h3>
-          <p class="body-sm contract-subject">
-            {{ c.subject }}
-          </p>
-
-          <div class="contract-details">
-            <div class="detail-row">
-              <span class="detail-label">{{ t('common.startDate') }}</span>
-              <span>{{ formatDate(c.start_date) }}</span>
-            </div>
-            <div
-              v-if="c.end_date"
-              class="detail-row"
-            >
-              <span class="detail-label">{{ t('common.endDate') }}</span>
-              <span>{{ formatDate(c.end_date) }}</span>
-            </div>
-            <div
-              v-if="c.amount"
-              class="detail-row"
-            >
-              <span class="detail-label">{{ t('common.amount') }}</span>
-              <span>{{ formatCurrency(c.amount) }} / {{ freqLabel(c.payment_frequency) }}</span>
-            </div>
-            <div class="detail-row">
-              <span class="detail-label">{{ t('contracts.autoRenewal') }}</span>
-              <span>{{ c.auto_renewal ? t('contracts.autoRenewalAuto', { days: c.notice_days }) : t('contracts.autoRenewalManual') }}</span>
-            </div>
-          </div>
-
           <div
-            v-if="reminderFor(c.id).length"
-            class="contract-reminders"
+            v-else
+            class="reminder-list"
           >
-            <CBadge
-              v-for="r in reminderFor(c.id)"
-              :key="r.id"
-              variant="pending"
+            <div
+              v-for="reminder in reminderViews"
+              :key="reminder.id"
+              class="reminder-row"
+              :class="`reminder-row--${reminder.urgency}`"
             >
-              🔔 {{ t(`contracts.reminderTypes.${r.reminder_type}`) }} — {{ formatDate(r.reminder_date) }}
-            </CBadge>
-          </div>
-
-          <div class="contract-contacts">
-            <a
-              v-if="c.vendor_email"
-              :href="`mailto:${c.vendor_email}`"
-              class="contact-link"
-            >✉️ {{ c.vendor_email }}</a>
-            <a
-              v-if="c.vendor_phone"
-              :href="`tel:${c.vendor_phone}`"
-              class="contact-link"
-            >📞 {{ c.vendor_phone }}</a>
+              <div class="reminder-dot"></div>
+              <div class="reminder-info">
+                <span class="reminder-contract">{{ contractsById.get(reminder.contract_id)?.vendor_name }}</span>
+                <span class="reminder-type">
+                  {{ t(`contracts.reminderTypes.${reminder.reminder_type}`) }}
+                </span>
+              </div>
+              <span class="reminder-date">{{ formatDate(reminder.targetDate) }}</span>
+              <span
+                class="reminder-days"
+                :class="`urgency-${reminder.urgency}`"
+              >
+                {{ reminder.daysLabel }}
+              </span>
+              <CBtn
+                variant="secondary"
+                size="sm"
+                :loading="busyKey === `reminder:${reminder.id}`"
+                :disabled="busyKey === `reminder:${reminder.id}`"
+                @click="acknowledgeReminder(reminder)"
+              >
+                {{ t('contracts.reminders.acknowledge') }}
+              </CBtn>
+            </div>
           </div>
         </CCard>
-      </div>
+
+        <div class="contracts-toolbar">
+          <div class="tabs">
+            <button
+              v-for="opt in [
+                { key: 'all', label: t('common.all') },
+                { key: 'active', label: t('contracts.filters.active') },
+                { key: 'expired', label: t('contracts.filters.expired') },
+              ]"
+              :key="opt.key"
+              :class="['tab', { 'tab--active': filter === opt.key }]"
+              @click="setFilter(opt.key as 'all' | 'active' | 'expired')"
+            >
+              {{ opt.label }}
+            </button>
+          </div>
+
+          <div class="search-bar">
+            <CIconSearch class="search-icon" />
+            <input
+              v-model="search"
+              type="search"
+              :aria-label="t('contracts.searchPlaceholder')"
+              :placeholder="t('contracts.searchPlaceholder')"
+              class="search-input"
+            />
+          </div>
+        </div>
+
+        <CCard
+          v-if="contracts.length === 0"
+          class="contracts-empty"
+        >
+          {{ t('contracts.empty') }}
+        </CCard>
+
+        <div
+          v-else
+          class="contracts-grid"
+        >
+          <CCard
+            v-for="contract in contracts"
+            :key="contract.id"
+            class="contract-card"
+          >
+            <div class="contract-header">
+              <div class="contract-type">
+                <div :class="['contract-type__icon', contractIconTone(contract)]">
+                  <component
+                    :is="contractTypeIcon(contract.contract_type)"
+                    class="type-icon"
+                    aria-hidden="true"
+                  />
+                </div>
+              </div>
+              <div class="contract-header__chips">
+                <CBadge
+                  variant="default"
+                >
+                  {{ t(`contracts.types.${contract.contract_type}`) }}
+                </CBadge>
+                <CBadge
+                  :variant="statusVariant(effectiveStatus(contract))"
+                  dot
+                >
+                  {{ t(`contracts.statuses.${effectiveStatus(contract)}`) }}
+                </CBadge>
+              </div>
+            </div>
+
+            <h3 class="title-md vendor-name">
+              {{ contract.vendor_name }}
+            </h3>
+            <p class="body-sm contract-subject">
+              {{ contract.subject }}
+            </p>
+
+            <div class="contract-details">
+              <div class="detail-row">
+                <span class="detail-label">{{ t('common.startDate') }}</span>
+                <span>{{ formatDate(contract.start_date) }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">{{ t('common.endDate') }}</span>
+                <span>{{ formatDate(contract.end_date) }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">{{ t('common.amount') }}</span>
+                <span>{{ formatCurrency(contract.amount) }}<template v-if="contract.payment_frequency"> / {{ freqLabel(contract.payment_frequency) }}</template></span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">{{ t('contracts.autoRenewal') }}</span>
+                <span>
+                  {{
+                    contract.auto_renewal
+                      ? t('contracts.autoRenewalAuto', { days: contract.notice_days ?? '—' })
+                      : t('contracts.autoRenewalManual')
+                  }}
+                </span>
+              </div>
+            </div>
+
+            <div
+              v-if="pendingRemindersByContract.get(contract.id)?.length"
+              class="contract-reminders"
+            >
+              <CBadge
+                v-for="reminder in pendingRemindersByContract.get(contract.id)"
+                :key="reminder.id"
+                variant="pending"
+              >
+                🔔 {{ t(`contracts.reminderTypes.${reminder.reminder_type}`) }} — {{ formatDate(reminder.targetDate) }}
+              </CBadge>
+            </div>
+
+            <div
+              v-if="contract.vendor_email || contract.vendor_phone"
+              class="contract-contacts"
+            >
+              <a
+                v-if="contract.vendor_email"
+                :href="`mailto:${contract.vendor_email}`"
+                class="contact-link"
+              >{{ contract.vendor_email }}</a>
+              <a
+                v-if="contract.vendor_phone"
+                :href="`tel:${contract.vendor_phone}`"
+                class="contact-link"
+              >{{ contract.vendor_phone }}</a>
+            </div>
+
+            <div class="contract-actions">
+              <CBtn
+                variant="ghost"
+                size="sm"
+                @click="openEditModal(contract)"
+              >
+                <CIconEdit />
+                {{ t('common.edit') }}
+              </CBtn>
+              <CBtn
+                variant="secondary"
+                size="sm"
+                @click="openDocumentsModal(contract)"
+              >
+                <CIconFile />
+                {{ t('contracts.documents.manage') }}
+              </CBtn>
+              <CBtn
+                v-if="effectiveStatus(contract) === 'active'"
+                variant="danger"
+                size="sm"
+                :loading="busyKey === `contract:${contract.id}`"
+                :disabled="busyKey === `contract:${contract.id}`"
+                @click="terminateContract(contract)"
+              >
+                <CIconArchive />
+                {{ t('contracts.terminate') }}
+              </CBtn>
+            </div>
+          </CCard>
+        </div>
+      </template>
     </div>
   </div>
+
+  <ContractFormModal
+    v-model:open="showFormModal"
+    :contract="editingContract"
+    @saved="reload"
+  />
+
+  <ContractDocumentsModal
+    v-model:open="showDocumentsModal"
+    :contract="documentsContract"
+    @changed="reload"
+  />
 </template>
 
 <style scoped>
 .section-head { padding: var(--space-4) var(--space-5) 0; }
+
+.reminder-empty {
+  padding: var(--space-4) var(--space-5) var(--space-5);
+  color: var(--color-on-surface-variant);
+}
 
 .reminder-list { padding: var(--space-3) var(--space-5) var(--space-4); display: flex; flex-direction: column; gap: var(--space-2); }
 .reminder-row { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); }
@@ -229,11 +537,80 @@ function freqLabel(freq?: string): string {
 .urgency-medium { color: var(--color-warning); }
 .urgency-low { color: var(--color-on-surface-variant); }
 
+.contracts-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.search-bar {
+  position: relative;
+  min-width: min(100%, 320px);
+}
+
+.search-icon {
+  position: absolute;
+  left: var(--space-3);
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  color: var(--color-on-surface-variant);
+}
+
+.search-input {
+  width: 100%;
+  height: 44px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-container-high);
+  padding: 0 var(--space-4) 0 calc(var(--space-4) + 20px);
+  color: var(--color-on-surface);
+}
+
 .contracts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: var(--space-4); }
 
+.contracts-empty {
+  color: var(--color-on-surface-variant);
+}
+
 .contract-card { display: flex; flex-direction: column; gap: 10px; }
-.contract-header { display: flex; align-items: center; justify-content: space-between; }
-.type-icon { font-size: 24px; }
+.contract-header { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); }
+.contract-type { display: flex; align-items: center; gap: var(--space-3); flex-shrink: 0; }
+.contract-header__chips {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  justify-content: flex-end;
+  margin-left: auto;
+}
+.contract-type__icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: var(--tone-bg, var(--color-secondary-container));
+  color: var(--tone-fg, var(--color-primary));
+}
+.type-icon {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+}
+.contract-actions {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-top: auto;
+  padding-top: var(--space-3);
+}
 .vendor-name { margin: 0; }
 .contract-subject { color: var(--color-on-surface-variant); }
 
@@ -246,5 +623,24 @@ function freqLabel(freq?: string): string {
 .contract-contacts { display: flex; flex-direction: column; gap: var(--space-1); }
 .contact-link { font-size: var(--text-xs); color: var(--color-primary); text-decoration: none; }
 .contact-link:hover { text-decoration: underline; }
-</style>
 
+@media (max-width: 900px) {
+  .reminder-row {
+    flex-wrap: wrap;
+  }
+
+  .contract-header {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+
+  .contract-header__chips {
+    justify-content: flex-end;
+  }
+
+  .contract-actions {
+    justify-content: flex-start;
+  }
+}
+
+</style>

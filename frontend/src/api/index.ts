@@ -200,10 +200,18 @@ export const contractsApi = {
     api.put<VendorContract>(`/contracts/${id}`, data),
   terminate: (id: string) =>
     api.delete(`/contracts/${id}`),
+  listAllReminders: () =>
+    api.get<ContractReminder[]>('/contracts/reminders'),
   listReminders: (id: string) =>
     api.get<ContractReminder[]>(`/contracts/${id}/reminders`),
   acknowledgeReminder: (id: string, rid: string) =>
     api.put(`/contracts/${id}/reminders/${rid}/acknowledge`),
+  listDocuments: (id: string) =>
+    api.get<Document[]>(`/contracts/${id}/documents`),
+  attachDocument: (id: string, document_id: string) =>
+    api.post(`/contracts/${id}/documents`, { document_id }),
+  detachDocument: (id: string, documentId: string) =>
+    api.delete(`/contracts/${id}/documents/${documentId}`),
 }
 
 // ── Tasks ─────────────────────────────────────────────────────────

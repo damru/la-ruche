@@ -256,16 +256,16 @@ Chaque copropriétaire doit pouvoir consulter le détail de ses charges sur l'ex
 ### 5.2 Assurance multirisque immeuble
 
 **Référence :** Art. 9-1 loi 1965 (ALUR)  
-**Couverture :** 🔲 hors périmètre logiciel
+**Couverture :** ⚠️ assistance documentaire — EP-006-S05
 
-L'assurance est obligatoire depuis ALUR 2014. l'Application peut stocker le contrat (EP-006) et alerter sur l'échéance.
+L'assurance est obligatoire depuis ALUR 2014. L'Application peut stocker le contrat, regrouper ses pièces justificatives et alerter sur l'échéance.
 
 ---
 
 ### 5.3 Contrats courants et reconductions tacites
 
 **Référence :** Art. L136-1 Code de la consommation, art. 18 loi 1965  
-**Couverture :** ⚠️ partielle — EP-006
+**Couverture :** ✅ couverte — EP-006
 
 Tout contrat avec reconduction tacite doit être suivi. Le syndic doit respecter le préavis de résiliation (généralement 3 mois avant la date anniversaire).
 
@@ -399,8 +399,8 @@ Le syndicat des copropriétaires est responsable de traitement. Les données tra
 | 4.5 | Arrêté de comptes | Art. 18 loi 1965 | ⚠️ | EP-004-S04 |
 | 4.6 | Relevé individuel de charges | Décret 1967 art. 48 | ✅ | EP-004-S06 |
 | 5.1 | Contrat de syndic (modèle-type) | Décret 2015 | 🔲 | — |
-| 5.2 | Assurance immeuble | Art. 9-1 loi 1965 | 🔲 | EP-006 |
-| 5.3 | Contrats + reconductions tacites | Art. 18 loi 1965 | ⚠️ | EP-006 |
+| 5.2 | Assurance immeuble | Art. 9-1 loi 1965 | ⚠️ | EP-006 |
+| 5.3 | Contrats + reconductions tacites | Art. 18 loi 1965 | ✅ | EP-006 |
 | 6.1 | Plan pluriannuel de travaux (PPT) | Loi Climat 2021 | ❌ | EP-009-S04 |
 | 6.2 | DPE collectif | Loi Climat 2021 | 🔲 | EP-005 |
 | 6.3 | Diagnostic technique global (DTG) | ALUR art. L731-1 | 🔲 | EP-005 |

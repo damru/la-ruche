@@ -3,10 +3,12 @@ use axum::{
     extract::{Path, State},
     http::StatusCode,
 };
+use serde::Deserialize;
 use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::{
+    api::documents::DocumentListItem,
     db::{self, AppState},
     domain::{AuthUser, Role},
     errors::{AppError, AppResult, json_value},
@@ -18,6 +20,14 @@ pub async fn list(
 ) -> AppResult<Json<serde_json::Value>> {
     auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
     json_value(db::contract::list(&state.pool, auth.building_id).await?)
+}
+
+pub async fn list_all_reminders(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+) -> AppResult<Json<serde_json::Value>> {
+    auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
+    json_value(db::contract::list_all_reminders(&state.pool, auth.building_id).await?)
 }
 
 pub async fn get(
@@ -81,5 +91,52 @@ pub async fn acknowledge_reminder(
 ) -> AppResult<StatusCode> {
     auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
     db::contract::acknowledge_reminder(&state.pool, rid, id, auth.building_id).await?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
+pub async fn list_documents(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+) -> AppResult<Json<Vec<DocumentListItem>>> {
+    auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
+    let roles: Vec<String> = auth.roles.iter().map(ToString::to_string).collect();
+    let documents = db::contract::list_documents(&state.pool, id, auth.building_id, &roles).await?;
+    Ok(Json(
+        documents.into_iter().map(DocumentListItem::from).collect(),
+    ))
+}
+
+#[derive(Deserialize)]
+pub struct AttachDocumentInput {
+    pub document_id: Uuid,
+}
+
+pub async fn attach_document(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+    Json(input): Json<AttachDocumentInput>,
+) -> AppResult<StatusCode> {
+    auth.require_role(&Role::Manager)?;
+    let attached =
+        db::contract::attach_document(&state.pool, id, input.document_id, auth.building_id).await?;
+    if !attached {
+        return Err(AppError::NotFound);
+    }
+    Ok(StatusCode::NO_CONTENT)
+}
+
+pub async fn detach_document(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+    Path((id, document_id)): Path<(Uuid, Uuid)>,
+) -> AppResult<StatusCode> {
+    auth.require_role(&Role::Manager)?;
+    let detached =
+        db::contract::detach_document(&state.pool, id, document_id, auth.building_id).await?;
+    if !detached {
+        return Err(AppError::NotFound);
+    }
     Ok(StatusCode::NO_CONTENT)
 }

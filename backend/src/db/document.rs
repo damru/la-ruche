@@ -19,21 +19,43 @@ pub struct DocumentRow {
     pub created_at: DateTime<Utc>,
 }
 
+#[derive(Debug, Serialize, sqlx::FromRow)]
+pub struct DocumentListRow {
+    pub id: Uuid,
+    pub original_name: String,
+    pub mime_type: String,
+    pub size_bytes: i64,
+    pub visible_roles: Vec<String>,
+    pub linked_contract_names: Vec<String>,
+    pub created_at: DateTime<Utc>,
+}
+
 pub async fn list(
     pool: &PgPool,
     building_id: Uuid,
     roles: &[String],
-) -> AppResult<Vec<DocumentRow>> {
-    Ok(sqlx::query_as::<_, DocumentRow>(
-        r#"SELECT id, building_id, original_name, storage_path, bucket,
-           mime_type, size_bytes, uploaded_by,
-           extraction_status::text AS extraction_status,
-           visible_to_roles::text[] AS visible_roles,
-           created_at
-           FROM document
-           WHERE building_id = $1
-           AND visible_to_roles::text[] && $2
-           ORDER BY created_at DESC"#,
+) -> AppResult<Vec<DocumentListRow>> {
+    Ok(sqlx::query_as::<_, DocumentListRow>(
+        r#"SELECT d.id,
+                  d.original_name,
+                  d.mime_type,
+                  d.size_bytes,
+                  d.visible_to_roles::text[] AS visible_roles,
+                  COALESCE(
+                      array_remove(
+                          array_agg(DISTINCT vc.vendor_name ORDER BY vc.vendor_name),
+                          NULL
+                      ),
+                      ARRAY[]::text[]
+                  ) AS linked_contract_names,
+                  d.created_at
+           FROM document d
+           LEFT JOIN contract_document cd ON cd.document_id = d.id
+           LEFT JOIN vendor_contract vc ON vc.id = cd.contract_id AND vc.building_id = $1
+           WHERE d.building_id = $1
+              AND d.visible_to_roles::text[] && $2
+           GROUP BY d.id, d.original_name, d.mime_type, d.size_bytes, d.visible_to_roles, d.created_at
+           ORDER BY d.created_at DESC"#,
     )
     .bind(building_id)
     .bind(roles)
@@ -95,12 +117,24 @@ pub async fn delete(
     id: Uuid,
     building_id: Uuid,
 ) -> AppResult<Option<(String, String)>> {
-    let row = sqlx::query!(
-        "DELETE FROM document WHERE id = $1 AND building_id = $2 RETURNING bucket, storage_path",
-        id,
-        building_id
+    let row = sqlx::query_as::<_, (String, String)>(
+        r#"
+        WITH deleted_document AS (
+            DELETE FROM document
+            WHERE id = $1 AND building_id = $2
+            RETURNING id, bucket, storage_path
+        ),
+        deleted_links AS (
+            DELETE FROM contract_document
+            WHERE document_id IN (SELECT id FROM deleted_document)
+        )
+        SELECT bucket, storage_path
+        FROM deleted_document
+        "#,
     )
+    .bind(id)
+    .bind(building_id)
     .fetch_optional(pool)
     .await?;
-    Ok(row.map(|r| (r.bucket, r.storage_path)))
+    Ok(row)
 }

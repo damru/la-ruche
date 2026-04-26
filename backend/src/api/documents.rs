@@ -38,7 +38,22 @@ pub struct DocumentListItem {
     pub mime_type: String,
     pub size_bytes: i64,
     pub visible_roles: Vec<String>,
+    pub linked_contract_names: Vec<String>,
     pub created_at: chrono::DateTime<chrono::Utc>,
+}
+
+impl From<db::document::DocumentListRow> for DocumentListItem {
+    fn from(document: db::document::DocumentListRow) -> Self {
+        Self {
+            id: document.id,
+            original_name: document.original_name,
+            mime_type: document.mime_type,
+            size_bytes: document.size_bytes,
+            visible_roles: document.visible_roles,
+            linked_contract_names: document.linked_contract_names,
+            created_at: document.created_at,
+        }
+    }
 }
 
 #[derive(Deserialize, Validate, ToSchema)]
@@ -152,18 +167,7 @@ pub async fn list(
     let roles: Vec<String> = auth.roles.iter().map(ToString::to_string).collect();
     let rows = db::document::list(&state.pool, auth.building_id, &roles).await?;
 
-    Ok(Json(
-        rows.into_iter()
-            .map(|document| DocumentListItem {
-                id: document.id,
-                original_name: document.original_name,
-                mime_type: document.mime_type,
-                size_bytes: document.size_bytes,
-                visible_roles: document.visible_roles,
-                created_at: document.created_at,
-            })
-            .collect(),
-    ))
+    Ok(Json(rows.into_iter().map(DocumentListItem::from).collect()))
 }
 
 /// GET /api/v1/documents/:id/download-url

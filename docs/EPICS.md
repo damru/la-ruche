@@ -129,9 +129,9 @@ Upload direct S3 via pre-signed URL, contrôle d'accès par rôle, téléchargem
 
 ### EP-006 — Contrats fournisseurs
 
-**Statut :** en cours | **MVP :** oui | **Réf. PRD :** Gestion courante
+**Statut :** terminée | **MVP :** oui | **Réf. PRD :** Gestion courante
 
-**État code actuel :** backend réel sur CRUD et rappels ; frontend contrats encore en mock.
+**État code actuel :** backend + frontend réels sur CRUD, rappels, acquittement, résiliation et pièces justificatives liées au contrat.
 
 Fiche contrat avec reconduction tacite et préavis configurables, rappels automatiques calculés à la création/MAJ, acquittement manuel.
 
@@ -331,4 +331,3 @@ Ces éléments ont été identifiés mais ne font pas l'objet d'une epic active.
 | Multi-copropriétés par compte | Architecture prête, non exposée — décision post-MVP                |
 | SSO / fédération d'identité   | Keycloak rejeté (ADR-002)                                          |
 | OCR/NLP documents             | Hook prévu (`domain/processor.rs`) — post-MVP                      |
-

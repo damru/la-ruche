@@ -1,9 +1,10 @@
-use chrono::{DateTime, NaiveDate, Utc};
+use chrono::{DateTime, Days, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use sqlx::types::Decimal;
 use uuid::Uuid;
 
+use crate::db::document::DocumentListRow;
 use crate::domain::reminders::{ContractReminderSpec, ReminderKind, compute_reminders};
 use crate::errors::AppResult;
 
@@ -41,6 +42,17 @@ pub struct CreateVendorContractInput {
     pub notice_days: Option<i32>,
 }
 
+#[derive(Debug, Clone, sqlx::FromRow)]
+struct ContractReminderCandidateRow {
+    id: Uuid,
+    contract_id: Uuid,
+    reminder_type: String,
+    reminder_date: NaiveDate,
+    status: String,
+    end_date: Option<NaiveDate>,
+    contract_status: String,
+}
+
 pub async fn list(pool: &PgPool, building_id: Uuid) -> AppResult<Vec<VendorContractRow>> {
     Ok(sqlx::query_as!(
         VendorContractRow,
@@ -53,6 +65,46 @@ pub async fn list(pool: &PgPool, building_id: Uuid) -> AppResult<Vec<VendorContr
     )
     .fetch_all(pool)
     .await?)
+}
+
+pub async fn list_all_reminders(
+    pool: &PgPool,
+    building_id: Uuid,
+) -> AppResult<Vec<serde_json::Value>> {
+    let rows = sqlx::query_as::<_, ContractReminderCandidateRow>(
+        r#"
+        SELECT cr.id,
+               cr.contract_id,
+               cr.reminder_type::text as reminder_type,
+               cr.reminder_date,
+               cr.status::text as status,
+               vc.end_date,
+               vc.status::text as contract_status
+        FROM contract_reminder cr
+        JOIN vendor_contract vc ON vc.id = cr.contract_id
+        WHERE vc.building_id = $1
+        ORDER BY cr.reminder_date
+        "#,
+    )
+    .bind(building_id)
+    .fetch_all(pool)
+    .await?;
+
+    let today = Utc::now().date_naive();
+
+    Ok(select_visible_contract_reminders(rows, today)
+        .into_iter()
+        .map(|row| {
+            serde_json::json!({
+                "id": row.id,
+                "contract_id": row.contract_id,
+                "reminder_type": row.reminder_type,
+                "reminder_date": row.reminder_date,
+                "target_date": reminder_target_date(&row),
+                "status": row.status,
+            })
+        })
+        .collect())
 }
 
 pub async fn get(
@@ -237,6 +289,115 @@ pub async fn acknowledge_reminder(
     Ok(())
 }
 
+pub async fn list_documents(
+    pool: &PgPool,
+    contract_id: Uuid,
+    building_id: Uuid,
+    roles: &[String],
+) -> AppResult<Vec<DocumentListRow>> {
+    Ok(sqlx::query_as::<_, DocumentListRow>(
+        r#"
+        SELECT d.id,
+               d.original_name,
+               d.mime_type,
+               d.size_bytes,
+               d.visible_to_roles::text[] AS visible_roles,
+               COALESCE(
+                   array_remove(
+                       array_agg(DISTINCT vc_link.vendor_name ORDER BY vc_link.vendor_name),
+                       NULL
+                   ),
+                   ARRAY[]::text[]
+               ) AS linked_contract_names,
+               d.created_at
+        FROM contract_document cd_current
+        JOIN vendor_contract vc ON vc.id = cd_current.contract_id
+        JOIN document d ON d.id = cd_current.document_id
+        LEFT JOIN contract_document cd_link ON cd_link.document_id = d.id
+        LEFT JOIN vendor_contract vc_link ON vc_link.id = cd_link.contract_id AND vc_link.building_id = $2
+        WHERE cd_current.contract_id = $1
+          AND vc.building_id = $2
+          AND d.building_id = $2
+          AND d.visible_to_roles::text[] && $3
+        GROUP BY d.id, d.original_name, d.mime_type, d.size_bytes, d.visible_to_roles, d.created_at
+        ORDER BY d.created_at DESC
+        "#,
+    )
+    .bind(contract_id)
+    .bind(building_id)
+    .bind(roles)
+    .fetch_all(pool)
+    .await?)
+}
+
+pub async fn attach_document(
+    pool: &PgPool,
+    contract_id: Uuid,
+    document_id: Uuid,
+    building_id: Uuid,
+) -> AppResult<bool> {
+    let pair_exists = sqlx::query_scalar::<_, bool>(
+        r#"
+        SELECT EXISTS(
+            SELECT 1
+            FROM vendor_contract vc
+            JOIN document d ON d.id = $2
+            WHERE vc.id = $1
+              AND vc.building_id = $3
+              AND d.building_id = $3
+        )
+        "#,
+    )
+    .bind(contract_id)
+    .bind(document_id)
+    .bind(building_id)
+    .fetch_one(pool)
+    .await?;
+
+    if !pair_exists {
+        return Ok(false);
+    }
+
+    sqlx::query(
+        r#"
+        INSERT INTO contract_document (contract_id, document_id)
+        VALUES ($1, $2)
+        ON CONFLICT (contract_id, document_id) DO NOTHING
+        "#,
+    )
+    .bind(contract_id)
+    .bind(document_id)
+    .execute(pool)
+    .await?;
+
+    Ok(true)
+}
+
+pub async fn detach_document(
+    pool: &PgPool,
+    contract_id: Uuid,
+    document_id: Uuid,
+    building_id: Uuid,
+) -> AppResult<bool> {
+    let result = sqlx::query(
+        r#"
+        DELETE FROM contract_document cd
+        USING vendor_contract vc
+        WHERE cd.contract_id = $1
+          AND cd.document_id = $2
+          AND vc.id = cd.contract_id
+          AND vc.building_id = $3
+        "#,
+    )
+    .bind(contract_id)
+    .bind(document_id)
+    .bind(building_id)
+    .execute(pool)
+    .await?;
+
+    Ok(result.rows_affected() > 0)
+}
+
 fn frequency_to_months(p: Option<&str>) -> Option<u32> {
     match p {
         Some("monthly") => Some(1),
@@ -253,5 +414,193 @@ fn reminder_kind_to_str(kind: &ReminderKind) -> &'static str {
         ReminderKind::PaymentDue => "payment_due",
         ReminderKind::Expiration => "expiration",
         ReminderKind::Termination => "termination",
+    }
+}
+
+#[derive(Default)]
+struct SelectedReminderRows {
+    next_payment: Option<ContractReminderCandidateRow>,
+    next_contract_end: Option<ContractReminderCandidateRow>,
+}
+
+fn select_visible_contract_reminders(
+    rows: Vec<ContractReminderCandidateRow>,
+    today: NaiveDate,
+) -> Vec<ContractReminderCandidateRow> {
+    let payment_threshold = today.checked_add_days(Days::new(30)).unwrap_or(today);
+    let contract_end_threshold = today.checked_add_days(Days::new(90)).unwrap_or(today);
+    let mut selected_by_contract = std::collections::BTreeMap::<Uuid, SelectedReminderRows>::new();
+
+    for row in rows {
+        if row.status != "pending" || !is_contract_reminder_visible(&row, today) {
+            continue;
+        }
+
+        let target_date = reminder_target_date(&row);
+        let selected = selected_by_contract.entry(row.contract_id).or_default();
+
+        if row.reminder_type == "payment_due" {
+            if target_date <= payment_threshold && selected.next_payment.is_none() {
+                selected.next_payment = Some(row);
+            }
+            continue;
+        }
+
+        if is_contract_end_reminder(&row.reminder_type)
+            && target_date <= contract_end_threshold
+            && selected.next_contract_end.is_none()
+        {
+            selected.next_contract_end = Some(row);
+        }
+    }
+
+    let mut reminders = Vec::new();
+
+    for selected in selected_by_contract.into_values() {
+        if let Some(reminder) = selected.next_payment {
+            reminders.push(reminder);
+        }
+        if let Some(reminder) = selected.next_contract_end {
+            reminders.push(reminder);
+        }
+    }
+
+    reminders.sort_by_key(reminder_target_date);
+    reminders
+}
+
+fn is_contract_reminder_visible(row: &ContractReminderCandidateRow, today: NaiveDate) -> bool {
+    if row.contract_status != "active" {
+        return false;
+    }
+
+    if let Some(end_date) = row.end_date
+        && end_date < today
+    {
+        return false;
+    }
+
+    reminder_target_date(row) >= today
+}
+
+fn is_contract_end_reminder(reminder_type: &str) -> bool {
+    matches!(reminder_type, "renewal" | "expiration" | "termination")
+}
+
+fn reminder_target_date(row: &ContractReminderCandidateRow) -> NaiveDate {
+    if row.reminder_type == "payment_due" {
+        row.reminder_date
+    } else {
+        row.end_date.unwrap_or(row.reminder_date)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn reminder_row(
+        contract_id: Uuid,
+        reminder_type: &str,
+        reminder_date: (i32, u32, u32),
+        end_date: Option<(i32, u32, u32)>,
+    ) -> ContractReminderCandidateRow {
+        ContractReminderCandidateRow {
+            id: Uuid::new_v4(),
+            contract_id,
+            reminder_type: reminder_type.to_string(),
+            reminder_date: NaiveDate::from_ymd_opt(
+                reminder_date.0,
+                reminder_date.1,
+                reminder_date.2,
+            )
+            .unwrap(),
+            status: "pending".to_string(),
+            end_date: end_date
+                .map(|(year, month, day)| NaiveDate::from_ymd_opt(year, month, day).unwrap()),
+            contract_status: "active".to_string(),
+        }
+    }
+
+    #[test]
+    fn keeps_only_next_payment_and_next_contract_end_per_contract() {
+        let today = NaiveDate::from_ymd_opt(2026, 4, 26).unwrap();
+        let contract_id = Uuid::new_v4();
+        let reminders = vec![
+            reminder_row(
+                contract_id,
+                "payment_due",
+                (2026, 4, 28),
+                Some((2026, 6, 20)),
+            ),
+            reminder_row(
+                contract_id,
+                "payment_due",
+                (2026, 5, 18),
+                Some((2026, 6, 20)),
+            ),
+            reminder_row(
+                contract_id,
+                "termination",
+                (2026, 4, 20),
+                Some((2026, 6, 20)),
+            ),
+            reminder_row(contract_id, "renewal", (2026, 5, 1), Some((2026, 6, 20))),
+            reminder_row(
+                contract_id,
+                "expiration",
+                (2026, 5, 21),
+                Some((2026, 6, 20)),
+            ),
+        ];
+
+        let visible = select_visible_contract_reminders(reminders, today);
+
+        assert_eq!(visible.len(), 2);
+        assert_eq!(visible[0].reminder_type, "payment_due");
+        assert_eq!(
+            visible[0].reminder_date,
+            NaiveDate::from_ymd_opt(2026, 4, 28).unwrap()
+        );
+        assert_eq!(visible[1].reminder_type, "termination");
+        assert_eq!(
+            visible[1].reminder_date,
+            NaiveDate::from_ymd_opt(2026, 4, 20).unwrap()
+        );
+    }
+
+    #[test]
+    fn drops_contracts_outside_visibility_windows_or_not_active() {
+        let today = NaiveDate::from_ymd_opt(2026, 4, 26).unwrap();
+        let active_contract = Uuid::new_v4();
+        let terminated_contract = Uuid::new_v4();
+        let mut terminated = reminder_row(
+            terminated_contract,
+            "payment_due",
+            (2026, 4, 29),
+            Some((2026, 7, 10)),
+        );
+        terminated.contract_status = "terminated".to_string();
+
+        let visible = select_visible_contract_reminders(
+            vec![
+                reminder_row(
+                    active_contract,
+                    "payment_due",
+                    (2026, 6, 1),
+                    Some((2026, 8, 20)),
+                ),
+                reminder_row(
+                    active_contract,
+                    "renewal",
+                    (2026, 5, 15),
+                    Some((2026, 8, 5)),
+                ),
+                terminated,
+            ],
+            today,
+        );
+
+        assert!(visible.is_empty());
     }
 }
