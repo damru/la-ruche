@@ -119,11 +119,7 @@ pub async fn submit(
 
     // Move each file from staging to the building's final bucket and create document records
     for doc_meta in &input.documents {
-        let ext = doc_meta
-            .key
-            .rsplit('.')
-            .next()
-            .unwrap_or("bin");
+        let ext = doc_meta.key.rsplit('.').next().unwrap_or("bin");
 
         let (bucket, final_key) = state
             .storage

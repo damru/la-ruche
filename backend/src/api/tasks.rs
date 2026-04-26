@@ -43,7 +43,10 @@ pub async fn create(
         return Err(AppError::Validation("Title is required".into()));
     }
     let t = db::task::create(&state.pool, auth.building_id, auth.user_id, input).await?;
-    Ok((StatusCode::CREATED, json_value(db::task::TaskListItem::from(t))?))
+    Ok((
+        StatusCode::CREATED,
+        json_value(db::task::TaskListItem::from(t))?,
+    ))
 }
 
 #[derive(Deserialize)]

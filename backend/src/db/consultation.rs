@@ -115,7 +115,6 @@ pub async fn create(
     Ok(serde_json::json!({ "id": id, "title": title }))
 }
 
-
 pub async fn respond(
     pool: &PgPool,
     id: Uuid,

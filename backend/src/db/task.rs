@@ -73,7 +73,13 @@ pub struct CreateTaskInput {
 }
 
 /// Valid task status values for update requests.
-const VALID_STATUSES: &[&str] = &["open", "in_progress", "awaiting_vendor", "closed", "cancelled"];
+const VALID_STATUSES: &[&str] = &[
+    "open",
+    "in_progress",
+    "awaiting_vendor",
+    "closed",
+    "cancelled",
+];
 
 pub fn validate_status(status: &str) -> bool {
     VALID_STATUSES.contains(&status)
@@ -111,7 +117,10 @@ pub async fn list(pool: &PgPool, building_id: Uuid) -> AppResult<Vec<TaskRow>> {
     .bind(building_id)
     .fetch_all(pool)
     .await?;
-    rows.iter().map(task_row_from_query).collect::<Result<Vec<_>, _>>().map_err(Into::into)
+    rows.iter()
+        .map(task_row_from_query)
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(Into::into)
 }
 
 pub async fn get(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<Option<TaskRow>> {
@@ -125,7 +134,10 @@ pub async fn get(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<Option
     .bind(building_id)
     .fetch_optional(pool)
     .await?;
-    row.as_ref().map(task_row_from_query).transpose().map_err(Into::into)
+    row.as_ref()
+        .map(task_row_from_query)
+        .transpose()
+        .map_err(Into::into)
 }
 
 pub async fn create(
@@ -239,7 +251,10 @@ pub async fn get_by_token(pool: &PgPool, token: Uuid) -> AppResult<Option<TaskRo
     .bind(token)
     .fetch_optional(pool)
     .await?;
-    row.as_ref().map(task_row_from_query).transpose().map_err(Into::into)
+    row.as_ref()
+        .map(task_row_from_query)
+        .transpose()
+        .map_err(Into::into)
 }
 
 pub async fn create_submission(
@@ -248,11 +263,13 @@ pub async fn create_submission(
     comment: Option<String>,
 ) -> AppResult<Uuid> {
     use sqlx::Row;
-    let row = sqlx::query("INSERT INTO vendor_submission (task_id, comment) VALUES ($1, $2) RETURNING id")
-        .bind(task_id)
-        .bind(comment)
-        .fetch_one(pool)
-        .await?;
+    let row = sqlx::query(
+        "INSERT INTO vendor_submission (task_id, comment) VALUES ($1, $2) RETURNING id",
+    )
+    .bind(task_id)
+    .bind(comment)
+    .fetch_one(pool)
+    .await?;
     Ok(row.try_get("id")?)
 }
 

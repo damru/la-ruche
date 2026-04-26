@@ -1,8 +1,8 @@
 use crate::errors::AppResult;
 use chrono::{DateTime, NaiveDate, Utc};
 use serde::Serialize;
-use sqlx::{PgPool, Row};
 use sqlx::types::Decimal;
+use sqlx::{PgPool, Row};
 use uuid::Uuid;
 
 /// Typed row for maintenance log entries.
@@ -47,10 +47,17 @@ pub async fn list(pool: &PgPool, building_id: Uuid) -> AppResult<Vec<Maintenance
     .bind(building_id)
     .fetch_all(pool)
     .await?;
-    rows.iter().map(row_from_pg).collect::<Result<Vec<_>, _>>().map_err(Into::into)
+    rows.iter()
+        .map(row_from_pg)
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(Into::into)
 }
 
-pub async fn get(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<Option<MaintenanceLogRow>> {
+pub async fn get(
+    pool: &PgPool,
+    id: Uuid,
+    building_id: Uuid,
+) -> AppResult<Option<MaintenanceLogRow>> {
     let row = sqlx::query(
         r#"SELECT id, building_id, title, description, intervention_date, cost,
            vendor_name, contract_id, task_id,
@@ -61,7 +68,10 @@ pub async fn get(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<Option
     .bind(building_id)
     .fetch_optional(pool)
     .await?;
-    row.as_ref().map(row_from_pg).transpose().map_err(Into::into)
+    row.as_ref()
+        .map(row_from_pg)
+        .transpose()
+        .map_err(Into::into)
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -129,17 +139,18 @@ pub async fn update(
     .bind(contract_id)
     .fetch_optional(pool)
     .await?;
-    row.as_ref().map(row_from_pg).transpose().map_err(Into::into)
+    row.as_ref()
+        .map(row_from_pg)
+        .transpose()
+        .map_err(Into::into)
 }
 
 pub async fn delete(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()> {
-    sqlx::query(
-        "DELETE FROM maintenance_log WHERE id=$1 AND building_id=$2 AND source='manual'",
-    )
-    .bind(id)
-    .bind(building_id)
-    .execute(pool)
-    .await?;
+    sqlx::query("DELETE FROM maintenance_log WHERE id=$1 AND building_id=$2 AND source='manual'")
+        .bind(id)
+        .bind(building_id)
+        .execute(pool)
+        .await?;
     Ok(())
 }
 

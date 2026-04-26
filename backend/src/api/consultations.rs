@@ -89,7 +89,9 @@ pub async fn create(
     }
     for choice in &input.choices {
         if choice.trim().is_empty() {
-            return Err(AppError::Validation("Choice labels must not be empty".into()));
+            return Err(AppError::Validation(
+                "Choice labels must not be empty".into(),
+            ));
         }
     }
     if input.visible_to_roles.is_empty() {
