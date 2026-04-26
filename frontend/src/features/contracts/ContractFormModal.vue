@@ -294,14 +294,14 @@ async function saveContract() {
           :disabled="!form.auto_renewal"
         />
       </div>
-
-      <CFormFeedback
-        :status="feedback.status.value"
-        :message="feedback.message.value"
-      />
     </div>
 
     <template #footer>
+      <CFormFeedback
+        :status="feedback.status.value"
+        :message="feedback.message.value"
+        style="flex:1"
+      />
       <CBtn
         variant="ghost"
         @click="closeModal"
