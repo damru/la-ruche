@@ -1,45 +1,147 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useFormatters } from '@/composables/useFormatters'
-import CMockBanner from '@/components/atoms/CMockBanner.vue'
+import { usePageLoader, toErrorMessage } from '@/composables/usePageLoader'
+import { useFormFeedback, SUCCESS_AUTO_CLEAR_MS } from '@/composables/useFormFeedback'
+import { useConfirm } from '@/composables/useConfirm'
 import CBadge from '@/components/atoms/CBadge.vue'
-import CCard from '@/components/molecules/CCard.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
+import CCard from '@/components/molecules/CCard.vue'
+import CAlert from '@/components/atoms/CAlert.vue'
+import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
+import CModal from '@/components/molecules/CModal.vue'
+import CPageError from '@/components/molecules/CPageError.vue'
+import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
-import { mockConsultations, mockBuildingStats } from '@/mock/data'
+import { buildingApi, consultationsApi } from '@/api'
+import type { Consultation, ConsultationResults } from '@/types/domain'
 
 const { t } = useI18n()
-const { formatDate, formatRelative } = useFormatters()
+const { formatDate } = useFormatters()
+const { confirm } = useConfirm()
 
-const filter = ref<'all' | 'open' | 'closed'>('all')
+const buildingName = ref('')
+const allConsultations = ref<Consultation[]>([])
+const statusFilter = ref<'open' | 'closed'>('open')
+const resultsCache = ref<Record<string, ConsultationResults>>({})
+
+// Create modal
+const showCreateModal = ref(false)
+const createFeedback = useFormFeedback()
+const saving = ref(false)
+const defaultCreateForm = () => ({
+  title: '',
+  description: '',
+  choices: ['', ''],
+})
+const createForm = ref(defaultCreateForm())
+
+// Respond modal
+const respondingTo = ref<Consultation | null>(null)
+const respondFeedback = useFormFeedback()
+const responding = ref(false)
+const selectedChoice = ref('')
+const respondComment = ref('')
+
+async function loadData() {
+  const [buildingRes, listRes] = await Promise.all([
+    buildingApi.get(),
+    consultationsApi.list(),
+  ])
+  buildingName.value = buildingRes.data.name
+  const raw = listRes.data as { consultations?: Consultation[] }
+  allConsultations.value = raw.consultations ?? (listRes.data as unknown as Consultation[])
+
+  // Pre-fetch results for closed consultations
+  await Promise.all(
+    allConsultations.value
+      .filter(c => c.status === 'closed' && !resultsCache.value[c.id])
+      .map(async (c) => {
+        const res = await consultationsApi.results(c.id)
+        const data = res.data as { results?: ConsultationResults }
+        resultsCache.value[c.id] = data.results ?? (res.data as unknown as ConsultationResults)
+      }),
+  )
+}
+
+const { loading, error, reload } = usePageLoader(loadData, t('common.loadError'))
+onMounted(reload)
 
 const consultations = computed(() =>
-  filter.value === 'all' ? mockConsultations : mockConsultations.filter(c => c.status === filter.value)
+  allConsultations.value.filter(c =>
+    statusFilter.value === 'open' ? c.status === 'open' : c.status === 'closed',
+  ),
 )
+const openCount = computed(() => allConsultations.value.filter(c => c.status === 'open').length)
 
-// Faux résultats de vote pour les consultations
-const fakeVotes: Record<string, number> = {
-  'ch-007': 8,
-  'ch-008': 4,
+function openCreateModal() {
+  createForm.value = defaultCreateForm()
+  createFeedback.reset()
+  showCreateModal.value = true
 }
 
-const fakeVotesOpen: Record<string, number> = {
-  'ch-001': 5,
-  'ch-002': 3,
-  'ch-003': 2,
-  'ch-004': 6,
-  'ch-005': 7,
-  'ch-006': 3,
+function addChoice() { createForm.value.choices.push('') }
+function removeChoice(idx: number) {
+  if (createForm.value.choices.length > 2) createForm.value.choices.splice(idx, 1)
 }
 
-function totalVotes(choices: { id: string }[], fakeMap: Record<string, number>): number {
-  return choices.reduce((s, c) => s + (fakeMap[c.id] ?? 0), 0)
+async function saveConsultation() {
+  if (!createForm.value.title.trim() || createForm.value.choices.filter(c => c.trim()).length < 2) return
+  saving.value = true
+  createFeedback.reset()
+  try {
+    await consultationsApi.create({
+      title: createForm.value.title,
+      description: createForm.value.description || undefined,
+      visible_to_roles: ['manager', 'board_member', 'co_owner', 'tenant'],
+      choices: createForm.value.choices.filter(c => c.trim()),
+    })
+    createFeedback.setSuccess(t('common.saved'))
+    setTimeout(() => { showCreateModal.value = false; reload() }, SUCCESS_AUTO_CLEAR_MS)
+  } catch (err) {
+    createFeedback.setError(toErrorMessage(err, t('common.error')))
+  } finally {
+    saving.value = false
+  }
 }
 
-function pct(choiceId: string, total: number, fakeMap: Record<string, number>): number {
-  if (!total) return 0
-  return Math.round(((fakeMap[choiceId] ?? 0) / total) * 100)
+function openRespondModal(c: Consultation) {
+  respondingTo.value = c
+  respondFeedback.reset()
+  selectedChoice.value = ''
+  respondComment.value = ''
+}
+
+async function submitResponse() {
+  if (!respondingTo.value || !selectedChoice.value) return
+  responding.value = true
+  respondFeedback.reset()
+  try {
+    await consultationsApi.respond(respondingTo.value.id, selectedChoice.value, respondComment.value || undefined)
+    respondFeedback.setSuccess(t('common.saved'))
+    setTimeout(() => { respondingTo.value = null; reload() }, SUCCESS_AUTO_CLEAR_MS)
+  } catch (err) {
+    respondFeedback.setError(toErrorMessage(err, t('common.error')))
+  } finally {
+    responding.value = false
+  }
+}
+
+async function closeConsultation(c: Consultation) {
+  const ok = await confirm({
+    title: t('consultations.confirmCloseTitle'),
+    message: t('consultations.confirmCloseMessage'),
+    confirmLabel: t('consultations.close'),
+    variant: 'danger',
+  })
+  if (!ok) return
+  try {
+    await consultationsApi.close(c.id)
+    await reload()
+  } catch (err) {
+    alert(toErrorMessage(err, t('common.error')))
+  }
 }
 </script>
 
@@ -48,7 +150,7 @@ function pct(choiceId: string, total: number, fakeMap: Record<string, number>): 
     <CTopbar>
       <template #left>
         <div class="topbar-breadcrumb">
-          {{ mockBuildingStats.name }}
+          {{ buildingName }}
           <CIconChevronRight
             width="14"
             height="14"
@@ -60,6 +162,7 @@ function pct(choiceId: string, total: number, fakeMap: Record<string, number>): 
         <CBtn
           variant="primary"
           size="sm"
+          @click="openCreateModal"
         >
           <CIconPlus style="width:16px;height:16px" />
           <span class="btn-label">{{ t('consultations.create') }}</span>
@@ -68,150 +171,327 @@ function pct(choiceId: string, total: number, fakeMap: Record<string, number>): 
     </CTopbar>
 
     <div class="view-container">
-      <CMockBanner />
-
-      <div class="view-header">
-        <div>
-          <h1 class="display-md">
-            {{ t('consultations.title') }}
-          </h1>
-          <p
-            class="body-md"
-            style="color:var(--color-on-surface-variant)"
-          >
-            {{ t('consultations.openCount', mockConsultations.filter(c => c.status === 'open').length) }}
-          </p>
+      <CPageError
+        v-if="error"
+        :message="error"
+        @retry="reload"
+      />
+      <CPageLoader v-else-if="loading" />
+      <template v-else>
+        <div class="view-header">
+          <div>
+            <h1 class="display-md">
+              {{ t('consultations.title') }}
+            </h1>
+            <p
+              class="body-md"
+              style="color:var(--color-on-surface-variant)"
+            >
+              {{ t('consultations.openCount', openCount) }}
+            </p>
+          </div>
         </div>
-      </div>
 
-      <div class="tabs">
-        <button
-          v-for="opt in [
-            { key: 'all', label: t('common.allFem') },
-            { key: 'open', label: t('consultations.filters.open') },
-            { key: 'closed', label: t('consultations.filters.closed') },
-          ]"
-          :key="opt.key"
-          :class="['tab', { 'tab--active': filter === opt.key }]"
-          @click="filter = opt.key as typeof filter"
-        >
-          {{ opt.label }}
-        </button>
-      </div>
-
-      <CCard class="legal-note">
-        <p class="body-sm">
-          <strong>{{ t('consultations.informalNote') }}</strong>
-          {{ t('consultations.informalNoteDetail') }}
-        </p>
-      </CCard>
-
-      <div class="consultation-list">
-        <CCard
-          v-for="c in consultations"
-          :key="c.id"
-          class="consultation-card"
-        >
-          <div class="con-header">
-            <CBadge
-              :variant="c.status === 'open' ? 'open' : 'closed'"
-              dot
-            >
-              {{ t(`consultations.statuses.${c.status}`) }}
-            </CBadge>
-            <span class="con-date">
-              <span v-if="c.status === 'open'">{{ t('consultations.openedAt', { date: formatRelative(c.created_at) }) }}</span>
-              <span v-else>{{ t('consultations.closedAt', { date: formatDate(c.closed_at!) }) }}</span>
-            </span>
+        <!-- Disclaimer légal obligatoire -->
+        <CAlert variant="info">
+          <CIconInfo
+            width="16"
+            height="16"
+            style="flex-shrink:0"
+          />
+          <div>
+            <strong>{{ t('consultations.informalNote') }}</strong>
+            <br /><span class="body-xs">{{ t('consultations.informalNoteDetail') }}</span>
           </div>
+        </CAlert>
 
-          <h3 class="title-md">
-            {{ c.title }}
-          </h3>
-          <p
-            v-if="c.description"
-            class="body-sm"
-            style="color:var(--color-on-surface-variant)"
+        <div class="tabs">
+          <button
+            v-for="item in [
+              { key: 'open', label: t('consultations.filters.open') },
+              { key: 'closed', label: t('consultations.filters.closed') },
+            ]"
+            :key="item.key"
+            :class="['tab', { 'tab--active': statusFilter === item.key }]"
+            @click="statusFilter = item.key as typeof statusFilter"
           >
-            {{ c.description }}
-          </p>
+            {{ item.label }}
+          </button>
+        </div>
 
-          <!-- Résultats (consultation clôturée) -->
-          <div
-            v-if="c.status === 'closed'"
-            class="choices-results"
+        <div class="consultation-list">
+          <CCard
+            v-for="c in consultations"
+            :key="c.id"
           >
-            <div
-              v-for="choice in c.choices"
-              :key="choice.id"
-              class="choice-result"
-            >
-              <div class="choice-label">
-                <span>{{ choice.label }}</span>
-                <span class="choice-pct">{{ pct(choice.id, totalVotes(c.choices, fakeVotes), fakeVotes) }}%</span>
+            <div class="card-head">
+              <div class="card-title-row">
+                <span class="title-sm">{{ c.title }}</span>
+                <CBadge :variant="c.status === 'open' ? 'open' : 'closed'">
+                  {{ t(`consultations.statuses.${c.status}`) }}
+                </CBadge>
               </div>
-              <div class="choice-bar-bg">
-                <div
-                  class="choice-bar-fill"
-                  :style="{ width: pct(choice.id, totalVotes(c.choices, fakeVotes), fakeVotes) + '%' }"
-                ></div>
+              <div class="card-actions">
+                <CBtn
+                  v-if="c.status === 'open'"
+                  variant="primary"
+                  size="sm"
+                  @click="openRespondModal(c)"
+                >
+                  {{ t('consultations.respond') }}
+                </CBtn>
+                <CBtn
+                  v-if="c.status === 'open'"
+                  variant="ghost"
+                  size="sm"
+                  @click="closeConsultation(c)"
+                >
+                  {{ t('consultations.close') }}
+                </CBtn>
               </div>
             </div>
-            <p class="votes-total">
-              {{ t('consultations.responseCount', { count: totalVotes(c.choices, fakeVotes) }) }}
-            </p>
-          </div>
-
-          <!-- Choix (consultation ouverte) -->
-          <div
-            v-else
-            class="choices-open"
-          >
-            <div
-              v-for="choice in c.choices"
-              :key="choice.id"
-              class="choice-open"
+            <p
+              v-if="c.description"
+              class="body-sm desc"
             >
-              <div class="choice-label">
-                <span>{{ choice.label }}</span>
-                <span class="choice-pct dim">{{ fakeVotesOpen[choice.id] ?? 0 }} réponse(s)</span>
-              </div>
-              <div class="choice-bar-bg">
-                <div
-                  class="choice-bar-fill choice-bar-fill--open"
-                  :style="{ width: pct(choice.id, totalVotes(c.choices, fakeVotesOpen), fakeVotesOpen) + '%' }"
-                ></div>
-              </div>
-            </div>
-            <p class="votes-total">
-              {{ t('consultations.responseCountOpen', { count: totalVotes(c.choices, fakeVotesOpen) }) }}
+              {{ c.description }}
             </p>
+
+            <div
+              v-if="c.status === 'closed' && resultsCache[c.id]"
+              class="results"
+            >
+              <div
+                v-for="choice in resultsCache[c.id].choices"
+                :key="choice.id"
+                class="result-row"
+              >
+                <span class="result-label">{{ choice.label }}</span>
+                <div class="result-bar-bg">
+                  <div
+                    class="result-bar"
+                    :style="{ width: choice.pct + '%' }"
+                  ></div>
+                </div>
+                <span class="result-pct">{{ choice.pct }}%</span>
+              </div>
+              <p
+                class="body-xs"
+                style="color:var(--color-on-surface-variant);margin-top:4px"
+              >
+                {{ t('consultations.responseCount', { count: resultsCache[c.id].total }) }}
+              </p>
+            </div>
+
+            <div
+              v-else-if="c.status === 'open' && c.choices"
+              class="open-choices"
+            >
+              <span
+                v-for="ch in c.choices"
+                :key="ch.id"
+                class="choice-pill"
+              >{{ ch.label }}</span>
+            </div>
+
+            <p class="body-xs footer-meta">
+              {{ c.status === 'open'
+                ? t('consultations.openedAt', { date: formatDate(c.created_at) })
+                : t('consultations.closedAt', { date: formatDate(c.closed_at!) }) }}
+            </p>
+          </CCard>
+
+          <div
+            v-if="!consultations.length"
+            class="empty-state"
+          >
+            {{ t('common.noData') }}
           </div>
-        </CCard>
-      </div>
+        </div>
+      </template>
     </div>
+
+    <!-- Create modal -->
+    <CModal
+      :open="showCreateModal"
+      :title="t('consultations.create')"
+      size="lg"
+      @update:open="showCreateModal = $event"
+    >
+      <form
+        class="form-grid"
+        @submit.prevent="saveConsultation"
+      >
+        <div class="form-field">
+          <label class="form-label">{{ t('consultations.fields.title') }} *</label>
+          <input
+            v-model="createForm.title"
+            type="text"
+            class="form-input"
+            required
+          />
+        </div>
+        <div class="form-field">
+          <label class="form-label">{{ t('consultations.fields.description') }}</label>
+          <textarea
+            v-model="createForm.description"
+            class="form-input"
+            rows="2"
+          ></textarea>
+        </div>
+        <div class="form-field">
+          <label class="form-label">{{ t('consultations.fields.choices') }} *</label>
+          <div
+            v-for="(_, idx) in createForm.choices"
+            :key="idx"
+            class="choice-input-row"
+          >
+            <input
+              v-model="createForm.choices[idx]"
+              type="text"
+              class="form-input"
+              :placeholder="`Option ${idx + 1}`"
+            />
+            <button
+              v-if="createForm.choices.length > 2"
+              type="button"
+              class="icon-btn icon-btn--danger"
+              @click="removeChoice(idx)"
+            >
+              <CIconX
+                width="14"
+                height="14"
+              />
+            </button>
+          </div>
+          <CBtn
+            variant="ghost"
+            size="sm"
+            type="button"
+            @click="addChoice"
+          >
+            <CIconPlus
+              width="14"
+              height="14"
+            /> {{ t('consultations.fields.addChoice') }}
+          </CBtn>
+        </div>
+        <CFormFeedback
+          :status="createFeedback.status.value"
+          :message="createFeedback.message.value"
+        />
+      </form>
+      <template #footer>
+        <CBtn
+          variant="ghost"
+          @click="showCreateModal = false"
+        >
+          {{ t('common.cancel') }}
+        </CBtn>
+        <CBtn
+          variant="primary"
+          :loading="saving"
+          @click="saveConsultation"
+        >
+          {{ t('common.create') }}
+        </CBtn>
+      </template>
+    </CModal>
+
+    <!-- Respond modal -->
+    <CModal
+      :open="!!respondingTo"
+      :title="t('consultations.respondModal.title')"
+      size="md"
+      @update:open="v => !v && (respondingTo = null)"
+    >
+      <div
+        v-if="respondingTo"
+        class="form-grid"
+      >
+        <p
+          class="body-md"
+          style="font-weight:var(--fw-medium)"
+        >
+          {{ respondingTo.title }}
+        </p>
+        <div class="form-field">
+          <label class="form-label">{{ t('consultations.respondModal.chooseOption') }} *</label>
+          <div class="choice-options">
+            <label
+              v-for="choice in respondingTo.choices"
+              :key="choice.id"
+              class="checkbox-label"
+            >
+              <input
+                v-model="selectedChoice"
+                type="radio"
+                :value="choice.id"
+                name="choice"
+              />
+              {{ choice.label }}
+            </label>
+          </div>
+        </div>
+        <div class="form-field">
+          <label class="form-label">{{ t('consultations.respondModal.commentLabel') }}</label>
+          <textarea
+            v-model="respondComment"
+            class="form-input"
+            rows="2"
+          ></textarea>
+        </div>
+        <CFormFeedback
+          :status="respondFeedback.status.value"
+          :message="respondFeedback.message.value"
+        />
+      </div>
+      <template #footer>
+        <CBtn
+          variant="ghost"
+          @click="respondingTo = null"
+        >
+          {{ t('common.cancel') }}
+        </CBtn>
+        <CBtn
+          variant="primary"
+          :loading="responding"
+          :disabled="!selectedChoice"
+          @click="submitResponse"
+        >
+          {{ t('consultations.respondModal.submit') }}
+        </CBtn>
+      </template>
+    </CModal>
   </div>
 </template>
 
 <style scoped>
-.legal-note { border-left: 3px solid var(--color-warning); }
+.consultation-list { display: flex; flex-direction: column; gap: 12px; }
+.card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); margin-bottom: var(--space-3); }
+.card-title-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.card-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.desc { color: var(--color-on-surface-variant); margin-bottom: var(--space-3); }
+.footer-meta { color: var(--color-on-surface-variant); margin-top: var(--space-3); }
 
-.consultation-list { display: flex; flex-direction: column; gap: var(--space-4); }
-.consultation-card { display: flex; flex-direction: column; gap: var(--space-3); }
+.results { display: flex; flex-direction: column; gap: 8px; margin-bottom: var(--space-2); }
+.result-row { display: grid; grid-template-columns: 1fr 100px 40px; gap: 8px; align-items: center; }
+.result-label { font-size: var(--text-sm); }
+.result-bar-bg { background: var(--color-surface-container); border-radius: var(--radius-full); height: 8px; overflow: hidden; }
+.result-bar { background: var(--color-primary); height: 100%; border-radius: var(--radius-full); }
+.result-pct { font-size: var(--text-sm); font-weight: var(--fw-semibold); text-align: right; }
 
-.con-header { display: flex; align-items: center; gap: 10px; }
-.con-date { font-size: var(--text-xs); color: var(--color-on-surface-variant); }
+.open-choices { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: var(--space-2); }
+.choice-pill { padding: 3px 10px; background: var(--color-surface-container); border-radius: var(--radius-full); font-size: var(--text-xs); }
 
-.choices-results, .choices-open { display: flex; flex-direction: column; gap: 10px; }
-.choice-result, .choice-open { display: flex; flex-direction: column; gap: var(--space-1); }
+.choice-options { display: flex; flex-direction: column; gap: 6px; }
+.choice-input-row { display: flex; align-items: center; gap: 8px; }
+.choice-input-row .form-input { flex: 1; }
 
-.choice-label { display: flex; justify-content: space-between; font-size: var(--text-sm); }
-.choice-pct { font-weight: var(--fw-semibold); }
-.dim { color: var(--color-on-surface-variant); }
-
-.choice-bar-bg { height: 8px; background: var(--color-surface-container); border-radius: var(--radius-full); overflow: hidden; }
-.choice-bar-fill { height: 100%; background: var(--color-primary); border-radius: var(--radius-full); transition: width 0.4s ease; }
-.choice-bar-fill--open { background: var(--color-secondary); }
-
-.votes-total { font-size: var(--text-xs); color: var(--color-on-surface-variant); margin-top: var(--space-1); }
+.form-grid { display: flex; flex-direction: column; gap: var(--space-4); }
+.form-field { display: flex; flex-direction: column; gap: var(--space-2); }
+.form-label { font-size: var(--text-sm); font-weight: var(--fw-medium); color: var(--color-on-surface-variant); }
+.form-input { padding: var(--space-2) var(--space-3); border: 1px solid var(--color-outline); border-radius: var(--radius-md); font-size: var(--text-sm); background: var(--color-surface); color: var(--color-on-surface); }
+.form-input:focus { outline: none; border-color: var(--color-primary); }
+.empty-state { padding: var(--space-8); text-align: center; font-size: var(--text-md); color: var(--color-on-surface-variant); }
 </style>

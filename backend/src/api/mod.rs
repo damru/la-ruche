@@ -2,9 +2,11 @@ pub mod assemblies;
 pub mod auth;
 pub mod budget;
 pub mod building;
+pub mod consultations;
 pub mod contractor;
 pub mod contracts;
 pub mod documents;
+pub mod logbook;
 pub mod onboarding;
 mod stubs;
 pub mod tasks;
@@ -13,7 +15,7 @@ pub mod users;
 
 // Modules still implemented as stubs — re-exported from stubs.rs
 use std::sync::Arc;
-use stubs::{claims, consultations, logbook, reports};
+use stubs::{claims, reports};
 
 use axum::{
     Router,
@@ -206,6 +208,7 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
     // ── Public routes (vendor token, no JWT) ─────────────────────
     let public = Router::new()
         .route("/vendor/{token}", get(contractor::get_task))
+        .route("/vendor/{token}/upload-url", post(contractor::upload_url))
         .route("/vendor/{token}/submission", post(contractor::submit))
         // ── Onboarding first-run (no JWT) ─────────────────────────
         .route("/api/v1/onboarding/status", get(onboarding::status))

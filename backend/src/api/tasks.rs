@@ -18,7 +18,8 @@ pub async fn list(
     State(state): State<Arc<AppState>>,
 ) -> AppResult<Json<serde_json::Value>> {
     let rows = db::task::list(&state.pool, auth.building_id).await?;
-    json_value(rows)
+    let items: Vec<db::task::TaskListItem> = rows.into_iter().map(Into::into).collect();
+    json_value(items)
 }
 
 pub async fn get(
@@ -29,7 +30,7 @@ pub async fn get(
     let t = db::task::get(&state.pool, id, auth.building_id)
         .await?
         .ok_or(AppError::NotFound)?;
-    json_value(t)
+    json_value(db::task::TaskListItem::from(t))
 }
 
 pub async fn create(
@@ -38,8 +39,11 @@ pub async fn create(
     Json(input): Json<db::task::CreateTaskInput>,
 ) -> AppResult<(StatusCode, Json<serde_json::Value>)> {
     auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
+    if input.title.trim().is_empty() {
+        return Err(AppError::Validation("Title is required".into()));
+    }
     let t = db::task::create(&state.pool, auth.building_id, auth.user_id, input).await?;
-    Ok((StatusCode::CREATED, json_value(t)?))
+    Ok((StatusCode::CREATED, json_value(db::task::TaskListItem::from(t))?))
 }
 
 #[derive(Deserialize)]
@@ -54,6 +58,12 @@ pub async fn update(
     Json(input): Json<UpdateTaskInput>,
 ) -> AppResult<StatusCode> {
     auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
+    if !db::task::validate_status(&input.status) {
+        return Err(AppError::Validation(format!(
+            "Invalid status '{}'. Valid values: open, in_progress, awaiting_vendor, closed, cancelled",
+            input.status
+        )));
+    }
     db::task::update_status(&state.pool, id, auth.building_id, &input.status).await?;
     Ok(StatusCode::NO_CONTENT)
 }

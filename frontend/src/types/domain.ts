@@ -211,7 +211,9 @@ export interface Task {
   priority: TaskPriority
   contract_id?: string
   assigned_to?: string
-  vendor_token?: string
+  created_by?: string
+  /** True when a vendor token is active — the raw token UUID is never returned by list/get. */
+  has_vendor_token?: boolean
   token_expires_at?: string
   closed_at?: string
   created_at: string
@@ -369,6 +371,33 @@ export interface RegistryResponse {
     active: boolean
   }[]
   keys: RegistryKey[]
+}
+
+export interface ConsultationResults {
+  total: number
+  choices: {
+    id: string
+    label: string
+    votes: number
+    pct: number
+  }[]
+}
+
+/// Task visible to an external vendor (token-based, no auth).
+export interface VendorTask {
+  id: string
+  title: string
+  description?: string
+  status: string
+  token_expires_at?: string
+}
+
+/// Document metadata sent in a vendor submission.
+export interface VendorDocument {
+  key: string
+  original_name: string
+  mime_type: string
+  size_bytes: number
 }
 
 export interface UnitChargesLevy {

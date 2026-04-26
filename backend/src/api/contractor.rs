@@ -4,7 +4,7 @@ use axum::{
     extract::{Path, State},
     http::StatusCode,
 };
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use uuid::Uuid;
 
@@ -22,7 +22,7 @@ pub async fn get_task(
         .await?
         .ok_or(AppError::NotFound)?;
 
-    // Only expose information needed by the vendor
+    // Only expose information needed by the vendor — no sensitive internal fields
     Ok(Json(serde_json::json!({
         "id": task.id,
         "title": task.title,
@@ -32,10 +32,63 @@ pub async fn get_task(
     })))
 }
 
+#[derive(Serialize)]
+pub struct StagingUploadUrlResponse {
+    pub url: String,
+    pub key: String,
+}
+
+#[derive(Deserialize)]
+pub struct StagingUploadUrlInput {
+    pub extension: String,
+    pub content_type: String,
+}
+
+/// POST /vendor/:token/upload-url — obtain a presigned PUT URL for staging bucket
+pub async fn upload_url(
+    State(state): State<Arc<AppState>>,
+    Path(token): Path<Uuid>,
+    Json(input): Json<StagingUploadUrlInput>,
+) -> AppResult<Json<StagingUploadUrlResponse>> {
+    // Validate token before issuing a presigned URL
+    let _ = db::task::get_by_token(&state.pool, token)
+        .await?
+        .ok_or(AppError::NotFound)?;
+
+    if input.extension.trim().is_empty() || input.extension.len() > 10 {
+        return Err(AppError::Validation("Invalid file extension".into()));
+    }
+
+    let upload = state
+        .storage
+        .presigned_staging_upload_url(
+            &input.extension,
+            &input.content_type,
+            state.cfg.s3.presigned_ttl_secs,
+        )
+        .await?;
+
+    Ok(Json(StagingUploadUrlResponse {
+        url: upload.url,
+        key: upload.key,
+    }))
+}
+
+/// Metadata for one document being submitted.
+#[derive(Deserialize)]
+pub struct SubmissionDocumentMeta {
+    /// Key in the staging bucket (returned by upload-url endpoint).
+    pub key: String,
+    /// Original filename provided by the vendor.
+    pub original_name: String,
+    pub mime_type: String,
+    pub size_bytes: i64,
+}
+
 #[derive(Deserialize)]
 pub struct SubmissionInput {
     pub comment: Option<String>,
-    pub document_keys: Vec<String>, // keys in staging bucket
+    pub documents: Vec<SubmissionDocumentMeta>,
 }
 
 /// POST /vendor/:token/submission
@@ -48,37 +101,82 @@ pub async fn submit(
         .await?
         .ok_or(AppError::NotFound)?;
 
-    let submission_id = db::task::create_submission(&state.pool, task.id, input.comment).await?;
+    // Use a DB transaction so that partial failures don't leave inconsistent state
+    let mut tx = state.pool.begin().await?;
 
-    // Move each file from staging to the building's final bucket
-    for key in &input.document_keys {
-        let ext = key.rsplit('.').next().unwrap_or("bin");
+    // Create submission record
+    let submission_id = {
+        use sqlx::Row;
+        let row = sqlx::query(
+            "INSERT INTO vendor_submission (task_id, comment) VALUES ($1, $2) RETURNING id",
+        )
+        .bind(task.id)
+        .bind(&input.comment)
+        .fetch_one(&mut *tx)
+        .await?;
+        row.try_get::<Uuid, _>("id")?
+    };
+
+    // Move each file from staging to the building's final bucket and create document records
+    for doc_meta in &input.documents {
+        let ext = doc_meta
+            .key
+            .rsplit('.')
+            .next()
+            .unwrap_or("bin");
+
         let (bucket, final_key) = state
             .storage
-            .move_from_staging(key, task.building_id, ext)
+            .move_from_staging(&doc_meta.key, task.building_id, ext)
             .await?;
 
+        // Use task.created_by as uploaded_by (the manager who opened the task)
         let doc = db::document::create(
             &state.pool,
             task.building_id,
-            task.id, // uploaded_by = task id as proxy (no user)
-            key,
+            task.created_by,
+            &doc_meta.original_name,
             &final_key,
             &bucket,
-            "application/octet-stream",
-            0,
+            &doc_meta.mime_type,
+            doc_meta.size_bytes,
             &["manager".to_string(), "board_member".to_string()],
         )
         .await?;
 
-        db::task::attach_submission_document(&state.pool, submission_id, doc.id).await?;
+        sqlx::query(
+            "INSERT INTO vendor_submission_document (submission_id, document_id) VALUES ($1, $2)",
+        )
+        .bind(submission_id)
+        .bind(doc.id)
+        .execute(&mut *tx)
+        .await?;
     }
 
-    // Automatically close the task after submission
-    db::task::update_status(&state.pool, task.id, task.building_id, "closed").await?;
+    // Close the task
+    sqlx::query(
+        "UPDATE task SET status = 'closed'::task_status, closed_at = NOW(), updated_at = NOW()
+         WHERE id = $1 AND building_id = $2",
+    )
+    .bind(task.id)
+    .bind(task.building_id)
+    .execute(&mut *tx)
+    .await?;
 
-    // Automatically feed the maintenance log
-    db::maintenance_log::from_task(&state.pool, task.id, task.building_id, task.id).await?;
+    // Auto-feed the maintenance log (idempotent via unique index on task_id)
+    sqlx::query(
+        r#"INSERT INTO maintenance_log (building_id, created_by, title, task_id, intervention_date, source)
+           SELECT building_id, $3, title, id, CURRENT_DATE, 'automatic'::log_source
+           FROM task WHERE id = $1 AND building_id = $2
+           ON CONFLICT DO NOTHING"#,
+    )
+    .bind(task.id)
+    .bind(task.building_id)
+    .bind(task.created_by)
+    .execute(&mut *tx)
+    .await?;
+
+    tx.commit().await?;
 
     Ok(StatusCode::CREATED)
 }

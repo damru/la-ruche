@@ -1,15 +1,23 @@
 import { api } from './client'
+import axios from 'axios'
 import type {
   Meeting, Resolution, VoteResult,
   Budget, BudgetLine, LevyCall, WorksFund,
   VendorContract, ContractReminder,
   Task, Claim, MaintenanceEntry,
-  Report, Consultation,
+  Report, Consultation, ConsultationResults, VendorTask, VendorDocument,
   Document, UploadUrlResponse, DownloadUrlResponse,
   Building, Unit, User, AllocationKey, UnitShare,
   OnboardingStatus, BootstrapInput, BootstrapResponse,
   LoginResponse, BuildingStats, RegistryResponse, UnitChargesResponse,
 } from '@/types/domain'
+
+// Public axios instance — no JWT, no interceptors (vendor endpoints)
+const publicApi = axios.create({
+  baseURL: '/',
+  headers: { 'Content-Type': 'application/json' },
+  timeout: 10_000,
+})
 
 // ── Onboarding ────────────────────────────────────────────────────
 export const onboardingApi = {
@@ -220,12 +228,12 @@ export const tasksApi = {
     api.get<Task[]>('/tasks'),
   get: (id: string) =>
     api.get<Task>(`/tasks/${id}`),
-  create: (data: Partial<Task>) =>
+  create: (data: { title: string; description?: string; priority?: string; contract_id?: string; assigned_to?: string }) =>
     api.post<Task>('/tasks', data),
   update: (id: string, data: Partial<Task>) =>
     api.put<Task>(`/tasks/${id}`, data),
   generateToken: (id: string) =>
-    api.post<{ token: string; expires_at: string }>(`/tasks/${id}/vendor-token`),
+    api.post<{ token: string; expires_at: string; url: string }>(`/tasks/${id}/vendor-token`),
   revokeToken: (id: string) =>
     api.delete(`/tasks/${id}/vendor-token`),
 }
@@ -271,17 +279,37 @@ export const reportsApi = {
 // ── Consultations ─────────────────────────────────────────────────
 export const consultationsApi = {
   list: () =>
-    api.get<Consultation[]>('/consultations'),
+    api.get<{ consultations: Consultation[] }>('/consultations'),
   get: (id: string) =>
-    api.get<Consultation>(`/consultations/${id}`),
-  create: (data: Partial<Consultation>) =>
+    api.get<{ consultation: Consultation }>(`/consultations/${id}`),
+  create: (data: { title: string; description?: string; visible_to_roles: string[]; choices: string[]; closed_at?: string }) =>
     api.post<Consultation>('/consultations', data),
-  update: (id: string, data: Partial<Consultation>) =>
-    api.put<Consultation>(`/consultations/${id}`, data),
+  update: (id: string) =>
+    api.put(`/consultations/${id}`),
   respond: (id: string, choice_id: string, comment?: string) =>
     api.post(`/consultations/${id}/respond`, { choice_id, comment }),
   results: (id: string) =>
-    api.get(`/consultations/${id}/results`),
+    api.get<{ results: ConsultationResults }>(`/consultations/${id}/results`),
   close: (id: string) =>
     api.post(`/consultations/${id}/close`),
+}
+
+// ── Contractor (public, tokenized — no JWT) ───────────────────────
+export const vendorApi = {
+  getTask: (token: string) =>
+    publicApi.get<VendorTask>(`/vendor/${token}`),
+  getUploadUrl: (token: string, extension: string, content_type: string) =>
+    publicApi.post<{ url: string; key: string }>(`/vendor/${token}/upload-url`, { extension, content_type }),
+  submit: (token: string, data: { comment?: string; documents: VendorDocument[] }) =>
+    publicApi.post(`/vendor/${token}/submission`, data),
+  uploadToStaging: async (file: File, signedUrl: string): Promise<void> => {
+    const response = await fetch(signedUrl, {
+      method: 'PUT',
+      body: file,
+      headers: { 'Content-Type': file.type },
+    })
+    if (!response.ok) {
+      throw new Error(`Staging upload failed (${response.status})`)
+    }
+  },
 }

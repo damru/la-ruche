@@ -511,6 +511,7 @@
     "title": "Tâches",
     "create": "Nouvelle tâche",
     "newTask": "Nouvelle tâche",
+    "editTask": "Modifier la tâche",
     "activeSummary": "{count} tâche(s) active(s)",
     "activeCount": "{count} tâche active | {count} tâches actives",
     "createdRelative": "Créée {relative}",
@@ -518,6 +519,15 @@
     "closedAt": "Clôturée le {date}",
     "emptyState": "Aucune tâche dans cette catégorie.",
     "empty": "Aucune tâche dans cette catégorie.",
+    "titleLabel": "Titre",
+    "descriptionLabel": "Description",
+    "priorityLabel": "Priorité",
+    "statusLabel": "Statut",
+    "updateStatus": "Changer le statut",
+    "vendorToken": "Lien prestataire",
+    "vendorTokenActive": "Lien actif — expire le {date}",
+    "vendorTokenUrl": "URL du lien",
+    "vendorTokenCopied": "URL copiée !",
     "statuses": {
       "open": "Ouverte",
       "in_progress": "En cours",
@@ -542,7 +552,9 @@
     },
     "generateToken": "Générer un lien prestataire",
     "tokenExpires": "Expire le {date}",
-    "revokeToken": "Révoquer le lien"
+    "revokeToken": "Révoquer le lien",
+    "confirmRevokeToken": "Révoquer ce lien empêchera le prestataire d'accéder à la tâche. Confirmer ?",
+    "confirmStatusChange": "Confirmer le changement de statut vers \"{status}\" ?"
   },
   "documents": {
     "title": "Documents",
@@ -595,8 +607,31 @@
     "myResponse": "Ma réponse",
     "results": "Résultats",
     "close": "Clôturer la consultation",
+    "confirmCloseTitle": "Clôturer la consultation",
+    "confirmCloseMessage": "La consultation sera clôturée et les réponses ne seront plus acceptées.",
     "informalNote": "Cette consultation est informelle et n'a aucune valeur décisionnelle légale.",
-    "informalNoteDetail": "Les consultations écrites permettent de recueillir l'avis des copropriétaires et des locataires sans valeur de vote."
+    "informalNoteDetail": "Les consultations écrites permettent de recueillir l'avis des copropriétaires et des locataires sans valeur de vote.",
+    "fields": {
+      "title": "Titre",
+      "description": "Description",
+      "visibleToRoles": "Accessible aux rôles",
+      "choices": "Options de réponse",
+      "addChoice": "Ajouter une option",
+      "removeChoice": "Supprimer l'option",
+      "minChoices": "Minimum 2 options requises"
+    },
+    "roles": {
+      "manager": "Syndic",
+      "board_member": "Conseil syndical",
+      "co_owner": "Copropriétaire",
+      "tenant": "Locataire"
+    },
+    "respondModal": {
+      "title": "Répondre à la consultation",
+      "chooseOption": "Choisissez une option",
+      "commentLabel": "Commentaire (optionnel)",
+      "submit": "Envoyer ma réponse"
+    }
   },
   "reports": {
     "title": "Signalements",
@@ -618,6 +653,11 @@
     "title": "Carnet d'entretien",
     "create": "Ajouter une entrée",
     "addEntry": "Ajouter une entrée",
+    "editEntry": "Modifier l'entrée",
+    "deleteEntry": "Supprimer l'entrée",
+    "confirmDeleteTitle": "Supprimer l'entrée",
+    "confirmDeleteMessage": "L'entrée « {title} » sera supprimée définitivement.",
+    "onlyManualDelete": "Seules les entrées manuelles peuvent être supprimées.",
     "interventionTotal": "{count} intervention — coût total : {amount} | {count} interventions — coût total : {amount}",
     "summary": "{count} intervention(s) — coût total : {cost}",
     "searchPlaceholder": "Rechercher une intervention…",
@@ -628,6 +668,14 @@
     "sources": {
       "manual": "Saisie manuelle",
       "automatic": "Généré automatiquement"
+    },
+    "fields": {
+      "title": "Titre",
+      "description": "Description",
+      "interventionDate": "Date d'intervention",
+      "cost": "Coût (€)",
+      "vendorName": "Prestataire",
+      "contractId": "Contrat associé"
     }
   },
   "claims": {
@@ -650,10 +698,18 @@
   "contractor": {
     "title": "Dépôt prestataire",
     "subtitle": "Déposez vos documents pour clôturer la tâche",
+    "expiresAt": "Lien valide jusqu'au {date}",
     "comment": "Commentaire",
+    "commentPlaceholder": "Ajoutez un commentaire pour le syndic (optionnel)",
+    "selectFiles": "Sélectionner des fichiers",
+    "dropzone": "Glissez vos fichiers ici ou cliquez pour parcourir",
+    "filesSelected": "{count} fichier sélectionné | {count} fichiers sélectionnés",
     "submit": "Valider le dépôt",
-    "success": "Dépôt enregistré avec succès",
-    "expired": "Ce lien a expiré ou est invalide"
+    "submitting": "Envoi en cours…",
+    "success": "Dépôt enregistré avec succès. La tâche a été clôturée.",
+    "expired": "Ce lien a expiré ou est invalide.",
+    "noFiles": "Veuillez sélectionner au moins un fichier.",
+    "uploadError": "Erreur lors de l'envoi d'un fichier."
   },
   "residents": {
     "title": "Résidents & Lots",
