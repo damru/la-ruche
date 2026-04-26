@@ -4,10 +4,22 @@ use sqlx::{PgPool, Row};
 use uuid::Uuid;
 
 pub async fn list(pool: &PgPool, building_id: Uuid) -> AppResult<Vec<serde_json::Value>> {
+    // Include choices in list so respond modal can display them without a separate fetch.
     let rows = sqlx::query(
-        r#"SELECT id, title, description, status::text AS status,
-           visible_to_roles::text[] AS visible_to_roles, closed_at, created_at
-           FROM consultation WHERE building_id = $1 ORDER BY created_at DESC"#,
+        r#"SELECT c.id, c.title, c.description, c.status::text AS status,
+           c.visible_to_roles::text[] AS visible_to_roles, c.closed_at, c.created_at,
+           COALESCE(
+               JSON_AGG(
+                   JSON_BUILD_OBJECT('id', cc.id, 'label', cc.label, 'order_index', cc.order_index)
+                   ORDER BY cc.order_index
+               ) FILTER (WHERE cc.id IS NOT NULL),
+               '[]'::json
+           ) AS choices
+           FROM consultation c
+           LEFT JOIN consultation_choice cc ON cc.consultation_id = c.id
+           WHERE c.building_id = $1
+           GROUP BY c.id
+           ORDER BY c.created_at DESC"#,
     )
     .bind(building_id)
     .fetch_all(pool)
@@ -23,6 +35,7 @@ pub async fn list(pool: &PgPool, building_id: Uuid) -> AppResult<Vec<serde_json:
                 "visible_to_roles": r.try_get::<Vec<String>, _>("visible_to_roles")?,
                 "closed_at": r.try_get::<Option<DateTime<Utc>>, _>("closed_at")?,
                 "created_at": r.try_get::<DateTime<Utc>, _>("created_at")?,
+                "choices": r.try_get::<serde_json::Value, _>("choices")?,
             }))
         })
         .collect::<Result<Vec<_>, _>>()

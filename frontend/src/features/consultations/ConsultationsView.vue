@@ -316,7 +316,7 @@ async function confirmClose() {
             v-if="!consultations.length"
             class="empty-state"
           >
-            {{ t('common.noData') }}
+            {{ statusFilter === 'open' ? t('consultations.noOpen') : t('consultations.noClosed') }}
           </div>
         </div>
 
@@ -526,18 +526,17 @@ async function confirmClose() {
 .card-actions { display: flex; gap: 6px; margin-top: var(--space-3); }
 
 .results { display: flex; flex-direction: column; gap: 8px; margin-bottom: var(--space-2); }
-.result-row { display: grid; grid-template-columns: 1fr 100px 40px; gap: 8px; align-items: center; }
-.result-label { font-size: var(--text-sm); }
-.result-bar-bg { background: var(--color-surface-container); border-radius: var(--radius-full); height: 8px; overflow: hidden; }
+/* Label min space, bar max space, pct fixed */
+.result-row { display: grid; grid-template-columns: auto 1fr 36px; gap: 8px; align-items: center; min-width: 0; }
+.result-label { font-size: var(--text-xs); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; }
+.result-bar-bg { background: var(--color-surface-container); border-radius: var(--radius-full); height: 10px; overflow: hidden; }
 .result-bar { background: var(--color-primary); height: 100%; border-radius: var(--radius-full); }
-.result-pct { font-size: var(--text-sm); font-weight: var(--fw-semibold); text-align: right; }
+.result-pct { font-size: var(--text-xs); font-weight: var(--fw-semibold); text-align: right; }
 
 .open-choices { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: var(--space-2); }
 .choice-pill { padding: 3px 10px; background: var(--color-surface-container); border-radius: var(--radius-full); font-size: var(--text-xs); }
 
 .choice-options { display: flex; flex-direction: column; gap: 8px; }
-/* Ensure radio labels are full-width in column layout (needed on mobile) */
-:deep(.choice-options .checkbox-label) { display: flex; width: 100%; }
 .choice-input-row { display: flex; align-items: center; gap: 8px; }
 .choice-input-row .form-input { flex: 1; }
 

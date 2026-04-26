@@ -612,6 +612,8 @@
     "myResponse": "Ma réponse",
     "results": "Résultats",
     "close": "Clôturer",
+    "noOpen": "Aucune consultation en cours",
+    "noClosed": "Aucune consultation clôturée",
     "closeAction": "Clôturer la consultation",
     "confirmCloseTitle": "Clôturer la consultation",
     "confirmCloseMessage": "La consultation sera clôturée et les réponses ne seront plus acceptées.",
