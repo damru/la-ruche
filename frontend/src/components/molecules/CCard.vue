@@ -31,6 +31,7 @@ withDefaults(defineProps<{
   background: var(--color-surface-container-lowest);
   border-radius: var(--radius-lg);
   overflow-x: auto;
+  min-width: 0;
 }
 
 .c-card--pad-none { padding: 0; }
