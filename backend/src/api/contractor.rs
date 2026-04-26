@@ -35,21 +35,15 @@ pub async fn get_task(
     .await?
     .ok_or(AppError::NotFound)?;
 
+    let address_line1: String = row.try_get("address_line1")?;
     let address_line2: Option<String> = row.try_get("address_line2").ok().flatten();
+    let postal_code: String = row.try_get("postal_code")?;
+    let city: String = row.try_get("city")?;
     let building_address = match address_line2 {
-        Some(line2) if !line2.is_empty() => format!(
-            "{}, {}, {} {}",
-            row.try_get::<String, _>("address_line1")?,
-            line2,
-            row.try_get::<String, _>("postal_code")?,
-            row.try_get::<String, _>("city")?
-        ),
-        _ => format!(
-            "{}, {} {}",
-            row.try_get::<String, _>("address_line1")?,
-            row.try_get::<String, _>("postal_code")?,
-            row.try_get::<String, _>("city")?
-        ),
+        Some(line2) if !line2.is_empty() => {
+            format!("{address_line1}, {line2}, {postal_code} {city}")
+        }
+        _ => format!("{address_line1}, {postal_code} {city}"),
     };
 
     Ok(Json(serde_json::json!({
