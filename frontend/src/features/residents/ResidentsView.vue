@@ -604,4 +604,12 @@ function formatLocation(unit: { block?: string | null; staircase?: string | null
   grid-template-columns: 1fr 1fr;
   gap: var(--space-3);
 }
+
+@media (max-width: 640px) {
+  .action-btns .icon-btn {
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0;
+  }
+}
 </style>
