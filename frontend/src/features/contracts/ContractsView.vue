@@ -217,12 +217,12 @@ function contractTypeIcon(type: ContractType) {
 function contractTypeTone(type: ContractType) {
   const tones = {
     maintenance: 'tone--warn',
-    insurance: 'tone--accent',
-    service: 'tone--valid',
+    insurance: 'tone--err',
+    service: 'tone--default',
     energy: 'tone--accent',
     water: 'tone--default',
     cleaning: 'tone--valid',
-    green_spaces: 'tone--warn',
+    green_spaces: 'tone--valid',
     other: 'tone--default',
   }
 
