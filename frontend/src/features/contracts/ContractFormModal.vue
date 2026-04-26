@@ -8,7 +8,7 @@ import CSelect from '@/components/atoms/CSelect.vue'
 import CModal from '@/components/molecules/CModal.vue'
 import { contractsApi } from '@/api'
 import { toErrorMessage } from '@/composables/usePageLoader'
-import { useFormFeedback } from '@/composables/useFormFeedback'
+import { useFormFeedback, SUCCESS_AUTO_CLEAR_MS } from '@/composables/useFormFeedback'
 import type { ContractType, PaymentFrequency, VendorContract } from '@/types/domain'
 
 interface ContractFormState {
@@ -193,7 +193,7 @@ async function saveContract() {
 
     feedback.setSuccess(t('common.saved'))
     emit('saved')
-    closeModal()
+    setTimeout(() => closeModal(), SUCCESS_AUTO_CLEAR_MS)
   } catch (error: unknown) {
     feedback.setError(toErrorMessage(error, t('contracts.form.saveError')))
   } finally {
@@ -294,14 +294,14 @@ async function saveContract() {
           :disabled="!form.auto_renewal"
         />
       </div>
-
-      <CFormFeedback
-        :status="feedback.status.value"
-        :message="feedback.message.value"
-      />
     </div>
 
     <template #footer>
+      <CFormFeedback
+        :status="feedback.status.value"
+        :message="feedback.message.value"
+        style="flex:1"
+      />
       <CBtn
         variant="ghost"
         @click="closeModal"

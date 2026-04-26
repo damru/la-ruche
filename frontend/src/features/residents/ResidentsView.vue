@@ -298,7 +298,7 @@ function formatLocation(unit: { block?: string | null; staircase?: string | null
                   <th>{{ t('units.shares') }}</th>
                   <th>{{ t('residents.currentOwner') }}</th>
                   <th>{{ t('common.status') }}</th>
-                  <th></th>
+                  <th class="col-shrink"></th>
                 </tr>
               </thead>
               <tbody>
@@ -327,7 +327,7 @@ function formatLocation(unit: { block?: string | null; staircase?: string | null
                       {{ unit.active ? t('common.active') : t('common.inactive') }}
                     </CBadge>
                   </td>
-                  <td>
+                  <td class="col-shrink">
                     <div class="action-btns">
                       <button
                         class="icon-btn icon-btn--subtle"
@@ -603,5 +603,13 @@ function formatLocation(unit: { block?: string | null; staircase?: string | null
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--space-3);
+}
+
+@media (max-width: 640px) {
+  .action-btns .icon-btn {
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0;
+  }
 }
 </style>
