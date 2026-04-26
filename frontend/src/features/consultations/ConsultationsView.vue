@@ -71,19 +71,8 @@ function barWidth(c: Consultation, pct: number): number {
   return hasVoted(c) || c.status === 'closed' ? pct : 0
 }
 
-// ── Unlock-vote modal ──────────────────────────────────────────────
-const unlockingVote = ref<Consultation | null>(null)
-const unlockFeedback = useFormFeedback()
-
-function openUnlockModal(c: Consultation) {
-  unlockingVote.value = c
-  unlockFeedback.reset()
-}
-
-function confirmUnlock() {
-  if (!unlockingVote.value) return
-  getInline(unlockingVote.value).unlocked = true
-  unlockingVote.value = null
+function unlockVote(c: Consultation) {
+  getInline(c).unlocked = true
 }
 
 // ── Close modal ────────────────────────────────────────────────────
@@ -375,7 +364,7 @@ async function confirmClose() {
               <CBtn
                 variant="ghost"
                 size="sm"
-                @click="openUnlockModal(c)"
+                @click="unlockVote(c)"
               >
                 {{ t('consultations.modifyVote') }}
               </CBtn>
@@ -535,36 +524,6 @@ async function confirmClose() {
           @click="confirmClose"
         >
           {{ t('consultations.closeAction') }}
-        </CBtn>
-      </template>
-    </CModal>
-
-    <!-- Modify vote confirmation modal -->
-    <CModal
-      :open="!!unlockingVote"
-      :title="t('consultations.modifyVoteTitle')"
-      size="sm"
-      @update:open="v => !v && (unlockingVote = null)"
-    >
-      <p class="body-sm">
-        {{ t('consultations.modifyVoteConfirm') }}
-      </p>
-      <template #footer>
-        <CFormFeedback
-          :status="unlockFeedback.status.value"
-          :message="unlockFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          @click="unlockingVote = null"
-        >
-          {{ t('common.cancel') }}
-        </CBtn>
-        <CBtn
-          variant="primary"
-          @click="confirmUnlock"
-        >
-          {{ t('consultations.modifyVoteAction') }}
         </CBtn>
       </template>
     </CModal>
