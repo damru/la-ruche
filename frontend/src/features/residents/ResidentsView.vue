@@ -294,11 +294,15 @@ function formatLocation(unit: { block?: string | null; staircase?: string | null
                 <tr>
                   <th>{{ t('common.lot') }}</th>
                   <th>{{ t('common.type') }}</th>
-                  <th>{{ t('residents.location') }}</th>
-                  <th>{{ t('units.shares') }}</th>
+                  <th class="col-hide-mobile">
+                    {{ t('residents.location') }}
+                  </th>
+                  <th class="col-hide-mobile">
+                    {{ t('units.shares') }}
+                  </th>
                   <th>{{ t('residents.currentOwner') }}</th>
                   <th>{{ t('common.status') }}</th>
-                  <th></th>
+                  <th class="col-shrink"></th>
                 </tr>
               </thead>
               <tbody>
@@ -308,10 +312,10 @@ function formatLocation(unit: { block?: string | null; staircase?: string | null
                 >
                   <td><strong class="data-md">{{ unit.unit_number }}</strong></td>
                   <td>{{ unitTypeIcon(unit.unit_type) }} {{ unitTypeLabel(unit.unit_type) }}</td>
-                  <td class="dim">
+                  <td class="dim col-hide-mobile">
                     {{ formatLocation(unit) }}
                   </td>
-                  <td class="dim cell-numeric">
+                  <td class="dim cell-numeric col-hide-mobile">
                     {{ shareMap.get(unit.id) ?? '—' }}
                   </td>
                   <td>
@@ -327,7 +331,7 @@ function formatLocation(unit: { block?: string | null; staircase?: string | null
                       {{ unit.active ? t('common.active') : t('common.inactive') }}
                     </CBadge>
                   </td>
-                  <td>
+                  <td class="col-shrink">
                     <div class="action-btns">
                       <button
                         class="icon-btn icon-btn--subtle"
@@ -603,5 +607,11 @@ function formatLocation(unit: { block?: string | null; staircase?: string | null
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--space-3);
+}
+
+@media (max-width: 640px) {
+  .col-hide-mobile {
+    display: none;
+  }
 }
 </style>
