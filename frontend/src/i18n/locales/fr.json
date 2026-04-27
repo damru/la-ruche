@@ -957,12 +957,22 @@
     "phonePlaceholder": "06 00 00 00 00",
     "deleteTitle": "Supprimer le prestataire",
     "deleteConfirm": "Supprimer définitivement « {name} » ? Cette action est irréversible.",
-    "domains": "Domaines",
     "notes": "Notes",
     "notesPlaceholder": "Informations utiles, contacts alternatifs, observations…",
     "selectDomains": "Sélectionner un ou plusieurs domaines",
     "assignedTasks": "{count} tâche(s) assignée(s)",
     "noAssignedTasks": "Aucune tâche assignée à ce prestataire",
-    "noDomain": "Domaine non renseigné"
+    "noDomain": "Domaine non renseigné",
+    "domainsLabel": "Domaines",
+    "domains": {
+      "maintenance": "Maintenance",
+      "insurance": "Assurance",
+      "service": "Prestation",
+      "energy": "Énergie",
+      "water": "Eau",
+      "cleaning": "Nettoyage",
+      "green_spaces": "Espaces verts",
+      "other": "Autre"
+    }
   }
 }

@@ -64,9 +64,8 @@ function populateSuggestions(query: string) {
 }
 
 function onContractorInput() {
-  if (!contractorSearch.value.trim()) {
-    selectedContractor.value = null
-  }
+  // Any manual text edit deselects the current contractor
+  selectedContractor.value = null
   populateSuggestions(contractorSearch.value)
 }
 

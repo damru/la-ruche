@@ -405,7 +405,7 @@ async function confirmDelete() {
         </div>
         <!-- Domains: multi-select checkboxes, sorted alphabetically -->
         <div class="form-field form-field--full">
-          <label class="form-label">{{ t('contractors.domains') }}</label>
+          <label class="form-label">{{ t('contractors.domainsLabel') }}</label>
           <div class="domains-checkboxes">
             <label
               v-for="d in DOMAINS"
