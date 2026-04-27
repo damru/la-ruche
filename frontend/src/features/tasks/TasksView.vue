@@ -241,7 +241,7 @@ async function updateTaskStatus(taskId: string, status: string) {
 }
 
 async function takeCharge(task: Task) {
-  await updateTaskStatus(task.id, 'in_progress')
+  openTakeChargeModal(task)
 }
 
 async function closeTaskManually(task: Task) {
@@ -283,6 +283,56 @@ async function confirmRevoke() {
     revokeFeedback.setError(toErrorMessage(err, t('common.error')))
   } finally {
     revoking.value = false
+  }
+}
+
+// ── Take charge modal ─────────────────────────────────────────────
+const takingChargeTask = ref<Task | null>(null)
+const takeChargeFeedback = useFormFeedback()
+const takingCharge = ref(false)
+
+function openTakeChargeModal(task: Task) {
+  takingChargeTask.value = task
+  takeChargeFeedback.reset()
+}
+
+async function confirmTakeCharge() {
+  if (!takingChargeTask.value) return
+  takingCharge.value = true
+  takeChargeFeedback.reset()
+  try {
+    await tasksApi.update(takingChargeTask.value.id, { status: 'in_progress' })
+    takeChargeFeedback.setSuccess(t('common.saved'))
+    setTimeout(() => { takingChargeTask.value = null; reload() }, SUCCESS_AUTO_CLEAR_MS)
+  } catch (err) {
+    takeChargeFeedback.setError(toErrorMessage(err, t('common.error')))
+  } finally {
+    takingCharge.value = false
+  }
+}
+
+// ── Reopen task modal ─────────────────────────────────────────────
+const reopeningTask = ref<Task | null>(null)
+const reopenFeedback = useFormFeedback()
+const reopening = ref(false)
+
+function openReopenModal(task: Task) {
+  reopeningTask.value = task
+  reopenFeedback.reset()
+}
+
+async function confirmReopen() {
+  if (!reopeningTask.value) return
+  reopening.value = true
+  reopenFeedback.reset()
+  try {
+    await tasksApi.update(reopeningTask.value.id, { status: 'open' })
+    reopenFeedback.setSuccess(t('common.saved'))
+    setTimeout(() => { reopeningTask.value = null; reload() }, SUCCESS_AUTO_CLEAR_MS)
+  } catch (err) {
+    reopenFeedback.setError(toErrorMessage(err, t('common.error')))
+  } finally {
+    reopening.value = false
   }
 }
 
@@ -467,6 +517,19 @@ function copyToClipboard(text: string) {
                       @click="closeTaskManually(task)"
                     >
                       <CIconCheckCircle
+                        width="15"
+                        height="15"
+                      />
+                    </button>
+                    <!-- Reopen: closed → open -->
+                    <button
+                      v-if="task.status === 'closed'"
+                      class="icon-btn"
+                      :title="t('tasks.reopenTask')"
+                      :disabled="updatingStatus === task.id"
+                      @click="openReopenModal(task)"
+                    >
+                      <CIconRefresh
                         width="15"
                         height="15"
                       />
@@ -709,6 +772,68 @@ function copyToClipboard(text: string) {
           @click="confirmRevoke"
         >
           {{ t('tasks.revokeToken') }}
+        </CBtn>
+      </template>
+    </CModal>
+
+    <!-- Take charge modal -->
+    <CModal
+      :open="!!takingChargeTask"
+      :title="t('tasks.confirmTakeChargeTitle')"
+      size="sm"
+      @update:open="v => !v && (takingChargeTask = null)"
+    >
+      <p class="body-sm">
+        {{ t('tasks.confirmTakeChargeMessage', { title: takingChargeTask?.title ?? '' }) }}
+      </p>
+      <template #footer>
+        <CFormFeedback
+          :status="takeChargeFeedback.status.value"
+          :message="takeChargeFeedback.message.value"
+        />
+        <CBtn
+          variant="ghost"
+          @click="takingChargeTask = null"
+        >
+          {{ t('common.cancel') }}
+        </CBtn>
+        <CBtn
+          variant="primary"
+          :loading="takingCharge"
+          @click="confirmTakeCharge"
+        >
+          {{ t('tasks.takeCharge') }}
+        </CBtn>
+      </template>
+    </CModal>
+
+    <!-- Reopen task modal -->
+    <CModal
+      :open="!!reopeningTask"
+      :title="t('tasks.confirmReopenTitle')"
+      size="sm"
+      @update:open="v => !v && (reopeningTask = null)"
+    >
+      <p class="body-sm">
+        {{ t('tasks.confirmReopenMessage', { title: reopeningTask?.title ?? '' }) }}
+      </p>
+      <template #footer>
+        <CFormFeedback
+          :status="reopenFeedback.status.value"
+          :message="reopenFeedback.message.value"
+        />
+        <CBtn
+          variant="ghost"
+          @click="reopeningTask = null"
+        >
+          {{ t('common.cancel') }}
+        </CBtn>
+        <CBtn
+          variant="primary"
+          :loading="reopening"
+          @click="confirmReopen"
+        >
+          {{ t('tasks.reopenTask') }}
         </CBtn>
       </template>
     </CModal>

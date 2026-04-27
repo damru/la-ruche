@@ -570,7 +570,12 @@
     "takeCharge": "Prendre en charge",
     "closeTask": "Clore la tâche",
     "confirmCloseTitle": "Clore la tâche",
-    "confirmCloseMessage": "La tâche « {title} » sera marquée comme close. Cette action peut être modifiée ultérieurement."
+    "confirmCloseMessage": "La tâche « {title} » sera marquée comme close. Cette action peut être modifiée ultérieurement.",
+    "confirmTakeChargeTitle": "Prendre en charge la tâche",
+    "confirmTakeChargeMessage": "Vous allez prendre en charge la tâche « {title} ». Son statut passera à « En cours ».",
+    "reopenTask": "Ré-ouvrir la tâche",
+    "confirmReopenTitle": "Ré-ouvrir la tâche",
+    "confirmReopenMessage": "La tâche « {title} » sera remise au statut « Ouverte »."
   },
   "documents": {
     "title": "Documents",

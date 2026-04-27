@@ -326,8 +326,14 @@ pub async fn update_fields(
 
 /// Returns 404 if the task doesn't exist.
 pub async fn revoke_token(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()> {
+    // Also reset status to 'open' when the task was awaiting a vendor, so the
+    // manager can decide to take a different path (self-handle or re-delegate).
     let result = sqlx::query(
-        "UPDATE task SET vendor_token = NULL, token_expires_at = NULL, updated_at = NOW()
+        "UPDATE task
+         SET vendor_token = NULL,
+             token_expires_at = NULL,
+             status = CASE WHEN status = 'awaiting_vendor' THEN 'open'::task_status ELSE status END,
+             updated_at = NOW()
          WHERE id = $1 AND building_id = $2",
     )
     .bind(id)
