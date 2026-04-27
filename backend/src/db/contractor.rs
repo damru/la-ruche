@@ -84,6 +84,8 @@ pub struct CreateContractorInput {
     pub email: Option<String>,
     pub phone: Option<String>,
     /// Professional domains (multi-value array).
+    /// `#[serde(default)]` lets clients omit the field entirely (treated as []);
+    /// the DB column is NOT NULL DEFAULT '{}' to enforce consistency at the schema level.
     #[serde(default)]
     pub domains: Vec<String>,
     pub notes: Option<String>,

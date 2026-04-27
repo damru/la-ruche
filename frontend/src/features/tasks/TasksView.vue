@@ -43,6 +43,11 @@ const contractorSuggestions = ref<Contractor[]>([])
 const showSuggestions = ref(false)
 const selectedContractor = ref<Contractor | null>(null)
 
+function contractorDomainLabel(c: Contractor): string {
+  if (!c.domains.length) return ''
+  return c.domains.map(d => t(`contractors.domains.${d}`, d)).join(', ')
+}
+
 function onContractorInput() {
   const q = contractorSearch.value.trim().toLowerCase()
   if (!q) {
@@ -665,7 +670,7 @@ function copyToClipboard(text: string) {
                 <span
                   v-if="c.domains.length"
                   class="autocomplete-meta"
-                >{{ c.domains.map(d => t(`contractors.domains.${d}`, d)).join(', ') }}</span>
+                >{{ contractorDomainLabel(c) }}</span>
               </li>
             </ul>
           </div>
