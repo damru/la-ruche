@@ -34,8 +34,7 @@ fn row_to_contractor(r: &sqlx::postgres::PgRow) -> Result<ContractorRow, sqlx::E
     })
 }
 
-const SELECT: &str =
-    "SELECT id, building_id, name, email, phone, domains, notes, created_at, updated_at FROM contractor";
+const SELECT: &str = "SELECT id, building_id, name, email, phone, domains, notes, created_at, updated_at FROM contractor";
 
 /// List all contractors for a building, ordered by name.
 pub async fn list(pool: &PgPool, building_id: Uuid) -> AppResult<Vec<ContractorRow>> {
