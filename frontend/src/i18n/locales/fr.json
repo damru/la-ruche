@@ -925,7 +925,7 @@
     "nameRequired": "Le nom est obligatoire",
     "domain": "Domaine",
     "email": "Email",
-    "emailPlaceholder": "contact@entreprise.fr",
+    "emailPlaceholder": "contact{'@'}entreprise.fr",
     "phone": "Téléphone",
     "phonePlaceholder": "06 00 00 00 00",
     "deleteTitle": "Supprimer le prestataire",
