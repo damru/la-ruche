@@ -71,6 +71,11 @@ pub async fn update(
     Json(input): Json<UpdateTaskInput>,
 ) -> AppResult<StatusCode> {
     auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
+    if let Some(ref t) = input.title
+        && t.trim().is_empty()
+    {
+        return Err(AppError::Validation("title cannot be empty".to_string()));
+    }
     if let Some(ref s) = input.status
         && !db::task::validate_status(s)
     {
@@ -78,11 +83,6 @@ pub async fn update(
             "Invalid status '{}'. Valid values: open, in_progress, awaiting_vendor, closed, cancelled",
             s
         )));
-    }
-    if let Some(ref t) = input.title
-        && t.trim().is_empty()
-    {
-        return Err(AppError::Validation("title cannot be empty".to_string()));
     }
     db::task::update_fields(
         &state.pool,
