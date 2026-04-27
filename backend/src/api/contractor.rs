@@ -162,8 +162,8 @@ pub async fn submit(
         // Vendor submissions have no authenticated user.
         // task.created_by (the manager who opened the task) is used as the
         // uploaded_by proxy to satisfy the FK constraint and maintain an audit trail.
-        let doc = db::document::create(
-            &state.pool,
+        let doc = db::document::create_tx(
+            &mut tx,
             task.building_id,
             task.created_by,
             &doc_meta.original_name,
