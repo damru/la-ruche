@@ -251,6 +251,7 @@ onMounted(reload)
                   size="sm"
                   @click="openEditModal(key)"
                 >
+                  <CIconEdit />
                   {{ t('common.edit') }}
                 </CBtn>
                 <CBtn
@@ -261,6 +262,7 @@ onMounted(reload)
                   :disabled="deletingKey === key.id"
                   @click="deleteKey(key.id)"
                 >
+                  <CIconTrash />
                   {{ deletingKey === key.id ? t('common.loading') : t('common.delete') }}
                 </CBtn>
                 <span

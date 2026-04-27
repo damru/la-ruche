@@ -33,6 +33,10 @@ const taskFeedback = useFormFeedback()
 const savingTask = ref(false)
 const editingTask = ref<Task | null>(null)
 
+// Assignment mode within the modal for open tasks
+// 'none' = not assigned | 'self' = self-assign (in_progress) | 'contractor' = assign contractor
+const assignMode = ref<'none' | 'self' | 'contractor'>('none')
+
 // Contractor autocomplete state
 const contractorSearch = ref('')
 const contractorSuggestions = ref<Contractor[]>([])
@@ -148,6 +152,7 @@ function openCreateModal() {
   taskForm.value = defaultForm()
   selectedContractor.value = null
   contractorSearch.value = ''
+  assignMode.value = 'none'
   taskFeedback.reset()
   showTaskModal.value = true
 }
@@ -164,9 +169,15 @@ function openEditModal(task: Task) {
     const c = contractorsById.value.get(task.contractor_id)
     selectedContractor.value = c ?? null
     contractorSearch.value = c?.name ?? ''
+    assignMode.value = 'contractor'
+  } else if (task.status === 'in_progress') {
+    selectedContractor.value = null
+    contractorSearch.value = ''
+    assignMode.value = 'self'
   } else {
     selectedContractor.value = null
     contractorSearch.value = ''
+    assignMode.value = 'none'
   }
   taskFeedback.reset()
   showTaskModal.value = true
@@ -178,20 +189,46 @@ async function saveTask() {
   taskFeedback.reset()
   try {
     if (editingTask.value) {
+      // Determine status change from assignMode
+      const statusPatch = assignMode.value === 'self' ? 'in_progress' : undefined
       await tasksApi.update(editingTask.value.id, {
         title: taskForm.value.title,
         description: taskForm.value.description || null,
         priority: taskForm.value.priority,
-        contractor_id: selectedContractor.value?.id ?? null,
+        contractor_id: assignMode.value === 'contractor'
+          ? (selectedContractor.value?.id ?? null)
+          : (assignMode.value === 'none' ? null : undefined),
+        ...(statusPatch ? { status: statusPatch } : {}),
       })
     } else {
       await tasksApi.create({
         title: taskForm.value.title,
         description: taskForm.value.description || undefined,
         priority: taskForm.value.priority as TaskPriority,
-        contractor_id: selectedContractor.value?.id ?? null,
+        contractor_id: assignMode.value === 'contractor'
+          ? (selectedContractor.value?.id ?? null)
+          : null,
       })
     }
+    taskFeedback.setSuccess(t('common.saved'))
+    setTimeout(() => {
+      showTaskModal.value = false
+      reload()
+    }, SUCCESS_AUTO_CLEAR_MS)
+  } catch (err) {
+    taskFeedback.setError(toErrorMessage(err, t('common.error')))
+  } finally {
+    savingTask.value = false
+  }
+}
+
+// ── Close task from modal (for in_progress / awaiting_vendor) ─────
+async function closeFromModal() {
+  if (!editingTask.value) return
+  savingTask.value = true
+  taskFeedback.reset()
+  try {
+    await tasksApi.update(editingTask.value.id, { status: 'closed' })
     taskFeedback.setSuccess(t('common.saved'))
     setTimeout(() => {
       showTaskModal.value = false
@@ -224,37 +261,6 @@ async function deleteTask(task: Task) {
   }
 }
 
-// ── Quick status actions ──────────────────────────────────────────
-const updatingStatus = ref<string | null>(null)
-
-async function updateTaskStatus(taskId: string, status: string) {
-  updatingStatus.value = taskId
-  pageError.value = ''
-  try {
-    await tasksApi.update(taskId, { status })
-    await reload()
-  } catch (err) {
-    pageError.value = toErrorMessage(err, t('common.error'))
-  } finally {
-    updatingStatus.value = null
-  }
-}
-
-async function takeCharge(task: Task) {
-  openTakeChargeModal(task)
-}
-
-async function closeTaskManually(task: Task) {
-  const ok = await confirm({
-    title: t('tasks.confirmCloseTitle'),
-    message: t('tasks.confirmCloseMessage', { title: task.title }),
-    confirmLabel: t('tasks.closeTask'),
-    variant: 'primary',
-  })
-  if (!ok) return
-  await updateTaskStatus(task.id, 'closed')
-}
-
 // ── Vendor token actions ───────────────────────────────────────────
 const generatingToken = ref<string | null>(null)
 // vendorLinks: task.id → { url, expires_at } — populated on demand
@@ -283,31 +289,6 @@ async function confirmRevoke() {
     revokeFeedback.setError(toErrorMessage(err, t('common.error')))
   } finally {
     revoking.value = false
-  }
-}
-
-// ── Take charge modal ─────────────────────────────────────────────
-const takingChargeTask = ref<Task | null>(null)
-const takeChargeFeedback = useFormFeedback()
-const takingCharge = ref(false)
-
-function openTakeChargeModal(task: Task) {
-  takingChargeTask.value = task
-  takeChargeFeedback.reset()
-}
-
-async function confirmTakeCharge() {
-  if (!takingChargeTask.value) return
-  takingCharge.value = true
-  takeChargeFeedback.reset()
-  try {
-    await tasksApi.update(takingChargeTask.value.id, { status: 'in_progress' })
-    takeChargeFeedback.setSuccess(t('common.saved'))
-    setTimeout(() => { takingChargeTask.value = null; reload() }, SUCCESS_AUTO_CLEAR_MS)
-  } catch (err) {
-    takeChargeFeedback.setError(toErrorMessage(err, t('common.error')))
-  } finally {
-    takingCharge.value = false
   }
 }
 
@@ -465,89 +446,13 @@ function copyToClipboard(text: string) {
                 :style="{ background: priorityColor(task.priority) }"
               ></div>
               <div class="task-body">
-                <div class="task-head">
-                  <div class="task-badges">
-                    <CBadge :variant="priorityVariant(task.priority)">
-                      {{ t(`tasks.priorities.${task.priority}`) }}
-                    </CBadge>
-                    <CBadge :variant="statusVariant(task.status)" dot>
-                      {{ t(`tasks.statuses.${task.status}`) }}
-                    </CBadge>
-                  </div>
-                  <div class="task-actions">
-                    <button
-                      class="icon-btn"
-                      :title="t('tasks.editTask')"
-                      @click="openEditModal(task)"
-                    >
-                      <CIconEdit
-                        width="15"
-                        height="15"
-                      />
-                    </button>
-                    <button
-                      class="icon-btn icon-btn--danger"
-                      :title="t('tasks.deleteTask')"
-                      @click="deleteTask(task)"
-                    >
-                      <CIconTrash
-                        width="15"
-                        height="15"
-                      />
-                    </button>
-                    <!-- Take charge: open → in_progress (internal, no contractor) -->
-                    <button
-                      v-if="task.status === 'open'"
-                      class="icon-btn icon-btn--valid"
-                      :title="t('tasks.takeCharge')"
-                      :disabled="updatingStatus === task.id"
-                      @click="takeCharge(task)"
-                    >
-                      <CIconUser
-                        width="15"
-                        height="15"
-                      />
-                    </button>
-                    <!-- Close manually: in_progress → closed (no vendor needed) -->
-                    <button
-                      v-if="task.status === 'in_progress'"
-                      class="icon-btn icon-btn--valid"
-                      :title="t('tasks.closeTask')"
-                      :disabled="updatingStatus === task.id"
-                      @click="closeTaskManually(task)"
-                    >
-                      <CIconCheckCircle
-                        width="15"
-                        height="15"
-                      />
-                    </button>
-                    <!-- Reopen: closed → open -->
-                    <button
-                      v-if="task.status === 'closed'"
-                      class="icon-btn"
-                      :title="t('tasks.reopenTask')"
-                      :disabled="updatingStatus === task.id"
-                      @click="openReopenModal(task)"
-                    >
-                      <CIconRefresh
-                        width="15"
-                        height="15"
-                      />
-                    </button>
-                    <!-- Generate link (only if no active token and task is active) -->
-                    <button
-                      v-if="!task.has_vendor_token && task.status !== 'closed' && task.status !== 'cancelled'"
-                      class="icon-btn"
-                      :title="t('tasks.generateToken')"
-                      :disabled="generatingToken === task.id"
-                      @click="generateToken(task)"
-                    >
-                      <CIconLink
-                        width="15"
-                        height="15"
-                      />
-                    </button>
-                  </div>
+                <div class="task-badges">
+                  <CBadge :variant="priorityVariant(task.priority)">
+                    {{ t(`tasks.priorities.${task.priority}`) }}
+                  </CBadge>
+                  <CBadge :variant="statusVariant(task.status)" dot>
+                    {{ t(`tasks.statuses.${task.status}`) }}
+                  </CBadge>
                 </div>
 
                 <span class="title-sm task-title">{{ task.title }}</span>
@@ -568,7 +473,7 @@ function copyToClipboard(text: string) {
                       class="body-xs"
                       style="color:var(--color-on-surface-variant)"
                     >
-                      {{ t('tasks.vendorTokenActive', { date: formatDate(task.token_expires_at!) }) }}
+                      {{ t('tasks.vendorTokenActive', { date: task.token_expires_at ? formatDate(task.token_expires_at) : '' }) }}
                     </span>
                     <div class="vendor-token-btns">
                       <button
@@ -617,6 +522,51 @@ function copyToClipboard(text: string) {
                   <span v-if="task.contractor_id && contractorsById.get(task.contractor_id)">
                     · 🔧 {{ contractorsById.get(task.contractor_id)!.name }}
                   </span>
+                </div>
+
+                <!-- Card footer actions (Contract-card pattern) -->
+                <div class="task-card-actions">
+                  <CBtn
+                    variant="ghost"
+                    size="sm"
+                    :aria-label="t('tasks.editTask')"
+                    @click="openEditModal(task)"
+                  >
+                    <CIconEdit />
+                    {{ t('common.edit') }}
+                  </CBtn>
+                  <CBtn
+                    variant="danger"
+                    size="sm"
+                    :aria-label="t('tasks.deleteTask')"
+                    @click="deleteTask(task)"
+                  >
+                    <CIconTrash />
+                    {{ t('common.delete') }}
+                  </CBtn>
+                  <!-- Generate link: non-closed/cancelled tasks without an active token -->
+                  <CBtn
+                    v-if="!task.has_vendor_token && task.status !== 'closed' && task.status !== 'cancelled'"
+                    variant="ghost"
+                    size="sm"
+                    :disabled="generatingToken === task.id"
+                    :aria-label="t('tasks.generateToken')"
+                    @click="generateToken(task)"
+                  >
+                    <CIconLink />
+                    {{ t('tasks.generateToken') }}
+                  </CBtn>
+                  <!-- Reopen: closed tasks -->
+                  <CBtn
+                    v-if="task.status === 'closed'"
+                    variant="ghost"
+                    size="sm"
+                    :aria-label="t('tasks.reopenTask')"
+                    @click="openReopenModal(task)"
+                  >
+                    <CIconRefresh />
+                    {{ t('tasks.reopenTask') }}
+                  </CBtn>
                 </div>
               </div>
             </div>
@@ -676,8 +626,11 @@ function copyToClipboard(text: string) {
             </option>
           </select>
         </div>
-        <!-- Contractor assignment with autocomplete -->
-        <div class="form-field">
+        <!-- Contractor assignment with autocomplete (only when assignMode === 'contractor') -->
+        <div
+          v-if="assignMode === 'contractor'"
+          class="form-field"
+        >
           <label class="form-label">{{ t('tasks.contractorLabel') }}</label>
           <div style="position:relative">
             <input
@@ -710,9 +663,9 @@ function copyToClipboard(text: string) {
               >
                 <span class="autocomplete-name">{{ c.name }}</span>
                 <span
-                  v-if="c.domain"
+                  v-if="c.domains.length"
                   class="autocomplete-meta"
-                >{{ t(`contractors.domains.${c.domain}`, c.domain) }}</span>
+                >{{ c.domains.map(d => t(`contractors.domains.${d}`, d)).join(', ') }}</span>
               </li>
             </ul>
           </div>
@@ -723,8 +676,52 @@ function copyToClipboard(text: string) {
             {{ selectedContractor.email || selectedContractor.phone || '' }}
           </span>
         </div>
+        <!-- Assignment mode: radio (visible for new tasks and for open tasks) -->
+        <div
+          v-if="!editingTask || editingTask.status === 'open'"
+          class="form-field"
+        >
+          <label class="form-label">{{ t('tasks.assignmentSection') }}</label>
+          <div class="assignment-options">
+            <label class="checkbox-label">
+              <input
+                v-model="assignMode"
+                type="radio"
+                value="none"
+              />
+              {{ t('tasks.assignNone') }}
+            </label>
+            <label class="checkbox-label">
+              <input
+                v-model="assignMode"
+                type="radio"
+                value="self"
+              />
+              {{ t('tasks.assignSelf') }}
+            </label>
+            <label class="checkbox-label">
+              <input
+                v-model="assignMode"
+                type="radio"
+                value="contractor"
+              />
+              {{ t('tasks.assignContractor') }}
+            </label>
+          </div>
+        </div>
       </form>
       <template #footer>
+        <!-- Close task button: visible when editing an active task (not yet closed) -->
+        <CBtn
+          v-if="editingTask && ['in_progress', 'awaiting_vendor'].includes(editingTask.status)"
+          variant="danger"
+          :loading="savingTask"
+          style="margin-right:auto"
+          @click="closeFromModal"
+        >
+          <CIconCheckCircle />
+          {{ t('tasks.closeTask') }}
+        </CBtn>
         <CFormFeedback
           :status="taskFeedback.status.value"
           :message="taskFeedback.message.value"
@@ -776,37 +773,6 @@ function copyToClipboard(text: string) {
       </template>
     </CModal>
 
-    <!-- Take charge modal -->
-    <CModal
-      :open="!!takingChargeTask"
-      :title="t('tasks.confirmTakeChargeTitle')"
-      size="sm"
-      @update:open="v => !v && (takingChargeTask = null)"
-    >
-      <p class="body-sm">
-        {{ t('tasks.confirmTakeChargeMessage', { title: takingChargeTask?.title ?? '' }) }}
-      </p>
-      <template #footer>
-        <CFormFeedback
-          :status="takeChargeFeedback.status.value"
-          :message="takeChargeFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          @click="takingChargeTask = null"
-        >
-          {{ t('common.cancel') }}
-        </CBtn>
-        <CBtn
-          variant="primary"
-          :loading="takingCharge"
-          @click="confirmTakeCharge"
-        >
-          {{ t('tasks.takeCharge') }}
-        </CBtn>
-      </template>
-    </CModal>
-
     <!-- Reopen task modal -->
     <CModal
       :open="!!reopeningTask"
@@ -849,13 +815,26 @@ function copyToClipboard(text: string) {
 .prio-bar { width: 4px; flex-shrink: 0; }
 
 .task-body { flex: 1; padding: 14px 16px; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
-.task-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
-.task-badges { display: flex; gap: 6px; flex-wrap: wrap; }
+.task-badges { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 2px; }
 .task-title { display: block; margin-top: 4px; }
 .task-desc { color: var(--color-on-surface-variant); }
 .task-meta { font-size: var(--text-2xs); color: var(--color-on-surface-variant); margin-top: 4px; }
 
-.task-actions { display: flex; gap: 2px; flex-shrink: 0; }
+.task-card-actions {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-top: var(--space-2);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-surface-container-high);
+}
+
+.assignment-options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
+}
 
 .vendor-token { display: flex; flex-direction: column; gap: 4px; margin: 4px 0; padding: 8px; background: var(--color-surface-container); border-radius: var(--radius-sm); }
 .vendor-token-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }

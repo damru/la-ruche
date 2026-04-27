@@ -163,7 +163,7 @@ async function logout() {
                 disabled
               />
             </div>
-            <div class="field field--full">
+            <div class="field">
               <label class="field-label">{{ t('common.email') }}</label>
               <input
                 :value="auth.user?.email"
@@ -171,7 +171,7 @@ async function logout() {
                 disabled
               />
             </div>
-            <div class="field field--full">
+            <div class="field">
               <label class="field-label">{{ t('common.phone') }}</label>
               <input
                 v-model="phone"

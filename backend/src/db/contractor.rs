@@ -13,7 +13,9 @@ pub struct ContractorRow {
     pub name: String,
     pub email: Option<String>,
     pub phone: Option<String>,
-    pub domain: Option<String>,
+    /// Professional domains (multi-value, e.g. ["maintenance", "cleaning"]).
+    pub domains: Vec<String>,
+    pub notes: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -25,14 +27,15 @@ fn row_to_contractor(r: &sqlx::postgres::PgRow) -> Result<ContractorRow, sqlx::E
         name: r.try_get("name")?,
         email: r.try_get("email")?,
         phone: r.try_get("phone")?,
-        domain: r.try_get("domain")?,
+        domains: r.try_get("domains")?,
+        notes: r.try_get("notes")?,
         created_at: r.try_get("created_at")?,
         updated_at: r.try_get("updated_at")?,
     })
 }
 
 const SELECT: &str =
-    "SELECT id, building_id, name, email, phone, domain, created_at, updated_at FROM contractor";
+    "SELECT id, building_id, name, email, phone, domains, notes, created_at, updated_at FROM contractor";
 
 /// List all contractors for a building, ordered by name.
 pub async fn list(pool: &PgPool, building_id: Uuid) -> AppResult<Vec<ContractorRow>> {
@@ -80,7 +83,10 @@ pub struct CreateContractorInput {
     pub name: String,
     pub email: Option<String>,
     pub phone: Option<String>,
-    pub domain: Option<String>,
+    /// Professional domains (multi-value array).
+    #[serde(default)]
+    pub domains: Vec<String>,
+    pub notes: Option<String>,
 }
 
 pub async fn create(
@@ -89,15 +95,16 @@ pub async fn create(
     input: CreateContractorInput,
 ) -> AppResult<ContractorRow> {
     let row = sqlx::query(
-        r#"INSERT INTO contractor (building_id, name, email, phone, domain)
-           VALUES ($1, $2, $3, $4, $5)
-           RETURNING id, building_id, name, email, phone, domain, created_at, updated_at"#,
+        r#"INSERT INTO contractor (building_id, name, email, phone, domains, notes)
+           VALUES ($1, $2, $3, $4, $5, $6)
+           RETURNING id, building_id, name, email, phone, domains, notes, created_at, updated_at"#,
     )
     .bind(building_id)
     .bind(&input.name)
     .bind(&input.email)
     .bind(&input.phone)
-    .bind(&input.domain)
+    .bind(&input.domains)
+    .bind(&input.notes)
     .fetch_one(pool)
     .await?;
     row_to_contractor(&row).map_err(Into::into)
@@ -108,7 +115,9 @@ pub struct UpdateContractorInput {
     pub name: Option<String>,
     pub email: Option<String>,
     pub phone: Option<String>,
-    pub domain: Option<String>,
+    /// When present, replaces the current domains array entirely.
+    pub domains: Option<Vec<String>>,
+    pub notes: Option<String>,
 }
 
 pub async fn update(
@@ -122,17 +131,19 @@ pub async fn update(
            SET name       = COALESCE($3, name),
                email      = COALESCE($4, email),
                phone      = COALESCE($5, phone),
-               domain     = COALESCE($6, domain),
+               domains    = COALESCE($6, domains),
+               notes      = COALESCE($7, notes),
                updated_at = NOW()
            WHERE id = $1 AND building_id = $2
-           RETURNING id, building_id, name, email, phone, domain, created_at, updated_at"#,
+           RETURNING id, building_id, name, email, phone, domains, notes, created_at, updated_at"#,
     )
     .bind(id)
     .bind(building_id)
     .bind(&input.name)
     .bind(&input.email)
     .bind(&input.phone)
-    .bind(&input.domain)
+    .bind(&input.domains)
+    .bind(&input.notes)
     .fetch_optional(pool)
     .await?;
     row.as_ref()

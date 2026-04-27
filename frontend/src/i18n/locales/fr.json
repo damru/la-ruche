@@ -575,7 +575,11 @@
     "confirmTakeChargeMessage": "Vous allez prendre en charge la tâche « {title} ». Son statut passera à « En cours ».",
     "reopenTask": "Ré-ouvrir la tâche",
     "confirmReopenTitle": "Ré-ouvrir la tâche",
-    "confirmReopenMessage": "La tâche « {title} » sera remise au statut « Ouverte »."
+    "confirmReopenMessage": "La tâche « {title} » sera remise au statut « Ouverte ».",
+    "assignmentSection": "Assignation",
+    "assignNone": "Non assignée",
+    "assignSelf": "Prendre en charge (moi)",
+    "assignContractor": "Assigner un prestataire"
   },
   "documents": {
     "title": "Documents",
@@ -941,15 +945,9 @@
     "phonePlaceholder": "06 00 00 00 00",
     "deleteTitle": "Supprimer le prestataire",
     "deleteConfirm": "Supprimer définitivement « {name} » ? Cette action est irréversible.",
-    "domains": {
-      "maintenance": "Maintenance",
-      "insurance": "Assurance",
-      "service": "Prestation",
-      "energy": "Énergie",
-      "water": "Eau",
-      "cleaning": "Nettoyage",
-      "green_spaces": "Espaces verts",
-      "other": "Autre"
-    }
+    "domains": "Domaines",
+    "notes": "Notes",
+    "notesPlaceholder": "Informations utiles, contacts alternatifs, observations…",
+    "selectDomains": "Sélectionner un ou plusieurs domaines"
   }
 }

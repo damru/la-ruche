@@ -393,6 +393,7 @@ async function confirmClose() {
                 size="sm"
                 @click="openCloseModal(c)"
               >
+                <CIconX />
                 {{ t('consultations.close') }}
               </CBtn>
             </div>

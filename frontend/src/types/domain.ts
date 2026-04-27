@@ -416,7 +416,9 @@ export interface Contractor {
   name: string
   email?: string
   phone?: string
-  domain?: string
+  /// Professional domains (multi-value).
+  domains: string[]
+  notes?: string
   created_at: string
   updated_at: string
 }

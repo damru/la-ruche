@@ -2,7 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { usePageLoader, toErrorMessage } from '@/composables/usePageLoader'
-import { useFormFeedback } from '@/composables/useFormFeedback'
+import { useFormFeedback, SUCCESS_AUTO_CLEAR_MS } from '@/composables/useFormFeedback'
 import { useAuthStore } from '@/stores/auth'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
@@ -29,7 +29,9 @@ import CIconChevronRight from '@/components/atoms/CIconChevronRight.svg'
 import { buildingApi, contractorsApi } from '@/api'
 import type { Contractor } from '@/types/domain'
 
-function domainIcon(domain?: string) {
+const DOMAINS_RAW = ['maintenance', 'insurance', 'service', 'energy', 'water', 'cleaning', 'green_spaces', 'other']
+
+function domainIcon(domains: string[]) {
   const icons: Record<string, unknown> = {
     maintenance: CIconWrench,
     insurance: CIconShield,
@@ -40,10 +42,11 @@ function domainIcon(domain?: string) {
     green_spaces: CIconLeaf,
     other: CIconLayers,
   }
-  return icons[domain ?? ''] ?? CIconLayers
+  // Use the icon of the first domain, fall back to layers
+  return icons[domains[0] ?? ''] ?? CIconLayers
 }
 
-function domainTone(domain?: string): string {
+function domainTone(domains: string[]): string {
   const tones: Record<string, string> = {
     maintenance: 'tone--warn',
     insurance: 'tone--err',
@@ -54,7 +57,7 @@ function domainTone(domain?: string): string {
     green_spaces: 'tone--valid',
     other: 'tone--default',
   }
-  return tones[domain ?? ''] ?? 'tone--default'
+  return tones[domains[0] ?? ''] ?? 'tone--default'
 }
 
 const { t } = useI18n()
@@ -66,8 +69,6 @@ const allContractors = ref<Contractor[]>([])
 const search = ref('')
 
 // ── Permissions ────────────────────────────────────────────────────
-// Managers and board members can create/edit/delete contractors.
-// All other roles can read (catalog is public to all building users).
 const canEdit = computed(() =>
   authStore.hasAnyRole(['manager', 'board_member']),
 )
@@ -93,9 +94,16 @@ const filtered = computed(() => {
     c =>
       c.name.toLowerCase().includes(q) ||
       (c.email ?? '').toLowerCase().includes(q) ||
-      (c.domain ?? '').toLowerCase().includes(q),
+      c.domains.some(d => d.toLowerCase().includes(q)),
   )
 })
+
+// ── Sorted domains list (alphabetical by translated label) ────────
+const DOMAINS = computed(() =>
+  [...DOMAINS_RAW].sort((a, b) =>
+    t(`contractors.domains.${a}`).localeCompare(t(`contractors.domains.${b}`)),
+  ),
+)
 
 // ── Form modal ────────────────────────────────────────────────────
 const showModal = ref(false)
@@ -103,19 +111,12 @@ const editingContractor = ref<Contractor | null>(null)
 const saving = ref(false)
 const feedback = useFormFeedback()
 
-const DOMAINS_RAW = ['maintenance', 'insurance', 'service', 'energy', 'water', 'cleaning', 'green_spaces', 'other']
-
-const DOMAINS = computed(() =>
-  [...DOMAINS_RAW].sort((a, b) =>
-    t(`contractors.domains.${a}`).localeCompare(t(`contractors.domains.${b}`)),
-  ),
-)
-
 const defaultForm = () => ({
   name: '',
   email: '',
   phone: '',
-  domain: '',
+  domains: [] as string[],
+  notes: '',
 })
 const form = ref(defaultForm())
 
@@ -132,7 +133,8 @@ function openEdit(c: Contractor) {
     name: c.name,
     email: c.email ?? '',
     phone: c.phone ?? '',
-    domain: c.domain ?? '',
+    domains: [...c.domains],
+    notes: c.notes ?? '',
   }
   feedback.reset()
   showModal.value = true
@@ -154,15 +156,19 @@ async function save() {
       name: form.value.name.trim(),
       email: form.value.email.trim() || undefined,
       phone: form.value.phone.trim() || undefined,
-      domain: form.value.domain || undefined,
+      domains: form.value.domains,
+      notes: form.value.notes.trim() || undefined,
     }
     if (editingContractor.value) {
       await contractorsApi.update(editingContractor.value.id, payload)
     } else {
       await contractorsApi.create(payload)
     }
-    showModal.value = false
-    await reload()
+    feedback.setSuccess(t('common.saved'))
+    setTimeout(() => {
+      showModal.value = false
+      reload()
+    }, SUCCESS_AUTO_CLEAR_MS)
   } catch (err) {
     feedback.setError(toErrorMessage(err, t('common.error')))
   } finally {
@@ -188,8 +194,11 @@ async function confirmDelete() {
   deleteFeedback.reset()
   try {
     await contractorsApi.delete(contractorToDelete.value.id)
-    showDeleteModal.value = false
-    await reload()
+    deleteFeedback.setSuccess(t('common.saved'))
+    setTimeout(() => {
+      showDeleteModal.value = false
+      reload()
+    }, SUCCESS_AUTO_CLEAR_MS)
   } catch (err) {
     deleteFeedback.setError(toErrorMessage(err, t('common.error')))
   } finally {
@@ -284,19 +293,20 @@ async function confirmDelete() {
             class="contractor-card"
           >
             <div class="contractor-header">
-              <div :class="['contractor-domain-icon', domainTone(c.domain)]">
+              <div :class="['contractor-domain-icon', domainTone(c.domains)]">
                 <component
-                  :is="domainIcon(c.domain)"
+                  :is="domainIcon(c.domains)"
                   class="domain-icon"
                   aria-hidden="true"
                 />
               </div>
               <div class="contractor-header__badges">
                 <CBadge
-                  v-if="c.domain"
+                  v-for="d in c.domains"
+                  :key="d"
                   variant="default"
                 >
-                  {{ t(`contractors.domains.${c.domain}`, c.domain) }}
+                  {{ t(`contractors.domains.${d}`, d) }}
                 </CBadge>
               </div>
             </div>
@@ -321,6 +331,13 @@ async function confirmDelete() {
               >{{ c.phone }}</a>
             </div>
 
+            <p
+              v-if="c.notes"
+              class="contractor-notes body-xs"
+            >
+              {{ c.notes }}
+            </p>
+
             <div
               v-if="canEdit"
               class="contractor-actions"
@@ -335,7 +352,7 @@ async function confirmDelete() {
                 {{ t('common.edit') }}
               </CBtn>
               <CBtn
-                variant="ghost"
+                variant="danger"
                 size="sm"
                 :aria-label="t('common.delete') + ' ' + c.name"
                 @click="openDeleteModal(c)"
@@ -353,7 +370,7 @@ async function confirmDelete() {
     <CModal
       :open="showModal"
       :title="editingContractor ? t('contractors.editContractor') : t('contractors.newContractor')"
-      @close="closeModal"
+      @update:open="showModal = $event"
     >
       <form
         class="form-grid"
@@ -367,24 +384,6 @@ async function confirmDelete() {
             :placeholder="t('contractors.namePlaceholder')"
             required
           />
-        </div>
-        <div class="form-field">
-          <label class="form-label">{{ t('contractors.domain') }}</label>
-          <select
-            v-model="form.domain"
-            class="form-input"
-          >
-            <option value="">
-              —
-            </option>
-            <option
-              v-for="d in DOMAINS"
-              :key="d"
-              :value="d"
-            >
-              {{ t(`contractors.domains.${d}`) }}
-            </option>
-          </select>
         </div>
         <div class="form-field">
           <label class="form-label">{{ t('contractors.email') }}</label>
@@ -403,6 +402,34 @@ async function confirmDelete() {
             class="form-input"
             :placeholder="t('contractors.phonePlaceholder')"
           />
+        </div>
+        <!-- Domains: multi-select checkboxes, sorted alphabetically -->
+        <div class="form-field form-field--full">
+          <label class="form-label">{{ t('contractors.domains') }}</label>
+          <div class="domains-checkboxes">
+            <label
+              v-for="d in DOMAINS"
+              :key="d"
+              class="checkbox-label"
+            >
+              <input
+                v-model="form.domains"
+                type="checkbox"
+                :value="d"
+              />
+              {{ t(`contractors.domains.${d}`) }}
+            </label>
+          </div>
+        </div>
+        <!-- Notes textarea -->
+        <div class="form-field form-field--full">
+          <label class="form-label">{{ t('contractors.notes') }}</label>
+          <textarea
+            v-model="form.notes"
+            class="form-input"
+            rows="3"
+            :placeholder="t('contractors.notesPlaceholder')"
+          ></textarea>
         </div>
       </form>
       <template #footer>
@@ -430,7 +457,7 @@ async function confirmDelete() {
     <CModal
       :open="showDeleteModal"
       :title="t('contractors.deleteTitle')"
-      @close="showDeleteModal = false"
+      @update:open="showDeleteModal = $event"
     >
       <p class="body-md">
         {{ t('contractors.deleteConfirm', { name: contractorToDelete?.name }) }}
@@ -583,12 +610,19 @@ async function confirmDelete() {
   text-decoration: underline;
 }
 
+.contractor-notes {
+  color: var(--color-on-surface-variant);
+  margin: 0;
+  white-space: pre-wrap;
+}
+
 .contractor-actions {
   display: flex;
   gap: var(--space-2);
   flex-wrap: wrap;
   margin-top: auto;
   padding-top: var(--space-3);
+  border-top: 1px solid var(--color-surface-container-high);
 }
 
 /* Form */
@@ -626,6 +660,14 @@ async function confirmDelete() {
   border-color: transparent;
 }
 
+/* Domains checkbox grid */
+.domains-checkboxes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  padding: var(--space-2) 0;
+}
+
 .topbar-breadcrumb {
   display: flex;
   align-items: center;
@@ -637,9 +679,5 @@ async function confirmDelete() {
 .topbar-breadcrumb span:last-child {
   color: var(--color-on-surface);
   font-weight: var(--fw-medium);
-}
-
-.mb-4 {
-  margin-bottom: var(--space-4);
 }
 </style>

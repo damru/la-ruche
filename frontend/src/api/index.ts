@@ -251,9 +251,9 @@ export const contractorsApi = {
     api.get<Contractor[]>('/contractors', { params: q ? { q } : undefined }),
   get: (id: string) =>
     api.get<Contractor>(`/contractors/${id}`),
-  create: (data: { name: string; email?: string; phone?: string; domain?: string }) =>
+  create: (data: { name: string; email?: string; phone?: string; domains?: string[]; notes?: string }) =>
     api.post<Contractor>('/contractors', data),
-  update: (id: string, data: { name?: string; email?: string; phone?: string; domain?: string }) =>
+  update: (id: string, data: { name?: string; email?: string; phone?: string; domains?: string[]; notes?: string }) =>
     api.put<Contractor>(`/contractors/${id}`, data),
   delete: (id: string) =>
     api.delete(`/contractors/${id}`),
