@@ -1,9 +1,9 @@
-// ── api/consultations.rs — Consultations informelles (EP-010) ────
+// ── api/consultations.rs — Informal consultations (EP-010) ────
 //
-// LÉGAL : Ces consultations sont informelles et n'ont aucune valeur
-// décisionnelle au sens de la loi du 10 juillet 1965 (art. 17 et 24).
-// Elles ne remplacent pas les votes en assemblée générale.
-// Une mention obligatoire est renvoyée dans chaque réponse.
+// LEGAL: These consultations are informal and have no decision-making
+// legal value under the law of 10 July 1965 (arts. 17 and 24).
+// They do not replace votes in the general assembly.
+// A mandatory notice is included in every response.
 use axum::{
     Json,
     extract::{Path, State},
