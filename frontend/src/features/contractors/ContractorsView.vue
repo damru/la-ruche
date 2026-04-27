@@ -334,6 +334,7 @@ async function confirmDelete() {
               <CBtn
                 variant="ghost"
                 size="sm"
+                :aria-label="t('common.edit') + ' ' + c.name"
                 @click="openEdit(c)"
               >
                 <CIconEdit />
@@ -342,6 +343,7 @@ async function confirmDelete() {
               <CBtn
                 variant="ghost"
                 size="sm"
+                :aria-label="t('common.delete') + ' ' + c.name"
                 @click="openDeleteModal(c)"
               >
                 <CIconTrash />
