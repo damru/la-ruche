@@ -48,25 +48,30 @@ function contractorDomainLabel(c: Contractor): string {
   return c.domains.map(d => t(`contractors.domains.${d}`, d)).join(', ')
 }
 
-function onContractorInput() {
-  const q = contractorSearch.value.trim().toLowerCase()
+// Max suggestions shown when typing (narrows the list) vs on focus (shows all)
+const MAX_SUGGESTIONS = 10
+
+function populateSuggestions(query: string) {
+  const q = query.trim().toLowerCase()
   if (!q) {
-    // Show all contractors when input is empty (shows on focus)
-    contractorSuggestions.value = allContractors.value.slice(0, 10)
-    showSuggestions.value = contractorSuggestions.value.length > 0
-    return
+    contractorSuggestions.value = allContractors.value.slice(0, MAX_SUGGESTIONS)
+  } else {
+    contractorSuggestions.value = allContractors.value
+      .filter(c => c.name.toLowerCase().includes(q))
+      .slice(0, MAX_SUGGESTIONS)
   }
-  contractorSuggestions.value = allContractors.value
-    .filter(c => c.name.toLowerCase().includes(q))
-    .slice(0, 8)
   showSuggestions.value = contractorSuggestions.value.length > 0
 }
 
-function onContractorFocus() {
+function onContractorInput() {
   if (!contractorSearch.value.trim()) {
-    contractorSuggestions.value = allContractors.value.slice(0, 10)
-    showSuggestions.value = contractorSuggestions.value.length > 0
+    selectedContractor.value = null
   }
+  populateSuggestions(contractorSearch.value)
+}
+
+function onContractorFocus() {
+  populateSuggestions(contractorSearch.value)
 }
 
 function selectContractorSuggestion(c: Contractor) {

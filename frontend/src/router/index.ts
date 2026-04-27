@@ -115,7 +115,7 @@ const routes: RouteRecordRaw[] = [
         path: 'contractors/:id',
         name: 'contractor-detail',
         component: ContractorDetailView,
-        meta: { title: 'page.contractors', roles: [] },
+        meta: { title: 'page.contractorDetail', roles: [] },
       },
       {
         path: 'contracts',

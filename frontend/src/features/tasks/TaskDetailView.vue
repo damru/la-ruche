@@ -138,13 +138,20 @@ const timelineEvents = computed((): TimelineEvent[] => {
 
   // 4. Logbook entry
   if (logbookEntry.value) {
+    let logbookDetail: string | undefined
+    if (logbookEntry.value.vendor_name) {
+      logbookDetail = `🔧 ${logbookEntry.value.vendor_name}`
+      if (logbookEntry.value.cost) {
+        logbookDetail += ` · ${formatCurrency(logbookEntry.value.cost)}`
+      }
+    } else {
+      logbookDetail = logbookEntry.value.description ?? undefined
+    }
     events.push({
       key: 'logbook',
       date: logbookEntry.value.intervention_date,
       label: logbookEntry.value.title,
-      detail: logbookEntry.value.vendor_name
-        ? `🔧 ${logbookEntry.value.vendor_name}${logbookEntry.value.cost ? ' · ' + formatCurrency(logbookEntry.value.cost) : ''}`
-        : logbookEntry.value.description ?? undefined,
+      detail: logbookDetail,
       icon: CIconCheckCircle,
       variant: 'success',
     })
