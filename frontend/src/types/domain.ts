@@ -95,6 +95,7 @@ export interface User {
   active: boolean
   roles: Role[]
   created_at: string
+  phone?: string
 }
 
 export interface Meeting {
@@ -287,6 +288,7 @@ export interface AuthUser {
   last_name: string
   first_name: string
   email: string
+  phone?: string
 }
 
 // ── Generic API responses ─────────────────────────────────────────
@@ -339,6 +341,7 @@ export interface LoginResponse {
   last_name: string
   first_name: string
   email?: string
+  phone?: string
 }
 
 export interface BuildingStats {

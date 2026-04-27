@@ -4,12 +4,15 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import CCard from '@/components/molecules/CCard.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
+import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import CIconClock from '@/components/atoms/CIconClock.svg'
 import CIconMoon from '@/components/atoms/CIconMoon.svg'
 import CIconSun from '@/components/atoms/CIconSun.svg'
 import { useAuthStore } from '@/stores/auth'
 import { useUiStore } from '@/stores/ui'
+import { authApi } from '@/api'
+import { useFormFeedback, SUCCESS_AUTO_CLEAR_MS } from '@/composables/useFormFeedback'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -22,6 +25,9 @@ const activeTab = ref<Tab>('account')
 
 // ── Account form ─────────────────────────────────────────────────
 const saving = ref(false)
+const profileFeedback = useFormFeedback()
+const phone = ref(auth.user?.phone ?? '')
+
 const themeOptions = [
   {
     value: 'light',
@@ -46,6 +52,23 @@ const themeOptions = [
 const selectedThemeOption = computed(
   () => themeOptions.find((option) => option.value === ui.themePreference) ?? themeOptions[2]
 )
+
+async function saveProfile() {
+  saving.value = true
+  profileFeedback.reset()
+  try {
+    const res = await authApi.updateProfile({ phone: phone.value || null })
+    if (auth.user) {
+      auth.user.phone = res.data.phone
+    }
+    profileFeedback.setSuccess(t('common.saved'))
+    setTimeout(() => profileFeedback.reset(), SUCCESS_AUTO_CLEAR_MS)
+  } catch {
+    profileFeedback.setError(t('common.error'))
+  } finally {
+    saving.value = false
+  }
+}
 
 // ── Notifications ─────────────────────────────────────────────────
 const notifItems = ref([
@@ -129,6 +152,7 @@ async function logout() {
               <input
                 :value="auth.user?.first_name"
                 class="field-input"
+                disabled
               />
             </div>
             <div class="field">
@@ -136,6 +160,7 @@ async function logout() {
               <input
                 :value="auth.user?.last_name"
                 class="field-input"
+                disabled
               />
             </div>
             <div class="field field--full">
@@ -143,14 +168,30 @@ async function logout() {
               <input
                 :value="auth.user?.email"
                 class="field-input"
+                disabled
+              />
+            </div>
+            <div class="field field--full">
+              <label class="field-label">{{ t('common.phone') }}</label>
+              <input
+                v-model="phone"
+                class="field-input"
+                type="tel"
+                :placeholder="t('common.phonePlaceholder')"
               />
             </div>
           </div>
           <div class="form-actions">
+            <CFormFeedback
+              :status="profileFeedback.status.value"
+              :message="profileFeedback.message.value"
+              style="flex:1"
+            />
             <CBtn
               variant="primary"
               :loading="saving"
               :disabled="saving"
+              @click="saveProfile"
             >
               {{ saving ? t('common.saving') : t('settings.account.update') }}
             </CBtn>

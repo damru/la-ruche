@@ -387,6 +387,7 @@ function formatLocation(unit: { block?: string | null; staircase?: string | null
                 <tr>
                   <th>{{ t('common.name') }}</th>
                   <th>{{ t('common.email') }}</th>
+                  <th>{{ t('common.phone') }}</th>
                   <th>{{ t('common.roles') }}</th>
                   <th>{{ t('common.status') }}</th>
                 </tr>
@@ -407,6 +408,14 @@ function formatLocation(unit: { block?: string | null; staircase?: string | null
                   <td class="dim">
                     {{ user.email }}
                   </td>
+                  <td class="dim">
+                    <a
+                      v-if="user.phone"
+                      :href="`tel:${user.phone}`"
+                      class="phone-link"
+                    >{{ user.phone }}</a>
+                    <span v-else>—</span>
+                  </td>
                   <td>
                     <div class="roles">
                       <CBadge
@@ -426,7 +435,7 @@ function formatLocation(unit: { block?: string | null; staircase?: string | null
                 </tr>
                 <tr v-if="users.length === 0">
                   <td
-                    colspan="4"
+                    colspan="5"
                     style="text-align:center;color:var(--color-on-surface-variant);padding:24px"
                   >
                     {{ t('residents.userNotFound') }}
@@ -574,6 +583,12 @@ function formatLocation(unit: { block?: string | null; staircase?: string | null
   flex-wrap: wrap;
   gap: var(--space-1);
 }
+
+.phone-link {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+.phone-link:hover { text-decoration: underline; }
 
 .action-btns {
   display: flex;

@@ -42,6 +42,8 @@ export const authApi = {
     api.post('/auth/reset-password/confirm', { token, password }),
   me: () =>
     api.get<LoginResponse>('/auth/me'),
+  updateProfile: (data: { phone?: string | null }) =>
+    api.patch<LoginResponse>('/auth/me', data),
   acceptInvite: (token: string, password: string, last_name: string, first_name: string) =>
     api.post('/auth/invite/accept', { token, password, last_name, first_name }),
   passkeyRegisterStart: () =>

@@ -59,7 +59,9 @@
     "confirmArchive": "Confirmer l'archivage",
     "deleteLabel": "Supprimer définitivement",
     "archiveLabel": "Archiver",
-    "clear": "Effacer"
+    "clear": "Effacer",
+    "phone": "Téléphone",
+    "phonePlaceholder": "06 00 00 00 00"
   },
   "page": {
     "onboarding": "Bienvenue",

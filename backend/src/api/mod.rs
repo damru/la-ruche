@@ -38,7 +38,7 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
         .route("/auth/login", post(auth::login))
         .route("/auth/logout", post(auth::logout))
         .route("/auth/refresh", post(auth::refresh))
-        .route("/auth/me", get(auth::me))
+        .route("/auth/me", get(auth::me).patch(auth::update_me))
         .route(
             "/auth/passkey/register/start",
             post(auth::passkey_register_start),
