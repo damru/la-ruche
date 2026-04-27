@@ -216,11 +216,12 @@ async function saveTask() {
       // 'self'       → in_progress (self-assigned, no contractor)
       // 'none'       → open (unassigned)
       // 'contractor' → keep current status (contractor_id drives the assignment)
-      const statusPatch = assignMode.value === 'self'
-        ? 'in_progress'
-        : assignMode.value === 'none'
-          ? 'open'
-          : undefined
+      let statusPatch: string | undefined
+      if (assignMode.value === 'self') {
+        statusPatch = 'in_progress'
+      } else if (assignMode.value === 'none') {
+        statusPatch = 'open'
+      }
       await tasksApi.update(editingTask.value.id, {
         title: taskForm.value.title,
         description: taskForm.value.description || null,
