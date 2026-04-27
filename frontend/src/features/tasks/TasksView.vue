@@ -227,17 +227,21 @@ async function deleteTask(task: Task) {
 // ── Quick status actions ──────────────────────────────────────────
 const updatingStatus = ref<string | null>(null)
 
-async function takeCharge(task: Task) {
-  updatingStatus.value = task.id
+async function updateTaskStatus(taskId: string, status: string) {
+  updatingStatus.value = taskId
   pageError.value = ''
   try {
-    await tasksApi.update(task.id, { status: 'in_progress' })
+    await tasksApi.update(taskId, { status })
     await reload()
   } catch (err) {
     pageError.value = toErrorMessage(err, t('common.error'))
   } finally {
     updatingStatus.value = null
   }
+}
+
+async function takeCharge(task: Task) {
+  await updateTaskStatus(task.id, 'in_progress')
 }
 
 async function closeTaskManually(task: Task) {
@@ -248,16 +252,7 @@ async function closeTaskManually(task: Task) {
     variant: 'primary',
   })
   if (!ok) return
-  updatingStatus.value = task.id
-  pageError.value = ''
-  try {
-    await tasksApi.update(task.id, { status: 'closed' })
-    await reload()
-  } catch (err) {
-    pageError.value = toErrorMessage(err, t('common.error'))
-  } finally {
-    updatingStatus.value = null
-  }
+  await updateTaskStatus(task.id, 'closed')
 }
 
 // ── Vendor token actions ───────────────────────────────────────────
