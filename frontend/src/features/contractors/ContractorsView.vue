@@ -103,10 +103,13 @@ const editingContractor = ref<Contractor | null>(null)
 const saving = ref(false)
 const feedback = useFormFeedback()
 
-const DOMAINS = [
-  'maintenance', 'insurance', 'service', 'energy',
-  'water', 'cleaning', 'green_spaces', 'other',
-]
+const DOMAINS_RAW = ['maintenance', 'insurance', 'service', 'energy', 'water', 'cleaning', 'green_spaces', 'other']
+
+const DOMAINS = computed(() =>
+  [...DOMAINS_RAW].sort((a, b) =>
+    t(`contractors.domains.${a}`).localeCompare(t(`contractors.domains.${b}`)),
+  ),
+)
 
 const defaultForm = () => ({
   name: '',
