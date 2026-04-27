@@ -521,8 +521,8 @@
     "activeSummary": "{count} tâche(s) active(s)",
     "activeCount": "{count} tâche active | {count} tâches actives",
     "createdRelative": "Créée {relative}",
-    "closedOn": "Close le {date}",
-    "closedAt": "Close le {date}",
+    "closedOn": "Terminée le {date}",
+    "closedAt": "Terminée le {date}",
     "emptyState": "Aucune tâche dans cette catégorie.",
     "empty": "Aucune tâche dans cette catégorie.",
     "titleLabel": "Titre",
@@ -538,7 +538,7 @@
       "open": "Ouverte",
       "in_progress": "En cours",
       "awaiting_vendor": "En attente prestataire",
-      "closed": "Close",
+      "closed": "Terminée",
       "cancelled": "Annulée"
     },
     "filters": {
@@ -548,7 +548,7 @@
       "inProgress": "En cours",
       "awaiting_vendor": "Prestataire",
       "vendor": "Prestataire",
-      "closed": "Closes"
+      "closed": "Terminées"
     },
     "priorities": {
       "low": "Basse",
@@ -570,9 +570,9 @@
     "contractorLabel": "Prestataire assigné",
     "contractorPlaceholder": "Rechercher ou saisir le nom du prestataire…",
     "takeCharge": "Prendre en charge",
-    "closeTask": "Clore la tâche",
-    "confirmCloseTitle": "Clore la tâche",
-    "confirmCloseMessage": "La tâche « {title} » sera marquée comme close. Cette action peut être modifiée ultérieurement.",
+    "closeTask": "Terminer la tâche",
+    "confirmCloseTitle": "Terminer la tâche",
+    "confirmCloseMessage": "La tâche « {title} » sera marquée comme terminée. Cette action peut être modifiée ultérieurement.",
     "confirmTakeChargeTitle": "Prendre en charge la tâche",
     "confirmTakeChargeMessage": "Vous allez prendre en charge la tâche « {title} ». Son statut passera à « En cours ».",
     "reopenTask": "Ré-ouvrir la tâche",
@@ -590,7 +590,7 @@
       "assignedContractor": "Prestataire assigné",
       "vendorLink": "Lien prestataire actif",
       "vendorLinkExpiry": "Expire le {date}",
-      "closed": "Tâche close",
+      "closed": "Tâche terminée",
       "closedNote": "Cette tâche peut être ré-ouverte depuis la liste des tâches."
     }
   },
@@ -629,29 +629,31 @@
     "create": "Nouvelle consultation",
     "openCount": "{count} consultation ouverte | {count} consultations ouvertes",
     "openedAt": "Ouverte {date}",
-    "closedAt": "Close le {date}",
+    "closedAt": "Fermée le {date}",
     "responseCount": "{count} réponses",
     "responseCountOpen": "{count} réponse(s) reçue(s) — en cours",
     "statuses": {
       "draft": "Brouillon",
       "open": "Ouverte",
-      "closed": "Close"
+      "closed": "Fermée"
     },
     "filters": {
       "open": "Ouvertes",
-      "closed": "Closes"
+      "closed": "Fermées"
     },
     "respond": "Répondre",
     "updateVote": "Mettre à jour mon vote",
     "modifyVote": "Modifier mon vote",
     "myResponse": "Ma réponse",
     "results": "Résultats",
-    "close": "Clore",
+    "close": "Terminer",
     "noOpen": "Aucune consultation en cours",
-    "noClosed": "Aucune consultation close",
-    "closeAction": "Clore la consultation",
-    "confirmCloseTitle": "Clore la consultation",
-    "confirmCloseMessage": "La consultation sera close et les réponses ne seront plus acceptées.",
+    "noClosed": "Aucune consultation fermée",
+    "closeAction": "Terminer",
+    "confirmCloseTitle": "Terminer la consultation",
+    "confirmCloseMessage": "La consultation sera fermée et les réponses ne seront plus acceptées.",
+    "confirmDeleteTitle": "Supprimer la consultation",
+    "confirmDeleteMessage": "La consultation « {title} » et toutes ses réponses seront supprimées définitivement. Cette action est irréversible.",
     "legalNote": "Art. 17 & 24 loi 10/07/1965",
     "informalNote": "Cette consultation est informelle et n'a aucune valeur décisionnelle légale.",
     "informalNoteDetail": "Les consultations écrites permettent de recueillir l'avis des copropriétaires et des locataires sans valeur de vote.",

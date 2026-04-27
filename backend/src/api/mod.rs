@@ -218,7 +218,9 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
         )
         .route(
             "/consultations/{id}",
-            get(consultations::get).put(consultations::update),
+            get(consultations::get)
+                .put(consultations::update)
+                .delete(consultations::delete),
         )
         .route("/consultations/{id}/respond", post(consultations::respond))
         .route("/consultations/{id}/results", get(consultations::results))

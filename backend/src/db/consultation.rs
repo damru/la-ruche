@@ -342,3 +342,56 @@ pub async fn open(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()> {
     }
     Ok(())
 }
+
+/// Deletes a closed consultation and all its related data (choices, responses).
+/// Returns 404 if not found or not in closed state.
+pub async fn delete(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()> {
+    // Delete in dependency order: response_choices → responses → choices → consultation
+    let mut tx = pool.begin().await?;
+
+    // Verify the consultation exists and is closed
+    let row = sqlx::query(
+        "SELECT id FROM consultation WHERE id=$1 AND building_id=$2 AND status='closed'",
+    )
+    .bind(id)
+    .bind(building_id)
+    .fetch_optional(&mut *tx)
+    .await?;
+
+    if row.is_none() {
+        return Err(crate::errors::AppError::NotFound);
+    }
+
+    // Delete response_choices (cascade not set, delete explicitly via responses)
+    sqlx::query(
+        r#"DELETE FROM consultation_response_choice
+           WHERE response_id IN (
+               SELECT id FROM consultation_response WHERE consultation_id=$1
+           )"#,
+    )
+    .bind(id)
+    .execute(&mut *tx)
+    .await?;
+
+    // Delete responses
+    sqlx::query("DELETE FROM consultation_response WHERE consultation_id=$1")
+        .bind(id)
+        .execute(&mut *tx)
+        .await?;
+
+    // Delete choices
+    sqlx::query("DELETE FROM consultation_choice WHERE consultation_id=$1")
+        .bind(id)
+        .execute(&mut *tx)
+        .await?;
+
+    // Delete the consultation itself
+    sqlx::query("DELETE FROM consultation WHERE id=$1 AND building_id=$2")
+        .bind(id)
+        .bind(building_id)
+        .execute(&mut *tx)
+        .await?;
+
+    tx.commit().await?;
+    Ok(())
+}

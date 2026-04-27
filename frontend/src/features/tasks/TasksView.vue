@@ -476,15 +476,15 @@ function copyToClipboard(text: string) {
             <div class="task-row">
               <div
                 class="prio-bar"
-                :style="{ background: priorityColor(task.priority) }"
+                :style="{ background: task.status === 'closed' ? 'var(--color-on-surface-variant)' : priorityColor(task.priority) }"
               ></div>
               <div class="task-body">
                 <div class="task-badges">
-                  <CBadge :variant="priorityVariant(task.priority)">
+                  <CBadge :variant="task.status === 'closed' ? 'disabled' : priorityVariant(task.priority)">
                     {{ t(`tasks.priorities.${task.priority}`) }}
                   </CBadge>
                   <CBadge
-                    :variant="statusVariant(task.status)"
+                    :variant="task.status === 'closed' ? 'disabled' : statusVariant(task.status)"
                     dot
                   >
                     {{ t(`tasks.statuses.${task.status}`) }}
