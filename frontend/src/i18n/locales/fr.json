@@ -566,6 +566,7 @@
     "deleteTask": "Supprimer la tâche",
     "confirmDeleteTitle": "Supprimer la tâche",
     "confirmDeleteMessage": "La tâche « {title} » sera supprimée définitivement. Cette action est irréversible.",
+    "confirmDeleteLogbookMessage": "La tâche « {title} » est enregistrée dans le carnet d'entretien. La supprimer effacera également l'entrée correspondante du carnet. Cette action est irréversible.",
     "contractorLabel": "Prestataire assigné",
     "contractorPlaceholder": "Rechercher ou saisir le nom du prestataire…",
     "takeCharge": "Prendre en charge",

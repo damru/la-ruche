@@ -389,7 +389,7 @@ async function confirmClose() {
               class="card-actions"
             >
               <CBtn
-                variant="ghost"
+                variant="danger"
                 size="sm"
                 @click="openCloseModal(c)"
               >

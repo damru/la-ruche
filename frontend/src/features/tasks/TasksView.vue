@@ -278,7 +278,9 @@ const pageError = ref('')
 async function deleteTask(task: Task) {
   const ok = await confirm({
     title: t('tasks.confirmDeleteTitle'),
-    message: t('tasks.confirmDeleteMessage', { title: task.title }),
+    message: task.is_in_logbook
+      ? t('tasks.confirmDeleteLogbookMessage', { title: task.title })
+      : t('tasks.confirmDeleteMessage', { title: task.title }),
     confirmLabel: t('common.delete'),
     variant: 'danger',
   })
@@ -469,7 +471,7 @@ function copyToClipboard(text: string) {
             v-for="task in tasks"
             :key="task.id"
             padding="none"
-            class="task-card"
+            :class="['task-card', { 'task-card--closed': task.status === 'closed' }]"
           >
             <div class="task-row">
               <div
@@ -630,6 +632,7 @@ function copyToClipboard(text: string) {
       :open="showTaskModal"
       :title="editingTask ? t('tasks.editTask') : t('tasks.newTask')"
       size="md"
+      :closable="!savingTask"
       @update:open="showTaskModal = $event"
     >
       <form
@@ -854,6 +857,7 @@ function copyToClipboard(text: string) {
 .task-list { display: flex; flex-direction: column; gap: 10px; }
 
 .task-card { overflow: hidden; }
+.task-card--closed { box-shadow: none; outline: 1px solid var(--color-outline-variant); }
 .task-row { display: flex; align-items: stretch; gap: 0; }
 
 .prio-bar { width: 4px; flex-shrink: 0; }

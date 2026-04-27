@@ -23,6 +23,8 @@ pub struct TaskRow {
     pub token_expires_at: Option<DateTime<Utc>>,
     pub closed_at: Option<DateTime<Utc>>,
     pub created_at: DateTime<Utc>,
+    /// True when at least one maintenance_log entry references this task.
+    pub is_in_logbook: bool,
 }
 
 /// Safe DTO for list/get API responses.
@@ -43,6 +45,8 @@ pub struct TaskListItem {
     pub token_expires_at: Option<DateTime<Utc>>,
     pub closed_at: Option<DateTime<Utc>>,
     pub created_at: DateTime<Utc>,
+    /// True when at least one maintenance_log entry references this task.
+    pub is_in_logbook: bool,
 }
 
 impl From<TaskRow> for TaskListItem {
@@ -62,6 +66,7 @@ impl From<TaskRow> for TaskListItem {
             token_expires_at: r.token_expires_at,
             closed_at: r.closed_at,
             created_at: r.created_at,
+            is_in_logbook: r.is_in_logbook,
         }
     }
 }
@@ -106,19 +111,21 @@ fn task_row_from_query(r: &sqlx::postgres::PgRow) -> Result<TaskRow, sqlx::Error
         token_expires_at: r.try_get("token_expires_at")?,
         closed_at: r.try_get("closed_at")?,
         created_at: r.try_get("created_at")?,
+        is_in_logbook: r.try_get("is_in_logbook").unwrap_or(false),
     })
 }
 
 pub async fn list(pool: &PgPool, building_id: Uuid) -> AppResult<Vec<TaskRow>> {
     let rows = sqlx::query(
-        r#"SELECT id, building_id, title, description,
-           status::text AS status, priority::text AS priority,
-           contract_id, contractor_id, assigned_to, created_by, vendor_token,
-           token_expires_at, closed_at, created_at
-           FROM task WHERE building_id = $1
-           ORDER BY CASE status::text WHEN 'closed' THEN 1 ELSE 0 END ASC,
-                    CASE priority::text WHEN 'urgent' THEN 1 WHEN 'high' THEN 2
-                    WHEN 'normal' THEN 3 ELSE 4 END, created_at DESC"#,
+        r#"SELECT t.id, t.building_id, t.title, t.description,
+           t.status::text AS status, t.priority::text AS priority,
+           t.contract_id, t.contractor_id, t.assigned_to, t.created_by, t.vendor_token,
+           t.token_expires_at, t.closed_at, t.created_at,
+           EXISTS(SELECT 1 FROM maintenance_log WHERE task_id = t.id) AS is_in_logbook
+           FROM task t WHERE t.building_id = $1
+           ORDER BY CASE t.status::text WHEN 'closed' THEN 1 ELSE 0 END ASC,
+                    CASE t.priority::text WHEN 'urgent' THEN 1 WHEN 'high' THEN 2
+                    WHEN 'normal' THEN 3 ELSE 4 END, t.created_at DESC"#,
     )
     .bind(building_id)
     .fetch_all(pool)
@@ -131,11 +138,12 @@ pub async fn list(pool: &PgPool, building_id: Uuid) -> AppResult<Vec<TaskRow>> {
 
 pub async fn get(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<Option<TaskRow>> {
     let row = sqlx::query(
-        r#"SELECT id, building_id, title, description,
-           status::text AS status, priority::text AS priority,
-           contract_id, contractor_id, assigned_to, created_by, vendor_token,
-           token_expires_at, closed_at, created_at
-           FROM task WHERE id = $1 AND building_id = $2"#,
+        r#"SELECT t.id, t.building_id, t.title, t.description,
+           t.status::text AS status, t.priority::text AS priority,
+           t.contract_id, t.contractor_id, t.assigned_to, t.created_by, t.vendor_token,
+           t.token_expires_at, t.closed_at, t.created_at,
+           EXISTS(SELECT 1 FROM maintenance_log WHERE task_id = t.id) AS is_in_logbook
+           FROM task t WHERE t.id = $1 AND t.building_id = $2"#,
     )
     .bind(id)
     .bind(building_id)
@@ -160,7 +168,8 @@ pub async fn create(
            RETURNING id, building_id, title, description,
            status::text AS status, priority::text AS priority,
            contract_id, contractor_id, assigned_to, created_by, vendor_token,
-           token_expires_at, closed_at, created_at"#,
+           token_expires_at, closed_at, created_at,
+           FALSE AS is_in_logbook"#,
     )
     .bind(building_id)
     .bind(&input.title)
@@ -349,13 +358,14 @@ pub async fn revoke_token(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResu
 /// Looks up a task by its vendor token. Only valid (non-expired, non-closed) tokens match.
 pub async fn get_by_token(pool: &PgPool, token: Uuid) -> AppResult<Option<TaskRow>> {
     let row = sqlx::query(
-        r#"SELECT id, building_id, title, description,
-           status::text AS status, priority::text AS priority,
-           contract_id, contractor_id, assigned_to, created_by, vendor_token,
-           token_expires_at, closed_at, created_at
-           FROM task
-           WHERE vendor_token = $1 AND token_expires_at > NOW()
-           AND status != 'closed'"#,
+        r#"SELECT t.id, t.building_id, t.title, t.description,
+           t.status::text AS status, t.priority::text AS priority,
+           t.contract_id, t.contractor_id, t.assigned_to, t.created_by, t.vendor_token,
+           t.token_expires_at, t.closed_at, t.created_at,
+           EXISTS(SELECT 1 FROM maintenance_log WHERE task_id = t.id) AS is_in_logbook
+           FROM task t
+           WHERE t.vendor_token = $1 AND t.token_expires_at > NOW()
+           AND t.status != 'closed'"#,
     )
     .bind(token)
     .fetch_optional(pool)
