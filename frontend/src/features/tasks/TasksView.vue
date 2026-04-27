@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useFormatters } from '@/composables/useFormatters'
 import { usePageLoader, toErrorMessage } from '@/composables/usePageLoader'
@@ -93,6 +93,13 @@ function clearContractor() {
   contractorSearch.value = ''
   showSuggestions.value = false
 }
+
+// Auto-clear contractor when switching away from contractor mode
+watch(assignMode, (newMode) => {
+  if (newMode !== 'contractor') {
+    clearContractor()
+  }
+})
 
 // Map for looking up contractor name by id on task cards
 const contractorsById = computed(() =>
@@ -214,7 +221,7 @@ async function saveTask() {
         priority: taskForm.value.priority,
         contractor_id: assignMode.value === 'contractor'
           ? (selectedContractor.value?.id ?? null)
-          : (assignMode.value === 'none' ? null : undefined),
+          : (assignMode.value === 'self' || assignMode.value === 'none' ? null : undefined),
         ...(statusPatch ? { status: statusPatch } : {}),
       })
     } else {
@@ -573,9 +580,9 @@ function copyToClipboard(text: string) {
                     <CIconTrash />
                     {{ t('common.delete') }}
                   </CBtn>
-                  <!-- Generate link: non-closed/cancelled tasks without an active token -->
+                  <!-- Generate link: tasks with a contractor but no active token, not closed/cancelled -->
                   <CBtn
-                    v-if="!task.has_vendor_token && task.status !== 'closed' && task.status !== 'cancelled'"
+                    v-if="task.contractor_id && !task.has_vendor_token && task.status !== 'closed' && task.status !== 'cancelled'"
                     variant="ghost"
                     size="sm"
                     :disabled="generatingToken === task.id"
@@ -706,9 +713,9 @@ function copyToClipboard(text: string) {
             {{ selectedContractor.email || selectedContractor.phone || '' }}
           </span>
         </div>
-        <!-- Assignment mode: radio (visible for new tasks and for open tasks) -->
+        <!-- Assignment mode: radio (visible for new tasks, open tasks, and in_progress tasks) -->
         <div
-          v-if="!editingTask || editingTask.status === 'open'"
+          v-if="!editingTask || ['open', 'in_progress'].includes(editingTask.status)"
           class="form-field"
         >
           <label class="form-label">{{ t('tasks.assignmentSection') }}</label>
