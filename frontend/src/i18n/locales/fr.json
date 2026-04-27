@@ -58,14 +58,19 @@
     "confirmDelete": "Confirmer la suppression",
     "confirmArchive": "Confirmer l'archivage",
     "deleteLabel": "Supprimer définitivement",
-    "archiveLabel": "Archiver"
+    "archiveLabel": "Archiver",
+    "clear": "Effacer",
+    "phone": "Téléphone",
+    "phonePlaceholder": "06 00 00 00 00"
   },
   "page": {
     "onboarding": "Bienvenue",
     "contractor": "Espace prestataire",
     "unitCharges": "Charges de l'unité",
     "forbidden": "Accès refusé",
-    "notFound": "Page introuvable"
+    "notFound": "Page introuvable",
+    "contractors": "Catalogue prestataires",
+    "contractorDetail": "Fiche prestataire"
   },
   "addressAutocomplete": {
     "searchLabel": "Rechercher une adresse",
@@ -110,7 +115,8 @@
       "registry": "Registre",
       "residents": "Copro.",
       "residence-building": "Infos",
-      "residence-keys": "Clés"
+      "residence-keys": "Clés",
+      "contractors": "Presta."
     },
     "notifications": "Notifications",
     "logout": "Se déconnecter",
@@ -120,7 +126,8 @@
       "finance": "Finance",
       "operations": "Opérations",
       "residence": "Résidence"
-    }
+    },
+    "contractors": "Prestataires"
   },
   "roles": {
     "manager": "Syndic bénévole",
@@ -181,7 +188,7 @@
     "overdueLots": "{count} lot(s) en retard de paiement",
     "overdueTotal": "Total : {amount}",
     "overdueAmount": "{amount} en attente",
-    "lastClosedAg": "Dernière AG clôturée",
+    "lastClosedAg": "Dernière AG close",
     "newTask": "Nouvelle tâche",
     "seeResidents": "Gérer",
     "residentsTitle": "Résidents",
@@ -250,7 +257,7 @@
       "draft": "Brouillon",
       "called": "Convoquée",
       "held": "Tenue",
-      "closed": "Clôturée"
+      "closed": "Close"
     },
     "resolutionStatuses": {
       "passed": "Adoptée",
@@ -258,7 +265,7 @@
       "pending": "En attente"
     },
     "call": "Convoquer l'AG",
-    "close": "Clôturer l'AG",
+    "close": "Clore l'AG",
     "calledAt": "Convoquée le {date}",
     "meetingDate": "Date de l'AG",
     "location": "Lieu",
@@ -267,11 +274,11 @@
     "resolutionCount": "{count} résolution à l'ordre du jour | {count} résolutions à l'ordre du jour",
     "addResolution": "Ajouter résolution",
     "filterUpcoming": "À venir",
-    "filterClosed": "Clôturées",
+    "filterClosed": "Closes",
     "statResolutions": "résolution | résolutions",
     "statPassed": "adoptée | adoptées",
     "statPendingVotes": "votes en attente",
-    "bannerClosed": "AG clôturée · PV disponible",
+    "bannerClosed": "AG close · PV disponible",
     "bannerCalled": "AG convoquée · En attente de tenue",
     "depositMinutes": "Déposer le PV",
     "info": "Informations",
@@ -295,7 +302,7 @@
     "resolutionDescription": "Description",
     "resolutionDescriptionPlaceholder": "Détails de la résolution...",
     "voteRule": "Règle de vote",
-    "closeMeetingTitle": "Clôturer l'assemblée",
+    "closeMeetingTitle": "Clore l'assemblée",
     "closeMeetingSub": "La clôture est définitive. Assurez-vous que toutes les résolutions ont été votées et que le PV a été déposé.",
     "closeMeetingConfirm": "Confirmer la clôture",
     "pvTitle": "Déposer le procès-verbal",
@@ -340,7 +347,7 @@
       "draft": "Prévisionnel",
       "approved": "Approuvé",
       "approvedAG": "Approuvé en AG",
-      "closed": "Clôturé"
+      "closed": "Clos"
     },
     "forecast": "Prévisionnel",
     "budgetForecastLabel": "Budget prévisionnel",
@@ -451,7 +458,12 @@
     "terminateMessage": "Le contrat « {name} » sera marqué comme résilié. Les rappels restent conservés pour l'historique.",
     "terminateError": "Impossible de résilier ce contrat.",
     "noticePeriod": "Préavis de résiliation",
-    "reminders": "Rappels",
+    "reminders": {
+      "acknowledge": "Acquitter",
+      "acknowledgeError": "Impossible d'acquitter ce rappel.",
+      "empty": "Aucun rappel en attente.",
+      "dueNow": "échéance atteinte"
+    },
     "form": {
       "createTitle": "Nouveau contrat",
       "editTitle": "Modifier le contrat",
@@ -494,12 +506,6 @@
       "deleteError": "Impossible de supprimer cette pièce.",
       "empty": "Aucune pièce liée à ce contrat pour le moment."
     },
-    "reminders": {
-      "acknowledge": "Acquitter",
-      "acknowledgeError": "Impossible d'acquitter ce rappel.",
-      "empty": "Aucun rappel en attente.",
-      "dueNow": "échéance atteinte"
-    },
     "reminderTypes": {
       "renewal": "Reconduction",
       "payment_due": "Échéance paiement",
@@ -511,18 +517,28 @@
     "title": "Tâches",
     "create": "Nouvelle tâche",
     "newTask": "Nouvelle tâche",
+    "editTask": "Modifier la tâche",
     "activeSummary": "{count} tâche(s) active(s)",
     "activeCount": "{count} tâche active | {count} tâches actives",
     "createdRelative": "Créée {relative}",
-    "closedOn": "Clôturée le {date}",
-    "closedAt": "Clôturée le {date}",
+    "closedOn": "Close le {date}",
+    "closedAt": "Close le {date}",
     "emptyState": "Aucune tâche dans cette catégorie.",
     "empty": "Aucune tâche dans cette catégorie.",
+    "titleLabel": "Titre",
+    "descriptionLabel": "Description",
+    "priorityLabel": "Priorité",
+    "statusLabel": "Statut",
+    "updateStatus": "Changer le statut",
+    "vendorToken": "Lien prestataire",
+    "vendorTokenActive": "Lien actif — expire le {date}",
+    "vendorTokenUrl": "URL du lien",
+    "vendorTokenCopied": "URL copiée !",
     "statuses": {
       "open": "Ouverte",
       "in_progress": "En cours",
       "awaiting_vendor": "En attente prestataire",
-      "closed": "Clôturée",
+      "closed": "Close",
       "cancelled": "Annulée"
     },
     "filters": {
@@ -532,7 +548,7 @@
       "inProgress": "En cours",
       "awaiting_vendor": "Prestataire",
       "vendor": "Prestataire",
-      "closed": "Clôturées"
+      "closed": "Closes"
     },
     "priorities": {
       "low": "Basse",
@@ -541,8 +557,41 @@
       "urgent": "Urgente"
     },
     "generateToken": "Générer un lien prestataire",
+    "showLink": "Afficher le lien",
     "tokenExpires": "Expire le {date}",
-    "revokeToken": "Révoquer le lien"
+    "revokeToken": "Révoquer le lien",
+    "confirmRevokeTitle": "Révoquer le lien prestataire",
+    "confirmRevokeToken": "Révoquer ce lien empêchera le prestataire d'accéder à la tâche. Cette action est irréversible.",
+    "confirmStatusChange": "Confirmer le changement de statut vers \"{status}\" ?",
+    "deleteTask": "Supprimer la tâche",
+    "confirmDeleteTitle": "Supprimer la tâche",
+    "confirmDeleteMessage": "La tâche « {title} » sera supprimée définitivement. Cette action est irréversible.",
+    "contractorLabel": "Prestataire assigné",
+    "contractorPlaceholder": "Rechercher ou saisir le nom du prestataire…",
+    "takeCharge": "Prendre en charge",
+    "closeTask": "Clore la tâche",
+    "confirmCloseTitle": "Clore la tâche",
+    "confirmCloseMessage": "La tâche « {title} » sera marquée comme close. Cette action peut être modifiée ultérieurement.",
+    "confirmTakeChargeTitle": "Prendre en charge la tâche",
+    "confirmTakeChargeMessage": "Vous allez prendre en charge la tâche « {title} ». Son statut passera à « En cours ».",
+    "reopenTask": "Ré-ouvrir la tâche",
+    "confirmReopenTitle": "Ré-ouvrir la tâche",
+    "confirmReopenMessage": "La tâche « {title} » sera remise au statut « Ouverte ».",
+    "assignmentSection": "Assignation",
+    "assignNone": "Non assignée",
+    "assignSelf": "Prendre en charge (moi)",
+    "assignContractor": "Assigner un prestataire",
+    "lifecycle": {
+      "title": "Historique de la tâche",
+      "created": "Tâche créée",
+      "createdRelative": "Créée {relative}",
+      "assignedSelf": "Prise en charge",
+      "assignedContractor": "Prestataire assigné",
+      "vendorLink": "Lien prestataire actif",
+      "vendorLinkExpiry": "Expire le {date}",
+      "closed": "Tâche close",
+      "closedNote": "Cette tâche peut être ré-ouverte depuis la liste des tâches."
+    }
   },
   "documents": {
     "title": "Documents",
@@ -579,24 +628,53 @@
     "create": "Nouvelle consultation",
     "openCount": "{count} consultation ouverte | {count} consultations ouvertes",
     "openedAt": "Ouverte {date}",
-    "closedAt": "Clôturée le {date}",
+    "closedAt": "Close le {date}",
     "responseCount": "{count} réponses",
     "responseCountOpen": "{count} réponse(s) reçue(s) — en cours",
     "statuses": {
       "draft": "Brouillon",
       "open": "Ouverte",
-      "closed": "Clôturée"
+      "closed": "Close"
     },
     "filters": {
       "open": "Ouvertes",
-      "closed": "Clôturées"
+      "closed": "Closes"
     },
     "respond": "Répondre",
+    "updateVote": "Mettre à jour mon vote",
+    "modifyVote": "Modifier mon vote",
     "myResponse": "Ma réponse",
     "results": "Résultats",
-    "close": "Clôturer la consultation",
+    "close": "Clore",
+    "noOpen": "Aucune consultation en cours",
+    "noClosed": "Aucune consultation close",
+    "closeAction": "Clore la consultation",
+    "confirmCloseTitle": "Clore la consultation",
+    "confirmCloseMessage": "La consultation sera close et les réponses ne seront plus acceptées.",
+    "legalNote": "Art. 17 & 24 loi 10/07/1965",
     "informalNote": "Cette consultation est informelle et n'a aucune valeur décisionnelle légale.",
-    "informalNoteDetail": "Les consultations écrites permettent de recueillir l'avis des copropriétaires et des locataires sans valeur de vote."
+    "informalNoteDetail": "Les consultations écrites permettent de recueillir l'avis des copropriétaires et des locataires sans valeur de vote.",
+    "fields": {
+      "title": "Titre",
+      "description": "Description",
+      "visibleToRoles": "Accessible aux rôles",
+      "choices": "Options de réponse",
+      "addChoice": "Ajouter une option",
+      "removeChoice": "Supprimer l'option",
+      "minChoices": "Minimum 2 options requises"
+    },
+    "roles": {
+      "manager": "Syndic",
+      "board_member": "Conseil syndical",
+      "co_owner": "Copropriétaire",
+      "tenant": "Locataire"
+    },
+    "respondModal": {
+      "title": "Répondre à la consultation",
+      "chooseOption": "Choisissez une option",
+      "commentLabel": "Commentaire (optionnel)",
+      "submit": "Envoyer ma réponse"
+    }
   },
   "reports": {
     "title": "Signalements",
@@ -606,18 +684,23 @@
     "statuses": {
       "open": "Ouvert",
       "in_progress": "En cours",
-      "closed": "Clôturé"
+      "closed": "Clos"
     },
     "filters": {
       "open": "Ouverts",
       "inProgress": "En cours",
-      "closed": "Clôturés"
+      "closed": "Clos"
     }
   },
   "maintenance": {
     "title": "Carnet d'entretien",
     "create": "Ajouter une entrée",
     "addEntry": "Ajouter une entrée",
+    "editEntry": "Modifier l'entrée",
+    "deleteEntry": "Supprimer l'entrée",
+    "confirmDeleteTitle": "Supprimer l'entrée",
+    "confirmDeleteMessage": "L'entrée « {title} » sera supprimée définitivement.",
+    "onlyManualDelete": "Seules les entrées manuelles peuvent être supprimées.",
     "interventionTotal": "{count} intervention — coût total : {amount} | {count} interventions — coût total : {amount}",
     "summary": "{count} intervention(s) — coût total : {cost}",
     "searchPlaceholder": "Rechercher une intervention…",
@@ -628,6 +711,14 @@
     "sources": {
       "manual": "Saisie manuelle",
       "automatic": "Généré automatiquement"
+    },
+    "fields": {
+      "title": "Titre",
+      "description": "Description",
+      "interventionDate": "Date d'intervention",
+      "cost": "Coût (€)",
+      "vendorName": "Prestataire",
+      "contractId": "Contrat associé"
     }
   },
   "claims": {
@@ -639,21 +730,32 @@
     "statuses": {
       "open": "Ouvert",
       "in_progress": "En cours",
-      "closed": "Clôturé"
+      "closed": "Clos"
     },
     "filters": {
       "open": "Ouverts",
       "inProgress": "En instruction",
-      "closed": "Clôturés"
+      "closed": "Clos"
     }
   },
   "contractor": {
     "title": "Dépôt prestataire",
-    "subtitle": "Déposez vos documents pour clôturer la tâche",
+    "subtitle": "Déposez vos documents et/ou un commentaire pour finaliser l'intervention.",
+    "expiresAt": "Lien valide jusqu'au {date}",
     "comment": "Commentaire",
+    "commentPlaceholder": "Décrivez l'intervention réalisée (optionnel)",
+    "selectFiles": "Sélectionner des fichiers",
+    "dropzone": "Glissez vos fichiers ici ou cliquez pour parcourir",
+    "filesSelected": "{count} fichier sélectionné | {count} fichiers sélectionnés",
     "submit": "Valider le dépôt",
-    "success": "Dépôt enregistré avec succès",
-    "expired": "Ce lien a expiré ou est invalide"
+    "submitting": "Envoi en cours…",
+    "success": "Dépôt enregistré avec succès. La tâche a été close.",
+    "expired": "Ce lien a expiré ou est invalide.",
+    "uploadError": "Erreur lors de l'envoi d'un fichier.",
+    "contactTitle": "Contact syndic",
+    "contactEmail": "E-mail",
+    "contactAddress": "Adresse",
+    "contactPhone": "Téléphone"
   },
   "residents": {
     "title": "Résidents & Lots",
@@ -776,7 +878,9 @@
       "generalProtected": "Cette clé est obligatoire et ne peut pas être supprimée (art. 10 loi 1965).",
       "confirmDeleteTitle": "Supprimer la clé de répartition",
       "confirmDeleteMessage": "La clé « {name} » sera archivée. L'historique des appels de fonds associés sera conservé."
-    }
+    },
+    "phone": "Téléphone",
+    "phonePlaceholder": "06 00 00 00 00"
   },
   "errors": {
     "title": "Erreur",
@@ -834,5 +938,41 @@
     "submitting": "Initialisation en cours…",
     "alreadyInitTitle": "Instance déjà configurée",
     "alreadyInitText": "Cette instance a déjà été initialisée. Connectez-vous avec votre compte existant."
+  },
+  "contractors": {
+    "title": "Prestataires",
+    "newContractor": "Nouveau prestataire",
+    "editContractor": "Modifier le prestataire",
+    "summary": "{count} prestataire(s) enregistré(s)",
+    "searchPlaceholder": "Rechercher par nom, domaine, email…",
+    "noContractors": "Aucun prestataire enregistré",
+    "noResults": "Aucun résultat",
+    "name": "Nom",
+    "namePlaceholder": "Nom de l'entreprise ou de l'intervenant",
+    "nameRequired": "Le nom est obligatoire",
+    "domain": "Domaine",
+    "email": "Email",
+    "emailPlaceholder": "contact{'@'}entreprise.fr",
+    "phone": "Téléphone",
+    "phonePlaceholder": "06 00 00 00 00",
+    "deleteTitle": "Supprimer le prestataire",
+    "deleteConfirm": "Supprimer définitivement « {name} » ? Cette action est irréversible.",
+    "notes": "Notes",
+    "notesPlaceholder": "Informations utiles, contacts alternatifs, observations…",
+    "selectDomains": "Sélectionner un ou plusieurs domaines",
+    "assignedTasks": "{count} tâche(s) assignée(s)",
+    "noAssignedTasks": "Aucune tâche assignée à ce prestataire",
+    "noDomain": "Domaine non renseigné",
+    "domainsLabel": "Domaines",
+    "domains": {
+      "maintenance": "Maintenance",
+      "insurance": "Assurance",
+      "service": "Prestation",
+      "energy": "Énergie",
+      "water": "Eau",
+      "cleaning": "Nettoyage",
+      "green_spaces": "Espaces verts",
+      "other": "Autre"
+    }
   }
 }

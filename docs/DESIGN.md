@@ -183,6 +183,26 @@ La vue `Contrats` affiche en tête les rappels à traiter, avec une action d’a
 
 Les pièces justificatives d’un contrat restent regroupées dans une modale dédiée au contrat courant, afin de garder la liste principale lisible tout en laissant l’upload documentaire dans le même parcours.
 
+## Règle UI — CFormFeedback dans les modales (DDR-006)
+
+**Règle obligatoire :** tout `CModal` qui contient un formulaire ou une action destructive **doit** inclure un `CFormFeedback` dans le slot `#footer`, sur la même ligne que les boutons d'action. Le `CFormFeedback` ne doit jamais être placé dans le corps de la modale (`<template #default>`).
+
+```vue
+<CModal :open="showModal" title="…" @close="closeModal">
+  <form @submit.prevent="save">
+    <!-- champs du formulaire -->
+  </form>
+  <template #footer>
+    <!-- ✅ CFormFeedback TOUJOURS dans #footer, avant les boutons -->
+    <CFormFeedback :status="feedback.status.value" :message="feedback.message.value" />
+    <CBtn variant="ghost" @click="closeModal">Annuler</CBtn>
+    <CBtn variant="primary" :loading="saving" @click="save">Enregistrer</CBtn>
+  </template>
+</CModal>
+```
+
+Références d'implémentation : `frontend/src/components/atoms/CFormFeedback.vue`, `frontend/src/composables/useFormFeedback.ts`. Exemples : `ContractFormModal.vue`, `AllocationKeysView.vue`, `ContractorsView.vue`.
+
 ## DDR
 | Ref | Décision |
 |---|---|
@@ -191,3 +211,4 @@ Les pièces justificatives d’un contrat restent regroupées dans une modale d�
 | DDR-003 | Bottom nav mobile, sidebar desktop, filtrage par rôle |
 | DDR-004 | Groupes sidebar (pattern B labels fixes), dropdown profil utilisateur, routes `/residence/*` et `/profile/*` |
 | DDR-005 | États de chargement et d'erreur de page — `usePageLoader` + `CPageError` |
+| DDR-006 | `CFormFeedback` dans le slot `#footer` de toute `CModal` avec formulaire ou action destructive |

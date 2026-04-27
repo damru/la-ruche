@@ -95,6 +95,7 @@ export interface User {
   active: boolean
   roles: Role[]
   created_at: string
+  phone?: string
 }
 
 export interface Meeting {
@@ -210,8 +211,11 @@ export interface Task {
   status: TaskStatus
   priority: TaskPriority
   contract_id?: string
+  contractor_id?: string
   assigned_to?: string
-  vendor_token?: string
+  created_by?: string
+  /** True when a vendor token is active — the raw token UUID is never returned by list/get. */
+  has_vendor_token?: boolean
   token_expires_at?: string
   closed_at?: string
   created_at: string
@@ -259,12 +263,20 @@ export interface Consultation {
   closed_at?: string
   created_at: string
   choices: ConsultationChoice[]
+  /** IDs of the choices the current user has already selected (empty = not voted yet). */
+  my_choice_ids: string[]
+  /** Total number of distinct voters. */
+  total_responses: number
 }
 
 export interface ConsultationChoice {
   id: string
   label: string
   order_index: number
+  /** Number of voters who selected this choice (from list endpoint). */
+  votes: number
+  /** Percentage of voters who selected this choice (0–100). */
+  pct: number
 }
 
 // ── Auth ──────────────────────────────────────────────────────────
@@ -276,6 +288,7 @@ export interface AuthUser {
   last_name: string
   first_name: string
   email: string
+  phone?: string
 }
 
 // ── Generic API responses ─────────────────────────────────────────
@@ -328,6 +341,7 @@ export interface LoginResponse {
   last_name: string
   first_name: string
   email?: string
+  phone?: string
 }
 
 export interface BuildingStats {
@@ -369,6 +383,52 @@ export interface RegistryResponse {
     active: boolean
   }[]
   keys: RegistryKey[]
+}
+
+export interface ConsultationResults {
+  total: number
+  choices: {
+    id: string
+    label: string
+    votes: number
+    pct: number
+  }[]
+}
+
+/// Task visible to an external vendor (token-based, no auth).
+export interface VendorTask {
+  id: string
+  title: string
+  description?: string
+  status: string
+  token_expires_at?: string
+  building_name: string
+  building_address: string
+  manager_name: string
+  manager_email: string
+  manager_phone?: string
+}
+
+/// Contractor from the building's referential.
+export interface Contractor {
+  id: string
+  building_id: string
+  name: string
+  email?: string
+  phone?: string
+  /// Professional domains (multi-value).
+  domains: string[]
+  notes?: string
+  created_at: string
+  updated_at: string
+}
+
+/// Document metadata sent in a vendor submission.
+export interface VendorDocument {
+  key: string
+  original_name: string
+  mime_type: string
+  size_bytes: number
 }
 
 export interface UnitChargesLevy {

@@ -1,7 +1,7 @@
 use crate::errors::AppResult;
 use chrono::{DateTime, Utc};
 use serde::Serialize;
-use sqlx::PgPool;
+use sqlx::{PgPool, Postgres, Transaction};
 use uuid::Uuid;
 
 #[derive(Debug, Serialize, sqlx::FromRow)]
@@ -94,6 +94,41 @@ pub async fn create(
     .bind(size_bytes)
     .bind(visible_to_roles)
     .fetch_one(pool)
+    .await?)
+}
+
+/// Same as `create` but executes within an existing transaction.
+#[allow(clippy::too_many_arguments)]
+pub async fn create_tx(
+    tx: &mut Transaction<'_, Postgres>,
+    building_id: Uuid,
+    user_id: Uuid,
+    original_name: &str,
+    storage_path: &str,
+    bucket: &str,
+    mime_type: &str,
+    size_bytes: i64,
+    visible_to_roles: &[String],
+) -> AppResult<DocumentRow> {
+    Ok(sqlx::query_as::<_, DocumentRow>(
+        r#"INSERT INTO document (building_id, uploaded_by, original_name, storage_path,
+           bucket, mime_type, size_bytes, visible_to_roles)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8::user_role[])
+           RETURNING id, building_id, original_name, storage_path, bucket,
+           mime_type, size_bytes, uploaded_by,
+           extraction_status::text AS extraction_status,
+           visible_to_roles::text[] AS visible_roles,
+           created_at"#,
+    )
+    .bind(building_id)
+    .bind(user_id)
+    .bind(original_name)
+    .bind(storage_path)
+    .bind(bucket)
+    .bind(mime_type)
+    .bind(size_bytes)
+    .bind(visible_to_roles)
+    .fetch_one(&mut **tx)
     .await?)
 }
 

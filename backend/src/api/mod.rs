@@ -2,9 +2,12 @@ pub mod assemblies;
 pub mod auth;
 pub mod budget;
 pub mod building;
+pub mod consultations;
 pub mod contractor;
+pub mod contractors;
 pub mod contracts;
 pub mod documents;
+pub mod logbook;
 pub mod onboarding;
 mod stubs;
 pub mod tasks;
@@ -13,7 +16,7 @@ pub mod users;
 
 // Modules still implemented as stubs — re-exported from stubs.rs
 use std::sync::Arc;
-use stubs::{claims, consultations, logbook, reports};
+use stubs::{claims, reports};
 
 use axum::{
     Router,
@@ -35,7 +38,7 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
         .route("/auth/login", post(auth::login))
         .route("/auth/logout", post(auth::logout))
         .route("/auth/refresh", post(auth::refresh))
-        .route("/auth/me", get(auth::me))
+        .route("/auth/me", get(auth::me).patch(auth::update_me))
         .route(
             "/auth/passkey/register/start",
             post(auth::passkey_register_start),
@@ -170,10 +173,28 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
         )
         // ── Tasks ───────────────────────────────────────────────
         .route("/tasks", get(tasks::list).post(tasks::create))
-        .route("/tasks/{id}", get(tasks::get).put(tasks::update))
+        .route(
+            "/tasks/{id}",
+            get(tasks::get)
+                .put(tasks::update)
+                .delete(tasks::delete_task),
+        )
         .route(
             "/tasks/{id}/vendor-token",
-            post(tasks::generate_token).delete(tasks::revoke_token),
+            get(tasks::get_vendor_token_url)
+                .post(tasks::generate_token)
+                .delete(tasks::revoke_token),
+        )
+        // ── Contractors referential ─────────────────────────────
+        .route(
+            "/contractors",
+            get(contractors::list).post(contractors::create),
+        )
+        .route(
+            "/contractors/{id}",
+            get(contractors::get)
+                .put(contractors::update)
+                .delete(contractors::delete),
         )
         // ── Claims ──────────────────────────────────────────────
         .route("/claims", get(claims::list).post(claims::create))
@@ -204,12 +225,23 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
         .route("/consultations/{id}/close", post(consultations::close));
 
     // ── Public routes (vendor token, no JWT) ─────────────────────
+    // Vendor routes live under /api/v1 (without auth middleware) so that the
+    // SPA can serve /vendor/:token as a proper page and API calls go to
+    // /api/v1/vendor/:token — avoiding the JSON-page issue.
     let public = Router::new()
-        .route("/vendor/{token}", get(contractor::get_task))
-        .route("/vendor/{token}/submission", post(contractor::submit))
         // ── Onboarding first-run (no JWT) ─────────────────────────
         .route("/api/v1/onboarding/status", get(onboarding::status))
-        .route("/api/v1/onboarding/bootstrap", post(onboarding::bootstrap));
+        .route("/api/v1/onboarding/bootstrap", post(onboarding::bootstrap))
+        // ── Contractor access (tokenized, no JWT) ─────────────────
+        .route("/api/v1/vendor/{token}", get(contractor::get_task))
+        .route(
+            "/api/v1/vendor/{token}/upload-url",
+            post(contractor::upload_url),
+        )
+        .route(
+            "/api/v1/vendor/{token}/submission",
+            post(contractor::submit),
+        );
 
     Router::new()
         .nest("/api/v1", api)

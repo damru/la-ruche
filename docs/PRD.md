@@ -50,7 +50,9 @@
 
 **Contrats fournisseurs** — Chaque contrat recense fournisseur, objet, dates, montant et périodicité. Les reconductions tacites et préavis sont configurables. Des rappels (reconduction, échéance, expiration, résiliation) sont calculés automatiquement et acquittables manuellement. Le contrat d’assurance multirisque immeuble peut en plus regrouper ses pièces justificatives dans le même espace de suivi. → EP-006
 
-**Tâches & Prestataires** — Les tâches sont assignées en interne avec priorité et statut. Un lien tokenisé éphémère permet aux prestataires externes d'accéder sans compte, de déposer photos et documents, et de clôturer la tâche. Les fichiers transitent par un bucket staging avant validation. → EP-007
+**Tâches & Prestataires** — Les tâches sont assignées en interne avec priorité et statut. Un lien tokenisé éphémère permet aux prestataires externes d'accéder sans compte, de déposer photos et documents, et de clôturer la tâche. Les fichiers transitent par un bucket staging avant validation. Les tâches peuvent être liées à un prestataire du référentiel pour consolider l'historique. → EP-007
+
+**Référentiel prestataires** — Catalogue des entreprises et intervenants de la résidence (nom, email, téléphone, domaine). Accessible à tous les résidents (catalogue pratique), modifiable par les managers. Réutilisé à l'assignation des tâches et propagé au carnet d'entretien. → EP-015
 
 **Sinistres** — Déclaration d'un sinistre (libellé, date, lot ou parties communes) avec suivi de statut jusqu'à clôture et attachement de documents associés. → EP-008
 

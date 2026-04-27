@@ -124,14 +124,7 @@ pub mod claims {
 }
 
 // ── logbook ──────────────────────────────────────────────────────────
-pub mod logbook {
-    use super::*;
-    stub!(list);
-    stub!(create);
-    stub!(get);
-    stub!(update);
-    stub!(delete);
-}
+// (wired in api/logbook.rs)
 
 // ── reports ──────────────────────────────────────────────────────────
 pub mod reports {
@@ -143,20 +136,7 @@ pub mod reports {
 }
 
 // ── consultations ─────────────────────────────────────────────────
-pub mod consultations {
-    use super::*;
-    stub!(list);
-    stub!(create);
-    stub!(get);
-    stub!(update);
-    stub!(respond);
-    stub!(results);
-    stub!(close);
-}
+// (wired in api/consultations.rs)
 
 // ── contractor (tokenized public access) ─────────────────────────
-pub mod contractor {
-    use super::*;
-    stub!(get_task);
-    stub!(submit);
-}
+// (wired in api/contractor.rs)
