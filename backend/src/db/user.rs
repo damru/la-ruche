@@ -102,13 +102,11 @@ pub async fn update_phone(
     id: Uuid,
     phone: Option<&str>,
 ) -> crate::errors::AppResult<()> {
-    sqlx::query(
-        "UPDATE user_account SET phone = $1, updated_at = NOW() WHERE id = $2",
-    )
-    .bind(phone)
-    .bind(id)
-    .execute(pool)
-    .await?;
+    sqlx::query("UPDATE user_account SET phone = $1, updated_at = NOW() WHERE id = $2")
+        .bind(phone)
+        .bind(id)
+        .execute(pool)
+        .await?;
     Ok(())
 }
 

@@ -415,12 +415,7 @@ pub async fn update_me(
     auth: crate::domain::AuthUser,
     Json(input): Json<UpdateMeInput>,
 ) -> AppResult<impl axum::response::IntoResponse> {
-    db::user::update_phone(
-        &state.pool,
-        auth.user_id,
-        input.phone.as_deref(),
-    )
-    .await?;
+    db::user::update_phone(&state.pool, auth.user_id, input.phone.as_deref()).await?;
     let user = db::user::find_by_id(&state.pool, auth.user_id)
         .await?
         .ok_or(AppError::NotFound)?;
