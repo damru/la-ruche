@@ -55,12 +55,29 @@ pub async fn create(
     ))
 }
 
+/// Serde helper: correctly maps absent → None, null → Some(None), value → Some(Some(v)).
+/// Standard `Option<Option<T>>` treats both absent and null as None, which
+/// breaks the "patch: keep if absent, clear if null" semantics.
+mod double_option {
+    use serde::{Deserialize, Deserializer};
+
+    pub fn deserialize<'de, T, D>(deserializer: D) -> Result<Option<Option<T>>, D::Error>
+    where
+        T: Deserialize<'de>,
+        D: Deserializer<'de>,
+    {
+        Ok(Some(Option::deserialize(deserializer)?))
+    }
+}
+
 #[derive(Deserialize)]
 pub struct UpdateTaskInput {
     pub status: Option<String>,
     pub title: Option<String>,
+    #[serde(default, deserialize_with = "double_option::deserialize")]
     pub description: Option<Option<String>>,
     pub priority: Option<String>,
+    #[serde(default, deserialize_with = "double_option::deserialize")]
     pub contractor_id: Option<Option<Uuid>>,
 }
 
