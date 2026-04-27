@@ -327,10 +327,14 @@ export const vendorApi = {
   submit: (token: string, data: { comment?: string; documents: VendorDocument[] }) =>
     publicApi.post(`/api/v1/vendor/${token}/submission`, data),
   uploadToStaging: async (file: File, signedUrl: string): Promise<void> => {
+    // Keep the upload header aligned with the content type used to generate the
+    // presigned URL. Some browser-provided File objects have an empty `type`.
+    const contentType = file.type || 'application/octet-stream'
+
     const response = await fetch(signedUrl, {
       method: 'PUT',
       body: file,
-      headers: { 'Content-Type': file.type },
+      headers: { 'Content-Type': contentType },
     })
     if (!response.ok) {
       throw new Error(`Staging upload failed (${response.status})`)
