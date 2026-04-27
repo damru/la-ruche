@@ -389,7 +389,7 @@ function copyToClipboard(text: string) {
                     <CBadge :variant="priorityVariant(task.priority)">
                       {{ t(`tasks.priorities.${task.priority}`) }}
                     </CBadge>
-                    <CBadge :variant="statusVariant(task.status)">
+                    <CBadge :variant="statusVariant(task.status)" dot>
                       {{ t(`tasks.statuses.${task.status}`) }}
                     </CBadge>
                   </div>

@@ -262,6 +262,7 @@ async function confirmClose() {
             <CBadge
               :variant="c.status === 'open' ? 'open' : 'closed'"
               class="status-badge"
+              dot
             >
               {{ t(`consultations.statuses.${c.status}`) }}
             </CBadge>

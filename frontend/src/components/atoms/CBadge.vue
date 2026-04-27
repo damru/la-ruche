@@ -50,6 +50,24 @@ withDefaults(defineProps<{
   flex-shrink: 0;
 }
 
+/* Blinking dot for active / open statuses */
+.c-badge--open .c-badge__dot,
+.c-badge--valid .c-badge__dot {
+  animation: badge-pulse 2.8s ease-in-out infinite;
+}
+
+/* Empty ring dot for closed / inactive statuses */
+.c-badge--closed .c-badge__dot {
+  background: transparent;
+  border: 1.5px solid currentColor;
+  opacity: 0.5;
+}
+
+@keyframes badge-pulse {
+  0%, 100% { opacity: 0.65; transform: scale(1); }
+  50%       { opacity: 0.2;  transform: scale(0.85); }
+}
+
 /* ── Roles ──────────────────────────────────────────────────── */
 .c-badge--manager      { background: #e8def8; color: #21005d; }
 .c-badge--board_member { background: #d2e4fb; color: #001d36; }
