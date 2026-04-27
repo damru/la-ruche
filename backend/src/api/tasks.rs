@@ -79,6 +79,11 @@ pub async fn update(
             s
         )));
     }
+    if let Some(ref t) = input.title
+        && t.trim().is_empty()
+    {
+        return Err(AppError::Validation("title cannot be empty".to_string()));
+    }
     db::task::update_fields(
         &state.pool,
         id,

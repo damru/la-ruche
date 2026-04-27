@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { useFormatters } from '@/composables/useFormatters'
 import { usePageLoader, toErrorMessage } from '@/composables/usePageLoader'
 import { useFormFeedback, SUCCESS_AUTO_CLEAR_MS } from '@/composables/useFormFeedback'
+import { useAuthStore } from '@/stores/auth'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CCard from '@/components/molecules/CCard.vue'
@@ -18,6 +19,10 @@ import type { Consultation } from '@/types/domain'
 
 const { t } = useI18n()
 const { formatDate, formatRelative } = useFormatters()
+const authStore = useAuthStore()
+
+// Managers and board members can create/close consultations.
+const canManage = computed(() => authStore.hasAnyRole(['manager', 'board_member']))
 
 const buildingName = ref('')
 const allConsultations = ref<Consultation[]>([])
@@ -380,7 +385,7 @@ async function confirmClose() {
 
             <!-- Manager close action -->
             <div
-              v-if="c.status === 'open'"
+              v-if="c.status === 'open' && canManage"
               class="card-actions"
             >
               <CBtn
