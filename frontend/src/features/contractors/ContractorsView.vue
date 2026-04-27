@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { usePageLoader, toErrorMessage } from '@/composables/usePageLoader'
 import { useFormFeedback } from '@/composables/useFormFeedback'
 import { useAuthStore } from '@/stores/auth'
+import CBadge from '@/components/atoms/CBadge.vue'
 import CAlert from '@/components/atoms/CAlert.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CCard from '@/components/molecules/CCard.vue'
@@ -12,14 +13,50 @@ import CModal from '@/components/molecules/CModal.vue'
 import CPageError from '@/components/molecules/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
+import CIconBolt from '@/components/atoms/CIconBolt.svg'
+import CIconDroplet from '@/components/atoms/CIconDroplet.svg'
 import CIconEdit from '@/components/atoms/CIconEdit.svg'
+import CIconLayers from '@/components/atoms/CIconLayers.svg'
+import CIconLeaf from '@/components/atoms/CIconLeaf.svg'
 import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import CIconSearch from '@/components/atoms/CIconSearch.svg'
+import CIconSettings from '@/components/atoms/CIconSettings.svg'
+import CIconShield from '@/components/atoms/CIconShield.svg'
+import CIconSparkles from '@/components/atoms/CIconSparkles.svg'
 import CIconTrash from '@/components/atoms/CIconTrash.svg'
 import CIconUsers from '@/components/atoms/CIconUsers.svg'
+import CIconWrench from '@/components/atoms/CIconWrench.svg'
 import CIconChevronRight from '@/components/atoms/CIconChevronRight.svg'
 import { buildingApi, contractorsApi } from '@/api'
 import type { Contractor } from '@/types/domain'
+
+function domainIcon(domain?: string) {
+  const icons: Record<string, unknown> = {
+    maintenance: CIconWrench,
+    insurance: CIconShield,
+    service: CIconSettings,
+    energy: CIconBolt,
+    water: CIconDroplet,
+    cleaning: CIconSparkles,
+    green_spaces: CIconLeaf,
+    other: CIconLayers,
+  }
+  return icons[domain ?? ''] ?? CIconLayers
+}
+
+function domainTone(domain?: string): string {
+  const tones: Record<string, string> = {
+    maintenance: 'tone--warn',
+    insurance: 'tone--err',
+    service: 'tone--default',
+    energy: 'tone--accent',
+    water: 'tone--default',
+    cleaning: 'tone--valid',
+    green_spaces: 'tone--valid',
+    other: 'tone--default',
+  }
+  return tones[domain ?? ''] ?? 'tone--default'
+}
 
 const { t } = useI18n()
 const authStore = useAuthStore()
@@ -242,89 +279,77 @@ async function confirmDelete() {
           </p>
         </div>
 
-        <!-- Contractors table -->
-        <CCard
+        <!-- Contractors grid -->
+        <div
           v-else
-          style="min-width:0;overflow-x:auto"
+          class="contractors-grid"
         >
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>{{ t('contractors.name') }}</th>
-                <th>{{ t('contractors.domain') }}</th>
-                <th>{{ t('contractors.email') }}</th>
-                <th>{{ t('contractors.phone') }}</th>
-                <th v-if="canEdit"></th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                v-for="c in filtered"
-                :key="c.id"
-              >
-                <td class="font-medium">
-                  {{ c.name }}
-                </td>
-                <td>
-                  <span v-if="c.domain">{{ t(`contractors.domains.${c.domain}`, c.domain) }}</span>
-                  <span
-                    v-else
-                    style="color:var(--color-on-surface-variant)"
-                  >—</span>
-                </td>
-                <td>
-                  <a
-                    v-if="c.email"
-                    :href="`mailto:${c.email}`"
-                    class="link"
-                  >{{ c.email }}</a>
-                  <span
-                    v-else
-                    style="color:var(--color-on-surface-variant)"
-                  >—</span>
-                </td>
-                <td>
-                  <a
-                    v-if="c.phone"
-                    :href="`tel:${c.phone}`"
-                    class="link"
-                  >{{ c.phone }}</a>
-                  <span
-                    v-else
-                    style="color:var(--color-on-surface-variant)"
-                  >—</span>
-                </td>
-                <td
-                  v-if="canEdit"
-                  class="actions-cell"
+          <CCard
+            v-for="c in filtered"
+            :key="c.id"
+            class="contractor-card"
+          >
+            <div class="contractor-header">
+              <div :class="['contractor-domain-icon', domainTone(c.domain)]">
+                <component
+                  :is="domainIcon(c.domain)"
+                  class="domain-icon"
+                  aria-hidden="true"
+                />
+              </div>
+              <div class="contractor-header__badges">
+                <CBadge
+                  v-if="c.domain"
+                  variant="default"
                 >
-                  <CBtn
-                    variant="ghost"
-                    size="sm"
-                    :aria-label="t('common.edit')"
-                    @click="openEdit(c)"
-                  >
-                    <CIconEdit
-                      width="16"
-                      height="16"
-                    />
-                  </CBtn>
-                  <CBtn
-                    variant="ghost"
-                    size="sm"
-                    :aria-label="t('common.delete')"
-                    @click="openDeleteModal(c)"
-                  >
-                    <CIconTrash
-                      width="16"
-                      height="16"
-                    />
-                  </CBtn>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </CCard>
+                  {{ t(`contractors.domains.${c.domain}`, c.domain) }}
+                </CBadge>
+              </div>
+            </div>
+
+            <h3 class="title-md contractor-name">
+              {{ c.name }}
+            </h3>
+
+            <div
+              v-if="c.email || c.phone"
+              class="contractor-contacts"
+            >
+              <a
+                v-if="c.email"
+                :href="`mailto:${c.email}`"
+                class="contact-link"
+              >{{ c.email }}</a>
+              <a
+                v-if="c.phone"
+                :href="`tel:${c.phone}`"
+                class="contact-link"
+              >{{ c.phone }}</a>
+            </div>
+
+            <div
+              v-if="canEdit"
+              class="contractor-actions"
+            >
+              <CBtn
+                variant="ghost"
+                size="sm"
+                @click="openEdit(c)"
+              >
+                <CIconEdit />
+                {{ t('common.edit') }}
+              </CBtn>
+              <CBtn
+                variant="ghost"
+                size="sm"
+                @click="openDeleteModal(c)"
+              >
+                <CIconTrash />
+                {{ t('common.delete') }}
+              </CBtn>
+            </div>
+          </CCard>
+        </div>
       </template>
     </div>
 
@@ -462,7 +487,7 @@ async function confirmDelete() {
 
 .search-bar {
   position: relative;
-  max-width: 360px;
+  min-width: min(100%, 360px);
 }
 
 .search-icon {
@@ -478,12 +503,12 @@ async function confirmDelete() {
 
 .search-input {
   width: 100%;
-  padding: var(--space-2) var(--space-3) var(--space-2) calc(var(--space-3) + 20px);
-  border: 1px solid var(--color-outline);
+  height: 44px;
+  border: none;
   border-radius: var(--radius-md);
-  background: var(--color-surface);
+  background: var(--color-surface-container-high);
+  padding: 0 var(--space-4) 0 calc(var(--space-4) + 20px);
   color: var(--color-on-surface);
-  font-size: var(--text-sm);
 }
 
 .empty-state {
@@ -495,50 +520,82 @@ async function confirmDelete() {
   color: var(--color-on-surface-variant);
 }
 
-.data-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: var(--text-sm);
+/* Grid */
+.contractors-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-4);
 }
 
-.data-table th,
-.data-table td {
-  padding: var(--space-3) var(--space-4);
-  text-align: left;
-  border-bottom: 1px solid var(--color-outline-variant);
+/* Card */
+.contractor-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
 }
 
-.data-table th {
-  font-weight: var(--fw-medium);
-  color: var(--color-on-surface-variant);
+.contractor-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.contractor-domain-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: var(--tone-bg, var(--color-secondary-container));
+  color: var(--tone-fg, var(--color-primary));
+}
+
+.domain-icon {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+.contractor-header__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  justify-content: flex-end;
+  margin-left: auto;
+}
+
+.contractor-name {
+  margin: 0;
+}
+
+.contractor-contacts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.contact-link {
   font-size: var(--text-xs);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.data-table tr:last-child td {
-  border-bottom: none;
-}
-
-.font-medium {
-  font-weight: var(--fw-medium);
-}
-
-.link {
   color: var(--color-primary);
   text-decoration: none;
 }
 
-.link:hover {
+.contact-link:hover {
   text-decoration: underline;
 }
 
-.actions-cell {
+.contractor-actions {
   display: flex;
-  gap: var(--space-1);
-  justify-content: flex-end;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-top: auto;
+  padding-top: var(--space-3);
 }
 
+/* Form */
 .form-grid {
   display: flex;
   flex-direction: column;
