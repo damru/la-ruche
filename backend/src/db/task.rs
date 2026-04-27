@@ -111,7 +111,7 @@ fn task_row_from_query(r: &sqlx::postgres::PgRow) -> Result<TaskRow, sqlx::Error
         token_expires_at: r.try_get("token_expires_at")?,
         closed_at: r.try_get("closed_at")?,
         created_at: r.try_get("created_at")?,
-        is_in_logbook: r.try_get("is_in_logbook").unwrap_or(false),
+        is_in_logbook: r.try_get("is_in_logbook")?,
     })
 }
 

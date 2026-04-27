@@ -31,12 +31,17 @@ const stackStyle = computed(() => ({
 function close() {
   if (props.closable) emit('update:open', false)
 }
+
+function handleOpenChange(open: boolean) {
+  if (!open) close()
+  else emit('update:open', true)
+}
 </script>
 
 <template>
   <DialogRoot
     :open="open"
-    @update:open="v => { if (!v) close(); else emit('update:open', true) }"
+    @update:open="handleOpenChange"
   >
     <DialogPortal>
       <DialogOverlay
