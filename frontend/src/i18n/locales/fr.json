@@ -69,7 +69,8 @@
     "unitCharges": "Charges de l'unité",
     "forbidden": "Accès refusé",
     "notFound": "Page introuvable",
-    "contractors": "Catalogue prestataires"
+    "contractors": "Catalogue prestataires",
+    "contractorDetail": "Fiche prestataire"
   },
   "addressAutocomplete": {
     "searchLabel": "Rechercher une adresse",
@@ -579,7 +580,18 @@
     "assignmentSection": "Assignation",
     "assignNone": "Non assignée",
     "assignSelf": "Prendre en charge (moi)",
-    "assignContractor": "Assigner un prestataire"
+    "assignContractor": "Assigner un prestataire",
+    "lifecycle": {
+      "title": "Historique de la tâche",
+      "created": "Tâche créée",
+      "createdRelative": "Créée {relative}",
+      "assignedSelf": "Prise en charge",
+      "assignedContractor": "Prestataire assigné",
+      "vendorLink": "Lien prestataire actif",
+      "vendorLinkExpiry": "Expire le {date}",
+      "closed": "Tâche close",
+      "closedNote": "Cette tâche peut être ré-ouverte depuis la liste des tâches."
+    }
   },
   "documents": {
     "title": "Documents",
@@ -948,6 +960,9 @@
     "domains": "Domaines",
     "notes": "Notes",
     "notesPlaceholder": "Informations utiles, contacts alternatifs, observations…",
-    "selectDomains": "Sélectionner un ou plusieurs domaines"
+    "selectDomains": "Sélectionner un ou plusieurs domaines",
+    "assignedTasks": "{count} tâche(s) assignée(s)",
+    "noAssignedTasks": "Aucune tâche assignée à ce prestataire",
+    "noDomain": "Domaine non renseigné"
   }
 }

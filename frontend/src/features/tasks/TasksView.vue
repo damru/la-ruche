@@ -51,15 +51,22 @@ function contractorDomainLabel(c: Contractor): string {
 function onContractorInput() {
   const q = contractorSearch.value.trim().toLowerCase()
   if (!q) {
-    contractorSuggestions.value = []
-    showSuggestions.value = false
-    selectedContractor.value = null
+    // Show all contractors when input is empty (shows on focus)
+    contractorSuggestions.value = allContractors.value.slice(0, 10)
+    showSuggestions.value = contractorSuggestions.value.length > 0
     return
   }
   contractorSuggestions.value = allContractors.value
     .filter(c => c.name.toLowerCase().includes(q))
     .slice(0, 8)
   showSuggestions.value = contractorSuggestions.value.length > 0
+}
+
+function onContractorFocus() {
+  if (!contractorSearch.value.trim()) {
+    contractorSuggestions.value = allContractors.value.slice(0, 10)
+    showSuggestions.value = contractorSuggestions.value.length > 0
+  }
 }
 
 function selectContractorSuggestion(c: Contractor) {
@@ -455,12 +462,20 @@ function copyToClipboard(text: string) {
                   <CBadge :variant="priorityVariant(task.priority)">
                     {{ t(`tasks.priorities.${task.priority}`) }}
                   </CBadge>
-                  <CBadge :variant="statusVariant(task.status)" dot>
+                  <CBadge
+                    :variant="statusVariant(task.status)"
+                    dot
+                  >
                     {{ t(`tasks.statuses.${task.status}`) }}
                   </CBadge>
                 </div>
 
-                <span class="title-sm task-title">{{ task.title }}</span>
+                <RouterLink
+                  :to="{ name: 'task-detail', params: { id: task.id } }"
+                  class="title-sm task-title task-title-link"
+                >
+                  {{ task.title }}
+                </RouterLink>
                 <p
                   v-if="task.description"
                   class="task-desc body-sm"
@@ -525,7 +540,11 @@ function copyToClipboard(text: string) {
                   <span>{{ formatRelative(task.created_at) }}</span>
                   <span v-if="task.closed_at">· {{ t('tasks.closedAt', { date: formatDate(task.closed_at) }) }}</span>
                   <span v-if="task.contractor_id && contractorsById.get(task.contractor_id)">
-                    · 🔧 {{ contractorsById.get(task.contractor_id)!.name }}
+                    · 🔧
+                    <RouterLink
+                      :to="{ name: 'contractor-detail', params: { id: task.contractor_id } }"
+                      class="contractor-meta-link"
+                    >{{ contractorsById.get(task.contractor_id)!.name }}</RouterLink>
                   </span>
                 </div>
 
@@ -644,6 +663,7 @@ function copyToClipboard(text: string) {
               class="form-input"
               :placeholder="t('tasks.contractorPlaceholder')"
               autocomplete="off"
+              @focus="onContractorFocus"
               @input="onContractorInput"
               @blur="hideSuggestions"
             />
@@ -822,6 +842,18 @@ function copyToClipboard(text: string) {
 .task-body { flex: 1; padding: 14px 16px; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
 .task-badges { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 2px; }
 .task-title { display: block; margin-top: 4px; }
+.task-title-link {
+  color: inherit;
+  text-decoration: none;
+  font-weight: var(--fw-semibold);
+}
+.task-title-link:hover { text-decoration: underline; color: var(--color-primary); }
+.contractor-meta-link {
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: var(--fw-medium);
+}
+.contractor-meta-link:hover { text-decoration: underline; }
 .task-desc { color: var(--color-on-surface-variant); }
 .task-meta { font-size: var(--text-2xs); color: var(--color-on-surface-variant); margin-top: 4px; }
 

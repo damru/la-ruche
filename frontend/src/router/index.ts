@@ -14,8 +14,10 @@ const AssemblyDetailView      = () => import('@/features/assemblies/AssemblyDeta
 const BudgetView              = () => import('@/features/budget/BudgetView.vue')
 const DocumentsView           = () => import('@/features/documents/DocumentsView.vue')
 const TasksView               = () => import('@/features/tasks/TasksView.vue')
+const TaskDetailView          = () => import('@/features/tasks/TaskDetailView.vue')
 const ContractsView           = () => import('@/features/contracts/ContractsView.vue')
 const ContractorsView         = () => import('@/features/contractors/ContractorsView.vue')
+const ContractorDetailView    = () => import('@/features/contractors/ContractorDetailView.vue')
 const ClaimsView              = () => import('@/features/claims/ClaimsView.vue')
 const MaintenanceView         = () => import('@/features/maintenance/MaintenanceView.vue')
 const ConsultationsView       = () => import('@/features/consultations/ConsultationsView.vue')
@@ -98,10 +100,22 @@ const routes: RouteRecordRaw[] = [
         meta: { title: 'nav.tasks', roles: ['manager', 'board_member'] },
       },
       {
+        path: 'tasks/:id',
+        name: 'task-detail',
+        component: TaskDetailView,
+        meta: { title: 'nav.tasks', roles: ['manager', 'board_member'] },
+      },
+      {
         path: 'contractors',
         name: 'contractors',
         component: ContractorsView,
         meta: { title: 'nav.contractors', roles: [] },
+      },
+      {
+        path: 'contractors/:id',
+        name: 'contractor-detail',
+        component: ContractorDetailView,
+        meta: { title: 'page.contractors', roles: [] },
       },
       {
         path: 'contracts',
