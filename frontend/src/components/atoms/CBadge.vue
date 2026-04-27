@@ -56,6 +56,13 @@ withDefaults(defineProps<{
   animation: badge-pulse 2.8s ease-in-out infinite;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .c-badge--open .c-badge__dot,
+  .c-badge--valid .c-badge__dot {
+    animation: none;
+  }
+}
+
 /* Empty ring dot for closed / inactive statuses */
 .c-badge--closed .c-badge__dot {
   background: transparent;
