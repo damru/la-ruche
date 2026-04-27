@@ -566,7 +566,11 @@
     "confirmDeleteTitle": "Supprimer la tâche",
     "confirmDeleteMessage": "La tâche « {title} » sera supprimée définitivement. Cette action est irréversible.",
     "contractorLabel": "Prestataire assigné",
-    "contractorPlaceholder": "Rechercher ou saisir le nom du prestataire…"
+    "contractorPlaceholder": "Rechercher ou saisir le nom du prestataire…",
+    "takeCharge": "Prendre en charge",
+    "closeTask": "Clore la tâche",
+    "confirmCloseTitle": "Clore la tâche",
+    "confirmCloseMessage": "La tâche « {title} » sera marquée comme close. Cette action peut être modifiée ultérieurement."
   },
   "documents": {
     "title": "Documents",

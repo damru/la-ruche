@@ -224,6 +224,42 @@ async function deleteTask(task: Task) {
   }
 }
 
+// ── Quick status actions ──────────────────────────────────────────
+const updatingStatus = ref<string | null>(null)
+
+async function takeCharge(task: Task) {
+  updatingStatus.value = task.id
+  pageError.value = ''
+  try {
+    await tasksApi.update(task.id, { status: 'in_progress' })
+    await reload()
+  } catch (err) {
+    pageError.value = toErrorMessage(err, t('common.error'))
+  } finally {
+    updatingStatus.value = null
+  }
+}
+
+async function closeTaskManually(task: Task) {
+  const ok = await confirm({
+    title: t('tasks.confirmCloseTitle'),
+    message: t('tasks.confirmCloseMessage', { title: task.title }),
+    confirmLabel: t('tasks.closeTask'),
+    variant: 'primary',
+  })
+  if (!ok) return
+  updatingStatus.value = task.id
+  pageError.value = ''
+  try {
+    await tasksApi.update(task.id, { status: 'closed' })
+    await reload()
+  } catch (err) {
+    pageError.value = toErrorMessage(err, t('common.error'))
+  } finally {
+    updatingStatus.value = null
+  }
+}
+
 // ── Vendor token actions ───────────────────────────────────────────
 const generatingToken = ref<string | null>(null)
 // vendorLinks: task.id → { url, expires_at } — populated on demand
@@ -410,6 +446,32 @@ function copyToClipboard(text: string) {
                       @click="deleteTask(task)"
                     >
                       <CIconTrash
+                        width="15"
+                        height="15"
+                      />
+                    </button>
+                    <!-- Take charge: open → in_progress (internal, no contractor) -->
+                    <button
+                      v-if="task.status === 'open'"
+                      class="icon-btn icon-btn--valid"
+                      :title="t('tasks.takeCharge')"
+                      :disabled="updatingStatus === task.id"
+                      @click="takeCharge(task)"
+                    >
+                      <CIconUser
+                        width="15"
+                        height="15"
+                      />
+                    </button>
+                    <!-- Close manually: in_progress → closed (no vendor needed) -->
+                    <button
+                      v-if="task.status === 'in_progress'"
+                      class="icon-btn icon-btn--valid"
+                      :title="t('tasks.closeTask')"
+                      :disabled="updatingStatus === task.id"
+                      @click="closeTaskManually(task)"
+                    >
+                      <CIconCheckCircle
                         width="15"
                         height="15"
                       />

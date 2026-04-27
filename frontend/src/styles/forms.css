@@ -136,6 +136,7 @@
 }
 
 .icon-btn--danger:hover { color: var(--color-error); }
+.icon-btn--valid:hover { color: var(--color-success); }
 
 /* ── Checkbox ─────────────────────────────────────────────────────── */
 /*
