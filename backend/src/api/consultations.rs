@@ -64,7 +64,7 @@ pub async fn get(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
 ) -> AppResult<Json<serde_json::Value>> {
-    let c = db::consultation::get_with_choices(&state.pool, id, auth.building_id)
+    let c = db::consultation::get_with_choices(&state.pool, id, auth.building_id, auth.user_id)
         .await?
         .ok_or(AppError::NotFound)?;
     Ok(Json(serde_json::json!({
@@ -148,7 +148,7 @@ pub async fn respond(
     }
 
     // visible_to_roles check: fetch consultation and verify caller role is allowed
-    let c = db::consultation::get_with_choices(&state.pool, id, auth.building_id)
+    let c = db::consultation::get_with_choices(&state.pool, id, auth.building_id, auth.user_id)
         .await?
         .ok_or(AppError::NotFound)?;
 

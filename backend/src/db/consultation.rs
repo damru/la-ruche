@@ -80,29 +80,63 @@ pub async fn list(
         .map_err(Into::into)
 }
 
+/// Returns a single consultation with the same full payload as `list`:
+/// choices include live vote counts + percentages; my_choice_ids and
+/// total_responses are also included so callers don't need extra round-trips.
 pub async fn get_with_choices(
     pool: &PgPool,
     id: Uuid,
     building_id: Uuid,
+    user_id: Uuid,
 ) -> AppResult<Option<serde_json::Value>> {
     let row = sqlx::query(
-        r#"SELECT id, title, description, status::text AS status,
-           visible_to_roles::text[] AS visible_to_roles, closed_at, created_at
-           FROM consultation WHERE id = $1 AND building_id = $2"#,
+        r#"SELECT
+           c.id, c.title, c.description, c.status::text AS status,
+           c.visible_to_roles::text[] AS visible_to_roles, c.closed_at, c.created_at,
+           total_r.cnt AS total_responses,
+           COALESCE(my_c.choice_ids, '[]'::json) AS my_choice_ids,
+           COALESCE(choices_agg.data, '[]'::json) AS choices
+           FROM consultation c
+           LEFT JOIN LATERAL (
+               SELECT COUNT(*) AS cnt
+               FROM consultation_response cr
+               WHERE cr.consultation_id = c.id
+           ) total_r ON true
+           LEFT JOIN LATERAL (
+               SELECT COALESCE(JSON_AGG(crc.choice_id::text), '[]'::json) AS choice_ids
+               FROM consultation_response cr2
+               JOIN consultation_response_choice crc ON crc.response_id = cr2.id
+               WHERE cr2.consultation_id = c.id AND cr2.user_id = $3
+           ) my_c ON true
+           LEFT JOIN LATERAL (
+               SELECT COALESCE(JSON_AGG(JSON_BUILD_OBJECT(
+                   'id',          cc.id,
+                   'label',       cc.label,
+                   'order_index', cc.order_index,
+                   'votes',       COALESCE(vc.cnt, 0)::int,
+                   'pct',         CASE WHEN total_r.cnt > 0
+                                       THEN ROUND(COALESCE(vc.cnt, 0) * 100.0 / total_r.cnt)::int
+                                       ELSE 0 END
+               ) ORDER BY cc.order_index), '[]'::json) AS data
+               FROM consultation_choice cc
+               LEFT JOIN (
+                   SELECT crc2.choice_id, COUNT(*) AS cnt
+                   FROM consultation_response cr3
+                   JOIN consultation_response_choice crc2 ON crc2.response_id = cr3.id
+                   WHERE cr3.consultation_id = c.id
+                   GROUP BY crc2.choice_id
+               ) vc ON vc.choice_id = cc.id
+               WHERE cc.consultation_id = c.id
+           ) choices_agg ON true
+           WHERE c.id = $1 AND c.building_id = $2"#,
     )
     .bind(id)
     .bind(building_id)
+    .bind(user_id)
     .fetch_optional(pool)
     .await?;
 
     let Some(r) = row else { return Ok(None) };
-
-    let choices = sqlx::query(
-        "SELECT id, label, order_index FROM consultation_choice WHERE consultation_id = $1 ORDER BY order_index",
-    )
-    .bind(id)
-    .fetch_all(pool)
-    .await?;
 
     Ok(Some(serde_json::json!({
         "id": r.try_get::<Uuid, _>("id")?,
@@ -112,13 +146,9 @@ pub async fn get_with_choices(
         "visible_to_roles": r.try_get::<Vec<String>, _>("visible_to_roles")?,
         "closed_at": r.try_get::<Option<DateTime<Utc>>, _>("closed_at")?,
         "created_at": r.try_get::<DateTime<Utc>, _>("created_at")?,
-        "choices": choices.iter().map(|c| -> Result<_, sqlx::Error> {
-            Ok(serde_json::json!({
-                "id": c.try_get::<Uuid, _>("id")?,
-                "label": c.try_get::<String, _>("label")?,
-                "order_index": c.try_get::<i32, _>("order_index")?,
-            }))
-        }).collect::<Result<Vec<_>, _>>()?,
+        "total_responses": r.try_get::<i64, _>("total_responses")?,
+        "my_choice_ids": r.try_get::<serde_json::Value, _>("my_choice_ids")?,
+        "choices": r.try_get::<serde_json::Value, _>("choices")?,
     })))
 }
 
