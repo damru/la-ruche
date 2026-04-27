@@ -28,7 +28,7 @@ onUnmounted(() => {
         <CIconHome />
       </template>
       <template #icon-assemblies>
-        <CIconUsers />
+        <CIconAgora />
       </template>
       <template #icon-budget>
         <CIconCurrency />
@@ -40,7 +40,7 @@ onUnmounted(() => {
         <CIconWrench />
       </template>
       <template #icon-contractors>
-        <CIconUsers />
+        <CIconHardHat />
       </template>
       <template #icon-contracts>
         <CIconFile />
