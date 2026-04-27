@@ -6,7 +6,7 @@
         lint lint-fix check \
         migrate migrate-test migrate-revert sqlx-prepare seed-dev \
         docker docker-up docker-down docker-prod docker-logs \
-        clean install-tools setup setup-hooks
+        clean install-tools setup setup-hooks commit fmt
 
 # Variables
 DB_URL      := postgres://laruche:laruche@localhost:5432/laruche
@@ -102,10 +102,10 @@ install-tools: ## Install development tools
 	cargo install cargo-watch --locked
 	cd frontend && npm ci
 
-setup-hooks: ## Install git hooks (pre-commit: cargo fmt)
+setup-hooks: ## Install git hooks (pre-commit: cargo fmt + clippy)
 	git config core.hooksPath .githooks
 	chmod +x .githooks/pre-commit
-	@echo "✅ Git hooks installés (.githooks/)"
+	@echo "✅ Git hooks installed (.githooks/)"
 
 setup: ## Full initial setup
 	cp backend/.env.example backend/.env
@@ -113,4 +113,15 @@ setup: ## Full initial setup
 	docker compose up -d postgres minio
 	sleep 3
 	$(MAKE) migrate
-	@echo "✅ La Ruche prêt — lancez 'make dev'"
+	@echo "✅ La Ruche ready — run 'make dev'"
+
+fmt: ## Format Rust code (cargo fmt)
+	cd backend && cargo fmt
+
+commit: ## Safe commit — runs all .githooks hooks then git commit
+	@echo "▶ Running pre-commit hooks from .githooks/ ..."
+	@for hook in .githooks/*; do \
+	  [ -x "$$hook" ] && "$$hook" || true; \
+	done
+	@echo "✅ Hooks passed — committing"
+	git commit $(filter-out $@,$(MAKECMDGOALS))
