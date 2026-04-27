@@ -5,7 +5,6 @@ import { usePageLoader, toErrorMessage } from '@/composables/usePageLoader'
 import { useFormFeedback } from '@/composables/useFormFeedback'
 import { useAuthStore } from '@/stores/auth'
 import CBadge from '@/components/atoms/CBadge.vue'
-import CAlert from '@/components/atoms/CAlert.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
@@ -103,7 +102,6 @@ const showModal = ref(false)
 const editingContractor = ref<Contractor | null>(null)
 const saving = ref(false)
 const feedback = useFormFeedback()
-const actionError = ref('')
 
 const DOMAINS = [
   'maintenance', 'insurance', 'service', 'energy',
@@ -245,13 +243,6 @@ async function confirmDelete() {
             </p>
           </div>
         </div>
-
-        <CAlert
-          v-if="actionError"
-          variant="error"
-          :message="actionError"
-          class="mb-4"
-        />
 
         <!-- Search bar -->
         <div class="search-bar">
