@@ -212,15 +212,22 @@ async function saveTask() {
   taskFeedback.reset()
   try {
     if (editingTask.value) {
-      // Determine status change from assignMode
-      const statusPatch = assignMode.value === 'self' ? 'in_progress' : undefined
+      // Reflect assignment mode change in DB:
+      // 'self'       → in_progress (self-assigned, no contractor)
+      // 'none'       → open (unassigned)
+      // 'contractor' → keep current status (contractor_id drives the assignment)
+      const statusPatch = assignMode.value === 'self'
+        ? 'in_progress'
+        : assignMode.value === 'none'
+          ? 'open'
+          : undefined
       await tasksApi.update(editingTask.value.id, {
         title: taskForm.value.title,
         description: taskForm.value.description || null,
         priority: taskForm.value.priority,
         contractor_id: assignMode.value === 'contractor'
           ? (selectedContractor.value?.id ?? null)
-          : (assignMode.value === 'self' || assignMode.value === 'none' ? null : undefined),
+          : null,
         ...(statusPatch ? { status: statusPatch } : {}),
       })
     } else {
@@ -714,7 +721,7 @@ function copyToClipboard(text: string) {
         </div>
         <!-- Assignment mode: radio (visible for new tasks, open tasks, and in_progress tasks) -->
         <div
-          v-if="!editingTask || ['open', 'in_progress'].includes(editingTask.status)"
+          v-if="!editingTask || ['open', 'in_progress', 'awaiting_vendor'].includes(editingTask.status)"
           class="form-field"
         >
           <label class="form-label">{{ t('tasks.assignmentSection') }}</label>
