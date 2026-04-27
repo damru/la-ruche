@@ -5,6 +5,7 @@
 type Variant =
   | 'manager' | 'board_member' | 'co_owner' | 'tenant'
   | 'open' | 'pending' | 'closed'
+  | 'valid' | 'err'
   | 'primary' | 'default'
 
 withDefaults(defineProps<{
@@ -17,7 +18,7 @@ withDefaults(defineProps<{
 </script>
 
 <template>
-  <span :class="['c-badge', `c-badge--${variant}`, { 'tone--default': variant === 'primary', 'tone--warn': variant === 'pending' }]">
+  <span :class="['c-badge', `c-badge--${variant}`, { 'tone--default': variant === 'primary', 'tone--warn': variant === 'pending', 'tone--valid': variant === 'valid', 'tone--err': variant === 'err' }]">
     <span
       v-if="dot"
       class="c-badge__dot"
@@ -64,6 +65,10 @@ withDefaults(defineProps<{
 .c-badge--open    { background: var(--color-success-container); color: var(--color-success); }
 .c-badge--pending { background: var(--tone-bg); color: var(--tone-fg); }
 .c-badge--closed  { background: var(--color-surface-container-high); color: var(--color-on-surface-variant); }
+
+/* ── Priority / Urgency ────────────────────────────────────── */
+.c-badge--valid { background: var(--tone-bg); color: var(--tone-fg); }
+.c-badge--err   { background: var(--tone-bg); color: var(--tone-fg); }
 
 /* ── Generic ───────────────────────────────────────────────── */
 .c-badge--primary { background: var(--tone-bg); color: var(--tone-fg); }

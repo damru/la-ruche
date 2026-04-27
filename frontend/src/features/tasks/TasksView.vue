@@ -119,18 +119,19 @@ const activeCount = computed(() =>
 )
 
 // ── Helpers ───────────────────────────────────────────────────────
-function statusVariant(s: string): 'open' | 'pending' | 'closed' | 'default' {
-  if (s === 'open') return 'pending'
+function statusVariant(s: string): 'valid' | 'open' | 'pending' | 'closed' | 'default' {
+  if (s === 'open') return 'valid'
   if (s === 'in_progress') return 'open'
   if (s === 'awaiting_vendor') return 'default'
   if (s === 'closed') return 'closed'
   return 'default'
 }
 
-function priorityVariant(p: string): 'open' | 'pending' | 'closed' | 'default' {
-  if (p === 'urgent') return 'closed'
-  if (p === 'high') return 'open'
-  if (p === 'normal') return 'pending'
+function priorityVariant(p: string): 'err' | 'pending' | 'primary' | 'valid' | 'default' {
+  if (p === 'urgent') return 'err'
+  if (p === 'high') return 'pending'
+  if (p === 'normal') return 'primary'
+  if (p === 'low') return 'valid'
   return 'default'
 }
 
@@ -138,7 +139,7 @@ function priorityColor(p: string): string {
   if (p === 'urgent') return 'var(--color-error)'
   if (p === 'high') return 'var(--color-warning)'
   if (p === 'normal') return 'var(--color-primary)'
-  return 'var(--color-outline-variant)'
+  return 'var(--color-success)'
 }
 
 // ── Task modal actions ────────────────────────────────────────────
