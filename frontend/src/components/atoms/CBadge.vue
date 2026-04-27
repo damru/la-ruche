@@ -5,6 +5,7 @@
 type Variant =
   | 'manager' | 'board_member' | 'co_owner' | 'tenant'
   | 'open' | 'pending' | 'closed'
+  | 'valid' | 'err'
   | 'primary' | 'default'
 
 withDefaults(defineProps<{
@@ -17,7 +18,7 @@ withDefaults(defineProps<{
 </script>
 
 <template>
-  <span :class="['c-badge', `c-badge--${variant}`, { 'tone--default': variant === 'primary', 'tone--warn': variant === 'pending' }]">
+  <span :class="['c-badge', `c-badge--${variant}`, { 'tone--default': variant === 'primary', 'tone--warn': variant === 'pending', 'tone--valid': variant === 'valid', 'tone--err': variant === 'err' }]">
     <span
       v-if="dot"
       class="c-badge__dot"
@@ -49,6 +50,31 @@ withDefaults(defineProps<{
   flex-shrink: 0;
 }
 
+/* Blinking dot for active / open statuses */
+.c-badge--open .c-badge__dot,
+.c-badge--valid .c-badge__dot {
+  animation: badge-pulse 2.8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .c-badge--open .c-badge__dot,
+  .c-badge--valid .c-badge__dot {
+    animation: none;
+  }
+}
+
+/* Empty ring dot for closed / inactive statuses */
+.c-badge--closed .c-badge__dot {
+  background: transparent;
+  border: 1.5px solid currentColor;
+  opacity: 0.5;
+}
+
+@keyframes badge-pulse {
+  0%, 100% { opacity: 0.65; transform: scale(1); }
+  50%       { opacity: 0.2;  transform: scale(0.85); }
+}
+
 /* ── Roles ──────────────────────────────────────────────────── */
 .c-badge--manager      { background: #e8def8; color: #21005d; }
 .c-badge--board_member { background: #d2e4fb; color: #001d36; }
@@ -64,6 +90,10 @@ withDefaults(defineProps<{
 .c-badge--open    { background: var(--color-success-container); color: var(--color-success); }
 .c-badge--pending { background: var(--tone-bg); color: var(--tone-fg); }
 .c-badge--closed  { background: var(--color-surface-container-high); color: var(--color-on-surface-variant); }
+
+/* ── Priority / Urgency ────────────────────────────────────── */
+.c-badge--valid { background: var(--tone-bg); color: var(--tone-fg); }
+.c-badge--err   { background: var(--tone-bg); color: var(--tone-fg); }
 
 /* ── Generic ───────────────────────────────────────────────── */
 .c-badge--primary { background: var(--tone-bg); color: var(--tone-fg); }

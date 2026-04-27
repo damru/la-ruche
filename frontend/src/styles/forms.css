@@ -136,6 +136,7 @@
 }
 
 .icon-btn--danger:hover { color: var(--color-error); }
+.icon-btn--valid:hover { color: var(--color-success); }
 
 /* ── Checkbox ─────────────────────────────────────────────────────── */
 /*
@@ -188,6 +189,46 @@
 }
 
 .checkbox-label input[type="checkbox"]:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Radio buttons — same pattern as checkboxes */
+.checkbox-label input[type="radio"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  min-width: 18px;
+  height: 18px;
+  min-height: 18px;
+  flex-shrink: 0;
+  border: 1.5px solid var(--color-outline-variant);
+  border-radius: 50%;
+  background: var(--color-surface-container-lowest);
+  cursor: pointer;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+  position: relative;
+}
+
+.checkbox-label input[type="radio"]:checked {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.checkbox-label input[type="radio"]:checked::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  background: #fff;
+  border-radius: 50%;
+}
+
+.checkbox-label input[type="radio"]:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.checkbox-label input[type="radio"]:disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }

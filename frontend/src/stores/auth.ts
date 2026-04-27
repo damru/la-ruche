@@ -52,6 +52,7 @@ export const useAuthStore = defineStore('auth', () => {
       last_name:   data.last_name,
       first_name:  data.first_name,
       email,
+      phone:       data.phone,
     }
     needsOnboarding.value = false
   }
@@ -78,6 +79,7 @@ export const useAuthStore = defineStore('auth', () => {
           last_name:   data.last_name,
           first_name:  data.first_name,
           email:       data.email ?? '',
+          phone:       data.phone,
         }
         return true
       } catch {

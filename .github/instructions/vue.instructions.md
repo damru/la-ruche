@@ -24,3 +24,29 @@ applyTo: '**/*.vue'
 
 - Always create or reuse SVG icons instead of using icon fonts or external libraries. This ensures visual consistency and optimal performance. These icons are located as atomic components in the `src/components/atoms/` directory.
 - Follow the design system tokens for typography, colors, and spacing as defined in `DESIGN.md`. Use CSS variables for colors and font weights to maintain consistency across the application.
+
+## Modal Form Feedback (DDR-006 — Non-negotiable)
+
+**Every `CModal` that contains a form or a destructive action MUST include a `CFormFeedback` component inside the `#footer` slot, placed before the action buttons.** This is a mandatory design rule — do not place feedback messages inside the modal body.
+
+```vue
+<!-- ✅ CORRECT — CFormFeedback in #footer before buttons -->
+<CModal :open="showModal" title="…" @close="closeModal">
+  <form @submit.prevent="save">
+    <!-- form fields only — no feedback here -->
+  </form>
+  <template #footer>
+    <CFormFeedback :status="feedback.status.value" :message="feedback.message.value" />
+    <CBtn variant="ghost" @click="closeModal">{{ t('common.cancel') }}</CBtn>
+    <CBtn variant="primary" :loading="saving" @click="save">{{ t('common.save') }}</CBtn>
+  </template>
+</CModal>
+
+<!-- ❌ WRONG — feedback in modal body -->
+<CModal …>
+  <CFormFeedback … />  <!-- never here -->
+  <form>…</form>
+</CModal>
+```
+
+Use `useFormFeedback()` composable to manage `status` and `message` state. Always call `feedback.reset()` when opening a modal. Reference implementations: `ContractFormModal.vue`, `AllocationKeysView.vue`, `ContractorsView.vue`.

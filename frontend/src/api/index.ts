@@ -1,15 +1,24 @@
 import { api } from './client'
+import axios from 'axios'
 import type {
   Meeting, Resolution, VoteResult,
   Budget, BudgetLine, LevyCall, WorksFund,
   VendorContract, ContractReminder,
   Task, Claim, MaintenanceEntry,
-  Report, Consultation,
+  Report, Consultation, ConsultationResults, VendorTask, VendorDocument,
   Document, UploadUrlResponse, DownloadUrlResponse,
   Building, Unit, User, AllocationKey, UnitShare,
   OnboardingStatus, BootstrapInput, BootstrapResponse,
   LoginResponse, BuildingStats, RegistryResponse, UnitChargesResponse,
+  Contractor,
 } from '@/types/domain'
+
+// Public axios instance — no JWT, no interceptors (vendor endpoints)
+const publicApi = axios.create({
+  baseURL: '/',
+  headers: { 'Content-Type': 'application/json' },
+  timeout: 10_000,
+})
 
 // ── Onboarding ────────────────────────────────────────────────────
 export const onboardingApi = {
@@ -33,6 +42,8 @@ export const authApi = {
     api.post('/auth/reset-password/confirm', { token, password }),
   me: () =>
     api.get<LoginResponse>('/auth/me'),
+  updateProfile: (data: { phone?: string | null }) =>
+    api.patch<LoginResponse>('/auth/me', data),
   acceptInvite: (token: string, password: string, last_name: string, first_name: string) =>
     api.post('/auth/invite/accept', { token, password, last_name, first_name }),
   passkeyRegisterStart: () =>
@@ -220,14 +231,32 @@ export const tasksApi = {
     api.get<Task[]>('/tasks'),
   get: (id: string) =>
     api.get<Task>(`/tasks/${id}`),
-  create: (data: Partial<Task>) =>
+  create: (data: { title: string; description?: string; priority?: string; contract_id?: string; contractor_id?: string | null; assigned_to?: string }) =>
     api.post<Task>('/tasks', data),
-  update: (id: string, data: Partial<Task>) =>
+  update: (id: string, data: { title?: string; description?: string | null; priority?: string; status?: string; contractor_id?: string | null }) =>
     api.put<Task>(`/tasks/${id}`, data),
+  delete: (id: string) =>
+    api.delete(`/tasks/${id}`),
   generateToken: (id: string) =>
-    api.post<{ token: string; expires_at: string }>(`/tasks/${id}/vendor-token`),
+    api.post<{ token: string; expires_at: string; url: string }>(`/tasks/${id}/vendor-token`),
+  getVendorTokenUrl: (id: string) =>
+    api.get<{ url: string; expires_at: string }>(`/tasks/${id}/vendor-token`),
   revokeToken: (id: string) =>
     api.delete(`/tasks/${id}/vendor-token`),
+}
+
+// ── Contractors referential ───────────────────────────────────────
+export const contractorsApi = {
+  list: (q?: string) =>
+    api.get<Contractor[]>('/contractors', { params: q ? { q } : undefined }),
+  get: (id: string) =>
+    api.get<Contractor>(`/contractors/${id}`),
+  create: (data: { name: string; email?: string; phone?: string; domains?: string[]; notes?: string }) =>
+    api.post<Contractor>('/contractors', data),
+  update: (id: string, data: { name?: string; email?: string; phone?: string; domains?: string[]; notes?: string }) =>
+    api.put<Contractor>(`/contractors/${id}`, data),
+  delete: (id: string) =>
+    api.delete(`/contractors/${id}`),
 }
 
 // ── Claims ────────────────────────────────────────────────────────
@@ -271,17 +300,44 @@ export const reportsApi = {
 // ── Consultations ─────────────────────────────────────────────────
 export const consultationsApi = {
   list: () =>
-    api.get<Consultation[]>('/consultations'),
+    api.get<{ consultations: Consultation[] }>('/consultations'),
   get: (id: string) =>
-    api.get<Consultation>(`/consultations/${id}`),
-  create: (data: Partial<Consultation>) =>
+    api.get<{ consultation: Consultation }>(`/consultations/${id}`),
+  create: (data: { title: string; description?: string; visible_to_roles: string[]; choices: string[]; closed_at?: string }) =>
     api.post<Consultation>('/consultations', data),
-  update: (id: string, data: Partial<Consultation>) =>
-    api.put<Consultation>(`/consultations/${id}`, data),
-  respond: (id: string, choice_id: string, comment?: string) =>
-    api.post(`/consultations/${id}/respond`, { choice_id, comment }),
+  /** Opens a draft consultation (transitions draft → open). */
+  openDraft: (id: string) =>
+    api.put(`/consultations/${id}`),
+  respond: (id: string, choice_ids: string[], comment?: string) =>
+    api.post(`/consultations/${id}/respond`, { choice_ids, comment }),
   results: (id: string) =>
-    api.get(`/consultations/${id}/results`),
+    api.get<{ results: ConsultationResults }>(`/consultations/${id}/results`),
   close: (id: string) =>
     api.post(`/consultations/${id}/close`),
+}
+
+// ── Contractor (public, tokenized — no JWT) ───────────────────────
+// Vendor API routes now live under /api/v1/vendor/ so the SPA can serve
+// /vendor/:token as a real page without backend interference.
+export const vendorApi = {
+  getTask: (token: string) =>
+    publicApi.get<VendorTask>(`/api/v1/vendor/${token}`),
+  getUploadUrl: (token: string, extension: string, content_type: string) =>
+    publicApi.post<{ url: string; key: string }>(`/api/v1/vendor/${token}/upload-url`, { extension, content_type }),
+  submit: (token: string, data: { comment?: string; documents: VendorDocument[] }) =>
+    publicApi.post(`/api/v1/vendor/${token}/submission`, data),
+  uploadToStaging: async (file: File, signedUrl: string): Promise<void> => {
+    // Keep the upload header aligned with the content type used to generate the
+    // presigned URL. Some browser-provided File objects have an empty `type`.
+    const contentType = file.type || 'application/octet-stream'
+
+    const response = await fetch(signedUrl, {
+      method: 'PUT',
+      body: file,
+      headers: { 'Content-Type': contentType },
+    })
+    if (!response.ok) {
+      throw new Error(`Staging upload failed (${response.status})`)
+    }
+  },
 }

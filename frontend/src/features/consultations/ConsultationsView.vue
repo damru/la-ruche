@@ -1,45 +1,192 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useFormatters } from '@/composables/useFormatters'
-import CMockBanner from '@/components/atoms/CMockBanner.vue'
+import { usePageLoader, toErrorMessage } from '@/composables/usePageLoader'
+import { useFormFeedback, SUCCESS_AUTO_CLEAR_MS } from '@/composables/useFormFeedback'
+import { useAuthStore } from '@/stores/auth'
 import CBadge from '@/components/atoms/CBadge.vue'
-import CCard from '@/components/molecules/CCard.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
+import CCard from '@/components/molecules/CCard.vue'
+import CAlert from '@/components/atoms/CAlert.vue'
+import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
+import CModal from '@/components/molecules/CModal.vue'
+import CPageError from '@/components/molecules/CPageError.vue'
+import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
-import { mockConsultations, mockBuildingStats } from '@/mock/data'
+import { buildingApi, consultationsApi } from '@/api'
+import type { Consultation } from '@/types/domain'
 
 const { t } = useI18n()
 const { formatDate, formatRelative } = useFormatters()
+const authStore = useAuthStore()
 
-const filter = ref<'all' | 'open' | 'closed'>('all')
+// Managers and board members can create/close consultations.
+const canManage = computed(() => authStore.hasAnyRole(['manager', 'board_member']))
+
+const buildingName = ref('')
+const allConsultations = ref<Consultation[]>([])
+const statusFilter = ref<'open' | 'closed'>('open')
+const pageError = ref('')
+
+// ── Create modal ───────────────────────────────────────────────────
+const showCreateModal = ref(false)
+const createFeedback = useFormFeedback()
+const saving = ref(false)
+const defaultCreateForm = () => ({
+  title: '',
+  description: '',
+  choices: ['', ''],
+})
+const createForm = ref(defaultCreateForm())
+
+// ── Inline vote state (per consultation ID) ────────────────────────
+interface InlineVote {
+  selections: string[]   // choice IDs currently checked
+  comment: string
+  submitting: boolean
+  error: string
+  unlocked: boolean      // true while the user is editing a previous vote
+}
+const inlineVotes = ref<Record<string, InlineVote>>({})
+
+function getInline(c: Consultation): InlineVote {
+  if (!inlineVotes.value[c.id]) {
+    inlineVotes.value[c.id] = {
+      selections: [...(c.my_choice_ids ?? [])],
+      comment: '',
+      submitting: false,
+      error: '',
+      unlocked: false,
+    }
+  }
+  return inlineVotes.value[c.id]
+}
+
+function hasVoted(c: Consultation): boolean {
+  return (c.my_choice_ids ?? []).length > 0
+}
+
+function isVoteLocked(c: Consultation): boolean {
+  return hasVoted(c) && !getInline(c).unlocked
+}
+
+function barWidth(c: Consultation, pct: number): number {
+  // Only show filled bars if user has already voted OR consultation is closed
+  return hasVoted(c) || c.status === 'closed' ? pct : 0
+}
+
+function unlockVote(c: Consultation) {
+  getInline(c).unlocked = true
+}
+
+// ── Close modal ────────────────────────────────────────────────────
+const closingConsultation = ref<Consultation | null>(null)
+const closeFeedback = useFormFeedback()
+const closing = ref(false)
+
+async function loadData() {
+  const [buildingRes, listRes] = await Promise.all([
+    buildingApi.get(),
+    consultationsApi.list(),
+  ])
+  buildingName.value = buildingRes.data.name
+  allConsultations.value = listRes.data.consultations ?? []
+
+  // Re-initialize inline vote state for existing consultations
+  for (const c of allConsultations.value) {
+    inlineVotes.value[c.id] = {
+      selections: [...(c.my_choice_ids ?? [])],
+      comment: inlineVotes.value[c.id]?.comment ?? '',
+      submitting: false,
+      error: '',
+      unlocked: false,
+    }
+  }
+}
+
+const { loading, error, reload } = usePageLoader(loadData, t('common.loadError'))
+onMounted(reload)
+
+// Clear inline error messages when switching tabs
+watch(statusFilter, () => {
+  for (const c of allConsultations.value) {
+    if (inlineVotes.value[c.id]) {
+      inlineVotes.value[c.id].error = ''
+    }
+  }
+})
 
 const consultations = computed(() =>
-  filter.value === 'all' ? mockConsultations : mockConsultations.filter(c => c.status === filter.value)
+  allConsultations.value.filter(c =>
+    statusFilter.value === 'open' ? c.status === 'open' : c.status === 'closed',
+  ),
 )
+const openCount = computed(() => allConsultations.value.filter(c => c.status === 'open').length)
 
-// Faux résultats de vote pour les consultations
-const fakeVotes: Record<string, number> = {
-  'ch-007': 8,
-  'ch-008': 4,
+function openCreateModal() {
+  createForm.value = defaultCreateForm()
+  createFeedback.reset()
+  showCreateModal.value = true
 }
 
-const fakeVotesOpen: Record<string, number> = {
-  'ch-001': 5,
-  'ch-002': 3,
-  'ch-003': 2,
-  'ch-004': 6,
-  'ch-005': 7,
-  'ch-006': 3,
+function addChoice() { createForm.value.choices.push('') }
+function removeChoice(idx: number) {
+  if (createForm.value.choices.length > 2) createForm.value.choices.splice(idx, 1)
 }
 
-function totalVotes(choices: { id: string }[], fakeMap: Record<string, number>): number {
-  return choices.reduce((s, c) => s + (fakeMap[c.id] ?? 0), 0)
+async function saveConsultation() {
+  if (!createForm.value.title.trim() || createForm.value.choices.filter(c => c.trim()).length < 2) return
+  saving.value = true
+  createFeedback.reset()
+  try {
+    await consultationsApi.create({
+      title: createForm.value.title,
+      description: createForm.value.description || undefined,
+      visible_to_roles: ['manager', 'board_member', 'co_owner', 'tenant'],
+      choices: createForm.value.choices.filter(c => c.trim()),
+    })
+    createFeedback.setSuccess(t('common.saved'))
+    setTimeout(() => { showCreateModal.value = false; reload() }, SUCCESS_AUTO_CLEAR_MS)
+  } catch (err) {
+    createFeedback.setError(toErrorMessage(err, t('common.error')))
+  } finally {
+    saving.value = false
+  }
 }
 
-function pct(choiceId: string, total: number, fakeMap: Record<string, number>): number {
-  if (!total) return 0
-  return Math.round(((fakeMap[choiceId] ?? 0) / total) * 100)
+async function submitVote(c: Consultation) {
+  const iv = getInline(c)
+  if (!iv.selections.length) return
+  iv.submitting = true
+  iv.error = ''
+  try {
+    await consultationsApi.respond(c.id, iv.selections, iv.comment || undefined)
+    await reload()
+  } catch (err) {
+    iv.error = toErrorMessage(err, t('common.error'))
+    iv.submitting = false
+  }
+}
+
+function openCloseModal(c: Consultation) {
+  closingConsultation.value = c
+  closeFeedback.reset()
+}
+
+async function confirmClose() {
+  if (!closingConsultation.value) return
+  closing.value = true
+  closeFeedback.reset()
+  try {
+    await consultationsApi.close(closingConsultation.value.id)
+    closeFeedback.setSuccess(t('common.saved'))
+    setTimeout(async () => { closingConsultation.value = null; await reload() }, SUCCESS_AUTO_CLEAR_MS)
+  } catch (err) {
+    closeFeedback.setError(toErrorMessage(err, t('common.error')))
+  } finally {
+    closing.value = false
+  }
 }
 </script>
 
@@ -48,7 +195,7 @@ function pct(choiceId: string, total: number, fakeMap: Record<string, number>): 
     <CTopbar>
       <template #left>
         <div class="topbar-breadcrumb">
-          {{ mockBuildingStats.name }}
+          {{ buildingName }}
           <CIconChevronRight
             width="14"
             height="14"
@@ -60,6 +207,7 @@ function pct(choiceId: string, total: number, fakeMap: Record<string, number>): 
         <CBtn
           variant="primary"
           size="sm"
+          @click="openCreateModal"
         >
           <CIconPlus style="width:16px;height:16px" />
           <span class="btn-label">{{ t('consultations.create') }}</span>
@@ -68,150 +216,425 @@ function pct(choiceId: string, total: number, fakeMap: Record<string, number>): 
     </CTopbar>
 
     <div class="view-container">
-      <CMockBanner />
-
-      <div class="view-header">
-        <div>
-          <h1 class="display-md">
-            {{ t('consultations.title') }}
-          </h1>
-          <p
-            class="body-md"
-            style="color:var(--color-on-surface-variant)"
-          >
-            {{ t('consultations.openCount', mockConsultations.filter(c => c.status === 'open').length) }}
-          </p>
+      <CPageError
+        v-if="error"
+        :message="error"
+        @retry="reload"
+      />
+      <CPageLoader v-else-if="loading" />
+      <template v-else>
+        <div class="view-header">
+          <div>
+            <h1 class="display-md">
+              {{ t('consultations.title') }}
+            </h1>
+            <p
+              class="body-md"
+              style="color:var(--color-on-surface-variant)"
+            >
+              {{ t('consultations.openCount', openCount) }}
+            </p>
+          </div>
         </div>
-      </div>
 
-      <div class="tabs">
-        <button
-          v-for="opt in [
-            { key: 'all', label: t('common.allFem') },
-            { key: 'open', label: t('consultations.filters.open') },
-            { key: 'closed', label: t('consultations.filters.closed') },
-          ]"
-          :key="opt.key"
-          :class="['tab', { 'tab--active': filter === opt.key }]"
-          @click="filter = opt.key as typeof filter"
+        <CAlert
+          v-if="pageError"
+          variant="error"
         >
-          {{ opt.label }}
-        </button>
-      </div>
+          {{ pageError }}
+        </CAlert>
 
-      <CCard class="legal-note">
-        <p class="body-sm">
-          <strong>{{ t('consultations.informalNote') }}</strong>
-          {{ t('consultations.informalNoteDetail') }}
-        </p>
-      </CCard>
+        <div class="tabs">
+          <button
+            v-for="item in [
+              { key: 'open', label: t('consultations.filters.open') },
+              { key: 'closed', label: t('consultations.filters.closed') },
+            ]"
+            :key="item.key"
+            :class="['tab', { 'tab--active': statusFilter === item.key }]"
+            @click="statusFilter = item.key as typeof statusFilter"
+          >
+            {{ item.label }}
+          </button>
+        </div>
 
-      <div class="consultation-list">
-        <CCard
-          v-for="c in consultations"
-          :key="c.id"
-          class="consultation-card"
-        >
-          <div class="con-header">
+        <div class="consultation-list">
+          <CCard
+            v-for="c in consultations"
+            :key="c.id"
+          >
+            <!-- Status badge top-left -->
             <CBadge
               :variant="c.status === 'open' ? 'open' : 'closed'"
+              class="status-badge"
               dot
             >
               {{ t(`consultations.statuses.${c.status}`) }}
             </CBadge>
-            <span class="con-date">
-              <span v-if="c.status === 'open'">{{ t('consultations.openedAt', { date: formatRelative(c.created_at) }) }}</span>
-              <span v-else>{{ t('consultations.closedAt', { date: formatDate(c.closed_at!) }) }}</span>
-            </span>
-          </div>
 
-          <h3 class="title-md">
-            {{ c.title }}
-          </h3>
-          <p
-            v-if="c.description"
-            class="body-sm"
-            style="color:var(--color-on-surface-variant)"
+            <!-- Title prominent, under status -->
+            <h3 class="consultation-title title-md">
+              {{ c.title }}
+            </h3>
+
+            <p
+              v-if="c.description"
+              class="body-sm desc"
+            >
+              {{ c.description }}
+            </p>
+
+            <!-- Choices + live result bars (CSS grid — 3 columns per choice row) -->
+            <div class="choices-results">
+              <template
+                v-for="choice in c.choices"
+                :key="choice.id"
+              >
+                <!-- Column 1: checkbox (open) or plain label (closed) -->
+                <label
+                  v-if="c.status === 'open'"
+                  class="choice-label checkbox-label"
+                  :class="{ 'choice-label--locked': isVoteLocked(c) }"
+                >
+                  <input
+                    v-model="getInline(c).selections"
+                    type="checkbox"
+                    :value="choice.id"
+                    :disabled="isVoteLocked(c)"
+                  />
+                  <span>{{ choice.label }}</span>
+                </label>
+                <span
+                  v-else
+                  class="choice-label"
+                >{{ choice.label }}</span>
+
+                <!-- Column 2: result bar -->
+                <div class="result-bar-bg">
+                  <div
+                    class="result-bar"
+                    :class="{ 'result-bar--dim': !hasVoted(c) && c.status === 'open' }"
+                    :style="{ width: barWidth(c, choice.pct) + '%' }"
+                  ></div>
+                </div>
+
+                <!-- Column 3: percentage -->
+                <span class="result-pct">
+                  {{ hasVoted(c) || c.status === 'closed' ? choice.pct + '%' : '—' }}
+                </span>
+              </template>
+            </div>
+
+            <!-- Response count -->
+            <p
+              v-if="hasVoted(c) || c.status === 'closed'"
+              class="body-xs response-count"
+            >
+              {{ t('consultations.responseCount', { count: c.total_responses }) }}
+            </p>
+
+            <!-- Inline vote form: comment + submit appear when ≥1 choice selected AND not locked -->
+            <div
+              v-if="c.status === 'open' && getInline(c).selections.length > 0 && !isVoteLocked(c)"
+              class="inline-vote-form"
+            >
+              <textarea
+                v-model="getInline(c).comment"
+                class="form-input"
+                rows="2"
+                :placeholder="t('consultations.respondModal.commentLabel')"
+              ></textarea>
+              <div class="inline-vote-actions">
+                <p
+                  v-if="getInline(c).error"
+                  class="body-xs error-text"
+                >
+                  {{ getInline(c).error }}
+                </p>
+                <CBtn
+                  variant="primary"
+                  size="sm"
+                  :loading="getInline(c).submitting"
+                  @click="submitVote(c)"
+                >
+                  {{ hasVoted(c) ? t('consultations.updateVote') : t('consultations.respondModal.submit') }}
+                </CBtn>
+              </div>
+            </div>
+
+            <!-- Locked state: show "Modifier" button when already voted -->
+            <div
+              v-if="c.status === 'open' && isVoteLocked(c)"
+              class="vote-locked-actions"
+            >
+              <CBtn
+                variant="ghost"
+                size="sm"
+                @click="unlockVote(c)"
+              >
+                {{ t('consultations.modifyVote') }}
+              </CBtn>
+            </div>
+
+            <!-- Date hint -->
+            <p class="body-xs footer-meta">
+              {{ c.status === 'open'
+                ? t('consultations.openedAt', { date: formatRelative(c.created_at) })
+                : t('consultations.closedAt', { date: formatDate(c.closed_at!) }) }}
+            </p>
+
+            <!-- Manager close action -->
+            <div
+              v-if="c.status === 'open' && canManage"
+              class="card-actions"
+            >
+              <CBtn
+                variant="ghost"
+                size="sm"
+                @click="openCloseModal(c)"
+              >
+                <CIconX />
+                {{ t('consultations.close') }}
+              </CBtn>
+            </div>
+          </CCard>
+
+          <div
+            v-if="!consultations.length"
+            class="empty-state"
           >
-            {{ c.description }}
+            {{ statusFilter === 'open' ? t('consultations.noOpen') : t('consultations.noClosed') }}
+          </div>
+        </div>
+
+        <!-- Legal info — bottom of page, CCard pattern (cf. Registry) -->
+        <CCard>
+          <p class="body-sm dim">
+            ⚖️ <strong>{{ t('consultations.legalNote') }}</strong> — {{ t('consultations.informalNote') }}
+            <br /><span class="body-xs">{{ t('consultations.informalNoteDetail') }}</span>
           </p>
-
-          <!-- Résultats (consultation clôturée) -->
-          <div
-            v-if="c.status === 'closed'"
-            class="choices-results"
-          >
-            <div
-              v-for="choice in c.choices"
-              :key="choice.id"
-              class="choice-result"
-            >
-              <div class="choice-label">
-                <span>{{ choice.label }}</span>
-                <span class="choice-pct">{{ pct(choice.id, totalVotes(c.choices, fakeVotes), fakeVotes) }}%</span>
-              </div>
-              <div class="choice-bar-bg">
-                <div
-                  class="choice-bar-fill"
-                  :style="{ width: pct(choice.id, totalVotes(c.choices, fakeVotes), fakeVotes) + '%' }"
-                ></div>
-              </div>
-            </div>
-            <p class="votes-total">
-              {{ t('consultations.responseCount', { count: totalVotes(c.choices, fakeVotes) }) }}
-            </p>
-          </div>
-
-          <!-- Choix (consultation ouverte) -->
-          <div
-            v-else
-            class="choices-open"
-          >
-            <div
-              v-for="choice in c.choices"
-              :key="choice.id"
-              class="choice-open"
-            >
-              <div class="choice-label">
-                <span>{{ choice.label }}</span>
-                <span class="choice-pct dim">{{ fakeVotesOpen[choice.id] ?? 0 }} réponse(s)</span>
-              </div>
-              <div class="choice-bar-bg">
-                <div
-                  class="choice-bar-fill choice-bar-fill--open"
-                  :style="{ width: pct(choice.id, totalVotes(c.choices, fakeVotesOpen), fakeVotesOpen) + '%' }"
-                ></div>
-              </div>
-            </div>
-            <p class="votes-total">
-              {{ t('consultations.responseCountOpen', { count: totalVotes(c.choices, fakeVotesOpen) }) }}
-            </p>
-          </div>
         </CCard>
-      </div>
+      </template>
     </div>
+
+    <!-- Create modal -->
+    <CModal
+      :open="showCreateModal"
+      :title="t('consultations.create')"
+      size="lg"
+      @update:open="showCreateModal = $event"
+    >
+      <form
+        class="form-grid"
+        @submit.prevent="saveConsultation"
+      >
+        <div class="form-field">
+          <label class="form-label">{{ t('consultations.fields.title') }} *</label>
+          <input
+            v-model="createForm.title"
+            type="text"
+            class="form-input"
+            required
+          />
+        </div>
+        <div class="form-field">
+          <label class="form-label">{{ t('consultations.fields.description') }}</label>
+          <textarea
+            v-model="createForm.description"
+            class="form-input"
+            rows="2"
+          ></textarea>
+        </div>
+        <div class="form-field">
+          <label class="form-label">{{ t('consultations.fields.choices') }} *</label>
+          <div
+            v-for="(_, idx) in createForm.choices"
+            :key="idx"
+            class="choice-input-row"
+          >
+            <input
+              v-model="createForm.choices[idx]"
+              type="text"
+              class="form-input"
+              :placeholder="`Option ${idx + 1}`"
+            />
+            <button
+              v-if="createForm.choices.length > 2"
+              type="button"
+              class="icon-btn icon-btn--danger"
+              @click="removeChoice(idx)"
+            >
+              <CIconX
+                width="14"
+                height="14"
+              />
+            </button>
+          </div>
+          <CBtn
+            variant="ghost"
+            size="sm"
+            type="button"
+            @click="addChoice"
+          >
+            <CIconPlus
+              width="14"
+              height="14"
+            /> {{ t('consultations.fields.addChoice') }}
+          </CBtn>
+        </div>
+      </form>
+      <template #footer>
+        <CFormFeedback
+          :status="createFeedback.status.value"
+          :message="createFeedback.message.value"
+        />
+        <CBtn
+          variant="ghost"
+          @click="showCreateModal = false"
+        >
+          {{ t('common.cancel') }}
+        </CBtn>
+        <CBtn
+          variant="primary"
+          :loading="saving"
+          @click="saveConsultation"
+        >
+          {{ t('common.create') }}
+        </CBtn>
+      </template>
+    </CModal>
+
+    <!-- Close consultation modal -->
+    <CModal
+      :open="!!closingConsultation"
+      :title="t('consultations.confirmCloseTitle')"
+      size="sm"
+      @update:open="v => !v && (closingConsultation = null)"
+    >
+      <p class="body-sm">
+        {{ t('consultations.confirmCloseMessage') }}
+      </p>
+      <template #footer>
+        <CFormFeedback
+          :status="closeFeedback.status.value"
+          :message="closeFeedback.message.value"
+        />
+        <CBtn
+          variant="ghost"
+          @click="closingConsultation = null"
+        >
+          {{ t('common.cancel') }}
+        </CBtn>
+        <CBtn
+          variant="danger"
+          :loading="closing"
+          @click="confirmClose"
+        >
+          {{ t('consultations.closeAction') }}
+        </CBtn>
+      </template>
+    </CModal>
   </div>
 </template>
 
 <style scoped>
-.legal-note { border-left: 3px solid var(--color-warning); }
+.consultation-list { display: flex; flex-direction: column; gap: 12px; }
 
-.consultation-list { display: flex; flex-direction: column; gap: var(--space-4); }
-.consultation-card { display: flex; flex-direction: column; gap: var(--space-3); }
+.status-badge { margin-bottom: var(--space-2); }
+.consultation-title { margin-bottom: var(--space-2); }
+.desc { color: var(--color-on-surface-variant); margin-bottom: var(--space-3); }
+.footer-meta { font-size: var(--text-2xs); color: var(--color-on-surface-variant); margin-top: var(--space-3); }
+.card-actions { display: flex; gap: 6px; margin-top: var(--space-3); }
+.response-count { color: var(--color-on-surface-variant); margin-top: var(--space-1); }
 
-.con-header { display: flex; align-items: center; gap: 10px; }
-.con-date { font-size: var(--text-xs); color: var(--color-on-surface-variant); }
+/* ── Choices + result bars (CSS grid) ─────────────────────────── */
+/* 3 columns: [fit-content(50%)] [1fr] [36px]
+   Column 1 auto-sizes to the widest label, capped at 50%.
+   Each <template v-for> produces 3 direct grid children. */
+.choices-results {
+  display: grid;
+  grid-template-columns: fit-content(50%) 1fr 36px;
+  align-items: center;
+  column-gap: 8px;
+  row-gap: 8px;
+  margin-bottom: var(--space-2);
+}
 
-.choices-results, .choices-open { display: flex; flex-direction: column; gap: 10px; }
-.choice-result, .choice-open { display: flex; flex-direction: column; gap: var(--space-1); }
+.choice-label {
+  font-size: var(--text-xs);
+  overflow-wrap: break-word;
+  word-break: break-word;
+  white-space: normal;
+  min-width: 0;
+}
 
-.choice-label { display: flex; justify-content: space-between; font-size: var(--text-sm); }
-.choice-pct { font-weight: var(--fw-semibold); }
+.choice-label.checkbox-label {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.choice-label--locked {
+  opacity: 0.6;
+}
+
+.result-bar-bg {
+  background: var(--color-surface-container);
+  border-radius: var(--radius-full);
+  height: 10px;
+  overflow: hidden;
+}
+.result-bar {
+  background: var(--color-primary);
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width 0.3s ease;
+}
+.result-bar--dim { background: var(--color-outline-variant); }
+.result-pct {
+  font-size: var(--text-xs);
+  font-weight: var(--fw-semibold);
+  text-align: right;
+  color: var(--color-on-surface-variant);
+}
+
+/* ── Inline vote form ──────────────────────────────────────────── */
+.vote-locked-actions {
+  margin-top: var(--space-2);
+}
+.inline-vote-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-outline-variant);
+}
+.inline-vote-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+.error-text { color: var(--color-error); flex: 1; }
+
+/* ── Create-form styles ────────────────────────────────────────── */
+.choice-input-row { display: flex; align-items: center; gap: 8px; }
+.choice-input-row .form-input { flex: 1; }
+
+.form-grid { display: flex; flex-direction: column; gap: var(--space-4); }
+.form-field { display: flex; flex-direction: column; gap: var(--space-2); }
+.form-label { font-size: var(--text-sm); font-weight: var(--fw-medium); color: var(--color-on-surface-variant); }
+.form-input {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-outline);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  background: var(--color-surface);
+  color: var(--color-on-surface);
+  resize: vertical;
+}
+.form-input:focus { outline: none; border-color: var(--color-primary); }
+.empty-state { padding: var(--space-8); text-align: center; font-size: var(--text-md); color: var(--color-on-surface-variant); }
 .dim { color: var(--color-on-surface-variant); }
-
-.choice-bar-bg { height: 8px; background: var(--color-surface-container); border-radius: var(--radius-full); overflow: hidden; }
-.choice-bar-fill { height: 100%; background: var(--color-primary); border-radius: var(--radius-full); transition: width 0.4s ease; }
-.choice-bar-fill--open { background: var(--color-secondary); }
-
-.votes-total { font-size: var(--text-xs); color: var(--color-on-surface-variant); margin-top: var(--space-1); }
 </style>

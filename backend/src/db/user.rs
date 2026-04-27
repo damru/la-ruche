@@ -37,7 +37,7 @@ pub async fn list(
 ) -> crate::errors::AppResult<Vec<serde_json::Value>> {
     let rows = sqlx::query!(
         r#"
-        SELECT u.id, u.email, u.last_name, u.first_name, u.active,
+        SELECT u.id, u.email, u.last_name, u.first_name, u.active, u.phone,
                ub.roles::text[] as roles
         FROM user_account u
         JOIN user_building ub ON ub.user_id = u.id
@@ -58,6 +58,7 @@ pub async fn list(
                 "last_name": r.last_name,
                 "first_name": r.first_name,
                 "active": r.active,
+                "phone": r.phone,
                 "roles": r.roles,
             })
         })
@@ -83,6 +84,30 @@ pub async fn create(
     )
     .fetch_one(pool)
     .await?)
+}
+
+pub async fn get_phone(pool: &PgPool, id: Uuid) -> crate::errors::AppResult<Option<String>> {
+    let row = sqlx::query("SELECT phone FROM user_account WHERE id = $1")
+        .bind(id)
+        .fetch_optional(pool)
+        .await?;
+    Ok(row.and_then(|r| {
+        use sqlx::Row;
+        r.try_get::<Option<String>, _>("phone").ok().flatten()
+    }))
+}
+
+pub async fn update_phone(
+    pool: &PgPool,
+    id: Uuid,
+    phone: Option<&str>,
+) -> crate::errors::AppResult<()> {
+    sqlx::query("UPDATE user_account SET phone = $1, updated_at = NOW() WHERE id = $2")
+        .bind(phone)
+        .bind(id)
+        .execute(pool)
+        .await?;
+    Ok(())
 }
 
 pub async fn update_password(pool: &PgPool, id: Uuid, hash: &str) -> crate::errors::AppResult<()> {

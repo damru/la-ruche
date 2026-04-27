@@ -14,7 +14,10 @@ const AssemblyDetailView      = () => import('@/features/assemblies/AssemblyDeta
 const BudgetView              = () => import('@/features/budget/BudgetView.vue')
 const DocumentsView           = () => import('@/features/documents/DocumentsView.vue')
 const TasksView               = () => import('@/features/tasks/TasksView.vue')
+const TaskDetailView          = () => import('@/features/tasks/TaskDetailView.vue')
 const ContractsView           = () => import('@/features/contracts/ContractsView.vue')
+const ContractorsView         = () => import('@/features/contractors/ContractorsView.vue')
+const ContractorDetailView    = () => import('@/features/contractors/ContractorDetailView.vue')
 const ClaimsView              = () => import('@/features/claims/ClaimsView.vue')
 const MaintenanceView         = () => import('@/features/maintenance/MaintenanceView.vue')
 const ConsultationsView       = () => import('@/features/consultations/ConsultationsView.vue')
@@ -37,6 +40,7 @@ declare module 'vue-router' {
     requiresAuth?: boolean
     roles?: Role[]         // allowed roles (empty = all authenticated users)
     title?: string         // pour le <title> de la page
+    public?: boolean       // fully public route — skips all auth/onboarding checks
   }
 }
 
@@ -47,7 +51,7 @@ const routes: RouteRecordRaw[] = [
   { path: '/reset/:token',   name: 'reset',         component: ResetPasswordView, meta: { title: 'auth.resetPassword' } },
   { path: '/onboarding',     name: 'onboarding',    component: OnboardingView,    meta: { title: 'page.onboarding' } },
   // ── Contractor (token URL, no JWT) ────────────────────────────
-  { path: '/vendor/:token', name: 'contractor', component: ContractorPage, meta: { title: 'page.contractor' } },
+  { path: '/vendor/:token', name: 'contractor', component: ContractorPage, meta: { title: 'page.contractor', public: true } },
 
   // ── App (layout with nav) ─────────────────────────────────────
   {
@@ -94,6 +98,24 @@ const routes: RouteRecordRaw[] = [
         name: 'tasks',
         component: TasksView,
         meta: { title: 'nav.tasks', roles: ['manager', 'board_member'] },
+      },
+      {
+        path: 'tasks/:id',
+        name: 'task-detail',
+        component: TaskDetailView,
+        meta: { title: 'nav.tasks', roles: ['manager', 'board_member'] },
+      },
+      {
+        path: 'contractors',
+        name: 'contractors',
+        component: ContractorsView,
+        meta: { title: 'nav.contractors', roles: [] },
+      },
+      {
+        path: 'contractors/:id',
+        name: 'contractor-detail',
+        component: ContractorDetailView,
+        meta: { title: 'page.contractorDetail', roles: [] },
       },
       {
         path: 'contracts',
@@ -197,6 +219,9 @@ router.beforeEach(async (to) => {
 
   // Update page title using i18n
   document.title = to.meta.title ? `${i18n.global.t(to.meta.title)} — La Ruche` : 'La Ruche'
+
+  // Fully public routes (e.g. contractor page) — skip all auth/onboarding checks
+  if (to.meta.public) return true
 
   // Restore session from cookie (once per page load, no-op if already done)
   await auth.restoreSession()
