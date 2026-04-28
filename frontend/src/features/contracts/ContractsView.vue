@@ -379,7 +379,7 @@ async function terminateContract(contract: VendorContract) {
           <CCard
             v-for="contract in contracts"
             :key="contract.id"
-            class="contract-card"
+            :class="['contract-card', { 'card--terminated': effectiveStatus(contract) !== 'active' }]"
           >
             <div class="contract-header">
               <div class="contract-type">

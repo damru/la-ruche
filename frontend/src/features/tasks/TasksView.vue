@@ -478,20 +478,20 @@ function copyToClipboard(text: string) {
             v-for="task in tasks"
             :key="task.id"
             padding="none"
-            :class="['task-card', { 'task-card--closed': task.status === 'closed' }]"
+            :class="['task-card', { 'card--terminated': task.status === 'closed' || task.status === 'cancelled' }]"
           >
             <div class="task-row">
               <div
                 class="prio-bar"
-                :style="{ background: task.status === 'closed' ? 'var(--color-on-surface-variant)' : priorityColor(task.priority) }"
+                :style="{ background: (task.status === 'closed' || task.status === 'cancelled') ? 'var(--color-on-surface-variant)' : priorityColor(task.priority) }"
               ></div>
               <div class="task-body">
                 <div class="task-badges">
-                  <CBadge :variant="task.status === 'closed' ? 'disabled' : priorityVariant(task.priority)">
+                  <CBadge :variant="(task.status === 'closed' || task.status === 'cancelled') ? 'disabled' : priorityVariant(task.priority)">
                     {{ t(`tasks.priorities.${task.priority}`) }}
                   </CBadge>
                   <CBadge
-                    :variant="task.status === 'closed' ? 'disabled' : statusVariant(task.status)"
+                    :variant="(task.status === 'closed' || task.status === 'cancelled') ? 'disabled' : statusVariant(task.status)"
                     dot
                   >
                     {{ t(`tasks.statuses.${task.status}`) }}
@@ -598,9 +598,9 @@ function copyToClipboard(text: string) {
                     <CIconCheckCircle />
                     {{ t('tasks.closeTask') }}
                   </CBtn>
-                  <!-- Delete: closed tasks only (visible on card) -->
+                  <!-- Delete: closed/cancelled tasks only (visible on card) -->
                   <CBtn
-                    v-if="task.status === 'closed'"
+                    v-if="task.status === 'closed' || task.status === 'cancelled'"
                     variant="danger"
                     size="sm"
                     :aria-label="t('tasks.deleteTask')"
@@ -908,7 +908,6 @@ function copyToClipboard(text: string) {
 .task-list { display: flex; flex-direction: column; gap: 10px; }
 
 .task-card { overflow: hidden; }
-.task-card--closed { box-shadow: none; outline: 1px solid var(--color-outline-variant); }
 .task-row { display: flex; align-items: stretch; gap: 0; }
 
 .prio-bar { width: 4px; flex-shrink: 0; }
