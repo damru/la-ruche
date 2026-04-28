@@ -4,32 +4,27 @@ import { ref, computed, watch } from 'vue'
 
 type ThemePreference = 'light' | 'dark' | 'auto'
 
-const THEME_COOKIE_NAME = 'laruche-theme'
+const THEME_STORAGE_KEY = 'laruche-theme'
 
 function readThemePreference(): ThemePreference {
-  if (typeof document === 'undefined') {
+  if (typeof window === 'undefined') {
     return 'auto'
   }
 
-  const cookieValue = document.cookie
-    .split('; ')
-    .find(entry => entry.startsWith(`${THEME_COOKIE_NAME}=`))
-    ?.split('=')[1]
-
-  return cookieValue === 'light' || cookieValue === 'dark' ? cookieValue : 'auto'
+  const saved = localStorage.getItem(THEME_STORAGE_KEY)
+  return saved === 'light' || saved === 'dark' ? saved : 'auto'
 }
 
 function persistThemePreference(preference: ThemePreference) {
-  if (typeof document === 'undefined') {
+  if (typeof window === 'undefined') {
     return
   }
 
   if (preference === 'auto') {
-    document.cookie = `${THEME_COOKIE_NAME}=; Path=/; Max-Age=0; SameSite=Lax`
-    return
+    localStorage.removeItem(THEME_STORAGE_KEY)
+  } else {
+    localStorage.setItem(THEME_STORAGE_KEY, preference)
   }
-
-  document.cookie = `${THEME_COOKIE_NAME}=${preference}; Path=/; Max-Age=31536000; SameSite=Lax`
 }
 
 export const useUiStore = defineStore('ui', () => {
