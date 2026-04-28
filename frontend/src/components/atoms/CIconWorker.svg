@@ -1,12 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <!-- Hard hat dome (semicircle going upward) -->
-  <path d="M7 9a5 5 0 0 0 10 0"/>
-  <!-- Hard hat brim -->
-  <line x1="5" y1="9" x2="19" y2="9"/>
-  <!-- Center ridge stripe -->
-  <line x1="12" y1="4" x2="12" y2="9"/>
-  <!-- Head -->
-  <circle cx="12" cy="13" r="3"/>
-  <!-- Shoulders -->
-  <path d="M5 22v-1a7 7 0 0 1 14 0v1"/>
+  <!-- Person silhouette (same as CIconUserPlus) -->
+  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+  <circle cx="9" cy="7" r="4"/>
+  <!-- Small wrench badge (top-right, same area as plus in CIconUserPlus) -->
+  <g transform="translate(14.8, 6.8) scale(0.35)" stroke-width="5.7">
+    <path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/>
+  </g>
 </svg>
