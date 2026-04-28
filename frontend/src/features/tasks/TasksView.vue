@@ -253,22 +253,28 @@ async function saveTask() {
   }
 }
 
-// ── Close task from modal (for in_progress / awaiting_vendor) ─────
-async function closeFromModal() {
-  if (!editingTask.value) return
-  savingTask.value = true
-  taskFeedback.reset()
+// ── Close task from card (for any non-closed task) ────────────────
+const closingTask = ref<Task | null>(null)
+const closeFeedback = useFormFeedback()
+const closingInProgress = ref(false)
+
+function openCloseModal(task: Task) {
+  closingTask.value = task
+  closeFeedback.reset()
+}
+
+async function confirmCloseTask() {
+  if (!closingTask.value) return
+  closingInProgress.value = true
+  closeFeedback.reset()
   try {
-    await tasksApi.update(editingTask.value.id, { status: 'closed' })
-    taskFeedback.setSuccess(t('common.saved'))
-    setTimeout(() => {
-      showTaskModal.value = false
-      reload()
-    }, SUCCESS_AUTO_CLEAR_MS)
+    await tasksApi.update(closingTask.value.id, { status: 'closed' })
+    closeFeedback.setSuccess(t('common.saved'))
+    setTimeout(() => { closingTask.value = null; reload() }, SUCCESS_AUTO_CLEAR_MS)
   } catch (err) {
-    taskFeedback.setError(toErrorMessage(err, t('common.error')))
+    closeFeedback.setError(toErrorMessage(err, t('common.error')))
   } finally {
-    savingTask.value = false
+    closingInProgress.value = false
   }
 }
 
@@ -286,6 +292,7 @@ async function deleteTask(task: Task) {
   })
   if (!ok) return
   pageError.value = ''
+  showTaskModal.value = false
   try {
     await tasksApi.delete(task.id)
     await reload()
@@ -580,7 +587,20 @@ function copyToClipboard(text: string) {
                     <CIconEdit />
                     {{ t('common.edit') }}
                   </CBtn>
+                  <!-- Terminate: non-closed tasks only -->
                   <CBtn
+                    v-if="task.status !== 'closed' && task.status !== 'cancelled'"
+                    variant="danger"
+                    size="sm"
+                    :aria-label="t('tasks.closeTask')"
+                    @click="openCloseModal(task)"
+                  >
+                    <CIconCheckCircle />
+                    {{ t('tasks.closeTask') }}
+                  </CBtn>
+                  <!-- Delete: closed tasks only (visible on card) -->
+                  <CBtn
+                    v-if="task.status === 'closed'"
                     variant="danger"
                     size="sm"
                     :aria-label="t('tasks.deleteTask')"
@@ -758,16 +778,16 @@ function copyToClipboard(text: string) {
         </div>
       </form>
       <template #footer>
-        <!-- Close task button: visible when editing an active task (not yet closed) -->
+        <!-- Delete: visible when editing a non-closed task (moved from card) -->
         <CBtn
-          v-if="editingTask && ['in_progress', 'awaiting_vendor'].includes(editingTask.status)"
+          v-if="editingTask && editingTask.status !== 'closed' && editingTask.status !== 'cancelled'"
           variant="danger"
           :loading="savingTask"
           style="margin-right:auto"
-          @click="closeFromModal"
+          @click="deleteTask(editingTask)"
         >
-          <CIconCheckCircle />
-          {{ t('tasks.closeTask') }}
+          <CIconTrash />
+          {{ t('common.delete') }}
         </CBtn>
         <CFormFeedback
           :status="taskFeedback.status.value"
@@ -816,6 +836,37 @@ function copyToClipboard(text: string) {
           @click="confirmRevoke"
         >
           {{ t('tasks.revokeToken') }}
+        </CBtn>
+      </template>
+    </CModal>
+
+    <!-- Close task modal -->
+    <CModal
+      :open="!!closingTask"
+      :title="t('tasks.confirmCloseTitle')"
+      size="sm"
+      @update:open="v => !v && (closingTask = null)"
+    >
+      <p class="body-sm">
+        {{ t('tasks.confirmCloseMessage', { title: closingTask?.title ?? '' }) }}
+      </p>
+      <template #footer>
+        <CFormFeedback
+          :status="closeFeedback.status.value"
+          :message="closeFeedback.message.value"
+        />
+        <CBtn
+          variant="ghost"
+          @click="closingTask = null"
+        >
+          {{ t('common.cancel') }}
+        </CBtn>
+        <CBtn
+          variant="primary"
+          :loading="closingInProgress"
+          @click="confirmCloseTask"
+        >
+          {{ t('tasks.closeTask') }}
         </CBtn>
       </template>
     </CModal>

@@ -63,8 +63,9 @@ withDefaults(defineProps<{
   }
 }
 
-/* Empty ring dot for closed / inactive statuses */
-.c-badge--closed .c-badge__dot {
+/* Empty ring dot for closed / inactive / disabled statuses */
+.c-badge--closed .c-badge__dot,
+.c-badge--disabled .c-badge__dot {
   background: transparent;
   border: 1.5px solid currentColor;
   opacity: 0.5;
