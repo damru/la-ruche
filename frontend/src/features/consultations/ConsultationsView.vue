@@ -3,7 +3,8 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useFormatters } from '@/composables/useFormatters'
 import { usePageLoader, toErrorMessage } from '@/composables/usePageLoader'
-import { useFormFeedback, SUCCESS_AUTO_CLEAR_MS } from '@/composables/useFormFeedback'
+import { useFormFeedback } from '@/composables/useFormFeedback'
+import { useAutoClose } from '@/composables/useAutoClose'
 import { useAuthStore } from '@/stores/auth'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
@@ -33,6 +34,8 @@ const pageError = ref('')
 const showCreateModal = ref(false)
 const createFeedback = useFormFeedback()
 const saving = ref(false)
+const { schedule: scheduleCreateClose, forceExpire: forceCreateClose } = useAutoClose()
+watch(showCreateModal, (open) => { if (!open) forceCreateClose() })
 const defaultCreateForm = () => ({
   title: '',
   description: '',
@@ -84,11 +87,15 @@ function unlockVote(c: Consultation) {
 const closingConsultation = ref<Consultation | null>(null)
 const closeFeedback = useFormFeedback()
 const closing = ref(false)
+const { schedule: scheduleCloseConsultation, forceExpire: forceCloseConsultation } = useAutoClose()
+watch(closingConsultation, (c) => { if (!c) forceCloseConsultation() })
 
 // ── Delete modal ───────────────────────────────────────────────────
 const deletingConsultation = ref<Consultation | null>(null)
 const deleteFeedback = useFormFeedback()
 const deleting = ref(false)
+const { schedule: scheduleDeleteConsultation, forceExpire: forceDeleteConsultation } = useAutoClose()
+watch(deletingConsultation, (c) => { if (!c) forceDeleteConsultation() })
 
 async function loadData() {
   const [buildingRes, listRes] = await Promise.all([
@@ -141,6 +148,7 @@ function removeChoice(idx: number) {
 }
 
 async function saveConsultation() {
+  if (createFeedback.status.value === 'success') { forceCreateClose(); return }
   if (!createForm.value.title.trim() || createForm.value.choices.filter(c => c.trim()).length < 2) return
   saving.value = true
   createFeedback.reset()
@@ -152,7 +160,7 @@ async function saveConsultation() {
       choices: createForm.value.choices.filter(c => c.trim()),
     })
     createFeedback.setSuccess(t('common.saved'))
-    setTimeout(() => { showCreateModal.value = false; reload() }, SUCCESS_AUTO_CLEAR_MS)
+    scheduleCreateClose(() => { showCreateModal.value = false; reload() })
   } catch (err) {
     createFeedback.setError(toErrorMessage(err, t('common.error')))
   } finally {
@@ -180,13 +188,14 @@ function openCloseModal(c: Consultation) {
 }
 
 async function confirmClose() {
+  if (closeFeedback.status.value === 'success') { forceCloseConsultation(); return }
   if (!closingConsultation.value) return
   closing.value = true
   closeFeedback.reset()
   try {
     await consultationsApi.close(closingConsultation.value.id)
     closeFeedback.setSuccess(t('consultations.closeSuccess'))
-    setTimeout(async () => { closingConsultation.value = null; await reload() }, SUCCESS_AUTO_CLEAR_MS)
+    scheduleCloseConsultation(async () => { closingConsultation.value = null; await reload() })
   } catch (err) {
     closeFeedback.setError(toErrorMessage(err, t('common.error')))
   } finally {
@@ -200,13 +209,14 @@ function openDeleteModal(c: Consultation) {
 }
 
 async function confirmDelete() {
+  if (deleteFeedback.status.value === 'success') { forceDeleteConsultation(); return }
   if (!deletingConsultation.value) return
   deleting.value = true
   deleteFeedback.reset()
   try {
     await consultationsApi.delete(deletingConsultation.value.id)
     deleteFeedback.setSuccess(t('consultations.deleteSuccess'))
-    setTimeout(async () => { deletingConsultation.value = null; await reload() }, SUCCESS_AUTO_CLEAR_MS)
+    scheduleDeleteConsultation(async () => { deletingConsultation.value = null; await reload() })
   } catch (err) {
     deleteFeedback.setError(toErrorMessage(err, t('common.error')))
   } finally {

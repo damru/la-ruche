@@ -69,8 +69,8 @@ function handleOpenChange(open: boolean) {
             </slot>
           </DialogTitle>
           <button
-            v-if="closable"
             class="c-modal__close"
+            :class="{ 'c-modal__close--disabled': !closable }"
             :aria-label="t('common.close')"
             @click="close"
           >
@@ -181,6 +181,11 @@ function handleOpenChange(open: boolean) {
 .c-modal__close:hover {
   background: var(--color-surface-container-high);
   color: var(--color-on-surface);
+}
+.c-modal__close--disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 .c-modal__body {

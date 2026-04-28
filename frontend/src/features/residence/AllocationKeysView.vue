@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import CCard from '@/components/molecules/CCard.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
@@ -11,7 +11,8 @@ import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import { allocationKeysApi, unitsApi } from '@/api'
 import { usePageLoader } from '@/composables/usePageLoader'
-import { useFormFeedback, SUCCESS_AUTO_CLEAR_MS } from '@/composables/useFormFeedback'
+import { useFormFeedback } from '@/composables/useFormFeedback'
+import { useAutoClose } from '@/composables/useAutoClose'
 import type { AllocationKey } from '@/types/domain'
 
 const { t } = useI18n()
@@ -22,6 +23,8 @@ const keyFeedback = useFormFeedback()
 
 // ── Modal state ───────────────────────────────────────────────────
 const showKeyModal = ref(false)
+const { schedule: scheduleKeyClose, forceExpire: forceKeyClose } = useAutoClose()
+watch(showKeyModal, (open) => { if (!open) forceKeyClose() })
 const modalForm = ref<{
   id?: string
   name: string
@@ -97,6 +100,7 @@ async function openEditModal(key: AllocationKey) {
 // ── Save ──────────────────────────────────────────────────────────
 
 async function saveKey() {
+  if (keyFeedback.status.value === 'success') { forceKeyClose(); return }
   if (!modalForm.value.name.trim()) {
     keyFeedback.setError(t('common.required'))
     return
@@ -135,7 +139,7 @@ async function saveKey() {
     } catch { /* non-blocking */ }
 
     keyFeedback.setSuccess(t('common.saved'))
-    setTimeout(() => { showKeyModal.value = false }, SUCCESS_AUTO_CLEAR_MS)
+    scheduleKeyClose(() => { showKeyModal.value = false })
   } catch (e: unknown) {
     keyFeedback.setError((e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? t('common.error'))
   } finally {
@@ -149,6 +153,8 @@ const showDeleteKeyModal = ref(false)
 const keyToDelete = ref<AllocationKey | null>(null)
 const deletingKeyInProgress = ref(false)
 const deleteKeyFeedback = useFormFeedback()
+const { schedule: scheduleDeleteKeyClose, forceExpire: forceDeleteKeyClose } = useAutoClose()
+watch(showDeleteKeyModal, (open) => { if (!open) forceDeleteKeyClose() })
 
 function openDeleteKeyModal(key: AllocationKey) {
   keyToDelete.value = key
@@ -157,6 +163,7 @@ function openDeleteKeyModal(key: AllocationKey) {
 }
 
 async function confirmDeleteKey() {
+  if (deleteKeyFeedback.status.value === 'success') { forceDeleteKeyClose(); return }
   if (!keyToDelete.value) return
   const keyId = keyToDelete.value.id
   deletingKeyInProgress.value = true
@@ -165,7 +172,7 @@ async function confirmDeleteKey() {
     await allocationKeysApi.delete(keyId)
     keys.value = keys.value.filter(k => k.id !== keyId)
     deleteKeyFeedback.setSuccess(t('settings.keys.deleteSuccess'))
-    setTimeout(() => { showDeleteKeyModal.value = false }, SUCCESS_AUTO_CLEAR_MS)
+    scheduleDeleteKeyClose(() => { showDeleteKeyModal.value = false })
   } catch (e: unknown) {
     deleteKeyFeedback.setError((e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? t('common.error'))
   } finally {
@@ -290,7 +297,7 @@ onMounted(reload)
     <CModal
       :open="showKeyModal"
       size="lg"
-      :closable="!modalSaving && keyFeedback.status.value !== 'success'"
+      :closable="!modalSaving"
       :title="modalForm.id ? t('settings.keys.editKey') : t('settings.keys.newKey')"
       @update:open="showKeyModal = $event"
     >

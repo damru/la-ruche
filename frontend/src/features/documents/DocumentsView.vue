@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, onMounted } from 'vue'
+import { computed, ref, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useFormatters } from '@/composables/useFormatters'
 import CBadge from '@/components/atoms/CBadge.vue'
@@ -11,7 +11,8 @@ import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import { documentsApi, buildingApi } from '@/api'
 import { toErrorMessage, usePageLoader } from '@/composables/usePageLoader'
-import { useFormFeedback, SUCCESS_AUTO_CLEAR_MS } from '@/composables/useFormFeedback'
+import { useFormFeedback } from '@/composables/useFormFeedback'
+import { useAutoClose } from '@/composables/useAutoClose'
 import type { Document } from '@/types/domain'
 import { buildDocumentDeleteMessage } from '@/utils/documents'
 import { extractFileExtension } from '@/utils/files'
@@ -31,6 +32,8 @@ const uploadSuccess = ref(false)
 const selectedFile = ref<File | null>(null)
 const selectedRoles = ref<string[]>(['manager', 'board_member', 'co_owner'])
 const fileInputRef = ref<HTMLInputElement | null>(null)
+const { schedule: scheduleUploadClose, forceExpire: forceUploadClose } = useAutoClose()
+watch(showUpload, (open) => { if (!open) forceUploadClose() })
 
 const documents = computed(() => {
   const q = search.value.toLowerCase()
@@ -79,6 +82,7 @@ function toggleRole(role: string) {
 }
 
 async function uploadFile() {
+  if (uploadSuccess.value) { forceUploadClose(); return }
   if (!selectedFile.value) return
   uploading.value = true
   uploadError.value = ''
@@ -106,7 +110,7 @@ async function uploadFile() {
 
     uploadSuccess.value = true
     await loadData()
-    setTimeout(() => { showUpload.value = false; uploadSuccess.value = false }, SUCCESS_AUTO_CLEAR_MS)
+    scheduleUploadClose(() => { showUpload.value = false; uploadSuccess.value = false })
   } catch (e: unknown) {
     uploadError.value = toErrorMessage(e, t('documents.uploadFailed'))
   } finally {
@@ -129,6 +133,8 @@ const showDeleteDocModal = ref(false)
 const docToDelete = ref<Document | null>(null)
 const deletingDoc = ref(false)
 const deleteDocFeedback = useFormFeedback()
+const { schedule: scheduleDeleteDocClose, forceExpire: forceDeleteDocClose } = useAutoClose()
+watch(showDeleteDocModal, (open) => { if (!open) forceDeleteDocClose() })
 
 function openDeleteDocModal(doc: Document) {
   docToDelete.value = doc
@@ -137,6 +143,7 @@ function openDeleteDocModal(doc: Document) {
 }
 
 async function confirmDeleteDoc() {
+  if (deleteDocFeedback.status.value === 'success') { forceDeleteDocClose(); return }
   if (!docToDelete.value) return
   const docId = docToDelete.value.id
   deletingDoc.value = true
@@ -145,7 +152,7 @@ async function confirmDeleteDoc() {
     await documentsApi.delete(docId)
     allDocuments.value = allDocuments.value.filter(d => d.id !== docId)
     deleteDocFeedback.setSuccess(t('documents.deleteSuccess'))
-    setTimeout(() => { showDeleteDocModal.value = false }, SUCCESS_AUTO_CLEAR_MS)
+    scheduleDeleteDocClose(() => { showDeleteDocModal.value = false })
   } catch (e: unknown) {
     deleteDocFeedback.setError(toErrorMessage(e, t('common.error')))
   } finally {

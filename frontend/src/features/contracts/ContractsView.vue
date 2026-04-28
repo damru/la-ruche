@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useFormatters } from '@/composables/useFormatters'
 import CBadge from '@/components/atoms/CBadge.vue'
@@ -22,7 +22,8 @@ import { buildingApi, contractsApi } from '@/api'
 import ContractDocumentsModal from '@/features/contracts/ContractDocumentsModal.vue'
 import ContractFormModal from '@/features/contracts/ContractFormModal.vue'
 import { usePageLoader, toErrorMessage } from '@/composables/usePageLoader'
-import { useFormFeedback, SUCCESS_AUTO_CLEAR_MS } from '@/composables/useFormFeedback'
+import { useFormFeedback } from '@/composables/useFormFeedback'
+import { useAutoClose } from '@/composables/useAutoClose'
 import type { ContractReminder, ContractStatus, ContractType, VendorContract } from '@/types/domain'
 
 interface ContractReminderView extends ContractReminder {
@@ -224,6 +225,8 @@ const showTerminateModal = ref(false)
 const contractToTerminate = ref<VendorContract | null>(null)
 const terminatingContract = ref(false)
 const terminateFeedback = useFormFeedback()
+const { schedule: scheduleTerminateClose, forceExpire: forceTerminateClose } = useAutoClose()
+watch(showTerminateModal, (open) => { if (!open) forceTerminateClose() })
 
 function openTerminateModal(contract: VendorContract) {
   contractToTerminate.value = contract
@@ -232,6 +235,7 @@ function openTerminateModal(contract: VendorContract) {
 }
 
 async function confirmTerminateContract() {
+  if (terminateFeedback.status.value === 'success') { forceTerminateClose(); return }
   if (!contractToTerminate.value) return
   terminatingContract.value = true
   terminateFeedback.reset()
@@ -239,7 +243,7 @@ async function confirmTerminateContract() {
     await contractsApi.terminate(contractToTerminate.value.id)
     terminateFeedback.setSuccess(t('contracts.terminateSuccess'))
     await reload()
-    setTimeout(() => { showTerminateModal.value = false }, SUCCESS_AUTO_CLEAR_MS)
+    scheduleTerminateClose(() => { showTerminateModal.value = false })
   } catch (currentError: unknown) {
     terminateFeedback.setError(toErrorMessage(currentError, t('contracts.terminateError')))
   } finally {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CCard from '@/components/molecules/CCard.vue'
@@ -11,7 +11,8 @@ import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import { unitsApi, allocationKeysApi, usersApi } from '@/api'
 import { usePageLoader } from '@/composables/usePageLoader'
-import { useFormFeedback, SUCCESS_AUTO_CLEAR_MS } from '@/composables/useFormFeedback'
+import { useFormFeedback } from '@/composables/useFormFeedback'
+import { useAutoClose } from '@/composables/useAutoClose'
 import type { Unit, User, UnitType, AllocationKey } from '@/types/domain'
 
 const { t } = useI18n()
@@ -31,6 +32,8 @@ const generalKey = computed(() => allKeys.value.find(k => k.key_type === 'genera
 const showUnitModal = ref(false)
 const unitFeedback = useFormFeedback()
 const savingUnit = ref(false)
+const { schedule: scheduleUnitClose, forceExpire: forceUnitClose } = useAutoClose()
+watch(showUnitModal, (open) => { if (!open) forceUnitClose() })
 const editingUnit = ref<{
   id?: string
   unit_number: string
@@ -129,6 +132,7 @@ async function openEditUnit(unit: Unit) {
 }
 
 async function saveUnit() {
+  if (unitFeedback.status.value === 'success') { forceUnitClose(); return }
   if (!editingUnit.value.unit_number.trim()) {
     unitFeedback.setError(t('common.required'))
     return
@@ -161,7 +165,7 @@ async function saveUnit() {
 
     unitFeedback.setSuccess(t('common.saved'))
     await loadData()
-    setTimeout(() => { showUnitModal.value = false }, SUCCESS_AUTO_CLEAR_MS)
+    scheduleUnitClose(() => { showUnitModal.value = false })
   } catch (e: unknown) {
     const status = (e as { response?: { status?: number } })?.response?.status
     const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? ''
@@ -183,6 +187,8 @@ const showArchiveModal = ref(false)
 const unitToArchive = ref<Unit | null>(null)
 const archivingUnit = ref(false)
 const archiveFeedback = useFormFeedback()
+const { schedule: scheduleArchiveClose, forceExpire: forceArchiveClose } = useAutoClose()
+watch(showArchiveModal, (open) => { if (!open) forceArchiveClose() })
 
 function openArchiveModal(unit: Unit) {
   unitToArchive.value = unit
@@ -191,6 +197,7 @@ function openArchiveModal(unit: Unit) {
 }
 
 async function confirmArchiveUnit() {
+  if (archiveFeedback.status.value === 'success') { forceArchiveClose(); return }
   if (!unitToArchive.value) return
   archivingUnit.value = true
   archiveFeedback.reset()
@@ -198,7 +205,7 @@ async function confirmArchiveUnit() {
     await unitsApi.archive(unitToArchive.value.id)
     archiveFeedback.setSuccess(t('residents.archiveSuccess'))
     await loadData()
-    setTimeout(() => { showArchiveModal.value = false }, SUCCESS_AUTO_CLEAR_MS)
+    scheduleArchiveClose(() => { showArchiveModal.value = false })
   } catch {
     archiveFeedback.setError(t('common.error'))
   } finally {
@@ -459,7 +466,7 @@ function formatLocation(unit: { block?: string | null; staircase?: string | null
       <CModal
         :open="showUnitModal"
         :title="editingUnit.id ? t('residents.editUnit') : t('residents.createUnit')"
-        :closable="!savingUnit && unitFeedback.status.value !== 'success'"
+        :closable="!savingUnit"
         @update:open="showUnitModal = $event"
       >
         <div class="unit-form">

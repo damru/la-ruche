@@ -28,7 +28,7 @@ withDefaults(defineProps<{
 <template>
   <button
     :type="type"
-    :disabled="disabled || loading || closing"
+    :disabled="disabled || loading"
     :class="['c-btn', `c-btn--${variant}`, `c-btn--${size}`, { 'c-btn--loading': loading, 'c-btn--closing': closing, 'tone--accent': variant === 'primary', 'tone--err': variant === 'danger' }]"
     v-bind="$attrs"
   >
@@ -128,7 +128,6 @@ withDefaults(defineProps<{
 /* Fills the button background from left to right over SUCCESS_AUTO_CLEAR_MS (3 s)
    to communicate the auto-close countdown after a successful action. */
 .c-btn--closing {
-  pointer-events: none;
   overflow: hidden;
 }
 .c-btn--closing::before {
