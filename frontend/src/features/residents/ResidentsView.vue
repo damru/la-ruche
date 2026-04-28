@@ -459,6 +459,7 @@ function formatLocation(unit: { block?: string | null; staircase?: string | null
       <CModal
         :open="showUnitModal"
         :title="editingUnit.id ? t('residents.editUnit') : t('residents.createUnit')"
+        :closable="!savingUnit && unitFeedback.status.value !== 'success'"
         @update:open="showUnitModal = $event"
       >
         <div class="unit-form">
