@@ -4,8 +4,8 @@
   <path d="M8 13 A4 6 0 0 1 16 13"/>
   <!-- Brim — small bump 1.5u beyond dome each side -->
   <line x1="6.5" y1="13" x2="17.5" y2="13"/>
-  <!-- Half face — bottom arc, 2u gap below brim -->
-  <path d="M8 19 A4 4 0 0 0 16 19"/>
+  <!-- Half face — joined to hat at y=13, chin at y=17 -->
+  <path d="M8 13 A4 4 0 0 0 16 13"/>
   <!-- Ventilation ribs — diagonal inward (converging downward) -->
   <line x1="9.5" y1="9" x2="11" y2="11.5"/>
   <line x1="14.5" y1="9" x2="13" y2="11.5"/>
