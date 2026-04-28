@@ -310,6 +310,7 @@ async function saveContract() {
       </CBtn>
       <CBtn
         :loading="saving"
+        :closing="feedback.status.value === 'success'"
         :disabled="saving"
         @click="saveContract"
       >

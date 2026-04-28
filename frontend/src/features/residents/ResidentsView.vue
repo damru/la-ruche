@@ -12,11 +12,9 @@ import CTopbar from '@/components/organisms/CTopbar.vue'
 import { unitsApi, allocationKeysApi, usersApi } from '@/api'
 import { usePageLoader } from '@/composables/usePageLoader'
 import { useFormFeedback, SUCCESS_AUTO_CLEAR_MS } from '@/composables/useFormFeedback'
-import { useConfirm } from '@/composables/useConfirm'
 import type { Unit, User, UnitType, AllocationKey } from '@/types/domain'
 
 const { t } = useI18n()
-const { confirm } = useConfirm()
 
 const activeTab = ref<'units' | 'users'>('units')
 const search = ref('')
@@ -179,20 +177,32 @@ async function saveUnit() {
   }
 }
 
-async function archiveUnit(id: string) {
-  const unit = allUnits.value.find(u => u.id === id)
-  const ok = await confirm({
-    title: t('residents.confirmArchiveTitle'),
-    message: t('residents.confirmArchiveMessage', { number: unit?.unit_number ?? id }),
-    confirmLabel: t('common.archiveLabel'),
-    variant: 'danger',
-  })
-  if (!ok) return
+// ── Archive unit modal ────────────────────────────────────────────
+
+const showArchiveModal = ref(false)
+const unitToArchive = ref<Unit | null>(null)
+const archivingUnit = ref(false)
+const archiveFeedback = useFormFeedback()
+
+function openArchiveModal(unit: Unit) {
+  unitToArchive.value = unit
+  archiveFeedback.reset()
+  showArchiveModal.value = true
+}
+
+async function confirmArchiveUnit() {
+  if (!unitToArchive.value) return
+  archivingUnit.value = true
+  archiveFeedback.reset()
   try {
-    await unitsApi.archive(id)
+    await unitsApi.archive(unitToArchive.value.id)
+    archiveFeedback.setSuccess(t('residents.archiveSuccess'))
     await loadData()
+    setTimeout(() => { showArchiveModal.value = false }, SUCCESS_AUTO_CLEAR_MS)
   } catch {
-    unitFeedback.setError(t('common.error'))
+    archiveFeedback.setError(t('common.error'))
+  } finally {
+    archivingUnit.value = false
   }
 }
 
@@ -356,7 +366,7 @@ function formatLocation(unit: { block?: string | null; staircase?: string | null
                         class="icon-btn icon-btn--danger"
                         :title="t('residents.archive')"
                         :aria-label="t('residents.archive')"
-                        @click="archiveUnit(unit.id)"
+                        @click="openArchiveModal(unit)"
                       >
                         <CIconArchive
                           width="16"
@@ -542,10 +552,43 @@ function formatLocation(unit: { block?: string | null; staircase?: string | null
           <CBtn
             variant="primary"
             :loading="savingUnit"
+            :closing="unitFeedback.status.value === 'success'"
             :disabled="savingUnit"
             @click="saveUnit"
           >
             {{ savingUnit ? t('common.saving') : t('common.save') }}
+          </CBtn>
+        </template>
+      </CModal>
+
+      <!-- Archive unit modal -->
+      <CModal
+        :open="showArchiveModal"
+        :title="t('residents.confirmArchiveTitle')"
+        size="sm"
+        @update:open="showArchiveModal = $event"
+      >
+        <p class="body-md">
+          {{ t('residents.confirmArchiveMessage', { number: unitToArchive?.unit_number ?? '' }) }}
+        </p>
+        <template #footer>
+          <CFormFeedback
+            :status="archiveFeedback.status.value"
+            :message="archiveFeedback.message.value"
+          />
+          <CBtn
+            variant="ghost"
+            @click="showArchiveModal = false"
+          >
+            {{ t('common.cancel') }}
+          </CBtn>
+          <CBtn
+            variant="danger"
+            :loading="archivingUnit"
+            :closing="archiveFeedback.status.value === 'success'"
+            @click="confirmArchiveUnit"
+          >
+            {{ t('common.archiveLabel') }}
           </CBtn>
         </template>
       </CModal>

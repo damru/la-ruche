@@ -11,12 +11,16 @@ withDefaults(defineProps<{
   size?: Size
   disabled?: boolean
   loading?: boolean
+  /** When true, disables the button and shows a left-to-right fill progress animation
+   *  (DDR-006: used during the auto-close timer after a successful modal action). */
+  closing?: boolean
   type?: 'button' | 'submit' | 'reset'
 }>(), {
   variant: 'primary',
   size: 'md',
   disabled: false,
   loading: false,
+  closing: false,
   type: 'button',
 })
 </script>
@@ -24,8 +28,8 @@ withDefaults(defineProps<{
 <template>
   <button
     :type="type"
-    :disabled="disabled || loading"
-    :class="['c-btn', `c-btn--${variant}`, `c-btn--${size}`, { 'c-btn--loading': loading, 'tone--accent': variant === 'primary', 'tone--err': variant === 'danger' }]"
+    :disabled="disabled || loading || closing"
+    :class="['c-btn', `c-btn--${variant}`, `c-btn--${size}`, { 'c-btn--loading': loading, 'c-btn--closing': closing, 'tone--accent': variant === 'primary', 'tone--err': variant === 'danger' }]"
     v-bind="$attrs"
   >
     <span
@@ -118,6 +122,28 @@ withDefaults(defineProps<{
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
   flex-shrink: 0;
+}
+
+/* ── Closing progress fill (DDR-006) ──────────────────────────── */
+/* Fills the button background from left to right over SUCCESS_AUTO_CLEAR_MS (3 s)
+   to communicate the auto-close countdown after a successful action. */
+.c-btn--closing {
+  pointer-events: none;
+  overflow: hidden;
+}
+.c-btn--closing::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.25);
+  transform-origin: left center;
+  transform: scaleX(0);
+  animation: c-btn-fill 3s linear forwards;
+}
+
+@keyframes c-btn-fill {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
 }
 
 /* ── Slot icons ───────────────────────────────────────────────── */

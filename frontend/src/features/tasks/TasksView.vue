@@ -4,7 +4,6 @@ import { useI18n } from 'vue-i18n'
 import { useFormatters } from '@/composables/useFormatters'
 import { usePageLoader, toErrorMessage } from '@/composables/usePageLoader'
 import { useFormFeedback, SUCCESS_AUTO_CLEAR_MS } from '@/composables/useFormFeedback'
-import { useConfirm } from '@/composables/useConfirm'
 import CAlert from '@/components/atoms/CAlert.vue'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
@@ -19,7 +18,6 @@ import type { Contractor, Task, TaskStatus, TaskPriority } from '@/types/domain'
 
 const { t } = useI18n()
 const { formatDate, formatRelative } = useFormatters()
-const { confirm } = useConfirm()
 
 // ── State ─────────────────────────────────────────────────────────
 const buildingName = ref('')
@@ -283,26 +281,33 @@ async function confirmCloseTask() {
   }
 }
 
-// ── Delete task ───────────────────────────────────────────────────
+// ── Delete task modal ─────────────────────────────────────────────
+const showDeleteModal = ref(false)
+const taskToDelete = ref<Task | null>(null)
+const deletingTask = ref(false)
+const deleteTaskFeedback = useFormFeedback()
 const pageError = ref('')
 
-async function deleteTask(task: Task) {
-  const ok = await confirm({
-    title: t('tasks.confirmDeleteTitle'),
-    message: task.is_in_logbook
-      ? t('tasks.confirmDeleteLogbookMessage', { title: task.title })
-      : t('tasks.confirmDeleteMessage', { title: task.title }),
-    confirmLabel: t('common.delete'),
-    variant: 'danger',
-  })
-  if (!ok) return
-  pageError.value = ''
+function openDeleteModal(task: Task) {
+  // Close the edit modal if it is open to avoid modal stacking
+  showTaskModal.value = false
+  taskToDelete.value = task
+  deleteTaskFeedback.reset()
+  showDeleteModal.value = true
+}
+
+async function confirmDeleteTask() {
+  if (!taskToDelete.value) return
+  deletingTask.value = true
+  deleteTaskFeedback.reset()
   try {
-    await tasksApi.delete(task.id)
-    showTaskModal.value = false
-    await reload()
+    await tasksApi.delete(taskToDelete.value.id)
+    deleteTaskFeedback.setSuccess(t('tasks.deleteSuccess'))
+    setTimeout(() => { showDeleteModal.value = false; reload() }, SUCCESS_AUTO_CLEAR_MS)
   } catch (err) {
-    pageError.value = toErrorMessage(err, t('common.error'))
+    deleteTaskFeedback.setError(toErrorMessage(err, t('common.error')))
+  } finally {
+    deletingTask.value = false
   }
 }
 
@@ -610,7 +615,7 @@ function copyToClipboard(text: string) {
                     variant="danger"
                     size="sm"
                     :aria-label="t('tasks.deleteTask')"
-                    @click="deleteTask(task)"
+                    @click="openDeleteModal(task)"
                   >
                     <CIconTrash />
                     {{ t('common.delete') }}
@@ -790,7 +795,7 @@ function copyToClipboard(text: string) {
           variant="danger"
           :loading="savingTask"
           style="margin-right:auto"
-          @click="deleteTask(editingTask)"
+          @click="openDeleteModal(editingTask)"
         >
           <CIconTrash />
           {{ t('common.delete') }}
@@ -808,6 +813,7 @@ function copyToClipboard(text: string) {
         <CBtn
           variant="primary"
           :loading="savingTask"
+          :closing="taskFeedback.status.value === 'success'"
           @click="saveTask"
         >
           {{ t('common.save') }}
@@ -839,6 +845,7 @@ function copyToClipboard(text: string) {
         <CBtn
           variant="danger"
           :loading="revoking"
+          :closing="revokeFeedback.status.value === 'success'"
           @click="confirmRevoke"
         >
           {{ t('tasks.revokeToken') }}
@@ -870,6 +877,7 @@ function copyToClipboard(text: string) {
         <CBtn
           variant="primary"
           :loading="closingInProgress"
+          :closing="closeFeedback.status.value === 'success'"
           @click="confirmCloseTask"
         >
           {{ t('tasks.closeTask') }}
@@ -901,9 +909,46 @@ function copyToClipboard(text: string) {
         <CBtn
           variant="primary"
           :loading="reopening"
+          :closing="reopenFeedback.status.value === 'success'"
           @click="confirmReopen"
         >
           {{ t('tasks.reopenTask') }}
+        </CBtn>
+      </template>
+    </CModal>
+
+    <!-- Delete task modal -->
+    <CModal
+      :open="showDeleteModal"
+      :title="t('tasks.confirmDeleteTitle')"
+      size="sm"
+      @update:open="showDeleteModal = $event"
+    >
+      <p class="body-sm">
+        {{
+          taskToDelete?.is_in_logbook
+            ? t('tasks.confirmDeleteLogbookMessage', { title: taskToDelete?.title ?? '' })
+            : t('tasks.confirmDeleteMessage', { title: taskToDelete?.title ?? '' })
+        }}
+      </p>
+      <template #footer>
+        <CFormFeedback
+          :status="deleteTaskFeedback.status.value"
+          :message="deleteTaskFeedback.message.value"
+        />
+        <CBtn
+          variant="ghost"
+          @click="showDeleteModal = false"
+        >
+          {{ t('common.cancel') }}
+        </CBtn>
+        <CBtn
+          variant="danger"
+          :loading="deletingTask"
+          :closing="deleteTaskFeedback.status.value === 'success'"
+          @click="confirmDeleteTask"
+        >
+          {{ t('common.deleteLabel') }}
         </CBtn>
       </template>
     </CModal>

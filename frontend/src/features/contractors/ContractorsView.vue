@@ -446,6 +446,7 @@ async function confirmDelete() {
         <CBtn
           variant="primary"
           :loading="saving"
+          :closing="feedback.status.value === 'success'"
           @click="save"
         >
           {{ t('common.save') }}
@@ -476,6 +477,7 @@ async function confirmDelete() {
         <CBtn
           variant="danger"
           :loading="!!deletingId"
+          :closing="deleteFeedback.status.value === 'success'"
           @click="confirmDelete"
         >
           {{ t('common.delete') }}

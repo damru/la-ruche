@@ -7,6 +7,7 @@ import CIconBolt from '@/components/atoms/CIconBolt.svg'
 import CIconDroplet from '@/components/atoms/CIconDroplet.svg'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CCard from '@/components/molecules/CCard.vue'
+import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
 import CPageError from '@/components/molecules/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
@@ -20,8 +21,8 @@ import CIconWrench from '@/components/atoms/CIconWrench.svg'
 import { buildingApi, contractsApi } from '@/api'
 import ContractDocumentsModal from '@/features/contracts/ContractDocumentsModal.vue'
 import ContractFormModal from '@/features/contracts/ContractFormModal.vue'
-import { useConfirm } from '@/composables/useConfirm'
 import { usePageLoader, toErrorMessage } from '@/composables/usePageLoader'
+import { useFormFeedback, SUCCESS_AUTO_CLEAR_MS } from '@/composables/useFormFeedback'
 import type { ContractReminder, ContractStatus, ContractType, VendorContract } from '@/types/domain'
 
 interface ContractReminderView extends ContractReminder {
@@ -32,7 +33,6 @@ interface ContractReminderView extends ContractReminder {
 
 const { t } = useI18n()
 const { formatCurrency, formatDate, daysUntil } = useFormatters()
-const { confirm } = useConfirm()
 
 const filter = ref<'all' | 'active' | 'expired'>('all')
 const search = ref('')
@@ -218,25 +218,32 @@ async function acknowledgeReminder(reminder: ContractReminder) {
   }
 }
 
-async function terminateContract(contract: VendorContract) {
-  const confirmed = await confirm({
-    title: t('contracts.terminateTitle'),
-    message: t('contracts.terminateMessage', { name: contract.vendor_name }),
-    confirmLabel: t('contracts.terminate'),
-    variant: 'danger',
-  })
+// ── Terminate contract modal ──────────────────────────────────────
 
-  if (!confirmed) return
+const showTerminateModal = ref(false)
+const contractToTerminate = ref<VendorContract | null>(null)
+const terminatingContract = ref(false)
+const terminateFeedback = useFormFeedback()
 
-  busyKey.value = `contract:${contract.id}`
+function openTerminateModal(contract: VendorContract) {
+  contractToTerminate.value = contract
+  terminateFeedback.reset()
+  showTerminateModal.value = true
+}
 
+async function confirmTerminateContract() {
+  if (!contractToTerminate.value) return
+  terminatingContract.value = true
+  terminateFeedback.reset()
   try {
-    await contractsApi.terminate(contract.id)
+    await contractsApi.terminate(contractToTerminate.value.id)
+    terminateFeedback.setSuccess(t('contracts.terminateSuccess'))
     await reload()
+    setTimeout(() => { showTerminateModal.value = false }, SUCCESS_AUTO_CLEAR_MS)
   } catch (currentError: unknown) {
-    error.value = toErrorMessage(currentError, t('contracts.terminateError'))
+    terminateFeedback.setError(toErrorMessage(currentError, t('contracts.terminateError')))
   } finally {
-    busyKey.value = ''
+    terminatingContract.value = false
   }
 }
 </script>
@@ -489,9 +496,7 @@ async function terminateContract(contract: VendorContract) {
                 v-if="effectiveStatus(contract) === 'active'"
                 variant="danger"
                 size="sm"
-                :loading="busyKey === `contract:${contract.id}`"
-                :disabled="busyKey === `contract:${contract.id}`"
-                @click="terminateContract(contract)"
+                @click="openTerminateModal(contract)"
               >
                 <CIconArchive />
                 {{ t('contracts.terminate') }}
@@ -514,6 +519,38 @@ async function terminateContract(contract: VendorContract) {
     :contract="documentsContract"
     @changed="reload"
   />
+
+  <!-- Terminate contract modal -->
+  <CModal
+    :open="showTerminateModal"
+    :title="t('contracts.terminateTitle')"
+    size="sm"
+    @update:open="showTerminateModal = $event"
+  >
+    <p class="body-md">
+      {{ t('contracts.terminateMessage', { name: contractToTerminate?.vendor_name ?? '' }) }}
+    </p>
+    <template #footer>
+      <CFormFeedback
+        :status="terminateFeedback.status.value"
+        :message="terminateFeedback.message.value"
+      />
+      <CBtn
+        variant="ghost"
+        @click="showTerminateModal = false"
+      >
+        {{ t('common.cancel') }}
+      </CBtn>
+      <CBtn
+        variant="danger"
+        :loading="terminatingContract"
+        :closing="terminateFeedback.status.value === 'success'"
+        @click="confirmTerminateContract"
+      >
+        {{ t('contracts.terminate') }}
+      </CBtn>
+    </template>
+  </CModal>
 </template>
 
 <style scoped>

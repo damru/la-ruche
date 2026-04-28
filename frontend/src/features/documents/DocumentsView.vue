@@ -11,16 +11,13 @@ import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import { documentsApi, buildingApi } from '@/api'
 import { toErrorMessage, usePageLoader } from '@/composables/usePageLoader'
-import { SUCCESS_AUTO_CLEAR_MS } from '@/composables/useFormFeedback'
-import { useConfirm } from '@/composables/useConfirm'
+import { useFormFeedback, SUCCESS_AUTO_CLEAR_MS } from '@/composables/useFormFeedback'
 import type { Document } from '@/types/domain'
 import { buildDocumentDeleteMessage } from '@/utils/documents'
 import { extractFileExtension } from '@/utils/files'
 
 const { t } = useI18n()
 const { formatDate, formatFileSize } = useFormatters()
-
-const { confirm } = useConfirm()
 
 const search = ref('')
 const allDocuments = ref<Document[]>([])
@@ -126,20 +123,32 @@ async function downloadDoc(id: string) {
   }
 }
 
-async function deleteDoc(id: string) {
-  const doc = allDocuments.value.find(d => d.id === id)
-  const ok = await confirm({
-    title: t('documents.confirmDeleteTitle'),
-    message: buildDocumentDeleteMessage(doc, t),
-    confirmLabel: t('common.deleteLabel'),
-    variant: 'danger',
-  })
-  if (!ok) return
+// ── Delete document modal ─────────────────────────────────────────
+
+const showDeleteDocModal = ref(false)
+const docToDelete = ref<Document | null>(null)
+const deletingDoc = ref(false)
+const deleteDocFeedback = useFormFeedback()
+
+function openDeleteDocModal(doc: Document) {
+  docToDelete.value = doc
+  deleteDocFeedback.reset()
+  showDeleteDocModal.value = true
+}
+
+async function confirmDeleteDoc() {
+  if (!docToDelete.value) return
+  deletingDoc.value = true
+  deleteDocFeedback.reset()
   try {
-    await documentsApi.delete(id)
-    allDocuments.value = allDocuments.value.filter(d => d.id !== id)
-  } catch {
-    error.value = t('common.error')
+    await documentsApi.delete(docToDelete.value.id)
+    allDocuments.value = allDocuments.value.filter(d => d.id !== docToDelete.value!.id)
+    deleteDocFeedback.setSuccess(t('documents.deleteSuccess'))
+    setTimeout(() => { showDeleteDocModal.value = false }, SUCCESS_AUTO_CLEAR_MS)
+  } catch (e: unknown) {
+    deleteDocFeedback.setError(toErrorMessage(e, t('common.error')))
+  } finally {
+    deletingDoc.value = false
   }
 }
 </script>
@@ -266,7 +275,7 @@ async function deleteDoc(id: string) {
                       class="icon-btn icon-btn--danger"
                       :title="t('common.delete')"
                       :aria-label="t('common.delete')"
-                      @click="deleteDoc(doc.id)"
+                      @click="openDeleteDocModal(doc)"
                     >
                       <CIconTrash
                         width="16"
@@ -358,10 +367,43 @@ async function deleteDoc(id: string) {
           <CBtn
             variant="primary"
             :loading="uploading"
+            :closing="uploadSuccess"
             :disabled="!selectedFile || uploading"
             @click="uploadFile"
           >
             {{ uploading ? t('common.saving') : t('common.upload') }}
+          </CBtn>
+        </template>
+      </CModal>
+
+      <!-- Delete document modal -->
+      <CModal
+        :open="showDeleteDocModal"
+        :title="t('documents.confirmDeleteTitle')"
+        size="sm"
+        @update:open="showDeleteDocModal = $event"
+      >
+        <p class="body-md">
+          {{ buildDocumentDeleteMessage(docToDelete ?? undefined, t) }}
+        </p>
+        <template #footer>
+          <CFormFeedback
+            :status="deleteDocFeedback.status.value"
+            :message="deleteDocFeedback.message.value"
+          />
+          <CBtn
+            variant="ghost"
+            @click="showDeleteDocModal = false"
+          >
+            {{ t('common.cancel') }}
+          </CBtn>
+          <CBtn
+            variant="danger"
+            :loading="deletingDoc"
+            :closing="deleteDocFeedback.status.value === 'success'"
+            @click="confirmDeleteDoc"
+          >
+            {{ t('common.deleteLabel') }}
           </CBtn>
         </template>
       </CModal>

@@ -457,6 +457,7 @@
     "terminate": "Résilier",
     "terminateTitle": "Résilier le contrat",
     "terminateMessage": "Le contrat « {name} » sera marqué comme résilié. Les rappels restent conservés pour l'historique.",
+    "terminateSuccess": "Contrat résilié",
     "terminateError": "Impossible de résilier ce contrat.",
     "noticePeriod": "Préavis de résiliation",
     "reminders": {
@@ -582,6 +583,7 @@
     "closeSuccess": "Tâche terminée",
     "reopenSuccess": "Tâche ré-ouverte",
     "revokeSuccess": "Lien révoqué",
+    "deleteSuccess": "Tâche supprimée",
     "assignmentSection": "Assignation",
     "assignNone": "Non assignée",
     "assignSelf": "Prendre en charge (moi)",
@@ -626,7 +628,8 @@
     "downloadNewTab": "Télécharger le document (ouvre dans un nouvel onglet)",
     "confirmDeleteTitle": "Supprimer le document",
     "confirmDeleteMessage": "Le document « {name} » sera supprimé définitivement. Cette action est irréversible.",
-    "confirmDeleteLinkedMessage": "Le document « {name} » est actuellement lié aux contrats suivants : {links}. Il sera détaché de ces contrats puis supprimé définitivement. Cette action est irréversible."
+    "confirmDeleteLinkedMessage": "Le document « {name} » est actuellement lié aux contrats suivants : {links}. Il sera détaché de ces contrats puis supprimé définitivement. Cette action est irréversible.",
+    "deleteSuccess": "Document supprimé définitivement."
   },
   "consultations": {
     "title": "Consultations",
@@ -796,7 +799,8 @@
     "userNotFound": "Aucun utilisateur trouvé.",
     "deactivated": "Désactivé",
     "confirmArchiveTitle": "Archiver le lot",
-    "confirmArchiveMessage": "Le lot {number} sera archivé. Cette action est réversible par un administrateur."
+    "confirmArchiveMessage": "Le lot {number} sera archivé. Cette action est réversible par un administrateur.",
+    "archiveSuccess": "Lot archivé"
   },
   "registry": {
     "title": "Registre de la copropriété",
@@ -886,7 +890,8 @@
       "general": "Clé système",
       "generalProtected": "Cette clé est obligatoire et ne peut pas être supprimée (art. 10 loi 1965).",
       "confirmDeleteTitle": "Supprimer la clé de répartition",
-      "confirmDeleteMessage": "La clé « {name} » sera archivée. L'historique des appels de fonds associés sera conservé."
+      "confirmDeleteMessage": "La clé « {name} » sera archivée. L'historique des appels de fonds associés sera conservé.",
+      "deleteSuccess": "Clé de répartition supprimée"
     },
     "phone": "Téléphone",
     "phonePlaceholder": "06 00 00 00 00"

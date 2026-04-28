@@ -12,15 +12,12 @@ import CTopbar from '@/components/organisms/CTopbar.vue'
 import { allocationKeysApi, unitsApi } from '@/api'
 import { usePageLoader } from '@/composables/usePageLoader'
 import { useFormFeedback, SUCCESS_AUTO_CLEAR_MS } from '@/composables/useFormFeedback'
-import { useConfirm } from '@/composables/useConfirm'
 import type { AllocationKey } from '@/types/domain'
 
 const { t } = useI18n()
-const { confirm } = useConfirm()
 
 const keys = ref<AllocationKey[]>([])
 const keyBalanceDelta = ref<Record<string, number>>({})  // EP-001-S07: imbalance badge per key
-const deletingKey = ref<string | null>(null)
 const keyFeedback = useFormFeedback()
 
 // ── Modal state ───────────────────────────────────────────────────
@@ -148,23 +145,30 @@ async function saveKey() {
 
 // ── Delete ────────────────────────────────────────────────────────
 
-async function deleteKey(id: string) {
-  const key = keys.value.find(k => k.id === id)
-  const ok = await confirm({
-    title: t('settings.keys.confirmDeleteTitle'),
-    message: t('settings.keys.confirmDeleteMessage', { name: key?.name ?? id }),
-    confirmLabel: t('common.deleteLabel'),
-    variant: 'danger',
-  })
-  if (!ok) return
-  deletingKey.value = id
+const showDeleteKeyModal = ref(false)
+const keyToDelete = ref<AllocationKey | null>(null)
+const deletingKeyInProgress = ref(false)
+const deleteKeyFeedback = useFormFeedback()
+
+function openDeleteKeyModal(key: AllocationKey) {
+  keyToDelete.value = key
+  deleteKeyFeedback.reset()
+  showDeleteKeyModal.value = true
+}
+
+async function confirmDeleteKey() {
+  if (!keyToDelete.value) return
+  deletingKeyInProgress.value = true
+  deleteKeyFeedback.reset()
   try {
-    await allocationKeysApi.delete(id)
-    keys.value = keys.value.filter(k => k.id !== id)
+    await allocationKeysApi.delete(keyToDelete.value.id)
+    keys.value = keys.value.filter(k => k.id !== keyToDelete.value!.id)
+    deleteKeyFeedback.setSuccess(t('settings.keys.deleteSuccess'))
+    setTimeout(() => { showDeleteKeyModal.value = false }, SUCCESS_AUTO_CLEAR_MS)
   } catch (e: unknown) {
-    keyFeedback.setError((e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? t('common.error'))
+    deleteKeyFeedback.setError((e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? t('common.error'))
   } finally {
-    deletingKey.value = null
+    deletingKeyInProgress.value = false
   }
 }
 
@@ -258,12 +262,10 @@ onMounted(reload)
                   v-if="key.key_type !== 'general'"
                   variant="danger"
                   size="sm"
-                  :loading="deletingKey === key.id"
-                  :disabled="deletingKey === key.id"
-                  @click="deleteKey(key.id)"
+                  @click="openDeleteKeyModal(key)"
                 >
                   <CIconTrash />
-                  {{ deletingKey === key.id ? t('common.loading') : t('common.delete') }}
+                  {{ t('common.delete') }}
                 </CBtn>
                 <span
                   v-else
@@ -390,10 +392,43 @@ onMounted(reload)
         <CBtn
           variant="primary"
           :loading="modalSaving"
+          :closing="keyFeedback.status.value === 'success'"
           :disabled="modalSaving || modalLoading"
           @click="saveKey"
         >
           {{ modalSaving ? t('common.saving') : t('common.save') }}
+        </CBtn>
+      </template>
+    </CModal>
+
+    <!-- Delete key modal -->
+    <CModal
+      :open="showDeleteKeyModal"
+      :title="t('settings.keys.confirmDeleteTitle')"
+      size="sm"
+      @update:open="showDeleteKeyModal = $event"
+    >
+      <p class="body-md">
+        {{ t('settings.keys.confirmDeleteMessage', { name: keyToDelete?.name ?? '' }) }}
+      </p>
+      <template #footer>
+        <CFormFeedback
+          :status="deleteKeyFeedback.status.value"
+          :message="deleteKeyFeedback.message.value"
+        />
+        <CBtn
+          variant="ghost"
+          @click="showDeleteKeyModal = false"
+        >
+          {{ t('common.cancel') }}
+        </CBtn>
+        <CBtn
+          variant="danger"
+          :loading="deletingKeyInProgress"
+          :closing="deleteKeyFeedback.status.value === 'success'"
+          @click="confirmDeleteKey"
+        >
+          {{ t('common.deleteLabel') }}
         </CBtn>
       </template>
     </CModal>
