@@ -74,7 +74,6 @@ declare module 'vue' {
     CIconUsers: typeof import('./../components/atoms/CIconUsers.svg')['default']
     CIconWarn: typeof import('./../components/atoms/CIconWarn.svg')['default']
     CIconWrench: typeof import('./../components/atoms/CIconWrench.svg')['default']
-    CIconWorker: typeof import('./../components/atoms/CIconWorker.svg')['default']
     CIconX: typeof import('./../components/atoms/CIconX.svg')['default']
     CInput: typeof import('./../components/atoms/CInput.vue')['default']
     CKpiCard: typeof import('./../components/molecules/CKpiCard.vue')['default']

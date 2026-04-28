@@ -40,7 +40,7 @@ onUnmounted(() => {
         <CIconWrench />
       </template>
       <template #icon-contractors>
-        <CIconWorker />
+        <CIconHardHat />
       </template>
       <template #icon-contracts>
         <CIconContract />
