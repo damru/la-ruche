@@ -16,6 +16,8 @@ export function useAutoClose() {
   let _pendingFn: (() => void) | undefined
 
   function schedule(fn: () => void, delay = SUCCESS_AUTO_CLEAR_MS): void {
+    // In practice, early-close guards in action functions ensure schedule() is
+    // never called while a timer is already running, so the previous fn is not lost.
     _pendingFn = fn
     clearTimeout(_timer)
     _timer = setTimeout(() => {
