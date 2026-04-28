@@ -290,6 +290,7 @@ onMounted(reload)
     <CModal
       :open="showKeyModal"
       size="lg"
+      :closable="!modalSaving && keyFeedback.status.value !== 'success'"
       :title="modalForm.id ? t('settings.keys.editKey') : t('settings.keys.newKey')"
       @update:open="showKeyModal = $event"
     >

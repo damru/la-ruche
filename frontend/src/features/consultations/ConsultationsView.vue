@@ -539,6 +539,7 @@ async function confirmDelete() {
         <CBtn
           variant="primary"
           :loading="saving"
+          :closing="createFeedback.status.value === 'success'"
           @click="saveConsultation"
         >
           {{ t('common.create') }}
@@ -570,6 +571,7 @@ async function confirmDelete() {
         <CBtn
           variant="danger"
           :loading="closing"
+          :closing="closeFeedback.status.value === 'success'"
           @click="confirmClose"
         >
           {{ t('consultations.closeAction') }}
@@ -601,6 +603,7 @@ async function confirmDelete() {
         <CBtn
           variant="danger"
           :loading="deleting"
+          :closing="deleteFeedback.status.value === 'success'"
           @click="confirmDelete"
         >
           {{ t('common.delete') }}
