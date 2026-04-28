@@ -66,7 +66,7 @@
 
 ### Fonctionnalités avancées
 
-**Paiement en ligne** — Les copropriétaires règlent leurs appels de fonds via une passerelle SEPA depuis l'interface. Un reçu PDF est généré à la confirmation. Les fonds sont versés sur le compte bancaire séparé de la copropriété (art. 18 loi 1965). → EP-015
+**Paiement en ligne** — Les copropriétaires règlent leurs appels de fonds via une passerelle SEPA depuis l'interface. Un reçu PDF est généré à la confirmation. Les fonds sont versés sur le compte bancaire séparé de la copropriété (art. 18 loi 1965). → EP-016
 
 **Tenue d'AG** — Module dédié à la conduite de séance : désignation des rôles (président, secrétaire, scrutateurs), feuille de présence numérique avec calcul du quorum en temps réel, prise de notes collaborative par résolution, génération du projet de PV et circuit de validation avec signature numérique (délai légal : art. 17 décret 1967). → EP-013
 
