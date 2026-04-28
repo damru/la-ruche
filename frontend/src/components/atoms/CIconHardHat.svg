@@ -1,12 +1,12 @@
 
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <!-- Dome — same width as face -->
-  <path d="M7.5 13 A4.5 7.5 0 0 1 16.5 13"/>
+  <!-- Dome — same width as face, apex y=7 -->
+  <path d="M8 13 A4 6 0 0 1 16 13"/>
   <!-- Brim — small bump 1.5u beyond dome each side -->
-  <line x1="6" y1="13" x2="18" y2="13"/>
-  <!-- Face — gap of 2.5u below brim -->
-  <circle cx="12" cy="18.5" r="3.8"/>
-  <!-- Ventilation ribs — diagonal, upper third of dome -->
-  <line x1="10" y1="6" x2="9" y2="8.5"/>
-  <line x1="14" y1="6" x2="15" y2="8.5"/>
+  <line x1="6.5" y1="13" x2="17.5" y2="13"/>
+  <!-- Half face — bottom arc, 2u gap below brim -->
+  <path d="M8 19 A4 4 0 0 0 16 19"/>
+  <!-- Ventilation ribs — diagonal inward (converging downward) -->
+  <line x1="9.5" y1="9" x2="11" y2="11.5"/>
+  <line x1="14.5" y1="9" x2="13" y2="11.5"/>
 </svg>
