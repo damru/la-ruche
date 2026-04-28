@@ -3,8 +3,8 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useFormatters } from '@/composables/useFormatters'
 import { usePageLoader, toErrorMessage } from '@/composables/usePageLoader'
-import { useFormFeedback, SUCCESS_AUTO_CLEAR_MS } from '@/composables/useFormFeedback'
-import { useConfirm } from '@/composables/useConfirm'
+import { useFormFeedback } from '@/composables/useFormFeedback'
+import { useAutoClose } from '@/composables/useAutoClose'
 import CAlert from '@/components/atoms/CAlert.vue'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
@@ -19,7 +19,6 @@ import type { Contractor, Task, TaskStatus, TaskPriority } from '@/types/domain'
 
 const { t } = useI18n()
 const { formatDate, formatRelative } = useFormatters()
-const { confirm } = useConfirm()
 
 // ── State ─────────────────────────────────────────────────────────
 const buildingName = ref('')
@@ -32,6 +31,8 @@ const showTaskModal = ref(false)
 const taskFeedback = useFormFeedback()
 const savingTask = ref(false)
 const editingTask = ref<Task | null>(null)
+const { schedule: scheduleTaskClose, forceExpire: forceTaskClose } = useAutoClose()
+watch(showTaskModal, (open) => { if (!open) forceTaskClose() })
 
 // Assignment mode within the modal for open tasks
 // 'none' = not assigned | 'self' = self-assign (in_progress) | 'contractor' = assign contractor
@@ -212,6 +213,7 @@ function openEditModal(task: Task) {
 }
 
 async function saveTask() {
+  if (taskFeedback.status.value === 'success') { forceTaskClose(); return }
   if (!taskForm.value.title.trim()) return
   savingTask.value = true
   taskFeedback.reset()
@@ -247,10 +249,7 @@ async function saveTask() {
       })
     }
     taskFeedback.setSuccess(t('common.saved'))
-    setTimeout(() => {
-      showTaskModal.value = false
-      reload()
-    }, SUCCESS_AUTO_CLEAR_MS)
+    scheduleTaskClose(() => { showTaskModal.value = false; reload() })
   } catch (err) {
     taskFeedback.setError(toErrorMessage(err, t('common.error')))
   } finally {
@@ -262,6 +261,8 @@ async function saveTask() {
 const closingTask = ref<Task | null>(null)
 const closeFeedback = useFormFeedback()
 const closingInProgress = ref(false)
+const { schedule: scheduleCloseTask, forceExpire: forceCloseTask } = useAutoClose()
+watch(closingTask, (task) => { if (!task) forceCloseTask() })
 
 function openCloseModal(task: Task) {
   closingTask.value = task
@@ -269,13 +270,14 @@ function openCloseModal(task: Task) {
 }
 
 async function confirmCloseTask() {
+  if (closeFeedback.status.value === 'success') { forceCloseTask(); return }
   if (!closingTask.value) return
   closingInProgress.value = true
   closeFeedback.reset()
   try {
     await tasksApi.update(closingTask.value.id, { status: 'closed' })
     closeFeedback.setSuccess(t('tasks.closeSuccess'))
-    setTimeout(() => { closingTask.value = null; reload(); }, SUCCESS_AUTO_CLEAR_MS)
+    scheduleCloseTask(() => { closingTask.value = null; reload() })
   } catch (err) {
     closeFeedback.setError(toErrorMessage(err, t('common.error')))
   } finally {
@@ -283,26 +285,36 @@ async function confirmCloseTask() {
   }
 }
 
-// ── Delete task ───────────────────────────────────────────────────
+// ── Delete task modal ─────────────────────────────────────────────
+const showDeleteModal = ref(false)
+const taskToDelete = ref<Task | null>(null)
+const deletingTask = ref(false)
+const deleteTaskFeedback = useFormFeedback()
 const pageError = ref('')
+const { schedule: scheduleDeleteTask, forceExpire: forceDeleteTask } = useAutoClose()
+watch(showDeleteModal, (open) => { if (!open) forceDeleteTask() })
 
-async function deleteTask(task: Task) {
-  const ok = await confirm({
-    title: t('tasks.confirmDeleteTitle'),
-    message: task.is_in_logbook
-      ? t('tasks.confirmDeleteLogbookMessage', { title: task.title })
-      : t('tasks.confirmDeleteMessage', { title: task.title }),
-    confirmLabel: t('common.delete'),
-    variant: 'danger',
-  })
-  if (!ok) return
-  pageError.value = ''
+function openDeleteModal(task: Task) {
+  // Close the edit modal if it is open to avoid modal stacking
+  showTaskModal.value = false
+  taskToDelete.value = task
+  deleteTaskFeedback.reset()
+  showDeleteModal.value = true
+}
+
+async function confirmDeleteTask() {
+  if (deleteTaskFeedback.status.value === 'success') { forceDeleteTask(); return }
+  if (!taskToDelete.value) return
+  deletingTask.value = true
+  deleteTaskFeedback.reset()
   try {
-    await tasksApi.delete(task.id)
-    showTaskModal.value = false
-    await reload()
+    await tasksApi.delete(taskToDelete.value.id)
+    deleteTaskFeedback.setSuccess(t('tasks.deleteSuccess'))
+    scheduleDeleteTask(() => { showDeleteModal.value = false; reload() })
   } catch (err) {
-    pageError.value = toErrorMessage(err, t('common.error'))
+    deleteTaskFeedback.setError(toErrorMessage(err, t('common.error')))
+  } finally {
+    deletingTask.value = false
   }
 }
 
@@ -315,6 +327,8 @@ const vendorLinks = ref<Record<string, { url: string; expires_at: string }>>({})
 const revokingTask = ref<Task | null>(null)
 const revokeFeedback = useFormFeedback()
 const revoking = ref(false)
+const { schedule: scheduleRevokeTask, forceExpire: forceRevokeTask } = useAutoClose()
+watch(revokingTask, (task) => { if (!task) forceRevokeTask() })
 
 function openRevokeModal(task: Task) {
   revokingTask.value = task
@@ -322,6 +336,7 @@ function openRevokeModal(task: Task) {
 }
 
 async function confirmRevoke() {
+  if (revokeFeedback.status.value === 'success') { forceRevokeTask(); return }
   if (!revokingTask.value) return
   revoking.value = true
   revokeFeedback.reset()
@@ -329,7 +344,7 @@ async function confirmRevoke() {
     await tasksApi.revokeToken(revokingTask.value.id)
     delete vendorLinks.value[revokingTask.value.id]
     revokeFeedback.setSuccess(t('tasks.revokeSuccess'))
-    setTimeout(() => { revokingTask.value = null; reload() }, SUCCESS_AUTO_CLEAR_MS)
+    scheduleRevokeTask(() => { revokingTask.value = null; reload() })
   } catch (err) {
     revokeFeedback.setError(toErrorMessage(err, t('common.error')))
   } finally {
@@ -341,6 +356,8 @@ async function confirmRevoke() {
 const reopeningTask = ref<Task | null>(null)
 const reopenFeedback = useFormFeedback()
 const reopening = ref(false)
+const { schedule: scheduleReopenTask, forceExpire: forceReopenTask } = useAutoClose()
+watch(reopeningTask, (task) => { if (!task) forceReopenTask() })
 
 function openReopenModal(task: Task) {
   reopeningTask.value = task
@@ -348,13 +365,14 @@ function openReopenModal(task: Task) {
 }
 
 async function confirmReopen() {
+  if (reopenFeedback.status.value === 'success') { forceReopenTask(); return }
   if (!reopeningTask.value) return
   reopening.value = true
   reopenFeedback.reset()
   try {
     await tasksApi.update(reopeningTask.value.id, { status: 'open' })
     reopenFeedback.setSuccess(t('tasks.reopenSuccess'))
-    setTimeout(() => { reopeningTask.value = null; reload() }, SUCCESS_AUTO_CLEAR_MS)
+    scheduleReopenTask(() => { reopeningTask.value = null; reload() })
   } catch (err) {
     reopenFeedback.setError(toErrorMessage(err, t('common.error')))
   } finally {
@@ -610,7 +628,7 @@ function copyToClipboard(text: string) {
                     variant="danger"
                     size="sm"
                     :aria-label="t('tasks.deleteTask')"
-                    @click="deleteTask(task)"
+                    @click="openDeleteModal(task)"
                   >
                     <CIconTrash />
                     {{ t('common.delete') }}
@@ -790,7 +808,7 @@ function copyToClipboard(text: string) {
           variant="danger"
           :loading="savingTask"
           style="margin-right:auto"
-          @click="deleteTask(editingTask)"
+          @click="openDeleteModal(editingTask)"
         >
           <CIconTrash />
           {{ t('common.delete') }}
@@ -808,6 +826,7 @@ function copyToClipboard(text: string) {
         <CBtn
           variant="primary"
           :loading="savingTask"
+          :closing="taskFeedback.status.value === 'success'"
           @click="saveTask"
         >
           {{ t('common.save') }}
@@ -839,6 +858,7 @@ function copyToClipboard(text: string) {
         <CBtn
           variant="danger"
           :loading="revoking"
+          :closing="revokeFeedback.status.value === 'success'"
           @click="confirmRevoke"
         >
           {{ t('tasks.revokeToken') }}
@@ -870,6 +890,7 @@ function copyToClipboard(text: string) {
         <CBtn
           variant="primary"
           :loading="closingInProgress"
+          :closing="closeFeedback.status.value === 'success'"
           @click="confirmCloseTask"
         >
           {{ t('tasks.closeTask') }}
@@ -901,9 +922,46 @@ function copyToClipboard(text: string) {
         <CBtn
           variant="primary"
           :loading="reopening"
+          :closing="reopenFeedback.status.value === 'success'"
           @click="confirmReopen"
         >
           {{ t('tasks.reopenTask') }}
+        </CBtn>
+      </template>
+    </CModal>
+
+    <!-- Delete task modal -->
+    <CModal
+      :open="showDeleteModal"
+      :title="t('tasks.confirmDeleteTitle')"
+      size="sm"
+      @update:open="showDeleteModal = $event"
+    >
+      <p class="body-sm">
+        {{
+          taskToDelete?.is_in_logbook
+            ? t('tasks.confirmDeleteLogbookMessage', { title: taskToDelete?.title ?? '' })
+            : t('tasks.confirmDeleteMessage', { title: taskToDelete?.title ?? '' })
+        }}
+      </p>
+      <template #footer>
+        <CFormFeedback
+          :status="deleteTaskFeedback.status.value"
+          :message="deleteTaskFeedback.message.value"
+        />
+        <CBtn
+          variant="ghost"
+          @click="showDeleteModal = false"
+        >
+          {{ t('common.cancel') }}
+        </CBtn>
+        <CBtn
+          variant="danger"
+          :loading="deletingTask"
+          :closing="deleteTaskFeedback.status.value === 'success'"
+          @click="confirmDeleteTask"
+        >
+          {{ t('common.deleteLabel') }}
         </CBtn>
       </template>
     </CModal>

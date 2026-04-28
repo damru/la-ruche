@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, onMounted } from 'vue'
+import { computed, ref, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useFormatters } from '@/composables/useFormatters'
 import CBadge from '@/components/atoms/CBadge.vue'
@@ -11,16 +11,14 @@ import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import { documentsApi, buildingApi } from '@/api'
 import { toErrorMessage, usePageLoader } from '@/composables/usePageLoader'
-import { SUCCESS_AUTO_CLEAR_MS } from '@/composables/useFormFeedback'
-import { useConfirm } from '@/composables/useConfirm'
+import { useFormFeedback } from '@/composables/useFormFeedback'
+import { useAutoClose } from '@/composables/useAutoClose'
 import type { Document } from '@/types/domain'
 import { buildDocumentDeleteMessage } from '@/utils/documents'
 import { extractFileExtension } from '@/utils/files'
 
 const { t } = useI18n()
 const { formatDate, formatFileSize } = useFormatters()
-
-const { confirm } = useConfirm()
 
 const search = ref('')
 const allDocuments = ref<Document[]>([])
@@ -34,6 +32,8 @@ const uploadSuccess = ref(false)
 const selectedFile = ref<File | null>(null)
 const selectedRoles = ref<string[]>(['manager', 'board_member', 'co_owner'])
 const fileInputRef = ref<HTMLInputElement | null>(null)
+const { schedule: scheduleUploadClose, forceExpire: forceUploadClose } = useAutoClose()
+watch(showUpload, (open) => { if (!open) forceUploadClose() })
 
 const documents = computed(() => {
   const q = search.value.toLowerCase()
@@ -82,6 +82,7 @@ function toggleRole(role: string) {
 }
 
 async function uploadFile() {
+  if (uploadSuccess.value) { forceUploadClose(); return }
   if (!selectedFile.value) return
   uploading.value = true
   uploadError.value = ''
@@ -109,7 +110,7 @@ async function uploadFile() {
 
     uploadSuccess.value = true
     await loadData()
-    setTimeout(() => { showUpload.value = false; uploadSuccess.value = false }, SUCCESS_AUTO_CLEAR_MS)
+    scheduleUploadClose(() => { showUpload.value = false; uploadSuccess.value = false })
   } catch (e: unknown) {
     uploadError.value = toErrorMessage(e, t('documents.uploadFailed'))
   } finally {
@@ -126,20 +127,36 @@ async function downloadDoc(id: string) {
   }
 }
 
-async function deleteDoc(id: string) {
-  const doc = allDocuments.value.find(d => d.id === id)
-  const ok = await confirm({
-    title: t('documents.confirmDeleteTitle'),
-    message: buildDocumentDeleteMessage(doc, t),
-    confirmLabel: t('common.deleteLabel'),
-    variant: 'danger',
-  })
-  if (!ok) return
+// ── Delete document modal ─────────────────────────────────────────
+
+const showDeleteDocModal = ref(false)
+const docToDelete = ref<Document | null>(null)
+const deletingDoc = ref(false)
+const deleteDocFeedback = useFormFeedback()
+const { schedule: scheduleDeleteDocClose, forceExpire: forceDeleteDocClose } = useAutoClose()
+watch(showDeleteDocModal, (open) => { if (!open) forceDeleteDocClose() })
+
+function openDeleteDocModal(doc: Document) {
+  docToDelete.value = doc
+  deleteDocFeedback.reset()
+  showDeleteDocModal.value = true
+}
+
+async function confirmDeleteDoc() {
+  if (deleteDocFeedback.status.value === 'success') { forceDeleteDocClose(); return }
+  if (!docToDelete.value) return
+  const docId = docToDelete.value.id
+  deletingDoc.value = true
+  deleteDocFeedback.reset()
   try {
-    await documentsApi.delete(id)
-    allDocuments.value = allDocuments.value.filter(d => d.id !== id)
-  } catch {
-    error.value = t('common.error')
+    await documentsApi.delete(docId)
+    allDocuments.value = allDocuments.value.filter(d => d.id !== docId)
+    deleteDocFeedback.setSuccess(t('documents.deleteSuccess'))
+    scheduleDeleteDocClose(() => { showDeleteDocModal.value = false })
+  } catch (e: unknown) {
+    deleteDocFeedback.setError(toErrorMessage(e, t('common.error')))
+  } finally {
+    deletingDoc.value = false
   }
 }
 </script>
@@ -266,7 +283,7 @@ async function deleteDoc(id: string) {
                       class="icon-btn icon-btn--danger"
                       :title="t('common.delete')"
                       :aria-label="t('common.delete')"
-                      @click="deleteDoc(doc.id)"
+                      @click="openDeleteDocModal(doc)"
                     >
                       <CIconTrash
                         width="16"
@@ -358,10 +375,43 @@ async function deleteDoc(id: string) {
           <CBtn
             variant="primary"
             :loading="uploading"
+            :closing="uploadSuccess"
             :disabled="!selectedFile || uploading"
             @click="uploadFile"
           >
             {{ uploading ? t('common.saving') : t('common.upload') }}
+          </CBtn>
+        </template>
+      </CModal>
+
+      <!-- Delete document modal -->
+      <CModal
+        :open="showDeleteDocModal"
+        :title="t('documents.confirmDeleteTitle')"
+        size="sm"
+        @update:open="showDeleteDocModal = $event"
+      >
+        <p class="body-md">
+          {{ buildDocumentDeleteMessage(docToDelete ?? undefined, t) }}
+        </p>
+        <template #footer>
+          <CFormFeedback
+            :status="deleteDocFeedback.status.value"
+            :message="deleteDocFeedback.message.value"
+          />
+          <CBtn
+            variant="ghost"
+            @click="showDeleteDocModal = false"
+          >
+            {{ t('common.cancel') }}
+          </CBtn>
+          <CBtn
+            variant="danger"
+            :loading="deletingDoc"
+            :closing="deleteDocFeedback.status.value === 'success'"
+            @click="confirmDeleteDoc"
+          >
+            {{ t('common.deleteLabel') }}
           </CBtn>
         </template>
       </CModal>

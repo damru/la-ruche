@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { usePageLoader, toErrorMessage } from '@/composables/usePageLoader'
-import { useFormFeedback, SUCCESS_AUTO_CLEAR_MS } from '@/composables/useFormFeedback'
+import { useFormFeedback } from '@/composables/useFormFeedback'
+import { useAutoClose } from '@/composables/useAutoClose'
 import { useAuthStore } from '@/stores/auth'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
@@ -110,6 +111,8 @@ const showModal = ref(false)
 const editingContractor = ref<Contractor | null>(null)
 const saving = ref(false)
 const feedback = useFormFeedback()
+const { schedule: scheduleModalClose, forceExpire: forceModalClose } = useAutoClose()
+watch(showModal, (open) => { if (!open) forceModalClose() })
 
 const defaultForm = () => ({
   name: '',
@@ -145,6 +148,7 @@ function closeModal() {
 }
 
 async function save() {
+  if (feedback.status.value === 'success') { forceModalClose(); return }
   if (!form.value.name.trim()) {
     feedback.setError(t('contractors.nameRequired'))
     return
@@ -165,10 +169,7 @@ async function save() {
       await contractorsApi.create(payload)
     }
     feedback.setSuccess(t('common.saved'))
-    setTimeout(() => {
-      showModal.value = false
-      reload()
-    }, SUCCESS_AUTO_CLEAR_MS)
+    scheduleModalClose(() => { showModal.value = false; reload() })
   } catch (err) {
     feedback.setError(toErrorMessage(err, t('common.error')))
   } finally {
@@ -181,6 +182,8 @@ const deletingId = ref<string | null>(null)
 const showDeleteModal = ref(false)
 const deleteFeedback = useFormFeedback()
 const contractorToDelete = ref<Contractor | null>(null)
+const { schedule: scheduleDeleteClose, forceExpire: forceDeleteClose } = useAutoClose()
+watch(showDeleteModal, (open) => { if (!open) forceDeleteClose() })
 
 function openDeleteModal(c: Contractor) {
   contractorToDelete.value = c
@@ -189,16 +192,14 @@ function openDeleteModal(c: Contractor) {
 }
 
 async function confirmDelete() {
+  if (deleteFeedback.status.value === 'success') { forceDeleteClose(); return }
   if (!contractorToDelete.value) return
   deletingId.value = contractorToDelete.value.id
   deleteFeedback.reset()
   try {
     await contractorsApi.delete(contractorToDelete.value.id)
     deleteFeedback.setSuccess(t('contractors.deleteSuccess'))
-    setTimeout(() => {
-      showDeleteModal.value = false
-      reload()
-    }, SUCCESS_AUTO_CLEAR_MS)
+    scheduleDeleteClose(() => { showDeleteModal.value = false; reload() })
   } catch (err) {
     deleteFeedback.setError(toErrorMessage(err, t('common.error')))
   } finally {
@@ -446,6 +447,7 @@ async function confirmDelete() {
         <CBtn
           variant="primary"
           :loading="saving"
+          :closing="feedback.status.value === 'success'"
           @click="save"
         >
           {{ t('common.save') }}
@@ -476,6 +478,7 @@ async function confirmDelete() {
         <CBtn
           variant="danger"
           :loading="!!deletingId"
+          :closing="deleteFeedback.status.value === 'success'"
           @click="confirmDelete"
         >
           {{ t('common.delete') }}

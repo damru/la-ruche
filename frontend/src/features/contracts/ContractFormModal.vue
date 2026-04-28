@@ -8,7 +8,8 @@ import CSelect from '@/components/atoms/CSelect.vue'
 import CModal from '@/components/molecules/CModal.vue'
 import { contractsApi } from '@/api'
 import { toErrorMessage } from '@/composables/usePageLoader'
-import { useFormFeedback, SUCCESS_AUTO_CLEAR_MS } from '@/composables/useFormFeedback'
+import { useFormFeedback } from '@/composables/useFormFeedback'
+import { useAutoClose } from '@/composables/useAutoClose'
 import type { ContractType, PaymentFrequency, VendorContract } from '@/types/domain'
 
 interface ContractFormState {
@@ -39,6 +40,9 @@ const { t } = useI18n()
 const feedback = useFormFeedback()
 const saving = ref(false)
 const fieldErrors = ref<Record<string, string>>({})
+const { schedule: scheduleFormClose, forceExpire: forceFormClose } = useAutoClose()
+// Cancel any pending auto-close timer if the parent dismisses the modal early
+watch(() => props.open, (open) => { if (!open) forceFormClose() })
 
 const defaultFormState = (): ContractFormState => ({
   vendor_name: '',
@@ -158,6 +162,7 @@ function validate(): boolean {
 }
 
 async function saveContract() {
+  if (feedback.status.value === 'success') { forceFormClose(); return }
   if (!validate()) return
 
   saving.value = true
@@ -193,7 +198,7 @@ async function saveContract() {
 
     feedback.setSuccess(t('common.saved'))
     emit('saved')
-    setTimeout(() => closeModal(), SUCCESS_AUTO_CLEAR_MS)
+    scheduleFormClose(() => closeModal())
   } catch (error: unknown) {
     feedback.setError(toErrorMessage(error, t('contracts.form.saveError')))
   } finally {
@@ -310,6 +315,7 @@ async function saveContract() {
       </CBtn>
       <CBtn
         :loading="saving"
+        :closing="feedback.status.value === 'success'"
         :disabled="saving"
         @click="saveContract"
       >
