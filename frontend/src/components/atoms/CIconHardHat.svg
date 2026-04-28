@@ -1,9 +1,12 @@
 
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <!-- Dome arc — arcs up from brim -->
-  <path d="M5 9 A7 8 0 0 0 19 9"/>
-  <!-- Brim line — shared anchor for dome above and head below -->
-  <line x1="3" y1="9" x2="21" y2="9"/>
-  <!-- Head arc — ellipse arcs down from brim -->
-  <path d="M6 9 A6 12 0 0 1 18 9"/>
+  <!-- Dome — same width as face -->
+  <path d="M7.5 13 A4.5 7.5 0 0 1 16.5 13"/>
+  <!-- Brim — small bump 1.5u beyond dome each side -->
+  <line x1="6" y1="13" x2="18" y2="13"/>
+  <!-- Face — gap of 2.5u below brim -->
+  <circle cx="12" cy="18.5" r="3.8"/>
+  <!-- Ventilation ribs — diagonal, upper third of dome -->
+  <line x1="10" y1="6" x2="9" y2="8.5"/>
+  <line x1="14" y1="6" x2="15" y2="8.5"/>
 </svg>
