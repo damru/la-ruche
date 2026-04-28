@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Hard hat dome (semicircle going upward) -->
+  <path d="M7 9a5 5 0 0 0 10 0"/>
+  <!-- Hard hat brim -->
+  <line x1="5" y1="9" x2="19" y2="9"/>
+  <!-- Center ridge stripe -->
+  <line x1="12" y1="4" x2="12" y2="9"/>
+  <!-- Head -->
+  <circle cx="12" cy="13" r="3"/>
+  <!-- Shoulders -->
+  <path d="M5 22v-1a7 7 0 0 1 14 0v1"/>
+</svg>
