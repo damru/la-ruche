@@ -146,6 +146,11 @@ const activeCount = computed(() =>
 )
 
 // ── Helpers ───────────────────────────────────────────────────────
+/** Returns true for any terminal task status (closed or cancelled). */
+function isTerminal(status: string): boolean {
+  return status === 'closed' || status === 'cancelled'
+}
+
 function statusVariant(s: string): 'valid' | 'open' | 'pending' | 'closed' | 'default' {
   if (s === 'open') return 'valid'
   if (s === 'in_progress') return 'open'
@@ -478,20 +483,21 @@ function copyToClipboard(text: string) {
             v-for="task in tasks"
             :key="task.id"
             padding="none"
-            :class="['task-card', { 'card--terminated': task.status === 'closed' || task.status === 'cancelled' }]"
+            :shadow="!isTerminal(task.status)"
+            :class="['task-card', { 'card--terminated': isTerminal(task.status) }]"
           >
             <div class="task-row">
               <div
                 class="prio-bar"
-                :style="{ background: (task.status === 'closed' || task.status === 'cancelled') ? 'var(--color-on-surface-variant)' : priorityColor(task.priority) }"
+                :style="{ background: isTerminal(task.status) ? 'var(--color-on-surface-variant)' : priorityColor(task.priority) }"
               ></div>
               <div class="task-body">
                 <div class="task-badges">
-                  <CBadge :variant="(task.status === 'closed' || task.status === 'cancelled') ? 'disabled' : priorityVariant(task.priority)">
+                  <CBadge :variant="isTerminal(task.status) ? 'disabled' : priorityVariant(task.priority)">
                     {{ t(`tasks.priorities.${task.priority}`) }}
                   </CBadge>
                   <CBadge
-                    :variant="(task.status === 'closed' || task.status === 'cancelled') ? 'disabled' : statusVariant(task.status)"
+                    :variant="isTerminal(task.status) ? 'disabled' : statusVariant(task.status)"
                     dot
                   >
                     {{ t(`tasks.statuses.${task.status}`) }}
@@ -587,9 +593,9 @@ function copyToClipboard(text: string) {
                     <CIconEdit />
                     {{ t('common.edit') }}
                   </CBtn>
-                  <!-- Terminate: non-closed tasks only -->
+                  <!-- Terminate: non-terminal tasks only -->
                   <CBtn
-                    v-if="task.status !== 'closed' && task.status !== 'cancelled'"
+                    v-if="!isTerminal(task.status)"
                     variant="danger"
                     size="sm"
                     :aria-label="t('tasks.closeTask')"
@@ -600,7 +606,7 @@ function copyToClipboard(text: string) {
                   </CBtn>
                   <!-- Delete: closed/cancelled tasks only (visible on card) -->
                   <CBtn
-                    v-if="task.status === 'closed' || task.status === 'cancelled'"
+                    v-if="isTerminal(task.status)"
                     variant="danger"
                     size="sm"
                     :aria-label="t('tasks.deleteTask')"
@@ -609,9 +615,9 @@ function copyToClipboard(text: string) {
                     <CIconTrash />
                     {{ t('common.delete') }}
                   </CBtn>
-                  <!-- Generate link: tasks with a contractor but no active token, not closed/cancelled -->
+                  <!-- Generate link: tasks with a contractor but no active token, not terminal -->
                   <CBtn
-                    v-if="task.contractor_id && !task.has_vendor_token && task.status !== 'closed' && task.status !== 'cancelled'"
+                    v-if="task.contractor_id && !task.has_vendor_token && !isTerminal(task.status)"
                     variant="ghost"
                     size="sm"
                     :disabled="generatingToken === task.id"
@@ -778,9 +784,9 @@ function copyToClipboard(text: string) {
         </div>
       </form>
       <template #footer>
-        <!-- Delete: visible when editing a non-closed task (moved from card) -->
+        <!-- Delete: visible when editing a non-terminal task (moved from card) -->
         <CBtn
-          v-if="editingTask && editingTask.status !== 'closed' && editingTask.status !== 'cancelled'"
+          v-if="editingTask && !isTerminal(editingTask.status)"
           variant="danger"
           :loading="savingTask"
           style="margin-right:auto"

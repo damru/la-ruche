@@ -83,12 +83,10 @@ button, [role="button"], input[type="checkbox"], input[type="radio"] {
 /* ── Card state modifiers ────────────────────────────────────────── */
 /*
  * Applied to any CCard that represents a terminated / closed / expired entity.
- * Removes the elevation shadow and adds a subtle outline so the card reads as
- * "inactive" — consistent across Tasks (closed/cancelled), Consultations (closed),
- * Contracts (terminated/expired), Claims (closed).
+ * Pairs with :shadow="false" on CCard (which removes box-shadow without !important).
+ * Only adds the outline — no override cascade needed.
  */
 .card--terminated {
-  box-shadow: none !important;
   outline: 1px solid var(--color-outline-variant);
 }
 

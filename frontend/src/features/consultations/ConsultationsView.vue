@@ -287,6 +287,7 @@ async function confirmDelete() {
           <CCard
             v-for="c in consultations"
             :key="c.id"
+            :shadow="c.status !== 'closed'"
             :class="{ 'card--terminated': c.status === 'closed' }"
           >
             <!-- Status badge top-left -->
