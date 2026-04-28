@@ -158,11 +158,12 @@ function openDeleteKeyModal(key: AllocationKey) {
 
 async function confirmDeleteKey() {
   if (!keyToDelete.value) return
+  const keyId = keyToDelete.value.id
   deletingKeyInProgress.value = true
   deleteKeyFeedback.reset()
   try {
-    await allocationKeysApi.delete(keyToDelete.value.id)
-    keys.value = keys.value.filter(k => k.id !== keyToDelete.value!.id)
+    await allocationKeysApi.delete(keyId)
+    keys.value = keys.value.filter(k => k.id !== keyId)
     deleteKeyFeedback.setSuccess(t('settings.keys.deleteSuccess'))
     setTimeout(() => { showDeleteKeyModal.value = false }, SUCCESS_AUTO_CLEAR_MS)
   } catch (e: unknown) {

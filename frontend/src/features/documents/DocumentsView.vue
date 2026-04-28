@@ -138,11 +138,12 @@ function openDeleteDocModal(doc: Document) {
 
 async function confirmDeleteDoc() {
   if (!docToDelete.value) return
+  const docId = docToDelete.value.id
   deletingDoc.value = true
   deleteDocFeedback.reset()
   try {
-    await documentsApi.delete(docToDelete.value.id)
-    allDocuments.value = allDocuments.value.filter(d => d.id !== docToDelete.value!.id)
+    await documentsApi.delete(docId)
+    allDocuments.value = allDocuments.value.filter(d => d.id !== docId)
     deleteDocFeedback.setSuccess(t('documents.deleteSuccess'))
     setTimeout(() => { showDeleteDocModal.value = false }, SUCCESS_AUTO_CLEAR_MS)
   } catch (e: unknown) {
