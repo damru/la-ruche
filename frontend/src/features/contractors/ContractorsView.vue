@@ -194,7 +194,7 @@ async function confirmDelete() {
   deleteFeedback.reset()
   try {
     await contractorsApi.delete(contractorToDelete.value.id)
-    deleteFeedback.setSuccess(t('common.saved'))
+    deleteFeedback.setSuccess(t('contractors.deleteSuccess'))
     setTimeout(() => {
       showDeleteModal.value = false
       reload()

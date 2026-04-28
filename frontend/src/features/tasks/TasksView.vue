@@ -274,7 +274,7 @@ async function confirmCloseTask() {
   closeFeedback.reset()
   try {
     await tasksApi.update(closingTask.value.id, { status: 'closed' })
-    closeFeedback.setSuccess(t('common.saved'))
+    closeFeedback.setSuccess(t('tasks.closeSuccess'))
     setTimeout(() => { closingTask.value = null; reload(); }, SUCCESS_AUTO_CLEAR_MS)
   } catch (err) {
     closeFeedback.setError(toErrorMessage(err, t('common.error')))
@@ -328,7 +328,7 @@ async function confirmRevoke() {
   try {
     await tasksApi.revokeToken(revokingTask.value.id)
     delete vendorLinks.value[revokingTask.value.id]
-    revokeFeedback.setSuccess(t('common.saved'))
+    revokeFeedback.setSuccess(t('tasks.revokeSuccess'))
     setTimeout(() => { revokingTask.value = null; reload() }, SUCCESS_AUTO_CLEAR_MS)
   } catch (err) {
     revokeFeedback.setError(toErrorMessage(err, t('common.error')))
@@ -353,7 +353,7 @@ async function confirmReopen() {
   reopenFeedback.reset()
   try {
     await tasksApi.update(reopeningTask.value.id, { status: 'open' })
-    reopenFeedback.setSuccess(t('common.saved'))
+    reopenFeedback.setSuccess(t('tasks.reopenSuccess'))
     setTimeout(() => { reopeningTask.value = null; reload() }, SUCCESS_AUTO_CLEAR_MS)
   } catch (err) {
     reopenFeedback.setError(toErrorMessage(err, t('common.error')))

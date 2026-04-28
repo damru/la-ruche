@@ -185,7 +185,7 @@ async function confirmClose() {
   closeFeedback.reset()
   try {
     await consultationsApi.close(closingConsultation.value.id)
-    closeFeedback.setSuccess(t('common.saved'))
+    closeFeedback.setSuccess(t('consultations.closeSuccess'))
     setTimeout(async () => { closingConsultation.value = null; await reload() }, SUCCESS_AUTO_CLEAR_MS)
   } catch (err) {
     closeFeedback.setError(toErrorMessage(err, t('common.error')))
@@ -205,7 +205,7 @@ async function confirmDelete() {
   deleteFeedback.reset()
   try {
     await consultationsApi.delete(deletingConsultation.value.id)
-    deleteFeedback.setSuccess(t('common.saved'))
+    deleteFeedback.setSuccess(t('consultations.deleteSuccess'))
     setTimeout(async () => { deletingConsultation.value = null; await reload() }, SUCCESS_AUTO_CLEAR_MS)
   } catch (err) {
     deleteFeedback.setError(toErrorMessage(err, t('common.error')))
