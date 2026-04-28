@@ -34,16 +34,16 @@ onUnmounted(() => {
         <CIconCurrency />
       </template>
       <template #icon-documents>
-        <CIconFile />
+        <CIconFolder />
       </template>
       <template #icon-tasks>
         <CIconWrench />
       </template>
       <template #icon-contractors>
-        <CIconHardHat />
+        <CIconWorker />
       </template>
       <template #icon-contracts>
-        <CIconFile />
+        <CIconContract />
       </template>
       <template #icon-claims>
         <CIconWarn />
