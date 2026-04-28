@@ -31,12 +31,17 @@ const stackStyle = computed(() => ({
 function close() {
   if (props.closable) emit('update:open', false)
 }
+
+function handleOpenChange(open: boolean) {
+  if (!open) close()
+  else emit('update:open', true)
+}
 </script>
 
 <template>
   <DialogRoot
     :open="open"
-    @update:open="emit('update:open', $event)"
+    @update:open="handleOpenChange"
   >
     <DialogPortal>
       <DialogOverlay
@@ -48,7 +53,7 @@ function close() {
         :class="['c-modal__content', `c-modal__content--${size}`]"
         :style="stackStyle"
         @escape-key-down="close"
-        @pointer-down-outside="close"
+        @pointer-down-outside="e => { e.preventDefault(); close() }"
       >
         <!-- Header -->
         <div

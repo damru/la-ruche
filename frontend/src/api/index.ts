@@ -314,6 +314,8 @@ export const consultationsApi = {
     api.get<{ results: ConsultationResults }>(`/consultations/${id}/results`),
   close: (id: string) =>
     api.post(`/consultations/${id}/close`),
+  delete: (id: string) =>
+    api.delete(`/consultations/${id}`),
 }
 
 // ── Contractor (public, tokenized — no JWT) ───────────────────────

@@ -194,6 +194,18 @@ pub async fn results(
     })))
 }
 
+/// DELETE /consultations/{id} — managers only; only closed consultations can be deleted.
+/// Deletes the consultation and all related choices and responses.
+pub async fn delete(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+) -> AppResult<StatusCode> {
+    auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
+    db::consultation::delete(&state.pool, id, auth.building_id).await?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
 /// POST /consultations/{id}/close — managers and board members can close any consultation.
 pub async fn close(
     auth: AuthUser,

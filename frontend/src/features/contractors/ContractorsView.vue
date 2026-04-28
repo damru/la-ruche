@@ -194,7 +194,7 @@ async function confirmDelete() {
   deleteFeedback.reset()
   try {
     await contractorsApi.delete(contractorToDelete.value.id)
-    deleteFeedback.setSuccess(t('common.saved'))
+    deleteFeedback.setSuccess(t('contractors.deleteSuccess'))
     setTimeout(() => {
       showDeleteModal.value = false
       reload()
@@ -506,32 +506,6 @@ async function confirmDelete() {
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--space-4);
-}
-
-.search-bar {
-  position: relative;
-  min-width: min(100%, 360px);
-}
-
-.search-icon {
-  position: absolute;
-  left: var(--space-3);
-  top: 50%;
-  transform: translateY(-50%);
-  width: 16px;
-  height: 16px;
-  color: var(--color-on-surface-variant);
-  pointer-events: none;
-}
-
-.search-input {
-  width: 100%;
-  height: 44px;
-  border: none;
-  border-radius: var(--radius-md);
-  background: var(--color-surface-container-high);
-  padding: 0 var(--space-4) 0 calc(var(--space-4) + 20px);
-  color: var(--color-on-surface);
 }
 
 .empty-state {

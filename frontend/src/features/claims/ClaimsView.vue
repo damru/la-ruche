@@ -87,7 +87,8 @@ function statusVariant(s: string): 'open' | 'pending' | 'closed' | 'default' {
         <CCard
           v-for="claim in claims"
           :key="claim.id"
-          class="claim-card"
+          :shadow="claim.status !== 'closed'"
+          :class="['claim-card', { 'card--terminated': claim.status === 'closed' }]"
         >
           <div class="claim-header">
             <div class="claim-icon">

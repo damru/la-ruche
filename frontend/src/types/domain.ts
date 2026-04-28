@@ -219,6 +219,8 @@ export interface Task {
   token_expires_at?: string
   closed_at?: string
   created_at: string
+  /** True when at least one maintenance_log entry references this task. */
+  is_in_logbook?: boolean
 }
 
 export interface Claim {

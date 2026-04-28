@@ -146,6 +146,11 @@ const activeCount = computed(() =>
 )
 
 // ── Helpers ───────────────────────────────────────────────────────
+/** Returns true for any terminal task status (closed or cancelled). */
+function isTerminal(status: string): boolean {
+  return status === 'closed' || status === 'cancelled'
+}
+
 function statusVariant(s: string): 'valid' | 'open' | 'pending' | 'closed' | 'default' {
   if (s === 'open') return 'valid'
   if (s === 'in_progress') return 'open'
@@ -253,22 +258,28 @@ async function saveTask() {
   }
 }
 
-// ── Close task from modal (for in_progress / awaiting_vendor) ─────
-async function closeFromModal() {
-  if (!editingTask.value) return
-  savingTask.value = true
-  taskFeedback.reset()
+// ── Close task from card (for any non-closed task) ────────────────
+const closingTask = ref<Task | null>(null)
+const closeFeedback = useFormFeedback()
+const closingInProgress = ref(false)
+
+function openCloseModal(task: Task) {
+  closingTask.value = task
+  closeFeedback.reset()
+}
+
+async function confirmCloseTask() {
+  if (!closingTask.value) return
+  closingInProgress.value = true
+  closeFeedback.reset()
   try {
-    await tasksApi.update(editingTask.value.id, { status: 'closed' })
-    taskFeedback.setSuccess(t('common.saved'))
-    setTimeout(() => {
-      showTaskModal.value = false
-      reload()
-    }, SUCCESS_AUTO_CLEAR_MS)
+    await tasksApi.update(closingTask.value.id, { status: 'closed' })
+    closeFeedback.setSuccess(t('tasks.closeSuccess'))
+    setTimeout(() => { closingTask.value = null; reload(); }, SUCCESS_AUTO_CLEAR_MS)
   } catch (err) {
-    taskFeedback.setError(toErrorMessage(err, t('common.error')))
+    closeFeedback.setError(toErrorMessage(err, t('common.error')))
   } finally {
-    savingTask.value = false
+    closingInProgress.value = false
   }
 }
 
@@ -278,7 +289,9 @@ const pageError = ref('')
 async function deleteTask(task: Task) {
   const ok = await confirm({
     title: t('tasks.confirmDeleteTitle'),
-    message: t('tasks.confirmDeleteMessage', { title: task.title }),
+    message: task.is_in_logbook
+      ? t('tasks.confirmDeleteLogbookMessage', { title: task.title })
+      : t('tasks.confirmDeleteMessage', { title: task.title }),
     confirmLabel: t('common.delete'),
     variant: 'danger',
   })
@@ -286,6 +299,7 @@ async function deleteTask(task: Task) {
   pageError.value = ''
   try {
     await tasksApi.delete(task.id)
+    showTaskModal.value = false
     await reload()
   } catch (err) {
     pageError.value = toErrorMessage(err, t('common.error'))
@@ -314,7 +328,7 @@ async function confirmRevoke() {
   try {
     await tasksApi.revokeToken(revokingTask.value.id)
     delete vendorLinks.value[revokingTask.value.id]
-    revokeFeedback.setSuccess(t('common.saved'))
+    revokeFeedback.setSuccess(t('tasks.revokeSuccess'))
     setTimeout(() => { revokingTask.value = null; reload() }, SUCCESS_AUTO_CLEAR_MS)
   } catch (err) {
     revokeFeedback.setError(toErrorMessage(err, t('common.error')))
@@ -339,7 +353,7 @@ async function confirmReopen() {
   reopenFeedback.reset()
   try {
     await tasksApi.update(reopeningTask.value.id, { status: 'open' })
-    reopenFeedback.setSuccess(t('common.saved'))
+    reopenFeedback.setSuccess(t('tasks.reopenSuccess'))
     setTimeout(() => { reopeningTask.value = null; reload() }, SUCCESS_AUTO_CLEAR_MS)
   } catch (err) {
     reopenFeedback.setError(toErrorMessage(err, t('common.error')))
@@ -469,20 +483,21 @@ function copyToClipboard(text: string) {
             v-for="task in tasks"
             :key="task.id"
             padding="none"
-            class="task-card"
+            :shadow="!isTerminal(task.status)"
+            :class="['task-card', { 'card--terminated': isTerminal(task.status) }]"
           >
             <div class="task-row">
               <div
                 class="prio-bar"
-                :style="{ background: priorityColor(task.priority) }"
+                :style="{ background: isTerminal(task.status) ? 'var(--color-on-surface-variant)' : priorityColor(task.priority) }"
               ></div>
               <div class="task-body">
                 <div class="task-badges">
-                  <CBadge :variant="priorityVariant(task.priority)">
+                  <CBadge :variant="isTerminal(task.status) ? 'disabled' : priorityVariant(task.priority)">
                     {{ t(`tasks.priorities.${task.priority}`) }}
                   </CBadge>
                   <CBadge
-                    :variant="statusVariant(task.status)"
+                    :variant="isTerminal(task.status) ? 'disabled' : statusVariant(task.status)"
                     dot
                   >
                     {{ t(`tasks.statuses.${task.status}`) }}
@@ -578,7 +593,20 @@ function copyToClipboard(text: string) {
                     <CIconEdit />
                     {{ t('common.edit') }}
                   </CBtn>
+                  <!-- Terminate: non-terminal tasks only -->
                   <CBtn
+                    v-if="!isTerminal(task.status)"
+                    variant="danger"
+                    size="sm"
+                    :aria-label="t('tasks.closeTask')"
+                    @click="openCloseModal(task)"
+                  >
+                    <CIconCheckCircle />
+                    {{ t('tasks.closeTask') }}
+                  </CBtn>
+                  <!-- Delete: closed/cancelled tasks only (visible on card) -->
+                  <CBtn
+                    v-if="isTerminal(task.status)"
                     variant="danger"
                     size="sm"
                     :aria-label="t('tasks.deleteTask')"
@@ -587,9 +615,9 @@ function copyToClipboard(text: string) {
                     <CIconTrash />
                     {{ t('common.delete') }}
                   </CBtn>
-                  <!-- Generate link: tasks with a contractor but no active token, not closed/cancelled -->
+                  <!-- Generate link: tasks with a contractor but no active token, not terminal -->
                   <CBtn
-                    v-if="task.contractor_id && !task.has_vendor_token && task.status !== 'closed' && task.status !== 'cancelled'"
+                    v-if="task.contractor_id && !task.has_vendor_token && !isTerminal(task.status)"
                     variant="ghost"
                     size="sm"
                     :disabled="generatingToken === task.id"
@@ -630,6 +658,7 @@ function copyToClipboard(text: string) {
       :open="showTaskModal"
       :title="editingTask ? t('tasks.editTask') : t('tasks.newTask')"
       size="md"
+      :closable="!savingTask"
       @update:open="showTaskModal = $event"
     >
       <form
@@ -755,16 +784,16 @@ function copyToClipboard(text: string) {
         </div>
       </form>
       <template #footer>
-        <!-- Close task button: visible when editing an active task (not yet closed) -->
+        <!-- Delete: visible when editing a non-terminal task (moved from card) -->
         <CBtn
-          v-if="editingTask && ['in_progress', 'awaiting_vendor'].includes(editingTask.status)"
+          v-if="editingTask && !isTerminal(editingTask.status)"
           variant="danger"
           :loading="savingTask"
           style="margin-right:auto"
-          @click="closeFromModal"
+          @click="deleteTask(editingTask)"
         >
-          <CIconCheckCircle />
-          {{ t('tasks.closeTask') }}
+          <CIconTrash />
+          {{ t('common.delete') }}
         </CBtn>
         <CFormFeedback
           :status="taskFeedback.status.value"
@@ -813,6 +842,37 @@ function copyToClipboard(text: string) {
           @click="confirmRevoke"
         >
           {{ t('tasks.revokeToken') }}
+        </CBtn>
+      </template>
+    </CModal>
+
+    <!-- Close task modal -->
+    <CModal
+      :open="!!closingTask"
+      :title="t('tasks.confirmCloseTitle')"
+      size="sm"
+      @update:open="v => !v && (closingTask = null)"
+    >
+      <p class="body-sm">
+        {{ t('tasks.confirmCloseMessage', { title: closingTask?.title ?? '' }) }}
+      </p>
+      <template #footer>
+        <CFormFeedback
+          :status="closeFeedback.status.value"
+          :message="closeFeedback.message.value"
+        />
+        <CBtn
+          variant="ghost"
+          @click="closingTask = null"
+        >
+          {{ t('common.cancel') }}
+        </CBtn>
+        <CBtn
+          variant="primary"
+          :loading="closingInProgress"
+          @click="confirmCloseTask"
+        >
+          {{ t('tasks.closeTask') }}
         </CBtn>
       </template>
     </CModal>

@@ -80,6 +80,16 @@ button, [role="button"], input[type="checkbox"], input[type="radio"] {
   .view-container { padding: 20px; }
 }
 
+/* ── Card state modifiers ────────────────────────────────────────── */
+/*
+ * Applied to any CCard that represents a terminated / closed / expired entity.
+ * Pairs with :shadow="false" on CCard (which removes box-shadow without !important).
+ * Only adds the outline — no override cascade needed.
+ */
+.card--terminated {
+  outline: 1px solid var(--color-outline-variant);
+}
+
 /* ── Utilitaires globaux ─────────────────────────────────────────── */
 
 /* Spinner (sur fond sombre/coloré) */

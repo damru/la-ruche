@@ -379,7 +379,8 @@ async function terminateContract(contract: VendorContract) {
           <CCard
             v-for="contract in contracts"
             :key="contract.id"
-            class="contract-card"
+            :shadow="effectiveStatus(contract) === 'active'"
+            :class="['contract-card', { 'card--terminated': effectiveStatus(contract) !== 'active' }]"
           >
             <div class="contract-header">
               <div class="contract-type">
@@ -543,31 +544,6 @@ async function terminateContract(contract: VendorContract) {
   justify-content: space-between;
   gap: var(--space-3);
   flex-wrap: wrap;
-}
-
-.search-bar {
-  position: relative;
-  min-width: min(100%, 320px);
-}
-
-.search-icon {
-  position: absolute;
-  left: var(--space-3);
-  top: 50%;
-  transform: translateY(-50%);
-  width: 16px;
-  height: 16px;
-  color: var(--color-on-surface-variant);
-}
-
-.search-input {
-  width: 100%;
-  height: 44px;
-  border: none;
-  border-radius: var(--radius-md);
-  background: var(--color-surface-container-high);
-  padding: 0 var(--space-4) 0 calc(var(--space-4) + 20px);
-  color: var(--color-on-surface);
 }
 
 .contracts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: var(--space-4); }

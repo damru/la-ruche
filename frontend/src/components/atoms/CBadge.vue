@@ -4,7 +4,7 @@
 
 type Variant =
   | 'manager' | 'board_member' | 'co_owner' | 'tenant'
-  | 'open' | 'pending' | 'closed'
+  | 'open' | 'pending' | 'closed' | 'disabled'
   | 'valid' | 'err'
   | 'primary' | 'default'
 
@@ -18,7 +18,7 @@ withDefaults(defineProps<{
 </script>
 
 <template>
-  <span :class="['c-badge', `c-badge--${variant}`, { 'tone--default': variant === 'primary', 'tone--warn': variant === 'pending', 'tone--valid': variant === 'valid', 'tone--err': variant === 'err' }]">
+  <span :class="['c-badge', `c-badge--${variant}`, { 'tone--default': variant === 'primary', 'tone--warn': variant === 'pending', 'tone--valid': variant === 'valid', 'tone--err': variant === 'err', 'tone--disabled': variant === 'disabled' }]">
     <span
       v-if="dot"
       class="c-badge__dot"
@@ -63,8 +63,9 @@ withDefaults(defineProps<{
   }
 }
 
-/* Empty ring dot for closed / inactive statuses */
-.c-badge--closed .c-badge__dot {
+/* Empty ring dot for closed / inactive / disabled statuses */
+.c-badge--closed .c-badge__dot,
+.c-badge--disabled .c-badge__dot {
   background: transparent;
   border: 1.5px solid currentColor;
   opacity: 0.5;
@@ -90,6 +91,7 @@ withDefaults(defineProps<{
 .c-badge--open    { background: var(--color-success-container); color: var(--color-success); }
 .c-badge--pending { background: var(--tone-bg); color: var(--tone-fg); }
 .c-badge--closed  { background: var(--color-surface-container-high); color: var(--color-on-surface-variant); }
+.c-badge--disabled { background: var(--tone-bg); color: var(--tone-fg); }
 
 /* ── Priority / Urgency ────────────────────────────────────── */
 .c-badge--valid { background: var(--tone-bg); color: var(--tone-fg); }

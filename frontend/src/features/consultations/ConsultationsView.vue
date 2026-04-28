@@ -85,6 +85,11 @@ const closingConsultation = ref<Consultation | null>(null)
 const closeFeedback = useFormFeedback()
 const closing = ref(false)
 
+// ── Delete modal ───────────────────────────────────────────────────
+const deletingConsultation = ref<Consultation | null>(null)
+const deleteFeedback = useFormFeedback()
+const deleting = ref(false)
+
 async function loadData() {
   const [buildingRes, listRes] = await Promise.all([
     buildingApi.get(),
@@ -180,12 +185,32 @@ async function confirmClose() {
   closeFeedback.reset()
   try {
     await consultationsApi.close(closingConsultation.value.id)
-    closeFeedback.setSuccess(t('common.saved'))
+    closeFeedback.setSuccess(t('consultations.closeSuccess'))
     setTimeout(async () => { closingConsultation.value = null; await reload() }, SUCCESS_AUTO_CLEAR_MS)
   } catch (err) {
     closeFeedback.setError(toErrorMessage(err, t('common.error')))
   } finally {
     closing.value = false
+  }
+}
+
+function openDeleteModal(c: Consultation) {
+  deletingConsultation.value = c
+  deleteFeedback.reset()
+}
+
+async function confirmDelete() {
+  if (!deletingConsultation.value) return
+  deleting.value = true
+  deleteFeedback.reset()
+  try {
+    await consultationsApi.delete(deletingConsultation.value.id)
+    deleteFeedback.setSuccess(t('consultations.deleteSuccess'))
+    setTimeout(async () => { deletingConsultation.value = null; await reload() }, SUCCESS_AUTO_CLEAR_MS)
+  } catch (err) {
+    deleteFeedback.setError(toErrorMessage(err, t('common.error')))
+  } finally {
+    deleting.value = false
   }
 }
 </script>
@@ -262,6 +287,8 @@ async function confirmClose() {
           <CCard
             v-for="c in consultations"
             :key="c.id"
+            :shadow="c.status !== 'closed'"
+            :class="{ 'card--terminated': c.status === 'closed' }"
           >
             <!-- Status badge top-left -->
             <CBadge
@@ -383,18 +410,33 @@ async function confirmClose() {
                 : t('consultations.closedAt', { date: formatDate(c.closed_at!) }) }}
             </p>
 
-            <!-- Manager close action -->
+            <!-- Manager close action (open consultations) -->
             <div
               v-if="c.status === 'open' && canManage"
               class="card-actions"
             >
               <CBtn
-                variant="ghost"
+                variant="danger"
                 size="sm"
                 @click="openCloseModal(c)"
               >
-                <CIconX />
+                <CIconCheckCircle />
                 {{ t('consultations.close') }}
+              </CBtn>
+            </div>
+
+            <!-- Manager delete action (closed consultations) -->
+            <div
+              v-if="c.status === 'closed' && canManage"
+              class="card-actions"
+            >
+              <CBtn
+                variant="danger"
+                size="sm"
+                @click="openDeleteModal(c)"
+              >
+                <CIconTrash />
+                {{ t('common.delete') }}
               </CBtn>
             </div>
           </CCard>
@@ -531,6 +573,37 @@ async function confirmClose() {
           @click="confirmClose"
         >
           {{ t('consultations.closeAction') }}
+        </CBtn>
+      </template>
+    </CModal>
+
+    <!-- Delete consultation modal -->
+    <CModal
+      :open="!!deletingConsultation"
+      :title="t('consultations.confirmDeleteTitle')"
+      size="sm"
+      @update:open="v => !v && (deletingConsultation = null)"
+    >
+      <p class="body-sm">
+        {{ t('consultations.confirmDeleteMessage', { title: deletingConsultation?.title ?? '' }) }}
+      </p>
+      <template #footer>
+        <CFormFeedback
+          :status="deleteFeedback.status.value"
+          :message="deleteFeedback.message.value"
+        />
+        <CBtn
+          variant="ghost"
+          @click="deletingConsultation = null"
+        >
+          {{ t('common.cancel') }}
+        </CBtn>
+        <CBtn
+          variant="danger"
+          :loading="deleting"
+          @click="confirmDelete"
+        >
+          {{ t('common.delete') }}
         </CBtn>
       </template>
     </CModal>
