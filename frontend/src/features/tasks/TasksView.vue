@@ -270,7 +270,7 @@ async function confirmCloseTask() {
   try {
     await tasksApi.update(closingTask.value.id, { status: 'closed' })
     closeFeedback.setSuccess(t('common.saved'))
-    setTimeout(() => { closingTask.value = null; reload() }, SUCCESS_AUTO_CLEAR_MS)
+    setTimeout(() => { closingTask.value = null; reload(); }, SUCCESS_AUTO_CLEAR_MS)
   } catch (err) {
     closeFeedback.setError(toErrorMessage(err, t('common.error')))
   } finally {
@@ -292,9 +292,9 @@ async function deleteTask(task: Task) {
   })
   if (!ok) return
   pageError.value = ''
-  showTaskModal.value = false
   try {
     await tasksApi.delete(task.id)
+    showTaskModal.value = false
     await reload()
   } catch (err) {
     pageError.value = toErrorMessage(err, t('common.error'))
