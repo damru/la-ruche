@@ -80,18 +80,19 @@ function removePhoto(idx: number) {
 /** Upload a single photo and return its document_id. */
 async function uploadPhoto(reportId: string, file: File): Promise<void> {
   const ext = file.name.split('.').pop() ?? 'jpg'
-  const urlRes = await documentsApi.getUploadUrl(ext, file.type || 'image/jpeg', file.size)
+  const mimeType = file.type || 'image/jpeg'
+  const urlRes = await documentsApi.getUploadUrl(ext, mimeType, file.size)
   const { url, key, bucket } = urlRes.data
-  await documentsApi.uploadToS3(file, url)
+  await documentsApi.uploadToS3(file, url, mimeType)
   const docRes = await documentsApi.confirmUpload({
     key,
     bucket,
     original_name: file.name,
-    mime_type: file.type || 'image/jpeg',
+    mime_type: mimeType,
     size_bytes: file.size,
     visible_roles: ['manager', 'board_member', 'co_owner'],
   })
-  await reportsApi.attachDocument(reportId, (docRes.data as { id: string }).id)
+  await reportsApi.attachDocument(reportId, docRes.data.id)
 }
 
 async function submitCreate() {
@@ -195,6 +196,73 @@ async function submitConvert() {
     convertFeedback.setError(toErrorMessage(err, t('common.error')))
   } finally {
     converting.value = false
+  }
+}
+
+// ── Edit report modal ─────────────────────────────────────────────
+const reportToEdit = ref<Report | null>(null)
+const editForm = ref({ title: '', description: '', unit_id: '' })
+const editFeedback = useFormFeedback()
+const editSaving = ref(false)
+const { schedule: scheduleEditClose, forceExpire: forceEditClose } = useAutoClose()
+watch(reportToEdit, (r) => { if (!r) forceEditClose() })
+
+function openEditModal(report: Report) {
+  reportToEdit.value = report
+  editForm.value = {
+    title: report.title,
+    description: report.description ?? '',
+    unit_id: report.unit_id ?? '',
+  }
+  editFeedback.reset()
+}
+
+async function submitEdit() {
+  if (editFeedback.status.value === 'success') { forceEditClose(); return }
+  if (!reportToEdit.value) return
+  if (!editForm.value.title.trim()) return
+  editSaving.value = true
+  editFeedback.reset()
+  try {
+    await reportsApi.update(reportToEdit.value.id, {
+      title: editForm.value.title.trim(),
+      description: editForm.value.description.trim() || null,
+      unit_id: editForm.value.unit_id || null,
+    })
+    editFeedback.setSuccess(t('reports.editSuccess'))
+    scheduleEditClose(() => { reportToEdit.value = null; reload() })
+  } catch (err) {
+    editFeedback.setError(toErrorMessage(err, t('common.error')))
+  } finally {
+    editSaving.value = false
+  }
+}
+
+// ── Delete report modal ───────────────────────────────────────────
+const reportToDelete = ref<Report | null>(null)
+const deleteFeedback = useFormFeedback()
+const deleting = ref(false)
+const { schedule: scheduleDeleteClose, forceExpire: forceDeleteClose } = useAutoClose()
+watch(reportToDelete, (r) => { if (!r) forceDeleteClose() })
+
+function openDeleteModal(report: Report) {
+  reportToDelete.value = report
+  deleteFeedback.reset()
+}
+
+async function submitDelete() {
+  if (deleteFeedback.status.value === 'success') { forceDeleteClose(); return }
+  if (!reportToDelete.value) return
+  deleting.value = true
+  deleteFeedback.reset()
+  try {
+    await reportsApi.delete(reportToDelete.value.id)
+    deleteFeedback.setSuccess(t('reports.deleteSuccess'))
+    scheduleDeleteClose(() => { reportToDelete.value = null; reload() })
+  } catch (err) {
+    deleteFeedback.setError(toErrorMessage(err, t('common.error')))
+  } finally {
+    deleting.value = false
   }
 }
 
@@ -372,22 +440,45 @@ function photoPreview(file: File): string {
               class="report-card-actions"
             >
               <CBtn
+                variant="ghost"
+                size="sm"
+                @click="openEditModal(r)"
+              >
+                <CIconEdit />
+                {{ t('reports.editReport') }}
+              </CBtn>
+              <CBtn
                 v-if="r.status !== 'closed'"
                 variant="ghost"
                 size="sm"
                 @click="openStatusModal(r)"
               >
-                <CIconEdit />
                 {{ t('reports.editStatus') }}
               </CBtn>
               <CBtn
-                v-if="r.status !== 'closed'"
+                v-if="r.task_id"
+                variant="ghost"
+                size="sm"
+                @click="router.push({ name: 'task-detail', params: { id: r.task_id } })"
+              >
+                <CIconCheckCircle />
+                {{ t('reports.viewTask') }}
+              </CBtn>
+              <CBtn
+                v-else-if="r.status !== 'closed'"
                 variant="ghost"
                 size="sm"
                 @click="openConvertModal(r)"
               >
                 <CIconCheckCircle />
                 {{ t('reports.convertToTask') }}
+              </CBtn>
+              <CBtn
+                variant="ghost"
+                size="sm"
+                @click="openDeleteModal(r)"
+              >
+                {{ t('reports.deleteReport') }}
               </CBtn>
             </div>
           </CCard>
@@ -610,6 +701,107 @@ function photoPreview(file: File): string {
         </CBtn>
       </template>
     </CModal>
+    <!-- Edit report modal -->
+    <CModal
+      :open="!!reportToEdit"
+      :title="t('reports.editReport')"
+      size="md"
+      @update:open="v => !v && (reportToEdit = null)"
+    >
+      <form
+        class="form-grid"
+        @submit.prevent="submitEdit"
+      >
+        <div class="form-field">
+          <label class="form-label">{{ t('reports.titleLabel') }}</label>
+          <input
+            v-model="editForm.title"
+            type="text"
+            class="form-input"
+            :placeholder="t('reports.titleLabel')"
+            required
+          />
+        </div>
+        <div class="form-field">
+          <label class="form-label">{{ t('reports.descriptionLabel') }}</label>
+          <textarea
+            v-model="editForm.description"
+            class="form-input"
+            rows="3"
+          />
+        </div>
+        <div class="form-field">
+          <label class="form-label">{{ t('reports.unitLabel2') }}</label>
+          <select
+            v-model="editForm.unit_id"
+            class="form-input"
+          >
+            <option value="">
+              {{ t('reports.unitPlaceholder') }}
+            </option>
+            <option
+              v-for="u in allUnits"
+              :key="u.id"
+              :value="u.id"
+            >
+              {{ t('reports.unitLabel', { number: u.unit_number }) }}
+            </option>
+          </select>
+        </div>
+      </form>
+      <template #footer>
+        <CFormFeedback
+          :status="editFeedback.status.value"
+          :message="editFeedback.message.value"
+        />
+        <CBtn
+          variant="ghost"
+          @click="reportToEdit = null"
+        >
+          {{ t('common.cancel') }}
+        </CBtn>
+        <CBtn
+          variant="primary"
+          :loading="editSaving"
+          :closing="editFeedback.status.value === 'success'"
+          @click="submitEdit"
+        >
+          {{ t('common.save') }}
+        </CBtn>
+      </template>
+    </CModal>
+
+    <!-- Delete report confirmation modal -->
+    <CModal
+      :open="!!reportToDelete"
+      :title="t('reports.confirmDeleteTitle')"
+      size="sm"
+      @update:open="v => !v && (reportToDelete = null)"
+    >
+      <p class="body-sm">
+        {{ t('reports.confirmDeleteMessage', { title: reportToDelete?.title ?? '' }) }}
+      </p>
+      <template #footer>
+        <CFormFeedback
+          :status="deleteFeedback.status.value"
+          :message="deleteFeedback.message.value"
+        />
+        <CBtn
+          variant="ghost"
+          @click="reportToDelete = null"
+        >
+          {{ t('common.cancel') }}
+        </CBtn>
+        <CBtn
+          variant="danger"
+          :loading="deleting"
+          :closing="deleteFeedback.status.value === 'success'"
+          @click="submitDelete"
+        >
+          {{ t('common.delete') }}
+        </CBtn>
+      </template>
+    </CModal>
   </div>
 </template>
 
@@ -661,10 +853,10 @@ function photoPreview(file: File): string {
   border-radius: var(--radius-sm); border: 1px solid var(--color-outline-variant);
 }
 .photo-remove {
-  position: absolute; top: -6px; right: -6px;
-  width: 18px; height: 18px; border-radius: 50%;
+  position: absolute; top: -4px; right: -4px;
+  width: 14px; height: 14px; border-radius: 50%;
   background: var(--color-error); color: #fff;
-  border: none; cursor: pointer; font-size: 12px; line-height: 1;
+  border: none; cursor: pointer; font-size: 10px; line-height: 1;
   display: flex; align-items: center; justify-content: center;
   padding: 0;
 }

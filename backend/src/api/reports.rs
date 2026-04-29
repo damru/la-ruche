@@ -85,6 +85,32 @@ pub async fn convert_to_task(
     json_value(serde_json::json!({ "task_id": task_id }))
 }
 
+/// Update a report's title, description, and unit. Manager/board only.
+pub async fn update(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+    Json(input): Json<db::report::UpdateReportInput>,
+) -> AppResult<StatusCode> {
+    auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
+    if input.title.trim().is_empty() {
+        return Err(AppError::Validation("Title is required".into()));
+    }
+    db::report::update(&state.pool, id, auth.building_id, input).await?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
+/// Delete a report. Manager/board only.
+pub async fn delete(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+) -> AppResult<StatusCode> {
+    auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
+    db::report::delete(&state.pool, id, auth.building_id).await?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
 // ── Document (photo) attachment ───────────────────────────────────
 
 /// GET /reports/{id}/documents — list documents attached to a report.

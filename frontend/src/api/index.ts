@@ -186,11 +186,11 @@ export const documentsApi = {
     api.get<DownloadUrlResponse>(`/documents/${id}/download-url`),
   delete: (id: string) =>
     api.delete(`/documents/${id}`),
-  uploadToS3: async (file: File, signedUrl: string): Promise<void> => {
+  uploadToS3: async (file: File, signedUrl: string, contentType?: string): Promise<void> => {
     const response = await fetch(signedUrl, {
       method: 'PUT',
       body: file,
-      headers: { 'Content-Type': file.type },
+      headers: { 'Content-Type': contentType ?? file.type },
     })
 
     if (!response.ok) {
@@ -293,6 +293,10 @@ export const reportsApi = {
     api.get<Report>(`/reports/${id}`),
   create: (data: { title: string; description?: string; unit_id?: string }) =>
     api.post<Report>('/reports', data),
+  update: (id: string, data: { title: string; description: string | null; unit_id: string | null }) =>
+    api.put(`/reports/${id}`, data),
+  delete: (id: string) =>
+    api.delete(`/reports/${id}`),
   updateStatus: (id: string, status: string) =>
     api.put(`/reports/${id}/status`, { status }),
   convertToTask: (id: string) =>

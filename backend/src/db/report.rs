@@ -18,6 +18,7 @@ pub struct ReportRow {
     pub title: String,
     pub description: Option<String>,
     pub status: String,
+    pub task_id: Option<Uuid>,
     pub document_count: i64,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
@@ -27,6 +28,7 @@ const LIST_QUERY: &str = concat!(
     "SELECT r.id, r.building_id, r.unit_id, r.author_id,",
     " u.first_name AS author_first_name, u.last_name AS author_last_name,",
     " r.title, r.description, r.status::text AS status,",
+    " r.task_id,",
     " (SELECT COUNT(*) FROM report_document rd WHERE rd.report_id = r.id) AS document_count,",
     " r.created_at, r.updated_at",
     " FROM report r",
@@ -38,6 +40,7 @@ const GET_QUERY: &str = concat!(
     "SELECT r.id, r.building_id, r.unit_id, r.author_id,",
     " u.first_name AS author_first_name, u.last_name AS author_last_name,",
     " r.title, r.description, r.status::text AS status,",
+    " r.task_id,",
     " (SELECT COUNT(*) FROM report_document rd WHERE rd.report_id = r.id) AS document_count,",
     " r.created_at, r.updated_at",
     " FROM report r",
@@ -56,6 +59,7 @@ fn row_to_report(r: &sqlx::postgres::PgRow) -> Result<ReportRow, sqlx::Error> {
         title: r.try_get("title")?,
         description: r.try_get("description")?,
         status: r.try_get("status")?,
+        task_id: r.try_get("task_id")?,
         document_count: r.try_get("document_count")?,
         created_at: r.try_get("created_at")?,
         updated_at: r.try_get("updated_at")?,
@@ -150,33 +154,102 @@ pub async fn update_status(
 }
 
 /// Converts a report into a task (EP-011-S03).
-/// Uses a single CTE query: fetches the report and creates the task in one round-trip.
-/// The report itself is NOT deleted. Returns the new task's UUID.
+/// Returns 404 if the report does not exist in the building.
+/// Returns 409 Conflict if the report was already converted (task_id IS NOT NULL).
+/// On success: inserts a task, links it back to the report via task_id, and returns the task UUID.
 pub async fn convert_to_task(
     pool: &PgPool,
     report_id: Uuid,
     building_id: Uuid,
     created_by: Uuid,
 ) -> AppResult<Uuid> {
+    // Step 1: check report exists and hasn't been converted yet.
+    let existing: Option<Option<Uuid>> =
+        sqlx::query_scalar("SELECT task_id FROM report WHERE id = $1 AND building_id = $2")
+            .bind(report_id)
+            .bind(building_id)
+            .fetch_optional(pool)
+            .await?;
+
+    match existing {
+        None => return Err(AppError::NotFound),
+        Some(Some(_)) => {
+            return Err(AppError::Conflict(
+                "This report has already been converted to a task".into(),
+            ));
+        }
+        Some(None) => {}
+    }
+
+    // Step 2: create the task and write task_id back to the report atomically.
     let row = sqlx::query(
-        r#"WITH src AS (
-               SELECT title, description
+        r#"WITH new_task AS (
+               INSERT INTO task (building_id, title, description, priority, created_by)
+               SELECT $2, title, description, 'normal'::task_priority, $3
                FROM report
-               WHERE id = $1 AND building_id = $2
+               WHERE id = $1
+               RETURNING id
            )
-           INSERT INTO task (building_id, title, description, priority, created_by)
-           SELECT $2, src.title, src.description, 'normal'::task_priority, $3
-           FROM src
-           RETURNING id"#,
+           UPDATE report
+           SET task_id = new_task.id, updated_at = NOW()
+           FROM new_task
+           WHERE report.id = $1
+           RETURNING new_task.id AS id"#,
     )
     .bind(report_id)
     .bind(building_id)
     .bind(created_by)
-    .fetch_optional(pool)
-    .await?
-    .ok_or(AppError::NotFound)?;
+    .fetch_one(pool)
+    .await?;
 
     Ok(row.try_get("id")?)
+}
+
+// ── Update / Delete ───────────────────────────────────────────────
+
+#[derive(Debug, serde::Deserialize)]
+pub struct UpdateReportInput {
+    pub title: String,
+    pub description: Option<String>,
+    pub unit_id: Option<Uuid>,
+}
+
+pub async fn update(
+    pool: &PgPool,
+    id: Uuid,
+    building_id: Uuid,
+    input: UpdateReportInput,
+) -> AppResult<()> {
+    let result = sqlx::query(
+        "UPDATE report SET title = $3, description = $4, unit_id = $5, updated_at = NOW() \
+         WHERE id = $1 AND building_id = $2",
+    )
+    .bind(id)
+    .bind(building_id)
+    .bind(&input.title)
+    .bind(&input.description)
+    .bind(input.unit_id)
+    .execute(pool)
+    .await?;
+
+    if result.rows_affected() == 0 {
+        return Err(AppError::NotFound);
+    }
+    Ok(())
+}
+
+pub async fn delete(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()> {
+    // report_document rows are removed automatically via ON DELETE CASCADE (migration 0010).
+    let result = sqlx::query("DELETE FROM report WHERE id = $1 AND building_id = $2")
+        .bind(id)
+        .bind(building_id)
+        .execute(pool)
+        .await?;
+
+    if result.rows_affected() == 0 {
+        return Err(AppError::NotFound);
+    }
+    Ok(())
 }
 
 // ── Document attachment ───────────────────────────────────────────
