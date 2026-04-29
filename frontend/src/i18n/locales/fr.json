@@ -727,6 +727,7 @@
     "photoUploading": "Chargement des photos…",
     "photoUploadError": "Erreur lors du chargement d'une photo",
     "removePhoto": "Supprimer",
+    "noPhotos": "Aucune photo disponible",
     "statuses": {
       "open": "Ouvert",
       "in_progress": "En cours",

@@ -16,7 +16,7 @@ import CPageError from '@/components/molecules/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import { buildingApi, documentsApi, reportsApi, unitsApi } from '@/api'
-import type { Report, ReportStatus, Unit } from '@/types/domain'
+import type { Document, Report, ReportStatus, Unit } from '@/types/domain'
 
 const { t } = useI18n()
 const { formatRelative } = useFormatters()
@@ -273,6 +273,31 @@ async function submitDelete() {
   }
 }
 
+// ── View photos modal ─────────────────────────────────────────────
+const viewPhotosReport = ref<Report | null>(null)
+const viewPhotosList = ref<{ doc: Document; url: string }[]>([])
+const viewPhotosLoading = ref(false)
+
+async function openViewPhotos(report: Report) {
+  viewPhotosReport.value = report
+  viewPhotosList.value = []
+  viewPhotosLoading.value = true
+  try {
+    const docsRes = await reportsApi.listDocuments(report.id)
+    const photos = await Promise.all(
+      docsRes.data.map(async (d) => {
+        const urlRes = await documentsApi.getDownloadUrl(d.id)
+        return { doc: d, url: urlRes.data.url }
+      }),
+    )
+    viewPhotosList.value = photos
+  } catch {
+    viewPhotosList.value = []
+  } finally {
+    viewPhotosLoading.value = false
+  }
+}
+
 // ── Load data ─────────────────────────────────────────────────────
 async function loadData() {
   const [buildingRes, reportsRes, unitsRes] = await Promise.all([
@@ -433,12 +458,13 @@ function photoPreview(file: File): string {
             <div class="report-footer">
               <span class="dim">👤 {{ authorName(r) }}</span>
               <span class="dim">🏠 {{ unitLabel(r.unit_id) }}</span>
-              <span
+              <button
                 v-if="r.document_count > 0"
-                class="dim photo-count"
+                class="dim photo-count photo-count--btn"
+                @click="openViewPhotos(r)"
               >
                 📎 {{ t('reports.photoCount', r.document_count) }}
-              </span>
+              </button>
             </div>
 
             <!-- Card actions (manager / board only) -->
@@ -832,6 +858,54 @@ function photoPreview(file: File): string {
         </CBtn>
       </template>
     </CModal>
+    <!-- View photos modal -->
+    <CModal
+      :open="!!viewPhotosReport"
+      :title="viewPhotosReport?.title ?? ''"
+      size="md"
+      @update:open="v => !v && (viewPhotosReport = null)"
+    >
+      <div
+        v-if="viewPhotosLoading"
+        class="photos-loading body-sm"
+      >
+        {{ t('common.loading') }}
+      </div>
+      <div
+        v-else-if="viewPhotosList.length"
+        class="photo-gallery"
+      >
+        <a
+          v-for="item in viewPhotosList"
+          :key="item.doc.id"
+          :href="item.url"
+          target="_blank"
+          rel="noopener"
+          class="photo-gallery-item"
+        >
+          <img
+            :src="item.url"
+            :alt="item.doc.original_name"
+            class="photo-gallery-thumb"
+          />
+        </a>
+      </div>
+      <p
+        v-else
+        class="body-sm"
+        style="color:var(--color-on-surface-variant)"
+      >
+        {{ t('reports.noPhotos') }}
+      </p>
+      <template #footer>
+        <CBtn
+          variant="ghost"
+          @click="viewPhotosReport = null"
+        >
+          {{ t('common.close') }}
+        </CBtn>
+      </template>
+    </CModal>
   </div>
 </template>
 
@@ -854,6 +928,13 @@ function photoPreview(file: File): string {
 .report-footer { display: flex; gap: 14px; font-size: var(--text-2xs); flex-wrap: wrap; }
 .dim { color: var(--color-on-surface-variant); }
 .photo-count { display: flex; align-items: center; gap: 4px; }
+.photo-count--btn {
+  background: none; border: none; padding: 0; cursor: pointer;
+  font-size: inherit; color: var(--color-on-surface-variant);
+  text-decoration: underline dotted;
+  min-height: unset; min-width: unset;
+}
+.photo-count--btn:hover { color: var(--color-primary); }
 .report-card-actions { display: flex; flex-direction: column; gap: var(--space-1); padding-top: var(--space-1); }
 .report-card-actions-row { display: flex; gap: var(--space-2); flex-wrap: wrap; }
 
@@ -885,11 +966,24 @@ function photoPreview(file: File): string {
 }
 .photo-remove {
   position: absolute; top: -4px; right: -4px;
-  width: 14px; height: 14px; border-radius: 50%;
+  width: 18px; height: 18px; border-radius: 50%;
   background: var(--color-error); color: #fff;
-  border: none; cursor: pointer; font-size: 10px; line-height: 1;
+  border: none; cursor: pointer; font-size: 11px; line-height: 1;
   display: flex; align-items: center; justify-content: center;
   padding: 0;
+  /* Override the global 44px touch-target minimum for this decorative badge */
+  min-height: unset; min-width: unset;
 }
 .photo-remove:hover { background: var(--color-error-dark, var(--color-error)); opacity: 0.85; }
+
+/* Photo gallery (view photos modal) */
+.photos-loading { color: var(--color-on-surface-variant); padding: var(--space-4) 0; text-align: center; }
+.photo-gallery { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.photo-gallery-item {
+  display: block; border-radius: var(--radius-sm); overflow: hidden;
+  border: 1px solid var(--color-outline-variant); flex-shrink: 0;
+  transition: opacity 0.15s;
+}
+.photo-gallery-item:hover { opacity: 0.85; }
+.photo-gallery-thumb { width: 120px; height: 120px; object-fit: cover; display: block; }
 </style>
