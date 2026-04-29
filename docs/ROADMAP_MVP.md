@@ -13,7 +13,7 @@ Livrer un MVP réellement exploitable en production sur le périmètre des epics
 
 Epics MVP: EP-001, EP-002, EP-003, EP-004, EP-005, EP-006, EP-008, EP-009, EP-010, EP-011.
 
-Hors MVP (pas bloquant livraison MVP): EP-007, EP-012, EP-013, EP-014, EP-015.
+Hors MVP (pas bloquant livraison MVP): EP-007, EP-012, EP-013, EP-014, EP-016, EP-017.
 
 ## État de départ (24/04/2026)
 

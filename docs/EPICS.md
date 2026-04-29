@@ -8,7 +8,7 @@
 > Chaque feature est organisée en epic. Les stories sont ajoutées à la demande, au moment de l'implémentation.
 > Le MVP est l'ensemble des epics marquées **MVP : oui**.
 > Statuts possibles : **en attente** · **en cours** · **terminée**
-> Dernière mise à jour : 24 avril 2026 (re-baseline code-réel)
+> Dernière mise à jour : 28 avril 2026
 
 > **Lecture d'avancement (code actuel) :**
 > - **backend réel** = handlers + DB opérationnels
@@ -29,14 +29,14 @@ La fiche identitaire de la copropriété (nom, adresse, SIRET syndic), le règle
 
 **Stories :**
 
-* `EP-001-S01` — Créer et modifier la fiche identité de la copropriété (nom, adresse, SIRET syndic, coordonnées de gestion)
-* `EP-001-S02` — Importer, stocker et consulter le règlement de copropriété et les documents fondateurs
-* `EP-001-S03` — Définir les clés de répartition et leurs règles de calcul
-* `EP-001-S04` — Créer, modifier, archiver et consulter les lots avec leurs tantièmes par clé
-* `EP-001-S05` — Afficher un registre consolidé copropriété + lots + tantièmes exploitable par les autres modules
-* `EP-001-S06` — Versioning des tantièmes : toute modification d'un `share_value` ferme l'enregistrement courant et crée un nouvel enregistrement daté (`valid_from`/`valid_to`) — immuabilité historique (LEGAL.md §2.2, ADR-006)
-* `EP-001-S07` — Alerte de déséquilibre : bloquer la génération d'appels de fonds si `Σ tantièmes ≠ total_clé` (LEGAL.md §2.1)
-* `EP-001-S08` — Clé Charges Générales système : `key_type` enum (`general` / `special`) + soft delete sur `allocation_key` ; créée automatiquement à l'onboarding, non supprimable (ADR-007, LEGAL.md §2.1)
+* `EP-001-S01` ✅ — Créer et modifier la fiche identité de la copropriété (nom, adresse, SIRET syndic, coordonnées de gestion)
+* `EP-001-S02` ✅ — Importer, stocker et consulter le règlement de copropriété et les documents fondateurs
+* `EP-001-S03` ✅ — Définir les clés de répartition et leurs règles de calcul
+* `EP-001-S04` ✅ — Créer, modifier, archiver et consulter les lots avec leurs tantièmes par clé
+* `EP-001-S05` ✅ — Afficher un registre consolidé copropriété + lots + tantièmes exploitable par les autres modules
+* `EP-001-S06` ✅ — Versioning des tantièmes : toute modification d'un `share_value` ferme l'enregistrement courant et crée un nouvel enregistrement daté (`valid_from`/`valid_to`) — immuabilité historique (LEGAL.md §2.2, ADR-006)
+* `EP-001-S07` ✅ — Alerte de déséquilibre : bloquer la génération d'appels de fonds si `Σ tantièmes ≠ total_clé` (LEGAL.md §2.1)
+* `EP-001-S08` ✅ — Clé Charges Générales système : `key_type` enum (`general` / `special`) + soft delete sur `allocation_key` ; créée automatiquement à l'onboarding, non supprimable (ADR-007, LEGAL.md §2.1)
 * `EP-001-S09` — Contrôle de cohérence EDD : comparer les tantièmes configurés avec le dernier EDD déposé et produire un rapport d'écarts (non bloquant) (LEGAL.md §1.2)
 * `EP-001-S10` — Journal d'audit des modifications de clés (qui, quoi, quand, justification) pour traçabilité syndic (LEGAL.md §1.2, §2.1)
 
@@ -117,11 +117,11 @@ Upload direct S3 via pre-signed URL, contrôle d'accès par rôle, téléchargem
 
 **Stories :**
 
-* `EP-005-S01` — Déposer un document via URL pré-signée sans transit par le backend
-* `EP-005-S02` — Associer un document à une entité métier (copropriété, AG, contrat, sinistre, tâche)
-* `EP-005-S03` — Lister, filtrer et rechercher les documents par catégorie, entité et visibilité
-* `EP-005-S04` — Appliquer les droits d’accès par rôle sur la consultation et le téléchargement
-* `EP-005-S05` — Télécharger un document via un accès sécurisé sans exposition publique du bucket
+* `EP-005-S01` ✅ — Déposer un document via URL pré-signée sans transit par le backend
+* `EP-005-S02` ✅ — Associer un document à une entité métier (copropriété, AG, contrat, sinistre, tâche)
+* `EP-005-S03` ✅ — Lister, filtrer et rechercher les documents par catégorie, entité et visibilité
+* `EP-005-S04` ✅ — Appliquer les droits d’accès par rôle sur la consultation et le téléchargement
+* `EP-005-S05` ✅ — Télécharger un document via un accès sécurisé sans exposition publique du bucket
 * `EP-005-S06` — Typer et verrouiller les documents fondateurs (`Règlement`, `EDD`) avec version courante explicite et historique consultable (LEGAL.md §1.2)
 * `EP-005-S07` — Catégoriser et archiver les pièces réglementaires techniques (`DPE collectif`, `DTG`, `PPT`, `PV`) avec règles de conservation adaptées (LEGAL.md §3.3, §6.1, §6.2, §6.3)
 
@@ -137,17 +137,17 @@ Fiche contrat avec reconduction tacite et préavis configurables, rappels automa
 
 **Stories :**
 
-* `EP-006-S01` — Créer et gérer une fiche contrat (prestataire, objet, montant, dates de début/fin)
-* `EP-006-S02` — Configurer la reconduction tacite et le préavis de résiliation par contrat (LEGAL.md §5.3)
-* `EP-006-S03` — Calculer automatiquement les dates d'alerte : préavis entrant, reconduction imminente, expiration (LEGAL.md §5.3)
-* `EP-006-S04` — Acquitter manuellement une alerte ou enregistrer la résiliation d'un contrat
-* `EP-006-S05` — Suivre le contrat d'assurance multirisque immeuble (échéance, pièces, rappels) en tant qu'aide de gestion documentaire (LEGAL.md §5.2)
+* `EP-006-S01` ✅ — Créer et gérer une fiche contrat (prestataire, objet, montant, dates de début/fin)
+* `EP-006-S02` ✅ — Configurer la reconduction tacite et le préavis de résiliation par contrat (LEGAL.md §5.3)
+* `EP-006-S03` ✅ — Calculer automatiquement les dates d'alerte : préavis entrant, reconduction imminente, expiration (LEGAL.md §5.3)
+* `EP-006-S04` ✅ — Acquitter manuellement une alerte ou enregistrer la résiliation d'un contrat
+* `EP-006-S05` ✅ — Suivre le contrat d'assurance multirisque immeuble (échéance, pièces, rappels) en tant qu'aide de gestion documentaire (LEGAL.md §5.2)
 
 ***
 
 ### EP-007 — Tâches & Prestataires
 
-**Statut :** en cours | **MVP :** non | **Réf. PRD :** Gestion courante
+**Statut :** terminée | **MVP :** non | **Réf. PRD :** Gestion courante
 
 **État code actuel :** backend réel (CRUD tâches + token prestataire + upload staging + soumission en transaction + assignation prestataire référentiel) + frontend branché (liste, créer, token, page publique prestataire, autocomplete prestataire).
 
@@ -280,17 +280,7 @@ Export des données de la copropriété au format RNC et génération de la fich
 
 ***
 
-### EP-015 — Paiement en ligne
-
-**Statut :** en attente | **MVP :** non | **Réf. PRD :** Fonctionnalités avancées
-
-Paiement des appels de fonds via passerelle SEPA, reçu PDF automatique, versement sur compte séparé (art. 18 loi 1965).
-
-**Stories :** _à définir_
-
-***
-
-### EP-013 — Tenue d'AG
+### EP-013 — Tenue d’AG
 
 **Statut :** en attente | **MVP :** non | **Réf. PRD :** Fonctionnalités avancées — extension EP-003
 
@@ -327,6 +317,53 @@ Catalogue des prestataires de la résidence : nom, email, téléphone, domaine p
 * `EP-015-S05` — Ajouter le numéro de téléphone au profil utilisateur (`user_account.phone`) et l'exposer dans la carte contact syndic sur la page prestataire — migration 0007
 
 ***
+
+### EP-016 — Paiement en ligne
+
+**Statut :** en attente | **MVP :** non | **Réf. PRD :** Fonctionnalités avancées
+
+Paiement des appels de fonds via passerelle SEPA, reçu PDF automatique, versement sur compte séparé (art. 18 loi 1965).
+
+**Stories :** _à définir_
+
+***
+
+### EP-017 — Journal d’activité & Suivi de cycle de vie
+
+**Statut :** en attente | **MVP :** non | **Réf. PRD :** Gestion courante
+
+**Contexte et évaluation du méta-objet :** Un signalement peut être « upgradeé » en tâche, créant une chaîne. Plutôt que d’introduire une entité parente (`WorkItem` / `Issue`) qui alourdirait le schéma sans gain proportionnel, l’approche retenue est une **table `audit_log` polymorphique** (`entity_type` / `entity_id`) + un champ `linked_task_id` FK sur `report` pour matérialiser la conversion. Les tables existantes restent inchangées et ne reflètent que l’état courant. Pas de méta-objet.
+
+Vue unifiée du cycle de vie d’un signalement et/ou d’une tâche, de la création à la résolution, basée sur un journal d’audit abstrait couvrant les deux entités. Remplace la page `TaskDetailView` statique par une timeline interactive et intègre le suivi des signalements.
+
+**Actions auditables :**
+
+| Entité | Action | Description |
+|--------|--------|-------------|
+| `report` | `created` | Signalement créé par un résident |
+| `report` | `status_changed` | Changement de statut (`new` → `acknowledged` → `in_progress` → `resolved`) — payload : `old_status`, `new_status` |
+| `report` | `photo_added` | Photo attachée au signalement |
+| `report` | `converted_to_task` | Converti en tâche — payload : `task_id` |
+| `task` | `created` | Tâche créée — payload : `source_report_id` si issue d’un signalement |
+| `task` | `status_changed` | Changement de statut — payload : `old_status`, `new_status` |
+| `task` | `assignee_changed` | Changement d’assignataire interne — payload : `old_assignee_id`, `new_assignee_id` |
+| `task` | `contractor_assigned` | Prestataire référentiel assigné/changé — payload : `contractor_id`, `contractor_name` |
+| `task` | `vendor_link_generated` | Lien prestataire externe généré |
+| `task` | `document_uploaded` | Document joint par un gestionnaire |
+| `task` | `vendor_submission_received` | Soumission prestataire reçue |
+| `task` | `closed` | Tâche clôturée |
+
+**Stories :**
+
+* `EP-017-S01` — Migration : créer la table `audit_log` polymorphique (`entity_type TEXT NOT NULL`, `entity_id UUID NOT NULL`, `action TEXT NOT NULL`, `actor_id UUID REFERENCES user_account(id)`, `payload JSONB`, `created_at TIMESTAMPTZ DEFAULT NOW()`) + index `(entity_type, entity_id, created_at DESC)`
+* `EP-017-S02` — Backend : émettre des événements auditables aux points clés de mutation : création, changement de statut, changement d’assignataire, attribution prestataire référentiel, génération lien vendeur, soumission vendeur, clôture (tâche) ; création, changement de statut, ajout photo, conversion (signalement). Chaque événement contient un `payload` JSONB avec ancien/nouveau valeur quand pertinent.
+* `EP-017-S03` — Backend : ajouter `linked_task_id UUID REFERENCES task(id)` sur `report` pour matérialiser la conversion signalement → tâche ; endpoint `GET /tasks/:id/timeline` remontant la chaîne jusqu’au signalement source si applicable ; endpoint `GET /reports/:id/timeline` symmétrique.
+* `EP-017-S04` — Frontend : vue `TaskTimelineView` (remplace `TaskDetailView`) : données statiques de la tâche (titre, statut, priorité, assignataire, prestataire) + timeline chronologique des événements depuis le signalement source (si applicable) jusqu’à la clôture.
+* `EP-017-S05` — Frontend : vue `ReportDetailView` : afficher les événements auditables du signalement + lien contextuel vers la tâche créée si conversion effective.
+* `EP-017-S06` — Accessibilité : événements visibles par tous les rôles ayant accès à l’entité ; actions sensibles (`assignee_changed`, `vendor_link_generated`) réservées aux rôles manager/conseil syndical.
+
+***
+
 
 ## Tâches techniques post-MVP
 
