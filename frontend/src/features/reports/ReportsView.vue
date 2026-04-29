@@ -446,54 +446,62 @@ function photoPreview(file: File): string {
               v-if="canManage"
               class="report-card-actions"
             >
-              <!-- Edit: always available -->
-              <CBtn
-                variant="ghost"
-                size="sm"
-                @click="openEditModal(r)"
-              >
-                <CIconEdit />
-                {{ t('common.edit') }}
-              </CBtn>
-              <!-- Status change: non-closed only -->
-              <CBtn
+              <!-- Row 1: status change (non-closed only) -->
+              <div
                 v-if="r.status !== 'closed'"
-                variant="ghost"
-                size="sm"
-                @click="openStatusModal(r)"
+                class="report-card-actions-row"
               >
-                <CIconRefresh />
-                {{ t('reports.editStatus') }}
-              </CBtn>
-              <!-- View Task if already converted, Convert if not closed and not yet converted -->
-              <CBtn
-                v-if="r.task_id"
-                variant="ghost"
-                size="sm"
-                @click="router.push({ name: 'task-detail', params: { id: r.task_id } })"
-              >
-                <CIconCheckCircle />
-                {{ t('reports.viewTask') }}
-              </CBtn>
-              <CBtn
-                v-else-if="r.status !== 'closed'"
-                variant="ghost"
-                size="sm"
-                @click="openConvertModal(r)"
-              >
-                <CIconCheckCircle />
-                {{ t('reports.convertToTask') }}
-              </CBtn>
-              <!-- Delete: on card only when closed (otherwise accessible from edit modal) -->
-              <CBtn
-                v-if="r.status === 'closed'"
-                variant="danger"
-                size="sm"
-                @click="openDeleteModal(r)"
-              >
-                <CIconTrash />
-                {{ t('common.delete') }}
-              </CBtn>
+                <CBtn
+                  variant="ghost"
+                  size="sm"
+                  @click="openStatusModal(r)"
+                >
+                  <CIconRefresh />
+                  {{ t('reports.editStatus') }}
+                </CBtn>
+              </div>
+
+              <!-- Row 2: edit + convert/view-task (non-closed) | edit + delete (closed) -->
+              <div class="report-card-actions-row">
+                <CBtn
+                  variant="ghost"
+                  size="sm"
+                  @click="openEditModal(r)"
+                >
+                  <CIconEdit />
+                  {{ t('common.edit') }}
+                </CBtn>
+                <!-- View Task if already converted -->
+                <CBtn
+                  v-if="r.task_id"
+                  variant="ghost"
+                  size="sm"
+                  @click="router.push({ name: 'task-detail', params: { id: r.task_id } })"
+                >
+                  <CIconCheckCircle />
+                  {{ t('reports.viewTask') }}
+                </CBtn>
+                <!-- Convert to Task if not yet converted and not closed -->
+                <CBtn
+                  v-else-if="r.status !== 'closed'"
+                  variant="ghost"
+                  size="sm"
+                  @click="openConvertModal(r)"
+                >
+                  <CIconCheckCircle />
+                  {{ t('reports.convertToTask') }}
+                </CBtn>
+                <!-- Delete: on card only when closed -->
+                <CBtn
+                  v-if="r.status === 'closed'"
+                  variant="danger"
+                  size="sm"
+                  @click="openDeleteModal(r)"
+                >
+                  <CIconTrash />
+                  {{ t('common.delete') }}
+                </CBtn>
+              </div>
             </div>
           </CCard>
 
@@ -846,7 +854,8 @@ function photoPreview(file: File): string {
 .report-footer { display: flex; gap: 14px; font-size: var(--text-2xs); flex-wrap: wrap; }
 .dim { color: var(--color-on-surface-variant); }
 .photo-count { display: flex; align-items: center; gap: 4px; }
-.report-card-actions { display: flex; gap: var(--space-2); flex-wrap: wrap; padding-top: var(--space-1); }
+.report-card-actions { display: flex; flex-direction: column; gap: var(--space-1); padding-top: var(--space-1); }
+.report-card-actions-row { display: flex; gap: var(--space-2); flex-wrap: wrap; }
 
 /* Photo picker */
 .photo-dropzone {
