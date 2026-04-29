@@ -464,8 +464,7 @@ function photoPreview(file: File): string {
                 class="dim photo-count photo-count--btn"
                 @click="openViewPhotos(r)"
               >
-                <CIconEye style="width:14px;height:14px;flex-shrink:0" />
-                {{ t('reports.photoCount', r.document_count) }}
+                👁️ {{ t('reports.photoCount', r.document_count) }}
               </button>
             </div>
 
