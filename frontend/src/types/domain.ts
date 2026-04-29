@@ -175,6 +175,7 @@ export interface Document {
   size_bytes: number
   visible_roles: Role[]
   linked_contract_names?: string[]
+  linked_report_count?: number
   created_at: string
 }
 

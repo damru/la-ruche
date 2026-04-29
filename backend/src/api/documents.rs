@@ -39,6 +39,7 @@ pub struct DocumentListItem {
     pub size_bytes: i64,
     pub visible_roles: Vec<String>,
     pub linked_contract_names: Vec<String>,
+    pub linked_report_count: i64,
     pub created_at: chrono::DateTime<chrono::Utc>,
 }
 
@@ -51,6 +52,7 @@ impl From<db::document::DocumentListRow> for DocumentListItem {
             size_bytes: document.size_bytes,
             visible_roles: document.visible_roles,
             linked_contract_names: document.linked_contract_names,
+            linked_report_count: document.linked_report_count,
             created_at: document.created_at,
         }
     }

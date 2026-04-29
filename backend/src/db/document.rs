@@ -27,6 +27,7 @@ pub struct DocumentListRow {
     pub size_bytes: i64,
     pub visible_roles: Vec<String>,
     pub linked_contract_names: Vec<String>,
+    pub linked_report_count: i64,
     pub created_at: DateTime<Utc>,
 }
 
@@ -48,10 +49,12 @@ pub async fn list(
                       ),
                       ARRAY[]::text[]
                   ) AS linked_contract_names,
+                  COUNT(DISTINCT rd.report_id) AS linked_report_count,
                   d.created_at
            FROM document d
            LEFT JOIN contract_document cd ON cd.document_id = d.id
            LEFT JOIN vendor_contract vc ON vc.id = cd.contract_id AND vc.building_id = $1
+           LEFT JOIN report_document rd ON rd.document_id = d.id
            WHERE d.building_id = $1
               AND d.visible_to_roles::text[] && $2
            GROUP BY d.id, d.original_name, d.mime_type, d.size_bytes, d.visible_to_roles, d.created_at

@@ -278,11 +278,14 @@ const viewPhotosReport = ref<Report | null>(null)
 const viewPhotosList = ref<{ doc: Document; url: string }[]>([])
 const viewPhotosLoading = ref(false)
 const lightboxIndex = ref<number | null>(null)
+const deletingPhoto = ref(false)
+const deletePhotoError = ref('')
 
 async function openViewPhotos(report: Report) {
   viewPhotosReport.value = report
   viewPhotosList.value = []
   viewPhotosLoading.value = true
+  deletePhotoError.value = ''
   try {
     const docsRes = await reportsApi.listDocuments(report.id)
     const photos = await Promise.all(
@@ -296,6 +299,36 @@ async function openViewPhotos(report: Report) {
     viewPhotosList.value = []
   } finally {
     viewPhotosLoading.value = false
+  }
+}
+
+async function deletePhoto(idx: number) {
+  if (!viewPhotosReport.value || deletingPhoto.value) return
+  const item = viewPhotosList.value[idx]
+  if (!item) return
+  deletingPhoto.value = true
+  deletePhotoError.value = ''
+  try {
+    await reportsApi.detachDocument(viewPhotosReport.value.id, item.doc.id)
+    await documentsApi.delete(item.doc.id)
+    viewPhotosList.value.splice(idx, 1)
+    // Update document_count on the card
+    const r = allReports.value.find(x => x.id === viewPhotosReport.value!.id)
+    if (r && typeof r.document_count === 'number' && r.document_count > 0) {
+      r.document_count -= 1
+    }
+    // Adjust lightbox index if needed
+    if (lightboxIndex.value !== null) {
+      if (viewPhotosList.value.length === 0) {
+        lightboxIndex.value = null
+      } else if (lightboxIndex.value >= viewPhotosList.value.length) {
+        lightboxIndex.value = viewPhotosList.value.length - 1
+      }
+    }
+  } catch {
+    deletePhotoError.value = t('common.error')
+  } finally {
+    deletingPhoto.value = false
   }
 }
 
@@ -876,18 +909,27 @@ function photoPreview(file: File): string {
         v-else-if="viewPhotosList.length"
         class="photo-gallery"
       >
-        <button
+        <div
           v-for="(item, idx) in viewPhotosList"
           :key="item.doc.id"
           class="photo-gallery-item"
-          @click="lightboxIndex = idx"
         >
           <img
             :src="item.url"
             :alt="item.doc.original_name"
             class="photo-gallery-thumb"
+            @click="lightboxIndex = idx"
           />
-        </button>
+          <button
+            v-if="canManage"
+            class="photo-gallery-delete"
+            :title="t('reports.deletePhoto')"
+            :disabled="deletingPhoto"
+            @click.stop="deletePhoto(idx)"
+          >
+            🗑
+          </button>
+        </div>
       </div>
       <p
         v-else
@@ -895,6 +937,13 @@ function photoPreview(file: File): string {
         style="color:var(--color-on-surface-variant)"
       >
         {{ t('reports.noPhotos') }}
+      </p>
+      <p
+        v-if="deletePhotoError"
+        class="body-sm"
+        style="color:var(--color-error);margin-top:var(--space-2)"
+      >
+        {{ deletePhotoError }}
       </p>
       <template #footer>
         <CBtn
@@ -918,6 +967,15 @@ function photoPreview(file: File): string {
           @click="lightboxIndex = null"
         >
           ✕
+        </button>
+        <button
+          v-if="canManage"
+          class="lightbox-delete"
+          :title="t('reports.deletePhoto')"
+          :disabled="deletingPhoto"
+          @click.stop="deletePhoto(lightboxIndex)"
+        >
+          🗑
         </button>
         <button
           v-if="lightboxIndex > 0"
@@ -1018,15 +1076,26 @@ function photoPreview(file: File): string {
 .photos-loading { color: var(--color-on-surface-variant); padding: var(--space-4) 0; text-align: center; }
 .photo-gallery { display: flex; flex-wrap: wrap; gap: var(--space-2); }
 .photo-gallery-item {
-  display: block; border-radius: var(--radius-sm); overflow: hidden;
-  border: 1px solid var(--color-outline-variant); flex-shrink: 0;
-  cursor: pointer; background: none; padding: 0;
-  transition: opacity 0.15s;
-  /* override global 44px touch-target */
-  min-height: unset; min-width: unset;
+  position: relative; border-radius: var(--radius-sm); overflow: visible;
+  flex-shrink: 0;
 }
-.photo-gallery-item:hover { opacity: 0.85; }
-.photo-gallery-thumb { width: 120px; height: 120px; object-fit: cover; display: block; }
+.photo-gallery-thumb {
+  width: 120px; height: 120px; object-fit: cover; display: block;
+  border-radius: var(--radius-sm); border: 1px solid var(--color-outline-variant);
+  cursor: pointer; transition: opacity 0.15s;
+}
+.photo-gallery-thumb:hover { opacity: 0.85; }
+.photo-gallery-delete {
+  position: absolute; top: -6px; right: -6px;
+  background: var(--color-error); color: #fff; border: none;
+  border-radius: 50%; width: 22px; height: 22px;
+  font-size: 12px; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; padding: 0;
+  min-height: unset; min-width: unset;
+  opacity: 0.9; transition: opacity 0.15s;
+}
+.photo-gallery-delete:hover { opacity: 1; }
 
 /* Lightbox */
 .lightbox-overlay {
@@ -1047,6 +1116,17 @@ function photoPreview(file: File): string {
   opacity: 0.8;
 }
 .lightbox-close:hover { opacity: 1; }
+.lightbox-delete {
+  position: absolute; top: 16px; right: 60px;
+  background: var(--color-error); border: none; color: #fff;
+  font-size: 16px; cursor: pointer; line-height: 1;
+  min-height: unset; min-width: unset;
+  opacity: 0.85; width: 36px; height: 36px;
+  border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+}
+.lightbox-delete:hover { opacity: 1; }
+.lightbox-delete:disabled { opacity: 0.4; cursor: default; }
 .lightbox-nav {
   position: absolute;
   background: rgba(255,255,255,0.15); border: none; color: #fff;
