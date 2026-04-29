@@ -255,6 +255,7 @@ export interface Report {
   title: string
   description?: string
   status: ReportStatus
+  document_count: number
   created_at: string
   updated_at: string
 }

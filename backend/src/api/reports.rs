@@ -84,3 +84,57 @@ pub async fn convert_to_task(
         db::report::convert_to_task(&state.pool, id, auth.building_id, auth.user_id).await?;
     json_value(serde_json::json!({ "task_id": task_id }))
 }
+
+// ── Document (photo) attachment ───────────────────────────────────
+
+/// GET /reports/{id}/documents — list documents attached to a report.
+/// All authenticated roles can list documents.
+pub async fn list_documents(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+) -> AppResult<Json<serde_json::Value>> {
+    // Verify the report belongs to the building
+    db::report::get(&state.pool, id, auth.building_id)
+        .await?
+        .ok_or(AppError::NotFound)?;
+    let docs = db::report::list_documents(&state.pool, id, auth.building_id).await?;
+    json_value(docs)
+}
+
+#[derive(Deserialize)]
+pub struct AttachDocumentInput {
+    pub document_id: Uuid,
+}
+
+/// POST /reports/{id}/documents — attach an existing document to a report.
+/// Any authenticated role (author of the report may attach their own photos).
+pub async fn attach_document(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+    Json(input): Json<AttachDocumentInput>,
+) -> AppResult<StatusCode> {
+    let attached =
+        db::report::attach_document(&state.pool, id, input.document_id, auth.building_id).await?;
+    if !attached {
+        return Err(AppError::NotFound);
+    }
+    Ok(StatusCode::NO_CONTENT)
+}
+
+/// DELETE /reports/{id}/documents/{doc_id} — detach a document from a report.
+/// Only managers and board members can detach documents.
+pub async fn detach_document(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+    Path((id, doc_id)): Path<(Uuid, Uuid)>,
+) -> AppResult<StatusCode> {
+    auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
+    let detached =
+        db::report::detach_document(&state.pool, id, doc_id, auth.building_id).await?;
+    if !detached {
+        return Err(AppError::NotFound);
+    }
+    Ok(StatusCode::NO_CONTENT)
+}

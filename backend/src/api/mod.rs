@@ -213,6 +213,14 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
         .route("/reports/{id}", get(reports::get))
         .route("/reports/{id}/status", put(reports::update_status))
         .route("/reports/{id}/task", post(reports::convert_to_task))
+        .route(
+            "/reports/{id}/documents",
+            get(reports::list_documents).post(reports::attach_document),
+        )
+        .route(
+            "/reports/{id}/documents/{doc_id}",
+            delete(reports::detach_document),
+        )
         // ── Consultations ────────────────────────────────────────
         .route(
             "/consultations",

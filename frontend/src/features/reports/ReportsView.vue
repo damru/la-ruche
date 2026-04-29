@@ -15,7 +15,7 @@ import CModal from '@/components/molecules/CModal.vue'
 import CPageError from '@/components/molecules/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
-import { buildingApi, reportsApi, unitsApi } from '@/api'
+import { buildingApi, documentsApi, reportsApi, unitsApi } from '@/api'
 import type { Report, ReportStatus, Unit } from '@/types/domain'
 
 const { t } = useI18n()
@@ -40,13 +40,58 @@ const showCreateModal = ref(false)
 const createFeedback = useFormFeedback()
 const saving = ref(false)
 const createForm = ref({ title: '', description: '', unit_id: '' })
+
+// Photo selection state
+const selectedPhotos = ref<File[]>([])
+const photoInputRef = ref<HTMLInputElement | null>(null)
+const photoDragOver = ref(false)
+const uploadingPhotos = ref(false)
+
 const { schedule: scheduleCreateClose, forceExpire: forceCreateClose } = useAutoClose()
 watch(showCreateModal, (open) => { if (!open) forceCreateClose() })
 
 function openCreateModal() {
   createForm.value = { title: '', description: '', unit_id: '' }
+  selectedPhotos.value = []
+  photoDragOver.value = false
   createFeedback.reset()
   showCreateModal.value = true
+}
+
+function onPhotoChange(e: Event) {
+  const input = e.target as HTMLInputElement
+  if (input.files) {
+    selectedPhotos.value = [...selectedPhotos.value, ...Array.from(input.files)]
+  }
+  // Reset so the same file can be added again if needed
+  if (photoInputRef.value) photoInputRef.value.value = ''
+}
+
+function onPhotoDrop(e: DragEvent) {
+  photoDragOver.value = false
+  const files = Array.from(e.dataTransfer?.files ?? []).filter(f => f.type.startsWith('image/'))
+  selectedPhotos.value = [...selectedPhotos.value, ...files]
+}
+
+function removePhoto(idx: number) {
+  selectedPhotos.value = selectedPhotos.value.filter((_, i) => i !== idx)
+}
+
+/** Upload a single photo and return its document_id. */
+async function uploadPhoto(reportId: string, file: File): Promise<void> {
+  const ext = file.name.split('.').pop() ?? 'jpg'
+  const urlRes = await documentsApi.getUploadUrl(ext, file.type || 'image/jpeg', file.size)
+  const { url, key, bucket } = urlRes.data
+  await documentsApi.uploadToS3(file, url)
+  const docRes = await documentsApi.confirmUpload({
+    key,
+    bucket,
+    original_name: file.name,
+    mime_type: file.type || 'image/jpeg',
+    size_bytes: file.size,
+    visible_roles: ['manager', 'board_member', 'co_owner'],
+  })
+  await reportsApi.attachDocument(reportId, (docRes.data as { id: string }).id)
 }
 
 async function submitCreate() {
@@ -55,17 +100,40 @@ async function submitCreate() {
   saving.value = true
   createFeedback.reset()
   try {
-    await reportsApi.create({
+    const reportRes = await reportsApi.create({
       title: createForm.value.title.trim(),
       description: createForm.value.description.trim() || undefined,
       unit_id: createForm.value.unit_id || undefined,
     })
+    const reportId = reportRes.data.id
+
+    // Upload photos sequentially — failure is reported but does not hide the success
+    if (selectedPhotos.value.length) {
+      uploadingPhotos.value = true
+      const errors: string[] = []
+      for (const photo of selectedPhotos.value) {
+        try {
+          await uploadPhoto(reportId, photo)
+        } catch {
+          errors.push(photo.name)
+        }
+      }
+      uploadingPhotos.value = false
+      if (errors.length) {
+        createFeedback.setError(t('reports.photoUploadError') + ': ' + errors.join(', '))
+        // Still reload — report was created
+        setTimeout(() => { showCreateModal.value = false; reload() }, 2000)
+        return
+      }
+    }
+
     createFeedback.setSuccess(t('reports.createSuccess'))
     scheduleCreateClose(() => { showCreateModal.value = false; reload() })
   } catch (err) {
     createFeedback.setError(toErrorMessage(err, t('common.error')))
   } finally {
     saving.value = false
+    uploadingPhotos.value = false
   }
 }
 
@@ -183,6 +251,10 @@ function unitLabel(unitId?: string): string {
 function authorName(r: Report): string {
   return `${r.author_first_name} ${r.author_last_name}`
 }
+
+function photoPreview(file: File): string {
+  return URL.createObjectURL(file)
+}
 </script>
 
 <template>
@@ -286,6 +358,12 @@ function authorName(r: Report): string {
             <div class="report-footer">
               <span class="dim">👤 {{ authorName(r) }}</span>
               <span class="dim">🏠 {{ unitLabel(r.unit_id) }}</span>
+              <span
+                v-if="r.document_count > 0"
+                class="dim photo-count"
+              >
+                📎 {{ t('reports.photoCount', r.document_count) }}
+              </span>
             </div>
 
             <!-- Card actions (manager / board only) -->
@@ -329,7 +407,7 @@ function authorName(r: Report): string {
       :open="showCreateModal"
       :title="t('reports.newReport')"
       size="md"
-      :closable="!saving"
+      :closable="!saving && !uploadingPhotos"
       @update:open="showCreateModal = $event"
     >
       <form
@@ -372,6 +450,68 @@ function authorName(r: Report): string {
             </option>
           </select>
         </div>
+
+        <!-- Photo picker -->
+        <div class="form-field">
+          <label class="form-label">{{ t('reports.photos') }}</label>
+          <!-- Hidden real file input -->
+          <input
+            ref="photoInputRef"
+            type="file"
+            accept="image/*"
+            multiple
+            style="display:none"
+            @change="onPhotoChange"
+          />
+          <!-- Drop zone -->
+          <div
+            :class="['photo-dropzone', { 'photo-dropzone--over': photoDragOver }]"
+            role="button"
+            tabindex="0"
+            @click="photoInputRef?.click()"
+            @keydown.enter="photoInputRef?.click()"
+            @dragover.prevent="photoDragOver = true"
+            @dragleave.prevent="photoDragOver = false"
+            @drop.prevent="onPhotoDrop"
+          >
+            <CIconUpload
+              width="20"
+              height="20"
+              style="color:var(--color-on-surface-variant)"
+            />
+            <span class="body-xs photo-hint">{{ t('reports.photoHint') }}</span>
+          </div>
+          <!-- Preview strip -->
+          <div
+            v-if="selectedPhotos.length"
+            class="photo-preview-strip"
+          >
+            <div
+              v-for="(photo, idx) in selectedPhotos"
+              :key="idx"
+              class="photo-preview-item"
+            >
+              <img
+                :src="photoPreview(photo)"
+                :alt="photo.name"
+                class="photo-thumb"
+              />
+              <button
+                type="button"
+                class="photo-remove"
+                :title="t('reports.removePhoto')"
+                @click="removePhoto(idx)"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+          <span
+            v-if="uploadingPhotos"
+            class="body-xs"
+            style="color:var(--color-on-surface-variant)"
+          >{{ t('reports.photoUploading') }}</span>
+        </div>
       </form>
       <template #footer>
         <CFormFeedback
@@ -386,7 +526,7 @@ function authorName(r: Report): string {
         </CBtn>
         <CBtn
           variant="primary"
-          :loading="saving"
+          :loading="saving || uploadingPhotos"
           :closing="createFeedback.status.value === 'success'"
           @click="submitCreate"
         >
@@ -490,5 +630,42 @@ function authorName(r: Report): string {
 .report-desc { color: var(--color-on-surface-variant); }
 .report-footer { display: flex; gap: 14px; font-size: var(--text-2xs); flex-wrap: wrap; }
 .dim { color: var(--color-on-surface-variant); }
+.photo-count { display: flex; align-items: center; gap: 4px; }
 .report-card-actions { display: flex; gap: var(--space-2); flex-wrap: wrap; padding-top: var(--space-1); }
+
+/* Photo picker */
+.photo-dropzone {
+  border: 1.5px dashed var(--color-outline);
+  border-radius: var(--radius-sm);
+  padding: var(--space-4) var(--space-3);
+  display: flex; align-items: center; justify-content: center; gap: var(--space-2);
+  cursor: pointer; transition: background 0.15s, border-color 0.15s;
+  user-select: none;
+}
+.photo-dropzone:hover,
+.photo-dropzone--over {
+  background: var(--color-surface-container);
+  border-color: var(--color-primary);
+}
+.photo-hint { color: var(--color-on-surface-variant); }
+
+.photo-preview-strip {
+  display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-2);
+}
+.photo-preview-item {
+  position: relative; width: 64px; height: 64px; flex-shrink: 0;
+}
+.photo-thumb {
+  width: 64px; height: 64px; object-fit: cover;
+  border-radius: var(--radius-sm); border: 1px solid var(--color-outline-variant);
+}
+.photo-remove {
+  position: absolute; top: -6px; right: -6px;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--color-error); color: #fff;
+  border: none; cursor: pointer; font-size: 12px; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0;
+}
+.photo-remove:hover { background: var(--color-error-dark, var(--color-error)); opacity: 0.85; }
 </style>

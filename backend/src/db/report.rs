@@ -4,7 +4,8 @@ use serde::Serialize;
 use sqlx::{PgPool, Row};
 use uuid::Uuid;
 
-/// Full report row enriched with author name (JOIN with user_account).
+/// Full report row enriched with author name (JOIN with user_account)
+/// and document count (subquery on report_document).
 /// Returned by all list/get API responses.
 #[derive(Debug, Serialize)]
 pub struct ReportRow {
@@ -17,6 +18,7 @@ pub struct ReportRow {
     pub title: String,
     pub description: Option<String>,
     pub status: String,
+    pub document_count: i64,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -25,6 +27,7 @@ const LIST_QUERY: &str = concat!(
     "SELECT r.id, r.building_id, r.unit_id, r.author_id,",
     " u.first_name AS author_first_name, u.last_name AS author_last_name,",
     " r.title, r.description, r.status::text AS status,",
+    " (SELECT COUNT(*) FROM report_document rd WHERE rd.report_id = r.id) AS document_count,",
     " r.created_at, r.updated_at",
     " FROM report r",
     " JOIN user_account u ON u.id = r.author_id",
@@ -35,6 +38,7 @@ const GET_QUERY: &str = concat!(
     "SELECT r.id, r.building_id, r.unit_id, r.author_id,",
     " u.first_name AS author_first_name, u.last_name AS author_last_name,",
     " r.title, r.description, r.status::text AS status,",
+    " (SELECT COUNT(*) FROM report_document rd WHERE rd.report_id = r.id) AS document_count,",
     " r.created_at, r.updated_at",
     " FROM report r",
     " JOIN user_account u ON u.id = r.author_id",
@@ -52,6 +56,7 @@ fn row_to_report(r: &sqlx::postgres::PgRow) -> Result<ReportRow, sqlx::Error> {
         title: r.try_get("title")?,
         description: r.try_get("description")?,
         status: r.try_get("status")?,
+        document_count: r.try_get("document_count")?,
         created_at: r.try_get("created_at")?,
         updated_at: r.try_get("updated_at")?,
     })
@@ -109,6 +114,7 @@ pub async fn create(
         " SELECT r.id, r.building_id, r.unit_id, r.author_id,",
         "  u.first_name AS author_first_name, u.last_name AS author_last_name,",
         "  r.title, r.description, r.status::text AS status,",
+        "  0::int8 AS document_count,",
         "  r.created_at, r.updated_at",
         " FROM inserted",
         " JOIN report r ON r.id = inserted.id",
@@ -172,4 +178,100 @@ pub async fn convert_to_task(
     .ok_or(AppError::NotFound)?;
 
     Ok(row.try_get("id")?)
+}
+
+// ── Document attachment ───────────────────────────────────────────
+
+/// List documents attached to a report (id, original_name, mime_type, size_bytes, created_at).
+pub async fn list_documents(
+    pool: &PgPool,
+    report_id: Uuid,
+    building_id: Uuid,
+) -> AppResult<Vec<serde_json::Value>> {
+    let rows = sqlx::query(
+        r#"SELECT d.id, d.original_name, d.mime_type, d.size_bytes, d.created_at
+           FROM report_document rd
+           JOIN document d ON d.id = rd.document_id AND d.building_id = $2
+           WHERE rd.report_id = $1
+           ORDER BY d.created_at ASC"#,
+    )
+    .bind(report_id)
+    .bind(building_id)
+    .fetch_all(pool)
+    .await?;
+
+    Ok(rows
+        .into_iter()
+        .map(|r| {
+            serde_json::json!({
+                "id": r.try_get::<Uuid, _>("id").unwrap_or_default(),
+                "original_name": r.try_get::<String, _>("original_name").unwrap_or_default(),
+                "mime_type": r.try_get::<String, _>("mime_type").unwrap_or_default(),
+                "size_bytes": r.try_get::<i64, _>("size_bytes").unwrap_or_default(),
+                "created_at": r.try_get::<DateTime<Utc>, _>("created_at").unwrap_or_default(),
+            })
+        })
+        .collect())
+}
+
+/// Attach an existing document to a report.
+/// Verifies both the report and the document belong to the building before linking.
+/// Returns false when either does not exist.
+pub async fn attach_document(
+    pool: &PgPool,
+    report_id: Uuid,
+    document_id: Uuid,
+    building_id: Uuid,
+) -> AppResult<bool> {
+    let pair_exists: bool = sqlx::query_scalar(
+        r#"SELECT EXISTS(
+               SELECT 1 FROM report r, document d
+               WHERE r.id = $1 AND r.building_id = $3
+                 AND d.id = $2 AND d.building_id = $3
+           )"#,
+    )
+    .bind(report_id)
+    .bind(document_id)
+    .bind(building_id)
+    .fetch_one(pool)
+    .await?;
+
+    if !pair_exists {
+        return Ok(false);
+    }
+
+    sqlx::query(
+        "INSERT INTO report_document (report_id, document_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
+    )
+    .bind(report_id)
+    .bind(document_id)
+    .execute(pool)
+    .await?;
+
+    Ok(true)
+}
+
+/// Detach a document from a report.
+/// Scoped to the building. Returns false if the link did not exist.
+pub async fn detach_document(
+    pool: &PgPool,
+    report_id: Uuid,
+    document_id: Uuid,
+    building_id: Uuid,
+) -> AppResult<bool> {
+    let result = sqlx::query(
+        r#"DELETE FROM report_document rd
+           USING report r
+           WHERE rd.report_id = $1
+             AND rd.document_id = $2
+             AND r.id = rd.report_id
+             AND r.building_id = $3"#,
+    )
+    .bind(report_id)
+    .bind(document_id)
+    .bind(building_id)
+    .execute(pool)
+    .await?;
+
+    Ok(result.rows_affected() > 0)
 }

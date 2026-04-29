@@ -713,6 +713,13 @@
     "empty": "Aucun signalement pour le moment.",
     "createdAt": "Signalé {date}",
     "updatedAt": "Mis à jour {date}",
+    "photos": "Photos",
+    "addPhotos": "Ajouter des photos",
+    "photoHint": "Glisser-déposer ou cliquer pour sélectionner (images uniquement)",
+    "photoCount": "{count} photo | {count} photos",
+    "photoUploading": "Chargement des photos…",
+    "photoUploadError": "Erreur lors du chargement d'une photo",
+    "removePhoto": "Supprimer",
     "statuses": {
       "open": "Ouvert",
       "in_progress": "En cours",

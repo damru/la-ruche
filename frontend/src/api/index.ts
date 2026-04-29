@@ -297,6 +297,12 @@ export const reportsApi = {
     api.put(`/reports/${id}/status`, { status }),
   convertToTask: (id: string) =>
     api.post<{ task_id: string }>(`/reports/${id}/task`),
+  listDocuments: (id: string) =>
+    api.get<Document[]>(`/reports/${id}/documents`),
+  attachDocument: (id: string, document_id: string) =>
+    api.post(`/reports/${id}/documents`, { document_id }),
+  detachDocument: (id: string, document_id: string) =>
+    api.delete(`/reports/${id}/documents/${document_id}`),
 }
 
 // ── Consultations ─────────────────────────────────────────────────
