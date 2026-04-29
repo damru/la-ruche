@@ -146,7 +146,7 @@ async function logout() {
           <h2 class="section-title">
             {{ t('settings.account.personalInfo') }}
           </h2>
-          <div class="form-grid">
+          <div class="form-grid-2col">
             <div class="field">
               <label class="field-label">{{ t('common.firstName') }}</label>
               <input

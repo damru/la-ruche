@@ -602,41 +602,6 @@ async function confirmDelete() {
   border-top: 1px solid var(--color-surface-container-high);
 }
 
-/* Form */
-.form-grid {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-}
-
-.form-field {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
-
-.form-label {
-  font-size: var(--text-sm);
-  font-weight: var(--fw-medium);
-  color: var(--color-on-surface);
-}
-
-.form-input {
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--color-outline);
-  border-radius: var(--radius-md);
-  background: var(--color-surface);
-  color: var(--color-on-surface);
-  font-size: var(--text-sm);
-  width: 100%;
-}
-
-.form-input:focus {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
-  border-color: transparent;
-}
-
 /* Domains checkbox grid */
 .domains-checkboxes {
   display: flex;

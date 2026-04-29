@@ -5,12 +5,12 @@
  * Do NOT duplicate these in component scoped styles.
  *
  *  Sections:
- *   - Form layout    (.form-grid, .form-actions, .section-title)
+ *   - Form layout    (.form-grid, .form-grid-2col, .form-field, .form-label,
+ *                     .form-input, .form-actions, .section-title)
  *   - Field          (.field, .field--full, .field-label, .field-input, .field-hint, .field-error)
  *   - Search bar     (.search-bar, .search-icon, .search-input)
  *   - Icon button    (.icon-btn, modifiers)
  *   - Checkbox       (.checkbox-label)
- *   - Icon button    (.icon-btn, modifiers)
  */
 
 /* ── Form layout ─────────────────────────────────────────────────── */
@@ -22,8 +22,21 @@
   margin-bottom: var(--space-4);
 }
 
-/* 2-column grid; collapse to 1 column on mobile */
+/*
+ * Default form wrapper — single-column flex stack.
+ * Used in modals and inline forms.
+ */
 .form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/*
+ * 2-column grid variant — used in full-page settings forms
+ * (BuildingView, ProfileView, ResidentsView…). Collapses to 1 column on mobile.
+ */
+.form-grid-2col {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--space-4);
@@ -31,7 +44,35 @@
 }
 
 @media (max-width: 640px) {
-  .form-grid { grid-template-columns: 1fr; }
+  .form-grid-2col { grid-template-columns: 1fr; }
+}
+
+/* Single field — label + control stacked vertically */
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.form-label {
+  font-size: var(--text-sm);
+  font-weight: var(--fw-medium);
+  color: var(--color-on-surface-variant);
+}
+
+.form-input {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-outline);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  background: var(--color-surface);
+  color: var(--color-on-surface);
+  resize: vertical;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
 }
 
 .form-actions {

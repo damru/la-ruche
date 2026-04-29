@@ -470,7 +470,7 @@ function formatLocation(unit: { block?: string | null; staircase?: string | null
         @update:open="showUnitModal = $event"
       >
         <div class="unit-form">
-          <div class="form-grid">
+          <div class="form-grid-2col">
             <div class="field">
               <label class="field-label">{{ t('units.number') }} *</label>
               <input

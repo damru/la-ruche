@@ -708,19 +708,6 @@ async function confirmDelete() {
 .choice-input-row { display: flex; align-items: center; gap: 8px; }
 .choice-input-row .form-input { flex: 1; }
 
-.form-grid { display: flex; flex-direction: column; gap: var(--space-4); }
-.form-field { display: flex; flex-direction: column; gap: var(--space-2); }
-.form-label { font-size: var(--text-sm); font-weight: var(--fw-medium); color: var(--color-on-surface-variant); }
-.form-input {
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--color-outline);
-  border-radius: var(--radius-md);
-  font-size: var(--text-sm);
-  background: var(--color-surface);
-  color: var(--color-on-surface);
-  resize: vertical;
-}
-.form-input:focus { outline: none; border-color: var(--color-primary); }
 .empty-state { padding: var(--space-8); text-align: center; font-size: var(--text-md); color: var(--color-on-surface-variant); }
 .dim { color: var(--color-on-surface-variant); }
 </style>
