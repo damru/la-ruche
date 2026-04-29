@@ -973,7 +973,7 @@ function photoPreview(file: File): string {
           class="lightbox-delete"
           :title="t('reports.deletePhoto')"
           :disabled="deletingPhoto"
-          @click.stop="deletePhoto(lightboxIndex)"
+          @click.stop="deletePhoto(lightboxIndex!)"
         >
           🗑
         </button>

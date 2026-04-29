@@ -630,7 +630,7 @@
     "confirmDeleteMessage": "Le document « {name} » sera supprimé définitivement. Cette action est irréversible.",
     "confirmDeleteLinkedMessage": "Le document « {name} » est actuellement lié aux contrats suivants : {links}. Il sera détaché de ces contrats puis supprimé définitivement. Cette action est irréversible.",
     "confirmDeleteLinkedReportMessage": "Le document « {name} » est lié à {count} signalement. Il sera détaché de ce signalement puis supprimé définitivement. Cette action est irréversible. | Le document « {name} » est lié à {count} signalements. Il sera détaché de ces signalements puis supprimé définitivement. Cette action est irréversible.",
-    "confirmDeleteLinkedBothMessage": "Le document « {name} » est lié aux contrats {links} et à {count} signalement. Il sera détaché puis supprimé définitivement. Cette action est irréversible.",
+    "confirmDeleteLinkedBothMessage": "Le document « {name} » est lié aux contrats {links} et à {count} signalement. Il sera détaché puis supprimé définitivement. Cette action est irréversible. | Le document « {name} » est lié aux contrats {links} et à {count} signalements. Il sera détaché puis supprimé définitivement. Cette action est irréversible.",
     "deleteSuccess": "Document supprimé définitivement."
   },
   "consultations": {
