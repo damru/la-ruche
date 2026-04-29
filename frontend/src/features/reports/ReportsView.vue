@@ -250,6 +250,13 @@ function openDeleteModal(report: Report) {
   deleteFeedback.reset()
 }
 
+/** Called from the edit modal footer — close edit, open delete confirmation. */
+function openDeleteFromEdit() {
+  const report = reportToEdit.value
+  reportToEdit.value = null
+  if (report) openDeleteModal(report)
+}
+
 async function submitDelete() {
   if (deleteFeedback.status.value === 'success') { forceDeleteClose(); return }
   if (!reportToDelete.value) return
@@ -439,22 +446,26 @@ function photoPreview(file: File): string {
               v-if="canManage"
               class="report-card-actions"
             >
+              <!-- Edit: always available -->
               <CBtn
                 variant="ghost"
                 size="sm"
                 @click="openEditModal(r)"
               >
                 <CIconEdit />
-                {{ t('reports.editReport') }}
+                {{ t('common.edit') }}
               </CBtn>
+              <!-- Status change: non-closed only -->
               <CBtn
                 v-if="r.status !== 'closed'"
                 variant="ghost"
                 size="sm"
                 @click="openStatusModal(r)"
               >
+                <CIconRefresh />
                 {{ t('reports.editStatus') }}
               </CBtn>
+              <!-- View Task if already converted, Convert if not closed and not yet converted -->
               <CBtn
                 v-if="r.task_id"
                 variant="ghost"
@@ -473,12 +484,15 @@ function photoPreview(file: File): string {
                 <CIconCheckCircle />
                 {{ t('reports.convertToTask') }}
               </CBtn>
+              <!-- Delete: on card only when closed (otherwise accessible from edit modal) -->
               <CBtn
-                variant="ghost"
+                v-if="r.status === 'closed'"
+                variant="danger"
                 size="sm"
                 @click="openDeleteModal(r)"
               >
-                {{ t('reports.deleteReport') }}
+                <CIconTrash />
+                {{ t('common.delete') }}
               </CBtn>
             </div>
           </CCard>
@@ -754,6 +768,14 @@ function photoPreview(file: File): string {
           :status="editFeedback.status.value"
           :message="editFeedback.message.value"
         />
+        <CBtn
+          v-if="reportToEdit && reportToEdit.status !== 'closed'"
+          variant="danger"
+          @click="openDeleteFromEdit"
+        >
+          <CIconTrash />
+          {{ t('common.delete') }}
+        </CBtn>
         <CBtn
           variant="ghost"
           @click="reportToEdit = null"
