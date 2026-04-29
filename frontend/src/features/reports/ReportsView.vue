@@ -32,6 +32,9 @@ const statusFilter = ref<'all' | ReportStatus>('all')
 // ── RBAC — only manager and board_member can act on reports ────────
 const canManage = computed(() => hasAnyRole(['manager', 'board_member']))
 
+// Status values as a const to avoid inline repetition in the template and ensure type-safety.
+const REPORT_STATUSES: ReportStatus[] = ['open', 'in_progress', 'closed']
+
 // ── Create report modal ───────────────────────────────────────────
 const showCreateModal = ref(false)
 const createFeedback = useFormFeedback()
@@ -406,7 +409,7 @@ function authorName(r: Report): string {
           class="form-input"
         >
           <option
-            v-for="s in (['open', 'in_progress', 'closed'] as ReportStatus[])"
+            v-for="s in REPORT_STATUSES"
             :key="s"
             :value="s"
           >
