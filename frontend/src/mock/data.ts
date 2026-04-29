@@ -276,10 +276,10 @@ export const mockMaintenanceEntries: MaintenanceEntry[] = [
 
 // ── Signalements résidents ────────────────────────────────────────
 export const mockReports: Report[] = [
-  { id: 'rpt-001', unit_id: 'unt-003', author_id: 'usr-007', title: 'Tâche d\'humidité au plafond', description: 'Une tâche d\'humidité est apparue au plafond de ma chambre (lot 3). Semble liée à la fuite de toiture.', status: 'in_progress', created_at: '2025-04-14T09:00:00Z' },
-  { id: 'rpt-002', unit_id: 'unt-005', author_id: 'usr-002', title: 'Éclairage couloir 2ème étage défaillant', description: 'La minuterie du couloir du 2ème étage cage B ne fonctionne plus. Couloir dans le noir.', status: 'open', created_at: '2025-04-05T11:00:00Z' },
-  { id: 'rpt-003', unit_id: 'unt-001', author_id: 'usr-003', title: 'Bruit de pompe la nuit', description: 'Depuis 3 semaines, une pompe dans la cave fait du bruit entre 23h et 6h du matin.', status: 'open', created_at: '2025-03-28T22:00:00Z' },
-  { id: 'rpt-004', unit_id: 'unt-002', author_id: 'usr-004', title: 'Interphone en panne', description: 'L\'interphone de l\'entrée principale ne fonctionne plus depuis une semaine.', status: 'closed', created_at: '2025-02-10T08:00:00Z' },
+  { id: 'rpt-001', unit_id: 'unt-003', author_id: 'usr-007', author_first_name: 'Claire', author_last_name: 'Renaud', title: 'Tâche d\'humidité au plafond', description: 'Une tâche d\'humidité est apparue au plafond de ma chambre (lot 3). Semble liée à la fuite de toiture.', status: 'in_progress', created_at: '2025-04-14T09:00:00Z', updated_at: '2025-04-14T09:00:00Z' },
+  { id: 'rpt-002', unit_id: 'unt-005', author_id: 'usr-002', author_first_name: 'Jean-Pierre', author_last_name: 'Dupont', title: 'Éclairage couloir 2ème étage défaillant', description: 'La minuterie du couloir du 2ème étage cage B ne fonctionne plus. Couloir dans le noir.', status: 'open', created_at: '2025-04-05T11:00:00Z', updated_at: '2025-04-05T11:00:00Z' },
+  { id: 'rpt-003', unit_id: 'unt-001', author_id: 'usr-003', author_first_name: 'Marie', author_last_name: 'Lefebvre', title: 'Bruit de pompe la nuit', description: 'Depuis 3 semaines, une pompe dans la cave fait du bruit entre 23h et 6h du matin.', status: 'open', created_at: '2025-03-28T22:00:00Z', updated_at: '2025-03-28T22:00:00Z' },
+  { id: 'rpt-004', unit_id: 'unt-002', author_id: 'usr-004', author_first_name: 'Robert', author_last_name: 'Cazeneuve', title: 'Interphone en panne', description: 'L\'interphone de l\'entrée principale ne fonctionne plus depuis une semaine.', status: 'closed', created_at: '2025-02-10T08:00:00Z', updated_at: '2025-02-15T10:00:00Z' },
 ]
 
 // ── Consultations ─────────────────────────────────────────────────

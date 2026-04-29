@@ -9,6 +9,7 @@ pub mod contracts;
 pub mod documents;
 pub mod logbook;
 pub mod onboarding;
+pub mod reports;
 mod stubs;
 pub mod tasks;
 pub mod units;
@@ -16,7 +17,7 @@ pub mod users;
 
 // Modules still implemented as stubs — re-exported from stubs.rs
 use std::sync::Arc;
-use stubs::{claims, reports};
+use stubs::claims;
 
 use axum::{
     Router,
@@ -211,6 +212,7 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
         .route("/reports", get(reports::list).post(reports::create))
         .route("/reports/{id}", get(reports::get))
         .route("/reports/{id}/status", put(reports::update_status))
+        .route("/reports/{id}/task", post(reports::convert_to_task))
         // ── Consultations ────────────────────────────────────────
         .route(
             "/consultations",

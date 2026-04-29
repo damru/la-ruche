@@ -291,10 +291,12 @@ export const reportsApi = {
     api.get<Report[]>('/reports'),
   get: (id: string) =>
     api.get<Report>(`/reports/${id}`),
-  create: (data: Partial<Report>) =>
+  create: (data: { title: string; description?: string; unit_id?: string }) =>
     api.post<Report>('/reports', data),
   updateStatus: (id: string, status: string) =>
     api.put(`/reports/${id}/status`, { status }),
+  convertToTask: (id: string) =>
+    api.post<{ task_id: string }>(`/reports/${id}/task`),
 }
 
 // ── Consultations ─────────────────────────────────────────────────

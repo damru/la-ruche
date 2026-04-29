@@ -126,14 +126,7 @@ pub mod claims {
 // ── logbook ──────────────────────────────────────────────────────────
 // (wired in api/logbook.rs)
 
-// ── reports ──────────────────────────────────────────────────────────
-pub mod reports {
-    use super::*;
-    stub!(list);
-    stub!(create);
-    stub!(get);
-    stub!(update_status);
-}
+// ── reports — wired in api/reports.rs ──────────────────────────────────
 
 // ── consultations ─────────────────────────────────────────────────
 // (wired in api/consultations.rs)

@@ -250,10 +250,13 @@ export interface Report {
   id: string
   unit_id?: string
   author_id: string
+  author_first_name: string
+  author_last_name: string
   title: string
   description?: string
   status: ReportStatus
   created_at: string
+  updated_at: string
 }
 
 export interface Consultation {

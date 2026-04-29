@@ -220,17 +220,15 @@ Consultations initiables par tout résident sans approbation préalable, résult
 
 ### EP-011 — Signalements
 
-**Statut :** en cours | **MVP :** oui | **Réf. PRD :** Participatif
+**Statut :** terminée | **MVP :** oui | **Réf. PRD :** Participatif
 
-**État code actuel :** stub/mock ; API signalements non implémentée (`501`) et vue encore alimentée par données fictives.
-
-Signalement par tout résident avec photo(s), suivi de statut par le syndic, conversion possible en tâche.
+Signalement par tout résident avec description et lot optionnel, suivi de statut par le syndic, conversion possible en tâche.
 
 **Stories :**
 
-* `EP-011-S01` — Créer un signalement avec description, localisation et photo(s)
-* `EP-011-S02` — Suivre et mettre à jour le statut d'un signalement (reçu, en cours, résolu)
-* `EP-011-S03` — Convertir un signalement en tâche (→ EP-007-S01)
+* `EP-011-S01` ✅ — Créer un signalement (titre, description, lot concerné)
+* `EP-011-S02` ✅ — Suivre et mettre à jour le statut (reçu → en cours → clos) — manager/conseil syndical
+* `EP-011-S03` ✅ — Convertir un signalement en tâche — crée une tâche avec titre/description du signalement, redirige vers la tâche créée
 
 ***
 
