@@ -105,21 +105,14 @@ pub async fn create(
     author_id: Uuid,
     input: CreateReportInput,
 ) -> AppResult<ReportRow> {
-    // Insert and immediately fetch enriched row via CTE to avoid a second round-trip.
-    let row = sqlx::query(concat!(
-        "WITH inserted AS (",
-        "  INSERT INTO report (building_id, author_id, title, description, unit_id)",
-        "  VALUES ($1, $2, $3, $4, $5) RETURNING id",
-        ")",
-        " SELECT r.id, r.building_id, r.unit_id, r.author_id,",
-        "  u.first_name AS author_first_name, u.last_name AS author_last_name,",
-        "  r.title, r.description, r.status::text AS status,",
-        "  0::int8 AS document_count,",
-        "  r.created_at, r.updated_at",
-        " FROM inserted",
-        " JOIN report r ON r.id = inserted.id",
-        " JOIN user_account u ON u.id = r.author_id",
-    ))
+    // Step 1: insert and obtain the new row's id.
+    // Using a plain INSERT … RETURNING id (not a CTE) so that the INSERT is never
+    // committed while the subsequent enriched SELECT fails, which would save the
+    // report in the DB but return a "Database error" to the caller.
+    let row = sqlx::query(
+        "INSERT INTO report (building_id, author_id, title, description, unit_id) \
+         VALUES ($1, $2, $3, $4, $5) RETURNING id",
+    )
     .bind(building_id)
     .bind(author_id)
     .bind(&input.title)
@@ -127,7 +120,13 @@ pub async fn create(
     .bind(input.unit_id)
     .fetch_one(pool)
     .await?;
-    row_to_report(&row).map_err(Into::into)
+    let id: Uuid = row.try_get("id")?;
+
+    // Step 2: fetch the enriched row (JOINs user_account + document_count subquery)
+    // reusing the same query used by the GET endpoint.
+    get(pool, id, building_id)
+        .await?
+        .ok_or_else(|| AppError::Internal(anyhow::anyhow!("created report not found")))
 }
 
 pub async fn update_status(
