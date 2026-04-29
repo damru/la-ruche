@@ -116,6 +116,11 @@ jobs:
           SQLX_OFFLINE: true
         run: cargo check
 
+      - name: Clean unused Cargo cache
+        run: |
+          cargo install cargo-sweep --locked
+          cargo sweep --installed
+
       - name: Upload SQLx offline files
         uses: actions/upload-artifact@v7
         with:
@@ -153,6 +158,9 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Clean unused npm cache
+        run: npm prune
 
   # ── Docker build ───────────────────────────────────────────────
   docker-build:
