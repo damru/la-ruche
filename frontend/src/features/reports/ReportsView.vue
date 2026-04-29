@@ -927,7 +927,7 @@ function photoPreview(file: File): string {
             :disabled="deletingPhoto"
             @click.stop="deletePhoto(idx)"
           >
-            🗑
+            <CIconTrash />
           </button>
         </div>
       </div>
@@ -975,7 +975,7 @@ function photoPreview(file: File): string {
           :disabled="deletingPhoto"
           @click.stop="deletePhoto(lightboxIndex!)"
         >
-          🗑
+          <CIconTrash />
         </button>
         <button
           v-if="lightboxIndex > 0"
@@ -1061,10 +1061,10 @@ function photoPreview(file: File): string {
   border-radius: var(--radius-sm); border: 1px solid var(--color-outline-variant);
 }
 .photo-remove {
-  position: absolute; top: -4px; right: -4px;
-  width: 18px; height: 18px; border-radius: 50%;
+  position: absolute; top: -6px; right: -6px;
+  width: 22px; height: 22px; border-radius: 50%;
   background: var(--color-error); color: #fff;
-  border: none; cursor: pointer; font-size: 11px; line-height: 1;
+  border: none; cursor: pointer; font-size: 14px; line-height: 1;
   display: flex; align-items: center; justify-content: center;
   padding: 0;
   /* Override the global 44px touch-target minimum for this decorative badge */
@@ -1089,12 +1089,12 @@ function photoPreview(file: File): string {
   position: absolute; top: -6px; right: -6px;
   background: var(--color-error); color: #fff; border: none;
   border-radius: 50%; width: 22px; height: 22px;
-  font-size: 12px; line-height: 1;
   display: flex; align-items: center; justify-content: center;
-  cursor: pointer; padding: 0;
+  cursor: pointer; padding: 3px;
   min-height: unset; min-width: unset;
   opacity: 0.9; transition: opacity 0.15s;
 }
+.photo-gallery-delete svg { width: 14px; height: 14px; }
 .photo-gallery-delete:hover { opacity: 1; }
 
 /* Lightbox */
@@ -1119,12 +1119,14 @@ function photoPreview(file: File): string {
 .lightbox-delete {
   position: absolute; top: 16px; right: 60px;
   background: var(--color-error); border: none; color: #fff;
-  font-size: 16px; cursor: pointer; line-height: 1;
+  cursor: pointer;
   min-height: unset; min-width: unset;
   opacity: 0.85; width: 36px; height: 36px;
   border-radius: var(--radius-sm);
   display: flex; align-items: center; justify-content: center;
+  padding: 8px;
 }
+.lightbox-delete svg { width: 18px; height: 18px; }
 .lightbox-delete:hover { opacity: 1; }
 .lightbox-delete:disabled { opacity: 0.4; cursor: default; }
 .lightbox-nav {
