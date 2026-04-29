@@ -187,7 +187,7 @@ pub async fn convert_to_task(
                INSERT INTO task (building_id, title, description, priority, created_by)
                SELECT $2, title, description, 'normal'::task_priority, $3
                FROM report
-               WHERE id = $1
+               WHERE id = $1 AND building_id = $2
                RETURNING id
            )
            UPDATE report

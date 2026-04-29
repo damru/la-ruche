@@ -90,12 +90,14 @@ pub async fn update(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
-    Json(input): Json<db::report::UpdateReportInput>,
+    Json(mut input): Json<db::report::UpdateReportInput>,
 ) -> AppResult<StatusCode> {
     auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
-    if input.title.trim().is_empty() {
+    let trimmed = input.title.trim().to_string();
+    if trimmed.is_empty() {
         return Err(AppError::Validation("Title is required".into()));
     }
+    input.title = trimmed;
     db::report::update(&state.pool, id, auth.building_id, input).await?;
     Ok(StatusCode::NO_CONTENT)
 }
