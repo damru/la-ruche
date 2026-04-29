@@ -131,8 +131,7 @@ pub async fn detach_document(
     Path((id, doc_id)): Path<(Uuid, Uuid)>,
 ) -> AppResult<StatusCode> {
     auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
-    let detached =
-        db::report::detach_document(&state.pool, id, doc_id, auth.building_id).await?;
+    let detached = db::report::detach_document(&state.pool, id, doc_id, auth.building_id).await?;
     if !detached {
         return Err(AppError::NotFound);
     }
