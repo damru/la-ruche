@@ -280,6 +280,10 @@ pub async fn delete(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()>
 }
 
 /// Updates mutable task fields. `None` values leave the existing field unchanged.
+/// `completion_cost_update` uses patch semantics:
+/// - `None` keeps the current value
+/// - `Some(None)` clears the value
+/// - `Some(Some(x))` replaces the value
 pub async fn update_fields(
     pool: &PgPool,
     id: Uuid,
@@ -289,31 +293,34 @@ pub async fn update_fields(
     priority: Option<&str>,
     status: Option<&str>,
     contractor_id: Option<Option<Uuid>>,
-    completion_cost: Option<Option<Decimal>>,
+    completion_cost_update: Option<Option<Decimal>>,
     actor_user_id: Uuid,
 ) -> AppResult<()> {
     let current = get(pool, id, building_id)
         .await?
         .ok_or(crate::errors::AppError::NotFound)?;
 
-    let current_title = current.title.clone();
-    let current_description = current.description.clone();
-    let current_priority = current.priority.clone();
     let current_status = current.status.clone();
     let current_completion_cost = current.completion_cost.clone();
 
-    let new_title = title.unwrap_or(&current_title).to_string();
+    let new_title = title
+        .map(ToOwned::to_owned)
+        .unwrap_or_else(|| current.title.clone());
     let new_description = match description {
         Some(d) => d.map(|s| s.to_string()),
-        None => current_description,
+        None => current.description.clone(),
     };
-    let new_priority = priority.unwrap_or(&current_priority).to_string();
-    let new_status = status.unwrap_or(&current_status).to_string();
+    let new_priority = priority
+        .map(ToOwned::to_owned)
+        .unwrap_or_else(|| current.priority.clone());
+    let new_status = status
+        .map(ToOwned::to_owned)
+        .unwrap_or_else(|| current.status.clone());
     let new_contractor_id = match contractor_id {
         Some(c) => c,
         None => current.contractor_id,
     };
-    let new_completion_cost = match completion_cost {
+    let new_completion_cost = match completion_cost_update {
         Some(cost) => cost,
         None => current_completion_cost,
     };

@@ -172,7 +172,7 @@ where
                   c.name AS vendor_name, t.completion_cost
            FROM task t
            LEFT JOIN contractor c ON c.id = t.contractor_id
-           WHERE t.id = $1 AND t.building_id = $2"#,
+           WHERE t.id = $1 AND t.building_id = $2 AND t.status = 'closed'::task_status"#,
     )
     .bind(task_id)
     .bind(building_id)

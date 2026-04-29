@@ -1,4 +1,6 @@
 -- Migration 0012: allow multiple logbook entries per task and add task completion pre-validation
+-- Note: ALTER TYPE ... ADD VALUE is not transactional in PostgreSQL. Keep it first so a partial
+-- failure leaves the enum in a valid forward-compatible state before later DDL is retried.
 
 ALTER TYPE task_status ADD VALUE IF NOT EXISTS 'awaiting_validation';
 

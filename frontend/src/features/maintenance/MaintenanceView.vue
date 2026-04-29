@@ -74,8 +74,15 @@ function shiftPeriod(date: Date, filter: Exclude<PeriodFilter, 'all'>, delta: nu
   return new Date(date.getFullYear() + delta, 0, 1)
 }
 
-function parseLocalDate(value: string): Date {
-  const [year, month, day] = value.split('-').map(Number)
+function parseLocalDate(value: string): Date | null {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value)
+  if (!match) return null
+
+  const year = Number(match[1])
+  const month = Number(match[2])
+  const day = Number(match[3])
+  if ([year, month, day].some(Number.isNaN)) return null
+
   return new Date(year, month - 1, day)
 }
 
@@ -160,7 +167,7 @@ const periodEntries = computed(() => {
   if (!range) return entries.value
   return entries.value.filter(entry => {
     const date = parseLocalDate(entry.intervention_date)
-    return date >= range.start && date <= range.end
+    return date ? date >= range.start && date <= range.end : false
   })
 })
 
