@@ -22,6 +22,7 @@
 | Distribution image conteneur | Docker Hub (`docker.io/damru/la-ruche`) | CI GitHub Actions |
 | Versioning tantièmes + snapshot levy | `valid_from`/`valid_to` + colonnes snapshot `levy_call` | ADR-006 |
 | Clé générale système | `key_type` enum + soft delete sur `allocation_key` | ADR-007 |
+| Traçabilité tâches ↔ carnet | Lien informatif `task_id` + multiples clôtures + `completion_cost` courant sur `task` | ADR-008 |
 | Logs | tracing + tracing-subscriber (JSON) | — |
 | Config | dotenvy + config crate (LA_RUCHE__*) | — |
 | Frontend | Vue 3 + Vite + TypeScript | DDR-003 |
@@ -190,6 +191,8 @@ HTTP → Tower (CORS, trace, timeout 30s)
 1. Syndic génère token → UUID + expire_at en DB
 2. Lien /prestataire/{token} → accès sans JWT
 3. Dépôt → staging S3 → validation → bucket final copropriété
+4. Soumission prestataire → statut `awaiting_validation` + commentaire / coût optionnel
+5. Clôture syndic → insertion d'une nouvelle ligne carnet avec snapshot coût/prestataire
 ```
 
 ---
@@ -231,3 +234,4 @@ HTTP → Tower (CORS, trace, timeout 30s)
 | ADR-005 | Runtime edge | Caddy installé dans l'image Debian slim |
 | ADR-006 | Versioning tantièmes & snapshot levy | `valid_from`/`valid_to` sur `unit_allocation_key` ; colonnes `shares_snapshot`, `shares_total_snapshot`, `key_id` sur `levy_call` |
 | ADR-007 | Clé générale système | `key_type allocation_key_type` enum + `deleted_at` soft delete sur `allocation_key` ; clé Charges Générales créée à l'onboarding, indestructible |
+| ADR-008 | Traçabilité tâches / carnet / soumissions prestataire | `maintenance_log.task_id` et `vendor_submission.task_id` deviennent informatifs (`ON DELETE SET NULL`) ; suppression de l'unicité 1 tâche → 1 entrée ; `task.completion_cost` porte le montant courant jusqu'à la clôture validée |

@@ -50,13 +50,13 @@
 
 **Contrats fournisseurs** — Chaque contrat recense fournisseur, objet, dates, montant et périodicité. Les reconductions tacites et préavis sont configurables. Des rappels (reconduction, échéance, expiration, résiliation) sont calculés automatiquement et acquittables manuellement. Le contrat d’assurance multirisque immeuble peut en plus regrouper ses pièces justificatives dans le même espace de suivi. → EP-006
 
-**Tâches & Prestataires** — Les tâches sont assignées en interne avec priorité et statut. Un lien tokenisé éphémère permet aux prestataires externes d'accéder sans compte, de déposer photos et documents, et de clôturer la tâche. Les fichiers transitent par un bucket staging avant validation. Les tâches peuvent être liées à un prestataire du référentiel pour consolider l'historique. → EP-007
+**Tâches & Prestataires** — Les tâches sont assignées en interne avec priorité et statut. Un lien tokenisé éphémère permet aux prestataires externes d'accéder sans compte, de déposer photos et documents, puis de pré-valider leur intervention avec un commentaire et un coût optionnel avant validation finale par le syndic. La clôture d'une tâche capture un montant optionnel, réutilisable pour alimenter le carnet d'entretien. Les fichiers transitent par un bucket staging avant validation. Les tâches peuvent être liées à un prestataire du référentiel pour consolider l'historique. → EP-007
 
 **Référentiel prestataires** — Catalogue des entreprises et intervenants de la résidence (nom, email, téléphone, domaine). Accessible à tous les résidents (catalogue pratique), modifiable par les managers. Réutilisé à l'assignation des tâches et propagé au carnet d'entretien. → EP-015
 
 **Sinistres** — Déclaration d'un sinistre (libellé, date, lot ou parties communes) avec suivi de statut jusqu'à clôture et attachement de documents associés. → EP-008
 
-**Carnet d'entretien** — Historique des interventions (libellé, date, coût, prestataire, pièces jointes), alimenté manuellement pour l'historique antérieur au logiciel ou automatiquement depuis une tâche clôturée. → EP-009
+**Carnet d'entretien** — Historique des interventions (libellé, date, coût, prestataire, pièces jointes), alimenté manuellement pour l'historique antérieur au logiciel ou automatiquement à chaque clôture effective d'une tâche, y compris après réouverture. Les liens avec les tâches restent purement de traçabilité et ne bloquent pas la suppression d'une tâche ou d'une entrée du carnet. → EP-009
 
 ### Participatif (pas de valeur décisionnelle légale)
 
@@ -151,4 +151,3 @@
 | Stockage | S3-compatible (MinIO self-hosted) | schéma DB |
 | Licence | AGPL-3.0 + licence commerciale | LICENSE, LICENSE-COMMERCIAL.md |
 | Déploiement | Docker Compose (backend + postgres + minio + caddy) | Dockerfile |
-

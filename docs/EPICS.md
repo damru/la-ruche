@@ -149,7 +149,7 @@ Fiche contrat avec reconduction tacite et préavis configurables, rappels automa
 
 **Statut :** terminée | **MVP :** non | **Réf. PRD :** Gestion courante
 
-**État code actuel :** backend réel (CRUD tâches + token prestataire + upload staging + soumission en transaction + assignation prestataire référentiel) + frontend branché (liste, créer, token, page publique prestataire, autocomplete prestataire).
+**État code actuel :** backend réel (CRUD tâches + token prestataire + upload staging + pré-validation prestataire en transaction + assignation prestataire référentiel) + frontend branché (liste, créer, token, page publique prestataire, autocomplete prestataire, clôture avec coût optionnel).
 
 Tâches assignées en interne, lien tokenisé éphémère pour accès prestataire sans compte, flux de dépôt staging → validation → bucket final. Les tâches peuvent être liées à un prestataire du référentiel (EP-015) pour consolider l'historique.
 
@@ -158,8 +158,8 @@ Tâches assignées en interne, lien tokenisé éphémère pour accès prestatair
 * `EP-007-S01` ✅ — Créer et assigner une tâche à un intervenant interne ou à un prestataire externe
 * `EP-007-S02` ✅ — Générer un lien tokenisé éphémère pour l'accès prestataire sans compte
 * `EP-007-S03` ✅ — Permettre au prestataire de déposer des documents via le lien tokenisé (zone staging) — `POST /vendor/:token/upload-url`
-* `EP-007-S04` ✅ — Valider et archiver les documents déposés par le prestataire (bucket final) — dans la transaction `POST /vendor/:token/submission`
-* `EP-007-S05` ✅ — Clôturer une tâche et l'alimenter automatiquement au carnet d'entretien (→ EP-009-S03) — idempotent via unique index, inclut `vendor_name` du prestataire assigné
+* `EP-007-S04` ✅ — Valider et archiver les documents déposés par le prestataire (bucket final) puis passer la tâche en pré-validation (`awaiting_validation`) avec commentaire et coût optionnel — dans la transaction `POST /vendor/:token/submission`
+* `EP-007-S05` ✅ — Clôturer une tâche avec coût optionnel et l'alimenter automatiquement au carnet d'entretien (→ EP-009-S03), y compris après réouverture ; inclut `vendor_name` du prestataire assigné
 * `EP-007-S06` ✅ — Assigner un prestataire du référentiel (EP-015) à une tâche via autocomplete — `contractor_id` FK sur `task`
 
 ***
@@ -186,7 +186,7 @@ Déclaration et suivi de sinistres (lot ou parties communes) avec documents asso
 
 **Statut :** terminée (S01-S03, S05) | **MVP :** oui | **Réf. PRD :** Gestion courante
 
-**État code actuel :** backend réel (list, get, create, update, delete + auto-feed depuis tâche) + frontend branché (timeline, modale création, suppression).
+**État code actuel :** backend réel (list, get, create, update, delete + auto-feed depuis tâche avec liens de traçabilité souples) + frontend branché (timeline, modale création, suppression, filtres calendaires).
 
 Historique des interventions alimenté manuellement ou automatiquement depuis une tâche clôturée.
 
@@ -194,7 +194,7 @@ Historique des interventions alimenté manuellement ou automatiquement depuis un
 
 * `EP-009-S01` ✅ — Consulter le carnet d'entretien (liste chronologique des interventions)
 * `EP-009-S02` ✅ — Ajouter manuellement une entrée d'intervention (date, description, prestataire, coût)
-* `EP-009-S03` ✅ — Alimenter automatiquement le carnet à la clôture d'une tâche (← EP-007-S05) — idempotent via `ON CONFLICT DO NOTHING`
+* `EP-009-S03` ✅ — Alimenter automatiquement le carnet à chaque clôture effective d'une tâche (← EP-007-S05), y compris après réouverture, avec coût optionnel et sans cascade destructive tâche ↔ carnet
 * `EP-009-S04` ❌ (hors scope) — PPT : attacher le Plan Pluriannuel de Travaux et lier ses postes au carnet d'entretien (LEGAL.md §6.1) — différé post-MVP
 * `EP-009-S05` ✅ — Registre minimal des contrats et diagnostics liés à l'entretien : champ `contract_id` sur `maintenance_log` + champ `task_id` pour la traçabilité prestataire (LEGAL.md §1.4)
 
