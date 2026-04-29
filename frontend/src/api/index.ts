@@ -233,7 +233,7 @@ export const tasksApi = {
     api.get<Task>(`/tasks/${id}`),
   create: (data: { title: string; description?: string; priority?: string; contract_id?: string; contractor_id?: string | null; assigned_to?: string }) =>
     api.post<Task>('/tasks', data),
-  update: (id: string, data: { title?: string; description?: string | null; priority?: string; status?: string; contractor_id?: string | null }) =>
+  update: (id: string, data: { title?: string; description?: string | null; priority?: string; status?: string; contractor_id?: string | null; completion_cost?: number | null }) =>
     api.put<Task>(`/tasks/${id}`, data),
   delete: (id: string) =>
     api.delete(`/tasks/${id}`),
@@ -338,7 +338,7 @@ export const vendorApi = {
     publicApi.get<VendorTask>(`/api/v1/vendor/${token}`),
   getUploadUrl: (token: string, extension: string, content_type: string) =>
     publicApi.post<{ url: string; key: string }>(`/api/v1/vendor/${token}/upload-url`, { extension, content_type }),
-  submit: (token: string, data: { comment?: string; documents: VendorDocument[] }) =>
+  submit: (token: string, data: { comment?: string; cost?: number; documents: VendorDocument[] }) =>
     publicApi.post(`/api/v1/vendor/${token}/submission`, data),
   uploadToStaging: async (file: File, signedUrl: string): Promise<void> => {
     // Keep the upload header aligned with the content type used to generate the

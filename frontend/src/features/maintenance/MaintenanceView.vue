@@ -20,10 +20,14 @@ const { t } = useI18n()
 const { formatDate, formatCurrency } = useFormatters()
 const { confirm } = useConfirm()
 
+type PeriodFilter = 'month' | 'quarter' | 'semester' | 'year' | 'all'
+
 // ── State ─────────────────────────────────────────────────────────
 const buildingName = ref('')
 const allEntries = ref<MaintenanceEntry[]>([])
 const search = ref('')
+const periodFilter = ref<PeriodFilter>('quarter')
+const periodAnchor = ref(startOfPeriod(new Date(), 'quarter'))
 
 // ── Entry form modal ───────────────────────────────────────────────
 const showEntryModal = ref(false)
@@ -39,6 +43,47 @@ const defaultForm = () => ({
 })
 const entryForm = ref(defaultForm())
 
+function startOfDay(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate())
+}
+
+function startOfPeriod(date: Date, filter: Exclude<PeriodFilter, 'all'>): Date {
+  const year = date.getFullYear()
+  const month = date.getMonth()
+
+  if (filter === 'month') return new Date(year, month, 1)
+  if (filter === 'quarter') return new Date(year, Math.floor(month / 3) * 3, 1)
+  if (filter === 'semester') return new Date(year, month < 6 ? 0 : 6, 1)
+  return new Date(year, 0, 1)
+}
+
+function endOfPeriod(date: Date, filter: Exclude<PeriodFilter, 'all'>): Date {
+  const year = date.getFullYear()
+  const month = date.getMonth()
+
+  if (filter === 'month') return new Date(year, month + 1, 0)
+  if (filter === 'quarter') return new Date(year, Math.floor(month / 3) * 3 + 3, 0)
+  if (filter === 'semester') return new Date(year, month < 6 ? 6 : 12, 0)
+  return new Date(year, 12, 0)
+}
+
+function shiftPeriod(date: Date, filter: Exclude<PeriodFilter, 'all'>, delta: number): Date {
+  if (filter === 'month') return new Date(date.getFullYear(), date.getMonth() + delta, 1)
+  if (filter === 'quarter') return new Date(date.getFullYear(), date.getMonth() + delta * 3, 1)
+  if (filter === 'semester') return new Date(date.getFullYear(), date.getMonth() + delta * 6, 1)
+  return new Date(date.getFullYear() + delta, 0, 1)
+}
+
+function parseLocalDate(value: string): Date {
+  const [year, month, day] = value.split('-').map(Number)
+  return new Date(year, month - 1, day)
+}
+
+function resetPeriod(filter: PeriodFilter) {
+  if (filter === 'all') return
+  periodAnchor.value = startOfPeriod(new Date(), filter)
+}
+
 // ── Load data ─────────────────────────────────────────────────────
 async function loadData() {
   const [buildingRes, entriesRes] = await Promise.all([
@@ -53,6 +98,54 @@ const { loading, error, reload } = usePageLoader(loadData, t('common.loadError')
 onMounted(reload)
 
 // ── Derived ───────────────────────────────────────────────────────
+const periodRange = computed(() => {
+  if (periodFilter.value === 'all') return null
+
+  const start = startOfDay(periodAnchor.value)
+  const today = startOfDay(new Date())
+  const periodEnd = endOfPeriod(start, periodFilter.value)
+
+  return {
+    start,
+    end: periodEnd > today ? today : periodEnd,
+  }
+})
+
+const periodLabel = computed(() => {
+  if (periodFilter.value === 'all') return t('maintenance.period.all')
+
+  const start = periodAnchor.value
+  const today = new Date()
+  if (periodFilter.value === 'month') {
+    return t('maintenance.period.month', {
+      month: new Intl.DateTimeFormat('fr-FR', { month: 'long' }).format(start),
+      year: start.getFullYear(),
+    })
+  }
+  if (periodFilter.value === 'quarter') {
+    return t('maintenance.period.quarter', {
+      quarter: Math.floor(start.getMonth() / 3) + 1,
+      year: start.getFullYear(),
+    })
+  }
+  if (periodFilter.value === 'semester') {
+    return t('maintenance.period.semester', {
+      semester: start.getMonth() < 6 ? 1 : 2,
+      year: start.getFullYear(),
+    })
+  }
+  if (start.getFullYear() === today.getFullYear()) {
+    return t('maintenance.period.year', { year: start.getFullYear() })
+  }
+  return String(start.getFullYear())
+})
+
+const canGoNext = computed(() => {
+  if (periodFilter.value === 'all') return false
+  const currentStart = startOfPeriod(new Date(), periodFilter.value)
+  return periodAnchor.value.getTime() < currentStart.getTime()
+})
+
 const entries = computed(() => {
   const q = search.value.toLowerCase()
   if (!q) return allEntries.value
@@ -62,9 +155,33 @@ const entries = computed(() => {
   )
 })
 
+const periodEntries = computed(() => {
+  const range = periodRange.value
+  if (!range) return entries.value
+  return entries.value.filter(entry => {
+    const date = parseLocalDate(entry.intervention_date)
+    return date >= range.start && date <= range.end
+  })
+})
+
 const totalCost = computed(() =>
-  allEntries.value.reduce((s, e) => s + (e.cost ?? 0), 0),
+  periodEntries.value.reduce((sum, entry) => sum + Number(entry.cost ?? 0), 0),
 )
+
+function selectPeriod(filter: PeriodFilter) {
+  periodFilter.value = filter
+  resetPeriod(filter)
+}
+
+function goToPreviousPeriod() {
+  if (periodFilter.value === 'all') return
+  periodAnchor.value = shiftPeriod(periodAnchor.value, periodFilter.value, -1)
+}
+
+function goToNextPeriod() {
+  if (periodFilter.value === 'all' || !canGoNext.value) return
+  periodAnchor.value = shiftPeriod(periodAnchor.value, periodFilter.value, 1)
+}
 
 // ── Entry modal actions ────────────────────────────────────────────
 function openCreateModal() {
@@ -160,8 +277,42 @@ async function deleteEntry(entry: MaintenanceEntry) {
               class="body-md"
               style="color:var(--color-on-surface-variant)"
             >
-              {{ t('maintenance.summary', { count: allEntries.length, cost: formatCurrency(totalCost) }) }}
+              {{ t('maintenance.periodSummary', { label: periodLabel, count: periodEntries.length, cost: formatCurrency(totalCost) }) }}
             </p>
+          </div>
+        </div>
+
+        <div class="period-toolbar">
+          <div class="tabs period-tabs">
+            <button
+              v-for="filter in ['month', 'quarter', 'semester', 'year', 'all'] as PeriodFilter[]"
+              :key="filter"
+              :class="['tab', { 'tab--active': periodFilter === filter }]"
+              @click="selectPeriod(filter)"
+            >
+              {{ t(`maintenance.filters.${filter}`) }}
+            </button>
+          </div>
+          <div class="period-nav">
+            <CBtn
+              variant="ghost"
+              size="sm"
+              :disabled="periodFilter === 'all'"
+              :aria-label="t('maintenance.previousPeriod')"
+              @click="goToPreviousPeriod"
+            >
+              ←
+            </CBtn>
+            <span class="period-label title-sm">{{ periodLabel }}</span>
+            <CBtn
+              variant="ghost"
+              size="sm"
+              :disabled="!canGoNext"
+              :aria-label="t('maintenance.nextPeriod')"
+              @click="goToNextPeriod"
+            >
+              →
+            </CBtn>
           </div>
         </div>
 
@@ -177,7 +328,7 @@ async function deleteEntry(entry: MaintenanceEntry) {
 
         <div class="timeline">
           <div
-            v-for="entry in entries"
+            v-for="entry in periodEntries"
             :key="entry.id"
             class="timeline-item"
           >
@@ -229,7 +380,7 @@ async function deleteEntry(entry: MaintenanceEntry) {
                   />{{ entry.vendor_name }}
                 </span>
                 <span
-                  v-if="entry.cost"
+                  v-if="entry.cost != null"
                   class="cost"
                 >{{ formatCurrency(entry.cost) }}</span>
               </div>
@@ -237,10 +388,10 @@ async function deleteEntry(entry: MaintenanceEntry) {
           </div>
 
           <div
-            v-if="!entries.length"
+            v-if="!periodEntries.length"
             class="empty-state"
           >
-            {{ t('common.noData') }}
+            {{ t('maintenance.emptyPeriod') }}
           </div>
         </div>
       </template>
@@ -303,12 +454,12 @@ async function deleteEntry(entry: MaintenanceEntry) {
             />
           </div>
         </div>
+      </form>
+      <template #footer>
         <CFormFeedback
           :status="entryFeedback.status.value"
           :message="entryFeedback.message.value"
         />
-      </form>
-      <template #footer>
         <CBtn
           variant="ghost"
           @click="showEntryModal = false"
@@ -360,12 +511,49 @@ async function deleteEntry(entry: MaintenanceEntry) {
 .entry-header-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 .entry-date { font-size: var(--text-xs); color: var(--color-on-surface-variant); }
 .entry-desc { color: var(--color-on-surface-variant); margin-bottom: var(--space-2); }
-.entry-footer { display: flex; justify-content: space-between; font-size: var(--text-sm); align-items: center; }
+.entry-footer { display: flex; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; font-size: var(--text-sm); align-items: center; }
 .vendor { color: var(--color-on-surface-variant); display: flex; align-items: center; }
 .cost { font-weight: var(--fw-semibold); color: var(--color-on-surface); }
 
-.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+.period-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.period-tabs { flex: 1; min-width: 0; }
+
+.period-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.period-label {
+  min-width: 9rem;
+  text-align: center;
+}
+
+.form-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
 
 .empty-state { padding: var(--space-8); text-align: center; font-size: var(--text-md); color: var(--color-on-surface-variant); }
-</style>
 
+@media (max-width: 720px) {
+  .period-nav {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .period-label {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+}
+</style>

@@ -14,7 +14,7 @@ export type VotePosition = 'in_favor' | 'against' | 'abstain' | 'non_voter'
 export type BudgetStatus = 'draft' | 'approved' | 'closed'
 export type LevyStatus = 'issued' | 'paid' | 'overdue'
 
-export type TaskStatus = 'open' | 'in_progress' | 'awaiting_vendor' | 'closed' | 'cancelled'
+export type TaskStatus = 'open' | 'in_progress' | 'awaiting_vendor' | 'awaiting_validation' | 'closed' | 'cancelled'
 export type TaskPriority = 'low' | 'normal' | 'high' | 'urgent'
 
 export type ClaimStatus = 'open' | 'in_progress' | 'closed'
@@ -219,6 +219,7 @@ export interface Task {
   has_vendor_token?: boolean
   token_expires_at?: string
   closed_at?: string
+  completion_cost?: number
   created_at: string
   /** True when at least one maintenance_log entry references this task. */
   is_in_logbook?: boolean

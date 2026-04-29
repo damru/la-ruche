@@ -1,7 +1,7 @@
 use crate::errors::AppResult;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
+use sqlx::{PgPool, types::Decimal};
 use uuid::Uuid;
 
 /// Full internal row — keeps vendor_token for token generation endpoints.
@@ -22,6 +22,7 @@ pub struct TaskRow {
     pub vendor_token: Option<Uuid>,
     pub token_expires_at: Option<DateTime<Utc>>,
     pub closed_at: Option<DateTime<Utc>>,
+    pub completion_cost: Option<Decimal>,
     pub created_at: DateTime<Utc>,
     /// True when at least one maintenance_log entry references this task.
     pub is_in_logbook: bool,
@@ -44,6 +45,7 @@ pub struct TaskListItem {
     pub has_vendor_token: bool,
     pub token_expires_at: Option<DateTime<Utc>>,
     pub closed_at: Option<DateTime<Utc>>,
+    pub completion_cost: Option<Decimal>,
     pub created_at: DateTime<Utc>,
     /// True when at least one maintenance_log entry references this task.
     pub is_in_logbook: bool,
@@ -65,6 +67,7 @@ impl From<TaskRow> for TaskListItem {
             created_by: r.created_by,
             token_expires_at: r.token_expires_at,
             closed_at: r.closed_at,
+            completion_cost: r.completion_cost,
             created_at: r.created_at,
             is_in_logbook: r.is_in_logbook,
         }
@@ -86,6 +89,7 @@ const VALID_STATUSES: &[&str] = &[
     "open",
     "in_progress",
     "awaiting_vendor",
+    "awaiting_validation",
     "closed",
     "cancelled",
 ];
@@ -110,6 +114,7 @@ fn task_row_from_query(r: &sqlx::postgres::PgRow) -> Result<TaskRow, sqlx::Error
         vendor_token: r.try_get("vendor_token")?,
         token_expires_at: r.try_get("token_expires_at")?,
         closed_at: r.try_get("closed_at")?,
+        completion_cost: r.try_get("completion_cost")?,
         created_at: r.try_get("created_at")?,
         is_in_logbook: r.try_get("is_in_logbook")?,
     })
@@ -120,7 +125,7 @@ pub async fn list(pool: &PgPool, building_id: Uuid) -> AppResult<Vec<TaskRow>> {
         r#"SELECT t.id, t.building_id, t.title, t.description,
            t.status::text AS status, t.priority::text AS priority,
            t.contract_id, t.contractor_id, t.assigned_to, t.created_by, t.vendor_token,
-           t.token_expires_at, t.closed_at, t.created_at,
+           t.token_expires_at, t.closed_at, t.completion_cost, t.created_at,
            EXISTS(SELECT 1 FROM maintenance_log WHERE task_id = t.id) AS is_in_logbook
            FROM task t WHERE t.building_id = $1
            ORDER BY CASE t.status::text WHEN 'closed' THEN 1 ELSE 0 END ASC,
@@ -141,7 +146,7 @@ pub async fn get(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<Option
         r#"SELECT t.id, t.building_id, t.title, t.description,
            t.status::text AS status, t.priority::text AS priority,
            t.contract_id, t.contractor_id, t.assigned_to, t.created_by, t.vendor_token,
-           t.token_expires_at, t.closed_at, t.created_at,
+           t.token_expires_at, t.closed_at, t.completion_cost, t.created_at,
            EXISTS(SELECT 1 FROM maintenance_log WHERE task_id = t.id) AS is_in_logbook
            FROM task t WHERE t.id = $1 AND t.building_id = $2"#,
     )
@@ -168,7 +173,7 @@ pub async fn create(
            RETURNING id, building_id, title, description,
            status::text AS status, priority::text AS priority,
            contract_id, contractor_id, assigned_to, created_by, vendor_token,
-           token_expires_at, closed_at, created_at,
+           token_expires_at, closed_at, completion_cost, created_at,
            FALSE AS is_in_logbook"#,
     )
     .bind(building_id)
@@ -284,21 +289,33 @@ pub async fn update_fields(
     priority: Option<&str>,
     status: Option<&str>,
     contractor_id: Option<Option<Uuid>>,
+    completion_cost: Option<Option<Decimal>>,
+    actor_user_id: Uuid,
 ) -> AppResult<()> {
     let current = get(pool, id, building_id)
         .await?
         .ok_or(crate::errors::AppError::NotFound)?;
 
-    let new_title = title.unwrap_or(&current.title).to_string();
+    let current_title = current.title.clone();
+    let current_description = current.description.clone();
+    let current_priority = current.priority.clone();
+    let current_status = current.status.clone();
+    let current_completion_cost = current.completion_cost.clone();
+
+    let new_title = title.unwrap_or(&current_title).to_string();
     let new_description = match description {
         Some(d) => d.map(|s| s.to_string()),
-        None => current.description,
+        None => current_description,
     };
-    let new_priority = priority.unwrap_or(&current.priority).to_string();
-    let new_status = status.unwrap_or(&current.status).to_string();
+    let new_priority = priority.unwrap_or(&current_priority).to_string();
+    let new_status = status.unwrap_or(&current_status).to_string();
     let new_contractor_id = match contractor_id {
         Some(c) => c,
         None => current.contractor_id,
+    };
+    let new_completion_cost = match completion_cost {
+        Some(cost) => cost,
+        None => current_completion_cost,
     };
     let closed_at = if new_status == "closed" && current.closed_at.is_none() {
         Some(Utc::now())
@@ -307,14 +324,18 @@ pub async fn update_fields(
     } else {
         current.closed_at
     };
+    let create_log_entry = current_status != "closed" && new_status == "closed";
 
+    let mut tx = pool.begin().await?;
     let result = sqlx::query(
         "UPDATE task SET title = $3, description = $4,
-         priority = $5::text::task_priority,
-         status = $6::text::task_status,
-         contractor_id = $7,
-         closed_at = $8, updated_at = NOW()
-         WHERE id = $1 AND building_id = $2",
+          priority = $5::text::task_priority,
+          status = $6::text::task_status,
+          contractor_id = $7,
+          closed_at = $8,
+          completion_cost = $9,
+          updated_at = NOW()
+          WHERE id = $1 AND building_id = $2",
     )
     .bind(id)
     .bind(building_id)
@@ -324,12 +345,23 @@ pub async fn update_fields(
     .bind(&new_status)
     .bind(new_contractor_id)
     .bind(closed_at)
-    .execute(pool)
+    .bind(new_completion_cost)
+    .execute(&mut *tx)
     .await?;
 
     if result.rows_affected() == 0 {
         return Err(crate::errors::AppError::NotFound);
     }
+    if create_log_entry {
+        crate::db::maintenance_log::create_automatic_from_task(
+            &mut *tx,
+            id,
+            building_id,
+            actor_user_id,
+        )
+        .await?;
+    }
+    tx.commit().await?;
     Ok(())
 }
 
@@ -361,7 +393,7 @@ pub async fn get_by_token(pool: &PgPool, token: Uuid) -> AppResult<Option<TaskRo
         r#"SELECT t.id, t.building_id, t.title, t.description,
            t.status::text AS status, t.priority::text AS priority,
            t.contract_id, t.contractor_id, t.assigned_to, t.created_by, t.vendor_token,
-           t.token_expires_at, t.closed_at, t.created_at,
+           t.token_expires_at, t.closed_at, t.completion_cost, t.created_at,
            EXISTS(SELECT 1 FROM maintenance_log WHERE task_id = t.id) AS is_in_logbook
            FROM task t
            WHERE t.vendor_token = $1 AND t.token_expires_at > NOW()

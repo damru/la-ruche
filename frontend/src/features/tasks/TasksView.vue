@@ -139,6 +139,7 @@ const counts = computed(() => ({
   open: allTasks.value.filter(t => t.status === 'open').length,
   in_progress: allTasks.value.filter(t => t.status === 'in_progress').length,
   awaiting_vendor: allTasks.value.filter(t => t.status === 'awaiting_vendor').length,
+  awaiting_validation: allTasks.value.filter(t => t.status === 'awaiting_validation').length,
   closed: allTasks.value.filter(t => t.status === 'closed').length,
 }))
 
@@ -156,8 +157,15 @@ function statusVariant(s: string): 'valid' | 'open' | 'pending' | 'closed' | 'de
   if (s === 'open') return 'valid'
   if (s === 'in_progress') return 'open'
   if (s === 'awaiting_vendor') return 'default'
+  if (s === 'awaiting_validation') return 'pending'
   if (s === 'closed') return 'closed'
   return 'default'
+}
+
+function closeActionLabel(task: Task): string {
+  return task.status === 'awaiting_validation'
+    ? t('tasks.validateTask')
+    : t('tasks.closeTask')
 }
 
 function priorityVariant(p: string): 'err' | 'pending' | 'primary' | 'valid' | 'default' {
@@ -261,11 +269,13 @@ async function saveTask() {
 const closingTask = ref<Task | null>(null)
 const closeFeedback = useFormFeedback()
 const closingInProgress = ref(false)
+const closeAmount = ref('')
 const { schedule: scheduleCloseTask, forceExpire: forceCloseTask } = useAutoClose()
 watch(closingTask, (task) => { if (!task) forceCloseTask() })
 
 function openCloseModal(task: Task) {
   closingTask.value = task
+  closeAmount.value = task.completion_cost != null ? String(task.completion_cost) : ''
   closeFeedback.reset()
 }
 
@@ -275,7 +285,10 @@ async function confirmCloseTask() {
   closingInProgress.value = true
   closeFeedback.reset()
   try {
-    await tasksApi.update(closingTask.value.id, { status: 'closed' })
+    await tasksApi.update(closingTask.value.id, {
+      status: 'closed',
+      completion_cost: closeAmount.value ? Number(closeAmount.value) : null,
+    })
     closeFeedback.setSuccess(t('tasks.closeSuccess'))
     scheduleCloseTask(() => { closingTask.value = null; reload() })
   } catch (err) {
@@ -484,6 +497,7 @@ function copyToClipboard(text: string) {
               { key: 'open', label: t('tasks.filters.open'), count: counts.open },
               { key: 'in_progress', label: t('tasks.filters.in_progress'), count: counts.in_progress },
               { key: 'awaiting_vendor', label: t('tasks.filters.awaiting_vendor'), count: counts.awaiting_vendor },
+              { key: 'awaiting_validation', label: t('tasks.filters.awaiting_validation'), count: counts.awaiting_validation },
               { key: 'closed', label: t('tasks.filters.closed'), count: counts.closed },
             ]"
             :key="item.key"
@@ -600,6 +614,21 @@ function copyToClipboard(text: string) {
                   </span>
                 </div>
 
+                <div
+                  v-if="task.status === 'closed'"
+                  class="task-card-actions task-card-actions--stacked"
+                >
+                  <CBtn
+                    variant="ghost"
+                    size="sm"
+                    :aria-label="t('tasks.reopenTask')"
+                    @click="openReopenModal(task)"
+                  >
+                    <CIconRefresh />
+                    {{ t('tasks.reopenTask') }}
+                  </CBtn>
+                </div>
+
                 <!-- Card footer actions (Contract-card pattern) -->
                 <div class="task-card-actions">
                   <CBtn
@@ -616,11 +645,11 @@ function copyToClipboard(text: string) {
                     v-if="!isTerminal(task.status)"
                     variant="danger"
                     size="sm"
-                    :aria-label="t('tasks.closeTask')"
+                    :aria-label="closeActionLabel(task)"
                     @click="openCloseModal(task)"
                   >
                     <CIconCheckCircle />
-                    {{ t('tasks.closeTask') }}
+                    {{ closeActionLabel(task) }}
                   </CBtn>
                   <!-- Delete: closed/cancelled tasks only (visible on card) -->
                   <CBtn
@@ -644,17 +673,6 @@ function copyToClipboard(text: string) {
                   >
                     <CIconLink />
                     {{ t('tasks.generateToken') }}
-                  </CBtn>
-                  <!-- Reopen: closed tasks -->
-                  <CBtn
-                    v-if="task.status === 'closed'"
-                    variant="ghost"
-                    size="sm"
-                    :aria-label="t('tasks.reopenTask')"
-                    @click="openReopenModal(task)"
-                  >
-                    <CIconRefresh />
-                    {{ t('tasks.reopenTask') }}
                   </CBtn>
                 </div>
               </div>
@@ -769,7 +787,7 @@ function copyToClipboard(text: string) {
         </div>
         <!-- Assignment mode: radio (visible for new tasks, open tasks, and in_progress tasks) -->
         <div
-          v-if="!editingTask || ['open', 'in_progress', 'awaiting_vendor'].includes(editingTask.status)"
+          v-if="!editingTask || ['open', 'in_progress', 'awaiting_vendor', 'awaiting_validation'].includes(editingTask.status)"
           class="form-field"
         >
           <label class="form-label">{{ t('tasks.assignmentSection') }}</label>
@@ -869,13 +887,34 @@ function copyToClipboard(text: string) {
     <!-- Close task modal -->
     <CModal
       :open="!!closingTask"
-      :title="t('tasks.confirmCloseTitle')"
+      :title="closingTask?.status === 'awaiting_validation' ? t('tasks.confirmCloseValidationTitle') : t('tasks.confirmCloseTitle')"
       size="sm"
       @update:open="v => !v && (closingTask = null)"
     >
       <p class="body-sm">
-        {{ t('tasks.confirmCloseMessage', { title: closingTask?.title ?? '' }) }}
+        {{
+          closingTask?.status === 'awaiting_validation'
+            ? t('tasks.confirmCloseValidationMessage', { title: closingTask?.title ?? '' })
+            : t('tasks.confirmCloseMessage', { title: closingTask?.title ?? '' })
+        }}
       </p>
+      <div class="form-field task-close-field">
+        <label class="form-label">{{ t('tasks.completionCostLabel') }}</label>
+        <input
+          v-model="closeAmount"
+          type="number"
+          min="0"
+          step="0.01"
+          class="form-input"
+        />
+        <span class="field-hint">
+          {{
+            closingTask?.status === 'awaiting_validation' && closingTask?.completion_cost != null
+              ? t('tasks.completionCostVendorHint')
+              : t('tasks.completionCostHint')
+          }}
+        </span>
+      </div>
       <template #footer>
         <CFormFeedback
           :status="closeFeedback.status.value"
@@ -893,7 +932,7 @@ function copyToClipboard(text: string) {
           :closing="closeFeedback.status.value === 'success'"
           @click="confirmCloseTask"
         >
-          {{ t('tasks.closeTask') }}
+          {{ closingTask ? closeActionLabel(closingTask) : t('tasks.closeTask') }}
         </CBtn>
       </template>
     </CModal>
@@ -1003,6 +1042,12 @@ function copyToClipboard(text: string) {
   border-top: 1px solid var(--color-surface-container-high);
 }
 
+.task-card-actions--stacked {
+  margin-top: var(--space-3);
+  padding-top: 0;
+  border-top: 0;
+}
+
 .assignment-options {
   display: flex;
   flex-direction: column;
@@ -1064,4 +1109,5 @@ function copyToClipboard(text: string) {
 }
 
 .field-hint { font-size: var(--text-xs); color: var(--color-on-surface-variant); }
+.task-close-field { margin-top: var(--space-4); }
 </style>

@@ -19,6 +19,7 @@ const task = ref<VendorTask | null>(null)
 const uploading = ref(false)
 const success = ref(false)
 const comment = ref('')
+const cost = ref('')
 const selectedFiles = ref<File[]>([])
 const dragOver = ref(false)
 
@@ -78,7 +79,11 @@ async function submit() {
     }
 
     // 2. Submit with all document keys + comment
-    await vendorApi.submit(token, { comment: comment.value || undefined, documents })
+    await vendorApi.submit(token, {
+      comment: comment.value || undefined,
+      cost: cost.value ? Number(cost.value) : undefined,
+      documents,
+    })
     success.value = true
   } catch {
     error.value = t('contractor.uploadError')
@@ -229,6 +234,18 @@ async function submit() {
               rows="3"
               :placeholder="t('contractor.commentPlaceholder')"
             ></textarea>
+          </div>
+
+          <div class="form-field">
+            <label class="form-label">{{ t('contractor.cost') }}</label>
+            <input
+              v-model="cost"
+              type="number"
+              min="0"
+              step="0.01"
+              class="form-input"
+              :placeholder="t('contractor.costPlaceholder')"
+            />
           </div>
 
           <!-- Error inline -->

@@ -4,6 +4,7 @@ use axum::{
     http::StatusCode,
 };
 use serde::Deserialize;
+use sqlx::types::Decimal;
 use std::sync::Arc;
 use uuid::Uuid;
 
@@ -79,6 +80,8 @@ pub struct UpdateTaskInput {
     pub priority: Option<String>,
     #[serde(default, deserialize_with = "double_option::deserialize")]
     pub contractor_id: Option<Option<Uuid>>,
+    #[serde(default, deserialize_with = "double_option::deserialize")]
+    pub completion_cost: Option<Option<Decimal>>,
 }
 
 pub async fn update(
@@ -97,7 +100,7 @@ pub async fn update(
         && !db::task::validate_status(s)
     {
         return Err(AppError::Validation(format!(
-            "Invalid status '{}'. Valid values: open, in_progress, awaiting_vendor, closed, cancelled",
+            "Invalid status '{}'. Valid values: open, in_progress, awaiting_vendor, awaiting_validation, closed, cancelled",
             s
         )));
     }
@@ -110,6 +113,8 @@ pub async fn update(
         input.priority.as_deref(),
         input.status.as_deref(),
         input.contractor_id,
+        input.completion_cost,
+        auth.user_id,
     )
     .await?;
     Ok(StatusCode::NO_CONTENT)

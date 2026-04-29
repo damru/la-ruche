@@ -2,7 +2,7 @@ use crate::errors::AppResult;
 use chrono::{DateTime, NaiveDate, Utc};
 use serde::Serialize;
 use sqlx::types::Decimal;
-use sqlx::{PgPool, Row};
+use sqlx::{Executor, PgPool, Postgres, Row};
 use uuid::Uuid;
 
 /// Typed row for maintenance log entries.
@@ -42,7 +42,8 @@ pub async fn list(pool: &PgPool, building_id: Uuid) -> AppResult<Vec<Maintenance
         r#"SELECT id, building_id, title, description, intervention_date, cost,
            vendor_name, contract_id, task_id,
            source::text AS source, created_at
-           FROM maintenance_log WHERE building_id = $1 ORDER BY intervention_date DESC"#,
+           FROM maintenance_log WHERE building_id = $1
+           ORDER BY intervention_date DESC, created_at DESC"#,
     )
     .bind(building_id)
     .fetch_all(pool)
@@ -154,24 +155,43 @@ pub async fn delete(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()>
     Ok(())
 }
 
-/// Automatic creation from a closed task (called transactionally in contractor::submit).
-/// The unique index on task_id ensures idempotency.
+/// Automatic creation from a closed task.
+pub async fn create_automatic_from_task<'e, E>(
+    executor: E,
+    task_id: Uuid,
+    building_id: Uuid,
+    user_id: Uuid,
+) -> AppResult<()>
+where
+    E: Executor<'e, Database = Postgres>,
+{
+    let result = sqlx::query(
+        r#"INSERT INTO maintenance_log
+           (building_id, created_by, title, task_id, intervention_date, source, vendor_name, cost)
+           SELECT t.building_id, $3, t.title, t.id, CURRENT_DATE, 'automatic'::log_source,
+                  c.name AS vendor_name, t.completion_cost
+           FROM task t
+           LEFT JOIN contractor c ON c.id = t.contractor_id
+           WHERE t.id = $1 AND t.building_id = $2"#,
+    )
+    .bind(task_id)
+    .bind(building_id)
+    .bind(user_id)
+    .execute(executor)
+    .await?;
+
+    if result.rows_affected() == 0 {
+        return Err(crate::errors::AppError::NotFound);
+    }
+    Ok(())
+}
+
 pub async fn from_task(
     pool: &PgPool,
     task_id: Uuid,
     building_id: Uuid,
     user_id: Uuid,
 ) -> AppResult<()> {
-    sqlx::query(
-        r#"INSERT INTO maintenance_log (building_id, created_by, title, task_id, intervention_date, source)
-           SELECT building_id, $3, title, id, CURRENT_DATE, 'automatic'::log_source
-           FROM task WHERE id = $1 AND building_id = $2
-           ON CONFLICT DO NOTHING"#,
-    )
-    .bind(task_id)
-    .bind(building_id)
-    .bind(user_id)
-    .execute(pool)
-    .await?;
+    create_automatic_from_task(pool, task_id, building_id, user_id).await?;
     Ok(())
 }
