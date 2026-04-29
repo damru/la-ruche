@@ -728,7 +728,7 @@ function photoPreview(file: File): string {
             v-model="editForm.description"
             class="form-input"
             rows="3"
-          />
+          ></textarea>
         </div>
         <div class="form-field">
           <label class="form-label">{{ t('reports.unitLabel2') }}</label>
