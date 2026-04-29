@@ -41,11 +41,17 @@ const createFeedback = useFormFeedback()
 const saving = ref(false)
 const createForm = ref({ title: '', description: '', unit_id: '' })
 
-// Photo selection state
+// Photo selection state (create modal)
 const selectedPhotos = ref<File[]>([])
 const photoInputRef = ref<HTMLInputElement | null>(null)
 const photoDragOver = ref(false)
 const uploadingPhotos = ref(false)
+
+// Photo selection state (edit modal)
+const editSelectedPhotos = ref<File[]>([])
+const editPhotoInputRef = ref<HTMLInputElement | null>(null)
+const editPhotoDragOver = ref(false)
+const editUploadingPhotos = ref(false)
 
 const { schedule: scheduleCreateClose, forceExpire: forceCreateClose } = useAutoClose()
 watch(showCreateModal, (open) => { if (!open) forceCreateClose() })
@@ -75,6 +81,24 @@ function onPhotoDrop(e: DragEvent) {
 
 function removePhoto(idx: number) {
   selectedPhotos.value = selectedPhotos.value.filter((_, i) => i !== idx)
+}
+
+function onEditPhotoChange(e: Event) {
+  const input = e.target as HTMLInputElement
+  if (input.files) {
+    editSelectedPhotos.value = [...editSelectedPhotos.value, ...Array.from(input.files)]
+  }
+  if (editPhotoInputRef.value) editPhotoInputRef.value.value = ''
+}
+
+function onEditPhotoDrop(e: DragEvent) {
+  editPhotoDragOver.value = false
+  const files = Array.from(e.dataTransfer?.files ?? []).filter(f => f.type.startsWith('image/'))
+  editSelectedPhotos.value = [...editSelectedPhotos.value, ...files]
+}
+
+function removeEditPhoto(idx: number) {
+  editSelectedPhotos.value = editSelectedPhotos.value.filter((_, i) => i !== idx)
 }
 
 /** Upload a single photo and return its document_id. */
@@ -214,6 +238,8 @@ function openEditModal(report: Report) {
     description: report.description ?? '',
     unit_id: report.unit_id ?? '',
   }
+  editSelectedPhotos.value = []
+  editPhotoDragOver.value = false
   editFeedback.reset()
 }
 
@@ -229,12 +255,22 @@ async function submitEdit() {
       description: editForm.value.description.trim() || null,
       unit_id: editForm.value.unit_id || null,
     })
+
+    if (editSelectedPhotos.value.length) {
+      editUploadingPhotos.value = true
+      for (const photo of editSelectedPhotos.value) {
+        try { await uploadPhoto(reportToEdit.value.id, photo) } catch { /* ignore individual failures */ }
+      }
+      editUploadingPhotos.value = false
+    }
+
     editFeedback.setSuccess(t('reports.editSuccess'))
     scheduleEditClose(() => { reportToEdit.value = null; reload() })
   } catch (err) {
     editFeedback.setError(toErrorMessage(err, t('common.error')))
   } finally {
     editSaving.value = false
+    editUploadingPhotos.value = false
   }
 }
 
@@ -279,35 +315,23 @@ const viewPhotosList = ref<{ doc: Document; url: string }[]>([])
 const viewPhotosLoading = ref(false)
 const lightboxIndex = ref<number | null>(null)
 const deletingPhoto = ref(false)
-const deletePhotoError = ref('')
 
-async function openViewPhotos(report: Report) {
-  viewPhotosReport.value = report
-  viewPhotosList.value = []
-  viewPhotosLoading.value = true
-  deletePhotoError.value = ''
-  try {
-    const docsRes = await reportsApi.listDocuments(report.id)
-    const photos = await Promise.all(
-      docsRes.data.map(async (d) => {
-        const urlRes = await documentsApi.getDownloadUrl(d.id)
-        return { doc: d, url: urlRes.data.url }
-      }),
-    )
-    viewPhotosList.value = photos
-  } catch {
-    viewPhotosList.value = []
-  } finally {
-    viewPhotosLoading.value = false
-  }
+// ── Delete photo confirmation ─────────────────────────────────────
+const photoToDeleteIdx = ref<number | null>(null)
+const deletePhotoFeedback = useFormFeedback()
+
+function confirmDeletePhoto(idx: number) {
+  photoToDeleteIdx.value = idx
+  deletePhotoFeedback.reset()
 }
 
-async function deletePhoto(idx: number) {
-  if (!viewPhotosReport.value || deletingPhoto.value) return
+async function executeDeletePhoto() {
+  if (photoToDeleteIdx.value === null || !viewPhotosReport.value || deletingPhoto.value) return
+  const idx = photoToDeleteIdx.value
   const item = viewPhotosList.value[idx]
   if (!item) return
   deletingPhoto.value = true
-  deletePhotoError.value = ''
+  deletePhotoFeedback.reset()
   try {
     await reportsApi.detachDocument(viewPhotosReport.value.id, item.doc.id)
     await documentsApi.delete(item.doc.id)
@@ -325,10 +349,31 @@ async function deletePhoto(idx: number) {
         lightboxIndex.value = viewPhotosList.value.length - 1
       }
     }
+    photoToDeleteIdx.value = null
   } catch {
-    deletePhotoError.value = t('common.error')
+    deletePhotoFeedback.setError(t('common.error'))
   } finally {
     deletingPhoto.value = false
+  }
+}
+
+async function openViewPhotos(report: Report) {
+  viewPhotosReport.value = report
+  viewPhotosList.value = []
+  viewPhotosLoading.value = true
+  try {
+    const docsRes = await reportsApi.listDocuments(report.id)
+    const photos = await Promise.all(
+      docsRes.data.map(async (d) => {
+        const urlRes = await documentsApi.getDownloadUrl(d.id)
+        return { doc: d, url: urlRes.data.url }
+      }),
+    )
+    viewPhotosList.value = photos
+  } catch {
+    viewPhotosList.value = []
+  } finally {
+    viewPhotosLoading.value = false
   }
 }
 
@@ -788,6 +833,7 @@ function photoPreview(file: File): string {
       :open="!!reportToEdit"
       :title="t('reports.editReport')"
       size="md"
+      :closable="!editSaving && !editUploadingPhotos"
       @update:open="v => !v && (reportToEdit = null)"
     >
       <form
@@ -830,6 +876,65 @@ function photoPreview(file: File): string {
             </option>
           </select>
         </div>
+
+        <!-- Photo picker (add photos to existing report) -->
+        <div class="form-field">
+          <label class="form-label">{{ t('reports.addPhotos') }}</label>
+          <input
+            ref="editPhotoInputRef"
+            type="file"
+            accept="image/*"
+            multiple
+            style="display:none"
+            @change="onEditPhotoChange"
+          />
+          <div
+            :class="['photo-dropzone', { 'photo-dropzone--over': editPhotoDragOver }]"
+            role="button"
+            tabindex="0"
+            @click="editPhotoInputRef?.click()"
+            @keydown.enter="editPhotoInputRef?.click()"
+            @dragover.prevent="editPhotoDragOver = true"
+            @dragleave.prevent="editPhotoDragOver = false"
+            @drop.prevent="onEditPhotoDrop"
+          >
+            <CIconUpload
+              width="20"
+              height="20"
+              style="color:var(--color-on-surface-variant)"
+            />
+            <span class="body-xs photo-hint">{{ t('reports.photoHint') }}</span>
+          </div>
+          <div
+            v-if="editSelectedPhotos.length"
+            class="photo-preview-strip"
+          >
+            <div
+              v-for="(photo, idx) in editSelectedPhotos"
+              :key="idx"
+              class="photo-preview-item"
+            >
+              <img
+                :src="photoPreview(photo)"
+                :alt="photo.name"
+                class="photo-thumb"
+              />
+              <button
+                type="button"
+                class="photo-remove"
+                :title="t('reports.removePhoto')"
+                @click="removeEditPhoto(idx)"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+          <span
+            v-if="editUploadingPhotos"
+            class="body-xs"
+            style="color:var(--color-on-surface-variant)"
+          >{{ t('reports.photoUploading') }}</span>
+        </div>
       </form>
       <template #footer>
         <CFormFeedback
@@ -852,7 +957,7 @@ function photoPreview(file: File): string {
         </CBtn>
         <CBtn
           variant="primary"
-          :loading="editSaving"
+          :loading="editSaving || editUploadingPhotos"
           :closing="editFeedback.status.value === 'success'"
           @click="submitEdit"
         >
@@ -892,6 +997,37 @@ function photoPreview(file: File): string {
         </CBtn>
       </template>
     </CModal>
+    <!-- Delete photo confirmation modal -->
+    <CModal
+      :open="photoToDeleteIdx !== null"
+      :title="t('reports.deletePhoto')"
+      size="sm"
+      @update:open="v => !v && (photoToDeleteIdx = null)"
+    >
+      <p class="body-sm">
+        {{ t('reports.deletePhotoConfirm') }}
+      </p>
+      <template #footer>
+        <CFormFeedback
+          :status="deletePhotoFeedback.status.value"
+          :message="deletePhotoFeedback.message.value"
+        />
+        <CBtn
+          variant="ghost"
+          @click="photoToDeleteIdx = null"
+        >
+          {{ t('common.cancel') }}
+        </CBtn>
+        <CBtn
+          variant="danger"
+          :loading="deletingPhoto"
+          @click="executeDeletePhoto"
+        >
+          {{ t('common.delete') }}
+        </CBtn>
+      </template>
+    </CModal>
+
     <!-- View photos modal -->
     <CModal
       :open="!!viewPhotosReport"
@@ -925,7 +1061,7 @@ function photoPreview(file: File): string {
             class="photo-gallery-delete"
             :title="t('reports.deletePhoto')"
             :disabled="deletingPhoto"
-            @click.stop="deletePhoto(idx)"
+            @click.stop="confirmDeletePhoto(idx)"
           >
             <CIconTrash />
           </button>
@@ -937,13 +1073,6 @@ function photoPreview(file: File): string {
         style="color:var(--color-on-surface-variant)"
       >
         {{ t('reports.noPhotos') }}
-      </p>
-      <p
-        v-if="deletePhotoError"
-        class="body-sm"
-        style="color:var(--color-error);margin-top:var(--space-2)"
-      >
-        {{ deletePhotoError }}
       </p>
       <template #footer>
         <CBtn
@@ -973,7 +1102,7 @@ function photoPreview(file: File): string {
           class="lightbox-delete"
           :title="t('reports.deletePhoto')"
           :disabled="deletingPhoto"
-          @click.stop="deletePhoto(lightboxIndex!)"
+          @click.stop="confirmDeletePhoto(lightboxIndex!)"
         >
           <CIconTrash />
         </button>
