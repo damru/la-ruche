@@ -258,10 +258,16 @@ async function submitEdit() {
 
     if (editSelectedPhotos.value.length) {
       editUploadingPhotos.value = true
+      const photoErrors: string[] = []
       for (const photo of editSelectedPhotos.value) {
-        try { await uploadPhoto(reportToEdit.value.id, photo) } catch { /* ignore individual failures */ }
+        try { await uploadPhoto(reportToEdit.value.id, photo) } catch { photoErrors.push(photo.name) }
       }
       editUploadingPhotos.value = false
+      if (photoErrors.length) {
+        editFeedback.setError(t('reports.photoUploadError') + ': ' + photoErrors.join(', '))
+        setTimeout(() => { reportToEdit.value = null; reload() }, 2000)
+        return
+      }
     }
 
     editFeedback.setSuccess(t('reports.editSuccess'))
