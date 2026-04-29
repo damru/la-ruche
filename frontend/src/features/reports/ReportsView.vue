@@ -277,6 +277,7 @@ async function submitDelete() {
 const viewPhotosReport = ref<Report | null>(null)
 const viewPhotosList = ref<{ doc: Document; url: string }[]>([])
 const viewPhotosLoading = ref(false)
+const lightboxIndex = ref<number | null>(null)
 
 async function openViewPhotos(report: Report) {
   viewPhotosReport.value = report
@@ -463,7 +464,8 @@ function photoPreview(file: File): string {
                 class="dim photo-count photo-count--btn"
                 @click="openViewPhotos(r)"
               >
-                📎 {{ t('reports.photoCount', r.document_count) }}
+                <CIconEye style="width:14px;height:14px;flex-shrink:0" />
+                {{ t('reports.photoCount', r.document_count) }}
               </button>
             </div>
 
@@ -875,20 +877,18 @@ function photoPreview(file: File): string {
         v-else-if="viewPhotosList.length"
         class="photo-gallery"
       >
-        <a
-          v-for="item in viewPhotosList"
+        <button
+          v-for="(item, idx) in viewPhotosList"
           :key="item.doc.id"
-          :href="item.url"
-          target="_blank"
-          rel="noopener"
           class="photo-gallery-item"
+          @click="lightboxIndex = idx"
         >
           <img
             :src="item.url"
             :alt="item.doc.original_name"
             class="photo-gallery-thumb"
           />
-        </a>
+        </button>
       </div>
       <p
         v-else
@@ -906,6 +906,45 @@ function photoPreview(file: File): string {
         </CBtn>
       </template>
     </CModal>
+
+    <!-- Lightbox overlay -->
+    <Teleport to="body">
+      <div
+        v-if="lightboxIndex !== null && viewPhotosList[lightboxIndex]"
+        class="lightbox-overlay"
+        @click.self="lightboxIndex = null"
+      >
+        <button
+          class="lightbox-close"
+          @click="lightboxIndex = null"
+        >
+          ✕
+        </button>
+        <button
+          v-if="lightboxIndex > 0"
+          class="lightbox-nav lightbox-nav--prev"
+          @click="lightboxIndex--"
+        >
+          ‹
+        </button>
+        <img
+          :src="viewPhotosList[lightboxIndex].url"
+          :alt="viewPhotosList[lightboxIndex].doc.original_name"
+          class="lightbox-img"
+          @click.stop
+        />
+        <button
+          v-if="lightboxIndex < viewPhotosList.length - 1"
+          class="lightbox-nav lightbox-nav--next"
+          @click="lightboxIndex++"
+        >
+          ›
+        </button>
+        <span class="lightbox-counter body-sm">
+          {{ lightboxIndex + 1 }} / {{ viewPhotosList.length }}
+        </span>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -982,8 +1021,46 @@ function photoPreview(file: File): string {
 .photo-gallery-item {
   display: block; border-radius: var(--radius-sm); overflow: hidden;
   border: 1px solid var(--color-outline-variant); flex-shrink: 0;
+  cursor: pointer; background: none; padding: 0;
   transition: opacity 0.15s;
+  /* override global 44px touch-target */
+  min-height: unset; min-width: unset;
 }
 .photo-gallery-item:hover { opacity: 0.85; }
 .photo-gallery-thumb { width: 120px; height: 120px; object-fit: cover; display: block; }
+
+/* Lightbox */
+.lightbox-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, 0.92);
+  display: flex; align-items: center; justify-content: center;
+}
+.lightbox-img {
+  max-width: 90vw; max-height: 90vh;
+  object-fit: contain; border-radius: var(--radius-sm);
+  box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+}
+.lightbox-close {
+  position: absolute; top: 16px; right: 20px;
+  background: none; border: none; color: #fff;
+  font-size: 28px; cursor: pointer; line-height: 1;
+  min-height: unset; min-width: unset;
+  opacity: 0.8;
+}
+.lightbox-close:hover { opacity: 1; }
+.lightbox-nav {
+  position: absolute;
+  background: rgba(255,255,255,0.15); border: none; color: #fff;
+  font-size: 48px; line-height: 1; padding: 8px 16px;
+  cursor: pointer; border-radius: var(--radius-sm);
+  min-height: unset; min-width: unset;
+  opacity: 0.7; transition: opacity 0.15s;
+}
+.lightbox-nav:hover { opacity: 1; }
+.lightbox-nav--prev { left: 16px; }
+.lightbox-nav--next { right: 16px; }
+.lightbox-counter {
+  position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%);
+  color: rgba(255,255,255,0.7);
+}
 </style>
