@@ -175,6 +175,7 @@ export interface Document {
   size_bytes: number
   visible_roles: Role[]
   linked_contract_names?: string[]
+  linked_report_count?: number
   created_at: string
 }
 
@@ -250,10 +251,15 @@ export interface Report {
   id: string
   unit_id?: string
   author_id: string
+  author_first_name: string
+  author_last_name: string
   title: string
   description?: string
   status: ReportStatus
+  task_id?: string
+  document_count: number
   created_at: string
+  updated_at: string
 }
 
 export interface Consultation {

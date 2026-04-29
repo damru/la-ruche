@@ -364,12 +364,7 @@ async function deleteEntry(entry: MaintenanceEntry) {
 .vendor { color: var(--color-on-surface-variant); display: flex; align-items: center; }
 .cost { font-weight: var(--fw-semibold); color: var(--color-on-surface); }
 
-.form-grid { display: flex; flex-direction: column; gap: var(--space-4); }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
-.form-field { display: flex; flex-direction: column; gap: var(--space-1); }
-.form-label { font-size: var(--text-sm); font-weight: var(--fw-medium); color: var(--color-on-surface-variant); }
-.form-input { padding: var(--space-2) var(--space-3); border: 1px solid var(--color-outline); border-radius: var(--radius-md); font-size: var(--text-sm); background: var(--color-surface); color: var(--color-on-surface); }
-.form-input:focus { outline: none; border-color: var(--color-primary); }
 
 .empty-state { padding: var(--space-8); text-align: center; font-size: var(--text-md); color: var(--color-on-surface-variant); }
 </style>

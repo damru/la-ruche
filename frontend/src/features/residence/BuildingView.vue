@@ -87,7 +87,7 @@ onMounted(reload)
           <h2 class="section-title">
             {{ t('settings.building.title') }}
           </h2>
-          <div class="form-grid">
+          <div class="form-grid-2col">
             <div class="field">
               <label class="field-label">{{ t('settings.building.name') }}</label>
               <input
