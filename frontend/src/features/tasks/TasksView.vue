@@ -44,11 +44,14 @@ const contractorSuggestions = ref<Contractor[]>([])
 const showSuggestions = ref(false)
 const selectedContractor = ref<Contractor | null>(null)
 const createSuggestedContractor = ref(false)
-const contractorDraft = ref({
-  name: '',
-  email: '',
-  phone: '',
-})
+function defaultContractorDraft() {
+  return {
+    name: '',
+    email: '',
+    phone: '',
+  }
+}
+const contractorDraft = ref(defaultContractorDraft())
 
 function contractorDomainLabel(c: Contractor): string {
   if (!c.domains.length) return ''
@@ -92,11 +95,7 @@ function selectContractorSuggestion(c: Contractor) {
   selectedContractor.value = c
   contractorSearch.value = c.name
   createSuggestedContractor.value = false
-  contractorDraft.value = {
-    name: '',
-    email: '',
-    phone: '',
-  }
+  contractorDraft.value = defaultContractorDraft()
   // Hide immediately — mousedown.prevent on the item ensures this fires before blur
   showSuggestions.value = false
 }
@@ -122,11 +121,7 @@ function clearContractor() {
   selectedContractor.value = null
   contractorSearch.value = ''
   createSuggestedContractor.value = false
-  contractorDraft.value = {
-    name: '',
-    email: '',
-    phone: '',
-  }
+  contractorDraft.value = defaultContractorDraft()
   showSuggestions.value = false
 }
 
@@ -226,11 +221,7 @@ function openCreateModal() {
   selectedContractor.value = null
   contractorSearch.value = ''
   createSuggestedContractor.value = false
-  contractorDraft.value = {
-    name: '',
-    email: '',
-    phone: '',
-  }
+  contractorDraft.value = defaultContractorDraft()
   assignMode.value = 'none'
   taskFeedback.reset()
   showTaskModal.value = true
@@ -250,30 +241,18 @@ function openEditModal(task: Task) {
     contractorSearch.value = c?.name ?? ''
     assignMode.value = 'contractor'
     createSuggestedContractor.value = false
-    contractorDraft.value = {
-      name: '',
-      email: '',
-      phone: '',
-    }
+    contractorDraft.value = defaultContractorDraft()
   } else if (task.status === 'in_progress') {
     selectedContractor.value = null
     contractorSearch.value = ''
     createSuggestedContractor.value = false
-    contractorDraft.value = {
-      name: '',
-      email: '',
-      phone: '',
-    }
+    contractorDraft.value = defaultContractorDraft()
     assignMode.value = 'self'
   } else {
     selectedContractor.value = null
     contractorSearch.value = ''
     createSuggestedContractor.value = false
-    contractorDraft.value = {
-      name: '',
-      email: '',
-      phone: '',
-    }
+    contractorDraft.value = defaultContractorDraft()
     assignMode.value = 'none'
   }
   taskFeedback.reset()
@@ -290,9 +269,9 @@ async function saveTask() {
     if (assignMode.value === 'contractor') {
       if (selectedContractor.value) {
         contractorId = selectedContractor.value.id
-      } else if (createSuggestedContractor.value && contractorDraft.value.name.trim()) {
+      } else if (createSuggestedContractor.value && contractorDraft.value.name) {
         const createdContractor = await contractorsApi.create({
-          name: contractorDraft.value.name.trim(),
+          name: contractorDraft.value.name,
           email: contractorDraft.value.email.trim() || undefined,
           phone: contractorDraft.value.phone.trim() || undefined,
         })
