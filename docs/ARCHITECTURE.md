@@ -157,6 +157,8 @@ Conventions : UUID v4, TIMESTAMPTZ, soft delete via `actif`/`statut`, `updated_a
 
 Pour la conversion `signalement → tâche`, l'endpoint backend crée la tâche dans une transaction SQL, persiste la priorité choisie, lie `report.task_id` et bascule immédiatement `report.status` à `in_progress`. Lors d'une clôture effective de la tâche, le backend clôture aussi le signalement lié en réutilisant ce lien `report.task_id`.
 
+Dans `TasksView`, l'assignation prestataire reste tolérante : l'autocomplete ne force pas la sélection d'un prestataire existant. Si aucune correspondance n'est trouvée, l'UI peut créer un prestataire via `POST /contractors` juste avant l'enregistrement de la tâche, sinon la saisie libre reste locale et n'écrit aucun `contractor_id`.
+
 ---
 
 ## Flux principaux

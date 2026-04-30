@@ -198,6 +198,14 @@ La modale de conversion d'un signalement en tâche doit permettre au gestionnair
 - La priorité proposée par défaut est `Normal`.
 - La conversion reste une action unique : création de la tâche puis redirection immédiate vers la tâche créée.
 
+## Règle UI — Vue Tâches
+
+Le champ d'assignation prestataire dans `TasksView` doit accepter une saisie libre sans forcer le choix d'un prestataire existant.
+
+- Tant qu'une correspondance existe, l'autocomplete continue de proposer le référentiel.
+- Si aucune correspondance n'existe, une suggestion dédiée permet d'ajouter ce prestataire au référentiel sans quitter la modale.
+- L'ajout au référentiel reste optionnel : si l'utilisateur n'active pas cette suggestion, la saisie libre ne doit pas bloquer l'enregistrement.
+
 ## Règle UI — CFormFeedback dans les modales (DDR-006)
 
 **Règle obligatoire :** tout `CModal` qui contient un formulaire ou une action destructive **doit** inclure un `CFormFeedback` dans le slot `#footer`, sur la même ligne que les boutons d'action. Le `CFormFeedback` ne doit jamais être placé dans le corps de la modale (`<template #default>`).

@@ -43,6 +43,12 @@ const contractorSearch = ref('')
 const contractorSuggestions = ref<Contractor[]>([])
 const showSuggestions = ref(false)
 const selectedContractor = ref<Contractor | null>(null)
+const createSuggestedContractor = ref(false)
+const contractorDraft = ref({
+  name: '',
+  email: '',
+  phone: '',
+})
 
 function contractorDomainLabel(c: Contractor): string {
   if (!c.domains.length) return ''
@@ -64,9 +70,17 @@ function populateSuggestions(query: string) {
   showSuggestions.value = contractorSuggestions.value.length > 0
 }
 
+const canSuggestContractorCreation = computed(() =>
+  assignMode.value === 'contractor'
+  && !selectedContractor.value
+  && contractorSearch.value.trim().length > 0
+  && contractorSuggestions.value.length === 0,
+)
+
 function onContractorInput() {
   // Any manual text edit deselects the current contractor
   selectedContractor.value = null
+  createSuggestedContractor.value = false
   populateSuggestions(contractorSearch.value)
 }
 
@@ -77,7 +91,23 @@ function onContractorFocus() {
 function selectContractorSuggestion(c: Contractor) {
   selectedContractor.value = c
   contractorSearch.value = c.name
+  createSuggestedContractor.value = false
+  contractorDraft.value = {
+    name: '',
+    email: '',
+    phone: '',
+  }
   // Hide immediately — mousedown.prevent on the item ensures this fires before blur
+  showSuggestions.value = false
+}
+
+function suggestContractorCreation() {
+  createSuggestedContractor.value = true
+  contractorDraft.value = {
+    name: contractorSearch.value.trim(),
+    email: '',
+    phone: '',
+  }
   showSuggestions.value = false
 }
 
@@ -91,6 +121,12 @@ function hideSuggestions() {
 function clearContractor() {
   selectedContractor.value = null
   contractorSearch.value = ''
+  createSuggestedContractor.value = false
+  contractorDraft.value = {
+    name: '',
+    email: '',
+    phone: '',
+  }
   showSuggestions.value = false
 }
 
@@ -189,6 +225,12 @@ function openCreateModal() {
   taskForm.value = defaultForm()
   selectedContractor.value = null
   contractorSearch.value = ''
+  createSuggestedContractor.value = false
+  contractorDraft.value = {
+    name: '',
+    email: '',
+    phone: '',
+  }
   assignMode.value = 'none'
   taskFeedback.reset()
   showTaskModal.value = true
@@ -207,13 +249,31 @@ function openEditModal(task: Task) {
     selectedContractor.value = c ?? null
     contractorSearch.value = c?.name ?? ''
     assignMode.value = 'contractor'
+    createSuggestedContractor.value = false
+    contractorDraft.value = {
+      name: '',
+      email: '',
+      phone: '',
+    }
   } else if (task.status === 'in_progress') {
     selectedContractor.value = null
     contractorSearch.value = ''
+    createSuggestedContractor.value = false
+    contractorDraft.value = {
+      name: '',
+      email: '',
+      phone: '',
+    }
     assignMode.value = 'self'
   } else {
     selectedContractor.value = null
     contractorSearch.value = ''
+    createSuggestedContractor.value = false
+    contractorDraft.value = {
+      name: '',
+      email: '',
+      phone: '',
+    }
     assignMode.value = 'none'
   }
   taskFeedback.reset()
@@ -226,6 +286,23 @@ async function saveTask() {
   savingTask.value = true
   taskFeedback.reset()
   try {
+    let contractorId: string | null = null
+    if (assignMode.value === 'contractor') {
+      if (selectedContractor.value) {
+        contractorId = selectedContractor.value.id
+      } else if (createSuggestedContractor.value && contractorDraft.value.name.trim()) {
+        const createdContractor = await contractorsApi.create({
+          name: contractorDraft.value.name.trim(),
+          email: contractorDraft.value.email.trim() || undefined,
+          phone: contractorDraft.value.phone.trim() || undefined,
+        })
+        contractorId = createdContractor.data.id
+        allContractors.value = [createdContractor.data, ...allContractors.value]
+      } else if (editingTask.value?.contractor_id) {
+        contractorId = editingTask.value.contractor_id
+      }
+    }
+
     if (editingTask.value) {
       // Reflect assignment mode change in DB:
       // 'self'       → in_progress (self-assigned, no contractor)
@@ -241,9 +318,7 @@ async function saveTask() {
         title: taskForm.value.title,
         description: taskForm.value.description || null,
         priority: taskForm.value.priority,
-        contractor_id: assignMode.value === 'contractor'
-          ? (selectedContractor.value?.id ?? null)
-          : null,
+        contractor_id: assignMode.value === 'contractor' ? contractorId : null,
         ...(statusPatch ? { status: statusPatch } : {}),
       })
     } else {
@@ -251,9 +326,7 @@ async function saveTask() {
         title: taskForm.value.title,
         description: taskForm.value.description || undefined,
         priority: taskForm.value.priority as TaskPriority,
-        contractor_id: assignMode.value === 'contractor'
-          ? (selectedContractor.value?.id ?? null)
-          : null,
+        contractor_id: assignMode.value === 'contractor' ? contractorId : null,
       })
     }
     taskFeedback.setSuccess(t('common.saved'))
@@ -765,7 +838,7 @@ function copyToClipboard(text: string) {
               ×
             </button>
             <ul
-              v-if="showSuggestions"
+              v-if="showSuggestions || canSuggestContractorCreation"
               class="autocomplete-list"
             >
               <li
@@ -780,6 +853,14 @@ function copyToClipboard(text: string) {
                   class="autocomplete-meta"
                 >{{ contractorDomainLabel(c) }}</span>
               </li>
+              <li
+                v-if="canSuggestContractorCreation"
+                class="autocomplete-item autocomplete-item--action"
+                @mousedown.prevent="suggestContractorCreation"
+              >
+                <span class="autocomplete-name">{{ t('tasks.contractorCreateSuggestion', { name: contractorSearch.trim() }) }}</span>
+                <span class="autocomplete-meta">{{ t('tasks.contractorCreateSuggestionHint') }}</span>
+              </li>
             </ul>
           </div>
           <span
@@ -787,6 +868,41 @@ function copyToClipboard(text: string) {
             class="field-hint"
           >
             {{ selectedContractor.email || selectedContractor.phone || '' }}
+          </span>
+          <span
+            v-else-if="contractorSearch.trim()"
+            class="field-hint"
+          >
+            {{ t('tasks.contractorFreeInputHint') }}
+          </span>
+        </div>
+        <div
+          v-if="assignMode === 'contractor' && createSuggestedContractor"
+          class="form-field contractor-create-box"
+        >
+          <label class="form-label">{{ t('tasks.contractorCreateLabel') }}</label>
+          <div class="form-grid-2col contractor-create-grid">
+            <div class="form-field">
+              <label class="form-label">{{ t('contractors.email') }}</label>
+              <input
+                v-model="contractorDraft.email"
+                type="email"
+                class="form-input"
+                :placeholder="t('contractors.emailPlaceholder')"
+              />
+            </div>
+            <div class="form-field">
+              <label class="form-label">{{ t('contractors.phone') }}</label>
+              <input
+                v-model="contractorDraft.phone"
+                type="tel"
+                class="form-input"
+                :placeholder="t('contractors.phonePlaceholder')"
+              />
+            </div>
+          </div>
+          <span class="field-hint">
+            {{ t('tasks.contractorCreateHelp') }}
           </span>
         </div>
         <!-- Assignment mode: radio (visible for new tasks, open tasks, and in_progress tasks) -->
@@ -1099,6 +1215,10 @@ function copyToClipboard(text: string) {
 .autocomplete-item:hover { background: var(--color-surface-container); }
 .autocomplete-name { font-weight: var(--fw-medium); }
 .autocomplete-meta { font-size: var(--text-xs); color: var(--color-on-surface-variant); }
+.autocomplete-item--action {
+  align-items: flex-start;
+  flex-direction: column;
+}
 
 .contractor-clear {
   position: absolute;
@@ -1114,6 +1234,13 @@ function copyToClipboard(text: string) {
 }
 
 .field-hint { font-size: var(--text-xs); color: var(--color-on-surface-variant); }
+.contractor-create-box {
+  padding: var(--space-3);
+  border: 1px dashed var(--color-outline);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-container-lowest);
+}
+.contractor-create-grid { margin-bottom: 0; }
 .task-close-field { margin-top: var(--space-4); }
 .modal-footer-feedback { margin-right: auto; min-width: 0; }
 </style>

@@ -160,7 +160,7 @@ Tâches assignées en interne, lien tokenisé éphémère pour accès prestatair
 * `EP-007-S03` ✅ — Permettre au prestataire de déposer des documents via le lien tokenisé (zone staging) — `POST /vendor/:token/upload-url`
 * `EP-007-S04` ✅ — Valider et archiver les documents déposés par le prestataire (bucket final) puis passer la tâche en pré-validation (`awaiting_validation`) avec commentaire et coût optionnel — dans la transaction `POST /vendor/:token/submission`
 * `EP-007-S05` ✅ — Clôturer une tâche avec coût optionnel et l'alimenter automatiquement au carnet d'entretien (→ EP-009-S03), y compris après réouverture ; inclut `vendor_name` du prestataire assigné
-* `EP-007-S06` ✅ — Assigner un prestataire du référentiel (EP-015) à une tâche via autocomplete — `contractor_id` FK sur `task`
+* `EP-007-S06` ✅ — Assigner un prestataire du référentiel (EP-015) à une tâche via autocomplete, avec suggestion de création optionnelle si aucune correspondance n'existe et sans bloquer la saisie libre — `contractor_id` FK sur `task`
 
 ***
 
@@ -304,7 +304,7 @@ Calendrier partagé centralisant AG, interventions et réunions avec liens conte
 
 **Statut :** en cours | **MVP :** non | **Réf. PRD :** Gestion courante
 
-**État code actuel :** backend réel (CRUD + recherche par nom) + frontend branché (catalogue, création, édition, suppression, autocomplete dans TasksView).
+**État code actuel :** backend réel (CRUD + recherche par nom) + frontend branché (catalogue, création, édition, suppression, autocomplete dans TasksView, création optionnelle depuis la modale tâche).
 
 Catalogue des prestataires de la résidence : nom, email, téléphone, domaine professionnel. Réutilisable lors de l'assignation d'une tâche (autocomplete) et pré-rempli à la migration vers le carnet d'entretien. Accessible en lecture à tous les utilisateurs, modifiable par les managers et membres du conseil syndical.
 
