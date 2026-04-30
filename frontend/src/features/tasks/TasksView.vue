@@ -73,12 +73,12 @@ function populateSuggestions(query: string) {
   showSuggestions.value = contractorSuggestions.value.length > 0
 }
 
-const canSuggestContractorCreation = computed(() =>
+const canSuggestContractorCreation = computed(() => (
   assignMode.value === 'contractor'
   && !selectedContractor.value
   && contractorSearch.value.trim().length > 0
-  && contractorSuggestions.value.length === 0,
-)
+  && contractorSuggestions.value.length === 0
+))
 
 function onContractorInput() {
   // Any manual text edit deselects the current contractor
@@ -1194,6 +1194,7 @@ function copyToClipboard(text: string) {
 .autocomplete-item:hover { background: var(--color-surface-container); }
 .autocomplete-name { font-weight: var(--fw-medium); }
 .autocomplete-meta { font-size: var(--text-xs); color: var(--color-on-surface-variant); }
+/* Vertical layout reserved for the "create contractor" suggestion row. */
 .autocomplete-item--action {
   align-items: flex-start;
   flex-direction: column;
