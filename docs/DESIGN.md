@@ -204,7 +204,7 @@ Le champ d'assignation prestataire dans `TasksView` doit accepter une saisie lib
 
 - Tant qu'une correspondance existe, l'autocomplete continue de proposer le référentiel.
 - Si aucune correspondance n'existe, une suggestion dédiée permet d'ajouter ce prestataire au référentiel sans quitter la modale.
-- L'ajout au référentiel reste optionnel : si l'utilisateur n'active pas cette suggestion, la saisie libre ne doit pas bloquer l'enregistrement.
+- L'ajout au référentiel reste optionnel : si l'utilisateur n'active pas cette suggestion, la saisie libre ne doit pas bloquer l'enregistrement et doit rester visible sur la tâche enregistrée.
 
 ## Règle UI — CFormFeedback dans les modales (DDR-006)
 

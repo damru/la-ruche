@@ -231,9 +231,9 @@ export const tasksApi = {
     api.get<Task[]>('/tasks'),
   get: (id: string) =>
     api.get<Task>(`/tasks/${id}`),
-  create: (data: { title: string; description?: string; priority?: string; contract_id?: string; contractor_id?: string | null; assigned_to?: string }) =>
+  create: (data: { title: string; description?: string; priority?: string; contract_id?: string; contractor_id?: string | null; contractor_name?: string | null; assigned_to?: string }) =>
     api.post<Task>('/tasks', data),
-  update: (id: string, data: { title?: string; description?: string | null; priority?: string; status?: string; contractor_id?: string | null; completion_cost?: number | null }) =>
+  update: (id: string, data: { title?: string; description?: string | null; priority?: string; status?: string; contractor_id?: string | null; contractor_name?: string | null; completion_cost?: number | null }) =>
     api.put<Task>(`/tasks/${id}`, data),
   delete: (id: string) =>
     api.delete(`/tasks/${id}`),

@@ -89,6 +89,8 @@ pub struct UpdateTaskInput {
     #[serde(default, deserialize_with = "double_option::deserialize")]
     pub contractor_id: Option<Option<Uuid>>,
     #[serde(default, deserialize_with = "double_option::deserialize")]
+    pub contractor_name: Option<Option<String>>,
+    #[serde(default, deserialize_with = "double_option::deserialize")]
     pub completion_cost: Option<Option<Decimal>>,
 }
 
@@ -129,6 +131,7 @@ pub async fn update(
         input.priority.as_deref(),
         input.status.as_deref(),
         input.contractor_id,
+        input.contractor_name.as_ref().map(|value| value.as_deref()),
         input.completion_cost,
         auth.user_id,
     )

@@ -213,6 +213,7 @@ export interface Task {
   priority: TaskPriority
   contract_id?: string
   contractor_id?: string
+  contractor_name?: string
   assigned_to?: string
   created_by?: string
   /** True when a vendor token is active — the raw token UUID is never returned by list/get. */

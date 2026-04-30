@@ -131,6 +131,10 @@ function clearContractor() {
   showSuggestions.value = false
 }
 
+function contractorDisplayName(task: Task): string | undefined {
+  return contractorsById.value.get(task.contractor_id ?? '')?.name ?? task.contractor_name
+}
+
 // Auto-clear contractor when switching away from contractor mode
 watch(assignMode, (newMode) => {
   if (newMode !== 'contractor') {
@@ -244,10 +248,16 @@ function openEditModal(task: Task) {
   if (task.contractor_id) {
     const c = contractorsById.value.get(task.contractor_id)
     selectedContractor.value = c ?? null
-    contractorSearch.value = c?.name ?? ''
+    contractorSearch.value = c?.name ?? task.contractor_name ?? ''
     assignMode.value = 'contractor'
     createSuggestedContractor.value = false
     contractorDraft.value = createDefaultContractorDraft()
+  } else if (task.contractor_name) {
+    selectedContractor.value = null
+    contractorSearch.value = task.contractor_name
+    createSuggestedContractor.value = false
+    contractorDraft.value = createDefaultContractorDraft()
+    assignMode.value = 'contractor'
   } else if (task.status === 'in_progress') {
     selectedContractor.value = null
     contractorSearch.value = ''
@@ -272,9 +282,11 @@ async function saveTask() {
   taskFeedback.reset()
   try {
     let contractorId: string | null = null
+    let contractorName: string | null = null
     if (assignMode.value === 'contractor') {
       if (selectedContractor.value) {
         contractorId = selectedContractor.value.id
+        contractorName = selectedContractor.value.name
       } else if (createSuggestedContractor.value && contractorDraft.value.name) {
         const createdContractor = await contractorsApi.create({
           name: contractorDraft.value.name,
@@ -282,9 +294,10 @@ async function saveTask() {
           phone: emptyStringToUndefined(contractorDraft.value.phone),
         })
         contractorId = createdContractor.data.id
+        contractorName = createdContractor.data.name
         allContractors.value = [createdContractor.data, ...allContractors.value]
-      } else if (editingTask.value?.contractor_id) {
-        contractorId = editingTask.value.contractor_id
+      } else {
+        contractorName = emptyStringToUndefined(contractorSearch.value) ?? null
       }
     }
 
@@ -304,6 +317,7 @@ async function saveTask() {
         description: taskForm.value.description || null,
         priority: taskForm.value.priority,
         contractor_id: assignMode.value === 'contractor' ? contractorId : null,
+        contractor_name: assignMode.value === 'contractor' ? contractorName : null,
         ...(statusPatch ? { status: statusPatch } : {}),
       })
     } else {
@@ -312,6 +326,7 @@ async function saveTask() {
         description: taskForm.value.description || undefined,
         priority: taskForm.value.priority as TaskPriority,
         contractor_id: assignMode.value === 'contractor' ? contractorId : null,
+        contractor_name: assignMode.value === 'contractor' ? contractorName : null,
       })
     }
     taskFeedback.setSuccess(t('common.saved'))
@@ -663,17 +678,22 @@ function copyToClipboard(text: string) {
                 <div class="task-meta">
                   <span>{{ formatRelative(task.created_at) }}</span>
                   <span v-if="task.closed_at">· {{ t('tasks.closedAt', { date: formatDate(task.closed_at) }) }}</span>
-                  <span v-if="task.contractor_id && contractorsById.get(task.contractor_id)">
+                  <span v-if="contractorDisplayName(task)">
                     · 🔧
                     <RouterLink
+                      v-if="task.contractor_id && contractorsById.get(task.contractor_id)"
                       :to="{ name: 'contractor-detail', params: { id: task.contractor_id } }"
                       class="contractor-meta-link"
                     >{{ contractorsById.get(task.contractor_id)!.name }}</RouterLink>
+                    <span
+                      v-else
+                      class="contractor-meta-link contractor-meta-link--text"
+                    >{{ contractorDisplayName(task) }}</span>
                   </span>
                 </div>
 
                 <div
-                  v-if="task.contractor_id && !task.has_vendor_token && !isTerminal(task.status)"
+                  v-if="contractorDisplayName(task) && !task.has_vendor_token && !isTerminal(task.status)"
                   class="task-card-actions task-card-actions--stacked"
                 >
                   <CBtn

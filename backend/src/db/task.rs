@@ -16,6 +16,7 @@ pub struct TaskRow {
     pub priority: String,
     pub contract_id: Option<Uuid>,
     pub contractor_id: Option<Uuid>,
+    pub contractor_name: Option<String>,
     pub assigned_to: Option<Uuid>,
     pub created_by: Uuid,
     /// Raw token UUID — capability secret, never exposed in list/get responses.
@@ -40,6 +41,7 @@ pub struct TaskListItem {
     pub priority: String,
     pub contract_id: Option<Uuid>,
     pub contractor_id: Option<Uuid>,
+    pub contractor_name: Option<String>,
     pub assigned_to: Option<Uuid>,
     pub created_by: Uuid,
     pub has_vendor_token: bool,
@@ -63,6 +65,7 @@ impl From<TaskRow> for TaskListItem {
             priority: r.priority,
             contract_id: r.contract_id,
             contractor_id: r.contractor_id,
+            contractor_name: r.contractor_name,
             assigned_to: r.assigned_to,
             created_by: r.created_by,
             token_expires_at: r.token_expires_at,
@@ -81,7 +84,15 @@ pub struct CreateTaskInput {
     pub priority: Option<String>,
     pub contract_id: Option<Uuid>,
     pub contractor_id: Option<Uuid>,
+    pub contractor_name: Option<String>,
     pub assigned_to: Option<Uuid>,
+}
+
+fn normalize_optional_text(value: Option<&str>) -> Option<String> {
+    value.and_then(|text| {
+        let trimmed = text.trim();
+        (!trimmed.is_empty()).then(|| trimmed.to_string())
+    })
 }
 
 /// Valid task status values for update requests.
@@ -116,6 +127,7 @@ fn task_row_from_query(r: &sqlx::postgres::PgRow) -> Result<TaskRow, sqlx::Error
         priority: r.try_get("priority")?,
         contract_id: r.try_get("contract_id")?,
         contractor_id: r.try_get("contractor_id")?,
+        contractor_name: r.try_get("contractor_name")?,
         assigned_to: r.try_get("assigned_to")?,
         created_by: r.try_get("created_by")?,
         vendor_token: r.try_get("vendor_token")?,
@@ -131,7 +143,7 @@ pub async fn list(pool: &PgPool, building_id: Uuid) -> AppResult<Vec<TaskRow>> {
     let rows = sqlx::query(
         r#"SELECT t.id, t.building_id, t.title, t.description,
            t.status::text AS status, t.priority::text AS priority,
-           t.contract_id, t.contractor_id, t.assigned_to, t.created_by, t.vendor_token,
+           t.contract_id, t.contractor_id, t.contractor_name, t.assigned_to, t.created_by, t.vendor_token,
            t.token_expires_at, t.closed_at, t.completion_cost, t.created_at,
            EXISTS(SELECT 1 FROM maintenance_log WHERE task_id = t.id) AS is_in_logbook
            FROM task t WHERE t.building_id = $1
@@ -152,7 +164,7 @@ pub async fn get(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<Option
     let row = sqlx::query(
         r#"SELECT t.id, t.building_id, t.title, t.description,
            t.status::text AS status, t.priority::text AS priority,
-           t.contract_id, t.contractor_id, t.assigned_to, t.created_by, t.vendor_token,
+           t.contract_id, t.contractor_id, t.contractor_name, t.assigned_to, t.created_by, t.vendor_token,
            t.token_expires_at, t.closed_at, t.completion_cost, t.created_at,
            EXISTS(SELECT 1 FROM maintenance_log WHERE task_id = t.id) AS is_in_logbook
            FROM task t WHERE t.id = $1 AND t.building_id = $2"#,
@@ -174,12 +186,13 @@ pub async fn create(
     input: CreateTaskInput,
 ) -> AppResult<TaskRow> {
     let priority = input.priority.as_deref().unwrap_or(DEFAULT_PRIORITY);
+    let contractor_name = normalize_optional_text(input.contractor_name.as_deref());
     let row = sqlx::query(
-        r#"INSERT INTO task (building_id, title, description, priority, contract_id, contractor_id, assigned_to, created_by)
-           VALUES ($1, $2, $3, $4::text::task_priority, $5, $6, $7, $8)
+        r#"INSERT INTO task (building_id, title, description, priority, contract_id, contractor_id, contractor_name, assigned_to, created_by)
+           VALUES ($1, $2, $3, $4::text::task_priority, $5, $6, $7, $8, $9)
            RETURNING id, building_id, title, description,
            status::text AS status, priority::text AS priority,
-           contract_id, contractor_id, assigned_to, created_by, vendor_token,
+           contract_id, contractor_id, contractor_name, assigned_to, created_by, vendor_token,
            token_expires_at, closed_at, completion_cost, created_at,
            FALSE AS is_in_logbook"#,
     )
@@ -189,6 +202,7 @@ pub async fn create(
     .bind(priority)
     .bind(input.contract_id)
     .bind(input.contractor_id)
+    .bind(contractor_name)
     .bind(input.assigned_to)
     .bind(user_id)
     .fetch_one(pool)
@@ -300,6 +314,7 @@ pub async fn update_fields(
     priority: Option<&str>,
     status: Option<&str>,
     contractor_id: Option<Option<Uuid>>,
+    contractor_name: Option<Option<&str>>,
     completion_cost_update: Option<Option<Decimal>>,
     actor_user_id: Uuid,
 ) -> AppResult<()> {
@@ -327,6 +342,10 @@ pub async fn update_fields(
         Some(c) => c,
         None => current.contractor_id,
     };
+    let new_contractor_name = match contractor_name {
+        Some(value) => normalize_optional_text(value),
+        None => current.contractor_name.clone(),
+    };
     let new_completion_cost = match completion_cost_update {
         Some(cost) => cost,
         None => current_completion_cost,
@@ -346,8 +365,9 @@ pub async fn update_fields(
           priority = $5::text::task_priority,
           status = $6::text::task_status,
           contractor_id = $7,
-          closed_at = $8,
-          completion_cost = $9,
+          contractor_name = $8,
+          closed_at = $9,
+          completion_cost = $10,
           updated_at = NOW()
           WHERE id = $1 AND building_id = $2",
     )
@@ -358,6 +378,7 @@ pub async fn update_fields(
     .bind(&new_priority)
     .bind(&new_status)
     .bind(new_contractor_id)
+    .bind(&new_contractor_name)
     .bind(closed_at)
     .bind(new_completion_cost)
     .execute(&mut *tx)
@@ -407,7 +428,7 @@ pub async fn get_by_token(pool: &PgPool, token: Uuid) -> AppResult<Option<TaskRo
     let row = sqlx::query(
         r#"SELECT t.id, t.building_id, t.title, t.description,
            t.status::text AS status, t.priority::text AS priority,
-           t.contract_id, t.contractor_id, t.assigned_to, t.created_by, t.vendor_token,
+           t.contract_id, t.contractor_id, t.contractor_name, t.assigned_to, t.created_by, t.vendor_token,
            t.token_expires_at, t.closed_at, t.completion_cost, t.created_at,
            EXISTS(SELECT 1 FROM maintenance_log WHERE task_id = t.id) AS is_in_logbook
            FROM task t

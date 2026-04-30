@@ -108,11 +108,11 @@ const timelineEvents = computed((): TimelineEvent[] => {
   })
 
   // 2. Contractor assignment or self-assignment (no timestamp — shown as undated step)
-  if (t_.contractor_id && contractor.value) {
+  if ((t_.contractor_id && contractor.value) || t_.contractor_name) {
     events.push({
       key: 'assigned_contractor',
       label: t('tasks.lifecycle.assignedContractor'),
-      detail: contractor.value.name,
+      detail: contractor.value?.name ?? t_.contractor_name,
       icon: CIconWrench,
       variant: 'warning',
     })
@@ -258,11 +258,16 @@ function dotClass(variant?: TimelineEvent['variant']): string {
               <span v-if="task.closed_at">
                 · {{ t('tasks.closedAt', { date: formatDate(task.closed_at) }) }}
               </span>
-              <span v-if="contractor">
+              <span v-if="contractor || task.contractor_name">
                 · <RouterLink
+                  v-if="contractor"
                   :to="{ name: 'contractor-detail', params: { id: contractor.id } }"
                   class="contractor-link"
                 >🔧 {{ contractor.name }}</RouterLink>
+                <span
+                  v-else
+                  class="contractor-link contractor-link--text"
+                >🔧 {{ task.contractor_name }}</span>
               </span>
             </div>
           </div>

@@ -169,10 +169,10 @@ where
         r#"INSERT INTO maintenance_log
            (building_id, created_by, title, task_id, intervention_date, source, vendor_name, cost)
            SELECT t.building_id, $3, t.title, t.id, CURRENT_DATE, 'automatic'::log_source,
-                  c.name AS vendor_name, t.completion_cost
-           FROM task t
-           LEFT JOIN contractor c ON c.id = t.contractor_id
-           WHERE t.id = $1 AND t.building_id = $2 AND t.status = 'closed'::task_status"#,
+                  COALESCE(c.name, t.contractor_name) AS vendor_name, t.completion_cost
+            FROM task t
+            LEFT JOIN contractor c ON c.id = t.contractor_id
+            WHERE t.id = $1 AND t.building_id = $2 AND t.status = 'closed'::task_status"#,
     )
     .bind(task_id)
     .bind(building_id)
