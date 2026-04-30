@@ -49,6 +49,14 @@ pub async fn create(
     if input.title.trim().is_empty() {
         return Err(AppError::Validation("Title is required".into()));
     }
+    if let Some(ref p) = input.priority
+        && !db::task::validate_priority(p)
+    {
+        return Err(AppError::Validation(format!(
+            "Invalid priority '{}'. Valid values: low, normal, high, urgent",
+            p
+        )));
+    }
     let t = db::task::create(&state.pool, auth.building_id, auth.user_id, input).await?;
     Ok((
         StatusCode::CREATED,
@@ -102,6 +110,14 @@ pub async fn update(
         return Err(AppError::Validation(format!(
             "Invalid status '{}'. Valid values: open, in_progress, awaiting_vendor, awaiting_validation, closed, cancelled",
             s
+        )));
+    }
+    if let Some(ref p) = input.priority
+        && !db::task::validate_priority(p)
+    {
+        return Err(AppError::Validation(format!(
+            "Invalid priority '{}'. Valid values: low, normal, high, urgent",
+            p
         )));
     }
     db::task::update_fields(

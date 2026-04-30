@@ -299,8 +299,8 @@ export const reportsApi = {
     api.delete(`/reports/${id}`),
   updateStatus: (id: string, status: string) =>
     api.put(`/reports/${id}/status`, { status }),
-  convertToTask: (id: string) =>
-    api.post<{ task_id: string }>(`/reports/${id}/task`),
+  convertToTask: (id: string, data?: { priority?: string }) =>
+    api.post<{ task_id: string }>(`/reports/${id}/task`, data),
   listDocuments: (id: string) =>
     api.get<Document[]>(`/reports/${id}/documents`),
   attachDocument: (id: string, document_id: string) =>

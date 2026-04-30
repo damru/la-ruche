@@ -191,6 +191,13 @@ La vue `Carnet d'entretien` expose des filtres rapides ancrés sur des périodes
 - Le total des dépenses et la liste affichée sont toujours calculés sur la période active.
 - Les champs `Coût` et `Prestataire` de la modale de création restent sur une grille 2 colonnes sur desktop mais repassent en pile sur écran étroit pour éviter tout débordement.
 
+## Règle UI — Vue Signalements
+
+La modale de conversion d'un signalement en tâche doit permettre au gestionnaire de choisir la **priorité** de la tâche au moment de la conversion, sans écran intermédiaire supplémentaire.
+
+- La priorité proposée par défaut est `Normal`.
+- La conversion reste une action unique : création de la tâche puis redirection immédiate vers la tâche créée.
+
 ## Règle UI — CFormFeedback dans les modales (DDR-006)
 
 **Règle obligatoire :** tout `CModal` qui contient un formulaire ou une action destructive **doit** inclure un `CFormFeedback` dans le slot `#footer`, sur la même ligne que les boutons d'action. Le `CFormFeedback` ne doit jamais être placé dans le corps de la modale (`<template #default>`).

@@ -94,8 +94,14 @@ const VALID_STATUSES: &[&str] = &[
     "cancelled",
 ];
 
+const VALID_PRIORITIES: &[&str] = &["low", "normal", "high", "urgent"];
+
 pub fn validate_status(status: &str) -> bool {
     VALID_STATUSES.contains(&status)
+}
+
+pub fn validate_priority(priority: &str) -> bool {
+    VALID_PRIORITIES.contains(&priority)
 }
 
 fn task_row_from_query(r: &sqlx::postgres::PgRow) -> Result<TaskRow, sqlx::Error> {

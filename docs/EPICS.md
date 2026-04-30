@@ -228,7 +228,7 @@ Signalement par tout résident avec description et lot optionnel, suivi de statu
 
 * `EP-011-S01` ✅ — Créer un signalement (titre, description, lot concerné)
 * `EP-011-S02` ✅ — Suivre et mettre à jour le statut (reçu → en cours → clos) — manager/conseil syndical
-* `EP-011-S03` ✅ — Convertir un signalement en tâche — crée une tâche avec titre/description du signalement, redirige vers la tâche créée
+* `EP-011-S03` ✅ — Convertir un signalement en tâche — crée une tâche avec titre/description + priorité choisie depuis le signalement, passe automatiquement le signalement en `in_progress`, puis redirige vers la tâche créée
 
 ***
 

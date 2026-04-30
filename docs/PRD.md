@@ -62,7 +62,7 @@
 
 **Consultations & Sondages** — Tout résident (copropriétaire ou locataire) peut initier une consultation sans approbation préalable. Les résultats sont visibles en temps réel. La mention "Informelle — non décisionnelle" est obligatoire dans l'interface. → EP-010
 
-**Signalements** — Tout résident peut signaler un problème avec photo(s) optionnelle(s). Le syndic suit le statut et peut convertir un signalement en tâche. → EP-011
+**Signalements** — Tout résident peut signaler un problème avec photo(s) optionnelle(s). Le syndic suit le statut et peut convertir un signalement en tâche en choisissant son niveau d'urgence ; la conversion fait automatiquement passer le signalement en cours. → EP-011
 
 ### Fonctionnalités avancées
 
