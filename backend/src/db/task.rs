@@ -94,6 +94,7 @@ const VALID_STATUSES: &[&str] = &[
     "cancelled",
 ];
 
+pub const DEFAULT_PRIORITY: &str = "normal";
 const VALID_PRIORITIES: &[&str] = &["low", "normal", "high", "urgent"];
 
 pub fn validate_status(status: &str) -> bool {
@@ -172,7 +173,7 @@ pub async fn create(
     user_id: Uuid,
     input: CreateTaskInput,
 ) -> AppResult<TaskRow> {
-    let priority = input.priority.as_deref().unwrap_or("normal");
+    let priority = input.priority.as_deref().unwrap_or(DEFAULT_PRIORITY);
     let row = sqlx::query(
         r#"INSERT INTO task (building_id, title, description, priority, contract_id, contractor_id, assigned_to, created_by)
            VALUES ($1, $2, $3, $4::text::task_priority, $5, $6, $7, $8)

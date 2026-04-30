@@ -34,6 +34,7 @@ const canManage = computed(() => hasAnyRole(['manager', 'board_member']))
 
 // Status values as a const to avoid inline repetition in the template and ensure type-safety.
 const REPORT_STATUSES: ReportStatus[] = ['open', 'in_progress', 'closed']
+const DEFAULT_CONVERT_PRIORITY: TaskPriority = 'normal'
 
 // ── Create report modal ───────────────────────────────────────────
 const showCreateModal = ref(false)
@@ -194,7 +195,7 @@ async function submitUpdateStatus() {
 
 // ── Convert to task modal ─────────────────────────────────────────
 const reportToConvert = ref<Report | null>(null)
-const convertPriority = ref<TaskPriority>('normal')
+const convertPriority = ref<TaskPriority>(DEFAULT_CONVERT_PRIORITY)
 const convertFeedback = useFormFeedback()
 const converting = ref(false)
 const { schedule: scheduleConvertClose, forceExpire: forceConvertClose } = useAutoClose()
@@ -202,7 +203,7 @@ watch(reportToConvert, (r) => { if (!r) forceConvertClose() })
 
 function openConvertModal(report: Report) {
   reportToConvert.value = report
-  convertPriority.value = 'normal'
+  convertPriority.value = DEFAULT_CONVERT_PRIORITY
   convertFeedback.reset()
 }
 

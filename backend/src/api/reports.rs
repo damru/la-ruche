@@ -88,7 +88,7 @@ pub async fn convert_to_task(
     auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
     let priority = input
         .and_then(|Json(body)| body.priority)
-        .unwrap_or_else(|| "normal".to_string());
+        .unwrap_or_else(|| db::task::DEFAULT_PRIORITY.to_string());
     if !db::task::validate_priority(&priority) {
         return Err(AppError::Validation(format!(
             "Invalid priority '{}'. Valid values: low, normal, high, urgent",

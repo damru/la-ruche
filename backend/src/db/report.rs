@@ -68,6 +68,7 @@ fn row_to_report(r: &sqlx::postgres::PgRow) -> Result<ReportRow, sqlx::Error> {
 
 /// Valid report status values — mirrors the `report_status` PostgreSQL enum.
 pub const VALID_STATUSES: &[&str] = &["open", "in_progress", "closed"];
+pub const STATUS_IN_PROGRESS: &str = "in_progress";
 
 pub fn validate_status(status: &str) -> bool {
     VALID_STATUSES.contains(&status)
@@ -211,12 +212,13 @@ pub async fn convert_to_task(
 
     // Step 4: link the task back to the report and mark the report in progress.
     sqlx::query(
-        "UPDATE report SET task_id = $3, status = 'in_progress'::report_status, updated_at = NOW() \
+        "UPDATE report SET task_id = $3, status = $4::text::report_status, updated_at = NOW() \
          WHERE id = $1 AND building_id = $2",
     )
     .bind(report_id)
     .bind(building_id)
     .bind(task_id)
+    .bind(STATUS_IN_PROGRESS)
     .execute(&mut *tx)
     .await?;
 
