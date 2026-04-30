@@ -1,7 +1,7 @@
 # DESIGN.md — l'Application Design System "The Modern Registry"
 
 > **Dénomination** — Dans le présent document, l'expression **« l'Application »** désigne exclusivement **La Ruche**, plateforme web open source de gestion participative de copropriété. Ces deux termes sont interchangeables et désignent la même entité logicielle.
-> Dernière mise à jour : 2026-04-25
+> Dernière mise à jour : 2026-04-30
 
 ## Typographie — 3 polices, 3 rôles (DDR-001 v3)
 
@@ -91,6 +91,8 @@ Comportement attendu : flip vertical (au-dessus → en-dessous si espace insuffi
 Mobile — 4 items par rôle : Syndic (Dashboard·AG·Budget·Tâches) · Conseil (Dashboard·AG·Budget·Documents) · Copropriétaire (Dashboard·AG·Budget·Consultations) · Locataire (Dashboard·Consultations·Signalements·—)
 
 La bottom nav mobile expose donc 6 actions visibles au total : 4 items primaires, 1 tiroir « Plus » pour les destinations secondaires, et 1 item Profil dédié. Le tiroir mobile est traité comme un panneau de navigation, pas comme une boîte de dialogue modale.
+
+Les icônes de navigation doivent rester immédiatement lisibles aux tailles 18px (sidebar) et 22px (bottom nav). Pour l’entrée **Prestataires**, l’icône de référence est le casque de chantier `CIconHardHat`, plus explicite qu’une silhouette avec badge outil à petite taille. Pour l’entrée **Contrats**, l’icône de référence est le document signé à plat `CIconContract`, sans coin plié, afin de conserver une lecture nette en petite taille.
 
 **DDR-004 — Groupes sidebar (pattern B — labels fixes)** : la sidebar desktop est structurée en 5 sections non-cliquables : *(solo)* Tableau de bord · **Gouvernance** (AG, Consultations, Signalements) · **Finance** (Budget, Contrats) · **Opérations** (Tâches, Sinistres, Carnet, Documents) · **Résidence** (Bâtiment, Clés de répartition, Registre, Copropriétaires). Le bloc utilisateur en pied de sidebar est cliquable et ouvre un panel contextuel (Mon compte, Notifications, Déconnexion).
 
