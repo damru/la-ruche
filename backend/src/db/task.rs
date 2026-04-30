@@ -301,7 +301,7 @@ pub async fn update_fields(
         .ok_or(crate::errors::AppError::NotFound)?;
 
     let current_status = current.status.clone();
-    let current_completion_cost = current.completion_cost.clone();
+    let current_completion_cost = current.completion_cost;
 
     let new_title = title
         .map(ToOwned::to_owned)
