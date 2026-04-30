@@ -759,6 +759,7 @@
     "deleteEntry": "Supprimer l'entrée",
     "confirmDeleteTitle": "Supprimer l'entrée",
     "confirmDeleteMessage": "L'entrée « {title} » sera supprimée définitivement.",
+    "deleteSuccess": "Entrée supprimée",
     "interventionTotal": "{count} intervention — coût total : {amount} | {count} interventions — coût total : {amount}",
     "summary": "{count} intervention(s) — coût total : {cost}",
     "periodSummary": "{label} · {count} intervention(s) — coût total : {cost}",

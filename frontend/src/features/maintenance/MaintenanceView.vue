@@ -4,7 +4,6 @@ import { useI18n } from 'vue-i18n'
 import { useFormatters } from '@/composables/useFormatters'
 import { usePageLoader, toErrorMessage } from '@/composables/usePageLoader'
 import { useFormFeedback } from '@/composables/useFormFeedback'
-import { useConfirm } from '@/composables/useConfirm'
 import { useAutoClose } from '@/composables/useAutoClose'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
@@ -19,7 +18,6 @@ import type { MaintenanceEntry } from '@/types/domain'
 
 const { t } = useI18n()
 const { formatDate, formatCurrency } = useFormatters()
-const { confirm } = useConfirm()
 
 type PeriodFilter = 'month' | 'quarter' | 'semester' | 'year' | 'all'
 
@@ -36,6 +34,12 @@ const entryFeedback = useFormFeedback()
 const savingEntry = ref(false)
 const { schedule: scheduleEntryClose, forceExpire: forceEntryClose } = useAutoClose()
 watch(showEntryModal, (open) => { if (!open) forceEntryClose() })
+
+const entryToDelete = ref<MaintenanceEntry | null>(null)
+const deleteFeedback = useFormFeedback()
+const deletingEntry = ref(false)
+const { schedule: scheduleDeleteClose, forceExpire: forceDeleteClose } = useAutoClose()
+watch(entryToDelete, (entry) => { if (!entry) forceDeleteClose() })
 
 const defaultForm = () => ({
   title: '',
@@ -225,19 +229,27 @@ async function saveEntry() {
   }
 }
 
-async function deleteEntry(entry: MaintenanceEntry) {
-  const ok = await confirm({
-    title: t('maintenance.confirmDeleteTitle'),
-    message: t('maintenance.confirmDeleteMessage', { title: entry.title }),
-    confirmLabel: t('common.delete'),
-    variant: 'danger',
-  })
-  if (!ok) return
+function openDeleteModal(entry: MaintenanceEntry) {
+  entryToDelete.value = entry
+  deleteFeedback.reset()
+}
+
+async function deleteEntry() {
+  if (deleteFeedback.status.value === 'success') { forceDeleteClose(); return }
+  if (!entryToDelete.value) return
+  deletingEntry.value = true
+  deleteFeedback.reset()
   try {
-    await maintenanceApi.delete(entry.id)
-    await reload()
+    await maintenanceApi.delete(entryToDelete.value.id)
+    deleteFeedback.setSuccess(t('maintenance.deleteSuccess'))
+    scheduleDeleteClose(() => {
+      entryToDelete.value = null
+      reload()
+    })
   } catch (err) {
-    alert(toErrorMessage(err, t('common.error')))
+    deleteFeedback.setError(toErrorMessage(err, t('common.error')))
+  } finally {
+    deletingEntry.value = false
   }
 }
 </script>
@@ -359,7 +371,7 @@ async function deleteEntry(entry: MaintenanceEntry) {
                   <button
                     class="icon-btn icon-btn--danger"
                     :title="t('maintenance.deleteEntry')"
-                    @click="deleteEntry(entry)"
+                    @click="openDeleteModal(entry)"
                   >
                     <CIconTrash
                       width="14"
@@ -480,6 +492,37 @@ async function deleteEntry(entry: MaintenanceEntry) {
           @click="saveEntry"
         >
           {{ t('common.save') }}
+        </CBtn>
+      </template>
+    </CModal>
+
+    <CModal
+      :open="!!entryToDelete"
+      :title="t('maintenance.confirmDeleteTitle')"
+      size="sm"
+      @update:open="v => !v && (entryToDelete = null)"
+    >
+      <p class="body-sm">
+        {{ t('maintenance.confirmDeleteMessage', { title: entryToDelete?.title ?? '' }) }}
+      </p>
+      <template #footer>
+        <CFormFeedback
+          :status="deleteFeedback.status.value"
+          :message="deleteFeedback.message.value"
+        />
+        <CBtn
+          variant="ghost"
+          @click="entryToDelete = null"
+        >
+          {{ t('common.cancel') }}
+        </CBtn>
+        <CBtn
+          variant="danger"
+          :loading="deletingEntry"
+          :closing="deleteFeedback.status.value === 'success'"
+          @click="deleteEntry"
+        >
+          {{ t('common.delete') }}
         </CBtn>
       </template>
     </CModal>

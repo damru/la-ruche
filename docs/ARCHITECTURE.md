@@ -155,7 +155,7 @@ laruche/
 
 Conventions : UUID v4, TIMESTAMPTZ, soft delete via `actif`/`statut`, `updated_at` via triggers, JSONB pour OCR futur.
 
-Pour la conversion `signalement → tâche`, l'endpoint backend crée la tâche dans une transaction SQL, persiste la priorité choisie, lie `report.task_id` et bascule immédiatement `report.status` à `in_progress`.
+Pour la conversion `signalement → tâche`, l'endpoint backend crée la tâche dans une transaction SQL, persiste la priorité choisie, lie `report.task_id` et bascule immédiatement `report.status` à `in_progress`. Lors d'une clôture effective de la tâche, le backend clôture aussi le signalement lié en réutilisant ce lien `report.task_id`.
 
 ---
 

@@ -374,6 +374,7 @@ pub async fn update_fields(
             actor_user_id,
         )
         .await?;
+        crate::db::report::close_linked_to_task(&mut *tx, id, building_id).await?;
     }
     tx.commit().await?;
     Ok(())

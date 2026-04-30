@@ -68,6 +68,7 @@ fn row_to_report(r: &sqlx::postgres::PgRow) -> Result<ReportRow, sqlx::Error> {
 
 /// Valid report status values — mirrors the `report_status` PostgreSQL enum.
 pub const VALID_STATUSES: &[&str] = &["open", "in_progress", "closed"];
+pub const STATUS_CLOSED: &str = "closed";
 pub const STATUS_IN_PROGRESS: &str = "in_progress";
 
 pub fn validate_status(status: &str) -> bool {
@@ -225,6 +226,27 @@ pub async fn convert_to_task(
     tx.commit().await?;
 
     Ok(task_id)
+}
+
+pub async fn close_linked_to_task<'e, E>(
+    executor: E,
+    task_id: Uuid,
+    building_id: Uuid,
+) -> AppResult<()>
+where
+    E: sqlx::Executor<'e, Database = sqlx::Postgres>,
+{
+    sqlx::query(
+        "UPDATE report
+         SET status = $3::text::report_status, updated_at = NOW()
+         WHERE task_id = $1 AND building_id = $2 AND status != $3::text::report_status",
+    )
+    .bind(task_id)
+    .bind(building_id)
+    .bind(STATUS_CLOSED)
+    .execute(executor)
+    .await?;
+    Ok(())
 }
 
 // ── Update / Delete ───────────────────────────────────────────────
