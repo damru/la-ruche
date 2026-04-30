@@ -700,7 +700,7 @@ function copyToClipboard(text: string) {
                     >{{ contractorsById.get(task.contractor_id)!.name }}</RouterLink>
                     <span
                       v-else
-                      class="contractor-meta-link contractor-meta-link--text"
+                      class="contractor-meta-text"
                     >{{ contractorDisplayName(task) }}</span>
                   </span>
                 </div>
@@ -1169,6 +1169,10 @@ function copyToClipboard(text: string) {
   font-weight: var(--fw-medium);
 }
 .contractor-meta-link:hover { text-decoration: underline; }
+.contractor-meta-text {
+  color: inherit;
+  font-weight: inherit;
+}
 .task-desc { color: var(--color-on-surface-variant); }
 .task-meta { font-size: var(--text-2xs); color: var(--color-on-surface-variant); margin-top: 4px; }
 
