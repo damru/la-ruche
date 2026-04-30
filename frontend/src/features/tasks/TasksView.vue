@@ -135,6 +135,37 @@ function contractorDisplayName(task: Task): string | undefined {
   return contractorsById.value.get(task.contractor_id ?? '')?.name ?? task.contractor_name
 }
 
+async function resolveContractorSelection() {
+  if (assignMode.value !== 'contractor') {
+    return {
+      contractorId: null,
+      contractorName: null,
+    }
+  }
+  if (selectedContractor.value) {
+    return {
+      contractorId: selectedContractor.value.id,
+      contractorName: selectedContractor.value.name,
+    }
+  }
+  if (createSuggestedContractor.value && contractorDraft.value.name) {
+    const createdContractor = await contractorsApi.create({
+      name: contractorDraft.value.name,
+      email: emptyStringToUndefined(contractorDraft.value.email),
+      phone: emptyStringToUndefined(contractorDraft.value.phone),
+    })
+    allContractors.value = [createdContractor.data, ...allContractors.value]
+    return {
+      contractorId: createdContractor.data.id,
+      contractorName: createdContractor.data.name,
+    }
+  }
+  return {
+    contractorId: null,
+    contractorName: emptyStringToUndefined(contractorSearch.value) ?? null,
+  }
+}
+
 // Auto-clear contractor when switching away from contractor mode
 watch(assignMode, (newMode) => {
   if (newMode !== 'contractor') {
@@ -281,25 +312,7 @@ async function saveTask() {
   savingTask.value = true
   taskFeedback.reset()
   try {
-    let contractorId: string | null = null
-    let contractorName: string | null = null
-    if (assignMode.value === 'contractor') {
-      if (selectedContractor.value) {
-        contractorId = selectedContractor.value.id
-        contractorName = selectedContractor.value.name
-      } else if (createSuggestedContractor.value && contractorDraft.value.name) {
-        const createdContractor = await contractorsApi.create({
-          name: contractorDraft.value.name,
-          email: emptyStringToUndefined(contractorDraft.value.email),
-          phone: emptyStringToUndefined(contractorDraft.value.phone),
-        })
-        contractorId = createdContractor.data.id
-        contractorName = createdContractor.data.name
-        allContractors.value = [createdContractor.data, ...allContractors.value]
-      } else {
-        contractorName = emptyStringToUndefined(contractorSearch.value) ?? null
-      }
-    }
+    const { contractorId, contractorName } = await resolveContractorSelection()
 
     if (editingTask.value) {
       // Reflect assignment mode change in DB:

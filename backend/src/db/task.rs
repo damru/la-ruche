@@ -88,6 +88,8 @@ pub struct CreateTaskInput {
     pub assigned_to: Option<Uuid>,
 }
 
+/// Trims optional text input and converts blank values to `None` so nullable
+/// text columns are stored consistently without whitespace-only content.
 fn normalize_optional_text(value: Option<&str>) -> Option<String> {
     value.and_then(|text| {
         let trimmed = text.trim();
