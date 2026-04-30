@@ -4,6 +4,7 @@ use axum::{
     http::StatusCode,
 };
 use serde::Deserialize;
+use sqlx::types::Decimal;
 use std::sync::Arc;
 use uuid::Uuid;
 
@@ -48,6 +49,14 @@ pub async fn create(
     if input.title.trim().is_empty() {
         return Err(AppError::Validation("Title is required".into()));
     }
+    if let Some(ref p) = input.priority
+        && !db::task::validate_priority(p)
+    {
+        return Err(AppError::Validation(format!(
+            "Invalid priority '{}'. Valid values: low, normal, high, urgent",
+            p
+        )));
+    }
     let t = db::task::create(&state.pool, auth.building_id, auth.user_id, input).await?;
     Ok((
         StatusCode::CREATED,
@@ -79,6 +88,10 @@ pub struct UpdateTaskInput {
     pub priority: Option<String>,
     #[serde(default, deserialize_with = "double_option::deserialize")]
     pub contractor_id: Option<Option<Uuid>>,
+    #[serde(default, deserialize_with = "double_option::deserialize")]
+    pub contractor_name: Option<Option<String>>,
+    #[serde(default, deserialize_with = "double_option::deserialize")]
+    pub completion_cost: Option<Option<Decimal>>,
 }
 
 pub async fn update(
@@ -97,8 +110,16 @@ pub async fn update(
         && !db::task::validate_status(s)
     {
         return Err(AppError::Validation(format!(
-            "Invalid status '{}'. Valid values: open, in_progress, awaiting_vendor, closed, cancelled",
+            "Invalid status '{}'. Valid values: open, in_progress, awaiting_vendor, awaiting_validation, closed, cancelled",
             s
+        )));
+    }
+    if let Some(ref p) = input.priority
+        && !db::task::validate_priority(p)
+    {
+        return Err(AppError::Validation(format!(
+            "Invalid priority '{}'. Valid values: low, normal, high, urgent",
+            p
         )));
     }
     db::task::update_fields(
@@ -110,6 +131,9 @@ pub async fn update(
         input.priority.as_deref(),
         input.status.as_deref(),
         input.contractor_id,
+        input.contractor_name.as_ref().map(|value| value.as_deref()),
+        input.completion_cost,
+        auth.user_id,
     )
     .await?;
     Ok(StatusCode::NO_CONTENT)

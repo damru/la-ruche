@@ -5,6 +5,7 @@ use axum::{
     http::StatusCode,
 };
 use serde::{Deserialize, Serialize};
+use sqlx::types::Decimal;
 use std::sync::Arc;
 use uuid::Uuid;
 
@@ -121,6 +122,7 @@ pub struct SubmissionDocumentMeta {
 #[derive(Deserialize)]
 pub struct SubmissionInput {
     pub comment: Option<String>,
+    pub cost: Option<Decimal>,
     pub documents: Vec<SubmissionDocumentMeta>,
 }
 
@@ -184,30 +186,19 @@ pub async fn submit(
         .await?;
     }
 
-    // Close the task
+    // Store the vendor's pre-validation and invalidate the token.
     sqlx::query(
-        "UPDATE task SET status = 'closed'::task_status, closed_at = NOW(), updated_at = NOW()
+        "UPDATE task
+         SET status = 'awaiting_validation'::task_status,
+             vendor_token = NULL,
+             token_expires_at = NULL,
+             completion_cost = $3,
+             updated_at = NOW()
          WHERE id = $1 AND building_id = $2",
     )
     .bind(task.id)
     .bind(task.building_id)
-    .execute(&mut *tx)
-    .await?;
-
-    // Auto-feed the maintenance log (idempotent via unique index on task_id)
-    // Includes contractor name if the task has one assigned.
-    sqlx::query(
-        r#"INSERT INTO maintenance_log (building_id, created_by, title, task_id, intervention_date, source, vendor_name)
-           SELECT t.building_id, $3, t.title, t.id, CURRENT_DATE, 'automatic'::log_source,
-                  c.name AS vendor_name
-           FROM task t
-           LEFT JOIN contractor c ON c.id = t.contractor_id
-           WHERE t.id = $1 AND t.building_id = $2
-           ON CONFLICT DO NOTHING"#,
-    )
-    .bind(task.id)
-    .bind(task.building_id)
-    .bind(task.created_by)
+    .bind(input.cost)
     .execute(&mut *tx)
     .await?;
 

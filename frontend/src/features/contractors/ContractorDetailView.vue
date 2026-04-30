@@ -84,6 +84,7 @@ function statusVariant(s: string): 'valid' | 'open' | 'pending' | 'closed' | 'de
   if (s === 'open') return 'valid'
   if (s === 'in_progress') return 'open'
   if (s === 'awaiting_vendor') return 'default'
+  if (s === 'awaiting_validation') return 'pending'
   if (s === 'closed') return 'closed'
   return 'default'
 }

@@ -183,6 +183,29 @@ La vue `Contrats` affiche en tête les rappels à traiter, avec une action d’a
 
 Les pièces justificatives d’un contrat restent regroupées dans une modale dédiée au contrat courant, afin de garder la liste principale lisible tout en laissant l’upload documentaire dans le même parcours.
 
+## Règle UI — Vue Carnet d'entretien
+
+La vue `Carnet d'entretien` expose des filtres rapides ancrés sur des périodes calendaires réelles : **mois**, **trimestre** (défaut), **semestre**, **année en cours** et **tout l'historique**.
+
+- La navigation `précédent / suivant` déplace la fenêtre d'une période complète, jamais une durée flottante depuis aujourd'hui.
+- Le total des dépenses et la liste affichée sont toujours calculés sur la période active.
+- Les champs `Coût` et `Prestataire` de la modale de création restent sur une grille 2 colonnes sur desktop mais repassent en pile sur écran étroit pour éviter tout débordement.
+
+## Règle UI — Vue Signalements
+
+La modale de conversion d'un signalement en tâche doit permettre au gestionnaire de choisir la **priorité** de la tâche au moment de la conversion, sans écran intermédiaire supplémentaire.
+
+- La priorité proposée par défaut est `Normal`.
+- La conversion reste une action unique : création de la tâche puis redirection immédiate vers la tâche créée.
+
+## Règle UI — Vue Tâches
+
+Le champ d'assignation prestataire dans `TasksView` doit accepter une saisie libre sans forcer le choix d'un prestataire existant.
+
+- Tant qu'une correspondance existe, l'autocomplete continue de proposer le référentiel.
+- Si aucune correspondance n'existe, une suggestion dédiée permet d'ajouter ce prestataire au référentiel sans quitter la modale.
+- L'ajout au référentiel reste optionnel : si l'utilisateur n'active pas cette suggestion, la saisie libre ne doit pas bloquer l'enregistrement et doit rester visible sur la tâche enregistrée.
+
 ## Règle UI — CFormFeedback dans les modales (DDR-006)
 
 **Règle obligatoire :** tout `CModal` qui contient un formulaire ou une action destructive **doit** inclure un `CFormFeedback` dans le slot `#footer`, sur la même ligne que les boutons d'action. Le `CFormFeedback` ne doit jamais être placé dans le corps de la modale (`<template #default>`).

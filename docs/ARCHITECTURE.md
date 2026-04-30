@@ -2,7 +2,7 @@
 
 > **Dénomination** — Dans le présent document, l'expression **« l'Application »** désigne exclusivement **La Ruche**, plateforme web open source de gestion participative de copropriété. Ces deux termes sont interchangeables et désignent la même entité logicielle.
 
-> Document vivant. Dernière mise à jour : 2026-04-25
+> Document vivant. Dernière mise à jour : 2026-04-29
 
 ---
 
@@ -22,6 +22,7 @@
 | Distribution image conteneur | Docker Hub (`docker.io/damru/la-ruche`) | CI GitHub Actions |
 | Versioning tantièmes + snapshot levy | `valid_from`/`valid_to` + colonnes snapshot `levy_call` | ADR-006 |
 | Clé générale système | `key_type` enum + soft delete sur `allocation_key` | ADR-007 |
+| Traçabilité tâches ↔ carnet | Lien informatif `task_id` + multiples clôtures + `completion_cost` courant sur `task` | ADR-008 |
 | Logs | tracing + tracing-subscriber (JSON) | — |
 | Config | dotenvy + config crate (LA_RUCHE__*) | — |
 | Frontend | Vue 3 + Vite + TypeScript | DDR-003 |
@@ -154,6 +155,10 @@ laruche/
 
 Conventions : UUID v4, TIMESTAMPTZ, soft delete via `actif`/`statut`, `updated_at` via triggers, JSONB pour OCR futur.
 
+Pour la conversion `signalement → tâche`, l'endpoint backend crée la tâche dans une transaction SQL, persiste la priorité choisie, lie `report.task_id` et bascule immédiatement `report.status` à `in_progress`. Lors d'une clôture effective de la tâche, le backend clôture aussi le signalement lié en réutilisant ce lien `report.task_id`.
+
+Dans `TasksView`, l'assignation prestataire reste tolérante : l'autocomplete ne force pas la sélection d'un prestataire existant. Si aucune correspondance n'est trouvée, l'UI peut créer un prestataire via `POST /contractors` juste avant l'enregistrement de la tâche ; sinon la saisie libre est persistée dans `task.contractor_name` sans `contractor_id`.
+
 ---
 
 ## Flux principaux
@@ -190,6 +195,8 @@ HTTP → Tower (CORS, trace, timeout 30s)
 1. Syndic génère token → UUID + expire_at en DB
 2. Lien /prestataire/{token} → accès sans JWT
 3. Dépôt → staging S3 → validation → bucket final copropriété
+4. Soumission prestataire → statut `awaiting_validation` + commentaire / coût optionnel
+5. Clôture syndic → insertion d'une nouvelle ligne carnet avec snapshot coût/prestataire
 ```
 
 ---
@@ -231,3 +238,4 @@ HTTP → Tower (CORS, trace, timeout 30s)
 | ADR-005 | Runtime edge | Caddy installé dans l'image Debian slim |
 | ADR-006 | Versioning tantièmes & snapshot levy | `valid_from`/`valid_to` sur `unit_allocation_key` ; colonnes `shares_snapshot`, `shares_total_snapshot`, `key_id` sur `levy_call` |
 | ADR-007 | Clé générale système | `key_type allocation_key_type` enum + `deleted_at` soft delete sur `allocation_key` ; clé Charges Générales créée à l'onboarding, indestructible |
+| ADR-008 | Traçabilité tâches / carnet / soumissions prestataire | `maintenance_log.task_id` et `vendor_submission.task_id` deviennent informatifs (`ON DELETE SET NULL`) ; suppression de l'unicité 1 tâche → 1 entrée ; `task.completion_cost` porte le montant courant jusqu'à la clôture validée |

@@ -53,6 +53,11 @@ pub struct UpdateStatusInput {
     pub status: String,
 }
 
+#[derive(Deserialize, Default)]
+pub struct ConvertToTaskInput {
+    pub priority: Option<String>,
+}
+
 /// Update report status. Only managers and board members can change status.
 pub async fn update_status(
     auth: AuthUser,
@@ -78,10 +83,21 @@ pub async fn convert_to_task(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
+    input: Option<Json<ConvertToTaskInput>>,
 ) -> AppResult<Json<serde_json::Value>> {
     auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
+    let priority = input
+        .and_then(|Json(body)| body.priority)
+        .unwrap_or_else(|| db::task::DEFAULT_PRIORITY.to_string());
+    if !db::task::validate_priority(&priority) {
+        return Err(AppError::Validation(format!(
+            "Invalid priority '{}'. Valid values: low, normal, high, urgent",
+            priority
+        )));
+    }
     let task_id =
-        db::report::convert_to_task(&state.pool, id, auth.building_id, auth.user_id).await?;
+        db::report::convert_to_task(&state.pool, id, auth.building_id, auth.user_id, &priority)
+            .await?;
     json_value(serde_json::json!({ "task_id": task_id }))
 }
 

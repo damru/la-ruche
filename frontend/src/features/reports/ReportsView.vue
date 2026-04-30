@@ -16,7 +16,7 @@ import CPageError from '@/components/molecules/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import { buildingApi, documentsApi, reportsApi, unitsApi } from '@/api'
-import type { Document, Report, ReportStatus, Unit } from '@/types/domain'
+import type { Document, Report, ReportStatus, TaskPriority, Unit } from '@/types/domain'
 
 const { t } = useI18n()
 const { formatRelative } = useFormatters()
@@ -34,6 +34,7 @@ const canManage = computed(() => hasAnyRole(['manager', 'board_member']))
 
 // Status values as a const to avoid inline repetition in the template and ensure type-safety.
 const REPORT_STATUSES: ReportStatus[] = ['open', 'in_progress', 'closed']
+const DEFAULT_CONVERT_PRIORITY: TaskPriority = 'normal'
 
 // ── Create report modal ───────────────────────────────────────────
 const showCreateModal = ref(false)
@@ -194,6 +195,7 @@ async function submitUpdateStatus() {
 
 // ── Convert to task modal ─────────────────────────────────────────
 const reportToConvert = ref<Report | null>(null)
+const convertPriority = ref<TaskPriority>(DEFAULT_CONVERT_PRIORITY)
 const convertFeedback = useFormFeedback()
 const converting = ref(false)
 const { schedule: scheduleConvertClose, forceExpire: forceConvertClose } = useAutoClose()
@@ -201,6 +203,7 @@ watch(reportToConvert, (r) => { if (!r) forceConvertClose() })
 
 function openConvertModal(report: Report) {
   reportToConvert.value = report
+  convertPriority.value = DEFAULT_CONVERT_PRIORITY
   convertFeedback.reset()
 }
 
@@ -210,7 +213,9 @@ async function submitConvert() {
   converting.value = true
   convertFeedback.reset()
   try {
-    const res = await reportsApi.convertToTask(reportToConvert.value.id)
+    const res = await reportsApi.convertToTask(reportToConvert.value.id, {
+      priority: convertPriority.value,
+    })
     convertFeedback.setSuccess(t('reports.convertSuccess'))
     scheduleConvertClose(() => {
       reportToConvert.value = null
@@ -813,6 +818,21 @@ function photoPreview(file: File): string {
       <p class="body-sm">
         {{ t('reports.confirmConvertMessage', { title: reportToConvert?.title ?? '' }) }}
       </p>
+      <div class="form-field">
+        <label class="form-label">{{ t('tasks.priorityLabel') }}</label>
+        <select
+          v-model="convertPriority"
+          class="form-input"
+        >
+          <option
+            v-for="priority in ['low', 'normal', 'high', 'urgent'] as TaskPriority[]"
+            :key="priority"
+            :value="priority"
+          >
+            {{ t(`tasks.priorities.${priority}`) }}
+          </option>
+        </select>
+      </div>
       <template #footer>
         <CFormFeedback
           :status="convertFeedback.status.value"

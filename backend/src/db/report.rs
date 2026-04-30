@@ -68,6 +68,8 @@ fn row_to_report(r: &sqlx::postgres::PgRow) -> Result<ReportRow, sqlx::Error> {
 
 /// Valid report status values — mirrors the `report_status` PostgreSQL enum.
 pub const VALID_STATUSES: &[&str] = &["open", "in_progress", "closed"];
+pub const STATUS_CLOSED: &str = "closed";
+pub const STATUS_IN_PROGRESS: &str = "in_progress";
 
 pub fn validate_status(status: &str) -> bool {
     VALID_STATUSES.contains(&status)
@@ -162,13 +164,16 @@ pub async fn convert_to_task(
     report_id: Uuid,
     building_id: Uuid,
     created_by: Uuid,
+    priority: &str,
 ) -> AppResult<Uuid> {
+    let mut tx = pool.begin().await?;
+
     // Step 1: check report exists and hasn't been converted yet.
     let existing: Option<Option<Uuid>> =
         sqlx::query_scalar("SELECT task_id FROM report WHERE id = $1 AND building_id = $2")
             .bind(report_id)
             .bind(building_id)
-            .fetch_optional(pool)
+            .fetch_optional(&mut *tx)
             .await?;
 
     match existing {
@@ -181,28 +186,67 @@ pub async fn convert_to_task(
         Some(None) => {}
     }
 
-    // Step 2: create the task and write task_id back to the report atomically.
+    // Step 2: load the source report payload inside the transaction.
+    let report_row =
+        sqlx::query("SELECT title, description FROM report WHERE id = $1 AND building_id = $2")
+            .bind(report_id)
+            .bind(building_id)
+            .fetch_one(&mut *tx)
+            .await?;
+    let title: String = report_row.try_get("title")?;
+    let description: Option<String> = report_row.try_get("description")?;
+
+    // Step 3: create the task with the selected priority.
     let row = sqlx::query(
-        r#"WITH new_task AS (
-               INSERT INTO task (building_id, title, description, priority, created_by)
-               SELECT $2, title, description, 'normal'::task_priority, $3
-               FROM report
-               WHERE id = $1 AND building_id = $2
-               RETURNING id
-           )
-           UPDATE report
-           SET task_id = new_task.id, updated_at = NOW()
-           FROM new_task
-           WHERE report.id = $1
-           RETURNING new_task.id AS id"#,
+        r#"INSERT INTO task (building_id, title, description, priority, created_by)
+           VALUES ($1, $2, $3, $4::text::task_priority, $5)
+           RETURNING id"#,
+    )
+    .bind(building_id)
+    .bind(&title)
+    .bind(&description)
+    .bind(priority)
+    .bind(created_by)
+    .fetch_one(&mut *tx)
+    .await?;
+    let task_id: Uuid = row.try_get("id")?;
+
+    // Step 4: link the task back to the report and mark the report in progress.
+    sqlx::query(
+        "UPDATE report SET task_id = $3, status = $4::text::report_status, updated_at = NOW() \
+         WHERE id = $1 AND building_id = $2",
     )
     .bind(report_id)
     .bind(building_id)
-    .bind(created_by)
-    .fetch_one(pool)
+    .bind(task_id)
+    .bind(STATUS_IN_PROGRESS)
+    .execute(&mut *tx)
     .await?;
 
-    Ok(row.try_get("id")?)
+    tx.commit().await?;
+
+    Ok(task_id)
+}
+
+pub async fn close_linked_to_task<'e, E>(
+    executor: E,
+    task_id: Uuid,
+    building_id: Uuid,
+) -> AppResult<()>
+where
+    E: sqlx::Executor<'e, Database = sqlx::Postgres>,
+{
+    sqlx::query(
+        "UPDATE report
+         SET status = $3::text::report_status, updated_at = NOW()
+         WHERE task_id = $1 AND building_id = $2 AND status != $3::text::report_status",
+    )
+    .bind(task_id)
+    .bind(building_id)
+    .bind(STATUS_CLOSED)
+    .execute(executor)
+    .await?;
+    Ok(())
 }
 
 // ── Update / Delete ───────────────────────────────────────────────

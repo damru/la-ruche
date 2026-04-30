@@ -43,6 +43,19 @@ const contractorSearch = ref('')
 const contractorSuggestions = ref<Contractor[]>([])
 const showSuggestions = ref(false)
 const selectedContractor = ref<Contractor | null>(null)
+const createSuggestedContractor = ref(false)
+function createDefaultContractorDraft() {
+  return {
+    name: '',
+    email: '',
+    phone: '',
+  }
+}
+const contractorDraft = ref(createDefaultContractorDraft())
+
+function emptyStringToUndefined(value: string) {
+  return value.trim() || undefined
+}
 
 function contractorDomainLabel(c: Contractor): string {
   if (!c.domains.length) return ''
@@ -64,9 +77,19 @@ function populateSuggestions(query: string) {
   showSuggestions.value = contractorSuggestions.value.length > 0
 }
 
+// Offer inline contractor creation only when the user explicitly chose contractor
+// assignment, typed something, and no known contractor currently matches.
+const canSuggestContractorCreation = computed(() => (
+  assignMode.value === 'contractor'
+  && !selectedContractor.value
+  && contractorSearch.value.trim().length > 0
+  && contractorSuggestions.value.length === 0
+))
+
 function onContractorInput() {
   // Any manual text edit deselects the current contractor
   selectedContractor.value = null
+  createSuggestedContractor.value = false
   populateSuggestions(contractorSearch.value)
 }
 
@@ -77,7 +100,19 @@ function onContractorFocus() {
 function selectContractorSuggestion(c: Contractor) {
   selectedContractor.value = c
   contractorSearch.value = c.name
+  createSuggestedContractor.value = false
+  contractorDraft.value = createDefaultContractorDraft()
   // Hide immediately — mousedown.prevent on the item ensures this fires before blur
+  showSuggestions.value = false
+}
+
+function suggestContractorCreation() {
+  createSuggestedContractor.value = true
+  contractorDraft.value = {
+    name: contractorSearch.value.trim(),
+    email: '',
+    phone: '',
+  }
   showSuggestions.value = false
 }
 
@@ -91,7 +126,44 @@ function hideSuggestions() {
 function clearContractor() {
   selectedContractor.value = null
   contractorSearch.value = ''
+  createSuggestedContractor.value = false
+  contractorDraft.value = createDefaultContractorDraft()
   showSuggestions.value = false
+}
+
+function contractorDisplayName(task: Task): string | undefined {
+  return contractorsById.value.get(task.contractor_id ?? '')?.name ?? task.contractor_name
+}
+
+async function resolveContractorSelection() {
+  if (assignMode.value !== 'contractor') {
+    return {
+      contractorId: null,
+      contractorName: null,
+    }
+  }
+  if (selectedContractor.value) {
+    return {
+      contractorId: selectedContractor.value.id,
+      contractorName: selectedContractor.value.name,
+    }
+  }
+  if (createSuggestedContractor.value && contractorDraft.value.name) {
+    const createdContractor = await contractorsApi.create({
+      name: contractorDraft.value.name,
+      email: emptyStringToUndefined(contractorDraft.value.email),
+      phone: emptyStringToUndefined(contractorDraft.value.phone),
+    })
+    allContractors.value = [createdContractor.data, ...allContractors.value]
+    return {
+      contractorId: createdContractor.data.id,
+      contractorName: createdContractor.data.name,
+    }
+  }
+  return {
+    contractorId: null,
+    contractorName: emptyStringToUndefined(contractorSearch.value) ?? null,
+  }
 }
 
 // Auto-clear contractor when switching away from contractor mode
@@ -139,6 +211,7 @@ const counts = computed(() => ({
   open: allTasks.value.filter(t => t.status === 'open').length,
   in_progress: allTasks.value.filter(t => t.status === 'in_progress').length,
   awaiting_vendor: allTasks.value.filter(t => t.status === 'awaiting_vendor').length,
+  awaiting_validation: allTasks.value.filter(t => t.status === 'awaiting_validation').length,
   closed: allTasks.value.filter(t => t.status === 'closed').length,
 }))
 
@@ -156,8 +229,15 @@ function statusVariant(s: string): 'valid' | 'open' | 'pending' | 'closed' | 'de
   if (s === 'open') return 'valid'
   if (s === 'in_progress') return 'open'
   if (s === 'awaiting_vendor') return 'default'
+  if (s === 'awaiting_validation') return 'pending'
   if (s === 'closed') return 'closed'
   return 'default'
+}
+
+function closeActionLabel(task: Task): string {
+  return task.status === 'awaiting_validation'
+    ? t('tasks.validateTask')
+    : t('tasks.closeTask')
 }
 
 function priorityVariant(p: string): 'err' | 'pending' | 'primary' | 'valid' | 'default' {
@@ -181,6 +261,8 @@ function openCreateModal() {
   taskForm.value = defaultForm()
   selectedContractor.value = null
   contractorSearch.value = ''
+  createSuggestedContractor.value = false
+  contractorDraft.value = createDefaultContractorDraft()
   assignMode.value = 'none'
   taskFeedback.reset()
   showTaskModal.value = true
@@ -197,15 +279,27 @@ function openEditModal(task: Task) {
   if (task.contractor_id) {
     const c = contractorsById.value.get(task.contractor_id)
     selectedContractor.value = c ?? null
-    contractorSearch.value = c?.name ?? ''
+    contractorSearch.value = c?.name ?? task.contractor_name ?? ''
+    assignMode.value = 'contractor'
+    createSuggestedContractor.value = false
+    contractorDraft.value = createDefaultContractorDraft()
+  } else if (task.contractor_name) {
+    selectedContractor.value = null
+    contractorSearch.value = task.contractor_name
+    createSuggestedContractor.value = false
+    contractorDraft.value = createDefaultContractorDraft()
     assignMode.value = 'contractor'
   } else if (task.status === 'in_progress') {
     selectedContractor.value = null
     contractorSearch.value = ''
+    createSuggestedContractor.value = false
+    contractorDraft.value = createDefaultContractorDraft()
     assignMode.value = 'self'
   } else {
     selectedContractor.value = null
     contractorSearch.value = ''
+    createSuggestedContractor.value = false
+    contractorDraft.value = createDefaultContractorDraft()
     assignMode.value = 'none'
   }
   taskFeedback.reset()
@@ -218,6 +312,8 @@ async function saveTask() {
   savingTask.value = true
   taskFeedback.reset()
   try {
+    const { contractorId, contractorName } = await resolveContractorSelection()
+
     if (editingTask.value) {
       // Reflect assignment mode change in DB:
       // 'self'       → in_progress (self-assigned, no contractor)
@@ -233,9 +329,8 @@ async function saveTask() {
         title: taskForm.value.title,
         description: taskForm.value.description || null,
         priority: taskForm.value.priority,
-        contractor_id: assignMode.value === 'contractor'
-          ? (selectedContractor.value?.id ?? null)
-          : null,
+        contractor_id: assignMode.value === 'contractor' ? contractorId : null,
+        contractor_name: assignMode.value === 'contractor' ? contractorName : null,
         ...(statusPatch ? { status: statusPatch } : {}),
       })
     } else {
@@ -243,9 +338,8 @@ async function saveTask() {
         title: taskForm.value.title,
         description: taskForm.value.description || undefined,
         priority: taskForm.value.priority as TaskPriority,
-        contractor_id: assignMode.value === 'contractor'
-          ? (selectedContractor.value?.id ?? null)
-          : null,
+        contractor_id: assignMode.value === 'contractor' ? contractorId : null,
+        contractor_name: assignMode.value === 'contractor' ? contractorName : null,
       })
     }
     taskFeedback.setSuccess(t('common.saved'))
@@ -261,11 +355,13 @@ async function saveTask() {
 const closingTask = ref<Task | null>(null)
 const closeFeedback = useFormFeedback()
 const closingInProgress = ref(false)
+const closeAmount = ref('')
 const { schedule: scheduleCloseTask, forceExpire: forceCloseTask } = useAutoClose()
 watch(closingTask, (task) => { if (!task) forceCloseTask() })
 
 function openCloseModal(task: Task) {
   closingTask.value = task
+  closeAmount.value = task.completion_cost != null ? String(task.completion_cost) : ''
   closeFeedback.reset()
 }
 
@@ -275,7 +371,10 @@ async function confirmCloseTask() {
   closingInProgress.value = true
   closeFeedback.reset()
   try {
-    await tasksApi.update(closingTask.value.id, { status: 'closed' })
+    await tasksApi.update(closingTask.value.id, {
+      status: 'closed',
+      completion_cost: closeAmount.value ? Number(closeAmount.value) : null,
+    })
     closeFeedback.setSuccess(t('tasks.closeSuccess'))
     scheduleCloseTask(() => { closingTask.value = null; reload() })
   } catch (err) {
@@ -484,6 +583,7 @@ function copyToClipboard(text: string) {
               { key: 'open', label: t('tasks.filters.open'), count: counts.open },
               { key: 'in_progress', label: t('tasks.filters.in_progress'), count: counts.in_progress },
               { key: 'awaiting_vendor', label: t('tasks.filters.awaiting_vendor'), count: counts.awaiting_vendor },
+              { key: 'awaiting_validation', label: t('tasks.filters.awaiting_validation'), count: counts.awaiting_validation },
               { key: 'closed', label: t('tasks.filters.closed'), count: counts.closed },
             ]"
             :key="item.key"
@@ -591,13 +691,49 @@ function copyToClipboard(text: string) {
                 <div class="task-meta">
                   <span>{{ formatRelative(task.created_at) }}</span>
                   <span v-if="task.closed_at">· {{ t('tasks.closedAt', { date: formatDate(task.closed_at) }) }}</span>
-                  <span v-if="task.contractor_id && contractorsById.get(task.contractor_id)">
+                  <span v-if="contractorDisplayName(task)">
                     · 🔧
                     <RouterLink
+                      v-if="task.contractor_id && contractorsById.get(task.contractor_id)"
                       :to="{ name: 'contractor-detail', params: { id: task.contractor_id } }"
                       class="contractor-meta-link"
                     >{{ contractorsById.get(task.contractor_id)!.name }}</RouterLink>
+                    <span
+                      v-else
+                      class="contractor-meta-text"
+                    >{{ contractorDisplayName(task) }}</span>
                   </span>
+                </div>
+
+                <div
+                  v-if="contractorDisplayName(task) && !task.has_vendor_token && !isTerminal(task.status)"
+                  class="task-card-actions task-card-actions--stacked"
+                >
+                  <CBtn
+                    variant="ghost"
+                    size="sm"
+                    :disabled="generatingToken === task.id"
+                    :aria-label="t('tasks.generateToken')"
+                    @click="generateToken(task)"
+                  >
+                    <CIconLink />
+                    {{ t('tasks.generateToken') }}
+                  </CBtn>
+                </div>
+
+                <div
+                  v-if="task.status === 'closed'"
+                  class="task-card-actions task-card-actions--stacked"
+                >
+                  <CBtn
+                    variant="ghost"
+                    size="sm"
+                    :aria-label="t('tasks.reopenTask')"
+                    @click="openReopenModal(task)"
+                  >
+                    <CIconRefresh />
+                    {{ t('tasks.reopenTask') }}
+                  </CBtn>
                 </div>
 
                 <!-- Card footer actions (Contract-card pattern) -->
@@ -616,11 +752,11 @@ function copyToClipboard(text: string) {
                     v-if="!isTerminal(task.status)"
                     variant="danger"
                     size="sm"
-                    :aria-label="t('tasks.closeTask')"
+                    :aria-label="closeActionLabel(task)"
                     @click="openCloseModal(task)"
                   >
                     <CIconCheckCircle />
-                    {{ t('tasks.closeTask') }}
+                    {{ closeActionLabel(task) }}
                   </CBtn>
                   <!-- Delete: closed/cancelled tasks only (visible on card) -->
                   <CBtn
@@ -632,29 +768,6 @@ function copyToClipboard(text: string) {
                   >
                     <CIconTrash />
                     {{ t('common.delete') }}
-                  </CBtn>
-                  <!-- Generate link: tasks with a contractor but no active token, not terminal -->
-                  <CBtn
-                    v-if="task.contractor_id && !task.has_vendor_token && !isTerminal(task.status)"
-                    variant="ghost"
-                    size="sm"
-                    :disabled="generatingToken === task.id"
-                    :aria-label="t('tasks.generateToken')"
-                    @click="generateToken(task)"
-                  >
-                    <CIconLink />
-                    {{ t('tasks.generateToken') }}
-                  </CBtn>
-                  <!-- Reopen: closed tasks -->
-                  <CBtn
-                    v-if="task.status === 'closed'"
-                    variant="ghost"
-                    size="sm"
-                    :aria-label="t('tasks.reopenTask')"
-                    @click="openReopenModal(task)"
-                  >
-                    <CIconRefresh />
-                    {{ t('tasks.reopenTask') }}
                   </CBtn>
                 </div>
               </div>
@@ -743,7 +856,7 @@ function copyToClipboard(text: string) {
               ×
             </button>
             <ul
-              v-if="showSuggestions"
+              v-if="showSuggestions || canSuggestContractorCreation"
               class="autocomplete-list"
             >
               <li
@@ -758,6 +871,14 @@ function copyToClipboard(text: string) {
                   class="autocomplete-meta"
                 >{{ contractorDomainLabel(c) }}</span>
               </li>
+              <li
+                v-if="canSuggestContractorCreation"
+                class="autocomplete-item autocomplete-item--action"
+                @mousedown.prevent="suggestContractorCreation"
+              >
+                <span class="autocomplete-name">{{ t('tasks.contractorCreateSuggestion', { name: contractorSearch.trim() }) }}</span>
+                <span class="autocomplete-meta">{{ t('tasks.contractorCreateSuggestionHint') }}</span>
+              </li>
             </ul>
           </div>
           <span
@@ -766,10 +887,45 @@ function copyToClipboard(text: string) {
           >
             {{ selectedContractor.email || selectedContractor.phone || '' }}
           </span>
+          <span
+            v-else-if="contractorSearch.trim()"
+            class="field-hint"
+          >
+            {{ t('tasks.contractorFreeInputHint') }}
+          </span>
+        </div>
+        <div
+          v-if="assignMode === 'contractor' && createSuggestedContractor"
+          class="form-field contractor-create-box"
+        >
+          <label class="form-label">{{ t('tasks.contractorCreateLabel') }}</label>
+          <div class="form-grid-2col contractor-create-grid">
+            <div class="form-field">
+              <label class="form-label">{{ t('contractors.email') }}</label>
+              <input
+                v-model="contractorDraft.email"
+                type="email"
+                class="form-input"
+                :placeholder="t('contractors.emailPlaceholder')"
+              />
+            </div>
+            <div class="form-field">
+              <label class="form-label">{{ t('contractors.phone') }}</label>
+              <input
+                v-model="contractorDraft.phone"
+                type="tel"
+                class="form-input"
+                :placeholder="t('contractors.phonePlaceholder')"
+              />
+            </div>
+          </div>
+          <span class="field-hint">
+            {{ t('tasks.contractorCreateHelp') }}
+          </span>
         </div>
         <!-- Assignment mode: radio (visible for new tasks, open tasks, and in_progress tasks) -->
         <div
-          v-if="!editingTask || ['open', 'in_progress', 'awaiting_vendor'].includes(editingTask.status)"
+          v-if="!editingTask || ['open', 'in_progress', 'awaiting_vendor', 'awaiting_validation'].includes(editingTask.status)"
           class="form-field"
         >
           <label class="form-label">{{ t('tasks.assignmentSection') }}</label>
@@ -869,15 +1025,37 @@ function copyToClipboard(text: string) {
     <!-- Close task modal -->
     <CModal
       :open="!!closingTask"
-      :title="t('tasks.confirmCloseTitle')"
+      :title="closingTask?.status === 'awaiting_validation' ? t('tasks.confirmCloseValidationTitle') : t('tasks.confirmCloseTitle')"
       size="sm"
       @update:open="v => !v && (closingTask = null)"
     >
       <p class="body-sm">
-        {{ t('tasks.confirmCloseMessage', { title: closingTask?.title ?? '' }) }}
+        {{
+          closingTask?.status === 'awaiting_validation'
+            ? t('tasks.confirmCloseValidationMessage', { title: closingTask?.title ?? '' })
+            : t('tasks.confirmCloseMessage', { title: closingTask?.title ?? '' })
+        }}
       </p>
+      <div class="form-field task-close-field">
+        <label class="form-label">{{ t('tasks.completionCostLabel') }}</label>
+        <input
+          v-model="closeAmount"
+          type="number"
+          min="0"
+          step="0.01"
+          class="form-input"
+        />
+        <span class="field-hint">
+          {{
+            closingTask?.status === 'awaiting_validation' && closingTask?.completion_cost != null
+              ? t('tasks.completionCostVendorHint')
+              : t('tasks.completionCostHint')
+          }}
+        </span>
+      </div>
       <template #footer>
         <CFormFeedback
+          class="modal-footer-feedback"
           :status="closeFeedback.status.value"
           :message="closeFeedback.message.value"
         />
@@ -893,7 +1071,7 @@ function copyToClipboard(text: string) {
           :closing="closeFeedback.status.value === 'success'"
           @click="confirmCloseTask"
         >
-          {{ t('tasks.closeTask') }}
+          {{ closingTask ? closeActionLabel(closingTask) : t('tasks.closeTask') }}
         </CBtn>
       </template>
     </CModal>
@@ -991,6 +1169,10 @@ function copyToClipboard(text: string) {
   font-weight: var(--fw-medium);
 }
 .contractor-meta-link:hover { text-decoration: underline; }
+.contractor-meta-text {
+  color: inherit;
+  font-weight: inherit;
+}
 .task-desc { color: var(--color-on-surface-variant); }
 .task-meta { font-size: var(--text-2xs); color: var(--color-on-surface-variant); margin-top: 4px; }
 
@@ -1001,6 +1183,12 @@ function copyToClipboard(text: string) {
   margin-top: var(--space-2);
   padding-top: var(--space-3);
   border-top: 1px solid var(--color-surface-container-high);
+}
+
+.task-card-actions--stacked {
+  margin-top: var(--space-3);
+  padding-top: 0;
+  border-top: 0;
 }
 
 .assignment-options {
@@ -1049,6 +1237,11 @@ function copyToClipboard(text: string) {
 .autocomplete-item:hover { background: var(--color-surface-container); }
 .autocomplete-name { font-weight: var(--fw-medium); }
 .autocomplete-meta { font-size: var(--text-xs); color: var(--color-on-surface-variant); }
+/* Vertical layout reserved for the "create contractor" suggestion row. */
+.autocomplete-item--action {
+  align-items: flex-start;
+  flex-direction: column;
+}
 
 .contractor-clear {
   position: absolute;
@@ -1064,4 +1257,13 @@ function copyToClipboard(text: string) {
 }
 
 .field-hint { font-size: var(--text-xs); color: var(--color-on-surface-variant); }
+.contractor-create-box {
+  padding: var(--space-3);
+  border: 1px dashed var(--color-outline);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-container-lowest);
+}
+.contractor-create-grid { margin-bottom: 0; }
+.task-close-field { margin-top: var(--space-4); }
+.modal-footer-feedback { margin-right: auto; min-width: 0; }
 </style>

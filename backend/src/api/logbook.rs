@@ -124,8 +124,7 @@ pub async fn update(
     json_value(entry)
 }
 
-/// Only managers can delete manual log entries.
-/// Automatic entries are part of the audit trail and cannot be deleted via API.
+/// Only managers can delete logbook entries.
 pub async fn delete(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,

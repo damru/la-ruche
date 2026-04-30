@@ -30,7 +30,7 @@ const taskId = computed(() => route.params.id as string)
 const buildingName = ref('')
 const task = ref<Task | null>(null)
 const contractor = ref<Contractor | null>(null)
-const logbookEntry = ref<MaintenanceEntry | null>(null)
+const logbookEntries = ref<MaintenanceEntry[]>([])
 
 // ── Load data ─────────────────────────────────────────────────────
 async function loadData() {
@@ -42,9 +42,9 @@ async function loadData() {
   buildingName.value = buildingRes.data.name
   task.value = taskRes.data
 
-  // Find linked logbook entry (auto entries have task_id set)
-  logbookEntry.value =
-    entriesRes.data.find(e => e.task_id === taskId.value) ?? null
+  logbookEntries.value = entriesRes.data
+    .filter(entry => entry.task_id === taskId.value)
+    .sort((left, right) => left.intervention_date.localeCompare(right.intervention_date))
 
   // Load contractor if assigned
   if (taskRes.data.contractor_id) {
@@ -63,6 +63,7 @@ function statusVariant(s: string): 'valid' | 'open' | 'pending' | 'closed' | 'de
   if (s === 'open') return 'valid'
   if (s === 'in_progress') return 'open'
   if (s === 'awaiting_vendor') return 'default'
+  if (s === 'awaiting_validation') return 'pending'
   if (s === 'closed') return 'closed'
   return 'default'
 }
@@ -107,11 +108,11 @@ const timelineEvents = computed((): TimelineEvent[] => {
   })
 
   // 2. Contractor assignment or self-assignment (no timestamp — shown as undated step)
-  if (t_.contractor_id && contractor.value) {
+  if ((t_.contractor_id && contractor.value) || t_.contractor_name) {
     events.push({
       key: 'assigned_contractor',
       label: t('tasks.lifecycle.assignedContractor'),
-      detail: contractor.value.name,
+      detail: contractor.value?.name ?? t_.contractor_name,
       icon: CIconWrench,
       variant: 'warning',
     })
@@ -136,21 +137,21 @@ const timelineEvents = computed((): TimelineEvent[] => {
     })
   }
 
-  // 4. Logbook entry
-  if (logbookEntry.value) {
+  // 4. Logbook entries
+  for (const logbookEntry of logbookEntries.value) {
     let logbookDetail: string | undefined
-    if (logbookEntry.value.vendor_name) {
-      logbookDetail = `🔧 ${logbookEntry.value.vendor_name}`
-      if (logbookEntry.value.cost) {
-        logbookDetail += ` · ${formatCurrency(logbookEntry.value.cost)}`
+    if (logbookEntry.vendor_name) {
+      logbookDetail = `🔧 ${logbookEntry.vendor_name}`
+      if (logbookEntry.cost != null) {
+        logbookDetail += ` · ${formatCurrency(logbookEntry.cost)}`
       }
     } else {
-      logbookDetail = logbookEntry.value.description ?? undefined
+      logbookDetail = logbookEntry.description ?? undefined
     }
     events.push({
-      key: 'logbook',
-      date: logbookEntry.value.intervention_date,
-      label: logbookEntry.value.title,
+      key: `logbook-${logbookEntry.id}`,
+      date: logbookEntry.intervention_date,
+      label: logbookEntry.title,
       detail: logbookDetail,
       icon: CIconCheckCircle,
       variant: 'success',
@@ -257,11 +258,16 @@ function dotClass(variant?: TimelineEvent['variant']): string {
               <span v-if="task.closed_at">
                 · {{ t('tasks.closedAt', { date: formatDate(task.closed_at) }) }}
               </span>
-              <span v-if="contractor">
+              <span v-if="contractor || task.contractor_name">
                 · <RouterLink
+                  v-if="contractor"
                   :to="{ name: 'contractor-detail', params: { id: contractor.id } }"
                   class="contractor-link"
                 >🔧 {{ contractor.name }}</RouterLink>
+                <span
+                  v-else
+                  class="contractor-link contractor-link--text"
+                >🔧 {{ task.contractor_name }}</span>
               </span>
             </div>
           </div>
