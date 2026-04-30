@@ -44,14 +44,18 @@ const contractorSuggestions = ref<Contractor[]>([])
 const showSuggestions = ref(false)
 const selectedContractor = ref<Contractor | null>(null)
 const createSuggestedContractor = ref(false)
-function defaultContractorDraft() {
+function createDefaultContractorDraft() {
   return {
     name: '',
     email: '',
     phone: '',
   }
 }
-const contractorDraft = ref(defaultContractorDraft())
+const contractorDraft = ref(createDefaultContractorDraft())
+
+function emptyStringToUndefined(value: string) {
+  return value.trim() || undefined
+}
 
 function contractorDomainLabel(c: Contractor): string {
   if (!c.domains.length) return ''
@@ -73,6 +77,8 @@ function populateSuggestions(query: string) {
   showSuggestions.value = contractorSuggestions.value.length > 0
 }
 
+// Offer inline contractor creation only when the user explicitly chose contractor
+// assignment, typed something, and no known contractor currently matches.
 const canSuggestContractorCreation = computed(() => (
   assignMode.value === 'contractor'
   && !selectedContractor.value
@@ -95,7 +101,7 @@ function selectContractorSuggestion(c: Contractor) {
   selectedContractor.value = c
   contractorSearch.value = c.name
   createSuggestedContractor.value = false
-  contractorDraft.value = defaultContractorDraft()
+  contractorDraft.value = createDefaultContractorDraft()
   // Hide immediately — mousedown.prevent on the item ensures this fires before blur
   showSuggestions.value = false
 }
@@ -121,7 +127,7 @@ function clearContractor() {
   selectedContractor.value = null
   contractorSearch.value = ''
   createSuggestedContractor.value = false
-  contractorDraft.value = defaultContractorDraft()
+  contractorDraft.value = createDefaultContractorDraft()
   showSuggestions.value = false
 }
 
@@ -221,7 +227,7 @@ function openCreateModal() {
   selectedContractor.value = null
   contractorSearch.value = ''
   createSuggestedContractor.value = false
-  contractorDraft.value = defaultContractorDraft()
+  contractorDraft.value = createDefaultContractorDraft()
   assignMode.value = 'none'
   taskFeedback.reset()
   showTaskModal.value = true
@@ -241,18 +247,18 @@ function openEditModal(task: Task) {
     contractorSearch.value = c?.name ?? ''
     assignMode.value = 'contractor'
     createSuggestedContractor.value = false
-    contractorDraft.value = defaultContractorDraft()
+    contractorDraft.value = createDefaultContractorDraft()
   } else if (task.status === 'in_progress') {
     selectedContractor.value = null
     contractorSearch.value = ''
     createSuggestedContractor.value = false
-    contractorDraft.value = defaultContractorDraft()
+    contractorDraft.value = createDefaultContractorDraft()
     assignMode.value = 'self'
   } else {
     selectedContractor.value = null
     contractorSearch.value = ''
     createSuggestedContractor.value = false
-    contractorDraft.value = defaultContractorDraft()
+    contractorDraft.value = createDefaultContractorDraft()
     assignMode.value = 'none'
   }
   taskFeedback.reset()
@@ -272,8 +278,8 @@ async function saveTask() {
       } else if (createSuggestedContractor.value && contractorDraft.value.name) {
         const createdContractor = await contractorsApi.create({
           name: contractorDraft.value.name,
-          email: contractorDraft.value.email.trim() || undefined,
-          phone: contractorDraft.value.phone.trim() || undefined,
+          email: emptyStringToUndefined(contractorDraft.value.email),
+          phone: emptyStringToUndefined(contractorDraft.value.phone),
         })
         contractorId = createdContractor.data.id
         allContractors.value = [createdContractor.data, ...allContractors.value]
