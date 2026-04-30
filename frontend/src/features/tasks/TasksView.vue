@@ -615,6 +615,22 @@ function copyToClipboard(text: string) {
                 </div>
 
                 <div
+                  v-if="task.contractor_id && !task.has_vendor_token && !isTerminal(task.status)"
+                  class="task-card-actions task-card-actions--stacked"
+                >
+                  <CBtn
+                    variant="ghost"
+                    size="sm"
+                    :disabled="generatingToken === task.id"
+                    :aria-label="t('tasks.generateToken')"
+                    @click="generateToken(task)"
+                  >
+                    <CIconLink />
+                    {{ t('tasks.generateToken') }}
+                  </CBtn>
+                </div>
+
+                <div
                   v-if="task.status === 'closed'"
                   class="task-card-actions task-card-actions--stacked"
                 >
@@ -661,18 +677,6 @@ function copyToClipboard(text: string) {
                   >
                     <CIconTrash />
                     {{ t('common.delete') }}
-                  </CBtn>
-                  <!-- Generate link: tasks with a contractor but no active token, not terminal -->
-                  <CBtn
-                    v-if="task.contractor_id && !task.has_vendor_token && !isTerminal(task.status)"
-                    variant="ghost"
-                    size="sm"
-                    :disabled="generatingToken === task.id"
-                    :aria-label="t('tasks.generateToken')"
-                    @click="generateToken(task)"
-                  >
-                    <CIconLink />
-                    {{ t('tasks.generateToken') }}
                   </CBtn>
                 </div>
               </div>
@@ -917,6 +921,7 @@ function copyToClipboard(text: string) {
       </div>
       <template #footer>
         <CFormFeedback
+          class="modal-footer-feedback"
           :status="closeFeedback.status.value"
           :message="closeFeedback.message.value"
         />
@@ -1110,4 +1115,5 @@ function copyToClipboard(text: string) {
 
 .field-hint { font-size: var(--text-xs); color: var(--color-on-surface-variant); }
 .task-close-field { margin-top: var(--space-4); }
+.modal-footer-feedback { margin-right: auto; min-width: 0; }
 </style>

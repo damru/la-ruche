@@ -147,7 +147,7 @@ pub async fn update(
 }
 
 pub async fn delete(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()> {
-    sqlx::query("DELETE FROM maintenance_log WHERE id=$1 AND building_id=$2 AND source='manual'")
+    sqlx::query("DELETE FROM maintenance_log WHERE id=$1 AND building_id=$2")
         .bind(id)
         .bind(building_id)
         .execute(pool)

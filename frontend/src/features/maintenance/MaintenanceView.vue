@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useFormatters } from '@/composables/useFormatters'
 import { usePageLoader, toErrorMessage } from '@/composables/usePageLoader'
-import { useFormFeedback, SUCCESS_AUTO_CLEAR_MS } from '@/composables/useFormFeedback'
+import { useFormFeedback } from '@/composables/useFormFeedback'
 import { useConfirm } from '@/composables/useConfirm'
+import { useAutoClose } from '@/composables/useAutoClose'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CCard from '@/components/molecules/CCard.vue'
@@ -33,6 +34,8 @@ const periodAnchor = ref(startOfPeriod(new Date(), 'quarter'))
 const showEntryModal = ref(false)
 const entryFeedback = useFormFeedback()
 const savingEntry = ref(false)
+const { schedule: scheduleEntryClose, forceExpire: forceEntryClose } = useAutoClose()
+watch(showEntryModal, (open) => { if (!open) forceEntryClose() })
 
 const defaultForm = () => ({
   title: '',
@@ -198,6 +201,7 @@ function openCreateModal() {
 }
 
 async function saveEntry() {
+  if (entryFeedback.status.value === 'success') { forceEntryClose(); return }
   if (!entryForm.value.title.trim()) return
   savingEntry.value = true
   entryFeedback.reset()
@@ -210,10 +214,10 @@ async function saveEntry() {
       vendor_name: entryForm.value.vendor_name || undefined,
     })
     entryFeedback.setSuccess(t('common.saved'))
-    setTimeout(() => {
+    scheduleEntryClose(() => {
       showEntryModal.value = false
       reload()
-    }, SUCCESS_AUTO_CLEAR_MS)
+    })
   } catch (err) {
     entryFeedback.setError(toErrorMessage(err, t('common.error')))
   } finally {
@@ -222,10 +226,6 @@ async function saveEntry() {
 }
 
 async function deleteEntry(entry: MaintenanceEntry) {
-  if (entry.source === 'automatic') {
-    alert(t('maintenance.onlyManualDelete'))
-    return
-  }
   const ok = await confirm({
     title: t('maintenance.confirmDeleteTitle'),
     message: t('maintenance.confirmDeleteMessage', { title: entry.title }),
@@ -357,7 +357,6 @@ async function deleteEntry(entry: MaintenanceEntry) {
                 <div class="entry-header-right">
                   <span class="entry-date">{{ formatDate(entry.intervention_date) }}</span>
                   <button
-                    v-if="entry.source === 'manual'"
                     class="icon-btn icon-btn--danger"
                     :title="t('maintenance.deleteEntry')"
                     @click="deleteEntry(entry)"
@@ -464,6 +463,7 @@ async function deleteEntry(entry: MaintenanceEntry) {
       </form>
       <template #footer>
         <CFormFeedback
+          class="modal-footer-feedback"
           :status="entryFeedback.status.value"
           :message="entryFeedback.message.value"
         />
@@ -476,6 +476,7 @@ async function deleteEntry(entry: MaintenanceEntry) {
         <CBtn
           variant="primary"
           :loading="savingEntry"
+          :closing="entryFeedback.status.value === 'success'"
           @click="saveEntry"
         >
           {{ t('common.save') }}
@@ -518,9 +519,16 @@ async function deleteEntry(entry: MaintenanceEntry) {
 .entry-header-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 .entry-date { font-size: var(--text-xs); color: var(--color-on-surface-variant); }
 .entry-desc { color: var(--color-on-surface-variant); margin-bottom: var(--space-2); }
-.entry-footer { display: flex; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; font-size: var(--text-sm); align-items: center; }
-.vendor { color: var(--color-on-surface-variant); display: flex; align-items: center; }
-.cost { font-weight: var(--fw-semibold); color: var(--color-on-surface); }
+.entry-footer { display: flex; justify-content: flex-start; gap: var(--space-3); flex-wrap: wrap; font-size: var(--text-sm); align-items: center; }
+.vendor { color: var(--color-on-surface-variant); display: flex; align-items: center; margin-right: auto; }
+.cost {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-weight: var(--fw-semibold);
+  color: var(--color-on-surface);
+  font-variant-numeric: tabular-nums;
+}
+.modal-footer-feedback { margin-right: auto; min-width: 0; }
 
 .period-toolbar {
   display: flex;
