@@ -23,7 +23,7 @@ const arrowDir = ref<'up' | 'down'>('down')
 const POPUP_W = 280
 const ARROW_H = 10
 const MARGIN = 10
-const HIDE_DELAY_MS = 120
+const HIDE_DELAY_MS = 240
 
 function clearHideTimeout() {
   if (hideTimeout !== null) {
@@ -136,13 +136,35 @@ function recalc() {
       @focus="show"
       @blur="scheduleHide"
       @click="toggle"
+      @keydown.enter.prevent="toggle"
+      @keydown.space.prevent="toggle"
       @keydown.escape.prevent="hide"
     >
       <slot>
-        <span
-          class="c-tooltip-trigger__symbol"
+        <svg
+          class="c-tooltip-trigger__icon"
+          viewBox="0 0 24 24"
           aria-hidden="true"
-        >ℹ️</span>
+        >
+          <circle
+            cx="12"
+            cy="12"
+            r="10"
+            fill="currentColor"
+          />
+          <path
+            d="M12 10.25v5.25"
+            stroke="var(--color-surface)"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
+          <circle
+            cx="12"
+            cy="7.25"
+            r="1.25"
+            fill="var(--color-surface)"
+          />
+        </svg>
       </slot>
     </button>
 
@@ -220,12 +242,10 @@ function recalc() {
   opacity: 1;
   color: var(--color-primary);
 }
-.c-tooltip-trigger__symbol {
+.c-tooltip-trigger__icon {
   display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 13px;
-  line-height: 1;
+  width: 14px;
+  height: 14px;
 }
 :slotted(svg) { width: 16px; height: 16px; }
 </style>
