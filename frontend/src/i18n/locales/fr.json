@@ -858,7 +858,7 @@
     "confirmDeleteTitle": "Supprimer le sinistre",
     "confirmDeleteMessage": "Le sinistre « {title} » sera supprimé définitivement. Cette action est irréversible.",
     "transmittedAtRequired": "La date de transmission à l'assurance est obligatoire.",
-    "invalidReimbursementAmount": "Le montant de remboursement doit être un nombre valide supérieur ou égal à zéro.",
+    "invalidReimbursementAmount": "Le montant de remboursement doit être un nombre valide strictement supérieur à zéro.",
     "legalCard": {
       "title": "Délais légaux de déclaration",
       "summary": "5 jours ouvrés pour un sinistre courant, 2 jours ouvrés pour un vol, et 10 jours après publication de l'arrêté pour une catastrophe naturelle.",
@@ -886,7 +886,7 @@
       "transmittedAtHint": "La transmission à l'assureur fait passer le dossier en cours d'instruction.",
       "reimbursementDate": "Date de remboursement",
       "reimbursementAmount": "Montant remboursé (€)",
-      "reimbursementAmountHint": "Ces champs restent optionnels si l'assurance n'a pas encore remboursé le dossier.",
+      "reimbursementAmountHint": "Laissez vide si l'assurance n'a pas encore remboursé le dossier ou si le montant n'est pas connu.",
       "closeDocuments": "Pièces de clôture"
     },
     "deadline": {
@@ -905,7 +905,8 @@
     "reimbursement": {
       "dateAndAmount": "Remboursement : {amount} le {date}",
       "amountOnly": "Remboursement : {amount}",
-      "dateOnly": "Remboursement reçu le {date}"
+      "dateOnly": "Date de remboursement : {date}",
+      "none": "Remboursement non renseigné"
     },
     "filters": {
       "open": "Ouverts",

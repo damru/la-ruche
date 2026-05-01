@@ -261,9 +261,13 @@ function reimbursementLabel(claim: Claim): string {
     })
   }
 
-  return t('claims.reimbursement.dateOnly', {
-    date: formatDate(claim.reimbursement_date),
-  })
+  if (claim.reimbursement_date) {
+    return t('claims.reimbursement.dateOnly', {
+      date: formatDate(claim.reimbursement_date),
+    })
+  }
+
+  return t('claims.reimbursement.none')
 }
 
 function appendDocuments(target: Ref<File[]>, files: File[]) {
@@ -327,7 +331,7 @@ function parseOptionalAmount(value: string): number | null {
   const normalized = value.trim().replace(',', '.')
   if (!normalized) return null
   const amount = Number(normalized)
-  return Number.isFinite(amount) ? amount : Number.NaN
+  return Number.isFinite(amount) ? amount : null
 }
 
 function buildClaimUpdatePayload(
@@ -558,8 +562,9 @@ async function submitClose() {
     return
   }
 
-  const reimbursementAmount = parseOptionalAmount(closeForm.value.reimbursement_amount)
-  if (Number.isNaN(reimbursementAmount)) {
+  const reimbursementAmountInput = closeForm.value.reimbursement_amount.trim()
+  const reimbursementAmount = parseOptionalAmount(reimbursementAmountInput)
+  if (reimbursementAmountInput && reimbursementAmount == null) {
     closeFeedback.setError(t('claims.invalidReimbursementAmount'))
     return
   }
@@ -1221,7 +1226,7 @@ async function submitDelete() {
             <input
               v-model="closeForm.reimbursement_amount"
               type="number"
-              min="0"
+              min="0.01"
               step="0.01"
               inputmode="decimal"
               class="form-input"

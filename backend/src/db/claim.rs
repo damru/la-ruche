@@ -151,9 +151,15 @@ pub fn validate_payload(
         ));
     }
 
-    if reimbursement_amount.is_some_and(|amount| amount.is_sign_negative()) {
+    if reimbursement_amount.is_some_and(|amount| amount <= Decimal::ZERO) {
         return Err(AppError::Validation(
-            "reimbursement_amount cannot be negative".into(),
+            "reimbursement_amount must be greater than zero".into(),
+        ));
+    }
+
+    if status.is_none() && (reimbursement_date.is_some() || reimbursement_amount.is_some()) {
+        return Err(AppError::Validation(
+            "reimbursement fields require an explicit status".into(),
         ));
     }
 

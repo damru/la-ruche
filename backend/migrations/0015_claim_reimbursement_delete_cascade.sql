@@ -4,7 +4,7 @@ ALTER TABLE claim
 
 ALTER TABLE claim
     ADD CONSTRAINT claim_reimbursement_amount_non_negative
-        CHECK (reimbursement_amount IS NULL OR reimbursement_amount >= 0);
+        CHECK (reimbursement_amount IS NULL OR reimbursement_amount > 0);
 
 ALTER TABLE claim_document
     DROP CONSTRAINT claim_document_claim_id_fkey,
