@@ -196,6 +196,7 @@ export interface VendorContract {
   auto_renewal: boolean
   notice_days?: number
   status: ContractStatus
+  document_count?: number
   created_at: string
 }
 

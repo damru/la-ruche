@@ -211,6 +211,8 @@ export const contractsApi = {
   update: (id: string, data: Partial<VendorContract>) =>
     api.put<VendorContract>(`/contracts/${id}`, data),
   terminate: (id: string) =>
+    api.put(`/contracts/${id}/terminate`),
+  delete: (id: string) =>
     api.delete(`/contracts/${id}`),
   listAllReminders: () =>
     api.get<ContractReminder[]>('/contracts/reminders'),

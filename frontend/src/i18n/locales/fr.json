@@ -459,6 +459,10 @@
     "terminateMessage": "Le contrat « {name} » sera marqué comme résilié. Les rappels restent conservés pour l'historique.",
     "terminateSuccess": "Contrat résilié",
     "terminateError": "Impossible de résilier ce contrat.",
+    "deleteTitle": "Supprimer le contrat",
+    "deleteMessage": "Le contrat « {name} » et ses documents devenus orphelins seront supprimés définitivement. Cette action est irréversible.",
+    "deleteSuccess": "Contrat supprimé.",
+    "deleteError": "Impossible de supprimer ce contrat.",
     "noticePeriod": "Préavis de résiliation",
     "reminders": {
       "acknowledge": "Acquitter",
@@ -507,7 +511,8 @@
       "detachError": "Impossible de retirer cette pièce.",
       "deleteSuccess": "Pièce supprimée définitivement.",
       "deleteError": "Impossible de supprimer cette pièce.",
-      "empty": "Aucune pièce liée à ce contrat pour le moment."
+      "empty": "Aucune pièce liée à ce contrat pour le moment.",
+      "count": "{count} document lié au contrat | {count} documents liés au contrat"
     },
     "reminderTypes": {
       "renewal": "Reconduction",

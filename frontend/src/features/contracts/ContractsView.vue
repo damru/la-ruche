@@ -416,6 +416,9 @@ async function confirmTerminateContract() {
             <p class="body-sm contract-subject">
               {{ contract.subject }}
             </p>
+            <p class="body-xs contract-documents-hint">
+              {{ t('contracts.documents.count', contract.document_count ?? 0) }}
+            </p>
 
             <div class="contract-details">
               <div class="detail-row">
@@ -608,6 +611,10 @@ async function confirmTerminateContract() {
 }
 .vendor-name { margin: 0; }
 .contract-subject { color: var(--color-on-surface-variant); }
+.contract-documents-hint {
+  margin: 0;
+  color: var(--color-on-surface-variant);
+}
 
 .contract-details { display: flex; flex-direction: column; gap: var(--space-1); }
 .detail-row { display: flex; justify-content: space-between; font-size: var(--text-sm); }

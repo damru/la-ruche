@@ -648,16 +648,6 @@ function photoPreview(file: File): string {
                   <CIconCheckCircle />
                   {{ t('reports.convertToTask') }}
                 </CBtn>
-                <!-- Delete: on card only when closed -->
-                <CBtn
-                  v-if="r.status === 'closed'"
-                  variant="danger"
-                  size="sm"
-                  @click="openDeleteModal(r)"
-                >
-                  <CIconTrash />
-                  {{ t('common.delete') }}
-                </CBtn>
               </div>
             </div>
           </CCard>
@@ -1043,7 +1033,7 @@ function photoPreview(file: File): string {
           :message="editFeedback.message.value"
         />
         <CBtn
-          v-if="reportToEdit && reportToEdit.status !== 'closed'"
+          v-if="reportToEdit"
           variant="danger"
           @click="openDeleteFromEdit"
         >

@@ -25,6 +25,7 @@ pub struct VendorContractRow {
     pub notice_days: Option<i32>,
     pub status: String,
     pub created_at: DateTime<Utc>,
+    pub document_count: i64,
 }
 
 #[derive(Debug, Deserialize)]
@@ -54,15 +55,32 @@ struct ContractReminderCandidateRow {
 }
 
 pub async fn list(pool: &PgPool, building_id: Uuid) -> AppResult<Vec<VendorContractRow>> {
-    Ok(sqlx::query_as!(
-        VendorContractRow,
-        r#"SELECT id, building_id, vendor_name, vendor_email, vendor_phone,
-           subject, contract_type::text as "contract_type!", start_date, end_date, amount,
-           payment_frequency::text as payment_frequency,
-           auto_renewal, notice_days, status::text as "status!", created_at
-           FROM vendor_contract WHERE building_id = $1 ORDER BY vendor_name"#,
-        building_id
+    Ok(sqlx::query_as::<_, VendorContractRow>(
+        r#"SELECT vc.id,
+                  vc.building_id,
+                  vc.vendor_name,
+                  vc.vendor_email,
+                  vc.vendor_phone,
+                  vc.subject,
+                  vc.contract_type::text AS contract_type,
+                  vc.start_date,
+                  vc.end_date,
+                  vc.amount,
+                  vc.payment_frequency::text AS payment_frequency,
+                  vc.auto_renewal,
+                  vc.notice_days,
+                  vc.status::text AS status,
+                  vc.created_at,
+                  (
+                      SELECT COUNT(*)::bigint
+                      FROM contract_document cd
+                      WHERE cd.contract_id = vc.id
+                  ) AS document_count
+           FROM vendor_contract vc
+           WHERE vc.building_id = $1
+           ORDER BY vc.vendor_name"#,
     )
+    .bind(building_id)
     .fetch_all(pool)
     .await?)
 }
@@ -112,16 +130,32 @@ pub async fn get(
     id: Uuid,
     building_id: Uuid,
 ) -> AppResult<Option<VendorContractRow>> {
-    Ok(sqlx::query_as!(
-        VendorContractRow,
-        r#"SELECT id, building_id, vendor_name, vendor_email, vendor_phone,
-           subject, contract_type::text as "contract_type!", start_date, end_date, amount,
-           payment_frequency::text as payment_frequency,
-           auto_renewal, notice_days, status::text as "status!", created_at
-           FROM vendor_contract WHERE id = $1 AND building_id = $2"#,
-        id,
-        building_id
+    Ok(sqlx::query_as::<_, VendorContractRow>(
+        r#"SELECT vc.id,
+                  vc.building_id,
+                  vc.vendor_name,
+                  vc.vendor_email,
+                  vc.vendor_phone,
+                  vc.subject,
+                  vc.contract_type::text AS contract_type,
+                  vc.start_date,
+                  vc.end_date,
+                  vc.amount,
+                  vc.payment_frequency::text AS payment_frequency,
+                  vc.auto_renewal,
+                  vc.notice_days,
+                  vc.status::text AS status,
+                  vc.created_at,
+                  (
+                      SELECT COUNT(*)::bigint
+                      FROM contract_document cd
+                      WHERE cd.contract_id = vc.id
+                  ) AS document_count
+           FROM vendor_contract vc
+           WHERE vc.id = $1 AND vc.building_id = $2"#,
     )
+    .bind(id)
+    .bind(building_id)
     .fetch_optional(pool)
     .await?)
 }
@@ -135,20 +169,33 @@ pub async fn create(
 ) -> AppResult<VendorContractRow> {
     let mut tx = pool.begin().await?;
 
-    let row = sqlx::query_as!(VendorContractRow,
+    let row = sqlx::query_as::<_, VendorContractRow>(
         r#"INSERT INTO vendor_contract
            (building_id, vendor_name, vendor_email, vendor_phone,
-            subject, contract_type, start_date, end_date, amount, payment_frequency,
-            auto_renewal, notice_days, created_by)
+             subject, contract_type, start_date, end_date, amount, payment_frequency,
+             auto_renewal, notice_days, created_by)
            VALUES ($1,$2,$3,$4,$5,$6::text::contract_type,$7,$8,$9,$10::text::payment_frequency,$11,$12,$13)
            RETURNING id, building_id, vendor_name, vendor_email, vendor_phone,
-           subject, contract_type::text as "contract_type!", start_date, end_date, amount,
+           subject, contract_type::text as contract_type, start_date, end_date, amount,
            payment_frequency::text as payment_frequency,
-           auto_renewal, notice_days, status::text as "status!", created_at"#,
-        building_id, input.vendor_name, input.vendor_email, input.vendor_phone,
-        input.subject, input.contract_type, input.start_date, input.end_date, input.amount,
-        input.payment_frequency, input.auto_renewal, input.notice_days, user_id
-    ).fetch_one(&mut *tx).await?;
+           auto_renewal, notice_days, status::text as status, created_at,
+           0::bigint as document_count"#,
+    )
+    .bind(building_id)
+    .bind(input.vendor_name)
+    .bind(input.vendor_email)
+    .bind(input.vendor_phone)
+    .bind(input.subject)
+    .bind(input.contract_type)
+    .bind(input.start_date)
+    .bind(input.end_date)
+    .bind(input.amount)
+    .bind(input.payment_frequency)
+    .bind(input.auto_renewal)
+    .bind(input.notice_days)
+    .bind(user_id)
+    .fetch_one(&mut *tx)
+    .await?;
 
     let spec = ContractReminderSpec {
         start_date: row.start_date,
@@ -180,8 +227,7 @@ pub async fn update(
 ) -> AppResult<Option<VendorContractRow>> {
     let mut tx = pool.begin().await?;
 
-    let row = sqlx::query_as!(
-        VendorContractRow,
+    let row = sqlx::query_as::<_, VendorContractRow>(
         r#"UPDATE vendor_contract SET
            vendor_name=$3, vendor_email=$4, vendor_phone=$5,
            subject=$6, contract_type=$7::text::contract_type, start_date=$8, end_date=$9,
@@ -189,23 +235,28 @@ pub async fn update(
            auto_renewal=$12, notice_days=$13, updated_at=NOW()
            WHERE id=$1 AND building_id=$2
            RETURNING id, building_id, vendor_name, vendor_email, vendor_phone,
-           subject, contract_type::text as "contract_type!", start_date, end_date, amount,
+           subject, contract_type::text as contract_type, start_date, end_date, amount,
            payment_frequency::text as payment_frequency,
-           auto_renewal, notice_days, status::text as "status!", created_at"#,
-        id,
-        building_id,
-        input.vendor_name,
-        input.vendor_email,
-        input.vendor_phone,
-        input.subject,
-        input.contract_type,
-        input.start_date,
-        input.end_date,
-        input.amount,
-        input.payment_frequency,
-        input.auto_renewal,
-        input.notice_days
+           auto_renewal, notice_days, status::text as status, created_at,
+           (
+               SELECT COUNT(*)::bigint
+               FROM contract_document cd
+               WHERE cd.contract_id = vendor_contract.id
+           ) AS document_count"#,
     )
+    .bind(id)
+    .bind(building_id)
+    .bind(input.vendor_name)
+    .bind(input.vendor_email)
+    .bind(input.vendor_phone)
+    .bind(input.subject)
+    .bind(input.contract_type)
+    .bind(input.start_date)
+    .bind(input.end_date)
+    .bind(input.amount)
+    .bind(input.payment_frequency)
+    .bind(input.auto_renewal)
+    .bind(input.notice_days)
     .fetch_optional(&mut *tx)
     .await?;
 
@@ -245,6 +296,48 @@ pub async fn terminate(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<
         id, building_id
     ).execute(pool).await?;
     Ok(())
+}
+
+pub async fn delete(
+    pool: &PgPool,
+    id: Uuid,
+    building_id: Uuid,
+) -> AppResult<Vec<(String, String)>> {
+    let mut tx = pool.begin().await?;
+    let linked_document_ids = sqlx::query_scalar::<_, Uuid>(
+        r#"
+        SELECT cd.document_id
+        FROM contract_document cd
+        JOIN vendor_contract vc ON vc.id = cd.contract_id
+        WHERE cd.contract_id = $1 AND vc.building_id = $2
+        "#,
+    )
+    .bind(id)
+    .bind(building_id)
+    .fetch_all(&mut *tx)
+    .await?;
+
+    sqlx::query!("DELETE FROM contract_reminder WHERE contract_id = $1", id)
+        .execute(&mut *tx)
+        .await?;
+    sqlx::query!("DELETE FROM contract_document WHERE contract_id = $1", id)
+        .execute(&mut *tx)
+        .await?;
+
+    let result = sqlx::query("DELETE FROM vendor_contract WHERE id = $1 AND building_id = $2")
+        .bind(id)
+        .bind(building_id)
+        .execute(&mut *tx)
+        .await?;
+
+    if result.rows_affected() == 0 {
+        return Err(crate::errors::AppError::NotFound);
+    }
+
+    let deleted_documents =
+        crate::db::document::delete_orphaned_tx(&mut tx, &linked_document_ids, building_id).await?;
+    tx.commit().await?;
+    Ok(deleted_documents)
 }
 
 pub async fn list_reminders(

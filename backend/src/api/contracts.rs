@@ -75,6 +75,24 @@ pub async fn terminate(
     Ok(StatusCode::NO_CONTENT)
 }
 
+pub async fn delete(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+) -> AppResult<StatusCode> {
+    auth.require_role(&Role::Manager)?;
+    let deleted_documents = db::contract::delete(&state.pool, id, auth.building_id).await?;
+    let storage = state.storage.clone();
+    tokio::spawn(async move {
+        for (bucket, key) in deleted_documents {
+            if let Err(error) = storage.delete_object(&bucket, &key).await {
+                tracing::error!(error = %error, "S3 delete error");
+            }
+        }
+    });
+    Ok(StatusCode::NO_CONTENT)
+}
+
 pub async fn list_reminders(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,

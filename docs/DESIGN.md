@@ -184,7 +184,9 @@ Références d'implémentation : `frontend/src/composables/usePageLoader.ts`, `f
 La vue `Contrats` affiche en tête les rappels à traiter, avec une action d’acquittement visible sans navigation secondaire.
 
 - Les pièces justificatives d’un contrat se gèrent directement depuis la modale de création / modification, sans bouton documentaire dédié sur la carte.
+- Chaque carte Contrat rappelle aussi le nombre de documents actuellement liés pour éviter d’ouvrir la modale à vide.
 - La modale d’édition liste les pièces déjà liées avec deux issues explicites : retirer le lien seulement, ou retirer le lien puis supprimer définitivement le document.
+- La suppression définitive d’un contrat se déclenche depuis la modale d’édition, jamais depuis la carte.
 
 ## Règle UI — Vue Carnet d'entretien
 
@@ -227,12 +229,14 @@ La modale de conversion d'un signalement en tâche doit permettre au gestionnair
 - La priorité proposée par défaut est `Normal`.
 - La conversion reste une action unique : création de la tâche puis redirection immédiate vers la tâche créée.
 - La modale de modification d’un signalement doit aussi afficher les images déjà jointes et permettre leur gestion sans repasser par la carte.
+- L’action `Supprimer` reste disponible uniquement dans la modale d’édition, pas sur la carte de liste.
 
 ## Règle UI — Gestion documentaire liée
 
 - Toute entité qui accepte des documents doit permettre leur gestion depuis la modale d’édition et, lorsqu’une vue détaillée existe, depuis cette vue détaillée également.
 - L’action de retrait d’un document lié ouvre toujours une confirmation avec deux actions distinctes : `Supprimer le lien seulement` et `Supprimer le lien et le document`.
 - Le module `Documents` doit exposer les références d’entités liées pour chaque fichier et rappeler, dans la modale de suppression, qu’un document supprimé sera d’abord retiré des entités auxquelles il est rattaché.
+- La suppression d’une entité doit aussi supprimer ses documents devenus orphelins ; un document encore rattaché ailleurs n’est pas supprimé.
 
 ## Règle UI — Vue Tâches
 

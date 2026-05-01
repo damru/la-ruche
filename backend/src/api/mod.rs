@@ -157,8 +157,9 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
             "/contracts/{id}",
             get(contracts::get)
                 .put(contracts::update)
-                .delete(contracts::terminate),
+                .delete(contracts::delete),
         )
+        .route("/contracts/{id}/terminate", put(contracts::terminate))
         .route("/contracts/{id}/reminders", get(contracts::list_reminders))
         .route(
             "/contracts/{id}/reminders/{rid}/acknowledge",

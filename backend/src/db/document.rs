@@ -195,3 +195,41 @@ pub async fn delete(
     .await?;
     Ok(row)
 }
+
+pub async fn delete_orphaned_tx(
+    tx: &mut Transaction<'_, Postgres>,
+    document_ids: &[Uuid],
+    building_id: Uuid,
+) -> AppResult<Vec<(String, String)>> {
+    if document_ids.is_empty() {
+        return Ok(Vec::new());
+    }
+
+    Ok(sqlx::query_as::<_, (String, String)>(
+        r#"
+        DELETE FROM document d
+        WHERE d.id = ANY($1)
+          AND d.building_id = $2
+          AND NOT EXISTS (
+              SELECT 1 FROM contract_document cd WHERE cd.document_id = d.id
+          )
+          AND NOT EXISTS (
+              SELECT 1 FROM report_document rd WHERE rd.document_id = d.id
+          )
+          AND NOT EXISTS (
+              SELECT 1 FROM claim_document cld WHERE cld.document_id = d.id
+          )
+          AND NOT EXISTS (
+              SELECT 1 FROM maintenance_log_document mld WHERE mld.document_id = d.id
+          )
+          AND NOT EXISTS (
+              SELECT 1 FROM vendor_submission_document vsd WHERE vsd.document_id = d.id
+          )
+        RETURNING d.bucket, d.storage_path
+        "#,
+    )
+    .bind(document_ids)
+    .bind(building_id)
+    .fetch_all(&mut **tx)
+    .await?)
+}

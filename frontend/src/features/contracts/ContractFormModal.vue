@@ -58,9 +58,14 @@ const documentsDragOver = ref(false)
 const documentActionFeedback = useFormFeedback()
 const documentActionLoading = ref(false)
 const pendingDocument = ref<Document | null>(null)
+const deletingContract = ref(false)
+const deleteContractFeedback = useFormFeedback()
+const showDeleteModal = ref(false)
 const { schedule: scheduleFormClose, forceExpire: forceFormClose } = useAutoClose()
+const { schedule: scheduleDeleteClose, forceExpire: forceDeleteClose } = useAutoClose()
 // Cancel any pending auto-close timer if the parent dismisses the modal early
 watch(() => props.open, (open) => { if (!open) forceFormClose() })
+watch(showDeleteModal, (open) => { if (!open) forceDeleteClose() })
 
 const defaultFormState = (): ContractFormState => ({
   vendor_name: '',
@@ -113,6 +118,8 @@ function resetForm() {
   documentsDragOver.value = false
   feedback.reset()
   documentActionFeedback.reset()
+  deleteContractFeedback.reset()
+  showDeleteModal.value = false
 }
 
 function hydrateForm(contract?: VendorContract | null) {
@@ -154,6 +161,37 @@ watch(
 
 function closeModal() {
   emit('update:open', false)
+}
+
+function openDeleteModal() {
+  if (!props.contract?.id) return
+  deleteContractFeedback.reset()
+  showDeleteModal.value = true
+}
+
+async function deleteContract() {
+  if (deleteContractFeedback.status.value === 'success') {
+    forceDeleteClose()
+    return
+  }
+  if (!props.contract?.id) return
+
+  deletingContract.value = true
+  deleteContractFeedback.reset()
+
+  try {
+    await contractsApi.delete(props.contract.id)
+    deleteContractFeedback.setSuccess(t('contracts.deleteSuccess'))
+    emit('saved')
+    scheduleDeleteClose(() => {
+      showDeleteModal.value = false
+      closeModal()
+    })
+  } catch (error: unknown) {
+    deleteContractFeedback.setError(toErrorMessage(error, t('contracts.deleteError')))
+  } finally {
+    deletingContract.value = false
+  }
 }
 
 async function loadDocuments(contractId: string) {
@@ -479,7 +517,11 @@ async function saveContract() {
           @dragleave.prevent="documentsDragOver = false"
           @drop.prevent="onDocumentDrop"
         >
-          <CIconUpload />
+          <CIconUpload
+            width="20"
+            height="20"
+            style="color:var(--color-on-surface-variant)"
+          />
           <span class="body-xs contract-form__dropzone-hint">{{ t('contracts.documents.hint') }}</span>
         </div>
 
@@ -530,7 +572,10 @@ async function saveContract() {
             >
               <div class="contract-form__documents-meta">
                 <div class="contract-form__documents-name">
-                  <CIconFile />
+                  <CIconFile
+                    width="16"
+                    height="16"
+                  />
                   <span>{{ document.original_name }}</span>
                 </div>
                 <div class="contract-form__documents-details">
@@ -564,6 +609,16 @@ async function saveContract() {
     </div>
 
     <template #footer>
+      <CBtn
+        v-if="isEditing"
+        variant="danger"
+        :loading="deletingContract"
+        style="margin-right:auto"
+        @click="openDeleteModal"
+      >
+        <CIconTrash />
+        {{ t('common.delete') }}
+      </CBtn>
       <CFormFeedback
         :status="feedback.status.value"
         :message="feedback.message.value"
@@ -598,6 +653,38 @@ async function saveContract() {
     @unlink="detachDocument(false)"
     @unlink-and-delete="detachDocument(true)"
   />
+
+  <CModal
+    :open="showDeleteModal"
+    :title="t('contracts.deleteTitle')"
+    size="sm"
+    @update:open="showDeleteModal = $event"
+  >
+    <p class="body-sm">
+      {{ t('contracts.deleteMessage', { name: props.contract?.vendor_name ?? '' }) }}
+    </p>
+    <template #footer>
+      <CFormFeedback
+        :status="deleteContractFeedback.status.value"
+        :message="deleteContractFeedback.message.value"
+      />
+      <CBtn
+        variant="ghost"
+        :disabled="deletingContract"
+        @click="showDeleteModal = false"
+      >
+        {{ t('common.cancel') }}
+      </CBtn>
+      <CBtn
+        variant="danger"
+        :loading="deletingContract"
+        :closing="deleteContractFeedback.status.value === 'success'"
+        @click="deleteContract"
+      >
+        {{ t('common.deleteLabel') }}
+      </CBtn>
+    </template>
+  </CModal>
 </template>
 
 <style scoped>
