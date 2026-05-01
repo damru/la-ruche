@@ -802,14 +802,64 @@
     },
     "previousPeriod": "Période précédente",
     "nextPeriod": "Période suivante",
-    "emptyPeriod": "Aucune intervention sur la période sélectionnée."
+    "emptyPeriod": "Aucune intervention sur la période sélectionnée.",
+    "regulatory": {
+      "title": "Mentions réglementaires",
+      "decree": "Décret 2001-477",
+      "building": "Immeuble",
+      "manager": "Syndic en exercice",
+      "noManager": "Syndic non renseigné",
+      "insuranceContracts": "Contrats d'assurance",
+      "maintenanceContracts": "Contrats d'entretien / maintenance",
+      "contractsCount": "{count} contrat | {count} contrats",
+      "endsOn": "Échéance : {date}",
+      "noInsuranceContracts": "Aucun contrat d'assurance actif renseigné.",
+      "noMaintenanceContracts": "Aucun contrat d'entretien ou de maintenance actif renseigné."
+    }
   },
   "claims": {
     "title": "Sinistres",
     "create": "Déclarer un sinistre",
     "activeCount": "{count} sinistre en cours | {count} sinistres en cours",
+    "createSuccess": "Sinistre enregistré",
+    "updateSuccess": "Suivi du sinistre mis à jour",
+    "updateTracking": "Mettre à jour le suivi",
     "openedAt": "Ouvert {date}",
     "declaredOn": "Déclaré le {date}",
+    "publishedOn": "Arrêté publié le {date}",
+    "commonAreas": "Parties communes",
+    "unitLabel": "Lot {number}",
+    "documentHint": "Glisser-déposer ou cliquer pour joindre les pièces du dossier",
+    "documentUploadError": "Le sinistre a été créé mais certains documents n'ont pas pu être rattachés",
+    "removeDocument": "Retirer",
+    "documentsCount": "{count} document | {count} documents",
+    "empty": "Aucun sinistre sur ce filtre.",
+    "types": {
+      "current": "Sinistre courant",
+      "natural_disaster": "Catastrophe naturelle",
+      "theft": "Vol"
+    },
+    "fields": {
+      "title": "Libellé",
+      "claimType": "Type de sinistre",
+      "declaredAt": "Date de survenance",
+      "publishedAt": "Date de publication de l'arrêté",
+      "publishedAtHint": "Obligatoire pour calculer le délai légal d'une catastrophe naturelle.",
+      "unit": "Lot concerné",
+      "description": "Description",
+      "documents": "Pièces jointes",
+      "status": "Statut",
+      "transmittedAt": "Date de transmission à l'assurance",
+      "transmittedAtHint": "Laissez vide tant que le dossier n'a pas été envoyé à l'assureur."
+    },
+    "deadline": {
+      "remaining": "{days} jour(s) restant(s) — échéance au {date}",
+      "today": "Échéance aujourd'hui ({date})",
+      "missed": "Délai dépassé depuis le {date}",
+      "transmittedOnTime": "Transmis le {date} (dans le délai légal)",
+      "transmittedLate": "Transmis le {date} (hors délai légal)",
+      "reference": "Échéance légale : {date}"
+    },
     "statuses": {
       "open": "Ouvert",
       "in_progress": "En cours",

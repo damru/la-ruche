@@ -259,9 +259,9 @@ export const mockReminders: ContractReminder[] = [
 
 // ── Sinistres ─────────────────────────────────────────────────────
 export const mockClaims: Claim[] = [
-  { id: 'clm-001', title: 'Dégât des eaux — Lot 3 (fuite toiture)', description: 'Infiltration d\'eau dans le salon du lot 3 suite à une détérioration de la toiture. Déclaration AXA N° 2025-04-12345.', declared_at: '2025-04-12', status: 'in_progress', unit_id: 'unt-003', created_at: '2025-04-12T14:00:00Z' },
-  { id: 'clm-002', title: 'Fissure façade — mur nord', description: 'Fissuration longitudinale constatée sur le mur nord, hauteur 1er–3ème étage. Expertise mandatée.', declared_at: '2025-02-20', status: 'open', created_at: '2025-02-20T10:00:00Z' },
-  { id: 'clm-003', title: 'Vol dans les caves (cage A)', description: 'Effraction des caves 1, 3 et 4 signalée le 12/11/2024. Plainte déposée. Sinistre déclaré à l\'assurance.', declared_at: '2024-11-13', status: 'closed', created_at: '2024-11-13T09:00:00Z' },
+  { id: 'clm-001', title: 'Dégât des eaux — Lot 3 (fuite toiture)', description: 'Infiltration d\'eau dans le salon du lot 3 suite à une détérioration de la toiture. Déclaration AXA N° 2025-04-12345.', claim_type: 'current', declared_at: '2025-04-12', status: 'in_progress', unit_id: 'unt-003', legal_deadline_at: '2025-04-18', days_remaining: 3, is_deadline_approaching: false, is_deadline_missed: false, is_transmitted_late: false, document_count: 2, created_at: '2025-04-12T14:00:00Z', updated_at: '2025-04-13T09:00:00Z' },
+  { id: 'clm-002', title: 'Fissure façade — mur nord', description: 'Fissuration longitudinale constatée sur le mur nord, hauteur 1er–3ème étage. Expertise mandatée.', claim_type: 'natural_disaster', declared_at: '2025-02-20', published_at: '2025-02-24', status: 'open', legal_deadline_at: '2025-03-06', days_remaining: 1, is_deadline_approaching: true, is_deadline_missed: false, is_transmitted_late: false, document_count: 1, created_at: '2025-02-20T10:00:00Z', updated_at: '2025-02-24T10:00:00Z' },
+  { id: 'clm-003', title: 'Vol dans les caves (cage A)', description: 'Effraction des caves 1, 3 et 4 signalée le 12/11/2024. Plainte déposée. Sinistre déclaré à l\'assurance.', claim_type: 'theft', declared_at: '2024-11-13', status: 'closed', transmitted_at: '2024-11-18', legal_deadline_at: '2024-11-15', is_deadline_approaching: false, is_deadline_missed: false, is_transmitted_late: true, document_count: 3, created_at: '2024-11-13T09:00:00Z', updated_at: '2024-11-18T18:00:00Z' },
 ]
 
 // ── Carnet d'entretien ────────────────────────────────────────────

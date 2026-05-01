@@ -17,6 +17,7 @@ export type LevyStatus = 'issued' | 'paid' | 'overdue'
 export type TaskStatus = 'open' | 'in_progress' | 'awaiting_vendor' | 'awaiting_validation' | 'closed' | 'cancelled'
 export type TaskPriority = 'low' | 'normal' | 'high' | 'urgent'
 
+export type ClaimType = 'current' | 'natural_disaster' | 'theft'
 export type ClaimStatus = 'open' | 'in_progress' | 'closed'
 export type ReportStatus = 'open' | 'in_progress' | 'closed'
 export type PollStatus = 'draft' | 'open' | 'closed'
@@ -230,10 +231,20 @@ export interface Claim {
   id: string
   title: string
   description?: string
+  claim_type: ClaimType
   declared_at: string
+  published_at?: string
   status: ClaimStatus
   unit_id?: string
+  transmitted_at?: string
+  legal_deadline_at: string
+  days_remaining?: number
+  is_deadline_approaching: boolean
+  is_deadline_missed: boolean
+  is_transmitted_late: boolean
+  document_count: number
   created_at: string
+  updated_at: string
 }
 
 export interface MaintenanceEntry {
@@ -247,6 +258,22 @@ export interface MaintenanceEntry {
   task_id?: string
   source: 'manual' | 'automatic'
   created_at: string
+}
+
+export interface LogbookContractSummary {
+  id: string
+  vendor_name: string
+  subject: string
+  contract_type: ContractType
+  end_date?: string
+  status: ContractStatus
+}
+
+export interface LogbookSummary {
+  building: Pick<Building, 'name' | 'address_line1' | 'address_line2' | 'postal_code' | 'city'>
+  current_manager?: Pick<User, 'first_name' | 'last_name' | 'email' | 'phone'>
+  insurance_contracts: LogbookContractSummary[]
+  maintenance_contracts: LogbookContractSummary[]
 }
 
 export interface Report {

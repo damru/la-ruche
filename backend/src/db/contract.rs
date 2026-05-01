@@ -8,7 +8,7 @@ use crate::db::document::DocumentListRow;
 use crate::domain::reminders::{ContractReminderSpec, ReminderKind, compute_reminders};
 use crate::errors::AppResult;
 
-#[derive(Debug, Serialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, sqlx::FromRow)]
 pub struct VendorContractRow {
     pub id: Uuid,
     pub building_id: Uuid,

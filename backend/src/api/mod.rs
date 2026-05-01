@@ -2,6 +2,7 @@ pub mod assemblies;
 pub mod auth;
 pub mod budget;
 pub mod building;
+pub mod claims;
 pub mod consultations;
 pub mod contractor;
 pub mod contractors;
@@ -17,7 +18,6 @@ pub mod users;
 
 // Modules still implemented as stubs — re-exported from stubs.rs
 use std::sync::Arc;
-use stubs::claims;
 
 use axum::{
     Router,
@@ -200,8 +200,17 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
         // ── Claims ──────────────────────────────────────────────
         .route("/claims", get(claims::list).post(claims::create))
         .route("/claims/{id}", get(claims::get).put(claims::update))
+        .route(
+            "/claims/{id}/documents",
+            get(claims::list_documents).post(claims::attach_document),
+        )
+        .route(
+            "/claims/{id}/documents/{doc_id}",
+            delete(claims::detach_document),
+        )
         // ── Maintenance log ─────────────────────────────────────
         .route("/logbook", get(logbook::list).post(logbook::create))
+        .route("/logbook/summary", get(logbook::summary))
         .route(
             "/logbook/{id}",
             get(logbook::get)
