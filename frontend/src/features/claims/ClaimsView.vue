@@ -182,13 +182,13 @@ function deadlineLabel(claim: Claim): string {
 }
 
 function claimLegalTooltip(claim: Claim) {
-  let tooltipKey: 'current' | 'theft' | 'naturalDisaster'
+  let tooltipKey: ClaimType
   switch (claim.claim_type) {
-    case 'natural_disaster':
-      tooltipKey = 'naturalDisaster'
-      break
     case 'theft':
       tooltipKey = 'theft'
+      break
+    case 'natural_disaster':
+      tooltipKey = 'natural_disaster'
       break
     default:
       tooltipKey = 'current'

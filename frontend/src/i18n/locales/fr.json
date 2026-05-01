@@ -848,7 +848,7 @@
         "linkLabel": "Article L113-2",
         "linkHref": "https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000035731302"
       },
-      "naturalDisaster": {
+      "natural_disaster": {
         "summary": "Résumé : en cas de catastrophe naturelle, la déclaration doit être faite dans les 10 jours suivant la publication de l'arrêté interministériel.",
         "linkLabel": "Article L125-2",
         "linkHref": "https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000047109081"
