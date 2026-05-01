@@ -203,6 +203,16 @@ La vue `Sinistres` affiche pour chaque dossier le délai légal restant avant d�
 - La création d'un sinistre reste faisable dans une seule modale et accepte des pièces jointes sans écran intermédiaire.
 - Le suivi de transmission à l'assurance est éditable dans une modale dédiée, avec date de transmission explicite.
 
+## Règle UI — Obligations légales
+
+Tout libellé, badge ou bloc d'interface qui expose une obligation légale calculée ou réglementaire doit afficher un `CTooltip` avec :
+
+- un résumé pédagogique de l'obligation ;
+- la référence officielle du texte applicable ;
+- un lien lisible vers le texte complet sur une source officielle (`legifrance.gouv.fr` ou `service-public.fr`).
+
+Cette règle s'applique notamment aux délais de déclaration de sinistre, au carnet d'entretien réglementaire et à toute future mention légale rendue visible dans l'interface.
+
 ## Règle UI — Vue Signalements
 
 La modale de conversion d'un signalement en tâche doit permettre au gestionnaire de choisir la **priorité** de la tâche au moment de la conversion, sans écran intermédiaire supplémentaire.

@@ -9,6 +9,7 @@ import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
+import CTooltip from '@/components/atoms/CTooltip.vue'
 import CModal from '@/components/molecules/CModal.vue'
 import CPageError from '@/components/molecules/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
@@ -335,6 +336,7 @@ async function deleteEntry() {
           <CCard class="regulatory-card">
             <div class="regulatory-card__header">
               <span class="title-sm">{{ t('maintenance.regulatory.title') }}</span>
+              <CTooltip :content="t('maintenance.regulatory.tooltip')" />
               <CBadge variant="default">
                 {{ t('maintenance.regulatory.decree') }}
               </CBadge>

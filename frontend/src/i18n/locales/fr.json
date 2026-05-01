@@ -814,7 +814,8 @@
       "contractsCount": "{count} contrat | {count} contrats",
       "endsOn": "Échéance : {date}",
       "noInsuranceContracts": "Aucun contrat d'assurance actif renseigné.",
-      "noMaintenanceContracts": "Aucun contrat d'entretien ou de maintenance actif renseigné."
+      "noMaintenanceContracts": "Aucun contrat d'entretien ou de maintenance actif renseigné.",
+      "tooltip": "Résumé : le carnet d'entretien est obligatoire et doit au minimum rappeler l'adresse de l'immeuble, le syndic en exercice, les assurances et, s'il y a lieu, les contrats d'entretien et les travaux importants. Référence officielle : décret n°2001-477 du 30 mai 2001, article 1, texte complet sur Légifrance : https://www.legifrance.gouv.fr/loda/article_lc/LEGIARTI000006547551."
     }
   },
   "claims": {
@@ -834,6 +835,7 @@
     "removeDocument": "Retirer",
     "documentsCount": "{count} document | {count} documents",
     "empty": "Aucun sinistre sur ce filtre.",
+    "legalDelayTooltip": "Résumé : le délai minimal de déclaration est de 5 jours ouvrés pour un sinistre courant, 2 jours ouvrés pour un vol et 10 jours après publication de l'arrêté pour une catastrophe naturelle. Références officielles : article L113-2 du Code des assurances (https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000035731302) et article L125-2 du Code des assurances (https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000047109081).",
     "types": {
       "current": "Sinistre courant",
       "natural_disaster": "Catastrophe naturelle",

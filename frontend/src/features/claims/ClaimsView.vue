@@ -9,6 +9,7 @@ import { useRole } from '@/composables/useRole'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
+import CTooltip from '@/components/atoms/CTooltip.vue'
 import CPageError from '@/components/molecules/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CCard from '@/components/molecules/CCard.vue'
@@ -372,7 +373,10 @@ async function submitUpdate() {
         <div class="view-header">
           <div>
             <h1 class="display-md">
-              {{ t('claims.title') }}
+              <span class="title-with-tooltip">
+                <span>{{ t('claims.title') }}</span>
+                <CTooltip :content="t('claims.legalDelayTooltip')" />
+              </span>
             </h1>
             <p
               class="body-md"
@@ -730,6 +734,12 @@ async function submitUpdate() {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
+}
+
+.title-with-tooltip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
 }
 
 .claim-card {
