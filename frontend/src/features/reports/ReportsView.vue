@@ -105,6 +105,16 @@ function removeEditPhoto(idx: number) {
   editSelectedPhotos.value = editSelectedPhotos.value.filter((_, i) => i !== idx)
 }
 
+function openEditPhotoAction(document: Document) {
+  if (!reportToEdit.value) return
+  openPhotoActionModal(reportToEdit.value.id, document)
+}
+
+function openViewPhotoAction(document: Document) {
+  if (!viewPhotosReport.value) return
+  openPhotoActionModal(viewPhotosReport.value.id, document)
+}
+
 /** Upload a single photo and return its document_id. */
 async function uploadPhoto(reportId: string, file: File): Promise<void> {
   const ext = file.name.split('.').pop() ?? 'jpg'
@@ -1014,7 +1024,7 @@ function photoPreview(file: File): string {
                 class="photo-gallery-delete"
                 :title="t('reports.deletePhoto')"
                 :disabled="deletingPhoto"
-                @click="openPhotoActionModal(reportToEdit?.id ?? '', item.doc)"
+                @click="openEditPhotoAction(item.doc)"
               >
                 <CIconTrash />
               </button>
@@ -1121,7 +1131,7 @@ function photoPreview(file: File): string {
             class="photo-gallery-delete"
             :title="t('reports.deletePhoto')"
             :disabled="deletingPhoto"
-            @click.stop="openPhotoActionModal(viewPhotosReport?.id ?? '', item.doc)"
+            @click.stop="openViewPhotoAction(item.doc)"
           >
             <CIconTrash />
           </button>
@@ -1162,7 +1172,7 @@ function photoPreview(file: File): string {
           class="lightbox-delete"
           :title="t('reports.deletePhoto')"
           :disabled="deletingPhoto"
-          @click.stop="openPhotoActionModal(viewPhotosReport?.id ?? '', viewPhotosList[lightboxIndex!].doc)"
+          @click.stop="openViewPhotoAction(viewPhotosList[lightboxIndex!].doc)"
         >
           <CIconTrash />
         </button>

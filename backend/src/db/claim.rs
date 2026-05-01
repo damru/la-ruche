@@ -62,6 +62,10 @@ enum FlexibleDecimalInput {
     Number(f64),
 }
 
+/// Accept both string and numeric JSON representations for reimbursement amounts.
+///
+/// The frontend can legitimately emit either shape depending on the control and serializer path,
+/// so the API keeps deserialization flexible while normalizing to `Decimal` before validation.
 fn deserialize_optional_decimal<'de, D>(deserializer: D) -> Result<Option<Decimal>, D::Error>
 where
     D: Deserializer<'de>,

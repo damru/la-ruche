@@ -170,6 +170,11 @@ async function loadDocuments(contractId: string) {
   }
 }
 
+function openDocumentPicker() {
+  if (!documentInputRef.value) return
+  documentInputRef.value.click()
+}
+
 function appendDocuments(files: File[]) {
   if (!files.length) return
   selectedDocuments.value = [...selectedDocuments.value, ...files]
@@ -466,9 +471,9 @@ async function saveContract() {
           :class="['contract-form__dropzone', { 'contract-form__dropzone--over': documentsDragOver }]"
           role="button"
           tabindex="0"
-          @click="documentInputRef?.click()"
-          @keydown.enter.prevent="documentInputRef?.click()"
-          @keydown.space.prevent="documentInputRef?.click()"
+          @click="openDocumentPicker"
+          @keydown.enter.prevent="openDocumentPicker"
+          @keydown.space.prevent="openDocumentPicker"
           @dragenter.prevent="documentsDragOver = true"
           @dragover.prevent="documentsDragOver = true"
           @dragleave.prevent="documentsDragOver = false"
