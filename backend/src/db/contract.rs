@@ -71,13 +71,11 @@ pub async fn list(pool: &PgPool, building_id: Uuid) -> AppResult<Vec<VendorContr
                   vc.notice_days,
                   vc.status::text AS status,
                   vc.created_at,
-                  (
-                      SELECT COUNT(*)::bigint
-                      FROM contract_document cd
-                      WHERE cd.contract_id = vc.id
-                  ) AS document_count
+                  COUNT(cd.document_id)::bigint AS document_count
            FROM vendor_contract vc
+           LEFT JOIN contract_document cd ON cd.contract_id = vc.id
            WHERE vc.building_id = $1
+           GROUP BY vc.id
            ORDER BY vc.vendor_name"#,
     )
     .bind(building_id)
@@ -130,7 +128,7 @@ pub async fn get(
     id: Uuid,
     building_id: Uuid,
 ) -> AppResult<Option<VendorContractRow>> {
-    Ok(sqlx::query_as::<_, VendorContractRow>(
+    let mut contract = sqlx::query_as::<_, VendorContractRow>(
         r#"SELECT vc.id,
                   vc.building_id,
                   vc.vendor_name,
@@ -146,18 +144,20 @@ pub async fn get(
                   vc.notice_days,
                   vc.status::text AS status,
                   vc.created_at,
-                  (
-                      SELECT COUNT(*)::bigint
-                      FROM contract_document cd
-                      WHERE cd.contract_id = vc.id
-                  ) AS document_count
+                  0::bigint AS document_count
            FROM vendor_contract vc
            WHERE vc.id = $1 AND vc.building_id = $2"#,
     )
     .bind(id)
     .bind(building_id)
     .fetch_optional(pool)
-    .await?)
+    .await?;
+
+    if let Some(row) = contract.as_mut() {
+        row.document_count = count_documents(pool, row.id).await?;
+    }
+
+    Ok(contract)
 }
 
 /// Creates the contract and computes + inserts all reminders in a transaction.
@@ -285,6 +285,13 @@ pub async fn update(
             ).execute(&mut *tx).await?;
         }
     }
+
+    let row = if let Some(mut row) = row {
+        row.document_count = count_documents(&mut *tx, row.id).await?;
+        Some(row)
+    } else {
+        None
+    };
 
     tx.commit().await?;
     Ok(row)
@@ -519,6 +526,22 @@ fn reminder_kind_to_str(kind: &ReminderKind) -> &'static str {
         ReminderKind::Expiration => "expiration",
         ReminderKind::Termination => "termination",
     }
+}
+
+async fn count_documents<'e, E>(executor: E, contract_id: Uuid) -> AppResult<i64>
+where
+    E: sqlx::Executor<'e, Database = sqlx::Postgres>,
+{
+    Ok(sqlx::query_scalar::<_, i64>(
+        r#"
+        SELECT COUNT(*)::bigint
+        FROM contract_document
+        WHERE contract_id = $1
+        "#,
+    )
+    .bind(contract_id)
+    .fetch_one(executor)
+    .await?)
 }
 
 #[derive(Default)]
