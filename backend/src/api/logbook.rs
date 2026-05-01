@@ -99,6 +99,45 @@ fn map_contract(contract: db::contract::VendorContractRow) -> LogbookContractInf
     }
 }
 
+fn parse_manager_info(user: &serde_json::Value) -> AppResult<Option<LogbookManagerInfo>> {
+    let roles = user
+        .get("roles")
+        .and_then(serde_json::Value::as_array)
+        .map(|roles| {
+            roles
+                .iter()
+                .filter_map(serde_json::Value::as_str)
+                .collect::<Vec<_>>()
+        })
+        .unwrap_or_default();
+
+    if !roles.contains(&"manager") {
+        return Ok(None);
+    }
+
+    let require_field = |field: &str| {
+        user.get(field)
+            .and_then(serde_json::Value::as_str)
+            .map(ToString::to_string)
+            .ok_or_else(|| {
+                AppError::Internal(anyhow::anyhow!(
+                    "manager row missing '{}' in logbook summary",
+                    field
+                ))
+            })
+    };
+
+    Ok(Some(LogbookManagerInfo {
+        first_name: require_field("first_name")?,
+        last_name: require_field("last_name")?,
+        email: require_field("email")?,
+        phone: user
+            .get("phone")
+            .and_then(serde_json::Value::as_str)
+            .map(ToString::to_string),
+    }))
+}
+
 /// All authenticated users can list the maintenance log.
 pub async fn list(
     auth: AuthUser,
@@ -119,32 +158,11 @@ pub async fn summary(
     let users = db::user::list(&state.pool, auth.building_id).await?;
     let today = Utc::now().date_naive();
 
-    let current_manager = users.into_iter().find_map(|user| {
-        let roles = user
-            .get("roles")
-            .and_then(serde_json::Value::as_array)
-            .map(|roles| {
-                roles
-                    .iter()
-                    .filter_map(serde_json::Value::as_str)
-                    .collect::<Vec<_>>()
-            })
-            .unwrap_or_default();
-
-        if !roles.contains(&"manager") {
-            return None;
-        }
-
-        Some(LogbookManagerInfo {
-            first_name: user.get("first_name")?.as_str()?.to_string(),
-            last_name: user.get("last_name")?.as_str()?.to_string(),
-            email: user.get("email")?.as_str()?.to_string(),
-            phone: user
-                .get("phone")
-                .and_then(serde_json::Value::as_str)
-                .map(ToString::to_string),
-        })
-    });
+    let current_manager = users
+        .iter()
+        .map(parse_manager_info)
+        .find_map(|manager| manager.transpose())
+        .transpose()?;
 
     let contracts = db::contract::list(&state.pool, auth.building_id).await?;
     let active_contracts = contracts

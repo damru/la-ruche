@@ -147,6 +147,8 @@ pub fn validate_payload(
 }
 
 fn add_business_days(mut date: NaiveDate, days: u32) -> NaiveDate {
+    // MVP legal approximation: weekends are excluded, but French public holidays are not
+    // modelled yet because the application has no holiday calendar service today.
     let mut remaining = days;
     while remaining > 0 {
         date = date
