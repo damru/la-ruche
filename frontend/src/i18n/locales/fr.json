@@ -837,22 +837,13 @@
     "removeDocument": "Retirer",
     "documentsCount": "{count} document | {count} documents",
     "empty": "Aucun sinistre sur ce filtre.",
-    "legalTooltips": {
-      "current": {
-        "summary": "Résumé : le délai minimal de déclaration à l'assureur est de 5 jours ouvrés à compter de la connaissance du sinistre.",
-        "linkLabel": "Article L113-2",
-        "linkHref": "https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000035731302"
-      },
-      "theft": {
-        "summary": "Résumé : en cas de vol, le délai minimal de déclaration à l'assureur est ramené à 2 jours ouvrés.",
-        "linkLabel": "Article L113-2",
-        "linkHref": "https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000035731302"
-      },
-      "natural_disaster": {
-        "summary": "Résumé : en cas de catastrophe naturelle, la déclaration doit être faite dans les 10 jours suivant la publication de l'arrêté interministériel.",
-        "linkLabel": "Article L125-2",
-        "linkHref": "https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000047109081"
-      }
+    "legalCard": {
+      "title": "Délais légaux de déclaration",
+      "summary": "5 jours ouvrés pour un sinistre courant, 2 jours ouvrés pour un vol, et 10 jours après publication de l'arrêté pour une catastrophe naturelle.",
+      "currentLinkLabel": "Article L113-2",
+      "currentLinkHref": "https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000035731302",
+      "naturalDisasterLinkLabel": "Article L125-2",
+      "naturalDisasterLinkHref": "https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000047109081"
     },
     "types": {
       "current": "Sinistre courant",

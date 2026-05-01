@@ -200,18 +200,18 @@ La vue `Carnet d'entretien` expose des filtres rapides ancrés sur des périodes
 La vue `Sinistres` affiche pour chaque dossier le délai légal restant avant déclaration à l'assurance, calculé selon le type de sinistre.
 
 - Les alertes de délai doivent être visibles directement sur la carte (approche d'échéance / retard / transmis).
+- L'explication juridique des délais est mutualisée dans une carte de note légale en bas de page, sur le modèle de `RegistryView`.
 - La création d'un sinistre reste faisable dans une seule modale et accepte des pièces jointes sans écran intermédiaire.
 - Le suivi de transmission à l'assurance est éditable dans une modale dédiée, avec date de transmission explicite.
 
 ## Règle UI — Obligations légales
 
-Tout libellé, badge ou bloc d'interface qui expose une obligation légale calculée ou réglementaire doit afficher un `CTooltip` avec :
+Tout libellé, badge ou bloc d'interface qui expose une obligation légale calculée ou réglementaire doit afficher soit un `CTooltip`, soit — si la règle vaut pour l'ensemble de la vue — une `CCard` de note légale en bas de page, avec :
 
 - un résumé pédagogique de l'obligation ;
-- un séparateur horizontal discret avant la référence ;
 - un lien lisible libellé simplement `Article …` vers le texte complet sur une source officielle (`legifrance.gouv.fr` ou `service-public.fr`).
 
-Cette règle s'applique notamment aux délais de déclaration de sinistre, au carnet d'entretien réglementaire et à toute future mention légale rendue visible dans l'interface.
+Cette règle s'applique notamment aux délais de déclaration de sinistre (carte mutualisée en bas de page), au carnet d'entretien réglementaire et à toute future mention légale rendue visible dans l'interface.
 
 ## Règle UI — Vue Signalements
 

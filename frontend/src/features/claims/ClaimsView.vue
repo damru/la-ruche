@@ -9,7 +9,6 @@ import { useRole } from '@/composables/useRole'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
-import CTooltip from '@/components/atoms/CTooltip.vue'
 import CPageError from '@/components/molecules/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CCard from '@/components/molecules/CCard.vue'
@@ -179,26 +178,6 @@ function deadlineLabel(claim: Claim): string {
   }
 
   return t('claims.deadline.reference', { date: formatDate(claim.legal_deadline_at) })
-}
-
-function claimLegalTooltip(claim: Claim) {
-  let tooltipKey: ClaimType
-  switch (claim.claim_type) {
-    case 'theft':
-      tooltipKey = 'theft'
-      break
-    case 'natural_disaster':
-      tooltipKey = 'natural_disaster'
-      break
-    default:
-      tooltipKey = 'current'
-  }
-
-  return {
-    content: t(`claims.legalTooltips.${tooltipKey}.summary`),
-    linkLabel: t(`claims.legalTooltips.${tooltipKey}.linkLabel`),
-    linkHref: t(`claims.legalTooltips.${tooltipKey}.linkHref`),
-  }
 }
 
 function openCreateModal() {
@@ -494,8 +473,7 @@ async function submitUpdate() {
                   width="14"
                   height="14"
                 />
-                <span>{{ t('claims.deadline.reference', { date: formatDate(claim.legal_deadline_at) }) }}</span>
-                <CTooltip v-bind="claimLegalTooltip(claim)" />
+                {{ t('claims.deadline.reference', { date: formatDate(claim.legal_deadline_at) }) }}
               </span>
               <span class="claim-card__detail">
                 <CIconFile
@@ -514,6 +492,31 @@ async function submitUpdate() {
             {{ t('claims.empty') }}
           </div>
         </div>
+
+        <CCard class="claims-legal-card">
+          <p class="body-sm claims-legal-card__text">
+            ⚖️ <strong>{{ t('claims.legalCard.title') }}</strong> — {{ t('claims.legalCard.summary') }}
+          </p>
+          <div class="claims-legal-card__links">
+            <a
+              class="claims-legal-card__link"
+              :href="t('claims.legalCard.currentLinkHref')"
+              target="_blank"
+              rel="noreferrer noopener"
+            >
+              {{ t('claims.legalCard.currentLinkLabel') }}
+            </a>
+            <span aria-hidden="true">·</span>
+            <a
+              class="claims-legal-card__link"
+              :href="t('claims.legalCard.naturalDisasterLinkHref')"
+              target="_blank"
+              rel="noreferrer noopener"
+            >
+              {{ t('claims.legalCard.naturalDisasterLinkLabel') }}
+            </a>
+          </div>
+        </CCard>
       </template>
     </div>
 
@@ -885,6 +888,34 @@ async function submitUpdate() {
   padding: var(--space-8);
   text-align: center;
   color: var(--color-on-surface-variant);
+}
+
+.claims-legal-card {
+  margin-top: var(--space-4);
+}
+
+.claims-legal-card__text,
+.claims-legal-card__links {
+  margin: 0;
+  color: var(--color-on-surface-variant);
+}
+
+.claims-legal-card__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: var(--space-2);
+  font-size: var(--text-sm);
+}
+
+.claims-legal-card__link {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+.claims-legal-card__link:hover,
+.claims-legal-card__link:focus-visible {
+  text-decoration: underline;
 }
 
 @media (max-width: 720px) {
