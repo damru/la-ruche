@@ -2,7 +2,7 @@
 
 > **Dénomination** — Dans le présent document, l'expression **« l'Application »** désigne exclusivement **La Ruche**, plateforme web open source de gestion participative de copropriété. Ces deux termes sont interchangeables et désignent la même entité logicielle.
 
-> Document vivant. Dernière mise à jour : 2026-04-29
+> Document vivant. Dernière mise à jour : 2026-05-01
 
 ---
 
@@ -158,6 +158,10 @@ Conventions : UUID v4, TIMESTAMPTZ, soft delete via `actif`/`statut`, `updated_a
 Pour la conversion `signalement → tâche`, l'endpoint backend crée la tâche dans une transaction SQL, persiste la priorité choisie, lie `report.task_id` et bascule immédiatement `report.status` à `in_progress`. Lors d'une clôture effective de la tâche, le backend clôture aussi le signalement lié en réutilisant ce lien `report.task_id`.
 
 Dans `TasksView`, l'assignation prestataire reste tolérante : l'autocomplete ne force pas la sélection d'un prestataire existant. Si aucune correspondance n'est trouvée, l'UI peut créer un prestataire via `POST /contractors` juste avant l'enregistrement de la tâche ; sinon la saisie libre est persistée dans `task.contractor_name` sans `contractor_id`.
+
+Le module `claims` expose un workflow réel de déclaration de sinistre : type de sinistre, date de survenance, date de publication d'arrêté pour catastrophe naturelle, date de transmission à l'assurance, calcul serveur de l'échéance légale et état d'alerte dérivé. Les pièces jointes sont reliées par `claim_document`, sur le même modèle que `report_document`.
+
+Le module `logbook` expose un résumé réglementaire distinct de la timeline : identité de l'immeuble, syndic en exercice et registres consolidés des contrats d'assurance et de maintenance actifs, afin de couvrir les mentions permanentes du décret n°2001-477 dans une seule vue.
 
 ---
 

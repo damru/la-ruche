@@ -1,7 +1,7 @@
 # DESIGN.md — l'Application Design System "The Modern Registry"
 
 > **Dénomination** — Dans le présent document, l'expression **« l'Application »** désigne exclusivement **La Ruche**, plateforme web open source de gestion participative de copropriété. Ces deux termes sont interchangeables et désignent la même entité logicielle.
-> Dernière mise à jour : 2026-04-30
+> Dernière mise à jour : 2026-05-01
 
 ## Typographie — 3 polices, 3 rôles (DDR-001 v3)
 
@@ -192,6 +192,16 @@ La vue `Carnet d'entretien` expose des filtres rapides ancrés sur des périodes
 - La navigation `précédent / suivant` déplace la fenêtre d'une période complète, jamais une durée flottante depuis aujourd'hui.
 - Le total des dépenses et la liste affichée sont toujours calculés sur la période active.
 - Les champs `Coût` et `Prestataire` de la modale de création restent sur une grille 2 colonnes sur desktop mais repassent en pile sur écran étroit pour éviter tout débordement.
+- Un bloc réglementaire précède la timeline et rappelle l'adresse de l'immeuble ainsi que le syndic en exercice.
+- Les contrats d'assurance et d'entretien en cours sont affichés dans des sections dédiées, séparées de la timeline, avec leur échéance et un état lisible sans navigation secondaire.
+
+## Règle UI — Vue Sinistres
+
+La vue `Sinistres` affiche pour chaque dossier le délai légal restant avant déclaration à l'assurance, calculé selon le type de sinistre.
+
+- Les alertes de délai doivent être visibles directement sur la carte (approche d'échéance / retard / transmis).
+- La création d'un sinistre reste faisable dans une seule modale et accepte des pièces jointes sans écran intermédiaire.
+- Le suivi de transmission à l'assurance est éditable dans une modale dédiée, avec date de transmission explicite.
 
 ## Règle UI — Vue Signalements
 

@@ -4,6 +4,7 @@
 
 | Étape                          | Statut | Livrable                                                                                                          |
 | ------------------------------ | ------ | ----------------------------------------------------------------------------------------------------------------- |
+| 2026-05-01 — EP-008 / EP-009 — implémentation sinistres + mentions réglementaires du carnet | ⏳ | Démarrage du chantier : synchronisation PRD / DESIGN / ARCHITECTURE, implémentation en cours du workflow réel des sinistres (délais légaux, transmission assurance, pièces jointes) et du complément réglementaire de la vue carnet (adresse, syndic, contrats assurance / maintenance). |
 | Licence                        | ✅      | AGPL-3.0, NOTICE, CONTRIBUTING.md                                                                                 |
 | Modèle de données              | ✅      | migrations/0001\_init.sql (26 tables)                                                                             |
 | Architecture backend           | ✅      | Squelette Rust complet, ADR 1-3                                                                                   |
