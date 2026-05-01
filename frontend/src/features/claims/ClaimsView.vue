@@ -181,6 +181,30 @@ function deadlineLabel(claim: Claim): string {
   return t('claims.deadline.reference', { date: formatDate(claim.legal_deadline_at) })
 }
 
+function claimLegalTooltip(claim: Claim) {
+  if (claim.claim_type === 'natural_disaster') {
+    return {
+      content: t('claims.legalTooltips.naturalDisaster.summary'),
+      linkLabel: t('claims.legalTooltips.naturalDisaster.linkLabel'),
+      linkHref: t('claims.legalTooltips.naturalDisaster.linkHref'),
+    }
+  }
+
+  if (claim.claim_type === 'theft') {
+    return {
+      content: t('claims.legalTooltips.theft.summary'),
+      linkLabel: t('claims.legalTooltips.theft.linkLabel'),
+      linkHref: t('claims.legalTooltips.theft.linkHref'),
+    }
+  }
+
+  return {
+    content: t('claims.legalTooltips.current.summary'),
+    linkLabel: t('claims.legalTooltips.current.linkLabel'),
+    linkHref: t('claims.legalTooltips.current.linkHref'),
+  }
+}
+
 function openCreateModal() {
   createForm.value = defaultCreateForm()
   selectedDocuments.value = []
@@ -373,10 +397,7 @@ async function submitUpdate() {
         <div class="view-header">
           <div>
             <h1 class="display-md">
-              <span class="title-with-tooltip">
-                <span>{{ t('claims.title') }}</span>
-                <CTooltip :content="t('claims.legalDelayTooltip')" />
-              </span>
+              {{ t('claims.title') }}
             </h1>
             <p
               class="body-md"
@@ -477,7 +498,8 @@ async function submitUpdate() {
                   width="14"
                   height="14"
                 />
-                {{ t('claims.deadline.reference', { date: formatDate(claim.legal_deadline_at) }) }}
+                <span>{{ t('claims.deadline.reference', { date: formatDate(claim.legal_deadline_at) }) }}</span>
+                <CTooltip v-bind="claimLegalTooltip(claim)" />
               </span>
               <span class="claim-card__detail">
                 <CIconFile
@@ -734,12 +756,6 @@ async function submitUpdate() {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-}
-
-.title-with-tooltip {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
 }
 
 .claim-card {

@@ -336,7 +336,11 @@ async function deleteEntry() {
           <CCard class="regulatory-card">
             <div class="regulatory-card__header">
               <span class="title-sm">{{ t('maintenance.regulatory.title') }}</span>
-              <CTooltip :content="t('maintenance.regulatory.tooltip')" />
+              <CTooltip
+                :content="t('maintenance.regulatory.tooltipSummary')"
+                :link-label="t('maintenance.regulatory.tooltipLinkLabel')"
+                :link-href="t('maintenance.regulatory.tooltipLinkHref')"
+              />
               <CBadge variant="default">
                 {{ t('maintenance.regulatory.decree') }}
               </CBadge>
