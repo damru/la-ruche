@@ -815,7 +815,7 @@
       "endsOn": "Échéance : {date}",
       "noInsuranceContracts": "Aucun contrat d'assurance actif renseigné.",
       "noMaintenanceContracts": "Aucun contrat d'entretien ou de maintenance actif renseigné.",
-      "tooltipSummary": "Résumé : le carnet d'entretien est obligatoire et doit au minimum rappeler l'adresse de l'immeuble, le syndic en exercice, les assurances et, s'il y a lieu, les contrats d'entretien et les travaux importants.",
+      "tooltipSummary": "Résumé : le carnet d'entretien est obligatoire et doit au minimum mentionner l'adresse de l'immeuble, le syndic en exercice, les assurances et, s'il y a lieu, les contrats d'entretien et les travaux importants.",
       "tooltipLinkLabel": "Article 1",
       "tooltipLinkHref": "https://www.legifrance.gouv.fr/loda/article_lc/LEGIARTI000006547551"
     }

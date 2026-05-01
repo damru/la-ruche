@@ -23,6 +23,7 @@ const arrowDir = ref<'up' | 'down'>('down')
 const POPUP_W = 280
 const ARROW_H = 10
 const MARGIN = 10
+const HIDE_DELAY_MS = 120
 
 function clearHideTimeout() {
   if (hideTimeout !== null) {
@@ -46,7 +47,7 @@ function scheduleHide() {
   clearHideTimeout()
   hideTimeout = window.setTimeout(() => {
     hide()
-  }, 120)
+  }, HIDE_DELAY_MS)
 }
 
 function hide() {
@@ -253,7 +254,7 @@ function recalc() {
 .c-tooltip-popup__separator {
   display: block;
   margin: 10px 0 8px;
-  border-top: 1px solid color-mix(in srgb, var(--color-outline-variant) 72%, transparent);
+  border-top: 1px solid var(--color-outline-variant);
 }
 
 .c-tooltip-popup__link {
