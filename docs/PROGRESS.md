@@ -4,6 +4,7 @@
 
 | Étape                          | Statut | Livrable                                                                                                          |
 | ------------------------------ | ------ | ----------------------------------------------------------------------------------------------------------------- |
+| 2026-05-01 — Commentaire PR #38 — icône sur le CTA de suivi sinistre | ✅ | Ajout de `CIconRefresh` sur le bouton `Mettre à jour le suivi` dans `ClaimsView`, aligné sur le pattern visuel déjà utilisé pour le changement de statut des signalements. |
 | 2026-05-01 — Commentaire PR #37 — unification des cartes légales | ✅ | Création de `CLegalInfoCard` (schéma titre / résumé / liens légaux longs), remplacement du tooltip du Carnet par une carte dédiée, harmonisation des cartes légales Sinistres / Carnet / Registry / Consultations. |
 | 2026-05-01 — Commentaire PR #36 — note légale mutualisée sur Sinistres | ✅ | Tooltip légal supprimé des claim cards ; ajout d'une carte de note légale en bas de page sur `ClaimsView`, calquée sur `RegistryView`, avec résumé global des délais et liens vers `L113-2` / `L125-2`. |
 | 2026-05-01 — Commentaire PR #35 — affinage des tooltips légaux | ✅ | `CTooltip` mis à jour avec icône ℹ️, séparateur discret et lien `Article …` sous le résumé ; tooltip déplacé dans les claim cards sur l'échéance légale ; bloc Carnet harmonisé avec le nouveau format. |

@@ -19,6 +19,7 @@ import CIconAlertTriangle from '@/components/atoms/CIconAlertTriangle.svg'
 import CIconClock from '@/components/atoms/CIconClock.svg'
 import CIconFile from '@/components/atoms/CIconFile.svg'
 import CIconHome from '@/components/atoms/CIconHome.svg'
+import CIconRefresh from '@/components/atoms/CIconRefresh.svg'
 import CIconShield from '@/components/atoms/CIconShield.svg'
 import CIconUpload from '@/components/atoms/CIconUpload.svg'
 import { buildingApi, claimsApi, documentsApi, unitsApi } from '@/api'
@@ -467,6 +468,7 @@ async function submitUpdate() {
                   size="sm"
                   @click="openUpdateModal(claim)"
                 >
+                  <CIconRefresh />
                   {{ t('claims.updateTracking') }}
                 </CBtn>
               </div>
