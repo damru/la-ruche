@@ -9,7 +9,7 @@ import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
-import CTooltip from '@/components/atoms/CTooltip.vue'
+import CLegalInfoCard from '@/components/molecules/CLegalInfoCard.vue'
 import CModal from '@/components/molecules/CModal.vue'
 import CPageError from '@/components/molecules/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
@@ -204,6 +204,13 @@ const currentManagerLabel = computed(() => {
   return `${manager.first_name} ${manager.last_name}`.trim()
 })
 
+const regulatoryLegalLinks = computed(() => [
+  {
+    label: t('maintenance.regulatory.legalCard.linkLabel'),
+    href: t('maintenance.regulatory.legalCard.linkHref'),
+  },
+])
+
 function contractStatusVariant(status: LogbookContractSummary['status']): 'open' | 'closed' | 'default' {
   if (status === 'active') return 'open'
   if (status === 'expired' || status === 'terminated') return 'closed'
@@ -336,11 +343,6 @@ async function deleteEntry() {
           <CCard class="regulatory-card">
             <div class="regulatory-card__header">
               <span class="title-sm">{{ t('maintenance.regulatory.title') }}</span>
-              <CTooltip
-                :content="t('maintenance.regulatory.tooltipSummary')"
-                :link-label="t('maintenance.regulatory.tooltipLinkLabel')"
-                :link-href="t('maintenance.regulatory.tooltipLinkHref')"
-              />
               <CBadge variant="default">
                 {{ t('maintenance.regulatory.decree') }}
               </CBadge>
@@ -460,6 +462,14 @@ async function deleteEntry() {
             </p>
           </CCard>
         </div>
+
+        <CLegalInfoCard
+          v-if="logbookSummary"
+          class="regulatory-legal-card"
+          :title="t('maintenance.regulatory.legalCard.title')"
+          :summary="t('maintenance.regulatory.legalCard.summary')"
+          :links="regulatoryLegalLinks"
+        />
 
         <div class="period-toolbar">
           <div class="tabs period-tabs">
@@ -731,6 +741,10 @@ async function deleteEntry() {
 .regulatory-card__hint {
   margin: 4px 0 0;
   color: var(--color-on-surface-variant);
+}
+
+.regulatory-legal-card {
+  margin-bottom: var(--space-4);
 }
 
 .contract-list {

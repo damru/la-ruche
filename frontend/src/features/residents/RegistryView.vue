@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import CCard from '@/components/molecules/CCard.vue'
+import CLegalInfoCard from '@/components/molecules/CLegalInfoCard.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import CPageError from '@/components/molecules/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
@@ -40,6 +41,13 @@ const sortedUnits = computed(() =>
     a.unit_number.localeCompare(b.unit_number, undefined, { numeric: true })
   )
 )
+
+const legalCardLinks = computed(() => [
+  {
+    label: t('registry.legalCard.linkLabel'),
+    href: t('registry.legalCard.linkHref'),
+  },
+])
 
 function unitTypeIcon(type: string): string {
   const icons: Record<string, string> = { apartment: '🏠', cellar: '🗄️', parking: '🚗', commercial_unit: '🏪', other: '📦' }
@@ -203,12 +211,11 @@ function formatLocation(unit: { block?: string | null; staircase?: string | null
           </table>
         </CCard>
 
-        <!-- Legal note -->
-        <CCard>
-          <p class="body-sm dim">
-            ⚖️ <strong>Art. 5 loi 10/07/1965</strong> — {{ t('registry.legalNote') }}
-          </p>
-        </CCard>
+        <CLegalInfoCard
+          :title="t('registry.legalCard.title')"
+          :summary="t('registry.legalCard.summary')"
+          :links="legalCardLinks"
+        />
       </template>
     </div>
   </div>

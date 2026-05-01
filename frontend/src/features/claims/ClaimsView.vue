@@ -10,6 +10,7 @@ import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
 import CPageError from '@/components/molecules/CPageError.vue'
+import CLegalInfoCard from '@/components/molecules/CLegalInfoCard.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CModal from '@/components/molecules/CModal.vue'
@@ -109,6 +110,17 @@ const claims = computed(() =>
 const activeClaimsCount = computed(() =>
   allClaims.value.filter(claim => claim.status !== 'closed').length,
 )
+
+const legalCardLinks = computed(() => [
+  {
+    label: t('claims.legalCard.currentLinkLabel'),
+    href: t('claims.legalCard.currentLinkHref'),
+  },
+  {
+    label: t('claims.legalCard.naturalDisasterLinkLabel'),
+    href: t('claims.legalCard.naturalDisasterLinkHref'),
+  },
+])
 
 function statusVariant(status: ClaimStatus): 'open' | 'pending' | 'closed' | 'default' {
   if (status === 'open') return 'pending'
@@ -493,30 +505,12 @@ async function submitUpdate() {
           </div>
         </div>
 
-        <CCard class="claims-legal-card">
-          <p class="body-sm claims-legal-card__text">
-            ⚖️ <strong>{{ t('claims.legalCard.title') }}</strong> — {{ t('claims.legalCard.summary') }}
-          </p>
-          <div class="claims-legal-card__links">
-            <a
-              class="claims-legal-card__link"
-              :href="t('claims.legalCard.currentLinkHref')"
-              target="_blank"
-              rel="noreferrer noopener"
-            >
-              {{ t('claims.legalCard.currentLinkLabel') }}
-            </a>
-            <span aria-hidden="true">·</span>
-            <a
-              class="claims-legal-card__link"
-              :href="t('claims.legalCard.naturalDisasterLinkHref')"
-              target="_blank"
-              rel="noreferrer noopener"
-            >
-              {{ t('claims.legalCard.naturalDisasterLinkLabel') }}
-            </a>
-          </div>
-        </CCard>
+        <CLegalInfoCard
+          class="claims-legal-card"
+          :title="t('claims.legalCard.title')"
+          :summary="t('claims.legalCard.summary')"
+          :links="legalCardLinks"
+        />
       </template>
     </div>
 
@@ -892,30 +886,6 @@ async function submitUpdate() {
 
 .claims-legal-card {
   margin-top: var(--space-4);
-}
-
-.claims-legal-card__text,
-.claims-legal-card__links {
-  margin: 0;
-  color: var(--color-on-surface-variant);
-}
-
-.claims-legal-card__links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: var(--space-2);
-  font-size: var(--text-sm);
-}
-
-.claims-legal-card__link {
-  color: var(--color-primary);
-  text-decoration: none;
-}
-
-.claims-legal-card__link:hover,
-.claims-legal-card__link:focus-visible {
-  text-decoration: underline;
 }
 
 @media (max-width: 720px) {
