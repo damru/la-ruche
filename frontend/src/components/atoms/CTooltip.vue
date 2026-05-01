@@ -181,9 +181,9 @@ function recalc() {
         @focusin="show"
         @focusout="scheduleHide"
       >
-        <p class="c-tooltip-popup__content">
+        <div class="c-tooltip-popup__content">
           {{ props.content }}
-        </p>
+        </div>
         <template v-if="props.linkHref && props.linkLabel">
           <span
             class="c-tooltip-popup__separator"

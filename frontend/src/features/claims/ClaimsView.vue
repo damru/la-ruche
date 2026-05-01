@@ -182,26 +182,17 @@ function deadlineLabel(claim: Claim): string {
 }
 
 function claimLegalTooltip(claim: Claim) {
-  if (claim.claim_type === 'natural_disaster') {
-    return {
-      content: t('claims.legalTooltips.naturalDisaster.summary'),
-      linkLabel: t('claims.legalTooltips.naturalDisaster.linkLabel'),
-      linkHref: t('claims.legalTooltips.naturalDisaster.linkHref'),
-    }
+  const tooltipKeyByType: Record<ClaimType, 'current' | 'theft' | 'naturalDisaster'> = {
+    current: 'current',
+    theft: 'theft',
+    natural_disaster: 'naturalDisaster',
   }
-
-  if (claim.claim_type === 'theft') {
-    return {
-      content: t('claims.legalTooltips.theft.summary'),
-      linkLabel: t('claims.legalTooltips.theft.linkLabel'),
-      linkHref: t('claims.legalTooltips.theft.linkHref'),
-    }
-  }
+  const tooltipKey = tooltipKeyByType[claim.claim_type]
 
   return {
-    content: t('claims.legalTooltips.current.summary'),
-    linkLabel: t('claims.legalTooltips.current.linkLabel'),
-    linkHref: t('claims.legalTooltips.current.linkHref'),
+    content: t(`claims.legalTooltips.${tooltipKey}.summary`),
+    linkLabel: t(`claims.legalTooltips.${tooltipKey}.linkLabel`),
+    linkHref: t(`claims.legalTooltips.${tooltipKey}.linkHref`),
   }
 }
 
