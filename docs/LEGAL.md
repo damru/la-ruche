@@ -60,17 +60,62 @@ Document annuel récapitulatif (nombre de lots, budget, données techniques) mis
 
 ### 1.4 Carnet d'entretien de l'immeuble
 
-**Référence :** Art. 18 loi 1965, décret n°2001-477 du 30 mai 2001  
-**Couverture :** ✅ couverte (S01-S03, S05) — EP-009
+**Référence :** Art. 18 loi 1965, décret n°2001-477 du 30 mai 2001 (service-public.fr/F2665)  
+**Couverture :** ⚠️ partielle (S01-S03, S05) — EP-009
 
-Le syndic doit tenir à jour un carnet d'entretien retraçant les interventions, contrats en cours et diagnostics réalisés.
+Le syndic tient à jour le carnet d'entretien, document obligatoire portant sur les parties communes.
 
-**Implémentation :**
+**Contenu obligatoire (décret n°2001-477, art. 1) :**
+
+*Mentions minimales permanentes :*
+
+| Donnée | Couverture | Story |
+|---|---|---|
+| Adresse de l'immeuble | ⚠️ stockée via EP-001-S01 mais non exposée dans la vue carnet | EP-009-S06 |
+| Identité du syndic en exercice | ⚠️ stockée via EP-001-S01 mais non exposée dans la vue carnet | EP-009-S06 |
+| Références des contrats d'assurance souscrits par le syndicat + dates d'échéance | ⚠️ contrats gérés via EP-006-S05 mais non visibles depuis la vue carnet | EP-009-S07 |
+
+*Mentions complémentaires (selon travaux et équipements) :*
+
+| Donnée | Couverture | Story |
+|---|---|---|
+| Travaux importants : année, nature, prestataire | ✅ entrées manuelles + alimentation auto depuis tâche clôturée | EP-009-S01/S02/S03 |
+| Références des contrats d'assurance dommages-ouvrage en cours de validité | ❌ non couverts | EP-009-S07 |
+| Références et dates d'échéance des contrats d'entretien et de maintenance d'équipements communs | ⚠️ `contract_id` sur entrée individuelle uniquement (EP-009-S05) ; pas de listing consolidé dans la vue carnet | EP-009-S08 |
+| Travaux prescrits dans le PPT et leur échéancier | ❌ hors scope post-MVP | EP-009-S04 |
+
+**Implémentation actuelle :**
 - Saisie manuelle d'interventions (titre, date, description, coût, prestataire, `contract_id`)
 - Alimentation automatique à la clôture d'une tâche prestataire (idempotent via `ON CONFLICT DO NOTHING` sur `task_id`)
 - Lien vers le contrat de prestation via `contract_id` (EP-009-S05)
 
-**Hors scope (EP-009-S04) :** Lien au Plan Pluriannuel de Travaux (PPT) — différé post-MVP.
+**Hors scope post-MVP (EP-009-S04) :** Lien au Plan Pluriannuel de Travaux (PPT).
+
+---
+
+### 1.5 Tenue à jour de la liste des copropriétaires
+
+**Référence :** Art. 18-I-1° loi 1965 (service-public.fr/F2608)  
+**Couverture :** ⚠️ partielle — EP-002-S01, EP-002-S04
+
+Le syndic doit tenir à jour la liste de tous les copropriétaires avec : état civil, numéro(s) de lot(s), adresse postale et adresse email.
+
+**Implications :**
+- l'Application doit centraliser et maintenir à jour ces données pour chaque copropriétaire (actif, archivé, en mutation).
+- La liste est utilisée pour l'envoi des convocations AG, la production de l'état daté et la mise à jour RNC.
+
+---
+
+### 1.6 Espace en ligne sécurisé (extranet de copropriété)
+
+**Référence :** Art. 18-I-5° loi 1965, modifié par la loi ALUR 2014 (service-public.fr/F2608)  
+**Couverture :** ✅ couverte nativement — EP-002, EP-003, EP-004, EP-005, EP-006, EP-009
+
+Depuis le 1er janvier 2015, tout syndic professionnel doit mettre à disposition des copropriétaires un **espace en ligne sécurisé** donnant accès aux documents essentiels de la copropriété (règlement, PV d'AG, comptes, carnet d'entretien, contrats, diagnostics) accessibles 24h/24 avec identifiants personnels.
+
+**Implications :**
+- l'Application **est** cet espace en ligne sécurisé : authentification par rôle (EP-002), documents (EP-005), AG et PV (EP-003), comptes (EP-004), contrats (EP-006), carnet d'entretien (EP-009).
+- C'est la raison d'être centrale du produit au regard de cette obligation légale.
 
 ---
 
@@ -251,6 +296,22 @@ Chaque copropriétaire doit pouvoir consulter le détail de ses charges sur l'ex
 
 ---
 
+### 4.7 Recouvrement des charges impayées
+
+**Référence :** Art. 18-I loi 1965, décret 1967 art. 36 (service-public.fr/F2608)  
+**Couverture :** ❌ non couverte — EP-004-S11
+
+Le syndic a l'**obligation légale** de recouvrer les charges impayées au nom du syndicat des copropriétaires. Cette obligation inclut :
+- La mise en demeure du copropriétaire débiteur (lettre recommandée)
+- L'engagement de procédures judiciaires si nécessaire (injonction de payer, saisie)
+- Le suivi des dossiers de recouvrement jusqu'à leur clôture
+
+**Implications :**
+- l'Application doit permettre d'identifier les lots en retard de paiement (solde débiteur), d'enregistrer les relances effectuées et de tracer les dossiers contentieux.
+- Les procédures judiciaires en cours font partie des informations obligatoires de l'état daté (cf. §7.1).
+
+---
+
 ## 5. Contrats fournisseurs
 
 ### 5.1 Contrat de syndic
@@ -384,6 +445,19 @@ Le syndicat des copropriétaires est responsable de traitement. Les données tra
 
 ---
 
+## 10. Représentation en justice et suivi des procédures
+
+**Référence :** Art. 18-I loi 1965 (service-public.fr/F2608)  
+**Couverture :** ⚠️ partielle — EP-002-S06, EP-002-S10
+
+Le syndic représente le syndicat des copropriétaires en justice, tant en demande qu'en défense. Il peut engager des actions pour défendre les intérêts de la copropriété sans vote en AG (sauf actions exceptionnelles nécessitant une autorisation AG).
+
+**Implications :**
+- l'Application ne peut pas initier ni conduire des procédures judiciaires — c'est hors périmètre logiciel.
+- En revanche, l'Application **doit tracer les procédures judiciaires en cours** : elles figurent obligatoirement dans l'état daté (cf. §7.1), le pré-état daté (cf. §7.2) et doivent être accessibles dans l'espace en ligne sécurisé (cf. §1.6).
+
+---
+
 ## Tableau de couverture synthétique
 
 | # | Obligation | Référence | Couverture | Epic |
@@ -391,7 +465,9 @@ Le syndicat des copropriétaires est responsable de traitement. Les données tra
 | 1.1 | Immatriculation RNC | ALUR art. 711-1 | ⚠️ | EP-001, EP-012-S01 |
 | 1.2 | Règlement de copropriété + EDD | Art. 8 loi 1965 | ⚠️ | EP-001, EP-005 |
 | 1.3 | Fiche synthétique annuelle | Art. 8-2 loi 1965 | ❌ | EP-012-S02 |
-| 1.4 | Carnet d'entretien | Décret 2001-477 | ✅ | EP-009 |
+| 1.4 | Carnet d'entretien | Décret 2001-477 | ⚠️ | EP-009 |
+| 1.5 | Liste des copropriétaires à jour | Art. 18-I-1° loi 1965 | ⚠️ | EP-002-S01, EP-002-S04 |
+| 1.6 | Espace en ligne sécurisé (extranet) | Art. 18-I-5° loi 1965 (ALUR) | ✅ | EP-002, EP-003, EP-004, EP-005, EP-006, EP-009 |
 | 2.1 | Intégrité somme tantièmes | EDD + art. 5 | ⚠️ | EP-001-S03, EP-001-S07 |
 | 2.2 | Historique tantièmes par lot | Art. 10 loi 1965 | ✅ | EP-001-S06 |
 | 2.3 | Snapshot tantièmes par appel de fonds | Art. 14-1 loi 1965 | ✅ | EP-004-S05 |
@@ -405,6 +481,7 @@ Le syndicat des copropriétaires est responsable de traitement. Les données tra
 | 4.4 | Fonds travaux ≥ 5% | Art. 14-2 loi 1965 | ⚠️ | EP-004 |
 | 4.5 | Arrêté de comptes | Art. 18 loi 1965 | ⚠️ | EP-004-S04 |
 | 4.6 | Relevé individuel de charges | Décret 1967 art. 48 | ✅ | EP-004-S06 |
+| 4.7 | Recouvrement des charges impayées | Art. 18-I loi 1965 | ❌ | EP-004-S11 |
 | 5.1 | Contrat de syndic (modèle-type) | Décret 2015 | 🔲 | — |
 | 5.2 | Assurance immeuble | Art. 9-1 loi 1965 | ⚠️ | EP-006 |
 | 5.3 | Contrats + reconductions tacites | Art. 18 loi 1965 | ✅ | EP-006 |
@@ -415,3 +492,4 @@ Le syndicat des copropriétaires est responsable de traitement. Les données tra
 | 7.2 | Pré-état daté | ALUR art. L721-2 | ❌ | EP-002-S07 |
 | 8 | RGPD + anonymisation | RGPD 2016/679 | ⚠️ | EP-002-S05 |
 | 9 | Sinistres (délais déclaration) | Code des assurances | ❌ | EP-008 |
+| 10 | Représentation en justice + procédures en cours | Art. 18-I loi 1965 | ⚠️ | EP-002-S06, EP-002-S10 |
