@@ -206,6 +206,11 @@ function openDocumentsModal(contract: VendorContract) {
   showDocumentsModal.value = true
 }
 
+function openDocumentsFromForm(contract: VendorContract) {
+  showFormModal.value = false
+  openDocumentsModal(contract)
+}
+
 async function acknowledgeReminder(reminder: ContractReminder) {
   busyKey.value = `reminder:${reminder.id}`
 
@@ -515,6 +520,7 @@ async function confirmTerminateContract() {
   <ContractFormModal
     v-model:open="showFormModal"
     :contract="editingContract"
+    @manage-documents="openDocumentsFromForm"
     @saved="reload"
   />
 

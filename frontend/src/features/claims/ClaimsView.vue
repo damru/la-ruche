@@ -27,10 +27,10 @@ import CIconTrash from '@/components/atoms/CIconTrash.svg'
 import CIconUpload from '@/components/atoms/CIconUpload.svg'
 import { buildingApi, claimsApi, documentsApi, unitsApi } from '@/api'
 import { extractFileExtension } from '@/utils/files'
-import type { Claim, ClaimStatus, ClaimType, Unit } from '@/types/domain'
+import type { Claim, ClaimStatus, ClaimType, Document, Unit } from '@/types/domain'
 
 const { t } = useI18n()
-const { formatCurrency, formatDate, formatRelative } = useFormatters()
+const { formatCurrency, formatDate, formatFileSize, formatRelative } = useFormatters()
 const { hasAnyRole } = useRole()
 
 const CLAIM_TYPES: ClaimType[] = ['current', 'natural_disaster', 'theft']
@@ -54,7 +54,7 @@ type ClaimUpdatePayload = {
   unit_id?: string | null
   transmitted_at?: string | null
   reimbursement_date?: string | null
-  reimbursement_amount?: number | null
+  reimbursement_amount?: string | null
 }
 
 const buildingName = ref('')
@@ -77,7 +77,14 @@ watch(showCreateModal, (open) => { if (!open) forceCreateClose() })
 const claimToEdit = ref<Claim | null>(null)
 const editFeedback = useFormFeedback()
 const editingClaim = ref(false)
+const uploadingEditDocuments = ref(false)
 const editForm = ref(defaultClaimEditorForm())
+const editDocuments = ref<Document[]>([])
+const loadingEditDocuments = ref(false)
+const selectedEditDocuments = ref<File[]>([])
+const editDocumentInputRef = ref<HTMLInputElement | null>(null)
+const editDocumentsDragOver = ref(false)
+const detachingDocumentId = ref<string | null>(null)
 const { schedule: scheduleEditClose, forceExpire: forceEditClose } = useAutoClose()
 watch(claimToEdit, (claim) => { if (!claim) forceEditClose() })
 
@@ -322,16 +329,28 @@ function removeCloseDocument(index: number) {
   removeDocument(closeSelectedDocuments, index)
 }
 
+function onEditDocumentChange(event: Event) {
+  handleDocumentChange(event, selectedEditDocuments, editDocumentInputRef)
+}
+
+function onEditDocumentDrop(event: DragEvent) {
+  handleDocumentDrop(event, selectedEditDocuments, editDocumentsDragOver)
+}
+
+function removeEditDocument(index: number) {
+  removeDocument(selectedEditDocuments, index)
+}
+
 function normalizePublishedAt(claimType: ClaimType, publishedAt: string): string | null {
   if (claimType !== 'natural_disaster') return null
   return publishedAt || null
 }
 
-function parseOptionalAmount(value: string): number | null {
+function parseOptionalAmount(value: string): string | null {
   const normalized = value.trim().replace(',', '.')
   if (!normalized) return null
   const amount = Number(normalized)
-  return Number.isFinite(amount) ? amount : null
+  return Number.isFinite(amount) && amount > 0 ? normalized : null
 }
 
 function buildClaimUpdatePayload(
@@ -348,7 +367,7 @@ function buildClaimUpdatePayload(
     unit_id: claim.unit_id ?? null,
     transmitted_at: claim.transmitted_at ?? null,
     reimbursement_date: claim.reimbursement_date ?? null,
-    reimbursement_amount: claim.reimbursement_amount ?? null,
+    reimbursement_amount: claim.reimbursement_amount != null ? String(claim.reimbursement_amount) : null,
     ...overrides,
   }
 }
@@ -361,10 +380,27 @@ function openCreateModal() {
   showCreateModal.value = true
 }
 
-function openEditModal(claim: Claim) {
+async function loadEditDocuments(claimId: string) {
+  loadingEditDocuments.value = true
+
+  try {
+    const response = await claimsApi.listDocuments(claimId)
+    editDocuments.value = response.data
+  } catch (currentError: unknown) {
+    editFeedback.setError(toErrorMessage(currentError, t('claims.documentsLoadError')))
+  } finally {
+    loadingEditDocuments.value = false
+  }
+}
+
+async function openEditModal(claim: Claim) {
   claimToEdit.value = claim
   editForm.value = claimEditorFormFromClaim(claim)
+  selectedEditDocuments.value = []
+  editDocumentsDragOver.value = false
+  editDocuments.value = []
   editFeedback.reset()
+  await loadEditDocuments(claim.id)
 }
 
 function openTransmitModal(claim: Claim) {
@@ -427,6 +463,30 @@ async function attachSelectedDocuments(claimId: string, documents: File[]): Prom
   }
 
   return failedDocuments
+}
+
+async function downloadClaimDocument(documentId: string) {
+  try {
+    const response = await documentsApi.getDownloadUrl(documentId)
+    window.open(response.data.url, '_blank', 'noopener')
+  } catch (currentError: unknown) {
+    editFeedback.setError(toErrorMessage(currentError, t('common.error')))
+  }
+}
+
+async function detachClaimDocument(documentId: string) {
+  if (!claimToEdit.value) return
+
+  detachingDocumentId.value = documentId
+
+  try {
+    await claimsApi.detachDocument(claimToEdit.value.id, documentId)
+    editDocuments.value = editDocuments.value.filter(document => document.id !== documentId)
+  } catch (currentError: unknown) {
+    editFeedback.setError(toErrorMessage(currentError, t('claims.documentsDetachError')))
+  } finally {
+    detachingDocumentId.value = null
+  }
 }
 
 async function submitCreate() {
@@ -502,6 +562,26 @@ async function submitEdit() {
       }),
     )
 
+    if (selectedEditDocuments.value.length > 0) {
+      uploadingEditDocuments.value = true
+      const failedDocuments = await attachSelectedDocuments(
+        claimToEdit.value.id,
+        selectedEditDocuments.value,
+      )
+      uploadingEditDocuments.value = false
+
+      if (failedDocuments.length > 0) {
+        editFeedback.setError(
+          `${t('claims.documentUploadError')}: ${failedDocuments.join(', ')}`,
+        )
+        setTimeout(() => {
+          claimToEdit.value = null
+          reload()
+        }, 2200)
+        return
+      }
+    }
+
     editFeedback.setSuccess(t('claims.updateSuccess'))
     scheduleEditClose(() => {
       claimToEdit.value = null
@@ -511,6 +591,7 @@ async function submitEdit() {
     editFeedback.setError(toErrorMessage(currentError, t('common.error')))
   } finally {
     editingClaim.value = false
+    uploadingEditDocuments.value = false
   }
 }
 
@@ -953,7 +1034,7 @@ async function submitDelete() {
             @change="onCreateDocumentChange"
           />
           <div
-            :class="['document-dropzone', { 'document-dropzone--over': documentsDragOver }]"
+            :class="['claim-dropzone', { 'claim-dropzone--over': documentsDragOver }]"
             role="button"
             tabindex="0"
             @click="documentInputRef?.click()"
@@ -965,31 +1046,34 @@ async function submitDelete() {
             @drop.prevent="onCreateDocumentDrop"
           >
             <CIconUpload
-              width="16"
-              height="16"
+              width="20"
+              height="20"
+              style="color:var(--color-on-surface-variant)"
             />
-            <span>{{ t('claims.documentHint') }}</span>
+            <span class="body-xs claim-dropzone__hint">{{ t('claims.documentHint') }}</span>
           </div>
 
-          <ul
+          <div
             v-if="selectedDocuments.length > 0"
-            class="document-list"
+            class="claim-preview-strip"
           >
-            <li
+            <div
               v-for="(document, index) in selectedDocuments"
               :key="`${document.name}-${index}`"
-              class="document-list__item"
+              class="claim-preview-item"
             >
-              <span>{{ document.name }}</span>
+              <span class="claim-preview-name">{{ document.name }}</span>
               <button
                 type="button"
-                class="document-list__remove"
+                class="claim-remove"
+                :title="t('claims.removeDocument')"
+                :aria-label="t('claims.removeDocument')"
                 @click="removeCreateDocument(index)"
               >
-                {{ t('claims.removeDocument') }}
+                ×
               </button>
-            </li>
-          </ul>
+            </div>
+          </div>
         </div>
       </form>
 
@@ -1107,6 +1191,113 @@ async function submitDelete() {
             rows="3"
           ></textarea>
         </div>
+
+        <div class="form-field">
+          <label class="form-label">{{ t('claims.fields.documents') }}</label>
+          <input
+            ref="editDocumentInputRef"
+            type="file"
+            multiple
+            style="display:none"
+            @change="onEditDocumentChange"
+          />
+          <div
+            :class="['claim-dropzone', { 'claim-dropzone--over': editDocumentsDragOver }]"
+            role="button"
+            tabindex="0"
+            @click="editDocumentInputRef?.click()"
+            @keydown.enter.prevent="editDocumentInputRef?.click()"
+            @keydown.space.prevent="editDocumentInputRef?.click()"
+            @dragenter.prevent="editDocumentsDragOver = true"
+            @dragover.prevent="editDocumentsDragOver = true"
+            @dragleave.prevent="editDocumentsDragOver = false"
+            @drop.prevent="onEditDocumentDrop"
+          >
+            <CIconUpload
+              width="20"
+              height="20"
+              style="color:var(--color-on-surface-variant)"
+            />
+            <span class="body-xs claim-dropzone__hint">{{ t('claims.editDocumentHint') }}</span>
+          </div>
+
+          <div
+            v-if="selectedEditDocuments.length > 0"
+            class="claim-preview-strip"
+          >
+            <div
+              v-for="(document, index) in selectedEditDocuments"
+              :key="`${document.name}-${index}`"
+              class="claim-preview-item"
+            >
+              <span class="claim-preview-name">{{ document.name }}</span>
+              <button
+                type="button"
+                class="claim-remove"
+                :title="t('claims.removeDocument')"
+                :aria-label="t('claims.removeDocument')"
+                @click="removeEditDocument(index)"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+
+          <div class="claim-documents-section">
+            <p class="field-hint claim-documents-section__hint">
+              {{ t('claims.fields.attachedDocuments') }}
+            </p>
+            <CPageLoader v-if="loadingEditDocuments" />
+            <div
+              v-else-if="editDocuments.length === 0"
+              class="claim-documents-empty"
+            >
+              {{ t('claims.noAttachedDocuments') }}
+            </div>
+            <div
+              v-else
+              class="claim-documents-list"
+            >
+              <div
+                v-for="document in editDocuments"
+                :key="document.id"
+                class="claim-documents-row"
+              >
+                <div class="claim-documents-meta">
+                  <div class="claim-documents-name">
+                    <CIconFile
+                      width="16"
+                      height="16"
+                    />
+                    <span>{{ document.original_name }}</span>
+                  </div>
+                  <div class="claim-documents-details">
+                    <span>{{ formatFileSize(document.size_bytes) }}</span>
+                    <span>·</span>
+                    <span>{{ formatDate(document.created_at) }}</span>
+                  </div>
+                </div>
+                <div class="claim-documents-actions">
+                  <CBtn
+                    variant="ghost"
+                    size="sm"
+                    @click="downloadClaimDocument(document.id)"
+                  >
+                    {{ t('common.download') }}
+                  </CBtn>
+                  <CBtn
+                    variant="danger"
+                    size="sm"
+                    :loading="detachingDocumentId === document.id"
+                    @click="detachClaimDocument(document.id)"
+                  >
+                    {{ t('claims.detachDocument') }}
+                  </CBtn>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </form>
 
       <template #footer>
@@ -1132,7 +1323,7 @@ async function submitDelete() {
         </CBtn>
         <CBtn
           variant="primary"
-          :loading="editingClaim"
+          :loading="editingClaim || uploadingEditDocuments"
           :closing="editFeedback.status.value === 'success'"
           @click="submitEdit"
         >
@@ -1247,7 +1438,7 @@ async function submitDelete() {
             @change="onCloseDocumentChange"
           />
           <div
-            :class="['document-dropzone', { 'document-dropzone--over': closeDocumentsDragOver }]"
+            :class="['claim-dropzone', { 'claim-dropzone--over': closeDocumentsDragOver }]"
             role="button"
             tabindex="0"
             @click="closeDocumentInputRef?.click()"
@@ -1259,31 +1450,34 @@ async function submitDelete() {
             @drop.prevent="onCloseDocumentDrop"
           >
             <CIconUpload
-              width="16"
-              height="16"
+              width="20"
+              height="20"
+              style="color:var(--color-on-surface-variant)"
             />
-            <span>{{ t('claims.closeDocumentHint') }}</span>
+            <span class="body-xs claim-dropzone__hint">{{ t('claims.closeDocumentHint') }}</span>
           </div>
 
-          <ul
+          <div
             v-if="closeSelectedDocuments.length > 0"
-            class="document-list"
+            class="claim-preview-strip"
           >
-            <li
+            <div
               v-for="(document, index) in closeSelectedDocuments"
               :key="`${document.name}-${index}`"
-              class="document-list__item"
+              class="claim-preview-item"
             >
-              <span>{{ document.name }}</span>
+              <span class="claim-preview-name">{{ document.name }}</span>
               <button
                 type="button"
-                class="document-list__remove"
+                class="claim-remove"
+                :title="t('claims.removeDocument')"
+                :aria-label="t('claims.removeDocument')"
                 @click="removeCloseDocument(index)"
               >
-                {{ t('claims.removeDocument') }}
+                ×
               </button>
-            </li>
-          </ul>
+            </div>
+          </div>
         </div>
       </form>
 
@@ -1436,43 +1630,147 @@ async function submitDelete() {
   font-size: var(--text-sm);
 }
 
-.document-dropzone {
+.claim-dropzone {
+  border: 1.5px dashed var(--color-outline);
+  border-radius: var(--radius-sm);
+  padding: var(--space-4) var(--space-3);
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: var(--space-2);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  user-select: none;
+}
+
+.claim-dropzone:hover,
+.claim-dropzone--over {
+  background: var(--color-surface-container);
+  border-color: var(--color-primary);
+}
+
+.claim-dropzone__hint {
+  color: var(--color-on-surface-variant);
+}
+
+.claim-preview-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.claim-preview-item {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  max-width: 100%;
+  padding: 0 var(--space-4) 0 var(--space-3);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-outline-variant);
+  background: var(--color-surface-container-low);
+}
+
+.claim-preview-name {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-on-surface-variant);
+  font-size: var(--text-sm);
+}
+
+.claim-remove {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--color-error);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  min-height: unset;
+  min-width: unset;
+}
+
+.claim-remove:hover {
+  background: var(--color-error-dark, var(--color-error));
+  opacity: 0.85;
+}
+
+.claim-documents-section {
+  margin-top: var(--space-3);
+}
+
+.claim-documents-section__hint {
+  margin-bottom: var(--space-2);
+}
+
+.claim-documents-empty {
   padding: var(--space-3);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
   background: var(--color-surface-container-low);
   color: var(--color-on-surface-variant);
-  cursor: pointer;
 }
 
-.document-dropzone--over {
-  background: var(--color-secondary-container);
-  color: var(--color-on-secondary-container);
-}
-
-.document-list {
+.claim-documents-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin: var(--space-3) 0 0;
-  padding: 0;
-  list-style: none;
+  gap: var(--space-2);
 }
 
-.document-list__item {
+.claim-documents-row {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   gap: var(--space-3);
-  padding: 8px 12px;
+  padding: var(--space-3);
   border-radius: var(--radius-sm);
   background: var(--color-surface-container-low);
 }
 
-.document-list__remove {
-  color: var(--color-error);
-  font-size: var(--text-sm);
+.claim-documents-meta {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.claim-documents-name {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  font-weight: var(--fw-medium);
+}
+
+.claim-documents-name span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.claim-documents-details {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--color-on-surface-variant);
+  font-size: var(--text-xs);
+}
+
+.claim-documents-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
 }
 
 .modal-footer-feedback {
@@ -1509,6 +1807,11 @@ async function submitDelete() {
 
   .form-row {
     grid-template-columns: 1fr;
+  }
+
+  .claim-documents-row {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
 </style>

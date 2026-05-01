@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
+import CIconFile from '@/components/atoms/CIconFile.svg'
 import CInput from '@/components/atoms/CInput.vue'
 import CSelect from '@/components/atoms/CSelect.vue'
 import CModal from '@/components/molecules/CModal.vue'
@@ -34,6 +35,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   'update:open': [value: boolean]
   saved: []
+  'manage-documents': [contract: VendorContract]
 }>()
 
 const { t } = useI18n()
@@ -126,6 +128,11 @@ watch(
 
 function closeModal() {
   emit('update:open', false)
+}
+
+function openDocumentsManager() {
+  if (!props.contract) return
+  emit('manage-documents', props.contract)
 }
 
 function validate(): boolean {
@@ -302,6 +309,14 @@ async function saveContract() {
     </div>
 
     <template #footer>
+      <CBtn
+        v-if="props.contract"
+        variant="secondary"
+        @click="openDocumentsManager"
+      >
+        <CIconFile />
+        {{ t('contracts.documents.manage') }}
+      </CBtn>
       <CFormFeedback
         :status="feedback.status.value"
         :message="feedback.message.value"

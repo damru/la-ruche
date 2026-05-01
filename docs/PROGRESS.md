@@ -4,6 +4,7 @@
 
 | Étape                          | Statut | Livrable                                                                                                          |
 | ------------------------------ | ------ | ----------------------------------------------------------------------------------------------------------------- |
+| 2026-05-01 — Commentaire PR #40 — finitions documents Sinistres / Contrats | ✅ | Alignement visuel des dropzones Sinistres sur le pattern Signalements, correction du payload de remboursement à la clôture, gestion des documents dans la modale d’édition de sinistre et accès aux documents depuis la modale d’édition d’un contrat. |
 | 2026-05-01 — Commentaire PR #39 — workflow d’actions Sinistres par statut | ✅ | Refonte de `ClaimsView` avec actions par statut (`Modifier`, `Transmettre`, `Clore`, `Supprimer`), modales dédiées, remboursement optionnel + pièces de clôture, suppression depuis la modale d’édition, endpoint backend `DELETE /claims/{id}` et migration SQL associée. |
 | 2026-05-01 — Commentaire PR #38 — icône sur le CTA de suivi sinistre | ✅ | Ajout de `CIconRefresh` sur le bouton `Mettre à jour le suivi` dans `ClaimsView`, aligné sur le pattern visuel déjà utilisé pour le changement de statut des signalements. |
 | 2026-05-01 — Commentaire PR #37 — unification des cartes légales | ✅ | Création de `CLegalInfoCard` (schéma titre / résumé / liens légaux longs), remplacement du tooltip du Carnet par une carte dédiée, harmonisation des cartes légales Sinistres / Carnet / Registry / Consultations. |

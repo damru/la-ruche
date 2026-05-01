@@ -268,7 +268,7 @@ export const claimsApi = {
     api.get<Claim>(`/claims/${id}`),
   create: (data: { title: string; description?: string; claim_type: string; declared_at: string; published_at?: string; unit_id?: string }) =>
     api.post<Claim>('/claims', data),
-  update: (id: string, data: { title: string; description?: string | null; claim_type: string; declared_at: string; published_at?: string | null; status: string; unit_id?: string | null; transmitted_at?: string | null; reimbursement_date?: string | null; reimbursement_amount?: number | null }) =>
+  update: (id: string, data: { title: string; description?: string | null; claim_type: string; declared_at: string; published_at?: string | null; status: string; unit_id?: string | null; transmitted_at?: string | null; reimbursement_date?: string | null; reimbursement_amount?: string | null }) =>
     api.put<Claim>(`/claims/${id}`, data),
   delete: (id: string) =>
     api.delete(`/claims/${id}`),

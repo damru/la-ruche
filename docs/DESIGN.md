@@ -202,9 +202,10 @@ La vue `Sinistres` affiche pour chaque dossier le délai légal restant avant d�
 - Les alertes de délai doivent être visibles directement sur la carte (approche d'échéance / retard / transmis).
 - L'explication juridique des délais est mutualisée dans une carte `CLegalInfoCard` en bas de page.
 - La création d'un sinistre reste faisable dans une seule modale et accepte des pièces jointes sans écran intermédiaire.
+- Les zones d'ajout de pièces jointes des modales Sinistres reprennent la dropzone standard utilisée sur les Signalements (`bordure pointillée`, état hover/drag, sélection directe de fichiers).
 - Chaque carte Sinistre expose toujours deux actions côte à côte pour les profils gestionnaires : `Modifier` puis une action contextuelle dépendante du statut courant.
 - Les actions contextuelles suivent strictement ce mapping : `Ouvert → Transmettre`, `En cours → Clore`, `Clos → Supprimer`.
-- `Transmettre` ouvre une modale dédiée avec la date de transmission à l'assurance ; `Clore` ouvre une modale dédiée avec remboursement optionnel (date + montant) et ajout de documents ; `Modifier` permet aussi de supprimer le dossier sans revenir à la carte.
+- `Transmettre` ouvre une modale dédiée avec la date de transmission à l'assurance ; `Clore` ouvre une modale dédiée avec remboursement optionnel (date + montant) et ajout de documents ; `Modifier` permet aussi de supprimer le dossier sans revenir à la carte et de gérer les documents déjà joints.
 
 ## Règle UI — Obligations légales
 
