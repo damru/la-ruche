@@ -182,11 +182,17 @@ function deadlineLabel(claim: Claim): string {
 }
 
 function claimLegalTooltip(claim: Claim) {
-  const tooltipKey = claim.claim_type === 'natural_disaster'
-    ? 'naturalDisaster'
-    : claim.claim_type === 'theft'
-      ? 'theft'
-      : 'current'
+  let tooltipKey: 'current' | 'theft' | 'naturalDisaster'
+  switch (claim.claim_type) {
+    case 'natural_disaster':
+      tooltipKey = 'naturalDisaster'
+      break
+    case 'theft':
+      tooltipKey = 'theft'
+      break
+    default:
+      tooltipKey = 'current'
+  }
 
   return {
     content: t(`claims.legalTooltips.${tooltipKey}.summary`),

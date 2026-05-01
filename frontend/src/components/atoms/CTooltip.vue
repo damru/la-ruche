@@ -20,7 +20,7 @@ const popupStyle = ref<Record<string, string>>({})
 const arrowStyle = ref<Record<string, string>>({})
 const arrowDir = ref<'up' | 'down'>('down')
 
-const POPUP_W = 280 // Accommodates the summary copy plus the Article link without wrapping too aggressively
+const POPUP_W = 280 // Accommodates the legal summary plus the separator and Article link without wrapping too aggressively
 const ARROW_H = 10
 const MARGIN = 10
 const HIDE_DELAY_MS = 240
@@ -139,6 +139,7 @@ function recalc() {
       @keydown.escape.prevent="hide"
     >
       <slot>
+        <!-- Keep this inline icon local to the tooltip so the legal-info marker stays visually stable. -->
         <svg
           class="c-tooltip-trigger__icon"
           viewBox="0 0 24 24"
