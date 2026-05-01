@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch, type Ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useFormatters } from '@/composables/useFormatters'
 import { usePageLoader, toErrorMessage } from '@/composables/usePageLoader'
@@ -16,22 +16,46 @@ import CCard from '@/components/molecules/CCard.vue'
 import CModal from '@/components/molecules/CModal.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import CIconAlertTriangle from '@/components/atoms/CIconAlertTriangle.svg'
+import CIconCheckCircle from '@/components/atoms/CIconCheckCircle.svg'
 import CIconClock from '@/components/atoms/CIconClock.svg'
+import CIconCurrency from '@/components/atoms/CIconCurrency.svg'
+import CIconEdit from '@/components/atoms/CIconEdit.svg'
 import CIconFile from '@/components/atoms/CIconFile.svg'
 import CIconHome from '@/components/atoms/CIconHome.svg'
-import CIconRefresh from '@/components/atoms/CIconRefresh.svg'
 import CIconShield from '@/components/atoms/CIconShield.svg'
+import CIconTrash from '@/components/atoms/CIconTrash.svg'
 import CIconUpload from '@/components/atoms/CIconUpload.svg'
 import { buildingApi, claimsApi, documentsApi, unitsApi } from '@/api'
 import { extractFileExtension } from '@/utils/files'
 import type { Claim, ClaimStatus, ClaimType, Unit } from '@/types/domain'
 
 const { t } = useI18n()
-const { formatDate, formatRelative } = useFormatters()
+const { formatCurrency, formatDate, formatRelative } = useFormatters()
 const { hasAnyRole } = useRole()
 
 const CLAIM_TYPES: ClaimType[] = ['current', 'natural_disaster', 'theft']
-const CLAIM_STATUSES: ClaimStatus[] = ['open', 'in_progress', 'closed']
+
+type ClaimEditorForm = {
+  title: string
+  description: string
+  claim_type: ClaimType
+  declared_at: string
+  published_at: string
+  unit_id: string
+}
+
+type ClaimUpdatePayload = {
+  title: string
+  description?: string | null
+  claim_type: string
+  declared_at: string
+  published_at?: string | null
+  status: string
+  unit_id?: string | null
+  transmitted_at?: string | null
+  reimbursement_date?: string | null
+  reimbursement_amount?: number | null
+}
 
 const buildingName = ref('')
 const allClaims = ref<Claim[]>([])
@@ -46,38 +70,68 @@ const uploadingDocuments = ref(false)
 const selectedDocuments = ref<File[]>([])
 const documentInputRef = ref<HTMLInputElement | null>(null)
 const documentsDragOver = ref(false)
-const createForm = ref(defaultCreateForm())
+const createForm = ref(defaultClaimEditorForm())
 const { schedule: scheduleCreateClose, forceExpire: forceCreateClose } = useAutoClose()
 watch(showCreateModal, (open) => { if (!open) forceCreateClose() })
 
-const claimToUpdate = ref<Claim | null>(null)
-const updateFeedback = useFormFeedback()
-const updatingClaim = ref(false)
-const updateForm = ref(defaultUpdateForm())
-const { schedule: scheduleUpdateClose, forceExpire: forceUpdateClose } = useAutoClose()
-watch(claimToUpdate, (claim) => { if (!claim) forceUpdateClose() })
+const claimToEdit = ref<Claim | null>(null)
+const editFeedback = useFormFeedback()
+const editingClaim = ref(false)
+const editForm = ref(defaultClaimEditorForm())
+const { schedule: scheduleEditClose, forceExpire: forceEditClose } = useAutoClose()
+watch(claimToEdit, (claim) => { if (!claim) forceEditClose() })
 
-function defaultCreateForm() {
+const claimToTransmit = ref<Claim | null>(null)
+const transmitFeedback = useFormFeedback()
+const transmittingClaim = ref(false)
+const transmitForm = ref({ transmitted_at: todayIso() })
+const { schedule: scheduleTransmitClose, forceExpire: forceTransmitClose } = useAutoClose()
+watch(claimToTransmit, (claim) => { if (!claim) forceTransmitClose() })
+
+const claimToClose = ref<Claim | null>(null)
+const closeFeedback = useFormFeedback()
+const closingClaim = ref(false)
+const uploadingCloseDocuments = ref(false)
+const closeForm = ref({
+  transmitted_at: todayIso(),
+  reimbursement_date: '',
+  reimbursement_amount: '',
+})
+const closeSelectedDocuments = ref<File[]>([])
+const closeDocumentInputRef = ref<HTMLInputElement | null>(null)
+const closeDocumentsDragOver = ref(false)
+const { schedule: scheduleCloseClaim, forceExpire: forceCloseClaim } = useAutoClose()
+watch(claimToClose, (claim) => { if (!claim) forceCloseClaim() })
+
+const claimToDelete = ref<Claim | null>(null)
+const deleteFeedback = useFormFeedback()
+const deletingClaim = ref(false)
+const { schedule: scheduleDeleteClose, forceExpire: forceDeleteClose } = useAutoClose()
+watch(claimToDelete, (claim) => { if (!claim) forceDeleteClose() })
+
+function todayIso(): string {
+  return new Date().toISOString().slice(0, 10)
+}
+
+function defaultClaimEditorForm(): ClaimEditorForm {
   return {
     title: '',
     description: '',
-    claim_type: 'current' as ClaimType,
-    declared_at: new Date().toISOString().slice(0, 10),
+    claim_type: 'current',
+    declared_at: todayIso(),
     published_at: '',
     unit_id: '',
   }
 }
 
-function defaultUpdateForm() {
+function claimEditorFormFromClaim(claim: Claim): ClaimEditorForm {
   return {
-    title: '',
-    description: '',
-    claim_type: 'current' as ClaimType,
-    declared_at: '',
-    published_at: '',
-    status: 'open' as ClaimStatus,
-    unit_id: '',
-    transmitted_at: '',
+    title: claim.title,
+    description: claim.description ?? '',
+    claim_type: claim.claim_type,
+    declared_at: claim.declared_at,
+    published_at: claim.published_at ?? '',
+    unit_id: claim.unit_id ?? '',
   }
 }
 
@@ -193,45 +247,151 @@ function deadlineLabel(claim: Claim): string {
   return t('claims.deadline.reference', { date: formatDate(claim.legal_deadline_at) })
 }
 
+function reimbursementLabel(claim: Claim): string {
+  if (claim.reimbursement_amount != null && claim.reimbursement_date) {
+    return t('claims.reimbursement.dateAndAmount', {
+      amount: formatCurrency(claim.reimbursement_amount),
+      date: formatDate(claim.reimbursement_date),
+    })
+  }
+
+  if (claim.reimbursement_amount != null) {
+    return t('claims.reimbursement.amountOnly', {
+      amount: formatCurrency(claim.reimbursement_amount),
+    })
+  }
+
+  return t('claims.reimbursement.dateOnly', {
+    date: formatDate(claim.reimbursement_date),
+  })
+}
+
+function appendDocuments(target: Ref<File[]>, files: File[]) {
+  if (files.length === 0) return
+  target.value = [...target.value, ...files]
+}
+
+function handleDocumentChange(
+  event: Event,
+  target: Ref<File[]>,
+  inputRef: Ref<HTMLInputElement | null>,
+) {
+  const input = event.target as HTMLInputElement
+  appendDocuments(target, Array.from(input.files ?? []))
+  if (inputRef.value) inputRef.value.value = ''
+}
+
+function handleDocumentDrop(
+  event: DragEvent,
+  target: Ref<File[]>,
+  dragState: Ref<boolean>,
+) {
+  dragState.value = false
+  appendDocuments(target, Array.from(event.dataTransfer?.files ?? []))
+}
+
+function removeDocument(target: Ref<File[]>, index: number) {
+  target.value = target.value.filter((_, currentIndex) => currentIndex !== index)
+}
+
+function onCreateDocumentChange(event: Event) {
+  handleDocumentChange(event, selectedDocuments, documentInputRef)
+}
+
+function onCreateDocumentDrop(event: DragEvent) {
+  handleDocumentDrop(event, selectedDocuments, documentsDragOver)
+}
+
+function removeCreateDocument(index: number) {
+  removeDocument(selectedDocuments, index)
+}
+
+function onCloseDocumentChange(event: Event) {
+  handleDocumentChange(event, closeSelectedDocuments, closeDocumentInputRef)
+}
+
+function onCloseDocumentDrop(event: DragEvent) {
+  handleDocumentDrop(event, closeSelectedDocuments, closeDocumentsDragOver)
+}
+
+function removeCloseDocument(index: number) {
+  removeDocument(closeSelectedDocuments, index)
+}
+
+function normalizePublishedAt(claimType: ClaimType, publishedAt: string): string | null {
+  if (claimType !== 'natural_disaster') return null
+  return publishedAt || null
+}
+
+function parseOptionalAmount(value: string): number | null {
+  const normalized = value.trim().replace(',', '.')
+  if (!normalized) return null
+  const amount = Number(normalized)
+  return Number.isFinite(amount) ? amount : Number.NaN
+}
+
+function buildClaimUpdatePayload(
+  claim: Claim,
+  overrides: Partial<ClaimUpdatePayload>,
+): ClaimUpdatePayload {
+  return {
+    title: claim.title,
+    description: claim.description ?? null,
+    claim_type: claim.claim_type,
+    declared_at: claim.declared_at,
+    published_at: claim.published_at ?? null,
+    status: claim.status,
+    unit_id: claim.unit_id ?? null,
+    transmitted_at: claim.transmitted_at ?? null,
+    reimbursement_date: claim.reimbursement_date ?? null,
+    reimbursement_amount: claim.reimbursement_amount ?? null,
+    ...overrides,
+  }
+}
+
 function openCreateModal() {
-  createForm.value = defaultCreateForm()
+  createForm.value = defaultClaimEditorForm()
   selectedDocuments.value = []
   documentsDragOver.value = false
   createFeedback.reset()
   showCreateModal.value = true
 }
 
-function openUpdateModal(claim: Claim) {
-  claimToUpdate.value = claim
-  updateForm.value = {
-    title: claim.title,
-    description: claim.description ?? '',
-    claim_type: claim.claim_type,
-    declared_at: claim.declared_at,
-    published_at: claim.published_at ?? '',
-    status: claim.status,
-    unit_id: claim.unit_id ?? '',
-    transmitted_at: claim.transmitted_at ?? '',
+function openEditModal(claim: Claim) {
+  claimToEdit.value = claim
+  editForm.value = claimEditorFormFromClaim(claim)
+  editFeedback.reset()
+}
+
+function openTransmitModal(claim: Claim) {
+  claimToTransmit.value = claim
+  transmitForm.value = {
+    transmitted_at: claim.transmitted_at ?? todayIso(),
   }
-  updateFeedback.reset()
+  transmitFeedback.reset()
 }
 
-function onDocumentChange(event: Event) {
-  const input = event.target as HTMLInputElement
-  if (input.files) {
-    selectedDocuments.value = [...selectedDocuments.value, ...Array.from(input.files)]
+function openCloseModal(claim: Claim) {
+  claimToClose.value = claim
+  closeForm.value = {
+    transmitted_at: claim.transmitted_at ?? todayIso(),
+    reimbursement_date: claim.reimbursement_date ?? '',
+    reimbursement_amount: claim.reimbursement_amount != null ? String(claim.reimbursement_amount) : '',
   }
-  if (documentInputRef.value) documentInputRef.value.value = ''
+  closeSelectedDocuments.value = []
+  closeDocumentsDragOver.value = false
+  closeFeedback.reset()
 }
 
-function onDocumentDrop(event: DragEvent) {
-  documentsDragOver.value = false
-  const files = Array.from(event.dataTransfer?.files ?? [])
-  selectedDocuments.value = [...selectedDocuments.value, ...files]
+function openDeleteModal(claim: Claim) {
+  claimToDelete.value = claim
+  deleteFeedback.reset()
 }
 
-function removeDocument(index: number) {
-  selectedDocuments.value = selectedDocuments.value.filter((_, currentIndex) => currentIndex !== index)
+function openDeleteFromEdit() {
+  const claim = claimToEdit.value
+  claimToEdit.value = null
+  if (claim) openDeleteModal(claim)
 }
 
 async function uploadDocument(claimId: string, file: File): Promise<void> {
@@ -251,6 +411,20 @@ async function uploadDocument(claimId: string, file: File): Promise<void> {
   await claimsApi.attachDocument(claimId, documentResponse.data.id)
 }
 
+async function attachSelectedDocuments(claimId: string, documents: File[]): Promise<string[]> {
+  const failedDocuments: string[] = []
+
+  for (const document of documents) {
+    try {
+      await uploadDocument(claimId, document)
+    } catch {
+      failedDocuments.push(document.name)
+    }
+  }
+
+  return failedDocuments
+}
+
 async function submitCreate() {
   if (createFeedback.status.value === 'success') {
     forceCreateClose()
@@ -266,24 +440,13 @@ async function submitCreate() {
       description: createForm.value.description.trim() || undefined,
       claim_type: createForm.value.claim_type,
       declared_at: createForm.value.declared_at,
-      published_at: createForm.value.claim_type === 'natural_disaster'
-        ? (createForm.value.published_at || undefined)
-        : undefined,
+      published_at: normalizePublishedAt(createForm.value.claim_type, createForm.value.published_at) ?? undefined,
       unit_id: createForm.value.unit_id || undefined,
     })
 
     if (selectedDocuments.value.length > 0) {
       uploadingDocuments.value = true
-      const failedDocuments: string[] = []
-
-      for (const document of selectedDocuments.value) {
-        try {
-          await uploadDocument(response.data.id, document)
-        } catch {
-          failedDocuments.push(document.name)
-        }
-      }
-
+      const failedDocuments = await attachSelectedDocuments(response.data.id, selectedDocuments.value)
       uploadingDocuments.value = false
 
       if (failedDocuments.length > 0) {
@@ -311,40 +474,165 @@ async function submitCreate() {
   }
 }
 
-async function submitUpdate() {
-  if (updateFeedback.status.value === 'success') {
-    forceUpdateClose()
+async function submitEdit() {
+  if (editFeedback.status.value === 'success') {
+    forceEditClose()
     return
   }
 
-  if (!claimToUpdate.value) return
+  if (!claimToEdit.value) return
 
-  updatingClaim.value = true
-  updateFeedback.reset()
+  editingClaim.value = true
+  editFeedback.reset()
 
   try {
-    await claimsApi.update(claimToUpdate.value.id, {
-      title: updateForm.value.title.trim(),
-      description: updateForm.value.description.trim() || null,
-      claim_type: updateForm.value.claim_type,
-      declared_at: updateForm.value.declared_at,
-      published_at: updateForm.value.claim_type === 'natural_disaster'
-        ? (updateForm.value.published_at || null)
-        : null,
-      status: updateForm.value.status,
-      unit_id: updateForm.value.unit_id || null,
-      transmitted_at: updateForm.value.transmitted_at || null,
-    })
+    await claimsApi.update(
+      claimToEdit.value.id,
+      buildClaimUpdatePayload(claimToEdit.value, {
+        title: editForm.value.title.trim(),
+        description: editForm.value.description.trim() || null,
+        claim_type: editForm.value.claim_type,
+        declared_at: editForm.value.declared_at,
+        published_at: normalizePublishedAt(editForm.value.claim_type, editForm.value.published_at),
+        unit_id: editForm.value.unit_id || null,
+      }),
+    )
 
-    updateFeedback.setSuccess(t('claims.updateSuccess'))
-    scheduleUpdateClose(() => {
-      claimToUpdate.value = null
+    editFeedback.setSuccess(t('claims.updateSuccess'))
+    scheduleEditClose(() => {
+      claimToEdit.value = null
       reload()
     })
   } catch (currentError: unknown) {
-    updateFeedback.setError(toErrorMessage(currentError, t('common.error')))
+    editFeedback.setError(toErrorMessage(currentError, t('common.error')))
   } finally {
-    updatingClaim.value = false
+    editingClaim.value = false
+  }
+}
+
+async function submitTransmit() {
+  if (transmitFeedback.status.value === 'success') {
+    forceTransmitClose()
+    return
+  }
+
+  if (!claimToTransmit.value) return
+  if (!transmitForm.value.transmitted_at) {
+    transmitFeedback.setError(t('claims.transmittedAtRequired'))
+    return
+  }
+
+  transmittingClaim.value = true
+  transmitFeedback.reset()
+
+  try {
+    await claimsApi.update(
+      claimToTransmit.value.id,
+      buildClaimUpdatePayload(claimToTransmit.value, {
+        status: 'in_progress',
+        transmitted_at: transmitForm.value.transmitted_at,
+      }),
+    )
+
+    transmitFeedback.setSuccess(t('claims.transmitSuccess'))
+    scheduleTransmitClose(() => {
+      claimToTransmit.value = null
+      reload()
+    })
+  } catch (currentError: unknown) {
+    transmitFeedback.setError(toErrorMessage(currentError, t('common.error')))
+  } finally {
+    transmittingClaim.value = false
+  }
+}
+
+async function submitClose() {
+  if (closeFeedback.status.value === 'success') {
+    forceCloseClaim()
+    return
+  }
+
+  if (!claimToClose.value) return
+  if (!closeForm.value.transmitted_at) {
+    closeFeedback.setError(t('claims.transmittedAtRequired'))
+    return
+  }
+
+  const reimbursementAmount = parseOptionalAmount(closeForm.value.reimbursement_amount)
+  if (Number.isNaN(reimbursementAmount)) {
+    closeFeedback.setError(t('claims.invalidReimbursementAmount'))
+    return
+  }
+
+  closingClaim.value = true
+  closeFeedback.reset()
+
+  try {
+    await claimsApi.update(
+      claimToClose.value.id,
+      buildClaimUpdatePayload(claimToClose.value, {
+        status: 'closed',
+        transmitted_at: closeForm.value.transmitted_at,
+        reimbursement_date: closeForm.value.reimbursement_date || null,
+        reimbursement_amount: reimbursementAmount,
+      }),
+    )
+
+    if (closeSelectedDocuments.value.length > 0) {
+      uploadingCloseDocuments.value = true
+      const failedDocuments = await attachSelectedDocuments(
+        claimToClose.value.id,
+        closeSelectedDocuments.value,
+      )
+      uploadingCloseDocuments.value = false
+
+      if (failedDocuments.length > 0) {
+        closeFeedback.setError(
+          `${t('claims.closeDocumentUploadError')}: ${failedDocuments.join(', ')}`,
+        )
+        setTimeout(() => {
+          claimToClose.value = null
+          reload()
+        }, 2200)
+        return
+      }
+    }
+
+    closeFeedback.setSuccess(t('claims.closeSuccess'))
+    scheduleCloseClaim(() => {
+      claimToClose.value = null
+      reload()
+    })
+  } catch (currentError: unknown) {
+    closeFeedback.setError(toErrorMessage(currentError, t('common.error')))
+  } finally {
+    closingClaim.value = false
+    uploadingCloseDocuments.value = false
+  }
+}
+
+async function submitDelete() {
+  if (deleteFeedback.status.value === 'success') {
+    forceDeleteClose()
+    return
+  }
+
+  if (!claimToDelete.value) return
+
+  deletingClaim.value = true
+  deleteFeedback.reset()
+
+  try {
+    await claimsApi.delete(claimToDelete.value.id)
+    deleteFeedback.setSuccess(t('claims.deleteSuccess'))
+    scheduleDeleteClose(() => {
+      claimToDelete.value = null
+      reload()
+    })
+  } catch (currentError: unknown) {
+    deleteFeedback.setError(toErrorMessage(currentError, t('common.error')))
+  } finally {
+    deletingClaim.value = false
   }
 }
 </script>
@@ -462,15 +750,46 @@ async function submitUpdate() {
                 <span class="claim-card__opened">
                   {{ t('claims.openedAt', { date: formatRelative(claim.created_at) }) }}
                 </span>
-                <CBtn
+                <div
                   v-if="canManage"
-                  variant="ghost"
-                  size="sm"
-                  @click="openUpdateModal(claim)"
+                  class="claim-card__actions-row"
                 >
-                  <CIconRefresh />
-                  {{ t('claims.updateTracking') }}
-                </CBtn>
+                  <CBtn
+                    variant="ghost"
+                    size="sm"
+                    @click="openEditModal(claim)"
+                  >
+                    <CIconEdit />
+                    {{ t('common.edit') }}
+                  </CBtn>
+                  <CBtn
+                    v-if="claim.status === 'open'"
+                    variant="ghost"
+                    size="sm"
+                    @click="openTransmitModal(claim)"
+                  >
+                    <CIconUpload />
+                    {{ t('claims.transmit') }}
+                  </CBtn>
+                  <CBtn
+                    v-else-if="claim.status === 'in_progress'"
+                    variant="ghost"
+                    size="sm"
+                    @click="openCloseModal(claim)"
+                  >
+                    <CIconCheckCircle />
+                    {{ t('claims.close') }}
+                  </CBtn>
+                  <CBtn
+                    v-else
+                    variant="danger"
+                    size="sm"
+                    @click="openDeleteModal(claim)"
+                  >
+                    <CIconTrash />
+                    {{ t('common.delete') }}
+                  </CBtn>
+                </div>
               </div>
             </div>
 
@@ -495,6 +814,16 @@ async function submitUpdate() {
                   height="14"
                 />
                 {{ t('claims.documentsCount', claim.document_count) }}
+              </span>
+              <span
+                v-if="claim.reimbursement_date || claim.reimbursement_amount != null"
+                class="claim-card__detail"
+              >
+                <CIconCurrency
+                  width="14"
+                  height="14"
+                />
+                {{ reimbursementLabel(claim) }}
               </span>
             </div>
           </CCard>
@@ -616,7 +945,7 @@ async function submitUpdate() {
             type="file"
             multiple
             style="display:none"
-            @change="onDocumentChange"
+            @change="onCreateDocumentChange"
           />
           <div
             :class="['document-dropzone', { 'document-dropzone--over': documentsDragOver }]"
@@ -628,7 +957,7 @@ async function submitUpdate() {
             @dragenter.prevent="documentsDragOver = true"
             @dragover.prevent="documentsDragOver = true"
             @dragleave.prevent="documentsDragOver = false"
-            @drop.prevent="onDocumentDrop"
+            @drop.prevent="onCreateDocumentDrop"
           >
             <CIconUpload
               width="16"
@@ -650,7 +979,7 @@ async function submitUpdate() {
               <button
                 type="button"
                 class="document-list__remove"
-                @click="removeDocument(index)"
+                @click="removeCreateDocument(index)"
               >
                 {{ t('claims.removeDocument') }}
               </button>
@@ -683,37 +1012,147 @@ async function submitUpdate() {
     </CModal>
 
     <CModal
-      :open="!!claimToUpdate"
-      :title="t('claims.updateTracking')"
-      size="md"
-      @update:open="value => !value && (claimToUpdate = null)"
+      :open="!!claimToEdit"
+      :title="t('claims.editTitle')"
+      size="lg"
+      @update:open="value => !value && (claimToEdit = null)"
     >
       <form
         class="form-grid"
-        @submit.prevent="submitUpdate"
+        @submit.prevent="submitEdit"
       >
         <div class="form-field">
-          <label class="form-label">{{ t('claims.fields.status') }}</label>
+          <label class="form-label">{{ t('claims.fields.title') }}</label>
+          <input
+            v-model="editForm.title"
+            type="text"
+            class="form-input"
+            required
+          />
+        </div>
+
+        <div class="form-field">
+          <label class="form-label">{{ t('claims.fields.claimType') }}</label>
           <select
-            v-model="updateForm.status"
+            v-model="editForm.claim_type"
             class="form-input"
           >
             <option
-              v-for="status in CLAIM_STATUSES"
-              :key="status"
-              :value="status"
+              v-for="claimType in CLAIM_TYPES"
+              :key="claimType"
+              :value="claimType"
             >
-              {{ t(`claims.statuses.${status}`) }}
+              {{ t(`claims.types.${claimType}`) }}
+            </option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <div class="form-field">
+            <label class="form-label">{{ t('claims.fields.declaredAt') }}</label>
+            <input
+              v-model="editForm.declared_at"
+              type="date"
+              class="form-input"
+              required
+            />
+          </div>
+
+          <div
+            v-if="editForm.claim_type === 'natural_disaster'"
+            class="form-field"
+          >
+            <label class="form-label">{{ t('claims.fields.publishedAt') }}</label>
+            <input
+              v-model="editForm.published_at"
+              type="date"
+              class="form-input"
+              required
+            />
+            <p class="field-hint">
+              {{ t('claims.fields.publishedAtHint') }}
+            </p>
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label class="form-label">{{ t('claims.fields.unit') }}</label>
+          <select
+            v-model="editForm.unit_id"
+            class="form-input"
+          >
+            <option value="">
+              {{ t('claims.commonAreas') }}
+            </option>
+            <option
+              v-for="unit in allUnits"
+              :key="unit.id"
+              :value="unit.id"
+            >
+              {{ t('claims.unitLabel', { number: unit.unit_number }) }}
             </option>
           </select>
         </div>
 
         <div class="form-field">
+          <label class="form-label">{{ t('claims.fields.description') }}</label>
+          <textarea
+            v-model="editForm.description"
+            class="form-input"
+            rows="3"
+          ></textarea>
+        </div>
+      </form>
+
+      <template #footer>
+        <CBtn
+          v-if="claimToEdit"
+          variant="danger"
+          style="margin-right:auto"
+          @click="openDeleteFromEdit"
+        >
+          <CIconTrash />
+          {{ t('common.delete') }}
+        </CBtn>
+        <CFormFeedback
+          class="modal-footer-feedback"
+          :status="editFeedback.status.value"
+          :message="editFeedback.message.value"
+        />
+        <CBtn
+          variant="ghost"
+          @click="claimToEdit = null"
+        >
+          {{ t('common.cancel') }}
+        </CBtn>
+        <CBtn
+          variant="primary"
+          :loading="editingClaim"
+          :closing="editFeedback.status.value === 'success'"
+          @click="submitEdit"
+        >
+          {{ t('common.save') }}
+        </CBtn>
+      </template>
+    </CModal>
+
+    <CModal
+      :open="!!claimToTransmit"
+      :title="t('claims.transmitTitle')"
+      size="sm"
+      @update:open="value => !value && (claimToTransmit = null)"
+    >
+      <form
+        class="form-grid"
+        @submit.prevent="submitTransmit"
+      >
+        <div class="form-field">
           <label class="form-label">{{ t('claims.fields.transmittedAt') }}</label>
           <input
-            v-model="updateForm.transmitted_at"
+            v-model="transmitForm.transmitted_at"
             type="date"
             class="form-input"
+            required
           />
           <p class="field-hint">
             {{ t('claims.fields.transmittedAtHint') }}
@@ -724,22 +1163,177 @@ async function submitUpdate() {
       <template #footer>
         <CFormFeedback
           class="modal-footer-feedback"
-          :status="updateFeedback.status.value"
-          :message="updateFeedback.message.value"
+          :status="transmitFeedback.status.value"
+          :message="transmitFeedback.message.value"
         />
         <CBtn
           variant="ghost"
-          @click="claimToUpdate = null"
+          @click="claimToTransmit = null"
         >
           {{ t('common.cancel') }}
         </CBtn>
         <CBtn
           variant="primary"
-          :loading="updatingClaim"
-          :closing="updateFeedback.status.value === 'success'"
-          @click="submitUpdate"
+          :loading="transmittingClaim"
+          :closing="transmitFeedback.status.value === 'success'"
+          @click="submitTransmit"
         >
-          {{ t('common.save') }}
+          {{ t('claims.transmit') }}
+        </CBtn>
+      </template>
+    </CModal>
+
+    <CModal
+      :open="!!claimToClose"
+      :title="t('claims.closeTitle')"
+      size="lg"
+      @update:open="value => !value && (claimToClose = null)"
+    >
+      <form
+        class="form-grid"
+        @submit.prevent="submitClose"
+      >
+        <div class="form-field">
+          <label class="form-label">{{ t('claims.fields.transmittedAt') }}</label>
+          <input
+            v-model="closeForm.transmitted_at"
+            type="date"
+            class="form-input"
+            required
+          />
+          <p class="field-hint">
+            {{ t('claims.fields.transmittedAtHint') }}
+          </p>
+        </div>
+
+        <div class="form-row">
+          <div class="form-field">
+            <label class="form-label">{{ t('claims.fields.reimbursementDate') }}</label>
+            <input
+              v-model="closeForm.reimbursement_date"
+              type="date"
+              class="form-input"
+            />
+          </div>
+
+          <div class="form-field">
+            <label class="form-label">{{ t('claims.fields.reimbursementAmount') }}</label>
+            <input
+              v-model="closeForm.reimbursement_amount"
+              type="number"
+              min="0"
+              step="0.01"
+              inputmode="decimal"
+              class="form-input"
+            />
+            <p class="field-hint">
+              {{ t('claims.fields.reimbursementAmountHint') }}
+            </p>
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label class="form-label">{{ t('claims.fields.closeDocuments') }}</label>
+          <input
+            ref="closeDocumentInputRef"
+            type="file"
+            multiple
+            style="display:none"
+            @change="onCloseDocumentChange"
+          />
+          <div
+            :class="['document-dropzone', { 'document-dropzone--over': closeDocumentsDragOver }]"
+            role="button"
+            tabindex="0"
+            @click="closeDocumentInputRef?.click()"
+            @keydown.enter.prevent="closeDocumentInputRef?.click()"
+            @keydown.space.prevent="closeDocumentInputRef?.click()"
+            @dragenter.prevent="closeDocumentsDragOver = true"
+            @dragover.prevent="closeDocumentsDragOver = true"
+            @dragleave.prevent="closeDocumentsDragOver = false"
+            @drop.prevent="onCloseDocumentDrop"
+          >
+            <CIconUpload
+              width="16"
+              height="16"
+            />
+            <span>{{ t('claims.closeDocumentHint') }}</span>
+          </div>
+
+          <ul
+            v-if="closeSelectedDocuments.length > 0"
+            class="document-list"
+          >
+            <li
+              v-for="(document, index) in closeSelectedDocuments"
+              :key="`${document.name}-${index}`"
+              class="document-list__item"
+            >
+              <span>{{ document.name }}</span>
+              <button
+                type="button"
+                class="document-list__remove"
+                @click="removeCloseDocument(index)"
+              >
+                {{ t('claims.removeDocument') }}
+              </button>
+            </li>
+          </ul>
+        </div>
+      </form>
+
+      <template #footer>
+        <CFormFeedback
+          class="modal-footer-feedback"
+          :status="closeFeedback.status.value"
+          :message="closeFeedback.message.value"
+        />
+        <CBtn
+          variant="ghost"
+          @click="claimToClose = null"
+        >
+          {{ t('common.cancel') }}
+        </CBtn>
+        <CBtn
+          variant="primary"
+          :loading="closingClaim || uploadingCloseDocuments"
+          :closing="closeFeedback.status.value === 'success'"
+          @click="submitClose"
+        >
+          {{ t('claims.close') }}
+        </CBtn>
+      </template>
+    </CModal>
+
+    <CModal
+      :open="!!claimToDelete"
+      :title="t('claims.confirmDeleteTitle')"
+      size="sm"
+      @update:open="value => !value && (claimToDelete = null)"
+    >
+      <p class="body-sm">
+        {{ t('claims.confirmDeleteMessage', { title: claimToDelete?.title ?? '' }) }}
+      </p>
+
+      <template #footer>
+        <CFormFeedback
+          class="modal-footer-feedback"
+          :status="deleteFeedback.status.value"
+          :message="deleteFeedback.message.value"
+        />
+        <CBtn
+          variant="ghost"
+          @click="claimToDelete = null"
+        >
+          {{ t('common.cancel') }}
+        </CBtn>
+        <CBtn
+          variant="danger"
+          :loading="deletingClaim"
+          :closing="deleteFeedback.status.value === 'success'"
+          @click="submitDelete"
+        >
+          {{ t('common.deleteLabel') }}
         </CBtn>
       </template>
     </CModal>
@@ -811,6 +1405,13 @@ async function submitUpdate() {
   align-items: flex-end;
   gap: var(--space-2);
   flex-shrink: 0;
+}
+
+.claim-card__actions-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
 }
 
 .claim-card__opened {
@@ -895,8 +1496,10 @@ async function submitUpdate() {
     flex-direction: column;
   }
 
-  .claim-card__actions {
+  .claim-card__actions,
+  .claim-card__actions-row {
     align-items: flex-start;
+    justify-content: flex-start;
   }
 
   .form-row {

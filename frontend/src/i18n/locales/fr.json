@@ -834,8 +834,15 @@
     "create": "Déclarer un sinistre",
     "activeCount": "{count} sinistre en cours | {count} sinistres en cours",
     "createSuccess": "Sinistre enregistré",
-    "updateSuccess": "Suivi du sinistre mis à jour",
-    "updateTracking": "Mettre à jour le suivi",
+    "updateSuccess": "Sinistre mis à jour",
+    "transmitSuccess": "Sinistre transmis à l'assurance",
+    "closeSuccess": "Sinistre clôturé",
+    "deleteSuccess": "Sinistre supprimé",
+    "editTitle": "Modifier le sinistre",
+    "transmitTitle": "Transmettre à l'assurance",
+    "closeTitle": "Clore le sinistre",
+    "transmit": "Transmettre",
+    "close": "Clore",
     "openedAt": "Ouvert {date}",
     "declaredOn": "Déclaré le {date}",
     "publishedOn": "Arrêté publié le {date}",
@@ -843,9 +850,15 @@
     "unitLabel": "Lot {number}",
     "documentHint": "Glisser-déposer ou cliquer pour joindre les pièces du dossier",
     "documentUploadError": "Le sinistre a été créé mais certains documents n'ont pas pu être rattachés",
+    "closeDocumentHint": "Ajouter les pièces de clôture (courrier, décompte, justificatif de remboursement...)",
+    "closeDocumentUploadError": "Le sinistre a été clôturé mais certains documents n'ont pas pu être rattachés",
     "removeDocument": "Retirer",
     "documentsCount": "{count} document | {count} documents",
     "empty": "Aucun sinistre sur ce filtre.",
+    "confirmDeleteTitle": "Supprimer le sinistre",
+    "confirmDeleteMessage": "Le sinistre « {title} » sera supprimé définitivement. Cette action est irréversible.",
+    "transmittedAtRequired": "La date de transmission à l'assurance est obligatoire.",
+    "invalidReimbursementAmount": "Le montant de remboursement doit être un nombre valide supérieur ou égal à zéro.",
     "legalCard": {
       "title": "Délais légaux de déclaration",
       "summary": "5 jours ouvrés pour un sinistre courant, 2 jours ouvrés pour un vol, et 10 jours après publication de l'arrêté pour une catastrophe naturelle.",
@@ -870,7 +883,11 @@
       "documents": "Pièces jointes",
       "status": "Statut",
       "transmittedAt": "Date de transmission à l'assurance",
-      "transmittedAtHint": "Laissez vide tant que le dossier n'a pas été envoyé à l'assureur."
+      "transmittedAtHint": "La transmission à l'assureur fait passer le dossier en cours d'instruction.",
+      "reimbursementDate": "Date de remboursement",
+      "reimbursementAmount": "Montant remboursé (€)",
+      "reimbursementAmountHint": "Ces champs restent optionnels si l'assurance n'a pas encore remboursé le dossier.",
+      "closeDocuments": "Pièces de clôture"
     },
     "deadline": {
       "remaining": "{days} jour(s) restant(s) — échéance au {date}",
@@ -884,6 +901,11 @@
       "open": "Ouvert",
       "in_progress": "En cours",
       "closed": "Clos"
+    },
+    "reimbursement": {
+      "dateAndAmount": "Remboursement : {amount} le {date}",
+      "amountOnly": "Remboursement : {amount}",
+      "dateOnly": "Remboursement reçu le {date}"
     },
     "filters": {
       "open": "Ouverts",

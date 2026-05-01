@@ -1,6 +1,6 @@
 use chrono::{DateTime, Datelike, Days, NaiveDate, Utc, Weekday};
 use serde::{Deserialize, Serialize};
-use sqlx::{PgPool, Row};
+use sqlx::{PgPool, Row, types::Decimal};
 use uuid::Uuid;
 
 use crate::errors::{AppError, AppResult};
@@ -17,6 +17,8 @@ pub struct ClaimRow {
     pub status: String,
     pub unit_id: Option<Uuid>,
     pub transmitted_at: Option<NaiveDate>,
+    pub reimbursement_date: Option<NaiveDate>,
+    pub reimbursement_amount: Option<Decimal>,
     pub legal_deadline_at: NaiveDate,
     pub days_remaining: Option<i64>,
     pub is_deadline_approaching: bool,
@@ -47,6 +49,8 @@ pub struct UpdateClaimInput {
     pub status: String,
     pub unit_id: Option<Uuid>,
     pub transmitted_at: Option<NaiveDate>,
+    pub reimbursement_date: Option<NaiveDate>,
+    pub reimbursement_amount: Option<Decimal>,
 }
 
 pub const CLAIM_TYPE_CURRENT: &str = "current";
@@ -71,6 +75,7 @@ const LIST_QUERY: &str = concat!(
     "SELECT c.id, c.building_id, c.title, c.description,",
     " c.claim_type::text AS claim_type, c.declared_at, c.published_at,",
     " c.status::text AS status, c.unit_id, c.transmitted_at,",
+    " c.reimbursement_date, c.reimbursement_amount,",
     " (SELECT COUNT(*) FROM claim_document cd WHERE cd.claim_id = c.id) AS document_count,",
     " c.created_at, c.updated_at",
     " FROM claim c WHERE c.building_id = $1",
@@ -81,6 +86,7 @@ const GET_QUERY: &str = concat!(
     "SELECT c.id, c.building_id, c.title, c.description,",
     " c.claim_type::text AS claim_type, c.declared_at, c.published_at,",
     " c.status::text AS status, c.unit_id, c.transmitted_at,",
+    " c.reimbursement_date, c.reimbursement_amount,",
     " (SELECT COUNT(*) FROM claim_document cd WHERE cd.claim_id = c.id) AS document_count,",
     " c.created_at, c.updated_at",
     " FROM claim c WHERE c.id = $1 AND c.building_id = $2",
@@ -101,6 +107,8 @@ pub fn validate_payload(
     declared_at: NaiveDate,
     published_at: Option<NaiveDate>,
     transmitted_at: Option<NaiveDate>,
+    reimbursement_date: Option<NaiveDate>,
+    reimbursement_amount: Option<Decimal>,
 ) -> AppResult<()> {
     if title.trim().is_empty() {
         return Err(AppError::Validation("Title is required".into()));
@@ -140,6 +148,20 @@ pub fn validate_payload(
     {
         return Err(AppError::Validation(
             "transmitted_at cannot be earlier than the legal reference date".into(),
+        ));
+    }
+
+    if reimbursement_amount.is_some_and(|amount| amount.is_sign_negative()) {
+        return Err(AppError::Validation(
+            "reimbursement_amount cannot be negative".into(),
+        ));
+    }
+
+    if matches!(status, Some(CLAIM_STATUS_OPEN | CLAIM_STATUS_IN_PROGRESS))
+        && (reimbursement_date.is_some() || reimbursement_amount.is_some())
+    {
+        return Err(AppError::Validation(
+            "reimbursement fields are only allowed for closed claims".into(),
         ));
     }
 
@@ -201,6 +223,8 @@ fn row_to_claim(row: &sqlx::postgres::PgRow) -> Result<ClaimRow, sqlx::Error> {
     let declared_at: NaiveDate = row.try_get("declared_at")?;
     let published_at: Option<NaiveDate> = row.try_get("published_at")?;
     let transmitted_at: Option<NaiveDate> = row.try_get("transmitted_at")?;
+    let reimbursement_date: Option<NaiveDate> = row.try_get("reimbursement_date")?;
+    let reimbursement_amount: Option<Decimal> = row.try_get("reimbursement_amount")?;
     let deadline = legal_deadline_at(&claim_type, declared_at, published_at);
     let today = Utc::now().date_naive();
 
@@ -223,6 +247,8 @@ fn row_to_claim(row: &sqlx::postgres::PgRow) -> Result<ClaimRow, sqlx::Error> {
         status: row.try_get("status")?,
         unit_id: row.try_get("unit_id")?,
         transmitted_at,
+        reimbursement_date,
+        reimbursement_amount,
         legal_deadline_at: deadline,
         days_remaining,
         is_deadline_approaching,
@@ -271,6 +297,8 @@ pub async fn create(
         input.declared_at,
         input.published_at,
         None,
+        None,
+        None,
     )?;
 
     let row = sqlx::query(
@@ -309,6 +337,8 @@ pub async fn update(
         input.declared_at,
         input.published_at,
         input.transmitted_at,
+        input.reimbursement_date,
+        input.reimbursement_amount,
     )?;
 
     let result = sqlx::query(
@@ -321,6 +351,8 @@ pub async fn update(
            status = $8::text::claim_status,
            unit_id = $9,
            transmitted_at = $10,
+           reimbursement_date = $11,
+           reimbursement_amount = $12,
            updated_at = NOW()
            WHERE id = $1 AND building_id = $2"#,
     )
@@ -334,6 +366,8 @@ pub async fn update(
     .bind(input.status)
     .bind(input.unit_id)
     .bind(input.transmitted_at)
+    .bind(input.reimbursement_date)
+    .bind(input.reimbursement_amount)
     .execute(pool)
     .await?;
 
@@ -373,6 +407,16 @@ pub async fn list_documents(
             })
         })
         .collect())
+}
+
+pub async fn delete(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<bool> {
+    let result = sqlx::query("DELETE FROM claim WHERE id = $1 AND building_id = $2")
+        .bind(id)
+        .bind(building_id)
+        .execute(pool)
+        .await?;
+
+    Ok(result.rows_affected() > 0)
 }
 
 pub async fn attach_document(
@@ -430,4 +474,46 @@ pub async fn detach_document(
     .await?;
 
     Ok(result.rows_affected() > 0)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn rejects_reimbursement_before_closed_status() {
+        let declared_at = NaiveDate::from_ymd_opt(2026, 5, 1).unwrap();
+
+        let result = validate_payload(
+            "Dégât des eaux",
+            CLAIM_TYPE_CURRENT,
+            Some(CLAIM_STATUS_IN_PROGRESS),
+            declared_at,
+            None,
+            Some(declared_at),
+            None,
+            Some(Decimal::new(15000, 2)),
+        );
+
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn accepts_closed_claim_with_optional_reimbursement() {
+        let declared_at = NaiveDate::from_ymd_opt(2026, 5, 1).unwrap();
+        let reimbursement_date = NaiveDate::from_ymd_opt(2026, 5, 20).unwrap();
+
+        let result = validate_payload(
+            "Vol cave",
+            CLAIM_TYPE_THEFT,
+            Some(CLAIM_STATUS_CLOSED),
+            declared_at,
+            None,
+            Some(declared_at),
+            Some(reimbursement_date),
+            Some(Decimal::new(9500, 2)),
+        );
+
+        assert!(result.is_ok());
+    }
 }

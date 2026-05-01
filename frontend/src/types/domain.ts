@@ -237,6 +237,8 @@ export interface Claim {
   status: ClaimStatus
   unit_id?: string
   transmitted_at?: string
+  reimbursement_date?: string
+  reimbursement_amount?: number
   legal_deadline_at: string
   days_remaining?: number
   is_deadline_approaching: boolean

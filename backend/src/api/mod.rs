@@ -199,7 +199,10 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
         )
         // ── Claims ──────────────────────────────────────────────
         .route("/claims", get(claims::list).post(claims::create))
-        .route("/claims/{id}", get(claims::get).put(claims::update))
+        .route(
+            "/claims/{id}",
+            get(claims::get).put(claims::update).delete(claims::delete),
+        )
         .route(
             "/claims/{id}/documents",
             get(claims::list_documents).post(claims::attach_document),

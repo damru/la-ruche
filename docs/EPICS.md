@@ -170,7 +170,7 @@ Tâches assignées en interne, lien tokenisé éphémère pour accès prestatair
 
 **Statut :** terminée | **MVP :** oui | **Réf. PRD :** Gestion courante
 
-**État code actuel :** backend réel (`claim_type`, calcul d'échéance légale, transmission assurance, pièces jointes) + frontend branché sur API réelle (création, suivi, alertes, rattachement documentaire).
+**État code actuel :** backend réel (`claim_type`, calcul d'échéance légale, transmission assurance, remboursement optionnel, pièces jointes, suppression) + frontend branché sur API réelle (création, édition, transmission, clôture, suppression, alertes, rattachement documentaire).
 
 Déclaration et suivi de sinistres (lot ou parties communes) avec documents associés.
 
@@ -179,8 +179,8 @@ Déclaration et suivi de sinistres (lot ou parties communes) avec documents asso
 * `EP-008-S01` ✅ — Déclarer un sinistre avec type, description, date de survenance et documents associés
 * `EP-008-S02` ✅ — Calculer et afficher le délai légal de déclaration restant selon le type de sinistre (LEGAL.md §9)
 * `EP-008-S03` ✅ — Alerter automatiquement si le délai légal de déclaration approche (LEGAL.md §9)
-* `EP-008-S04` ✅ — Suivre le statut du sinistre jusqu'à transmission à l'assurance
-* `EP-008-S05` ✅ — Tracer la date de transmission à l'assurance et contrôler le respect du délai légal selon le type de sinistre (LEGAL.md §9)
+* `EP-008-S04` ✅ — Suivre le statut du sinistre avec actions contextuelles (`Modifier`, `Transmettre`, `Clore`, `Supprimer`) selon l'état courant
+* `EP-008-S05` ✅ — Tracer la date de transmission à l'assurance, le remboursement éventuel et contrôler le respect du délai légal selon le type de sinistre (LEGAL.md §9)
 
 ***
 

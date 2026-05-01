@@ -56,6 +56,19 @@ pub async fn update(
     json_value(claim)
 }
 
+pub async fn delete(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+) -> AppResult<StatusCode> {
+    auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
+    let deleted = db::claim::delete(&state.pool, id, auth.building_id).await?;
+    if !deleted {
+        return Err(AppError::NotFound);
+    }
+    Ok(StatusCode::NO_CONTENT)
+}
+
 pub async fn list_documents(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,
