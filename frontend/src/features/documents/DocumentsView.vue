@@ -53,6 +53,14 @@ async function loadData() {
 const { loading, error, reload } = usePageLoader(loadData, t('common.loadError'))
 onMounted(reload)
 
+function documentReferences(document: Document): string[] {
+  return [
+    ...(document.linked_contract_names ?? []).map(name => t('documents.referenceContract', { name })),
+    ...(document.linked_report_titles ?? []).map(title => t('documents.referenceReport', { title })),
+    ...(document.linked_claim_titles ?? []).map(title => t('documents.referenceClaim', { title })),
+  ]
+}
+
 function mimeLabel(mime: string): string {
   if (mime.includes('pdf')) return 'PDF'
   if (mime.includes('sheet') || mime.includes('excel')) return 'Excel'
@@ -225,6 +233,7 @@ async function confirmDeleteDoc() {
                 <th>{{ t('documents.columns.fileName') }}</th>
                 <th>{{ t('documents.columns.type') }}</th>
                 <th>{{ t('documents.columns.visibility') }}</th>
+                <th>{{ t('documents.columns.references') }}</th>
                 <th>{{ t('documents.columns.size') }}</th>
                 <th>{{ t('documents.columns.addedDate') }}</th>
                 <th></th>
@@ -259,6 +268,24 @@ async function confirmDeleteDoc() {
                       {{ t(`roles.${role}`) }}
                     </CBadge>
                   </div>
+                </td>
+                <td>
+                  <div
+                    v-if="documentReferences(doc).length"
+                    class="doc-references"
+                  >
+                    <span
+                      v-for="reference in documentReferences(doc)"
+                      :key="reference"
+                      class="doc-reference"
+                    >
+                      {{ reference }}
+                    </span>
+                  </div>
+                  <span
+                    v-else
+                    class="dim"
+                  >—</span>
                 </td>
                 <td class="dim">
                   {{ formatFileSize(doc.size_bytes) }}
@@ -427,6 +454,17 @@ async function confirmDeleteDoc() {
 .dim { color: var(--color-on-surface-variant); }
 
 .roles-list { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+
+.doc-references {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.doc-reference {
+  color: var(--color-on-surface-variant);
+  font-size: var(--text-xs);
+}
 
 .action-btns { display: flex; gap: var(--space-1); }
 .action-btns .icon-btn {

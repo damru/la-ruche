@@ -183,7 +183,8 @@ Références d'implémentation : `frontend/src/composables/usePageLoader.ts`, `f
 
 La vue `Contrats` affiche en tête les rappels à traiter, avec une action d’acquittement visible sans navigation secondaire.
 
-Les pièces justificatives d’un contrat restent regroupées dans une modale dédiée au contrat courant, afin de garder la liste principale lisible tout en laissant l’upload documentaire dans le même parcours.
+- Les pièces justificatives d’un contrat se gèrent directement depuis la modale de création / modification, sans bouton documentaire dédié sur la carte.
+- La modale d’édition liste les pièces déjà liées avec deux issues explicites : retirer le lien seulement, ou retirer le lien puis supprimer définitivement le document.
 
 ## Règle UI — Vue Carnet d'entretien
 
@@ -225,6 +226,13 @@ La modale de conversion d'un signalement en tâche doit permettre au gestionnair
 
 - La priorité proposée par défaut est `Normal`.
 - La conversion reste une action unique : création de la tâche puis redirection immédiate vers la tâche créée.
+- La modale de modification d’un signalement doit aussi afficher les images déjà jointes et permettre leur gestion sans repasser par la carte.
+
+## Règle UI — Gestion documentaire liée
+
+- Toute entité qui accepte des documents doit permettre leur gestion depuis la modale d’édition et, lorsqu’une vue détaillée existe, depuis cette vue détaillée également.
+- L’action de retrait d’un document lié ouvre toujours une confirmation avec deux actions distinctes : `Supprimer le lien seulement` et `Supprimer le lien et le document`.
+- Le module `Documents` doit exposer les références d’entités liées pour chaque fichier et rappeler, dans la modale de suppression, qu’un document supprimé sera d’abord retiré des entités auxquelles il est rattaché.
 
 ## Règle UI — Vue Tâches
 

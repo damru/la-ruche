@@ -10,6 +10,7 @@ import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
 import CPageError from '@/components/molecules/CPageError.vue'
+import CDocumentLinkActionModal from '@/components/molecules/CDocumentLinkActionModal.vue'
 import CLegalInfoCard from '@/components/molecules/CLegalInfoCard.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CCard from '@/components/molecules/CCard.vue'
@@ -85,6 +86,8 @@ const selectedEditDocuments = ref<File[]>([])
 const editDocumentInputRef = ref<HTMLInputElement | null>(null)
 const editDocumentsDragOver = ref(false)
 const detachingDocumentId = ref<string | null>(null)
+const documentActionFeedback = useFormFeedback()
+const pendingDocumentAction = ref<Document | null>(null)
 const { schedule: scheduleEditClose, forceExpire: forceEditClose } = useAutoClose()
 watch(claimToEdit, (claim) => { if (!claim) forceEditClose() })
 
@@ -474,16 +477,45 @@ async function downloadClaimDocument(documentId: string) {
   }
 }
 
-async function detachClaimDocument(documentId: string) {
-  if (!claimToEdit.value) return
+function openDocumentActionModal(document: Document) {
+  pendingDocumentAction.value = document
+  documentActionFeedback.reset()
+}
 
-  detachingDocumentId.value = documentId
+function closeDocumentActionModal() {
+  if (detachingDocumentId.value) return
+  pendingDocumentAction.value = null
+  documentActionFeedback.reset()
+}
+
+function updateClaimDocumentCount(claimId: string, delta: number) {
+  const claim = allClaims.value.find(currentClaim => currentClaim.id === claimId)
+  if (claim) {
+    claim.document_count = Math.max(0, claim.document_count + delta)
+  }
+}
+
+async function handleDocumentAction(deleteDocument: boolean) {
+  if (!claimToEdit.value || !pendingDocumentAction.value) return
+
+  detachingDocumentId.value = pendingDocumentAction.value.id
 
   try {
-    await claimsApi.detachDocument(claimToEdit.value.id, documentId)
-    editDocuments.value = editDocuments.value.filter(document => document.id !== documentId)
+    if (deleteDocument) {
+      await documentsApi.delete(pendingDocumentAction.value.id)
+    } else {
+      await claimsApi.detachDocument(claimToEdit.value.id, pendingDocumentAction.value.id)
+    }
+    editDocuments.value = editDocuments.value.filter(document => document.id !== pendingDocumentAction.value?.id)
+    updateClaimDocumentCount(claimToEdit.value.id, -1)
+    pendingDocumentAction.value = null
   } catch (currentError: unknown) {
-    editFeedback.setError(toErrorMessage(currentError, t('claims.documentsDetachError')))
+    documentActionFeedback.setError(
+      toErrorMessage(
+        currentError,
+        deleteDocument ? t('claims.documentsDeleteError') : t('claims.documentsDetachError'),
+      ),
+    )
   } finally {
     detachingDocumentId.value = null
   }
@@ -1289,7 +1321,7 @@ async function submitDelete() {
                     variant="danger"
                     size="sm"
                     :loading="detachingDocumentId === document.id"
-                    @click="detachClaimDocument(document.id)"
+                    @click="openDocumentActionModal(document)"
                   >
                     {{ t('claims.detachDocument') }}
                   </CBtn>
@@ -1536,6 +1568,19 @@ async function submitDelete() {
         </CBtn>
       </template>
     </CModal>
+
+    <CDocumentLinkActionModal
+      :open="!!pendingDocumentAction"
+      :title="t('claims.documentsDetachTitle')"
+      :description="t('claims.documentsDetachMessage', { name: pendingDocumentAction?.original_name ?? '', title: claimToEdit?.title ?? '' })"
+      :warning="t('claims.documentsDeleteWarning', { name: pendingDocumentAction?.original_name ?? '' })"
+      :loading="!!detachingDocumentId"
+      :status="documentActionFeedback.status.value"
+      :message="documentActionFeedback.message.value"
+      @update:open="value => !value && closeDocumentActionModal()"
+      @unlink="handleDocumentAction(false)"
+      @unlink-and-delete="handleDocumentAction(true)"
+    />
   </div>
 </template>
 

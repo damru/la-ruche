@@ -1,6 +1,7 @@
 use chrono::{DateTime, Datelike, Days, NaiveDate, Utc, Weekday};
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use sqlx::{PgPool, Row, types::Decimal};
+use std::str::FromStr;
 use uuid::Uuid;
 
 use crate::errors::{AppError, AppResult};
@@ -50,7 +51,33 @@ pub struct UpdateClaimInput {
     pub unit_id: Option<Uuid>,
     pub transmitted_at: Option<NaiveDate>,
     pub reimbursement_date: Option<NaiveDate>,
+    #[serde(default, deserialize_with = "deserialize_optional_decimal")]
     pub reimbursement_amount: Option<Decimal>,
+}
+
+#[derive(Deserialize)]
+#[serde(untagged)]
+enum FlexibleDecimalInput {
+    String(String),
+    Number(f64),
+}
+
+fn deserialize_optional_decimal<'de, D>(deserializer: D) -> Result<Option<Decimal>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let value = Option::<FlexibleDecimalInput>::deserialize(deserializer)?;
+
+    value
+        .map(|input| {
+            let raw = match input {
+                FlexibleDecimalInput::String(value) => value,
+                FlexibleDecimalInput::Number(value) => value.to_string(),
+            };
+
+            Decimal::from_str(&raw).map_err(serde::de::Error::custom)
+        })
+        .transpose()
 }
 
 pub const CLAIM_TYPE_CURRENT: &str = "current";

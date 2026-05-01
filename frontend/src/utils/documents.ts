@@ -9,30 +9,20 @@ export function buildDocumentDeleteMessage(
   if (!document) return t('documents.confirmDeleteMessage', { name: '' })
 
   const linkedContractNames = document.linked_contract_names ?? []
-  const linkedReportCount = document.linked_report_count ?? 0
+  const linkedReportTitles = document.linked_report_titles ?? []
+  const linkedClaimTitles = document.linked_claim_titles ?? []
+  const references = [
+    ...linkedContractNames.map(name => t('documents.referenceContract', { name })),
+    ...linkedReportTitles.map(title => t('documents.referenceReport', { title })),
+    ...linkedClaimTitles.map(title => t('documents.referenceClaim', { title })),
+  ]
 
-  if (linkedContractNames.length === 0 && linkedReportCount === 0) {
+  if (references.length === 0) {
     return t('documents.confirmDeleteMessage', { name: document.original_name })
   }
 
-  if (linkedContractNames.length > 0 && linkedReportCount === 0) {
-    return t('documents.confirmDeleteLinkedMessage', {
-      name: document.original_name,
-      links: linkedContractNames.join(', '),
-    })
-  }
-
-  if (linkedContractNames.length === 0 && linkedReportCount > 0) {
-    return t('documents.confirmDeleteLinkedReportMessage', {
-      name: document.original_name,
-      count: linkedReportCount,
-    })
-  }
-
-  // linked to both contracts and reports
-  return t('documents.confirmDeleteLinkedBothMessage', {
+  return t('documents.confirmDeleteLinkedMessage', {
     name: document.original_name,
-    links: linkedContractNames.join(', '),
-    count: linkedReportCount,
+    links: references.join(', '),
   })
 }

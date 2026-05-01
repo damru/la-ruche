@@ -11,6 +11,7 @@ import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
+import CDocumentLinkActionModal from '@/components/molecules/CDocumentLinkActionModal.vue'
 import CModal from '@/components/molecules/CModal.vue'
 import CPageError from '@/components/molecules/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
@@ -53,6 +54,8 @@ const editSelectedPhotos = ref<File[]>([])
 const editPhotoInputRef = ref<HTMLInputElement | null>(null)
 const editPhotoDragOver = ref(false)
 const editUploadingPhotos = ref(false)
+const editAttachedPhotos = ref<{ doc: Document; url: string }[]>([])
+const loadingEditAttachedPhotos = ref(false)
 
 const { schedule: scheduleCreateClose, forceExpire: forceCreateClose } = useAutoClose()
 watch(showCreateModal, (open) => { if (!open) forceCreateClose() })
@@ -237,6 +240,7 @@ const { schedule: scheduleEditClose, forceExpire: forceEditClose } = useAutoClos
 watch(reportToEdit, (r) => { if (!r) forceEditClose() })
 
 function openEditModal(report: Report) {
+  void loadEditAttachedPhotos(report.id)
   reportToEdit.value = report
   editForm.value = {
     title: report.title,
@@ -326,33 +330,66 @@ const viewPhotosList = ref<{ doc: Document; url: string }[]>([])
 const viewPhotosLoading = ref(false)
 const lightboxIndex = ref<number | null>(null)
 const deletingPhoto = ref(false)
+const photoActionTarget = ref<{ reportId: string; document: Document } | null>(null)
+const photoActionFeedback = useFormFeedback()
+const showPhotoActionModal = computed(() => photoActionTarget.value !== null)
 
-// ── Delete photo confirmation ─────────────────────────────────────
-const photoToDeleteIdx = ref<number | null>(null)
-const deletePhotoFeedback = useFormFeedback()
-
-function confirmDeletePhoto(idx: number) {
-  photoToDeleteIdx.value = idx
-  deletePhotoFeedback.reset()
+function updateReportDocumentCount(reportId: string, delta: number) {
+  const report = allReports.value.find(currentReport => currentReport.id === reportId)
+  if (report && typeof report.document_count === 'number') {
+    report.document_count = Math.max(0, report.document_count + delta)
+  }
 }
 
-async function executeDeletePhoto() {
-  if (photoToDeleteIdx.value === null || !viewPhotosReport.value || deletingPhoto.value) return
-  const idx = photoToDeleteIdx.value
-  const item = viewPhotosList.value[idx]
-  if (!item) return
-  deletingPhoto.value = true
-  deletePhotoFeedback.reset()
+async function fetchReportPhotos(reportId: string): Promise<Array<{ doc: Document; url: string }>> {
+  const docsRes = await reportsApi.listDocuments(reportId)
+  return Promise.all(
+    docsRes.data.map(async (document) => {
+      const urlRes = await documentsApi.getDownloadUrl(document.id)
+      return { doc: document, url: urlRes.data.url }
+    }),
+  )
+}
+
+async function loadEditAttachedPhotos(reportId: string) {
+  loadingEditAttachedPhotos.value = true
+
   try {
-    await reportsApi.detachDocument(viewPhotosReport.value.id, item.doc.id)
-    await documentsApi.delete(item.doc.id)
-    viewPhotosList.value.splice(idx, 1)
-    // Update document_count on the card
-    const r = allReports.value.find(x => x.id === viewPhotosReport.value!.id)
-    if (r && typeof r.document_count === 'number' && r.document_count > 0) {
-      r.document_count -= 1
+    editAttachedPhotos.value = await fetchReportPhotos(reportId)
+  } catch {
+    editAttachedPhotos.value = []
+  } finally {
+    loadingEditAttachedPhotos.value = false
+  }
+}
+
+function openPhotoActionModal(reportId: string, document: Document) {
+  photoActionTarget.value = { reportId, document }
+  photoActionFeedback.reset()
+}
+
+function closePhotoActionModal() {
+  if (deletingPhoto.value) return
+  photoActionTarget.value = null
+  photoActionFeedback.reset()
+}
+
+async function handlePhotoAction(deleteDocument: boolean) {
+  if (!photoActionTarget.value || deletingPhoto.value) return
+
+  deletingPhoto.value = true
+  photoActionFeedback.reset()
+
+  try {
+    await reportsApi.detachDocument(photoActionTarget.value.reportId, photoActionTarget.value.document.id)
+    if (deleteDocument) {
+      await documentsApi.delete(photoActionTarget.value.document.id)
     }
-    // Adjust lightbox index if needed
+
+    viewPhotosList.value = viewPhotosList.value.filter(item => item.doc.id !== photoActionTarget.value?.document.id)
+    editAttachedPhotos.value = editAttachedPhotos.value.filter(item => item.doc.id !== photoActionTarget.value?.document.id)
+    updateReportDocumentCount(photoActionTarget.value.reportId, -1)
+
     if (lightboxIndex.value !== null) {
       if (viewPhotosList.value.length === 0) {
         lightboxIndex.value = null
@@ -360,9 +397,10 @@ async function executeDeletePhoto() {
         lightboxIndex.value = viewPhotosList.value.length - 1
       }
     }
-    photoToDeleteIdx.value = null
+
+    photoActionTarget.value = null
   } catch {
-    deletePhotoFeedback.setError(t('common.error'))
+    photoActionFeedback.setError(t('common.error'))
   } finally {
     deletingPhoto.value = false
   }
@@ -373,14 +411,7 @@ async function openViewPhotos(report: Report) {
   viewPhotosList.value = []
   viewPhotosLoading.value = true
   try {
-    const docsRes = await reportsApi.listDocuments(report.id)
-    const photos = await Promise.all(
-      docsRes.data.map(async (d) => {
-        const urlRes = await documentsApi.getDownloadUrl(d.id)
-        return { doc: d, url: urlRes.data.url }
-      }),
-    )
-    viewPhotosList.value = photos
+    viewPhotosList.value = await fetchReportPhotos(report.id)
   } catch {
     viewPhotosList.value = []
   } finally {
@@ -961,6 +992,40 @@ function photoPreview(file: File): string {
             style="color:var(--color-on-surface-variant)"
           >{{ t('reports.photoUploading') }}</span>
         </div>
+        <div class="form-field">
+          <label class="form-label">{{ t('reports.attachedPhotos') }}</label>
+          <CPageLoader v-if="loadingEditAttachedPhotos" />
+          <div
+            v-else-if="editAttachedPhotos.length"
+            class="photo-gallery"
+          >
+            <div
+              v-for="item in editAttachedPhotos"
+              :key="item.doc.id"
+              class="photo-gallery-item"
+            >
+              <img
+                :src="item.url"
+                :alt="item.doc.original_name"
+                class="photo-gallery-thumb"
+              />
+              <button
+                type="button"
+                class="photo-gallery-delete"
+                :title="t('reports.deletePhoto')"
+                :disabled="deletingPhoto"
+                @click="openPhotoActionModal(reportToEdit?.id ?? '', item.doc)"
+              >
+                <CIconTrash />
+              </button>
+            </div>
+          </div>
+          <span
+            v-else
+            class="body-xs"
+            style="color:var(--color-on-surface-variant)"
+          >{{ t('reports.noAttachedPhotos') }}</span>
+        </div>
       </form>
       <template #footer>
         <CFormFeedback
@@ -1023,37 +1088,6 @@ function photoPreview(file: File): string {
         </CBtn>
       </template>
     </CModal>
-    <!-- Delete photo confirmation modal -->
-    <CModal
-      :open="photoToDeleteIdx !== null"
-      :title="t('reports.deletePhoto')"
-      size="sm"
-      @update:open="v => !v && (photoToDeleteIdx = null)"
-    >
-      <p class="body-sm">
-        {{ t('reports.deletePhotoConfirm') }}
-      </p>
-      <template #footer>
-        <CFormFeedback
-          :status="deletePhotoFeedback.status.value"
-          :message="deletePhotoFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          @click="photoToDeleteIdx = null"
-        >
-          {{ t('common.cancel') }}
-        </CBtn>
-        <CBtn
-          variant="danger"
-          :loading="deletingPhoto"
-          @click="executeDeletePhoto"
-        >
-          {{ t('common.delete') }}
-        </CBtn>
-      </template>
-    </CModal>
-
     <!-- View photos modal -->
     <CModal
       :open="!!viewPhotosReport"
@@ -1087,7 +1121,7 @@ function photoPreview(file: File): string {
             class="photo-gallery-delete"
             :title="t('reports.deletePhoto')"
             :disabled="deletingPhoto"
-            @click.stop="confirmDeletePhoto(idx)"
+            @click.stop="openPhotoActionModal(viewPhotosReport?.id ?? '', item.doc)"
           >
             <CIconTrash />
           </button>
@@ -1128,7 +1162,7 @@ function photoPreview(file: File): string {
           class="lightbox-delete"
           :title="t('reports.deletePhoto')"
           :disabled="deletingPhoto"
-          @click.stop="confirmDeletePhoto(lightboxIndex!)"
+          @click.stop="openPhotoActionModal(viewPhotosReport?.id ?? '', viewPhotosList[lightboxIndex!].doc)"
         >
           <CIconTrash />
         </button>
@@ -1157,6 +1191,19 @@ function photoPreview(file: File): string {
         </span>
       </div>
     </Teleport>
+
+    <CDocumentLinkActionModal
+      :open="showPhotoActionModal"
+      :title="t('reports.deletePhoto')"
+      :description="t('reports.deletePhotoDetachMessage', { name: photoActionTarget?.document.original_name ?? '', title: viewPhotosReport?.title ?? reportToEdit?.title ?? '' })"
+      :warning="t('reports.deletePhotoConfirm')"
+      :loading="deletingPhoto"
+      :status="photoActionFeedback.status.value"
+      :message="photoActionFeedback.message.value"
+      @update:open="value => !value && closePhotoActionModal()"
+      @unlink="handlePhotoAction(false)"
+      @unlink-and-delete="handlePhotoAction(true)"
+    />
   </div>
 </template>
 

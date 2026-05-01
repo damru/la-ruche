@@ -306,15 +306,26 @@ pub async fn list_documents(
                    array_remove(
                        array_agg(DISTINCT vc_link.vendor_name ORDER BY vc_link.vendor_name),
                        NULL
-                   ),
-                   ARRAY[]::text[]
-               ) AS linked_contract_names,
-               d.created_at
+                    ),
+                    ARRAY[]::text[]
+                ) AS linked_contract_names,
+                COALESCE(
+                    array_remove(
+                        array_agg(DISTINCT r.title ORDER BY r.title),
+                        NULL
+                    ),
+                    ARRAY[]::text[]
+                ) AS linked_report_titles,
+                ARRAY[]::text[] AS linked_claim_titles,
+                COUNT(DISTINCT rd.report_id) AS linked_report_count,
+                d.created_at
         FROM contract_document cd_current
         JOIN vendor_contract vc ON vc.id = cd_current.contract_id
         JOIN document d ON d.id = cd_current.document_id
         LEFT JOIN contract_document cd_link ON cd_link.document_id = d.id
         LEFT JOIN vendor_contract vc_link ON vc_link.id = cd_link.contract_id AND vc_link.building_id = $2
+        LEFT JOIN report_document rd ON rd.document_id = d.id
+        LEFT JOIN report r ON r.id = rd.report_id AND r.building_id = $2
         WHERE cd_current.contract_id = $1
           AND vc.building_id = $2
           AND d.building_id = $2

@@ -20,6 +20,7 @@ declare module 'vue' {
     CCard: typeof import('./../components/molecules/CCard.vue')['default']
     CConfirmDialog: typeof import('./../components/molecules/CConfirmDialog.vue')['default']
     CDataTable: typeof import('./../components/molecules/CDataTable.vue')['default']
+    CDocumentLinkActionModal: typeof import('./../components/molecules/CDocumentLinkActionModal.vue')['default']
     CDropzone: typeof import('./../components/molecules/CDropzone.vue')['default']
     CFormFeedback: typeof import('./../components/atoms/CFormFeedback.vue')['default']
     CIconAgora: typeof import('./../components/atoms/CIconAgora.svg')['default']

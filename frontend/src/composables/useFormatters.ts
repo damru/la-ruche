@@ -26,9 +26,11 @@ export function useFormatters() {
     hour: '2-digit', minute: '2-digit',
   })
 
-  function formatCurrency(value: number | null | undefined): string {
+  function formatCurrency(value: number | string | null | undefined): string {
     if (value == null) return '—'
-    return currency.format(value)
+    const normalized = typeof value === 'string' ? Number(value) : value
+    if (Number.isNaN(normalized)) return '—'
+    return currency.format(normalized)
   }
 
   function formatDate(value: string | null | undefined, format: 'short' | 'long' | 'datetime' = 'short'): string {

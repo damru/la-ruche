@@ -19,7 +19,6 @@ import CIconShield from '@/components/atoms/CIconShield.svg'
 import CIconSparkles from '@/components/atoms/CIconSparkles.svg'
 import CIconWrench from '@/components/atoms/CIconWrench.svg'
 import { buildingApi, contractsApi } from '@/api'
-import ContractDocumentsModal from '@/features/contracts/ContractDocumentsModal.vue'
 import ContractFormModal from '@/features/contracts/ContractFormModal.vue'
 import { usePageLoader, toErrorMessage } from '@/composables/usePageLoader'
 import { useFormFeedback } from '@/composables/useFormFeedback'
@@ -41,9 +40,7 @@ const buildingName = ref('')
 const allContracts = ref<VendorContract[]>([])
 const allReminders = ref<ContractReminder[]>([])
 const editingContract = ref<VendorContract | null>(null)
-const documentsContract = ref<VendorContract | null>(null)
 const showFormModal = ref(false)
-const showDocumentsModal = ref(false)
 const busyKey = ref('')
 
 async function loadData() {
@@ -199,16 +196,6 @@ function setFilter(nextFilter: 'all' | 'active' | 'expired') {
 function openEditModal(contract: VendorContract) {
   editingContract.value = contract
   showFormModal.value = true
-}
-
-function openDocumentsModal(contract: VendorContract) {
-  documentsContract.value = contract
-  showDocumentsModal.value = true
-}
-
-function openDocumentsFromForm(contract: VendorContract) {
-  showFormModal.value = false
-  openDocumentsModal(contract)
 }
 
 async function acknowledgeReminder(reminder: ContractReminder) {
@@ -494,14 +481,6 @@ async function confirmTerminateContract() {
                 {{ t('common.edit') }}
               </CBtn>
               <CBtn
-                variant="secondary"
-                size="sm"
-                @click="openDocumentsModal(contract)"
-              >
-                <CIconFile />
-                {{ t('contracts.documents.manage') }}
-              </CBtn>
-              <CBtn
                 v-if="effectiveStatus(contract) === 'active'"
                 variant="danger"
                 size="sm"
@@ -520,14 +499,7 @@ async function confirmTerminateContract() {
   <ContractFormModal
     v-model:open="showFormModal"
     :contract="editingContract"
-    @manage-documents="openDocumentsFromForm"
     @saved="reload"
-  />
-
-  <ContractDocumentsModal
-    v-model:open="showDocumentsModal"
-    :contract="documentsContract"
-    @changed="reload"
   />
 
   <!-- Terminate contract modal -->

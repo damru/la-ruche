@@ -176,6 +176,8 @@ export interface Document {
   size_bytes: number
   visible_roles: Role[]
   linked_contract_names?: string[]
+  linked_report_titles?: string[]
+  linked_claim_titles?: string[]
   linked_report_count?: number
   created_at: string
 }
@@ -238,7 +240,7 @@ export interface Claim {
   unit_id?: string
   transmitted_at?: string
   reimbursement_date?: string
-  reimbursement_amount?: number
+  reimbursement_amount?: number | string
   legal_deadline_at: string
   days_remaining?: number
   is_deadline_approaching: boolean
