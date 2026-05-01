@@ -20,7 +20,7 @@ const popupStyle = ref<Record<string, string>>({})
 const arrowStyle = ref<Record<string, string>>({})
 const arrowDir = ref<'up' | 'down'>('down')
 
-const POPUP_W = 280 // Accommodates the summary copy plus the Article link without wrapping too aggressively.
+const POPUP_W = 280 // Accommodates the summary copy plus the Article link without wrapping too aggressively
 const ARROW_H = 10
 const MARGIN = 10
 const HIDE_DELAY_MS = 240
@@ -45,9 +45,7 @@ function show() {
 
 function scheduleHide() {
   clearHideTimeout()
-  hideTimeout = window.setTimeout(() => {
-    hide()
-  }, HIDE_DELAY_MS)
+  hideTimeout = window.setTimeout(hide, HIDE_DELAY_MS)
 }
 
 function hide() {

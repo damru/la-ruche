@@ -184,7 +184,9 @@ function deadlineLabel(claim: Claim): string {
 function claimLegalTooltip(claim: Claim) {
   const tooltipKey = claim.claim_type === 'natural_disaster'
     ? 'naturalDisaster'
-    : claim.claim_type
+    : claim.claim_type === 'theft'
+      ? 'theft'
+      : 'current'
 
   return {
     content: t(`claims.legalTooltips.${tooltipKey}.summary`),
