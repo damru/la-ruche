@@ -61,6 +61,7 @@ Historique de propriété tracé avec dates de cession, invitation par lien toke
 * `EP-002-S07` — Générer le pré-état daté pour signature du compromis de vente (synthèse financière de la copropriété) (LEGAL.md §7.2)
 * `EP-002-S08` — Garantir en mutation que les tantièmes restent attachés au lot (pas au propriétaire) et exposer la quote-part vendeur/acquéreur à date (LEGAL.md §2.4)
 * `EP-002-S09` — Exporter les données personnelles d'un copropriétaire (droit d'accès RGPD) avec périmètre horodaté et traçabilité de la demande (LEGAL.md §8)
+* `EP-002-S10` — Enregistrer et suivre les procédures judiciaires en cours impliquant le syndicat (demandeur ou défendeur), avec date d'ouverture, type, statut ; requis pour l'état daté (LEGAL.md §7.1, §10)
 
 ***
 
@@ -104,6 +105,7 @@ Budget prévisionnel par exercice, appels de fonds générés par tantièmes, fo
 * `EP-004-S08` — Émission trimestrielle paramétrable et contrôles d'échéances par exercice (quart par défaut) avec piste d'audit (LEGAL.md §4.3)
 * `EP-004-S09` — Implémenter le mapping plan comptable copropriété (arrêté 14/03/2005) sur lignes budgétaires et exports comptables (LEGAL.md §4.2)
 * `EP-004-S10` — Contrôle et alerte du seuil minimum fonds travaux (>= 5% du budget prévisionnel) avant validation de l'exercice (LEGAL.md §4.4)
+* `EP-004-S11` — Recouvrement des charges impayées : identification des lots en solde débiteur, enregistrement des relances (mise en demeure), suivi des dossiers contentieux jusqu'à clôture (LEGAL.md §4.7)
 
 ***
 
@@ -257,6 +259,8 @@ Export des données de la copropriété au format RNC et génération de la fich
 | §1.2 Règlement + EDD | EP-005-S06, EP-001-S09, EP-001-S10 | Contrôle documentaire avancé à implémenter |
 | §1.3 Fiche synthétique | EP-012-S02 | Génération annuelle non implémentée |
 | §1.4 Carnet d'entretien | EP-009-S01/S02/S03/S05/S06/S07/S08 | En-tête réglementaire (adresse + syndic), contrats assurance et d'entretien non encore visibles dans la vue carnet |
+| §1.5 Liste des copropriétaires | EP-002-S01, EP-002-S04 | Données partiellement couvertes ; champ email à compléter |
+| §1.6 Espace en ligne sécurisé | EP-002/EP-003/EP-004/EP-005/EP-006/EP-009 | Couverture native (c'est l'Application elle-même) |
 | §2.1 Intégrité somme tantièmes | EP-001-S07, EP-004-S07 | Blocage dur backend à finaliser bout-en-bout |
 | §2.2 Historique tantièmes | EP-001-S06 | Couvert côté modèle ; contrôles de restitution à renforcer |
 | §2.3 Snapshot appels | EP-004-S05 | Couvert ; vérifier adoption sur tous flux d'appels |
@@ -270,6 +274,7 @@ Export des données de la copropriété au format RNC et génération de la fich
 | §4.4 Fonds travaux >= 5% | EP-004-S03/S10 | Contrôle automatique du seuil à finaliser |
 | §4.5 Arrêté de comptes | EP-004-S04 | Écrans et exports d'arrêté à finaliser |
 | §4.6 Relevé individuel de charges | EP-004-S06 | Couvert backend ; UX front à industrialiser |
+| §4.7 Recouvrement des impayés | EP-004-S11 | Fonctionnalité non implémentée |
 | §5.1 Contrat de syndic | Hors périmètre logiciel | Pas de gestion du mandat syndic |
 | §5.2 Assurance multirisque | EP-006-S05 | Suivi documentaire et alertes à implémenter |
 | §5.3 Reconduction contrats | EP-006-S01/S02/S03/S04 | Front contrats encore en mode mock |
@@ -280,6 +285,7 @@ Export des données de la copropriété au format RNC et génération de la fich
 | §7.2 Pré-état daté | EP-002-S07 | Workflow non implémenté |
 | §8 RGPD (anonymisation + export) | EP-002-S05, EP-002-S09 | Export + anonymisation bout-en-bout à finaliser |
 | §9 Sinistres (délais) | EP-008-S01/S02/S03/S04/S05 | API + UI encore en mode stub/mock |
+| §10 Représentation en justice + procédures | EP-002-S06, EP-002-S10 | Registre des procédures judiciaires non implémenté |
 
 ***
 
