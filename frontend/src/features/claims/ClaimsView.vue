@@ -26,12 +26,12 @@ import CIconHome from '@/components/atoms/CIconHome.svg'
 import CIconShield from '@/components/atoms/CIconShield.svg'
 import CIconTrash from '@/components/atoms/CIconTrash.svg'
 import CIconUpload from '@/components/atoms/CIconUpload.svg'
-import { buildingApi, claimsApi, documentsApi, unitsApi } from '@/api'
+import { buildingApi, claimsApi, documentsApi, unitsApi, usersApi } from '@/api'
 import { extractFileExtension } from '@/utils/files'
-import type { Claim, ClaimStatus, ClaimType, Document, Unit } from '@/types/domain'
+import type { Claim, ClaimStatus, ClaimType, Document, Unit, User } from '@/types/domain'
 
 const { t } = useI18n()
-const { formatCurrency, formatDate, formatFileSize, formatRelative } = useFormatters()
+const { formatCurrency, formatDate, formatFileSize } = useFormatters()
 const { hasAnyRole } = useRole()
 
 const CLAIM_TYPES: ClaimType[] = ['current', 'natural_disaster', 'theft']
@@ -61,6 +61,7 @@ type ClaimUpdatePayload = {
 const buildingName = ref('')
 const allClaims = ref<Claim[]>([])
 const allUnits = ref<Unit[]>([])
+const allUsers = ref<User[]>([])
 const filter = ref<'all' | ClaimStatus>('all')
 const canManage = computed(() => hasAnyRole(['manager', 'board_member']))
 
@@ -146,15 +147,17 @@ function claimEditorFormFromClaim(claim: Claim): ClaimEditorForm {
 }
 
 async function loadData() {
-  const [buildingResponse, claimsResponse, unitsResponse] = await Promise.all([
+  const [buildingResponse, claimsResponse, unitsResponse, usersResponse] = await Promise.all([
     buildingApi.get(),
     claimsApi.list(),
     unitsApi.list(),
+    usersApi.list(),
   ])
 
   buildingName.value = buildingResponse.data.name
   allClaims.value = claimsResponse.data
   allUnits.value = unitsResponse.data
+  allUsers.value = usersResponse.data
 }
 
 const { loading, error, reload } = usePageLoader(loadData, t('common.loadError'))
@@ -164,12 +167,16 @@ const unitsById = computed(() =>
   new Map(allUnits.value.map(unit => [unit.id, unit])),
 )
 
+const usersById = computed(() =>
+  new Map(allUsers.value.map(user => [user.id, user])),
+)
+
 const claims = computed(() =>
   (filter.value === 'all'
     ? allClaims.value
     : allClaims.value.filter(claim => claim.status === filter.value))
     .slice()
-    .sort((left, right) => right.created_at.localeCompare(left.created_at)),
+    .sort((left, right) => right.updated_at.localeCompare(left.updated_at)),
 )
 
 const activeClaimsCount = computed(() =>
@@ -217,6 +224,11 @@ function typeTone(type: ClaimType): string {
 function unitLabel(unitId?: string): string {
   if (!unitId) return t('claims.commonAreas')
   return t('claims.unitLabel', { number: unitsById.value.get(unitId)?.unit_number ?? '—' })
+}
+
+function creatorName(userId: string): string {
+  const user = usersById.value.get(userId)
+  return user ? `${user.first_name} ${user.last_name}` : t('common.noData')
 }
 
 function deadlineVariant(claim: Claim): 'valid' | 'pending' | 'err' | 'default' {
@@ -823,126 +835,132 @@ async function submitDelete() {
             v-for="claim in claims"
             :key="claim.id"
             :shadow="claim.status !== 'closed'"
-            :class="['claim-card', { 'card--terminated': claim.status === 'closed' }]"
+            :class="['activity-card', 'claim-card', { 'card--terminated': claim.status === 'closed' }]"
           >
-            <div class="claim-card__header">
-              <div class="claim-card__identity">
-                <div :class="['claim-card__icon', typeTone(claim.claim_type)]">
-                  <component
-                    :is="typeIcon(claim.claim_type)"
-                    width="18"
-                    height="18"
-                  />
-                </div>
-                <div class="claim-card__title-wrap">
-                  <div class="claim-card__badges">
-                    <CBadge
-                      :variant="statusVariant(claim.status)"
-                      dot
-                    >
-                      {{ t(`claims.statuses.${claim.status}`) }}
-                    </CBadge>
-                    <CBadge variant="default">
-                      {{ t(`claims.types.${claim.claim_type}`) }}
-                    </CBadge>
-                    <CBadge
-                      :variant="deadlineVariant(claim)"
-                      :dot="deadlineVariant(claim) !== 'default'"
-                    >
-                      {{ deadlineLabel(claim) }}
-                    </CBadge>
-                  </div>
-                  <h3 class="title-md">
-                    {{ claim.title }}
-                  </h3>
-                  <p class="body-sm claim-card__meta">
-                    {{ unitLabel(claim.unit_id) }} · {{ t('claims.declaredOn', { date: formatDate(claim.declared_at) }) }}
-                    <template v-if="claim.published_at">
-                      · {{ t('claims.publishedOn', { date: formatDate(claim.published_at) }) }}
-                    </template>
-                  </p>
-                </div>
+            <div class="activity-card__head">
+              <div :class="['activity-card__icon', typeTone(claim.claim_type)]">
+                <component
+                  :is="typeIcon(claim.claim_type)"
+                  width="18"
+                  height="18"
+                />
               </div>
+              <div class="activity-card__stack">
+                <div class="activity-card__chips">
+                  <CBadge
+                    :variant="statusVariant(claim.status)"
+                    dot
+                  >
+                    {{ t(`claims.statuses.${claim.status}`) }}
+                  </CBadge>
+                  <CBadge variant="default">
+                    {{ t(`claims.types.${claim.claim_type}`) }}
+                  </CBadge>
+                  <CBadge
+                    :variant="deadlineVariant(claim)"
+                    :dot="deadlineVariant(claim) !== 'default'"
+                  >
+                    {{ deadlineLabel(claim) }}
+                  </CBadge>
+                </div>
 
-              <div class="claim-card__actions">
-                <span class="claim-card__opened">
-                  {{ t('claims.openedAt', { date: formatRelative(claim.created_at) }) }}
-                </span>
-                <div
-                  v-if="canManage"
-                  class="claim-card__actions-row"
+                <h3 class="title-sm activity-card__title">
+                  {{ claim.title }}
+                </h3>
+
+                <div class="activity-card__subtitle">
+                  <span class="activity-card__line">
+                    <CIconLocation />
+                    {{ unitLabel(claim.unit_id) }}
+                  </span>
+                </div>
+
+                <p
+                  v-if="claim.description"
+                  class="body-sm activity-card__description"
                 >
-                  <CBtn
-                    variant="ghost"
-                    size="sm"
-                    @click="openEditModal(claim)"
+                  {{ claim.description }}
+                </p>
+
+                <div class="activity-card__meta">
+                  <span class="activity-card__line">
+                    <CIconCalendar />
+                    {{ t('claims.updatedAt', { date: formatDate(claim.updated_at) }) }}
+                  </span>
+                  <span class="activity-card__line">
+                    <CIconUser />
+                    {{ creatorName(claim.created_by) }}
+                  </span>
+                  <span class="activity-card__line">
+                    <CIconFile />
+                    {{ t('claims.documentsCount', claim.document_count) }}
+                  </span>
+                </div>
+
+                <template v-if="canManage">
+                  <div class="activity-card__separator"></div>
+
+                  <div class="activity-card__actions">
+                    <CBtn
+                      variant="ghost"
+                      size="sm"
+                      @click="openEditModal(claim)"
+                    >
+                      <CIconEdit />
+                      {{ t('common.edit') }}
+                    </CBtn>
+                    <CBtn
+                      v-if="claim.status === 'open'"
+                      variant="primary"
+                      size="sm"
+                      @click="openTransmitModal(claim)"
+                    >
+                      <CIconUpload />
+                      {{ t('claims.transmit') }}
+                    </CBtn>
+                    <CBtn
+                      v-else-if="claim.status === 'in_progress'"
+                      variant="primary"
+                      size="sm"
+                      @click="openCloseModal(claim)"
+                    >
+                      <CIconCheckCircle />
+                      {{ t('claims.close') }}
+                    </CBtn>
+                  </div>
+                </template>
+
+                <div class="activity-card__note">
+                  <span class="activity-card__line">
+                    <CIconClock
+                      width="14"
+                      height="14"
+                    />
+                    {{ t('claims.deadline.reference', { date: formatDate(claim.legal_deadline_at) }) }}
+                  </span>
+                  <span class="activity-card__line">
+                    <CIconCalendar />
+                    {{ t('claims.declaredOn', { date: formatDate(claim.declared_at) }) }}
+                  </span>
+                  <span
+                    v-if="claim.published_at"
+                    class="activity-card__line"
                   >
-                    <CIconEdit />
-                    {{ t('common.edit') }}
-                  </CBtn>
-                  <CBtn
-                    v-if="claim.status === 'open'"
-                    variant="ghost"
-                    size="sm"
-                    @click="openTransmitModal(claim)"
+                    <CIconAlertTriangle />
+                    {{ t('claims.publishedOn', { date: formatDate(claim.published_at) }) }}
+                  </span>
+                  <span
+                    v-if="claim.reimbursement_date || claim.reimbursement_amount != null"
+                    class="activity-card__line"
                   >
-                    <CIconUpload />
-                    {{ t('claims.transmit') }}
-                  </CBtn>
-                  <CBtn
-                    v-else-if="claim.status === 'in_progress'"
-                    variant="ghost"
-                    size="sm"
-                    @click="openCloseModal(claim)"
-                  >
-                    <CIconCheckCircle />
-                    {{ t('claims.close') }}
-                  </CBtn>
-                  <CBtn
-                    v-else
-                    variant="danger"
-                    size="sm"
-                    @click="openDeleteModal(claim)"
-                  >
-                    <CIconTrash />
-                    {{ t('common.delete') }}
-                  </CBtn>
+                    <CIconCurrency
+                      width="14"
+                      height="14"
+                    />
+                    {{ reimbursementLabel(claim) }}
+                  </span>
                 </div>
               </div>
-            </div>
-
-            <p
-              v-if="claim.description"
-              class="body-sm claim-card__description"
-            >
-              {{ claim.description }}
-            </p>
-
-            <div class="claim-card__footer">
-              <span class="claim-card__detail">
-                <CIconClock
-                  width="14"
-                  height="14"
-                />
-                {{ t('claims.deadline.reference', { date: formatDate(claim.legal_deadline_at) }) }}
-              </span>
-              <span class="claim-card__detail">
-                <CIconFile
-                  width="14"
-                  height="14"
-                />
-                {{ t('claims.documentsCount', claim.document_count) }}
-              </span>
-              <span
-                v-if="claim.reimbursement_date || claim.reimbursement_amount != null"
-                class="claim-card__detail"
-              >
-                <CIconCurrency
-                  width="14"
-                  height="14"
-                />
-                {{ reimbursementLabel(claim) }}
-              </span>
             </div>
           </CCard>
 
@@ -1597,84 +1615,6 @@ async function submitDelete() {
   gap: var(--space-3);
 }
 
-.claim-card__header {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--space-4);
-}
-
-.claim-card__identity {
-  display: flex;
-  gap: var(--space-3);
-  min-width: 0;
-}
-
-.claim-card__icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-md);
-  flex-shrink: 0;
-  background: var(--tone-bg);
-  color: var(--tone-fg);
-}
-
-.claim-card__title-wrap {
-  min-width: 0;
-}
-
-.claim-card__badges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.claim-card__meta,
-.claim-card__opened,
-.claim-card__description,
-.claim-card__detail {
-  color: var(--color-on-surface-variant);
-}
-
-.claim-card__description {
-  margin: 0;
-}
-
-.claim-card__actions {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: var(--space-2);
-  flex-shrink: 0;
-}
-
-.claim-card__actions-row {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: var(--space-2);
-}
-
-.claim-card__opened {
-  font-size: var(--text-xs);
-}
-
-.claim-card__footer {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-3);
-}
-
-.claim-card__detail {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: var(--text-sm);
-}
-
 .claim-dropzone {
   border: 1.5px dashed var(--color-outline);
   border-radius: var(--radius-sm);
@@ -1840,16 +1780,6 @@ async function submitDelete() {
 }
 
 @media (max-width: 720px) {
-  .claim-card__header {
-    flex-direction: column;
-  }
-
-  .claim-card__actions,
-  .claim-card__actions-row {
-    align-items: flex-start;
-    justify-content: flex-start;
-  }
-
   .form-row {
     grid-template-columns: 1fr;
   }

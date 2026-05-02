@@ -133,7 +133,7 @@ watch(statusFilter, () => {
 const consultations = computed(() =>
   allConsultations.value.filter(c =>
     statusFilter.value === 'open' ? c.status === 'open' : c.status === 'closed',
-  ),
+  ).slice().sort((left, right) => right.updated_at.localeCompare(left.updated_at)),
 )
 const openCount = computed(() => allConsultations.value.filter(c => c.status === 'open').length)
 

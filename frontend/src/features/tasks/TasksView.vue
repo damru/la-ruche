@@ -14,16 +14,17 @@ import CModal from '@/components/molecules/CModal.vue'
 import CPageError from '@/components/molecules/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
-import { buildingApi, contractorsApi, tasksApi } from '@/api'
-import type { Contractor, Task, TaskStatus, TaskPriority } from '@/types/domain'
+import { buildingApi, contractorsApi, tasksApi, usersApi } from '@/api'
+import type { Contractor, Task, TaskStatus, TaskPriority, User } from '@/types/domain'
 
 const { t } = useI18n()
-const { formatDate, formatRelative } = useFormatters()
+const { formatDate } = useFormatters()
 
 // ── State ─────────────────────────────────────────────────────────
 const buildingName = ref('')
 const allTasks = ref<Task[]>([])
 const allContractors = ref<Contractor[]>([])
+const allUsers = ref<User[]>([])
 const statusFilter = ref<'all' | TaskStatus>('all')
 
 // ── Task form modal ───────────────────────────────────────────────
@@ -178,6 +179,10 @@ const contractorsById = computed(() =>
   new Map(allContractors.value.map(c => [c.id, c])),
 )
 
+const usersById = computed(() =>
+  new Map(allUsers.value.map(user => [user.id, user])),
+)
+
 const defaultForm = () => ({
   title: '',
   description: '',
@@ -187,11 +192,13 @@ const taskForm = ref(defaultForm())
 
 // ── Load data ─────────────────────────────────────────────────────
 async function loadData() {
-  const [buildingRes, tasksRes, contractorsRes] = await Promise.all([
+  const [usersRes, buildingRes, tasksRes, contractorsRes] = await Promise.all([
+    usersApi.list(),
     buildingApi.get(),
     tasksApi.list(),
     contractorsApi.list(),
   ])
+  allUsers.value = usersRes.data
   buildingName.value = buildingRes.data.name
   allTasks.value = tasksRes.data
   allContractors.value = contractorsRes.data
@@ -202,9 +209,11 @@ onMounted(reload)
 
 // ── Derived ───────────────────────────────────────────────────────
 const tasks = computed(() =>
-  statusFilter.value === 'all'
+  (statusFilter.value === 'all'
     ? allTasks.value
-    : allTasks.value.filter(t => t.status === statusFilter.value),
+    : allTasks.value.filter(t => t.status === statusFilter.value))
+    .slice()
+    .sort((left, right) => right.updated_at.localeCompare(left.updated_at)),
 )
 
 const counts = computed(() => ({
@@ -248,11 +257,16 @@ function priorityVariant(p: string): 'err' | 'pending' | 'primary' | 'valid' | '
   return 'default'
 }
 
-function priorityColor(p: string): string {
-  if (p === 'urgent') return 'var(--color-error)'
-  if (p === 'high') return 'var(--color-warning)'
-  if (p === 'normal') return 'var(--color-primary)'
-  return 'var(--color-success)'
+function priorityTone(p: string): string {
+  if (p === 'urgent') return 'tone--err'
+  if (p === 'high') return 'tone--warn'
+  if (p === 'normal') return 'tone--accent'
+  return 'tone--valid'
+}
+
+function creatorName(userId?: string): string {
+  const user = userId ? usersById.value.get(userId) : undefined
+  return user ? `${user.first_name} ${user.last_name}` : t('common.noData')
 }
 
 // ── Task modal actions ────────────────────────────────────────────
@@ -600,144 +614,89 @@ function copyToClipboard(text: string) {
           <CCard
             v-for="task in tasks"
             :key="task.id"
-            padding="none"
             :shadow="!isTerminal(task.status)"
-            :class="['task-card', { 'card--terminated': isTerminal(task.status) }]"
+            :class="['activity-card', 'task-card', { 'card--terminated': isTerminal(task.status) }]"
           >
-            <div class="task-row">
+            <div class="activity-card__head">
               <div
-                class="prio-bar"
-                :style="{ background: isTerminal(task.status) ? 'var(--color-on-surface-variant)' : priorityColor(task.priority) }"
-              ></div>
-              <div class="task-body">
-                <div class="task-badges">
-                  <CBadge :variant="isTerminal(task.status) ? 'disabled' : priorityVariant(task.priority)">
-                    {{ t(`tasks.priorities.${task.priority}`) }}
-                  </CBadge>
+                class="activity-card__icon"
+                :class="isTerminal(task.status) ? 'tone--disabled' : priorityTone(task.priority)"
+              >
+                <CIconWrench />
+              </div>
+              <div class="activity-card__stack">
+                <div class="activity-card__chips">
                   <CBadge
                     :variant="isTerminal(task.status) ? 'disabled' : statusVariant(task.status)"
                     dot
                   >
                     {{ t(`tasks.statuses.${task.status}`) }}
                   </CBadge>
+                  <CBadge :variant="isTerminal(task.status) ? 'disabled' : priorityVariant(task.priority)">
+                    {{ t(`tasks.priorities.${task.priority}`) }}
+                  </CBadge>
+                  <CBadge
+                    v-if="task.has_vendor_token"
+                    variant="default"
+                  >
+                    {{ t('tasks.vendorToken') }}
+                  </CBadge>
                 </div>
 
                 <RouterLink
                   :to="{ name: 'task-detail', params: { id: task.id } }"
-                  class="title-sm task-title task-title-link"
+                  class="title-sm activity-card__title task-title-link"
                 >
                   {{ task.title }}
                 </RouterLink>
+
+                <div class="activity-card__subtitle">
+                  <span
+                    v-if="task.contractor_id && contractorsById.get(task.contractor_id)"
+                    class="activity-card__line"
+                  >
+                    <CIconLocation />
+                    <RouterLink
+                      :to="{ name: 'contractor-detail', params: { id: task.contractor_id } }"
+                      class="task-assignment-link"
+                    >
+                      {{ contractorsById.get(task.contractor_id)!.name }}
+                    </RouterLink>
+                  </span>
+                  <span
+                    v-else
+                    class="activity-card__line"
+                  >
+                    <CIconLocation />
+                    {{ contractorDisplayName(task) || t('tasks.contractorUnassigned') }}
+                  </span>
+                </div>
+
                 <p
                   v-if="task.description"
-                  class="task-desc body-sm"
+                  class="body-sm activity-card__description"
                 >
                   {{ task.description }}
                 </p>
 
-                <!-- Vendor token section -->
-                <div
-                  v-if="task.has_vendor_token"
-                  class="vendor-token"
-                >
-                  <div class="vendor-token-header">
-                    <span
-                      class="body-xs"
-                      style="color:var(--color-on-surface-variant)"
-                    >
-                      {{ t('tasks.vendorTokenActive', { date: task.token_expires_at ? formatDate(task.token_expires_at) : '' }) }}
-                    </span>
-                    <div class="vendor-token-btns">
-                      <button
-                        class="icon-btn"
-                        :title="t('tasks.showLink')"
-                        @click="showVendorLink(task)"
-                      >
-                        <CIconEye
-                          width="14"
-                          height="14"
-                        />
-                      </button>
-                      <button
-                        class="icon-btn icon-btn--danger"
-                        :title="t('tasks.revokeToken')"
-                        @click="openRevokeModal(task)"
-                      >
-                        <CIconX
-                          width="14"
-                          height="14"
-                        />
-                      </button>
-                    </div>
-                  </div>
-                  <div
-                    v-if="vendorLinks[task.id]"
-                    class="token-url-row"
-                  >
-                    <code class="token-url">{{ vendorLinks[task.id].url }}</code>
-                    <button
-                      class="icon-btn"
-                      :title="t('tasks.vendorTokenCopied')"
-                      @click="copyToClipboard(vendorLinks[task.id].url)"
-                    >
-                      <CIconCopy
-                        width="14"
-                        height="14"
-                      />
-                    </button>
-                  </div>
-                </div>
-
-                <div class="task-meta">
-                  <span>{{ formatRelative(task.created_at) }}</span>
-                  <span v-if="task.closed_at">· {{ t('tasks.closedAt', { date: formatDate(task.closed_at) }) }}</span>
-                  <span v-if="contractorDisplayName(task)">
-                    · 🔧
-                    <RouterLink
-                      v-if="task.contractor_id && contractorsById.get(task.contractor_id)"
-                      :to="{ name: 'contractor-detail', params: { id: task.contractor_id } }"
-                      class="contractor-meta-link"
-                    >{{ contractorsById.get(task.contractor_id)!.name }}</RouterLink>
-                    <span
-                      v-else
-                      class="contractor-meta-text"
-                    >{{ contractorDisplayName(task) }}</span>
+                <div class="activity-card__meta">
+                  <span class="activity-card__line">
+                    <CIconCalendar />
+                    {{ t('tasks.updatedAt', { date: formatDate(task.updated_at) }) }}
+                  </span>
+                  <span class="activity-card__line">
+                    <CIconUser />
+                    {{ creatorName(task.created_by) }}
+                  </span>
+                  <span class="activity-card__line">
+                    <CIconFile />
+                    {{ t('tasks.documentsCount', task.document_count) }}
                   </span>
                 </div>
 
-                <div
-                  v-if="contractorDisplayName(task) && !task.has_vendor_token && !isTerminal(task.status)"
-                  class="task-card-actions task-card-actions--stacked"
-                >
-                  <CBtn
-                    variant="ghost"
-                    size="sm"
-                    :disabled="generatingToken === task.id"
-                    :aria-label="t('tasks.generateToken')"
-                    @click="generateToken(task)"
-                  >
-                    <CIconLink />
-                    {{ t('tasks.generateToken') }}
-                  </CBtn>
-                </div>
+                <div class="activity-card__separator"></div>
 
-                <div
-                  v-if="task.status === 'closed'"
-                  class="task-card-actions task-card-actions--stacked"
-                >
-                  <CBtn
-                    variant="ghost"
-                    size="sm"
-                    :aria-label="t('tasks.reopenTask')"
-                    @click="openReopenModal(task)"
-                  >
-                    <CIconRefresh />
-                    {{ t('tasks.reopenTask') }}
-                  </CBtn>
-                </div>
-
-                <!-- Card footer actions (Contract-card pattern) -->
-                <div class="task-card-actions">
+                <div class="activity-card__actions">
                   <CBtn
                     variant="ghost"
                     size="sm"
@@ -747,10 +706,19 @@ function copyToClipboard(text: string) {
                     <CIconEdit />
                     {{ t('common.edit') }}
                   </CBtn>
-                  <!-- Terminate: non-terminal tasks only -->
                   <CBtn
-                    v-if="!isTerminal(task.status)"
-                    variant="danger"
+                    v-if="task.status === 'closed'"
+                    variant="primary"
+                    size="sm"
+                    :aria-label="t('tasks.reopenTask')"
+                    @click="openReopenModal(task)"
+                  >
+                    <CIconRefresh />
+                    {{ t('tasks.reopenTask') }}
+                  </CBtn>
+                  <CBtn
+                    v-else-if="!isTerminal(task.status)"
+                    variant="primary"
                     size="sm"
                     :aria-label="closeActionLabel(task)"
                     @click="openCloseModal(task)"
@@ -758,6 +726,85 @@ function copyToClipboard(text: string) {
                     <CIconCheckCircle />
                     {{ closeActionLabel(task) }}
                   </CBtn>
+                </div>
+
+                <div
+                  v-if="(contractorDisplayName(task) && !task.has_vendor_token && !isTerminal(task.status)) || task.has_vendor_token"
+                  class="activity-card__secondary-actions"
+                >
+                  <CBtn
+                    v-if="contractorDisplayName(task) && !task.has_vendor_token && !isTerminal(task.status)"
+                    variant="ghost"
+                    size="sm"
+                    :disabled="generatingToken === task.id"
+                    :aria-label="t('tasks.generateToken')"
+                    @click="generateToken(task)"
+                  >
+                    <CIconLink />
+                    {{ t('tasks.generateToken') }}
+                  </CBtn>
+                  <CBtn
+                    v-if="task.has_vendor_token"
+                    variant="ghost"
+                    size="sm"
+                    :aria-label="t('tasks.showLink')"
+                    @click="showVendorLink(task)"
+                  >
+                    <CIconEye />
+                    {{ t('tasks.showLink') }}
+                  </CBtn>
+                  <CBtn
+                    v-if="task.has_vendor_token"
+                    variant="ghost"
+                    size="sm"
+                    :aria-label="t('tasks.revokeToken')"
+                    @click="openRevokeModal(task)"
+                  >
+                    <CIconX />
+                    {{ t('tasks.revokeToken') }}
+                  </CBtn>
+                </div>
+
+                <div
+                  v-if="task.has_vendor_token || vendorLinks[task.id] || task.closed_at || task.is_in_logbook"
+                  class="activity-card__note"
+                >
+                  <span
+                    v-if="task.has_vendor_token"
+                    class="activity-card__line"
+                  >
+                    <CIconLink />
+                    {{ t('tasks.vendorTokenActive', { date: task.token_expires_at ? formatDate(task.token_expires_at) : '' }) }}
+                  </span>
+                  <span
+                    v-if="task.closed_at"
+                    class="activity-card__line"
+                  >
+                    <CIconCalendar />
+                    {{ t('tasks.closedAt', { date: formatDate(task.closed_at) }) }}
+                  </span>
+                  <span
+                    v-if="task.is_in_logbook"
+                    class="activity-card__line"
+                  >
+                    <CIconBook />
+                    {{ t('maintenance.title') }}
+                  </span>
+                  <code
+                    v-if="vendorLinks[task.id]"
+                    class="token-url"
+                  >{{ vendorLinks[task.id].url }}</code>
+                  <button
+                    v-if="vendorLinks[task.id]"
+                    class="icon-btn"
+                    :title="t('tasks.vendorTokenCopied')"
+                    @click="copyToClipboard(vendorLinks[task.id].url)"
+                  >
+                    <CIconCopy
+                      width="14"
+                      height="14"
+                    />
+                  </button>
                 </div>
               </div>
             </div>
@@ -1139,45 +1186,22 @@ function copyToClipboard(text: string) {
 .task-list { display: flex; flex-direction: column; gap: 10px; }
 
 .task-card { overflow: hidden; }
-.task-row { display: flex; align-items: stretch; gap: 0; }
-
-.prio-bar { width: 4px; flex-shrink: 0; }
-
-.task-body { flex: 1; padding: 14px 16px; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
-.task-badges { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 2px; }
-.task-title { display: block; margin-top: 4px; }
 .task-title-link {
   color: inherit;
   text-decoration: none;
   font-weight: var(--fw-semibold);
 }
 .task-title-link:hover { text-decoration: underline; color: var(--color-primary); }
-.contractor-meta-link {
+.task-assignment-link {
   color: var(--color-primary);
   text-decoration: none;
   font-weight: var(--fw-medium);
 }
-.contractor-meta-link:hover { text-decoration: underline; }
-.contractor-meta-text {
-  color: inherit;
-  font-weight: inherit;
-}
-.task-desc { color: var(--color-on-surface-variant); }
-.task-meta { font-size: var(--text-2xs); color: var(--color-on-surface-variant); margin-top: 4px; }
-
-.task-card-actions {
-  display: flex;
-  gap: var(--space-2);
-  flex-wrap: wrap;
-  margin-top: var(--space-2);
-  padding-top: var(--space-3);
-  border-top: 1px solid var(--color-surface-container-high);
-}
-
-.task-card-actions--stacked {
-  margin-top: var(--space-3);
-  padding-top: 0;
-  border-top: 0;
+.task-assignment-link:hover { text-decoration: underline; }
+.token-url {
+  font-size: var(--text-2xs);
+  word-break: break-all;
+  flex: 1;
 }
 
 .assignment-options {
@@ -1187,11 +1211,24 @@ function copyToClipboard(text: string) {
   padding: var(--space-2) 0;
 }
 
-.vendor-token { display: flex; flex-direction: column; gap: 4px; margin: 4px 0; padding: 8px; background: var(--color-surface-container); border-radius: var(--radius-sm); }
-.vendor-token-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.vendor-token-btns { display: flex; gap: 2px; }
-.token-url-row { display: flex; align-items: center; gap: 6px; }
-.token-url { font-size: var(--text-2xs); word-break: break-all; flex: 1; }
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: var(--color-surface-container-high);
+  color: var(--color-on-surface);
+  cursor: pointer;
+  min-width: unset;
+  min-height: unset;
+}
+
+.icon-btn:hover {
+  background: var(--color-secondary-container);
+}
 
 .empty-state { padding: var(--space-8); text-align: center; font-size: var(--text-md); color: var(--color-on-surface-variant); }
 

@@ -13,6 +13,7 @@ import './styles/tabs.css'
 import './styles/kpi.css'
 import './styles/forms.css'
 import './styles/tables.css'
+import './styles/activity-cards.css'
 
 // ── TanStack Query ────────────────────────────────────────────────
 const queryClient = new QueryClient({

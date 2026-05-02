@@ -17,7 +17,7 @@ pub async fn list(
     let rows = sqlx::query(
         r#"SELECT
            c.id, c.title, c.description, c.status::text AS status,
-           c.visible_to_roles::text[] AS visible_to_roles, c.closed_at, c.created_at,
+           c.visible_to_roles::text[] AS visible_to_roles, c.closed_at, c.created_at, c.updated_at,
            total_r.cnt AS total_responses,
            COALESCE(my_c.choice_ids, '[]'::json) AS my_choice_ids,
            COALESCE(choices_agg.data, '[]'::json) AS choices
@@ -54,7 +54,7 @@ pub async fn list(
                WHERE cc.consultation_id = c.id
            ) choices_agg ON true
            WHERE c.building_id = $1
-           ORDER BY c.created_at DESC"#,
+           ORDER BY c.updated_at DESC"#,
     )
     .bind(building_id)
     .bind(user_id)
@@ -71,6 +71,7 @@ pub async fn list(
                 "visible_to_roles": r.try_get::<Vec<String>, _>("visible_to_roles")?,
                 "closed_at": r.try_get::<Option<DateTime<Utc>>, _>("closed_at")?,
                 "created_at": r.try_get::<DateTime<Utc>, _>("created_at")?,
+                "updated_at": r.try_get::<DateTime<Utc>, _>("updated_at")?,
                 "total_responses": r.try_get::<i64, _>("total_responses")?,
                 "my_choice_ids": r.try_get::<serde_json::Value, _>("my_choice_ids")?,
                 "choices": r.try_get::<serde_json::Value, _>("choices")?,
@@ -92,7 +93,7 @@ pub async fn get_with_choices(
     let row = sqlx::query(
         r#"SELECT
            c.id, c.title, c.description, c.status::text AS status,
-           c.visible_to_roles::text[] AS visible_to_roles, c.closed_at, c.created_at,
+           c.visible_to_roles::text[] AS visible_to_roles, c.closed_at, c.created_at, c.updated_at,
            total_r.cnt AS total_responses,
            COALESCE(my_c.choice_ids, '[]'::json) AS my_choice_ids,
            COALESCE(choices_agg.data, '[]'::json) AS choices
@@ -143,10 +144,11 @@ pub async fn get_with_choices(
         "title": r.try_get::<String, _>("title")?,
         "description": r.try_get::<Option<String>, _>("description")?,
         "status": r.try_get::<String, _>("status")?,
-        "visible_to_roles": r.try_get::<Vec<String>, _>("visible_to_roles")?,
-        "closed_at": r.try_get::<Option<DateTime<Utc>>, _>("closed_at")?,
-        "created_at": r.try_get::<DateTime<Utc>, _>("created_at")?,
-        "total_responses": r.try_get::<i64, _>("total_responses")?,
+                "visible_to_roles": r.try_get::<Vec<String>, _>("visible_to_roles")?,
+                "closed_at": r.try_get::<Option<DateTime<Utc>>, _>("closed_at")?,
+                "created_at": r.try_get::<DateTime<Utc>, _>("created_at")?,
+                "updated_at": r.try_get::<DateTime<Utc>, _>("updated_at")?,
+                "total_responses": r.try_get::<i64, _>("total_responses")?,
         "my_choice_ids": r.try_get::<serde_json::Value, _>("my_choice_ids")?,
         "choices": r.try_get::<serde_json::Value, _>("choices")?,
     })))

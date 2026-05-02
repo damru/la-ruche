@@ -33,7 +33,7 @@ const LIST_QUERY: &str = concat!(
     " r.created_at, r.updated_at",
     " FROM report r",
     " JOIN user_account u ON u.id = r.author_id",
-    " WHERE r.building_id = $1 ORDER BY r.created_at DESC",
+    " WHERE r.building_id = $1 ORDER BY r.updated_at DESC",
 );
 
 const GET_QUERY: &str = concat!(

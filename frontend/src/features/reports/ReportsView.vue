@@ -20,7 +20,7 @@ import { buildingApi, documentsApi, reportsApi, unitsApi } from '@/api'
 import type { Document, Report, ReportStatus, TaskPriority, Unit } from '@/types/domain'
 
 const { t } = useI18n()
-const { formatRelative } = useFormatters()
+const { formatDate } = useFormatters()
 const router = useRouter()
 const { hasAnyRole } = useRole()
 
@@ -446,9 +446,11 @@ onMounted(reload)
 
 // ── Derived ───────────────────────────────────────────────────────
 const reports = computed(() =>
-  statusFilter.value === 'all'
+  (statusFilter.value === 'all'
     ? allReports.value
-    : allReports.value.filter(r => r.status === statusFilter.value),
+    : allReports.value.filter(r => r.status === statusFilter.value))
+    .slice()
+    .sort((left, right) => right.updated_at.localeCompare(left.updated_at)),
 )
 
 const counts = computed(() => ({
@@ -559,95 +561,118 @@ function photoPreview(file: File): string {
             v-for="r in reports"
             :key="r.id"
             :shadow="r.status !== 'closed'"
-            :class="['report-card', { 'card--terminated': r.status === 'closed' }]"
+            :class="['activity-card', 'report-card', { 'card--terminated': r.status === 'closed' }]"
           >
-            <div class="report-header">
-              <div class="report-icon">
+            <div class="activity-card__head">
+              <div class="activity-card__icon tone--default">
                 <CIconInfo />
               </div>
-              <div class="report-meta-top">
-                <CBadge
-                  :variant="statusVariant(r.status)"
-                  dot
-                >
-                  {{ t(`reports.statuses.${r.status}`) }}
-                </CBadge>
-                <span class="report-date">{{ formatRelative(r.created_at) }}</span>
-              </div>
-            </div>
+              <div class="activity-card__stack">
+                <div class="activity-card__chips">
+                  <CBadge
+                    :variant="statusVariant(r.status)"
+                    dot
+                  >
+                    {{ t(`reports.statuses.${r.status}`) }}
+                  </CBadge>
+                  <CBadge
+                    v-if="r.task_id"
+                    variant="default"
+                  >
+                    {{ t('reports.viewTask') }}
+                  </CBadge>
+                </div>
 
-            <h3 class="title-sm report-title">
-              {{ r.title }}
-            </h3>
-            <p
-              v-if="r.description"
-              class="body-sm report-desc"
-            >
-              {{ r.description }}
-            </p>
+                <h3 class="title-sm activity-card__title">
+                  {{ r.title }}
+                </h3>
 
-            <div class="report-footer">
-              <span class="dim">👤 {{ authorName(r) }}</span>
-              <span class="dim">🏠 {{ unitLabel(r.unit_id) }}</span>
-              <button
-                v-if="r.document_count > 0"
-                class="dim photo-count photo-count--btn"
-                @click="openViewPhotos(r)"
-              >
-                👁️ {{ t('reports.photoCount', r.document_count) }}
-              </button>
-            </div>
+                <div class="activity-card__subtitle">
+                  <span class="activity-card__line">
+                    <CIconLocation />
+                    {{ unitLabel(r.unit_id) }}
+                  </span>
+                </div>
 
-            <!-- Card actions (manager / board only) -->
-            <div
-              v-if="canManage"
-              class="report-card-actions"
-            >
-              <!-- Row 1: status change (non-closed only) -->
-              <div
-                v-if="r.status !== 'closed'"
-                class="report-card-actions-row"
-              >
-                <CBtn
-                  variant="ghost"
-                  size="sm"
-                  @click="openStatusModal(r)"
+                <p
+                  v-if="r.description"
+                  class="body-sm activity-card__description"
                 >
-                  <CIconRefresh />
-                  {{ t('reports.editStatus') }}
-                </CBtn>
-              </div>
+                  {{ r.description }}
+                </p>
 
-              <!-- Row 2: edit + convert/view-task (non-closed) | edit + delete (closed) -->
-              <div class="report-card-actions-row">
-                <CBtn
-                  variant="ghost"
-                  size="sm"
-                  @click="openEditModal(r)"
-                >
-                  <CIconEdit />
-                  {{ t('common.edit') }}
-                </CBtn>
-                <!-- View Task if already converted -->
-                <CBtn
-                  v-if="r.task_id"
-                  variant="ghost"
-                  size="sm"
-                  @click="router.push({ name: 'task-detail', params: { id: r.task_id } })"
-                >
-                  <CIconCheckCircle />
-                  {{ t('reports.viewTask') }}
-                </CBtn>
-                <!-- Convert to Task if not yet converted and not closed -->
-                <CBtn
-                  v-else-if="r.status !== 'closed'"
-                  variant="ghost"
-                  size="sm"
-                  @click="openConvertModal(r)"
-                >
-                  <CIconCheckCircle />
-                  {{ t('reports.convertToTask') }}
-                </CBtn>
+                <div class="activity-card__meta">
+                  <span class="activity-card__line">
+                    <CIconCalendar />
+                    {{ t('reports.updatedAt', { date: formatDate(r.updated_at) }) }}
+                  </span>
+                  <span class="activity-card__line">
+                    <CIconUser />
+                    {{ authorName(r) }}
+                  </span>
+                  <button
+                    v-if="r.document_count > 0"
+                    class="activity-card__line report-card__photo-button"
+                    @click="openViewPhotos(r)"
+                  >
+                    <CIconFile />
+                    {{ t('reports.photoCount', r.document_count) }}
+                  </button>
+                  <span
+                    v-else
+                    class="activity-card__line"
+                  >
+                    <CIconFile />
+                    {{ t('reports.photoCount', r.document_count) }}
+                  </span>
+                </div>
+
+                <template v-if="canManage">
+                  <div class="activity-card__separator"></div>
+
+                  <div class="activity-card__actions">
+                    <CBtn
+                      variant="ghost"
+                      size="sm"
+                      @click="openEditModal(r)"
+                    >
+                      <CIconEdit />
+                      {{ t('common.edit') }}
+                    </CBtn>
+                    <CBtn
+                      v-if="r.task_id"
+                      variant="primary"
+                      size="sm"
+                      @click="router.push({ name: 'task-detail', params: { id: r.task_id } })"
+                    >
+                      <CIconCheckCircle />
+                      {{ t('reports.viewTask') }}
+                    </CBtn>
+                    <CBtn
+                      v-else-if="r.status !== 'closed'"
+                      variant="primary"
+                      size="sm"
+                      @click="openConvertModal(r)"
+                    >
+                      <CIconCheckCircle />
+                      {{ t('reports.convertToTask') }}
+                    </CBtn>
+                  </div>
+
+                  <div
+                    v-if="r.status !== 'closed'"
+                    class="activity-card__secondary-actions"
+                  >
+                    <CBtn
+                      variant="ghost"
+                      size="sm"
+                      @click="openStatusModal(r)"
+                    >
+                      <CIconRefresh />
+                      {{ t('reports.editStatus') }}
+                    </CBtn>
+                  </div>
+                </template>
               </div>
             </div>
           </CCard>
@@ -1210,31 +1235,18 @@ function photoPreview(file: File): string {
 <style scoped>
 /* ── Report cards ───────────────────────────────────────────────── */
 .report-list { display: flex; flex-direction: column; gap: var(--space-3); }
-.report-card { display: flex; flex-direction: column; gap: var(--space-2); }
+.report-card__photo-button {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  min-height: unset;
+  min-width: unset;
+}
 
-.report-header { display: flex; align-items: center; gap: var(--space-3); }
-.report-icon {
-  width: 36px; height: 36px; border-radius: var(--radius-sm);
-  background: var(--color-surface-container);
-  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+.report-card__photo-button:hover {
+  color: var(--color-primary);
 }
-.report-icon svg { width: 18px; height: 18px; color: var(--color-on-surface-variant); }
-.report-meta-top { display: flex; align-items: center; gap: var(--space-2); }
-.report-date { font-size: var(--text-2xs); color: var(--color-on-surface-variant); }
-.report-title { color: var(--color-on-surface); }
-.report-desc { color: var(--color-on-surface-variant); }
-.report-footer { display: flex; gap: 14px; font-size: var(--text-2xs); flex-wrap: wrap; }
-.dim { color: var(--color-on-surface-variant); }
-.photo-count { display: flex; align-items: center; gap: 4px; }
-.photo-count--btn {
-  background: none; border: none; padding: 0; cursor: pointer;
-  font-size: inherit; color: var(--color-on-surface-variant);
-  text-decoration: underline dotted;
-  min-height: unset; min-width: unset;
-}
-.photo-count--btn:hover { color: var(--color-primary); }
-.report-card-actions { display: flex; flex-direction: column; gap: var(--space-1); padding-top: var(--space-1); }
-.report-card-actions-row { display: flex; gap: var(--space-2); flex-wrap: wrap; }
 
 /* Photo picker */
 .photo-dropzone {

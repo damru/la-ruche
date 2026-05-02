@@ -226,12 +226,15 @@ export interface Task {
   closed_at?: string
   completion_cost?: number
   created_at: string
+  updated_at: string
+  document_count: number
   /** True when at least one maintenance_log entry references this task. */
   is_in_logbook?: boolean
 }
 
 export interface Claim {
   id: string
+  created_by: string
   title: string
   description?: string
   claim_type: ClaimType
@@ -304,6 +307,7 @@ export interface Consultation {
   visible_roles: Role[]
   closed_at?: string
   created_at: string
+  updated_at: string
   choices: ConsultationChoice[]
   /** IDs of the choices the current user has already selected (empty = not voted yet). */
   my_choice_ids: string[]

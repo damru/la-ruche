@@ -10,6 +10,7 @@ use crate::errors::{AppError, AppResult};
 pub struct ClaimRow {
     pub id: Uuid,
     pub building_id: Uuid,
+    pub created_by: Uuid,
     pub title: String,
     pub description: Option<String>,
     pub claim_type: String,
@@ -103,18 +104,18 @@ pub const VALID_STATUSES: &[&str] = &[
 ];
 
 const LIST_QUERY: &str = concat!(
-    "SELECT c.id, c.building_id, c.title, c.description,",
+    "SELECT c.id, c.building_id, c.created_by, c.title, c.description,",
     " c.claim_type::text AS claim_type, c.declared_at, c.published_at,",
     " c.status::text AS status, c.unit_id, c.transmitted_at,",
     " c.reimbursement_date, c.reimbursement_amount,",
     " (SELECT COUNT(*) FROM claim_document cd WHERE cd.claim_id = c.id) AS document_count,",
     " c.created_at, c.updated_at",
     " FROM claim c WHERE c.building_id = $1",
-    " ORDER BY c.created_at DESC",
+    " ORDER BY c.updated_at DESC",
 );
 
 const GET_QUERY: &str = concat!(
-    "SELECT c.id, c.building_id, c.title, c.description,",
+    "SELECT c.id, c.building_id, c.created_by, c.title, c.description,",
     " c.claim_type::text AS claim_type, c.declared_at, c.published_at,",
     " c.status::text AS status, c.unit_id, c.transmitted_at,",
     " c.reimbursement_date, c.reimbursement_amount,",
@@ -276,6 +277,7 @@ fn row_to_claim(row: &sqlx::postgres::PgRow) -> Result<ClaimRow, sqlx::Error> {
     Ok(ClaimRow {
         id: row.try_get("id")?,
         building_id: row.try_get("building_id")?,
+        created_by: row.try_get("created_by")?,
         title: row.try_get("title")?,
         description: row.try_get("description")?,
         claim_type,

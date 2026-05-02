@@ -210,6 +210,25 @@ La vue `Sinistres` affiche pour chaque dossier le délai légal restant avant d�
 - Les actions contextuelles suivent strictement ce mapping : `Ouvert → Transmettre`, `En cours → Clore`, `Clos → Supprimer`.
 - `Transmettre` ouvre une modale dédiée avec la date de transmission à l'assurance ; `Clore` ouvre une modale dédiée avec remboursement optionnel (date + montant) et ajout de documents ; `Modifier` permet aussi de supprimer le dossier sans revenir à la carte et de gérer les documents déjà joints.
 
+## Règle UI — Cartes Opérations (`Signalements` / `Tâches` / `Sinistres`)
+
+Les cartes de liste des vues `Signalements`, `Tâches` et `Sinistres` partagent une même ossature visuelle afin d'améliorer le balayage :
+
+- ligne 1 : icône métier, chip de statut, chip de catégorie/priorité quand disponible, puis chips contextuelles complémentaires ;
+- ligne 2 : titre ;
+- ligne 3 : ligne de contexte principale (localisation si elle existe, sinon information métier équivalente comme le prestataire assigné) ;
+- ligne 4 : description ;
+- ligne 5 : métadonnées compactes avec icônes (`mise à jour`, `acteur de référence selon les données disponibles`, `documents liés`) ;
+- séparateur discret ;
+- ligne d'actions avec `Modifier` puis une action contextuelle accentée ;
+- bloc informatif secondaire pour les éléments métier complémentaires (délai légal, remboursement, lien prestataire, historique, etc.).
+
+Contraintes complémentaires :
+
+- les listes sont triées par `dernière modification` décroissante ;
+- la carte `Sinistre` n'expose jamais `Supprimer` dans la liste ; cette action reste confinée à la modale d'édition ;
+- l'ossature reste commune mais chaque entité peut substituer un équivalent métier quand une donnée n'existe pas (ex. `prestataire assigné` au lieu d'une localisation stricte sur les tâches).
+
 ## Règle UI — Obligations légales
 
 Les cartes de note légale globales de page utilisent `CLegalInfoCard` et suivent toujours le même schéma :

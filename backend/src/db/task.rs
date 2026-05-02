@@ -25,6 +25,8 @@ pub struct TaskRow {
     pub closed_at: Option<DateTime<Utc>>,
     pub completion_cost: Option<Decimal>,
     pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+    pub document_count: i64,
     /// True when at least one maintenance_log entry references this task.
     pub is_in_logbook: bool,
 }
@@ -49,6 +51,8 @@ pub struct TaskListItem {
     pub closed_at: Option<DateTime<Utc>>,
     pub completion_cost: Option<Decimal>,
     pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+    pub document_count: i64,
     /// True when at least one maintenance_log entry references this task.
     pub is_in_logbook: bool,
 }
@@ -72,6 +76,8 @@ impl From<TaskRow> for TaskListItem {
             closed_at: r.closed_at,
             completion_cost: r.completion_cost,
             created_at: r.created_at,
+            updated_at: r.updated_at,
+            document_count: r.document_count,
             is_in_logbook: r.is_in_logbook,
         }
     }
@@ -137,6 +143,8 @@ fn task_row_from_query(r: &sqlx::postgres::PgRow) -> Result<TaskRow, sqlx::Error
         closed_at: r.try_get("closed_at")?,
         completion_cost: r.try_get("completion_cost")?,
         created_at: r.try_get("created_at")?,
+        updated_at: r.try_get("updated_at")?,
+        document_count: r.try_get("document_count")?,
         is_in_logbook: r.try_get("is_in_logbook")?,
     })
 }
@@ -146,12 +154,16 @@ pub async fn list(pool: &PgPool, building_id: Uuid) -> AppResult<Vec<TaskRow>> {
         r#"SELECT t.id, t.building_id, t.title, t.description,
            t.status::text AS status, t.priority::text AS priority,
            t.contract_id, t.contractor_id, t.contractor_name, t.assigned_to, t.created_by, t.vendor_token,
-           t.token_expires_at, t.closed_at, t.completion_cost, t.created_at,
+           t.token_expires_at, t.closed_at, t.completion_cost, t.created_at, t.updated_at,
+           (
+             SELECT COUNT(*)
+             FROM vendor_submission_document vsd
+             JOIN vendor_submission vs ON vs.id = vsd.submission_id
+             WHERE vs.task_id = t.id
+           ) AS document_count,
            EXISTS(SELECT 1 FROM maintenance_log WHERE task_id = t.id) AS is_in_logbook
            FROM task t WHERE t.building_id = $1
-           ORDER BY CASE t.status::text WHEN 'closed' THEN 1 ELSE 0 END ASC,
-                    CASE t.priority::text WHEN 'urgent' THEN 1 WHEN 'high' THEN 2
-                    WHEN 'normal' THEN 3 ELSE 4 END, t.created_at DESC"#,
+           ORDER BY t.updated_at DESC"#,
     )
     .bind(building_id)
     .fetch_all(pool)
@@ -167,7 +179,13 @@ pub async fn get(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<Option
         r#"SELECT t.id, t.building_id, t.title, t.description,
            t.status::text AS status, t.priority::text AS priority,
            t.contract_id, t.contractor_id, t.contractor_name, t.assigned_to, t.created_by, t.vendor_token,
-           t.token_expires_at, t.closed_at, t.completion_cost, t.created_at,
+           t.token_expires_at, t.closed_at, t.completion_cost, t.created_at, t.updated_at,
+           (
+             SELECT COUNT(*)
+             FROM vendor_submission_document vsd
+             JOIN vendor_submission vs ON vs.id = vsd.submission_id
+             WHERE vs.task_id = t.id
+           ) AS document_count,
            EXISTS(SELECT 1 FROM maintenance_log WHERE task_id = t.id) AS is_in_logbook
            FROM task t WHERE t.id = $1 AND t.building_id = $2"#,
     )
@@ -195,7 +213,8 @@ pub async fn create(
            RETURNING id, building_id, title, description,
            status::text AS status, priority::text AS priority,
            contract_id, contractor_id, contractor_name, assigned_to, created_by, vendor_token,
-           token_expires_at, closed_at, completion_cost, created_at,
+           token_expires_at, closed_at, completion_cost, created_at, updated_at,
+           0::bigint AS document_count,
            FALSE AS is_in_logbook"#,
     )
     .bind(building_id)
@@ -431,7 +450,13 @@ pub async fn get_by_token(pool: &PgPool, token: Uuid) -> AppResult<Option<TaskRo
         r#"SELECT t.id, t.building_id, t.title, t.description,
            t.status::text AS status, t.priority::text AS priority,
            t.contract_id, t.contractor_id, t.contractor_name, t.assigned_to, t.created_by, t.vendor_token,
-           t.token_expires_at, t.closed_at, t.completion_cost, t.created_at,
+           t.token_expires_at, t.closed_at, t.completion_cost, t.created_at, t.updated_at,
+           (
+             SELECT COUNT(*)
+             FROM vendor_submission_document vsd
+             JOIN vendor_submission vs ON vs.id = vsd.submission_id
+             WHERE vs.task_id = t.id
+           ) AS document_count,
            EXISTS(SELECT 1 FROM maintenance_log WHERE task_id = t.id) AS is_in_logbook
            FROM task t
            WHERE t.vendor_token = $1 AND t.token_expires_at > NOW()

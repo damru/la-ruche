@@ -1,0 +1,95 @@
+.activity-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.activity-card__head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.activity-card__icon {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-surface-container-low);
+  color: var(--color-primary);
+}
+
+.activity-card__icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.activity-card__stack {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.activity-card__chips,
+.activity-card__meta,
+.activity-card__actions,
+.activity-card__secondary-actions,
+.activity-card__note {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.activity-card__title {
+  color: var(--color-on-surface);
+  margin: 0;
+}
+
+.activity-card__subtitle,
+.activity-card__description {
+  color: var(--color-on-surface-variant);
+}
+
+.activity-card__line {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  color: inherit;
+}
+
+.activity-card__line svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.activity-card__separator {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--color-surface-container-high),
+    transparent
+  );
+}
+
+.activity-card__secondary-actions {
+  margin-top: calc(var(--space-2) * -1);
+}
+
+.activity-card__note {
+  color: var(--color-on-surface-variant);
+  font-size: var(--text-xs);
+}
+
+@media (max-width: 720px) {
+  .activity-card__head {
+    flex-direction: column;
+  }
+}
