@@ -758,17 +758,6 @@ function copyToClipboard(text: string) {
                     <CIconCheckCircle />
                     {{ closeActionLabel(task) }}
                   </CBtn>
-                  <!-- Delete: closed/cancelled tasks only (visible on card) -->
-                  <CBtn
-                    v-if="isTerminal(task.status)"
-                    variant="danger"
-                    size="sm"
-                    :aria-label="t('tasks.deleteTask')"
-                    @click="openDeleteModal(task)"
-                  >
-                    <CIconTrash />
-                    {{ t('common.delete') }}
-                  </CBtn>
                 </div>
               </div>
             </div>
@@ -958,9 +947,9 @@ function copyToClipboard(text: string) {
         </div>
       </form>
       <template #footer>
-        <!-- Delete: visible when editing a non-terminal task (moved from card) -->
+        <!-- Delete: visible from the modal only -->
         <CBtn
-          v-if="editingTask && !isTerminal(editingTask.status)"
+          v-if="editingTask"
           variant="danger"
           :loading="savingTask"
           style="margin-right:auto"

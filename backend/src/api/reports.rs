@@ -125,7 +125,15 @@ pub async fn delete(
     Path(id): Path<Uuid>,
 ) -> AppResult<StatusCode> {
     auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
-    db::report::delete(&state.pool, id, auth.building_id).await?;
+    let deleted_documents = db::report::delete(&state.pool, id, auth.building_id).await?;
+    let storage = state.storage.clone();
+    tokio::spawn(async move {
+        for (bucket, key) in deleted_documents {
+            if let Err(error) = storage.delete_object(&bucket, &key).await {
+                tracing::error!(error = %error, "S3 delete error");
+            }
+        }
+    });
     Ok(StatusCode::NO_CONTENT)
 }
 

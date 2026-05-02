@@ -3,14 +3,22 @@ import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
+import CIconDownload from '@/components/atoms/CIconDownload.svg'
+import CIconFile from '@/components/atoms/CIconFile.svg'
+import CIconTrash from '@/components/atoms/CIconTrash.svg'
+import CIconUpload from '@/components/atoms/CIconUpload.svg'
 import CInput from '@/components/atoms/CInput.vue'
 import CSelect from '@/components/atoms/CSelect.vue'
 import CModal from '@/components/molecules/CModal.vue'
-import { contractsApi } from '@/api'
+import CPageLoader from '@/components/molecules/CPageLoader.vue'
+import CDocumentLinkActionModal from '@/components/molecules/CDocumentLinkActionModal.vue'
+import { contractsApi, documentsApi } from '@/api'
+import { useFormatters } from '@/composables/useFormatters'
 import { toErrorMessage } from '@/composables/usePageLoader'
 import { useFormFeedback } from '@/composables/useFormFeedback'
 import { useAutoClose } from '@/composables/useAutoClose'
-import type { ContractType, PaymentFrequency, VendorContract } from '@/types/domain'
+import type { ContractType, Document, PaymentFrequency, VendorContract } from '@/types/domain'
+import { extractFileExtension } from '@/utils/files'
 
 interface ContractFormState {
   vendor_name: string
@@ -37,12 +45,27 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+const { formatDate, formatFileSize } = useFormatters()
 const feedback = useFormFeedback()
 const saving = ref(false)
 const fieldErrors = ref<Record<string, string>>({})
+const loadingDocuments = ref(false)
+const uploadingDocuments = ref(false)
+const existingDocuments = ref<Document[]>([])
+const selectedDocuments = ref<File[]>([])
+const documentInputRef = ref<HTMLInputElement | null>(null)
+const documentsDragOver = ref(false)
+const documentActionFeedback = useFormFeedback()
+const documentActionLoading = ref(false)
+const pendingDocument = ref<Document | null>(null)
+const deletingContract = ref(false)
+const deleteContractFeedback = useFormFeedback()
+const showDeleteModal = ref(false)
 const { schedule: scheduleFormClose, forceExpire: forceFormClose } = useAutoClose()
+const { schedule: scheduleDeleteClose, forceExpire: forceDeleteClose } = useAutoClose()
 // Cancel any pending auto-close timer if the parent dismisses the modal early
 watch(() => props.open, (open) => { if (!open) forceFormClose() })
+watch(showDeleteModal, (open) => { if (!open) forceDeleteClose() })
 
 const defaultFormState = (): ContractFormState => ({
   vendor_name: '',
@@ -61,6 +84,7 @@ const defaultFormState = (): ContractFormState => ({
 const form = ref<ContractFormState>(defaultFormState())
 
 const isEditing = computed(() => !!props.contract?.id)
+const showDocumentActionModal = computed(() => pendingDocument.value !== null)
 
 const contractTypeOptions = computed(() =>
   [
@@ -89,7 +113,13 @@ function normalizeAmountInput(value: string): string {
 function resetForm() {
   form.value = defaultFormState()
   fieldErrors.value = {}
+  existingDocuments.value = []
+  selectedDocuments.value = []
+  documentsDragOver.value = false
   feedback.reset()
+  documentActionFeedback.reset()
+  deleteContractFeedback.reset()
+  showDeleteModal.value = false
 }
 
 function hydrateForm(contract?: VendorContract | null) {
@@ -112,6 +142,8 @@ function hydrateForm(contract?: VendorContract | null) {
     notice_days: contract.notice_days != null ? String(contract.notice_days) : '',
   }
   fieldErrors.value = {}
+  selectedDocuments.value = []
+  documentsDragOver.value = false
   feedback.reset()
 }
 
@@ -120,12 +152,165 @@ watch(
   ([open, contract]) => {
     if (!open) return
     hydrateForm(contract)
+    if (contract?.id) {
+      void loadDocuments(contract.id)
+    }
   },
   { immediate: true },
 )
 
 function closeModal() {
   emit('update:open', false)
+}
+
+function openDeleteModal() {
+  if (!props.contract?.id) return
+  deleteContractFeedback.reset()
+  showDeleteModal.value = true
+}
+
+async function deleteContract() {
+  if (deleteContractFeedback.status.value === 'success') {
+    forceDeleteClose()
+    return
+  }
+  if (!props.contract?.id) return
+
+  deletingContract.value = true
+  deleteContractFeedback.reset()
+
+  try {
+    await contractsApi.delete(props.contract.id)
+    deleteContractFeedback.setSuccess(t('contracts.deleteSuccess'))
+    emit('saved')
+    scheduleDeleteClose(() => {
+      showDeleteModal.value = false
+      closeModal()
+    })
+  } catch (error: unknown) {
+    deleteContractFeedback.setError(toErrorMessage(error, t('contracts.deleteError')))
+  } finally {
+    deletingContract.value = false
+  }
+}
+
+async function loadDocuments(contractId: string) {
+  loadingDocuments.value = true
+  documentActionFeedback.reset()
+
+  try {
+    const response = await contractsApi.listDocuments(contractId)
+    existingDocuments.value = response.data
+  } catch (error: unknown) {
+    feedback.setError(toErrorMessage(error, t('contracts.documents.loadError')))
+  } finally {
+    loadingDocuments.value = false
+  }
+}
+
+function openDocumentPicker() {
+  if (!documentInputRef.value) return
+  documentInputRef.value.click()
+}
+
+function appendDocuments(files: File[]) {
+  if (!files.length) return
+  selectedDocuments.value = [...selectedDocuments.value, ...files]
+}
+
+function onDocumentChange(event: Event) {
+  const input = event.target as HTMLInputElement
+  appendDocuments(Array.from(input.files ?? []))
+  if (documentInputRef.value) documentInputRef.value.value = ''
+}
+
+function onDocumentDrop(event: DragEvent) {
+  documentsDragOver.value = false
+  appendDocuments(Array.from(event.dataTransfer?.files ?? []))
+}
+
+function removeSelectedDocument(index: number) {
+  selectedDocuments.value = selectedDocuments.value.filter((_, currentIndex) => currentIndex !== index)
+}
+
+async function uploadDocument(contractId: string, file: File) {
+  const extension = extractFileExtension(file.name)
+  const mimeType = file.type || 'application/octet-stream'
+  const uploadUrl = await documentsApi.getUploadUrl(extension, mimeType, file.size)
+
+  await documentsApi.uploadToS3(file, uploadUrl.data.url, mimeType)
+
+  const document = await documentsApi.confirmUpload({
+    key: uploadUrl.data.key,
+    bucket: uploadUrl.data.bucket,
+    original_name: file.name,
+    mime_type: mimeType,
+    size_bytes: file.size,
+    visible_roles: ['manager', 'board_member'],
+  })
+
+  await contractsApi.attachDocument(contractId, document.data.id)
+}
+
+async function attachSelectedDocuments(contractId: string) {
+  const failedDocuments: string[] = []
+
+  for (const document of selectedDocuments.value) {
+    try {
+      await uploadDocument(contractId, document)
+    } catch {
+      failedDocuments.push(document.name)
+    }
+  }
+
+  return failedDocuments
+}
+
+async function downloadDocument(documentId: string) {
+  try {
+    const response = await documentsApi.getDownloadUrl(documentId)
+    window.open(response.data.url, '_blank', 'noopener')
+  } catch (error: unknown) {
+    feedback.setError(toErrorMessage(error, t('contracts.documents.downloadError')))
+  }
+}
+
+function openDocumentActionModal(document: Document) {
+  pendingDocument.value = document
+  documentActionFeedback.reset()
+}
+
+function closeDocumentActionModal() {
+  if (documentActionLoading.value) return
+  pendingDocument.value = null
+  documentActionFeedback.reset()
+}
+
+async function detachDocument(deleteDocument: boolean) {
+  if (!props.contract?.id || !pendingDocument.value) return
+
+  documentActionLoading.value = true
+  documentActionFeedback.reset()
+
+  try {
+    if (deleteDocument) {
+      await documentsApi.delete(pendingDocument.value.id)
+    } else {
+      await contractsApi.detachDocument(props.contract.id, pendingDocument.value.id)
+    }
+
+    existingDocuments.value = existingDocuments.value.filter(document => document.id !== pendingDocument.value?.id)
+    pendingDocument.value = null
+  } catch (error: unknown) {
+    documentActionFeedback.setError(
+      toErrorMessage(
+        error,
+        deleteDocument ? t('contracts.documents.deleteError') : t('contracts.documents.detachError'),
+      ),
+    )
+  } finally {
+    documentActionLoading.value = false
+  }
 }
 
 function validate(): boolean {
@@ -190,10 +375,20 @@ async function saveContract() {
       notice_days: form.value.auto_renewal ? noticeDays : undefined,
     }
 
-    if (props.contract?.id) {
-      await contractsApi.update(props.contract.id, payload)
-    } else {
-      await contractsApi.create(payload)
+    const response = props.contract?.id
+      ? await contractsApi.update(props.contract.id, payload)
+      : await contractsApi.create(payload)
+
+    if (selectedDocuments.value.length > 0) {
+      uploadingDocuments.value = true
+      const failedDocuments = await attachSelectedDocuments(response.data.id)
+      uploadingDocuments.value = false
+
+      if (failedDocuments.length > 0) {
+        feedback.setError(`${t('contracts.documents.uploadError')}: ${failedDocuments.join(', ')}`)
+        await loadDocuments(response.data.id)
+        return
+      }
     }
 
     feedback.setSuccess(t('common.saved'))
@@ -203,6 +398,7 @@ async function saveContract() {
     feedback.setError(toErrorMessage(error, t('contracts.form.saveError')))
   } finally {
     saving.value = false
+    uploadingDocuments.value = false
   }
 }
 </script>
@@ -299,9 +495,130 @@ async function saveContract() {
           :disabled="!form.auto_renewal"
         />
       </div>
+
+      <div class="contract-form__documents">
+        <label class="form-label">{{ t('contracts.documents.titleInline') }}</label>
+        <input
+          ref="documentInputRef"
+          type="file"
+          class="contract-form__file-input"
+          multiple
+          @change="onDocumentChange"
+        />
+        <div
+          :class="['contract-form__dropzone', { 'contract-form__dropzone--over': documentsDragOver }]"
+          role="button"
+          tabindex="0"
+          @click="openDocumentPicker"
+          @keydown.enter.prevent="openDocumentPicker"
+          @keydown.space.prevent="openDocumentPicker"
+          @dragenter.prevent="documentsDragOver = true"
+          @dragover.prevent="documentsDragOver = true"
+          @dragleave.prevent="documentsDragOver = false"
+          @drop.prevent="onDocumentDrop"
+        >
+          <CIconUpload
+            width="20"
+            height="20"
+            style="color:var(--color-on-surface-variant)"
+          />
+          <span class="body-xs contract-form__dropzone-hint">{{ t('contracts.documents.hint') }}</span>
+        </div>
+
+        <div
+          v-if="selectedDocuments.length"
+          class="contract-form__selected-documents"
+        >
+          <div
+            v-for="(document, index) in selectedDocuments"
+            :key="`${document.name}-${index}`"
+            class="contract-form__selected-document"
+          >
+            <span class="contract-form__selected-name">{{ document.name }}</span>
+            <button
+              type="button"
+              class="contract-form__remove-document"
+              :title="t('common.delete')"
+              :aria-label="t('common.delete')"
+              @click="removeSelectedDocument(index)"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+
+        <div
+          v-if="isEditing"
+          class="contract-form__existing-documents"
+        >
+          <p class="field-hint contract-form__documents-hint">
+            {{ t('contracts.documents.attached') }}
+          </p>
+          <CPageLoader v-if="loadingDocuments" />
+          <div
+            v-else-if="existingDocuments.length === 0"
+            class="contract-form__documents-empty"
+          >
+            {{ t('contracts.documents.empty') }}
+          </div>
+          <div
+            v-else
+            class="contract-form__documents-list"
+          >
+            <div
+              v-for="document in existingDocuments"
+              :key="document.id"
+              class="contract-form__documents-row"
+            >
+              <div class="contract-form__documents-meta">
+                <div class="contract-form__documents-name">
+                  <CIconFile
+                    width="16"
+                    height="16"
+                  />
+                  <span>{{ document.original_name }}</span>
+                </div>
+                <div class="contract-form__documents-details">
+                  <span>{{ formatFileSize(document.size_bytes) }}</span>
+                  <span>·</span>
+                  <span>{{ formatDate(document.created_at) }}</span>
+                </div>
+              </div>
+              <div class="contract-form__documents-actions">
+                <CBtn
+                  variant="ghost"
+                  size="sm"
+                  @click="downloadDocument(document.id)"
+                >
+                  <CIconDownload />
+                  {{ t('common.download') }}
+                </CBtn>
+                <CBtn
+                  variant="danger"
+                  size="sm"
+                  @click="openDocumentActionModal(document)"
+                >
+                  <CIconTrash />
+                  {{ t('contracts.documents.detach') }}
+                </CBtn>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <template #footer>
+      <CBtn
+        v-if="isEditing"
+        variant="danger"
+        :loading="deletingContract"
+        style="margin-right:auto"
+        @click="openDeleteModal"
+      >
+        <CIconTrash />
+        {{ t('common.delete') }}
+      </CBtn>
       <CFormFeedback
         :status="feedback.status.value"
         :message="feedback.message.value"
@@ -314,12 +631,57 @@ async function saveContract() {
         {{ t('common.cancel') }}
       </CBtn>
       <CBtn
-        :loading="saving"
+        :loading="saving || uploadingDocuments"
         :closing="feedback.status.value === 'success'"
-        :disabled="saving"
+        :disabled="saving || uploadingDocuments"
         @click="saveContract"
       >
-        {{ saving ? t('common.saving') : t('common.save') }}
+        {{ saving || uploadingDocuments ? t('common.saving') : t('common.save') }}
+      </CBtn>
+    </template>
+  </CModal>
+
+  <CDocumentLinkActionModal
+    :open="showDocumentActionModal"
+    :title="t('contracts.documents.detachTitle')"
+    :description="t('contracts.documents.detachMessage', { name: pendingDocument?.original_name ?? '', contract: props.contract?.vendor_name ?? '' })"
+    :warning="t('contracts.documents.deleteWarning', { name: pendingDocument?.original_name ?? '' })"
+    :loading="documentActionLoading"
+    :status="documentActionFeedback.status.value"
+    :message="documentActionFeedback.message.value"
+    @update:open="value => !value && closeDocumentActionModal()"
+    @unlink="detachDocument(false)"
+    @unlink-and-delete="detachDocument(true)"
+  />
+
+  <CModal
+    :open="showDeleteModal"
+    :title="t('contracts.deleteTitle')"
+    size="sm"
+    @update:open="showDeleteModal = $event"
+  >
+    <p class="body-sm">
+      {{ t('contracts.deleteMessage', { name: props.contract?.vendor_name ?? '' }) }}
+    </p>
+    <template #footer>
+      <CFormFeedback
+        :status="deleteContractFeedback.status.value"
+        :message="deleteContractFeedback.message.value"
+      />
+      <CBtn
+        variant="ghost"
+        :disabled="deletingContract"
+        @click="showDeleteModal = false"
+      >
+        {{ t('common.cancel') }}
+      </CBtn>
+      <CBtn
+        variant="danger"
+        :loading="deletingContract"
+        :closing="deleteContractFeedback.status.value === 'success'"
+        @click="deleteContract"
+      >
+        {{ t('common.deleteLabel') }}
       </CBtn>
     </template>
   </CModal>
@@ -355,9 +717,160 @@ async function saveContract() {
   font-weight: var(--fw-medium);
 }
 
+.contract-form__documents {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.contract-form__file-input {
+  display: none;
+}
+
+.contract-form__dropzone {
+  border: 1.5px dashed var(--color-outline);
+  border-radius: var(--radius-sm);
+  padding: var(--space-4) var(--space-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.contract-form__dropzone:hover,
+.contract-form__dropzone--over {
+  background: var(--color-surface-container);
+  border-color: var(--color-primary);
+}
+
+.contract-form__dropzone-hint {
+  color: var(--color-on-surface-variant);
+}
+
+.contract-form__selected-documents {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.contract-form__selected-document {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  max-width: 100%;
+  padding: 0 var(--space-4) 0 var(--space-3);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-outline-variant);
+  background: var(--color-surface-container-low);
+}
+
+.contract-form__selected-name {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-on-surface-variant);
+  font-size: var(--text-sm);
+}
+
+.contract-form__remove-document {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--color-error);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: unset;
+  min-height: unset;
+  padding: 0;
+}
+
+.contract-form__existing-documents {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.contract-form__documents-hint {
+  margin: 0;
+}
+
+.contract-form__documents-empty {
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-container-low);
+  color: var(--color-on-surface-variant);
+}
+
+.contract-form__documents-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.contract-form__documents-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-container-low);
+}
+
+.contract-form__documents-meta {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.contract-form__documents-name {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: var(--fw-medium);
+  min-width: 0;
+}
+
+.contract-form__documents-name span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.contract-form__documents-details {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--color-on-surface-variant);
+  font-size: var(--text-xs);
+}
+
+.contract-form__documents-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
 @media (max-width: 720px) {
   .contract-form__grid {
     grid-template-columns: 1fr;
+  }
+
+  .contract-form__documents-row {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
 </style>

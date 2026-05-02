@@ -1,7 +1,7 @@
 # DESIGN.md — l'Application Design System "The Modern Registry"
 
 > **Dénomination** — Dans le présent document, l'expression **« l'Application »** désigne exclusivement **La Ruche**, plateforme web open source de gestion participative de copropriété. Ces deux termes sont interchangeables et désignent la même entité logicielle.
-> Dernière mise à jour : 2026-04-30
+> Dernière mise à jour : 2026-05-01
 
 ## Typographie — 3 polices, 3 rôles (DDR-001 v3)
 
@@ -183,7 +183,10 @@ Références d'implémentation : `frontend/src/composables/usePageLoader.ts`, `f
 
 La vue `Contrats` affiche en tête les rappels à traiter, avec une action d’acquittement visible sans navigation secondaire.
 
-Les pièces justificatives d’un contrat restent regroupées dans une modale dédiée au contrat courant, afin de garder la liste principale lisible tout en laissant l’upload documentaire dans le même parcours.
+- Les pièces justificatives d’un contrat se gèrent directement depuis la modale de création / modification, sans bouton documentaire dédié sur la carte.
+- Chaque carte Contrat rappelle aussi le nombre de documents actuellement liés pour éviter d’ouvrir la modale à vide.
+- La modale d’édition liste les pièces déjà liées avec deux issues explicites : retirer le lien seulement, ou retirer le lien puis supprimer définitivement le document.
+- La suppression définitive d’un contrat se déclenche depuis la modale d’édition, jamais depuis la carte.
 
 ## Règle UI — Vue Carnet d'entretien
 
@@ -192,6 +195,32 @@ La vue `Carnet d'entretien` expose des filtres rapides ancrés sur des périodes
 - La navigation `précédent / suivant` déplace la fenêtre d'une période complète, jamais une durée flottante depuis aujourd'hui.
 - Le total des dépenses et la liste affichée sont toujours calculés sur la période active.
 - Les champs `Coût` et `Prestataire` de la modale de création restent sur une grille 2 colonnes sur desktop mais repassent en pile sur écran étroit pour éviter tout débordement.
+- Un bloc réglementaire précède la timeline et rappelle l'adresse de l'immeuble ainsi que le syndic en exercice.
+- Les contrats d'assurance et d'entretien en cours sont affichés dans des sections dédiées, séparées de la timeline, avec leur échéance et un état lisible sans navigation secondaire.
+
+## Règle UI — Vue Sinistres
+
+La vue `Sinistres` affiche pour chaque dossier le délai légal restant avant déclaration à l'assurance, calculé selon le type de sinistre.
+
+- Les alertes de délai doivent être visibles directement sur la carte (approche d'échéance / retard / transmis).
+- L'explication juridique des délais est mutualisée dans une carte `CLegalInfoCard` en bas de page.
+- La création d'un sinistre reste faisable dans une seule modale et accepte des pièces jointes sans écran intermédiaire.
+- Les zones d'ajout de pièces jointes des modales Sinistres reprennent la dropzone standard utilisée sur les Signalements (`bordure pointillée`, état hover/drag, sélection directe de fichiers).
+- Chaque carte Sinistre expose toujours deux actions côte à côte pour les profils gestionnaires : `Modifier` puis une action contextuelle dépendante du statut courant.
+- Les actions contextuelles suivent strictement ce mapping : `Ouvert → Transmettre`, `En cours → Clore`, `Clos → Supprimer`.
+- `Transmettre` ouvre une modale dédiée avec la date de transmission à l'assurance ; `Clore` ouvre une modale dédiée avec remboursement optionnel (date + montant) et ajout de documents ; `Modifier` permet aussi de supprimer le dossier sans revenir à la carte et de gérer les documents déjà joints.
+
+## Règle UI — Obligations légales
+
+Les cartes de note légale globales de page utilisent `CLegalInfoCard` et suivent toujours le même schéma :
+
+- un titre explicite ;
+- un résumé pédagogique de l'obligation ;
+- un ou plusieurs liens légaux libellés avec une référence longue (`Article N …`) vers le texte complet sur une source officielle (`legifrance.gouv.fr` ou `service-public.fr`).
+
+Les obligations légales compactes et strictement locales à un libellé peuvent encore utiliser `CTooltip`, mais les notes juridiques de bas de page doivent être homogènes via `CLegalInfoCard`.
+
+Cette règle s'applique notamment aux délais de déclaration de sinistre, au carnet d'entretien réglementaire, au registre de copropriété et aux consultations informelles.
 
 ## Règle UI — Vue Signalements
 
@@ -199,6 +228,15 @@ La modale de conversion d'un signalement en tâche doit permettre au gestionnair
 
 - La priorité proposée par défaut est `Normal`.
 - La conversion reste une action unique : création de la tâche puis redirection immédiate vers la tâche créée.
+- La modale de modification d’un signalement doit aussi afficher les images déjà jointes et permettre leur gestion sans repasser par la carte.
+- L’action `Supprimer` reste disponible uniquement dans la modale d’édition, pas sur la carte de liste.
+
+## Règle UI — Gestion documentaire liée
+
+- Toute entité qui accepte des documents doit permettre leur gestion depuis la modale d’édition et, lorsqu’une vue détaillée existe, depuis cette vue détaillée également.
+- L’action de retrait d’un document lié ouvre toujours une confirmation avec deux actions distinctes : `Supprimer le lien seulement` et `Supprimer le lien et le document`.
+- Le module `Documents` doit exposer les références d’entités liées pour chaque fichier et rappeler, dans la modale de suppression, qu’un document supprimé sera d’abord retiré des entités auxquelles il est rattaché.
+- La suppression d’une entité doit aussi supprimer ses documents devenus orphelins ; un document encore rattaché ailleurs n’est pas supprimé.
 
 ## Règle UI — Vue Tâches
 

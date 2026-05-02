@@ -54,9 +54,9 @@
 
 **Référentiel prestataires** — Catalogue des entreprises et intervenants de la résidence (nom, email, téléphone, domaine). Accessible à tous les résidents (catalogue pratique), modifiable par les managers. Réutilisé à l'assignation des tâches et propagé au carnet d'entretien. → EP-015
 
-**Sinistres** — Déclaration d'un sinistre (libellé, date, lot ou parties communes) avec suivi de statut jusqu'à clôture et attachement de documents associés. → EP-008
+**Sinistres** — Déclaration d'un sinistre (type, libellé, date de survenance, lot ou parties communes) avec pièces jointes, calcul du délai légal restant selon le type, alerte visuelle si l'échéance approche, puis workflow d'actions par statut : modification du dossier, transmission à l'assurance avec date explicite, clôture avec remboursement optionnel (date + montant) et pièces complémentaires, ou suppression avec confirmation. → EP-008
 
-**Carnet d'entretien** — Historique des interventions (libellé, date, coût, prestataire, pièces jointes), alimenté manuellement pour l'historique antérieur au logiciel ou automatiquement à chaque clôture effective d'une tâche, y compris après réouverture. Les liens avec les tâches restent purement de traçabilité et ne bloquent pas la suppression d'une tâche ou d'une entrée du carnet. → EP-009
+**Carnet d'entretien** — Historique des interventions (libellé, date, coût, prestataire, pièces jointes), alimenté manuellement pour l'historique antérieur au logiciel ou automatiquement à chaque clôture effective d'une tâche, y compris après réouverture. La vue expose aussi l'en-tête réglementaire (adresse de l'immeuble, syndic en exercice) et les listings consolidés des contrats d'assurance et de maintenance en cours avec leurs échéances. Les liens avec les tâches restent purement de traçabilité et ne bloquent pas la suppression d'une tâche ou d'une entrée du carnet. → EP-009
 
 ### Participatif (pas de valeur décisionnelle légale)
 

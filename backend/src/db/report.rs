@@ -282,18 +282,40 @@ pub async fn update(
     Ok(())
 }
 
-pub async fn delete(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()> {
+pub async fn delete(
+    pool: &PgPool,
+    id: Uuid,
+    building_id: Uuid,
+) -> AppResult<Vec<(String, String)>> {
+    let mut tx = pool.begin().await?;
+    let linked_document_ids = sqlx::query_scalar::<_, Uuid>(
+        r#"
+        SELECT rd.document_id
+        FROM report_document rd
+        JOIN report r ON r.id = rd.report_id
+        WHERE rd.report_id = $1 AND r.building_id = $2
+        "#,
+    )
+    .bind(id)
+    .bind(building_id)
+    .fetch_all(&mut *tx)
+    .await?;
+
     // report_document rows are removed automatically via ON DELETE CASCADE (migration 0010).
     let result = sqlx::query("DELETE FROM report WHERE id = $1 AND building_id = $2")
         .bind(id)
         .bind(building_id)
-        .execute(pool)
+        .execute(&mut *tx)
         .await?;
 
     if result.rows_affected() == 0 {
         return Err(AppError::NotFound);
     }
-    Ok(())
+
+    let deleted_documents =
+        crate::db::document::delete_orphaned_tx(&mut tx, &linked_document_ids, building_id).await?;
+    tx.commit().await?;
+    Ok(deleted_documents)
 }
 
 // ── Document attachment ───────────────────────────────────────────

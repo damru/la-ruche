@@ -10,6 +10,7 @@ import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CAlert from '@/components/atoms/CAlert.vue'
+import CLegalInfoCard from '@/components/molecules/CLegalInfoCard.vue'
 import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
 import CModal from '@/components/molecules/CModal.vue'
 import CPageError from '@/components/molecules/CPageError.vue'
@@ -135,6 +136,17 @@ const consultations = computed(() =>
   ),
 )
 const openCount = computed(() => allConsultations.value.filter(c => c.status === 'open').length)
+
+const legalCardLinks = computed(() => [
+  {
+    label: t('consultations.legalCard.article17LinkLabel'),
+    href: t('consultations.legalCard.article17LinkHref'),
+  },
+  {
+    label: t('consultations.legalCard.article24LinkLabel'),
+    href: t('consultations.legalCard.article24LinkHref'),
+  },
+])
 
 function openCreateModal() {
   createForm.value = defaultCreateForm()
@@ -459,13 +471,11 @@ async function confirmDelete() {
           </div>
         </div>
 
-        <!-- Legal info — bottom of page, CCard pattern (cf. Registry) -->
-        <CCard>
-          <p class="body-sm dim">
-            ⚖️ <strong>{{ t('consultations.legalNote') }}</strong> — {{ t('consultations.informalNote') }}
-            <br /><span class="body-xs">{{ t('consultations.informalNoteDetail') }}</span>
-          </p>
-        </CCard>
+        <CLegalInfoCard
+          :title="t('consultations.legalCard.title')"
+          :summary="t('consultations.legalCard.summary')"
+          :links="legalCardLinks"
+        />
       </template>
     </div>
 

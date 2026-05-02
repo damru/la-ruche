@@ -9,12 +9,13 @@ import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
+import CLegalInfoCard from '@/components/molecules/CLegalInfoCard.vue'
 import CModal from '@/components/molecules/CModal.vue'
 import CPageError from '@/components/molecules/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
-import { buildingApi, maintenanceApi } from '@/api'
-import type { MaintenanceEntry } from '@/types/domain'
+import { maintenanceApi } from '@/api'
+import type { LogbookContractSummary, LogbookSummary, MaintenanceEntry } from '@/types/domain'
 
 const { t } = useI18n()
 const { formatDate, formatCurrency } = useFormatters()
@@ -23,6 +24,7 @@ type PeriodFilter = 'month' | 'quarter' | 'semester' | 'year' | 'all'
 
 // ── State ─────────────────────────────────────────────────────────
 const buildingName = ref('')
+const logbookSummary = ref<LogbookSummary | null>(null)
 const allEntries = ref<MaintenanceEntry[]>([])
 const search = ref('')
 const periodFilter = ref<PeriodFilter>('quarter')
@@ -100,11 +102,12 @@ function resetPeriod(filter: PeriodFilter) {
 
 // ── Load data ─────────────────────────────────────────────────────
 async function loadData() {
-  const [buildingRes, entriesRes] = await Promise.all([
-    buildingApi.get(),
+  const [summaryRes, entriesRes] = await Promise.all([
+    maintenanceApi.summary(),
     maintenanceApi.list(),
   ])
-  buildingName.value = buildingRes.data.name
+  logbookSummary.value = summaryRes.data
+  buildingName.value = summaryRes.data.building.name
   allEntries.value = entriesRes.data
 }
 
@@ -181,6 +184,38 @@ const periodEntries = computed(() => {
 const totalCost = computed(() =>
   periodEntries.value.reduce((sum, entry) => sum + Number(entry.cost ?? 0), 0),
 )
+
+const buildingAddress = computed(() => {
+  const building = logbookSummary.value?.building
+  if (!building) return ''
+
+  return [
+    building.address_line1,
+    building.address_line2,
+    `${building.postal_code} ${building.city}`,
+  ]
+    .filter(Boolean)
+    .join(', ')
+})
+
+const currentManagerLabel = computed(() => {
+  const manager = logbookSummary.value?.current_manager
+  if (!manager) return t('maintenance.regulatory.noManager')
+  return `${manager.first_name} ${manager.last_name}`.trim()
+})
+
+const regulatoryLegalLinks = computed(() => [
+  {
+    label: t('maintenance.regulatory.legalCard.linkLabel'),
+    href: t('maintenance.regulatory.legalCard.linkHref'),
+  },
+])
+
+function contractStatusVariant(status: LogbookContractSummary['status']): 'open' | 'closed' | 'default' {
+  if (status === 'active') return 'open'
+  if (status === 'expired' || status === 'terminated') return 'closed'
+  return 'default'
+}
 
 function selectPeriod(filter: PeriodFilter) {
   periodFilter.value = filter
@@ -300,6 +335,141 @@ async function deleteEntry() {
             </p>
           </div>
         </div>
+
+        <div
+          v-if="logbookSummary"
+          class="regulatory-grid"
+        >
+          <CCard class="regulatory-card">
+            <div class="regulatory-card__header">
+              <span class="title-sm">{{ t('maintenance.regulatory.title') }}</span>
+              <CBadge variant="default">
+                {{ t('maintenance.regulatory.decree') }}
+              </CBadge>
+            </div>
+            <div class="regulatory-card__body">
+              <div>
+                <span class="regulatory-card__label">{{ t('maintenance.regulatory.building') }}</span>
+                <p class="body-sm regulatory-card__value">
+                  {{ buildingAddress }}
+                </p>
+              </div>
+              <div>
+                <span class="regulatory-card__label">{{ t('maintenance.regulatory.manager') }}</span>
+                <p class="body-sm regulatory-card__value">
+                  {{ currentManagerLabel }}
+                </p>
+                <p
+                  v-if="logbookSummary.current_manager?.email"
+                  class="body-sm regulatory-card__hint"
+                >
+                  {{ logbookSummary.current_manager.email }}
+                  <template v-if="logbookSummary.current_manager.phone">
+                    · {{ logbookSummary.current_manager.phone }}
+                  </template>
+                </p>
+              </div>
+            </div>
+          </CCard>
+
+          <CCard class="regulatory-card">
+            <div class="regulatory-card__header">
+              <span class="title-sm">{{ t('maintenance.regulatory.insuranceContracts') }}</span>
+              <CBadge
+                variant="default"
+                :dot="logbookSummary.insurance_contracts.length > 0"
+              >
+                {{ t('maintenance.regulatory.contractsCount', logbookSummary.insurance_contracts.length) }}
+              </CBadge>
+            </div>
+            <div
+              v-if="logbookSummary.insurance_contracts.length > 0"
+              class="contract-list"
+            >
+              <div
+                v-for="contract in logbookSummary.insurance_contracts"
+                :key="contract.id"
+                class="contract-list__item"
+              >
+                <div>
+                  <p class="body-sm contract-list__title">
+                    {{ contract.subject }}
+                  </p>
+                  <p class="body-sm contract-list__meta">
+                    {{ contract.vendor_name }}
+                  </p>
+                </div>
+                <div class="contract-list__aside">
+                  <CBadge :variant="contractStatusVariant(contract.status)">
+                    {{ t(`contracts.statuses.${contract.status}`) }}
+                  </CBadge>
+                  <span class="contract-list__deadline">
+                    {{ t('maintenance.regulatory.endsOn', { date: formatDate(contract.end_date) }) }}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <p
+              v-else
+              class="body-sm regulatory-card__hint"
+            >
+              {{ t('maintenance.regulatory.noInsuranceContracts') }}
+            </p>
+          </CCard>
+
+          <CCard class="regulatory-card">
+            <div class="regulatory-card__header">
+              <span class="title-sm">{{ t('maintenance.regulatory.maintenanceContracts') }}</span>
+              <CBadge
+                variant="default"
+                :dot="logbookSummary.maintenance_contracts.length > 0"
+              >
+                {{ t('maintenance.regulatory.contractsCount', logbookSummary.maintenance_contracts.length) }}
+              </CBadge>
+            </div>
+            <div
+              v-if="logbookSummary.maintenance_contracts.length > 0"
+              class="contract-list"
+            >
+              <div
+                v-for="contract in logbookSummary.maintenance_contracts"
+                :key="contract.id"
+                class="contract-list__item"
+              >
+                <div>
+                  <p class="body-sm contract-list__title">
+                    {{ contract.subject }}
+                  </p>
+                  <p class="body-sm contract-list__meta">
+                    {{ contract.vendor_name }} · {{ t(`contracts.types.${contract.contract_type}`) }}
+                  </p>
+                </div>
+                <div class="contract-list__aside">
+                  <CBadge :variant="contractStatusVariant(contract.status)">
+                    {{ t(`contracts.statuses.${contract.status}`) }}
+                  </CBadge>
+                  <span class="contract-list__deadline">
+                    {{ t('maintenance.regulatory.endsOn', { date: formatDate(contract.end_date) }) }}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <p
+              v-else
+              class="body-sm regulatory-card__hint"
+            >
+              {{ t('maintenance.regulatory.noMaintenanceContracts') }}
+            </p>
+          </CCard>
+        </div>
+
+        <CLegalInfoCard
+          v-if="logbookSummary"
+          class="regulatory-legal-card"
+          :title="t('maintenance.regulatory.legalCard.title')"
+          :summary="t('maintenance.regulatory.legalCard.summary')"
+          :links="regulatoryLegalLinks"
+        />
 
         <div class="period-toolbar">
           <div class="tabs period-tabs">
@@ -531,6 +701,85 @@ async function deleteEntry() {
 
 <style scoped>
 .timeline { display: flex; flex-direction: column; gap: 0; }
+.regulatory-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.regulatory-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.regulatory-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.regulatory-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.regulatory-card__label {
+  display: block;
+  font-size: var(--text-xs);
+  color: var(--color-on-surface-variant);
+  margin-bottom: 4px;
+}
+
+.regulatory-card__value {
+  margin: 0;
+}
+
+.regulatory-card__hint {
+  margin: 4px 0 0;
+  color: var(--color-on-surface-variant);
+}
+
+.regulatory-legal-card {
+  margin-bottom: var(--space-4);
+}
+
+.contract-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.contract-list__item {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-container-low);
+}
+
+.contract-list__title,
+.contract-list__meta {
+  margin: 0;
+}
+
+.contract-list__meta,
+.contract-list__deadline {
+  color: var(--color-on-surface-variant);
+}
+
+.contract-list__aside {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
 .timeline-item {
   display: flex; gap: 16px; align-items: stretch;
   padding-bottom: 16px;
@@ -600,6 +849,18 @@ async function deleteEntry() {
 .empty-state { padding: var(--space-8); text-align: center; font-size: var(--text-md); color: var(--color-on-surface-variant); }
 
 @media (max-width: 720px) {
+  .regulatory-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .contract-list__item {
+    flex-direction: column;
+  }
+
+  .contract-list__aside {
+    align-items: flex-start;
+  }
+
   .period-nav {
     width: 100%;
     justify-content: space-between;

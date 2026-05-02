@@ -459,6 +459,10 @@
     "terminateMessage": "Le contrat « {name} » sera marqué comme résilié. Les rappels restent conservés pour l'historique.",
     "terminateSuccess": "Contrat résilié",
     "terminateError": "Impossible de résilier ce contrat.",
+    "deleteTitle": "Supprimer le contrat",
+    "deleteMessage": "Le contrat « {name} » et ses documents devenus orphelins seront supprimés définitivement. Cette action est irréversible.",
+    "deleteSuccess": "Contrat supprimé.",
+    "deleteError": "Impossible de supprimer ce contrat.",
     "noticePeriod": "Préavis de résiliation",
     "reminders": {
       "acknowledge": "Acquitter",
@@ -487,10 +491,11 @@
       "saveError": "Impossible d'enregistrer le contrat."
     },
     "documents": {
-      "manage": "Pièces",
       "title": "Pièces justificatives — {name}",
+      "titleInline": "Pièces justificatives",
       "hint": "Ajoutez ici les pièces utiles à ce contrat. Elles restent visibles aussi dans le module Documents.",
       "insuranceHint": "Centralisez ici police, attestation et avenants du contrat d'assurance immeuble.",
+      "attached": "Pièces déjà liées",
       "selectFile": "Choisir un fichier",
       "noFileSelected": "Aucun fichier sélectionné",
       "attachUpload": "Déposer et lier",
@@ -500,13 +505,14 @@
       "downloadError": "Impossible de télécharger cette pièce.",
       "detach": "Délier",
       "detachTitle": "Retirer la pièce du contrat",
-      "deleteAlso": "Supprimer aussi ce document du registre",
+      "detachMessage": "Le document « {name} » est actuellement lié au contrat « {contract} ».",
       "deleteWarning": "Le document « {name} » sera supprimé définitivement du registre documentaire après retrait. Cette action est irréversible.",
       "detachSuccess": "Pièce retirée du contrat.",
       "detachError": "Impossible de retirer cette pièce.",
       "deleteSuccess": "Pièce supprimée définitivement.",
       "deleteError": "Impossible de supprimer cette pièce.",
-      "empty": "Aucune pièce liée à ce contrat pour le moment."
+      "empty": "Aucune pièce liée à ce contrat pour le moment.",
+      "count": "{count} document lié au contrat | {count} documents liés au contrat"
     },
     "reminderTypes": {
       "renewal": "Reconduction",
@@ -626,6 +632,7 @@
       "fileName": "Nom du fichier",
       "type": "Type",
       "visibility": "Visibilité",
+      "references": "Entités liées",
       "size": "Taille",
       "addedDate": "Date d'ajout"
     },
@@ -641,9 +648,12 @@
     "downloadNewTab": "Télécharger le document (ouvre dans un nouvel onglet)",
     "confirmDeleteTitle": "Supprimer le document",
     "confirmDeleteMessage": "Le document « {name} » sera supprimé définitivement. Cette action est irréversible.",
-    "confirmDeleteLinkedMessage": "Le document « {name} » est actuellement lié aux contrats suivants : {links}. Il sera détaché de ces contrats puis supprimé définitivement. Cette action est irréversible.",
-    "confirmDeleteLinkedReportMessage": "Le document « {name} » est lié à {count} signalement. Il sera détaché de ce signalement puis supprimé définitivement. Cette action est irréversible. | Le document « {name} » est lié à {count} signalements. Il sera détaché de ces signalements puis supprimé définitivement. Cette action est irréversible.",
-    "confirmDeleteLinkedBothMessage": "Le document « {name} » est lié aux contrats {links} et à {count} signalement. Il sera détaché puis supprimé définitivement. Cette action est irréversible. | Le document « {name} » est lié aux contrats {links} et à {count} signalements. Il sera détaché puis supprimé définitivement. Cette action est irréversible.",
+    "confirmDeleteLinkedMessage": "Le document « {name} » est actuellement lié aux entités suivantes : {links}. Il sera retiré de ces entités puis supprimé définitivement. Cette action est irréversible.",
+    "referenceContract": "Contrat : {name}",
+    "referenceReport": "Signalement : {title}",
+    "referenceClaim": "Sinistre : {title}",
+    "unlinkOnly": "Supprimer le lien seulement",
+    "unlinkAndDelete": "Supprimer le lien et le document",
     "deleteSuccess": "Document supprimé définitivement."
   },
   "consultations": {
@@ -678,9 +688,15 @@
     "confirmDeleteMessage": "La consultation « {title} » et toutes ses réponses seront supprimées définitivement. Cette action est irréversible.",
     "closeSuccess": "Consultation fermée",
     "deleteSuccess": "Consultation supprimée",
-    "legalNote": "Art. 17 & 24 loi 10/07/1965",
     "informalNote": "Cette consultation est informelle et n'a aucune valeur décisionnelle légale.",
-    "informalNoteDetail": "Les consultations écrites permettent de recueillir l'avis des copropriétaires et des locataires sans valeur de vote.",
+    "legalCard": {
+      "title": "Consultation informelle",
+      "summary": "Cette consultation permet de recueillir l'avis des copropriétaires et des locataires, sans valeur décisionnelle légale ni effet de vote d'assemblée générale.",
+      "article17LinkLabel": "Article 17 de la loi n°65-557 du 10 juillet 1965",
+      "article17LinkHref": "https://www.legifrance.gouv.fr/loda/article_lc/LEGIARTI000006460042",
+      "article24LinkLabel": "Article 24 de la loi n°65-557 du 10 juillet 1965",
+      "article24LinkHref": "https://www.legifrance.gouv.fr/loda/article_lc/LEGIARTI000006460050"
+    },
     "fields": {
       "title": "Titre",
       "description": "Description",
@@ -737,13 +753,16 @@
     "updatedAt": "Mis à jour {date}",
     "photos": "Photos",
     "addPhotos": "Ajouter des photos",
+    "attachedPhotos": "Photos déjà jointes",
     "photoHint": "Glisser-déposer ou cliquer pour sélectionner (images uniquement)",
     "photoCount": "{count} photo | {count} photos",
     "photoUploading": "Chargement des photos…",
     "photoUploadError": "Erreur lors du chargement d'une photo",
     "removePhoto": "Supprimer",
     "deletePhoto": "Supprimer la photo",
-    "deletePhotoConfirm": "Supprimer cette photo définitivement du signalement ?",
+    "deletePhotoConfirm": "La photo sera retirée du signalement puis supprimée définitivement. Cette action est irréversible.",
+    "deletePhotoDetachMessage": "L'image « {name} » est actuellement liée au signalement « {title} ».",
+    "noAttachedPhotos": "Aucune photo jointe pour ce signalement.",
     "noPhotos": "Aucune photo disponible",
     "statuses": {
       "open": "Ouvert",
@@ -802,18 +821,115 @@
     },
     "previousPeriod": "Période précédente",
     "nextPeriod": "Période suivante",
-    "emptyPeriod": "Aucune intervention sur la période sélectionnée."
+    "emptyPeriod": "Aucune intervention sur la période sélectionnée.",
+    "regulatory": {
+      "title": "Mentions réglementaires",
+      "decree": "Décret 2001-477",
+      "building": "Immeuble",
+      "manager": "Syndic en exercice",
+      "noManager": "Syndic non renseigné",
+      "insuranceContracts": "Contrats d'assurance",
+      "maintenanceContracts": "Contrats d'entretien / maintenance",
+      "contractsCount": "{count} contrat | {count} contrats",
+      "endsOn": "Échéance : {date}",
+      "noInsuranceContracts": "Aucun contrat d'assurance actif renseigné.",
+      "noMaintenanceContracts": "Aucun contrat d'entretien ou de maintenance actif renseigné.",
+      "legalCard": {
+        "title": "Carnet d'entretien réglementaire",
+        "summary": "Le carnet d'entretien est obligatoire et doit au minimum mentionner l'adresse de l'immeuble, le syndic en exercice, les assurances et, s'il y a lieu, les contrats d'entretien et les travaux importants.",
+        "linkLabel": "Article 1 du décret n°2001-477 du 30 mai 2001",
+        "linkHref": "https://www.legifrance.gouv.fr/loda/article_lc/LEGIARTI000023944595"
+      }
+    }
   },
   "claims": {
     "title": "Sinistres",
     "create": "Déclarer un sinistre",
     "activeCount": "{count} sinistre en cours | {count} sinistres en cours",
+    "createSuccess": "Sinistre enregistré",
+    "updateSuccess": "Sinistre mis à jour",
+    "transmitSuccess": "Sinistre transmis à l'assurance",
+    "closeSuccess": "Sinistre clôturé",
+    "deleteSuccess": "Sinistre supprimé",
+    "editTitle": "Modifier le sinistre",
+    "transmitTitle": "Transmettre à l'assurance",
+    "closeTitle": "Clore le sinistre",
+    "transmit": "Transmettre",
+    "close": "Clore",
     "openedAt": "Ouvert {date}",
     "declaredOn": "Déclaré le {date}",
+    "publishedOn": "Arrêté publié le {date}",
+    "commonAreas": "Parties communes",
+    "unitLabel": "Lot {number}",
+    "documentHint": "Glisser-déposer ou cliquer pour joindre les pièces du dossier",
+    "editDocumentHint": "Glisser-déposer ou cliquer pour ajouter des pièces complémentaires",
+    "documentUploadError": "Le sinistre a été créé mais certains documents n'ont pas pu être rattachés",
+    "documentsLoadError": "Impossible de charger les documents du sinistre.",
+    "documentsDetachError": "Impossible de retirer ce document du sinistre.",
+    "documentsDeleteError": "Impossible de supprimer ce document.",
+    "documentsDetachTitle": "Retirer la pièce du sinistre",
+    "documentsDetachMessage": "Le document « {name} » est actuellement lié au sinistre « {title} ».",
+    "documentsDeleteWarning": "Le document « {name} » sera supprimé définitivement du registre documentaire après retrait. Cette action est irréversible.",
+    "closeDocumentHint": "Ajouter les pièces de clôture (courrier, décompte, justificatif de remboursement...)",
+    "closeDocumentUploadError": "Le sinistre a été clôturé mais certains documents n'ont pas pu être rattachés",
+    "removeDocument": "Retirer",
+    "detachDocument": "Retirer du sinistre",
+    "documentsCount": "{count} document | {count} documents",
+    "noAttachedDocuments": "Aucun document joint pour ce sinistre.",
+    "empty": "Aucun sinistre sur ce filtre.",
+    "confirmDeleteTitle": "Supprimer le sinistre",
+    "confirmDeleteMessage": "Le sinistre « {title} » sera supprimé définitivement. Cette action est irréversible.",
+    "transmittedAtRequired": "La date de transmission à l'assurance est obligatoire.",
+    "invalidReimbursementAmount": "Le montant de remboursement doit être un nombre valide strictement supérieur à zéro.",
+    "legalCard": {
+      "title": "Délais légaux de déclaration",
+      "summary": "5 jours ouvrés pour un sinistre courant, 2 jours ouvrés pour un vol, et 10 jours après publication de l'arrêté pour une catastrophe naturelle.",
+      "currentLinkLabel": "Article L113-2 du code des assurances",
+      "currentLinkHref": "https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000035731302",
+      "naturalDisasterLinkLabel": "Article L125-2 du code des assurances",
+      "naturalDisasterLinkHref": "https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000047109081"
+    },
+    "types": {
+      "current": "Sinistre courant",
+      "natural_disaster": "Catastrophe naturelle",
+      "theft": "Vol"
+    },
+    "fields": {
+      "title": "Libellé",
+      "claimType": "Type de sinistre",
+      "declaredAt": "Date de survenance",
+      "publishedAt": "Date de publication de l'arrêté",
+      "publishedAtHint": "Obligatoire pour calculer le délai légal d'une catastrophe naturelle.",
+      "unit": "Lot concerné",
+      "description": "Description",
+      "documents": "Pièces jointes",
+      "attachedDocuments": "Documents déjà joints",
+      "status": "Statut",
+      "transmittedAt": "Date de transmission à l'assurance",
+      "transmittedAtHint": "La transmission à l'assureur fait passer le dossier en cours d'instruction.",
+      "reimbursementDate": "Date de remboursement",
+      "reimbursementAmount": "Montant remboursé (€)",
+      "reimbursementAmountHint": "Laissez vide si l'assurance n'a pas encore remboursé le dossier ou si le montant n'est pas connu.",
+      "closeDocuments": "Pièces de clôture"
+    },
+    "deadline": {
+      "remaining": "{days} jour(s) restant(s) — échéance au {date}",
+      "today": "Échéance aujourd'hui ({date})",
+      "missed": "Délai dépassé depuis le {date}",
+      "transmittedOnTime": "Transmis le {date} (dans le délai légal)",
+      "transmittedLate": "Transmis le {date} (hors délai légal)",
+      "reference": "Échéance légale : {date}"
+    },
     "statuses": {
       "open": "Ouvert",
       "in_progress": "En cours",
       "closed": "Clos"
+    },
+    "reimbursement": {
+      "dateAndAmount": "Remboursement : {amount} le {date}",
+      "amountOnly": "Remboursement : {amount}",
+      "dateOnly": "Date de remboursement : {date}",
+      "none": "Remboursement non renseigné"
     },
     "filters": {
       "open": "Ouverts",
@@ -881,7 +997,12 @@
     "keys": "Clés de répartition",
     "totalShares": "Tantièmes totaux",
     "keyMismatch": "La clé « {key} » totalise {sum} tantièmes sur {total} attendus.",
-    "legalNote": "La quote-part des parties communes afférente à chaque lot est proportionnelle à la valeur relative de chaque partie privative par rapport à l'ensemble des valeurs desdites parties."
+    "legalCard": {
+      "title": "Répartition des quotes-parts",
+      "summary": "La quote-part des parties communes afférente à chaque lot est proportionnelle à la valeur relative de chaque partie privative par rapport à l'ensemble des valeurs desdites parties.",
+      "linkLabel": "Article 5 de la loi n°65-557 du 10 juillet 1965",
+      "linkHref": "https://www.legifrance.gouv.fr/loda/article_lc/LEGIARTI000006460030"
+    }
   },
   "settings": {
     "subtitle": "Configuration de la résidence",

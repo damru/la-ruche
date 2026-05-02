@@ -61,7 +61,7 @@ Document annuel récapitulatif (nombre de lots, budget, données techniques) mis
 ### 1.4 Carnet d'entretien de l'immeuble
 
 **Référence :** Art. 18 loi 1965, décret n°2001-477 du 30 mai 2001 (service-public.fr/F2665)  
-**Couverture :** ⚠️ partielle (S01-S03, S05) — EP-009
+**Couverture :** ⚠️ partielle (S01-S03, S05-S08 ; PPT hors scope) — EP-009
 
 Le syndic tient à jour le carnet d'entretien, document obligatoire portant sur les parties communes.
 
@@ -71,23 +71,25 @@ Le syndic tient à jour le carnet d'entretien, document obligatoire portant sur 
 
 | Donnée | Couverture | Story |
 |---|---|---|
-| Adresse de l'immeuble | ⚠️ stockée via EP-001-S01 mais non exposée dans la vue carnet | EP-009-S06 |
-| Identité du syndic en exercice | ⚠️ stockée via EP-001-S01 mais non exposée dans la vue carnet | EP-009-S06 |
-| Références des contrats d'assurance souscrits par le syndicat + dates d'échéance | ⚠️ contrats gérés via EP-006-S05 mais non visibles depuis la vue carnet | EP-009-S07 |
+| Adresse de l'immeuble | ✅ visible dans l'en-tête réglementaire de la vue carnet | EP-009-S06 |
+| Identité du syndic en exercice | ✅ visible dans l'en-tête réglementaire de la vue carnet | EP-009-S06 |
+| Références des contrats d'assurance souscrits par le syndicat + dates d'échéance | ✅ listing consolidé dans la vue carnet | EP-009-S07 |
 
 *Mentions complémentaires (selon travaux et équipements) :*
 
 | Donnée | Couverture | Story |
 |---|---|---|
 | Travaux importants : année, nature, prestataire | ✅ entrées manuelles + alimentation auto depuis tâche clôturée | EP-009-S01/S02/S03 |
-| Références des contrats d'assurance dommages-ouvrage en cours de validité | ❌ non couverts | EP-009-S07 |
-| Références et dates d'échéance des contrats d'entretien et de maintenance d'équipements communs | ⚠️ `contract_id` sur entrée individuelle uniquement (EP-009-S05) ; pas de listing consolidé dans la vue carnet | EP-009-S08 |
+| Références des contrats d'assurance dommages-ouvrage en cours de validité | ✅ couvertes via le listing des contrats d'assurance actifs | EP-009-S07 |
+| Références et dates d'échéance des contrats d'entretien et de maintenance d'équipements communs | ✅ listing consolidé dans la vue carnet | EP-009-S08 |
 | Travaux prescrits dans le PPT et leur échéancier | ❌ hors scope post-MVP | EP-009-S04 |
 
 **Implémentation actuelle :**
 - Saisie manuelle d'interventions (titre, date, description, coût, prestataire, `contract_id`)
 - Alimentation automatique à la clôture d'une tâche prestataire (idempotent via `ON CONFLICT DO NOTHING` sur `task_id`)
 - Lien vers le contrat de prestation via `contract_id` (EP-009-S05)
+- En-tête réglementaire : adresse immeuble + syndic en exercice
+- Blocs dédiés aux contrats d'assurance et de maintenance actifs avec dates d'échéance
 
 **Hors scope post-MVP (EP-009-S04) :** Lien au Plan Pluriannuel de Travaux (PPT).
 
@@ -431,7 +433,7 @@ Le syndicat des copropriétaires est responsable de traitement. Les données tra
 ## 9. Sinistres
 
 **Référence :** Code des assurances, contrat multirisque immeuble  
-**Couverture :** ❌ non couverte — EP-008
+**Couverture :** ✅ couverte — EP-008
 
 | Type de sinistre | Délai de déclaration |
 |---|---|
@@ -442,6 +444,7 @@ Le syndicat des copropriétaires est responsable de traitement. Les données tra
 **Implications :**
 - l'Application doit afficher le délai restant sur un sinistre déclaré non encore transmis à l'assurance.
 - Alerte automatique si le délai légal approche.
+- La date de transmission à l'assurance doit être tracée et confrontée à l'échéance calculée.
 
 ---
 
@@ -491,5 +494,5 @@ Le syndic représente le syndicat des copropriétaires en justice, tant en deman
 | 7.1 | État daté (15 jours) | Décret 1967 art. 5 | ❌ | EP-002-S06 |
 | 7.2 | Pré-état daté | ALUR art. L721-2 | ❌ | EP-002-S07 |
 | 8 | RGPD + anonymisation | RGPD 2016/679 | ⚠️ | EP-002-S05 |
-| 9 | Sinistres (délais déclaration) | Code des assurances | ❌ | EP-008 |
+| 9 | Sinistres (délais déclaration) | Code des assurances | ✅ | EP-008 |
 | 10 | Représentation en justice + procédures en cours | Art. 18-I loi 1965 | ⚠️ | EP-002-S06, EP-002-S10 |

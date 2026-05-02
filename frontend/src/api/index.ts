@@ -4,7 +4,8 @@ import type {
   Meeting, Resolution, VoteResult,
   Budget, BudgetLine, LevyCall, WorksFund,
   VendorContract, ContractReminder,
-  Task, Claim, MaintenanceEntry,
+    Task, Claim, MaintenanceEntry,
+  LogbookSummary,
   Report, Consultation, ConsultationResults, VendorTask, VendorDocument,
   Document, UploadUrlResponse, DownloadUrlResponse,
   Building, Unit, User, AllocationKey, UnitShare,
@@ -210,6 +211,8 @@ export const contractsApi = {
   update: (id: string, data: Partial<VendorContract>) =>
     api.put<VendorContract>(`/contracts/${id}`, data),
   terminate: (id: string) =>
+    api.put(`/contracts/${id}/terminate`),
+  delete: (id: string) =>
     api.delete(`/contracts/${id}`),
   listAllReminders: () =>
     api.get<ContractReminder[]>('/contracts/reminders'),
@@ -265,16 +268,26 @@ export const claimsApi = {
     api.get<Claim[]>('/claims'),
   get: (id: string) =>
     api.get<Claim>(`/claims/${id}`),
-  create: (data: Partial<Claim>) =>
+  create: (data: { title: string; description?: string; claim_type: string; declared_at: string; published_at?: string; unit_id?: string }) =>
     api.post<Claim>('/claims', data),
-  update: (id: string, data: Partial<Claim>) =>
+  update: (id: string, data: { title: string; description?: string | null; claim_type: string; declared_at: string; published_at?: string | null; status: string; unit_id?: string | null; transmitted_at?: string | null; reimbursement_date?: string | null; reimbursement_amount?: string | null }) =>
     api.put<Claim>(`/claims/${id}`, data),
+  delete: (id: string) =>
+    api.delete(`/claims/${id}`),
+  listDocuments: (id: string) =>
+    api.get<Document[]>(`/claims/${id}/documents`),
+  attachDocument: (id: string, document_id: string) =>
+    api.post(`/claims/${id}/documents`, { document_id }),
+  detachDocument: (id: string, document_id: string) =>
+    api.delete(`/claims/${id}/documents/${document_id}`),
 }
 
 // ── Maintenance Log ───────────────────────────────────────────────
 export const maintenanceApi = {
   list: () =>
     api.get<MaintenanceEntry[]>('/logbook'),
+  summary: () =>
+    api.get<LogbookSummary>('/logbook/summary'),
   get: (id: string) =>
     api.get<MaintenanceEntry>(`/logbook/${id}`),
   create: (data: Partial<MaintenanceEntry>) =>

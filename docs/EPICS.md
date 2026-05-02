@@ -168,25 +168,25 @@ Tâches assignées en interne, lien tokenisé éphémère pour accès prestatair
 
 ### EP-008 — Sinistres
 
-**Statut :** en cours | **MVP :** oui | **Réf. PRD :** Gestion courante
+**Statut :** terminée | **MVP :** oui | **Réf. PRD :** Gestion courante
 
-**État code actuel :** stub/mock ; API sinistres non implémentée (`501`) et vue encore alimentée par données fictives.
+**État code actuel :** backend réel (`claim_type`, calcul d'échéance légale, transmission assurance, remboursement optionnel, pièces jointes, suppression) + frontend branché sur API réelle (création, édition, transmission, clôture, suppression, alertes, rattachement documentaire).
 
 Déclaration et suivi de sinistres (lot ou parties communes) avec documents associés.
 
 **Stories :**
 
-* `EP-008-S01` — Déclarer un sinistre avec type, description, date de survenance et documents associés
-* `EP-008-S02` — Calculer et afficher le délai légal de déclaration restant selon le type de sinistre (LEGAL.md §9)
-* `EP-008-S03` — Alerter automatiquement si le délai légal de déclaration approche (LEGAL.md §9)
-* `EP-008-S04` — Suivre le statut du sinistre jusqu'à transmission à l'assurance
-* `EP-008-S05` — Tracer la date de transmission à l'assurance et contrôler le respect du délai légal selon le type de sinistre (LEGAL.md §9)
+* `EP-008-S01` ✅ — Déclarer un sinistre avec type, description, date de survenance et documents associés
+* `EP-008-S02` ✅ — Calculer et afficher le délai légal de déclaration restant selon le type de sinistre (LEGAL.md §9)
+* `EP-008-S03` ✅ — Alerter automatiquement si le délai légal de déclaration approche (LEGAL.md §9)
+* `EP-008-S04` ✅ — Suivre le statut du sinistre avec actions contextuelles (`Modifier`, `Transmettre`, `Clore`, `Supprimer`) selon l'état courant
+* `EP-008-S05` ✅ — Tracer la date de transmission à l'assurance, le remboursement éventuel et contrôler le respect du délai légal selon le type de sinistre (LEGAL.md §9)
 
 ***
 
 ### EP-009 — Carnet d'entretien
 
-**Statut :** en cours (S01-S03, S05 terminées) | **MVP :** oui | **Réf. PRD :** Gestion courante
+**Statut :** terminée (`S04` hors scope post-MVP) | **MVP :** oui | **Réf. PRD :** Gestion courante
 
 **État code actuel :** backend réel (list, get, create, update, delete + auto-feed depuis tâche avec liens de traçabilité souples) + frontend branché (timeline, modale création, suppression, filtres calendaires). En-tête réglementaire et listing contrats encore absents.
 
@@ -199,9 +199,9 @@ Historique des interventions alimenté manuellement ou automatiquement depuis un
 * `EP-009-S03` ✅ — Alimenter automatiquement le carnet à chaque clôture effective d'une tâche (← EP-007-S05), y compris après réouverture, avec coût optionnel et sans cascade destructive tâche ↔ carnet
 * `EP-009-S04` ❌ (hors scope) — PPT : attacher le Plan Pluriannuel de Travaux et lier ses postes au carnet d'entretien (LEGAL.md §6.1) — différé post-MVP
 * `EP-009-S05` ✅ — Registre minimal des contrats et diagnostics liés à l'entretien : champ `contract_id` sur `maintenance_log` + champ `task_id` pour la traçabilité prestataire (LEGAL.md §1.4)
-* `EP-009-S06` — En-tête réglementaire du carnet : afficher dans la vue carnet l'adresse de l'immeuble et l'identité du syndic en exercice (depuis EP-001-S01), conformément au décret n°2001-477 art. 1 (LEGAL.md §1.4)
-* `EP-009-S07` — Référencer dans le carnet les contrats d'assurance souscrits par le syndicat (multirisque et dommages-ouvrage) avec leurs dates d'échéance, en lien avec EP-006-S05 (LEGAL.md §1.4)
-* `EP-009-S08` — Lister dans le carnet les contrats d'entretien et de maintenance d'équipements communs en cours (ascenseur, chaufferie…) avec leurs dates d'échéance, en lien avec EP-006 (LEGAL.md §1.4)
+* `EP-009-S06` ✅ — En-tête réglementaire du carnet : afficher dans la vue carnet l'adresse de l'immeuble et l'identité du syndic en exercice (depuis EP-001-S01), conformément au décret n°2001-477 art. 1 (LEGAL.md §1.4)
+* `EP-009-S07` ✅ — Référencer dans le carnet les contrats d'assurance souscrits par le syndicat (multirisque et dommages-ouvrage) avec leurs dates d'échéance, en lien avec EP-006-S05 (LEGAL.md §1.4)
+* `EP-009-S08` ✅ — Lister dans le carnet les contrats d'entretien et de maintenance d'équipements communs en cours (ascenseur, chaufferie…) avec leurs dates d'échéance, en lien avec EP-006 (LEGAL.md §1.4)
 
 ***
 
@@ -258,7 +258,7 @@ Export des données de la copropriété au format RNC et génération de la fich
 | §1.1 Immatriculation RNC | EP-012-S01, EP-012-S03 | Dépôt RNC reste manuel (hors API publique gouvernementale) |
 | §1.2 Règlement + EDD | EP-005-S06, EP-001-S09, EP-001-S10 | Contrôle documentaire avancé à implémenter |
 | §1.3 Fiche synthétique | EP-012-S02 | Génération annuelle non implémentée |
-| §1.4 Carnet d'entretien | EP-009-S01/S02/S03/S05/S06/S07/S08 | En-tête réglementaire (adresse + syndic), contrats assurance et d'entretien non encore visibles dans la vue carnet |
+| §1.4 Carnet d'entretien | EP-009-S01/S02/S03/S05/S06/S07/S08 | Couvert côté carnet ; PPT reste hors scope post-MVP |
 | §1.5 Liste des copropriétaires | EP-002-S01, EP-002-S04 | Données partiellement couvertes ; champ email à compléter |
 | §1.6 Espace en ligne sécurisé | EP-002/EP-003/EP-004/EP-005/EP-006/EP-009 | Couverture native (c'est l'Application elle-même) |
 | §2.1 Intégrité somme tantièmes | EP-001-S07, EP-004-S07 | Blocage dur backend à finaliser bout-en-bout |
@@ -284,7 +284,7 @@ Export des données de la copropriété au format RNC et génération de la fich
 | §7.1 État daté (15 jours) | EP-002-S06 | Workflow non implémenté |
 | §7.2 Pré-état daté | EP-002-S07 | Workflow non implémenté |
 | §8 RGPD (anonymisation + export) | EP-002-S05, EP-002-S09 | Export + anonymisation bout-en-bout à finaliser |
-| §9 Sinistres (délais) | EP-008-S01/S02/S03/S04/S05 | API + UI encore en mode stub/mock |
+| §9 Sinistres (délais) | EP-008-S01/S02/S03/S04/S05 | Couvert : workflow réel, alertes de délai, transmission assurance et pièces jointes |
 | §10 Représentation en justice + procédures | EP-002-S06, EP-002-S10 | Registre des procédures judiciaires non implémenté |
 
 ***

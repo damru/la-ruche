@@ -4,8 +4,8 @@ use axum::{
     extract::{Path, State},
     http::StatusCode,
 };
-use chrono::NaiveDate;
-use serde::Deserialize;
+use chrono::{NaiveDate, Utc};
+use serde::{Deserialize, Serialize};
 use sqlx::types::Decimal;
 use std::sync::Arc;
 use uuid::Uuid;
@@ -42,6 +42,102 @@ pub struct UpdateLogbookInput {
     pub contract_id: Option<Uuid>,
 }
 
+#[derive(Serialize)]
+pub struct LogbookBuildingInfo {
+    pub name: String,
+    pub address_line1: String,
+    pub address_line2: Option<String>,
+    pub postal_code: String,
+    pub city: String,
+}
+
+#[derive(Serialize)]
+pub struct LogbookManagerInfo {
+    pub first_name: String,
+    pub last_name: String,
+    pub email: String,
+    pub phone: Option<String>,
+}
+
+#[derive(Serialize)]
+pub struct LogbookContractInfo {
+    pub id: Uuid,
+    pub vendor_name: String,
+    pub subject: String,
+    pub contract_type: String,
+    pub end_date: Option<NaiveDate>,
+    pub status: String,
+}
+
+#[derive(Serialize)]
+pub struct LogbookSummaryResponse {
+    pub building: LogbookBuildingInfo,
+    pub current_manager: Option<LogbookManagerInfo>,
+    pub insurance_contracts: Vec<LogbookContractInfo>,
+    pub maintenance_contracts: Vec<LogbookContractInfo>,
+}
+
+fn is_contract_active(contract: &db::contract::VendorContractRow, today: NaiveDate) -> bool {
+    contract.status == "active" && contract.end_date.is_none_or(|date| date >= today)
+}
+
+fn is_maintenance_contract(contract_type: &str) -> bool {
+    matches!(
+        contract_type,
+        "maintenance" | "service" | "energy" | "water" | "cleaning" | "green_spaces"
+    )
+}
+
+fn map_contract(contract: db::contract::VendorContractRow) -> LogbookContractInfo {
+    LogbookContractInfo {
+        id: contract.id,
+        vendor_name: contract.vendor_name,
+        subject: contract.subject,
+        contract_type: contract.contract_type,
+        end_date: contract.end_date,
+        status: contract.status,
+    }
+}
+
+fn parse_manager_info(user: &serde_json::Value) -> AppResult<Option<LogbookManagerInfo>> {
+    let roles = user
+        .get("roles")
+        .and_then(serde_json::Value::as_array)
+        .map(|roles| {
+            roles
+                .iter()
+                .filter_map(serde_json::Value::as_str)
+                .collect::<Vec<_>>()
+        })
+        .unwrap_or_default();
+
+    if !roles.contains(&"manager") {
+        return Ok(None);
+    }
+
+    let require_field = |field: &str| {
+        user.get(field)
+            .and_then(serde_json::Value::as_str)
+            .map(ToString::to_string)
+            .ok_or_else(|| {
+                AppError::Internal(anyhow::anyhow!(
+                    "manager row missing '{}' in logbook summary",
+                    field
+                ))
+            })
+    };
+
+    Ok(Some(LogbookManagerInfo {
+        first_name: require_field("first_name")?,
+        last_name: require_field("last_name")?,
+        email: require_field("email")?,
+        phone: user
+            .get("phone")
+            .and_then(serde_json::Value::as_str)
+            .map(ToString::to_string),
+    }))
+}
+
 /// All authenticated users can list the maintenance log.
 pub async fn list(
     auth: AuthUser,
@@ -49,6 +145,56 @@ pub async fn list(
 ) -> AppResult<Json<serde_json::Value>> {
     let rows = db::maintenance_log::list(&state.pool, auth.building_id).await?;
     json_value(rows)
+}
+
+/// All authenticated users can access the regulatory summary of the logbook.
+pub async fn summary(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+) -> AppResult<Json<LogbookSummaryResponse>> {
+    let building = db::building::get(&state.pool, auth.building_id)
+        .await?
+        .ok_or(AppError::NotFound)?;
+    let users = db::user::list(&state.pool, auth.building_id).await?;
+    let today = Utc::now().date_naive();
+
+    let current_manager = users
+        .iter()
+        .map(parse_manager_info)
+        .find_map(|manager| manager.transpose())
+        .transpose()?;
+
+    let contracts = db::contract::list(&state.pool, auth.building_id).await?;
+    let active_contracts = contracts
+        .into_iter()
+        .filter(|contract| is_contract_active(contract, today))
+        .collect::<Vec<_>>();
+
+    let insurance_contracts = active_contracts
+        .iter()
+        .filter(|contract| contract.contract_type == "insurance")
+        .cloned()
+        .map(map_contract)
+        .collect();
+
+    let maintenance_contracts = active_contracts
+        .into_iter()
+        .filter(|contract| is_maintenance_contract(&contract.contract_type))
+        .map(map_contract)
+        .collect();
+
+    Ok(Json(LogbookSummaryResponse {
+        building: LogbookBuildingInfo {
+            name: building.name,
+            address_line1: building.address_line1,
+            address_line2: building.address_line2,
+            postal_code: building.postal_code,
+            city: building.city,
+        },
+        current_manager,
+        insurance_contracts,
+        maintenance_contracts,
+    }))
 }
 
 /// All authenticated users can view a single log entry.

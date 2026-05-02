@@ -4,36 +4,67 @@
 // Arrow shifts to always point at the trigger center even when the popup is clamped.
 import { ref, onUnmounted } from 'vue'
 
-defineProps<{ content: string }>()
+const props = defineProps<{
+  content: string
+  linkHref?: string
+  linkLabel?: string
+}>()
 
 const visible = ref(false)
 const triggerRef = ref<HTMLElement | null>(null)
-const popupRef  = ref<HTMLElement | null>(null)
+const popupRef = ref<HTMLElement | null>(null)
+let hideTimeout: ReturnType<typeof window.setTimeout> | null = null
 
 // ── Computed position state ────────────────────────────────────────
-const popupStyle  = ref<Record<string, string>>({})
-const arrowStyle  = ref<Record<string, string>>({})
-const arrowDir    = ref<'up' | 'down'>('down')
+const popupStyle = ref<Record<string, string>>({})
+const arrowStyle = ref<Record<string, string>>({})
+const arrowDir = ref<'up' | 'down'>('down')
 
-const POPUP_W  = 260
-const ARROW_H  = 10  // tip-to-base height of the CSS triangle
-const MARGIN   = 10  // minimum distance from screen edges
+const POPUP_W = 280 // Accommodates the legal summary plus the separator and Article link without wrapping too aggressively
+const ARROW_H = 10
+const MARGIN = 10
+const HIDE_DELAY_MS = 240 // Gives enough time to move from the trigger to the popup without accidental dismissal
+
+function clearHideTimeout() {
+  if (hideTimeout !== null) {
+    window.clearTimeout(hideTimeout)
+    hideTimeout = null
+  }
+}
 
 // ── Show / Hide ───────────────────────────────────────────────────
 // The popup node is always in the DOM (v-show) so offsetHeight is
 // immediately available — no rAF or nextTick needed.
 function show() {
+  clearHideTimeout()
   recalc()
   visible.value = true
   window.addEventListener('resize', recalc)
   window.addEventListener('scroll', recalc, { passive: true })
 }
+
+function scheduleHide() {
+  clearHideTimeout()
+  hideTimeout = window.setTimeout(hide, HIDE_DELAY_MS)
+}
+
 function hide() {
+  clearHideTimeout()
   visible.value = false
   cleanup()
 }
 
+function toggle() {
+  if (visible.value) {
+    hide()
+    return
+  }
+
+  show()
+}
+
 function cleanup() {
+  clearHideTimeout()
   window.removeEventListener('resize', recalc)
   window.removeEventListener('scroll', recalc)
 }
@@ -44,13 +75,13 @@ onUnmounted(cleanup)
 function recalc() {
   if (!triggerRef.value || !popupRef.value) return
 
-  const tr  = triggerRef.value.getBoundingClientRect()
-  const vw  = window.innerWidth
-  const vh  = window.innerHeight
+  const tr = triggerRef.value.getBoundingClientRect()
+  const vw = window.innerWidth
+  const vh = window.innerHeight
   const popH = popupRef.value.offsetHeight || 80
 
   // Horizontal: center on trigger, clamp to viewport
-  const idealLeft   = tr.left + tr.width / 2 - POPUP_W / 2
+  const idealLeft = tr.left + tr.width / 2 - POPUP_W / 2
   const clampedLeft = Math.max(MARGIN, Math.min(idealLeft, vw - POPUP_W - MARGIN))
 
   // Vertical: prefer above, flip below if not enough space
@@ -76,8 +107,8 @@ function recalc() {
   top = Math.max(MARGIN, Math.min(top, vh - popH - MARGIN))
 
   popupStyle.value = {
-    left:  `${clampedLeft}px`,
-    top:   `${top}px`,
+    left: `${clampedLeft}px`,
+    top: `${top}px`,
     width: `${POPUP_W}px`,
   }
 
@@ -97,15 +128,42 @@ function recalc() {
       class="c-tooltip-trigger"
       :class="{ 'c-tooltip-trigger--active': visible }"
       :aria-expanded="visible"
-      :aria-label="content"
+      :aria-label="props.content"
       @mouseenter="show"
-      @mouseleave="hide"
+      @mouseleave="scheduleHide"
       @focus="show"
-      @blur="hide"
+      @blur="scheduleHide"
+      @click="toggle"
+      @keydown.enter.prevent="toggle"
+      @keydown.space.prevent="toggle"
+      @keydown.escape.prevent="hide"
     >
       <slot>
-        <!-- Default: info circle icon -->
-        <CIconInfo aria-hidden="true" />
+        <!-- Keep this inline icon local to the tooltip so the legal-info marker stays visually stable. -->
+        <svg
+          class="c-tooltip-trigger__icon"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <circle
+            cx="12"
+            cy="12"
+            r="10"
+            fill="currentColor"
+          />
+          <path
+            d="M12 10.25v5.25"
+            stroke="var(--color-surface)"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
+          <circle
+            cx="12"
+            cy="7.25"
+            r="1.25"
+            fill="var(--color-surface)"
+          />
+        </svg>
       </slot>
     </button>
 
@@ -117,8 +175,28 @@ function recalc() {
         :style="popupStyle"
         role="tooltip"
         :aria-hidden="!visible"
+        @mouseenter="show"
+        @mouseleave="scheduleHide"
+        @focusin="show"
+        @focusout="scheduleHide"
       >
-        {{ content }}
+        <div class="c-tooltip-popup__content">
+          {{ props.content }}
+        </div>
+        <template v-if="props.linkHref && props.linkLabel">
+          <span
+            class="c-tooltip-popup__separator"
+            aria-hidden="true"
+          ></span>
+          <a
+            class="c-tooltip-popup__link"
+            :href="props.linkHref"
+            target="_blank"
+            rel="noreferrer noopener"
+          >
+            {{ props.linkLabel }}
+          </a>
+        </template>
         <span
           class="c-tooltip-arrow"
           :style="arrowStyle"
@@ -163,6 +241,11 @@ function recalc() {
   opacity: 1;
   color: var(--color-primary);
 }
+.c-tooltip-trigger__icon {
+  display: inline-flex;
+  width: 14px;
+  height: 14px;
+}
 :slotted(svg) { width: 16px; height: 16px; }
 </style>
 
@@ -181,6 +264,27 @@ function recalc() {
   line-height: 1.55;
   color: var(--color-on-surface);
   box-shadow: var(--shadow-md);
+}
+
+.c-tooltip-popup__content {
+  margin: 0;
+}
+
+.c-tooltip-popup__separator {
+  display: block;
+  margin: 10px 0 8px;
+  border-top: 1px solid var(--color-outline-variant);
+}
+
+.c-tooltip-popup__link {
+  color: var(--color-primary);
+  font-weight: var(--fw-semibold);
+  text-decoration: none;
+}
+
+.c-tooltip-popup__link:hover,
+.c-tooltip-popup__link:focus-visible {
+  text-decoration: underline;
 }
 
 .c-tooltip-popup--hidden {
