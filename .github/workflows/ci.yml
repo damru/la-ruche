@@ -13,6 +13,7 @@ concurrency:
 env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
+  SQLX_ARTIFACT_NAME: sqlx-files
 
 jobs:
   # ── Tests backend ──────────────────────────────────────────────
@@ -204,14 +205,14 @@ jobs:
       - name: Upload SQLx offline files
         uses: actions/upload-artifact@v7
         with:
-          name: sqlx-files
+          name: ${{ env.SQLX_ARTIFACT_NAME }}
           path: backend/.sqlx/
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 1
 
   docker-push:
-    name: Docker push
+    name: Docker — push
     runs-on: ubuntu-latest
     needs: [test-backend, test-frontend, docker-build]
     steps:
@@ -220,7 +221,7 @@ jobs:
       - name: Download SQLx offline files
         uses: actions/download-artifact@v8
         with:
-          name: sqlx-files
+          name: ${{ env.SQLX_ARTIFACT_NAME }}
           path: backend/.sqlx/
 
       - name: Docker meta
