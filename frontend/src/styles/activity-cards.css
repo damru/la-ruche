@@ -42,6 +42,7 @@
 
 .activity-card__chips,
 .activity-card__meta,
+.activity-card__documents,
 .activity-card__actions,
 .activity-card__secondary-actions,
 .activity-card__note {
@@ -75,11 +76,18 @@
 }
 
 .activity-card__subtitle,
+.activity-card__description,
 .activity-card__meta,
+.activity-card__documents,
 .activity-card__note {
   color: var(--color-on-surface-variant);
   font-size: var(--text-xs);
   line-height: 1.4;
+}
+
+.activity-card__description {
+  margin: calc(var(--space-2) * -1) 0 0;
+  white-space: pre-wrap;
 }
 
 .activity-card__line {

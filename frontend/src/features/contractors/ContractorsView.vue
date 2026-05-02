@@ -293,15 +293,21 @@ async function confirmDelete() {
             :key="c.id"
             class="contractor-card"
           >
-            <div class="contractor-header">
-              <div :class="['contractor-domain-icon', domainTone(c.domains)]">
-                <component
-                  :is="domainIcon(c.domains)"
-                  class="domain-icon"
-                  aria-hidden="true"
-                />
+            <div class="activity-card__head">
+              <div class="activity-card__header-row">
+                <div :class="['activity-card__icon', 'contractor-card__icon', domainTone(c.domains)]">
+                  <component
+                    :is="domainIcon(c.domains)"
+                    class="contractor-card__type-icon"
+                    aria-hidden="true"
+                  />
+                </div>
+                <h3 class="activity-card__title contractor-name">
+                  {{ c.name }}
+                </h3>
               </div>
-              <div class="contractor-header__badges">
+
+              <div class="activity-card__chips">
                 <CBadge
                   v-for="d in c.domains"
                   :key="d"
@@ -311,10 +317,6 @@ async function confirmDelete() {
                 </CBadge>
               </div>
             </div>
-
-            <h3 class="title-md contractor-name">
-              {{ c.name }}
-            </h3>
 
             <div
               v-if="c.email || c.phone"
@@ -531,44 +533,22 @@ async function confirmDelete() {
 .contractor-card {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
-}
-
-.contractor-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
   gap: var(--space-3);
-}
-
-.contractor-domain-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: var(--radius-md);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  background: var(--tone-bg, var(--color-secondary-container));
-  color: var(--tone-fg, var(--color-primary));
-}
-
-.domain-icon {
-  width: 28px;
-  height: 28px;
-  flex-shrink: 0;
-}
-
-.contractor-header__badges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  justify-content: flex-end;
-  margin-left: auto;
 }
 
 .contractor-name {
   margin: 0;
+}
+
+.contractor-card__icon {
+  background: var(--tone-bg, var(--color-secondary-container));
+  color: var(--tone-fg, var(--color-primary));
+}
+
+.contractor-card__type-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
 }
 
 .contractor-contacts {

@@ -486,9 +486,26 @@ function authorName(r: Report): string {
   return `${r.author_first_name} ${r.author_last_name}`
 }
 
-function linkedTaskStatusLabel(report: Report): string | null {
+function linkedTaskStatusChipLabel(report: Report): string | null {
   if (!report.task_status) return null
-  return t('reports.linkedTaskStatus', { status: t(`tasks.statuses.${report.task_status}`) })
+  return t(`reports.linkedTaskChip.${report.task_status}`)
+}
+
+function linkedTaskStatusVariant(report: Report): 'valid' | 'open' | 'pending' | 'closed' | 'default' {
+  if (!report.task_status) return 'default'
+  switch (report.task_status) {
+    case 'closed':
+      return 'valid'
+    case 'in_progress':
+      return 'open'
+    case 'awaiting_vendor':
+    case 'awaiting_validation':
+      return 'pending'
+    case 'cancelled':
+      return 'closed'
+    default:
+      return 'default'
+  }
 }
 
 function photoPreview(file: File): string {
@@ -586,6 +603,17 @@ function photoPreview(file: File): string {
                 </CBadge>
               </div>
 
+              <div
+                v-if="linkedTaskStatusChipLabel(r)"
+                class="activity-card__chips"
+              >
+                <CBadge
+                  :variant="linkedTaskStatusVariant(r)"
+                >
+                  {{ linkedTaskStatusChipLabel(r) }}
+                </CBadge>
+              </div>
+
               <div class="activity-card__stack">
                 <div class="activity-card__subtitle">
                   <span class="activity-card__line">
@@ -593,6 +621,13 @@ function photoPreview(file: File): string {
                     {{ unitLabel(r.unit_id) }}
                   </span>
                 </div>
+
+                <p
+                  v-if="r.description"
+                  class="activity-card__description"
+                >
+                  {{ r.description }}
+                </p>
 
                 <div class="activity-card__meta">
                   <span class="activity-card__line">
@@ -603,6 +638,9 @@ function photoPreview(file: File): string {
                     <CIconUser />
                     {{ authorName(r) }}
                   </span>
+                </div>
+
+                <div class="activity-card__documents">
                   <button
                     v-if="r.document_count > 0"
                     class="activity-card__line report-card__photo-button"
@@ -666,16 +704,6 @@ function photoPreview(file: File): string {
                     </CBtn>
                   </div>
                 </template>
-
-                <div
-                  v-if="linkedTaskStatusLabel(r)"
-                  class="activity-card__note"
-                >
-                  <span class="activity-card__line">
-                    <CIconCheckCircle />
-                    {{ linkedTaskStatusLabel(r) }}
-                  </span>
-                </div>
               </div>
             </div>
           </CCard>

@@ -899,6 +899,13 @@ async function submitDelete() {
                   </span>
                 </div>
 
+                <p
+                  v-if="claim.description"
+                  class="activity-card__description"
+                >
+                  {{ claim.description }}
+                </p>
+
                 <div class="activity-card__meta">
                   <span class="activity-card__line">
                     <CIconCalendar />
@@ -908,6 +915,9 @@ async function submitDelete() {
                     <CIconUser />
                     {{ creatorName(claim.created_by) }}
                   </span>
+                </div>
+
+                <div class="activity-card__documents">
                   <button
                     v-if="claim.document_count > 0"
                     class="activity-card__line claim-card__documents-button"

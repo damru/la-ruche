@@ -703,6 +703,13 @@ function copyToClipboard(text: string) {
                   </span>
                 </div>
 
+                <p
+                  v-if="task.description"
+                  class="activity-card__description"
+                >
+                  {{ task.description }}
+                </p>
+
                 <div class="activity-card__meta">
                   <span class="activity-card__line">
                     <CIconCalendar />
@@ -712,6 +719,9 @@ function copyToClipboard(text: string) {
                     <CIconUser />
                     {{ creatorName(task.created_by) }}
                   </span>
+                </div>
+
+                <div class="activity-card__documents">
                   <button
                     v-if="task.document_count > 0"
                     class="activity-card__line task-card__documents-button"

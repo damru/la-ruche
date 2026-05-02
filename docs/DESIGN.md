@@ -184,6 +184,7 @@ Références d'implémentation : `frontend/src/composables/usePageLoader.ts`, `f
 La vue `Contrats` affiche en tête les rappels à traiter, avec une action d’acquittement visible sans navigation secondaire.
 
 - L’en-tête des cartes Contrat reprend le même pattern que les cartes Opérations : icône métier, titre principal et chip de statut sur une même ligne, puis chips secondaires sur une ligne dédiée.
+- Les cartes `Prestataires` reprennent la même grammaire d’en-tête, sans chip de statut quand aucune information de cycle de vie n’existe.
 - Les pièces justificatives d’un contrat se gèrent directement depuis la modale de création / modification, sans bouton documentaire dédié sur la carte.
 - Chaque carte Contrat rappelle aussi le nombre de documents actuellement liés pour éviter d’ouvrir la modale à vide.
 - La modale d’édition liste les pièces déjà liées avec deux issues explicites : retirer le lien seulement, ou retirer le lien puis supprimer définitivement le document.
@@ -218,7 +219,9 @@ Les cartes de liste des vues `Signalements`, `Tâches` et `Sinistres` partagent 
 - ligne 1 : icône métier, titre principal, puis chip de statut alignée à droite ;
 - ligne 2 : chips secondaires éventuelles (priorité, catégorie, délai, indicateur métier) ;
 - ligne 3 : ligne de contexte principale (localisation si elle existe, sinon information métier équivalente comme le prestataire assigné) ;
-- ligne 4 : métadonnées compactes avec icônes (`mise à jour`, `acteur de référence selon les données disponibles`, `documents liés`) ;
+- ligne 4 : description courte éventuelle, placée juste sous le contexte primaire ;
+- ligne 5 : métadonnées compactes avec icônes (`mise à jour`, `acteur de référence selon les données disponibles`) ;
+- ligne 6 : hint `documents liés` sur sa propre ligne, avec le même ton visuel que les métadonnées et ouverture directe de la modale de téléchargement ;
 - séparateur discret ;
 - ligne d'actions avec `Modifier` puis une action contextuelle accentée ;
 - bloc informatif secondaire pour les éléments métier complémentaires (délai légal, remboursement, lien prestataire, historique, etc.).
@@ -227,8 +230,9 @@ Contraintes complémentaires :
 
 - les listes sont triées par `dernière modification` décroissante ;
 - la ligne de contexte principale, la ligne de métadonnées et la ligne d’informations secondaires partagent la même hiérarchie visuelle (`texte secondaire`, taille compacte, séparateurs `•` entre éléments d’une même ligne) ;
-- la description n’est pas affichée dans ces cartes de liste ;
-- cliquer sur la métadonnée `documents liés` ouvre une modale listant les fichiers téléchargeables ;
+- la description redevient visible si elle existe, immédiatement sous la localisation / le contexte principal ;
+- cliquer sur le hint `documents liés` ouvre une modale listant les fichiers téléchargeables ;
+- le statut de tâche liée d’un `Signalement` est condensé dans une chip dédiée plutôt que répété en ligne secondaire ;
 - la carte `Sinistre` n'expose jamais `Supprimer` dans la liste ; cette action reste confinée à la modale d'édition ;
 - l'ossature reste commune mais chaque entité peut substituer un équivalent métier quand une donnée n'existe pas (ex. `prestataire assigné` au lieu d'une localisation stricte sur les tâches).
 

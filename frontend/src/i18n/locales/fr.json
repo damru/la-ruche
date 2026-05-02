@@ -757,7 +757,14 @@
     "updatedAt": "Mis à jour {date}",
     "documentsCount": "{count} document lié | {count} documents liés",
     "noLinkedDocuments": "Aucun document lié à ce signalement.",
-    "linkedTaskStatus": "Tâche liée : {status}",
+    "linkedTaskChip": {
+      "open": "Tâche ouverte",
+      "in_progress": "Tâche en cours",
+      "awaiting_vendor": "Tâche côté prestataire",
+      "awaiting_validation": "Tâche à valider",
+      "closed": "Tâche terminée",
+      "cancelled": "Tâche annulée"
+    },
     "photos": "Photos",
     "addPhotos": "Ajouter des photos",
     "attachedPhotos": "Photos déjà jointes",
