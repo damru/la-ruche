@@ -104,12 +104,12 @@
     "myAccount": "Mon compte",
     "mobile": {
       "dashboard": "Accueil",
-      "assemblies": "Signalements",
-      "budget": "Prestataires",
+      "assemblies": "AG",
+      "budget": "Budget",
       "documents": "Docs",
       "tasks": "Tâches",
       "consultations": "Consult.",
-      "reports": "Signaux",
+      "reports": "Signalements",
       "contracts": "Contrats",
       "claims": "Sinistres",
       "maintenance": "Carnet",
@@ -117,7 +117,7 @@
       "residents": "Copro.",
       "residence-building": "Infos",
       "residence-keys": "Clés",
-      "contractors": "Presta."
+      "contractors": "Prestataires"
     },
     "notifications": "Notifications",
     "logout": "Se déconnecter",
