@@ -104,8 +104,8 @@
     "myAccount": "Mon compte",
     "mobile": {
       "dashboard": "Accueil",
-      "assemblies": "AG",
-      "budget": "Budget",
+      "assemblies": "Signalements",
+      "budget": "Prestataires",
       "documents": "Docs",
       "tasks": "Tâches",
       "consultations": "Consult.",
