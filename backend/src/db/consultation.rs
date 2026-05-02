@@ -68,13 +68,13 @@ pub async fn list(
                 "title": r.try_get::<String, _>("title")?,
                 "description": r.try_get::<Option<String>, _>("description")?,
                 "status": r.try_get::<String, _>("status")?,
-                "visible_to_roles": r.try_get::<Vec<String>, _>("visible_to_roles")?,
-                "closed_at": r.try_get::<Option<DateTime<Utc>>, _>("closed_at")?,
-                "created_at": r.try_get::<DateTime<Utc>, _>("created_at")?,
-                "updated_at": r.try_get::<DateTime<Utc>, _>("updated_at")?,
-                "total_responses": r.try_get::<i64, _>("total_responses")?,
-                "my_choice_ids": r.try_get::<serde_json::Value, _>("my_choice_ids")?,
-                "choices": r.try_get::<serde_json::Value, _>("choices")?,
+                 "visible_to_roles": r.try_get::<Vec<String>, _>("visible_to_roles")?,
+                 "closed_at": r.try_get::<Option<DateTime<Utc>>, _>("closed_at")?,
+                 "created_at": r.try_get::<DateTime<Utc>, _>("created_at")?,
+                 "updated_at": r.try_get::<DateTime<Utc>, _>("updated_at")?,
+                 "total_responses": r.try_get::<i64, _>("total_responses")?,
+                 "my_choice_ids": r.try_get::<serde_json::Value, _>("my_choice_ids")?,
+                 "choices": r.try_get::<serde_json::Value, _>("choices")?,
             }))
         })
         .collect::<Result<Vec<_>, _>>()

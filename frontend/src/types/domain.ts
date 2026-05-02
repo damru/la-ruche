@@ -219,7 +219,7 @@ export interface Task {
   contractor_id?: string
   contractor_name?: string
   assigned_to?: string
-  created_by?: string
+  created_by: string
   /** True when a vendor token is active — the raw token UUID is never returned by list/get. */
   has_vendor_token?: boolean
   token_expires_at?: string
