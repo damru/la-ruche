@@ -116,20 +116,6 @@ jobs:
           SQLX_OFFLINE: true
         run: cargo check
 
-      - name: Clean unused Cargo cache
-        run: |
-          cargo install cargo-sweep --locked
-          cargo sweep --installed
-
-      - name: Upload SQLx offline files
-        uses: actions/upload-artifact@v7
-        with:
-          name: sqlx-files
-          path: backend/.sqlx/
-          include-hidden-files: true
-          if-no-files-found: error
-          retention-days: 1
-
   # ── Tests frontend ─────────────────────────────────────────────
   test-frontend:
     name: Frontend — typecheck + lint
@@ -166,9 +152,76 @@ jobs:
   docker-build:
     name: Docker build
     runs-on: ubuntu-latest
-    needs: [test-backend, test-frontend]
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_DB: laruche_test
+          POSTGRES_USER: laruche
+          POSTGRES_PASSWORD: laruche
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v6
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install sqlx-cli
+        working-directory: ./backend
+        run: cargo install sqlx-cli --no-default-features --features postgres --locked
+
+      - name: Run migrations
+        working-directory: ./backend
+        env:
+          DATABASE_URL: postgres://laruche:laruche@localhost:5432/laruche_test
+        run: sqlx migrate run
+
+      - name: Generate SQLx offline files
+        working-directory: ./backend
+        env:
+          DATABASE_URL: postgres://laruche:laruche@localhost:5432/laruche_test
+        run: cargo sqlx prepare
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: false
+          cache-from: type=gha,scope=docker-ci
+          cache-to: type=gha,mode=max,scope=docker-ci
+          build-args: |
+            CARGO_PROFILE=release
+            SQLX_OFFLINE=true
+
+      - name: Upload SQLx offline files
+        uses: actions/upload-artifact@v7
+        with:
+          name: sqlx-files
+          path: backend/.sqlx/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 1
+
+  docker-push:
+    name: Docker push
+    runs-on: ubuntu-latest
+    needs: [test-backend, test-frontend, docker-build]
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Download SQLx offline files
+        uses: actions/download-artifact@v8
+        with:
+          name: sqlx-files
+          path: backend/.sqlx/
 
       - name: Docker meta
         id: meta
@@ -182,12 +235,6 @@ jobs:
             type=schedule,pattern=nightly
             type=schedule,pattern={{date 'YYYYMMDD'}}
             type=sha
-
-      - name: Download SQLx offline files
-        uses: actions/download-artifact@v8
-        with:
-          name: sqlx-files
-          path: backend/.sqlx/
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
@@ -206,8 +253,8 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=docker-ci
+          cache-to: type=gha,mode=max,scope=docker-ci
           build-args: |
             CARGO_PROFILE=release
             SQLX_OFFLINE=true
