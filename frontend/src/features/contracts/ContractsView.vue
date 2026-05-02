@@ -385,34 +385,36 @@ async function confirmTerminateContract() {
             :shadow="effectiveStatus(contract) === 'active'"
             :class="['contract-card', { 'card--terminated': effectiveStatus(contract) !== 'active' }]"
           >
-            <div class="contract-header">
-              <div class="contract-type">
-                <div :class="['contract-type__icon', contractIconTone(contract)]">
+            <div class="activity-card__head">
+              <div class="activity-card__header-row">
+                <div :class="['activity-card__icon', 'contract-card__icon', contractIconTone(contract)]">
                   <component
                     :is="contractTypeIcon(contract.contract_type)"
-                    class="type-icon"
+                    class="contract-card__type-icon"
                     aria-hidden="true"
                   />
                 </div>
+                <h3 class="activity-card__title vendor-name">
+                  {{ contract.vendor_name }}
+                </h3>
+                <CBadge
+                  :variant="statusVariant(effectiveStatus(contract))"
+                  dot
+                  class="activity-card__status"
+                >
+                  {{ t(`contracts.statuses.${effectiveStatus(contract)}`) }}
+                </CBadge>
               </div>
-              <div class="contract-header__chips">
+
+              <div class="activity-card__chips">
                 <CBadge
                   variant="default"
                 >
                   {{ t(`contracts.types.${contract.contract_type}`) }}
                 </CBadge>
-                <CBadge
-                  :variant="statusVariant(effectiveStatus(contract))"
-                  dot
-                >
-                  {{ t(`contracts.statuses.${effectiveStatus(contract)}`) }}
-                </CBadge>
               </div>
             </div>
 
-            <h3 class="title-md vendor-name">
-              {{ contract.vendor_name }}
-            </h3>
             <p class="body-sm contract-subject">
               {{ contract.subject }}
             </p>
@@ -583,32 +585,14 @@ async function confirmTerminateContract() {
   color: var(--color-on-surface-variant);
 }
 
-.contract-card { display: flex; flex-direction: column; gap: 10px; }
-.contract-header { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); }
-.contract-type { display: flex; align-items: center; gap: var(--space-3); flex-shrink: 0; }
-.contract-header__chips {
-  display: flex;
-  flex: 1 1 auto;
-  min-width: 0;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  justify-content: flex-end;
-  margin-left: auto;
-}
-.contract-type__icon {
-  width: 48px;
-  height: 48px;
-  border-radius: var(--radius-md);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
+.contract-card { display: flex; flex-direction: column; gap: var(--space-3); }
+.contract-card__icon {
   background: var(--tone-bg, var(--color-secondary-container));
   color: var(--tone-fg, var(--color-primary));
 }
-.type-icon {
-  width: 28px;
-  height: 28px;
+.contract-card__type-icon {
+  width: 20px;
+  height: 20px;
   flex-shrink: 0;
 }
 .contract-card__bottom {
@@ -632,7 +616,10 @@ async function confirmTerminateContract() {
   flex-wrap: wrap;
 }
 .vendor-name { margin: 0; }
-.contract-subject { color: var(--color-on-surface-variant); }
+.contract-subject {
+  margin: 0;
+  color: var(--color-on-surface-variant);
+}
 
 .contract-details { display: flex; flex-direction: column; gap: var(--space-1); }
 .detail-row { display: flex; justify-content: space-between; font-size: var(--text-sm); }
@@ -647,15 +634,6 @@ async function confirmTerminateContract() {
 @media (max-width: 900px) {
   .reminder-row {
     flex-wrap: wrap;
-  }
-
-  .contract-header {
-    flex-direction: row;
-    align-items: flex-start;
-  }
-
-  .contract-header__chips {
-    justify-content: flex-end;
   }
 
   .contract-actions {

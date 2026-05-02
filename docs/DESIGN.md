@@ -183,6 +183,7 @@ Références d'implémentation : `frontend/src/composables/usePageLoader.ts`, `f
 
 La vue `Contrats` affiche en tête les rappels à traiter, avec une action d’acquittement visible sans navigation secondaire.
 
+- L’en-tête des cartes Contrat reprend le même pattern que les cartes Opérations : icône métier, titre principal et chip de statut sur une même ligne, puis chips secondaires sur une ligne dédiée.
 - Les pièces justificatives d’un contrat se gèrent directement depuis la modale de création / modification, sans bouton documentaire dédié sur la carte.
 - Chaque carte Contrat rappelle aussi le nombre de documents actuellement liés pour éviter d’ouvrir la modale à vide.
 - La modale d’édition liste les pièces déjà liées avec deux issues explicites : retirer le lien seulement, ou retirer le lien puis supprimer définitivement le document.
@@ -214,8 +215,8 @@ La vue `Sinistres` affiche pour chaque dossier le délai légal restant avant d�
 
 Les cartes de liste des vues `Signalements`, `Tâches` et `Sinistres` partagent une même ossature visuelle afin d'améliorer le balayage :
 
-- ligne 1 : icône métier et groupe de chips sur la même ligne, avec retour à la ligne interne uniquement dans la zone des chips si l’espace manque ;
-- ligne 2 : titre ;
+- ligne 1 : icône métier, titre principal, puis chip de statut alignée à droite ;
+- ligne 2 : chips secondaires éventuelles (priorité, catégorie, délai, indicateur métier) ;
 - ligne 3 : ligne de contexte principale (localisation si elle existe, sinon information métier équivalente comme le prestataire assigné) ;
 - ligne 4 : métadonnées compactes avec icônes (`mise à jour`, `acteur de référence selon les données disponibles`, `documents liés`) ;
 - séparateur discret ;

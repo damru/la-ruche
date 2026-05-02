@@ -646,40 +646,41 @@ function copyToClipboard(text: string) {
             :class="['activity-card', 'task-card', { 'card--terminated': isTerminal(task.status) }]"
           >
             <div class="activity-card__head">
-              <div class="activity-card__hero">
+              <div class="activity-card__header-row">
                 <div
                   class="activity-card__icon"
                   :class="isTerminal(task.status) ? 'tone--disabled' : priorityTone(task.priority)"
                 >
                   <CIconWrench />
                 </div>
-                <div class="activity-card__chips">
-                  <CBadge
-                    :variant="isTerminal(task.status) ? 'disabled' : statusVariant(task.status)"
-                    dot
-                  >
-                    {{ t(`tasks.statuses.${task.status}`) }}
-                  </CBadge>
-                  <CBadge :variant="isTerminal(task.status) ? 'disabled' : priorityVariant(task.priority)">
-                    {{ t(`tasks.priorities.${task.priority}`) }}
-                  </CBadge>
-                  <CBadge
-                    v-if="task.has_vendor_token"
-                    variant="default"
-                  >
-                    {{ t('tasks.vendorToken') }}
-                  </CBadge>
-                </div>
-              </div>
-
-              <div class="activity-card__stack">
                 <RouterLink
                   :to="{ name: 'task-detail', params: { id: task.id } }"
                   class="activity-card__title task-title-link"
                 >
                   {{ task.title }}
                 </RouterLink>
+                <CBadge
+                  :variant="isTerminal(task.status) ? 'disabled' : statusVariant(task.status)"
+                  dot
+                  class="activity-card__status"
+                >
+                  {{ t(`tasks.statuses.${task.status}`) }}
+                </CBadge>
+              </div>
 
+              <div class="activity-card__chips">
+                <CBadge :variant="isTerminal(task.status) ? 'disabled' : priorityVariant(task.priority)">
+                  {{ t(`tasks.priorities.${task.priority}`) }}
+                </CBadge>
+                <CBadge
+                  v-if="task.has_vendor_token"
+                  variant="default"
+                >
+                  {{ t('tasks.vendorToken') }}
+                </CBadge>
+              </div>
+
+              <div class="activity-card__stack">
                 <div class="activity-card__subtitle">
                   <span
                     v-if="task.contractor_id && contractorsById.get(task.contractor_id)"

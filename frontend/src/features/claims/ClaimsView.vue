@@ -859,7 +859,7 @@ async function submitDelete() {
             :class="['activity-card', 'claim-card', { 'card--terminated': claim.status === 'closed' }]"
           >
             <div class="activity-card__head">
-              <div class="activity-card__hero">
+              <div class="activity-card__header-row">
                 <div :class="['activity-card__icon', typeTone(claim.claim_type)]">
                   <component
                     :is="typeIcon(claim.claim_type)"
@@ -867,30 +867,31 @@ async function submitDelete() {
                     height="18"
                   />
                 </div>
-                <div class="activity-card__chips">
-                  <CBadge
-                    :variant="statusVariant(claim.status)"
-                    dot
-                  >
-                    {{ t(`claims.statuses.${claim.status}`) }}
-                  </CBadge>
-                  <CBadge variant="default">
-                    {{ t(`claims.types.${claim.claim_type}`) }}
-                  </CBadge>
-                  <CBadge
-                    :variant="deadlineVariant(claim)"
-                    :dot="deadlineVariant(claim) !== 'default'"
-                  >
-                    {{ deadlineLabel(claim) }}
-                  </CBadge>
-                </div>
-              </div>
-
-              <div class="activity-card__stack">
                 <h3 class="activity-card__title">
                   {{ claim.title }}
                 </h3>
+                <CBadge
+                  :variant="statusVariant(claim.status)"
+                  dot
+                  class="activity-card__status"
+                >
+                  {{ t(`claims.statuses.${claim.status}`) }}
+                </CBadge>
+              </div>
 
+              <div class="activity-card__chips">
+                <CBadge variant="default">
+                  {{ t(`claims.types.${claim.claim_type}`) }}
+                </CBadge>
+                <CBadge
+                  :variant="deadlineVariant(claim)"
+                  :dot="deadlineVariant(claim) !== 'default'"
+                >
+                  {{ deadlineLabel(claim) }}
+                </CBadge>
+              </div>
+
+              <div class="activity-card__stack">
                 <div class="activity-card__subtitle">
                   <span class="activity-card__line">
                     <CIconLocation />

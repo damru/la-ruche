@@ -570,25 +570,23 @@ function photoPreview(file: File): string {
             :class="['activity-card', 'report-card', { 'card--terminated': r.status === 'closed' }]"
           >
             <div class="activity-card__head">
-              <div class="activity-card__hero">
+              <div class="activity-card__header-row">
                 <div class="activity-card__icon tone--default">
                   <CIconInfo />
                 </div>
-                <div class="activity-card__chips">
-                  <CBadge
-                    :variant="statusVariant(r.status)"
-                    dot
-                  >
-                    {{ t(`reports.statuses.${r.status}`) }}
-                  </CBadge>
-                </div>
-              </div>
-
-              <div class="activity-card__stack">
                 <h3 class="activity-card__title">
                   {{ r.title }}
                 </h3>
+                <CBadge
+                  :variant="statusVariant(r.status)"
+                  dot
+                  class="activity-card__status"
+                >
+                  {{ t(`reports.statuses.${r.status}`) }}
+                </CBadge>
+              </div>
 
+              <div class="activity-card__stack">
                 <div class="activity-card__subtitle">
                   <span class="activity-card__line">
                     <CIconLocation />
