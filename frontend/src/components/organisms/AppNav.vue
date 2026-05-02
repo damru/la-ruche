@@ -37,15 +37,15 @@ const allGroups: NavGroup[] = [
   {
     label: t('nav.groups.governance'),
     items: [
-      { name: 'assemblies',    route: '/meetings',      label: t('nav.meetings'),      mobileLabel: t('nav.mobile.assemblies'),    roles: ['manager', 'board_member', 'co_owner'], mobileOrder: 2 },
+      { name: 'assemblies',    route: '/meetings',      label: t('nav.meetings'),      mobileLabel: t('nav.mobile.assemblies'),    roles: ['manager', 'board_member', 'co_owner'], mobileOrder: 10 },
       { name: 'consultations', route: '/consultations', label: t('nav.consultations'), mobileLabel: t('nav.mobile.consultations'), roles: [],                                      mobileOrder: 4 },
-      { name: 'reports',       route: '/reports',       label: t('nav.reports'),       mobileLabel: t('nav.mobile.reports'),       roles: [],                                      mobileOrder: 4 },
+      { name: 'reports',       route: '/reports',       label: t('nav.reports'),       mobileLabel: t('nav.mobile.reports'),       roles: [],                                      mobileOrder: 2 },
     ],
   },
   {
     label: t('nav.groups.finance'),
     items: [
-      { name: 'budget',      route: '/budget',      label: t('nav.budget'),      mobileLabel: t('nav.mobile.budget'),      roles: ['manager', 'board_member', 'co_owner'], mobileOrder: 3 },
+      { name: 'budget',      route: '/budget',      label: t('nav.budget'),      mobileLabel: t('nav.mobile.budget'),      roles: ['manager', 'board_member', 'co_owner'], mobileOrder: 11 },
       { name: 'my-charges',  route: '/my-charges',  label: t('nav.myCharges'),   mobileLabel: t('nav.myCharges'),           roles: ['co_owner'],                            mobileOrder: 3 },
       { name: 'contracts',   route: '/contracts',   label: t('nav.contracts'),   mobileLabel: t('nav.mobile.contracts'),   roles: ['manager'],                             mobileOrder: 6 },
     ],
@@ -54,7 +54,7 @@ const allGroups: NavGroup[] = [
     label: t('nav.groups.operations'),
     items: [
       { name: 'tasks',        route: '/tasks',        label: t('nav.tasks'),        mobileLabel: t('nav.mobile.tasks'),        roles: ['manager', 'board_member'], mobileOrder: 4 },
-      { name: 'contractors',  route: '/contractors',  label: t('nav.contractors'),  mobileLabel: t('nav.mobile.contractors'),  roles: [],                          mobileOrder: 9 },
+      { name: 'contractors',  route: '/contractors',  label: t('nav.contractors'),  mobileLabel: t('nav.mobile.contractors'),  roles: [],                          mobileOrder: 3 },
       { name: 'claims',       route: '/claims',       label: t('nav.claims'),       mobileLabel: t('nav.mobile.claims'),       roles: ['manager', 'board_member'], mobileOrder: 7 },
       { name: 'maintenance', route: '/logbook',   label: t('nav.maintenance'), mobileLabel: t('nav.mobile.maintenance'), roles: ['manager', 'board_member'], mobileOrder: 8 },
       { name: 'documents',   route: '/documents', label: t('nav.documents'),   mobileLabel: t('nav.mobile.documents'),   roles: ['manager', 'board_member', 'co_owner', 'tenant'], mobileOrder: 5 },
