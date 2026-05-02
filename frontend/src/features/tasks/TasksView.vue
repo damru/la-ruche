@@ -10,12 +10,13 @@ import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
+import CLinkedDocumentsModal from '@/components/molecules/CLinkedDocumentsModal.vue'
 import CModal from '@/components/molecules/CModal.vue'
 import CPageError from '@/components/molecules/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
-import { buildingApi, contractorsApi, tasksApi, usersApi } from '@/api'
-import type { Contractor, Task, TaskStatus, TaskPriority, User } from '@/types/domain'
+import { buildingApi, contractorsApi, documentsApi, tasksApi, usersApi } from '@/api'
+import type { Contractor, Document, Task, TaskStatus, TaskPriority, User } from '@/types/domain'
 
 const { t } = useI18n()
 const { formatDate } = useFormatters()
@@ -269,6 +270,30 @@ function creatorName(userId?: string): string {
   return user ? `${user.first_name} ${user.last_name}` : t('common.noData')
 }
 
+async function openTaskDocuments(task: Task) {
+  taskDocumentsTarget.value = task
+  taskDocuments.value = []
+  loadingTaskDocuments.value = true
+  try {
+    const response = await tasksApi.listDocuments(task.id)
+    taskDocuments.value = response.data
+  } catch (err) {
+    pageError.value = toErrorMessage(err, t('common.error'))
+    taskDocumentsTarget.value = null
+  } finally {
+    loadingTaskDocuments.value = false
+  }
+}
+
+async function downloadTaskDocument(documentId: string) {
+  try {
+    const response = await documentsApi.getDownloadUrl(documentId)
+    window.open(response.data.url, '_blank', 'noopener')
+  } catch (err) {
+    pageError.value = toErrorMessage(err, t('common.error'))
+  }
+}
+
 // ── Task modal actions ────────────────────────────────────────────
 function openCreateModal() {
   editingTask.value = null
@@ -404,6 +429,9 @@ const taskToDelete = ref<Task | null>(null)
 const deletingTask = ref(false)
 const deleteTaskFeedback = useFormFeedback()
 const pageError = ref('')
+const taskDocumentsTarget = ref<Task | null>(null)
+const taskDocuments = ref<Document[]>([])
+const loadingTaskDocuments = ref(false)
 const { schedule: scheduleDeleteTask, forceExpire: forceDeleteTask } = useAutoClose()
 watch(showDeleteModal, (open) => { if (!open) forceDeleteTask() })
 
@@ -618,13 +646,13 @@ function copyToClipboard(text: string) {
             :class="['activity-card', 'task-card', { 'card--terminated': isTerminal(task.status) }]"
           >
             <div class="activity-card__head">
-              <div
-                class="activity-card__icon"
-                :class="isTerminal(task.status) ? 'tone--disabled' : priorityTone(task.priority)"
-              >
-                <CIconWrench />
-              </div>
-              <div class="activity-card__stack">
+              <div class="activity-card__hero">
+                <div
+                  class="activity-card__icon"
+                  :class="isTerminal(task.status) ? 'tone--disabled' : priorityTone(task.priority)"
+                >
+                  <CIconWrench />
+                </div>
                 <div class="activity-card__chips">
                   <CBadge
                     :variant="isTerminal(task.status) ? 'disabled' : statusVariant(task.status)"
@@ -642,10 +670,12 @@ function copyToClipboard(text: string) {
                     {{ t('tasks.vendorToken') }}
                   </CBadge>
                 </div>
+              </div>
 
+              <div class="activity-card__stack">
                 <RouterLink
                   :to="{ name: 'task-detail', params: { id: task.id } }"
-                  class="title-sm activity-card__title task-title-link"
+                  class="activity-card__title task-title-link"
                 >
                   {{ task.title }}
                 </RouterLink>
@@ -672,13 +702,6 @@ function copyToClipboard(text: string) {
                   </span>
                 </div>
 
-                <p
-                  v-if="task.description"
-                  class="body-sm activity-card__description"
-                >
-                  {{ task.description }}
-                </p>
-
                 <div class="activity-card__meta">
                   <span class="activity-card__line">
                     <CIconCalendar />
@@ -688,7 +711,18 @@ function copyToClipboard(text: string) {
                     <CIconUser />
                     {{ creatorName(task.created_by) }}
                   </span>
-                  <span class="activity-card__line">
+                  <button
+                    v-if="task.document_count > 0"
+                    class="activity-card__line task-card__documents-button"
+                    @click="openTaskDocuments(task)"
+                  >
+                    <CIconFile />
+                    {{ t('tasks.documentsCount', task.document_count) }}
+                  </button>
+                  <span
+                    v-else
+                    class="activity-card__line"
+                  >
                     <CIconFile />
                     {{ t('tasks.documentsCount', task.document_count) }}
                   </span>
@@ -1179,6 +1213,16 @@ function copyToClipboard(text: string) {
         </CBtn>
       </template>
     </CModal>
+
+    <CLinkedDocumentsModal
+      :open="!!taskDocumentsTarget"
+      :title="taskDocumentsTarget?.title ?? ''"
+      :documents="taskDocuments"
+      :loading="loadingTaskDocuments"
+      :empty-message="t('tasks.noLinkedDocuments')"
+      @update:open="value => !value && (taskDocumentsTarget = null)"
+      @download="downloadTaskDocument"
+    />
   </div>
 </template>
 
@@ -1198,6 +1242,15 @@ function copyToClipboard(text: string) {
   font-weight: var(--fw-medium);
 }
 .task-assignment-link:hover { text-decoration: underline; }
+.task-card__documents-button {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  min-width: unset;
+  min-height: unset;
+}
+.task-card__documents-button:hover { color: var(--color-primary); }
 .token-url {
   font-size: var(--text-2xs);
   word-break: break-all;

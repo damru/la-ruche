@@ -471,6 +471,40 @@ pub async fn get_by_token(pool: &PgPool, token: Uuid) -> AppResult<Option<TaskRo
         .map_err(Into::into)
 }
 
+pub async fn list_documents(
+    pool: &PgPool,
+    task_id: Uuid,
+    building_id: Uuid,
+) -> AppResult<Vec<serde_json::Value>> {
+    use sqlx::Row;
+
+    let rows = sqlx::query(
+        r#"SELECT DISTINCT d.id, d.original_name, d.mime_type, d.size_bytes, d.created_at
+           FROM vendor_submission_document vsd
+           JOIN vendor_submission vs ON vs.id = vsd.submission_id
+           JOIN document d ON d.id = vsd.document_id AND d.building_id = $2
+           WHERE vs.task_id = $1
+           ORDER BY d.created_at ASC"#,
+    )
+    .bind(task_id)
+    .bind(building_id)
+    .fetch_all(pool)
+    .await?;
+
+    Ok(rows
+        .into_iter()
+        .map(|row| {
+            serde_json::json!({
+                "id": row.try_get::<Uuid, _>("id").unwrap_or_default(),
+                "original_name": row.try_get::<String, _>("original_name").unwrap_or_default(),
+                "mime_type": row.try_get::<String, _>("mime_type").unwrap_or_default(),
+                "size_bytes": row.try_get::<i64, _>("size_bytes").unwrap_or_default(),
+                "created_at": row.try_get::<DateTime<Utc>, _>("created_at").unwrap_or_default(),
+            })
+        })
+        .collect())
+}
+
 pub async fn create_submission(
     pool: &PgPool,
     task_id: Uuid,

@@ -240,6 +240,8 @@ export const tasksApi = {
     api.put<Task>(`/tasks/${id}`, data),
   delete: (id: string) =>
     api.delete(`/tasks/${id}`),
+  listDocuments: (id: string) =>
+    api.get<Document[]>(`/tasks/${id}/documents`),
   generateToken: (id: string) =>
     api.post<{ token: string; expires_at: string; url: string }>(`/tasks/${id}/vendor-token`),
   getVendorTokenUrl: (id: string) =>

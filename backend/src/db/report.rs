@@ -19,6 +19,7 @@ pub struct ReportRow {
     pub description: Option<String>,
     pub status: String,
     pub task_id: Option<Uuid>,
+    pub task_status: Option<String>,
     pub document_count: i64,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
@@ -28,11 +29,12 @@ const LIST_QUERY: &str = concat!(
     "SELECT r.id, r.building_id, r.unit_id, r.author_id,",
     " u.first_name AS author_first_name, u.last_name AS author_last_name,",
     " r.title, r.description, r.status::text AS status,",
-    " r.task_id,",
+    " r.task_id, t.status::text AS task_status,",
     " (SELECT COUNT(*) FROM report_document rd WHERE rd.report_id = r.id) AS document_count,",
     " r.created_at, r.updated_at",
     " FROM report r",
     " JOIN user_account u ON u.id = r.author_id",
+    " LEFT JOIN task t ON t.id = r.task_id AND t.building_id = r.building_id",
     " WHERE r.building_id = $1 ORDER BY r.updated_at DESC",
 );
 
@@ -40,11 +42,12 @@ const GET_QUERY: &str = concat!(
     "SELECT r.id, r.building_id, r.unit_id, r.author_id,",
     " u.first_name AS author_first_name, u.last_name AS author_last_name,",
     " r.title, r.description, r.status::text AS status,",
-    " r.task_id,",
+    " r.task_id, t.status::text AS task_status,",
     " (SELECT COUNT(*) FROM report_document rd WHERE rd.report_id = r.id) AS document_count,",
     " r.created_at, r.updated_at",
     " FROM report r",
     " JOIN user_account u ON u.id = r.author_id",
+    " LEFT JOIN task t ON t.id = r.task_id AND t.building_id = r.building_id",
     " WHERE r.id = $1 AND r.building_id = $2",
 );
 
@@ -60,6 +63,7 @@ fn row_to_report(r: &sqlx::postgres::PgRow) -> Result<ReportRow, sqlx::Error> {
         description: r.try_get("description")?,
         status: r.try_get("status")?,
         task_id: r.try_get("task_id")?,
+        task_status: r.try_get("task_status")?,
         document_count: r.try_get("document_count")?,
         created_at: r.try_get("created_at")?,
         updated_at: r.try_get("updated_at")?,

@@ -294,6 +294,7 @@ export interface Report {
   description?: string
   status: ReportStatus
   task_id?: string
+  task_status?: TaskStatus
   document_count: number
   created_at: string
   updated_at: string

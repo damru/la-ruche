@@ -11,6 +11,7 @@ import CBtn from '@/components/atoms/CBtn.vue'
 import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
 import CPageError from '@/components/molecules/CPageError.vue'
 import CDocumentLinkActionModal from '@/components/molecules/CDocumentLinkActionModal.vue'
+import CLinkedDocumentsModal from '@/components/molecules/CLinkedDocumentsModal.vue'
 import CLegalInfoCard from '@/components/molecules/CLegalInfoCard.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CCard from '@/components/molecules/CCard.vue'
@@ -117,6 +118,9 @@ watch(claimToClose, (claim) => { if (!claim) forceCloseClaim() })
 const claimToDelete = ref<Claim | null>(null)
 const deleteFeedback = useFormFeedback()
 const deletingClaim = ref(false)
+const claimDocumentsTarget = ref<Claim | null>(null)
+const claimDocuments = ref<Document[]>([])
+const loadingClaimDocuments = ref(false)
 const { schedule: scheduleDeleteClose, forceExpire: forceDeleteClose } = useAutoClose()
 watch(claimToDelete, (claim) => { if (!claim) forceDeleteClose() })
 
@@ -408,6 +412,22 @@ async function loadEditDocuments(claimId: string) {
   }
 }
 
+async function openClaimDocuments(claim: Claim) {
+  claimDocumentsTarget.value = claim
+  claimDocuments.value = []
+  loadingClaimDocuments.value = true
+
+  try {
+    const response = await claimsApi.listDocuments(claim.id)
+    claimDocuments.value = response.data
+  } catch (currentError: unknown) {
+    editFeedback.setError(toErrorMessage(currentError, t('claims.documentsLoadError')))
+    claimDocumentsTarget.value = null
+  } finally {
+    loadingClaimDocuments.value = false
+  }
+}
+
 async function openEditModal(claim: Claim) {
   claimToEdit.value = claim
   editForm.value = claimEditorFormFromClaim(claim)
@@ -519,6 +539,7 @@ async function handleDocumentAction(deleteDocument: boolean) {
       await claimsApi.detachDocument(claimToEdit.value.id, pendingDocumentAction.value.id)
     }
     editDocuments.value = editDocuments.value.filter(document => document.id !== pendingDocumentAction.value?.id)
+    claimDocuments.value = claimDocuments.value.filter(document => document.id !== pendingDocumentAction.value?.id)
     updateClaimDocumentCount(claimToEdit.value.id, -1)
     pendingDocumentAction.value = null
   } catch (currentError: unknown) {
@@ -838,14 +859,14 @@ async function submitDelete() {
             :class="['activity-card', 'claim-card', { 'card--terminated': claim.status === 'closed' }]"
           >
             <div class="activity-card__head">
-              <div :class="['activity-card__icon', typeTone(claim.claim_type)]">
-                <component
-                  :is="typeIcon(claim.claim_type)"
-                  width="18"
-                  height="18"
-                />
-              </div>
-              <div class="activity-card__stack">
+              <div class="activity-card__hero">
+                <div :class="['activity-card__icon', typeTone(claim.claim_type)]">
+                  <component
+                    :is="typeIcon(claim.claim_type)"
+                    width="18"
+                    height="18"
+                  />
+                </div>
                 <div class="activity-card__chips">
                   <CBadge
                     :variant="statusVariant(claim.status)"
@@ -863,8 +884,10 @@ async function submitDelete() {
                     {{ deadlineLabel(claim) }}
                   </CBadge>
                 </div>
+              </div>
 
-                <h3 class="title-sm activity-card__title">
+              <div class="activity-card__stack">
+                <h3 class="activity-card__title">
                   {{ claim.title }}
                 </h3>
 
@@ -875,13 +898,6 @@ async function submitDelete() {
                   </span>
                 </div>
 
-                <p
-                  v-if="claim.description"
-                  class="body-sm activity-card__description"
-                >
-                  {{ claim.description }}
-                </p>
-
                 <div class="activity-card__meta">
                   <span class="activity-card__line">
                     <CIconCalendar />
@@ -891,7 +907,18 @@ async function submitDelete() {
                     <CIconUser />
                     {{ creatorName(claim.created_by) }}
                   </span>
-                  <span class="activity-card__line">
+                  <button
+                    v-if="claim.document_count > 0"
+                    class="activity-card__line claim-card__documents-button"
+                    @click="openClaimDocuments(claim)"
+                  >
+                    <CIconFile />
+                    {{ t('claims.documentsCount', claim.document_count) }}
+                  </button>
+                  <span
+                    v-else
+                    class="activity-card__line"
+                  >
                     <CIconFile />
                     {{ t('claims.documentsCount', claim.document_count) }}
                   </span>
@@ -1587,6 +1614,16 @@ async function submitDelete() {
       </template>
     </CModal>
 
+    <CLinkedDocumentsModal
+      :open="!!claimDocumentsTarget"
+      :title="claimDocumentsTarget?.title ?? ''"
+      :documents="claimDocuments"
+      :loading="loadingClaimDocuments"
+      :empty-message="t('claims.noAttachedDocuments')"
+      @update:open="value => !value && (claimDocumentsTarget = null)"
+      @download="downloadClaimDocument"
+    />
+
     <CDocumentLinkActionModal
       :open="!!pendingDocumentAction"
       :title="t('claims.documentsDetachTitle')"
@@ -1613,6 +1650,19 @@ async function submitDelete() {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
+}
+
+.claim-card__documents-button {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  min-width: unset;
+  min-height: unset;
+}
+
+.claim-card__documents-button:hover {
+  color: var(--color-primary);
 }
 
 .claim-dropzone {

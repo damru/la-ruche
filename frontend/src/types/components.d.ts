@@ -79,6 +79,7 @@ declare module 'vue' {
     CInput: typeof import('./../components/atoms/CInput.vue')['default']
     CKpiCard: typeof import('./../components/molecules/CKpiCard.vue')['default']
     CLegalInfoCard: typeof import('./../components/molecules/CLegalInfoCard.vue')['default']
+    CLinkedDocumentsModal: typeof import('./../components/molecules/CLinkedDocumentsModal.vue')['default']
     CListItem: typeof import('./../components/molecules/CListItem.vue')['default']
     CLogoMark: typeof import('./../components/atoms/CLogoMark.svg')['default']
     CMockBanner: typeof import('./../components/atoms/CMockBanner.vue')['default']

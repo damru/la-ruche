@@ -40,6 +40,19 @@ pub async fn get(
     json_value(db::task::TaskListItem::from(t))
 }
 
+pub async fn list_documents(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+) -> AppResult<Json<serde_json::Value>> {
+    auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
+    db::task::get(&state.pool, id, auth.building_id)
+        .await?
+        .ok_or(AppError::NotFound)?;
+    let documents = db::task::list_documents(&state.pool, id, auth.building_id).await?;
+    json_value(documents)
+}
+
 pub async fn create(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,

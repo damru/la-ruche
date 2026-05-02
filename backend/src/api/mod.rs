@@ -181,6 +181,7 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
                 .put(tasks::update)
                 .delete(tasks::delete_task),
         )
+        .route("/tasks/{id}/documents", get(tasks::list_documents))
         .route(
             "/tasks/{id}/vendor-token",
             get(tasks::get_vendor_token_url)

@@ -214,11 +214,10 @@ La vue `Sinistres` affiche pour chaque dossier le délai légal restant avant d�
 
 Les cartes de liste des vues `Signalements`, `Tâches` et `Sinistres` partagent une même ossature visuelle afin d'améliorer le balayage :
 
-- ligne 1 : icône métier, chip de statut, chip de catégorie/priorité quand disponible, puis chips contextuelles complémentaires ;
+- ligne 1 : icône métier et groupe de chips sur la même ligne, avec retour à la ligne interne uniquement dans la zone des chips si l’espace manque ;
 - ligne 2 : titre ;
 - ligne 3 : ligne de contexte principale (localisation si elle existe, sinon information métier équivalente comme le prestataire assigné) ;
-- ligne 4 : description ;
-- ligne 5 : métadonnées compactes avec icônes (`mise à jour`, `acteur de référence selon les données disponibles`, `documents liés`) ;
+- ligne 4 : métadonnées compactes avec icônes (`mise à jour`, `acteur de référence selon les données disponibles`, `documents liés`) ;
 - séparateur discret ;
 - ligne d'actions avec `Modifier` puis une action contextuelle accentée ;
 - bloc informatif secondaire pour les éléments métier complémentaires (délai légal, remboursement, lien prestataire, historique, etc.).
@@ -226,6 +225,9 @@ Les cartes de liste des vues `Signalements`, `Tâches` et `Sinistres` partagent 
 Contraintes complémentaires :
 
 - les listes sont triées par `dernière modification` décroissante ;
+- la ligne de contexte principale, la ligne de métadonnées et la ligne d’informations secondaires partagent la même hiérarchie visuelle (`texte secondaire`, taille compacte, séparateurs `•` entre éléments d’une même ligne) ;
+- la description n’est pas affichée dans ces cartes de liste ;
+- cliquer sur la métadonnée `documents liés` ouvre une modale listant les fichiers téléchargeables ;
 - la carte `Sinistre` n'expose jamais `Supprimer` dans la liste ; cette action reste confinée à la modale d'édition ;
 - l'ossature reste commune mais chaque entité peut substituer un équivalent métier quand une donnée n'existe pas (ex. `prestataire assigné` au lieu d'une localisation stricte sur les tâches).
 
