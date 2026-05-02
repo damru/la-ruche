@@ -2,7 +2,7 @@
 
 > **Dénomination** — Dans le présent document, l'expression **« l'Application »** désigne exclusivement **La Ruche**, plateforme web open source de gestion participative de copropriété. Ces deux termes sont interchangeables et désignent la même entité logicielle.
 
-> Document vivant. Dernière mise à jour : 2026-05-01
+> Document vivant. Dernière mise à jour : 2026-05-02
 
 ---
 
@@ -217,6 +217,13 @@ HTTP → Tower (CORS, trace, timeout 30s)
 | Isolation tenant | Toutes les requêtes filtrent sur `copropriete_id` |
 | Erreurs | 403 (pas 404) sur routes protégées — pas de fuite d'info |
 | Chiffrement | SSE at-rest S3, TLS at-transit |
+
+---
+
+## CI/CD
+
+- Le workflow `CI` sépare la **validation backend**, la **validation frontend** et un **`docker-build`** exécuté en parallèle pour préchauffer le cache Buildx sans publication.
+- La publication Docker Hub est portée par un job `docker-push` distinct, déclenché seulement après succès de `test-backend`, `test-frontend` et `docker-build`, tandis que la cohérence de `.sqlx/` reste vérifiée côté backend via `cargo sqlx prepare --check`.
 
 ---
 
