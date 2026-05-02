@@ -416,9 +416,6 @@ async function confirmTerminateContract() {
             <p class="body-sm contract-subject">
               {{ contract.subject }}
             </p>
-            <p class="body-xs contract-documents-hint">
-              {{ t('contracts.documents.count', contract.document_count ?? 0) }}
-            </p>
 
             <div class="contract-details">
               <div class="detail-row">
@@ -474,24 +471,36 @@ async function confirmTerminateContract() {
               >{{ contract.vendor_phone }}</a>
             </div>
 
-            <div class="contract-actions">
-              <CBtn
-                variant="ghost"
-                size="sm"
-                @click="openEditModal(contract)"
-              >
-                <CIconEdit />
-                {{ t('common.edit') }}
-              </CBtn>
-              <CBtn
-                v-if="effectiveStatus(contract) === 'active'"
-                variant="danger"
-                size="sm"
-                @click="openTerminateModal(contract)"
-              >
-                <CIconArchive />
-                {{ t('contracts.terminate') }}
-              </CBtn>
+            <div class="contract-card__bottom">
+              <div class="contract-card__footer">
+                <span class="contract-card__detail">
+                  <CIconFile
+                    width="14"
+                    height="14"
+                  />
+                  {{ t('contracts.documents.count', contract.document_count ?? 0) }}
+                </span>
+              </div>
+
+              <div class="contract-actions">
+                <CBtn
+                  variant="ghost"
+                  size="sm"
+                  @click="openEditModal(contract)"
+                >
+                  <CIconEdit />
+                  {{ t('common.edit') }}
+                </CBtn>
+                <CBtn
+                  v-if="effectiveStatus(contract) === 'active'"
+                  variant="danger"
+                  size="sm"
+                  @click="openTerminateModal(contract)"
+                >
+                  <CIconArchive />
+                  {{ t('contracts.terminate') }}
+                </CBtn>
+              </div>
             </div>
           </CCard>
         </div>
@@ -602,19 +611,28 @@ async function confirmTerminateContract() {
   height: 28px;
   flex-shrink: 0;
 }
+.contract-card__bottom {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: auto;
+  padding-top: var(--space-3);
+}
+.contract-card__footer { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+.contract-card__detail {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-sm);
+  color: var(--color-on-surface-variant);
+}
 .contract-actions {
   display: flex;
   gap: var(--space-2);
   flex-wrap: wrap;
-  margin-top: auto;
-  padding-top: var(--space-3);
 }
 .vendor-name { margin: 0; }
 .contract-subject { color: var(--color-on-surface-variant); }
-.contract-documents-hint {
-  margin: 0;
-  color: var(--color-on-surface-variant);
-}
 
 .contract-details { display: flex; flex-direction: column; gap: var(--space-1); }
 .detail-row { display: flex; justify-content: space-between; font-size: var(--text-sm); }
