@@ -2,7 +2,7 @@
 
 > **Dénomination** — Dans le présent document, l'expression **« l'Application »** désigne exclusivement **La Ruche**, plateforme web open source de gestion participative de copropriété. Ces deux termes sont interchangeables et désignent la même entité logicielle.
 
-> Document vivant. Dernière mise à jour : 2026-05-02
+> Document vivant. Dernière mise à jour : 2026-05-03
 
 ---
 
@@ -222,9 +222,10 @@ HTTP → Tower (CORS, trace, timeout 30s)
 
 ## CI/CD
 
-- Le workflow `CI` sépare la **validation backend**, la **validation frontend** et un **`docker-build`** exécuté en parallèle pour préchauffer le cache Buildx sans publication.
-- Le job `docker-build` régénère son propre dossier temporaire `backend/.sqlx/` avant le build image, puis le transmet au job `docker-push`, afin de garder le build Docker indépendant du backend tout en conservant `SQLX_OFFLINE=true` dans l’image.
+- Le workflow `CI` prépare désormais `backend/.sqlx/` dans un job dédié `prepare-sqlx`, puis partage cet artefact aux jobs **backend** et **docker-build** pour éviter une double génération.
+- Le workflow sépare ensuite la **validation backend**, la **validation frontend** et un **`docker-build`** exécuté en parallèle pour préchauffer le cache Buildx sans publication.
 - La publication Docker Hub est portée par un job `docker-push` distinct, déclenché seulement après succès de `test-backend`, `test-frontend` et `docker-build`.
+- Les caches CI sont mutualisés par écosystème : `Swatinem/rust-cache` pour Cargo, cache npm via `actions/setup-node`, et cache GHA Buildx à portée dédiée pour les builds Docker.
 
 ---
 
@@ -235,7 +236,7 @@ HTTP → Tower (CORS, trace, timeout 30s)
 - **`pub(crate)` par défaut**
 - **Pas de `unwrap()` hors tests**
 - **`Decimal` pour tous les montants financiers** (pas `f64`)
-- **`SQLX_OFFLINE=true` en CI et en build Docker** — `backend/.sqlx/` est généré avant les checks offline et avant la construction d’image
+- **`SQLX_OFFLINE=true` en CI et en build Docker** — `backend/.sqlx/` est généré une seule fois dans `prepare-sqlx`, puis téléchargé par les jobs backend et Docker
 
 ---
 

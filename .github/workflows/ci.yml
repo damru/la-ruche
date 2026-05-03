@@ -15,11 +15,11 @@ env:
   RUST_BACKTRACE: 1
   POSTGRES_CI_IMAGE: postgres:18-alpine
   SQLX_ARTIFACT_NAME: sqlx-offline-metadata
+  SQLX_CLI_VERSION: 0.8.6
 
 jobs:
-  # ── Tests backend ──────────────────────────────────────────────
-  test-backend:
-    name: Backend — test + lint
+  prepare-sqlx:
+    name: SQLx — prepare offline metadata
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -41,24 +41,28 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
       - name: Cache Cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            backend -> target
+
+      - name: Cache sqlx-cli
+        id: cache-sqlx-cli
         uses: actions/cache@v5
         with:
           path: |
-            ~/backend/.cargo/bin/
-            ~/backend/.cargo/registry/
-            ~/backend/.cargo/git/
-            backend/target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: ${{ runner.os }}-cargo-
-
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          components: rustfmt, clippy
+            ~/.cargo/bin/sqlx
+            ~/.cargo/.crates2.json
+            ~/.cargo/.crates.toml
+          key: ${{ runner.os }}-sqlx-cli-${{ env.SQLX_CLI_VERSION }}
 
       - name: Install sqlx-cli
-        run: cargo install sqlx-cli --no-default-features --features postgres --locked
+        if: steps.cache-sqlx-cli.outputs.cache-hit != 'true'
+        run: cargo install sqlx-cli --version ${{ env.SQLX_CLI_VERSION }} --no-default-features --features postgres --locked
 
       - name: Run migrations
         env:
@@ -69,6 +73,76 @@ jobs:
         env:
           DATABASE_URL: postgres://laruche:laruche@localhost:5432/laruche_test
         run: cargo sqlx prepare
+
+      - name: Upload SQLx offline files
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ env.SQLX_ARTIFACT_NAME }}
+          path: backend/.sqlx/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 1
+
+  # ── Tests backend ──────────────────────────────────────────────
+  test-backend:
+    name: Backend — test + lint
+    runs-on: ubuntu-latest
+    needs: prepare-sqlx
+    defaults:
+      run:
+        working-directory: ./backend
+    services:
+      postgres:
+        image: ${{ env.POSTGRES_CI_IMAGE }}
+        env:
+          POSTGRES_DB: laruche_test
+          POSTGRES_USER: laruche
+          POSTGRES_PASSWORD: laruche
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Cache Cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            backend -> target
+
+      - name: Cache sqlx-cli
+        id: cache-sqlx-cli
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.cargo/bin/sqlx
+            ~/.cargo/.crates2.json
+            ~/.cargo/.crates.toml
+          key: ${{ runner.os }}-sqlx-cli-${{ env.SQLX_CLI_VERSION }}
+
+      - name: Install sqlx-cli
+        if: steps.cache-sqlx-cli.outputs.cache-hit != 'true'
+        run: cargo install sqlx-cli --version ${{ env.SQLX_CLI_VERSION }} --no-default-features --features postgres --locked
+
+      - name: Download SQLx offline files
+        uses: actions/download-artifact@v8
+        with:
+          name: ${{ env.SQLX_ARTIFACT_NAME }}
+          path: backend/.sqlx/
+
+      - name: Run migrations
+        env:
+          DATABASE_URL: postgres://laruche:laruche@localhost:5432/laruche_test
+        run: sqlx migrate run
 
       - name: Check formatting
         env:
@@ -136,7 +210,7 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --prefer-offline
 
       - name: TypeScript check
         run: npm run typecheck
@@ -147,47 +221,19 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Clean unused npm cache
-        run: npm prune
-
   # ── Docker build ───────────────────────────────────────────────
   docker-build:
     name: Docker build
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: ${{ env.POSTGRES_CI_IMAGE }}
-        env:
-          POSTGRES_DB: laruche_test
-          POSTGRES_USER: laruche
-          POSTGRES_PASSWORD: laruche
-        ports: ["5432:5432"]
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 5
+    needs: prepare-sqlx
     steps:
       - uses: actions/checkout@v6
 
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Install sqlx-cli
-        working-directory: ./backend
-        run: cargo install sqlx-cli --no-default-features --features postgres --locked
-
-      - name: Run migrations
-        working-directory: ./backend
-        env:
-          DATABASE_URL: postgres://laruche:laruche@localhost:5432/laruche_test
-        run: sqlx migrate run
-
-      - name: Generate SQLx offline files
-        working-directory: ./backend
-        env:
-          DATABASE_URL: postgres://laruche:laruche@localhost:5432/laruche_test
-        run: cargo sqlx prepare
+      - name: Download SQLx offline files
+        uses: actions/download-artifact@v8
+        with:
+          name: ${{ env.SQLX_ARTIFACT_NAME }}
+          path: backend/.sqlx/
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
@@ -197,20 +243,11 @@ jobs:
         with:
           context: .
           push: false
-          cache-from: type=gha,scope=docker-ci
-          cache-to: type=gha,mode=max,scope=docker-ci
+          cache-from: type=gha,scope=docker-${{ github.ref_name }}
+          cache-to: type=gha,mode=max,scope=docker-${{ github.ref_name }}
           build-args: |
             CARGO_PROFILE=release
             SQLX_OFFLINE=true
-
-      - name: Upload SQLx offline files
-        uses: actions/upload-artifact@v7
-        with:
-          name: ${{ env.SQLX_ARTIFACT_NAME }}
-          path: backend/.sqlx/
-          include-hidden-files: true
-          if-no-files-found: error
-          retention-days: 1
 
   docker-push:
     name: Docker — push
@@ -255,8 +292,8 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha,scope=docker-ci
-          cache-to: type=gha,mode=max,scope=docker-ci
+          cache-from: type=gha,scope=docker-${{ github.ref_name }}
+          cache-to: type=gha,mode=max,scope=docker-${{ github.ref_name }}
           build-args: |
             CARGO_PROFILE=release
             SQLX_OFFLINE=true
