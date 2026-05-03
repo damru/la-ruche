@@ -231,7 +231,7 @@ Contraintes complémentaires :
 
 - les listes sont triées par `dernière modification` décroissante ;
 - le titre des `activity-card` reste en police de texte classique (`font-body`), pas en display ;
-- la description utilise une taille de texte standard avec un contraste et un poids supérieurs aux metadata / secondary information ;
+- la description utilise une taille de texte standard, en ton principal mais sans graisse excessive ; les metadata / secondary information restent volontairement plus légères via une teinte plus douce ;
 - les lignes compactes `activity-card` n'utilisent plus de séparateur ; le groupement repose sur l'alignement, la proximité et des espacements icône/texte très serrés ;
 - la carte `Tâche` compacte son header en `titre + priorité + statut`, sans icône, puis regroupe l’assignation et la date de création relative dans les métadonnées ;
 - la carte `Signalement` affiche `icône + (statut + mise à jour relative simple)` sur sa première ligne, avec une icône de mise à jour dédiée ; sa modale de miniatures reste compacte avec des vignettes plafonnées, puis ouvre un viewer photo agrandi dont les boutons de navigation sont alignés sur une même ligne sous l’image ;
