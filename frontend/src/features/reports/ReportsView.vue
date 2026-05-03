@@ -598,7 +598,7 @@ function photoPreview(file: File): string {
                     {{ t(`reports.statuses.${r.status}`) }}
                   </CBadge>
                   <span class="activity-card__line report-card__relative-date">
-                    <CIconRefresh />
+                    <CIconClock />
                     {{ formatRelative(r.updated_at) }}
                   </span>
                 </div>
@@ -1329,6 +1329,7 @@ function photoPreview(file: File): string {
 .photo-gallery-delete:hover { opacity: 1; }
 
 .report-photo-gallery-modal {
+  --report-photo-thumb-size: 120px;
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
@@ -1339,13 +1340,13 @@ function photoPreview(file: File): string {
   background: none;
   padding: 0;
   cursor: pointer;
-  max-width: 120px;
-  flex: 0 0 120px;
+  max-width: var(--report-photo-thumb-size);
+  flex: 0 0 var(--report-photo-thumb-size);
 }
 
 .report-photo-gallery-modal__thumb {
-  width: 120px;
-  height: 120px;
+  width: var(--report-photo-thumb-size);
+  height: var(--report-photo-thumb-size);
   object-fit: cover;
   border-radius: var(--radius-sm);
   border: 1px solid var(--color-outline-variant);
