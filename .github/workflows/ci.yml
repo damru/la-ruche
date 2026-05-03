@@ -46,22 +46,13 @@ jobs:
       - name: Cache Cargo
         uses: Swatinem/rust-cache@v2
         with:
+          shared-key: backend-ci
           workspaces: |
             backend -> target
-
-      - name: Cache sqlx-cli
-        id: cache-sqlx-cli
-        uses: actions/cache@v5
-        with:
-          path: |
-            ~/.cargo/bin/sqlx
-            ~/.cargo/.crates2.json
-            ~/.cargo/.crates.toml
-          key: ${{ runner.os }}-sqlx-cli-${{ env.SQLX_CLI_VERSION }}
+          cache-all-crates: "true"
 
       - name: Install sqlx-cli
-        if: steps.cache-sqlx-cli.outputs.cache-hit != 'true'
-        run: cargo install sqlx-cli --version ${{ env.SQLX_CLI_VERSION }} --no-default-features --features postgres --locked
+        run: command -v sqlx >/dev/null 2>&1 || cargo install sqlx-cli --version ${{ env.SQLX_CLI_VERSION }} --no-default-features --features postgres --locked
 
       - name: Run migrations
         env:
@@ -115,22 +106,13 @@ jobs:
       - name: Cache Cargo
         uses: Swatinem/rust-cache@v2
         with:
+          shared-key: backend-ci
           workspaces: |
             backend -> target
-
-      - name: Cache sqlx-cli
-        id: cache-sqlx-cli
-        uses: actions/cache@v5
-        with:
-          path: |
-            ~/.cargo/bin/sqlx
-            ~/.cargo/.crates2.json
-            ~/.cargo/.crates.toml
-          key: ${{ runner.os }}-sqlx-cli-${{ env.SQLX_CLI_VERSION }}
+          cache-all-crates: "true"
 
       - name: Install sqlx-cli
-        if: steps.cache-sqlx-cli.outputs.cache-hit != 'true'
-        run: cargo install sqlx-cli --version ${{ env.SQLX_CLI_VERSION }} --no-default-features --features postgres --locked
+        run: command -v sqlx >/dev/null 2>&1 || cargo install sqlx-cli --version ${{ env.SQLX_CLI_VERSION }} --no-default-features --features postgres --locked
 
       - name: Download SQLx offline files
         uses: actions/download-artifact@v8
