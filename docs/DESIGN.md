@@ -1,7 +1,7 @@
 # DESIGN.md — l'Application Design System "The Modern Registry"
 
 > **Dénomination** — Dans le présent document, l'expression **« l'Application »** désigne exclusivement **La Ruche**, plateforme web open source de gestion participative de copropriété. Ces deux termes sont interchangeables et désignent la même entité logicielle.
-> Dernière mise à jour : 2026-05-01
+> Dernière mise à jour : 2026-05-03
 
 ## Typographie — 3 polices, 3 rôles (DDR-001 v3)
 
@@ -274,6 +274,9 @@ Le champ d'assignation prestataire dans `TasksView` doit accepter une saisie lib
 - Tant qu'une correspondance existe, l'autocomplete continue de proposer le référentiel.
 - Si aucune correspondance n'existe, une suggestion dédiée permet d'ajouter ce prestataire au référentiel sans quitter la modale.
 - L'ajout au référentiel reste optionnel : si l'utilisateur n'active pas cette suggestion, la saisie libre ne doit pas bloquer l'enregistrement et doit rester visible sur la tâche enregistrée.
+- Le bloc `lien prestataire` de la carte doit rester visible tant qu'un token est actif ; les actions `Générer`, `Afficher` et `Révoquer` se placent au-dessus de la ligne d'actions principale, et l'URL active doit être lisible / copiable directement depuis la carte.
+- La métadonnée prestataire de la carte n'apparaît que lorsqu'une assignation existe réellement ; elle utilise l'icône métier `CIconHardHat` et pointe vers la fiche prestataire si `contractor_id` est connu.
+- La modale de création / modification d'une tâche reprend la dropzone documentaire standard des autres modules pour joindre des fichiers sans écran intermédiaire, puis liste aussi les documents déjà liés en édition avec téléchargement et retrait explicites.
 
 ## Règle UI — CFormFeedback dans les modales (DDR-006)
 

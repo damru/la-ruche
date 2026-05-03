@@ -242,6 +242,10 @@ export const tasksApi = {
     api.delete(`/tasks/${id}`),
   listDocuments: (id: string) =>
     api.get<Document[]>(`/tasks/${id}/documents`),
+  attachDocument: (id: string, document_id: string) =>
+    api.post(`/tasks/${id}/documents`, { document_id }),
+  detachDocument: (id: string, documentId: string) =>
+    api.delete(`/tasks/${id}/documents/${documentId}`),
   generateToken: (id: string) =>
     api.post<{ token: string; expires_at: string; url: string }>(`/tasks/${id}/vendor-token`),
   getVendorTokenUrl: (id: string) =>

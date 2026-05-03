@@ -220,6 +220,9 @@ pub async fn delete_orphaned_tx(
               SELECT 1 FROM claim_document cld WHERE cld.document_id = d.id
           )
           AND NOT EXISTS (
+              SELECT 1 FROM task_document td WHERE td.document_id = d.id
+          )
+          AND NOT EXISTS (
               SELECT 1 FROM maintenance_log_document mld WHERE mld.document_id = d.id
           )
           AND NOT EXISTS (

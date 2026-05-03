@@ -8,6 +8,7 @@ import { useAutoClose } from '@/composables/useAutoClose'
 import CAlert from '@/components/atoms/CAlert.vue'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
+import CDocumentLinkActionModal from '@/components/molecules/CDocumentLinkActionModal.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
 import CLinkedDocumentsModal from '@/components/molecules/CLinkedDocumentsModal.vue'
@@ -17,9 +18,10 @@ import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import { buildingApi, contractorsApi, documentsApi, tasksApi, usersApi } from '@/api'
 import type { Contractor, Document, Task, TaskStatus, TaskPriority, User } from '@/types/domain'
+import { extractFileExtension } from '@/utils/files'
 
 const { t } = useI18n()
-const { formatRelative } = useFormatters()
+const { formatDate, formatFileSize, formatRelative } = useFormatters()
 
 // ── State ─────────────────────────────────────────────────────────
 const buildingName = ref('')
@@ -190,6 +192,15 @@ const defaultForm = () => ({
   priority: 'normal' as string,
 })
 const taskForm = ref(defaultForm())
+const selectedTaskDocuments = ref<File[]>([])
+const taskDocumentInputRef = ref<HTMLInputElement | null>(null)
+const taskDocumentsDragOver = ref(false)
+const loadingTaskFormDocuments = ref(false)
+const uploadingTaskDocuments = ref(false)
+const existingTaskDocuments = ref<Document[]>([])
+const pendingTaskDocument = ref<Document | null>(null)
+const taskDocumentActionFeedback = useFormFeedback()
+const taskDocumentActionLoading = ref(false)
 
 // ── Load data ─────────────────────────────────────────────────────
 async function loadData() {
@@ -258,14 +269,134 @@ function priorityVariant(p: string): 'err' | 'pending' | 'primary' | 'valid' | '
   return 'default'
 }
 
-function assigneeLabel(task: Task): string {
-  const contractorName = contractorDisplayName(task)
-  if (contractorName) return contractorName
-
+function assignedUserName(task: Task): string | null {
   const assignedUser = task.assigned_to ? usersById.value.get(task.assigned_to) : undefined
-  if (assignedUser) return `${assignedUser.first_name} ${assignedUser.last_name}`
+  if (!assignedUser) return null
+  return `${assignedUser.first_name} ${assignedUser.last_name}`
+}
 
-  return t('tasks.assignNone')
+function hasAssignment(task: Task): boolean {
+  return Boolean(contractorDisplayName(task) || assignedUserName(task))
+}
+
+function openTaskDocumentPicker() {
+  taskDocumentInputRef.value?.click()
+}
+
+function appendTaskDocuments(files: File[]) {
+  if (!files.length) return
+  selectedTaskDocuments.value = [...selectedTaskDocuments.value, ...files]
+}
+
+function onTaskDocumentChange(event: Event) {
+  const input = event.target as HTMLInputElement
+  appendTaskDocuments(Array.from(input.files ?? []))
+  if (taskDocumentInputRef.value) taskDocumentInputRef.value.value = ''
+}
+
+function onTaskDocumentDrop(event: DragEvent) {
+  taskDocumentsDragOver.value = false
+  appendTaskDocuments(Array.from(event.dataTransfer?.files ?? []))
+}
+
+function removeSelectedTaskDocument(index: number) {
+  selectedTaskDocuments.value = selectedTaskDocuments.value.filter((_, currentIndex) => currentIndex !== index)
+}
+
+async function uploadTaskDocument(taskId: string, file: File) {
+  const extension = extractFileExtension(file.name)
+  const mimeType = file.type || 'application/octet-stream'
+  const uploadUrl = await documentsApi.getUploadUrl(extension, mimeType, file.size)
+
+  await documentsApi.uploadToS3(file, uploadUrl.data.url, mimeType)
+
+  const document = await documentsApi.confirmUpload({
+    key: uploadUrl.data.key,
+    bucket: uploadUrl.data.bucket,
+    original_name: file.name,
+    mime_type: mimeType,
+    size_bytes: file.size,
+    visible_roles: ['manager', 'board_member'],
+  })
+
+  await tasksApi.attachDocument(taskId, document.data.id)
+}
+
+async function attachSelectedTaskDocuments(taskId: string) {
+  const failedDocuments: string[] = []
+
+  for (const document of selectedTaskDocuments.value) {
+    try {
+      await uploadTaskDocument(taskId, document)
+    } catch {
+      failedDocuments.push(document.name)
+    }
+  }
+
+  return failedDocuments
+}
+
+async function loadTaskFormDocuments(taskId: string) {
+  loadingTaskFormDocuments.value = true
+  taskDocumentActionFeedback.reset()
+
+  try {
+    const response = await tasksApi.listDocuments(taskId)
+    existingTaskDocuments.value = response.data
+  } catch (err) {
+    taskFeedback.setError(toErrorMessage(err, t('tasks.documentsLoadError')))
+  } finally {
+    loadingTaskFormDocuments.value = false
+  }
+}
+
+function openTaskDocumentActionModal(document: Document) {
+  pendingTaskDocument.value = document
+  taskDocumentActionFeedback.reset()
+}
+
+function closeTaskDocumentActionModal() {
+  if (taskDocumentActionLoading.value) return
+  pendingTaskDocument.value = null
+  taskDocumentActionFeedback.reset()
+}
+
+function updateTaskDocumentCount(taskId: string, delta: number) {
+  const task = allTasks.value.find(currentTask => currentTask.id === taskId)
+  if (task) {
+    task.document_count = Math.max(0, task.document_count + delta)
+  }
+}
+
+async function handleTaskDocumentAction(deleteDocument: boolean) {
+  if (!editingTask.value || !pendingTaskDocument.value) return
+
+  taskDocumentActionLoading.value = true
+  taskDocumentActionFeedback.reset()
+
+  try {
+    if (deleteDocument) {
+      await documentsApi.delete(pendingTaskDocument.value.id)
+    } else {
+      await tasksApi.detachDocument(editingTask.value.id, pendingTaskDocument.value.id)
+    }
+
+    existingTaskDocuments.value = existingTaskDocuments.value.filter(document => document.id !== pendingTaskDocument.value?.id)
+    if (taskDocumentsTarget.value?.id === editingTask.value.id) {
+      taskDocuments.value = taskDocuments.value.filter(document => document.id !== pendingTaskDocument.value?.id)
+    }
+    updateTaskDocumentCount(editingTask.value.id, -1)
+    pendingTaskDocument.value = null
+  } catch (err) {
+    taskDocumentActionFeedback.setError(
+      toErrorMessage(
+        err,
+        deleteDocument ? t('tasks.documentsDeleteError') : t('tasks.documentsDetachError'),
+      ),
+    )
+  } finally {
+    taskDocumentActionLoading.value = false
+  }
 }
 
 async function openTaskDocuments(task: Task) {
@@ -296,6 +427,10 @@ async function downloadTaskDocument(documentId: string) {
 function openCreateModal() {
   editingTask.value = null
   taskForm.value = defaultForm()
+  selectedTaskDocuments.value = []
+  taskDocumentsDragOver.value = false
+  existingTaskDocuments.value = []
+  pendingTaskDocument.value = null
   selectedContractor.value = null
   contractorSearch.value = ''
   createSuggestedContractor.value = false
@@ -305,13 +440,17 @@ function openCreateModal() {
   showTaskModal.value = true
 }
 
-function openEditModal(task: Task) {
+async function openEditModal(task: Task) {
   editingTask.value = task
   taskForm.value = {
     title: task.title,
     description: task.description ?? '',
     priority: task.priority,
   }
+  selectedTaskDocuments.value = []
+  taskDocumentsDragOver.value = false
+  existingTaskDocuments.value = []
+  pendingTaskDocument.value = null
   // Pre-fill contractor from loaded referential
   if (task.contractor_id) {
     const c = contractorsById.value.get(task.contractor_id)
@@ -341,6 +480,7 @@ function openEditModal(task: Task) {
   }
   taskFeedback.reset()
   showTaskModal.value = true
+  await loadTaskFormDocuments(task.id)
 }
 
 async function saveTask() {
@@ -350,6 +490,7 @@ async function saveTask() {
   taskFeedback.reset()
   try {
     const { contractorId, contractorName } = await resolveContractorSelection()
+    let taskId: string
 
     if (editingTask.value) {
       // Reflect assignment mode change in DB:
@@ -370,21 +511,45 @@ async function saveTask() {
         contractor_name: assignMode.value === 'contractor' ? contractorName : null,
         ...(statusPatch ? { status: statusPatch } : {}),
       })
+      taskId = editingTask.value.id
     } else {
-      await tasksApi.create({
+      const response = await tasksApi.create({
         title: taskForm.value.title,
         description: taskForm.value.description || undefined,
         priority: taskForm.value.priority as TaskPriority,
         contractor_id: assignMode.value === 'contractor' ? contractorId : null,
         contractor_name: assignMode.value === 'contractor' ? contractorName : null,
       })
+      taskId = response.data.id
     }
+
+    if (selectedTaskDocuments.value.length > 0) {
+      uploadingTaskDocuments.value = true
+      const failedDocuments = await attachSelectedTaskDocuments(taskId)
+      uploadingTaskDocuments.value = false
+
+      if (failedDocuments.length > 0) {
+        taskFeedback.setError(`${t('tasks.documentUploadError')}: ${failedDocuments.join(', ')}`)
+        if (editingTask.value) {
+          await loadTaskFormDocuments(taskId)
+          await reload()
+        } else {
+          window.setTimeout(() => {
+            showTaskModal.value = false
+            reload()
+          }, 2200)
+        }
+        return
+      }
+    }
+
     taskFeedback.setSuccess(t('common.saved'))
     scheduleTaskClose(() => { showTaskModal.value = false; reload() })
   } catch (err) {
     taskFeedback.setError(toErrorMessage(err, t('common.error')))
   } finally {
     savingTask.value = false
+    uploadingTaskDocuments.value = false
   }
 }
 
@@ -556,6 +721,25 @@ async function showVendorLink(task: Task) {
   }
 }
 
+const copiedVendorLinkTaskId = ref<string | null>(null)
+
+async function copyVendorLink(taskId: string) {
+  const vendorLink = vendorLinks.value[taskId]
+  if (!vendorLink) return
+
+  try {
+    await navigator.clipboard.writeText(vendorLink.url)
+    copiedVendorLinkTaskId.value = taskId
+    window.setTimeout(() => {
+      if (copiedVendorLinkTaskId.value === taskId) {
+        copiedVendorLinkTaskId.value = null
+      }
+    }, 1800)
+  } catch (err) {
+    pageError.value = toErrorMessage(err, t('common.error'))
+  }
+}
+
 </script>
 
 <template>
@@ -688,48 +872,27 @@ async function showVendorLink(task: Task) {
                 </div>
 
                 <div class="activity-card__meta">
-                  <span class="activity-card__line">
-                    <CIconUser />
-                    {{ assigneeLabel(task) }}
+                  <span
+                    v-if="hasAssignment(task)"
+                    class="activity-card__line"
+                  >
+                    <CIconHardHat v-if="contractorDisplayName(task)" />
+                    <CIconUser v-else />
+                    <RouterLink
+                      v-if="task.contractor_id && contractorDisplayName(task)"
+                      :to="{ name: 'contractor-detail', params: { id: task.contractor_id } }"
+                      class="task-card__meta-link"
+                    >
+                      {{ contractorDisplayName(task) }}
+                    </RouterLink>
+                    <span v-else>
+                      {{ contractorDisplayName(task) ?? assignedUserName(task) }}
+                    </span>
                   </span>
                   <span class="activity-card__line">
                     <CIconCalendar />
                     {{ t('tasks.lifecycle.createdRelative', { relative: formatRelative(task.created_at) }) }}
                   </span>
-                </div>
-
-                <div class="activity-card__separator"></div>
-
-                <div class="activity-card__actions">
-                  <CBtn
-                    variant="ghost"
-                    size="sm"
-                    :aria-label="t('tasks.editTask')"
-                    @click="openEditModal(task)"
-                  >
-                    <CIconEdit />
-                    {{ t('common.edit') }}
-                  </CBtn>
-                  <CBtn
-                    v-if="task.status === 'closed'"
-                    variant="primary"
-                    size="sm"
-                    :aria-label="t('tasks.reopenTask')"
-                    @click="openReopenModal(task)"
-                  >
-                    <CIconRefresh />
-                    {{ t('tasks.reopenTask') }}
-                  </CBtn>
-                  <CBtn
-                    v-else-if="!isTerminal(task.status)"
-                    variant="primary"
-                    size="sm"
-                    :aria-label="closeActionLabel(task)"
-                    @click="openCloseModal(task)"
-                  >
-                    <CIconCheckCircle />
-                    {{ closeActionLabel(task) }}
-                  </CBtn>
                 </div>
 
                 <div
@@ -766,6 +929,67 @@ async function showVendorLink(task: Task) {
                   >
                     <CIconX />
                     {{ t('tasks.revokeToken') }}
+                  </CBtn>
+                </div>
+
+                <div
+                  v-if="vendorLinks[task.id]"
+                  class="task-card__vendor-link"
+                >
+                  <div class="task-card__vendor-link-meta">
+                    <span class="body-xs">
+                      {{ t('tasks.vendorTokenActive', { date: formatDate(vendorLinks[task.id].expires_at) }) }}
+                    </span>
+                    <a
+                      :href="vendorLinks[task.id].url"
+                      class="task-card__vendor-link-url"
+                      target="_blank"
+                      rel="noopener"
+                    >
+                      {{ vendorLinks[task.id].url }}
+                    </a>
+                  </div>
+                  <CBtn
+                    variant="ghost"
+                    size="sm"
+                    @click="copyVendorLink(task.id)"
+                  >
+                    <CIconCopy />
+                    {{ copiedVendorLinkTaskId === task.id ? t('tasks.vendorTokenCopied') : t('common.copy') }}
+                  </CBtn>
+                </div>
+
+                <div class="activity-card__separator"></div>
+
+                <div class="activity-card__actions">
+                  <CBtn
+                    variant="ghost"
+                    size="sm"
+                    :aria-label="t('tasks.editTask')"
+                    @click="openEditModal(task)"
+                  >
+                    <CIconEdit />
+                    {{ t('common.edit') }}
+                  </CBtn>
+                  <CBtn
+                    v-if="task.status === 'closed'"
+                    variant="primary"
+                    size="sm"
+                    :aria-label="t('tasks.reopenTask')"
+                    @click="openReopenModal(task)"
+                  >
+                    <CIconRefresh />
+                    {{ t('tasks.reopenTask') }}
+                  </CBtn>
+                  <CBtn
+                    v-else-if="!isTerminal(task.status)"
+                    variant="primary"
+                    size="sm"
+                    :aria-label="closeActionLabel(task)"
+                    @click="openCloseModal(task)"
+                  >
+                    <CIconCheckCircle />
+                    {{ closeActionLabel(task) }}
                   </CBtn>
                 </div>
               </div>
@@ -921,6 +1145,119 @@ async function showVendorLink(task: Task) {
             {{ t('tasks.contractorCreateHelp') }}
           </span>
         </div>
+        <div class="form-field">
+          <label class="form-label">{{ t('tasks.documentsLabel') }}</label>
+          <input
+            ref="taskDocumentInputRef"
+            type="file"
+            multiple
+            style="display:none"
+            @change="onTaskDocumentChange"
+          />
+          <div
+            :class="['task-dropzone', { 'task-dropzone--over': taskDocumentsDragOver }]"
+            role="button"
+            tabindex="0"
+            @click="openTaskDocumentPicker"
+            @keydown.enter.prevent="openTaskDocumentPicker"
+            @keydown.space.prevent="openTaskDocumentPicker"
+            @dragenter.prevent="taskDocumentsDragOver = true"
+            @dragover.prevent="taskDocumentsDragOver = true"
+            @dragleave.prevent="taskDocumentsDragOver = false"
+            @drop.prevent="onTaskDocumentDrop"
+          >
+            <CIconUpload
+              width="20"
+              height="20"
+              style="color:var(--color-on-surface-variant)"
+            />
+            <span class="body-xs task-dropzone__hint">
+              {{ editingTask ? t('tasks.editDocumentHint') : t('tasks.documentHint') }}
+            </span>
+          </div>
+
+          <div
+            v-if="selectedTaskDocuments.length > 0"
+            class="task-selected-documents"
+          >
+            <div
+              v-for="(document, index) in selectedTaskDocuments"
+              :key="`${document.name}-${index}`"
+              class="task-selected-document"
+            >
+              <span class="task-selected-document__name">{{ document.name }}</span>
+              <button
+                type="button"
+                class="task-selected-document__remove"
+                :title="t('tasks.removeDocument')"
+                :aria-label="t('tasks.removeDocument')"
+                @click="removeSelectedTaskDocument(index)"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+
+          <div
+            v-if="editingTask"
+            class="task-existing-documents"
+          >
+            <p class="field-hint task-existing-documents__hint">
+              {{ t('tasks.attachedDocuments') }}
+            </p>
+            <CPageLoader v-if="loadingTaskFormDocuments" />
+            <div
+              v-else-if="existingTaskDocuments.length === 0"
+              class="task-existing-documents__empty"
+            >
+              {{ t('tasks.noAttachedDocuments') }}
+            </div>
+            <div
+              v-else
+              class="task-existing-documents__list"
+            >
+              <div
+                v-for="document in existingTaskDocuments"
+                :key="document.id"
+                class="task-existing-documents__row"
+              >
+                <div class="task-existing-documents__meta">
+                  <div class="task-existing-documents__name">
+                    <CIconFile
+                      width="16"
+                      height="16"
+                    />
+                    <span>{{ document.original_name }}</span>
+                  </div>
+                  <div class="task-existing-documents__details">
+                    <span>{{ formatFileSize(document.size_bytes) }}</span>
+                    <span>·</span>
+                    <span>{{ formatDate(document.created_at) }}</span>
+                  </div>
+                </div>
+                <div class="task-existing-documents__actions">
+                  <CBtn
+                    variant="ghost"
+                    size="sm"
+                    @click="downloadTaskDocument(document.id)"
+                  >
+                    <CIconDownload />
+                    {{ t('common.download') }}
+                  </CBtn>
+                  <CBtn
+                    variant="danger"
+                    size="sm"
+                    :loading="taskDocumentActionLoading && pendingTaskDocument?.id === document.id"
+                    @click="openTaskDocumentActionModal(document)"
+                  >
+                    <CIconTrash />
+                    {{ t('tasks.detachDocument') }}
+                  </CBtn>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
         <!-- Assignment mode: radio (visible for new tasks, open tasks, and in_progress tasks) -->
         <div
           v-if="!editingTask || ['open', 'in_progress', 'awaiting_vendor', 'awaiting_validation'].includes(editingTask.status)"
@@ -979,7 +1316,7 @@ async function showVendorLink(task: Task) {
         </CBtn>
         <CBtn
           variant="primary"
-          :loading="savingTask"
+          :loading="savingTask || uploadingTaskDocuments"
           :closing="taskFeedback.status.value === 'success'"
           @click="saveTask"
         >
@@ -1151,6 +1488,18 @@ async function showVendorLink(task: Task) {
       @update:open="value => !value && (taskDocumentsTarget = null)"
       @download="downloadTaskDocument"
     />
+    <CDocumentLinkActionModal
+      :open="!!pendingTaskDocument"
+      :title="t('tasks.documentsDetachTitle')"
+      :description="t('tasks.documentsDetachMessage', { name: pendingTaskDocument?.original_name ?? '', title: editingTask?.title ?? '' })"
+      :warning="t('tasks.documentsDeleteWarning', { name: pendingTaskDocument?.original_name ?? '' })"
+      :loading="taskDocumentActionLoading"
+      :status="taskDocumentActionFeedback.status.value"
+      :message="taskDocumentActionFeedback.message.value"
+      @update:open="value => !value && closeTaskDocumentActionModal()"
+      @unlink="handleTaskDocumentAction(false)"
+      @unlink-and-delete="handleTaskDocumentAction(true)"
+    />
   </div>
 </template>
 
@@ -1177,6 +1526,11 @@ async function showVendorLink(task: Task) {
   font-weight: var(--fw-semibold);
 }
 .task-title-link:hover { text-decoration: underline; color: var(--color-primary); }
+.task-card__meta-link {
+  color: inherit;
+  text-decoration: none;
+}
+.task-card__meta-link:hover { color: var(--color-primary); text-decoration: underline; }
 .task-card__documents-button {
   background: none;
   border: none;
@@ -1186,6 +1540,27 @@ async function showVendorLink(task: Task) {
   min-height: unset;
 }
 .task-card__documents-button:hover { color: var(--color-primary); }
+.task-card__vendor-link {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-container-low);
+}
+.task-card__vendor-link-meta {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.task-card__vendor-link-url {
+  color: var(--color-primary);
+  text-decoration: none;
+  word-break: break-all;
+}
+.task-card__vendor-link-url:hover { text-decoration: underline; }
 
 .assignment-options {
   display: flex;
@@ -1256,4 +1631,90 @@ async function showVendorLink(task: Task) {
 .contractor-create-grid { margin-bottom: 0; }
 .task-close-field { margin-top: var(--space-4); }
 .modal-footer-feedback { margin-right: auto; min-width: 0; }
+.task-dropzone {
+  margin-top: var(--space-2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 108px;
+  padding: var(--space-4);
+  border: 1px dashed color-mix(in srgb, var(--color-outline) 72%, transparent);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-container-lowest);
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+.task-dropzone:hover,
+.task-dropzone--over {
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 6%, var(--color-surface-container-lowest));
+}
+.task-dropzone__hint { color: var(--color-on-surface-variant); }
+.task-selected-documents,
+.task-existing-documents__list {
+  margin-top: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.task-selected-document,
+.task-existing-documents__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-container-low);
+}
+.task-selected-document__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.task-selected-document__remove {
+  border: none;
+  background: none;
+  color: var(--color-on-surface-variant);
+  cursor: pointer;
+}
+.task-existing-documents {
+  margin-top: var(--space-3);
+}
+.task-existing-documents__meta {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.task-existing-documents__name {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.task-existing-documents__name span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.task-existing-documents__details {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-on-surface-variant);
+  font-size: var(--text-xs);
+}
+.task-existing-documents__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.task-existing-documents__empty {
+  margin-top: var(--space-2);
+  color: var(--color-on-surface-variant);
+}
 </style>
