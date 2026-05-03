@@ -133,7 +133,7 @@ jobs:
           retention-days: 1
 
       - name: Show sccache stats
-        if: always()
+        if: success() || failure()
         run: sccache --show-stats
 
   # ── Tests frontend ─────────────────────────────────────────────
