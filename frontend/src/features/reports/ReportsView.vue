@@ -605,7 +605,7 @@ function photoPreview(file: File): string {
               </div>
 
               <div class="activity-card__stack">
-                <h3 class="activity-card__title">
+                <h3 class="activity-card__title report-card__title">
                   {{ r.title }}
                 </h3>
 
@@ -1265,6 +1265,11 @@ function photoPreview(file: File): string {
 
 .report-card__photo-button:hover {
   color: var(--color-primary);
+}
+.report-card__title {
+  align-self: flex-start;
+  width: 100%;
+  text-align: left;
 }
 
 /* Photo picker */

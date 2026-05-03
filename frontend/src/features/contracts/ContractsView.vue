@@ -8,6 +8,7 @@ import CIconDroplet from '@/components/atoms/CIconDroplet.svg'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
+import CLinkedDocumentsModal from '@/components/molecules/CLinkedDocumentsModal.vue'
 import CPageError from '@/components/molecules/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
@@ -18,12 +19,12 @@ import CIconSettings from '@/components/atoms/CIconSettings.svg'
 import CIconShield from '@/components/atoms/CIconShield.svg'
 import CIconSparkles from '@/components/atoms/CIconSparkles.svg'
 import CIconWrench from '@/components/atoms/CIconWrench.svg'
-import { buildingApi, contractsApi } from '@/api'
+import { buildingApi, contractsApi, documentsApi } from '@/api'
 import ContractFormModal from '@/features/contracts/ContractFormModal.vue'
 import { usePageLoader, toErrorMessage } from '@/composables/usePageLoader'
 import { useFormFeedback } from '@/composables/useFormFeedback'
 import { useAutoClose } from '@/composables/useAutoClose'
-import type { ContractReminder, ContractStatus, ContractType, VendorContract } from '@/types/domain'
+import type { ContractReminder, ContractStatus, ContractType, Document, VendorContract } from '@/types/domain'
 
 interface ContractReminderView extends ContractReminder {
   targetDate: string
@@ -42,6 +43,9 @@ const allReminders = ref<ContractReminder[]>([])
 const editingContract = ref<VendorContract | null>(null)
 const showFormModal = ref(false)
 const busyKey = ref('')
+const contractDocumentsTarget = ref<VendorContract | null>(null)
+const contractDocuments = ref<Document[]>([])
+const loadingContractDocuments = ref(false)
 
 async function loadData() {
   const [buildingResponse, contractsResponse, remindersResponse] = await Promise.all([
@@ -217,6 +221,31 @@ function setFilter(nextFilter: 'all' | 'active' | 'expired') {
 function openEditModal(contract: VendorContract) {
   editingContract.value = contract
   showFormModal.value = true
+}
+
+async function openContractDocuments(contract: VendorContract) {
+  contractDocumentsTarget.value = contract
+  contractDocuments.value = []
+  loadingContractDocuments.value = true
+
+  try {
+    const response = await contractsApi.listDocuments(contract.id)
+    contractDocuments.value = response.data
+  } catch (currentError: unknown) {
+    error.value = toErrorMessage(currentError, t('contracts.documents.loadError'))
+    contractDocumentsTarget.value = null
+  } finally {
+    loadingContractDocuments.value = false
+  }
+}
+
+async function downloadContractDocument(documentId: string) {
+  try {
+    const response = await documentsApi.getDownloadUrl(documentId)
+    window.open(response.data.url, '_blank', 'noopener')
+  } catch (currentError: unknown) {
+    error.value = toErrorMessage(currentError, t('contracts.documents.downloadError'))
+  }
 }
 
 async function acknowledgeReminder(reminder: ContractReminder) {
@@ -415,20 +444,15 @@ async function confirmTerminateContract() {
                 <h3 class="activity-card__title vendor-name">
                   {{ contract.vendor_name }}
                 </h3>
+                <CBadge variant="default">
+                  {{ t(`contracts.types.${contract.contract_type}`) }}
+                </CBadge>
                 <CBadge
                   :variant="statusVariant(effectiveStatus(contract))"
                   dot
                   class="activity-card__status"
                 >
                   {{ t(`contracts.statuses.${effectiveStatus(contract)}`) }}
-                </CBadge>
-              </div>
-
-              <div class="activity-card__chips">
-                <CBadge
-                  variant="default"
-                >
-                  {{ t(`contracts.types.${contract.contract_type}`) }}
                 </CBadge>
               </div>
             </div>
@@ -493,7 +517,21 @@ async function confirmTerminateContract() {
 
             <div class="contract-card__bottom">
               <div class="contract-card__footer">
-                <span class="contract-card__detail">
+                <button
+                  v-if="(contract.document_count ?? 0) > 0"
+                  class="contract-card__detail contract-card__documents-button"
+                  @click="openContractDocuments(contract)"
+                >
+                  <CIconFile
+                    width="14"
+                    height="14"
+                  />
+                  {{ t('contracts.documents.count', contract.document_count ?? 0) }}
+                </button>
+                <span
+                  v-else
+                  class="contract-card__detail"
+                >
                   <CIconFile
                     width="14"
                     height="14"
@@ -532,6 +570,16 @@ async function confirmTerminateContract() {
     v-model:open="showFormModal"
     :contract="editingContract"
     @saved="reload"
+  />
+
+  <CLinkedDocumentsModal
+    :open="!!contractDocumentsTarget"
+    :title="t('contracts.documents.title', { name: contractDocumentsTarget?.vendor_name ?? '' })"
+    :documents="contractDocuments"
+    :loading="loadingContractDocuments"
+    :empty-message="t('contracts.documents.empty')"
+    @update:open="value => !value && (contractDocumentsTarget = null)"
+    @download="downloadContractDocument"
   />
 
   <!-- Terminate contract modal -->
@@ -627,6 +675,17 @@ async function confirmTerminateContract() {
   gap: 6px;
   font-size: var(--text-sm);
   color: var(--color-on-surface-variant);
+}
+.contract-card__documents-button {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  min-height: unset;
+  min-width: unset;
+}
+.contract-card__documents-button:hover {
+  color: var(--color-primary);
 }
 .contract-actions {
   display: flex;

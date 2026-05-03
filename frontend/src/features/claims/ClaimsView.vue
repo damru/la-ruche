@@ -886,6 +886,9 @@ async function submitDelete() {
                 <h3 class="activity-card__title">
                   {{ claim.title }}
                 </h3>
+                <CBadge variant="default">
+                  {{ t(`claims.types.${claim.claim_type}`) }}
+                </CBadge>
                 <CBadge
                   :variant="statusVariant(claim.status)"
                   dot
@@ -896,9 +899,6 @@ async function submitDelete() {
               </div>
 
               <div class="activity-card__chips">
-                <CBadge variant="default">
-                  {{ t(`claims.types.${claim.claim_type}`) }}
-                </CBadge>
                 <CBadge
                   :variant="deadlineVariant(claim)"
                   :dot="deadlineVariant(claim) !== 'default'"
@@ -922,17 +922,6 @@ async function submitDelete() {
                   {{ claim.description }}
                 </p>
 
-                <div class="activity-card__meta">
-                  <span class="activity-card__line">
-                    <CIconCalendar />
-                    {{ t('claims.updatedAt', { date: formatDate(claim.updated_at) }) }}
-                  </span>
-                  <span class="activity-card__line">
-                    <CIconUser />
-                    {{ creatorName(claim.created_by) }}
-                  </span>
-                </div>
-
                 <div class="activity-card__documents">
                   <button
                     v-if="claim.document_count > 0"
@@ -948,6 +937,17 @@ async function submitDelete() {
                   >
                     <CIconFile />
                     {{ t('claims.documentsCount', claim.document_count) }}
+                  </span>
+                </div>
+
+                <div class="activity-card__meta">
+                  <span class="activity-card__line">
+                    <CIconCalendar />
+                    {{ t('claims.updatedAt', { date: formatDate(claim.updated_at) }) }}
+                  </span>
+                  <span class="activity-card__line">
+                    <CIconUser />
+                    {{ creatorName(claim.created_by) }}
                   </span>
                 </div>
 

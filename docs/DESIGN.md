@@ -183,12 +183,12 @@ Références d'implémentation : `frontend/src/composables/usePageLoader.ts`, `f
 
 La vue `Contrats` affiche en tête les rappels à traiter, avec une action d’acquittement visible sans navigation secondaire.
 
-- L’en-tête des cartes Contrat reprend le même pattern que les cartes Opérations : icône métier, titre principal et chip de statut sur une même ligne, puis chips secondaires sur une ligne dédiée.
+- L’en-tête des cartes Contrat reprend le même pattern que les cartes Opérations : icône métier, titre principal, chip de domaine/type puis chip de statut sur une même ligne.
 - Les cartes `Prestataires` reprennent la même grammaire d’en-tête, sans chip de statut quand aucune information de cycle de vie n’existe.
 - Les titres de `activity-card` restent compacts (18px) ; lorsqu’un titre partage sa ligne avec une icône métier, il reste centré verticalement pour éviter un décalage visuel entre l’icône et le texte.
 - Les tabs de filtre `Contrats` affichent le volume d’éléments par état (`Tous`, `Actifs`, `Expirés`) directement dans chaque segment.
-- Les pièces justificatives d’un contrat se gèrent directement depuis la modale de création / modification, sans bouton documentaire dédié sur la carte.
-- Chaque carte Contrat rappelle aussi le nombre de documents actuellement liés pour éviter d’ouvrir la modale à vide.
+- Les pièces justificatives d’un contrat se gèrent directement depuis la modale de création / modification, sans CTA documentaire primaire sur la carte.
+- Chaque carte Contrat rappelle aussi le nombre de documents actuellement liés et permet d’ouvrir une modale de consultation/téléchargement directement depuis ce hint lorsque des pièces existent.
 - La modale d’édition liste les pièces déjà liées avec deux issues explicites : retirer le lien seulement, ou retirer le lien puis supprimer définitivement le document.
 - La suppression définitive d’un contrat se déclenche depuis la modale d’édition, jamais depuis la carte.
 
@@ -214,6 +214,7 @@ La vue `Sinistres` affiche pour chaque dossier le délai légal restant avant d�
 - Les actions contextuelles suivent strictement ce mapping : `Ouvert → Transmettre`, `En cours → Clore`, `Clos → Supprimer`.
 - `Transmettre` ouvre une modale dédiée avec la date de transmission à l'assurance ; `Clore` ouvre une modale dédiée avec remboursement optionnel (date + montant) et ajout de documents ; `Modifier` permet aussi de supprimer le dossier sans revenir à la carte et de gérer les documents déjà joints.
 - Les tabs de filtre `Sinistres` affichent aussi le volume par état (`Tous`, `Ouverts`, `En cours`, `Clos`) pour rendre le backlog lisible sans ouvrir chaque segment.
+- La carte `Sinistre` affiche désormais sa chip de type dans le header, à gauche du statut, puis conserve le hint documentaire sur sa propre ligne au-dessus des métadonnées `date/auteur`.
 
 ## Règle UI — Cartes Opérations (`Signalements` / `Tâches` / `Sinistres`)
 
@@ -235,7 +236,7 @@ Contraintes complémentaires :
 - la description utilise une taille de texte standard, en ton principal mais sans graisse excessive ; les metadata / secondary information restent volontairement plus légères via une teinte plus douce (implémentée avec `color-mix(... 88%, white)`) ;
 - les lignes compactes `activity-card` n'utilisent plus de séparateur ; le groupement repose sur l'alignement, la proximité et des espacements icône/texte très serrés ;
 - la carte `Tâche` compacte son header en `titre + priorité + statut`, sans icône, puis regroupe l’assignation et la date de création relative dans les métadonnées ;
-- la carte `Signalement` affiche `icône + (statut + mise à jour relative simple)` sur sa première ligne, avec une icône de mise à jour dédiée ; sa modale de miniatures reste compacte avec des vignettes plafonnées, puis ouvre un viewer photo agrandi dont les boutons de navigation sont alignés sur une même ligne sous l’image ;
+- la carte `Signalement` affiche `icône + (statut + mise à jour relative simple)` sur sa première ligne, avec une icône de mise à jour dédiée ; son titre reste aligné à gauche sous cet en-tête ; sa modale de miniatures reste compacte avec des vignettes plafonnées, puis ouvre un viewer photo agrandi dont les boutons de navigation sont alignés sur une même ligne sous l’image ;
 - la carte `Sinistre` conserve son icône métier mais sa couleur doit refléter explicitement le type de sinistre ;
 - la carte `Sinistre` n'expose jamais `Supprimer` dans la liste ; cette action reste confinée à la modale d'édition ;
 - l'ossature reste commune mais chaque entité peut substituer un équivalent métier quand une donnée n'existe pas (ex. `prestataire assigné` au lieu d'une localisation stricte sur les tâches).
