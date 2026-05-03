@@ -192,8 +192,8 @@ const claimCounts = computed(() =>
     (counts, claim) => {
       counts.all += 1
       if (claim.status === 'open') counts.open += 1
-      if (claim.status === 'in_progress') counts.in_progress += 1
-      if (claim.status === 'closed') counts.closed += 1
+      else if (claim.status === 'in_progress') counts.in_progress += 1
+      else if (claim.status === 'closed') counts.closed += 1
       return counts
     },
     { all: 0, open: 0, in_progress: 0, closed: 0 },
