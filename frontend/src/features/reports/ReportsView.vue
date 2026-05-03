@@ -1352,7 +1352,7 @@ function photoPreview(file: File): string {
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: var(--space-3);
-  min-height: min(80vh, 760px);
+  min-height: min(78vh, 760px);
 }
 
 .report-photo-viewer__image {

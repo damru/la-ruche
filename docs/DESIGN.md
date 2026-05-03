@@ -220,7 +220,7 @@ Les cartes de liste des vues `Signalements`, `Tâches` et `Sinistres` partagent 
 - ligne 2 : titre principal ou, pour certaines cartes, reprise du titre juste sous l’en-tête si cela améliore la lisibilité ;
 - ligne 3 : description courte éventuelle, en taille de texte standard ;
 - ligne 4 : hints documentaires / photo sur leur propre ligne ;
-- ligne 5 : métadonnées compactes avec icônes, sans séparateur médian ;
+- ligne 5 : métadonnées compactes avec icônes, sans séparateur ;
 - séparateur discret ;
 - ligne d'actions avec `Modifier` puis une action contextuelle accentée ;
 - bloc informatif secondaire pour les éléments métier complémentaires (délai légal, remboursement, lien prestataire, historique, etc.).
@@ -229,6 +229,7 @@ Contraintes complémentaires :
 
 - les listes sont triées par `dernière modification` décroissante ;
 - la description utilise une taille de texte normale, tout en gardant un ton secondaire ;
+- les lignes compactes `activity-card` n'utilisent plus de séparateur ; le groupement repose sur l'alignement, la proximité et des espacements icône/texte très serrés ;
 - la carte `Tâche` compacte son header en `titre + priorité + statut`, sans icône, puis regroupe l’assignation et la date de création relative dans les métadonnées ;
 - la carte `Signalement` affiche `icône + statut + date de mise à jour relative simple` (`aujourd'hui`, `hier`, etc.) sur sa première ligne, puis ouvre une grille de miniatures qui bascule vers un viewer photo plein écran avec navigation latérale depuis le hint des photos liées ;
 - la carte `Sinistre` conserve son icône métier mais sa couleur doit refléter explicitement le type de sinistre ;
