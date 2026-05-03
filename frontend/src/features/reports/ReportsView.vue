@@ -1348,16 +1348,17 @@ function photoPreview(file: File): string {
 }
 
 .report-photo-viewer {
+  --report-photo-viewer-height: min(78vh, 760px);
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: var(--space-3);
-  min-height: min(78vh, 760px);
+  min-height: var(--report-photo-viewer-height);
 }
 
 .report-photo-viewer__image {
   width: 100%;
-  max-height: min(78vh, 760px);
+  max-height: var(--report-photo-viewer-height);
   object-fit: contain;
   border-radius: var(--radius-md);
   background: var(--color-surface-container-low);
