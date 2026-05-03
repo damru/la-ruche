@@ -46,13 +46,15 @@ jobs:
       - name: Cache Cargo
         uses: Swatinem/rust-cache@v2
         with:
+          # Share Cargo registry, target artifacts, and cargo-installed tools across backend jobs.
           shared-key: backend-ci
           workspaces: |
             backend -> target
-          cache-all-crates: "true"
+          cache-all-crates: true
 
       - name: Install sqlx-cli
         run: |
+          # rust-cache restores cargo-installed binaries when available; only install on a cold cache.
           if ! command -v sqlx >/dev/null 2>&1; then
             cargo install sqlx-cli --version ${{ env.SQLX_CLI_VERSION }} --no-default-features --features postgres --locked
           fi
@@ -109,13 +111,15 @@ jobs:
       - name: Cache Cargo
         uses: Swatinem/rust-cache@v2
         with:
+          # Share Cargo registry, target artifacts, and cargo-installed tools across backend jobs.
           shared-key: backend-ci
           workspaces: |
             backend -> target
-          cache-all-crates: "true"
+          cache-all-crates: true
 
       - name: Install sqlx-cli
         run: |
+          # rust-cache restores cargo-installed binaries when available; only install on a cold cache.
           if ! command -v sqlx >/dev/null 2>&1; then
             cargo install sqlx-cli --version ${{ env.SQLX_CLI_VERSION }} --no-default-features --features postgres --locked
           fi
