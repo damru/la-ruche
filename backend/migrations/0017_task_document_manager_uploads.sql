@@ -4,6 +4,9 @@ CREATE TABLE task_document (
     PRIMARY KEY (task_id, document_id)
 );
 
+CREATE INDEX IF NOT EXISTS idx_task_document_document_id
+    ON task_document(document_id);
+
 -- Align vendor-submission document links with the rest of the document model:
 -- deleting a vendor submission should drop its link rows, and deleting a document
 -- from the manager-facing task modal must also clean existing vendor-submission links.
