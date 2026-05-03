@@ -187,6 +187,20 @@ const activeClaimsCount = computed(() =>
   allClaims.value.filter(claim => claim.status !== 'closed').length,
 )
 
+const claimCounts = computed(() => ({
+  all: allClaims.value.length,
+  open: allClaims.value.filter(claim => claim.status === 'open').length,
+  in_progress: allClaims.value.filter(claim => claim.status === 'in_progress').length,
+  closed: allClaims.value.filter(claim => claim.status === 'closed').length,
+}))
+
+const claimTabs = computed(() => [
+  { key: 'all', label: t('common.all'), count: claimCounts.value.all },
+  { key: 'open', label: t('claims.filters.open'), count: claimCounts.value.open },
+  { key: 'in_progress', label: t('claims.filters.inProgress'), count: claimCounts.value.in_progress },
+  { key: 'closed', label: t('claims.filters.closed'), count: claimCounts.value.closed },
+])
+
 const legalCardLinks = computed(() => [
   {
     label: t('claims.legalCard.currentLinkLabel'),
@@ -837,17 +851,13 @@ async function submitDelete() {
 
         <div class="tabs">
           <button
-            v-for="option in [
-              { key: 'all', label: t('common.all') },
-              { key: 'open', label: t('claims.filters.open') },
-              { key: 'in_progress', label: t('claims.filters.inProgress') },
-              { key: 'closed', label: t('claims.filters.closed') },
-            ]"
+            v-for="option in claimTabs"
             :key="option.key"
             :class="['tab', { 'tab--active': filter === option.key }]"
             @click="filter = option.key as typeof filter"
           >
             {{ option.label }}
+            <span class="tab-count">{{ option.count }}</span>
           </button>
         </div>
 

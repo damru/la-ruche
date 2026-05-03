@@ -184,6 +184,18 @@ const contracts = computed(() => {
     .sort((left, right) => left.vendor_name.localeCompare(right.vendor_name))
 })
 
+const contractCounts = computed(() => ({
+  all: allContracts.value.length,
+  active: allContracts.value.filter(contract => effectiveStatus(contract) === 'active').length,
+  expired: allContracts.value.filter(contract => effectiveStatus(contract) !== 'active').length,
+}))
+
+const contractTabs = computed(() => [
+  { key: 'all', label: t('common.all'), count: contractCounts.value.all },
+  { key: 'active', label: t('contracts.filters.active'), count: contractCounts.value.active },
+  { key: 'expired', label: t('contracts.filters.expired'), count: contractCounts.value.expired },
+])
+
 function openCreateModal() {
   editingContract.value = null
   showFormModal.value = true
@@ -343,16 +355,13 @@ async function confirmTerminateContract() {
         <div class="contracts-toolbar">
           <div class="tabs">
             <button
-              v-for="opt in [
-                { key: 'all', label: t('common.all') },
-                { key: 'active', label: t('contracts.filters.active') },
-                { key: 'expired', label: t('contracts.filters.expired') },
-              ]"
+              v-for="opt in contractTabs"
               :key="opt.key"
               :class="['tab', { 'tab--active': filter === opt.key }]"
               @click="setFilter(opt.key as 'all' | 'active' | 'expired')"
             >
               {{ opt.label }}
+              <span class="tab-count">{{ opt.count }}</span>
             </button>
           </div>
 
