@@ -1357,7 +1357,7 @@ function photoPreview(file: File): string {
 
 .report-photo-viewer__image {
   width: 100%;
-  max-height: min(78vh, 860px);
+  max-height: min(78vh, 760px);
   object-fit: contain;
   border-radius: var(--radius-md);
   background: var(--color-surface-container-low);
