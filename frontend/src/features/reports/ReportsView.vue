@@ -585,7 +585,7 @@ function photoPreview(file: File): string {
             :class="['activity-card', 'report-card', { 'card--terminated': r.status === 'closed' }]"
           >
             <div class="activity-card__head report-card__head">
-              <div class="report-card__status-row">
+              <div class="activity-card__header-row activity-card__header-row--with-icon report-card__status-row">
                 <div class="activity-card__icon tone--default">
                   <CIconInfo />
                 </div>

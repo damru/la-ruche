@@ -291,7 +291,7 @@ async function confirmDelete() {
           <CCard
             v-for="c in filtered"
             :key="c.id"
-            class="contractor-card"
+            class="activity-card contractor-card"
           >
             <div class="activity-card__head">
               <div class="activity-card__header-row activity-card__header-row--with-icon">

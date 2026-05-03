@@ -875,7 +875,7 @@ async function submitDelete() {
             :class="['activity-card', 'claim-card', { 'card--terminated': claim.status === 'closed' }]"
           >
             <div class="activity-card__head">
-              <div class="activity-card__header-row">
+              <div class="activity-card__header-row activity-card__header-row--with-icon">
                 <div :class="['activity-card__icon', typeTone(claim.claim_type)]">
                   <component
                     :is="typeIcon(claim.claim_type)"

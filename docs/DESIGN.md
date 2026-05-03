@@ -183,6 +183,7 @@ Références d'implémentation : `frontend/src/composables/usePageLoader.ts`, `f
 
 La vue `Contrats` affiche en tête les rappels à traiter, avec une action d’acquittement visible sans navigation secondaire.
 
+- Les cartes `Contrat`, `Sinistre`, `Signalement` et `Prestataire` reposent toutes sur le socle partagé `activity-card` ; dès qu’un header contient une icône métier, il utilise `activity-card__header-row activity-card__header-row--with-icon` pour conserver un centrage vertical stable entre icône, titre et chips.
 - L’en-tête des cartes Contrat reprend le même pattern que les cartes Opérations : icône métier, titre principal, chip de domaine/type puis chip de statut sur une même ligne.
 - Les cartes `Prestataires` reprennent la même grammaire d’en-tête, sans chip de statut quand aucune information de cycle de vie n’existe.
 - Les titres de `activity-card` restent compacts (18px) ; lorsqu’un titre partage sa ligne avec une icône métier, il reste centré verticalement pour éviter un décalage visuel entre l’icône et le texte.
@@ -214,7 +215,7 @@ La vue `Sinistres` affiche pour chaque dossier le délai légal restant avant d�
 - Les actions contextuelles suivent strictement ce mapping : `Ouvert → Transmettre`, `En cours → Clore`, `Clos → Supprimer`.
 - `Transmettre` ouvre une modale dédiée avec la date de transmission à l'assurance ; `Clore` ouvre une modale dédiée avec remboursement optionnel (date + montant) et ajout de documents ; `Modifier` permet aussi de supprimer le dossier sans revenir à la carte et de gérer les documents déjà joints.
 - Les tabs de filtre `Sinistres` affichent aussi le volume par état (`Tous`, `Ouverts`, `En cours`, `Clos`) pour rendre le backlog lisible sans ouvrir chaque segment.
-- La carte `Sinistre` affiche désormais sa chip de type dans le header, à gauche du statut, puis conserve le hint documentaire sur sa propre ligne au-dessus des métadonnées `date/auteur`.
+- La carte `Sinistre` affiche désormais sa chip de type dans le header, à gauche du statut, puis conserve le hint documentaire sur sa propre ligne au-dessus des métadonnées `date/auteur`, avec le même alignement vertical header que les cartes Contrat / Signalement / Prestataire.
 
 ## Règle UI — Cartes Opérations (`Signalements` / `Tâches` / `Sinistres`)
 

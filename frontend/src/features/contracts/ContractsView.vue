@@ -430,7 +430,7 @@ async function confirmTerminateContract() {
             v-for="contract in contracts"
             :key="contract.id"
             :shadow="effectiveStatus(contract) === 'active'"
-            :class="['contract-card', { 'card--terminated': effectiveStatus(contract) !== 'active' }]"
+            :class="['activity-card', 'contract-card', { 'card--terminated': effectiveStatus(contract) !== 'active' }]"
           >
             <div class="activity-card__head">
               <div class="activity-card__header-row activity-card__header-row--with-icon">
