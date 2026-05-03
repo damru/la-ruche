@@ -56,6 +56,7 @@ jobs:
         run: |
           # rust-cache restores cargo-installed binaries when available; only install on a cold cache.
           if ! command -v sqlx >/dev/null 2>&1; then
+            echo "Installing sqlx-cli (not restored from cache)"
             cargo install sqlx-cli --version ${{ env.SQLX_CLI_VERSION }} --no-default-features --features postgres --locked
           fi
 
@@ -121,6 +122,7 @@ jobs:
         run: |
           # rust-cache restores cargo-installed binaries when available; only install on a cold cache.
           if ! command -v sqlx >/dev/null 2>&1; then
+            echo "Installing sqlx-cli (not restored from cache)"
             cargo install sqlx-cli --version ${{ env.SQLX_CLI_VERSION }} --no-default-features --features postgres --locked
           fi
 
