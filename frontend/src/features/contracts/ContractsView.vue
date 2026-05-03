@@ -184,11 +184,20 @@ const contracts = computed(() => {
     .sort((left, right) => left.vendor_name.localeCompare(right.vendor_name))
 })
 
-const contractCounts = computed(() => ({
-  all: allContracts.value.length,
-  active: allContracts.value.filter(contract => effectiveStatus(contract) === 'active').length,
-  expired: allContracts.value.filter(contract => effectiveStatus(contract) !== 'active').length,
-}))
+const contractCounts = computed(() =>
+  allContracts.value.reduce(
+    (counts, contract) => {
+      counts.all += 1
+      if (effectiveStatus(contract) === 'active') {
+        counts.active += 1
+      } else {
+        counts.expired += 1
+      }
+      return counts
+    },
+    { all: 0, active: 0, expired: 0 },
+  ),
+)
 
 const contractTabs = computed(() => [
   { key: 'all', label: t('common.all'), count: contractCounts.value.all },

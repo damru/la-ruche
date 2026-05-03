@@ -187,12 +187,18 @@ const activeClaimsCount = computed(() =>
   allClaims.value.filter(claim => claim.status !== 'closed').length,
 )
 
-const claimCounts = computed(() => ({
-  all: allClaims.value.length,
-  open: allClaims.value.filter(claim => claim.status === 'open').length,
-  in_progress: allClaims.value.filter(claim => claim.status === 'in_progress').length,
-  closed: allClaims.value.filter(claim => claim.status === 'closed').length,
-}))
+const claimCounts = computed(() =>
+  allClaims.value.reduce(
+    (counts, claim) => {
+      counts.all += 1
+      if (claim.status === 'open') counts.open += 1
+      if (claim.status === 'in_progress') counts.in_progress += 1
+      if (claim.status === 'closed') counts.closed += 1
+      return counts
+    },
+    { all: 0, open: 0, in_progress: 0, closed: 0 },
+  ),
+)
 
 const claimTabs = computed(() => [
   { key: 'all', label: t('common.all'), count: claimCounts.value.all },
