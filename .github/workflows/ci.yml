@@ -24,6 +24,10 @@ jobs:
     defaults:
       run:
         working-directory: ./backend
+    env:
+      RUSTC_WRAPPER: sccache
+      SCCACHE_DIR: ~/.cache/sccache
+      SCCACHE_CACHE_SIZE: 2G
     services:
       postgres:
         image: postgres:18-alpine
@@ -56,6 +60,20 @@ jobs:
             backend -> target
           cache-all-crates: true
           cache-workspace-crates: true
+
+      - name: Install sccache
+        uses: mozilla-actions/sccache-action@v0.0.10
+
+      - name: Cache sccache
+        uses: actions/cache@v5.0.5
+        with:
+          path: ~/.cache/sccache
+          key: sccache-${{ runner.os }}-${{ hashFiles('backend/Cargo.lock') }}
+          restore-keys: |
+            sccache-${{ runner.os }}-
+
+      - name: Reset sccache stats
+        run: sccache --zero-stats
 
       - name: Install sqlx-cli
         run: |
@@ -122,6 +140,14 @@ jobs:
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 1
+
+      - name: Show sccache stats
+        if: always()
+        run: sccache --show-stats
+
+      - name: Show sccache stats
+        if: always()
+        run: sccache --show-stats
 
   # ── Tests frontend ─────────────────────────────────────────────
   test-frontend:
