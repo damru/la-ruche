@@ -222,10 +222,10 @@ HTTP → Tower (CORS, trace, timeout 30s)
 
 ## CI/CD
 
-- Le workflow `CI` prépare désormais `backend/.sqlx/` dans un job dédié `prepare-sqlx`, puis partage cet artefact aux jobs **backend** et **docker-build** pour éviter une double génération.
-- Le workflow sépare ensuite la **validation backend**, la **validation frontend** et un **`docker-build`** exécuté en parallèle pour préchauffer le cache Buildx sans publication.
+- Le workflow `CI` génère désormais `backend/.sqlx/` directement dans le job **backend**, puis partage cet artefact aux jobs **docker-build** et **docker-push** sans relancer une préparation SQLx séparée.
+- Le workflow sépare la **validation backend** et la **validation frontend**, puis déclenche un **`docker-build`** après succès backend pour réutiliser l’artefact SQLx sans régénération locale.
 - La publication Docker Hub est portée par un job `docker-push` distinct, déclenché seulement après succès de `test-backend`, `test-frontend` et `docker-build`.
-- Les caches CI sont mutualisés par écosystème : `Swatinem/rust-cache` partage désormais une clé stable `backend-ci` entre `prepare-sqlx` et `test-backend` pour réutiliser les dépendances Cargo et `sqlx-cli`, le cache npm passe par `actions/setup-node`, et le cache GHA Buildx reste isolé par branche pour les builds Docker.
+- Les caches CI sont mutualisés par écosystème : `Swatinem/rust-cache` porte une clé stable `backend-ci` entre les exécutions du workflow pour réutiliser le registre Cargo, les artefacts `target/`, les crates de test et `sqlx-cli`; le nettoyage natif du cache retire les artefacts Cargo inactifs depuis plus d’une semaine, le cache npm passe par `actions/setup-node`, et le cache GHA Buildx reste isolé par branche pour les builds Docker.
 
 ---
 
@@ -236,7 +236,7 @@ HTTP → Tower (CORS, trace, timeout 30s)
 - **`pub(crate)` par défaut**
 - **Pas de `unwrap()` hors tests**
 - **`Decimal` pour tous les montants financiers** (pas `f64`)
-- **`SQLX_OFFLINE=true` en CI et en build Docker** — `backend/.sqlx/` est généré une seule fois dans `prepare-sqlx`, puis téléchargé par les jobs backend et Docker
+- **`SQLX_OFFLINE=true` en CI et en build Docker** — `backend/.sqlx/` est généré une seule fois dans `test-backend`, puis téléchargé par les jobs Docker
 
 ---
 
