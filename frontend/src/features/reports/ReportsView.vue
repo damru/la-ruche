@@ -597,7 +597,7 @@ function photoPreview(file: File): string {
                   >
                     {{ t(`reports.statuses.${r.status}`) }}
                   </CBadge>
-                  <span class="activity-card__line report-card__relative-date">
+                  <span class="activity-card__line report-card__relative-update">
                     <CIconClock />
                     {{ formatRelative(r.updated_at) }}
                   </span>
@@ -1248,7 +1248,7 @@ function photoPreview(file: File): string {
 .report-card__status {
   flex-shrink: 0;
 }
-.report-card__relative-date {
+.report-card__relative-update {
   color: var(--color-on-surface-variant);
   font-size: var(--text-xs);
   line-height: 1.4;

@@ -231,7 +231,7 @@ Contraintes complémentaires :
 - la description utilise une taille de texte normale et une emphase visuelle supérieure aux metadata / secondary information ;
 - les lignes compactes `activity-card` n'utilisent plus de séparateur ; le groupement repose sur l'alignement, la proximité et des espacements icône/texte très serrés ;
 - la carte `Tâche` compacte son header en `titre + priorité + statut`, sans icône, puis regroupe l’assignation et la date de création relative dans les métadonnées ;
-- la carte `Signalement` affiche `icône + (statut + mise à jour relative simple)` sur sa première ligne, avec une icône de mise à jour dédiée ; sa modale de miniatures reste compacte avec des vignettes plafonnées, puis bascule vers un viewer photo agrandi dont les boutons de navigation sont alignés sur une même ligne sous l’image ;
+- la carte `Signalement` affiche `icône + (statut + mise à jour relative simple)` sur sa première ligne, avec une icône de mise à jour dédiée ; sa modale de miniatures reste compacte avec des vignettes plafonnées, puis ouvre un viewer photo agrandi dont les boutons de navigation sont alignés sur une même ligne sous l’image ;
 - la carte `Sinistre` conserve son icône métier mais sa couleur doit refléter explicitement le type de sinistre ;
 - la carte `Sinistre` n'expose jamais `Supprimer` dans la liste ; cette action reste confinée à la modale d'édition ;
 - l'ossature reste commune mais chaque entité peut substituer un équivalent métier quand une donnée n'existe pas (ex. `prestataire assigné` au lieu d'une localisation stricte sur les tâches).
