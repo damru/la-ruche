@@ -26,6 +26,7 @@ jobs:
         working-directory: ./backend
     env:
       RUSTC_WRAPPER: sccache
+      SCCACHE_GHA_ENABLED: "true"
       SCCACHE_DIR: ~/.cache/sccache
       SCCACHE_CACHE_SIZE: 2G
     services:
@@ -63,14 +64,6 @@ jobs:
 
       - name: Install sccache
         uses: mozilla-actions/sccache-action@v0.0.10
-
-      - name: Cache sccache
-        uses: actions/cache@v5.0.5
-        with:
-          path: ~/.cache/sccache
-          key: sccache-${{ runner.os }}-${{ hashFiles('backend/Cargo.lock') }}
-          restore-keys: |
-            sccache-${{ runner.os }}-
 
       - name: Reset sccache stats
         run: sccache --zero-stats
@@ -140,10 +133,6 @@ jobs:
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 1
-
-      - name: Show sccache stats
-        if: always()
-        run: sccache --show-stats
 
       - name: Show sccache stats
         if: always()
