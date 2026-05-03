@@ -217,7 +217,7 @@ function typeIcon(type: ClaimType) {
 
 function typeTone(type: ClaimType): string {
   const tones = {
-    current: 'tone--default',
+    current: 'tone--accent',
     natural_disaster: 'tone--warn',
     theft: 'tone--err',
   }

@@ -216,12 +216,11 @@ La vue `Sinistres` affiche pour chaque dossier le délai légal restant avant d�
 
 Les cartes de liste des vues `Signalements`, `Tâches` et `Sinistres` partagent une même ossature visuelle afin d'améliorer le balayage :
 
-- ligne 1 : icône métier, titre principal, puis chip de statut alignée à droite ;
-- ligne 2 : chips secondaires éventuelles (priorité, catégorie, délai, indicateur métier) ;
-- ligne 3 : ligne de contexte principale (localisation si elle existe, sinon information métier équivalente comme le prestataire assigné) ;
-- ligne 4 : description courte éventuelle, placée juste sous le contexte primaire ;
-- ligne 5 : métadonnées compactes avec icônes (`mise à jour`, `acteur de référence selon les données disponibles`) ;
-- ligne 6 : hint `documents liés` sur sa propre ligne, avec le même ton visuel que les métadonnées et ouverture directe de la modale de téléchargement ;
+- ligne 1 : en-tête compact propre à l’entité, avec au minimum le statut visible sans ouvrir la carte ;
+- ligne 2 : titre principal ou, pour certaines cartes, reprise du titre juste sous l’en-tête si cela améliore la lisibilité ;
+- ligne 3 : description courte éventuelle, en taille de texte standard ;
+- ligne 4 : hints documentaires / photo sur leur propre ligne ;
+- ligne 5 : métadonnées compactes avec icônes ;
 - séparateur discret ;
 - ligne d'actions avec `Modifier` puis une action contextuelle accentée ;
 - bloc informatif secondaire pour les éléments métier complémentaires (délai légal, remboursement, lien prestataire, historique, etc.).
@@ -229,10 +228,10 @@ Les cartes de liste des vues `Signalements`, `Tâches` et `Sinistres` partagent 
 Contraintes complémentaires :
 
 - les listes sont triées par `dernière modification` décroissante ;
-- la ligne de contexte principale, la ligne de métadonnées et la ligne d’informations secondaires partagent la même hiérarchie visuelle (`texte secondaire`, taille compacte, séparateurs `•` entre éléments d’une même ligne) ;
-- la description redevient visible si elle existe, immédiatement sous la localisation / le contexte principal ;
-- cliquer sur le hint `documents liés` ouvre une modale listant les fichiers téléchargeables ;
-- le statut de tâche liée d’un `Signalement` est condensé dans une chip dédiée plutôt que répété en ligne secondaire ;
+- la description utilise une taille de texte normale, tout en gardant un ton secondaire ;
+- la carte `Tâche` compacte son header en `titre + priorité + statut`, sans icône, puis regroupe l’assignation et la date de création relative dans les métadonnées ;
+- la carte `Signalement` affiche `icône + statut + date de mise à jour relative` sur sa première ligne, puis ouvre une galerie de photos prévisualisables avec navigation latérale depuis le hint des photos liées ;
+- la carte `Sinistre` conserve son icône métier mais sa couleur doit refléter explicitement le type de sinistre ;
 - la carte `Sinistre` n'expose jamais `Supprimer` dans la liste ; cette action reste confinée à la modale d'édition ;
 - l'ossature reste commune mais chaque entité peut substituer un équivalent métier quand une donnée n'existe pas (ex. `prestataire assigné` au lieu d'une localisation stricte sur les tâches).
 

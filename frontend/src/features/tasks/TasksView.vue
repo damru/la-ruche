@@ -19,7 +19,7 @@ import { buildingApi, contractorsApi, documentsApi, tasksApi, usersApi } from '@
 import type { Contractor, Document, Task, TaskStatus, TaskPriority, User } from '@/types/domain'
 
 const { t } = useI18n()
-const { formatDate } = useFormatters()
+const { formatRelative } = useFormatters()
 
 // ── State ─────────────────────────────────────────────────────────
 const buildingName = ref('')
@@ -258,16 +258,14 @@ function priorityVariant(p: string): 'err' | 'pending' | 'primary' | 'valid' | '
   return 'default'
 }
 
-function priorityTone(p: string): string {
-  if (p === 'urgent') return 'tone--err'
-  if (p === 'high') return 'tone--warn'
-  if (p === 'normal') return 'tone--accent'
-  return 'tone--valid'
-}
+function assigneeLabel(task: Task): string {
+  const contractorName = contractorDisplayName(task)
+  if (contractorName) return contractorName
 
-function creatorName(userId?: string): string {
-  const user = userId ? usersById.value.get(userId) : undefined
-  return user ? `${user.first_name} ${user.last_name}` : t('common.noData')
+  const assignedUser = task.assigned_to ? usersById.value.get(task.assigned_to) : undefined
+  if (assignedUser) return `${assignedUser.first_name} ${assignedUser.last_name}`
+
+  return t('tasks.assignNone')
 }
 
 async function openTaskDocuments(task: Task) {
@@ -558,9 +556,6 @@ async function showVendorLink(task: Task) {
   }
 }
 
-function copyToClipboard(text: string) {
-  navigator.clipboard.writeText(text).catch(() => {})
-}
 </script>
 
 <template>
@@ -645,81 +640,34 @@ function copyToClipboard(text: string) {
             :shadow="!isTerminal(task.status)"
             :class="['activity-card', 'task-card', { 'card--terminated': isTerminal(task.status) }]"
           >
-            <div class="activity-card__head">
-              <div class="activity-card__header-row">
-                <div
-                  class="activity-card__icon"
-                  :class="isTerminal(task.status) ? 'tone--disabled' : priorityTone(task.priority)"
-                >
-                  <CIconWrench />
-                </div>
+            <div class="activity-card__head task-card__head">
+              <div class="task-card__header-row">
                 <RouterLink
                   :to="{ name: 'task-detail', params: { id: task.id } }"
                   class="activity-card__title task-title-link"
                 >
                   {{ task.title }}
                 </RouterLink>
-                <CBadge
-                  :variant="isTerminal(task.status) ? 'disabled' : statusVariant(task.status)"
-                  dot
-                  class="activity-card__status"
-                >
-                  {{ t(`tasks.statuses.${task.status}`) }}
-                </CBadge>
-              </div>
-
-              <div class="activity-card__chips">
-                <CBadge :variant="isTerminal(task.status) ? 'disabled' : priorityVariant(task.priority)">
-                  {{ t(`tasks.priorities.${task.priority}`) }}
-                </CBadge>
-                <CBadge
-                  v-if="task.has_vendor_token"
-                  variant="default"
-                >
-                  {{ t('tasks.vendorToken') }}
-                </CBadge>
+                <div class="task-card__header-badges">
+                  <CBadge :variant="isTerminal(task.status) ? 'disabled' : priorityVariant(task.priority)">
+                    {{ t(`tasks.priorities.${task.priority}`) }}
+                  </CBadge>
+                  <CBadge
+                    :variant="isTerminal(task.status) ? 'disabled' : statusVariant(task.status)"
+                    dot
+                  >
+                    {{ t(`tasks.statuses.${task.status}`) }}
+                  </CBadge>
+                </div>
               </div>
 
               <div class="activity-card__stack">
-                <div class="activity-card__subtitle">
-                  <span
-                    v-if="task.contractor_id && contractorsById.get(task.contractor_id)"
-                    class="activity-card__line"
-                  >
-                    <CIconLocation />
-                    <RouterLink
-                      :to="{ name: 'contractor-detail', params: { id: task.contractor_id } }"
-                      class="task-assignment-link"
-                    >
-                      {{ contractorsById.get(task.contractor_id)!.name }}
-                    </RouterLink>
-                  </span>
-                  <span
-                    v-else
-                    class="activity-card__line"
-                  >
-                    <CIconLocation />
-                    {{ contractorDisplayName(task) || t('tasks.contractorUnassigned') }}
-                  </span>
-                </div>
-
                 <p
                   v-if="task.description"
                   class="activity-card__description"
                 >
                   {{ task.description }}
                 </p>
-
-                <div class="activity-card__meta">
-                  <span class="activity-card__line">
-                    <CIconCalendar />
-                    {{ t('tasks.updatedAt', { date: formatDate(task.updated_at) }) }}
-                  </span>
-                  <span class="activity-card__line">
-                    <CIconUser />
-                    {{ creatorName(task.created_by) }}
-                  </span>
-                </div>
 
                 <div class="activity-card__documents">
                   <button
@@ -736,6 +684,17 @@ function copyToClipboard(text: string) {
                   >
                     <CIconFile />
                     {{ t('tasks.documentsCount', task.document_count) }}
+                  </span>
+                </div>
+
+                <div class="activity-card__meta">
+                  <span class="activity-card__line">
+                    <CIconUser />
+                    {{ assigneeLabel(task) }}
+                  </span>
+                  <span class="activity-card__line">
+                    <CIconCalendar />
+                    {{ t('tasks.lifecycle.createdRelative', { relative: formatRelative(task.created_at) }) }}
                   </span>
                 </div>
 
@@ -808,48 +767,6 @@ function copyToClipboard(text: string) {
                     <CIconX />
                     {{ t('tasks.revokeToken') }}
                   </CBtn>
-                </div>
-
-                <div
-                  v-if="task.has_vendor_token || vendorLinks[task.id] || task.closed_at || task.is_in_logbook"
-                  class="activity-card__note"
-                >
-                  <span
-                    v-if="task.has_vendor_token"
-                    class="activity-card__line"
-                  >
-                    <CIconLink />
-                    {{ t('tasks.vendorTokenActive', { date: task.token_expires_at ? formatDate(task.token_expires_at) : '' }) }}
-                  </span>
-                  <span
-                    v-if="task.closed_at"
-                    class="activity-card__line"
-                  >
-                    <CIconCalendar />
-                    {{ t('tasks.closedAt', { date: formatDate(task.closed_at) }) }}
-                  </span>
-                  <span
-                    v-if="task.is_in_logbook"
-                    class="activity-card__line"
-                  >
-                    <CIconBook />
-                    {{ t('maintenance.title') }}
-                  </span>
-                  <code
-                    v-if="vendorLinks[task.id]"
-                    class="token-url"
-                  >{{ vendorLinks[task.id].url }}</code>
-                  <button
-                    v-if="vendorLinks[task.id]"
-                    class="icon-btn"
-                    :title="t('tasks.vendorTokenCopied')"
-                    @click="copyToClipboard(vendorLinks[task.id].url)"
-                  >
-                    <CIconCopy
-                      width="14"
-                      height="14"
-                    />
-                  </button>
                 </div>
               </div>
             </div>
@@ -1241,18 +1158,25 @@ function copyToClipboard(text: string) {
 .task-list { display: flex; flex-direction: column; gap: 10px; }
 
 .task-card { overflow: hidden; }
+.task-card__head { gap: var(--space-3); }
+.task-card__header-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+.task-card__header-badges {
+  margin-left: auto;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
 .task-title-link {
   color: inherit;
   text-decoration: none;
   font-weight: var(--fw-semibold);
 }
 .task-title-link:hover { text-decoration: underline; color: var(--color-primary); }
-.task-assignment-link {
-  color: var(--color-primary);
-  text-decoration: none;
-  font-weight: var(--fw-medium);
-}
-.task-assignment-link:hover { text-decoration: underline; }
 .task-card__documents-button {
   background: none;
   border: none;
@@ -1262,36 +1186,12 @@ function copyToClipboard(text: string) {
   min-height: unset;
 }
 .task-card__documents-button:hover { color: var(--color-primary); }
-.token-url {
-  font-size: var(--text-2xs);
-  word-break: break-all;
-  flex: 1;
-}
 
 .assignment-options {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
   padding: var(--space-2) 0;
-}
-
-.icon-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: var(--radius-sm);
-  border: none;
-  background: var(--color-surface-container-high);
-  color: var(--color-on-surface);
-  cursor: pointer;
-  min-width: unset;
-  min-height: unset;
-}
-
-.icon-btn:hover {
-  background: var(--color-secondary-container);
 }
 
 .empty-state { padding: var(--space-8); text-align: center; font-size: var(--text-md); color: var(--color-on-surface-variant); }

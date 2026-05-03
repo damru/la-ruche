@@ -11,7 +11,6 @@ import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
-import CLinkedDocumentsModal from '@/components/molecules/CLinkedDocumentsModal.vue'
 import CDocumentLinkActionModal from '@/components/molecules/CDocumentLinkActionModal.vue'
 import CModal from '@/components/molecules/CModal.vue'
 import CPageError from '@/components/molecules/CPageError.vue'
@@ -21,7 +20,7 @@ import { buildingApi, documentsApi, reportsApi, unitsApi } from '@/api'
 import type { Document, Report, ReportStatus, TaskPriority, Unit } from '@/types/domain'
 
 const { t } = useI18n()
-const { formatDate } = useFormatters()
+const { formatDate, formatRelative } = useFormatters()
 const router = useRouter()
 const { hasAnyRole } = useRole()
 
@@ -331,13 +330,14 @@ async function submitDelete() {
 }
 
 // ── Linked documents modal ────────────────────────────────────────
-const reportDocumentsTarget = ref<Report | null>(null)
-const reportDocuments = ref<Document[]>([])
-const reportDocumentsLoading = ref(false)
 const deletingPhoto = ref(false)
 const photoActionTarget = ref<{ reportId: string; document: Document } | null>(null)
 const photoActionFeedback = useFormFeedback()
 const showPhotoActionModal = computed(() => photoActionTarget.value !== null)
+const reportPhotoGalleryTarget = ref<Report | null>(null)
+const reportPhotos = ref<Array<{ doc: Document; url: string }>>([])
+const reportPhotosLoading = ref(false)
+const activeReportPhotoIndex = ref<number | null>(null)
 
 function updateReportDocumentCount(reportId: string, delta: number) {
   const report = allReports.value.find(currentReport => currentReport.id === reportId)
@@ -354,18 +354,6 @@ async function fetchReportPhotos(reportId: string): Promise<Array<{ doc: Documen
       return { doc: document, url: urlRes.data.url }
     }),
   )
-}
-
-async function loadReportDocuments(reportId: string) {
-  reportDocumentsLoading.value = true
-  try {
-    const response = await reportsApi.listDocuments(reportId)
-    reportDocuments.value = response.data
-  } catch {
-    reportDocuments.value = []
-  } finally {
-    reportDocumentsLoading.value = false
-  }
 }
 
 async function loadEditAttachedPhotos(reportId: string) {
@@ -404,7 +392,6 @@ async function handlePhotoAction(deleteDocument: boolean) {
     }
 
     editAttachedPhotos.value = editAttachedPhotos.value.filter(item => item.doc.id !== photoActionTarget.value?.document.id)
-    reportDocuments.value = reportDocuments.value.filter(document => document.id !== photoActionTarget.value?.document.id)
     updateReportDocumentCount(photoActionTarget.value.reportId, -1)
 
     photoActionTarget.value = null
@@ -415,20 +402,53 @@ async function handlePhotoAction(deleteDocument: boolean) {
   }
 }
 
-async function openReportDocuments(report: Report) {
-  reportDocumentsTarget.value = report
-  reportDocuments.value = []
-  await loadReportDocuments(report.id)
+function closeReportPhotoGallery() {
+  reportPhotoGalleryTarget.value = null
+  reportPhotos.value = []
+  reportPhotosLoading.value = false
+  activeReportPhotoIndex.value = null
 }
 
-async function downloadReportDocument(documentId: string) {
+async function openReportPhotos(report: Report) {
+  reportPhotoGalleryTarget.value = report
+  reportPhotos.value = []
+  reportPhotosLoading.value = true
+
   try {
-    const response = await documentsApi.getDownloadUrl(documentId)
-    window.open(response.data.url, '_blank', 'noopener')
+    reportPhotos.value = await fetchReportPhotos(report.id)
   } catch {
     photoActionFeedback.setError(t('common.error'))
+    closeReportPhotoGallery()
+  } finally {
+    reportPhotosLoading.value = false
   }
 }
+
+function openReportPhotoViewer(index: number) {
+  activeReportPhotoIndex.value = index
+}
+
+function closeReportPhotoViewer() {
+  activeReportPhotoIndex.value = null
+}
+
+function showPreviousReportPhoto() {
+  if (activeReportPhotoIndex.value === null || reportPhotos.value.length <= 1) return
+  activeReportPhotoIndex.value = (activeReportPhotoIndex.value - 1 + reportPhotos.value.length) % reportPhotos.value.length
+}
+
+function showNextReportPhoto() {
+  if (activeReportPhotoIndex.value === null || reportPhotos.value.length <= 1) return
+  activeReportPhotoIndex.value = (activeReportPhotoIndex.value + 1) % reportPhotos.value.length
+}
+
+const activeReportPhoto = computed(() =>
+  activeReportPhotoIndex.value === null ? null : reportPhotos.value[activeReportPhotoIndex.value] ?? null,
+)
+
+const activeReportPhotoPosition = computed(() =>
+  activeReportPhotoIndex.value === null ? 0 : activeReportPhotoIndex.value + 1,
+)
 
 // ── Load data ─────────────────────────────────────────────────────
 async function loadData() {
@@ -484,28 +504,6 @@ function unitLabel(unitId?: string): string {
 
 function authorName(r: Report): string {
   return `${r.author_first_name} ${r.author_last_name}`
-}
-
-function linkedTaskStatusChipLabel(report: Report): string | null {
-  if (!report.task_status) return null
-  return t(`reports.linkedTaskChip.${report.task_status}`)
-}
-
-function linkedTaskStatusVariant(report: Report): 'valid' | 'open' | 'pending' | 'closed' | 'default' {
-  if (!report.task_status) return 'default'
-  switch (report.task_status) {
-    case 'closed':
-      return 'valid'
-    case 'in_progress':
-      return 'open'
-    case 'awaiting_vendor':
-    case 'awaiting_validation':
-      return 'pending'
-    case 'cancelled':
-      return 'closed'
-    default:
-      return 'default'
-  }
 }
 
 function photoPreview(file: File): string {
@@ -586,41 +584,28 @@ function photoPreview(file: File): string {
             :shadow="r.status !== 'closed'"
             :class="['activity-card', 'report-card', { 'card--terminated': r.status === 'closed' }]"
           >
-            <div class="activity-card__head">
-              <div class="activity-card__header-row">
+            <div class="activity-card__head report-card__head">
+              <div class="report-card__status-row">
                 <div class="activity-card__icon tone--default">
                   <CIconInfo />
                 </div>
-                <h3 class="activity-card__title">
-                  {{ r.title }}
-                </h3>
                 <CBadge
                   :variant="statusVariant(r.status)"
                   dot
-                  class="activity-card__status"
+                  class="report-card__status"
                 >
                   {{ t(`reports.statuses.${r.status}`) }}
                 </CBadge>
-              </div>
-
-              <div
-                v-if="linkedTaskStatusChipLabel(r)"
-                class="activity-card__chips"
-              >
-                <CBadge
-                  :variant="linkedTaskStatusVariant(r)"
-                >
-                  {{ linkedTaskStatusChipLabel(r) }}
-                </CBadge>
+                <span class="activity-card__line report-card__relative-date">
+                  <CIconCalendar />
+                  {{ t('reports.updatedAt', { date: formatRelative(r.updated_at) }) }}
+                </span>
               </div>
 
               <div class="activity-card__stack">
-                <div class="activity-card__subtitle">
-                  <span class="activity-card__line">
-                    <CIconLocation />
-                    {{ unitLabel(r.unit_id) }}
-                  </span>
-                </div>
+                <h3 class="activity-card__title">
+                  {{ r.title }}
+                </h3>
 
                 <p
                   v-if="r.description"
@@ -629,32 +614,36 @@ function photoPreview(file: File): string {
                   {{ r.description }}
                 </p>
 
-                <div class="activity-card__meta">
-                  <span class="activity-card__line">
-                    <CIconCalendar />
-                    {{ t('reports.updatedAt', { date: formatDate(r.updated_at) }) }}
-                  </span>
-                  <span class="activity-card__line">
-                    <CIconUser />
-                    {{ authorName(r) }}
-                  </span>
-                </div>
-
                 <div class="activity-card__documents">
                   <button
                     v-if="r.document_count > 0"
                     class="activity-card__line report-card__photo-button"
-                    @click="openReportDocuments(r)"
+                    @click="openReportPhotos(r)"
                   >
                     <CIconFile />
-                    {{ t('reports.documentsCount', r.document_count) }}
+                    {{ t('reports.linkedPhotosCount', r.document_count) }}
                   </button>
                   <span
                     v-else
                     class="activity-card__line"
                   >
                     <CIconFile />
-                    {{ t('reports.documentsCount', r.document_count) }}
+                    {{ t('reports.linkedPhotosCount', r.document_count) }}
+                  </span>
+                </div>
+
+                <div class="activity-card__meta">
+                  <span class="activity-card__line">
+                    <CIconUser />
+                    {{ authorName(r) }}
+                  </span>
+                  <span class="activity-card__line">
+                    <CIconHome />
+                    {{ unitLabel(r.unit_id) }}
+                  </span>
+                  <span class="activity-card__line">
+                    <CIconCalendar />
+                    {{ formatDate(r.created_at) }}
                   </span>
                 </div>
 
@@ -1144,15 +1133,80 @@ function photoPreview(file: File): string {
         </CBtn>
       </template>
     </CModal>
-    <CLinkedDocumentsModal
-      :open="!!reportDocumentsTarget"
-      :title="reportDocumentsTarget?.title ?? ''"
-      :documents="reportDocuments"
-      :loading="reportDocumentsLoading"
-      :empty-message="t('reports.noLinkedDocuments')"
-      @update:open="value => !value && (reportDocumentsTarget = null)"
-      @download="downloadReportDocument"
-    />
+    <CModal
+      :open="!!reportPhotoGalleryTarget"
+      :title="reportPhotoGalleryTarget?.title ?? ''"
+      size="lg"
+      @update:open="value => !value && closeReportPhotoGallery()"
+    >
+      <CPageLoader v-if="reportPhotosLoading" />
+      <div
+        v-else-if="reportPhotos.length"
+        class="report-photo-gallery-modal"
+      >
+        <button
+          v-for="(item, index) in reportPhotos"
+          :key="item.doc.id"
+          type="button"
+          class="report-photo-gallery-modal__item"
+          @click="openReportPhotoViewer(index)"
+        >
+          <img
+            :src="item.url"
+            :alt="item.doc.original_name"
+            class="report-photo-gallery-modal__thumb"
+          />
+        </button>
+      </div>
+      <p
+        v-else
+        class="body-sm report-photo-gallery-modal__empty"
+      >
+        {{ t('reports.noPhotos') }}
+      </p>
+    </CModal>
+
+    <CModal
+      :open="activeReportPhotoIndex !== null"
+      :title="activeReportPhoto?.doc.original_name ?? reportPhotoGalleryTarget?.title ?? ''"
+      size="lg"
+      @update:open="value => !value && closeReportPhotoViewer()"
+    >
+      <div
+        v-if="activeReportPhoto"
+        class="report-photo-viewer"
+      >
+        <CBtn
+          variant="ghost"
+          size="sm"
+          class="report-photo-viewer__nav"
+          :disabled="reportPhotos.length <= 1"
+          @click="showPreviousReportPhoto"
+        >
+          <CIconArrowLeft />
+        </CBtn>
+        <img
+          :src="activeReportPhoto.url"
+          :alt="activeReportPhoto.doc.original_name"
+          class="report-photo-viewer__image"
+        />
+        <CBtn
+          variant="ghost"
+          size="sm"
+          class="report-photo-viewer__nav"
+          :disabled="reportPhotos.length <= 1"
+          @click="showNextReportPhoto"
+        >
+          <CIconArrowRight />
+        </CBtn>
+      </div>
+      <p
+        v-if="activeReportPhoto"
+        class="body-sm report-photo-viewer__caption"
+      >
+        {{ activeReportPhotoPosition }} / {{ reportPhotos.length }} · {{ activeReportPhoto.doc.original_name }}
+      </p>
+    </CModal>
 
     <CDocumentLinkActionModal
       :open="showPhotoActionModal"
@@ -1172,6 +1226,18 @@ function photoPreview(file: File): string {
 <style scoped>
 /* ── Report cards ───────────────────────────────────────────────── */
 .report-list { display: flex; flex-direction: column; gap: var(--space-3); }
+.report-card__head { gap: var(--space-3); }
+.report-card__status-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.report-card__status {
+  flex-shrink: 0;
+}
+.report-card__relative-date {
+  margin-left: auto;
+}
 .report-card__photo-button {
   background: none;
   border: none;
@@ -1245,4 +1311,55 @@ function photoPreview(file: File): string {
 }
 .photo-gallery-delete svg { width: 14px; height: 14px; }
 .photo-gallery-delete:hover { opacity: 1; }
+
+.report-photo-gallery-modal {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--space-3);
+}
+
+.report-photo-gallery-modal__item {
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.report-photo-gallery-modal__thumb {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-outline-variant);
+}
+
+.report-photo-gallery-modal__empty {
+  margin: 0;
+  color: var(--color-on-surface-variant);
+}
+
+.report-photo-viewer {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.report-photo-viewer__image {
+  width: 100%;
+  max-height: 70vh;
+  object-fit: contain;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-container-low);
+}
+
+.report-photo-viewer__nav {
+  align-self: center;
+}
+
+.report-photo-viewer__caption {
+  margin: var(--space-3) 0 0;
+  text-align: center;
+  color: var(--color-on-surface-variant);
+}
 </style>
