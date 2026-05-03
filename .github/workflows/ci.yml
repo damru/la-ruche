@@ -13,15 +13,20 @@ concurrency:
 env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
+  SQLX_ARTIFACT_NAME: sqlx-offline-metadata
+  SQLX_CLI_VERSION: 0.8.6
 
 jobs:
-  # ── Tests backend ──────────────────────────────────────────────
+  # ── Tests backend + SQLx metadata ───────────────────────────
   test-backend:
-    name: Backend — test + lint
+    name: Backend — SQLx + test + lint
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./backend
+    env:
+      RUSTC_WRAPPER: sccache
+      SCCACHE_GHA_ENABLED: "true"
     services:
       postgres:
         image: postgres:18-alpine
@@ -39,24 +44,35 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Cache Cargo
-        uses: actions/cache@v5
-        with:
-          path: |
-            ~/backend/.cargo/bin/
-            ~/backend/.cargo/registry/
-            ~/backend/.cargo/git/
-            backend/target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: ${{ runner.os }}-cargo-
-
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
 
+      - name: Cache Cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          # Share all backend Cargo artifacts across workflow runs, including test-only crates and cargo-installed tools.
+          # rust-cache prunes stale build artifacts older than one week before saving the cache archive.
+          shared-key: backend-ci
+          workspaces: |
+            backend -> target
+          cache-all-crates: true
+          cache-workspace-crates: true
+
+      - name: Install sccache
+        uses: mozilla-actions/sccache-action@v0.0.10
+
+      - name: Reset sccache stats
+        run: sccache --zero-stats
+
       - name: Install sqlx-cli
-        run: cargo install sqlx-cli --no-default-features --features postgres --locked
+        run: |
+          # rust-cache restores cargo-installed binaries when available; only install on a cold cache.
+          if ! command -v sqlx >/dev/null 2>&1; then
+            echo "Installing sqlx-cli (not restored from cache)"
+            cargo install sqlx-cli --version ${{ env.SQLX_CLI_VERSION }} --no-default-features --features postgres --locked
+          fi
 
       - name: Run migrations
         env:
@@ -78,12 +94,7 @@ jobs:
           SQLX_OFFLINE: true
         run: cargo clippy -- -D warnings
 
-      - name: Tests unitaires (sans DB)
-        env:
-          SQLX_OFFLINE: true
-        run: cargo test --lib
-
-      - name: Tests d'intégration (avec DB)
+      - name: Tests backend (lib + intégration)
         env:
           DATABASE_URL: postgres://laruche:laruche@localhost:5432/laruche_test
           LA_RUCHE__APP__HOST: 127.0.0.1
@@ -109,26 +120,21 @@ jobs:
           LA_RUCHE__AUTH__ARGON2_MEMORY_KB: "65536"
           LA_RUCHE__AUTH__ARGON2_ITERATIONS: "3"
           SQLX_OFFLINE: false
-        run: cargo test --test '*'
-
-      - name: Check (offline — .sqlx/ généré)
-        env:
-          SQLX_OFFLINE: true
-        run: cargo check
-
-      - name: Clean unused Cargo cache
-        run: |
-          cargo install cargo-sweep --locked
-          cargo sweep --installed
+        # A single Cargo invocation reuses the compiled test profile once for unit and integration suites.
+        run: cargo test --lib --tests
 
       - name: Upload SQLx offline files
         uses: actions/upload-artifact@v7
         with:
-          name: sqlx-files
+          name: ${{ env.SQLX_ARTIFACT_NAME }}
           path: backend/.sqlx/
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 1
+
+      - name: Show sccache stats
+        if: success() || failure()
+        run: sccache --show-stats
 
   # ── Tests frontend ─────────────────────────────────────────────
   test-frontend:
@@ -148,7 +154,8 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
-        run: npm ci
+        # setup-node manages the npm cache; --prefer-offline uses cached packages when available and falls back to the registry otherwise.
+        run: npm ci --prefer-offline
 
       - name: TypeScript check
         run: npm run typecheck
@@ -159,16 +166,19 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Clean unused npm cache
-        run: npm prune
-
-  # ── Docker build ───────────────────────────────────────────────
-  docker-build:
-    name: Docker build
+  # ── Docker build + push ────────────────────────────────────────
+  docker:
+    name: Docker — build + push
     runs-on: ubuntu-latest
     needs: [test-backend, test-frontend]
     steps:
       - uses: actions/checkout@v6
+
+      - name: Download SQLx offline files
+        uses: actions/download-artifact@v8
+        with:
+          name: ${{ env.SQLX_ARTIFACT_NAME }}
+          path: backend/.sqlx/
 
       - name: Docker meta
         id: meta
@@ -182,12 +192,6 @@ jobs:
             type=schedule,pattern=nightly
             type=schedule,pattern={{date 'YYYYMMDD'}}
             type=sha
-
-      - name: Download SQLx offline files
-        uses: actions/download-artifact@v8
-        with:
-          name: sqlx-files
-          path: backend/.sqlx/
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
@@ -206,8 +210,9 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # Branch-scoped caches keep feature branches from evicting each other's layers while preserving warm rebuilds within the same branch.
+          cache-from: type=gha,scope=docker-${{ github.ref_name }}
+          cache-to: type=gha,mode=max,scope=docker-${{ github.ref_name }}
           build-args: |
             CARGO_PROFILE=release
             SQLX_OFFLINE=true
