@@ -52,7 +52,10 @@ jobs:
           cache-all-crates: "true"
 
       - name: Install sqlx-cli
-        run: command -v sqlx >/dev/null 2>&1 || cargo install sqlx-cli --version ${{ env.SQLX_CLI_VERSION }} --no-default-features --features postgres --locked
+        run: |
+          if ! command -v sqlx >/dev/null 2>&1; then
+            cargo install sqlx-cli --version ${{ env.SQLX_CLI_VERSION }} --no-default-features --features postgres --locked
+          fi
 
       - name: Run migrations
         env:
@@ -112,7 +115,10 @@ jobs:
           cache-all-crates: "true"
 
       - name: Install sqlx-cli
-        run: command -v sqlx >/dev/null 2>&1 || cargo install sqlx-cli --version ${{ env.SQLX_CLI_VERSION }} --no-default-features --features postgres --locked
+        run: |
+          if ! command -v sqlx >/dev/null 2>&1; then
+            cargo install sqlx-cli --version ${{ env.SQLX_CLI_VERSION }} --no-default-features --features postgres --locked
+          fi
 
       - name: Download SQLx offline files
         uses: actions/download-artifact@v8
