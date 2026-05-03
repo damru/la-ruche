@@ -222,10 +222,12 @@ HTTP → Tower (CORS, trace, timeout 30s)
 
 ## CI/CD
 
-- Le workflow `CI` prépare désormais `backend/.sqlx/` dans un job dédié `prepare-sqlx`, puis partage cet artefact aux jobs **backend** et **docker-build** pour éviter une double génération.
-- Le workflow sépare ensuite la **validation backend**, la **validation frontend** et un **`docker-build`** exécuté en parallèle pour préchauffer le cache Buildx sans publication.
-- La publication Docker Hub est portée par un job `docker-push` distinct, déclenché seulement après succès de `test-backend`, `test-frontend` et `docker-build`.
-- Les caches CI sont mutualisés par écosystème : `Swatinem/rust-cache` pour Cargo, cache npm via `actions/setup-node`, et cache GHA Buildx à portée dédiée pour les builds Docker.
+- Le workflow `CI` génère désormais `backend/.sqlx/` directement dans le job **backend**, puis partage cet artefact au job **docker** sans relancer une préparation SQLx séparée.
+- Le workflow sépare la **validation backend**, la **validation frontend** et un job **`docker`** unique, déclenché seulement après succès de `test-backend` et `test-frontend`.
+- Dans le job backend, les migrations PostgreSQL ne sont exécutées qu'une seule fois avant `cargo sqlx prepare`, puis la validation Cargo enchaîne `cargo fmt --check`, `cargo clippy -- -D warnings` et un unique `cargo test --lib --tests` pour mutualiser le profil de compilation des tests sans relancer un `cargo check` redondant.
+- Le job backend active aussi `sccache` comme cache compilateur Rust dédié, persistant entre exécutions GitHub Actions via le backend GHA natif de `mozilla-actions/sccache-action`, afin de réutiliser plus finement les artefacts `rustc` entre `cargo install sqlx-cli`, `cargo clippy` et `cargo test --lib --tests`.
+- Le job Docker unique construit et publie l’image dans la même exécution, ce qui supprime le préchauffage dédié désormais inutile grâce au cache Buildx réutilisé par branche.
+- Les caches CI sont mutualisés par écosystème : `Swatinem/rust-cache` porte une clé stable `backend-ci` entre les exécutions du workflow pour réutiliser le registre Cargo, les artefacts `target/`, les crates de test et `sqlx-cli`, `sccache` conserve séparément les objets compilés `rustc` dans le cache GitHub Actions natif, le cache npm passe par `actions/setup-node`, et le cache GHA Buildx reste isolé par branche pour les builds Docker.
 
 ---
 
@@ -236,7 +238,7 @@ HTTP → Tower (CORS, trace, timeout 30s)
 - **`pub(crate)` par défaut**
 - **Pas de `unwrap()` hors tests**
 - **`Decimal` pour tous les montants financiers** (pas `f64`)
-- **`SQLX_OFFLINE=true` en CI et en build Docker** — `backend/.sqlx/` est généré une seule fois dans `prepare-sqlx`, puis téléchargé par les jobs backend et Docker
+- **`SQLX_OFFLINE=true` en CI et en build Docker** — `backend/.sqlx/` est généré une seule fois dans `test-backend`, puis téléchargé par les jobs Docker
 
 ---
 
