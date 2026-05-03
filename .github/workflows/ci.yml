@@ -75,11 +75,6 @@ jobs:
           DATABASE_URL: postgres://laruche:laruche@localhost:5432/laruche_test
         run: cargo sqlx prepare
 
-      - name: Run migrations
-        env:
-          DATABASE_URL: postgres://laruche:laruche@localhost:5432/laruche_test
-        run: sqlx migrate run
-
       - name: Check formatting
         env:
           SQLX_OFFLINE: true
@@ -90,12 +85,7 @@ jobs:
           SQLX_OFFLINE: true
         run: cargo clippy -- -D warnings
 
-      - name: Tests unitaires (sans DB)
-        env:
-          SQLX_OFFLINE: true
-        run: cargo test --lib
-
-      - name: Tests d'intégration (avec DB)
+      - name: Tests backend (lib + intégration)
         env:
           DATABASE_URL: postgres://laruche:laruche@localhost:5432/laruche_test
           LA_RUCHE__APP__HOST: 127.0.0.1
@@ -121,12 +111,8 @@ jobs:
           LA_RUCHE__AUTH__ARGON2_MEMORY_KB: "65536"
           LA_RUCHE__AUTH__ARGON2_ITERATIONS: "3"
           SQLX_OFFLINE: false
-        run: cargo test --test '*'
-
-      - name: Check (offline — .sqlx/ généré)
-        env:
-          SQLX_OFFLINE: true
-        run: cargo check
+        # A single Cargo invocation reuses the compiled test profile once for unit and integration suites.
+        run: cargo test --lib --tests
 
       - name: Upload SQLx offline files
         uses: actions/upload-artifact@v7
