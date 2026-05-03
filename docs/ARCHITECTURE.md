@@ -222,9 +222,9 @@ HTTP → Tower (CORS, trace, timeout 30s)
 
 ## CI/CD
 
-- Le workflow `CI` génère désormais `backend/.sqlx/` directement dans le job **backend**, puis partage cet artefact aux jobs **docker-build** et **docker-push** sans relancer une préparation SQLx séparée.
-- Le workflow sépare la **validation backend** et la **validation frontend**, puis déclenche un **`docker-build`** après succès backend pour réutiliser l’artefact SQLx sans régénération locale.
-- La publication Docker Hub est portée par un job `docker-push` distinct, déclenché seulement après succès de `test-backend`, `test-frontend` et `docker-build`.
+- Le workflow `CI` génère désormais `backend/.sqlx/` directement dans le job **backend**, puis partage cet artefact au job **docker** sans relancer une préparation SQLx séparée.
+- Le workflow sépare la **validation backend**, la **validation frontend** et un job **`docker`** unique, déclenché seulement après succès de `test-backend` et `test-frontend`.
+- Le job Docker unique construit et publie l’image dans la même exécution, ce qui supprime le préchauffage dédié désormais inutile grâce au cache Buildx réutilisé par branche.
 - Les caches CI sont mutualisés par écosystème : `Swatinem/rust-cache` porte une clé stable `backend-ci` entre les exécutions du workflow pour réutiliser le registre Cargo, les artefacts `target/`, les crates de test et `sqlx-cli`; le nettoyage natif du cache retire les artefacts Cargo inactifs depuis plus d’une semaine, le cache npm passe par `actions/setup-node`, et le cache GHA Buildx reste isolé par branche pour les builds Docker.
 
 ---
