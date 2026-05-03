@@ -589,17 +589,19 @@ function photoPreview(file: File): string {
                 <div class="activity-card__icon tone--default">
                   <CIconInfo />
                 </div>
-                <CBadge
-                  :variant="statusVariant(r.status)"
-                  dot
-                  class="report-card__status"
-                >
-                  {{ t(`reports.statuses.${r.status}`) }}
-                </CBadge>
-                <span class="activity-card__line report-card__relative-date">
-                  <CIconCalendar />
-                  {{ formatRelative(r.updated_at) }}
-                </span>
+                <div class="report-card__status-meta">
+                  <CBadge
+                    :variant="statusVariant(r.status)"
+                    dot
+                    class="report-card__status"
+                  >
+                    {{ t(`reports.statuses.${r.status}`) }}
+                  </CBadge>
+                  <span class="activity-card__line report-card__relative-date">
+                    <CIconRefresh />
+                    {{ formatRelative(r.updated_at) }}
+                  </span>
+                </div>
               </div>
 
               <div class="activity-card__stack">
@@ -1136,7 +1138,7 @@ function photoPreview(file: File): string {
     <CModal
       :open="!!reportPhotoGalleryTarget"
       :title="reportPhotoGalleryTarget?.title ?? ''"
-      size="xl"
+      size="md"
       @update:open="value => !value && closeReportPhotoGallery()"
     >
       <CPageLoader v-if="reportPhotosLoading" />
@@ -1176,29 +1178,31 @@ function photoPreview(file: File): string {
         v-if="activeReportPhoto"
         class="report-photo-viewer"
       >
-        <CBtn
-          variant="ghost"
-          size="sm"
-          class="report-photo-viewer__nav"
-          :disabled="reportPhotos.length <= 1"
-          @click="showPreviousReportPhoto"
-        >
-          <CIconArrowLeft />
-        </CBtn>
         <img
           :src="activeReportPhoto.url"
           :alt="activeReportPhoto.doc.original_name"
           class="report-photo-viewer__image"
         />
-        <CBtn
-          variant="ghost"
-          size="sm"
-          class="report-photo-viewer__nav"
-          :disabled="reportPhotos.length <= 1"
-          @click="showNextReportPhoto"
-        >
-          <CIconArrowRight />
-        </CBtn>
+        <div class="report-photo-viewer__nav-row">
+          <CBtn
+            variant="ghost"
+            size="sm"
+            class="report-photo-viewer__nav"
+            :disabled="reportPhotos.length <= 1"
+            @click="showPreviousReportPhoto"
+          >
+            <CIconArrowLeft />
+          </CBtn>
+          <CBtn
+            variant="ghost"
+            size="sm"
+            class="report-photo-viewer__nav"
+            :disabled="reportPhotos.length <= 1"
+            @click="showNextReportPhoto"
+          >
+            <CIconArrowRight />
+          </CBtn>
+        </div>
       </div>
       <p
         v-if="activeReportPhoto"
@@ -1231,15 +1235,24 @@ function photoPreview(file: File): string {
   display: flex;
   align-items: center;
   gap: var(--space-3);
+  min-width: 0;
+}
+.report-card__status-meta {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+  min-width: 0;
 }
 .report-card__status {
   flex-shrink: 0;
 }
 .report-card__relative-date {
-  margin-left: auto;
   color: var(--color-on-surface-variant);
   font-size: var(--text-xs);
   line-height: 1.4;
+  white-space: nowrap;
 }
 .report-card__photo-button {
   background: none;
@@ -1316,30 +1329,31 @@ function photoPreview(file: File): string {
 .photo-gallery-delete:hover { opacity: 1; }
 
 .report-photo-gallery-modal {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: var(--space-3);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
 }
 
 .report-photo-gallery-modal__item {
-  border: 1px solid var(--color-outline-variant);
-  background: var(--color-surface-container-low);
-  padding: var(--space-2);
-  border-radius: var(--radius-md);
+  border: none;
+  background: none;
+  padding: 0;
   cursor: pointer;
-  transition: border-color var(--transition-fast), transform var(--transition-fast);
-}
-
-.report-photo-gallery-modal__item:hover {
-  border-color: var(--color-primary);
-  transform: translateY(-1px);
+  max-width: 120px;
+  flex: 0 0 120px;
 }
 
 .report-photo-gallery-modal__thumb {
-  width: 100%;
-  aspect-ratio: 1;
+  width: 120px;
+  height: 120px;
   object-fit: cover;
   border-radius: var(--radius-sm);
+  border: 1px solid var(--color-outline-variant);
+  transition: opacity 0.15s;
+}
+
+.report-photo-gallery-modal__thumb:hover {
+  opacity: 0.85;
 }
 
 .report-photo-gallery-modal__empty {
@@ -1349,11 +1363,10 @@ function photoPreview(file: File): string {
 
 .report-photo-viewer {
   --report-photo-viewer-height: min(78vh, 760px);
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
+  display: flex;
+  flex-direction: column;
   gap: var(--space-3);
-  min-height: var(--report-photo-viewer-height);
+  align-items: center;
 }
 
 .report-photo-viewer__image {
@@ -1362,6 +1375,13 @@ function photoPreview(file: File): string {
   object-fit: contain;
   border-radius: var(--radius-md);
   background: var(--color-surface-container-low);
+}
+
+.report-photo-viewer__nav-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
 }
 
 .report-photo-viewer__nav {
@@ -1375,23 +1395,8 @@ function photoPreview(file: File): string {
 }
 
 @media (max-width: 720px) {
-  .report-card__status-row {
-    flex-wrap: wrap;
-  }
-
-  .report-card__relative-date {
-    width: 100%;
-    margin-left: 0;
-  }
-
   .report-photo-gallery-modal {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .report-photo-viewer {
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--space-2);
-    justify-items: center;
+    justify-content: flex-start;
   }
 }
 </style>
