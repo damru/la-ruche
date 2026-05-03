@@ -185,6 +185,7 @@ La vue `Contrats` affiche en tête les rappels à traiter, avec une action d’a
 
 - L’en-tête des cartes Contrat reprend le même pattern que les cartes Opérations : icône métier, titre principal et chip de statut sur une même ligne, puis chips secondaires sur une ligne dédiée.
 - Les cartes `Prestataires` reprennent la même grammaire d’en-tête, sans chip de statut quand aucune information de cycle de vie n’existe.
+- Les titres de `activity-card` restent compacts (18px) ; lorsqu’un titre partage sa ligne avec une icône métier, il reste centré verticalement pour éviter un décalage visuel entre l’icône et le texte.
 - Les tabs de filtre `Contrats` affichent le volume d’éléments par état (`Tous`, `Actifs`, `Expirés`) directement dans chaque segment.
 - Les pièces justificatives d’un contrat se gèrent directement depuis la modale de création / modification, sans bouton documentaire dédié sur la carte.
 - Chaque carte Contrat rappelle aussi le nombre de documents actuellement liés pour éviter d’ouvrir la modale à vide.
@@ -275,7 +276,7 @@ Le champ d'assignation prestataire dans `TasksView` doit accepter une saisie lib
 - Si aucune correspondance n'existe, une suggestion dédiée permet d'ajouter ce prestataire au référentiel sans quitter la modale.
 - L'ajout au référentiel reste optionnel : si l'utilisateur n'active pas cette suggestion, la saisie libre ne doit pas bloquer l'enregistrement et doit rester visible sur la tâche enregistrée.
 - Le bloc `lien prestataire` de la carte doit rester visible tant qu'un token est actif ; les actions `Générer`, `Afficher` et `Révoquer` se placent au-dessus de la ligne d'actions principale, et l'URL active doit être lisible / copiable directement depuis la carte.
-- La métadonnée prestataire de la carte n'apparaît que lorsqu'une assignation existe réellement ; elle utilise l'icône métier `CIconHardHat` et pointe vers la fiche prestataire si `contractor_id` est connu.
+- La métadonnée prestataire de la carte n'apparaît que lorsqu'une assignation existe réellement ; elle utilise l'icône métier `CIconWrench` pour un prestataire externe, `CIconUser` pour une auto-assignation, et pointe vers la fiche prestataire si `contractor_id` est connu.
 - La modale de création / modification d'une tâche reprend la dropzone documentaire standard des autres modules pour joindre des fichiers sans écran intermédiaire, puis liste aussi les documents déjà liés en édition avec téléchargement et retrait explicites.
 
 ## Règle UI — CFormFeedback dans les modales (DDR-006)

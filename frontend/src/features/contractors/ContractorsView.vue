@@ -294,7 +294,7 @@ async function confirmDelete() {
             class="contractor-card"
           >
             <div class="activity-card__head">
-              <div class="activity-card__header-row">
+              <div class="activity-card__header-row activity-card__header-row--with-icon">
                 <div :class="['activity-card__icon', 'contractor-card__icon', domainTone(c.domains)]">
                   <component
                     :is="domainIcon(c.domains)"

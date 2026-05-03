@@ -878,7 +878,7 @@ async function copyVendorLink(taskId: string) {
                     v-if="hasAssignment(task)"
                     class="activity-card__line"
                   >
-                    <CIconHardHat v-if="contractorDisplayName(task)" />
+                    <CIconWrench v-if="task.contractor_id || contractorDisplayName(task)" />
                     <CIconUser v-else />
                     <RouterLink
                       v-if="task.contractor_id && contractorDisplayName(task)"

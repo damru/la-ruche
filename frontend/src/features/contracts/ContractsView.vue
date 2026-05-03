@@ -404,7 +404,7 @@ async function confirmTerminateContract() {
             :class="['contract-card', { 'card--terminated': effectiveStatus(contract) !== 'active' }]"
           >
             <div class="activity-card__head">
-              <div class="activity-card__header-row">
+              <div class="activity-card__header-row activity-card__header-row--with-icon">
                 <div :class="['activity-card__icon', 'contract-card__icon', contractIconTone(contract)]">
                   <component
                     :is="contractTypeIcon(contract.contract_type)"

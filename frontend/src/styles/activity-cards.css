@@ -64,10 +64,15 @@
   flex: 1;
   min-width: 0;
   font-family: var(--font-body);
-  font-size: 20px;
-  font-weight: var(--fw-bold);
+  font-size: 18px;
+  font-weight: var(--fw-semibold);
   letter-spacing: 0;
-  line-height: 1.25;
+  line-height: 1.2;
+  align-self: center;
+}
+
+.activity-card__header-row--with-icon {
+  align-items: center;
 }
 
 .activity-card__status {
@@ -130,5 +135,9 @@
 @media (max-width: 720px) {
   .activity-card__header-row {
     align-items: flex-start;
+  }
+
+  .activity-card__header-row--with-icon {
+    align-items: center;
   }
 }
