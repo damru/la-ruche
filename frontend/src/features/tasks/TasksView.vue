@@ -29,6 +29,8 @@ const allTasks = ref<Task[]>([])
 const allContractors = ref<Contractor[]>([])
 const allUsers = ref<User[]>([])
 const statusFilter = ref<'all' | TaskStatus>('all')
+const TASK_MODAL_ERROR_CLOSE_DELAY_MS = 2200
+const VENDOR_LINK_COPY_FEEDBACK_DELAY_MS = 1800
 
 // ── Task form modal ───────────────────────────────────────────────
 const showTaskModal = ref(false)
@@ -537,7 +539,7 @@ async function saveTask() {
           window.setTimeout(() => {
             showTaskModal.value = false
             reload()
-          }, 2200)
+          }, TASK_MODAL_ERROR_CLOSE_DELAY_MS)
         }
         return
       }
@@ -734,7 +736,7 @@ async function copyVendorLink(taskId: string) {
       if (copiedVendorLinkTaskId.value === taskId) {
         copiedVendorLinkTaskId.value = null
       }
-    }, 1800)
+    }, VENDOR_LINK_COPY_FEEDBACK_DELAY_MS)
   } catch (err) {
     pageError.value = toErrorMessage(err, t('common.error'))
   }

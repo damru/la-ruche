@@ -593,9 +593,12 @@ pub async fn attach_document(
         SELECT EXISTS(
             SELECT 1
             FROM task t
-            JOIN document d ON d.id = $2
             WHERE t.id = $1
               AND t.building_id = $3
+        ) AND EXISTS(
+            SELECT 1
+            FROM document d
+            WHERE d.id = $2
               AND d.building_id = $3
         )
         "#,
