@@ -95,16 +95,9 @@
 .activity-card__line {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--space-1);
   min-width: 0;
   color: inherit;
-}
-
-.activity-card__subtitle > .activity-card__line + .activity-card__line::before,
-.activity-card__meta > .activity-card__line + .activity-card__line::before,
-.activity-card__note > .activity-card__line + .activity-card__line::before {
-  content: '•';
-  margin-right: var(--space-2);
 }
 
 .activity-card__line svg {

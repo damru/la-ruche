@@ -220,7 +220,7 @@ Les cartes de liste des vues `Signalements`, `Tâches` et `Sinistres` partagent 
 - ligne 2 : titre principal ou, pour certaines cartes, reprise du titre juste sous l’en-tête si cela améliore la lisibilité ;
 - ligne 3 : description courte éventuelle, en taille de texte standard ;
 - ligne 4 : hints documentaires / photo sur leur propre ligne ;
-- ligne 5 : métadonnées compactes avec icônes ;
+- ligne 5 : métadonnées compactes avec icônes, sans séparateur médian ;
 - séparateur discret ;
 - ligne d'actions avec `Modifier` puis une action contextuelle accentée ;
 - bloc informatif secondaire pour les éléments métier complémentaires (délai légal, remboursement, lien prestataire, historique, etc.).
@@ -230,7 +230,7 @@ Contraintes complémentaires :
 - les listes sont triées par `dernière modification` décroissante ;
 - la description utilise une taille de texte normale, tout en gardant un ton secondaire ;
 - la carte `Tâche` compacte son header en `titre + priorité + statut`, sans icône, puis regroupe l’assignation et la date de création relative dans les métadonnées ;
-- la carte `Signalement` affiche `icône + statut + date de mise à jour relative` sur sa première ligne, puis ouvre une galerie de photos prévisualisables avec navigation latérale depuis le hint des photos liées ;
+- la carte `Signalement` affiche `icône + statut + date de mise à jour relative simple` (`aujourd'hui`, `hier`, etc.) sur sa première ligne, puis ouvre une grille de miniatures qui bascule vers un viewer photo plein écran avec navigation latérale depuis le hint des photos liées ;
 - la carte `Sinistre` conserve son icône métier mais sa couleur doit refléter explicitement le type de sinistre ;
 - la carte `Sinistre` n'expose jamais `Supprimer` dans la liste ; cette action reste confinée à la modale d'édition ;
 - l'ossature reste commune mais chaque entité peut substituer un équivalent métier quand une donnée n'existe pas (ex. `prestataire assigné` au lieu d'une localisation stricte sur les tâches).

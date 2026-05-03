@@ -598,7 +598,7 @@ function photoPreview(file: File): string {
                 </CBadge>
                 <span class="activity-card__line report-card__relative-date">
                   <CIconCalendar />
-                  {{ t('reports.updatedAt', { date: formatRelative(r.updated_at) }) }}
+                  {{ formatRelative(r.updated_at) }}
                 </span>
               </div>
 
@@ -1136,7 +1136,7 @@ function photoPreview(file: File): string {
     <CModal
       :open="!!reportPhotoGalleryTarget"
       :title="reportPhotoGalleryTarget?.title ?? ''"
-      size="lg"
+      size="xl"
       @update:open="value => !value && closeReportPhotoGallery()"
     >
       <CPageLoader v-if="reportPhotosLoading" />
@@ -1169,7 +1169,7 @@ function photoPreview(file: File): string {
     <CModal
       :open="activeReportPhotoIndex !== null"
       :title="activeReportPhoto?.doc.original_name ?? reportPhotoGalleryTarget?.title ?? ''"
-      size="lg"
+      size="xl"
       @update:open="value => !value && closeReportPhotoViewer()"
     >
       <div
@@ -1237,6 +1237,9 @@ function photoPreview(file: File): string {
 }
 .report-card__relative-date {
   margin-left: auto;
+  color: var(--color-on-surface-variant);
+  font-size: var(--text-xs);
+  line-height: 1.4;
 }
 .report-card__photo-button {
   background: none;
@@ -1314,23 +1317,29 @@ function photoPreview(file: File): string {
 
 .report-photo-gallery-modal {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: var(--space-3);
 }
 
 .report-photo-gallery-modal__item {
-  border: none;
-  background: none;
-  padding: 0;
+  border: 1px solid var(--color-outline-variant);
+  background: var(--color-surface-container-low);
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
   cursor: pointer;
+  transition: border-color var(--transition-fast), transform var(--transition-fast);
+}
+
+.report-photo-gallery-modal__item:hover {
+  border-color: var(--color-primary);
+  transform: translateY(-1px);
 }
 
 .report-photo-gallery-modal__thumb {
   width: 100%;
   aspect-ratio: 1;
   object-fit: cover;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-sm);
 }
 
 .report-photo-gallery-modal__empty {
@@ -1343,11 +1352,12 @@ function photoPreview(file: File): string {
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: var(--space-3);
+  min-height: min(80vh, 760px);
 }
 
 .report-photo-viewer__image {
   width: 100%;
-  max-height: 70vh;
+  max-height: min(78vh, 860px);
   object-fit: contain;
   border-radius: var(--radius-md);
   background: var(--color-surface-container-low);
@@ -1361,5 +1371,26 @@ function photoPreview(file: File): string {
   margin: var(--space-3) 0 0;
   text-align: center;
   color: var(--color-on-surface-variant);
+}
+
+@media (max-width: 720px) {
+  .report-card__status-row {
+    flex-wrap: wrap;
+  }
+
+  .report-card__relative-date {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .report-photo-gallery-modal {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .report-photo-viewer {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-2);
+    justify-items: center;
+  }
 }
 </style>
