@@ -13,7 +13,6 @@ concurrency:
 env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
-  POSTGRES_CI_IMAGE: postgres:18-alpine
   SQLX_ARTIFACT_NAME: sqlx-offline-metadata
   SQLX_CLI_VERSION: 0.8.6
 
@@ -26,7 +25,7 @@ jobs:
         working-directory: ./backend
     services:
       postgres:
-        image: ${{ env.POSTGRES_CI_IMAGE }}
+        image: postgres:18-alpine
         env:
           POSTGRES_DB: laruche_test
           POSTGRES_USER: laruche
@@ -93,7 +92,7 @@ jobs:
         working-directory: ./backend
     services:
       postgres:
-        image: ${{ env.POSTGRES_CI_IMAGE }}
+        image: postgres:18-alpine
         env:
           POSTGRES_DB: laruche_test
           POSTGRES_USER: laruche
