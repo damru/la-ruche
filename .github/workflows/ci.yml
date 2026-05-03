@@ -210,7 +210,7 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
-        # setup-node warms ~/.npm; --prefer-offline reuses it when available and still falls back to the registry on cold runners.
+        # setup-node populates ~/.npm; --prefer-offline uses cache when available and falls back to the registry otherwise.
         run: npm ci --prefer-offline
 
       - name: TypeScript check
@@ -244,7 +244,7 @@ jobs:
         with:
           context: .
           push: false
-          # Branch-scoped caches keep feature branches from evicting each other while preserving warm rebuilds within the same branch.
+          # Branch-scoped caches keep feature branches from evicting each other's layers while preserving warm rebuilds within the same branch.
           cache-from: type=gha,scope=docker-${{ github.ref_name }}
           cache-to: type=gha,mode=max,scope=docker-${{ github.ref_name }}
           build-args: |
