@@ -7,6 +7,11 @@
 --   • 10 units    : 8 apartments, 1 cellar, 1 parking space
 --   • 3 alloc keys: Charges Générales, Ascenseur, Eau Froide
 --   • 10 users    : 1 manager · 2 board members · 5 co-owners · 2 tenants
+--   • 3 contracts : all contract statuses covered
+--   • 4 contractors
+--   • 6 tasks     : all task statuses covered
+--   • 3 reports   : all report statuses covered
+--   • 3 claims    : all claim statuses covered
 --
 -- All accounts share the same password: Demo1234!
 -- (Argon2id hash, m=4096 t=1 p=1 — dev-only lightweight params)
@@ -23,12 +28,14 @@ TRUNCATE TABLE
     maintenance_log_document, maintenance_log,
     report_document, report,
     vendor_submission_document, vendor_submission,
+    task_document,
     task,
     contract_document, contract_reminder, vendor_contract,
     claim_document, claim,
     vote, resolution, general_meeting,
     levy_call, budget_line, budget, works_fund,
     consultation,
+    contractor,
     unit_allocation_key,
     allocation_key,
     unit_owner,
@@ -237,6 +244,446 @@ VALUES
 ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================
+-- 8. CONTRACTS
+-- One fixture per contract status: active, terminated, expired.
+-- Reminder rows also cover all reminder statuses.
+-- ============================================================
+INSERT INTO vendor_contract (
+    id,
+    building_id,
+    vendor_name,
+    vendor_email,
+    vendor_phone,
+    subject,
+    contract_type,
+    start_date,
+    end_date,
+    amount,
+    payment_frequency,
+    auto_renewal,
+    notice_days,
+    status,
+    created_by,
+    created_at,
+    updated_at
+)
+VALUES
+    (
+        '00000000-0000-0000-0000-000000000451',
+        '00000000-0000-0000-0000-000000000001',
+        'Alpha Ascenseurs',
+        'contact@alpha-ascenseurs.test',
+        '+33 4 72 10 00 01',
+        'Lift preventive maintenance',
+        'maintenance',
+        CURRENT_DATE - 380,
+        CURRENT_DATE + 350,
+        2800.00,
+        'annual',
+        TRUE,
+        90,
+        'active',
+        '00000000-0000-0000-0000-000000000201',
+        NOW() - INTERVAL '380 days',
+        NOW() - INTERVAL '3 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000452',
+        '00000000-0000-0000-0000-000000000001',
+        'Hydro Services Lyon',
+        'interventions@hydro-services.test',
+        '+33 4 72 10 00 02',
+        'Water network emergency support',
+        'water',
+        CURRENT_DATE - 520,
+        CURRENT_DATE + 25,
+        450.00,
+        'quarterly',
+        FALSE,
+        30,
+        'terminated',
+        '00000000-0000-0000-0000-000000000202',
+        NOW() - INTERVAL '520 days',
+        NOW() - INTERVAL '40 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000453',
+        '00000000-0000-0000-0000-000000000001',
+        'Nettoyage Presqu''ile',
+        'planning@nettoyage-presquile.test',
+        '+33 4 72 10 00 05',
+        'Common areas cleaning service',
+        'cleaning',
+        CURRENT_DATE - 760,
+        CURRENT_DATE - 20,
+        620.00,
+        'monthly',
+        FALSE,
+        15,
+        'expired',
+        '00000000-0000-0000-0000-000000000201',
+        NOW() - INTERVAL '760 days',
+        NOW() - INTERVAL '20 days'
+    )
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO contract_reminder (
+    id,
+    contract_id,
+    reminder_type,
+    reminder_date,
+    status,
+    created_at,
+    updated_at
+)
+VALUES
+    (
+        '00000000-0000-0000-0000-000000000461',
+        '00000000-0000-0000-0000-000000000451',
+        'renewal',
+        CURRENT_DATE + 260,
+        'pending',
+        NOW() - INTERVAL '10 days',
+        NOW() - INTERVAL '10 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000462',
+        '00000000-0000-0000-0000-000000000452',
+        'termination',
+        CURRENT_DATE - 15,
+        'sent',
+        NOW() - INTERVAL '50 days',
+        NOW() - INTERVAL '12 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000463',
+        '00000000-0000-0000-0000-000000000453',
+        'expiration',
+        CURRENT_DATE - 35,
+        'acknowledged',
+        NOW() - INTERVAL '60 days',
+        NOW() - INTERVAL '18 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000464',
+        '00000000-0000-0000-0000-000000000451',
+        'payment_due',
+        CURRENT_DATE + 20,
+        'pending',
+        NOW() - INTERVAL '5 days',
+        NOW() - INTERVAL '5 days'
+    )
+ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================
+-- 9. CONTRACTORS
+-- Contractors do not have a status enum in the current schema.
+-- ============================================================
+INSERT INTO contractor (id, building_id, name, email, phone, domains, notes)
+VALUES
+    (
+        '00000000-0000-0000-0000-000000000501',
+        '00000000-0000-0000-0000-000000000001',
+        'Alpha Ascenseurs',
+        'contact@alpha-ascenseurs.test',
+        '+33 4 72 10 00 01',
+        ARRAY['elevator', 'maintenance'],
+        'Annual lift maintenance and emergency breakdown response.'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000502',
+        '00000000-0000-0000-0000-000000000001',
+        'Hydro Services Lyon',
+        'interventions@hydro-services.test',
+        '+33 4 72 10 00 02',
+        ARRAY['plumbing', 'water_damage'],
+        'Plumbing contractor used for leaks, risers, and water-damage follow-up.'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000503',
+        '00000000-0000-0000-0000-000000000001',
+        'Serrurerie du Parc',
+        'atelier@serrurerie-parc.test',
+        '+33 4 72 10 00 03',
+        ARRAY['locksmith', 'security'],
+        'Preferred locksmith for common-area access control and urgent lock changes.'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000504',
+        '00000000-0000-0000-0000-000000000001',
+        'Toitures Lyonnaises',
+        'support@toitures-lyonnaises.test',
+        '+33 4 72 10 00 04',
+        ARRAY['roofing', 'waterproofing'],
+        'Roofing company used for terrace waterproofing and storm remediation.'
+    )
+ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================
+-- 10. TASKS
+-- One fixture per task status: open, in_progress, awaiting_vendor,
+-- awaiting_validation, closed, cancelled.
+-- ============================================================
+INSERT INTO task (
+    id,
+    building_id,
+    title,
+    description,
+    status,
+    priority,
+    created_by,
+    assigned_to,
+    contractor_id,
+    contractor_name,
+    vendor_token,
+    token_expires_at,
+    closed_at,
+    completion_cost,
+    created_at,
+    updated_at
+)
+VALUES
+    (
+        '00000000-0000-0000-0000-000000000601',
+        '00000000-0000-0000-0000-000000000001',
+        'Replace broken hallway light on level 2',
+        'A common-area light fixture near lot 4 has failed and needs replacement.',
+        'open',
+        'normal',
+        '00000000-0000-0000-0000-000000000201',
+        '00000000-0000-0000-0000-000000000202',
+        NULL,
+        'Electricien de quartier',
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NOW() - INTERVAL '14 days',
+        NOW() - INTERVAL '2 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000602',
+        '00000000-0000-0000-0000-000000000001',
+        'Repair leak on the riser above lot 2',
+        'The board opened an intervention after repeated humidity reports in the stairwell.',
+        'in_progress',
+        'high',
+        '00000000-0000-0000-0000-000000000202',
+        '00000000-0000-0000-0000-000000000201',
+        '00000000-0000-0000-0000-000000000502',
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NOW() - INTERVAL '10 days',
+        NOW() - INTERVAL '1 day'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000603',
+        '00000000-0000-0000-0000-000000000001',
+        'Replace basement service door lock',
+        'The old cylinder is failing; awaiting contractor visit confirmation.',
+        'awaiting_vendor',
+        'urgent',
+        '00000000-0000-0000-0000-000000000201',
+        '00000000-0000-0000-0000-000000000203',
+        '00000000-0000-0000-0000-000000000503',
+        NULL,
+        '00000000-0000-0000-0000-000000009603',
+        NOW() + INTERVAL '5 days',
+        NULL,
+        NULL,
+        NOW() - INTERVAL '7 days',
+        NOW() - INTERVAL '6 hours'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000604',
+        '00000000-0000-0000-0000-000000000001',
+        'Validate glazing replacement quote for lobby window',
+        'The contractor submitted completion details; the manager must validate the final amount.',
+        'awaiting_validation',
+        'high',
+        '00000000-0000-0000-0000-000000000202',
+        '00000000-0000-0000-0000-000000000201',
+        NULL,
+        'Vitrier du Rhone',
+        NULL,
+        NULL,
+        NULL,
+        680.00,
+        NOW() - INTERVAL '9 days',
+        NOW() - INTERVAL '12 hours'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000605',
+        '00000000-0000-0000-0000-000000000001',
+        'Repair terrace waterproofing above common corridor',
+        'Storm infiltration was fixed after a short roof intervention on the terrace slab.',
+        'closed',
+        'normal',
+        '00000000-0000-0000-0000-000000000201',
+        '00000000-0000-0000-0000-000000000202',
+        '00000000-0000-0000-0000-000000000504',
+        NULL,
+        NULL,
+        NULL,
+        NOW() - INTERVAL '5 days',
+        3200.00,
+        NOW() - INTERVAL '25 days',
+        NOW() - INTERVAL '5 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000606',
+        '00000000-0000-0000-0000-000000000001',
+        'Refresh old notice-board signage',
+        'Initial request cancelled after the board decided to redesign all common signage later.',
+        'cancelled',
+        'low',
+        '00000000-0000-0000-0000-000000000203',
+        NULL,
+        NULL,
+        'Signaletique Lyon Centre',
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NOW() - INTERVAL '18 days',
+        NOW() - INTERVAL '8 days'
+    )
+ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================
+-- 11. REPORTS
+-- One fixture per report status: open, in_progress, closed.
+-- ============================================================
+INSERT INTO report (
+    id,
+    building_id,
+    unit_id,
+    author_id,
+    title,
+    description,
+    status,
+    task_id,
+    created_at,
+    updated_at
+)
+VALUES
+    (
+        '00000000-0000-0000-0000-000000000701',
+        '00000000-0000-0000-0000-000000000001',
+        '00000000-0000-0000-0000-000000000104',
+        '00000000-0000-0000-0000-000000000209',
+        'Motion sensor no longer works in the lobby',
+        'The entrance light turns on too late at night and leaves the hall dark for several seconds.',
+        'open',
+        NULL,
+        NOW() - INTERVAL '4 days',
+        NOW() - INTERVAL '4 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000702',
+        '00000000-0000-0000-0000-000000000001',
+        '00000000-0000-0000-0000-000000000102',
+        '00000000-0000-0000-0000-000000000205',
+        'Humidity marks around the riser in stair A',
+        'The issue was converted into a task and is being handled by the plumbing contractor.',
+        'in_progress',
+        '00000000-0000-0000-0000-000000000602',
+        NOW() - INTERVAL '11 days',
+        NOW() - INTERVAL '1 day'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000703',
+        '00000000-0000-0000-0000-000000000001',
+        NULL,
+        '00000000-0000-0000-0000-000000000204',
+        'Terrace infiltration above the corridor',
+        'The leak was reported after a storm and is now resolved after the roofing intervention.',
+        'closed',
+        '00000000-0000-0000-0000-000000000605',
+        NOW() - INTERVAL '27 days',
+        NOW() - INTERVAL '5 days'
+    )
+ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================
+-- 12. CLAIMS
+-- One fixture per claim status: open, in_progress, closed.
+-- ============================================================
+INSERT INTO claim (
+    id,
+    building_id,
+    title,
+    description,
+    declared_at,
+    status,
+    unit_id,
+    created_by,
+    claim_type,
+    published_at,
+    transmitted_at,
+    reimbursement_date,
+    reimbursement_amount,
+    created_at,
+    updated_at
+)
+VALUES
+    (
+        '00000000-0000-0000-0000-000000000801',
+        '00000000-0000-0000-0000-000000000001',
+        'Water ingress in the cellar corridor',
+        'Minor water infiltration observed after heavy rain near the cellar access ramp.',
+        CURRENT_DATE - 6,
+        'open',
+        '00000000-0000-0000-0000-000000000109',
+        '00000000-0000-0000-0000-000000000203',
+        'current',
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        NOW() - INTERVAL '6 days',
+        NOW() - INTERVAL '6 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000802',
+        '00000000-0000-0000-0000-000000000001',
+        'Break-in attempt on parking access door',
+        'The insurer has been notified after damage to the shared parking entrance lock.',
+        CURRENT_DATE - 8,
+        'in_progress',
+        '00000000-0000-0000-0000-000000000110',
+        '00000000-0000-0000-0000-000000000208',
+        'theft',
+        NULL,
+        CURRENT_DATE - 7,
+        NULL,
+        NULL,
+        NOW() - INTERVAL '8 days',
+        NOW() - INTERVAL '3 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000803',
+        '00000000-0000-0000-0000-000000000001',
+        'Storm damage on the roof membrane',
+        'Natural disaster claim closed after reimbursement for emergency waterproofing work.',
+        CURRENT_DATE - 45,
+        'closed',
+        NULL,
+        '00000000-0000-0000-0000-000000000201',
+        'natural_disaster',
+        CURRENT_DATE - 38,
+        CURRENT_DATE - 34,
+        CURRENT_DATE - 20,
+        4200.00,
+        NOW() - INTERVAL '45 days',
+        NOW() - INTERVAL '20 days'
+    )
+ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================
 -- SUMMARY
 -- ============================================================
 -- Role          | Email                              | Units owned
@@ -251,5 +698,12 @@ ON CONFLICT (id) DO NOTHING;
 -- co_owner      | henri.chevalier@laruche.test       | Lots 3, 9, 10
 -- tenant        | isabelle.fontaine@laruche.test     | (occupies Lot 2)
 -- tenant        | jules.martin@laruche.test          | (occupies Lot 3)
+--
+-- Contracts     | 3 fixtures                         | active, terminated, expired
+-- Reminders     | 4 fixtures                         | pending, sent, acknowledged
+-- Contractors   | 4 referential entries              | elevator, plumbing, locksmith, roofing
+-- Tasks         | 6 fixtures                         | open, in_progress, awaiting_vendor, awaiting_validation, closed, cancelled
+-- Reports       | 3 fixtures                         | open, in_progress, closed
+-- Claims        | 3 fixtures                         | open, in_progress, closed
 --
 -- Password (all accounts): Demo1234!

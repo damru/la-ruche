@@ -23,10 +23,12 @@ Principe Material You adapté : les surfaces s'assombrissent (pas d'inversion), 
 - Ombres : réduites en dark (l'obscurité crée déjà la profondeur)
 
 ### Persistance du choix utilisateur
-`localStorage.setItem('laruche-theme', 'dark' | 'light')`
-Lu au `<script>` inline avant le rendu Vue → pas de flash.
+Le store UI persiste la préférence explicite dans `localStorage` sous la clé `laruche-theme` avec les seules valeurs `light` ou `dark`.
+
+L'absence de clé signifie `auto` : le thème suit alors `prefers-color-scheme` via `usePreferredDark()` et la valeur résolue est appliquée sur `<html data-theme="…">`.
 
 ## Conséquences
 - Les composants ne référencent jamais de couleur en dur — uniquement des tokens CSS
+- La sémantique produit du réglage (`Profil > Mon compte`, options `Clair` / `Sombre` / `Auto`) est décrite dans DDR-004
 - Les images/illustrations doivent avoir une variante dark ou être neutres
 - Les graphiques (budget, charges) utilisent `primary` + `secondary-container` pour rester cohérents

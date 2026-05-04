@@ -469,7 +469,7 @@ function formatLocation(unit: { block?: string | null; staircase?: string | null
         :closable="!savingUnit"
         @update:open="showUnitModal = $event"
       >
-        <div class="unit-form">
+        <div class="form-grid">
           <div class="form-grid-2col">
             <div class="field">
               <label class="field-label">{{ t('units.number') }} *</label>
@@ -648,12 +648,6 @@ function formatLocation(unit: { block?: string | null; staircase?: string | null
   align-items: center;
 }
 
-.unit-form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-}
-
 .shares-section {
   border-top: 1px solid var(--color-outline-variant);
   padding-top: var(--space-4);
@@ -663,12 +657,6 @@ function formatLocation(unit: { block?: string | null; staircase?: string | null
   font-size: var(--text-md);
   font-weight: var(--fw-semibold);
   margin-bottom: var(--space-3);
-}
-
-.shares-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-3);
 }
 
 @media (max-width: 640px) {

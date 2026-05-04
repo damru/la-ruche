@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { usePageLoader, toErrorMessage } from '@/composables/usePageLoader'
 import { useFormFeedback } from '@/composables/useFormFeedback'
@@ -62,6 +63,7 @@ function domainTone(domains: string[]): string {
 }
 
 const { t } = useI18n()
+const router = useRouter()
 const authStore = useAuthStore()
 
 // ── State ─────────────────────────────────────────────────────────
@@ -98,6 +100,10 @@ const filtered = computed(() => {
       c.domains.some(d => d.toLowerCase().includes(q)),
   )
 })
+
+function openContractorDetail(contractorId: string) {
+  void router.push({ name: 'contractor-detail', params: { id: contractorId } })
+}
 
 // ── Sorted domains list (alphabetical by translated label) ────────
 const DOMAINS = computed(() =>
@@ -291,7 +297,12 @@ async function confirmDelete() {
           <CCard
             v-for="c in filtered"
             :key="c.id"
-            class="activity-card contractor-card"
+            class="activity-card activity-card--interactive"
+            role="link"
+            tabindex="0"
+            @click="openContractorDetail(c.id)"
+            @keydown.enter.prevent="openContractorDetail(c.id)"
+            @keydown.space.prevent="openContractorDetail(c.id)"
           >
             <div class="activity-card__head">
               <div class="activity-card__header-row activity-card__header-row--with-icon">
@@ -302,7 +313,7 @@ async function confirmDelete() {
                     aria-hidden="true"
                   />
                 </div>
-                <h3 class="activity-card__title contractor-name">
+                <h3 class="activity-card__title">
                   {{ c.name }}
                 </h3>
               </div>
@@ -316,53 +327,56 @@ async function confirmDelete() {
                   {{ t(`contractors.domains.${d}`, d) }}
                 </CBadge>
               </div>
-            </div>
+              <div class="activity-card__stack">
+                <p
+                  v-if="c.notes"
+                  class="activity-card__description contractor-notes"
+                >
+                  {{ c.notes }}
+                </p>
 
-            <div
-              v-if="c.email || c.phone"
-              class="contractor-contacts"
-            >
-              <a
-                v-if="c.email"
-                :href="`mailto:${c.email}`"
-                class="contact-link"
-              >{{ c.email }}</a>
-              <a
-                v-if="c.phone"
-                :href="`tel:${c.phone}`"
-                class="contact-link"
-              >{{ c.phone }}</a>
-            </div>
+                <div
+                  v-if="c.email || c.phone"
+                  class="activity-card__meta activity-card__contacts"
+                >
+                  <a
+                    v-if="c.email"
+                    :href="`mailto:${c.email}`"
+                    class="activity-card__line activity-card__contact-link"
+                    @click.stop
+                  ><span aria-hidden="true">✉️</span>{{ c.email }}</a>
+                  <a
+                    v-if="c.phone"
+                    :href="`tel:${c.phone}`"
+                    class="activity-card__line activity-card__contact-link"
+                    @click.stop
+                  ><span aria-hidden="true">📞</span>{{ c.phone }}</a>
+                </div>
 
-            <p
-              v-if="c.notes"
-              class="contractor-notes body-xs"
-            >
-              {{ c.notes }}
-            </p>
-
-            <div
-              v-if="canEdit"
-              class="contractor-actions"
-            >
-              <CBtn
-                variant="ghost"
-                size="sm"
-                :aria-label="t('common.edit') + ' ' + c.name"
-                @click="openEdit(c)"
-              >
-                <CIconEdit />
-                {{ t('common.edit') }}
-              </CBtn>
-              <CBtn
-                variant="danger"
-                size="sm"
-                :aria-label="t('common.delete') + ' ' + c.name"
-                @click="openDeleteModal(c)"
-              >
-                <CIconTrash />
-                {{ t('common.delete') }}
-              </CBtn>
+                <div
+                  v-if="canEdit"
+                  class="activity-card__actions"
+                >
+                  <CBtn
+                    variant="ghost"
+                    size="sm"
+                    :aria-label="t('common.edit') + ' ' + c.name"
+                    @click.stop="openEdit(c)"
+                  >
+                    <CIconEdit />
+                    {{ t('common.edit') }}
+                  </CBtn>
+                  <CBtn
+                    variant="danger"
+                    size="sm"
+                    :aria-label="t('common.delete') + ' ' + c.name"
+                    @click.stop="openDeleteModal(c)"
+                  >
+                    <CIconTrash />
+                    {{ t('common.delete') }}
+                  </CBtn>
+                </div>
+              </div>
             </div>
           </CCard>
         </div>
@@ -497,22 +511,6 @@ async function confirmDelete() {
   height: 100%;
 }
 
-.view-container {
-  flex: 1;
-  padding: var(--space-4);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  overflow-y: auto;
-}
-
-.view-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-4);
-}
-
 .empty-state {
   display: flex;
   flex-direction: column;
@@ -529,59 +527,6 @@ async function confirmDelete() {
   gap: var(--space-4);
 }
 
-/* Card */
-.contractor-card {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-
-.contractor-name {
-  margin: 0;
-}
-
-.contractor-card__icon {
-  background: var(--tone-bg, var(--color-secondary-container));
-  color: var(--tone-fg, var(--color-primary));
-}
-
-.contractor-card__type-icon {
-  width: 20px;
-  height: 20px;
-  flex-shrink: 0;
-}
-
-.contractor-contacts {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
-
-.contact-link {
-  font-size: var(--text-xs);
-  color: var(--color-primary);
-  text-decoration: none;
-}
-
-.contact-link:hover {
-  text-decoration: underline;
-}
-
-.contractor-notes {
-  color: var(--color-on-surface-variant);
-  margin: 0;
-  white-space: pre-wrap;
-}
-
-.contractor-actions {
-  display: flex;
-  gap: var(--space-2);
-  flex-wrap: wrap;
-  margin-top: auto;
-  padding-top: var(--space-3);
-  border-top: 1px solid var(--color-surface-container-high);
-}
-
 /* Domains checkbox grid */
 .domains-checkboxes {
   display: flex;
@@ -590,16 +535,4 @@ async function confirmDelete() {
   padding: var(--space-2) 0;
 }
 
-.topbar-breadcrumb {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  font-size: var(--text-sm);
-  color: var(--color-on-surface-variant);
-}
-
-.topbar-breadcrumb span:last-child {
-  color: var(--color-on-surface);
-  font-weight: var(--fw-medium);
-}
 </style>

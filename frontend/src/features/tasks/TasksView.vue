@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useFormatters } from '@/composables/useFormatters'
 import { usePageLoader, toErrorMessage } from '@/composables/usePageLoader'
@@ -22,6 +23,7 @@ import { extractFileExtension } from '@/utils/files'
 
 const { t } = useI18n()
 const { formatDate, formatFileSize, formatRelative } = useFormatters()
+const router = useRouter()
 
 // ── State ─────────────────────────────────────────────────────────
 const buildingName = ref('')
@@ -279,6 +281,10 @@ function assignedUserName(task: Task): string | null {
 
 function hasAssignment(task: Task): boolean {
   return Boolean(contractorDisplayName(task) || assignedUserName(task))
+}
+
+function openTaskDetail(taskId: string) {
+  void router.push({ name: 'task-detail', params: { id: taskId } })
 }
 
 function openTaskDocumentPicker() {
@@ -824,17 +830,19 @@ async function copyVendorLink(taskId: string) {
             v-for="task in tasks"
             :key="task.id"
             :shadow="!isTerminal(task.status)"
-            :class="['activity-card', 'task-card', { 'card--terminated': isTerminal(task.status) }]"
+            :class="['activity-card', 'activity-card--interactive', 'task-card', { 'card--terminated': isTerminal(task.status) }]"
+            role="link"
+            tabindex="0"
+            @click="openTaskDetail(task.id)"
+            @keydown.enter.prevent="openTaskDetail(task.id)"
+            @keydown.space.prevent="openTaskDetail(task.id)"
           >
-            <div class="activity-card__head task-card__head">
-              <div class="task-card__header-row">
-                <RouterLink
-                  :to="{ name: 'task-detail', params: { id: task.id } }"
-                  class="activity-card__title task-title-link"
-                >
+            <div class="activity-card__head">
+              <div class="activity-card__header-row">
+                <h3 class="activity-card__title">
                   {{ task.title }}
-                </RouterLink>
-                <div class="task-card__header-badges">
+                </h3>
+                <div class="activity-card__chips">
                   <CBadge :variant="isTerminal(task.status) ? 'disabled' : priorityVariant(task.priority)">
                     {{ t(`tasks.priorities.${task.priority}`) }}
                   </CBadge>
@@ -855,22 +863,17 @@ async function copyVendorLink(taskId: string) {
                   {{ task.description }}
                 </p>
 
-                <div class="activity-card__documents">
+                <div
+                  v-if="task.document_count > 0"
+                  class="activity-card__documents"
+                >
                   <button
-                    v-if="task.document_count > 0"
-                    class="activity-card__line task-card__documents-button"
-                    @click="openTaskDocuments(task)"
+                    class="activity-card__line activity-card__documents-button"
+                    @click.stop="openTaskDocuments(task)"
                   >
                     <CIconFile />
                     {{ t('tasks.documentsCount', task.document_count) }}
                   </button>
-                  <span
-                    v-else
-                    class="activity-card__line"
-                  >
-                    <CIconFile />
-                    {{ t('tasks.documentsCount', task.document_count) }}
-                  </span>
                 </div>
 
                 <div class="activity-card__meta">
@@ -884,6 +887,7 @@ async function copyVendorLink(taskId: string) {
                       v-if="task.contractor_id && contractorDisplayName(task)"
                       :to="{ name: 'contractor-detail', params: { id: task.contractor_id } }"
                       class="task-card__meta-link"
+                      @click.stop
                     >
                       {{ contractorDisplayName(task) }}
                     </RouterLink>
@@ -907,7 +911,7 @@ async function copyVendorLink(taskId: string) {
                     size="sm"
                     :disabled="generatingToken === task.id"
                     :aria-label="t('tasks.generateToken')"
-                    @click="generateToken(task)"
+                    @click.stop="generateToken(task)"
                   >
                     <CIconLink />
                     {{ t('tasks.generateToken') }}
@@ -917,7 +921,7 @@ async function copyVendorLink(taskId: string) {
                     variant="ghost"
                     size="sm"
                     :aria-label="t('tasks.showLink')"
-                    @click="showVendorLink(task)"
+                    @click.stop="showVendorLink(task)"
                   >
                     <CIconEye />
                     {{ t('tasks.showLink') }}
@@ -927,7 +931,7 @@ async function copyVendorLink(taskId: string) {
                     variant="ghost"
                     size="sm"
                     :aria-label="t('tasks.revokeToken')"
-                    @click="openRevokeModal(task)"
+                    @click.stop="openRevokeModal(task)"
                   >
                     <CIconX />
                     {{ t('tasks.revokeToken') }}
@@ -947,6 +951,7 @@ async function copyVendorLink(taskId: string) {
                       class="task-card__vendor-link-url"
                       target="_blank"
                       rel="noopener"
+                      @click.stop
                     >
                       {{ vendorLinks[task.id].url }}
                     </a>
@@ -954,21 +959,19 @@ async function copyVendorLink(taskId: string) {
                   <CBtn
                     variant="ghost"
                     size="sm"
-                    @click="copyVendorLink(task.id)"
+                    @click.stop="copyVendorLink(task.id)"
                   >
                     <CIconCopy />
                     {{ copiedVendorLinkTaskId === task.id ? t('tasks.vendorTokenCopied') : t('common.copy') }}
                   </CBtn>
                 </div>
 
-                <div class="activity-card__separator"></div>
-
                 <div class="activity-card__actions">
                   <CBtn
                     variant="ghost"
                     size="sm"
                     :aria-label="t('tasks.editTask')"
-                    @click="openEditModal(task)"
+                    @click.stop="openEditModal(task)"
                   >
                     <CIconEdit />
                     {{ t('common.edit') }}
@@ -978,7 +981,7 @@ async function copyVendorLink(taskId: string) {
                     variant="primary"
                     size="sm"
                     :aria-label="t('tasks.reopenTask')"
-                    @click="openReopenModal(task)"
+                    @click.stop="openReopenModal(task)"
                   >
                     <CIconRefresh />
                     {{ t('tasks.reopenTask') }}
@@ -988,7 +991,7 @@ async function copyVendorLink(taskId: string) {
                     variant="primary"
                     size="sm"
                     :aria-label="closeActionLabel(task)"
-                    @click="openCloseModal(task)"
+                    @click.stop="openCloseModal(task)"
                   >
                     <CIconCheckCircle />
                     {{ closeActionLabel(task) }}
@@ -1157,7 +1160,7 @@ async function copyVendorLink(taskId: string) {
             @change="onTaskDocumentChange"
           />
           <div
-            :class="['task-dropzone', { 'task-dropzone--over': taskDocumentsDragOver }]"
+            :class="['dropzone', { 'dropzone--over': taskDocumentsDragOver }]"
             role="button"
             tabindex="0"
             @click="openTaskDocumentPicker"
@@ -1168,12 +1171,8 @@ async function copyVendorLink(taskId: string) {
             @dragleave.prevent="taskDocumentsDragOver = false"
             @drop.prevent="onTaskDocumentDrop"
           >
-            <CIconUpload
-              width="20"
-              height="20"
-              style="color:var(--color-on-surface-variant)"
-            />
-            <span class="body-xs task-dropzone__hint">
+            <CIconUpload class="dropzone__icon" />
+            <span class="body-xs dropzone__hint">
               {{ editingTask ? t('tasks.editDocumentHint') : t('tasks.documentHint') }}
             </span>
           </div>
@@ -1509,39 +1508,11 @@ async function copyVendorLink(taskId: string) {
 .task-list { display: flex; flex-direction: column; gap: 10px; }
 
 .task-card { overflow: hidden; }
-.task-card__head { gap: var(--space-3); }
-.task-card__header-row {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-3);
-}
-.task-card__header-badges {
-  margin-left: auto;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: var(--space-2);
-}
-.task-title-link {
-  color: inherit;
-  text-decoration: none;
-  font-weight: var(--fw-semibold);
-}
-.task-title-link:hover { text-decoration: underline; color: var(--color-primary); }
 .task-card__meta-link {
   color: inherit;
   text-decoration: none;
 }
 .task-card__meta-link:hover { color: var(--color-primary); text-decoration: underline; }
-.task-card__documents-button {
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  min-width: unset;
-  min-height: unset;
-}
-.task-card__documents-button:hover { color: var(--color-primary); }
 .task-card__vendor-link {
   display: flex;
   align-items: flex-start;
@@ -1633,27 +1604,6 @@ async function copyVendorLink(taskId: string) {
 .contractor-create-grid { margin-bottom: 0; }
 .task-close-field { margin-top: var(--space-4); }
 .modal-footer-feedback { margin-right: auto; min-width: 0; }
-.task-dropzone {
-  margin-top: var(--space-2);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
-  min-height: 108px;
-  padding: var(--space-4);
-  border: 1px dashed color-mix(in srgb, var(--color-outline) 72%, transparent);
-  border-radius: var(--radius-md);
-  background: var(--color-surface-container-lowest);
-  cursor: pointer;
-  transition: border-color 0.2s ease, background 0.2s ease;
-}
-.task-dropzone:hover,
-.task-dropzone--over {
-  border-color: var(--color-primary);
-  background: color-mix(in srgb, var(--color-primary) 6%, var(--color-surface-container-lowest));
-}
-.task-dropzone__hint { color: var(--color-on-surface-variant); }
 .task-selected-documents,
 .task-existing-documents__list {
   margin-top: var(--space-3);

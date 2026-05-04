@@ -63,7 +63,7 @@ async function handleSubmit() {
           </div>
 
           <form
-            class="form"
+            class="form-grid"
             novalidate
             @submit.prevent="handleSubmit"
           >
@@ -199,7 +199,6 @@ async function handleSubmit() {
   color: var(--color-on-surface-variant);
   line-height: 1.5;
 }
-.form { display: flex; flex-direction: column; gap: var(--space-4); }
 .success-state {
   display: flex;
   flex-direction: column;

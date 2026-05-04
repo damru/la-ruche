@@ -354,7 +354,7 @@ async function confirmDeleteDoc() {
           </CAlert>
 
           <div
-            class="dropzone"
+            class="dropzone dropzone--stacked dropzone--roomy"
             @click="fileInputRef?.click()"
           >
             <input
@@ -476,16 +476,6 @@ async function confirmDeleteDoc() {
 
 /* Upload modal */
 .upload-form { display: flex; flex-direction: column; gap: var(--space-4); }
-.dropzone {
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: var(--space-2); padding: var(--space-8);
-  border: 2px dashed var(--color-outline-variant);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: border-color var(--transition-fast);
-  font-size: var(--text-md); color: var(--color-on-surface-variant);
-}
-.dropzone:hover { border-color: var(--color-primary); }
 .selected-file { color: var(--color-on-surface); font-weight: var(--fw-medium); }
 .visibility-section { display: flex; flex-direction: column; gap: var(--space-2); }
 .role-checkboxes { display: flex; flex-wrap: wrap; gap: var(--space-3); }

@@ -20,7 +20,7 @@ const { t } = useI18n()
 <template>
   <CCard class="c-page-error">
     <div
-      class="c-page-error__icon"
+      class="c-page-error__icon tone--err"
       aria-hidden="true"
     >
       <CIconAlertTriangle
@@ -60,8 +60,8 @@ const { t } = useI18n()
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--color-error-container);
-  color: var(--color-error);
+  background: var(--tone-bg, var(--color-error-container));
+  color: var(--tone-fg, var(--color-error));
   flex-shrink: 0;
 }
 

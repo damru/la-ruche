@@ -123,7 +123,7 @@ async function handleResetRequest() {
           </div>
 
           <form
-            class="form"
+            class="form-grid"
             novalidate
             @submit.prevent="handleLogin"
           >
@@ -222,7 +222,7 @@ async function handleResetRequest() {
           </div>
 
           <form
-            class="form"
+            class="form-grid"
             novalidate
             @submit.prevent="handleResetRequest"
           >
@@ -337,9 +337,6 @@ async function handleResetRequest() {
   color: var(--color-on-surface-variant);
   line-height: 1.5;
 }
-
-/* ── Formulaire ───────────────────────────────────────────────── */
-.form { display: flex; flex-direction: column; gap: var(--space-4); }
 
 /* Password field (label row + forgot link — unique to Login) */
 

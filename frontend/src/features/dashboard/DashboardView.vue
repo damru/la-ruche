@@ -124,7 +124,7 @@ const todayStr = computed(() =>
         <div class="hero-right">
           <div
             v-if="overdueLevies.length"
-            class="hero-alert hero-alert--err"
+            class="hero-alert tone--err"
           >
             <CIconWarn aria-hidden="true" />
             <div>
@@ -135,7 +135,7 @@ const todayStr = computed(() =>
           <div
             v-for="r in reminders.slice(0, 2)"
             :key="r.id"
-            class="hero-alert hero-alert--warn"
+            class="hero-alert tone--warn"
           >
             <CIconWarn aria-hidden="true" />
             <div>
@@ -145,7 +145,7 @@ const todayStr = computed(() =>
           </div>
           <div
             v-if="nextMeeting && nextMeeting.status === 'closed'"
-            class="hero-alert hero-alert--ok"
+            class="hero-alert tone--valid"
           >
             <CIconCheck aria-hidden="true" />
             <div>
@@ -317,8 +317,14 @@ const todayStr = computed(() =>
               class="reminder-item"
             >
               <div
-                class="reminder-icon"
-                :class="`reminder-icon--${reminderUrgency(reminder.reminder_date)}`"
+                :class="[
+                  'reminder-icon',
+                  {
+                    'tone--err': reminderUrgency(reminder.reminder_date) === 'high',
+                    'tone--warn': reminderUrgency(reminder.reminder_date) === 'medium',
+                    'tone--muted': reminderUrgency(reminder.reminder_date) === 'low',
+                  },
+                ]"
               >
                 <CIconFile />
               </div>
@@ -564,13 +570,12 @@ const todayStr = computed(() =>
 .hero-alert {
   display: flex; align-items: center; gap: var(--space-2);
   padding: 12px var(--space-4); border-radius: var(--radius-md); min-width: 280px; font-size: 13px;
+  background: var(--tone-bg, var(--color-surface-container-low));
+  color: var(--tone-fg, var(--color-on-surface));
 }
 .hero-alert svg { width: 16px; height: 16px; flex-shrink: 0; }
 .hero-alert div strong { font-weight: var(--fw-semibold); display: block; }
 .hero-alert div span  { font-size: 11px; opacity: 0.85; }
-.hero-alert--err  { background: var(--color-error-container);   color: var(--color-error); }
-.hero-alert--warn { background: var(--color-warning-container); color: var(--color-warning); }
-.hero-alert--ok   { background: var(--color-success-container); color: var(--color-success); }
 
 /* ── KPI ──────────────────────────────────────────────────────────── */
 .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-4); }
@@ -619,10 +624,8 @@ const todayStr = computed(() =>
 .reminder-list { padding: 0 var(--space-5) var(--space-2); display: flex; flex-direction: column; gap: var(--space-1); }
 .reminder-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius-md); transition: background var(--transition-fast); cursor: pointer; }
 .reminder-item:hover { background: var(--color-surface-container-low); }
-.reminder-icon { width: 32px; height: 32px; min-width: unset; min-height: unset; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.reminder-icon { width: 32px; height: 32px; min-width: unset; min-height: unset; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: var(--tone-bg, transparent); color: var(--tone-fg, inherit); }
 .reminder-icon svg { width: 15px; height: 15px; }
-.reminder-icon--high   { background: var(--color-error-container);   color: var(--color-error); }
-.reminder-icon--medium { background: var(--color-warning-container); color: var(--color-warning); }
 .reminder-icon--low    { background: var(--color-surface-container); color: var(--color-on-surface-variant); }
 .reminder-body { flex: 1; min-width: 0; }
 .reminder-title { font-size: 12px; font-weight: var(--fw-medium); color: var(--color-on-surface); }

@@ -1,7 +1,7 @@
 # DESIGN.md — l'Application Design System "The Modern Registry"
 
 > **Dénomination** — Dans le présent document, l'expression **« l'Application »** désigne exclusivement **La Ruche**, plateforme web open source de gestion participative de copropriété. Ces deux termes sont interchangeables et désignent la même entité logicielle.
-> Dernière mise à jour : 2026-05-03
+> Dernière mise à jour : 2026-05-04
 
 ## Typographie — 3 polices, 3 rôles (DDR-001 v3)
 
@@ -117,19 +117,33 @@ Le formulaire ou wizard reste la zone scrollable principale. Les actions critiqu
 ## Internationalisation
 `Intl.NumberFormat('fr-FR', { style:'currency', currency:'EUR' })` · `Intl.DateTimeFormat('fr-FR')`
 
+## Primitives de layout de vue — `base.css`
+
+`frontend/src/styles/base.css` porte les primitives globales qui ne doivent pas être surchargées sauf exception explicites.
+
+## Règle UI — Reminder cards
+
+Les cartes de rappels synthétiques partagées entre vues métier passent par `frontend/src/components/molecules/CReminderCard.vue`.
+
+La molécule porte le conteneur, le titre de section, l’état vide et la structure de ligne (`titre`, `subtitle`, `meta`, accent temporel, actions optionnelles). Une vue ne doit pas recopier localement les wrappers `section-head`, `reminder-list`, `reminder-row`, `reminder-dot` ou leurs variantes tonales si le besoin correspond à cette carte.
+
 ## Système de tonalités couleur — `tones.css`
 
 Défini dans `frontend/src/styles/tones.css`, importé globalement avant tout composant.
 
 Les classes `.tone--*` sont des **utilitaires purs** : elles définissent uniquement deux variables CSS — sans aucune règle de forme, taille ou layout. Elles s’appliquent à n’importe quel élément (icône, bouton, chip, badge, pill…).
 
+Une vue ne doit jamais redéclarer localement `.tone--default`, `.tone--accent`, `.tone--warn`, `.tone--err`, `.tone--disabled` ou `.tone--valid` dans son CSS scoped. Si un composant a besoin d’une forme locale, il conserve uniquement ses règles de taille / rayon / layout et consomme les variables via `background: var(--tone-bg, ...)` et `color: var(--tone-fg, ...)`.
+
 | Classe | `--tone-bg` | `--tone-fg` |
 |---|---|---|
 | `.tone--default`  | `--color-secondary-container`       | `--color-primary`            |
+| `.tone--info`     | `--color-secondary-container`       | `--color-on-secondary-container` |
 | `.tone--accent`   | `--gradient-primary`                | `--color-on-primary`         |
 | `.tone--warn`     | `--color-warning-container`         | `--color-warning`            |
 | `.tone--err`      | `--color-error-container`           | `--color-error`              |
 | `.tone--disabled` | `--color-surface-container-highest` | `--color-on-surface-variant` |
+| `.tone--muted`    | `--color-surface-container`         | `--color-on-surface-variant` |
 | `.tone--valid`    | `--color-success-container`         | `--color-success`            |
 
 Les éléments consommateurs déclarent :
@@ -149,6 +163,53 @@ color:      var(--tone-fg, <fallback>);
 <button class="btn tone--err">Supprimer</button>
 ```
 
+## Règle UI — Activity cards
+
+Les cartes `activity-card` constituent le socle partagé des cartes de liste métier (`Contrat`, `Prestataire`, `Tâche`, `Signalement`, `Sinistre`). Toute règle transversale liée à leur structure, leur hiérarchie visuelle ou leurs primitives CSS doit être documentée ici, et non dispersée dans les sections de vues.
+
+### Ossature commune
+
+- Les cartes reposent sur `frontend/src/styles/activity-cards.css`.
+- Dès qu’un header contient une icône métier, il utilise `activity-card__header-row activity-card__header-row--with-icon` pour conserver un centrage vertical stable entre icône, titre et chips.
+- Les titres `activity-card` restent compacts (18px), en police de texte classique (`font-body`), jamais en display.
+- La description utilise une taille de texte standard, en ton principal mais sans graisse excessive ; les metadata / secondary information restent volontairement plus légères via une teinte plus douce.
+- Les lignes compactes `activity-card` n’utilisent pas de séparateur ; le groupement repose sur l’alignement, la proximité et des espacements icône/texte serrés.
+
+### Primitives partagées
+
+Les patterns de contenu récurrents doivent être mutualisés dans `frontend/src/styles/activity-cards.css` au lieu d’être redéclarés localement.
+
+- `activity-card--compact` pour les variantes de carte qui gardent la grammaire `activity-card` mais avec un rythme vertical plus serré.
+- `activity-card--interactive` pour toute carte entière cliquable, avec curseur, hover sur le titre et focus visible mutualisés.
+- `activity-card__chips` pour toute grappe de chips / badges d’une `activity-card`, y compris dans l’en-tête. Une vue ne doit pas introduire de wrapper alternatif dédié si ce conteneur couvre déjà le besoin.
+- `activity-card__contacts` pour la pile verticale email / téléphone.
+- `activity-card__contact-link` pour les liens de contact dans une carte, avec préfixe emoji métier (`✉️` pour l’email, `📞` pour le téléphone).
+- `activity-card__documents-button` pour le bouton inline ouvrant les pièces liées depuis `activity-card__documents`.
+
+Si une vue réutilise exactement l’un de ces patterns, elle doit consommer la classe partagée et supprimer le CSS local redondant.
+
+### Grammaire des cartes Opérations
+
+Les cartes de liste des vues `Signalements`, `Tâches` et `Sinistres` partagent une même ossature visuelle afin d’améliorer le balayage :
+
+- ligne 1 : en-tête compact propre à l’entité, avec au minimum le statut visible sans ouvrir la carte ;
+- ligne 2 : titre principal ou, pour certaines cartes, reprise du titre juste sous l’en-tête si cela améliore la lisibilité ;
+- ligne 3 : description courte éventuelle, en taille de texte standard ;
+- ligne 4 : hints documentaires / photo sur leur propre ligne ;
+- ligne 5 : métadonnées compactes avec icônes, sans séparateur ;
+- ligne d’actions avec `Modifier` puis une action contextuelle accentée ;
+- bloc informatif secondaire pour les éléments métier complémentaires (délai légal, remboursement, lien prestataire, historique, etc.).
+
+### Variantes métier autorisées
+
+- `Contrat` : header `icône métier + titre + chip statut`, avec chip domaine/type sur une rangée dédiée juste sous l’en-tête ; hint documentaire ouvrable directement depuis la carte quand des pièces existent.
+- `Prestataire` : même grammaire d’en-tête que `Contrat`, sans chip de statut quand aucune information de cycle de vie n’existe.
+- `Tâche` : header compact `titre + priorité + statut`, sans icône ; l’assignation et la date de création relative sont regroupées dans les métadonnées.
+- `Signalement` : première ligne `icône + (statut + mise à jour relative simple)`, titre aligné à gauche sous l’en-tête, viewer photo compact puis agrandi.
+- `Sinistre` : icône métier obligatoire avec couleur dépendante du type ; chip de type affichée dans le header à gauche du statut ; hint documentaire positionné au-dessus des métadonnées `date/auteur`.
+
+L’ossature reste commune mais chaque entité peut substituer un équivalent métier lorsqu’une donnée n’existe pas (ex. `prestataire assigné` au lieu d’une localisation stricte sur les tâches).
+
 ## Règle UI — Primitives KPI (`kpi.css`)
 
 Mutualisés dans `frontend/src/styles/kpi.css`. Consomment `--tone-bg` / `--tone-fg` fournis par `.tone--*`.
@@ -163,19 +224,12 @@ Mutualisés dans `frontend/src/styles/kpi.css`. Consomment `--tone-bg` / `--tone
 | `.kpi-filter__label`  | Libellé secondaire (11px) |
 ## États de chargement et d'erreur de page (DDR-005)
 
-Toute vue qui charge des données au montage doit utiliser le composable `usePageLoader` et le composant `CPageError`.
+La règle normative reste portée par `docs/ddr/DDR-005-page-loading-states.md`.
 
-```vue
-const { loading, error, reload } = usePageLoader(loadData)
-onMounted(reload)
-```
-
-Template conditionnel obligatoire :
-1. `v-if="error"` → `<CPageError :message="error" @retry="reload" />`
-2. `v-else-if="loading"` → spinner centré via `.c-btn__spinner`
-3. `v-else` → contenu normal
-
-Les appels non-critiques (données secondaires, endpoints optionnels) sont isolés dans un `try/catch` séparé après le `Promise.all` principal pour ne pas bloquer le chargement des données primaires.
+Résumé d'usage pour le design system :
+- toute vue qui charge ses données au montage passe par `usePageLoader` ;
+- l'état d'erreur s'affiche via `CPageError`, l'état de chargement via `CPageLoader` ;
+- les chargements secondaires non bloquants restent isolés pour ne pas retarder le rendu principal.
 
 Références d'implémentation : `frontend/src/composables/usePageLoader.ts`, `frontend/src/components/molecules/CPageError.vue`, `frontend/src/components/molecules/CPageLoader.vue`.
 
@@ -183,10 +237,6 @@ Références d'implémentation : `frontend/src/composables/usePageLoader.ts`, `f
 
 La vue `Contrats` affiche en tête les rappels à traiter, avec une action d’acquittement visible sans navigation secondaire.
 
-- Les cartes `Contrat`, `Sinistre`, `Signalement` et `Prestataire` reposent toutes sur le socle partagé `activity-card` ; dès qu’un header contient une icône métier, il utilise `activity-card__header-row activity-card__header-row--with-icon` pour conserver un centrage vertical stable entre icône, titre et chips.
-- L’en-tête des cartes Contrat reprend le même pattern que les cartes Opérations : icône métier, titre principal, chip de domaine/type puis chip de statut sur une même ligne.
-- Les cartes `Prestataires` reprennent la même grammaire d’en-tête, sans chip de statut quand aucune information de cycle de vie n’existe.
-- Les titres de `activity-card` restent compacts (18px) ; lorsqu’un titre partage sa ligne avec une icône métier, il reste centré verticalement pour éviter un décalage visuel entre l’icône et le texte.
 - Les tabs de filtre `Contrats` affichent le volume d’éléments par état (`Tous`, `Actifs`, `Expirés`) directement dans chaque segment.
 - Les pièces justificatives d’un contrat se gèrent directement depuis la modale de création / modification, sans CTA documentaire primaire sur la carte.
 - Chaque carte Contrat rappelle aussi le nombre de documents actuellement liés et permet d’ouvrir une modale de consultation/téléchargement directement depuis ce hint lorsque des pièces existent.
@@ -215,32 +265,15 @@ La vue `Sinistres` affiche pour chaque dossier le délai légal restant avant d�
 - Les actions contextuelles suivent strictement ce mapping : `Ouvert → Transmettre`, `En cours → Clore`, `Clos → Supprimer`.
 - `Transmettre` ouvre une modale dédiée avec la date de transmission à l'assurance ; `Clore` ouvre une modale dédiée avec remboursement optionnel (date + montant) et ajout de documents ; `Modifier` permet aussi de supprimer le dossier sans revenir à la carte et de gérer les documents déjà joints.
 - Les tabs de filtre `Sinistres` affichent aussi le volume par état (`Tous`, `Ouverts`, `En cours`, `Clos`) pour rendre le backlog lisible sans ouvrir chaque segment.
-- La carte `Sinistre` affiche désormais sa chip de type dans le header, à gauche du statut, puis conserve le hint documentaire sur sa propre ligne au-dessus des métadonnées `date/auteur`, avec le même alignement vertical header que les cartes Contrat / Signalement / Prestataire.
 
 ## Règle UI — Cartes Opérations (`Signalements` / `Tâches` / `Sinistres`)
 
-Les cartes de liste des vues `Signalements`, `Tâches` et `Sinistres` partagent une même ossature visuelle afin d'améliorer le balayage :
-
-- ligne 1 : en-tête compact propre à l’entité, avec au minimum le statut visible sans ouvrir la carte ;
-- ligne 2 : titre principal ou, pour certaines cartes, reprise du titre juste sous l’en-tête si cela améliore la lisibilité ;
-- ligne 3 : description courte éventuelle, en taille de texte standard ;
-- ligne 4 : hints documentaires / photo sur leur propre ligne ;
-- ligne 5 : métadonnées compactes avec icônes, sans séparateur ;
-- séparateur discret ;
-- ligne d'actions avec `Modifier` puis une action contextuelle accentée ;
-- bloc informatif secondaire pour les éléments métier complémentaires (délai légal, remboursement, lien prestataire, historique, etc.).
+La structure partagée et les primitives communes des cartes `Signalements`, `Tâches` et `Sinistres` sont définies dans la section `Règle UI — Activity cards`.
 
 Contraintes complémentaires :
 
 - les listes sont triées par `dernière modification` décroissante ;
-- le titre des `activity-card` reste en police de texte classique (`font-body`), pas en display ;
-- la description utilise une taille de texte standard, en ton principal mais sans graisse excessive ; les metadata / secondary information restent volontairement plus légères via une teinte plus douce (implémentée avec `color-mix(... 88%, white)`) ;
-- les lignes compactes `activity-card` n'utilisent plus de séparateur ; le groupement repose sur l'alignement, la proximité et des espacements icône/texte très serrés ;
-- la carte `Tâche` compacte son header en `titre + priorité + statut`, sans icône, puis regroupe l’assignation et la date de création relative dans les métadonnées ;
-- la carte `Signalement` affiche `icône + (statut + mise à jour relative simple)` sur sa première ligne, avec une icône de mise à jour dédiée ; son titre reste aligné à gauche sous cet en-tête ; sa modale de miniatures reste compacte avec des vignettes plafonnées, puis ouvre un viewer photo agrandi dont les boutons de navigation sont alignés sur une même ligne sous l’image ;
-- la carte `Sinistre` conserve son icône métier mais sa couleur doit refléter explicitement le type de sinistre ;
 - la carte `Sinistre` n'expose jamais `Supprimer` dans la liste ; cette action reste confinée à la modale d'édition ;
-- l'ossature reste commune mais chaque entité peut substituer un équivalent métier quand une donnée n'existe pas (ex. `prestataire assigné` au lieu d'une localisation stricte sur les tâches).
 
 ## Règle UI — Obligations légales
 
@@ -269,6 +302,7 @@ La modale de conversion d'un signalement en tâche doit permettre au gestionnair
 - L’action de retrait d’un document lié ouvre toujours une confirmation avec deux actions distinctes : `Supprimer le lien seulement` et `Supprimer le lien et le document`.
 - Le module `Documents` doit exposer les références d’entités liées pour chaque fichier et rappeler, dans la modale de suppression, qu’un document supprimé sera d’abord retiré des entités auxquelles il est rattaché.
 - La suppression d’une entité doit aussi supprimer ses documents devenus orphelins ; un document encore rattaché ailleurs n’est pas supprimé.
+- Les dropzones documentaires inline utilisent la feuille globale `frontend/src/styles/forms.css` et la même base visuelle que l’ancienne `claim-dropzone` : bordure pointillée, état `hover/drag`, icône neutre et hint secondaire.
 
 ## Règle UI — Vue Tâches
 

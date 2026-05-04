@@ -5,6 +5,19 @@
   --activity-card-soft-text: color-mix(in srgb, var(--color-on-surface-variant) 88%, white);
 }
 
+.activity-card--interactive {
+  cursor: pointer;
+}
+
+.activity-card--interactive:hover .activity-card__title {
+  color: var(--color-primary);
+}
+
+.activity-card--interactive:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
 .activity-card__head {
   display: flex;
   flex-direction: column;
@@ -18,6 +31,10 @@
   min-width: 0;
 }
 
+.activity-card__header-row > .activity-card__chips {
+  justify-content: flex-end;
+}
+
 .activity-card__icon {
   width: 40px;
   height: 40px;
@@ -26,8 +43,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--color-surface-container-low);
-  color: var(--color-primary);
+  background: var(--tone-bg, var(--color-secondary-container));
+  color: var(--tone-fg, var(--color-primary));
+
 }
 
 .activity-card__icon svg {
@@ -52,6 +70,12 @@
   gap: var(--space-2);
 }
 
+.activity-card__contacts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
 .activity-card__chips {
   flex: 1;
   min-width: 0;
@@ -62,7 +86,6 @@
   color: var(--color-on-surface);
   margin: 0;
   flex: 1;
-  min-width: 0;
   font-family: var(--font-body);
   font-size: 18px;
   font-weight: var(--fw-semibold);
@@ -91,7 +114,6 @@
 }
 
 .activity-card__description {
-  margin: calc(var(--space-2) * -1) 0 0;
   white-space: pre-wrap;
   font-size: var(--text-md);
   font-weight: var(--fw-regular);
@@ -113,21 +135,33 @@
   flex-shrink: 0;
 }
 
-.activity-card__separator {
-  height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    var(--color-surface-container-high),
-    transparent
-  );
+.activity-card__contact-link {
+  font-size: var(--text-xs);
+  color: var(--color-primary);
+  text-decoration: none;
 }
 
-.activity-card__secondary-actions {
-  margin-top: calc(var(--space-2) * -1);
+.activity-card__contact-link:hover {
+  text-decoration: underline;
+}
+
+.activity-card__documents-button {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  min-width: unset;
+  min-height: unset;
+}
+
+.activity-card__documents-button:hover {
+  color: var(--color-primary);
 }
 
 .activity-card__note {
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-container-low);
+  padding: var(--space-2);
   color: var(--activity-card-soft-text);
   font-size: var(--text-xs);
 }

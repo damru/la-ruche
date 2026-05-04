@@ -31,6 +31,12 @@ const iconMap: Record<Variant, typeof CIconInfo> = {
   error:   CIconAlertTriangle,
   success: CIconCheckCircle,
 }
+const toneClassMap: Record<Variant, string> = {
+  info: 'tone--info',
+  warning: 'tone--warn',
+  error: 'tone--err',
+  success: 'tone--valid',
+}
 
 function dismiss() {
   visible.value = false
@@ -42,7 +48,7 @@ function dismiss() {
   <Transition name="c-alert-fade">
     <div
       v-if="visible"
-      :class="['c-alert', `c-alert--${variant}`]"
+      :class="['c-alert', toneClassMap[variant]]"
       role="alert"
     >
       <component
@@ -83,6 +89,8 @@ function dismiss() {
   gap: var(--space-3);
   padding: var(--space-3) var(--space-4);
   border-radius: var(--radius-md);
+  background: var(--tone-bg, var(--color-secondary-container));
+  color: var(--tone-fg, var(--color-on-secondary-container));
 }
 
 .c-alert__icon {
@@ -116,12 +124,6 @@ function dismiss() {
   transition: opacity var(--transition-fast);
 }
 .c-alert__close:hover { opacity: 1; }
-
-/* ── Variantes ────────────────────────────────────────────────── */
-.c-alert--info    { background: var(--color-secondary-container); color: var(--color-on-secondary-container); }
-.c-alert--warning { background: var(--color-warning-container);   color: var(--color-warning); }
-.c-alert--error   { background: var(--color-error-container);     color: var(--color-error); }
-.c-alert--success { background: var(--color-success-container);   color: var(--color-success); }
 
 /* ── Transition ────────────────────────────────────────────────── */
 .c-alert-fade-enter-active { transition: all var(--transition-base); }

@@ -140,8 +140,6 @@ async function submitCreate() {
       unit_id: createForm.value.unit_id || undefined,
     })
     const reportId = reportRes.data.id
-
-    // Upload photos sequentially — failure is reported but does not hide the success
     if (selectedPhotos.value.length) {
       uploadingPhotos.value = true
       const errors: string[] = []
@@ -584,12 +582,12 @@ function photoPreview(file: File): string {
             :shadow="r.status !== 'closed'"
             :class="['activity-card', 'report-card', { 'card--terminated': r.status === 'closed' }]"
           >
-            <div class="activity-card__head report-card__head">
-              <div class="activity-card__header-row activity-card__header-row--with-icon report-card__status-row">
+            <div class="activity-card__head">
+              <div class="activity-card__header-row activity-card__header-row--with-icon">
                 <div class="activity-card__icon tone--default">
                   <CIconInfo />
                 </div>
-                <div class="report-card__status-meta">
+                <div class="activity-card__chips">
                   <CBadge
                     :variant="statusVariant(r.status)"
                     dot
@@ -616,22 +614,17 @@ function photoPreview(file: File): string {
                   {{ r.description }}
                 </p>
 
-                <div class="activity-card__documents">
+                <div
+                  v-if="r.document_count > 0"
+                  class="activity-card__documents"
+                >
                   <button
-                    v-if="r.document_count > 0"
-                    class="activity-card__line report-card__photo-button"
+                    class="activity-card__line activity-card__documents-button"
                     @click="openReportPhotos(r)"
                   >
                     <CIconFile />
                     {{ t('reports.linkedPhotosCount', r.document_count) }}
                   </button>
-                  <span
-                    v-else
-                    class="activity-card__line"
-                  >
-                    <CIconFile />
-                    {{ t('reports.linkedPhotosCount', r.document_count) }}
-                  </span>
                 </div>
 
                 <div class="activity-card__meta">
@@ -649,9 +642,23 @@ function photoPreview(file: File): string {
                   </span>
                 </div>
 
-                <template v-if="canManage">
-                  <div class="activity-card__separator"></div>
+                <div class="activity-card__secondary-actions">
+                  <div
+                    v-if="r.status !== 'closed'"
+                    class="activity-card__secondary-actions"
+                  >
+                    <CBtn
+                      variant="ghost"
+                      size="sm"
+                      @click="openStatusModal(r)"
+                    >
+                      <CIconRefresh />
+                      {{ t('reports.editStatus') }}
+                    </CBtn>
+                  </div>
+                </div>
 
+                <template v-if="canManage">
                   <div class="activity-card__actions">
                     <CBtn
                       variant="ghost"
@@ -678,20 +685,6 @@ function photoPreview(file: File): string {
                     >
                       <CIconCheckCircle />
                       {{ t('reports.convertToTask') }}
-                    </CBtn>
-                  </div>
-
-                  <div
-                    v-if="r.status !== 'closed'"
-                    class="activity-card__secondary-actions"
-                  >
-                    <CBtn
-                      variant="ghost"
-                      size="sm"
-                      @click="openStatusModal(r)"
-                    >
-                      <CIconRefresh />
-                      {{ t('reports.editStatus') }}
                     </CBtn>
                   </div>
                 </template>
@@ -772,7 +765,7 @@ function photoPreview(file: File): string {
           />
           <!-- Drop zone -->
           <div
-            :class="['photo-dropzone', { 'photo-dropzone--over': photoDragOver }]"
+            :class="['dropzone', { 'dropzone--over': photoDragOver }]"
             role="button"
             tabindex="0"
             @click="photoInputRef?.click()"
@@ -781,12 +774,8 @@ function photoPreview(file: File): string {
             @dragleave.prevent="photoDragOver = false"
             @drop.prevent="onPhotoDrop"
           >
-            <CIconUpload
-              width="20"
-              height="20"
-              style="color:var(--color-on-surface-variant)"
-            />
-            <span class="body-xs photo-hint">{{ t('reports.photoHint') }}</span>
+            <CIconUpload class="dropzone__icon" />
+            <span class="body-xs dropzone__hint">{{ t('reports.photoHint') }}</span>
           </div>
           <!-- Preview strip -->
           <div
@@ -993,7 +982,7 @@ function photoPreview(file: File): string {
             @change="onEditPhotoChange"
           />
           <div
-            :class="['photo-dropzone', { 'photo-dropzone--over': editPhotoDragOver }]"
+            :class="['dropzone', { 'dropzone--over': editPhotoDragOver }]"
             role="button"
             tabindex="0"
             @click="editPhotoInputRef?.click()"
@@ -1002,12 +991,8 @@ function photoPreview(file: File): string {
             @dragleave.prevent="editPhotoDragOver = false"
             @drop.prevent="onEditPhotoDrop"
           >
-            <CIconUpload
-              width="20"
-              height="20"
-              style="color:var(--color-on-surface-variant)"
-            />
-            <span class="body-xs photo-hint">{{ t('reports.photoHint') }}</span>
+            <CIconUpload class="dropzone__icon" />
+            <span class="body-xs dropzone__hint">{{ t('reports.photoHint') }}</span>
           </div>
           <div
             v-if="editSelectedPhotos.length"
@@ -1230,21 +1215,6 @@ function photoPreview(file: File): string {
 <style scoped>
 /* ── Report cards ───────────────────────────────────────────────── */
 .report-list { display: flex; flex-direction: column; gap: var(--space-3); }
-.report-card__head { gap: var(--space-3); }
-.report-card__status-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  min-width: 0;
-}
-.report-card__status-meta {
-  margin-left: auto;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  flex-shrink: 0;
-  min-width: 0;
-}
 .report-card__status {
   flex-shrink: 0;
 }
@@ -1254,39 +1224,11 @@ function photoPreview(file: File): string {
   line-height: 1.4;
   white-space: nowrap;
 }
-.report-card__photo-button {
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  min-height: unset;
-  min-width: unset;
-}
-
-.report-card__photo-button:hover {
-  color: var(--color-primary);
-}
 .report-card__title {
   align-self: flex-start;
   width: 100%;
   text-align: left;
 }
-
-/* Photo picker */
-.photo-dropzone {
-  border: 1.5px dashed var(--color-outline);
-  border-radius: var(--radius-sm);
-  padding: var(--space-4) var(--space-3);
-  display: flex; align-items: center; justify-content: center; gap: var(--space-2);
-  cursor: pointer; transition: background 0.15s, border-color 0.15s;
-  user-select: none;
-}
-.photo-dropzone:hover,
-.photo-dropzone--over {
-  background: var(--color-surface-container);
-  border-color: var(--color-primary);
-}
-.photo-hint { color: var(--color-on-surface-variant); }
 
 .photo-preview-strip {
   display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-2);
@@ -1297,23 +1239,6 @@ function photoPreview(file: File): string {
 .photo-thumb {
   width: 64px; height: 64px; object-fit: cover;
   border-radius: var(--radius-sm); border: 1px solid var(--color-outline-variant);
-}
-.photo-remove {
-  position: absolute; top: -6px; right: -6px;
-  width: 22px; height: 22px; border-radius: 50%;
-  background: var(--color-error); color: #fff;
-  border: none; cursor: pointer; font-size: 14px; line-height: 1;
-  display: flex; align-items: center; justify-content: center;
-  padding: 0;
-  /* Override the global 44px touch-target minimum for this decorative badge */
-  min-height: unset; min-width: unset;
-}
-.photo-remove:hover { background: var(--color-error-dark, var(--color-error)); opacity: 0.85; }
-
-.photo-gallery { display: flex; flex-wrap: wrap; gap: var(--space-2); }
-.photo-gallery-item {
-  position: relative; border-radius: var(--radius-sm); overflow: visible;
-  flex-shrink: 0;
 }
 .photo-gallery-thumb {
   width: 120px; height: 120px; object-fit: cover; display: block;

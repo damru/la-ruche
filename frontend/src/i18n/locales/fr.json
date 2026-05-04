@@ -9,6 +9,7 @@
     "create": "Créer",
     "close": "Fermer",
     "confirm": "Confirmer",
+    "copy": "Copier",
     "back": "Retour",
     "search": "Rechercher",
     "filter": "Filtrer",
@@ -467,7 +468,6 @@
     "reminders": {
       "acknowledge": "Acquitter",
       "acknowledgeError": "Impossible d'acquitter ce rappel.",
-      "empty": "Aucun rappel en attente.",
       "dueNow": "échéance atteinte"
     },
     "form": {
@@ -512,7 +512,7 @@
       "deleteSuccess": "Pièce supprimée définitivement.",
       "deleteError": "Impossible de supprimer cette pièce.",
       "empty": "Aucune pièce liée à ce contrat pour le moment.",
-      "count": "{count} document lié au contrat | {count} documents liés au contrat"
+      "count": "{count} document lié | {count} documents liés"
     },
     "reminderTypes": {
       "renewal": "Reconduction",
@@ -769,8 +769,8 @@
     "empty": "Aucun signalement pour le moment.",
     "createdAt": "Signalé {date}",
     "updatedAt": "Mis à jour {date}",
-    "documentsCount": "{count} document lié | {count} documents liés",
-    "linkedPhotosCount": "{count} photo liée | {count} photos liées",
+    "documentsCount": "{count} document | {count} documents",
+    "linkedPhotosCount": "{count} photo | {count} photos",
     "photos": "Photos",
     "addPhotos": "Ajouter des photos",
     "attachedPhotos": "Photos déjà jointes",
@@ -865,6 +865,7 @@
   "claims": {
     "title": "Sinistres",
     "create": "Déclarer un sinistre",
+    "upcomingReminders": "Déclarations à échéance proche",
     "activeCount": "{count} sinistre en cours | {count} sinistres en cours",
     "createSuccess": "Sinistre enregistré",
     "updateSuccess": "Sinistre mis à jour",

@@ -2,7 +2,7 @@
 
 > **Dénomination** — Dans le présent document, l'expression **« l'Application »** désigne exclusivement **La Ruche**, plateforme web open source de gestion participative de copropriété. Ces deux termes sont interchangeables et désignent la même entité logicielle.
 
-> Document vivant. Dernière mise à jour : 2026-05-03
+> Document vivant. Dernière mise à jour : 2026-05-04
 
 ---
 
@@ -27,7 +27,7 @@
 | Config | dotenvy + config crate (LA_RUCHE__*) | — |
 | Frontend | Vue 3 + Vite + TypeScript | DDR-003 |
 | État UI | Pinia | — |
-| Préférences UI persistées | Cookie `laruche-theme` (`light` / `dark`), absence de cookie = `auto` | DDR-004 |
+| Préférences UI persistées | `localStorage` `laruche-theme` (`light` / `dark`), absence de clé = `auto` | DDR-002, DDR-004 |
 | État serveur | TanStack Query | — |
 | HTTP client | Axios + intercepteurs refresh | — |
 | i18n | vue-i18n (fr uniquement MVP) | — |
@@ -43,15 +43,24 @@ laruche/
 │   ├── migrations/
 │   │   └── 0001_init.sql       ← 26 tables, UUID, triggers updated_at
 │   └── src/
-│       ├── api/                ← handlers (zero business logic)
+│       ├── api/                ← handlers (zéro logique métier)
 │       │   ├── assemblies.rs
 │       │   ├── auth.rs
 │       │   ├── budget.rs
+│       │   ├── building.rs
+│       │   ├── claims.rs
+│       │   ├── consultations.rs
 │       │   ├── contracts.rs
 │       │   ├── contractor.rs
+│       │   ├── contractors.rs
 │       │   ├── documents.rs
+│       │   ├── logbook.rs
 │       │   ├── mod.rs          ← router + OpenAPI
+│       │   ├── onboarding.rs
+│       │   ├── reports.rs
 │       │   ├── stubs.rs        ← stubs for routes not yet implemented
+│       │   ├── units.rs
+│       │   ├── users.rs
 │       │   └── tasks.rs
 │       ├── auth/               ← jwt, middleware, passkey, password, token
 │       │   ├── jwt.rs
@@ -61,13 +70,15 @@ laruche/
 │       │   ├── password.rs
 │       │   └── token.rs
 │       ├── config.rs           ← typed config from env
-│       ├── db/                 ← SQLx repositories (12 modules)
+│       ├── db/                 ← repositories SQLx
+│       │   ├── allocation_key.rs
 │       │   ├── assembly.rs
 │       │   ├── budget.rs
 │       │   ├── building.rs
 │       │   ├── claim.rs
 │       │   ├── consultation.rs
 │       │   ├── contract.rs
+│       │   ├── contractor.rs
 │       │   ├── document.rs
 │       │   ├── maintenance_log.rs
 │       │   ├── mod.rs
@@ -111,24 +122,27 @@ laruche/
 │   │   │                          CDataTable, CModal, CDropzone
 │   │   └── organisms/          ← AppNav
 │   ├── composables/            ← useRole, useFormatters (Intl natif)
-│   ├── features/               ← vues lazy-loaded par domaine
+│   │   ├── features/               ← vues lazy-loaded par domaine
 │   │   ├── assemblies/         ← AssemblyListView, AssemblyDetailView
 │   │   ├── auth/               ← LoginView ✅, AcceptInviteView, ResetPasswordView
 │   │   ├── budget/             ← BudgetView
 │   │   ├── claims/             ← ClaimsView
 │   │   ├── consultations/      ← ConsultationsView
 │   │   ├── contractor/         ← ContractorPage
+│   │   ├── contractors/        ← ContractorsView, ContractorDetailView
 │   │   ├── contracts/          ← ContractsView
 │   │   ├── dashboard/          ← DashboardView ✅
 │   │   ├── documents/          ← DocumentsView
 │   │   ├── maintenance/        ← MaintenanceView
+│   │   ├── onboarding/         ← OnboardingView
+│   │   ├── profile/            ← ProfileView
 │   │   ├── reports/            ← ReportsView
+│   │   ├── residence/          ← BuildingView, AllocationKeysView
 │   │   ├── residents/          ← ResidentsView
-│   │   ├── settings/           ← SettingsView
 │   │   └── tasks/              ← TasksView
 │   ├── layouts/                ← AppLayout
-│   ├── router/index.ts         ← lazy routes, guards (403 vs 404)
-│   ├── stores/                 ← auth.ts, ui.ts (Pinia + préférence d'apparence)
+│   ├── router/index.ts         ← lazy routes, guards (403 vs 404, onboarding, redirects legacy)
+│   ├── stores/                 ← auth.ts, ui.ts (Pinia + préférence d'apparence via localStorage)
 │   ├── styles/                 ← tokens.css, base.css, typography.css
 │   ├── types/domain.ts         ← types TS miroir schéma Rust
 │   └── views/                  ← ForbiddenView, NotFoundView
@@ -155,15 +169,14 @@ laruche/
 
 Conventions : UUID v4, TIMESTAMPTZ, soft delete via `actif`/`statut`, `updated_at` via triggers, JSONB pour OCR futur.
 
-Pour la conversion `signalement → tâche`, l'endpoint backend crée la tâche dans une transaction SQL, persiste la priorité choisie, lie `report.task_id` et bascule immédiatement `report.status` à `in_progress`. Lors d'une clôture effective de la tâche, le backend clôture aussi le signalement lié en réutilisant ce lien `report.task_id`.
+Invariants techniques implémentés :
 
-Dans `TasksView`, l'assignation prestataire reste tolérante : l'autocomplete ne force pas la sélection d'un prestataire existant. Si aucune correspondance n'est trouvée, l'UI peut créer un prestataire via `POST /contractors` juste avant l'enregistrement de la tâche ; sinon la saisie libre est persistée dans `task.contractor_name` sans `contractor_id`.
+- `report.task_id` porte le lien informatif entre signalement et tâche ; cette relation reste non destructive et réutilisable par les workflows applicatifs.
+- Les documents de tâche sont répartis entre `task_document` (gestionnaires) et `vendor_submission_document` (soumissions prestataire) ; les endpoints manager `GET/POST/DELETE /tasks/{id}/documents` et `document_count` agrègent ces deux sources.
+- `claim_document` suit le même modèle d'association documentaire que `report_document`, avec nettoyage des liens lors des suppressions d'entité.
+- `maintenance_log.task_id` et `maintenance_log.contract_id` restent des liens de traçabilité souples, sans cascade destructive depuis les tâches ou contrats.
 
-Les documents de tâche sont scindés en deux canaux complémentaires : `task_document` pour les pièces jointes ajoutées par les gestionnaires depuis la modale create/update, et `vendor_submission_document` pour les dépôts issus du lien public prestataire. Les endpoints `GET/POST/DELETE /tasks/{id}/documents` agrègent ces liens côté manager, et le `document_count` d'une tâche additionne les deux sources sans exposer le token prestataire.
-
-Le module `claims` expose un workflow réel de déclaration de sinistre : type de sinistre, date de survenance, date de publication d'arrêté pour catastrophe naturelle, date de transmission à l'assurance, remboursement optionnel (date + montant), calcul serveur de l'échéance légale et état d'alerte dérivé. Les pièces jointes sont reliées par `claim_document`, sur le même modèle que `report_document`, et la suppression d'un sinistre doit nettoyer automatiquement ses rattachements documentaires.
-
-Le module `logbook` expose un résumé réglementaire distinct de la timeline : identité de l'immeuble, syndic en exercice et registres consolidés des contrats d'assurance et de maintenance actifs, afin de couvrir les mentions permanentes du décret n°2001-477 dans une seule vue.
+Les règles produit détaillées de navigation, d'apparence et de workflows métier restent normatives dans `PRD.md`, `EPICS.md`, `DESIGN.md` et les ADR/DDR concernés ; ce document n'en conserve qu'un résumé d'architecture.
 
 ---
 
@@ -199,7 +212,7 @@ HTTP → Tower (CORS, trace, timeout 30s)
 ### Token prestataire
 ```
 1. Syndic génère token → UUID + expire_at en DB
-2. Lien /prestataire/{token} → accès sans JWT
+2. Lien `/vendor/{token}` → accès sans JWT
 3. Dépôt → staging S3 → validation → bucket final copropriété
 4. Soumission prestataire → statut `awaiting_validation` + commentaire / coût optionnel
 5. Clôture syndic → insertion d'une nouvelle ligne carnet avec snapshot coût/prestataire
