@@ -241,8 +241,8 @@ La vue `Contrats` affiche en tête les rappels à traiter, avec une action d’a
 - Les pièces justificatives d’un contrat se gèrent directement depuis la modale de création / modification, sans CTA documentaire primaire sur la carte.
 - Chaque carte Contrat rappelle aussi le nombre de documents actuellement liés et permet d’ouvrir une modale de consultation/téléchargement directement depuis ce hint lorsque des pièces existent.
 - La modale d’édition liste les pièces déjà liées avec deux issues explicites : retirer le lien seulement, ou retirer le lien puis supprimer définitivement le document.
-- La suppression définitive d’un contrat se déclenche depuis la modale d’édition, jamais depuis la carte.
-
+- La suppression définitive d’un contrat se déclenche depuis la modale d’édition, jamais depuis la carte.- Un contrat `active` ne peut pas être modifié sur ses champs financiers (`amount`, `start_date`, `end_date`). L'action « Modifier » est remplacée par « Créer un avenant » qui clôture le contrat courant et ouvre le formulaire pré-rempli pour le nouveau (ADR-009).
+- La fiche contrat expose la chaîne des avenants via `predecessor_id` : chaque contrat de la chaîne est affiché avec sa période de validité et ses pièces jointes propres.
 ## Règle UI — Vue Carnet d'entretien
 
 La vue `Carnet d'entretien` expose des filtres rapides ancrés sur des périodes calendaires réelles : **mois**, **trimestre** (défaut), **semestre**, **année en cours** et **tout l'historique**.
@@ -334,6 +334,16 @@ Le champ d'assignation prestataire dans `TasksView` doit accepter une saisie lib
 ```
 
 Références d'implémentation : `frontend/src/components/atoms/CFormFeedback.vue`, `frontend/src/composables/useFormFeedback.ts`. Exemples : `ContractFormModal.vue`, `AllocationKeysView.vue`, `ContractorsView.vue`.
+
+## Règle UI — Entités comptables gelées (ADR-009)
+
+Toute entité ayant atteint un état terminal comptablement (levy_call `issued`, tâche `closed`, sinistre avec `transmitted_at` renseigné, etc.) doit être visuellement distinguée des entités modifiables.
+
+- **Badge "Gelé"** : une icône cadenas (`CIconLock`) accompagnée du libellé de l'état terminal est affichée dans le header de la carte ou de la vue détail. Elle utilise `.tone--muted`.
+- **Actions supprimées** : les boutons Modifier et Supprimer disparaissent de la carte et de la modale — ils ne sont pas simplement désactivés, afin d'éviter toute confusion.
+- **Champs en lecture seule** : dans une modale ou vue détail, les champs immuables sont rendus sous forme de `<span>` (pas `<input readonly>`), précédés d'une mention contextuelle discrète « Donnée comptable — non modifiable » en `label-sm` avec `.tone--muted`.
+- **Action de remplacement (Pattern B)** : pour les contrats actifs, l'action « Créer un avenant » remplace « Modifier » et s'affiche avec le variant `ghost` standard. Elle ne doit pas être présentée comme une action destructive.
+- **Frise d'historique** : sur les entités avec `predecessor_id` (contrats) ou `parent_budget_id` (budgets), une section « Historique » liste la chaîne des versions précédentes avec leur période de validité, sans action disponible sur les entrées historiques.
 
 ## DDR
 | Ref | Décision |

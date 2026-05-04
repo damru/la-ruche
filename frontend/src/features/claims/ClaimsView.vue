@@ -235,7 +235,7 @@ const claimReminderRows = computed(() =>
     id: claim.id,
     title: claim.title,
     subtitle: `${t(`claims.types.${claim.claim_type}`)} · ${unitLabel(claim.unit_id)}`,
-    meta: formatDate(claim.legal_deadline_at),
+    meta: formatDate(claim.declared_at),
     emphasis: deadlineLabel(claim),
     tone: claimReminderTone(claim),
   })),

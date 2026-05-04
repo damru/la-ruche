@@ -12,6 +12,7 @@
 --   • 6 tasks     : all task statuses covered
 --   • 3 reports   : all report statuses covered
 --   • 3 claims    : all claim statuses covered
+--   • 2 consults  : open + closed with seeded choices/responses
 --
 -- All accounts share the same password: Demo1234!
 -- (Argon2id hash, m=4096 t=1 p=1 — dev-only lightweight params)
@@ -34,7 +35,7 @@ TRUNCATE TABLE
     claim_document, claim,
     vote, resolution, general_meeting,
     levy_call, budget_line, budget, works_fund,
-    consultation,
+    consultation_response_choice, consultation_response, consultation_choice, consultation,
     contractor,
     unit_allocation_key,
     allocation_key,
@@ -683,6 +684,119 @@ VALUES
     )
 ON CONFLICT (id) DO NOTHING;
 
+    -- ============================================================
+    -- 13. CONSULTATIONS
+    -- Two fixtures: one open, one closed. Includes seeded choices and
+    -- responses using the multi-choice schema.
+    -- ============================================================
+    INSERT INTO consultation (
+        id,
+        building_id,
+        title,
+        description,
+        status,
+        visible_to_roles,
+        created_by,
+        closed_at,
+        created_at,
+        updated_at
+    )
+    VALUES
+        (
+            '00000000-0000-0000-0000-000000000901',
+            '00000000-0000-0000-0000-000000000001',
+            'Priorité d''aménagement de la cour intérieure',
+            'Consultation informelle sur les prochains usages à privilégier pour la cour commune avant arbitrage budgétaire.',
+            'open',
+            '{manager,board_member,co_owner,tenant}',
+            '00000000-0000-0000-0000-000000000201',
+            NOW() + INTERVAL '10 days',
+            NOW() - INTERVAL '2 days',
+            NOW() - INTERVAL '4 hours'
+        ),
+        (
+            '00000000-0000-0000-0000-000000000902',
+            '00000000-0000-0000-0000-000000000001',
+            'Choix du prochain chantier prioritaire dans le hall',
+            'Synthèse des avis exprimés sur la priorité de travaux dans le hall d''entrée.',
+            'closed',
+            '{manager,board_member,co_owner}',
+            '00000000-0000-0000-0000-000000000202',
+            NOW() - INTERVAL '3 days',
+            NOW() - INTERVAL '18 days',
+            NOW() - INTERVAL '3 days'
+        )
+    ON CONFLICT (id) DO NOTHING;
+
+    INSERT INTO consultation_choice (id, consultation_id, label, order_index)
+    VALUES
+        ('00000000-0000-0000-0000-000000000911', '00000000-0000-0000-0000-000000000901', 'Végétaliser davantage la cour', 0),
+        ('00000000-0000-0000-0000-000000000912', '00000000-0000-0000-0000-000000000901', 'Ajouter un stationnement vélos sécurisé', 1),
+        ('00000000-0000-0000-0000-000000000913', '00000000-0000-0000-0000-000000000901', 'Créer un coin assise / détente', 2),
+        ('00000000-0000-0000-0000-000000000921', '00000000-0000-0000-0000-000000000902', 'Repeindre le hall et reprendre les plinthes', 0),
+        ('00000000-0000-0000-0000-000000000922', '00000000-0000-0000-0000-000000000902', 'Remplacer les luminaires par des LED', 1),
+        ('00000000-0000-0000-0000-000000000923', '00000000-0000-0000-0000-000000000902', 'Changer le tapis et la signalétique', 2)
+    ON CONFLICT (id) DO NOTHING;
+
+    INSERT INTO consultation_response (id, consultation_id, user_id, comment, created_at)
+    VALUES
+        (
+            '00000000-0000-0000-0000-000000000931',
+            '00000000-0000-0000-0000-000000000901',
+            '00000000-0000-0000-0000-000000000204',
+            'La cour manque surtout de verdure pour l''été.',
+            NOW() - INTERVAL '30 hours'
+        ),
+        (
+            '00000000-0000-0000-0000-000000000932',
+            '00000000-0000-0000-0000-000000000901',
+            '00000000-0000-0000-0000-000000000209',
+            'Un espace vélo fermé serait très utile au quotidien.',
+            NOW() - INTERVAL '20 hours'
+        ),
+        (
+            '00000000-0000-0000-0000-000000000933',
+            '00000000-0000-0000-0000-000000000901',
+            '00000000-0000-0000-0000-000000000202',
+            'Le projet peut combiner végétalisation et coin assise si le budget suit.',
+            NOW() - INTERVAL '8 hours'
+        ),
+        (
+            '00000000-0000-0000-0000-000000000934',
+            '00000000-0000-0000-0000-000000000902',
+            '00000000-0000-0000-0000-000000000205',
+            'La peinture donnerait un vrai coup de propre immédiatement.',
+            NOW() - INTERVAL '12 days'
+        ),
+        (
+            '00000000-0000-0000-0000-000000000935',
+            '00000000-0000-0000-0000-000000000902',
+            '00000000-0000-0000-0000-000000000206',
+            'Les LED amélioreraient le confort et réduiraient la consommation.',
+            NOW() - INTERVAL '11 days'
+        ),
+        (
+            '00000000-0000-0000-0000-000000000936',
+            '00000000-0000-0000-0000-000000000902',
+            '00000000-0000-0000-0000-000000000203',
+            'Signalétique et tapis peuvent venir dans un second temps.',
+            NOW() - INTERVAL '10 days'
+        )
+    ON CONFLICT (id) DO NOTHING;
+
+    INSERT INTO consultation_response_choice (response_id, choice_id)
+    VALUES
+        ('00000000-0000-0000-0000-000000000931', '00000000-0000-0000-0000-000000000911'),
+        ('00000000-0000-0000-0000-000000000931', '00000000-0000-0000-0000-000000000913'),
+        ('00000000-0000-0000-0000-000000000932', '00000000-0000-0000-0000-000000000912'),
+        ('00000000-0000-0000-0000-000000000933', '00000000-0000-0000-0000-000000000911'),
+        ('00000000-0000-0000-0000-000000000933', '00000000-0000-0000-0000-000000000913'),
+        ('00000000-0000-0000-0000-000000000934', '00000000-0000-0000-0000-000000000921'),
+        ('00000000-0000-0000-0000-000000000935', '00000000-0000-0000-0000-000000000922'),
+        ('00000000-0000-0000-0000-000000000936', '00000000-0000-0000-0000-000000000922'),
+        ('00000000-0000-0000-0000-000000000936', '00000000-0000-0000-0000-000000000923')
+    ON CONFLICT DO NOTHING;
+
 -- ============================================================
 -- SUMMARY
 -- ============================================================
@@ -705,5 +819,6 @@ ON CONFLICT (id) DO NOTHING;
 -- Tasks         | 6 fixtures                         | open, in_progress, awaiting_vendor, awaiting_validation, closed, cancelled
 -- Reports       | 3 fixtures                         | open, in_progress, closed
 -- Claims        | 3 fixtures                         | open, in_progress, closed
+-- Consultations | 2 fixtures                         | open, closed (+ choices & responses)
 --
 -- Password (all accounts): Demo1234!
