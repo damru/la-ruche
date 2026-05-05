@@ -423,8 +423,7 @@ async function confirmTerminateContract() {
             :shadow="effectiveStatus(contract) === 'active'"
             :class="['activity-card', { 'card--terminated': effectiveStatus(contract) !== 'active' }]"
           >
-            <div class="activity-card__head">
-              <div class="activity-card__header-row activity-card__header-row--with-icon">
+            <div class="activity-card__header-row activity-card__header-row--with-icon">
                 <div :class="['activity-card__icon', 'contract-card__icon', contractIconTone(contract)]">
                   <component
                     :is="contractTypeIcon(contract.contract_type)"
@@ -436,6 +435,9 @@ async function confirmTerminateContract() {
                   {{ contract.vendor_name }}
                 </h3>
                 <div class="activity-card__chips">
+                  <CBadge variant="default">
+                    {{ t(`contracts.types.${contract.contract_type}`) }}
+                  </CBadge>
                   <CBadge
                     :variant="statusVariant(effectiveStatus(contract))"
                     dot
@@ -443,11 +445,6 @@ async function confirmTerminateContract() {
                     {{ t(`contracts.statuses.${effectiveStatus(contract)}`) }}
                   </CBadge>
                 </div>
-              </div>
-              <div class="activity-card__chips">
-                <CBadge variant="default">
-                  {{ t(`contracts.types.${contract.contract_type}`) }}
-                </CBadge>
               </div>
               <div class="activity-card__stack">
                 <p class="activity-card__description">
@@ -541,7 +538,6 @@ async function confirmTerminateContract() {
                   </CBtn>
                 </div>
               </div>
-            </div>
           </CCard>
         </div>
       </template>

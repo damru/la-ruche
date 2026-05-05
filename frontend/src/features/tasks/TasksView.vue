@@ -837,8 +837,7 @@ async function copyVendorLink(taskId: string) {
             @keydown.enter.prevent="openTaskDetail(task.id)"
             @keydown.space.prevent="openTaskDetail(task.id)"
           >
-            <div class="activity-card__head">
-              <div class="activity-card__header-row">
+            <div class="activity-card__header-row">
                 <h3 class="activity-card__title">
                   {{ task.title }}
                 </h3>
@@ -998,7 +997,6 @@ async function copyVendorLink(taskId: string) {
                   </CBtn>
                 </div>
               </div>
-            </div>
           </CCard>
 
           <div
@@ -1507,7 +1505,6 @@ async function copyVendorLink(taskId: string) {
 <style scoped>
 .task-list { display: flex; flex-direction: column; gap: 10px; }
 
-.task-card { overflow: hidden; }
 .task-card__meta-link {
   color: inherit;
   text-decoration: none;

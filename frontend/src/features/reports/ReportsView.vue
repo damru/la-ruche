@@ -580,10 +580,9 @@ function photoPreview(file: File): string {
             v-for="r in reports"
             :key="r.id"
             :shadow="r.status !== 'closed'"
-            :class="['activity-card', 'report-card', { 'card--terminated': r.status === 'closed' }]"
+            :class="['activity-card', { 'card--terminated': r.status === 'closed' }]"
           >
-            <div class="activity-card__head">
-              <div class="activity-card__header-row activity-card__header-row--with-icon">
+            <div class="activity-card__header-row activity-card__header-row--with-icon">
                 <div class="activity-card__icon tone--default">
                   <CIconInfo />
                 </div>
@@ -591,11 +590,10 @@ function photoPreview(file: File): string {
                   <CBadge
                     :variant="statusVariant(r.status)"
                     dot
-                    class="report-card__status"
                   >
                     {{ t(`reports.statuses.${r.status}`) }}
                   </CBadge>
-                  <span class="activity-card__line report-card__relative-update">
+                  <span class="activity-card__line">
                     <CIconClock />
                     {{ formatRelative(r.updated_at) }}
                   </span>
@@ -603,7 +601,7 @@ function photoPreview(file: File): string {
               </div>
 
               <div class="activity-card__stack">
-                <h3 class="activity-card__title report-card__title">
+                <h3 class="activity-card__title">
                   {{ r.title }}
                 </h3>
 
@@ -689,7 +687,6 @@ function photoPreview(file: File): string {
                   </div>
                 </template>
               </div>
-            </div>
           </CCard>
 
           <div
@@ -1215,21 +1212,6 @@ function photoPreview(file: File): string {
 <style scoped>
 /* ── Report cards ───────────────────────────────────────────────── */
 .report-list { display: flex; flex-direction: column; gap: var(--space-3); }
-.report-card__status {
-  flex-shrink: 0;
-}
-.report-card__relative-update {
-  color: var(--color-on-surface-variant);
-  font-size: var(--text-xs);
-  line-height: 1.4;
-  white-space: nowrap;
-}
-.report-card__title {
-  align-self: flex-start;
-  width: 100%;
-  text-align: left;
-}
-
 .photo-preview-strip {
   display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-2);
 }

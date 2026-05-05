@@ -304,8 +304,7 @@ async function confirmDelete() {
             @keydown.enter.prevent="openContractorDetail(c.id)"
             @keydown.space.prevent="openContractorDetail(c.id)"
           >
-            <div class="activity-card__head">
-              <div class="activity-card__header-row activity-card__header-row--with-icon">
+            <div class="activity-card__header-row activity-card__header-row--with-icon">
                 <div :class="['activity-card__icon', 'contractor-card__icon', domainTone(c.domains)]">
                   <component
                     :is="domainIcon(c.domains)"
@@ -377,7 +376,6 @@ async function confirmDelete() {
                   </CBtn>
                 </div>
               </div>
-            </div>
           </CCard>
         </div>
       </template>
@@ -505,12 +503,6 @@ async function confirmDelete() {
 </template>
 
 <style scoped>
-.view-page {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-
 .empty-state {
   display: flex;
   flex-direction: column;
