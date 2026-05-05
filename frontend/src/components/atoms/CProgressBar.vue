@@ -37,8 +37,15 @@ const fillStyle = computed(() => ({
       >{{ label }}</span>
       <span
         v-if="showValue"
-        class="c-progress__value"
-        :class="`c-progress__value--${variant}`"
+        :class="[
+          'c-progress__value',
+          {
+            'tone--default': variant === 'primary',
+            'tone--warn': variant === 'warning',
+            'tone--valid': variant === 'success',
+            'tone--err': variant === 'error',
+          },
+        ]"
       >
         {{ clampedValue }}%
       </span>
@@ -78,11 +85,8 @@ const fillStyle = computed(() => ({
 .c-progress__value {
   font-size: 13px;
   font-weight: 600;
+  color: var(--tone-fg, var(--color-primary));
 }
-.c-progress__value--primary { color: var(--color-primary); }
-.c-progress__value--warning  { color: var(--color-warning); }
-.c-progress__value--success  { color: var(--color-success); }
-.c-progress__value--error    { color: var(--color-error); }
 
 .c-progress__track {
   height: 10px;

@@ -9,9 +9,11 @@ import AppNav from '@/components/organisms/AppNav.vue'
 
 // Listen for session-expired event
 const router = useRouter()
+
 const onSessionExpired = () => {
   router.push({ name: 'login', query: { reason: 'expired' } })
 }
+
 onMounted(() => {
   window.addEventListener('laruche:session-expired', onSessionExpired)
 })

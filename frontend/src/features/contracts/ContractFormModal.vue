@@ -506,7 +506,7 @@ async function saveContract() {
           @change="onDocumentChange"
         />
         <div
-          :class="['contract-form__dropzone', { 'contract-form__dropzone--over': documentsDragOver }]"
+          :class="['dropzone', { 'dropzone--over': documentsDragOver }]"
           role="button"
           tabindex="0"
           @click="openDocumentPicker"
@@ -517,12 +517,8 @@ async function saveContract() {
           @dragleave.prevent="documentsDragOver = false"
           @drop.prevent="onDocumentDrop"
         >
-          <CIconUpload
-            width="20"
-            height="20"
-            style="color:var(--color-on-surface-variant)"
-          />
-          <span class="body-xs contract-form__dropzone-hint">{{ t('contracts.documents.hint') }}</span>
+          <CIconUpload class="dropzone__icon" />
+          <span class="body-xs dropzone__hint">{{ t('contracts.documents.hint') }}</span>
         </div>
 
         <div
@@ -725,28 +721,6 @@ async function saveContract() {
 
 .contract-form__file-input {
   display: none;
-}
-
-.contract-form__dropzone {
-  border: 1.5px dashed var(--color-outline);
-  border-radius: var(--radius-sm);
-  padding: var(--space-4) var(--space-3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
-}
-
-.contract-form__dropzone:hover,
-.contract-form__dropzone--over {
-  background: var(--color-surface-container);
-  border-color: var(--color-primary);
-}
-
-.contract-form__dropzone-hint {
-  color: var(--color-on-surface-variant);
 }
 
 .contract-form__selected-documents {

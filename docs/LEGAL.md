@@ -461,6 +461,109 @@ Le syndic représente le syndicat des copropriétaires en justice, tant en deman
 
 ---
 
+## 11. Immutabilité des données comptables
+
+**Références :** Art. L123-22 Code de commerce (conservation 10 ans) · Art. 14-1 loi 1965 · Art. 17 loi 1965 · Décret 2001-477 · Code des assurances  
+**Couverture :** ❌ non couverte — ADR-009
+
+L'obligation de conservation comptable (art. L123-22 Code de commerce, 10 ans) et la valeur probatoire des actes produits en copropriété imposent que certaines données ne puissent pas être modifiées ou supprimées une fois qu'elles ont acquis une valeur juridique ou financière.
+
+---
+
+### 11.1 Entités comptablement critiques
+
+Deux patterns distincts s'appliquent selon la nature de l'entité :
+
+**Pattern A — Gel sur état terminal :** l'entité reste en place mais ses champs financiers/de traçabilité deviennent immuables à partir d'un statut défini.
+
+**Pattern B — Clôturer + recréer :** modifier une entité en place introduit des incohérences (dates, contexte de signature, exercice de référence). La correction consiste à clôturer l'entrée existante et à en créer une nouvelle avec un lien vers son prédécesseur.
+
+**Pattern C — Append-only :** toute correction se fait par ajout d'une nouvelle entrée (jamais en écrasant). La ligne originale reste intacte.
+
+| Entité | Table | Pattern | Déclencheur de gel / recréation |
+|---|---|---|---|
+| Appel de fonds | `levy_call` | A | Passage de `draft` → `issued` — immuable total |
+| Vote en AG | `vote` | A | AG `held` — immuable total |
+| Résolution AG | `resolution` | A | AG `closed` — immuable total ; une résolution supersédée est annulée par vote d'une nouvelle résolution en AG suivante |
+| Tâche (données de clôture) | `task` | A | Statut `closed` — `completion_cost` et `closed_at` immuables |
+| Sinistre (données financières) | `claim` | A | `transmitted_at` ou `reimbursement_amount` renseignés — ces champs immuables une fois saisis |
+| Contrat fournisseur | `vendor_contract` | B | Tout changement de montant, couverture ou période = avenant = nouveau contrat. L'ancien est terminé (`status = terminated`, `end_date` = date de l'avenant) ; le nouveau référence son prédécesseur via `predecessor_id` |
+| Budget / lignes budgétaires | `budget` / `budget_line` | B | Un budget rectificatif voté en AG est un nouvel acte. Le budget approuvé est clos ; le rectificatif est créé avec `parent_budget_id`. (Contrainte `UNIQUE(building_id, fiscal_year)` à lever — ADR-009) |
+| Entrée carnet automatique | `maintenance_log` | A | Source `automatic` — immuable total (`cost`, `intervention_date`, `task_id`) |
+| Entrée carnet manuelle | `maintenance_log` | C | Correction = nouvelle entrée. L'entrée originale n'est pas modifiée |
+| Avoir sur appel de fonds | `levy_call` | C | Correction d'un `levy_call` émis = nouvelle ligne de montant négatif (avoir), jamais modification du call original |
+
+> **Cas particulier `levy_call` :** le statut `draft` est introduit (ADR-009) pour permettre une vérification avant émission officielle. Une fois passé à `issued`, le `levy_call` est immuable. Toute correction ultérieure passe par un avoir (Pattern C).
+
+---
+
+### 11.2 Règles de modification et de suppression
+
+**Principe général :** une entité dans un état définitif ne peut être ni supprimée ni modifiée sur ses champs financiers ou de traçabilité. Les guards sont implémentés en `domain/` (pas dans les handlers).
+
+| Entité | Pattern | Modification interdite dès | Suppression interdite dès |
+|---|---|---|---|
+| `levy_call` | A | Passage à `issued` | Passage à `issued` |
+| `vote` / `resolution` | A | AG `held` / `closed` | AG `held` / `closed` |
+| `task` — champs `completion_cost`, `closed_at` | A | Statut `closed` | Si une entrée `maintenance_log` automatique est liée |
+| `claim` — champs `transmitted_at`, `reimbursement_*` | A | Champs renseignés | Statut `closed` avec données financières |
+| `maintenance_log` (source `automatic`) | A | Toujours | Toujours |
+| `vendor_contract` | B | Tout changement sur montant/couverture/période = clôturer + recréer | Si des `maintenance_log` ou `budget_line` le référencent |
+| `budget` / `budget_line` | B | Budget `approved` = clôturer + recréer un rectificatif | Budget `approved` |
+
+**Correction d'erreur (Pattern A/C) :** aucune modification rétroactive. La correction s'effectue par une nouvelle écriture explicite (avoir, nouvelle entrée) — jamais par écrasement d'une donnée émise.
+
+**Avenant contractuel (Pattern B) :** l'ancien contrat est terminé à la date de signature de l'avenant. Le nouveau contrat démarre à cette même date et référence le prédécesseur via `predecessor_id`. L'historique complet reste consultable en remontant la chaîne.
+
+---
+
+### 11.3 Audit log des mutations
+
+Toute modification d'un champ financier ou de traçabilité sur une entité critique est enregistrée dans la table `audit_log` avant que le guard ne l'autorise ou non.
+
+**Structure :**
+
+```
+audit_log
+  id           UUID PK
+  building_id  UUID FK → building
+  entity_type  TEXT       -- 'task' | 'claim' | 'vendor_contract' | 'levy_call' | …
+  entity_id    UUID
+  operation    TEXT       -- 'UPDATE' | 'DELETE'
+  changed_by   UUID FK → user_account (nullable si action système)
+  changed_at   TIMESTAMPTZ
+  old_values   JSONB      -- uniquement les champs modifiés, valeurs avant
+  new_values   JSONB      -- uniquement les champs modifiés, valeurs après (null si DELETE)
+```
+
+**Exemple — modification du coût de clôture d'une tâche :**
+```json
+old_values: { "completion_cost": "1500.00" }
+new_values: { "completion_cost": "1800.00" }
+```
+
+**Exemple — tentative de suppression d'un sinistre transmis :**
+```json
+old_values: { "status": "closed", "transmitted_at": "2026-04-10", "reimbursement_amount": "3200.00" }
+new_values: null
+```
+
+L'`audit_log` est en **append-only** : aucune ligne ne peut être modifiée ou supprimée. La durée de conservation suit celle des données comptables (10 ans, art. L123-22).
+
+---
+
+### 11.4 Implications techniques (→ ADR-009)
+
+- **Guards de domaine** dans `domain/` : fonctions `is_mutable(entity, field)` et `is_deletable(entity)` appelées avant chaque mutation.
+- **Statut `draft` sur `levy_call`** : migration DB requise pour ajouter `draft` à l'enum `levy_status`.
+- **`predecessor_id` sur `vendor_contract`** : colonne `UUID REFERENCES vendor_contract(id)` permettant de chaîner les avenants ; nullable sur les contrats initiaux.
+- **`parent_budget_id` sur `budget`** : colonne `UUID REFERENCES budget(id)` pour lier un budget rectificatif à son budget approuvé d'origine ; la contrainte `UNIQUE(building_id, fiscal_year)` doit être levée ou remplacée par une contrainte partielle sur le budget actif.
+- **Endpoints de transition d'état** : les mutations financières passent par des endpoints dédiés (`POST /tasks/{id}/close`, `POST /claims/{id}/transmit`, `POST /levy-calls/{id}/issue`, `POST /contracts/{id}/terminate`) — jamais un `PATCH` générique.
+- **Contrainte DB défensive** : trigger PG sur `levy_call` bloquant tout `UPDATE`/`DELETE` si `status != 'draft'` (défense en profondeur).
+- **Règle UI** : les entités gelées (Pattern A) affichent un indicateur visuel ; les actions Modifier/Supprimer disparaissent (pas seulement désactivées) ; les champs immuables sont rendus en lecture seule avec une mention contextuelle. Pour les entités Pattern B, l'action disponible est « Créer un avenant » (qui pré-remplit le nouveau formulaire et clôture l'ancien).
+
+---
+
 ## Tableau de couverture synthétique
 
 | # | Obligation | Référence | Couverture | Epic |
@@ -496,3 +599,4 @@ Le syndic représente le syndicat des copropriétaires en justice, tant en deman
 | 8 | RGPD + anonymisation | RGPD 2016/679 | ⚠️ | EP-002-S05 |
 | 9 | Sinistres (délais déclaration) | Code des assurances | ✅ | EP-008 |
 | 10 | Représentation en justice + procédures en cours | Art. 18-I loi 1965 | ⚠️ | EP-002-S06, EP-002-S10 |
+| 11 | Immutabilité des données comptables + audit log | Art. L123-22 Code de commerce | ❌ | ADR-009 |

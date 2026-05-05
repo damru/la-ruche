@@ -227,10 +227,9 @@ async function handleSubmit() {
             {{ error }}
           </CAlert>
 
-          <!-- Step 1: Manager account -->
           <form
             v-if="step === 1"
-            class="form"
+            class="form-grid"
             novalidate
             @submit.prevent="goNext"
           >
@@ -412,10 +411,9 @@ async function handleSubmit() {
             </CBtn>
           </form>
 
-          <!-- Step 2: Building -->
           <form
             v-else
-            class="form"
+            class="form-grid"
             novalidate
             @submit.prevent="handleSubmit"
           >
@@ -542,44 +540,8 @@ async function handleSubmit() {
   padding-top: var(--space-4);
 }
 
-/* ── Header + progress indicator ────────────────────────────── */
+/* ── Header ────────────────────────────────────────────── */
 .form-header { display: flex; flex-direction: column; gap: var(--space-4); }
-
-.step-indicator {
-  display: flex;
-  align-items: center;
-  gap: 0;
-  margin-bottom: var(--space-1);
-}
-.step-pill {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  font-weight: 700;
-  background: var(--color-surface-container-high);
-  color: var(--color-on-surface-variant);
-  border: 2px solid var(--color-outline-variant);
-  transition: all var(--transition-fast);
-}
-.step-pill--active,
-.step-pill--done {
-  background: var(--color-primary);
-  color: var(--color-on-primary);
-  border-color: var(--color-primary);
-}
-.step-connector {
-  flex: 1;
-  height: 2px;
-  max-width: 40px;
-  background: var(--color-outline-variant);
-  margin: 0 var(--space-2);
-  transition: background var(--transition-fast);
-}
-.step-connector--done { background: var(--color-primary); }
 
 .form-title {
   font-family: var(--font-display);
@@ -601,8 +563,6 @@ async function handleSubmit() {
   grid-template-columns: 1fr 1fr;
   gap: var(--space-4);
 }
-.field--narrow { max-width: 130px; }
-
 .required { color: var(--color-error); }
 
 /* ── Field error state ─────────────────────────────────────────── */

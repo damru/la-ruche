@@ -219,19 +219,22 @@ export interface Task {
   contractor_id?: string
   contractor_name?: string
   assigned_to?: string
-  created_by?: string
+  created_by: string
   /** True when a vendor token is active — the raw token UUID is never returned by list/get. */
   has_vendor_token?: boolean
   token_expires_at?: string
   closed_at?: string
   completion_cost?: number
   created_at: string
+  updated_at: string
+  document_count: number
   /** True when at least one maintenance_log entry references this task. */
   is_in_logbook?: boolean
 }
 
 export interface Claim {
   id: string
+  created_by: string
   title: string
   description?: string
   claim_type: ClaimType
@@ -291,6 +294,7 @@ export interface Report {
   description?: string
   status: ReportStatus
   task_id?: string
+  task_status?: TaskStatus
   document_count: number
   created_at: string
   updated_at: string
@@ -304,6 +308,7 @@ export interface Consultation {
   visible_roles: Role[]
   closed_at?: string
   created_at: string
+  updated_at: string
   choices: ConsultationChoice[]
   /** IDs of the choices the current user has already selected (empty = not voted yet). */
   my_choice_ids: string[]
@@ -354,6 +359,10 @@ export interface DownloadUrlResponse {
 
 export interface OnboardingStatus {
   needs_onboarding: boolean
+}
+
+export interface RuntimeStatus {
+  demo_mode: boolean
 }
 
 export interface BootstrapInput {

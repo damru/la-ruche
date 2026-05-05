@@ -301,7 +301,7 @@ onMounted(reload)
       :title="modalForm.id ? t('settings.keys.editKey') : t('settings.keys.newKey')"
       @update:open="showKeyModal = $event"
     >
-      <div class="key-form">
+      <div class="form-grid">
         <div class="form-grid">
           <div class="field field--full">
             <label class="field-label">{{ t('common.name') }} *</label>
@@ -495,9 +495,6 @@ onMounted(reload)
   background: var(--color-surface-container-low);
   color: var(--color-on-surface);
 }
-
-/* ── Modal form ────────────────────────────────────────────────── */
-.key-form { display: flex; flex-direction: column; gap: var(--space-4); }
 
 .shares-section { border-top: 1px solid var(--color-outline-variant); padding-top: var(--space-4); }
 .shares-title { font-size: var(--text-md); font-weight: var(--fw-semibold); margin-bottom: var(--space-3); }

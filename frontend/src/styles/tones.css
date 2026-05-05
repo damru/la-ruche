@@ -10,6 +10,10 @@
   --tone-bg: var(--color-secondary-container);
   --tone-fg: var(--color-primary);
 }
+.tone--info {
+  --tone-bg: var(--color-secondary-container);
+  --tone-fg: var(--color-on-secondary-container);
+}
 
 .tone--accent {
   --tone-bg: var(--gradient-primary);
@@ -28,6 +32,10 @@
 
 .tone--disabled {
   --tone-bg: var(--color-surface-container-highest);
+  --tone-fg: var(--color-on-surface-variant);
+}
+.tone--muted {
+  --tone-bg: var(--color-surface-container);
   --tone-fg: var(--color-on-surface-variant);
 }
 

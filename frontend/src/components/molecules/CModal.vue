@@ -12,7 +12,7 @@ const { t } = useI18n()
 const props = withDefaults(defineProps<{
   open: boolean
   title?: string
-  size?: 'sm' | 'md' | 'lg'
+  size?: 'sm' | 'md' | 'lg' | 'xl'
   closable?: boolean
   stack?: number
 }>(), {
@@ -145,6 +145,7 @@ function handleOpenChange(open: boolean) {
 .c-modal__content--sm { width: min(340px, 90vw); }
 .c-modal__content--md { width: min(480px, 90vw); }
 .c-modal__content--lg { width: min(680px, 90vw); }
+.c-modal__content--xl { width: min(1120px, 96vw); }
 
 .c-modal__header {
   display: flex;

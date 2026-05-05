@@ -284,9 +284,9 @@ function typeLabel(type: string): string {
                       <span class="vote-shares">{{ mockVoteResults[res.id].abstentions }} t.</span>
                     </div>
                   </div>
-                  <div :class="['vote-result', mockVoteResults[res.id].adopted ? 'vote-result--passed' : 'vote-result--rejected']">
+                  <div :class="['vote-result', mockVoteResults[res.id].adopted ? 'tone--valid' : 'tone--err']">
                     <div>
-                      <div :class="['vote-result-text', mockVoteResults[res.id].adopted ? 'text--ok' : 'text--err']">
+                      <div :class="['vote-result-text', mockVoteResults[res.id].adopted ? 'tone--valid' : 'tone--err']">
                         {{ mockVoteResults[res.id].adopted ? '✓ ' + t('meetings.vote.passed') : '✗ ' + t('meetings.vote.rejected') }}
                       </div>
                       <div class="vote-result-sub">
@@ -746,12 +746,9 @@ function typeLabel(type: string): string {
   justify-content: space-between;
   padding: 12px 16px;
   border-radius: var(--radius-md);
+  background: var(--tone-bg, transparent);
 }
-.vote-result--passed   { background: var(--color-success-container, #e8f5e9); }
-.vote-result--rejected { background: var(--color-error-container); }
-.vote-result-text { font-size: 13px; font-weight: var(--fw-semibold); }
-.text--ok { color: var(--color-success, #2e7d32); }
-.text--err { color: var(--color-error); }
+.vote-result-text { font-size: 13px; font-weight: var(--fw-semibold); color: var(--tone-fg, inherit); }
 .vote-result-sub { font-size: 11px; margin-top: 2px; opacity: .8; color: var(--color-on-surface-variant); }
 .vote-result-count { font-family: var(--font-mono); font-size: 13px; font-weight: var(--fw-medium); color: var(--color-on-surface); }
 .vote-pending {

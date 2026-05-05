@@ -18,7 +18,7 @@ withDefaults(defineProps<{
 </script>
 
 <template>
-  <span :class="['c-badge', `c-badge--${variant}`, { 'tone--default': variant === 'primary', 'tone--warn': variant === 'pending', 'tone--valid': variant === 'valid', 'tone--err': variant === 'err', 'tone--disabled': variant === 'disabled' }]">
+  <span :class="['c-badge', `c-badge--${variant}`, { 'tone--default': variant === 'primary', 'tone--warn': variant === 'pending', 'tone--valid': variant === 'valid' || variant === 'open', 'tone--err': variant === 'err', 'tone--disabled': variant === 'disabled' }]">
     <span
       v-if="dot"
       class="c-badge__dot"
@@ -33,11 +33,11 @@ withDefaults(defineProps<{
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 4px 10px;
+  padding: var(--space-1) var(--space-2);
   border-radius: var(--radius-full);
   font-family: var(--font-body);
-  font-size: 12px;
-  font-weight: 500;
+  font-size: var(--text-xs);
+  font-weight: var(--fw-medium);
   white-space: nowrap;
 }
 
@@ -88,7 +88,7 @@ withDefaults(defineProps<{
 [data-theme="dark"] .c-badge--tenant       { background: #573200; color: #fcecd1; }
 
 /* ── Statuts ──────────────────────────────────────────────────── */
-.c-badge--open    { background: var(--color-success-container); color: var(--color-success); }
+.c-badge--open    { background: var(--tone-bg); color: var(--tone-fg); }
 .c-badge--pending { background: var(--tone-bg); color: var(--tone-fg); }
 .c-badge--closed  { background: var(--color-surface-container-high); color: var(--color-on-surface-variant); }
 .c-badge--disabled { background: var(--tone-bg); color: var(--tone-fg); }

@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { usePreferredDark } from '@vueuse/core'
 import { ref, computed, watch } from 'vue'
+import { runtimeApi } from '@/api'
 
 type ThemePreference = 'light' | 'dark' | 'auto'
 
@@ -41,6 +42,10 @@ export const useUiStore = defineStore('ui', () => {
 
   const isDark = computed(() => theme.value === 'dark')
 
+  // ── Runtime flags ───────────────────────────────────────────────
+  const demoMode = ref(false)
+  const runtimeLoaded = ref(false)
+
   // Apply data-theme whenever the resolved theme changes (including system changes)
   watch(theme, (resolvedTheme) => {
     if (typeof document !== 'undefined') {
@@ -51,6 +56,20 @@ export const useUiStore = defineStore('ui', () => {
   function setThemePreference(preference: ThemePreference) {
     themePreference.value = preference
     persistThemePreference(preference)
+  }
+
+  async function loadRuntimeStatus() {
+    if (runtimeLoaded.value) {
+      return
+    }
+
+    runtimeLoaded.value = true
+    try {
+      const { data } = await runtimeApi.status()
+      demoMode.value = data.demo_mode
+    } catch {
+      demoMode.value = false
+    }
   }
 
   // ── Sidebar mobile (bottom nav) ────────────────────────────────
@@ -67,7 +86,10 @@ export const useUiStore = defineStore('ui', () => {
     themePreference,
     theme,
     isDark,
+    demoMode,
+    runtimeLoaded,
     setThemePreference,
+    loadRuntimeStatus,
     activeNavItem,
     setActiveNavItem,
   }

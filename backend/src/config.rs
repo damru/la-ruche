@@ -20,6 +20,8 @@ pub struct AppSettings {
     pub public_url: String,
     /// Display name shown in passkey prompts
     pub name: String,
+    #[serde(default)]
+    pub demo_mode: bool,
 }
 
 impl AppSettings {
@@ -74,6 +76,7 @@ fn print_config_diagnostics(cfg: &config::Config) {
         "LA_RUCHE__APP__PORT",
         "LA_RUCHE__APP__PUBLIC_URL",
         "LA_RUCHE__APP__NAME",
+        "LA_RUCHE__APP__DEMO_MODE",
         "LA_RUCHE__DB__URL",
         "LA_RUCHE__DB__MAX_CONNECTIONS",
         "LA_RUCHE__S3__ENDPOINT_URL",
@@ -93,6 +96,7 @@ fn print_config_diagnostics(cfg: &config::Config) {
         "app.port",
         "app.public_url",
         "app.name",
+        "app.demo_mode",
         "db.url",
         "db.max_connections",
         "s3.endpoint_url",

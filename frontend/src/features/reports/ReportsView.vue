@@ -20,7 +20,7 @@ import { buildingApi, documentsApi, reportsApi, unitsApi } from '@/api'
 import type { Document, Report, ReportStatus, TaskPriority, Unit } from '@/types/domain'
 
 const { t } = useI18n()
-const { formatRelative } = useFormatters()
+const { formatDate, formatRelative } = useFormatters()
 const router = useRouter()
 const { hasAnyRole } = useRole()
 
@@ -110,11 +110,6 @@ function openEditPhotoAction(document: Document) {
   openPhotoActionModal(reportToEdit.value.id, document)
 }
 
-function openViewPhotoAction(document: Document) {
-  if (!viewPhotosReport.value) return
-  openPhotoActionModal(viewPhotosReport.value.id, document)
-}
-
 /** Upload a single photo and return its document_id. */
 async function uploadPhoto(reportId: string, file: File): Promise<void> {
   const ext = file.name.split('.').pop() ?? 'jpg'
@@ -145,8 +140,6 @@ async function submitCreate() {
       unit_id: createForm.value.unit_id || undefined,
     })
     const reportId = reportRes.data.id
-
-    // Upload photos sequentially — failure is reported but does not hide the success
     if (selectedPhotos.value.length) {
       uploadingPhotos.value = true
       const errors: string[] = []
@@ -334,15 +327,15 @@ async function submitDelete() {
   }
 }
 
-// ── View photos modal ─────────────────────────────────────────────
-const viewPhotosReport = ref<Report | null>(null)
-const viewPhotosList = ref<{ doc: Document; url: string }[]>([])
-const viewPhotosLoading = ref(false)
-const lightboxIndex = ref<number | null>(null)
+// ── Linked documents modal ────────────────────────────────────────
 const deletingPhoto = ref(false)
 const photoActionTarget = ref<{ reportId: string; document: Document } | null>(null)
 const photoActionFeedback = useFormFeedback()
 const showPhotoActionModal = computed(() => photoActionTarget.value !== null)
+const reportPhotoGalleryTarget = ref<Report | null>(null)
+const reportPhotos = ref<Array<{ doc: Document; url: string }>>([])
+const reportPhotosLoading = ref(false)
+const activeReportPhotoIndex = ref<number | null>(null)
 
 function updateReportDocumentCount(reportId: string, delta: number) {
   const report = allReports.value.find(currentReport => currentReport.id === reportId)
@@ -396,17 +389,8 @@ async function handlePhotoAction(deleteDocument: boolean) {
       await documentsApi.delete(photoActionTarget.value.document.id)
     }
 
-    viewPhotosList.value = viewPhotosList.value.filter(item => item.doc.id !== photoActionTarget.value?.document.id)
     editAttachedPhotos.value = editAttachedPhotos.value.filter(item => item.doc.id !== photoActionTarget.value?.document.id)
     updateReportDocumentCount(photoActionTarget.value.reportId, -1)
-
-    if (lightboxIndex.value !== null) {
-      if (viewPhotosList.value.length === 0) {
-        lightboxIndex.value = null
-      } else if (lightboxIndex.value >= viewPhotosList.value.length) {
-        lightboxIndex.value = viewPhotosList.value.length - 1
-      }
-    }
 
     photoActionTarget.value = null
   } catch {
@@ -416,18 +400,53 @@ async function handlePhotoAction(deleteDocument: boolean) {
   }
 }
 
-async function openViewPhotos(report: Report) {
-  viewPhotosReport.value = report
-  viewPhotosList.value = []
-  viewPhotosLoading.value = true
+function closeReportPhotoGallery() {
+  reportPhotoGalleryTarget.value = null
+  reportPhotos.value = []
+  reportPhotosLoading.value = false
+  activeReportPhotoIndex.value = null
+}
+
+async function openReportPhotos(report: Report) {
+  reportPhotoGalleryTarget.value = report
+  reportPhotos.value = []
+  reportPhotosLoading.value = true
+
   try {
-    viewPhotosList.value = await fetchReportPhotos(report.id)
+    reportPhotos.value = await fetchReportPhotos(report.id)
   } catch {
-    viewPhotosList.value = []
+    photoActionFeedback.setError(t('common.error'))
+    closeReportPhotoGallery()
   } finally {
-    viewPhotosLoading.value = false
+    reportPhotosLoading.value = false
   }
 }
+
+function openReportPhotoViewer(index: number) {
+  activeReportPhotoIndex.value = index
+}
+
+function closeReportPhotoViewer() {
+  activeReportPhotoIndex.value = null
+}
+
+function showPreviousReportPhoto() {
+  if (activeReportPhotoIndex.value === null || reportPhotos.value.length <= 1) return
+  activeReportPhotoIndex.value = (activeReportPhotoIndex.value - 1 + reportPhotos.value.length) % reportPhotos.value.length
+}
+
+function showNextReportPhoto() {
+  if (activeReportPhotoIndex.value === null || reportPhotos.value.length <= 1) return
+  activeReportPhotoIndex.value = (activeReportPhotoIndex.value + 1) % reportPhotos.value.length
+}
+
+const activeReportPhoto = computed(() =>
+  activeReportPhotoIndex.value === null ? null : reportPhotos.value[activeReportPhotoIndex.value] ?? null,
+)
+
+const activeReportPhotoPosition = computed(() =>
+  activeReportPhotoIndex.value === null ? 0 : activeReportPhotoIndex.value + 1,
+)
 
 // ── Load data ─────────────────────────────────────────────────────
 async function loadData() {
@@ -446,9 +465,11 @@ onMounted(reload)
 
 // ── Derived ───────────────────────────────────────────────────────
 const reports = computed(() =>
-  statusFilter.value === 'all'
+  (statusFilter.value === 'all'
     ? allReports.value
-    : allReports.value.filter(r => r.status === statusFilter.value),
+    : allReports.value.filter(r => r.status === statusFilter.value))
+    .slice()
+    .sort((left, right) => right.updated_at.localeCompare(left.updated_at)),
 )
 
 const counts = computed(() => ({
@@ -559,97 +580,113 @@ function photoPreview(file: File): string {
             v-for="r in reports"
             :key="r.id"
             :shadow="r.status !== 'closed'"
-            :class="['report-card', { 'card--terminated': r.status === 'closed' }]"
+            :class="['activity-card', { 'card--terminated': r.status === 'closed' }]"
           >
-            <div class="report-header">
-              <div class="report-icon">
-                <CIconInfo />
-              </div>
-              <div class="report-meta-top">
-                <CBadge
-                  :variant="statusVariant(r.status)"
-                  dot
-                >
-                  {{ t(`reports.statuses.${r.status}`) }}
-                </CBadge>
-                <span class="report-date">{{ formatRelative(r.created_at) }}</span>
-              </div>
-            </div>
-
-            <h3 class="title-sm report-title">
-              {{ r.title }}
-            </h3>
-            <p
-              v-if="r.description"
-              class="body-sm report-desc"
-            >
-              {{ r.description }}
-            </p>
-
-            <div class="report-footer">
-              <span class="dim">👤 {{ authorName(r) }}</span>
-              <span class="dim">🏠 {{ unitLabel(r.unit_id) }}</span>
-              <button
-                v-if="r.document_count > 0"
-                class="dim photo-count photo-count--btn"
-                @click="openViewPhotos(r)"
-              >
-                👁️ {{ t('reports.photoCount', r.document_count) }}
-              </button>
-            </div>
-
-            <!-- Card actions (manager / board only) -->
-            <div
-              v-if="canManage"
-              class="report-card-actions"
-            >
-              <!-- Row 1: status change (non-closed only) -->
-              <div
-                v-if="r.status !== 'closed'"
-                class="report-card-actions-row"
-              >
-                <CBtn
-                  variant="ghost"
-                  size="sm"
-                  @click="openStatusModal(r)"
-                >
-                  <CIconRefresh />
-                  {{ t('reports.editStatus') }}
-                </CBtn>
+            <div class="activity-card__header-row activity-card__header-row--with-icon">
+                <div class="activity-card__icon tone--default">
+                  <CIconInfo />
+                </div>
+                <div class="activity-card__chips">
+                  <CBadge
+                    :variant="statusVariant(r.status)"
+                    dot
+                  >
+                    {{ t(`reports.statuses.${r.status}`) }}
+                  </CBadge>
+                  <span class="activity-card__line">
+                    <CIconClock />
+                    {{ formatRelative(r.updated_at) }}
+                  </span>
+                </div>
               </div>
 
-              <!-- Row 2: edit + convert/view-task (non-closed) | edit + delete (closed) -->
-              <div class="report-card-actions-row">
-                <CBtn
-                  variant="ghost"
-                  size="sm"
-                  @click="openEditModal(r)"
+              <div class="activity-card__stack">
+                <h3 class="activity-card__title">
+                  {{ r.title }}
+                </h3>
+
+                <p
+                  v-if="r.description"
+                  class="activity-card__description"
                 >
-                  <CIconEdit />
-                  {{ t('common.edit') }}
-                </CBtn>
-                <!-- View Task if already converted -->
-                <CBtn
-                  v-if="r.task_id"
-                  variant="ghost"
-                  size="sm"
-                  @click="router.push({ name: 'task-detail', params: { id: r.task_id } })"
+                  {{ r.description }}
+                </p>
+
+                <div
+                  v-if="r.document_count > 0"
+                  class="activity-card__documents"
                 >
-                  <CIconCheckCircle />
-                  {{ t('reports.viewTask') }}
-                </CBtn>
-                <!-- Convert to Task if not yet converted and not closed -->
-                <CBtn
-                  v-else-if="r.status !== 'closed'"
-                  variant="ghost"
-                  size="sm"
-                  @click="openConvertModal(r)"
-                >
-                  <CIconCheckCircle />
-                  {{ t('reports.convertToTask') }}
-                </CBtn>
+                  <button
+                    class="activity-card__line activity-card__documents-button"
+                    @click="openReportPhotos(r)"
+                  >
+                    <CIconFile />
+                    {{ t('reports.linkedPhotosCount', r.document_count) }}
+                  </button>
+                </div>
+
+                <div class="activity-card__meta">
+                  <span class="activity-card__line">
+                    <CIconUser />
+                    {{ authorName(r) }}
+                  </span>
+                  <span class="activity-card__line">
+                    <CIconHome />
+                    {{ unitLabel(r.unit_id) }}
+                  </span>
+                  <span class="activity-card__line">
+                    <CIconCalendar />
+                    {{ formatDate(r.created_at) }}
+                  </span>
+                </div>
+
+                <div class="activity-card__secondary-actions">
+                  <div
+                    v-if="r.status !== 'closed'"
+                    class="activity-card__secondary-actions"
+                  >
+                    <CBtn
+                      variant="ghost"
+                      size="sm"
+                      @click="openStatusModal(r)"
+                    >
+                      <CIconRefresh />
+                      {{ t('reports.editStatus') }}
+                    </CBtn>
+                  </div>
+                </div>
+
+                <template v-if="canManage">
+                  <div class="activity-card__actions">
+                    <CBtn
+                      variant="ghost"
+                      size="sm"
+                      @click="openEditModal(r)"
+                    >
+                      <CIconEdit />
+                      {{ t('common.edit') }}
+                    </CBtn>
+                    <CBtn
+                      v-if="r.task_id"
+                      variant="primary"
+                      size="sm"
+                      @click="router.push({ name: 'task-detail', params: { id: r.task_id } })"
+                    >
+                      <CIconCheckCircle />
+                      {{ t('reports.viewTask') }}
+                    </CBtn>
+                    <CBtn
+                      v-else-if="r.status !== 'closed'"
+                      variant="primary"
+                      size="sm"
+                      @click="openConvertModal(r)"
+                    >
+                      <CIconCheckCircle />
+                      {{ t('reports.convertToTask') }}
+                    </CBtn>
+                  </div>
+                </template>
               </div>
-            </div>
           </CCard>
 
           <div
@@ -725,7 +762,7 @@ function photoPreview(file: File): string {
           />
           <!-- Drop zone -->
           <div
-            :class="['photo-dropzone', { 'photo-dropzone--over': photoDragOver }]"
+            :class="['dropzone', { 'dropzone--over': photoDragOver }]"
             role="button"
             tabindex="0"
             @click="photoInputRef?.click()"
@@ -734,12 +771,8 @@ function photoPreview(file: File): string {
             @dragleave.prevent="photoDragOver = false"
             @drop.prevent="onPhotoDrop"
           >
-            <CIconUpload
-              width="20"
-              height="20"
-              style="color:var(--color-on-surface-variant)"
-            />
-            <span class="body-xs photo-hint">{{ t('reports.photoHint') }}</span>
+            <CIconUpload class="dropzone__icon" />
+            <span class="body-xs dropzone__hint">{{ t('reports.photoHint') }}</span>
           </div>
           <!-- Preview strip -->
           <div
@@ -946,7 +979,7 @@ function photoPreview(file: File): string {
             @change="onEditPhotoChange"
           />
           <div
-            :class="['photo-dropzone', { 'photo-dropzone--over': editPhotoDragOver }]"
+            :class="['dropzone', { 'dropzone--over': editPhotoDragOver }]"
             role="button"
             tabindex="0"
             @click="editPhotoInputRef?.click()"
@@ -955,12 +988,8 @@ function photoPreview(file: File): string {
             @dragleave.prevent="editPhotoDragOver = false"
             @drop.prevent="onEditPhotoDrop"
           >
-            <CIconUpload
-              width="20"
-              height="20"
-              style="color:var(--color-on-surface-variant)"
-            />
-            <span class="body-xs photo-hint">{{ t('reports.photoHint') }}</span>
+            <CIconUpload class="dropzone__icon" />
+            <span class="body-xs dropzone__hint">{{ t('reports.photoHint') }}</span>
           </div>
           <div
             v-if="editSelectedPhotos.length"
@@ -1088,114 +1117,87 @@ function photoPreview(file: File): string {
         </CBtn>
       </template>
     </CModal>
-    <!-- View photos modal -->
     <CModal
-      :open="!!viewPhotosReport"
-      :title="viewPhotosReport?.title ?? ''"
+      :open="!!reportPhotoGalleryTarget"
+      :title="reportPhotoGalleryTarget?.title ?? ''"
       size="md"
-      @update:open="v => !v && (viewPhotosReport = null)"
+      @update:open="value => !value && closeReportPhotoGallery()"
     >
+      <CPageLoader v-if="reportPhotosLoading" />
       <div
-        v-if="viewPhotosLoading"
-        class="photos-loading body-sm"
+        v-else-if="reportPhotos.length"
+        class="report-photo-gallery-modal"
       >
-        {{ t('common.loading') }}
-      </div>
-      <div
-        v-else-if="viewPhotosList.length"
-        class="photo-gallery"
-      >
-        <div
-          v-for="(item, idx) in viewPhotosList"
+        <button
+          v-for="(item, index) in reportPhotos"
           :key="item.doc.id"
-          class="photo-gallery-item"
+          type="button"
+          class="report-photo-gallery-modal__item"
+          @click="openReportPhotoViewer(index)"
         >
           <img
             :src="item.url"
             :alt="item.doc.original_name"
-            class="photo-gallery-thumb"
-            @click="lightboxIndex = idx"
+            class="report-photo-gallery-modal__thumb"
           />
-          <button
-            v-if="canManage"
-            class="photo-gallery-delete"
-            :title="t('reports.deletePhoto')"
-            :disabled="deletingPhoto"
-            @click.stop="openViewPhotoAction(item.doc)"
-          >
-            <CIconTrash />
-          </button>
-        </div>
+        </button>
       </div>
       <p
         v-else
-        class="body-sm"
-        style="color:var(--color-on-surface-variant)"
+        class="body-sm report-photo-gallery-modal__empty"
       >
         {{ t('reports.noPhotos') }}
       </p>
-      <template #footer>
-        <CBtn
-          variant="ghost"
-          @click="viewPhotosReport = null"
-        >
-          {{ t('common.close') }}
-        </CBtn>
-      </template>
     </CModal>
 
-    <!-- Lightbox overlay -->
-    <Teleport to="body">
+    <CModal
+      :open="activeReportPhotoIndex !== null"
+      :title="activeReportPhoto?.doc.original_name ?? reportPhotoGalleryTarget?.title ?? ''"
+      size="xl"
+      @update:open="value => !value && closeReportPhotoViewer()"
+    >
       <div
-        v-if="lightboxIndex !== null && viewPhotosList[lightboxIndex]"
-        class="lightbox-overlay"
-        @click.self="lightboxIndex = null"
+        v-if="activeReportPhoto"
+        class="report-photo-viewer"
       >
-        <button
-          class="lightbox-close"
-          @click="lightboxIndex = null"
-        >
-          ✕
-        </button>
-        <button
-          v-if="canManage"
-          class="lightbox-delete"
-          :title="t('reports.deletePhoto')"
-          :disabled="deletingPhoto"
-          @click.stop="openViewPhotoAction(viewPhotosList[lightboxIndex!].doc)"
-        >
-          <CIconTrash />
-        </button>
-        <button
-          v-if="lightboxIndex > 0"
-          class="lightbox-nav lightbox-nav--prev"
-          @click="lightboxIndex--"
-        >
-          ‹
-        </button>
         <img
-          :src="viewPhotosList[lightboxIndex].url"
-          :alt="viewPhotosList[lightboxIndex].doc.original_name"
-          class="lightbox-img"
-          @click.stop
+          :src="activeReportPhoto.url"
+          :alt="activeReportPhoto.doc.original_name"
+          class="report-photo-viewer__image"
         />
-        <button
-          v-if="lightboxIndex < viewPhotosList.length - 1"
-          class="lightbox-nav lightbox-nav--next"
-          @click="lightboxIndex++"
-        >
-          ›
-        </button>
-        <span class="lightbox-counter body-sm">
-          {{ lightboxIndex + 1 }} / {{ viewPhotosList.length }}
-        </span>
+        <div class="report-photo-viewer__nav-row">
+          <CBtn
+            variant="ghost"
+            size="sm"
+            class="report-photo-viewer__nav"
+            :disabled="reportPhotos.length <= 1"
+            @click="showPreviousReportPhoto"
+          >
+            <CIconArrowLeft />
+          </CBtn>
+          <CBtn
+            variant="ghost"
+            size="sm"
+            class="report-photo-viewer__nav"
+            :disabled="reportPhotos.length <= 1"
+            @click="showNextReportPhoto"
+          >
+            <CIconArrowRight />
+          </CBtn>
+        </div>
       </div>
-    </Teleport>
+      <p
+        v-if="activeReportPhoto"
+        class="body-sm report-photo-viewer__caption"
+      >
+        {{ activeReportPhotoPosition }} / {{ reportPhotos.length }} · {{ activeReportPhoto.doc.original_name }}
+      </p>
+    </CModal>
 
     <CDocumentLinkActionModal
       :open="showPhotoActionModal"
       :title="t('reports.deletePhoto')"
-      :description="t('reports.deletePhotoDetachMessage', { name: photoActionTarget?.document.original_name ?? '', title: viewPhotosReport?.title ?? reportToEdit?.title ?? '' })"
+      :description="t('reports.deletePhotoDetachMessage', { name: photoActionTarget?.document.original_name ?? '', title: reportToEdit?.title ?? '' })"
       :warning="t('reports.deletePhotoConfirm')"
       :loading="deletingPhoto"
       :status="photoActionFeedback.status.value"
@@ -1210,48 +1212,6 @@ function photoPreview(file: File): string {
 <style scoped>
 /* ── Report cards ───────────────────────────────────────────────── */
 .report-list { display: flex; flex-direction: column; gap: var(--space-3); }
-.report-card { display: flex; flex-direction: column; gap: var(--space-2); }
-
-.report-header { display: flex; align-items: center; gap: var(--space-3); }
-.report-icon {
-  width: 36px; height: 36px; border-radius: var(--radius-sm);
-  background: var(--color-surface-container);
-  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-}
-.report-icon svg { width: 18px; height: 18px; color: var(--color-on-surface-variant); }
-.report-meta-top { display: flex; align-items: center; gap: var(--space-2); }
-.report-date { font-size: var(--text-2xs); color: var(--color-on-surface-variant); }
-.report-title { color: var(--color-on-surface); }
-.report-desc { color: var(--color-on-surface-variant); }
-.report-footer { display: flex; gap: 14px; font-size: var(--text-2xs); flex-wrap: wrap; }
-.dim { color: var(--color-on-surface-variant); }
-.photo-count { display: flex; align-items: center; gap: 4px; }
-.photo-count--btn {
-  background: none; border: none; padding: 0; cursor: pointer;
-  font-size: inherit; color: var(--color-on-surface-variant);
-  text-decoration: underline dotted;
-  min-height: unset; min-width: unset;
-}
-.photo-count--btn:hover { color: var(--color-primary); }
-.report-card-actions { display: flex; flex-direction: column; gap: var(--space-1); padding-top: var(--space-1); }
-.report-card-actions-row { display: flex; gap: var(--space-2); flex-wrap: wrap; }
-
-/* Photo picker */
-.photo-dropzone {
-  border: 1.5px dashed var(--color-outline);
-  border-radius: var(--radius-sm);
-  padding: var(--space-4) var(--space-3);
-  display: flex; align-items: center; justify-content: center; gap: var(--space-2);
-  cursor: pointer; transition: background 0.15s, border-color 0.15s;
-  user-select: none;
-}
-.photo-dropzone:hover,
-.photo-dropzone--over {
-  background: var(--color-surface-container);
-  border-color: var(--color-primary);
-}
-.photo-hint { color: var(--color-on-surface-variant); }
-
 .photo-preview-strip {
   display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-2);
 }
@@ -1261,25 +1221,6 @@ function photoPreview(file: File): string {
 .photo-thumb {
   width: 64px; height: 64px; object-fit: cover;
   border-radius: var(--radius-sm); border: 1px solid var(--color-outline-variant);
-}
-.photo-remove {
-  position: absolute; top: -6px; right: -6px;
-  width: 22px; height: 22px; border-radius: 50%;
-  background: var(--color-error); color: #fff;
-  border: none; cursor: pointer; font-size: 14px; line-height: 1;
-  display: flex; align-items: center; justify-content: center;
-  padding: 0;
-  /* Override the global 44px touch-target minimum for this decorative badge */
-  min-height: unset; min-width: unset;
-}
-.photo-remove:hover { background: var(--color-error-dark, var(--color-error)); opacity: 0.85; }
-
-/* Photo gallery (view photos modal) */
-.photos-loading { color: var(--color-on-surface-variant); padding: var(--space-4) 0; text-align: center; }
-.photo-gallery { display: flex; flex-wrap: wrap; gap: var(--space-2); }
-.photo-gallery-item {
-  position: relative; border-radius: var(--radius-sm); overflow: visible;
-  flex-shrink: 0;
 }
 .photo-gallery-thumb {
   width: 120px; height: 120px; object-fit: cover; display: block;
@@ -1299,51 +1240,76 @@ function photoPreview(file: File): string {
 .photo-gallery-delete svg { width: 14px; height: 14px; }
 .photo-gallery-delete:hover { opacity: 1; }
 
-/* Lightbox */
-.lightbox-overlay {
-  position: fixed; inset: 0; z-index: 9999;
-  background: rgba(0, 0, 0, 0.92);
-  display: flex; align-items: center; justify-content: center;
+.report-photo-gallery-modal {
+  --report-photo-thumb-size: 120px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
 }
-.lightbox-img {
-  max-width: 90vw; max-height: 90vh;
-  object-fit: contain; border-radius: var(--radius-sm);
-  box-shadow: 0 8px 40px rgba(0,0,0,0.6);
-}
-.lightbox-close {
-  position: absolute; top: 16px; right: 20px;
-  background: none; border: none; color: #fff;
-  font-size: 28px; cursor: pointer; line-height: 1;
-  min-height: unset; min-width: unset;
-  opacity: 0.8;
-}
-.lightbox-close:hover { opacity: 1; }
-.lightbox-delete {
-  position: absolute; top: 16px; right: 60px;
-  background: var(--color-error); border: none; color: #fff;
+
+.report-photo-gallery-modal__item {
+  border: none;
+  background: none;
+  padding: 0;
   cursor: pointer;
-  min-height: unset; min-width: unset;
-  opacity: 0.85; width: 36px; height: 36px;
+  max-width: var(--report-photo-thumb-size);
+  flex: 0 0 var(--report-photo-thumb-size);
+}
+
+.report-photo-gallery-modal__thumb {
+  width: var(--report-photo-thumb-size);
+  height: var(--report-photo-thumb-size);
+  object-fit: cover;
   border-radius: var(--radius-sm);
-  display: flex; align-items: center; justify-content: center;
-  padding: 8px;
+  border: 1px solid var(--color-outline-variant);
+  transition: opacity 0.15s;
 }
-.lightbox-delete svg { width: 18px; height: 18px; }
-.lightbox-delete:hover { opacity: 1; }
-.lightbox-delete:disabled { opacity: 0.4; cursor: default; }
-.lightbox-nav {
-  position: absolute;
-  background: rgba(255,255,255,0.15); border: none; color: #fff;
-  font-size: 48px; line-height: 1; padding: 8px 16px;
-  cursor: pointer; border-radius: var(--radius-sm);
-  min-height: unset; min-width: unset;
-  opacity: 0.7; transition: opacity 0.15s;
+
+.report-photo-gallery-modal__thumb:hover {
+  opacity: 0.85;
 }
-.lightbox-nav:hover { opacity: 1; }
-.lightbox-nav--prev { left: 16px; }
-.lightbox-nav--next { right: 16px; }
-.lightbox-counter {
-  position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%);
-  color: rgba(255,255,255,0.7);
+
+.report-photo-gallery-modal__empty {
+  margin: 0;
+  color: var(--color-on-surface-variant);
+}
+
+.report-photo-viewer {
+  --report-photo-viewer-height: min(78vh, 760px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.report-photo-viewer__image {
+  width: 100%;
+  max-height: var(--report-photo-viewer-height);
+  object-fit: contain;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-container-low);
+}
+
+.report-photo-viewer__nav-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+}
+
+.report-photo-viewer__nav {
+  align-self: center;
+}
+
+.report-photo-viewer__caption {
+  margin: var(--space-3) 0 0;
+  text-align: center;
+  color: var(--color-on-surface-variant);
+}
+
+@media (max-width: 720px) {
+  .report-photo-gallery-modal {
+    justify-content: flex-start;
+  }
 }
 </style>

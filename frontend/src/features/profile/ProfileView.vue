@@ -5,13 +5,14 @@ import { useRouter } from 'vue-router'
 import CCard from '@/components/molecules/CCard.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
+import CModal from '@/components/molecules/CModal.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import CIconClock from '@/components/atoms/CIconClock.svg'
 import CIconMoon from '@/components/atoms/CIconMoon.svg'
 import CIconSun from '@/components/atoms/CIconSun.svg'
 import { useAuthStore } from '@/stores/auth'
 import { useUiStore } from '@/stores/ui'
-import { authApi } from '@/api'
+import { authApi, adminApi } from '@/api'
 import { useFormFeedback, SUCCESS_AUTO_CLEAR_MS } from '@/composables/useFormFeedback'
 
 const { t } = useI18n()
@@ -89,6 +90,28 @@ async function logout() {
     router.push({ name: 'login' })
   } finally {
     loggingOut.value = false
+  }
+}
+
+// ── Reset demo ────────────────────────────────────────────────────
+const showResetModal = ref(false)
+const resetting = ref(false)
+const resetFeedback = useFormFeedback()
+
+async function confirmResetDemo() {
+  resetting.value = true
+  resetFeedback.reset()
+  try {
+    await adminApi.resetDemo()
+    resetFeedback.setSuccess(t('settings.account.resetAppSuccess'))
+    setTimeout(() => {
+      showResetModal.value = false
+      resetFeedback.reset()
+    }, SUCCESS_AUTO_CLEAR_MS)
+  } catch {
+    resetFeedback.setError(t('settings.account.resetAppError'))
+  } finally {
+    resetting.value = false
   }
 }
 </script>
@@ -238,7 +261,7 @@ async function logout() {
           </p>
         </CCard>
 
-        <CCard>
+        <CCard v-if="auth.isManager">
           <h2
             class="section-title"
             style="color: var(--color-error)"
@@ -251,7 +274,7 @@ async function logout() {
           >
             {{ t('settings.account.dangerDesc') }}
           </p>
-          <CBtn variant="danger">
+          <CBtn variant="danger" @click="showResetModal = true">
             {{ t('settings.account.resetApp') }}
           </CBtn>
         </CCard>
@@ -292,6 +315,27 @@ async function logout() {
       </template>
     </div>
   </div>
+
+  <!-- ── Reset demo modal ─────────────────────────────────────── -->
+  <CModal
+    :open="showResetModal"
+    :title="t('settings.account.resetAppConfirmTitle')"
+    @close="showResetModal = false"
+  >
+    <p class="body-sm">{{ t('settings.account.resetAppConfirmMessage') }}</p>
+    <template #footer>
+      <CFormFeedback
+        :status="resetFeedback.status.value"
+        :message="resetFeedback.message.value"
+      />
+      <CBtn variant="ghost" :disabled="resetting" @click="showResetModal = false">
+        {{ t('common.cancel') }}
+      </CBtn>
+      <CBtn variant="danger" :loading="resetting" :disabled="resetting" @click="confirmResetDemo">
+        {{ t('settings.account.resetAppConfirm') }}
+      </CBtn>
+    </template>
+  </CModal>
 </template>
 
 <style scoped>

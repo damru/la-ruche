@@ -274,15 +274,11 @@ function priorityVariant(p: string): 'err' | 'pending' | 'primary' | 'valid' | '
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  background: var(--tone-bg, var(--color-secondary-container));
+  color: var(--tone-fg, var(--color-primary));
 }
 
 .domain-icon { width: 24px; height: 24px; }
-
-.tone--warn    { background: var(--color-warning-container, #fff3e0); color: var(--color-warning); }
-.tone--err     { background: var(--color-error-container, #fdecea); color: var(--color-error); }
-.tone--valid   { background: var(--color-success-container, #e8f5e9); color: var(--color-success); }
-.tone--accent  { background: var(--color-secondary-container, #e8f0fe); color: var(--color-secondary, var(--color-primary)); }
-.tone--default { background: var(--color-surface-container); color: var(--color-on-surface-variant); }
 
 .contractor-header-info {
   flex: 1;

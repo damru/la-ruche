@@ -16,9 +16,10 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     ports:
-      - "80:80"
+      - "8080:80"
       - "443:443"
     environment:
+      LA_RUCHE__APP__DEMO_MODE: "true"
       LA_RUCHE__APP__HOST: "0.0.0.0"
       LA_RUCHE__APP__PORT: "8080"
       LA_RUCHE__APP__PUBLIC_URL: "${PUBLIC_URL:-http://localhost}"
@@ -73,8 +74,8 @@ services:
     environment:
       MINIO_ROOT_USER: "${S3_ACCESS_KEY_ID:-minioadmin}"
       MINIO_ROOT_PASSWORD: "${S3_SECRET_ACCESS_KEY:-minioadmin}"
-    volumes:
-      - minio_data:/data
+    # volumes:
+    #   - minio_data:/data
     healthcheck:
       test: ["CMD", "mc", "ready", "local"]
       interval: 5s

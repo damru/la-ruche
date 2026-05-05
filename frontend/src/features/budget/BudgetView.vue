@@ -173,7 +173,7 @@ function initials(name: string): string {
               <CIconWarn />
             </div>
           </div>
-          <div class="kpi-value kpi-value--err">
+          <div class="kpi-value tone--err">
             {{ overdueLevies.length }}
           </div>
           <div class="kpi-delta kpi-delta--down">
@@ -189,7 +189,7 @@ function initials(name: string): string {
               <CIconWrench />
             </div>
           </div>
-          <div class="kpi-value kpi-value--warn">
+          <div class="kpi-value tone--warn">
             {{ formatCurrency(mockWorksFund.levied_amount) }}
           </div>
           <div class="kpi-delta kpi-delta--neutral">
@@ -293,7 +293,7 @@ function initials(name: string): string {
                       {{ levy.unit_number }}
                     </td>
                     <td>{{ levy.owner_name }}</td>
-                    <td :class="['td-amount', { 'td-amount--err': levy.status === 'overdue' }]">
+                    <td :class="['td-amount', { 'tone--err': levy.status === 'overdue' }]">
                       {{ formatCurrency(levy.amount) }}
                     </td>
                     <td class="td-right td-muted">
@@ -342,7 +342,7 @@ function initials(name: string): string {
             <div class="ft-prog">
               <div class="ft-prog-head">
                 <span>{{ t('budget.engaged') }}</span>
-                <span class="ft-prog-pct">{{ worksEngagedPct }}%</span>
+                <span class="ft-prog-pct tone--warn">{{ worksEngagedPct }}%</span>
               </div>
               <div class="prog-track">
                 <div
@@ -538,12 +538,10 @@ function initials(name: string): string {
   font-weight: var(--fw-bold);
   font-variation-settings: 'opsz' 72;
   letter-spacing: -.03em;
-  color: var(--color-on-surface);
+  color: var(--tone-fg, var(--color-on-surface));
   line-height: 1;
   margin-bottom: 4px;
 }
-.kpi-value--err { color: var(--color-error); }
-.kpi-value--warn { color: var(--color-warning, #e65100); }
 .kpi-delta { font-size: 12px; font-weight: var(--fw-medium); }
 .kpi-delta--neutral { color: var(--color-on-surface-variant); }
 .kpi-delta--down { color: var(--color-error); }
@@ -602,10 +600,7 @@ function initials(name: string): string {
 .prog-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
 .prog-label { font-size: 13px; font-weight: var(--fw-medium); color: var(--color-on-surface); }
 .prog-meta { display: flex; align-items: center; gap: 10px; }
-.prog-pct { font-size: 13px; font-weight: var(--fw-semibold); }
-.prog-pct--primary { color: var(--color-primary); }
-.prog-pct--warn { color: var(--color-warning, #e65100); }
-.prog-pct--over { color: var(--color-error); }
+.prog-pct { font-size: 13px; font-weight: var(--fw-semibold); color: var(--tone-fg, var(--color-primary)); }
 .prog-track {
   height: 10px;
   border-radius: var(--radius-full);
@@ -664,8 +659,7 @@ tbody tr:hover td { background: var(--color-surface-container-low); }
 .td-mono { font-family: var(--font-mono); font-size: 12px; color: var(--color-primary); }
 .td-muted { color: var(--color-on-surface-variant); font-size: 12px; }
 .td-right { text-align: right; }
-.td-amount { font-family: var(--font-mono); font-weight: var(--fw-medium); text-align: right; }
-.td-amount--err { color: var(--color-error); }
+.td-amount { font-family: var(--font-mono); font-weight: var(--fw-medium); text-align: right; color: var(--tone-fg, inherit); }
 .tfoot-row td { font-size: 13px; font-weight: var(--fw-semibold); padding: 14px 16px; background: var(--color-surface-container-low); }
 
 /* Fonds travaux card */

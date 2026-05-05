@@ -25,6 +25,8 @@ pub struct TaskRow {
     pub closed_at: Option<DateTime<Utc>>,
     pub completion_cost: Option<Decimal>,
     pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+    pub document_count: i64,
     /// True when at least one maintenance_log entry references this task.
     pub is_in_logbook: bool,
 }
@@ -49,6 +51,8 @@ pub struct TaskListItem {
     pub closed_at: Option<DateTime<Utc>>,
     pub completion_cost: Option<Decimal>,
     pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+    pub document_count: i64,
     /// True when at least one maintenance_log entry references this task.
     pub is_in_logbook: bool,
 }
@@ -72,6 +76,8 @@ impl From<TaskRow> for TaskListItem {
             closed_at: r.closed_at,
             completion_cost: r.completion_cost,
             created_at: r.created_at,
+            updated_at: r.updated_at,
+            document_count: r.document_count,
             is_in_logbook: r.is_in_logbook,
         }
     }
@@ -137,6 +143,8 @@ fn task_row_from_query(r: &sqlx::postgres::PgRow) -> Result<TaskRow, sqlx::Error
         closed_at: r.try_get("closed_at")?,
         completion_cost: r.try_get("completion_cost")?,
         created_at: r.try_get("created_at")?,
+        updated_at: r.try_get("updated_at")?,
+        document_count: r.try_get("document_count")?,
         is_in_logbook: r.try_get("is_in_logbook")?,
     })
 }
@@ -146,12 +154,23 @@ pub async fn list(pool: &PgPool, building_id: Uuid) -> AppResult<Vec<TaskRow>> {
         r#"SELECT t.id, t.building_id, t.title, t.description,
            t.status::text AS status, t.priority::text AS priority,
            t.contract_id, t.contractor_id, t.contractor_name, t.assigned_to, t.created_by, t.vendor_token,
-           t.token_expires_at, t.closed_at, t.completion_cost, t.created_at,
+           t.token_expires_at, t.closed_at, t.completion_cost, t.created_at, t.updated_at,
+            (
+              SELECT COUNT(*)
+              FROM (
+                SELECT td.document_id
+                FROM task_document td
+                WHERE td.task_id = t.id
+                UNION
+                SELECT vsd.document_id
+                FROM vendor_submission_document vsd
+                JOIN vendor_submission vs ON vs.id = vsd.submission_id
+                WHERE vs.task_id = t.id
+              ) AS task_documents
+            ) AS document_count,
            EXISTS(SELECT 1 FROM maintenance_log WHERE task_id = t.id) AS is_in_logbook
            FROM task t WHERE t.building_id = $1
-           ORDER BY CASE t.status::text WHEN 'closed' THEN 1 ELSE 0 END ASC,
-                    CASE t.priority::text WHEN 'urgent' THEN 1 WHEN 'high' THEN 2
-                    WHEN 'normal' THEN 3 ELSE 4 END, t.created_at DESC"#,
+           ORDER BY t.updated_at DESC"#,
     )
     .bind(building_id)
     .fetch_all(pool)
@@ -167,7 +186,20 @@ pub async fn get(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<Option
         r#"SELECT t.id, t.building_id, t.title, t.description,
            t.status::text AS status, t.priority::text AS priority,
            t.contract_id, t.contractor_id, t.contractor_name, t.assigned_to, t.created_by, t.vendor_token,
-           t.token_expires_at, t.closed_at, t.completion_cost, t.created_at,
+           t.token_expires_at, t.closed_at, t.completion_cost, t.created_at, t.updated_at,
+            (
+              SELECT COUNT(*)
+              FROM (
+                SELECT td.document_id
+                FROM task_document td
+                WHERE td.task_id = t.id
+                UNION
+                SELECT vsd.document_id
+                FROM vendor_submission_document vsd
+                JOIN vendor_submission vs ON vs.id = vsd.submission_id
+                WHERE vs.task_id = t.id
+              ) AS task_documents
+            ) AS document_count,
            EXISTS(SELECT 1 FROM maintenance_log WHERE task_id = t.id) AS is_in_logbook
            FROM task t WHERE t.id = $1 AND t.building_id = $2"#,
     )
@@ -195,7 +227,8 @@ pub async fn create(
            RETURNING id, building_id, title, description,
            status::text AS status, priority::text AS priority,
            contract_id, contractor_id, contractor_name, assigned_to, created_by, vendor_token,
-           token_expires_at, closed_at, completion_cost, created_at,
+           token_expires_at, closed_at, completion_cost, created_at, updated_at,
+           0::bigint AS document_count,
            FALSE AS is_in_logbook"#,
     )
     .bind(building_id)
@@ -289,17 +322,65 @@ pub async fn get_vendor_token(
     }))
 }
 
-/// Deletes a task. Returns 404 if not found.
-pub async fn delete(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()> {
+/// Deletes a task and returns the physical files that became orphaned.
+pub async fn delete(
+    pool: &PgPool,
+    id: Uuid,
+    building_id: Uuid,
+) -> AppResult<Vec<(String, String)>> {
+    let mut tx = pool.begin().await?;
+
+    let linked_document_ids = sqlx::query_scalar::<_, Uuid>(
+        r#"
+        SELECT document_id
+        FROM (
+            SELECT td.document_id
+            FROM task_document td
+            WHERE td.task_id = $1
+            UNION
+            SELECT vsd.document_id
+            FROM vendor_submission_document vsd
+            JOIN vendor_submission vs ON vs.id = vsd.submission_id
+            JOIN task t ON t.id = vs.task_id
+            WHERE t.id = $1 AND t.building_id = $2
+        ) AS linked_documents
+        "#,
+    )
+    .bind(id)
+    .bind(building_id)
+    .fetch_all(&mut *tx)
+    .await?;
+
+    sqlx::query(
+        r#"
+        DELETE FROM vendor_submission
+        WHERE task_id = $1
+          AND EXISTS (
+              SELECT 1
+              FROM task t
+              WHERE t.id = $1
+                AND t.building_id = $2
+          )
+        "#,
+    )
+    .bind(id)
+    .bind(building_id)
+    .execute(&mut *tx)
+    .await?;
+
     let result = sqlx::query("DELETE FROM task WHERE id = $1 AND building_id = $2")
         .bind(id)
         .bind(building_id)
-        .execute(pool)
+        .execute(&mut *tx)
         .await?;
     if result.rows_affected() == 0 {
         return Err(crate::errors::AppError::NotFound);
     }
-    Ok(())
+
+    let deleted_documents =
+        crate::db::document::delete_orphaned_tx(&mut tx, &linked_document_ids, building_id).await?;
+    tx.commit().await?;
+    Ok(deleted_documents)
 }
 
 /// Updates mutable task fields. `None` values leave the existing field unchanged.
@@ -431,7 +512,20 @@ pub async fn get_by_token(pool: &PgPool, token: Uuid) -> AppResult<Option<TaskRo
         r#"SELECT t.id, t.building_id, t.title, t.description,
            t.status::text AS status, t.priority::text AS priority,
            t.contract_id, t.contractor_id, t.contractor_name, t.assigned_to, t.created_by, t.vendor_token,
-           t.token_expires_at, t.closed_at, t.completion_cost, t.created_at,
+           t.token_expires_at, t.closed_at, t.completion_cost, t.created_at, t.updated_at,
+            (
+              SELECT COUNT(*)
+              FROM (
+                SELECT td.document_id
+                FROM task_document td
+                WHERE td.task_id = t.id
+                UNION
+                SELECT vsd.document_id
+                FROM vendor_submission_document vsd
+                JOIN vendor_submission vs ON vs.id = vsd.submission_id
+                WHERE vs.task_id = t.id
+              ) AS task_documents
+            ) AS document_count,
            EXISTS(SELECT 1 FROM maintenance_log WHERE task_id = t.id) AS is_in_logbook
            FROM task t
            WHERE t.vendor_token = $1 AND t.token_expires_at > NOW()
@@ -444,6 +538,119 @@ pub async fn get_by_token(pool: &PgPool, token: Uuid) -> AppResult<Option<TaskRo
         .map(task_row_from_query)
         .transpose()
         .map_err(Into::into)
+}
+
+pub async fn list_documents(
+    pool: &PgPool,
+    task_id: Uuid,
+    building_id: Uuid,
+) -> AppResult<Vec<serde_json::Value>> {
+    use sqlx::Row;
+
+    let rows = sqlx::query(
+        r#"SELECT DISTINCT d.id, d.original_name, d.mime_type, d.size_bytes, d.created_at
+           FROM document d
+           WHERE d.building_id = $2
+             AND d.id IN (
+               SELECT td.document_id
+               FROM task_document td
+               WHERE td.task_id = $1
+               UNION
+               SELECT vsd.document_id
+               FROM vendor_submission_document vsd
+               JOIN vendor_submission vs ON vs.id = vsd.submission_id
+               WHERE vs.task_id = $1
+             )
+           ORDER BY d.created_at ASC"#,
+    )
+    .bind(task_id)
+    .bind(building_id)
+    .fetch_all(pool)
+    .await?;
+
+    Ok(rows
+        .into_iter()
+        .map(|row| {
+            serde_json::json!({
+                "id": row.try_get::<Uuid, _>("id").unwrap_or_default(),
+                "original_name": row.try_get::<String, _>("original_name").unwrap_or_default(),
+                "mime_type": row.try_get::<String, _>("mime_type").unwrap_or_default(),
+                "size_bytes": row.try_get::<i64, _>("size_bytes").unwrap_or_default(),
+                "created_at": row.try_get::<DateTime<Utc>, _>("created_at").unwrap_or_default(),
+            })
+        })
+        .collect())
+}
+
+pub async fn attach_document(
+    pool: &PgPool,
+    task_id: Uuid,
+    document_id: Uuid,
+    building_id: Uuid,
+) -> AppResult<bool> {
+    let pair_exists = sqlx::query_scalar::<_, bool>(
+        r#"
+        SELECT EXISTS(
+            SELECT 1
+            FROM task t
+            WHERE t.id = $1
+              AND t.building_id = $3
+        ) AND EXISTS(
+            SELECT 1
+            FROM document d
+            WHERE d.id = $2
+              AND d.building_id = $3
+        )
+        "#,
+    )
+    .bind(task_id)
+    .bind(document_id)
+    .bind(building_id)
+    .fetch_one(pool)
+    .await?;
+
+    if !pair_exists {
+        return Ok(false);
+    }
+
+    sqlx::query(
+        r#"
+        INSERT INTO task_document (task_id, document_id)
+        VALUES ($1, $2)
+        ON CONFLICT (task_id, document_id) DO NOTHING
+        "#,
+    )
+    .bind(task_id)
+    .bind(document_id)
+    .execute(pool)
+    .await?;
+
+    Ok(true)
+}
+
+pub async fn detach_document(
+    pool: &PgPool,
+    task_id: Uuid,
+    document_id: Uuid,
+    building_id: Uuid,
+) -> AppResult<bool> {
+    let result = sqlx::query(
+        r#"
+        DELETE FROM task_document td
+        USING task t
+        WHERE td.task_id = $1
+          AND td.document_id = $2
+          AND t.id = td.task_id
+          AND t.building_id = $3
+        "#,
+    )
+    .bind(task_id)
+    .bind(document_id)
+    .bind(building_id)
+    .execute(pool)
+    .await?;
+
+    Ok(result.rows_affected() > 0)
 }
 
 pub async fn create_submission(

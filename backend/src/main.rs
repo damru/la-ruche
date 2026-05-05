@@ -19,6 +19,8 @@ use tower_http::{
 use tracing::info;
 use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
 
+const DEMO_SQL: &str = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/seeds/demo.sql"));
+
 fn load_dotenv() {
     let candidates = [".env", "../.env", "../../.env", "../../../.env"];
     let debug = config_debug_enabled();
@@ -56,6 +58,11 @@ fn load_dotenv() {
     }
 }
 
+async fn seed_demo_database(pool: &sqlx::PgPool) -> anyhow::Result<()> {
+    sqlx::raw_sql(DEMO_SQL).execute(pool).await?;
+    Ok(())
+}
+
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     // ── Config ──────────────────────────────────────────────────
@@ -79,6 +86,11 @@ async fn main() -> anyhow::Result<()> {
     // Run migrations automatically on startup
     sqlx::migrate!("./migrations").run(&pool).await?;
     info!("Migrations applied");
+
+    if cfg.app.demo_mode {
+        seed_demo_database(&pool).await?;
+        info!("Demo database initialized from demo.sql");
+    }
 
     // ── Stockage S3 ─────────────────────────────────────────────
     let storage = StorageClient::new(&cfg.s3).await?;

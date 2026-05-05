@@ -152,14 +152,14 @@ function typeLabel(type: string): string {
                 v-if="meeting.status === 'closed'"
                 class="stat"
               >
-                <span class="stat-value stat-value--ok">{{ passedCount(meeting.id) }}</span>
+                <span class="stat-value tone--valid">{{ passedCount(meeting.id) }}</span>
                 <span class="stat-label">{{ t('meetings.statPassed', passedCount(meeting.id)) }}</span>
               </div>
               <div
                 v-if="meeting.status !== 'closed'"
                 class="stat"
               >
-                <span class="stat-value stat-value--muted">—</span>
+                <span class="stat-value tone--disabled">—</span>
                 <span class="stat-label">{{ t('meetings.statPendingVotes') }}</span>
               </div>
             </div>
@@ -277,10 +277,8 @@ function typeLabel(type: string): string {
   font-weight: var(--fw-bold);
   font-variation-settings: 'opsz' 36;
   letter-spacing: -.02em;
-  color: var(--color-on-surface);
+  color: var(--tone-fg, var(--color-on-surface));
 }
-.stat-value--ok { color: var(--color-success, #2e7d32); }
-.stat-value--muted { color: var(--color-on-surface-variant); }
 .stat-label { font-size: var(--text-xs); color: var(--color-on-surface-variant); }
 
 /* Chevron */

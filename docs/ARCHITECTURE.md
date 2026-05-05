@@ -2,7 +2,7 @@
 
 > **Dénomination** — Dans le présent document, l'expression **« l'Application »** désigne exclusivement **La Ruche**, plateforme web open source de gestion participative de copropriété. Ces deux termes sont interchangeables et désignent la même entité logicielle.
 
-> Document vivant. Dernière mise à jour : 2026-05-03
+> Document vivant. Dernière mise à jour : 2026-05-04
 
 ---
 
@@ -23,11 +23,12 @@
 | Versioning tantièmes + snapshot levy | `valid_from`/`valid_to` + colonnes snapshot `levy_call` | ADR-006 |
 | Clé générale système | `key_type` enum + soft delete sur `allocation_key` | ADR-007 |
 | Traçabilité tâches ↔ carnet | Lien informatif `task_id` + multiples clôtures + `completion_cost` courant sur `task` | ADR-008 |
+| Immutabilité comptable + audit log | Guards de domaine + `audit_log` append-only + `valid_from`/`valid_to` sur `budget_line` + `predecessor_id` sur `vendor_contract` | ADR-009 |
 | Logs | tracing + tracing-subscriber (JSON) | — |
-| Config | dotenvy + config crate (LA_RUCHE__*) | — |
+| Config | dotenvy + config crate (LA_RUCHE__*) ; `LA_RUCHE__APP__DEMO_MODE=true` rejoue `backend/seeds/demo.sql` au démarrage | — |
 | Frontend | Vue 3 + Vite + TypeScript | DDR-003 |
 | État UI | Pinia | — |
-| Préférences UI persistées | Cookie `laruche-theme` (`light` / `dark`), absence de cookie = `auto` | DDR-004 |
+| Préférences UI persistées | `localStorage` `laruche-theme` (`light` / `dark`), absence de clé = `auto` | DDR-002, DDR-004 |
 | État serveur | TanStack Query | — |
 | HTTP client | Axios + intercepteurs refresh | — |
 | i18n | vue-i18n (fr uniquement MVP) | — |
@@ -43,15 +44,24 @@ laruche/
 │   ├── migrations/
 │   │   └── 0001_init.sql       ← 26 tables, UUID, triggers updated_at
 │   └── src/
-│       ├── api/                ← handlers (zero business logic)
+│       ├── api/                ← handlers (zéro logique métier)
 │       │   ├── assemblies.rs
 │       │   ├── auth.rs
 │       │   ├── budget.rs
+│       │   ├── building.rs
+│       │   ├── claims.rs
+│       │   ├── consultations.rs
 │       │   ├── contracts.rs
 │       │   ├── contractor.rs
+│       │   ├── contractors.rs
 │       │   ├── documents.rs
+│       │   ├── logbook.rs
 │       │   ├── mod.rs          ← router + OpenAPI
+│       │   ├── onboarding.rs
+│       │   ├── reports.rs
 │       │   ├── stubs.rs        ← stubs for routes not yet implemented
+│       │   ├── units.rs
+│       │   ├── users.rs
 │       │   └── tasks.rs
 │       ├── auth/               ← jwt, middleware, passkey, password, token
 │       │   ├── jwt.rs
@@ -61,13 +71,15 @@ laruche/
 │       │   ├── password.rs
 │       │   └── token.rs
 │       ├── config.rs           ← typed config from env
-│       ├── db/                 ← SQLx repositories (12 modules)
+│       ├── db/                 ← repositories SQLx
+│       │   ├── allocation_key.rs
 │       │   ├── assembly.rs
 │       │   ├── budget.rs
 │       │   ├── building.rs
 │       │   ├── claim.rs
 │       │   ├── consultation.rs
 │       │   ├── contract.rs
+│       │   ├── contractor.rs
 │       │   ├── document.rs
 │       │   ├── maintenance_log.rs
 │       │   ├── mod.rs
@@ -111,24 +123,27 @@ laruche/
 │   │   │                          CDataTable, CModal, CDropzone
 │   │   └── organisms/          ← AppNav
 │   ├── composables/            ← useRole, useFormatters (Intl natif)
-│   ├── features/               ← vues lazy-loaded par domaine
+│   │   ├── features/               ← vues lazy-loaded par domaine
 │   │   ├── assemblies/         ← AssemblyListView, AssemblyDetailView
 │   │   ├── auth/               ← LoginView ✅, AcceptInviteView, ResetPasswordView
 │   │   ├── budget/             ← BudgetView
 │   │   ├── claims/             ← ClaimsView
 │   │   ├── consultations/      ← ConsultationsView
 │   │   ├── contractor/         ← ContractorPage
+│   │   ├── contractors/        ← ContractorsView, ContractorDetailView
 │   │   ├── contracts/          ← ContractsView
 │   │   ├── dashboard/          ← DashboardView ✅
 │   │   ├── documents/          ← DocumentsView
 │   │   ├── maintenance/        ← MaintenanceView
+│   │   ├── onboarding/         ← OnboardingView
+│   │   ├── profile/            ← ProfileView
 │   │   ├── reports/            ← ReportsView
+│   │   ├── residence/          ← BuildingView, AllocationKeysView
 │   │   ├── residents/          ← ResidentsView
-│   │   ├── settings/           ← SettingsView
 │   │   └── tasks/              ← TasksView
 │   ├── layouts/                ← AppLayout
-│   ├── router/index.ts         ← lazy routes, guards (403 vs 404)
-│   ├── stores/                 ← auth.ts, ui.ts (Pinia + préférence d'apparence)
+│   ├── router/index.ts         ← lazy routes, guards (403 vs 404, onboarding, redirects legacy)
+│   ├── stores/                 ← auth.ts, ui.ts (Pinia + préférence d'apparence via localStorage)
 │   ├── styles/                 ← tokens.css, base.css, typography.css
 │   ├── types/domain.ts         ← types TS miroir schéma Rust
 │   └── views/                  ← ForbiddenView, NotFoundView
@@ -155,13 +170,14 @@ laruche/
 
 Conventions : UUID v4, TIMESTAMPTZ, soft delete via `actif`/`statut`, `updated_at` via triggers, JSONB pour OCR futur.
 
-Pour la conversion `signalement → tâche`, l'endpoint backend crée la tâche dans une transaction SQL, persiste la priorité choisie, lie `report.task_id` et bascule immédiatement `report.status` à `in_progress`. Lors d'une clôture effective de la tâche, le backend clôture aussi le signalement lié en réutilisant ce lien `report.task_id`.
+Invariants techniques implémentés :
 
-Dans `TasksView`, l'assignation prestataire reste tolérante : l'autocomplete ne force pas la sélection d'un prestataire existant. Si aucune correspondance n'est trouvée, l'UI peut créer un prestataire via `POST /contractors` juste avant l'enregistrement de la tâche ; sinon la saisie libre est persistée dans `task.contractor_name` sans `contractor_id`.
+- `report.task_id` porte le lien informatif entre signalement et tâche ; cette relation reste non destructive et réutilisable par les workflows applicatifs.
+- Les documents de tâche sont répartis entre `task_document` (gestionnaires) et `vendor_submission_document` (soumissions prestataire) ; les endpoints manager `GET/POST/DELETE /tasks/{id}/documents` et `document_count` agrègent ces deux sources.
+- `claim_document` suit le même modèle d'association documentaire que `report_document`, avec nettoyage des liens lors des suppressions d'entité.
+- `maintenance_log.task_id` et `maintenance_log.contract_id` restent des liens de traçabilité souples, sans cascade destructive depuis les tâches ou contrats.
 
-Le module `claims` expose un workflow réel de déclaration de sinistre : type de sinistre, date de survenance, date de publication d'arrêté pour catastrophe naturelle, date de transmission à l'assurance, remboursement optionnel (date + montant), calcul serveur de l'échéance légale et état d'alerte dérivé. Les pièces jointes sont reliées par `claim_document`, sur le même modèle que `report_document`, et la suppression d'un sinistre doit nettoyer automatiquement ses rattachements documentaires.
-
-Le module `logbook` expose un résumé réglementaire distinct de la timeline : identité de l'immeuble, syndic en exercice et registres consolidés des contrats d'assurance et de maintenance actifs, afin de couvrir les mentions permanentes du décret n°2001-477 dans une seule vue.
+Les règles produit détaillées de navigation, d'apparence et de workflows métier restent normatives dans `PRD.md`, `EPICS.md`, `DESIGN.md` et les ADR/DDR concernés ; ce document n'en conserve qu'un résumé d'architecture.
 
 ---
 
@@ -197,7 +213,7 @@ HTTP → Tower (CORS, trace, timeout 30s)
 ### Token prestataire
 ```
 1. Syndic génère token → UUID + expire_at en DB
-2. Lien /prestataire/{token} → accès sans JWT
+2. Lien `/vendor/{token}` → accès sans JWT
 3. Dépôt → staging S3 → validation → bucket final copropriété
 4. Soumission prestataire → statut `awaiting_validation` + commentaire / coût optionnel
 5. Clôture syndic → insertion d'une nouvelle ligne carnet avec snapshot coût/prestataire
@@ -254,3 +270,4 @@ HTTP → Tower (CORS, trace, timeout 30s)
 | ADR-006 | Versioning tantièmes & snapshot levy | `valid_from`/`valid_to` sur `unit_allocation_key` ; colonnes `shares_snapshot`, `shares_total_snapshot`, `key_id` sur `levy_call` |
 | ADR-007 | Clé générale système | `key_type allocation_key_type` enum + `deleted_at` soft delete sur `allocation_key` ; clé Charges Générales créée à l'onboarding, indestructible |
 | ADR-008 | Traçabilité tâches / carnet / soumissions prestataire | `maintenance_log.task_id` et `vendor_submission.task_id` deviennent informatifs (`ON DELETE SET NULL`) ; suppression de l'unicité 1 tâche → 1 entrée ; `task.completion_cost` porte le montant courant jusqu'à la clôture validée |
+| ADR-009 | Immutabilité des données comptables + audit log | Guards `is_mutable`/`is_deletable` dans `domain/immutability.rs` ; table `audit_log` append-only (diff JSONB `old_values`/`new_values`) ; statut `draft` sur `levy_call` ; `predecessor_id` sur `vendor_contract` (pattern avenant) ; `parent_budget_id` + `valid_from`/`valid_to` sur `budget_line` ; trigger PG défensif sur `levy_call` |

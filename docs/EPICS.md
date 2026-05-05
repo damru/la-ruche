@@ -151,9 +151,9 @@ Fiche contrat avec reconduction tacite et préavis configurables, rappels automa
 
 **Statut :** terminée | **MVP :** non | **Réf. PRD :** Gestion courante
 
-**État code actuel :** backend réel (CRUD tâches + token prestataire + upload staging + pré-validation prestataire en transaction + assignation prestataire référentiel) + frontend branché (liste, créer, token, page publique prestataire, autocomplete prestataire, clôture avec coût optionnel).
+**État code actuel :** backend réel (CRUD tâches + token prestataire + upload staging + pré-validation prestataire en transaction + documents manager via `task_document` + assignation prestataire référentiel ou nom libre sur `task.contractor_name`) + frontend branché (liste, créer, modifier, documents manager, token, page publique prestataire, autocomplete prestataire tolérant avec création optionnelle, clôture avec coût optionnel).
 
-Tâches assignées en interne, lien tokenisé éphémère pour accès prestataire sans compte, flux de dépôt staging → validation → bucket final. Les tâches peuvent être liées à un prestataire du référentiel (EP-015) pour consolider l'historique.
+Tâches assignées en interne, lien tokenisé éphémère pour accès prestataire sans compte, flux de dépôt staging → validation → bucket final. Les tâches peuvent être liées à un prestataire du référentiel (EP-015) pour consolider l'historique, ou conserver une saisie libre si aucun prestataire n'est retenu.
 
 **Stories :**
 
@@ -170,7 +170,7 @@ Tâches assignées en interne, lien tokenisé éphémère pour accès prestatair
 
 **Statut :** terminée | **MVP :** oui | **Réf. PRD :** Gestion courante
 
-**État code actuel :** backend réel (`claim_type`, calcul d'échéance légale, transmission assurance, remboursement optionnel, pièces jointes, suppression) + frontend branché sur API réelle (création, édition, transmission, clôture, suppression, alertes, rattachement documentaire).
+**État code actuel :** backend réel (`claim_type`, `occurred_at`, `published_at`, `transmitted_at`, remboursement optionnel, calcul d'échéance légale, alertes dérivées, pièces jointes et nettoyage des liaisons documentaires à la suppression) + frontend branché sur API réelle (création, édition, transmission, clôture, suppression, alertes, rattachement documentaire).
 
 Déclaration et suivi de sinistres (lot ou parties communes) avec documents associés.
 
@@ -188,9 +188,9 @@ Déclaration et suivi de sinistres (lot ou parties communes) avec documents asso
 
 **Statut :** terminée (`S04` hors scope post-MVP) | **MVP :** oui | **Réf. PRD :** Gestion courante
 
-**État code actuel :** backend réel (list, get, create, update, delete + auto-feed depuis tâche avec liens de traçabilité souples) + frontend branché (timeline, modale création, suppression, filtres calendaires). En-tête réglementaire et listing contrats encore absents.
+**État code actuel :** backend réel (list, get, create, update, delete + auto-feed depuis tâche avec liens de traçabilité souples + résumé réglementaire) + frontend branché (timeline, résumé réglementaire distinct, modale création, suppression, filtres calendaires, listings contrats assurance / maintenance actifs).
 
-Historique des interventions alimenté manuellement ou automatiquement depuis une tâche clôturée. Doit également exposer les mentions minimales obligatoires du décret n°2001-477 (adresse immeuble, identité syndic, contrats d'assurance et d'entretien).
+Historique des interventions alimenté manuellement ou automatiquement depuis une tâche clôturée. La vue regroupe séparément les mentions minimales obligatoires du décret n°2001-477 (adresse immeuble, identité syndic, contrats d'assurance et d'entretien) au-dessus de la timeline.
 
 **Stories :**
 
@@ -226,6 +226,8 @@ Consultations initiables par tout résident sans approbation préalable, résult
 ### EP-011 — Signalements
 
 **Statut :** terminée | **MVP :** oui | **Réf. PRD :** Participatif
+
+**État code actuel :** backend réel (CRUD, documents associés, conversion en tâche avec priorité choisie, lien `report.task_id`, clôture automatique du signalement à la fermeture effective de la tâche liée) + frontend branché (liste, création, photos, mise à jour de statut, conversion en tâche).
 
 Signalement par tout résident avec description et lot optionnel, suivi de statut par le syndic, conversion possible en tâche.
 

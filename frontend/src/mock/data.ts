@@ -174,13 +174,13 @@ export const mockDocuments: Document[] = [
 
 // ── Tâches ────────────────────────────────────────────────────────
 export const mockTasks: Task[] = [
-  { id: 'tsk-001', title: 'Réparation fuite toiture — Cage B', description: 'Infiltration d\'eau signalée au dernier étage, cage B. Devis reçu de Couvertures Dupré.', status: 'in_progress', priority: 'urgent', contract_id: undefined, created_at: '2025-04-10T08:00:00Z' },
-  { id: 'tsk-002', title: 'Remplacement éclairage cave — LED', description: 'Remplacement des tubes fluorescents par des LED dans les caves A et B.', status: 'open', priority: 'normal', created_at: '2025-03-22T09:00:00Z' },
-  { id: 'tsk-003', title: 'Réglage minuterie escalier A', description: 'La minuterie reste allumée en continu. Intervention électricien nécessaire.', status: 'awaiting_vendor', priority: 'high', created_at: '2025-04-05T10:00:00Z' },
-  { id: 'tsk-004', title: 'Peinture porte palière Lot 3', description: 'Porte palière à repeindre suite à des dégradations constatées.', status: 'open', priority: 'low', created_at: '2025-02-14T11:00:00Z' },
-  { id: 'tsk-005', title: 'Contrôle extincteurs annuel', description: 'Vérification annuelle des extincteurs — cages A et B.', status: 'closed', priority: 'normal', closed_at: '2025-03-15T14:00:00Z', created_at: '2025-02-01T09:00:00Z' },
-  { id: 'tsk-006', title: 'Débouchage regards pluviaux', description: 'Regards engorgés signalés lors des dernières pluies.', status: 'closed', priority: 'high', closed_at: '2025-04-08T16:00:00Z', created_at: '2025-03-28T08:00:00Z' },
-  { id: 'tsk-007', title: 'Révision chaudière parties communes', description: 'Révision annuelle de la chaudière collective avant l\'hiver.', status: 'cancelled', priority: 'normal', created_at: '2025-01-10T09:00:00Z' },
+  { id: 'tsk-001', created_by: 'usr-001', title: 'Réparation fuite toiture — Cage B', description: 'Infiltration d\'eau signalée au dernier étage, cage B. Devis reçu de Couvertures Dupré.', status: 'in_progress', priority: 'urgent', contract_id: undefined, created_at: '2025-04-10T08:00:00Z', updated_at: '2025-04-12T09:30:00Z', document_count: 2 },
+  { id: 'tsk-002', created_by: 'usr-001', title: 'Remplacement éclairage cave — LED', description: 'Remplacement des tubes fluorescents par des LED dans les caves A et B.', status: 'open', priority: 'normal', created_at: '2025-03-22T09:00:00Z', updated_at: '2025-03-22T09:00:00Z', document_count: 0 },
+  { id: 'tsk-003', created_by: 'usr-001', title: 'Réglage minuterie escalier A', description: 'La minuterie reste allumée en continu. Intervention électricien nécessaire.', status: 'awaiting_vendor', priority: 'high', created_at: '2025-04-05T10:00:00Z', updated_at: '2025-04-08T12:00:00Z', document_count: 1 },
+  { id: 'tsk-004', created_by: 'usr-001', title: 'Peinture porte palière Lot 3', description: 'Porte palière à repeindre suite à des dégradations constatées.', status: 'open', priority: 'low', created_at: '2025-02-14T11:00:00Z', updated_at: '2025-02-14T11:00:00Z', document_count: 0 },
+  { id: 'tsk-005', created_by: 'usr-001', title: 'Contrôle extincteurs annuel', description: 'Vérification annuelle des extincteurs — cages A et B.', status: 'closed', priority: 'normal', closed_at: '2025-03-15T14:00:00Z', created_at: '2025-02-01T09:00:00Z', updated_at: '2025-03-15T14:00:00Z', document_count: 1 },
+  { id: 'tsk-006', created_by: 'usr-001', title: 'Débouchage regards pluviaux', description: 'Regards engorgés signalés lors des dernières pluies.', status: 'closed', priority: 'high', closed_at: '2025-04-08T16:00:00Z', created_at: '2025-03-28T08:00:00Z', updated_at: '2025-04-08T16:00:00Z', document_count: 3 },
+  { id: 'tsk-007', created_by: 'usr-001', title: 'Révision chaudière parties communes', description: 'Révision annuelle de la chaudière collective avant l\'hiver.', status: 'cancelled', priority: 'normal', created_at: '2025-01-10T09:00:00Z', updated_at: '2025-01-12T10:00:00Z', document_count: 0 },
 ]
 
 // ── Contrats ──────────────────────────────────────────────────────
@@ -259,9 +259,9 @@ export const mockReminders: ContractReminder[] = [
 
 // ── Sinistres ─────────────────────────────────────────────────────
 export const mockClaims: Claim[] = [
-  { id: 'clm-001', title: 'Dégât des eaux — Lot 3 (fuite toiture)', description: 'Infiltration d\'eau dans le salon du lot 3 suite à une détérioration de la toiture. Déclaration AXA N° 2025-04-12345.', claim_type: 'current', declared_at: '2025-04-12', status: 'in_progress', unit_id: 'unt-003', legal_deadline_at: '2025-04-18', days_remaining: 3, is_deadline_approaching: false, is_deadline_missed: false, is_transmitted_late: false, document_count: 2, created_at: '2025-04-12T14:00:00Z', updated_at: '2025-04-13T09:00:00Z' },
-  { id: 'clm-002', title: 'Fissure façade — mur nord', description: 'Fissuration longitudinale constatée sur le mur nord, hauteur 1er–3ème étage. Expertise mandatée.', claim_type: 'natural_disaster', declared_at: '2025-02-20', published_at: '2025-02-24', status: 'open', legal_deadline_at: '2025-03-06', days_remaining: 1, is_deadline_approaching: true, is_deadline_missed: false, is_transmitted_late: false, document_count: 1, created_at: '2025-02-20T10:00:00Z', updated_at: '2025-02-24T10:00:00Z' },
-  { id: 'clm-003', title: 'Vol dans les caves (cage A)', description: 'Effraction des caves 1, 3 et 4 signalée le 12/11/2024. Plainte déposée. Sinistre déclaré à l\'assurance.', claim_type: 'theft', declared_at: '2024-11-13', status: 'closed', transmitted_at: '2024-11-18', legal_deadline_at: '2024-11-15', is_deadline_approaching: false, is_deadline_missed: false, is_transmitted_late: true, document_count: 3, created_at: '2024-11-13T09:00:00Z', updated_at: '2024-11-18T18:00:00Z' },
+  { id: 'clm-001', created_by: 'usr-001', title: 'Dégât des eaux — Lot 3 (fuite toiture)', description: 'Infiltration d\'eau dans le salon du lot 3 suite à une détérioration de la toiture. Déclaration AXA N° 2025-04-12345.', claim_type: 'current', declared_at: '2025-04-12', status: 'in_progress', unit_id: 'unt-003', legal_deadline_at: '2025-04-18', days_remaining: 3, is_deadline_approaching: false, is_deadline_missed: false, is_transmitted_late: false, document_count: 2, created_at: '2025-04-12T14:00:00Z', updated_at: '2025-04-13T09:00:00Z' },
+  { id: 'clm-002', created_by: 'usr-001', title: 'Fissure façade — mur nord', description: 'Fissuration longitudinale constatée sur le mur nord, hauteur 1er–3ème étage. Expertise mandatée.', claim_type: 'natural_disaster', declared_at: '2025-02-20', published_at: '2025-02-24', status: 'open', legal_deadline_at: '2025-03-06', days_remaining: 1, is_deadline_approaching: true, is_deadline_missed: false, is_transmitted_late: false, document_count: 1, created_at: '2025-02-20T10:00:00Z', updated_at: '2025-02-24T10:00:00Z' },
+  { id: 'clm-003', created_by: 'usr-001', title: 'Vol dans les caves (cage A)', description: 'Effraction des caves 1, 3 et 4 signalée le 12/11/2024. Plainte déposée. Sinistre déclaré à l\'assurance.', claim_type: 'theft', declared_at: '2024-11-13', status: 'closed', transmitted_at: '2024-11-18', legal_deadline_at: '2024-11-15', is_deadline_approaching: false, is_deadline_missed: false, is_transmitted_late: true, document_count: 3, created_at: '2024-11-13T09:00:00Z', updated_at: '2024-11-18T18:00:00Z' },
 ]
 
 // ── Carnet d'entretien ────────────────────────────────────────────
@@ -291,6 +291,7 @@ export const mockConsultations: Consultation[] = [
     status: 'open',
     visible_roles: ['manager', 'board_member', 'co_owner'],
     created_at: '2025-04-15T10:00:00Z',
+    updated_at: '2025-04-15T10:00:00Z',
     my_choice_ids: [],
     total_responses: 0,
     choices: [
@@ -306,6 +307,7 @@ export const mockConsultations: Consultation[] = [
     status: 'open',
     visible_roles: ['manager', 'board_member', 'co_owner', 'tenant'],
     created_at: '2025-03-20T14:00:00Z',
+    updated_at: '2025-03-20T14:00:00Z',
     my_choice_ids: [],
     total_responses: 0,
     choices: [
@@ -322,6 +324,7 @@ export const mockConsultations: Consultation[] = [
     visible_roles: ['manager', 'board_member', 'co_owner'],
     closed_at: '2025-02-28T23:59:00Z',
     created_at: '2025-02-01T09:00:00Z',
+    updated_at: '2025-02-28T23:59:00Z',
     my_choice_ids: [],
     total_responses: 5,
     choices: [

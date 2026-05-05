@@ -185,7 +185,7 @@ async function submit() {
             @drop.prevent="onDrop"
             @click="fileInputRef?.click()"
           >
-            <CIconFile class="dropzone-icon" />
+            <CIconFile class="dropzone__icon dropzone__icon--lg" />
             <p class="body-sm">
               {{ t('contractor.dropzone') }}
             </p>
@@ -380,23 +380,6 @@ async function submit() {
   border-bottom: 1px solid var(--color-outline-variant);
 }
 
-.dropzone {
-  border: 2px dashed var(--color-outline);
-  border-radius: var(--radius-md);
-  padding: var(--space-6);
-  text-align: center;
-  cursor: pointer;
-  transition: border-color var(--transition-fast), background var(--transition-fast);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-2);
-}
-.dropzone:hover, .dropzone--over {
-  border-color: var(--color-primary);
-  background: var(--color-primary-container);
-}
-.dropzone-icon { width: 32px; height: 32px; color: var(--color-on-surface-variant); }
 .file-input-hidden { display: none; }
 
 .file-list { list-style: none; display: flex; flex-direction: column; gap: 6px; }

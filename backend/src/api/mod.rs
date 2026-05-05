@@ -1,3 +1,4 @@
+pub mod admin;
 pub mod assemblies;
 pub mod auth;
 pub mod budget;
@@ -11,6 +12,7 @@ pub mod documents;
 pub mod logbook;
 pub mod onboarding;
 pub mod reports;
+pub mod runtime;
 mod stubs;
 pub mod tasks;
 pub mod units;
@@ -34,6 +36,8 @@ const NOTICE_TEXT: &str = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/../
 
 pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
     let api = Router::new()
+        // ── Admin ────────────────────────────────────────────────
+        .route("/admin/reset-demo", post(admin::reset_demo))
         // ── Auth ────────────────────────────────────────────────
         .route("/auth/register", post(auth::register))
         .route("/auth/login", post(auth::login))
@@ -182,6 +186,14 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
                 .delete(tasks::delete_task),
         )
         .route(
+            "/tasks/{id}/documents",
+            get(tasks::list_documents).post(tasks::attach_document),
+        )
+        .route(
+            "/tasks/{id}/documents/{document_id}",
+            delete(tasks::detach_document),
+        )
+        .route(
             "/tasks/{id}/vendor-token",
             get(tasks::get_vendor_token_url)
                 .post(tasks::generate_token)
@@ -262,6 +274,7 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
         // ── Onboarding first-run (no JWT) ─────────────────────────
         .route("/api/v1/onboarding/status", get(onboarding::status))
         .route("/api/v1/onboarding/bootstrap", post(onboarding::bootstrap))
+        .route("/api/v1/runtime", get(runtime::status))
         // ── Contractor access (tokenized, no JWT) ─────────────────
         .route("/api/v1/vendor/{token}", get(contractor::get_task))
         .route(

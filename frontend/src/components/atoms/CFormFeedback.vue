@@ -11,7 +11,7 @@ defineProps<{
   <Transition name="feedback">
     <span
       v-if="status !== 'idle'"
-      :class="['form-feedback', `form-feedback--${status}`]"
+      :class="['form-feedback', { 'tone--valid': status === 'success', 'tone--err': status === 'error' }]"
     >
       <span
         class="form-feedback__icon"
@@ -30,10 +30,8 @@ defineProps<{
   font-size: 13px;
   font-weight: 500;
   transition: opacity var(--transition-fast);
+  color: var(--tone-fg, inherit);
 }
-
-.form-feedback--success { color: var(--color-success, #2e7d32); }
-.form-feedback--error   { color: var(--color-error); }
 
 .form-feedback__icon { font-size: 14px; }
 

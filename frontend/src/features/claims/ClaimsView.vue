@@ -11,10 +11,12 @@ import CBtn from '@/components/atoms/CBtn.vue'
 import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
 import CPageError from '@/components/molecules/CPageError.vue'
 import CDocumentLinkActionModal from '@/components/molecules/CDocumentLinkActionModal.vue'
+import CLinkedDocumentsModal from '@/components/molecules/CLinkedDocumentsModal.vue'
 import CLegalInfoCard from '@/components/molecules/CLegalInfoCard.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CModal from '@/components/molecules/CModal.vue'
+import CReminderCard from '@/components/molecules/CReminderCard.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import CIconAlertTriangle from '@/components/atoms/CIconAlertTriangle.svg'
 import CIconCheckCircle from '@/components/atoms/CIconCheckCircle.svg'
@@ -26,12 +28,12 @@ import CIconHome from '@/components/atoms/CIconHome.svg'
 import CIconShield from '@/components/atoms/CIconShield.svg'
 import CIconTrash from '@/components/atoms/CIconTrash.svg'
 import CIconUpload from '@/components/atoms/CIconUpload.svg'
-import { buildingApi, claimsApi, documentsApi, unitsApi } from '@/api'
+import { buildingApi, claimsApi, documentsApi, unitsApi, usersApi } from '@/api'
 import { extractFileExtension } from '@/utils/files'
-import type { Claim, ClaimStatus, ClaimType, Document, Unit } from '@/types/domain'
+import type { Claim, ClaimStatus, ClaimType, Document, Unit, User } from '@/types/domain'
 
 const { t } = useI18n()
-const { formatCurrency, formatDate, formatFileSize, formatRelative } = useFormatters()
+const { formatCurrency, formatDate, formatFileSize } = useFormatters()
 const { hasAnyRole } = useRole()
 
 const CLAIM_TYPES: ClaimType[] = ['current', 'natural_disaster', 'theft']
@@ -61,6 +63,7 @@ type ClaimUpdatePayload = {
 const buildingName = ref('')
 const allClaims = ref<Claim[]>([])
 const allUnits = ref<Unit[]>([])
+const allUsers = ref<User[]>([])
 const filter = ref<'all' | ClaimStatus>('all')
 const canManage = computed(() => hasAnyRole(['manager', 'board_member']))
 
@@ -116,6 +119,9 @@ watch(claimToClose, (claim) => { if (!claim) forceCloseClaim() })
 const claimToDelete = ref<Claim | null>(null)
 const deleteFeedback = useFormFeedback()
 const deletingClaim = ref(false)
+const claimDocumentsTarget = ref<Claim | null>(null)
+const claimDocuments = ref<Document[]>([])
+const loadingClaimDocuments = ref(false)
 const { schedule: scheduleDeleteClose, forceExpire: forceDeleteClose } = useAutoClose()
 watch(claimToDelete, (claim) => { if (!claim) forceDeleteClose() })
 
@@ -146,15 +152,17 @@ function claimEditorFormFromClaim(claim: Claim): ClaimEditorForm {
 }
 
 async function loadData() {
-  const [buildingResponse, claimsResponse, unitsResponse] = await Promise.all([
+  const [buildingResponse, claimsResponse, unitsResponse, usersResponse] = await Promise.all([
     buildingApi.get(),
     claimsApi.list(),
     unitsApi.list(),
+    usersApi.list(),
   ])
 
   buildingName.value = buildingResponse.data.name
   allClaims.value = claimsResponse.data
   allUnits.value = unitsResponse.data
+  allUsers.value = usersResponse.data
 }
 
 const { loading, error, reload } = usePageLoader(loadData, t('common.loadError'))
@@ -164,17 +172,41 @@ const unitsById = computed(() =>
   new Map(allUnits.value.map(unit => [unit.id, unit])),
 )
 
+const claimsById = computed(() =>
+  new Map(allClaims.value.map(claim => [claim.id, claim])),
+)
+
 const claims = computed(() =>
   (filter.value === 'all'
     ? allClaims.value
     : allClaims.value.filter(claim => claim.status === filter.value))
     .slice()
-    .sort((left, right) => right.created_at.localeCompare(left.created_at)),
+    .sort((left, right) => right.updated_at.localeCompare(left.updated_at)),
 )
 
 const activeClaimsCount = computed(() =>
   allClaims.value.filter(claim => claim.status !== 'closed').length,
 )
+
+const claimCounts = computed(() =>
+  allClaims.value.reduce(
+    (counts, claim) => {
+      counts.all += 1
+      if (claim.status === 'open') counts.open += 1
+      else if (claim.status === 'in_progress') counts.in_progress += 1
+      else if (claim.status === 'closed') counts.closed += 1
+      return counts
+    },
+    { all: 0, open: 0, in_progress: 0, closed: 0 },
+  ),
+)
+
+const claimTabs = computed(() => [
+  { key: 'all', label: t('common.all'), count: claimCounts.value.all },
+  { key: 'open', label: t('claims.filters.open'), count: claimCounts.value.open },
+  { key: 'in_progress', label: t('claims.filters.inProgress'), count: claimCounts.value.in_progress },
+  { key: 'closed', label: t('claims.filters.closed'), count: claimCounts.value.closed },
+])
 
 const legalCardLinks = computed(() => [
   {
@@ -186,6 +218,28 @@ const legalCardLinks = computed(() => [
     href: t('claims.legalCard.naturalDisasterLinkHref'),
   },
 ])
+
+const deadlineReminderClaims = computed(() =>
+  allClaims.value
+    .filter(claim => !claim.transmitted_at && claim.status === 'open' && (claim.is_deadline_approaching || claim.is_deadline_missed || claim.days_remaining === 0))
+    .slice()
+    .sort((left, right) => left.legal_deadline_at.localeCompare(right.legal_deadline_at)),
+)
+
+function claimReminderTone(claim: Claim): 'err' | 'warn' {
+  return claim.is_deadline_missed || claim.days_remaining === 0 ? 'err' : 'warn'
+}
+
+const claimReminderRows = computed(() =>
+  deadlineReminderClaims.value.map(claim => ({
+    id: claim.id,
+    title: claim.title,
+    subtitle: `${t(`claims.types.${claim.claim_type}`)} · ${unitLabel(claim.unit_id)}`,
+    meta: formatDate(claim.declared_at),
+    emphasis: deadlineLabel(claim),
+    tone: claimReminderTone(claim),
+  })),
+)
 
 function statusVariant(status: ClaimStatus): 'open' | 'pending' | 'closed' | 'default' {
   if (status === 'open') return 'pending'
@@ -206,7 +260,7 @@ function typeIcon(type: ClaimType) {
 
 function typeTone(type: ClaimType): string {
   const tones = {
-    current: 'tone--default',
+    current: 'tone--accent',
     natural_disaster: 'tone--warn',
     theft: 'tone--err',
   }
@@ -396,6 +450,22 @@ async function loadEditDocuments(claimId: string) {
   }
 }
 
+async function openClaimDocuments(claim: Claim) {
+  claimDocumentsTarget.value = claim
+  claimDocuments.value = []
+  loadingClaimDocuments.value = true
+
+  try {
+    const response = await claimsApi.listDocuments(claim.id)
+    claimDocuments.value = response.data
+  } catch (currentError: unknown) {
+    editFeedback.setError(toErrorMessage(currentError, t('claims.documentsLoadError')))
+    claimDocumentsTarget.value = null
+  } finally {
+    loadingClaimDocuments.value = false
+  }
+}
+
 async function openEditModal(claim: Claim) {
   claimToEdit.value = claim
   editForm.value = claimEditorFormFromClaim(claim)
@@ -507,6 +577,7 @@ async function handleDocumentAction(deleteDocument: boolean) {
       await claimsApi.detachDocument(claimToEdit.value.id, pendingDocumentAction.value.id)
     }
     editDocuments.value = editDocuments.value.filter(document => document.id !== pendingDocumentAction.value?.id)
+    claimDocuments.value = claimDocuments.value.filter(document => document.id !== pendingDocumentAction.value?.id)
     updateClaimDocumentCount(claimToEdit.value.id, -1)
     pendingDocumentAction.value = null
   } catch (currentError: unknown) {
@@ -802,19 +873,35 @@ async function submitDelete() {
           </div>
         </div>
 
+        <CReminderCard
+          v-if="claimReminderRows.length > 0"
+          :title="t('claims.upcomingReminders')"
+          :rows="claimReminderRows"
+        >
+          <template
+            v-if="canManage"
+            #actions="{ row }"
+          >
+            <CBtn
+              variant="primary"
+              size="sm"
+              @click="openTransmitModal(claimsById.get(row.id)!)"
+            >
+              <CIconUpload />
+              {{ t('claims.transmit') }}
+            </CBtn>
+          </template>
+        </CReminderCard>
+
         <div class="tabs">
           <button
-            v-for="option in [
-              { key: 'all', label: t('common.all') },
-              { key: 'open', label: t('claims.filters.open') },
-              { key: 'in_progress', label: t('claims.filters.inProgress') },
-              { key: 'closed', label: t('claims.filters.closed') },
-            ]"
+            v-for="option in claimTabs"
             :key="option.key"
             :class="['tab', { 'tab--active': filter === option.key }]"
             @click="filter = option.key as typeof filter"
           >
             {{ option.label }}
+            <span class="tab-count">{{ option.count }}</span>
           </button>
         </div>
 
@@ -823,127 +910,131 @@ async function submitDelete() {
             v-for="claim in claims"
             :key="claim.id"
             :shadow="claim.status !== 'closed'"
-            :class="['claim-card', { 'card--terminated': claim.status === 'closed' }]"
+            :class="['activity-card', { 'card--terminated': claim.status === 'closed' }]"
           >
-            <div class="claim-card__header">
-              <div class="claim-card__identity">
-                <div :class="['claim-card__icon', typeTone(claim.claim_type)]">
+            <div class="activity-card__header-row activity-card__header-row--with-icon">
+                <div :class="['activity-card__icon', typeTone(claim.claim_type)]">
                   <component
                     :is="typeIcon(claim.claim_type)"
                     width="18"
                     height="18"
                   />
                 </div>
-                <div class="claim-card__title-wrap">
-                  <div class="claim-card__badges">
-                    <CBadge
-                      :variant="statusVariant(claim.status)"
-                      dot
-                    >
-                      {{ t(`claims.statuses.${claim.status}`) }}
-                    </CBadge>
-                    <CBadge variant="default">
-                      {{ t(`claims.types.${claim.claim_type}`) }}
-                    </CBadge>
-                    <CBadge
-                      :variant="deadlineVariant(claim)"
-                      :dot="deadlineVariant(claim) !== 'default'"
-                    >
-                      {{ deadlineLabel(claim) }}
-                    </CBadge>
-                  </div>
-                  <h3 class="title-md">
-                    {{ claim.title }}
-                  </h3>
-                  <p class="body-sm claim-card__meta">
-                    {{ unitLabel(claim.unit_id) }} · {{ t('claims.declaredOn', { date: formatDate(claim.declared_at) }) }}
-                    <template v-if="claim.published_at">
-                      · {{ t('claims.publishedOn', { date: formatDate(claim.published_at) }) }}
-                    </template>
-                  </p>
+                <h3 class="activity-card__title">
+                  {{ claim.title }}
+                </h3>
+                <div class="activity-card__chips">
+                  <CBadge variant="default">
+                    {{ t(`claims.types.${claim.claim_type}`) }}
+                  </CBadge>
+                  <CBadge
+                    :variant="statusVariant(claim.status)"
+                    dot
+                  >
+                    {{ t(`claims.statuses.${claim.status}`) }}
+                  </CBadge>
                 </div>
               </div>
 
-              <div class="claim-card__actions">
-                <span class="claim-card__opened">
-                  {{ t('claims.openedAt', { date: formatRelative(claim.created_at) }) }}
-                </span>
-                <div
-                  v-if="canManage"
-                  class="claim-card__actions-row"
+              <div class="activity-card__chips">
+                <CBadge
+                  :variant="deadlineVariant(claim)"
+                  :dot="deadlineVariant(claim) !== 'default'"
                 >
-                  <CBtn
-                    variant="ghost"
-                    size="sm"
-                    @click="openEditModal(claim)"
+                  {{ deadlineLabel(claim) }}
+                </CBadge>
+              </div>
+
+              <div class="activity-card__stack">
+                <div class="activity-card__subtitle">
+                  <span class="activity-card__line">
+                    <CIconLocation />
+                    {{ unitLabel(claim.unit_id) }}
+                  </span>
+                </div>
+
+                <p
+                  v-if="claim.description"
+                  class="activity-card__description"
+                >
+                  {{ claim.description }}
+                </p>
+
+                <div
+                  v-if="claim.document_count > 0"
+                  class="activity-card__documents"
+                >
+                  <button
+                    class="activity-card__line activity-card__documents-button"
+                    @click="openClaimDocuments(claim)"
                   >
-                    <CIconEdit />
-                    {{ t('common.edit') }}
-                  </CBtn>
-                  <CBtn
-                    v-if="claim.status === 'open'"
-                    variant="ghost"
-                    size="sm"
-                    @click="openTransmitModal(claim)"
+                    <CIconFile />
+                    {{ t('claims.documentsCount', claim.document_count) }}
+                  </button>
+                </div>
+
+                <template v-if="canManage">
+                  <div class="activity-card__actions">
+                    <CBtn
+                      variant="ghost"
+                      size="sm"
+                      @click="openEditModal(claim)"
+                    >
+                      <CIconEdit />
+                      {{ t('common.edit') }}
+                    </CBtn>
+                    <CBtn
+                      v-if="claim.status === 'open'"
+                      variant="primary"
+                      size="sm"
+                      @click="openTransmitModal(claim)"
+                    >
+                      <CIconUpload />
+                      {{ t('claims.transmit') }}
+                    </CBtn>
+                    <CBtn
+                      v-else-if="claim.status === 'in_progress'"
+                      variant="primary"
+                      size="sm"
+                      @click="openCloseModal(claim)"
+                    >
+                      <CIconCheckCircle />
+                      {{ t('claims.close') }}
+                    </CBtn>
+                  </div>
+                </template>
+
+                <div class="activity-card__note">
+                  <span class="activity-card__line">
+                    <CIconCalendar />
+                    {{ t('claims.declaredOn', { date: formatDate(claim.declared_at) }) }}
+                  </span>
+                  <span class="activity-card__line">
+                    <CIconClock
+                      width="14"
+                      height="14"
+                    />
+                    {{ t('claims.deadline.reference', { date: formatDate(claim.legal_deadline_at) }) }}
+                  </span>
+                  <span
+                    v-if="claim.published_at"
+                    class="activity-card__line"
                   >
-                    <CIconUpload />
-                    {{ t('claims.transmit') }}
-                  </CBtn>
-                  <CBtn
-                    v-else-if="claim.status === 'in_progress'"
-                    variant="ghost"
-                    size="sm"
-                    @click="openCloseModal(claim)"
+                    <CIconAlertTriangle />
+                    {{ t('claims.publishedOn', { date: formatDate(claim.published_at) }) }}
+                  </span>
+                  <span
+                    v-if="claim.reimbursement_date || claim.reimbursement_amount != null"
+                    class="activity-card__line"
                   >
-                    <CIconCheckCircle />
-                    {{ t('claims.close') }}
-                  </CBtn>
-                  <CBtn
-                    v-else
-                    variant="danger"
-                    size="sm"
-                    @click="openDeleteModal(claim)"
-                  >
-                    <CIconTrash />
-                    {{ t('common.delete') }}
-                  </CBtn>
+                    <CIconCurrency
+                      width="14"
+                      height="14"
+                    />
+                    {{ reimbursementLabel(claim) }}
+                  </span>
                 </div>
               </div>
-            </div>
-
-            <p
-              v-if="claim.description"
-              class="body-sm claim-card__description"
-            >
-              {{ claim.description }}
-            </p>
-
-            <div class="claim-card__footer">
-              <span class="claim-card__detail">
-                <CIconClock
-                  width="14"
-                  height="14"
-                />
-                {{ t('claims.deadline.reference', { date: formatDate(claim.legal_deadline_at) }) }}
-              </span>
-              <span class="claim-card__detail">
-                <CIconFile
-                  width="14"
-                  height="14"
-                />
-                {{ t('claims.documentsCount', claim.document_count) }}
-              </span>
-              <span
-                v-if="claim.reimbursement_date || claim.reimbursement_amount != null"
-                class="claim-card__detail"
-              >
-                <CIconCurrency
-                  width="14"
-                  height="14"
-                />
-                {{ reimbursementLabel(claim) }}
-              </span>
-            </div>
           </CCard>
 
           <div
@@ -1066,7 +1157,7 @@ async function submitDelete() {
             @change="onCreateDocumentChange"
           />
           <div
-            :class="['claim-dropzone', { 'claim-dropzone--over': documentsDragOver }]"
+            :class="['dropzone', { 'dropzone--over': documentsDragOver }]"
             role="button"
             tabindex="0"
             @click="documentInputRef?.click()"
@@ -1077,12 +1168,8 @@ async function submitDelete() {
             @dragleave.prevent="documentsDragOver = false"
             @drop.prevent="onCreateDocumentDrop"
           >
-            <CIconUpload
-              width="20"
-              height="20"
-              style="color:var(--color-on-surface-variant)"
-            />
-            <span class="body-xs claim-dropzone__hint">{{ t('claims.documentHint') }}</span>
+            <CIconUpload class="dropzone__icon" />
+            <span class="body-xs dropzone__hint">{{ t('claims.documentHint') }}</span>
           </div>
 
           <div
@@ -1234,7 +1321,7 @@ async function submitDelete() {
             @change="onEditDocumentChange"
           />
           <div
-            :class="['claim-dropzone', { 'claim-dropzone--over': editDocumentsDragOver }]"
+            :class="['dropzone', { 'dropzone--over': editDocumentsDragOver }]"
             role="button"
             tabindex="0"
             @click="editDocumentInputRef?.click()"
@@ -1245,12 +1332,8 @@ async function submitDelete() {
             @dragleave.prevent="editDocumentsDragOver = false"
             @drop.prevent="onEditDocumentDrop"
           >
-            <CIconUpload
-              width="20"
-              height="20"
-              style="color:var(--color-on-surface-variant)"
-            />
-            <span class="body-xs claim-dropzone__hint">{{ t('claims.editDocumentHint') }}</span>
+            <CIconUpload class="dropzone__icon" />
+            <span class="body-xs dropzone__hint">{{ t('claims.editDocumentHint') }}</span>
           </div>
 
           <div
@@ -1470,7 +1553,7 @@ async function submitDelete() {
             @change="onCloseDocumentChange"
           />
           <div
-            :class="['claim-dropzone', { 'claim-dropzone--over': closeDocumentsDragOver }]"
+            :class="['dropzone', { 'dropzone--over': closeDocumentsDragOver }]"
             role="button"
             tabindex="0"
             @click="closeDocumentInputRef?.click()"
@@ -1481,12 +1564,8 @@ async function submitDelete() {
             @dragleave.prevent="closeDocumentsDragOver = false"
             @drop.prevent="onCloseDocumentDrop"
           >
-            <CIconUpload
-              width="20"
-              height="20"
-              style="color:var(--color-on-surface-variant)"
-            />
-            <span class="body-xs claim-dropzone__hint">{{ t('claims.closeDocumentHint') }}</span>
+            <CIconUpload class="dropzone__icon" />
+            <span class="body-xs dropzone__hint">{{ t('claims.closeDocumentHint') }}</span>
           </div>
 
           <div
@@ -1569,6 +1648,16 @@ async function submitDelete() {
       </template>
     </CModal>
 
+    <CLinkedDocumentsModal
+      :open="!!claimDocumentsTarget"
+      :title="claimDocumentsTarget?.title ?? ''"
+      :documents="claimDocuments"
+      :loading="loadingClaimDocuments"
+      :empty-message="t('claims.noAttachedDocuments')"
+      @update:open="value => !value && (claimDocumentsTarget = null)"
+      @download="downloadClaimDocument"
+    />
+
     <CDocumentLinkActionModal
       :open="!!pendingDocumentAction"
       :title="t('claims.documentsDetachTitle')"
@@ -1589,113 +1678,6 @@ async function submitDelete() {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-}
-
-.claim-card {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-
-.claim-card__header {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--space-4);
-}
-
-.claim-card__identity {
-  display: flex;
-  gap: var(--space-3);
-  min-width: 0;
-}
-
-.claim-card__icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-md);
-  flex-shrink: 0;
-  background: var(--tone-bg);
-  color: var(--tone-fg);
-}
-
-.claim-card__title-wrap {
-  min-width: 0;
-}
-
-.claim-card__badges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.claim-card__meta,
-.claim-card__opened,
-.claim-card__description,
-.claim-card__detail {
-  color: var(--color-on-surface-variant);
-}
-
-.claim-card__description {
-  margin: 0;
-}
-
-.claim-card__actions {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: var(--space-2);
-  flex-shrink: 0;
-}
-
-.claim-card__actions-row {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: var(--space-2);
-}
-
-.claim-card__opened {
-  font-size: var(--text-xs);
-}
-
-.claim-card__footer {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-3);
-}
-
-.claim-card__detail {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: var(--text-sm);
-}
-
-.claim-dropzone {
-  border: 1.5px dashed var(--color-outline);
-  border-radius: var(--radius-sm);
-  padding: var(--space-4) var(--space-3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
-  user-select: none;
-}
-
-.claim-dropzone:hover,
-.claim-dropzone--over {
-  background: var(--color-surface-container);
-  border-color: var(--color-primary);
-}
-
-.claim-dropzone__hint {
-  color: var(--color-on-surface-variant);
 }
 
 .claim-preview-strip {
@@ -1840,16 +1822,6 @@ async function submitDelete() {
 }
 
 @media (max-width: 720px) {
-  .claim-card__header {
-    flex-direction: column;
-  }
-
-  .claim-card__actions,
-  .claim-card__actions-row {
-    align-items: flex-start;
-    justify-content: flex-start;
-  }
-
   .form-row {
     grid-template-columns: 1fr;
   }

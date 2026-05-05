@@ -9,7 +9,7 @@ import type {
   Report, Consultation, ConsultationResults, VendorTask, VendorDocument,
   Document, UploadUrlResponse, DownloadUrlResponse,
   Building, Unit, User, AllocationKey, UnitShare,
-  OnboardingStatus, BootstrapInput, BootstrapResponse,
+  OnboardingStatus, RuntimeStatus, BootstrapInput, BootstrapResponse,
   LoginResponse, BuildingStats, RegistryResponse, UnitChargesResponse,
   Contractor,
 } from '@/types/domain'
@@ -27,6 +27,11 @@ export const onboardingApi = {
     api.get<OnboardingStatus>('/onboarding/status'),
   bootstrap: (data: BootstrapInput) =>
     api.post<BootstrapResponse>('/onboarding/bootstrap', data),
+}
+
+export const runtimeApi = {
+  status: () =>
+    api.get<RuntimeStatus>('/runtime'),
 }
 
 // ── Auth ──────────────────────────────────────────────────────────
@@ -240,6 +245,12 @@ export const tasksApi = {
     api.put<Task>(`/tasks/${id}`, data),
   delete: (id: string) =>
     api.delete(`/tasks/${id}`),
+  listDocuments: (id: string) =>
+    api.get<Document[]>(`/tasks/${id}/documents`),
+  attachDocument: (id: string, document_id: string) =>
+    api.post(`/tasks/${id}/documents`, { document_id }),
+  detachDocument: (id: string, documentId: string) =>
+    api.delete(`/tasks/${id}/documents/${documentId}`),
   generateToken: (id: string) =>
     api.post<{ token: string; expires_at: string; url: string }>(`/tasks/${id}/vendor-token`),
   getVendorTokenUrl: (id: string) =>
@@ -367,4 +378,10 @@ export const vendorApi = {
       throw new Error(`Staging upload failed (${response.status})`)
     }
   },
+}
+
+// ── Admin ─────────────────────────────────────────────────────────
+export const adminApi = {
+  resetDemo: () =>
+    api.post('/admin/reset-demo'),
 }

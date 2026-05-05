@@ -7,6 +7,7 @@ backend/**/*.rs.bk
 frontend/node_modules/
 frontend/dist/
 frontend/.env.local
+docs/review-screenshots/*.png
 
 # IDE
 .idea/
