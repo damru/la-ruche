@@ -41,6 +41,7 @@ RUN mkdir src && echo "fn main() {}" > src/main.rs && \
 
 COPY backend/src ./src
 COPY backend/migrations ./migrations
+COPY backend/seeds ./seeds
 # ⚠️  Requires `make sqlx-prepare` before docker build (creates backend/.sqlx/)
 COPY backend/.sqlx ./.sqlx
 
@@ -75,6 +76,7 @@ COPY --from=frontend-builder /build/dist /usr/share/caddy
 ARG CARGO_PROFILE=debug
 COPY --from=backend-builder /build/target/${CARGO_PROFILE}/laruche ./laruche
 COPY --from=backend-builder /build/migrations ./migrations
+COPY --from=backend-builder /build/seeds ./seeds
 
 # Copy Caddy configuration
 COPY docker/Caddyfile /etc/caddy/Caddyfile

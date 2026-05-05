@@ -374,3 +374,9 @@ export const vendorApi = {
     }
   },
 }
+
+// ── Admin ─────────────────────────────────────────────────────────
+export const adminApi = {
+  resetDemo: () =>
+    api.post('/admin/reset-demo'),
+}

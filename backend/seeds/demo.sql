@@ -388,8 +388,8 @@ VALUES
         'Alpha Ascenseurs',
         'contact@alpha-ascenseurs.test',
         '+33 4 72 10 00 01',
-        ARRAY['elevator', 'maintenance'],
-        'Annual lift maintenance and emergency breakdown response.'
+        ARRAY['maintenance', 'service'],
+        'Entretien annuel des ascenseurs et interventions d''urgence en cas de panne.'
     ),
     (
         '00000000-0000-0000-0000-000000000502',
@@ -397,8 +397,8 @@ VALUES
         'Hydro Services Lyon',
         'interventions@hydro-services.test',
         '+33 4 72 10 00 02',
-        ARRAY['plumbing', 'water_damage'],
-        'Plumbing contractor used for leaks, risers, and water-damage follow-up.'
+        ARRAY['water', 'maintenance'],
+        'Prestataire plomberie intervenant sur les réseaux d''eau, fuites et colonnes montantes.'
     ),
     (
         '00000000-0000-0000-0000-000000000503',
@@ -406,8 +406,8 @@ VALUES
         'Serrurerie du Parc',
         'atelier@serrurerie-parc.test',
         '+33 4 72 10 00 03',
-        ARRAY['locksmith', 'security'],
-        'Preferred locksmith for common-area access control and urgent lock changes.'
+        ARRAY['service', 'other'],
+        'Serrurier de référence pour les accès aux parties communes et changements de cylindres urgents.'
     ),
     (
         '00000000-0000-0000-0000-000000000504',
@@ -415,8 +415,8 @@ VALUES
         'Toitures Lyonnaises',
         'support@toitures-lyonnaises.test',
         '+33 4 72 10 00 04',
-        ARRAY['roofing', 'waterproofing'],
-        'Roofing company used for terrace waterproofing and storm remediation.'
+        ARRAY['maintenance', 'other'],
+        'Couvreur intervenant sur l''étanchéité des terrasses et la remise en état après tempête.'
     )
 ON CONFLICT (id) DO NOTHING;
 

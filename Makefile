@@ -4,7 +4,7 @@
 .PHONY: help dev dev-frontend dev-full build build-frontend \
         test test-integration test-all test-frontend \
         lint lint-fix check \
-        migrate migrate-test migrate-revert sqlx-prepare seed-dev \
+        migrate migrate-test migrate-revert sqlx-prepare \
         docker docker-up docker-down docker-prod docker-logs \
         clean install-tools setup setup-hooks commit fmt
 
@@ -70,8 +70,6 @@ migrate-test: ## Apply migrations on the test DB
 migrate-revert: ## Revert the last migration
 	cd backend && DATABASE_URL=$(DB_URL) sqlx migrate revert
 
-seed-dev: ## ⚠️  Inject dev seed data (resets DB — remove before v1.0)
-	docker compose exec -T postgres psql -U laruche -d laruche < backend/seeds/seed_dev.sql
 
 sqlx-prepare: ## Generate SQLx offline metadata (.sqlx/)
 	cd backend && DATABASE_URL=$(DB_URL) cargo sqlx prepare

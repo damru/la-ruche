@@ -1066,7 +1066,12 @@
       "changePassword": "Changer le mot de passe",
       "dangerZone": "Zone dangereuse",
       "dangerDesc": "Ces actions sont irréversibles.",
-      "resetApp": "Réinitialiser l'application"
+      "resetApp": "Réinitialiser l'application",
+      "resetAppConfirmTitle": "Réinitialiser l'application ?",
+      "resetAppConfirmMessage": "Toutes les données seront effacées et remplacées par les données de démonstration. Cette action est irréversible.",
+      "resetAppConfirm": "Réinitialiser",
+      "resetAppSuccess": "Application réinitialisée avec les données de démonstration.",
+      "resetAppError": "Impossible de réinitialiser l'application."
     },
     "preferences": {
       "title": "Préférences",

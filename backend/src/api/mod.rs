@@ -1,3 +1,4 @@
+pub mod admin;
 pub mod assemblies;
 pub mod auth;
 pub mod budget;
@@ -34,6 +35,8 @@ const NOTICE_TEXT: &str = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/../
 
 pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
     let api = Router::new()
+        // ── Admin ────────────────────────────────────────────────
+        .route("/admin/reset-demo", post(admin::reset_demo))
         // ── Auth ────────────────────────────────────────────────
         .route("/auth/register", post(auth::register))
         .route("/auth/login", post(auth::login))
