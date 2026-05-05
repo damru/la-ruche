@@ -12,6 +12,7 @@ pub mod documents;
 pub mod logbook;
 pub mod onboarding;
 pub mod reports;
+pub mod runtime;
 mod stubs;
 pub mod tasks;
 pub mod units;
@@ -273,6 +274,7 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
         // ── Onboarding first-run (no JWT) ─────────────────────────
         .route("/api/v1/onboarding/status", get(onboarding::status))
         .route("/api/v1/onboarding/bootstrap", post(onboarding::bootstrap))
+        .route("/api/v1/runtime", get(runtime::status))
         // ── Contractor access (tokenized, no JWT) ─────────────────
         .route("/api/v1/vendor/{token}", get(contractor::get_task))
         .route(

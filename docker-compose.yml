@@ -19,6 +19,7 @@ services:
       - "8080:80"
       - "443:443"
     environment:
+      LA_RUCHE__APP__DEMO_MODE: "true"
       LA_RUCHE__APP__HOST: "0.0.0.0"
       LA_RUCHE__APP__PORT: "8080"
       LA_RUCHE__APP__PUBLIC_URL: "${PUBLIC_URL:-http://localhost}"

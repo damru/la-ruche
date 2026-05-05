@@ -361,6 +361,10 @@ export interface OnboardingStatus {
   needs_onboarding: boolean
 }
 
+export interface RuntimeStatus {
+  demo_mode: boolean
+}
+
 export interface BootstrapInput {
   email: string
   last_name: string

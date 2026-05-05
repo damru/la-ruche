@@ -9,7 +9,7 @@ import type {
   Report, Consultation, ConsultationResults, VendorTask, VendorDocument,
   Document, UploadUrlResponse, DownloadUrlResponse,
   Building, Unit, User, AllocationKey, UnitShare,
-  OnboardingStatus, BootstrapInput, BootstrapResponse,
+  OnboardingStatus, RuntimeStatus, BootstrapInput, BootstrapResponse,
   LoginResponse, BuildingStats, RegistryResponse, UnitChargesResponse,
   Contractor,
 } from '@/types/domain'
@@ -27,6 +27,11 @@ export const onboardingApi = {
     api.get<OnboardingStatus>('/onboarding/status'),
   bootstrap: (data: BootstrapInput) =>
     api.post<BootstrapResponse>('/onboarding/bootstrap', data),
+}
+
+export const runtimeApi = {
+  status: () =>
+    api.get<RuntimeStatus>('/runtime'),
 }
 
 // ── Auth ──────────────────────────────────────────────────────────

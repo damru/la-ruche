@@ -87,7 +87,7 @@
   font-weight: var(--fw-semibold);
   letter-spacing: 0;
   line-height: 1.2;
-  align-self: center;
+  align-self: start;
 }
 
 .activity-card__header-row--with-icon {

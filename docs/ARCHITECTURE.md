@@ -25,7 +25,7 @@
 | Traçabilité tâches ↔ carnet | Lien informatif `task_id` + multiples clôtures + `completion_cost` courant sur `task` | ADR-008 |
 | Immutabilité comptable + audit log | Guards de domaine + `audit_log` append-only + `valid_from`/`valid_to` sur `budget_line` + `predecessor_id` sur `vendor_contract` | ADR-009 |
 | Logs | tracing + tracing-subscriber (JSON) | — |
-| Config | dotenvy + config crate (LA_RUCHE__*) | — |
+| Config | dotenvy + config crate (LA_RUCHE__*) ; `LA_RUCHE__APP__DEMO_MODE=true` rejoue `backend/seeds/demo.sql` au démarrage | — |
 | Frontend | Vue 3 + Vite + TypeScript | DDR-003 |
 | État UI | Pinia | — |
 | Préférences UI persistées | `localStorage` `laruche-theme` (`light` / `dark`), absence de clé = `auto` | DDR-002, DDR-004 |

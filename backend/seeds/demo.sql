@@ -18,8 +18,8 @@
 -- (Argon2id hash, m=4096 t=1 p=1 — dev-only lightweight params)
 --
 -- Usage:
---   psql $DATABASE_URL -f backend/seeds/seed_dev.sql
---   make seed-dev
+--   psql $DATABASE_URL -f backend/seeds/demo.sql
+--   set LA_RUCHE__APP__DEMO_MODE=true to auto-initialize the database at startup
 -- ============================================================
 
 -- ============================================================
@@ -815,7 +815,7 @@ ON CONFLICT (id) DO NOTHING;
 --
 -- Contracts     | 3 fixtures                         | active, terminated, expired
 -- Reminders     | 4 fixtures                         | pending, sent, acknowledged
--- Contractors   | 4 referential entries              | elevator, plumbing, locksmith, roofing
+-- Contractors   | 4 referential entries              | maintenance, water, service, other
 -- Tasks         | 6 fixtures                         | open, in_progress, awaiting_vendor, awaiting_validation, closed, cancelled
 -- Reports       | 3 fixtures                         | open, in_progress, closed
 -- Claims        | 3 fixtures                         | open, in_progress, closed
