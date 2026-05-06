@@ -42,7 +42,7 @@ pub async fn create(
     Json(input): Json<db::report::CreateReportInput>,
 ) -> AppResult<(StatusCode, Json<serde_json::Value>)> {
     if input.title.trim().is_empty() {
-        return Err(AppError::Validation("Title is required".into()));
+        return Err(AppError::validation_code("errors.reports.title_required"));
     }
     let row = db::report::create(&state.pool, auth.building_id, auth.user_id, input).await?;
     Ok((StatusCode::CREATED, json_value(row)?))
@@ -67,10 +67,7 @@ pub async fn update_status(
 ) -> AppResult<StatusCode> {
     auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
     if !db::report::validate_status(&input.status) {
-        return Err(AppError::Validation(format!(
-            "Invalid status '{}'. Valid values: open, in_progress, closed",
-            input.status
-        )));
+        return Err(AppError::validation_code("errors.reports.invalid_status"));
     }
     db::report::update_status(&state.pool, id, auth.building_id, &input.status).await?;
     Ok(StatusCode::NO_CONTENT)
@@ -90,10 +87,7 @@ pub async fn convert_to_task(
         .and_then(|Json(body)| body.priority)
         .unwrap_or_else(|| db::task::DEFAULT_PRIORITY.to_string());
     if !db::task::validate_priority(&priority) {
-        return Err(AppError::Validation(format!(
-            "Invalid priority '{}'. Valid values: low, normal, high, urgent",
-            priority
-        )));
+        return Err(AppError::validation_code("errors.reports.invalid_priority"));
     }
     let task_id =
         db::report::convert_to_task(&state.pool, id, auth.building_id, auth.user_id, &priority)
@@ -111,7 +105,7 @@ pub async fn update(
     auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
     let trimmed = input.title.trim().to_string();
     if trimmed.is_empty() {
-        return Err(AppError::Validation("Title is required".into()));
+        return Err(AppError::validation_code("errors.reports.title_required"));
     }
     input.title = trimmed;
     db::report::update(&state.pool, id, auth.building_id, input).await?;

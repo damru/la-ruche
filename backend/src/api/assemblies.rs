@@ -146,7 +146,7 @@ pub async fn create(
     auth.require_role(&Role::Manager)?;
     input
         .validate()
-        .map_err(|e| AppError::Validation(e.to_string()))?;
+        .map_err(|_| AppError::validation_code("errors.meetings.invalid_meeting_payload"))?;
 
     let meeting =
         crate::db::assembly::create(&state.pool, auth.building_id, auth.user_id, input).await?;
@@ -173,7 +173,7 @@ pub async fn update(
     auth.require_role(&Role::Manager)?;
     input
         .validate()
-        .map_err(|e| AppError::Validation(e.to_string()))?;
+        .map_err(|_| AppError::validation_code("errors.meetings.invalid_meeting_payload"))?;
 
     let meeting = crate::db::assembly::update(&state.pool, id, auth.building_id, input)
         .await?
@@ -220,7 +220,7 @@ pub async fn create_resolution(
     auth.require_role(&Role::Manager)?;
     input
         .validate()
-        .map_err(|e| AppError::Validation(e.to_string()))?;
+        .map_err(|_| AppError::validation_code("errors.meetings.invalid_resolution_payload"))?;
 
     let resolution =
         crate::db::assembly::create_resolution(&state.pool, id, auth.building_id, input).await?;
@@ -356,6 +356,8 @@ fn parse_vote_rule(s: &str) -> AppResult<VoteRule> {
         "absolute_majority" => Ok(VoteRule::AbsoluteMajority),
         "double_majority" => Ok(VoteRule::DoubleMajority),
         "unanimity" => Ok(VoteRule::Unanimity),
-        _ => Err(AppError::BadRequest(format!("Invalid vote type: {}", s))),
+        _ => Err(AppError::bad_request_code(
+            "errors.meetings.invalid_vote_type",
+        )),
     }
 }

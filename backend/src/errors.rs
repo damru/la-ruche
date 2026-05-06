@@ -47,6 +47,20 @@ pub enum AppError {
     Internal(#[from] anyhow::Error),
 }
 
+impl AppError {
+    pub fn validation_code(code: &'static str) -> Self {
+        Self::Validation(code.into())
+    }
+
+    pub fn bad_request_code(code: &'static str) -> Self {
+        Self::BadRequest(code.into())
+    }
+
+    pub fn conflict_code(code: &'static str) -> Self {
+        Self::Conflict(code.into())
+    }
+}
+
 /// JSON response body for errors
 #[derive(Serialize)]
 struct ErrorBody {

@@ -89,7 +89,6 @@
       "maintenance": "Historique d'entretien",
       "reports": "Incidents et anomalies",
       "tasks": "Suivi des interventions",
-      "taskDetail": "Pilotage d'une intervention",
       "contractors": "Annuaire des prestataires",
       "contractorDetail": "Coordonnées et historique",
       "allocationKeys": "Bases de répartition",
@@ -1182,7 +1181,76 @@
     "CONFLICT": "Conflit de données",
     "DB_ERROR": "Erreur base de données",
     "STORAGE_ERROR": "Erreur de stockage",
-    "INTERNAL_ERROR": "Erreur interne du serveur"
+    "INTERNAL_ERROR": "Erreur interne du serveur",
+    "building": {
+      "invalid_payload": "Les informations de l'immeuble sont invalides."
+    },
+    "allocation_keys": {
+      "invalid_payload": "La clé de répartition est invalide.",
+      "share_value_negative": "Les tantièmes ne peuvent pas être négatifs.",
+      "shares_exceed_total": "La somme des tantièmes dépasse le total de la copropriété."
+    },
+    "meetings": {
+      "invalid_meeting_payload": "Les informations de l'assemblée sont invalides.",
+      "invalid_resolution_payload": "Les informations de la résolution sont invalides.",
+      "invalid_vote_type": "La règle de vote est invalide.",
+      "unit_general_shares_missing": "Le lot sélectionné est introuvable ou n'a pas de tantièmes généraux.",
+      "meeting_not_mutable": "Cette assemblée n'est plus modifiable."
+    },
+    "auth": {
+      "invalid_login_payload": "Les identifiants fournis sont incomplets ou invalides.",
+      "invalid_reset_request_payload": "La demande de réinitialisation est invalide.",
+      "invalid_reset_confirm_payload": "Le nouveau mot de passe ou le jeton est invalide.",
+      "invalid_invite_accept_payload": "Les informations d'acceptation de l'invitation sont invalides."
+    },
+    "consultations": {
+      "title_required": "Le titre de la consultation est obligatoire.",
+      "min_choices": "Au moins deux choix sont requis.",
+      "choice_label_required": "Chaque choix doit avoir un libellé.",
+      "visible_roles_required": "Au moins un rôle visible doit être sélectionné.",
+      "invalid_visible_role": "Un des rôles visibles est invalide."
+    },
+    "contractor": {
+      "invalid_file_extension": "L'extension du fichier est invalide."
+    },
+    "contractors": {
+      "name_required": "Le nom du prestataire est obligatoire."
+    },
+    "documents": {
+      "invalid_upload_request": "La demande d'envoi de document est invalide.",
+      "invalid_extension": "L'extension du document est invalide.",
+      "invalid_confirm_request": "La confirmation du document est invalide."
+    },
+    "logbook": {
+      "title_required": "Le titre de l'entrée du carnet est obligatoire."
+    },
+    "onboarding": {
+      "invalid_payload": "Les informations de démarrage sont invalides.",
+      "shares_total_positive": "Les tantièmes totaux doivent être strictement positifs.",
+      "already_initialized": "Cette instance est déjà initialisée."
+    },
+    "reports": {
+      "title_required": "Le titre du signalement est obligatoire.",
+      "invalid_status": "Le statut du signalement est invalide.",
+      "invalid_priority": "La priorité de la tâche générée est invalide."
+    },
+    "tasks": {
+      "title_required": "Le titre de la tâche est obligatoire.",
+      "invalid_status": "Le statut de la tâche est invalide.",
+      "invalid_priority": "La priorité de la tâche est invalide."
+    },
+    "units": {
+      "invalid_payload": "Les informations du lot sont invalides."
+    },
+    "claims": {
+      "title_required": "Le titre du sinistre est obligatoire.",
+      "invalid_type": "Le type de sinistre est invalide.",
+      "invalid_status": "Le statut du sinistre est invalide.",
+      "published_at_required_for_natural_disaster": "La date de publication de l'arrêté est obligatoire pour une catastrophe naturelle.",
+      "published_at_only_for_natural_disaster": "La date de publication n'est autorisée que pour une catastrophe naturelle.",
+      "transmitted_before_reference_date": "La date de transmission ne peut pas être antérieure à la date légale de référence.",
+      "reimbursement_amount_positive": "Le montant remboursé doit être strictement positif."
+    }
   },
   "format": {
     "currency": "{value} €",

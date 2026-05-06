@@ -94,15 +94,12 @@ pub async fn create(
 ) -> AppResult<(StatusCode, Json<serde_json::Value>)> {
     auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
     if input.title.trim().is_empty() {
-        return Err(AppError::Validation("Title is required".into()));
+        return Err(AppError::validation_code("errors.tasks.title_required"));
     }
     if let Some(ref p) = input.priority
         && !db::task::validate_priority(p)
     {
-        return Err(AppError::Validation(format!(
-            "Invalid priority '{}'. Valid values: low, normal, high, urgent",
-            p
-        )));
+        return Err(AppError::validation_code("errors.tasks.invalid_priority"));
     }
     let t = db::task::create(&state.pool, auth.building_id, auth.user_id, input).await?;
     Ok((
@@ -151,23 +148,17 @@ pub async fn update(
     if let Some(ref t) = input.title
         && t.trim().is_empty()
     {
-        return Err(AppError::Validation("title cannot be empty".to_string()));
+        return Err(AppError::validation_code("errors.tasks.title_required"));
     }
     if let Some(ref s) = input.status
         && !db::task::validate_status(s)
     {
-        return Err(AppError::Validation(format!(
-            "Invalid status '{}'. Valid values: open, in_progress, awaiting_vendor, awaiting_validation, closed, cancelled",
-            s
-        )));
+        return Err(AppError::validation_code("errors.tasks.invalid_status"));
     }
     if let Some(ref p) = input.priority
         && !db::task::validate_priority(p)
     {
-        return Err(AppError::Validation(format!(
-            "Invalid priority '{}'. Valid values: low, normal, high, urgent",
-            p
-        )));
+        return Err(AppError::validation_code("errors.tasks.invalid_priority"));
     }
     db::task::update_fields(
         &state.pool,

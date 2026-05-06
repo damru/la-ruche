@@ -134,7 +134,7 @@ pub async fn create(
     require_manager(&auth)?;
     input
         .validate()
-        .map_err(|e| AppError::Validation(e.to_string()))?;
+        .map_err(|_| AppError::validation_code("errors.units.invalid_payload"))?;
 
     // Pre-check: is the number already taken by an archived unit?
     if db::unit::is_archived(&state.pool, auth.building_id, &input.unit_number).await? {
@@ -188,7 +188,7 @@ pub async fn update(
     require_manager(&auth)?;
     input
         .validate()
-        .map_err(|e| AppError::Validation(e.to_string()))?;
+        .map_err(|_| AppError::validation_code("errors.units.invalid_payload"))?;
 
     let row = db::unit::update(
         &state.pool,

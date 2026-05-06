@@ -81,28 +81,32 @@ pub async fn create(
     Json(input): Json<CreateConsultationInput>,
 ) -> AppResult<(StatusCode, Json<serde_json::Value>)> {
     if input.title.trim().is_empty() {
-        return Err(AppError::Validation("Title is required".into()));
+        return Err(AppError::validation_code(
+            "errors.consultations.title_required",
+        ));
     }
     if input.choices.len() < 2 {
-        return Err(AppError::Validation(
-            "At least 2 choices are required".into(),
+        return Err(AppError::validation_code(
+            "errors.consultations.min_choices",
         ));
     }
     for choice in &input.choices {
         if choice.trim().is_empty() {
-            return Err(AppError::Validation(
-                "Choice labels must not be empty".into(),
+            return Err(AppError::validation_code(
+                "errors.consultations.choice_label_required",
             ));
         }
     }
     if input.visible_to_roles.is_empty() {
-        return Err(AppError::Validation(
-            "visible_to_roles must not be empty".into(),
+        return Err(AppError::validation_code(
+            "errors.consultations.visible_roles_required",
         ));
     }
     for role in &input.visible_to_roles {
         if !VALID_ROLES.contains(&role.as_str()) {
-            return Err(AppError::Validation(format!("Invalid role: {}", role)));
+            return Err(AppError::validation_code(
+                "errors.consultations.invalid_visible_role",
+            ));
         }
     }
 

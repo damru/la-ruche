@@ -510,7 +510,9 @@ pub async fn save_attendance(
             )
             .fetch_optional(&mut *tx)
             .await?
-            .ok_or_else(|| AppError::BadRequest("Unit not found or has no general shares".into()))?
+            .ok_or_else(|| {
+                AppError::bad_request_code("errors.meetings.unit_general_shares_missing")
+            })?
         };
 
         sqlx::query!(
@@ -594,8 +596,8 @@ pub async fn create_resolution(
     .unwrap_or(false);
 
     if !exists {
-        return Err(AppError::Conflict(
-            "Meeting not found or already closed".into(),
+        return Err(AppError::conflict_code(
+            "errors.meetings.meeting_not_mutable",
         ));
     }
 
@@ -675,7 +677,7 @@ pub async fn cast_vote(
         crate::db::allocation_key::get_unit_general_share(pool, input.unit_id, building_id)
             .await?
             .ok_or_else(|| {
-                AppError::BadRequest("Unit not found or has no general shares".into())
+                AppError::bad_request_code("errors.meetings.unit_general_shares_missing")
             })?;
 
     sqlx::query!(
