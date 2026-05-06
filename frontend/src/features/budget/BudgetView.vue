@@ -105,7 +105,7 @@ function initials(name: string): string {
       <!-- Page header -->
       <div class="page-header">
         <p class="page-eyebrow">
-          {{ t('budget.title') }}
+          {{ t('page.eyebrows.budget') }}
         </p>
         <h1 class="page-title">
           {{ t('budget.fiscalYear', { year: selectedBudget.fiscal_year }) }}

@@ -53,11 +53,14 @@ onMounted(reload)
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
-        <div class="view-header">
+        <header class="view-header">
+          <p class="page-eyebrow">
+            {{ t('page.eyebrows.myCharges') }}
+          </p>
           <h1 class="display-md">
             {{ t('nav.myCharges') }}
           </h1>
-        </div>
+        </header>
 
         <!-- Multi-unit selection (co-owner with several units) -->
         <div

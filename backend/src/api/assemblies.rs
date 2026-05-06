@@ -16,6 +16,7 @@ use uuid::Uuid;
 use validator::Validate;
 
 use crate::{
+    api::documents::DocumentListItem,
     db::AppState,
     domain::{AuthUser, Role, vote::VoteRule},
     errors::{AppError, AppResult},
@@ -47,6 +48,8 @@ pub struct MeetingResponse {
     pub notice_date: Option<NaiveDate>,
     pub meeting_date: DateTime<Utc>,
     pub location: Option<String>,
+    pub agenda: Option<String>,
+    pub minutes_document_id: Option<Uuid>,
     pub created_at: DateTime<Utc>,
 }
 
@@ -64,6 +67,65 @@ pub struct VoteInput {
     pub unit_id: Uuid,
     pub position: String, // "in_favor" | "against" | "abstain"
     pub proxy_for: Option<Uuid>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum MeetingDocumentKindDto {
+    Notice,
+    Attachment,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct MeetingDocumentResponse {
+    #[serde(flatten)]
+    pub document: DocumentListItem,
+    pub kind: MeetingDocumentKindDto,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct AttachMeetingDocumentInput {
+    pub document_id: Uuid,
+    pub kind: MeetingDocumentKindDto,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum MeetingAttendanceModeDto {
+    Present,
+    Proxy,
+    Correspondence,
+    Absent,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct MeetingAttendanceEntryResponse {
+    pub unit_id: Uuid,
+    pub unit_number: String,
+    pub owner_name: Option<String>,
+    pub mode: MeetingAttendanceModeDto,
+    pub representative_name: Option<String>,
+    pub shares_represented: i32,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct MeetingAttendanceResponse {
+    pub entries: Vec<MeetingAttendanceEntryResponse>,
+    pub shares_present: i32,
+    pub total_shares: i32,
+    pub present_units: i32,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct MeetingAttendanceInputEntry {
+    pub unit_id: Uuid,
+    pub mode: MeetingAttendanceModeDto,
+    pub representative_name: Option<String>,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct SaveMeetingAttendanceInput {
+    pub entries: Vec<MeetingAttendanceInputEntry>,
 }
 
 // ── Handlers ─────────────────────────────────────────────────────
@@ -218,6 +280,74 @@ pub async fn results(
     let result = tally.compute(&rule);
 
     crate::errors::json_value(result)
+}
+
+pub async fn list_documents(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+) -> AppResult<Json<Vec<MeetingDocumentResponse>>> {
+    let roles: Vec<String> = auth.roles.iter().map(ToString::to_string).collect();
+    let documents =
+        crate::db::assembly::list_documents(&state.pool, id, auth.building_id, &roles).await?;
+    Ok(Json(documents))
+}
+
+pub async fn attach_document(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+    Json(input): Json<AttachMeetingDocumentInput>,
+) -> AppResult<StatusCode> {
+    auth.require_role(&Role::Manager)?;
+    let attached = crate::db::assembly::attach_document(
+        &state.pool,
+        id,
+        input.document_id,
+        input.kind,
+        auth.building_id,
+    )
+    .await?;
+    if !attached {
+        return Err(AppError::NotFound);
+    }
+    Ok(StatusCode::NO_CONTENT)
+}
+
+pub async fn detach_document(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+    Path((id, document_id)): Path<(Uuid, Uuid)>,
+) -> AppResult<StatusCode> {
+    auth.require_role(&Role::Manager)?;
+    let detached =
+        crate::db::assembly::detach_document(&state.pool, id, document_id, auth.building_id)
+            .await?;
+    if !detached {
+        return Err(AppError::NotFound);
+    }
+    Ok(StatusCode::NO_CONTENT)
+}
+
+pub async fn list_attendance(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+) -> AppResult<Json<MeetingAttendanceResponse>> {
+    let attendance =
+        crate::db::assembly::list_attendance(&state.pool, id, auth.building_id).await?;
+    Ok(Json(attendance))
+}
+
+pub async fn save_attendance(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+    Json(input): Json<SaveMeetingAttendanceInput>,
+) -> AppResult<StatusCode> {
+    auth.require_role(&Role::Manager)?;
+    crate::db::assembly::save_attendance(&state.pool, id, auth.building_id, input.entries).await?;
+    Ok(StatusCode::NO_CONTENT)
 }
 
 fn parse_vote_rule(s: &str) -> AppResult<VoteRule> {

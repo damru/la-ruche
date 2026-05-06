@@ -139,11 +139,14 @@ async function confirmResetDemo() {
     </CTopbar>
 
     <div class="view-container">
-      <div class="view-header">
+      <header class="view-header">
+        <p class="page-eyebrow">
+          {{ t('page.eyebrows.profile') }}
+        </p>
         <h1 class="display-md">
           {{ t('nav.account') }}
         </h1>
-      </div>
+      </header>
 
       <!-- Tabs -->
       <div class="tabs">
@@ -274,7 +277,10 @@ async function confirmResetDemo() {
           >
             {{ t('settings.account.dangerDesc') }}
           </p>
-          <CBtn variant="danger" @click="showResetModal = true">
+          <CBtn
+            variant="danger"
+            @click="showResetModal = true"
+          >
             {{ t('settings.account.resetApp') }}
           </CBtn>
         </CCard>
@@ -322,16 +328,27 @@ async function confirmResetDemo() {
     :title="t('settings.account.resetAppConfirmTitle')"
     @close="showResetModal = false"
   >
-    <p class="body-sm">{{ t('settings.account.resetAppConfirmMessage') }}</p>
+    <p class="body-sm">
+      {{ t('settings.account.resetAppConfirmMessage') }}
+    </p>
     <template #footer>
       <CFormFeedback
         :status="resetFeedback.status.value"
         :message="resetFeedback.message.value"
       />
-      <CBtn variant="ghost" :disabled="resetting" @click="showResetModal = false">
+      <CBtn
+        variant="ghost"
+        :disabled="resetting"
+        @click="showResetModal = false"
+      >
         {{ t('common.cancel') }}
       </CBtn>
-      <CBtn variant="danger" :loading="resetting" :disabled="resetting" @click="confirmResetDemo">
+      <CBtn
+        variant="danger"
+        :loading="resetting"
+        :disabled="resetting"
+        @click="confirmResetDemo"
+      >
         {{ t('settings.account.resetAppConfirm') }}
       </CBtn>
     </template>

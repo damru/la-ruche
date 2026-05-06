@@ -152,6 +152,9 @@ function priorityVariant(p: string): 'err' | 'pending' | 'primary' | 'valid' | '
               />
             </div>
             <div class="contractor-header-info">
+              <p class="page-eyebrow">
+                {{ t('page.eyebrows.contractorDetail') }}
+              </p>
               <h1 class="display-md contractor-name">
                 {{ contractor.name }}
               </h1>
@@ -371,11 +374,4 @@ function priorityVariant(p: string): 'err' | 'pending' | 'primary' | 'valid' | '
 }
 .breadcrumb-link:hover { text-decoration: underline; }
 
-/* ── Empty state ─────────────────────────────────────────────────── */
-.empty-state {
-  padding: var(--space-8);
-  text-align: center;
-  font-size: var(--text-md);
-  color: var(--color-on-surface-variant);
-}
 </style>

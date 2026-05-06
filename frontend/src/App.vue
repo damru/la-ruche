@@ -12,7 +12,11 @@ onMounted(() => {
 </script>
 
 <template>
-  <CMockBanner v-if="ui.demoMode" variant="demo" class="app-root__banner" />
+  <CMockBanner
+    v-if="ui.demoMode"
+    variant="demo"
+    class="app-root__banner"
+  />
   <RouterView />
   <CConfirmDialog />
 </template>

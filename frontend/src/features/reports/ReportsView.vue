@@ -542,19 +542,20 @@ function photoPreview(file: File): string {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
-        <div class="view-header">
-          <div>
-            <h1 class="display-md">
-              {{ t('reports.title') }}
-            </h1>
-            <p
-              class="body-md"
-              style="color:var(--color-on-surface-variant)"
-            >
-              {{ t('reports.activeCount', activeCount) }}
-            </p>
-          </div>
-        </div>
+        <header class="view-header">
+          <p class="page-eyebrow">
+            {{ t('page.eyebrows.reports') }}
+          </p>
+          <h1 class="display-md">
+            {{ t('reports.title') }}
+          </h1>
+          <p
+            class="body-md"
+            style="color:var(--color-on-surface-variant)"
+          >
+            {{ t('reports.activeCount', activeCount) }}
+          </p>
+        </header>
 
         <!-- Filters -->
         <div class="tabs">
@@ -583,110 +584,110 @@ function photoPreview(file: File): string {
             :class="['activity-card', { 'card--terminated': r.status === 'closed' }]"
           >
             <div class="activity-card__header-row activity-card__header-row--with-icon">
-                <div class="activity-card__icon tone--default">
-                  <CIconInfo />
-                </div>
-                <div class="activity-card__chips">
-                  <CBadge
-                    :variant="statusVariant(r.status)"
-                    dot
-                  >
-                    {{ t(`reports.statuses.${r.status}`) }}
-                  </CBadge>
-                  <span class="activity-card__line">
-                    <CIconClock />
-                    {{ formatRelative(r.updated_at) }}
-                  </span>
-                </div>
+              <div class="activity-card__icon tone--default">
+                <CIconInfo />
+              </div>
+              <div class="activity-card__chips">
+                <CBadge
+                  :variant="statusVariant(r.status)"
+                  dot
+                >
+                  {{ t(`reports.statuses.${r.status}`) }}
+                </CBadge>
+                <span class="activity-card__line">
+                  <CIconClock />
+                  {{ formatRelative(r.updated_at) }}
+                </span>
+              </div>
+            </div>
+
+            <div class="activity-card__stack">
+              <h3 class="activity-card__title">
+                {{ r.title }}
+              </h3>
+
+              <p
+                v-if="r.description"
+                class="activity-card__description"
+              >
+                {{ r.description }}
+              </p>
+
+              <div
+                v-if="r.document_count > 0"
+                class="activity-card__documents"
+              >
+                <button
+                  class="activity-card__line activity-card__documents-button"
+                  @click="openReportPhotos(r)"
+                >
+                  <CIconFile />
+                  {{ t('reports.linkedPhotosCount', r.document_count) }}
+                </button>
               </div>
 
-              <div class="activity-card__stack">
-                <h3 class="activity-card__title">
-                  {{ r.title }}
-                </h3>
+              <div class="activity-card__meta">
+                <span class="activity-card__line">
+                  <CIconUser />
+                  {{ authorName(r) }}
+                </span>
+                <span class="activity-card__line">
+                  <CIconHome />
+                  {{ unitLabel(r.unit_id) }}
+                </span>
+                <span class="activity-card__line">
+                  <CIconCalendar />
+                  {{ formatDate(r.created_at) }}
+                </span>
+              </div>
 
-                <p
-                  v-if="r.description"
-                  class="activity-card__description"
-                >
-                  {{ r.description }}
-                </p>
-
+              <div class="activity-card__secondary-actions">
                 <div
-                  v-if="r.document_count > 0"
-                  class="activity-card__documents"
+                  v-if="r.status !== 'closed'"
+                  class="activity-card__secondary-actions"
                 >
-                  <button
-                    class="activity-card__line activity-card__documents-button"
-                    @click="openReportPhotos(r)"
+                  <CBtn
+                    variant="ghost"
+                    size="sm"
+                    @click="openStatusModal(r)"
                   >
-                    <CIconFile />
-                    {{ t('reports.linkedPhotosCount', r.document_count) }}
-                  </button>
+                    <CIconRefresh />
+                    {{ t('reports.editStatus') }}
+                  </CBtn>
                 </div>
-
-                <div class="activity-card__meta">
-                  <span class="activity-card__line">
-                    <CIconUser />
-                    {{ authorName(r) }}
-                  </span>
-                  <span class="activity-card__line">
-                    <CIconHome />
-                    {{ unitLabel(r.unit_id) }}
-                  </span>
-                  <span class="activity-card__line">
-                    <CIconCalendar />
-                    {{ formatDate(r.created_at) }}
-                  </span>
-                </div>
-
-                <div class="activity-card__secondary-actions">
-                  <div
-                    v-if="r.status !== 'closed'"
-                    class="activity-card__secondary-actions"
-                  >
-                    <CBtn
-                      variant="ghost"
-                      size="sm"
-                      @click="openStatusModal(r)"
-                    >
-                      <CIconRefresh />
-                      {{ t('reports.editStatus') }}
-                    </CBtn>
-                  </div>
-                </div>
-
-                <template v-if="canManage">
-                  <div class="activity-card__actions">
-                    <CBtn
-                      variant="ghost"
-                      size="sm"
-                      @click="openEditModal(r)"
-                    >
-                      <CIconEdit />
-                      {{ t('common.edit') }}
-                    </CBtn>
-                    <CBtn
-                      v-if="r.task_id"
-                      variant="primary"
-                      size="sm"
-                      @click="router.push({ name: 'task-detail', params: { id: r.task_id } })"
-                    >
-                      <CIconCheckCircle />
-                      {{ t('reports.viewTask') }}
-                    </CBtn>
-                    <CBtn
-                      v-else-if="r.status !== 'closed'"
-                      variant="primary"
-                      size="sm"
-                      @click="openConvertModal(r)"
-                    >
-                      <CIconCheckCircle />
-                      {{ t('reports.convertToTask') }}
-                    </CBtn>
-                  </div>
-                </template>
               </div>
+
+              <template v-if="canManage">
+                <div class="activity-card__actions">
+                  <CBtn
+                    variant="ghost"
+                    size="sm"
+                    @click="openEditModal(r)"
+                  >
+                    <CIconEdit />
+                    {{ t('common.edit') }}
+                  </CBtn>
+                  <CBtn
+                    v-if="r.task_id"
+                    variant="primary"
+                    size="sm"
+                    @click="router.push({ name: 'task-detail', params: { id: r.task_id } })"
+                  >
+                    <CIconCheckCircle />
+                    {{ t('reports.viewTask') }}
+                  </CBtn>
+                  <CBtn
+                    v-else-if="r.status !== 'closed'"
+                    variant="primary"
+                    size="sm"
+                    @click="openConvertModal(r)"
+                  >
+                    <CIconCheckCircle />
+                    {{ t('reports.convertToTask') }}
+                  </CBtn>
+                </div>
+              </template>
+            </div>
           </CCard>
 
           <div

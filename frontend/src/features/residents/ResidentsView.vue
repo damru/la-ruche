@@ -265,19 +265,20 @@ function formatLocation(unit: { block?: string | null; staircase?: string | null
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
-        <div class="view-header">
-          <div>
-            <h1 class="display-md">
-              {{ t('residents.title') }}
-            </h1>
-            <p
-              class="body-md"
-              style="color:var(--color-on-surface-variant)"
-            >
-              {{ t('residents.summary', { units: allUnits.length, users: allUsers.length }) }}
-            </p>
-          </div>
-        </div>
+        <header class="view-header">
+          <p class="page-eyebrow">
+            {{ t('page.eyebrows.residents') }}
+          </p>
+          <h1 class="display-md">
+            {{ t('residents.title') }}
+          </h1>
+          <p
+            class="body-md"
+            style="color:var(--color-on-surface-variant)"
+          >
+            {{ t('residents.summary', { units: allUnits.length, users: allUsers.length }) }}
+          </p>
+        </header>
 
         <div class="tabs">
           <button

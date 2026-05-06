@@ -202,19 +202,20 @@ async function confirmDeleteDoc() {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
-        <div class="view-header">
-          <div>
-            <h1 class="display-md">
-              {{ t('documents.title') }}
-            </h1>
-            <p
-              class="body-md"
-              style="color:var(--color-on-surface-variant)"
-            >
-              {{ t('documents.count', { count: allDocuments.length }) }}
-            </p>
-          </div>
-        </div>
+        <header class="view-header">
+          <p class="page-eyebrow">
+            {{ t('page.eyebrows.documents') }}
+          </p>
+          <h1 class="display-md">
+            {{ t('documents.title') }}
+          </h1>
+          <p
+            class="body-md"
+            style="color:var(--color-on-surface-variant)"
+          >
+            {{ t('documents.count', { count: allDocuments.length }) }}
+          </p>
+        </header>
 
         <div class="search-bar">
           <CIconSearch class="search-icon" />
@@ -471,8 +472,6 @@ async function confirmDeleteDoc() {
   min-width: 36px;
   min-height: 36px;
 }
-
-.empty-state { padding: var(--space-8); text-align: center; font-size: var(--text-md); color: var(--color-on-surface-variant); }
 
 /* Upload modal */
 .upload-form { display: flex; flex-direction: column; gap: var(--space-4); }

@@ -16,7 +16,7 @@
 > - Arrêté du 14 mars 2005 (plan comptable copropriété)
 > - RGPD (Règlement UE 2016/679)
 >
-> Dernière mise à jour : 24 avril 2026 (re-baseline code-réel)
+> Dernière mise à jour : 5 mai 2026 (resynchronisation LEGAL / EPICS)
 
 ---
 
@@ -464,7 +464,7 @@ Le syndic représente le syndicat des copropriétaires en justice, tant en deman
 ## 11. Immutabilité des données comptables
 
 **Références :** Art. L123-22 Code de commerce (conservation 10 ans) · Art. 14-1 loi 1965 · Art. 17 loi 1965 · Décret 2001-477 · Code des assurances  
-**Couverture :** ❌ non couverte — ADR-009
+**Couverture :** ❌ non couverte — EP-018 (backlog), ADR-009 (cadrage)
 
 L'obligation de conservation comptable (art. L123-22 Code de commerce, 10 ans) et la valeur probatoire des actes produits en copropriété imposent que certaines données ne puissent pas être modifiées ou supprimées une fois qu'elles ont acquis une valeur juridique ou financière.
 
@@ -599,4 +599,4 @@ L'`audit_log` est en **append-only** : aucune ligne ne peut être modifiée ou s
 | 8 | RGPD + anonymisation | RGPD 2016/679 | ⚠️ | EP-002-S05 |
 | 9 | Sinistres (délais déclaration) | Code des assurances | ✅ | EP-008 |
 | 10 | Représentation en justice + procédures en cours | Art. 18-I loi 1965 | ⚠️ | EP-002-S06, EP-002-S10 |
-| 11 | Immutabilité des données comptables + audit log | Art. L123-22 Code de commerce | ❌ | ADR-009 |
+| 11 | Immutabilité des données comptables + audit log | Art. L123-22 Code de commerce | ❌ | EP-018, ADR-009 |

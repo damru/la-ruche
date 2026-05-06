@@ -82,6 +82,21 @@ function statusLabel(levy: UnitChargesLevy): string {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else-if="data">
+        <header class="view-header">
+          <p class="page-eyebrow">
+            {{ t('page.eyebrows.unitCharges') }}
+          </p>
+          <h1 class="display-md">
+            {{ t('units.charges.title') }}
+          </h1>
+          <p
+            class="body-md"
+            style="color:var(--color-on-surface-variant)"
+          >
+            {{ t('common.lot') }} {{ data.unit.unit_number }} · {{ data.unit.unit_type }}
+          </p>
+        </header>
+
         <!-- Summary KPIs -->
         <div class="charges-kpis">
           <div class="kpi-card">

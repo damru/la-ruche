@@ -249,19 +249,20 @@ async function confirmDelete() {
       <CPageLoader v-else-if="loading" />
       <template v-else>
         <!-- Header + search -->
-        <div class="view-header">
-          <div>
-            <h1 class="display-md">
-              {{ t('contractors.title') }}
-            </h1>
-            <p
-              class="body-md"
-              style="color:var(--color-on-surface-variant)"
-            >
-              {{ t('contractors.summary', { count: allContractors.length }) }}
-            </p>
-          </div>
-        </div>
+        <header class="view-header">
+          <p class="page-eyebrow">
+            {{ t('page.eyebrows.contractors') }}
+          </p>
+          <h1 class="display-md">
+            {{ t('contractors.title') }}
+          </h1>
+          <p
+            class="body-md"
+            style="color:var(--color-on-surface-variant)"
+          >
+            {{ t('contractors.summary', { count: allContractors.length }) }}
+          </p>
+        </header>
 
         <!-- Search bar -->
         <div class="search-bar">
@@ -305,77 +306,77 @@ async function confirmDelete() {
             @keydown.space.prevent="openContractorDetail(c.id)"
           >
             <div class="activity-card__header-row activity-card__header-row--with-icon">
-                <div :class="['activity-card__icon', 'contractor-card__icon', domainTone(c.domains)]">
-                  <component
-                    :is="domainIcon(c.domains)"
-                    class="contractor-card__type-icon"
-                    aria-hidden="true"
-                  />
-                </div>
-                <h3 class="activity-card__title">
-                  {{ c.name }}
-                </h3>
+              <div :class="['activity-card__icon', 'contractor-card__icon', domainTone(c.domains)]">
+                <component
+                  :is="domainIcon(c.domains)"
+                  class="contractor-card__type-icon"
+                  aria-hidden="true"
+                />
+              </div>
+              <h3 class="activity-card__title">
+                {{ c.name }}
+              </h3>
+            </div>
+
+            <div class="activity-card__chips">
+              <CBadge
+                v-for="d in c.domains"
+                :key="d"
+                variant="default"
+              >
+                {{ t(`contractors.domains.${d}`, d) }}
+              </CBadge>
+            </div>
+            <div class="activity-card__stack">
+              <p
+                v-if="c.notes"
+                class="activity-card__description contractor-notes"
+              >
+                {{ c.notes }}
+              </p>
+
+              <div
+                v-if="c.email || c.phone"
+                class="activity-card__meta activity-card__contacts"
+              >
+                <a
+                  v-if="c.email"
+                  :href="`mailto:${c.email}`"
+                  class="activity-card__line activity-card__contact-link"
+                  @click.stop
+                ><span aria-hidden="true">✉️</span>{{ c.email }}</a>
+                <a
+                  v-if="c.phone"
+                  :href="`tel:${c.phone}`"
+                  class="activity-card__line activity-card__contact-link"
+                  @click.stop
+                ><span aria-hidden="true">📞</span>{{ c.phone }}</a>
               </div>
 
-              <div class="activity-card__chips">
-                <CBadge
-                  v-for="d in c.domains"
-                  :key="d"
-                  variant="default"
+              <div
+                v-if="canEdit"
+                class="activity-card__actions"
+              >
+                <CBtn
+                  variant="ghost"
+                  size="sm"
+                  :aria-label="t('common.edit') + ' ' + c.name"
+                  @click.stop="openEdit(c)"
                 >
-                  {{ t(`contractors.domains.${d}`, d) }}
-                </CBadge>
+                  <CIconEdit />
+                  {{ t('common.edit') }}
+                </CBtn>
+                <CBtn
+                  variant="danger"
+                  size="sm"
+                  :aria-label="t('common.delete') + ' ' + c.name"
+                  @click.stop="openDeleteModal(c)"
+                >
+                  <CIconTrash />
+                  {{ t('common.delete') }}
+                </CBtn>
               </div>
-              <div class="activity-card__stack">
-                <p
-                  v-if="c.notes"
-                  class="activity-card__description contractor-notes"
-                >
-                  {{ c.notes }}
-                </p>
-
-                <div
-                  v-if="c.email || c.phone"
-                  class="activity-card__meta activity-card__contacts"
-                >
-                  <a
-                    v-if="c.email"
-                    :href="`mailto:${c.email}`"
-                    class="activity-card__line activity-card__contact-link"
-                    @click.stop
-                  ><span aria-hidden="true">✉️</span>{{ c.email }}</a>
-                  <a
-                    v-if="c.phone"
-                    :href="`tel:${c.phone}`"
-                    class="activity-card__line activity-card__contact-link"
-                    @click.stop
-                  ><span aria-hidden="true">📞</span>{{ c.phone }}</a>
-                </div>
-
-                <div
-                  v-if="canEdit"
-                  class="activity-card__actions"
-                >
-                  <CBtn
-                    variant="ghost"
-                    size="sm"
-                    :aria-label="t('common.edit') + ' ' + c.name"
-                    @click.stop="openEdit(c)"
-                  >
-                    <CIconEdit />
-                    {{ t('common.edit') }}
-                  </CBtn>
-                  <CBtn
-                    variant="danger"
-                    size="sm"
-                    :aria-label="t('common.delete') + ' ' + c.name"
-                    @click.stop="openDeleteModal(c)"
-                  >
-                    <CIconTrash />
-                    {{ t('common.delete') }}
-                  </CBtn>
-                </div>
-              </div>
+            </div>
           </CCard>
         </div>
       </template>

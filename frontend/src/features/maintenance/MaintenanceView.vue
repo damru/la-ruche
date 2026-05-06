@@ -322,19 +322,20 @@ async function deleteEntry() {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
-        <div class="view-header">
-          <div>
-            <h1 class="display-md">
-              {{ t('maintenance.title') }}
-            </h1>
-            <p
-              class="body-md"
-              style="color:var(--color-on-surface-variant)"
-            >
-              {{ t('maintenance.periodSummary', { label: periodLabel, count: periodEntries.length, cost: formatCurrency(totalCost) }) }}
-            </p>
-          </div>
-        </div>
+        <header class="view-header">
+          <p class="page-eyebrow">
+            {{ t('page.eyebrows.maintenance') }}
+          </p>
+          <h1 class="display-md">
+            {{ t('maintenance.title') }}
+          </h1>
+          <p
+            class="body-md"
+            style="color:var(--color-on-surface-variant)"
+          >
+            {{ t('maintenance.periodSummary', { label: periodLabel, count: periodEntries.length, cost: formatCurrency(totalCost) }) }}
+          </p>
+        </header>
 
         <div
           v-if="logbookSummary"
@@ -845,8 +846,6 @@ async function deleteEntry() {
 }
 
 .form-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
-
-.empty-state { padding: var(--space-8); text-align: center; font-size: var(--text-md); color: var(--color-on-surface-variant); }
 
 @media (max-width: 720px) {
   .regulatory-grid {

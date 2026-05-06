@@ -121,11 +121,30 @@ Le formulaire ou wizard reste la zone scrollable principale. Les actions critiqu
 
 `frontend/src/styles/base.css` porte les primitives globales qui ne doivent pas être surchargées sauf exception explicites.
 
+## Règle UI — Eyebrows de page
+
+- Toute page métier avec un titre principal visible doit exposer un eyebrow très court au-dessus du `h1`.
+- L'eyebrow complète le titre ; il ne doit pas répéter le nom de la page ni reprendre mot pour mot le breadcrumb.
+- Le contenu attendu est une description de 3 à 6 mots indiquant immédiatement ce que l'utilisateur trouve sur la page.
+- La primitive visuelle partagée est `.page-eyebrow` dans `frontend/src/styles/base.css` ; une vue ne doit pas redéfinir localement sa typo sauf besoin exceptionnel déjà justifié.
+- Les pages détail peuvent utiliser le même pattern à l'intérieur d'une carte d'en-tête si le `h1` principal est porté par cette carte.
+
 ## Règle UI — Reminder cards
 
 Les cartes de rappels synthétiques partagées entre vues métier passent par `frontend/src/components/molecules/CReminderCard.vue`.
 
 La molécule porte le conteneur, le titre de section, l’état vide et la structure de ligne (`titre`, `subtitle`, `meta`, accent temporel, actions optionnelles). Une vue ne doit pas recopier localement les wrappers `section-head`, `reminder-list`, `reminder-row`, `reminder-dot` ou leurs variantes tonales si le besoin correspond à cette carte.
+
+## Règle UI — Vues AG (`EP-003`)
+
+- Les vues AG restent des pages métier dédiées (`AssemblyListView`, `AssemblyDetailView`) et ne doivent plus consommer `src/mock/data.ts` dès le démarrage du chantier `EP-003`.
+- Toute vue AG branchée sur l'API réelle applique le pattern DDR-005 : chargement via `usePageLoader`, erreur via `CPageError`, attente via `CPageLoader`.
+- La fiche AG doit rendre immédiatement lisibles : statut, date d'AG, date limite de convocation (J-21), résolutions et état documentaire (`convocation`, annexes, `PV`).
+- Une AG `closed` bascule en lecture seule visible : les actions mutantes disparaissent ou sont désactivées explicitement, sans ambiguïté sur l'état gelé.
+- Les rôles non gestionnaires restent en lecture seule sur la préparation de l'AG ; le locataire consulte les résultats et le PV publié mais ne participe pas au vote.
+- Le chantier `EP-003` n'embarque pas les patterns avancés de conduite de séance (`président`, `scrutateurs`, quorum temps réel, notes collaboratives) qui relèvent de `EP-013`.
+- `S02` doit exposer dans la fiche AG une section documentaire compacte distinguant au minimum les annexes de convocation et le `PV`, avec upload/liaison côté manager et consultation simple côté rôles autorisés.
+- `S03` ajoute une carte latérale de présence lisible sans jargon technique : chaque lot porte un mode de participation explicite (`présent`, `mandat`, `correspondance`, `absent`) et un indicateur de tantièmes représentés ; cette carte ne doit pas dépendre du nombre de votes déjà saisis sur les résolutions.
 
 ## Système de tonalités couleur — `tones.css`
 

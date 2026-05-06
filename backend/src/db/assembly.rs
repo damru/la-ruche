@@ -10,8 +10,12 @@ use uuid::Uuid;
 
 use crate::{
     api::assemblies::{
-        CreateMeetingInput, CreateResolutionInput, MeetingResponse, MeetingTypeDto, VoteInput,
+        CreateMeetingInput, CreateResolutionInput, MeetingAttendanceEntryResponse,
+        MeetingAttendanceInputEntry, MeetingAttendanceModeDto, MeetingAttendanceResponse,
+        MeetingDocumentKindDto, MeetingDocumentResponse, MeetingResponse, MeetingTypeDto,
+        VoteInput,
     },
+    api::documents::DocumentListItem,
     domain::vote::VoteTally,
     errors::{AppError, AppResult},
 };
@@ -24,6 +28,8 @@ struct MeetingRow {
     notice_date: Option<chrono::NaiveDate>,
     meeting_date: DateTime<Utc>,
     location: Option<String>,
+    agenda: Option<String>,
+    minutes_document_id: Option<Uuid>,
     created_at: DateTime<Utc>,
 }
 
@@ -39,8 +45,42 @@ impl From<MeetingRow> for MeetingResponse {
             notice_date: row.notice_date,
             meeting_date: row.meeting_date,
             location: row.location,
+            agenda: row.agenda,
+            minutes_document_id: row.minutes_document_id,
             created_at: row.created_at,
         }
+    }
+}
+
+fn meeting_document_kind_to_db(kind: &MeetingDocumentKindDto) -> &'static str {
+    match kind {
+        MeetingDocumentKindDto::Notice => "notice",
+        MeetingDocumentKindDto::Attachment => "attachment",
+    }
+}
+
+fn meeting_document_kind_from_db(kind: &str) -> MeetingDocumentKindDto {
+    match kind {
+        "attachment" => MeetingDocumentKindDto::Attachment,
+        _ => MeetingDocumentKindDto::Notice,
+    }
+}
+
+fn meeting_attendance_mode_to_db(mode: &MeetingAttendanceModeDto) -> &'static str {
+    match mode {
+        MeetingAttendanceModeDto::Present => "present",
+        MeetingAttendanceModeDto::Proxy => "proxy",
+        MeetingAttendanceModeDto::Correspondence => "correspondence",
+        MeetingAttendanceModeDto::Absent => "absent",
+    }
+}
+
+fn meeting_attendance_mode_from_db(mode: &str) -> MeetingAttendanceModeDto {
+    match mode {
+        "proxy" => MeetingAttendanceModeDto::Proxy,
+        "correspondence" => MeetingAttendanceModeDto::Correspondence,
+        "absent" => MeetingAttendanceModeDto::Absent,
+        _ => MeetingAttendanceModeDto::Present,
     }
 }
 
@@ -49,7 +89,7 @@ pub async fn list(pool: &PgPool, building_id: Uuid) -> AppResult<Vec<MeetingResp
         MeetingRow,
         r#"
         SELECT id, meeting_type::text as "meeting_type!", status::text as "status!",
-               notice_date, meeting_date, location, created_at
+               notice_date, meeting_date, location, agenda, minutes_document_id, created_at
         FROM general_meeting
         WHERE building_id = $1
         ORDER BY meeting_date DESC
@@ -67,7 +107,7 @@ pub async fn get(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<Option
         MeetingRow,
         r#"
         SELECT id, meeting_type::text as "meeting_type!", status::text as "status!",
-               notice_date, meeting_date, location, created_at
+               notice_date, meeting_date, location, agenda, minutes_document_id, created_at
         FROM general_meeting
         WHERE id = $1 AND building_id = $2
         "#,
@@ -98,7 +138,7 @@ pub async fn create(
             (building_id, meeting_type, meeting_date, location, agenda, created_by)
         VALUES ($1, $2::meeting_type, $3, $4, $5, $6)
         RETURNING id, meeting_type::text as "meeting_type!", status::text as "status!",
-                  notice_date, meeting_date, location, created_at
+                  notice_date, meeting_date, location, agenda, minutes_document_id, created_at
         "#,
         building_id,
         meeting_type as _,
@@ -119,22 +159,29 @@ pub async fn update(
     building_id: Uuid,
     input: CreateMeetingInput,
 ) -> AppResult<Option<MeetingResponse>> {
+    let meeting_type = match input.meeting_type {
+        MeetingTypeDto::Annual => "annual",
+        MeetingTypeDto::Extraordinary => "extraordinary",
+    };
+
     let row = sqlx::query_as!(
         MeetingRow,
         r#"
         UPDATE general_meeting
-        SET meeting_date = $3,
-            location = $4,
-            agenda = $5,
+        SET meeting_type = $3::meeting_type,
+            meeting_date = $4,
+            location = $5,
+            agenda = $6,
             updated_at = NOW()
         WHERE id = $1
           AND building_id = $2
           AND status = 'draft'
         RETURNING id, meeting_type::text as "meeting_type!", status::text as "status!",
-                  notice_date, meeting_date, location, created_at
+                  notice_date, meeting_date, location, agenda, minutes_document_id, created_at
         "#,
         id,
         building_id,
+        meeting_type as _,
         input.meeting_date,
         input.location,
         input.agenda,
@@ -146,6 +193,30 @@ pub async fn update(
 }
 
 pub async fn call(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()> {
+    let has_notice_document = sqlx::query_scalar!(
+        r#"
+        SELECT EXISTS(
+            SELECT 1
+            FROM general_meeting_document gmd
+            JOIN general_meeting gm ON gm.id = gmd.meeting_id
+            WHERE gm.id = $1
+              AND gm.building_id = $2
+              AND gmd.kind = 'notice'
+        )
+        "#,
+        id,
+        building_id,
+    )
+    .fetch_one(pool)
+    .await?
+    .unwrap_or(false);
+
+    if !has_notice_document {
+        return Err(AppError::Conflict(
+            "Meeting notice cannot be sent without at least one notice document".into(),
+        ));
+    }
+
     let affected = sqlx::query!(
         r#"
         UPDATE general_meeting
@@ -179,6 +250,286 @@ pub async fn close(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()> 
     )
     .execute(pool)
     .await?;
+    Ok(())
+}
+
+pub async fn list_documents(
+    pool: &PgPool,
+    meeting_id: Uuid,
+    building_id: Uuid,
+    roles: &[String],
+) -> AppResult<Vec<MeetingDocumentResponse>> {
+    let rows = sqlx::query!(
+        r#"
+        SELECT d.id,
+               d.original_name,
+               d.mime_type,
+               d.size_bytes,
+               d.visible_to_roles::text[] as visible_roles,
+               d.created_at,
+               gmd.kind::text as "kind!"
+        FROM general_meeting_document gmd
+        JOIN general_meeting gm ON gm.id = gmd.meeting_id
+        JOIN document d ON d.id = gmd.document_id
+        WHERE gmd.meeting_id = $1
+          AND gm.building_id = $2
+          AND d.building_id = $2
+          AND d.visible_to_roles::text[] && $3
+        ORDER BY CASE WHEN gmd.kind = 'notice' THEN 0 ELSE 1 END, d.created_at DESC
+        "#,
+        meeting_id,
+        building_id,
+        roles,
+    )
+    .fetch_all(pool)
+    .await?;
+
+    Ok(rows
+        .into_iter()
+        .map(|row| MeetingDocumentResponse {
+            document: DocumentListItem {
+                id: row.id,
+                original_name: row.original_name,
+                mime_type: row.mime_type,
+                size_bytes: row.size_bytes,
+                visible_roles: row.visible_roles.unwrap_or_default(),
+                linked_contract_names: Vec::new(),
+                linked_report_titles: Vec::new(),
+                linked_claim_titles: Vec::new(),
+                linked_report_count: 0,
+                created_at: row.created_at,
+            },
+            kind: meeting_document_kind_from_db(&row.kind),
+        })
+        .collect())
+}
+
+pub async fn attach_document(
+    pool: &PgPool,
+    meeting_id: Uuid,
+    document_id: Uuid,
+    kind: MeetingDocumentKindDto,
+    building_id: Uuid,
+) -> AppResult<bool> {
+    let exists = sqlx::query_scalar!(
+        r#"
+        SELECT EXISTS(
+            SELECT 1
+            FROM general_meeting gm
+            JOIN document d ON d.id = $2
+            WHERE gm.id = $1
+              AND gm.building_id = $3
+              AND d.building_id = $3
+        )
+        "#,
+        meeting_id,
+        document_id,
+        building_id,
+    )
+    .fetch_one(pool)
+    .await?
+    .unwrap_or(false);
+
+    if !exists {
+        return Ok(false);
+    }
+
+    sqlx::query!(
+        r#"
+        INSERT INTO general_meeting_document (meeting_id, document_id, kind)
+        VALUES ($1, $2, $3::meeting_document_kind)
+        ON CONFLICT (meeting_id, document_id) DO UPDATE
+            SET kind = EXCLUDED.kind
+        "#,
+        meeting_id,
+        document_id,
+        meeting_document_kind_to_db(&kind) as _,
+    )
+    .execute(pool)
+    .await?;
+
+    Ok(true)
+}
+
+pub async fn detach_document(
+    pool: &PgPool,
+    meeting_id: Uuid,
+    document_id: Uuid,
+    building_id: Uuid,
+) -> AppResult<bool> {
+    let deleted = sqlx::query!(
+        r#"
+        DELETE FROM general_meeting_document gmd
+        USING general_meeting gm
+        WHERE gmd.meeting_id = $1
+          AND gmd.document_id = $2
+          AND gm.id = gmd.meeting_id
+          AND gm.building_id = $3
+        "#,
+        meeting_id,
+        document_id,
+        building_id,
+    )
+    .execute(pool)
+    .await?
+    .rows_affected();
+
+    Ok(deleted > 0)
+}
+
+pub async fn list_attendance(
+    pool: &PgPool,
+    meeting_id: Uuid,
+    building_id: Uuid,
+) -> AppResult<MeetingAttendanceResponse> {
+    let exists = sqlx::query_scalar!(
+        "SELECT EXISTS(SELECT 1 FROM general_meeting WHERE id = $1 AND building_id = $2)",
+        meeting_id,
+        building_id,
+    )
+    .fetch_one(pool)
+    .await?
+    .unwrap_or(false);
+
+    if !exists {
+        return Err(AppError::NotFound);
+    }
+
+    let rows = sqlx::query!(
+        r#"
+        SELECT u.id as unit_id,
+               u.unit_number,
+               CASE
+                   WHEN ua.id IS NULL THEN NULL
+                   ELSE ua.first_name || ' ' || ua.last_name
+               END as owner_name,
+               COALESCE(gma.mode::text, 'absent') as "mode!",
+               gma.representative_name,
+               COALESCE(gma.shares_represented, 0) as "shares_represented!"
+        FROM unit u
+        LEFT JOIN unit_owner uo
+            ON uo.unit_id = u.id
+           AND uo.end_date IS NULL
+        LEFT JOIN user_account ua ON ua.id = uo.user_id
+        LEFT JOIN general_meeting_attendance gma
+            ON gma.unit_id = u.id
+           AND gma.meeting_id = $1
+        WHERE u.building_id = $2
+          AND u.active = true
+        ORDER BY u.unit_number
+        "#,
+        meeting_id,
+        building_id,
+    )
+    .fetch_all(pool)
+    .await?;
+
+    let summary = sqlx::query!(
+        r#"
+        SELECT COALESCE(SUM(gma.shares_represented) FILTER (WHERE gma.mode != 'absent'), 0)::int as "shares_present!",
+               COUNT(*) FILTER (WHERE gma.mode != 'absent')::int as "present_units!",
+               b.shares_total as "total_shares!"
+        FROM building b
+        LEFT JOIN general_meeting_attendance gma ON gma.meeting_id = $1
+        WHERE b.id = $2
+        GROUP BY b.shares_total
+        "#,
+        meeting_id,
+        building_id,
+    )
+    .fetch_one(pool)
+    .await?;
+
+    Ok(MeetingAttendanceResponse {
+        entries: rows
+            .into_iter()
+            .map(|row| MeetingAttendanceEntryResponse {
+                unit_id: row.unit_id,
+                unit_number: row.unit_number,
+                owner_name: row.owner_name,
+                mode: meeting_attendance_mode_from_db(&row.mode),
+                representative_name: row.representative_name,
+                shares_represented: row.shares_represented,
+            })
+            .collect(),
+        shares_present: summary.shares_present,
+        total_shares: summary.total_shares,
+        present_units: summary.present_units,
+    })
+}
+
+pub async fn save_attendance(
+    pool: &PgPool,
+    meeting_id: Uuid,
+    building_id: Uuid,
+    entries: Vec<MeetingAttendanceInputEntry>,
+) -> AppResult<()> {
+    let mut tx = pool.begin().await?;
+
+    let exists = sqlx::query_scalar!(
+        "SELECT EXISTS(SELECT 1 FROM general_meeting WHERE id = $1 AND building_id = $2)",
+        meeting_id,
+        building_id,
+    )
+    .fetch_one(&mut *tx)
+    .await?
+    .unwrap_or(false);
+
+    if !exists {
+        return Err(AppError::NotFound);
+    }
+
+    sqlx::query!(
+        "DELETE FROM general_meeting_attendance WHERE meeting_id = $1",
+        meeting_id
+    )
+    .execute(&mut *tx)
+    .await?;
+
+    for entry in entries {
+        let shares_represented = if matches!(entry.mode, MeetingAttendanceModeDto::Absent) {
+            0
+        } else {
+            sqlx::query_scalar!(
+                r#"
+                SELECT uak.share_value
+                FROM unit u
+                JOIN unit_allocation_key uak
+                    ON uak.unit_id = u.id
+                   AND uak.valid_to IS NULL
+                JOIN allocation_key ak
+                    ON ak.id = uak.key_id
+                   AND ak.key_type = 'general'
+                   AND ak.deleted_at IS NULL
+                WHERE u.id = $1
+                  AND u.building_id = $2
+                  AND u.active = true
+                "#,
+                entry.unit_id,
+                building_id,
+            )
+            .fetch_optional(&mut *tx)
+            .await?
+            .ok_or_else(|| AppError::BadRequest("Unit not found or has no general shares".into()))?
+        };
+
+        sqlx::query!(
+            r#"
+            INSERT INTO general_meeting_attendance
+                (meeting_id, unit_id, mode, representative_name, shares_represented)
+            VALUES ($1, $2, $3::meeting_attendance_mode, $4, $5)
+            "#,
+            meeting_id,
+            entry.unit_id,
+            meeting_attendance_mode_to_db(&entry.mode) as _,
+            entry.representative_name,
+            shares_represented,
+        )
+        .execute(&mut *tx)
+        .await?;
+    }
+
+    tx.commit().await?;
     Ok(())
 }
 
@@ -404,6 +755,18 @@ pub async fn get_tally(
     .fetch_one(pool)
     .await?;
 
+    let attendance = sqlx::query!(
+        r#"
+        SELECT COALESCE(SUM(shares_represented) FILTER (WHERE mode != 'absent'), 0)::int as "shares_present!",
+               COUNT(*) FILTER (WHERE mode != 'absent')::int as "present_units!"
+        FROM general_meeting_attendance
+        WHERE meeting_id = $1
+        "#,
+        meeting_id,
+    )
+    .fetch_one(pool)
+    .await?;
+
     let mut for_votes = 0i32;
     let mut against_votes = 0i32;
     let mut abstentions = 0i32;
@@ -420,9 +783,17 @@ pub async fn get_tally(
 
     let tally = VoteTally {
         shares_total: building.shares_total,
-        shares_present,
+        shares_present: if attendance.shares_present > 0 {
+            attendance.shares_present
+        } else {
+            shares_present
+        },
         total_owners: building.total_owners.unwrap_or(0) as u32,
-        present_owners: building.present_owners.unwrap_or(0) as u32,
+        present_owners: if attendance.present_units > 0 {
+            attendance.present_units as u32
+        } else {
+            building.present_owners.unwrap_or(0) as u32
+        },
         for_votes,
         against_votes,
         abstentions,

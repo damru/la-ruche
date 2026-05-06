@@ -23,7 +23,8 @@
 | Versioning tantièmes + snapshot levy | `valid_from`/`valid_to` + colonnes snapshot `levy_call` | ADR-006 |
 | Clé générale système | `key_type` enum + soft delete sur `allocation_key` | ADR-007 |
 | Traçabilité tâches ↔ carnet | Lien informatif `task_id` + multiples clôtures + `completion_cost` courant sur `task` | ADR-008 |
-| Immutabilité comptable + audit log | Guards de domaine + `audit_log` append-only + `valid_from`/`valid_to` sur `budget_line` + `predecessor_id` sur `vendor_contract` | ADR-009 |
+| Immutabilité comptable + audit log | Guards de domaine + `audit_log` append-only réservé à la preuve comptable/juridique + `valid_from`/`valid_to` sur `budget_line` + `predecessor_id` sur `vendor_contract` | ADR-009 |
+| Timeline métier tâches/signalements | `activity_log` polymorphique distinct de `audit_log` pour la frise UX et le suivi de cycle de vie | EP-017 / EP-018 |
 | Logs | tracing + tracing-subscriber (JSON) | — |
 | Config | dotenvy + config crate (LA_RUCHE__*) ; `LA_RUCHE__APP__DEMO_MODE=true` rejoue `backend/seeds/demo.sql` au démarrage | — |
 | Frontend | Vue 3 + Vite + TypeScript | DDR-003 |
@@ -176,8 +177,15 @@ Invariants techniques implémentés :
 - Les documents de tâche sont répartis entre `task_document` (gestionnaires) et `vendor_submission_document` (soumissions prestataire) ; les endpoints manager `GET/POST/DELETE /tasks/{id}/documents` et `document_count` agrègent ces deux sources.
 - `claim_document` suit le même modèle d'association documentaire que `report_document`, avec nettoyage des liens lors des suppressions d'entité.
 - `maintenance_log.task_id` et `maintenance_log.contract_id` restent des liens de traçabilité souples, sans cascade destructive depuis les tâches ou contrats.
+- Le chantier `EP-003` validé en mai 2026 cible d'abord le branchement des vues AG sur l'API réelle existante (`meetings`, `resolutions`, `votes`, `results`, transitions `call` / `close`) avant toute extension de conduite de séance.
+- La frontière documentaire et technique entre `EP-003` et `EP-013` est la suivante : `EP-003` couvre la préparation juridique de l'AG, la saisie des résolutions, le calcul des résultats, le dépôt du PV signé et une traçabilité simple de notification ; `EP-013` couvre la feuille de présence avancée, les rôles de séance, les notes collaboratives et la validation/signature probante du PV.
+- Les besoins documentaires minimaux d'`EP-003` doivent réutiliser le module `Documents` existant ; une refonte typée des pièces réglementaires AG au-delà de `convocation` / annexes / `PV` reste renvoyée aux chantiers documentaires dédiés.
+- Pour `EP-003-S02`, les pièces AG non-PV sont rattachées via une liaison dédiée `general_meeting_document`, tandis que le PV signé continue d'être référencé sur `general_meeting.minutes_document_id`.
+- Pour `EP-003-S03`, la présence AG est portée par un registre dédié au niveau réunion (présent / procuration / vote par correspondance / absent) ; le vote par résolution reste stocké dans `vote` et ne sert plus de substitut implicite à la feuille de présence.
 
 Les règles produit détaillées de navigation, d'apparence et de workflows métier restent normatives dans `PRD.md`, `EPICS.md`, `DESIGN.md` et les ADR/DDR concernés ; ce document n'en conserve qu'un résumé d'architecture.
+
+Arbitrage documentaire ouvert et cible retenue à ce stade : le nom `audit_log` est réservé à la traçabilité probante d'ADR-009 (mutations comptables, diff ciblé, conservation longue, valeur de preuve). Les besoins de timeline UX et de suivi de cycle de vie de `report` / `task` relèvent d'un flux séparé nommé `activity_log`, afin d'éviter de mélanger journal juridique append-only et événements métier orientés interface.
 
 ---
 

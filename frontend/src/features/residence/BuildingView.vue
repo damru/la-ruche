@@ -69,19 +69,20 @@ onMounted(reload)
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
-        <div class="view-header">
-          <div>
-            <h1 class="display-md">
-              {{ t('nav.residence-info') }}
-            </h1>
-            <p
-              class="body-md"
-              style="color:var(--color-on-surface-variant)"
-            >
-              {{ t('settings.building.subtitle') }}
-            </p>
-          </div>
-        </div>
+        <header class="view-header">
+          <p class="page-eyebrow">
+            {{ t('page.eyebrows.building') }}
+          </p>
+          <h1 class="display-md">
+            {{ t('nav.residence-info') }}
+          </h1>
+          <p
+            class="body-md"
+            style="color:var(--color-on-surface-variant)"
+          >
+            {{ t('settings.building.subtitle') }}
+          </p>
+        </header>
 
         <CCard>
           <h2 class="section-title">

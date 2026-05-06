@@ -244,6 +244,9 @@ function dotClass(variant?: TimelineEvent['variant']): string {
                 {{ t(`tasks.statuses.${task.status}`) }}
               </CBadge>
             </div>
+            <p class="page-eyebrow">
+              {{ t('page.eyebrows.taskDetail') }}
+            </p>
             <h1 class="display-md task-title">
               {{ task.title }}
             </h1>

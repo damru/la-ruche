@@ -859,19 +859,20 @@ async function submitDelete() {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
-        <div class="view-header">
-          <div>
-            <h1 class="display-md">
-              {{ t('claims.title') }}
-            </h1>
-            <p
-              class="body-md"
-              style="color:var(--color-on-surface-variant)"
-            >
-              {{ t('claims.activeCount', activeClaimsCount) }}
-            </p>
-          </div>
-        </div>
+        <header class="view-header">
+          <p class="page-eyebrow">
+            {{ t('page.eyebrows.claims') }}
+          </p>
+          <h1 class="display-md">
+            {{ t('claims.title') }}
+          </h1>
+          <p
+            class="body-md"
+            style="color:var(--color-on-surface-variant)"
+          >
+            {{ t('claims.activeCount', activeClaimsCount) }}
+          </p>
+        </header>
 
         <CReminderCard
           v-if="claimReminderRows.length > 0"
@@ -913,128 +914,128 @@ async function submitDelete() {
             :class="['activity-card', { 'card--terminated': claim.status === 'closed' }]"
           >
             <div class="activity-card__header-row activity-card__header-row--with-icon">
-                <div :class="['activity-card__icon', typeTone(claim.claim_type)]">
-                  <component
-                    :is="typeIcon(claim.claim_type)"
-                    width="18"
-                    height="18"
-                  />
-                </div>
-                <h3 class="activity-card__title">
-                  {{ claim.title }}
-                </h3>
-                <div class="activity-card__chips">
-                  <CBadge variant="default">
-                    {{ t(`claims.types.${claim.claim_type}`) }}
-                  </CBadge>
-                  <CBadge
-                    :variant="statusVariant(claim.status)"
-                    dot
-                  >
-                    {{ t(`claims.statuses.${claim.status}`) }}
-                  </CBadge>
-                </div>
+              <div :class="['activity-card__icon', typeTone(claim.claim_type)]">
+                <component
+                  :is="typeIcon(claim.claim_type)"
+                  width="18"
+                  height="18"
+                />
               </div>
-
+              <h3 class="activity-card__title">
+                {{ claim.title }}
+              </h3>
               <div class="activity-card__chips">
+                <CBadge variant="default">
+                  {{ t(`claims.types.${claim.claim_type}`) }}
+                </CBadge>
                 <CBadge
-                  :variant="deadlineVariant(claim)"
-                  :dot="deadlineVariant(claim) !== 'default'"
+                  :variant="statusVariant(claim.status)"
+                  dot
                 >
-                  {{ deadlineLabel(claim) }}
+                  {{ t(`claims.statuses.${claim.status}`) }}
                 </CBadge>
               </div>
+            </div>
 
-              <div class="activity-card__stack">
-                <div class="activity-card__subtitle">
-                  <span class="activity-card__line">
-                    <CIconLocation />
-                    {{ unitLabel(claim.unit_id) }}
-                  </span>
-                </div>
+            <div class="activity-card__chips">
+              <CBadge
+                :variant="deadlineVariant(claim)"
+                :dot="deadlineVariant(claim) !== 'default'"
+              >
+                {{ deadlineLabel(claim) }}
+              </CBadge>
+            </div>
 
-                <p
-                  v-if="claim.description"
-                  class="activity-card__description"
-                >
-                  {{ claim.description }}
-                </p>
-
-                <div
-                  v-if="claim.document_count > 0"
-                  class="activity-card__documents"
-                >
-                  <button
-                    class="activity-card__line activity-card__documents-button"
-                    @click="openClaimDocuments(claim)"
-                  >
-                    <CIconFile />
-                    {{ t('claims.documentsCount', claim.document_count) }}
-                  </button>
-                </div>
-
-                <template v-if="canManage">
-                  <div class="activity-card__actions">
-                    <CBtn
-                      variant="ghost"
-                      size="sm"
-                      @click="openEditModal(claim)"
-                    >
-                      <CIconEdit />
-                      {{ t('common.edit') }}
-                    </CBtn>
-                    <CBtn
-                      v-if="claim.status === 'open'"
-                      variant="primary"
-                      size="sm"
-                      @click="openTransmitModal(claim)"
-                    >
-                      <CIconUpload />
-                      {{ t('claims.transmit') }}
-                    </CBtn>
-                    <CBtn
-                      v-else-if="claim.status === 'in_progress'"
-                      variant="primary"
-                      size="sm"
-                      @click="openCloseModal(claim)"
-                    >
-                      <CIconCheckCircle />
-                      {{ t('claims.close') }}
-                    </CBtn>
-                  </div>
-                </template>
-
-                <div class="activity-card__note">
-                  <span class="activity-card__line">
-                    <CIconCalendar />
-                    {{ t('claims.declaredOn', { date: formatDate(claim.declared_at) }) }}
-                  </span>
-                  <span class="activity-card__line">
-                    <CIconClock
-                      width="14"
-                      height="14"
-                    />
-                    {{ t('claims.deadline.reference', { date: formatDate(claim.legal_deadline_at) }) }}
-                  </span>
-                  <span
-                    v-if="claim.published_at"
-                    class="activity-card__line"
-                  >
-                    <CIconAlertTriangle />
-                    {{ t('claims.publishedOn', { date: formatDate(claim.published_at) }) }}
-                  </span>
-                  <span
-                    v-if="claim.reimbursement_date || claim.reimbursement_amount != null"
-                    class="activity-card__line"
-                  >
-                    <CIconCurrency
-                      width="14"
-                      height="14"
-                    />
-                    {{ reimbursementLabel(claim) }}
-                  </span>
-                </div>
+            <div class="activity-card__stack">
+              <div class="activity-card__subtitle">
+                <span class="activity-card__line">
+                  <CIconLocation />
+                  {{ unitLabel(claim.unit_id) }}
+                </span>
               </div>
+
+              <p
+                v-if="claim.description"
+                class="activity-card__description"
+              >
+                {{ claim.description }}
+              </p>
+
+              <div
+                v-if="claim.document_count > 0"
+                class="activity-card__documents"
+              >
+                <button
+                  class="activity-card__line activity-card__documents-button"
+                  @click="openClaimDocuments(claim)"
+                >
+                  <CIconFile />
+                  {{ t('claims.documentsCount', claim.document_count) }}
+                </button>
+              </div>
+
+              <template v-if="canManage">
+                <div class="activity-card__actions">
+                  <CBtn
+                    variant="ghost"
+                    size="sm"
+                    @click="openEditModal(claim)"
+                  >
+                    <CIconEdit />
+                    {{ t('common.edit') }}
+                  </CBtn>
+                  <CBtn
+                    v-if="claim.status === 'open'"
+                    variant="primary"
+                    size="sm"
+                    @click="openTransmitModal(claim)"
+                  >
+                    <CIconUpload />
+                    {{ t('claims.transmit') }}
+                  </CBtn>
+                  <CBtn
+                    v-else-if="claim.status === 'in_progress'"
+                    variant="primary"
+                    size="sm"
+                    @click="openCloseModal(claim)"
+                  >
+                    <CIconCheckCircle />
+                    {{ t('claims.close') }}
+                  </CBtn>
+                </div>
+              </template>
+
+              <div class="activity-card__note">
+                <span class="activity-card__line">
+                  <CIconCalendar />
+                  {{ t('claims.declaredOn', { date: formatDate(claim.declared_at) }) }}
+                </span>
+                <span class="activity-card__line">
+                  <CIconClock
+                    width="14"
+                    height="14"
+                  />
+                  {{ t('claims.deadline.reference', { date: formatDate(claim.legal_deadline_at) }) }}
+                </span>
+                <span
+                  v-if="claim.published_at"
+                  class="activity-card__line"
+                >
+                  <CIconAlertTriangle />
+                  {{ t('claims.publishedOn', { date: formatDate(claim.published_at) }) }}
+                </span>
+                <span
+                  v-if="claim.reimbursement_date || claim.reimbursement_amount != null"
+                  class="activity-card__line"
+                >
+                  <CIconCurrency
+                    width="14"
+                    height="14"
+                  />
+                  {{ reimbursementLabel(claim) }}
+                </span>
+              </div>
+            </div>
           </CCard>
 
           <div
@@ -1809,12 +1810,6 @@ async function submitDelete() {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-3);
-}
-
-.empty-state {
-  padding: var(--space-8);
-  text-align: center;
-  color: var(--color-on-surface-variant);
 }
 
 .claims-legal-card {

@@ -94,20 +94,21 @@ function formatLocation(unit: { block?: string | null; staircase?: string | null
       />
       <CPageLoader v-else-if="loading" />
       <template v-else-if="data">
-        <div class="view-header">
-          <div>
-            <h1 class="display-md">
-              {{ t('registry.title') }}
-            </h1>
-            <p
-              v-if="data"
-              class="body-md dim"
-            >
-              {{ data.building.address_line1 }}, {{ data.building.postal_code }} {{ data.building.city }}
-              · {{ t('registry.totalShares') }} : {{ data.building.shares_total }}
-            </p>
-          </div>
-        </div>
+        <header class="view-header">
+          <p class="page-eyebrow">
+            {{ t('page.eyebrows.registry') }}
+          </p>
+          <h1 class="display-md">
+            {{ t('registry.title') }}
+          </h1>
+          <p
+            v-if="data"
+            class="body-md dim"
+          >
+            {{ data.building.address_line1 }}, {{ data.building.postal_code }} {{ data.building.city }}
+            · {{ t('registry.totalShares') }} : {{ data.building.shares_total }}
+          </p>
+        </header>
         <!-- Summary cards -->
         <div class="summary-row">
           <CCard>

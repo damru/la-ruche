@@ -1,921 +1,1439 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useFormatters } from '@/composables/useFormatters'
-import CTopbar from '@/components/organisms/CTopbar.vue'
+import { usePageLoader, toErrorMessage } from '@/composables/usePageLoader'
+import { useFormFeedback } from '@/composables/useFormFeedback'
+import { useAutoClose } from '@/composables/useAutoClose'
+import { useAuthStore } from '@/stores/auth'
+import type {
+  Meeting,
+  MeetingAttendance,
+  MeetingAttendanceEntry,
+  MeetingAttendanceMode,
+  MeetingDocument,
+  MeetingType,
+  Resolution,
+  VoteResult,
+  VoteType,
+} from '@/types/domain'
+import { buildingApi, documentsApi, meetingsApi } from '@/api'
 import CBtn from '@/components/atoms/CBtn.vue'
-import CMockBanner from '@/components/atoms/CMockBanner.vue'
-import { mockMeetings, mockResolutions, mockVoteResults, mockBuildingStats } from '@/mock/data'
+import CCard from '@/components/molecules/CCard.vue'
+import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
+import CModal from '@/components/molecules/CModal.vue'
+import CPageError from '@/components/molecules/CPageError.vue'
+import CPageLoader from '@/components/molecules/CPageLoader.vue'
+import CTopbar from '@/components/organisms/CTopbar.vue'
 
 const route = useRoute()
 const router = useRouter()
 const { t } = useI18n()
 const { formatDate } = useFormatters()
+const auth = useAuthStore()
 
-const meeting = computed(() =>
-  mockMeetings.find(m => m.id === route.params.id) ?? mockMeetings[0]
-)
-const resolutions = computed(() =>
-  mockResolutions.filter(r => r.meeting_id === meeting.value.id)
-)
+const buildingName = ref('')
+const meeting = ref<Meeting | null>(null)
+const resolutions = ref<Resolution[]>([])
+const voteResults = ref<Record<string, VoteResult>>({})
+const documents = ref<MeetingDocument[]>([])
+const attendance = ref<MeetingAttendance>({
+  entries: [],
+  shares_present: 0,
+  total_shares: 0,
+  present_units: 0,
+})
 
+const showEditMeetingModal = ref(false)
 const showAddResolutionModal = ref(false)
-const showClotureModal = ref(false)
-const showPvModal = ref(false)
+const showDocumentModal = ref(false)
+const showAttendanceModal = ref(false)
 
-// Mock participants
-const participants = [
-  { name: 'Marie Lefebvre', lot: 'Lot 1', tantièmes: 120, color: '#dde1f9', text: '#1a1d2e' },
-  { name: 'Robert Cazeneuve', lot: 'Lot 2', tantièmes: 85, color: '#e8f5e9', text: '#1b4f23' },
-  { name: 'Claire Renaud', lot: 'Lot 3', tantièmes: 95, color: '#dde1f9', text: '#1a1d2e', mandataire: 'Lefebvre Marie' },
-  { name: 'Fatima Bensalem', lot: 'Lot 4', tantièmes: 110, color: '#fce8d5', text: '#7a3600' },
-  { name: 'Jean-Pierre Dupont', lot: 'Lot 5', tantièmes: 130, color: '#dde1f9', text: '#1a1d2e' },
-]
+const meetingFeedback = useFormFeedback()
+const resolutionFeedback = useFormFeedback()
+const documentFeedback = useFormFeedback()
+const attendanceFeedback = useFormFeedback()
 
-const sharesPresent = computed(() => participants.reduce((s, p) => s + p.tantièmes, 0))
-const totalShares = 1000
-const quorumPct = computed(() => Math.round((sharesPresent.value / totalShares) * 100))
-const quorumOk = computed(() => sharesPresent.value > totalShares / 4)
+const savingMeeting = ref(false)
+const savingResolution = ref(false)
+const savingDocument = ref(false)
+const savingAttendance = ref(false)
+const callingMeeting = ref(false)
 
-// ODJ items = resolution titles
-const odjItems = computed(() => resolutions.value.map(r => r.title))
+const { schedule: scheduleMeetingClose, forceExpire: forceMeetingClose } = useAutoClose()
+const { schedule: scheduleResolutionClose, forceExpire: forceResolutionClose } = useAutoClose()
+const { schedule: scheduleDocumentClose, forceExpire: forceDocumentClose } = useAutoClose()
+const { schedule: scheduleAttendanceClose, forceExpire: forceAttendanceClose } = useAutoClose()
 
-function initials(name: string): string {
-  return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
+watch(showEditMeetingModal, (open) => { if (!open) forceMeetingClose() })
+watch(showAddResolutionModal, (open) => { if (!open) forceResolutionClose() })
+watch(showDocumentModal, (open) => { if (!open) forceDocumentClose() })
+watch(showAttendanceModal, (open) => { if (!open) forceAttendanceClose() })
+
+function defaultMeetingForm() {
+  return {
+    meeting_type: 'annual' as MeetingType,
+    meeting_date: '',
+    location: '',
+    agenda: '',
+  }
 }
 
-function statusLabel(s: string): string {
-  return t(`meetings.resolutionStatuses.${s}`)
+function defaultResolutionForm() {
+  return {
+    number: 1,
+    title: '',
+    description: '',
+    vote_type: 'simple_majority' as VoteType,
+  }
 }
-function statusChipClass(s: string): string {
-  if (s === 'passed') return 'tone--valid'
-  if (s === 'rejected') return 'tone--err'
+
+function defaultDocumentForm() {
+  return {
+    kind: 'notice' as 'notice' | 'attachment',
+    file: null as File | null,
+  }
+}
+
+const meetingForm = ref(defaultMeetingForm())
+const resolutionForm = ref(defaultResolutionForm())
+const documentForm = ref(defaultDocumentForm())
+const attendanceDraft = ref<MeetingAttendanceEntry[]>([])
+
+const canEditMeeting = computed(() => auth.isManager && meeting.value?.status === 'draft')
+const canAddResolution = computed(() => auth.isManager && ['draft', 'called'].includes(meeting.value?.status ?? ''))
+const canCallMeeting = computed(() => auth.isManager && meeting.value?.status === 'draft')
+const noticeDocuments = computed(() => documents.value.filter(document => document.kind === 'notice'))
+const attachmentDocuments = computed(() => documents.value.filter(document => document.kind === 'attachment'))
+const attendancePct = computed(() => {
+  if (!attendance.value.total_shares) return 0
+  return Math.round((attendance.value.shares_present / attendance.value.total_shares) * 100)
+})
+const agendaItems = computed(() => {
+  if (meeting.value?.agenda?.trim()) {
+    return meeting.value.agenda
+      .split(/\r?\n/)
+      .map(item => item.trim())
+      .filter(Boolean)
+  }
+
+  return resolutions.value.map(resolution => resolution.title)
+})
+const noticeDeadline = computed(() => {
+  if (!meeting.value) return ''
+  const date = new Date(meeting.value.meeting_date)
+  date.setDate(date.getDate() - 21)
+  return formatDate(date.toISOString())
+})
+
+async function loadData() {
+  const meetingId = route.params.id as string
+  const [buildingRes, meetingRes, resolutionRes, documentsRes, attendanceRes] = await Promise.all([
+    buildingApi.get(),
+    meetingsApi.get(meetingId),
+    meetingsApi.listResolutions(meetingId),
+    meetingsApi.listDocuments(meetingId),
+    meetingsApi.attendance(meetingId),
+  ])
+
+  buildingName.value = buildingRes.data.name
+  meeting.value = meetingRes.data
+  resolutions.value = resolutionRes.data.map(resolution => ({
+    ...resolution,
+    meeting_id: resolution.meeting_id ?? meetingRes.data.id,
+  }))
+  documents.value = documentsRes.data
+  attendance.value = attendanceRes.data
+
+  const tallies = await Promise.allSettled(
+    resolutions.value.map(async (resolution) => {
+      const result = await meetingsApi.results(meetingId, resolution.id)
+      return [resolution.id, result.data] as const
+    }),
+  )
+
+  voteResults.value = Object.fromEntries(
+    tallies
+      .filter((entry): entry is PromiseFulfilledResult<readonly [string, VoteResult]> => entry.status === 'fulfilled')
+      .map(entry => entry.value),
+  )
+}
+
+const { loading, error, reload } = usePageLoader(loadData, t('common.loadError'))
+onMounted(reload)
+
+function typeLabel(type: MeetingType): string {
+  return t(`meetings.typeLabel.${type}`)
+}
+
+function meetingStatusLabel(status: Meeting['status']): string {
+  return t(`meetings.statuses.${status}`)
+}
+
+function meetingStatusChip(status: Meeting['status']): string {
+  if (status === 'called') return 'tone--default'
+  if (status === 'closed') return 'tone--valid'
   return 'tone--disabled'
 }
-function voteTypeLabel(t_: string): string {
-  return t(`meetings.vote.typeShort.${t_}`)
-}
-function voteTypeClass(t_: string): string {
-  if (t_ === 'simple_majority') return 'tone--default'
-  if (t_ === 'absolute_majority') return 'chip-art25'
-  return 'chip-art26'
-}
-function resBadgeClass(s: string): string {
-  if (s === 'passed') return 'tone--accent'
-  return 'tone--disabled'
-}
-function votePct(votes: number, present: number): number {
-  if (!present) return 0
-  return Math.round((votes / present) * 100)
+
+function resolutionStatusLabel(status: Resolution['status']): string {
+  return t(`meetings.resolutionStatuses.${status}`)
 }
 
-function meetingStatusLabel(s: string): string {
-  return t(`meetings.statuses.${s}`)
-}
-function meetingStatusChip(s: string): string {
-  if (s === 'called') return 'tone--default'
-  if (s === 'closed') return 'tone--valid'
+function resolutionStatusChip(status: Resolution['status']): string {
+  if (status === 'passed') return 'tone--valid'
+  if (status === 'rejected') return 'tone--err'
   return 'tone--disabled'
 }
-function typeLabel(type: string): string {
-  return t(`meetings.typeLabel.${type === 'annual' ? 'annual' : 'extraordinary'}`)
+
+function voteTypeLabel(voteType: VoteType): string {
+  const shortKey = `meetings.vote.typeShort.${voteType}`
+  const shortLabel = t(shortKey)
+  return shortLabel === shortKey ? t(`meetings.vote.types.${voteType}`) : shortLabel
+}
+
+function voteTypeChip(voteType: VoteType): string {
+  if (voteType === 'simple_majority') return 'tone--default'
+  if (voteType === 'absolute_majority') return 'chip-art25'
+  if (voteType === 'double_majority') return 'chip-art26'
+  return 'tone--muted'
+}
+
+function votePct(value: number, total: number): number {
+  if (!total) return 0
+  return Math.round((value / total) * 100)
+}
+
+function attendanceModeLabel(mode: MeetingAttendanceMode): string {
+  return t(`meetings.attendanceModes.${mode}`)
+}
+
+function attendanceModeChip(mode: MeetingAttendanceMode): string {
+  if (mode === 'present') return 'tone--valid'
+  if (mode === 'proxy') return 'tone--default'
+  if (mode === 'correspondence') return 'tone--muted'
+  return 'tone--disabled'
+}
+
+function documentKindLabel(kind: MeetingDocument['kind']): string {
+  return t(`meetings.documents.${kind}`)
+}
+
+function openEditMeetingModal() {
+  if (!meeting.value) return
+  meetingForm.value = {
+    meeting_type: meeting.value.meeting_type,
+    meeting_date: toDateTimeLocal(meeting.value.meeting_date),
+    location: meeting.value.location ?? '',
+    agenda: meeting.value.agenda ?? '',
+  }
+  meetingFeedback.reset()
+  showEditMeetingModal.value = true
+}
+
+function openResolutionModal() {
+  resolutionForm.value = {
+    ...defaultResolutionForm(),
+    number: resolutions.value.length + 1,
+  }
+  resolutionFeedback.reset()
+  showAddResolutionModal.value = true
+}
+
+function openDocumentModal() {
+  documentForm.value = defaultDocumentForm()
+  documentFeedback.reset()
+  showDocumentModal.value = true
+}
+
+function openAttendanceModal() {
+  attendanceDraft.value = attendance.value.entries.map(entry => ({ ...entry }))
+  attendanceFeedback.reset()
+  showAttendanceModal.value = true
+}
+
+async function saveMeeting() {
+  if (!meeting.value || !meetingForm.value.meeting_date) return
+
+  savingMeeting.value = true
+  meetingFeedback.reset()
+
+  try {
+    await meetingsApi.update(meeting.value.id, {
+      meeting_type: meetingForm.value.meeting_type,
+      meeting_date: new Date(meetingForm.value.meeting_date).toISOString(),
+      location: meetingForm.value.location || undefined,
+      agenda: meetingForm.value.agenda || undefined,
+    })
+
+    meetingFeedback.setSuccess(t('common.saved'))
+    scheduleMeetingClose(async () => {
+      showEditMeetingModal.value = false
+      await reload()
+    })
+  } catch (err) {
+    meetingFeedback.setError(toErrorMessage(err, t('common.error')))
+  } finally {
+    savingMeeting.value = false
+  }
+}
+
+async function saveResolution() {
+  if (!meeting.value || !resolutionForm.value.title.trim()) return
+
+  savingResolution.value = true
+  resolutionFeedback.reset()
+
+  try {
+    await meetingsApi.createResolution(meeting.value.id, {
+      number: resolutionForm.value.number,
+      title: resolutionForm.value.title,
+      description: resolutionForm.value.description || undefined,
+      vote_type: resolutionForm.value.vote_type,
+    })
+
+    resolutionFeedback.setSuccess(t('common.saved'))
+    scheduleResolutionClose(async () => {
+      showAddResolutionModal.value = false
+      await reload()
+    })
+  } catch (err) {
+    resolutionFeedback.setError(toErrorMessage(err, t('common.error')))
+  } finally {
+    savingResolution.value = false
+  }
+}
+
+async function saveDocument() {
+  if (!meeting.value || !documentForm.value.file) return
+
+  savingDocument.value = true
+  documentFeedback.reset()
+
+  try {
+    const file = documentForm.value.file
+    const extension = file.name.includes('.') ? file.name.split('.').pop() ?? 'pdf' : 'pdf'
+    const upload = await documentsApi.getUploadUrl(extension, file.type || 'application/pdf', file.size)
+    await documentsApi.uploadToS3(file, upload.data.url, file.type || 'application/pdf')
+
+    const confirmed = await documentsApi.confirmUpload({
+      key: upload.data.key,
+      bucket: upload.data.bucket,
+      original_name: file.name,
+      mime_type: file.type || 'application/pdf',
+      size_bytes: file.size,
+      visible_roles: ['manager', 'board_member', 'co_owner'],
+    })
+
+    await meetingsApi.attachDocument(meeting.value.id, {
+      document_id: confirmed.data.id,
+      kind: documentForm.value.kind,
+    })
+
+    documentFeedback.setSuccess(t('common.saved'))
+    scheduleDocumentClose(async () => {
+      showDocumentModal.value = false
+      await reload()
+    })
+  } catch (err) {
+    documentFeedback.setError(toErrorMessage(err, t('common.error')))
+  } finally {
+    savingDocument.value = false
+  }
+}
+
+async function detachDocument(documentId: string) {
+  if (!meeting.value) return
+
+  try {
+    await meetingsApi.detachDocument(meeting.value.id, documentId)
+    await reload()
+  } catch (err) {
+    documentFeedback.setError(toErrorMessage(err, t('common.error')))
+  }
+}
+
+async function openDocument(documentId: string) {
+  try {
+    const response = await documentsApi.getDownloadUrl(documentId)
+    window.open(response.data.url, '_blank', 'noopener')
+  } catch (err) {
+    documentFeedback.setError(toErrorMessage(err, t('common.error')))
+  }
+}
+
+async function saveAttendance() {
+  if (!meeting.value) return
+
+  savingAttendance.value = true
+  attendanceFeedback.reset()
+
+  try {
+    await meetingsApi.saveAttendance(meeting.value.id, attendanceDraft.value)
+    attendanceFeedback.setSuccess(t('common.saved'))
+    scheduleAttendanceClose(async () => {
+      showAttendanceModal.value = false
+      await reload()
+    })
+  } catch (err) {
+    attendanceFeedback.setError(toErrorMessage(err, t('common.error')))
+  } finally {
+    savingAttendance.value = false
+  }
+}
+
+async function callMeeting() {
+  if (!meeting.value) return
+
+  callingMeeting.value = true
+  documentFeedback.reset()
+
+  try {
+    await meetingsApi.call(meeting.value.id)
+    await reload()
+  } catch (err) {
+    documentFeedback.setError(toErrorMessage(err, t('common.error')))
+  } finally {
+    callingMeeting.value = false
+  }
+}
+
+function toDateTimeLocal(value: string): string {
+  const date = new Date(value)
+  const offsetMs = date.getTimezoneOffset() * 60_000
+  return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16)
+}
+
+function onFileChange(event: Event) {
+  const input = event.target as HTMLInputElement
+  documentForm.value.file = input.files?.[0] ?? null
 }
 </script>
 
 <template>
-  <div class="detail-page view-page">
+  <div class="view-page">
     <CTopbar>
       <template #left>
         <div class="topbar-breadcrumb">
           <span
-            style="cursor:pointer;color:var(--color-on-surface-variant)"
-            @click="router.push('/')"
-          >{{ mockBuildingStats.name }}</span>
+            class="breadcrumb-link"
+            @click="router.push('/meetings')"
+          >{{ buildingName || '...' }}</span>
           <CIconChevronRight
             width="14"
             height="14"
           />
           <span
-            style="cursor:pointer;color:var(--color-on-surface-variant)"
+            class="breadcrumb-link"
             @click="router.push('/meetings')"
-          >{{ t('meetings.eyebrow') }}</span>
+          >{{ t('meetings.title') }}</span>
           <CIconChevronRight
             width="14"
             height="14"
           />
-          <span>{{ typeLabel(meeting.meeting_type) }} {{ new Date(meeting.meeting_date).getFullYear() }}</span>
+          <span>{{ meeting ? `${typeLabel(meeting.meeting_type)} ${new Date(meeting.meeting_date).getFullYear()}` : '…' }}</span>
         </div>
       </template>
       <template #right>
         <CBtn
+          v-if="canCallMeeting"
           variant="secondary"
           size="sm"
-          @click="showAddResolutionModal = true"
+          :loading="callingMeeting"
+          @click="callMeeting"
+        >
+          <CIconBell />
+          <span class="btn-label">{{ t('meetings.call') }}</span>
+        </CBtn>
+        <CBtn
+          v-if="canEditMeeting"
+          variant="secondary"
+          size="sm"
+          @click="openEditMeetingModal"
+        >
+          <CIconEdit />
+          <span class="btn-label">{{ t('common.edit') }}</span>
+        </CBtn>
+        <CBtn
+          v-if="canAddResolution"
+          variant="primary"
+          size="sm"
+          @click="openResolutionModal"
         >
           <CIconPlus />
           <span class="btn-label">{{ t('meetings.addResolution') }}</span>
         </CBtn>
-        <CBtn
-          variant="primary"
-          size="sm"
-          @click="showClotureModal = true"
-        >
-          <CIconCheck />
-          <span class="btn-label">{{ t('meetings.close') }}</span>
-        </CBtn>
       </template>
     </CTopbar>
 
-    <div class="content view-container">
-      <CMockBanner />
-
-      <!-- Page header -->
-      <div class="page-eyebrow">
-        <span :class="['chip', meetingStatusChip(meeting.status)]">
-          <span class="chip-dot"></span>
-          {{ meetingStatusLabel(meeting.status) }}
-        </span>
-        {{ t('meetings.assembly') }}
-      </div>
-      <h1 class="page-title">
-        {{ typeLabel(meeting.meeting_type) }} {{ new Date(meeting.meeting_date).getFullYear() }}
-      </h1>
-      <div class="page-meta">
-        <span class="meta-item">
-          <CIconCalendar />
-          {{ formatDate(meeting.meeting_date) }}
-        </span>
-        <span class="meta-sep"></span>
-        <span class="meta-item">
-          <CIconLocation />
-          {{ meeting.location }}
-        </span>
-        <span class="meta-sep"></span>
-        <span class="meta-item">
-          <CIconUser />
-          {{ participants.length }} {{ t('meetings.present') }} · {{ t('meetings.calledAt', { date: meeting.notice_date ? formatDate(meeting.notice_date) : '—' }) }}
-        </span>
-      </div>
-
-      <!-- Status banner -->
-      <div :class="['status-banner', meeting.status === 'closed' ? 'status-banner--closed' : 'status-banner--called']">
-        <div class="banner-left">
-          <div :class="['banner-icon', meeting.status === 'closed' ? 'banner-icon--closed' : 'banner-icon--called']">
-            <CIconCheck v-if="meeting.status === 'closed'" />
-            <CIconCalendar v-else />
+    <div class="view-container assembly-detail-page">
+      <CPageError
+        v-if="error"
+        :message="error"
+        @retry="reload"
+      />
+      <CPageLoader v-else-if="loading" />
+      <template v-else-if="meeting">
+        <header class="assembly-detail-header">
+          <div class="page-header__eyebrow">
+            <span :class="['status-chip', meetingStatusChip(meeting.status)]">
+              <span class="status-chip__dot"></span>
+              {{ meetingStatusLabel(meeting.status) }}
+            </span>
+            <span>{{ t('page.eyebrows.assemblyDetail') }}</span>
           </div>
-          <div>
-            <div class="banner-title">
-              {{ meeting.status === 'closed' ? t('meetings.bannerClosed') : t('meetings.bannerCalled') }}
-            </div>
-            <div class="banner-sub">
-              {{ t('meetings.resolutionCount', resolutions.length) }}
-            </div>
-          </div>
-        </div>
-        <div class="banner-right">
-          <CBtn
-            variant="secondary"
-            size="sm"
-            @click="showPvModal = true"
-          >
-            <CIconDownload />
-            {{ t('meetings.depositMinutes') }}
-          </CBtn>
-        </div>
-      </div>
 
-      <!-- Two-col layout -->
-      <div class="layout">
-        <!-- LEFT: résolutions -->
-        <div class="res-col">
-          <div class="res-col-head">
-            <div>
-              <h2 class="section-title-lg">
-                {{ t('meetings.resolutions') }}
-              </h2>
-              <p class="section-sub">
-                {{ t('meetings.resolutionCount', resolutions.length) }}
-              </p>
-            </div>
-            <button
-              class="btn-ghost-sm"
-              @click="showAddResolutionModal = true"
+          <h1 class="display-md">
+            {{ typeLabel(meeting.meeting_type) }} {{ new Date(meeting.meeting_date).getFullYear() }}
+          </h1>
+
+          <div class="page-meta">
+            <span class="activity-card__line">
+              <CIconCalendar />
+              {{ formatDate(meeting.meeting_date) }}
+            </span>
+            <span
+              v-if="meeting.location"
+              class="activity-card__line"
             >
-              <CIconPlus />
-              {{ t('common.add') }}
-            </button>
+              <CIconLocation />
+              {{ meeting.location }}
+            </span>
+            <span class="activity-card__line">
+              <CIconBell />
+              {{ t('meetings.calledAt', { date: meeting.notice_date ? formatDate(meeting.notice_date) : '—' }) }}
+            </span>
           </div>
+        </header>
 
-          <div class="res-list">
-            <div
-              v-for="res in resolutions"
-              :key="res.id"
-              class="res-card"
-            >
-              <!-- Header -->
-              <div class="res-header">
-                <div :class="['res-num', resBadgeClass(res.status)]">
-                  {{ res.number }}
-                </div>
-                <div class="res-meta">
-                  <h3 class="res-title">
-                    {{ res.title }}
-                  </h3>
-                  <div class="res-chips">
-                    <span :class="['chip', voteTypeClass(res.vote_type)]">{{ voteTypeLabel(res.vote_type) }}</span>
-                    <span :class="['chip', statusChipClass(res.status)]">
-                      <span class="chip-dot"></span>
-                      {{ statusLabel(res.status) }}
-                    </span>
-                  </div>
-                </div>
-              </div>
+        <div class="legal-callout">
+          <strong>{{ t('meetings.legalWarning') }}</strong>
+          <span>J-21 : {{ noticeDeadline }}</span>
+        </div>
 
-              <!-- Description -->
-              <p
-                v-if="res.description"
-                class="res-desc"
-              >
-                {{ res.description }}
-              </p>
-
-              <div class="res-divider"></div>
-
-              <!-- Vote section -->
-              <div class="vote-section">
-                <template v-if="mockVoteResults[res.id]">
-                  <div class="vote-title">
-                    {{ t('meetings.vote.tally') }}
-                  </div>
-                  <div class="vote-bars">
-                    <div class="vote-row">
-                      <span class="vote-label">{{ t('meetings.vote.in_favor') }}</span>
-                      <div class="vote-track">
-                        <div
-                          class="vote-fill vote-fill--for"
-                          :style="{ width: votePct(mockVoteResults[res.id].votes_for, mockVoteResults[res.id].shares_present) + '%' }"
-                        ></div>
-                      </div>
-                      <span class="vote-pct vote-pct--for">{{ votePct(mockVoteResults[res.id].votes_for, mockVoteResults[res.id].shares_present) }}%</span>
-                      <span class="vote-shares">{{ mockVoteResults[res.id].votes_for }} t.</span>
-                    </div>
-                    <div class="vote-row">
-                      <span class="vote-label">{{ t('meetings.vote.against') }}</span>
-                      <div class="vote-track">
-                        <div
-                          class="vote-fill vote-fill--against"
-                          :style="{ width: votePct(mockVoteResults[res.id].votes_against, mockVoteResults[res.id].shares_present) + '%' }"
-                        ></div>
-                      </div>
-                      <span class="vote-pct vote-pct--against">{{ votePct(mockVoteResults[res.id].votes_against, mockVoteResults[res.id].shares_present) }}%</span>
-                      <span class="vote-shares">{{ mockVoteResults[res.id].votes_against }} t.</span>
-                    </div>
-                    <div class="vote-row">
-                      <span class="vote-label">{{ t('meetings.vote.abstain') }}</span>
-                      <div class="vote-track">
-                        <div
-                          class="vote-fill vote-fill--abstain"
-                          :style="{ width: votePct(mockVoteResults[res.id].abstentions, mockVoteResults[res.id].shares_present) + '%' }"
-                        ></div>
-                      </div>
-                      <span class="vote-pct vote-pct--abstain">{{ votePct(mockVoteResults[res.id].abstentions, mockVoteResults[res.id].shares_present) }}%</span>
-                      <span class="vote-shares">{{ mockVoteResults[res.id].abstentions }} t.</span>
-                    </div>
-                  </div>
-                  <div :class="['vote-result', mockVoteResults[res.id].adopted ? 'tone--valid' : 'tone--err']">
-                    <div>
-                      <div :class="['vote-result-text', mockVoteResults[res.id].adopted ? 'tone--valid' : 'tone--err']">
-                        {{ mockVoteResults[res.id].adopted ? '✓ ' + t('meetings.vote.passed') : '✗ ' + t('meetings.vote.rejected') }}
-                      </div>
-                      <div class="vote-result-sub">
-                        {{ mockVoteResults[res.id].explanation }}
-                      </div>
-                    </div>
-                    <span class="vote-result-count">
-                      {{ mockVoteResults[res.id].votes_for }} / {{ mockVoteResults[res.id].shares_present }}
-                    </span>
-                  </div>
-                </template>
-                <template v-else>
-                  <div class="vote-pending">
-                    <CIconClock />
-                    {{ t('meetings.vote.pendingVote') }}
-                  </div>
-                </template>
+        <div class="detail-layout">
+          <section class="main-column">
+            <div class="section-head">
+              <div>
+                <h2 class="section-title">
+                  {{ t('meetings.resolutions') }}
+                </h2>
+                <p class="section-subtitle">
+                  {{ t('meetings.resolutionCount', resolutions.length) }}
+                </p>
               </div>
             </div>
-          </div>
-        </div>
 
-        <!-- RIGHT: sidebar -->
-        <div class="right-col">
-          <!-- Infos card -->
-          <div class="info-card">
-            <h3 class="info-title">
-              {{ t('meetings.info') }}
-            </h3>
-            <div class="info-row">
-              <span class="info-key">{{ t('meetings.infoFields.type') }}</span>
-              <span class="info-val">{{ typeLabel(meeting.meeting_type) }}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-key">{{ t('meetings.infoFields.date') }}</span>
-              <span class="info-val">{{ formatDate(meeting.meeting_date) }}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-key">{{ t('meetings.infoFields.location') }}</span>
-              <span class="info-val">{{ meeting.location }}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-key">{{ t('meetings.infoFields.notice') }}</span>
-              <span class="info-val">{{ meeting.notice_date ? formatDate(meeting.notice_date) : '—' }}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-key">{{ t('meetings.infoFields.resolutions') }}</span>
-              <span class="info-val info-val--mono">{{ resolutions.length }}</span>
-            </div>
-          </div>
-
-          <!-- Présence & quorum -->
-          <div class="presence-card">
-            <h3 class="presence-title">
-              {{ t('meetings.presenceQuorum') }}
-            </h3>
-            <p class="presence-sub">
-              {{ t('meetings.sharesRepresented') }}
-            </p>
-            <div class="presence-big">
-              {{ sharesPresent }} <span class="presence-unit">/ {{ totalShares }}</span>
-            </div>
-            <p class="presence-detail">
-              {{ t('meetings.attendeesDetail', { count: participants.length }) }}
-            </p>
-            <div class="prog-track">
-              <div
-                class="prog-fill prog-fill--primary"
-                :style="{ width: quorumPct + '%' }"
-              ></div>
-            </div>
-            <div class="presence-legend">
-              <span>0</span>
-              <span>{{ quorumPct }}{{ t('meetings.tantiemesShares') }}</span>
-              <span>1000</span>
-            </div>
             <div
-              v-if="quorumOk"
-              class="quorum-alert tone--valid"
+              v-if="resolutions.length === 0"
+              class="empty-state"
             >
-              <CIconCheck />
-              {{ t('meetings.quorumOk') }}
+              {{ t('meetings.resolutionsEmpty') }}
             </div>
+
             <div
               v-else
-              class="quorum-alert quorum-alert--warn tone--warn"
+              class="resolution-list"
             >
-              <CIconAlertTriangle />
-              {{ t('meetings.quorumKo') }}
-            </div>
-
-            <!-- Participants -->
-            <div class="part-list">
-              <div
-                v-for="p in participants"
-                :key="p.name"
-                class="part-item"
+              <CCard
+                v-for="resolution in resolutions"
+                :key="resolution.id"
+                class="resolution-card"
               >
-                <div
-                  class="part-avatar"
-                  :style="{ background: p.color, color: p.text }"
+                <div class="resolution-card__header">
+                  <div class="resolution-number">
+                    {{ resolution.number }}
+                  </div>
+                  <div class="resolution-card__body">
+                    <h3 class="resolution-title">
+                      {{ resolution.title }}
+                    </h3>
+                    <div class="resolution-chips">
+                      <span :class="['status-chip', voteTypeChip(resolution.vote_type)]">{{ voteTypeLabel(resolution.vote_type) }}</span>
+                      <span :class="['status-chip', resolutionStatusChip(resolution.status)]">
+                        <span class="status-chip__dot"></span>
+                        {{ resolutionStatusLabel(resolution.status) }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <p
+                  v-if="resolution.description"
+                  class="resolution-description"
                 >
-                  {{ initials(p.name) }}
-                </div>
-                <div class="part-info">
-                  <div class="part-name">
-                    {{ p.name }}
-                  </div>
-                  <div class="part-lot">
-                    {{ p.lot }}
-                  </div>
-                </div>
-                <span class="part-shares">{{ p.tantièmes }} t.</span>
-                <span
-                  v-if="p.mandataire"
-                  class="part-power tone--warn"
-                >{{ t('meetings.mandate') }}</span>
-              </div>
-            </div>
-          </div>
+                  {{ resolution.description }}
+                </p>
 
-          <!-- ODJ card -->
-          <div class="odj-card">
-            <h3 class="info-title">
-              {{ t('meetings.agenda') }}
-            </h3>
-            <div class="odj-list">
-              <div
-                v-for="(item, i) in odjItems"
-                :key="i"
-                class="odj-item"
-              >
-                <span class="odj-n">{{ i + 1 }}.</span>
-                <span class="odj-text">{{ item }}</span>
-              </div>
-            </div>
-          </div>
-        </div><!-- /right-col -->
-      </div><!-- /layout -->
-    </div><!-- /content -->
+                <div
+                  v-if="voteResults[resolution.id]"
+                  class="tally-box"
+                >
+                  <div class="tally-row">
+                    <span>{{ t('meetings.vote.in_favor') }}</span>
+                    <div class="tally-track">
+                      <div
+                        class="tally-fill tally-fill--for"
+                        :style="{ width: `${votePct(voteResults[resolution.id].votes_for, voteResults[resolution.id].shares_present)}%` }"
+                      ></div>
+                    </div>
+                    <strong>{{ voteResults[resolution.id].votes_for }}</strong>
+                  </div>
+                  <div class="tally-row">
+                    <span>{{ t('meetings.vote.against') }}</span>
+                    <div class="tally-track">
+                      <div
+                        class="tally-fill tally-fill--against"
+                        :style="{ width: `${votePct(voteResults[resolution.id].votes_against, voteResults[resolution.id].shares_present)}%` }"
+                      ></div>
+                    </div>
+                    <strong>{{ voteResults[resolution.id].votes_against }}</strong>
+                  </div>
+                  <div class="tally-row">
+                    <span>{{ t('meetings.vote.abstain') }}</span>
+                    <div class="tally-track">
+                      <div
+                        class="tally-fill tally-fill--abstain"
+                        :style="{ width: `${votePct(voteResults[resolution.id].abstentions, voteResults[resolution.id].shares_present)}%` }"
+                      ></div>
+                    </div>
+                    <strong>{{ voteResults[resolution.id].abstentions }}</strong>
+                  </div>
+                  <div :class="['result-pill', voteResults[resolution.id].adopted ? 'tone--valid' : 'tone--err']">
+                    <strong>{{ voteResults[resolution.id].adopted ? t('meetings.vote.passed') : t('meetings.vote.rejected') }}</strong>
+                    <span>{{ voteResults[resolution.id].explanation }}</span>
+                  </div>
+                </div>
 
-    <!-- Modal: Ajouter résolution -->
-    <Teleport to="body">
-      <div
-        :class="['modal-overlay', { 'modal-overlay--show': showAddResolutionModal }]"
-        @click.self="showAddResolutionModal = false"
+                <div
+                  v-else
+                  class="pending-box"
+                >
+                  {{ t('meetings.vote.pendingVote') }}
+                </div>
+              </CCard>
+            </div>
+          </section>
+
+          <aside class="side-column">
+            <CCard>
+              <h2 class="side-title">
+                {{ t('meetings.info') }}
+              </h2>
+              <dl class="info-list">
+                <div class="info-list__row">
+                  <dt>{{ t('meetings.infoFields.type') }}</dt>
+                  <dd>{{ typeLabel(meeting.meeting_type) }}</dd>
+                </div>
+                <div class="info-list__row">
+                  <dt>{{ t('meetings.infoFields.date') }}</dt>
+                  <dd>{{ formatDate(meeting.meeting_date) }}</dd>
+                </div>
+                <div class="info-list__row">
+                  <dt>{{ t('meetings.infoFields.location') }}</dt>
+                  <dd>{{ meeting.location || '—' }}</dd>
+                </div>
+                <div class="info-list__row">
+                  <dt>{{ t('meetings.infoFields.notice') }}</dt>
+                  <dd>{{ meeting.notice_date ? formatDate(meeting.notice_date) : '—' }}</dd>
+                </div>
+                <div class="info-list__row">
+                  <dt>{{ t('meetings.infoFields.resolutions') }}</dt>
+                  <dd>{{ resolutions.length }}</dd>
+                </div>
+              </dl>
+            </CCard>
+
+            <CCard>
+              <div class="side-head">
+                <div>
+                  <h2 class="side-title">
+                    {{ t('meetings.documents.title') }}
+                  </h2>
+                  <p class="side-subtitle">
+                    {{ t('meetings.callReady') }}
+                  </p>
+                </div>
+                <CBtn
+                  v-if="auth.isManager"
+                  variant="ghost"
+                  size="sm"
+                  @click="openDocumentModal"
+                >
+                  <CIconPlus />
+                  <span class="btn-label">{{ t('meetings.documents.uploadAction') }}</span>
+                </CBtn>
+              </div>
+
+              <CFormFeedback
+                :status="documentFeedback.status.value"
+                :message="documentFeedback.message.value"
+              />
+
+              <div class="doc-group">
+                <p class="doc-group__title">
+                  {{ t('meetings.documents.notice') }}
+                </p>
+                <div
+                  v-if="noticeDocuments.length === 0"
+                  class="empty-state empty-state--compact"
+                >
+                  {{ t('meetings.documents.empty') }}
+                </div>
+                <div
+                  v-else
+                  class="doc-list"
+                >
+                  <div
+                    v-for="document in noticeDocuments"
+                    :key="document.id"
+                    class="doc-row"
+                  >
+                    <button
+                      class="doc-link"
+                      @click="openDocument(document.id)"
+                    >
+                      {{ document.original_name }}
+                    </button>
+                    <div class="doc-row__actions">
+                      <span class="doc-kind">{{ documentKindLabel(document.kind) }}</span>
+                      <button
+                        v-if="auth.isManager"
+                        class="doc-remove"
+                        @click="detachDocument(document.id)"
+                      >
+                        {{ t('common.delete') }}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="doc-group">
+                <p class="doc-group__title">
+                  {{ t('meetings.documents.attachment') }}
+                </p>
+                <div
+                  v-if="attachmentDocuments.length === 0"
+                  class="empty-state empty-state--compact"
+                >
+                  {{ t('meetings.documents.empty') }}
+                </div>
+                <div
+                  v-else
+                  class="doc-list"
+                >
+                  <div
+                    v-for="document in attachmentDocuments"
+                    :key="document.id"
+                    class="doc-row"
+                  >
+                    <button
+                      class="doc-link"
+                      @click="openDocument(document.id)"
+                    >
+                      {{ document.original_name }}
+                    </button>
+                    <div class="doc-row__actions">
+                      <span class="doc-kind">{{ documentKindLabel(document.kind) }}</span>
+                      <button
+                        v-if="auth.isManager"
+                        class="doc-remove"
+                        @click="detachDocument(document.id)"
+                      >
+                        {{ t('common.delete') }}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div :class="['minutes-pill', meeting.minutes_document_id ? 'tone--valid' : 'tone--disabled']">
+                {{ meeting.minutes_document_id ? t('meetings.documents.minutesReady') : t('meetings.documents.minutesPending') }}
+              </div>
+            </CCard>
+
+            <CCard>
+              <div class="side-head">
+                <div>
+                  <h2 class="side-title">
+                    {{ t('meetings.presenceQuorum') }}
+                  </h2>
+                  <p class="side-subtitle">
+                    {{ t('meetings.attendanceSummary', { count: attendance.present_units }) }}
+                  </p>
+                </div>
+                <CBtn
+                  v-if="auth.isManager"
+                  variant="ghost"
+                  size="sm"
+                  @click="openAttendanceModal"
+                >
+                  <CIconEdit />
+                  <span class="btn-label">{{ t('meetings.attendanceAction') }}</span>
+                </CBtn>
+              </div>
+
+              <div class="quorum-kpi">
+                <strong>{{ attendance.shares_present }}</strong>
+                <span>{{ t('meetings.sharesRepresented') }} / {{ attendance.total_shares }}</span>
+                <small>{{ attendancePct }}%</small>
+              </div>
+
+              <div class="attendance-list">
+                <div
+                  v-for="entry in attendance.entries"
+                  :key="entry.unit_id"
+                  class="attendance-row"
+                >
+                  <div>
+                    <strong>{{ entry.unit_number }}</strong>
+                    <p>{{ entry.owner_name || '—' }}</p>
+                  </div>
+                  <div class="attendance-row__meta">
+                    <span :class="['status-chip', attendanceModeChip(entry.mode)]">{{ attendanceModeLabel(entry.mode) }}</span>
+                    <small>{{ entry.shares_represented }}</small>
+                  </div>
+                </div>
+              </div>
+            </CCard>
+
+            <CCard>
+              <h2 class="side-title">
+                {{ t('meetings.agenda') }}
+              </h2>
+              <ol class="agenda-list">
+                <li
+                  v-for="(item, index) in agendaItems"
+                  :key="`${index}-${item}`"
+                >
+                  {{ item }}
+                </li>
+              </ol>
+            </CCard>
+          </aside>
+        </div>
+      </template>
+    </div>
+
+    <CModal
+      :open="showEditMeetingModal"
+      :title="t('common.edit')"
+      @update:open="showEditMeetingModal = $event"
+    >
+      <form
+        class="form-grid"
+        @submit.prevent="saveMeeting"
       >
-        <div
-          class="modal"
-          role="dialog"
+        <label class="form-field">
+          <span class="form-label">{{ t('meetings.infoFields.type') }}</span>
+          <select
+            v-model="meetingForm.meeting_type"
+            class="form-input"
+          >
+            <option value="annual">{{ t('meetings.types.annual') }}</option>
+            <option value="extraordinary">{{ t('meetings.types.extraordinary') }}</option>
+          </select>
+        </label>
+        <label class="form-field">
+          <span class="form-label">{{ t('meetings.meetingDate') }}</span>
+          <input
+            v-model="meetingForm.meeting_date"
+            class="form-input"
+            type="datetime-local"
+          />
+        </label>
+        <label class="form-field">
+          <span class="form-label">{{ t('meetings.location') }}</span>
+          <input
+            v-model="meetingForm.location"
+            class="form-input"
+            type="text"
+          />
+        </label>
+        <label class="form-field">
+          <span class="form-label">{{ t('meetings.agenda') }}</span>
+          <textarea
+            v-model="meetingForm.agenda"
+            class="form-input"
+          ></textarea>
+        </label>
+      </form>
+
+      <template #footer>
+        <CFormFeedback
+          :status="meetingFeedback.status.value"
+          :message="meetingFeedback.message.value"
+        />
+        <CBtn
+          variant="ghost"
+          @click="showEditMeetingModal = false"
         >
-          <h2 class="modal-title">
-            {{ t('meetings.newResolution') }}
-          </h2>
-          <p class="modal-sub">
-            {{ t('meetings.newResolutionSub') }}
-          </p>
-          <div class="field">
-            <label>{{ t('meetings.resolutionLabel') }}</label>
-            <input
-              type="text"
-              :placeholder="t('meetings.resolutionLabelPlaceholder')"
-            />
-          </div>
-          <div class="field">
-            <label>{{ t('meetings.resolutionDescription') }}</label>
-            <textarea :placeholder="t('meetings.resolutionDescriptionPlaceholder')"></textarea>
-          </div>
-          <div class="field">
-            <label>{{ t('meetings.voteRule') }}</label>
-            <select>
-              <option value="simple_majority">
-                {{ t('meetings.vote.types.simple_majority') }}
+          {{ t('common.cancel') }}
+        </CBtn>
+        <CBtn
+          variant="primary"
+          :loading="savingMeeting"
+          @click="saveMeeting"
+        >
+          {{ t('common.save') }}
+        </CBtn>
+      </template>
+    </CModal>
+
+    <CModal
+      :open="showAddResolutionModal"
+      :title="t('meetings.newResolution')"
+      @update:open="showAddResolutionModal = $event"
+    >
+      <form
+        class="form-grid"
+        @submit.prevent="saveResolution"
+      >
+        <label class="form-field">
+          <span class="form-label">#</span>
+          <input
+            v-model.number="resolutionForm.number"
+            class="form-input"
+            type="number"
+            min="1"
+          />
+        </label>
+        <label class="form-field">
+          <span class="form-label">{{ t('meetings.resolutionLabel') }}</span>
+          <input
+            v-model="resolutionForm.title"
+            class="form-input"
+            type="text"
+            :placeholder="t('meetings.resolutionLabelPlaceholder')"
+          />
+        </label>
+        <label class="form-field">
+          <span class="form-label">{{ t('meetings.resolutionDescription') }}</span>
+          <textarea
+            v-model="resolutionForm.description"
+            class="form-input"
+            :placeholder="t('meetings.resolutionDescriptionPlaceholder')"
+          ></textarea>
+        </label>
+        <label class="form-field">
+          <span class="form-label">{{ t('meetings.voteRule') }}</span>
+          <select
+            v-model="resolutionForm.vote_type"
+            class="form-input"
+          >
+            <option value="simple_majority">{{ t('meetings.vote.types.simple_majority') }}</option>
+            <option value="absolute_majority">{{ t('meetings.vote.types.absolute_majority') }}</option>
+            <option value="double_majority">{{ t('meetings.vote.types.double_majority') }}</option>
+            <option value="unanimity">{{ t('meetings.vote.types.unanimity') }}</option>
+          </select>
+        </label>
+      </form>
+
+      <template #footer>
+        <CFormFeedback
+          :status="resolutionFeedback.status.value"
+          :message="resolutionFeedback.message.value"
+        />
+        <CBtn
+          variant="ghost"
+          @click="showAddResolutionModal = false"
+        >
+          {{ t('common.cancel') }}
+        </CBtn>
+        <CBtn
+          variant="primary"
+          :loading="savingResolution"
+          @click="saveResolution"
+        >
+          {{ t('common.add') }}
+        </CBtn>
+      </template>
+    </CModal>
+
+    <CModal
+      :open="showDocumentModal"
+      :title="t('meetings.documents.uploadTitle')"
+      @update:open="showDocumentModal = $event"
+    >
+      <form
+        class="form-grid"
+        @submit.prevent="saveDocument"
+      >
+        <label class="form-field">
+          <span class="form-label">{{ t('meetings.documents.uploadType') }}</span>
+          <select
+            v-model="documentForm.kind"
+            class="form-input"
+          >
+            <option value="notice">{{ t('meetings.documents.notice') }}</option>
+            <option value="attachment">{{ t('meetings.documents.attachment') }}</option>
+          </select>
+        </label>
+        <label class="form-field">
+          <span class="form-label">{{ t('meetings.documents.uploadFile') }}</span>
+          <input
+            class="form-input"
+            type="file"
+            accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+            @change="onFileChange"
+          />
+        </label>
+      </form>
+
+      <template #footer>
+        <CFormFeedback
+          :status="documentFeedback.status.value"
+          :message="documentFeedback.message.value"
+        />
+        <CBtn
+          variant="ghost"
+          @click="showDocumentModal = false"
+        >
+          {{ t('common.cancel') }}
+        </CBtn>
+        <CBtn
+          variant="primary"
+          :loading="savingDocument"
+          @click="saveDocument"
+        >
+          {{ t('common.add') }}
+        </CBtn>
+      </template>
+    </CModal>
+
+    <CModal
+      :open="showAttendanceModal"
+      :title="t('meetings.attendanceTitle')"
+      @update:open="showAttendanceModal = $event"
+    >
+      <form
+        class="form-grid"
+        @submit.prevent="saveAttendance"
+      >
+        <p class="modal-subtitle">
+          {{ t('meetings.attendanceHint') }}
+        </p>
+        <div class="attendance-edit-list">
+          <div
+            v-for="entry in attendanceDraft"
+            :key="entry.unit_id"
+            class="attendance-edit-row"
+          >
+            <div class="attendance-edit-row__identity">
+              <strong>{{ entry.unit_number }}</strong>
+              <span>{{ entry.owner_name || '—' }}</span>
+            </div>
+            <select
+              v-model="entry.mode"
+              class="form-input"
+            >
+              <option value="present">
+                {{ t('meetings.attendanceModes.present') }}
               </option>
-              <option value="absolute_majority">
-                {{ t('meetings.vote.types.absolute_majority') }}
+              <option value="proxy">
+                {{ t('meetings.attendanceModes.proxy') }}
               </option>
-              <option value="double_majority">
-                {{ t('meetings.vote.types.double_majority') }}
+              <option value="correspondence">
+                {{ t('meetings.attendanceModes.correspondence') }}
+              </option>
+              <option value="absent">
+                {{ t('meetings.attendanceModes.absent') }}
               </option>
             </select>
-          </div>
-          <div class="modal-actions">
-            <CBtn
-              variant="secondary"
-              size="sm"
-              @click="showAddResolutionModal = false"
-            >
-              {{ t('common.cancel') }}
-            </CBtn>
-            <CBtn
-              variant="primary"
-              size="sm"
-              @click="showAddResolutionModal = false"
-            >
-              {{ t('common.add') }}
-            </CBtn>
-          </div>
-        </div>
-      </div>
-
-      <!-- Modal: Clôturer AG -->
-      <div
-        :class="['modal-overlay', { 'modal-overlay--show': showClotureModal }]"
-        @click.self="showClotureModal = false"
-      >
-        <div
-          class="modal"
-          role="dialog"
-        >
-          <h2 class="modal-title">
-            {{ t('meetings.closeMeetingTitle') }}
-          </h2>
-          <p class="modal-sub">
-            {{ t('meetings.closeMeetingSub') }}
-          </p>
-          <div class="modal-actions">
-            <CBtn
-              variant="secondary"
-              size="sm"
-              @click="showClotureModal = false"
-            >
-              {{ t('common.cancel') }}
-            </CBtn>
-            <CBtn
-              variant="primary"
-              size="sm"
-              @click="showClotureModal = false"
-            >
-              {{ t('meetings.closeMeetingConfirm') }}
-            </CBtn>
-          </div>
-        </div>
-      </div>
-
-      <!-- Modal: Déposer PV -->
-      <div
-        :class="['modal-overlay', { 'modal-overlay--show': showPvModal }]"
-        @click.self="showPvModal = false"
-      >
-        <div
-          class="modal"
-          role="dialog"
-        >
-          <h2 class="modal-title">
-            {{ t('meetings.pvTitle') }}
-          </h2>
-          <p class="modal-sub">
-            {{ t('meetings.pvSub') }}
-          </p>
-          <div class="field">
-            <label>{{ t('meetings.pvFileLabel') }}</label>
             <input
-              type="file"
-              accept=".pdf"
-              style="height:auto;padding:10px 14px"
+              v-model="entry.representative_name"
+              class="form-input"
+              type="text"
+              :placeholder="t('meetings.attendanceRepresentative')"
             />
           </div>
-          <div class="modal-actions">
-            <CBtn
-              variant="secondary"
-              size="sm"
-              @click="showPvModal = false"
-            >
-              {{ t('common.cancel') }}
-            </CBtn>
-            <CBtn
-              variant="primary"
-              size="sm"
-              @click="showPvModal = false"
-            >
-              {{ t('meetings.pvSubmit') }}
-            </CBtn>
-          </div>
         </div>
-      </div>
-    </Teleport>
+      </form>
+
+      <template #footer>
+        <CFormFeedback
+          :status="attendanceFeedback.status.value"
+          :message="attendanceFeedback.message.value"
+        />
+        <CBtn
+          variant="ghost"
+          @click="showAttendanceModal = false"
+        >
+          {{ t('common.cancel') }}
+        </CBtn>
+        <CBtn
+          variant="primary"
+          :loading="savingAttendance"
+          @click="saveAttendance"
+        >
+          {{ t('common.save') }}
+        </CBtn>
+      </template>
+    </CModal>
   </div>
 </template>
 
 <style scoped>
-.detail-page {
+.assembly-detail-page {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
-  background: var(--color-surface);
+  gap: var(--space-6);
 }
-.content { padding: 40px; flex: 1; }
-.content { padding: 0; flex: 1; }
 
-/* Header */
-.page-eyebrow {
-  font-size: 11px;
+.assembly-detail-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.breadcrumb-link {
+  cursor: pointer;
+  color: var(--color-on-surface-variant);
+}
+
+.page-header__eyebrow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-2xs);
   font-weight: var(--fw-semibold);
-  letter-spacing: .1em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--color-primary);
-  margin-bottom: 8px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
 }
-.page-title {
-  font-family: var(--font-display);
-  font-size: 36px;
-  font-weight: var(--fw-bold);
-  font-variation-settings: 'opsz' 72;
-  letter-spacing: -.03em;
-  color: var(--color-on-surface);
-  line-height: 1;
-  margin-bottom: 8px;
-}
+
 .page-meta {
   display: flex;
-  align-items: center;
-  gap: 10px;
   flex-wrap: wrap;
-  margin-bottom: 32px;
+  gap: var(--space-3);
+  color: var(--color-on-surface-variant);
+  font-size: var(--text-sm);
 }
-.meta-item { display: flex; align-items: center; gap: 5px; font-size: 13px; color: var(--color-on-surface-variant); }
-.meta-item svg { width: 13px; height: 13px; flex-shrink: 0; }
-.meta-sep { width: 3px; height: 3px; border-radius: 50%; background: var(--color-outline); }
 
-/* Status banner */
-.status-banner {
-  border-radius: var(--radius-lg);
-  padding: 16px 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 32px;
-}
-.status-banner--called  { background: var(--color-secondary-container); }
-.status-banner--closed  { background: var(--color-success-container, #e8f5e9); }
-.banner-left { display: flex; align-items: center; gap: 12px; }
-.banner-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-md);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-.banner-icon svg { width: 20px; height: 20px; }
-.banner-icon--called  { background: rgba(100,63,213,.15); color: var(--color-primary); }
-.banner-icon--closed  { background: rgba(46,125,50,.15); color: var(--color-success, #2e7d32); }
-.banner-title { font-size: 14px; font-weight: var(--fw-semibold); color: var(--color-on-surface); }
-.banner-sub { font-size: 12px; color: var(--color-on-surface-variant); margin-top: 2px; }
-.banner-right { display: flex; gap: 8px; }
-
-/* Layout */
-.layout { display: grid; grid-template-columns: 1fr 320px; gap: 24px; align-items: start; }
-
-/* Résolutions */
-.res-col { display: flex; flex-direction: column; gap: 0; }
-.res-col-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 20px;
-}
-.section-title-lg {
-  font-family: var(--font-display);
-  font-size: 20px;
-  font-weight: var(--fw-semibold);
-  font-variation-settings: 'opsz' 36;
-  letter-spacing: -.01em;
-  color: var(--color-on-surface);
-}
-.section-sub { font-size: 12px; color: var(--color-on-surface-variant); margin-top: 2px; }
-.btn-ghost-sm {
+.status-chip {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  height: 34px;
-  padding: 0 12px;
-  border-radius: var(--radius-md);
-  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  font-size: var(--text-2xs);
   font-weight: var(--fw-medium);
-  border: none;
-  cursor: pointer;
-  background: transparent;
-  color: var(--color-primary);
-  font-family: var(--font-body);
-  transition: background .2s ease;
-}
-.btn-ghost-sm:hover { background: var(--color-secondary-container); }
-.btn-ghost-sm svg { width: 13px; height: 13px; }
-
-.res-list { display: flex; flex-direction: column; gap: 16px; }
-.res-card {
-  background: var(--color-surface-container-lowest);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
-  overflow: hidden;
-  transition: box-shadow .2s ease;
-}
-.res-card:hover { box-shadow: var(--shadow-lg); }
-.res-header { display: flex; align-items: flex-start; gap: 14px; padding: 20px 24px 16px; }
-.res-num {
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-md);
-  background: var(--tone-bg);
-  color: var(--tone-fg);
-  font-family: var(--font-display);
-  font-size: 16px;
-  font-weight: var(--fw-bold);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-.res-meta { flex: 1; min-width: 0; }
-.res-title {
-  font-family: var(--font-display);
-  font-size: 16px;
-  font-weight: var(--fw-semibold);
-  font-variation-settings: 'opsz' 36;
-  color: var(--color-on-surface);
-  letter-spacing: -.01em;
-  margin-bottom: 6px;
-}
-.res-chips { display: flex; gap: 6px; flex-wrap: wrap; }
-.res-desc { padding: 0 24px 16px; font-size: 13px; color: var(--color-on-surface-variant); line-height: 1.6; }
-.res-divider { height: 1px; background: rgba(194,199,207,.2); margin: 0 24px; }
-
-/* Vote */
-.vote-section { padding: 16px 24px 20px; }
-.vote-title {
-  font-size: 11px;
-  font-weight: var(--fw-semibold);
-  letter-spacing: .06em;
-  text-transform: uppercase;
-  color: var(--color-on-surface-variant);
-  margin-bottom: 14px;
-}
-.vote-bars { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
-.vote-row { display: flex; align-items: center; gap: 10px; }
-.vote-label { font-size: 12px; font-weight: var(--fw-medium); width: 70px; flex-shrink: 0; color: var(--color-on-surface-variant); }
-.vote-track { flex: 1; height: 8px; border-radius: var(--radius-full); background: var(--color-surface-container-highest); overflow: hidden; }
-.vote-fill { height: 100%; border-radius: var(--radius-full); transition: width .8s cubic-bezier(.34,1.3,.64,1); }
-.vote-fill--for     { background: linear-gradient(135deg, #1b5e20, #43a047); }
-.vote-fill--against { background: linear-gradient(135deg, #ba1a1a, #e53935); }
-.vote-fill--abstain { background: var(--color-outline); }
-.vote-pct { font-family: var(--font-mono); font-size: 12px; font-weight: var(--fw-medium); width: 40px; text-align: right; flex-shrink: 0; }
-.vote-pct--for      { color: var(--color-success, #2e7d32); }
-.vote-pct--against  { color: var(--color-error); }
-.vote-pct--abstain  { color: var(--color-on-surface-variant); }
-.vote-shares { font-family: var(--font-mono); font-size: 11px; color: var(--color-on-surface-variant); width: 70px; text-align: right; flex-shrink: 0; }
-
-.vote-result {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  border-radius: var(--radius-md);
   background: var(--tone-bg, transparent);
+  color: var(--tone-fg, inherit);
 }
-.vote-result-text { font-size: 13px; font-weight: var(--fw-semibold); color: var(--tone-fg, inherit); }
-.vote-result-sub { font-size: 11px; margin-top: 2px; opacity: .8; color: var(--color-on-surface-variant); }
-.vote-result-count { font-family: var(--font-mono); font-size: 13px; font-weight: var(--fw-medium); color: var(--color-on-surface); }
-.vote-pending {
+
+.status-chip__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.7;
+}
+
+.legal-callout {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  color: var(--color-on-surface-variant);
-  padding: 12px 16px;
-  background: var(--color-surface-container-low);
-  border-radius: var(--radius-md);
-}
-.vote-pending svg { width: 15px; height: 15px; flex-shrink: 0; }
-
-/* Right column */
-.right-col { display: flex; flex-direction: column; gap: 20px; }
-
-/* Info card */
-.info-card, .presence-card, .odj-card {
-  background: var(--color-surface-container-lowest);
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  padding: var(--space-4);
   border-radius: var(--radius-lg);
-  padding: 20px;
-  box-shadow: var(--shadow-md);
+  background: var(--color-secondary-container);
+  color: var(--color-on-secondary-container);
 }
-.info-title {
-  font-family: var(--font-display);
-  font-size: 16px;
-  font-weight: var(--fw-semibold);
-  font-variation-settings: 'opsz' 36;
-  color: var(--color-on-surface);
-  margin-bottom: 16px;
+
+.detail-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: var(--space-4);
+  align-items: start;
 }
-.info-row {
+
+.main-column,
+.side-column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.section-head,
+.side-head {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  padding: 10px 0;
-  border-bottom: 1px solid rgba(194,199,207,.15);
+  gap: var(--space-3);
 }
-.info-row:last-child { border-bottom: none; padding-bottom: 0; }
-.info-key { font-size: 12px; color: var(--color-on-surface-variant); }
-.info-val { font-size: 13px; font-weight: var(--fw-medium); color: var(--color-on-surface); text-align: right; max-width: 160px; }
-.info-val--mono { font-family: var(--font-mono); font-weight: var(--fw-regular); }
 
-/* Présence */
-.presence-title {
-  font-family: var(--font-display);
-  font-size: 16px;
-  font-weight: var(--fw-semibold);
-  font-variation-settings: 'opsz' 36;
-  color: var(--color-on-surface);
-  margin-bottom: 4px;
-}
-.presence-sub { font-size: 12px; color: var(--color-on-surface-variant); margin-bottom: 16px; }
-.presence-big {
-  font-family: var(--font-display);
-  font-size: 40px;
-  font-weight: var(--fw-bold);
-  font-variation-settings: 'opsz' 72;
-  letter-spacing: -.03em;
-  color: var(--color-on-surface);
-  margin-bottom: 2px;
-  line-height: 1;
-}
-.presence-unit { font-size: 20px; color: var(--color-on-surface-variant); }
-.presence-detail { font-size: 12px; color: var(--color-on-surface-variant); margin-bottom: 12px; }
-.prog-track { height: 10px; border-radius: var(--radius-full); background: var(--color-surface-container-highest); overflow: hidden; margin-bottom: 6px; }
-.prog-fill { height: 100%; border-radius: var(--radius-full); transition: width .8s cubic-bezier(.34,1.3,.64,1); }
-.prog-fill--primary { background: var(--gradient-primary); }
-.presence-legend { display: flex; justify-content: space-between; margin-bottom: 12px; }
-.presence-legend span { font-size: 11px; color: var(--color-on-surface-variant); }
-.quorum-alert {
-  border-radius: var(--radius-sm);
-  padding: 10px 12px;
-  font-size: 12px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 16px;
-  background: var(--tone-bg);
-  color: var(--tone-fg);
-}
-.quorum-alert svg { width: 14px; height: 14px; flex-shrink: 0; }
-
-/* Participants */
-.part-list { display: flex; flex-direction: column; }
-.part-item { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid rgba(194,199,207,.12); }
-.part-item:last-child { border-bottom: none; }
-.part-avatar { width: 28px; height: 28px; border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 11px; font-weight: var(--fw-bold); flex-shrink: 0; }
-.part-info { flex: 1; min-width: 0; }
-.part-name { font-size: 12px; color: var(--color-on-surface); }
-.part-lot { font-size: 11px; color: var(--color-on-surface-variant); }
-.part-shares { font-family: var(--font-mono); font-size: 11px; color: var(--color-on-surface-variant); }
-.part-power { font-size: 10px; padding: 2px 6px; border-radius: var(--radius-full); background: var(--tone-bg); color: var(--tone-fg); font-weight: var(--fw-medium); }
-
-/* ODJ */
-.odj-list { display: flex; flex-direction: column; }
-.odj-item { display: flex; gap: 10px; padding: 8px 0; border-bottom: 1px solid rgba(194,199,207,.12); }
-.odj-item:last-child { border-bottom: none; }
-.odj-n { font-family: var(--font-mono); font-size: 11px; color: var(--color-primary); font-weight: var(--fw-medium); width: 20px; flex-shrink: 0; padding-top: 1px; }
-.odj-text { font-size: 12px; color: var(--color-on-surface); line-height: 1.4; }
-
-/* Chips */
-.chip { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: var(--radius-full); font-size: 11px; font-weight: var(--fw-medium); background: var(--tone-bg, transparent); color: var(--tone-fg, inherit); }
-.chip-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: .65; flex-shrink: 0; }
-.chip-art25 { --tone-bg: #e8def8; --tone-fg: #21005d; }
-.chip-art26 { --tone-bg: #fce8d5; --tone-fg: #7a3600; }
-
-/* Modal */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(25,28,29,.4);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  z-index: 200;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity .2s;
-}
-.modal-overlay--show { opacity: 1; pointer-events: all; }
-.modal {
-  background: rgba(255,255,255,.92);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(194,199,207,.3);
-  box-shadow: 0 20px 60px rgba(25,28,29,.14);
-  border-radius: var(--radius-lg);
-  padding: 28px;
-  width: 480px;
-  max-width: 90vw;
-  transform: translateY(8px) scale(.98);
-  transition: transform .25s cubic-bezier(.34,1.3,.64,1);
-}
-.modal-overlay--show .modal { transform: translateY(0) scale(1); }
-.modal-title {
+.section-title,
+.side-title {
   font-family: var(--font-display);
   font-size: 20px;
   font-weight: var(--fw-semibold);
-  font-variation-settings: 'opsz' 36;
-  letter-spacing: -.01em;
-  color: var(--color-on-surface);
-  margin-bottom: 6px;
 }
-.modal-sub { font-size: 13px; color: var(--color-on-surface-variant); margin-bottom: 24px; line-height: 1.5; }
-.modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 24px; }
-.field label { font-size: 13px; font-weight: var(--fw-medium); color: var(--color-on-surface); display: block; margin-bottom: 6px; }
-.field input,
-.field select,
-.field textarea {
-  width: 100%;
-  padding: 0 14px;
-  height: 42px;
-  background: var(--color-surface-container);
-  border: none;
+
+.section-subtitle,
+.side-subtitle,
+.modal-subtitle {
+  color: var(--color-on-surface-variant);
+  font-size: var(--text-sm);
+}
+
+.modal-subtitle {
+  margin: 0;
+}
+
+.resolution-list,
+.doc-list,
+.attendance-list,
+.attendance-edit-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.resolution-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.resolution-card__header {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.resolution-number {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border-radius: var(--radius-md);
-  font-family: var(--font-body);
-  font-size: 14px;
-  color: var(--color-on-surface);
-  outline: none;
-  transition: background .2s, box-shadow .2s;
+  background: var(--color-secondary-container);
+  color: var(--color-on-secondary-container);
+  font-family: var(--font-display);
+  font-weight: var(--fw-bold);
 }
-.field textarea { height: auto; padding: 12px 14px; resize: vertical; min-height: 72px; }
-.field input:focus,
-.field select:focus,
-.field textarea:focus { background: var(--color-surface-container-low); box-shadow: 0 0 0 2px rgba(100,63,213,.3); }
+
+.resolution-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.resolution-title {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: var(--fw-semibold);
+}
+
+.resolution-chips {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.resolution-description {
+  color: var(--color-on-surface-variant);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.tally-box {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.tally-row {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr) 36px;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--text-sm);
+}
+
+.tally-track {
+  height: 8px;
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  background: var(--color-surface-container-high);
+}
+
+.tally-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+}
+
+.tally-fill--for {
+  background: linear-gradient(135deg, #1b5e20, #43a047);
+}
+
+.tally-fill--against {
+  background: linear-gradient(135deg, #ba1a1a, #e53935);
+}
+
+.tally-fill--abstain {
+  background: var(--color-outline);
+}
+
+.result-pill,
+.pending-box,
+.minutes-pill,
+.quorum-kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+}
+
+.result-pill {
+  background: var(--tone-bg, transparent);
+  color: var(--tone-fg, inherit);
+}
+
+.pending-box {
+  background: var(--color-surface-container-low);
+  color: var(--color-on-surface-variant);
+}
+
+.quorum-kpi {
+  background: var(--color-secondary-container);
+  color: var(--color-on-secondary-container);
+}
+
+.quorum-kpi strong {
+  font-size: 28px;
+  font-family: var(--font-display);
+}
+
+.info-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.info-list__row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.info-list__row dt,
+.doc-kind,
+.attendance-row p,
+.attendance-edit-row__identity span {
+  color: var(--color-on-surface-variant);
+}
+
+.info-list__row dd {
+  margin: 0;
+  text-align: right;
+}
+
+.doc-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.doc-group__title {
+  margin: 0;
+  font-size: var(--text-xs);
+  font-weight: var(--fw-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.doc-row,
+.attendance-row,
+.attendance-edit-row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  align-items: center;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-container-low);
+}
+
+.doc-row__actions,
+.attendance-row__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.doc-link,
+.doc-remove {
+  border: none;
+  background: transparent;
+  font: inherit;
+}
+
+.doc-link {
+  color: var(--color-primary);
+  cursor: pointer;
+  text-align: left;
+}
+
+.doc-remove {
+  cursor: pointer;
+  color: var(--color-error);
+}
+
+.attendance-row p {
+  margin: 2px 0 0;
+  font-size: var(--text-xs);
+}
+
+.attendance-edit-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(160px, 220px) minmax(0, 1fr);
+}
+
+.attendance-edit-row__identity {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.agenda-list {
+  margin: 0;
+  padding-left: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.chip-art25 {
+  --tone-bg: #e8def8;
+  --tone-fg: #21005d;
+}
+
+.chip-art26 {
+  --tone-bg: #fce8d5;
+  --tone-fg: #7a3600;
+}
+
+.empty-state--compact {
+  padding: var(--space-4);
+}
+
+@media (max-width: 960px) {
+  .detail-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .tally-row {
+    grid-template-columns: 72px minmax(0, 1fr) 32px;
+  }
+
+  .attendance-edit-row {
+    grid-template-columns: 1fr;
+  }
+}
 </style>

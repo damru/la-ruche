@@ -270,19 +270,20 @@ async function confirmDelete() {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
-        <div class="view-header">
-          <div>
-            <h1 class="display-md">
-              {{ t('consultations.title') }}
-            </h1>
-            <p
-              class="body-md"
-              style="color:var(--color-on-surface-variant)"
-            >
-              {{ t('consultations.openCount', openCount) }}
-            </p>
-          </div>
-        </div>
+        <header class="view-header">
+          <p class="page-eyebrow">
+            {{ t('page.eyebrows.consultations') }}
+          </p>
+          <h1 class="display-md">
+            {{ t('consultations.title') }}
+          </h1>
+          <p
+            class="body-md"
+            style="color:var(--color-on-surface-variant)"
+          >
+            {{ t('consultations.openCount', openCount) }}
+          </p>
+        </header>
 
         <CAlert
           v-if="pageError"
@@ -718,6 +719,5 @@ async function confirmDelete() {
 .choice-input-row { display: flex; align-items: center; gap: 8px; }
 .choice-input-row .form-input { flex: 1; }
 
-.empty-state { padding: var(--space-8); text-align: center; font-size: var(--text-md); color: var(--color-on-surface-variant); }
 .dim { color: var(--color-on-surface-variant); }
 </style>

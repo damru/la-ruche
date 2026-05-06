@@ -7,6 +7,8 @@ export type Role = 'manager' | 'board_member' | 'co_owner' | 'tenant'
 
 export type MeetingStatus = 'draft' | 'called' | 'held' | 'closed'
 export type MeetingType = 'annual' | 'extraordinary'
+export type MeetingDocumentKind = 'notice' | 'attachment'
+export type MeetingAttendanceMode = 'present' | 'proxy' | 'correspondence' | 'absent'
 export type VoteType = 'simple_majority' | 'absolute_majority' | 'double_majority' | 'unanimity'
 export type ResolutionStatus = 'pending' | 'passed' | 'rejected' | 'withdrawn'
 export type VotePosition = 'in_favor' | 'against' | 'abstain' | 'non_voter'
@@ -106,7 +108,29 @@ export interface Meeting {
   notice_date?: string
   meeting_date: string
   location?: string
+  agenda?: string
+  minutes_document_id?: string
   created_at: string
+}
+
+export interface MeetingDocument extends Document {
+  kind: MeetingDocumentKind
+}
+
+export interface MeetingAttendanceEntry {
+  unit_id: string
+  unit_number: string
+  owner_name?: string
+  mode: MeetingAttendanceMode
+  representative_name?: string
+  shares_represented: number
+}
+
+export interface MeetingAttendance {
+  entries: MeetingAttendanceEntry[]
+  shares_present: number
+  total_shares: number
+  present_units: number
 }
 
 export interface Resolution {

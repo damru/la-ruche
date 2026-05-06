@@ -217,11 +217,14 @@ onMounted(reload)
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
-        <div class="view-header">
+        <header class="view-header">
+          <p class="page-eyebrow">
+            {{ t('page.eyebrows.allocationKeys') }}
+          </p>
           <h1 class="display-md">
             {{ t('nav.residence-keys') }}
           </h1>
-        </div>
+        </header>
 
         <p
           v-if="keys.length === 0"

@@ -1,7 +1,7 @@
 import { api } from './client'
 import axios from 'axios'
 import type {
-  Meeting, Resolution, VoteResult,
+  Meeting, MeetingAttendance, MeetingDocument, Resolution, VoteResult,
   Budget, BudgetLine, LevyCall, WorksFund,
   VendorContract, ContractReminder,
     Task, Claim, MaintenanceEntry,
@@ -140,6 +140,22 @@ export const meetingsApi = {
     api.post(`/meetings/${id}/call`),
   close: (id: string) =>
     api.post(`/meetings/${id}/close`),
+  listDocuments: (id: string) =>
+    api.get<MeetingDocument[]>(`/meetings/${id}/documents`),
+  attachDocument: (id: string, data: { document_id: string; kind: 'notice' | 'attachment' }) =>
+    api.post(`/meetings/${id}/documents`, data),
+  detachDocument: (id: string, documentId: string) =>
+    api.delete(`/meetings/${id}/documents/${documentId}`),
+  attendance: (id: string) =>
+    api.get<MeetingAttendance>(`/meetings/${id}/attendance`),
+  saveAttendance: (id: string, entries: MeetingAttendance['entries']) =>
+    api.put(`/meetings/${id}/attendance`, {
+      entries: entries.map(entry => ({
+        unit_id: entry.unit_id,
+        mode: entry.mode,
+        representative_name: entry.representative_name || undefined,
+      })),
+    }),
   listResolutions: (meetingId: string) =>
     api.get<Resolution[]>(`/meetings/${meetingId}/resolutions`),
   createResolution: (meetingId: string, data: Partial<Resolution>) =>

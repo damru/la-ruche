@@ -109,6 +109,18 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
         .route("/meetings/{id}/call", post(assemblies::call))
         .route("/meetings/{id}/close", post(assemblies::close))
         .route(
+            "/meetings/{id}/documents",
+            get(assemblies::list_documents).post(assemblies::attach_document),
+        )
+        .route(
+            "/meetings/{id}/documents/{document_id}",
+            delete(assemblies::detach_document),
+        )
+        .route(
+            "/meetings/{id}/attendance",
+            get(assemblies::list_attendance).put(assemblies::save_attendance),
+        )
+        .route(
             "/meetings/{id}/resolutions",
             get(assemblies::list_resolutions).post(assemblies::create_resolution),
         )

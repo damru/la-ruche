@@ -31,7 +31,7 @@ pub struct UploadUrlResponse {
     pub bucket: String,
 }
 
-#[derive(Serialize, ToSchema)]
+#[derive(Debug, Serialize, ToSchema)]
 pub struct DocumentListItem {
     pub id: Uuid,
     pub original_name: String,
