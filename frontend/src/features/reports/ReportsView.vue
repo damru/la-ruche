@@ -544,9 +544,9 @@ function photoPreview(file: File): string {
       <CPageLoader v-else-if="loading" />
       <template v-else>
         <header class="view-header">
-          <p class="page-eyebrow">
+          <CEyebrow>
             {{ t('page.eyebrows.reports') }}
-          </p>
+          </CEyebrow>
           <h1 class="display-md">
             {{ t('reports.title') }}
           </h1>

@@ -27,7 +27,7 @@
 | Timeline métier tâches/signalements | `activity_log` polymorphique distinct de `audit_log` pour la frise UX et le suivi de cycle de vie | EP-017 / EP-018 |
 | Logs | tracing + tracing-subscriber (JSON) | — |
 | Config | dotenvy + config crate (LA_RUCHE__*) ; `LA_RUCHE__APP__DEMO_MODE=true` rejoue `backend/seeds/demo.sql` au démarrage | — |
-| Frontend | Vue 3 + Vite + TypeScript | DDR-003 |
+| Frontend | Vue 3 + Vite + TypeScript + Tailwind CSS (couche utilitaire) | DDR-003 |
 | État UI | Pinia | — |
 | Préférences UI persistées | `localStorage` `laruche-theme` (`light` / `dark`), absence de clé = `auto` | DDR-002, DDR-004 |
 | État serveur | TanStack Query | — |
@@ -119,7 +119,7 @@ laruche/
 │   ├── api/                    ← client Axios + modules API
 │   ├── components/
 │   │   ├── atoms/              ← CBtn, CInput, CSelect, CTextarea,
-│   │   │                          CProgressBar, CAlert, CBadge, CSeparator
+│   │   │                          CProgressBar, CAlert, CBadge, CSeparator, CEyebrow
 │   │   ├── molecules/          ← CCard, CKpiCard, CListItem,
 │   │   │                          CDataTable, CModal, CDropzone, CCardMeta, CCardNote
 │   │   └── organisms/          ← AppNav
@@ -145,11 +145,13 @@ laruche/
 │   ├── layouts/                ← AppLayout
 │   ├── router/index.ts         ← lazy routes, guards (403 vs 404, onboarding, redirects legacy)
 │   ├── stores/                 ← auth.ts, ui.ts (Pinia + préférence d'apparence via localStorage)
-│   ├── styles/                 ← tokens.css, base.css, typography.css
+│   ├── styles/                 ← tailwind.css, tokens.css, base.css, typography.css
 │   ├── types/domain.ts         ← types TS miroir schéma Rust
 │   └── views/                  ← ForbiddenView, NotFoundView
 └── Makefile                    ← cibles make (dev, test, docker…)
 ```
+
+Le frontend conserve les feuilles globales historiques (`tokens.css`, `base.css`, `tones.css`, etc.) comme source normative du design system. Tailwind CSS n'est ajouté que comme couche utilitaire optionnelle pour accélérer certains layouts locaux, sans déplacer les tokens ni la responsabilité des primitives partagées hors de ces fichiers.
 
 ---
 

@@ -145,7 +145,7 @@
 | Migrations | SQLx migrate | ADR-001 |
 | Auth | JWT httpOnly + Argon2id + WebAuthn | ADR-002 |
 | Structure | Single crate modulaire | ADR-003 |
-| Frontend | Vue 3 + Vite + TypeScript | DDR-003 |
+| Frontend | Vue 3 + Vite + TypeScript + Tailwind CSS (couche utilitaire) | DDR-003 |
 | Typographie | Fraunces + DM Sans + JetBrains Mono | DDR-001 |
 | Design | "The Modern Registry" — lavande/charcoal | DDR-002 |
 | Stockage | S3-compatible (MinIO self-hosted) | schéma DB |

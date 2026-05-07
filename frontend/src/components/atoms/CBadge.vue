@@ -2,23 +2,32 @@
 // Composant atomique — CBadge
 // "Official stamp" chips for roles and statuses
 
+import { computed } from 'vue'
+
 type Variant =
   | 'manager' | 'board_member' | 'co_owner' | 'tenant'
   | 'open' | 'pending' | 'closed' | 'disabled'
   | 'valid' | 'err'
   | 'primary' | 'default'
 
-withDefaults(defineProps<{
+const props = withDefaults(defineProps<{
   variant?: Variant
   dot?: boolean
+  // pulse defaults to true when variant is 'valid' or 'open', false otherwise
+  pulse?: boolean
 }>(), {
   variant: 'default',
   dot: false,
+  pulse: undefined,
 })
+
+const effectivePulse = computed(() =>
+  props.pulse ?? (props.variant === 'valid' || props.variant === 'open')
+)
 </script>
 
 <template>
-  <span :class="['c-badge', `c-badge--${variant}`, { 'tone--default': variant === 'primary', 'tone--warn': variant === 'pending', 'tone--valid': variant === 'valid' || variant === 'open', 'tone--err': variant === 'err', 'tone--disabled': variant === 'disabled' }]">
+  <span :class="['c-badge', `c-badge--${variant}`, { 'c-badge--pulse': effectivePulse, 'tone--default': variant === 'primary', 'tone--warn': variant === 'pending', 'tone--valid': variant === 'valid' || variant === 'open', 'tone--err': variant === 'err', 'tone--disabled': variant === 'disabled' }]">
     <span
       v-if="dot"
       class="c-badge__dot"
@@ -39,6 +48,7 @@ withDefaults(defineProps<{
   font-size: var(--text-xs);
   font-weight: var(--fw-medium);
   white-space: nowrap;
+  width: fit-content;
 }
 
 .c-badge__dot {
@@ -50,15 +60,13 @@ withDefaults(defineProps<{
   flex-shrink: 0;
 }
 
-/* Blinking dot for active / open statuses */
-.c-badge--open .c-badge__dot,
-.c-badge--valid .c-badge__dot {
+/* Blinking dot — controlled by the pulse prop */
+.c-badge--pulse .c-badge__dot {
   animation: badge-pulse 2.8s ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .c-badge--open .c-badge__dot,
-  .c-badge--valid .c-badge__dot {
+  .c-badge--pulse .c-badge__dot {
     animation: none;
   }
 }

@@ -9,6 +9,7 @@ import { useAutoClose } from '@/composables/useAutoClose'
 import { useAuthStore } from '@/stores/auth'
 import type { Meeting, MeetingType } from '@/types/domain'
 import { buildingApi, meetingsApi } from '@/api'
+import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
 import CSeparator from '@/components/atoms/CSeparator.vue'
@@ -76,10 +77,10 @@ function statusLabel(status: Meeting['status']): string {
   return t(`meetings.statuses.${status}`)
 }
 
-function statusChipClass(status: Meeting['status']): string {
-  if (status === 'called') return 'tone--default'
-  if (status === 'closed') return 'tone--valid'
-  return 'tone--disabled'
+function statusBadgeVariant(status: Meeting['status']): 'primary' | 'valid' | 'disabled' {
+  if (status === 'called') return 'primary'
+  if (status === 'closed') return 'valid'
+  return 'disabled'
 }
 
 function meetingBadgeLabel(type: MeetingType): string {
@@ -167,9 +168,9 @@ async function saveMeeting() {
       <CPageLoader v-else-if="loading" />
       <template v-else>
         <header class="view-header">
-          <p class="page-eyebrow">
+          <CEyebrow>
             {{ t('page.eyebrows.assemblies') }}
-          </p>
+          </CEyebrow>
           <h1 class="display-md">
             {{ t('meetings.title') }}
           </h1>
@@ -228,36 +229,40 @@ async function saveMeeting() {
             @keydown.enter.prevent="openMeeting(meeting.id)"
             @keydown.space.prevent="openMeeting(meeting.id)"
           >
-            <div :class="['meeting-badge', { 'meeting-badge--closed': meeting.status === 'closed' }]">
+            <div :class="['meeting-badge', { 'meeting-badge--closed': meeting.status === 'closed', 'meeting-badge--draft': statusBadgeVariant(meeting.status) === 'disabled' }]">
               <span class="meeting-badge__type">{{ meetingBadgeLabel(meeting.meeting_type) }}</span>
               <span class="meeting-badge__year">{{ new Date(meeting.meeting_date).getFullYear() }}</span>
             </div>
 
             <div class="meeting-card__main">
-              <div class="meeting-card__title-row">
-                <h2 class="activity-card__title meeting-card__title">
-                  {{ typeLabel(meeting.meeting_type) }} {{ new Date(meeting.meeting_date).getFullYear() }}
-                </h2>
-                <span :class="['status-chip', statusChipClass(meeting.status)]">
-                  <span class="status-chip__dot"></span>
-                  {{ statusLabel(meeting.status) }}
-                </span>
+              <div class="flex flex-col gap-x-4 gap-y-1 mb-4">
+                <div class="flex flex-row max-md:flex-col gap-y-1 justify-between">
+                  <h2 class="activity-card__title meeting-card__title">
+                    {{ typeLabel(meeting.meeting_type) }} {{ new Date(meeting.meeting_date).getFullYear() }}
+                  </h2>
+                  <CBadge
+                    :variant="statusBadgeVariant(meeting.status)"
+                    :pulse="statusBadgeVariant(meeting.status) === 'primary'"
+                    dot
+                  >
+                    {{ statusLabel(meeting.status) }}
+                  </CBadge>
+                </div>
+                <CCardMeta>
+                  <span class="activity-card__line">
+                    <CIconCalendar />
+                    {{ formatDate(meeting.meeting_date) }}
+                  </span>
+                  <CSeparator />
+                  <span
+                    v-if="meeting.location"
+                    class="activity-card__line"
+                  >
+                    <CIconLocation />
+                    {{ meeting.location }}
+                  </span>
+                </CCardMeta>
               </div>
-
-              <CCardMeta>
-                <span class="activity-card__line">
-                  <CIconCalendar />
-                  {{ formatDate(meeting.meeting_date) }}
-                </span>
-                <CSeparator />
-                <span
-                  v-if="meeting.location"
-                  class="activity-card__line"
-                >
-                  <CIconLocation />
-                  {{ meeting.location }}
-                </span>
-              </CCardMeta>
 
               <div class="meeting-card__resolution-row body-xs">
                 <span class="meeting-card__res-count">
@@ -388,13 +393,13 @@ async function saveMeeting() {
 }
 
 .meeting-badge {
-  width: 88px;
+  width: fit-content;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-1);
   padding: var(--space-4);
   background: var(--gradient-primary);
   color: white;
@@ -402,6 +407,18 @@ async function saveMeeting() {
 
 .meeting-badge--closed {
   background: linear-gradient(135deg, #1b5e20, #43a047);
+}
+
+.meeting-badge--draft {
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      rgba(255, 255, 255, 0.18) 0px,
+      rgba(255, 255, 255, 0.18) 10px,
+      transparent 10px,
+      transparent 20px
+    ),
+    var(--gradient-primary);
 }
 
 .meeting-badge__type {
@@ -414,13 +431,6 @@ async function saveMeeting() {
   font-family: var(--font-mono);
   font-size: 16px;
   font-weight: var(--fw-bold);
-}
-
-.meeting-card__title-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: var(--space-4);
 }
 
 .meeting-card__title {
@@ -448,38 +458,11 @@ async function saveMeeting() {
   color: var(--tone-fg, inherit);
 }
 
-.status-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  border-radius: var(--radius-full);
-  font-size: var(--text-2xs);
-  font-weight: var(--fw-medium);
-  background: var(--tone-bg, transparent);
-  color: var(--tone-fg, inherit);
-}
-
-.status-chip__dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: currentColor;
-  opacity: 0.7;
-}
-
-.meeting-card__title-row {
-  flex-wrap: wrap;
-}
-
 @media (max-width: 900px) {
   .meeting-badge {
     width: 72px;
   }
 
-  .meeting-card__title-row {
-    flex-direction: column;
-  }
 }
 
 </style>

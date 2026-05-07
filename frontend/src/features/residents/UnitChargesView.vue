@@ -83,9 +83,9 @@ function statusLabel(levy: UnitChargesLevy): string {
       <CPageLoader v-else-if="loading" />
       <template v-else-if="data">
         <header class="view-header">
-          <p class="page-eyebrow">
+          <CEyebrow>
             {{ t('page.eyebrows.unitCharges') }}
-          </p>
+          </CEyebrow>
           <h1 class="display-md">
             {{ t('units.charges.title') }}
           </h1>

@@ -104,9 +104,9 @@ function initials(name: string): string {
 
       <!-- Page header -->
       <div class="page-header">
-        <p class="page-eyebrow">
+        <CEyebrow class="budget-page__eyebrow">
           {{ t('page.eyebrows.budget') }}
-        </p>
+        </CEyebrow>
         <h1 class="page-title">
           {{ t('budget.fiscalYear', { year: selectedBudget.fiscal_year }) }}
         </h1>
@@ -481,12 +481,7 @@ function initials(name: string): string {
 }
 
 /* Page header */
-.page-eyebrow {
-  font-size: 11px;
-  font-weight: var(--fw-semibold);
-  letter-spacing: .1em;
-  text-transform: uppercase;
-  color: var(--color-primary);
+.budget-page__eyebrow {
   margin-bottom: 8px;
 }
 .page-title {

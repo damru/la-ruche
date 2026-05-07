@@ -271,9 +271,9 @@ async function confirmDelete() {
       <CPageLoader v-else-if="loading" />
       <template v-else>
         <header class="view-header">
-          <p class="page-eyebrow">
+          <CEyebrow>
             {{ t('page.eyebrows.consultations') }}
-          </p>
+          </CEyebrow>
           <h1 class="display-md">
             {{ t('consultations.title') }}
           </h1>

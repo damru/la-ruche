@@ -6,6 +6,7 @@ import { useFormatters } from '@/composables/useFormatters'
 import { usePageLoader } from '@/composables/usePageLoader'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
+import CEyebrow from '@/components/atoms/CEyebrow.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CPageError from '@/components/molecules/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
@@ -152,9 +153,9 @@ function priorityVariant(p: string): 'err' | 'pending' | 'primary' | 'valid' | '
               />
             </div>
             <div class="contractor-header-info">
-              <p class="page-eyebrow">
+              <CEyebrow>
                 {{ t('page.eyebrows.contractorDetail') }}
-              </p>
+              </CEyebrow>
               <h1 class="display-md contractor-name">
                 {{ contractor.name }}
               </h1>

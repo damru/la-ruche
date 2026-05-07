@@ -55,8 +55,5 @@ withDefaults(defineProps<{
   outline-offset: 2px;
 }
 .c-card--interactive:active { transform: translateY(0); }
-.c-card--interactive:hover :deep(h2), .c-card--interactive:hover :deep(h3) {
-  color: var(--color-primary);
-}
 
 </style>

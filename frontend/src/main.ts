@@ -5,15 +5,14 @@ import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
 import App from './App.vue'
 import router from './router'
 import i18n from './i18n'
-import './styles/tokens.css'
 import './styles/base.css'
 import './styles/typography.css'
-import './styles/tones.css'
 import './styles/tabs.css'
 import './styles/kpi.css'
 import './styles/forms.css'
 import './styles/tables.css'
 import './styles/activity-cards.css'
+import './styles/tailwind.css'
 
 // ── TanStack Query ────────────────────────────────────────────────
 const queryClient = new QueryClient({

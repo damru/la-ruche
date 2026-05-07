@@ -49,6 +49,11 @@
   gap: var(--space-1) var(--space-2);
 }
 
+.activity-card__chips :deep(svg) {
+  width: 14px;
+  height: 14px;
+}
+
 .activity-card__contacts {
   display: flex;
   flex-direction: column;
@@ -65,13 +70,11 @@
 .activity-card__title {
   color: var(--color-on-surface);
   margin: 0;
-  flex: 1;
   font-family: var(--font-body);
   font-size: 18px;
   font-weight: var(--fw-semibold);
   letter-spacing: 0;
   line-height: 1.2;
-  align-self: start;
 }
 
 .activity-card__header-row--with-icon {

@@ -323,9 +323,9 @@ async function deleteEntry() {
       <CPageLoader v-else-if="loading" />
       <template v-else>
         <header class="view-header">
-          <p class="page-eyebrow">
+          <CEyebrow>
             {{ t('page.eyebrows.maintenance') }}
-          </p>
+          </CEyebrow>
           <h1 class="display-md">
             {{ t('maintenance.title') }}
           </h1>

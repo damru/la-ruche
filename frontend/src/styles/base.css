@@ -1,7 +1,5 @@
 /* ── BASE ────────────────────────────────────────────────────────── */
 
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
 html {
   -webkit-text-size-adjust: 100%;
   scroll-behavior: smooth;
@@ -49,8 +47,6 @@ input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
 
-/* Page loading spinner ─────────────────────────────────────────── */
-
 /* Touch target minimum 44px ─────────────────────────────────────── */
 button, [role="button"], input[type="checkbox"], input[type="radio"] {
   min-height: 44px;
@@ -75,14 +71,6 @@ button, [role="button"], input[type="checkbox"], input[type="radio"] {
   flex-direction: column;
   align-items: flex-start;
   gap: var(--space-2);
-}
-
-.page-eyebrow {
-  font-size: var(--text-2xs);
-  font-weight: var(--fw-semibold);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--color-primary);
 }
 
 .empty-state {

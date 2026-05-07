@@ -251,9 +251,9 @@ async function confirmDelete() {
       <template v-else>
         <!-- Header + search -->
         <header class="view-header">
-          <p class="page-eyebrow">
+          <CEyebrow>
             {{ t('page.eyebrows.contractors') }}
-          </p>
+          </CEyebrow>
           <h1 class="display-md">
             {{ t('contractors.title') }}
           </h1>

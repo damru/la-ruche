@@ -785,9 +785,9 @@ async function copyVendorLink(taskId: string) {
       <CPageLoader v-else-if="loading" />
       <template v-else>
         <header class="view-header">
-          <p class="page-eyebrow">
+          <CEyebrow>
             {{ t('page.eyebrows.tasks') }}
-          </p>
+          </CEyebrow>
           <h1 class="display-md">
             {{ t('tasks.title') }}
           </h1>

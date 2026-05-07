@@ -266,9 +266,9 @@ function formatLocation(unit: { block?: string | null; staircase?: string | null
       <CPageLoader v-else-if="loading" />
       <template v-else>
         <header class="view-header">
-          <p class="page-eyebrow">
+          <CEyebrow>
             {{ t('page.eyebrows.residents') }}
-          </p>
+          </CEyebrow>
           <h1 class="display-md">
             {{ t('residents.title') }}
           </h1>

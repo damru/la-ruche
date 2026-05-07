@@ -121,12 +121,20 @@ Le formulaire ou wizard reste la zone scrollable principale. Les actions critiqu
 
 `frontend/src/styles/base.css` porte les primitives globales qui ne doivent pas être surchargées sauf exception explicites.
 
+## Couche utilitaire Tailwind CSS
+
+Le frontend peut utiliser Tailwind CSS comme couche utilitaire locale, mais les tokens et primitives partagées restent normatifs dans `frontend/src/styles/tokens.css`, `base.css`, `typography.css`, `tones.css`, `forms.css`, `tables.css`, `tabs.css`, `kpi.css` et `activity-cards.css`.
+
+- Tailwind ne remplace pas les composants atomiques/moléculaires existants ni les classes globales déjà documentées dans ce fichier.
+- Les valeurs de design récurrentes doivent continuer à être exprimées via les variables CSS du design system, puis consommées depuis Tailwind si nécessaire.
+- Une vue ne doit pas introduire un empilement massif de classes utilitaires si une primitive partagée existe déjà (`view-header`, `tabs`, `activity-card`, `tone--*`, etc.).
+
 ## Règle UI — Eyebrows de page
 
 - Toute page métier avec un titre principal visible doit exposer un eyebrow très court au-dessus du `h1`.
 - L'eyebrow complète le titre ; il ne doit pas répéter le nom de la page ni reprendre mot pour mot le breadcrumb.
 - Le contenu attendu est une description de 3 à 6 mots indiquant immédiatement ce que l'utilisateur trouve sur la page.
-- La primitive visuelle partagée est `.page-eyebrow` dans `frontend/src/styles/base.css` ; une vue ne doit pas redéfinir localement sa typo sauf besoin exceptionnel déjà justifié.
+- La primitive visuelle partagée est portée par l'atome `frontend/src/components/atoms/CEyebrow.vue`, qui encapsule désormais la typo eyebrow en style scoped ; une vue ne doit pas redéfinir localement sa typo sauf besoin exceptionnel déjà justifié.
 - Les pages détail peuvent utiliser le même pattern à l'intérieur d'une carte d'en-tête si le `h1` principal est porté par cette carte.
 
 ## Règle UI — Reminder cards

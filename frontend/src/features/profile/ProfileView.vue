@@ -140,9 +140,9 @@ async function confirmResetDemo() {
 
     <div class="view-container">
       <header class="view-header">
-        <p class="page-eyebrow">
+        <CEyebrow>
           {{ t('page.eyebrows.profile') }}
-        </p>
+        </CEyebrow>
         <h1 class="display-md">
           {{ t('nav.account') }}
         </h1>
