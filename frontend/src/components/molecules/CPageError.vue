@@ -23,7 +23,7 @@ const { t } = useI18n()
       class="c-page-error__icon tone--err"
       aria-hidden="true"
     >
-      <CIconAlertTriangle
+      <CIconXCircle
         width="18"
         height="18"
       />

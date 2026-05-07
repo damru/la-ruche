@@ -138,7 +138,7 @@ async function submit() {
         v-else-if="error && !task"
         class="state-card state-card--error"
       >
-        <CIconAlertTriangle
+        <CIconXCircle
           class="state-icon"
           style="color:var(--color-error)"
         />

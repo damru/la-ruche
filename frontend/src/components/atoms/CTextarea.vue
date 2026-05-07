@@ -7,6 +7,7 @@ const props = withDefaults(defineProps<{
   placeholder?: string
   required?: boolean
   disabled?: boolean
+  readonly?: boolean
   rows?: number
   id?: string
 }>(), {
@@ -17,6 +18,7 @@ const props = withDefaults(defineProps<{
   placeholder: undefined,
   required: false,
   disabled: false,
+  readonly: false,
   rows: 4,
   id: undefined,
 })
@@ -39,7 +41,14 @@ const inputId = props.id ?? `c-textarea-${Math.random().toString(36).slice(2, 7)
       >*</span>
     </label>
 
+    <span
+      v-if="readonly"
+      :id="inputId"
+      class="c-field__readonly"
+    >{{ modelValue }}</span>
+
     <textarea
+      v-else
       :id="inputId"
       :value="modelValue"
       :placeholder="placeholder"
@@ -53,7 +62,7 @@ const inputId = props.id ?? `c-textarea-${Math.random().toString(36).slice(2, 7)
     ></textarea>
 
     <p
-      v-if="error"
+      v-if="!readonly && error"
       :id="`${inputId}-error`"
       class="c-field__error"
       role="alert"
@@ -61,7 +70,7 @@ const inputId = props.id ?? `c-textarea-${Math.random().toString(36).slice(2, 7)
       {{ error }}
     </p>
     <p
-      v-else-if="hint"
+      v-else-if="!readonly && hint"
       :id="`${inputId}-hint`"
       class="c-field__hint"
     >
@@ -72,7 +81,7 @@ const inputId = props.id ?? `c-textarea-${Math.random().toString(36).slice(2, 7)
 
 <style scoped>
 .c-field { display: flex; flex-direction: column; gap: var(--space-1); }
-.c-field__label { font-size: 13px; font-weight: 500; color: var(--color-on-surface); }
+.c-field__label { font-size: var(--text-sm); font-weight: var(--fw-medium); color: var(--color-on-surface); }
 .c-field__required { color: var(--color-error); margin-left: 2px; }
 
 .c-field__textarea {
@@ -81,7 +90,7 @@ const inputId = props.id ?? `c-textarea-${Math.random().toString(36).slice(2, 7)
   border: none;
   border-radius: var(--radius-md);
   font-family: var(--font-body);
-  font-size: 14px;
+  font-size: var(--text-md);
   color: var(--color-on-surface);
   outline: none;
   resize: vertical;
@@ -93,10 +102,25 @@ const inputId = props.id ?? `c-textarea-${Math.random().toString(36).slice(2, 7)
 .c-field__textarea::placeholder { color: var(--color-on-surface-variant); }
 .c-field__textarea:focus {
   background: var(--color-surface-container);
-  box-shadow: 0 0 0 2px rgba(100, 63, 213, 0.35);
+  box-shadow: var(--shadow-primary-ring);
 }
-.c-field__textarea--error { box-shadow: 0 0 0 2px rgba(186, 26, 26, 0.35); }
+.c-field__textarea--error { box-shadow: var(--shadow-error-ring); }
 .c-field__textarea:disabled { opacity: 0.5; cursor: not-allowed; }
-.c-field__hint { font-size: 12px; color: var(--color-on-surface-variant); }
-.c-field__error { font-size: 12px; color: var(--color-error); }
+.c-field__hint { font-size: var(--text-xs); color: var(--color-on-surface-variant); }
+.c-field__error { font-size: var(--text-xs); color: var(--color-error); }
+
+.c-field__readonly {
+  display: block;
+  padding: var(--space-3) var(--space-4);
+  font-family: var(--font-body);
+  font-size: var(--text-md);
+  color: var(--color-on-surface);
+  background: var(--color-surface-container-low);
+  border-radius: var(--radius-md);
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 80px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
 </style>

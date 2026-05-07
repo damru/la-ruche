@@ -10,7 +10,8 @@ import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CAlert from '@/components/atoms/CAlert.vue'
-import CLegalInfoCard from '@/components/molecules/CLegalInfoCard.vue'
+import CLegalDescription from '@/components/atoms/CLegalDescription.vue'
+import CLegalNotice from '@/components/molecules/CLegalNotice.vue'
 import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
 import CModal from '@/components/molecules/CModal.vue'
 import CPageError from '@/components/molecules/CPageError.vue'
@@ -472,11 +473,14 @@ async function confirmDelete() {
           </div>
         </div>
 
-        <CLegalInfoCard
-          :title="t('consultations.legalCard.title')"
-          :summary="t('consultations.legalCard.summary')"
-          :links="legalCardLinks"
-        />
+        <CCard>
+          <CLegalNotice :links="legalCardLinks">
+            <CLegalDescription
+              :title="t('consultations.legalCard.title')"
+              :summary="t('consultations.legalCard.summary')"
+            />
+          </CLegalNotice>
+        </CCard>
       </template>
     </div>
 

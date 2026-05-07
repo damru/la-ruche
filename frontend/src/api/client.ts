@@ -27,6 +27,36 @@ function notifyQueue(ok: boolean) {
   refreshQueue = []
 }
 
+// Shared refresh flow used by both interceptor and restoreSession.
+// This prevents refresh-token rotation races when multiple requests
+// hit 401 at the same time.
+export async function tryRefreshSession(): Promise<boolean> {
+  if (isRefreshing) {
+    return new Promise<boolean>(resolve => refreshQueue.push(resolve))
+  }
+
+  isRefreshing = true
+  try {
+    await api.post('/auth/refresh')
+    notifyQueue(true)
+    return true
+  } catch {
+    // Cross-tab race guard: another tab may have refreshed and rotated
+    // the token just before this request failed with 401.
+    // If /auth/me succeeds, session is still valid in this browser.
+    try {
+      await api.get('/auth/me')
+      notifyQueue(true)
+      return true
+    } catch {
+      notifyQueue(false)
+      return false
+    }
+  } finally {
+    isRefreshing = false
+  }
+}
+
 // ── Response interceptor — transparent token refresh ─────────────────
 // Auth probe URLs — failures here are expected during session restoration
 // and must NOT trigger a session-expired redirect.
@@ -57,27 +87,15 @@ api.interceptors.response.use(
         return Promise.reject(error)
       }
 
-      if (isRefreshing) {
-        // Attendre que le refresh en cours se termine
-        const ok = await new Promise<boolean>(resolve => refreshQueue.push(resolve))
-        if (!ok) return Promise.reject(error)
-        return api.request(original)
-      }
-
-      isRefreshing = true
-      try {
-        await api.post('/auth/refresh')
-        notifyQueue(true)
-        original._retry = true
-        return api.request(original)
-      } catch {
-        notifyQueue(false)
+      const ok = await tryRefreshSession()
+      if (!ok) {
         // Refresh failed → log out
         window.dispatchEvent(new CustomEvent('laruche:session-expired'))
         return Promise.reject(error)
-      } finally {
-        isRefreshing = false
       }
+
+      original._retry = true
+      return api.request(original)
     }
 
     return Promise.reject(error)

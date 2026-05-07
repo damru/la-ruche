@@ -63,6 +63,13 @@ async fn seed_demo_database(pool: &sqlx::PgPool) -> anyhow::Result<()> {
     Ok(())
 }
 
+async fn database_is_empty(pool: &sqlx::PgPool) -> anyhow::Result<bool> {
+    let exists: bool = sqlx::query_scalar("SELECT EXISTS (SELECT 1 FROM user_account)")
+        .fetch_one(pool)
+        .await?;
+    Ok(!exists)
+}
+
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     // ── Config ──────────────────────────────────────────────────
@@ -88,8 +95,14 @@ async fn main() -> anyhow::Result<()> {
     info!("Migrations applied");
 
     if cfg.app.demo_mode {
-        seed_demo_database(&pool).await?;
-        info!("Demo database initialized from demo.sql");
+        if database_is_empty(&pool).await? {
+            seed_demo_database(&pool).await?;
+            info!("Demo database initialized from demo.sql");
+        } else {
+            info!(
+                "Demo mode on, but data already present — seed skipped (use POST /admin/reset-demo to re-seed)"
+            );
+        }
     }
 
     // ── Stockage S3 ─────────────────────────────────────────────

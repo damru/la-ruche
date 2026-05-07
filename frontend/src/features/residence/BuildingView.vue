@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import CLegalDescription from '@/components/atoms/CLegalDescription.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
+import CLegalNotice from '@/components/molecules/CLegalNotice.vue'
 import CPageError from '@/components/molecules/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
@@ -169,12 +171,12 @@ onMounted(reload)
           <h2 class="section-title">
             {{ t('settings.building.legalData') }}
           </h2>
-          <p
-            class="body-xs"
-            style="color:var(--color-on-surface-variant); margin-bottom:12px"
-          >
-            <strong>⚖️ Art. 18 loi 10/07/1965</strong> — {{ t('settings.building.legalText') }}
-          </p>
+          <CLegalNotice>
+            <CLegalDescription
+              title="Art. 18 loi n°65-557 du 10 juillet 1965"
+              :summary="t('settings.building.legalText')"
+            />
+          </CLegalNotice>
           <div class="form-actions">
             <CBtn variant="secondary">
               <CIconDownload

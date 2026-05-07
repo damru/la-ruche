@@ -20,3 +20,6 @@ docs/review-screenshots/*.png
 # OS
 .DS_Store
 Thumbs.db
+
+# Claude
+.claude/worktrees/**

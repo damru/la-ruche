@@ -10,7 +10,8 @@ import { useRole } from '@/composables/useRole'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CCard from '@/components/molecules/CCard.vue'
-import CCardMeta from '@/components/molecules/CCardMeta.vue'
+import CMetaLine from '@/components/molecules/CMetaLine.vue'
+import CMetaItem from '@/components/molecules/CMetaItem.vue'
 import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
 import CDocumentLinkActionModal from '@/components/molecules/CDocumentLinkActionModal.vue'
 import CModal from '@/components/molecules/CModal.vue'
@@ -627,20 +628,26 @@ function photoPreview(file: File): string {
                 </button>
               </div>
 
-              <CCardMeta>
-                <span class="activity-card__line">
-                  <CIconUser />
+              <CMetaLine>
+                <CMetaItem>
+                  <template #icon>
+                    <CIconUser />
+                  </template>
                   {{ authorName(r) }}
-                </span>
-                <span class="activity-card__line">
-                  <CIconHome />
+                </CMetaItem>
+                <CMetaItem>
+                  <template #icon>
+                    <CIconHome />
+                  </template>
                   {{ unitLabel(r.unit_id) }}
-                </span>
-                <span class="activity-card__line">
-                  <CIconCalendar />
+                </CMetaItem>
+                <CMetaItem>
+                  <template #icon>
+                    <CIconCalendar />
+                  </template>
                   {{ formatDate(r.created_at) }}
-                </span>
-              </CCardMeta>
+                </CMetaItem>
+              </CMetaLine>
 
               <div class="activity-card__secondary-actions">
                 <div

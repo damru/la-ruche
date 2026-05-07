@@ -9,25 +9,17 @@ withDefaults(defineProps<{
 <template>
   <component
     :is="as"
-    class="c-card-meta"
+    class="flex flex-wrap items-center gap-x-2 gap-y-1"
   >
     <slot></slot>
   </component>
 </template>
 
 <style scoped>
-.c-card-meta {
+.c-meta-line {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-1) var(--space-2);
-  font-size: var(--text-2xs);
-  line-height: 1.4;
-}
-
-.c-card-meta :deep(svg) {
-  width: 14px;
-  height: 14px;
-  flex-shrink: 0;
 }
 </style>

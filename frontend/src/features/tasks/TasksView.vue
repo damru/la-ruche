@@ -11,7 +11,8 @@ import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CDocumentLinkActionModal from '@/components/molecules/CDocumentLinkActionModal.vue'
 import CCard from '@/components/molecules/CCard.vue'
-import CCardMeta from '@/components/molecules/CCardMeta.vue'
+import CMetaLine from '@/components/molecules/CMetaLine.vue'
+import CMetaItem from '@/components/molecules/CMetaItem.vue'
 import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
 import CLinkedDocumentsModal from '@/components/molecules/CLinkedDocumentsModal.vue'
 import CModal from '@/components/molecules/CModal.vue'
@@ -877,13 +878,14 @@ async function copyVendorLink(taskId: string) {
                 </button>
               </div>
 
-              <CCardMeta>
-                <span
+              <CMetaLine>
+                <CMetaItem
                   v-if="hasAssignment(task)"
-                  class="activity-card__line"
                 >
-                  <CIconWrench v-if="task.contractor_id || contractorDisplayName(task)" />
-                  <CIconUser v-else />
+                  <template #icon>
+                    <CIconWrench v-if="task.contractor_id || contractorDisplayName(task)" />
+                    <CIconUser v-else />
+                  </template>
                   <RouterLink
                     v-if="task.contractor_id && contractorDisplayName(task)"
                     :to="{ name: 'contractor-detail', params: { id: task.contractor_id } }"
@@ -895,12 +897,14 @@ async function copyVendorLink(taskId: string) {
                   <span v-else>
                     {{ contractorDisplayName(task) ?? assignedUserName(task) }}
                   </span>
-                </span>
-                <span class="activity-card__line">
-                  <CIconCalendar />
+                </CMetaItem>
+                <CMetaItem>
+                  <template #icon>
+                    <CIconCalendar />
+                  </template>
                   {{ t('tasks.lifecycle.createdRelative', { relative: formatRelative(task.created_at) }) }}
-                </span>
-              </CCardMeta>
+                </CMetaItem>
+              </CMetaLine>
 
               <div
                 v-if="(contractorDisplayName(task) && !task.has_vendor_token && !isTerminal(task.status)) || task.has_vendor_token"

@@ -16,7 +16,7 @@ defineProps<{
       <span
         class="form-feedback__icon"
         aria-hidden="true"
-      >{{ status === 'success' ? '✓' : '✕' }}</span>
+      >{{ status === 'success' ? '✓' : '✗' }}</span>
       <span v-if="message">{{ message }}</span>
     </span>
   </Transition>

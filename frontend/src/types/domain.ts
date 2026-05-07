@@ -146,13 +146,15 @@ export interface Resolution {
 }
 
 export interface VoteResult {
-  adopted: boolean
-  votes_for: number
-  votes_against: number
+  passed: boolean
+  for_votes: number
+  against_votes: number
   abstentions: number
   shares_present: number
-  total_shares: number
-  explanation: string
+  shares_total: number
+  shares_counted: number
+  threshold: number
+  eligible_for_second_vote: boolean
 }
 
 export interface Budget {

@@ -201,7 +201,7 @@ Les tantièmes sont attachés au **lot**, pas au propriétaire. Une mutation (ve
 
 | Majorité | Base de calcul | Exemples de décisions |
 |---|---|---|
-| **Art. 24** | Majorité des voix exprimées (présents + représentés) | Travaux courants, budget, petites décisions |
+| **Art. 24** | Majorité des voix exprimées (présents + représentés), les abstentions ne comptent pas | Travaux courants, budget, petites décisions |
 | **Art. 25** | Majorité de l'ensemble des tantièmes (absents compris) | Travaux importants, mandat syndic, délégation |
 | **Art. 25-1** | Si > 1/3 pour l'art. 25 non atteint, renvoi en art. 24 | Passerelle |
 | **Art. 26** | Double majorité (2/3 des présents représentant > 1/2 des tantièmes) | Travaux transformatifs |

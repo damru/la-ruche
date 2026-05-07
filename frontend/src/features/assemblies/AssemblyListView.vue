@@ -14,7 +14,7 @@ import CBtn from '@/components/atoms/CBtn.vue'
 import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
 import CSeparator from '@/components/atoms/CSeparator.vue'
 import CCard from '@/components/molecules/CCard.vue'
-import CCardMeta from '@/components/molecules/CCardMeta.vue'
+import CMetaLine from '@/components/molecules/CMetaLine.vue'
 import CModal from '@/components/molecules/CModal.vue'
 import CPageError from '@/components/molecules/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
@@ -236,7 +236,7 @@ async function saveMeeting() {
 
             <div class="meeting-card__main">
               <div class="flex flex-col gap-x-4 gap-y-1 mb-4">
-                <div class="flex flex-row max-md:flex-col gap-y-1 justify-between">
+                <div class="flex flex-row justify-between">
                   <h2 class="activity-card__title meeting-card__title">
                     {{ typeLabel(meeting.meeting_type) }} {{ new Date(meeting.meeting_date).getFullYear() }}
                   </h2>
@@ -248,20 +248,23 @@ async function saveMeeting() {
                     {{ statusLabel(meeting.status) }}
                   </CBadge>
                 </div>
-                <CCardMeta>
-                  <span class="activity-card__line">
-                    <CIconCalendar />
+                <CMetaLine>
+                  <CMetaItem>
+                    <template #icon>
+                      <CIconCalendar />
+                    </template>
                     {{ formatDate(meeting.meeting_date) }}
-                  </span>
+                  </CMetaItem>
                   <CSeparator />
-                  <span
+                  <CMetaItem
                     v-if="meeting.location"
-                    class="activity-card__line"
                   >
-                    <CIconLocation />
+                    <template #icon>
+                      <CIconLocation />
+                    </template>
                     {{ meeting.location }}
-                  </span>
-                </CCardMeta>
+                  </CMetaItem>
+                </CMetaLine>
               </div>
 
               <div class="meeting-card__resolution-row body-xs">

@@ -8,25 +8,27 @@ import { useAutoClose } from '@/composables/useAutoClose'
 import { useRole } from '@/composables/useRole'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
+import CLegalDescription from '@/components/atoms/CLegalDescription.vue'
 import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
 import CPageError from '@/components/molecules/CPageError.vue'
 import CDocumentLinkActionModal from '@/components/molecules/CDocumentLinkActionModal.vue'
 import CLinkedDocumentsModal from '@/components/molecules/CLinkedDocumentsModal.vue'
-import CLegalInfoCard from '@/components/molecules/CLegalInfoCard.vue'
+import CLegalNotice from '@/components/molecules/CLegalNotice.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CCardNote from '@/components/molecules/CCardNote.vue'
 import CModal from '@/components/molecules/CModal.vue'
 import CReminderCard from '@/components/molecules/CReminderCard.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
-import CIconAlertTriangle from '@/components/atoms/CIconAlertTriangle.svg'
 import CIconCheckCircle from '@/components/atoms/CIconCheckCircle.svg'
 import CIconClock from '@/components/atoms/CIconClock.svg'
 import CIconCurrency from '@/components/atoms/CIconCurrency.svg'
 import CIconEdit from '@/components/atoms/CIconEdit.svg'
 import CIconFile from '@/components/atoms/CIconFile.svg'
 import CIconHome from '@/components/atoms/CIconHome.svg'
+import CIconLockOpen from '@/components/atoms/CIconLockOpen.svg'
 import CIconShield from '@/components/atoms/CIconShield.svg'
+import CIconXCircle from '@/components/atoms/CIconXCircle.svg'
 import CIconTrash from '@/components/atoms/CIconTrash.svg'
 import CIconUpload from '@/components/atoms/CIconUpload.svg'
 import { buildingApi, claimsApi, documentsApi, unitsApi, usersApi } from '@/api'
@@ -253,7 +255,7 @@ function typeIcon(type: ClaimType) {
   const icons = {
     current: CIconShield,
     natural_disaster: CIconHome,
-    theft: CIconAlertTriangle,
+    theft: CIconLockOpen,
   }
 
   return icons[type] ?? CIconShield
@@ -950,7 +952,7 @@ async function submitDelete() {
             <div class="activity-card__stack">
               <div class="body-sm activity-card__line">
                 <CIconLocation />
-                  {{ unitLabel(claim.unit_id) }}
+                {{ unitLabel(claim.unit_id) }}
               </div>
 
               <p
@@ -1020,7 +1022,10 @@ async function submitDelete() {
                   v-if="claim.published_at"
                   class="activity-card__line"
                 >
-                  <CIconAlertTriangle />
+                  <CIconXCircle
+                    width="14"
+                    height="14"
+                  />
                   {{ t('claims.publishedOn', { date: formatDate(claim.published_at) }) }}
                 </span>
                 <span
@@ -1045,12 +1050,14 @@ async function submitDelete() {
           </div>
         </div>
 
-        <CLegalInfoCard
-          class="claims-legal-card"
-          :title="t('claims.legalCard.title')"
-          :summary="t('claims.legalCard.summary')"
-          :links="legalCardLinks"
-        />
+        <CCard>
+          <CLegalNotice :links="legalCardLinks">
+            <CLegalDescription
+              :title="t('claims.legalCard.title')"
+              :summary="t('claims.legalCard.summary')"
+            />
+          </CLegalNotice>
+        </CCard>
       </template>
     </div>
 
@@ -1809,10 +1816,6 @@ async function submitDelete() {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-3);
-}
-
-.claims-legal-card {
-  margin-top: var(--space-4);
 }
 
 @media (max-width: 720px) {

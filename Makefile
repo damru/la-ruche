@@ -71,7 +71,7 @@ migrate-revert: ## Revert the last migration
 	cd backend && DATABASE_URL=$(DB_URL) sqlx migrate revert
 
 
-sqlx-prepare: ## Generate SQLx offline metadata (.sqlx/)
+sqlx-prepare: migrate ## Generate SQLx offline metadata (.sqlx/)
 	cd backend && DATABASE_URL=$(DB_URL) cargo sqlx prepare
 
 # ── Docker ────────────────────────────────────────────────────────

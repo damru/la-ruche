@@ -19,13 +19,17 @@ import type {
   VoteType,
 } from '@/types/domain'
 import { buildingApi, documentsApi, meetingsApi } from '@/api'
+import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
+import CLegalDescription from '@/components/atoms/CLegalDescription.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
+import CLegalNotice from '@/components/molecules/CLegalNotice.vue'
 import CModal from '@/components/molecules/CModal.vue'
 import CPageError from '@/components/molecules/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
+import CMetaItem from '@/components/molecules/CMetaItem.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -60,6 +64,7 @@ const savingResolution = ref(false)
 const savingDocument = ref(false)
 const savingAttendance = ref(false)
 const callingMeeting = ref(false)
+const closingMeeting = ref(false)
 
 const { schedule: scheduleMeetingClose, forceExpire: forceMeetingClose } = useAutoClose()
 const { schedule: scheduleResolutionClose, forceExpire: forceResolutionClose } = useAutoClose()
@@ -76,7 +81,6 @@ function defaultMeetingForm() {
     meeting_type: 'annual' as MeetingType,
     meeting_date: '',
     location: '',
-    agenda: '',
   }
 }
 
@@ -100,16 +104,36 @@ const meetingForm = ref(defaultMeetingForm())
 const resolutionForm = ref(defaultResolutionForm())
 const documentForm = ref(defaultDocumentForm())
 const attendanceDraft = ref<MeetingAttendanceEntry[]>([])
+const meetingAgendaItems = ref<string[]>([''])
 
-const canEditMeeting = computed(() => auth.isManager && meeting.value?.status === 'draft')
 const canAddResolution = computed(() => auth.isManager && ['draft', 'called'].includes(meeting.value?.status ?? ''))
-const canCallMeeting = computed(() => auth.isManager && meeting.value?.status === 'draft')
 const noticeDocuments = computed(() => documents.value.filter(document => document.kind === 'notice'))
 const attachmentDocuments = computed(() => documents.value.filter(document => document.kind === 'attachment'))
+const isMeetingPast = computed(() => {
+  if (!meeting.value) return false
+  return new Date(meeting.value.meeting_date).getTime() < Date.now()
+})
+const topbarActionState = computed<'none' | 'draft' | 'called-waiting' | 'called-closable' | 'closed'>(() => {
+  if (!auth.isManager || !meeting.value) return 'none'
+
+  if (meeting.value.status === 'draft') return 'draft'
+  if (meeting.value.status === 'closed') return 'closed'
+  if (meeting.value.status === 'held') return 'called-closable'
+  if (meeting.value.status === 'called') {
+    return isMeetingPast.value ? 'called-closable' : 'called-waiting'
+  }
+
+  return 'none'
+})
 const attendancePct = computed(() => {
   if (!attendance.value.total_shares) return 0
   return Math.round((attendance.value.shares_present / attendance.value.total_shares) * 100)
 })
+const quorumThreshold = computed(() => Math.ceil((attendance.value.total_shares || 0) / 2))
+const quorumReached = computed(() => attendance.value.shares_present >= quorumThreshold.value)
+const attendanceFillStyle = computed(() => ({ width: `${Math.min(attendancePct.value, 100)}%` }))
+const resolvedResolutionCount = computed(() => resolutions.value.filter(resolution => resolution.status !== 'pending').length)
+const pendingResolutionCount = computed(() => resolutions.value.filter(resolution => resolution.status === 'pending').length)
 const agendaItems = computed(() => {
   if (meeting.value?.agenda?.trim()) {
     return meeting.value.agenda
@@ -125,6 +149,67 @@ const noticeDeadline = computed(() => {
   const date = new Date(meeting.value.meeting_date)
   date.setDate(date.getDate() - 21)
   return formatDate(date.toISOString())
+})
+const majorityLegalDescriptions = computed(() => {
+  const legalEntries = [
+    {
+      id: 'simple_majority',
+      title: t('meetings.vote.types.simple_majority'),
+      summary: t('meetings.legalCard.descriptions.simple_majority'),
+      legalLinks: [
+        {
+          label: t('meetings.legalCard.simple_majority.linkLabel'),
+          href: t('meetings.legalCard.simple_majority.linkHref'),
+        },
+      ],
+    },
+    {
+      id: 'absolute_majority',
+      title: t('meetings.vote.types.absolute_majority'),
+      summary: t('meetings.legalCard.descriptions.absolute_majority'),
+      legalLinks: [
+        {
+          label: t('meetings.legalCard.absolute_majority.linkLabel'),
+          href: t('meetings.legalCard.absolute_majority.linkHref'),
+        },
+      ],
+    },
+    {
+      id: 'absolute_majority_second_vote',
+      title: t('meetings.vote.art25_1_title'),
+      summary: t('meetings.legalCard.descriptions.absolute_majority_second_vote'),
+      legalLinks: [
+        {
+          label: t('meetings.legalCard.absolute_majority_second_vote.linkLabel'),
+          href: t('meetings.legalCard.absolute_majority_second_vote.linkHref'),
+        },
+      ],
+    },
+    {
+      id: 'double_majority',
+      title: t('meetings.vote.types.double_majority'),
+      summary: t('meetings.legalCard.descriptions.double_majority'),
+      legalLinks: [
+        {
+          label: t('meetings.legalCard.double_majority.linkLabel'),
+          href: t('meetings.legalCard.double_majority.linkHref'),
+        },
+      ],
+    },
+    {
+      id: 'unanimity',
+      title: t('meetings.vote.types.unanimity'),
+      summary: t('meetings.legalCard.descriptions.unanimity'),
+      legalLinks: [
+        {
+          label: t('meetings.legalCard.unanimity.linkLabel'),
+          href: t('meetings.legalCard.unanimity.linkHref'),
+        },
+      ],
+    },
+  ]
+
+  return legalEntries
 })
 
 async function loadData() {
@@ -171,20 +256,88 @@ function meetingStatusLabel(status: Meeting['status']): string {
   return t(`meetings.statuses.${status}`)
 }
 
-function meetingStatusChip(status: Meeting['status']): string {
-  if (status === 'called') return 'tone--default'
-  if (status === 'closed') return 'tone--valid'
-  return 'tone--disabled'
+type BadgeVariant = 'open' | 'pending' | 'closed' | 'disabled' | 'valid' | 'err' | 'primary' | 'default'
+type MeetingBannerState = 'draft' | 'called' | 'held' | 'closed'
+
+function meetingStatusVariant(status: Meeting['status']): BadgeVariant {
+  if (status === 'called') return 'primary'
+  if (status === 'closed') return 'valid'
+  return 'disabled'
+}
+
+function meetingBannerState(status: Meeting['status']): MeetingBannerState {
+  if (status === 'closed') return 'closed'
+  if (status === 'held' || topbarActionState.value === 'called-closable') return 'held'
+  if (status === 'called') return 'called'
+  return 'draft'
+}
+
+function meetingBannerTitle(status: Meeting['status']): string {
+  const state = meetingBannerState(status)
+  if (state === 'called') return t('meetings.bannerCalled')
+  if (state === 'held') return t('meetings.bannerHeld')
+  if (state === 'closed') return t('meetings.bannerClosed')
+  return `${meetingStatusLabel(status)} · ${t('meetings.legalWarning')}`
+}
+
+function meetingBannerSubtitle(status: Meeting['status']): string {
+  const state = meetingBannerState(status)
+
+  if (state === 'closed') {
+    return meeting.value?.minutes_document_id
+      ? t('meetings.documents.minutesReady')
+      : t('meetings.documents.minutesPending')
+  }
+
+  if (state === 'held') {
+    return t('meetings.bannerHeldSub', {
+      resolved: resolvedResolutionCount.value,
+      pending: pendingResolutionCount.value,
+      minutes: meeting.value?.minutes_document_id
+        ? t('meetings.documents.minutesReady')
+        : t('meetings.documents.minutesPending'),
+    })
+  }
+
+  return `J-21 : ${noticeDeadline.value}`
+}
+
+function hasFinalVoteResult(status: Resolution['status']): boolean {
+  return status === 'passed' || status === 'rejected'
+}
+
+function voteResultSubtitle(resolution: Resolution, result: VoteResult): string {
+  if (resolution.vote_type === 'simple_majority') {
+    return t(`meetings.vote.explanations.simple_majority.${result.passed ? 'passed' : 'rejected'}`, {
+      threshold: result.threshold,
+    })
+  }
+
+  if (resolution.vote_type === 'absolute_majority') {
+    return t(`meetings.vote.explanations.absolute_majority.${result.passed ? 'passed' : 'rejected'}`, {
+      threshold: result.threshold,
+    })
+  }
+
+  if (resolution.vote_type === 'double_majority') {
+    return t(`meetings.vote.explanations.double_majority.${result.passed ? 'passed' : 'rejected'}`, {
+      threshold: result.threshold,
+    })
+  }
+
+  return t(`meetings.vote.explanations.unanimity.${result.passed ? 'passed' : 'rejected'}`, {
+    threshold: result.threshold,
+  })
 }
 
 function resolutionStatusLabel(status: Resolution['status']): string {
   return t(`meetings.resolutionStatuses.${status}`)
 }
 
-function resolutionStatusChip(status: Resolution['status']): string {
-  if (status === 'passed') return 'tone--valid'
-  if (status === 'rejected') return 'tone--err'
-  return 'tone--disabled'
+function resolutionStatusVariant(status: Resolution['status']): BadgeVariant {
+  if (status === 'passed') return 'valid'
+  if (status === 'rejected') return 'err'
+  return 'disabled'
 }
 
 function voteTypeLabel(voteType: VoteType): string {
@@ -193,11 +346,16 @@ function voteTypeLabel(voteType: VoteType): string {
   return shortLabel === shortKey ? t(`meetings.vote.types.${voteType}`) : shortLabel
 }
 
-function voteTypeChip(voteType: VoteType): string {
-  if (voteType === 'simple_majority') return 'tone--default'
+function voteTypeVariant(voteType: VoteType): BadgeVariant {
+  if (voteType === 'simple_majority') return 'primary'
+  if (voteType === 'absolute_majority' || voteType === 'double_majority') return 'default'
+  return 'disabled'
+}
+
+function voteTypeClass(voteType: VoteType): string {
   if (voteType === 'absolute_majority') return 'chip-art25'
   if (voteType === 'double_majority') return 'chip-art26'
-  return 'tone--muted'
+  return ''
 }
 
 function votePct(value: number, total: number): number {
@@ -205,15 +363,26 @@ function votePct(value: number, total: number): number {
   return Math.round((value / total) * 100)
 }
 
+function showsAbstentionTallyPercent(voteType: VoteType): boolean {
+  return voteType !== 'simple_majority'
+}
+
 function attendanceModeLabel(mode: MeetingAttendanceMode): string {
   return t(`meetings.attendanceModes.${mode}`)
 }
 
-function attendanceModeChip(mode: MeetingAttendanceMode): string {
-  if (mode === 'present') return 'tone--valid'
-  if (mode === 'proxy') return 'tone--default'
-  if (mode === 'correspondence') return 'tone--muted'
-  return 'tone--disabled'
+function attendanceModeVariant(mode: MeetingAttendanceMode): BadgeVariant {
+  if (mode === 'present') return 'valid'
+  if (mode === 'proxy') return 'pending'
+  if (mode === 'correspondence') return 'primary'
+  return 'disabled'
+}
+
+function ownerInitials(name?: string | null): string {
+  if (!name?.trim()) return '??'
+  const parts = name.trim().split(/\s+/).filter(Boolean)
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
+  return `${parts[0][0] ?? ''}${parts[parts.length - 1][0] ?? ''}`.toUpperCase()
 }
 
 function documentKindLabel(kind: MeetingDocument['kind']): string {
@@ -222,14 +391,32 @@ function documentKindLabel(kind: MeetingDocument['kind']): string {
 
 function openEditMeetingModal() {
   if (!meeting.value) return
+
+  const agenda = (meeting.value.agenda ?? '')
+    .split(/\r?\n/)
+    .map(item => item.trim())
+    .filter(Boolean)
+
   meetingForm.value = {
     meeting_type: meeting.value.meeting_type,
     meeting_date: toDateTimeLocal(meeting.value.meeting_date),
     location: meeting.value.location ?? '',
-    agenda: meeting.value.agenda ?? '',
   }
+  meetingAgendaItems.value = agenda.length ? agenda : ['']
   meetingFeedback.reset()
   showEditMeetingModal.value = true
+}
+
+function addAgendaItem() {
+  meetingAgendaItems.value.push('')
+}
+
+function removeAgendaItem(index: number) {
+  if (meetingAgendaItems.value.length <= 1) {
+    meetingAgendaItems.value = ['']
+    return
+  }
+  meetingAgendaItems.value.splice(index, 1)
 }
 
 function openResolutionModal() {
@@ -259,12 +446,16 @@ async function saveMeeting() {
   savingMeeting.value = true
   meetingFeedback.reset()
 
+  const normalizedAgenda = meetingAgendaItems.value
+    .map(item => item.trim())
+    .filter(Boolean)
+
   try {
     await meetingsApi.update(meeting.value.id, {
       meeting_type: meetingForm.value.meeting_type,
       meeting_date: new Date(meetingForm.value.meeting_date).toISOString(),
       location: meetingForm.value.location || undefined,
-      agenda: meetingForm.value.agenda || undefined,
+      agenda: normalizedAgenda.length ? normalizedAgenda.join('\n') : undefined,
     })
 
     meetingFeedback.setSuccess(t('common.saved'))
@@ -399,6 +590,22 @@ async function callMeeting() {
   }
 }
 
+async function closeMeeting() {
+  if (!meeting.value) return
+
+  closingMeeting.value = true
+  documentFeedback.reset()
+
+  try {
+    await meetingsApi.close(meeting.value.id)
+    await reload()
+  } catch (err) {
+    documentFeedback.setError(toErrorMessage(err, t('common.error')))
+  } finally {
+    closingMeeting.value = false
+  }
+}
+
 function toDateTimeLocal(value: string): string {
   const date = new Date(value)
   const offsetMs = date.getTimezoneOffset() * 60_000
@@ -436,33 +643,55 @@ function onFileChange(event: Event) {
         </div>
       </template>
       <template #right>
+        <template v-if="topbarActionState === 'draft'">
+          <CBtn
+            variant="secondary"
+            size="sm"
+            @click="openEditMeetingModal"
+          >
+            <CIconEdit />
+            <span class="btn-label">{{ t('common.edit') }}</span>
+          </CBtn>
+          <CBtn
+            variant="primary"
+            size="sm"
+            :loading="callingMeeting"
+            @click="callMeeting"
+          >
+            <CIconBell />
+            <span class="btn-label">{{ t('meetings.call') }}</span>
+          </CBtn>
+        </template>
+
         <CBtn
-          v-if="canCallMeeting"
+          v-else-if="topbarActionState === 'called-waiting'"
           variant="secondary"
           size="sm"
-          :loading="callingMeeting"
-          @click="callMeeting"
+          disabled
         >
-          <CIconBell />
-          <span class="btn-label">{{ t('meetings.call') }}</span>
+          <CIconClock />
+          <span class="btn-label">{{ t('meetings.waiting') }}</span>
         </CBtn>
+
         <CBtn
-          v-if="canEditMeeting"
-          variant="secondary"
-          size="sm"
-          @click="openEditMeetingModal"
-        >
-          <CIconEdit />
-          <span class="btn-label">{{ t('common.edit') }}</span>
-        </CBtn>
-        <CBtn
-          v-if="canAddResolution"
+          v-else-if="topbarActionState === 'called-closable'"
           variant="primary"
           size="sm"
-          @click="openResolutionModal"
+          :loading="closingMeeting"
+          @click="closeMeeting"
         >
-          <CIconPlus />
-          <span class="btn-label">{{ t('meetings.addResolution') }}</span>
+          <CIconCheck />
+          <span class="btn-label">{{ t('meetings.close') }}</span>
+        </CBtn>
+
+        <CBtn
+          v-else-if="topbarActionState === 'closed'"
+          variant="secondary"
+          size="sm"
+          disabled
+        >
+          <CIconLock />
+          <span class="btn-label">{{ t('meetings.closedAction') }}</span>
         </CBtn>
       </template>
     </CTopbar>
@@ -476,53 +705,86 @@ function onFileChange(event: Event) {
       <CPageLoader v-else-if="loading" />
       <template v-else-if="meeting">
         <header class="assembly-detail-header">
-          <div class="page-header__eyebrow">
-            <span :class="['status-chip', meetingStatusChip(meeting.status)]">
-              <span class="status-chip__dot"></span>
+          <CEyebrow>
+            <CBadge
+              :variant="meetingStatusVariant(meeting.status)"
+              dot
+              :pulse="meeting.status === 'called'"
+            >
               {{ meetingStatusLabel(meeting.status) }}
-            </span>
+            </CBadge>
             <span>{{ t('page.eyebrows.assemblyDetail') }}</span>
-          </div>
+          </CEyebrow>
 
           <h1 class="display-md">
             {{ typeLabel(meeting.meeting_type) }} {{ new Date(meeting.meeting_date).getFullYear() }}
           </h1>
 
-          <div class="page-meta">
-            <span class="activity-card__line">
-              <CIconCalendar />
+          <CMetaLine>
+            <CMetaItem variant="sub">
+              <template #icon>
+                <CIconCalendar />
+              </template>
               {{ formatDate(meeting.meeting_date) }}
-            </span>
-            <span
+            </CMetaItem>
+            <CSeparator />
+            <CMetaItem
               v-if="meeting.location"
-              class="activity-card__line"
+              variant="sub"
             >
-              <CIconLocation />
+              <template #icon>
+                <CIconLocation />
+              </template>
               {{ meeting.location }}
-            </span>
-            <span class="activity-card__line">
-              <CIconBell />
+            </CMetaItem>
+            <CSeparator v-if="meeting.location" />
+            <CMetaItem variant="sub">
+              <template #icon>
+                <CIconBell />
+              </template>
               {{ t('meetings.calledAt', { date: meeting.notice_date ? formatDate(meeting.notice_date) : '—' }) }}
-            </span>
-          </div>
+            </CMetaItem>
+          </CMetaLine>
         </header>
 
-        <div class="legal-callout">
-          <strong>{{ t('meetings.legalWarning') }}</strong>
-          <span>J-21 : {{ noticeDeadline }}</span>
+        <div :class="['status-banner', `status-banner--${meetingBannerState(meeting.status)}`]">
+          <div class="status-banner__left">
+            <div class="status-banner__icon">
+              <CIconBell v-if="meetingBannerState(meeting.status) === 'called'" />
+              <CIconCheck v-else-if="meetingBannerState(meeting.status) === 'held' || meetingBannerState(meeting.status) === 'closed'" />
+              <CIconEdit v-else />
+            </div>
+            <div>
+              <p class="status-banner__title">
+                {{ meetingBannerTitle(meeting.status) }}
+              </p>
+              <p class="status-banner__sub">
+                {{ meetingBannerSubtitle(meeting.status) }}
+              </p>
+            </div>
+          </div>
         </div>
 
         <div class="detail-layout">
           <section class="main-column">
             <div class="section-head">
               <div>
-                <h2 class="section-title">
+                <h2 class="section-title headline-sm card-title">
                   {{ t('meetings.resolutions') }}
                 </h2>
                 <p class="section-subtitle">
                   {{ t('meetings.resolutionCount', resolutions.length) }}
                 </p>
               </div>
+              <CBtn
+                v-if="canAddResolution"
+                variant="ghost"
+                size="sm"
+                @click="openResolutionModal"
+              >
+                <CIconPlus />
+                <span class="btn-label">{{ t('meetings.addResolution') }}</span>
+              </CBtn>
             </div>
 
             <div
@@ -542,7 +804,7 @@ function onFileChange(event: Event) {
                 class="resolution-card"
               >
                 <div class="resolution-card__header">
-                  <div class="resolution-number">
+                  <div :class="['resolution-number', resolution.status === 'passed' ? 'tone--accent' : resolution.status === 'rejected' ? 'tone--disabled' : '']">
                     {{ resolution.number }}
                   </div>
                   <div class="resolution-card__body">
@@ -550,11 +812,18 @@ function onFileChange(event: Event) {
                       {{ resolution.title }}
                     </h3>
                     <div class="resolution-chips">
-                      <span :class="['status-chip', voteTypeChip(resolution.vote_type)]">{{ voteTypeLabel(resolution.vote_type) }}</span>
-                      <span :class="['status-chip', resolutionStatusChip(resolution.status)]">
-                        <span class="status-chip__dot"></span>
+                      <CBadge
+                        :variant="voteTypeVariant(resolution.vote_type)"
+                        :class="voteTypeClass(resolution.vote_type)"
+                      >
+                        {{ voteTypeLabel(resolution.vote_type) }}
+                      </CBadge>
+                      <CBadge
+                        :variant="resolutionStatusVariant(resolution.status)"
+                        dot
+                      >
                         {{ resolutionStatusLabel(resolution.status) }}
-                      </span>
+                      </CBadge>
                     </div>
                   </div>
                 </div>
@@ -570,46 +839,73 @@ function onFileChange(event: Event) {
                   v-if="voteResults[resolution.id]"
                   class="tally-box"
                 >
-                  <div class="tally-row">
-                    <span>{{ t('meetings.vote.in_favor') }}</span>
-                    <div class="tally-track">
-                      <div
-                        class="tally-fill tally-fill--for"
-                        :style="{ width: `${votePct(voteResults[resolution.id].votes_for, voteResults[resolution.id].shares_present)}%` }"
-                      ></div>
+                  <p class="tally-title">
+                    {{ t('meetings.vote.tally') }}
+                  </p>
+                  <div class="tally-bars">
+                    <div class="tally-row">
+                      <span class="tally-label">{{ t('meetings.vote.in_favor') }}</span>
+                      <div class="tally-track">
+                        <div
+                          class="tally-fill tally-fill--for"
+                          :style="{ width: `${votePct(voteResults[resolution.id].for_votes, voteResults[resolution.id].shares_counted)}%` }"
+                        ></div>
+                      </div>
+                      <span class="tally-pct">{{ votePct(voteResults[resolution.id].for_votes, voteResults[resolution.id].shares_counted) }}%</span>
+                      <span class="tally-shares">{{ t('units.sharesAmount', { amount: voteResults[resolution.id].for_votes }) }}</span>
                     </div>
-                    <strong>{{ voteResults[resolution.id].votes_for }}</strong>
-                  </div>
-                  <div class="tally-row">
-                    <span>{{ t('meetings.vote.against') }}</span>
-                    <div class="tally-track">
-                      <div
-                        class="tally-fill tally-fill--against"
-                        :style="{ width: `${votePct(voteResults[resolution.id].votes_against, voteResults[resolution.id].shares_present)}%` }"
-                      ></div>
+                    <div class="tally-row">
+                      <span class="tally-label">{{ t('meetings.vote.against') }}</span>
+                      <div class="tally-track">
+                        <div
+                          class="tally-fill tally-fill--against"
+                          :style="{ width: `${votePct(voteResults[resolution.id].against_votes, voteResults[resolution.id].shares_counted)}%` }"
+                        ></div>
+                      </div>
+                      <span class="tally-pct">{{ votePct(voteResults[resolution.id].against_votes, voteResults[resolution.id].shares_counted) }}%</span>
+                      <span class="tally-shares">{{ t('units.sharesAmount', { amount: voteResults[resolution.id].against_votes }) }}</span>
                     </div>
-                    <strong>{{ voteResults[resolution.id].votes_against }}</strong>
-                  </div>
-                  <div class="tally-row">
-                    <span>{{ t('meetings.vote.abstain') }}</span>
-                    <div class="tally-track">
-                      <div
-                        class="tally-fill tally-fill--abstain"
-                        :style="{ width: `${votePct(voteResults[resolution.id].abstentions, voteResults[resolution.id].shares_present)}%` }"
-                      ></div>
+                    <div class="tally-row">
+                      <span class="tally-label">{{ t('meetings.vote.abstain') }}</span>
+                      <div class="tally-track">
+                        <div
+                          class="tally-fill tally-fill--abstain"
+                          :style="{ width: `${showsAbstentionTallyPercent(resolution.vote_type) ? votePct(voteResults[resolution.id].abstentions, voteResults[resolution.id].shares_counted) : 0}%` }"
+                        ></div>
+                      </div>
+                      <span
+                        class="tally-pct"
+                      >{{ showsAbstentionTallyPercent(resolution.vote_type) ? votePct(voteResults[resolution.id].abstentions, voteResults[resolution.id].shares_counted) + '%' : '-' }}</span>
+                      <span class="tally-shares">{{ t('units.sharesAmount', { amount: voteResults[resolution.id].abstentions }) }}</span>
                     </div>
-                    <strong>{{ voteResults[resolution.id].abstentions }}</strong>
                   </div>
-                  <div :class="['result-pill', voteResults[resolution.id].adopted ? 'tone--valid' : 'tone--err']">
-                    <strong>{{ voteResults[resolution.id].adopted ? t('meetings.vote.passed') : t('meetings.vote.rejected') }}</strong>
-                    <span>{{ voteResults[resolution.id].explanation }}</span>
-                  </div>
+                  <CAlert
+                    v-if="hasFinalVoteResult(resolution.status)"
+                    :variant="voteResults[resolution.id].passed ? 'success' : 'error'"
+                    :title="voteResults[resolution.id].passed ? t('meetings.vote.passed') : t('meetings.vote.rejected')"
+                  >
+                    <p class="font-(length:--text-2xs)">
+                      {{ voteResultSubtitle(resolution, voteResults[resolution.id]) }}
+                    </p>
+                    <template #side>
+                      <span class="font-mono font-medium self-center">{{ voteResults[resolution.id].for_votes }} / {{ voteResults[resolution.id].shares_counted }}</span>
+                    </template>
+                  </CAlert>
+                  <CAlert
+                    v-if="voteResults[resolution.id]?.eligible_for_second_vote"
+                    variant="warning"
+                    :title="t('meetings.vote.art25_1_title')"
+                  >
+                    <p class="font-(length:--text-2xs)">
+                      {{ t('meetings.vote.explanations.absolute_majority_second_vote', { threshold: Math.ceil(voteResults[resolution.id].shares_counted / 3) }) }}
+                    </p>
+                  </CAlert>
                 </div>
 
                 <div
                   v-else
                   class="pending-box"
-                >
+                > 
                   {{ t('meetings.vote.pendingVote') }}
                 </div>
               </CCard>
@@ -618,7 +914,7 @@ function onFileChange(event: Event) {
 
           <aside class="side-column">
             <CCard>
-              <h2 class="side-title">
+              <h2 class="side-title headline-sm card-title">
                 {{ t('meetings.info') }}
               </h2>
               <dl class="info-list">
@@ -649,7 +945,9 @@ function onFileChange(event: Event) {
               <div class="side-head">
                 <div>
                   <h2 class="side-title">
-                    {{ t('meetings.documents.title') }}
+                    <span class="headline-sm card-title">
+                      {{ t('meetings.documents.title') }}
+                    </span>
                   </h2>
                   <p class="side-subtitle">
                     {{ t('meetings.callReady') }}
@@ -757,11 +1055,11 @@ function onFileChange(event: Event) {
             <CCard>
               <div class="side-head">
                 <div>
-                  <h2 class="side-title">
+                  <h2 class="side-title headline-sm card-title">
                     {{ t('meetings.presenceQuorum') }}
                   </h2>
                   <p class="side-subtitle">
-                    {{ t('meetings.attendanceSummary', { count: attendance.present_units }) }}
+                    {{ t('meetings.sharesRepresented') }}
                   </p>
                 </div>
                 <CBtn
@@ -775,45 +1073,93 @@ function onFileChange(event: Event) {
                 </CBtn>
               </div>
 
-              <div class="quorum-kpi">
-                <strong>{{ attendance.shares_present }}</strong>
-                <span>{{ t('meetings.sharesRepresented') }} / {{ attendance.total_shares }}</span>
-                <small>{{ attendancePct }}%</small>
+              <div class="flex flex-col gap-2">
+                <p class="font-serif font-bold tracking-tight">
+                  <span class="text-(--color-on-surface) text-[40px]">{{ attendance.shares_present }}</span> 
+                  <span class="text-[20px] ">/ {{ attendance.total_shares }}</span>
+                </p>
+                <p class="presence-kpi__detail">
+                  {{ t('meetings.attendanceSummary', { count: attendance.present_units }) }}
+                </p>
+                <div class="presence-track">
+                  <div
+                    class="presence-fill"
+                    :style="attendanceFillStyle"
+                  ></div>
+                </div>
+                <div class="presence-legend">
+                  <span>0</span>
+                  <span>{{ attendancePct }}%</span>
+                  <span>{{ attendance.total_shares }}</span>
+                </div>
+                <CAlert
+                  :variant="quorumReached ? 'success' : 'warning'"
+                  class="quorum-alert"
+                  :title="quorumReached ? t('meetings.quorumOk') : t('meetings.quorumKo')"
+                >
+                {{ quorumReached ? t('meetings.quorumOkDetail') : t('meetings.quorumKoDetail', { threshold: quorumThreshold }) }}
+                </CAlert>
               </div>
-
-              <div class="attendance-list">
+              <div class="participants-list">
                 <div
                   v-for="entry in attendance.entries"
                   :key="entry.unit_id"
-                  class="attendance-row"
+                  class="participant-row"
                 >
-                  <div>
-                    <strong>{{ entry.unit_number }}</strong>
-                    <p>{{ entry.owner_name || '—' }}</p>
+                  <div class="participant-row__identity">
+                    <div class="attendance-avatar">
+                      {{ ownerInitials(entry.owner_name) }}
+                    </div>
+                    <div>
+                      <p class="participant-name">
+                        {{ entry.owner_name || '—' }}
+                      </p>
+                      <p class="participant-meta">
+                        Lot {{ entry.unit_number }}
+                      </p>
+                    </div>
                   </div>
-                  <div class="attendance-row__meta">
-                    <span :class="['status-chip', attendanceModeChip(entry.mode)]">{{ attendanceModeLabel(entry.mode) }}</span>
-                    <small>{{ entry.shares_represented }}</small>
+                  <div class="participant-row__meta">
+                    <small class="attendance-shares">{{ t('units.sharesAmount', { amount: entry.shares_represented }) }}</small>
+                    <CBadge :variant="attendanceModeVariant(entry.mode)">
+                      {{ attendanceModeLabel(entry.mode) }}
+                    </CBadge>
                   </div>
                 </div>
               </div>
             </CCard>
 
             <CCard>
-              <h2 class="side-title">
+              <h2 class="side-title headline-sm card-title">
                 {{ t('meetings.agenda') }}
               </h2>
               <ol class="agenda-list">
                 <li
                   v-for="(item, index) in agendaItems"
                   :key="`${index}-${item}`"
+                  class="agenda-item"
                 >
-                  {{ item }}
+                  <span class="agenda-item__n">{{ index + 1 }}.</span>
+                  <span class="agenda-item__text">{{ item }}</span>
                 </li>
               </ol>
             </CCard>
           </aside>
         </div>
+
+        <CCard class="gap-y-2">
+          <CLegalNotice 
+            v-for="entry in majorityLegalDescriptions"
+            :key="entry.id"
+            :links="entry.legalLinks"
+            class="border-b border-[color:color-mix(in_srgb,var(--color-outline)_18%,transparent)] pb-2 last:border-b-0 last:pb-0"
+          >
+            <CLegalDescription
+              :title="entry.title"
+              :summary="entry.summary"
+            />
+          </CLegalNotice>
+        </CCard>
       </template>
     </div>
 
@@ -852,13 +1198,39 @@ function onFileChange(event: Event) {
             type="text"
           />
         </label>
-        <label class="form-field">
+        <div class="form-field form-field--full">
           <span class="form-label">{{ t('meetings.agenda') }}</span>
-          <textarea
-            v-model="meetingForm.agenda"
-            class="form-input"
-          ></textarea>
-        </label>
+          <div class="agenda-editor">
+            <div
+              v-for="(_, index) in meetingAgendaItems"
+              :key="`agenda-${index}`"
+              class="agenda-editor__row"
+            >
+              <input
+                v-model="meetingAgendaItems[index]"
+                class="form-input"
+                type="text"
+                :placeholder="`${t('meetings.agenda')} ${index + 1}`"
+              />
+              <CBtn
+                variant="ghost"
+                size="sm"
+                @click="removeAgendaItem(index)"
+              >
+                {{ t('common.delete') }}
+              </CBtn>
+            </div>
+
+            <CBtn
+              variant="secondary"
+              size="sm"
+              @click="addAgendaItem"
+            >
+              <CIconPlus />
+              <span class="btn-label">{{ t('common.add') }}</span>
+            </CBtn>
+          </div>
+        </div>
       </form>
 
       <template #footer>
@@ -1093,58 +1465,96 @@ function onFileChange(event: Event) {
   color: var(--color-on-surface-variant);
 }
 
-.page-header__eyebrow {
+.status-banner {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
-  font-size: var(--text-2xs);
-  font-weight: var(--fw-semibold);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--color-primary);
-}
-
-.page-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-3);
-  color: var(--color-on-surface-variant);
-  font-size: var(--text-sm);
-}
-
-.status-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  border-radius: var(--radius-full);
-  font-size: var(--text-2xs);
-  font-weight: var(--fw-medium);
-  background: var(--tone-bg, transparent);
-  color: var(--tone-fg, inherit);
-}
-
-.status-chip__dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: currentColor;
-  opacity: 0.7;
-}
-
-.legal-callout {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-3);
+  justify-content: space-between;
+  gap: var(--space-4);
   padding: var(--space-4);
   border-radius: var(--radius-lg);
+}
+
+.status-banner__left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.status-banner__icon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.status-banner__icon :deep(svg) {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.status-banner__title {
+  margin: 0;
+  font-size: var(--text-sm);
+  font-weight: var(--fw-semibold);
+}
+
+.status-banner__sub {
+  margin: 2px 0 0;
+  color: var(--color-on-surface-variant);
+  font-size: var(--text-xs);
+}
+
+.status-banner--called {
   background: var(--color-secondary-container);
   color: var(--color-on-secondary-container);
 }
 
+.status-banner--called .status-banner__icon {
+  background: color-mix(in srgb, var(--color-primary) 16%, transparent);
+  color: var(--color-primary);
+}
+
+.status-banner--closed {
+  background: color-mix(in srgb, var(--color-success-container) 100%, transparent);
+  color: var(--color-on-success-container);
+}
+
+.status-banner--closed .status-banner__icon {
+  background: color-mix(in srgb, var(--color-success) 16%, transparent);
+  color: var(--color-success);
+}
+
+.status-banner--held {
+  background: color-mix(in srgb, var(--color-success-container) 100%, transparent);
+  color: var(--color-on-success-container);
+}
+
+.status-banner--held .status-banner__icon {
+  background: color-mix(in srgb, var(--color-success) 16%, transparent);
+  color: var(--color-success);
+}
+
+.status-banner--draft {
+  background: var(--color-surface-container-low);
+  color: var(--color-on-surface);
+}
+
+.status-banner--draft .status-banner__icon {
+  background: color-mix(in srgb, var(--color-outline) 24%, transparent);
+  color: var(--color-on-surface-variant);
+}
+
 .detail-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 340px;
+  grid-template-columns: minmax(0, 1fr) 320px;
   gap: var(--space-4);
   align-items: start;
 }
@@ -1169,6 +1579,10 @@ function onFileChange(event: Event) {
   font-family: var(--font-display);
   font-size: 20px;
   font-weight: var(--fw-semibold);
+}
+
+.card-title {
+  font-size: 16px;
 }
 
 .section-subtitle,
@@ -1210,8 +1624,8 @@ function onFileChange(event: Event) {
   align-items: center;
   justify-content: center;
   border-radius: var(--radius-md);
-  background: var(--color-secondary-container);
-  color: var(--color-on-secondary-container);
+  background: var(--tone-bg, var(--color-secondary-container));
+  color: var(--tone-fg, var(--color-on-secondary-container));
   font-family: var(--font-display);
   font-weight: var(--fw-bold);
 }
@@ -1225,7 +1639,7 @@ function onFileChange(event: Event) {
 
 .resolution-title {
   font-family: var(--font-display);
-  font-size: 18px;
+  font-size: 16px;
   font-weight: var(--fw-semibold);
 }
 
@@ -1247,12 +1661,31 @@ function onFileChange(event: Event) {
   gap: var(--space-3);
 }
 
+.tally-title {
+  margin: 0;
+  font-size: var(--text-2xs);
+  font-weight: var(--fw-semibold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-on-surface-variant);
+}
+
+.tally-bars {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
 .tally-row {
   display: grid;
-  grid-template-columns: 88px minmax(0, 1fr) 36px;
+  grid-template-columns: 72px minmax(0, 1fr) 44px 52px;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--space-2);
   font-size: var(--text-sm);
+}
+
+.tally-label {
+  color: var(--color-on-surface-variant);
 }
 
 .tally-track {
@@ -1279,6 +1712,19 @@ function onFileChange(event: Event) {
   background: var(--color-outline);
 }
 
+.tally-pct {
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+}
+
+.tally-shares {
+  text-align: right;
+  font-family: var(--font-mono);
+  color: var(--color-on-surface-variant);
+  font-size: var(--text-xs);
+}
+
 .result-pill,
 .pending-box,
 .minutes-pill,
@@ -1298,6 +1744,47 @@ function onFileChange(event: Event) {
 .pending-box {
   background: var(--color-surface-container-low);
   color: var(--color-on-surface-variant);
+}
+
+.vote-result {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+}
+
+.vote-result--passed {
+  background: color-mix(in srgb, var(--color-success-container) 100%, transparent);
+  color: var(--color-on-success-container);
+}
+
+.vote-result--rejected {
+  background: color-mix(in srgb, var(--color-error-container) 100%, transparent);
+  color: var(--color-on-error-container);
+}
+
+.vote-result__text,
+.vote-result__sub {
+  margin: 0;
+}
+
+.vote-result__text {
+  font-size: var(--text-sm);
+  font-weight: var(--fw-semibold);
+}
+
+.vote-result__sub {
+  font-size: var(--text-xs);
+  opacity: 0.82;
+}
+
+.vote-result__value {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: var(--fw-medium);
+  white-space: nowrap;
 }
 
 .quorum-kpi {
@@ -1349,7 +1836,6 @@ function onFileChange(event: Event) {
 }
 
 .doc-row,
-.attendance-row,
 .attendance-edit-row {
   display: flex;
   justify-content: space-between;
@@ -1361,10 +1847,11 @@ function onFileChange(event: Event) {
 }
 
 .doc-row__actions,
-.attendance-row__meta {
+.participant-row__meta {
   display: flex;
   align-items: center;
   gap: var(--space-2);
+  font-size: var(--text-2xs);
 }
 
 .doc-link,
@@ -1385,9 +1872,139 @@ function onFileChange(event: Event) {
   color: var(--color-error);
 }
 
-.attendance-row p {
-  margin: 2px 0 0;
+.presence-kpi__label,
+.presence-kpi__value,
+.presence-kpi__detail {
+  margin: 0;
+}
+
+.presence-kpi__label {
   font-size: var(--text-xs);
+}
+
+.presence-kpi__value {
+  font-family: var(--font-display);
+  font-size: 40px;
+  font-weight: var(--fw-bold);
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.presence-kpi__detail {
+  font-size: var(--text-xs);
+  color: var(--color-on-secondary-container);
+  opacity: 0.84;
+}
+
+.presence-track {
+  height: 10px;
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--color-outline) 45%, transparent);
+  overflow: hidden;
+}
+
+.presence-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  background: var(--gradient-primary);
+}
+
+.presence-legend {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+  font-size: var(--text-2xs);
+  color: var(--color-on-secondary-container);
+  opacity: 0.86;
+}
+
+.quorum-alert {
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-xs);
+  font-weight: var(--fw-medium);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.participants-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.participant-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-outline) 18%, transparent);
+}
+
+.participant-row:last-child {
+  border-bottom: none;
+}
+
+.participant-row__identity {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.participant-name,
+.participant-meta {
+  margin: 0;
+}
+
+.participant-name {
+  font-size: var(--text-sm);
+  color: var(--color-on-surface);
+}
+
+.participant-meta {
+  font-size: var(--text-xs);
+  color: var(--color-on-surface-variant);
+}
+
+.attendance-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-2xs);
+  font-weight: var(--fw-bold);
+  background: color-mix(in srgb, var(--color-primary) 16%, var(--color-surface));
+  color: var(--color-primary);
+}
+
+.attendance-shares {
+  font-family: var(--font-mono);
+  color: var(--color-on-surface-variant);
+}
+
+.agenda-editor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.agenda-editor__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-2);
+}
+
+.form-field--full {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
 }
 
 .attendance-edit-row {
@@ -1403,10 +2020,38 @@ function onFileChange(event: Event) {
 
 .agenda-list {
   margin: 0;
-  padding-left: 1.25rem;
+  padding: 0;
+  list-style: none;
   display: flex;
   flex-direction: column;
+  gap: 0;
+}
+
+.agenda-item {
+  display: flex;
   gap: var(--space-2);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-outline) 18%, transparent);
+}
+
+.agenda-item:last-child {
+  border-bottom: none;
+}
+
+.agenda-item__n {
+  width: 20px;
+  flex-shrink: 0;
+  padding-top: 1px;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: var(--fw-medium);
+  color: var(--color-primary);
+}
+
+.agenda-item__text {
+  font-size: var(--text-sm);
+  color: var(--color-on-surface);
+  line-height: 1.4;
 }
 
 .chip-art25 {
@@ -1429,10 +2074,18 @@ function onFileChange(event: Event) {
   }
 
   .tally-row {
-    grid-template-columns: 72px minmax(0, 1fr) 32px;
+    grid-template-columns: 72px minmax(0, 1fr) 44px;
+  }
+
+  .tally-shares {
+    display: none;
   }
 
   .attendance-edit-row {
+    grid-template-columns: 1fr;
+  }
+
+  .agenda-editor__row {
     grid-template-columns: 1fr;
   }
 }

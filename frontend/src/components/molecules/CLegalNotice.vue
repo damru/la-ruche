@@ -1,23 +1,19 @@
 <script setup lang="ts">
-import CCard from '@/components/molecules/CCard.vue'
-
 type LegalLink = {
   label: string
   href: string
 }
 
-defineProps<{
-  title: string
-  summary: string
-  links: LegalLink[]
-}>()
+withDefaults(defineProps<{
+  links?: LegalLink[]
+}>(), {
+  links: () => [],
+})
 </script>
 
 <template>
-  <CCard class="legal-info-card">
-    <p class="body-xs legal-info-card__text">
-      ⚖️ <strong>{{ title }}</strong> — {{ summary }}
-    </p>
+  <div class="legal-info-card">
+    <slot></slot>
     <div
       v-if="links.length > 0"
       class="legal-info-card__links"
@@ -40,7 +36,7 @@ defineProps<{
         </a>
       </template>
     </div>
-  </CCard>
+  </div>
 </template>
 
 <style scoped>
@@ -50,16 +46,12 @@ defineProps<{
   gap: var(--space-2);
 }
 
-.legal-info-card__text,
-.legal-info-card__links {
-  margin: 0;
-  color: var(--color-on-surface-variant);
-}
-
 .legal-info-card__links {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+  margin: 0;
+  color: var(--color-on-surface-variant);
   font-size: var(--text-sm);
 }
 

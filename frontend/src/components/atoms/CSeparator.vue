@@ -10,7 +10,10 @@ const tag = props.as || 'span'
 </script>
 
 <template>
-  <component :is="tag" class="c-separator" />
+  <component
+    :is="tag"
+    class="c-separator"
+  />
 </template>
 
 <style scoped>

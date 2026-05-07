@@ -9,7 +9,7 @@ import { useAuthStore } from '@/stores/auth'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CCard from '@/components/molecules/CCard.vue'
-import CCardMeta from '@/components/molecules/CCardMeta.vue'
+import CMetaLine from '@/components/molecules/CMetaLine.vue'
 import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
 import CModal from '@/components/molecules/CModal.vue'
 import CPageError from '@/components/molecules/CPageError.vue'
@@ -335,7 +335,7 @@ async function confirmDelete() {
                 {{ c.notes }}
               </p>
 
-              <CCardMeta
+              <CMetaLine
                 v-if="c.email || c.phone"
                 class="activity-card__contacts"
               >
@@ -351,7 +351,7 @@ async function confirmDelete() {
                   class="activity-card__line activity-card__contact-link"
                   @click.stop
                 ><span aria-hidden="true">📞</span>{{ c.phone }}</a>
-              </CCardMeta>
+              </CMetaLine>
 
               <div
                 v-if="canEdit"

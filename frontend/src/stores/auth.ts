@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { authApi, onboardingApi } from '@/api'
+import { tryRefreshSession } from '@/api/client'
 import type { AuthUser, Role } from '@/types/domain'
 
 export const useAuthStore = defineStore('auth', () => {
@@ -92,11 +93,9 @@ export const useAuthStore = defineStore('auth', () => {
 
     // access_token may have expired (deleted by browser after Max-Age).
     // Try refreshing via the refresh_token cookie, then retry.
-    try {
-      await authApi.refresh()
+    const refreshed = await tryRefreshSession()
+    if (refreshed) {
       await hydrateFromMe()
-    } catch {
-      // No valid refresh_token either → stay unauthenticated
     }
   }
 

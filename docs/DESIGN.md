@@ -1,7 +1,7 @@
 # DESIGN.md — l'Application Design System "The Modern Registry"
 
 > **Dénomination** — Dans le présent document, l'expression **« l'Application »** désigne exclusivement **La Ruche**, plateforme web open source de gestion participative de copropriété. Ces deux termes sont interchangeables et désignent la même entité logicielle.
-> Dernière mise à jour : 2026-05-04
+> Dernière mise à jour : 2026-05-09
 
 ## Typographie — 3 polices, 3 rôles (DDR-001 v3)
 
@@ -127,6 +127,7 @@ Le frontend peut utiliser Tailwind CSS comme couche utilitaire locale, mais les 
 
 - Tailwind ne remplace pas les composants atomiques/moléculaires existants ni les classes globales déjà documentées dans ce fichier.
 - Les valeurs de design récurrentes doivent continuer à être exprimées via les variables CSS du design system, puis consommées depuis Tailwind si nécessaire.
+- En configuration Tailwind v4, ces tokens sont exposés aux utilitaires via `@theme inline` dans `frontend/src/styles/tailwind.css`, sans `tailwind.config.js` dédié.
 - Une vue ne doit pas introduire un empilement massif de classes utilitaires si une primitive partagée existe déjà (`view-header`, `tabs`, `activity-card`, `tone--*`, etc.).
 
 ## Règle UI — Eyebrows de page
@@ -160,7 +161,7 @@ Défini dans `frontend/src/styles/tones.css`, importé globalement avant tout co
 
 Les classes `.tone--*` sont des **utilitaires purs** : elles définissent uniquement deux variables CSS — sans aucune règle de forme, taille ou layout. Elles s’appliquent à n’importe quel élément (icône, bouton, chip, badge, pill…).
 
-Une vue ne doit jamais redéclarer localement `.tone--default`, `.tone--accent`, `.tone--warn`, `.tone--err`, `.tone--disabled` ou `.tone--valid` dans son CSS scoped. Si un composant a besoin d’une forme locale, il conserve uniquement ses règles de taille / rayon / layout et consomme les variables via `background: var(--tone-bg, ...)` et `color: var(--tone-fg, ...)`.
+Une vue ne doit jamais redéclarer localement `.tone--default`, `.tone--accent`, `.tone--warn`, `.tone--err`, `.tone--disabled`, `.tone--valid` ou les variantes de rôle `.tone--manager`, `.tone--board-member`, `.tone--co-owner`, `.tone--tenant` dans son CSS scoped. Si un composant a besoin d’une forme locale, il conserve uniquement ses règles de taille / rayon / layout et consomme les variables via `background: var(--tone-bg, ...)` et `color: var(--tone-fg, ...)`.
 
 | Classe | `--tone-bg` | `--tone-fg` |
 |---|---|---|
@@ -172,11 +173,17 @@ Une vue ne doit jamais redéclarer localement `.tone--default`, `.tone--accent`,
 | `.tone--disabled` | `--color-surface-container-highest` | `--color-on-surface-variant` |
 | `.tone--muted`    | `--color-surface-container`         | `--color-on-surface-variant` |
 | `.tone--valid`    | `--color-success-container`         | `--color-success`            |
+| `.tone--manager`  | `--color-role-manager-bg`           | `--color-role-manager-fg`    |
+| `.tone--board-member` | `--color-role-board-bg`        | `--color-role-board-fg`      |
+| `.tone--co-owner` | `--color-role-co-owner-bg`          | `--color-role-co-owner-fg`   |
+| `.tone--tenant`   | `--color-role-tenant-bg`            | `--color-role-tenant-fg`     |
 
 Les éléments consommateurs déclarent :
 ```css
 background: var(--tone-bg, <fallback>);
 color:      var(--tone-fg, <fallback>);
+
+`CBadge` applique désormais ce fallback directement au niveau de sa racine, avec `var(--color-surface-container-high)` et `var(--color-on-surface-variant)` pour les variantes sans tonalité dédiée.
 ```
 
 ```html
@@ -208,7 +215,8 @@ Les patterns de contenu récurrents doivent être mutualisés dans `frontend/src
 
 - `activity-card--compact` pour les variantes de carte qui gardent la grammaire `activity-card` mais avec un rythme vertical plus serré.
 - `activity-card__chips` pour toute grappe de chips / badges d’une `activity-card`, y compris dans l’en-tête. Une vue ne doit pas introduire de wrapper alternatif dédié si ce conteneur couvre déjà le besoin.
-- Les métadonnées de carte (`date`, `auteur`, `lot`, localisation, etc.) passent par la molécule `frontend/src/components/molecules/CCardMeta.vue` avec style scoped ; une vue ne doit plus utiliser la classe globale `activity-card__meta`.
+- Les métadonnées de carte (`date`, `auteur`, `lot`, localisation, etc.) passent par la molécule `frontend/src/components/molecules/CMeta.vue` avec style scoped ; une vue ne doit plus utiliser la classe globale `activity-card__meta`.
+- Les lignes élémentaires `icône + contenu` à l'intérieur d'une métadonnée passent par `frontend/src/components/molecules/CMetaItem.vue`, avec un slot `icon` dédié. Cette molécule porte les variantes typographiques `footer` par défaut et `sub` (`13px` / `1.5`) ; une vue ne doit plus recopier localement un wrapper `span.activity-card__line` pour ce pattern simple.
 - Les encarts d’information secondaire (`activity-card__note`) passent par la molécule `frontend/src/components/molecules/CCardNote.vue` avec style scoped ; une vue ne doit plus utiliser la classe globale `activity-card__note`.
 - Les séparateurs discrets entre lignes de métadonnées (point circulaire 3px) utilisent l'atome `frontend/src/components/atoms/CSeparator.vue` avec style scoped.
 - `activity-card__contacts` pour la pile verticale email / téléphone.
@@ -287,7 +295,7 @@ La vue `Carnet d'entretien` expose des filtres rapides ancrés sur des périodes
 La vue `Sinistres` affiche pour chaque dossier le délai légal restant avant déclaration à l'assurance, calculé selon le type de sinistre.
 
 - Les alertes de délai doivent être visibles directement sur la carte (approche d'échéance / retard / transmis).
-- L'explication juridique des délais est mutualisée dans une carte `CLegalInfoCard` en bas de page.
+- L'explication juridique des délais est mutualisée dans une `CCard` contenant `CLegalNotice` en bas de page.
 - La création d'un sinistre reste faisable dans une seule modale et accepte des pièces jointes sans écran intermédiaire.
 - Les zones d'ajout de pièces jointes des modales Sinistres reprennent la dropzone standard utilisée sur les Signalements (`bordure pointillée`, état hover/drag, sélection directe de fichiers).
 - Chaque carte Sinistre expose toujours deux actions côte à côte pour les profils gestionnaires : `Modifier` puis une action contextuelle dépendante du statut courant.
@@ -306,13 +314,14 @@ Contraintes complémentaires :
 
 ## Règle UI — Obligations légales
 
-Les cartes de note légale globales de page utilisent `CLegalInfoCard` et suivent toujours le même schéma :
+Les cartes de note légale globales de page utilisent `CCard` + `CLegalNotice` et suivent toujours le même schéma :
 
-- un titre explicite ;
-- un résumé pédagogique de l'obligation ;
+- un ou plusieurs `CLegalDescription` avec un titre explicite et un résumé pédagogique de l'obligation ;
 - un ou plusieurs liens légaux libellés avec une référence longue (`Article N …`) vers le texte complet sur une source officielle (`legifrance.gouv.fr` ou `service-public.fr`).
 
-Les obligations légales compactes et strictement locales à un libellé peuvent encore utiliser `CTooltip`, mais les notes juridiques de bas de page doivent être homogènes via `CLegalInfoCard`.
+`CLegalDescription` porte le bloc textuel `⚖️ + titre + résumé`, tandis que `CLegalNotice` ne gère que la pile verticale et la rangée de liens. Cette séparation permet aussi les cartes juridiques multi-entrées, par exemple pour détailler plusieurs règles de majorité sur une même AG.
+
+Les obligations légales compactes et strictement locales à un libellé peuvent encore utiliser `CTooltip`, mais les notes juridiques de bas de page doivent être homogènes via `CCard` + `CLegalNotice`.
 
 Cette règle s'applique notamment aux délais de déclaration de sinistre, au carnet d'entretien réglementaire, au registre de copropriété et aux consultations informelles.
 

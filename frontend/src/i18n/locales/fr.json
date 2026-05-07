@@ -293,8 +293,10 @@
       "pending": "En attente"
     },
     "call": "Convoquer l'AG",
+    "waiting": "En attente",
     "callReady": "La convocation est prête à partir dès qu'au moins une pièce de convocation est jointe.",
     "close": "Clore l'AG",
+    "closedAction": "AG close",
     "calledAt": "Convoquée le {date}",
     "meetingDate": "Date de l'AG",
     "location": "Lieu",
@@ -311,6 +313,8 @@
     "statPendingVotes": "votes en attente",
     "bannerClosed": "AG close · PV disponible",
     "bannerCalled": "AG convoquée · En attente de tenue",
+    "bannerHeld": "AG tenue · En attente de clôture",
+    "bannerHeldSub": "{resolved} résolutions votées · {pending} en attente · {minutes}",
     "depositMinutes": "Déposer le PV",
     "documents": {
       "title": "Pièces de l'AG",
@@ -333,11 +337,12 @@
       "resolutions": "Résolutions"
     },
     "presenceQuorum": "Présence & Quorum",
+    "participants": "Participants",
     "attendanceAction": "Mettre à jour la présence",
     "attendanceTitle": "Feuille de présence",
-    "attendanceHint": "Chaque lot doit être marqué présent, représenté, en correspondance ou absent.",
+    "attendanceHint": "Chaque copropriétaire doit être marqué présent, représenté, en correspondance ou absent.",
     "attendanceRepresentative": "Représenté par",
-    "attendanceSummary": "{count} lots présents, représentés ou en correspondance",
+    "attendanceSummary": "{count} copropriétaires présents, représentés ou en correspondance",
     "attendanceModes": {
       "present": "Présent",
       "proxy": "Mandat",
@@ -346,8 +351,10 @@
     },
     "sharesRepresented": "Tantièmes représentés",
     "attendeesDetail": "{count} copropriétaires présents ou représentés",
-    "quorumOk": "Quorum atteint — AG peut délibérer valablement",
+    "quorumOk": "Quorum atteint",
+    "quorumOkDetail": "L'assemblée peut valablement délibérer.",
     "quorumKo": "Quorum insuffisant",
+    "quorumKoDetail": "L'assemblée ne peut pas valablement délibérer. Seuil nécessaire: {threshold} tantièmes.",
     "mandate": "Mandat",
     "newResolution": "Nouvelle résolution",
     "newResolutionSub": "Ajoutez une résolution à l'ordre du jour de cette assemblée.",
@@ -374,6 +381,26 @@
       "pendingVote": "Vote non encore enregistré",
       "passed": "Résolution adoptée",
       "rejected": "Résolution rejetée",
+      "art25_1_title": "Art. 25-1 — Second vote possible",
+      "explanations": {
+        "simple_majority": {
+          "passed": "Majorité article 24 (seuil : {threshold} t.)",
+          "rejected": "Majorité article 24 non atteinte (seuil : {threshold} t.)"
+        },
+        "absolute_majority": {
+          "passed": "Majorité article 25 (seuil : {threshold} t.)",
+          "rejected": "Majorité article 25 non atteinte (seuil : {threshold} t.)"
+        },
+        "absolute_majority_second_vote": "Plus d'un tiers des tantièmes favorables (seuil : {threshold} t.): l'assemblée peut immédiatement procéder à un second vote à la majorité de l'art. 24 (art. 25-1).",
+        "double_majority": {
+          "passed": "Majorité article 26 (seuil tantièmes : {threshold} t. + majorité en nombre)",
+          "rejected": "Majorité article 26 non atteinte (seuil tantièmes : {threshold} t. + majorité en nombre)"
+        },
+        "unanimity": {
+          "passed": "Unanimité atteinte ({threshold} tantièmes requis)",
+          "rejected": "Unanimité non atteinte ({threshold} tantièmes requis)"
+        }
+      },
       "types": {
         "simple_majority": "Art. 24 — Majorité simple",
         "absolute_majority": "Art. 25 — Majorité absolue",
@@ -390,7 +417,36 @@
     "uploadMinutes": "Déposer le PV signé",
     "present": "présents",
     "tantiemesShares": "% des tantièmes",
-    "legalWarning": "Délai légal de convocation : 21 jours minimum (art. 9 décret 17/03/1967)"
+    "legalWarning": "Délai légal de convocation : 21 jours minimum (art. 9 décret 17/03/1967)",
+    "legalCard": {
+      "descriptions": {
+        "simple_majority": "Décision adoptée à la majorité des voix exprimées des copropriétaires présents, représentés ou votant par correspondance. Les abstentions ne sont pas comptabilisées dans le calcul de la majorité.",
+        "absolute_majority": "Décision adoptée à la majorité des voix de tous les copropriétaires du syndicat, qu'ils soient présents, représentés, absents ou votant par correspondance.",
+        "absolute_majority_second_vote": "Si la résolution relevant de l'article 25 recueille au moins un tiers des voix de tous les copropriétaires, l'assemblée peut procéder immédiatement à un second vote à la majorité simple de l'article 24.",
+        "double_majority": "Décision adoptée à la majorité des membres du syndicat représentant au moins les deux tiers des voix de tous les copropriétaires.",
+        "unanimity": "Décision réservée aux cas les plus structurants et nécessitant l'accord de tous les copropriétaires."
+      },
+      "simple_majority": {
+        "linkLabel": "Article 24 de la loi n°65-557 du 10 juillet 1965",
+        "linkHref": "https://www.legifrance.gouv.fr/loda/article_lc/LEGIARTI000051749514"
+      },
+      "absolute_majority": {
+        "linkLabel": "Article 25 de la loi n°65-557 du 10 juillet 1965",
+        "linkHref": "https://www.legifrance.gouv.fr/loda/article_lc/LEGIARTI000051749507"
+      },
+      "absolute_majority_second_vote": {
+        "linkLabel": "Article 25-1 de la loi n°65-557 du 10 juillet 1965",
+        "linkHref": "https://www.legifrance.gouv.fr/loda/article_lc/LEGIARTI000049398359/"
+      },
+      "double_majority": {
+        "linkLabel": "Article 26 de la loi n°65-557 du 10 juillet 1965",
+        "linkHref": "https://www.legifrance.gouv.fr/loda/article_lc/LEGIARTI000050623612"
+      },
+      "unanimity": {
+        "linkLabel": "Unanimité",
+        "linkHref": "#"
+      }
+    }
   },
   "budget": {
     "title": "Budget & Charges",
@@ -456,6 +512,7 @@
       "other": "Autre"
     },
     "shares": "Tantièmes",
+    "sharesAmount": "{amount} t.",
     "generalShares": "Tantièmes généraux",
     "generalSharesHint": "Tantièmes affectés à la clé Charges Générales. Les clés spéciales se configurent dans Clés de répartition.",
     "owner": "Propriétaire",

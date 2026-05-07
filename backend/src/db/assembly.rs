@@ -756,7 +756,8 @@ pub async fn get_tally(
         r#"
         SELECT b.shares_total,
                COUNT(DISTINCT ub.user_id)::int as total_owners,
-               COUNT(DISTINCT v.user_id)::int as present_owners
+             COUNT(DISTINCT v.user_id)::int as present_owners,
+             COUNT(DISTINCT v.user_id) FILTER (WHERE v.position = 'in_favor')::int as "favorable_owners!"
         FROM building b
         JOIN unit u ON u.building_id = b.id
         LEFT JOIN user_building ub ON ub.building_id = b.id
@@ -810,6 +811,7 @@ pub async fn get_tally(
         } else {
             building.present_owners.unwrap_or(0) as u32
         },
+        favorable_owners: building.favorable_owners as u32,
         for_votes,
         against_votes,
         abstentions,

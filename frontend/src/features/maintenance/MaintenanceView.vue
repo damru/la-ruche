@@ -7,9 +7,10 @@ import { useFormFeedback } from '@/composables/useFormFeedback'
 import { useAutoClose } from '@/composables/useAutoClose'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
+import CLegalDescription from '@/components/atoms/CLegalDescription.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
-import CLegalInfoCard from '@/components/molecules/CLegalInfoCard.vue'
+import CLegalNotice from '@/components/molecules/CLegalNotice.vue'
 import CModal from '@/components/molecules/CModal.vue'
 import CPageError from '@/components/molecules/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
@@ -464,13 +465,17 @@ async function deleteEntry() {
           </CCard>
         </div>
 
-        <CLegalInfoCard
+        <CCard
           v-if="logbookSummary"
           class="regulatory-legal-card"
-          :title="t('maintenance.regulatory.legalCard.title')"
-          :summary="t('maintenance.regulatory.legalCard.summary')"
-          :links="regulatoryLegalLinks"
-        />
+        >
+          <CLegalNotice :links="regulatoryLegalLinks">
+            <CLegalDescription
+              :title="t('maintenance.regulatory.legalCard.title')"
+              :summary="t('maintenance.regulatory.legalCard.summary')"
+            />
+          </CLegalNotice>
+        </CCard>
 
         <div class="period-toolbar">
           <div class="tabs period-tabs">

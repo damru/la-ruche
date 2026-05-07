@@ -2,7 +2,7 @@
 
 > **Dénomination** — Dans le présent document, l'expression **« l'Application »** désigne exclusivement **La Ruche**, plateforme web open source de gestion participative de copropriété. Ces deux termes sont interchangeables et désignent la même entité logicielle.
 
-> Document vivant. Dernière mise à jour : 2026-05-04
+> Document vivant. Dernière mise à jour : 2026-05-09
 
 ---
 
@@ -119,9 +119,9 @@ laruche/
 │   ├── api/                    ← client Axios + modules API
 │   ├── components/
 │   │   ├── atoms/              ← CBtn, CInput, CSelect, CTextarea,
-│   │   │                          CProgressBar, CAlert, CBadge, CSeparator, CEyebrow
+│   │   │                          CProgressBar, CAlert, CBadge, CSeparator, CEyebrow, CLegalDescription
 │   │   ├── molecules/          ← CCard, CKpiCard, CListItem,
-│   │   │                          CDataTable, CModal, CDropzone, CCardMeta, CCardNote
+│   │   │                          CDataTable, CModal, CDropzone, CMeta, CMetaItem, CCardNote, CLegalNotice
 │   │   └── organisms/          ← AppNav
 │   ├── composables/            ← useRole, useFormatters (Intl natif)
 │   │   ├── features/               ← vues lazy-loaded par domaine
@@ -151,7 +151,7 @@ laruche/
 └── Makefile                    ← cibles make (dev, test, docker…)
 ```
 
-Le frontend conserve les feuilles globales historiques (`tokens.css`, `base.css`, `tones.css`, etc.) comme source normative du design system. Tailwind CSS n'est ajouté que comme couche utilitaire optionnelle pour accélérer certains layouts locaux, sans déplacer les tokens ni la responsabilité des primitives partagées hors de ces fichiers.
+Le frontend conserve les feuilles globales historiques (`tokens.css`, `base.css`, `tones.css`, etc.) comme source normative du design system. Tailwind CSS n'est ajouté que comme couche utilitaire optionnelle pour accélérer certains layouts locaux, sans déplacer les tokens ni la responsabilité des primitives partagées hors de ces fichiers. En v4, les utilitaires personnalisés sont exposés depuis `frontend/src/styles/tailwind.css` via `@theme inline`, sans `tailwind.config.js` spécifique.
 
 ---
 

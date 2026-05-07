@@ -30,8 +30,8 @@
 }
 
 .activity-card__icon svg {
-  width: 18px;
-  height: 18px;
+  width: var(--icon-md);
+  height: var(--icon-md);
 }
 
 .activity-card__stack {
@@ -62,19 +62,21 @@
 
 .activity-card__chips {
   flex: 1;
-  min-width: 0;
   align-items: center;
   font-size: var(--text-xs);
+  flex-wrap: wrap-reverse;
 }
 
 .activity-card__title {
   color: var(--color-on-surface);
   margin: 0;
   font-family: var(--font-body);
-  font-size: 18px;
+  font-size: var(--text-lg);
   font-weight: var(--fw-semibold);
   letter-spacing: 0;
   line-height: 1.2;
+  text-wrap: auto;
+  min-width: 0;
 }
 
 .activity-card__header-row--with-icon {

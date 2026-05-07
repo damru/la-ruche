@@ -38,6 +38,9 @@
 
 .c-topbar__right {
   flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
 }
 
 .c-topbar :deep(.topbar-breadcrumb) {

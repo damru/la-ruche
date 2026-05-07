@@ -10,6 +10,7 @@ const props = withDefaults(defineProps<{
   type?: string
   required?: boolean
   disabled?: boolean
+  readonly?: boolean
   id?: string
 }>(), {
   modelValue: undefined,
@@ -20,6 +21,7 @@ const props = withDefaults(defineProps<{
   type: 'text',
   required: false,
   disabled: false,
+  readonly: false,
   id: undefined,
 })
 
@@ -46,7 +48,14 @@ const inputId = props.id ?? `c-input-${Math.random().toString(36).slice(2, 7)}`
       >*</span>
     </label>
 
+    <span
+      v-if="readonly"
+      :id="inputId"
+      class="c-field__readonly"
+    >{{ modelValue }}</span>
+
     <input
+      v-else
       :id="inputId"
       :type="type"
       :value="modelValue"
@@ -60,12 +69,12 @@ const inputId = props.id ?? `c-input-${Math.random().toString(36).slice(2, 7)}`
     />
 
     <p
-      v-if="error"
+      v-if="!readonly && error"
       :id="`${inputId}-error`"
       class="c-field__error"
       role="alert"
     >
-      <CIconAlertTriangle
+      <CIconXCircle
         width="12"
         height="12"
         aria-hidden="true"
@@ -73,7 +82,7 @@ const inputId = props.id ?? `c-input-${Math.random().toString(36).slice(2, 7)}`
       {{ error }}
     </p>
     <p
-      v-else-if="hint"
+      v-else-if="!readonly && hint"
       :id="`${inputId}-hint`"
       class="c-field__hint"
     >
@@ -96,7 +105,7 @@ const inputId = props.id ?? `c-input-${Math.random().toString(36).slice(2, 7)}`
 
 .c-field__input {
   box-sizing: border-box;
-  height: 44px;
+  height: var(--control-height);
   padding: 0 var(--space-4);
   background: var(--color-surface-container-high);
   border: none;
@@ -115,16 +124,30 @@ const inputId = props.id ?? `c-input-${Math.random().toString(36).slice(2, 7)}`
 
 .c-field__input:focus {
   background: var(--color-surface-container);
-  box-shadow: 0 0 0 2px rgba(100, 63, 213, 0.35);
+  box-shadow: var(--shadow-primary-ring);
 }
 
 .c-field__input--error {
-  box-shadow: 0 0 0 2px rgba(186, 26, 26, 0.35);
+  box-shadow: var(--shadow-error-ring);
 }
 
 .c-field__input:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.c-field__readonly {
+  display: flex;
+  align-items: center;
+  height: var(--control-height);
+  padding: 0 var(--space-4);
+  font-family: var(--font-body);
+  font-size: var(--text-md);
+  color: var(--color-on-surface);
+  background: var(--color-surface-container-low);
+  border-radius: var(--radius-md);
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .c-field__hint {

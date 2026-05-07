@@ -98,6 +98,20 @@ button, [role="button"], input[type="checkbox"], input[type="radio"] {
 /* Spinner (sur fond sombre/coloré) */
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* Skeleton loader */
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+.loading-skeleton {
+  background: var(--color-surface-container-high);
+  border-radius: var(--radius-sm);
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+  pointer-events: none;
+  user-select: none;
+}
+
 .spinner {
   display: inline-block;
   width: 16px;

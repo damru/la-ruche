@@ -4,11 +4,13 @@
 // "No-Line" rule: no internal borders
 
 withDefaults(defineProps<{
-  padding?: 'sm' | 'md' | 'lg' | 'none'
+  padding?: 'xs' | 'sm' | 'md' | 'lg' | 'none'
+  radius?: 'xs' | 'sm' | 'md' | 'lg' | 'none'
   shadow?: boolean
   interactive?: boolean   // hover lift
 }>(), {
   padding: 'md',
+  radius: 'lg',
   shadow: true,
   interactive: false,
 })
@@ -28,14 +30,17 @@ withDefaults(defineProps<{
 
 <style scoped>
 .c-card {
-  background: var(--color-surface-container-lowest);
+  background: var(--tone-bg, var(--color-surface-container-lowest));
   border-radius: var(--radius-lg);
   overflow-x: auto;
   min-width: 0;
-  color: var(--color-on-surface-variant);
+  color: var(--tone-fg, var(--color-on-surface-variant));
+  display: flex;
+  flex-direction: column;
 }
 
 .c-card--pad-none { padding: 0; }
+.c-card--pad-xs   { padding: var(--space-3); }
 .c-card--pad-sm   { padding: var(--space-4); }
 .c-card--pad-md   { padding: var(--space-5); }
 .c-card--pad-lg   { padding: var(--space-6); }
