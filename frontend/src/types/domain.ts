@@ -111,6 +111,8 @@ export interface Meeting {
   agenda?: string
   minutes_document_id?: string
   created_at: string
+  resolution_count: number
+  passed_count: number
 }
 
 export interface MeetingDocument extends Document {

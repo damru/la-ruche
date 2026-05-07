@@ -31,6 +31,8 @@ struct MeetingRow {
     agenda: Option<String>,
     minutes_document_id: Option<Uuid>,
     created_at: DateTime<Utc>,
+    resolution_count: i64,
+    passed_count: i64,
 }
 
 impl From<MeetingRow> for MeetingResponse {
@@ -48,6 +50,8 @@ impl From<MeetingRow> for MeetingResponse {
             agenda: row.agenda,
             minutes_document_id: row.minutes_document_id,
             created_at: row.created_at,
+            resolution_count: row.resolution_count,
+            passed_count: row.passed_count,
         }
     }
 }
@@ -85,14 +89,21 @@ fn meeting_attendance_mode_from_db(mode: &str) -> MeetingAttendanceModeDto {
 }
 
 pub async fn list(pool: &PgPool, building_id: Uuid) -> AppResult<Vec<MeetingResponse>> {
-    let rows = sqlx::query_as!(
+    let rows: Vec<MeetingRow> = sqlx::query_as!(
         MeetingRow,
         r#"
-        SELECT id, meeting_type::text as "meeting_type!", status::text as "status!",
-               notice_date, meeting_date, location, agenda, minutes_document_id, created_at
-        FROM general_meeting
-        WHERE building_id = $1
-        ORDER BY meeting_date DESC
+        SELECT gm.id,
+               gm.meeting_type::text as "meeting_type!",
+               gm.status::text as "status!",
+               gm.notice_date, gm.meeting_date, gm.location, gm.agenda,
+               gm.minutes_document_id, gm.created_at,
+               COUNT(r.id)                                       AS "resolution_count!",
+               COUNT(r.id) FILTER (WHERE r.status = 'passed')    AS "passed_count!"
+        FROM general_meeting gm
+        LEFT JOIN resolution r ON r.meeting_id = gm.id
+        WHERE gm.building_id = $1
+        GROUP BY gm.id
+        ORDER BY gm.meeting_date DESC
         "#,
         building_id
     )
@@ -107,7 +118,8 @@ pub async fn get(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<Option
         MeetingRow,
         r#"
         SELECT id, meeting_type::text as "meeting_type!", status::text as "status!",
-               notice_date, meeting_date, location, agenda, minutes_document_id, created_at
+               notice_date, meeting_date, location, agenda, minutes_document_id, created_at,
+               0::bigint AS "resolution_count!", 0::bigint AS "passed_count!"
         FROM general_meeting
         WHERE id = $1 AND building_id = $2
         "#,
@@ -138,7 +150,8 @@ pub async fn create(
             (building_id, meeting_type, meeting_date, location, agenda, created_by)
         VALUES ($1, $2::meeting_type, $3, $4, $5, $6)
         RETURNING id, meeting_type::text as "meeting_type!", status::text as "status!",
-                  notice_date, meeting_date, location, agenda, minutes_document_id, created_at
+                  notice_date, meeting_date, location, agenda, minutes_document_id, created_at,
+                  0::bigint AS "resolution_count!", 0::bigint AS "passed_count!"
         "#,
         building_id,
         meeting_type as _,
@@ -177,7 +190,8 @@ pub async fn update(
           AND building_id = $2
           AND status = 'draft'
         RETURNING id, meeting_type::text as "meeting_type!", status::text as "status!",
-                  notice_date, meeting_date, location, agenda, minutes_document_id, created_at
+                  notice_date, meeting_date, location, agenda, minutes_document_id, created_at,
+                  0::bigint AS "resolution_count!", 0::bigint AS "passed_count!"
         "#,
         id,
         building_id,

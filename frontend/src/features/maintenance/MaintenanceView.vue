@@ -351,18 +351,18 @@ async function deleteEntry() {
             <div class="regulatory-card__body">
               <div>
                 <span class="regulatory-card__label">{{ t('maintenance.regulatory.building') }}</span>
-                <p class="body-sm regulatory-card__value">
+                <p class="body-xs regulatory-card__value">
                   {{ buildingAddress }}
                 </p>
               </div>
               <div>
                 <span class="regulatory-card__label">{{ t('maintenance.regulatory.manager') }}</span>
-                <p class="body-sm regulatory-card__value">
+                <p class="body-xs regulatory-card__value">
                   {{ currentManagerLabel }}
                 </p>
                 <p
                   v-if="logbookSummary.current_manager?.email"
-                  class="body-sm regulatory-card__hint"
+                  class="body-xs regulatory-card__hint"
                 >
                   {{ logbookSummary.current_manager.email }}
                   <template v-if="logbookSummary.current_manager.phone">
@@ -393,10 +393,10 @@ async function deleteEntry() {
                 class="contract-list__item"
               >
                 <div>
-                  <p class="body-sm contract-list__title">
+                  <p class="body-xs contract-list__title">
                     {{ contract.subject }}
                   </p>
-                  <p class="body-sm contract-list__meta">
+                  <p class="body-xs contract-list__meta">
                     {{ contract.vendor_name }}
                   </p>
                 </div>
@@ -412,7 +412,7 @@ async function deleteEntry() {
             </div>
             <p
               v-else
-              class="body-sm regulatory-card__hint"
+              class="body-xs regulatory-card__hint"
             >
               {{ t('maintenance.regulatory.noInsuranceContracts') }}
             </p>
@@ -438,10 +438,10 @@ async function deleteEntry() {
                 class="contract-list__item"
               >
                 <div>
-                  <p class="body-sm contract-list__title">
+                  <p class="body-xs contract-list__title">
                     {{ contract.subject }}
                   </p>
-                  <p class="body-sm contract-list__meta">
+                  <p class="body-xs contract-list__meta">
                     {{ contract.vendor_name }} · {{ t(`contracts.types.${contract.contract_type}`) }}
                   </p>
                 </div>
@@ -457,7 +457,7 @@ async function deleteEntry() {
             </div>
             <p
               v-else
-              class="body-sm regulatory-card__hint"
+              class="body-xs regulatory-card__hint"
             >
               {{ t('maintenance.regulatory.noMaintenanceContracts') }}
             </p>
@@ -553,7 +553,7 @@ async function deleteEntry() {
               </div>
               <p
                 v-if="entry.description"
-                class="body-sm entry-desc"
+                class="body-xs entry-desc"
               >
                 {{ entry.description }}
               </p>
@@ -673,7 +673,7 @@ async function deleteEntry() {
       size="sm"
       @update:open="v => !v && (entryToDelete = null)"
     >
-      <p class="body-sm">
+      <p class="body-xs">
         {{ t('maintenance.confirmDeleteMessage', { title: entryToDelete?.title ?? '' }) }}
       </p>
       <template #footer>

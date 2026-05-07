@@ -10,6 +10,7 @@ import { useRole } from '@/composables/useRole'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CCard from '@/components/molecules/CCard.vue'
+import CCardMeta from '@/components/molecules/CCardMeta.vue'
 import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
 import CDocumentLinkActionModal from '@/components/molecules/CDocumentLinkActionModal.vue'
 import CModal from '@/components/molecules/CModal.vue'
@@ -608,7 +609,7 @@ function photoPreview(file: File): string {
 
               <p
                 v-if="r.description"
-                class="activity-card__description"
+                class="body-xs"
               >
                 {{ r.description }}
               </p>
@@ -626,7 +627,7 @@ function photoPreview(file: File): string {
                 </button>
               </div>
 
-              <div class="activity-card__meta">
+              <CCardMeta>
                 <span class="activity-card__line">
                   <CIconUser />
                   {{ authorName(r) }}
@@ -639,7 +640,7 @@ function photoPreview(file: File): string {
                   <CIconCalendar />
                   {{ formatDate(r.created_at) }}
                 </span>
-              </div>
+              </CCardMeta>
 
               <div class="activity-card__secondary-actions">
                 <div
@@ -880,7 +881,7 @@ function photoPreview(file: File): string {
       size="sm"
       @update:open="v => !v && (reportToConvert = null)"
     >
-      <p class="body-sm">
+      <p class="body-xs">
         {{ t('reports.confirmConvertMessage', { title: reportToConvert?.title ?? '' }) }}
       </p>
       <div class="form-field">
@@ -1094,7 +1095,7 @@ function photoPreview(file: File): string {
       size="sm"
       @update:open="v => !v && (reportToDelete = null)"
     >
-      <p class="body-sm">
+      <p class="body-xs">
         {{ t('reports.confirmDeleteMessage', { title: reportToDelete?.title ?? '' }) }}
       </p>
       <template #footer>
@@ -1145,7 +1146,7 @@ function photoPreview(file: File): string {
       </div>
       <p
         v-else
-        class="body-sm report-photo-gallery-modal__empty"
+        class="body-xs report-photo-gallery-modal__empty"
       >
         {{ t('reports.noPhotos') }}
       </p>
@@ -1189,7 +1190,7 @@ function photoPreview(file: File): string {
       </div>
       <p
         v-if="activeReportPhoto"
-        class="body-sm report-photo-viewer__caption"
+        class="body-xs report-photo-viewer__caption"
       >
         {{ activeReportPhotoPosition }} / {{ reportPhotos.length }} · {{ activeReportPhoto.doc.original_name }}
       </p>

@@ -684,8 +684,190 @@ VALUES
     )
 ON CONFLICT (id) DO NOTHING;
 
+-- ============================================================
+-- 13. ASSEMBLIES (GENERAL MEETINGS)
+-- - annual draft: created, not convoked, no agenda, no resolutions
+-- - extraordinary called: convoked with agenda and resolutions, no votes
+-- - annual closed: convoked, closed, with agenda/resolutions/votes
+-- ============================================================
+INSERT INTO general_meeting (
+    id,
+    building_id,
+    meeting_type,
+    status,
+    notice_date,
+    meeting_date,
+    location,
+    agenda,
+    created_by,
+    created_at,
+    updated_at
+)
+VALUES
+    (
+        '00000000-0000-0000-0000-000000000851',
+        '00000000-0000-0000-0000-000000000001',
+        'annual',
+        'draft',
+        NULL,
+        NOW() + INTERVAL '45 days',
+        'Salle commune - RDC',
+        NULL,
+        '00000000-0000-0000-0000-000000000201',
+        NOW() - INTERVAL '3 days',
+        NOW() - INTERVAL '3 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000852',
+        '00000000-0000-0000-0000-000000000001',
+        'extraordinary',
+        'called',
+        CURRENT_DATE - 5,
+        NOW() + INTERVAL '20 days',
+        'Cabinet du syndic - Salle 2',
+        '1) Vote de travaux urgents sur l''étanchéité 2) Validation du financement exceptionnel',
+        '00000000-0000-0000-0000-000000000201',
+        NOW() - INTERVAL '6 days',
+        NOW() - INTERVAL '5 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000853',
+        '00000000-0000-0000-0000-000000000001',
+        'annual',
+        'closed',
+        CURRENT_DATE - 60,
+        NOW() - INTERVAL '45 days',
+        'Salle commune - RDC',
+        '1) Approbation des comptes 2) Vote du budget previsionnel 3) Renouvellement contrat entretien ascenseur',
+        '00000000-0000-0000-0000-000000000201',
+        NOW() - INTERVAL '75 days',
+        NOW() - INTERVAL '44 days'
+    )
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO resolution (id, meeting_id, number, title, description, vote_type, status, created_at)
+VALUES
+    -- Extraordinary called meeting (no votes yet)
+    (
+        '00000000-0000-0000-0000-000000000861',
+        '00000000-0000-0000-0000-000000000852',
+        1,
+        'Lancement des travaux de reprise d''etancheite',
+        'Autoriser le syndic a engager les travaux d''urgence sur la toiture terrasse.',
+        'absolute_majority',
+        'pending',
+        NOW() - INTERVAL '5 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000862',
+        '00000000-0000-0000-0000-000000000852',
+        2,
+        'Appel de fonds exceptionnel',
+        'Valider un appel de fonds exceptionnel pour couvrir les travaux urgents.',
+        'simple_majority',
+        'pending',
+        NOW() - INTERVAL '5 days'
+    ),
+    -- Annual closed meeting (votes seeded below)
+    (
+        '00000000-0000-0000-0000-000000000863',
+        '00000000-0000-0000-0000-000000000853',
+        1,
+        'Approbation des comptes de l''exercice',
+        'Valider les comptes de copropriete de l''exercice ecoule.',
+        'simple_majority',
+        'passed',
+        NOW() - INTERVAL '46 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000864',
+        '00000000-0000-0000-0000-000000000853',
+        2,
+        'Augmentation du budget entretien de 12%',
+        'Proposition d''augmentation du budget entretien pour l''exercice suivant.',
+        'absolute_majority',
+        'rejected',
+        NOW() - INTERVAL '46 days'
+    )
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO vote (
+    id,
+    resolution_id,
+    user_id,
+    unit_id,
+    position,
+    shares_represented,
+    proxy_for,
+    created_at
+)
+VALUES
+    -- Resolution 863 (passed)
+    (
+        '00000000-0000-0000-0000-000000000871',
+        '00000000-0000-0000-0000-000000000863',
+        '00000000-0000-0000-0000-000000000204',
+        '00000000-0000-0000-0000-000000000101',
+        'in_favor',
+        850,
+        NULL,
+        NOW() - INTERVAL '45 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000872',
+        '00000000-0000-0000-0000-000000000863',
+        '00000000-0000-0000-0000-000000000202',
+        '00000000-0000-0000-0000-000000000106',
+        'in_favor',
+        980,
+        NULL,
+        NOW() - INTERVAL '45 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000873',
+        '00000000-0000-0000-0000-000000000863',
+        '00000000-0000-0000-0000-000000000205',
+        '00000000-0000-0000-0000-000000000108',
+        'against',
+        1010,
+        NULL,
+        NOW() - INTERVAL '45 days'
+    ),
+    -- Resolution 864 (rejected)
+    (
+        '00000000-0000-0000-0000-000000000874',
+        '00000000-0000-0000-0000-000000000864',
+        '00000000-0000-0000-0000-000000000204',
+        '00000000-0000-0000-0000-000000000101',
+        'in_favor',
+        850,
+        NULL,
+        NOW() - INTERVAL '45 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000875',
+        '00000000-0000-0000-0000-000000000864',
+        '00000000-0000-0000-0000-000000000202',
+        '00000000-0000-0000-0000-000000000106',
+        'against',
+        980,
+        NULL,
+        NOW() - INTERVAL '45 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000876',
+        '00000000-0000-0000-0000-000000000864',
+        '00000000-0000-0000-0000-000000000205',
+        '00000000-0000-0000-0000-000000000108',
+        'against',
+        1010,
+        NULL,
+        NOW() - INTERVAL '45 days'
+    )
+ON CONFLICT (id) DO NOTHING;
+
     -- ============================================================
-    -- 13. CONSULTATIONS
+    -- 14. CONSULTATIONS
     -- Two fixtures: one open, one closed. Includes seeded choices and
     -- responses using the multi-choice schema.
     -- ============================================================
@@ -819,6 +1001,7 @@ ON CONFLICT (id) DO NOTHING;
 -- Tasks         | 6 fixtures                         | open, in_progress, awaiting_vendor, awaiting_validation, closed, cancelled
 -- Reports       | 3 fixtures                         | open, in_progress, closed
 -- Claims        | 3 fixtures                         | open, in_progress, closed
+-- Assemblies    | 3 fixtures                         | draft (no agenda/resolution), called (agenda + resolutions, no votes), closed (agenda + resolutions + votes)
 -- Consultations | 2 fixtures                         | open, closed (+ choices & responses)
 --
 -- Password (all accounts): Demo1234!

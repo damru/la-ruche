@@ -11,6 +11,9 @@ import type { Meeting, MeetingType } from '@/types/domain'
 import { buildingApi, meetingsApi } from '@/api'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
+import CSeparator from '@/components/atoms/CSeparator.vue'
+import CCard from '@/components/molecules/CCard.vue'
+import CCardMeta from '@/components/molecules/CCardMeta.vue'
 import CModal from '@/components/molecules/CModal.vue'
 import CPageError from '@/components/molecules/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
@@ -83,16 +86,8 @@ function meetingBadgeLabel(type: MeetingType): string {
   return type === 'annual' ? 'AG' : 'AGE'
 }
 
-function noticeDeadlineLabel(meetingDate: string): string {
-  const date = new Date(meetingDate)
-  date.setDate(date.getDate() - 21)
-  return formatDate(date.toISOString())
-}
-
-function agendaExcerpt(agenda?: string): string {
-  if (!agenda?.trim()) return '—'
-  const normalized = agenda.replace(/\s+/g, ' ').trim()
-  return normalized.length > 140 ? `${normalized.slice(0, 137)}...` : normalized
+function openMeeting(meetingId: string) {
+  router.push(`/meetings/${meetingId}`)
 }
 
 function openCreateModal() {
@@ -186,27 +181,27 @@ async function saveMeeting() {
           </p>
         </header>
 
-        <div class="filter-row">
+        <div class="tabs">
           <button
-            :class="['filter-pill', { 'filter-pill--active': filter === 'all' }]"
+            :class="['tab', { 'tab--active': filter === 'all' }]"
             @click="filter = 'all'"
           >
             {{ t('common.allFem') }}
-            <span>{{ allMeetings.length }}</span>
+            <span class="tab-count">{{ allMeetings.length }}</span>
           </button>
           <button
-            :class="['filter-pill', { 'filter-pill--active': filter === 'upcoming' }]"
+            :class="['tab', { 'tab--active': filter === 'upcoming' }]"
             @click="filter = 'upcoming'"
           >
             {{ t('meetings.filterUpcoming') }}
-            <span>{{ upcomingCount }}</span>
+            <span class="tab-count">{{ upcomingCount }}</span>
           </button>
           <button
-            :class="['filter-pill', { 'filter-pill--active': filter === 'closed' }]"
+            :class="['tab', { 'tab--active': filter === 'closed' }]"
             @click="filter = 'closed'"
           >
             {{ t('meetings.filterClosed') }}
-            <span>{{ closedCount }}</span>
+            <span class="tab-count">{{ closedCount }}</span>
           </button>
         </div>
 
@@ -221,61 +216,70 @@ async function saveMeeting() {
           v-else
           class="meeting-list"
         >
-          <button
+          <CCard
             v-for="meeting in meetings"
             :key="meeting.id"
-            class="meeting-card"
-            @click="router.push(`/meetings/${meeting.id}`)"
+            padding="none"
+            interactive
+            class="activity-card meeting-card"
+            role="button"
+            tabindex="0"
+            @click="openMeeting(meeting.id)"
+            @keydown.enter.prevent="openMeeting(meeting.id)"
+            @keydown.space.prevent="openMeeting(meeting.id)"
           >
             <div :class="['meeting-badge', { 'meeting-badge--closed': meeting.status === 'closed' }]">
               <span class="meeting-badge__type">{{ meetingBadgeLabel(meeting.meeting_type) }}</span>
               <span class="meeting-badge__year">{{ new Date(meeting.meeting_date).getFullYear() }}</span>
             </div>
 
-            <div class="meeting-card__body">
-              <div class="meeting-card__header">
-                <div>
-                  <h2 class="meeting-card__title">
-                    {{ typeLabel(meeting.meeting_type) }} {{ new Date(meeting.meeting_date).getFullYear() }}
-                  </h2>
-                  <div class="meeting-card__meta">
-                    <span class="activity-card__line">
-                      <CIconCalendar />
-                      {{ formatDate(meeting.meeting_date) }}
-                    </span>
-                    <span
-                      v-if="meeting.location"
-                      class="activity-card__line"
-                    >
-                      <CIconLocation />
-                      {{ meeting.location }}
-                    </span>
-                  </div>
-                </div>
+            <div class="meeting-card__main">
+              <div class="meeting-card__title-row">
+                <h2 class="activity-card__title meeting-card__title">
+                  {{ typeLabel(meeting.meeting_type) }} {{ new Date(meeting.meeting_date).getFullYear() }}
+                </h2>
                 <span :class="['status-chip', statusChipClass(meeting.status)]">
                   <span class="status-chip__dot"></span>
                   {{ statusLabel(meeting.status) }}
                 </span>
               </div>
 
-              <p class="meeting-card__agenda">
-                {{ agendaExcerpt(meeting.agenda) }}
-              </p>
-
-              <div class="meeting-card__footer">
-                <span class="footer-pill">
-                  {{ t('meetings.calledAt', { date: meeting.notice_date ? formatDate(meeting.notice_date) : '—' }) }}
+              <CCardMeta>
+                <span class="activity-card__line">
+                  <CIconCalendar />
+                  {{ formatDate(meeting.meeting_date) }}
                 </span>
-                <span class="footer-pill">
-                  J-21 : {{ noticeDeadlineLabel(meeting.meeting_date) }}
+                <CSeparator />
+                <span
+                  v-if="meeting.location"
+                  class="activity-card__line"
+                >
+                  <CIconLocation />
+                  {{ meeting.location }}
+                </span>
+              </CCardMeta>
+
+              <div class="meeting-card__resolution-row body-xs">
+                <span class="meeting-card__res-count">
+                  <span class="text-headline-sm">{{ meeting.resolution_count }}</span>
+                  {{ t('meetings.statResolutions', meeting.resolution_count) }}
+                </span>
+                <span
+                  v-if="meeting.status === 'closed'"
+                  class="meeting-card__res-passed tone--valid"
+                >
+                  <span class="text-headline-sm">{{ meeting.passed_count }}</span>
+                  {{ t('meetings.statPassed', meeting.passed_count) }}
+                </span>
+                <span
+                  v-else
+                  class="text-muted"
+                >
+                  — {{ t('meetings.statPendingVotes') }}
                 </span>
               </div>
             </div>
-
-            <div class="meeting-card__chevron">
-              <CIconChevronRight />
-            </div>
-          </button>
+          </CCard>
         </div>
       </template>
     </div>
@@ -341,9 +345,10 @@ async function saveMeeting() {
         <CBtn
           variant="primary"
           :loading="saving"
+          :closing="createFeedback.status.value === 'success'"
           @click="saveMeeting"
         >
-          {{ t('common.save') }}
+          {{ saving ? t('common.saving') : t('common.save') }}
         </CBtn>
       </template>
     </CModal>
@@ -357,35 +362,6 @@ async function saveMeeting() {
   gap: var(--space-6);
 }
 
-.filter-row {
-  display: flex;
-  gap: var(--space-2);
-  flex-wrap: wrap;
-}
-
-.filter-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: 0 var(--space-4);
-  min-height: 40px;
-  border: none;
-  border-radius: var(--radius-full);
-  background: var(--color-surface-container-low);
-  color: var(--color-on-surface-variant);
-  font-weight: var(--fw-medium);
-  cursor: pointer;
-}
-
-.filter-pill span {
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
-}
-
-.filter-pill--active {
-  background: var(--color-secondary-container);
-  color: var(--color-on-secondary-container);
-}
 
 .meeting-list {
   display: flex;
@@ -394,20 +370,21 @@ async function saveMeeting() {
 }
 
 .meeting-card {
-  display: flex;
   width: 100%;
-  border: none;
-  padding: 0;
-  background: var(--color-surface-container-lowest);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
   overflow: hidden;
-  text-align: left;
-  cursor: pointer;
+  gap: 0;
 }
 
-.meeting-card:hover {
-  box-shadow: var(--shadow-lg);
+.meeting-card__main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-5);
 }
 
 .meeting-badge {
@@ -435,17 +412,11 @@ async function saveMeeting() {
 
 .meeting-badge__year {
   font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: var(--fw-bold);
 }
 
-.meeting-card__body {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  padding: var(--space-5);
-}
-
-.meeting-card__header {
+.meeting-card__title-row {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -454,17 +425,27 @@ async function saveMeeting() {
 
 .meeting-card__title {
   font-family: var(--font-display);
-  font-size: 18px;
-  font-weight: var(--fw-semibold);
-  margin-bottom: var(--space-2);
 }
 
-.meeting-card__meta {
+.meeting-card__resolution-row {
   display: flex;
+  align-items: baseline;
   gap: var(--space-3);
   flex-wrap: wrap;
   color: var(--color-on-surface-variant);
-  font-size: var(--text-sm);
+}
+
+.meeting-card__res-count {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.meeting-card__res-passed {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  color: var(--tone-fg, inherit);
 }
 
 .status-chip {
@@ -487,53 +468,18 @@ async function saveMeeting() {
   opacity: 0.7;
 }
 
-.meeting-card__agenda {
-  color: var(--color-on-surface-variant);
-  line-height: 1.5;
-  margin: 0;
-}
-
-.meeting-card__footer {
-  display: flex;
-  gap: var(--space-2);
+.meeting-card__title-row {
   flex-wrap: wrap;
 }
 
-.footer-pill {
-  display: inline-flex;
-  align-items: center;
-  min-height: 30px;
-  padding: 0 10px;
-  border-radius: var(--radius-full);
-  background: var(--color-surface-container-low);
-  color: var(--color-on-surface-variant);
-  font-size: var(--text-xs);
-}
-
-.meeting-card__chevron {
-  display: flex;
-  align-items: center;
-  padding: 0 var(--space-4);
-  color: var(--color-on-surface-variant);
-}
-
 @media (max-width: 900px) {
-  .meeting-card {
-    flex-direction: column;
-  }
-
   .meeting-badge {
-    width: 100%;
-    flex-direction: row;
-    justify-content: flex-start;
+    width: 72px;
   }
 
-  .meeting-card__header {
+  .meeting-card__title-row {
     flex-direction: column;
-  }
-
-  .meeting-card__chevron {
-    display: none;
   }
 }
+
 </style>

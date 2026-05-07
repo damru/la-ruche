@@ -32,6 +32,7 @@ withDefaults(defineProps<{
   border-radius: var(--radius-lg);
   overflow-x: auto;
   min-width: 0;
+  color: var(--color-on-surface-variant);
 }
 
 .c-card--pad-none { padding: 0; }
@@ -45,9 +46,17 @@ withDefaults(defineProps<{
   cursor: pointer;
   transition: transform var(--transition-fast), box-shadow var(--transition-fast);
 }
-.c-card--interactive:hover {
+.c-card--shadow.c-card--interactive:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-lg);
 }
+.c-card--interactive:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
 .c-card--interactive:active { transform: translateY(0); }
+.c-card--interactive:hover :deep(h2), .c-card--interactive:hover :deep(h3) {
+  color: var(--color-primary);
+}
+
 </style>

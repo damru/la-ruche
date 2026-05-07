@@ -303,7 +303,7 @@ function dotClass(variant?: TimelineEvent['variant']): string {
               </div>
               <p
                 v-if="ev.detail"
-                class="body-sm event-detail"
+                class="body-xs event-detail"
               >
                 {{ ev.detail }}
               </p>
@@ -311,7 +311,7 @@ function dotClass(variant?: TimelineEvent['variant']): string {
               <RouterLink
                 v-if="ev.key === 'assigned_contractor' && contractor"
                 :to="{ name: 'contractor-detail', params: { id: contractor.id } }"
-                class="contractor-link body-sm"
+                class="contractor-link body-xs"
               >
                 {{ contractor.email || contractor.phone || '' }}
               </RouterLink>
@@ -322,7 +322,7 @@ function dotClass(variant?: TimelineEvent['variant']): string {
         <!-- Reopening indicator for closed tasks -->
         <div
           v-if="task.status === 'closed'"
-          class="reopen-hint body-sm"
+          class="reopen-hint body-xs"
         >
           <CIconRefresh
             width="13"

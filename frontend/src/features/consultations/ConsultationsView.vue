@@ -329,7 +329,7 @@ async function confirmDelete() {
 
             <p
               v-if="c.description"
-              class="body-sm desc"
+              class="body-xs desc"
             >
               {{ c.description }}
             </p>
@@ -575,7 +575,7 @@ async function confirmDelete() {
       size="sm"
       @update:open="v => !v && (closingConsultation = null)"
     >
-      <p class="body-sm">
+      <p class="body-xs">
         {{ t('consultations.confirmCloseMessage') }}
       </p>
       <template #footer>
@@ -607,7 +607,7 @@ async function confirmDelete() {
       size="sm"
       @update:open="v => !v && (deletingConsultation = null)"
     >
-      <p class="body-sm">
+      <p class="body-xs">
         {{ t('consultations.confirmDeleteMessage', { title: deletingConsultation?.title ?? '' }) }}
       </p>
       <template #footer>

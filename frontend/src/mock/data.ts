@@ -77,6 +77,8 @@ export const mockMeetings: Meeting[] = [
     meeting_date: '2025-06-12T18:00:00Z',
     location: 'Salle polyvalente, 14 allée des Acacias – Paris 15e',
     created_at: '2025-05-01T09:00:00Z',
+    resolution_count: 4,
+    passed_count: 0,
   },
   {
     id: 'mtg-002',
@@ -86,6 +88,8 @@ export const mockMeetings: Meeting[] = [
     meeting_date: '2024-06-08T18:00:00Z',
     location: 'Salle polyvalente, 14 allée des Acacias – Paris 15e',
     created_at: '2024-05-02T09:00:00Z',
+    resolution_count: 4,
+    passed_count: 3,
   },
   {
     id: 'mtg-003',
@@ -95,6 +99,8 @@ export const mockMeetings: Meeting[] = [
     meeting_date: '2024-09-20T18:30:00Z',
     location: 'En ligne (visioconférence)',
     created_at: '2024-08-26T14:00:00Z',
+    resolution_count: 2,
+    passed_count: 2,
   },
 ]
 

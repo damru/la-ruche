@@ -33,7 +33,7 @@ const { formatDate, formatFileSize } = useFormatters()
   >
     <div
       v-if="loading"
-      class="linked-documents-modal__loading body-sm"
+      class="linked-documents-modal__loading body-xs"
     >
       {{ t('common.loading') }}
     </div>
@@ -71,7 +71,7 @@ const { formatDate, formatFileSize } = useFormatters()
 
     <p
       v-else
-      class="linked-documents-modal__empty body-sm"
+      class="linked-documents-modal__empty body-xs"
     >
       {{ emptyMessage }}
     </p>

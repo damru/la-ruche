@@ -14,13 +14,34 @@
   width: max-content;
   max-width: 100%;
   overflow-x: auto;
+  overflow-y: hidden;
   overscroll-behavior-x: contain;
   -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-outline-variant) transparent;
 }
 
 .tabs::-webkit-scrollbar {
-  display: none;
+  height: 8px;
+}
+
+.tabs::-webkit-scrollbar-thumb {
+  background: var(--color-outline-variant);
+  border-radius: var(--radius-full);
+}
+
+.tabs::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .tabs {
+    scrollbar-width: none;
+  }
+
+  .tabs::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 .tab {

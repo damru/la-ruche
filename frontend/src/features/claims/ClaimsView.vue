@@ -15,6 +15,7 @@ import CLinkedDocumentsModal from '@/components/molecules/CLinkedDocumentsModal.
 import CLegalInfoCard from '@/components/molecules/CLegalInfoCard.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CCard from '@/components/molecules/CCard.vue'
+import CCardNote from '@/components/molecules/CCardNote.vue'
 import CModal from '@/components/molecules/CModal.vue'
 import CReminderCard from '@/components/molecules/CReminderCard.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
@@ -947,16 +948,14 @@ async function submitDelete() {
             </div>
 
             <div class="activity-card__stack">
-              <div class="activity-card__subtitle">
-                <span class="activity-card__line">
-                  <CIconLocation />
+              <div class="body-sm activity-card__line">
+                <CIconLocation />
                   {{ unitLabel(claim.unit_id) }}
-                </span>
               </div>
 
               <p
                 v-if="claim.description"
-                class="activity-card__description"
+                class="body-xs"
               >
                 {{ claim.description }}
               </p>
@@ -1005,7 +1004,7 @@ async function submitDelete() {
                 </div>
               </template>
 
-              <div class="activity-card__note">
+              <CCardNote>
                 <span class="activity-card__line">
                   <CIconCalendar />
                   {{ t('claims.declaredOn', { date: formatDate(claim.declared_at) }) }}
@@ -1034,7 +1033,7 @@ async function submitDelete() {
                   />
                   {{ reimbursementLabel(claim) }}
                 </span>
-              </div>
+              </CCardNote>
             </div>
           </CCard>
 
@@ -1622,7 +1621,7 @@ async function submitDelete() {
       size="sm"
       @update:open="value => !value && (claimToDelete = null)"
     >
-      <p class="body-sm">
+      <p class="body-xs">
         {{ t('claims.confirmDeleteMessage', { title: claimToDelete?.title ?? '' }) }}
       </p>
 

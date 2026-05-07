@@ -272,7 +272,7 @@ async function confirmResetDemo() {
             {{ t('settings.account.dangerZone') }}
           </h2>
           <p
-            class="body-sm"
+            class="body-xs"
             style="color: var(--color-on-surface-variant); margin-bottom: 12px"
           >
             {{ t('settings.account.dangerDesc') }}
@@ -301,7 +301,7 @@ async function confirmResetDemo() {
               <div class="notif-info">
                 <span class="title-sm">{{ t(`settings.notifications.${item.key}`) }}</span>
                 <p
-                  class="body-sm"
+                  class="body-xs"
                   style="color: var(--color-on-surface-variant)"
                 >
                   {{ t(`settings.notifications.${item.key}Desc`) }}
@@ -328,7 +328,7 @@ async function confirmResetDemo() {
     :title="t('settings.account.resetAppConfirmTitle')"
     @close="showResetModal = false"
   >
-    <p class="body-sm">
+    <p class="body-xs">
       {{ t('settings.account.resetAppConfirmMessage') }}
     </p>
     <template #footer>

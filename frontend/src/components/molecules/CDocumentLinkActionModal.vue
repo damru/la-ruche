@@ -37,7 +37,7 @@ const { t } = useI18n()
     @update:open="emit('update:open', $event)"
   >
     <div class="document-action-modal">
-      <p class="body-sm">
+      <p class="body-xs">
         {{ description }}
       </p>
       <p

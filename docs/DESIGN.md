@@ -199,8 +199,10 @@ Les cartes `activity-card` constituent le socle partagé des cartes de liste mé
 Les patterns de contenu récurrents doivent être mutualisés dans `frontend/src/styles/activity-cards.css` au lieu d’être redéclarés localement.
 
 - `activity-card--compact` pour les variantes de carte qui gardent la grammaire `activity-card` mais avec un rythme vertical plus serré.
-- `activity-card--interactive` pour toute carte entière cliquable, avec curseur, hover sur le titre et focus visible mutualisés.
 - `activity-card__chips` pour toute grappe de chips / badges d’une `activity-card`, y compris dans l’en-tête. Une vue ne doit pas introduire de wrapper alternatif dédié si ce conteneur couvre déjà le besoin.
+- Les métadonnées de carte (`date`, `auteur`, `lot`, localisation, etc.) passent par la molécule `frontend/src/components/molecules/CCardMeta.vue` avec style scoped ; une vue ne doit plus utiliser la classe globale `activity-card__meta`.
+- Les encarts d’information secondaire (`activity-card__note`) passent par la molécule `frontend/src/components/molecules/CCardNote.vue` avec style scoped ; une vue ne doit plus utiliser la classe globale `activity-card__note`.
+- Les séparateurs discrets entre lignes de métadonnées (point circulaire 3px) utilisent l'atome `frontend/src/components/atoms/CSeparator.vue` avec style scoped.
 - `activity-card__contacts` pour la pile verticale email / téléphone.
 - `activity-card__contact-link` pour les liens de contact dans une carte, avec préfixe emoji métier (`✉️` pour l’email, `📞` pour le téléphone).
 - `activity-card__documents-button` pour le bouton inline ouvrant les pièces liées depuis `activity-card__documents`.

@@ -9,6 +9,7 @@ import { useAuthStore } from '@/stores/auth'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CCard from '@/components/molecules/CCard.vue'
+import CCardMeta from '@/components/molecules/CCardMeta.vue'
 import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
 import CModal from '@/components/molecules/CModal.vue'
 import CPageError from '@/components/molecules/CPageError.vue'
@@ -298,8 +299,8 @@ async function confirmDelete() {
           <CCard
             v-for="c in filtered"
             :key="c.id"
-            class="activity-card activity-card--interactive"
-            role="link"
+            interactive
+            class="activity-card"
             tabindex="0"
             @click="openContractorDetail(c.id)"
             @keydown.enter.prevent="openContractorDetail(c.id)"
@@ -309,7 +310,6 @@ async function confirmDelete() {
               <div :class="['activity-card__icon', 'contractor-card__icon', domainTone(c.domains)]">
                 <component
                   :is="domainIcon(c.domains)"
-                  class="contractor-card__type-icon"
                   aria-hidden="true"
                 />
               </div>
@@ -330,14 +330,14 @@ async function confirmDelete() {
             <div class="activity-card__stack">
               <p
                 v-if="c.notes"
-                class="activity-card__description contractor-notes"
+                class="body-xs"
               >
                 {{ c.notes }}
               </p>
 
-              <div
+              <CCardMeta
                 v-if="c.email || c.phone"
-                class="activity-card__meta activity-card__contacts"
+                class="activity-card__contacts"
               >
                 <a
                   v-if="c.email"
@@ -351,7 +351,7 @@ async function confirmDelete() {
                   class="activity-card__line activity-card__contact-link"
                   @click.stop
                 ><span aria-hidden="true">📞</span>{{ c.phone }}</a>
-              </div>
+              </CCardMeta>
 
               <div
                 v-if="canEdit"

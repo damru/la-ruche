@@ -15,7 +15,7 @@ defineProps<{
 
 <template>
   <CCard class="legal-info-card">
-    <p class="body-sm legal-info-card__text">
+    <p class="body-xs legal-info-card__text">
       ⚖️ <strong>{{ title }}</strong> — {{ summary }}
     </p>
     <div

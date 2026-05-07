@@ -168,7 +168,7 @@ function priorityVariant(p: string): 'err' | 'pending' | 'primary' | 'valid' | '
                 </CBadge>
                 <span
                   v-if="!contractor.domains.length"
-                  class="body-sm"
+                  class="body-xs"
                   style="color: var(--color-on-surface-variant)"
                 >
                   {{ t('contractors.noDomain') }}
@@ -195,7 +195,7 @@ function priorityVariant(p: string): 'err' | 'pending' | 'primary' | 'valid' | '
 
           <p
             v-if="contractor.notes"
-            class="contractor-notes body-sm"
+            class="contractor-notes body-xs"
           >
             {{ contractor.notes }}
           </p>
@@ -239,12 +239,12 @@ function priorityVariant(p: string): 'err' | 'pending' | 'primary' | 'valid' | '
                     {{ t(`tasks.statuses.${task.status}`) }}
                   </CBadge>
                 </div>
-                <span class="body-sm task-item-meta">{{ formatRelative(task.created_at) }}</span>
+                <span class="body-xs task-item-meta">{{ formatRelative(task.created_at) }}</span>
               </div>
               <span class="title-sm task-item-title">{{ task.title }}</span>
               <p
                 v-if="task.description"
-                class="body-sm task-item-desc"
+                class="body-xs task-item-desc"
               >
                 {{ task.description }}
               </p>

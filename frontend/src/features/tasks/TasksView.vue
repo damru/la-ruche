@@ -11,6 +11,7 @@ import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CDocumentLinkActionModal from '@/components/molecules/CDocumentLinkActionModal.vue'
 import CCard from '@/components/molecules/CCard.vue'
+import CCardMeta from '@/components/molecules/CCardMeta.vue'
 import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
 import CLinkedDocumentsModal from '@/components/molecules/CLinkedDocumentsModal.vue'
 import CModal from '@/components/molecules/CModal.vue'
@@ -831,8 +832,8 @@ async function copyVendorLink(taskId: string) {
             v-for="task in tasks"
             :key="task.id"
             :shadow="!isTerminal(task.status)"
-            :class="['activity-card', 'activity-card--interactive', 'task-card', { 'card--terminated': isTerminal(task.status) }]"
-            role="link"
+            :class="['activity-card', 'task-card', { 'card--terminated': isTerminal(task.status) }]"
+            interactive
             tabindex="0"
             @click="openTaskDetail(task.id)"
             @keydown.enter.prevent="openTaskDetail(task.id)"
@@ -858,7 +859,7 @@ async function copyVendorLink(taskId: string) {
             <div class="activity-card__stack">
               <p
                 v-if="task.description"
-                class="activity-card__description"
+                class="body-xs"
               >
                 {{ task.description }}
               </p>
@@ -876,7 +877,7 @@ async function copyVendorLink(taskId: string) {
                 </button>
               </div>
 
-              <div class="activity-card__meta">
+              <CCardMeta>
                 <span
                   v-if="hasAssignment(task)"
                   class="activity-card__line"
@@ -899,7 +900,7 @@ async function copyVendorLink(taskId: string) {
                   <CIconCalendar />
                   {{ t('tasks.lifecycle.createdRelative', { relative: formatRelative(task.created_at) }) }}
                 </span>
-              </div>
+              </CCardMeta>
 
               <div
                 v-if="(contractorDisplayName(task) && !task.has_vendor_token && !isTerminal(task.status)) || task.has_vendor_token"
@@ -1332,7 +1333,7 @@ async function copyVendorLink(taskId: string) {
       size="sm"
       @update:open="v => !v && (revokingTask = null)"
     >
-      <p class="body-sm">
+      <p class="body-xs">
         {{ t('tasks.confirmRevokeToken') }}
       </p>
       <template #footer>
@@ -1364,7 +1365,7 @@ async function copyVendorLink(taskId: string) {
       size="sm"
       @update:open="v => !v && (closingTask = null)"
     >
-      <p class="body-sm">
+      <p class="body-xs">
         {{
           closingTask?.status === 'awaiting_validation'
             ? t('tasks.confirmCloseValidationMessage', { title: closingTask?.title ?? '' })
@@ -1418,7 +1419,7 @@ async function copyVendorLink(taskId: string) {
       size="sm"
       @update:open="v => !v && (reopeningTask = null)"
     >
-      <p class="body-sm">
+      <p class="body-xs">
         {{ t('tasks.confirmReopenMessage', { title: reopeningTask?.title ?? '' }) }}
       </p>
       <template #footer>
@@ -1450,7 +1451,7 @@ async function copyVendorLink(taskId: string) {
       size="sm"
       @update:open="showDeleteModal = $event"
     >
-      <p class="body-sm">
+      <p class="body-xs">
         {{
           taskToDelete?.is_in_logbook
             ? t('tasks.confirmDeleteLogbookMessage', { title: taskToDelete?.title ?? '' })

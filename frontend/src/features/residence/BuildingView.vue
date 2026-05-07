@@ -170,7 +170,7 @@ onMounted(reload)
             {{ t('settings.building.legalData') }}
           </h2>
           <p
-            class="body-sm"
+            class="body-xs"
             style="color:var(--color-on-surface-variant); margin-bottom:12px"
           >
             <strong>⚖️ Art. 18 loi 10/07/1965</strong> — {{ t('settings.building.legalText') }}

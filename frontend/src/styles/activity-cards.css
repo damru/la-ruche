@@ -2,20 +2,6 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-  --activity-card-soft-text: color-mix(in srgb, var(--color-on-surface-variant) 88%, white);
-}
-
-.activity-card--interactive {
-  cursor: pointer;
-}
-
-.activity-card--interactive:hover .activity-card__title {
-  color: var(--color-primary);
-}
-
-.activity-card--interactive:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
 }
 
 .activity-card__header-row {
@@ -35,6 +21,7 @@
   flex-shrink: 0;
   border-radius: var(--radius-md);
   display: flex;
+  align-self: flex-start;
   align-items: center;
   justify-content: center;
   background: var(--tone-bg, var(--color-secondary-container));
@@ -54,11 +41,9 @@
 }
 
 .activity-card__chips,
-.activity-card__meta,
 .activity-card__documents,
 .activity-card__actions,
-.activity-card__secondary-actions,
-.activity-card__note {
+.activity-card__secondary-actions {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-1) var(--space-2);
@@ -75,7 +60,6 @@
   min-width: 0;
   align-items: center;
   font-size: var(--text-xs);
-  color: var(--color-on-surface-variant);
 }
 
 .activity-card__title {
@@ -94,27 +78,9 @@
   align-items: center;
 }
 
-.activity-card__status {
-  margin-left: auto;
-  flex-shrink: 0;
-}
-
-.activity-card__subtitle,
-.activity-card__description,
-.activity-card__meta,
-.activity-card__documents,
-.activity-card__note {
-  color: var(--activity-card-soft-text);
+.activity-card__documents {
   font-size: var(--text-2xs);
   line-height: 1.4;
-}
-
-.activity-card__description {
-  white-space: pre-wrap;
-  font-size: var(--text-md);
-  font-weight: var(--fw-regular);
-  line-height: 1.6;
-  color: var(--color-on-surface);
 }
 
 .activity-card__line {
@@ -123,12 +89,6 @@
   gap: var(--space-1);
   width: fit-content;
   color: inherit;
-}
-
-.activity-card__line svg {
-  width: 14px;
-  height: 14px;
-  flex-shrink: 0;
 }
 
 .activity-card__contact-link {
@@ -152,14 +112,6 @@
 
 .activity-card__documents-button:hover {
   color: var(--color-primary);
-}
-
-.activity-card__note {
-  border-radius: var(--radius-sm);
-  background: var(--color-surface-container-low);
-  padding: var(--space-2);
-  color: var(--activity-card-soft-text);
-  font-size: var(--text-xs);
 }
 
 @media (max-width: 720px) {

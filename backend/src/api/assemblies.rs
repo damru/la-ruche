@@ -51,6 +51,8 @@ pub struct MeetingResponse {
     pub agenda: Option<String>,
     pub minutes_document_id: Option<Uuid>,
     pub created_at: DateTime<Utc>,
+    pub resolution_count: i64,
+    pub passed_count: i64,
 }
 
 #[derive(Debug, Deserialize, Validate, ToSchema)]

@@ -75,7 +75,7 @@ onMounted(reload)
           >
             <div class="unit-card__inner">
               <span class="unit-card__number title-sm">{{ t('common.lot') }} {{ unit.unit_number }}</span>
-              <span class="unit-card__type body-sm dim">{{ unit.description }}</span>
+              <span class="unit-card__type body-xs dim">{{ unit.description }}</span>
             </div>
             <CBtn
               variant="ghost"

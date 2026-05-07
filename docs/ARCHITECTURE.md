@@ -119,9 +119,9 @@ laruche/
 │   ├── api/                    ← client Axios + modules API
 │   ├── components/
 │   │   ├── atoms/              ← CBtn, CInput, CSelect, CTextarea,
-│   │   │                          CProgressBar, CAlert, CBadge
+│   │   │                          CProgressBar, CAlert, CBadge, CSeparator
 │   │   ├── molecules/          ← CCard, CKpiCard, CListItem,
-│   │   │                          CDataTable, CModal, CDropzone
+│   │   │                          CDataTable, CModal, CDropzone, CCardMeta, CCardNote
 │   │   └── organisms/          ← AppNav
 │   ├── composables/            ← useRole, useFormatters (Intl natif)
 │   │   ├── features/               ← vues lazy-loaded par domaine
