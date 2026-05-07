@@ -9,6 +9,7 @@ import CModal from '@/components/molecules/CModal.vue'
 import CPageError from '@/components/molecules/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
+import CDropzone from '@/components/molecules/CDropzone.vue'
 import { documentsApi, buildingApi } from '@/api'
 import { toErrorMessage, usePageLoader } from '@/composables/usePageLoader'
 import { useFormFeedback } from '@/composables/useFormFeedback'
@@ -31,7 +32,6 @@ const uploadError = ref('')
 const uploadSuccess = ref(false)
 const selectedFile = ref<File | null>(null)
 const selectedRoles = ref<string[]>(['manager', 'board_member', 'co_owner'])
-const fileInputRef = ref<HTMLInputElement | null>(null)
 const { schedule: scheduleUploadClose, forceExpire: forceUploadClose } = useAutoClose()
 watch(showUpload, (open) => { if (!open) forceUploadClose() })
 
@@ -76,11 +76,8 @@ function openUploadModal() {
   showUpload.value = true
 }
 
-function onFileChange(event: Event) {
-  const input = event.target as HTMLInputElement
-  if (input.files?.length) {
-    selectedFile.value = input.files[0]
-  }
+function onDropzoneFiles(files: File[]) {
+  selectedFile.value = files[0] ?? null
 }
 
 function toggleRole(role: string) {
@@ -354,25 +351,17 @@ async function confirmDeleteDoc() {
             {{ uploadError }}
           </CAlert>
 
-          <div
-            class="dropzone dropzone--stacked dropzone--roomy"
-            @click="fileInputRef?.click()"
+          <CDropzone
+            :uploading="uploading"
+            @files="onDropzoneFiles"
+            @error="uploadError = $event"
+          />
+          <p
+            v-if="selectedFile"
+            class="selected-file"
           >
-            <input
-              ref="fileInputRef"
-              type="file"
-              style="display:none"
-              @change="onFileChange"
-            />
-            <span
-              v-if="selectedFile"
-              class="selected-file"
-            >{{ selectedFile.name }} ({{ formatFileSize(selectedFile.size) }})</span>
-            <span v-else>{{ t('documents.dropzone') }}</span>
-            <p class="body-sm dim">
-              {{ t('documents.maxSize') }}
-            </p>
-          </div>
+            {{ selectedFile.name }} ({{ formatFileSize(selectedFile.size) }})
+          </p>
 
           <div class="visibility-section">
             <label class="field-label">{{ t('documents.visiblePar') }}</label>
