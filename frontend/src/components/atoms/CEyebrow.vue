@@ -10,14 +10,14 @@ withDefaults(defineProps<{
 <template>
   <component
     :is="as"
-    class="page-eyebrow"
+    class="c-eyebrow"
   >
     <slot></slot>
   </component>
 </template>
 
 <style scoped>
-.page-eyebrow {
+.c-eyebrow {
   display: flex;
   align-items: center;
   gap: var(--space-2);

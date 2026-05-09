@@ -60,6 +60,9 @@ export default defineConfig({
         },
       },
     },
+    watch: {
+      usePolling: true, // Enable polling for file changes in WSL environment
+    },
   },
 
   build: {

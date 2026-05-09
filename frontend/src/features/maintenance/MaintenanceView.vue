@@ -11,8 +11,9 @@ import CLegalDescription from '@/components/atoms/CLegalDescription.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
 import CLegalNotice from '@/components/molecules/CLegalNotice.vue'
+import CLegalCard from '@/components/molecules/CLegalCard.vue'
 import CModal from '@/components/molecules/CModal.vue'
-import CPageError from '@/components/molecules/CPageError.vue'
+import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import { maintenanceApi } from '@/api'
@@ -465,7 +466,7 @@ async function deleteEntry() {
           </CCard>
         </div>
 
-        <CCard
+        <CLegalCard
           v-if="logbookSummary"
           class="regulatory-legal-card"
         >
@@ -475,7 +476,7 @@ async function deleteEntry() {
               :summary="t('maintenance.regulatory.legalCard.summary')"
             />
           </CLegalNotice>
-        </CCard>
+        </CLegalCard>
 
         <div class="period-toolbar">
           <div class="tabs period-tabs">
@@ -511,15 +512,15 @@ async function deleteEntry() {
           </div>
         </div>
 
-        <div class="search-bar">
-          <CIconSearch class="search-icon" />
-          <input
-            v-model="search"
-            type="search"
-            :placeholder="t('maintenance.searchPlaceholder')"
-            class="search-input"
-          />
-        </div>
+        <CFormInput
+          v-model="search"
+          type="search"
+          :placeholder="t('maintenance.searchPlaceholder')"
+        >
+          <template #prefix>
+            <CIconSearch />
+          </template>
+        </CFormInput>
 
         <div class="timeline">
           <div
@@ -602,51 +603,34 @@ async function deleteEntry() {
         class="form-grid"
         @submit.prevent="saveEntry"
       >
-        <div class="form-field">
-          <label class="form-label">{{ t('maintenance.fields.title') }} *</label>
-          <input
-            v-model="entryForm.title"
-            type="text"
-            class="form-input"
-            required
-          />
-        </div>
-        <div class="form-field">
-          <label class="form-label">{{ t('maintenance.fields.description') }}</label>
-          <textarea
-            v-model="entryForm.description"
-            class="form-input"
-            rows="2"
-          ></textarea>
-        </div>
-        <div class="form-field">
-          <label class="form-label">{{ t('maintenance.fields.interventionDate') }} *</label>
-          <input
-            v-model="entryForm.intervention_date"
-            type="date"
-            class="form-input"
-            required
-          />
-        </div>
+        <CFormInput
+          v-model="entryForm.title"
+          :label="t('maintenance.fields.title')"
+          required
+        />
+        <CFormTextarea
+          v-model="entryForm.description"
+          :label="t('maintenance.fields.description')"
+          :rows="2"
+        />
+        <CFormInput
+          v-model="entryForm.intervention_date"
+          :label="t('maintenance.fields.interventionDate')"
+          type="date"
+          required
+        />
         <div class="form-row">
-          <div class="form-field">
-            <label class="form-label">{{ t('maintenance.fields.cost') }}</label>
-            <input
-              v-model="entryForm.cost"
-              type="number"
-              step="0.01"
-              min="0"
-              class="form-input"
-            />
-          </div>
-          <div class="form-field">
-            <label class="form-label">{{ t('maintenance.fields.vendorName') }}</label>
-            <input
-              v-model="entryForm.vendor_name"
-              type="text"
-              class="form-input"
-            />
-          </div>
+          <CFormInput
+            v-model="entryForm.cost"
+            :label="t('maintenance.fields.cost')"
+            type="number"
+            :step="0.01"
+            :min="0"
+          />
+          <CFormInput
+            v-model="entryForm.vendor_name"
+            :label="t('maintenance.fields.vendorName')"
+          />
         </div>
       </form>
       <template #footer>

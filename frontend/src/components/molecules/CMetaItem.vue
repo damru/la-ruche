@@ -13,7 +13,10 @@ withDefaults(defineProps<{
     :is="as"
     :class="['c-meta-item', `c-meta-item--${variant}`]"
   >
-    <span class="c-meta-item__icon">
+    <span
+      v-if="$slots.icon"
+      class="c-meta-item__icon"
+    >
       <slot name="icon"></slot>
     </span>
     <span class="c-meta-item__content">

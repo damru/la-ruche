@@ -10,15 +10,16 @@ import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CLegalDescription from '@/components/atoms/CLegalDescription.vue'
 import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
-import CPageError from '@/components/molecules/CPageError.vue'
-import CDocumentLinkActionModal from '@/components/molecules/CDocumentLinkActionModal.vue'
-import CLinkedDocumentsModal from '@/components/molecules/CLinkedDocumentsModal.vue'
+import CPageError from '@/components/organisms/CPageError.vue'
+import CDocumentLinkActionModal from '@/components/organisms/CDocumentLinkActionModal.vue'
+import CLinkedDocumentsModal from '@/components/organisms/CLinkedDocumentsModal.vue'
 import CLegalNotice from '@/components/molecules/CLegalNotice.vue'
+import CLegalCard from '@/components/molecules/CLegalCard.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CCardNote from '@/components/molecules/CCardNote.vue'
 import CModal from '@/components/molecules/CModal.vue'
-import CReminderCard from '@/components/molecules/CReminderCard.vue'
+import CReminderCard from '@/components/organisms/CReminderCard.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import CIconCheckCircle from '@/components/atoms/CIconCheckCircle.svg'
 import CIconClock from '@/components/atoms/CIconClock.svg'
@@ -174,6 +175,21 @@ onMounted(reload)
 const unitsById = computed(() =>
   new Map(allUnits.value.map(unit => [unit.id, unit])),
 )
+
+const claimTypeOptions = computed(() =>
+  CLAIM_TYPES.map(claimType => ({
+    value: claimType,
+    label: t(`claims.types.${claimType}`),
+  })),
+)
+
+const unitOptions = computed(() => [
+  { value: '', label: t('claims.commonAreas') },
+  ...allUnits.value.map(unit => ({
+    value: unit.id,
+    label: t('claims.unitLabel', { number: unit.unit_number }),
+  })),
+])
 
 const claimsById = computed(() =>
   new Map(allClaims.value.map(claim => [claim.id, claim])),
@@ -1050,14 +1066,14 @@ async function submitDelete() {
           </div>
         </div>
 
-        <CCard>
+        <CLegalCard>
           <CLegalNotice :links="legalCardLinks">
             <CLegalDescription
               :title="t('claims.legalCard.title')"
               :summary="t('claims.legalCard.summary')"
             />
           </CLegalNotice>
-        </CCard>
+        </CLegalCard>
       </template>
     </div>
 
@@ -1072,87 +1088,44 @@ async function submitDelete() {
         class="form-grid"
         @submit.prevent="submitCreate"
       >
-        <div class="form-field">
-          <label class="form-label">{{ t('claims.fields.title') }}</label>
-          <input
-            v-model="createForm.title"
-            type="text"
-            class="form-input"
+        <CFormInput
+          v-model="createForm.title"
+          :label="t('claims.fields.title')"
+          required
+        />
+        <CFormSelect
+          v-model="createForm.claim_type"
+          :label="t('claims.fields.claimType')"
+          :options="claimTypeOptions"
+        />
+
+        <div class="form-row">
+          <CFormInput
+            v-model="createForm.declared_at"
+            :label="t('claims.fields.declaredAt')"
+            type="date"
             required
+          />
+          <CFormInput
+            v-if="createForm.claim_type === 'natural_disaster'"
+            v-model="createForm.published_at"
+            :label="t('claims.fields.publishedAt')"
+            type="date"
+            required
+            :hint="t('claims.fields.publishedAtHint')"
           />
         </div>
 
-        <div class="form-field">
-          <label class="form-label">{{ t('claims.fields.claimType') }}</label>
-          <select
-            v-model="createForm.claim_type"
-            class="form-input"
-          >
-            <option
-              v-for="claimType in CLAIM_TYPES"
-              :key="claimType"
-              :value="claimType"
-            >
-              {{ t(`claims.types.${claimType}`) }}
-            </option>
-          </select>
-        </div>
-
-        <div class="form-row">
-          <div class="form-field">
-            <label class="form-label">{{ t('claims.fields.declaredAt') }}</label>
-            <input
-              v-model="createForm.declared_at"
-              type="date"
-              class="form-input"
-              required
-            />
-          </div>
-
-          <div
-            v-if="createForm.claim_type === 'natural_disaster'"
-            class="form-field"
-          >
-            <label class="form-label">{{ t('claims.fields.publishedAt') }}</label>
-            <input
-              v-model="createForm.published_at"
-              type="date"
-              class="form-input"
-              required
-            />
-            <p class="field-hint">
-              {{ t('claims.fields.publishedAtHint') }}
-            </p>
-          </div>
-        </div>
-
-        <div class="form-field">
-          <label class="form-label">{{ t('claims.fields.unit') }}</label>
-          <select
-            v-model="createForm.unit_id"
-            class="form-input"
-          >
-            <option value="">
-              {{ t('claims.commonAreas') }}
-            </option>
-            <option
-              v-for="unit in allUnits"
-              :key="unit.id"
-              :value="unit.id"
-            >
-              {{ t('claims.unitLabel', { number: unit.unit_number }) }}
-            </option>
-          </select>
-        </div>
-
-        <div class="form-field">
-          <label class="form-label">{{ t('claims.fields.description') }}</label>
-          <textarea
-            v-model="createForm.description"
-            class="form-input"
-            rows="3"
-          ></textarea>
-        </div>
+        <CFormSelect
+          v-model="createForm.unit_id"
+          :label="t('claims.fields.unit')"
+          :options="unitOptions"
+        />
+        <CFormTextarea
+          v-model="createForm.description"
+          :label="t('claims.fields.description')"
+          :rows="3"
+        />
 
         <div class="form-field">
           <label class="form-label">{{ t('claims.fields.documents') }}</label>
@@ -1236,87 +1209,44 @@ async function submitDelete() {
         class="form-grid"
         @submit.prevent="submitEdit"
       >
-        <div class="form-field">
-          <label class="form-label">{{ t('claims.fields.title') }}</label>
-          <input
-            v-model="editForm.title"
-            type="text"
-            class="form-input"
+        <CFormInput
+          v-model="editForm.title"
+          :label="t('claims.fields.title')"
+          required
+        />
+        <CFormSelect
+          v-model="editForm.claim_type"
+          :label="t('claims.fields.claimType')"
+          :options="claimTypeOptions"
+        />
+
+        <div class="form-row">
+          <CFormInput
+            v-model="editForm.declared_at"
+            :label="t('claims.fields.declaredAt')"
+            type="date"
             required
+          />
+          <CFormInput
+            v-if="editForm.claim_type === 'natural_disaster'"
+            v-model="editForm.published_at"
+            :label="t('claims.fields.publishedAt')"
+            type="date"
+            required
+            :hint="t('claims.fields.publishedAtHint')"
           />
         </div>
 
-        <div class="form-field">
-          <label class="form-label">{{ t('claims.fields.claimType') }}</label>
-          <select
-            v-model="editForm.claim_type"
-            class="form-input"
-          >
-            <option
-              v-for="claimType in CLAIM_TYPES"
-              :key="claimType"
-              :value="claimType"
-            >
-              {{ t(`claims.types.${claimType}`) }}
-            </option>
-          </select>
-        </div>
-
-        <div class="form-row">
-          <div class="form-field">
-            <label class="form-label">{{ t('claims.fields.declaredAt') }}</label>
-            <input
-              v-model="editForm.declared_at"
-              type="date"
-              class="form-input"
-              required
-            />
-          </div>
-
-          <div
-            v-if="editForm.claim_type === 'natural_disaster'"
-            class="form-field"
-          >
-            <label class="form-label">{{ t('claims.fields.publishedAt') }}</label>
-            <input
-              v-model="editForm.published_at"
-              type="date"
-              class="form-input"
-              required
-            />
-            <p class="field-hint">
-              {{ t('claims.fields.publishedAtHint') }}
-            </p>
-          </div>
-        </div>
-
-        <div class="form-field">
-          <label class="form-label">{{ t('claims.fields.unit') }}</label>
-          <select
-            v-model="editForm.unit_id"
-            class="form-input"
-          >
-            <option value="">
-              {{ t('claims.commonAreas') }}
-            </option>
-            <option
-              v-for="unit in allUnits"
-              :key="unit.id"
-              :value="unit.id"
-            >
-              {{ t('claims.unitLabel', { number: unit.unit_number }) }}
-            </option>
-          </select>
-        </div>
-
-        <div class="form-field">
-          <label class="form-label">{{ t('claims.fields.description') }}</label>
-          <textarea
-            v-model="editForm.description"
-            class="form-input"
-            rows="3"
-          ></textarea>
-        </div>
+        <CFormSelect
+          v-model="editForm.unit_id"
+          :label="t('claims.fields.unit')"
+          :options="unitOptions"
+        />
+        <CFormTextarea
+          v-model="editForm.description"
+          :label="t('claims.fields.description')"
+          :rows="3"
+        />
 
         <div class="form-field">
           <label class="form-label">{{ t('claims.fields.documents') }}</label>
@@ -1464,18 +1394,13 @@ async function submitDelete() {
         class="form-grid"
         @submit.prevent="submitTransmit"
       >
-        <div class="form-field">
-          <label class="form-label">{{ t('claims.fields.transmittedAt') }}</label>
-          <input
-            v-model="transmitForm.transmitted_at"
-            type="date"
-            class="form-input"
-            required
-          />
-          <p class="field-hint">
-            {{ t('claims.fields.transmittedAtHint') }}
-          </p>
-        </div>
+        <CFormInput
+          v-model="transmitForm.transmitted_at"
+          :label="t('claims.fields.transmittedAt')"
+          type="date"
+          required
+          :hint="t('claims.fields.transmittedAtHint')"
+        />
       </form>
 
       <template #footer>
@@ -1511,43 +1436,29 @@ async function submitDelete() {
         class="form-grid"
         @submit.prevent="submitClose"
       >
-        <div class="form-field">
-          <label class="form-label">{{ t('claims.fields.transmittedAt') }}</label>
-          <input
-            v-model="closeForm.transmitted_at"
-            type="date"
-            class="form-input"
-            required
-          />
-          <p class="field-hint">
-            {{ t('claims.fields.transmittedAtHint') }}
-          </p>
-        </div>
+        <CFormInput
+          v-model="closeForm.transmitted_at"
+          :label="t('claims.fields.transmittedAt')"
+          type="date"
+          required
+          :hint="t('claims.fields.transmittedAtHint')"
+        />
 
         <div class="form-row">
-          <div class="form-field">
-            <label class="form-label">{{ t('claims.fields.reimbursementDate') }}</label>
-            <input
-              v-model="closeForm.reimbursement_date"
-              type="date"
-              class="form-input"
-            />
-          </div>
-
-          <div class="form-field">
-            <label class="form-label">{{ t('claims.fields.reimbursementAmount') }}</label>
-            <input
-              v-model="closeForm.reimbursement_amount"
-              type="number"
-              min="0.01"
-              step="0.01"
-              inputmode="decimal"
-              class="form-input"
-            />
-            <p class="field-hint">
-              {{ t('claims.fields.reimbursementAmountHint') }}
-            </p>
-          </div>
+          <CFormInput
+            v-model="closeForm.reimbursement_date"
+            :label="t('claims.fields.reimbursementDate')"
+            type="date"
+          />
+          <CFormInput
+            v-model="closeForm.reimbursement_amount"
+            :label="t('claims.fields.reimbursementAmount')"
+            type="number"
+            :min="0.01"
+            :step="0.01"
+            inputmode="decimal"
+            :hint="t('claims.fields.reimbursementAmountHint')"
+          />
         </div>
 
         <div class="form-field">

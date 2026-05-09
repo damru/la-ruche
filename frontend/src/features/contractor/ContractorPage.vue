@@ -225,28 +225,20 @@ async function submit() {
             </li>
           </ul>
 
-          <!-- Comment -->
-          <div class="form-field">
-            <label class="form-label">{{ t('contractor.comment') }}</label>
-            <textarea
-              v-model="comment"
-              class="form-input"
-              rows="3"
-              :placeholder="t('contractor.commentPlaceholder')"
-            ></textarea>
-          </div>
-
-          <div class="form-field">
-            <label class="form-label">{{ t('contractor.cost') }}</label>
-            <input
-              v-model="cost"
-              type="number"
-              min="0"
-              step="0.01"
-              class="form-input"
-              :placeholder="t('contractor.costPlaceholder')"
-            />
-          </div>
+          <CFormTextarea
+            v-model="comment"
+            :label="t('contractor.comment')"
+            :rows="3"
+            :placeholder="t('contractor.commentPlaceholder')"
+          />
+          <CFormInput
+            v-model="cost"
+            :label="t('contractor.cost')"
+            type="number"
+            :min="0"
+            :step="0.01"
+            :placeholder="t('contractor.costPlaceholder')"
+          />
 
           <!-- Error inline -->
           <p

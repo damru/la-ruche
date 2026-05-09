@@ -106,6 +106,8 @@ function handleOpenChange(open: boolean) {
   background: rgba(25, 28, 29, 0.4);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
+  -moz-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
   z-index: calc(var(--z-overlay) + var(--c-modal-stack, 0));
   animation: c-overlay-in 0.2s ease;
 }
@@ -125,6 +127,8 @@ function handleOpenChange(open: boolean) {
   background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
+  -moz-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
   border: 1px solid rgba(194, 199, 207, 0.3);
   box-shadow: var(--shadow-glass);
   border-radius: var(--radius-lg);

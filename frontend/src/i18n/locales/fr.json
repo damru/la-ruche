@@ -57,6 +57,7 @@
     "loadError": "Impossible de charger les données",
     "retry": "Réessayer",
     "requiredAria": "obligatoire",
+    "remove": "Retirer",
     "fileDropzoneAria": "Zone de dépôt de fichier",
     "fileDropzoneText": "Glissez un fichier ici",
     "fileDropzoneHint": "ou cliquez pour parcourir · max {size} Mo",
@@ -279,7 +280,9 @@
     },
     "typeLabel": {
       "annual": "AG Ordinaire",
-      "extraordinary": "AG Extraordinaire"
+      "annualShort": "AG",
+      "extraordinary": "AG Extraordinaire",
+      "extraordinaryShort": "AGE"
     },
     "statuses": {
       "draft": "Brouillon",

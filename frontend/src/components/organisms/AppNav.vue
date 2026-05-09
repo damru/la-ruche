@@ -186,10 +186,10 @@ watch(() => route.path, closeDrawer)
           {{ auth.user?.first_name?.[0] }}{{ auth.user?.last_name?.[0] }}
         </div>
         <div class="c-sidebar__user-info">
-          <div class="c-sidebar__user-name">
+          <div class="text-sm font-medium text-on-surface">
             {{ auth.user?.first_name }} {{ auth.user?.last_name }}
           </div>
-          <div class="c-sidebar__user-role">
+          <div class="text-xs font-medium text-primary">
             {{ t(`roles.${auth.user?.roles[0]}`) }}
           </div>
         </div>
@@ -447,9 +447,6 @@ watch(() => route.path, closeDrawer)
 }
 
 .c-sidebar__user-info { flex: 1; min-width: 0; }
-.c-sidebar__user-name { font-size: 12px; font-weight: 500; color: var(--color-on-surface); }
-.c-sidebar__user-role { font-size: 10px; color: var(--color-primary); font-weight: 500; }
-
 .c-sidebar__user-chevron { color: var(--color-on-surface-variant); flex-shrink: 0; }
 
 /* ── Bottom nav ───────────────────────────────────────────────── */

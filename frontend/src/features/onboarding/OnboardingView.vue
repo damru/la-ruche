@@ -8,8 +8,7 @@ import { extractApiError } from '@/api/client'
 import AuthBrandPanel from '@/components/organisms/AuthBrandPanel.vue'
 import CAlert from '@/components/atoms/CAlert.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
-import CTooltip from '@/components/atoms/CTooltip.vue'
-import CAddressAutocomplete from '@/components/molecules/CAddressAutocomplete.vue'
+import CFormAddressAutocomplete from '@/components/molecules/CFormAddressAutocomplete.vue'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -234,142 +233,76 @@ async function handleSubmit() {
             @submit.prevent="goNext"
           >
             <div class="field-row">
-              <div class="field">
-                <label
-                  for="last_name"
-                  class="field-label"
-                >{{ t('onboarding.lastName') }} <span
-                  class="required"
-                  aria-hidden="true"
-                >*</span></label>
-                <input
-                  id="last_name"
-                  v-model="form.last_name"
-                  type="text"
-                  :class="['field-input', { 'field-input--error': err.last_name }]"
-                  :placeholder="t('onboarding.lastNamePlaceholder')"
-                  autocomplete="family-name"
-                  required
-                  :disabled="loading"
-                  @blur="touch('last_name')"
-                />
-                <p
-                  v-if="err.last_name"
-                  class="field-error"
-                  role="alert"
-                >
-                  {{ t('onboarding.fieldRequired') }}
-                </p>
-              </div>
-              <div class="field">
-                <label
-                  for="first_name"
-                  class="field-label"
-                >{{ t('onboarding.firstName') }} <span
-                  class="required"
-                  aria-hidden="true"
-                >*</span></label>
-                <input
-                  id="first_name"
-                  v-model="form.first_name"
-                  type="text"
-                  :class="['field-input', { 'field-input--error': err.first_name }]"
-                  :placeholder="t('onboarding.firstNamePlaceholder')"
-                  autocomplete="given-name"
-                  required
-                  :disabled="loading"
-                  @blur="touch('first_name')"
-                />
-                <p
-                  v-if="err.first_name"
-                  class="field-error"
-                  role="alert"
-                >
-                  {{ t('onboarding.fieldRequired') }}
-                </p>
-              </div>
-            </div>
-
-            <div class="field">
-              <label
-                for="email"
-                class="field-label"
-              >{{ t('auth.email') }} <span
-                class="required"
-                aria-hidden="true"
-              >*</span></label>
-              <input
-                id="email"
-                v-model="form.email"
-                type="email"
-                :class="['field-input', { 'field-input--error': err.email }]"
-                :placeholder="t('auth.emailPlaceholder')"
-                autocomplete="email"
+              <CFormInput
+                id="last_name"
+                v-model="form.last_name"
+                :label="t('onboarding.lastName')"
+                :placeholder="t('onboarding.lastNamePlaceholder')"
+                :error="err.last_name ? t('onboarding.fieldRequired') : undefined"
+                autocomplete="family-name"
                 required
                 :disabled="loading"
-                @blur="touch('email')"
+                @blur="touch('last_name')"
               />
-              <p
-                v-if="err.email"
-                class="field-error"
-                role="alert"
-              >
-                {{ t('onboarding.fieldRequired') }}
-              </p>
+              <CFormInput
+                id="first_name"
+                v-model="form.first_name"
+                :label="t('onboarding.firstName')"
+                :placeholder="t('onboarding.firstNamePlaceholder')"
+                :error="err.first_name ? t('onboarding.fieldRequired') : undefined"
+                autocomplete="given-name"
+                required
+                :disabled="loading"
+                @blur="touch('first_name')"
+              />
             </div>
 
+            <CFormInput
+              id="email"
+              v-model="form.email"
+              type="email"
+              :label="t('auth.email')"
+              :placeholder="t('auth.emailPlaceholder')"
+              :error="err.email ? t('onboarding.fieldRequired') : undefined"
+              autocomplete="email"
+              required
+              :disabled="loading"
+              @blur="touch('email')"
+            />
+
             <div class="field">
-              <label
-                for="password"
-                class="field-label"
-              >{{ t('auth.password') }} <span
-                class="required"
-                aria-hidden="true"
-              >*</span></label>
-              <div class="field-input-wrap">
-                <input
-                  id="password"
-                  v-model="form.password"
-                  :type="showPassword ? 'text' : 'password'"
-                  :class="['field-input', { 'field-input--error': passwordDirty && form.password.length < 8 }]"
-                  :placeholder="t('auth.passwordPlaceholder')"
-                  autocomplete="new-password"
-                  required
-                  minlength="8"
-                  :disabled="loading"
-                />
-                <button
-                  type="button"
-                  class="pwd-toggle"
-                  :aria-label="showPassword ? t('auth.hidePassword') : t('auth.showPassword')"
-                  :aria-pressed="showPassword"
-                  tabindex="0"
-                  @click="showPassword = !showPassword"
-                >
-                  <!-- Eye-off -->
-                  <CIconEyeOff
-                    v-if="showPassword"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    aria-hidden="true"
-                  />
-                  <!-- Eye -->
-                  <CIconEye
-                    v-else
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    aria-hidden="true"
-                  />
-                </button>
-              </div>
+              <CFormInput
+                id="password"
+                v-model="form.password"
+                :label="t('auth.password')"
+                :type="showPassword ? 'text' : 'password'"
+                :placeholder="t('auth.passwordPlaceholder')"
+                :error="passwordDirty && form.password.length < 8 ? t('onboarding.passwordRuleLength') : undefined"
+                autocomplete="new-password"
+                :maxlength="undefined"
+                required
+                :disabled="loading"
+              >
+                <template #suffix>
+                  <button
+                    type="button"
+                    class="pwd-toggle"
+                    :aria-label="showPassword ? t('auth.hidePassword') : t('auth.showPassword')"
+                    :aria-pressed="showPassword"
+                    tabindex="0"
+                    @click="showPassword = !showPassword"
+                  >
+                    <CIconEyeOff
+                      v-if="showPassword"
+                      aria-hidden="true"
+                    />
+                    <CIconEye
+                      v-else
+                      aria-hidden="true"
+                    />
+                  </button>
+                </template>
+              </CFormInput>
               <!-- Password rules — always visible, state changes on input -->
               <ul
                 class="pwd-rules"
@@ -417,34 +350,18 @@ async function handleSubmit() {
             novalidate
             @submit.prevent="handleSubmit"
           >
-            <div class="field">
-              <label
-                for="building_name"
-                class="field-label"
-              >{{ t('onboarding.buildingName') }} <span
-                class="required"
-                aria-hidden="true"
-              >*</span></label>
-              <input
-                id="building_name"
-                v-model="form.building_name"
-                type="text"
-                :class="['field-input', { 'field-input--error': err.building_name }]"
-                :placeholder="t('onboarding.buildingNamePlaceholder')"
-                required
-                :disabled="loading"
-                @blur="touch('building_name')"
-              />
-              <p
-                v-if="err.building_name"
-                class="field-error"
-                role="alert"
-              >
-                {{ t('onboarding.fieldRequired') }}
-              </p>
-            </div>
+            <CFormInput
+              id="building_name"
+              v-model="form.building_name"
+              :label="t('onboarding.buildingName')"
+              :placeholder="t('onboarding.buildingNamePlaceholder')"
+              :error="err.building_name ? t('onboarding.fieldRequired') : undefined"
+              required
+              :disabled="loading"
+              @blur="touch('building_name')"
+            />
 
-            <CAddressAutocomplete
+            <CFormAddressAutocomplete
               :model-value="addressValue"
               :disabled="loading"
               :errors="{ address_line1: err.address_line1, postal_code: err.postal_code, city: err.city }"
@@ -454,25 +371,15 @@ async function handleSubmit() {
               @blur:city="touch('city')"
             />
 
-            <div class="field">
-              <div class="field-label-row">
-                <label
-                  for="shares_total"
-                  class="field-label"
-                >{{ t('onboarding.sharesTotal') }}</label>
-                <CTooltip :content="t('onboarding.sharesTotalHint')" />
-              </div>
-              <input
-                id="shares_total"
-                v-model="form.shares_total"
-                type="text"
-                inputmode="numeric"
-                pattern="[0-9]*"
-                class="field-input"
-                :placeholder="t('onboarding.sharesTotalPlaceholder')"
-                :disabled="loading"
-              />
-            </div>
+            <CFormInput
+              id="shares_total"
+              v-model="form.shares_total"
+              :label="t('onboarding.sharesTotal')"
+              :placeholder="t('onboarding.sharesTotalPlaceholder')"
+              :hint="t('onboarding.sharesTotalHint')"
+              inputmode="numeric"
+              :disabled="loading"
+            />
 
             <div class="form-actions">
               <CBtn

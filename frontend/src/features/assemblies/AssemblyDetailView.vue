@@ -19,17 +19,6 @@ import type {
   VoteType,
 } from '@/types/domain'
 import { buildingApi, documentsApi, meetingsApi } from '@/api'
-import CBadge from '@/components/atoms/CBadge.vue'
-import CBtn from '@/components/atoms/CBtn.vue'
-import CLegalDescription from '@/components/atoms/CLegalDescription.vue'
-import CCard from '@/components/molecules/CCard.vue'
-import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
-import CLegalNotice from '@/components/molecules/CLegalNotice.vue'
-import CModal from '@/components/molecules/CModal.vue'
-import CPageError from '@/components/molecules/CPageError.vue'
-import CPageLoader from '@/components/molecules/CPageLoader.vue'
-import CTopbar from '@/components/organisms/CTopbar.vue'
-import CMetaItem from '@/components/molecules/CMetaItem.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -246,6 +235,34 @@ async function loadData() {
 }
 
 const { loading, error, reload } = usePageLoader(loadData, t('common.loadError'))
+
+const meetingTypeOptions = computed(() => [
+  { value: 'annual', label: t('meetings.types.annual') },
+  { value: 'extraordinary', label: t('meetings.types.extraordinary') },
+])
+
+const voteTypeOptions = computed(() => [
+  { value: 'simple_majority', label: t('meetings.vote.types.simple_majority') },
+  { value: 'absolute_majority', label: t('meetings.vote.types.absolute_majority') },
+  { value: 'double_majority', label: t('meetings.vote.types.double_majority') },
+  { value: 'unanimity', label: t('meetings.vote.types.unanimity') },
+])
+
+const documentKindOptions = computed(() => [
+  { value: 'notice', label: t('meetings.documents.notice') },
+  { value: 'attachment', label: t('meetings.documents.attachment') },
+])
+
+const attendanceModeOptions = computed(() => [
+  { value: 'present', label: t('meetings.attendanceModes.present') },
+  { value: 'proxy', label: t('meetings.attendanceModes.proxy') },
+  { value: 'correspondence', label: t('meetings.attendanceModes.correspondence') },
+  { value: 'absent', label: t('meetings.attendanceModes.absent') },
+])
+
+function setResolutionNumber(v: string) {
+  resolutionForm.value.number = parseInt(v, 10) || 1
+}
 onMounted(reload)
 
 function typeLabel(type: MeetingType): string {
@@ -751,7 +768,8 @@ function onFileChange(event: Event) {
           <div class="status-banner__left">
             <div class="status-banner__icon">
               <CIconBell v-if="meetingBannerState(meeting.status) === 'called'" />
-              <CIconCheck v-else-if="meetingBannerState(meeting.status) === 'held' || meetingBannerState(meeting.status) === 'closed'" />
+              <CIconCheck v-else-if="meetingBannerState(meeting.status) === 'held'" />
+              <CIconLock v-else-if="meetingBannerState(meeting.status) === 'closed'" />
               <CIconEdit v-else />
             </div>
             <div>
@@ -769,7 +787,7 @@ function onFileChange(event: Event) {
           <section class="main-column">
             <div class="section-head">
               <div>
-                <h2 class="section-title headline-sm card-title">
+                <h2 class="headline-sm">
                   {{ t('meetings.resolutions') }}
                 </h2>
                 <p class="section-subtitle">
@@ -801,10 +819,15 @@ function onFileChange(event: Event) {
               <CCard
                 v-for="resolution in resolutions"
                 :key="resolution.id"
-                class="resolution-card"
+                class="resolution-card gap-y-4"
               >
                 <div class="resolution-card__header">
-                  <div :class="['resolution-number', resolution.status === 'passed' ? 'tone--accent' : resolution.status === 'rejected' ? 'tone--disabled' : '']">
+                  <div :class="['resolution-number',
+                    resolution.status === 'passed' ? 'tone--accent' 
+                      : voteResults[resolution.id]?.eligible_for_second_vote === true ? 'tone--warn' 
+                      : resolution.status === 'rejected' ? 'tone--disabled' 
+                      : '',
+                  ]">
                     {{ resolution.number }}
                   </div>
                   <div class="resolution-card__body">
@@ -913,11 +936,11 @@ function onFileChange(event: Event) {
           </section>
 
           <aside class="side-column">
-            <CCard>
-              <h2 class="side-title headline-sm card-title">
+            <CCard class="gap-y-4">
+              <h2 class="side-head headline-sm card-title">
                 {{ t('meetings.info') }}
               </h2>
-              <dl class="info-list">
+              <CFlexGroup tag="dl" class="[&_dt]:text-xs [&_dd]:font-medium [&_dd]:text(--color-on-surface) " variant="vertical">
                 <div class="info-list__row">
                   <dt>{{ t('meetings.infoFields.type') }}</dt>
                   <dd>{{ typeLabel(meeting.meeting_type) }}</dd>
@@ -938,16 +961,14 @@ function onFileChange(event: Event) {
                   <dt>{{ t('meetings.infoFields.resolutions') }}</dt>
                   <dd>{{ resolutions.length }}</dd>
                 </div>
-              </dl>
+              </CFlexGroup>
             </CCard>
 
-            <CCard>
+            <CCard class="gap-y-4">
               <div class="side-head">
                 <div>
-                  <h2 class="side-title">
-                    <span class="headline-sm card-title">
-                      {{ t('meetings.documents.title') }}
-                    </span>
+                  <h2 class="headline-sm card-title">
+                    {{ t('meetings.documents.title') }}
                   </h2>
                   <p class="side-subtitle">
                     {{ t('meetings.callReady') }}
@@ -1052,10 +1073,10 @@ function onFileChange(event: Event) {
               </div>
             </CCard>
 
-            <CCard>
+            <CCard class="gap-y-4">
               <div class="side-head">
                 <div>
-                  <h2 class="side-title headline-sm card-title">
+                  <h2 class="headline-sm card-title">
                     {{ t('meetings.presenceQuorum') }}
                   </h2>
                   <p class="side-subtitle">
@@ -1075,7 +1096,7 @@ function onFileChange(event: Event) {
 
               <div class="flex flex-col gap-2">
                 <p class="font-serif font-bold tracking-tight">
-                  <span class="text-(--color-on-surface) text-[40px]">{{ attendance.shares_present }}</span> 
+                  <span class="text-on-surface text-[40px]">{{ attendance.shares_present }}</span> 
                   <span class="text-[20px] ">/ {{ attendance.total_shares }}</span>
                 </p>
                 <p class="presence-kpi__detail">
@@ -1097,69 +1118,70 @@ function onFileChange(event: Event) {
                   class="quorum-alert"
                   :title="quorumReached ? t('meetings.quorumOk') : t('meetings.quorumKo')"
                 >
-                {{ quorumReached ? t('meetings.quorumOkDetail') : t('meetings.quorumKoDetail', { threshold: quorumThreshold }) }}
+                  {{ quorumReached ? t('meetings.quorumOkDetail') : t('meetings.quorumKoDetail', { threshold: quorumThreshold }) }}
                 </CAlert>
               </div>
-              <div class="participants-list">
+              <CFlexGroup variant="vertical">
                 <div
                   v-for="entry in attendance.entries"
                   :key="entry.unit_id"
                   class="participant-row"
                 >
-                  <div class="participant-row__identity">
-                    <div class="attendance-avatar">
-                      {{ ownerInitials(entry.owner_name) }}
+                    <div class="participant-row__identity">
+                      <div class="attendance-avatar">
+                        {{ ownerInitials(entry.owner_name) }}
+                      </div>
+                      <div>
+                        <p class="participant-name">
+                          {{ entry.owner_name || '—' }}
+                        </p>
+                        <p class="participant-meta">
+                          Lot {{ entry.unit_number }}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p class="participant-name">
-                        {{ entry.owner_name || '—' }}
-                      </p>
-                      <p class="participant-meta">
-                        Lot {{ entry.unit_number }}
-                      </p>
+                    <div class="participant-row__meta">
+                      <small class="attendance-shares">{{ t('units.sharesAmount', { amount: entry.shares_represented }) }}</small>
+                      <CBadge :variant="attendanceModeVariant(entry.mode)">
+                        {{ attendanceModeLabel(entry.mode) }}
+                      </CBadge>
                     </div>
-                  </div>
-                  <div class="participant-row__meta">
-                    <small class="attendance-shares">{{ t('units.sharesAmount', { amount: entry.shares_represented }) }}</small>
-                    <CBadge :variant="attendanceModeVariant(entry.mode)">
-                      {{ attendanceModeLabel(entry.mode) }}
-                    </CBadge>
-                  </div>
                 </div>
-              </div>
+              </CFlexGroup>
             </CCard>
 
-            <CCard>
-              <h2 class="side-title headline-sm card-title">
+            <CCard class="gap-y-4">
+              <h2 class="side-head headline-sm card-title">
                 {{ t('meetings.agenda') }}
               </h2>
-              <ol class="agenda-list">
+              <CFlexGroup tag="ol" class="agenda-list" variant="vertical">
                 <li
                   v-for="(item, index) in agendaItems"
                   :key="`${index}-${item}`"
                   class="agenda-item"
                 >
-                  <span class="agenda-item__n">{{ index + 1 }}.</span>
-                  <span class="agenda-item__text">{{ item }}</span>
+                    <span class="agenda-item__n">{{ index + 1 }}.</span>
+                    <span class="agenda-item__text">{{ item }}</span>
                 </li>
-              </ol>
+              </CFlexGroup>
             </CCard>
           </aside>
         </div>
 
-        <CCard class="gap-y-2">
-          <CLegalNotice 
-            v-for="entry in majorityLegalDescriptions"
-            :key="entry.id"
-            :links="entry.legalLinks"
-            class="border-b border-[color:color-mix(in_srgb,var(--color-outline)_18%,transparent)] pb-2 last:border-b-0 last:pb-0"
-          >
-            <CLegalDescription
-              :title="entry.title"
-              :summary="entry.summary"
-            />
-          </CLegalNotice>
-        </CCard>
+        <CLegalCard>
+          <CFlexGroup variant="vertical">
+            <CLegalNotice
+              v-for="entry in majorityLegalDescriptions"
+              :key="entry.title"
+              :links="entry.legalLinks"
+            >
+              <CLegalDescription
+                :title="entry.title"
+                :summary="entry.summary"
+              />
+            </CLegalNotice>
+          </CFlexGroup>
+        </CLegalCard>
       </template>
     </div>
 
@@ -1172,32 +1194,20 @@ function onFileChange(event: Event) {
         class="form-grid"
         @submit.prevent="saveMeeting"
       >
-        <label class="form-field">
-          <span class="form-label">{{ t('meetings.infoFields.type') }}</span>
-          <select
-            v-model="meetingForm.meeting_type"
-            class="form-input"
-          >
-            <option value="annual">{{ t('meetings.types.annual') }}</option>
-            <option value="extraordinary">{{ t('meetings.types.extraordinary') }}</option>
-          </select>
-        </label>
-        <label class="form-field">
-          <span class="form-label">{{ t('meetings.meetingDate') }}</span>
-          <input
-            v-model="meetingForm.meeting_date"
-            class="form-input"
-            type="datetime-local"
-          />
-        </label>
-        <label class="form-field">
-          <span class="form-label">{{ t('meetings.location') }}</span>
-          <input
-            v-model="meetingForm.location"
-            class="form-input"
-            type="text"
-          />
-        </label>
+        <CFormSelect
+          v-model="meetingForm.meeting_type"
+          :label="t('meetings.infoFields.type')"
+          :options="meetingTypeOptions"
+        />
+        <CFormInput
+          v-model="meetingForm.meeting_date"
+          :label="t('meetings.meetingDate')"
+          type="datetime-local"
+        />
+        <CFormInput
+          v-model="meetingForm.location"
+          :label="t('meetings.location')"
+        />
         <div class="form-field form-field--full">
           <span class="form-label">{{ t('meetings.agenda') }}</span>
           <div class="agenda-editor">
@@ -1206,10 +1216,8 @@ function onFileChange(event: Event) {
               :key="`agenda-${index}`"
               class="agenda-editor__row"
             >
-              <input
+              <CFormInput
                 v-model="meetingAgendaItems[index]"
-                class="form-input"
-                type="text"
                 :placeholder="`${t('meetings.agenda')} ${index + 1}`"
               />
               <CBtn
@@ -1263,44 +1271,27 @@ function onFileChange(event: Event) {
         class="form-grid"
         @submit.prevent="saveResolution"
       >
-        <label class="form-field">
-          <span class="form-label">#</span>
-          <input
-            v-model.number="resolutionForm.number"
-            class="form-input"
-            type="number"
-            min="1"
-          />
-        </label>
-        <label class="form-field">
-          <span class="form-label">{{ t('meetings.resolutionLabel') }}</span>
-          <input
-            v-model="resolutionForm.title"
-            class="form-input"
-            type="text"
-            :placeholder="t('meetings.resolutionLabelPlaceholder')"
-          />
-        </label>
-        <label class="form-field">
-          <span class="form-label">{{ t('meetings.resolutionDescription') }}</span>
-          <textarea
-            v-model="resolutionForm.description"
-            class="form-input"
-            :placeholder="t('meetings.resolutionDescriptionPlaceholder')"
-          ></textarea>
-        </label>
-        <label class="form-field">
-          <span class="form-label">{{ t('meetings.voteRule') }}</span>
-          <select
-            v-model="resolutionForm.vote_type"
-            class="form-input"
-          >
-            <option value="simple_majority">{{ t('meetings.vote.types.simple_majority') }}</option>
-            <option value="absolute_majority">{{ t('meetings.vote.types.absolute_majority') }}</option>
-            <option value="double_majority">{{ t('meetings.vote.types.double_majority') }}</option>
-            <option value="unanimity">{{ t('meetings.vote.types.unanimity') }}</option>
-          </select>
-        </label>
+        <CFormInput
+          :model-value="resolutionForm.number"
+          label="#"
+          type="number"
+          @update:model-value="setResolutionNumber"
+        />
+        <CFormInput
+          v-model="resolutionForm.title"
+          :label="t('meetings.resolutionLabel')"
+          :placeholder="t('meetings.resolutionLabelPlaceholder')"
+        />
+        <CFormTextarea
+          v-model="resolutionForm.description"
+          :label="t('meetings.resolutionDescription')"
+          :placeholder="t('meetings.resolutionDescriptionPlaceholder')"
+        />
+        <CFormSelect
+          v-model="resolutionForm.vote_type"
+          :label="t('meetings.voteRule')"
+          :options="voteTypeOptions"
+        />
       </form>
 
       <template #footer>
@@ -1333,16 +1324,11 @@ function onFileChange(event: Event) {
         class="form-grid"
         @submit.prevent="saveDocument"
       >
-        <label class="form-field">
-          <span class="form-label">{{ t('meetings.documents.uploadType') }}</span>
-          <select
-            v-model="documentForm.kind"
-            class="form-input"
-          >
-            <option value="notice">{{ t('meetings.documents.notice') }}</option>
-            <option value="attachment">{{ t('meetings.documents.attachment') }}</option>
-          </select>
-        </label>
+        <CFormSelect
+          v-model="documentForm.kind"
+          :label="t('meetings.documents.uploadType')"
+          :options="documentKindOptions"
+        />
         <label class="form-field">
           <span class="form-label">{{ t('meetings.documents.uploadFile') }}</span>
           <input
@@ -1397,27 +1383,13 @@ function onFileChange(event: Event) {
               <strong>{{ entry.unit_number }}</strong>
               <span>{{ entry.owner_name || '—' }}</span>
             </div>
-            <select
+            <CFormSelect
               v-model="entry.mode"
-              class="form-input"
-            >
-              <option value="present">
-                {{ t('meetings.attendanceModes.present') }}
-              </option>
-              <option value="proxy">
-                {{ t('meetings.attendanceModes.proxy') }}
-              </option>
-              <option value="correspondence">
-                {{ t('meetings.attendanceModes.correspondence') }}
-              </option>
-              <option value="absent">
-                {{ t('meetings.attendanceModes.absent') }}
-              </option>
-            </select>
-            <input
+              :options="attendanceModeOptions"
+            />
+            <CFormInput
+              v-if="entry.mode === 'proxy'"
               v-model="entry.representative_name"
-              class="form-input"
-              type="text"
               :placeholder="t('meetings.attendanceRepresentative')"
             />
           </div>
@@ -1566,7 +1538,6 @@ function onFileChange(event: Event) {
   gap: var(--space-4);
 }
 
-.section-head,
 .side-head {
   display: flex;
   justify-content: space-between;
@@ -1574,22 +1545,15 @@ function onFileChange(event: Event) {
   gap: var(--space-3);
 }
 
-.section-title,
-.side-title {
-  font-family: var(--font-display);
-  font-size: 20px;
-  font-weight: var(--fw-semibold);
-}
-
 .card-title {
-  font-size: 16px;
+  font-size: var(--text-lg);
 }
 
 .section-subtitle,
 .side-subtitle,
 .modal-subtitle {
   color: var(--color-on-surface-variant);
-  font-size: var(--text-sm);
+  font-size: var(--text-xs);
 }
 
 .modal-subtitle {
@@ -1797,15 +1761,10 @@ function onFileChange(event: Event) {
   font-family: var(--font-display);
 }
 
-.info-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-
 .info-list__row {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   gap: var(--space-3);
 }
 
@@ -1928,23 +1887,11 @@ function onFileChange(event: Event) {
   gap: var(--space-2);
 }
 
-.participants-list {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
 .participant-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-2);
-  padding: var(--space-2) 0;
-  border-bottom: 1px solid color-mix(in srgb, var(--color-outline) 18%, transparent);
-}
-
-.participant-row:last-child {
-  border-bottom: none;
 }
 
 .participant-row__identity {
@@ -2022,20 +1969,11 @@ function onFileChange(event: Event) {
   margin: 0;
   padding: 0;
   list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 0;
 }
 
 .agenda-item {
   display: flex;
   gap: var(--space-2);
-  padding: var(--space-2) 0;
-  border-bottom: 1px solid color-mix(in srgb, var(--color-outline) 18%, transparent);
-}
-
-.agenda-item:last-child {
-  border-bottom: none;
 }
 
 .agenda-item__n {

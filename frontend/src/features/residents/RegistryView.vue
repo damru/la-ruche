@@ -4,8 +4,9 @@ import { useI18n } from 'vue-i18n'
 import CLegalDescription from '@/components/atoms/CLegalDescription.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CLegalNotice from '@/components/molecules/CLegalNotice.vue'
+import CLegalCard from '@/components/molecules/CLegalCard.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
-import CPageError from '@/components/molecules/CPageError.vue'
+import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import { buildingApi } from '@/api'
 import { usePageLoader } from '@/composables/usePageLoader'
@@ -213,14 +214,14 @@ function formatLocation(unit: { block?: string | null; staircase?: string | null
           </table>
         </CCard>
 
-        <CCard>
+        <CLegalCard>
           <CLegalNotice :links="legalCardLinks">
             <CLegalDescription
               :title="t('registry.legalCard.title')"
               :summary="t('registry.legalCard.summary')"
             />
           </CLegalNotice>
-        </CCard>
+        </CLegalCard>
       </template>
     </div>
   </div>

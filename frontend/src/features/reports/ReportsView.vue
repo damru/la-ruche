@@ -13,9 +13,9 @@ import CCard from '@/components/molecules/CCard.vue'
 import CMetaLine from '@/components/molecules/CMetaLine.vue'
 import CMetaItem from '@/components/molecules/CMetaItem.vue'
 import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
-import CDocumentLinkActionModal from '@/components/molecules/CDocumentLinkActionModal.vue'
+import CDocumentLinkActionModal from '@/components/organisms/CDocumentLinkActionModal.vue'
 import CModal from '@/components/molecules/CModal.vue'
-import CPageError from '@/components/molecules/CPageError.vue'
+import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import { buildingApi, documentsApi, reportsApi, unitsApi } from '@/api'
@@ -488,6 +488,25 @@ const unitsById = computed(() =>
   new Map(allUnits.value.map(u => [u.id, u])),
 )
 
+const unitOptions = computed(() => [
+  { value: '', label: t('reports.unitPlaceholder') },
+  ...allUnits.value.map(u => ({
+    value: u.id,
+    label: t('reports.unitLabel', { number: u.unit_number }),
+  })),
+])
+
+const reportStatusOptions = computed(() =>
+  REPORT_STATUSES.map(s => ({ value: s, label: t(`reports.statuses.${s}`) })),
+)
+
+const taskPriorityOptions = computed(() =>
+  (['low', 'normal', 'high', 'urgent'] as TaskPriority[]).map(priority => ({
+    value: priority,
+    label: t(`tasks.priorities.${priority}`),
+  })),
+)
+
 // ── Helpers ───────────────────────────────────────────────────────
 function statusVariant(s: string): 'valid' | 'open' | 'pending' | 'closed' | 'default' {
   if (s === 'open') return 'pending'
@@ -720,42 +739,22 @@ function photoPreview(file: File): string {
         class="form-grid"
         @submit.prevent="submitCreate"
       >
-        <div class="form-field">
-          <label class="form-label">{{ t('reports.titleLabel') }}</label>
-          <input
-            v-model="createForm.title"
-            type="text"
-            class="form-input"
-            :placeholder="t('reports.titleLabel')"
-            required
-          />
-        </div>
-        <div class="form-field">
-          <label class="form-label">{{ t('reports.descriptionLabel') }}</label>
-          <textarea
-            v-model="createForm.description"
-            class="form-input"
-            rows="3"
-          ></textarea>
-        </div>
-        <div class="form-field">
-          <label class="form-label">{{ t('reports.unitLabel2') }}</label>
-          <select
-            v-model="createForm.unit_id"
-            class="form-input"
-          >
-            <option value="">
-              {{ t('reports.unitPlaceholder') }}
-            </option>
-            <option
-              v-for="u in allUnits"
-              :key="u.id"
-              :value="u.id"
-            >
-              {{ t('reports.unitLabel', { number: u.unit_number }) }}
-            </option>
-          </select>
-        </div>
+        <CFormInput
+          v-model="createForm.title"
+          :label="t('reports.titleLabel')"
+          :placeholder="t('reports.titleLabel')"
+          required
+        />
+        <CFormTextarea
+          v-model="createForm.description"
+          :label="t('reports.descriptionLabel')"
+          :rows="3"
+        />
+        <CFormSelect
+          v-model="createForm.unit_id"
+          :label="t('reports.unitLabel2')"
+          :options="unitOptions"
+        />
 
         <!-- Photo picker -->
         <div class="form-field">
@@ -844,21 +843,11 @@ function photoPreview(file: File): string {
       size="sm"
       @update:open="v => !v && (reportToUpdate = null)"
     >
-      <div class="form-field">
-        <label class="form-label">{{ t('reports.statusLabel') }}</label>
-        <select
-          v-model="statusForm"
-          class="form-input"
-        >
-          <option
-            v-for="s in REPORT_STATUSES"
-            :key="s"
-            :value="s"
-          >
-            {{ t(`reports.statuses.${s}`) }}
-          </option>
-        </select>
-      </div>
+      <CFormSelect
+        v-model="statusForm"
+        :label="t('reports.statusLabel')"
+        :options="reportStatusOptions"
+      />
       <template #footer>
         <CFormFeedback
           :status="updateFeedback.status.value"
@@ -891,21 +880,11 @@ function photoPreview(file: File): string {
       <p class="body-xs">
         {{ t('reports.confirmConvertMessage', { title: reportToConvert?.title ?? '' }) }}
       </p>
-      <div class="form-field">
-        <label class="form-label">{{ t('tasks.priorityLabel') }}</label>
-        <select
-          v-model="convertPriority"
-          class="form-input"
-        >
-          <option
-            v-for="priority in ['low', 'normal', 'high', 'urgent'] as TaskPriority[]"
-            :key="priority"
-            :value="priority"
-          >
-            {{ t(`tasks.priorities.${priority}`) }}
-          </option>
-        </select>
-      </div>
+      <CFormSelect
+        v-model="convertPriority"
+        :label="t('tasks.priorityLabel')"
+        :options="taskPriorityOptions"
+      />
       <template #footer>
         <CFormFeedback
           :status="convertFeedback.status.value"
@@ -939,42 +918,22 @@ function photoPreview(file: File): string {
         class="form-grid"
         @submit.prevent="submitEdit"
       >
-        <div class="form-field">
-          <label class="form-label">{{ t('reports.titleLabel') }}</label>
-          <input
-            v-model="editForm.title"
-            type="text"
-            class="form-input"
-            :placeholder="t('reports.titleLabel')"
-            required
-          />
-        </div>
-        <div class="form-field">
-          <label class="form-label">{{ t('reports.descriptionLabel') }}</label>
-          <textarea
-            v-model="editForm.description"
-            class="form-input"
-            rows="3"
-          ></textarea>
-        </div>
-        <div class="form-field">
-          <label class="form-label">{{ t('reports.unitLabel2') }}</label>
-          <select
-            v-model="editForm.unit_id"
-            class="form-input"
-          >
-            <option value="">
-              {{ t('reports.unitPlaceholder') }}
-            </option>
-            <option
-              v-for="u in allUnits"
-              :key="u.id"
-              :value="u.id"
-            >
-              {{ t('reports.unitLabel', { number: u.unit_number }) }}
-            </option>
-          </select>
-        </div>
+        <CFormInput
+          v-model="editForm.title"
+          :label="t('reports.titleLabel')"
+          :placeholder="t('reports.titleLabel')"
+          required
+        />
+        <CFormTextarea
+          v-model="editForm.description"
+          :label="t('reports.descriptionLabel')"
+          :rows="3"
+        />
+        <CFormSelect
+          v-model="editForm.unit_id"
+          :label="t('reports.unitLabel2')"
+          :options="unitOptions"
+        />
 
         <!-- Photo picker (add photos to existing report) -->
         <div class="form-field">

@@ -501,33 +501,27 @@ pub async fn save_attendance(
     .await?;
 
     for entry in entries {
-        let shares_represented = if matches!(entry.mode, MeetingAttendanceModeDto::Absent) {
-            0
-        } else {
-            sqlx::query_scalar!(
-                r#"
-                SELECT uak.share_value
-                FROM unit u
-                JOIN unit_allocation_key uak
-                    ON uak.unit_id = u.id
-                   AND uak.valid_to IS NULL
-                JOIN allocation_key ak
-                    ON ak.id = uak.key_id
-                   AND ak.key_type = 'general'
-                   AND ak.deleted_at IS NULL
-                WHERE u.id = $1
-                  AND u.building_id = $2
-                  AND u.active = true
-                "#,
-                entry.unit_id,
-                building_id,
-            )
-            .fetch_optional(&mut *tx)
-            .await?
-            .ok_or_else(|| {
-                AppError::bad_request_code("errors.meetings.unit_general_shares_missing")
-            })?
-        };
+        let shares_represented = sqlx::query_scalar!(
+            r#"
+            SELECT uak.share_value
+            FROM unit u
+            JOIN unit_allocation_key uak
+                ON uak.unit_id = u.id
+               AND uak.valid_to IS NULL
+            JOIN allocation_key ak
+                ON ak.id = uak.key_id
+               AND ak.key_type = 'general'
+               AND ak.deleted_at IS NULL
+            WHERE u.id = $1
+              AND u.building_id = $2
+              AND u.active = true
+            "#,
+            entry.unit_id,
+            building_id,
+        )
+        .fetch_optional(&mut *tx)
+        .await?
+        .ok_or_else(|| AppError::bad_request_code("errors.meetings.unit_general_shares_missing"))?;
 
         sqlx::query!(
             r#"

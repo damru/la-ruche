@@ -27,18 +27,20 @@ const effectivePulse = computed(() =>
 </script>
 
 <template>
-  <span :class="['c-badge', `c-badge--${variant}`, {
-    'c-badge--pulse': effectivePulse,
-    'tone--manager': variant === 'manager',
-    'tone--board-member': variant === 'board_member',
-    'tone--co-owner': variant === 'co_owner',
-    'tone--tenant': variant === 'tenant',
-    'tone--default': variant === 'primary',
-    'tone--warn': variant === 'pending',
-    'tone--valid': variant === 'valid' || variant === 'open',
-    'tone--err': variant === 'err',
-    'tone--disabled': variant === 'disabled'
-  }]">
+  <span
+    :class="['c-badge', `c-badge--${variant}`, {
+      'c-badge--pulse': effectivePulse,
+      'tone--manager': variant === 'manager',
+      'tone--board-member': variant === 'board_member',
+      'tone--co-owner': variant === 'co_owner',
+      'tone--tenant': variant === 'tenant',
+      'tone--default': variant === 'primary',
+      'tone--warn': variant === 'pending',
+      'tone--valid': variant === 'valid' || variant === 'open',
+      'tone--err': variant === 'err',
+      'tone--disabled': variant === 'disabled'
+    }]"
+  >
     <span
       v-if="dot"
       class="c-badge__dot"

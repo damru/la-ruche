@@ -218,7 +218,7 @@ Les patterns de contenu récurrents doivent être mutualisés dans `frontend/src
 - Les métadonnées de carte (`date`, `auteur`, `lot`, localisation, etc.) passent par la molécule `frontend/src/components/molecules/CMeta.vue` avec style scoped ; une vue ne doit plus utiliser la classe globale `activity-card__meta`.
 - Les lignes élémentaires `icône + contenu` à l'intérieur d'une métadonnée passent par `frontend/src/components/molecules/CMetaItem.vue`, avec un slot `icon` dédié. Cette molécule porte les variantes typographiques `footer` par défaut et `sub` (`13px` / `1.5`) ; une vue ne doit plus recopier localement un wrapper `span.activity-card__line` pour ce pattern simple.
 - Les encarts d’information secondaire (`activity-card__note`) passent par la molécule `frontend/src/components/molecules/CCardNote.vue` avec style scoped ; une vue ne doit plus utiliser la classe globale `activity-card__note`.
-- Les séparateurs discrets entre lignes de métadonnées (point circulaire 3px) utilisent l'atome `frontend/src/components/atoms/CSeparator.vue` avec style scoped.
+- Les séparateurs discrets entre lignes de métadonnées (point circulaire 3px ou ligne) utilisent l'atome `frontend/src/components/atoms/CSeparator.vue` avec variant "horizontal" ou "vertical" et style scoped.
 - `activity-card__contacts` pour la pile verticale email / téléphone.
 - `activity-card__contact-link` pour les liens de contact dans une carte, avec préfixe emoji métier (`✉️` pour l’email, `📞` pour le téléphone).
 - `activity-card__documents-button` pour le bouton inline ouvrant les pièces liées depuis `activity-card__documents`.

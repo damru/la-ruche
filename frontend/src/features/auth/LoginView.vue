@@ -6,7 +6,7 @@ import { useAuthStore } from '@/stores/auth'
 import { extractApiError } from '@/api/client'
 import AuthBrandPanel from '@/components/organisms/AuthBrandPanel.vue'
 import CAlert from '@/components/atoms/CAlert.vue'
-import CInput from '@/components/atoms/CInput.vue'
+import CFormInput from '@/components/atoms/CFormInput.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 
 const { t } = useI18n()
@@ -127,7 +127,7 @@ async function handleResetRequest() {
             novalidate
             @submit.prevent="handleLogin"
           >
-            <CInput
+            <CFormInput
               id="email"
               v-model="form.email"
               type="email"
@@ -138,31 +138,23 @@ async function handleResetRequest() {
               :disabled="loading"
             />
 
-            <div class="field">
-              <div class="field-label-row">
-                <label
-                  for="password"
-                  class="field-label"
-                >{{ t('auth.password') }}</label>
-                <button
-                  type="button"
-                  class="forgot-link"
-                  @click="mode = 'reset-request'; resetEmail = form.email"
-                >
-                  {{ t('auth.forgotPassword') }}
-                </button>
-              </div>
-              <input
-                id="password"
-                v-model="form.password"
-                type="password"
-                class="field-input"
-                :placeholder="t('auth.passwordPlaceholder')"
-                autocomplete="current-password"
-                required
-                :disabled="loading"
-              />
-            </div>
+            <CFormInput
+              id="password"
+              v-model="form.password"
+              type="password"
+              :label="t('auth.password')"
+              :placeholder="t('auth.passwordPlaceholder')"
+              autocomplete="current-password"
+              :required="true"
+              :disabled="loading"
+            />
+            <button
+              type="button"
+              class="forgot-link forgot-link--standalone"
+              @click="mode = 'reset-request'; resetEmail = form.email"
+            >
+              {{ t('auth.forgotPassword') }}
+            </button>
 
             <CBtn
               type="submit"
@@ -226,7 +218,7 @@ async function handleResetRequest() {
             novalidate
             @submit.prevent="handleResetRequest"
           >
-            <CInput
+            <CFormInput
               id="reset-email"
               v-model="resetEmail"
               type="email"

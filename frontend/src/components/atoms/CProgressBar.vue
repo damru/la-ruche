@@ -77,14 +77,14 @@ const fillStyle = computed(() => ({
 }
 
 .c-progress__label {
-  font-size: 13px;
-  font-weight: 500;
+  font-size: var(--text-sm);
+  font-weight: var(--fw-medium);
   color: var(--color-on-surface);
 }
 
 .c-progress__value {
-  font-size: 13px;
-  font-weight: 600;
+  font-size: var(--text-sm);
+  font-weight: var(--fw-semibold);
   color: var(--tone-fg, var(--color-primary));
 }
 

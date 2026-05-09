@@ -9,14 +9,14 @@ import { useAutoClose } from '@/composables/useAutoClose'
 import CAlert from '@/components/atoms/CAlert.vue'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
-import CDocumentLinkActionModal from '@/components/molecules/CDocumentLinkActionModal.vue'
+import CDocumentLinkActionModal from '@/components/organisms/CDocumentLinkActionModal.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CMetaLine from '@/components/molecules/CMetaLine.vue'
 import CMetaItem from '@/components/molecules/CMetaItem.vue'
 import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
-import CLinkedDocumentsModal from '@/components/molecules/CLinkedDocumentsModal.vue'
+import CLinkedDocumentsModal from '@/components/organisms/CLinkedDocumentsModal.vue'
 import CModal from '@/components/molecules/CModal.vue'
-import CPageError from '@/components/molecules/CPageError.vue'
+import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import { buildingApi, contractorsApi, documentsApi, tasksApi, usersApi } from '@/api'
@@ -197,6 +197,13 @@ const defaultForm = () => ({
   description: '',
   priority: 'normal' as string,
 })
+
+const taskPriorityOptions = computed(() =>
+  (['low', 'normal', 'high', 'urgent'] as const).map(p => ({
+    value: p,
+    label: t(`tasks.priorities.${p}`),
+  })),
+)
 const taskForm = ref(defaultForm())
 const selectedTaskDocuments = ref<File[]>([])
 const taskDocumentInputRef = ref<HTMLInputElement | null>(null)
@@ -1027,103 +1034,78 @@ async function copyVendorLink(taskId: string) {
         class="form-grid"
         @submit.prevent="saveTask"
       >
-        <div class="form-field">
-          <label class="form-label">{{ t('tasks.titleLabel') }} *</label>
-          <input
-            v-model="taskForm.title"
-            type="text"
-            class="form-input"
-            :placeholder="t('tasks.titleLabel')"
-            required
-          />
-        </div>
-        <div class="form-field">
-          <label class="form-label">{{ t('tasks.descriptionLabel') }}</label>
-          <textarea
-            v-model="taskForm.description"
-            class="form-input"
-            rows="3"
-          ></textarea>
-        </div>
-        <div class="form-field">
-          <label class="form-label">{{ t('tasks.priorityLabel') }}</label>
-          <select
-            v-model="taskForm.priority"
-            class="form-input"
-          >
-            <option
-              v-for="p in ['low', 'normal', 'high', 'urgent']"
-              :key="p"
-              :value="p"
-            >
-              {{ t(`tasks.priorities.${p}`) }}
-            </option>
-          </select>
-        </div>
+        <CFormInput
+          v-model="taskForm.title"
+          :label="t('tasks.titleLabel')"
+          :placeholder="t('tasks.titleLabel')"
+          required
+        />
+        <CFormTextarea
+          v-model="taskForm.description"
+          :label="t('tasks.descriptionLabel')"
+          :rows="3"
+        />
+        <CFormSelect
+          v-model="taskForm.priority"
+          :label="t('tasks.priorityLabel')"
+          :options="taskPriorityOptions"
+        />
         <!-- Contractor assignment with autocomplete (only when assignMode === 'contractor') -->
         <div
           v-if="assignMode === 'contractor'"
-          class="form-field"
+          class="form-field contractor-autocomplete"
         >
-          <label class="form-label">{{ t('tasks.contractorLabel') }}</label>
-          <div style="position:relative">
-            <input
-              v-model="contractorSearch"
-              type="text"
-              class="form-input"
-              :placeholder="t('tasks.contractorPlaceholder')"
-              autocomplete="off"
-              @focus="onContractorFocus"
-              @input="onContractorInput"
-              @blur="hideSuggestions"
-            />
-            <button
+          <CFormInput
+            v-model="contractorSearch"
+            :label="t('tasks.contractorLabel')"
+            :placeholder="t('tasks.contractorPlaceholder')"
+            autocomplete="off"
+            :hint="selectedContractor
+              ? (selectedContractor.email || selectedContractor.phone || '')
+              : (contractorSearch.trim() ? t('tasks.contractorFreeInputHint') : '')"
+            @focus="onContractorFocus"
+            @input="onContractorInput"
+            @blur="hideSuggestions"
+          >
+            <template
               v-if="selectedContractor"
-              type="button"
-              class="contractor-clear"
-              :aria-label="t('common.clear')"
-              @click="clearContractor"
+              #suffix
             >
-              ×
-            </button>
-            <ul
-              v-if="showSuggestions || canSuggestContractorCreation"
-              class="autocomplete-list"
+              <button
+                type="button"
+                class="contractor-clear"
+                :aria-label="t('common.clear')"
+                @click="clearContractor"
+              >
+                ×
+              </button>
+            </template>
+          </CFormInput>
+          <ul
+            v-if="showSuggestions || canSuggestContractorCreation"
+            class="autocomplete-list"
+          >
+            <li
+              v-for="c in contractorSuggestions"
+              :key="c.id"
+              class="autocomplete-item"
+              @mousedown.prevent="selectContractorSuggestion(c)"
             >
-              <li
-                v-for="c in contractorSuggestions"
-                :key="c.id"
-                class="autocomplete-item"
-                @mousedown.prevent="selectContractorSuggestion(c)"
-              >
-                <span class="autocomplete-name">{{ c.name }}</span>
-                <span
-                  v-if="c.domains.length"
-                  class="autocomplete-meta"
-                >{{ contractorDomainLabel(c) }}</span>
-              </li>
-              <li
-                v-if="canSuggestContractorCreation"
-                class="autocomplete-item autocomplete-item--action"
-                @mousedown.prevent="suggestContractorCreation"
-              >
-                <span class="autocomplete-name">{{ t('tasks.contractorCreateSuggestion', { name: contractorSearch.trim() }) }}</span>
-                <span class="autocomplete-meta">{{ t('tasks.contractorCreateSuggestionHint') }}</span>
-              </li>
-            </ul>
-          </div>
-          <span
-            v-if="selectedContractor"
-            class="field-hint"
-          >
-            {{ selectedContractor.email || selectedContractor.phone || '' }}
-          </span>
-          <span
-            v-else-if="contractorSearch.trim()"
-            class="field-hint"
-          >
-            {{ t('tasks.contractorFreeInputHint') }}
-          </span>
+              <span class="autocomplete-name">{{ c.name }}</span>
+              <span
+                v-if="c.domains.length"
+                class="autocomplete-meta"
+              >{{ contractorDomainLabel(c) }}</span>
+            </li>
+            <li
+              v-if="canSuggestContractorCreation"
+              class="autocomplete-item autocomplete-item--action"
+              @mousedown.prevent="suggestContractorCreation"
+            >
+              <span class="autocomplete-name">{{ t('tasks.contractorCreateSuggestion', { name: contractorSearch.trim() }) }}</span>
+              <span class="autocomplete-meta">{{ t('tasks.contractorCreateSuggestionHint') }}</span>
+            </li>
+          </ul>
         </div>
         <div
           v-if="assignMode === 'contractor' && createSuggestedContractor"
@@ -1131,24 +1113,18 @@ async function copyVendorLink(taskId: string) {
         >
           <label class="form-label">{{ t('tasks.contractorCreateLabel') }}</label>
           <div class="form-grid-2col contractor-create-grid">
-            <div class="form-field">
-              <label class="form-label">{{ t('contractors.email') }}</label>
-              <input
-                v-model="contractorDraft.email"
-                type="email"
-                class="form-input"
-                :placeholder="t('contractors.emailPlaceholder')"
-              />
-            </div>
-            <div class="form-field">
-              <label class="form-label">{{ t('contractors.phone') }}</label>
-              <input
-                v-model="contractorDraft.phone"
-                type="tel"
-                class="form-input"
-                :placeholder="t('contractors.phonePlaceholder')"
-              />
-            </div>
+            <CFormInput
+              v-model="contractorDraft.email"
+              :label="t('contractors.email')"
+              type="email"
+              :placeholder="t('contractors.emailPlaceholder')"
+            />
+            <CFormInput
+              v-model="contractorDraft.phone"
+              :label="t('contractors.phone')"
+              type="tel"
+              :placeholder="t('contractors.phonePlaceholder')"
+            />
           </div>
           <span class="field-hint">
             {{ t('tasks.contractorCreateHelp') }}
@@ -1376,23 +1352,17 @@ async function copyVendorLink(taskId: string) {
             : t('tasks.confirmCloseMessage', { title: closingTask?.title ?? '' })
         }}
       </p>
-      <div class="form-field task-close-field">
-        <label class="form-label">{{ t('tasks.completionCostLabel') }}</label>
-        <input
-          v-model="closeAmount"
-          type="number"
-          min="0"
-          step="0.01"
-          class="form-input"
-        />
-        <span class="field-hint">
-          {{
-            closingTask?.status === 'awaiting_validation' && closingTask?.completion_cost != null
-              ? t('tasks.completionCostVendorHint')
-              : t('tasks.completionCostHint')
-          }}
-        </span>
-      </div>
+      <CFormInput
+        v-model="closeAmount"
+        :label="t('tasks.completionCostLabel')"
+        type="number"
+        :min="0"
+        :step="0.01"
+        :hint="closingTask?.status === 'awaiting_validation' && closingTask?.completion_cost != null
+          ? t('tasks.completionCostVendorHint')
+          : t('tasks.completionCostHint')"
+        class="task-close-field"
+      />
       <template #footer>
         <CFormFeedback
           class="modal-footer-feedback"
@@ -1546,6 +1516,8 @@ async function copyVendorLink(taskId: string) {
 }
 
 /* Contractor autocomplete */
+.contractor-autocomplete { position: relative; }
+
 .autocomplete-list {
   position: absolute;
   top: 100%;
@@ -1583,16 +1555,15 @@ async function copyVendorLink(taskId: string) {
 }
 
 .contractor-clear {
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
   background: none;
   border: none;
   cursor: pointer;
   font-size: 16px;
   color: var(--color-on-surface-variant);
   padding: 0 4px;
+  pointer-events: auto;
+  min-height: unset;
+  min-width: unset;
 }
 
 .field-hint { font-size: var(--text-xs); color: var(--color-on-surface-variant); }

@@ -16,3 +16,4 @@ docs/
 backend/target/
 frontend/node_modules/
 frontend/dist/
+graphify_out

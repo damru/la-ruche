@@ -21,6 +21,7 @@ withDefaults(defineProps<{
     :class="[
       'c-card',
       `c-card--pad-${padding}`,
+      `c-card--radius-${radius}`,
       { 'c-card--shadow': shadow, 'c-card--interactive': interactive }
     ]"
   >
@@ -31,13 +32,18 @@ withDefaults(defineProps<{
 <style scoped>
 .c-card {
   background: var(--tone-bg, var(--color-surface-container-lowest));
-  border-radius: var(--radius-lg);
   overflow-x: auto;
   min-width: 0;
   color: var(--tone-fg, var(--color-on-surface-variant));
   display: flex;
   flex-direction: column;
 }
+
+.c-card--radius-none { border-radius: 0; }
+.c-card--radius-xs   { border-radius: var(--radius-xs, var(--radius-sm)); }
+.c-card--radius-sm   { border-radius: var(--radius-sm); }
+.c-card--radius-md   { border-radius: var(--radius-md); }
+.c-card--radius-lg   { border-radius: var(--radius-lg); }
 
 .c-card--pad-none { padding: 0; }
 .c-card--pad-xs   { padding: var(--space-3); }

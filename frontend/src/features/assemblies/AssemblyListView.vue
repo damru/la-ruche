@@ -16,7 +16,7 @@ import CSeparator from '@/components/atoms/CSeparator.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CMetaLine from '@/components/molecules/CMetaLine.vue'
 import CModal from '@/components/molecules/CModal.vue'
-import CPageError from '@/components/molecules/CPageError.vue'
+import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 
@@ -79,12 +79,12 @@ function statusLabel(status: Meeting['status']): string {
 
 function statusBadgeVariant(status: Meeting['status']): 'primary' | 'valid' | 'disabled' {
   if (status === 'called') return 'primary'
-  if (status === 'closed') return 'valid'
+  if (status === 'closed' || status === 'held') return 'valid'
   return 'disabled'
 }
 
 function meetingBadgeLabel(type: MeetingType): string {
-  return type === 'annual' ? 'AG' : 'AGE'
+  return type === 'annual' ? t('meetings.typeLabel.annualShort') : t('meetings.typeLabel.extraordinaryShort')
 }
 
 function openMeeting(meetingId: string) {
@@ -174,12 +174,15 @@ async function saveMeeting() {
           <h1 class="display-md">
             {{ t('meetings.title') }}
           </h1>
-          <p
-            class="body-md"
-            style="color:var(--color-on-surface-variant)"
-          >
-            {{ buildingName }} · {{ t('meetings.count', allMeetings.length) }}
-          </p>
+          <CMetaLine>
+            <CMetaItem variant="sub">
+              {{ buildingName }}
+            </CMetaItem>
+            <CSeparator />
+            <CMetaItem variant="sub">
+              {{ t('meetings.count', allMeetings.length) }}
+            </CMetaItem>
+          </CMetaLine>
         </header>
 
         <div class="tabs">
@@ -229,7 +232,7 @@ async function saveMeeting() {
             @keydown.enter.prevent="openMeeting(meeting.id)"
             @keydown.space.prevent="openMeeting(meeting.id)"
           >
-            <div :class="['meeting-badge', { 'meeting-badge--closed': meeting.status === 'closed', 'meeting-badge--draft': statusBadgeVariant(meeting.status) === 'disabled' }]">
+            <div :class="['meeting-badge', { 'meeting-badge--closed': meeting.status === 'closed', 'meeting-badge--held': meeting.status === 'held', 'meeting-badge--draft': statusBadgeVariant(meeting.status) === 'disabled' }]">
               <span class="meeting-badge__type">{{ meetingBadgeLabel(meeting.meeting_type) }}</span>
               <span class="meeting-badge__year">{{ new Date(meeting.meeting_date).getFullYear() }}</span>
             </div>
@@ -243,13 +246,14 @@ async function saveMeeting() {
                   <CBadge
                     :variant="statusBadgeVariant(meeting.status)"
                     :pulse="statusBadgeVariant(meeting.status) === 'primary'"
+                    class="text-xs"
                     dot
                   >
                     {{ statusLabel(meeting.status) }}
                   </CBadge>
                 </div>
                 <CMetaLine>
-                  <CMetaItem>
+                  <CMetaItem variant="sub">
                     <template #icon>
                       <CIconCalendar />
                     </template>
@@ -258,6 +262,7 @@ async function saveMeeting() {
                   <CSeparator />
                   <CMetaItem
                     v-if="meeting.location"
+                    variant="sub"
                   >
                     <template #icon>
                       <CIconLocation />
@@ -301,42 +306,27 @@ async function saveMeeting() {
         class="form-grid"
         @submit.prevent="saveMeeting"
       >
-        <label class="form-field">
-          <span class="form-label">{{ t('meetings.infoFields.type') }}</span>
-          <select
-            v-model="createForm.meeting_type"
-            class="form-input"
-          >
-            <option value="annual">{{ t('meetings.types.annual') }}</option>
-            <option value="extraordinary">{{ t('meetings.types.extraordinary') }}</option>
-          </select>
-        </label>
-
-        <label class="form-field">
-          <span class="form-label">{{ t('meetings.meetingDate') }}</span>
-          <input
-            v-model="createForm.meeting_date"
-            class="form-input"
-            type="datetime-local"
-          />
-        </label>
-
-        <label class="form-field">
-          <span class="form-label">{{ t('meetings.location') }}</span>
-          <input
-            v-model="createForm.location"
-            class="form-input"
-            type="text"
-          />
-        </label>
-
-        <label class="form-field">
-          <span class="form-label">{{ t('meetings.agenda') }}</span>
-          <textarea
-            v-model="createForm.agenda"
-            class="form-input"
-          ></textarea>
-        </label>
+        <CFormSelect
+          v-model="createForm.meeting_type"
+          :label="t('meetings.infoFields.type')"
+          :options="[
+            { value: 'annual', label: t('meetings.types.annual') },
+            { value: 'extraordinary', label: t('meetings.types.extraordinary') },
+          ]"
+        />
+        <CFormInput
+          v-model="createForm.meeting_date"
+          :label="t('meetings.meetingDate')"
+          type="datetime-local"
+        />
+        <CFormInput
+          v-model="createForm.location"
+          :label="t('meetings.location')"
+        />
+        <CFormTextarea
+          v-model="createForm.agenda"
+          :label="t('meetings.agenda')"
+        />
       </form>
 
       <template #footer>
@@ -422,6 +412,19 @@ async function saveMeeting() {
       transparent 20px
     ),
     var(--gradient-primary);
+}
+
+
+.meeting-badge--held {
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      rgba(255, 255, 255, 0.18) 0px,
+      rgba(255, 255, 255, 0.18) 10px,
+      transparent 10px,
+      transparent 20px
+    ),
+    linear-gradient(135deg, #1b5e20, #43a047);
 }
 
 .meeting-badge__type {

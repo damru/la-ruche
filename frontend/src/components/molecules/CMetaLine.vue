@@ -9,7 +9,7 @@ withDefaults(defineProps<{
 <template>
   <component
     :is="as"
-    class="flex flex-wrap items-center gap-x-2 gap-y-1"
+    class="c-meta-line"
   >
     <slot></slot>
   </component>

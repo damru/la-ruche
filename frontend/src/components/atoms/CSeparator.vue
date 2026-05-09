@@ -1,27 +1,40 @@
 <script setup lang="ts">
-/** Separator atom — small circular dot divider */
+import { Separator } from 'radix-vue';
 
-const props = defineProps<{
-  /** Semantic HTML element */
-  as?: 'span' | 'div'
-}>()
-
-const tag = props.as || 'span'
+/** Separator atom.
+ *  - horizontal (default): small circular dot — use between inline/meta items
+ *  - vertical: full-width rule — use between stacked sections
+ */
+withDefaults(defineProps<{
+  variant?: 'horizontal' | 'vertical'
+}>(), {
+  variant: 'horizontal',
+})
 </script>
 
 <template>
-  <component
-    :is="tag"
-    class="c-separator"
+  <Separator
+    :class="{
+      'c-separator--horizontal': variant === 'horizontal',
+      'c-separator--vertical': variant === 'vertical',
+    }"
+    :decorative="true"
+    :orientation="variant"
   />
 </template>
 
 <style scoped>
-.c-separator {
+/* Horizontal — circular dot between inline items */
+.c-separator--horizontal {
   width: 0.25em;
   height: 0.25em;
   border-radius: var(--radius-full);
   background: var(--color-outline);
-  display: inline-block;
+}
+
+/* Vertical — thin rule between stacked sections */
+.c-separator--vertical {
+  height: 1px;
+  background: color-mix(in srgb, var(--color-outline) 8%, transparent);
 }
 </style>

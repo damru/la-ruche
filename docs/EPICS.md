@@ -424,6 +424,10 @@ Durcir les entités comptablement critiques pour empêcher toute modification r�
 | # | Tâche | Détail | Statut |
 |---|-------|--------|--------|
 | T-001 | Fusionner les migrations SQL en un fichier unique | Consolider `0001_init.sql` et `0002_tantieme_audit.sql` (et toute migration ultérieure) en un seul fichier `0001_init.sql` pour simplifier l'initialisation d'une nouvelle instance. | en attente |
+| T-002-A | Peaufiner les écrans, création de composants atomiques | en-attente |
+| T-002-B | Rationaliser le CSS, généralisation de tailwind, réduction des classes custom, utilisation des composants radix-vue | en-attente |
+| T-003 | Durcir le contrat d'interface entre backend et frontend - utilisation d'openapi ? | en attente |
+| T-004 | Etudier l'intérêt de la création d'un crate dédié aux AG | en attente |
 
 ***
 

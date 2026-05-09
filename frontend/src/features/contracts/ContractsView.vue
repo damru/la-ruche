@@ -8,10 +8,10 @@ import CIconDroplet from '@/components/atoms/CIconDroplet.svg'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
-import CLinkedDocumentsModal from '@/components/molecules/CLinkedDocumentsModal.vue'
-import CPageError from '@/components/molecules/CPageError.vue'
+import CLinkedDocumentsModal from '@/components/organisms/CLinkedDocumentsModal.vue'
+import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
-import CReminderCard from '@/components/molecules/CReminderCard.vue'
+import CReminderCard from '@/components/organisms/CReminderCard.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import CIconFile from '@/components/atoms/CIconFile.svg'
 import CIconLeaf from '@/components/atoms/CIconLeaf.svg'
@@ -395,16 +395,15 @@ async function confirmTerminateContract() {
             </button>
           </div>
 
-          <div class="search-bar">
-            <CIconSearch class="search-icon" />
-            <input
-              v-model="search"
-              type="search"
-              :aria-label="t('contracts.searchPlaceholder')"
-              :placeholder="t('contracts.searchPlaceholder')"
-              class="search-input"
-            />
-          </div>
+          <CFormInput
+            v-model="search"
+            type="search"
+            :placeholder="t('contracts.searchPlaceholder')"
+          >
+            <template #prefix>
+              <CIconSearch />
+            </template>
+          </CFormInput>
         </div>
 
         <CCard

@@ -425,27 +425,22 @@ function initials(name: string): string {
           <p class="modal-sub">
             {{ t('budget.generateLeviesSub') }}
           </p>
-          <div class="field">
-            <label>{{ t('budget.quarterLabel') }}</label>
-            <select>
-              <option>T1 2025 — Échéance 1er janvier</option>
-              <option>T2 2025 — Échéance 1er avril</option>
-              <option>T3 2025 — Échéance 1er juillet</option>
-              <option selected>
-                T4 2025 — Échéance 1er octobre
-              </option>
-            </select>
-          </div>
-          <div class="field">
-            <label>{{ t('budget.totalToShare') }}</label>
-            <input
-              type="number"
-              :value="Math.round(totalForecast / 4)"
-            />
-            <p class="field-hint">
-              {{ t('budget.totalToShareHint', { amount: formatCurrency(totalForecast) }) }}
-            </p>
-          </div>
+          <CFormSelect
+            :model-value="'T4 2025'"
+            :label="t('budget.quarterLabel')"
+            :options="[
+              { value: 'T1 2025', label: 'T1 2025 — Échéance 1er janvier' },
+              { value: 'T2 2025', label: 'T2 2025 — Échéance 1er avril' },
+              { value: 'T3 2025', label: 'T3 2025 — Échéance 1er juillet' },
+              { value: 'T4 2025', label: 'T4 2025 — Échéance 1er octobre' },
+            ]"
+          />
+          <CFormInput
+            :model-value="Math.round(totalForecast / 4)"
+            :label="t('budget.totalToShare')"
+            type="number"
+            :hint="t('budget.totalToShareHint', { amount: formatCurrency(totalForecast) })"
+          />
           <div class="modal-actions">
             <CBtn
               variant="secondary"

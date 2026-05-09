@@ -12,7 +12,7 @@ import CCard from '@/components/molecules/CCard.vue'
 import CMetaLine from '@/components/molecules/CMetaLine.vue'
 import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
 import CModal from '@/components/molecules/CModal.vue'
-import CPageError from '@/components/molecules/CPageError.vue'
+import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import CIconBolt from '@/components/atoms/CIconBolt.svg'
@@ -107,10 +107,10 @@ function openContractorDetail(contractorId: string) {
 }
 
 // ── Sorted domains list (alphabetical by translated label) ────────
-const DOMAINS = computed(() =>
-  [...DOMAINS_RAW].sort((a, b) =>
-    t(`contractors.domains.${a}`).localeCompare(t(`contractors.domains.${b}`)),
-  ),
+const domainOptions = computed(() =>
+  [...DOMAINS_RAW]
+    .map(value => ({ value, label: t(`contractors.domains.${value}`) }))
+    .sort((a, b) => a.label.localeCompare(b.label)),
 )
 
 // ── Form modal ────────────────────────────────────────────────────
@@ -266,15 +266,15 @@ async function confirmDelete() {
         </header>
 
         <!-- Search bar -->
-        <div class="search-bar">
-          <CIconSearch class="search-icon" />
-          <input
-            v-model="search"
-            type="search"
-            class="search-input"
-            :placeholder="t('contractors.searchPlaceholder')"
-          />
-        </div>
+        <CFormInput
+          v-model="search"
+          type="search"
+          :placeholder="t('contractors.searchPlaceholder')"
+        >
+          <template #prefix>
+            <CIconSearch />
+          </template>
+        </CFormInput>
 
         <!-- Empty state -->
         <div
@@ -392,61 +392,37 @@ async function confirmDelete() {
         class="form-grid"
         @submit.prevent="save"
       >
-        <div class="form-field">
-          <label class="form-label">{{ t('contractors.name') }} *</label>
-          <input
-            v-model="form.name"
-            class="form-input"
-            :placeholder="t('contractors.namePlaceholder')"
-            required
-          />
-        </div>
-        <div class="form-field">
-          <label class="form-label">{{ t('contractors.email') }}</label>
-          <input
-            v-model="form.email"
-            type="email"
-            class="form-input"
-            :placeholder="t('contractors.emailPlaceholder')"
-          />
-        </div>
-        <div class="form-field">
-          <label class="form-label">{{ t('contractors.phone') }}</label>
-          <input
-            v-model="form.phone"
-            type="tel"
-            class="form-input"
-            :placeholder="t('contractors.phonePlaceholder')"
-          />
-        </div>
-        <!-- Domains: multi-select checkboxes, sorted alphabetically -->
-        <div class="form-field form-field--full">
-          <label class="form-label">{{ t('contractors.domainsLabel') }}</label>
-          <div class="domains-checkboxes">
-            <label
-              v-for="d in DOMAINS"
-              :key="d"
-              class="checkbox-label"
-            >
-              <input
-                v-model="form.domains"
-                type="checkbox"
-                :value="d"
-              />
-              {{ t(`contractors.domains.${d}`) }}
-            </label>
-          </div>
-        </div>
-        <!-- Notes textarea -->
-        <div class="form-field form-field--full">
-          <label class="form-label">{{ t('contractors.notes') }}</label>
-          <textarea
-            v-model="form.notes"
-            class="form-input"
-            rows="3"
-            :placeholder="t('contractors.notesPlaceholder')"
-          ></textarea>
-        </div>
+        <CFormInput
+          v-model="form.name"
+          :label="t('contractors.name')"
+          :placeholder="t('contractors.namePlaceholder')"
+          required
+        />
+        <CFormInput
+          v-model="form.email"
+          :label="t('contractors.email')"
+          type="email"
+          :placeholder="t('contractors.emailPlaceholder')"
+        />
+        <CFormInput
+          v-model="form.phone"
+          :label="t('contractors.phone')"
+          type="tel"
+          :placeholder="t('contractors.phonePlaceholder')"
+        />
+        <CFormChipSelect
+          v-model="form.domains"
+          :label="t('contractors.domainsLabel')"
+          :options="domainOptions"
+          class="form-field--full"
+        />
+        <CFormTextarea
+          v-model="form.notes"
+          :label="t('contractors.notes')"
+          :rows="3"
+          :placeholder="t('contractors.notesPlaceholder')"
+          class="form-field--full"
+        />
       </form>
       <template #footer>
         <CFormFeedback
@@ -518,14 +494,6 @@ async function confirmDelete() {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: var(--space-4);
-}
-
-/* Domains checkbox grid */
-.domains-checkboxes {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2) var(--space-4);
-  padding: var(--space-2) 0;
 }
 
 </style>

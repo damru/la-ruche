@@ -6,7 +6,7 @@ import CBtn from '@/components/atoms/CBtn.vue'
 import CAlert from '@/components/atoms/CAlert.vue'
 import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
 import CModal from '@/components/molecules/CModal.vue'
-import CPageError from '@/components/molecules/CPageError.vue'
+import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import { allocationKeysApi, unitsApi } from '@/api'
@@ -37,16 +37,15 @@ const modalSaving = ref(false)
 
 // ── Derived ───────────────────────────────────────────────────────
 
-/** Shares sorted numerically by unit_number; same object refs as modalForm.shares for v-model to work */
-const modalSortedShares = computed(() =>
-  [...modalForm.value.shares].sort((a, b) =>
-    a.unit_number.localeCompare(b.unit_number, undefined, { numeric: true })
-  )
-)
-
 const modalSharesSum = computed(() =>
   modalForm.value.shares.reduce((acc, s) => acc + (s.share_value || 0), 0)
 )
+
+function sortSharesByUnit(shares: { unit_id: string; unit_number: string; share_value: number }[]) {
+  return [...shares].sort((a, b) =>
+    a.unit_number.localeCompare(b.unit_number, undefined, { numeric: true })
+  )
+}
 
 const isSumMismatch = computed(() => {
   const total = modalForm.value.sharesTotal
@@ -77,9 +76,11 @@ async function openCreateModal() {
   try {
     // Load all units to allow share assignment at creation time
     const res = await unitsApi.list()
-    modalForm.value.shares = res.data
-      .filter(u => u.active)
-      .map(u => ({ unit_id: u.id, unit_number: u.unit_number, share_value: 0 }))
+    modalForm.value.shares = sortSharesByUnit(
+      res.data
+        .filter(u => u.active)
+        .map(u => ({ unit_id: u.id, unit_number: u.unit_number, share_value: 0 }))
+    )
   } catch { /* units failed to load — shares section will show empty state */ }
   finally { modalLoading.value = false }
 }
@@ -91,7 +92,7 @@ async function openEditModal(key: AllocationKey) {
   modalLoading.value = true
   try {
     const res = await allocationKeysApi.listShares(key.id)
-    modalForm.value.shares = res.data.shares.map(s => ({ ...s }))
+    modalForm.value.shares = sortSharesByUnit(res.data.shares.map(s => ({ ...s })))
     modalForm.value.sharesTotal = res.data.shares_total
   } catch { /* non-blocking — shares section will show empty state */ }
   finally { modalLoading.value = false }
@@ -306,22 +307,19 @@ onMounted(reload)
     >
       <div class="form-grid">
         <div class="form-grid">
-          <div class="field field--full">
-            <label class="field-label">{{ t('common.name') }} *</label>
-            <input
-              v-model="modalForm.name"
-              class="field-input"
-              :placeholder="t('settings.keys.namePlaceholder')"
-            />
-          </div>
-          <div class="field field--full">
-            <label class="field-label">{{ t('settings.keys.descriptionLabel') }}</label>
-            <textarea
-              v-model="modalForm.description"
-              class="field-input"
-              :placeholder="t('settings.keys.descriptionPlaceholder')"
-            ></textarea>
-          </div>
+          <CFormInput
+            v-model="modalForm.name"
+            :label="t('common.name')"
+            :placeholder="t('settings.keys.namePlaceholder')"
+            required
+            class="field--full"
+          />
+          <CFormTextarea
+            v-model="modalForm.description"
+            :label="t('settings.keys.descriptionLabel')"
+            :placeholder="t('settings.keys.descriptionPlaceholder')"
+            class="field--full"
+          />
         </div>
 
         <div class="shares-section">
@@ -348,21 +346,16 @@ onMounted(reload)
               {{ t('settings.keys.noUnits') }}
             </p>
             <template v-else>
-              <div class="shares-chips">
-                <label
-                  v-for="share in modalSortedShares"
+              <div class="c-chips">
+                <CFormChipInput
+                  v-for="share in modalForm.shares"
                   :key="share.unit_id"
-                  class="share-chip"
-                >
-                  <span class="share-chip__lot">{{ share.unit_number }}</span>
-                  <input
-                    v-model.number="share.share_value"
-                    type="number"
-                    step="1"
-                    min="0"
-                    class="share-chip__input"
-                  />
-                </label>
+                  v-model="share.share_value"
+                  :label="share.unit_number"
+                  type="number"
+                  :step="1"
+                  :min="0"
+                />
               </div>
               <div class="shares-summary">
                 <span>{{ t('common.total') }} :</span>
@@ -504,49 +497,7 @@ onMounted(reload)
 
 .shares-loading { display: flex; align-items: center; gap: var(--space-2); color: var(--color-on-surface-variant); font-size: var(--text-sm); }
 
-.shares-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 10px;
-}
-
-.share-chip {
-  display: flex;
-  align-items: stretch;
-  gap: 0;
-  background: var(--color-secondary-container);
-  border-radius: 9999px;
-  overflow: hidden;
-  cursor: default;
-}
-.share-chip__lot {
-  padding: 5px 8px 5px 12px;
-  font-size: var(--text-xs);
-  font-weight: var(--fw-semibold);
-  color: var(--color-on-surface-variant);
-  white-space: nowrap;
-  display: flex;
-  align-items: center;
-}
-.share-chip__input {
-  box-sizing: border-box;
-  width: 50px;
-  padding: 5px 10px 5px 6px;
-  font-size: var(--text-sm);
-  font-weight: var(--fw-medium);
-  text-align: right;
-  background: var(--color-surface-container-high);
-  border: none;
-  border-radius: 0 9999px 9999px 0;
-  color: var(--color-on-surface);
-  outline: none;
-  transition: background var(--transition-fast), box-shadow var(--transition-fast);
-}
-.share-chip__input:focus {
-  background: var(--color-surface-container-highest, var(--color-surface-container-high));
-  box-shadow: inset 0 0 0 2px var(--color-primary);
-}
+.c-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 
 .shares-summary {
   display: flex;

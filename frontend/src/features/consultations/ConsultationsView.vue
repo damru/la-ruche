@@ -12,9 +12,10 @@ import CCard from '@/components/molecules/CCard.vue'
 import CAlert from '@/components/atoms/CAlert.vue'
 import CLegalDescription from '@/components/atoms/CLegalDescription.vue'
 import CLegalNotice from '@/components/molecules/CLegalNotice.vue'
+import CLegalCard from '@/components/molecules/CLegalCard.vue'
 import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
 import CModal from '@/components/molecules/CModal.vue'
-import CPageError from '@/components/molecules/CPageError.vue'
+import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import { buildingApi, consultationsApi } from '@/api'
@@ -389,12 +390,11 @@ async function confirmDelete() {
               v-if="c.status === 'open' && getInline(c).selections.length > 0 && !isVoteLocked(c)"
               class="inline-vote-form"
             >
-              <textarea
+              <CFormTextarea
                 v-model="getInline(c).comment"
-                class="form-input"
-                rows="2"
+                :rows="2"
                 :placeholder="t('consultations.respondModal.commentLabel')"
-              ></textarea>
+              />
               <div class="inline-vote-actions">
                 <p
                   v-if="getInline(c).error"
@@ -473,14 +473,14 @@ async function confirmDelete() {
           </div>
         </div>
 
-        <CCard>
+        <CLegalCard>
           <CLegalNotice :links="legalCardLinks">
             <CLegalDescription
               :title="t('consultations.legalCard.title')"
               :summary="t('consultations.legalCard.summary')"
             />
           </CLegalNotice>
-        </CCard>
+        </CLegalCard>
       </template>
     </div>
 
@@ -495,23 +495,16 @@ async function confirmDelete() {
         class="form-grid"
         @submit.prevent="saveConsultation"
       >
-        <div class="form-field">
-          <label class="form-label">{{ t('consultations.fields.title') }} *</label>
-          <input
-            v-model="createForm.title"
-            type="text"
-            class="form-input"
-            required
-          />
-        </div>
-        <div class="form-field">
-          <label class="form-label">{{ t('consultations.fields.description') }}</label>
-          <textarea
-            v-model="createForm.description"
-            class="form-input"
-            rows="2"
-          ></textarea>
-        </div>
+        <CFormInput
+          v-model="createForm.title"
+          :label="t('consultations.fields.title')"
+          required
+        />
+        <CFormTextarea
+          v-model="createForm.description"
+          :label="t('consultations.fields.description')"
+          :rows="2"
+        />
         <div class="form-field">
           <label class="form-label">{{ t('consultations.fields.choices') }} *</label>
           <div
@@ -519,11 +512,10 @@ async function confirmDelete() {
             :key="idx"
             class="choice-input-row"
           >
-            <input
+            <CFormInput
               v-model="createForm.choices[idx]"
-              type="text"
-              class="form-input"
               :placeholder="`Option ${idx + 1}`"
+              class="grow"
             />
             <button
               v-if="createForm.choices.length > 2"

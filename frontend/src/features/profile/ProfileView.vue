@@ -173,39 +173,27 @@ async function confirmResetDemo() {
             {{ t('settings.account.personalInfo') }}
           </h2>
           <div class="form-grid-2col">
-            <div class="field">
-              <label class="field-label">{{ t('common.firstName') }}</label>
-              <input
-                :value="auth.user?.first_name"
-                class="field-input"
-                disabled
-              />
-            </div>
-            <div class="field">
-              <label class="field-label">{{ t('common.lastName') }}</label>
-              <input
-                :value="auth.user?.last_name"
-                class="field-input"
-                disabled
-              />
-            </div>
-            <div class="field">
-              <label class="field-label">{{ t('common.email') }}</label>
-              <input
-                :value="auth.user?.email"
-                class="field-input"
-                disabled
-              />
-            </div>
-            <div class="field">
-              <label class="field-label">{{ t('common.phone') }}</label>
-              <input
-                v-model="phone"
-                class="field-input"
-                type="tel"
-                :placeholder="t('common.phonePlaceholder')"
-              />
-            </div>
+            <CFormInput
+              :model-value="auth.user?.first_name ?? ''"
+              :label="t('common.firstName')"
+              disabled
+            />
+            <CFormInput
+              :model-value="auth.user?.last_name ?? ''"
+              :label="t('common.lastName')"
+              disabled
+            />
+            <CFormInput
+              :model-value="auth.user?.email ?? ''"
+              :label="t('common.email')"
+              disabled
+            />
+            <CFormInput
+              v-model="phone"
+              :label="t('common.phone')"
+              type="tel"
+              :placeholder="t('common.phonePlaceholder')"
+            />
           </div>
           <div class="form-actions">
             <CFormFeedback

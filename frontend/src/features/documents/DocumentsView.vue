@@ -6,10 +6,10 @@ import CBadge from '@/components/atoms/CBadge.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CModal from '@/components/molecules/CModal.vue'
-import CPageError from '@/components/molecules/CPageError.vue'
+import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
-import CDropzone from '@/components/molecules/CDropzone.vue'
+import CFormDropzone from '@/components/molecules/CFormDropzone.vue'
 import { documentsApi, buildingApi } from '@/api'
 import { toErrorMessage, usePageLoader } from '@/composables/usePageLoader'
 import { useFormFeedback } from '@/composables/useFormFeedback'
@@ -214,15 +214,15 @@ async function confirmDeleteDoc() {
           </p>
         </header>
 
-        <div class="search-bar">
-          <CIconSearch class="search-icon" />
-          <input
-            v-model="search"
-            type="search"
-            :placeholder="t('documents.searchPlaceholder')"
-            class="search-input"
-          />
-        </div>
+        <CFormInput
+          v-model="search"
+          type="search"
+          :placeholder="t('documents.searchPlaceholder')"
+        >
+          <template #prefix>
+            <CIconSearch />
+          </template>
+        </CFormInput>
 
         <CCard padding="none">
           <table class="data-table">
@@ -351,7 +351,7 @@ async function confirmDeleteDoc() {
             {{ uploadError }}
           </CAlert>
 
-          <CDropzone
+          <CFormDropzone
             :uploading="uploading"
             @files="onDropzoneFiles"
             @error="uploadError = $event"

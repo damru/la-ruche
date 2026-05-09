@@ -112,3 +112,12 @@ If no → Pattern A or B suffices.
 - **Pattern B — amend workflow:** replace « Modifier » with « Créer un avenant » (`ghost` variant, not destructive). Pre-fill the new form and close the old entity in one server call.
 - **Never call a generic `PUT`/`PATCH`** on a frozen entity — use the dedicated transition endpoint.
 - **Never include frozen fields in a form payload** once they are set.
+
+## graphify
+
+This project has a graphify knowledge graph at graphify-out/.
+
+Rules:
+- Before answering architecture or codebase questions, read graphify-out/GRAPH_REPORT.md for god nodes and community structure
+- If graphify-out/wiki/index.md exists, navigate it instead of reading raw files
+- After modifying code files in this session, run `graphify update .` to keep the graph current (AST-only, no API cost)

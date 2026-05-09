@@ -6,7 +6,7 @@ import CCard from '@/components/molecules/CCard.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CModal from '@/components/molecules/CModal.vue'
 import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
-import CPageError from '@/components/molecules/CPageError.vue'
+import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import { unitsApi, allocationKeysApi, usersApi } from '@/api'
@@ -42,12 +42,16 @@ const editingUnit = ref<{
   staircase: string
   floor: string
   description: string
-  general_shares: number
+  general_shares: number | string
 }>({
   unit_number: '', unit_type: 'apartment', block: '', staircase: '', floor: '', description: '', general_shares: 0,
 })
 
 const unitTypes: UnitType[] = ['apartment', 'cellar', 'parking', 'commercial_unit', 'other']
+
+const unitTypeOptions = computed(() =>
+  unitTypes.map(ut => ({ value: ut, label: t(`units.types.${ut}`) })),
+)
 
 const units = computed(() => {
   const q = search.value.toLowerCase()
@@ -294,15 +298,15 @@ function formatLocation(unit: { block?: string | null; staircase?: string | null
           </button>
         </div>
 
-        <div class="search-bar">
-          <CIconSearch class="search-icon" />
-          <input
-            v-model="search"
-            type="search"
-            :placeholder="activeTab === 'units' ? t('residents.searchUnit') : t('residents.searchUser')"
-            class="search-input"
-          />
-        </div>
+        <CFormInput
+          v-model="search"
+          type="search"
+          :placeholder="activeTab === 'units' ? t('residents.searchUnit') : t('residents.searchUser')"
+        >
+          <template #prefix>
+            <CIconSearch />
+          </template>
+        </CFormInput>
 
         <!-- Lots -->
         <template v-if="activeTab === 'units'">
@@ -472,57 +476,34 @@ function formatLocation(unit: { block?: string | null; staircase?: string | null
       >
         <div class="form-grid">
           <div class="form-grid-2col">
-            <div class="field">
-              <label class="field-label">{{ t('units.number') }} *</label>
-              <input
-                v-model="editingUnit.unit_number"
-                class="field-input"
-                placeholder="A01"
-              />
-            </div>
-            <div class="field">
-              <label class="field-label">{{ t('common.type') }}</label>
-              <select
-                v-model="editingUnit.unit_type"
-                class="field-input"
-              >
-                <option
-                  v-for="ut in unitTypes"
-                  :key="ut"
-                  :value="ut"
-                >
-                  {{ t(`units.types.${ut}`) }}
-                </option>
-              </select>
-            </div>
-            <div class="field">
-              <label class="field-label">{{ t('residents.block') }}</label>
-              <input
-                v-model="editingUnit.block"
-                class="field-input"
-              />
-            </div>
-            <div class="field">
-              <label class="field-label">{{ t('residents.staircaseLabel') }}</label>
-              <input
-                v-model="editingUnit.staircase"
-                class="field-input"
-              />
-            </div>
-            <div class="field">
-              <label class="field-label">{{ t('residents.floorLabel') }}</label>
-              <input
-                v-model="editingUnit.floor"
-                class="field-input"
-              />
-            </div>
-            <div class="field field--full">
-              <label class="field-label">{{ t('residents.description') }}</label>
-              <textarea
-                v-model="editingUnit.description"
-                class="field-input"
-              ></textarea>
-            </div>
+            <CFormInput
+              v-model="editingUnit.unit_number"
+              :label="t('units.number')"
+              placeholder="A01"
+              required
+            />
+            <CFormSelect
+              v-model="editingUnit.unit_type"
+              :label="t('common.type')"
+              :options="unitTypeOptions"
+            />
+            <CFormInput
+              v-model="editingUnit.block"
+              :label="t('residents.block')"
+            />
+            <CFormInput
+              v-model="editingUnit.staircase"
+              :label="t('residents.staircaseLabel')"
+            />
+            <CFormInput
+              v-model="editingUnit.floor"
+              :label="t('residents.floorLabel')"
+            />
+            <CFormTextarea
+              v-model="editingUnit.description"
+              :label="t('residents.description')"
+              class="field--full"
+            />
           </div>
 
           <!-- Tantièmes généraux (clé Charges Générales) -->
@@ -530,20 +511,15 @@ function formatLocation(unit: { block?: string | null; staircase?: string | null
             <h3 class="shares-title">
               {{ t('units.generalShares') }}
             </h3>
-            <div class="field">
-              <label class="field-label">{{ generalKey ? generalKey.name : t('units.shares') }}</label>
-              <input
-                v-model.number="editingUnit.general_shares"
-                type="number"
-                step="1"
-                min="0"
-                class="field-input"
-                style="max-width:160px"
-              />
-              <p class="field-hint">
-                {{ t('units.generalSharesHint') }}
-              </p>
-            </div>
+            <CFormInput
+              v-model="editingUnit.general_shares"
+              :label="generalKey ? generalKey.name : t('units.shares')"
+              type="number"
+              :step="1"
+              :min="0"
+              :hint="t('units.generalSharesHint')"
+              style="max-width:240px"
+            />
           </div>
         </div>
         <template #footer>

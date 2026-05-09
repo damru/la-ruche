@@ -11,7 +11,7 @@ const { t } = useI18n()
     :aria-label="t('common.loading')"
   >
     <span
-      class="c-btn__spinner"
+      class="c-page-loader__spinner"
       aria-hidden="true"
     ></span>
     <span>{{ t('common.loading') }}</span>
@@ -26,5 +26,16 @@ const { t } = useI18n()
   justify-content: center;
   gap: var(--space-3);
   color: var(--color-on-surface-variant);
+}
+
+.c-page-loader__spinner {
+  width: var(--icon-sm, 16px);
+  height: var(--icon-sm, 16px);
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+  opacity: 0.6;
 }
 </style>
