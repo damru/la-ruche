@@ -55,15 +55,23 @@ const savingAttendance = ref(false)
 const callingMeeting = ref(false)
 const closingMeeting = ref(false)
 
+const showVoteModal = ref(false)
+const votingResolution = ref<Resolution | null>(null)
+const unitVotes = ref<Record<string, string>>({})
+const savingVotes = ref(false)
+const voteFeedback = useFormFeedback()
+
 const { schedule: scheduleMeetingClose, forceExpire: forceMeetingClose } = useAutoClose()
 const { schedule: scheduleResolutionClose, forceExpire: forceResolutionClose } = useAutoClose()
 const { schedule: scheduleDocumentClose, forceExpire: forceDocumentClose } = useAutoClose()
 const { schedule: scheduleAttendanceClose, forceExpire: forceAttendanceClose } = useAutoClose()
+const { schedule: scheduleVoteClose, forceExpire: forceVoteClose } = useAutoClose()
 
 watch(showEditMeetingModal, (open) => { if (!open) forceMeetingClose() })
 watch(showAddResolutionModal, (open) => { if (!open) forceResolutionClose() })
 watch(showDocumentModal, (open) => { if (!open) forceDocumentClose() })
 watch(showAttendanceModal, (open) => { if (!open) forceAttendanceClose() })
+watch(showVoteModal, (open) => { if (!open) forceVoteClose() })
 
 function defaultMeetingForm() {
   return {
@@ -96,6 +104,17 @@ const attendanceDraft = ref<MeetingAttendanceEntry[]>([])
 const meetingAgendaItems = ref<string[]>([''])
 
 const canAddResolution = computed(() => auth.isManager && ['draft', 'called'].includes(meeting.value?.status ?? ''))
+const canManageVotes = computed(() => auth.isManager && meeting.value?.status === 'held')
+const sortedAttendanceEntries = computed(() =>
+  [...attendance.value.entries].sort((a, b) => parseInt(a.unit_number, 10) - parseInt(b.unit_number, 10))
+)
+const attendingUnits = computed(() => sortedAttendanceEntries.value.filter(e => e.mode !== 'absent'))
+const votePositionOptions = computed(() => [
+  { value: '', label: t('meetings.vote.notSet') },
+  { value: 'in_favor', label: t('meetings.vote.in_favor') },
+  { value: 'against', label: t('meetings.vote.against') },
+  { value: 'abstain', label: t('meetings.vote.abstain') },
+])
 const noticeDocuments = computed(() => documents.value.filter(document => document.kind === 'notice'))
 const attachmentDocuments = computed(() => documents.value.filter(document => document.kind === 'attachment'))
 const isMeetingPast = computed(() => {
@@ -513,6 +532,51 @@ async function saveResolution() {
   }
 }
 
+async function openVoteModal(resolution: Resolution) {
+  votingResolution.value = resolution
+  unitVotes.value = {}
+  voteFeedback.reset()
+  showVoteModal.value = true
+  try {
+    const res = await meetingsApi.listVotes(meeting.value!.id, resolution.id)
+    for (const v of res.data) {
+      unitVotes.value[v.unit_id] = v.position
+    }
+  } catch {
+    // pre-fill failure non-blocking — manager can still enter votes
+  }
+}
+
+function fillAllVotes(position: 'in_favor' | 'against') {
+  for (const entry of attendingUnits.value) {
+    unitVotes.value[entry.unit_id] = position
+  }
+}
+
+async function saveVotes() {
+  if (!votingResolution.value || !meeting.value) return
+  savingVotes.value = true
+  voteFeedback.reset()
+  try {
+    await Promise.all(
+      attendingUnits.value
+        .filter(e => unitVotes.value[e.unit_id])
+        .map(e => meetingsApi.vote(meeting.value!.id, votingResolution.value!.id, {
+          unit_id: e.unit_id,
+          position: unitVotes.value[e.unit_id],
+        })),
+    )
+    const result = await meetingsApi.results(meeting.value.id, votingResolution.value.id)
+    voteResults.value = { ...voteResults.value, [votingResolution.value.id]: result.data }
+    voteFeedback.setSuccess(t('meetings.vote.voteSaved'))
+    scheduleVoteClose(async () => { showVoteModal.value = false })
+  } catch (err) {
+    voteFeedback.setError(toErrorMessage(err, t('common.error')))
+  } finally {
+    savingVotes.value = false
+  }
+}
+
 async function saveDocument() {
   if (!meeting.value || !documentForm.value.file) return
 
@@ -785,7 +849,7 @@ function onFileChange(event: Event) {
 
         <div class="detail-layout">
           <section class="main-column">
-            <div class="section-head">
+            <div class="flex flex-row justify-between items-start">
               <div>
                 <h2 class="headline-sm">
                   {{ t('meetings.resolutions') }}
@@ -928,8 +992,21 @@ function onFileChange(event: Event) {
                 <div
                   v-else
                   class="pending-box"
-                > 
+                >
                   {{ t('meetings.vote.pendingVote') }}
+                </div>
+
+                <div
+                  v-if="canManageVotes"
+                  class="vote-entry-action"
+                >
+                  <CBtn
+                    size="sm"
+                    variant="ghost"
+                    @click="openVoteModal(resolution)"
+                  >
+                    {{ t('meetings.vote.enterVotes') }}
+                  </CBtn>
                 </div>
               </CCard>
             </div>
@@ -1123,7 +1200,7 @@ function onFileChange(event: Event) {
               </div>
               <CFlexGroup variant="vertical">
                 <div
-                  v-for="entry in attendance.entries"
+                  v-for="entry in sortedAttendanceEntries"
                   :key="entry.unit_id"
                   class="participant-row"
                 >
@@ -1311,6 +1388,93 @@ function onFileChange(event: Event) {
           @click="saveResolution"
         >
           {{ t('common.add') }}
+        </CBtn>
+      </template>
+    </CModal>
+
+    <CModal
+      :open="showVoteModal"
+      size="lg"
+      :title="votingResolution ? t('meetings.vote.enterVotesTitle', { title: votingResolution.title }) : ''"
+      @update:open="showVoteModal = $event"
+    >
+      <p
+        v-if="attendingUnits.length === 0"
+        class="body-sm tone--muted"
+      >
+        {{ t('meetings.vote.noAttendees') }}
+      </p>
+      <template v-else>
+        <div class="vote-quick-actions">
+          <CBtn
+            size="sm"
+            variant="ghost"
+            @click="fillAllVotes('in_favor')"
+          >
+            {{ t('meetings.vote.fillAllFor') }}
+          </CBtn>
+          <CBtn
+            size="sm"
+            variant="ghost"
+            @click="fillAllVotes('against')"
+          >
+            {{ t('meetings.vote.fillAllAgainst') }}
+          </CBtn>
+        </div>
+        <table class="vote-table">
+          <thead>
+            <tr>
+              <th>{{ t('units.number') }}</th>
+              <th>{{ t('units.owner') }}</th>
+              <th>{{ t('meetings.participants') }}</th>
+              <th>{{ t('meetings.vote.myVote') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="entry in attendingUnits"
+              :key="entry.unit_id"
+            >
+              <td class="font-mono vote-table__unit">
+                {{ entry.unit_number }}
+              </td>
+              <td class="vote-table__owner">
+                {{ entry.owner_name || '—' }}
+              </td>
+              <td>
+                <CBadge :variant="attendanceModeVariant(entry.mode)">
+                  {{ attendanceModeLabel(entry.mode) }}
+                </CBadge>
+              </td>
+              <td :class="['vote-table__select', !unitVotes[entry.unit_id] && 'vote-table__select--empty']">
+                <CFormSelect
+                  :model-value="unitVotes[entry.unit_id] ?? ''"
+                  :options="votePositionOptions"
+                  @update:model-value="unitVotes[entry.unit_id] = $event"
+                />
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </template>
+      <template #footer>
+        <CFormFeedback
+          :status="voteFeedback.status.value"
+          :message="voteFeedback.message.value"
+        />
+        <CBtn
+          variant="ghost"
+          @click="showVoteModal = false"
+        >
+          {{ t('common.cancel') }}
+        </CBtn>
+        <CBtn
+          variant="primary"
+          :loading="savingVotes"
+          :disabled="attendingUnits.length === 0"
+          @click="saveVotes"
+        >
+          {{ t('meetings.vote.submit') }}
         </CBtn>
       </template>
     </CModal>
@@ -1708,6 +1872,59 @@ function onFileChange(event: Event) {
 .pending-box {
   background: var(--color-surface-container-low);
   color: var(--color-on-surface-variant);
+}
+
+.vote-entry-action {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.vote-quick-actions {
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.vote-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.vote-table th {
+  text-align: left;
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-xs);
+  font-weight: var(--fw-medium);
+  color: var(--color-on-surface-variant);
+  border-bottom: 1px solid var(--color-outline-variant);
+}
+
+.vote-table td {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--color-outline-variant);
+  vertical-align: middle;
+}
+
+.vote-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.vote-table__unit {
+  width: 64px;
+  white-space: nowrap;
+}
+
+.vote-table__owner {
+  min-width: 120px;
+}
+
+.vote-table__select {
+  width: 160px;
+}
+
+.vote-table__select--empty :deep(select) {
+  box-shadow: var(--shadow-error-ring);
 }
 
 .vote-result {

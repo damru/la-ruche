@@ -78,7 +78,7 @@ Cycle de vie complet d'une AG, résolutions typées par majorité, vote par lot 
 * `EP-003-S01` ✅ — Créer une AG avec date, type et ordre du jour ; calculer et afficher la date limite de convocation (J−21) (LEGAL.md §3.1)
 * `EP-003-S02` ✅ — Joindre les documents obligatoires à la convocation et alerter en cas de pièce manquante avant envoi (LEGAL.md §3.1)
 * `EP-003-S03` ✅ — Enregistrer les présences, procurations et votes par correspondance (LEGAL.md §3.2)
-* `EP-003-S04` ✅ — Saisir les résolutions et calculer les résultats selon la règle de majorité applicable (art. 24/25/25-1/26/unanimité) (LEGAL.md §3.2)
+* `EP-003-S04` ✅ — Saisir les résolutions et les votes, et calculer les résultats selon la règle de majorité applicable (art. 24/25/25-1/26/unanimité) (LEGAL.md §3.2)
 * `EP-003-S05` — Générer et stocker le PV signé en séance (LEGAL.md §3.3)
 * `EP-003-S06` — Tracer la date de notification du PV aux copropriétaires absents (délai 2 mois — art. 42 loi 1965) (LEGAL.md §3.3)
 * `EP-003-S07` — Exclure explicitement les lots archivés des calculs de quorum et de majorité avec piste d'audit des bases de calcul (LEGAL.md §3.2)

@@ -818,3 +818,41 @@ pub async fn get_tally(
         tally,
     ))
 }
+
+pub struct UnitVoteRow {
+    pub unit_id: Uuid,
+    pub position: String,
+}
+
+pub async fn list_votes(
+    pool: &PgPool,
+    meeting_id: Uuid,
+    resolution_id: Uuid,
+    building_id: Uuid,
+) -> AppResult<Vec<UnitVoteRow>> {
+    let rows = sqlx::query!(
+        r#"
+        SELECT v.unit_id, v.position::text as "position!"
+        FROM vote v
+        JOIN resolution r ON r.id = v.resolution_id
+        JOIN general_meeting gm ON gm.id = r.meeting_id
+        WHERE v.resolution_id = $1
+          AND r.meeting_id = $2
+          AND gm.building_id = $3
+        ORDER BY v.unit_id
+        "#,
+        resolution_id,
+        meeting_id,
+        building_id,
+    )
+    .fetch_all(pool)
+    .await?;
+
+    Ok(rows
+        .into_iter()
+        .map(|r| UnitVoteRow {
+            unit_id: r.unit_id,
+            position: r.position,
+        })
+        .collect())
+}

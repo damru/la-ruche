@@ -1,7 +1,7 @@
 import { api } from './client'
 import axios from 'axios'
 import type {
-  Meeting, MeetingAttendance, MeetingDocument, Resolution, VoteResult,
+  Meeting, MeetingAttendance, MeetingDocument, Resolution, VoteResult, UnitVote,
   Budget, BudgetLine, LevyCall, WorksFund,
   VendorContract, ContractReminder,
     Task, Claim, MaintenanceEntry,
@@ -164,6 +164,8 @@ export const meetingsApi = {
     api.put<Resolution>(`/meetings/${meetingId}/resolutions/${rid}`, data),
   vote: (meetingId: string, rid: string, data: { unit_id: string; position: string; proxy_for?: string }) =>
     api.post(`/meetings/${meetingId}/resolutions/${rid}/vote`, data),
+  listVotes: (meetingId: string, rid: string) =>
+    api.get<UnitVote[]>(`/meetings/${meetingId}/resolutions/${rid}/votes`),
   results: (meetingId: string, rid: string) =>
     api.get<VoteResult>(`/meetings/${meetingId}/resolutions/${rid}/results`),
 }

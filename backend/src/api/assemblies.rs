@@ -352,6 +352,32 @@ pub async fn save_attendance(
     Ok(StatusCode::NO_CONTENT)
 }
 
+#[derive(Debug, Serialize, ToSchema)]
+pub struct UnitVoteResponse {
+    pub unit_id: Uuid,
+    pub position: String,
+}
+
+pub async fn list_votes(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+    Path((meeting_id, resolution_id)): Path<(Uuid, Uuid)>,
+) -> AppResult<Json<Vec<UnitVoteResponse>>> {
+    let votes =
+        crate::db::assembly::list_votes(&state.pool, meeting_id, resolution_id, auth.building_id)
+            .await?;
+
+    Ok(Json(
+        votes
+            .into_iter()
+            .map(|v| UnitVoteResponse {
+                unit_id: v.unit_id,
+                position: v.position,
+            })
+            .collect(),
+    ))
+}
+
 fn parse_vote_rule(s: &str) -> AppResult<VoteRule> {
     match s {
         "simple_majority" => Ok(VoteRule::SimpleMajority),

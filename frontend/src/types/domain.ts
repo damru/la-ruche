@@ -157,6 +157,11 @@ export interface VoteResult {
   eligible_for_second_vote: boolean
 }
 
+export interface UnitVote {
+  unit_id: string
+  position: 'in_favor' | 'against' | 'abstain'
+}
+
 export interface Budget {
   id: string
   fiscal_year: number

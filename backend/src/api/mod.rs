@@ -133,6 +133,10 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
             post(assemblies::vote),
         )
         .route(
+            "/meetings/{id}/resolutions/{rid}/votes",
+            get(assemblies::list_votes),
+        )
+        .route(
             "/meetings/{id}/resolutions/{rid}/results",
             get(assemblies::results),
         )
