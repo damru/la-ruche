@@ -108,8 +108,8 @@ pub async fn delete(pool: &PgPool, id: Uuid, building_id: Uuid) -> crate::errors
     match key_type.as_deref() {
         None => return Ok(false),
         Some("general") => {
-            return Err(crate::errors::AppError::Conflict(
-                "GENERAL_KEY_PROTECTED".into(),
+            return Err(crate::errors::AppError::conflict_code(
+                "errors.allocation_keys.general_key_protected",
             ));
         }
         _ => {}

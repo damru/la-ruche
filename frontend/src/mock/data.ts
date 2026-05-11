@@ -301,9 +301,9 @@ export const mockConsultations: Consultation[] = [
     my_choice_ids: [],
     total_responses: 0,
     choices: [
-      { id: 'ch-001', label: 'Bâtisoins – 32 400 € TTC (délai 6 semaines)', order_index: 1, votes: 0, pct: 0 },
-      { id: 'ch-002', label: 'Rénov\'Paris – 35 800 € TTC (délai 4 semaines)', order_index: 2, votes: 0, pct: 0 },
-      { id: 'ch-003', label: 'Attendre l\'AG pour décision finale', order_index: 3, votes: 0, pct: 0 },
+      { id: 'ch-001', label: 'Bâtisoins – 32 400 € TTC (délai 6 semaines)', order_index: 1, votes: 0 },
+      { id: 'ch-002', label: 'Rénov\'Paris – 35 800 € TTC (délai 4 semaines)', order_index: 2, votes: 0 },
+      { id: 'ch-003', label: 'Attendre l\'AG pour décision finale', order_index: 3, votes: 0 },
     ],
   },
   {
@@ -317,9 +317,9 @@ export const mockConsultations: Consultation[] = [
     my_choice_ids: [],
     total_responses: 0,
     choices: [
-      { id: 'ch-004', label: '8h–22h tous les jours', order_index: 1, votes: 0, pct: 0 },
-      { id: 'ch-005', label: '9h–21h en semaine, 9h–23h le week-end', order_index: 2, votes: 0, pct: 0 },
-      { id: 'ch-006', label: '10h–20h tous les jours', order_index: 3, votes: 0, pct: 0 },
+      { id: 'ch-004', label: '8h–22h tous les jours', order_index: 1, votes: 0 },
+      { id: 'ch-005', label: '9h–21h en semaine, 9h–23h le week-end', order_index: 2, votes: 0 },
+      { id: 'ch-006', label: '10h–20h tous les jours', order_index: 3, votes: 0 },
     ],
   },
   {
@@ -334,8 +334,8 @@ export const mockConsultations: Consultation[] = [
     my_choice_ids: [],
     total_responses: 5,
     choices: [
-      { id: 'ch-007', label: 'Oui, je suis intéressé(e)', order_index: 1, votes: 3, pct: 60 },
-      { id: 'ch-008', label: 'Non, pas besoin pour l\'instant', order_index: 2, votes: 2, pct: 40 },
+      { id: 'ch-007', label: 'Oui, je suis intéressé(e)', order_index: 1, votes: 3 },
+      { id: 'ch-008', label: 'Non, pas besoin pour l\'instant', order_index: 2, votes: 2 },
     ],
   },
 ]

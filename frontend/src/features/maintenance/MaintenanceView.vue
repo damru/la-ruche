@@ -777,7 +777,7 @@ async function deleteEntry() {
 }
 
 .timeline-dot {
-  width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0;
+  width: var(--icon-xs); height: var(--icon-xs); border-radius: 50%; flex-shrink: 0;
   background: var(--color-primary);
   border: 3px solid var(--color-surface);
   margin-top: 16px;

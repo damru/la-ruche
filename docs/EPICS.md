@@ -275,9 +275,23 @@ Export des données de la copropriété au format RNC et génération de la fich
 
 **Statut :** en attente | **MVP :** non | **Réf. PRD :** Fonctionnalités avancées — extension EP-003
 
+**État code actuel :** statut `ongoing` disponible (migration `0019_meeting_ongoing_status`) ; transitions `POST /{id}/start` (`called` → `ongoing`) et `POST /{id}/close` (`ongoing` → `closed`) opérationnelles backend. Aucune vue frontend dédiée à la conduite de séance n'existe encore.
+
 Conduite de séance : désignation des rôles (président, secrétaire, scrutateurs), feuille de présence numérique, quorum en temps réel, notes collaboratives, génération et validation du PV avec signature numérique. `EP-013` démarre là où `EP-003` s'arrête : préparation juridique, votes et clôture simple restent dans `EP-003`, tandis que l'assistance complète de séance et la validation probante du PV relèvent de cette extension post-MVP.
 
-**Stories :** _à définir_
+Le cycle de vie complet d'une AG est : `draft` → `called` → **`ongoing`** → `closed`.
+
+**Stories :**
+
+* `EP-013-S01` — Démarrer la séance : faire passer une AG du statut `called` à `ongoing` via `POST /{id}/start` ; verrouiller l'ordre du jour et l'assiette de tantièmes à l'instant de démarrage ; exposer le statut `ongoing` dans la liste et la fiche AG
+* `EP-013-S02` — Désigner les rôles de séance : saisir le président, le secrétaire et les scrutateurs lors du démarrage (`status = ongoing`) ; données figées à la clôture de séance (`status = closed`)
+* `EP-013-S03` — Feuille de présence numérique en temps réel : afficher le quorum atteint (tantièmes représentés / total) dynamiquement à mesure de l'enregistrement des présences, procurations et votes par correspondance ; mise à jour sans rechargement de page
+* `EP-013-S04` — Conduire le vote résolution par résolution : en `status = ongoing`, saisir les positions (pour / contre / abstention / non-votant) lot par lot pour chaque résolution et calculer le résultat automatiquement selon la règle de majorité applicable (art. 24 / 25 / 26 / unanimité)
+* `EP-013-S05` — Détecter et traiter l'article 25-1 : si une résolution `absolute_majority` est rejetée avec ≥ 1/3 des tantièmes totaux en faveur, proposer immédiatement une re-délibération à la majorité simple (art. 25-1) dans la même séance ; tracer la résolution originale et sa re-délibération
+* `EP-013-S06` — Prendre des notes collaboratives par résolution : saisir des annotations de séance (arguments, amendements de forme) attachées à chaque résolution ; accessibles dans le projet de PV
+* `EP-013-S07` — Clôturer la séance : faire passer l'AG de `ongoing` à `closed` via `POST /{id}/close` ; figer les votes et la feuille de présence ; bloquer toute modification ultérieure des résultats
+* `EP-013-S08` — Générer et valider le projet de PV : après clôture de séance (`status = closed`), produire un projet de PV structuré (résolutions + résultats + présences + notes) et le soumettre à revue avant signature
+* `EP-013-S09` — Signer et publier le PV : finaliser le PV avec signature numérique, l'attacher à l'AG et déclencher la traçabilité de notification aux absents (→ EP-003-S06)
 
 ***
 

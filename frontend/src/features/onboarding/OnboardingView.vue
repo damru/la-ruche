@@ -457,7 +457,7 @@ async function handleSubmit() {
   color: var(--color-on-surface);
 }
 .form-sub {
-  font-size: 14px;
+  font-size: var(--text-md);
   color: var(--color-on-surface-variant);
   line-height: 1.5;
 }
@@ -564,7 +564,7 @@ async function handleSubmit() {
   color: var(--color-on-primary);
   border-radius: var(--radius-sm);
   font-family: var(--font-body);
-  font-size: 14px;
+  font-size: var(--text-sm);
   font-weight: 600;
   text-decoration: none;
   box-shadow: 0 2px 12px rgba(100, 63, 213, 0.2);
@@ -594,12 +594,12 @@ async function handleSubmit() {
 .already-init-icon svg { width: 32px; height: 32px; }
 .already-init-title {
   font-family: var(--font-display);
-  font-size: 22px;
+  font-size: var(--text-lg);
   font-weight: 700;
   color: var(--color-on-surface);
 }
 .already-init-text {
-  font-size: 14px;
+  font-size: var(--text-md);
   color: var(--color-on-surface-variant);
   max-width: 340px;
   line-height: 1.6;

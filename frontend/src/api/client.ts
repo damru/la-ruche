@@ -69,16 +69,11 @@ api.interceptors.response.use(
     if (!original) return Promise.reject(error)
 
     const status = error.response?.status
-    const errorCode = error.response?.data?.error
 
-    // 401 TOKEN_INVALID  → token présent mais expiré
-    // 401 UNAUTHORIZED   → cookie supprimé par le browser après Max-Age
-    // Dans les deux cas, tenter un refresh (sauf sur les routes auth elles-mêmes,
-    // et sauf si la requête a déjà été retentée après un refresh)
-    const shouldRefresh =
-      status === 401 &&
-      (errorCode === 'TOKEN_INVALID' || errorCode === 'UNAUTHORIZED') &&
-      !original._retry
+    // Any non-auth 401 should attempt a refresh once.
+    // Backend error codes may vary by source (middleware/handler), but
+    // the HTTP status is the reliable signal for an expired/invalid access token.
+    const shouldRefresh = status === 401 && !original._retry
 
     if (shouldRefresh) {
       // Never attempt refresh or dispatch session-expired for auth probe requests
@@ -103,10 +98,14 @@ api.interceptors.response.use(
 )
 
 // ── Helper d'extraction d'erreur ──────────────────────────────────
-// Returns an i18n key (e.g. "errors.UNAUTHORIZED") to be translated by the caller.
+// Returns an i18n key to be translated by the caller.
+// If the backend `message` field is already an i18n key path (starts with "errors."),
+// it is used directly (specific validation/conflict code).
+// Otherwise falls back to `errors.${data.error}` (generic HTTP error code).
 export function extractApiError(error: unknown): string {
   if (axios.isAxiosError(error)) {
     const data = error.response?.data as ApiError | undefined
+    if (data?.message?.startsWith('errors.')) return data.message
     if (data?.error) return `errors.${data.error}`
   }
   return 'errors.unknown'

@@ -483,7 +483,7 @@ Deux patterns distincts s'appliquent selon la nature de l'entité :
 | Entité | Table | Pattern | Déclencheur de gel / recréation |
 |---|---|---|---|
 | Appel de fonds | `levy_call` | A | Passage de `draft` → `issued` — immuable total |
-| Vote en AG | `vote` | A | AG `held` — immuable total |
+| Vote en AG | `vote` | A | AG `ongoing` — immuable total |
 | Résolution AG | `resolution` | A | AG `closed` — immuable total ; une résolution supersédée est annulée par vote d'une nouvelle résolution en AG suivante |
 | Tâche (données de clôture) | `task` | A | Statut `closed` — `completion_cost` et `closed_at` immuables |
 | Sinistre (données financières) | `claim` | A | `transmitted_at` ou `reimbursement_amount` renseignés — ces champs immuables une fois saisis |
@@ -504,7 +504,7 @@ Deux patterns distincts s'appliquent selon la nature de l'entité :
 | Entité | Pattern | Modification interdite dès | Suppression interdite dès |
 |---|---|---|---|
 | `levy_call` | A | Passage à `issued` | Passage à `issued` |
-| `vote` / `resolution` | A | AG `held` / `closed` | AG `held` / `closed` |
+| `vote` / `resolution` | A | AG `ongoing` / `closed` | AG `ongoing` / `closed` |
 | `task` — champs `completion_cost`, `closed_at` | A | Statut `closed` | Si une entrée `maintenance_log` automatique est liée |
 | `claim` — champs `transmitted_at`, `reimbursement_*` | A | Champs renseignés | Statut `closed` avec données financières |
 | `maintenance_log` (source `automatic`) | A | Toujours | Toujours |

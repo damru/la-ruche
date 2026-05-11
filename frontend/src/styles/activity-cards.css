@@ -49,9 +49,9 @@
   gap: var(--space-1) var(--space-2);
 }
 
-.activity-card__chips :deep(svg) {
-  width: 14px;
-  height: 14px;
+.activity-card__chips :deep(svg), .activity-card__chips > * > svg {
+  width: var(--icon-xs);
+  height: var(--icon-xs);
 }
 
 .activity-card__contacts {

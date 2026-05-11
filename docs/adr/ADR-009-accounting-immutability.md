@@ -25,7 +25,7 @@ Les champs financiers et de traçabilité des entités suivantes deviennent immu
 | Entité | Déclencheur |
 |---|---|
 | `levy_call` | `status = 'issued'` |
-| `vote` | AG `held` |
+| `vote` | AG `ongoing` |
 | `resolution` | AG `closed` |
 | `task.completion_cost` / `task.closed_at` | `status = 'closed'` |
 | `claim.transmitted_at` / `claim.reimbursement_*` | Champs renseignés |

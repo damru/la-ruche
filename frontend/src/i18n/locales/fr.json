@@ -90,6 +90,7 @@
       "maintenance": "Historique d'entretien",
       "reports": "Incidents et anomalies",
       "tasks": "Suivi des interventions",
+      "taskDetail": "Historique de la tâche",
       "contractors": "Annuaire des prestataires",
       "contractorDetail": "Coordonnées et historique",
       "allocationKeys": "Bases de répartition",
@@ -287,7 +288,7 @@
     "statuses": {
       "draft": "Brouillon",
       "called": "Convoquée",
-      "held": "Tenue",
+      "ongoing": "En séance",
       "closed": "Close"
     },
     "resolutionStatuses": {
@@ -296,6 +297,13 @@
       "pending": "En attente"
     },
     "call": "Convoquer l'AG",
+    "start": "Démarrer l'AG",
+    "startingAction": "AG en séance",
+    "bannerOngoing": "AG en cours · Votes en séance",
+    "bannerOngoingSub": "{resolved} résolutions votées · {pending} en attente",
+    "editResolution": "Modifier",
+    "resolutionDescriptionOnly": "Titre et règle de vote verrouillés pendant la séance.",
+    "createArt24": "Créer sous Art. 24",
     "waiting": "En attente",
     "callReady": "La convocation est prête à partir dès qu'au moins une pièce de convocation est jointe.",
     "close": "Clore l'AG",
@@ -316,8 +324,6 @@
     "statPendingVotes": "votes en attente",
     "bannerClosed": "AG close · PV disponible",
     "bannerCalled": "AG convoquée · En attente de tenue",
-    "bannerHeld": "AG tenue · En attente de clôture",
-    "bannerHeldSub": "{resolved} résolutions votées · {pending} en attente · {minutes}",
     "depositMinutes": "Déposer le PV",
     "documents": {
       "title": "Pièces de l'AG",
@@ -384,6 +390,7 @@
       "enterVotesTitle": "Votes — {title}",
       "noAttendees": "Aucun participant enregistré. Renseignez d'abord la feuille de présence.",
       "voteSaved": "Votes enregistrés",
+      "eligibleSecondVote": "Résolution rejetée — éligible à un second vote à la majorité de l'art. 25-1",
       "fillAllFor": "Tout Pour",
       "fillAllAgainst": "Tout Contre",
       "results": "Résultats du vote",
@@ -815,7 +822,7 @@
     "modifyVote": "Modifier mon vote",
     "myResponse": "Ma réponse",
     "results": "Résultats",
-    "close": "Terminer",
+    "close": "Clore le vote",
     "noOpen": "Aucune consultation en cours",
     "noClosed": "Aucune consultation fermée",
     "closeAction": "Terminer",
@@ -865,7 +872,7 @@
     "unitLabel": "Lot {number}",
     "noUnit": "Parties communes",
     "by": "Par",
-    "titleLabel": "Titre *",
+    "titleLabel": "Titre",
     "descriptionLabel": "Description",
     "unitLabel2": "Lot concerné",
     "unitPlaceholder": "Sélectionner un lot (optionnel)",
@@ -1239,30 +1246,36 @@
   "errors": {
     "title": "Erreur",
     "unknown": "Erreur inconnue",
-    "UNAUTHORIZED": "Identifiants incorrects ou session expirée",
-    "TOKEN_INVALID": "Session expirée, veuillez vous reconnecter",
-    "FORBIDDEN": "Accès interdit",
-    "NOT_FOUND": "Ressource introuvable",
-    "VALIDATION_ERROR": "Données invalides",
-    "BAD_REQUEST": "Requête invalide",
-    "CONFLICT": "Conflit de données",
-    "DB_ERROR": "Erreur base de données",
-    "STORAGE_ERROR": "Erreur de stockage",
-    "INTERNAL_ERROR": "Erreur interne du serveur",
+    "unauthorized": "Identifiants incorrects ou session expirée",
+    "token_invalid": "Session expirée, veuillez vous reconnecter",
+    "forbidden": "Accès interdit",
+    "not_found": "Ressource introuvable",
+    "validation_error": "Données invalides",
+    "bad_request": "Requête invalide",
+    "conflict": "Conflit de données",
+    "db_error": "Erreur base de données",
+    "storage_error": "Erreur de stockage",
+    "internal_error": "Erreur interne du serveur",
     "building": {
       "invalid_payload": "Les informations de l'immeuble sont invalides."
     },
     "allocation_keys": {
       "invalid_payload": "La clé de répartition est invalide.",
       "share_value_negative": "Les tantièmes ne peuvent pas être négatifs.",
-      "shares_exceed_total": "La somme des tantièmes dépasse le total de la copropriété."
+      "shares_exceed_total": "La somme des tantièmes dépasse le total de la copropriété.",
+      "general_key_protected": "La clé Charges Générales est obligatoire et ne peut pas être supprimée (art. 10 loi 1965)."
     },
     "meetings": {
       "invalid_meeting_payload": "Les informations de l'assemblée sont invalides.",
       "invalid_resolution_payload": "Les informations de la résolution sont invalides.",
       "invalid_vote_type": "La règle de vote est invalide.",
       "unit_general_shares_missing": "Le lot sélectionné est introuvable ou n'a pas de tantièmes généraux.",
-      "meeting_not_mutable": "Cette assemblée n'est plus modifiable."
+      "meeting_not_mutable": "Cette assemblée n'est plus modifiable.",
+      "notice_document_required": "La convocation ne peut pas être envoyée sans au moins un document de convocation joint.",
+      "not_in_draft_status": "Cette assemblée n'est plus au statut brouillon.",
+      "attendance_locked": "La feuille de présence ne peut plus être modifiée une fois l'assemblée tenue ou clôturée.",
+      "not_in_called_status": "Cette assemblée n'est pas au statut convoquée.",
+      "not_in_ongoing_status": "Cette assemblée n'est pas en cours de séance."
     },
     "auth": {
       "invalid_login_payload": "Les identifiants fournis sont incomplets ou invalides.",
@@ -1275,7 +1288,8 @@
       "min_choices": "Au moins deux choix sont requis.",
       "choice_label_required": "Chaque choix doit avoir un libellé.",
       "visible_roles_required": "Au moins un rôle visible doit être sélectionné.",
-      "invalid_visible_role": "Un des rôles visibles est invalide."
+      "invalid_visible_role": "Un des rôles visibles est invalide.",
+      "not_found_or_closed": "La consultation est introuvable, clôturée ou l'option sélectionnée ne lui appartient pas."
     },
     "contractor": {
       "invalid_file_extension": "L'extension du fichier est invalide."
@@ -1299,7 +1313,8 @@
     "reports": {
       "title_required": "Le titre du signalement est obligatoire.",
       "invalid_status": "Le statut du signalement est invalide.",
-      "invalid_priority": "La priorité de la tâche générée est invalide."
+      "invalid_priority": "La priorité de la tâche générée est invalide.",
+      "already_converted_to_task": "Ce signalement a déjà été converti en tâche."
     },
     "tasks": {
       "title_required": "Le titre de la tâche est obligatoire.",
@@ -1307,7 +1322,9 @@
       "invalid_priority": "La priorité de la tâche est invalide."
     },
     "units": {
-      "invalid_payload": "Les informations du lot sont invalides."
+      "invalid_payload": "Les informations du lot sont invalides.",
+      "unit_number_archived": "Ce numéro est utilisé par un lot archivé — réactivez-le ou choisissez un autre numéro.",
+      "unit_number_exists": "Un lot avec ce numéro existe déjà."
     },
     "claims": {
       "title_required": "Le titre du sinistre est obligatoire.",
@@ -1316,7 +1333,9 @@
       "published_at_required_for_natural_disaster": "La date de publication de l'arrêté est obligatoire pour une catastrophe naturelle.",
       "published_at_only_for_natural_disaster": "La date de publication n'est autorisée que pour une catastrophe naturelle.",
       "transmitted_before_reference_date": "La date de transmission ne peut pas être antérieure à la date légale de référence.",
-      "reimbursement_amount_positive": "Le montant remboursé doit être strictement positif."
+      "reimbursement_amount_positive": "Le montant remboursé doit être strictement positif.",
+      "reimbursement_requires_status": "Les champs de remboursement nécessitent un statut explicite.",
+      "reimbursement_only_for_closed": "Les champs de remboursement ne sont autorisés que pour les sinistres clôturés."
     }
   },
   "format": {

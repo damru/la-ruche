@@ -125,8 +125,8 @@ const { formatDate, formatFileSize } = useFormatters()
 }
 
 .linked-documents-modal__name svg {
-  width: 14px;
-  height: 14px;
+  width: var(--icon-xs);
+  height: var(--icon-xs);
   flex-shrink: 0;
 }
 

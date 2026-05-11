@@ -60,8 +60,8 @@
 
 .c-topbar :deep(.topbar-breadcrumb svg) {
   flex: 0 0 auto;
-  width: 14px;
-  height: 14px;
+  width: var(--icon-xs);
+  height: var(--icon-xs);
   color: var(--color-outline-variant);
 }
 
@@ -78,27 +78,6 @@
 .c-topbar :deep(.topbar-greeting-date) {
   font-size: var(--text-xs);
   color: var(--color-on-surface-variant);
-}
-
-/* Theme toggle button */
-.c-topbar__theme-btn {
-  width: 38px;
-  height: 38px;
-  min-width: 38px;
-  min-height: 38px;
-  border-radius: var(--radius-full);
-  background: var(--color-surface-container);
-  color: var(--color-on-surface-variant);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  cursor: pointer;
-  transition: background var(--transition-fast);
-}
-
-.c-topbar__theme-btn:hover {
-  background: var(--color-surface-container-high);
 }
 
 /* ── Mobile ──────────────────────────────────────────────────────── */

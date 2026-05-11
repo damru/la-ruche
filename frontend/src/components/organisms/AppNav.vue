@@ -349,7 +349,7 @@ watch(() => route.path, closeDrawer)
 
 .c-sidebar__logo-name {
   font-family: var(--font-display);
-  font-size: 14px;
+  font-size: var(--text-md);
   font-weight: 700;
   font-variation-settings: 'opsz' 20;
   color: var(--color-on-surface);
@@ -596,7 +596,7 @@ watch(() => route.path, closeDrawer)
   border-radius: var(--radius-sm);
   text-decoration: none;
   color: var(--color-on-surface-variant);
-  font-size: 14px;
+  font-size: var(--text-md);
   font-weight: 500;
   transition: background var(--transition-fast);
 }

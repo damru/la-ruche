@@ -21,7 +21,7 @@ withDefaults(defineProps<{
     :radius="radius"
     :shadow="false"
   >
-    <slot />
+    <slot></slot>
   </CCard>
 </template>
 

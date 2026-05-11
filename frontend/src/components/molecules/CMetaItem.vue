@@ -1,6 +1,6 @@
 <script setup lang="ts">
 withDefaults(defineProps<{
-  as?: 'div' | 'span' | 'a'
+  as?: 'div' | 'span' | 'a' | 'button'
   variant?: 'footer' | 'sub'
 }>(), {
   as: 'span',
@@ -11,21 +11,26 @@ withDefaults(defineProps<{
 <template>
   <component
     :is="as"
-    :class="['c-meta-item', `c-meta-item--${variant}`]"
+    :class="[  
+      'inline-flex', 
+      'items-center', 
+      'gap-1',
+      'color-on-surface-variant',
+      `${variant === 'footer' ? '[&_svg]:w-(--icon-xs) [&_svg]:h-(--icon-2xs) text-xs' : '[&_svg]:w-(--icon-sm) [&_svg]:h-(--icon-sm) text-sm'}`, 
+    ]"
   >
-    <span
-      v-if="$slots.icon"
-      class="c-meta-item__icon"
-    >
-      <slot name="icon"></slot>
-    </span>
-    <span class="c-meta-item__content">
+    <slot v-if="$slots.icon" name="icon"></slot>
+    <p>
       <slot></slot>
-    </span>
+    </p>
   </component>
 </template>
 
 <style scoped>
+* {
+  min-height: unset;
+  min-width: 0;
+}
 .c-meta-item {
   display: inline-flex;
   align-items: center;
@@ -34,25 +39,4 @@ withDefaults(defineProps<{
   color: var(--color-on-surface-variant);
 }
 
-.c-meta-item--footer {
-  font-size: var(--text-2xs);
-  line-height: 1.4;
-}
-
-.c-meta-item--sub {
-  font-size: var(--text-sm);
-  line-height: 1.5;
-}
-
-.c-meta-item__icon,
-.c-meta-item__content {
-  display: inline-flex;
-  align-items: center;
-}
-
-.c-meta-item :deep(svg) {
-  width: 14px;
-  height: 14px;
-  flex-shrink: 0;
-}
 </style>

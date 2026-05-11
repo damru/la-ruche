@@ -325,7 +325,7 @@ async function handleResetRequest() {
 }
 
 .form-sub {
-  font-size: 14px;
+  font-size: var(--text-md);
   color: var(--color-on-surface-variant);
   line-height: 1.5;
 }
@@ -369,7 +369,7 @@ async function handleResetRequest() {
   width: 100%;
   border-radius: var(--radius-md);
   font-family: var(--font-body);
-  font-size: 14px;
+  font-size: var(--text-md);
   font-weight: 500;
   background: var(--color-surface-container-low);
   color: var(--color-on-surface);
@@ -388,7 +388,7 @@ async function handleResetRequest() {
   min-height: unset;
   color: var(--color-primary);
   font-family: var(--font-body);
-  font-size: 13px;
+  font-size: var(--text-sm);
   font-weight: 500;
   cursor: pointer;
   padding: 0;

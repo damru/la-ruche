@@ -107,6 +107,7 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
             get(assemblies::get).put(assemblies::update),
         )
         .route("/meetings/{id}/call", post(assemblies::call))
+        .route("/meetings/{id}/start", post(assemblies::start))
         .route("/meetings/{id}/close", post(assemblies::close))
         .route(
             "/meetings/{id}/documents",
@@ -126,7 +127,7 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
         )
         .route(
             "/meetings/{id}/resolutions/{rid}",
-            put(assemblies::update_resolution),
+            put(assemblies::update_resolution).patch(assemblies::patch_resolution),
         )
         .route(
             "/meetings/{id}/resolutions/{rid}/vote",
@@ -139,6 +140,10 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
         .route(
             "/meetings/{id}/resolutions/{rid}/results",
             get(assemblies::results),
+        )
+        .route(
+            "/meetings/{id}/resolutions/{rid}/finalize",
+            post(assemblies::finalize_resolution),
         )
         // ── Budget ──────────────────────────────────────────────
         .route("/budgets", get(budget::list).post(budget::create))

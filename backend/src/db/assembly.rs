@@ -226,8 +226,8 @@ pub async fn call(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()> {
     .unwrap_or(false);
 
     if !has_notice_document {
-        return Err(AppError::Conflict(
-            "Meeting notice cannot be sent without at least one notice document".into(),
+        return Err(AppError::conflict_code(
+            "errors.meetings.notice_document_required",
         ));
     }
 
@@ -245,25 +245,32 @@ pub async fn call(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()> {
     .rows_affected();
 
     if affected == 0 {
-        return Err(AppError::Conflict(
-            "Meeting not found or no longer in draft status".into(),
+        return Err(AppError::conflict_code(
+            "errors.meetings.not_in_draft_status",
         ));
     }
     Ok(())
 }
 
 pub async fn close(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()> {
-    sqlx::query!(
+    let affected = sqlx::query!(
         r#"
         UPDATE general_meeting
         SET status = 'closed', updated_at = NOW()
-        WHERE id = $1 AND building_id = $2 AND status = 'held'
+        WHERE id = $1 AND building_id = $2 AND status = 'ongoing'
         "#,
         id,
         building_id
     )
     .execute(pool)
-    .await?;
+    .await?
+    .rows_affected();
+
+    if affected == 0 {
+        return Err(AppError::conflict_code(
+            "errors.meetings.not_in_ongoing_status",
+        ));
+    }
     Ok(())
 }
 
@@ -493,6 +500,18 @@ pub async fn save_attendance(
         return Err(AppError::NotFound);
     }
 
+    let status = sqlx::query_scalar!(
+        "SELECT status::text FROM general_meeting WHERE id = $1",
+        meeting_id,
+    )
+    .fetch_one(&mut *tx)
+    .await?
+    .unwrap_or_default();
+
+    if status == "closed" {
+        return Err(AppError::conflict_code("errors.meetings.attendance_locked"));
+    }
+
     sqlx::query!(
         "DELETE FROM general_meeting_attendance WHERE meeting_id = $1",
         meeting_id
@@ -596,7 +615,7 @@ pub async fn create_resolution(
     input: CreateResolutionInput,
 ) -> AppResult<serde_json::Value> {
     let exists = sqlx::query_scalar!(
-        "SELECT EXISTS(SELECT 1 FROM general_meeting WHERE id = $1 AND building_id = $2 AND status IN ('draft','called'))",
+        "SELECT EXISTS(SELECT 1 FROM general_meeting WHERE id = $1 AND building_id = $2 AND status IN ('draft','called','ongoing'))",
         meeting_id, building_id
     )
     .fetch_one(pool)
@@ -855,4 +874,138 @@ pub async fn list_votes(
             position: r.position,
         })
         .collect())
+}
+
+pub async fn start(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()> {
+    let affected = sqlx::query!(
+        r#"
+        UPDATE general_meeting
+        SET status = 'ongoing', updated_at = NOW()
+        WHERE id = $1 AND building_id = $2 AND status = 'called'
+        "#,
+        id,
+        building_id
+    )
+    .execute(pool)
+    .await?
+    .rows_affected();
+
+    if affected == 0 {
+        return Err(AppError::conflict_code(
+            "errors.meetings.not_in_called_status",
+        ));
+    }
+    Ok(())
+}
+
+/// Finalizes a resolution by computing the majority result and persisting the status.
+///
+/// Returns `Ok(true)` if all attending units have voted and the status was updated.
+/// Returns `Ok(false)` if some votes are still missing (no-op).
+/// The meeting must be `ongoing` for the update to apply.
+pub async fn finalize_resolution(
+    pool: &PgPool,
+    meeting_id: Uuid,
+    resolution_id: Uuid,
+    building_id: Uuid,
+    new_status: &str,
+) -> AppResult<bool> {
+    let attending: i64 = sqlx::query_scalar!(
+        r#"
+        SELECT COUNT(*) as "count!"
+        FROM general_meeting_attendance gma
+        JOIN general_meeting gm ON gm.id = gma.meeting_id
+        WHERE gma.meeting_id = $1
+          AND gm.building_id = $2
+          AND gma.mode != 'absent'
+        "#,
+        meeting_id,
+        building_id,
+    )
+    .fetch_one(pool)
+    .await?;
+
+    let voted: i64 = sqlx::query_scalar!(
+        r#"
+        SELECT COUNT(DISTINCT v.unit_id) as "count!"
+        FROM vote v
+        JOIN resolution r ON r.id = v.resolution_id
+        JOIN general_meeting gm ON gm.id = r.meeting_id
+        WHERE v.resolution_id = $1
+          AND r.meeting_id = $2
+          AND gm.building_id = $3
+        "#,
+        resolution_id,
+        meeting_id,
+        building_id,
+    )
+    .fetch_one(pool)
+    .await?;
+
+    if attending > 0 && voted < attending {
+        return Ok(false);
+    }
+
+    sqlx::query!(
+        r#"
+        UPDATE resolution
+        SET status = $1::resolution_status
+        FROM general_meeting gm
+        WHERE resolution.id = $2
+          AND resolution.meeting_id = $3
+          AND gm.id = resolution.meeting_id
+          AND gm.building_id = $4
+          AND gm.status = 'ongoing'
+        "#,
+        new_status as _,
+        resolution_id,
+        meeting_id,
+        building_id,
+    )
+    .execute(pool)
+    .await?;
+
+    Ok(true)
+}
+
+pub async fn patch_resolution_description(
+    pool: &PgPool,
+    meeting_id: Uuid,
+    resolution_id: Uuid,
+    building_id: Uuid,
+    description: Option<String>,
+) -> AppResult<Option<serde_json::Value>> {
+    let row = sqlx::query!(
+        r#"
+        UPDATE resolution
+        SET description = $3
+        FROM general_meeting gm
+        WHERE resolution.id = $1
+          AND resolution.meeting_id = $2
+          AND gm.id = resolution.meeting_id
+          AND gm.building_id = $4
+          AND gm.status = 'ongoing'
+        RETURNING resolution.id, resolution.number, resolution.title,
+                  resolution.description,
+                  resolution.vote_type::text as vote_type,
+                  resolution.status::text as status
+        "#,
+        resolution_id,
+        meeting_id,
+        description,
+        building_id,
+    )
+    .fetch_optional(pool)
+    .await?;
+
+    Ok(row.map(|r| {
+        serde_json::json!({
+            "id": r.id,
+            "number": r.number,
+            "title": r.title,
+            "description": r.description,
+            "vote_type": r.vote_type,
+            "status": r.status,
+        })
+    }))
 }

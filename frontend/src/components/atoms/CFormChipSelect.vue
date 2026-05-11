@@ -164,8 +164,8 @@ function toggle(value: string, optionDisabled?: boolean) {
 }
 
 .c-chip-select__icon {
-  width: 14px;
-  height: 14px;
+  width: var(--icon-xs);
+  height: var(--icon-xs);
 }
 
 .c-field__hint {

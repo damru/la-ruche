@@ -109,6 +109,8 @@
   --control-height-sm: 36px;   /* input sm, bouton sm */
 
   /* ── Icônes ──────────────────────────────────────────────────── */
+  --icon-2xs: 12px;  /* meta-footer */
+  --icon-xs: 14px;   /* content, subtitle, chips */
   --icon-sm: 16px;   /* inline, boutons, chevrons */
   --icon-md: 18px;   /* cartes, headers */
   --icon-lg: 24px;   /* icônes proéminentes */

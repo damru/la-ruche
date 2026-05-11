@@ -602,51 +602,55 @@ function photoPreview(file: File): string {
             v-for="r in reports"
             :key="r.id"
             :shadow="r.status !== 'closed'"
-            :class="['activity-card', { 'card--terminated': r.status === 'closed' }]"
+            :class="['gap-y-4', { 'card--terminated': r.status === 'closed' }]"
           >
             <div class="activity-card__header-row activity-card__header-row--with-icon">
               <div class="activity-card__icon tone--default">
                 <CIconInfo />
               </div>
-              <div class="activity-card__chips">
+              
+              <CMetaLine class="[&_svg]:w-(--icon-sm) [&_svg]:h-(--icon-sm) text-xs">
                 <CBadge
                   :variant="statusVariant(r.status)"
                   dot
                 >
                   {{ t(`reports.statuses.${r.status}`) }}
                 </CBadge>
-                <span class="activity-card__line">
-                  <CIconClock />
+                <CMetaItem>
+                  <template #icon>
+                    <CIconClock />
+                  </template>
                   {{ formatRelative(r.updated_at) }}
-                </span>
-              </div>
+                </CMetaItem>
+              </CMetaLine>
             </div>
 
             <div class="activity-card__stack">
-              <h3 class="activity-card__title">
-                {{ r.title }}
-              </h3>
+              <CFlexGroup
+                direction="row"
+              >
+                <h3 class="activity-card__title">
+                  {{ r.title }}
+                </h3>
+                
+                <CMetaItem
+                  v-if="r.document_count > 0"
+                  @click="openReportPhotos(r)"
+                  variant="sub"
+                  as="button"
+                >
+                  <template #icon>
+                    <CIconFile />
+                  </template>
+                  {{ t('reports.linkedPhotosCount', r.document_count) }}
+                </CMetaItem>
+              </CFlexGroup>
 
               <p
                 v-if="r.description"
-                class="body-xs"
               >
                 {{ r.description }}
               </p>
-
-              <div
-                v-if="r.document_count > 0"
-                class="activity-card__documents"
-              >
-                <button
-                  class="activity-card__line activity-card__documents-button"
-                  @click="openReportPhotos(r)"
-                >
-                  <CIconFile />
-                  {{ t('reports.linkedPhotosCount', r.document_count) }}
-                </button>
-              </div>
-
               <CMetaLine>
                 <CMetaItem>
                   <template #icon>
@@ -1205,7 +1209,7 @@ function photoPreview(file: File): string {
   min-height: unset; min-width: unset;
   opacity: 0.9; transition: opacity 0.15s;
 }
-.photo-gallery-delete svg { width: 14px; height: 14px; }
+.photo-gallery-delete svg { width: var(--icon-xs); height: var(--icon-xs); }
 .photo-gallery-delete:hover { opacity: 1; }
 
 .report-photo-gallery-modal {

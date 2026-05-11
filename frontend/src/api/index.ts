@@ -138,8 +138,12 @@ export const meetingsApi = {
     api.put<Meeting>(`/meetings/${id}`, data),
   call: (id: string) =>
     api.post(`/meetings/${id}/call`),
+  start: (id: string) =>
+    api.post(`/meetings/${id}/start`),
   close: (id: string) =>
     api.post(`/meetings/${id}/close`),
+  patchResolution: (meetingId: string, rid: string, data: { description?: string }) =>
+    api.patch<Resolution>(`/meetings/${meetingId}/resolutions/${rid}`, data),
   listDocuments: (id: string) =>
     api.get<MeetingDocument[]>(`/meetings/${id}/documents`),
   attachDocument: (id: string, data: { document_id: string; kind: 'notice' | 'attachment' }) =>
@@ -168,6 +172,10 @@ export const meetingsApi = {
     api.get<UnitVote[]>(`/meetings/${meetingId}/resolutions/${rid}/votes`),
   results: (meetingId: string, rid: string) =>
     api.get<VoteResult>(`/meetings/${meetingId}/resolutions/${rid}/results`),
+  finalizeResolution: (meetingId: string, rid: string) =>
+    api.post<{ finalized: boolean; result?: VoteResult; eligible_for_second_vote: boolean }>(
+      `/meetings/${meetingId}/resolutions/${rid}/finalize`,
+    ),
 }
 
 // ── Budget ────────────────────────────────────────────────────────

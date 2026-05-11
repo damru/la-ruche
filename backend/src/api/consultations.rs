@@ -146,8 +146,8 @@ pub async fn respond(
     Json(input): Json<RespondInput>,
 ) -> AppResult<StatusCode> {
     if input.choice_ids.is_empty() {
-        return Err(AppError::Validation(
-            "At least one choice is required".into(),
+        return Err(AppError::validation_code(
+            "errors.consultations.min_choices",
         ));
     }
 

@@ -6,6 +6,6 @@ const { t } = useI18n()
 
 <template>
   <div class="view-stub">
-    {{ t('errors.NOT_FOUND') }}
+    {{ t('errors.not_found') }}
   </div>
 </template>

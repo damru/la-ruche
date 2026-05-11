@@ -76,13 +76,6 @@ function priorityVariant(p: string): 'err' | 'pending' | 'primary' | 'valid' | '
   return 'default'
 }
 
-function priorityColor(p: string): string {
-  if (p === 'urgent') return 'var(--color-error)'
-  if (p === 'high') return 'var(--color-warning)'
-  if (p === 'normal') return 'var(--color-primary)'
-  return 'var(--color-success)'
-}
-
 // ── Lifecycle timeline events ──────────────────────────────────────
 interface TimelineEvent {
   key: string
@@ -227,54 +220,46 @@ function dotClass(variant?: TimelineEvent['variant']): string {
       <CPageLoader v-else-if="loading" />
       <template v-else-if="task">
         <!-- Task header card -->
-        <CCard class="task-header-card">
-          <div
-            class="prio-bar"
-            :style="{ background: priorityColor(task.priority) }"
-          ></div>
-          <div class="task-header-body">
-            <div class="task-header-badges">
-              <CBadge :variant="priorityVariant(task.priority)">
-                {{ t(`tasks.priorities.${task.priority}`) }}
-              </CBadge>
-              <CBadge
-                :variant="statusVariant(task.status)"
-                dot
+        <header class="view-header">
+          <CEyebrow>
+            <CBadge :variant="priorityVariant(task.priority)">
+              {{ t(`tasks.priorities.${task.priority}`) }}
+            </CBadge>
+            <CBadge
+              :variant="statusVariant(task.status)"
+              dot
               >
-                {{ t(`tasks.statuses.${task.status}`) }}
-              </CBadge>
-            </div>
-            <CEyebrow>
-              {{ t('page.eyebrows.taskDetail') }}
-            </CEyebrow>
-            <h1 class="display-md task-title">
-              {{ task.title }}
-            </h1>
-            <p
-              v-if="task.description"
-              class="body-md task-desc"
-            >
-              {{ task.description }}
-            </p>
-            <div class="task-meta">
-              <span>{{ t('tasks.lifecycle.createdRelative', { relative: formatRelative(task.created_at) }) }}</span>
-              <span v-if="task.closed_at">
-                · {{ t('tasks.closedAt', { date: formatDate(task.closed_at) }) }}
-              </span>
-              <span v-if="contractor || task.contractor_name">
-                · <RouterLink
-                  v-if="contractor"
-                  :to="{ name: 'contractor-detail', params: { id: contractor.id } }"
-                  class="contractor-link"
-                >🔧 {{ contractor.name }}</RouterLink>
-                <span
-                  v-else
-                  class="contractor-link contractor-link--text"
-                >🔧 {{ task.contractor_name }}</span>
-              </span>
-            </div>
+              {{ t(`tasks.statuses.${task.status}`) }}
+            </CBadge>
+            {{ t('page.eyebrows.taskDetail') }}
+          </CEyebrow>
+          <h1 class="display-md task-title">
+            {{ task.title }}
+          </h1>
+          <p
+            v-if="task.description"
+            class="body-md task-desc"
+          >
+            {{ task.description }}
+          </p>
+          <div class="task-meta">
+            <span>{{ t('tasks.lifecycle.createdRelative', { relative: formatRelative(task.created_at) }) }}</span>
+            <span v-if="task.closed_at">
+              · {{ t('tasks.closedAt', { date: formatDate(task.closed_at) }) }}
+            </span>
+            <span v-if="contractor || task.contractor_name">
+              · <RouterLink
+                v-if="contractor"
+                :to="{ name: 'contractor-detail', params: { id: contractor.id } }"
+                class="contractor-link"
+              >🔧 {{ contractor.name }}</RouterLink>
+              <span
+                v-else
+                class="contractor-link contractor-link--text"
+              >🔧 {{ task.contractor_name }}</span>
+            </span>
           </div>
-        </CCard>
+        </header>
 
         <!-- Lifecycle timeline -->
         <h2 class="section-title title-sm">
@@ -343,25 +328,6 @@ function dotClass(variant?: TimelineEvent['variant']): string {
   padding: 0;
   overflow: hidden;
   margin-bottom: var(--space-6);
-}
-
-.prio-bar {
-  width: 4px;
-  flex-shrink: 0;
-}
-
-.task-header-body {
-  flex: 1;
-  padding: var(--space-4) var(--space-5);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.task-header-badges {
-  display: flex;
-  gap: var(--space-2);
-  flex-wrap: wrap;
 }
 
 .task-title { margin: 0; }

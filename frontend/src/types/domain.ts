@@ -5,7 +5,7 @@
 
 export type Role = 'manager' | 'board_member' | 'co_owner' | 'tenant'
 
-export type MeetingStatus = 'draft' | 'called' | 'held' | 'closed'
+export type MeetingStatus = 'draft' | 'called' | 'ongoing' | 'closed'
 export type MeetingType = 'annual' | 'extraordinary'
 export type MeetingDocumentKind = 'notice' | 'attachment'
 export type MeetingAttendanceMode = 'present' | 'proxy' | 'correspondence' | 'absent'
@@ -355,8 +355,6 @@ export interface ConsultationChoice {
   order_index: number
   /** Number of voters who selected this choice (from list endpoint). */
   votes: number
-  /** Percentage of voters who selected this choice (0–100). */
-  pct: number
 }
 
 // ── Auth ──────────────────────────────────────────────────────────
@@ -475,7 +473,6 @@ export interface ConsultationResults {
     id: string
     label: string
     votes: number
-    pct: number
   }[]
 }
 

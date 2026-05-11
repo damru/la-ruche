@@ -77,9 +77,16 @@ function isVoteLocked(c: Consultation): boolean {
   return hasVoted(c) && !getInline(c).unlocked
 }
 
-function barWidth(c: Consultation, pct: number): number {
+function getTotalVotes(c: Consultation): number {
+  return consultationTotalVotes.value[c.id] ?? 0
+}
+
+function barWidth(c: Consultation, votes: number): number {
   // Only show filled bars if user has already voted OR consultation is closed
-  return hasVoted(c) || c.status === 'closed' ? pct : 0
+  if (!(hasVoted(c) || c.status === 'closed')) return 0
+  const totalVotes = getTotalVotes(c)
+  if (totalVotes === 0) return 0
+  return Math.round(votes * 100 / totalVotes)
 }
 
 function unlockVote(c: Consultation) {
@@ -138,6 +145,14 @@ const consultations = computed(() =>
   ).slice().sort((left, right) => right.updated_at.localeCompare(left.updated_at)),
 )
 const openCount = computed(() => allConsultations.value.filter(c => c.status === 'open').length)
+const closedCount = computed(() => allConsultations.value.filter(c => c.status === 'closed').length)
+const consultationTotalVotes = computed(() => {
+  const map: Record<string, number> = {}
+  for (const c of allConsultations.value) {
+    map[c.id] = c.choices.reduce((sum, choice) => sum + choice.votes, 0)
+  }
+  return map
+})
 
 const legalCardLinks = computed(() => [
   {
@@ -297,14 +312,14 @@ async function confirmDelete() {
         <div class="tabs">
           <button
             v-for="item in [
-              { key: 'open', label: t('consultations.filters.open') },
-              { key: 'closed', label: t('consultations.filters.closed') },
+              { key: 'open', label: t('consultations.filters.open'), count: openCount },
+              { key: 'closed', label: t('consultations.filters.closed'), count: closedCount },
             ]"
             :key="item.key"
             :class="['tab', { 'tab--active': statusFilter === item.key }]"
             @click="statusFilter = item.key as typeof statusFilter"
           >
-            {{ item.label }}
+            {{ item.label }} <span class="tab-count">{{ item.count }}</span>
           </button>
         </div>
 
@@ -366,13 +381,13 @@ async function confirmDelete() {
                   <div
                     class="result-bar"
                     :class="{ 'result-bar--dim': !hasVoted(c) && c.status === 'open' }"
-                    :style="{ width: barWidth(c, choice.pct) + '%' }"
+                    :style="{ width: barWidth(c, choice.votes) + '%' }"
                   ></div>
                 </div>
 
                 <!-- Column 3: percentage -->
-                <span class="result-pct">
-                  {{ hasVoted(c) || c.status === 'closed' ? choice.pct + '%' : '—' }}
+                <span class="font-mono text-xs text-end">
+                  {{ hasVoted(c) || c.status === 'closed' ? (() => { const total = getTotalVotes(c); return total > 0 ? Math.round(choice.votes * 100 / total) : 0 })() + '%' : '—' }}
                 </span>
               </template>
             </div>
@@ -440,7 +455,7 @@ async function confirmDelete() {
               class="card-actions"
             >
               <CBtn
-                variant="danger"
+                variant="primary"
                 size="sm"
                 @click="openCloseModal(c)"
               >
@@ -684,12 +699,6 @@ async function confirmDelete() {
   transition: width 0.3s ease;
 }
 .result-bar--dim { background: var(--color-outline-variant); }
-.result-pct {
-  font-size: var(--text-xs);
-  font-weight: var(--fw-semibold);
-  text-align: right;
-  color: var(--color-on-surface-variant);
-}
 
 /* ── Inline vote form ──────────────────────────────────────────── */
 .vote-locked-actions {

@@ -851,7 +851,7 @@ async function copyVendorLink(taskId: string) {
               <h3 class="activity-card__title">
                 {{ task.title }}
               </h3>
-              <div class="activity-card__chips">
+              <CMetaLine class="flex-1 justify-end text-xs">
                 <CBadge :variant="isTerminal(task.status) ? 'disabled' : priorityVariant(task.priority)">
                   {{ t(`tasks.priorities.${task.priority}`) }}
                 </CBadge>
@@ -861,7 +861,7 @@ async function copyVendorLink(taskId: string) {
                 >
                   {{ t(`tasks.statuses.${task.status}`) }}
                 </CBadge>
-              </div>
+              </CMetaLine>
             </div>
 
             <div class="activity-card__stack">

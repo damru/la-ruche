@@ -79,7 +79,7 @@ function statusLabel(status: Meeting['status']): string {
 
 function statusBadgeVariant(status: Meeting['status']): 'primary' | 'valid' | 'disabled' {
   if (status === 'called') return 'primary'
-  if (status === 'closed' || status === 'held') return 'valid'
+  if (status === 'closed' || status === 'ongoing') return 'valid'
   return 'disabled'
 }
 
@@ -232,7 +232,7 @@ async function saveMeeting() {
             @keydown.enter.prevent="openMeeting(meeting.id)"
             @keydown.space.prevent="openMeeting(meeting.id)"
           >
-            <div :class="['meeting-badge', { 'meeting-badge--closed': meeting.status === 'closed', 'meeting-badge--held': meeting.status === 'held', 'meeting-badge--draft': statusBadgeVariant(meeting.status) === 'disabled' }]">
+            <div :class="['meeting-badge', { 'meeting-badge--closed': meeting.status === 'closed', 'meeting-badge--ongoing': meeting.status === 'ongoing', 'meeting-badge--draft': statusBadgeVariant(meeting.status) === 'disabled', 'meeting-badge--pulse': meeting.status === 'ongoing' }]">
               <span class="meeting-badge__type">{{ meetingBadgeLabel(meeting.meeting_type) }}</span>
               <span class="meeting-badge__year">{{ new Date(meeting.meeting_date).getFullYear() }}</span>
             </div>
@@ -245,7 +245,7 @@ async function saveMeeting() {
                   </h2>
                   <CBadge
                     :variant="statusBadgeVariant(meeting.status)"
-                    :pulse="statusBadgeVariant(meeting.status) === 'primary'"
+                    :pulse="meeting.status === 'called' || meeting.status === 'ongoing'"
                     class="text-xs"
                     dot
                   >
@@ -398,8 +398,30 @@ async function saveMeeting() {
   color: white;
 }
 
-.meeting-badge--closed {
+.meeting-badge--closed,
+.meeting-badge--ongoing {
   background: linear-gradient(135deg, #1b5e20, #43a047);
+}
+
+.meeting-badge--pulse {
+  position: relative;
+}
+
+.meeting-badge--pulse::after {
+  content: '';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: white;
+  animation: pulse-dot 1.8s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.7); }
 }
 
 .meeting-badge--draft {
@@ -414,18 +436,6 @@ async function saveMeeting() {
     var(--gradient-primary);
 }
 
-
-.meeting-badge--held {
-  background:
-    repeating-linear-gradient(
-      -45deg,
-      rgba(255, 255, 255, 0.18) 0px,
-      rgba(255, 255, 255, 0.18) 10px,
-      transparent 10px,
-      transparent 20px
-    ),
-    linear-gradient(135deg, #1b5e20, #43a047);
-}
 
 .meeting-badge__type {
   font-family: var(--font-display);

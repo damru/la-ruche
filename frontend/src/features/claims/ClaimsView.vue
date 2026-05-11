@@ -940,57 +940,56 @@ async function submitDelete() {
                   height="18"
                 />
               </div>
-              <h3 class="activity-card__title">
-                {{ claim.title }}
-              </h3>
-              <div class="activity-card__chips">
-                <CBadge variant="default">
-                  {{ t(`claims.types.${claim.claim_type}`) }}
-                </CBadge>
+              <CMetaLine class="text-xs justify-end justify-self-end">
                 <CBadge
                   :variant="statusVariant(claim.status)"
                   dot
                 >
                   {{ t(`claims.statuses.${claim.status}`) }}
                 </CBadge>
-              </div>
+                <CBadge variant="default">
+                  {{ t(`claims.types.${claim.claim_type}`) }}
+                </CBadge>
+                <CBadge
+                  :variant="deadlineVariant(claim)"
+                  :dot="deadlineVariant(claim) !== 'default'"
+                  >
+                  {{ deadlineLabel(claim) }}
+                </CBadge>
+              </CMetaLine>
             </div>
-
-            <div class="activity-card__chips">
-              <CBadge
-                :variant="deadlineVariant(claim)"
-                :dot="deadlineVariant(claim) !== 'default'"
-              >
-                {{ deadlineLabel(claim) }}
-              </CBadge>
-            </div>
-
             <div class="activity-card__stack">
-              <div class="body-sm activity-card__line">
-                <CIconLocation />
-                {{ unitLabel(claim.unit_id) }}
-              </div>
-
+              <CFlexGroup
+                direction="row"
+              >
+                <h3 class="activity-card__title">
+                  {{ claim.title }}
+                </h3>
+                <CMetaItem
+                  variant="sub"
+                >
+                  <template #icon>
+                    <CIconLocation />
+                  </template>
+                  {{ unitLabel(claim.unit_id) }}
+                </CMetaItem>
+                <CMetaItem
+                  v-if="claim.document_count > 0"
+                  @click="openClaimDocuments(claim)"
+                  variant="sub"
+                  as="button"
+                >
+                  <template #icon>
+                    <CIconFile />
+                  </template>
+                  {{ t('claims.documentsCount', claim.document_count) }}
+                </CMetaItem>
+              </CFlexGroup>
               <p
                 v-if="claim.description"
-                class="body-xs"
               >
                 {{ claim.description }}
               </p>
-
-              <div
-                v-if="claim.document_count > 0"
-                class="activity-card__documents"
-              >
-                <button
-                  class="activity-card__line activity-card__documents-button"
-                  @click="openClaimDocuments(claim)"
-                >
-                  <CIconFile />
-                  {{ t('claims.documentsCount', claim.document_count) }}
-                </button>
-              </div>
-
               <template v-if="canManage">
                 <div class="activity-card__actions">
                   <CBtn
@@ -1637,7 +1636,7 @@ async function submitDelete() {
   color: #fff;
   border: none;
   cursor: pointer;
-  font-size: 14px;
+  font-size: var(--text-md);
   line-height: 1;
   display: flex;
   align-items: center;

@@ -79,27 +79,27 @@ impl IntoResponse for AppError {
         }
 
         let (status, code, message) = match &self {
-            AppError::Validation(msg) => (StatusCode::BAD_REQUEST, "VALIDATION_ERROR", msg.clone()),
-            AppError::BadRequest(msg) => (StatusCode::BAD_REQUEST, "BAD_REQUEST", msg.clone()),
-            AppError::Unauthorized => (StatusCode::UNAUTHORIZED, "UNAUTHORIZED", self.to_string()),
-            AppError::TokenInvalid => (StatusCode::UNAUTHORIZED, "TOKEN_INVALID", self.to_string()),
-            AppError::Forbidden => (StatusCode::FORBIDDEN, "FORBIDDEN", self.to_string()),
-            AppError::NotFound => (StatusCode::NOT_FOUND, "NOT_FOUND", self.to_string()),
-            AppError::Conflict(msg) => (StatusCode::CONFLICT, "CONFLICT", msg.clone()),
+            AppError::Validation(msg) => (StatusCode::BAD_REQUEST, "validation_error", msg.clone()),
+            AppError::BadRequest(msg) => (StatusCode::BAD_REQUEST, "bad_request", msg.clone()),
+            AppError::Unauthorized => (StatusCode::UNAUTHORIZED, "unauthorized", self.to_string()),
+            AppError::TokenInvalid => (StatusCode::UNAUTHORIZED, "token_invalid", self.to_string()),
+            AppError::Forbidden => (StatusCode::FORBIDDEN, "forbidden", self.to_string()),
+            AppError::NotFound => (StatusCode::NOT_FOUND, "not_found", self.to_string()),
+            AppError::Conflict(msg) => (StatusCode::CONFLICT, "conflict", msg.clone()),
             // 5xx: generic message to client, details in logs
             AppError::Database(_) => (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                "DB_ERROR",
+                "db_error",
                 "Database error".into(),
             ),
             AppError::Storage(_) => (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                "STORAGE_ERROR",
+                "storage_error",
                 "Storage error".into(),
             ),
             AppError::Internal(_) => (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                "INTERNAL_ERROR",
+                "internal_error",
                 "Internal error".into(),
             ),
         };

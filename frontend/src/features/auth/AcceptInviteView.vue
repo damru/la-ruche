@@ -195,7 +195,7 @@ async function handleSubmit() {
   margin-bottom: var(--space-1);
 }
 .form-sub {
-  font-size: 14px;
+  font-size: var(--text-md);
   color: var(--color-on-surface-variant);
   line-height: 1.5;
 }

@@ -61,17 +61,27 @@ const unitVotes = ref<Record<string, string>>({})
 const savingVotes = ref(false)
 const voteFeedback = useFormFeedback()
 
+const startingMeeting = ref(false)
+
+const showEditResolutionModal = ref(false)
+const editingResolution = ref<Resolution | null>(null)
+const editResolutionForm = ref({ description: '' })
+const savingEditResolution = ref(false)
+const editResolutionFeedback = useFormFeedback()
+
 const { schedule: scheduleMeetingClose, forceExpire: forceMeetingClose } = useAutoClose()
 const { schedule: scheduleResolutionClose, forceExpire: forceResolutionClose } = useAutoClose()
 const { schedule: scheduleDocumentClose, forceExpire: forceDocumentClose } = useAutoClose()
 const { schedule: scheduleAttendanceClose, forceExpire: forceAttendanceClose } = useAutoClose()
 const { schedule: scheduleVoteClose, forceExpire: forceVoteClose } = useAutoClose()
+const { schedule: scheduleEditResolutionClose, forceExpire: forceEditResolutionClose } = useAutoClose()
 
 watch(showEditMeetingModal, (open) => { if (!open) forceMeetingClose() })
 watch(showAddResolutionModal, (open) => { if (!open) forceResolutionClose() })
 watch(showDocumentModal, (open) => { if (!open) forceDocumentClose() })
 watch(showAttendanceModal, (open) => { if (!open) forceAttendanceClose() })
 watch(showVoteModal, (open) => { if (!open) forceVoteClose() })
+watch(showEditResolutionModal, (open) => { if (!open) forceEditResolutionClose() })
 
 function defaultMeetingForm() {
   return {
@@ -104,7 +114,9 @@ const attendanceDraft = ref<MeetingAttendanceEntry[]>([])
 const meetingAgendaItems = ref<string[]>([''])
 
 const canAddResolution = computed(() => auth.isManager && ['draft', 'called'].includes(meeting.value?.status ?? ''))
-const canManageVotes = computed(() => auth.isManager && meeting.value?.status === 'held')
+const canManageVotes = computed(() => auth.isManager && ['ongoing'].includes(meeting.value?.status ?? ''))
+const canEditResolution = computed(() => auth.isManager && ['draft', 'ongoing'].includes(meeting.value?.status ?? ''))
+const canEditAttendance = computed(() => auth.isManager && meeting.value?.status !== 'closed')
 const sortedAttendanceEntries = computed(() =>
   [...attendance.value.entries].sort((a, b) => parseInt(a.unit_number, 10) - parseInt(b.unit_number, 10))
 )
@@ -121,14 +133,14 @@ const isMeetingPast = computed(() => {
   if (!meeting.value) return false
   return new Date(meeting.value.meeting_date).getTime() < Date.now()
 })
-const topbarActionState = computed<'none' | 'draft' | 'called-waiting' | 'called-closable' | 'closed'>(() => {
+const topbarActionState = computed<'none' | 'draft' | 'called-waiting' | 'called-startable' | 'ongoing' | 'closed'>(() => {
   if (!auth.isManager || !meeting.value) return 'none'
 
   if (meeting.value.status === 'draft') return 'draft'
   if (meeting.value.status === 'closed') return 'closed'
-  if (meeting.value.status === 'held') return 'called-closable'
+  if (meeting.value.status === 'ongoing') return 'ongoing'
   if (meeting.value.status === 'called') {
-    return isMeetingPast.value ? 'called-closable' : 'called-waiting'
+    return isMeetingPast.value ? 'called-startable' : 'called-waiting'
   }
 
   return 'none'
@@ -293,17 +305,17 @@ function meetingStatusLabel(status: Meeting['status']): string {
 }
 
 type BadgeVariant = 'open' | 'pending' | 'closed' | 'disabled' | 'valid' | 'err' | 'primary' | 'default'
-type MeetingBannerState = 'draft' | 'called' | 'held' | 'closed'
+type MeetingBannerState = 'draft' | 'called' | 'ongoing' | 'closed'
 
 function meetingStatusVariant(status: Meeting['status']): BadgeVariant {
   if (status === 'called') return 'primary'
-  if (status === 'closed') return 'valid'
+  if (status === 'ongoing' || status === 'closed') return 'valid'
   return 'disabled'
 }
 
 function meetingBannerState(status: Meeting['status']): MeetingBannerState {
   if (status === 'closed') return 'closed'
-  if (status === 'held' || topbarActionState.value === 'called-closable') return 'held'
+  if (status === 'ongoing') return 'ongoing'
   if (status === 'called') return 'called'
   return 'draft'
 }
@@ -311,9 +323,9 @@ function meetingBannerState(status: Meeting['status']): MeetingBannerState {
 function meetingBannerTitle(status: Meeting['status']): string {
   const state = meetingBannerState(status)
   if (state === 'called') return t('meetings.bannerCalled')
-  if (state === 'held') return t('meetings.bannerHeld')
+  if (state === 'ongoing') return t('meetings.bannerOngoing')
   if (state === 'closed') return t('meetings.bannerClosed')
-  return `${meetingStatusLabel(status)} · ${t('meetings.legalWarning')}`
+  return meetingStatusLabel(status)
 }
 
 function meetingBannerSubtitle(status: Meeting['status']): string {
@@ -325,13 +337,10 @@ function meetingBannerSubtitle(status: Meeting['status']): string {
       : t('meetings.documents.minutesPending')
   }
 
-  if (state === 'held') {
-    return t('meetings.bannerHeldSub', {
+  if (state === 'ongoing') {
+    return t('meetings.bannerOngoingSub', {
       resolved: resolvedResolutionCount.value,
       pending: pendingResolutionCount.value,
-      minutes: meeting.value?.minutes_document_id
-        ? t('meetings.documents.minutesReady')
-        : t('meetings.documents.minutesPending'),
     })
   }
 
@@ -566,9 +575,35 @@ async function saveVotes() {
           position: unitVotes.value[e.unit_id],
         })),
     )
-    const result = await meetingsApi.results(meeting.value.id, votingResolution.value.id)
-    voteResults.value = { ...voteResults.value, [votingResolution.value.id]: result.data }
-    voteFeedback.setSuccess(t('meetings.vote.voteSaved'))
+
+    // Attempt finalization — server checks if all attending units have voted
+    const finalizeRes = await meetingsApi.finalizeResolution(
+      meeting.value.id,
+      votingResolution.value.id,
+    )
+
+    if (finalizeRes.data.finalized && finalizeRes.data.result) {
+      // Update local resolution status immediately without a full reload
+      const rid = votingResolution.value.id
+      resolutions.value = resolutions.value.map(r =>
+        r.id === rid
+          ? { ...r, status: finalizeRes.data.result!.passed ? 'passed' : 'rejected' }
+          : r,
+      )
+      voteResults.value = { ...voteResults.value, [rid]: finalizeRes.data.result }
+      const msgKey = finalizeRes.data.eligible_for_second_vote
+        ? 'meetings.vote.eligibleSecondVote'
+        : finalizeRes.data.result.passed
+          ? 'meetings.vote.passed'
+          : 'meetings.vote.rejected'
+      voteFeedback.setSuccess(t(msgKey))
+    } else {
+      // Votes saved but not all units have voted yet — just refresh the tally
+      const result = await meetingsApi.results(meeting.value.id, votingResolution.value.id)
+      voteResults.value = { ...voteResults.value, [votingResolution.value.id]: result.data }
+      voteFeedback.setSuccess(t('meetings.vote.voteSaved'))
+    }
+
     scheduleVoteClose(async () => { showVoteModal.value = false })
   } catch (err) {
     voteFeedback.setError(toErrorMessage(err, t('common.error')))
@@ -687,6 +722,70 @@ async function closeMeeting() {
   }
 }
 
+async function startMeeting() {
+  if (!meeting.value) return
+  startingMeeting.value = true
+  try {
+    await meetingsApi.start(meeting.value.id)
+    await reload()
+  } catch (err) {
+    documentFeedback.setError(toErrorMessage(err, t('common.error')))
+  } finally {
+    startingMeeting.value = false
+  }
+}
+
+function openEditResolutionModal(resolution: Resolution) {
+  editingResolution.value = resolution
+  editResolutionForm.value = { description: resolution.description ?? '' }
+  editResolutionFeedback.reset()
+  showEditResolutionModal.value = true
+}
+
+async function saveEditResolution() {
+  if (!editingResolution.value || !meeting.value) return
+  savingEditResolution.value = true
+  editResolutionFeedback.reset()
+  try {
+    if (meeting.value.status === 'draft') {
+      await meetingsApi.updateResolution(meeting.value.id, editingResolution.value.id, {
+        number: editingResolution.value.number,
+        title: editingResolution.value.title,
+        description: editResolutionForm.value.description || undefined,
+        vote_type: editingResolution.value.vote_type,
+      })
+    } else {
+      await meetingsApi.patchResolution(meeting.value.id, editingResolution.value.id, {
+        description: editResolutionForm.value.description || undefined,
+      })
+    }
+    editResolutionFeedback.setSuccess(t('common.saved'))
+    scheduleEditResolutionClose(async () => {
+      showEditResolutionModal.value = false
+      await reload()
+    })
+  } catch (err) {
+    editResolutionFeedback.setError(toErrorMessage(err, t('common.error')))
+  } finally {
+    savingEditResolution.value = false
+  }
+}
+
+async function createArt24Resolution(resolution: Resolution) {
+  if (!meeting.value) return
+  try {
+    await meetingsApi.createResolution(meeting.value.id, {
+      number: resolutions.value.length + 1,
+      title: `${resolution.title} (Art. 24)`,
+      description: resolution.description,
+      vote_type: 'simple_majority',
+    })
+    await reload()
+  } catch (err) {
+    documentFeedback.setError(toErrorMessage(err, t('common.error')))
+  }
+}
+
 function toDateTimeLocal(value: string): string {
   const date = new Date(value)
   const offsetMs = date.getTimezoneOffset() * 60_000
@@ -755,7 +854,18 @@ function onFileChange(event: Event) {
         </CBtn>
 
         <CBtn
-          v-else-if="topbarActionState === 'called-closable'"
+          v-else-if="topbarActionState === 'called-startable'"
+          variant="primary"
+          size="sm"
+          :loading="startingMeeting"
+          @click="startMeeting"
+        >
+          <CIconCheck />
+          <span class="btn-label">{{ t('meetings.start') }}</span>
+        </CBtn>
+
+        <CBtn
+          v-else-if="topbarActionState === 'ongoing'"
           variant="primary"
           size="sm"
           :loading="closingMeeting"
@@ -832,7 +942,7 @@ function onFileChange(event: Event) {
           <div class="status-banner__left">
             <div class="status-banner__icon">
               <CIconBell v-if="meetingBannerState(meeting.status) === 'called'" />
-              <CIconCheck v-else-if="meetingBannerState(meeting.status) === 'held'" />
+              <CIconCheck v-else-if="meetingBannerState(meeting.status) === 'ongoing'" />
               <CIconLock v-else-if="meetingBannerState(meeting.status) === 'closed'" />
               <CIconEdit v-else />
             </div>
@@ -886,12 +996,14 @@ function onFileChange(event: Event) {
                 class="resolution-card gap-y-4"
               >
                 <div class="resolution-card__header">
-                  <div :class="['resolution-number',
-                    resolution.status === 'passed' ? 'tone--accent' 
-                      : voteResults[resolution.id]?.eligible_for_second_vote === true ? 'tone--warn' 
-                      : resolution.status === 'rejected' ? 'tone--disabled' 
-                      : '',
-                  ]">
+                  <div
+                    :class="['resolution-number',
+                             resolution.status === 'passed' ? 'tone--accent' 
+                             : voteResults[resolution.id]?.eligible_for_second_vote === true ? 'tone--warn' 
+                               : resolution.status === 'rejected' ? 'tone--disabled' 
+                                 : '',
+                    ]"
+                  >
                     {{ resolution.number }}
                   </div>
                   <div class="resolution-card__body">
@@ -996,11 +1108,25 @@ function onFileChange(event: Event) {
                   {{ t('meetings.vote.pendingVote') }}
                 </div>
 
-                <div
-                  v-if="canManageVotes"
-                  class="vote-entry-action"
-                >
+                <div class="resolution-card__actions">
                   <CBtn
+                    v-if="canEditResolution"
+                    size="sm"
+                    variant="ghost"
+                    @click="openEditResolutionModal(resolution)"
+                  >
+                    {{ t('meetings.editResolution') }}
+                  </CBtn>
+                  <CBtn
+                    v-if="voteResults[resolution.id]?.eligible_for_second_vote && meeting?.status === 'ongoing'"
+                    size="sm"
+                    variant="ghost"
+                    @click="createArt24Resolution(resolution)"
+                  >
+                    {{ t('meetings.createArt24') }}
+                  </CBtn>
+                  <CBtn
+                    v-if="canManageVotes"
                     size="sm"
                     variant="ghost"
                     @click="openVoteModal(resolution)"
@@ -1017,7 +1143,11 @@ function onFileChange(event: Event) {
               <h2 class="side-head headline-sm card-title">
                 {{ t('meetings.info') }}
               </h2>
-              <CFlexGroup tag="dl" class="[&_dt]:text-xs [&_dd]:font-medium [&_dd]:text(--color-on-surface) " variant="vertical">
+              <CFlexGroup
+                tag="dl"
+                class="[&_dt]:text-xs [&_dd]:font-medium [&_dd]:text(--color-on-surface) "
+                direction="column"
+              >
                 <div class="info-list__row">
                   <dt>{{ t('meetings.infoFields.type') }}</dt>
                   <dd>{{ typeLabel(meeting.meeting_type) }}</dd>
@@ -1161,7 +1291,7 @@ function onFileChange(event: Event) {
                   </p>
                 </div>
                 <CBtn
-                  v-if="auth.isManager"
+                  v-if="canEditAttendance"
                   variant="ghost"
                   size="sm"
                   @click="openAttendanceModal"
@@ -1198,31 +1328,31 @@ function onFileChange(event: Event) {
                   {{ quorumReached ? t('meetings.quorumOkDetail') : t('meetings.quorumKoDetail', { threshold: quorumThreshold }) }}
                 </CAlert>
               </div>
-              <CFlexGroup variant="vertical">
+              <CFlexGroup direction="column">
                 <div
                   v-for="entry in sortedAttendanceEntries"
                   :key="entry.unit_id"
                   class="participant-row"
                 >
-                    <div class="participant-row__identity">
-                      <div class="attendance-avatar">
-                        {{ ownerInitials(entry.owner_name) }}
-                      </div>
-                      <div>
-                        <p class="participant-name">
-                          {{ entry.owner_name || '—' }}
-                        </p>
-                        <p class="participant-meta">
-                          Lot {{ entry.unit_number }}
-                        </p>
-                      </div>
+                  <div class="participant-row__identity">
+                    <div class="attendance-avatar">
+                      {{ ownerInitials(entry.owner_name) }}
                     </div>
-                    <div class="participant-row__meta">
-                      <small class="attendance-shares">{{ t('units.sharesAmount', { amount: entry.shares_represented }) }}</small>
-                      <CBadge :variant="attendanceModeVariant(entry.mode)">
-                        {{ attendanceModeLabel(entry.mode) }}
-                      </CBadge>
+                    <div>
+                      <p class="participant-name">
+                        {{ entry.owner_name || '—' }}
+                      </p>
+                      <p class="participant-meta">
+                        Lot {{ entry.unit_number }}
+                      </p>
                     </div>
+                  </div>
+                  <div class="participant-row__meta">
+                    <small class="attendance-shares">{{ t('units.sharesAmount', { amount: entry.shares_represented }) }}</small>
+                    <CBadge :variant="attendanceModeVariant(entry.mode)">
+                      {{ attendanceModeLabel(entry.mode) }}
+                    </CBadge>
+                  </div>
                 </div>
               </CFlexGroup>
             </CCard>
@@ -1231,14 +1361,18 @@ function onFileChange(event: Event) {
               <h2 class="side-head headline-sm card-title">
                 {{ t('meetings.agenda') }}
               </h2>
-              <CFlexGroup tag="ol" class="agenda-list" variant="vertical">
+              <CFlexGroup
+                tag="ol"
+                class="agenda-list"
+                direction="column"
+              >
                 <li
                   v-for="(item, index) in agendaItems"
                   :key="`${index}-${item}`"
                   class="agenda-item"
                 >
-                    <span class="agenda-item__n">{{ index + 1 }}.</span>
-                    <span class="agenda-item__text">{{ item }}</span>
+                  <span class="agenda-item__n">{{ index + 1 }}.</span>
+                  <span class="agenda-item__text">{{ item }}</span>
                 </li>
               </CFlexGroup>
             </CCard>
@@ -1246,7 +1380,7 @@ function onFileChange(event: Event) {
         </div>
 
         <CLegalCard>
-          <CFlexGroup variant="vertical">
+          <CFlexGroup direction="column">
             <CLegalNotice
               v-for="entry in majorityLegalDescriptions"
               :key="entry.title"
@@ -1435,10 +1569,10 @@ function onFileChange(event: Event) {
               v-for="entry in attendingUnits"
               :key="entry.unit_id"
             >
-              <td class="font-mono vote-table__unit">
+              <td class="font-mono">
                 {{ entry.unit_number }}
               </td>
-              <td class="vote-table__owner">
+              <td>
                 {{ entry.owner_name || '—' }}
               </td>
               <td>
@@ -1446,7 +1580,7 @@ function onFileChange(event: Event) {
                   {{ attendanceModeLabel(entry.mode) }}
                 </CBadge>
               </td>
-              <td :class="['vote-table__select', !unitVotes[entry.unit_id] && 'vote-table__select--empty']">
+              <td :class="[!unitVotes[entry.unit_id] && 'vote-table__select--empty']">
                 <CFormSelect
                   :model-value="unitVotes[entry.unit_id] ?? ''"
                   :options="votePositionOptions"
@@ -1475,6 +1609,51 @@ function onFileChange(event: Event) {
           @click="saveVotes"
         >
           {{ t('meetings.vote.submit') }}
+        </CBtn>
+      </template>
+    </CModal>
+
+    <CModal
+      :open="showEditResolutionModal"
+      :title="t('meetings.editResolution')"
+      @update:open="showEditResolutionModal = $event"
+    >
+      <form
+        class="form-grid"
+        @submit.prevent="saveEditResolution"
+      >
+        <template v-if="meeting?.status === 'ongoing'">
+          <p class="modal-subtitle resolution-locked-notice">
+            {{ t('meetings.resolutionDescriptionOnly') }}
+          </p>
+          <div class="form-field">
+            <span class="form-label">{{ t('meetings.resolutionLabel') }}</span>
+            <span class="form-static">{{ editingResolution?.title }}</span>
+          </div>
+        </template>
+        <CFormTextarea
+          v-model="editResolutionForm.description"
+          :label="t('meetings.resolutionDescription')"
+          :placeholder="t('meetings.resolutionDescriptionPlaceholder')"
+        />
+      </form>
+      <template #footer>
+        <CFormFeedback
+          :status="editResolutionFeedback.status.value"
+          :message="editResolutionFeedback.message.value"
+        />
+        <CBtn
+          variant="ghost"
+          @click="showEditResolutionModal = false"
+        >
+          {{ t('common.cancel') }}
+        </CBtn>
+        <CBtn
+          variant="primary"
+          :loading="savingEditResolution"
+          @click="saveEditResolution"
+        >
+          {{ t('common.save') }}
         </CBtn>
       </template>
     </CModal>
@@ -1668,12 +1847,12 @@ function onFileChange(event: Event) {
   color: var(--color-success);
 }
 
-.status-banner--held {
+.status-banner--ongoing {
   background: color-mix(in srgb, var(--color-success-container) 100%, transparent);
   color: var(--color-on-success-container);
 }
 
-.status-banner--held .status-banner__icon {
+.status-banner--ongoing .status-banner__icon {
   background: color-mix(in srgb, var(--color-success) 16%, transparent);
   color: var(--color-success);
 }
@@ -1813,7 +1992,8 @@ function onFileChange(event: Event) {
 }
 
 .tally-label {
-  color: var(--color-on-surface-variant);
+  font-size: var(--text-xs);
+  font-weight: var(--fw-medium);
 }
 
 .tally-track {
@@ -1879,6 +2059,28 @@ function onFileChange(event: Event) {
   justify-content: flex-end;
 }
 
+.resolution-card__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.resolution-locked-notice {
+  grid-column: 1 / -1;
+  color: var(--color-on-surface-variant);
+  font-size: var(--text-xs);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface-container-low);
+  border-radius: var(--radius-sm);
+  margin: 0;
+}
+
+.form-static {
+  font-size: var(--text-sm);
+  color: var(--color-on-surface);
+  padding: var(--space-2) 0;
+}
+
 .vote-quick-actions {
   display: flex;
   gap: var(--space-2);
@@ -1908,19 +2110,6 @@ function onFileChange(event: Event) {
 
 .vote-table tbody tr:last-child td {
   border-bottom: none;
-}
-
-.vote-table__unit {
-  width: 64px;
-  white-space: nowrap;
-}
-
-.vote-table__owner {
-  min-width: 120px;
-}
-
-.vote-table__select {
-  width: 160px;
 }
 
 .vote-table__select--empty :deep(select) {

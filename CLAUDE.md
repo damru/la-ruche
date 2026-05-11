@@ -78,7 +78,7 @@ If **no** → no further action required. If **yes** → proceed to Step 2.
 | Entity | Pattern | Frozen from |
 |---|---|---|
 | `levy_call` | A | `status = 'issued'` |
-| `vote` / `resolution` | A | AG `held` / `closed` |
+| `vote` / `resolution` | A | AG `ongoing` / `closed` |
 | `task.completion_cost`, `task.closed_at` | A | `status = 'closed'` |
 | `claim.transmitted_at`, `claim.reimbursement_*` | A | Fields set |
 | `maintenance_log` (source `automatic`) | A | Always |

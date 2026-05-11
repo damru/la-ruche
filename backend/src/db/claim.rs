@@ -184,16 +184,16 @@ pub fn validate_payload(
     }
 
     if status.is_none() && (reimbursement_date.is_some() || reimbursement_amount.is_some()) {
-        return Err(AppError::Validation(
-            "reimbursement fields require an explicit status".into(),
+        return Err(AppError::validation_code(
+            "errors.claims.reimbursement_requires_status",
         ));
     }
 
     if matches!(status, Some(CLAIM_STATUS_OPEN | CLAIM_STATUS_IN_PROGRESS))
         && (reimbursement_date.is_some() || reimbursement_amount.is_some())
     {
-        return Err(AppError::Validation(
-            "reimbursement fields are only allowed for closed claims".into(),
+        return Err(AppError::validation_code(
+            "errors.claims.reimbursement_only_for_closed",
         ));
     }
 

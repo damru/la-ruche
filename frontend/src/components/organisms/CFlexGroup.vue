@@ -4,8 +4,8 @@
 // top-level slotted element. Comment/Text vnodes (produced by v-if=false)
 // are filtered out so conditional items don't produce orphan separators.
 //
-//   variant="vertical"   → flex-direction: column + CSeparator variant="vertical" (hr rule)
-//   variant="horizontal" → flex-direction: row    + CSeparator variant="horizontal" (dot)
+//   direction="column"   → flex-direction: column + CSeparator variant="vertical" (hr rule)
+//   direction="row"      → flex-direction: row    + CSeparator variant="horizontal" (dot)
 //   tag                  → root HTML tag (default: "div"). Use "ol", "ul", "dl", etc.
 //                          to preserve semantic markup.
 import { defineComponent, h, Fragment, Comment, Text } from 'vue'
@@ -15,9 +15,9 @@ export default defineComponent({
   name: 'CFlexGroup',
 
   props: {
-    variant: {
-      type: String as () => 'horizontal' | 'vertical',
-      default: 'vertical',
+    direction: {
+      type: String as () => 'row' | 'column',
+      default: 'column',
     },
     tag: {
       type: String,
@@ -51,32 +51,16 @@ export default defineComponent({
       nodes.forEach((node, i) => {
         children.push(node)
         if (i < nodes.length - 1) {
-          children.push(h(CSeparator, { variant: props.variant }))
+          children.push(h(CSeparator, { variant: props.direction === 'column' ? 'vertical' : 'horizontal' }))
         }
       })
 
       return h(
         props.tag,
-        { class: ['c-flex-group', `c-flex-group--${props.variant}`] },
+        { class: ["flex", "gap-(--space-2)", `flex ${props.direction === 'column' ? 'flex-col' : 'flex-row items-center'}`] },
         children,
       )
     }
   },
 })
 </script>
-
-<style>
-.c-flex-group {
-  display: flex;
-  gap: var(--space-2);
-}
-
-.c-flex-group--vertical {
-  flex-direction: column;
-}
-
-.c-flex-group--horizontal {
-  flex-direction: row;
-  align-items: center;
-}
-</style>

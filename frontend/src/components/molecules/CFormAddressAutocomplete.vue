@@ -339,7 +339,7 @@ function updateField(field: keyof AddressValue, value: string) {
   border: none;
   border-radius: var(--radius-md);
   font-family: var(--font-body);
-  font-size: 14px;
+  font-size: var(--text-md);
   color: var(--color-on-surface);
   outline: none;
   transition:

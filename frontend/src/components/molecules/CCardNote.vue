@@ -17,8 +17,8 @@
 }
 
 .c-card-note :deep(svg) {
-  width: 14px;
-  height: 14px;
+  width: var(--icon-xs);
+  height: var(--icon-xs);
   flex-shrink: 0;
 }
 </style>

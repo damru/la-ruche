@@ -284,6 +284,46 @@ pub async fn results(
     crate::errors::json_value(result)
 }
 
+pub async fn finalize_resolution(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+    Path((meeting_id, resolution_id)): Path<(Uuid, Uuid)>,
+) -> AppResult<Json<serde_json::Value>> {
+    auth.require_role(&Role::Manager)?;
+
+    let (resolution, tally) =
+        crate::db::assembly::get_tally(&state.pool, meeting_id, resolution_id, auth.building_id)
+            .await?;
+
+    let rule = parse_vote_rule(&resolution.vote_type)?;
+    let result = tally.compute(&rule);
+
+    let new_status = if result.passed { "passed" } else { "rejected" };
+
+    let finalized = crate::db::assembly::finalize_resolution(
+        &state.pool,
+        meeting_id,
+        resolution_id,
+        auth.building_id,
+        new_status,
+    )
+    .await?;
+
+    let result_json = if finalized {
+        Some(serde_json::to_value(&result).map_err(|_| {
+            AppError::bad_request_code("errors.meetings.invalid_resolution_payload")
+        })?)
+    } else {
+        None
+    };
+
+    Ok(Json(serde_json::json!({
+        "finalized": finalized,
+        "result": result_json,
+        "eligible_for_second_vote": result.eligible_for_second_vote,
+    })))
+}
+
 pub async fn list_documents(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,
@@ -376,6 +416,40 @@ pub async fn list_votes(
             })
             .collect(),
     ))
+}
+
+pub async fn start(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+) -> AppResult<StatusCode> {
+    auth.require_role(&Role::Manager)?;
+    crate::db::assembly::start(&state.pool, id, auth.building_id).await?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct PatchResolutionInput {
+    pub description: Option<String>,
+}
+
+pub async fn patch_resolution(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+    Path((meeting_id, resolution_id)): Path<(Uuid, Uuid)>,
+    Json(input): Json<PatchResolutionInput>,
+) -> AppResult<Json<serde_json::Value>> {
+    auth.require_role(&Role::Manager)?;
+    let resolution = crate::db::assembly::patch_resolution_description(
+        &state.pool,
+        meeting_id,
+        resolution_id,
+        auth.building_id,
+        input.description,
+    )
+    .await?
+    .ok_or(AppError::NotFound)?;
+    Ok(Json(resolution))
 }
 
 fn parse_vote_rule(s: &str) -> AppResult<VoteRule> {
