@@ -46,9 +46,12 @@ async fn setup_voting_environment() -> VotingEnv {
         .await
         .json();
 
-    let user_id =
-        uuid::Uuid::parse_str(login["user_id"].as_str().expect("user_id in login response"))
-            .expect("valid UUID");
+    let user_id = uuid::Uuid::parse_str(
+        login["user_id"]
+            .as_str()
+            .expect("user_id in login response"),
+    )
+    .expect("valid UUID");
     let building_id = uuid::Uuid::parse_str(
         login["building_id"]
             .as_str()
@@ -245,9 +248,21 @@ async fn test_assembly_all_legal_cases_with_real_db() {
         assert_eq!(result["for_votes"], json!(500), "Art.24: for_votes");
         assert_eq!(result["against_votes"], json!(300), "Art.24: against_votes");
         assert_eq!(result["abstentions"], json!(200), "Art.24: abstentions");
-        assert_eq!(result["shares_counted"], json!(800), "Art.24: shares_counted");
-        assert_eq!(result["threshold"], json!(401), "Art.24: threshold = 800/2+1");
-        assert_eq!(result["passed"], json!(true), "Art.24: 500 >= 401 must pass");
+        assert_eq!(
+            result["shares_counted"],
+            json!(800),
+            "Art.24: shares_counted"
+        );
+        assert_eq!(
+            result["threshold"],
+            json!(401),
+            "Art.24: threshold = 800/2+1"
+        );
+        assert_eq!(
+            result["passed"],
+            json!(true),
+            "Art.24: 500 >= 401 must pass"
+        );
         assert_eq!(
             result["eligible_for_second_vote"],
             Value::Null,
@@ -295,8 +310,16 @@ async fn test_assembly_all_legal_cases_with_real_db() {
 
         assert_eq!(result["for_votes"], json!(800), "Art.25: for_votes");
         assert_eq!(result["shares_total"], json!(1000), "Art.25: shares_total");
-        assert_eq!(result["threshold"], json!(501), "Art.25: threshold = 1000/2+1");
-        assert_eq!(result["passed"], json!(true), "Art.25: 800 >= 501 must pass");
+        assert_eq!(
+            result["threshold"],
+            json!(501),
+            "Art.25: threshold = 1000/2+1"
+        );
+        assert_eq!(
+            result["passed"],
+            json!(true),
+            "Art.25: 800 >= 501 must pass"
+        );
         assert_eq!(result["eligible_for_second_vote"], Value::Null);
     }
 
@@ -365,7 +388,11 @@ async fn test_assembly_all_legal_cases_with_real_db() {
         let result = get_vote_result(&env, mid, rid).await;
 
         assert_eq!(result["for_votes"], json!(1000));
-        assert_eq!(result["threshold"], json!(667), "Art.26: (1000*2+2)/3 = 667");
+        assert_eq!(
+            result["threshold"],
+            json!(667),
+            "Art.26: (1000*2+2)/3 = 667"
+        );
         assert_eq!(result["passed"], json!(true), "1000 ≥ 667 → Art.26 passes");
         assert_eq!(result["eligible_for_second_vote"], Value::Null);
     }
@@ -411,7 +438,11 @@ async fn test_assembly_all_legal_cases_with_real_db() {
         assert_eq!(result["for_votes"], json!(1000));
         assert_eq!(result["against_votes"], json!(0));
         assert_eq!(result["abstentions"], json!(0));
-        assert_eq!(result["passed"], json!(true), "1000/1000 in favour → unanimity");
+        assert_eq!(
+            result["passed"],
+            json!(true),
+            "1000/1000 in favour → unanimity"
+        );
         assert_eq!(result["eligible_for_second_vote"], Value::Null);
     }
 
@@ -429,18 +460,18 @@ async fn test_assembly_all_legal_cases_with_real_db() {
         .await;
         let result = get_vote_result(&env, mid, rid).await;
 
-        assert_eq!(result["passed"], json!(false), "abstention breaks unanimity");
+        assert_eq!(
+            result["passed"],
+            json!(false),
+            "abstention breaks unanimity"
+        );
         assert_eq!(result["eligible_for_second_vote"], Value::Null);
     }
 
     // ── Protected route — results returns 401 without auth ───────────────────
     {
-        let (mid, rid) = create_resolution_with_votes(
-            &env,
-            "simple_majority",
-            &[(env.uid_a, "in_favor")],
-        )
-        .await;
+        let (mid, rid) =
+            create_resolution_with_votes(&env, "simple_majority", &[(env.uid_a, "in_favor")]).await;
         let resp = env
             .server
             .get(&format!(
