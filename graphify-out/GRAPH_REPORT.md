@@ -1,710 +1,843 @@
-# Graph Report - frontend  (2026-05-11)
+# Graph Report - /c/Users/qfx/Workspace/Perso/laruche  (2026-05-12)
 
 ## Corpus Check
-- 149 files · ~68,130 words
+- 145 files · ~208,367 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 251 nodes · 177 edges · 98 communities detected
-- Extraction: 59% EXTRACTED · 41% INFERRED · 0% AMBIGUOUS · INFERRED: 73 edges (avg confidence: 0.76)
+- 843 nodes · 1220 edges · 121 communities detected
+- Extraction: 64% EXTRACTED · 36% INFERRED · 0% AMBIGUOUS · INFERRED: 438 edges (avg confidence: 0.79)
 - Token cost: 0 input · 0 output
 
 ## Community Hubs (Navigation)
-- [[_COMMUNITY_Route View Registry|Route View Registry]]
-- [[_COMMUNITY_View Interaction Handlers|View Interaction Handlers]]
-- [[_COMMUNITY_Frontend Entry And Theme|Frontend Entry And Theme]]
-- [[_COMMUNITY_Access And File Icons|Access And File Icons]]
-- [[_COMMUNITY_Admin And Status Icons|Admin And Status Icons]]
-- [[_COMMUNITY_Modal Feedback Pattern|Modal Feedback Pattern]]
-- [[_COMMUNITY_Tailwind Vite Setup|Tailwind Vite Setup]]
-- [[_COMMUNITY_Schedule And Status Icons|Schedule And Status Icons]]
-- [[_COMMUNITY_Document Finance Utility Icons|Document Finance Utility Icons]]
-- [[_COMMUNITY_Property Location Icons|Property Location Icons]]
-- [[_COMMUNITY_API Client Session|API Client Session]]
-- [[_COMMUNITY_Confirmation Dialog State|Confirmation Dialog State]]
-- [[_COMMUNITY_Resident Charge Status|Resident Charge Status]]
-- [[_COMMUNITY_Navigation Arrow Icons|Navigation Arrow Icons]]
-- [[_COMMUNITY_Vite Build Config|Vite Build Config]]
-- [[_COMMUNITY_Assembly Detail View|Assembly Detail View]]
-- [[_COMMUNITY_Theme Preference Store|Theme Preference Store]]
-- [[_COMMUNITY_Theme And Loading Icons|Theme And Loading Icons]]
-- [[_COMMUNITY_App Bootstrap Shell|App Bootstrap Shell]]
-- [[_COMMUNITY_Chip Input Field|Chip Input Field]]
-- [[_COMMUNITY_Flexible Layout Group|Flexible Layout Group]]
-- [[_COMMUNITY_Auto Close Composable|Auto Close Composable]]
-- [[_COMMUNITY_Formatting Helpers|Formatting Helpers]]
-- [[_COMMUNITY_Form Feedback Composable|Form Feedback Composable]]
-- [[_COMMUNITY_Role Access Composable|Role Access Composable]]
-- [[_COMMUNITY_Dashboard Priority Sorting|Dashboard Priority Sorting]]
-- [[_COMMUNITY_Maintenance View Screen|Maintenance View Screen]]
-- [[_COMMUNITY_File Extension Helpers|File Extension Helpers]]
-- [[_COMMUNITY_Energy And Water Icons|Energy And Water Icons]]
-- [[_COMMUNITY_Overflow Indicator Icons|Overflow Indicator Icons]]
-- [[_COMMUNITY_Info And Message Icons|Info And Message Icons]]
-- [[_COMMUNITY_Add And Refresh Icons|Add And Refresh Icons]]
-- [[_COMMUNITY_Search And Upload Icons|Search And Upload Icons]]
-- [[_COMMUNITY_Frontend ESLint Config|Frontend ESLint Config]]
-- [[_COMMUNITY_Vite Type Declarations|Vite Type Declarations]]
-- [[_COMMUNITY_API Barrel Export|API Barrel Export]]
-- [[_COMMUNITY_Alert Message Component|Alert Message Component]]
-- [[_COMMUNITY_Status Badge Component|Status Badge Component]]
-- [[_COMMUNITY_Button Action Component|Button Action Component]]
-- [[_COMMUNITY_Eyebrow Label Component|Eyebrow Label Component]]
-- [[_COMMUNITY_Chip Select Field|Chip Select Field]]
-- [[_COMMUNITY_Form Feedback Component|Form Feedback Component]]
-- [[_COMMUNITY_Form Input Field|Form Input Field]]
-- [[_COMMUNITY_Form Select Field|Form Select Field]]
-- [[_COMMUNITY_Form Textarea Field|Form Textarea Field]]
-- [[_COMMUNITY_Legal Description Component|Legal Description Component]]
-- [[_COMMUNITY_Mock Data Banner|Mock Data Banner]]
-- [[_COMMUNITY_Progress Bar Component|Progress Bar Component]]
-- [[_COMMUNITY_Section Separator Component|Section Separator Component]]
-- [[_COMMUNITY_Tooltip Hint Component|Tooltip Hint Component]]
-- [[_COMMUNITY_Card Surface Component|Card Surface Component]]
-- [[_COMMUNITY_Card Note Component|Card Note Component]]
-- [[_COMMUNITY_Data Table Component|Data Table Component]]
-- [[_COMMUNITY_Address Autocomplete Field|Address Autocomplete Field]]
-- [[_COMMUNITY_File Dropzone Component|File Dropzone Component]]
-- [[_COMMUNITY_KPI Metric Card|KPI Metric Card]]
-- [[_COMMUNITY_Legal Summary Card|Legal Summary Card]]
-- [[_COMMUNITY_Legal Notice Component|Legal Notice Component]]
-- [[_COMMUNITY_List Item Component|List Item Component]]
-- [[_COMMUNITY_Meta Block Component|Meta Block Component]]
-- [[_COMMUNITY_Meta Item Component|Meta Item Component]]
-- [[_COMMUNITY_Meta Line Component|Meta Line Component]]
-- [[_COMMUNITY_Modal Dialog Component|Modal Dialog Component]]
-- [[_COMMUNITY_Page Loading Component|Page Loading Component]]
-- [[_COMMUNITY_Application Navigation|Application Navigation]]
-- [[_COMMUNITY_Auth Brand Panel|Auth Brand Panel]]
-- [[_COMMUNITY_Confirmation Dialog Component|Confirmation Dialog Component]]
-- [[_COMMUNITY_Document Link Action Modal|Document Link Action Modal]]
-- [[_COMMUNITY_Linked Documents Modal|Linked Documents Modal]]
-- [[_COMMUNITY_Page Error State|Page Error State]]
-- [[_COMMUNITY_Reminder Card Component|Reminder Card Component]]
-- [[_COMMUNITY_Top Bar Header|Top Bar Header]]
-- [[_COMMUNITY_Assembly List View|Assembly List View]]
-- [[_COMMUNITY_Invite Acceptance View|Invite Acceptance View]]
-- [[_COMMUNITY_Login Authentication View|Login Authentication View]]
-- [[_COMMUNITY_Budget Management View|Budget Management View]]
-- [[_COMMUNITY_Claims Management View|Claims Management View]]
-- [[_COMMUNITY_Contractor Overview Page|Contractor Overview Page]]
-- [[_COMMUNITY_Contractor Detail View|Contractor Detail View]]
-- [[_COMMUNITY_Contract Form Modal|Contract Form Modal]]
-- [[_COMMUNITY_Contract Management View|Contract Management View]]
-- [[_COMMUNITY_Document Management View|Document Management View]]
-- [[_COMMUNITY_Onboarding Flow View|Onboarding Flow View]]
-- [[_COMMUNITY_User Profile View|User Profile View]]
-- [[_COMMUNITY_Reports Overview View|Reports Overview View]]
-- [[_COMMUNITY_Residence Building View|Residence Building View]]
-- [[_COMMUNITY_Resident Charges View|Resident Charges View]]
-- [[_COMMUNITY_Task Management View|Task Management View]]
-- [[_COMMUNITY_Internationalization Setup|Internationalization Setup]]
-- [[_COMMUNITY_Application Layout Shell|Application Layout Shell]]
-- [[_COMMUNITY_Mock Domain Data|Mock Domain Data]]
-- [[_COMMUNITY_Authentication Store|Authentication Store]]
-- [[_COMMUNITY_Auto Import Types|Auto Import Types]]
-- [[_COMMUNITY_Component Type Declarations|Component Type Declarations]]
-- [[_COMMUNITY_CSS Type Declarations|CSS Type Declarations]]
-- [[_COMMUNITY_Domain Type Models|Domain Type Models]]
-- [[_COMMUNITY_Forbidden Access View|Forbidden Access View]]
-- [[_COMMUNITY_Not Found View|Not Found View]]
+- [[_COMMUNITY_Community 0|Community 0]]
+- [[_COMMUNITY_Community 1|Community 1]]
+- [[_COMMUNITY_Community 2|Community 2]]
+- [[_COMMUNITY_Community 3|Community 3]]
+- [[_COMMUNITY_Community 4|Community 4]]
+- [[_COMMUNITY_Community 5|Community 5]]
+- [[_COMMUNITY_Community 6|Community 6]]
+- [[_COMMUNITY_Community 7|Community 7]]
+- [[_COMMUNITY_Community 8|Community 8]]
+- [[_COMMUNITY_Community 9|Community 9]]
+- [[_COMMUNITY_Community 10|Community 10]]
+- [[_COMMUNITY_Community 11|Community 11]]
+- [[_COMMUNITY_Community 12|Community 12]]
+- [[_COMMUNITY_Community 13|Community 13]]
+- [[_COMMUNITY_Community 14|Community 14]]
+- [[_COMMUNITY_Community 15|Community 15]]
+- [[_COMMUNITY_Community 16|Community 16]]
+- [[_COMMUNITY_Community 17|Community 17]]
+- [[_COMMUNITY_Community 18|Community 18]]
+- [[_COMMUNITY_Community 19|Community 19]]
+- [[_COMMUNITY_Community 20|Community 20]]
+- [[_COMMUNITY_Community 21|Community 21]]
+- [[_COMMUNITY_Community 22|Community 22]]
+- [[_COMMUNITY_Community 23|Community 23]]
+- [[_COMMUNITY_Community 24|Community 24]]
+- [[_COMMUNITY_Community 25|Community 25]]
+- [[_COMMUNITY_Community 26|Community 26]]
+- [[_COMMUNITY_Community 27|Community 27]]
+- [[_COMMUNITY_Community 28|Community 28]]
+- [[_COMMUNITY_Community 29|Community 29]]
+- [[_COMMUNITY_Community 30|Community 30]]
+- [[_COMMUNITY_Community 31|Community 31]]
+- [[_COMMUNITY_Community 32|Community 32]]
+- [[_COMMUNITY_Community 33|Community 33]]
+- [[_COMMUNITY_Community 34|Community 34]]
+- [[_COMMUNITY_Community 35|Community 35]]
+- [[_COMMUNITY_Community 36|Community 36]]
+- [[_COMMUNITY_Community 37|Community 37]]
+- [[_COMMUNITY_Community 38|Community 38]]
+- [[_COMMUNITY_Community 39|Community 39]]
+- [[_COMMUNITY_Community 40|Community 40]]
+- [[_COMMUNITY_Community 41|Community 41]]
+- [[_COMMUNITY_Community 42|Community 42]]
+- [[_COMMUNITY_Community 43|Community 43]]
+- [[_COMMUNITY_Community 44|Community 44]]
+- [[_COMMUNITY_Community 45|Community 45]]
+- [[_COMMUNITY_Community 46|Community 46]]
+- [[_COMMUNITY_Community 47|Community 47]]
+- [[_COMMUNITY_Community 48|Community 48]]
+- [[_COMMUNITY_Community 49|Community 49]]
+- [[_COMMUNITY_Community 50|Community 50]]
+- [[_COMMUNITY_Community 51|Community 51]]
+- [[_COMMUNITY_Community 52|Community 52]]
+- [[_COMMUNITY_Community 53|Community 53]]
+- [[_COMMUNITY_Community 54|Community 54]]
+- [[_COMMUNITY_Community 55|Community 55]]
+- [[_COMMUNITY_Community 56|Community 56]]
+- [[_COMMUNITY_Community 57|Community 57]]
+- [[_COMMUNITY_Community 58|Community 58]]
+- [[_COMMUNITY_Community 59|Community 59]]
+- [[_COMMUNITY_Community 60|Community 60]]
+- [[_COMMUNITY_Community 61|Community 61]]
+- [[_COMMUNITY_Community 62|Community 62]]
+- [[_COMMUNITY_Community 63|Community 63]]
+- [[_COMMUNITY_Community 64|Community 64]]
+- [[_COMMUNITY_Community 65|Community 65]]
+- [[_COMMUNITY_Community 66|Community 66]]
+- [[_COMMUNITY_Community 67|Community 67]]
+- [[_COMMUNITY_Community 68|Community 68]]
+- [[_COMMUNITY_Community 69|Community 69]]
+- [[_COMMUNITY_Community 70|Community 70]]
+- [[_COMMUNITY_Community 71|Community 71]]
+- [[_COMMUNITY_Community 72|Community 72]]
+- [[_COMMUNITY_Community 73|Community 73]]
+- [[_COMMUNITY_Community 74|Community 74]]
+- [[_COMMUNITY_Community 75|Community 75]]
+- [[_COMMUNITY_Community 76|Community 76]]
+- [[_COMMUNITY_Community 77|Community 77]]
+- [[_COMMUNITY_Community 78|Community 78]]
+- [[_COMMUNITY_Community 79|Community 79]]
+- [[_COMMUNITY_Community 80|Community 80]]
+- [[_COMMUNITY_Community 81|Community 81]]
+- [[_COMMUNITY_Community 82|Community 82]]
+- [[_COMMUNITY_Community 83|Community 83]]
+- [[_COMMUNITY_Community 84|Community 84]]
+- [[_COMMUNITY_Community 85|Community 85]]
+- [[_COMMUNITY_Community 86|Community 86]]
+- [[_COMMUNITY_Community 87|Community 87]]
+- [[_COMMUNITY_Community 88|Community 88]]
+- [[_COMMUNITY_Community 89|Community 89]]
+- [[_COMMUNITY_Community 90|Community 90]]
+- [[_COMMUNITY_Community 91|Community 91]]
+- [[_COMMUNITY_Community 92|Community 92]]
+- [[_COMMUNITY_Community 93|Community 93]]
+- [[_COMMUNITY_Community 94|Community 94]]
+- [[_COMMUNITY_Community 95|Community 95]]
+- [[_COMMUNITY_Community 96|Community 96]]
+- [[_COMMUNITY_Community 97|Community 97]]
+- [[_COMMUNITY_Community 98|Community 98]]
+- [[_COMMUNITY_Community 99|Community 99]]
+- [[_COMMUNITY_Community 100|Community 100]]
+- [[_COMMUNITY_Community 101|Community 101]]
+- [[_COMMUNITY_Community 102|Community 102]]
+- [[_COMMUNITY_Community 103|Community 103]]
+- [[_COMMUNITY_Community 104|Community 104]]
+- [[_COMMUNITY_Community 105|Community 105]]
+- [[_COMMUNITY_Community 106|Community 106]]
+- [[_COMMUNITY_Community 107|Community 107]]
+- [[_COMMUNITY_Community 108|Community 108]]
+- [[_COMMUNITY_Community 109|Community 109]]
+- [[_COMMUNITY_Community 110|Community 110]]
+- [[_COMMUNITY_Community 111|Community 111]]
+- [[_COMMUNITY_Community 112|Community 112]]
+- [[_COMMUNITY_Community 113|Community 113]]
+- [[_COMMUNITY_Community 114|Community 114]]
+- [[_COMMUNITY_Community 115|Community 115]]
+- [[_COMMUNITY_Community 116|Community 116]]
+- [[_COMMUNITY_Community 117|Community 117]]
+- [[_COMMUNITY_Community 118|Community 118]]
+- [[_COMMUNITY_Community 119|Community 119]]
+- [[_COMMUNITY_Community 120|Community 120]]
 
 ## God Nodes (most connected - your core abstractions)
-1. `t()` - 12 edges
-2. `DDR-006 — Modal Form Feedback Rule` - 9 edges
-3. `index.html — App Entry Point` - 8 edges
-4. `Frontend CLAUDE.md — Vue/Tailwind Instructions` - 7 edges
-5. `toErrorMessage()` - 6 edges
-6. `Tailwind CSS v4 — Vite Setup` - 6 edges
-7. `submitVote()` - 5 edges
-8. `reload()` - 4 edges
-9. `DESIGN.md — Design System Tokens Reference` - 4 edges
-10. `Lock Icon (Locked/Immutable)` - 4 edges
+1. `json_value()` - 31 edges
+2. `get()` - 22 edges
+3. `list()` - 15 edges
+4. `create()` - 15 edges
+5. `test_server()` - 15 edges
+6. `delete()` - 13 edges
+7. `t()` - 12 edges
+8. `main()` - 11 edges
+9. `tally()` - 10 edges
+10. `login()` - 9 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `submitVote()` --calls--> `respond()`  [INFERRED]
-  frontend/src/features/consultations/ConsultationsView.vue → frontend/src/composables/useConfirm.ts
+- `get()` --calls--> `for()`  [INFERRED]
+  /c/Users/qfx/Workspace/Perso/laruche/backend/src/db/unit.rs → frontend/src/features/residents/RegistryView.vue
 - `statusLabel()` --calls--> `t()`  [INFERRED]
-  frontend/src/features/residents/UnitChargesView.vue → frontend/src/features/tasks/TaskDetailView.vue
+  frontend/src/features/residents/UnitChargesView.vue → /c/Users/qfx/Workspace/Perso/laruche/frontend/src/features/tasks/TaskDetailView.vue
+- `charges()` --calls--> `load()`  [INFERRED]
+  /c/Users/qfx/Workspace/Perso/laruche/backend/src/api/units.rs → frontend/src/features/residents/UnitChargesView.vue
+- `respond()` --calls--> `submitVote()`  [INFERRED]
+  frontend/src/composables/useConfirm.ts → /c/Users/qfx/Workspace/Perso/laruche/frontend/src/features/consultations/ConsultationsView.vue
 - `forceModalClose()` --calls--> `t()`  [INFERRED]
-  frontend/src/features/contractors/ContractorsView.vue → frontend/src/features/tasks/TaskDetailView.vue
-- `forceKeyClose()` --calls--> `t()`  [INFERRED]
-  frontend/src/features/residence/AllocationKeysView.vue → frontend/src/features/tasks/TaskDetailView.vue
-- `unitTypeIcon()` --calls--> `t()`  [INFERRED]
-  frontend/src/features/residents/RegistryView.vue → frontend/src/features/tasks/TaskDetailView.vue
+  frontend/src/features/contractors/ContractorsView.vue → /c/Users/qfx/Workspace/Perso/laruche/frontend/src/features/tasks/TaskDetailView.vue
 
 ## Communities
 
-### Community 0 - "Route View Registry"
+### Community 0 - "Community 0"
+Cohesion: 0.04
+Nodes (91): reset_demo(), attach_document(), create(), detach_document(), list(), list_documents(), create(), list() (+83 more)
+
+### Community 1 - "Community 1"
+Cohesion: 0.04
+Nodes (53): delete(), get_unit_general_share(), AttachMeetingDocumentInput, call(), create_resolution(), CreateMeetingInput, CreateResolutionInput, finalize_resolution() (+45 more)
+
+### Community 2 - "Community 2"
+Cohesion: 0.05
+Nodes (43): AcceptInviteInput, append_set_cookie(), build_auth_cookie_headers(), build_logout_cookie_headers(), clear_cookie(), invite_accept(), login(), LoginInput (+35 more)
+
+### Community 3 - "Community 3"
+Cohesion: 0.08
+Nodes (31): compute_levies(), ComputedLevy, total_exact(), UnitWithShares, notifyQueue(), tryRefreshSession(), bootstrap_payload(), test_levies_sum_matches_total_amount() (+23 more)
+
+### Community 4 - "Community 4"
+Cohesion: 0.08
+Nodes (35): AllocationKeyRow, GeneralShareRow, list_shares(), set_share(), shares_balance(), UnitShareRow, update(), AllocationKeyInput (+27 more)
+
+### Community 5 - "Community 5"
+Cohesion: 0.07
+Nodes (21): build_client(), StorageClient, StagingUploadUrlInput, StagingUploadUrlResponse, SubmissionDocumentMeta, SubmissionInput, submit(), upload_url() (+13 more)
+
+### Community 6 - "Community 6"
+Cohesion: 0.09
+Nodes (26): ContractReminderCandidateRow, count_documents(), create(), CreateVendorContractInput, drops_contracts_outside_visibility_windows_or_not_active(), frequency_to_months(), get(), is_contract_end_reminder() (+18 more)
+
+### Community 7 - "Community 7"
+Cohesion: 0.08
+Nodes (13): forceKeyClose(), return(), confirmClose(), confirmDelete(), saveConsultation(), submitVote(), forceModalClose(), buildDocumentDeleteMessage() (+5 more)
+
+### Community 8 - "Community 8"
 Cohesion: 0.07
 Nodes (0): 
 
-### Community 1 - "View Interaction Handlers"
+### Community 9 - "Community 9"
 Cohesion: 0.09
-Nodes (12): forceKeyClose(), reload(), confirmClose(), confirmDelete(), saveConsultation(), submitVote(), forceModalClose(), buildDocumentDeleteMessage() (+4 more)
+Nodes (19): archive(), CreateUnitInput, CurrentOwnerRow, is_archived(), list_current_owners(), OwnerRecord, UnitRow, UpdateUnitInput (+11 more)
 
-### Community 2 - "Frontend Entry And Theme"
-Cohesion: 0.17
-Nodes (15): Atomic Design System (Atoms > Molecules > Organisms), DESIGN.md — Design System Tokens Reference, Frontend CLAUDE.md — Vue/Tailwind Instructions, Root CLAUDE.md — Project-wide Rules, SVG Icons — Atomic Components in src/components/atoms/, #app — Vue Mount Point, Rationale: Dark mode applied before Vue render to prevent flash, Anti-Flash Dark Mode Inline Script (+7 more)
+### Community 10 - "Community 10"
+Cohesion: 0.14
+Nodes (20): test_absolute_majority_vote_fails_when_below_threshold(), test_double_majority_vote_requires_two_thirds(), test_simple_majority_vote_passes(), art24_never_eligible_for_second_vote(), art24_passed(), art24_rejected(), art24_reports_counted_shares_separately_from_total_shares(), art25_1_eligible_when_rejected_above_one_third() (+12 more)
 
-### Community 3 - "Access And File Icons"
+### Community 11 - "Community 11"
+Cohesion: 0.08
+Nodes (11): delete(), delete(), delete_orphaned_tx(), DocumentListRow, DocumentRow, create(), CreateReportInput, delete() (+3 more)
+
+### Community 12 - "Community 12"
+Cohesion: 0.1
+Nodes (16): close(), close(), get_with_choices(), open(), respond(), results(), close(), create() (+8 more)
+
+### Community 13 - "Community 13"
+Cohesion: 0.13
+Nodes (19): accepts_closed_claim_with_optional_reimbursement(), add_business_days(), approaching_threshold_days(), ClaimRow, create(), CreateClaimInput, deserialize_optional_decimal(), FlexibleDecimalInput (+11 more)
+
+### Community 14 - "Community 14"
+Cohesion: 0.14
+Nodes (19): list_general_shares(), BudgetLineRow, BudgetRow, create_line(), CreateBudgetInput, CreateLineInput, delete_line(), generate_levies() (+11 more)
+
+### Community 15 - "Community 15"
+Cohesion: 0.11
+Nodes (19): Atomic Design System (Atoms > Molecules > Organisms), CBtn Component, CFormFeedback Component, CModal Component, DDR-006 — Modal Form Feedback Rule, Rationale: CFormFeedback must be in #footer slot, not modal body, DESIGN.md — Design System Tokens Reference, Frontend CLAUDE.md — Vue/Tailwind Instructions (+11 more)
+
+### Community 16 - "Community 16"
+Cohesion: 0.18
+Nodes (13): CreateLogbookInput, delete(), get(), is_contract_active(), is_maintenance_contract(), list(), LogbookBuildingInfo, LogbookContractInfo (+5 more)
+
+### Community 17 - "Community 17"
+Cohesion: 0.21
+Nodes (8): AppConfig, AppSettings, AuthSettings, config_debug_enabled(), DbSettings, format_env_value(), print_config_diagnostics(), S3Settings
+
+### Community 18 - "Community 18"
 Cohesion: 0.24
 Nodes (11): Edit Icon, Eye Icon (Visibility On), Eye Off Icon (Visibility Off), File Icon, Folder Icon, Layers Icon (Stacked Layers), Lock Icon (Locked/Immutable), Lock Open Icon (Unlocked) (+3 more)
 
-### Community 4 - "Admin And Status Icons"
+### Community 19 - "Community 19"
 Cohesion: 0.2
 Nodes (11): Settings Icon, Shield Icon, Trash Icon, User Icon, User Plus Icon, Users Icon, Warning Icon, Wrench Icon (+3 more)
 
-### Community 5 - "Modal Feedback Pattern"
+### Community 20 - "Community 20"
 Cohesion: 0.22
-Nodes (9): AllocationKeysView.vue — Reference Implementation, CBtn Component, CFormFeedback Component, CModal Component, ContractFormModal.vue — Reference Implementation, ContractorsView.vue — Reference Implementation, DDR-006 — Modal Form Feedback Rule, Rationale: CFormFeedback must be in #footer slot, not modal body (+1 more)
+Nodes (5): ContractorRow, create(), CreateContractorInput, row_to_contractor(), UpdateContractorInput
 
-### Community 6 - "Tailwind Vite Setup"
-Cohesion: 0.33
-Nodes (6): Rationale: Tailwind v4 CSS-first config eliminates postcss.config.js and tailwind.config.js, Tailwind CSS v4 — Vite Setup, @tailwindcss/vite Plugin, Tailwind CSS Docs — Installation/Vite, Tailwind CSS Upgrade Guide, vite.config.ts
+### Community 21 - "Community 21"
+Cohesion: 0.24
+Nodes (5): create(), create_automatic_from_task(), from_task(), MaintenanceLogRow, row_from_pg()
 
-### Community 7 - "Schedule And Status Icons"
+### Community 22 - "Community 22"
+Cohesion: 0.25
+Nodes (5): validate_access_token(), AuthUser, extract_token(), MaybeAuthUser, VendorToken
+
+### Community 23 - "Community 23"
+Cohesion: 0.29
+Nodes (4): DocumentMeta, DocumentProcessor, ExtractionResult, NoopProcessor
+
+### Community 24 - "Community 24"
 Cohesion: 0.33
 Nodes (6): Agora — Public Building / Assembly Hall, Calendar — Date / Scheduling, Check — Confirmation / Done, Check Circle — Success / Validated State, Clock — Time / Timestamp, Favicon — La Ruche App Logo (Hexagonal Grid)
 
-### Community 8 - "Document Finance Utility Icons"
+### Community 25 - "Community 25"
 Cohesion: 0.4
 Nodes (6): Archive — Box with Lid, Book — Documentation / Reading, Contract — Signed Document, Copy — Duplicate Content, Currency — Money / Financial Amount, Download — Save to Device
 
-### Community 9 - "Property Location Icons"
+### Community 26 - "Community 26"
 Cohesion: 0.4
 Nodes (5): Hard Hat Icon (Safety/Construction), Home Icon, Leaf Icon (Nature/Eco), Link Icon (Hyperlink/Chain), Location Icon (Map Pin)
 
-### Community 10 - "API Client Session"
-Cohesion: 0.67
-Nodes (2): notifyQueue(), tryRefreshSession()
-
-### Community 11 - "Confirmation Dialog State"
-Cohesion: 0.5
-Nodes (1): respond()
-
-### Community 12 - "Resident Charge Status"
-Cohesion: 0.5
-Nodes (1): statusLabel()
-
-### Community 13 - "Navigation Arrow Icons"
+### Community 27 - "Community 27"
 Cohesion: 0.67
 Nodes (4): Arrow Left — Navigate Backward, Arrow Right — Navigate Forward, Chevron Down — Expand / Dropdown, Chevron Right — Collapse / Navigate Forward
 
-### Community 14 - "Vite Build Config"
+### Community 28 - "Community 28"
+Cohesion: 0.67
+Nodes (1): RuntimeStatusResponse
+
+### Community 29 - "Community 29"
 Cohesion: 0.67
 Nodes (0): 
 
-### Community 15 - "Assembly Detail View"
+### Community 30 - "Community 30"
 Cohesion: 0.67
 Nodes (0): 
 
-### Community 16 - "Theme Preference Store"
-Cohesion: 0.67
-Nodes (0): 
-
-### Community 17 - "Theme And Loading Icons"
+### Community 31 - "Community 31"
 Cohesion: 0.67
 Nodes (3): Sparkles Icon, Spinner Icon, Sun Icon
 
-### Community 18 - "App Bootstrap Shell"
+### Community 32 - "Community 32"
+Cohesion: 1.0
+Nodes (1): MeetingResponse
+
+### Community 33 - "Community 33"
+Cohesion: 1.0
+Nodes (1): AppState
+
+### Community 34 - "Community 34"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 19 - "Chip Input Field"
+### Community 35 - "Community 35"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 20 - "Flexible Layout Group"
+### Community 36 - "Community 36"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 21 - "Auto Close Composable"
+### Community 37 - "Community 37"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 22 - "Formatting Helpers"
+### Community 38 - "Community 38"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 23 - "Form Feedback Composable"
+### Community 39 - "Community 39"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 24 - "Role Access Composable"
+### Community 40 - "Community 40"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 25 - "Dashboard Priority Sorting"
+### Community 41 - "Community 41"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 26 - "Maintenance View Screen"
+### Community 42 - "Community 42"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 27 - "File Extension Helpers"
+### Community 43 - "Community 43"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 28 - "Energy And Water Icons"
+### Community 44 - "Community 44"
 Cohesion: 1.0
-Nodes (2): Bolt — Lightning / Quick Action, Droplet — Water / Fluid / Maintenance
+Nodes (0): 
 
-### Community 29 - "Overflow Indicator Icons"
+### Community 45 - "Community 45"
 Cohesion: 1.0
 Nodes (2): Dot — Status Indicator / Bullet Point, Dots Horizontal — More Options / Overflow Menu
 
-### Community 30 - "Info And Message Icons"
+### Community 46 - "Community 46"
+Cohesion: 1.0
+Nodes (2): Bolt — Lightning / Quick Action, Droplet — Water / Fluid / Maintenance
+
+### Community 47 - "Community 47"
 Cohesion: 1.0
 Nodes (2): Info Icon, Message Square Icon (Chat/Comment)
 
-### Community 31 - "Add And Refresh Icons"
+### Community 48 - "Community 48"
 Cohesion: 1.0
 Nodes (2): Plus Icon (Add/Create), Refresh Icon (Reload/Sync)
 
-### Community 32 - "Search And Upload Icons"
+### Community 49 - "Community 49"
 Cohesion: 1.0
 Nodes (2): Search Icon, Upload Icon
 
-### Community 33 - "Frontend ESLint Config"
+### Community 50 - "Community 50"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 34 - "Vite Type Declarations"
+### Community 51 - "Community 51"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 35 - "API Barrel Export"
+### Community 52 - "Community 52"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 36 - "Alert Message Component"
+### Community 53 - "Community 53"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 37 - "Status Badge Component"
+### Community 54 - "Community 54"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 38 - "Button Action Component"
+### Community 55 - "Community 55"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 39 - "Eyebrow Label Component"
+### Community 56 - "Community 56"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 40 - "Chip Select Field"
+### Community 57 - "Community 57"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 41 - "Form Feedback Component"
+### Community 58 - "Community 58"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 42 - "Form Input Field"
+### Community 59 - "Community 59"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 43 - "Form Select Field"
+### Community 60 - "Community 60"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 44 - "Form Textarea Field"
+### Community 61 - "Community 61"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 45 - "Legal Description Component"
+### Community 62 - "Community 62"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 46 - "Mock Data Banner"
+### Community 63 - "Community 63"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 47 - "Progress Bar Component"
+### Community 64 - "Community 64"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 48 - "Section Separator Component"
+### Community 65 - "Community 65"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 49 - "Tooltip Hint Component"
+### Community 66 - "Community 66"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 50 - "Card Surface Component"
+### Community 67 - "Community 67"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 51 - "Card Note Component"
+### Community 68 - "Community 68"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 52 - "Data Table Component"
+### Community 69 - "Community 69"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 53 - "Address Autocomplete Field"
+### Community 70 - "Community 70"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 54 - "File Dropzone Component"
+### Community 71 - "Community 71"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 55 - "KPI Metric Card"
+### Community 72 - "Community 72"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 56 - "Legal Summary Card"
+### Community 73 - "Community 73"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 57 - "Legal Notice Component"
+### Community 74 - "Community 74"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 58 - "List Item Component"
+### Community 75 - "Community 75"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 59 - "Meta Block Component"
+### Community 76 - "Community 76"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 60 - "Meta Item Component"
+### Community 77 - "Community 77"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 61 - "Meta Line Component"
+### Community 78 - "Community 78"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 62 - "Modal Dialog Component"
+### Community 79 - "Community 79"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 63 - "Page Loading Component"
+### Community 80 - "Community 80"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 64 - "Application Navigation"
+### Community 81 - "Community 81"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 65 - "Auth Brand Panel"
+### Community 82 - "Community 82"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 66 - "Confirmation Dialog Component"
+### Community 83 - "Community 83"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 67 - "Document Link Action Modal"
+### Community 84 - "Community 84"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 68 - "Linked Documents Modal"
+### Community 85 - "Community 85"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 69 - "Page Error State"
+### Community 86 - "Community 86"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 70 - "Reminder Card Component"
+### Community 87 - "Community 87"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 71 - "Top Bar Header"
+### Community 88 - "Community 88"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 72 - "Assembly List View"
+### Community 89 - "Community 89"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 73 - "Invite Acceptance View"
+### Community 90 - "Community 90"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 74 - "Login Authentication View"
+### Community 91 - "Community 91"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 75 - "Budget Management View"
+### Community 92 - "Community 92"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 76 - "Claims Management View"
+### Community 93 - "Community 93"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 77 - "Contractor Overview Page"
+### Community 94 - "Community 94"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 78 - "Contractor Detail View"
+### Community 95 - "Community 95"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 79 - "Contract Form Modal"
+### Community 96 - "Community 96"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 80 - "Contract Management View"
+### Community 97 - "Community 97"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 81 - "Document Management View"
+### Community 98 - "Community 98"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 82 - "Onboarding Flow View"
+### Community 99 - "Community 99"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 83 - "User Profile View"
+### Community 100 - "Community 100"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 84 - "Reports Overview View"
+### Community 101 - "Community 101"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 85 - "Residence Building View"
+### Community 102 - "Community 102"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 86 - "Resident Charges View"
+### Community 103 - "Community 103"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 87 - "Task Management View"
+### Community 104 - "Community 104"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 88 - "Internationalization Setup"
+### Community 105 - "Community 105"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 89 - "Application Layout Shell"
+### Community 106 - "Community 106"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 90 - "Mock Domain Data"
+### Community 107 - "Community 107"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 91 - "Authentication Store"
+### Community 108 - "Community 108"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 92 - "Auto Import Types"
+### Community 109 - "Community 109"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 93 - "Component Type Declarations"
+### Community 110 - "Community 110"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 94 - "CSS Type Declarations"
+### Community 111 - "Community 111"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 95 - "Domain Type Models"
+### Community 112 - "Community 112"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 96 - "Forbidden Access View"
+### Community 113 - "Community 113"
 Cohesion: 1.0
 Nodes (0): 
 
-### Community 97 - "Not Found View"
+### Community 114 - "Community 114"
 Cohesion: 1.0
 Nodes (0): 
+
+### Community 115 - "Community 115"
+Cohesion: 1.0
+Nodes (0): 
+
+### Community 116 - "Community 116"
+Cohesion: 1.0
+Nodes (0): 
+
+### Community 117 - "Community 117"
+Cohesion: 1.0
+Nodes (0): 
+
+### Community 118 - "Community 118"
+Cohesion: 1.0
+Nodes (0): 
+
+### Community 119 - "Community 119"
+Cohesion: 1.0
+Nodes (1): favicon.svg
+
+### Community 120 - "Community 120"
+Cohesion: 1.0
+Nodes (1): Rationale: Dark mode applied before Vue render to prevent flash
 
 ## Knowledge Gaps
-- **43 isolated node(s):** `Atomic Design System (Atoms > Molecules > Organisms)`, `CModal Component`, `CFormFeedback Component`, `CBtn Component`, `useFormFeedback() Composable` (+38 more)
+- **162 isolated node(s):** `DbSettings`, `S3Settings`, `AuthSettings`, `ErrorBody`, `CreateMeetingInput` (+157 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **Thin community `App Bootstrap Shell`** (2 nodes): `App.vue`, `main.ts`
+- **Thin community `Community 32`** (2 nodes): `MeetingResponse`, `.from()`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Chip Input Field`** (2 nodes): `onInput()`, `CFormChipInput.vue`
+- **Thin community `Community 33`** (2 nodes): `mod.rs`, `AppState`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Flexible Layout Group`** (2 nodes): `return()`, `CFlexGroup.vue`
+- **Thin community `Community 34`** (2 nodes): `App.vue`, `main.ts`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Auto Close Composable`** (2 nodes): `useAutoClose.ts`, `useAutoClose()`
+- **Thin community `Community 35`** (2 nodes): `onInput()`, `CFormChipInput.vue`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Formatting Helpers`** (2 nodes): `useFormatters.ts`, `useFormatters()`
+- **Thin community `Community 36`** (2 nodes): `CFlexGroup.vue`, `return()`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Form Feedback Composable`** (2 nodes): `useFormFeedback.ts`, `useFormFeedback()`
+- **Thin community `Community 37`** (2 nodes): `useAutoClose.ts`, `useAutoClose()`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Role Access Composable`** (2 nodes): `useRole.ts`, `useRole()`
+- **Thin community `Community 38`** (2 nodes): `useFormatters.ts`, `useFormatters()`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Dashboard Priority Sorting`** (2 nodes): `priorityOrder()`, `DashboardView.vue`
+- **Thin community `Community 39`** (2 nodes): `useFormFeedback.ts`, `useFormFeedback()`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Maintenance View Screen`** (2 nodes): `MaintenanceView.vue`, `t()`
+- **Thin community `Community 40`** (2 nodes): `useRole.ts`, `useRole()`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `File Extension Helpers`** (2 nodes): `extractFileExtension()`, `files.ts`
+- **Thin community `Community 41`** (2 nodes): `typeLabel()`, `AssemblyListView.vue`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Energy And Water Icons`** (2 nodes): `Bolt — Lightning / Quick Action`, `Droplet — Water / Fluid / Maintenance`
+- **Thin community `Community 42`** (2 nodes): `priorityOrder()`, `DashboardView.vue`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Overflow Indicator Icons`** (2 nodes): `Dot — Status Indicator / Bullet Point`, `Dots Horizontal — More Options / Overflow Menu`
+- **Thin community `Community 43`** (2 nodes): `MaintenanceView.vue`, `t()`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Info And Message Icons`** (2 nodes): `Info Icon`, `Message Square Icon (Chat/Comment)`
+- **Thin community `Community 44`** (2 nodes): `extractFileExtension()`, `files.ts`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Add And Refresh Icons`** (2 nodes): `Plus Icon (Add/Create)`, `Refresh Icon (Reload/Sync)`
+- **Thin community `Community 45`** (2 nodes): `Dot — Status Indicator / Bullet Point`, `Dots Horizontal — More Options / Overflow Menu`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Search And Upload Icons`** (2 nodes): `Search Icon`, `Upload Icon`
+- **Thin community `Community 46`** (2 nodes): `Bolt — Lightning / Quick Action`, `Droplet — Water / Fluid / Maintenance`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Frontend ESLint Config`** (1 nodes): `eslint.config.js`
+- **Thin community `Community 47`** (2 nodes): `Info Icon`, `Message Square Icon (Chat/Comment)`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Vite Type Declarations`** (1 nodes): `vite-env.d.ts`
+- **Thin community `Community 48`** (2 nodes): `Plus Icon (Add/Create)`, `Refresh Icon (Reload/Sync)`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `API Barrel Export`** (1 nodes): `index.ts`
+- **Thin community `Community 49`** (2 nodes): `Search Icon`, `Upload Icon`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Alert Message Component`** (1 nodes): `CAlert.vue`
+- **Thin community `Community 50`** (1 nodes): `lib.rs`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Status Badge Component`** (1 nodes): `CBadge.vue`
+- **Thin community `Community 51`** (1 nodes): `stubs.rs`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Button Action Component`** (1 nodes): `CBtn.vue`
+- **Thin community `Community 52`** (1 nodes): `mod.rs`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Eyebrow Label Component`** (1 nodes): `CEyebrow.vue`
+- **Thin community `Community 53`** (1 nodes): `mod.rs`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Chip Select Field`** (1 nodes): `CFormChipSelect.vue`
+- **Thin community `Community 54`** (1 nodes): `mod.rs`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Form Feedback Component`** (1 nodes): `CFormFeedback.vue`
+- **Thin community `Community 55`** (1 nodes): `eslint.config.js`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Form Input Field`** (1 nodes): `CFormInput.vue`
+- **Thin community `Community 56`** (1 nodes): `vite-env.d.ts`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Form Select Field`** (1 nodes): `CFormSelect.vue`
+- **Thin community `Community 57`** (1 nodes): `index.ts`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Form Textarea Field`** (1 nodes): `CFormTextarea.vue`
+- **Thin community `Community 58`** (1 nodes): `CAlert.vue`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Legal Description Component`** (1 nodes): `CLegalDescription.vue`
+- **Thin community `Community 59`** (1 nodes): `CBadge.vue`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Mock Data Banner`** (1 nodes): `CMockBanner.vue`
+- **Thin community `Community 60`** (1 nodes): `CBtn.vue`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Progress Bar Component`** (1 nodes): `CProgressBar.vue`
+- **Thin community `Community 61`** (1 nodes): `CEyebrow.vue`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Section Separator Component`** (1 nodes): `CSeparator.vue`
+- **Thin community `Community 62`** (1 nodes): `CFormChipSelect.vue`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Tooltip Hint Component`** (1 nodes): `CTooltip.vue`
+- **Thin community `Community 63`** (1 nodes): `CFormFeedback.vue`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Card Surface Component`** (1 nodes): `CCard.vue`
+- **Thin community `Community 64`** (1 nodes): `CFormInput.vue`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Card Note Component`** (1 nodes): `CCardNote.vue`
+- **Thin community `Community 65`** (1 nodes): `CFormSelect.vue`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Data Table Component`** (1 nodes): `CDataTable.vue`
+- **Thin community `Community 66`** (1 nodes): `CFormTextarea.vue`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Address Autocomplete Field`** (1 nodes): `CFormAddressAutocomplete.vue`
+- **Thin community `Community 67`** (1 nodes): `CLegalDescription.vue`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `File Dropzone Component`** (1 nodes): `CFormDropzone.vue`
+- **Thin community `Community 68`** (1 nodes): `CMockBanner.vue`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `KPI Metric Card`** (1 nodes): `CKpiCard.vue`
+- **Thin community `Community 69`** (1 nodes): `CProgressBar.vue`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Legal Summary Card`** (1 nodes): `CLegalCard.vue`
+- **Thin community `Community 70`** (1 nodes): `CSeparator.vue`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Legal Notice Component`** (1 nodes): `CLegalNotice.vue`
+- **Thin community `Community 71`** (1 nodes): `CTooltip.vue`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `List Item Component`** (1 nodes): `CListItem.vue`
+- **Thin community `Community 72`** (1 nodes): `CCard.vue`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Meta Block Component`** (1 nodes): `CMeta.vue`
+- **Thin community `Community 73`** (1 nodes): `CCardNote.vue`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Meta Item Component`** (1 nodes): `CMetaItem.vue`
+- **Thin community `Community 74`** (1 nodes): `CDataTable.vue`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Meta Line Component`** (1 nodes): `CMetaLine.vue`
+- **Thin community `Community 75`** (1 nodes): `CFormAddressAutocomplete.vue`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Modal Dialog Component`** (1 nodes): `CModal.vue`
+- **Thin community `Community 76`** (1 nodes): `CFormDropzone.vue`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Page Loading Component`** (1 nodes): `CPageLoader.vue`
+- **Thin community `Community 77`** (1 nodes): `CKpiCard.vue`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Application Navigation`** (1 nodes): `AppNav.vue`
+- **Thin community `Community 78`** (1 nodes): `CLegalCard.vue`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Auth Brand Panel`** (1 nodes): `AuthBrandPanel.vue`
+- **Thin community `Community 79`** (1 nodes): `CLegalNotice.vue`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Confirmation Dialog Component`** (1 nodes): `CConfirmDialog.vue`
+- **Thin community `Community 80`** (1 nodes): `CListItem.vue`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Document Link Action Modal`** (1 nodes): `CDocumentLinkActionModal.vue`
+- **Thin community `Community 81`** (1 nodes): `CMeta.vue`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Linked Documents Modal`** (1 nodes): `CLinkedDocumentsModal.vue`
+- **Thin community `Community 82`** (1 nodes): `CMetaItem.vue`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Page Error State`** (1 nodes): `CPageError.vue`
+- **Thin community `Community 83`** (1 nodes): `CMetaLine.vue`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Reminder Card Component`** (1 nodes): `CReminderCard.vue`
+- **Thin community `Community 84`** (1 nodes): `CModal.vue`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Top Bar Header`** (1 nodes): `CTopbar.vue`
+- **Thin community `Community 85`** (1 nodes): `CPageLoader.vue`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Assembly List View`** (1 nodes): `AssemblyListView.vue`
+- **Thin community `Community 86`** (1 nodes): `AppNav.vue`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Invite Acceptance View`** (1 nodes): `AcceptInviteView.vue`
+- **Thin community `Community 87`** (1 nodes): `AuthBrandPanel.vue`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Login Authentication View`** (1 nodes): `LoginView.vue`
+- **Thin community `Community 88`** (1 nodes): `CConfirmDialog.vue`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Budget Management View`** (1 nodes): `BudgetView.vue`
+- **Thin community `Community 89`** (1 nodes): `CDocumentLinkActionModal.vue`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Claims Management View`** (1 nodes): `ClaimsView.vue`
+- **Thin community `Community 90`** (1 nodes): `CLinkedDocumentsModal.vue`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Contractor Overview Page`** (1 nodes): `ContractorPage.vue`
+- **Thin community `Community 91`** (1 nodes): `CPageError.vue`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Contractor Detail View`** (1 nodes): `ContractorDetailView.vue`
+- **Thin community `Community 92`** (1 nodes): `CReminderCard.vue`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Contract Form Modal`** (1 nodes): `ContractFormModal.vue`
+- **Thin community `Community 93`** (1 nodes): `CTopbar.vue`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Contract Management View`** (1 nodes): `ContractsView.vue`
+- **Thin community `Community 94`** (1 nodes): `AcceptInviteView.vue`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Document Management View`** (1 nodes): `DocumentsView.vue`
+- **Thin community `Community 95`** (1 nodes): `LoginView.vue`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Onboarding Flow View`** (1 nodes): `OnboardingView.vue`
+- **Thin community `Community 96`** (1 nodes): `BudgetView.vue`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `User Profile View`** (1 nodes): `ProfileView.vue`
+- **Thin community `Community 97`** (1 nodes): `ClaimsView.vue`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Reports Overview View`** (1 nodes): `ReportsView.vue`
+- **Thin community `Community 98`** (1 nodes): `ContractorPage.vue`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Residence Building View`** (1 nodes): `BuildingView.vue`
+- **Thin community `Community 99`** (1 nodes): `ContractorDetailView.vue`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Resident Charges View`** (1 nodes): `MyChargesView.vue`
+- **Thin community `Community 100`** (1 nodes): `ContractFormModal.vue`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Task Management View`** (1 nodes): `TasksView.vue`
+- **Thin community `Community 101`** (1 nodes): `ContractsView.vue`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Internationalization Setup`** (1 nodes): `index.ts`
+- **Thin community `Community 102`** (1 nodes): `DocumentsView.vue`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Application Layout Shell`** (1 nodes): `AppLayout.vue`
+- **Thin community `Community 103`** (1 nodes): `OnboardingView.vue`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Mock Domain Data`** (1 nodes): `data.ts`
+- **Thin community `Community 104`** (1 nodes): `ProfileView.vue`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Authentication Store`** (1 nodes): `auth.ts`
+- **Thin community `Community 105`** (1 nodes): `ReportsView.vue`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Auto Import Types`** (1 nodes): `auto-imports.d.ts`
+- **Thin community `Community 106`** (1 nodes): `BuildingView.vue`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Component Type Declarations`** (1 nodes): `components.d.ts`
+- **Thin community `Community 107`** (1 nodes): `MyChargesView.vue`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `CSS Type Declarations`** (1 nodes): `css.d.ts`
+- **Thin community `Community 108`** (1 nodes): `TasksView.vue`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Domain Type Models`** (1 nodes): `domain.ts`
+- **Thin community `Community 109`** (1 nodes): `index.ts`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Forbidden Access View`** (1 nodes): `ForbiddenView.vue`
+- **Thin community `Community 110`** (1 nodes): `AppLayout.vue`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Not Found View`** (1 nodes): `NotFoundView.vue`
+- **Thin community `Community 111`** (1 nodes): `data.ts`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 112`** (1 nodes): `auth.ts`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 113`** (1 nodes): `auto-imports.d.ts`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 114`** (1 nodes): `components.d.ts`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 115`** (1 nodes): `css.d.ts`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 116`** (1 nodes): `domain.ts`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 117`** (1 nodes): `ForbiddenView.vue`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 118`** (1 nodes): `NotFoundView.vue`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 119`** (1 nodes): `favicon.svg`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 120`** (1 nodes): `Rationale: Dark mode applied before Vue render to prevent flash`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `t()` connect `View Interaction Handlers` to `Resident Charge Status`?**
-  _High betweenness centrality (0.016) - this node is a cross-community bridge._
-- **Why does `Frontend CLAUDE.md — Vue/Tailwind Instructions` connect `Frontend Entry And Theme` to `Modal Feedback Pattern`, `Tailwind Vite Setup`?**
-  _High betweenness centrality (0.010) - this node is a cross-community bridge._
-- **Why does `submitVote()` connect `View Interaction Handlers` to `Confirmation Dialog State`?**
-  _High betweenness centrality (0.007) - this node is a cross-community bridge._
-- **Are the 11 inferred relationships involving `t()` (e.g. with `reload()` and `saveConsultation()`) actually correct?**
-  _`t()` has 11 INFERRED edges - model-reasoned connections that need verification._
-- **Are the 5 inferred relationships involving `toErrorMessage()` (e.g. with `reload()` and `saveConsultation()`) actually correct?**
-  _`toErrorMessage()` has 5 INFERRED edges - model-reasoned connections that need verification._
-- **What connects `Atomic Design System (Atoms > Molecules > Organisms)`, `CModal Component`, `CFormFeedback Component` to the rest of the system?**
-  _43 weakly-connected nodes found - possible documentation gaps or missing edges._
-- **Should `Route View Registry` be split into smaller, more focused modules?**
-  _Cohesion score 0.07 - nodes in this community are weakly interconnected._
+- **Why does `get()` connect `Community 3` to `Community 0`, `Community 1`, `Community 2`, `Community 4`, `Community 5`, `Community 7`, `Community 9`, `Community 14`, `Community 16`, `Community 22`?**
+  _High betweenness centrality (0.071) - this node is a cross-community bridge._
+- **Why does `json_value()` connect `Community 0` to `Community 1`, `Community 4`, `Community 6`, `Community 12`, `Community 16`?**
+  _High betweenness centrality (0.049) - this node is a cross-community bridge._
+- **Why does `delete()` connect `Community 0` to `Community 3`, `Community 4`, `Community 7`, `Community 11`, `Community 16`?**
+  _High betweenness centrality (0.048) - this node is a cross-community bridge._
+- **Are the 30 inferred relationships involving `json_value()` (e.g. with `results()` and `list()`) actually correct?**
+  _`json_value()` has 30 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 21 inferred relationships involving `get()` (e.g. with `get()` and `refresh()`) actually correct?**
+  _`get()` has 21 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 14 inferred relationships involving `list()` (e.g. with `list()` and `list()`) actually correct?**
+  _`list()` has 14 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 14 inferred relationships involving `create()` (e.g. with `create()` and `invite_accept()`) actually correct?**
+  _`create()` has 14 INFERRED edges - model-reasoned connections that need verification._
