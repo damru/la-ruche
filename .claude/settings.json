@@ -21,6 +21,16 @@
             "timeout": 30
           }
         ]
+      },
+      {
+        "matcher": "Edit|Write|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "git rev-parse --git-dir >/dev/null 2>&1 && code-review-graph update --skip-flows --repo \"C:/Users/QFX/Workspace/Perso/laruche\" || true",
+            "timeout": 30
+          }
+        ]
       }
     ],
     "SessionStart": [
@@ -30,6 +40,16 @@
           {
             "type": "command",
             "command": "git rev-parse --git-dir >/dev/null 2>&1 && code-review-graph status --repo \"/c/Users/qfx/Workspace/Perso/laruche\" || echo 'Not a git repo, skipping'",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "git rev-parse --git-dir >/dev/null 2>&1 && code-review-graph status --repo \"C:/Users/QFX/Workspace/Perso/laruche\" || echo 'Not a git repo, skipping'",
             "timeout": 10
           }
         ]
