@@ -121,12 +121,12 @@ export const mockResolutions: Resolution[] = [
 ]
 
 export const mockVoteResults: Record<string, VoteResult> = {
-  'res-005': { passed: true, for_votes: 840, against_votes: 0, abstentions: 80, shares_present: 920, shares_total: 1000, shares_counted: 840, threshold: 421, eligible_for_second_vote: false },
-  'res-006': { passed: true, for_votes: 780, against_votes: 60, abstentions: 80, shares_present: 920, shares_total: 1000, shares_counted: 840, threshold: 421, eligible_for_second_vote: false },
-  'res-007': { passed: false, for_votes: 320, against_votes: 500, abstentions: 100, shares_present: 920, shares_total: 1000, shares_counted: 1000, threshold: 501, eligible_for_second_vote: false },
-  'res-008': { passed: true, for_votes: 900, against_votes: 20, abstentions: 0, shares_present: 920, shares_total: 1000, shares_counted: 920, threshold: 461, eligible_for_second_vote: false },
-  'res-009': { passed: true, for_votes: 850, against_votes: 40, abstentions: 30, shares_present: 920, shares_total: 1000, shares_counted: 890, threshold: 446, eligible_for_second_vote: false },
-  'res-010': { passed: true, for_votes: 780, against_votes: 100, abstentions: 40, shares_present: 920, shares_total: 1000, shares_counted: 1000, threshold: 501, eligible_for_second_vote: false },
+  'res-005': { passed: true, for_votes: 840, against_votes: 0, abstentions: 80, shares_present: 920, shares_total: 1000, shares_counted: 840, threshold: 421, eligible_for_second_vote: null },
+  'res-006': { passed: true, for_votes: 780, against_votes: 60, abstentions: 80, shares_present: 920, shares_total: 1000, shares_counted: 840, threshold: 421, eligible_for_second_vote: null },
+  'res-007': { passed: false, for_votes: 320, against_votes: 500, abstentions: 100, shares_present: 920, shares_total: 1000, shares_counted: 1000, threshold: 501, eligible_for_second_vote: null },
+  'res-008': { passed: true, for_votes: 900, against_votes: 20, abstentions: 0, shares_present: 920, shares_total: 1000, shares_counted: 920, threshold: 461, eligible_for_second_vote: null },
+  'res-009': { passed: true, for_votes: 850, against_votes: 40, abstentions: 30, shares_present: 920, shares_total: 1000, shares_counted: 890, threshold: 446, eligible_for_second_vote: null },
+  'res-010': { passed: true, for_votes: 780, against_votes: 100, abstentions: 40, shares_present: 920, shares_total: 1000, shares_counted: 1000, threshold: 501, eligible_for_second_vote: null },
 }
 
 // ── Budget ────────────────────────────────────────────────────────

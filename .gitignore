@@ -28,3 +28,5 @@ Thumbs.db
 # MemPalace per-project files (issue #185)
 mempalace.yaml
 entities.json
+# Added by code-review-graph
+.code-review-graph/

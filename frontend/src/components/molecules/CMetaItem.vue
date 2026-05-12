@@ -19,7 +19,10 @@ withDefaults(defineProps<{
       `${variant === 'footer' ? '[&_svg]:w-(--icon-xs) [&_svg]:h-(--icon-2xs) text-xs' : '[&_svg]:w-(--icon-sm) [&_svg]:h-(--icon-sm) text-sm'}`, 
     ]"
   >
-    <slot v-if="$slots.icon" name="icon"></slot>
+    <slot
+      v-if="$slots.icon"
+      name="icon"
+    ></slot>
     <p>
       <slot></slot>
     </p>

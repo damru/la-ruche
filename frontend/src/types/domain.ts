@@ -154,7 +154,7 @@ export interface VoteResult {
   shares_total: number
   shares_counted: number
   threshold: number
-  eligible_for_second_vote: boolean
+  eligible_for_second_vote: 'art_25_1' | 'art_26_1' | null
 }
 
 export interface UnitVote {

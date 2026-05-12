@@ -228,7 +228,7 @@ function dotClass(variant?: TimelineEvent['variant']): string {
             <CBadge
               :variant="statusVariant(task.status)"
               dot
-              >
+            >
               {{ t(`tasks.statuses.${task.status}`) }}
             </CBadge>
             {{ t('page.eyebrows.taskDetail') }}

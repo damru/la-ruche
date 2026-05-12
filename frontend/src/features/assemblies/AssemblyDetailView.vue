@@ -69,12 +69,24 @@ const editResolutionForm = ref({ description: '' })
 const savingEditResolution = ref(false)
 const editResolutionFeedback = useFormFeedback()
 
+const showArt24Modal = ref(false)
+const art24ResolutionToCreate = ref<Resolution | null>(null)
+const savingArt24 = ref(false)
+const art24Feedback = useFormFeedback()
+
+const showArt25Modal = ref(false)
+const art25ResolutionToCreate = ref<Resolution | null>(null)
+const savingArt25 = ref(false)
+const art25Feedback = useFormFeedback()
+
 const { schedule: scheduleMeetingClose, forceExpire: forceMeetingClose } = useAutoClose()
 const { schedule: scheduleResolutionClose, forceExpire: forceResolutionClose } = useAutoClose()
 const { schedule: scheduleDocumentClose, forceExpire: forceDocumentClose } = useAutoClose()
 const { schedule: scheduleAttendanceClose, forceExpire: forceAttendanceClose } = useAutoClose()
 const { schedule: scheduleVoteClose, forceExpire: forceVoteClose } = useAutoClose()
 const { schedule: scheduleEditResolutionClose, forceExpire: forceEditResolutionClose } = useAutoClose()
+const { schedule: scheduleArt24Close, forceExpire: forceArt24Close } = useAutoClose()
+const { schedule: scheduleArt25Close, forceExpire: forceArt25Close } = useAutoClose()
 
 watch(showEditMeetingModal, (open) => { if (!open) forceMeetingClose() })
 watch(showAddResolutionModal, (open) => { if (!open) forceResolutionClose() })
@@ -82,6 +94,8 @@ watch(showDocumentModal, (open) => { if (!open) forceDocumentClose() })
 watch(showAttendanceModal, (open) => { if (!open) forceAttendanceClose() })
 watch(showVoteModal, (open) => { if (!open) forceVoteClose() })
 watch(showEditResolutionModal, (open) => { if (!open) forceEditResolutionClose() })
+watch(showArt24Modal, (open) => { if (!open) forceArt24Close() })
+watch(showArt25Modal, (open) => { if (!open) forceArt25Close() })
 
 function defaultMeetingForm() {
   return {
@@ -591,11 +605,13 @@ async function saveVotes() {
           : r,
       )
       voteResults.value = { ...voteResults.value, [rid]: finalizeRes.data.result }
-      const msgKey = finalizeRes.data.eligible_for_second_vote
-        ? 'meetings.vote.eligibleSecondVote'
-        : finalizeRes.data.result.passed
-          ? 'meetings.vote.passed'
-          : 'meetings.vote.rejected'
+      const msgKey = finalizeRes.data.eligible_for_second_vote === 'art_25_1'
+        ? 'meetings.vote.eligibleSecondVote25_1'
+        : finalizeRes.data.eligible_for_second_vote === 'art_26_1'
+          ? 'meetings.vote.eligibleSecondVote26_1'
+          : finalizeRes.data.result.passed
+            ? 'meetings.vote.passed'
+            : 'meetings.vote.rejected'
       voteFeedback.setSuccess(t(msgKey))
     } else {
       // Votes saved but not all units have voted yet — just refresh the tally
@@ -771,18 +787,61 @@ async function saveEditResolution() {
   }
 }
 
-async function createArt24Resolution(resolution: Resolution) {
-  if (!meeting.value) return
+function openArt24Modal(resolution: Resolution) {
+  art24ResolutionToCreate.value = resolution
+  art24Feedback.reset()
+  showArt24Modal.value = true
+}
+
+async function confirmArt24Resolution() {
+  if (!meeting.value || !art24ResolutionToCreate.value) return
+  savingArt24.value = true
+  art24Feedback.reset()
   try {
     await meetingsApi.createResolution(meeting.value.id, {
       number: resolutions.value.length + 1,
-      title: `${resolution.title} (Art. 24)`,
-      description: resolution.description,
+      title: `${art24ResolutionToCreate.value.title} (Art. 24)`,
+      description: art24ResolutionToCreate.value.description,
       vote_type: 'simple_majority',
     })
-    await reload()
+    art24Feedback.setSuccess(t('common.saved'))
+    scheduleArt24Close(async () => {
+      showArt24Modal.value = false
+      await reload()
+    })
   } catch (err) {
-    documentFeedback.setError(toErrorMessage(err, t('common.error')))
+    art24Feedback.setError(toErrorMessage(err, t('common.error')))
+  } finally {
+    savingArt24.value = false
+  }
+}
+
+function openArt25Modal(resolution: Resolution) {
+  art25ResolutionToCreate.value = resolution
+  art25Feedback.reset()
+  showArt25Modal.value = true
+}
+
+async function confirmArt25Resolution() {
+  if (!meeting.value || !art25ResolutionToCreate.value) return
+  savingArt25.value = true
+  art25Feedback.reset()
+  try {
+    await meetingsApi.createResolution(meeting.value.id, {
+      number: resolutions.value.length + 1,
+      title: `${art25ResolutionToCreate.value.title} (Art. 25)`,
+      description: art25ResolutionToCreate.value.description,
+      vote_type: 'absolute_majority',
+    })
+    art25Feedback.setSuccess(t('common.saved'))
+    scheduleArt25Close(async () => {
+      showArt25Modal.value = false
+      await reload()
+    })
+  } catch (err) {
+    art25Feedback.setError(toErrorMessage(err, t('common.error')))
+  } finally {
+    savingArt25.value = false
   }
 }
 
@@ -999,7 +1058,7 @@ function onFileChange(event: Event) {
                   <div
                     :class="['resolution-number',
                              resolution.status === 'passed' ? 'tone--accent' 
-                             : voteResults[resolution.id]?.eligible_for_second_vote === true ? 'tone--warn' 
+                             : voteResults[resolution.id]?.eligible_for_second_vote != null ? 'tone--warn' 
                                : resolution.status === 'rejected' ? 'tone--disabled' 
                                  : '',
                     ]"
@@ -1091,12 +1150,21 @@ function onFileChange(event: Event) {
                     </template>
                   </CAlert>
                   <CAlert
-                    v-if="voteResults[resolution.id]?.eligible_for_second_vote"
+                    v-if="voteResults[resolution.id]?.eligible_for_second_vote === 'art_25_1'"
                     variant="warning"
                     :title="t('meetings.vote.art25_1_title')"
                   >
                     <p class="font-(length:--text-2xs)">
                       {{ t('meetings.vote.explanations.absolute_majority_second_vote', { threshold: Math.ceil(voteResults[resolution.id].shares_counted / 3) }) }}
+                    </p>
+                  </CAlert>
+                  <CAlert
+                    v-if="voteResults[resolution.id]?.eligible_for_second_vote === 'art_26_1'"
+                    variant="warning"
+                    :title="t('meetings.vote.art26_1_title')"
+                  >
+                    <p class="font-(length:--text-2xs)">
+                      {{ t('meetings.vote.explanations.double_majority_second_vote', { threshold: Math.ceil(voteResults[resolution.id].shares_counted / 2) }) }}
                     </p>
                   </CAlert>
                 </div>
@@ -1118,12 +1186,20 @@ function onFileChange(event: Event) {
                     {{ t('meetings.editResolution') }}
                   </CBtn>
                   <CBtn
-                    v-if="voteResults[resolution.id]?.eligible_for_second_vote && meeting?.status === 'ongoing'"
+                    v-if="voteResults[resolution.id]?.eligible_for_second_vote === 'art_25_1' && meeting?.status === 'ongoing'"
                     size="sm"
                     variant="ghost"
-                    @click="createArt24Resolution(resolution)"
+                    @click="openArt24Modal(resolution)"
                   >
                     {{ t('meetings.createArt24') }}
+                  </CBtn>
+                  <CBtn
+                    v-if="voteResults[resolution.id]?.eligible_for_second_vote === 'art_26_1' && meeting?.status === 'ongoing'"
+                    size="sm"
+                    variant="ghost"
+                    @click="openArt25Modal(resolution)"
+                  >
+                    {{ t('meetings.createArt25') }}
                   </CBtn>
                   <CBtn
                     v-if="canManageVotes"
@@ -1756,6 +1832,66 @@ function onFileChange(event: Event) {
           @click="saveAttendance"
         >
           {{ t('common.save') }}
+        </CBtn>
+      </template>
+    </CModal>
+
+    <CModal
+      :open="showArt24Modal"
+      :title="t('meetings.createArt24Title')"
+      size="sm"
+      @update:open="showArt24Modal = $event"
+    >
+      <p class="body-sm">
+        {{ t('meetings.createArt24Message', { title: art24ResolutionToCreate?.title ?? '' }) }}
+      </p>
+      <template #footer>
+        <CFormFeedback
+          :status="art24Feedback.status.value"
+          :message="art24Feedback.message.value"
+        />
+        <CBtn
+          variant="ghost"
+          @click="showArt24Modal = false"
+        >
+          {{ t('common.cancel') }}
+        </CBtn>
+        <CBtn
+          variant="primary"
+          :loading="savingArt24"
+          @click="confirmArt24Resolution"
+        >
+          {{ t('common.create') }}
+        </CBtn>
+      </template>
+    </CModal>
+
+    <CModal
+      :open="showArt25Modal"
+      :title="t('meetings.createArt25Title')"
+      size="sm"
+      @update:open="showArt25Modal = $event"
+    >
+      <p class="body-sm">
+        {{ t('meetings.createArt25Message', { title: art25ResolutionToCreate?.title ?? '' }) }}
+      </p>
+      <template #footer>
+        <CFormFeedback
+          :status="art25Feedback.status.value"
+          :message="art25Feedback.message.value"
+        />
+        <CBtn
+          variant="ghost"
+          @click="showArt25Modal = false"
+        >
+          {{ t('common.cancel') }}
+        </CBtn>
+        <CBtn
+          variant="primary"
+          :loading="savingArt25"
+          @click="confirmArt25Resolution"
+        >
+          {{ t('common.create') }}
         </CBtn>
       </template>
     </CModal>

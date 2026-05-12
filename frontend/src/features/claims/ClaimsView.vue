@@ -953,7 +953,7 @@ async function submitDelete() {
                 <CBadge
                   :variant="deadlineVariant(claim)"
                   :dot="deadlineVariant(claim) !== 'default'"
-                  >
+                >
                   {{ deadlineLabel(claim) }}
                 </CBadge>
               </CMetaLine>
@@ -975,9 +975,9 @@ async function submitDelete() {
                 </CMetaItem>
                 <CMetaItem
                   v-if="claim.document_count > 0"
-                  @click="openClaimDocuments(claim)"
                   variant="sub"
                   as="button"
+                  @click="openClaimDocuments(claim)"
                 >
                   <template #icon>
                     <CIconFile />

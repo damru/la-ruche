@@ -635,9 +635,9 @@ function photoPreview(file: File): string {
                 
                 <CMetaItem
                   v-if="r.document_count > 0"
-                  @click="openReportPhotos(r)"
                   variant="sub"
                   as="button"
+                  @click="openReportPhotos(r)"
                 >
                   <template #icon>
                     <CIconFile />

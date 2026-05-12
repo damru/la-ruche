@@ -173,7 +173,7 @@ export const meetingsApi = {
   results: (meetingId: string, rid: string) =>
     api.get<VoteResult>(`/meetings/${meetingId}/resolutions/${rid}/results`),
   finalizeResolution: (meetingId: string, rid: string) =>
-    api.post<{ finalized: boolean; result?: VoteResult; eligible_for_second_vote: boolean }>(
+    api.post<{ finalized: boolean; result?: VoteResult; eligible_for_second_vote: 'art_25_1' | 'art_26_1' | null }>(
       `/meetings/${meetingId}/resolutions/${rid}/finalize`,
     ),
 }

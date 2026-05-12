@@ -7,6 +7,8 @@
 ///   - Art. 25-1, Loi 10/07/1965: when art. 25 fails but > 1/3 votes in favour,
 ///     assembly may immediately re-vote under art. 24
 ///   - Art. 26, Loi 10/07/1965: double majority (2/3 votes + majority of members)
+///   - Art. 26-1, Loi 10/07/1965: when art. 26 fails but > 1/2 votes in favour,
+///     assembly may immediately re-vote under art. 25
 ///   - Art. 26 al. 4: unanimity
 use serde::Serialize;
 
@@ -16,6 +18,18 @@ pub enum VoteRule {
     AbsoluteMajority,
     DoubleMajority,
     Unanimity,
+}
+
+/// Indicates which passerelle article allows an immediate second vote.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum SecondVoteType {
+    /// Art. 25-1: art. 25 rejected but > 1/3 of total shares in favour → re-vote under art. 24
+    #[serde(rename = "art_25_1")]
+    Art25_1,
+    /// Art. 26-1: art. 26 rejected but > 1/2 of total shares in favour → re-vote under art. 25
+    #[serde(rename = "art_26_1")]
+    Art26_1,
 }
 
 #[derive(Debug, Clone)]
@@ -49,7 +63,7 @@ pub struct VoteResult {
     pub shares_total: i32,
     pub shares_counted: i32,
     pub threshold: i32,
-    pub eligible_for_second_vote: bool,
+    pub eligible_for_second_vote: Option<SecondVoteType>,
 }
 
 impl VoteTally {
@@ -77,7 +91,7 @@ impl VoteTally {
             shares_total: self.shares_total,
             shares_counted,
             threshold,
-            eligible_for_second_vote: false,
+            eligible_for_second_vote: None,
         }
     }
 
@@ -89,7 +103,11 @@ impl VoteTally {
         let threshold = self.shares_total / 2 + 1;
         let passed = self.for_votes >= threshold;
         // art. 25-1: strictly more than one third of total shares
-        let eligible_for_second_vote = !passed && self.for_votes * 3 > self.shares_total;
+        let eligible_for_second_vote = if !passed && self.for_votes * 3 > self.shares_total {
+            Some(SecondVoteType::Art25_1)
+        } else {
+            None
+        };
         VoteResult {
             passed,
             for_votes: self.for_votes,
@@ -105,11 +123,19 @@ impl VoteTally {
 
     /// Art. 26 — double majority:
     ///   2/3 of shares of ALL co-owners + 2/3 of co-owners in favour
+    /// Art. 26-1: if rejected but for_votes > 1/2 of total shares,
+    ///   the assembly may immediately re-vote under art. 25.
     fn double_majority(&self) -> VoteResult {
         let threshold = (self.shares_total * 2 + 2) / 3;
         let shares_threshold_met = self.for_votes >= threshold;
         let owners_threshold_met = self.favorable_owners * 3 >= self.total_owners * 2;
         let passed = shares_threshold_met && owners_threshold_met;
+        // art. 26-1: strictly more than half of total shares in favour
+        let eligible_for_second_vote = if !passed && self.for_votes * 2 > self.shares_total {
+            Some(SecondVoteType::Art26_1)
+        } else {
+            None
+        };
         VoteResult {
             passed,
             for_votes: self.for_votes,
@@ -119,7 +145,7 @@ impl VoteTally {
             shares_total: self.shares_total,
             shares_counted: self.shares_total,
             threshold,
-            eligible_for_second_vote: false,
+            eligible_for_second_vote,
         }
     }
 
@@ -136,7 +162,7 @@ impl VoteTally {
             shares_total: self.shares_total,
             shares_counted: self.shares_total,
             threshold: self.shares_total,
-            eligible_for_second_vote: false,
+            eligible_for_second_vote: None,
         }
     }
 }
@@ -195,7 +221,10 @@ mod tests {
         let d = tally(1000, 700, 340, 360);
         let result = d.compute(&VoteRule::AbsoluteMajority);
         assert!(!result.passed);
-        assert!(result.eligible_for_second_vote);
+        assert_eq!(
+            result.eligible_for_second_vote,
+            Some(SecondVoteType::Art25_1)
+        );
     }
 
     #[test]
@@ -204,7 +233,7 @@ mod tests {
         let d = tally(1000, 700, 333, 367);
         let result = d.compute(&VoteRule::AbsoluteMajority);
         assert!(!result.passed);
-        assert!(!result.eligible_for_second_vote);
+        assert_eq!(result.eligible_for_second_vote, None);
     }
 
     #[test]
@@ -213,7 +242,7 @@ mod tests {
         let d = tally(1000, 700, 501, 199);
         let result = d.compute(&VoteRule::AbsoluteMajority);
         assert!(result.passed);
-        assert!(!result.eligible_for_second_vote);
+        assert_eq!(result.eligible_for_second_vote, None);
     }
 
     #[test]
@@ -221,7 +250,46 @@ mod tests {
         let d = tally(1000, 600, 299, 301);
         let result = d.compute(&VoteRule::SimpleMajority);
         assert!(!result.passed);
-        assert!(!result.eligible_for_second_vote);
+        assert_eq!(result.eligible_for_second_vote, None);
+    }
+
+    #[test]
+    fn art26_1_eligible_when_rejected_above_half() {
+        // for=5100/9000 > 4500 (50%) but < 6001 (2/3) → rejected at art. 26, eligible for art. 26-1
+        let d = VoteTally {
+            shares_total: 9000,
+            shares_present: 8000,
+            total_owners: 10,
+            present_owners: 9,
+            favorable_owners: 5,
+            for_votes: 5100,
+            against_votes: 2900,
+            abstentions: 0,
+        };
+        let result = d.compute(&VoteRule::DoubleMajority);
+        assert!(!result.passed);
+        assert_eq!(
+            result.eligible_for_second_vote,
+            Some(SecondVoteType::Art26_1)
+        );
+    }
+
+    #[test]
+    fn art26_1_not_eligible_when_rejected_at_or_below_half() {
+        // for=4500/9000 = exactly 1/2 → not strictly more than 1/2, no second vote
+        let d = VoteTally {
+            shares_total: 9000,
+            shares_present: 8000,
+            total_owners: 10,
+            present_owners: 9,
+            favorable_owners: 4,
+            for_votes: 4500,
+            against_votes: 3500,
+            abstentions: 0,
+        };
+        let result = d.compute(&VoteRule::DoubleMajority);
+        assert!(!result.passed);
+        assert_eq!(result.eligible_for_second_vote, None);
     }
 
     #[test]

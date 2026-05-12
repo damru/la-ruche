@@ -304,6 +304,11 @@
     "editResolution": "Modifier",
     "resolutionDescriptionOnly": "Titre et règle de vote verrouillés pendant la séance.",
     "createArt24": "Créer sous Art. 24",
+    "createArt25": "Créer sous Art. 25",
+    "createArt24Title": "Créer une résolution — Article 25-1",
+    "createArt24Message": "Crée une deuxième résolution pour \"{title}\" afin de permettre un second vote à la majorité simple (Article 24 de la loi de 1965).",
+    "createArt25Title": "Créer une résolution — Article 26-1",
+    "createArt25Message": "Crée une deuxième résolution pour \"{title}\" afin de permettre un second vote à la majorité absolue (Article 25 de la loi de 1965).",
     "waiting": "En attente",
     "callReady": "La convocation est prête à partir dès qu'au moins une pièce de convocation est jointe.",
     "close": "Clore l'AG",
@@ -390,7 +395,8 @@
       "enterVotesTitle": "Votes — {title}",
       "noAttendees": "Aucun participant enregistré. Renseignez d'abord la feuille de présence.",
       "voteSaved": "Votes enregistrés",
-      "eligibleSecondVote": "Résolution rejetée — éligible à un second vote à la majorité de l'art. 25-1",
+      "eligibleSecondVote25_1": "Résolution rejetée — éligible à un second vote à la majorité de l'art. 25-1",
+      "eligibleSecondVote26_1": "Résolution rejetée — éligible à un second vote à la majorité de l'art. 26-1",
       "fillAllFor": "Tout Pour",
       "fillAllAgainst": "Tout Contre",
       "results": "Résultats du vote",
@@ -399,6 +405,7 @@
       "passed": "Résolution adoptée",
       "rejected": "Résolution rejetée",
       "art25_1_title": "Art. 25-1 — Second vote possible",
+      "art26_1_title": "Art. 26-1 — Second vote possible",
       "explanations": {
         "simple_majority": {
           "passed": "Majorité article 24 (seuil : {threshold} t.)",
@@ -408,7 +415,8 @@
           "passed": "Majorité article 25 (seuil : {threshold} t.)",
           "rejected": "Majorité article 25 non atteinte (seuil : {threshold} t.)"
         },
-        "absolute_majority_second_vote": "Plus d'un tiers des tantièmes favorables (seuil : {threshold} t.): l'assemblée peut immédiatement procéder à un second vote à la majorité de l'art. 24 (art. 25-1).",
+        "absolute_majority_second_vote": "Plus d'un tiers des tantièmes favorables (seuil : {threshold} t.): l'assemblée peut immédiatement procéder à un second vote à la majorité de l'art. 24.",
+        "double_majority_second_vote": "Plus de la moitié des tantièmes favorables (seuil : {threshold} t.) : l'assemblée peut immédiatement procéder à un second vote à la majorité absolue de l'art. 25.",
         "double_majority": {
           "passed": "Majorité article 26 (seuil tantièmes : {threshold} t. + majorité en nombre)",
           "rejected": "Majorité article 26 non atteinte (seuil tantièmes : {threshold} t. + majorité en nombre)"

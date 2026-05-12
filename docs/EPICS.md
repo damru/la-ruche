@@ -78,10 +78,11 @@ Cycle de vie complet d'une AG, résolutions typées par majorité, vote par lot 
 * `EP-003-S01` ✅ — Créer une AG avec date, type et ordre du jour ; calculer et afficher la date limite de convocation (J−21) (LEGAL.md §3.1)
 * `EP-003-S02` ✅ — Joindre les documents obligatoires à la convocation et alerter en cas de pièce manquante avant envoi (LEGAL.md §3.1)
 * `EP-003-S03` ✅ — Enregistrer les présences, procurations et votes par correspondance (LEGAL.md §3.2)
-* `EP-003-S04` ✅ — Saisir les résolutions et les votes, et calculer les résultats selon la règle de majorité applicable (art. 24/25/25-1/26/unanimité) (LEGAL.md §3.2)
+* `EP-003-S04` ✅ — Saisir les résolutions et les votes, et calculer les résultats selon la règle de majorité applicable (art. 24/25/25-1/26/26-1/unanimité) (LEGAL.md §3.2)
 * `EP-003-S05` — Générer et stocker le PV signé en séance (LEGAL.md §3.3)
 * `EP-003-S06` — Tracer la date de notification du PV aux copropriétaires absents (délai 2 mois — art. 42 loi 1965) (LEGAL.md §3.3)
 * `EP-003-S07` — Exclure explicitement les lots archivés des calculs de quorum et de majorité avec piste d'audit des bases de calcul (LEGAL.md §3.2)
+* `EP-003-S08` ✅ — Détecter et traiter l'article 26-1 : si une résolution `double_majority` est rejetée avec > 1/2 des tantièmes totaux en faveur, proposer immédiatement une re-délibération à la majorité absolue (art. 26-1) dans la même séance via une nouvelle résolution liée (LEGAL.md §3.2)
 
 **Cadrage d'implémentation validé (mai 2026) :**
 
@@ -438,8 +439,9 @@ Durcir les entités comptablement critiques pour empêcher toute modification r�
 | # | Tâche | Détail | Statut |
 |---|-------|--------|--------|
 | T-001 | Fusionner les migrations SQL en un fichier unique | Consolider `0001_init.sql` et `0002_tantieme_audit.sql` (et toute migration ultérieure) en un seul fichier `0001_init.sql` pour simplifier l'initialisation d'une nouvelle instance. | en attente |
-| T-002-A | Peaufiner les écrans, création de composants atomiques | en-attente |
-| T-002-B | Rationaliser le CSS, généralisation de tailwind, réduction des classes custom, utilisation des composants radix-vue | en-attente |
+| T-002-1 | Utilisation des composants radix-vue (ex: CModal > Dialog) | en attente |
+| T-002-2 | Peaufiner les écrans, création de composants atomiques | en-attente |
+| T-002-3 | Rationaliser le CSS, généralisation de tailwind, réduction des classes custom | en attente |
 | T-003 | Durcir le contrat d'interface entre backend et frontend - utilisation d'openapi ? | en attente |
 | T-004 | Etudier l'intérêt de la création d'un crate dédié aux AG | en attente |
 
