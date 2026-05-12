@@ -42,7 +42,7 @@ async fn test_onboarding_bootstrap_invalid_input_returns_400() {
         .await;
     assert_eq!(resp.status_code(), StatusCode::BAD_REQUEST);
     let body: Value = resp.json();
-    assert_eq!(body["error"], "VALIDATION_ERROR");
+    assert_eq!(body["error"], "validation_error");
 }
 
 #[tokio::test]
@@ -78,7 +78,7 @@ async fn test_login_invalid_input_returns_400() {
         .await;
     assert_eq!(resp.status_code(), StatusCode::BAD_REQUEST);
     let body: Value = resp.json();
-    assert_eq!(body["error"], "VALIDATION_ERROR");
+    assert_eq!(body["error"], "validation_error");
 }
 
 #[tokio::test]
