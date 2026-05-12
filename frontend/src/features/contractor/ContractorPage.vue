@@ -138,7 +138,7 @@ async function submit() {
         v-else-if="error && !task"
         class="state-card state-card--error"
       >
-        <CIconAlertTriangle
+        <CIconXCircle
           class="state-icon"
           style="color:var(--color-error)"
         />
@@ -159,7 +159,7 @@ async function submit() {
             </h2>
             <p
               v-if="task.description"
-              class="body-sm"
+              class="body-xs"
               style="color:var(--color-on-surface-variant)"
             >
               {{ task.description }}
@@ -186,7 +186,7 @@ async function submit() {
             @click="fileInputRef?.click()"
           >
             <CIconFile class="dropzone__icon dropzone__icon--lg" />
-            <p class="body-sm">
+            <p class="body-xs">
               {{ t('contractor.dropzone') }}
             </p>
             <input
@@ -212,7 +212,7 @@ async function submit() {
                 width="14"
                 height="14"
               />
-              <span class="body-sm file-name">{{ file.name }}</span>
+              <span class="body-xs file-name">{{ file.name }}</span>
               <button
                 class="icon-btn icon-btn--danger"
                 @click="removeFile(idx)"
@@ -225,33 +225,25 @@ async function submit() {
             </li>
           </ul>
 
-          <!-- Comment -->
-          <div class="form-field">
-            <label class="form-label">{{ t('contractor.comment') }}</label>
-            <textarea
-              v-model="comment"
-              class="form-input"
-              rows="3"
-              :placeholder="t('contractor.commentPlaceholder')"
-            ></textarea>
-          </div>
-
-          <div class="form-field">
-            <label class="form-label">{{ t('contractor.cost') }}</label>
-            <input
-              v-model="cost"
-              type="number"
-              min="0"
-              step="0.01"
-              class="form-input"
-              :placeholder="t('contractor.costPlaceholder')"
-            />
-          </div>
+          <CFormTextarea
+            v-model="comment"
+            :label="t('contractor.comment')"
+            :rows="3"
+            :placeholder="t('contractor.commentPlaceholder')"
+          />
+          <CFormInput
+            v-model="cost"
+            :label="t('contractor.cost')"
+            type="number"
+            :min="0"
+            :step="0.01"
+            :placeholder="t('contractor.costPlaceholder')"
+          />
 
           <!-- Error inline -->
           <p
             v-if="error"
-            class="error-msg body-sm"
+            class="error-msg body-xs"
           >
             {{ error }}
           </p>
@@ -279,7 +271,7 @@ async function submit() {
             <span class="contact-label body-xs">{{ t('contractor.contactEmail') }}</span>
             <a
               :href="`mailto:${task.manager_email}`"
-              class="body-sm contact-value"
+              class="body-xs contact-value"
             >{{ task.manager_email }}</a>
           </div>
           <div
@@ -289,12 +281,12 @@ async function submit() {
             <span class="contact-label body-xs">{{ t('contractor.contactPhone') }}</span>
             <a
               :href="`tel:${task.manager_phone}`"
-              class="body-sm contact-value"
+              class="body-xs contact-value"
             >{{ task.manager_phone }}</a>
           </div>
           <div class="contact-row">
             <span class="contact-label body-xs">{{ t('contractor.contactAddress') }}</span>
-            <span class="body-sm contact-value">{{ task.building_address }}</span>
+            <span class="body-xs contact-value">{{ task.building_address }}</span>
           </div>
         </div>
       </div>

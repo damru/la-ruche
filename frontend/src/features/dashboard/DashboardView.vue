@@ -112,7 +112,7 @@ const todayStr = computed(() =>
       <div class="hero">
         <div class="hero-left">
           <p class="hero-eyebrow">
-            {{ t('dashboard.overview') }}
+            {{ t('page.eyebrows.dashboard') }}
           </p>
           <h1 class="hero-title">
             {{ stats.name }}

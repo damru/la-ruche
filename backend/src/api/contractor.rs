@@ -90,7 +90,9 @@ pub async fn upload_url(
         .ok_or(AppError::NotFound)?;
 
     if input.extension.trim().is_empty() || input.extension.len() > 10 {
-        return Err(AppError::Validation("Invalid file extension".into()));
+        return Err(AppError::validation_code(
+            "errors.contractor.invalid_file_extension",
+        ));
     }
 
     let upload = state

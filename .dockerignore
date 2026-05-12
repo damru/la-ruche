@@ -1,5 +1,7 @@
 # Dockerfile helper — exclude dev files from the build context
+.claude/
 .git/
+.githooks/
 .github/
 .idea/
 .venv/
@@ -14,3 +16,4 @@ docs/
 backend/target/
 frontend/node_modules/
 frontend/dist/
+graphify_out

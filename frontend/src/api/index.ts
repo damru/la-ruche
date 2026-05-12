@@ -1,7 +1,7 @@
 import { api } from './client'
 import axios from 'axios'
 import type {
-  Meeting, Resolution, VoteResult,
+  Meeting, MeetingAttendance, MeetingDocument, Resolution, VoteResult, UnitVote,
   Budget, BudgetLine, LevyCall, WorksFund,
   VendorContract, ContractReminder,
     Task, Claim, MaintenanceEntry,
@@ -138,8 +138,28 @@ export const meetingsApi = {
     api.put<Meeting>(`/meetings/${id}`, data),
   call: (id: string) =>
     api.post(`/meetings/${id}/call`),
+  start: (id: string) =>
+    api.post(`/meetings/${id}/start`),
   close: (id: string) =>
     api.post(`/meetings/${id}/close`),
+  patchResolution: (meetingId: string, rid: string, data: { description?: string }) =>
+    api.patch<Resolution>(`/meetings/${meetingId}/resolutions/${rid}`, data),
+  listDocuments: (id: string) =>
+    api.get<MeetingDocument[]>(`/meetings/${id}/documents`),
+  attachDocument: (id: string, data: { document_id: string; kind: 'notice' | 'attachment' }) =>
+    api.post(`/meetings/${id}/documents`, data),
+  detachDocument: (id: string, documentId: string) =>
+    api.delete(`/meetings/${id}/documents/${documentId}`),
+  attendance: (id: string) =>
+    api.get<MeetingAttendance>(`/meetings/${id}/attendance`),
+  saveAttendance: (id: string, entries: MeetingAttendance['entries']) =>
+    api.put(`/meetings/${id}/attendance`, {
+      entries: entries.map(entry => ({
+        unit_id: entry.unit_id,
+        mode: entry.mode,
+        representative_name: entry.representative_name || undefined,
+      })),
+    }),
   listResolutions: (meetingId: string) =>
     api.get<Resolution[]>(`/meetings/${meetingId}/resolutions`),
   createResolution: (meetingId: string, data: Partial<Resolution>) =>
@@ -148,8 +168,14 @@ export const meetingsApi = {
     api.put<Resolution>(`/meetings/${meetingId}/resolutions/${rid}`, data),
   vote: (meetingId: string, rid: string, data: { unit_id: string; position: string; proxy_for?: string }) =>
     api.post(`/meetings/${meetingId}/resolutions/${rid}/vote`, data),
+  listVotes: (meetingId: string, rid: string) =>
+    api.get<UnitVote[]>(`/meetings/${meetingId}/resolutions/${rid}/votes`),
   results: (meetingId: string, rid: string) =>
     api.get<VoteResult>(`/meetings/${meetingId}/resolutions/${rid}/results`),
+  finalizeResolution: (meetingId: string, rid: string) =>
+    api.post<{ finalized: boolean; result?: VoteResult; eligible_for_second_vote: 'art_25_1' | 'art_26_1' | null }>(
+      `/meetings/${meetingId}/resolutions/${rid}/finalize`,
+    ),
 }
 
 // ── Budget ────────────────────────────────────────────────────────

@@ -181,8 +181,17 @@ pub async fn delete(
             WHERE id = $1 AND building_id = $2
             RETURNING id, bucket, storage_path
         ),
+        cleared_meeting_minutes AS (
+            UPDATE general_meeting
+            SET minutes_document_id = NULL
+            WHERE minutes_document_id IN (SELECT id FROM deleted_document)
+        ),
         deleted_links AS (
             DELETE FROM contract_document
+            WHERE document_id IN (SELECT id FROM deleted_document)
+        ),
+        deleted_meeting_links AS (
+            DELETE FROM general_meeting_document
             WHERE document_id IN (SELECT id FROM deleted_document)
         )
         SELECT bucket, storage_path
@@ -212,6 +221,12 @@ pub async fn delete_orphaned_tx(
           AND d.building_id = $2
           AND NOT EXISTS (
               SELECT 1 FROM contract_document cd WHERE cd.document_id = d.id
+          )
+          AND NOT EXISTS (
+              SELECT 1 FROM general_meeting_document gmd WHERE gmd.document_id = d.id
+          )
+          AND NOT EXISTS (
+              SELECT 1 FROM general_meeting gm WHERE gm.minutes_document_id = d.id
           )
           AND NOT EXISTS (
               SELECT 1 FROM report_document rd WHERE rd.document_id = d.id

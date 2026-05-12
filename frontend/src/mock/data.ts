@@ -77,6 +77,8 @@ export const mockMeetings: Meeting[] = [
     meeting_date: '2025-06-12T18:00:00Z',
     location: 'Salle polyvalente, 14 allée des Acacias – Paris 15e',
     created_at: '2025-05-01T09:00:00Z',
+    resolution_count: 4,
+    passed_count: 0,
   },
   {
     id: 'mtg-002',
@@ -86,6 +88,8 @@ export const mockMeetings: Meeting[] = [
     meeting_date: '2024-06-08T18:00:00Z',
     location: 'Salle polyvalente, 14 allée des Acacias – Paris 15e',
     created_at: '2024-05-02T09:00:00Z',
+    resolution_count: 4,
+    passed_count: 3,
   },
   {
     id: 'mtg-003',
@@ -95,6 +99,8 @@ export const mockMeetings: Meeting[] = [
     meeting_date: '2024-09-20T18:30:00Z',
     location: 'En ligne (visioconférence)',
     created_at: '2024-08-26T14:00:00Z',
+    resolution_count: 2,
+    passed_count: 2,
   },
 ]
 
@@ -115,12 +121,12 @@ export const mockResolutions: Resolution[] = [
 ]
 
 export const mockVoteResults: Record<string, VoteResult> = {
-  'res-005': { adopted: true, votes_for: 840, votes_against: 0, abstentions: 80, shares_present: 920, total_shares: 1000, explanation: 'Majorité article 24' },
-  'res-006': { adopted: true, votes_for: 780, votes_against: 60, abstentions: 80, shares_present: 920, total_shares: 1000, explanation: 'Majorité article 24' },
-  'res-007': { adopted: false, votes_for: 320, votes_against: 500, abstentions: 100, shares_present: 920, total_shares: 1000, explanation: 'Majorité article 25 non atteinte' },
-  'res-008': { adopted: true, votes_for: 900, votes_against: 20, abstentions: 0, shares_present: 920, total_shares: 1000, explanation: 'Majorité article 24' },
-  'res-009': { adopted: true, votes_for: 850, votes_against: 40, abstentions: 30, shares_present: 920, total_shares: 1000, explanation: 'Majorité article 24' },
-  'res-010': { adopted: true, votes_for: 780, votes_against: 100, abstentions: 40, shares_present: 920, total_shares: 1000, explanation: 'Majorité article 25' },
+  'res-005': { passed: true, for_votes: 840, against_votes: 0, abstentions: 80, shares_present: 920, shares_total: 1000, shares_counted: 840, threshold: 421, eligible_for_second_vote: null },
+  'res-006': { passed: true, for_votes: 780, against_votes: 60, abstentions: 80, shares_present: 920, shares_total: 1000, shares_counted: 840, threshold: 421, eligible_for_second_vote: null },
+  'res-007': { passed: false, for_votes: 320, against_votes: 500, abstentions: 100, shares_present: 920, shares_total: 1000, shares_counted: 1000, threshold: 501, eligible_for_second_vote: null },
+  'res-008': { passed: true, for_votes: 900, against_votes: 20, abstentions: 0, shares_present: 920, shares_total: 1000, shares_counted: 920, threshold: 461, eligible_for_second_vote: null },
+  'res-009': { passed: true, for_votes: 850, against_votes: 40, abstentions: 30, shares_present: 920, shares_total: 1000, shares_counted: 890, threshold: 446, eligible_for_second_vote: null },
+  'res-010': { passed: true, for_votes: 780, against_votes: 100, abstentions: 40, shares_present: 920, shares_total: 1000, shares_counted: 1000, threshold: 501, eligible_for_second_vote: null },
 }
 
 // ── Budget ────────────────────────────────────────────────────────
@@ -295,9 +301,9 @@ export const mockConsultations: Consultation[] = [
     my_choice_ids: [],
     total_responses: 0,
     choices: [
-      { id: 'ch-001', label: 'Bâtisoins – 32 400 € TTC (délai 6 semaines)', order_index: 1, votes: 0, pct: 0 },
-      { id: 'ch-002', label: 'Rénov\'Paris – 35 800 € TTC (délai 4 semaines)', order_index: 2, votes: 0, pct: 0 },
-      { id: 'ch-003', label: 'Attendre l\'AG pour décision finale', order_index: 3, votes: 0, pct: 0 },
+      { id: 'ch-001', label: 'Bâtisoins – 32 400 € TTC (délai 6 semaines)', order_index: 1, votes: 0 },
+      { id: 'ch-002', label: 'Rénov\'Paris – 35 800 € TTC (délai 4 semaines)', order_index: 2, votes: 0 },
+      { id: 'ch-003', label: 'Attendre l\'AG pour décision finale', order_index: 3, votes: 0 },
     ],
   },
   {
@@ -311,9 +317,9 @@ export const mockConsultations: Consultation[] = [
     my_choice_ids: [],
     total_responses: 0,
     choices: [
-      { id: 'ch-004', label: '8h–22h tous les jours', order_index: 1, votes: 0, pct: 0 },
-      { id: 'ch-005', label: '9h–21h en semaine, 9h–23h le week-end', order_index: 2, votes: 0, pct: 0 },
-      { id: 'ch-006', label: '10h–20h tous les jours', order_index: 3, votes: 0, pct: 0 },
+      { id: 'ch-004', label: '8h–22h tous les jours', order_index: 1, votes: 0 },
+      { id: 'ch-005', label: '9h–21h en semaine, 9h–23h le week-end', order_index: 2, votes: 0 },
+      { id: 'ch-006', label: '10h–20h tous les jours', order_index: 3, votes: 0 },
     ],
   },
   {
@@ -328,8 +334,8 @@ export const mockConsultations: Consultation[] = [
     my_choice_ids: [],
     total_responses: 5,
     choices: [
-      { id: 'ch-007', label: 'Oui, je suis intéressé(e)', order_index: 1, votes: 3, pct: 60 },
-      { id: 'ch-008', label: 'Non, pas besoin pour l\'instant', order_index: 2, votes: 2, pct: 40 },
+      { id: 'ch-007', label: 'Oui, je suis intéressé(e)', order_index: 1, votes: 3 },
+      { id: 'ch-008', label: 'Non, pas besoin pour l\'instant', order_index: 2, votes: 2 },
     ],
   },
 ]

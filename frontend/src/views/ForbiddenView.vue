@@ -6,6 +6,6 @@ const { t } = useI18n()
 
 <template>
   <div class="view-stub">
-    {{ t('errors.FORBIDDEN') }}
+    {{ t('errors.forbidden') }}
   </div>
 </template>

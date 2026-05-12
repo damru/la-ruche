@@ -11,7 +11,7 @@ pub async fn list(
     user_id: Uuid,
 ) -> AppResult<Vec<serde_json::Value>> {
     // Each consultation row includes:
-    //  - choices: [{id, label, order_index, votes, pct}]
+    //  - choices: [{id, label, order_index, votes}]
     //  - total_responses: number of distinct voters
     //  - my_choice_ids: UUIDs (as text) of choices the current user has selected
     let rows = sqlx::query(
@@ -38,10 +38,7 @@ pub async fn list(
                    'id',          cc.id,
                    'label',       cc.label,
                    'order_index', cc.order_index,
-                   'votes',       COALESCE(vc.cnt, 0)::int,
-                   'pct',         CASE WHEN total_r.cnt > 0
-                                       THEN ROUND(COALESCE(vc.cnt, 0) * 100.0 / total_r.cnt)::int
-                                       ELSE 0 END
+                   'votes',       COALESCE(vc.cnt, 0)::int
                ) ORDER BY cc.order_index), '[]'::json) AS data
                FROM consultation_choice cc
                LEFT JOIN (
@@ -114,10 +111,7 @@ pub async fn get_with_choices(
                    'id',          cc.id,
                    'label',       cc.label,
                    'order_index', cc.order_index,
-                   'votes',       COALESCE(vc.cnt, 0)::int,
-                   'pct',         CASE WHEN total_r.cnt > 0
-                                       THEN ROUND(COALESCE(vc.cnt, 0) * 100.0 / total_r.cnt)::int
-                                       ELSE 0 END
+                   'votes',       COALESCE(vc.cnt, 0)::int
                ) ORDER BY cc.order_index), '[]'::json) AS data
                FROM consultation_choice cc
                LEFT JOIN (
@@ -221,8 +215,8 @@ pub async fn respond(
         .await?;
 
         if valid.is_none() {
-            return Err(crate::errors::AppError::Conflict(
-                "Consultation not found, closed, or choice does not belong to it".into(),
+            return Err(crate::errors::AppError::conflict_code(
+                "errors.consultations.not_found_or_closed",
             ));
         }
     }
@@ -307,8 +301,7 @@ pub async fn results(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<se
         "choices": parsed.iter().map(|(choice_id, label, votes)| serde_json::json!({
             "id": choice_id,
             "label": label,
-            "votes": votes,
-            "pct": if total > 0 { votes * 100 / total } else { 0 }
+            "votes": votes
         })).collect::<Vec<_>>()
     }))
 }

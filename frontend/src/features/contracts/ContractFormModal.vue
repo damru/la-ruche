@@ -7,11 +7,11 @@ import CIconDownload from '@/components/atoms/CIconDownload.svg'
 import CIconFile from '@/components/atoms/CIconFile.svg'
 import CIconTrash from '@/components/atoms/CIconTrash.svg'
 import CIconUpload from '@/components/atoms/CIconUpload.svg'
-import CInput from '@/components/atoms/CInput.vue'
-import CSelect from '@/components/atoms/CSelect.vue'
+import CFormInput from '@/components/atoms/CFormInput.vue'
+import CFormSelect from '@/components/atoms/CFormSelect.vue'
 import CModal from '@/components/molecules/CModal.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
-import CDocumentLinkActionModal from '@/components/molecules/CDocumentLinkActionModal.vue'
+import CDocumentLinkActionModal from '@/components/organisms/CDocumentLinkActionModal.vue'
 import { contractsApi, documentsApi } from '@/api'
 import { useFormatters } from '@/composables/useFormatters'
 import { toErrorMessage } from '@/composables/usePageLoader'
@@ -412,48 +412,48 @@ async function saveContract() {
   >
     <div class="contract-form">
       <div class="contract-form__grid">
-        <CInput
+        <CFormInput
           v-model="form.vendor_name"
           :label="t('contracts.form.vendorName')"
           :error="fieldErrors.vendor_name"
           required
         />
-        <CSelect
+        <CFormSelect
           v-model="form.contract_type"
           :label="t('contracts.form.contractType')"
           :options="contractTypeOptions"
         />
-        <CInput
+        <CFormInput
           v-model="form.subject"
           :label="t('contracts.form.subject')"
           :error="fieldErrors.subject"
           required
           class="contract-form__field--full"
         />
-        <CInput
+        <CFormInput
           v-model="form.vendor_email"
           :label="t('contracts.form.vendorEmail')"
           type="email"
         />
-        <CInput
+        <CFormInput
           v-model="form.vendor_phone"
           :label="t('contracts.form.vendorPhone')"
         />
-        <CInput
+        <CFormInput
           v-model="form.start_date"
           :label="t('common.startDate')"
           :error="fieldErrors.start_date"
           type="date"
           required
         />
-        <CInput
+        <CFormInput
           v-model="form.end_date"
           :label="t('common.endDate')"
           :hint="t('contracts.form.endDateHint')"
           :error="fieldErrors.end_date"
           type="date"
         />
-        <CInput
+        <CFormInput
           v-model="form.amount"
           :label="t('common.amount')"
           :hint="t('contracts.form.amountHint')"
@@ -461,7 +461,7 @@ async function saveContract() {
           type="text"
           placeholder="0,00"
         />
-        <CSelect
+        <CFormSelect
           v-model="form.payment_frequency"
           :label="t('contracts.form.paymentFrequency')"
           :placeholder="t('contracts.form.paymentFrequencyPlaceholder')"
@@ -486,7 +486,7 @@ async function saveContract() {
       </div>
 
       <div class="contract-form__grid">
-        <CInput
+        <CFormInput
           v-model="form.notice_days"
           :label="t('contracts.noticePeriod')"
           :hint="t('contracts.form.noticeDaysHint')"
@@ -656,7 +656,7 @@ async function saveContract() {
     size="sm"
     @update:open="showDeleteModal = $event"
   >
-    <p class="body-sm">
+    <p class="body-xs">
       {{ t('contracts.deleteMessage', { name: props.contract?.vendor_name ?? '' }) }}
     </p>
     <template #footer>

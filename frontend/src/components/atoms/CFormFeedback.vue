@@ -16,7 +16,7 @@ defineProps<{
       <span
         class="form-feedback__icon"
         aria-hidden="true"
-      >{{ status === 'success' ? '✓' : '✕' }}</span>
+      >{{ status === 'success' ? '✓' : '✗' }}</span>
       <span v-if="message">{{ message }}</span>
     </span>
   </Transition>
@@ -27,13 +27,13 @@ defineProps<{
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 13px;
-  font-weight: 500;
+  font-size: var(--text-sm);
+  font-weight: var(--fw-medium);
   transition: opacity var(--transition-fast);
   color: var(--tone-fg, inherit);
 }
 
-.form-feedback__icon { font-size: 14px; }
+.form-feedback__icon { font-size: var(--text-md); }
 
 /* fade in/out */
 .feedback-enter-active,

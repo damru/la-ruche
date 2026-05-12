@@ -16,7 +16,7 @@
 > - Arrêté du 14 mars 2005 (plan comptable copropriété)
 > - RGPD (Règlement UE 2016/679)
 >
-> Dernière mise à jour : 24 avril 2026 (re-baseline code-réel)
+> Dernière mise à jour : 5 mai 2026 (resynchronisation LEGAL / EPICS)
 
 ---
 
@@ -201,10 +201,11 @@ Les tantièmes sont attachés au **lot**, pas au propriétaire. Une mutation (ve
 
 | Majorité | Base de calcul | Exemples de décisions |
 |---|---|---|
-| **Art. 24** | Majorité des voix exprimées (présents + représentés) | Travaux courants, budget, petites décisions |
+| **Art. 24** | Majorité des voix exprimées (présents + représentés), les abstentions ne comptent pas | Travaux courants, budget, petites décisions |
 | **Art. 25** | Majorité de l'ensemble des tantièmes (absents compris) | Travaux importants, mandat syndic, délégation |
 | **Art. 25-1** | Si > 1/3 pour l'art. 25 non atteint, renvoi en art. 24 | Passerelle |
 | **Art. 26** | Double majorité (2/3 des présents représentant > 1/2 des tantièmes) | Travaux transformatifs |
+| **Art. 26-1** | Si > 1/2 pourt l'art. 26 non atteint, renvoie en art. 25 | Travaux transformatifs |
 | **Unanimité** | 100% des tantièmes | Modification EDD, aliénation parties communes |
 
 **Implications :**
@@ -464,7 +465,7 @@ Le syndic représente le syndicat des copropriétaires en justice, tant en deman
 ## 11. Immutabilité des données comptables
 
 **Références :** Art. L123-22 Code de commerce (conservation 10 ans) · Art. 14-1 loi 1965 · Art. 17 loi 1965 · Décret 2001-477 · Code des assurances  
-**Couverture :** ❌ non couverte — ADR-009
+**Couverture :** ❌ non couverte — EP-018 (backlog), ADR-009 (cadrage)
 
 L'obligation de conservation comptable (art. L123-22 Code de commerce, 10 ans) et la valeur probatoire des actes produits en copropriété imposent que certaines données ne puissent pas être modifiées ou supprimées une fois qu'elles ont acquis une valeur juridique ou financière.
 
@@ -483,7 +484,7 @@ Deux patterns distincts s'appliquent selon la nature de l'entité :
 | Entité | Table | Pattern | Déclencheur de gel / recréation |
 |---|---|---|---|
 | Appel de fonds | `levy_call` | A | Passage de `draft` → `issued` — immuable total |
-| Vote en AG | `vote` | A | AG `held` — immuable total |
+| Vote en AG | `vote` | A | AG `ongoing` — immuable total |
 | Résolution AG | `resolution` | A | AG `closed` — immuable total ; une résolution supersédée est annulée par vote d'une nouvelle résolution en AG suivante |
 | Tâche (données de clôture) | `task` | A | Statut `closed` — `completion_cost` et `closed_at` immuables |
 | Sinistre (données financières) | `claim` | A | `transmitted_at` ou `reimbursement_amount` renseignés — ces champs immuables une fois saisis |
@@ -504,7 +505,7 @@ Deux patterns distincts s'appliquent selon la nature de l'entité :
 | Entité | Pattern | Modification interdite dès | Suppression interdite dès |
 |---|---|---|---|
 | `levy_call` | A | Passage à `issued` | Passage à `issued` |
-| `vote` / `resolution` | A | AG `held` / `closed` | AG `held` / `closed` |
+| `vote` / `resolution` | A | AG `ongoing` / `closed` | AG `ongoing` / `closed` |
 | `task` — champs `completion_cost`, `closed_at` | A | Statut `closed` | Si une entrée `maintenance_log` automatique est liée |
 | `claim` — champs `transmitted_at`, `reimbursement_*` | A | Champs renseignés | Statut `closed` avec données financières |
 | `maintenance_log` (source `automatic`) | A | Toujours | Toujours |
@@ -599,4 +600,4 @@ L'`audit_log` est en **append-only** : aucune ligne ne peut être modifiée ou s
 | 8 | RGPD + anonymisation | RGPD 2016/679 | ⚠️ | EP-002-S05 |
 | 9 | Sinistres (délais déclaration) | Code des assurances | ✅ | EP-008 |
 | 10 | Représentation en justice + procédures en cours | Art. 18-I loi 1965 | ⚠️ | EP-002-S06, EP-002-S10 |
-| 11 | Immutabilité des données comptables + audit log | Art. L123-22 Code de commerce | ❌ | ADR-009 |
+| 11 | Immutabilité des données comptables + audit log | Art. L123-22 Code de commerce | ❌ | EP-018, ADR-009 |

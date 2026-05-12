@@ -8,24 +8,28 @@ import { useAutoClose } from '@/composables/useAutoClose'
 import { useRole } from '@/composables/useRole'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
+import CLegalDescription from '@/components/atoms/CLegalDescription.vue'
 import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
-import CPageError from '@/components/molecules/CPageError.vue'
-import CDocumentLinkActionModal from '@/components/molecules/CDocumentLinkActionModal.vue'
-import CLinkedDocumentsModal from '@/components/molecules/CLinkedDocumentsModal.vue'
-import CLegalInfoCard from '@/components/molecules/CLegalInfoCard.vue'
+import CPageError from '@/components/organisms/CPageError.vue'
+import CDocumentLinkActionModal from '@/components/organisms/CDocumentLinkActionModal.vue'
+import CLinkedDocumentsModal from '@/components/organisms/CLinkedDocumentsModal.vue'
+import CLegalNotice from '@/components/molecules/CLegalNotice.vue'
+import CLegalCard from '@/components/molecules/CLegalCard.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CCard from '@/components/molecules/CCard.vue'
+import CCardNote from '@/components/molecules/CCardNote.vue'
 import CModal from '@/components/molecules/CModal.vue'
-import CReminderCard from '@/components/molecules/CReminderCard.vue'
+import CReminderCard from '@/components/organisms/CReminderCard.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
-import CIconAlertTriangle from '@/components/atoms/CIconAlertTriangle.svg'
 import CIconCheckCircle from '@/components/atoms/CIconCheckCircle.svg'
 import CIconClock from '@/components/atoms/CIconClock.svg'
 import CIconCurrency from '@/components/atoms/CIconCurrency.svg'
 import CIconEdit from '@/components/atoms/CIconEdit.svg'
 import CIconFile from '@/components/atoms/CIconFile.svg'
 import CIconHome from '@/components/atoms/CIconHome.svg'
+import CIconLockOpen from '@/components/atoms/CIconLockOpen.svg'
 import CIconShield from '@/components/atoms/CIconShield.svg'
+import CIconXCircle from '@/components/atoms/CIconXCircle.svg'
 import CIconTrash from '@/components/atoms/CIconTrash.svg'
 import CIconUpload from '@/components/atoms/CIconUpload.svg'
 import { buildingApi, claimsApi, documentsApi, unitsApi, usersApi } from '@/api'
@@ -165,12 +169,27 @@ async function loadData() {
   allUsers.value = usersResponse.data
 }
 
-const { loading, error, reload } = usePageLoader(loadData, t('common.loadError'))
+const { loading, error, reload } = usePageLoader(loadData)
 onMounted(reload)
 
 const unitsById = computed(() =>
   new Map(allUnits.value.map(unit => [unit.id, unit])),
 )
+
+const claimTypeOptions = computed(() =>
+  CLAIM_TYPES.map(claimType => ({
+    value: claimType,
+    label: t(`claims.types.${claimType}`),
+  })),
+)
+
+const unitOptions = computed(() => [
+  { value: '', label: t('claims.commonAreas') },
+  ...allUnits.value.map(unit => ({
+    value: unit.id,
+    label: t('claims.unitLabel', { number: unit.unit_number }),
+  })),
+])
 
 const claimsById = computed(() =>
   new Map(allClaims.value.map(claim => [claim.id, claim])),
@@ -252,7 +271,7 @@ function typeIcon(type: ClaimType) {
   const icons = {
     current: CIconShield,
     natural_disaster: CIconHome,
-    theft: CIconAlertTriangle,
+    theft: CIconLockOpen,
   }
 
   return icons[type] ?? CIconShield
@@ -832,10 +851,7 @@ async function submitDelete() {
       <template #left>
         <div class="topbar-breadcrumb">
           {{ buildingName || '…' }}
-          <CIconChevronRight
-            width="14"
-            height="14"
-          />
+          <CIconChevronRight />
           <span>{{ t('claims.title') }}</span>
         </div>
       </template>
@@ -859,19 +875,20 @@ async function submitDelete() {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
-        <div class="view-header">
-          <div>
-            <h1 class="display-md">
-              {{ t('claims.title') }}
-            </h1>
-            <p
-              class="body-md"
-              style="color:var(--color-on-surface-variant)"
-            >
-              {{ t('claims.activeCount', activeClaimsCount) }}
-            </p>
-          </div>
-        </div>
+        <header class="view-header">
+          <CEyebrow>
+            {{ t('page.eyebrows.claims') }}
+          </CEyebrow>
+          <h1 class="display-md">
+            {{ t('claims.title') }}
+          </h1>
+          <p
+            class="body-md"
+            style="color:var(--color-on-surface-variant)"
+          >
+            {{ t('claims.activeCount', activeClaimsCount) }}
+          </p>
+        </header>
 
         <CReminderCard
           v-if="claimReminderRows.length > 0"
@@ -913,128 +930,128 @@ async function submitDelete() {
             :class="['activity-card', { 'card--terminated': claim.status === 'closed' }]"
           >
             <div class="activity-card__header-row activity-card__header-row--with-icon">
-                <div :class="['activity-card__icon', typeTone(claim.claim_type)]">
-                  <component
-                    :is="typeIcon(claim.claim_type)"
-                    width="18"
-                    height="18"
-                  />
-                </div>
-                <h3 class="activity-card__title">
-                  {{ claim.title }}
-                </h3>
-                <div class="activity-card__chips">
-                  <CBadge variant="default">
-                    {{ t(`claims.types.${claim.claim_type}`) }}
-                  </CBadge>
-                  <CBadge
-                    :variant="statusVariant(claim.status)"
-                    dot
-                  >
-                    {{ t(`claims.statuses.${claim.status}`) }}
-                  </CBadge>
-                </div>
+              <div :class="['activity-card__icon', typeTone(claim.claim_type)]">
+                <component
+                  :is="typeIcon(claim.claim_type)"
+                  width="18"
+                  height="18"
+                />
               </div>
-
-              <div class="activity-card__chips">
+              <CMetaLine class="text-xs justify-end justify-self-end">
+                <CBadge
+                  :variant="statusVariant(claim.status)"
+                  dot
+                >
+                  {{ t(`claims.statuses.${claim.status}`) }}
+                </CBadge>
+                <CBadge variant="default">
+                  {{ t(`claims.types.${claim.claim_type}`) }}
+                </CBadge>
                 <CBadge
                   :variant="deadlineVariant(claim)"
                   :dot="deadlineVariant(claim) !== 'default'"
                 >
                   {{ deadlineLabel(claim) }}
                 </CBadge>
-              </div>
-
-              <div class="activity-card__stack">
-                <div class="activity-card__subtitle">
-                  <span class="activity-card__line">
+              </CMetaLine>
+            </div>
+            <div class="activity-card__stack">
+              <CFlexGroup
+                direction="row"
+              >
+                <h3 class="activity-card__title">
+                  {{ claim.title }}
+                </h3>
+                <CMetaItem
+                  variant="sub"
+                >
+                  <template #icon>
                     <CIconLocation />
-                    {{ unitLabel(claim.unit_id) }}
-                  </span>
-                </div>
-
-                <p
-                  v-if="claim.description"
-                  class="activity-card__description"
-                >
-                  {{ claim.description }}
-                </p>
-
-                <div
+                  </template>
+                  {{ unitLabel(claim.unit_id) }}
+                </CMetaItem>
+                <CMetaItem
                   v-if="claim.document_count > 0"
-                  class="activity-card__documents"
+                  variant="sub"
+                  as="button"
+                  @click="openClaimDocuments(claim)"
                 >
-                  <button
-                    class="activity-card__line activity-card__documents-button"
-                    @click="openClaimDocuments(claim)"
-                  >
+                  <template #icon>
                     <CIconFile />
-                    {{ t('claims.documentsCount', claim.document_count) }}
-                  </button>
-                </div>
-
-                <template v-if="canManage">
-                  <div class="activity-card__actions">
-                    <CBtn
-                      variant="ghost"
-                      size="sm"
-                      @click="openEditModal(claim)"
-                    >
-                      <CIconEdit />
-                      {{ t('common.edit') }}
-                    </CBtn>
-                    <CBtn
-                      v-if="claim.status === 'open'"
-                      variant="primary"
-                      size="sm"
-                      @click="openTransmitModal(claim)"
-                    >
-                      <CIconUpload />
-                      {{ t('claims.transmit') }}
-                    </CBtn>
-                    <CBtn
-                      v-else-if="claim.status === 'in_progress'"
-                      variant="primary"
-                      size="sm"
-                      @click="openCloseModal(claim)"
-                    >
-                      <CIconCheckCircle />
-                      {{ t('claims.close') }}
-                    </CBtn>
-                  </div>
-                </template>
-
-                <div class="activity-card__note">
-                  <span class="activity-card__line">
-                    <CIconCalendar />
-                    {{ t('claims.declaredOn', { date: formatDate(claim.declared_at) }) }}
-                  </span>
-                  <span class="activity-card__line">
-                    <CIconClock
-                      width="14"
-                      height="14"
-                    />
-                    {{ t('claims.deadline.reference', { date: formatDate(claim.legal_deadline_at) }) }}
-                  </span>
-                  <span
-                    v-if="claim.published_at"
-                    class="activity-card__line"
+                  </template>
+                  {{ t('claims.documentsCount', claim.document_count) }}
+                </CMetaItem>
+              </CFlexGroup>
+              <p
+                v-if="claim.description"
+              >
+                {{ claim.description }}
+              </p>
+              <template v-if="canManage">
+                <div class="activity-card__actions">
+                  <CBtn
+                    variant="ghost"
+                    size="sm"
+                    @click="openEditModal(claim)"
                   >
-                    <CIconAlertTriangle />
-                    {{ t('claims.publishedOn', { date: formatDate(claim.published_at) }) }}
-                  </span>
-                  <span
-                    v-if="claim.reimbursement_date || claim.reimbursement_amount != null"
-                    class="activity-card__line"
+                    <CIconEdit />
+                    {{ t('common.edit') }}
+                  </CBtn>
+                  <CBtn
+                    v-if="claim.status === 'open'"
+                    variant="primary"
+                    size="sm"
+                    @click="openTransmitModal(claim)"
                   >
-                    <CIconCurrency
-                      width="14"
-                      height="14"
-                    />
-                    {{ reimbursementLabel(claim) }}
-                  </span>
+                    <CIconUpload />
+                    {{ t('claims.transmit') }}
+                  </CBtn>
+                  <CBtn
+                    v-else-if="claim.status === 'in_progress'"
+                    variant="primary"
+                    size="sm"
+                    @click="openCloseModal(claim)"
+                  >
+                    <CIconCheckCircle />
+                    {{ t('claims.close') }}
+                  </CBtn>
                 </div>
-              </div>
+              </template>
+
+              <CCardNote>
+                <span class="activity-card__line">
+                  <CIconCalendar />
+                  {{ t('claims.declaredOn', { date: formatDate(claim.declared_at) }) }}
+                </span>
+                <span class="activity-card__line">
+                  <CIconClock
+                    width="14"
+                    height="14"
+                  />
+                  {{ t('claims.deadline.reference', { date: formatDate(claim.legal_deadline_at) }) }}
+                </span>
+                <span
+                  v-if="claim.published_at"
+                  class="activity-card__line"
+                >
+                  <CIconXCircle
+                    width="14"
+                    height="14"
+                  />
+                  {{ t('claims.publishedOn', { date: formatDate(claim.published_at) }) }}
+                </span>
+                <span
+                  v-if="claim.reimbursement_date || claim.reimbursement_amount != null"
+                  class="activity-card__line"
+                >
+                  <CIconCurrency
+                    width="14"
+                    height="14"
+                  />
+                  {{ reimbursementLabel(claim) }}
+                </span>
+              </CCardNote>
+            </div>
           </CCard>
 
           <div
@@ -1045,12 +1062,14 @@ async function submitDelete() {
           </div>
         </div>
 
-        <CLegalInfoCard
-          class="claims-legal-card"
-          :title="t('claims.legalCard.title')"
-          :summary="t('claims.legalCard.summary')"
-          :links="legalCardLinks"
-        />
+        <CLegalCard>
+          <CLegalNotice :links="legalCardLinks">
+            <CLegalDescription
+              :title="t('claims.legalCard.title')"
+              :summary="t('claims.legalCard.summary')"
+            />
+          </CLegalNotice>
+        </CLegalCard>
       </template>
     </div>
 
@@ -1065,87 +1084,44 @@ async function submitDelete() {
         class="form-grid"
         @submit.prevent="submitCreate"
       >
-        <div class="form-field">
-          <label class="form-label">{{ t('claims.fields.title') }}</label>
-          <input
-            v-model="createForm.title"
-            type="text"
-            class="form-input"
+        <CFormInput
+          v-model="createForm.title"
+          :label="t('claims.fields.title')"
+          required
+        />
+        <CFormSelect
+          v-model="createForm.claim_type"
+          :label="t('claims.fields.claimType')"
+          :options="claimTypeOptions"
+        />
+
+        <div class="form-row">
+          <CFormInput
+            v-model="createForm.declared_at"
+            :label="t('claims.fields.declaredAt')"
+            type="date"
             required
+          />
+          <CFormInput
+            v-if="createForm.claim_type === 'natural_disaster'"
+            v-model="createForm.published_at"
+            :label="t('claims.fields.publishedAt')"
+            type="date"
+            required
+            :hint="t('claims.fields.publishedAtHint')"
           />
         </div>
 
-        <div class="form-field">
-          <label class="form-label">{{ t('claims.fields.claimType') }}</label>
-          <select
-            v-model="createForm.claim_type"
-            class="form-input"
-          >
-            <option
-              v-for="claimType in CLAIM_TYPES"
-              :key="claimType"
-              :value="claimType"
-            >
-              {{ t(`claims.types.${claimType}`) }}
-            </option>
-          </select>
-        </div>
-
-        <div class="form-row">
-          <div class="form-field">
-            <label class="form-label">{{ t('claims.fields.declaredAt') }}</label>
-            <input
-              v-model="createForm.declared_at"
-              type="date"
-              class="form-input"
-              required
-            />
-          </div>
-
-          <div
-            v-if="createForm.claim_type === 'natural_disaster'"
-            class="form-field"
-          >
-            <label class="form-label">{{ t('claims.fields.publishedAt') }}</label>
-            <input
-              v-model="createForm.published_at"
-              type="date"
-              class="form-input"
-              required
-            />
-            <p class="field-hint">
-              {{ t('claims.fields.publishedAtHint') }}
-            </p>
-          </div>
-        </div>
-
-        <div class="form-field">
-          <label class="form-label">{{ t('claims.fields.unit') }}</label>
-          <select
-            v-model="createForm.unit_id"
-            class="form-input"
-          >
-            <option value="">
-              {{ t('claims.commonAreas') }}
-            </option>
-            <option
-              v-for="unit in allUnits"
-              :key="unit.id"
-              :value="unit.id"
-            >
-              {{ t('claims.unitLabel', { number: unit.unit_number }) }}
-            </option>
-          </select>
-        </div>
-
-        <div class="form-field">
-          <label class="form-label">{{ t('claims.fields.description') }}</label>
-          <textarea
-            v-model="createForm.description"
-            class="form-input"
-            rows="3"
-          ></textarea>
-        </div>
+        <CFormSelect
+          v-model="createForm.unit_id"
+          :label="t('claims.fields.unit')"
+          :options="unitOptions"
+        />
+        <CFormTextarea
+          v-model="createForm.description"
+          :label="t('claims.fields.description')"
+          :rows="3"
+        />
 
         <div class="form-field">
           <label class="form-label">{{ t('claims.fields.documents') }}</label>
@@ -1229,87 +1205,44 @@ async function submitDelete() {
         class="form-grid"
         @submit.prevent="submitEdit"
       >
-        <div class="form-field">
-          <label class="form-label">{{ t('claims.fields.title') }}</label>
-          <input
-            v-model="editForm.title"
-            type="text"
-            class="form-input"
+        <CFormInput
+          v-model="editForm.title"
+          :label="t('claims.fields.title')"
+          required
+        />
+        <CFormSelect
+          v-model="editForm.claim_type"
+          :label="t('claims.fields.claimType')"
+          :options="claimTypeOptions"
+        />
+
+        <div class="form-row">
+          <CFormInput
+            v-model="editForm.declared_at"
+            :label="t('claims.fields.declaredAt')"
+            type="date"
             required
+          />
+          <CFormInput
+            v-if="editForm.claim_type === 'natural_disaster'"
+            v-model="editForm.published_at"
+            :label="t('claims.fields.publishedAt')"
+            type="date"
+            required
+            :hint="t('claims.fields.publishedAtHint')"
           />
         </div>
 
-        <div class="form-field">
-          <label class="form-label">{{ t('claims.fields.claimType') }}</label>
-          <select
-            v-model="editForm.claim_type"
-            class="form-input"
-          >
-            <option
-              v-for="claimType in CLAIM_TYPES"
-              :key="claimType"
-              :value="claimType"
-            >
-              {{ t(`claims.types.${claimType}`) }}
-            </option>
-          </select>
-        </div>
-
-        <div class="form-row">
-          <div class="form-field">
-            <label class="form-label">{{ t('claims.fields.declaredAt') }}</label>
-            <input
-              v-model="editForm.declared_at"
-              type="date"
-              class="form-input"
-              required
-            />
-          </div>
-
-          <div
-            v-if="editForm.claim_type === 'natural_disaster'"
-            class="form-field"
-          >
-            <label class="form-label">{{ t('claims.fields.publishedAt') }}</label>
-            <input
-              v-model="editForm.published_at"
-              type="date"
-              class="form-input"
-              required
-            />
-            <p class="field-hint">
-              {{ t('claims.fields.publishedAtHint') }}
-            </p>
-          </div>
-        </div>
-
-        <div class="form-field">
-          <label class="form-label">{{ t('claims.fields.unit') }}</label>
-          <select
-            v-model="editForm.unit_id"
-            class="form-input"
-          >
-            <option value="">
-              {{ t('claims.commonAreas') }}
-            </option>
-            <option
-              v-for="unit in allUnits"
-              :key="unit.id"
-              :value="unit.id"
-            >
-              {{ t('claims.unitLabel', { number: unit.unit_number }) }}
-            </option>
-          </select>
-        </div>
-
-        <div class="form-field">
-          <label class="form-label">{{ t('claims.fields.description') }}</label>
-          <textarea
-            v-model="editForm.description"
-            class="form-input"
-            rows="3"
-          ></textarea>
-        </div>
+        <CFormSelect
+          v-model="editForm.unit_id"
+          :label="t('claims.fields.unit')"
+          :options="unitOptions"
+        />
+        <CFormTextarea
+          v-model="editForm.description"
+          :label="t('claims.fields.description')"
+          :rows="3"
+        />
 
         <div class="form-field">
           <label class="form-label">{{ t('claims.fields.documents') }}</label>
@@ -1457,18 +1390,13 @@ async function submitDelete() {
         class="form-grid"
         @submit.prevent="submitTransmit"
       >
-        <div class="form-field">
-          <label class="form-label">{{ t('claims.fields.transmittedAt') }}</label>
-          <input
-            v-model="transmitForm.transmitted_at"
-            type="date"
-            class="form-input"
-            required
-          />
-          <p class="field-hint">
-            {{ t('claims.fields.transmittedAtHint') }}
-          </p>
-        </div>
+        <CFormInput
+          v-model="transmitForm.transmitted_at"
+          :label="t('claims.fields.transmittedAt')"
+          type="date"
+          required
+          :hint="t('claims.fields.transmittedAtHint')"
+        />
       </form>
 
       <template #footer>
@@ -1504,43 +1432,29 @@ async function submitDelete() {
         class="form-grid"
         @submit.prevent="submitClose"
       >
-        <div class="form-field">
-          <label class="form-label">{{ t('claims.fields.transmittedAt') }}</label>
-          <input
-            v-model="closeForm.transmitted_at"
-            type="date"
-            class="form-input"
-            required
-          />
-          <p class="field-hint">
-            {{ t('claims.fields.transmittedAtHint') }}
-          </p>
-        </div>
+        <CFormInput
+          v-model="closeForm.transmitted_at"
+          :label="t('claims.fields.transmittedAt')"
+          type="date"
+          required
+          :hint="t('claims.fields.transmittedAtHint')"
+        />
 
         <div class="form-row">
-          <div class="form-field">
-            <label class="form-label">{{ t('claims.fields.reimbursementDate') }}</label>
-            <input
-              v-model="closeForm.reimbursement_date"
-              type="date"
-              class="form-input"
-            />
-          </div>
-
-          <div class="form-field">
-            <label class="form-label">{{ t('claims.fields.reimbursementAmount') }}</label>
-            <input
-              v-model="closeForm.reimbursement_amount"
-              type="number"
-              min="0.01"
-              step="0.01"
-              inputmode="decimal"
-              class="form-input"
-            />
-            <p class="field-hint">
-              {{ t('claims.fields.reimbursementAmountHint') }}
-            </p>
-          </div>
+          <CFormInput
+            v-model="closeForm.reimbursement_date"
+            :label="t('claims.fields.reimbursementDate')"
+            type="date"
+          />
+          <CFormInput
+            v-model="closeForm.reimbursement_amount"
+            :label="t('claims.fields.reimbursementAmount')"
+            type="number"
+            :min="0.01"
+            :step="0.01"
+            inputmode="decimal"
+            :hint="t('claims.fields.reimbursementAmountHint')"
+          />
         </div>
 
         <div class="form-field">
@@ -1621,7 +1535,7 @@ async function submitDelete() {
       size="sm"
       @update:open="value => !value && (claimToDelete = null)"
     >
-      <p class="body-sm">
+      <p class="body-xs">
         {{ t('claims.confirmDeleteMessage', { title: claimToDelete?.title ?? '' }) }}
       </p>
 
@@ -1719,7 +1633,7 @@ async function submitDelete() {
   color: #fff;
   border: none;
   cursor: pointer;
-  font-size: 14px;
+  font-size: var(--text-md);
   line-height: 1;
   display: flex;
   align-items: center;
@@ -1809,16 +1723,6 @@ async function submitDelete() {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-3);
-}
-
-.empty-state {
-  padding: var(--space-8);
-  text-align: center;
-  color: var(--color-on-surface-variant);
-}
-
-.claims-legal-card {
-  margin-top: var(--space-4);
 }
 
 @media (max-width: 720px) {

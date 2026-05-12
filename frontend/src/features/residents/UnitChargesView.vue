@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import CCard from '@/components/molecules/CCard.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
-import CPageError from '@/components/molecules/CPageError.vue'
+import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import { unitsApi } from '@/api'
 import { usePageLoader } from '@/composables/usePageLoader'
@@ -34,7 +34,7 @@ async function load() {
   data.value = res.data
 }
 
-const { loading, error, reload } = usePageLoader(load, t('common.loadError'))
+const { loading, error, reload } = usePageLoader(load)
 onMounted(reload)
 
 function statusClass(levy: UnitChargesLevy): string {
@@ -60,15 +60,9 @@ function statusLabel(levy: UnitChargesLevy): string {
             style="cursor:pointer"
             @click="router.push(backRoute)"
           >{{ backLabel }}</span>
-          <CIconChevronRight
-            width="14"
-            height="14"
-          />
+          <CIconChevronRight />
           <span>{{ data?.unit.unit_number ?? '…' }}</span>
-          <CIconChevronRight
-            width="14"
-            height="14"
-          />
+          <CIconChevronRight />
           <span>{{ t('units.charges.title') }}</span>
         </div>
       </template>
@@ -82,6 +76,21 @@ function statusLabel(levy: UnitChargesLevy): string {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else-if="data">
+        <header class="view-header">
+          <CEyebrow>
+            {{ t('page.eyebrows.unitCharges') }}
+          </CEyebrow>
+          <h1 class="display-md">
+            {{ t('units.charges.title') }}
+          </h1>
+          <p
+            class="body-md"
+            style="color:var(--color-on-surface-variant)"
+          >
+            {{ t('common.lot') }} {{ data.unit.unit_number }} · {{ data.unit.unit_type }}
+          </p>
+        </header>
+
         <!-- Summary KPIs -->
         <div class="charges-kpis">
           <div class="kpi-card">

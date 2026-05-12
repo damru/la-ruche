@@ -48,7 +48,7 @@ withDefaults(defineProps<{
   justify-content: center;
   gap: var(--space-2);
   font-family: var(--font-body);
-  font-weight: 500;
+  font-weight: var(--fw-medium);
   border: none;
   border-radius: var(--radius-md);
   cursor: pointer;
@@ -60,6 +60,9 @@ withDefaults(defineProps<{
   white-space: nowrap;
   position: relative;
   text-decoration: none;
+  text-align: left;
+  text-wrap: auto;
+  width: fit-content;
 }
 
 .c-btn:disabled {
@@ -69,20 +72,20 @@ withDefaults(defineProps<{
 }
 
 /* ── Tailles ──────────────────────────────────────────────────── */
-.c-btn--sm  { height: 36px; min-height: 36px; min-width: 36px; padding: 0 var(--space-3); font-size: var(--text-sm); border-radius: var(--radius-sm); }
-.c-btn--md  { height: 44px; min-height: 44px; min-width: 44px; padding: 0 var(--space-5); font-size: var(--text-md); }
-.c-btn--lg  { height: 52px; min-height: 52px; min-width: 52px; padding: 0 var(--space-6); font-size: var(--text-lg); }
+.c-btn--sm  { min-height: 36px; min-width: 36px; padding: 0 var(--space-3); font-size: var(--text-sm); border-radius: var(--radius-sm); }
+.c-btn--md  { min-height: 44px; min-width: 44px; padding: 0 var(--space-5); font-size: var(--text-md); }
+.c-btn--lg  { min-height: 52px; min-width: 52px; padding: 0 var(--space-6); font-size: var(--text-lg); }
 .c-btn--icon { width: 44px; height: 44px; padding: 0; border-radius: var(--radius-sm); }
 
 /* ── Variantes ────────────────────────────────────────────────── */
 .c-btn--primary {
   background: var(--tone-bg);
   color: var(--tone-fg);
-  box-shadow: 0 4px 16px rgba(100, 63, 213, 0.25);
+  box-shadow: var(--shadow-primary-lift);
 }
 .c-btn--primary:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 8px 24px rgba(100, 63, 213, 0.35);
+  box-shadow: var(--shadow-primary-lift-hover);
 }
 .c-btn--primary:active:not(:disabled) {
   transform: translateY(0);
@@ -115,8 +118,8 @@ withDefaults(defineProps<{
 /* ── Spinner ──────────────────────────────────────────────────── */
 .c-btn--loading { pointer-events: none; }
 .c-btn__spinner {
-  width: 16px;
-  height: 16px;
+  width: var(--icon-sm);
+  height: var(--icon-sm);
   border: 2px solid currentColor;
   border-top-color: transparent;
   border-radius: 50%;
@@ -147,8 +150,8 @@ withDefaults(defineProps<{
 
 /* ── Slot icons ───────────────────────────────────────────────── */
 :slotted(svg) {
-  width: 16px;
-  height: 16px;
+  width: var(--icon-sm);
+  height: var(--icon-sm);
   flex-shrink: 0;
 }
 </style>

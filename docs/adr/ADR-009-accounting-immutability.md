@@ -25,7 +25,7 @@ Les champs financiers et de traçabilité des entités suivantes deviennent immu
 | Entité | Déclencheur |
 |---|---|
 | `levy_call` | `status = 'issued'` |
-| `vote` | AG `held` |
+| `vote` | AG `ongoing` |
 | `resolution` | AG `closed` |
 | `task.completion_cost` / `task.closed_at` | `status = 'closed'` |
 | `claim.transmitted_at` / `claim.reimbursement_*` | Champs renseignés |
@@ -100,6 +100,8 @@ WHERE valid_from <= :date
 ---
 
 ## Audit log
+
+**Frontière documentaire avec EP-017 :** le `audit_log` défini par cet ADR est un journal probant de mutations comptables et juridiques. Il ne doit pas devenir la frise générique de cycle de vie des `task` / `report`. Les événements UX et métier non probants (création de signalement, conversion en tâche, uploads, changements d’assignation lisibles en timeline) relèvent d’un flux distinct, documenté côté backlog comme `activity_log` dans `EP-017`.
 
 ### Structure
 

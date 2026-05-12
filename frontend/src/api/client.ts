@@ -27,6 +27,36 @@ function notifyQueue(ok: boolean) {
   refreshQueue = []
 }
 
+// Shared refresh flow used by both interceptor and restoreSession.
+// This prevents refresh-token rotation races when multiple requests
+// hit 401 at the same time.
+export async function tryRefreshSession(): Promise<boolean> {
+  if (isRefreshing) {
+    return new Promise<boolean>(resolve => refreshQueue.push(resolve))
+  }
+
+  isRefreshing = true
+  try {
+    await api.post('/auth/refresh')
+    notifyQueue(true)
+    return true
+  } catch {
+    // Cross-tab race guard: another tab may have refreshed and rotated
+    // the token just before this request failed with 401.
+    // If /auth/me succeeds, session is still valid in this browser.
+    try {
+      await api.get('/auth/me')
+      notifyQueue(true)
+      return true
+    } catch {
+      notifyQueue(false)
+      return false
+    }
+  } finally {
+    isRefreshing = false
+  }
+}
+
 // ── Response interceptor — transparent token refresh ─────────────────
 // Auth probe URLs — failures here are expected during session restoration
 // and must NOT trigger a session-expired redirect.
@@ -39,16 +69,11 @@ api.interceptors.response.use(
     if (!original) return Promise.reject(error)
 
     const status = error.response?.status
-    const errorCode = error.response?.data?.error
 
-    // 401 TOKEN_INVALID  → token présent mais expiré
-    // 401 UNAUTHORIZED   → cookie supprimé par le browser après Max-Age
-    // Dans les deux cas, tenter un refresh (sauf sur les routes auth elles-mêmes,
-    // et sauf si la requête a déjà été retentée après un refresh)
-    const shouldRefresh =
-      status === 401 &&
-      (errorCode === 'TOKEN_INVALID' || errorCode === 'UNAUTHORIZED') &&
-      !original._retry
+    // Any non-auth 401 should attempt a refresh once.
+    // Backend error codes may vary by source (middleware/handler), but
+    // the HTTP status is the reliable signal for an expired/invalid access token.
+    const shouldRefresh = status === 401 && !original._retry
 
     if (shouldRefresh) {
       // Never attempt refresh or dispatch session-expired for auth probe requests
@@ -57,27 +82,15 @@ api.interceptors.response.use(
         return Promise.reject(error)
       }
 
-      if (isRefreshing) {
-        // Attendre que le refresh en cours se termine
-        const ok = await new Promise<boolean>(resolve => refreshQueue.push(resolve))
-        if (!ok) return Promise.reject(error)
-        return api.request(original)
-      }
-
-      isRefreshing = true
-      try {
-        await api.post('/auth/refresh')
-        notifyQueue(true)
-        original._retry = true
-        return api.request(original)
-      } catch {
-        notifyQueue(false)
+      const ok = await tryRefreshSession()
+      if (!ok) {
         // Refresh failed → log out
         window.dispatchEvent(new CustomEvent('laruche:session-expired'))
         return Promise.reject(error)
-      } finally {
-        isRefreshing = false
       }
+
+      original._retry = true
+      return api.request(original)
     }
 
     return Promise.reject(error)
@@ -85,10 +98,14 @@ api.interceptors.response.use(
 )
 
 // ── Helper d'extraction d'erreur ──────────────────────────────────
-// Returns an i18n key (e.g. "errors.UNAUTHORIZED") to be translated by the caller.
+// Returns an i18n key to be translated by the caller.
+// If the backend `message` field is already an i18n key path (starts with "errors."),
+// it is used directly (specific validation/conflict code).
+// Otherwise falls back to `errors.${data.error}` (generic HTTP error code).
 export function extractApiError(error: unknown): string {
   if (axios.isAxiosError(error)) {
     const data = error.response?.data as ApiError | undefined
+    if (data?.message?.startsWith('errors.')) return data.message
     if (data?.error) return `errors.${data.error}`
   }
   return 'errors.unknown'

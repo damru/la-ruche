@@ -2,13 +2,14 @@
 import { useI18n } from 'vue-i18n'
 import CIconInfo from '@/components/atoms/CIconInfo.svg'
 import CIconWarn from '@/components/atoms/CIconWarn.svg'
-import CIconAlertTriangle from '@/components/atoms/CIconAlertTriangle.svg'
 import CIconCheckCircle from '@/components/atoms/CIconCheckCircle.svg'
+import CIconXCircle from '@/components/atoms/CIconXCircle.svg'
 import CIconX from '@/components/atoms/CIconX.svg'
 
-import { ref } from 'vue'
+import { computed, ref, useSlots } from 'vue'
 
 const { t } = useI18n()
+const slots = useSlots()
 
 type Variant = 'info' | 'warning' | 'error' | 'success'
 
@@ -24,11 +25,12 @@ withDefaults(defineProps<{
 
 const emit = defineEmits<{ dismiss: [] }>()
 const visible = ref(true)
+const hasSideSlot = computed(() => Boolean(slots.side))
 
 const iconMap: Record<Variant, typeof CIconInfo> = {
   info:    CIconInfo,
   warning: CIconWarn,
-  error:   CIconAlertTriangle,
+  error:   CIconXCircle,
   success: CIconCheckCircle,
 }
 const toneClassMap: Record<Variant, string> = {
@@ -51,34 +53,60 @@ function dismiss() {
       :class="['c-alert', toneClassMap[variant]]"
       role="alert"
     >
-      <component
-        :is="iconMap[variant]"
-        class="c-alert__icon"
-        aria-hidden="true"
-      />
-      <div class="c-alert__body">
-        <p
+      <div class="c-alert__main">
+        <div
           v-if="title"
-          class="c-alert__title"
+          class="c-alert__header"
         >
-          {{ title }}
-        </p>
-        <p class="c-alert__text">
+          <component
+            :is="iconMap[variant]"
+            class="c-alert__icon"
+            aria-hidden="true"
+          />
+          <p class="c-alert__title">
+            {{ title }}
+          </p>
+        </div>
+        <div
+          v-else
+          class="c-alert__header"
+        >
+          <component
+            :is="iconMap[variant]"
+            class="c-alert__icon"
+            aria-hidden="true"
+          />
+        </div>
+        <div class="c-alert__body">
           <slot></slot>
-        </p>
+        </div>
       </div>
-      <button
-        v-if="dismissible"
-        class="c-alert__close"
-        :aria-label="t('common.close')"
-        @click="dismiss"
+      <div
+        v-if="hasSideSlot || dismissible"
+        :class="[
+          'c-alert__side',
+          { 'c-alert__side--with-close': dismissible },
+        ]"
       >
-        <CIconX
-          width="16"
-          height="16"
-          aria-hidden="true"
-        />
-      </button>
+        <button
+          v-if="dismissible"
+          class="c-alert__close"
+          :aria-label="t('common.close')"
+          @click="dismiss"
+        >
+          <CIconX
+            width="16"
+            height="16"
+            aria-hidden="true"
+          />
+        </button>
+        <div
+          v-if="hasSideSlot"
+          class="c-alert__side-content"
+        >
+          <slot name="side"></slot>
+        </div>
+      </div>
     </div>
   </Transition>
 </template>
@@ -86,6 +114,7 @@ function dismiss() {
 <style scoped>
 .c-alert {
   display: flex;
+  justify-content: space-between;
   gap: var(--space-3);
   padding: var(--space-3) var(--space-4);
   border-radius: var(--radius-md);
@@ -93,35 +122,79 @@ function dismiss() {
   color: var(--tone-fg, var(--color-on-secondary-container));
 }
 
+.c-alert__main {
+  flex: 1;
+  min-width: 0;
+  align-self: flex-start;
+}
+
+.c-alert__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
 .c-alert__icon {
   width: 18px;
   height: 18px;
   flex-shrink: 0;
-  margin-top: 1px;
 }
 
-.c-alert__body { flex: 1; min-width: 0; }
+.c-alert__body {
+  min-width: 0;
+  margin-top: 2px;
+}
 
 .c-alert__title {
   font-size: var(--text-sm);
   font-weight: var(--fw-semibold);
-  margin-bottom: 2px;
+  margin: 0;
 }
 
-.c-alert__text { font-size: var(--text-sm); opacity: 0.9; line-height: 1.4; }
+.c-alert__body :deep(p) {
+  margin: 0;
+}
+
+.c-alert__body {
+  font-size: var(--text-sm);
+  opacity: 0.9;
+  line-height: 1.4;
+}
+
+.c-alert__side {
+  display: flex;
+  flex-shrink: 0;
+  align-self: stretch;
+}
+
+.c-alert__side--with-close {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  justify-items: end;
+  align-items: stretch;
+  gap: var(--space-2);
+}
+
+.c-alert__side-content {
+  display: flex;
+  min-height: 0;
+}
+
+.c-alert__side--with-close .c-alert__side-content {
+  justify-self: stretch;
+}
 
 .c-alert__close {
-  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
   min-width: unset;
   min-height: unset;
   border-radius: var(--radius-sm);
   opacity: 0.6;
   transition: opacity var(--transition-fast);
+  justify-self: end;
+  align-self: start;
 }
 .c-alert__close:hover { opacity: 1; }
 

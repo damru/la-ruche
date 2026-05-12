@@ -243,10 +243,10 @@ function recalc() {
 }
 .c-tooltip-trigger__icon {
   display: inline-flex;
-  width: 14px;
-  height: 14px;
+  width: var(--icon-xs);
+  height: var(--icon-xs);
 }
-:slotted(svg) { width: 16px; height: 16px; }
+:slotted(svg) { width: var(--icon-sm); height: var(--icon-sm); }
 </style>
 
 <!-- Global styles for teleported popup (not scoped) -->

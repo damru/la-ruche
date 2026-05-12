@@ -10,7 +10,7 @@ import { useAuthStore } from '@/stores/auth'
 import CCard from '@/components/molecules/CCard.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
-import CPageError from '@/components/molecules/CPageError.vue'
+import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import { unitsApi } from '@/api'
 import { usePageLoader } from '@/composables/usePageLoader'
@@ -31,7 +31,7 @@ async function loadOwnedUnits() {
   }
 }
 
-const { loading, error, reload } = usePageLoader(loadOwnedUnits, t('common.loadError'))
+const { loading, error, reload } = usePageLoader(loadOwnedUnits)
 onMounted(reload)
 </script>
 
@@ -53,11 +53,14 @@ onMounted(reload)
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
-        <div class="view-header">
+        <header class="view-header">
+          <CEyebrow>
+            {{ t('page.eyebrows.myCharges') }}
+          </CEyebrow>
           <h1 class="display-md">
             {{ t('nav.myCharges') }}
           </h1>
-        </div>
+        </header>
 
         <!-- Multi-unit selection (co-owner with several units) -->
         <div
@@ -72,7 +75,7 @@ onMounted(reload)
           >
             <div class="unit-card__inner">
               <span class="unit-card__number title-sm">{{ t('common.lot') }} {{ unit.unit_number }}</span>
-              <span class="unit-card__type body-sm dim">{{ unit.description }}</span>
+              <span class="unit-card__type body-xs dim">{{ unit.description }}</span>
             </div>
             <CBtn
               variant="ghost"

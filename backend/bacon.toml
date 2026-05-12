@@ -1,0 +1,5 @@
+default_job = "run"
+
+[jobs.run]
+command = ["cargo", "run"]
+need_stdout = true

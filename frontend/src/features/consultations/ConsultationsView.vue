@@ -10,10 +10,12 @@ import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CAlert from '@/components/atoms/CAlert.vue'
-import CLegalInfoCard from '@/components/molecules/CLegalInfoCard.vue'
+import CLegalDescription from '@/components/atoms/CLegalDescription.vue'
+import CLegalNotice from '@/components/molecules/CLegalNotice.vue'
+import CLegalCard from '@/components/molecules/CLegalCard.vue'
 import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
 import CModal from '@/components/molecules/CModal.vue'
-import CPageError from '@/components/molecules/CPageError.vue'
+import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import { buildingApi, consultationsApi } from '@/api'
@@ -75,9 +77,16 @@ function isVoteLocked(c: Consultation): boolean {
   return hasVoted(c) && !getInline(c).unlocked
 }
 
-function barWidth(c: Consultation, pct: number): number {
+function getTotalVotes(c: Consultation): number {
+  return consultationTotalVotes.value[c.id] ?? 0
+}
+
+function barWidth(c: Consultation, votes: number): number {
   // Only show filled bars if user has already voted OR consultation is closed
-  return hasVoted(c) || c.status === 'closed' ? pct : 0
+  if (!(hasVoted(c) || c.status === 'closed')) return 0
+  const totalVotes = getTotalVotes(c)
+  if (totalVotes === 0) return 0
+  return Math.round(votes * 100 / totalVotes)
 }
 
 function unlockVote(c: Consultation) {
@@ -118,7 +127,7 @@ async function loadData() {
   }
 }
 
-const { loading, error, reload } = usePageLoader(loadData, t('common.loadError'))
+const { loading, error, reload } = usePageLoader(loadData)
 onMounted(reload)
 
 // Clear inline error messages when switching tabs
@@ -136,6 +145,14 @@ const consultations = computed(() =>
   ).slice().sort((left, right) => right.updated_at.localeCompare(left.updated_at)),
 )
 const openCount = computed(() => allConsultations.value.filter(c => c.status === 'open').length)
+const closedCount = computed(() => allConsultations.value.filter(c => c.status === 'closed').length)
+const consultationTotalVotes = computed(() => {
+  const map: Record<string, number> = {}
+  for (const c of allConsultations.value) {
+    map[c.id] = c.choices.reduce((sum, choice) => sum + choice.votes, 0)
+  }
+  return map
+})
 
 const legalCardLinks = computed(() => [
   {
@@ -174,7 +191,7 @@ async function saveConsultation() {
     createFeedback.setSuccess(t('common.saved'))
     scheduleCreateClose(() => { showCreateModal.value = false; reload() })
   } catch (err) {
-    createFeedback.setError(toErrorMessage(err, t('common.error')))
+    createFeedback.setError(toErrorMessage(err))
   } finally {
     saving.value = false
   }
@@ -189,7 +206,7 @@ async function submitVote(c: Consultation) {
     await consultationsApi.respond(c.id, iv.selections, iv.comment || undefined)
     await reload()
   } catch (err) {
-    iv.error = toErrorMessage(err, t('common.error'))
+    iv.error = toErrorMessage(err)
     iv.submitting = false
   }
 }
@@ -209,7 +226,7 @@ async function confirmClose() {
     closeFeedback.setSuccess(t('consultations.closeSuccess'))
     scheduleCloseConsultation(async () => { closingConsultation.value = null; await reload() })
   } catch (err) {
-    closeFeedback.setError(toErrorMessage(err, t('common.error')))
+    closeFeedback.setError(toErrorMessage(err))
   } finally {
     closing.value = false
   }
@@ -230,7 +247,7 @@ async function confirmDelete() {
     deleteFeedback.setSuccess(t('consultations.deleteSuccess'))
     scheduleDeleteConsultation(async () => { deletingConsultation.value = null; await reload() })
   } catch (err) {
-    deleteFeedback.setError(toErrorMessage(err, t('common.error')))
+    deleteFeedback.setError(toErrorMessage(err))
   } finally {
     deleting.value = false
   }
@@ -243,10 +260,7 @@ async function confirmDelete() {
       <template #left>
         <div class="topbar-breadcrumb">
           {{ buildingName }}
-          <CIconChevronRight
-            width="14"
-            height="14"
-          />
+          <CIconChevronRight />
           <span>{{ t('consultations.title') }}</span>
         </div>
       </template>
@@ -270,19 +284,20 @@ async function confirmDelete() {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
-        <div class="view-header">
-          <div>
-            <h1 class="display-md">
-              {{ t('consultations.title') }}
-            </h1>
-            <p
-              class="body-md"
-              style="color:var(--color-on-surface-variant)"
-            >
-              {{ t('consultations.openCount', openCount) }}
-            </p>
-          </div>
-        </div>
+        <header class="view-header">
+          <CEyebrow>
+            {{ t('page.eyebrows.consultations') }}
+          </CEyebrow>
+          <h1 class="display-md">
+            {{ t('consultations.title') }}
+          </h1>
+          <p
+            class="body-md"
+            style="color:var(--color-on-surface-variant)"
+          >
+            {{ t('consultations.openCount', openCount) }}
+          </p>
+        </header>
 
         <CAlert
           v-if="pageError"
@@ -294,14 +309,14 @@ async function confirmDelete() {
         <div class="tabs">
           <button
             v-for="item in [
-              { key: 'open', label: t('consultations.filters.open') },
-              { key: 'closed', label: t('consultations.filters.closed') },
+              { key: 'open', label: t('consultations.filters.open'), count: openCount },
+              { key: 'closed', label: t('consultations.filters.closed'), count: closedCount },
             ]"
             :key="item.key"
             :class="['tab', { 'tab--active': statusFilter === item.key }]"
             @click="statusFilter = item.key as typeof statusFilter"
           >
-            {{ item.label }}
+            {{ item.label }} <span class="tab-count">{{ item.count }}</span>
           </button>
         </div>
 
@@ -328,7 +343,7 @@ async function confirmDelete() {
 
             <p
               v-if="c.description"
-              class="body-sm desc"
+              class="body-xs desc"
             >
               {{ c.description }}
             </p>
@@ -363,13 +378,13 @@ async function confirmDelete() {
                   <div
                     class="result-bar"
                     :class="{ 'result-bar--dim': !hasVoted(c) && c.status === 'open' }"
-                    :style="{ width: barWidth(c, choice.pct) + '%' }"
+                    :style="{ width: barWidth(c, choice.votes) + '%' }"
                   ></div>
                 </div>
 
                 <!-- Column 3: percentage -->
-                <span class="result-pct">
-                  {{ hasVoted(c) || c.status === 'closed' ? choice.pct + '%' : '—' }}
+                <span class="font-mono text-xs text-end">
+                  {{ hasVoted(c) || c.status === 'closed' ? (() => { const total = getTotalVotes(c); return total > 0 ? Math.round(choice.votes * 100 / total) : 0 })() + '%' : '—' }}
                 </span>
               </template>
             </div>
@@ -387,12 +402,11 @@ async function confirmDelete() {
               v-if="c.status === 'open' && getInline(c).selections.length > 0 && !isVoteLocked(c)"
               class="inline-vote-form"
             >
-              <textarea
+              <CFormTextarea
                 v-model="getInline(c).comment"
-                class="form-input"
-                rows="2"
+                :rows="2"
                 :placeholder="t('consultations.respondModal.commentLabel')"
-              ></textarea>
+              />
               <div class="inline-vote-actions">
                 <p
                   v-if="getInline(c).error"
@@ -438,7 +452,7 @@ async function confirmDelete() {
               class="card-actions"
             >
               <CBtn
-                variant="danger"
+                variant="primary"
                 size="sm"
                 @click="openCloseModal(c)"
               >
@@ -471,11 +485,14 @@ async function confirmDelete() {
           </div>
         </div>
 
-        <CLegalInfoCard
-          :title="t('consultations.legalCard.title')"
-          :summary="t('consultations.legalCard.summary')"
-          :links="legalCardLinks"
-        />
+        <CLegalCard>
+          <CLegalNotice :links="legalCardLinks">
+            <CLegalDescription
+              :title="t('consultations.legalCard.title')"
+              :summary="t('consultations.legalCard.summary')"
+            />
+          </CLegalNotice>
+        </CLegalCard>
       </template>
     </div>
 
@@ -490,23 +507,16 @@ async function confirmDelete() {
         class="form-grid"
         @submit.prevent="saveConsultation"
       >
-        <div class="form-field">
-          <label class="form-label">{{ t('consultations.fields.title') }} *</label>
-          <input
-            v-model="createForm.title"
-            type="text"
-            class="form-input"
-            required
-          />
-        </div>
-        <div class="form-field">
-          <label class="form-label">{{ t('consultations.fields.description') }}</label>
-          <textarea
-            v-model="createForm.description"
-            class="form-input"
-            rows="2"
-          ></textarea>
-        </div>
+        <CFormInput
+          v-model="createForm.title"
+          :label="t('consultations.fields.title')"
+          required
+        />
+        <CFormTextarea
+          v-model="createForm.description"
+          :label="t('consultations.fields.description')"
+          :rows="2"
+        />
         <div class="form-field">
           <label class="form-label">{{ t('consultations.fields.choices') }} *</label>
           <div
@@ -514,11 +524,10 @@ async function confirmDelete() {
             :key="idx"
             class="choice-input-row"
           >
-            <input
+            <CFormInput
               v-model="createForm.choices[idx]"
-              type="text"
-              class="form-input"
               :placeholder="`Option ${idx + 1}`"
+              class="grow"
             />
             <button
               v-if="createForm.choices.length > 2"
@@ -574,7 +583,7 @@ async function confirmDelete() {
       size="sm"
       @update:open="v => !v && (closingConsultation = null)"
     >
-      <p class="body-sm">
+      <p class="body-xs">
         {{ t('consultations.confirmCloseMessage') }}
       </p>
       <template #footer>
@@ -606,7 +615,7 @@ async function confirmDelete() {
       size="sm"
       @update:open="v => !v && (deletingConsultation = null)"
     >
-      <p class="body-sm">
+      <p class="body-xs">
         {{ t('consultations.confirmDeleteMessage', { title: deletingConsultation?.title ?? '' }) }}
       </p>
       <template #footer>
@@ -687,12 +696,6 @@ async function confirmDelete() {
   transition: width 0.3s ease;
 }
 .result-bar--dim { background: var(--color-outline-variant); }
-.result-pct {
-  font-size: var(--text-xs);
-  font-weight: var(--fw-semibold);
-  text-align: right;
-  color: var(--color-on-surface-variant);
-}
 
 /* ── Inline vote form ──────────────────────────────────────────── */
 .vote-locked-actions {
@@ -718,6 +721,5 @@ async function confirmDelete() {
 .choice-input-row { display: flex; align-items: center; gap: 8px; }
 .choice-input-row .form-input { flex: 1; }
 
-.empty-state { padding: var(--space-8); text-align: center; font-size: var(--text-md); color: var(--color-on-surface-variant); }
 .dim { color: var(--color-on-surface-variant); }
 </style>

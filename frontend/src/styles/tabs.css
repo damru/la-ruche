@@ -7,20 +7,41 @@
 
 .tabs {
   display: flex;
-  gap: 4px;
+  gap: var(--space-1);
   background: var(--color-surface-container-low);
   border-radius: var(--radius-md);
-  padding: 4px;
+  padding: var(--space-1);
   width: max-content;
   max-width: 100%;
   overflow-x: auto;
+  overflow-y: hidden;
   overscroll-behavior-x: contain;
   -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-outline-variant) transparent;
 }
 
 .tabs::-webkit-scrollbar {
-  display: none;
+  height: 8px;
+}
+
+.tabs::-webkit-scrollbar-thumb {
+  background: var(--color-outline-variant);
+  border-radius: var(--radius-full);
+}
+
+.tabs::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .tabs {
+    scrollbar-width: none;
+  }
+
+  .tabs::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 .tab {
@@ -28,14 +49,14 @@
   min-width: fit-content;
   align-items: center;
   gap: 6px;
-  padding: 8px 18px;
+  padding: var(--space-2) var(--space-5);
   border-radius: var(--radius-sm);
   border: none;
   cursor: pointer;
   background: transparent;
   color: var(--color-on-surface-variant);
   font-family: var(--font-body);
-  font-size: 13px;
+  font-size: var(--text-sm);
   font-weight: var(--fw-medium);
   transition: color var(--transition-fast), background var(--transition-fast), box-shadow var(--transition-fast);
   white-space: nowrap;
@@ -55,8 +76,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 18px;
-  height: 18px;
+  min-width: var(--icon-md);
+  height: var(--icon-md);
   padding: 0 5px;
   border-radius: var(--radius-full);
   background: var(--color-primary);

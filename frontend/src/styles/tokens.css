@@ -18,6 +18,14 @@
   --color-success-container:     #e8f5e9;
   --color-warning:               #e65100;
   --color-warning-container:     #fff8e1;
+  --color-role-manager-bg:       #e8def8;
+  --color-role-manager-fg:       #21005d;
+  --color-role-board-bg:         #d2e4fb;
+  --color-role-board-fg:         #001d36;
+  --color-role-co-owner-bg:      #cef5e5;
+  --color-role-co-owner-fg:      #00391d;
+  --color-role-tenant-bg:        #fcecd1;
+  --color-role-tenant-fg:        #3a2000;
 
   /* ── Surfaces — Light ────────────────────────────────────────── */
   --color-surface:                    #f8f9fa;
@@ -39,6 +47,10 @@
   --shadow-md:  0 8px 32px rgba(25, 28, 29, 0.07), 0 2px 8px rgba(25, 28, 29, 0.04);
   --shadow-lg:  0 16px 48px rgba(25, 28, 29, 0.10), 0 4px 16px rgba(25, 28, 29, 0.06);
   --shadow-glass: 0 20px 60px rgba(25, 28, 29, 0.14), 0 4px 16px rgba(25, 28, 29, 0.08);
+  --shadow-primary-ring:       0 0 0 2px rgba(100, 63, 213, 0.35);
+  --shadow-error-ring:         0 0 0 2px rgba(186, 26, 26, 0.35);
+  --shadow-primary-lift:       0 4px 16px rgba(100, 63, 213, 0.25);
+  --shadow-primary-lift-hover: 0 8px 24px rgba(100, 63, 213, 0.35);
 
   /* ── Border radius ───────────────────────────────────────────── */
   --radius-sm:   8px;
@@ -92,6 +104,17 @@
   --nav-bottom-height:      64px;
   --nav-safe-area-bottom: env(safe-area-inset-bottom, 0px);
 
+  /* ── Contrôles UI ───────────────────────────────────────────── */
+  --control-height:    44px;   /* input, select — touch target */
+  --control-height-sm: 36px;   /* input sm, bouton sm */
+
+  /* ── Icônes ──────────────────────────────────────────────────── */
+  --icon-2xs: 12px;  /* meta-footer */
+  --icon-xs: 14px;   /* content, subtitle, chips */
+  --icon-sm: 16px;   /* inline, boutons, chevrons */
+  --icon-md: 18px;   /* cartes, headers */
+  --icon-lg: 24px;   /* icônes proéminentes */
+
   /* ── Z-index ─────────────────────────────────────────────────── */
   --z-base:     0;
   --z-raised:  10;
@@ -116,6 +139,14 @@
   --color-success-container:     #1b4f23;
   --color-warning:               #ffb74d;
   --color-warning-container:     #4d3500;
+  --color-role-manager-bg:       #4a4458;
+  --color-role-manager-fg:       #e8def8;
+  --color-role-board-bg:         #00345b;
+  --color-role-board-fg:         #d2e4fb;
+  --color-role-co-owner-bg:      #00522b;
+  --color-role-co-owner-fg:      #cef5e5;
+  --color-role-tenant-bg:        #573200;
+  --color-role-tenant-fg:        #fcecd1;
 
   --color-surface:                    #111318;
   --color-surface-container-lowest:   #0c0e13;
@@ -134,4 +165,9 @@
   --shadow-md:  0 8px 32px rgba(0, 0, 0, 0.22), 0 2px 8px rgba(0, 0, 0, 0.16);
   --shadow-lg:  0 16px 48px rgba(0, 0, 0, 0.32), 0 4px 16px rgba(0, 0, 0, 0.22);
   --shadow-glass: 0 20px 60px rgba(0, 0, 0, 0.40), 0 4px 16px rgba(0, 0, 0, 0.28);
+
+  --shadow-primary-ring:       0 0 0 2px rgba(196, 181, 253, 0.35);
+  --shadow-error-ring:         0 0 0 2px rgba(255, 180, 171, 0.35);
+  --shadow-primary-lift:       0 4px 16px rgba(196, 181, 253, 0.20);
+  --shadow-primary-lift-hover: 0 8px 24px rgba(196, 181, 253, 0.30);
 }

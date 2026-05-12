@@ -33,3 +33,9 @@ Langue : TOUT le code (et commentaires) DOIVENT être en anglais, les documents 
 ​Document Maître : Le fichier PRD.md centralise la vision et toutes les fonctionnalités détaillées.
 ​Rigueur Produit : Rejette les idées sans valeur ajoutée ou illégales. Envoie les features abandonnées dans la section "Cimetière" de la PRD avec justification.
 ​Traçabilité : Lie les décisions fonctionnelles de la PRD aux contraintes techniques (références vers ADR/DDR).
+
+## graphify
+
+Before answering architecture or codebase questions, read `graphify-out/GRAPH_REPORT.md` if it exists.
+If `graphify-out/wiki/index.md` exists, navigate it for deep questions.
+Type `/graphify` in Copilot Chat to build or update the knowledge graph.

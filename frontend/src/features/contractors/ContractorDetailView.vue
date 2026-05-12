@@ -6,8 +6,9 @@ import { useFormatters } from '@/composables/useFormatters'
 import { usePageLoader } from '@/composables/usePageLoader'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
+import CEyebrow from '@/components/atoms/CEyebrow.vue'
 import CCard from '@/components/molecules/CCard.vue'
-import CPageError from '@/components/molecules/CPageError.vue'
+import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import CIconArrowLeft from '@/components/atoms/CIconArrowLeft.svg'
@@ -47,7 +48,7 @@ async function loadData() {
   )
 }
 
-const { loading, error, reload } = usePageLoader(loadData, t('common.loadError'))
+const { loading, error, reload } = usePageLoader(loadData)
 onMounted(reload)
 
 // ── Domain icon helpers (mirrors ContractorsView) ─────────────────
@@ -104,20 +105,14 @@ function priorityVariant(p: string): 'err' | 'pending' | 'primary' | 'valid' | '
       <template #left>
         <div class="topbar-breadcrumb">
           {{ buildingName }}
-          <CIconChevronRight
-            width="14"
-            height="14"
-          />
+          <CIconChevronRight />
           <RouterLink
             :to="{ name: 'contractors' }"
-            class="breadcrumb-link"
+            class="topbar-breadcrumb-link"
           >
             {{ t('contractors.title') }}
           </RouterLink>
-          <CIconChevronRight
-            width="14"
-            height="14"
-          />
+          <CIconChevronRight />
           <span>{{ contractor?.name ?? '…' }}</span>
         </div>
       </template>
@@ -152,6 +147,9 @@ function priorityVariant(p: string): 'err' | 'pending' | 'primary' | 'valid' | '
               />
             </div>
             <div class="contractor-header-info">
+              <CEyebrow>
+                {{ t('page.eyebrows.contractorDetail') }}
+              </CEyebrow>
               <h1 class="display-md contractor-name">
                 {{ contractor.name }}
               </h1>
@@ -165,7 +163,7 @@ function priorityVariant(p: string): 'err' | 'pending' | 'primary' | 'valid' | '
                 </CBadge>
                 <span
                   v-if="!contractor.domains.length"
-                  class="body-sm"
+                  class="body-xs"
                   style="color: var(--color-on-surface-variant)"
                 >
                   {{ t('contractors.noDomain') }}
@@ -192,7 +190,7 @@ function priorityVariant(p: string): 'err' | 'pending' | 'primary' | 'valid' | '
 
           <p
             v-if="contractor.notes"
-            class="contractor-notes body-sm"
+            class="contractor-notes body-xs"
           >
             {{ contractor.notes }}
           </p>
@@ -236,12 +234,12 @@ function priorityVariant(p: string): 'err' | 'pending' | 'primary' | 'valid' | '
                     {{ t(`tasks.statuses.${task.status}`) }}
                   </CBadge>
                 </div>
-                <span class="body-sm task-item-meta">{{ formatRelative(task.created_at) }}</span>
+                <span class="body-xs task-item-meta">{{ formatRelative(task.created_at) }}</span>
               </div>
               <span class="title-sm task-item-title">{{ task.title }}</span>
               <p
                 v-if="task.description"
-                class="body-sm task-item-desc"
+                class="body-xs task-item-desc"
               >
                 {{ task.description }}
               </p>
@@ -362,20 +360,5 @@ function priorityVariant(p: string): 'err' | 'pending' | 'primary' | 'valid' | '
 .task-item-desc {
   color: var(--color-on-surface-variant);
   margin: var(--space-1) 0 0;
-}
-
-/* ── Breadcrumb link ─────────────────────────────────────────────── */
-.breadcrumb-link {
-  color: inherit;
-  text-decoration: none;
-}
-.breadcrumb-link:hover { text-decoration: underline; }
-
-/* ── Empty state ─────────────────────────────────────────────────── */
-.empty-state {
-  padding: var(--space-8);
-  text-align: center;
-  font-size: var(--text-md);
-  color: var(--color-on-surface-variant);
 }
 </style>

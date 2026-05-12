@@ -5,8 +5,10 @@
 
 export type Role = 'manager' | 'board_member' | 'co_owner' | 'tenant'
 
-export type MeetingStatus = 'draft' | 'called' | 'held' | 'closed'
+export type MeetingStatus = 'draft' | 'called' | 'ongoing' | 'closed'
 export type MeetingType = 'annual' | 'extraordinary'
+export type MeetingDocumentKind = 'notice' | 'attachment'
+export type MeetingAttendanceMode = 'present' | 'proxy' | 'correspondence' | 'absent'
 export type VoteType = 'simple_majority' | 'absolute_majority' | 'double_majority' | 'unanimity'
 export type ResolutionStatus = 'pending' | 'passed' | 'rejected' | 'withdrawn'
 export type VotePosition = 'in_favor' | 'against' | 'abstain' | 'non_voter'
@@ -106,7 +108,31 @@ export interface Meeting {
   notice_date?: string
   meeting_date: string
   location?: string
+  agenda?: string
+  minutes_document_id?: string
   created_at: string
+  resolution_count: number
+  passed_count: number
+}
+
+export interface MeetingDocument extends Document {
+  kind: MeetingDocumentKind
+}
+
+export interface MeetingAttendanceEntry {
+  unit_id: string
+  unit_number: string
+  owner_name?: string
+  mode: MeetingAttendanceMode
+  representative_name?: string
+  shares_represented: number
+}
+
+export interface MeetingAttendance {
+  entries: MeetingAttendanceEntry[]
+  shares_present: number
+  total_shares: number
+  present_units: number
 }
 
 export interface Resolution {
@@ -120,13 +146,20 @@ export interface Resolution {
 }
 
 export interface VoteResult {
-  adopted: boolean
-  votes_for: number
-  votes_against: number
+  passed: boolean
+  for_votes: number
+  against_votes: number
   abstentions: number
   shares_present: number
-  total_shares: number
-  explanation: string
+  shares_total: number
+  shares_counted: number
+  threshold: number
+  eligible_for_second_vote: 'art_25_1' | 'art_26_1' | null
+}
+
+export interface UnitVote {
+  unit_id: string
+  position: 'in_favor' | 'against' | 'abstain'
 }
 
 export interface Budget {
@@ -322,8 +355,6 @@ export interface ConsultationChoice {
   order_index: number
   /** Number of voters who selected this choice (from list endpoint). */
   votes: number
-  /** Percentage of voters who selected this choice (0–100). */
-  pct: number
 }
 
 // ── Auth ──────────────────────────────────────────────────────────
@@ -442,7 +473,6 @@ export interface ConsultationResults {
     id: string
     label: string
     votes: number
-    pct: number
   }[]
 }
 

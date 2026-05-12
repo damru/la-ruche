@@ -107,22 +107,43 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
             get(assemblies::get).put(assemblies::update),
         )
         .route("/meetings/{id}/call", post(assemblies::call))
+        .route("/meetings/{id}/start", post(assemblies::start))
         .route("/meetings/{id}/close", post(assemblies::close))
+        .route(
+            "/meetings/{id}/documents",
+            get(assemblies::list_documents).post(assemblies::attach_document),
+        )
+        .route(
+            "/meetings/{id}/documents/{document_id}",
+            delete(assemblies::detach_document),
+        )
+        .route(
+            "/meetings/{id}/attendance",
+            get(assemblies::list_attendance).put(assemblies::save_attendance),
+        )
         .route(
             "/meetings/{id}/resolutions",
             get(assemblies::list_resolutions).post(assemblies::create_resolution),
         )
         .route(
             "/meetings/{id}/resolutions/{rid}",
-            put(assemblies::update_resolution),
+            put(assemblies::update_resolution).patch(assemblies::patch_resolution),
         )
         .route(
             "/meetings/{id}/resolutions/{rid}/vote",
             post(assemblies::vote),
         )
         .route(
+            "/meetings/{id}/resolutions/{rid}/votes",
+            get(assemblies::list_votes),
+        )
+        .route(
             "/meetings/{id}/resolutions/{rid}/results",
             get(assemblies::results),
+        )
+        .route(
+            "/meetings/{id}/resolutions/{rid}/finalize",
+            post(assemblies::finalize_resolution),
         )
         // ── Budget ──────────────────────────────────────────────
         .route("/budgets", get(budget::list).post(budget::create))

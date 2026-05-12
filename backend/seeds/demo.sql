@@ -12,6 +12,7 @@
 --   • 6 tasks     : all task statuses covered
 --   • 3 reports   : all report statuses covered
 --   • 3 claims    : all claim statuses covered
+--   • 4 assemblies: draft, called, closed, ongoing
 --   • 2 consults  : open + closed with seeded choices/responses
 --
 -- All accounts share the same password: Demo1234!
@@ -123,6 +124,12 @@ VALUES
     ('00000000-0000-0000-0000-000000000109', '00000000-0000-0000-0000-000000000001', '9',  'cellar',    'S', NULL,  'Cave n°1 — sous-sol'),
     ('00000000-0000-0000-0000-000000000110', '00000000-0000-0000-0000-000000000001', '10', 'parking',   'P', NULL,  'Place de parking n°1')
 ON CONFLICT (building_id, unit_number) DO NOTHING;
+
+-- EP-003-S07: lot 10 (parking, 440 tantièmes) archived after meeting 855 started.
+-- Frozen attendance for meetings 853 and 855 still includes it (locked at start time).
+-- compute_active_shares_total (draft/called) → 7 560 ; SUM(attendance) for locked meetings → 8 000.
+UPDATE unit SET active = false
+WHERE id = '00000000-0000-0000-0000-000000000110';
 
 -- ============================================================
 -- 4. UNIT ALLOCATION KEY SHARES  (active records, valid_to = NULL)
@@ -684,8 +691,762 @@ VALUES
     )
 ON CONFLICT (id) DO NOTHING;
 
+-- ============================================================
+-- 13. ASSEMBLIES (GENERAL MEETINGS)
+-- - annual draft: created, not convoked, no agenda, no resolutions
+-- - extraordinary called: convoked with multi-line agenda and resolutions, no votes yet
+-- - annual closed: convoked, closed, with multi-line agenda, attendance and votes
+-- ============================================================
+INSERT INTO general_meeting (
+    id,
+    building_id,
+    meeting_type,
+    status,
+    notice_date,
+    meeting_date,
+    location,
+    agenda,
+    created_by,
+    created_at,
+    updated_at
+)
+VALUES
+    (
+        '00000000-0000-0000-0000-000000000851',
+        '00000000-0000-0000-0000-000000000001',
+        'annual',
+        'draft',
+        NULL,
+        NOW() + INTERVAL '45 days',
+        'Salle commune - RDC',
+        NULL,
+        '00000000-0000-0000-0000-000000000201',
+        NOW() - INTERVAL '3 days',
+        NOW() - INTERVAL '3 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000852',
+        '00000000-0000-0000-0000-000000000001',
+        'extraordinary',
+        'called',
+        CURRENT_DATE - 5,
+        NOW() + INTERVAL '20 days',
+        'Cabinet du syndic - Salle 2',
+        'Vote de travaux urgents sur l''etancheite
+    Validation du financement exceptionnel',
+        '00000000-0000-0000-0000-000000000201',
+        NOW() - INTERVAL '6 days',
+        NOW() - INTERVAL '5 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000853',
+        '00000000-0000-0000-0000-000000000001',
+        'annual',
+        'closed',
+        CURRENT_DATE - 60,
+        NOW() - INTERVAL '45 days',
+        'Salle commune - RDC',
+        'Approbation des comptes de l''exercice
+    Augmentation du budget entretien de 12%
+    Renouvellement du contrat d''entretien ascenseur
+    Reprise partielle des garde-corps en facade
+    Lancement du programme d''isolation thermique des pignons',
+        '00000000-0000-0000-0000-000000000201',
+        NOW() - INTERVAL '75 days',
+        NOW() - INTERVAL '44 days'
+    )
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO resolution (id, meeting_id, number, title, description, vote_type, status, created_at)
+VALUES
+    -- Extraordinary called meeting (no votes yet)
+    (
+        '00000000-0000-0000-0000-000000000861',
+        '00000000-0000-0000-0000-000000000852',
+        1,
+        'Lancement des travaux de reprise d''etancheite',
+        'Autoriser le syndic a engager les travaux d''urgence sur la toiture terrasse.',
+        'absolute_majority',
+        'pending',
+        NOW() - INTERVAL '5 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000862',
+        '00000000-0000-0000-0000-000000000852',
+        2,
+        'Appel de fonds exceptionnel',
+        'Valider un appel de fonds exceptionnel pour couvrir les travaux urgents.',
+        'simple_majority',
+        'pending',
+        NOW() - INTERVAL '5 days'
+    ),
+    -- Annual closed meeting (votes seeded below)
+    (
+        '00000000-0000-0000-0000-000000000863',
+        '00000000-0000-0000-0000-000000000853',
+        1,
+        'Approbation des comptes de l''exercice',
+        'Valider les comptes de copropriete de l''exercice ecoule.',
+        'simple_majority',
+        'passed',
+        NOW() - INTERVAL '46 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000864',
+        '00000000-0000-0000-0000-000000000853',
+        2,
+        'Augmentation du budget entretien de 12%',
+        'Proposition d''augmentation du budget entretien pour l''exercice suivant.',
+        'absolute_majority',
+        'rejected',
+        NOW() - INTERVAL '46 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000865',
+        '00000000-0000-0000-0000-000000000853',
+        3,
+        'Renouvellement du contrat d''entretien ascenseur',
+        'Valider le renouvellement du contrat de maintenance de l''ascenseur pour trois ans.',
+        'simple_majority',
+        'passed',
+        NOW() - INTERVAL '46 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000868',
+        '00000000-0000-0000-0000-000000000853',
+        4,
+        'Reprise partielle des garde-corps en facade',
+        'Resolution relevant de l''article 25 : rejetee a la majorite absolue, mais avec plus d''un tiers des tantiemes pour.',
+        'absolute_majority',
+        'rejected',
+        NOW() - INTERVAL '46 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000869',
+        '00000000-0000-0000-0000-000000000853',
+        5,
+        'Lancement du programme d''isolation thermique des pignons',
+        'Validation des travaux structurants d''isolation en double majorite.',
+        'double_majority',
+        'passed',
+        NOW() - INTERVAL '46 days'
+    )
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO general_meeting_attendance (
+    meeting_id,
+    unit_id,
+    mode,
+    representative_name,
+    shares_represented
+)
+VALUES
+    ('00000000-0000-0000-0000-000000000853', '00000000-0000-0000-0000-000000000101', 'present',        NULL,                 850),
+    ('00000000-0000-0000-0000-000000000853', '00000000-0000-0000-0000-000000000102', 'proxy',          'Bernard Dupont',     900),
+    ('00000000-0000-0000-0000-000000000853', '00000000-0000-0000-0000-000000000103', 'correspondence', NULL,                 850),
+    ('00000000-0000-0000-0000-000000000853', '00000000-0000-0000-0000-000000000104', 'present',        NULL,                 950),
+    ('00000000-0000-0000-0000-000000000853', '00000000-0000-0000-0000-000000000105', 'proxy',          'Camille Rousseau',   900),
+    ('00000000-0000-0000-0000-000000000853', '00000000-0000-0000-0000-000000000106', 'present',        NULL,                 980),
+    ('00000000-0000-0000-0000-000000000853', '00000000-0000-0000-0000-000000000107', 'absent',         NULL,                 960),
+    ('00000000-0000-0000-0000-000000000853', '00000000-0000-0000-0000-000000000108', 'present',        NULL,                1010),
+    ('00000000-0000-0000-0000-000000000853', '00000000-0000-0000-0000-000000000109', 'correspondence', NULL,                 160),
+    ('00000000-0000-0000-0000-000000000853', '00000000-0000-0000-0000-000000000110', 'absent',         NULL,                 440)
+ON CONFLICT (meeting_id, unit_id) DO NOTHING;
+
+INSERT INTO vote (
+    id,
+    resolution_id,
+    user_id,
+    unit_id,
+    position,
+    shares_represented,
+    proxy_for,
+    created_at
+)
+VALUES
+    -- Resolution 863 (passed, attendance total = 6 600 tantiemes)
+    (
+        '00000000-0000-0000-0000-000000000871',
+        '00000000-0000-0000-0000-000000000863',
+        '00000000-0000-0000-0000-000000000204',
+        '00000000-0000-0000-0000-000000000101',
+        'in_favor',
+        850,
+        NULL,
+        NOW() - INTERVAL '45 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000872',
+        '00000000-0000-0000-0000-000000000863',
+        '00000000-0000-0000-0000-000000000202',
+        '00000000-0000-0000-0000-000000000102',
+        'in_favor',
+        900,
+        '00000000-0000-0000-0000-000000000205',
+        NOW() - INTERVAL '45 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000873',
+        '00000000-0000-0000-0000-000000000863',
+        '00000000-0000-0000-0000-000000000208',
+        '00000000-0000-0000-0000-000000000103',
+        'abstain',
+        850,
+        NULL,
+        NOW() - INTERVAL '45 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000874',
+        '00000000-0000-0000-0000-000000000863',
+        '00000000-0000-0000-0000-000000000206',
+        '00000000-0000-0000-0000-000000000104',
+        'in_favor',
+        950,
+        NULL,
+        NOW() - INTERVAL '45 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000875',
+        '00000000-0000-0000-0000-000000000863',
+        '00000000-0000-0000-0000-000000000203',
+        '00000000-0000-0000-0000-000000000105',
+        'against',
+        900,
+        '00000000-0000-0000-0000-000000000207',
+        NOW() - INTERVAL '45 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000876',
+        '00000000-0000-0000-0000-000000000863',
+        '00000000-0000-0000-0000-000000000202',
+        '00000000-0000-0000-0000-000000000106',
+        'in_favor',
+        980,
+        NULL,
+        NOW() - INTERVAL '45 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000877',
+        '00000000-0000-0000-0000-000000000863',
+        '00000000-0000-0000-0000-000000000205',
+        '00000000-0000-0000-0000-000000000108',
+        'in_favor',
+        1010,
+        NULL,
+        NOW() - INTERVAL '45 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000878',
+        '00000000-0000-0000-0000-000000000863',
+        '00000000-0000-0000-0000-000000000208',
+        '00000000-0000-0000-0000-000000000109',
+        'in_favor',
+        160,
+        NULL,
+        NOW() - INTERVAL '45 days'
+    ),
+    -- Resolution 864 (rejected, for = 2 890 / 8 000)
+    (
+        '00000000-0000-0000-0000-000000000879',
+        '00000000-0000-0000-0000-000000000864',
+        '00000000-0000-0000-0000-000000000204',
+        '00000000-0000-0000-0000-000000000101',
+        'against',
+        850,
+        NULL,
+        NOW() - INTERVAL '45 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000880',
+        '00000000-0000-0000-0000-000000000864',
+        '00000000-0000-0000-0000-000000000202',
+        '00000000-0000-0000-0000-000000000102',
+        'in_favor',
+        900,
+        '00000000-0000-0000-0000-000000000205',
+        NOW() - INTERVAL '45 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000881',
+        '00000000-0000-0000-0000-000000000864',
+        '00000000-0000-0000-0000-000000000208',
+        '00000000-0000-0000-0000-000000000103',
+        'abstain',
+        850,
+        NULL,
+        NOW() - INTERVAL '45 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000882',
+        '00000000-0000-0000-0000-000000000864',
+        '00000000-0000-0000-0000-000000000206',
+        '00000000-0000-0000-0000-000000000104',
+        'against',
+        950,
+        NULL,
+        NOW() - INTERVAL '45 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000883',
+        '00000000-0000-0000-0000-000000000864',
+        '00000000-0000-0000-0000-000000000203',
+        '00000000-0000-0000-0000-000000000105',
+        'against',
+        900,
+        '00000000-0000-0000-0000-000000000207',
+        NOW() - INTERVAL '45 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000884',
+        '00000000-0000-0000-0000-000000000864',
+        '00000000-0000-0000-0000-000000000202',
+        '00000000-0000-0000-0000-000000000106',
+        'against',
+        980,
+        NULL,
+        NOW() - INTERVAL '45 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000885',
+        '00000000-0000-0000-0000-000000000864',
+        '00000000-0000-0000-0000-000000000205',
+        '00000000-0000-0000-0000-000000000108',
+        'in_favor',
+        1010,
+        NULL,
+        NOW() - INTERVAL '45 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000886',
+        '00000000-0000-0000-0000-000000000864',
+        '00000000-0000-0000-0000-000000000208',
+        '00000000-0000-0000-0000-000000000109',
+        'abstain',
+        160,
+        NULL,
+        NOW() - INTERVAL '45 days'
+    ),
+    -- Resolution 865 (passed, renewal contract)
+    (
+        '00000000-0000-0000-0000-000000000887',
+        '00000000-0000-0000-0000-000000000865',
+        '00000000-0000-0000-0000-000000000204',
+        '00000000-0000-0000-0000-000000000101',
+        'in_favor',
+        850,
+        NULL,
+        NOW() - INTERVAL '45 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000888',
+        '00000000-0000-0000-0000-000000000865',
+        '00000000-0000-0000-0000-000000000202',
+        '00000000-0000-0000-0000-000000000102',
+        'in_favor',
+        900,
+        '00000000-0000-0000-0000-000000000205',
+        NOW() - INTERVAL '45 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000889',
+        '00000000-0000-0000-0000-000000000865',
+        '00000000-0000-0000-0000-000000000208',
+        '00000000-0000-0000-0000-000000000103',
+        'abstain',
+        850,
+        NULL,
+        NOW() - INTERVAL '45 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000890',
+        '00000000-0000-0000-0000-000000000865',
+        '00000000-0000-0000-0000-000000000206',
+        '00000000-0000-0000-0000-000000000104',
+        'in_favor',
+        950,
+        NULL,
+        NOW() - INTERVAL '45 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000891',
+        '00000000-0000-0000-0000-000000000865',
+        '00000000-0000-0000-0000-000000000203',
+        '00000000-0000-0000-0000-000000000105',
+        'in_favor',
+        900,
+        '00000000-0000-0000-0000-000000000207',
+        NOW() - INTERVAL '45 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000892',
+        '00000000-0000-0000-0000-000000000865',
+        '00000000-0000-0000-0000-000000000202',
+        '00000000-0000-0000-0000-000000000106',
+        'in_favor',
+        980,
+        NULL,
+        NOW() - INTERVAL '45 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000893',
+        '00000000-0000-0000-0000-000000000865',
+        '00000000-0000-0000-0000-000000000205',
+        '00000000-0000-0000-0000-000000000108',
+        'against',
+        1010,
+        NULL,
+        NOW() - INTERVAL '45 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000894',
+        '00000000-0000-0000-0000-000000000865',
+        '00000000-0000-0000-0000-000000000208',
+        '00000000-0000-0000-0000-000000000109',
+        'in_favor',
+        160,
+        NULL,
+        NOW() - INTERVAL '45 days'
+    ),
+    -- Resolution 868 (rejected under article 25, but > 33% of total shares in favor)
+    (
+        '00000000-0000-0000-0000-000000000895',
+        '00000000-0000-0000-0000-000000000868',
+        '00000000-0000-0000-0000-000000000204',
+        '00000000-0000-0000-0000-000000000101',
+        'in_favor',
+        850,
+        NULL,
+        NOW() - INTERVAL '45 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000896',
+        '00000000-0000-0000-0000-000000000868',
+        '00000000-0000-0000-0000-000000000202',
+        '00000000-0000-0000-0000-000000000102',
+        'in_favor',
+        900,
+        '00000000-0000-0000-0000-000000000205',
+        NOW() - INTERVAL '45 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000897',
+        '00000000-0000-0000-0000-000000000868',
+        '00000000-0000-0000-0000-000000000208',
+        '00000000-0000-0000-0000-000000000103',
+        'abstain',
+        850,
+        NULL,
+        NOW() - INTERVAL '45 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000898',
+        '00000000-0000-0000-0000-000000000868',
+        '00000000-0000-0000-0000-000000000206',
+        '00000000-0000-0000-0000-000000000104',
+        'against',
+        950,
+        NULL,
+        NOW() - INTERVAL '45 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000899',
+        '00000000-0000-0000-0000-000000000868',
+        '00000000-0000-0000-0000-000000000203',
+        '00000000-0000-0000-0000-000000000105',
+        'against',
+        900,
+        '00000000-0000-0000-0000-000000000207',
+        NOW() - INTERVAL '45 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000900',
+        '00000000-0000-0000-0000-000000000868',
+        '00000000-0000-0000-0000-000000000202',
+        '00000000-0000-0000-0000-000000000106',
+        'in_favor',
+        980,
+        NULL,
+        NOW() - INTERVAL '45 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000901',
+        '00000000-0000-0000-0000-000000000868',
+        '00000000-0000-0000-0000-000000000205',
+        '00000000-0000-0000-0000-000000000108',
+        'against',
+        1010,
+        NULL,
+        NOW() - INTERVAL '45 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000902',
+        '00000000-0000-0000-0000-000000000868',
+        '00000000-0000-0000-0000-000000000208',
+        '00000000-0000-0000-0000-000000000109',
+        'abstain',
+        160,
+        NULL,
+        NOW() - INTERVAL '45 days'
+    ),
+    -- Resolution 869 (passed under article 26 double majority)
+    (
+        '00000000-0000-0000-0000-000000000903',
+        '00000000-0000-0000-0000-000000000869',
+        '00000000-0000-0000-0000-000000000204',
+        '00000000-0000-0000-0000-000000000101',
+        'in_favor',
+        850,
+        NULL,
+        NOW() - INTERVAL '45 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000904',
+        '00000000-0000-0000-0000-000000000869',
+        '00000000-0000-0000-0000-000000000202',
+        '00000000-0000-0000-0000-000000000102',
+        'in_favor',
+        900,
+        '00000000-0000-0000-0000-000000000205',
+        NOW() - INTERVAL '45 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000905',
+        '00000000-0000-0000-0000-000000000869',
+        '00000000-0000-0000-0000-000000000208',
+        '00000000-0000-0000-0000-000000000103',
+        'against',
+        850,
+        NULL,
+        NOW() - INTERVAL '45 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000906',
+        '00000000-0000-0000-0000-000000000869',
+        '00000000-0000-0000-0000-000000000206',
+        '00000000-0000-0000-0000-000000000104',
+        'in_favor',
+        950,
+        NULL,
+        NOW() - INTERVAL '45 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000907',
+        '00000000-0000-0000-0000-000000000869',
+        '00000000-0000-0000-0000-000000000203',
+        '00000000-0000-0000-0000-000000000105',
+        'in_favor',
+        900,
+        '00000000-0000-0000-0000-000000000207',
+        NOW() - INTERVAL '45 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000908',
+        '00000000-0000-0000-0000-000000000869',
+        '00000000-0000-0000-0000-000000000202',
+        '00000000-0000-0000-0000-000000000106',
+        'in_favor',
+        980,
+        NULL,
+        NOW() - INTERVAL '45 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000909',
+        '00000000-0000-0000-0000-000000000869',
+        '00000000-0000-0000-0000-000000000205',
+        '00000000-0000-0000-0000-000000000108',
+        'in_favor',
+        1010,
+        NULL,
+        NOW() - INTERVAL '45 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000910',
+        '00000000-0000-0000-0000-000000000869',
+        '00000000-0000-0000-0000-000000000208',
+        '00000000-0000-0000-0000-000000000109',
+        'in_favor',
+        160,
+        NULL,
+        NOW() - INTERVAL '45 days'
+    )
+ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================
+-- 13b. ONGOING ASSEMBLY
+-- Extraordinary meeting currently in session (status = ongoing).
+-- Attendance: 8 lots present/represented/correspondence (6 660 / 8 000 tantièmes locked at start).
+-- Lot 10 (parking, 440) archived after start → still in frozen attendance (EP-003-S07).
+-- Resolutions (all thresholds computed on 8 000 = SUM attendance, not building.shares_total):
+--   870  Art. 24 (simple_majority)  — passed     for=4560 > against=1940
+--   871  Art. 24 (simple_majority)  — rejected   for=2890 < against=3610
+--   872  Art. 25 (absolute_majority)— passed     for=5540 > 4000 (50% of 8000)
+--   873  Art. 25 (absolute_majority)— rejected   for=3550 (44.4% ≥ 1/3) → art. 25-1 eligible
+--   874  Art. 26 (double_majority)  — rejected   for=4530 (56.6% > 50%) → art. 26-1 eligible
+-- ============================================================
+INSERT INTO general_meeting (
+    id, building_id, meeting_type, status,
+    notice_date, meeting_date, location, agenda,
+    created_by, created_at, updated_at
+)
+VALUES (
+    '00000000-0000-0000-0000-000000000855',
+    '00000000-0000-0000-0000-000000000001',
+    'extraordinary',
+    'ongoing',
+    CURRENT_DATE - 22,
+    NOW(),
+    'Salle commune - RDC',
+    'Approbation du contrat d''entretien de la chaudière
+Réfection des canalisations d''eau chaude sanitaire
+Modification de la fréquence de nettoyage des parties communes
+Installation de bornes de recharge véhicules électriques en parking',
+    '00000000-0000-0000-0000-000000000201',
+    NOW() - INTERVAL '3 hours',
+    NOW()
+) ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO resolution (id, meeting_id, number, title, description, vote_type, status, created_at)
+VALUES
+    -- Résolution 1 — Art. 24 (simple_majority) — PASSED
+    -- for=4560 (lots 1+2+3+4+8) > against=1940 (lots 6+7) ; abstain=160 (lot 9)
+    (
+        '00000000-0000-0000-0000-000000000870',
+        '00000000-0000-0000-0000-000000000855',
+        1,
+        'Approbation du contrat d''entretien de la chaudière',
+        'Autoriser le syndic à signer le contrat de maintenance préventive de la chaudière collective avec Therma Services pour une durée de 3 ans.',
+        'simple_majority',
+        'passed',
+        NOW() - INTERVAL '90 minutes'
+    ),
+    -- Résolution 2 — Art. 24 (simple_majority) — REJECTED
+    -- for=2890 (lots 4+6+7) < against=3610 (lots 1+2+3+8) ; non_voter=160 (lot 9)
+    (
+        '00000000-0000-0000-0000-000000000871',
+        '00000000-0000-0000-0000-000000000855',
+        2,
+        'Modification de la fréquence de nettoyage des parties communes',
+        'Passer le nettoyage des parties communes de deux fois par semaine à trois fois par semaine et augmenter le budget annuel en conséquence.',
+        'simple_majority',
+        'rejected',
+        NOW() - INTERVAL '60 minutes'
+    ),
+    -- Résolution 3 — Art. 25 (absolute_majority) — PASSED
+    -- for=5540 (lots 1+2+3+4+6+8) > 4000 (50% of 8000) ; against=960 (lot 7) ; abstain=160 (lot 9)
+    (
+        '00000000-0000-0000-0000-000000000872',
+        '00000000-0000-0000-0000-000000000855',
+        3,
+        'Réfection des canalisations d''eau chaude sanitaire',
+        'Voter les travaux de remplacement des canalisations d''eau chaude sanitaire des colonnes A et B — devis Hydro Services retenu pour 42 000 €.',
+        'absolute_majority',
+        'passed',
+        NOW() - INTERVAL '30 minutes'
+    ),
+    -- Résolution 4 — Art. 25 (absolute_majority) — REJECTED, art. 25-1 eligible
+    -- for=3550 (lots 1+2+3+4 = 44.4% ≥ 1/3 of 8000) — not absolute majority but re-submission possible
+    -- against=2950 (lots 6+7+8) ; non_voter=160 (lot 9)
+    (
+        '00000000-0000-0000-0000-000000000873',
+        '00000000-0000-0000-0000-000000000855',
+        4,
+        'Installation de bornes de recharge véhicules électriques en parking',
+        'Voter l''installation de deux bornes de recharge VE dans le parking souterrain. Rejetée à la majorité absolue (art. 25) mais 3 550 tantièmes en faveur (44.4 % ≥ 1/3 des 8 000) — éligible à une seconde délibération immédiate à la majorité simple (art. 25-1).',
+        'absolute_majority',
+        'rejected',
+        NOW() - INTERVAL '10 minutes'
+    ),
+    -- Résolution 5 — Art. 26 (double_majority) — REJECTED, art. 26-1 eligible
+    -- for=4530 (lots 1+2+3+4+6 = 56.6% > 50% of 8000) but < 5334 (2/3) — double maj fails
+    -- against=1970 (lots 7+8) ; non_voter=160 (lot 9)
+    (
+        '00000000-0000-0000-0000-000000000874',
+        '00000000-0000-0000-0000-000000000855',
+        5,
+        'Réfection de la cage d''escalier et rénovation du hall d''entrée',
+        'Autoriser les travaux de rénovation complète du hall d''entrée et de la cage d''éscalier (revêtements sol, peinture, éclairage LED) pour un montant de 68 000 € TTC. Rejetée à la double majorité (art. 26) — 4 530 tantièmes favorables (56,6 % > 50 %) — éligible à une seconde délibération à la majorité absolue (art. 26-1).',
+        'double_majority',
+        'rejected',
+        NOW() - INTERVAL '2 minutes'
+    )
+ON CONFLICT (id) DO NOTHING;
+
+-- Ongoing meeting attendance (EP-003-S07: locked at start time, includes now-archived lot 10)
+-- get_meeting_total_shares → SUM(shares_represented) = 8 000 (not compute_active_shares_total = 7 560)
+-- Present/represented: lots 1–4, 6–9  (6 660 tantièmes)
+-- Absent: lot 5 (900), lot 10 (440) — lot 10 archived after meeting started, still frozen here
+INSERT INTO general_meeting_attendance (
+    meeting_id, unit_id, mode, representative_name, shares_represented
+)
+VALUES
+    ('00000000-0000-0000-0000-000000000855', '00000000-0000-0000-0000-000000000101', 'present',        NULL,             850),
+    ('00000000-0000-0000-0000-000000000855', '00000000-0000-0000-0000-000000000102', 'present',        NULL,             900),
+    ('00000000-0000-0000-0000-000000000855', '00000000-0000-0000-0000-000000000103', 'proxy',          'Sophie Bernard', 850),
+    ('00000000-0000-0000-0000-000000000855', '00000000-0000-0000-0000-000000000104', 'present',        NULL,             950),
+    ('00000000-0000-0000-0000-000000000855', '00000000-0000-0000-0000-000000000105', 'absent',         NULL,             900),
+    ('00000000-0000-0000-0000-000000000855', '00000000-0000-0000-0000-000000000106', 'present',        NULL,             980),
+    ('00000000-0000-0000-0000-000000000855', '00000000-0000-0000-0000-000000000107', 'present',        NULL,             960),
+    ('00000000-0000-0000-0000-000000000855', '00000000-0000-0000-0000-000000000108', 'present',        NULL,            1010),
+    ('00000000-0000-0000-0000-000000000855', '00000000-0000-0000-0000-000000000109', 'correspondence', NULL,             160),
+    ('00000000-0000-0000-0000-000000000855', '00000000-0000-0000-0000-000000000110', 'absent',         NULL,             440)
+ON CONFLICT (meeting_id, unit_id) DO NOTHING;
+
+-- Votes — ongoing meeting
+-- Lot 3 (Henri, proxy holder Sophie Bernard) cast by Bernard Dupont (202) as representative
+INSERT INTO vote (
+    id, resolution_id, user_id, unit_id, position, shares_represented, proxy_for, created_at
+)
+VALUES
+    -- Resolution 870 (Art. 24 — passed: for=4560, against=1940, abstain=160)
+    ('00000000-0000-0000-0000-000000000951', '00000000-0000-0000-0000-000000000870', '00000000-0000-0000-0000-000000000204', '00000000-0000-0000-0000-000000000101', 'in_favor',  850, NULL,                                       NOW() - INTERVAL '85 minutes'),
+    ('00000000-0000-0000-0000-000000000952', '00000000-0000-0000-0000-000000000870', '00000000-0000-0000-0000-000000000205', '00000000-0000-0000-0000-000000000102', 'in_favor',  900, NULL,                                       NOW() - INTERVAL '85 minutes'),
+    ('00000000-0000-0000-0000-000000000953', '00000000-0000-0000-0000-000000000870', '00000000-0000-0000-0000-000000000202', '00000000-0000-0000-0000-000000000103', 'in_favor',  850, '00000000-0000-0000-0000-000000000208',     NOW() - INTERVAL '85 minutes'),
+    ('00000000-0000-0000-0000-000000000954', '00000000-0000-0000-0000-000000000870', '00000000-0000-0000-0000-000000000206', '00000000-0000-0000-0000-000000000104', 'in_favor',  950, NULL,                                       NOW() - INTERVAL '85 minutes'),
+    ('00000000-0000-0000-0000-000000000955', '00000000-0000-0000-0000-000000000870', '00000000-0000-0000-0000-000000000202', '00000000-0000-0000-0000-000000000106', 'against',   980, NULL,                                       NOW() - INTERVAL '85 minutes'),
+    ('00000000-0000-0000-0000-000000000956', '00000000-0000-0000-0000-000000000870', '00000000-0000-0000-0000-000000000203', '00000000-0000-0000-0000-000000000107', 'against',   960, NULL,                                       NOW() - INTERVAL '85 minutes'),
+    ('00000000-0000-0000-0000-000000000957', '00000000-0000-0000-0000-000000000870', '00000000-0000-0000-0000-000000000205', '00000000-0000-0000-0000-000000000108', 'in_favor', 1010, NULL,                                       NOW() - INTERVAL '85 minutes'),
+    ('00000000-0000-0000-0000-000000000958', '00000000-0000-0000-0000-000000000870', '00000000-0000-0000-0000-000000000208', '00000000-0000-0000-0000-000000000109', 'abstain',   160, NULL,                                       NOW() - INTERVAL '85 minutes'),
+    -- Resolution 871 (Art. 24 — rejected: for=2890, against=3610, non_voter=160)
+    ('00000000-0000-0000-0000-000000000959', '00000000-0000-0000-0000-000000000871', '00000000-0000-0000-0000-000000000204', '00000000-0000-0000-0000-000000000101', 'against',   850, NULL,                                       NOW() - INTERVAL '55 minutes'),
+    ('00000000-0000-0000-0000-000000000960', '00000000-0000-0000-0000-000000000871', '00000000-0000-0000-0000-000000000205', '00000000-0000-0000-0000-000000000102', 'against',   900, NULL,                                       NOW() - INTERVAL '55 minutes'),
+    ('00000000-0000-0000-0000-000000000961', '00000000-0000-0000-0000-000000000871', '00000000-0000-0000-0000-000000000202', '00000000-0000-0000-0000-000000000103', 'against',   850, '00000000-0000-0000-0000-000000000208',     NOW() - INTERVAL '55 minutes'),
+    ('00000000-0000-0000-0000-000000000962', '00000000-0000-0000-0000-000000000871', '00000000-0000-0000-0000-000000000206', '00000000-0000-0000-0000-000000000104', 'in_favor',  950, NULL,                                       NOW() - INTERVAL '55 minutes'),
+    ('00000000-0000-0000-0000-000000000963', '00000000-0000-0000-0000-000000000871', '00000000-0000-0000-0000-000000000202', '00000000-0000-0000-0000-000000000106', 'in_favor',  980, NULL,                                       NOW() - INTERVAL '55 minutes'),
+    ('00000000-0000-0000-0000-000000000964', '00000000-0000-0000-0000-000000000871', '00000000-0000-0000-0000-000000000203', '00000000-0000-0000-0000-000000000107', 'in_favor',  960, NULL,                                       NOW() - INTERVAL '55 minutes'),
+    ('00000000-0000-0000-0000-000000000965', '00000000-0000-0000-0000-000000000871', '00000000-0000-0000-0000-000000000205', '00000000-0000-0000-0000-000000000108', 'against',  1010, NULL,                                       NOW() - INTERVAL '55 minutes'),
+    ('00000000-0000-0000-0000-000000000966', '00000000-0000-0000-0000-000000000871', '00000000-0000-0000-0000-000000000208', '00000000-0000-0000-0000-000000000109', 'non_voter', 160, NULL,                                       NOW() - INTERVAL '55 minutes'),
+    -- Resolution 872 (Art. 25 — passed: for=5540 > 4000; against=960; abstain=160)
+    ('00000000-0000-0000-0000-000000000967', '00000000-0000-0000-0000-000000000872', '00000000-0000-0000-0000-000000000204', '00000000-0000-0000-0000-000000000101', 'in_favor',  850, NULL,                                       NOW() - INTERVAL '25 minutes'),
+    ('00000000-0000-0000-0000-000000000968', '00000000-0000-0000-0000-000000000872', '00000000-0000-0000-0000-000000000205', '00000000-0000-0000-0000-000000000102', 'in_favor',  900, NULL,                                       NOW() - INTERVAL '25 minutes'),
+    ('00000000-0000-0000-0000-000000000969', '00000000-0000-0000-0000-000000000872', '00000000-0000-0000-0000-000000000202', '00000000-0000-0000-0000-000000000103', 'in_favor',  850, '00000000-0000-0000-0000-000000000208',     NOW() - INTERVAL '25 minutes'),
+    ('00000000-0000-0000-0000-000000000970', '00000000-0000-0000-0000-000000000872', '00000000-0000-0000-0000-000000000206', '00000000-0000-0000-0000-000000000104', 'in_favor',  950, NULL,                                       NOW() - INTERVAL '25 minutes'),
+    ('00000000-0000-0000-0000-000000000971', '00000000-0000-0000-0000-000000000872', '00000000-0000-0000-0000-000000000202', '00000000-0000-0000-0000-000000000106', 'in_favor',  980, NULL,                                       NOW() - INTERVAL '25 minutes'),
+    ('00000000-0000-0000-0000-000000000972', '00000000-0000-0000-0000-000000000872', '00000000-0000-0000-0000-000000000203', '00000000-0000-0000-0000-000000000107', 'against',   960, NULL,                                       NOW() - INTERVAL '25 minutes'),
+    ('00000000-0000-0000-0000-000000000973', '00000000-0000-0000-0000-000000000872', '00000000-0000-0000-0000-000000000205', '00000000-0000-0000-0000-000000000108', 'in_favor', 1010, NULL,                                       NOW() - INTERVAL '25 minutes'),
+    ('00000000-0000-0000-0000-000000000974', '00000000-0000-0000-0000-000000000872', '00000000-0000-0000-0000-000000000208', '00000000-0000-0000-0000-000000000109', 'abstain',   160, NULL,                                       NOW() - INTERVAL '25 minutes'),
+    -- Resolution 873 (Art. 25 — rejected, art. 25-1 eligible: for=3550 = 44.4% ≥ 1/3; against=2950; non_voter=160)
+    ('00000000-0000-0000-0000-000000000975', '00000000-0000-0000-0000-000000000873', '00000000-0000-0000-0000-000000000204', '00000000-0000-0000-0000-000000000101', 'in_favor',  850, NULL,                                       NOW() - INTERVAL '8 minutes'),
+    ('00000000-0000-0000-0000-000000000976', '00000000-0000-0000-0000-000000000873', '00000000-0000-0000-0000-000000000205', '00000000-0000-0000-0000-000000000102', 'in_favor',  900, NULL,                                       NOW() - INTERVAL '8 minutes'),
+    ('00000000-0000-0000-0000-000000000977', '00000000-0000-0000-0000-000000000873', '00000000-0000-0000-0000-000000000202', '00000000-0000-0000-0000-000000000103', 'in_favor',  850, '00000000-0000-0000-0000-000000000208',     NOW() - INTERVAL '8 minutes'),
+    ('00000000-0000-0000-0000-000000000978', '00000000-0000-0000-0000-000000000873', '00000000-0000-0000-0000-000000000206', '00000000-0000-0000-0000-000000000104', 'in_favor',  950, NULL,                                       NOW() - INTERVAL '8 minutes'),
+    ('00000000-0000-0000-0000-000000000979', '00000000-0000-0000-0000-000000000873', '00000000-0000-0000-0000-000000000202', '00000000-0000-0000-0000-000000000106', 'against',   980, NULL,                                       NOW() - INTERVAL '8 minutes'),
+    ('00000000-0000-0000-0000-000000000980', '00000000-0000-0000-0000-000000000873', '00000000-0000-0000-0000-000000000203', '00000000-0000-0000-0000-000000000107', 'against',   960, NULL,                                       NOW() - INTERVAL '8 minutes'),
+    ('00000000-0000-0000-0000-000000000981', '00000000-0000-0000-0000-000000000873', '00000000-0000-0000-0000-000000000205', '00000000-0000-0000-0000-000000000108', 'against',  1010, NULL,                                       NOW() - INTERVAL '8 minutes'),
+    ('00000000-0000-0000-0000-000000000982', '00000000-0000-0000-0000-000000000873', '00000000-0000-0000-0000-000000000208', '00000000-0000-0000-0000-000000000109', 'non_voter', 160, NULL,                                       NOW() - INTERVAL '8 minutes'),
+    -- Resolution 874 (Art. 26 — rejected, art. 26-1 eligible: for=4530 = 56.6% > 50%; against=1970; non_voter=160)
+    -- favorable lots: 1+2+3+4+6 ; against: 7+8 ; non_voter: 9
+    ('00000000-0000-0000-0000-000000000983', '00000000-0000-0000-0000-000000000874', '00000000-0000-0000-0000-000000000204', '00000000-0000-0000-0000-000000000101', 'in_favor',  850, NULL,                                       NOW() - INTERVAL '1 minutes'),
+    ('00000000-0000-0000-0000-000000000984', '00000000-0000-0000-0000-000000000874', '00000000-0000-0000-0000-000000000205', '00000000-0000-0000-0000-000000000102', 'in_favor',  900, NULL,                                       NOW() - INTERVAL '1 minutes'),
+    ('00000000-0000-0000-0000-000000000985', '00000000-0000-0000-0000-000000000874', '00000000-0000-0000-0000-000000000202', '00000000-0000-0000-0000-000000000103', 'in_favor',  850, '00000000-0000-0000-0000-000000000208',     NOW() - INTERVAL '1 minutes'),
+    ('00000000-0000-0000-0000-000000000986', '00000000-0000-0000-0000-000000000874', '00000000-0000-0000-0000-000000000206', '00000000-0000-0000-0000-000000000104', 'in_favor',  950, NULL,                                       NOW() - INTERVAL '1 minutes'),
+    ('00000000-0000-0000-0000-000000000987', '00000000-0000-0000-0000-000000000874', '00000000-0000-0000-0000-000000000202', '00000000-0000-0000-0000-000000000106', 'in_favor',  980, NULL,                                       NOW() - INTERVAL '1 minutes'),
+    ('00000000-0000-0000-0000-000000000988', '00000000-0000-0000-0000-000000000874', '00000000-0000-0000-0000-000000000203', '00000000-0000-0000-0000-000000000107', 'against',   960, NULL,                                       NOW() - INTERVAL '1 minutes'),
+    ('00000000-0000-0000-0000-000000000989', '00000000-0000-0000-0000-000000000874', '00000000-0000-0000-0000-000000000205', '00000000-0000-0000-0000-000000000108', 'against',  1010, NULL,                                       NOW() - INTERVAL '1 minutes'),
+    ('00000000-0000-0000-0000-000000000990', '00000000-0000-0000-0000-000000000874', '00000000-0000-0000-0000-000000000208', '00000000-0000-0000-0000-000000000109', 'non_voter', 160, NULL,                                       NOW() - INTERVAL '1 minutes')
+ON CONFLICT (id) DO NOTHING;
+
     -- ============================================================
-    -- 13. CONSULTATIONS
+    -- 14. CONSULTATIONS
     -- Two fixtures: one open, one closed. Includes seeded choices and
     -- responses using the multi-choice schema.
     -- ============================================================
@@ -819,6 +1580,7 @@ ON CONFLICT (id) DO NOTHING;
 -- Tasks         | 6 fixtures                         | open, in_progress, awaiting_vendor, awaiting_validation, closed, cancelled
 -- Reports       | 3 fixtures                         | open, in_progress, closed
 -- Claims        | 3 fixtures                         | open, in_progress, closed
+-- Assemblies    | 4 fixtures                         | draft (empty), called (multi-line agenda + pending resolutions), closed (multi-line agenda + mixed attendance + votes, incl. art. 25 and art. 26 cases), ongoing (extraordinary — art. 24 ✓/✗, art. 25 ✓/✗ with art. 25-1 eligible case)
 -- Consultations | 2 fixtures                         | open, closed (+ choices & responses)
 --
 -- Password (all accounts): Demo1234!

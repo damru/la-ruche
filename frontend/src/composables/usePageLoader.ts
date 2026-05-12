@@ -1,19 +1,22 @@
 import { ref } from 'vue'
+import i18n from '@/i18n'
 
-export function toErrorMessage(error: unknown, fallbackMessage: string): string {
+const { t } = i18n.global
+
+export function toErrorMessage(error: unknown, fallbackMessage = 'common.error'): string {
   const apiMessage = (error as { response?: { data?: { message?: string } } })?.response?.data?.message
   if (typeof apiMessage === 'string' && apiMessage.trim().length > 0) {
-    return apiMessage
+    return t(apiMessage)
   }
 
   if (error instanceof Error && error.message.trim().length > 0) {
     return error.message
   }
 
-  return fallbackMessage
+  return t(fallbackMessage)
 }
 
-export function usePageLoader(loader: () => Promise<void>, fallbackMessage: string) {
+export function usePageLoader(loader: () => Promise<void>, fallbackMessage = 'common.loadError') {
   const loading = ref(true)
   const error = ref<string | null>(null)
 

@@ -135,7 +135,7 @@ pub async fn login(
 ) -> AppResult<Response> {
     input
         .validate()
-        .map_err(|e| AppError::Validation(e.to_string()))?;
+        .map_err(|_| AppError::validation_code("errors.auth.invalid_login_payload"))?;
 
     let user = db::user::find_by_email(&state.pool, &input.email)
         .await?
@@ -283,7 +283,7 @@ pub async fn reset_password_request(
 ) -> AppResult<StatusCode> {
     input
         .validate()
-        .map_err(|e| AppError::Validation(e.to_string()))?;
+        .map_err(|_| AppError::validation_code("errors.auth.invalid_reset_request_payload"))?;
 
     // Always returns 204 — no account existence leak
     if let Some(user) = db::user::find_by_email(&state.pool, &input.email).await? {
@@ -315,7 +315,7 @@ pub async fn reset_password_confirm(
 ) -> AppResult<StatusCode> {
     input
         .validate()
-        .map_err(|e| AppError::Validation(e.to_string()))?;
+        .map_err(|_| AppError::validation_code("errors.auth.invalid_reset_confirm_payload"))?;
 
     let token_hash = token::hash_token(&input.token);
     let info = db::user::consume_token(&state.pool, &token_hash, "reset_password")
@@ -340,7 +340,7 @@ pub async fn invite_accept(
 ) -> AppResult<StatusCode> {
     input
         .validate()
-        .map_err(|e| AppError::Validation(e.to_string()))?;
+        .map_err(|_| AppError::validation_code("errors.auth.invalid_invite_accept_payload"))?;
 
     let token_hash = token::hash_token(&input.token);
     let info = db::user::consume_token(&state.pool, &token_hash, "invitation")

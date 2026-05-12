@@ -19,7 +19,7 @@ help: ## Show this help
 # ── Development ───────────────────────────────────────────────────
 dev: ## Start the dev environment (postgres + minio + backend hot-reload)
 	docker compose up -d postgres minio
-	cd backend && DATABASE_URL=$(DB_URL) cargo watch -x run
+	cd backend && DATABASE_URL=$(DB_URL) bacon
 
 dev-frontend: ## Start the Vue 3 frontend in dev mode
 	cd frontend && npm run dev
@@ -71,7 +71,7 @@ migrate-revert: ## Revert the last migration
 	cd backend && DATABASE_URL=$(DB_URL) sqlx migrate revert
 
 
-sqlx-prepare: ## Generate SQLx offline metadata (.sqlx/)
+sqlx-prepare: migrate ## Generate SQLx offline metadata (.sqlx/)
 	cd backend && DATABASE_URL=$(DB_URL) cargo sqlx prepare
 
 # ── Docker ────────────────────────────────────────────────────────
@@ -97,7 +97,7 @@ clean: ## Clean build artifacts
 
 install-tools: ## Install development tools
 	cargo install sqlx-cli --no-default-features --features postgres --locked
-	cargo install cargo-watch --locked
+	cargo install bacon --locked
 	cd frontend && npm ci
 
 setup-hooks: ## Install git hooks (pre-commit: cargo fmt + clippy)

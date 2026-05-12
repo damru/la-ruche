@@ -6,9 +6,10 @@ import CBadge from '@/components/atoms/CBadge.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CModal from '@/components/molecules/CModal.vue'
-import CPageError from '@/components/molecules/CPageError.vue'
+import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
+import CFormDropzone from '@/components/molecules/CFormDropzone.vue'
 import { documentsApi, buildingApi } from '@/api'
 import { toErrorMessage, usePageLoader } from '@/composables/usePageLoader'
 import { useFormFeedback } from '@/composables/useFormFeedback'
@@ -31,7 +32,6 @@ const uploadError = ref('')
 const uploadSuccess = ref(false)
 const selectedFile = ref<File | null>(null)
 const selectedRoles = ref<string[]>(['manager', 'board_member', 'co_owner'])
-const fileInputRef = ref<HTMLInputElement | null>(null)
 const { schedule: scheduleUploadClose, forceExpire: forceUploadClose } = useAutoClose()
 watch(showUpload, (open) => { if (!open) forceUploadClose() })
 
@@ -50,7 +50,7 @@ async function loadData() {
   buildingName.value = buildingRes.data.name
 }
 
-const { loading, error, reload } = usePageLoader(loadData, t('common.loadError'))
+const { loading, error, reload } = usePageLoader(loadData)
 onMounted(reload)
 
 function documentReferences(document: Document): string[] {
@@ -76,11 +76,8 @@ function openUploadModal() {
   showUpload.value = true
 }
 
-function onFileChange(event: Event) {
-  const input = event.target as HTMLInputElement
-  if (input.files?.length) {
-    selectedFile.value = input.files[0]
-  }
+function onDropzoneFiles(files: File[]) {
+  selectedFile.value = files[0] ?? null
 }
 
 function toggleRole(role: string) {
@@ -162,7 +159,7 @@ async function confirmDeleteDoc() {
     deleteDocFeedback.setSuccess(t('documents.deleteSuccess'))
     scheduleDeleteDocClose(() => { showDeleteDocModal.value = false })
   } catch (e: unknown) {
-    deleteDocFeedback.setError(toErrorMessage(e, t('common.error')))
+    deleteDocFeedback.setError(toErrorMessage(e))
   } finally {
     deletingDoc.value = false
   }
@@ -175,10 +172,7 @@ async function confirmDeleteDoc() {
       <template #left>
         <div class="topbar-breadcrumb">
           {{ buildingName || '...' }}
-          <CIconChevronRight
-            width="14"
-            height="14"
-          />
+          <CIconChevronRight />
           <span>{{ t('documents.title') }}</span>
         </div>
       </template>
@@ -202,29 +196,30 @@ async function confirmDeleteDoc() {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
-        <div class="view-header">
-          <div>
-            <h1 class="display-md">
-              {{ t('documents.title') }}
-            </h1>
-            <p
-              class="body-md"
-              style="color:var(--color-on-surface-variant)"
-            >
-              {{ t('documents.count', { count: allDocuments.length }) }}
-            </p>
-          </div>
-        </div>
+        <header class="view-header">
+          <CEyebrow>
+            {{ t('page.eyebrows.documents') }}
+          </CEyebrow>
+          <h1 class="display-md">
+            {{ t('documents.title') }}
+          </h1>
+          <p
+            class="body-md"
+            style="color:var(--color-on-surface-variant)"
+          >
+            {{ t('documents.count', { count: allDocuments.length }) }}
+          </p>
+        </header>
 
-        <div class="search-bar">
-          <CIconSearch class="search-icon" />
-          <input
-            v-model="search"
-            type="search"
-            :placeholder="t('documents.searchPlaceholder')"
-            class="search-input"
-          />
-        </div>
+        <CFormInput
+          v-model="search"
+          type="search"
+          :placeholder="t('documents.searchPlaceholder')"
+        >
+          <template #prefix>
+            <CIconSearch />
+          </template>
+        </CFormInput>
 
         <CCard padding="none">
           <table class="data-table">
@@ -353,25 +348,17 @@ async function confirmDeleteDoc() {
             {{ uploadError }}
           </CAlert>
 
-          <div
-            class="dropzone dropzone--stacked dropzone--roomy"
-            @click="fileInputRef?.click()"
+          <CFormDropzone
+            :uploading="uploading"
+            @files="onDropzoneFiles"
+            @error="uploadError = $event"
+          />
+          <p
+            v-if="selectedFile"
+            class="selected-file"
           >
-            <input
-              ref="fileInputRef"
-              type="file"
-              style="display:none"
-              @change="onFileChange"
-            />
-            <span
-              v-if="selectedFile"
-              class="selected-file"
-            >{{ selectedFile.name }} ({{ formatFileSize(selectedFile.size) }})</span>
-            <span v-else>{{ t('documents.dropzone') }}</span>
-            <p class="body-sm dim">
-              {{ t('documents.maxSize') }}
-            </p>
-          </div>
+            {{ selectedFile.name }} ({{ formatFileSize(selectedFile.size) }})
+          </p>
 
           <div class="visibility-section">
             <label class="field-label">{{ t('documents.visiblePar') }}</label>
@@ -471,8 +458,6 @@ async function confirmDeleteDoc() {
   min-width: 36px;
   min-height: 36px;
 }
-
-.empty-state { padding: var(--space-8); text-align: center; font-size: var(--text-md); color: var(--color-on-surface-variant); }
 
 /* Upload modal */
 .upload-form { display: flex; flex-direction: column; gap: var(--space-4); }

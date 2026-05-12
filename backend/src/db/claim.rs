@@ -143,34 +143,28 @@ pub fn validate_payload(
     reimbursement_amount: Option<Decimal>,
 ) -> AppResult<()> {
     if title.trim().is_empty() {
-        return Err(AppError::Validation("Title is required".into()));
+        return Err(AppError::validation_code("errors.claims.title_required"));
     }
 
     if !validate_claim_type(claim_type) {
-        return Err(AppError::Validation(format!(
-            "Invalid claim type '{}'. Valid values: current, natural_disaster, theft",
-            claim_type
-        )));
+        return Err(AppError::validation_code("errors.claims.invalid_type"));
     }
 
     if let Some(status) = status
         && !validate_status(status)
     {
-        return Err(AppError::Validation(format!(
-            "Invalid status '{}'. Valid values: open, in_progress, closed",
-            status
-        )));
+        return Err(AppError::validation_code("errors.claims.invalid_status"));
     }
 
     if claim_type == CLAIM_TYPE_NATURAL_DISASTER {
         if published_at.is_none() {
-            return Err(AppError::Validation(
-                "published_at is required for natural_disaster claims".into(),
+            return Err(AppError::validation_code(
+                "errors.claims.published_at_required_for_natural_disaster",
             ));
         }
     } else if published_at.is_some() {
-        return Err(AppError::Validation(
-            "published_at is only allowed for natural_disaster claims".into(),
+        return Err(AppError::validation_code(
+            "errors.claims.published_at_only_for_natural_disaster",
         ));
     }
 
@@ -178,28 +172,28 @@ pub fn validate_payload(
     if let Some(transmitted_at) = transmitted_at
         && transmitted_at < reference_date
     {
-        return Err(AppError::Validation(
-            "transmitted_at cannot be earlier than the legal reference date".into(),
+        return Err(AppError::validation_code(
+            "errors.claims.transmitted_before_reference_date",
         ));
     }
 
     if reimbursement_amount.is_some_and(|amount| amount <= Decimal::ZERO) {
-        return Err(AppError::Validation(
-            "reimbursement_amount must be greater than zero".into(),
+        return Err(AppError::validation_code(
+            "errors.claims.reimbursement_amount_positive",
         ));
     }
 
     if status.is_none() && (reimbursement_date.is_some() || reimbursement_amount.is_some()) {
-        return Err(AppError::Validation(
-            "reimbursement fields require an explicit status".into(),
+        return Err(AppError::validation_code(
+            "errors.claims.reimbursement_requires_status",
         ));
     }
 
     if matches!(status, Some(CLAIM_STATUS_OPEN | CLAIM_STATUS_IN_PROGRESS))
         && (reimbursement_date.is_some() || reimbursement_amount.is_some())
     {
-        return Err(AppError::Validation(
-            "reimbursement fields are only allowed for closed claims".into(),
+        return Err(AppError::validation_code(
+            "errors.claims.reimbursement_only_for_closed",
         ));
     }
 

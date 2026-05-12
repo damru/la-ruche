@@ -1,4 +1,5 @@
 import { defineConfig } from 'vite'
+import tailwindcss from '@tailwindcss/vite'
 import vue from '@vitejs/plugin-vue'
 import svgLoader from 'vite-svg-loader'
 import Components from 'unplugin-vue-components/vite'
@@ -8,6 +9,7 @@ import { fileURLToPath, URL } from 'node:url'
 
 export default defineConfig({
   plugins: [
+    tailwindcss(),
     vue(),
 
     // SVG files imported as Vue components (width/height/class pass-through via inheritAttrs)
@@ -57,6 +59,9 @@ export default defineConfig({
           return '/index.html'
         },
       },
+    },
+    watch: {
+      usePolling: true, // Enable polling for file changes in WSL environment
     },
   },
 

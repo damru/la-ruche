@@ -133,12 +133,12 @@ pub async fn bootstrap(
 ) -> AppResult<Response> {
     input
         .validate()
-        .map_err(|e| AppError::Validation(e.to_string()))?;
+        .map_err(|_| AppError::validation_code("errors.onboarding.invalid_payload"))?;
 
     // Validation métier : tantièmes > 0
     if input.shares_total <= 0 {
-        return Err(AppError::Validation(
-            "Les tantièmes totaux doivent être supérieurs à 0".into(),
+        return Err(AppError::validation_code(
+            "errors.onboarding.shares_total_positive",
         ));
     }
 
@@ -152,7 +152,9 @@ pub async fn bootstrap(
         .await?;
 
     if count > 0 {
-        return Err(AppError::Conflict("Instance déjà initialisée".into()));
+        return Err(AppError::conflict_code(
+            "errors.onboarding.already_initialized",
+        ));
     }
 
     // Création de la copropriété

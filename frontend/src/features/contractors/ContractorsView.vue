@@ -9,9 +9,10 @@ import { useAuthStore } from '@/stores/auth'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CCard from '@/components/molecules/CCard.vue'
+import CMetaLine from '@/components/molecules/CMetaLine.vue'
 import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
 import CModal from '@/components/molecules/CModal.vue'
-import CPageError from '@/components/molecules/CPageError.vue'
+import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import CIconBolt from '@/components/atoms/CIconBolt.svg'
@@ -86,7 +87,7 @@ async function loadData() {
   allContractors.value = contractorsRes.data
 }
 
-const { loading, error, reload } = usePageLoader(loadData, t('common.loadError'))
+const { loading, error, reload } = usePageLoader(loadData)
 onMounted(reload)
 
 // ── Filtered list ─────────────────────────────────────────────────
@@ -106,10 +107,10 @@ function openContractorDetail(contractorId: string) {
 }
 
 // ── Sorted domains list (alphabetical by translated label) ────────
-const DOMAINS = computed(() =>
-  [...DOMAINS_RAW].sort((a, b) =>
-    t(`contractors.domains.${a}`).localeCompare(t(`contractors.domains.${b}`)),
-  ),
+const domainOptions = computed(() =>
+  [...DOMAINS_RAW]
+    .map(value => ({ value, label: t(`contractors.domains.${value}`) }))
+    .sort((a, b) => a.label.localeCompare(b.label)),
 )
 
 // ── Form modal ────────────────────────────────────────────────────
@@ -177,7 +178,7 @@ async function save() {
     feedback.setSuccess(t('common.saved'))
     scheduleModalClose(() => { showModal.value = false; reload() })
   } catch (err) {
-    feedback.setError(toErrorMessage(err, t('common.error')))
+    feedback.setError(toErrorMessage(err))
   } finally {
     saving.value = false
   }
@@ -207,7 +208,7 @@ async function confirmDelete() {
     deleteFeedback.setSuccess(t('contractors.deleteSuccess'))
     scheduleDeleteClose(() => { showDeleteModal.value = false; reload() })
   } catch (err) {
-    deleteFeedback.setError(toErrorMessage(err, t('common.error')))
+    deleteFeedback.setError(toErrorMessage(err))
   } finally {
     deletingId.value = null
   }
@@ -220,10 +221,7 @@ async function confirmDelete() {
       <template #left>
         <div class="topbar-breadcrumb">
           {{ buildingName }}
-          <CIconChevronRight
-            width="14"
-            height="14"
-          />
+          <CIconChevronRight />
           <span>{{ t('contractors.title') }}</span>
         </div>
       </template>
@@ -249,30 +247,31 @@ async function confirmDelete() {
       <CPageLoader v-else-if="loading" />
       <template v-else>
         <!-- Header + search -->
-        <div class="view-header">
-          <div>
-            <h1 class="display-md">
-              {{ t('contractors.title') }}
-            </h1>
-            <p
-              class="body-md"
-              style="color:var(--color-on-surface-variant)"
-            >
-              {{ t('contractors.summary', { count: allContractors.length }) }}
-            </p>
-          </div>
-        </div>
+        <header class="view-header">
+          <CEyebrow>
+            {{ t('page.eyebrows.contractors') }}
+          </CEyebrow>
+          <h1 class="display-md">
+            {{ t('contractors.title') }}
+          </h1>
+          <p
+            class="body-md"
+            style="color:var(--color-on-surface-variant)"
+          >
+            {{ t('contractors.summary', { count: allContractors.length }) }}
+          </p>
+        </header>
 
         <!-- Search bar -->
-        <div class="search-bar">
-          <CIconSearch class="search-icon" />
-          <input
-            v-model="search"
-            type="search"
-            class="search-input"
-            :placeholder="t('contractors.searchPlaceholder')"
-          />
-        </div>
+        <CFormInput
+          v-model="search"
+          type="search"
+          :placeholder="t('contractors.searchPlaceholder')"
+        >
+          <template #prefix>
+            <CIconSearch />
+          </template>
+        </CFormInput>
 
         <!-- Empty state -->
         <div
@@ -297,85 +296,84 @@ async function confirmDelete() {
           <CCard
             v-for="c in filtered"
             :key="c.id"
-            class="activity-card activity-card--interactive"
-            role="link"
+            interactive
+            class="activity-card"
             tabindex="0"
             @click="openContractorDetail(c.id)"
             @keydown.enter.prevent="openContractorDetail(c.id)"
             @keydown.space.prevent="openContractorDetail(c.id)"
           >
             <div class="activity-card__header-row activity-card__header-row--with-icon">
-                <div :class="['activity-card__icon', 'contractor-card__icon', domainTone(c.domains)]">
-                  <component
-                    :is="domainIcon(c.domains)"
-                    class="contractor-card__type-icon"
-                    aria-hidden="true"
-                  />
-                </div>
-                <h3 class="activity-card__title">
-                  {{ c.name }}
-                </h3>
+              <div :class="['activity-card__icon', 'contractor-card__icon', domainTone(c.domains)]">
+                <component
+                  :is="domainIcon(c.domains)"
+                  aria-hidden="true"
+                />
               </div>
+              <h3 class="activity-card__title">
+                {{ c.name }}
+              </h3>
+            </div>
 
-              <div class="activity-card__chips">
-                <CBadge
-                  v-for="d in c.domains"
-                  :key="d"
-                  variant="default"
+            <div class="activity-card__chips">
+              <CBadge
+                v-for="d in c.domains"
+                :key="d"
+                variant="default"
+              >
+                {{ t(`contractors.domains.${d}`, d) }}
+              </CBadge>
+            </div>
+            <div class="activity-card__stack">
+              <p
+                v-if="c.notes"
+                class="body-xs"
+              >
+                {{ c.notes }}
+              </p>
+
+              <CMetaLine
+                v-if="c.email || c.phone"
+                class="activity-card__contacts"
+              >
+                <a
+                  v-if="c.email"
+                  :href="`mailto:${c.email}`"
+                  class="activity-card__line activity-card__contact-link"
+                  @click.stop
+                ><span aria-hidden="true">✉️</span>{{ c.email }}</a>
+                <a
+                  v-if="c.phone"
+                  :href="`tel:${c.phone}`"
+                  class="activity-card__line activity-card__contact-link"
+                  @click.stop
+                ><span aria-hidden="true">📞</span>{{ c.phone }}</a>
+              </CMetaLine>
+
+              <div
+                v-if="canEdit"
+                class="activity-card__actions"
+              >
+                <CBtn
+                  variant="ghost"
+                  size="sm"
+                  :aria-label="t('common.edit') + ' ' + c.name"
+                  @click.stop="openEdit(c)"
                 >
-                  {{ t(`contractors.domains.${d}`, d) }}
-                </CBadge>
+                  <CIconEdit />
+                  {{ t('common.edit') }}
+                </CBtn>
+                <CBtn
+                  variant="danger"
+                  size="sm"
+                  :aria-label="t('common.delete') + ' ' + c.name"
+                  @click.stop="openDeleteModal(c)"
+                >
+                  <CIconTrash />
+                  {{ t('common.delete') }}
+                </CBtn>
               </div>
-              <div class="activity-card__stack">
-                <p
-                  v-if="c.notes"
-                  class="activity-card__description contractor-notes"
-                >
-                  {{ c.notes }}
-                </p>
-
-                <div
-                  v-if="c.email || c.phone"
-                  class="activity-card__meta activity-card__contacts"
-                >
-                  <a
-                    v-if="c.email"
-                    :href="`mailto:${c.email}`"
-                    class="activity-card__line activity-card__contact-link"
-                    @click.stop
-                  ><span aria-hidden="true">✉️</span>{{ c.email }}</a>
-                  <a
-                    v-if="c.phone"
-                    :href="`tel:${c.phone}`"
-                    class="activity-card__line activity-card__contact-link"
-                    @click.stop
-                  ><span aria-hidden="true">📞</span>{{ c.phone }}</a>
-                </div>
-
-                <div
-                  v-if="canEdit"
-                  class="activity-card__actions"
-                >
-                  <CBtn
-                    variant="ghost"
-                    size="sm"
-                    :aria-label="t('common.edit') + ' ' + c.name"
-                    @click.stop="openEdit(c)"
-                  >
-                    <CIconEdit />
-                    {{ t('common.edit') }}
-                  </CBtn>
-                  <CBtn
-                    variant="danger"
-                    size="sm"
-                    :aria-label="t('common.delete') + ' ' + c.name"
-                    @click.stop="openDeleteModal(c)"
-                  >
-                    <CIconTrash />
-                    {{ t('common.delete') }}
-                  </CBtn>
-                </div>
-              </div>
+            </div>
           </CCard>
         </div>
       </template>
@@ -391,61 +389,37 @@ async function confirmDelete() {
         class="form-grid"
         @submit.prevent="save"
       >
-        <div class="form-field">
-          <label class="form-label">{{ t('contractors.name') }} *</label>
-          <input
-            v-model="form.name"
-            class="form-input"
-            :placeholder="t('contractors.namePlaceholder')"
-            required
-          />
-        </div>
-        <div class="form-field">
-          <label class="form-label">{{ t('contractors.email') }}</label>
-          <input
-            v-model="form.email"
-            type="email"
-            class="form-input"
-            :placeholder="t('contractors.emailPlaceholder')"
-          />
-        </div>
-        <div class="form-field">
-          <label class="form-label">{{ t('contractors.phone') }}</label>
-          <input
-            v-model="form.phone"
-            type="tel"
-            class="form-input"
-            :placeholder="t('contractors.phonePlaceholder')"
-          />
-        </div>
-        <!-- Domains: multi-select checkboxes, sorted alphabetically -->
-        <div class="form-field form-field--full">
-          <label class="form-label">{{ t('contractors.domainsLabel') }}</label>
-          <div class="domains-checkboxes">
-            <label
-              v-for="d in DOMAINS"
-              :key="d"
-              class="checkbox-label"
-            >
-              <input
-                v-model="form.domains"
-                type="checkbox"
-                :value="d"
-              />
-              {{ t(`contractors.domains.${d}`) }}
-            </label>
-          </div>
-        </div>
-        <!-- Notes textarea -->
-        <div class="form-field form-field--full">
-          <label class="form-label">{{ t('contractors.notes') }}</label>
-          <textarea
-            v-model="form.notes"
-            class="form-input"
-            rows="3"
-            :placeholder="t('contractors.notesPlaceholder')"
-          ></textarea>
-        </div>
+        <CFormInput
+          v-model="form.name"
+          :label="t('contractors.name')"
+          :placeholder="t('contractors.namePlaceholder')"
+          required
+        />
+        <CFormInput
+          v-model="form.email"
+          :label="t('contractors.email')"
+          type="email"
+          :placeholder="t('contractors.emailPlaceholder')"
+        />
+        <CFormInput
+          v-model="form.phone"
+          :label="t('contractors.phone')"
+          type="tel"
+          :placeholder="t('contractors.phonePlaceholder')"
+        />
+        <CFormChipSelect
+          v-model="form.domains"
+          :label="t('contractors.domainsLabel')"
+          :options="domainOptions"
+          class="form-field--full"
+        />
+        <CFormTextarea
+          v-model="form.notes"
+          :label="t('contractors.notes')"
+          :rows="3"
+          :placeholder="t('contractors.notesPlaceholder')"
+          class="form-field--full"
+        />
       </form>
       <template #footer>
         <CFormFeedback
@@ -517,14 +491,6 @@ async function confirmDelete() {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: var(--space-4);
-}
-
-/* Domains checkbox grid */
-.domains-checkboxes {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2) var(--space-4);
-  padding: var(--space-2) 0;
 }
 
 </style>

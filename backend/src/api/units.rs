@@ -134,11 +134,11 @@ pub async fn create(
     require_manager(&auth)?;
     input
         .validate()
-        .map_err(|e| AppError::Validation(e.to_string()))?;
+        .map_err(|_| AppError::validation_code("errors.units.invalid_payload"))?;
 
     // Pre-check: is the number already taken by an archived unit?
     if db::unit::is_archived(&state.pool, auth.building_id, &input.unit_number).await? {
-        return Err(AppError::Conflict("UNIT_NUMBER_ARCHIVED".into()));
+        return Err(AppError::conflict_code("errors.units.unit_number_archived"));
     }
 
     let row = db::unit::create(
@@ -158,7 +158,7 @@ pub async fn create(
         AppError::Database(db_err)
             if db_err.as_database_error().and_then(|d| d.code()).as_deref() == Some("23505") =>
         {
-            AppError::Conflict("UNIT_NUMBER_EXISTS".into())
+            AppError::conflict_code("errors.units.unit_number_exists")
         }
         _ => e,
     })?;
@@ -188,7 +188,7 @@ pub async fn update(
     require_manager(&auth)?;
     input
         .validate()
-        .map_err(|e| AppError::Validation(e.to_string()))?;
+        .map_err(|_| AppError::validation_code("errors.units.invalid_payload"))?;
 
     let row = db::unit::update(
         &state.pool,

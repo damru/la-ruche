@@ -57,7 +57,9 @@ pub async fn create(
 ) -> AppResult<(StatusCode, Json<serde_json::Value>)> {
     auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
     if input.name.trim().is_empty() {
-        return Err(AppError::Validation("Name is required".into()));
+        return Err(AppError::validation_code(
+            "errors.contractors.name_required",
+        ));
     }
     let c = db::contractor::create(&state.pool, auth.building_id, input).await?;
     Ok((StatusCode::CREATED, json_value(c)?))

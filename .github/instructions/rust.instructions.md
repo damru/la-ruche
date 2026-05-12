@@ -121,6 +121,7 @@ A rule that only exists in one layer is latent drift. Add the missing layer or d
 - Provide meaningful error messages and context.
 - Error types should be meaningful and well-behaved (implement standard traits).
 - Validate function arguments and return appropriate errors for invalid input.
+- Always use custom i18n error codes (e.g., `AppError::validation_code("errors.claims.reimbursement_requires_status")`) instead of generic messages to allow for proper localization and consistency across the codebase.
 
 ## API Design Guidelines
 

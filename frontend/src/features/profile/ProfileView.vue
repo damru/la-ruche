@@ -139,11 +139,14 @@ async function confirmResetDemo() {
     </CTopbar>
 
     <div class="view-container">
-      <div class="view-header">
+      <header class="view-header">
+        <CEyebrow>
+          {{ t('page.eyebrows.profile') }}
+        </CEyebrow>
         <h1 class="display-md">
           {{ t('nav.account') }}
         </h1>
-      </div>
+      </header>
 
       <!-- Tabs -->
       <div class="tabs">
@@ -170,39 +173,27 @@ async function confirmResetDemo() {
             {{ t('settings.account.personalInfo') }}
           </h2>
           <div class="form-grid-2col">
-            <div class="field">
-              <label class="field-label">{{ t('common.firstName') }}</label>
-              <input
-                :value="auth.user?.first_name"
-                class="field-input"
-                disabled
-              />
-            </div>
-            <div class="field">
-              <label class="field-label">{{ t('common.lastName') }}</label>
-              <input
-                :value="auth.user?.last_name"
-                class="field-input"
-                disabled
-              />
-            </div>
-            <div class="field">
-              <label class="field-label">{{ t('common.email') }}</label>
-              <input
-                :value="auth.user?.email"
-                class="field-input"
-                disabled
-              />
-            </div>
-            <div class="field">
-              <label class="field-label">{{ t('common.phone') }}</label>
-              <input
-                v-model="phone"
-                class="field-input"
-                type="tel"
-                :placeholder="t('common.phonePlaceholder')"
-              />
-            </div>
+            <CFormInput
+              :model-value="auth.user?.first_name ?? ''"
+              :label="t('common.firstName')"
+              disabled
+            />
+            <CFormInput
+              :model-value="auth.user?.last_name ?? ''"
+              :label="t('common.lastName')"
+              disabled
+            />
+            <CFormInput
+              :model-value="auth.user?.email ?? ''"
+              :label="t('common.email')"
+              disabled
+            />
+            <CFormInput
+              v-model="phone"
+              :label="t('common.phone')"
+              type="tel"
+              :placeholder="t('common.phonePlaceholder')"
+            />
           </div>
           <div class="form-actions">
             <CFormFeedback
@@ -269,12 +260,15 @@ async function confirmResetDemo() {
             {{ t('settings.account.dangerZone') }}
           </h2>
           <p
-            class="body-sm"
+            class="body-xs"
             style="color: var(--color-on-surface-variant); margin-bottom: 12px"
           >
             {{ t('settings.account.dangerDesc') }}
           </p>
-          <CBtn variant="danger" @click="showResetModal = true">
+          <CBtn
+            variant="danger"
+            @click="showResetModal = true"
+          >
             {{ t('settings.account.resetApp') }}
           </CBtn>
         </CCard>
@@ -295,7 +289,7 @@ async function confirmResetDemo() {
               <div class="notif-info">
                 <span class="title-sm">{{ t(`settings.notifications.${item.key}`) }}</span>
                 <p
-                  class="body-sm"
+                  class="body-xs"
                   style="color: var(--color-on-surface-variant)"
                 >
                   {{ t(`settings.notifications.${item.key}Desc`) }}
@@ -322,16 +316,27 @@ async function confirmResetDemo() {
     :title="t('settings.account.resetAppConfirmTitle')"
     @close="showResetModal = false"
   >
-    <p class="body-sm">{{ t('settings.account.resetAppConfirmMessage') }}</p>
+    <p class="body-xs">
+      {{ t('settings.account.resetAppConfirmMessage') }}
+    </p>
     <template #footer>
       <CFormFeedback
         :status="resetFeedback.status.value"
         :message="resetFeedback.message.value"
       />
-      <CBtn variant="ghost" :disabled="resetting" @click="showResetModal = false">
+      <CBtn
+        variant="ghost"
+        :disabled="resetting"
+        @click="showResetModal = false"
+      >
         {{ t('common.cancel') }}
       </CBtn>
-      <CBtn variant="danger" :loading="resetting" :disabled="resetting" @click="confirmResetDemo">
+      <CBtn
+        variant="danger"
+        :loading="resetting"
+        :disabled="resetting"
+        @click="confirmResetDemo"
+      >
         {{ t('settings.account.resetAppConfirm') }}
       </CBtn>
     </template>

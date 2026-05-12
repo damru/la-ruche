@@ -7,11 +7,13 @@ import { useFormFeedback } from '@/composables/useFormFeedback'
 import { useAutoClose } from '@/composables/useAutoClose'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
+import CLegalDescription from '@/components/atoms/CLegalDescription.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
-import CLegalInfoCard from '@/components/molecules/CLegalInfoCard.vue'
+import CLegalNotice from '@/components/molecules/CLegalNotice.vue'
+import CLegalCard from '@/components/molecules/CLegalCard.vue'
 import CModal from '@/components/molecules/CModal.vue'
-import CPageError from '@/components/molecules/CPageError.vue'
+import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import { maintenanceApi } from '@/api'
@@ -111,7 +113,7 @@ async function loadData() {
   allEntries.value = entriesRes.data
 }
 
-const { loading, error, reload } = usePageLoader(loadData, t('common.loadError'))
+const { loading, error, reload } = usePageLoader(loadData)
 onMounted(reload)
 
 // ── Derived ───────────────────────────────────────────────────────
@@ -258,7 +260,7 @@ async function saveEntry() {
       reload()
     })
   } catch (err) {
-    entryFeedback.setError(toErrorMessage(err, t('common.error')))
+    entryFeedback.setError(toErrorMessage(err))
   } finally {
     savingEntry.value = false
   }
@@ -282,7 +284,7 @@ async function deleteEntry() {
       reload()
     })
   } catch (err) {
-    deleteFeedback.setError(toErrorMessage(err, t('common.error')))
+    deleteFeedback.setError(toErrorMessage(err))
   } finally {
     deletingEntry.value = false
   }
@@ -295,10 +297,7 @@ async function deleteEntry() {
       <template #left>
         <div class="topbar-breadcrumb">
           {{ buildingName }}
-          <CIconChevronRight
-            width="14"
-            height="14"
-          />
+          <CIconChevronRight />
           <span>{{ t('maintenance.title') }}</span>
         </div>
       </template>
@@ -322,19 +321,20 @@ async function deleteEntry() {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
-        <div class="view-header">
-          <div>
-            <h1 class="display-md">
-              {{ t('maintenance.title') }}
-            </h1>
-            <p
-              class="body-md"
-              style="color:var(--color-on-surface-variant)"
-            >
-              {{ t('maintenance.periodSummary', { label: periodLabel, count: periodEntries.length, cost: formatCurrency(totalCost) }) }}
-            </p>
-          </div>
-        </div>
+        <header class="view-header">
+          <CEyebrow>
+            {{ t('page.eyebrows.maintenance') }}
+          </CEyebrow>
+          <h1 class="display-md">
+            {{ t('maintenance.title') }}
+          </h1>
+          <p
+            class="body-md"
+            style="color:var(--color-on-surface-variant)"
+          >
+            {{ t('maintenance.periodSummary', { label: periodLabel, count: periodEntries.length, cost: formatCurrency(totalCost) }) }}
+          </p>
+        </header>
 
         <div
           v-if="logbookSummary"
@@ -350,18 +350,18 @@ async function deleteEntry() {
             <div class="regulatory-card__body">
               <div>
                 <span class="regulatory-card__label">{{ t('maintenance.regulatory.building') }}</span>
-                <p class="body-sm regulatory-card__value">
+                <p class="body-xs regulatory-card__value">
                   {{ buildingAddress }}
                 </p>
               </div>
               <div>
                 <span class="regulatory-card__label">{{ t('maintenance.regulatory.manager') }}</span>
-                <p class="body-sm regulatory-card__value">
+                <p class="body-xs regulatory-card__value">
                   {{ currentManagerLabel }}
                 </p>
                 <p
                   v-if="logbookSummary.current_manager?.email"
-                  class="body-sm regulatory-card__hint"
+                  class="body-xs regulatory-card__hint"
                 >
                   {{ logbookSummary.current_manager.email }}
                   <template v-if="logbookSummary.current_manager.phone">
@@ -392,10 +392,10 @@ async function deleteEntry() {
                 class="contract-list__item"
               >
                 <div>
-                  <p class="body-sm contract-list__title">
+                  <p class="body-xs contract-list__title">
                     {{ contract.subject }}
                   </p>
-                  <p class="body-sm contract-list__meta">
+                  <p class="body-xs contract-list__meta">
                     {{ contract.vendor_name }}
                   </p>
                 </div>
@@ -411,7 +411,7 @@ async function deleteEntry() {
             </div>
             <p
               v-else
-              class="body-sm regulatory-card__hint"
+              class="body-xs regulatory-card__hint"
             >
               {{ t('maintenance.regulatory.noInsuranceContracts') }}
             </p>
@@ -437,10 +437,10 @@ async function deleteEntry() {
                 class="contract-list__item"
               >
                 <div>
-                  <p class="body-sm contract-list__title">
+                  <p class="body-xs contract-list__title">
                     {{ contract.subject }}
                   </p>
-                  <p class="body-sm contract-list__meta">
+                  <p class="body-xs contract-list__meta">
                     {{ contract.vendor_name }} · {{ t(`contracts.types.${contract.contract_type}`) }}
                   </p>
                 </div>
@@ -456,20 +456,24 @@ async function deleteEntry() {
             </div>
             <p
               v-else
-              class="body-sm regulatory-card__hint"
+              class="body-xs regulatory-card__hint"
             >
               {{ t('maintenance.regulatory.noMaintenanceContracts') }}
             </p>
           </CCard>
         </div>
 
-        <CLegalInfoCard
+        <CLegalCard
           v-if="logbookSummary"
           class="regulatory-legal-card"
-          :title="t('maintenance.regulatory.legalCard.title')"
-          :summary="t('maintenance.regulatory.legalCard.summary')"
-          :links="regulatoryLegalLinks"
-        />
+        >
+          <CLegalNotice :links="regulatoryLegalLinks">
+            <CLegalDescription
+              :title="t('maintenance.regulatory.legalCard.title')"
+              :summary="t('maintenance.regulatory.legalCard.summary')"
+            />
+          </CLegalNotice>
+        </CLegalCard>
 
         <div class="period-toolbar">
           <div class="tabs period-tabs">
@@ -505,15 +509,15 @@ async function deleteEntry() {
           </div>
         </div>
 
-        <div class="search-bar">
-          <CIconSearch class="search-icon" />
-          <input
-            v-model="search"
-            type="search"
-            :placeholder="t('maintenance.searchPlaceholder')"
-            class="search-input"
-          />
-        </div>
+        <CFormInput
+          v-model="search"
+          type="search"
+          :placeholder="t('maintenance.searchPlaceholder')"
+        >
+          <template #prefix>
+            <CIconSearch />
+          </template>
+        </CFormInput>
 
         <div class="timeline">
           <div
@@ -552,7 +556,7 @@ async function deleteEntry() {
               </div>
               <p
                 v-if="entry.description"
-                class="body-sm entry-desc"
+                class="body-xs entry-desc"
               >
                 {{ entry.description }}
               </p>
@@ -596,51 +600,34 @@ async function deleteEntry() {
         class="form-grid"
         @submit.prevent="saveEntry"
       >
-        <div class="form-field">
-          <label class="form-label">{{ t('maintenance.fields.title') }} *</label>
-          <input
-            v-model="entryForm.title"
-            type="text"
-            class="form-input"
-            required
-          />
-        </div>
-        <div class="form-field">
-          <label class="form-label">{{ t('maintenance.fields.description') }}</label>
-          <textarea
-            v-model="entryForm.description"
-            class="form-input"
-            rows="2"
-          ></textarea>
-        </div>
-        <div class="form-field">
-          <label class="form-label">{{ t('maintenance.fields.interventionDate') }} *</label>
-          <input
-            v-model="entryForm.intervention_date"
-            type="date"
-            class="form-input"
-            required
-          />
-        </div>
+        <CFormInput
+          v-model="entryForm.title"
+          :label="t('maintenance.fields.title')"
+          required
+        />
+        <CFormTextarea
+          v-model="entryForm.description"
+          :label="t('maintenance.fields.description')"
+          :rows="2"
+        />
+        <CFormInput
+          v-model="entryForm.intervention_date"
+          :label="t('maintenance.fields.interventionDate')"
+          type="date"
+          required
+        />
         <div class="form-row">
-          <div class="form-field">
-            <label class="form-label">{{ t('maintenance.fields.cost') }}</label>
-            <input
-              v-model="entryForm.cost"
-              type="number"
-              step="0.01"
-              min="0"
-              class="form-input"
-            />
-          </div>
-          <div class="form-field">
-            <label class="form-label">{{ t('maintenance.fields.vendorName') }}</label>
-            <input
-              v-model="entryForm.vendor_name"
-              type="text"
-              class="form-input"
-            />
-          </div>
+          <CFormInput
+            v-model="entryForm.cost"
+            :label="t('maintenance.fields.cost')"
+            type="number"
+            :step="0.01"
+            :min="0"
+          />
+          <CFormInput
+            v-model="entryForm.vendor_name"
+            :label="t('maintenance.fields.vendorName')"
+          />
         </div>
       </form>
       <template #footer>
@@ -672,7 +659,7 @@ async function deleteEntry() {
       size="sm"
       @update:open="v => !v && (entryToDelete = null)"
     >
-      <p class="body-sm">
+      <p class="body-xs">
         {{ t('maintenance.confirmDeleteMessage', { title: entryToDelete?.title ?? '' }) }}
       </p>
       <template #footer>
@@ -787,7 +774,7 @@ async function deleteEntry() {
 }
 
 .timeline-dot {
-  width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0;
+  width: var(--icon-xs); height: var(--icon-xs); border-radius: 50%; flex-shrink: 0;
   background: var(--color-primary);
   border: 3px solid var(--color-surface);
   margin-top: 16px;
@@ -845,8 +832,6 @@ async function deleteEntry() {
 }
 
 .form-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
-
-.empty-state { padding: var(--space-8); text-align: center; font-size: var(--text-md); color: var(--color-on-surface-variant); }
 
 @media (max-width: 720px) {
   .regulatory-grid {

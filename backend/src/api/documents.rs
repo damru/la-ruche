@@ -31,7 +31,7 @@ pub struct UploadUrlResponse {
     pub bucket: String,
 }
 
-#[derive(Serialize, ToSchema)]
+#[derive(Debug, Serialize, ToSchema)]
 pub struct DocumentListItem {
     pub id: Uuid,
     pub original_name: String,
@@ -84,12 +84,14 @@ pub async fn get_upload_url(
 ) -> AppResult<Json<UploadUrlResponse>> {
     input
         .validate()
-        .map_err(|e| AppError::Validation(e.to_string()))?;
+        .map_err(|_| AppError::validation_code("errors.documents.invalid_upload_request"))?;
 
     // Sanitize extension (prevent path traversal)
     let ext = input.extension.trim_start_matches('.').to_lowercase();
     if ext.contains('/') || ext.contains('\\') {
-        return Err(AppError::Validation("Invalid extension".into()));
+        return Err(AppError::validation_code(
+            "errors.documents.invalid_extension",
+        ));
     }
 
     // Ensure bucket exists — idempotent, handles seeded data or transient S3 failures.
@@ -124,7 +126,7 @@ pub async fn confirm_upload(
 ) -> AppResult<(StatusCode, Json<serde_json::Value>)> {
     input
         .validate()
-        .map_err(|e| AppError::Validation(e.to_string()))?;
+        .map_err(|_| AppError::validation_code("errors.documents.invalid_confirm_request"))?;
 
     // Verify the key belongs to the building's bucket
     let expected_bucket = state.storage.bucket_name(auth.building_id);

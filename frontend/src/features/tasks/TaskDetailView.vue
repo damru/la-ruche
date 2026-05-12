@@ -7,7 +7,7 @@ import { usePageLoader } from '@/composables/usePageLoader'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CCard from '@/components/molecules/CCard.vue'
-import CPageError from '@/components/molecules/CPageError.vue'
+import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import CIconArrowLeft from '@/components/atoms/CIconArrowLeft.svg'
@@ -55,7 +55,7 @@ async function loadData() {
   }
 }
 
-const { loading, error, reload } = usePageLoader(loadData, t('common.loadError'))
+const { loading, error, reload } = usePageLoader(loadData)
 onMounted(reload)
 
 // ── Helpers ───────────────────────────────────────────────────────
@@ -74,13 +74,6 @@ function priorityVariant(p: string): 'err' | 'pending' | 'primary' | 'valid' | '
   if (p === 'normal') return 'primary'
   if (p === 'low') return 'valid'
   return 'default'
-}
-
-function priorityColor(p: string): string {
-  if (p === 'urgent') return 'var(--color-error)'
-  if (p === 'high') return 'var(--color-warning)'
-  if (p === 'normal') return 'var(--color-primary)'
-  return 'var(--color-success)'
 }
 
 // ── Lifecycle timeline events ──────────────────────────────────────
@@ -189,20 +182,14 @@ function dotClass(variant?: TimelineEvent['variant']): string {
       <template #left>
         <div class="topbar-breadcrumb">
           {{ buildingName }}
-          <CIconChevronRight
-            width="14"
-            height="14"
-          />
+          <CIconChevronRight />
           <RouterLink
             :to="{ name: 'tasks' }"
-            class="breadcrumb-link"
+            class="topbar-breadcrumb-link"
           >
             {{ t('tasks.title') }}
           </RouterLink>
-          <CIconChevronRight
-            width="14"
-            height="14"
-          />
+          <CIconChevronRight />
           <span>{{ task?.title ?? '…' }}</span>
         </div>
       </template>
@@ -227,51 +214,46 @@ function dotClass(variant?: TimelineEvent['variant']): string {
       <CPageLoader v-else-if="loading" />
       <template v-else-if="task">
         <!-- Task header card -->
-        <CCard class="task-header-card">
-          <div
-            class="prio-bar"
-            :style="{ background: priorityColor(task.priority) }"
-          ></div>
-          <div class="task-header-body">
-            <div class="task-header-badges">
-              <CBadge :variant="priorityVariant(task.priority)">
-                {{ t(`tasks.priorities.${task.priority}`) }}
-              </CBadge>
-              <CBadge
-                :variant="statusVariant(task.status)"
-                dot
-              >
-                {{ t(`tasks.statuses.${task.status}`) }}
-              </CBadge>
-            </div>
-            <h1 class="display-md task-title">
-              {{ task.title }}
-            </h1>
-            <p
-              v-if="task.description"
-              class="body-md task-desc"
+        <header class="view-header">
+          <CEyebrow>
+            <CBadge :variant="priorityVariant(task.priority)">
+              {{ t(`tasks.priorities.${task.priority}`) }}
+            </CBadge>
+            <CBadge
+              :variant="statusVariant(task.status)"
+              dot
             >
-              {{ task.description }}
-            </p>
-            <div class="task-meta">
-              <span>{{ t('tasks.lifecycle.createdRelative', { relative: formatRelative(task.created_at) }) }}</span>
-              <span v-if="task.closed_at">
-                · {{ t('tasks.closedAt', { date: formatDate(task.closed_at) }) }}
-              </span>
-              <span v-if="contractor || task.contractor_name">
-                · <RouterLink
-                  v-if="contractor"
-                  :to="{ name: 'contractor-detail', params: { id: contractor.id } }"
-                  class="contractor-link"
-                >🔧 {{ contractor.name }}</RouterLink>
-                <span
-                  v-else
-                  class="contractor-link contractor-link--text"
-                >🔧 {{ task.contractor_name }}</span>
-              </span>
-            </div>
+              {{ t(`tasks.statuses.${task.status}`) }}
+            </CBadge>
+            {{ t('page.eyebrows.taskDetail') }}
+          </CEyebrow>
+          <h1 class="display-md task-title">
+            {{ task.title }}
+          </h1>
+          <p
+            v-if="task.description"
+            class="body-md task-desc"
+          >
+            {{ task.description }}
+          </p>
+          <div class="task-meta">
+            <span>{{ t('tasks.lifecycle.createdRelative', { relative: formatRelative(task.created_at) }) }}</span>
+            <span v-if="task.closed_at">
+              · {{ t('tasks.closedAt', { date: formatDate(task.closed_at) }) }}
+            </span>
+            <span v-if="contractor || task.contractor_name">
+              · <RouterLink
+                v-if="contractor"
+                :to="{ name: 'contractor-detail', params: { id: contractor.id } }"
+                class="contractor-link"
+              >🔧 {{ contractor.name }}</RouterLink>
+              <span
+                v-else
+                class="contractor-link contractor-link--text"
+              >🔧 {{ task.contractor_name }}</span>
+            </span>
           </div>
-        </CCard>
+        </header>
 
         <!-- Lifecycle timeline -->
         <h2 class="section-title title-sm">
@@ -300,7 +282,7 @@ function dotClass(variant?: TimelineEvent['variant']): string {
               </div>
               <p
                 v-if="ev.detail"
-                class="body-sm event-detail"
+                class="body-xs event-detail"
               >
                 {{ ev.detail }}
               </p>
@@ -308,7 +290,7 @@ function dotClass(variant?: TimelineEvent['variant']): string {
               <RouterLink
                 v-if="ev.key === 'assigned_contractor' && contractor"
                 :to="{ name: 'contractor-detail', params: { id: contractor.id } }"
-                class="contractor-link body-sm"
+                class="contractor-link body-xs"
               >
                 {{ contractor.email || contractor.phone || '' }}
               </RouterLink>
@@ -319,7 +301,7 @@ function dotClass(variant?: TimelineEvent['variant']): string {
         <!-- Reopening indicator for closed tasks -->
         <div
           v-if="task.status === 'closed'"
-          class="reopen-hint body-sm"
+          class="reopen-hint body-xs"
         >
           <CIconRefresh
             width="13"
@@ -340,25 +322,6 @@ function dotClass(variant?: TimelineEvent['variant']): string {
   padding: 0;
   overflow: hidden;
   margin-bottom: var(--space-6);
-}
-
-.prio-bar {
-  width: 4px;
-  flex-shrink: 0;
-}
-
-.task-header-body {
-  flex: 1;
-  padding: var(--space-4) var(--space-5);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.task-header-badges {
-  display: flex;
-  gap: var(--space-2);
-  flex-wrap: wrap;
 }
 
 .task-title { margin: 0; }
@@ -453,13 +416,6 @@ function dotClass(variant?: TimelineEvent['variant']): string {
   font-weight: var(--fw-medium);
 }
 .contractor-link:hover { text-decoration: underline; }
-
-/* ── Breadcrumb link ─────────────────────────────────────────────── */
-.breadcrumb-link {
-  color: inherit;
-  text-decoration: none;
-}
-.breadcrumb-link:hover { text-decoration: underline; }
 
 /* ── Reopen hint ─────────────────────────────────────────────────── */
 .reopen-hint {

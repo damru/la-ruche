@@ -1,4 +1,5 @@
 # Rust
+backend/.env
 backend/.sqlx/
 backend/target/
 backend/**/*.rs.bk
@@ -20,3 +21,12 @@ docs/review-screenshots/*.png
 # OS
 .DS_Store
 Thumbs.db
+
+# Claude
+.claude/worktrees/**
+
+# MemPalace per-project files (issue #185)
+mempalace.yaml
+entities.json
+# Added by code-review-graph
+.code-review-graph/

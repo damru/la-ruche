@@ -152,7 +152,7 @@ withDefaults(defineProps<{
 }
 
 .auth-brand__sub {
-  font-size: 14px;
+  font-size: var(--text-md);
   color: rgba(255, 255, 255, 0.78);
   line-height: 1.6;
 }

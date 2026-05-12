@@ -122,7 +122,7 @@ pub async fn update(
 
     input
         .validate()
-        .map_err(|e| AppError::Validation(e.to_string()))?;
+        .map_err(|_| AppError::validation_code("errors.building.invalid_payload"))?;
 
     let row = db::building::update(
         &state.pool,
@@ -225,7 +225,7 @@ pub async fn create_key(
     require_manager(&auth)?;
     input
         .validate()
-        .map_err(|e| AppError::Validation(e.to_string()))?;
+        .map_err(|_| AppError::validation_code("errors.allocation_keys.invalid_payload"))?;
 
     let row = db::allocation_key::create(
         &state.pool,
@@ -256,7 +256,7 @@ pub async fn update_key(
     require_manager(&auth)?;
     input
         .validate()
-        .map_err(|e| AppError::Validation(e.to_string()))?;
+        .map_err(|_| AppError::validation_code("errors.allocation_keys.invalid_payload"))?;
 
     let row = db::allocation_key::update(
         &state.pool,
@@ -351,7 +351,9 @@ pub async fn set_key_shares(
     let mut parsed: Vec<(Uuid, i32)> = Vec::with_capacity(body.shares.len());
     for item in &body.shares {
         if item.share_value < 0 {
-            return Err(AppError::Validation("share_value must be >= 0".into()));
+            return Err(AppError::validation_code(
+                "errors.allocation_keys.share_value_negative",
+            ));
         }
         parsed.push((item.unit_id, item.share_value));
     }
@@ -362,10 +364,9 @@ pub async fn set_key_shares(
         .ok_or(AppError::NotFound)?;
     let shares_sum: i32 = parsed.iter().map(|(_, v)| v).sum();
     if shares_sum > building.shares_total {
-        return Err(AppError::Validation(format!(
-            "Sum of shares ({}) exceeds building total ({})",
-            shares_sum, building.shares_total
-        )));
+        return Err(AppError::validation_code(
+            "errors.allocation_keys.shares_exceed_total",
+        ));
     }
 
     for (unit_id, share_value) in parsed {

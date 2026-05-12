@@ -1,10 +1,13 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import CLegalDescription from '@/components/atoms/CLegalDescription.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
-import CPageError from '@/components/molecules/CPageError.vue'
+import CLegalNotice from '@/components/molecules/CLegalNotice.vue'
+import CLegalCard from '@/components/molecules/CLegalCard.vue'
+import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import { buildingApi } from '@/api'
@@ -17,6 +20,8 @@ const { t } = useI18n()
 const form = ref<Partial<Building>>({})
 const feedback = useFormFeedback()
 const saving = ref(false)
+
+watch(form, () => feedback.reset(), { deep: true })
 
 async function loadBuilding() {
   const res = await buildingApi.get()
@@ -37,7 +42,7 @@ async function saveBuilding() {
   }
 }
 
-const { loading, error, reload } = usePageLoader(loadBuilding, t('common.loadError'))
+const { loading, error, reload } = usePageLoader(loadBuilding)
 onMounted(reload)
 </script>
 
@@ -47,15 +52,9 @@ onMounted(reload)
       <template #left>
         <div class="topbar-breadcrumb">
           {{ form.name ?? '...' }}
-          <CIconChevronRight
-            width="14"
-            height="14"
-          />
+          <CIconChevronRight />
           <span>{{ t('nav.groups.residence') }}</span>
-          <CIconChevronRight
-            width="14"
-            height="14"
-          />
+          <CIconChevronRight />
           <span>{{ t('nav.residence-info') }}</span>
         </div>
       </template>
@@ -69,84 +68,58 @@ onMounted(reload)
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
-        <div class="view-header">
-          <div>
-            <h1 class="display-md">
-              {{ t('nav.residence-info') }}
-            </h1>
-            <p
-              class="body-md"
-              style="color:var(--color-on-surface-variant)"
-            >
-              {{ t('settings.building.subtitle') }}
-            </p>
-          </div>
-        </div>
+        <header class="view-header">
+          <CEyebrow>
+            {{ t('page.eyebrows.building') }}
+          </CEyebrow>
+          <h1 class="display-md">
+            {{ t('nav.residence-info') }}
+          </h1>
+          <p
+            class="body-md"
+            style="color:var(--color-on-surface-variant)"
+          >
+            {{ t('settings.building.subtitle') }}
+          </p>
+        </header>
 
         <CCard>
           <h2 class="section-title">
             {{ t('settings.building.title') }}
           </h2>
           <div class="form-grid-2col">
-            <div class="field">
-              <label class="field-label">{{ t('settings.building.name') }}</label>
-              <input
-                v-model="form.name"
-                class="field-input"
-                @input="feedback.reset()"
-              />
-            </div>
-            <div class="field">
-              <label class="field-label">{{ t('settings.building.siret') }}</label>
-              <input
-                v-model="form.manager_siret"
-                class="field-input"
-                @input="feedback.reset()"
-              />
-            </div>
-            <div class="field field--full">
-              <label class="field-label">{{ t('addressAutocomplete.addressLine1') }}</label>
-              <input
-                v-model="form.address_line1"
-                class="field-input"
-                @input="feedback.reset()"
-              />
-            </div>
-            <div class="field">
-              <label class="field-label">{{ t('addressAutocomplete.postalCode') }}</label>
-              <input
-                v-model="form.postal_code"
-                class="field-input"
-                @input="feedback.reset()"
-              />
-            </div>
-            <div class="field">
-              <label class="field-label">{{ t('addressAutocomplete.city') }}</label>
-              <input
-                v-model="form.city"
-                class="field-input"
-                @input="feedback.reset()"
-              />
-            </div>
-            <div class="field">
-              <label class="field-label">{{ t('settings.building.sharesTotal') }}</label>
-              <input
-                v-model="form.shares_total"
-                type="number"
-                step="1"
-                class="field-input"
-                @input="feedback.reset()"
-              />
-            </div>
-            <div class="field">
-              <label class="field-label">{{ t('settings.building.bylawsDate') }}</label>
-              <input
-                v-model="form.bylaws_date"
-                type="date"
-                class="field-input"
-                @input="feedback.reset()"
-              />
-            </div>
+            <CFormInput
+              v-model="form.name"
+              :label="t('settings.building.name')"
+            />
+            <CFormInput
+              v-model="form.manager_siret"
+              :label="t('settings.building.siret')"
+            />
+            <CFormInput
+              v-model="form.address_line1"
+              :label="t('addressAutocomplete.addressLine1')"
+              class="field--full"
+            />
+            <CFormInput
+              v-model="form.postal_code"
+              :label="t('addressAutocomplete.postalCode')"
+            />
+            <CFormInput
+              v-model="form.city"
+              :label="t('addressAutocomplete.city')"
+            />
+            <CFormInput
+              v-model="form.shares_total"
+              :label="t('settings.building.sharesTotal')"
+              type="number"
+              :step="1"
+            />
+            <CFormInput
+              v-model="form.bylaws_date"
+              :label="t('settings.building.bylawsDate')"
+              type="date"
+            />
           </div>
           <div class="form-actions">
             <CBtn
@@ -164,16 +137,16 @@ onMounted(reload)
           </div>
         </CCard>
 
-        <CCard>
+        <CLegalCard>
           <h2 class="section-title">
             {{ t('settings.building.legalData') }}
           </h2>
-          <p
-            class="body-sm"
-            style="color:var(--color-on-surface-variant); margin-bottom:12px"
-          >
-            <strong>⚖️ Art. 18 loi 10/07/1965</strong> — {{ t('settings.building.legalText') }}
-          </p>
+          <CLegalNotice>
+            <CLegalDescription
+              title="Art. 18 loi n°65-557 du 10 juillet 1965"
+              :summary="t('settings.building.legalText')"
+            />
+          </CLegalNotice>
           <div class="form-actions">
             <CBtn variant="secondary">
               <CIconDownload
@@ -192,7 +165,7 @@ onMounted(reload)
               {{ t('settings.downloadBylaws') }}
             </CBtn>
           </div>
-        </CCard>
+        </CLegalCard>
       </template>
     </div>
   </div>

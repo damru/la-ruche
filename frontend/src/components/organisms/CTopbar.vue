@@ -38,6 +38,9 @@
 
 .c-topbar__right {
   flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
 }
 
 .c-topbar :deep(.topbar-breadcrumb) {
@@ -57,8 +60,8 @@
 
 .c-topbar :deep(.topbar-breadcrumb svg) {
   flex: 0 0 auto;
-  width: 14px;
-  height: 14px;
+  width: var(--icon-xs);
+  height: var(--icon-xs);
   color: var(--color-outline-variant);
 }
 
@@ -77,26 +80,11 @@
   color: var(--color-on-surface-variant);
 }
 
-/* Theme toggle button */
-.c-topbar__theme-btn {
-  width: 38px;
-  height: 38px;
-  min-width: 38px;
-  min-height: 38px;
-  border-radius: var(--radius-full);
-  background: var(--color-surface-container);
-  color: var(--color-on-surface-variant);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  cursor: pointer;
-  transition: background var(--transition-fast);
+.c-topbar :deep(.topbar-breadcrumb-link) {
+  color: inherit;
+  text-decoration: none;
 }
-
-.c-topbar__theme-btn:hover {
-  background: var(--color-surface-container-high);
-}
+.c-topbar :deep(.topbar-breadcrumb-link:hover) { text-decoration: underline; }
 
 /* ── Mobile ──────────────────────────────────────────────────────── */
 @media (max-width: 640px) {

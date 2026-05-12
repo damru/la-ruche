@@ -57,6 +57,7 @@
     "loadError": "Impossible de charger les données",
     "retry": "Réessayer",
     "requiredAria": "obligatoire",
+    "remove": "Retirer",
     "fileDropzoneAria": "Zone de dépôt de fichier",
     "fileDropzoneText": "Glissez un fichier ici",
     "fileDropzoneHint": "ou cliquez pour parcourir · max {size} Mo",
@@ -76,7 +77,30 @@
     "forbidden": "Accès refusé",
     "notFound": "Page introuvable",
     "contractors": "Catalogue prestataires",
-    "contractorDetail": "Fiche prestataire"
+    "contractorDetail": "Fiche prestataire",
+    "eyebrows": {
+      "dashboard": "Pilotage de la résidence",
+      "budget": "Prévisions et appels",
+      "assemblies": "Calendrier des séances",
+      "assemblyDetail": "Dossier de séance",
+      "consultations": "Votes et décisions collectives",
+      "claims": "Déclarations et remboursements",
+      "contracts": "Marchés et échéances",
+      "documents": "Bibliothèque partagée",
+      "maintenance": "Historique d'entretien",
+      "reports": "Incidents et anomalies",
+      "tasks": "Suivi des interventions",
+      "taskDetail": "Historique de la tâche",
+      "contractors": "Annuaire des prestataires",
+      "contractorDetail": "Coordonnées et historique",
+      "allocationKeys": "Bases de répartition",
+      "building": "Données de l'immeuble",
+      "residents": "Lots et occupants",
+      "registry": "Référentiel lots et tantièmes",
+      "profile": "Préférences du compte",
+      "myCharges": "Vue copropriétaire",
+      "unitCharges": "Historique d'un lot"
+    }
   },
   "addressAutocomplete": {
     "searchLabel": "Rechercher une adresse",
@@ -257,12 +281,14 @@
     },
     "typeLabel": {
       "annual": "AG Ordinaire",
-      "extraordinary": "AG Extraordinaire"
+      "annualShort": "AG",
+      "extraordinary": "AG Extraordinaire",
+      "extraordinaryShort": "AGE"
     },
     "statuses": {
       "draft": "Brouillon",
       "called": "Convoquée",
-      "held": "Tenue",
+      "ongoing": "En séance",
       "closed": "Close"
     },
     "resolutionStatuses": {
@@ -271,14 +297,31 @@
       "pending": "En attente"
     },
     "call": "Convoquer l'AG",
+    "start": "Démarrer l'AG",
+    "startingAction": "AG en séance",
+    "bannerOngoing": "AG en cours · Votes en séance",
+    "bannerOngoingSub": "{resolved} résolutions votées · {pending} en attente",
+    "editResolution": "Modifier",
+    "resolutionDescriptionOnly": "Titre et règle de vote verrouillés pendant la séance.",
+    "createArt24": "Créer sous Art. 24",
+    "createArt25": "Créer sous Art. 25",
+    "createArt24Title": "Créer une résolution — Article 25-1",
+    "createArt24Message": "Crée une deuxième résolution pour \"{title}\" afin de permettre un second vote à la majorité simple (Article 24 de la loi de 1965).",
+    "createArt25Title": "Créer une résolution — Article 26-1",
+    "createArt25Message": "Crée une deuxième résolution pour \"{title}\" afin de permettre un second vote à la majorité absolue (Article 25 de la loi de 1965).",
+    "waiting": "En attente",
+    "callReady": "La convocation est prête à partir dès qu'au moins une pièce de convocation est jointe.",
     "close": "Clore l'AG",
+    "closedAction": "AG close",
     "calledAt": "Convoquée le {date}",
     "meetingDate": "Date de l'AG",
     "location": "Lieu",
     "agenda": "Ordre du jour",
     "resolutions": "Résolutions",
+    "empty": "Aucune assemblée générale à afficher.",
+    "resolutionsEmpty": "Aucune résolution à l'ordre du jour pour cette assemblée.",
     "resolutionCount": "{count} résolution à l'ordre du jour | {count} résolutions à l'ordre du jour",
-    "addResolution": "Ajouter résolution",
+    "addResolution": "Ajouter une résolution",
     "filterUpcoming": "À venir",
     "filterClosed": "Closes",
     "statResolutions": "résolution | résolutions",
@@ -287,6 +330,18 @@
     "bannerClosed": "AG close · PV disponible",
     "bannerCalled": "AG convoquée · En attente de tenue",
     "depositMinutes": "Déposer le PV",
+    "documents": {
+      "title": "Pièces de l'AG",
+      "notice": "Convocation",
+      "attachment": "Annexe",
+      "empty": "Aucune pièce de convocation liée.",
+      "uploadTitle": "Ajouter une pièce AG",
+      "uploadType": "Type de pièce",
+      "uploadFile": "Fichier",
+      "uploadAction": "Ajouter une pièce",
+      "minutesPending": "PV non déposé",
+      "minutesReady": "PV déposé"
+    },
     "info": "Informations",
     "infoFields": {
       "type": "Type",
@@ -296,10 +351,26 @@
       "resolutions": "Résolutions"
     },
     "presenceQuorum": "Présence & Quorum",
+    "participants": "Participants",
+    "attendanceAction": "Mettre à jour la présence",
+    "attendanceTitle": "Feuille de présence",
+    "attendanceHint": "Chaque copropriétaire doit être marqué présent, représenté, en correspondance ou absent.",
+    "attendanceRepresentative": "Représenté par",
+    "attendanceSummary": "{count} copropriétaires présents, représentés ou en correspondance",
+    "attendanceModes": {
+      "present": "Présent",
+      "proxy": "Mandat",
+      "correspondence": "Correspondance",
+      "absent": "Absent"
+    },
     "sharesRepresented": "Tantièmes représentés",
     "attendeesDetail": "{count} copropriétaires présents ou représentés",
-    "quorumOk": "Quorum atteint — AG peut délibérer valablement",
+    "quorumOk": "Quorum atteint",
+    "quorumOkDetail": "L'assemblée peut valablement délibérer.",
     "quorumKo": "Quorum insuffisant",
+    "quorumKoDetail": "L'assemblée ne peut pas valablement délibérer. Seuil nécessaire: {threshold} copropriétaire.",
+    "sharesTotalMismatchTitle": "Incohérence des tantièmes",
+    "sharesTotalMismatchDetail": "Le total AG ({actual}) ne correspond pas au total de l'immeuble ({expected}). Rééquilibrez la clé générale avant de poursuivre.",
     "mandate": "Mandat",
     "newResolution": "Nouvelle résolution",
     "newResolutionSub": "Ajoutez une résolution à l'ordre du jour de cette assemblée.",
@@ -319,13 +390,44 @@
       "in_favor": "Pour",
       "against": "Contre",
       "abstain": "Abstention",
+      "notSet": "— Non saisi",
       "submit": "Voter",
-      "myVote": "Mon vote",
+      "myVote": "Vote",
+      "enterVotes": "Saisir les votes",
+      "enterVotesTitle": "Votes — {title}",
+      "noAttendees": "Aucun participant enregistré. Renseignez d'abord la feuille de présence.",
+      "voteSaved": "Votes enregistrés",
+      "eligibleSecondVote25_1": "Résolution rejetée — éligible à un second vote à la majorité de l'art. 25-1",
+      "eligibleSecondVote26_1": "Résolution rejetée — éligible à un second vote à la majorité de l'art. 26-1",
+      "fillAllFor": "Tout Pour",
+      "fillAllAgainst": "Tout Contre",
       "results": "Résultats du vote",
       "tally": "Dépouillement",
       "pendingVote": "Vote non encore enregistré",
       "passed": "Résolution adoptée",
       "rejected": "Résolution rejetée",
+      "art25_1_title": "Art. 25-1 — Second vote possible",
+      "art26_1_title": "Art. 26-1 — Second vote possible",
+      "explanations": {
+        "simple_majority": {
+          "passed": "Majorité article 24 (seuil : {threshold} t.)",
+          "rejected": "Majorité article 24 non atteinte (seuil : {threshold} t.)"
+        },
+        "absolute_majority": {
+          "passed": "Majorité article 25 (seuil : {threshold} t.)",
+          "rejected": "Majorité article 25 non atteinte (seuil : {threshold} t.)"
+        },
+        "absolute_majority_second_vote": "Plus d'un tiers des tantièmes favorables (seuil : {threshold} t.): l'assemblée peut immédiatement procéder à un second vote à la majorité de l'art. 24.",
+        "double_majority_second_vote": "Plus de la moitié des tantièmes favorables (seuil : {threshold} t.) : l'assemblée peut immédiatement procéder à un second vote à la majorité absolue de l'art. 25.",
+        "double_majority": {
+          "passed": "Majorité article 26 (seuil tantièmes : {threshold} t. + majorité en nombre)",
+          "rejected": "Majorité article 26 non atteinte (seuil tantièmes : {threshold} t. + majorité en nombre)"
+        },
+        "unanimity": {
+          "passed": "Unanimité atteinte ({threshold} tantièmes requis)",
+          "rejected": "Unanimité non atteinte ({threshold} tantièmes requis)"
+        }
+      },
       "types": {
         "simple_majority": "Art. 24 — Majorité simple",
         "absolute_majority": "Art. 25 — Majorité absolue",
@@ -342,7 +444,36 @@
     "uploadMinutes": "Déposer le PV signé",
     "present": "présents",
     "tantiemesShares": "% des tantièmes",
-    "legalWarning": "Délai légal de convocation : 21 jours minimum (art. 9 décret 17/03/1967)"
+    "legalWarning": "Délai légal de convocation : 21 jours minimum (art. 9 décret 17/03/1967)",
+    "legalCard": {
+      "descriptions": {
+        "simple_majority": "Décision adoptée à la majorité des voix exprimées des copropriétaires présents, représentés ou votant par correspondance. Les abstentions ne sont pas comptabilisées dans le calcul de la majorité.",
+        "absolute_majority": "Décision adoptée à la majorité des voix de tous les copropriétaires du syndicat, qu'ils soient présents, représentés, absents ou votant par correspondance.",
+        "absolute_majority_second_vote": "Si la résolution relevant de l'article 25 recueille au moins un tiers des voix de tous les copropriétaires, l'assemblée peut procéder immédiatement à un second vote à la majorité simple de l'article 24.",
+        "double_majority": "Décision adoptée à la majorité des membres du syndicat représentant au moins les deux tiers des voix de tous les copropriétaires.",
+        "unanimity": "Décision réservée aux cas les plus structurants et nécessitant l'accord de tous les copropriétaires."
+      },
+      "simple_majority": {
+        "linkLabel": "Article 24 de la loi n°65-557 du 10 juillet 1965",
+        "linkHref": "https://www.legifrance.gouv.fr/loda/article_lc/LEGIARTI000051749514"
+      },
+      "absolute_majority": {
+        "linkLabel": "Article 25 de la loi n°65-557 du 10 juillet 1965",
+        "linkHref": "https://www.legifrance.gouv.fr/loda/article_lc/LEGIARTI000051749507"
+      },
+      "absolute_majority_second_vote": {
+        "linkLabel": "Article 25-1 de la loi n°65-557 du 10 juillet 1965",
+        "linkHref": "https://www.legifrance.gouv.fr/loda/article_lc/LEGIARTI000049398359/"
+      },
+      "double_majority": {
+        "linkLabel": "Article 26 de la loi n°65-557 du 10 juillet 1965",
+        "linkHref": "https://www.legifrance.gouv.fr/loda/article_lc/LEGIARTI000050623612"
+      },
+      "unanimity": {
+        "linkLabel": "Unanimité",
+        "linkHref": "#"
+      }
+    }
   },
   "budget": {
     "title": "Budget & Charges",
@@ -408,6 +539,7 @@
       "other": "Autre"
     },
     "shares": "Tantièmes",
+    "sharesAmount": "{amount} t.",
     "generalShares": "Tantièmes généraux",
     "generalSharesHint": "Tantièmes affectés à la clé Charges Générales. Les clés spéciales se configurent dans Clés de répartition.",
     "owner": "Propriétaire",
@@ -700,7 +832,7 @@
     "modifyVote": "Modifier mon vote",
     "myResponse": "Ma réponse",
     "results": "Résultats",
-    "close": "Terminer",
+    "close": "Clore le vote",
     "noOpen": "Aucune consultation en cours",
     "noClosed": "Aucune consultation fermée",
     "closeAction": "Terminer",
@@ -750,7 +882,7 @@
     "unitLabel": "Lot {number}",
     "noUnit": "Parties communes",
     "by": "Par",
-    "titleLabel": "Titre *",
+    "titleLabel": "Titre",
     "descriptionLabel": "Description",
     "unitLabel2": "Lot concerné",
     "unitPlaceholder": "Sélectionner un lot (optionnel)",
@@ -1124,16 +1256,97 @@
   "errors": {
     "title": "Erreur",
     "unknown": "Erreur inconnue",
-    "UNAUTHORIZED": "Identifiants incorrects ou session expirée",
-    "TOKEN_INVALID": "Session expirée, veuillez vous reconnecter",
-    "FORBIDDEN": "Accès interdit",
-    "NOT_FOUND": "Ressource introuvable",
-    "VALIDATION_ERROR": "Données invalides",
-    "BAD_REQUEST": "Requête invalide",
-    "CONFLICT": "Conflit de données",
-    "DB_ERROR": "Erreur base de données",
-    "STORAGE_ERROR": "Erreur de stockage",
-    "INTERNAL_ERROR": "Erreur interne du serveur"
+    "unauthorized": "Identifiants incorrects ou session expirée",
+    "token_invalid": "Session expirée, veuillez vous reconnecter",
+    "forbidden": "Accès interdit",
+    "not_found": "Ressource introuvable",
+    "validation_error": "Données invalides",
+    "bad_request": "Requête invalide",
+    "conflict": "Conflit de données",
+    "db_error": "Erreur base de données",
+    "storage_error": "Erreur de stockage",
+    "internal_error": "Erreur interne du serveur",
+    "building": {
+      "invalid_payload": "Les informations de l'immeuble sont invalides."
+    },
+    "allocation_keys": {
+      "invalid_payload": "La clé de répartition est invalide.",
+      "share_value_negative": "Les tantièmes ne peuvent pas être négatifs.",
+      "shares_exceed_total": "La somme des tantièmes dépasse le total de la copropriété.",
+      "general_key_protected": "La clé Charges Générales est obligatoire et ne peut pas être supprimée (art. 10 loi 1965)."
+    },
+    "meetings": {
+      "invalid_meeting_payload": "Les informations de l'assemblée sont invalides.",
+      "invalid_resolution_payload": "Les informations de la résolution sont invalides.",
+      "invalid_vote_type": "La règle de vote est invalide.",
+      "unit_general_shares_missing": "Le lot sélectionné est introuvable ou n'a pas de tantièmes généraux.",
+      "meeting_not_mutable": "Cette assemblée n'est plus modifiable.",
+      "notice_document_required": "La convocation ne peut pas être envoyée sans au moins un document de convocation joint.",
+      "not_in_draft_status": "Cette assemblée n'est plus au statut brouillon.",
+      "attendance_locked": "La feuille de présence ne peut plus être modifiée une fois l'assemblée tenue ou clôturée.",
+      "not_in_called_status": "Cette assemblée n'est pas au statut convoquée.",
+      "not_in_ongoing_status": "Cette assemblée n'est pas en cours de séance."
+    },
+    "auth": {
+      "invalid_login_payload": "Les identifiants fournis sont incomplets ou invalides.",
+      "invalid_reset_request_payload": "La demande de réinitialisation est invalide.",
+      "invalid_reset_confirm_payload": "Le nouveau mot de passe ou le jeton est invalide.",
+      "invalid_invite_accept_payload": "Les informations d'acceptation de l'invitation sont invalides."
+    },
+    "consultations": {
+      "title_required": "Le titre de la consultation est obligatoire.",
+      "min_choices": "Au moins deux choix sont requis.",
+      "choice_label_required": "Chaque choix doit avoir un libellé.",
+      "visible_roles_required": "Au moins un rôle visible doit être sélectionné.",
+      "invalid_visible_role": "Un des rôles visibles est invalide.",
+      "not_found_or_closed": "La consultation est introuvable, clôturée ou l'option sélectionnée ne lui appartient pas."
+    },
+    "contractor": {
+      "invalid_file_extension": "L'extension du fichier est invalide."
+    },
+    "contractors": {
+      "name_required": "Le nom du prestataire est obligatoire."
+    },
+    "documents": {
+      "invalid_upload_request": "La demande d'envoi de document est invalide.",
+      "invalid_extension": "L'extension du document est invalide.",
+      "invalid_confirm_request": "La confirmation du document est invalide."
+    },
+    "logbook": {
+      "title_required": "Le titre de l'entrée du carnet est obligatoire."
+    },
+    "onboarding": {
+      "invalid_payload": "Les informations de démarrage sont invalides.",
+      "shares_total_positive": "Les tantièmes totaux doivent être strictement positifs.",
+      "already_initialized": "Cette instance est déjà initialisée."
+    },
+    "reports": {
+      "title_required": "Le titre du signalement est obligatoire.",
+      "invalid_status": "Le statut du signalement est invalide.",
+      "invalid_priority": "La priorité de la tâche générée est invalide.",
+      "already_converted_to_task": "Ce signalement a déjà été converti en tâche."
+    },
+    "tasks": {
+      "title_required": "Le titre de la tâche est obligatoire.",
+      "invalid_status": "Le statut de la tâche est invalide.",
+      "invalid_priority": "La priorité de la tâche est invalide."
+    },
+    "units": {
+      "invalid_payload": "Les informations du lot sont invalides.",
+      "unit_number_archived": "Ce numéro est utilisé par un lot archivé — réactivez-le ou choisissez un autre numéro.",
+      "unit_number_exists": "Un lot avec ce numéro existe déjà."
+    },
+    "claims": {
+      "title_required": "Le titre du sinistre est obligatoire.",
+      "invalid_type": "Le type de sinistre est invalide.",
+      "invalid_status": "Le statut du sinistre est invalide.",
+      "published_at_required_for_natural_disaster": "La date de publication de l'arrêté est obligatoire pour une catastrophe naturelle.",
+      "published_at_only_for_natural_disaster": "La date de publication n'est autorisée que pour une catastrophe naturelle.",
+      "transmitted_before_reference_date": "La date de transmission ne peut pas être antérieure à la date légale de référence.",
+      "reimbursement_amount_positive": "Le montant remboursé doit être strictement positif.",
+      "reimbursement_requires_status": "Les champs de remboursement nécessitent un statut explicite.",
+      "reimbursement_only_for_closed": "Les champs de remboursement ne sont autorisés que pour les sinistres clôturés."
+    }
   },
   "format": {
     "currency": "{value} €",

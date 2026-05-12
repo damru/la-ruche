@@ -38,7 +38,7 @@
 
 **Gestion des propriétaires** — L'historique de propriété est tracé avec les dates de cession. Les résidents sont invités par lien tokenisé. L'anonymisation RGPD à la demande efface le nom tout en conservant les données comptables (10 ans, art. L123-22 Code de commerce). → EP-002
 
-**Assemblée Générale** — Cycle de vie complet d'une AG (brouillon → convoquée → tenue → clôturée), avec rappel du délai légal de convocation (21 jours, art. 9 décret 1967). Les résolutions sont typées par majorité (art. 24 / 25 / 26 / unanimité), le vote se fait par lot avec procurations, et les résultats sont calculés automatiquement. Le PV signé est déposé à la clôture. → EP-003
+**Assemblée Générale** — Cycle de vie complet d'une AG (brouillon → convoquée → tenue → clôturée), avec rappel du délai légal de convocation (21 jours, art. 9 décret 1967). Les résolutions sont typées par majorité (art. 24 / 25 / 26 / unanimité), le vote se fait par lot avec procurations, et les résultats sont calculés automatiquement. Le périmètre MVP couvre la préparation juridique de l'AG, le branchement des écrans sur l'API réelle, le dépôt du PV signé et la traçabilité simple de notification aux absents. → EP-003
 
 **Budget & Charges** — Budget prévisionnel par exercice découpé en lignes par clé de répartition. Les appels de fonds sont générés automatiquement au prorata des tantièmes. Le fonds travaux obligatoire (≥ 5%, art. 14-2 ALUR) est suivi sur un compte séparé. L'arrêté de comptes compare réalisé et prévisionnel. → EP-004
 
@@ -68,7 +68,7 @@
 
 **Paiement en ligne** — Les copropriétaires règlent leurs appels de fonds via une passerelle SEPA depuis l'interface. Un reçu PDF est généré à la confirmation. Les fonds sont versés sur le compte bancaire séparé de la copropriété (art. 18 loi 1965). → EP-016
 
-**Tenue d'AG** — Module dédié à la conduite de séance : désignation des rôles (président, secrétaire, scrutateurs), feuille de présence numérique avec calcul du quorum en temps réel, prise de notes collaborative par résolution, génération du projet de PV et circuit de validation avec signature numérique (délai légal : art. 17 décret 1967). → EP-013
+**Tenue d'AG** — Module dédié à la conduite de séance, explicitement hors MVP `EP-003` : désignation des rôles (président, secrétaire, scrutateurs), feuille de présence numérique avec calcul du quorum en temps réel, prise de notes collaborative par résolution, génération du projet de PV et circuit de validation avec signature numérique (délai légal : art. 17 décret 1967). → EP-013
 
 **Calendrier copropriété** — Calendrier partagé (mensuel / hebdomadaire / liste) centralisant AG, interventions prestataires et réunions du conseil, avec lien contextuel vers les entités correspondantes et export iCal. → EP-014
 
@@ -145,7 +145,7 @@
 | Migrations | SQLx migrate | ADR-001 |
 | Auth | JWT httpOnly + Argon2id + WebAuthn | ADR-002 |
 | Structure | Single crate modulaire | ADR-003 |
-| Frontend | Vue 3 + Vite + TypeScript | DDR-003 |
+| Frontend | Vue 3 + Vite + TypeScript + Tailwind CSS (couche utilitaire) | DDR-003 |
 | Typographie | Fraunces + DM Sans + JetBrains Mono | DDR-001 |
 | Design | "The Modern Registry" — lavande/charcoal | DDR-002 |
 | Stockage | S3-compatible (MinIO self-hosted) | schéma DB |

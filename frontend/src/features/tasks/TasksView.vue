@@ -9,12 +9,14 @@ import { useAutoClose } from '@/composables/useAutoClose'
 import CAlert from '@/components/atoms/CAlert.vue'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
-import CDocumentLinkActionModal from '@/components/molecules/CDocumentLinkActionModal.vue'
+import CDocumentLinkActionModal from '@/components/organisms/CDocumentLinkActionModal.vue'
 import CCard from '@/components/molecules/CCard.vue'
+import CMetaLine from '@/components/molecules/CMetaLine.vue'
+import CMetaItem from '@/components/molecules/CMetaItem.vue'
 import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
-import CLinkedDocumentsModal from '@/components/molecules/CLinkedDocumentsModal.vue'
+import CLinkedDocumentsModal from '@/components/organisms/CLinkedDocumentsModal.vue'
 import CModal from '@/components/molecules/CModal.vue'
-import CPageError from '@/components/molecules/CPageError.vue'
+import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import { buildingApi, contractorsApi, documentsApi, tasksApi, usersApi } from '@/api'
@@ -195,6 +197,13 @@ const defaultForm = () => ({
   description: '',
   priority: 'normal' as string,
 })
+
+const taskPriorityOptions = computed(() =>
+  (['low', 'normal', 'high', 'urgent'] as const).map(p => ({
+    value: p,
+    label: t(`tasks.priorities.${p}`),
+  })),
+)
 const taskForm = ref(defaultForm())
 const selectedTaskDocuments = ref<File[]>([])
 const taskDocumentInputRef = ref<HTMLInputElement | null>(null)
@@ -220,7 +229,7 @@ async function loadData() {
   allContractors.value = contractorsRes.data
 }
 
-const { loading, error, reload } = usePageLoader(loadData, t('common.loadError'))
+const { loading, error, reload } = usePageLoader(loadData)
 onMounted(reload)
 
 // ── Derived ───────────────────────────────────────────────────────
@@ -415,7 +424,7 @@ async function openTaskDocuments(task: Task) {
     const response = await tasksApi.listDocuments(task.id)
     taskDocuments.value = response.data
   } catch (err) {
-    pageError.value = toErrorMessage(err, t('common.error'))
+    pageError.value = toErrorMessage(err)
     taskDocumentsTarget.value = null
   } finally {
     loadingTaskDocuments.value = false
@@ -427,7 +436,7 @@ async function downloadTaskDocument(documentId: string) {
     const response = await documentsApi.getDownloadUrl(documentId)
     window.open(response.data.url, '_blank', 'noopener')
   } catch (err) {
-    pageError.value = toErrorMessage(err, t('common.error'))
+    pageError.value = toErrorMessage(err)
   }
 }
 
@@ -554,7 +563,7 @@ async function saveTask() {
     taskFeedback.setSuccess(t('common.saved'))
     scheduleTaskClose(() => { showTaskModal.value = false; reload() })
   } catch (err) {
-    taskFeedback.setError(toErrorMessage(err, t('common.error')))
+    taskFeedback.setError(toErrorMessage(err))
   } finally {
     savingTask.value = false
     uploadingTaskDocuments.value = false
@@ -588,7 +597,7 @@ async function confirmCloseTask() {
     closeFeedback.setSuccess(t('tasks.closeSuccess'))
     scheduleCloseTask(() => { closingTask.value = null; reload() })
   } catch (err) {
-    closeFeedback.setError(toErrorMessage(err, t('common.error')))
+    closeFeedback.setError(toErrorMessage(err))
   } finally {
     closingInProgress.value = false
   }
@@ -624,7 +633,7 @@ async function confirmDeleteTask() {
     deleteTaskFeedback.setSuccess(t('tasks.deleteSuccess'))
     scheduleDeleteTask(() => { showDeleteModal.value = false; reload() })
   } catch (err) {
-    deleteTaskFeedback.setError(toErrorMessage(err, t('common.error')))
+    deleteTaskFeedback.setError(toErrorMessage(err))
   } finally {
     deletingTask.value = false
   }
@@ -658,7 +667,7 @@ async function confirmRevoke() {
     revokeFeedback.setSuccess(t('tasks.revokeSuccess'))
     scheduleRevokeTask(() => { revokingTask.value = null; reload() })
   } catch (err) {
-    revokeFeedback.setError(toErrorMessage(err, t('common.error')))
+    revokeFeedback.setError(toErrorMessage(err))
   } finally {
     revoking.value = false
   }
@@ -686,7 +695,7 @@ async function confirmReopen() {
     reopenFeedback.setSuccess(t('tasks.reopenSuccess'))
     scheduleReopenTask(() => { reopeningTask.value = null; reload() })
   } catch (err) {
-    reopenFeedback.setError(toErrorMessage(err, t('common.error')))
+    reopenFeedback.setError(toErrorMessage(err))
   } finally {
     reopening.value = false
   }
@@ -705,7 +714,7 @@ async function generateToken(task: Task) {
     vendorLinks.value[task.id] = { url, expires_at: res.data.expires_at }
     await reload()
   } catch (err) {
-    pageError.value = toErrorMessage(err, t('common.error'))
+    pageError.value = toErrorMessage(err)
   } finally {
     generatingToken.value = null
   }
@@ -725,7 +734,7 @@ async function showVendorLink(task: Task) {
       : res.data.url
     vendorLinks.value[task.id] = { url, expires_at: res.data.expires_at }
   } catch (err) {
-    pageError.value = toErrorMessage(err, t('common.error'))
+    pageError.value = toErrorMessage(err)
   }
 }
 
@@ -744,7 +753,7 @@ async function copyVendorLink(taskId: string) {
       }
     }, VENDOR_LINK_COPY_FEEDBACK_DELAY_MS)
   } catch (err) {
-    pageError.value = toErrorMessage(err, t('common.error'))
+    pageError.value = toErrorMessage(err)
   }
 }
 
@@ -756,10 +765,7 @@ async function copyVendorLink(taskId: string) {
       <template #left>
         <div class="topbar-breadcrumb">
           {{ buildingName }}
-          <CIconChevronRight
-            width="14"
-            height="14"
-          />
+          <CIconChevronRight />
           <span>{{ t('tasks.title') }}</span>
         </div>
       </template>
@@ -783,19 +789,20 @@ async function copyVendorLink(taskId: string) {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
-        <div class="view-header">
-          <div>
-            <h1 class="display-md">
-              {{ t('tasks.title') }}
-            </h1>
-            <p
-              class="body-md"
-              style="color:var(--color-on-surface-variant)"
-            >
-              {{ t('tasks.activeSummary', { count: activeCount }) }}
-            </p>
-          </div>
-        </div>
+        <header class="view-header">
+          <CEyebrow>
+            {{ t('page.eyebrows.tasks') }}
+          </CEyebrow>
+          <h1 class="display-md">
+            {{ t('tasks.title') }}
+          </h1>
+          <p
+            class="body-md"
+            style="color:var(--color-on-surface-variant)"
+          >
+            {{ t('tasks.activeSummary', { count: activeCount }) }}
+          </p>
+        </header>
 
         <CAlert
           v-if="pageError"
@@ -830,173 +837,176 @@ async function copyVendorLink(taskId: string) {
             v-for="task in tasks"
             :key="task.id"
             :shadow="!isTerminal(task.status)"
-            :class="['activity-card', 'activity-card--interactive', 'task-card', { 'card--terminated': isTerminal(task.status) }]"
-            role="link"
+            :class="['activity-card', 'task-card', { 'card--terminated': isTerminal(task.status) }]"
+            interactive
             tabindex="0"
             @click="openTaskDetail(task.id)"
             @keydown.enter.prevent="openTaskDetail(task.id)"
             @keydown.space.prevent="openTaskDetail(task.id)"
           >
             <div class="activity-card__header-row">
-                <h3 class="activity-card__title">
-                  {{ task.title }}
-                </h3>
-                <div class="activity-card__chips">
-                  <CBadge :variant="isTerminal(task.status) ? 'disabled' : priorityVariant(task.priority)">
-                    {{ t(`tasks.priorities.${task.priority}`) }}
-                  </CBadge>
-                  <CBadge
-                    :variant="isTerminal(task.status) ? 'disabled' : statusVariant(task.status)"
-                    dot
-                  >
-                    {{ t(`tasks.statuses.${task.status}`) }}
-                  </CBadge>
-                </div>
+              <h3 class="activity-card__title">
+                {{ task.title }}
+              </h3>
+              <CMetaLine class="flex-1 justify-end text-xs">
+                <CBadge :variant="isTerminal(task.status) ? 'disabled' : priorityVariant(task.priority)">
+                  {{ t(`tasks.priorities.${task.priority}`) }}
+                </CBadge>
+                <CBadge
+                  :variant="isTerminal(task.status) ? 'disabled' : statusVariant(task.status)"
+                  dot
+                >
+                  {{ t(`tasks.statuses.${task.status}`) }}
+                </CBadge>
+              </CMetaLine>
+            </div>
+
+            <div class="activity-card__stack">
+              <p
+                v-if="task.description"
+                class="body-xs"
+              >
+                {{ task.description }}
+              </p>
+
+              <div
+                v-if="task.document_count > 0"
+                class="activity-card__documents"
+              >
+                <button
+                  class="activity-card__line activity-card__documents-button"
+                  @click.stop="openTaskDocuments(task)"
+                >
+                  <CIconFile />
+                  {{ t('tasks.documentsCount', task.document_count) }}
+                </button>
               </div>
 
-              <div class="activity-card__stack">
-                <p
-                  v-if="task.description"
-                  class="activity-card__description"
+              <CMetaLine>
+                <CMetaItem
+                  v-if="hasAssignment(task)"
                 >
-                  {{ task.description }}
-                </p>
-
-                <div
-                  v-if="task.document_count > 0"
-                  class="activity-card__documents"
-                >
-                  <button
-                    class="activity-card__line activity-card__documents-button"
-                    @click.stop="openTaskDocuments(task)"
-                  >
-                    <CIconFile />
-                    {{ t('tasks.documentsCount', task.document_count) }}
-                  </button>
-                </div>
-
-                <div class="activity-card__meta">
-                  <span
-                    v-if="hasAssignment(task)"
-                    class="activity-card__line"
-                  >
+                  <template #icon>
                     <CIconWrench v-if="task.contractor_id || contractorDisplayName(task)" />
                     <CIconUser v-else />
-                    <RouterLink
-                      v-if="task.contractor_id && contractorDisplayName(task)"
-                      :to="{ name: 'contractor-detail', params: { id: task.contractor_id } }"
-                      class="task-card__meta-link"
-                      @click.stop
-                    >
-                      {{ contractorDisplayName(task) }}
-                    </RouterLink>
-                    <span v-else>
-                      {{ contractorDisplayName(task) ?? assignedUserName(task) }}
-                    </span>
+                  </template>
+                  <RouterLink
+                    v-if="task.contractor_id && contractorDisplayName(task)"
+                    :to="{ name: 'contractor-detail', params: { id: task.contractor_id } }"
+                    class="task-card__meta-link"
+                    @click.stop
+                  >
+                    {{ contractorDisplayName(task) }}
+                  </RouterLink>
+                  <span v-else>
+                    {{ contractorDisplayName(task) ?? assignedUserName(task) }}
                   </span>
-                  <span class="activity-card__line">
+                </CMetaItem>
+                <CMetaItem>
+                  <template #icon>
                     <CIconCalendar />
-                    {{ t('tasks.lifecycle.createdRelative', { relative: formatRelative(task.created_at) }) }}
-                  </span>
-                </div>
+                  </template>
+                  {{ t('tasks.lifecycle.createdRelative', { relative: formatRelative(task.created_at) }) }}
+                </CMetaItem>
+              </CMetaLine>
 
-                <div
-                  v-if="(contractorDisplayName(task) && !task.has_vendor_token && !isTerminal(task.status)) || task.has_vendor_token"
-                  class="activity-card__secondary-actions"
+              <div
+                v-if="(contractorDisplayName(task) && !task.has_vendor_token && !isTerminal(task.status)) || task.has_vendor_token"
+                class="activity-card__secondary-actions"
+              >
+                <CBtn
+                  v-if="contractorDisplayName(task) && !task.has_vendor_token && !isTerminal(task.status)"
+                  variant="ghost"
+                  size="sm"
+                  :disabled="generatingToken === task.id"
+                  :aria-label="t('tasks.generateToken')"
+                  @click.stop="generateToken(task)"
                 >
-                  <CBtn
-                    v-if="contractorDisplayName(task) && !task.has_vendor_token && !isTerminal(task.status)"
-                    variant="ghost"
-                    size="sm"
-                    :disabled="generatingToken === task.id"
-                    :aria-label="t('tasks.generateToken')"
-                    @click.stop="generateToken(task)"
-                  >
-                    <CIconLink />
-                    {{ t('tasks.generateToken') }}
-                  </CBtn>
-                  <CBtn
-                    v-if="task.has_vendor_token"
-                    variant="ghost"
-                    size="sm"
-                    :aria-label="t('tasks.showLink')"
-                    @click.stop="showVendorLink(task)"
-                  >
-                    <CIconEye />
-                    {{ t('tasks.showLink') }}
-                  </CBtn>
-                  <CBtn
-                    v-if="task.has_vendor_token"
-                    variant="ghost"
-                    size="sm"
-                    :aria-label="t('tasks.revokeToken')"
-                    @click.stop="openRevokeModal(task)"
-                  >
-                    <CIconX />
-                    {{ t('tasks.revokeToken') }}
-                  </CBtn>
-                </div>
-
-                <div
-                  v-if="vendorLinks[task.id]"
-                  class="task-card__vendor-link"
+                  <CIconLink />
+                  {{ t('tasks.generateToken') }}
+                </CBtn>
+                <CBtn
+                  v-if="task.has_vendor_token"
+                  variant="ghost"
+                  size="sm"
+                  :aria-label="t('tasks.showLink')"
+                  @click.stop="showVendorLink(task)"
                 >
-                  <div class="task-card__vendor-link-meta">
-                    <span class="body-xs">
-                      {{ t('tasks.vendorTokenActive', { date: formatDate(vendorLinks[task.id].expires_at) }) }}
-                    </span>
-                    <a
-                      :href="vendorLinks[task.id].url"
-                      class="task-card__vendor-link-url"
-                      target="_blank"
-                      rel="noopener"
-                      @click.stop
-                    >
-                      {{ vendorLinks[task.id].url }}
-                    </a>
-                  </div>
-                  <CBtn
-                    variant="ghost"
-                    size="sm"
-                    @click.stop="copyVendorLink(task.id)"
-                  >
-                    <CIconCopy />
-                    {{ copiedVendorLinkTaskId === task.id ? t('tasks.vendorTokenCopied') : t('common.copy') }}
-                  </CBtn>
-                </div>
-
-                <div class="activity-card__actions">
-                  <CBtn
-                    variant="ghost"
-                    size="sm"
-                    :aria-label="t('tasks.editTask')"
-                    @click.stop="openEditModal(task)"
-                  >
-                    <CIconEdit />
-                    {{ t('common.edit') }}
-                  </CBtn>
-                  <CBtn
-                    v-if="task.status === 'closed'"
-                    variant="primary"
-                    size="sm"
-                    :aria-label="t('tasks.reopenTask')"
-                    @click.stop="openReopenModal(task)"
-                  >
-                    <CIconRefresh />
-                    {{ t('tasks.reopenTask') }}
-                  </CBtn>
-                  <CBtn
-                    v-else-if="!isTerminal(task.status)"
-                    variant="primary"
-                    size="sm"
-                    :aria-label="closeActionLabel(task)"
-                    @click.stop="openCloseModal(task)"
-                  >
-                    <CIconCheckCircle />
-                    {{ closeActionLabel(task) }}
-                  </CBtn>
-                </div>
+                  <CIconEye />
+                  {{ t('tasks.showLink') }}
+                </CBtn>
+                <CBtn
+                  v-if="task.has_vendor_token"
+                  variant="ghost"
+                  size="sm"
+                  :aria-label="t('tasks.revokeToken')"
+                  @click.stop="openRevokeModal(task)"
+                >
+                  <CIconX />
+                  {{ t('tasks.revokeToken') }}
+                </CBtn>
               </div>
+
+              <div
+                v-if="vendorLinks[task.id]"
+                class="task-card__vendor-link"
+              >
+                <div class="task-card__vendor-link-meta">
+                  <span class="body-xs">
+                    {{ t('tasks.vendorTokenActive', { date: formatDate(vendorLinks[task.id].expires_at) }) }}
+                  </span>
+                  <a
+                    :href="vendorLinks[task.id].url"
+                    class="task-card__vendor-link-url"
+                    target="_blank"
+                    rel="noopener"
+                    @click.stop
+                  >
+                    {{ vendorLinks[task.id].url }}
+                  </a>
+                </div>
+                <CBtn
+                  variant="ghost"
+                  size="sm"
+                  @click.stop="copyVendorLink(task.id)"
+                >
+                  <CIconCopy />
+                  {{ copiedVendorLinkTaskId === task.id ? t('tasks.vendorTokenCopied') : t('common.copy') }}
+                </CBtn>
+              </div>
+
+              <div class="activity-card__actions">
+                <CBtn
+                  variant="ghost"
+                  size="sm"
+                  :aria-label="t('tasks.editTask')"
+                  @click.stop="openEditModal(task)"
+                >
+                  <CIconEdit />
+                  {{ t('common.edit') }}
+                </CBtn>
+                <CBtn
+                  v-if="task.status === 'closed'"
+                  variant="primary"
+                  size="sm"
+                  :aria-label="t('tasks.reopenTask')"
+                  @click.stop="openReopenModal(task)"
+                >
+                  <CIconRefresh />
+                  {{ t('tasks.reopenTask') }}
+                </CBtn>
+                <CBtn
+                  v-else-if="!isTerminal(task.status)"
+                  variant="primary"
+                  size="sm"
+                  :aria-label="closeActionLabel(task)"
+                  @click.stop="openCloseModal(task)"
+                >
+                  <CIconCheckCircle />
+                  {{ closeActionLabel(task) }}
+                </CBtn>
+              </div>
+            </div>
           </CCard>
 
           <div
@@ -1021,103 +1031,78 @@ async function copyVendorLink(taskId: string) {
         class="form-grid"
         @submit.prevent="saveTask"
       >
-        <div class="form-field">
-          <label class="form-label">{{ t('tasks.titleLabel') }} *</label>
-          <input
-            v-model="taskForm.title"
-            type="text"
-            class="form-input"
-            :placeholder="t('tasks.titleLabel')"
-            required
-          />
-        </div>
-        <div class="form-field">
-          <label class="form-label">{{ t('tasks.descriptionLabel') }}</label>
-          <textarea
-            v-model="taskForm.description"
-            class="form-input"
-            rows="3"
-          ></textarea>
-        </div>
-        <div class="form-field">
-          <label class="form-label">{{ t('tasks.priorityLabel') }}</label>
-          <select
-            v-model="taskForm.priority"
-            class="form-input"
-          >
-            <option
-              v-for="p in ['low', 'normal', 'high', 'urgent']"
-              :key="p"
-              :value="p"
-            >
-              {{ t(`tasks.priorities.${p}`) }}
-            </option>
-          </select>
-        </div>
+        <CFormInput
+          v-model="taskForm.title"
+          :label="t('tasks.titleLabel')"
+          :placeholder="t('tasks.titleLabel')"
+          required
+        />
+        <CFormTextarea
+          v-model="taskForm.description"
+          :label="t('tasks.descriptionLabel')"
+          :rows="3"
+        />
+        <CFormSelect
+          v-model="taskForm.priority"
+          :label="t('tasks.priorityLabel')"
+          :options="taskPriorityOptions"
+        />
         <!-- Contractor assignment with autocomplete (only when assignMode === 'contractor') -->
         <div
           v-if="assignMode === 'contractor'"
-          class="form-field"
+          class="form-field contractor-autocomplete"
         >
-          <label class="form-label">{{ t('tasks.contractorLabel') }}</label>
-          <div style="position:relative">
-            <input
-              v-model="contractorSearch"
-              type="text"
-              class="form-input"
-              :placeholder="t('tasks.contractorPlaceholder')"
-              autocomplete="off"
-              @focus="onContractorFocus"
-              @input="onContractorInput"
-              @blur="hideSuggestions"
-            />
-            <button
+          <CFormInput
+            v-model="contractorSearch"
+            :label="t('tasks.contractorLabel')"
+            :placeholder="t('tasks.contractorPlaceholder')"
+            autocomplete="off"
+            :hint="selectedContractor
+              ? (selectedContractor.email || selectedContractor.phone || '')
+              : (contractorSearch.trim() ? t('tasks.contractorFreeInputHint') : '')"
+            @focus="onContractorFocus"
+            @input="onContractorInput"
+            @blur="hideSuggestions"
+          >
+            <template
               v-if="selectedContractor"
-              type="button"
-              class="contractor-clear"
-              :aria-label="t('common.clear')"
-              @click="clearContractor"
+              #suffix
             >
-              ×
-            </button>
-            <ul
-              v-if="showSuggestions || canSuggestContractorCreation"
-              class="autocomplete-list"
+              <button
+                type="button"
+                class="contractor-clear"
+                :aria-label="t('common.clear')"
+                @click="clearContractor"
+              >
+                ×
+              </button>
+            </template>
+          </CFormInput>
+          <ul
+            v-if="showSuggestions || canSuggestContractorCreation"
+            class="autocomplete-list"
+          >
+            <li
+              v-for="c in contractorSuggestions"
+              :key="c.id"
+              class="autocomplete-item"
+              @mousedown.prevent="selectContractorSuggestion(c)"
             >
-              <li
-                v-for="c in contractorSuggestions"
-                :key="c.id"
-                class="autocomplete-item"
-                @mousedown.prevent="selectContractorSuggestion(c)"
-              >
-                <span class="autocomplete-name">{{ c.name }}</span>
-                <span
-                  v-if="c.domains.length"
-                  class="autocomplete-meta"
-                >{{ contractorDomainLabel(c) }}</span>
-              </li>
-              <li
-                v-if="canSuggestContractorCreation"
-                class="autocomplete-item autocomplete-item--action"
-                @mousedown.prevent="suggestContractorCreation"
-              >
-                <span class="autocomplete-name">{{ t('tasks.contractorCreateSuggestion', { name: contractorSearch.trim() }) }}</span>
-                <span class="autocomplete-meta">{{ t('tasks.contractorCreateSuggestionHint') }}</span>
-              </li>
-            </ul>
-          </div>
-          <span
-            v-if="selectedContractor"
-            class="field-hint"
-          >
-            {{ selectedContractor.email || selectedContractor.phone || '' }}
-          </span>
-          <span
-            v-else-if="contractorSearch.trim()"
-            class="field-hint"
-          >
-            {{ t('tasks.contractorFreeInputHint') }}
-          </span>
+              <span class="autocomplete-name">{{ c.name }}</span>
+              <span
+                v-if="c.domains.length"
+                class="autocomplete-meta"
+              >{{ contractorDomainLabel(c) }}</span>
+            </li>
+            <li
+              v-if="canSuggestContractorCreation"
+              class="autocomplete-item autocomplete-item--action"
+              @mousedown.prevent="suggestContractorCreation"
+            >
+              <span class="autocomplete-name">{{ t('tasks.contractorCreateSuggestion', { name: contractorSearch.trim() }) }}</span>
+              <span class="autocomplete-meta">{{ t('tasks.contractorCreateSuggestionHint') }}</span>
+            </li>
+          </ul>
         </div>
         <div
           v-if="assignMode === 'contractor' && createSuggestedContractor"
@@ -1125,24 +1110,18 @@ async function copyVendorLink(taskId: string) {
         >
           <label class="form-label">{{ t('tasks.contractorCreateLabel') }}</label>
           <div class="form-grid-2col contractor-create-grid">
-            <div class="form-field">
-              <label class="form-label">{{ t('contractors.email') }}</label>
-              <input
-                v-model="contractorDraft.email"
-                type="email"
-                class="form-input"
-                :placeholder="t('contractors.emailPlaceholder')"
-              />
-            </div>
-            <div class="form-field">
-              <label class="form-label">{{ t('contractors.phone') }}</label>
-              <input
-                v-model="contractorDraft.phone"
-                type="tel"
-                class="form-input"
-                :placeholder="t('contractors.phonePlaceholder')"
-              />
-            </div>
+            <CFormInput
+              v-model="contractorDraft.email"
+              :label="t('contractors.email')"
+              type="email"
+              :placeholder="t('contractors.emailPlaceholder')"
+            />
+            <CFormInput
+              v-model="contractorDraft.phone"
+              :label="t('contractors.phone')"
+              type="tel"
+              :placeholder="t('contractors.phonePlaceholder')"
+            />
           </div>
           <span class="field-hint">
             {{ t('tasks.contractorCreateHelp') }}
@@ -1331,7 +1310,7 @@ async function copyVendorLink(taskId: string) {
       size="sm"
       @update:open="v => !v && (revokingTask = null)"
     >
-      <p class="body-sm">
+      <p class="body-xs">
         {{ t('tasks.confirmRevokeToken') }}
       </p>
       <template #footer>
@@ -1363,30 +1342,24 @@ async function copyVendorLink(taskId: string) {
       size="sm"
       @update:open="v => !v && (closingTask = null)"
     >
-      <p class="body-sm">
+      <p class="body-xs">
         {{
           closingTask?.status === 'awaiting_validation'
             ? t('tasks.confirmCloseValidationMessage', { title: closingTask?.title ?? '' })
             : t('tasks.confirmCloseMessage', { title: closingTask?.title ?? '' })
         }}
       </p>
-      <div class="form-field task-close-field">
-        <label class="form-label">{{ t('tasks.completionCostLabel') }}</label>
-        <input
-          v-model="closeAmount"
-          type="number"
-          min="0"
-          step="0.01"
-          class="form-input"
-        />
-        <span class="field-hint">
-          {{
-            closingTask?.status === 'awaiting_validation' && closingTask?.completion_cost != null
-              ? t('tasks.completionCostVendorHint')
-              : t('tasks.completionCostHint')
-          }}
-        </span>
-      </div>
+      <CFormInput
+        v-model="closeAmount"
+        :label="t('tasks.completionCostLabel')"
+        type="number"
+        :min="0"
+        :step="0.01"
+        :hint="closingTask?.status === 'awaiting_validation' && closingTask?.completion_cost != null
+          ? t('tasks.completionCostVendorHint')
+          : t('tasks.completionCostHint')"
+        class="task-close-field"
+      />
       <template #footer>
         <CFormFeedback
           class="modal-footer-feedback"
@@ -1417,7 +1390,7 @@ async function copyVendorLink(taskId: string) {
       size="sm"
       @update:open="v => !v && (reopeningTask = null)"
     >
-      <p class="body-sm">
+      <p class="body-xs">
         {{ t('tasks.confirmReopenMessage', { title: reopeningTask?.title ?? '' }) }}
       </p>
       <template #footer>
@@ -1449,7 +1422,7 @@ async function copyVendorLink(taskId: string) {
       size="sm"
       @update:open="showDeleteModal = $event"
     >
-      <p class="body-sm">
+      <p class="body-xs">
         {{
           taskToDelete?.is_in_logbook
             ? t('tasks.confirmDeleteLogbookMessage', { title: taskToDelete?.title ?? '' })
@@ -1539,9 +1512,9 @@ async function copyVendorLink(taskId: string) {
   padding: var(--space-2) 0;
 }
 
-.empty-state { padding: var(--space-8); text-align: center; font-size: var(--text-md); color: var(--color-on-surface-variant); }
-
 /* Contractor autocomplete */
+.contractor-autocomplete { position: relative; }
+
 .autocomplete-list {
   position: absolute;
   top: 100%;
@@ -1579,16 +1552,15 @@ async function copyVendorLink(taskId: string) {
 }
 
 .contractor-clear {
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
   background: none;
   border: none;
   cursor: pointer;
   font-size: 16px;
   color: var(--color-on-surface-variant);
   padding: 0 4px;
+  pointer-events: auto;
+  min-height: unset;
+  min-width: unset;
 }
 
 .field-hint { font-size: var(--text-xs); color: var(--color-on-surface-variant); }

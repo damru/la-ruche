@@ -43,3 +43,23 @@
   --tone-bg: var(--color-success-container, #e8f5e9);
   --tone-fg: var(--color-success, #2e7d32);
 }
+
+.tone--manager {
+  --tone-bg: var(--color-role-manager-bg);
+  --tone-fg: var(--color-role-manager-fg);
+}
+
+.tone--board-member {
+  --tone-bg: var(--color-role-board-bg);
+  --tone-fg: var(--color-role-board-fg);
+}
+
+.tone--co-owner {
+  --tone-bg: var(--color-role-co-owner-bg);
+  --tone-fg: var(--color-role-co-owner-fg);
+}
+
+.tone--tenant {
+  --tone-bg: var(--color-role-tenant-bg);
+  --tone-fg: var(--color-role-tenant-fg);
+}

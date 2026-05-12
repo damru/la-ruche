@@ -64,15 +64,15 @@ withDefaults(defineProps<{
 }
 
 .c-kpi__label {
-  font-size: 13px;
+  font-size: var(--text-sm);
   color: var(--color-on-surface-variant);
-  font-weight: 400;
+  font-weight: var(--fw-regular);
 }
 
 .c-kpi__value {
   font-family: var(--font-display);
   font-size: 32px;
-  font-weight: 700;
+  font-weight: var(--fw-bold);
   font-variation-settings: 'opsz' 72;
   letter-spacing: -0.03em;
   color: var(--color-on-surface);
@@ -81,8 +81,8 @@ withDefaults(defineProps<{
 }
 
 .c-kpi__delta {
-  font-size: 12px;
-  font-weight: 500;
+  font-size: var(--text-xs);
+  font-weight: var(--fw-medium);
   display: inline-flex;
   align-items: center;
   gap: 3px;

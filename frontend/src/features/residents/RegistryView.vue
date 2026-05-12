@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import CLegalDescription from '@/components/atoms/CLegalDescription.vue'
 import CCard from '@/components/molecules/CCard.vue'
-import CLegalInfoCard from '@/components/molecules/CLegalInfoCard.vue'
+import CLegalNotice from '@/components/molecules/CLegalNotice.vue'
+import CLegalCard from '@/components/molecules/CLegalCard.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
-import CPageError from '@/components/molecules/CPageError.vue'
+import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import { buildingApi } from '@/api'
 import { usePageLoader } from '@/composables/usePageLoader'
@@ -19,7 +21,7 @@ async function loadRegistry() {
   data.value = res.data
 }
 
-const { loading, error, reload } = usePageLoader(loadRegistry, t('common.loadError'))
+const { loading, error, reload } = usePageLoader(loadRegistry)
 onMounted(reload)
 
 // Build a matrix: unit_id → key_id → share_value
@@ -77,10 +79,7 @@ function formatLocation(unit: { block?: string | null; staircase?: string | null
       <template #left>
         <div class="topbar-breadcrumb">
           {{ data?.building.name ?? '...' }}
-          <CIconChevronRight
-            width="14"
-            height="14"
-          />
+          <CIconChevronRight />
           <span>{{ t('registry.title') }}</span>
         </div>
       </template>
@@ -94,20 +93,21 @@ function formatLocation(unit: { block?: string | null; staircase?: string | null
       />
       <CPageLoader v-else-if="loading" />
       <template v-else-if="data">
-        <div class="view-header">
-          <div>
-            <h1 class="display-md">
-              {{ t('registry.title') }}
-            </h1>
-            <p
-              v-if="data"
-              class="body-md dim"
-            >
-              {{ data.building.address_line1 }}, {{ data.building.postal_code }} {{ data.building.city }}
-              · {{ t('registry.totalShares') }} : {{ data.building.shares_total }}
-            </p>
-          </div>
-        </div>
+        <header class="view-header">
+          <CEyebrow>
+            {{ t('page.eyebrows.registry') }}
+          </CEyebrow>
+          <h1 class="display-md">
+            {{ t('registry.title') }}
+          </h1>
+          <p
+            v-if="data"
+            class="body-md dim"
+          >
+            {{ data.building.address_line1 }}, {{ data.building.postal_code }} {{ data.building.city }}
+            · {{ t('registry.totalShares') }} : {{ data.building.shares_total }}
+          </p>
+        </header>
         <!-- Summary cards -->
         <div class="summary-row">
           <CCard>
@@ -211,11 +211,14 @@ function formatLocation(unit: { block?: string | null; staircase?: string | null
           </table>
         </CCard>
 
-        <CLegalInfoCard
-          :title="t('registry.legalCard.title')"
-          :summary="t('registry.legalCard.summary')"
-          :links="legalCardLinks"
-        />
+        <CLegalCard>
+          <CLegalNotice :links="legalCardLinks">
+            <CLegalDescription
+              :title="t('registry.legalCard.title')"
+              :summary="t('registry.legalCard.summary')"
+            />
+          </CLegalNotice>
+        </CLegalCard>
       </template>
     </div>
   </div>

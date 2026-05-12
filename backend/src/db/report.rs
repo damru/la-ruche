@@ -183,8 +183,8 @@ pub async fn convert_to_task(
     match existing {
         None => return Err(AppError::NotFound),
         Some(Some(_)) => {
-            return Err(AppError::Conflict(
-                "This report has already been converted to a task".into(),
+            return Err(AppError::conflict_code(
+                "errors.reports.already_converted_to_task",
             ));
         }
         Some(None) => {}

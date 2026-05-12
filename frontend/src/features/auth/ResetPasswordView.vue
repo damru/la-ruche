@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import AuthBrandPanel from '@/components/organisms/AuthBrandPanel.vue'
 import CAlert from '@/components/atoms/CAlert.vue'
-import CInput from '@/components/atoms/CInput.vue'
+import CFormInput from '@/components/atoms/CFormInput.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 
 const { t } = useI18n()
@@ -64,7 +64,7 @@ async function handleSubmit() {
             novalidate
             @submit.prevent="handleSubmit"
           >
-            <CInput
+            <CFormInput
               id="password"
               v-model="form.password"
               type="password"
@@ -75,7 +75,7 @@ async function handleSubmit() {
               :disabled="loading"
             />
             <div>
-              <CInput
+              <CFormInput
                 id="confirm"
                 v-model="form.confirm"
                 type="password"
@@ -181,7 +181,7 @@ async function handleSubmit() {
   margin-bottom: var(--space-1);
 }
 .form-sub {
-  font-size: 14px;
+  font-size: var(--text-md);
   color: var(--color-on-surface-variant);
   line-height: 1.5;
 }
@@ -190,7 +190,7 @@ async function handleSubmit() {
   border: none;
   color: var(--color-primary);
   font-family: var(--font-body);
-  font-size: 13px;
+  font-size: var(--text-sm);
   font-weight: 500;
   cursor: pointer;
   padding: 0;

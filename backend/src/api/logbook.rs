@@ -219,7 +219,7 @@ pub async fn create(
     auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
 
     if input.title.trim().is_empty() {
-        return Err(AppError::Validation("Title is required".into()));
+        return Err(AppError::validation_code("errors.logbook.title_required"));
     }
 
     let entry = db::maintenance_log::create(
@@ -250,7 +250,7 @@ pub async fn update(
     auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
 
     if input.title.trim().is_empty() {
-        return Err(AppError::Validation("Title is required".into()));
+        return Err(AppError::validation_code("errors.logbook.title_required"));
     }
 
     let entry = db::maintenance_log::update(
