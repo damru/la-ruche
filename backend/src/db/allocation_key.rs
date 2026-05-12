@@ -153,7 +153,7 @@ pub async fn list_shares(
            LEFT JOIN unit_allocation_key uak
                   ON uak.unit_id = u.id AND uak.key_id = $1 AND uak.valid_to IS NULL
            WHERE u.building_id = $2
-             AND (u.active = true OR uak.share_value > 0)
+             AND u.active = true
            ORDER BY u.unit_number"#,
     )
     .bind(key_id)
@@ -215,7 +215,7 @@ pub async fn shares_balance(
         "SELECT COALESCE(SUM(uak.share_value), 0) \
          FROM unit_allocation_key uak \
          JOIN unit u ON u.id = uak.unit_id \
-         WHERE uak.key_id = $1 AND u.building_id = $2 AND uak.valid_to IS NULL",
+         WHERE uak.key_id = $1 AND u.building_id = $2 AND u.active = true AND uak.valid_to IS NULL",
     )
     .bind(key_id)
     .bind(building_id)

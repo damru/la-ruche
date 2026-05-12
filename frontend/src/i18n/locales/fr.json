@@ -369,6 +369,8 @@
     "quorumOkDetail": "L'assemblée peut valablement délibérer.",
     "quorumKo": "Quorum insuffisant",
     "quorumKoDetail": "L'assemblée ne peut pas valablement délibérer. Seuil nécessaire: {threshold} copropriétaire.",
+    "sharesTotalMismatchTitle": "Incohérence des tantièmes",
+    "sharesTotalMismatchDetail": "Le total AG ({actual}) ne correspond pas au total de l'immeuble ({expected}). Rééquilibrez la clé générale avant de poursuivre.",
     "mandate": "Mandat",
     "newResolution": "Nouvelle résolution",
     "newResolutionSub": "Ajoutez une résolution à l'ordre du jour de cette assemblée.",

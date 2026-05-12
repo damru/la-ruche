@@ -271,6 +271,7 @@ pub async fn close(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()> 
             "errors.meetings.not_in_ongoing_status",
         ));
     }
+
     Ok(())
 }
 
@@ -403,79 +404,156 @@ pub async fn list_attendance(
     meeting_id: Uuid,
     building_id: Uuid,
 ) -> AppResult<MeetingAttendanceResponse> {
-    let exists = sqlx::query_scalar!(
-        "SELECT EXISTS(SELECT 1 FROM general_meeting WHERE id = $1 AND building_id = $2)",
+    let status = sqlx::query_scalar!(
+        "SELECT status::text FROM general_meeting WHERE id = $1 AND building_id = $2",
         meeting_id,
         building_id,
     )
-    .fetch_one(pool)
+    .fetch_optional(pool)
     .await?
-    .unwrap_or(false);
+    .flatten()
+    .ok_or(AppError::NotFound)?;
 
-    if !exists {
-        return Err(AppError::NotFound);
-    }
+    // ongoing/closed: drive from attendance table (list frozen, archived units included as-is).
+    // others: drive from unit table (active only), and always resolve shares from
+    // the current active general allocation key at query time.
+    let entries: Vec<MeetingAttendanceEntryResponse> = if status == "ongoing" || status == "closed"
+    {
+        sqlx::query!(
+            r#"
+            SELECT u.id as unit_id,
+                   u.unit_number,
+                   CASE WHEN ua.id IS NULL THEN NULL
+                        ELSE ua.first_name || ' ' || ua.last_name
+                   END as owner_name,
+                   gma.mode::text as "mode!",
+                   gma.representative_name,
+                   gma.shares_represented as "shares_represented!"
+            FROM general_meeting_attendance gma
+            JOIN unit u ON u.id = gma.unit_id
+            LEFT JOIN unit_owner uo ON uo.unit_id = u.id AND uo.end_date IS NULL
+            LEFT JOIN user_account ua ON ua.id = uo.user_id
+            WHERE gma.meeting_id = $1
+            ORDER BY u.unit_number
+            "#,
+            meeting_id,
+        )
+        .fetch_all(pool)
+        .await?
+        .into_iter()
+        .map(|row| MeetingAttendanceEntryResponse {
+            unit_id: row.unit_id,
+            unit_number: row.unit_number,
+            owner_name: row.owner_name,
+            mode: meeting_attendance_mode_from_db(&row.mode),
+            representative_name: row.representative_name,
+            shares_represented: row.shares_represented,
+        })
+        .collect()
+    } else {
+        sqlx::query!(
+            r#"
+            SELECT u.id as unit_id,
+                   u.unit_number,
+                   CASE WHEN ua.id IS NULL THEN NULL
+                        ELSE ua.first_name || ' ' || ua.last_name
+                   END as owner_name,
+                   COALESCE(gma.mode::text, 'absent') as "mode!",
+                   gma.representative_name,
+                   COALESCE(uak.share_value, 0) as "shares_represented!"
+            FROM unit u
+            LEFT JOIN unit_owner uo ON uo.unit_id = u.id AND uo.end_date IS NULL
+            LEFT JOIN user_account ua ON ua.id = uo.user_id
+            LEFT JOIN general_meeting_attendance gma
+                ON gma.unit_id = u.id AND gma.meeting_id = $1
+            LEFT JOIN unit_allocation_key uak
+                ON uak.unit_id = u.id
+               AND uak.valid_to IS NULL
+               AND EXISTS (
+                   SELECT 1
+                   FROM allocation_key ak
+                   WHERE ak.id = uak.key_id
+                     AND ak.key_type = 'general'
+                     AND ak.deleted_at IS NULL
+               )
+            WHERE u.building_id = $2
+              AND u.active = true
+            ORDER BY u.unit_number
+            "#,
+            meeting_id,
+            building_id,
+        )
+        .fetch_all(pool)
+        .await?
+        .into_iter()
+        .map(|row| MeetingAttendanceEntryResponse {
+            unit_id: row.unit_id,
+            unit_number: row.unit_number,
+            owner_name: row.owner_name,
+            mode: meeting_attendance_mode_from_db(&row.mode),
+            representative_name: row.representative_name,
+            shares_represented: row.shares_represented,
+        })
+        .collect()
+    };
 
-    let rows = sqlx::query!(
-        r#"
-        SELECT u.id as unit_id,
-               u.unit_number,
-               CASE
-                   WHEN ua.id IS NULL THEN NULL
-                   ELSE ua.first_name || ' ' || ua.last_name
-               END as owner_name,
-               COALESCE(gma.mode::text, 'absent') as "mode!",
-               gma.representative_name,
-               COALESCE(gma.shares_represented, 0) as "shares_represented!"
-        FROM unit u
-        LEFT JOIN unit_owner uo
-            ON uo.unit_id = u.id
-           AND uo.end_date IS NULL
-        LEFT JOIN user_account ua ON ua.id = uo.user_id
-        LEFT JOIN general_meeting_attendance gma
-            ON gma.unit_id = u.id
-           AND gma.meeting_id = $1
-        WHERE u.building_id = $2
-          AND u.active = true
-        ORDER BY u.unit_number
-        "#,
-        meeting_id,
-        building_id,
-    )
-    .fetch_all(pool)
-    .await?;
+    let (shares_present, present_units): (i32, i32) = if status == "closed" {
+        let summary = sqlx::query!(
+            r#"
+            SELECT COALESCE(SUM(gma.shares_represented) FILTER (WHERE gma.mode != 'absent'), 0)::int as "shares_present!",
+                   COUNT(*) FILTER (WHERE gma.mode != 'absent')::int as "present_units!"
+            FROM general_meeting_attendance gma
+            WHERE gma.meeting_id = $1
+            "#,
+            meeting_id,
+        )
+        .fetch_one(pool)
+        .await?;
 
-    let summary = sqlx::query!(
-        r#"
-        SELECT COALESCE(SUM(gma.shares_represented) FILTER (WHERE gma.mode != 'absent'), 0)::int as "shares_present!",
-               COUNT(*) FILTER (WHERE gma.mode != 'absent')::int as "present_units!",
-               b.shares_total as "total_shares!"
-        FROM building b
-        LEFT JOIN general_meeting_attendance gma ON gma.meeting_id = $1
-        WHERE b.id = $2
-        GROUP BY b.shares_total
-        "#,
-        meeting_id,
-        building_id,
-    )
-    .fetch_one(pool)
-    .await?;
+        (summary.shares_present, summary.present_units)
+    } else {
+        let summary = sqlx::query!(
+            r#"
+            SELECT
+                COALESCE(
+                    SUM(COALESCE(uak.share_value, 0))
+                    FILTER (WHERE COALESCE(gma.mode::text, 'absent') != 'absent'),
+                    0
+                )::int as "shares_present!",
+                COUNT(*)
+                FILTER (WHERE COALESCE(gma.mode::text, 'absent') != 'absent')::int as "present_units!"
+            FROM unit u
+            LEFT JOIN general_meeting_attendance gma
+                ON gma.unit_id = u.id AND gma.meeting_id = $1
+            LEFT JOIN unit_allocation_key uak
+                ON uak.unit_id = u.id
+               AND uak.valid_to IS NULL
+               AND EXISTS (
+                   SELECT 1
+                   FROM allocation_key ak
+                   WHERE ak.id = uak.key_id
+                     AND ak.key_type = 'general'
+                     AND ak.deleted_at IS NULL
+               )
+            WHERE u.building_id = $2
+              AND u.active = true
+            "#,
+            meeting_id,
+            building_id,
+        )
+        .fetch_one(pool)
+        .await?;
+
+        (summary.shares_present, summary.present_units)
+    };
+
+    let total_shares = get_meeting_total_shares(pool, meeting_id, building_id).await?;
 
     Ok(MeetingAttendanceResponse {
-        entries: rows
-            .into_iter()
-            .map(|row| MeetingAttendanceEntryResponse {
-                unit_id: row.unit_id,
-                unit_number: row.unit_number,
-                owner_name: row.owner_name,
-                mode: meeting_attendance_mode_from_db(&row.mode),
-                representative_name: row.representative_name,
-                shares_represented: row.shares_represented,
-            })
-            .collect(),
-        shares_present: summary.shares_present,
-        total_shares: summary.total_shares,
-        present_units: summary.present_units,
+        entries,
+        shares_present,
+        total_shares,
+        present_units,
     })
 }
 
@@ -487,75 +565,95 @@ pub async fn save_attendance(
 ) -> AppResult<()> {
     let mut tx = pool.begin().await?;
 
-    let exists = sqlx::query_scalar!(
-        "SELECT EXISTS(SELECT 1 FROM general_meeting WHERE id = $1 AND building_id = $2)",
+    let status = sqlx::query_scalar!(
+        "SELECT status::text FROM general_meeting WHERE id = $1 AND building_id = $2",
         meeting_id,
         building_id,
     )
-    .fetch_one(&mut *tx)
+    .fetch_optional(&mut *tx)
     .await?
-    .unwrap_or(false);
-
-    if !exists {
-        return Err(AppError::NotFound);
-    }
-
-    let status = sqlx::query_scalar!(
-        "SELECT status::text FROM general_meeting WHERE id = $1",
-        meeting_id,
-    )
-    .fetch_one(&mut *tx)
-    .await?
-    .unwrap_or_default();
+    .flatten()
+    .ok_or(AppError::NotFound)?;
 
     if status == "closed" {
         return Err(AppError::conflict_code("errors.meetings.attendance_locked"));
     }
 
-    sqlx::query!(
-        "DELETE FROM general_meeting_attendance WHERE meeting_id = $1",
-        meeting_id
-    )
-    .execute(&mut *tx)
-    .await?;
+    if status == "ongoing" {
+        // List frozen: only update mode/representative_name for existing records.
+        for entry in entries {
+            let updated = sqlx::query!(
+                r#"
+                UPDATE general_meeting_attendance
+                SET mode = $3::meeting_attendance_mode,
+                    representative_name = $4,
+                    updated_at = NOW()
+                WHERE meeting_id = $1 AND unit_id = $2
+                "#,
+                meeting_id,
+                entry.unit_id,
+                meeting_attendance_mode_to_db(&entry.mode) as _,
+                entry.representative_name,
+            )
+            .execute(&mut *tx)
+            .await?
+            .rows_affected();
 
-    for entry in entries {
-        let shares_represented = sqlx::query_scalar!(
-            r#"
-            SELECT uak.share_value
-            FROM unit u
-            JOIN unit_allocation_key uak
-                ON uak.unit_id = u.id
-               AND uak.valid_to IS NULL
-            JOIN allocation_key ak
-                ON ak.id = uak.key_id
-               AND ak.key_type = 'general'
-               AND ak.deleted_at IS NULL
-            WHERE u.id = $1
-              AND u.building_id = $2
-              AND u.active = true
-            "#,
-            entry.unit_id,
-            building_id,
-        )
-        .fetch_optional(&mut *tx)
-        .await?
-        .ok_or_else(|| AppError::bad_request_code("errors.meetings.unit_general_shares_missing"))?;
-
+            if updated == 0 {
+                return Err(AppError::bad_request_code(
+                    "errors.meetings.attendance_unit_not_in_meeting",
+                ));
+            }
+        }
+    } else {
+        // draft/called: full replace.
         sqlx::query!(
-            r#"
-            INSERT INTO general_meeting_attendance
-                (meeting_id, unit_id, mode, representative_name, shares_represented)
-            VALUES ($1, $2, $3::meeting_attendance_mode, $4, $5)
-            "#,
-            meeting_id,
-            entry.unit_id,
-            meeting_attendance_mode_to_db(&entry.mode) as _,
-            entry.representative_name,
-            shares_represented,
+            "DELETE FROM general_meeting_attendance WHERE meeting_id = $1",
+            meeting_id
         )
         .execute(&mut *tx)
         .await?;
+
+        for entry in entries {
+            let shares_represented = sqlx::query_scalar!(
+                r#"
+                SELECT uak.share_value
+                FROM unit u
+                JOIN unit_allocation_key uak
+                    ON uak.unit_id = u.id
+                   AND uak.valid_to IS NULL
+                JOIN allocation_key ak
+                    ON ak.id = uak.key_id
+                   AND ak.key_type = 'general'
+                   AND ak.deleted_at IS NULL
+                WHERE u.id = $1
+                  AND u.building_id = $2
+                  AND u.active = true
+                "#,
+                entry.unit_id,
+                building_id,
+            )
+            .fetch_optional(&mut *tx)
+            .await?
+            .ok_or_else(|| {
+                AppError::bad_request_code("errors.meetings.unit_general_shares_missing")
+            })?;
+
+            sqlx::query!(
+                r#"
+                INSERT INTO general_meeting_attendance
+                    (meeting_id, unit_id, mode, representative_name, shares_represented)
+                VALUES ($1, $2, $3::meeting_attendance_mode, $4, $5)
+                "#,
+                meeting_id,
+                entry.unit_id,
+                meeting_attendance_mode_to_db(&entry.mode) as _,
+                entry.representative_name,
+                shares_represented,
+            )
+            .execute(&mut *tx)
+            .await?;
+        }
     }
 
     tx.commit().await?;
@@ -767,23 +865,23 @@ pub async fn get_tally(
 
     let building = sqlx::query!(
         r#"
-        SELECT b.shares_total,
-               COUNT(DISTINCT ub.user_id)::int as total_owners,
-             COUNT(DISTINCT v.user_id)::int as present_owners,
-             COUNT(DISTINCT v.user_id) FILTER (WHERE v.position = 'in_favor')::int as "favorable_owners!"
+        SELECT COUNT(DISTINCT ub.user_id)::int as total_owners,
+               COUNT(DISTINCT v.user_id)::int as present_owners,
+               COUNT(DISTINCT v.user_id) FILTER (WHERE v.position = 'in_favor')::int as "favorable_owners!"
         FROM building b
-        JOIN unit u ON u.building_id = b.id
+        JOIN unit u ON u.building_id = b.id AND u.active = true
         LEFT JOIN user_building ub ON ub.building_id = b.id
             AND 'co_owner' = ANY(ub.roles::text[])
         LEFT JOIN vote v ON v.resolution_id = $1
         WHERE b.id = $2
-        GROUP BY b.shares_total
         "#,
         resolution_id,
         building_id
     )
     .fetch_one(pool)
     .await?;
+
+    let shares_total = get_meeting_total_shares(pool, meeting_id, building_id).await?;
 
     let attendance = sqlx::query!(
         r#"
@@ -812,7 +910,7 @@ pub async fn get_tally(
     }
 
     let tally = VoteTally {
-        shares_total: building.shares_total,
+        shares_total,
         shares_present: if attendance.shares_present > 0 {
             attendance.shares_present
         } else {
@@ -877,6 +975,8 @@ pub async fn list_votes(
 }
 
 pub async fn start(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()> {
+    let mut tx = pool.begin().await?;
+
     let affected = sqlx::query!(
         r#"
         UPDATE general_meeting
@@ -886,7 +986,7 @@ pub async fn start(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()> 
         id,
         building_id
     )
-    .execute(pool)
+    .execute(&mut *tx)
     .await?
     .rows_affected();
 
@@ -895,7 +995,91 @@ pub async fn start(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()> 
             "errors.meetings.not_in_called_status",
         ));
     }
+
+    // Complete attendance: insert absent records for any active unit not yet submitted.
+    // Ensures SUM(shares_represented) over all attendance rows = total active tantièmes
+    // at lock time, used as the frozen denominator for ongoing/closed tallies (EP-003-S07).
+    sqlx::query!(
+        r#"
+        INSERT INTO general_meeting_attendance
+            (meeting_id, unit_id, mode, shares_represented)
+        SELECT $1, u.id, 'absent'::meeting_attendance_mode, uak.share_value
+        FROM unit u
+        JOIN unit_allocation_key uak ON uak.unit_id = u.id AND uak.valid_to IS NULL
+        JOIN allocation_key ak ON ak.id = uak.key_id
+            AND ak.key_type = 'general'
+            AND ak.deleted_at IS NULL
+        WHERE u.building_id = $2
+          AND u.active = true
+          AND NOT EXISTS (
+              SELECT 1 FROM general_meeting_attendance
+              WHERE meeting_id = $1 AND unit_id = u.id
+          )
+        "#,
+        id,
+        building_id,
+    )
+    .execute(&mut *tx)
+    .await?;
+
+    tx.commit().await?;
     Ok(())
+}
+
+/// Total tantièmes of active lots on the general key.
+/// Used for draft/called meetings (not yet locked).
+async fn compute_active_shares_total(pool: &PgPool, building_id: Uuid) -> AppResult<i32> {
+    sqlx::query_scalar!(
+        r#"
+        SELECT COALESCE(SUM(uak.share_value), 0)::int as "total!"
+        FROM unit_allocation_key uak
+        JOIN unit u ON u.id = uak.unit_id
+        JOIN allocation_key ak ON ak.id = uak.key_id
+        WHERE u.building_id = $1
+          AND u.active = true
+          AND uak.valid_to IS NULL
+          AND ak.key_type = 'general'
+          AND ak.deleted_at IS NULL
+        "#,
+        building_id,
+    )
+    .fetch_one(pool)
+    .await
+    .map_err(AppError::from)
+}
+
+/// ongoing/closed: SUM(shares_represented) from frozen attendance (all units incl. absent).
+/// draft/called: SUM from active units on general key.
+async fn get_meeting_total_shares(
+    pool: &PgPool,
+    meeting_id: Uuid,
+    building_id: Uuid,
+) -> AppResult<i32> {
+    let status = sqlx::query_scalar!(
+        "SELECT status::text FROM general_meeting WHERE id = $1 AND building_id = $2",
+        meeting_id,
+        building_id,
+    )
+    .fetch_optional(pool)
+    .await?
+    .flatten()
+    .unwrap_or_default();
+
+    if status == "ongoing" || status == "closed" {
+        sqlx::query_scalar!(
+            r#"
+            SELECT COALESCE(SUM(shares_represented), 0)::int as "total!"
+            FROM general_meeting_attendance
+            WHERE meeting_id = $1
+            "#,
+            meeting_id,
+        )
+        .fetch_one(pool)
+        .await
+        .map_err(AppError::from)
+    } else {
+        compute_active_shares_total(pool, building_id).await
+    }
 }
 
 /// Finalizes a resolution by computing the majority result and persisting the status.

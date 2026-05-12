@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useFormatters } from '@/composables/useFormatters'
 import { usePageLoader, toErrorMessage } from '@/composables/usePageLoader'
@@ -26,6 +26,7 @@ const { formatDate } = useFormatters()
 const auth = useAuthStore()
 
 const buildingName = ref('')
+const buildingSharesTotal = ref(0)
 const meeting = ref<Meeting | null>(null)
 const resolutions = ref<Resolution[]>([])
 const voteResults = ref<Record<string, VoteResult>>({})
@@ -162,6 +163,9 @@ const attendancePct = computed(() => {
   if (!attendance.value.total_shares) return 0
   return Math.round((attendance.value.shares_present / attendance.value.total_shares) * 100)
 })
+const hasSharesTotalMismatch = computed(() =>
+  buildingSharesTotal.value > 0 && attendance.value.total_shares !== buildingSharesTotal.value,
+)
 const quorumReached = computed(() => attendance.value.present_units >= 1)
 const attendanceFillStyle = computed(() => ({ width: `${Math.min(attendancePct.value, 100)}%` }))
 const resolvedResolutionCount = computed(() => resolutions.value.filter(resolution => resolution.status !== 'pending').length)
@@ -255,6 +259,7 @@ async function loadData() {
   ])
 
   buildingName.value = buildingRes.data.name
+  buildingSharesTotal.value = buildingRes.data.shares_total
   meeting.value = meetingRes.data
   resolutions.value = resolutionRes.data.map(resolution => ({
     ...resolution,
@@ -1373,6 +1378,14 @@ function onFileChange(event: Event) {
                   <span class="text-on-surface text-[40px]">{{ attendance.shares_present }}</span> 
                   <span class="text-[20px] ">/ {{ attendance.total_shares }}</span>
                 </p>
+                <CAlert
+                  v-if="hasSharesTotalMismatch"
+                  variant="error"
+                  class="quorum-alert"
+                  :title="t('meetings.sharesTotalMismatchTitle')"
+                >
+                  {{ t('meetings.sharesTotalMismatchDetail', { expected: buildingSharesTotal, actual: attendance.total_shares }) }}
+                </CAlert>
                 <p class="presence-kpi__detail">
                   {{ t('meetings.attendanceSummary', { count: attendance.present_units }) }}
                 </p>

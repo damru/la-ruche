@@ -331,4 +331,62 @@ mod tests {
         let d = tally(1000, 1000, 999, 0);
         assert!(!d.compute(&VoteRule::Unanimity).passed);
     }
+
+    // EP-003-S07: archived lots must be excluded from shares_total.
+    // The DB layer (compute_active_shares_total) enforces this; these tests
+    // document the impact of using the wrong base on majority outcomes.
+
+    #[test]
+    fn ep003_s07_art25_passes_with_active_base_only() {
+        // Building: 1000 total, 200 from archived lot → active = 800.
+        // For votes: 401. With active base: threshold = 401 → passes.
+        let d = tally(800, 600, 401, 199);
+        let result = d.compute(&VoteRule::AbsoluteMajority);
+        assert!(result.passed);
+        assert_eq!(result.threshold, 401);
+    }
+
+    #[test]
+    fn ep003_s07_art25_fails_when_archived_included_in_base() {
+        // Same votes but shares_total erroneously includes archived lot (1000).
+        // threshold = 501, 401 < 501 → incorrectly rejected.
+        let d = tally(1000, 600, 401, 199);
+        let result = d.compute(&VoteRule::AbsoluteMajority);
+        assert!(!result.passed);
+        assert_eq!(result.threshold, 501);
+    }
+
+    #[test]
+    fn ep003_s07_art26_threshold_shifts_with_active_base() {
+        // Active 800 shares: art.26 threshold = (800*2+2)/3 = 534.
+        // 540 in favour → passes with correct base.
+        let d = VoteTally {
+            shares_total: 800,
+            shares_present: 700,
+            total_owners: 10,
+            present_owners: 8,
+            favorable_owners: 7,
+            for_votes: 540,
+            against_votes: 160,
+            abstentions: 0,
+        };
+        let result = d.compute(&VoteRule::DoubleMajority);
+        assert!(result.passed);
+        assert_eq!(result.threshold, 534);
+    }
+
+    #[test]
+    fn ep003_s07_art26_1_eligibility_shifts_with_active_base() {
+        // Active 800: for_votes = 410 > 800/2 → eligible for art.26-1 re-vote.
+        // With inflated 1000 base: 410 <= 500 → NOT eligible (wrong).
+        let active_base = tally(800, 700, 410, 290);
+        let inflated_base = tally(1000, 700, 410, 290);
+        let active_result = active_base.compute(&VoteRule::DoubleMajority);
+        let inflated_result = inflated_base.compute(&VoteRule::DoubleMajority);
+        assert_eq!(
+            active_result.eligible_for_second_vote,
+            Some(SecondVoteType::Art26_1)
+        );
+        assert_eq!(inflated_result.eligible_for_second_vote, None);
+    }
 }

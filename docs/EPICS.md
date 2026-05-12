@@ -81,16 +81,8 @@ Cycle de vie complet d'une AG, résolutions typées par majorité, vote par lot 
 * `EP-003-S04` ✅ — Saisir les résolutions et les votes, et calculer les résultats selon la règle de majorité applicable (art. 24/25/25-1/26/26-1/unanimité) (LEGAL.md §3.2)
 * `EP-003-S05` — Générer et stocker le PV signé en séance (LEGAL.md §3.3)
 * `EP-003-S06` — Tracer la date de notification du PV aux copropriétaires absents (délai 2 mois — art. 42 loi 1965) (LEGAL.md §3.3)
-* `EP-003-S07` — Exclure explicitement les lots archivés des calculs de quorum et de majorité avec piste d'audit des bases de calcul (LEGAL.md §3.2)
+* `EP-003-S07` ✅ — Exclure explicitement les lots archivés des calculs de quorum et de majorité avec piste d'audit des bases de calcul (LEGAL.md §3.2)
 * `EP-003-S08` ✅ — Détecter et traiter l'article 26-1 : si une résolution `double_majority` est rejetée avec > 1/2 des tantièmes totaux en faveur, proposer immédiatement une re-délibération à la majorité absolue (art. 26-1) dans la même séance via une nouvelle résolution liée (LEGAL.md §3.2)
-
-**Cadrage d'implémentation validé (mai 2026) :**
-
-- `EP-003` vise d'abord à sortir les vues AG du mode mock en les branchant sur les endpoints backend déjà majoritairement réels.
-- Ordre de livraison retenu : `S01` → `S04` → `S02` → `S03` → `S05` → `S06` → `S07`.
-- Jalons de livraison retenus : **Milestone A** = `S01` + `S04` + branchement UI réel ; **Milestone B** = `S02` + `S03`, puis `S05` / `S06` / `S07`.
-- `S06` cible une traçabilité simple et datée de notification aux absents ; l'automatisation probante d'envoi reste hors scope MVP.
-- `S07` doit être garanti côté backend avec tests dédiés ; un simple filtrage UI ne compte pas.
 
 **Hors scope explicite (renvoyé à `EP-013` ou à des epics transverses) :**
 

@@ -125,6 +125,12 @@ VALUES
     ('00000000-0000-0000-0000-000000000110', '00000000-0000-0000-0000-000000000001', '10', 'parking',   'P', NULL,  'Place de parking n°1')
 ON CONFLICT (building_id, unit_number) DO NOTHING;
 
+-- EP-003-S07: lot 10 (parking, 440 tantièmes) archived after meeting 855 started.
+-- Frozen attendance for meetings 853 and 855 still includes it (locked at start time).
+-- compute_active_shares_total (draft/called) → 7 560 ; SUM(attendance) for locked meetings → 8 000.
+UPDATE unit SET active = false
+WHERE id = '00000000-0000-0000-0000-000000000110';
+
 -- ============================================================
 -- 4. UNIT ALLOCATION KEY SHARES  (active records, valid_to = NULL)
 -- ============================================================
@@ -1268,8 +1274,9 @@ ON CONFLICT (id) DO NOTHING;
 -- ============================================================
 -- 13b. ONGOING ASSEMBLY
 -- Extraordinary meeting currently in session (status = ongoing).
--- Attendance: 8 lots present/represented/correspondence (6 660 / 8 000 tantièmes).
--- Resolutions:
+-- Attendance: 8 lots present/represented/correspondence (6 660 / 8 000 tantièmes locked at start).
+-- Lot 10 (parking, 440) archived after start → still in frozen attendance (EP-003-S07).
+-- Resolutions (all thresholds computed on 8 000 = SUM attendance, not building.shares_total):
 --   870  Art. 24 (simple_majority)  — passed     for=4560 > against=1940
 --   871  Art. 24 (simple_majority)  — rejected   for=2890 < against=3610
 --   872  Art. 25 (absolute_majority)— passed     for=5540 > 4000 (50% of 8000)
@@ -1364,9 +1371,10 @@ VALUES
     )
 ON CONFLICT (id) DO NOTHING;
 
--- Ongoing meeting attendance
+-- Ongoing meeting attendance (EP-003-S07: locked at start time, includes now-archived lot 10)
+-- get_meeting_total_shares → SUM(shares_represented) = 8 000 (not compute_active_shares_total = 7 560)
 -- Present/represented: lots 1–4, 6–9  (6 660 tantièmes)
--- Absent: lot 5 (900), lot 10 (440)
+-- Absent: lot 5 (900), lot 10 (440) — lot 10 archived after meeting started, still frozen here
 INSERT INTO general_meeting_attendance (
     meeting_id, unit_id, mode, representative_name, shares_represented
 )
