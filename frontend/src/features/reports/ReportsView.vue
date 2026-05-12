@@ -536,10 +536,7 @@ function photoPreview(file: File): string {
       <template #left>
         <div class="topbar-breadcrumb">
           {{ buildingName }}
-          <CIconChevronRight
-            width="14"
-            height="14"
-          />
+          <CIconChevronRight />
           <span>{{ t('reports.title') }}</span>
         </div>
       </template>

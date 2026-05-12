@@ -260,10 +260,7 @@ async function confirmDelete() {
       <template #left>
         <div class="topbar-breadcrumb">
           {{ buildingName }}
-          <CIconChevronRight
-            width="14"
-            height="14"
-          />
+          <CIconChevronRight />
           <span>{{ t('consultations.title') }}</span>
         </div>
       </template>

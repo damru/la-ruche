@@ -862,22 +862,15 @@ function onFileChange(event: Event) {
     <CTopbar>
       <template #left>
         <div class="topbar-breadcrumb">
-          <span
-            class="breadcrumb-link"
-            @click="router.push('/meetings')"
-          >{{ buildingName || '...' }}</span>
-          <CIconChevronRight
-            width="14"
-            height="14"
-          />
-          <span
-            class="breadcrumb-link"
-            @click="router.push('/meetings')"
-          >{{ t('meetings.title') }}</span>
-          <CIconChevronRight
-            width="14"
-            height="14"
-          />
+          <span>{{ buildingName || '...' }}</span>
+          <CIconChevronRight />
+          <RouterLink
+            :to="{ name: 'assembly-list' }"
+            class="topbar-breadcrumb-link"
+          >
+            {{ t('meetings.title') }}
+          </RouterLink>
+          <CIconChevronRight />
           <span>{{ meeting ? `${typeLabel(meeting.meeting_type)} ${new Date(meeting.meeting_date).getFullYear()}` : '…' }}</span>
         </div>
       </template>
@@ -946,7 +939,7 @@ function onFileChange(event: Event) {
       </template>
     </CTopbar>
 
-    <div class="view-container assembly-detail-page">
+    <div class="view-container">
       <CPageError
         v-if="error"
         :message="error"
@@ -954,7 +947,7 @@ function onFileChange(event: Event) {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else-if="meeting">
-        <header class="assembly-detail-header">
+        <header class="view-header">
           <CEyebrow>
             <CBadge
               :variant="meetingStatusVariant(meeting.status)"
@@ -1006,10 +999,10 @@ function onFileChange(event: Event) {
               <CIconEdit v-else />
             </div>
             <div>
-              <p class="status-banner__title">
+              <p class="text-sm font-semibold">
                 {{ meetingBannerTitle(meeting.status) }}
               </p>
-              <p class="status-banner__sub">
+              <p class="text-xs text-on-surface-variant">
                 {{ meetingBannerSubtitle(meeting.status) }}
               </p>
             </div>
@@ -1899,23 +1892,6 @@ function onFileChange(event: Event) {
 </template>
 
 <style scoped>
-.assembly-detail-page {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-6);
-}
-
-.assembly-detail-header {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.breadcrumb-link {
-  cursor: pointer;
-  color: var(--color-on-surface-variant);
-}
-
 .status-banner {
   display: flex;
   align-items: center;
@@ -1949,18 +1925,6 @@ function onFileChange(event: Event) {
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
-}
-
-.status-banner__title {
-  margin: 0;
-  font-size: var(--text-sm);
-  font-weight: var(--fw-semibold);
-}
-
-.status-banner__sub {
-  margin: 2px 0 0;
-  color: var(--color-on-surface-variant);
-  font-size: var(--text-xs);
 }
 
 .status-banner--called {

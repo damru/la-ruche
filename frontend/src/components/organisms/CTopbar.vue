@@ -80,6 +80,12 @@
   color: var(--color-on-surface-variant);
 }
 
+.c-topbar :deep(.topbar-breadcrumb-link) {
+  color: inherit;
+  text-decoration: none;
+}
+.c-topbar :deep(.topbar-breadcrumb-link:hover) { text-decoration: underline; }
+
 /* ── Mobile ──────────────────────────────────────────────────────── */
 @media (max-width: 640px) {
   .c-topbar {

@@ -79,10 +79,7 @@ function formatLocation(unit: { block?: string | null; staircase?: string | null
       <template #left>
         <div class="topbar-breadcrumb">
           {{ data?.building.name ?? '...' }}
-          <CIconChevronRight
-            width="14"
-            height="14"
-          />
+          <CIconChevronRight />
           <span>{{ t('registry.title') }}</span>
         </div>
       </template>

@@ -191,10 +191,7 @@ onMounted(reload)
       <template #left>
         <div class="topbar-breadcrumb">
           <span>{{ t('nav.groups.residence') }}</span>
-          <CIconChevronRight
-            width="14"
-            height="14"
-          />
+          <CIconChevronRight />
           <span>{{ t('nav.residence-keys') }}</span>
         </div>
       </template>

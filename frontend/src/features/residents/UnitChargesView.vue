@@ -60,15 +60,9 @@ function statusLabel(levy: UnitChargesLevy): string {
             style="cursor:pointer"
             @click="router.push(backRoute)"
           >{{ backLabel }}</span>
-          <CIconChevronRight
-            width="14"
-            height="14"
-          />
+          <CIconChevronRight />
           <span>{{ data?.unit.unit_number ?? '…' }}</span>
-          <CIconChevronRight
-            width="14"
-            height="14"
-          />
+          <CIconChevronRight />
           <span>{{ t('units.charges.title') }}</span>
         </div>
       </template>

@@ -233,10 +233,7 @@ function formatLocation(unit: { block?: string | null; staircase?: string | null
       <template #left>
         <div class="topbar-breadcrumb">
           {{ t('nav.residents') }}
-          <CIconChevronRight
-            width="14"
-            height="14"
-          />
+          <CIconChevronRight />
           <span>{{ t('residents.title') }}</span>
         </div>
       </template>

@@ -72,10 +72,7 @@ function initials(name: string): string {
       <template #left>
         <div class="topbar-breadcrumb">
           {{ mockBuildingStats.name }}
-          <CIconChevronRight
-            width="14"
-            height="14"
-          />
+          <CIconChevronRight  />
           <span>Budget &amp; Charges</span>
         </div>
       </template>

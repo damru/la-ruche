@@ -105,20 +105,14 @@ function priorityVariant(p: string): 'err' | 'pending' | 'primary' | 'valid' | '
       <template #left>
         <div class="topbar-breadcrumb">
           {{ buildingName }}
-          <CIconChevronRight
-            width="14"
-            height="14"
-          />
+          <CIconChevronRight />
           <RouterLink
             :to="{ name: 'contractors' }"
-            class="breadcrumb-link"
+            class="topbar-breadcrumb-link"
           >
             {{ t('contractors.title') }}
           </RouterLink>
-          <CIconChevronRight
-            width="14"
-            height="14"
-          />
+          <CIconChevronRight />
           <span>{{ contractor?.name ?? '…' }}</span>
         </div>
       </template>
@@ -367,12 +361,4 @@ function priorityVariant(p: string): 'err' | 'pending' | 'primary' | 'valid' | '
   color: var(--color-on-surface-variant);
   margin: var(--space-1) 0 0;
 }
-
-/* ── Breadcrumb link ─────────────────────────────────────────────── */
-.breadcrumb-link {
-  color: inherit;
-  text-decoration: none;
-}
-.breadcrumb-link:hover { text-decoration: underline; }
-
 </style>

@@ -765,10 +765,7 @@ async function copyVendorLink(taskId: string) {
       <template #left>
         <div class="topbar-breadcrumb">
           {{ buildingName }}
-          <CIconChevronRight
-            width="14"
-            height="14"
-          />
+          <CIconChevronRight />
           <span>{{ t('tasks.title') }}</span>
         </div>
       </template>

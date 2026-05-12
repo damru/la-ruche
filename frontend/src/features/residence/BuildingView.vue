@@ -52,15 +52,9 @@ onMounted(reload)
       <template #left>
         <div class="topbar-breadcrumb">
           {{ form.name ?? '...' }}
-          <CIconChevronRight
-            width="14"
-            height="14"
-          />
+          <CIconChevronRight />
           <span>{{ t('nav.groups.residence') }}</span>
-          <CIconChevronRight
-            width="14"
-            height="14"
-          />
+          <CIconChevronRight />
           <span>{{ t('nav.residence-info') }}</span>
         </div>
       </template>

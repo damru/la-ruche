@@ -182,20 +182,14 @@ function dotClass(variant?: TimelineEvent['variant']): string {
       <template #left>
         <div class="topbar-breadcrumb">
           {{ buildingName }}
-          <CIconChevronRight
-            width="14"
-            height="14"
-          />
+          <CIconChevronRight />
           <RouterLink
             :to="{ name: 'tasks' }"
-            class="breadcrumb-link"
+            class="topbar-breadcrumb-link"
           >
             {{ t('tasks.title') }}
           </RouterLink>
-          <CIconChevronRight
-            width="14"
-            height="14"
-          />
+          <CIconChevronRight />
           <span>{{ task?.title ?? '…' }}</span>
         </div>
       </template>
@@ -422,13 +416,6 @@ function dotClass(variant?: TimelineEvent['variant']): string {
   font-weight: var(--fw-medium);
 }
 .contractor-link:hover { text-decoration: underline; }
-
-/* ── Breadcrumb link ─────────────────────────────────────────────── */
-.breadcrumb-link {
-  color: inherit;
-  text-decoration: none;
-}
-.breadcrumb-link:hover { text-decoration: underline; }
 
 /* ── Reopen hint ─────────────────────────────────────────────────── */
 .reopen-hint {

@@ -139,10 +139,7 @@ async function saveMeeting() {
       <template #left>
         <div class="topbar-breadcrumb">
           {{ buildingName || '...' }}
-          <CIconChevronRight
-            width="14"
-            height="14"
-          />
+          <CIconChevronRight />
           <span>{{ t('meetings.title') }}</span>
         </div>
       </template>

@@ -851,10 +851,7 @@ async function submitDelete() {
       <template #left>
         <div class="topbar-breadcrumb">
           {{ buildingName || '…' }}
-          <CIconChevronRight
-            width="14"
-            height="14"
-          />
+          <CIconChevronRight  />
           <span>{{ t('claims.title') }}</span>
         </div>
       </template>
