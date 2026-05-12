@@ -389,4 +389,95 @@ mod tests {
         );
         assert_eq!(inflated_result.eligible_for_second_vote, None);
     }
+
+    // ── Additional edge-case unit tests ────────────────────────────────────────
+
+    #[test]
+    fn unanimity_passes_when_all_shares_vote_in_favor() {
+        // 1000/1000 in favour, no against, no abstentions → unanimity
+        let d = tally(1000, 1000, 1000, 0);
+        let result = d.compute(&VoteRule::Unanimity);
+        assert!(result.passed);
+        assert_eq!(result.threshold, 1000);
+        assert_eq!(result.eligible_for_second_vote, None);
+    }
+
+    #[test]
+    fn art24_fails_on_exact_tie_between_for_and_against() {
+        // 300 for vs 300 against → shares_counted = 600, threshold = 301 → not strictly more
+        let d = tally(1000, 600, 300, 300);
+        let result = d.compute(&VoteRule::SimpleMajority);
+        assert!(!result.passed);
+        assert_eq!(result.shares_counted, 600);
+        assert_eq!(result.threshold, 301);
+        assert_eq!(result.eligible_for_second_vote, None);
+    }
+
+    #[test]
+    fn art25_passes_at_exact_absolute_majority_threshold() {
+        // 501/1000 → threshold = 501, 501 >= 501 → passes
+        let d = tally(1000, 800, 501, 299);
+        let result = d.compute(&VoteRule::AbsoluteMajority);
+        assert!(result.passed);
+        assert_eq!(result.threshold, 501);
+        assert_eq!(result.eligible_for_second_vote, None);
+    }
+
+    #[test]
+    fn art26_fails_when_owners_condition_not_met_but_eligible_for_second_vote() {
+        // Shares: 700/1000 ≥ 2/3 threshold (667), so shares condition is met.
+        // Owners: 5 in favour out of 9 total → 5*3=15 < 9*2=18 → owners condition NOT met.
+        // → overall rejected, but for_votes*2 (1400) > shares_total (1000) → Art.26-1 eligible.
+        let d = VoteTally {
+            shares_total: 1000,
+            shares_present: 900,
+            total_owners: 9,
+            present_owners: 8,
+            favorable_owners: 5,
+            for_votes: 700,
+            against_votes: 200,
+            abstentions: 0,
+        };
+        let result = d.compute(&VoteRule::DoubleMajority);
+        assert!(!result.passed, "owners condition not met → rejected");
+        assert_eq!(result.threshold, 667);
+        assert_eq!(
+            result.eligible_for_second_vote,
+            Some(SecondVoteType::Art26_1),
+            "700 > 500 (half of 1000) → eligible for Art.26-1"
+        );
+    }
+
+    #[test]
+    fn art26_fails_when_only_shares_not_met_below_half_not_eligible_for_second_vote() {
+        // for_votes = 490/1000 < 500 (half) → NOT eligible for Art.26-1
+        let d = VoteTally {
+            shares_total: 1000,
+            shares_present: 900,
+            total_owners: 9,
+            present_owners: 8,
+            favorable_owners: 7,
+            for_votes: 490,
+            against_votes: 410,
+            abstentions: 0,
+        };
+        let result = d.compute(&VoteRule::DoubleMajority);
+        assert!(!result.passed);
+        assert_eq!(result.eligible_for_second_vote, None);
+    }
+
+    #[test]
+    fn art25_fails_just_below_absolute_majority_threshold() {
+        // 500/1000 → threshold = 501, 500 < 501 → fails
+        // 500 * 3 = 1500 > 1000 → eligible for Art.25-1 (> 1/3)
+        let d = tally(1000, 800, 500, 300);
+        let result = d.compute(&VoteRule::AbsoluteMajority);
+        assert!(!result.passed);
+        assert_eq!(result.threshold, 501);
+        assert_eq!(
+            result.eligible_for_second_vote,
+            Some(SecondVoteType::Art25_1),
+            "500 > 333 (1/3 of 1000) → Art.25-1 applies"
+        );
+    }
 }
