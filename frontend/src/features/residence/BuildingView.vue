@@ -42,7 +42,7 @@ async function saveBuilding() {
   }
 }
 
-const { loading, error, reload } = usePageLoader(loadBuilding, t('common.loadError'))
+const { loading, error, reload } = usePageLoader(loadBuilding)
 onMounted(reload)
 </script>
 

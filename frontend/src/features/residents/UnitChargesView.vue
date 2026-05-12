@@ -34,7 +34,7 @@ async function load() {
   data.value = res.data
 }
 
-const { loading, error, reload } = usePageLoader(load, t('common.loadError'))
+const { loading, error, reload } = usePageLoader(load)
 onMounted(reload)
 
 function statusClass(levy: UnitChargesLevy): string {

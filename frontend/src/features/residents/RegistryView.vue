@@ -21,7 +21,7 @@ async function loadRegistry() {
   data.value = res.data
 }
 
-const { loading, error, reload } = usePageLoader(loadRegistry, t('common.loadError'))
+const { loading, error, reload } = usePageLoader(loadRegistry)
 onMounted(reload)
 
 // Build a matrix: unit_id → key_id → share_value

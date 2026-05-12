@@ -181,7 +181,7 @@ async function confirmDeleteKey() {
   }
 }
 
-const { loading, error, reload } = usePageLoader(loadKeys, t('common.loadError'))
+const { loading, error, reload } = usePageLoader(loadKeys)
 onMounted(reload)
 </script>
 

@@ -50,7 +50,7 @@ async function loadData() {
   buildingName.value = buildingRes.data.name
 }
 
-const { loading, error, reload } = usePageLoader(loadData, t('common.loadError'))
+const { loading, error, reload } = usePageLoader(loadData)
 onMounted(reload)
 
 function documentReferences(document: Document): string[] {
@@ -159,7 +159,7 @@ async function confirmDeleteDoc() {
     deleteDocFeedback.setSuccess(t('documents.deleteSuccess'))
     scheduleDeleteDocClose(() => { showDeleteDocModal.value = false })
   } catch (e: unknown) {
-    deleteDocFeedback.setError(toErrorMessage(e, t('common.error')))
+    deleteDocFeedback.setError(toErrorMessage(e))
   } finally {
     deletingDoc.value = false
   }

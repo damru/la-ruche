@@ -368,7 +368,7 @@
     "quorumOk": "Quorum atteint",
     "quorumOkDetail": "L'assemblée peut valablement délibérer.",
     "quorumKo": "Quorum insuffisant",
-    "quorumKoDetail": "L'assemblée ne peut pas valablement délibérer. Seuil nécessaire: {threshold} tantièmes.",
+    "quorumKoDetail": "L'assemblée ne peut pas valablement délibérer. Seuil nécessaire: {threshold} copropriétaire.",
     "mandate": "Mandat",
     "newResolution": "Nouvelle résolution",
     "newResolutionSub": "Ajoutez une résolution à l'ordre du jour de cette assemblée.",

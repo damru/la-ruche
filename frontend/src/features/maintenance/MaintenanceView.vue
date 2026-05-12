@@ -113,7 +113,7 @@ async function loadData() {
   allEntries.value = entriesRes.data
 }
 
-const { loading, error, reload } = usePageLoader(loadData, t('common.loadError'))
+const { loading, error, reload } = usePageLoader(loadData)
 onMounted(reload)
 
 // ── Derived ───────────────────────────────────────────────────────
@@ -260,7 +260,7 @@ async function saveEntry() {
       reload()
     })
   } catch (err) {
-    entryFeedback.setError(toErrorMessage(err, t('common.error')))
+    entryFeedback.setError(toErrorMessage(err))
   } finally {
     savingEntry.value = false
   }
@@ -284,7 +284,7 @@ async function deleteEntry() {
       reload()
     })
   } catch (err) {
-    deleteFeedback.setError(toErrorMessage(err, t('common.error')))
+    deleteFeedback.setError(toErrorMessage(err))
   } finally {
     deletingEntry.value = false
   }

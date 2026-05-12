@@ -229,7 +229,7 @@ async function loadData() {
   allContractors.value = contractorsRes.data
 }
 
-const { loading, error, reload } = usePageLoader(loadData, t('common.loadError'))
+const { loading, error, reload } = usePageLoader(loadData)
 onMounted(reload)
 
 // ── Derived ───────────────────────────────────────────────────────
@@ -424,7 +424,7 @@ async function openTaskDocuments(task: Task) {
     const response = await tasksApi.listDocuments(task.id)
     taskDocuments.value = response.data
   } catch (err) {
-    pageError.value = toErrorMessage(err, t('common.error'))
+    pageError.value = toErrorMessage(err)
     taskDocumentsTarget.value = null
   } finally {
     loadingTaskDocuments.value = false
@@ -436,7 +436,7 @@ async function downloadTaskDocument(documentId: string) {
     const response = await documentsApi.getDownloadUrl(documentId)
     window.open(response.data.url, '_blank', 'noopener')
   } catch (err) {
-    pageError.value = toErrorMessage(err, t('common.error'))
+    pageError.value = toErrorMessage(err)
   }
 }
 
@@ -563,7 +563,7 @@ async function saveTask() {
     taskFeedback.setSuccess(t('common.saved'))
     scheduleTaskClose(() => { showTaskModal.value = false; reload() })
   } catch (err) {
-    taskFeedback.setError(toErrorMessage(err, t('common.error')))
+    taskFeedback.setError(toErrorMessage(err))
   } finally {
     savingTask.value = false
     uploadingTaskDocuments.value = false
@@ -597,7 +597,7 @@ async function confirmCloseTask() {
     closeFeedback.setSuccess(t('tasks.closeSuccess'))
     scheduleCloseTask(() => { closingTask.value = null; reload() })
   } catch (err) {
-    closeFeedback.setError(toErrorMessage(err, t('common.error')))
+    closeFeedback.setError(toErrorMessage(err))
   } finally {
     closingInProgress.value = false
   }
@@ -633,7 +633,7 @@ async function confirmDeleteTask() {
     deleteTaskFeedback.setSuccess(t('tasks.deleteSuccess'))
     scheduleDeleteTask(() => { showDeleteModal.value = false; reload() })
   } catch (err) {
-    deleteTaskFeedback.setError(toErrorMessage(err, t('common.error')))
+    deleteTaskFeedback.setError(toErrorMessage(err))
   } finally {
     deletingTask.value = false
   }
@@ -667,7 +667,7 @@ async function confirmRevoke() {
     revokeFeedback.setSuccess(t('tasks.revokeSuccess'))
     scheduleRevokeTask(() => { revokingTask.value = null; reload() })
   } catch (err) {
-    revokeFeedback.setError(toErrorMessage(err, t('common.error')))
+    revokeFeedback.setError(toErrorMessage(err))
   } finally {
     revoking.value = false
   }
@@ -695,7 +695,7 @@ async function confirmReopen() {
     reopenFeedback.setSuccess(t('tasks.reopenSuccess'))
     scheduleReopenTask(() => { reopeningTask.value = null; reload() })
   } catch (err) {
-    reopenFeedback.setError(toErrorMessage(err, t('common.error')))
+    reopenFeedback.setError(toErrorMessage(err))
   } finally {
     reopening.value = false
   }
@@ -714,7 +714,7 @@ async function generateToken(task: Task) {
     vendorLinks.value[task.id] = { url, expires_at: res.data.expires_at }
     await reload()
   } catch (err) {
-    pageError.value = toErrorMessage(err, t('common.error'))
+    pageError.value = toErrorMessage(err)
   } finally {
     generatingToken.value = null
   }
@@ -734,7 +734,7 @@ async function showVendorLink(task: Task) {
       : res.data.url
     vendorLinks.value[task.id] = { url, expires_at: res.data.expires_at }
   } catch (err) {
-    pageError.value = toErrorMessage(err, t('common.error'))
+    pageError.value = toErrorMessage(err)
   }
 }
 
@@ -753,7 +753,7 @@ async function copyVendorLink(taskId: string) {
       }
     }, VENDOR_LINK_COPY_FEEDBACK_DELAY_MS)
   } catch (err) {
-    pageError.value = toErrorMessage(err, t('common.error'))
+    pageError.value = toErrorMessage(err)
   }
 }
 

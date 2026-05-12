@@ -92,7 +92,7 @@ async function loadData() {
   } catch { /* endpoint may not yet be available */ }
 }
 
-const { loading, error, reload } = usePageLoader(loadData, t('common.loadError'))
+const { loading, error, reload } = usePageLoader(loadData)
 onMounted(reload)
 
 function unitTypeIcon(type: string): string {

@@ -31,7 +31,7 @@ async function loadOwnedUnits() {
   }
 }
 
-const { loading, error, reload } = usePageLoader(loadOwnedUnits, t('common.loadError'))
+const { loading, error, reload } = usePageLoader(loadOwnedUnits)
 onMounted(reload)
 </script>
 

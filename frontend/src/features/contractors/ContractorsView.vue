@@ -87,7 +87,7 @@ async function loadData() {
   allContractors.value = contractorsRes.data
 }
 
-const { loading, error, reload } = usePageLoader(loadData, t('common.loadError'))
+const { loading, error, reload } = usePageLoader(loadData)
 onMounted(reload)
 
 // ── Filtered list ─────────────────────────────────────────────────
@@ -178,7 +178,7 @@ async function save() {
     feedback.setSuccess(t('common.saved'))
     scheduleModalClose(() => { showModal.value = false; reload() })
   } catch (err) {
-    feedback.setError(toErrorMessage(err, t('common.error')))
+    feedback.setError(toErrorMessage(err))
   } finally {
     saving.value = false
   }
@@ -208,7 +208,7 @@ async function confirmDelete() {
     deleteFeedback.setSuccess(t('contractors.deleteSuccess'))
     scheduleDeleteClose(() => { showDeleteModal.value = false; reload() })
   } catch (err) {
-    deleteFeedback.setError(toErrorMessage(err, t('common.error')))
+    deleteFeedback.setError(toErrorMessage(err))
   } finally {
     deletingId.value = null
   }

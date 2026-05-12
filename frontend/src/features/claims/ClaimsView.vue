@@ -169,7 +169,7 @@ async function loadData() {
   allUsers.value = usersResponse.data
 }
 
-const { loading, error, reload } = usePageLoader(loadData, t('common.loadError'))
+const { loading, error, reload } = usePageLoader(loadData)
 onMounted(reload)
 
 const unitsById = computed(() =>

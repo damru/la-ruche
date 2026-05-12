@@ -21,7 +21,6 @@ import type {
 import { buildingApi, documentsApi, meetingsApi } from '@/api'
 
 const route = useRoute()
-const router = useRouter()
 const { t } = useI18n()
 const { formatDate } = useFormatters()
 const auth = useAuthStore()
@@ -163,8 +162,7 @@ const attendancePct = computed(() => {
   if (!attendance.value.total_shares) return 0
   return Math.round((attendance.value.shares_present / attendance.value.total_shares) * 100)
 })
-const quorumThreshold = computed(() => Math.ceil((attendance.value.total_shares || 0) / 2))
-const quorumReached = computed(() => attendance.value.shares_present >= quorumThreshold.value)
+const quorumReached = computed(() => attendance.value.present_units >= 1)
 const attendanceFillStyle = computed(() => ({ width: `${Math.min(attendancePct.value, 100)}%` }))
 const resolvedResolutionCount = computed(() => resolutions.value.filter(resolution => resolution.status !== 'pending').length)
 const pendingResolutionCount = computed(() => resolutions.value.filter(resolution => resolution.status === 'pending').length)
@@ -279,7 +277,7 @@ async function loadData() {
   )
 }
 
-const { loading, error, reload } = usePageLoader(loadData, t('common.loadError'))
+const { loading, error, reload } = usePageLoader(loadData)
 
 const meetingTypeOptions = computed(() => [
   { value: 'annual', label: t('meetings.types.annual') },
@@ -523,7 +521,7 @@ async function saveMeeting() {
       await reload()
     })
   } catch (err) {
-    meetingFeedback.setError(toErrorMessage(err, t('common.error')))
+    meetingFeedback.setError(toErrorMessage(err))
   } finally {
     savingMeeting.value = false
   }
@@ -549,7 +547,7 @@ async function saveResolution() {
       await reload()
     })
   } catch (err) {
-    resolutionFeedback.setError(toErrorMessage(err, t('common.error')))
+    resolutionFeedback.setError(toErrorMessage(err))
   } finally {
     savingResolution.value = false
   }
@@ -622,7 +620,7 @@ async function saveVotes() {
 
     scheduleVoteClose(async () => { showVoteModal.value = false })
   } catch (err) {
-    voteFeedback.setError(toErrorMessage(err, t('common.error')))
+    voteFeedback.setError(toErrorMessage(err))
   } finally {
     savingVotes.value = false
   }
@@ -660,7 +658,7 @@ async function saveDocument() {
       await reload()
     })
   } catch (err) {
-    documentFeedback.setError(toErrorMessage(err, t('common.error')))
+    documentFeedback.setError(toErrorMessage(err))
   } finally {
     savingDocument.value = false
   }
@@ -673,7 +671,7 @@ async function detachDocument(documentId: string) {
     await meetingsApi.detachDocument(meeting.value.id, documentId)
     await reload()
   } catch (err) {
-    documentFeedback.setError(toErrorMessage(err, t('common.error')))
+    documentFeedback.setError(toErrorMessage(err))
   }
 }
 
@@ -682,7 +680,7 @@ async function openDocument(documentId: string) {
     const response = await documentsApi.getDownloadUrl(documentId)
     window.open(response.data.url, '_blank', 'noopener')
   } catch (err) {
-    documentFeedback.setError(toErrorMessage(err, t('common.error')))
+    documentFeedback.setError(toErrorMessage(err))
   }
 }
 
@@ -700,7 +698,7 @@ async function saveAttendance() {
       await reload()
     })
   } catch (err) {
-    attendanceFeedback.setError(toErrorMessage(err, t('common.error')))
+    attendanceFeedback.setError(toErrorMessage(err))
   } finally {
     savingAttendance.value = false
   }
@@ -716,7 +714,7 @@ async function callMeeting() {
     await meetingsApi.call(meeting.value.id)
     await reload()
   } catch (err) {
-    documentFeedback.setError(toErrorMessage(err, t('common.error')))
+    documentFeedback.setError(toErrorMessage(err))
   } finally {
     callingMeeting.value = false
   }
@@ -732,7 +730,7 @@ async function closeMeeting() {
     await meetingsApi.close(meeting.value.id)
     await reload()
   } catch (err) {
-    documentFeedback.setError(toErrorMessage(err, t('common.error')))
+    documentFeedback.setError(toErrorMessage(err))
   } finally {
     closingMeeting.value = false
   }
@@ -745,7 +743,7 @@ async function startMeeting() {
     await meetingsApi.start(meeting.value.id)
     await reload()
   } catch (err) {
-    documentFeedback.setError(toErrorMessage(err, t('common.error')))
+    documentFeedback.setError(toErrorMessage(err))
   } finally {
     startingMeeting.value = false
   }
@@ -781,7 +779,7 @@ async function saveEditResolution() {
       await reload()
     })
   } catch (err) {
-    editResolutionFeedback.setError(toErrorMessage(err, t('common.error')))
+    editResolutionFeedback.setError(toErrorMessage(err))
   } finally {
     savingEditResolution.value = false
   }
@@ -810,7 +808,7 @@ async function confirmArt24Resolution() {
       await reload()
     })
   } catch (err) {
-    art24Feedback.setError(toErrorMessage(err, t('common.error')))
+    art24Feedback.setError(toErrorMessage(err))
   } finally {
     savingArt24.value = false
   }
@@ -839,7 +837,7 @@ async function confirmArt25Resolution() {
       await reload()
     })
   } catch (err) {
-    art25Feedback.setError(toErrorMessage(err, t('common.error')))
+    art25Feedback.setError(toErrorMessage(err))
   } finally {
     savingArt25.value = false
   }
@@ -1394,7 +1392,7 @@ function onFileChange(event: Event) {
                   class="quorum-alert"
                   :title="quorumReached ? t('meetings.quorumOk') : t('meetings.quorumKo')"
                 >
-                  {{ quorumReached ? t('meetings.quorumOkDetail') : t('meetings.quorumKoDetail', { threshold: quorumThreshold }) }}
+                  {{ quorumReached ? t('meetings.quorumOkDetail') : t('meetings.quorumKoDetail', { threshold: 1 }) }}
                 </CAlert>
               </div>
               <CFlexGroup direction="column">

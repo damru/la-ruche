@@ -48,7 +48,7 @@ async function loadData() {
   )
 }
 
-const { loading, error, reload } = usePageLoader(loadData, t('common.loadError'))
+const { loading, error, reload } = usePageLoader(loadData)
 onMounted(reload)
 
 // ── Domain icon helpers (mirrors ContractorsView) ─────────────────

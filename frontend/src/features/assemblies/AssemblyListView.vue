@@ -57,7 +57,7 @@ async function loadData() {
   allMeetings.value = meetingsRes.data.slice().sort((left, right) => right.meeting_date.localeCompare(left.meeting_date))
 }
 
-const { loading, error, reload } = usePageLoader(loadData, t('common.loadError'))
+const { loading, error, reload } = usePageLoader(loadData)
 onMounted(reload)
 
 const meetings = computed(() => {
@@ -126,7 +126,7 @@ async function saveMeeting() {
       router.push(`/meetings/${response.data.id}`)
     })
   } catch (err) {
-    createFeedback.setError(toErrorMessage(err, t('common.error')))
+    createFeedback.setError(toErrorMessage(err))
   } finally {
     saving.value = false
   }

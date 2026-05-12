@@ -164,7 +164,7 @@ async function submitCreate() {
     createFeedback.setSuccess(t('reports.createSuccess'))
     scheduleCreateClose(() => { showCreateModal.value = false; reload() })
   } catch (err) {
-    createFeedback.setError(toErrorMessage(err, t('common.error')))
+    createFeedback.setError(toErrorMessage(err))
   } finally {
     saving.value = false
     uploadingPhotos.value = false
@@ -195,7 +195,7 @@ async function submitUpdateStatus() {
     updateFeedback.setSuccess(t('reports.updateSuccess'))
     scheduleUpdateClose(() => { reportToUpdate.value = null; reload() })
   } catch (err) {
-    updateFeedback.setError(toErrorMessage(err, t('common.error')))
+    updateFeedback.setError(toErrorMessage(err))
   } finally {
     updating.value = false
   }
@@ -230,7 +230,7 @@ async function submitConvert() {
       router.push({ name: 'task-detail', params: { id: res.data.task_id } })
     })
   } catch (err) {
-    convertFeedback.setError(toErrorMessage(err, t('common.error')))
+    convertFeedback.setError(toErrorMessage(err))
   } finally {
     converting.value = false
   }
@@ -287,7 +287,7 @@ async function submitEdit() {
     editFeedback.setSuccess(t('reports.editSuccess'))
     scheduleEditClose(() => { reportToEdit.value = null; reload() })
   } catch (err) {
-    editFeedback.setError(toErrorMessage(err, t('common.error')))
+    editFeedback.setError(toErrorMessage(err))
   } finally {
     editSaving.value = false
     editUploadingPhotos.value = false
@@ -323,7 +323,7 @@ async function submitDelete() {
     deleteFeedback.setSuccess(t('reports.deleteSuccess'))
     scheduleDeleteClose(() => { reportToDelete.value = null; reload() })
   } catch (err) {
-    deleteFeedback.setError(toErrorMessage(err, t('common.error')))
+    deleteFeedback.setError(toErrorMessage(err))
   } finally {
     deleting.value = false
   }
@@ -462,7 +462,7 @@ async function loadData() {
   allUnits.value = unitsRes.data
 }
 
-const { loading, error, reload } = usePageLoader(loadData, t('common.loadError'))
+const { loading, error, reload } = usePageLoader(loadData)
 onMounted(reload)
 
 // ── Derived ───────────────────────────────────────────────────────

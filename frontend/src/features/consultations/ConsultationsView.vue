@@ -127,7 +127,7 @@ async function loadData() {
   }
 }
 
-const { loading, error, reload } = usePageLoader(loadData, t('common.loadError'))
+const { loading, error, reload } = usePageLoader(loadData)
 onMounted(reload)
 
 // Clear inline error messages when switching tabs
@@ -191,7 +191,7 @@ async function saveConsultation() {
     createFeedback.setSuccess(t('common.saved'))
     scheduleCreateClose(() => { showCreateModal.value = false; reload() })
   } catch (err) {
-    createFeedback.setError(toErrorMessage(err, t('common.error')))
+    createFeedback.setError(toErrorMessage(err))
   } finally {
     saving.value = false
   }
@@ -206,7 +206,7 @@ async function submitVote(c: Consultation) {
     await consultationsApi.respond(c.id, iv.selections, iv.comment || undefined)
     await reload()
   } catch (err) {
-    iv.error = toErrorMessage(err, t('common.error'))
+    iv.error = toErrorMessage(err)
     iv.submitting = false
   }
 }
@@ -226,7 +226,7 @@ async function confirmClose() {
     closeFeedback.setSuccess(t('consultations.closeSuccess'))
     scheduleCloseConsultation(async () => { closingConsultation.value = null; await reload() })
   } catch (err) {
-    closeFeedback.setError(toErrorMessage(err, t('common.error')))
+    closeFeedback.setError(toErrorMessage(err))
   } finally {
     closing.value = false
   }
@@ -247,7 +247,7 @@ async function confirmDelete() {
     deleteFeedback.setSuccess(t('consultations.deleteSuccess'))
     scheduleDeleteConsultation(async () => { deletingConsultation.value = null; await reload() })
   } catch (err) {
-    deleteFeedback.setError(toErrorMessage(err, t('common.error')))
+    deleteFeedback.setError(toErrorMessage(err))
   } finally {
     deleting.value = false
   }

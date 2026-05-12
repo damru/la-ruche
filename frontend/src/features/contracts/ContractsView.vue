@@ -60,7 +60,7 @@ async function loadData() {
   allReminders.value = remindersResponse.data
 }
 
-const { loading, error, reload } = usePageLoader(loadData, t('common.loadError'))
+const { loading, error, reload } = usePageLoader(loadData)
 onMounted(reload)
 
 const contractsById = computed(() =>
