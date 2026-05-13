@@ -299,8 +299,74 @@
     "call": "Convoquer l'AG",
     "start": "Démarrer l'AG",
     "startingAction": "AG en séance",
+    "start_modal": {
+      "title": "Démarrer la séance",
+      "lead": "Désignez le président, le secrétaire et les éventuels scrutateurs avant de commencer les votes.",
+      "president_label": "Président de séance",
+      "secretary_label": "Secrétaire de séance",
+      "scrutineers_label": "Scrutateurs (optionnels)",
+      "scrutineer_placeholder": "Nom du scrutateur",
+      "add_scrutineer": "Ajouter un scrutateur",
+      "required": "Le président et le secrétaire sont obligatoires."
+    },
+    "session_roles": {
+      "title": "Rôles de séance",
+      "president": "Président",
+      "secretary": "Secrétaire",
+      "scrutineers": "Scrutateurs"
+    },
+    "convocation": {
+      "modal_title": "Convoquer l'AG",
+      "modal_lead": "Vérifiez la complétude réglementaire et tracez le canal d'envoi.",
+      "checklist_title": "Checklist réglementaire",
+      "checklist_incomplete": "Au moins un point bloquant n'est pas satisfait. Complétez avant l'envoi.",
+      "advisory": "non bloquant",
+      "items": {
+        "j_minus_21_respected": "Délai J−21 respecté",
+        "notice_document_attached": "Document de convocation joint",
+        "agenda_present": "Ordre du jour renseigné",
+        "resolutions_present": "Au moins une résolution inscrite",
+        "vote_by_mail_form_attached": "Formulaire de vote par correspondance joint",
+        "convocation_channel_declared": "Canal d'envoi déclaré",
+        "convocation_sent_at_recorded": "Date d'envoi enregistrée"
+      },
+      "channel_label": "Canal d'envoi",
+      "channels": {
+        "lrar": "Lettre recommandée avec AR",
+        "hand_delivery": "Remise en main propre",
+        "email": "Email (accord exprès requis)"
+      },
+      "sent_at_label": "Date d'envoi (optionnel, par défaut maintenant)",
+      "sent_at_placeholder": "JJ/MM/AAAA HH:mm"
+    },
+    "signatures": {
+      "modal_title": "Signatures du bureau de séance",
+      "modal_lead": "Tracez les signatures effectives du président, du secrétaire et des scrutateurs.",
+      "action_label": "Saisir les signatures",
+      "president": "Président",
+      "secretary": "Secrétaire",
+      "scrutineers": "Scrutateurs",
+      "signed_on": "signé le {date}",
+      "not_signed": "non signé"
+    },
+    "minutes": {
+      "title": "Procès-verbal de séance",
+      "lead": "L'AG est clôturée. Téléchargez le projet de PV pour signature ou attachez directement un PV signé.",
+      "download_draft": "Télécharger le projet de PV",
+      "upload_signed": "Attacher le PV signé",
+      "signed_attached": "PV signé attaché",
+      "download_signed": "Télécharger le PV signé",
+      "modal_title": "Attacher le PV signé",
+      "modal_lead": "Sélectionnez le fichier PDF ou Markdown du PV signé à archiver dans l'AG.",
+      "mark_notified": "Marquer le PV notifié aux absents",
+      "notified_at": "Notifié aux absents le {date}",
+      "not_yet_notified_at": "Non notifié aux absents",
+      "notification_duty_hint": "Délai de notification syndic : avant le {date} (J+30 — art. 42 al. 3 loi 65-557)",
+      "deadline_hint": "Délai de contestation jusqu'au {date} (2 mois depuis la notification — art. 42 loi 1965)"
+    },
     "bannerOngoing": "AG en cours · Votes en séance",
     "bannerOngoingSub": "{resolved} résolutions votées · {pending} en attente",
+    "bannerResolutionsResolved": "résolutions adoptées",
     "editResolution": "Modifier",
     "resolutionDescriptionOnly": "Titre et règle de vote verrouillés pendant la séance.",
     "createArt24": "Créer sous Art. 24",
@@ -327,13 +393,14 @@
     "statResolutions": "résolution | résolutions",
     "statPassed": "adoptée | adoptées",
     "statPendingVotes": "votes en attente",
-    "bannerClosed": "AG close · PV disponible",
+    "bannerClosed": "AG close",
     "bannerCalled": "AG convoquée · En attente de tenue",
     "depositMinutes": "Déposer le PV",
     "documents": {
       "title": "Pièces de l'AG",
       "notice": "Convocation",
       "attachment": "Annexe",
+      "vote_by_mail_form": "Formulaire de vote par correspondance",
       "empty": "Aucune pièce de convocation liée.",
       "uploadTitle": "Ajouter une pièce AG",
       "uploadType": "Type de pièce",
@@ -440,8 +507,6 @@
         "double_majority": "Art. 26"
       }
     },
-    "minutes": "Procès-verbal",
-    "uploadMinutes": "Déposer le PV signé",
     "present": "présents",
     "tantiemesShares": "% des tantièmes",
     "legalWarning": "Délai légal de convocation : 21 jours minimum (art. 9 décret 17/03/1967)",
@@ -471,7 +536,7 @@
       },
       "unanimity": {
         "linkLabel": "Unanimité",
-        "linkHref": "#"
+        "linkHref": "https://www.legifrance.gouv.fr/loda/id/JORFTEXT000000880200"
       }
     }
   },
@@ -1285,7 +1350,11 @@
       "not_in_draft_status": "Cette assemblée n'est plus au statut brouillon.",
       "attendance_locked": "La feuille de présence ne peut plus être modifiée une fois l'assemblée tenue ou clôturée.",
       "not_in_called_status": "Cette assemblée n'est pas au statut convoquée.",
-      "not_in_ongoing_status": "Cette assemblée n'est pas en cours de séance."
+      "not_in_ongoing_status": "Cette assemblée n'est pas en cours de séance.",
+      "not_in_closed_status": "Cette assemblée n'est pas encore clôturée — projet de PV indisponible.",
+      "session_roles_required": "Le président et le secrétaire de séance sont obligatoires pour démarrer l'AG.",
+      "minutes_already_attached": "Un PV signé est déjà attaché à cette assemblée.",
+      "minutes_not_signed": "Le PV doit être signé et attaché avant d'être notifié aux absents."
     },
     "auth": {
       "invalid_login_payload": "Les identifiants fournis sont incomplets ou invalides.",

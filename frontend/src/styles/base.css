@@ -18,14 +18,14 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Focus visible — accessibilité ─────────────────────────────────── */
+/* Focus visible — accessibility ──────────────────────────────────── */
 :focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
   border-radius: 2px;
 }
 
-/* Scrollbar discrète ────────────────────────────────────────────── */
+/* Subtle scrollbar ────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--color-outline-variant); border-radius: var(--radius-full); }
@@ -34,6 +34,15 @@ body {
 /* Links ─────────────────────────────────────────────────────────── */
 a { color: var(--color-primary); text-decoration: none; }
 a:hover { text-decoration: underline; }
+
+/* Legal article reference — inline superscript footnote link */
+sup > a.legal-ref {
+  font-size: var(--text-2xs);
+  color: var(--color-on-surface-variant);
+  text-decoration: none;
+  white-space: nowrap;
+}
+sup > a.legal-ref:hover { text-decoration: underline; }
 
 /* Images ────────────────────────────────────────────────────────── */
 img, svg { display: block; max-width: 100%; }
@@ -95,7 +104,7 @@ button, [role="button"], input[type="checkbox"], input[type="radio"] {
 
 /* ── Utilitaires globaux ─────────────────────────────────────────── */
 
-/* Spinner (sur fond sombre/coloré) */
+/* Spinner (on dark/coloured background) */
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* Skeleton loader */

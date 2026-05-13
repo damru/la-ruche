@@ -8,7 +8,7 @@
 > Chaque feature est organisée en epic. Les stories sont ajoutées à la demande, au moment de l'implémentation.
 > Le MVP est l'ensemble des epics marquées **MVP : oui**.
 > Statuts possibles : **en attente** · **en cours** · **terminée**
-> Dernière mise à jour : 5 mai 2026
+> Dernière mise à jour : 13 mai 2026
 
 > **Lecture d'avancement (code actuel) :**
 > - **backend réel** = handlers + DB opérationnels
@@ -63,6 +63,7 @@ Historique de propriété tracé avec dates de cession, invitation par lien toke
 * `EP-002-S09` — Exporter les données personnelles d'un copropriétaire (droit d'accès RGPD) avec périmètre horodaté et traçabilité de la demande (LEGAL.md §8)
 * `EP-002-S10` — Enregistrer et suivre les procédures judiciaires en cours impliquant le syndicat (demandeur ou défendeur), avec date d'ouverture, type, statut ; requis pour l'état daté (LEGAL.md §7.1, §10)
 * `EP-002-S11` — Tenir un registre de gouvernance (syndic en exercice, membres du conseil syndical, périodes de mandat) pour auditer la séparation des organes (LEGAL.md §1.7, §1.8)
+* `EP-002-S12` — PV du conseil syndical en délégation de pouvoirs : créer, stocker et consulter les PV formels des décisions prises par le conseil syndical sous délégation d'AG (signé par 2 membres, noms + sens des votes, inscrit au registre des PV d'AG) — art. 21-1 décret 67-223, LEGIARTI000042077775 (LEGAL.md §3.5)
 
 ***
 
@@ -81,11 +82,11 @@ Cycle de vie complet d'une AG, résolutions typées par majorité, vote par lot 
 * `EP-003-S03` ✅ — Enregistrer les présences, procurations et votes par correspondance (LEGAL.md §3.2)
 * `EP-003-S04` ✅ — Saisir les résolutions et les votes, et calculer les résultats selon la règle de majorité applicable (art. 24/25/25-1/26/26-1/unanimité) (LEGAL.md §3.2)
 * `EP-003-S05` ✅ — Générer et stocker le PV signé en séance (LEGAL.md §3.3) (endpoint `POST /meetings/{id}/minutes` + flux pré-signé EP-005 ; verrouillage par `minutes_already_attached`)
-* `EP-003-S06` ✅ — Tracer la date de notification du PV aux copropriétaires absents (délai 2 mois — art. 42 loi 1965) (LEGAL.md §3.3) (migration `0022_meeting_minutes_notification.sql`, endpoint `POST /meetings/{id}/notify-minutes`, calcul du délai J+60 et affichage côté UI)
+* `EP-003-S06` ✅ — Tracer la date de notification du PV aux copropriétaires **opposants ou défaillants** : le syndic doit notifier dans le délai d'**un mois** à compter de la tenue de l'AG (art. 42 al. 3 loi 1965). L'implémentation affiche la date limite de contestation à J+60 depuis la date d'AG (approche conservative : suppose notification immédiate) — le délai légal exact de contestation est J+60 depuis la **date de notification** (LEGAL.md §3.4)
 * `EP-003-S07` ✅ — Exclure explicitement les lots archivés des calculs de quorum et de majorité avec piste d'audit des bases de calcul (LEGAL.md §3.2)
 * `EP-003-S08` ✅ — Détecter et traiter l'article 26-1 : si une résolution `double_majority` est rejetée avec > 1/2 des tantièmes totaux en faveur, proposer immédiatement une re-délibération à la majorité absolue (art. 26-1) dans la même séance via une nouvelle résolution liée (LEGAL.md §3.2)
-* `EP-003-S09` — Contrôler la complétude réglementaire de la convocation selon les art. 7 à 13 du décret 1967 (ordre du jour, annexes, preuve d'envoi) avec checklist horodatée (LEGAL.md §3.1)
-* `EP-003-S10` — Tracer la conformité du bureau de séance et des signatures du PV (président, secrétaire, scrutateurs) selon les art. 15, 17 et 17-1 du décret 1967 (LEGAL.md §3.4)
+* `EP-003-S09` ✅ — Contrôler la complétude réglementaire de la convocation selon les art. 7 à 13 du décret 1967 (ordre du jour, annexes, preuve d'envoi) et l'art. 9 al. 4 (formulaire de **vote par correspondance obligatoirement joint**) avec checklist horodatée (LEGAL.md §3.1) (migration `0023_meeting_convocation_proof.sql`, module pur `domain/convocation_checklist.rs`, endpoint `GET /meetings/{id}/convocation-checklist`, `POST /call` étendu avec `{ channel, sent_at? }`, modale UI avec checklist temps réel)
+* `EP-003-S10` ✅ — Tracer la conformité du bureau de séance et des signatures du PV (président, secrétaire, scrutateurs) selon les art. 15, 17 et 17-1 du décret 1967 (LEGAL.md §3.4) (migration `0024_meeting_minutes_signatures.sql`, endpoint `POST /meetings/{id}/minutes/signatures`, signatures intégrées au template `domain/minutes_draft.rs`, modale UI dédiée)
 
 **Hors scope explicite (renvoyé à `EP-013` ou à des epics transverses) :**
 
@@ -116,9 +117,9 @@ Budget prévisionnel par exercice, appels de fonds générés par tantièmes, fo
 * `EP-004-S05` ✅ — Snapshot des tantièmes dans chaque appel de fonds généré (`shares_snapshot`, `shares_total_snapshot`, `key_id`) — immuabilité comptable (LEGAL.md §2.3, ADR-006)
 * `EP-004-S06` ✅ — Relevé individuel de charges par lot : liste des appels reçus, montants, statuts, solde courant (LEGAL.md §4.6)
 * `EP-004-S07` — Blocage dur côté backend de toute génération d'appel de fonds tant qu'une clé active est déséquilibrée (`Σ tantièmes ≠ total_clé`) (LEGAL.md §2.1)
-* `EP-004-S08` — Émission trimestrielle paramétrable et contrôles d'échéances par exercice (quart par défaut) avec piste d'audit (LEGAL.md §4.3)
+* `EP-004-S08` — Émission trimestrielle paramétrable et contrôles d'échéances par exercice (quart par défaut) avec piste d'audit (LEGAL.md §4.3) — Prendre en compte les catégories de l'art. 35 décret v6.0 (25/12/2025) : avances PPT, cotisations fonds travaux (art. 14-2-1), provisions délégation CS
 * `EP-004-S09` — Implémenter le mapping plan comptable copropriété (arrêté 14/03/2005) sur lignes budgétaires et exports comptables (LEGAL.md §4.2)
-* `EP-004-S10` — Contrôle et alerte du seuil minimum fonds travaux (>= 5% du budget prévisionnel) avant validation de l'exercice (LEGAL.md §4.4)
+* `EP-004-S10` — Contrôle et alerte du seuil minimum fonds travaux avant validation de l'exercice : **≥ 5% du budget prévisionnel** en l'absence de PPT adopté ; **≥ 2,5% du montant des travaux prévus au PPT** ET **≥ 5% du budget prévisionnel** si un PPT est adopté en AG (art. 14-2-1 loi 1965, LEGIARTI000043967792, en vigueur 01/01/2023 — LEGAL.md §4.4)
 * `EP-004-S11` — Recouvrement des charges impayées : identification des lots en solde débiteur, enregistrement des relances (mise en demeure), suivi des dossiers contentieux jusqu'à clôture (LEGAL.md §4.7)
 
 ***
@@ -404,14 +405,15 @@ Durcir les entités comptablement critiques pour empêcher toute modification r�
 | §2.2 Historique tantièmes | EP-001-S06 | Couvert côté modèle ; contrôles de restitution à renforcer |
 | §2.3 Snapshot appels | EP-004-S05 | Couvert ; vérifier adoption sur tous flux d'appels |
 | §2.4 Tantièmes et mutations | EP-002-S08, EP-002-S06/S07 | Workflows notariaux à implémenter |
-| §3.1 Convocation AG (J-21 + pièces, art. 7 à 13 décret) | EP-003-S01/S02/S09 | Checklist réglementaire complète et preuve d'envoi à finaliser |
+| §3.1 Convocation AG (J-21 + pièces + formulaire vote par correspondance, art. 7 à 13 et 9 décret 1967) | EP-003-S01/S02/S09 | Formulaire vote par correspondance à intégrer dans la checklist EP-003-S09 |
 | §3.2 Règles de majorité | EP-003-S03/S04/S07 | Présence par lot désormais distincte du vote ; restent à durcir les cas limites et l'exclusion des lots archivés |
 | §3.3 PV + notification absents | EP-003-S05/S06, EP-005-S07 | Workflow de notification probante à compléter |
-| §3.4 Tenue de séance et signatures PV (art. 15, 17, 17-1 décret) | EP-013-S02, EP-003-S10 | Signature probante du PV à finaliser |
+| §3.4 PV (signable J+8) + notification 1 mois + contestation 2 mois | EP-003-S05/S06/S10, EP-013-S08 | Délai de contestation calculé depuis date d'AG (approche conservative) ; délai exact = J+60 depuis date de notification |
+| §3.5 PV du conseil syndical en délégation | EP-002-S12 | Non implémenté |
 | §4.1 Compte bancaire séparé | Hors périmètre logiciel | Information uniquement ; pas de flux bancaire |
 | §4.2 Plan comptable normé | EP-004-S09 | Mapping comptable non implémenté |
-| §4.3 Budget + appels de fonds | EP-004-S01/S02/S08 | Front budget encore en mock ; validations métier à compléter |
-| §4.4 Fonds travaux >= 5% | EP-004-S03/S10 | Contrôle automatique du seuil à finaliser |
+| §4.3 Budget + appels de fonds (incl. catégories art. 35 v6 dec. 2025) | EP-004-S01/S02/S08 | Nouvelles catégories PPT/fonds travaux/délégation CS à modéliser |
+| §4.4 Fonds travaux ≥ 5% (ou 2,5% PPT si plan adopté, art. 14-2-1 en vigueur 01/01/2023) | EP-004-S03/S10 | Seuil 2,5% PPT à implémenter ; contrôle automatique à finaliser |
 | §4.5 Arrêté de comptes | EP-004-S04 | Écrans et exports d'arrêté à finaliser |
 | §4.6 Relevé individuel de charges | EP-004-S06 | Couvert backend ; UX front à industrialiser |
 | §4.7 Recouvrement des impayés | EP-004-S11 | Fonctionnalité non implémentée |

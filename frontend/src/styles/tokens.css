@@ -104,16 +104,16 @@
   --nav-bottom-height:      64px;
   --nav-safe-area-bottom: env(safe-area-inset-bottom, 0px);
 
-  /* ── Contrôles UI ───────────────────────────────────────────── */
+  /* ── UI Controls ───────────────────────────────────────────── */
   --control-height:    44px;   /* input, select — touch target */
-  --control-height-sm: 36px;   /* input sm, bouton sm */
+  --control-height-sm: 36px;   /* small input, small button */
 
-  /* ── Icônes ──────────────────────────────────────────────────── */
+  /* ── Icons ──────────────────────────────────────────────────── */
   --icon-2xs: 12px;  /* meta-footer */
   --icon-xs: 14px;   /* content, subtitle, chips */
   --icon-sm: 16px;   /* inline, boutons, chevrons */
   --icon-md: 18px;   /* cartes, headers */
-  --icon-lg: 24px;   /* icônes proéminentes */
+  --icon-lg: 24px;   /* prominent icons */
 
   /* ── Z-index ─────────────────────────────────────────────────── */
   --z-base:     0;

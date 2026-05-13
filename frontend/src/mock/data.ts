@@ -9,7 +9,7 @@ import type {
   Task, Claim, MaintenanceEntry, Report, Consultation,
 } from '@/types/domain'
 
-// ── Bâtiment ─────────────────────────────────────────────────────
+// ── Building ─────────────────────────────────────────────────────
 export const mockBuilding: Building = {
   id: 'bld-001',
   name: 'Résidence Les Acacias',
@@ -67,7 +67,7 @@ export const mockUnits: Unit[] = [
   { id: 'unt-012', building_id: 'bld-001', unit_number: 'Parking 2', unit_type: 'parking', active: true, current_owner: mockUsers[4] },
 ]
 
-// ── Assemblées générales ──────────────────────────────────────────
+// ── General Meetings ──────────────────────────────────────────────
 export const mockMeetings: Meeting[] = [
   {
     id: 'mtg-001',
@@ -79,6 +79,11 @@ export const mockMeetings: Meeting[] = [
     created_at: '2025-05-01T09:00:00Z',
     resolution_count: 4,
     passed_count: 0,
+    scrutineers: [],
+    minutes_notified_at: null,
+    convocation_sent_at: null,
+    convocation_channel: null,
+    minutes_scrutineers_signed: [],
   },
   {
     id: 'mtg-002',
@@ -90,6 +95,7 @@ export const mockMeetings: Meeting[] = [
     created_at: '2024-05-02T09:00:00Z',
     resolution_count: 4,
     passed_count: 3,
+    scrutineers: [],
   },
   {
     id: 'mtg-003',
@@ -101,11 +107,12 @@ export const mockMeetings: Meeting[] = [
     created_at: '2024-08-26T14:00:00Z',
     resolution_count: 2,
     passed_count: 2,
+    scrutineers: [],
   },
 ]
 
 export const mockResolutions: Resolution[] = [
-  // AG 2025 (called - résolutions prévisionnelles)
+  // AG 2025 (called - draft resolutions)
   { id: 'res-001', meeting_id: 'mtg-001', number: 1, title: 'Approbation des comptes 2024', description: 'Approbation des comptes de gestion de l\'exercice 2024 présentés par le syndic.', vote_type: 'simple_majority', status: 'pending' },
   { id: 'res-002', meeting_id: 'mtg-001', number: 2, title: 'Approbation du budget prévisionnel 2025', description: 'Vote du budget prévisionnel de charges pour l\'exercice 2025, arrêté à 48 500 €.', vote_type: 'simple_majority', status: 'pending' },
   { id: 'res-003', meeting_id: 'mtg-001', number: 3, title: 'Ravalement de façade', description: 'Autorisation de travaux de ravalement de la façade côté rue. Devis Bâtisoins : 32 400 € TTC.', vote_type: 'absolute_majority', status: 'pending' },
@@ -178,7 +185,7 @@ export const mockDocuments: Document[] = [
   { id: 'doc-010', original_name: 'Rapport_toiture_2024.pdf', mime_type: 'application/pdf', size_bytes: 920_000, visible_roles: ['manager', 'board_member'], created_at: '2024-08-15T11:00:00Z' },
 ]
 
-// ── Tâches ────────────────────────────────────────────────────────
+// ── Tasks ────────────────────────────────────────────────────────
 export const mockTasks: Task[] = [
   { id: 'tsk-001', created_by: 'usr-001', title: 'Réparation fuite toiture — Cage B', description: 'Infiltration d\'eau signalée au dernier étage, cage B. Devis reçu de Couvertures Dupré.', status: 'in_progress', priority: 'urgent', contract_id: undefined, created_at: '2025-04-10T08:00:00Z', updated_at: '2025-04-12T09:30:00Z', document_count: 2 },
   { id: 'tsk-002', created_by: 'usr-001', title: 'Remplacement éclairage cave — LED', description: 'Remplacement des tubes fluorescents par des LED dans les caves A et B.', status: 'open', priority: 'normal', created_at: '2025-03-22T09:00:00Z', updated_at: '2025-03-22T09:00:00Z', document_count: 0 },
@@ -280,7 +287,7 @@ export const mockMaintenanceEntries: MaintenanceEntry[] = [
   { id: 'mnt-006', title: 'Révision chaudière collective', description: 'Révision annuelle + nettoyage brûleurs. Rapport de conformité joint.', intervention_date: '2024-11-05', cost: 680, vendor_name: 'Thermique Expert', source: 'automatic', created_at: '2024-11-05T11:00:00Z' },
 ]
 
-// ── Signalements résidents ────────────────────────────────────────
+// ── Resident Reports ────────────────────────────────────────────
 export const mockReports: Report[] = [
   { id: 'rpt-001', unit_id: 'unt-003', author_id: 'usr-007', author_first_name: 'Claire', author_last_name: 'Renaud', title: 'Tâche d\'humidité au plafond', description: 'Une tâche d\'humidité est apparue au plafond de ma chambre (lot 3). Semble liée à la fuite de toiture.', status: 'in_progress', document_count: 2, created_at: '2025-04-14T09:00:00Z', updated_at: '2025-04-14T09:00:00Z' },
   { id: 'rpt-002', unit_id: 'unt-005', author_id: 'usr-002', author_first_name: 'Jean-Pierre', author_last_name: 'Dupont', title: 'Éclairage couloir 2ème étage défaillant', description: 'La minuterie du couloir du 2ème étage cage B ne fonctionne plus. Couloir dans le noir.', status: 'open', document_count: 0, created_at: '2025-04-05T11:00:00Z', updated_at: '2025-04-05T11:00:00Z' },

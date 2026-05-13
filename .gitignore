@@ -28,9 +28,11 @@ Thumbs.db
 .mcp.json
 
 
-#########################################
-#       ARTIFACTS FROM AI PLUGINS       #
-#########################################
+#################################
+#       ARTIFACTS FROM AI       #
+#################################
+
+.outputs/
 
 # MemPalace per-project files (issue #185)
 mempalace.yaml

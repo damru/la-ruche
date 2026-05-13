@@ -102,8 +102,8 @@ fn build_auth_cookie_headers(
 
 /// GET /onboarding/status
 ///
-/// Renvoie si l'instance nécessite un onboarding (aucun utilisateur en base).
-/// Route publique — aucune authentification requise.
+/// Returns whether the instance requires onboarding (no user accounts in DB).
+/// Public route — no authentication required.
 pub async fn status(State(state): State<Arc<AppState>>) -> AppResult<Response> {
     let count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM user_account")
         .fetch_one(&state.pool)
@@ -122,11 +122,11 @@ pub async fn status(State(state): State<Arc<AppState>>) -> AppResult<Response> {
 
 /// POST /onboarding/bootstrap
 ///
-/// Initialise l'instance au premier lancement : crée la copropriété et le premier
-/// compte manager dans une transaction atomique, puis retourne une session
-/// authentifiée (cookies access_token + refresh_token).
+/// Initialises the instance on first launch: creates the building and the first manager
+/// account in an atomic transaction, then returns an authenticated session
+/// (cookies access_token + refresh_token).
 ///
-/// Retourne 409 si l'instance est déjà initialisée (au moins un utilisateur existe).
+/// Returns 409 if the instance is already initialised (at least one user exists).
 pub async fn bootstrap(
     State(state): State<Arc<AppState>>,
     Json(input): Json<BootstrapInput>,
@@ -135,7 +135,6 @@ pub async fn bootstrap(
         .validate()
         .map_err(|_| AppError::validation_code("errors.onboarding.invalid_payload"))?;
 
-    // Validation métier : tantièmes > 0
     if input.shares_total <= 0 {
         return Err(AppError::validation_code(
             "errors.onboarding.shares_total_positive",
@@ -144,7 +143,7 @@ pub async fn bootstrap(
 
     let password_hash = password::hash_password(&input.password, &state.cfg.auth)?;
 
-    // Transaction atomique — guard first-run inclus
+    // Atomic transaction — includes first-run guard
     let mut tx = state.pool.begin().await?;
 
     let count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM user_account")
@@ -157,7 +156,6 @@ pub async fn bootstrap(
         ));
     }
 
-    // Création de la copropriété
     let building_row = sqlx::query(
         "INSERT INTO building (name, address_line1, postal_code, city, shares_total) \
          VALUES ($1, $2, $3, $4, $5) RETURNING id",
@@ -171,7 +169,6 @@ pub async fn bootstrap(
     .await?;
     let building_id: uuid::Uuid = building_row.get("id");
 
-    // Création du compte manager
     let user_row = sqlx::query(
         "INSERT INTO user_account (email, last_name, first_name, password_hash) \
          VALUES ($1, $2, $3, $4) RETURNING id",
@@ -184,7 +181,6 @@ pub async fn bootstrap(
     .await?;
     let user_id: uuid::Uuid = user_row.get("id");
 
-    // Liaison utilisateur ↔ copropriété avec rôle manager
     sqlx::query(
         "INSERT INTO user_building (user_id, building_id, roles) \
          VALUES ($1, $2, ARRAY['manager']::user_role[])",
@@ -194,7 +190,7 @@ pub async fn bootstrap(
     .execute(&mut *tx)
     .await?;
 
-    // Clé de répartition générale créée automatiquement (ADR-007 — non supprimable)
+    // General allocation key created automatically (ADR-007 — non-deletable)
     sqlx::query(
         "INSERT INTO allocation_key (building_id, name, description, key_type) \
          VALUES ($1, 'Charges Générales', 'Clé de répartition générale — non supprimable', 'general')",
@@ -212,7 +208,6 @@ pub async fn bootstrap(
         "Onboarding first-run : instance initialisée"
     );
 
-    // Génération des tokens d'authentification
     let access_token = jwt::generate_access_token(
         user_id,
         building_id,

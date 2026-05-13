@@ -355,19 +355,15 @@ async function confirmDelete() {
                 :key="choice.id"
               >
                 <!-- Column 1: checkbox (open) or plain label (closed) -->
-                <label
+                <CFormCheckbox
                   v-if="c.status === 'open'"
-                  class="choice-label checkbox-label"
+                  v-model="getInline(c).selections"
+                  :value="choice.id"
+                  :label="choice.label"
+                  :disabled="isVoteLocked(c)"
+                  class="choice-label"
                   :class="{ 'choice-label--locked': isVoteLocked(c) }"
-                >
-                  <input
-                    v-model="getInline(c).selections"
-                    type="checkbox"
-                    :value="choice.id"
-                    :disabled="isVoteLocked(c)"
-                  />
-                  <span>{{ choice.label }}</span>
-                </label>
+                />
                 <span
                   v-else
                   class="choice-label"

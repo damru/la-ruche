@@ -6,8 +6,8 @@ use axum::{
 use serde::Serialize;
 use thiserror::Error;
 
-/// Type d'erreur unifié — toute erreur interne remonte ici
-/// puis est convertie en réponse HTTP JSON structurée.
+/// Unified error type — all internal errors bubble up here
+/// and are converted into a structured JSON HTTP response.
 #[derive(Debug, Error)]
 pub enum AppError {
     // ── 400 ─────────────────────────────────────────────────────

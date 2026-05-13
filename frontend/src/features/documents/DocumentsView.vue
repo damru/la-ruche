@@ -80,12 +80,6 @@ function onDropzoneFiles(files: File[]) {
   selectedFile.value = files[0] ?? null
 }
 
-function toggleRole(role: string) {
-  const idx = selectedRoles.value.indexOf(role)
-  if (idx >= 0) selectedRoles.value.splice(idx, 1)
-  else selectedRoles.value.push(role)
-}
-
 async function uploadFile() {
   if (uploadSuccess.value) { forceUploadClose(); return }
   if (!selectedFile.value) return
@@ -363,18 +357,13 @@ async function confirmDeleteDoc() {
           <div class="visibility-section">
             <label class="field-label">{{ t('documents.visiblePar') }}</label>
             <div class="role-checkboxes">
-              <label
+              <CFormCheckbox
                 v-for="role in ['manager', 'board_member', 'co_owner', 'tenant']"
                 :key="role"
-                class="checkbox-label"
-              >
-                <input
-                  type="checkbox"
-                  :checked="selectedRoles.includes(role)"
-                  @change="toggleRole(role)"
-                />
-                {{ t(`roles.${role}`) }}
-              </label>
+                v-model="selectedRoles"
+                :value="role"
+                :label="t(`roles.${role}`)"
+              />
             </div>
           </div>
         </div>

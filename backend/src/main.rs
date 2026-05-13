@@ -84,7 +84,7 @@ async fn main() -> anyhow::Result<()> {
 
     info!(version = env!("CARGO_PKG_VERSION"), "Starting La Ruche");
 
-    // ── Base de données ─────────────────────────────────────────
+    // ── Database ───────────────────────────────────────────
     let pool = PgPoolOptions::new()
         .max_connections(cfg.db.max_connections)
         .connect(&cfg.db.url)
@@ -108,7 +108,7 @@ async fn main() -> anyhow::Result<()> {
     // ── Stockage S3 ─────────────────────────────────────────────
     let storage = StorageClient::new(&cfg.s3).await?;
 
-    // ── State partagé ───────────────────────────────────────────
+    // ── Shared state ───────────────────────────────────────────
     let state = Arc::new(AppState {
         pool,
         storage,

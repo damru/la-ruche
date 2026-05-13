@@ -7,6 +7,7 @@ import CIconDownload from '@/components/atoms/CIconDownload.svg'
 import CIconFile from '@/components/atoms/CIconFile.svg'
 import CIconTrash from '@/components/atoms/CIconTrash.svg'
 import CIconUpload from '@/components/atoms/CIconUpload.svg'
+import CFormCheckbox from '@/components/atoms/CFormCheckbox.vue'
 import CFormInput from '@/components/atoms/CFormInput.vue'
 import CFormSelect from '@/components/atoms/CFormSelect.vue'
 import CModal from '@/components/molecules/CModal.vue'
@@ -471,15 +472,11 @@ async function saveContract() {
       </div>
 
       <div class="contract-form__renewal">
-        <label class="checkbox-label contract-form__checkbox">
-          <input
-            v-model="form.auto_renewal"
-            type="checkbox"
-          />
-          <span>
-            {{ t('contracts.autoRenewal') }}
-          </span>
-        </label>
+        <CFormCheckbox
+          v-model="form.auto_renewal"
+          class="contract-form__checkbox"
+          :label="t('contracts.autoRenewal')"
+        />
         <p class="field-hint">
           {{ t('contracts.form.autoRenewalHint') }}
         </p>
