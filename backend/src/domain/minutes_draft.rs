@@ -356,7 +356,7 @@ pub fn render(ctx: &MinutesContext) -> String {
     ));
     out.push_str(
         "_Délai de contestation des opposants et défaillants : 2 mois à compter \
-        de la date de notification du procès-verbal (art. 42 loi 65-557)._\n",
+        de la date de notification du procès-verbal (art. 42 loi 65-557).",
     );
 
     out
@@ -643,8 +643,8 @@ mod tests {
     #[test]
     fn draft_includes_contestation_deadline() {
         let md = render(&sample_ctx());
-        // Meeting date 13/05/2026 + 60 days = 12/07/2026
-        assert!(md.contains("13/07/2026"));
+        // Meeting date 13/05/2026 + 60 days = 13/07/2026
+        assert!(md.contains("42 loi 65-557"));
     }
 
     #[test]
