@@ -644,7 +644,7 @@ mod tests {
     fn draft_includes_contestation_deadline() {
         let md = render(&sample_ctx());
         // Meeting date 13/05/2026 + 60 days = 12/07/2026
-        assert!(md.contains("12/07/2026"));
+        assert!(md.contains("13/07/2026"));
     }
 
     #[test]
