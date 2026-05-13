@@ -16,7 +16,7 @@
 > - Arrêté du 14 mars 2005 (plan comptable copropriété)
 > - RGPD (Règlement UE 2016/679)
 >
-> Dernière mise à jour : 5 mai 2026 (resynchronisation LEGAL / EPICS)
+> Dernière mise à jour : 13 mai 2026 (compléments organes / AG / missions du syndic)
 
 ---
 
@@ -121,6 +121,44 @@ Depuis le 1er janvier 2015, tout syndic professionnel doit mettre à disposition
 
 ---
 
+### 1.7 Organes de la copropriété
+
+**Références :** Art. 14, 18 et 21 loi 1965  
+**Couverture :** ⚠️ partielle — EP-002, EP-003
+
+La gouvernance d'une copropriété repose sur trois organes juridiquement distincts.
+
+| Organe | Base légale | Rôle juridique | Couverture produit |
+|---|---|---|---|
+| Syndicat des copropriétaires | Art. 14 loi 1965 | Personnalité civile ; responsable des dommages causés par vice de construction ou défaut d'entretien des parties communes | ⚠️ partielle (représentation métier implicite, pas de module dédié de gouvernance) |
+| Syndic | Art. 18 loi 1965 | Mandataire du syndicat ; exécute les décisions d'AG, administre l'immeuble, tient la comptabilité | ⚠️ partielle (fonctions réparties sur EP-001/003/004/005/006/009) |
+| Conseil syndical | Art. 21 loi 1965 | Assiste le syndic et contrôle sa gestion (sauf vote contraire art. 26) | ⚠️ partielle (rôle `board_member` présent, règles de fonctionnement incomplètes) |
+
+**Implications :**
+- Le référentiel produit doit distinguer les responsabilités juridiques (syndicat / syndic / conseil syndical) pour éviter les ambiguïtés d'habilitation.
+- Les capacités de contrôle du conseil syndical (accès, suivi des décisions et de l'exécution) doivent rester traçables.
+
+---
+
+### 1.8 Missions légales du syndic (article 18)
+
+**Référence :** Art. 18 loi 1965  
+**Couverture :** ⚠️ partielle — EP-001, EP-002, EP-003, EP-004, EP-009, EP-012
+
+| Mission légale | Couverture actuelle | Écart principal |
+|---|---|---|
+| Gestion financière (compte séparé, comptabilité du syndicat) | ⚠️ partielle (EP-004) | Flux bancaires et plan comptable normé incomplets |
+| Conservation et entretien de l'immeuble | ✅/⚠️ via EP-007 + EP-009 | Couvert côté carnet ; PPT reste hors scope post-MVP |
+| Représentation du syndicat en justice | ⚠️ partielle (EP-002-S10) | Suivi procédural encore en backlog |
+| Tenue de la liste des copropriétaires et des archives | ⚠️ partielle (EP-002, EP-005) | Workflows mutations / état daté à finaliser |
+| Immatriculation et mise à jour RNC | ⚠️ partielle (EP-012) | Export assisté en backlog, dépôt encore manuel |
+
+**Implications :**
+- Le découpage backlog doit rester indexé sur les obligations de l'art. 18 pour audit de conformité rapide.
+- Chaque obligation non couverte doit pointer vers une story explicite (pas de dette implicite).
+
+---
+
 ## 2. Tantièmes — Audit et traçabilité
 
 > Ce bloc est structurant pour tout le modèle comptable. Il est insuffisamment adressé dans la PRD initiale.
@@ -181,7 +219,7 @@ Les tantièmes sont attachés au **lot**, pas au propriétaire. Une mutation (ve
 
 ### 3.1 Convocation
 
-**Référence :** Art. 9 décret 1967  
+**Référence :** Art. 7 à 13 décret 1967  
 **Couverture :** ⚠️ partielle — EP-003-S01, EP-003-S02
 
 - Délai minimum : **21 jours** avant la date de l'AG.
@@ -194,10 +232,23 @@ Les tantièmes sont attachés au **lot**, pas au propriétaire. Une mutation (ve
 
 ---
 
-### 3.2 Règles de majorité
+### 3.2 Tenue de séance et présidence
+
+**Référence :** Art. 15 décret 1967  
+**Couverture :** ✅ couverte — EP-013-S02, EP-013-S03
+
+La tenue de séance impose la désignation d'un président, d'un secrétaire et, le cas échéant, de scrutateurs.
+
+**Implications :**
+- Les rôles de séance doivent être enregistrés avant le démarrage des votes.
+- Le bureau de séance doit rester lisible dans le dossier AG et dans les exports de PV.
+
+---
+
+### 3.3 Règles de majorité
 
 **Référence :** Art. 24, 25, 26 loi 1965  
-**Couverture :** ⚠️ partielle — EP-003-S03, EP-003-S04
+**Couverture :** ✅ couverte — EP-003-S03, EP-003-S04, EP-003-S07, EP-013-S05, EP-013-S10
 
 | Majorité | Base de calcul | Exemples de décisions |
 |---|---|---|
@@ -214,10 +265,10 @@ Les tantièmes sont attachés au **lot**, pas au propriétaire. Une mutation (ve
 
 ---
 
-### 3.3 PV d'assemblée générale
+### 3.4 PV d'assemblée générale
 
-**Référence :** Art. 17 loi 1965, art. 17-1A  
-**Couverture :** ⚠️ partielle — EP-003-S05, EP-003-S06
+**Référence :** Art. 17 et 17-1 décret 1967, art. 17 loi 1965  
+**Couverture :** ✅ couverte — EP-003-S05, EP-003-S06, EP-013-S08
 
 Le PV doit être signé séance tenante par le président, le secrétaire et les scrutateurs. Il doit être notifié aux copropriétaires absents dans les **2 mois** suivant l'AG (point de départ du délai de contestation — art. 42 loi 1965).
 
@@ -575,13 +626,16 @@ L'`audit_log` est en **append-only** : aucune ligne ne peut être modifiée ou s
 | 1.4 | Carnet d'entretien | Décret 2001-477 | ⚠️ | EP-009 |
 | 1.5 | Liste des copropriétaires à jour | Art. 18-I-1° loi 1965 | ⚠️ | EP-002-S01, EP-002-S04 |
 | 1.6 | Espace en ligne sécurisé (extranet) | Art. 18-I-5° loi 1965 (ALUR) | ✅ | EP-002, EP-003, EP-004, EP-005, EP-006, EP-009 |
+| 1.7 | Organes de copropriété (syndicat, syndic, conseil syndical) | Art. 14/18/21 loi 1965 | ⚠️ | EP-002, EP-003 |
+| 1.8 | Missions légales du syndic | Art. 18 loi 1965 | ⚠️ | EP-001, EP-002, EP-003, EP-004, EP-009, EP-012 |
 | 2.1 | Intégrité somme tantièmes | EDD + art. 5 | ⚠️ | EP-001-S03, EP-001-S07 |
 | 2.2 | Historique tantièmes par lot | Art. 10 loi 1965 | ✅ | EP-001-S06 |
 | 2.3 | Snapshot tantièmes par appel de fonds | Art. 14-1 loi 1965 | ✅ | EP-004-S05 |
 | 2.4 | Tantièmes et mutations | Art. 6 loi 1965 | ⚠️ | EP-002-S06, EP-002-S07 |
 | 3.1 | Convocation AG (21 jours) | Art. 9 décret 1967 | ⚠️ | EP-003-S01, EP-003-S02 |
-| 3.2 | Règles de majorité | Art. 24/25/26 loi 1965 | ⚠️ | EP-003-S03, EP-003-S04 |
-| 3.3 | PV + notification absents | Art. 17 loi 1965 | ⚠️ | EP-003-S05, EP-003-S06 |
+| 3.2 | Tenue de séance et présidence | Art. 15 décret 1967 | ✅ | EP-013-S02, EP-013-S03 |
+| 3.3 | Règles de majorité | Art. 24/25/26 loi 1965 | ✅ | EP-003-S03/S04/S07, EP-013-S05/S10 |
+| 3.4 | PV + notification absents | Art. 17 et 17-1 décret 1967 | ✅ | EP-003-S05/S06, EP-013-S08 |
 | 4.1 | Compte bancaire séparé | Art. 18 loi 1965 | 🔲 | — |
 | 4.2 | Plan comptable normé | Arrêté 14/03/2005 | ⚠️ | EP-004 |
 | 4.3 | Budget prévisionnel + appels de fonds | Art. 14-1 loi 1965 | ⚠️ | EP-004 |
