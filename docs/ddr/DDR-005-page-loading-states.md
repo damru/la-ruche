@@ -15,7 +15,7 @@ Adoption d'un pattern transverse en deux parties :
 `frontend/src/composables/usePageLoader.ts` — wrape n'importe quelle fonction `async () => void` et expose trois réfs : `loading`, `error` (message string ou `null`), `reload`.
 
 ### 2. Molecule `CPageError`
-`frontend/src/components/molecules/CPageError.vue` — affiche un état d'erreur centré : icône circulaire rouge, titre `common.loadError`, message optionnel, bouton "Réessayer" qui émet `@retry`.
+`frontend/src/components/organisms/CPageError.vue` — affiche un état d'erreur centré : icône circulaire rouge, titre `common.loadError`, message optionnel, bouton "Réessayer" qui émet `@retry`.
 
 ### Pattern d'usage dans une vue
 

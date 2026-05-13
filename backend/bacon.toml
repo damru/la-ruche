@@ -3,3 +3,8 @@ default_job = "run"
 [jobs.run]
 command = ["cargo", "run"]
 need_stdout = true
+
+[jobs.watch]
+command = ["cargo", "run"]
+default_watch = true
+need_stdout = true

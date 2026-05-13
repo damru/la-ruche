@@ -25,6 +25,25 @@ const error = ref('')
 const form = reactive({ email: '', password: '' })
 const resetEmail = ref('')
 
+function resolvePostLoginRedirect(): string {
+  const rawRedirect = Array.isArray(route.query.redirect)
+    ? route.query.redirect[0]
+    : route.query.redirect
+
+  if (typeof rawRedirect !== 'string' || rawRedirect.trim().length === 0) {
+    return '/dashboard'
+  }
+
+  const normalized = rawRedirect.startsWith('/') ? rawRedirect : `/${rawRedirect}`
+  const resolved = router.resolve(normalized)
+
+  if (!resolved.matched.length || resolved.name === 'login') {
+    return '/dashboard'
+  }
+
+  return resolved.fullPath
+}
+
 // ── Expired session alert ──────────────────────────────────────────
 const sessionExpired = route.query.reason === 'expired'
 
@@ -35,8 +54,7 @@ async function handleLogin() {
   loading.value = true
   try {
     await auth.login(form.email, form.password)
-    const redirect = (route.query.redirect as string) ?? '/dashboard'
-    router.push(redirect)
+    await router.replace(resolvePostLoginRedirect())
   } catch (e) {
     error.value = t(extractApiError(e))
   } finally {
@@ -54,8 +72,8 @@ async function handlePasskey() {
     const { data: options } = await authApi.passkeyLoginStart(form.email)
     const credential = await navigator.credentials.get({ publicKey: options })
     await authApi.passkeyLoginFinish(credential)
-    const redirect = (route.query.redirect as string) ?? '/dashboard'
-    router.push(redirect)
+    await auth.restoreSession()
+    await router.replace(resolvePostLoginRedirect())
   } catch (e) {
     error.value = t(extractApiError(e))
   } finally {
