@@ -57,6 +57,6 @@ function handleChange(event: Event) {
       @change="handleChange"
     />
     <span v-if="label">{{ label }}</span>
-    <slot v-else />
+    <slot v-else></slot>
   </label>
 </template>

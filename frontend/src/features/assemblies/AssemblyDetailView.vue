@@ -1754,8 +1754,8 @@ function toDateTimeLocal(value: string): string {
                   variant="ghost"
                   size="sm"
                   type="button"
-                  @click="openDocument(meeting.minutes_document_id!)"
                   class="self-center"
+                  @click="openDocument(meeting.minutes_document_id!)"
                 >
                   <CIconDownload class="icon-sm" />
                   <span>{{ t('meetings.minutes.download_signed') }}</span>
@@ -2335,11 +2335,15 @@ function toDateTimeLocal(value: string): string {
         </p>
         <CFormCheckbox v-model="signaturesForm.president_signed">
           {{ t('meetings.signatures.president') }}
-          <template v-if="meeting?.president_name"> — {{ meeting.president_name }}</template>
+          <template v-if="meeting?.president_name">
+            — {{ meeting.president_name }}
+          </template>
         </CFormCheckbox>
         <CFormCheckbox v-model="signaturesForm.secretary_signed">
           {{ t('meetings.signatures.secretary') }}
-          <template v-if="meeting?.secretary_name"> — {{ meeting.secretary_name }}</template>
+          <template v-if="meeting?.secretary_name">
+            — {{ meeting.secretary_name }}
+          </template>
         </CFormCheckbox>
         <div
           v-if="(meeting?.scrutineers ?? []).length > 0"
