@@ -63,7 +63,7 @@ Coverage codes:
 
 ### Step 3 — Produce the gap report
 
-Write the output to `docs/legal/legal-gap-report-<YYYY-MM-DD>.md` (create the file).
+Write the output to `.outputs/legal-reports/legal-gap-report-<YYYY-MM-DD>.md` (create the file).
 
 Report structure:
 
@@ -111,5 +111,5 @@ Before marking the skill complete:
 - [ ] Legal text quoted verbatim with LEGIARTI ID + URL
 - [ ] Gap table produced — every obligation has a status
 - [ ] Every ❌ / ⚠️ has a gap description and a backlog reference or « à créer »
-- [ ] Output file `docs/legal/legal-gap-report-<date>.md` created
+- [ ] Output file `.outputs/legal-reportslegal-gap-report-<date>.md` created
 - [ ] `docs/LEGAL.md` **not modified**

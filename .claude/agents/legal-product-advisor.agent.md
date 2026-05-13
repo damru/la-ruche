@@ -70,7 +70,7 @@ alignée sur le bénéfice utilisateur. Cite la référence légale entre parent
 
 Rules:
 - Reuse an existing EP-XXX story reference if the gap clearly belongs to one
-  already in PRD.md (e.g., état daté → EP-002, PPT → EP-009).
+  already in PRD.md (e.g., état daté → EP-002, PPT → EP-009). If the epic or the story is already marked as done, do not reuse the reference — assign a new one instead (cf next point).
 - Assign `→ EP-XXX (à créer)` with the next available EP number if no story
   exists — check the highest existing EP number in PRD.md first.
 - Place new stories under the appropriate PRD.md section:

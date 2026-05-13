@@ -93,7 +93,7 @@ Coverage codes:
 
 ### Step 4 — Produce the gap report
 
-Write the output to `docs/legal/legal-gap-report-<YYYY-MM-DD>.md` (create or append
+Write the output to `.outputs/legal-reportslegal-gap-report-<YYYY-MM-DD>.md` (create or append
 if a report for today already exists from `legal-compliance-copro-check`).
 
 Report structure:
@@ -146,5 +146,5 @@ Before marking the skill complete:
 - [ ] Gap table produced — every obligation has a status
 - [ ] No overlap with `legal-compliance-check` scope (65-557 / 67-223)
 - [ ] Every ❌ / ⚠️ has a gap description and a backlog reference or « à créer »
-- [ ] Output file `docs/legal/legal-gap-report-<date>.md` created
+- [ ] Output file `.outputs/legal-reportslegal-gap-report-<date>.md` created
 - [ ] `docs/LEGAL.md` **not modified**
