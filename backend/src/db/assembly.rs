@@ -10,10 +10,11 @@ use uuid::Uuid;
 
 use crate::{
     api::assemblies::{
-        CreateMeetingInput, CreateResolutionInput, MeetingAttendanceEntryResponse,
-        MeetingAttendanceInputEntry, MeetingAttendanceModeDto, MeetingAttendanceResponse,
-        MeetingDocumentKindDto, MeetingDocumentResponse, MeetingResponse, MeetingTypeDto,
-        VoteInput,
+        CallMeetingInput, ConvocationChannelDto, CreateMeetingInput, CreateResolutionInput,
+        MeetingAttendanceEntryResponse, MeetingAttendanceInputEntry, MeetingAttendanceModeDto,
+        MeetingAttendanceResponse, MeetingDocumentKindDto, MeetingDocumentResponse,
+        MeetingResponse, MeetingTypeDto, ScrutineerEntry, ScrutineerSignature, SignMinutesInput,
+        StartMeetingInput, VoteInput,
     },
     api::documents::DocumentListItem,
     domain::vote::VoteTally,
@@ -33,10 +34,23 @@ struct MeetingRow {
     created_at: DateTime<Utc>,
     resolution_count: i64,
     passed_count: i64,
+    president_name: Option<String>,
+    president_user_id: Option<Uuid>,
+    secretary_name: Option<String>,
+    secretary_user_id: Option<Uuid>,
+    scrutineers: serde_json::Value,
+    minutes_notified_at: Option<DateTime<Utc>>,
+    convocation_sent_at: Option<DateTime<Utc>>,
+    convocation_channel: Option<String>,
+    minutes_president_signed_at: Option<DateTime<Utc>>,
+    minutes_secretary_signed_at: Option<DateTime<Utc>>,
+    minutes_scrutineers_signed: serde_json::Value,
 }
 
 impl From<MeetingRow> for MeetingResponse {
     fn from(row: MeetingRow) -> Self {
+        let scrutineers: Vec<ScrutineerEntry> =
+            serde_json::from_value(row.scrutineers).unwrap_or_default();
         MeetingResponse {
             id: row.id,
             meeting_type: match row.meeting_type.as_str() {
@@ -52,7 +66,27 @@ impl From<MeetingRow> for MeetingResponse {
             created_at: row.created_at,
             resolution_count: row.resolution_count,
             passed_count: row.passed_count,
+            president_name: row.president_name,
+            president_user_id: row.president_user_id,
+            secretary_name: row.secretary_name,
+            secretary_user_id: row.secretary_user_id,
+            scrutineers,
+            minutes_notified_at: row.minutes_notified_at,
+            convocation_sent_at: row.convocation_sent_at,
+            convocation_channel: row.convocation_channel,
+            minutes_president_signed_at: row.minutes_president_signed_at,
+            minutes_secretary_signed_at: row.minutes_secretary_signed_at,
+            minutes_scrutineers_signed: serde_json::from_value(row.minutes_scrutineers_signed)
+                .unwrap_or_default(),
         }
+    }
+}
+
+fn convocation_channel_to_db(c: &ConvocationChannelDto) -> &'static str {
+    match c {
+        ConvocationChannelDto::Lrar => "lrar",
+        ConvocationChannelDto::HandDelivery => "hand_delivery",
+        ConvocationChannelDto::Email => "email",
     }
 }
 
@@ -60,12 +94,14 @@ fn meeting_document_kind_to_db(kind: &MeetingDocumentKindDto) -> &'static str {
     match kind {
         MeetingDocumentKindDto::Notice => "notice",
         MeetingDocumentKindDto::Attachment => "attachment",
+        MeetingDocumentKindDto::VoteByMailForm => "vote_by_mail_form",
     }
 }
 
 fn meeting_document_kind_from_db(kind: &str) -> MeetingDocumentKindDto {
     match kind {
         "attachment" => MeetingDocumentKindDto::Attachment,
+        "vote_by_mail_form" => MeetingDocumentKindDto::VoteByMailForm,
         _ => MeetingDocumentKindDto::Notice,
     }
 }
@@ -97,6 +133,15 @@ pub async fn list(pool: &PgPool, building_id: Uuid) -> AppResult<Vec<MeetingResp
                gm.status::text as "status!",
                gm.notice_date, gm.meeting_date, gm.location, gm.agenda,
                gm.minutes_document_id, gm.created_at,
+               gm.president_name, gm.president_user_id,
+               gm.secretary_name, gm.secretary_user_id,
+               gm.scrutineers as "scrutineers!: serde_json::Value",
+               gm.minutes_notified_at,
+               gm.convocation_sent_at,
+               gm.convocation_channel::text as convocation_channel,
+               gm.minutes_president_signed_at,
+               gm.minutes_secretary_signed_at,
+               gm.minutes_scrutineers_signed as "minutes_scrutineers_signed!: serde_json::Value",
                COUNT(r.id)                                       AS "resolution_count!",
                COUNT(r.id) FILTER (WHERE r.status = 'passed')    AS "passed_count!"
         FROM general_meeting gm
@@ -119,6 +164,14 @@ pub async fn get(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<Option
         r#"
         SELECT id, meeting_type::text as "meeting_type!", status::text as "status!",
                notice_date, meeting_date, location, agenda, minutes_document_id, created_at,
+               president_name, president_user_id, secretary_name, secretary_user_id,
+               scrutineers as "scrutineers!: serde_json::Value",
+               minutes_notified_at,
+               convocation_sent_at,
+               convocation_channel::text as convocation_channel,
+               minutes_president_signed_at,
+               minutes_secretary_signed_at,
+               minutes_scrutineers_signed as "minutes_scrutineers_signed!: serde_json::Value",
                0::bigint AS "resolution_count!", 0::bigint AS "passed_count!"
         FROM general_meeting
         WHERE id = $1 AND building_id = $2
@@ -151,6 +204,14 @@ pub async fn create(
         VALUES ($1, $2::meeting_type, $3, $4, $5, $6)
         RETURNING id, meeting_type::text as "meeting_type!", status::text as "status!",
                   notice_date, meeting_date, location, agenda, minutes_document_id, created_at,
+                  president_name, president_user_id, secretary_name, secretary_user_id,
+                  scrutineers as "scrutineers!: serde_json::Value",
+                  minutes_notified_at,
+                  convocation_sent_at,
+                  convocation_channel::text as convocation_channel,
+                  minutes_president_signed_at,
+                  minutes_secretary_signed_at,
+                  minutes_scrutineers_signed as "minutes_scrutineers_signed!: serde_json::Value",
                   0::bigint AS "resolution_count!", 0::bigint AS "passed_count!"
         "#,
         building_id,
@@ -191,6 +252,14 @@ pub async fn update(
           AND status = 'draft'
         RETURNING id, meeting_type::text as "meeting_type!", status::text as "status!",
                   notice_date, meeting_date, location, agenda, minutes_document_id, created_at,
+                  president_name, president_user_id, secretary_name, secretary_user_id,
+                  scrutineers as "scrutineers!: serde_json::Value",
+                  minutes_notified_at,
+                  convocation_sent_at,
+                  convocation_channel::text as convocation_channel,
+                  minutes_president_signed_at,
+                  minutes_secretary_signed_at,
+                  minutes_scrutineers_signed as "minutes_scrutineers_signed!: serde_json::Value",
                   0::bigint AS "resolution_count!", 0::bigint AS "passed_count!"
         "#,
         id,
@@ -206,7 +275,12 @@ pub async fn update(
     Ok(row.map(Into::into))
 }
 
-pub async fn call(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()> {
+pub async fn call(
+    pool: &PgPool,
+    id: Uuid,
+    building_id: Uuid,
+    input: CallMeetingInput,
+) -> AppResult<()> {
     let has_notice_document = sqlx::query_scalar!(
         r#"
         SELECT EXISTS(
@@ -231,14 +305,23 @@ pub async fn call(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()> {
         ));
     }
 
+    let channel = convocation_channel_to_db(&input.channel);
+    let sent_at = input.sent_at.unwrap_or_else(chrono::Utc::now);
+
     let affected = sqlx::query!(
         r#"
         UPDATE general_meeting
-        SET status = 'called', notice_date = CURRENT_DATE, updated_at = NOW()
+        SET status = 'called',
+            notice_date = CURRENT_DATE,
+            convocation_sent_at = $3,
+            convocation_channel = $4::meeting_convocation_channel,
+            updated_at = NOW()
         WHERE id = $1 AND building_id = $2 AND status = 'draft'
         "#,
         id,
-        building_id
+        building_id,
+        sent_at,
+        channel as _,
     )
     .execute(pool)
     .await?
@@ -250,6 +333,48 @@ pub async fn call(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()> {
         ));
     }
     Ok(())
+}
+
+///Evaluates the convocation completeness checklist for an AG.
+pub async fn load_convocation_checklist(
+    pool: &PgPool,
+    meeting_id: Uuid,
+    building_id: Uuid,
+) -> AppResult<crate::domain::convocation_checklist::ConvocationChecklist> {
+    use crate::domain::convocation_checklist::{ConvocationContext, evaluate};
+
+    let row = sqlx::query!(
+        r#"
+        SELECT meeting_date,
+               agenda,
+               convocation_sent_at,
+               convocation_channel::text as convocation_channel,
+               (SELECT COUNT(*)::int FROM general_meeting_document
+                WHERE meeting_id = $1 AND kind = 'notice')             as "notice_count!",
+               (SELECT COUNT(*)::int FROM resolution
+                WHERE meeting_id = $1)                                  as "resolution_count!",
+               (SELECT COUNT(*)::int FROM general_meeting_document
+                WHERE meeting_id = $1 AND kind = 'vote_by_mail_form')  as "vote_by_mail_form_count!"
+        FROM general_meeting
+        WHERE id = $1 AND building_id = $2
+        "#,
+        meeting_id,
+        building_id,
+    )
+    .fetch_optional(pool)
+    .await?
+    .ok_or(AppError::NotFound)?;
+
+    Ok(evaluate(&ConvocationContext {
+        meeting_date: row.meeting_date,
+        now: chrono::Utc::now(),
+        agenda: row.agenda,
+        notice_documents_count: row.notice_count as usize,
+        resolutions_count: row.resolution_count as usize,
+        convocation_sent_at: row.convocation_sent_at,
+        convocation_channel: row.convocation_channel,
+        has_vote_by_mail_form: row.vote_by_mail_form_count > 0,
+    }))
 }
 
 pub async fn close(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()> {
@@ -273,6 +398,345 @@ pub async fn close(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()> 
     }
 
     Ok(())
+}
+
+/// Guard : meeting `status = 'closed'` ET `minutes_document_id` NULL.
+pub async fn attach_signed_minutes(
+    pool: &PgPool,
+    meeting_id: Uuid,
+    document_id: Uuid,
+    building_id: Uuid,
+) -> AppResult<()> {
+    let document_exists = sqlx::query_scalar!(
+        "SELECT EXISTS(SELECT 1 FROM document WHERE id = $1 AND building_id = $2)",
+        document_id,
+        building_id,
+    )
+    .fetch_one(pool)
+    .await?
+    .unwrap_or(false);
+
+    if !document_exists {
+        return Err(AppError::NotFound);
+    }
+
+    let affected = sqlx::query!(
+        r#"
+        UPDATE general_meeting
+        SET minutes_document_id = $3, updated_at = NOW()
+        WHERE id = $1
+          AND building_id = $2
+          AND status = 'closed'
+          AND minutes_document_id IS NULL
+        "#,
+        meeting_id,
+        building_id,
+        document_id,
+    )
+    .execute(pool)
+    .await?
+    .rows_affected();
+
+    if affected == 0 {
+        return Err(AppError::conflict_code(
+            "errors.meetings.minutes_already_attached",
+        ));
+    }
+
+    Ok(())
+}
+
+/// Requires an attached signed PV (`minutes_document_id IS NOT NULL`).
+/// Idempotent: re-applies NOW() timestamp on each call for checked roles.
+pub async fn sign_minutes(
+    pool: &PgPool,
+    id: Uuid,
+    building_id: Uuid,
+    input: SignMinutesInput,
+) -> AppResult<()> {
+    let now = chrono::Utc::now();
+    let scrutineers_signed: Vec<ScrutineerSignature> = input
+        .scrutineers_signed
+        .into_iter()
+        .map(|name| ScrutineerSignature {
+            name,
+            signed_at: now,
+        })
+        .collect();
+    let scrutineers_json = serde_json::to_value(&scrutineers_signed)
+        .map_err(|_| AppError::validation_code("errors.meetings.signatures_invalid"))?;
+
+    let president_at = if input.president_signed {
+        Some(now)
+    } else {
+        None
+    };
+    let secretary_at = if input.secretary_signed {
+        Some(now)
+    } else {
+        None
+    };
+
+    let affected = sqlx::query!(
+        r#"
+        UPDATE general_meeting
+        SET minutes_president_signed_at = COALESCE($3, minutes_president_signed_at),
+            minutes_secretary_signed_at = COALESCE($4, minutes_secretary_signed_at),
+            minutes_scrutineers_signed = $5::jsonb,
+            updated_at = NOW()
+        WHERE id = $1
+          AND building_id = $2
+          AND status = 'closed'
+          AND minutes_document_id IS NOT NULL
+        "#,
+        id,
+        building_id,
+        president_at,
+        secretary_at,
+        scrutineers_json,
+    )
+    .execute(pool)
+    .await?
+    .rows_affected();
+
+    if affected == 0 {
+        return Err(AppError::conflict_code(
+            "errors.meetings.minutes_not_signed",
+        ));
+    }
+    Ok(())
+}
+
+pub async fn notify_minutes(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()> {
+    let affected = sqlx::query!(
+        r#"
+        UPDATE general_meeting
+        SET minutes_notified_at = NOW(), updated_at = NOW()
+        WHERE id = $1
+          AND building_id = $2
+          AND status = 'closed'
+          AND minutes_document_id IS NOT NULL
+        "#,
+        id,
+        building_id,
+    )
+    .execute(pool)
+    .await?
+    .rows_affected();
+
+    if affected == 0 {
+        return Err(AppError::conflict_code(
+            "errors.meetings.minutes_not_signed",
+        ));
+    }
+    Ok(())
+}
+
+/// Loads all data needed to render the draft PV of a closed AG.
+/// Returns a 409 error if the meeting is not in `closed` status.
+pub async fn load_minutes_context(
+    pool: &PgPool,
+    meeting_id: Uuid,
+    building_id: Uuid,
+) -> AppResult<crate::domain::minutes_draft::MinutesContext> {
+    use crate::domain::minutes_draft::{
+        MinutesAttendanceLine, MinutesContext, MinutesResolution, MinutesSignature,
+        MinutesVoteDetail,
+    };
+
+    let meeting = sqlx::query!(
+        r#"
+        SELECT gm.meeting_type::text as "meeting_type!",
+               gm.status::text as "status!",
+               gm.meeting_date,
+               gm.location,
+               gm.agenda,
+               gm.president_name,
+               gm.secretary_name,
+               gm.scrutineers as "scrutineers!: serde_json::Value",
+               gm.minutes_president_signed_at,
+               gm.minutes_secretary_signed_at,
+               gm.minutes_scrutineers_signed as "minutes_scrutineers_signed!: serde_json::Value",
+               b.name as building_name,
+               b.address_line1,
+               b.postal_code,
+               b.city,
+               b.shares_total
+        FROM general_meeting gm
+        JOIN building b ON b.id = gm.building_id
+        WHERE gm.id = $1 AND gm.building_id = $2
+        "#,
+        meeting_id,
+        building_id,
+    )
+    .fetch_optional(pool)
+    .await?
+    .ok_or(AppError::NotFound)?;
+
+    if meeting.status != "closed" {
+        return Err(AppError::conflict_code(
+            "errors.meetings.not_in_closed_status",
+        ));
+    }
+
+    let resolutions = sqlx::query!(
+        r#"
+        SELECT r.number, r.title, r.description, r.vote_type::text as "vote_type!",
+               r.status::text as "status!"
+        FROM resolution r
+        WHERE r.meeting_id = $1
+        ORDER BY r.number
+        "#,
+        meeting_id,
+    )
+    .fetch_all(pool)
+    .await?;
+
+    let mut minutes_resolutions: Vec<MinutesResolution> = Vec::with_capacity(resolutions.len());
+    for r in resolutions {
+        let resolution_id = sqlx::query_scalar!(
+            "SELECT id FROM resolution WHERE meeting_id = $1 AND number = $2",
+            meeting_id,
+            r.number
+        )
+        .fetch_one(pool)
+        .await?;
+
+        let (_info, tally) = get_tally(pool, meeting_id, resolution_id, building_id).await?;
+
+        let vote_detail_rows = sqlx::query!(
+            r#"
+            SELECT u.unit_number,
+                   COALESCE(ua.first_name || ' ' || ua.last_name, '—') as "owner_name!",
+                   v.position::text as "position!",
+                   v.shares_represented as "shares!"
+            FROM vote v
+            JOIN unit u ON u.id = v.unit_id
+            LEFT JOIN unit_owner uo ON uo.unit_id = u.id AND uo.end_date IS NULL
+            LEFT JOIN user_account ua ON ua.id = uo.user_id
+            WHERE v.resolution_id = $1
+              AND v.position::text != 'in_favor'
+            ORDER BY u.unit_number
+            "#,
+            resolution_id,
+        )
+        .fetch_all(pool)
+        .await?;
+
+        let rule = match r.vote_type.as_str() {
+            "simple_majority" => crate::domain::vote::VoteRule::SimpleMajority,
+            "absolute_majority" => crate::domain::vote::VoteRule::AbsoluteMajority,
+            "double_majority" => crate::domain::vote::VoteRule::DoubleMajority,
+            _ => crate::domain::vote::VoteRule::Unanimity,
+        };
+        let result = tally.compute(&rule);
+
+        minutes_resolutions.push(MinutesResolution {
+            number: r.number,
+            title: r.title,
+            description: r.description,
+            vote_type: r.vote_type,
+            status: r.status,
+            for_votes: result.for_votes,
+            against_votes: result.against_votes,
+            abstentions: result.abstentions,
+            threshold: result.threshold,
+            eligible_for_second_vote: result.eligible_for_second_vote.as_ref().map(|s| match s {
+                crate::domain::vote::SecondVoteType::Art25_1 => "art_25_1".to_string(),
+                crate::domain::vote::SecondVoteType::Art26_1 => "art_26_1".to_string(),
+            }),
+            reservations: vec![],
+            vote_details: vote_detail_rows
+                .into_iter()
+                .map(|v| MinutesVoteDetail {
+                    owner_name: v.owner_name,
+                    unit_number: v.unit_number,
+                    shares: v.shares,
+                    position: v.position,
+                })
+                .collect(),
+        });
+    }
+
+    let attendance_rows = sqlx::query!(
+        r#"
+        SELECT u.unit_number,
+               CASE WHEN ua.id IS NULL THEN NULL
+                    ELSE ua.first_name || ' ' || ua.last_name
+               END as owner_name,
+               gma.representative_name,
+               gma.mode::text as "mode!",
+               gma.shares_represented as "shares!"
+        FROM general_meeting_attendance gma
+        JOIN unit u ON u.id = gma.unit_id
+        LEFT JOIN unit_owner uo ON uo.unit_id = u.id AND uo.end_date IS NULL
+        LEFT JOIN user_account ua ON ua.id = uo.user_id
+        WHERE gma.meeting_id = $1
+        ORDER BY u.unit_number
+        "#,
+        meeting_id,
+    )
+    .fetch_all(pool)
+    .await?;
+
+    let scrutineers: Vec<String> =
+        serde_json::from_value::<Vec<serde_json::Value>>(meeting.scrutineers)
+            .unwrap_or_default()
+            .into_iter()
+            .filter_map(|s| {
+                s.get("name")
+                    .and_then(|n| n.as_str())
+                    .map(|s| s.to_string())
+            })
+            .collect();
+
+    let scrutineers_signed: Vec<MinutesSignature> =
+        serde_json::from_value::<Vec<serde_json::Value>>(meeting.minutes_scrutineers_signed)
+            .unwrap_or_default()
+            .into_iter()
+            .filter_map(|s| {
+                let name = s.get("name").and_then(|n| n.as_str())?.to_string();
+                let signed_at = s
+                    .get("signed_at")
+                    .and_then(|t| t.as_str())
+                    .and_then(|t| chrono::DateTime::parse_from_rfc3339(t).ok())
+                    .map(|t| t.with_timezone(&chrono::Utc))?;
+                Some(MinutesSignature { name, signed_at })
+            })
+            .collect();
+
+    Ok(MinutesContext {
+        building_name: meeting.building_name,
+        building_address: format!(
+            "{}, {} {}",
+            meeting.address_line1, meeting.postal_code, meeting.city
+        ),
+        meeting_type: meeting.meeting_type,
+        meeting_date: meeting.meeting_date,
+        closing_time: None,
+        location: meeting.location,
+        agenda: meeting.agenda,
+        total_building_shares: Some(meeting.shares_total),
+        proxy_distribution: None,
+        technical_incidents: vec![],
+        president_name: meeting.president_name,
+        secretary_name: meeting.secretary_name,
+        scrutineers,
+        resolutions: minutes_resolutions,
+        attendance: attendance_rows
+            .into_iter()
+            .map(|a| MinutesAttendanceLine {
+                unit_number: a.unit_number,
+                owner_name: a.owner_name,
+                mode: a.mode,
+                shares: a.shares,
+                representative_name: a.representative_name,
+            })
+            .collect(),
+        president_signed_at: meeting.minutes_president_signed_at,
+        secretary_signed_at: meeting.minutes_secretary_signed_at,
+        scrutineers_signed,
+    })
 }
 
 pub async fn list_documents(
@@ -974,17 +1438,36 @@ pub async fn list_votes(
         .collect())
 }
 
-pub async fn start(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()> {
+pub async fn start(
+    pool: &PgPool,
+    id: Uuid,
+    building_id: Uuid,
+    input: StartMeetingInput,
+) -> AppResult<()> {
     let mut tx = pool.begin().await?;
+
+    let scrutineers_json = serde_json::to_value(&input.scrutineers)
+        .map_err(|_| AppError::validation_code("errors.meetings.session_roles_required"))?;
 
     let affected = sqlx::query!(
         r#"
         UPDATE general_meeting
-        SET status = 'ongoing', updated_at = NOW()
+        SET status = 'ongoing',
+            president_name = $3,
+            president_user_id = $4,
+            secretary_name = $5,
+            secretary_user_id = $6,
+            scrutineers = $7::jsonb,
+            updated_at = NOW()
         WHERE id = $1 AND building_id = $2 AND status = 'called'
         "#,
         id,
-        building_id
+        building_id,
+        input.president_name,
+        input.president_user_id,
+        input.secretary_name,
+        input.secretary_user_id,
+        scrutineers_json,
     )
     .execute(&mut *tx)
     .await?

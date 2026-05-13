@@ -5,14 +5,19 @@ type LegalLink = {
 }
 
 withDefaults(defineProps<{
+  id?: string
   links?: LegalLink[]
 }>(), {
+  id: undefined,
   links: () => [],
 })
 </script>
 
 <template>
-  <div class="c-legal-notice">
+  <div
+    :id="id"
+    class="c-legal-notice"
+  >
     <slot></slot>
     <div
       v-if="links.length > 0"
@@ -27,6 +32,14 @@ withDefaults(defineProps<{
           aria-hidden="true"
         >·</span>
         <a
+          v-if="link.href.startsWith('#')"
+          class="c-legal-notice__link"
+          :href="link.href"
+        >
+          {{ link.label }}
+        </a>
+        <a
+          v-else
           class="c-legal-notice__link"
           :href="link.href"
           target="_blank"

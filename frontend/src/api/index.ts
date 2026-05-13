@@ -136,10 +136,19 @@ export const meetingsApi = {
     api.post<Meeting>('/meetings', data),
   update: (id: string, data: Partial<Meeting>) =>
     api.put<Meeting>(`/meetings/${id}`, data),
-  call: (id: string) =>
-    api.post(`/meetings/${id}/call`),
-  start: (id: string) =>
-    api.post(`/meetings/${id}/start`),
+  // EP-003-S09 — channel et date d'envoi requis pour preuve d'envoi
+  call: (id: string, data: { channel: 'lrar' | 'hand_delivery' | 'email'; sent_at?: string }) =>
+    api.post(`/meetings/${id}/call`, data),
+  getConvocationChecklist: (id: string) =>
+    api.get<import('@/types/domain').ConvocationChecklist>(`/meetings/${id}/convocation-checklist`),
+  start: (id: string, data: {
+    president_name: string
+    president_user_id?: string | null
+    secretary_name: string
+    secretary_user_id?: string | null
+    scrutineers: Array<{ name: string; user_id?: string | null }>
+  }) =>
+    api.post(`/meetings/${id}/start`, data),
   close: (id: string) =>
     api.post(`/meetings/${id}/close`),
   patchResolution: (meetingId: string, rid: string, data: { description?: string }) =>
@@ -176,6 +185,22 @@ export const meetingsApi = {
     api.post<{ finalized: boolean; result?: VoteResult; eligible_for_second_vote: 'art_25_1' | 'art_26_1' | null }>(
       `/meetings/${meetingId}/resolutions/${rid}/finalize`,
     ),
+  // EP-013-S08 — Draft PV (structured markdown)
+  getMinutesDraft: (id: string) =>
+    api.get<{ markdown: string }>(`/meetings/${id}/minutes/draft`),
+  // EP-003-S05 — Attaches a signed PV already uploaded (pre-signed URL EP-005)
+  attachMinutes: (id: string, document_id: string) =>
+    api.post(`/meetings/${id}/minutes`, { document_id }),
+  // EP-003-S06 — Marks the PV as notified to absent co-owners (art. 42 loi 1965 deadline)
+  notifyMinutes: (id: string) =>
+    api.post(`/meetings/${id}/notify-minutes`),
+  // EP-003-S10 — Records bureau de séance signatures on the PV
+  signMinutes: (id: string, data: {
+    president_signed: boolean
+    secretary_signed: boolean
+    scrutineers_signed: string[]
+  }) =>
+    api.post(`/meetings/${id}/minutes/signatures`, data),
 }
 
 // ── Budget ────────────────────────────────────────────────────────

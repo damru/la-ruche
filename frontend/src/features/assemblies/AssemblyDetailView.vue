@@ -8,6 +8,8 @@ import { useFormFeedback } from '@/composables/useFormFeedback'
 import { useAutoClose } from '@/composables/useAutoClose'
 import { useAuthStore } from '@/stores/auth'
 import type {
+  ConvocationChannel,
+  ConvocationChecklist,
   Meeting,
   MeetingAttendance,
   MeetingAttendanceEntry,
@@ -63,6 +65,60 @@ const voteFeedback = useFormFeedback()
 
 const startingMeeting = ref(false)
 
+const showStartMeetingModal = ref(false)
+const startMeetingForm = ref(defaultStartMeetingForm())
+const startMeetingFeedback = useFormFeedback()
+
+function defaultStartMeetingForm() {
+  return {
+    president_name: '',
+    secretary_name: '',
+    scrutineers: [] as Array<{ name: string }>,
+  }
+}
+
+// EP-003-S09 — Convocation : checklist + canal + date d'envoi
+const showConvocationModal = ref(false)
+const convocationForm = ref<{ channel: ConvocationChannel; sent_at: string }>({
+  channel: 'lrar',
+  sent_at: '',
+})
+const convocationChecklist = ref<ConvocationChecklist | null>(null)
+const loadingConvocationChecklist = ref(false)
+const convocationFeedback = useFormFeedback()
+
+const showMinutesModal = ref(false)
+const minutesForm = ref<{ file: File | null }>({ file: null })
+const savingMinutes = ref(false)
+const downloadingMinutesDraft = ref(false)
+const notifyingMinutes = ref(false)
+const minutesFeedback = useFormFeedback()
+
+const showSignaturesModal = ref(false)
+const signaturesForm = ref({
+  president_signed: false,
+  secretary_signed: false,
+  scrutineers_signed: [] as string[],
+})
+const savingSignatures = ref(false)
+const signaturesFeedback = useFormFeedback()
+
+const notificationDutyDeadline = computed(() => {
+  if (!meeting.value?.meeting_date) return null
+  const meetingDate = new Date(meeting.value.meeting_date)
+  const deadline = new Date(meetingDate)
+  deadline.setDate(deadline.getDate() + 30)
+  return deadline
+})
+
+const notificationDeadline = computed(() => {
+  if (!meeting.value?.minutes_notified_at) return null
+  const notified = new Date(meeting.value.minutes_notified_at)
+  const deadline = new Date(notified)
+  deadline.setMonth(deadline.getMonth() + 2)
+  return deadline
+})
+
 const showEditResolutionModal = ref(false)
 const editingResolution = ref<Resolution | null>(null)
 const editResolutionForm = ref({ description: '' })
@@ -96,6 +152,18 @@ watch(showVoteModal, (open) => { if (!open) forceVoteClose() })
 watch(showEditResolutionModal, (open) => { if (!open) forceEditResolutionClose() })
 watch(showArt24Modal, (open) => { if (!open) forceArt24Close() })
 watch(showArt25Modal, (open) => { if (!open) forceArt25Close() })
+
+const { schedule: scheduleStartMeetingClose, forceExpire: forceStartMeetingClose } = useAutoClose()
+watch(showStartMeetingModal, (open) => { if (!open) forceStartMeetingClose() })
+
+const { schedule: scheduleMinutesClose, forceExpire: forceMinutesClose } = useAutoClose()
+watch(showMinutesModal, (open) => { if (!open) forceMinutesClose() })
+
+const { schedule: scheduleConvocationClose, forceExpire: forceConvocationClose } = useAutoClose()
+watch(showConvocationModal, (open) => { if (!open) forceConvocationClose() })
+
+const { schedule: scheduleSignaturesClose, forceExpire: forceSignaturesClose } = useAutoClose()
+watch(showSignaturesModal, (open) => { if (!open) forceSignaturesClose() })
 
 function defaultMeetingForm() {
   return {
@@ -190,6 +258,7 @@ const majorityLegalDescriptions = computed(() => {
   const legalEntries = [
     {
       id: 'simple_majority',
+      anchorId: 'art24',
       title: t('meetings.vote.types.simple_majority'),
       summary: t('meetings.legalCard.descriptions.simple_majority'),
       legalLinks: [
@@ -201,6 +270,7 @@ const majorityLegalDescriptions = computed(() => {
     },
     {
       id: 'absolute_majority',
+      anchorId: 'art25',
       title: t('meetings.vote.types.absolute_majority'),
       summary: t('meetings.legalCard.descriptions.absolute_majority'),
       legalLinks: [
@@ -212,6 +282,7 @@ const majorityLegalDescriptions = computed(() => {
     },
     {
       id: 'absolute_majority_second_vote',
+      anchorId: 'art25-1',
       title: t('meetings.vote.art25_1_title'),
       summary: t('meetings.legalCard.descriptions.absolute_majority_second_vote'),
       legalLinks: [
@@ -223,6 +294,7 @@ const majorityLegalDescriptions = computed(() => {
     },
     {
       id: 'double_majority',
+      anchorId: 'art26',
       title: t('meetings.vote.types.double_majority'),
       summary: t('meetings.legalCard.descriptions.double_majority'),
       legalLinks: [
@@ -234,6 +306,7 @@ const majorityLegalDescriptions = computed(() => {
     },
     {
       id: 'unanimity',
+      anchorId: 'art26-al4',
       title: t('meetings.vote.types.unanimity'),
       summary: t('meetings.legalCard.descriptions.unanimity'),
       legalLinks: [
@@ -299,6 +372,7 @@ const voteTypeOptions = computed(() => [
 const documentKindOptions = computed(() => [
   { value: 'notice', label: t('meetings.documents.notice') },
   { value: 'attachment', label: t('meetings.documents.attachment') },
+  { value: 'vote_by_mail_form', label: t('meetings.documents.vote_by_mail_form') },
 ])
 
 const attendanceModeOptions = computed(() => [
@@ -330,28 +404,29 @@ function meetingStatusVariant(status: Meeting['status']): BadgeVariant {
   return 'disabled'
 }
 
-function meetingBannerState(status: Meeting['status']): MeetingBannerState {
+function meetingState(status: Meeting['status']): MeetingBannerState {
   if (status === 'closed') return 'closed'
   if (status === 'ongoing') return 'ongoing'
   if (status === 'called') return 'called'
   return 'draft'
 }
 
-function meetingBannerTitle(status: Meeting['status']): string {
-  const state = meetingBannerState(status)
+function meetingBannerTitle(meeting: Meeting): string {
+  const state = meetingState(meeting.status)
   if (state === 'called') return t('meetings.bannerCalled')
   if (state === 'ongoing') return t('meetings.bannerOngoing')
-  if (state === 'closed') return t('meetings.bannerClosed')
-  return meetingStatusLabel(status)
+  if (state === 'closed') return `${t('meetings.bannerClosed')} · ${meeting.minutes_notified_at ? t('meetings.documents.minutesReady') : t('meetings.documents.minutesPending')}`
+  return meetingStatusLabel(state)
 }
 
 function meetingBannerSubtitle(status: Meeting['status']): string {
-  const state = meetingBannerState(status)
+  const state = meetingState(status)
 
   if (state === 'closed') {
-    return meeting.value?.minutes_document_id
-      ? t('meetings.documents.minutesReady')
-      : t('meetings.documents.minutesPending')
+    if (meeting.value?.minutes_notified_at) {
+      return `${t('meetings.minutes.notified_at', { date: formatDate(meeting.value.minutes_notified_at) })} · ${t('meetings.minutes.deadline_hint', { date: formatDate(notificationDeadline.value!.toISOString()) })}`
+    }
+    return t('meetings.minutes.not_yet_notified_at')
   }
 
   if (state === 'ongoing') {
@@ -623,6 +698,11 @@ async function saveVotes() {
       voteFeedback.setSuccess(t('meetings.vote.voteSaved'))
     }
 
+    // EP-013-S03: Re-fetch attendance after each vote so the denominator
+    // (shares_present) reflects the updated server-side AG record.
+    const attendanceRes = await meetingsApi.attendance(meeting.value.id)
+    attendance.value = attendanceRes.data
+
     scheduleVoteClose(async () => { showVoteModal.value = false })
   } catch (err) {
     voteFeedback.setError(toErrorMessage(err))
@@ -709,17 +789,43 @@ async function saveAttendance() {
   }
 }
 
-async function callMeeting() {
+// EP-003-S09 — Ouvre la modale convocation (checklist + canal + date d'envoi).
+async function openConvocationModal() {
   if (!meeting.value) return
-
-  callingMeeting.value = true
-  documentFeedback.reset()
-
+  convocationFeedback.reset()
+  convocationForm.value = { channel: 'lrar', sent_at: '' }
+  loadingConvocationChecklist.value = true
   try {
-    await meetingsApi.call(meeting.value.id)
-    await reload()
+    const res = await meetingsApi.getConvocationChecklist(meeting.value.id)
+    convocationChecklist.value = res.data
   } catch (err) {
-    documentFeedback.setError(toErrorMessage(err))
+    convocationFeedback.setError(toErrorMessage(err))
+  } finally {
+    loadingConvocationChecklist.value = false
+  }
+  showConvocationModal.value = true
+}
+
+async function confirmCallMeeting() {
+  if (!meeting.value) return
+  if (!convocationChecklist.value?.ready_to_send) {
+    convocationFeedback.setError(t('meetings.convocation.checklist_incomplete'))
+    return
+  }
+  callingMeeting.value = true
+  convocationFeedback.reset()
+  try {
+    await meetingsApi.call(meeting.value.id, {
+      channel: convocationForm.value.channel,
+      sent_at: convocationForm.value.sent_at || undefined,
+    })
+    convocationFeedback.setSuccess(t('common.saved'))
+    scheduleConvocationClose(async () => {
+      showConvocationModal.value = false
+      await reload()
+    })
+  } catch (err) {
+    convocationFeedback.setError(toErrorMessage(err))
   } finally {
     callingMeeting.value = false
   }
@@ -741,14 +847,144 @@ async function closeMeeting() {
   }
 }
 
-async function startMeeting() {
+function openStartMeetingModal() {
+  startMeetingForm.value = defaultStartMeetingForm()
+  startMeetingFeedback.reset()
+  showStartMeetingModal.value = true
+}
+
+function addScrutineer() {
+  startMeetingForm.value.scrutineers.push({ name: '' })
+}
+
+function removeScrutineer(index: number) {
+  startMeetingForm.value.scrutineers.splice(index, 1)
+}
+
+async function downloadMinutesDraft() {
   if (!meeting.value) return
-  startingMeeting.value = true
+  downloadingMinutesDraft.value = true
   try {
-    await meetingsApi.start(meeting.value.id)
+    const response = await meetingsApi.getMinutesDraft(meeting.value.id)
+    const blob = new Blob([response.data.markdown], { type: 'text/markdown;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `pv-ag-${meeting.value.id}.md`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  } catch (err) {
+    minutesFeedback.setError(toErrorMessage(err))
+  } finally {
+    downloadingMinutesDraft.value = false
+  }
+}
+
+function openMinutesModal() {
+  minutesForm.value = { file: null }
+  minutesFeedback.reset()
+  showMinutesModal.value = true
+}
+
+function openSignaturesModal() {
+  if (!meeting.value) return
+  signaturesForm.value = {
+    president_signed: !!meeting.value.minutes_president_signed_at,
+    secretary_signed: !!meeting.value.minutes_secretary_signed_at,
+    scrutineers_signed: (meeting.value.minutes_scrutineers_signed ?? []).map(s => s.name),
+  }
+  signaturesFeedback.reset()
+  showSignaturesModal.value = true
+}
+
+async function saveSignatures() {
+  if (!meeting.value) return
+  savingSignatures.value = true
+  signaturesFeedback.reset()
+  try {
+    await meetingsApi.signMinutes(meeting.value.id, signaturesForm.value)
+    signaturesFeedback.setSuccess(t('common.saved'))
+    scheduleSignaturesClose(async () => {
+      showSignaturesModal.value = false
+      await reload()
+    })
+  } catch (err) {
+    signaturesFeedback.setError(toErrorMessage(err))
+  } finally {
+    savingSignatures.value = false
+  }
+}
+
+async function markMinutesNotified() {
+  if (!meeting.value) return
+  notifyingMinutes.value = true
+  minutesFeedback.reset()
+  try {
+    await meetingsApi.notifyMinutes(meeting.value.id)
+    minutesFeedback.setSuccess(t('common.saved'))
     await reload()
   } catch (err) {
-    documentFeedback.setError(toErrorMessage(err))
+    minutesFeedback.setError(toErrorMessage(err))
+  } finally {
+    notifyingMinutes.value = false
+  }
+}
+
+async function saveMinutes() {
+  if (!meeting.value || !minutesForm.value.file) return
+  savingMinutes.value = true
+  minutesFeedback.reset()
+  try {
+    const file = minutesForm.value.file
+    const extension = file.name.includes('.') ? file.name.split('.').pop() ?? 'pdf' : 'pdf'
+    const upload = await documentsApi.getUploadUrl(extension, file.type || 'application/pdf', file.size)
+    await documentsApi.uploadToS3(file, upload.data.url, file.type || 'application/pdf')
+    const confirmed = await documentsApi.confirmUpload({
+      key: upload.data.key,
+      bucket: upload.data.bucket,
+      original_name: file.name,
+      mime_type: file.type || 'application/pdf',
+      size_bytes: file.size,
+      visible_roles: ['manager', 'board_member', 'co_owner'],
+    })
+    await meetingsApi.attachMinutes(meeting.value.id, confirmed.data.id)
+    minutesFeedback.setSuccess(t('common.saved'))
+    scheduleMinutesClose(async () => {
+      showMinutesModal.value = false
+      await reload()
+    })
+  } catch (err) {
+    minutesFeedback.setError(toErrorMessage(err))
+  } finally {
+    savingMinutes.value = false
+  }
+}
+
+async function confirmStartMeeting() {
+  if (!meeting.value) return
+  if (!startMeetingForm.value.president_name.trim() || !startMeetingForm.value.secretary_name.trim()) {
+    startMeetingFeedback.setError(t('meetings.start_modal.required'))
+    return
+  }
+  startingMeeting.value = true
+  startMeetingFeedback.reset()
+  try {
+    await meetingsApi.start(meeting.value.id, {
+      president_name: startMeetingForm.value.president_name.trim(),
+      secretary_name: startMeetingForm.value.secretary_name.trim(),
+      scrutineers: startMeetingForm.value.scrutineers
+        .map(s => ({ name: s.name.trim() }))
+        .filter(s => s.name.length > 0),
+    })
+    startMeetingFeedback.setSuccess(t('common.saved'))
+    scheduleStartMeetingClose(async () => {
+      showStartMeetingModal.value = false
+      await reload()
+    })
+  } catch (err) {
+    startMeetingFeedback.setError(toErrorMessage(err))
   } finally {
     startingMeeting.value = false
   }
@@ -854,10 +1090,7 @@ function toDateTimeLocal(value: string): string {
   return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16)
 }
 
-function onFileChange(event: Event) {
-  const input = event.target as HTMLInputElement
-  documentForm.value.file = input.files?.[0] ?? null
-}
+
 </script>
 
 <template>
@@ -866,14 +1099,14 @@ function onFileChange(event: Event) {
       <template #left>
         <div class="topbar-breadcrumb">
           <span>{{ buildingName || '...' }}</span>
-          <CIconChevronRight />
+          <CIconChevronRight class="icon-xs" />
           <RouterLink
             :to="{ name: 'assembly-list' }"
             class="topbar-breadcrumb-link"
           >
             {{ t('meetings.title') }}
           </RouterLink>
-          <CIconChevronRight />
+          <CIconChevronRight class="icon-xs" />
           <span>{{ meeting ? `${typeLabel(meeting.meeting_type)} ${new Date(meeting.meeting_date).getFullYear()}` : '…' }}</span>
         </div>
       </template>
@@ -884,16 +1117,16 @@ function onFileChange(event: Event) {
             size="sm"
             @click="openEditMeetingModal"
           >
-            <CIconEdit />
+            <CIconEdit class="icon-sm" />
             <span class="btn-label">{{ t('common.edit') }}</span>
           </CBtn>
           <CBtn
             variant="primary"
             size="sm"
             :loading="callingMeeting"
-            @click="callMeeting"
+            @click="openConvocationModal"
           >
-            <CIconBell />
+            <CIconBell class="icon-sm" />
             <span class="btn-label">{{ t('meetings.call') }}</span>
           </CBtn>
         </template>
@@ -904,7 +1137,7 @@ function onFileChange(event: Event) {
           size="sm"
           disabled
         >
-          <CIconClock />
+          <CIconClock class="icon-sm" />
           <span class="btn-label">{{ t('meetings.waiting') }}</span>
         </CBtn>
 
@@ -913,9 +1146,9 @@ function onFileChange(event: Event) {
           variant="primary"
           size="sm"
           :loading="startingMeeting"
-          @click="startMeeting"
+          @click="openStartMeetingModal"
         >
-          <CIconCheck />
+          <CIconCheck class="icon-sm" />
           <span class="btn-label">{{ t('meetings.start') }}</span>
         </CBtn>
 
@@ -926,7 +1159,7 @@ function onFileChange(event: Event) {
           :loading="closingMeeting"
           @click="closeMeeting"
         >
-          <CIconCheck />
+          <CIconCheck class="icon-sm" />
           <span class="btn-label">{{ t('meetings.close') }}</span>
         </CBtn>
 
@@ -936,7 +1169,7 @@ function onFileChange(event: Event) {
           size="sm"
           disabled
         >
-          <CIconLock />
+          <CIconLock class="icon-sm" />
           <span class="btn-label">{{ t('meetings.closedAction') }}</span>
         </CBtn>
       </template>
@@ -969,7 +1202,7 @@ function onFileChange(event: Event) {
           <CMetaLine>
             <CMetaItem variant="sub">
               <template #icon>
-                <CIconCalendar />
+                <CIconCalendar class="icon-xs" />
               </template>
               {{ formatDate(meeting.meeting_date) }}
             </CMetaItem>
@@ -979,38 +1212,202 @@ function onFileChange(event: Event) {
               variant="sub"
             >
               <template #icon>
-                <CIconLocation />
+                <CIconLocation class="icon-xs" />
               </template>
               {{ meeting.location }}
             </CMetaItem>
             <CSeparator v-if="meeting.location" />
             <CMetaItem variant="sub">
               <template #icon>
-                <CIconBell />
+                <CIconBell class="icon-xs" />
               </template>
               {{ t('meetings.calledAt', { date: meeting.notice_date ? formatDate(meeting.notice_date) : '—' }) }}
             </CMetaItem>
           </CMetaLine>
         </header>
 
-        <div :class="['status-banner', `status-banner--${meetingBannerState(meeting.status)}`]">
+        <div :class="['status-banner', `status-banner--${meetingState(meeting.status)}`]">
           <div class="status-banner__left">
             <div class="status-banner__icon">
-              <CIconBell v-if="meetingBannerState(meeting.status) === 'called'" />
-              <CIconCheck v-else-if="meetingBannerState(meeting.status) === 'ongoing'" />
-              <CIconLock v-else-if="meetingBannerState(meeting.status) === 'closed'" />
+              <CIconBell v-if="meetingState(meeting.status) === 'called'" />
+              <CIconCheck v-else-if="meetingState(meeting.status) === 'ongoing'" />
+              <CIconLock v-else-if="meetingState(meeting.status) === 'closed'" />
               <CIconEdit v-else />
             </div>
             <div>
               <p class="text-sm font-semibold">
-                {{ meetingBannerTitle(meeting.status) }}
+                {{ meetingBannerTitle(meeting) }}
               </p>
               <p class="text-xs text-on-surface-variant">
                 {{ meetingBannerSubtitle(meeting.status) }}
               </p>
             </div>
           </div>
+          <CBtn
+            v-if="meetingState(meeting.status) === 'closed' && meeting.minutes_document_id"
+            variant="ghost"
+            size="sm"
+            type="button"
+            @click="openDocument(meeting.minutes_document_id!)"
+          >
+            <CIconDownload class="icon-sm" />
+            <span class="btn-label">{{ t('meetings.minutes.download_signed') }}</span>
+          </CBtn>
         </div>
+
+        <CCard
+          v-if="meetingState(meeting.status) === 'closed' && auth.isManager"
+          class="minutes-card"
+        >
+          <div class="flex flex-col gap-3">
+            <span class="label-sm">{{ t('meetings.minutes.title') }}</span>
+            <template v-if="meeting.minutes_document_id">
+              <div class="flex items-center gap-2 flex-wrap">
+                <CIconLock class="text-on-surface-variant icon-sm" />
+                <span class="text-sm">{{ t('meetings.minutes.signed_attached') }}</span>
+                <CBtn
+                  variant="ghost"
+                  size="sm"
+                  type="button"
+                  @click="openDocument(meeting.minutes_document_id!)"
+                >
+                  <CIconDownload class="icon-sm" />
+                  <span>{{ t('meetings.minutes.download_signed') }}</span>
+                </CBtn>
+                <CBtn
+                  v-if="auth.isManager"
+                  variant="ghost"
+                  size="sm"
+                  type="button"
+                  @click="openSignaturesModal"
+                >
+                  <CIconEdit class="icon-sm" />
+                  <span>{{ t('meetings.signatures.action_label') }}</span>
+                </CBtn>
+              </div>
+              <div class="flex flex-col gap-1 text-xs text-on-surface-variant">
+                <span>
+                  {{ t('meetings.signatures.president') }} :
+                  <template v-if="meeting.minutes_president_signed_at">
+                    {{ t('meetings.signatures.signed_on', { date: formatDate(meeting.minutes_president_signed_at) }) }}
+                  </template>
+                  <span v-else>{{ t('meetings.signatures.not_signed') }}</span>
+                </span>
+                <span>
+                  {{ t('meetings.signatures.secretary') }} :
+                  <template v-if="meeting.minutes_secretary_signed_at">
+                    {{ t('meetings.signatures.signed_on', { date: formatDate(meeting.minutes_secretary_signed_at) }) }}
+                  </template>
+                  <span v-else>{{ t('meetings.signatures.not_signed') }}</span>
+                </span>
+                <span v-if="(meeting.minutes_scrutineers_signed ?? []).length > 0">
+                  {{ t('meetings.signatures.scrutineers') }} :
+                  {{ (meeting.minutes_scrutineers_signed ?? []).map(s => s.name).join(', ') }}
+                </span>
+              </div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <template v-if="auth.isManager">
+                  <span
+                    v-if="notificationDutyDeadline"
+                    class="text-xs text-on-surface-variant"
+                  >
+                    {{ t('meetings.minutes.notification_duty_hint', { date: formatDate(notificationDutyDeadline.toISOString()) }) }}<sup><a
+                      href="https://www.legifrance.gouv.fr/loda/article_lc/LEGIARTI000039329680"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="legal-ref"
+                    >art.&nbsp;42&nbsp;al.&nbsp;3</a></sup>
+                  </span>
+                  <CBtn
+                    variant="ghost"
+                    size="sm"
+                    type="button"
+                    :loading="notifyingMinutes"
+                    @click="markMinutesNotified"
+                  >
+                    <CIconBell class="icon-sm" />
+                    <span>{{ t('meetings.minutes.mark_notified') }}</span>
+                  </CBtn>
+                </template>
+              </div>
+            </template>
+            <template v-else>
+              <p class="text-xs text-on-surface-variant">
+                {{ t('meetings.minutes.lead') }}
+              </p>
+              <div
+                v-if="auth.isManager"
+                class="flex gap-2 flex-wrap"
+              >
+                <CBtn
+                  variant="ghost"
+                  size="sm"
+                  type="button"
+                  :loading="downloadingMinutesDraft"
+                  @click="downloadMinutesDraft"
+                >
+                  <CIconDownload class="icon-sm" />
+                  <span>{{ t('meetings.minutes.download_draft') }}</span>
+                </CBtn>
+                <CBtn
+                  variant="primary"
+                  size="sm"
+                  type="button"
+                  @click="openMinutesModal"
+                >
+                  <CIconUpload class="icon-sm" />
+                  <span>{{ t('meetings.minutes.upload_signed') }}</span>
+                </CBtn>
+              </div>
+            </template>
+            <CFormFeedback
+              v-if="minutesFeedback.status.value !== 'idle'"
+              :status="minutesFeedback.status.value"
+              :message="minutesFeedback.message.value"
+            />
+          </div>
+        </CCard>
+
+        <CCard
+          v-if="meeting && ['ongoing', 'closed'].includes(meeting.status) && meeting.president_name"
+          class="session-roles-card"
+        >
+          <div class="flex flex-col gap-2">
+            <span class="label-sm">{{ t('meetings.session_roles.title') }}</span>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div>
+                <p class="text-xs text-on-surface-variant">
+                  {{ t('meetings.session_roles.president') }}
+                </p>
+                <p class="text-sm font-medium">
+                  {{ meeting.president_name }}
+                </p>
+              </div>
+              <div>
+                <p class="text-xs text-on-surface-variant">
+                  {{ t('meetings.session_roles.secretary') }}
+                </p>
+                <p class="text-sm font-medium">
+                  {{ meeting.secretary_name }}
+                </p>
+              </div>
+              <div>
+                <p class="text-xs text-on-surface-variant">
+                  {{ t('meetings.session_roles.scrutineers') }}
+                </p>
+                <p class="text-sm font-medium">
+                  <template v-if="meeting.scrutineers.length > 0">
+                    {{ meeting.scrutineers.map(s => s.name).join(', ') }}
+                  </template>
+                  <span
+                    v-else
+                    class="text-on-surface-variant"
+                  >—</span>
+                </p>
+              </div>
+            </div>
+          </div>
+        </CCard>
 
         <div class="detail-layout">
           <section class="main-column">
@@ -1029,7 +1426,7 @@ function onFileChange(event: Event) {
                 size="sm"
                 @click="openResolutionModal"
               >
-                <CIconPlus />
+                <CIconPlus class="icon-sm" />
                 <span class="btn-label">{{ t('meetings.addResolution') }}</span>
               </CBtn>
             </div>
@@ -1259,7 +1656,7 @@ function onFileChange(event: Event) {
                   size="sm"
                   @click="openDocumentModal"
                 >
-                  <CIconPlus />
+                  <CIconPlus class="icon-sm" />
                   <span class="btn-label">{{ t('meetings.documents.uploadAction') }}</span>
                 </CBtn>
               </div>
@@ -1347,9 +1744,23 @@ function onFileChange(event: Event) {
                 </div>
               </div>
 
-              <div :class="['minutes-pill', meeting.minutes_document_id ? 'tone--valid' : 'tone--disabled']">
-                {{ meeting.minutes_document_id ? t('meetings.documents.minutesReady') : t('meetings.documents.minutesPending') }}
-              </div>
+              <CAlert
+                v-if="meetingState(meeting.status) === 'closed'"
+                :variant="meeting.minutes_document_id ? 'success' : 'warning'"
+                :title="meeting.minutes_document_id ? t('meetings.documents.minutesReady') : t('meetings.documents.minutesPending')"
+              >
+                <CBtn
+                  v-if="meeting.minutes_document_id"
+                  variant="ghost"
+                  size="sm"
+                  type="button"
+                  class="self-center"
+                  @click="openDocument(meeting.minutes_document_id!)"
+                >
+                  <CIconDownload class="icon-sm" />
+                  <span>{{ t('meetings.minutes.download_signed') }}</span>
+                </CBtn>
+              </CAlert>
             </CCard>
 
             <CCard class="gap-y-4">
@@ -1368,7 +1779,7 @@ function onFileChange(event: Event) {
                   size="sm"
                   @click="openAttendanceModal"
                 >
-                  <CIconEdit />
+                  <CIconEdit class="icon-sm" />
                   <span class="btn-label">{{ t('meetings.attendanceAction') }}</span>
                 </CBtn>
               </div>
@@ -1463,6 +1874,7 @@ function onFileChange(event: Event) {
           <CFlexGroup direction="column">
             <CLegalNotice
               v-for="entry in majorityLegalDescriptions"
+              :id="entry.anchorId"
               :key="entry.title"
               :links="entry.legalLinks"
             >
@@ -1525,7 +1937,7 @@ function onFileChange(event: Event) {
               size="sm"
               @click="addAgendaItem"
             >
-              <CIconPlus />
+              <CIconPlus class="icon-sm" />
               <span class="btn-label">{{ t('common.add') }}</span>
             </CBtn>
           </div>
@@ -1752,15 +2164,18 @@ function onFileChange(event: Event) {
           :label="t('meetings.documents.uploadType')"
           :options="documentKindOptions"
         />
-        <label class="form-field">
-          <span class="form-label">{{ t('meetings.documents.uploadFile') }}</span>
-          <input
-            class="form-input"
-            type="file"
-            accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
-            @change="onFileChange"
-          />
-        </label>
+        <CFormDropzone
+          accept="application/pdf,.pdf,.doc,.docx,.png,.jpg,.jpeg"
+          :uploading="savingDocument"
+          @files="documentForm.file = $event[0] ?? null"
+          @error="documentFeedback.setError($event)"
+        />
+        <p
+          v-if="documentForm.file"
+          class="text-xs text-on-surface-variant"
+        >
+          {{ documentForm.file.name }}
+        </p>
       </form>
 
       <template #footer>
@@ -1896,6 +2311,287 @@ function onFileChange(event: Event) {
           @click="confirmArt25Resolution"
         >
           {{ t('common.create') }}
+        </CBtn>
+      </template>
+    </CModal>
+
+    <CModal
+      :open="showSignaturesModal"
+      :title="t('meetings.signatures.modal_title')"
+      size="md"
+      @update:open="showSignaturesModal = $event"
+    >
+      <form
+        class="form-grid"
+        @submit.prevent="saveSignatures"
+      >
+        <p class="body-sm text-on-surface-variant">
+          {{ t('meetings.signatures.modal_lead') }}<sup><a
+            href="https://www.legifrance.gouv.fr/loda/article_lc/LEGIARTI000042078689/"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="legal-ref"
+          >art.&nbsp;17–17-1</a></sup>
+        </p>
+        <CFormCheckbox v-model="signaturesForm.president_signed">
+          {{ t('meetings.signatures.president') }}
+          <template v-if="meeting?.president_name">
+            — {{ meeting.president_name }}
+          </template>
+        </CFormCheckbox>
+        <CFormCheckbox v-model="signaturesForm.secretary_signed">
+          {{ t('meetings.signatures.secretary') }}
+          <template v-if="meeting?.secretary_name">
+            — {{ meeting.secretary_name }}
+          </template>
+        </CFormCheckbox>
+        <div
+          v-if="(meeting?.scrutineers ?? []).length > 0"
+          class="flex flex-col gap-1"
+        >
+          <span class="label-sm">{{ t('meetings.signatures.scrutineers') }}</span>
+          <CFormCheckbox
+            v-for="scrutineer in meeting?.scrutineers ?? []"
+            :key="scrutineer.name"
+            v-model="signaturesForm.scrutineers_signed"
+            :value="scrutineer.name"
+            :label="scrutineer.name"
+          />
+        </div>
+      </form>
+      <template #footer>
+        <CFormFeedback
+          :status="signaturesFeedback.status.value"
+          :message="signaturesFeedback.message.value"
+        />
+        <CBtn
+          variant="ghost"
+          @click="showSignaturesModal = false"
+        >
+          {{ t('common.cancel') }}
+        </CBtn>
+        <CBtn
+          variant="primary"
+          :loading="savingSignatures"
+          @click="saveSignatures"
+        >
+          {{ t('common.save') }}
+        </CBtn>
+      </template>
+    </CModal>
+
+    <!-- EP-003-S09 — Convocation : checklist + canal + date d'envoi -->
+    <CModal
+      :open="showConvocationModal"
+      :title="t('meetings.convocation.modal_title')"
+      size="md"
+      @update:open="showConvocationModal = $event"
+    >
+      <form
+        class="form-grid"
+        @submit.prevent="confirmCallMeeting"
+      >
+        <p class="body-sm text-on-surface-variant">
+          {{ t('meetings.convocation.modal_lead') }}<sup><a
+            href="https://www.legifrance.gouv.fr/loda/id/JORFTEXT000000508310"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="legal-ref"
+          >art.&nbsp;7–13</a></sup>
+        </p>
+        <div
+          v-if="loadingConvocationChecklist"
+          class="text-sm text-on-surface-variant"
+        >
+          {{ t('common.loading') }}
+        </div>
+        <div
+          v-else-if="convocationChecklist"
+          class="flex flex-col gap-2"
+        >
+          <span class="label-sm">{{ t('meetings.convocation.checklist_title') }}</span>
+          <ul class="flex flex-col gap-1">
+            <li
+              v-for="item in convocationChecklist.items"
+              :key="item.key"
+              class="flex items-center gap-2 text-sm"
+            >
+              <CIconCheck
+                v-if="item.satisfied"
+                class="text-success icon-sm"
+              />
+              <CIconX
+                v-else
+                :class="[item.severity === 'Blocking' ? 'text-error' : 'text-on-surface-variant', 'icon-sm']"
+              />
+              <span>{{ t('meetings.convocation.items.' + item.key) }}</span>
+              <span
+                v-if="!item.satisfied && item.severity === 'Advisory'"
+                class="text-xs text-on-surface-variant"
+              >
+                ({{ t('meetings.convocation.advisory') }})
+              </span>
+            </li>
+          </ul>
+        </div>
+        <CFormSelect
+          v-model="convocationForm.channel"
+          :label="t('meetings.convocation.channel_label')"
+          :options="[
+            { value: 'lrar', label: t('meetings.convocation.channels.lrar') },
+            { value: 'hand_delivery', label: t('meetings.convocation.channels.hand_delivery') },
+            { value: 'email', label: t('meetings.convocation.channels.email') },
+          ]"
+        />
+        <CFormInput
+          v-model="convocationForm.sent_at"
+          type="datetime-local"
+          :label="t('meetings.convocation.sent_at_label')"
+          :placeholder="t('meetings.convocation.sent_at_placeholder')"
+        />
+      </form>
+      <template #footer>
+        <CFormFeedback
+          :status="convocationFeedback.status.value"
+          :message="convocationFeedback.message.value"
+        />
+        <CBtn
+          variant="ghost"
+          @click="showConvocationModal = false"
+        >
+          {{ t('common.cancel') }}
+        </CBtn>
+        <CBtn
+          variant="primary"
+          :loading="callingMeeting"
+          :disabled="!convocationChecklist?.ready_to_send"
+          @click="confirmCallMeeting"
+        >
+          {{ t('meetings.call') }}
+        </CBtn>
+      </template>
+    </CModal>
+
+    <CModal
+      :open="showMinutesModal"
+      :title="t('meetings.minutes.modal_title')"
+      size="md"
+      @update:open="showMinutesModal = $event"
+    >
+      <form
+        class="form-grid"
+        @submit.prevent="saveMinutes"
+      >
+        <p class="body-sm text-on-surface-variant">
+          {{ t('meetings.minutes.modal_lead') }}
+        </p>
+        <CFormDropzone
+          accept="application/pdf,.pdf,.md,.txt"
+          :uploading="savingMinutes"
+          @files="minutesForm.file = $event[0] ?? null"
+          @error="minutesFeedback.setError($event)"
+        />
+        <p
+          v-if="minutesForm.file"
+          class="text-xs text-on-surface-variant"
+        >
+          {{ minutesForm.file.name }}
+        </p>
+      </form>
+      <template #footer>
+        <CFormFeedback
+          :status="minutesFeedback.status.value"
+          :message="minutesFeedback.message.value"
+        />
+        <CBtn
+          variant="ghost"
+          @click="showMinutesModal = false"
+        >
+          {{ t('common.cancel') }}
+        </CBtn>
+        <CBtn
+          variant="primary"
+          :loading="savingMinutes"
+          :disabled="!minutesForm.file"
+          @click="saveMinutes"
+        >
+          {{ t('meetings.minutes.upload_signed') }}
+        </CBtn>
+      </template>
+    </CModal>
+
+    <CModal
+      :open="showStartMeetingModal"
+      :title="t('meetings.start_modal.title')"
+      size="md"
+      @update:open="showStartMeetingModal = $event"
+    >
+      <form
+        class="form-grid"
+        @submit.prevent="confirmStartMeeting"
+      >
+        <p class="body-sm text-on-surface-variant">
+          {{ t('meetings.start_modal.lead') }}
+        </p>
+        <CFormInput
+          v-model="startMeetingForm.president_name"
+          :label="t('meetings.start_modal.president_label')"
+          required
+        />
+        <CFormInput
+          v-model="startMeetingForm.secretary_name"
+          :label="t('meetings.start_modal.secretary_label')"
+          required
+        />
+        <div class="flex flex-col gap-2">
+          <span class="label-sm">{{ t('meetings.start_modal.scrutineers_label') }}</span>
+          <div
+            v-for="(scrutineer, index) in startMeetingForm.scrutineers"
+            :key="index"
+            class="flex gap-2 items-center"
+          >
+            <CFormInput
+              v-model="scrutineer.name"
+              :placeholder="t('meetings.start_modal.scrutineer_placeholder')"
+              class="grow"
+            />
+            <CBtn
+              variant="ghost"
+              size="sm"
+              type="button"
+              @click="removeScrutineer(index)"
+            >
+              <CIconTrash class="icon-sm" />
+            </CBtn>
+          </div>
+          <CBtn
+            variant="ghost"
+            size="sm"
+            type="button"
+            @click="addScrutineer"
+          >
+            <CIconPlus class="icon-sm" />
+            <span>{{ t('meetings.start_modal.add_scrutineer') }}</span>
+          </CBtn>
+        </div>
+      </form>
+      <template #footer>
+        <CFormFeedback
+          :status="startMeetingFeedback.status.value"
+          :message="startMeetingFeedback.message.value"
+        />
+        <CBtn
+          variant="ghost"
+          @click="showStartMeetingModal = false"
+        >
+          {{ t('common.cancel') }}
+        </CBtn>
+        <CBtn
+          variant="primary"
+          :loading="startingMeeting"
+          @click="confirmStartMeeting"
+        >
+          {{ t('meetings.start') }}
         </CBtn>
       </template>
     </CModal>
@@ -2146,7 +2842,6 @@ function onFileChange(event: Event) {
 
 .result-pill,
 .pending-box,
-.minutes-pill,
 .quorum-kpi {
   display: flex;
   flex-direction: column;
@@ -2544,4 +3239,8 @@ function onFileChange(event: Event) {
     grid-template-columns: 1fr;
   }
 }
+
+/* ── Icon size token utilities ───────────────────────────────── */
+.icon-xs { width: var(--icon-xs); height: var(--icon-xs); flex-shrink: 0; }
+.icon-sm { width: var(--icon-sm); height: var(--icon-sm); flex-shrink: 0; }
 </style>

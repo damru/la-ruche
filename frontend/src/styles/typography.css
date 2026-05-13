@@ -43,7 +43,7 @@
   line-height: 1.1;
 }
 
-/* Italique — tension éditoriale avec DM Sans */
+/* Italic — editorial tension with DM Sans */
 .text-headline-md,
 .headline-md {
   font-family: var(--font-display);
@@ -156,7 +156,7 @@
   line-height: 1.45;
 }
 
-/* Couleurs sémantiques rapides */
+/* Quick semantic colour helpers */
 .text-primary   { color: var(--color-primary); }
 .text-secondary { color: var(--color-secondary); }
 .text-muted     { color: var(--color-on-surface-variant); }

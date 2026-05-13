@@ -16,7 +16,7 @@
 > - Arrêté du 14 mars 2005 (plan comptable copropriété)
 > - RGPD (Règlement UE 2016/679)
 >
-> Dernière mise à jour : 5 mai 2026 (resynchronisation LEGAL / EPICS)
+> Dernière mise à jour : 13 mai 2026 (correctifs légaux §3.1/§3.4/§4.3/§4.4/§4.6/§4.7 + nouvelle §3.5 — audit loi 65-557 / décret 67-223)
 
 ---
 
@@ -121,6 +121,44 @@ Depuis le 1er janvier 2015, tout syndic professionnel doit mettre à disposition
 
 ---
 
+### 1.7 Organes de la copropriété
+
+**Références :** Art. 14, 18 et 21 loi 1965  
+**Couverture :** ⚠️ partielle — EP-002, EP-003
+
+La gouvernance d'une copropriété repose sur trois organes juridiquement distincts.
+
+| Organe | Base légale | Rôle juridique | Couverture produit |
+|---|---|---|---|
+| Syndicat des copropriétaires | Art. 14 loi 1965 | Personnalité civile ; responsable des dommages causés par vice de construction ou défaut d'entretien des parties communes | ⚠️ partielle (représentation métier implicite, pas de module dédié de gouvernance) |
+| Syndic | Art. 18 loi 1965 | Mandataire du syndicat ; exécute les décisions d'AG, administre l'immeuble, tient la comptabilité | ⚠️ partielle (fonctions réparties sur EP-001/003/004/005/006/009) |
+| Conseil syndical | Art. 21 loi 1965 | Assiste le syndic et contrôle sa gestion (sauf vote contraire art. 26) | ⚠️ partielle (rôle `board_member` présent, règles de fonctionnement incomplètes) |
+
+**Implications :**
+- Le référentiel produit doit distinguer les responsabilités juridiques (syndicat / syndic / conseil syndical) pour éviter les ambiguïtés d'habilitation.
+- Les capacités de contrôle du conseil syndical (accès, suivi des décisions et de l'exécution) doivent rester traçables.
+
+---
+
+### 1.8 Missions légales du syndic (article 18)
+
+**Référence :** Art. 18 loi 1965  
+**Couverture :** ⚠️ partielle — EP-001, EP-002, EP-003, EP-004, EP-009, EP-012
+
+| Mission légale | Couverture actuelle | Écart principal |
+|---|---|---|
+| Gestion financière (compte séparé, comptabilité du syndicat) | ⚠️ partielle (EP-004) | Flux bancaires et plan comptable normé incomplets |
+| Conservation et entretien de l'immeuble | ✅/⚠️ via EP-007 + EP-009 | Couvert côté carnet ; PPT reste hors scope post-MVP |
+| Représentation du syndicat en justice | ⚠️ partielle (EP-002-S10) | Suivi procédural encore en backlog |
+| Tenue de la liste des copropriétaires et des archives | ⚠️ partielle (EP-002, EP-005) | Workflows mutations / état daté à finaliser |
+| Immatriculation et mise à jour RNC | ⚠️ partielle (EP-012) | Export assisté en backlog, dépôt encore manuel |
+
+**Implications :**
+- Le découpage backlog doit rester indexé sur les obligations de l'art. 18 pour audit de conformité rapide.
+- Chaque obligation non couverte doit pointer vers une story explicite (pas de dette implicite).
+
+---
+
 ## 2. Tantièmes — Audit et traçabilité
 
 > Ce bloc est structurant pour tout le modèle comptable. Il est insuffisamment adressé dans la PRD initiale.
@@ -181,23 +219,40 @@ Les tantièmes sont attachés au **lot**, pas au propriétaire. Une mutation (ve
 
 ### 3.1 Convocation
 
-**Référence :** Art. 9 décret 1967  
-**Couverture :** ⚠️ partielle — EP-003-S01, EP-003-S02
+**Référence :** Art. 7 à 13 décret 1967 — Art. 9 al. 4 décret 1967 (LEGIARTI000042078632 v6.0, en vigueur 04/07/2020)  
+**Couverture :** ⚠️ partielle — EP-003-S01, EP-003-S02, EP-003-S09
 
 - Délai minimum : **21 jours** avant la date de l'AG.
 - Documents obligatoires joints : ordre du jour, projet de budget, projets de résolutions, contrats soumis au vote, état financier.
+- Depuis le décret du 2 juillet 2020, **le formulaire de vote par correspondance doit être joint à la convocation** (art. 9 al. 4 décret 67-223, LEGIARTI000042078632).
 - Mode d'envoi : recommandé avec AR ou remise en main propre contre émargement.
 
 **Implications :**
 - l'Application doit calculer et afficher la date limite de convocation (= date AG − 21 jours).
 - Alerte si un document obligatoire est manquant avant envoi de la convocation.
+- Le formulaire de vote par correspondance doit être inclus dans la checklist de complétude de la convocation (EP-003-S09).
+
+**Écart constaté :** Le formulaire de vote par correspondance n'est pas encore référencé dans la checklist de convocation (EP-003-S09). → ⚠️ à compléter.
 
 ---
 
-### 3.2 Règles de majorité
+### 3.2 Tenue de séance et présidence
+
+**Référence :** Art. 15 décret 1967  
+**Couverture :** ✅ couverte — EP-013-S02, EP-013-S03
+
+La tenue de séance impose la désignation d'un président, d'un secrétaire et, le cas échéant, de scrutateurs.
+
+**Implications :**
+- Les rôles de séance doivent être enregistrés avant le démarrage des votes.
+- Le bureau de séance doit rester lisible dans le dossier AG et dans les exports de PV.
+
+---
+
+### 3.3 Règles de majorité
 
 **Référence :** Art. 24, 25, 26 loi 1965  
-**Couverture :** ⚠️ partielle — EP-003-S03, EP-003-S04
+**Couverture :** ✅ couverte — EP-003-S03, EP-003-S04, EP-003-S07, EP-013-S05, EP-013-S10
 
 | Majorité | Base de calcul | Exemples de décisions |
 |---|---|---|
@@ -214,16 +269,42 @@ Les tantièmes sont attachés au **lot**, pas au propriétaire. Une mutation (ve
 
 ---
 
-### 3.3 PV d'assemblée générale
+### 3.4 PV d'assemblée générale
 
-**Référence :** Art. 17 loi 1965, art. 17-1A  
-**Couverture :** ⚠️ partielle — EP-003-S05, EP-003-S06
+**Référence :** Art. 17, 17-1 et 18 décret 1967 (LEGIARTI000042078689 v5.0, LEGIARTI000042076794 v1.0, LEGIARTI000042078697 v2.0) · Art. 42 loi 1965 (LEGIARTI000039329680 v9.0)  
+**Couverture :** ✅ couverte — EP-003-S05, EP-003-S06, EP-003-S10, EP-013-S08
 
-Le PV doit être signé séance tenante par le président, le secrétaire et les scrutateurs. Il doit être notifié aux copropriétaires absents dans les **2 mois** suivant l'AG (point de départ du délai de contestation — art. 42 loi 1965).
+Le PV est signé séance tenante **ou dans les huit jours suivant la tenue de l'assemblée** par le président, le secrétaire et les scrutateurs (art. 17 décret 1967).
+
+Le syndic doit notifier le PV aux copropriétaires **opposants ou défaillants** dans le délai d'**un mois** à compter de la tenue de l'AG (art. 42 al. 3 loi 1965 — LEGIARTI000039329680). La notification doit mentionner les résultats du vote et reproduire le texte de l'art. 42 al. 2 (art. 18 décret 1967 — LEGIARTI000042078697).
+
+Les copropriétaires opposants ou défaillants disposent ensuite d'un délai de **deux mois** à compter de cette notification pour contester les décisions en justice (art. 42 al. 2 loi 1965). L'exécution des travaux votés (art. 25 et 26) est suspendue pendant ce délai de deux mois sauf urgence (art. 42 al. 4 loi 1965). → 🔲 hors périmètre logiciel (obligation du syndic envers les prestataires).
+
+**Note sur Art. 17-1 :** Cet article traite de l'irrégularité formelle du PV (conditions de vote, computation des voix) et non de la notification — il ne constitue pas la base légale de l'obligation de notification.
 
 **Implications :**
 - Conservation des PV : **sans limitation de durée** (archives de la copropriété).
-- l'Application stocke le PV signé (EP-005) et doit tracer la date de notification aux absents.
+- l'Application stocke le PV signé (EP-005) et doit tracer la date de notification aux absents (EP-003-S06).
+- L'implémentation actuelle calcule le délai de contestation à J+60 depuis la date d'AG (hypothèse : notification immédiate). Le délai légal exact est J+60 depuis la **date de notification** (J+30 au plus tard), soit un maximum de J+90. L'approche actuelle est conservative côté copropriétaire.
+
+**Écart constaté :** La description précédente indiquait à tort « 2 mois » pour le délai de notification (art. 42 al. 3 = 1 mois) et référençait erronément Art. 17-1 comme base de la notification (Art. 17-1 = irrégularités formelles). Corrigé.
+
+---
+
+### 3.5 PV du conseil syndical en délégation de pouvoirs
+
+**Référence :** Art. 21-1 décret 1967 (LEGIARTI000042077775 v1.0, en vigueur 04/07/2020) · Art. 21-1 et ss. loi 1965  
+**Couverture :** ❌ non couverte — EP-002-S12 (à créer)
+
+Lorsque le conseil syndical bénéficie d'une délégation de pouvoirs votée en AG (art. 21-1 et ss. loi 1965), ses décisions doivent être consignées dans un **procès-verbal formel** :
+- Signé par **deux membres** du conseil syndical
+- Mentionnant le nom des membres ayant participé à la délibération et le **sens de leur vote**
+- Transmis au syndic qui l'**inscrit au registre des PV des assemblées générales**
+
+**Implications :**
+- La délégation de pouvoirs au conseil syndical (feature de gouvernance avancée) implique la tenue d'un registre de PV spécifique.
+- Ces PV ont la même valeur formelle que les PV d'AG pour les décisions déléguées.
+- l'Application doit permettre de créer, stocker et consulter ces PV depuis la fiche de gouvernance de la copropriété.
 
 ---
 
@@ -252,28 +333,42 @@ Le plan comptable copropriété distingue les charges générales (clé généra
 
 ### 4.3 Budget prévisionnel et appels de fonds
 
-**Référence :** Art. 14-1 loi 1965, décret 1967 art. 35  
+**Référence :** Art. 14-1 loi 1965 (LEGIARTI000043977299 v2.0, en vigueur 01/01/2023) · Décret 1967 art. 35 (LEGIARTI000053191341 v6.0, en vigueur 25/12/2025)  
 **Couverture :** ⚠️ partielle — EP-004
 
 Le budget prévisionnel est voté en AG. Les appels de fonds provisionnels sont versés **par quart** (sauf décision contraire de l'AG), aux dates prévues.
+
+La version 6.0 de l'art. 35 décret (en vigueur 25/12/2025) intègre trois nouvelles catégories d'appels de fonds que le syndic peut exiger :
+- Avances correspondant à l'échéancier PPT adopté (point 4)
+- Cotisations au fonds de travaux (art. 14-2-1 loi 1965, point 5)
+- Provisions sur la délégation accordée au conseil syndical (art. 21-2 loi 1965, point 6)
 
 **Implications :**
 - Chaque appel de fonds génère une ligne par lot, calculée au prorata des tantièmes de la clé.
 - **Cf. §2.3 :** le snapshot des tantièmes doit être figé au moment de la génération.
 - Un appel de fonds exceptionnel (travaux votés en AG) suit les mêmes règles mais référence une résolution AG.
+- Les catégories PPT, fonds travaux et délégation CS ajoutées en décembre 2025 doivent être typées dans l'application (EP-004-S08).
+
+**Écart constaté :** La mise à jour de l'art. 35 décret en décembre 2025 (v6.0) n'est pas encore reflétée dans la modélisation des appels de fonds.
 
 ---
 
 ### 4.4 Fonds travaux obligatoire
 
-**Référence :** Art. 14-2 loi 1965 (introduit par ALUR 2014)  
+**Référence :** Art. 14-2 loi 1965 (introduit par ALUR 2014) · Art. 14-2-1 loi 1965 (LEGIARTI000043967792 v1.0, introduit par loi Climat 2021, en vigueur 01/01/2023)  
 **Couverture :** ⚠️ partielle — EP-004
 
-Minimum **5% du budget prévisionnel** annuel, versé sur un **compte séparé** dédié. Ne peut pas être restitué lors d'une mutation (reste acquis à la copropriété).
+Depuis le 01/01/2023, le calcul de la cotisation annuelle au fonds de travaux est régi par l'art. 14-2-1 loi 1965 :
+- Si un **plan pluriannuel de travaux (PPT) a été adopté** : la cotisation ne peut être inférieure à **2,5 % du montant des travaux prévus dans le plan** ET à **5 % du budget prévisionnel**.
+- En **l'absence de PPT adopté** : la cotisation ne peut être inférieure à **5 % du budget prévisionnel**.
+
+Les sommes versées au fonds de travaux sont attachées aux lots et entrent définitivement dans le patrimoine du syndicat. Elles **ne sont pas remboursables** lors d'une mutation.
 
 **Implications :**
-- l'Application doit alerter si la dotation fonds travaux est inférieure à 5% du budget prévisionnel.
+- l'Application doit alerter si la dotation fonds travaux est inférieure au seuil légal applicable (5% sans PPT / 2,5% du PPT + 5% avec PPT adopté).
 - À la mutation d'un lot, la quote-part fonds travaux du vendeur **n'est pas remboursable** — à préciser dans l'état daté.
+
+**Écart constaté :** La référence précédente (art. 14-2 ALUR 2014 + « minimum 5% ») ne reflète plus l'état du droit depuis 01/01/2023. L'art. 14-2-1 (loi Climat 2021) est la référence applicable.
 
 ---
 
@@ -292,22 +387,26 @@ Clôture annuelle comparant réalisé vs prévisionnel. Présenté en AG avec ap
 
 ### 4.6 Relevé individuel de charges
 
-**Référence :** Décret 1967 art. 48  
+**Référence :** Art. 18 loi 1965 (obligation d'information du syndic) · Arrêté du 14 mars 2005 (plan comptable copropriété, annexe II — compte individuel)  
 **Couverture :** ✅ EP-004-S06
 
 Chaque copropriétaire doit pouvoir consulter le détail de ses charges sur l'exercice (appels reçus, règlement de charges, solde).
+
+**Écart constaté :** La référence précédente « Décret 1967 art. 48 » était incorrecte. L'art. 48 du décret traite de la désignation judiciaire des membres du conseil syndical — il ne fonde pas l'obligation de relevé individuel. La base légale correcte est l'art. 18 loi 1965 (obligation d'information du syndic) et l'arrêté du 14 mars 2005 (plan comptable). Corrigé.
 
 ---
 
 ### 4.7 Recouvrement des charges impayées
 
-**Référence :** Art. 18-I loi 1965, décret 1967 art. 36 (service-public.fr/F2608)  
+**Référence :** Art. 18-I loi 1965 · Décret 1967 art. 35 et 36 (LEGIARTI000006488649 v2.0) (service-public.fr/F2608)  
 **Couverture :** ❌ non couverte — EP-004-S11
 
 Le syndic a l'**obligation légale** de recouvrer les charges impayées au nom du syndicat des copropriétaires. Cette obligation inclut :
 - La mise en demeure du copropriétaire débiteur (lettre recommandée)
 - L'engagement de procédures judiciaires si nécessaire (injonction de payer, saisie)
 - Le suivi des dossiers de recouvrement jusqu'à leur clôture
+
+Les sommes dues (provisions du budget prévisionnel + dépenses hors budget) portent **intérêt au taux légal** au profit du syndicat, à compter de la mise en demeure (art. 36 décret 67-223, LEGIARTI000006488649).
 
 **Implications :**
 - l'Application doit permettre d'identifier les lots en retard de paiement (solde débiteur), d'enregistrer les relances effectuées et de tracer les dossiers contentieux.
@@ -575,19 +674,23 @@ L'`audit_log` est en **append-only** : aucune ligne ne peut être modifiée ou s
 | 1.4 | Carnet d'entretien | Décret 2001-477 | ⚠️ | EP-009 |
 | 1.5 | Liste des copropriétaires à jour | Art. 18-I-1° loi 1965 | ⚠️ | EP-002-S01, EP-002-S04 |
 | 1.6 | Espace en ligne sécurisé (extranet) | Art. 18-I-5° loi 1965 (ALUR) | ✅ | EP-002, EP-003, EP-004, EP-005, EP-006, EP-009 |
+| 1.7 | Organes de copropriété (syndicat, syndic, conseil syndical) | Art. 14/18/21 loi 1965 | ⚠️ | EP-002, EP-003 |
+| 1.8 | Missions légales du syndic | Art. 18 loi 1965 | ⚠️ | EP-001, EP-002, EP-003, EP-004, EP-009, EP-012 |
 | 2.1 | Intégrité somme tantièmes | EDD + art. 5 | ⚠️ | EP-001-S03, EP-001-S07 |
 | 2.2 | Historique tantièmes par lot | Art. 10 loi 1965 | ✅ | EP-001-S06 |
 | 2.3 | Snapshot tantièmes par appel de fonds | Art. 14-1 loi 1965 | ✅ | EP-004-S05 |
 | 2.4 | Tantièmes et mutations | Art. 6 loi 1965 | ⚠️ | EP-002-S06, EP-002-S07 |
-| 3.1 | Convocation AG (21 jours) | Art. 9 décret 1967 | ⚠️ | EP-003-S01, EP-003-S02 |
-| 3.2 | Règles de majorité | Art. 24/25/26 loi 1965 | ⚠️ | EP-003-S03, EP-003-S04 |
-| 3.3 | PV + notification absents | Art. 17 loi 1965 | ⚠️ | EP-003-S05, EP-003-S06 |
+| 3.1 | Convocation AG + formulaire vote par correspondance (art. 7-13 et 9 al. 4 décret 1967) | Art. 9 décret 1967 | ⚠️ | EP-003-S01, EP-003-S02, EP-003-S09 |
+| 3.2 | Tenue de séance et présidence | Art. 15 décret 1967 | ✅ | EP-013-S02, EP-013-S03 |
+| 3.3 | Règles de majorité | Art. 24/25/26 loi 1965 | ✅ | EP-003-S03/S04/S07, EP-013-S05/S10 |
+| 3.4 | PV (signable J+8) + notification 1 mois + contestation 2 mois | Art. 17, 18 décret 1967 · Art. 42 loi 1965 | ✅ | EP-003-S05/S06/S10, EP-013-S08 |
+| 3.5 | PV du conseil syndical en délégation de pouvoirs | Art. 21-1 décret 1967 | ❌ | EP-002-S12 (à créer) |
 | 4.1 | Compte bancaire séparé | Art. 18 loi 1965 | 🔲 | — |
 | 4.2 | Plan comptable normé | Arrêté 14/03/2005 | ⚠️ | EP-004 |
-| 4.3 | Budget prévisionnel + appels de fonds | Art. 14-1 loi 1965 | ⚠️ | EP-004 |
-| 4.4 | Fonds travaux ≥ 5% | Art. 14-2 loi 1965 | ⚠️ | EP-004 |
+| 4.3 | Budget prévisionnel + appels de fonds (incl. PPT/fonds travaux/délégation CS depuis art. 35 v6 dec. 2025) | Art. 14-1 loi 1965 · Art. 35 décret 1967 v6.0 | ⚠️ | EP-004 |
+| 4.4 | Fonds travaux ≥ 5% (ou 2,5% PPT si plan adopté) | Art. 14-2-1 loi 1965 (01/01/2023) | ⚠️ | EP-004 |
 | 4.5 | Arrêté de comptes | Art. 18 loi 1965 | ⚠️ | EP-004-S04 |
-| 4.6 | Relevé individuel de charges | Décret 1967 art. 48 | ✅ | EP-004-S06 |
+| 4.6 | Relevé individuel de charges | Art. 18 loi 1965 · Arrêté 14/03/2005 | ✅ | EP-004-S06 |
 | 4.7 | Recouvrement des charges impayées | Art. 18-I loi 1965 | ❌ | EP-004-S11 |
 | 5.1 | Contrat de syndic (modèle-type) | Décret 2015 | 🔲 | — |
 | 5.2 | Assurance immeuble | Art. 9-1 loi 1965 | ⚠️ | EP-006 |

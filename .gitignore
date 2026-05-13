@@ -23,10 +23,23 @@ docs/review-screenshots/*.png
 Thumbs.db
 
 # Claude
+.claude/settings.local.json
 .claude/worktrees/**
+.mcp.json
+
+
+#################################
+#       ARTIFACTS FROM AI       #
+#################################
+
+.outputs/
 
 # MemPalace per-project files (issue #185)
 mempalace.yaml
 entities.json
+
+# Graphify outputs 
+graphify-out/
+
 # Added by code-review-graph
 .code-review-graph/

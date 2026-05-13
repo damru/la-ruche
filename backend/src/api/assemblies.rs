@@ -53,6 +53,68 @@ pub struct MeetingResponse {
     pub created_at: DateTime<Utc>,
     pub resolution_count: i64,
     pub passed_count: i64,
+    // EP-013-S02 — session roles (set on /start, frozen at /close)
+    pub president_name: Option<String>,
+    pub president_user_id: Option<Uuid>,
+    pub secretary_name: Option<String>,
+    pub secretary_user_id: Option<Uuid>,
+    pub scrutineers: Vec<ScrutineerEntry>,
+    pub minutes_notified_at: Option<DateTime<Utc>>,
+    pub convocation_sent_at: Option<DateTime<Utc>>,
+    pub convocation_channel: Option<String>,
+    pub minutes_president_signed_at: Option<DateTime<Utc>>,
+    pub minutes_secretary_signed_at: Option<DateTime<Utc>>,
+    pub minutes_scrutineers_signed: Vec<ScrutineerSignature>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct ScrutineerSignature {
+    pub name: String,
+    pub signed_at: DateTime<Utc>,
+}
+
+/// `president_signed` / `secretary_signed`: if `true`, a server-side timestamp is set.
+/// `scrutineers_signed`: free-text names of scrutineers who signed.
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct SignMinutesInput {
+    pub president_signed: bool,
+    pub secretary_signed: bool,
+    #[serde(default)]
+    pub scrutineers_signed: Vec<String>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum ConvocationChannelDto {
+    Lrar,
+    HandDelivery,
+    Email,
+}
+
+/// `sent_at` is optional: if absent, the server records `NOW()`.
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct CallMeetingInput {
+    pub channel: ConvocationChannelDto,
+    pub sent_at: Option<DateTime<Utc>>,
+}
+
+/// if the user is known in the system. Stored as JSONB on `general_meeting.scrutineers`.
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct ScrutineerEntry {
+    pub name: String,
+    pub user_id: Option<Uuid>,
+}
+
+#[derive(Debug, Deserialize, Validate, ToSchema)]
+pub struct StartMeetingInput {
+    #[validate(length(min = 1))]
+    pub president_name: String,
+    pub president_user_id: Option<Uuid>,
+    #[validate(length(min = 1))]
+    pub secretary_name: String,
+    pub secretary_user_id: Option<Uuid>,
+    #[serde(default)]
+    pub scrutineers: Vec<ScrutineerEntry>,
 }
 
 #[derive(Debug, Deserialize, Validate, ToSchema)]
@@ -76,6 +138,7 @@ pub struct VoteInput {
 pub enum MeetingDocumentKindDto {
     Notice,
     Attachment,
+    VoteByMailForm,
 }
 
 #[derive(Debug, Serialize, ToSchema)]
@@ -187,10 +250,22 @@ pub async fn call(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
+    Json(input): Json<CallMeetingInput>,
 ) -> AppResult<StatusCode> {
     auth.require_role(&Role::Manager)?;
-    crate::db::assembly::call(&state.pool, id, auth.building_id).await?;
+    crate::db::assembly::call(&state.pool, id, auth.building_id, input).await?;
     Ok(StatusCode::NO_CONTENT)
+}
+
+/// Evaluates regulatory completeness per art. 7–13 décret 1967.
+pub async fn get_convocation_checklist(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+) -> AppResult<Json<crate::domain::convocation_checklist::ConvocationChecklist>> {
+    let checklist =
+        crate::db::assembly::load_convocation_checklist(&state.pool, id, auth.building_id).await?;
+    Ok(Json(checklist))
 }
 
 pub async fn close(
@@ -422,9 +497,13 @@ pub async fn start(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
+    Json(input): Json<StartMeetingInput>,
 ) -> AppResult<StatusCode> {
     auth.require_role(&Role::Manager)?;
-    crate::db::assembly::start(&state.pool, id, auth.building_id).await?;
+    input
+        .validate()
+        .map_err(|_| AppError::validation_code("errors.meetings.session_roles_required"))?;
+    crate::db::assembly::start(&state.pool, id, auth.building_id, input).await?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -450,6 +529,70 @@ pub async fn patch_resolution(
     .await?
     .ok_or(AppError::NotFound)?;
     Ok(Json(resolution))
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct MinutesDraftResponse {
+    pub markdown: String,
+}
+
+/// Generates a structured Markdown draft PV for manual signature. Requires `status = 'closed'`.
+pub async fn get_minutes_draft(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+) -> AppResult<Json<MinutesDraftResponse>> {
+    auth.require_role(&Role::Manager)?;
+    let ctx = crate::db::assembly::load_minutes_context(&state.pool, id, auth.building_id).await?;
+    let markdown = crate::domain::minutes_draft::render(&ctx);
+    Ok(Json(MinutesDraftResponse { markdown }))
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct AttachMinutesInput {
+    pub document_id: Uuid,
+}
+
+/// Attaches a signed PV (already uploaded via pre-signed URL EP-005) to a closed AG.
+pub async fn attach_minutes(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+    Json(input): Json<AttachMinutesInput>,
+) -> AppResult<StatusCode> {
+    auth.require_role(&Role::Manager)?;
+    crate::db::assembly::attach_signed_minutes(
+        &state.pool,
+        id,
+        input.document_id,
+        auth.building_id,
+    )
+    .await?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
+/// Records bureau de séance signatures. Requires a signed PV (`minutes_document_id IS NOT NULL`).
+pub async fn sign_minutes(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+    Json(input): Json<SignMinutesInput>,
+) -> AppResult<StatusCode> {
+    auth.require_role(&Role::Manager)?;
+    crate::db::assembly::sign_minutes(&state.pool, id, auth.building_id, input).await?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
+/// Records the PV notification date for absent co-owners.
+/// Contestation deadline: art. 42 loi 1965 = 2 months from this date.
+pub async fn notify_minutes(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+) -> AppResult<StatusCode> {
+    auth.require_role(&Role::Manager)?;
+    crate::db::assembly::notify_minutes(&state.pool, id, auth.building_id).await?;
+    Ok(StatusCode::NO_CONTENT)
 }
 
 fn parse_vote_rule(s: &str) -> AppResult<VoteRule> {

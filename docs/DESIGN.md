@@ -268,7 +268,7 @@ Résumé d'usage pour le design system :
 - l'état d'erreur s'affiche via `CPageError`, l'état de chargement via `CPageLoader` ;
 - les chargements secondaires non bloquants restent isolés pour ne pas retarder le rendu principal.
 
-Références d'implémentation : `frontend/src/composables/usePageLoader.ts`, `frontend/src/components/molecules/CPageError.vue`, `frontend/src/components/molecules/CPageLoader.vue`.
+Références d'implémentation : `frontend/src/composables/usePageLoader.ts`, `frontend/src/components/organisms/CPageError.vue`, `frontend/src/components/molecules/CPageLoader.vue`.
 
 ## Règle UI — Vue Contrats
 

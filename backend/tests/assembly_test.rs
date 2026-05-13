@@ -120,6 +120,60 @@ fn art26_not_eligible_for_passerelle_when_at_or_below_half() {
     );
 }
 
+// ── Art. 26-1 — passerelle vers Art. 25 (EP-013-S10) ──────────────────────────
+
+#[test]
+fn art26_1_eligible_when_owners_threshold_blocks_passage() {
+    // Setup non-canonique requis : il faut shares ≥ 2/3 mais owners < 2/3
+    // pour que la résolution échoue à l'art. 26 tout en restant éligible art. 26-1.
+    // Canonical 3 propriétaires ne permet pas cette configuration : si A+B(800) votent
+    // en faveur, owners=2/3 déjà atteint et la résolution passe.
+    // Setup explicite : 6 propriétaires, A(700)+B(50) en faveur, 4 autres(250) contre.
+    // shares: 750/1000 ≥ 667 ✓ ; owners: 2/6 → 2*3=6 < 6*2=12 ✗ → rejeté.
+    // for*2 = 1500 > 1000 → éligible art. 26-1 (re-délib art. 25).
+    let result = VoteTally {
+        shares_total: 1000,
+        shares_present: 1000,
+        total_owners: 6,
+        present_owners: 6,
+        favorable_owners: 2,
+        for_votes: 750,
+        against_votes: 250,
+        abstentions: 0,
+    }
+    .compute(&VoteRule::DoubleMajority);
+    assert!(
+        !result.passed,
+        "Art.26: condition propriétaires non atteinte"
+    );
+    assert_eq!(
+        result.eligible_for_second_vote,
+        Some(SecondVoteType::Art26_1),
+        "for=750 > 500 (1/2 de 1000) → passerelle art. 26-1 disponible"
+    );
+}
+
+#[test]
+fn art26_1_not_eligible_when_for_votes_exactly_half() {
+    // for = 500 exactement = 1/2 (non strict) → pas éligible
+    let result = VoteTally {
+        shares_total: 1000,
+        shares_present: 1000,
+        total_owners: 6,
+        present_owners: 6,
+        favorable_owners: 1,
+        for_votes: 500,
+        against_votes: 500,
+        abstentions: 0,
+    }
+    .compute(&VoteRule::DoubleMajority);
+    assert!(!result.passed);
+    assert_eq!(
+        result.eligible_for_second_vote, None,
+        "for=500 = 1000/2 (non strict) → pas de passerelle art. 26-1"
+    );
+}
+
 // ── Unanimity ─────────────────────────────────────────────────────────────────
 
 #[test]

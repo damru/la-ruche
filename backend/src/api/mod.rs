@@ -107,6 +107,10 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
             get(assemblies::get).put(assemblies::update),
         )
         .route("/meetings/{id}/call", post(assemblies::call))
+        .route(
+            "/meetings/{id}/convocation-checklist",
+            get(assemblies::get_convocation_checklist),
+        )
         .route("/meetings/{id}/start", post(assemblies::start))
         .route("/meetings/{id}/close", post(assemblies::close))
         .route(
@@ -144,6 +148,19 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
         .route(
             "/meetings/{id}/resolutions/{rid}/finalize",
             post(assemblies::finalize_resolution),
+        )
+        .route(
+            "/meetings/{id}/minutes/draft",
+            get(assemblies::get_minutes_draft),
+        )
+        .route("/meetings/{id}/minutes", post(assemblies::attach_minutes))
+        .route(
+            "/meetings/{id}/minutes/signatures",
+            post(assemblies::sign_minutes),
+        )
+        .route(
+            "/meetings/{id}/notify-minutes",
+            post(assemblies::notify_minutes),
         )
         // ── Budget ──────────────────────────────────────────────
         .route("/budgets", get(budget::list).post(budget::create))

@@ -7,7 +7,7 @@ export type Role = 'manager' | 'board_member' | 'co_owner' | 'tenant'
 
 export type MeetingStatus = 'draft' | 'called' | 'ongoing' | 'closed'
 export type MeetingType = 'annual' | 'extraordinary'
-export type MeetingDocumentKind = 'notice' | 'attachment'
+export type MeetingDocumentKind = 'notice' | 'attachment' | 'vote_by_mail_form'
 export type MeetingAttendanceMode = 'present' | 'proxy' | 'correspondence' | 'absent'
 export type VoteType = 'simple_majority' | 'absolute_majority' | 'double_majority' | 'unanimity'
 export type ResolutionStatus = 'pending' | 'passed' | 'rejected' | 'withdrawn'
@@ -101,6 +101,11 @@ export interface User {
   phone?: string
 }
 
+export interface MeetingScrutineer {
+  name: string
+  user_id?: string | null
+}
+
 export interface Meeting {
   id: string
   meeting_type: MeetingType
@@ -113,6 +118,30 @@ export interface Meeting {
   created_at: string
   resolution_count: number
   passed_count: number
+  president_name?: string | null
+  president_user_id?: string | null
+  secretary_name?: string | null
+  secretary_user_id?: string | null
+  scrutineers: MeetingScrutineer[]
+  minutes_notified_at?: string | null
+  convocation_sent_at?: string | null
+  convocation_channel?: 'lrar' | 'hand_delivery' | 'email' | null
+  minutes_president_signed_at?: string | null
+  minutes_secretary_signed_at?: string | null
+  minutes_scrutineers_signed?: Array<{ name: string; signed_at: string }>
+}
+
+export type ConvocationChannel = 'lrar' | 'hand_delivery' | 'email'
+
+export interface ConvocationChecklistItem {
+  key: string
+  satisfied: boolean
+  severity: 'Blocking' | 'Advisory'
+}
+
+export interface ConvocationChecklist {
+  items: ConvocationChecklistItem[]
+  ready_to_send: boolean
 }
 
 export interface MeetingDocument extends Document {
