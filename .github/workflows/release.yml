@@ -45,7 +45,8 @@ jobs:
           fi
 
           # Strip -rc-N to get the release version (e.g. v1.2.4).
-          RELEASE_VERSION=$(echo "$RC_TAG" | sed 's/-rc-[0-9]*$//')
+          # [0-9][0-9]* requires at least one digit after '-rc-'.
+          RELEASE_VERSION=$(echo "$RC_TAG" | sed 's/-rc-[0-9][0-9]*$//')
 
           # Docker image tags are the version without the leading 'v'.
           IMAGE_RC_TAG=$(echo "$RC_TAG"        | sed 's/^v//')

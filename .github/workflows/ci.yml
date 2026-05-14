@@ -193,6 +193,7 @@ jobs:
         id: rc
         run: |
           # Highest released semver tag (excludes -rc- pre-releases).
+          # Falls back to v0.0.0 on a fresh repo → first RC will be 0.0.1-rc-1.
           LATEST=$(git tag -l 'v[0-9]*.[0-9]*.[0-9]*' | grep -Ev -- '-rc-' | sort -V | tail -1)
           [ -z "$LATEST" ] && LATEST="v0.0.0"
 
@@ -202,7 +203,8 @@ jobs:
           NEXT_VERSION="${MAJOR}.${MINOR}.$((PATCH + 1))"
 
           # N = number of existing RC git tags for this next version + 1.
-          RC_COUNT=$(git tag -l "v${NEXT_VERSION}-rc-[0-9]*" | wc -l | tr -d ' ')
+          # [0-9][0-9]* requires at least one digit after '-rc-'.
+          RC_COUNT=$(git tag -l "v${NEXT_VERSION}-rc-[0-9][0-9]*" | wc -l | tr -d ' ')
           N=$((RC_COUNT + 1))
 
           IMAGE_TAG="${NEXT_VERSION}-rc-${N}"
