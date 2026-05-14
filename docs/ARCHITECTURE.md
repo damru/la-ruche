@@ -255,6 +255,8 @@ HTTP → Tower (CORS, trace, timeout 30s)
 - Le job Docker unique construit et publie l’image dans la même exécution, ce qui supprime le préchauffage dédié désormais inutile grâce au cache Buildx réutilisé par branche.
 - Les caches CI sont mutualisés par écosystème : `Swatinem/rust-cache` porte une clé stable `backend-ci` entre les exécutions du workflow pour réutiliser le registre Cargo, les artefacts `target/`, les crates de test et `sqlx-cli`, `sccache` conserve séparément les objets compilés `rustc` dans le cache GitHub Actions natif, le cache npm passe par `actions/setup-node`, et le cache GHA Buildx reste isolé par branche pour les builds Docker.
 
+- **Versionnement des images Docker** : le job `docker` ne s'exécute que sur les push vers `main`. Il calcule le prochain patch semver depuis le dernier git tag de release (`v{major}.{minor}.{patch}`), compte les git tags RC existants `v{next}-rc-N` pour incrémenter N, publie l'image `{next}-rc-{N}` et pousse le git tag correspondant. Le workflow `release.yml` (déclenchement manuel) identifie le git tag RC pointant sur le commit cible, re-tague l'image côté registre via `docker buildx imagetools create` (sans re-téléchargement des layers), pousse les tags `{version}` et `latest`, crée le git tag de release et ouvre une GitHub Release avec notes auto-générées.
+
 ---
 
 ## Principes de code

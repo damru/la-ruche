@@ -1,0 +1,98 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: >
+          Commit SHA to release.
+          Must have a corresponding RC git tag (v{version}-rc-N) created by the CI docker job.
+          Defaults to the latest commit on main.
+        required: false
+        type: string
+
+jobs:
+  release:
+    name: Retag RC as release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Fetch all tags
+        run: git fetch --tags --force
+
+      - name: Resolve RC tag and release version
+        id: resolve
+        env:
+          INPUT_SHA: ${{ inputs.sha }}
+        run: |
+          TARGET_SHA="${INPUT_SHA:-$(git rev-parse HEAD)}"
+          echo "sha=${TARGET_SHA}" >> "$GITHUB_OUTPUT"
+
+          # Find the highest RC git tag pointing at the target commit.
+          RC_TAG=$(git tag --points-at "$TARGET_SHA" \
+            | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+-rc-[0-9]+$' \
+            | sort -V | tail -1)
+
+          if [ -z "$RC_TAG" ]; then
+            echo "::error::No RC git tag found for commit ${TARGET_SHA}. Run the CI docker job on main first."
+            exit 1
+          fi
+
+          # Strip -rc-N to get the release version (e.g. v1.2.4).
+          RELEASE_VERSION=$(echo "$RC_TAG" | sed 's/-rc-[0-9]*$//')
+
+          # Docker image tags are the version without the leading 'v'.
+          IMAGE_RC_TAG=$(echo "$RC_TAG"        | sed 's/^v//')
+          IMAGE_RELEASE_TAG=$(echo "$RELEASE_VERSION" | sed 's/^v//')
+
+          echo "rc_tag=${RC_TAG}"                    >> "$GITHUB_OUTPUT"
+          echo "release_version=${RELEASE_VERSION}"  >> "$GITHUB_OUTPUT"
+          echo "image_rc_tag=${IMAGE_RC_TAG}"         >> "$GITHUB_OUTPUT"
+          echo "image_release_tag=${IMAGE_RELEASE_TAG}" >> "$GITHUB_OUTPUT"
+
+          echo "Releasing ${IMAGE_RELEASE_TAG} from RC ${IMAGE_RC_TAG} (commit ${TARGET_SHA})"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v4
+        with:
+          registry: docker.io
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Retag RC image as release
+        env:
+          IMAGE: ${{ vars.DOCKERHUB_USERNAME }}/${{ vars.DOCKERHUB_PROJECT }}
+          RC_TAG: ${{ steps.resolve.outputs.image_rc_tag }}
+          RELEASE_TAG: ${{ steps.resolve.outputs.image_release_tag }}
+        run: |
+          # imagetools create copies the manifest server-side (no layer download).
+          docker buildx imagetools create \
+            --tag "${IMAGE}:${RELEASE_TAG}" \
+            --tag "${IMAGE}:latest" \
+            "${IMAGE}:${RC_TAG}"
+
+      - name: Create release git tag
+        env:
+          RELEASE_VERSION: ${{ steps.resolve.outputs.release_version }}
+          TARGET_SHA: ${{ steps.resolve.outputs.sha }}
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag "$RELEASE_VERSION" "$TARGET_SHA"
+          git push origin "$RELEASE_VERSION"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.resolve.outputs.release_version }}
+          name: Release ${{ steps.resolve.outputs.image_release_tag }}
+          generate_release_notes: true
