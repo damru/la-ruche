@@ -1,481 +1,931 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useFormatters } from '@/composables/useFormatters'
+import { usePageLoader, toErrorMessage } from '@/composables/usePageLoader'
+import { useFormFeedback } from '@/composables/useFormFeedback'
+import { useAutoClose } from '@/composables/useAutoClose'
+import { useRole } from '@/composables/useRole'
 import CTopbar from '@/components/organisms/CTopbar.vue'
+import CPageLoader from '@/components/molecules/CPageLoader.vue'
+import CPageError from '@/components/organisms/CPageError.vue'
+import CModal from '@/components/molecules/CModal.vue'
+import CFormInput from '@/components/atoms/CFormInput.vue'
+import CFormSelect from '@/components/atoms/CFormSelect.vue'
+import CFormCheckbox from '@/components/atoms/CFormCheckbox.vue'
+import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
+import CProgressBar from '@/components/atoms/CProgressBar.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
-import CMockBanner from '@/components/atoms/CMockBanner.vue'
-import { mockBudgets, mockBudgetLines, mockLevies, mockWorksFund, mockBuildingStats } from '@/mock/data'
+import CEyebrow from '@/components/atoms/CEyebrow.vue'
+import CIconPlus from '@/components/atoms/CIconPlus.svg'
+import CIconCheckCircle from '@/components/atoms/CIconCheckCircle.svg'
+import CIconCurrency from '@/components/atoms/CIconCurrency.svg'
+import CIconCheck from '@/components/atoms/CIconCheck.svg'
+import CIconWarn from '@/components/atoms/CIconWarn.svg'
+import CIconWrench from '@/components/atoms/CIconWrench.svg'
+import CIconTrash from '@/components/atoms/CIconTrash.svg'
+import CIconDownload from '@/components/atoms/CIconDownload.svg'
+import CIconChevronRight from '@/components/atoms/CIconChevronRight.svg'
+import { budgetApi, allocationKeysApi, buildingApi } from '@/api'
+import type { Budget, BudgetLine, LevyCall, WorksFund, AllocationKey, LevyStatus } from '@/types/domain'
 
 const { t } = useI18n()
 const { formatCurrency, formatDate } = useFormatters()
+const { hasAnyRole } = useRole()
 
-const selectedBudgetId = ref(mockBudgets[0].id)
-const showGenerateModal = ref(false)
+const canManage = computed(() => hasAnyRole(['manager']))
+
+// ── State ─────────────────────────────────────────────────────────
+
+const buildingName = ref('')
+const budgets = ref<Budget[]>([])
+const selectedBudgetId = ref<string | null>(null)
+const budgetLines = ref<BudgetLine[]>([])
+const levies = ref<LevyCall[]>([])
+const worksFund = ref<WorksFund | null>(null)
+const allocationKeys = ref<AllocationKey[]>([])
+
+// ── Derived ───────────────────────────────────────────────────────
 
 const selectedBudget = computed(() =>
-  mockBudgets.find(b => b.id === selectedBudgetId.value) ?? mockBudgets[0]
+  budgets.value.find(b => b.id === selectedBudgetId.value) ?? null
 )
-const budgetLines = computed(() =>
-  mockBudgetLines.filter(l => l.budget_id === selectedBudgetId.value)
-)
+
 const totalForecast = computed(() =>
   budgetLines.value.reduce((s, l) => s + l.budgeted_amount, 0)
 )
+
 const totalActual = computed(() =>
   budgetLines.value.reduce((s, l) => s + (l.actual_amount ?? 0), 0)
 )
+
 const executionRate = computed(() =>
   totalForecast.value ? Math.round((totalActual.value / totalForecast.value) * 100) : 0
 )
-const overdueLevies = computed(() => mockLevies.filter(l => l.status === 'overdue'))
-const overdueTotal = computed(() => overdueLevies.value.reduce((s, l) => s + l.amount, 0))
-const paidLevies = computed(() => mockLevies.filter(l => l.status === 'paid'))
-const collectionRate = computed(() =>
-  mockLevies.length ? Math.round((paidLevies.value.length / mockLevies.length) * 100) : 100
-)
-const worksAvailPct = computed(() =>
-  mockWorksFund.levied_amount
-    ? Math.round((mockWorksFund.available_amount / mockWorksFund.levied_amount) * 100)
-    : 0
-)
-const worksEngagedPct = computed(() => 100 - worksAvailPct.value)
 
-function linePct(line: typeof budgetLines.value[0]): number {
+const overdueLevies = computed(() => levies.value.filter(l => l.status === 'overdue'))
+const overdueTotal = computed(() => overdueLevies.value.reduce((s, l) => s + l.amount, 0))
+
+const worksEngagedPct = computed(() => {
+  if (!worksFund.value?.levied_amount) return 0
+  const engaged = worksFund.value.levied_amount - worksFund.value.available_amount
+  return Math.min(100, Math.round((engaged / worksFund.value.levied_amount) * 100))
+})
+
+const keyOptions = computed(() =>
+  allocationKeys.value.map(k => ({ value: k.id, label: k.name }))
+)
+
+// ── Loaders ───────────────────────────────────────────────────────
+
+async function loadMeta() {
+  const [statsRes, keysRes] = await Promise.all([
+    buildingApi.stats(),
+    allocationKeysApi.list(),
+  ])
+  buildingName.value = statsRes.data.name
+  allocationKeys.value = keysRes.data
+}
+
+async function loadBudgets() {
+  const res = await budgetApi.list()
+  budgets.value = res.data
+  if (res.data.length > 0 && !selectedBudgetId.value) {
+    selectedBudgetId.value = res.data[0].id
+  }
+}
+
+async function loadBudgetData(budgetId: string) {
+  const [linesRes, leviesRes] = await Promise.all([
+    budgetApi.listLines(budgetId),
+    budgetApi.listLevies(budgetId),
+  ])
+  // Enrich lines with key names
+  budgetLines.value = linesRes.data.map(l => ({
+    ...l,
+    key_name: allocationKeys.value.find(k => k.id === l.key_id)?.name,
+  }))
+  levies.value = leviesRes.data as LevyCall[]
+
+  // Load works fund for selected year
+  if (selectedBudget.value) {
+    try {
+      const wfRes = await budgetApi.getWorksFund(selectedBudget.value.fiscal_year)
+      worksFund.value = wfRes.data
+    } catch {
+      worksFund.value = null
+    }
+  }
+}
+
+const { loading, error, reload } = usePageLoader(async () => {
+  await loadMeta()
+  await loadBudgets()
+  if (selectedBudgetId.value) {
+    await loadBudgetData(selectedBudgetId.value)
+  }
+})
+
+onMounted(reload)
+
+watch(selectedBudgetId, async (id) => {
+  if (id) await loadBudgetData(id)
+})
+
+// ── Create budget modal (S01) ─────────────────────────────────────
+
+const showCreateBudgetModal = ref(false)
+const createBudgetFeedback = useFormFeedback()
+const savingBudget = ref(false)
+const createBudgetForm = ref({ fiscal_year: new Date().getFullYear() + 1 })
+const { forceExpire: forceCreateBudgetClose } = useAutoClose()
+watch(showCreateBudgetModal, open => { if (!open) forceCreateBudgetClose() })
+
+function openCreateBudgetModal() {
+  createBudgetFeedback.reset()
+  createBudgetForm.value = { fiscal_year: new Date().getFullYear() + 1 }
+  showCreateBudgetModal.value = true
+}
+
+async function saveBudget() {
+  savingBudget.value = true
+  createBudgetFeedback.reset()
+  try {
+    const res = await budgetApi.create({ fiscal_year: Number(createBudgetForm.value.fiscal_year) })
+    await loadBudgets()
+    selectedBudgetId.value = res.data.id
+    showCreateBudgetModal.value = false
+  } catch (err) {
+    createBudgetFeedback.setError(toErrorMessage(err))
+  } finally {
+    savingBudget.value = false
+  }
+}
+
+// ── Create line modal (S01) ───────────────────────────────────────
+
+const showCreateLineModal = ref(false)
+const createLineFeedback = useFormFeedback()
+const savingLine = ref(false)
+const createLineForm = ref({ label: '', key_id: '', budgeted_amount: '' })
+const { forceExpire: forceCreateLineClose } = useAutoClose()
+watch(showCreateLineModal, open => { if (!open) forceCreateLineClose() })
+
+function openCreateLineModal() {
+  createLineFeedback.reset()
+  createLineForm.value = { label: '', key_id: keyOptions.value[0]?.value ?? '', budgeted_amount: '' }
+  showCreateLineModal.value = true
+}
+
+async function saveLine() {
+  if (!selectedBudgetId.value) return
+  const amount = parseFloat(createLineForm.value.budgeted_amount)
+  if (!createLineForm.value.label.trim() || !createLineForm.value.key_id || isNaN(amount) || amount <= 0) {
+    createLineFeedback.setError(t('common.required'))
+    return
+  }
+  savingLine.value = true
+  createLineFeedback.reset()
+  try {
+    await budgetApi.createLine(selectedBudgetId.value, {
+      label: createLineForm.value.label.trim(),
+      key_id: createLineForm.value.key_id,
+      budgeted_amount: amount,
+    })
+    await loadBudgetData(selectedBudgetId.value)
+    showCreateLineModal.value = false
+  } catch (err) {
+    createLineFeedback.setError(toErrorMessage(err))
+  } finally {
+    savingLine.value = false
+  }
+}
+
+// ── Delete line (S01) ─────────────────────────────────────────────
+
+const lineToDelete = ref<BudgetLine | null>(null)
+const deletingLine = ref(false)
+const deleteLineFeedback = useFormFeedback()
+
+async function confirmDeleteLine() {
+  if (!lineToDelete.value || !selectedBudgetId.value) return
+  deletingLine.value = true
+  deleteLineFeedback.reset()
+  try {
+    await budgetApi.deleteLine(selectedBudgetId.value, lineToDelete.value.id)
+    await loadBudgetData(selectedBudgetId.value)
+    lineToDelete.value = null
+  } catch (err) {
+    deleteLineFeedback.setError(toErrorMessage(err))
+  } finally {
+    deletingLine.value = false
+  }
+}
+
+// ── Generate levies modal (S02) ───────────────────────────────────
+
+const showGenerateModal = ref(false)
+const generateFeedback = useFormFeedback()
+const generatingLevies = ref(false)
+const generateForm = ref({ due_date: '', include_works_fund: true })
+const { forceExpire: forceGenerateClose } = useAutoClose()
+watch(showGenerateModal, open => { if (!open) forceGenerateClose() })
+
+function openGenerateModal() {
+  generateFeedback.reset()
+  // Default due date = 1st day of next quarter
+  const now = new Date()
+  const nextQ = new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3 + 3, 1)
+  generateForm.value = {
+    due_date: nextQ.toISOString().slice(0, 10),
+    include_works_fund: true,
+  }
+  showGenerateModal.value = true
+}
+
+async function generateLevies() {
+  if (!selectedBudgetId.value || !generateForm.value.due_date) return
+  generatingLevies.value = true
+  generateFeedback.reset()
+  try {
+    await budgetApi.generateLevies(selectedBudgetId.value, {
+      due_date: generateForm.value.due_date,
+      include_works_fund: generateForm.value.include_works_fund,
+    })
+    await loadBudgetData(selectedBudgetId.value)
+    showGenerateModal.value = false
+  } catch (err) {
+    generateFeedback.setError(toErrorMessage(err))
+  } finally {
+    generatingLevies.value = false
+  }
+}
+
+// ── Mark paid (S02) ───────────────────────────────────────────────
+
+const markingPaidId = ref<string | null>(null)
+
+async function markPaid(levy: LevyCall) {
+  if (markingPaidId.value) return
+  markingPaidId.value = levy.id
+  try {
+    await budgetApi.markPaid(levy.id)
+    if (selectedBudgetId.value) await loadBudgetData(selectedBudgetId.value)
+  } catch {
+    // silently handle — row stays as-is
+  } finally {
+    markingPaidId.value = null
+  }
+}
+
+// ── Helpers ───────────────────────────────────────────────────────
+
+function linePct(line: BudgetLine): number {
   if (!line.actual_amount || !line.budgeted_amount) return 0
   return Math.min(100, Math.round((line.actual_amount / line.budgeted_amount) * 100))
 }
-function lineVariant(line: typeof budgetLines.value[0]): string {
+
+function lineVariant(line: BudgetLine): 'primary' | 'warning' | 'success' {
   const pct = linePct(line)
-  if (pct >= 100) return 'over'
-  if (pct >= 85) return 'warn'
+  if (pct >= 100) return 'success'
+  if (pct >= 85) return 'warning'
   return 'primary'
 }
-function levyStatusLabel(s: string): string {
-  return t(`budget.levyStatuses.${s}`)
-}
-function levyChipClass(s: string): string {
+
+function levyStatusVariant(s: LevyStatus): string {
   if (s === 'paid') return 'tone--valid'
   if (s === 'issued') return 'tone--warn'
   if (s === 'overdue') return 'tone--err'
   return 'tone--disabled'
 }
+
 function initials(name: string): string {
   return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
 }
+
+// Works-fund legal threshold: alert if available < 5% of forecast (S03/S10)
+const worksFundBelowThreshold = computed(() => {
+  if (!worksFund.value || !totalForecast.value) return false
+  const minRequired = totalForecast.value * 0.05
+  return worksFund.value.available_amount < minRequired
+})
 </script>
 
 <template>
   <div class="budget-page view-page">
-    <!-- Topbar -->
     <CTopbar>
       <template #left>
         <div class="topbar-breadcrumb">
-          {{ mockBuildingStats.name }}
-          <CIconChevronRight />
-          <span>Budget &amp; Charges</span>
+          {{ buildingName }}
+          <CIconChevronRight aria-hidden="true" />
+          <span>{{ t('budget.title') }}</span>
         </div>
       </template>
       <template #right>
         <CBtn
+          v-if="canManage && selectedBudgetId"
           variant="secondary"
           size="sm"
+          @click="openCreateLineModal"
         >
-          <CIconPlus />
-          <span class="btn-label">{{ t('budget.newLine') }}</span>
+          <CIconPlus aria-hidden="true" />
+          {{ t('budget.newLine') }}
         </CBtn>
         <CBtn
+          v-if="canManage && selectedBudgetId"
           variant="primary"
           size="sm"
-          @click="showGenerateModal = true"
+          @click="openGenerateModal"
         >
-          <CIconCheckCircle />
-          <span class="btn-label">{{ t('budget.generateLevies') }}</span>
+          <CIconCheckCircle aria-hidden="true" />
+          {{ t('budget.generateLevies') }}
         </CBtn>
       </template>
     </CTopbar>
 
-    <!-- Content -->
-    <div class="content view-container">
-      <CMockBanner />
+    <div class="view-container">
+      <CPageLoader v-if="loading" />
+      <CPageError
+        v-else-if="error"
+        :message="error"
+        @retry="reload"
+      />
 
-      <!-- Page header -->
-      <div class="page-header">
-        <CEyebrow class="budget-page__eyebrow">
-          {{ t('page.eyebrows.budget') }}
-        </CEyebrow>
-        <h1 class="page-title">
-          {{ t('budget.fiscalYear', { year: selectedBudget.fiscal_year }) }}
-        </h1>
-        <p class="page-sub">
-          {{ mockBuildingStats.name }} ·
-          {{ selectedBudget.status === 'approved' ? t('budget.statuses.approvedAG') : t('budget.statuses.draft') }}
-        </p>
-      </div>
-
-      <!-- Year tabs -->
-      <div class="tabs">
-        <button
-          v-for="b in mockBudgets"
-          :key="b.id"
-          :class="['tab', { 'tab--active': selectedBudgetId === b.id }]"
-          @click="selectedBudgetId = b.id"
-        >
-          {{ b.fiscal_year }}
-        </button>
-        <button class="tab tab--new">
-          {{ t('budget.newFiscalYear') }}
-        </button>
-      </div>
-
-      <!-- KPI row -->
-      <div class="kpi-grid">
-        <!-- Budget prévisionnel -->
-        <div class="kpi-card">
-          <div class="kpi-head">
-            <span class="kpi-label">{{ t('budget.budgetForecastLabel') }}</span>
-            <div class="kpi-icon tone--default">
-              <CIconCurrency />
-            </div>
-          </div>
-          <div class="kpi-value">
-            {{ formatCurrency(totalForecast) }}
-          </div>
-          <div class="kpi-delta kpi-delta--neutral">
-            {{ t('budget.budgetItems', budgetLines.length) }}
-          </div>
+      <template v-else>
+        <!-- Page header -->
+        <div class="page-header">
+          <CEyebrow>{{ t('page.eyebrows.budget') }}</CEyebrow>
+          <h1 class="page-title">
+            {{ selectedBudget ? t('budget.fiscalYear', { year: selectedBudget.fiscal_year }) : t('budget.title') }}
+          </h1>
+          <p
+            v-if="selectedBudget"
+            class="page-sub"
+          >
+            {{ buildingName }} ·
+            {{ selectedBudget.status === 'approved' ? t('budget.statuses.approvedAG') : t('budget.statuses.draft') }}
+          </p>
         </div>
 
-        <!-- Réalisé -->
-        <div class="kpi-card">
-          <div class="kpi-head">
-            <span class="kpi-label">{{ t('budget.realizedToDate') }}</span>
-            <div class="kpi-icon tone--accent">
-              <CIconCheck stroke="white" />
-            </div>
-          </div>
-          <div class="kpi-value">
-            {{ formatCurrency(totalActual) }}
-          </div>
-          <div class="kpi-delta kpi-delta--neutral">
-            {{ t('budget.ofBudget', { pct: executionRate }) }}
-          </div>
+        <!-- Year tabs -->
+        <div class="tabs">
+          <button
+            v-for="b in budgets"
+            :key="b.id"
+            :class="['tab', { 'tab--active': selectedBudgetId === b.id }]"
+            @click="selectedBudgetId = b.id"
+          >
+            {{ b.fiscal_year }}
+          </button>
+          <button
+            v-if="canManage"
+            class="tab tab--new"
+            @click="openCreateBudgetModal"
+          >
+            + {{ t('budget.newFiscalYear') }}
+          </button>
         </div>
 
-        <!-- Appels en retard -->
-        <div class="kpi-card">
-          <div class="kpi-head">
-            <span class="kpi-label">{{ t('budget.overdueCallsLabel') }}</span>
-            <div class="kpi-icon tone--err">
-              <CIconWarn />
-            </div>
-          </div>
-          <div class="kpi-value tone--err">
-            {{ overdueLevies.length }}
-          </div>
-          <div class="kpi-delta kpi-delta--down">
-            {{ t('budget.pendingAmount', { amount: formatCurrency(overdueTotal) }) }}
-          </div>
-        </div>
-
-        <!-- Fonds travaux -->
-        <div class="kpi-card">
-          <div class="kpi-head">
-            <span class="kpi-label">{{ t('budget.worksFund') }}</span>
-            <div class="kpi-icon tone--warn">
-              <CIconWrench />
-            </div>
-          </div>
-          <div class="kpi-value tone--warn">
-            {{ formatCurrency(mockWorksFund.levied_amount) }}
-          </div>
-          <div class="kpi-delta kpi-delta--neutral">
-            {{ t('budget.available', { amount: formatCurrency(mockWorksFund.available_amount) }) }}
-          </div>
-        </div>
-      </div>
-
-      <!-- Two-col layout -->
-      <div class="two-col">
-        <!-- LEFT: sections -->
-        <div class="left-col">
-          <!-- Consommation par poste -->
-          <div class="section-card">
-            <div class="section-head">
-              <div>
-                <h2 class="section-title">
-                  {{ t('budget.consumptionByLine') }}
-                </h2>
-                <p class="section-sub">
-                  {{ t('budget.forecastVsActual') }}
-                </p>
-              </div>
-              <button class="btn-ghost-sm">
-                <CIconDownload />
-                {{ t('common.export') }}
-              </button>
-            </div>
-            <div class="prog-list">
-              <div
-                v-for="line in budgetLines"
-                :key="line.id"
-                class="prog-item"
-              >
-                <div class="prog-header">
-                  <span class="prog-label">{{ line.label }}</span>
-                  <div class="prog-meta">
-                    <span class="chip tone--default">{{ line.key_name }}</span>
-                    <span :class="['prog-pct', 'prog-pct--' + lineVariant(line)]">{{ linePct(line) }}%</span>
-                  </div>
-                </div>
-                <div class="prog-track">
-                  <div
-                    :class="['prog-fill', 'prog-fill--' + lineVariant(line)]"
-                    :style="{ width: linePct(line) + '%' }"
-                  ></div>
-                </div>
-                <div class="prog-foot">
-                  <span>{{ t('budget.realizedLabel') }} : <b>{{ formatCurrency(line.actual_amount ?? 0) }}</b></span>
-                  <span>{{ t('budget.plannedLabel') }} : <b>{{ formatCurrency(line.budgeted_amount) }}</b></span>
-                </div>
+        <!-- KPI row -->
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-head">
+              <span class="kpi-label">{{ t('budget.budgetForecastLabel') }}</span>
+              <div class="kpi-icon tone--default">
+                <CIconCurrency aria-hidden="true" />
               </div>
             </div>
+            <div class="kpi-value">
+              {{ formatCurrency(totalForecast) }}
+            </div>
+            <div class="kpi-delta kpi-delta--neutral">
+              {{ t('budget.budgetItems', budgetLines.length) }}
+            </div>
           </div>
 
-          <!-- Appels de fonds — tableau -->
-          <div class="section-card">
-            <div class="section-head">
-              <div>
-                <h2 class="section-title">
-                  {{ t('budget.levies') }}
-                </h2>
-                <p class="section-sub">
-                  {{ t('budget.collectionRate', { lots: mockLevies.length, pct: collectionRate }) }}
-                </p>
+          <div class="kpi-card">
+            <div class="kpi-head">
+              <span class="kpi-label">{{ t('budget.realizedToDate') }}</span>
+              <div class="kpi-icon tone--accent">
+                <CIconCheck
+                  stroke="white"
+                  aria-hidden="true"
+                />
               </div>
-              <div class="section-actions">
+            </div>
+            <div class="kpi-value">
+              {{ formatCurrency(totalActual) }}
+            </div>
+            <div class="kpi-delta kpi-delta--neutral">
+              {{ t('budget.ofBudget', { pct: executionRate }) }}
+            </div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-head">
+              <span class="kpi-label">{{ t('budget.overdueCallsLabel') }}</span>
+              <div class="kpi-icon tone--err">
+                <CIconWarn aria-hidden="true" />
+              </div>
+            </div>
+            <div class="kpi-value tone--err">
+              {{ overdueLevies.length }}
+            </div>
+            <div class="kpi-delta kpi-delta--down">
+              {{ t('budget.pendingAmount', { amount: formatCurrency(overdueTotal) }) }}
+            </div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-head">
+              <span class="kpi-label">{{ t('budget.worksFund') }}</span>
+              <div class="kpi-icon tone--warn">
+                <CIconWrench aria-hidden="true" />
+              </div>
+            </div>
+            <div
+              v-if="worksFund"
+              class="kpi-value tone--warn"
+            >
+              {{ formatCurrency(worksFund.levied_amount) }}
+            </div>
+            <div
+              v-else
+              class="kpi-value kpi-delta--neutral"
+            >
+              —
+            </div>
+            <div
+              v-if="worksFund"
+              class="kpi-delta kpi-delta--neutral"
+            >
+              {{ t('budget.available', { amount: formatCurrency(worksFund.available_amount) }) }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Two-col layout -->
+        <div class="two-col">
+          <!-- LEFT column -->
+          <div class="left-col">
+            <!-- Budget lines consumption (S04 — arrêté de comptes) -->
+            <div class="section-card">
+              <div class="section-head">
+                <div>
+                  <h2 class="section-title">
+                    {{ t('budget.consumptionByLine') }}
+                  </h2>
+                  <p class="section-sub">
+                    {{ t('budget.forecastVsActual') }}
+                  </p>
+                </div>
                 <button class="btn-ghost-sm">
-                  {{ t('common.filter') }}
+                  <CIconDownload aria-hidden="true" />
+                  {{ t('common.export') }}
                 </button>
+              </div>
+
+              <div
+                v-if="budgetLines.length === 0"
+                class="empty-state"
+              >
+                <p>{{ t('common.noData') }}</p>
                 <CBtn
-                  variant="secondary"
+                  v-if="canManage"
+                  variant="ghost"
                   size="sm"
+                  @click="openCreateLineModal"
                 >
-                  <CIconPlus />
-                  {{ t('budget.markPaid') }}
+                  <CIconPlus aria-hidden="true" />
+                  {{ t('budget.addLine') }}
                 </CBtn>
               </div>
-            </div>
-            <div class="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>{{ t('common.lot') }}</th>
-                    <th>{{ t('common.coOwner') }}</th>
-                    <th class="td-right">
-                      {{ t('common.amount') }}
-                    </th>
-                    <th class="td-right">
-                      {{ t('common.dueDate') }}
-                    </th>
-                    <th>{{ t('common.status') }}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr
-                    v-for="levy in mockLevies"
-                    :key="levy.id"
-                  >
-                    <td class="td-mono">
-                      {{ levy.unit_number }}
-                    </td>
-                    <td>{{ levy.owner_name }}</td>
-                    <td :class="['td-amount', { 'tone--err': levy.status === 'overdue' }]">
-                      {{ formatCurrency(levy.amount) }}
-                    </td>
-                    <td class="td-right td-muted">
-                      {{ levy.due_date ? formatDate(levy.due_date) : '—' }}
-                    </td>
-                    <td>
-                      <span :class="['chip', levyChipClass(levy.status)]">
-                        <span class="chip-dot"></span>
-                        {{ levyStatusLabel(levy.status) }}
-                      </span>
-                    </td>
-                  </tr>
-                </tbody>
-                <tfoot>
-                  <tr class="tfoot-row">
-                    <td colspan="2">
-                      {{ t('common.total') }}
-                    </td>
-                    <td class="td-right">
-                      {{ formatCurrency(mockLevies.reduce((s, l) => s + l.amount, 0)) }}
-                    </td>
-                    <td colspan="2"></td>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
-          </div>
-        </div><!-- /left-col -->
 
-        <!-- RIGHT: sidebar -->
-        <div class="right-col">
-          <!-- Fonds travaux -->
-          <div class="ft-card">
-            <div class="ft-header">
-              <h3 class="ft-title">
-                Fonds travaux
-              </h3>
-              <span class="ft-badge tone--default">Art. 14-2 ALUR</span>
-            </div>
-            <div class="ft-amount">
-              {{ formatCurrency(mockWorksFund.levied_amount) }}
-            </div>
-            <p class="ft-sub">
-              {{ t('budget.separateBankAccount', { year: selectedBudget.fiscal_year }) }}
-            </p>
-            <div class="ft-prog">
-              <div class="ft-prog-head">
-                <span>{{ t('budget.engaged') }}</span>
-                <span class="ft-prog-pct tone--warn">{{ worksEngagedPct }}%</span>
-              </div>
-              <div class="prog-track">
+              <div
+                v-else
+                class="prog-list"
+              >
                 <div
-                  class="prog-fill prog-fill--warn"
-                  :style="{ width: worksEngagedPct + '%' }"
-                ></div>
+                  v-for="line in budgetLines"
+                  :key="line.id"
+                  class="prog-item"
+                >
+                  <div class="prog-item__header">
+                    <span class="prog-item__label">{{ line.label }}</span>
+                    <div class="prog-item__meta">
+                      <span
+                        v-if="line.key_name"
+                        class="chip tone--default"
+                      >{{ line.key_name }}</span>
+                      <CBtn
+                        v-if="canManage"
+                        variant="ghost"
+                        size="sm"
+                        class="prog-item__delete"
+                        :aria-label="t('common.delete')"
+                        @click="lineToDelete = line"
+                      >
+                        <CIconTrash aria-hidden="true" />
+                      </CBtn>
+                    </div>
+                  </div>
+                  <CProgressBar
+                    :value="linePct(line)"
+                    :variant="lineVariant(line)"
+                    :show-value="true"
+                  />
+                  <div class="prog-item__foot">
+                    <span>{{ t('budget.realizedLabel') }} : <b>{{ formatCurrency(line.actual_amount ?? 0) }}</b></span>
+                    <span>{{ t('budget.plannedLabel') }} : <b>{{ formatCurrency(line.budgeted_amount) }}</b></span>
+                  </div>
+                </div>
               </div>
-              <div class="ft-prog-foot">
-                <span>{{ t('budget.engagedAmount', { amount: formatCurrency(mockWorksFund.levied_amount - mockWorksFund.available_amount) }) }}</span>
-                <span class="ft-prog-available">{{ t('budget.remaining', { amount: formatCurrency(mockWorksFund.available_amount) }) }}</span>
+
+              <!-- Total row -->
+              <div
+                v-if="budgetLines.length > 0"
+                class="prog-total"
+              >
+                <span>{{ t('common.total') }}</span>
+                <span class="prog-total__values">
+                  {{ formatCurrency(totalActual) }} / {{ formatCurrency(totalForecast) }}
+                </span>
               </div>
             </div>
-            <div class="ft-legal">
-              {{ t('budget.worksFundLegalFull') }}
+
+            <!-- Levy calls table (S02) -->
+            <div class="section-card">
+              <div class="section-head">
+                <div>
+                  <h2 class="section-title">
+                    {{ t('budget.levies') }}
+                  </h2>
+                  <p class="section-sub">
+                    {{ t('budget.collectionRate', { lots: levies.length, pct: levies.length ? Math.round(levies.filter(l => l.status === 'paid').length / levies.length * 100) : 0 }) }}
+                  </p>
+                </div>
+              </div>
+
+              <div
+                v-if="levies.length === 0"
+                class="empty-state"
+              >
+                <p>{{ t('common.noData') }}</p>
+                <CBtn
+                  v-if="canManage && selectedBudgetId"
+                  variant="ghost"
+                  size="sm"
+                  @click="openGenerateModal"
+                >
+                  <CIconCheckCircle aria-hidden="true" />
+                  {{ t('budget.generateLevies') }}
+                </CBtn>
+              </div>
+
+              <div
+                v-else
+                class="table-wrap"
+              >
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>{{ t('common.lot') }}</th>
+                      <th>{{ t('common.coOwner') }}</th>
+                      <th class="col-right">
+                        {{ t('common.amount') }}
+                      </th>
+                      <th class="col-right">
+                        {{ t('common.dueDate') }}
+                      </th>
+                      <th>{{ t('common.status') }}</th>
+                      <th
+                        v-if="canManage"
+                        class="col-shrink"
+                      ></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr
+                      v-for="levy in levies"
+                      :key="levy.id"
+                    >
+                      <td class="cell-mono">
+                        {{ levy.unit_number ?? '—' }}
+                      </td>
+                      <td>{{ levy.owner_name ?? '—' }}</td>
+                      <td
+                        class="cell-numeric"
+                        :class="{ 'tone--err': levy.status === 'overdue' }"
+                      >
+                        {{ formatCurrency(levy.amount) }}
+                      </td>
+                      <td class="col-right cell-muted">
+                        {{ levy.due_date ? formatDate(levy.due_date) : '—' }}
+                      </td>
+                      <td>
+                        <span :class="['chip', levyStatusVariant(levy.status as LevyStatus)]">
+                          <span
+                            class="chip-dot"
+                            aria-hidden="true"
+                          ></span>
+                          {{ t(`budget.levyStatuses.${levy.status}`) }}
+                        </span>
+                      </td>
+                      <td v-if="canManage">
+                        <CBtn
+                          v-if="levy.status !== 'paid'"
+                          variant="ghost"
+                          size="sm"
+                          :loading="markingPaidId === levy.id"
+                          @click="markPaid(levy)"
+                        >
+                          {{ t('budget.markPaid') }}
+                        </CBtn>
+                      </td>
+                    </tr>
+                  </tbody>
+                  <tfoot>
+                    <tr class="row-total">
+                      <td colspan="2">
+                        {{ t('common.total') }}
+                      </td>
+                      <td class="cell-numeric">
+                        {{ formatCurrency(levies.reduce((s, l) => s + l.amount, 0)) }}
+                      </td>
+                      <td
+                        :colspan="canManage ? 3 : 2"
+                      ></td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
             </div>
           </div>
 
-          <!-- Retards de paiement -->
-          <div
-            v-if="overdueLevies.length"
-            class="mini-card"
-          >
-            <h3 class="mini-title">
-              {{ t('budget.latePayments') }}
-            </h3>
-            <p class="mini-sub">
-              {{ t('budget.latePaymentsDesc', { count: overdueLevies.length, amount: formatCurrency(overdueTotal) }) }}
-            </p>
+          <!-- RIGHT sidebar -->
+          <div class="right-col">
+            <!-- Works fund card (S03) -->
+            <div class="ft-card">
+              <div class="ft-header">
+                <h3 class="ft-title">
+                  {{ t('budget.worksFund') }}
+                </h3>
+                <span class="ft-badge tone--default">Art. 14-2 ALUR</span>
+              </div>
+
+              <template v-if="worksFund">
+                <div class="ft-amount">
+                  {{ formatCurrency(worksFund.levied_amount) }}
+                </div>
+                <p class="ft-sub">
+                  {{ t('budget.separateBankAccount', { year: selectedBudget?.fiscal_year }) }}
+                </p>
+                <div class="ft-prog">
+                  <div class="ft-prog-head">
+                    <span>{{ t('budget.engaged') }}</span>
+                    <span class="ft-prog-pct tone--warn">{{ worksEngagedPct }}%</span>
+                  </div>
+                  <CProgressBar
+                    :value="worksEngagedPct"
+                    variant="warning"
+                    :show-value="false"
+                  />
+                  <div class="ft-prog-foot">
+                    <span>{{ t('budget.engagedAmount', { amount: formatCurrency(worksFund.levied_amount - worksFund.available_amount) }) }}</span>
+                    <span
+                      class="ft-prog-available"
+                      :class="{ 'tone--err': worksFundBelowThreshold }"
+                    >
+                      {{ t('budget.remaining', { amount: formatCurrency(worksFund.available_amount) }) }}
+                    </span>
+                  </div>
+                </div>
+              </template>
+              <template v-else>
+                <p class="ft-sub">
+                  {{ t('common.noData') }}
+                </p>
+              </template>
+
+              <div class="ft-legal">
+                {{ t('budget.worksFundLegalFull') }}
+              </div>
+            </div>
+
+            <!-- Overdue payments panel (S02) -->
             <div
-              v-for="levy in overdueLevies"
-              :key="levy.id"
-              class="overdue-item"
+              v-if="overdueLevies.length > 0"
+              class="mini-card"
             >
-              <div class="overdue-avatar tone--err">
-                {{ initials(levy.owner_name ?? '?') }}
-              </div>
-              <div class="overdue-info">
-                <div class="overdue-name">
-                  {{ levy.owner_name ?? '—' }}
+              <h3 class="mini-title">
+                {{ t('budget.latePayments') }}
+              </h3>
+              <p class="mini-sub">
+                {{ t('budget.latePaymentsDesc', { count: overdueLevies.length, amount: formatCurrency(overdueTotal) }) }}
+              </p>
+              <div
+                v-for="levy in overdueLevies"
+                :key="levy.id"
+                class="overdue-item"
+              >
+                <div class="overdue-avatar tone--err">
+                  {{ initials(levy.owner_name ?? '?') }}
                 </div>
-                <div class="overdue-lot">
-                  {{ levy.unit_number ?? '—' }}
+                <div class="overdue-info">
+                  <div class="overdue-name">
+                    {{ levy.owner_name ?? '—' }}
+                  </div>
+                  <div class="overdue-lot">
+                    {{ levy.unit_number ?? '—' }}
+                  </div>
                 </div>
-              </div>
-              <div class="overdue-right">
-                <div class="overdue-amount">
-                  {{ formatCurrency(levy.amount) }}
-                </div>
-                <div class="overdue-date">
-                  {{ levy.due_date ? formatDate(levy.due_date) : '—' }}
+                <div class="overdue-right">
+                  <div class="overdue-amount">
+                    {{ formatCurrency(levy.amount) }}
+                  </div>
+                  <div class="overdue-date">
+                    {{ levy.due_date ? formatDate(levy.due_date) : '—' }}
+                  </div>
                 </div>
               </div>
             </div>
-            <CBtn
-              variant="secondary"
-              size="sm"
-              style="width:100%;justify-content:center;margin-top:16px"
-            >
-              {{ t('budget.sendReminders') }}
-            </CBtn>
-          </div>
-        </div><!-- /right-col -->
-      </div><!-- /two-col -->
-    </div><!-- /content -->
-
-    <!-- Modal: Générer les appels -->
-    <Teleport to="body">
-      <div
-        :class="['modal-overlay', { 'modal-overlay--show': showGenerateModal }]"
-        @click.self="showGenerateModal = false"
-      >
-        <div
-          class="modal"
-          role="dialog"
-          aria-modal="true"
-        >
-          <h2 class="modal-title">
-            {{ t('budget.generateLeviesTitle') }}
-          </h2>
-          <p class="modal-sub">
-            {{ t('budget.generateLeviesSub') }}
-          </p>
-          <CFormSelect
-            :model-value="'T4 2025'"
-            :label="t('budget.quarterLabel')"
-            :options="[
-              { value: 'T1 2025', label: 'T1 2025 — Échéance 1er janvier' },
-              { value: 'T2 2025', label: 'T2 2025 — Échéance 1er avril' },
-              { value: 'T3 2025', label: 'T3 2025 — Échéance 1er juillet' },
-              { value: 'T4 2025', label: 'T4 2025 — Échéance 1er octobre' },
-            ]"
-          />
-          <CFormInput
-            :model-value="Math.round(totalForecast / 4)"
-            :label="t('budget.totalToShare')"
-            type="number"
-            :hint="t('budget.totalToShareHint', { amount: formatCurrency(totalForecast) })"
-          />
-          <div class="modal-actions">
-            <CBtn
-              variant="secondary"
-              size="sm"
-              @click="showGenerateModal = false"
-            >
-              {{ t('common.cancel') }}
-            </CBtn>
-            <CBtn
-              variant="primary"
-              size="sm"
-              @click="showGenerateModal = false"
-            >
-              {{ t('budget.generate') }}
-            </CBtn>
           </div>
         </div>
+      </template>
+    </div>
+
+    <!-- ── Modal: Nouvel exercice (S01) ──────────────────────────── -->
+    <CModal
+      :open="showCreateBudgetModal"
+      :title="t('budget.newFiscalYear')"
+      @update:open="showCreateBudgetModal = $event"
+    >
+      <CFormInput
+        v-model="createBudgetForm.fiscal_year"
+        :label="t('budget.fiscalYearLabel')"
+        type="number"
+        :min="2020"
+        :max="2099"
+        required
+      />
+      <template #footer>
+        <CFormFeedback
+          :status="createBudgetFeedback.status.value"
+          :message="createBudgetFeedback.message.value"
+        />
+        <CBtn
+          variant="ghost"
+          @click="showCreateBudgetModal = false"
+        >
+          {{ t('common.cancel') }}
+        </CBtn>
+        <CBtn
+          variant="primary"
+          :loading="savingBudget"
+          @click="saveBudget"
+        >
+          {{ t('common.create') }}
+        </CBtn>
+      </template>
+    </CModal>
+
+    <!-- ── Modal: Nouvelle ligne (S01) ───────────────────────────── -->
+    <CModal
+      :open="showCreateLineModal"
+      :title="t('budget.addLine')"
+      @update:open="showCreateLineModal = $event"
+    >
+      <CFormInput
+        v-model="createLineForm.label"
+        :label="t('budget.lineLabel')"
+        required
+      />
+      <CFormSelect
+        v-model="createLineForm.key_id"
+        :label="t('budget.lineKey')"
+        :options="keyOptions"
+        required
+      />
+      <CFormInput
+        v-model="createLineForm.budgeted_amount"
+        :label="t('budget.lineBudgetedAmount')"
+        type="number"
+        :min="0"
+        step="0.01"
+        required
+      />
+      <template #footer>
+        <CFormFeedback
+          :status="createLineFeedback.status.value"
+          :message="createLineFeedback.message.value"
+        />
+        <CBtn
+          variant="ghost"
+          @click="showCreateLineModal = false"
+        >
+          {{ t('common.cancel') }}
+        </CBtn>
+        <CBtn
+          variant="primary"
+          :loading="savingLine"
+          @click="saveLine"
+        >
+          {{ t('common.save') }}
+        </CBtn>
+      </template>
+    </CModal>
+
+    <!-- ── Modal: Supprimer ligne (S01) ──────────────────────────── -->
+    <CModal
+      :open="!!lineToDelete"
+      :title="t('common.confirmDelete')"
+      @update:open="v => { if (!v) lineToDelete = null }"
+    >
+      <p>{{ lineToDelete?.label }}</p>
+      <template #footer>
+        <CFormFeedback
+          :status="deleteLineFeedback.status.value"
+          :message="deleteLineFeedback.message.value"
+        />
+        <CBtn
+          variant="ghost"
+          @click="lineToDelete = null"
+        >
+          {{ t('common.cancel') }}
+        </CBtn>
+        <CBtn
+          variant="danger"
+          :loading="deletingLine"
+          @click="confirmDeleteLine"
+        >
+          {{ t('common.delete') }}
+        </CBtn>
+      </template>
+    </CModal>
+
+    <!-- ── Modal: Générer les appels (S02) ───────────────────────── -->
+    <CModal
+      :open="showGenerateModal"
+      :title="t('budget.generateLeviesTitle')"
+      @update:open="showGenerateModal = $event"
+    >
+      <p class="modal-sub">
+        {{ t('budget.generateLeviesSub') }}
+      </p>
+      <CFormInput
+        v-model="generateForm.due_date"
+        :label="t('common.dueDate')"
+        type="date"
+        required
+      />
+      <div class="field-group">
+        <CFormCheckbox
+          v-model="generateForm.include_works_fund"
+          :label="t('budget.includeWorksFund')"
+        />
+        <p class="field-hint">
+          {{ t('budget.worksFundLegal') }}
+        </p>
       </div>
-    </Teleport>
+      <div
+        v-if="totalForecast > 0"
+        class="generate-summary"
+      >
+        <strong>{{ t('budget.generateSummaryLabel') }}</strong>
+        {{ t('budget.generateSummaryDesc', {
+          lots: levies.length || '—',
+          charges: formatCurrency(Math.round(totalForecast / 4)),
+          fund: formatCurrency(Math.round(totalForecast * 0.05 / 4)),
+        }) }}
+      </div>
+      <template #footer>
+        <CFormFeedback
+          :status="generateFeedback.status.value"
+          :message="generateFeedback.message.value"
+        />
+        <CBtn
+          variant="ghost"
+          @click="showGenerateModal = false"
+        >
+          {{ t('common.cancel') }}
+        </CBtn>
+        <CBtn
+          variant="primary"
+          :loading="generatingLevies"
+          @click="generateLevies"
+        >
+          <CIconCheckCircle aria-hidden="true" />
+          {{ t('budget.generate') }}
+        </CBtn>
+      </template>
+    </CModal>
   </div>
 </template>
 
 <style scoped>
-.budget-page {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  background: var(--color-surface);
-}
-.content {
-  padding: 0;
-  flex: 1;
-}
+/* ── Layout ──────────────────────────────────────────────────────── */
+.budget-page { display: flex; flex-direction: column; min-height: 100vh; }
 
-/* Page header */
-.budget-page__eyebrow {
-  margin-bottom: 8px;
-}
 .page-title {
   font-family: var(--font-display);
   font-size: 36px;
@@ -492,11 +942,11 @@ function initials(name: string): string {
   margin-bottom: 32px;
 }
 
-/* Tabs — .tabs/.tab/.tab--active defined globally in tabs.css */
+/* ── Tabs ────────────────────────────────────────────────────────── */
 .tabs { margin-bottom: 32px; }
 .tab--new { color: var(--color-primary); }
 
-/* KPI grid */
+/* ── KPI ─────────────────────────────────────────────────────────── */
 .kpi-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -515,10 +965,7 @@ function initials(name: string): string {
   align-items: flex-start;
   margin-bottom: 12px;
 }
-.kpi-label {
-  font-size: 12px;
-  color: var(--color-on-surface-variant);
-}
+.kpi-label { font-size: 12px; color: var(--color-on-surface-variant); }
 .kpi-value {
   font-family: var(--font-display);
   font-size: 28px;
@@ -533,7 +980,7 @@ function initials(name: string): string {
 .kpi-delta--neutral { color: var(--color-on-surface-variant); }
 .kpi-delta--down { color: var(--color-error); }
 
-/* Two-col */
+/* ── Two-col ─────────────────────────────────────────────────────── */
 .two-col {
   display: grid;
   grid-template-columns: 1fr 340px;
@@ -543,7 +990,7 @@ function initials(name: string): string {
 .left-col { display: flex; flex-direction: column; gap: 24px; }
 .right-col { display: flex; flex-direction: column; gap: 20px; }
 
-/* Section card */
+/* ── Section card ────────────────────────────────────────────────── */
 .section-card {
   background: var(--color-surface-container-lowest);
   border-radius: var(--radius-lg);
@@ -556,8 +1003,16 @@ function initials(name: string): string {
   justify-content: space-between;
   padding: 20px 24px;
 }
+.section-title {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: var(--fw-semibold);
+  font-variation-settings: 'opsz' 36;
+  letter-spacing: -.01em;
+  color: var(--color-on-surface);
+}
 .section-sub { font-size: 12px; color: var(--color-on-surface-variant); margin-top: 2px; }
-.section-actions { display: flex; gap: 8px; align-items: center; }
+
 .btn-ghost-sm {
   display: inline-flex;
   align-items: center;
@@ -572,42 +1027,58 @@ function initials(name: string): string {
   background: transparent;
   color: var(--color-primary);
   font-family: var(--font-body);
-  transition: background .2s ease;
+  transition: background var(--transition-fast);
 }
 .btn-ghost-sm:hover { background: var(--color-secondary-container); }
 .btn-ghost-sm svg { width: 13px; height: 13px; }
 
-/* Progress bars */
-.prog-list {
-  padding: 0 24px 20px;
+.empty-state {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  align-items: center;
+  gap: 12px;
+  padding: 32px 24px;
+  color: var(--color-on-surface-variant);
+  font-size: 14px;
 }
-.prog-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-.prog-label { font-size: 13px; font-weight: var(--fw-medium); color: var(--color-on-surface); }
-.prog-meta { display: flex; align-items: center; gap: 10px; }
-.prog-pct { font-size: 13px; font-weight: var(--fw-semibold); color: var(--tone-fg, var(--color-primary)); }
-.prog-track {
-  height: 10px;
-  border-radius: var(--radius-full);
-  background: var(--color-surface-container-highest);
-  overflow: hidden;
-}
-.prog-fill {
-  height: 100%;
-  border-radius: var(--radius-full);
-  transition: width .8s cubic-bezier(.34,1.3,.64,1);
-}
-.prog-fill--primary { background: var(--gradient-primary); }
-.prog-fill--warn { background: linear-gradient(135deg, #e65100, #ff9800); }
-.prog-fill--over { background: linear-gradient(135deg, #ba1a1a, #e53935); }
-.prog-fill--ok { background: linear-gradient(135deg, #1b5e20, #43a047); }
-.prog-foot { display: flex; justify-content: space-between; margin-top: 5px; }
-.prog-foot span { font-size: 11px; color: var(--color-on-surface-variant); }
-.prog-foot span b { color: var(--color-on-surface); font-weight: var(--fw-medium); font-family: var(--font-mono); }
 
-/* Chips */
+/* ── Progress bars ───────────────────────────────────────────────── */
+.prog-list { padding: 0 24px 20px; display: flex; flex-direction: column; gap: 20px; }
+
+.prog-item__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.prog-item__label { font-size: 13px; font-weight: var(--fw-medium); color: var(--color-on-surface); }
+.prog-item__meta { display: flex; align-items: center; gap: 8px; }
+.prog-item__delete { opacity: 0; transition: opacity var(--transition-fast); padding: 0 6px !important; }
+.prog-item:hover .prog-item__delete { opacity: 1; }
+
+.prog-item__foot {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 5px;
+  font-size: 11px;
+  color: var(--color-on-surface-variant);
+}
+.prog-item__foot b { color: var(--color-on-surface); font-weight: var(--fw-medium); font-family: var(--font-mono); }
+
+.prog-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 24px;
+  border-top: 1px solid var(--color-outline-variant);
+  font-size: 13px;
+  font-weight: var(--fw-semibold);
+  color: var(--color-on-surface);
+  background: var(--color-surface-container-low);
+}
+.prog-total__values { font-family: var(--font-mono); }
+
+/* ── Chips ───────────────────────────────────────────────────────── */
 .chip {
   display: inline-flex;
   align-items: center;
@@ -619,37 +1090,21 @@ function initials(name: string): string {
   background: var(--tone-bg, transparent);
   color: var(--tone-fg, inherit);
 }
-.chip-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: .65; flex-shrink: 0; }
+.chip-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: .65;
+  flex-shrink: 0;
+}
 
-/* Table */
+/* ── Table overrides for this view ───────────────────────────────── */
 .table-wrap { overflow-x: auto; }
-table { width: 100%; border-collapse: separate; border-spacing: 0; }
-thead th {
-  font-size: 11px;
-  font-weight: var(--fw-semibold);
-  letter-spacing: .06em;
-  text-transform: uppercase;
-  color: var(--color-on-surface-variant);
-  padding: 10px 16px;
-  text-align: left;
-  background: var(--color-surface-container-low);
-}
-tbody td {
-  font-size: 13px;
-  color: var(--color-on-surface);
-  padding: 13px 16px;
-  border-bottom: 1px solid rgba(194,199,207,.12);
-}
-tbody tr:last-child td { border-bottom: none; }
-tbody tr { transition: background .2s ease; cursor: pointer; }
-tbody tr:hover td { background: var(--color-surface-container-low); }
-.td-mono { font-family: var(--font-mono); font-size: 12px; color: var(--color-primary); }
-.td-muted { color: var(--color-on-surface-variant); font-size: 12px; }
-.td-right { text-align: right; }
-.td-amount { font-family: var(--font-mono); font-weight: var(--fw-medium); text-align: right; color: var(--tone-fg, inherit); }
-.tfoot-row td { font-size: 13px; font-weight: var(--fw-semibold); padding: 14px 16px; background: var(--color-surface-container-low); }
+.cell-mono { font-family: var(--font-mono); font-size: 12px; color: var(--color-primary); }
+.cell-muted { color: var(--color-on-surface-variant); font-size: 12px; }
 
-/* Fonds travaux card */
+/* ── Works fund card ─────────────────────────────────────────────── */
 .ft-card {
   background: var(--color-surface-container-lowest);
   border-radius: var(--radius-lg);
@@ -706,9 +1161,8 @@ tbody tr:hover td { background: var(--color-surface-container-low); }
   line-height: 1.5;
   margin-top: 16px;
 }
-.ft-legal strong { color: var(--color-on-surface); font-weight: var(--fw-medium); }
 
-/* Mini card */
+/* ── Mini card (overdue) ─────────────────────────────────────────── */
 .mini-card {
   background: var(--color-surface-container-lowest);
   border-radius: var(--radius-lg);
@@ -724,6 +1178,7 @@ tbody tr:hover td { background: var(--color-surface-container-low); }
   margin-bottom: 4px;
 }
 .mini-sub { font-size: 12px; color: var(--color-on-surface-variant); margin-bottom: 16px; }
+
 .overdue-item {
   display: flex;
   align-items: center;
@@ -753,50 +1208,16 @@ tbody tr:hover td { background: var(--color-surface-container-low); }
 .overdue-amount { font-family: var(--font-mono); font-size: 13px; font-weight: var(--fw-medium); color: var(--color-error); }
 .overdue-date { font-size: 11px; color: var(--color-error); margin-top: 1px; }
 
-/* Modal */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(25,28,29,.4);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  z-index: 200;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity .2s;
+/* ── Modal ───────────────────────────────────────────────────────── */
+.modal-sub { font-size: 13px; color: var(--color-on-surface-variant); margin-bottom: 16px; line-height: 1.5; }
+.field-group { display: flex; flex-direction: column; gap: 4px; }
+.field-hint { font-size: 11px; color: var(--color-on-surface-variant); }
+.generate-summary {
+  background: var(--color-secondary-container);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  font-size: 13px;
+  color: var(--color-on-secondary-container);
+  margin-top: 8px;
 }
-.modal-overlay--show { opacity: 1; pointer-events: all; }
-.modal {
-  background: rgba(255,255,255,.92);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(194,199,207,.3);
-  box-shadow: 0 20px 60px rgba(25,28,29,.14);
-  border-radius: var(--radius-lg);
-  padding: 28px;
-  width: 520px;
-  max-width: 90vw;
-  transform: translateY(8px) scale(.98);
-  transition: transform .25s cubic-bezier(.34,1.3,.64,1);
-}
-.modal-overlay--show .modal { transform: translateY(0) scale(1); }
-.modal-title {
-  font-family: var(--font-display);
-  font-size: 20px;
-  font-weight: var(--fw-semibold);
-  font-variation-settings: 'opsz' 36;
-  letter-spacing: -.01em;
-  color: var(--color-on-surface);
-  margin-bottom: 6px;
-}
-.modal-sub { font-size: 13px; color: var(--color-on-surface-variant); margin-bottom: 24px; line-height: 1.5; }
-.modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 24px; }
-.field label { font-size: 13px; font-weight: var(--fw-medium); color: var(--color-on-surface); display: block; margin-bottom: 6px; }
-.field input,
-.field select { width: 100%; padding: 0 14px; height: 42px; background: var(--color-surface-container); border: none; border-radius: var(--radius-md); font-family: var(--font-body); font-size: 14px; color: var(--color-on-surface); outline: none; transition: background .2s, box-shadow .2s; }
-.field input:focus,
-.field select:focus { background: var(--color-surface-container-low); box-shadow: 0 0 0 2px rgba(100,63,213,.3); }
 </style>

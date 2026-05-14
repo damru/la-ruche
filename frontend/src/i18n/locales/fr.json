@@ -591,7 +591,14 @@
       "paid": "Payé",
       "overdue": "En retard"
     },
-    "markPaid": "Marquer comme payé"
+    "markPaid": "Marquer comme payé",
+    "fiscalYearLabel": "Exercice fiscal",
+    "lineLabel": "Libellé du poste",
+    "lineKey": "Clé de répartition",
+    "lineBudgetedAmount": "Montant prévisionnel (€)",
+    "includeWorksFund": "Inclure cotisation fonds travaux",
+    "generateSummaryLabel": "Récapitulatif",
+    "generateSummaryDesc": "{lots} lots · {charges} de charges + {fund} fonds travaux (estimation T)"
   },
   "units": {
     "title": "Lots",

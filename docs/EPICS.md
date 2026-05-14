@@ -8,7 +8,7 @@
 > Chaque feature est organisée en epic. Les stories sont ajoutées à la demande, au moment de l'implémentation.
 > Le MVP est l'ensemble des epics marquées **MVP : oui**.
 > Statuts possibles : **en attente** · **en cours** · **terminée**
-> Dernière mise à jour : 13 mai 2026
+> Dernière mise à jour : 14 mai 2026
 
 > **Lecture d'avancement (code actuel) :**
 > - **backend réel** = handlers + DB opérationnels
@@ -80,18 +80,18 @@ Cycle de vie complet d'une AG, résolutions typées par majorité, vote par lot 
 * `EP-003-S01` ✅ — Créer une AG avec date, type et ordre du jour ; calculer et afficher la date limite de convocation (J−21) (LEGAL.md §3.1)
 * `EP-003-S02` ✅ — Joindre les documents obligatoires à la convocation et alerter en cas de pièce manquante avant envoi (LEGAL.md §3.1)
 * `EP-003-S03` ✅ — Enregistrer les présences, procurations et votes par correspondance (LEGAL.md §3.2)
-* `EP-003-S04` ✅ — Saisir les résolutions et les votes, et calculer les résultats selon la règle de majorité applicable (art. 24/25/25-1/26/26-1/unanimité) (LEGAL.md §3.2)
+* `EP-003-S04` ✅ — Saisir les résolutions et les votes, et calculer les résultats selon la règle de majorité applicable (art. 24/25/26/unanimité) (LEGAL.md §3.2)
 * `EP-003-S05` ✅ — Générer et stocker le PV signé en séance (LEGAL.md §3.3) (endpoint `POST /meetings/{id}/minutes` + flux pré-signé EP-005 ; verrouillage par `minutes_already_attached`)
 * `EP-003-S06` ✅ — Tracer la date de notification du PV aux copropriétaires **opposants ou défaillants** : le syndic doit notifier dans le délai d'**un mois** à compter de la tenue de l'AG (art. 42 al. 3 loi 1965). L'implémentation affiche la date limite de contestation à J+60 depuis la date d'AG (approche conservative : suppose notification immédiate) — le délai légal exact de contestation est J+60 depuis la **date de notification** (LEGAL.md §3.4)
 * `EP-003-S07` ✅ — Exclure explicitement les lots archivés des calculs de quorum et de majorité avec piste d'audit des bases de calcul (LEGAL.md §3.2)
-* `EP-003-S08` ✅ — Détecter et traiter l'article 26-1 : si une résolution `double_majority` est rejetée avec > 1/2 des tantièmes totaux en faveur, proposer immédiatement une re-délibération à la majorité absolue (art. 26-1) dans la même séance via une nouvelle résolution liée (LEGAL.md §3.2)
-* `EP-003-S09` ✅ — Contrôler la complétude réglementaire de la convocation selon les art. 7 à 13 du décret 1967 (ordre du jour, annexes, preuve d'envoi) et l'art. 9 al. 4 (formulaire de **vote par correspondance obligatoirement joint**) avec checklist horodatée (LEGAL.md §3.1) (migration `0023_meeting_convocation_proof.sql`, module pur `domain/convocation_checklist.rs`, endpoint `GET /meetings/{id}/convocation-checklist`, `POST /call` étendu avec `{ channel, sent_at? }`, modale UI avec checklist temps réel)
-* `EP-003-S10` ✅ — Tracer la conformité du bureau de séance et des signatures du PV (président, secrétaire, scrutateurs) selon les art. 15, 17 et 17-1 du décret 1967 (LEGAL.md §3.4) (migration `0024_meeting_minutes_signatures.sql`, endpoint `POST /meetings/{id}/minutes/signatures`, signatures intégrées au template `domain/minutes_draft.rs`, modale UI dédiée)
+* `EP-003-S08` ✅ — Contrôler la complétude réglementaire de la convocation selon les art. 7 à 13 du décret 1967 (ordre du jour, annexes, preuve d'envoi) et l'art. 9 al. 4 (formulaire de **vote par correspondance obligatoirement joint**) avec checklist horodatée (LEGAL.md §3.1) (migration `0023_meeting_convocation_proof.sql`, module pur `domain/convocation_checklist.rs`, endpoint `GET /meetings/{id}/convocation-checklist`, `POST /call` étendu avec `{ channel, sent_at? }`, modale UI avec checklist temps réel)
+* `EP-003-S09` ✅ — Tracer la conformité du bureau de séance et des signatures du PV (président, secrétaire, scrutateurs) selon les art. 15, 17 et 17-1 du décret 1967 (LEGAL.md §3.4) (migration `0024_meeting_minutes_signatures.sql`, endpoint `POST /meetings/{id}/minutes/signatures`, signatures intégrées au template `domain/minutes_draft.rs`, modale UI dédiée)
 
 **Hors scope explicite (renvoyé à `EP-013` ou à des epics transverses) :**
 
 - désignation des rôles de séance (`président`, `secrétaire`, `scrutateurs`) ;
 - feuille de présence avancée avec quorum temps réel de conduite de séance ;
+- re-délibérations art. 25-1 (majorité absolue → simple) et art. 26-1 (double majorité → absolue) — implémentées dans `EP-013-S05` et `EP-013-S10` ;
 - prise de notes collaborative par résolution ;
 - génération du projet de PV et circuit de validation ;
 - signature numérique / signature électronique du PV ;
@@ -104,16 +104,16 @@ Cycle de vie complet d'une AG, résolutions typées par majorité, vote par lot 
 
 **Statut :** en cours | **MVP :** oui | **Réf. PRD :** Fondations légales
 
-**État code actuel :** backend réel sur les flux principaux (génération appels, snapshots, relevé individuel) ; frontend budget encore en mock ; certaines actions backend restent minimales.
+**État code actuel :** backend réel sur les flux principaux (génération appels, snapshots, relevé individuel) + frontend branché sur l'API réelle (S01-S04).
 
 Budget prévisionnel par exercice, appels de fonds générés par tantièmes, fonds travaux obligatoire (≥ 5%), arrêté de comptes.
 
 **Stories :**
 
-* `EP-004-S01` — Créer et gérer un budget prévisionnel par exercice (lignes par clé de répartition)
-* `EP-004-S02` — Générer les appels de fonds trimestriels au prorata des tantièmes
-* `EP-004-S03` — Suivre et alimenter le fonds travaux (≥ 5% du budget prévisionnel, compte séparé)
-* `EP-004-S04` — Produire l'arrêté de comptes (réalisé vs prévisionnel)
+* `EP-004-S01` ✅ — Créer et gérer un budget prévisionnel par exercice (lignes par clé de répartition) — `POST /budgets`, `POST /budgets/{id}/lines`, `DELETE /budgets/{id}/lines/{lid}` ; frontend branché (modales création exercice + ligne, suppression ligne, affichage prévisionnel vs réalisé par clé)
+* `EP-004-S02` ✅ — Générer les appels de fonds trimestriels au prorata des tantièmes — `POST /budgets/{id}/levies/generate` avec `due_date` + `include_works_fund` ; `PUT /levies/{id}/payment` ; tableau des appels connecté à l'API
+* `EP-004-S03` ✅ — Suivre et alimenter le fonds travaux (≥ 5% du budget prévisionnel, compte séparé) — `GET /works-fund/{fiscal_year}` ; carte fonds travaux avec barre de progression + notice légale + alerte seuil
+* `EP-004-S04` ✅ — Produire l'arrêté de comptes (réalisé vs prévisionnel) — barres de progression par poste budgétaire avec données réelles API
 * `EP-004-S05` ✅ — Snapshot des tantièmes dans chaque appel de fonds généré (`shares_snapshot`, `shares_total_snapshot`, `key_id`) — immuabilité comptable (LEGAL.md §2.3, ADR-006)
 * `EP-004-S06` ✅ — Relevé individuel de charges par lot : liste des appels reçus, montants, statuts, solde courant (LEGAL.md §4.6)
 * `EP-004-S07` — Blocage dur côté backend de toute génération d'appel de fonds tant qu'une clé active est déséquilibrée (`Σ tantièmes ≠ total_clé`) (LEGAL.md §2.1)
