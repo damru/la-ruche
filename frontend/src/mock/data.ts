@@ -154,14 +154,14 @@ export const mockBudgetLines: BudgetLine[] = [
 ]
 
 export const mockLevies: LevyCall[] = [
-  { id: 'lev-001', budget_id: 'bud-001', unit_id: 'unt-001', unit_number: 'Lot 1', owner_name: 'Lefebvre Marie', amount: 1_820, due_date: '2025-01-15', status: 'paid', issued_at: '2025-01-01T00:00:00Z', paid_at: '2025-01-12T00:00:00Z' },
-  { id: 'lev-002', budget_id: 'bud-001', unit_id: 'unt-002', unit_number: 'Lot 2', owner_name: 'Cazeneuve Robert', amount: 2_100, due_date: '2025-01-15', status: 'paid', issued_at: '2025-01-01T00:00:00Z', paid_at: '2025-01-14T00:00:00Z' },
-  { id: 'lev-003', budget_id: 'bud-001', unit_id: 'unt-003', unit_number: 'Lot 3', owner_name: 'Renaud Claire', amount: 1_650, due_date: '2025-01-15', status: 'overdue', issued_at: '2025-01-01T00:00:00Z' },
-  { id: 'lev-004', budget_id: 'bud-001', unit_id: 'unt-004', unit_number: 'Lot 4', owner_name: 'Bensalem Fatima', amount: 1_950, due_date: '2025-04-15', status: 'issued', issued_at: '2025-04-01T00:00:00Z' },
-  { id: 'lev-005', budget_id: 'bud-001', unit_id: 'unt-005', unit_number: 'Lot 5', owner_name: 'Dupont Jean-Pierre', amount: 2_250, due_date: '2025-04-15', status: 'paid', issued_at: '2025-04-01T00:00:00Z', paid_at: '2025-04-10T00:00:00Z' },
-  { id: 'lev-006', budget_id: 'bud-001', unit_id: 'unt-006', unit_number: 'Lot 6', owner_name: 'Laborde Michel', amount: 1_780, due_date: '2025-01-15', status: 'overdue', issued_at: '2025-01-01T00:00:00Z' },
-  { id: 'lev-007', budget_id: 'bud-001', unit_id: 'unt-007', unit_number: 'Lot 7', owner_name: '(vacant)', amount: 1_420, due_date: '2025-04-15', status: 'issued', issued_at: '2025-04-01T00:00:00Z' },
-  { id: 'lev-008', budget_id: 'bud-001', unit_id: 'unt-008', unit_number: 'Lot 8', owner_name: 'Bensalem Fatima', amount: 1_900, due_date: '2025-04-15', status: 'paid', issued_at: '2025-04-01T00:00:00Z', paid_at: '2025-04-08T00:00:00Z' },
+  { id: 'lev-001', budget_id: 'bud-001', unit_id: 'unt-001', call_label: 'Trimestriel T1', unit_number: 'Lot 1', owner_name: 'Lefebvre Marie', amount: 1_820, due_date: '2025-01-15', status: 'paid', issued_at: '2025-01-01T00:00:00Z', paid_at: '2025-01-12T00:00:00Z' },
+  { id: 'lev-002', budget_id: 'bud-001', unit_id: 'unt-002', call_label: 'Trimestriel T1', unit_number: 'Lot 2', owner_name: 'Cazeneuve Robert', amount: 2_100, due_date: '2025-01-15', status: 'paid', issued_at: '2025-01-01T00:00:00Z', paid_at: '2025-01-14T00:00:00Z' },
+  { id: 'lev-003', budget_id: 'bud-001', unit_id: 'unt-003', call_label: 'Trimestriel T1', unit_number: 'Lot 3', owner_name: 'Renaud Claire', amount: 1_650, due_date: '2025-01-15', status: 'overdue', issued_at: '2025-01-01T00:00:00Z' },
+  { id: 'lev-004', budget_id: 'bud-001', unit_id: 'unt-004', call_label: 'Trimestriel T2', unit_number: 'Lot 4', owner_name: 'Bensalem Fatima', amount: 1_950, due_date: '2025-04-15', status: 'issued', issued_at: '2025-04-01T00:00:00Z' },
+  { id: 'lev-005', budget_id: 'bud-001', unit_id: 'unt-005', call_label: 'Trimestriel T2', unit_number: 'Lot 5', owner_name: 'Dupont Jean-Pierre', amount: 2_250, due_date: '2025-04-15', status: 'paid', issued_at: '2025-04-01T00:00:00Z', paid_at: '2025-04-10T00:00:00Z' },
+  { id: 'lev-006', budget_id: 'bud-001', unit_id: 'unt-006', call_label: 'Trimestriel T1', unit_number: 'Lot 6', owner_name: 'Laborde Michel', amount: 1_780, due_date: '2025-01-15', status: 'overdue', issued_at: '2025-01-01T00:00:00Z' },
+  { id: 'lev-007', budget_id: 'bud-001', unit_id: 'unt-007', call_label: 'Trimestriel T2', unit_number: 'Lot 7', owner_name: '(vacant)', amount: 1_420, due_date: '2025-04-15', status: 'issued', issued_at: '2025-04-01T00:00:00Z' },
+  { id: 'lev-008', budget_id: 'bud-001', unit_id: 'unt-008', call_label: 'Appel exceptionnel AG 2025-03', unit_number: 'Lot 8', owner_name: 'Bensalem Fatima', amount: 1_900, due_date: '2025-04-15', status: 'paid', issued_at: '2025-04-01T00:00:00Z', paid_at: '2025-04-08T00:00:00Z' },
 ]
 
 export const mockWorksFund: WorksFund = {

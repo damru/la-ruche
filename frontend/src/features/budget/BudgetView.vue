@@ -15,8 +15,13 @@ import CFormSelect from '@/components/atoms/CFormSelect.vue'
 import CFormCheckbox from '@/components/atoms/CFormCheckbox.vue'
 import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
 import CProgressBar from '@/components/atoms/CProgressBar.vue'
+import CLegalDescription from '@/components/atoms/CLegalDescription.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CEyebrow from '@/components/atoms/CEyebrow.vue'
+import CMetaItem from '@/components/molecules/CMetaItem.vue'
+import CLegalNotice from '@/components/molecules/CLegalNotice.vue'
+import CLegalCard from '@/components/molecules/CLegalCard.vue'
+import CFlexGroup from '@/components/organisms/CFlexGroup.vue'
 import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import CIconCheckCircle from '@/components/atoms/CIconCheckCircle.svg'
 import CIconCurrency from '@/components/atoms/CIconCurrency.svg'
@@ -34,6 +39,7 @@ const { formatCurrency, formatDate } = useFormatters()
 const { hasAnyRole } = useRole()
 
 const canManage = computed(() => hasAnyRole(['manager']))
+const canEditSelectedBudget = computed(() => canManage.value && selectedBudget.value?.status !== 'closed')
 
 // ── State ─────────────────────────────────────────────────────────
 
@@ -51,18 +57,6 @@ const selectedBudget = computed(() =>
   budgets.value.find(b => b.id === selectedBudgetId.value) ?? null
 )
 
-const totalForecast = computed(() =>
-  budgetLines.value.reduce((s, l) => s + l.budgeted_amount, 0)
-)
-
-const totalActual = computed(() =>
-  budgetLines.value.reduce((s, l) => s + (l.actual_amount ?? 0), 0)
-)
-
-const executionRate = computed(() =>
-  totalForecast.value ? Math.round((totalActual.value / totalForecast.value) * 100) : 0
-)
-
 const overdueLevies = computed(() => levies.value.filter(l => l.status === 'overdue'))
 const overdueTotal = computed(() => overdueLevies.value.reduce((s, l) => s + l.amount, 0))
 
@@ -75,6 +69,31 @@ const worksEngagedPct = computed(() => {
 const keyOptions = computed(() =>
   allocationKeys.value.map(k => ({ value: k.id, label: k.name }))
 )
+
+const selectedTotalForecast = computed(() =>
+  Number(selectedBudget.value?.total_forecast ?? 0)
+)
+const selectedTotalActual = computed(() =>
+  Number(selectedBudget.value?.total_actual ?? 0)
+)
+
+const levyPaidCount = computed(() =>
+  levies.value.filter(l => l.status === 'paid').length
+)
+const levyCollectionRate = computed(() =>
+  levies.value.length > 0 ? Math.round((levyPaidCount.value / levies.value.length) * 100) : 0
+)
+
+const legalCardLinks = computed(() => [
+  {
+    label: t('budget.legalCard.article35LinkLabel'),
+    href: t('budget.legalCard.article35LinkHref'),
+  },
+  {
+    label: t('budget.legalCard.article37LinkLabel'),
+    href: t('budget.legalCard.article37LinkHref'),
+  },
+])
 
 // ── Loaders ───────────────────────────────────────────────────────
 
@@ -96,22 +115,38 @@ async function loadBudgets() {
 }
 
 async function loadBudgetData(budgetId: string) {
-  const [linesRes, leviesRes] = await Promise.all([
+  const [budgetRes, linesRes, leviesRes] = await Promise.all([
+    budgetApi.get(budgetId),
     budgetApi.listLines(budgetId),
     budgetApi.listLevies(budgetId),
   ])
+  const refreshed = budgetRes.data
+  budgets.value = budgets.value.map(b => (b.id === refreshed.id ? refreshed : b))
   // Enrich lines with key names
   budgetLines.value = linesRes.data.map(l => ({
     ...l,
+    budgeted_amount: Number(l.budgeted_amount),
+    actual_amount: l.actual_amount != null ? Number(l.actual_amount) : undefined,
     key_name: allocationKeys.value.find(k => k.id === l.key_id)?.name,
   }))
-  levies.value = leviesRes.data as LevyCall[]
+  levies.value = (leviesRes.data as LevyCall[]).map(levy => ({
+    ...levy,
+    amount: Number(levy.amount),
+    call_label:
+      !levy.call_label || levy.call_label === 'Levy call'
+        ? t('budget.defaultLevyLabel')
+        : levy.call_label,
+  }))
 
   // Load works fund for selected year
   if (selectedBudget.value) {
     try {
       const wfRes = await budgetApi.getWorksFund(selectedBudget.value.fiscal_year)
-      worksFund.value = wfRes.data
+      worksFund.value = {
+        ...wfRes.data,
+        levied_amount: Number(wfRes.data.levied_amount),
+        available_amount: Number(wfRes.data.available_amount),
+      }
     } catch {
       worksFund.value = null
     }
@@ -227,7 +262,7 @@ async function confirmDeleteLine() {
 const showGenerateModal = ref(false)
 const generateFeedback = useFormFeedback()
 const generatingLevies = ref(false)
-const generateForm = ref({ due_date: '', include_works_fund: true })
+const generateForm = ref({ due_date: '', include_works_fund: true, call_label: '' })
 const { forceExpire: forceGenerateClose } = useAutoClose()
 watch(showGenerateModal, open => { if (!open) forceGenerateClose() })
 
@@ -239,6 +274,7 @@ function openGenerateModal() {
   generateForm.value = {
     due_date: nextQ.toISOString().slice(0, 10),
     include_works_fund: true,
+    call_label: '',
   }
   showGenerateModal.value = true
 }
@@ -251,6 +287,7 @@ async function generateLevies() {
     await budgetApi.generateLevies(selectedBudgetId.value, {
       due_date: generateForm.value.due_date,
       include_works_fund: generateForm.value.include_works_fund,
+      call_label: generateForm.value.call_label.trim() || undefined,
     })
     await loadBudgetData(selectedBudgetId.value)
     showGenerateModal.value = false
@@ -275,6 +312,32 @@ async function markPaid(levy: LevyCall) {
     // silently handle — row stays as-is
   } finally {
     markingPaidId.value = null
+  }
+}
+
+// ── Close exercise modal ───────────────────────────────────────────
+
+const showCloseExerciseModal = ref(false)
+const closingExercise = ref(false)
+const closeExerciseFeedback = useFormFeedback()
+
+function openCloseExerciseModal() {
+  closeExerciseFeedback.reset()
+  showCloseExerciseModal.value = true
+}
+
+async function closeExercise() {
+  if (!selectedBudgetId.value) return
+  closingExercise.value = true
+  closeExerciseFeedback.reset()
+  try {
+    await budgetApi.close(selectedBudgetId.value)
+    await loadBudgetData(selectedBudgetId.value)
+    showCloseExerciseModal.value = false
+  } catch (err) {
+    closeExerciseFeedback.setError(toErrorMessage(err))
+  } finally {
+    closingExercise.value = false
   }
 }
 
@@ -305,8 +368,8 @@ function initials(name: string): string {
 
 // Works-fund legal threshold: alert if available < 5% of forecast (S03/S10)
 const worksFundBelowThreshold = computed(() => {
-  if (!worksFund.value || !totalForecast.value) return false
-  const minRequired = totalForecast.value * 0.05
+  if (!worksFund.value || !selectedTotalForecast.value) return false
+  const minRequired = selectedTotalForecast.value * 0.05
   return worksFund.value.available_amount < minRequired
 })
 </script>
@@ -323,22 +386,12 @@ const worksFundBelowThreshold = computed(() => {
       </template>
       <template #right>
         <CBtn
-          v-if="canManage && selectedBudgetId"
-          variant="secondary"
-          size="sm"
-          @click="openCreateLineModal"
-        >
-          <CIconPlus aria-hidden="true" />
-          {{ t('budget.newLine') }}
-        </CBtn>
-        <CBtn
-          v-if="canManage && selectedBudgetId"
+          v-if="canEditSelectedBudget && selectedBudgetId"
           variant="primary"
           size="sm"
-          @click="openGenerateModal"
+          @click="openCloseExerciseModal"
         >
-          <CIconCheckCircle aria-hidden="true" />
-          {{ t('budget.generateLevies') }}
+          {{ t('budget.closeExercise') }}
         </CBtn>
       </template>
     </CTopbar>
@@ -396,7 +449,7 @@ const worksFundBelowThreshold = computed(() => {
               </div>
             </div>
             <div class="kpi-value">
-              {{ formatCurrency(totalForecast) }}
+              {{ formatCurrency(selectedTotalForecast) }}
             </div>
             <div class="kpi-delta kpi-delta--neutral">
               {{ t('budget.budgetItems', budgetLines.length) }}
@@ -414,10 +467,12 @@ const worksFundBelowThreshold = computed(() => {
               </div>
             </div>
             <div class="kpi-value">
-              {{ formatCurrency(totalActual) }}
+              {{ formatCurrency(selectedTotalActual) }}
             </div>
             <div class="kpi-delta kpi-delta--neutral">
-              {{ t('budget.ofBudget', { pct: executionRate }) }}
+              {{ t('budget.ofBudget', {
+                pct: selectedTotalForecast ? Math.round((selectedTotalActual / selectedTotalForecast) * 100) : 0,
+              }) }}
             </div>
           </div>
 
@@ -479,10 +534,21 @@ const worksFundBelowThreshold = computed(() => {
                     {{ t('budget.forecastVsActual') }}
                   </p>
                 </div>
-                <button class="btn-ghost-sm">
-                  <CIconDownload aria-hidden="true" />
-                  {{ t('common.export') }}
-                </button>
+                <div class="section-head__actions">
+                  <button class="btn-ghost-sm">
+                    <CIconDownload aria-hidden="true" />
+                    {{ t('common.export') }}
+                  </button>
+                  <CBtn
+                    v-if="canEditSelectedBudget"
+                    variant="ghost"
+                    size="sm"
+                    @click="openCreateLineModal"
+                  >
+                    <CIconPlus aria-hidden="true" />
+                    {{ t('budget.newLine') }}
+                  </CBtn>
+                </div>
               </div>
 
               <div
@@ -491,7 +557,7 @@ const worksFundBelowThreshold = computed(() => {
               >
                 <p>{{ t('common.noData') }}</p>
                 <CBtn
-                  v-if="canManage"
+                  v-if="canEditSelectedBudget"
                   variant="ghost"
                   size="sm"
                   @click="openCreateLineModal"
@@ -518,7 +584,7 @@ const worksFundBelowThreshold = computed(() => {
                         class="chip tone--default"
                       >{{ line.key_name }}</span>
                       <CBtn
-                        v-if="canManage"
+                        v-if="canEditSelectedBudget"
                         variant="ghost"
                         size="sm"
                         class="prog-item__delete"
@@ -548,7 +614,7 @@ const worksFundBelowThreshold = computed(() => {
               >
                 <span>{{ t('common.total') }}</span>
                 <span class="prog-total__values">
-                  {{ formatCurrency(totalActual) }} / {{ formatCurrency(totalForecast) }}
+                  {{ formatCurrency(selectedTotalActual) }} / {{ formatCurrency(selectedTotalForecast) }}
                 </span>
               </div>
             </div>
@@ -560,9 +626,28 @@ const worksFundBelowThreshold = computed(() => {
                   <h2 class="section-title">
                     {{ t('budget.levies') }}
                   </h2>
-                  <p class="section-sub">
-                    {{ t('budget.collectionRate', { lots: levies.length, pct: levies.length ? Math.round(levies.filter(l => l.status === 'paid').length / levies.length * 100) : 0 }) }}
-                  </p>
+                  <CFlexGroup
+                    direction="row"
+                    class="section-sub section-sub-metrics"
+                  >
+                    <CMetaItem variant="sub">
+                      {{ t('budget.collectionRateLots', { lots: levies.length }) }}
+                    </CMetaItem>
+                    <CMetaItem variant="sub">
+                      {{ t('budget.collectionRatePct', { pct: levyCollectionRate }) }}
+                    </CMetaItem>
+                  </CFlexGroup>
+                </div>
+                <div class="section-head__actions">
+                  <CBtn
+                    v-if="canEditSelectedBudget && selectedBudgetId"
+                    variant="ghost"
+                    size="sm"
+                    @click="openGenerateModal"
+                  >
+                    <CIconCheckCircle aria-hidden="true" />
+                    {{ t('budget.generateLevies') }}
+                  </CBtn>
                 </div>
               </div>
 
@@ -597,9 +682,10 @@ const worksFundBelowThreshold = computed(() => {
                       <th class="col-right">
                         {{ t('common.dueDate') }}
                       </th>
+                      <th>{{ t('budget.levyCallLabel') }}</th>
                       <th>{{ t('common.status') }}</th>
                       <th
-                        v-if="canManage"
+                        v-if="canEditSelectedBudget"
                         class="col-shrink"
                       ></th>
                     </tr>
@@ -622,6 +708,9 @@ const worksFundBelowThreshold = computed(() => {
                       <td class="col-right cell-muted">
                         {{ levy.due_date ? formatDate(levy.due_date) : '—' }}
                       </td>
+                      <td class="cell-muted">
+                        {{ levy.call_label || t('budget.defaultLevyLabel') }}
+                      </td>
                       <td>
                         <span :class="['chip', levyStatusVariant(levy.status as LevyStatus)]">
                           <span
@@ -631,7 +720,7 @@ const worksFundBelowThreshold = computed(() => {
                           {{ t(`budget.levyStatuses.${levy.status}`) }}
                         </span>
                       </td>
-                      <td v-if="canManage">
+                      <td v-if="canEditSelectedBudget">
                         <CBtn
                           v-if="levy.status !== 'paid'"
                           variant="ghost"
@@ -639,6 +728,7 @@ const worksFundBelowThreshold = computed(() => {
                           :loading="markingPaidId === levy.id"
                           @click="markPaid(levy)"
                         >
+                          <CIconCheckCircle aria-hidden="true" />
                           {{ t('budget.markPaid') }}
                         </CBtn>
                       </td>
@@ -653,7 +743,7 @@ const worksFundBelowThreshold = computed(() => {
                         {{ formatCurrency(levies.reduce((s, l) => s + l.amount, 0)) }}
                       </td>
                       <td
-                        :colspan="canManage ? 3 : 2"
+                        :colspan="canEditSelectedBudget ? 4 : 3"
                       ></td>
                     </tr>
                   </tfoot>
@@ -706,10 +796,6 @@ const worksFundBelowThreshold = computed(() => {
                   {{ t('common.noData') }}
                 </p>
               </template>
-
-              <div class="ft-legal">
-                {{ t('budget.worksFundLegalFull') }}
-              </div>
             </div>
 
             <!-- Overdue payments panel (S02) -->
@@ -751,6 +837,15 @@ const worksFundBelowThreshold = computed(() => {
             </div>
           </div>
         </div>
+
+        <CLegalCard>
+          <CLegalNotice :links="legalCardLinks">
+            <CLegalDescription
+              :title="t('budget.legalCard.title')"
+              :summary="t('budget.legalCard.summary')"
+            />
+          </CLegalNotice>
+        </CLegalCard>
       </template>
     </div>
 
@@ -887,15 +982,20 @@ const worksFundBelowThreshold = computed(() => {
           {{ t('budget.worksFundLegal') }}
         </p>
       </div>
+      <CFormInput
+        v-model="generateForm.call_label"
+        :label="t('budget.callLabel')"
+        :placeholder="t('budget.callLabelPlaceholder')"
+      />
       <div
-        v-if="totalForecast > 0"
+        v-if="selectedTotalForecast > 0"
         class="generate-summary"
       >
         <strong>{{ t('budget.generateSummaryLabel') }}</strong>
         {{ t('budget.generateSummaryDesc', {
           lots: levies.length || '—',
-          charges: formatCurrency(Math.round(totalForecast / 4)),
-          fund: formatCurrency(Math.round(totalForecast * 0.05 / 4)),
+          charges: formatCurrency(Math.round(selectedTotalForecast / 4)),
+          fund: formatCurrency(Math.round(selectedTotalForecast * 0.05 / 4)),
         }) }}
       </div>
       <template #footer>
@@ -916,6 +1016,35 @@ const worksFundBelowThreshold = computed(() => {
         >
           <CIconCheckCircle aria-hidden="true" />
           {{ t('budget.generate') }}
+        </CBtn>
+      </template>
+    </CModal>
+
+    <CModal
+      :open="showCloseExerciseModal"
+      :title="t('budget.closeExerciseTitle')"
+      @update:open="showCloseExerciseModal = $event"
+    >
+      <p class="modal-sub">
+        {{ t('budget.closeExerciseConfirmation', { year: selectedBudget?.fiscal_year }) }}
+      </p>
+      <template #footer>
+        <CFormFeedback
+          :status="closeExerciseFeedback.status.value"
+          :message="closeExerciseFeedback.message.value"
+        />
+        <CBtn
+          variant="ghost"
+          @click="showCloseExerciseModal = false"
+        >
+          {{ t('common.cancel') }}
+        </CBtn>
+        <CBtn
+          variant="danger"
+          :loading="closingExercise"
+          @click="closeExercise"
+        >
+          {{ t('budget.closeExerciseConfirm') }}
         </CBtn>
       </template>
     </CModal>
@@ -1002,7 +1131,9 @@ const worksFundBelowThreshold = computed(() => {
   align-items: center;
   justify-content: space-between;
   padding: 20px 24px;
+  gap: 12px;
 }
+.section-head__actions { display: inline-flex; align-items: center; gap: 8px; }
 .section-title {
   font-family: var(--font-display);
   font-size: 17px;
@@ -1012,6 +1143,10 @@ const worksFundBelowThreshold = computed(() => {
   color: var(--color-on-surface);
 }
 .section-sub { font-size: 12px; color: var(--color-on-surface-variant); margin-top: 2px; }
+.section-sub-metrics {
+  margin-top: 2px;
+  color: var(--color-on-surface-variant);
+}
 
 .btn-ghost-sm {
   display: inline-flex;
@@ -1074,7 +1209,7 @@ const worksFundBelowThreshold = computed(() => {
   font-size: 13px;
   font-weight: var(--fw-semibold);
   color: var(--color-on-surface);
-  background: var(--color-surface-container-low);
+  background: var(--color-surface-container-lowest);
 }
 .prog-total__values { font-family: var(--font-mono); }
 
@@ -1152,16 +1287,6 @@ const worksFundBelowThreshold = computed(() => {
 .ft-prog-pct { color: var(--color-warning, #e65100); font-weight: var(--fw-semibold); }
 .ft-prog-foot { display: flex; justify-content: space-between; margin-top: 5px; font-size: 11px; color: var(--color-on-surface-variant); }
 .ft-prog-available { color: var(--color-warning, #e65100); font-weight: var(--fw-medium); }
-.ft-legal {
-  font-size: 11px;
-  color: var(--color-on-surface-variant);
-  background: var(--color-surface-container-low);
-  border-radius: var(--radius-sm);
-  padding: 10px 12px;
-  line-height: 1.5;
-  margin-top: 16px;
-}
-
 /* ── Mini card (overdue) ─────────────────────────────────────────── */
 .mini-card {
   background: var(--color-surface-container-lowest);
@@ -1219,5 +1344,22 @@ const worksFundBelowThreshold = computed(() => {
   font-size: 13px;
   color: var(--color-on-secondary-container);
   margin-top: 8px;
+}
+
+@media (max-width: 1024px) {
+  .two-col {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .section-head {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
 }
 </style>

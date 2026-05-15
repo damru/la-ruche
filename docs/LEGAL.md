@@ -16,7 +16,7 @@
 > - Arrêté du 14 mars 2005 (plan comptable copropriété)
 > - RGPD (Règlement UE 2016/679)
 >
-> Dernière mise à jour : 13 mai 2026 (correctifs légaux §3.1/§3.4/§4.3/§4.4/§4.6/§4.7 + nouvelle §3.5 — audit loi 65-557 / décret 67-223)
+> Dernière mise à jour : 15 mai 2026 (correctifs légaux §3.1/§3.4/§4.3/§4.4/§4.6/§4.7 + nouvelle §3.5 — audit loi 65-557 / décret 67-223 + couverture explicite art. 37)
 
 ---
 
@@ -333,7 +333,7 @@ Le plan comptable copropriété distingue les charges générales (clé généra
 
 ### 4.3 Budget prévisionnel et appels de fonds
 
-**Référence :** Art. 14-1 loi 1965 (LEGIARTI000043977299 v2.0, en vigueur 01/01/2023) · Décret 1967 art. 35 (LEGIARTI000053191341 v6.0, en vigueur 25/12/2025)  
+**Référence :** Art. 14-1 loi 1965 (LEGIARTI000043977299 v2.0, en vigueur 01/01/2023) · Décret 1967 art. 35 (LEGIARTI000053191341 v6.0, en vigueur 25/12/2025) · Décret 1967 art. 37 (LEGIARTI000006488654)  
 **Couverture :** ⚠️ partielle — EP-004
 
 Le budget prévisionnel est voté en AG. Les appels de fonds provisionnels sont versés **par quart** (sauf décision contraire de l'AG), aux dates prévues.
@@ -346,10 +346,10 @@ La version 6.0 de l'art. 35 décret (en vigueur 25/12/2025) intègre trois nouve
 **Implications :**
 - Chaque appel de fonds génère une ligne par lot, calculée au prorata des tantièmes de la clé.
 - **Cf. §2.3 :** le snapshot des tantièmes doit être figé au moment de la génération.
-- Un appel de fonds exceptionnel (travaux votés en AG) suit les mêmes règles mais référence une résolution AG.
+- Un appel de fonds exceptionnel (travaux votés en AG) suit les mêmes règles mais référence explicitement une résolution AG, avec un libellé traçable et non ambigu (art. 37 décret 1967).
 - Les catégories PPT, fonds travaux et délégation CS ajoutées en décembre 2025 doivent être typées dans l'application (EP-004-S08).
 
-**Écart constaté :** La mise à jour de l'art. 35 décret en décembre 2025 (v6.0) n'est pas encore reflétée dans la modélisation des appels de fonds.
+**Écart constaté :** La mise à jour de l'art. 35 décret en décembre 2025 (v6.0) et la traçabilité explicite art. 37 des appels exceptionnels ne sont pas encore entièrement reflétées dans la modélisation des appels de fonds.
 
 ---
 
@@ -687,7 +687,7 @@ L'`audit_log` est en **append-only** : aucune ligne ne peut être modifiée ou s
 | 3.5 | PV du conseil syndical en délégation de pouvoirs | Art. 21-1 décret 1967 | ❌ | EP-002-S12 (à créer) |
 | 4.1 | Compte bancaire séparé | Art. 18 loi 1965 | 🔲 | — |
 | 4.2 | Plan comptable normé | Arrêté 14/03/2005 | ⚠️ | EP-004 |
-| 4.3 | Budget prévisionnel + appels de fonds (incl. PPT/fonds travaux/délégation CS depuis art. 35 v6 dec. 2025) | Art. 14-1 loi 1965 · Art. 35 décret 1967 v6.0 | ⚠️ | EP-004 |
+| 4.3 | Budget prévisionnel + appels de fonds (incl. PPT/fonds travaux/délégation CS depuis art. 35 v6 dec. 2025 + appels exceptionnels art. 37) | Art. 14-1 loi 1965 · Art. 35 et 37 décret 1967 | ⚠️ | EP-004 |
 | 4.4 | Fonds travaux ≥ 5% (ou 2,5% PPT si plan adopté) | Art. 14-2-1 loi 1965 (01/01/2023) | ⚠️ | EP-004 |
 | 4.5 | Arrêté de comptes | Art. 18 loi 1965 | ⚠️ | EP-004-S04 |
 | 4.6 | Relevé individuel de charges | Art. 18 loi 1965 · Arrêté 14/03/2005 | ✅ | EP-004-S06 |
