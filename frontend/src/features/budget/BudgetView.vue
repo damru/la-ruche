@@ -132,7 +132,10 @@ async function loadBudgetData(budgetId: string) {
   levies.value = (leviesRes.data as LevyCall[]).map(levy => ({
     ...levy,
     amount: Number(levy.amount),
-    call_label: levy.call_label || t('budget.defaultLevyLabel'),
+    call_label:
+      !levy.call_label || levy.call_label === 'Levy call'
+        ? t('budget.defaultLevyLabel')
+        : levy.call_label,
   }))
 
   // Load works fund for selected year

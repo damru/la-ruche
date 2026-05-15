@@ -154,6 +154,11 @@ pub struct GenerateLeviesInput {
     pub call_label: Option<String>,
 }
 
+fn quarterly_default_call_label(now: chrono::DateTime<chrono::Utc>) -> String {
+    let quarter = (now.month0() / 3) + 1;
+    format!("Quarterly Q{quarter} {}", now.year())
+}
+
 pub async fn generate_levies(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,
@@ -204,8 +209,7 @@ pub async fn generate_levies(
         .collect();
 
     let computed_levies = compute_levies(remaining_amount, &units_with_shares, total_shares);
-    let now = chrono::Utc::now();
-    let default_label = format!("Trimestriel T{} {}", ((now.month0() / 3) + 1), now.year());
+    let default_label = quarterly_default_call_label(chrono::Utc::now());
     let call_label = input
         .call_label
         .as_deref()
