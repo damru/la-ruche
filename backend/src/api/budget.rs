@@ -3,7 +3,7 @@ use axum::{
     extract::{Path, State},
     http::StatusCode,
 };
-use chrono::NaiveDate;
+use chrono::{Datelike, NaiveDate};
 use serde::Deserialize;
 use sqlx::types::Decimal;
 use std::sync::Arc;
@@ -69,6 +69,20 @@ pub async fn update(
     Ok(StatusCode::NO_CONTENT)
 }
 
+pub async fn close(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+) -> AppResult<StatusCode> {
+    auth.require_role(&Role::Manager)?;
+    let closed = db::budget::close(&state.pool, id, auth.building_id).await?;
+    if closed {
+        Ok(StatusCode::NO_CONTENT)
+    } else {
+        Err(AppError::conflict_code("errors.budget.exercise_already_closed"))
+    }
+}
+
 pub async fn list_lines(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,
@@ -94,6 +108,7 @@ pub async fn create_line(
     Json(input): Json<CreateLineInput>,
 ) -> AppResult<(StatusCode, Json<serde_json::Value>)> {
     auth.require_role(&Role::Manager)?;
+    db::budget::ensure_budget_is_mutable(&state.pool, id, auth.building_id).await?;
     let l = db::budget::create_line(
         &state.pool,
         id,
@@ -123,6 +138,7 @@ pub async fn delete_line(
     Path((budget_id, line_id)): Path<(Uuid, Uuid)>,
 ) -> AppResult<StatusCode> {
     auth.require_role(&Role::Manager)?;
+    db::budget::ensure_budget_is_mutable(&state.pool, budget_id, auth.building_id).await?;
     db::budget::delete_line(&state.pool, line_id, budget_id).await?;
     Ok(StatusCode::NO_CONTENT)
 }
@@ -133,6 +149,7 @@ pub async fn delete_line(
 pub struct GenerateLeviesInput {
     pub due_date: NaiveDate,
     pub include_works_fund: bool,
+    pub call_label: Option<String>,
 }
 
 pub async fn generate_levies(
@@ -142,6 +159,7 @@ pub async fn generate_levies(
     Json(input): Json<GenerateLeviesInput>,
 ) -> AppResult<Json<serde_json::Value>> {
     auth.require_role(&Role::Manager)?;
+    db::budget::ensure_budget_is_mutable(&state.pool, id, auth.building_id).await?;
 
     let _budget = db::budget::get(&state.pool, id, auth.building_id)
         .await?
@@ -161,6 +179,18 @@ pub async fn generate_levies(
     };
 
     let total_amount = total_charges + works_fund_amount;
+    let already_called = db::budget::total_levy_amount(&state.pool, id, auth.building_id).await?;
+    let remaining_amount = (total_amount - already_called).max(Decimal::ZERO);
+
+    if remaining_amount <= Decimal::ZERO {
+        return Ok(Json(serde_json::json!({
+            "generated": 0,
+            "total_amount": total_amount,
+            "already_called": already_called,
+            "remaining_amount": Decimal::ZERO,
+            "due_date": input.due_date,
+        })));
+    }
 
     let units_with_shares: Vec<UnitWithShares> = units_data
         .iter()
@@ -171,7 +201,19 @@ pub async fn generate_levies(
         })
         .collect();
 
-    let computed_levies = compute_levies(total_amount, &units_with_shares, total_shares);
+    let computed_levies = compute_levies(remaining_amount, &units_with_shares, total_shares);
+    let now = chrono::Utc::now();
+    let default_label = format!(
+        "Trimestriel T{} {}",
+        ((now.month0() / 3) + 1),
+        now.year()
+    );
+    let call_label = input
+        .call_label
+        .as_deref()
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+        .unwrap_or(&default_label);
     let levy_inserts: Vec<db::budget::LevyInsert> = computed_levies
         .iter()
         .map(|l| db::budget::LevyInsert {
@@ -188,6 +230,7 @@ pub async fn generate_levies(
         id,
         auth.building_id,
         input.due_date,
+        call_label,
         &levy_inserts,
     )
     .await?
@@ -196,6 +239,9 @@ pub async fn generate_levies(
     Ok(Json(serde_json::json!({
         "generated": nb,
         "total_amount": total_amount,
+        "already_called": already_called,
+        "remaining_amount": remaining_amount,
+        "call_label": call_label,
         "due_date": input.due_date,
     })))
 }
@@ -217,6 +263,7 @@ pub async fn mark_paid(
     Path(id): Path<Uuid>,
 ) -> AppResult<StatusCode> {
     auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
+    db::budget::ensure_levy_budget_is_mutable(&state.pool, id, auth.building_id).await?;
     db::budget::mark_paid(&state.pool, id, auth.building_id).await?;
     Ok(StatusCode::NO_CONTENT)
 }

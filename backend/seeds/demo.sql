@@ -252,6 +252,123 @@ VALUES
 ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================
+-- 7b. BUDGETS, LINES, WORKS FUND AND LEVIES (past + current)
+-- ============================================================
+INSERT INTO budget (id, building_id, fiscal_year, status, created_at, updated_at)
+VALUES
+    (
+        '00000000-0000-0000-0000-000000000421',
+        '00000000-0000-0000-0000-000000000001',
+        EXTRACT(YEAR FROM CURRENT_DATE)::int - 1,
+        'closed',
+        NOW() - INTERVAL '420 days',
+        NOW() - INTERVAL '120 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000422',
+        '00000000-0000-0000-0000-000000000001',
+        EXTRACT(YEAR FROM CURRENT_DATE)::int,
+        'draft',
+        NOW() - INTERVAL '120 days',
+        NOW() - INTERVAL '2 days'
+    )
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO budget_line (id, budget_id, label, key_id, budgeted_amount, actual_amount, created_at)
+VALUES
+    ('00000000-0000-0000-0000-000000000423', '00000000-0000-0000-0000-000000000421', 'Entretien parties communes', '00000000-0000-0000-0000-000000000010', 9800.00, 9620.00, NOW() - INTERVAL '420 days'),
+    ('00000000-0000-0000-0000-000000000424', '00000000-0000-0000-0000-000000000421', 'Ascenseur', '00000000-0000-0000-0000-000000000011', 5200.00, 5170.00, NOW() - INTERVAL '420 days'),
+    ('00000000-0000-0000-0000-000000000425', '00000000-0000-0000-0000-000000000422', 'Entretien parties communes', '00000000-0000-0000-0000-000000000010', 10400.00, 5110.00, NOW() - INTERVAL '120 days'),
+    ('00000000-0000-0000-0000-000000000426', '00000000-0000-0000-0000-000000000422', 'Ascenseur', '00000000-0000-0000-0000-000000000011', 5400.00, 2510.00, NOW() - INTERVAL '120 days'),
+    ('00000000-0000-0000-0000-000000000427', '00000000-0000-0000-0000-000000000422', 'Eau froide collective', '00000000-0000-0000-0000-000000000012', 3200.00, 980.00, NOW() - INTERVAL '120 days')
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO works_fund (id, building_id, fiscal_year, levied_amount, available_amount, created_at, updated_at)
+VALUES
+    (
+        '00000000-0000-0000-0000-000000000428',
+        '00000000-0000-0000-0000-000000000001',
+        EXTRACT(YEAR FROM CURRENT_DATE)::int - 1,
+        2100.00,
+        380.00,
+        NOW() - INTERVAL '420 days',
+        NOW() - INTERVAL '120 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000429',
+        '00000000-0000-0000-0000-000000000001',
+        EXTRACT(YEAR FROM CURRENT_DATE)::int,
+        2450.00,
+        1640.00,
+        NOW() - INTERVAL '120 days',
+        NOW() - INTERVAL '2 days'
+    )
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO levy_call (
+    id,
+    budget_id,
+    unit_id,
+    amount,
+    due_date,
+    status,
+    key_id,
+    shares_snapshot,
+    shares_total_snapshot,
+    call_label,
+    issued_at,
+    paid_at,
+    created_at
+)
+VALUES
+    (
+        '00000000-0000-0000-0000-000000000430',
+        '00000000-0000-0000-0000-000000000422',
+        '00000000-0000-0000-0000-000000000101',
+        2150.00,
+        CURRENT_DATE - 45,
+        'paid',
+        '00000000-0000-0000-0000-000000000010',
+        850,
+        8000,
+        'Trimestriel T1',
+        NOW() - INTERVAL '60 days',
+        NOW() - INTERVAL '20 days',
+        NOW() - INTERVAL '60 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000431',
+        '00000000-0000-0000-0000-000000000422',
+        '00000000-0000-0000-0000-000000000104',
+        2410.00,
+        CURRENT_DATE - 20,
+        'overdue',
+        '00000000-0000-0000-0000-000000000010',
+        950,
+        8000,
+        'Trimestriel T1',
+        NOW() - INTERVAL '35 days',
+        NULL,
+        NOW() - INTERVAL '35 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000432',
+        '00000000-0000-0000-0000-000000000422',
+        '00000000-0000-0000-0000-000000000106',
+        2520.00,
+        CURRENT_DATE + 15,
+        'issued',
+        '00000000-0000-0000-0000-000000000010',
+        980,
+        8000,
+        'Appel exceptionnel AG 2026-04',
+        NOW() - INTERVAL '5 days',
+        NULL,
+        NOW() - INTERVAL '5 days'
+    )
+ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================
 -- 8. CONTRACTS
 -- One fixture per contract status: active, terminated, expired.
 -- Reminder rows also cover all reminder statuses.

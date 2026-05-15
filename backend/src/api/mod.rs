@@ -165,6 +165,7 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
         // ── Budget ──────────────────────────────────────────────
         .route("/budgets", get(budget::list).post(budget::create))
         .route("/budgets/{id}", get(budget::get).put(budget::update))
+        .route("/budgets/{id}/close", post(budget::close))
         .route(
             "/budgets/{id}/lines",
             get(budget::list_lines).post(budget::create_line),

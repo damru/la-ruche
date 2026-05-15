@@ -11,6 +11,8 @@ pub struct BudgetRow {
     pub fiscal_year: i32,
     pub status: String,
     pub approval_meeting_id: Option<Uuid>,
+    pub total_forecast: Decimal,
+    pub total_actual: Decimal,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -38,6 +40,7 @@ pub struct LevyCallRow {
     pub key_id: Option<Uuid>,
     pub shares_snapshot: Option<i32>,
     pub shares_total_snapshot: Option<i32>,
+    pub call_label: String,
 }
 
 /// One entry per unit to insert as levy_call.
@@ -52,9 +55,19 @@ pub struct LevyInsert {
 pub async fn list(pool: &PgPool, building_id: Uuid) -> crate::errors::AppResult<Vec<BudgetRow>> {
     Ok(sqlx::query_as!(
         BudgetRow,
-        r#"SELECT id, building_id, fiscal_year, status::text as "status!",
-           approval_meeting_id, created_at, updated_at
-           FROM budget WHERE building_id = $1 ORDER BY fiscal_year DESC"#,
+        r#"SELECT
+            b.id,
+            b.building_id,
+            b.fiscal_year,
+            b.status::text as "status!",
+            b.approval_meeting_id,
+            COALESCE((SELECT SUM(bl.budgeted_amount) FROM budget_line bl WHERE bl.budget_id = b.id), 0)::numeric as "total_forecast!",
+            COALESCE((SELECT SUM(bl.actual_amount) FROM budget_line bl WHERE bl.budget_id = b.id), 0)::numeric as "total_actual!",
+            b.created_at,
+            b.updated_at
+           FROM budget b
+           WHERE b.building_id = $1
+           ORDER BY b.fiscal_year DESC"#,
         building_id
     )
     .fetch_all(pool)
@@ -68,9 +81,18 @@ pub async fn get(
 ) -> crate::errors::AppResult<Option<BudgetRow>> {
     Ok(sqlx::query_as!(
         BudgetRow,
-        r#"SELECT id, building_id, fiscal_year, status::text as "status!",
-           approval_meeting_id, created_at, updated_at
-           FROM budget WHERE id = $1 AND building_id = $2"#,
+        r#"SELECT
+            b.id,
+            b.building_id,
+            b.fiscal_year,
+            b.status::text as "status!",
+            b.approval_meeting_id,
+            COALESCE((SELECT SUM(bl.budgeted_amount) FROM budget_line bl WHERE bl.budget_id = b.id), 0)::numeric as "total_forecast!",
+            COALESCE((SELECT SUM(bl.actual_amount) FROM budget_line bl WHERE bl.budget_id = b.id), 0)::numeric as "total_actual!",
+            b.created_at,
+            b.updated_at
+           FROM budget b
+           WHERE b.id = $1 AND b.building_id = $2"#,
         id,
         building_id
     )
@@ -85,14 +107,89 @@ pub async fn create(
 ) -> crate::errors::AppResult<BudgetRow> {
     Ok(sqlx::query_as!(
         BudgetRow,
-        r#"INSERT INTO budget (building_id, fiscal_year) VALUES ($1, $2)
-           RETURNING id, building_id, fiscal_year, status::text as "status!",
-           approval_meeting_id, created_at, updated_at"#,
+        r#"INSERT INTO budget (building_id, fiscal_year)
+           VALUES ($1, $2)
+           RETURNING
+           id,
+           building_id,
+           fiscal_year,
+           status::text as "status!",
+           approval_meeting_id,
+           0::numeric as "total_forecast!",
+           0::numeric as "total_actual!",
+           created_at,
+           updated_at"#,
         building_id,
         fiscal_year
     )
     .fetch_one(pool)
     .await?)
+}
+
+pub async fn ensure_budget_is_mutable(
+    pool: &PgPool,
+    budget_id: Uuid,
+    building_id: Uuid,
+) -> crate::errors::AppResult<()> {
+    let status = sqlx::query_scalar!(
+        r#"SELECT status::text as "status!" FROM budget WHERE id = $1 AND building_id = $2"#,
+        budget_id,
+        building_id
+    )
+    .fetch_optional(pool)
+    .await?
+    .ok_or(crate::errors::AppError::NotFound)?;
+
+    if status == "closed" {
+        return Err(crate::errors::AppError::conflict_code(
+            "errors.budget.exercise_closed",
+        ));
+    }
+
+    Ok(())
+}
+
+pub async fn ensure_levy_budget_is_mutable(
+    pool: &PgPool,
+    levy_id: Uuid,
+    building_id: Uuid,
+) -> crate::errors::AppResult<()> {
+    let status = sqlx::query_scalar!(
+        r#"SELECT b.status::text as "status!"
+           FROM levy_call lc
+           JOIN budget b ON b.id = lc.budget_id
+           WHERE lc.id = $1 AND b.building_id = $2"#,
+        levy_id,
+        building_id
+    )
+    .fetch_optional(pool)
+    .await?
+    .ok_or(crate::errors::AppError::NotFound)?;
+
+    if status == "closed" {
+        return Err(crate::errors::AppError::conflict_code(
+            "errors.budget.exercise_closed",
+        ));
+    }
+
+    Ok(())
+}
+
+pub async fn close(
+    pool: &PgPool,
+    budget_id: Uuid,
+    building_id: Uuid,
+) -> crate::errors::AppResult<bool> {
+    let result = sqlx::query!(
+        r#"UPDATE budget
+           SET status = 'closed', updated_at = NOW()
+           WHERE id = $1 AND building_id = $2 AND status != 'closed'"#,
+        budget_id,
+        building_id
+    )
+    .execute(pool)
+    .await?;
+    Ok(result.rows_affected() > 0)
 }
 
 pub async fn list_lines(
@@ -155,6 +252,7 @@ pub async fn generate_levies(
     budget_id: Uuid,
     _building_id: Uuid,
     due_date: NaiveDate,
+    call_label: &str,
     levies: &[LevyInsert],
 ) -> crate::errors::AppResult<Vec<LevyCallRow>> {
     let mut tx = pool.begin().await?;
@@ -164,17 +262,18 @@ pub async fn generate_levies(
         let row = sqlx::query_as!(
             LevyCallRow,
             r#"INSERT INTO levy_call
-                   (budget_id, unit_id, amount, due_date,
+                   (budget_id, unit_id, amount, due_date, call_label,
                     key_id, shares_snapshot, shares_total_snapshot)
-               VALUES ($1, $2, $3, $4, $5, $6, $7)
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
                ON CONFLICT DO NOTHING
                RETURNING id, budget_id, unit_id, amount, due_date,
-               status::text as "status!", issued_at, paid_at,
-               key_id, shares_snapshot, shares_total_snapshot"#,
+                status::text as "status!", issued_at, paid_at,
+                key_id, shares_snapshot, shares_total_snapshot, call_label"#,
             budget_id,
             l.unit_id,
             l.amount,
             due_date,
+            call_label,
             l.key_id,
             l.shares_snapshot as i32,
             l.shares_total_snapshot as i32,
@@ -197,9 +296,9 @@ pub async fn list_levies(
     building_id: Uuid,
 ) -> crate::errors::AppResult<Vec<serde_json::Value>> {
     let rows = sqlx::query!(
-        r#"SELECT lc.id, lc.unit_id, u.unit_number, lc.amount, lc.due_date,
+        r#"SELECT lc.id, lc.unit_id, u.unit_number, lc.amount, lc.due_date, lc.call_label,
            lc.status::text as status, lc.issued_at, lc.paid_at,
-           ua.first_name || ' ' || ua.last_name as owner_name
+            ua.first_name || ' ' || ua.last_name as owner_name
            FROM levy_call lc
            JOIN budget b ON b.id = lc.budget_id AND b.building_id = $2
            JOIN unit u ON u.id = lc.unit_id
@@ -223,12 +322,31 @@ pub async fn list_levies(
                 "owner_name": r.owner_name,
                 "amount": r.amount,
                 "due_date": r.due_date,
+                "call_label": r.call_label,
                 "status": r.status,
                 "issued_at": r.issued_at,
                 "paid_at": r.paid_at,
             })
         })
         .collect())
+}
+
+pub async fn total_levy_amount(
+    pool: &PgPool,
+    budget_id: Uuid,
+    building_id: Uuid,
+) -> crate::errors::AppResult<Decimal> {
+    let row = sqlx::query!(
+        r#"SELECT COALESCE(SUM(lc.amount), 0)::numeric as "total!"
+           FROM levy_call lc
+           JOIN budget b ON b.id = lc.budget_id
+           WHERE lc.budget_id = $1 AND b.building_id = $2"#,
+        budget_id,
+        building_id
+    )
+    .fetch_one(pool)
+    .await?;
+    Ok(row.total)
 }
 
 pub async fn mark_paid(

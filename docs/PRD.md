@@ -6,7 +6,7 @@
 > Document produit. Vision, utilisateurs, fonctionnalités et contraintes centralisés ici.
 > Pour le backlog détaillé (epics, stories, statuts), voir [EPICS.md](EPICS.md).
 > Liens vers ADR/DDR pour les contraintes techniques associées.
-> Dernière mise à jour : 25 avril 2026
+> Dernière mise à jour : 15 mai 2026
 
 ---
 
@@ -40,7 +40,7 @@
 
 **Assemblée Générale** — Cycle de vie complet d'une AG (brouillon → convoquée → tenue → clôturée), avec rappel du délai légal de convocation (21 jours, art. 9 décret 1967). Les résolutions sont typées par majorité (art. 24 / 25 / 26 / unanimité), le vote se fait par lot avec procurations, et les résultats sont calculés automatiquement. Le périmètre MVP couvre la préparation juridique de l'AG, le branchement des écrans sur l'API réelle, le dépôt du PV signé et la traçabilité simple de notification aux absents. → EP-003
 
-**Budget & Charges** — Budget prévisionnel par exercice découpé en lignes par clé de répartition. Les appels de fonds sont générés automatiquement au prorata des tantièmes. Le fonds travaux obligatoire (≥ 5%, art. 14-2 ALUR) est suivi sur un compte séparé. L'arrêté de comptes compare réalisé et prévisionnel. → EP-004
+**Budget & Charges** — Budget prévisionnel par exercice découpé en lignes par clé de répartition. Les appels de fonds sont générés automatiquement au prorata des tantièmes, en n'appelant que le solde non déjà appelé sur l'exercice. Chaque appel porte un libellé différenciant son motif (trimestriel, exceptionnel AG, libellé libre) pour lecture comptable et juridique. Le fonds travaux obligatoire (≥ 5%, art. 14-2 ALUR) est suivi sur un compte séparé. L'arrêté de comptes compare réalisé et prévisionnel, puis l'exercice peut être clôturé pour geler les actions. → EP-004
 
 ### Gestion courante
 

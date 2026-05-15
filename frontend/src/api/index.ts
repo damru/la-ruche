@@ -211,14 +211,16 @@ export const budgetApi = {
     api.get<Budget>(`/budgets/${id}`),
   create: (data: { fiscal_year: number }) =>
     api.post<Budget>('/budgets', data),
+  close: (id: string) =>
+    api.post(`/budgets/${id}/close`),
   listLines: (id: string) =>
     api.get<BudgetLine[]>(`/budgets/${id}/lines`),
   createLine: (id: string, data: { label: string; key_id: string; budgeted_amount: number }) =>
     api.post<BudgetLine>(`/budgets/${id}/lines`, data),
   deleteLine: (id: string, lid: string) =>
     api.delete(`/budgets/${id}/lines/${lid}`),
-  generateLevies: (id: string, data: { due_date: string; include_works_fund: boolean }) =>
-    api.post<{ generated: number; total_amount: number; due_date: string }>(`/budgets/${id}/levies/generate`, data),
+  generateLevies: (id: string, data: { due_date: string; include_works_fund: boolean; call_label?: string }) =>
+    api.post<{ generated: number; total_amount: number; already_called: number; remaining_amount: number; due_date: string; call_label?: string }>(`/budgets/${id}/levies/generate`, data),
   listLevies: (id: string) =>
     api.get<LevyCall[]>(`/budgets/${id}/levies`),
   markPaid: (levyId: string) =>

@@ -1,7 +1,7 @@
 # DESIGN.md — l'Application Design System "The Modern Registry"
 
 > **Dénomination** — Dans le présent document, l'expression **« l'Application »** désigne exclusivement **La Ruche**, plateforme web open source de gestion participative de copropriété. Ces deux termes sont interchangeables et désignent la même entité logicielle.
-> Dernière mise à jour : 2026-05-09
+> Dernière mise à jour : 2026-05-15
 
 ## Typographie — 3 polices, 3 rôles (DDR-001 v3)
 
@@ -324,6 +324,14 @@ Les cartes de note légale globales de page utilisent `CCard` + `CLegalNotice` e
 Les obligations légales compactes et strictement locales à un libellé peuvent encore utiliser `CTooltip`, mais les notes juridiques de bas de page doivent être homogènes via `CCard` + `CLegalNotice`.
 
 Cette règle s'applique notamment aux délais de déclaration de sinistre, au carnet d'entretien réglementaire, au registre de copropriété et aux consultations informelles.
+
+## Règle UI — Vue Budget & Charges
+
+- Les KPI budget sur mobile restent lisibles en grille 2 colonnes (2 lignes pour 4 KPI), sans défilement horizontal.
+- La topbar de la vue budget n'expose qu'une action globale : `Clore l'exercice` (avec confirmation modale).
+- Les actions métier locales (`Nouvelle ligne`, `Générer les appels`, `Marquer comme payé`) sont portées par leurs cartes respectives, alignées à droite sur la ligne de titre.
+- Le bloc légal Budget est homogène avec le pattern de bas de page `CLegalCard` + `CLegalNotice` + `CLegalDescription`.
+- Le sous-titre de la carte `Appels de fonds` utilise deux métriques séparées (`nombre de lots`, `taux de recouvrement`) via `CFlexGroup` horizontal + `CMetaItem`.
 
 ## Règle UI — Vue Signalements
 
