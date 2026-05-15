@@ -79,7 +79,9 @@ pub async fn close(
     if closed {
         Ok(StatusCode::NO_CONTENT)
     } else {
-        Err(AppError::conflict_code("errors.budget.exercise_already_closed"))
+        Err(AppError::conflict_code(
+            "errors.budget.exercise_already_closed",
+        ))
     }
 }
 
@@ -203,11 +205,7 @@ pub async fn generate_levies(
 
     let computed_levies = compute_levies(remaining_amount, &units_with_shares, total_shares);
     let now = chrono::Utc::now();
-    let default_label = format!(
-        "Trimestriel T{} {}",
-        ((now.month0() / 3) + 1),
-        now.year()
-    );
+    let default_label = format!("Trimestriel T{} {}", ((now.month0() / 3) + 1), now.year());
     let call_label = input
         .call_label
         .as_deref()

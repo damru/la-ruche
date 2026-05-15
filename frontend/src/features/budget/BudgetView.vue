@@ -581,7 +581,7 @@ const worksFundBelowThreshold = computed(() => {
                         class="chip tone--default"
                       >{{ line.key_name }}</span>
                       <CBtn
-                      v-if="canEditSelectedBudget"
+                        v-if="canEditSelectedBudget"
                         variant="ghost"
                         size="sm"
                         class="prog-item__delete"
@@ -793,7 +793,6 @@ const worksFundBelowThreshold = computed(() => {
                   {{ t('common.noData') }}
                 </p>
               </template>
-
             </div>
 
             <!-- Overdue payments panel (S02) -->
