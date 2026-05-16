@@ -4,6 +4,11 @@ import CKpiMetric from '@/components/atoms/CKpiMetric.vue'
 
 type Tone = 'default' | 'accent' | 'warn' | 'err' | 'valid' | 'muted'
 
+// Slot contract:
+// - icon: header icon
+// - subtitle: KPI secondary text
+// - footer: optional content displayed below the KPI block
+
 withDefaults(defineProps<{
   label: string
   value: string | number

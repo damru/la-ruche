@@ -195,7 +195,7 @@ pub async fn generate_levies(
     } else {
         Decimal::ZERO
     };
-    let already_called = if input.include_works_fund {
+    let already_called_total = if input.include_works_fund {
         levy_totals.total_amount
     } else {
         levy_totals.charge_amount
@@ -211,7 +211,7 @@ pub async fn generate_levies(
         return Ok(Json(serde_json::json!({
             "generated": 0,
             "total_amount": total_amount,
-            "already_called": already_called,
+            "already_called": already_called_total,
             "remaining_amount": Decimal::ZERO,
             "due_date": input.due_date,
         })));
@@ -281,7 +281,7 @@ pub async fn generate_levies(
     Ok(Json(serde_json::json!({
         "generated": nb,
         "total_amount": total_amount,
-        "already_called": already_called,
+        "already_called": already_called_total,
         "remaining_amount": remaining_amount,
         "call_label": call_label,
         "due_date": input.due_date,

@@ -110,10 +110,15 @@ const totalLeviedAmount = computed(() =>
   levies.value.reduce((sum, levy) => sum + levy.amount, 0)
 )
 const alreadyCalledChargeAmount = computed(() =>
+  // Keep a defensive fallback for pre-migration payloads in local/demo environments.
   levies.value.reduce((sum, levy) => sum + Number(levy.charge_amount ?? levy.amount ?? 0), 0)
 )
 const alreadyCalledWorksFundAmount = computed(() =>
   levies.value.reduce((sum, levy) => sum + Number(levy.works_fund_amount ?? 0), 0)
+)
+const alreadyCalledDisplayAmount = computed(() =>
+  alreadyCalledChargeAmount.value
+  + (generateForm.value.include_works_fund ? alreadyCalledWorksFundAmount.value : 0)
 )
 const levyCollectionRate = computed(() =>
   levyCallCount.value > 0 ? Math.round((levyPaidCount.value / levyCallCount.value) * 100) : 0
@@ -1103,7 +1108,7 @@ const worksFundBelowThreshold = computed(() => {
           </div>
           <div class="generate-summary__metric">
             <span class="generate-summary__metric-label">{{ t('budget.generateSummaryAlreadyCalledLabel') }}</span>
-            <strong class="generate-summary__metric-value">{{ formatCurrency(alreadyCalledChargeAmount + (generateForm.include_works_fund ? alreadyCalledWorksFundAmount : 0)) }}</strong>
+            <strong class="generate-summary__metric-value">{{ formatCurrency(alreadyCalledDisplayAmount) }}</strong>
           </div>
           <div class="generate-summary__metric">
             <span class="generate-summary__metric-label">{{ t('budget.generateSummaryRemainingLabel') }}</span>
