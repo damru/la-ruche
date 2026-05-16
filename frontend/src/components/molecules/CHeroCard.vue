@@ -1,5 +1,13 @@
 <script setup lang="ts">
+import CCard from '@/components/molecules/CCard.vue'
+import CKpiMetric from '@/components/atoms/CKpiMetric.vue'
+
 type Tone = 'default' | 'accent' | 'warn' | 'err' | 'valid' | 'muted'
+
+// Slot contract:
+// - icon: header icon
+// - subtitle: KPI secondary text
+// - footer: optional content displayed below the KPI block
 
 withDefaults(defineProps<{
   label: string
@@ -13,7 +21,10 @@ withDefaults(defineProps<{
 </script>
 
 <template>
-  <div class="hero-card">
+  <CCard
+    class="hero-card"
+    padding="md"
+  >
     <div class="hero-card__header">
       <p class="hero-card__label">
         {{ label }}
@@ -25,31 +36,24 @@ withDefaults(defineProps<{
         <slot name="icon"></slot>
       </div>
     </div>
-
-    <p
-      class="hero-card__value"
+    <CKpiMetric
+      :data="value"
       :class="{ [`tone--${tone}`]: emphasizeValue }"
     >
-      {{ value }}
-    </p>
-
+      <template #subtitle>
+        <slot name="subtitle"></slot>
+      </template>
+    </CKpiMetric>
     <div
-      v-if="$slots.subtitle"
-      class="hero-card__subtitle"
+      v-if="$slots.footer"
+      class="hero-card__footer"
     >
-      <slot name="subtitle"></slot>
+      <slot name="footer"></slot>
     </div>
-  </div>
+  </CCard>
 </template>
 
 <style scoped>
-.hero-card {
-  background: var(--color-surface-container-lowest);
-  border-radius: var(--radius-lg);
-  padding: var(--space-5);
-  box-shadow: var(--shadow-md);
-}
-
 .hero-card__header {
   display: flex;
   align-items: flex-start;
@@ -66,20 +70,11 @@ withDefaults(defineProps<{
 .hero-card__icon {
   flex-shrink: 0;
 }
-
-.hero-card__value {
-  font-family: var(--font-display);
-  font-size: 28px;
-  font-weight: var(--fw-bold);
-  font-variation-settings: 'opsz' 72;
-  letter-spacing: -0.03em;
-  color: var(--tone-fg, var(--color-on-surface));
-  line-height: 1;
+.hero-card :deep(.c-kpi-metric__subtitle) {
+  margin-top: 0;
 }
 
-.hero-card__subtitle {
-  margin-top: var(--space-1);
-  font-size: var(--text-xs);
-  color: var(--color-on-surface-variant);
+.hero-card__footer {
+  margin-top: var(--space-3);
 }
 </style>

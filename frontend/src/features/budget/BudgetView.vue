@@ -15,6 +15,7 @@ import CFormSelect from '@/components/atoms/CFormSelect.vue'
 import CFormCheckbox from '@/components/atoms/CFormCheckbox.vue'
 import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
 import CProgressBar from '@/components/atoms/CProgressBar.vue'
+import CDataTable from '@/components/molecules/CDataTable.vue'
 import CLegalDescription from '@/components/atoms/CLegalDescription.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CEyebrow from '@/components/atoms/CEyebrow.vue'
@@ -36,6 +37,7 @@ import CIconLock from '@/components/atoms/CIconLock.svg'
 import CIconChevronRight from '@/components/atoms/CIconChevronRight.svg'
 import { budgetApi, allocationKeysApi, buildingApi } from '@/api'
 import type { Budget, BudgetLine, LevyCall, WorksFund, AllocationKey, LevyStatus, BuildingStats } from '@/types/domain'
+import type { Column } from '@/components/molecules/CDataTable.vue'
 
 const { t } = useI18n()
 const { formatCurrency, formatDate } = useFormatters()
@@ -43,6 +45,7 @@ const { hasAnyRole } = useRole()
 
 const canManage = computed(() => hasAnyRole(['manager']))
 const canEditSelectedBudget = computed(() => canManage.value && selectedBudget.value?.status !== 'closed')
+const canMarkLeviesPaid = computed(() => hasAnyRole(['manager', 'board_member']))
 const DEFAULT_WORKS_FUND_RATE = 0.05
 const sharePercentageFormatter = new Intl.NumberFormat('fr-FR', {
   minimumFractionDigits: 1,
@@ -106,6 +109,17 @@ const levyPaidCount = computed(() =>
 const totalLeviedAmount = computed(() =>
   levies.value.reduce((sum, levy) => sum + levy.amount, 0)
 )
+const alreadyCalledChargeAmount = computed(() =>
+  // Keep a defensive fallback for pre-migration payloads in local/demo environments.
+  levies.value.reduce((sum, levy) => sum + Number(levy.charge_amount ?? levy.amount ?? 0), 0)
+)
+const alreadyCalledWorksFundAmount = computed(() =>
+  levies.value.reduce((sum, levy) => sum + Number(levy.works_fund_amount ?? 0), 0)
+)
+const alreadyCalledDisplayAmount = computed(() =>
+  alreadyCalledChargeAmount.value
+  + (generateForm.value.include_works_fund ? alreadyCalledWorksFundAmount.value : 0)
+)
 const levyCollectionRate = computed(() =>
   levyCallCount.value > 0 ? Math.round((levyPaidCount.value / levyCallCount.value) * 100) : 0
 )
@@ -113,9 +127,35 @@ const worksFundContributionTarget = computed(() => selectedTotalForecast.value *
 const impactedLotsCount = computed(() =>
   buildingStats.value?.nb_lots ?? leviedUnitsCount.value
 )
-const generatePreviewTotal = computed(() => {
-  const totalTarget = selectedTotalForecast.value + (generateForm.value.include_works_fund ? worksFundContributionTarget.value : 0)
-  return Math.max(totalTarget - totalLeviedAmount.value, 0)
+const generatePreviewChargeTotal = computed(() =>
+  Math.max(selectedTotalForecast.value - alreadyCalledChargeAmount.value, 0)
+)
+const generatePreviewWorksFundTotal = computed(() =>
+  generateForm.value.include_works_fund
+    ? Math.max(worksFundContributionTarget.value - alreadyCalledWorksFundAmount.value, 0)
+    : 0
+)
+const generatePreviewTotal = computed(() =>
+  generatePreviewChargeTotal.value + generatePreviewWorksFundTotal.value
+)
+const canGenerateLevies = computed(() =>
+  selectedBudget.value?.status !== 'closed' && generatePreviewTotal.value > 0
+)
+const levyTableColumns = computed<Column<LevyCall>[]>(() => {
+  const columns: Column<LevyCall>[] = [
+    { key: 'unit_number', label: t('common.lot') },
+    { key: 'owner_name', label: t('common.coOwner') },
+    { key: 'amount', label: t('common.amount'), align: 'right' },
+    { key: 'due_date', label: t('common.dueDate'), align: 'right' },
+    { key: 'call_label', label: t('budget.levyCallLabel') },
+    { key: 'status', label: t('common.status') },
+  ]
+
+  if (canMarkLeviesPaid.value) {
+    columns.push({ key: 'actions', label: '', align: 'right' })
+  }
+
+  return columns
 })
 const budgetBreakdownItems = computed(() => {
   const total = budgetLines.value.reduce((sum, line) => sum + Number(line.budgeted_amount ?? 0), 0)
@@ -209,6 +249,8 @@ async function loadBudgetData(budgetId: string) {
   levies.value = (leviesRes.data as LevyCall[]).map(levy => ({
     ...levy,
     amount: Number(levy.amount),
+    charge_amount: levy.charge_amount != null ? Number(levy.charge_amount) : Number(levy.amount),
+    works_fund_amount: levy.works_fund_amount != null ? Number(levy.works_fund_amount) : 0,
     call_label:
       !levy.call_label || levy.call_label === 'Levy call'
         ? t('budget.defaultLevyLabel')
@@ -527,6 +569,51 @@ const worksFundBelowThreshold = computed(() => {
           </button>
         </div>
 
+        <div
+          v-if="overdueLevies.length > 0"
+          class="mini-card mini-card--top"
+        >
+          <h3 class="mini-title">
+            {{ t('budget.latePayments') }}
+          </h3>
+          <CFlexGroup
+            direction="row"
+            class="mini-sub mini-sub--metrics"
+          >
+            <CMetaItem variant="sub">
+              {{ t('budget.latePaymentsCount', { count: overdueLevies.length }) }}
+            </CMetaItem>
+            <CMetaItem variant="sub">
+              {{ t('budget.latePaymentsTotal', { amount: formatCurrency(overdueTotal) }) }}
+            </CMetaItem>
+          </CFlexGroup>
+          <div
+            v-for="levy in overdueLevies"
+            :key="levy.id"
+            class="overdue-item"
+          >
+            <div class="overdue-avatar tone--err">
+              {{ initials(levy.owner_name ?? '?') }}
+            </div>
+            <div class="overdue-info">
+              <div class="overdue-name">
+                {{ levy.owner_name ?? '—' }}
+              </div>
+              <div class="overdue-lot">
+                {{ levy.unit_number ?? '—' }}
+              </div>
+            </div>
+            <div class="overdue-right">
+              <div class="overdue-amount">
+                {{ formatCurrency(levy.amount) }}
+              </div>
+              <div class="overdue-date">
+                {{ levy.due_date ? formatDate(levy.due_date) : '—' }}
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- KPI row -->
         <div class="kpi-grid">
           <CHeroCard
@@ -617,7 +704,7 @@ const worksFundBelowThreshold = computed(() => {
                     @click="showBreakdownModal = true"
                   >
                     <CIconPieChart aria-hidden="true" />
-                    {{ t('budget.breakdown') }}
+                    <span class="section-head__action-label">{{ t('budget.breakdown') }}</span>
                   </CBtn>
                   <CBtn
                     v-if="canEditSelectedBudget"
@@ -626,7 +713,7 @@ const worksFundBelowThreshold = computed(() => {
                     @click="openCreateLineModal"
                   >
                     <CIconPlus aria-hidden="true" />
-                    {{ t('budget.newLine') }}
+                    <span class="section-head__action-label">{{ t('budget.newLine') }}</span>
                   </CBtn>
                 </div>
               </div>
@@ -636,15 +723,6 @@ const worksFundBelowThreshold = computed(() => {
                 class="empty-state"
               >
                 <p>{{ t('common.noData') }}</p>
-                <CBtn
-                  v-if="canEditSelectedBudget"
-                  variant="ghost"
-                  size="sm"
-                  @click="openCreateLineModal"
-                >
-                  <CIconPlus aria-hidden="true" />
-                  {{ t('budget.addLine') }}
-                </CBtn>
               </div>
 
               <div
@@ -726,7 +804,7 @@ const worksFundBelowThreshold = computed(() => {
                     @click="openGenerateModal"
                   >
                     <CIconMegaphone aria-hidden="true" />
-                    {{ t('budget.generateLevies') }}
+                    <span class="section-head__action-label">{{ t('budget.generateLevies') }}</span>
                   </CBtn>
                 </div>
               </div>
@@ -736,100 +814,71 @@ const worksFundBelowThreshold = computed(() => {
                 class="empty-state"
               >
                 <p>{{ t('common.noData') }}</p>
-                <CBtn
-                  v-if="canManage && selectedBudgetId"
-                  variant="ghost"
-                  size="sm"
-                  @click="openGenerateModal"
-                >
-                  <CIconMegaphone aria-hidden="true" />
-                  {{ t('budget.generateLevies') }}
-                </CBtn>
               </div>
 
               <div
                 v-else
-                class="table-wrap"
-                tabindex="0"
-                :aria-label="t('budget.levies')"
+                class="levies-table"
               >
-                <table class="data-table">
-                  <thead>
-                    <tr>
-                      <th>{{ t('common.lot') }}</th>
-                      <th>{{ t('common.coOwner') }}</th>
-                      <th class="col-right">
-                        {{ t('common.amount') }}
-                      </th>
-                      <th class="col-right">
-                        {{ t('common.dueDate') }}
-                      </th>
-                      <th>{{ t('budget.levyCallLabel') }}</th>
-                      <th>{{ t('common.status') }}</th>
-                      <th
-                        v-if="canEditSelectedBudget"
-                        class="col-shrink"
-                      ></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr
-                      v-for="levy in levies"
-                      :key="levy.id"
+                <CDataTable
+                  :columns="levyTableColumns"
+                  :rows="levies"
+                  :empty-text="t('common.noData')"
+                >
+                  <template #cell-unit_number="{ row }">
+                    <span class="cell-mono">
+                      {{ row.unit_number ?? '—' }}
+                    </span>
+                  </template>
+                  <template #cell-owner_name="{ row }">
+                    {{ row.owner_name ?? '—' }}
+                  </template>
+                  <template #cell-amount="{ row }">
+                    <span
+                      class="cell-numeric"
+                      :class="{ 'tone--err': row.status === 'overdue' }"
                     >
-                      <td class="cell-mono">
-                        {{ levy.unit_number ?? '—' }}
-                      </td>
-                      <td>{{ levy.owner_name ?? '—' }}</td>
-                      <td
-                        class="cell-numeric"
-                        :class="{ 'tone--err': levy.status === 'overdue' }"
-                      >
-                        {{ formatCurrency(levy.amount) }}
-                      </td>
-                      <td class="col-right cell-muted">
-                        {{ levy.due_date ? formatDate(levy.due_date) : '—' }}
-                      </td>
-                      <td class="cell-muted">
-                        {{ levy.call_label || t('budget.defaultLevyLabel') }}
-                      </td>
-                      <td>
-                        <span :class="['chip', levyStatusVariant(levy.status as LevyStatus)]">
-                          <span
-                            class="chip-dot"
-                            aria-hidden="true"
-                          ></span>
-                          {{ t(`budget.levyStatuses.${levy.status}`) }}
-                        </span>
-                      </td>
-                      <td v-if="canEditSelectedBudget">
-                        <CBtn
-                          v-if="levy.status !== 'paid'"
-                          variant="ghost"
-                          size="sm"
-                          :loading="markingPaidId === levy.id"
-                          @click="markPaid(levy)"
-                        >
-                          <CIconCheckCircle aria-hidden="true" />
-                          {{ t('budget.markPaid') }}
-                        </CBtn>
-                      </td>
-                    </tr>
-                  </tbody>
-                  <tfoot>
-                    <tr class="row-total">
-                      <td colspan="2">
-                        {{ t('common.total') }}
-                      </td>
-                      <td class="cell-numeric">
-                        {{ formatCurrency(levies.reduce((s, l) => s + l.amount, 0)) }}
-                      </td>
-                      <td
-                        :colspan="canEditSelectedBudget ? 4 : 3"
-                      ></td>
-                    </tr>
-                  </tfoot>
-                </table>
+                      {{ formatCurrency(Number(row.amount ?? 0)) }}
+                    </span>
+                  </template>
+                  <template #cell-due_date="{ row }">
+                    <span class="cell-muted">
+                      {{ row.due_date ? formatDate(row.due_date) : '—' }}
+                    </span>
+                  </template>
+                  <template #cell-call_label="{ row }">
+                    <span class="cell-muted">
+                      {{ row.call_label || t('budget.defaultLevyLabel') }}
+                    </span>
+                  </template>
+                  <template #cell-status="{ row }">
+                    <span :class="['chip', levyStatusVariant(row.status as LevyStatus)]">
+                      <span
+                        class="chip-dot"
+                        aria-hidden="true"
+                      ></span>
+                      {{ t(`budget.levyStatuses.${row.status}`) }}
+                    </span>
+                  </template>
+                  <template #cell-actions="{ row }">
+                    <CBtn
+                      v-if="canMarkLeviesPaid && row.status !== 'paid'"
+                      variant="ghost"
+                      size="sm"
+                      :loading="markingPaidId === row.id"
+                      @click="markPaid(row)"
+                    >
+                      <CIconCheckCircle aria-hidden="true" />
+                      {{ t('budget.markPaid') }}
+                    </CBtn>
+                  </template>
+                </CDataTable>
+                <div class="levies-total">
+                  <span>{{ t('common.total') }}</span>
+                  <span class="cell-numeric">
+                    {{ formatCurrency(totalLeviedAmount) }}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -886,52 +935,6 @@ const worksFundBelowThreshold = computed(() => {
                   {{ t('common.noData') }}
                 </p>
               </template>
-            </div>
-
-            <!-- Overdue payments panel (S02) -->
-            <div
-              v-if="overdueLevies.length > 0"
-              class="mini-card"
-            >
-              <h3 class="mini-title">
-                {{ t('budget.latePayments') }}
-              </h3>
-              <CFlexGroup
-                direction="row"
-                class="mini-sub mini-sub--metrics"
-              >
-                <CMetaItem variant="sub">
-                  {{ t('budget.latePaymentsCount', { count: overdueLevies.length }) }}
-                </CMetaItem>
-                <CMetaItem variant="sub">
-                  {{ t('budget.latePaymentsTotal', { amount: formatCurrency(overdueTotal) }) }}
-                </CMetaItem>
-              </CFlexGroup>
-              <div
-                v-for="levy in overdueLevies"
-                :key="levy.id"
-                class="overdue-item"
-              >
-                <div class="overdue-avatar tone--err">
-                  {{ initials(levy.owner_name ?? '?') }}
-                </div>
-                <div class="overdue-info">
-                  <div class="overdue-name">
-                    {{ levy.owner_name ?? '—' }}
-                  </div>
-                  <div class="overdue-lot">
-                    {{ levy.unit_number ?? '—' }}
-                  </div>
-                </div>
-                <div class="overdue-right">
-                  <div class="overdue-amount">
-                    {{ formatCurrency(levy.amount) }}
-                  </div>
-                  <div class="overdue-date">
-                    {{ levy.due_date ? formatDate(levy.due_date) : '—' }}
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -1105,11 +1108,11 @@ const worksFundBelowThreshold = computed(() => {
           </div>
           <div class="generate-summary__metric">
             <span class="generate-summary__metric-label">{{ t('budget.generateSummaryAlreadyCalledLabel') }}</span>
-            <strong>{{ formatCurrency(totalLeviedAmount) }}</strong>
+            <strong class="generate-summary__metric-value">{{ formatCurrency(alreadyCalledDisplayAmount) }}</strong>
           </div>
           <div class="generate-summary__metric">
             <span class="generate-summary__metric-label">{{ t('budget.generateSummaryRemainingLabel') }}</span>
-            <strong>{{ formatCurrency(generatePreviewTotal) }}</strong>
+            <strong class="generate-summary__metric-value">{{ formatCurrency(generatePreviewTotal) }}</strong>
           </div>
         </div>
         <p
@@ -1132,6 +1135,7 @@ const worksFundBelowThreshold = computed(() => {
         </CBtn>
         <CBtn
           variant="primary"
+          :disabled="!canGenerateLevies"
           :loading="generatingLevies"
           @click="generateLevies"
         >
@@ -1285,6 +1289,7 @@ const worksFundBelowThreshold = computed(() => {
   gap: 12px;
 }
 .section-head__actions { display: inline-flex; align-items: center; gap: 8px; }
+.section-head__action-label { display: inline; }
 .section-title {
   font-family: var(--font-display);
   font-size: 17px;
@@ -1368,11 +1373,28 @@ const worksFundBelowThreshold = computed(() => {
 }
 
 /* ── Table overrides for this view ───────────────────────────────── */
-.table-wrap {
-  overflow-x: auto;
-  overflow-y: hidden;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-gutter: stable both-edges;
+.levies-table :deep(.c-table-wrap) {
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+}
+.levies-table :deep(.c-table) {
+  min-width: 760px;
+}
+.levies-table :deep(.c-table__th),
+.levies-table :deep(.c-table__td) {
+  white-space: nowrap;
+}
+.levies-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 24px;
+  border-top: 1px solid var(--color-outline-variant);
+  font-size: 13px;
+  font-weight: var(--fw-semibold);
+  color: var(--color-on-surface);
+  background: var(--color-surface-container-lowest);
 }
 .cell-mono { font-family: var(--font-mono); font-size: 12px; color: var(--color-primary); }
 .cell-muted { color: var(--color-on-surface-variant); font-size: 12px; }
@@ -1433,6 +1455,7 @@ const worksFundBelowThreshold = computed(() => {
   padding: 20px;
   box-shadow: var(--shadow-md);
 }
+.mini-card--top { margin-bottom: 20px; }
 .mini-title {
   font-family: var(--font-display);
   font-size: 15px;
@@ -1495,6 +1518,10 @@ const worksFundBelowThreshold = computed(() => {
   display: flex;
   flex-direction: column;
   gap: 4px;
+}
+.generate-summary__metric-value {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
 }
 .generate-summary__metric-label {
   font-size: 11px;
@@ -1586,6 +1613,10 @@ const worksFundBelowThreshold = computed(() => {
 
   .generate-summary__grid {
     grid-template-columns: 1fr;
+  }
+
+  .section-head__action-label {
+    display: none;
   }
 }
 </style>

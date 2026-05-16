@@ -92,6 +92,7 @@ declare module 'vue' {
     CIconX: typeof import('./../components/atoms/CIconX.svg')['default']
     CIconXCircle: typeof import('./../components/atoms/CIconXCircle.svg')['default']
     CKpiCard: typeof import('./../components/molecules/CKpiCard.vue')['default']
+    CKpiMetric: typeof import('./../components/atoms/CKpiMetric.vue')['default']
     CLegalCard: typeof import('./../components/molecules/CLegalCard.vue')['default']
     CLegalDescription: typeof import('./../components/atoms/CLegalDescription.vue')['default']
     CLegalNotice: typeof import('./../components/molecules/CLegalNotice.vue')['default']

@@ -179,8 +179,9 @@ Invariants techniques implémentés :
 - Les documents de tâche sont répartis entre `task_document` (gestionnaires) et `vendor_submission_document` (soumissions prestataire) ; les endpoints manager `GET/POST/DELETE /tasks/{id}/documents` et `document_count` agrègent ces deux sources.
 - `claim_document` suit le même modèle d'association documentaire que `report_document`, avec nettoyage des liens lors des suppressions d'entité.
 - `maintenance_log.task_id` et `maintenance_log.contract_id` restent des liens de traçabilité souples, sans cascade destructive depuis les tâches ou contrats.
-- La clôture d'un `budget` (`status = closed`) gèle les mutations de l'exercice : création/suppression de lignes, génération d'appels et marquage `paid` d'un appel.
+- La clôture d'un `budget` (`status = closed`) gèle les mutations de l'exercice : création/suppression de lignes et génération de nouveaux appels ; le marquage `paid` d'un appel existant reste autorisé.
 - Les appels de fonds portent un `call_label` persisted côté backend pour différencier explicitement la nature de chaque appel dans les vues comptables.
+- Les appels de fonds persistés portent une décomposition `charge_amount` / `works_fund_amount` sur `levy_call` pour isoler le calcul du solde à appeler selon l'inclusion du fonds travaux.
 - `BudgetView` mutualise désormais ses KPI via `CHeroCard`, dérive le récapitulatif de génération d'appels à partir des montants déjà appelés côté frontend, et expose une modale de répartition circulaire calculée depuis `budget_line`.
 - Le chantier `EP-003` validé en mai 2026 cible d'abord le branchement des vues AG sur l'API réelle existante (`meetings`, `resolutions`, `votes`, `results`, transitions `call` / `close`) avant toute extension de conduite de séance.
 - La frontière documentaire et technique entre `EP-003` et `EP-013` est la suivante : `EP-003` couvre la préparation juridique de l'AG, la saisie des résolutions, le calcul des résultats, le dépôt du PV signé et une traçabilité simple de notification ; `EP-013` couvre la feuille de présence avancée, les rôles de séance, les notes collaboratives et la validation/signature probante du PV.

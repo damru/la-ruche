@@ -219,6 +219,8 @@ export interface LevyCall {
   unit_number?: string
   owner_name?: string
   amount: number
+  charge_amount?: number
+  works_fund_amount?: number
   due_date: string
   status: LevyStatus
   issued_at: string
