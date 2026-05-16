@@ -153,7 +153,7 @@ const budgetBreakdownStyle = computed(() => {
   }
 })
 
-const legalCardLinks = computed(() => [
+const legalCardLinksLevies = computed(() => [
   {
     label: t('budget.legalCard.article35LinkLabel'),
     href: t('budget.legalCard.article35LinkHref'),
@@ -162,6 +162,9 @@ const legalCardLinks = computed(() => [
     label: t('budget.legalCard.article37LinkLabel'),
     href: t('budget.legalCard.article37LinkHref'),
   },
+])
+
+const legalCardLinksWorksFund = computed(() => [
   {
     label: t('budget.legalCard.article14_2_1LinkLabel'),
     href: t('budget.legalCard.article14_2_1LinkHref'),
@@ -934,16 +937,20 @@ const worksFundBelowThreshold = computed(() => {
         </div>
 
         <CLegalCard>
-          <CLegalNotice :links="legalCardLinks">
-            <CLegalDescription
-              :title="t('budget.legalCard.title')"
-              :summary="t('budget.legalCard.summary')"
-            />
-            <CLegalDescription
-              :title="t('budget.legalCard.worksFundTitle')"
-              :summary="t('budget.legalCard.worksFundSummary')"
-            />
-          </CLegalNotice>
+          <CFlexGroup direction="column">
+            <CLegalNotice :links="legalCardLinksLevies">
+              <CLegalDescription
+                :title="t('budget.legalCard.title')"
+                :summary="t('budget.legalCard.summary')"
+              />
+            </CLegalNotice>
+            <CLegalNotice :links="legalCardLinksWorksFund">
+              <CLegalDescription
+                :title="t('budget.legalCard.worksFundTitle')"
+                :summary="t('budget.legalCard.worksFundSummary')"
+              />
+            </CLegalNotice>
+          </CFlexGroup>
         </CLegalCard>
       </template>
     </div>
@@ -1140,6 +1147,9 @@ const worksFundBelowThreshold = computed(() => {
       size="lg"
       @update:open="showBreakdownModal = $event"
     >
+      <p class="breakdown-modal__intro">
+        {{ t('budget.breakdownIntro') }}
+      </p>
       <div class="breakdown-modal">
         <div class="breakdown-modal__chart-wrap">
           <div
@@ -1151,9 +1161,6 @@ const worksFundBelowThreshold = computed(() => {
         </div>
 
         <div class="breakdown-modal__legend">
-          <p class="breakdown-modal__intro">
-            {{ t('budget.breakdownIntro') }}
-          </p>
           <div
             v-for="item in budgetBreakdownItems"
             :key="item.id"
@@ -1268,7 +1275,7 @@ const worksFundBelowThreshold = computed(() => {
   background: var(--color-surface-container-lowest);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
-  overflow: hidden;
+  overflow: clip;
 }
 .section-head {
   display: flex;
@@ -1503,6 +1510,7 @@ const worksFundBelowThreshold = computed(() => {
   grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
   gap: 24px;
   align-items: center;
+  margin-top: 16px;
 }
 .breakdown-modal__chart-wrap {
   display: flex;
@@ -1514,15 +1522,15 @@ const worksFundBelowThreshold = computed(() => {
   border-radius: 50%;
   box-shadow: inset 0 0 0 1px rgba(25, 28, 29, 0.05);
 }
+.breakdown-modal__intro {
+  font-size: 13px;
+  color: var(--color-on-surface-variant);
+  margin: 0;
+}
 .breakdown-modal__legend {
   display: flex;
   flex-direction: column;
   gap: 12px;
-}
-.breakdown-modal__intro {
-  font-size: 13px;
-  color: var(--color-on-surface-variant);
-  margin-bottom: 4px;
 }
 .breakdown-modal__legend-item {
   display: flex;
@@ -1552,6 +1560,8 @@ const worksFundBelowThreshold = computed(() => {
 .breakdown-modal__legend-copy :deep(.c-meta-item) {
   font-size: 12px;
   color: var(--color-on-surface-variant);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
 }
 
 @media (max-width: 1024px) {
