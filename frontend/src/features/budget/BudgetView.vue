@@ -931,7 +931,6 @@ const worksFundBelowThreshold = computed(() => {
                 </p>
               </template>
             </div>
-
           </div>
         </div>
 

@@ -188,7 +188,8 @@ pub async fn generate_levies(
 
     let levy_totals = db::budget::levy_amount_totals(&state.pool, id, auth.building_id).await?;
     let target_charge_amount = total_charges;
-    let remaining_charge_amount = (target_charge_amount - levy_totals.charge_amount).max(Decimal::ZERO);
+    let remaining_charge_amount =
+        (target_charge_amount - levy_totals.charge_amount).max(Decimal::ZERO);
     let remaining_works_fund_amount = if input.include_works_fund {
         (works_fund_amount - levy_totals.works_fund_amount).max(Decimal::ZERO)
     } else {
@@ -227,7 +228,11 @@ pub async fn generate_levies(
 
     let charge_levies = compute_levies(remaining_charge_amount, &units_with_shares, total_shares);
     let works_fund_levies = if input.include_works_fund {
-        compute_levies(remaining_works_fund_amount, &units_with_shares, total_shares)
+        compute_levies(
+            remaining_works_fund_amount,
+            &units_with_shares,
+            total_shares,
+        )
     } else {
         vec![]
     };
@@ -247,7 +252,11 @@ pub async fn generate_levies(
         .map(|l| db::budget::LevyInsert {
             unit_id: l.unit_id,
             key_id: l.key_id,
-            amount: l.amount + works_fund_by_unit.get(&l.unit_id).copied().unwrap_or(Decimal::ZERO),
+            amount: l.amount
+                + works_fund_by_unit
+                    .get(&l.unit_id)
+                    .copied()
+                    .unwrap_or(Decimal::ZERO),
             charge_amount: l.amount,
             works_fund_amount: works_fund_by_unit
                 .get(&l.unit_id)
