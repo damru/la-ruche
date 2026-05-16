@@ -44,6 +44,10 @@ const { hasAnyRole } = useRole()
 const canManage = computed(() => hasAnyRole(['manager']))
 const canEditSelectedBudget = computed(() => canManage.value && selectedBudget.value?.status !== 'closed')
 const DEFAULT_WORKS_FUND_RATE = 0.05
+const sharePercentageFormatter = new Intl.NumberFormat('fr-FR', {
+  minimumFractionDigits: 1,
+  maximumFractionDigits: 1,
+})
 const PIE_CHART_COLORS = [
   'var(--color-primary)',
   'var(--color-on-secondary-container)',
@@ -106,7 +110,7 @@ const levyCollectionRate = computed(() =>
   levyCallCount.value > 0 ? Math.round((levyPaidCount.value / levyCallCount.value) * 100) : 0
 )
 const worksFundContributionTarget = computed(() => selectedTotalForecast.value * DEFAULT_WORKS_FUND_RATE)
-const generatePreviewLots = computed(() =>
+const impactedLotsCount = computed(() =>
   buildingStats.value?.nb_lots ?? leviedUnitsCount.value
 )
 const generatePreviewTotal = computed(() => {
@@ -438,10 +442,7 @@ function initials(name: string): string {
 }
 
 function formatSharePercentage(value: number): string {
-  return new Intl.NumberFormat('fr-FR', {
-    minimumFractionDigits: 1,
-    maximumFractionDigits: 1,
-  }).format(value)
+  return sharePercentageFormatter.format(value)
 }
 
 // Works-fund legal threshold: alert if available < 5% of forecast (S03/S10)
@@ -746,6 +747,8 @@ const worksFundBelowThreshold = computed(() => {
               <div
                 v-else
                 class="table-wrap"
+                tabindex="0"
+                :aria-label="t('budget.levies')"
               >
                 <table class="data-table">
                   <thead>
@@ -1091,7 +1094,7 @@ const worksFundBelowThreshold = computed(() => {
         <div class="generate-summary__grid">
           <div class="generate-summary__metric">
             <span class="generate-summary__metric-label">{{ t('budget.generateSummaryLotsLabel') }}</span>
-            <strong>{{ generatePreviewLots }}</strong>
+            <strong>{{ impactedLotsCount }}</strong>
           </div>
           <div class="generate-summary__metric">
             <span class="generate-summary__metric-label">{{ t('budget.generateSummaryAlreadyCalledLabel') }}</span>
@@ -1506,7 +1509,7 @@ const worksFundBelowThreshold = computed(() => {
   justify-content: center;
 }
 .breakdown-modal__chart {
-  width: min(280px, var(--breakdown-chart-max-width, 56vw));
+  width: min(280px, 56vw);
   aspect-ratio: 1;
   border-radius: 50%;
   box-shadow: inset 0 0 0 1px rgba(25, 28, 29, 0.05);
