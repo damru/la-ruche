@@ -40,7 +40,7 @@
 
 **Assemblée Générale** — Cycle de vie complet d'une AG (brouillon → convoquée → tenue → clôturée), avec rappel du délai légal de convocation (21 jours, art. 9 décret 1967). Les résolutions sont typées par majorité (art. 24 / 25 / 26 / unanimité), le vote se fait par lot avec procurations, et les résultats sont calculés automatiquement. Le périmètre MVP couvre la préparation juridique de l'AG, le branchement des écrans sur l'API réelle, le dépôt du PV signé et la traçabilité simple de notification aux absents. → EP-003
 
-**Budget & Charges** — Budget prévisionnel par exercice découpé en lignes par clé de répartition. Les appels de fonds sont générés automatiquement au prorata des tantièmes, en n'appelant que le solde non déjà appelé sur l'exercice. Chaque appel porte un libellé différenciant son motif (trimestriel, exceptionnel AG, libellé libre) pour lecture comptable et juridique. Le fonds travaux obligatoire (≥ 5%, art. 14-2 ALUR) est suivi sur un compte séparé. L'arrêté de comptes compare réalisé et prévisionnel, puis l'exercice peut être clôturé pour geler les actions. → EP-004
+**Budget & Charges** — Budget prévisionnel par exercice découpé en lignes par clé de répartition. Les appels de fonds sont générés automatiquement au prorata des tantièmes, en n'appelant que le solde non déjà appelé sur l'exercice. Chaque appel porte un libellé différenciant son motif (trimestriel, exceptionnel AG, libellé libre) pour lecture comptable et juridique. Le récapitulatif de génération doit rappeler le nombre de lots impactés, le montant déjà appelé et le montant restant à appeler. Le fonds travaux obligatoire est suivi sur un compte séparé avec rappel explicite de la base légale à jour (art. 14-2-1 loi 1965, dans sa rédaction issue de la loi du 22 août 2021). La vue Budget expose aussi une visualisation synthétique des parts par poste pour accélérer la lecture des masses budgétaires. L'arrêté de comptes compare réalisé et prévisionnel, puis l'exercice peut être clôturé pour geler les actions. → EP-004
 
 ### Gestion courante
 
@@ -128,7 +128,7 @@
 - **Art. 24 loi 1965** — majorité des voix des présents et représentés
 - **Art. 25 loi 1965** — majorité absolue de tous les copropriétaires
 - **Art. 26 loi 1965** — double majorité (2/3 tantièmes + majorité en nombre)
-- **Art. 14-2 loi ALUR** — fonds travaux obligatoire ≥ 5% budget prévisionnel
+- **Art. 14-2-1 loi du 10 juillet 1965** — fonds travaux obligatoire (seuil minimal selon le droit en vigueur, modifié notamment par la loi du 22 août 2021)
 - **Art. L123-22 Code de commerce** — conservation données comptables 10 ans
 - **RGPD** — droit à l'effacement (anonymisation avec conservation données légales)
 

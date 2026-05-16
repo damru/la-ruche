@@ -1,7 +1,7 @@
 # DESIGN.md — l'Application Design System "The Modern Registry"
 
 > **Dénomination** — Dans le présent document, l'expression **« l'Application »** désigne exclusivement **La Ruche**, plateforme web open source de gestion participative de copropriété. Ces deux termes sont interchangeables et désignent la même entité logicielle.
-> Dernière mise à jour : 2026-05-15
+> Dernière mise à jour : 2026-05-16
 
 ## Typographie — 3 polices, 3 rôles (DDR-001 v3)
 
@@ -328,10 +328,16 @@ Cette règle s'applique notamment aux délais de déclaration de sinistre, au ca
 ## Règle UI — Vue Budget & Charges
 
 - Les KPI budget sur mobile restent lisibles en grille 2 colonnes (2 lignes pour 4 KPI), sans défilement horizontal.
+- Les KPI budget consomment désormais un composant partagé `CHeroCard` (HeroCard) afin de mutualiser l'en-tête, l'icône tonale, la valeur et le sous-texte.
 - La topbar de la vue budget n'expose qu'une action globale : `Clore l'exercice` (avec confirmation modale).
+- Sur écran étroit, le bouton topbar `Clore l'exercice` conserve l'icône visible mais masque son libellé texte via `.btn-label`.
 - Les actions métier locales (`Nouvelle ligne`, `Générer les appels`, `Marquer comme payé`) sont portées par leurs cartes respectives, alignées à droite sur la ligne de titre.
 - Le bloc légal Budget est homogène avec le pattern de bas de page `CLegalCard` + `CLegalNotice` + `CLegalDescription`.
-- Le sous-titre de la carte `Appels de fonds` utilise deux métriques séparées (`nombre de lots`, `taux de recouvrement`) via `CFlexGroup` horizontal + `CMetaItem`.
+- Le sous-titre de la carte `Appels de fonds` utilise deux métriques séparées (`nombre d'appels`, `taux de recouvrement`) via `CFlexGroup` horizontal + `CMetaItem`.
+- Tout sous-titre budget qui exprimait auparavant plusieurs informations dans une seule chaîne avec point médian (`·`) doit être rendu via `CFlexGroup direction="row"` + `CMetaItem variant="sub"` + `CSeparator`.
+- Le tableau des appels doit rester scrollable horizontalement sur petit écran sans casser la hauteur de carte ni les actions de ligne.
+- La carte `Consommation par poste` expose une action secondaire à icône de diagramme circulaire ouvrant une modale de répartition par poste ; la modale doit montrer le poids relatif de chaque ligne et une légende textuelle accessible.
+- Les mentions légales liées au fonds travaux doivent citer la base à jour (`art. 14-2-1 loi 1965`, rédaction issue de la loi du 22 août 2021) plutôt qu'une référence générique à ALUR seule.
 
 ## Règle UI — Vue Signalements
 

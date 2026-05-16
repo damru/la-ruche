@@ -21,6 +21,7 @@ import CEyebrow from '@/components/atoms/CEyebrow.vue'
 import CMetaItem from '@/components/molecules/CMetaItem.vue'
 import CLegalNotice from '@/components/molecules/CLegalNotice.vue'
 import CLegalCard from '@/components/molecules/CLegalCard.vue'
+import CHeroCard from '@/components/molecules/CHeroCard.vue'
 import CFlexGroup from '@/components/organisms/CFlexGroup.vue'
 import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import CIconCheckCircle from '@/components/atoms/CIconCheckCircle.svg'
@@ -29,10 +30,12 @@ import CIconCheck from '@/components/atoms/CIconCheck.svg'
 import CIconWarn from '@/components/atoms/CIconWarn.svg'
 import CIconWrench from '@/components/atoms/CIconWrench.svg'
 import CIconTrash from '@/components/atoms/CIconTrash.svg'
-import CIconDownload from '@/components/atoms/CIconDownload.svg'
+import CIconMegaphone from '@/components/atoms/CIconMegaphone.svg'
+import CIconPieChart from '@/components/atoms/CIconPieChart.svg'
+import CIconLock from '@/components/atoms/CIconLock.svg'
 import CIconChevronRight from '@/components/atoms/CIconChevronRight.svg'
 import { budgetApi, allocationKeysApi, buildingApi } from '@/api'
-import type { Budget, BudgetLine, LevyCall, WorksFund, AllocationKey, LevyStatus } from '@/types/domain'
+import type { Budget, BudgetLine, LevyCall, WorksFund, AllocationKey, LevyStatus, BuildingStats } from '@/types/domain'
 
 const { t } = useI18n()
 const { formatCurrency, formatDate } = useFormatters()
@@ -40,10 +43,26 @@ const { hasAnyRole } = useRole()
 
 const canManage = computed(() => hasAnyRole(['manager']))
 const canEditSelectedBudget = computed(() => canManage.value && selectedBudget.value?.status !== 'closed')
+const DEFAULT_WORKS_FUND_RATE = 0.05
+const sharePercentageFormatter = new Intl.NumberFormat('fr-FR', {
+  minimumFractionDigits: 1,
+  maximumFractionDigits: 1,
+})
+const PIE_CHART_COLORS = [
+  'var(--color-primary)',
+  'var(--color-on-secondary-container)',
+  'var(--color-warning)',
+  'var(--color-success)',
+  'var(--color-error)',
+  'var(--color-on-surface-variant)',
+  'var(--color-secondary-container)',
+  'var(--color-success-container)',
+]
 
 // ── State ─────────────────────────────────────────────────────────
 
 const buildingName = ref('')
+const buildingStats = ref<BuildingStats | null>(null)
 const budgets = ref<Budget[]>([])
 const selectedBudgetId = ref<string | null>(null)
 const budgetLines = ref<BudgetLine[]>([])
@@ -77,12 +96,62 @@ const selectedTotalActual = computed(() =>
   Number(selectedBudget.value?.total_actual ?? 0)
 )
 
+const levyCallCount = computed(() => levies.value.length)
+const leviedUnitsCount = computed(() =>
+  new Set(levies.value.map(levy => levy.unit_id)).size
+)
 const levyPaidCount = computed(() =>
   levies.value.filter(l => l.status === 'paid').length
 )
-const levyCollectionRate = computed(() =>
-  levies.value.length > 0 ? Math.round((levyPaidCount.value / levies.value.length) * 100) : 0
+const totalLeviedAmount = computed(() =>
+  levies.value.reduce((sum, levy) => sum + levy.amount, 0)
 )
+const levyCollectionRate = computed(() =>
+  levyCallCount.value > 0 ? Math.round((levyPaidCount.value / levyCallCount.value) * 100) : 0
+)
+const worksFundContributionTarget = computed(() => selectedTotalForecast.value * DEFAULT_WORKS_FUND_RATE)
+const impactedLotsCount = computed(() =>
+  buildingStats.value?.nb_lots ?? leviedUnitsCount.value
+)
+const generatePreviewTotal = computed(() => {
+  const totalTarget = selectedTotalForecast.value + (generateForm.value.include_works_fund ? worksFundContributionTarget.value : 0)
+  return Math.max(totalTarget - totalLeviedAmount.value, 0)
+})
+const budgetBreakdownItems = computed(() => {
+  const total = budgetLines.value.reduce((sum, line) => sum + Number(line.budgeted_amount ?? 0), 0)
+
+  return budgetLines.value
+    .filter(line => Number(line.budgeted_amount ?? 0) > 0)
+    .map((line, index) => {
+      const amount = Number(line.budgeted_amount ?? 0)
+      const sharePct = total > 0 ? (amount / total) * 100 : 0
+
+      return {
+        id: line.id,
+        label: line.label,
+        amount,
+        sharePct,
+        color: PIE_CHART_COLORS[index % PIE_CHART_COLORS.length],
+      }
+    })
+})
+const budgetBreakdownStyle = computed(() => {
+  if (budgetBreakdownItems.value.length === 0) {
+    return {}
+  }
+
+  let start = 0
+  const segments = budgetBreakdownItems.value.map((item) => {
+    const end = start + (item.sharePct / 100) * 360
+    const segment = `${item.color} ${start}deg ${end}deg`
+    start = end
+    return segment
+  })
+
+  return {
+    background: `conic-gradient(${segments.join(', ')})`,
+  }
+})
 
 const legalCardLinks = computed(() => [
   {
@@ -93,6 +162,10 @@ const legalCardLinks = computed(() => [
     label: t('budget.legalCard.article37LinkLabel'),
     href: t('budget.legalCard.article37LinkHref'),
   },
+  {
+    label: t('budget.legalCard.article14_2_1LinkLabel'),
+    href: t('budget.legalCard.article14_2_1LinkHref'),
+  },
 ])
 
 // ── Loaders ───────────────────────────────────────────────────────
@@ -102,6 +175,7 @@ async function loadMeta() {
     buildingApi.stats(),
     allocationKeysApi.list(),
   ])
+  buildingStats.value = statsRes.data
   buildingName.value = statsRes.data.name
   allocationKeys.value = keysRes.data
 }
@@ -260,6 +334,7 @@ async function confirmDeleteLine() {
 // ── Generate levies modal (S02) ───────────────────────────────────
 
 const showGenerateModal = ref(false)
+const showBreakdownModal = ref(false)
 const generateFeedback = useFormFeedback()
 const generatingLevies = ref(false)
 const generateForm = ref({ due_date: '', include_works_fund: true, call_label: '' })
@@ -366,6 +441,10 @@ function initials(name: string): string {
   return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
 }
 
+function formatSharePercentage(value: number): string {
+  return sharePercentageFormatter.format(value)
+}
+
 // Works-fund legal threshold: alert if available < 5% of forecast (S03/S10)
 const worksFundBelowThreshold = computed(() => {
   if (!worksFund.value || !selectedTotalForecast.value) return false
@@ -391,7 +470,8 @@ const worksFundBelowThreshold = computed(() => {
           size="sm"
           @click="openCloseExerciseModal"
         >
-          {{ t('budget.closeExercise') }}
+          <CIconLock aria-hidden="true" />
+          <span class="btn-label">{{ t('budget.closeExercise') }}</span>
         </CBtn>
       </template>
     </CTopbar>
@@ -411,13 +491,18 @@ const worksFundBelowThreshold = computed(() => {
           <h1 class="page-title">
             {{ selectedBudget ? t('budget.fiscalYear', { year: selectedBudget.fiscal_year }) : t('budget.title') }}
           </h1>
-          <p
+          <CFlexGroup
             v-if="selectedBudget"
-            class="page-sub"
+            direction="row"
+            class="page-sub page-sub--metrics"
           >
-            {{ buildingName }} ·
-            {{ selectedBudget.status === 'approved' ? t('budget.statuses.approvedAG') : t('budget.statuses.draft') }}
-          </p>
+            <CMetaItem variant="sub">
+              {{ buildingName }}
+            </CMetaItem>
+            <CMetaItem variant="sub">
+              {{ selectedBudget.status === 'approved' ? t('budget.statuses.approvedAG') : t(`budget.statuses.${selectedBudget.status}`) }}
+            </CMetaItem>
+          </CFlexGroup>
         </div>
 
         <!-- Year tabs -->
@@ -441,82 +526,69 @@ const worksFundBelowThreshold = computed(() => {
 
         <!-- KPI row -->
         <div class="kpi-grid">
-          <div class="kpi-card">
-            <div class="kpi-head">
-              <span class="kpi-label">{{ t('budget.budgetForecastLabel') }}</span>
-              <div class="kpi-icon tone--default">
-                <CIconCurrency aria-hidden="true" />
-              </div>
-            </div>
-            <div class="kpi-value">
-              {{ formatCurrency(selectedTotalForecast) }}
-            </div>
-            <div class="kpi-delta kpi-delta--neutral">
+          <CHeroCard
+            :label="t('budget.budgetForecastLabel')"
+            :value="formatCurrency(selectedTotalForecast)"
+            tone="default"
+          >
+            <template #icon>
+              <CIconCurrency aria-hidden="true" />
+            </template>
+            <template #subtitle>
               {{ t('budget.budgetItems', budgetLines.length) }}
-            </div>
-          </div>
+            </template>
+          </CHeroCard>
 
-          <div class="kpi-card">
-            <div class="kpi-head">
-              <span class="kpi-label">{{ t('budget.realizedToDate') }}</span>
-              <div class="kpi-icon tone--accent">
+          <CHeroCard
+            :label="t('budget.realizedToDate')"
+            :value="formatCurrency(selectedTotalActual)"
+            tone="accent"
+          >
+            <template #icon>
+              <div class="hero-card__icon-on-accent">
                 <CIconCheck
                   stroke="white"
                   aria-hidden="true"
                 />
               </div>
-            </div>
-            <div class="kpi-value">
-              {{ formatCurrency(selectedTotalActual) }}
-            </div>
-            <div class="kpi-delta kpi-delta--neutral">
+            </template>
+            <template #subtitle>
               {{ t('budget.ofBudget', {
                 pct: selectedTotalForecast ? Math.round((selectedTotalActual / selectedTotalForecast) * 100) : 0,
               }) }}
-            </div>
-          </div>
+            </template>
+          </CHeroCard>
 
-          <div class="kpi-card">
-            <div class="kpi-head">
-              <span class="kpi-label">{{ t('budget.overdueCallsLabel') }}</span>
-              <div class="kpi-icon tone--err">
-                <CIconWarn aria-hidden="true" />
-              </div>
-            </div>
-            <div class="kpi-value tone--err">
-              {{ overdueLevies.length }}
-            </div>
-            <div class="kpi-delta kpi-delta--down">
+          <CHeroCard
+            :label="t('budget.overdueCallsLabel')"
+            :value="overdueLevies.length"
+            tone="err"
+            :emphasize-value="true"
+          >
+            <template #icon>
+              <CIconWarn aria-hidden="true" />
+            </template>
+            <template #subtitle>
               {{ t('budget.pendingAmount', { amount: formatCurrency(overdueTotal) }) }}
-            </div>
-          </div>
+            </template>
+          </CHeroCard>
 
-          <div class="kpi-card">
-            <div class="kpi-head">
-              <span class="kpi-label">{{ t('budget.worksFund') }}</span>
-              <div class="kpi-icon tone--warn">
-                <CIconWrench aria-hidden="true" />
-              </div>
-            </div>
-            <div
+          <CHeroCard
+            :label="t('budget.worksFund')"
+            :value="worksFund ? formatCurrency(worksFund.levied_amount) : '—'"
+            tone="warn"
+            :emphasize-value="!!worksFund"
+          >
+            <template #icon>
+              <CIconWrench aria-hidden="true" />
+            </template>
+            <template
               v-if="worksFund"
-              class="kpi-value tone--warn"
-            >
-              {{ formatCurrency(worksFund.levied_amount) }}
-            </div>
-            <div
-              v-else
-              class="kpi-value kpi-delta--neutral"
-            >
-              —
-            </div>
-            <div
-              v-if="worksFund"
-              class="kpi-delta kpi-delta--neutral"
+              #subtitle
             >
               {{ t('budget.available', { amount: formatCurrency(worksFund.available_amount) }) }}
-            </div>
-          </div>
+            </template>
+          </CHeroCard>
         </div>
 
         <!-- Two-col layout -->
@@ -535,10 +607,15 @@ const worksFundBelowThreshold = computed(() => {
                   </p>
                 </div>
                 <div class="section-head__actions">
-                  <button class="btn-ghost-sm">
-                    <CIconDownload aria-hidden="true" />
-                    {{ t('common.export') }}
-                  </button>
+                  <CBtn
+                    v-if="budgetBreakdownItems.length > 0"
+                    variant="ghost"
+                    size="sm"
+                    @click="showBreakdownModal = true"
+                  >
+                    <CIconPieChart aria-hidden="true" />
+                    {{ t('budget.breakdown') }}
+                  </CBtn>
                   <CBtn
                     v-if="canEditSelectedBudget"
                     variant="ghost"
@@ -631,7 +708,7 @@ const worksFundBelowThreshold = computed(() => {
                     class="section-sub section-sub-metrics"
                   >
                     <CMetaItem variant="sub">
-                      {{ t('budget.collectionRateLots', { lots: levies.length }) }}
+                      {{ t('budget.levyCallsCount', { count: levyCallCount }) }}
                     </CMetaItem>
                     <CMetaItem variant="sub">
                       {{ t('budget.collectionRatePct', { pct: levyCollectionRate }) }}
@@ -645,7 +722,7 @@ const worksFundBelowThreshold = computed(() => {
                     size="sm"
                     @click="openGenerateModal"
                   >
-                    <CIconCheckCircle aria-hidden="true" />
+                    <CIconMegaphone aria-hidden="true" />
                     {{ t('budget.generateLevies') }}
                   </CBtn>
                 </div>
@@ -662,7 +739,7 @@ const worksFundBelowThreshold = computed(() => {
                   size="sm"
                   @click="openGenerateModal"
                 >
-                  <CIconCheckCircle aria-hidden="true" />
+                  <CIconMegaphone aria-hidden="true" />
                   {{ t('budget.generateLevies') }}
                 </CBtn>
               </div>
@@ -670,6 +747,8 @@ const worksFundBelowThreshold = computed(() => {
               <div
                 v-else
                 class="table-wrap"
+                tabindex="0"
+                :aria-label="t('budget.levies')"
               >
                 <table class="data-table">
                   <thead>
@@ -767,9 +846,17 @@ const worksFundBelowThreshold = computed(() => {
                 <div class="ft-amount">
                   {{ formatCurrency(worksFund.levied_amount) }}
                 </div>
-                <p class="ft-sub">
-                  {{ t('budget.separateBankAccount', { year: selectedBudget?.fiscal_year }) }}
-                </p>
+                <CFlexGroup
+                  direction="row"
+                  class="ft-sub ft-sub--metrics"
+                >
+                  <CMetaItem variant="sub">
+                    {{ t('budget.separateBankAccountLabel') }}
+                  </CMetaItem>
+                  <CMetaItem variant="sub">
+                    {{ t('budget.fiscalYearShort', { year: selectedBudget?.fiscal_year }) }}
+                  </CMetaItem>
+                </CFlexGroup>
                 <div class="ft-prog">
                   <div class="ft-prog-head">
                     <span>{{ t('budget.engaged') }}</span>
@@ -806,9 +893,17 @@ const worksFundBelowThreshold = computed(() => {
               <h3 class="mini-title">
                 {{ t('budget.latePayments') }}
               </h3>
-              <p class="mini-sub">
-                {{ t('budget.latePaymentsDesc', { count: overdueLevies.length, amount: formatCurrency(overdueTotal) }) }}
-              </p>
+              <CFlexGroup
+                direction="row"
+                class="mini-sub mini-sub--metrics"
+              >
+                <CMetaItem variant="sub">
+                  {{ t('budget.latePaymentsCount', { count: overdueLevies.length }) }}
+                </CMetaItem>
+                <CMetaItem variant="sub">
+                  {{ t('budget.latePaymentsTotal', { amount: formatCurrency(overdueTotal) }) }}
+                </CMetaItem>
+              </CFlexGroup>
               <div
                 v-for="levy in overdueLevies"
                 :key="levy.id"
@@ -843,6 +938,10 @@ const worksFundBelowThreshold = computed(() => {
             <CLegalDescription
               :title="t('budget.legalCard.title')"
               :summary="t('budget.legalCard.summary')"
+            />
+            <CLegalDescription
+              :title="t('budget.legalCard.worksFundTitle')"
+              :summary="t('budget.legalCard.worksFundSummary')"
             />
           </CLegalNotice>
         </CLegalCard>
@@ -992,11 +1091,26 @@ const worksFundBelowThreshold = computed(() => {
         class="generate-summary"
       >
         <strong>{{ t('budget.generateSummaryLabel') }}</strong>
-        {{ t('budget.generateSummaryDesc', {
-          lots: levies.length || '—',
-          charges: formatCurrency(Math.round(selectedTotalForecast / 4)),
-          fund: formatCurrency(Math.round(selectedTotalForecast * 0.05 / 4)),
-        }) }}
+        <div class="generate-summary__grid">
+          <div class="generate-summary__metric">
+            <span class="generate-summary__metric-label">{{ t('budget.generateSummaryLotsLabel') }}</span>
+            <strong>{{ impactedLotsCount }}</strong>
+          </div>
+          <div class="generate-summary__metric">
+            <span class="generate-summary__metric-label">{{ t('budget.generateSummaryAlreadyCalledLabel') }}</span>
+            <strong>{{ formatCurrency(totalLeviedAmount) }}</strong>
+          </div>
+          <div class="generate-summary__metric">
+            <span class="generate-summary__metric-label">{{ t('budget.generateSummaryRemainingLabel') }}</span>
+            <strong>{{ formatCurrency(generatePreviewTotal) }}</strong>
+          </div>
+        </div>
+        <p
+          v-if="generatePreviewTotal === 0"
+          class="generate-summary__hint"
+        >
+          {{ t('budget.generateSummaryNothingToGenerate') }}
+        </p>
       </div>
       <template #footer>
         <CFormFeedback
@@ -1014,10 +1128,59 @@ const worksFundBelowThreshold = computed(() => {
           :loading="generatingLevies"
           @click="generateLevies"
         >
-          <CIconCheckCircle aria-hidden="true" />
+          <CIconMegaphone aria-hidden="true" />
           {{ t('budget.generate') }}
         </CBtn>
       </template>
+    </CModal>
+
+    <CModal
+      :open="showBreakdownModal"
+      :title="t('budget.breakdownTitle')"
+      size="lg"
+      @update:open="showBreakdownModal = $event"
+    >
+      <div class="breakdown-modal">
+        <div class="breakdown-modal__chart-wrap">
+          <div
+            class="breakdown-modal__chart"
+            :style="budgetBreakdownStyle"
+            role="img"
+            :aria-label="t('budget.breakdownAriaLabel')"
+          ></div>
+        </div>
+
+        <div class="breakdown-modal__legend">
+          <p class="breakdown-modal__intro">
+            {{ t('budget.breakdownIntro') }}
+          </p>
+          <div
+            v-for="item in budgetBreakdownItems"
+            :key="item.id"
+            class="breakdown-modal__legend-item"
+          >
+            <span
+              class="breakdown-modal__swatch"
+              :style="{ background: item.color }"
+              aria-hidden="true"
+            ></span>
+            <div class="breakdown-modal__legend-copy">
+              <strong>{{ item.label }}</strong>
+              <CFlexGroup
+                direction="row"
+                class="breakdown-modal__legend-meta"
+              >
+                <CMetaItem variant="sub">
+                  {{ formatCurrency(item.amount) }}
+                </CMetaItem>
+                <CMetaItem variant="sub">
+                  {{ t('budget.breakdownShare', { pct: formatSharePercentage(item.sharePct) }) }}
+                </CMetaItem>
+              </CFlexGroup>
+            </div>
+          </div>
+        </div>
+      </div>
     </CModal>
 
     <CModal
@@ -1070,6 +1233,9 @@ const worksFundBelowThreshold = computed(() => {
   margin-top: 6px;
   margin-bottom: 32px;
 }
+.page-sub--metrics {
+  flex-wrap: wrap;
+}
 
 /* ── Tabs ────────────────────────────────────────────────────────── */
 .tabs { margin-bottom: 32px; }
@@ -1082,32 +1248,10 @@ const worksFundBelowThreshold = computed(() => {
   gap: 16px;
   margin-bottom: 32px;
 }
-.kpi-card {
-  background: var(--color-surface-container-lowest);
-  border-radius: var(--radius-lg);
-  padding: 20px;
-  box-shadow: var(--shadow-md);
+.hero-card__icon-on-accent {
+  color: var(--color-on-primary);
+  display: inline-flex;
 }
-.kpi-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 12px;
-}
-.kpi-label { font-size: 12px; color: var(--color-on-surface-variant); }
-.kpi-value {
-  font-family: var(--font-display);
-  font-size: 28px;
-  font-weight: var(--fw-bold);
-  font-variation-settings: 'opsz' 72;
-  letter-spacing: -.03em;
-  color: var(--tone-fg, var(--color-on-surface));
-  line-height: 1;
-  margin-bottom: 4px;
-}
-.kpi-delta { font-size: 12px; font-weight: var(--fw-medium); }
-.kpi-delta--neutral { color: var(--color-on-surface-variant); }
-.kpi-delta--down { color: var(--color-error); }
 
 /* ── Two-col ─────────────────────────────────────────────────────── */
 .two-col {
@@ -1146,26 +1290,8 @@ const worksFundBelowThreshold = computed(() => {
 .section-sub-metrics {
   margin-top: 2px;
   color: var(--color-on-surface-variant);
+  flex-wrap: wrap;
 }
-
-.btn-ghost-sm {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 34px;
-  padding: 0 12px;
-  border-radius: var(--radius-md);
-  font-size: 12px;
-  font-weight: var(--fw-medium);
-  border: none;
-  cursor: pointer;
-  background: transparent;
-  color: var(--color-primary);
-  font-family: var(--font-body);
-  transition: background var(--transition-fast);
-}
-.btn-ghost-sm:hover { background: var(--color-secondary-container); }
-.btn-ghost-sm svg { width: 13px; height: 13px; }
 
 .empty-state {
   display: flex;
@@ -1235,7 +1361,12 @@ const worksFundBelowThreshold = computed(() => {
 }
 
 /* ── Table overrides for this view ───────────────────────────────── */
-.table-wrap { overflow-x: auto; }
+.table-wrap {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-gutter: stable both-edges;
+}
 .cell-mono { font-family: var(--font-mono); font-size: 12px; color: var(--color-primary); }
 .cell-muted { color: var(--color-on-surface-variant); font-size: 12px; }
 
@@ -1274,6 +1405,7 @@ const worksFundBelowThreshold = computed(() => {
   margin-bottom: 4px;
 }
 .ft-sub { font-size: 12px; color: var(--color-on-surface-variant); margin-bottom: 20px; }
+.ft-sub--metrics { flex-wrap: wrap; }
 .ft-prog { margin-bottom: 8px; }
 .ft-prog-head {
   display: flex;
@@ -1303,6 +1435,7 @@ const worksFundBelowThreshold = computed(() => {
   margin-bottom: 4px;
 }
 .mini-sub { font-size: 12px; color: var(--color-on-surface-variant); margin-bottom: 16px; }
+.mini-sub--metrics { flex-wrap: wrap; }
 
 .overdue-item {
   display: flex;
@@ -1345,9 +1478,88 @@ const worksFundBelowThreshold = computed(() => {
   color: var(--color-on-secondary-container);
   margin-top: 8px;
 }
+.generate-summary__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 10px;
+}
+.generate-summary__metric {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.generate-summary__metric-label {
+  font-size: 11px;
+  color: color-mix(in srgb, var(--color-on-secondary-container) 78%, transparent);
+}
+.generate-summary__hint {
+  margin-top: 10px;
+  font-size: 12px;
+}
+
+.breakdown-modal {
+  display: grid;
+  grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+  gap: 24px;
+  align-items: center;
+}
+.breakdown-modal__chart-wrap {
+  display: flex;
+  justify-content: center;
+}
+.breakdown-modal__chart {
+  width: min(280px, 56vw);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(25, 28, 29, 0.05);
+}
+.breakdown-modal__legend {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.breakdown-modal__intro {
+  font-size: 13px;
+  color: var(--color-on-surface-variant);
+  margin-bottom: 4px;
+}
+.breakdown-modal__legend-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.breakdown-modal__swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  margin-top: 4px;
+  flex-shrink: 0;
+}
+.breakdown-modal__legend-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.breakdown-modal__legend-copy strong {
+  font-size: 13px;
+  color: var(--color-on-surface);
+}
+.breakdown-modal__legend-meta {
+  flex-wrap: wrap;
+}
+.breakdown-modal__legend-copy :deep(.c-meta-item) {
+  font-size: 12px;
+  color: var(--color-on-surface-variant);
+}
 
 @media (max-width: 1024px) {
   .two-col {
+    grid-template-columns: 1fr;
+  }
+
+  .breakdown-modal {
     grid-template-columns: 1fr;
   }
 }
@@ -1360,6 +1572,10 @@ const worksFundBelowThreshold = computed(() => {
   .section-head {
     flex-wrap: wrap;
     align-items: flex-start;
+  }
+
+  .generate-summary__grid {
+    grid-template-columns: 1fr;
   }
 }
 </style>
