@@ -46,13 +46,13 @@ const canEditSelectedBudget = computed(() => canManage.value && selectedBudget.v
 const DEFAULT_WORKS_FUND_RATE = 0.05
 const PIE_CHART_COLORS = [
   'var(--color-primary)',
-  '#7d5bf0',
-  '#9f84ff',
-  '#c4b5fd',
-  '#5e35b1',
-  '#8e24aa',
-  '#3949ab',
-  '#00897b',
+  'var(--color-on-secondary-container)',
+  'var(--color-warning)',
+  'var(--color-success)',
+  'var(--color-error)',
+  'var(--color-on-surface-variant)',
+  'var(--color-secondary-container)',
+  'var(--color-success-container)',
 ]
 
 // ── State ─────────────────────────────────────────────────────────
@@ -435,6 +435,13 @@ function levyStatusVariant(s: LevyStatus): string {
 
 function initials(name: string): string {
   return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
+}
+
+function formatSharePercentage(value: number): string {
+  return new Intl.NumberFormat('fr-FR', {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  }).format(value)
 }
 
 // Works-fund legal threshold: alert if available < 5% of forecast (S03/S10)
@@ -1164,7 +1171,7 @@ const worksFundBelowThreshold = computed(() => {
                   {{ formatCurrency(item.amount) }}
                 </CMetaItem>
                 <CMetaItem variant="sub">
-                  {{ t('budget.breakdownShare', { pct: item.sharePct.toFixed(1) }) }}
+                  {{ t('budget.breakdownShare', { pct: formatSharePercentage(item.sharePct) }) }}
                 </CMetaItem>
               </CFlexGroup>
             </div>
@@ -1499,7 +1506,7 @@ const worksFundBelowThreshold = computed(() => {
   justify-content: center;
 }
 .breakdown-modal__chart {
-  width: min(280px, 56vw);
+  width: min(280px, var(--breakdown-chart-max-width, 56vw));
   aspect-ratio: 1;
   border-radius: 50%;
   box-shadow: inset 0 0 0 1px rgba(25, 28, 29, 0.05);

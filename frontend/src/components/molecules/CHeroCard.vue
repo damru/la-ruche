@@ -20,7 +20,7 @@ withDefaults(defineProps<{
       </p>
       <div
         v-if="$slots.icon"
-        :class="['kpi-icon', `tone--${tone}`]"
+        :class="['hero-card__icon', 'kpi-icon', `tone--${tone}`]"
       >
         <slot name="icon"></slot>
       </div>
@@ -61,6 +61,10 @@ withDefaults(defineProps<{
 .hero-card__label {
   font-size: var(--text-xs);
   color: var(--color-on-surface-variant);
+}
+
+.hero-card__icon {
+  flex-shrink: 0;
 }
 
 .hero-card__value {
