@@ -1523,7 +1523,7 @@ const worksFundBelowThreshold = computed(() => {
   box-shadow: inset 0 0 0 1px rgba(25, 28, 29, 0.05);
 }
 .breakdown-modal__intro {
-  font-size: 13px;
+  font-size: var(--text-sm);
   color: var(--color-on-surface-variant);
   margin: 0;
 }
