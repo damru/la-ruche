@@ -43,6 +43,7 @@ const { hasAnyRole } = useRole()
 
 const canManage = computed(() => hasAnyRole(['manager']))
 const canEditSelectedBudget = computed(() => canManage.value && selectedBudget.value?.status !== 'closed')
+const DEFAULT_WORKS_FUND_RATE = 0.05
 const PIE_CHART_COLORS = [
   'var(--color-primary)',
   '#7d5bf0',
@@ -92,6 +93,9 @@ const selectedTotalActual = computed(() =>
 )
 
 const levyCallCount = computed(() => levies.value.length)
+const leviedUnitsCount = computed(() =>
+  new Set(levies.value.map(levy => levy.unit_id)).size
+)
 const levyPaidCount = computed(() =>
   levies.value.filter(l => l.status === 'paid').length
 )
@@ -101,9 +105,9 @@ const totalLeviedAmount = computed(() =>
 const levyCollectionRate = computed(() =>
   levyCallCount.value > 0 ? Math.round((levyPaidCount.value / levyCallCount.value) * 100) : 0
 )
-const worksFundContributionTarget = computed(() => selectedTotalForecast.value * 0.05)
+const worksFundContributionTarget = computed(() => selectedTotalForecast.value * DEFAULT_WORKS_FUND_RATE)
 const generatePreviewLots = computed(() =>
-  buildingStats.value?.nb_lots ?? new Set(levies.value.map(levy => levy.unit_id)).size
+  buildingStats.value?.nb_lots ?? leviedUnitsCount.value
 )
 const generatePreviewTotal = computed(() => {
   const totalTarget = selectedTotalForecast.value + (generateForm.value.include_works_fund ? worksFundContributionTarget.value : 0)
@@ -1152,9 +1156,17 @@ const worksFundBelowThreshold = computed(() => {
             ></span>
             <div class="breakdown-modal__legend-copy">
               <strong>{{ item.label }}</strong>
-              <span>
-                {{ formatCurrency(item.amount) }} · {{ t('budget.breakdownShare', { pct: item.sharePct.toFixed(1) }) }}
-              </span>
+              <CFlexGroup
+                direction="row"
+                class="breakdown-modal__legend-meta"
+              >
+                <CMetaItem variant="sub">
+                  {{ formatCurrency(item.amount) }}
+                </CMetaItem>
+                <CMetaItem variant="sub">
+                  {{ t('budget.breakdownShare', { pct: item.sharePct.toFixed(1) }) }}
+                </CMetaItem>
+              </CFlexGroup>
             </div>
           </div>
         </div>
@@ -1524,7 +1536,10 @@ const worksFundBelowThreshold = computed(() => {
   font-size: 13px;
   color: var(--color-on-surface);
 }
-.breakdown-modal__legend-copy span {
+.breakdown-modal__legend-meta {
+  flex-wrap: wrap;
+}
+.breakdown-modal__legend-copy :deep(.c-meta-item) {
   font-size: 12px;
   color: var(--color-on-surface-variant);
 }
