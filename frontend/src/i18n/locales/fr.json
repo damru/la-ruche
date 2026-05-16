@@ -575,7 +575,7 @@
     "closeExercise": "Clore l'exercice",
     "closeExerciseTitle": "Clore l'exercice",
     "closeExerciseConfirm": "Confirmer la clôture",
-    "closeExerciseConfirmation": "La clôture de l'exercice {year} est définitive. Toutes les actions de modification, génération et encaissement seront gelées.",
+    "closeExerciseConfirmation": "La clôture de l'exercice {year} est définitive. Les modifications budgétaires et la génération de nouveaux appels seront gelées.",
     "callLabel": "Libellé de l'appel",
     "callLabelPlaceholder": "Ex. Appel trimestriel T2, Appel exceptionnel AG du 12/05…",
     "levyCallLabel": "Libellé",

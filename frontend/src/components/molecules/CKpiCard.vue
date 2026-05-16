@@ -1,6 +1,8 @@
 <script setup lang="ts">
 // Molecule component — CKpiCard
 // Used on the dashboard for key metrics
+import CCard from '@/components/molecules/CCard.vue'
+import CKpiMetric from '@/components/atoms/CKpiMetric.vue'
 
 type DeltaVariant = 'up' | 'down' | 'neutral'
 
@@ -18,7 +20,10 @@ withDefaults(defineProps<{
 </script>
 
 <template>
-  <div class="c-kpi">
+  <CCard
+    class="c-kpi"
+    padding="md"
+  >
     <div class="c-kpi__header">
       <div>
         <p class="c-kpi__label">
@@ -35,27 +40,16 @@ withDefaults(defineProps<{
         <slot name="icon"></slot>
       </div>
     </div>
-    <p class="c-kpi__value">
-      {{ value }}
-    </p>
-    <p
-      v-if="delta"
-      :class="['c-kpi__delta', `c-kpi__delta--${deltaVariant}`]"
-    >
-      {{ delta }}
-    </p>
+    <CKpiMetric
+      :data="value"
+      :delta="delta"
+      :delta-variant="deltaVariant"
+    />
     <slot name="extra"></slot>
-  </div>
+  </CCard>
 </template>
 
 <style scoped>
-.c-kpi {
-  background: var(--color-surface-container-lowest);
-  border-radius: var(--radius-lg);
-  padding: var(--space-5);
-  box-shadow: var(--shadow-md);
-}
-
 .c-kpi__header {
   display: flex;
   align-items: flex-start;
@@ -68,26 +62,4 @@ withDefaults(defineProps<{
   color: var(--color-on-surface-variant);
   font-weight: var(--fw-regular);
 }
-
-.c-kpi__value {
-  font-family: var(--font-display);
-  font-size: 32px;
-  font-weight: var(--fw-bold);
-  font-variation-settings: 'opsz' 72;
-  letter-spacing: -0.03em;
-  color: var(--color-on-surface);
-  line-height: 1;
-  margin-bottom: var(--space-1);
-}
-
-.c-kpi__delta {
-  font-size: var(--text-xs);
-  font-weight: var(--fw-medium);
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-}
-.c-kpi__delta--up      { color: var(--color-success); }
-.c-kpi__delta--down    { color: var(--color-error); }
-.c-kpi__delta--neutral { color: var(--color-on-surface-variant); }
 </style>

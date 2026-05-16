@@ -41,6 +41,8 @@ pub struct LevyCallRow {
     pub shares_snapshot: Option<i32>,
     pub shares_total_snapshot: Option<i32>,
     pub call_label: String,
+    pub charge_amount: Decimal,
+    pub works_fund_amount: Decimal,
 }
 
 /// One entry per unit to insert as levy_call.
@@ -48,8 +50,16 @@ pub struct LevyInsert {
     pub unit_id: Uuid,
     pub key_id: Uuid,
     pub amount: Decimal,
+    pub charge_amount: Decimal,
+    pub works_fund_amount: Decimal,
     pub shares_snapshot: i64,
     pub shares_total_snapshot: i64,
+}
+
+pub struct LevyAmountTotals {
+    pub total_amount: Decimal,
+    pub charge_amount: Decimal,
+    pub works_fund_amount: Decimal,
 }
 
 pub async fn list(pool: &PgPool, building_id: Uuid) -> crate::errors::AppResult<Vec<BudgetRow>> {
@@ -134,32 +144,6 @@ pub async fn ensure_budget_is_mutable(
     let status = sqlx::query_scalar!(
         r#"SELECT status::text as "status!" FROM budget WHERE id = $1 AND building_id = $2"#,
         budget_id,
-        building_id
-    )
-    .fetch_optional(pool)
-    .await?
-    .ok_or(crate::errors::AppError::NotFound)?;
-
-    if status == "closed" {
-        return Err(crate::errors::AppError::conflict_code(
-            "errors.budget.exercise_closed",
-        ));
-    }
-
-    Ok(())
-}
-
-pub async fn ensure_levy_budget_is_mutable(
-    pool: &PgPool,
-    levy_id: Uuid,
-    building_id: Uuid,
-) -> crate::errors::AppResult<()> {
-    let status = sqlx::query_scalar!(
-        r#"SELECT b.status::text as "status!"
-           FROM levy_call lc
-           JOIN budget b ON b.id = lc.budget_id
-           WHERE lc.id = $1 AND b.building_id = $2"#,
-        levy_id,
         building_id
     )
     .fetch_optional(pool)
@@ -262,16 +246,18 @@ pub async fn generate_levies(
         let row = sqlx::query_as!(
             LevyCallRow,
             r#"INSERT INTO levy_call
-                   (budget_id, unit_id, amount, due_date, call_label,
+                   (budget_id, unit_id, amount, charge_amount, works_fund_amount, due_date, call_label,
                     key_id, shares_snapshot, shares_total_snapshot)
-               VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-               ON CONFLICT DO NOTHING
-               RETURNING id, budget_id, unit_id, amount, due_date,
-                status::text as "status!", issued_at, paid_at,
-                key_id, shares_snapshot, shares_total_snapshot, call_label"#,
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+                ON CONFLICT DO NOTHING
+                RETURNING id, budget_id, unit_id, amount, due_date,
+                 status::text as "status!", issued_at, paid_at,
+                 key_id, shares_snapshot, shares_total_snapshot, call_label, charge_amount, works_fund_amount"#,
             budget_id,
             l.unit_id,
             l.amount,
+            l.charge_amount,
+            l.works_fund_amount,
             due_date,
             call_label,
             l.key_id,
@@ -296,7 +282,7 @@ pub async fn list_levies(
     building_id: Uuid,
 ) -> crate::errors::AppResult<Vec<serde_json::Value>> {
     let rows = sqlx::query!(
-        r#"SELECT lc.id, lc.unit_id, u.unit_number, lc.amount, lc.due_date, lc.call_label,
+        r#"SELECT lc.id, lc.unit_id, u.unit_number, lc.amount, lc.charge_amount, lc.works_fund_amount, lc.due_date, lc.call_label,
            lc.status::text as status, lc.issued_at, lc.paid_at,
             ua.first_name || ' ' || ua.last_name as owner_name
            FROM levy_call lc
@@ -321,6 +307,8 @@ pub async fn list_levies(
                 "unit_number": r.unit_number,
                 "owner_name": r.owner_name,
                 "amount": r.amount,
+                "charge_amount": r.charge_amount,
+                "works_fund_amount": r.works_fund_amount,
                 "due_date": r.due_date,
                 "call_label": r.call_label,
                 "status": r.status,
@@ -331,13 +319,16 @@ pub async fn list_levies(
         .collect())
 }
 
-pub async fn total_levy_amount(
+pub async fn levy_amount_totals(
     pool: &PgPool,
     budget_id: Uuid,
     building_id: Uuid,
-) -> crate::errors::AppResult<Decimal> {
+) -> crate::errors::AppResult<LevyAmountTotals> {
     let row = sqlx::query!(
-        r#"SELECT COALESCE(SUM(lc.amount), 0)::numeric as "total!"
+        r#"SELECT
+               COALESCE(SUM(lc.amount), 0)::numeric as "total!",
+               COALESCE(SUM(lc.charge_amount), 0)::numeric as "charge_total!",
+               COALESCE(SUM(lc.works_fund_amount), 0)::numeric as "works_total!"
            FROM levy_call lc
            JOIN budget b ON b.id = lc.budget_id
            WHERE lc.budget_id = $1 AND b.building_id = $2"#,
@@ -346,7 +337,11 @@ pub async fn total_levy_amount(
     )
     .fetch_one(pool)
     .await?;
-    Ok(row.total)
+    Ok(LevyAmountTotals {
+        total_amount: row.total,
+        charge_amount: row.charge_total,
+        works_fund_amount: row.works_total,
+    })
 }
 
 pub async fn mark_paid(

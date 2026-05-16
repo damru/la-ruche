@@ -6,6 +6,7 @@ use axum::{
 use chrono::{Datelike, NaiveDate};
 use serde::Deserialize;
 use sqlx::types::Decimal;
+use std::collections::HashMap;
 use std::sync::Arc;
 use uuid::Uuid;
 
@@ -185,9 +186,25 @@ pub async fn generate_levies(
         Decimal::ZERO
     };
 
-    let total_amount = total_charges + works_fund_amount;
-    let already_called = db::budget::total_levy_amount(&state.pool, id, auth.building_id).await?;
-    let remaining_amount = (total_amount - already_called).max(Decimal::ZERO);
+    let levy_totals = db::budget::levy_amount_totals(&state.pool, id, auth.building_id).await?;
+    let target_charge_amount = total_charges;
+    let remaining_charge_amount = (target_charge_amount - levy_totals.charge_amount).max(Decimal::ZERO);
+    let remaining_works_fund_amount = if input.include_works_fund {
+        (works_fund_amount - levy_totals.works_fund_amount).max(Decimal::ZERO)
+    } else {
+        Decimal::ZERO
+    };
+    let already_called = if input.include_works_fund {
+        levy_totals.total_amount
+    } else {
+        levy_totals.charge_amount
+    };
+    let total_amount = if input.include_works_fund {
+        total_charges + works_fund_amount
+    } else {
+        total_charges
+    };
+    let remaining_amount = remaining_charge_amount + remaining_works_fund_amount;
 
     if remaining_amount <= Decimal::ZERO {
         return Ok(Json(serde_json::json!({
@@ -208,7 +225,16 @@ pub async fn generate_levies(
         })
         .collect();
 
-    let computed_levies = compute_levies(remaining_amount, &units_with_shares, total_shares);
+    let charge_levies = compute_levies(remaining_charge_amount, &units_with_shares, total_shares);
+    let works_fund_levies = if input.include_works_fund {
+        compute_levies(remaining_works_fund_amount, &units_with_shares, total_shares)
+    } else {
+        vec![]
+    };
+    let works_fund_by_unit: HashMap<Uuid, Decimal> = works_fund_levies
+        .iter()
+        .map(|levy| (levy.unit_id, levy.amount))
+        .collect();
     let default_label = quarterly_default_call_label(chrono::Utc::now());
     let call_label = input
         .call_label
@@ -216,12 +242,17 @@ pub async fn generate_levies(
         .map(str::trim)
         .filter(|value| !value.is_empty())
         .unwrap_or(&default_label);
-    let levy_inserts: Vec<db::budget::LevyInsert> = computed_levies
+    let levy_inserts: Vec<db::budget::LevyInsert> = charge_levies
         .iter()
         .map(|l| db::budget::LevyInsert {
             unit_id: l.unit_id,
             key_id: l.key_id,
-            amount: l.amount,
+            amount: l.amount + works_fund_by_unit.get(&l.unit_id).copied().unwrap_or(Decimal::ZERO),
+            charge_amount: l.amount,
+            works_fund_amount: works_fund_by_unit
+                .get(&l.unit_id)
+                .copied()
+                .unwrap_or(Decimal::ZERO),
             shares_snapshot: l.shares_snapshot,
             shares_total_snapshot: l.shares_total_snapshot,
         })
@@ -265,7 +296,6 @@ pub async fn mark_paid(
     Path(id): Path<Uuid>,
 ) -> AppResult<StatusCode> {
     auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
-    db::budget::ensure_levy_budget_is_mutable(&state.pool, id, auth.building_id).await?;
     db::budget::mark_paid(&state.pool, id, auth.building_id).await?;
     Ok(StatusCode::NO_CONTENT)
 }
