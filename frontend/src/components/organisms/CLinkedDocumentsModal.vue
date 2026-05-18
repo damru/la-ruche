@@ -131,7 +131,7 @@ const { formatDate, formatFileSize } = useFormatters()
 }
 
 .linked-documents-modal__name span {
-  overflow: hidden;
+  overflow: clip;
   text-overflow: ellipsis;
   white-space: nowrap;
 }

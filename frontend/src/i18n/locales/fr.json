@@ -576,6 +576,8 @@
     "closeExerciseTitle": "Clore l'exercice",
     "closeExerciseConfirm": "Confirmer la clôture",
     "closeExerciseConfirmation": "La clôture de l'exercice {year} est définitive. Les modifications budgétaires et la génération de nouveaux appels seront gelées.",
+    "noExercice": "Aucun exercice budgétaire n'a encore été créé pour cette résidence.",
+    "noExerciceHint": "Créez un premier exercice pour commencer à suivre les budgets, les postes de dépenses et les appels de fonds.",
     "callLabel": "Libellé de l'appel",
     "callLabelPlaceholder": "Ex. Appel trimestriel T2, Appel exceptionnel AG du 12/05…",
     "levyCallLabel": "Libellé",

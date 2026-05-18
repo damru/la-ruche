@@ -131,7 +131,7 @@ withDefaults(defineProps<{
 /* Fills the button background from left to right over SUCCESS_AUTO_CLEAR_MS (3 s)
    to communicate the auto-close countdown after a successful action. */
 .c-btn--closing {
-  overflow: hidden;
+  overflow: clip;
 }
 .c-btn--closing::before {
   content: '';

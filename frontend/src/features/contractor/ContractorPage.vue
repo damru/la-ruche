@@ -381,7 +381,7 @@ async function submit() {
   background: var(--color-surface-container);
   border-radius: var(--radius-sm);
 }
-.file-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-name { flex: 1; overflow: clip; text-overflow: ellipsis; white-space: nowrap; }
 
 .error-msg { color: var(--color-error); }
 

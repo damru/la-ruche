@@ -1592,7 +1592,7 @@ async function copyVendorLink(taskId: string) {
 }
 .task-selected-document__name {
   min-width: 0;
-  overflow: hidden;
+  overflow: clip;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -1618,7 +1618,7 @@ async function copyVendorLink(taskId: string) {
   min-width: 0;
 }
 .task-existing-documents__name span {
-  overflow: hidden;
+  overflow: clip;
   text-overflow: ellipsis;
   white-space: nowrap;
 }

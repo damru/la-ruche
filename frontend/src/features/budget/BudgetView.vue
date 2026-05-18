@@ -18,7 +18,9 @@ import CProgressBar from '@/components/atoms/CProgressBar.vue'
 import CDataTable from '@/components/molecules/CDataTable.vue'
 import CLegalDescription from '@/components/atoms/CLegalDescription.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
+import CBadge from '@/components/atoms/CBadge.vue'
 import CEyebrow from '@/components/atoms/CEyebrow.vue'
+import CCard from '@/components/molecules/CCard.vue'
 import CMetaItem from '@/components/molecules/CMetaItem.vue'
 import CLegalNotice from '@/components/molecules/CLegalNotice.vue'
 import CLegalCard from '@/components/molecules/CLegalCard.vue'
@@ -475,11 +477,11 @@ function lineVariant(line: BudgetLine): 'primary' | 'warning' | 'success' {
   return 'primary'
 }
 
-function levyStatusVariant(s: LevyStatus): string {
-  if (s === 'paid') return 'tone--valid'
-  if (s === 'issued') return 'tone--warn'
-  if (s === 'overdue') return 'tone--err'
-  return 'tone--disabled'
+function levyStatusBadgeVariant(s: LevyStatus): 'valid' | 'pending' | 'err' | 'disabled' {
+  if (s === 'paid') return 'valid'
+  if (s === 'issued') return 'pending'
+  if (s === 'overdue') return 'err'
+  return 'disabled'
 }
 
 function initials(name: string): string {
@@ -499,7 +501,7 @@ const worksFundBelowThreshold = computed(() => {
 </script>
 
 <template>
-  <div class="budget-page view-page">
+  <div class="view-page">
     <CTopbar>
       <template #left>
         <div class="topbar-breadcrumb">
@@ -529,11 +531,30 @@ const worksFundBelowThreshold = computed(() => {
         @retry="reload"
       />
 
-      <template v-else>
-        <!-- Page header -->
-        <div class="page-header">
+      <template
+        v-else-if="budgets.length === 0"
+      >
+        <div class="view-header">
           <CEyebrow>{{ t('page.eyebrows.budget') }}</CEyebrow>
-          <h1 class="page-title">
+          <h1 class="display-md">{{ t('budget.title') }}</h1>
+        </div>
+        <div class="empty-state empty-state--page">
+          <p class="empty-state__message">{{ t('budget.noExercice') }}</p>
+          <p class="empty-state__hint">{{ t('budget.noExerciceHint') }}</p>
+          <CBtn
+            v-if="canManage"
+            variant="primary"
+            @click="openCreateBudgetModal"
+          >
+            + {{ t('budget.newFiscalYear') }}
+          </CBtn>
+        </div>
+      </template>
+
+      <template v-else>
+        <div class="view-header">
+          <CEyebrow>{{ t('page.eyebrows.budget') }}</CEyebrow>
+          <h1 class="display-md">
             {{ selectedBudget ? t('budget.fiscalYear', { year: selectedBudget.fiscal_year }) : t('budget.title') }}
           </h1>
           <CFlexGroup
@@ -550,11 +571,10 @@ const worksFundBelowThreshold = computed(() => {
           </CFlexGroup>
         </div>
 
-        <!-- Year tabs -->
-        <div class="tabs">
+        <div class="tabs mb-8">
           <button
             v-for="b in budgets"
-            :key="b.id"
+            :key="b.id" 
             :class="['tab', { 'tab--active': selectedBudgetId === b.id }]"
             @click="selectedBudgetId = b.id"
           >
@@ -569,9 +589,10 @@ const worksFundBelowThreshold = computed(() => {
           </button>
         </div>
 
-        <div
+        <CCard
           v-if="overdueLevies.length > 0"
-          class="mini-card mini-card--top"
+          padding="md"
+          class="mb-5"
         >
           <h3 class="mini-title">
             {{ t('budget.latePayments') }}
@@ -612,10 +633,10 @@ const worksFundBelowThreshold = computed(() => {
               </div>
             </div>
           </div>
-        </div>
+        </CCard>
 
         <!-- KPI row -->
-        <div class="kpi-grid">
+        <div class="mb-8 grid grid-cols-2 gap-4 md:grid-cols-4">
           <CHeroCard
             :label="t('budget.budgetForecastLabel')"
             :value="formatCurrency(selectedTotalForecast)"
@@ -682,11 +703,11 @@ const worksFundBelowThreshold = computed(() => {
         </div>
 
         <!-- Two-col layout -->
-        <div class="two-col">
+        <div class="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
           <!-- LEFT column -->
-          <div class="left-col">
+          <div class="flex flex-col gap-6">
             <!-- Budget lines consumption (S04 — arrêté de comptes) -->
-            <div class="section-card">
+            <CCard padding="none">
               <div class="section-head">
                 <div>
                   <h2 class="section-title">
@@ -704,7 +725,7 @@ const worksFundBelowThreshold = computed(() => {
                     @click="showBreakdownModal = true"
                   >
                     <CIconPieChart aria-hidden="true" />
-                    <span class="section-head__action-label">{{ t('budget.breakdown') }}</span>
+                    <span class="hidden md:inline">{{ t('budget.breakdown') }}</span>
                   </CBtn>
                   <CBtn
                     v-if="canEditSelectedBudget"
@@ -713,7 +734,7 @@ const worksFundBelowThreshold = computed(() => {
                     @click="openCreateLineModal"
                   >
                     <CIconPlus aria-hidden="true" />
-                    <span class="section-head__action-label">{{ t('budget.newLine') }}</span>
+                    <span class="hidden md:inline">{{ t('budget.newLine') }}</span>
                   </CBtn>
                 </div>
               </div>
@@ -737,10 +758,10 @@ const worksFundBelowThreshold = computed(() => {
                   <div class="prog-item__header">
                     <span class="prog-item__label">{{ line.label }}</span>
                     <div class="prog-item__meta">
-                      <span
+                      <CBadge
                         v-if="line.key_name"
-                        class="chip tone--default"
-                      >{{ line.key_name }}</span>
+                        variant="primary"
+                      >{{ line.key_name }}</CBadge>
                       <CBtn
                         v-if="canEditSelectedBudget"
                         variant="ghost"
@@ -775,10 +796,10 @@ const worksFundBelowThreshold = computed(() => {
                   {{ formatCurrency(selectedTotalActual) }} / {{ formatCurrency(selectedTotalForecast) }}
                 </span>
               </div>
-            </div>
+            </CCard>
 
             <!-- Levy calls table (S02) -->
-            <div class="section-card">
+            <CCard padding="none">
               <div class="section-head">
                 <div>
                   <h2 class="section-title">
@@ -804,7 +825,7 @@ const worksFundBelowThreshold = computed(() => {
                     @click="openGenerateModal"
                   >
                     <CIconMegaphone aria-hidden="true" />
-                    <span class="section-head__action-label">{{ t('budget.generateLevies') }}</span>
+                    <span class="hidden md:inline">{{ t('budget.generateLevies') }}</span>
                   </CBtn>
                 </div>
               </div>
@@ -852,13 +873,13 @@ const worksFundBelowThreshold = computed(() => {
                     </span>
                   </template>
                   <template #cell-status="{ row }">
-                    <span :class="['chip', levyStatusVariant(row.status as LevyStatus)]">
-                      <span
-                        class="chip-dot"
-                        aria-hidden="true"
-                      ></span>
+                    <CBadge
+                      :variant="levyStatusBadgeVariant(row.status as LevyStatus)"
+                      :pulse="false"
+                      dot
+                    >
                       {{ t(`budget.levyStatuses.${row.status}`) }}
-                    </span>
+                    </CBadge>
                   </template>
                   <template #cell-actions="{ row }">
                     <CBtn
@@ -880,18 +901,21 @@ const worksFundBelowThreshold = computed(() => {
                   </span>
                 </div>
               </div>
-            </div>
+            </CCard>
           </div>
 
           <!-- RIGHT sidebar -->
-          <div class="right-col">
+          <div class="flex flex-col gap-5">
             <!-- Works fund card (S03) -->
-            <div class="ft-card">
+            <CCard padding="md">
               <div class="ft-header">
                 <h3 class="ft-title">
                   {{ t('budget.worksFund') }}
                 </h3>
-                <span class="ft-badge tone--default">Art. 14-2 ALUR</span>
+                <CBadge
+                  variant="primary"
+                  class="ft-badge"
+                >Art. 14-2 ALUR</CBadge>
               </div>
 
               <template v-if="worksFund">
@@ -935,7 +959,7 @@ const worksFundBelowThreshold = computed(() => {
                   {{ t('common.noData') }}
                 </p>
               </template>
-            </div>
+            </CCard>
           </div>
         </div>
 
@@ -1227,17 +1251,7 @@ const worksFundBelowThreshold = computed(() => {
 
 <style scoped>
 /* ── Layout ──────────────────────────────────────────────────────── */
-.budget-page { display: flex; flex-direction: column; min-height: 100vh; }
 
-.page-title {
-  font-family: var(--font-display);
-  font-size: 36px;
-  font-weight: var(--fw-bold);
-  font-variation-settings: 'opsz' 72;
-  letter-spacing: -.03em;
-  color: var(--color-on-surface);
-  line-height: 1;
-}
 .page-sub {
   font-size: 14px;
   color: var(--color-on-surface-variant);
@@ -1249,38 +1263,15 @@ const worksFundBelowThreshold = computed(() => {
 }
 
 /* ── Tabs ────────────────────────────────────────────────────────── */
-.tabs { margin-bottom: 32px; }
 .tab--new { color: var(--color-primary); }
 
 /* ── KPI ─────────────────────────────────────────────────────────── */
-.kpi-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  margin-bottom: 32px;
-}
 .hero-card__icon-on-accent {
   color: var(--color-on-primary);
   display: inline-flex;
 }
 
-/* ── Two-col ─────────────────────────────────────────────────────── */
-.two-col {
-  display: grid;
-  grid-template-columns: 1fr 340px;
-  gap: 24px;
-  align-items: start;
-}
-.left-col { display: flex; flex-direction: column; gap: 24px; }
-.right-col { display: flex; flex-direction: column; gap: 20px; }
-
 /* ── Section card ────────────────────────────────────────────────── */
-.section-card {
-  background: var(--color-surface-container-lowest);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
-  overflow: clip;
-}
 .section-head {
   display: flex;
   align-items: center;
@@ -1289,7 +1280,6 @@ const worksFundBelowThreshold = computed(() => {
   gap: 12px;
 }
 .section-head__actions { display: inline-flex; align-items: center; gap: 8px; }
-.section-head__action-label { display: inline; }
 .section-title {
   font-family: var(--font-display);
   font-size: 17px;
@@ -1313,6 +1303,25 @@ const worksFundBelowThreshold = computed(() => {
   padding: 32px 24px;
   color: var(--color-on-surface-variant);
   font-size: 14px;
+}
+
+.empty-state--page {
+  padding: 64px 24px;
+  max-width: 480px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.empty-state__message {
+  font-size: 16px;
+  font-weight: var(--fw-medium);
+  color: var(--color-on-surface);
+}
+
+.empty-state__hint {
+  font-size: 14px;
+  color: var(--color-on-surface-variant);
+  margin-bottom: 8px;
 }
 
 /* ── Progress bars ───────────────────────────────────────────────── */
@@ -1351,27 +1360,6 @@ const worksFundBelowThreshold = computed(() => {
 }
 .prog-total__values { font-family: var(--font-mono); }
 
-/* ── Chips ───────────────────────────────────────────────────────── */
-.chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 4px 10px;
-  border-radius: var(--radius-full);
-  font-size: 11px;
-  font-weight: var(--fw-medium);
-  background: var(--tone-bg, transparent);
-  color: var(--tone-fg, inherit);
-}
-.chip-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: currentColor;
-  opacity: .65;
-  flex-shrink: 0;
-}
-
 /* ── Table overrides for this view ───────────────────────────────── */
 .levies-table :deep(.c-table-wrap) {
   border-radius: 0;
@@ -1400,12 +1388,6 @@ const worksFundBelowThreshold = computed(() => {
 .cell-muted { color: var(--color-on-surface-variant); font-size: 12px; }
 
 /* ── Works fund card ─────────────────────────────────────────────── */
-.ft-card {
-  background: var(--color-surface-container-lowest);
-  border-radius: var(--radius-lg);
-  padding: 24px;
-  box-shadow: var(--shadow-md);
-}
 .ft-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 16px; }
 .ft-title {
   font-family: var(--font-display);
@@ -1449,13 +1431,6 @@ const worksFundBelowThreshold = computed(() => {
 .ft-prog-foot { display: flex; justify-content: space-between; margin-top: 5px; font-size: 11px; color: var(--color-on-surface-variant); }
 .ft-prog-available { color: var(--color-warning, #e65100); font-weight: var(--fw-medium); }
 /* ── Mini card (overdue) ─────────────────────────────────────────── */
-.mini-card {
-  background: var(--color-surface-container-lowest);
-  border-radius: var(--radius-lg);
-  padding: 20px;
-  box-shadow: var(--shadow-md);
-}
-.mini-card--top { margin-bottom: 20px; }
 .mini-title {
   font-family: var(--font-display);
   font-size: 15px;
@@ -1592,20 +1567,12 @@ const worksFundBelowThreshold = computed(() => {
 }
 
 @media (max-width: 1024px) {
-  .two-col {
-    grid-template-columns: 1fr;
-  }
-
   .breakdown-modal {
     grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 768px) {
-  .kpi-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
   .section-head {
     flex-wrap: wrap;
     align-items: flex-start;
@@ -1613,10 +1580,6 @@ const worksFundBelowThreshold = computed(() => {
 
   .generate-summary__grid {
     grid-template-columns: 1fr;
-  }
-
-  .section-head__action-label {
-    display: none;
   }
 }
 </style>

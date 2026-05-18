@@ -740,7 +740,7 @@ async function saveContract() {
 
 .contract-form__selected-name {
   max-width: 220px;
-  overflow: hidden;
+  overflow: clip;
   text-overflow: ellipsis;
   white-space: nowrap;
   color: var(--color-on-surface-variant);
@@ -815,7 +815,7 @@ async function saveContract() {
 }
 
 .contract-form__documents-name span {
-  overflow: hidden;
+  overflow: clip;
   text-overflow: ellipsis;
   white-space: nowrap;
 }

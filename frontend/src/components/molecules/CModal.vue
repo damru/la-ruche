@@ -132,7 +132,7 @@ function handleOpenChange(open: boolean) {
   border: 1px solid rgba(194, 199, 207, 0.3);
   box-shadow: var(--shadow-glass);
   border-radius: var(--radius-lg);
-  overflow: hidden;
+  overflow: clip;
 
   max-height: 90vh;
   display: flex;

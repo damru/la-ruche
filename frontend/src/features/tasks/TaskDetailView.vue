@@ -320,7 +320,7 @@ function dotClass(variant?: TimelineEvent['variant']): string {
   display: flex;
   align-items: stretch;
   padding: 0;
-  overflow: hidden;
+  overflow: clip;
   margin-bottom: var(--space-6);
 }
 
