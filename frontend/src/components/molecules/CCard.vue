@@ -19,6 +19,7 @@ withDefaults(defineProps<{
 <template>
   <div
     :class="[
+      'gap-y-4',
       'c-card',
       `c-card--pad-${padding}`,
       `c-card--radius-${radius}`,

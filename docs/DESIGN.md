@@ -327,6 +327,8 @@ Cette règle s'applique notamment aux délais de déclaration de sinistre, au ca
 - Le sous-titre de la carte `Appels de fonds` utilise deux métriques séparées (`nombre d'appels`, `taux de recouvrement`) via `CFlexGroup` horizontal + `CMetaItem`.
 - Tout sous-titre budget qui exprimait auparavant plusieurs informations dans une seule chaîne avec point médian (`·`) doit être rendu via `CFlexGroup direction="row"` + `CMetaItem variant="sub"` + `CSeparator`.
 - Le rappel des appels en retard est affiché en haut de la page Budget, au-dessus des cartes KPI.
+- Le fonds travaux dispose d'une carte dédiée distincte des KPI de synthèse : elle porte la barre de progression, le rappel légal, le taux configuré et les alertes de blocage métier ; la barre n'est plus imbriquée dans une Hero card générique.
+- La carte de pilotage du fonds travaux doit rendre séparément `objectif annuel`, `déjà appelé`, `disponible` et `taux configuré`, avec une action explicite de configuration réservée aux gestionnaires.
 - Le tableau des appels repose sur le composant partagé `CDataTable` (pas de table HTML locale), avec total affiché en pied de carte.
 - La carte `Consommation par poste` expose une action secondaire à icône de diagramme circulaire ouvrant une modale de répartition par poste ; la modale doit montrer le poids relatif de chaque ligne et une légende textuelle accessible.
 - La modale de répartition affiche les montants en typographie tabulaire mono (`font-mono`).

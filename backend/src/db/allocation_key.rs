@@ -230,6 +230,32 @@ pub async fn shares_balance(
     Ok((sum, total))
 }
 
+pub async fn list_unbalanced_active_keys(
+    pool: &PgPool,
+    building_id: Uuid,
+) -> crate::errors::AppResult<Vec<String>> {
+    Ok(sqlx::query_scalar::<_, String>(
+        r#"SELECT ak.name
+                     FROM allocation_key ak
+                     JOIN building b ON b.id = ak.building_id
+                     INNER JOIN unit_allocation_key uak
+                         ON uak.key_id = ak.id
+                        AND uak.valid_to IS NULL
+                     INNER JOIN unit u
+                         ON u.id = uak.unit_id
+                        AND u.building_id = ak.building_id
+                        AND u.active = true
+                     WHERE ak.building_id = $1
+                       AND ak.deleted_at IS NULL
+                     GROUP BY ak.id, ak.name, b.shares_total
+                     HAVING COALESCE(SUM(uak.share_value), 0) != b.shares_total
+                     ORDER BY ak.name"#,
+    )
+    .bind(building_id)
+    .fetch_all(pool)
+    .await?)
+}
+
 /// If the value is unchanged for the active record, this is a no-op.
 /// Otherwise: close the current record (valid_to = today) and insert a new one.
 pub async fn set_share(

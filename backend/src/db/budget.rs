@@ -45,6 +45,15 @@ pub struct LevyCallRow {
     pub works_fund_amount: Decimal,
 }
 
+#[derive(Debug, Serialize, sqlx::FromRow)]
+pub struct WorksFundRow {
+    pub id: Uuid,
+    pub fiscal_year: i32,
+    pub levied_amount: Decimal,
+    pub available_amount: Decimal,
+    pub contribution_rate_pct: Decimal,
+}
+
 /// One entry per unit to insert as levy_call.
 pub struct LevyInsert {
     pub unit_id: Uuid,
@@ -115,7 +124,9 @@ pub async fn create(
     building_id: Uuid,
     fiscal_year: i32,
 ) -> crate::errors::AppResult<BudgetRow> {
-    Ok(sqlx::query_as!(
+    let mut tx = pool.begin().await?;
+
+    let budget = sqlx::query_as!(
         BudgetRow,
         r#"INSERT INTO budget (building_id, fiscal_year)
            VALUES ($1, $2)
@@ -132,7 +143,105 @@ pub async fn create(
         building_id,
         fiscal_year
     )
-    .fetch_one(pool)
+    .fetch_one(&mut *tx)
+    .await?;
+
+    ensure_works_fund(&mut *tx, building_id, fiscal_year).await?;
+
+    tx.commit().await?;
+    Ok(budget)
+}
+
+pub async fn get_by_fiscal_year(
+    pool: &PgPool,
+    building_id: Uuid,
+    fiscal_year: i32,
+) -> crate::errors::AppResult<Option<BudgetRow>> {
+    Ok(sqlx::query_as::<_, BudgetRow>(
+        r#"SELECT
+            b.id,
+            b.building_id,
+            b.fiscal_year,
+            b.status::text as status,
+            b.approval_meeting_id,
+            COALESCE((SELECT SUM(bl.budgeted_amount) FROM budget_line bl WHERE bl.budget_id = b.id), 0)::numeric as total_forecast,
+            COALESCE((SELECT SUM(bl.actual_amount) FROM budget_line bl WHERE bl.budget_id = b.id), 0)::numeric as total_actual,
+            b.created_at,
+            b.updated_at
+           FROM budget b
+           WHERE b.building_id = $1 AND b.fiscal_year = $2"#,
+    )
+    .bind(building_id)
+    .bind(fiscal_year)
+    .fetch_optional(pool)
+    .await?)
+}
+
+pub async fn ensure_works_fund<'e, E>(
+    executor: E,
+    building_id: Uuid,
+    fiscal_year: i32,
+) -> crate::errors::AppResult<()>
+where
+    E: sqlx::Executor<'e, Database = sqlx::Postgres>,
+{
+    sqlx::query(
+        r#"INSERT INTO works_fund (building_id, fiscal_year)
+           VALUES ($1, $2)
+           ON CONFLICT (building_id, fiscal_year) DO NOTHING"#,
+    )
+    .bind(building_id)
+    .bind(fiscal_year)
+    .execute(executor)
+    .await?;
+
+    Ok(())
+}
+
+pub async fn get_works_fund(
+    pool: &PgPool,
+    building_id: Uuid,
+    fiscal_year: i32,
+) -> crate::errors::AppResult<Option<WorksFundRow>> {
+    Ok(sqlx::query_as::<_, WorksFundRow>(
+        r#"SELECT id, fiscal_year, levied_amount, available_amount, contribution_rate_pct
+           FROM works_fund
+           WHERE building_id = $1 AND fiscal_year = $2"#,
+    )
+    .bind(building_id)
+    .bind(fiscal_year)
+    .fetch_optional(pool)
+    .await?)
+}
+
+pub async fn get_or_create_works_fund(
+    pool: &PgPool,
+    building_id: Uuid,
+    fiscal_year: i32,
+) -> crate::errors::AppResult<WorksFundRow> {
+    ensure_works_fund(pool, building_id, fiscal_year).await?;
+    get_works_fund(pool, building_id, fiscal_year)
+        .await?
+        .ok_or(crate::errors::AppError::NotFound)
+}
+
+pub async fn update_works_fund_rate(
+    pool: &PgPool,
+    building_id: Uuid,
+    fiscal_year: i32,
+    contribution_rate_pct: Decimal,
+) -> crate::errors::AppResult<Option<WorksFundRow>> {
+    Ok(sqlx::query_as::<_, WorksFundRow>(
+        r#"UPDATE works_fund
+           SET contribution_rate_pct = $3,
+               updated_at = NOW()
+           WHERE building_id = $1 AND fiscal_year = $2
+           RETURNING id, fiscal_year, levied_amount, available_amount, contribution_rate_pct"#,
+    )
+    .bind(building_id)
+    .bind(fiscal_year)
+    .bind(contribution_rate_pct)
+    .fetch_optional(pool)
     .await?)
 }
 
@@ -234,7 +343,7 @@ pub async fn delete_line(
 pub async fn generate_levies(
     pool: &PgPool,
     budget_id: Uuid,
-    _building_id: Uuid,
+    building_id: Uuid,
     due_date: NaiveDate,
     call_label: &str,
     levies: &[LevyInsert],
@@ -270,6 +379,26 @@ pub async fn generate_levies(
         if let Some(row) = row {
             result.push(row);
         }
+    }
+
+    let generated_works_fund_amount: Decimal = result.iter().map(|row| row.works_fund_amount).sum();
+    if generated_works_fund_amount > Decimal::ZERO {
+        sqlx::query(
+            r#"UPDATE works_fund wf
+               SET levied_amount = wf.levied_amount + $1,
+                   available_amount = wf.available_amount + $1,
+                   updated_at = NOW()
+               FROM budget b
+               WHERE b.id = $2
+                 AND b.building_id = $3
+                 AND wf.building_id = b.building_id
+                 AND wf.fiscal_year = b.fiscal_year"#,
+        )
+        .bind(generated_works_fund_amount)
+        .bind(budget_id)
+        .bind(building_id)
+        .execute(&mut *tx)
+        .await?;
     }
 
     tx.commit().await?;
@@ -360,24 +489,4 @@ pub async fn mark_paid(
     .execute(pool)
     .await?;
     Ok(())
-}
-
-pub async fn get_works_fund(
-    pool: &PgPool,
-    building_id: Uuid,
-    fiscal_year: i32,
-) -> crate::errors::AppResult<Option<serde_json::Value>> {
-    let row = sqlx::query!(
-        "SELECT id, fiscal_year, levied_amount, available_amount FROM works_fund WHERE building_id = $1 AND fiscal_year = $2",
-        building_id, fiscal_year
-    ).fetch_optional(pool).await?;
-
-    Ok(row.map(|r| {
-        serde_json::json!({
-            "id": r.id,
-            "fiscal_year": r.fiscal_year,
-            "levied_amount": r.levied_amount,
-            "available_amount": r.available_amount,
-        })
-    }))
 }

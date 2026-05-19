@@ -19,6 +19,33 @@ use crate::{
     errors::{AppError, AppResult},
 };
 
+fn legal_minimum_works_fund_rate_pct() -> Decimal {
+    Decimal::new(5, 0)
+}
+
+fn percentage_divisor() -> Decimal {
+    Decimal::new(100, 0)
+}
+
+fn works_fund_target_amount(total_charges: Decimal, contribution_rate_pct: Decimal) -> Decimal {
+    (total_charges * contribution_rate_pct / percentage_divisor()).round_dp(2)
+}
+
+fn serialize_works_fund(
+    works_fund: db::budget::WorksFundRow,
+    minimum_legal_rate_pct: Decimal,
+) -> serde_json::Value {
+    serde_json::json!({
+        "id": works_fund.id,
+        "fiscal_year": works_fund.fiscal_year,
+        "levied_amount": works_fund.levied_amount,
+        "available_amount": works_fund.available_amount,
+        "contribution_rate_pct": works_fund.contribution_rate_pct,
+        "minimum_legal_rate_pct": minimum_legal_rate_pct,
+        "is_rate_compliant": works_fund.contribution_rate_pct >= minimum_legal_rate_pct,
+    })
+}
+
 pub async fn list(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,
@@ -76,6 +103,28 @@ pub async fn close(
     Path(id): Path<Uuid>,
 ) -> AppResult<StatusCode> {
     auth.require_role(&Role::Manager)?;
+    let budget = db::budget::get(&state.pool, id, auth.building_id)
+        .await?
+        .ok_or(AppError::NotFound)?;
+    let works_fund =
+        db::budget::get_or_create_works_fund(&state.pool, auth.building_id, budget.fiscal_year)
+            .await?;
+    let legal_minimum_rate_pct = legal_minimum_works_fund_rate_pct();
+
+    if works_fund.contribution_rate_pct < legal_minimum_rate_pct {
+        return Err(AppError::conflict_code(
+            "errors.budget.works_fund_rate_below_legal_minimum",
+        ));
+    }
+
+    let works_fund_target =
+        works_fund_target_amount(budget.total_forecast, works_fund.contribution_rate_pct);
+    if works_fund.levied_amount < works_fund_target {
+        return Err(AppError::conflict_code(
+            "errors.budget.works_fund_target_unmet",
+        ));
+    }
+
     let closed = db::budget::close(&state.pool, id, auth.building_id).await?;
     if closed {
         Ok(StatusCode::NO_CONTENT)
@@ -155,6 +204,11 @@ pub struct GenerateLeviesInput {
     pub call_label: Option<String>,
 }
 
+#[derive(Deserialize)]
+pub struct UpdateWorksFundInput {
+    pub contribution_rate_pct: Decimal,
+}
+
 fn quarterly_default_call_label(now: chrono::DateTime<chrono::Utc>) -> String {
     let quarter = (now.month0() / 3) + 1;
     format!("Quarterly Q{quarter} {}", now.year())
@@ -169,10 +223,22 @@ pub async fn generate_levies(
     auth.require_role(&Role::Manager)?;
     db::budget::ensure_budget_is_mutable(&state.pool, id, auth.building_id).await?;
 
-    let _budget = db::budget::get(&state.pool, id, auth.building_id)
+    let budget = db::budget::get(&state.pool, id, auth.building_id)
         .await?
         .ok_or(AppError::NotFound)?;
+
+    let unbalanced_keys =
+        db::allocation_key::list_unbalanced_active_keys(&state.pool, auth.building_id).await?;
+    if !unbalanced_keys.is_empty() {
+        return Err(AppError::conflict_code(
+            "errors.budget.allocation_keys_unbalanced",
+        ));
+    }
+
     let lines = db::budget::list_lines(&state.pool, id, auth.building_id).await?;
+    let works_fund =
+        db::budget::get_or_create_works_fund(&state.pool, auth.building_id, budget.fiscal_year)
+            .await?;
 
     let units_data = db::allocation_key::list_general_shares(&state.pool, auth.building_id).await?;
 
@@ -180,8 +246,15 @@ pub async fn generate_levies(
 
     let total_charges: Decimal = lines.iter().map(|l| l.budgeted_amount).sum();
 
+    let legal_minimum_rate_pct = legal_minimum_works_fund_rate_pct();
+    if input.include_works_fund && works_fund.contribution_rate_pct < legal_minimum_rate_pct {
+        return Err(AppError::conflict_code(
+            "errors.budget.works_fund_rate_below_legal_minimum",
+        ));
+    }
+
     let works_fund_amount = if input.include_works_fund {
-        total_charges * Decimal::new(5, 2)
+        works_fund_target_amount(total_charges, works_fund.contribution_rate_pct)
     } else {
         Decimal::ZERO
     };
@@ -318,8 +391,31 @@ pub async fn list_works_fund(
         .to_string()
         .parse::<i32>()
         .unwrap_or(2025);
-    let ft = db::budget::get_works_fund(&state.pool, auth.building_id, fiscal_year).await?;
-    Ok(Json(ft.unwrap_or(serde_json::json!(null))))
+    let ft = match db::budget::get_works_fund(&state.pool, auth.building_id, fiscal_year).await? {
+        Some(works_fund) => Some(works_fund),
+        None => {
+            if db::budget::get_by_fiscal_year(&state.pool, auth.building_id, fiscal_year)
+                .await?
+                .is_some()
+            {
+                Some(
+                    db::budget::get_or_create_works_fund(
+                        &state.pool,
+                        auth.building_id,
+                        fiscal_year,
+                    )
+                    .await?,
+                )
+            } else {
+                None
+            }
+        }
+    };
+
+    Ok(Json(
+        ft.map(|works_fund| serialize_works_fund(works_fund, legal_minimum_works_fund_rate_pct()))
+            .unwrap_or(serde_json::json!(null)),
+    ))
 }
 
 pub async fn get_works_fund(
@@ -327,6 +423,56 @@ pub async fn get_works_fund(
     State(state): State<Arc<AppState>>,
     Path(fiscal_year): Path<i32>,
 ) -> AppResult<Json<serde_json::Value>> {
-    let ft = db::budget::get_works_fund(&state.pool, auth.building_id, fiscal_year).await?;
-    Ok(Json(ft.ok_or(AppError::NotFound)?))
+    let works_fund = match db::budget::get_works_fund(&state.pool, auth.building_id, fiscal_year)
+        .await?
+    {
+        Some(works_fund) => works_fund,
+        None => {
+            db::budget::get_by_fiscal_year(&state.pool, auth.building_id, fiscal_year)
+                .await?
+                .ok_or(AppError::NotFound)?;
+            db::budget::get_or_create_works_fund(&state.pool, auth.building_id, fiscal_year).await?
+        }
+    };
+
+    Ok(Json(serialize_works_fund(
+        works_fund,
+        legal_minimum_works_fund_rate_pct(),
+    )))
+}
+
+pub async fn update_works_fund(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+    Path(fiscal_year): Path<i32>,
+    Json(input): Json<UpdateWorksFundInput>,
+) -> AppResult<Json<serde_json::Value>> {
+    auth.require_role(&Role::Manager)?;
+
+    if input.contribution_rate_pct < Decimal::ZERO
+        || input.contribution_rate_pct > percentage_divisor()
+    {
+        return Err(AppError::validation_code(
+            "errors.budget.works_fund_rate_invalid",
+        ));
+    }
+
+    db::budget::get_by_fiscal_year(&state.pool, auth.building_id, fiscal_year)
+        .await?
+        .ok_or(AppError::NotFound)?;
+    db::budget::get_or_create_works_fund(&state.pool, auth.building_id, fiscal_year).await?;
+
+    let works_fund = db::budget::update_works_fund_rate(
+        &state.pool,
+        auth.building_id,
+        fiscal_year,
+        input.contribution_rate_pct.round_dp(2),
+    )
+    .await?
+    .ok_or(AppError::NotFound)?;
+
+    Ok(Json(serialize_works_fund(
+        works_fund,
+        legal_minimum_works_fund_rate_pct(),
+    )))
 }

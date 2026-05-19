@@ -227,6 +227,8 @@ export const budgetApi = {
     api.put(`/levies/${levyId}/payment`),
   getWorksFund: (fiscalYear: number) =>
     api.get<WorksFund>(`/works-fund/${fiscalYear}`),
+  updateWorksFund: (fiscalYear: number, data: { contribution_rate_pct: number }) =>
+    api.put<WorksFund>(`/works-fund/${fiscalYear}`, data),
 }
 
 // ── Documents ─────────────────────────────────────────────────────

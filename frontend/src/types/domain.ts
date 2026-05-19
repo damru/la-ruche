@@ -232,6 +232,9 @@ export interface WorksFund {
   fiscal_year: number
   levied_amount: number
   available_amount: number
+  contribution_rate_pct: number
+  minimum_legal_rate_pct: number
+  is_rate_compliant: boolean
 }
 
 export interface Document {

@@ -181,7 +181,10 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
         .route("/budgets/{id}/levies", get(budget::list_levies))
         .route("/levies/{id}/payment", put(budget::mark_paid))
         .route("/works-fund", get(budget::list_works_fund))
-        .route("/works-fund/{fiscal_year}", get(budget::get_works_fund))
+        .route(
+            "/works-fund/{fiscal_year}",
+            get(budget::get_works_fund).put(budget::update_works_fund),
+        )
         // ── Documents ───────────────────────────────────────────
         .route(
             "/documents",

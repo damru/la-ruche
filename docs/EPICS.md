@@ -104,7 +104,7 @@ Cycle de vie complet d'une AG, résolutions typées par majorité, vote par lot 
 
 **Statut :** en cours | **MVP :** oui | **Réf. PRD :** Fondations légales
 
-**État code actuel :** backend réel sur les flux principaux (génération appels, snapshots, relevé individuel) + frontend branché sur l'API réelle (S01-S04).
+**État code actuel :** backend réel sur les flux principaux (génération appels, snapshots, relevé individuel, garde d'équilibrage des clés, clôture conditionnelle fonds travaux) + frontend branché sur l'API réelle (S01-S04) avec carte dédiée de pilotage du fonds travaux et configuration du taux par exercice.
 
 Budget prévisionnel par exercice, appels de fonds générés par tantièmes, fonds travaux obligatoire (≥ 5%), arrêté de comptes.
 
@@ -112,14 +112,14 @@ Budget prévisionnel par exercice, appels de fonds générés par tantièmes, fo
 
 * `EP-004-S01` ✅ — Créer et gérer un budget prévisionnel par exercice (lignes par clé de répartition) — `POST /budgets`, `POST /budgets/{id}/lines`, `DELETE /budgets/{id}/lines/{lid}` ; frontend branché (modales création exercice + ligne, suppression ligne, affichage prévisionnel vs réalisé par clé)
 * `EP-004-S02` ✅ — Générer les appels de fonds trimestriels au prorata des tantièmes — `POST /budgets/{id}/levies/generate` avec `due_date` + `include_works_fund` ; `PUT /levies/{id}/payment` ; tableau des appels connecté à l'API
-* `EP-004-S03` ✅ — Suivre et alimenter le fonds travaux (≥ 5% du budget prévisionnel, compte séparé) — `GET /works-fund/{fiscal_year}` ; carte fonds travaux avec barre de progression + notice légale + alerte seuil
+* `EP-004-S03` ✅ — Suivre et alimenter le fonds travaux (≥ 5% du budget prévisionnel, compte séparé) — `GET /works-fund/{fiscal_year}` + `PUT /works-fund/{fiscal_year}` ; entrée `works_fund` créée avec l'exercice, carte dédiée de pilotage, objectif annuel, progression d'appel, taux configurable et notice légale
 * `EP-004-S04` ✅ — Produire l'arrêté de comptes (réalisé vs prévisionnel) — barres de progression par poste budgétaire avec données réelles API
 * `EP-004-S05` ✅ — Snapshot des tantièmes dans chaque appel de fonds généré (`shares_snapshot`, `shares_total_snapshot`, `key_id`) — immuabilité comptable (LEGAL.md §2.3, ADR-006)
 * `EP-004-S06` ✅ — Relevé individuel de charges par lot : liste des appels reçus, montants, statuts, solde courant (LEGAL.md §4.6)
-* `EP-004-S07` — Blocage dur côté backend de toute génération d'appel de fonds tant qu'une clé active est déséquilibrée (`Σ tantièmes ≠ total_clé`) (LEGAL.md §2.1)
+* `EP-004-S07` ✅ — Blocage dur côté backend de toute génération d'appel de fonds tant qu'une clé active est déséquilibrée (`Σ tantièmes ≠ total_clé`) (LEGAL.md §2.1)
 * `EP-004-S08` — Émission trimestrielle paramétrable et contrôles d'échéances par exercice (quart par défaut) avec piste d'audit (LEGAL.md §4.3) — Prendre en compte les catégories de l'art. 35 décret v6.0 (25/12/2025) : avances PPT, cotisations fonds travaux (art. 14-2-1), provisions délégation CS
 * `EP-004-S09` — Implémenter le mapping plan comptable copropriété (arrêté 14/03/2005) sur lignes budgétaires et exports comptables (LEGAL.md §4.2)
-* `EP-004-S10` — Contrôle et alerte du seuil minimum fonds travaux avant validation de l'exercice : **≥ 5% du budget prévisionnel** en l'absence de PPT adopté ; **≥ 2,5% du montant des travaux prévus au PPT** ET **≥ 5% du budget prévisionnel** si un PPT est adopté en AG (art. 14-2-1 loi 1965, LEGIARTI000043967792, en vigueur 01/01/2023 — LEGAL.md §4.4)
+* `EP-004-S10` — Contrôle et alerte du seuil minimum fonds travaux avant validation de l'exercice : **branche sans PPT partiellement couverte** via alerte UI + blocage de clôture si le taux configuré est < 5% ou si le montant appelé est insuffisant ; **branche PPT 2,5%** encore à implémenter (art. 14-2-1 loi 1965, LEGIARTI000043967792, en vigueur 01/01/2023 — LEGAL.md §4.4)
 * `EP-004-S11` — Recouvrement des charges impayées : identification des lots en solde débiteur, enregistrement des relances (mise en demeure), suivi des dossiers contentieux jusqu'à clôture (LEGAL.md §4.7)
 
 ***
@@ -401,7 +401,7 @@ Durcir les entités comptablement critiques pour empêcher toute modification r�
 | §1.6 Espace en ligne sécurisé | EP-002/EP-003/EP-004/EP-005/EP-006/EP-009 | Couverture native (c'est l'Application elle-même) |
 | §1.7 Organes de copropriété | EP-002-S11, EP-013-S02 | Registre des mandats et gouvernance détaillée à finaliser |
 | §1.8 Missions du syndic (art. 18) | EP-001/EP-002/EP-003/EP-004/EP-009/EP-012 | Couverture partielle ; obligations encore dispersées |
-| §2.1 Intégrité somme tantièmes | EP-001-S07, EP-004-S07 | Blocage dur backend à finaliser bout-en-bout |
+| §2.1 Intégrité somme tantièmes | EP-001-S07, EP-004-S07 | Couvert côté registre et côté budget ; la vue Budget expose désormais aussi le blocage avant génération |
 | §2.2 Historique tantièmes | EP-001-S06 | Couvert côté modèle ; contrôles de restitution à renforcer |
 | §2.3 Snapshot appels | EP-004-S05 | Couvert ; vérifier adoption sur tous flux d'appels |
 | §2.4 Tantièmes et mutations | EP-002-S08, EP-002-S06/S07 | Workflows notariaux à implémenter |
@@ -413,7 +413,7 @@ Durcir les entités comptablement critiques pour empêcher toute modification r�
 | §4.1 Compte bancaire séparé | Hors périmètre logiciel | Information uniquement ; pas de flux bancaire |
 | §4.2 Plan comptable normé | EP-004-S09 | Mapping comptable non implémenté |
 | §4.3 Budget + appels de fonds (incl. catégories art. 35 v6 dec. 2025) | EP-004-S01/S02/S08 | Nouvelles catégories PPT/fonds travaux/délégation CS à modéliser |
-| §4.4 Fonds travaux ≥ 5% (ou 2,5% PPT si plan adopté, art. 14-2-1 en vigueur 01/01/2023) | EP-004-S03/S10 | Seuil 2,5% PPT à implémenter ; contrôle automatique à finaliser |
+| §4.4 Fonds travaux ≥ 5% (ou 2,5% PPT si plan adopté, art. 14-2-1 en vigueur 01/01/2023) | EP-004-S03/S10 | Branche ≥ 5% sans PPT couverte (carte dédiée, taux configurable, blocage de clôture) ; seuil 2,5% PPT encore à implémenter |
 | §4.5 Arrêté de comptes | EP-004-S04 | Écrans et exports d'arrêté à finaliser |
 | §4.6 Relevé individuel de charges | EP-004-S06 | Couvert backend ; UX front à industrialiser |
 | §4.7 Recouvrement des impayés | EP-004-S11 | Fonctionnalité non implémentée |

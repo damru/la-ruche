@@ -12,7 +12,7 @@ withDefaults(defineProps<{
   subtitle?: string
   delta?: string
   deltaVariant?: DeltaVariant
-  tone?: 'default' | 'accent' | 'warn' | 'err'
+  tone?: 'default' | 'accent' | 'warn' | 'err' | 'valid' | 'info'
   emphasizeValue?: boolean
 }>(), {
   delta: undefined,

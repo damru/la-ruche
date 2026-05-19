@@ -1445,7 +1445,7 @@ function toDateTimeLocal(value: string): string {
               <CCard
                 v-for="resolution in resolutions"
                 :key="resolution.id"
-                class="resolution-card gap-y-4"
+                class="resolution-card "
               >
                 <div class="resolution-card__header">
                   <div
@@ -1569,7 +1569,10 @@ function toDateTimeLocal(value: string): string {
                   {{ t('meetings.vote.pendingVote') }}
                 </div>
 
-                <div class="resolution-card__actions">
+                <div
+                  v-if="canEditResolution || canManageVotes" 
+                  class="resolution-card__actions"
+                >
                   <CBtn
                     v-if="canEditResolution"
                     size="sm"
@@ -1608,7 +1611,7 @@ function toDateTimeLocal(value: string): string {
           </section>
 
           <aside class="side-column">
-            <CCard class="gap-y-4">
+            <CCard class="">
               <h2 class="side-head headline-sm card-title">
                 {{ t('meetings.info') }}
               </h2>
@@ -1640,7 +1643,7 @@ function toDateTimeLocal(value: string): string {
               </CFlexGroup>
             </CCard>
 
-            <CCard class="gap-y-4">
+            <CCard class="">
               <div class="side-head">
                 <div>
                   <h2 class="headline-sm card-title">
@@ -1763,7 +1766,7 @@ function toDateTimeLocal(value: string): string {
               </CAlert>
             </CCard>
 
-            <CCard class="gap-y-4">
+            <CCard class="">
               <div class="side-head">
                 <div>
                   <h2 class="headline-sm card-title">
@@ -1848,7 +1851,7 @@ function toDateTimeLocal(value: string): string {
               </CFlexGroup>
             </CCard>
 
-            <CCard class="gap-y-4">
+            <CCard class="">
               <h2 class="side-head headline-sm card-title">
                 {{ t('meetings.agenda') }}
               </h2>

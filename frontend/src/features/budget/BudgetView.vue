@@ -14,6 +14,7 @@ import CFormInput from '@/components/atoms/CFormInput.vue'
 import CFormSelect from '@/components/atoms/CFormSelect.vue'
 import CFormCheckbox from '@/components/atoms/CFormCheckbox.vue'
 import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
+import CAlert from '@/components/atoms/CAlert.vue'
 import CProgressBar from '@/components/atoms/CProgressBar.vue'
 import CDataTable from '@/components/molecules/CDataTable.vue'
 import CLegalDescription from '@/components/atoms/CLegalDescription.vue'
@@ -21,10 +22,12 @@ import CBtn from '@/components/atoms/CBtn.vue'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CEyebrow from '@/components/atoms/CEyebrow.vue'
 import CCard from '@/components/molecules/CCard.vue'
+import CKpiCard from '@/components/molecules/CKpiCard.vue'
 import CMetaItem from '@/components/molecules/CMetaItem.vue'
+import CMetaLine from '@/components/molecules/CMetaLine.vue'
+import CSeparator from '@/components/atoms/CSeparator.vue'
 import CLegalNotice from '@/components/molecules/CLegalNotice.vue'
 import CLegalCard from '@/components/molecules/CLegalCard.vue'
-import CHeroCard from '@/components/molecules/CHeroCard.vue'
 import CFlexGroup from '@/components/organisms/CFlexGroup.vue'
 import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import CIconCheckCircle from '@/components/atoms/CIconCheckCircle.svg'
@@ -48,7 +51,6 @@ const { hasAnyRole } = useRole()
 const canManage = computed(() => hasAnyRole(['manager']))
 const canEditSelectedBudget = computed(() => canManage.value && selectedBudget.value?.status !== 'closed')
 const canMarkLeviesPaid = computed(() => hasAnyRole(['manager', 'board_member']))
-const DEFAULT_WORKS_FUND_RATE = 0.05
 const sharePercentageFormatter = new Intl.NumberFormat('fr-FR', {
   minimumFractionDigits: 1,
   maximumFractionDigits: 1,
@@ -74,6 +76,7 @@ const budgetLines = ref<BudgetLine[]>([])
 const levies = ref<LevyCall[]>([])
 const worksFund = ref<WorksFund | null>(null)
 const allocationKeys = ref<AllocationKey[]>([])
+const unbalancedAllocationKeys = ref<string[]>([])
 
 // ── Derived ───────────────────────────────────────────────────────
 
@@ -83,12 +86,6 @@ const selectedBudget = computed(() =>
 
 const overdueLevies = computed(() => levies.value.filter(l => l.status === 'overdue'))
 const overdueTotal = computed(() => overdueLevies.value.reduce((s, l) => s + l.amount, 0))
-
-const worksEngagedPct = computed(() => {
-  if (!worksFund.value?.levied_amount) return 0
-  const engaged = worksFund.value.levied_amount - worksFund.value.available_amount
-  return Math.min(100, Math.round((engaged / worksFund.value.levied_amount) * 100))
-})
 
 const keyOptions = computed(() =>
   allocationKeys.value.map(k => ({ value: k.id, label: k.name }))
@@ -125,7 +122,29 @@ const alreadyCalledDisplayAmount = computed(() =>
 const levyCollectionRate = computed(() =>
   levyCallCount.value > 0 ? Math.round((levyPaidCount.value / levyCallCount.value) * 100) : 0
 )
-const worksFundContributionTarget = computed(() => selectedTotalForecast.value * DEFAULT_WORKS_FUND_RATE)
+const worksFundContributionRate = computed(() =>
+  Number(worksFund.value?.contribution_rate_pct ?? worksFund.value?.minimum_legal_rate_pct ?? 5)
+)
+const worksFundMinimumRate = computed(() =>
+  Number(worksFund.value?.minimum_legal_rate_pct ?? 5)
+)
+const worksFundContributionTarget = computed(() =>
+  selectedTotalForecast.value * (worksFundContributionRate.value / 100)
+)
+const worksFundCalledAmount = computed(() => Number(worksFund.value?.levied_amount ?? 0))
+const worksFundAvailableAmount = computed(() => Number(worksFund.value?.available_amount ?? 0))
+const worksFundRemainingToCall = computed(() =>
+  Math.max(worksFundContributionTarget.value - worksFundCalledAmount.value, 0)
+)
+const worksFundProgressPct = computed(() => {
+  if (worksFundContributionTarget.value <= 0) return 0
+  return Math.min(100, Math.round((worksFundCalledAmount.value / worksFundContributionTarget.value) * 100))
+})
+const worksFundRateCompliant = computed(() =>
+  Boolean(worksFund.value?.is_rate_compliant ?? worksFundContributionRate.value >= worksFundMinimumRate.value)
+)
+const worksFundTargetMet = computed(() => worksFundRemainingToCall.value < 0.01)
+const hasUnbalancedAllocationKeys = computed(() => unbalancedAllocationKeys.value.length > 0)
 const impactedLotsCount = computed(() =>
   buildingStats.value?.nb_lots ?? leviedUnitsCount.value
 )
@@ -141,7 +160,35 @@ const generatePreviewTotal = computed(() =>
   generatePreviewChargeTotal.value + generatePreviewWorksFundTotal.value
 )
 const canGenerateLevies = computed(() =>
-  selectedBudget.value?.status !== 'closed' && generatePreviewTotal.value > 0
+  selectedBudget.value?.status !== 'closed'
+  && generatePreviewTotal.value > 0
+  && !hasUnbalancedAllocationKeys.value
+  && (!generateForm.value.include_works_fund || worksFundRateCompliant.value)
+)
+const generateBlockingReason = computed(() => {
+  if (hasUnbalancedAllocationKeys.value) {
+    return t('budget.allocationKeysBlocked', {
+      keys: unbalancedAllocationKeys.value.join(', '),
+    })
+  }
+
+  if (generateForm.value.include_works_fund && !worksFundRateCompliant.value) {
+    return t('budget.worksFundRateBlocked', {
+      minimum: formatSharePercentage(worksFundMinimumRate.value),
+    })
+  }
+
+  return ''
+})
+const generateFeedbackStatus = computed(() =>
+  generateFeedback.status.value !== 'idle'
+    ? generateFeedback.status.value
+    : (generateBlockingReason.value ? 'error' : 'idle')
+)
+const generateFeedbackMessage = computed(() =>
+  generateFeedback.status.value !== 'idle'
+    ? generateFeedback.message.value
+    : generateBlockingReason.value
 )
 const levyTableColumns = computed<Column<LevyCall>[]>(() => {
   const columns: Column<LevyCall>[] = [
@@ -223,6 +270,18 @@ async function loadMeta() {
   buildingStats.value = statsRes.data
   buildingName.value = statsRes.data.name
   allocationKeys.value = keysRes.data
+
+  try {
+    const balances = await Promise.all(
+      keysRes.data.map(async (key) => {
+        const res = await allocationKeysApi.balance(key.id)
+        return res.data.balanced ? null : key.name
+      }),
+    )
+    unbalancedAllocationKeys.value = balances.filter((value): value is string => Boolean(value))
+  } catch {
+    unbalancedAllocationKeys.value = []
+  }
 }
 
 async function loadBudgets() {
@@ -267,6 +326,9 @@ async function loadBudgetData(budgetId: string) {
         ...wfRes.data,
         levied_amount: Number(wfRes.data.levied_amount),
         available_amount: Number(wfRes.data.available_amount),
+        contribution_rate_pct: Number(wfRes.data.contribution_rate_pct),
+        minimum_legal_rate_pct: Number(wfRes.data.minimum_legal_rate_pct),
+        is_rate_compliant: Boolean(wfRes.data.is_rate_compliant),
       }
     } catch {
       worksFund.value = null
@@ -420,6 +482,49 @@ async function generateLevies() {
   }
 }
 
+// ── Works fund settings modal ────────────────────────────────────
+
+const showWorksFundModal = ref(false)
+const savingWorksFund = ref(false)
+const worksFundFeedback = useFormFeedback()
+const worksFundForm = ref({ contribution_rate_pct: '' })
+
+function openWorksFundModal() {
+  worksFundFeedback.reset()
+  worksFundForm.value = {
+    contribution_rate_pct: worksFund.value
+      ? worksFundContributionRate.value.toFixed(2)
+      : worksFundMinimumRate.value.toFixed(2),
+  }
+  showWorksFundModal.value = true
+}
+
+async function saveWorksFund() {
+  if (!selectedBudget.value) return
+
+  const contributionRatePct = Number.parseFloat(worksFundForm.value.contribution_rate_pct)
+  if (!Number.isFinite(contributionRatePct) || contributionRatePct < 0 || contributionRatePct > 100) {
+    worksFundFeedback.setError(t('errors.budget.works_fund_rate_invalid'))
+    return
+  }
+
+  savingWorksFund.value = true
+  worksFundFeedback.reset()
+  try {
+    await budgetApi.updateWorksFund(selectedBudget.value.fiscal_year, {
+      contribution_rate_pct: contributionRatePct,
+    })
+    if (selectedBudgetId.value) {
+      await loadBudgetData(selectedBudgetId.value)
+    }
+    showWorksFundModal.value = false
+  } catch (err) {
+    worksFundFeedback.setError(toErrorMessage(err))
+  } finally {
+    savingWorksFund.value = false
+  }
+}
+
 // ── Mark paid (S02) ───────────────────────────────────────────────
 
 const markingPaidId = ref<string | null>(null)
@@ -491,13 +596,6 @@ function initials(name: string): string {
 function formatSharePercentage(value: number): string {
   return sharePercentageFormatter.format(value)
 }
-
-// Works-fund legal threshold: alert if available < 5% of forecast (S03/S10)
-const worksFundBelowThreshold = computed(() => {
-  if (!worksFund.value || !selectedTotalForecast.value) return false
-  const minRequired = selectedTotalForecast.value * 0.05
-  return worksFund.value.available_amount < minRequired
-})
 </script>
 
 <template>
@@ -536,7 +634,9 @@ const worksFundBelowThreshold = computed(() => {
       >
         <div class="view-header">
           <CEyebrow>{{ t('page.eyebrows.budget') }}</CEyebrow>
-          <h1 class="display-md">{{ t('budget.title') }}</h1>
+          <h1 class="display-md">
+            {{ t('budget.title') }}
+          </h1>
         </div>
         <div class="empty-state empty-state--page">
           <p class="title-md text-on-surface">
@@ -557,7 +657,18 @@ const worksFundBelowThreshold = computed(() => {
 
       <template v-else>
         <div class="view-header">
-          <CEyebrow>{{ t('page.eyebrows.budget') }}</CEyebrow>
+          <CEyebrow>
+            <CBadge
+              :variant="worksFundRateCompliant && worksFundTargetMet && !hasUnbalancedAllocationKeys ? 'valid' : 'pending'"
+              dot
+              :pulse="false"
+            >
+              {{ worksFundRateCompliant && worksFundTargetMet && !hasUnbalancedAllocationKeys
+                ? t('budget.worksFundStatusOk')
+                : t('budget.worksFundStatusAction') }}
+            </CBadge>
+            {{ t('page.eyebrows.budget') }}
+          </CEyebrow>
           <h1 class="display-md">
             {{ selectedBudget ? t('budget.fiscalYear', { year: selectedBudget.fiscal_year }) : t('budget.title') }}
           </h1>
@@ -592,6 +703,40 @@ const worksFundBelowThreshold = computed(() => {
           </button>
         </div>
 
+        <CAlert
+          v-if="!worksFundRateCompliant"
+          variant="error"
+          :title="t('budget.worksFundRateAlertTitle')"
+        >
+          <p>
+            {{ t('budget.worksFundRateAlert', {
+              pct: formatSharePercentage(worksFundContributionRate),
+              minimum: formatSharePercentage(worksFundMinimumRate),
+            }) }}
+          </p>
+        </CAlert>
+        <CAlert
+          v-if="worksFund && !worksFundTargetMet"
+          variant="warning"
+          :title="t('budget.worksFundTargetAlertTitle')"
+        >
+          <p>
+            {{ t('budget.worksFundTargetAlert', {
+              amount: formatCurrency(worksFundRemainingToCall),
+            }) }}
+          </p>
+        </CAlert>
+        <CAlert
+          v-if="hasUnbalancedAllocationKeys"
+          variant="warning"
+          :title="t('budget.allocationKeysAlertTitle')"
+        >
+          <p>
+            {{ t('budget.allocationKeysAlert', {
+              keys: unbalancedAllocationKeys.join(', '),
+            }) }}
+          </p>
+        </CAlert>
         <!-- KPI row -->
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <CKpiCard
@@ -619,49 +764,100 @@ const worksFundBelowThreshold = computed(() => {
 
           <CKpiCard
             :label="t('budget.overdueCallsLabel')"
-            :value="overdueLevies.length > 0 ? overdueLevies.length : t('common.none')"
+            :value="overdueLevies.length > 0 ? String(overdueLevies.length) : t('common.none')"
             :subtitle="t('budget.pendingAmount', { amount: formatCurrency(overdueTotal) })"
             :emphasize-value="true"
             :tone="overdueLevies.length > 0 ? 'err' : 'valid'"
           >
             <template #icon>
-              <CIconWarn v-if="overdueLevies.length > 0" aria-hidden="true" />
-              <CIconCheck v-else aria-hidden="true" />
+              <CIconWarn
+                v-if="overdueLevies.length > 0"
+                aria-hidden="true"
+              />
+              <CIconCheck
+                v-else
+                aria-hidden="true"
+              />
             </template>
           </CKpiCard>
 
           <CKpiCard
-            :label="t('budget.worksFund')"
-            :value="worksFund ? formatCurrency(worksFund.levied_amount) : '—'"
-            tone="warn"
-            :emphasize-value="!!worksFund"
+            :label="t('budget.generateSummaryAlreadyCalledLabel')"
+            :value="formatCurrency(totalLeviedAmount)"
+            :subtitle="t('budget.levyCallsCount', { count: levyCallCount })"
+            tone="accent"
           >
             <template #icon>
-              <CIconWrench aria-hidden="true" />
-            </template>
-            <template 
-              v-if="worksFund" 
-              #extra
-            >
-              <div class="ft-prog mt-3">
-                <CProgressBar
-                  :value="worksEngagedPct"
-                  variant="warning"
-                  :show-value="true"
-                />
-                <div class="ft-prog-foot">
-                  <span>{{ t('budget.engaged', { amount: formatCurrency(worksFund.levied_amount - worksFund.available_amount) }) }}</span>
-                  <span
-                    class="ft-prog-available text-end"
-                    :class="{ 'tone--err': worksFundBelowThreshold }"
-                  >
-                    {{ t('budget.remaining', { amount: formatCurrency(worksFund.available_amount) }) }}
-                  </span>
-                </div>
-              </div>
+              <CIconMegaphone aria-hidden="true" />
             </template>
           </CKpiCard>
         </div>
+
+        <CCard class="works-fund-card">
+          <div class="section-head">
+            <div>
+              <h2 class="headline-sm">
+                {{ t('budget.worksFund') }}
+              </h2>
+              <CMetaLine v-if="selectedBudget">
+                <CMetaItem variant="sub">
+                  {{ t('budget.worksFundRateSummary', {
+                    pct: formatSharePercentage(worksFundContributionRate),
+                    minimum: formatSharePercentage(worksFundMinimumRate),
+                  }) }}
+                </CMetaItem>
+              </CMetaLine>
+            </div>
+            <div class="inline-flex items-center gap-2">
+              <CBtn
+                v-if="canEditSelectedBudget && selectedBudget"
+                variant="ghost"
+                size="sm"
+                @click="openWorksFundModal"
+              >
+                <CIconWrench aria-hidden="true" />
+                <span class="hidden md:inline">{{ t('budget.worksFundConfigure') }}</span>
+              </CBtn>
+            </div>
+          </div>
+
+          <p>
+            {{ t('budget.worksFundLegal') }}
+          </p>
+
+          <div class="works-fund-card__metrics">
+            <div class="works-fund-card__metric">
+              <span class="text-xs">{{ t('budget.worksFundTarget') }}</span>
+              <strong class="font-mono">{{ formatCurrency(worksFundContributionTarget) }}</strong>
+            </div>
+            <div class="works-fund-card__metric">
+              <span class="text-xs">{{ t('budget.worksFundRate') }}</span>
+              <strong>{{ formatSharePercentage(worksFundContributionRate) }}%</strong>
+            </div>
+            <div class="works-fund-card__metric">
+              <span class="text-xs">{{ t('budget.worksFundCalled') }}</span>
+              <strong class="font-mono">{{ formatCurrency(worksFundCalledAmount) }}</strong>
+            </div>
+            <div class="works-fund-card__metric">
+              <span class="text-xs">{{ t('budget.worksFundAvailable') }}</span>
+              <strong class="font-mono">{{ formatCurrency(worksFundAvailableAmount) }}</strong>
+            </div>
+          </div>
+
+          <div>
+            <CProgressBar
+              :value="worksFundProgressPct"
+              variant="warning"
+              :show-value="true"
+            />
+            <div class="ft-prog-foot">
+              <span>{{ t('budget.worksFundProgressLabel', { pct: worksFundProgressPct }) }}</span>
+              <span class="ft-prog-available text-end">
+                {{ t('budget.worksFundRemainingToCall', { amount: formatCurrency(worksFundRemainingToCall) }) }}
+              </span>
+            </div>
+          </div>
+        </CCard>
 
         <div
           v-if="overdueLevies.length > 0"
@@ -686,8 +882,8 @@ const worksFundBelowThreshold = computed(() => {
           <CCard
             v-for="levy in overdueLevies"
             :key="levy.id"
-            class="overdue-item tone--err flex-row! justify-between"
-            :shadow=false
+            class="overdue-item tone--err"
+            :shadow="false"
           >
             <div class="flex gap-3">
               <div class="overdue-avatar">
@@ -721,7 +917,7 @@ const worksFundBelowThreshold = computed(() => {
         <CCard>
           <div class="section-head">
             <div>
-              <h2 class="headline-sm text-lg!">
+              <h2 class="headline-sm">
                 {{ t('budget.consumptionByLine') }}
               </h2>
               <CMetaItem variant="sub">
@@ -779,7 +975,6 @@ const worksFundBelowThreshold = computed(() => {
                     v-if="canEditSelectedBudget"
                     variant="ghost"
                     size="sm"
-                    class="p-0!"
                     :aria-label="t('common.delete')"
                     @click="lineToDelete = line"
                   >
@@ -812,7 +1007,7 @@ const worksFundBelowThreshold = computed(() => {
         <CCard>
           <div class="section-head">
             <div>
-              <h2 class="headline-sm text-lg!">
+              <h2 class="headline-sm">
                 {{ t('budget.levies') }}
               </h2>
               <CMetaLine>
@@ -837,6 +1032,8 @@ const worksFundBelowThreshold = computed(() => {
               </CBtn>
             </div>
           </div>
+
+        
 
           <div
             v-if="levies.length === 0"
@@ -1093,8 +1290,8 @@ const worksFundBelowThreshold = computed(() => {
       </div>
       <template #footer>
         <CFormFeedback
-          :status="generateFeedback.status.value"
-          :message="generateFeedback.message.value"
+          :status="generateFeedbackStatus"
+          :message="generateFeedbackMessage"
         />
         <CBtn
           variant="ghost"
@@ -1164,6 +1361,47 @@ const worksFundBelowThreshold = computed(() => {
     </CModal>
 
     <CModal
+      :open="showWorksFundModal"
+      :title="t('budget.worksFundConfigureTitle')"
+      @update:open="showWorksFundModal = $event"
+    >
+      <p class="body-sm mb-4 leading-6 text-muted">
+        {{ t('budget.worksFundConfigureHint') }}
+      </p>
+      <CFormInput
+        v-model="worksFundForm.contribution_rate_pct"
+        :label="t('budget.worksFundRate')"
+        type="number"
+        :min="0"
+        :max="100"
+        step="0.01"
+        required
+      />
+      <p class="field-hint mt-2">
+        {{ t('budget.worksFundRateHint', { minimum: formatSharePercentage(worksFundMinimumRate) }) }}
+      </p>
+      <template #footer>
+        <CFormFeedback
+          :status="worksFundFeedback.status.value"
+          :message="worksFundFeedback.message.value"
+        />
+        <CBtn
+          variant="ghost"
+          @click="showWorksFundModal = false"
+        >
+          {{ t('common.cancel') }}
+        </CBtn>
+        <CBtn
+          variant="primary"
+          :loading="savingWorksFund"
+          @click="saveWorksFund"
+        >
+          {{ t('common.save') }}
+        </CBtn>
+      </template>
+    </CModal>
+
+    <CModal
       :open="showCloseExerciseModal"
       :title="t('budget.closeExerciseTitle')"
       @update:open="showCloseExerciseModal = $event"
@@ -1201,7 +1439,7 @@ const worksFundBelowThreshold = computed(() => {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  margin-bottom: var(--space-6);
+  margin-bottom: var(--space-3  );
   gap: 12px;
 }
 .section-sub { font-size: 12px; color: var(--color-on-surface-variant); margin-top: 2px; }
@@ -1211,6 +1449,26 @@ const worksFundBelowThreshold = computed(() => {
   max-width: 480px;
   margin: 0 auto;
   text-align: center;
+}
+
+.works-fund-card__metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.works-fund-card__metric {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-warning) var(--color-tint), transparent);
+}
+
+.works-fund-card__alerts {
+  display: grid;
+  gap: var(--space-3);
 }
 
 /* ── Progress bars ───────────────────────────────────────────────── */
@@ -1255,38 +1513,17 @@ const worksFundBelowThreshold = computed(() => {
 .cell-muted { color: var(--color-on-surface-variant); font-size: var(--text-xs); }
 
 /* ── Works fund card ─────────────────────────────────────────────── */
-.ft-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 16px; }
-.ft-title {
-  font-family: var(--font-display);
-  font-size: 16px;
-  font-weight: var(--fw-semibold);
-  font-variation-settings: 'opsz' 36;
-  color: var(--color-on-surface);
-}
-.ft-badge {
-  font-size: 10px;
-  font-weight: var(--fw-semibold);
-  letter-spacing: .06em;
-  text-transform: uppercase;
-  padding: 4px 8px;
-  border-radius: var(--radius-full);
-  background: var(--tone-bg);
-  color: var(--tone-fg);
-}
-.ft-amount {
-  font-family: var(--font-display);
-  font-size: 32px;
-  font-weight: var(--fw-bold);
-  font-variation-settings: 'opsz' 72;
-  letter-spacing: -.03em;
-  color: var(--color-on-surface);
-  margin-bottom: 4px;
-}
-.ft-prog-pct { color: var(--color-warning, #e65100); font-weight: var(--fw-semibold); }
 .ft-prog-foot { display: flex; justify-content: space-between; margin-top: 5px; font-size: 11px; color: var(--color-on-surface-variant); }
 .ft-prog-available { color: var(--color-warning, #e65100); font-weight: var(--fw-medium); }
 
 /* ── Mini card (overdue) ─────────────────────────────────────────── */
+
+.overdue-item {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
 
 .overdue-avatar {
   width: 42px;
@@ -1342,6 +1579,10 @@ const worksFundBelowThreshold = computed(() => {
 @media (max-width: 1024px) {
   .breakdown-modal {
     grid-template-columns: 1fr;
+  }
+
+  .works-fund-card__metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 

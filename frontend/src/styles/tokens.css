@@ -26,6 +26,7 @@
   --color-role-co-owner-fg:      #00391d;
   --color-role-tenant-bg:        #fcecd1;
   --color-role-tenant-fg:        #3a2000;
+  --color-tint:                  12%;
 
   /* ── Surfaces — Light ────────────────────────────────────────── */
   --color-surface:                    #f8f9fa;
@@ -38,7 +39,7 @@
   --color-on-surface-variant:         #42474e;
   --color-outline:                    #74777f;
   --color-outline-variant:            #c2c7cf;
-  --color-outline-light: color-mix(in srgb, var(--color-outline) 12%, transparent);
+  --color-outline-light: color-mix(in srgb, var(--color-outline) var(--color-tint), transparent);
 
   /* ── Gradient signature ──────────────────────────────────────── */
   --gradient-primary: linear-gradient(135deg, #643fd5, #7d5bf0);
@@ -148,6 +149,7 @@
   --color-role-co-owner-fg:      #cef5e5;
   --color-role-tenant-bg:        #573200;
   --color-role-tenant-fg:        #fcecd1;
+  --color-tint:                  18%;
 
   --color-surface:                    #111318;
   --color-surface-container-lowest:   #0c0e13;
