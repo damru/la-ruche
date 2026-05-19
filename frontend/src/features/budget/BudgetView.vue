@@ -49,6 +49,7 @@ const { formatCurrency, formatDate } = useFormatters()
 const { hasAnyRole } = useRole()
 
 const canManage = computed(() => hasAnyRole(['manager']))
+const canViewLevies = computed(() => hasAnyRole(['manager', 'board_member']))
 const canEditSelectedBudget = computed(() => canManage.value && selectedBudget.value?.status !== 'closed')
 const canMarkLeviesPaid = computed(() => hasAnyRole(['manager', 'board_member']))
 const sharePercentageFormatter = new Intl.NumberFormat('fr-FR', {
@@ -293,10 +294,19 @@ async function loadBudgets() {
 }
 
 async function loadBudgetData(budgetId: string) {
+  const leviesRequest = canViewLevies.value
+    ? budgetApi.listLevies(budgetId).catch((error: unknown) => {
+        if ((error as { response?: { status?: number } })?.response?.status === 403) {
+          return { data: [] as LevyCall[] }
+        }
+        throw error
+      })
+    : Promise.resolve({ data: [] as LevyCall[] })
+
   const [budgetRes, linesRes, leviesRes] = await Promise.all([
     budgetApi.get(budgetId),
     budgetApi.listLines(budgetId),
-    budgetApi.listLevies(budgetId),
+    leviesRequest,
   ])
   const refreshed = budgetRes.data
   budgets.value = budgets.value.map(b => (b.id === refreshed.id ? refreshed : b))
@@ -350,7 +360,7 @@ watch(selectedBudgetId, async (id) => {
   if (id) await loadBudgetData(id)
 })
 
-// ── Create budget modal (S01) ─────────────────────────────────────
+// ── Create budget modal ─────────────────────────────────────
 
 const showCreateBudgetModal = ref(false)
 const createBudgetFeedback = useFormFeedback()
@@ -380,7 +390,7 @@ async function saveBudget() {
   }
 }
 
-// ── Create line modal (S01) ───────────────────────────────────────
+// ── Create line modal ───────────────────────────────────────
 
 const showCreateLineModal = ref(false)
 const createLineFeedback = useFormFeedback()
@@ -419,7 +429,7 @@ async function saveLine() {
   }
 }
 
-// ── Delete line (S01) ─────────────────────────────────────────────
+// ── Delete line ─────────────────────────────────────────────
 
 const lineToDelete = ref<BudgetLine | null>(null)
 const deletingLine = ref(false)
@@ -440,7 +450,7 @@ async function confirmDeleteLine() {
   }
 }
 
-// ── Generate levies modal (S02) ───────────────────────────────────
+// ── Generate levies modal ───────────────────────────────────
 
 const showGenerateModal = ref(false)
 const showBreakdownModal = ref(false)
@@ -525,7 +535,7 @@ async function saveWorksFund() {
   }
 }
 
-// ── Mark paid (S02) ───────────────────────────────────────────────
+// ── Mark paid ───────────────────────────────────────────────
 
 const markingPaidId = ref<string | null>(null)
 
@@ -659,6 +669,7 @@ function formatSharePercentage(value: number): string {
         <div class="view-header">
           <CEyebrow>
             <CBadge
+              v-if="canEditSelectedBudget"
               :variant="worksFundRateCompliant && worksFundTargetMet && !hasUnbalancedAllocationKeys ? 'valid' : 'pending'"
               dot
               :pulse="false"
@@ -703,40 +714,43 @@ function formatSharePercentage(value: number): string {
           </button>
         </div>
 
-        <CAlert
-          v-if="!worksFundRateCompliant"
-          variant="error"
-          :title="t('budget.worksFundRateAlertTitle')"
-        >
-          <p>
-            {{ t('budget.worksFundRateAlert', {
-              pct: formatSharePercentage(worksFundContributionRate),
-              minimum: formatSharePercentage(worksFundMinimumRate),
-            }) }}
-          </p>
-        </CAlert>
-        <CAlert
-          v-if="worksFund && !worksFundTargetMet"
-          variant="warning"
-          :title="t('budget.worksFundTargetAlertTitle')"
-        >
-          <p>
-            {{ t('budget.worksFundTargetAlert', {
-              amount: formatCurrency(worksFundRemainingToCall),
-            }) }}
-          </p>
-        </CAlert>
-        <CAlert
-          v-if="hasUnbalancedAllocationKeys"
-          variant="warning"
-          :title="t('budget.allocationKeysAlertTitle')"
-        >
-          <p>
-            {{ t('budget.allocationKeysAlert', {
-              keys: unbalancedAllocationKeys.join(', '),
-            }) }}
-          </p>
-        </CAlert>
+        <template v-if="canEditSelectedBudget">
+          <CAlert
+            v-if="!worksFundRateCompliant"
+            variant="error"
+            :title="t('budget.worksFundRateAlertTitle')"
+          >
+            <p>
+              {{ t('budget.worksFundRateAlert', {
+                pct: formatSharePercentage(worksFundContributionRate),
+                minimum: formatSharePercentage(worksFundMinimumRate),
+              }) }}
+            </p>
+          </CAlert>
+          <CAlert
+            v-if="worksFund && !worksFundTargetMet"
+            variant="warning"
+            :title="t('budget.worksFundTargetAlertTitle')"
+          >
+            <p>
+              {{ t('budget.worksFundTargetAlert', {
+                amount: formatCurrency(worksFundRemainingToCall),
+              }) }}
+            </p>
+          </CAlert>
+          <CAlert
+            v-if="hasUnbalancedAllocationKeys"
+            variant="warning"
+            :title="t('budget.allocationKeysAlertTitle')"
+          >
+            <p>
+              {{ t('budget.allocationKeysAlert', {
+                keys: unbalancedAllocationKeys.join(', '),
+              }) }}
+            </p>
+          </CAlert>
+        </template>
+
         <!-- KPI row -->
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <CKpiCard
@@ -763,6 +777,7 @@ function formatSharePercentage(value: number): string {
           </CKpiCard>
 
           <CKpiCard
+            v-if="canViewLevies"
             :label="t('budget.overdueCallsLabel')"
             :value="overdueLevies.length > 0 ? String(overdueLevies.length) : t('common.none')"
             :subtitle="t('budget.pendingAmount', { amount: formatCurrency(overdueTotal) })"
@@ -782,6 +797,7 @@ function formatSharePercentage(value: number): string {
           </CKpiCard>
 
           <CKpiCard
+            v-if="canViewLevies"
             :label="t('budget.generateSummaryAlreadyCalledLabel')"
             :value="formatCurrency(totalLeviedAmount)"
             :subtitle="t('budget.levyCallsCount', { count: levyCallCount })"
@@ -860,8 +876,7 @@ function formatSharePercentage(value: number): string {
         </CCard>
 
         <div
-          v-if="overdueLevies.length > 0"
-          class="lg:order-last"
+          v-if="canViewLevies && overdueLevies.length > 0"
         >
           <div class="section-head">
             <div>
@@ -1004,7 +1019,7 @@ function formatSharePercentage(value: number): string {
           </div>
         </CCard>
         
-        <CCard>
+        <CCard v-if="canViewLevies">
           <div class="section-head">
             <div>
               <h2 class="headline-sm">

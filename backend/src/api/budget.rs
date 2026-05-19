@@ -366,6 +366,7 @@ pub async fn list_levies(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
 ) -> AppResult<Json<serde_json::Value>> {
+    auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
     let levies = db::budget::list_levies(&state.pool, id, auth.building_id).await?;
     Ok(Json(
         serde_json::to_value(levies).map_err(|e| AppError::Internal(e.into()))?,
