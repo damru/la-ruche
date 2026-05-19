@@ -5,8 +5,9 @@
 
 > Document produit. Vision, utilisateurs, fonctionnalités et contraintes centralisés ici.
 > Pour le backlog détaillé (epics, stories, statuts), voir [EPICS.md](EPICS.md).
+> Pour le détail feature par feature, voir le [Product Hub](product/README.md).
 > Liens vers ADR/DDR pour les contraintes techniques associées.
-> Dernière mise à jour : 25 avril 2026
+> Dernière mise à jour : 19 mai 2026
 
 ---
 
@@ -32,13 +33,15 @@
 
 ## Fonctionnalités
 
+> **Niveau de détail** — Les paragraphes ci-dessous restent la vue synthétique du produit. Les PRD détaillés par feature sont centralisés dans le [Product Hub](product/README.md).
+
 ### Fondations légales (loi 10/07/1965 + décret 17/03/1967)
 
 **Registre de la copropriété** — l'Application permet de constituer la fiche identitaire de la copropriété (nom, adresse, SIRET syndic), de déposer le règlement de copropriété, de configurer les clés de répartition et de gérer le registre des lots avec leurs tantièmes par clé. → EP-001
 
 **Gestion des propriétaires** — L'historique de propriété est tracé avec les dates de cession. Les résidents sont invités par lien tokenisé. L'anonymisation RGPD à la demande efface le nom tout en conservant les données comptables (10 ans, art. L123-22 Code de commerce). → EP-002
 
-**Assemblée Générale** — Cycle de vie complet d'une AG (brouillon → convoquée → tenue → clôturée), avec rappel du délai légal de convocation (21 jours, art. 9 décret 1967). Les résolutions sont typées par majorité (art. 24 / 25 / 26 / unanimité), le vote se fait par lot avec procurations, et les résultats sont calculés automatiquement. Le périmètre MVP couvre la préparation juridique de l'AG, le branchement des écrans sur l'API réelle, le dépôt du PV signé et la traçabilité simple de notification aux absents. → EP-003
+**Assemblée Générale** — Cycle de vie complet d'une AG (brouillon → convoquée → tenue → clôturée), avec rappel du délai légal de convocation (21 jours, art. 9 décret 1967). Les résolutions sont typées par majorité (art. 24 / 25 / 26 / unanimité), le vote se fait par lot avec procurations, et les résultats sont calculés automatiquement. Le périmètre MVP couvre la préparation juridique de l'AG, le branchement des écrans sur l'API réelle, le dépôt du PV signé et la traçabilité simple de notification aux absents. → EP-003, EP-013 · [PRD détaillé](product/PRD%20-%20Assembl%C3%A9e%20G%C3%A9n%C3%A9rale.md)
 
 **Budget & Charges** — Budget prévisionnel par exercice découpé en lignes par clé de répartition. Les appels de fonds sont générés automatiquement au prorata des tantièmes. Le fonds travaux obligatoire (≥ 5%, art. 14-2 ALUR) est suivi sur un compte séparé. L'arrêté de comptes compare réalisé et prévisionnel. → EP-004
 
@@ -46,11 +49,11 @@
 
 **Documents** — Upload direct vers S3 via pre-signed URL ; le backend ne manipule pas les fichiers. L'accès est contrôlé par rôle, le téléchargement se fait via une URL signée à courte durée de vie, sans exposition publique du bucket. → EP-005
 
-**Profil & préférences** — Chaque utilisateur gère ses informations personnelles, ses notifications et sa préférence d'apparence depuis son profil. Le thème peut être forcé en clair ou sombre, ou rester en mode automatique en suivant la préférence système de l'appareil. → DDR-004
+**Profil & préférences** — Chaque utilisateur gère ses informations personnelles, ses notifications et sa préférence d'apparence depuis son profil. Le thème peut être forcé en clair ou sombre, ou rester en mode automatique en suivant la préférence système de l'appareil. → EP-019, DDR-004 · [PRD détaillé](product/PRD%20-%20Profil%20et%20pr%C3%A9f%C3%A9rences.md)
 
 **Contrats fournisseurs** — Chaque contrat recense fournisseur, objet, dates, montant et périodicité. Les reconductions tacites et préavis sont configurables. Des rappels (reconduction, échéance, expiration, résiliation) sont calculés automatiquement et acquittables manuellement. Le contrat d’assurance multirisque immeuble peut en plus regrouper ses pièces justificatives dans le même espace de suivi. → EP-006
 
-**Tâches & Prestataires** — Les tâches sont assignées en interne avec priorité et statut. Un lien tokenisé éphémère permet aux prestataires externes d'accéder sans compte, de déposer photos et documents, puis de pré-valider leur intervention avec un commentaire et un coût optionnel avant validation finale par le syndic. La clôture d'une tâche capture un montant optionnel, réutilisable pour alimenter le carnet d'entretien. Les fichiers transitent par un bucket staging avant validation. Les gestionnaires doivent aussi pouvoir joindre des documents directement depuis la modale de création / modification d'une tâche, sans passer par l'écran public prestataire. Les tâches peuvent être liées à un prestataire du référentiel pour consolider l'historique, mais doivent aussi conserver un nom de prestataire libre sur la tâche quand aucun prestataire connu n'est sélectionné ni créé. Les listes de tâches sont présentées par dernière modification décroissante. → EP-007
+**Tâches & Prestataires** — Les tâches sont assignées en interne avec priorité et statut. Un lien tokenisé éphémère permet aux prestataires externes d'accéder sans compte, de déposer photos et documents, puis de pré-valider leur intervention avec un commentaire et un coût optionnel avant validation finale par le syndic. La clôture d'une tâche capture un montant optionnel, réutilisable pour alimenter le carnet d'entretien. Les fichiers transitent par un bucket staging avant validation. Les gestionnaires doivent aussi pouvoir joindre des documents directement depuis la modale de création / modification d'une tâche, sans passer par l'écran public prestataire. Les tâches peuvent être liées à un prestataire du référentiel pour consolider l'historique, mais doivent aussi conserver un nom de prestataire libre sur la tâche quand aucun prestataire connu n'est sélectionné ni créé. Les listes de tâches sont présentées par dernière modification décroissante. → EP-007, EP-015 · [PRD détaillé](product/PRD%20-%20T%C3%A2ches%20et%20prestataires.md)
 
 **Référentiel prestataires** — Catalogue des entreprises et intervenants de la résidence (nom, email, téléphone, domaine). Accessible à tous les résidents (catalogue pratique), modifiable par les managers. Réutilisé à l'assignation des tâches et propagé au carnet d'entretien. → EP-015
 

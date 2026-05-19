@@ -8,7 +8,7 @@
 > Chaque feature est organisée en epic. Les stories sont ajoutées à la demande, au moment de l'implémentation.
 > Le MVP est l'ensemble des epics marquées **MVP : oui**.
 > Statuts possibles : **en attente** · **en cours** · **terminée**
-> Dernière mise à jour : 13 mai 2026
+> Dernière mise à jour : 19 mai 2026
 
 > **Lecture d'avancement (code actuel) :**
 > - **backend réel** = handlers + DB opérationnels
@@ -386,6 +386,24 @@ Durcir les entités comptablement critiques pour empêcher toute modification r�
 * `EP-018-S05` — Appliquer le Pattern B sur `vendor_contract` : ajouter `predecessor_id`, remplacer `Modifier` par `Créer un avenant`, clôturer l'ancien contrat à la date d'effet et exposer la chaîne d'avenants
 * `EP-018-S06` — Appliquer le Pattern B sur `budget` / `budget_line` : ajouter `parent_budget_id`, remplacer l'unicité annuelle par une contrainte compatible rectificatifs, versionner `budget_line` via `valid_from` / `valid_to` et créer le workflow de budget rectificatif
 * `EP-018-S07` — Appliquer le Pattern C sur les corrections comptables : avoirs sur `levy_call`, corrections append-only sur `maintenance_log` manuel, et journalisation des opérations `UPDATE` / `DELETE` financières avec diff ciblé (`old_values` / `new_values`)
+
+***
+
+### EP-019 — Profil & préférences
+
+**Statut :** en cours | **MVP :** oui | **Réf. PRD :** Gestion courante
+
+**État code actuel :** partiel ; la préférence d'apparence est déjà exposée et persistée côté frontend, le profil utilisateur dispose d'un espace dédié, mais la feature reste encore incomplète comme hub personnel structuré de compte, notifications et préférences.
+
+Feature simple self-service permettant à chaque utilisateur authentifié de gérer ses informations personnelles utiles au produit, ses préférences de notifications et sa préférence d'apparence depuis un écran unique à onglets.
+
+**Stories :**
+
+* `EP-019-S01` — Consulter son espace profil personnel avec rappel lisible du rôle et du contexte de compte
+* `EP-019-S02` — Modifier ses informations personnelles éditables depuis l'Application (nom d'usage, coordonnées utiles, champs autorisés)
+* `EP-019-S03` — Gérer ses préférences de notifications avec aides non techniques et lisibilité des canaux disponibles
+* `EP-019-S04` — Définir sa préférence d'apparence (`clair`, `sombre`, `automatique`) et l'appliquer immédiatement dans l'interface
+* `EP-019-S05` — Structurer l'écran en onglets `Compte`, `Notifications`, `Apparence` pour éviter la dispersion des réglages
 
 ***
 
