@@ -38,6 +38,7 @@
   --color-on-surface-variant:         #42474e;
   --color-outline:                    #74777f;
   --color-outline-variant:            #c2c7cf;
+  --color-outline-light: color-mix(in srgb, var(--color-outline) 12%, transparent);
 
   /* ── Gradient signature ──────────────────────────────────────── */
   --gradient-primary: linear-gradient(135deg, #643fd5, #7d5bf0);

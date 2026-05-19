@@ -68,7 +68,8 @@
     "archiveLabel": "Archiver",
     "clear": "Effacer",
     "phone": "Téléphone",
-    "phonePlaceholder": "06 00 00 00 00"
+    "phonePlaceholder": "06 00 00 00 00",
+    "none": "Aucun"
   },
   "page": {
     "onboarding": "Bienvenue",
@@ -560,7 +561,6 @@
     "variance": "Écart",
     "overdueCallsLabel": "Appels en retard",
     "pendingAmount": "{amount} en attente",
-    "available": "{amount} disponibles",
     "consumptionByLine": "Consommation par poste",
     "forecastVsActual": "Prévisionnel vs réalisé",
     "realizedLabel": "Réalisé",
@@ -595,8 +595,7 @@
     "worksFundLegalFull": "Obligation légale — Cotisation annuelle obligatoire ≥ 5% du budget prévisionnel voté en AG. Non récupérable par le copropriétaire en cas de vente.",
     "separateBankAccountLabel": "Compte bancaire séparé",
     "fiscalYearShort": "Exercice {year}",
-    "engaged": "Engagé",
-    "engagedAmount": "Engagé : {amount}",
+    "engaged": "{amount} engagés",
     "remaining": "{amount} restants",
     "latePayments": "Retards de paiement",
     "latePaymentsCount": "{count} lot en retard | {count} lots en retard",

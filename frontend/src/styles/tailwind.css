@@ -29,6 +29,7 @@
 	--color-on-surface-variant: var(--color-on-surface-variant);
 	--color-outline: var(--color-outline);
 	--color-outline-variant: var(--color-outline-variant);
+	--color-outline-light: var(--color-outline-light);
 
 	--shadow-sm: var(--shadow-sm);
 	--shadow-md: var(--shadow-md);

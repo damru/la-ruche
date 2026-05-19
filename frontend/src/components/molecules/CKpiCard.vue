@@ -9,19 +9,22 @@ type DeltaVariant = 'up' | 'down' | 'neutral'
 withDefaults(defineProps<{
   label: string
   value: string
+  subtitle?: string
   delta?: string
   deltaVariant?: DeltaVariant
-  iconAccent?: boolean    // gradient on the icon
+  tone?: 'default' | 'accent' | 'warn' | 'err'
+  emphasizeValue?: boolean
 }>(), {
   delta: undefined,
   deltaVariant: 'neutral',
-  iconAccent: false,
+  subtitle: undefined,
+  tone: 'default',
+  emphasizeValue: false,
 })
 </script>
 
 <template>
   <CCard
-    class="c-kpi"
     padding="md"
   >
     <div class="c-kpi__header">
@@ -33,8 +36,8 @@ withDefaults(defineProps<{
       <div
         v-if="$slots.icon"
         :class="[
-          'kpi-icon',
-          iconAccent ? 'tone--accent' : 'tone--default',
+          'c-kpi__icon',
+          `tone--${tone}`,
         ]"
       >
         <slot name="icon"></slot>
@@ -44,6 +47,8 @@ withDefaults(defineProps<{
       :data="value"
       :delta="delta"
       :delta-variant="deltaVariant"
+      :subtitle="subtitle"
+      :class="`${emphasizeValue ? `tone--${tone}` : ''}`"
     />
     <slot name="extra"></slot>
   </CCard>
@@ -61,5 +66,22 @@ withDefaults(defineProps<{
   font-size: var(--text-sm);
   color: var(--color-on-surface-variant);
   font-weight: var(--fw-regular);
+}
+
+.c-kpi__icon {
+  width: calc(var(--icon-md) * 2);
+  height: calc(var(--icon-md) * 2);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: var(--tone-bg, var(--color-secondary-container));
+  color: var(--tone-fg, var(--color-primary));
+}
+
+.c-kpi__icon :deep(svg) {
+  width: var(--icon-md);
+  height: var(--icon-md);
 }
 </style>

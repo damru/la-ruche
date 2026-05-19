@@ -796,10 +796,7 @@ async function copyVendorLink(taskId: string) {
           <h1 class="display-md">
             {{ t('tasks.title') }}
           </h1>
-          <p
-            class="body-md"
-            style="color:var(--color-on-surface-variant)"
-          >
+          <p class="text-on-surface-variant">
             {{ t('tasks.activeSummary', { count: activeCount }) }}
           </p>
         </header>

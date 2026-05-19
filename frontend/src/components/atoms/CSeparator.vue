@@ -35,6 +35,6 @@ withDefaults(defineProps<{
 /* Vertical — thin rule between stacked sections */
 .c-separator--vertical {
   height: 1px;
-  background: color-mix(in srgb, var(--color-outline) 8%, transparent);
+  background: var(--color-outline-light);
 }
 </style>

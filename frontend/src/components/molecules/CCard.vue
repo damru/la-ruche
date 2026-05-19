@@ -34,6 +34,7 @@ withDefaults(defineProps<{
   background: var(--tone-bg, var(--color-surface-container-lowest));
   overflow-x: auto;
   min-width: 0;
+  height: fit-content;
   color: var(--tone-fg, var(--color-on-surface-variant));
   display: flex;
   flex-direction: column;

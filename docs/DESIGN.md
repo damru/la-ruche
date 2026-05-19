@@ -247,18 +247,6 @@ Les cartes de liste des vues `Signalements`, `Tâches` et `Sinistres` partagent 
 
 L’ossature reste commune mais chaque entité peut substituer un équivalent métier lorsqu’une donnée n’existe pas (ex. `prestataire assigné` au lieu d’une localisation stricte sur les tâches).
 
-## Règle UI — Primitives KPI (`kpi.css`)
-
-Mutualisés dans `frontend/src/styles/kpi.css`. Consomment `--tone-bg` / `--tone-fg` fournis par `.tone--*`.
-
-| Classe | Rôle |
-|---|---|
-| `.kpi-icon`           | Badge icône carré 36px |
-| `.kpi-filter-row`     | Ligne de pills KPI |
-| `.kpi-filter`         | Pill KPI cliquable (inactif) |
-| `.kpi-filter--active` | Pill KPI actif — consomme la tonalité |
-| `.kpi-filter__count`  | Valeur numérique (Fraunces 24px) |
-| `.kpi-filter__label`  | Libellé secondaire (11px) |
 ## États de chargement et d'erreur de page (DDR-005)
 
 La règle normative reste portée par `docs/ddr/DDR-005-page-loading-states.md`.

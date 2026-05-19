@@ -15,7 +15,7 @@ withDefaults(defineProps<{
       'inline-flex', 
       'items-center', 
       'gap-1',
-      'color-on-surface-variant',
+      'text-on-surface-variant',
       `${variant === 'footer' ? '[&_svg]:w-(--icon-xs) [&_svg]:h-(--icon-2xs) text-xs' : '[&_svg]:w-(--icon-sm) [&_svg]:h-(--icon-sm) text-sm'}`, 
     ]"
   >
@@ -34,12 +34,4 @@ withDefaults(defineProps<{
   min-height: unset;
   min-width: 0;
 }
-.c-meta-item {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  width: fit-content;
-  color: var(--color-on-surface-variant);
-}
-
 </style>

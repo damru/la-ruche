@@ -38,7 +38,7 @@ const fillStyle = computed(() => ({
       <span
         v-if="showValue"
         :class="[
-          'c-progress__value',
+          'c-progress__value font-mono',
           {
             'tone--default': variant === 'primary',
             'tone--warn': variant === 'warning',
