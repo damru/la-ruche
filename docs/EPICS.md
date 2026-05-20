@@ -8,7 +8,7 @@
 > Chaque feature est organisée en epic. Les stories sont ajoutées à la demande, au moment de l'implémentation.
 > Le MVP est l'ensemble des epics marquées **MVP : oui**.
 > Statuts possibles : **en attente** · **en cours** · **terminée**
-> Dernière mise à jour : 19 mai 2026
+> Dernière mise à jour : 20 mai 2026
 
 > **Lecture d'avancement (code actuel) :**
 > - **backend réel** = handlers + DB opérationnels
@@ -164,7 +164,7 @@ Fiche contrat avec reconduction tacite et préavis configurables, rappels automa
 
 ### EP-007 — Tâches & Prestataires
 
-**Statut :** terminée | **MVP :** non | **Réf. PRD :** Gestion courante
+**Statut :** en cours | **MVP :** non | **Réf. PRD :** Gestion courante
 
 **État code actuel :** backend réel (CRUD tâches + token prestataire + upload staging + pré-validation prestataire en transaction + documents manager via `task_document` + assignation prestataire référentiel ou nom libre sur `task.contractor_name`) + frontend branché (liste, créer, modifier, documents manager, token, page publique prestataire, autocomplete prestataire tolérant avec création optionnelle, clôture avec coût optionnel).
 
@@ -178,6 +178,8 @@ Tâches assignées en interne, lien tokenisé éphémère pour accès prestatair
 * `EP-007-S04` ✅ — Valider et archiver les documents déposés par le prestataire (bucket final) puis passer la tâche en pré-validation (`awaiting_validation`) avec commentaire et coût optionnel — dans la transaction `POST /vendor/:token/submission`
 * `EP-007-S05` ✅ — Clôturer une tâche avec coût optionnel et l'alimenter automatiquement au carnet d'entretien (→ EP-009-S03), y compris après réouverture ; inclut `vendor_name` du prestataire assigné
 * `EP-007-S06` ✅ — Assigner un prestataire du référentiel (EP-015) à une tâche via autocomplete, avec suggestion de création optionnelle si aucune correspondance n'existe et conservation d'un nom libre sur la tâche si aucun prestataire n'est créé — `contractor_id` FK sur `task` + `task.contractor_name`
+* `EP-007-S07` — Reprendre en main une tâche depuis une phase devis (`awaiting_quote` ou `quote_received`) : retour à `in_progress` sans annuler les documents reçus, sans révocation automatique du lien prestataire (PRD US-TP-012)
+* `EP-007-S08` — Supprimer ou annuler une tâche : suppression bloquée si une entrée carnet d'entretien ou une soumission prestataire y est rattachée ; annulation disponible comme alternative sans destruction des données (PRD US-TP-016, ADR-009)
 
 ***
 
@@ -400,10 +402,12 @@ Feature simple self-service permettant à chaque utilisateur authentifié de gé
 **Stories :**
 
 * `EP-019-S01` — Consulter son espace profil personnel avec rappel lisible du rôle et du contexte de compte
-* `EP-019-S02` — Modifier ses informations personnelles éditables depuis l'Application (nom d'usage, coordonnées utiles, champs autorisés)
-* `EP-019-S03` — Gérer ses préférences de notifications avec aides non techniques et lisibilité des canaux disponibles
+* `EP-019-S02` — Modifier ses informations personnelles éditables : email (identifiant de connexion) et téléphone uniquement ; `full_name` est `prefilled` depuis EP-002 (non modifiable ici) (PRD US-PP-002)
+* `EP-019-S03` — Gérer ses préférences de notifications par événement (16 événements catalogués : 3 obligatoires toggle désactivé, 13 optionnels) (PRD US-PP-004)
 * `EP-019-S04` — Définir sa préférence d'apparence (`clair`, `sombre`, `automatique`) et l'appliquer immédiatement dans l'interface
 * `EP-019-S05` — Structurer l'écran en onglets `Compte`, `Notifications`, `Apparence` pour éviter la dispersion des réglages
+* `EP-019-S06` — Gérer la première visite : afficher les valeurs par défaut de manière lisible dès la première ouverture du profil ; s'assurer que l'état initial est compréhensible sans action préalable (PRD US-PP-003)
+* `EP-019-S07` — Réinitialiser ses préférences : bouton global unique en bas de page (couvre Notifications + Apparence), avec modale de confirmation avant exécution (PRD US-PP-005)
 
 ***
 
