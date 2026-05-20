@@ -22,6 +22,13 @@ llm_directives:
     ces données après l'état `closed`. Le PV signé déposé est append-only.
     Le moteur de vote DOIT appliquer les règles art. 24, 25, 25-1, 26, 26-1
     et unanimité sans raccourci.
+  modification_policy: >
+    Ne modifier ce fichier que si une évolution de la feature est ABSOLUMENT
+    nécessaire, et EXCLUSIVEMENT après validation explicite d'un PRD additionnel.
+    Si une modification est nécessaire : inline, succincte, dans une section
+    existante. Si aucune section ne convient, requérir une validation utilisateur.
+    Le corps du document ne contient aucune référence technique externe
+    (ADR, DDR, numéro de feature ou de ticket).
 ---
 
 # PRD — Assemblée Générale

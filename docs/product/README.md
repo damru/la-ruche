@@ -41,11 +41,11 @@ Les matrices du Product Hub sont construites avec :
 
 | Feature | Réf. backlog | Statut produit | PRD détaillé | Note |
 |---|---|---|---|---|
-| Registre de la copropriété | `EP-001` | en cours | à créer | Inclut identité, clés, lots et tantièmes |
-| Gestion des propriétaires | `EP-002` | en cours | à créer | Inclut mutations, invitations et RGPD |
+| Registre de la copropriété | `EP-001` | en cours | [PRD - Registre de la copropriété](PRD%20-%20Registre%20de%20la%20copropri%C3%A9t%C3%A9.md) | Inclut identité, clés, lots et tantièmes |
+| Gestion des propriétaires | `EP-002` | en cours | [PRD - Gestion des propriétaires](PRD%20-%20Gestion%20des%20propri%C3%A9taires.md) | Inclut mutations, invitations et RGPD |
 | Assemblée Générale | `EP-003`, `EP-013` | en cours | [PRD - Assemblée Générale](PRD%20-%20Assembl%C3%A9e%20G%C3%A9n%C3%A9rale.md) | Couvre préparation, conduite et PV |
-| Budget & Charges | `EP-004` | en cours | à créer | Inclut budget, appels, fonds travaux et arrêté |
-| Documents | `EP-005` | en cours | à créer | Couche transverse documentaire |
+| Budget & Charges | `EP-004` | en cours | [PRD - Budget et charges](PRD%20-%20Budget%20et%20charges.md) | Inclut budget, appels, fonds travaux et arrêté |
+| Documents | `EP-005` | en cours | [PRD - Documents](PRD%20-%20Documents.md) | Couche transverse documentaire |
 | Profil & préférences | `EP-019`, `DDR-004` | en cours | [PRD - Profil et préférences](PRD%20-%20Profil%20et%20pr%C3%A9f%C3%A9rences.md) | Feature simple self-service utilisateur |
 | Contrats fournisseurs | `EP-006` | en cours | à créer | Inclut rappels et pièces liées |
 | Tâches & Prestataires | `EP-007`, `EP-015` | en cours | [PRD - Tâches et prestataires](PRD%20-%20T%C3%A2ches%20et%20prestataires.md) | Inclut sous-parcours prestataire tokenisé |

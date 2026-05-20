@@ -37,8 +37,10 @@
   --color-on-surface:                 #191c1d;
   --color-on-surface-variant:         #42474e;
   --color-outline:                    #74777f;
-  --color-outline-variant:            #c2c7cf;
-
+  --color-outline-variant:            #c2c7cf;  
+  --tint:                             15%;
+  --color-outline-light:              color-mix(in srgb, var(--color-outline) var(--tint), transparent);
+  
   /* ── Gradient signature ──────────────────────────────────────── */
   --gradient-primary: linear-gradient(135deg, #643fd5, #7d5bf0);
 
@@ -158,6 +160,7 @@
   --color-on-surface-variant:         #c3c6cf;
   --color-outline:                    #8e9099;
   --color-outline-variant:            #43474f;
+  --tint:                             20%;
 
   --gradient-primary: linear-gradient(135deg, #7d5bf0, #c4b5fd);
 
