@@ -44,6 +44,31 @@ import { budgetApi, allocationKeysApi, buildingApi } from '@/api'
 import type { Budget, BudgetLine, LevyCall, WorksFund, AllocationKey, LevyStatus, BuildingStats } from '@/types/domain'
 import type { Column } from '@/components/molecules/CDataTable.vue'
 
+interface ConsolidatedLevyRow {
+  id: string
+  owner_name: string
+  unit_numbers: string[]
+  amount: number
+  due_date: string
+  call_label: string
+  issued_at: string
+  paid_at: string | null
+  status: LevyStatus
+  levy_call_id: string
+  levy_ids: string[]
+  payable_unit_ids: string[]
+}
+
+type ConsolidatedLevyAccumulator = ConsolidatedLevyRow & {
+  statuses: LevyStatus[]
+  paid_dates: string[]
+  unit_number_set: Set<string>
+}
+
+function asConsolidatedLevyRow(row: Record<string, unknown>): ConsolidatedLevyRow {
+  return row as unknown as ConsolidatedLevyRow
+}
+
 const { t } = useI18n()
 const { formatCurrency, formatDate } = useFormatters()
 const { hasAnyRole } = useRole()
@@ -85,8 +110,84 @@ const selectedBudget = computed(() =>
   budgets.value.find(b => b.id === selectedBudgetId.value) ?? null
 )
 
-const overdueLevies = computed(() => levies.value.filter(l => l.status === 'overdue'))
-const overdueTotal = computed(() => overdueLevies.value.reduce((s, l) => s + l.amount, 0))
+function aggregateLevyStatus(statuses: LevyStatus[]): LevyStatus {
+  if (statuses.includes('overdue')) return 'overdue'
+  if (statuses.every(status => status === 'paid')) return 'paid'
+  return 'issued'
+}
+
+const consolidatedLevies = computed<ConsolidatedLevyRow[]>(() => {
+  const groups = new Map<string, ConsolidatedLevyAccumulator>()
+
+  for (const levy of levies.value) {
+    const ownerName = levy.owner_name?.trim() || `${t('common.lot')} ${levy.unit_number ?? '—'}`
+    const ownerKey = levy.owner_id ?? `unit:${levy.unit_id}`
+    const groupKey = [ownerKey, levy.call_label, levy.due_date, levy.issued_at].join('|')
+    const existing = groups.get(groupKey)
+
+    if (existing) {
+      existing.amount += Number(levy.amount ?? 0)
+      existing.statuses.push(levy.status)
+      existing.levy_ids.push(levy.id)
+      if (levy.status !== 'paid') {
+        existing.payable_unit_ids.push(levy.unit_id)
+      }
+      if (levy.paid_at) {
+        existing.paid_dates.push(levy.paid_at)
+      }
+      if (levy.unit_number) {
+        existing.unit_number_set.add(levy.unit_number)
+      }
+      continue
+    }
+
+    const accumulator: ConsolidatedLevyAccumulator = {
+      id: groupKey,
+      owner_name: ownerName,
+      unit_numbers: [],
+      amount: Number(levy.amount ?? 0),
+      due_date: levy.due_date,
+      call_label: levy.call_label,
+      issued_at: levy.issued_at,
+      paid_at: levy.paid_at ?? null,
+      status: levy.status,
+      levy_call_id: levy.id,
+      levy_ids: [levy.id],
+      payable_unit_ids: levy.status === 'paid' ? [] : [levy.unit_id],
+      statuses: [levy.status],
+      paid_dates: levy.paid_at ? [levy.paid_at] : [],
+      unit_number_set: new Set(levy.unit_number ? [levy.unit_number] : []),
+    }
+    groups.set(groupKey, accumulator)
+  }
+
+  return Array.from(groups.values())
+    .map(group => ({
+      id: group.id,
+      owner_name: group.owner_name,
+      unit_numbers: Array.from(group.unit_number_set).sort((a, b) =>
+        a.localeCompare(b, undefined, { numeric: true }),
+      ),
+      amount: group.amount,
+      due_date: group.due_date,
+      call_label: group.call_label,
+      issued_at: group.issued_at,
+      paid_at: group.paid_dates.sort().at(-1) ?? null,
+      status: aggregateLevyStatus(group.statuses),
+      levy_call_id: group.levy_call_id,
+      levy_ids: group.levy_ids,
+      payable_unit_ids: group.payable_unit_ids,
+    }))
+    .sort((a, b) =>
+      b.due_date.localeCompare(a.due_date)
+      || a.owner_name.localeCompare(b.owner_name)
+      || a.call_label.localeCompare(b.call_label),
+    )
+})
+
+const overdueLevies = computed(() => consolidatedLevies.value.filter(levy => levy.status === 'overdue'))
+const overdueTotal = computed(() => overdueLevies.value.reduce((sum, levy) => sum + levy.amount, 0))
+const levyTableRows = computed<Record<string, unknown>[]>(() => consolidatedLevies.value as unknown as Record<string, unknown>[])
 
 const keyOptions = computed(() =>
   allocationKeys.value.map(k => ({ value: k.id, label: k.name }))
@@ -99,15 +200,15 @@ const selectedTotalActual = computed(() =>
   Number(selectedBudget.value?.total_actual ?? 0)
 )
 
-const levyCallCount = computed(() => levies.value.length)
+const levyCallCount = computed(() => consolidatedLevies.value.length)
 const leviedUnitsCount = computed(() =>
   new Set(levies.value.map(levy => levy.unit_id)).size
 )
 const levyPaidCount = computed(() =>
-  levies.value.filter(l => l.status === 'paid').length
+  consolidatedLevies.value.filter(levy => levy.status === 'paid').length
 )
 const totalLeviedAmount = computed(() =>
-  levies.value.reduce((sum, levy) => sum + levy.amount, 0)
+  consolidatedLevies.value.reduce((sum, levy) => sum + levy.amount, 0)
 )
 const alreadyCalledChargeAmount = computed(() =>
   // Keep a defensive fallback for pre-migration payloads in local/demo environments.
@@ -191,12 +292,11 @@ const generateFeedbackMessage = computed(() =>
     ? generateFeedback.message.value
     : generateBlockingReason.value
 )
-const levyTableColumns = computed<Column<LevyCall>[]>(() => {
-  const columns: Column<LevyCall>[] = [
-    { key: 'unit_number', label: t('common.lot') },
+const levyTableColumns = computed<Column<Record<string, unknown>>[]>(() => {
+  const columns: Column<Record<string, unknown>>[] = [
     { key: 'owner_name', label: t('common.coOwner') },
     { key: 'amount', label: t('common.amount'), align: 'right', numeric: true },
-    { key: 'due_date', label: t('common.dueDate'), align: 'right', numeric: true },
+    { key: 'due_date', label: t('common.dueDate'), numeric: true },
     { key: 'call_label', label: t('budget.levyCallLabel') },
     { key: 'status', label: t('common.status') },
   ]
@@ -357,7 +457,8 @@ const { loading, error, reload } = usePageLoader(async () => {
 onMounted(reload)
 
 watch(selectedBudgetId, async (id) => {
-  if (id) await loadBudgetData(id)
+  if (!id || loading.value) return
+  await loadBudgetData(id)
 })
 
 // ── Create budget modal ─────────────────────────────────────
@@ -539,11 +640,13 @@ async function saveWorksFund() {
 
 const markingPaidId = ref<string | null>(null)
 
-async function markPaid(levy: LevyCall) {
-  if (markingPaidId.value) return
+async function markPaid(levy: ConsolidatedLevyRow) {
+  if (markingPaidId.value || levy.payable_unit_ids.length === 0) return
   markingPaidId.value = levy.id
   try {
-    await budgetApi.markPaid(levy.id)
+    await Promise.all(
+      levy.payable_unit_ids.map(unitId => budgetApi.markPaid(levy.levy_call_id, unitId)),
+    )
     if (selectedBudgetId.value) await loadBudgetData(selectedBudgetId.value)
   } catch {
     // silently handle — row stays as-is
@@ -675,8 +778,8 @@ function formatSharePercentage(value: number): string {
               :pulse="false"
             >
               {{ worksFundRateCompliant && worksFundTargetMet && !hasUnbalancedAllocationKeys
-                ? t('budget.worksFundStatusOk')
-                : t('budget.worksFundStatusAction') }}
+                ? t('common.compliant')
+                : t('common.actionRequired') }}
             </CBadge>
             {{ t('page.eyebrows.budget') }}
           </CEyebrow>
@@ -752,7 +855,7 @@ function formatSharePercentage(value: number): string {
         </template>
 
         <!-- KPI row -->
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="flex flex-wrap gap-4">
           <CKpiCard
             :label="t('budget.budgetForecastLabel')"
             :value="formatCurrency(selectedTotalForecast)"
@@ -910,7 +1013,7 @@ function formatSharePercentage(value: number): string {
                 </div>
                 <CMetaLine>
                   <CMetaItem variant="sub">
-                    {{ t("common.lot") }} {{ levy.unit_number ?? '—' }}
+                    {{ t("common.lot") }} {{ levy.unit_numbers.join(', ') || '—' }}
                   </CMetaItem>
                   <CSeparator />
                   <CMetaItem variant="sub">
@@ -1051,7 +1154,7 @@ function formatSharePercentage(value: number): string {
         
 
           <div
-            v-if="levies.length === 0"
+            v-if="consolidatedLevies.length === 0"
             class="empty-state"
           >
             <p>{{ t('common.noData') }}</p>
@@ -1061,28 +1164,27 @@ function formatSharePercentage(value: number): string {
             v-else
             class="-mx-5 border-b border-outline-variant"
             :columns="levyTableColumns"
-            :rows="levies"
+            :rows="levyTableRows"
             :empty-text="t('common.noData')"
           >
-            <template #cell-unit_number="{ row }">
-              <span class="font-mono text-primary">
-                {{ row.unit_number ?? '—' }}
-              </span>
-            </template>
             <template #cell-owner_name="{ row }">
-              {{ row.owner_name ?? '—' }}
+              <div>
+                <div>{{ row.owner_name ?? '—' }}</div>
+                <div class="cell-muted">
+                  {{ t('common.lot') }} {{ asConsolidatedLevyRow(row).unit_numbers.join(', ') || '—' }}
+                </div>
+              </div>
             </template>
             <template #cell-amount="{ row }">
               <span
-                class="cell-numeric"
-                :class="{ 'tone--err': row.status === 'overdue' }"
+                :class="{ 'text-error': row.status === 'overdue' }"
               >
                 {{ formatCurrency(Number(row.amount ?? 0)) }}
               </span>
             </template>
             <template #cell-due_date="{ row }">
               <span class="cell-muted">
-                {{ row.due_date ? formatDate(row.due_date) : '—' }}
+                {{ asConsolidatedLevyRow(row).due_date ? formatDate(asConsolidatedLevyRow(row).due_date) : '—' }}
               </span>
             </template>
             <template #cell-call_label="{ row }">
@@ -1093,7 +1195,8 @@ function formatSharePercentage(value: number): string {
             <template #cell-status="{ row }">
               <CBadge
                 :variant="levyStatusBadgeVariant(row.status as LevyStatus)"
-                :pulse="false"
+                :pulse="row.status === 'overdue'"
+                :ring="row.status === 'issued' || row.status === 'overdue'"
                 dot
               >
                 {{ t(`budget.levyStatuses.${row.status}`) }}
@@ -1104,8 +1207,8 @@ function formatSharePercentage(value: number): string {
                 v-if="canMarkLeviesPaid && row.status !== 'paid'"
                 variant="ghost"
                 size="sm"
-                :loading="markingPaidId === row.id"
-                @click="markPaid(row)"
+                :loading="markingPaidId === asConsolidatedLevyRow(row).id"
+                @click="markPaid(asConsolidatedLevyRow(row))"
               >
                 <CIconCheckCircle aria-hidden="true" />
                 {{ t('budget.markPaid') }}
@@ -1512,7 +1615,6 @@ function formatSharePercentage(value: number): string {
   font-size: var(--text-sm);
   color: var(--color-on-surface);
   padding-top: var(--space-4);
-  margin-top: var(--space-4);
 }
 
 /* ── Table overrides for this view ───────────────────────────────── */
@@ -1520,7 +1622,6 @@ function formatSharePercentage(value: number): string {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-top: var(--space-4);
   font-size: var(--text-sm);
   font-weight: var(--fw-semibold);
   color: var(--color-on-surface);

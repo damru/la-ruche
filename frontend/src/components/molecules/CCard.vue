@@ -39,6 +39,7 @@ withDefaults(defineProps<{
   color: var(--tone-fg, var(--color-on-surface-variant));
   display: flex;
   flex-direction: column;
+  flex: 1;
 }
 
 .c-card--radius-none { border-radius: 0; }

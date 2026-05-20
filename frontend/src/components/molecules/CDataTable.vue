@@ -163,15 +163,15 @@ function getCellValue(row: T, key: string): unknown {
   font-weight: var(--fw-semibold);
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--color-on-surface-variant);
+  color: var(--tone-fg, var(--color-on-surface-variant));
   padding: var(--space-3) var(--space-4);
-  background: var(--color-surface-container-low);
+  background: var(--tone-bg, var(--color-surface-container-low));
   white-space: nowrap;
   user-select: none;
 }
 
 .c-table__th--sortable { cursor: pointer; }
-.c-table__th--sortable:hover { color: var(--color-on-surface); }
+.c-table__th--sortable:hover { color: var(--tone-fg, var(--color-on-surface)); }
 
 .c-table__th-inner {
   display: inline-flex;
@@ -185,24 +185,30 @@ function getCellValue(row: T, key: string): unknown {
   opacity: 0.4;
   transition: opacity var(--transition-fast);
 }
-.c-table__sort-icon--active { opacity: 1; color: var(--color-primary); }
+.c-table__sort-icon--active { 
+  opacity: 1; 
+  color: var(--tone-fg, var(--color-primary)); 
+}
 
 .c-table__td {
   font-size: var(--text-sm);
-  color: var(--color-on-surface);
+  color: var(--tone-fg, var(--color-on-surface));
+  background: var(--tone-bg, transparent);
   padding: var(--space-1) var(--space-4);
-  /* No-Line rule — subtle alternating background only when striped */
   border-bottom: 1px solid var(--color-outline-light);
-  white-space: nowrap;
 }
 
 .c-table__row:last-child .c-table__td { border-bottom: none; }
 
-.c-table__row { transition: background var(--transition-fast); }
-.c-table__row:hover .c-table__td { background: var(--color-surface-container-low); }
+.c-table__row { 
+  transition: background var(--transition-fast); 
+}
+.c-table__row:hover .c-table__td { 
+  background: var(--color-surface-container-low); 
+}
 
 .c-table__row--striped:nth-child(even) .c-table__td {
-  background: var(--color-surface-container);
+  background: var(--tone-bg, var(--color-surface-container));
 }
 
 /* Alignements */
@@ -213,7 +219,7 @@ function getCellValue(row: T, key: string): unknown {
 .c-table__empty {
   text-align: center;
   padding: var(--space-12) var(--space-4);
-  color: var(--color-on-surface-variant);
+  color: var(--tone-fg, var(--color-on-surface-variant));
   font-size: var(--text-md);
 }
 
@@ -222,7 +228,7 @@ function getCellValue(row: T, key: string): unknown {
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  color: var(--color-on-surface-variant);
+  color: var(--tone-fg, var(--color-on-surface-variant));
 }
 
 .c-table__spinner {

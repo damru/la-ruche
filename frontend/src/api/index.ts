@@ -223,8 +223,8 @@ export const budgetApi = {
     api.post<{ generated: number; total_amount: number; already_called: number; remaining_amount: number; due_date: string; call_label?: string }>(`/budgets/${id}/levies/generate`, data),
   listLevies: (id: string) =>
     api.get<LevyCall[]>(`/budgets/${id}/levies`),
-  markPaid: (levyId: string) =>
-    api.put(`/levies/${levyId}/payment`),
+  markPaid: (levyCallId: string, unitId: string) =>
+    api.put(`/levies/${levyCallId}/units/${unitId}/payment`),
   getWorksFund: (fiscalYear: number) =>
     api.get<WorksFund>(`/works-fund/${fiscalYear}`),
   updateWorksFund: (fiscalYear: number, data: { contribution_rate_pct: number }) =>

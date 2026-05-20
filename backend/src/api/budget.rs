@@ -240,10 +240,6 @@ pub async fn generate_levies(
         db::budget::get_or_create_works_fund(&state.pool, auth.building_id, budget.fiscal_year)
             .await?;
 
-    let units_data = db::allocation_key::list_general_shares(&state.pool, auth.building_id).await?;
-
-    let total_shares: i64 = units_data.iter().map(|u| u.shares as i64).sum();
-
     let total_charges: Decimal = lines.iter().map(|l| l.budgeted_amount).sum();
 
     let legal_minimum_rate_pct = legal_minimum_works_fund_rate_pct();
@@ -260,6 +256,8 @@ pub async fn generate_levies(
     };
 
     let levy_totals = db::budget::levy_amount_totals(&state.pool, id, auth.building_id).await?;
+    let charge_amount_totals_by_line =
+        db::budget::charge_amount_totals_by_line(&state.pool, id, auth.building_id).await?;
     let target_charge_amount = total_charges;
     let remaining_charge_amount =
         (target_charge_amount - levy_totals.charge_amount).max(Decimal::ZERO);
@@ -290,29 +288,119 @@ pub async fn generate_levies(
         })));
     }
 
-    let units_with_shares: Vec<UnitWithShares> = units_data
+    let mut levy_inserts_by_unit_key: HashMap<(Uuid, Uuid), db::budget::LevyInsert> =
+        HashMap::new();
+    let mut units_with_shares_by_key: HashMap<Uuid, (Vec<UnitWithShares>, i64)> = HashMap::new();
+
+    for line in &lines {
+        let already_called_for_line = charge_amount_totals_by_line
+            .get(&line.id)
+            .copied()
+            .unwrap_or(Decimal::ZERO);
+        let remaining_for_line =
+            (line.budgeted_amount - already_called_for_line).max(Decimal::ZERO);
+
+        if remaining_for_line <= Decimal::ZERO {
+            continue;
+        }
+
+        let (units_with_shares, key_total_shares) = if let Some(cached) =
+            units_with_shares_by_key.get(&line.key_id)
+        {
+            cached.clone()
+        } else {
+            let key_shares =
+                db::allocation_key::list_shares(&state.pool, line.key_id, auth.building_id).await?;
+            let units_with_shares: Vec<UnitWithShares> = key_shares
+                .into_iter()
+                .filter(|row| row.share_value > 0)
+                .map(|row| UnitWithShares {
+                    unit_id: row.unit_id,
+                    key_id: row.key_id,
+                    shares: row.share_value as i64,
+                })
+                .collect();
+            let key_total_shares: i64 = units_with_shares.iter().map(|unit| unit.shares).sum();
+            units_with_shares_by_key
+                .insert(line.key_id, (units_with_shares.clone(), key_total_shares));
+            (units_with_shares, key_total_shares)
+        };
+
+        for levy in compute_levies(remaining_for_line, &units_with_shares, key_total_shares) {
+            if levy.amount <= Decimal::ZERO {
+                continue;
+            }
+
+            levy_inserts_by_unit_key
+                .entry((levy.unit_id, levy.key_id))
+                .and_modify(|insert| {
+                    insert.amount += levy.amount;
+                    insert.charge_amount += levy.amount;
+                    insert.line_allocations.push(db::budget::LevyInsertLine {
+                        budget_line_id: line.id,
+                        amount: levy.amount,
+                    });
+                })
+                .or_insert(db::budget::LevyInsert {
+                    unit_id: levy.unit_id,
+                    key_id: levy.key_id,
+                    amount: levy.amount,
+                    charge_amount: levy.amount,
+                    works_fund_amount: Decimal::ZERO,
+                    shares_snapshot: levy.shares_snapshot,
+                    shares_total_snapshot: levy.shares_total_snapshot,
+                    line_allocations: vec![db::budget::LevyInsertLine {
+                        budget_line_id: line.id,
+                        amount: levy.amount,
+                    }],
+                });
+        }
+    }
+
+    let general_units_data =
+        db::allocation_key::list_general_shares(&state.pool, auth.building_id).await?;
+    let general_units_with_shares: Vec<UnitWithShares> = general_units_data
         .iter()
-        .map(|u| UnitWithShares {
-            unit_id: u.unit_id,
-            key_id: u.key_id,
-            shares: u.shares as i64,
+        .map(|row| UnitWithShares {
+            unit_id: row.unit_id,
+            key_id: row.key_id,
+            shares: row.shares as i64,
         })
         .collect();
-
-    let charge_levies = compute_levies(remaining_charge_amount, &units_with_shares, total_shares);
-    let works_fund_levies = if input.include_works_fund {
-        compute_levies(
-            remaining_works_fund_amount,
-            &units_with_shares,
-            total_shares,
-        )
-    } else {
-        vec![]
-    };
-    let works_fund_by_unit: HashMap<Uuid, Decimal> = works_fund_levies
+    let general_total_shares: i64 = general_units_with_shares
         .iter()
-        .map(|levy| (levy.unit_id, levy.amount))
-        .collect();
+        .map(|unit| unit.shares)
+        .sum();
+
+    if input.include_works_fund && remaining_works_fund_amount > Decimal::ZERO {
+        for levy in compute_levies(
+            remaining_works_fund_amount,
+            &general_units_with_shares,
+            general_total_shares,
+        ) {
+            if levy.amount <= Decimal::ZERO {
+                continue;
+            }
+
+            levy_inserts_by_unit_key
+                .entry((levy.unit_id, levy.key_id))
+                .and_modify(|insert| {
+                    insert.amount += levy.amount;
+                    insert.works_fund_amount += levy.amount;
+                })
+                .or_insert(db::budget::LevyInsert {
+                    unit_id: levy.unit_id,
+                    key_id: levy.key_id,
+                    amount: levy.amount,
+                    charge_amount: Decimal::ZERO,
+                    works_fund_amount: levy.amount,
+                    shares_snapshot: levy.shares_snapshot,
+                    shares_total_snapshot: levy.shares_total_snapshot,
+                    line_allocations: Vec::new(),
+                });
+        }
+    }
+
     let default_label = quarterly_default_call_label(chrono::Utc::now());
     let call_label = input
         .call_label
@@ -320,24 +408,9 @@ pub async fn generate_levies(
         .map(str::trim)
         .filter(|value| !value.is_empty())
         .unwrap_or(&default_label);
-    let levy_inserts: Vec<db::budget::LevyInsert> = charge_levies
-        .iter()
-        .map(|l| db::budget::LevyInsert {
-            unit_id: l.unit_id,
-            key_id: l.key_id,
-            amount: l.amount
-                + works_fund_by_unit
-                    .get(&l.unit_id)
-                    .copied()
-                    .unwrap_or(Decimal::ZERO),
-            charge_amount: l.amount,
-            works_fund_amount: works_fund_by_unit
-                .get(&l.unit_id)
-                .copied()
-                .unwrap_or(Decimal::ZERO),
-            shares_snapshot: l.shares_snapshot,
-            shares_total_snapshot: l.shares_total_snapshot,
-        })
+    let levy_inserts: Vec<db::budget::LevyInsert> = levy_inserts_by_unit_key
+        .into_values()
+        .filter(|insert| insert.amount > Decimal::ZERO)
         .collect();
 
     let nb = db::budget::generate_levies(
@@ -348,8 +421,7 @@ pub async fn generate_levies(
         call_label,
         &levy_inserts,
     )
-    .await?
-    .len();
+    .await?;
 
     Ok(Json(serde_json::json!({
         "generated": nb,
@@ -376,10 +448,10 @@ pub async fn list_levies(
 pub async fn mark_paid(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,
-    Path(id): Path<Uuid>,
+    Path((levy_call_id, unit_id)): Path<(Uuid, Uuid)>,
 ) -> AppResult<StatusCode> {
     auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
-    db::budget::mark_paid(&state.pool, id, auth.building_id).await?;
+    db::budget::mark_paid(&state.pool, levy_call_id, unit_id, auth.building_id).await?;
     Ok(StatusCode::NO_CONTENT)
 }
 

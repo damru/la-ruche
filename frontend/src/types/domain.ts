@@ -216,6 +216,7 @@ export interface LevyCall {
   budget_id: string
   unit_id: string
   call_label: string
+  owner_id?: string
   unit_number?: string
   owner_name?: string
   amount: number
@@ -547,18 +548,29 @@ export interface VendorDocument {
   size_bytes: number
 }
 
-export interface UnitChargesLevy {
-  id: string
-  fiscal_year: number
-  amount: number
-  due_date: string
-  status: 'issued' | 'paid' | 'overdue'
-  issued_at: string
-  paid_at: string | null
+export interface UnitChargesLevyBreakdownItem {
+  budget_line_id: string | null
+  budget_line_label: string | null
   key_id: string | null
   key_name: string | null
   shares_snapshot: number | null
   shares_total_snapshot: number | null
+  amount: number
+  is_works_fund: boolean
+}
+
+export interface UnitChargesLevy {
+  id: string
+  fiscal_year: number
+  call_label: string
+  due_date: string
+  status: 'issued' | 'paid' | 'overdue'
+  issued_at: string
+  paid_at: string | null
+  total_amount: number
+  charge_amount: number
+  works_fund_amount: number
+  breakdown: UnitChargesLevyBreakdownItem[]
 }
 
 export interface UnitChargesResponse {

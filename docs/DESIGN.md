@@ -330,6 +330,8 @@ Cette règle s'applique notamment aux délais de déclaration de sinistre, au ca
 - Le fonds travaux dispose d'une carte dédiée distincte des KPI de synthèse : elle porte la barre de progression, le rappel légal, le taux configuré et les alertes de blocage métier ; la barre n'est plus imbriquée dans une Hero card générique.
 - La carte de pilotage du fonds travaux doit rendre séparément `objectif annuel`, `déjà appelé`, `disponible` et `taux configuré`, avec une action explicite de configuration réservée aux gestionnaires.
 - Le tableau des appels repose sur le composant partagé `CDataTable` (pas de table HTML locale), avec total affiché en pied de carte.
+- La carte `Appels de fonds` affiche des montants consolidés par copropriétaire ; les lignes internes par lot / clé restent un détail de calcul, pas le niveau de lecture principal.
+- La vue de relevé unitaire `UnitChargesView` expose des montants consolidés par appel, avec un CTA `Détail` ouvrant une modale listant la ventilation par clé de répartition.
 - La carte `Consommation par poste` expose une action secondaire à icône de diagramme circulaire ouvrant une modale de répartition par poste ; la modale doit montrer le poids relatif de chaque ligne et une légende textuelle accessible.
 - La modale de répartition affiche les montants en typographie tabulaire mono (`font-mono`).
 - Les mentions légales liées au fonds travaux doivent citer la base à jour (`art. 14-2-1 loi 1965`, rédaction issue de la loi du 22 août 2021) plutôt qu'une référence générique à ALUR seule.

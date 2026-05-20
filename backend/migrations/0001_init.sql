@@ -385,7 +385,7 @@ CREATE TABLE vote (
 );
 
 -- ============================================================
--- BUDGET & LEVY CALLS
+-- BUDGET & LEVY CALLS (ADR-009: accounting immutability)
 -- ============================================================
 
 CREATE TABLE budget (
@@ -409,31 +409,62 @@ CREATE TABLE budget_line (
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- key_id / shares_snapshot / shares_total_snapshot added by migration 0002 (ADR-006)
+-- Header record per generation batch (ADR-009)
 CREATE TABLE levy_call (
-    id                   UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    budget_id            UUID NOT NULL REFERENCES budget(id),
-    unit_id              UUID NOT NULL REFERENCES unit(id),
-    amount               NUMERIC(12, 2) NOT NULL,
-    due_date             DATE NOT NULL,
-    status               levy_status NOT NULL DEFAULT 'issued',
-    key_id               UUID REFERENCES allocation_key(id),
-    shares_snapshot      INTEGER,  -- tantièmes du lot au moment de la génération — immutable after INSERT
-    shares_total_snapshot INTEGER, -- total tantièmes de la clé au moment de la génération — immutable after INSERT
-    issued_at            TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    paid_at              TIMESTAMPTZ,
-    created_at           TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    id                UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    budget_id         UUID NOT NULL REFERENCES budget(id),
+    call_label        TEXT NOT NULL CHECK (length(trim(call_label)) > 0),
+    due_date          DATE NOT NULL,
+    charge_amount     NUMERIC(12, 2) NOT NULL DEFAULT 0,
+    works_fund_amount NUMERIC(12, 2) NOT NULL DEFAULT 0,
+    issued_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Aggregate total per (levy_call, budget_line) — immutable after INSERT
+CREATE TABLE levy_call_line (
+    levy_call_id    UUID NOT NULL REFERENCES levy_call(id) ON DELETE CASCADE,
+    budget_line_id  UUID NOT NULL REFERENCES budget_line(id),
+    amount          NUMERIC(12, 2) NOT NULL,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (levy_call_id, budget_line_id)
+);
+
+-- Per-unit, per-budget-line breakdown with status (Pattern A — ADR-009)
+CREATE TABLE levy_call_unit (
+    id                    UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    levy_call_id          UUID NOT NULL REFERENCES levy_call(id) ON DELETE CASCADE,
+    unit_id               UUID NOT NULL REFERENCES unit(id),
+    budget_line_id        UUID REFERENCES budget_line(id),  -- NULL = works_fund portion
+    key_id                UUID REFERENCES allocation_key(id),
+    amount                NUMERIC(12, 2) NOT NULL,
+    shares_snapshot       INTEGER,       -- tantièmes du lot — immutable after INSERT
+    shares_total_snapshot INTEGER,       -- total tantièmes — immutable after INSERT
+    status                levy_status NOT NULL DEFAULT 'issued',
+    paid_at               TIMESTAMPTZ,
+    created_at            TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- One works_fund row per (levy_call, unit)
+CREATE UNIQUE INDEX idx_levy_call_unit_wf
+    ON levy_call_unit (levy_call_id, unit_id)
+    WHERE budget_line_id IS NULL;
+
+-- One charge row per (levy_call, unit, budget_line)
+CREATE UNIQUE INDEX idx_levy_call_unit_line
+    ON levy_call_unit (levy_call_id, unit_id, budget_line_id)
+    WHERE budget_line_id IS NOT NULL;
 
 -- Works fund — Art. 14-2 ALUR (mandatory separate bank account)
 CREATE TABLE works_fund (
     id                  UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     building_id         UUID NOT NULL REFERENCES building(id),
     fiscal_year         INTEGER NOT NULL,
-    levied_amount       NUMERIC(12, 2) NOT NULL DEFAULT 0,
-    available_amount    NUMERIC(12, 2) NOT NULL DEFAULT 0,
-    created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    levied_amount           NUMERIC(12, 2) NOT NULL DEFAULT 0,
+    available_amount        NUMERIC(12, 2) NOT NULL DEFAULT 0,
+    contribution_rate_pct   NUMERIC(5, 2) NOT NULL DEFAULT 5.00,
+    created_at              TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at              TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     UNIQUE (building_id, fiscal_year)
 );
 
@@ -695,8 +726,11 @@ CREATE INDEX idx_unit_owner_current      ON unit_owner(unit_id) WHERE end_date I
 CREATE INDEX idx_document_building       ON document(building_id);
 CREATE INDEX idx_meeting_building        ON general_meeting(building_id);
 CREATE INDEX idx_budget_building         ON budget(building_id);
-CREATE INDEX idx_levy_call_unit          ON levy_call(unit_id);
-CREATE INDEX idx_levy_call_status        ON levy_call(status) WHERE status != 'paid';
+CREATE INDEX idx_levy_call_budget           ON levy_call(budget_id);
+CREATE INDEX idx_levy_call_line_budget_line ON levy_call_line(budget_line_id);
+CREATE INDEX idx_levy_call_unit_levy_call   ON levy_call_unit(levy_call_id);
+CREATE INDEX idx_levy_call_unit_unit        ON levy_call_unit(unit_id);
+CREATE INDEX idx_levy_call_unit_status      ON levy_call_unit(status) WHERE status != 'paid';
 CREATE INDEX idx_task_building           ON task(building_id);
 CREATE INDEX idx_task_token              ON task(vendor_token) WHERE vendor_token IS NOT NULL;
 CREATE INDEX idx_reminder_trigger        ON contract_reminder(reminder_date, status)

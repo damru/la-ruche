@@ -4,21 +4,21 @@
 import CCard from '@/components/molecules/CCard.vue'
 import CKpiMetric from '@/components/atoms/CKpiMetric.vue'
 
-type DeltaVariant = 'up' | 'down' | 'neutral'
-
 withDefaults(defineProps<{
   label: string
   value: string
   subtitle?: string
   delta?: string
-  deltaVariant?: DeltaVariant
+  deltaVariant?: 'up' | 'down' | 'neutral'
   tone?: 'default' | 'accent' | 'warn' | 'err' | 'valid' | 'info'
+  emphasize?: boolean
   emphasizeValue?: boolean
 }>(), {
   delta: undefined,
   deltaVariant: 'neutral',
   subtitle: undefined,
   tone: 'default',
+  emphasize: false,
   emphasizeValue: false,
 })
 </script>
@@ -26,6 +26,8 @@ withDefaults(defineProps<{
 <template>
   <CCard
     padding="md"
+    class="min-w-40!"
+    :class="emphasize ? `tone--${tone}` : ''"
   >
     <div class="c-kpi__header">
       <div>
@@ -48,7 +50,7 @@ withDefaults(defineProps<{
       :delta="delta"
       :delta-variant="deltaVariant"
       :subtitle="subtitle"
-      :class="`${emphasizeValue ? `tone--${tone}` : ''}`"
+      :class="emphasizeValue ? `tone--${tone}` : ''"
     />
     <slot name="extra"></slot>
   </CCard>
@@ -60,6 +62,7 @@ withDefaults(defineProps<{
   align-items: flex-start;
   justify-content: space-between;
   margin-bottom: var(--space-3);
+  text-transform: uppercase;
 }
 
 .c-kpi__label {

@@ -31,7 +31,7 @@
 }
 
 .tone--disabled {
-  --tone-bg: var(--color-surface-container-highest);
+  --tone-bg: var(--color-surface-container-high);
   --tone-fg: var(--color-on-surface-variant);
 }
 .tone--muted {

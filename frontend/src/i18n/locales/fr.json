@@ -38,6 +38,7 @@
     "total": "Total",
     "date": "Date",
     "paidAt": "Payé le",
+    "issuedAt": "Date d'appel",
     "active": "Actif",
     "inactive": "Inactif",
     "type": "Type",
@@ -69,7 +70,10 @@
     "clear": "Effacer",
     "phone": "Téléphone",
     "phonePlaceholder": "06 00 00 00 00",
-    "none": "Aucun"
+    "none": "Aucun",
+    "compliant": "Pilotage conforme",
+    "actionRequired": "Action requise"
+
   },
   "page": {
     "onboarding": "Bienvenue",
@@ -591,8 +595,6 @@
     "breakdownIntro": "Part de chaque poste dans le budget prévisionnel courant.",
     "breakdownShare": "{pct}%",
     "worksFund": "Fonds travaux",
-    "worksFundStatusOk": "Pilotage conforme",
-    "worksFundStatusAction": "Action requise",
     "worksFundLegal": "Cotisation fonds travaux selon la base légale en vigueur (art. 14-2-1 loi du 10 juillet 1965).",
     "worksFundLegalFull": "Obligation légale — Cotisation annuelle obligatoire ≥ 5% du budget prévisionnel voté en AG. Non récupérable par le copropriétaire en cas de vente.",
     "worksFundTarget": "Objectif annuel",
@@ -672,11 +674,22 @@
     "charges": {
       "title": "Relevé de charges",
       "history": "Historique des appels de fonds",
+      "detailAction": "Détail",
+      "detailTitle": "Détail — {label}",
       "totalIssued": "Total appelé",
       "totalPaid": "Total payé",
       "balance": "Solde dû",
       "empty": "Aucun appel de fonds pour ce lot",
-      "legalNote": "Relevé individuel de charges — Décret 1967 art. 48. Les tantièmes affichés sont ceux en vigueur au moment de l'émission de chaque appel.",
+      "legalCard": {
+        "art10title": "Participations aux charges",
+        "art10summary": "Les propriétaires sont tenus de participer aux charges communes selon les tantièmes de leur lot, sauf disposition contraire prévue par le règlement de copropriété ou la loi.",
+        "art10linkLabel": "Article 10 de la loi n°65-557 du 10 juillet 1965",
+        "art10linkHref": "https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000043977284",
+        "art18title": "Relevé individuel de charges",
+        "art18summary": "Le syndic doit fournir à tout copropriétaire qui en fait la demande un relevé individuel de charges mentionnant les sommes appelées au titre de chaque lot et les tantièmes y afférents.",
+        "art18linkLabel": "Article 18 de la loi n°65-557 du 10 juillet 1965",
+        "art18linkHref": "https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000049398867"
+      },
       "noUnit": "Aucun lot n'est associé à votre compte. Contactez votre syndic."
     }
   },

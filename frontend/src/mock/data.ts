@@ -169,6 +169,9 @@ export const mockWorksFund: WorksFund = {
   fiscal_year: 2025,
   levied_amount: 24_300,
   available_amount: 18_400,
+  contribution_rate_pct: 5,
+  minimum_legal_rate_pct: 5,
+  is_rate_compliant: true,
 }
 
 // ── Documents ─────────────────────────────────────────────────────

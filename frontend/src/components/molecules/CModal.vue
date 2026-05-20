@@ -135,6 +135,7 @@ function handleOpenChange(open: boolean) {
   overflow: clip;
 
   max-height: 90vh;
+  max-width: 90vw;
   display: flex;
   flex-direction: column;
 
