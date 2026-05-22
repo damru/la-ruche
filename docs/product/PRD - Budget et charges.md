@@ -29,13 +29,6 @@ llm_directives:
     avec parent_budget_id référençant l'approuvé — ADR-009 Pattern B.
     Le snapshot des tantièmes DOIT être figé au moment de la génération
     de chaque appel de fonds (ADR-006).
-  modification_policy: >
-    Ne modifier ce fichier que si une évolution de la feature est ABSOLUMENT
-    nécessaire, et EXCLUSIVEMENT après validation explicite d'un PRD additionnel.
-    Si une modification est nécessaire : inline, succincte, dans une section
-    existante. Si aucune section ne convient, requérir une validation utilisateur.
-    Le corps du document ne contient aucune référence technique externe
-    (ADR, DDR, numéro de feature ou de ticket).
 ---
 
 # PRD — Budget et charges

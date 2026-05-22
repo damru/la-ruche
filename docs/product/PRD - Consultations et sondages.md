@@ -15,10 +15,6 @@ llm_directives:
     de lien avec les résolutions ou les votes AG.
     Les réponses des participants sont immuables une fois soumises.
     Ne pas implémenter : vote électronique probant, signature des réponses.
-  modification_policy: >
-    Ne modifier ce fichier que sur validation explicite après analyse de gap.
-    Le corps du document ne contient aucune référence technique externe
-    (ADR, DDR, numéro de feature ou de ticket).
 ---
 
 # PRD — Consultations et sondages

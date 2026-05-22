@@ -23,13 +23,6 @@ llm_directives:
     durée de vie courte — jamais par exposition directe du bucket S3.
     Les fichiers supprimés DOIVENT être marqués logiquement (soft-delete)
     avant toute suppression physique sur S3.
-  modification_policy: >
-    Ne modifier ce fichier que si une évolution de la feature est ABSOLUMENT
-    nécessaire, et EXCLUSIVEMENT après validation explicite d'un PRD additionnel.
-    Si une modification est nécessaire : inline, succincte, dans une section
-    existante. Si aucune section ne convient, requérir une validation utilisateur.
-    Le corps du document ne contient aucune référence technique externe
-    (ADR, DDR, numéro de feature ou de ticket).
 ---
 
 # PRD — Documents

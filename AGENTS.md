@@ -61,23 +61,27 @@ cargo sqlx prepare                 # regenerate .sqlx/ (offline mode)
 
 ## Workflow
 
-- Request matches existing PRD or Epic → confirm with user before starting.
-- ADR for structural technical decisions with real alternatives. DDR for structural UI/UX decisions.
-- Create ADR/DDR only when there are genuine alternatives to document.
-- If domain rule files conflict with each other or with user requests, flag the conflict to the user and await resolution before proceeding.
+### Before starting
 
-## Feature Implementation Checklist
+1. Locate the matching Epic/Story in `docs/EPICS.md`. No match → confirm with user (new story, new epic, or out-of-scope) before proceeding.
+2. If domain rule files conflict with each other or with the request → flag to user and await resolution.
+3. Request requires structural decisions → discuss ADR (technical) or DDR (UI/UX) with user before starting. Create only when there are genuine alternatives to document.
 
-Follow these steps **in order** for any new feature or significant change:
+### Implementation checklist
 
-1. Update `docs/PRD.md` / `docs/DESIGN.md` / `docs/ARCHITECTURE.md` **before** coding.
-2. If structural DB trade-offs exist, create an ADR in `docs/adr/` before writing the migration.
-3. Write and apply the migration (`cargo sqlx migrate run`).
-4. Regenerate offline query data (`cargo sqlx prepare`) and commit `backend/.sqlx/`.
-5. Implement backend changes (domain → db → api layers).
-6. Implement frontend changes.
-7. Run `graphify update .` to keep the knowledge graph current.
-8. Add a dated entry to `docs/PROGRESS.md` with Epic/Story ref (started / completed / abandoned).
+Follow in order for any feature or significant change:
+
+1. **ARCHITECTURE.md** — update before writing any new migration (new table, column, index, relation).
+2. **DESIGN.md** — add new component to catalogue before implementing it.
+3. **ADR / DDR** — create in `docs/adr/` if genuine structural trade-offs exist.
+4. Migration: `cargo sqlx migrate run`.
+5. Offline query data: `cargo sqlx prepare` → commit `backend/.sqlx/`.
+6. Backend: domain → db → api.
+7. Frontend.
+8. `graphify update .`
+9. **EPICS.md** — mark story `✅` and update epic status **only when backend + frontend are both on the real API**. Never anticipate.
+10. **LEGAL.md** — if the story covers a legal obligation, update coverage (⚠️/❌ → ✅) in the same pass.
+11. **PROGRESS.md** — dated entry with Epic/Story ref (started / completed / abandoned).
 
 ---
 
@@ -97,6 +101,7 @@ Short version: financial amounts, legal dates, lifecycle statuses → freeze on 
 | Design system / frontend docs | `.agents/rules/doc-design.instructions.md` |
 | Legal / compliance | `.agents/rules/doc-legal.instructions.md` |
 | Product / PRD | `.agents/rules/doc-prd.instructions.md` |
+| Backlog / Epics | `.agents/rules/doc-epics.instructions.md` |
 | Accounting immutability | `.agents/rules/accounting-immutability.instructions.md` |
 | Rust conventions | `.agents/rules/rust.instructions.md` |
 | Vue.js conventions | `.agents/rules/vue.instructions.md` |

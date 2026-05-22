@@ -25,17 +25,7 @@ references:
   - ADR-008
   - ADR-009
   - ADR-010
-llm-directives:
-  modification_policy: >
-    Ne modifier ce fichier que si une évolution structurante du backend est AVÉRÉE dans le code
-    (nouvelle table en migration, nouveau module src/, changement de stack) ou si un ADR est créé/modifié.
-    Toute modification doit rester ciblée et synchrone avec le code réel — ne pas anticiper
-    des structures non encore implémentées sans mention explicite "prévu".
-    Ne jamais supprimer un invariant sans vérifier qu'il n't est plus appliqué dans le code.
-  scope: backend, database, CI/CD, API contracts, security
-  do_not_touch: >
-    Les règles produit détaillées, les guidelines UX et les tokens de design system
-    restent dans PRD.md, DESIGN.md et les DDR. Ne pas les dupliquer ici.
+
 ---
 
 # ARCHITECTURE.md — l'Application

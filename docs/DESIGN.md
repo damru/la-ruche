@@ -23,19 +23,7 @@ rules:
   - Les classes .tone--* sont des utilitaires CSS purs (non Tailwind) — jamais redéfinis localement.
   - Zéro bloc <style> dans les vues de feature — mise en page locale = utilitaire Tailwind ou composant du catalogue.
   - CFormFeedback toujours dans #footer de CModal, jamais dans le body.
-llm-directives:
-  modification_policy: >
-    Ne modifier ce fichier que si une évolution du design system global ou d'une guideline est
-    ABSOLUMENT nécessaire, et EXCLUSIVEMENT après validation explicite d'un DDR additionnel.
-    Toute modification : inline, succincte, dans une section existante.
-    Si aucune section ne convient, requérir une validation utilisateur.
-    Le corps du document ne contient aucune référence technique externe
-    (ADR, numéro de feature ou de ticket) — uniquement les DDR.
-  scope: frontend, composants Vue, tokens CSS, guidelines UX, accessibilité
-  do_not_touch: >
-    Les règles d'architecture backend, les contraintes DB et les obligations légales
-    restent dans ARCHITECTURE.md et LEGAL.md. Ne pas les dupliquer ici.
-    Les règles produit métier (workflows, permissions) restent dans PRD.md.
+
 ---
 
 # DESIGN.md — Design System "The Modern Registry"

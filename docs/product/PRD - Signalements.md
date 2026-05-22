@@ -16,10 +16,6 @@ llm_directives:
     L'identité du déclarant est masquée aux autres résidents si l'option
     d'anonymat est activée — elle reste visible du Syndic.
     Ne pas implémenter : chat en temps réel, modération automatique par IA.
-  modification_policy: >
-    Ne modifier ce fichier que sur validation explicite après analyse de gap.
-    Le corps du document ne contient aucune référence technique externe
-    (ADR, DDR, numéro de feature ou de ticket).
 ---
 
 # PRD — Signalements

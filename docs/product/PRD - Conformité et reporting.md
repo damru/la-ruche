@@ -17,10 +17,6 @@ llm_directives:
     sur les données existantes dans d'autres modules — aucune saisie redondante.
     Ne pas implémenter : télétransmission directe au ANAH/RNC via API,
     DTG, DPE collectif, diagnostics techniques.
-  modification_policy: >
-    Ne modifier ce fichier que sur validation explicite après analyse de gap.
-    Le corps du document ne contient aucune référence technique externe
-    (ADR, DDR, numéro de feature ou de ticket).
 ---
 
 # PRD — Conformité et reporting réglementaire

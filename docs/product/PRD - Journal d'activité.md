@@ -17,10 +17,6 @@ llm_directives:
       Contrats, Sinistres, Propriétaires. Les entrées sont immuables
       (append-only). Ne pas implémenter : fil d'actualité social, commentaires,
       consultation du journal d'audit probant.
-    modification_policy: >
-      Ne modifier ce fichier que sur validation explicite après analyse de gap.
-      Le corps du document ne contient aucune référence technique externe
-      (ADR, DDR, numéro de feature ou de ticket).
 ---
 
 # PRD — Journal d'activité et suivi de cycle de vie

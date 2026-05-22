@@ -15,10 +15,6 @@ llm_directives:
     Toute implémentation devra respecter PSD2, DSP2, et la réglementation
     anti-blanchiment. Ne jamais stocker de données de carte bancaire.
     Utiliser exclusivement un PSP tiers certifié PCI-DSS.
-  modification_policy: >
-    Ne modifier ce fichier que sur validation explicite après analyse de gap.
-    Le corps du document ne contient aucune référence technique externe
-    (ADR, DDR, numéro de feature ou de ticket).
 ---
 
 # PRD — Paiement en ligne

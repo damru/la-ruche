@@ -16,10 +16,6 @@ llm_directives:
     is_mutable() avant toute écriture. Les délais légaux de déclaration DOIVENT
     être calculés et affichés dès la création.
     Ne pas implémenter : gestion des assurances individuelles, téléclaration PSI.
-  modification_policy: >
-    Ne modifier ce fichier que sur validation explicite après analyse de gap.
-    Le corps du document ne contient aucune référence technique externe
-    (ADR, DDR, numéro de feature ou de ticket).
 ---
 
 # PRD — Sinistres

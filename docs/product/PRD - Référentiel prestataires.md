@@ -15,10 +15,6 @@ llm_directives:
     spécialité, contact) mais pas les conditions contractuelles.
     Ne pas implémenter : notation publique, appel d'offres, mise en relation
     automatique avec des prestataires externes.
-  modification_policy: >
-    Ne modifier ce fichier que sur validation explicite après analyse de gap.
-    Le corps du document ne contient aucune référence technique externe
-    (ADR, DDR, numéro de feature ou de ticket).
 ---
 
 # PRD — Référentiel prestataires

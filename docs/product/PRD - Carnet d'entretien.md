@@ -16,10 +16,6 @@ llm_directives:
     Les entrées automatiques (source = automatic) sont immuables dès création.
     Le carnet doit pouvoir être exporté en PDF à tout moment.
     Ne pas implémenter : import en masse, DPE collectif, diagnostics techniques.
-  modification_policy: >
-    Ne modifier ce fichier que sur validation explicite après analyse de gap.
-    Le corps du document ne contient aucune référence technique externe
-    (ADR, DDR, numéro de feature ou de ticket).
 ---
 
 # PRD — Carnet d'entretien

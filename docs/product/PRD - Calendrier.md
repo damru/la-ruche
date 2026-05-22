@@ -13,10 +13,6 @@ llm_directives:
     modules, et un module de création pour les événements manuels (entité Event).
     Ne pas implémenter : gestion d'invitations, synchronisation calendrier
     externe, rappels push depuis le calendrier.
-  modification_policy: >
-    Ne modifier ce fichier que sur validation explicite après analyse de gap.
-    Le corps du document ne contient aucune référence technique externe
-    (ADR, DDR, numéro de feature ou de ticket).
 ---
 
 # PRD — Calendrier copropriété

@@ -41,13 +41,6 @@ llm_directives:
     Les PRD détaillés par feature sont référencés dans le frontmatter `features`.
     Ne pas modifier les sections des features individuelles ici — renvoyer
     vers le PRD dédié pour tout détail fonctionnel.
-  modification_policy: >
-    Ne modifier ce fichier que pour ajouter/retirer une feature, mettre à jour
-    la vision produit, ou corriger les informations transversales (rôles,
-    contraintes légales, architecture). Les détails fonctionnels par feature
-    vivent dans leur PRD respectif.
-    Le corps du document ne contient aucune référence technique externe
-    (ADR, DDR, numéro de feature ou de ticket).
 ---
 
 # PRD — La Ruche

@@ -22,13 +22,6 @@ llm_directives:
     le nom par un identifiant neutre — jamais supprimer les lignes comptables.
     Les liens tokenisés d'invitation sont à usage unique et à durée limitée.
     Aucun accès cross-utilisateur n'est autorisé — isolation stricte par building_id + user_id.
-  modification_policy: >
-    Ne modifier ce fichier que si une évolution de la feature est ABSOLUMENT
-    nécessaire, et EXCLUSIVEMENT après validation explicite d'un PRD additionnel.
-    Si une modification est nécessaire : inline, succincte, dans une section
-    existante. Si aucune section ne convient, requérir une validation utilisateur.
-    Le corps du document ne contient aucune référence technique externe
-    (ADR, DDR, numéro de feature ou de ticket).
 ---
 
 # PRD — Gestion des propriétaires

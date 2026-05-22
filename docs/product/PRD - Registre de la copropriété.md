@@ -21,13 +21,6 @@ llm_directives:
     toute modification crée une nouvelle version, jamais un écrasement.
     Tout appel de fonds DOIT être bloqué si la somme des tantièmes actifs
     est différente du total déclaré pour la clé concernée.
-  modification_policy: >
-    Ne modifier ce fichier que si une évolution de la feature est ABSOLUMENT
-    nécessaire, et EXCLUSIVEMENT après validation explicite d'un PRD additionnel.
-    Si une modification est nécessaire : inline, succincte, dans une section
-    existante. Si aucune section ne convient, requérir une validation utilisateur.
-    Le corps du document ne contient aucune référence technique externe
-    (ADR, DDR, numéro de feature ou de ticket).
 ---
 
 # PRD — Registre de la copropriété

@@ -18,13 +18,6 @@ llm_directives:
     Un contrat actif est immuable sur ses champs financiers et légaux.
     Tout amendement DOIT créer un nouveau contrat avec predecessor_id.
     Les rappels sont calculés automatiquement à partir des dates et durées de préavis.
-  modification_policy: >
-    Ne modifier ce fichier que si une évolution de la feature est ABSOLUMENT
-    nécessaire, et EXCLUSIVEMENT après validation explicite d'un PRD additionnel.
-    Si une modification est nécessaire : inline, succincte, dans une section
-    existante. Si aucune section ne convient, requérir une validation utilisateur.
-    Le corps du document ne contient aucune référence technique externe
-    (ADR, DDR, numéro de feature ou de ticket).
 ---
 
 # PRD — Contrats fournisseurs
