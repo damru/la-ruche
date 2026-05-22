@@ -1,8 +1,45 @@
-# LEGAL.md — l'Application
+---
+document: LEGAL
+version: 1.0.0
+owner: Damien
+status: validé
+last_updated: 2026-05-22
+references:
+  - Loi n°65-557 du 10 juillet 1965
+  - Décret n°67-223 du 17 mars 1967
+  - Loi ALUR n°2014-366 du 24 mars 2014
+  - Loi ELAN n°2018-1021 du 23 novembre 2018
+  - Loi Climat et Résilience n°2021-1104 du 22 août 2021
+  - Arrêté du 14 mars 2005
+  - RGPD Règlement UE 2016/679
+  - ADR-009
+description: >
+  Référentiel des obligations légales de la copropriété française applicables à La Ruche.
+  Pour chaque obligation : base légale, couverture actuelle et écart à combler.
+  Source normative pour les décisions produit à contrainte légale.
+rules:
+  - Toute obligation légale nouvelle ou modifiée doit être ajoutée ici avant tout backlog ou ADR.
+  - Les références légales citent toujours le texte officiel (Légifrance LEGIARTI ou service-public.fr).
+  - Ne jamais interpréter la loi — citer les textes officiels, dater les versions en vigueur.
+  - Un écart constaté (⚠️ partielle / ❌ non couverte) doit pointer vers une Epic ou story explicite.
+  - La couverture ✅ n'est mise à jour qu'après livraison effective, pas après planification.
+llm-directives:
+  modification_policy: >
+    Ne modifier ce fichier que si une loi, un décret ou une jurisprudence applicable à la copropriété
+    française évolue, ou si la couverture d'une obligation change suite à une livraison.
+    Toute modification doit citer le texte officiel avec sa version LEGIARTI et sa date d'entrée en vigueur.
+    Ne jamais supprimer une obligation — archiver avec mention "abrogé par [texte] le [date]" si nécessaire.
+    Corriger les écarts constatés uniquement si la source légale primaire le confirme.
+  scope: droit de la copropriété française, RGPD, comptabilité légale, obligations syndic
+  do_not_touch: >
+    Les règles d'implémentation technique restent dans ARCHITECTURE.md et les ADR.
+    Les workflows produit restent dans PRD.md. Ne pas dupliquer ici.
+    Les décisions UI/UX restent dans DESIGN.md.
+---
 
-> **Dénomination** — Dans le présent document, l'expression **« l'Application »** désigne exclusivement **La Ruche**, plateforme web open source de gestion participative de copropriété. Ces deux termes sont interchangeables et désignent la même entité logicielle.
+# LEGAL.md — La Ruche
 
-## Référentiel des obligations légales de la copropriété
+> **Dénomination** — « l'Application » désigne exclusivement **La Ruche**, plateforme web open source de gestion participative de copropriété.
 
 > Document de référence produit. Chaque obligation légale est décrite avec ses implications techniques et fonctionnelles, et sa couverture par l'Application.
 >

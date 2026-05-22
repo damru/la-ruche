@@ -1,16 +1,41 @@
 ---
-description: Source de vérité du design system de La Ruche — s'applique à l'intégralité du frontend.
+document: DESIGN
+version: 1.0.0
+owner: Damien
+status: validé
+last_updated: 2026-05-22
+references:
+  - DDR-001
+  - DDR-002
+  - DDR-003
+  - DDR-004
+  - DDR-005
+  - DDR-006
+  - DDR-007
+description: >
+  Source de vérité du design system "The Modern Registry" de La Ruche — tokens, catalogue de composants
+  et guidelines UX. S'applique à l'intégralité du frontend Vue 3.
+  Tout composant, style ou token appliqué en frontend doit être conforme à ce document.
 rules:
-  - Ce fichier fait foi. Tout composant, style ou token appliqué en frontend doit y être conforme.
+  - Ce fichier fait foi. Aucune valeur brute (px, hex, rem) dans un attribut class si un token existe.
+  - Tout nouveau composant atom/molecule/organism doit être ajouté au catalogue (§2) avant usage.
+  - Toute nouvelle primitive interactive passe par un wrapper C* — jamais d'import direct radix-vue dans une vue.
+  - Les classes .tone--* sont des utilitaires CSS purs (non Tailwind) — jamais redéfinis localement.
+  - Zéro bloc <style> dans les vues de feature — mise en page locale = utilitaire Tailwind ou composant du catalogue.
+  - CFormFeedback toujours dans #footer de CModal, jamais dans le body.
 llm-directives:
   modification_policy: >
-    Ne modifier ce fichier que si une évolution du design system global ou d'une guideline est 
+    Ne modifier ce fichier que si une évolution du design system global ou d'une guideline est
     ABSOLUMENT nécessaire, et EXCLUSIVEMENT après validation explicite d'un DDR additionnel.
-    Si une modification est nécessaire : inline, succincte, dans une section
-    existante. Si aucune section ne convient, requérir une validation utilisateur.
+    Toute modification : inline, succincte, dans une section existante.
+    Si aucune section ne convient, requérir une validation utilisateur.
     Le corps du document ne contient aucune référence technique externe
-    (ADR, DDR, numéro de feature ou de ticket).
-
+    (ADR, numéro de feature ou de ticket) — uniquement les DDR.
+  scope: frontend, composants Vue, tokens CSS, guidelines UX, accessibilité
+  do_not_touch: >
+    Les règles d'architecture backend, les contraintes DB et les obligations légales
+    restent dans ARCHITECTURE.md et LEGAL.md. Ne pas les dupliquer ici.
+    Les règles produit métier (workflows, permissions) restent dans PRD.md.
 ---
 
 # DESIGN.md — Design System "The Modern Registry"

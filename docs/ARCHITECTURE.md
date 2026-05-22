@@ -1,8 +1,47 @@
+---
+document: ARCHITECTURE
+version: 2.1.0
+owner: Damien
+status: validé
+last_updated: 2026-05-22
+description: >
+  Source de vérité de l'architecture technique de La Ruche — stack, structure du projet,
+  schéma DB, flux principaux, sécurité, CI/CD et principes de code.
+  S'applique à l'intégralité du backend (Rust/Axum/SQLx) et aux points de contact frontend/API.
+rules:
+  - Ce fichier fait foi pour toute décision d'architecture backend.
+  - Toute nouvelle table, handler, module domain/ ou store frontend doit être reflété ici.
+  - Les noms de tables, colonnes et types Rust utilisent exclusivement les identifiants anglais du code.
+  - Les entités marquées "prévu, non encore implémenté" ne doivent pas être codées sans ADR ou Epic associé.
+  - Les invariants listés dans "Schéma DB" ont valeur de contrat : toute modification nécessite une mise à jour synchrone de ce document.
+references:
+  - ADR-001
+  - ADR-002
+  - ADR-003
+  - ADR-004
+  - ADR-005
+  - ADR-006
+  - ADR-007
+  - ADR-008
+  - ADR-009
+llm-directives:
+  modification_policy: >
+    Ne modifier ce fichier que si une évolution structurante du backend est AVÉRÉE dans le code
+    (nouvelle table en migration, nouveau module src/, changement de stack) ou si un ADR est créé/modifié.
+    Toute modification doit rester ciblée et synchrone avec le code réel — ne pas anticiper
+    des structures non encore implémentées sans mention explicite "prévu".
+    Ne jamais supprimer un invariant sans vérifier qu'il n't est plus appliqué dans le code.
+  scope: backend, database, CI/CD, API contracts, security
+  do_not_touch: >
+    Les règles produit détaillées, les guidelines UX et les tokens de design system
+    restent dans PRD.md, DESIGN.md et les DDR. Ne pas les dupliquer ici.
+---
+
 # ARCHITECTURE.md — l'Application
 
 > **Dénomination** — Dans le présent document, l'expression **« l'Application »** désigne exclusivement **La Ruche**, plateforme web open source de gestion participative de copropriété. Ces deux termes sont interchangeables et désignent la même entité logicielle.
 
-> Document vivant. Dernière mise à jour : 2026-05-09
+> Document vivant. Dernière mise à jour : 2026-05-22
 
 ---
 
@@ -24,10 +63,10 @@
 | Clé générale système | `key_type` enum + soft delete sur `allocation_key` | ADR-007 |
 | Traçabilité tâches ↔ carnet | Lien informatif `task_id` + multiples clôtures + `completion_cost` courant sur `task` | ADR-008 |
 | Immutabilité comptable + audit log | Guards de domaine + `audit_log` append-only réservé à la preuve comptable/juridique + `valid_from`/`valid_to` sur `budget_line` + `predecessor_id` sur `vendor_contract` | ADR-009 |
-| Timeline métier tâches/signalements | `activity_log` polymorphique distinct de `audit_log` pour la frise UX et le suivi de cycle de vie | EP-017 / EP-018 |
+| Timeline métier tâches/signalements | `activity_log` polymorphique distinct de `audit_log` pour la frise UX — **prévu, non encore implémenté** | EP-017 / EP-018 |
 | Logs | tracing + tracing-subscriber (JSON) | — |
 | Config | dotenvy + config crate (LA_RUCHE__*) ; `LA_RUCHE__APP__DEMO_MODE=true` rejoue `backend/seeds/demo.sql` au démarrage | — |
-| Frontend | Vue 3 + Vite + TypeScript + Tailwind CSS (couche utilitaire) | DDR-003 |
+| Frontend | Vue 3 + Vite + TypeScript + Tailwind CSS v4 (couche utilitaire) | DDR-003 |
 | État UI | Pinia | — |
 | Préférences UI persistées | `localStorage` `laruche-theme` (`light` / `dark`), absence de clé = `auto` | DDR-002, DDR-004 |
 | État serveur | TanStack Query | — |
@@ -43,27 +82,31 @@
 laruche/
 ├── backend/
 │   ├── migrations/
-│   │   └── 0001_init.sql       ← 26 tables, UUID, triggers updated_at
+│   │   └── 0001_init.sql       ← 36 tables, 25 ENUMs, UUID, triggers updated_at
+│   ├── seeds/
+│   │   └── demo.sql            ← données de démonstration (rejoué au démarrage si DEMO_MODE)
 │   └── src/
 │       ├── api/                ← handlers (zéro logique métier)
-│       │   ├── assemblies.rs
-│       │   ├── auth.rs
-│       │   ├── budget.rs
-│       │   ├── building.rs
-│       │   ├── claims.rs
-│       │   ├── consultations.rs
-│       │   ├── contracts.rs
-│       │   ├── contractor.rs
-│       │   ├── contractors.rs
-│       │   ├── documents.rs
-│       │   ├── logbook.rs
-│       │   ├── mod.rs          ← router + OpenAPI
-│       │   ├── onboarding.rs
-│       │   ├── reports.rs
-│       │   ├── stubs.rs        ← stubs for routes not yet implemented
-│       │   ├── units.rs
-│       │   ├── users.rs
-│       │   └── tasks.rs
+│       │   ├── admin.rs        ← POST /admin/reset-demo (manager only, DEMO_MODE)
+│       │   ├── assemblies.rs   ← CRUD AG, résolutions, votes, présence, documents, convocation, clôture
+│       │   ├── auth.rs         ← login/logout, refresh JWT, reset password, invitation, profil, passkey (stubs)
+│       │   ├── budget.rs       ← CRUD budgets et lignes, appels de charges, marquage paiement, fonds travaux
+│       │   ├── building.rs     ← lecture/update immeuble, CRUD clés de répartition, tantièmes, stats, registre
+│       │   ├── claims.rs       ← CRUD sinistres + documents attachés
+│       │   ├── consultations.rs ← CRUD consultations, réponse, résultats, clôture
+│       │   ├── contractor.rs   ← portail prestataire : tâche, URL upload, soumission devis (accès token)
+│       │   ├── contractors.rs  ← CRUD référentiel prestataires
+│       │   ├── contracts.rs    ← CRUD contrats fournisseurs, résiliation, rappels, documents attachés
+│       │   ├── documents.rs    ← upload (pre-signed URL), confirmation, liste, download, suppression
+│       │   ├── logbook.rs      ← CRUD carnet d'entretien (maintenance_log)
+│       │   ├── mod.rs          ← router principal Axum + OpenAPI
+│       │   ├── onboarding.rs   ← statut onboarding + bootstrap immeuble
+│       │   ├── reports.rs      ← CRUD signalements, transitions statut, conversion en tâche, documents
+│       │   ├── runtime.rs      ← GET /runtime/status (demo_mode flag)
+│       │   ├── stubs.rs        ← placeholders pour routes non encore implémentées
+│       │   ├── tasks.rs        ← CRUD tâches, documents, génération/révocation token prestataire
+│       │   ├── units.rs        ← CRUD lots, archivage, historique propriétaires, transfert, charges
+│       │   └── users.rs        ← liste des utilisateurs
 │       ├── auth/               ← jwt, middleware, passkey, password, token
 │       │   ├── jwt.rs
 │       │   ├── middleware.rs
@@ -72,7 +115,7 @@ laruche/
 │       │   ├── password.rs
 │       │   └── token.rs
 │       ├── config.rs           ← typed config from env
-│       ├── db/                 ← repositories SQLx
+│       ├── db/                 ← repositories SQLx (14 repos + mod.rs)
 │       │   ├── allocation_key.rs
 │       │   ├── assembly.rs
 │       │   ├── budget.rs
@@ -89,89 +132,120 @@ laruche/
 │       │   ├── unit.rs
 │       │   └── user.rs
 │       ├── domain/             ← pure logic, no I/O
-│       │   ├── charges.rs      ← levy distribution by share (Decimal)
-│       │   ├── mod.rs          ← Role, AuthUser
-│       │   ├── processor.rs    ← OCR/NLP trait (NoopProcessor MVP)
-│       │   ├── reminders.rs    ← contract reminder date computation
-│       │   └── vote.rs         ← quorums art. 24/25/26 (tested)
+│       │   ├── charges.rs              ← répartition des charges par tantième (Decimal)
+│       │   ├── convocation_checklist.rs ← checklist légale convocation AG (art. 7-13 décret 1967)
+│       │   ├── minutes_draft.rs        ← génération PV draft Markdown (art. 17 décret 67-223)
+│       │   ├── mod.rs                  ← Role, AuthUser, re-exports
+│       │   ├── processor.rs            ← trait DocumentProcessor + NoopProcessor (OCR/NLP futur)
+│       │   ├── reminders.rs            ← calcul dates de rappel contrat fournisseur
+│       │   └── vote.rs                 ← quorums art. 24/25/25-1/26/26-1 (testé)
 │       ├── errors.rs           ← unified AppError → JSON HTTP
 │       ├── jobs/
 │       │   ├── mod.rs
-│       │   └── reminders.rs    ← hourly poll, ready for notifications
+│       │   └── reminders.rs    ← hourly poll, prêt pour notifications
 │       ├── main.rs             ← assembly, auto-migrations, jobs
 │       └── storage/            ← client S3, presigned URLs
 │           ├── client.rs
 │           ├── mod.rs
 │           └── presigned.rs
-├── CONTRIBUTING.md             ← guide de contribution
+├── CONTRIBUTING.md
 ├── docker-compose.prod.yml     ← override production, image Docker Hub
 ├── docker-compose.yml          ← laruche + postgres + minio
 ├── docker/
 │   ├── Caddyfile               ← config Caddy (SPA + reverse proxy)
-│   └── entrypoint.sh           ← backend + Caddy démarrage
+│   └── entrypoint.sh           ← démarrage backend + Caddy
 ├── Dockerfile                  ← multi-stage unique (Node + Rust + Caddy)
 ├── docs/
-│   ├── adr/ (ADR-001, 002, 003)
+│   ├── adr/                    ← ADR-001 à ADR-009
+│   ├── product/                ← PRD détaillés par feature
 │   ├── ARCHITECTURE.md
 │   ├── DESIGN.md
-│   └── PRD.md
+│   ├── EPICS.md
+│   ├── LEGAL.md
+│   ├── PRD.md
+│   └── PROGRESS.md
 ├── frontend/src/
-│   ├── api/                    ← client Axios + modules API
+│   ├── api/
+│   │   ├── client.ts           ← instance Axios + intercepteurs refresh + publicApi (token prestataire)
+│   │   └── index.ts            ← tous les modules API regroupés
 │   ├── components/
-│   │   ├── atoms/              ← CBtn, CInput, CSelect, CTextarea,
-│   │   │                          CProgressBar, CAlert, CBadge, CSeparator, CEyebrow, CLegalDescription
-│   │   ├── molecules/          ← CCard, CKpiCard, CListItem,
-│   │   │                          CDataTable, CModal, CDropzone, CMeta, CMetaItem, CCardNote, CLegalNotice
+│   │   ├── atoms/              ← CAlert, CBadge, CBtn, CEyebrow,
+│   │   │                          CFormCheckbox, CFormChipInput, CFormChipSelect,
+│   │   │                          CFormFeedback, CFormInput, CFormSelect, CFormTextarea,
+│   │   │                          CLegalDescription, CMockBanner, CProgressBar,
+│   │   │                          CSeparator, CTooltip + icônes SVG (CIcon*.svg)
+│   │   ├── molecules/          ← CCard, CCardNote, CDataTable,
+│   │   │                          CFormAddressAutocomplete, CFormDropzone,
+│   │   │                          CKpiCard, CLegalCard, CLegalNotice,
+│   │   │                          CListItem, CMeta, CMetaItem, CMetaLine,
+│   │   │                          CModal, CPageLoader
 │   │   └── organisms/          ← AppNav
-│   ├── composables/            ← useRole, useFormatters (Intl natif)
-│   │   ├── features/               ← vues lazy-loaded par domaine
-│   │   ├── assemblies/         ← AssemblyListView, AssemblyDetailView
-│   │   ├── auth/               ← LoginView ✅, AcceptInviteView, ResetPasswordView
-│   │   ├── budget/             ← BudgetView
-│   │   ├── claims/             ← ClaimsView
-│   │   ├── consultations/      ← ConsultationsView
-│   │   ├── contractor/         ← ContractorPage
-│   │   ├── contractors/        ← ContractorsView, ContractorDetailView
-│   │   ├── contracts/          ← ContractsView
-│   │   ├── dashboard/          ← DashboardView ✅
-│   │   ├── documents/          ← DocumentsView
-│   │   ├── maintenance/        ← MaintenanceView
-│   │   ├── onboarding/         ← OnboardingView
-│   │   ├── profile/            ← ProfileView
-│   │   ├── reports/            ← ReportsView
-│   │   ├── residence/          ← BuildingView, AllocationKeysView
-│   │   ├── residents/          ← ResidentsView
-│   │   └── tasks/              ← TasksView
+│   ├── composables/            ← hooks transverses
+│   │   ├── useAutoClose.ts
+│   │   ├── useConfirm.ts
+│   │   ├── useFormatters.ts    ← formatage Intl natif (fr-FR), sans date-fns
+│   │   ├── useFormFeedback.ts
+│   │   ├── usePageLoader.ts
+│   │   └── useRole.ts
+│   ├── features/               ← vues lazy-loaded par domaine
+│   │   ├── assemblies/
+│   │   ├── auth/
+│   │   ├── budget/
+│   │   ├── claims/
+│   │   ├── consultations/
+│   │   ├── contractor/         ← portail prestataire (accès token, sans JWT)
+│   │   ├── contractors/
+│   │   ├── contracts/
+│   │   ├── dashboard/
+│   │   ├── documents/
+│   │   ├── maintenance/
+│   │   ├── onboarding/
+│   │   ├── profile/
+│   │   ├── reports/
+│   │   ├── residence/
+│   │   ├── residents/
+│   │   └── tasks/
 │   ├── layouts/                ← AppLayout
-│   ├── router/index.ts         ← lazy routes, guards (403 vs 404, onboarding, redirects legacy)
-│   ├── stores/                 ← auth.ts, ui.ts (Pinia + préférence d'apparence via localStorage)
+│   ├── router/index.ts         ← lazy routes, guards (403 vs 404, onboarding, redirects)
+│   ├── stores/
+│   │   ├── auth.ts             ← session utilisateur (Pinia)
+│   │   ├── documents.ts        ← état GED partagé
+│   │   ├── files.ts            ← upload / presigned URLs
+│   │   └── ui.ts               ← préférences apparence (localStorage)
 │   ├── styles/                 ← tailwind.css, tokens.css, base.css, typography.css
 │   ├── types/domain.ts         ← types TS miroir schéma Rust
+│   ├── utils/                  ← utilitaires purs (pas de composables)
 │   └── views/                  ← ForbiddenView, NotFoundView
 └── Makefile                    ← cibles make (dev, test, docker…)
 ```
 
-Le frontend conserve les feuilles globales historiques (`tokens.css`, `base.css`, `tones.css`, etc.) comme source normative du design system. Tailwind CSS n'est ajouté que comme couche utilitaire optionnelle pour accélérer certains layouts locaux, sans déplacer les tokens ni la responsabilité des primitives partagées hors de ces fichiers. En v4, les utilitaires personnalisés sont exposés depuis `frontend/src/styles/tailwind.css` via `@theme inline`, sans `tailwind.config.js` spécifique.
+Le frontend conserve les feuilles globales historiques (`tokens.css`, `base.css`, `tones.css`, etc.) comme source normative du design system. Tailwind CSS n'est ajouté que comme couche utilitaire optionnelle via `@tailwindcss/vite` (sans `tailwind.config.js`). Les tokens custom sont exposés via `@theme inline` dans `frontend/src/styles/tailwind.css`.
 
 ---
 
-## Schéma DB — 26 tables
+## Schéma DB — 36 tables
 
 | Domaine | Tables |
 |---|---|
-| Copropriété | `copropriete`, `lot`, `cle_repartition`, `lot_cle_repartition` |
-| Utilisateurs | `utilisateur`, `user_copropriete`, `token_utilisateur`, `lot_proprietaire` |
-| AG | `assemblee_generale`, `resolution`, `vote` |
-| Budget | `budget`, `ligne_budget`, `appel_de_fonds`, `fonds_travaux` |
+| Copropriété | `building`, `unit`, `allocation_key`, `unit_allocation_key` |
+| Utilisateurs | `user_account`, `user_token`, `user_building`, `unit_owner` |
+| AG | `general_meeting`, `general_meeting_document`, `general_meeting_attendance`, `resolution`, `vote` |
+| Budget | `budget`, `budget_line`, `levy_call`, `works_fund` |
 | Documents | `document` |
-| Contrats | `contrat_fournisseur`, `contrat_document`, `rappel_contrat` |
-| Tâches | `tache`, `depot_prestataire`, `depot_prestataire_document` |
-| Sinistres | `sinistre`, `sinistre_document` |
-| Carnet | `carnet_entretien`, `carnet_document` |
-| Signalements | `signalement`, `signalement_document` |
-| Consultations | `consultation`, `choix_consultation`, `reponse_consultation` |
+| Contrats | `vendor_contract`, `contract_document`, `contract_reminder` |
+| Prestataires | `contractor` |
+| Tâches | `task` (`contractor_id` FK → `contractor`, `contractor_name` texte libre, `vendor_token` ephemeral), `task_document`, `vendor_submission`, `vendor_submission_document` |
+| Sinistres | `claim`, `claim_document` |
+| Carnet | `maintenance_log`, `maintenance_log_document` |
+| Signalements | `report`, `report_document` — `report.task_id` FK informatif (EP-017, conversion signalement → tâche) |
+| Consultations | `consultation`, `consultation_choice`, `consultation_response`, `consultation_response_choice` |
 
-Conventions : UUID v4, TIMESTAMPTZ, soft delete via `actif`/`statut`, `updated_at` via triggers, JSONB pour OCR futur.
+Conventions : UUID v4, TIMESTAMPTZ, soft delete via `active`/`status`, `updated_at` via triggers, JSONB pour OCR futur.
+
+> **Note** — Les tables `audit_log` (traçabilité comptable ADR-009) et `activity_log` (timeline UX EP-017/EP-018) sont **définies comme cibles d'architecture** mais pas encore créées en base. Elles feront l'objet de migrations dédiées.
+
+**Règle de gestion transverse — Upload = GED (2026-05-22)**
+Tout upload de fichier depuis n'importe quel module de l'application **crée systématiquement un enregistrement dans la table `document`** (GED centrale) avant d'être associé à l'entité source via une table de liaison dédiée (`{entite}_document`). Il n'existe pas de pièce jointe "privée" hors GED. Cette règle s'applique à tous les modules existants et à tout nouveau module qui introduit un mécanisme d'upload.
 
 Invariants techniques implémentés :
 
@@ -185,9 +259,9 @@ Invariants techniques implémentés :
 - Pour `EP-003-S02`, les pièces AG non-PV sont rattachées via une liaison dédiée `general_meeting_document`, tandis que le PV signé continue d'être référencé sur `general_meeting.minutes_document_id`.
 - Pour `EP-003-S03`, la présence AG est portée par un registre dédié au niveau réunion (présent / procuration / vote par correspondance / absent) ; le vote par résolution reste stocké dans `vote` et ne sert plus de substitut implicite à la feuille de présence.
 
-Les règles produit détaillées de navigation, d'apparence et de workflows métier restent normatives dans `PRD.md`, `EPICS.md`, `DESIGN.md` et les ADR/DDR concernés ; ce document n'en conserve qu'un résumé d'architecture.
+Arbitrage documentaire : le nom `audit_log` est réservé à la traçabilité probante d'ADR-009 (mutations comptables, diff ciblé, conservation longue, valeur de preuve). Les besoins de timeline UX et de suivi de cycle de vie de `report` / `task` relèveront d'un flux séparé `activity_log`, afin d'éviter de mélanger journal juridique append-only et événements métier orientés interface.
 
-Arbitrage documentaire ouvert et cible retenue à ce stade : le nom `audit_log` est réservé à la traçabilité probante d'ADR-009 (mutations comptables, diff ciblé, conservation longue, valeur de preuve). Les besoins de timeline UX et de suivi de cycle de vie de `report` / `task` relèvent d'un flux séparé nommé `activity_log`, afin d'éviter de mélanger journal juridique append-only et événements métier orientés interface.
+Les règles produit détaillées de navigation, d'apparence et de workflows métier restent normatives dans `PRD.md`, `DESIGN.md` et les ADR/DDR concernés ; ce document n'en conserve qu'un résumé d'architecture.
 
 ---
 
@@ -211,7 +285,7 @@ HTTP → Tower (CORS, trace, timeout 30s)
 4. Client → POST /api/v1/documents (confirme key + métadonnées)
 ```
 
-### Pièce justificative d’un contrat
+### Pièce justificative d'un contrat
 ```
 1. Client → POST /api/v1/documents/upload-url
 2. Client → PUT direct S3
@@ -240,7 +314,7 @@ HTTP → Tower (CORS, trace, timeout 30s)
 | Mots de passe | Argon2id, 64MB mémoire, 3 itérations |
 | Tokens invitation/reset | UUID hashé SHA-256, TTL strict |
 | Fichiers | Bucket privé, pas d'URL publique, pre-signed uniquement |
-| Isolation tenant | Toutes les requêtes filtrent sur `copropriete_id` |
+| Isolation tenant | Toutes les requêtes filtrent sur `building_id` (ex-`copropriete_id`) |
 | Erreurs | 403 (pas 404) sur routes protégées — pas de fuite d'info |
 | Chiffrement | SSE at-rest S3, TLS at-transit |
 
@@ -248,12 +322,12 @@ HTTP → Tower (CORS, trace, timeout 30s)
 
 ## CI/CD
 
-- Le workflow `CI` génère désormais `backend/.sqlx/` directement dans le job **backend**, puis partage cet artefact au job **docker** sans relancer une préparation SQLx séparée.
+- Le workflow `CI` génère `backend/.sqlx/` directement dans le job **backend**, puis partage cet artefact au job **docker** sans relancer une préparation SQLx séparée.
 - Le workflow sépare la **validation backend**, la **validation frontend** et un job **`docker`** unique, déclenché seulement après succès de `test-backend` et `test-frontend`.
-- Dans le job backend, les migrations PostgreSQL ne sont exécutées qu'une seule fois avant `cargo sqlx prepare`, puis la validation Cargo enchaîne `cargo fmt --check`, `cargo clippy -- -D warnings` et un unique `cargo test --lib --tests` pour mutualiser le profil de compilation des tests sans relancer un `cargo check` redondant.
-- Le job backend active aussi `sccache` comme cache compilateur Rust dédié, persistant entre exécutions GitHub Actions via le backend GHA natif de `mozilla-actions/sccache-action`, afin de réutiliser plus finement les artefacts `rustc` entre `cargo install sqlx-cli`, `cargo clippy` et `cargo test --lib --tests`.
-- Le job Docker unique construit et publie l’image dans la même exécution, ce qui supprime le préchauffage dédié désormais inutile grâce au cache Buildx réutilisé par branche.
-- Les caches CI sont mutualisés par écosystème : `Swatinem/rust-cache` porte une clé stable `backend-ci` entre les exécutions du workflow pour réutiliser le registre Cargo, les artefacts `target/`, les crates de test et `sqlx-cli`, `sccache` conserve séparément les objets compilés `rustc` dans le cache GitHub Actions natif, le cache npm passe par `actions/setup-node`, et le cache GHA Buildx reste isolé par branche pour les builds Docker.
+- Dans le job backend, les migrations PostgreSQL ne sont exécutées qu'une seule fois avant `cargo sqlx prepare`, puis la validation Cargo enchaîne `cargo fmt --check`, `cargo clippy -- -D warnings` et un unique `cargo test --lib --tests`.
+- Le job backend active `sccache` comme cache compilateur Rust dédié, persistant entre exécutions GitHub Actions via le backend GHA natif de `mozilla-actions/sccache-action`.
+- Le job Docker unique construit et publie l'image dans la même exécution grâce au cache Buildx réutilisé par branche.
+- Les caches CI sont mutualisés par écosystème : `Swatinem/rust-cache` (clé stable `backend-ci`), `sccache` (objets `rustc` natifs GHA), `actions/setup-node` (npm), cache GHA Buildx (Docker, par branche).
 
 ---
 
@@ -280,4 +354,4 @@ HTTP → Tower (CORS, trace, timeout 30s)
 | ADR-006 | Versioning tantièmes & snapshot levy | `valid_from`/`valid_to` sur `unit_allocation_key` ; colonnes `shares_snapshot`, `shares_total_snapshot`, `key_id` sur `levy_call` |
 | ADR-007 | Clé générale système | `key_type allocation_key_type` enum + `deleted_at` soft delete sur `allocation_key` ; clé Charges Générales créée à l'onboarding, indestructible |
 | ADR-008 | Traçabilité tâches / carnet / soumissions prestataire | `maintenance_log.task_id` et `vendor_submission.task_id` deviennent informatifs (`ON DELETE SET NULL`) ; suppression de l'unicité 1 tâche → 1 entrée ; `task.completion_cost` porte le montant courant jusqu'à la clôture validée |
-| ADR-009 | Immutabilité des données comptables + audit log | Guards `is_mutable`/`is_deletable` dans `domain/immutability.rs` ; table `audit_log` append-only (diff JSONB `old_values`/`new_values`) ; statut `draft` sur `levy_call` ; `predecessor_id` sur `vendor_contract` (pattern avenant) ; `parent_budget_id` + `valid_from`/`valid_to` sur `budget_line` ; trigger PG défensif sur `levy_call` |
+| ADR-009 | Immutabilité des données comptables + audit log | Guards `is_mutable`/`is_deletable` dans `domain/` (**EP-018-S02, non encore implémentés**) ; table `audit_log` append-only (diff JSONB `old_values`/`new_values`, **EP-018-S07, non encore créée**) ; statut `draft` sur `levy_call` (**EP-018-S03, non encore implémenté**) ; `predecessor_id` sur `vendor_contract` (pattern avenant, **EP-018-S05**) ; `parent_budget_id` + `valid_from`/`valid_to` sur `budget_line` (**EP-018-S06**) ; trigger PG défensif sur `levy_call` (**EP-018-S03**) |

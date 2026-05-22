@@ -3,7 +3,7 @@ product: Documents
 version: 1.0.0
 owner: Damien
 status: validé
-last_updated: 2026-05-21
+last_updated: 2026-05-22
 references:
   - EP-005
   - LEGAL.md §1.6
@@ -33,12 +33,6 @@ llm_directives:
 ---
 
 # PRD — Documents
-
-> **Statut** — validé
-> **Dernière modification** — 21 mai 2026
-> **Références** — `LEGAL.md §1.6`, `LEGAL.md §8`
-
----
 
 ## 1. Vue d'ensemble
 
@@ -146,9 +140,12 @@ Trois risques à couvrir :
 | Documents de sinistres | `C/R/U/D¹` | `R` | `R¹` | `X` |
 | Documents de tâches | `C/R/U/D¹` | `R/U` | `X` | `X` |
 | Documents libres | `C/R/U/D¹` | `R/U` | `R¹` | `X` |
+| Pièces signalement | `C/R/U/D¹` | `R` | `C/R¹` | `C/R¹` |
+| Pièces carnet d'entretien | `C/R/U/D¹` | `R` | `R` | `X` |
+| Documents prestataire | `C/R/U/D¹` | `R` | `X` | `X` |
 
 > ¹ `D¹` : suppression logique uniquement ; workflow de remplacement obligatoire pour les documents juridiquement critiques (règlement, PV signé).
-> `R¹` (accès restreint) : pour sinistres et documents libres — copropriété de résidence uniquement ; pour appels de fonds — lots de l'utilisateur uniquement.
+> `R¹` (accès restreint) : pour sinistres et documents libres — copropriété de résidence uniquement ; pour appels de fonds — lots de l'utilisateur uniquement ; pour pièces signalement — signalements créés par l'utilisateur uniquement.
 
 ### Règles de sécurité
 
@@ -175,6 +172,9 @@ Trois risques à couvrir :
 | Pièce sinistre | `SINISTRE` | Syndic + Conseil | Sinistre (`claim_id`) |
 | Pièce tâche | `TACHE` | Syndic + Conseil | Tâche (`task_id`) |
 | Document libre | `LIBRE` | Paramétrable | Optionnel |
+| Pièce signalement | `SIGNALEMENT` | Syndic + Conseil + déclarant | Signalement (`report_id`) |
+| Pièce carnet d'entretien | `CARNET_ENTRETIEN` | Syndic + Conseil + Copropriétaire | Entrée carnet (`entry_id`) |
+| Document prestataire | `PRESTATAIRE` | Syndic + Conseil | Prestataire (`contractor_id`) |
 
 ### Cycle de vie d'un document
 
@@ -204,9 +204,9 @@ Le tableau suivant mappe chaque obligation légale à la catégorie documentaire
 | Budget prévisionnel de l'exercice | `BUDGET` | ✅ Couverte |
 | Appels de fonds individuels (Annexe II) | `APPEL_FONDS` | ✅ Couverte |
 | Contrats d'assurance en vigueur | `CONTRAT` | ⚠️ Partielle — accès Syndic+Conseil uniquement (pas résidents) |
-| Carnet d'entretien | future EP-009 | ❌ Non couverte — à implémenter en EP-009 |
+| Carnet d'entretien | EP-009 | ✅ Couverte — export PDF accessible au Syndic, Conseil et Copropriétaires (EP-009) |
 | DTG / DPE collectif si établi | `DIAGNOSTIC` | ✅ Couverte |
-| Plan Pluriannuel de Travaux si adopté | future EP-009 | ❌ Non couverte — à implémenter en EP-009 |
+| Plan Pluriannuel de Travaux si adopté | hors périmètre | ❌ Non couverte — hors scope EP-009 (registres techniques séparés) |
 
 > Note : l'accès aux contrats d'assurance est actuellement réservé au Syndic et au Conseil (voir matrice CRUD §3). Une évolution vers un accès résident en lecture est à envisager pour satisfaire pleinement l'obligation.
 

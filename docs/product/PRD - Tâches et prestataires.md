@@ -3,7 +3,7 @@ product: Tâches et prestataires
 version: 1.0.0
 owner: Damien
 status: en cours
-last_updated: 2026-05-20
+last_updated: 2026-05-22
 references:
   - EP-007
   - EP-015
@@ -32,12 +32,6 @@ llm_directives:
 ---
 
 # PRD — Tâches et prestataires
-
-> **Statut** — en cours
-> **Dernière modification** — 20 mai 2026
-> **Références** — `EP-007`, `EP-015`, `EP-009-S03`, `EP-018-S04`, `LEGAL.md §1.4`, `ADR-009`
-
----
 
 ## 1. Vue d'ensemble
 
@@ -254,13 +248,13 @@ Chaque clôture constitue un **cycle de résolution** historisé : `completion_c
 | Titre / description | Repris automatiquement |
 | Lot / unité concernée | Repris automatiquement |
 | Documents joints | Repris automatiquement |
-| Catégorie / type | Repris automatiquement |
+| Catégorie / type | Saisie manuelle obligatoire |
 | Priorité | Saisie manuelle obligatoire |
 | Prestataire | Vide par défaut — optionnel |
 
 **Critères d'acceptation**
 
-- **AC-002-A** : Le système DOIT reprendre automatiquement titre, description, lot/unité, documents et catégorie du signalement source.
+- **AC-002-A** : Le système DOIT reprendre automatiquement titre, description, lot/unité et documents du signalement source. La catégorie de la tâche DOIT être saisie manuellement par le Syndic lors de la conversion — elle n'est pas héritée automatiquement.
 - **AC-002-B** : Le système DOIT exiger la saisie manuelle de la priorité avant de valider la conversion.
 - **AC-002-C** : Le système DOIT créer un lien bidirectionnel `signalement ↔ tâche` visible dans les deux vues.
 - **AC-002-D** : Le système DOIT rejeter si le signalement est déjà converti — code `errors.tasks.signalement_already_converted`.

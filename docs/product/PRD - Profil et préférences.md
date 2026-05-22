@@ -3,7 +3,7 @@ product: Profil et préférences
 version: 1.0.0
 owner: Damien
 status: validé
-last_updated: 2026-05-20
+last_updated: 2026-05-22
 references:
   - EP-019
   - DDR-004
@@ -29,12 +29,6 @@ llm_directives:
 ---
 
 # PRD — Profil et préférences
-
-> **Statut** — en cours
-> **Dernière modification** — 20 mai 2026
-> **Références** — `EP-019`, `DDR-004`, `LEGAL.md §8`
-
----
 
 ## 1. Vue d'ensemble
 
@@ -248,6 +242,9 @@ Aucun KPI prioritaire n'est retenu à ce stade. La feature est un socle de confo
 | **Contrats** | `contrat.reconduction_imminente` | Reconduction imminente (J-30) | Optionnel |
 | **Contrats** | `contrat.expire` | Contrat expiré | Optionnel |
 | **Sinistres** | `sinistre.delai_critique` | Délai de déclaration < 48h | 🔒 Obligatoire |
+| **Signalements (déclarant)** | `signalement.pris_en_charge` | Votre signalement est pris en charge | 🔒 Obligatoire |
+| **Signalements (déclarant)** | `signalement.en_cours` | Votre signalement est en cours de traitement | 🔒 Obligatoire |
+| **Signalements (déclarant)** | `signalement.cloture_declarant` | Votre signalement a été clôturé | 🔒 Obligatoire |
 
 #### US-PP-005 — Réinitialiser ses préférences
 

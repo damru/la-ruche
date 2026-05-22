@@ -1,6 +1,6 @@
 ---
 product: Assemblée Générale
-version: 2.0.0
+version: 1.0.0
 owner: Damien
 status: validé
 last_updated: 2026-05-20
@@ -32,12 +32,6 @@ llm_directives:
 ---
 
 # PRD — Assemblée Générale
-
-> **Statut** — en cours
-> **Dernière modification** — 20 mai 2026
-> **Références** — `EP-003`, `EP-013`, `LEGAL.md §3`, `ADR-009`, `ADR-006`
-
----
 
 ## 1. Vue d'ensemble
 

@@ -40,12 +40,6 @@ llm_directives:
 
 # PRD — Budget et charges
 
-> **Statut** — validé
-> **Dernière modification** — 21 mai 2026
-> **Références** — `LEGAL.md §4`, `LEGAL.md §11`
-
----
-
 ## 1. Vue d'ensemble
 
 ### Objectif

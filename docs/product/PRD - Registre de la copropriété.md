@@ -32,12 +32,6 @@ llm_directives:
 
 # PRD — Registre de la copropriété
 
-> **Statut** — validé
-> **Dernière modification** — 21 mai 2026
-> **Références** — `LEGAL.md §1`, `LEGAL.md §2`
-
----
-
 ## 1. Vue d'ensemble
 
 ### Objectif

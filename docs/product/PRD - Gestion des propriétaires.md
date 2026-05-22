@@ -33,12 +33,6 @@ llm_directives:
 
 # PRD — Gestion des propriétaires
 
-> **Statut** — validé
-> **Dernière modification** — 21 mai 2026
-> **Références** — `LEGAL.md §1.5`, `LEGAL.md §7`, `LEGAL.md §8`
-
----
-
 ## 1. Vue d'ensemble
 
 ### Objectif

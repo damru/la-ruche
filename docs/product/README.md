@@ -47,17 +47,17 @@ Les matrices du Product Hub sont construites avec :
 | Budget & Charges | `EP-004` | en cours | [PRD - Budget et charges](PRD%20-%20Budget%20et%20charges.md) | Inclut budget, appels, fonds travaux et arrêté |
 | Documents | `EP-005` | en cours | [PRD - Documents](PRD%20-%20Documents.md) | Couche transverse documentaire |
 | Profil & préférences | `EP-019`, `DDR-004` | en cours | [PRD - Profil et préférences](PRD%20-%20Profil%20et%20pr%C3%A9f%C3%A9rences.md) | Feature simple self-service utilisateur |
-| Contrats fournisseurs | `EP-006` | en cours | à créer | Inclut rappels et pièces liées |
+| Contrats fournisseurs | `EP-006` | en cours | [PRD - Contrats fournisseurs](PRD%20-%20Contrats%20fournisseurs.md) | Inclut rappels, avenants et pièces liées |
 | Tâches & Prestataires | `EP-007`, `EP-015` | en cours | [PRD - Tâches et prestataires](PRD%20-%20T%C3%A2ches%20et%20prestataires.md) | Inclut sous-parcours prestataire tokenisé |
-| Référentiel prestataires | `EP-015` | en cours | à créer | Peut rester séparé malgré le lien fort avec les tâches |
-| Sinistres | `EP-008` | en cours | à créer | Inclut délais, transmission, clôture |
-| Carnet d'entretien | `EP-009` | en cours | à créer | Inclut alimentation manuelle et automatique |
-| Consultations & Sondages | `EP-010` | en cours | à créer | Participatif, non décisionnel |
-| Signalements | `EP-011` | en cours | à créer | Résident -> suivi -> conversion éventuelle |
-| Conformité & Reporting réglementaire | `EP-012` | en attente | à créer | RNC et fiche synthétique |
-| Calendrier copropriété | `EP-014` | en attente | à créer | Feature de cadrage |
-| Paiement en ligne | `EP-016` | en attente | à créer | Feature de cadrage |
-| Journal d’activité & Suivi de cycle de vie | `EP-017` | en attente | à créer | Timeline métier distincte de l'audit probant |
+| Référentiel prestataires | `EP-015` | en cours | [PRD - Référentiel prestataires](PRD%20-%20Référentiel%20prestataires.md) | Annuaire partagé référencé par Tâches et Contrats |
+| Sinistres | `EP-008` | en cours | [PRD - Sinistres](PRD%20-%20Sinistres.md) | Inclut délais légaux, transmission, clôture et remboursement |
+| Carnet d'entretien | `EP-009` | en cours | [PRD - Carnet d'entretien](PRD%20-%20Carnet%20d'entretien.md) | Inclut alimentation manuelle et automatique depuis tâches/contrats/sinistres |
+| Consultations & Sondages | `EP-010` | en cours | [PRD - Consultations et sondages](PRD%20-%20Consultations%20et%20sondages.md) | Participatif, non décisionnel, avec option anonymat |
+| Signalements | `EP-011` | en cours | [PRD - Signalements](PRD%20-%20Signalements.md) | Résident → suivi → conversion en tâche |
+| Conformité & Reporting réglementaire | `EP-012` | en attente | [PRD - Conformité et reporting](PRD%20-%20Conformité%20et%20reporting.md) | Fiche synthétique obligatoire (art. 8-2) et export RNC |
+| Calendrier copropriété | `EP-014` | en attente | [PRD - Calendrier](PRD%20-%20Calendrier.md) | Agrégation read-only de tous les événements datés |
+| Paiement en ligne | `EP-016` | en attente | [PRD - Paiement en ligne](PRD%20-%20Paiement%20en%20ligne.md) | Cadrage préliminaire — lot futur, prérequis PSP/DSP2 |
+| Journal d'activité & Suivi de cycle de vie | `EP-017` | en attente | [PRD - Journal d'activité](PRD%20-%20Journal%20d'activité.md) | Timeline métier lisible — distincte de l'audit probant backend |
 | Immutabilité comptable & auditabilité probante | `EP-018` | en attente | à créer | Contrainte transverse structurante |
 
 ## Lot 1
