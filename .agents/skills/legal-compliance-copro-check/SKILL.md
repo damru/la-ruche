@@ -32,7 +32,7 @@ tests. It is a read-only audit that outputs a structured report.
 
 ### Step 1 — Fetch the consolidated legal text
 
-Use `mcp_mcp-openlegi_rechercher_dans_texte_legal` to retrieve the
+Use `openlegi` MCP with tool `rechercher_dans_texte_legal` to retrieve the
 **in-force** (état VIGUEUR) version:
 
 ```
@@ -43,6 +43,7 @@ champ: "ARTICLE"
 
 - Note the `LEGIARTI` identifier and the Légifrance URL.
 - Quote the **exact text** verbatim. Never paraphrase legal obligations.
+- If `openlegi` MCP is unavailable, ask user if they want to scrape the text from Légifrance and note the fallback in the report.
 
 ### Step 2 — Gap analysis
 
@@ -111,5 +112,5 @@ Before marking the skill complete:
 - [ ] Legal text quoted verbatim with LEGIARTI ID + URL
 - [ ] Gap table produced — every obligation has a status
 - [ ] Every ❌ / ⚠️ has a gap description and a backlog reference or « à créer »
-- [ ] Output file `.outputs/legal-reportslegal-gap-report-<date>.md` created
+- [ ] Output file `.outputs/legal-reports/legal-gap-report-<date>.md` created
 - [ ] `docs/LEGAL.md` **not modified**

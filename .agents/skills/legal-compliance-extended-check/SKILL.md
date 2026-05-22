@@ -57,7 +57,7 @@ being audited, determine which text applies using the table above.
 
 ### Step 2 — Fetch the consolidated text
 
-Use `mcp_mcp-openlegi_rechercher_dans_texte_legal`:
+Use `openlegi` MCP with tool `rechercher_dans_texte_legal`:
 
 ```
 search: "<article keyword or subject>"
@@ -72,6 +72,7 @@ fallback in the report.
 
 - Record the `LEGIARTI` identifier and the Légifrance URL.
 - Quote the **exact text** verbatim. Never paraphrase obligations.
+- If `openlegi` MCP is unavailable, ask user if they want to scrape the text from Légifrance and note the fallback in the report.
 
 ### Step 3 — Gap analysis
 
@@ -93,7 +94,7 @@ Coverage codes:
 
 ### Step 4 — Produce the gap report
 
-Write the output to `.outputs/legal-reportslegal-gap-report-<YYYY-MM-DD>.md` (create or append
+Write the output to `.outputs/legal-reports/legal-gap-report-<YYYY-MM-DD>.md` (create or append
 if a report for today already exists from `legal-compliance-copro-check`).
 
 Report structure:
@@ -146,5 +147,5 @@ Before marking the skill complete:
 - [ ] Gap table produced — every obligation has a status
 - [ ] No overlap with `legal-compliance-check` scope (65-557 / 67-223)
 - [ ] Every ❌ / ⚠️ has a gap description and a backlog reference or « à créer »
-- [ ] Output file `.outputs/legal-reportslegal-gap-report-<date>.md` created
+- [ ] Output file `.outputs/legal-reports/legal-gap-report-<date>.md` created
 - [ ] `docs/LEGAL.md` **not modified**
