@@ -24,6 +24,7 @@ references:
   - ADR-007
   - ADR-008
   - ADR-009
+  - ADR-010
 llm-directives:
   modification_policy: >
     Ne modifier ce fichier que si une évolution structurante du backend est AVÉRÉE dans le code
@@ -54,7 +55,7 @@ llm-directives:
 | Base de données | PostgreSQL 16 | ADR-001 |
 | ORM / Query | SQLx 0.8 (compile-time) | ADR-001 |
 | Migrations | SQLx migrate (embedded) | ADR-001 |
-| Auth | JWT + Argon2id + webauthn-rs | ADR-002 |
+| Auth | JWT + Argon2id + webauthn-rs (passkeys **stubs** — `auth/passkey.rs` compilable, 4 handlers retournent `tracing::warn!` + 501 ; pas de roadmap active) | ADR-002 |
 | Stockage | S3-compatible — MinIO self-hosted | schema.sql |
 | API | REST JSON + OpenAPI (utoipa) | ADR-001 |
 | Edge runtime | Caddy sur Debian slim | ADR-005 |
@@ -230,7 +231,7 @@ Le frontend conserve les feuilles globales historiques (`tokens.css`, `base.css`
 | Copropriété | `building`, `unit`, `allocation_key`, `unit_allocation_key` |
 | Utilisateurs | `user_account`, `user_token`, `user_building`, `unit_owner` |
 | AG | `general_meeting`, `general_meeting_document`, `general_meeting_attendance`, `resolution`, `vote` |
-| Budget | `budget`, `budget_line`, `levy_call`, `works_fund` |
+| Budget | `budget`, `budget_line`, `levy_call`, `works_fund` — champ `category` sur `levy_call` **prévu** |
 | Documents | `document` |
 | Contrats | `vendor_contract`, `contract_document`, `contract_reminder` |
 | Prestataires | `contractor` |
@@ -354,4 +355,5 @@ HTTP → Tower (CORS, trace, timeout 30s)
 | ADR-006 | Versioning tantièmes & snapshot levy | `valid_from`/`valid_to` sur `unit_allocation_key` ; colonnes `shares_snapshot`, `shares_total_snapshot`, `key_id` sur `levy_call` |
 | ADR-007 | Clé générale système | `key_type allocation_key_type` enum + `deleted_at` soft delete sur `allocation_key` ; clé Charges Générales créée à l'onboarding, indestructible |
 | ADR-008 | Traçabilité tâches / carnet / soumissions prestataire | `maintenance_log.task_id` et `vendor_submission.task_id` deviennent informatifs (`ON DELETE SET NULL`) ; suppression de l'unicité 1 tâche → 1 entrée ; `task.completion_cost` porte le montant courant jusqu'à la clôture validée |
-| ADR-009 | Immutabilité des données comptables + audit log | Guards `is_mutable`/`is_deletable` dans `domain/` (**EP-018-S02, non encore implémentés**) ; table `audit_log` append-only (diff JSONB `old_values`/`new_values`, **EP-018-S07, non encore créée**) ; statut `draft` sur `levy_call` (**EP-018-S03, non encore implémenté**) ; `predecessor_id` sur `vendor_contract` (pattern avenant, **EP-018-S05**) ; `parent_budget_id` + `valid_from`/`valid_to` sur `budget_line` (**EP-018-S06**) ; trigger PG défensif sur `levy_call` (**EP-018-S03**) |
+| ADR-009 | Immutabilité des données comptables + audit log | Guards `is_mutable`/`is_deletable` dans `domain/` ; table `audit_log` append-only (diff JSONB `old_values`/`new_values` ; statut `draft` sur `levy_call` ; `predecessor_id` sur `vendor_contract` (pattern avenant) ; `parent_budget_id` + `valid_from`/`valid_to` sur `budget_line` ; trigger PG défensif sur `levy_call` |
+| ADR-010 | PV conseil syndical | Extension `meeting_type` ENUM (`annual` / `extraordinary` / `council`) ; réutilisation de `general_meeting` + `general_meeting_document` ; champ `minutes_document_id` référence le PV signé — pas de nouvelle table |

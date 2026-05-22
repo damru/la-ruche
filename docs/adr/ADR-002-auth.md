@@ -25,8 +25,9 @@ car trop lourd pour du self-hosted sans compétences DevOps).
 ### Passkeys — webauthn-rs
 - Implémentation WebAuthn Level 2
 - Enregistrement après première connexion par mot de passe
-- Credential stockée en JSONB dans `utilisateur.passkey_credential`
+- Credential stockée en JSONB dans `user_account.passkey_credential`
 - Pas de dépendance à un authenticator spécifique (Touch ID, Windows Hello, clé FIDO2)
+- **Statut implémentation** : `auth/passkey.rs` — `build_webauthn()` opérationnel ; 4 handlers de cérémonie (`register_start/finish`, `login_start/finish`) retournent `501 NOT_IMPLEMENTED`. Pas de roadmap d'activation définie.
 
 ### Sessions — JWT httpOnly
 - Access token : JWT signé HS256, durée 15 minutes
