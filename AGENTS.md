@@ -61,27 +61,24 @@ cargo sqlx prepare                 # regenerate .sqlx/ (offline mode)
 
 ## Workflow
 
-### Before starting
+- Request matches existing PRD → [request matches an Epic or a Story][request does not matches an Epic or a Story → confirm with user to create a new item] → update related item status → add entry in docs/PROGRESS.md.
+- Request does not match existing PRD  → it is not trivial (ADR/DDR/PRD could be created) → discuss with user before starting
+    - ADR for structural technical decisions with real alternatives. DDR for structural UI/UX decisions.
+    - Create ADR/DDR only when there are genuine alternatives to document.
+- If domain rule files conflict with each other or with user requests, flag the conflict to the user and await resolution before proceeding.
 
-1. Locate the matching Epic/Story in `docs/EPICS.md`. No match → confirm with user (new story, new epic, or out-of-scope) before proceeding.
-2. If domain rule files conflict with each other or with the request → flag to user and await resolution.
-3. Request requires structural decisions → discuss ADR (technical) or DDR (UI/UX) with user before starting. Create only when there are genuine alternatives to document.
+## Feature Implementation Checklist
 
-### Implementation checklist
+Follow these steps **in order** for any new feature or significant change:
 
-Follow in order for any feature or significant change:
-
-1. **ARCHITECTURE.md** — update before writing any new migration (new table, column, index, relation).
-2. **DESIGN.md** — add new component to catalogue before implementing it.
-3. **ADR / DDR** — create in `docs/adr/` if genuine structural trade-offs exist.
-4. Migration: `cargo sqlx migrate run`.
-5. Offline query data: `cargo sqlx prepare` → commit `backend/.sqlx/`.
-6. Backend: domain → db → api.
-7. Frontend.
-8. `graphify update .`
-9. **EPICS.md** — mark story `✅` and update epic status **only when backend + frontend are both on the real API**. Never anticipate.
-10. **LEGAL.md** — if the story covers a legal obligation, update coverage (⚠️/❌ → ✅) in the same pass.
-11. **PROGRESS.md** — dated entry with Epic/Story ref (started / completed / abandoned).
+1. Update `docs/PRD.md` / `docs/DESIGN.md` / `docs/ARCHITECTURE.md` **before** coding.
+2. If structural DB trade-offs exist, create an ADR in `docs/adr/` before writing the migration.
+3. Write and apply the migration (`cargo sqlx migrate run`).
+4. Regenerate offline query data (`cargo sqlx prepare`) and commit `backend/.sqlx/`.
+5. Implement backend changes (domain → db → api layers).
+6. Implement frontend changes.
+7. Run `graphify update .` to keep the knowledge graph current.
+8. Add a dated entry to `docs/PROGRESS.md` with Epic/Story ref (started / completed / abandoned).
 
 ---
 
@@ -126,3 +123,42 @@ Knowledge graph at `graphify-out/`.
 
 - Architecture/codebase questions → read `graphify-out/GRAPH_REPORT.md` first.
 - After modifying code files → run `graphify update .` to keep the graph current (also step 7 of the Feature Implementation Checklist).
+
+<!-- code-review-graph MCP tools -->
+## MCP Tools: code-review-graph
+
+**IMPORTANT: This project has a knowledge graph. ALWAYS use the
+code-review-graph MCP tools BEFORE using Grep/Glob/Read to explore
+the codebase.** The graph is faster, cheaper (fewer tokens), and gives
+you structural context (callers, dependents, test coverage) that file
+scanning cannot.
+
+### When to use graph tools FIRST
+
+- **Exploring code**: `semantic_search_nodes` or `query_graph` instead of Grep
+- **Understanding impact**: `get_impact_radius` instead of manually tracing imports
+- **Code review**: `detect_changes` + `get_review_context` instead of reading entire files
+- **Finding relationships**: `query_graph` with callers_of/callees_of/imports_of/tests_for
+- **Architecture questions**: `get_architecture_overview` + `list_communities`
+
+Fall back to Grep/Glob/Read **only** when the graph doesn't cover what you need.
+
+### Key Tools
+
+| Tool | Use when |
+| ------ | ---------- |
+| `detect_changes` | Reviewing code changes — gives risk-scored analysis |
+| `get_review_context` | Need source snippets for review — token-efficient |
+| `get_impact_radius` | Understanding blast radius of a change |
+| `get_affected_flows` | Finding which execution paths are impacted |
+| `query_graph` | Tracing callers, callees, imports, tests, dependencies |
+| `semantic_search_nodes` | Finding functions/classes by name or keyword |
+| `get_architecture_overview` | Understanding high-level codebase structure |
+| `refactor_tool` | Planning renames, finding dead code |
+
+### Workflow
+
+1. The graph auto-updates on file changes (via hooks).
+2. Use `detect_changes` for code review.
+3. Use `get_affected_flows` to understand impact.
+4. Use `query_graph` pattern="tests_for" to check coverage.
