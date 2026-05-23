@@ -34,11 +34,13 @@ fn row_to_contractor(r: &sqlx::postgres::PgRow) -> Result<ContractorRow, sqlx::E
     })
 }
 
-const SELECT: &str = "SELECT id, building_id, name, email, phone, domains, notes, created_at, updated_at FROM contractor";
+const SELECT_LIST_BY_BUILDING: &str = "SELECT id, building_id, name, email, phone, domains, notes, created_at, updated_at FROM contractor WHERE building_id = $1 ORDER BY name";
+const SELECT_SEARCH_BY_BUILDING: &str = "SELECT id, building_id, name, email, phone, domains, notes, created_at, updated_at FROM contractor WHERE building_id = $1 AND name ILIKE $2 ORDER BY name LIMIT 10";
+const SELECT_BY_ID_AND_BUILDING: &str = "SELECT id, building_id, name, email, phone, domains, notes, created_at, updated_at FROM contractor WHERE id = $1 AND building_id = $2";
 
 /// List all contractors for a building, ordered by name.
 pub async fn list(pool: &PgPool, building_id: Uuid) -> AppResult<Vec<ContractorRow>> {
-    let rows = sqlx::query(&format!("{SELECT} WHERE building_id = $1 ORDER BY name"))
+    let rows = sqlx::query(SELECT_LIST_BY_BUILDING)
         .bind(building_id)
         .fetch_all(pool)
         .await?;
@@ -51,13 +53,11 @@ pub async fn list(pool: &PgPool, building_id: Uuid) -> AppResult<Vec<ContractorR
 /// Search contractors by name (case-insensitive, ILIKE), limited to 10 results.
 /// Used for autocomplete when assigning a contractor to a task.
 pub async fn search(pool: &PgPool, building_id: Uuid, q: &str) -> AppResult<Vec<ContractorRow>> {
-    let rows = sqlx::query(&format!(
-        "{SELECT} WHERE building_id = $1 AND name ILIKE $2 ORDER BY name LIMIT 10"
-    ))
-    .bind(building_id)
-    .bind(format!("%{q}%"))
-    .fetch_all(pool)
-    .await?;
+    let rows = sqlx::query(SELECT_SEARCH_BY_BUILDING)
+        .bind(building_id)
+        .bind(format!("%{q}%"))
+        .fetch_all(pool)
+        .await?;
     rows.iter()
         .map(row_to_contractor)
         .collect::<Result<Vec<_>, _>>()
@@ -66,7 +66,7 @@ pub async fn search(pool: &PgPool, building_id: Uuid, q: &str) -> AppResult<Vec<
 
 /// Fetch a single contractor by id, scoped to the building.
 pub async fn get(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<Option<ContractorRow>> {
-    let row = sqlx::query(&format!("{SELECT} WHERE id = $1 AND building_id = $2"))
+    let row = sqlx::query(SELECT_BY_ID_AND_BUILDING)
         .bind(id)
         .bind(building_id)
         .fetch_optional(pool)

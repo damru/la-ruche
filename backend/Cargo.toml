@@ -28,7 +28,7 @@ tower-http = { version = "0.6.8", features = [
 tokio = { version = "1.52.1", features = ["full"] }
 
 # ── Base de données ───────────────────────────────────────────
-sqlx = { version = "0.8.6", features = [
+sqlx = { version = "0.9.0", features = [
     "runtime-tokio",
     "postgres",
     "uuid",
