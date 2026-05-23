@@ -1,126 +1,153 @@
-# La Ruche — Project Instructions
+# La Ruche — Agent Instructions
 
-## Identité et posture
+## Project
 
-**Profil multi-expert** : tu agis tour à tour comme Expert-comptable / Juriste, UX/UI Designer, Développeur (Fullstack) et Product Manager.
+Open-source webapp for French co-ownership management (syndic bénévole).
+Monorepo: `backend/` (Rust) + `frontend/` (Vue 3).
 
-**Ton** : pédagogue, informel mais professionnel, pragmatique et synthétique.
-
-**Règle d'or** : si une requête est ambiguë, demande des précisions.
-
-## Méthodologie
-
-Applique le principe **DRY** à TOUS les changements.
-
-**Refactorisation complète** : toute refactorisation doit supprimer les fichiers, méthodes, classes, types, imports, variables et routes qui ne sont plus référencés après le changement. Ne jamais laisser de code mort.
-
-**Architecture & Backend** :
-- Principes : Clean Code, SOLID, KISS, DRY, YAGNI, moindre responsabilité.
-- Horreur du code spaghetti et du refactoring inutile. Changements ciblés uniquement.
-
-## Workflow de travail
-
-- Si une nouvelle feature ou une décision technique est détectée, **commence TOUJOURS** par mettre à jour les documents associés (`PRD.md`, `DESIGN.md`, `ARCHITECTURE.md`).
-- Dès qu'une tâche est commencée, terminée ou abandonnée, ajoute-la dans `PROGRESS.md` avec le statut correspondant. Chaque entrée doit être datée et titrée de manière descriptive. Si une tâche implémente directement un bloc défini dans `PRD.md` ou dans le backlog, ajoute le code Bloc PRD (A, B, C…) ou une référence Epic/Story.
-- Vérifie systématiquement si une demande correspond à un élément déjà défini dans le PRD ou le backlog. Si c'est le cas, demande une confirmation avant de commencer.
-
-## Documentation des décisions
-
-- **ADR** (Architecture Decision Record) : choix techniques structurants avec alternatives réelles. Maintiens `ARCHITECTURE.md` (index des normes + résumés des ADR) à jour automatiquement dès qu'un choix technique est posé, qu'un module est créé/refondu, ou qu'une contrainte d'architecture est établie.
-- **DDR** (Design Decision Record) : choix UI/UX structurants. Maintiens `DESIGN.md` (index des normes + résumés des DDR) à jour automatiquement dès qu'un token change, qu'un composant est créé/refondu, ou qu'une règle UI est établie.
-- Crée un ADR/DDR uniquement pour les choix structurants avec alternatives réelles.
-
-## Product Management
-
-- **Document maître** : `PRD.md` centralise la vision et toutes les fonctionnalités détaillées.
-- **Rigueur produit** : rejette les idées sans valeur ajoutée ou illégales. Envoie les features abandonnées dans la section « Cimetière » de la PRD avec justification.
-- **Traçabilité** : lie les décisions fonctionnelles de la PRD aux contraintes techniques (références vers ADR/DDR).
-
-## Expertise métier (légal & finance)
-
-- **Rigueur** : conformité stricte au droit de la copropriété française. Ne jamais interpréter la loi : cite les textes officiels.
-- **Style** : réponses précises, concises, sans interprétation personnelle des dispositifs légaux.
-
-## Langue
-
-- **TOUT le code (et commentaires)** DOIVENT être en anglais.
-- **Les documents** (PRD, DESIGN, ARCHITECTURE, PROGRESS, ADR, DDR) DOIVENT être en français. Si un document référence des éléments du code, utilise les termes anglais correspondants.
+Domain-specific rules in `.agents/rules/` are automatically injected into context by the IDE when editing files in the matching domain. Do not re-read them manually.
 
 ---
 
-# Accounting Immutability (ADR-009)
+## Commits
 
-> Full specification: `docs/adr/ADR-009-accounting-immutability.md`
-> Legal basis: `docs/LEGAL.md §11`
+**All commits must follow [Conventional Commits](https://www.conventionalcommits.org/).**
 
-These rules apply whenever creating or modifying an entity that carries **financial amounts**, **legal dates**, or **lifecycle statuses** (DB migrations, Rust structs/handlers/domain, Vue forms/modals/cards).
+Format: `<type>(<scope>): <imperative summary>`
 
-## Step 1 — Does this entity carry financial or legal traceability data?
+- Types: `feat` `fix` `refactor` `perf` `docs` `test` `chore` `build` `ci` `style` `revert`
+- Scope: optional, e.g. `backend`, `frontend`, `ag`, `auth`, `db`
+- Breaking change: append `!` before the colon or add `BREAKING CHANGE:` footer
+- Subject ≤72 chars, imperative mood, no trailing period
+- Body only when the *why* is non-obvious from the diff
 
-**Signals — answer yes if any of these apply:**
-- stores an `amount`, `cost`, or financial balance
-- stores a date that triggers a legal obligation (`declared_at`, `transmitted_at`, `closed_at`, `due_date`…)
-- has a `status` enum that reflects a lifecycle transition (open → closed, draft → issued…)
-- is referenced by another entity that does any of the above
+Examples:
+```
+feat(ag): add vote-by-correspondence form to convocation checklist
+fix(backend): guard levy_call mutation after issued status
+docs: update ARCHITECTURE.md with vendor_contract table
+feat!: remove deprecated PUT /levy-calls/:id
+chore(ci): add commitlint workflow on pull_request
+```
 
-If **no** → no further action required. If **yes** → proceed to Step 2.
+Use the `caveman:caveman-commit` skill when writing commit messages.
 
-## Step 2 — Which pattern applies?
+---
 
-| Pattern | When | Mechanism |
-|---|---|---|
-| **A — Freeze on terminal state** | Entity stays in place; some fields become immutable after a status transition | Guard `domain::immutability::is_mutable()` / `is_deletable()` called before any write; dedicated transition endpoint |
-| **B — Close + recreate** | Modifying in place is semantically wrong (amendment, rectifying budget) | `predecessor_id` or `parent_budget_id` column; `POST /{id}/terminate` or `POST /{id}/amend` endpoint |
-| **C — Append-only** | Correction = new write; original row stays intact | No `UPDATE`/`DELETE`; new row referencing the previous one |
+## Commands
 
-**Currently covered entities:**
+```bash
+# Backend
+cargo build                        # compile
+cargo test --lib --tests           # run tests
+cargo clippy -- -D warnings        # lint (must pass clean)
+cargo fmt --check                  # format check
 
-| Entity | Pattern | Frozen from |
-|---|---|---|
-| `levy_call` | A | `status = 'issued'` |
-| `vote` / `resolution` | A | AG `ongoing` / `closed` |
-| `task.completion_cost`, `task.closed_at` | A | `status = 'closed'` |
-| `claim.transmitted_at`, `claim.reimbursement_*` | A | Fields set |
-| `maintenance_log` (source `automatic`) | A | Always |
-| `vendor_contract` | B | Active — amend via `predecessor_id` |
-| `budget` / `budget_line` | B | Approved — rectify via `parent_budget_id` |
-| `maintenance_log` (source `manual`) | C | Always |
-| Correction of an issued `levy_call` | C | Credit note (negative amount row) |
+# Frontend
+npm --prefix frontend install      # install deps
+npm --prefix frontend run build    # build
+npm --prefix frontend run lint     # lint
 
-## Step 3 — Does this entity need point-in-time queries?
+# DB (local dev)
+docker compose up -d postgres      # start postgres
+cargo sqlx migrate run             # apply migrations
+cargo sqlx prepare                 # regenerate .sqlx/ (offline mode)
+```
 
-**Signal:** a derived value (levy call, allocated amount) is calculated **from** this entity and must be reproducible at a past date.
+---
 
-If yes → add `valid_from DATE NOT NULL` and `valid_to DATE` columns. Reference implementation: `unit_allocation_key` (ADR-006), `budget_line` (ADR-009).
+## Language
 
-If no → Pattern A or B suffices.
+- **Code + comments** → English only.
+- **Docs** (PRD, DESIGN, ARCHITECTURE, PROGRESS, ADR, DDR) → French. Code identifiers stay English inside docs.
 
-## Backend rules (`.rs`, `migrations/*.sql`)
+---
 
-- **No generic `PUT`/`PATCH` on frozen fields.** Use a dedicated transition endpoint (`POST /{id}/close`, `POST /{id}/issue`, `POST /{id}/transmit`, `POST /{id}/terminate`).
-- **Every transition endpoint must call `domain::immutability::is_mutable()` before any DB write.**
-- **Every `DELETE` handler on a critical entity must call `domain::immutability::is_deletable()` before executing.**
-- Financial mutations must write to `audit_log` via `db::audit_log::record()` with `old_values` / `new_values` as JSONB containing **only the changed fields**.
-- Log: `UPDATE` on financial/traceability fields, `DELETE` attempts, status transitions. Do **not** log `INSERT` or non-financial field updates.
-- `audit_log` rows are append-only — never delete or update them.
+## Backend (Rust + Axum + SQLx)
 
-## Frontend rules (`.vue`, `.ts`)
+- Zero business logic in handlers (`api/`) — logic lives in `domain/`.
+- Zero SQL in `domain/` — DB access in `db/` repositories only.
+- `pub(crate)` by default. No `unwrap()` outside tests.
+- `Decimal` for all financial amounts — never `f64`.
+- New table → always update `docs/ARCHITECTURE.md` before migration. Create an ADR only when there are **genuine structural design trade-offs** with real alternatives (e.g. schema design, storage strategy). Simple tables (lookups, enums, standard joins) → no ADR needed.
+- `SQLX_OFFLINE=true` in CI and Docker — `backend/.sqlx/` committed.
+- Errors: custom `AppError` with i18n code (`AppError::validation_code("errors.x.y")`), never raw strings.
 
-- **Pattern A — frozen fields:** use `v-if` (not `disabled`) to hide Modifier / Supprimer once the terminal state is reached.
-- **Pattern A — readonly display:** render immutable fields as `<span>`, not `<input readonly>`. Add a discrete `label-sm .tone--muted` label « Donnée comptable — non modifiable ».
-- **Pattern A — frozen indicator:** display `CIconLock` with `.tone--muted` in the card or detail header.
-- **Pattern B — amend workflow:** replace « Modifier » with « Créer un avenant » (`ghost` variant, not destructive). Pre-fill the new form and close the old entity in one server call.
-- **Never call a generic `PUT`/`PATCH`** on a frozen entity — use the dedicated transition endpoint.
-- **Never include frozen fields in a form payload** once they are set.
+## Frontend (Vue 3 + TypeScript + Tailwind v4)
+
+- Composition API only. No Options API.
+- No raw values (`px`, `hex`, `rem`) in `class`/`style` — use Tailwind utilities or CSS tokens.
+- No `<style>` block in feature views — Tailwind utilities or catalogue components only.
+- `CFormFeedback` in `#footer` slot of `CModal` only, never in body.
+- No direct `radix-vue` import in feature views — use `C*` wrappers.
+- New component → add to catalogue in `docs/DESIGN.md §2` before use.
+
+---
+
+## Workflow
+
+- Request matches existing PRD → [request matches an Epic or a Story][request does not matches an Epic or a Story → confirm with user to create a new item] → update related item status → add entry in docs/PROGRESS.md.
+- Request does not match existing PRD  → it is not trivial (ADR/DDR/PRD could be created) → discuss with user before starting
+    - ADR for structural technical decisions with real alternatives. DDR for structural UI/UX decisions.
+    - Create ADR/DDR only when there are genuine alternatives to document.
+- If domain rule files conflict with each other or with user requests, flag the conflict to the user and await resolution before proceeding.
+
+## Feature Implementation Checklist
+
+Follow these steps **in order** for any new feature or significant change:
+
+1. Update `docs/PRD.md` / `docs/DESIGN.md` / `docs/ARCHITECTURE.md` **before** coding.
+2. If structural DB trade-offs exist, create an ADR in `docs/adr/` before writing the migration.
+3. Write and apply the migration (`cargo sqlx migrate run`).
+4. Regenerate offline query data (`cargo sqlx prepare`) and commit `backend/.sqlx/`.
+5. Implement backend changes (domain → db → api layers).
+6. Implement frontend changes.
+7. Run `graphify update .` to keep the knowledge graph current.
+8. Add a dated entry to `docs/PROGRESS.md` with Epic/Story ref (started / completed / abandoned).
+
+---
+
+## Accounting immutability (ADR-009)
+
+Full rules → `.agents/rules/accounting-immutability.instructions.md`
+
+Short version: financial amounts, legal dates, lifecycle statuses → freeze on terminal state (Pattern A), close+recreate for amendments (Pattern B), or append-only (Pattern C). Never generic `PUT`/`PATCH` on frozen fields.
+
+---
+
+## Domain rules index
+
+| Domain | Rule file |
+|---|---|
+| Architecture / backend docs | `.agents/rules/doc-architecture.instructions.md` |
+| Design system / frontend docs | `.agents/rules/doc-design.instructions.md` |
+| Legal / compliance | `.agents/rules/doc-legal.instructions.md` |
+| Product / PRD | `.agents/rules/doc-prd.instructions.md` |
+| Backlog / Epics | `.agents/rules/doc-epics.instructions.md` |
+| Accounting immutability | `.agents/rules/accounting-immutability.instructions.md` |
+| Rust conventions | `.agents/rules/rust.instructions.md` |
+| Vue.js conventions | `.agents/rules/vue.instructions.md` |
+| Tailwind CSS v4 | `.agents/rules/tailwind-v4-vite.instructions.md` |
+| Knowledge graph (MCP) | `.agents/rules/code-review-graph.instructions.md` |
+
+---
+
+## Security
+
+- JWT: `httpOnly` + `Secure` + `SameSite=Strict`. Refresh token hashed SHA-256, never in plain text.
+- All queries filter on `building_id` — no cross-tenant leaks.
+- 403 (not 404) on protected routes.
+- Files: private S3 bucket, pre-signed URLs only.
+- Never commit secrets or `.env` files.
+
+---
 
 ## graphify
 
-This project has a graphify knowledge graph at graphify-out/.
+Knowledge graph at `graphify-out/`.
 
-Rules:
-- Before answering architecture or codebase questions, read graphify-out/GRAPH_REPORT.md for god nodes and community structure
-- If graphify-out/wiki/index.md exists, navigate it instead of reading raw files
-- After modifying code files in this session, run `graphify update .` to keep the graph current (AST-only, no API cost)
+- Architecture/codebase questions → read `graphify-out/GRAPH_REPORT.md` first.
+- After modifying code files → run `graphify update .` to keep the graph current (also step 7 of the Feature Implementation Checklist).
 
 <!-- code-review-graph MCP tools -->
 ## MCP Tools: code-review-graph

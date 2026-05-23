@@ -8,12 +8,7 @@ description: >
   "nouvelle obligation légale", "loi modifiée", "mise à jour légale", "créer
   une story légale", "backlog légal", "PRD conformité", "legal product gap",
   "que faut-il implémenter pour couvrir", "quelle story pour".
-tools:
-  - read
-  - edit
-  - mcp_mcp-openlegi_rechercher_dans_texte_legal
-  - mcp_mcp-openlegi_recherche_journal_officiel
-  - mcp_mcp-openlegi_dernier_journal_officiel
+tools: [read/getNotebookSummary, read/problems, read/readFile, read/viewImage, read/terminalSelection, read/terminalLastCommand, agent/runSubagent, edit/createDirectory, edit/createFile, edit/createJupyterNotebook, edit/editFiles, edit/editNotebook, edit/rename, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/usages, mcp-openlegi/creer_ticket, mcp-openlegi/dernier_journal_officiel, mcp-openlegi/get_decision_administrative, mcp-openlegi/get_decision_cnil, mcp-openlegi/get_decision_constitutionnelle, mcp-openlegi/get_decision_financiere, mcp-openlegi/get_decision_judiciaire, mcp-openlegi/lister_codes_juridiques, mcp-openlegi/lister_emetteurs_jorf, mcp-openlegi/lister_natures_textes_jorf, mcp-openlegi/recherche_journal_officiel, mcp-openlegi/rechercher_code, mcp-openlegi/rechercher_conventions_collectives, mcp-openlegi/rechercher_dans_texte_legal, mcp-openlegi/rechercher_decisions_cnil, mcp-openlegi/rechercher_decisions_constitutionnelles, mcp-openlegi/rechercher_jurisprudence_administrative, mcp-openlegi/rechercher_jurisprudence_financiere, mcp-openlegi/rechercher_jurisprudence_judiciaire]
 model: sonnet
 ---
 

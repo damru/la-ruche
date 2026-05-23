@@ -1,18 +1,61 @@
-# PRD.md — l'Application
+---
+product: La Ruche
+version: 2.0.0
+owner: Damien
+status: validé
+last_updated: 2026-05-22
+features:
+  - product/PRD - Registre de la copropriété.md
+  - product/PRD - Gestion des propriétaires.md
+  - product/PRD - Assemblée Générale.md
+  - product/PRD - Budget et charges.md
+  - product/PRD - Documents.md
+  - product/PRD - Profil et préférences.md
+  - product/PRD - Contrats fournisseurs.md
+  - product/PRD - Tâches et prestataires.md
+  - product/PRD - Référentiel prestataires.md
+  - product/PRD - Sinistres.md
+  - product/PRD - Carnet d'entretien.md
+  - product/PRD - Consultations et sondages.md
+  - product/PRD - Signalements.md
+  - product/PRD - Journal d'activité.md
+  - product/PRD - Calendrier.md
+  - product/PRD - Conformité et reporting.md
+  - product/PRD - Paiement en ligne.md
+references:
+  - LEGAL.md
+  - ADR-001
+  - ADR-002
+  - ADR-003
+  - ADR-006
+  - ADR-009
+  - DDR-001
+  - DDR-002
+  - DDR-003
+  - DDR-004
+llm_directives:
+  temperature: 0.2
+  persona: >
+    Ce document est le PRD maître de La Ruche. Il décrit la vision produit,
+    les utilisateurs, les fonctionnalités et les contraintes transversales.
+    Les PRD détaillés par feature sont référencés dans le frontmatter `features`.
+    Ne pas modifier les sections des features individuelles ici — renvoyer
+    vers le PRD dédié pour tout détail fonctionnel.
+---
 
-> **Dénomination** — Dans le présent document, l'expression **« l'Application »** désigne exclusivement **La Ruche**, plateforme web open source de gestion participative de copropriété. Ces deux termes sont interchangeables et désignent la même entité logicielle.
-## Product Requirements Document
+# PRD — La Ruche
+
+> **Dénomination** — « l'Application » désigne exclusivement **La Ruche**, plateforme web open source de gestion participative de copropriété.
 
 > Document produit. Vision, utilisateurs, fonctionnalités et contraintes centralisés ici.
 > Pour le backlog détaillé (epics, stories, statuts), voir [EPICS.md](EPICS.md).
-> Liens vers ADR/DDR pour les contraintes techniques associées.
-> Dernière mise à jour : 15 mai 2026
+> Pour le détail feature par feature, voir le [Product Hub](product/README.md).
 
 ---
 
 ## Vision produit
 
-**l'Application** est une webapp open source de gestion participative de copropriété, conçue pour les syndics bénévoles, les membres du conseil syndical et les copropriétaires. Elle vise à rendre la gestion d'immeuble transparente, collaborative et accessible — sans les coûts et la complexité des outils professionnels.
+**La Ruche** est une webapp open source de gestion participative de copropriété, conçue pour les syndics bénévoles, les membres du conseil syndical et les copropriétaires. Elle vise à rendre la gestion d'immeuble transparente, collaborative et accessible — sans les coûts et la complexité des outils professionnels.
 
 **Principe directeur :** La gestion participative dans les limites légales. Tout ce qui peut être partagé avec les résidents l'est. Les décisions informelles (consultations, sondages) sont clairement distinguées des actes légaux (votes AG).
 
@@ -32,53 +75,58 @@
 
 ## Fonctionnalités
 
-### Fondations légales (loi 10/07/1965 + décret 17/03/1967)
+> Les PRD détaillés par feature sont listés dans le frontmatter `features` et centralisés dans le [Product Hub](product/README.md).
 
-**Registre de la copropriété** — l'Application permet de constituer la fiche identitaire de la copropriété (nom, adresse, SIRET syndic), de déposer le règlement de copropriété, de configurer les clés de répartition et de gérer le registre des lots avec leurs tantièmes par clé. → EP-001
+### Fondations légales
 
-**Gestion des propriétaires** — L'historique de propriété est tracé avec les dates de cession. Les résidents sont invités par lien tokenisé. L'anonymisation RGPD à la demande efface le nom tout en conservant les données comptables (10 ans, art. L123-22 Code de commerce). → EP-002
-
-**Assemblée Générale** — Cycle de vie complet d'une AG (brouillon → convoquée → tenue → clôturée), avec rappel du délai légal de convocation (21 jours, art. 9 décret 1967). Les résolutions sont typées par majorité (art. 24 / 25 / 26 / unanimité), le vote se fait par lot avec procurations, et les résultats sont calculés automatiquement. Le périmètre MVP couvre la préparation juridique de l'AG, le branchement des écrans sur l'API réelle, le dépôt du PV signé et la traçabilité simple de notification aux absents. → EP-003
-
-**Budget & Charges** — Budget prévisionnel par exercice découpé en lignes par clé de répartition. Les appels de fonds sont générés automatiquement au prorata des tantièmes, en n'appelant que le solde non déjà appelé sur l'exercice. Le calcul doit repartir chaque appel ligne budgétaire par ligne budgétaire selon la `allocation_key` de la ligne, puis consolider l'affichage par copropriétaire sans perdre le détail par clé de répartition. Le « déjà appelé » ne se calcule donc plus globalement par clé mais à partir d'une ventilation append-only entre `levy_call` et `budget_line`, afin de savoir pour chaque lot quelle part de chaque ligne budgétaire a déjà été appelée. Le calcul distingue explicitement la part « charges courantes » et la part « fonds travaux » des appels déjà émis afin d'éviter les écarts quand l'option fonds travaux est activée/désactivée. Chaque appel porte un libellé différenciant son motif (trimestriel, exceptionnel AG, libellé libre) pour lecture comptable et juridique. Le récapitulatif de génération doit rappeler le nombre de lots impactés, le montant déjà appelé et le montant restant à appeler. Le fonds travaux obligatoire est suivi sur un compte séparé avec rappel explicite de la base légale à jour (art. 14-2-1 loi 1965, dans sa rédaction issue de la loi du 22 août 2021). La vue Budget expose aussi une visualisation synthétique des parts par poste pour accélérer la lecture des masses budgétaires, ainsi qu'une carte dédiée de pilotage du fonds travaux par exercice : taux configurable, objectif annuel, montant déjà appelé et alertes de conformité. L'espace copropriétaire `Mes charges` oriente vers un relevé unitaire qui présente les montants consolidés par appel, avec un détail à la demande par clé de répartition. La création d'un exercice initialise systématiquement l'entrée `fonds_travaux` associée, la génération d'appels est bloquée tant qu'une clé de répartition active reste déséquilibrée, et la clôture d'exercice est refusée si le taux configuré ou le montant effectivement appelé ne respectent pas la cible annuelle du fonds travaux. L'arrêté de comptes compare réalisé et prévisionnel ; une fois clos, l'exercice bloque les écritures de génération/modification mais autorise encore le marquage « payé » des appels déjà émis. → EP-004
+| Feature | Usages principaux | PRD |
+|---|---|---|
+| **Registre de la copropriété** | Fiche identitaire (nom, adresse, SIRET syndic), règlement de copropriété, clés de répartition, registre des lots avec tantièmes versionnés | [PRD](product/PRD%20-%20Registre%20de%20la%20copropri%C3%A9t%C3%A9.md) |
+| **Gestion des propriétaires** | Historique de propriété avec dates de cession, invitation par lien tokenisé, anonymisation RGPD (conservation comptable 10 ans) | [PRD](product/PRD%20-%20Gestion%20des%20propri%C3%A9taires.md) |
+| **Assemblée Générale** | Cycle de vie complet (brouillon → convoquée → tenue → clôturée), résolutions typées par majorité, vote par lot avec procurations, calcul automatique des résultats, dépôt du PV signé | [PRD](product/PRD%20-%20Assembl%C3%A9e%20G%C3%A9n%C3%A9rale.md) |
+| **Budget & Charges** | Budget prévisionnel par exercice et clé de répartition, appels de fonds au prorata des tantièmes, fonds travaux ALUR (≥ 5 %), arrêté de comptes réalisé vs prévisionnel | [PRD](product/PRD%20-%20Budget%20et%20charges.md) |
 
 ### Gestion courante
 
-**Documents** — Upload direct vers S3 via pre-signed URL ; le backend ne manipule pas les fichiers. L'accès est contrôlé par rôle, le téléchargement se fait via une URL signée à courte durée de vie, sans exposition publique du bucket. → EP-005
+| Feature | Usages principaux | PRD |
+|---|---|---|
+| **Documents** | Upload S3 via pre-signed URL, accès contrôlé par rôle, téléchargement via URL signée à courte durée de vie | [PRD](product/PRD%20-%20Documents.md) |
+| **Profil & préférences** | Informations personnelles, notifications, thème clair/sombre/auto | [PRD](product/PRD%20-%20Profil%20et%20pr%C3%A9f%C3%A9rences.md) |
+| **Contrats fournisseurs** | Fiche contrat (fournisseur, objet, dates, montant, périodicité), reconduction tacite et préavis, rappels automatiques acquittables, suivi assurance MRI | [PRD](product/PRD%20-%20Contrats%20fournisseurs.md) |
+| **Tâches & Prestataires** | Tâches assignées avec priorité et statut, accès prestataire par lien tokenisé, dépôt de photos/documents, pré-validation d'intervention, clôture avec montant optionnel alimentant le carnet d'entretien | [PRD](product/PRD%20-%20T%C3%A2ches%20et%20prestataires.md) |
+| **Référentiel prestataires** | Annuaire centralisé (nom, spécialité, contact, SIRET), réutilisé dans tâches et contrats, consultation simplifiée pour copropriétaires, archivage soft-delete | [PRD](product/PRD%20-%20R%C3%A9f%C3%A9rentiel%20prestataires.md) |
+| **Sinistres** | Déclaration (type, date, description), calcul du délai légal, transmission à l'assureur avec date et montant figés, clôture avec remboursement ou refus, traçabilité complète | [PRD](product/PRD%20-%20Sinistres.md) |
+| **Carnet d'entretien** | Historique des interventions (libellé, date, coût, prestataire), alimentation automatique à la clôture de tâche, en-tête réglementaire, listing contrats en cours | [PRD](product/PRD%20-%20Carnet%20d%27entretien.md) |
 
-**Profil & préférences** — Chaque utilisateur gère ses informations personnelles, ses notifications et sa préférence d'apparence depuis son profil. Le thème peut être forcé en clair ou sombre, ou rester en mode automatique en suivant la préférence système de l'appareil. → DDR-004
+### Participatif
 
-**Contrats fournisseurs** — Chaque contrat recense fournisseur, objet, dates, montant et périodicité. Les reconductions tacites et préavis sont configurables. Des rappels (reconduction, échéance, expiration, résiliation) sont calculés automatiquement et acquittables manuellement. Le contrat d’assurance multirisque immeuble peut en plus regrouper ses pièces justificatives dans le même espace de suivi. → EP-006
+| Feature | Usages principaux | PRD |
+|---|---|---|
+| **Consultations & Sondages** | Consultation binaire ou sondage à choix multiples, mode anonyme ou nominatif, résultats en temps réel, mention non-décisionnelle obligatoire | [PRD](product/PRD%20-%20Consultations%20et%20sondages.md) |
+| **Signalements** | Signalement de problème par tout résident (catégorie, description, photo, urgence), anonymat optionnel, conversion en tâche, suivi de statut par le déclarant | [PRD](product/PRD%20-%20Signalements.md) |
 
-**Tâches & Prestataires** — Les tâches sont assignées en interne avec priorité et statut. Un lien tokenisé éphémère permet aux prestataires externes d'accéder sans compte, de déposer photos et documents, puis de pré-valider leur intervention avec un commentaire et un coût optionnel avant validation finale par le syndic. La clôture d'une tâche capture un montant optionnel, réutilisable pour alimenter le carnet d'entretien. Les fichiers transitent par un bucket staging avant validation. Les gestionnaires doivent aussi pouvoir joindre des documents directement depuis la modale de création / modification d'une tâche, sans passer par l'écran public prestataire. Les tâches peuvent être liées à un prestataire du référentiel pour consolider l'historique, mais doivent aussi conserver un nom de prestataire libre sur la tâche quand aucun prestataire connu n'est sélectionné ni créé. Les listes de tâches sont présentées par dernière modification décroissante. → EP-007
+### Transversal
 
-**Référentiel prestataires** — Catalogue des entreprises et intervenants de la résidence (nom, email, téléphone, domaine). Accessible à tous les résidents (catalogue pratique), modifiable par les managers. Réutilisé à l'assignation des tâches et propagé au carnet d'entretien. → EP-015
+| Feature | Usages principaux | PRD |
+|---|---|---|
+| **Journal d'activité** | Timeline opérationnelle des transitions de cycle de vie (signalements + tâches), filtrage par rôle et visibilité, append-only | [PRD](product/PRD%20-%20Journal%20d%27activit%C3%A9.md) |
+| **Calendrier** | Vue partagée (mensuel/hebdo/liste) des AG, interventions et réunions, lien contextuel vers les entités, export iCal | [PRD](product/PRD%20-%20Calendrier.md) |
+| **Conformité et reporting** | Fiches réglementaires (immatriculation, RGPD, diagnostics, assurance, carnet d'entretien), calcul de conformité, export PDF | [PRD](product/PRD%20-%20Conformit%C3%A9%20et%20reporting.md) |
 
-**Sinistres** — Déclaration d'un sinistre (type, libellé, date de survenance, lot ou parties communes) avec pièces jointes, calcul du délai légal restant selon le type, alerte visuelle si l'échéance approche, puis workflow d'actions par statut : modification du dossier, transmission à l'assurance avec date explicite, clôture avec remboursement optionnel (date + montant) et pièces complémentaires, ou suppression avec confirmation. Les listes de sinistres sont présentées par dernière modification décroissante. → EP-008
+### Avancé (lots futurs)
 
-**Carnet d'entretien** — Historique des interventions (libellé, date, coût, prestataire, pièces jointes), alimenté manuellement pour l'historique antérieur au logiciel ou automatiquement à chaque clôture effective d'une tâche, y compris après réouverture. La vue expose aussi l'en-tête réglementaire (adresse de l'immeuble, syndic en exercice) et les listings consolidés des contrats d'assurance et de maintenance en cours avec leurs échéances. Les liens avec les tâches restent purement de traçabilité et ne bloquent pas la suppression d'une tâche ou d'une entrée du carnet. → EP-009
-
-### Participatif (pas de valeur décisionnelle légale)
-
-**Consultations & Sondages** — Tout résident (copropriétaire ou locataire) peut initier une consultation sans approbation préalable. Les résultats sont visibles en temps réel. La mention "Informelle — non décisionnelle" est obligatoire dans l'interface. Les listes sont triées par dernière modification décroissante. → EP-010
-
-**Signalements** — Tout résident peut signaler un problème avec photo(s) optionnelle(s). Le syndic suit le statut et peut convertir un signalement en tâche en choisissant son niveau d'urgence ; la conversion fait automatiquement passer le signalement en cours, puis la clôture effective de la tâche clôture aussi le signalement lié. Les listes de signalements sont présentées par dernière modification décroissante. → EP-011
-
-### Fonctionnalités avancées
-
-**Paiement en ligne** — Les copropriétaires règlent leurs appels de fonds via une passerelle SEPA depuis l'interface. Un reçu PDF est généré à la confirmation. Les fonds sont versés sur le compte bancaire séparé de la copropriété (art. 18 loi 1965). → EP-016
-
-**Tenue d'AG** — Module dédié à la conduite de séance, explicitement hors MVP `EP-003` : désignation des rôles (président, secrétaire, scrutateurs), feuille de présence numérique avec calcul du quorum en temps réel, prise de notes collaborative par résolution, génération du projet de PV et circuit de validation avec signature numérique (délai légal : art. 17 décret 1967). → EP-013
-
-**Calendrier copropriété** — Calendrier partagé (mensuel / hebdomadaire / liste) centralisant AG, interventions prestataires et réunions du conseil, avec lien contextuel vers les entités correspondantes et export iCal. → EP-014
+| Feature | Usages principaux | PRD |
+|---|---|---|
+| **Paiement en ligne** | Règlement des appels de fonds via passerelle SEPA, reçu PDF, versement sur compte séparé (art. 18 loi 1965) | [PRD](product/PRD%20-%20Paiement%20en%20ligne.md) |
+| **Tenue d'AG** | Conduite de séance (rôles, feuille de présence, quorum temps réel, prise de notes, génération PV, signature numérique) | Inclus dans [PRD AG](product/PRD%20-%20Assembl%C3%A9e%20G%C3%A9n%C3%A9rale.md) |
 
 ---
 
-## 🪦 Cimetière des fonctionnalités abandonnées
+## Cimetière des fonctionnalités abandonnées
 
 ### Keycloak pour l'authentification
 **Proposé :** Gestion auth via Keycloak.
-**Rejeté :** Trop lourd pour le self-hosting sans compétences DevOps. Remplacé par auth Rust intégrée (ADR-002).
+**Rejeté :** Trop lourd pour le self-hosting sans compétences DevOps. Remplacé par auth Rust intégrée.
 
 ### Commons Clause sur la licence
 **Proposée :** Addendum pour limiter la commercialisation.
@@ -108,7 +156,7 @@
 | Créer/modifier AG | ✅ | ❌ | ❌ | ❌ |
 | Voter en AG | ✅ | ✅ | ✅ | ❌ |
 | Consulter résultats AG | ✅ | ✅ | ✅ | ✅ |
-| Voir comptabilité | ✅ | ✅ | Ses charges | ❌ |
+| Voir comptabilité | ✅ | ✅ | Budget général + ses charges | ❌ |
 | Créer budget | ✅ | ❌ | ❌ | ❌ |
 | Gérer contrats | ✅ | ❌ | ❌ | ❌ |
 | Gérer tâches | ✅ | ✅ | ❌ | ❌ |
@@ -138,16 +186,16 @@
 
 ## Architecture technique (résumé)
 
-| Couche | Choix | Référence |
-|---|---|---|
-| Backend | Rust + Axum — binaire unique | ADR-001 |
-| Base de données | PostgreSQL 16 + SQLx | ADR-001 |
-| Migrations | SQLx migrate | ADR-001 |
-| Auth | JWT httpOnly + Argon2id + WebAuthn | ADR-002 |
-| Structure | Single crate modulaire | ADR-003 |
-| Frontend | Vue 3 + Vite + TypeScript + Tailwind CSS (couche utilitaire) | DDR-003 |
-| Typographie | Fraunces + DM Sans + JetBrains Mono | DDR-001 |
-| Design | "The Modern Registry" — lavande/charcoal | DDR-002 |
-| Stockage | S3-compatible (MinIO self-hosted) | schéma DB |
-| Licence | AGPL-3.0 + licence commerciale | LICENSE, LICENSE-COMMERCIAL.md |
-| Déploiement | Docker Compose (backend + postgres + minio + caddy) | Dockerfile |
+| Couche | Choix |
+|---|---|
+| Backend | Rust + Axum — binaire unique |
+| Base de données | PostgreSQL 16 + SQLx |
+| Migrations | SQLx migrate |
+| Auth | JWT httpOnly + Argon2id + WebAuthn |
+| Structure | Single crate modulaire |
+| Frontend | Vue 3 + Vite + TypeScript + Tailwind CSS (couche utilitaire) |
+| Typographie | Fraunces + DM Sans + JetBrains Mono |
+| Design | "The Modern Registry" — lavande/charcoal |
+| Stockage | S3-compatible (MinIO self-hosted) |
+| Licence | AGPL-3.0 + licence commerciale |
+| Déploiement | Docker Compose (backend + postgres + minio + caddy) |
