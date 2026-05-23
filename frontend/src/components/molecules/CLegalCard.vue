@@ -1,24 +1,18 @@
 <script setup lang="ts">
-// Molecule — CLegalCard
-// Semantic container for legal / regulatory notices.
-// Wraps CCard with no shadow and a 4px left accent border (--color-error token).
-// DDR: see DESIGN.md
 import CCard from '@/components/molecules/CCard.vue'
 
 withDefaults(defineProps<{
   padding?: 'xs' | 'sm' | 'md' | 'lg' | 'none'
-  radius?: 'xs' | 'sm' | 'md' | 'lg' | 'none'
 }>(), {
-  padding: 'md',
-  radius: 'lg',
+  padding: 'xs',
 })
 </script>
 
 <template>
   <CCard
-    class="border-l-4 border-error text-xs"
+    class="border-l-2 border-primary opacity-75 text-xs bg-transparent!"
     :padding="padding"
-    :radius="radius"
+    radius="none"
     :shadow="false"
   >
     <slot></slot>
