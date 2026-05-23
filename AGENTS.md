@@ -9,6 +9,31 @@ Domain-specific rules in `.agents/rules/` are automatically injected into contex
 
 ---
 
+## Commits
+
+**All commits must follow [Conventional Commits](https://www.conventionalcommits.org/).**
+
+Format: `<type>(<scope>): <imperative summary>`
+
+- Types: `feat` `fix` `refactor` `perf` `docs` `test` `chore` `build` `ci` `style` `revert`
+- Scope: optional, e.g. `backend`, `frontend`, `ag`, `auth`, `db`
+- Breaking change: append `!` before the colon or add `BREAKING CHANGE:` footer
+- Subject ≤72 chars, imperative mood, no trailing period
+- Body only when the *why* is non-obvious from the diff
+
+Examples:
+```
+feat(ag): add vote-by-correspondence form to convocation checklist
+fix(backend): guard levy_call mutation after issued status
+docs: update ARCHITECTURE.md with vendor_contract table
+feat!: remove deprecated PUT /levy-calls/:id
+chore(ci): add commitlint workflow on pull_request
+```
+
+Use the `caveman:caveman-commit` skill when writing commit messages.
+
+---
+
 ## Commands
 
 ```bash
