@@ -1,3 +1,20 @@
+---
+document: EPICS
+version: 1.0.0
+owner: Damien
+status: validé
+last_updated: 2026-05-23
+description: >
+  Backlog officiel du projet La Ruche — épics et stories organisées par domaine fonctionnel.
+  Chaque story référence un PRD, un ADR ou une obligation légale (LEGAL.md §X.Y).
+rules:
+  - Ne jamais marquer ✅ si backend + frontend ne sont pas tous deux sur l'API réelle.
+  - Aucun détail d'implémentation dans une story (pas de noms de fichiers, schémas DB, fonctions, endpoints).
+  - Toute story d'origine légale doit pointer vers LEGAL.md §X.Y.
+  - À chaque création d'item ou livraison effective, mettre à jour le statut de la story, de l'epic et "État code actuel".
+
+---
+
 # EPICS.md — l'Application
 
 > **Dénomination** — Dans le présent document, l'expression **« l'Application »** désigne exclusivement **La Ruche**, plateforme web open source de gestion participative de copropriété. Ces deux termes sont interchangeables et désignent la même entité logicielle.
@@ -8,7 +25,7 @@
 > Chaque feature est organisée en epic. Les stories sont ajoutées à la demande, au moment de l'implémentation.
 > Le MVP est l'ensemble des epics marquées **MVP : oui**.
 > Statuts possibles : **en attente** · **en cours** · **terminée**
-> Dernière mise à jour : 22 mai 2026
+> Dernière mise à jour : 23 mai 2026
 
 > **Lecture d'avancement (code actuel) :**
 > - **backend réel** = handlers + DB opérationnels
@@ -69,7 +86,7 @@ Historique de propriété tracé avec dates de cession, invitation par lien toke
 
 ### EP-003 — Assemblée Générale
 
-**Statut :** terminée | **MVP :** oui | **Réf. PRD :** Fondations légales
+**Statut :** en cours | **MVP :** oui | **Réf. PRD :** Fondations légales
 
 **État code actuel :** backend + frontend réels sur tout le cycle de vie (`draft → called → ongoing → closed`). Génération du projet de PV markdown server-side, upload du PV signé via flux pré-signé, traçabilité de la date de notification aux absents avec calcul du délai légal art. 42 loi 1965 (J+60). Calculs de majorité art. 24/25/25-1/26/26-1/unanimité couverts par tests canoniques.
 
@@ -86,6 +103,8 @@ Cycle de vie complet d'une AG, résolutions typées par majorité, vote par lot 
 * `EP-003-S07` ✅ — Exclure explicitement les lots archivés des calculs de quorum et de majorité avec piste d'audit des bases de calcul (LEGAL.md §3.2)
 * `EP-003-S08` ✅ — Contrôler la complétude réglementaire de la convocation selon les art. 7 à 13 du décret 1967 (ordre du jour, annexes, preuve d'envoi) et l'art. 9 al. 4 (formulaire de **vote par correspondance obligatoirement joint**) avec checklist horodatée (LEGAL.md §3.1)
 * `EP-003-S09` ✅ — Tracer la conformité du bureau de séance et des signatures du PV (président, secrétaire, scrutateurs) selon les art. 15, 17 et 17-1 du décret 1967 (LEGAL.md §3.4) (migration `0024_meeting_minutes_signatures.sql`, endpoint `POST /meetings/{id}/minutes/signatures`, signatures intégrées au template `domain/minutes_draft.rs`, modale UI dédiée)
+* `EP-003-S10` — Valider que le formulaire de vote par correspondance est réceptionné par le syndic **au plus tard J-3 francs** avant la date de l'AG (art. 9 bis décret 67-223, LEGIARTI000042076552) et annuler automatiquement un vote par correspondance si le copropriétaire est présent ou représenté en séance (art. 14-1 décret 67-223, LEGIARTI000042076720) (LEGAL.md §3.1)
+* `EP-003-S11` — Enregistrer et traiter la demande de convocation d'AG formulée par un copropriétaire pour ses propres questions (art. 17-1 AA loi 1965, LEGIARTI000039301594) avec imputation des frais de convocation au copropriétaire demandeur (LEGAL.md §3.5)
 
 **Hors scope explicite (renvoyé à `EP-013` ou à des epics transverses) :**
 
@@ -120,7 +139,7 @@ Budget prévisionnel par exercice, appels de fonds générés par tantièmes, fo
 * `EP-004-S08` — Émission trimestrielle paramétrable et contrôles d'échéances par exercice (quart par défaut) avec piste d'audit (LEGAL.md §4.3) — Prendre en compte les catégories de l'art. 35 décret v6.0 (25/12/2025) : avances PPT, cotisations fonds travaux (art. 14-2-1), provisions délégation CS
 * `EP-004-S09` — Implémenter le mapping plan comptable copropriété (arrêté 14/03/2005) sur lignes budgétaires et exports comptables (LEGAL.md §4.2)
 * `EP-004-S10` — Contrôle et alerte du seuil minimum fonds travaux avant validation de l'exercice : **branche sans PPT partiellement couverte** via alerte UI + blocage de clôture si le taux configuré est < 5% ou si le montant appelé est insuffisant ; **branche PPT 2,5%** encore à implémenter (art. 14-2-1 loi 1965, LEGIARTI000043967792, en vigueur 01/01/2023 — LEGAL.md §4.4)
-* `EP-004-S11` — Recouvrement des charges impayées : identification des lots en solde débiteur, enregistrement des relances (mise en demeure), suivi des dossiers contentieux jusqu'à clôture (LEGAL.md §4.7)
+* `EP-004-S11` — Recouvrement des charges impayées : identification des lots en solde débiteur, enregistrement des relances (mise en demeure), suivi des dossiers contentieux jusqu'à clôture ; déclencher et signaler la **déchéance du terme à J+30** après mise en demeure infructueuse (toutes provisions restantes deviennent exigibles, art. 19-2 loi 1965, LEGIARTI000043977271) (LEGAL.md §4.7)
 
 ***
 
