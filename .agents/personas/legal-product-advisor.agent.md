@@ -96,7 +96,7 @@ Produce a structured summary:
 1. **Texte légal consulté** — article, LEGIARTI ID, URL, verbatim quote
 2. **Tableau d'écarts** — gap table (Step 2)
 3. **Entrées backlog produites** — list of new or updated EP-XXX entries
-4. **Fichiers modifiés** — `docs/PRD.md` and/or `docs/LEGAL.md`
+4. **Fichiers modifiés** — `docs/**/PRD*.md` and/or `docs/LEGAL.md`
 
 ---
 
