@@ -1,394 +1,562 @@
-# DESIGN.md — l'Application Design System "The Modern Registry"
+---
+document: DESIGN
+version: 1.0.0
+owner: Damien
+status: validé
+last_updated: 2026-05-22
+references:
+  - DDR-001
+  - DDR-002
+  - DDR-003
+  - DDR-004
+  - DDR-005
+  - DDR-006
+  - DDR-007
+description: >
+  Source de vérité du design system "The Modern Registry" de La Ruche — tokens, catalogue de composants
+  et guidelines UX. S'applique à l'intégralité du frontend Vue 3.
+  Tout composant, style ou token appliqué en frontend doit être conforme à ce document.
+rules:
+  - Ce fichier fait foi. Aucune valeur brute (px, hex, rem) dans un attribut class si un token existe.
+  - Tout nouveau composant atom/molecule/organism doit être ajouté au catalogue (§2) avant usage.
+  - Toute nouvelle primitive interactive passe par un wrapper C* — jamais d'import direct radix-vue dans une vue.
+  - Les classes .tone--* sont des utilitaires CSS purs (non Tailwind) — jamais redéfinis localement.
+  - Zéro bloc <style> dans les vues de feature — mise en page locale = utilitaire Tailwind ou composant du catalogue.
+  - CFormFeedback toujours dans #footer de CModal, jamais dans le body.
 
-> **Dénomination** — Dans le présent document, l'expression **« l'Application »** désigne exclusivement **La Ruche**, plateforme web open source de gestion participative de copropriété. Ces deux termes sont interchangeables et désignent la même entité logicielle.
-> Dernière mise à jour : 2026-05-09
+---
 
-## Typographie — 3 polices, 3 rôles (DDR-001 v3)
+# DESIGN.md — Design System "The Modern Registry"
 
-| Rôle | Police | Usage |
-|---|---|---|
-| Display / Titres | **Fraunces** (variable opsz/wght/ital) | Titres, KPI ≥ 28px |
-| Corps / UI | **DM Sans** | Texte, labels, navigation |
-| Données tabulaires | **JetBrains Mono** | Montants tableaux, codes, numéros lot |
+> **Dénomination** — « l'Application » désigne exclusivement **La Ruche**, plateforme de gestion participative de copropriété.  
+> Dernière mise à jour : 2026-05-21
 
-Fraunces a des chiffres proportionnels non tabulaires → colonnes non alignées en tableau. JetBrains Mono résout ça avec `lnum tnum`.
+---
 
-```
-display-lg   Fraunces 56px / 800 / opsz:144 / ls:-0.04em
-headline-md  Fraunces 24px / 600 / opsz:48  / italic
-headline-sm  Fraunces 20px / 600 / opsz:36
-body-md      DM Sans  14px / 400
-label-sm     DM Sans  11px / 500 / uppercase / ls:0.06em
-data-md      JetBrains Mono 13px / 500
-```
+## 1. Tokens
 
-### Tokens `--fw-*` — Policy graisse
+### 1.1 Typographie
 
-| Token | Valeur | Usage |
-|---|---|---|
-| `--fw-regular` | `400` | Corps de texte, descriptions secondaires |
-| `--fw-medium` | `500` | Labels formulaire, boutons, nav, contrôles UI |
-| `--fw-semibold` | `600` | En-têtes de sections, titres de composants, alertes |
-| `--fw-bold` | `700` | Titres de page, valeurs KPI, display numérique |
-| `--fw-display` | `800` | `display-lg` uniquement (Fraunces) |
-
-Tout `font-weight` dans les composants doit référencer un token `--fw-*`, jamais une valeur numérique brute.
+Trois polices, trois rôles. Chargées depuis Google Fonts.
 
 ```html
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&family=DM+Sans:ital,opsz,wght@0,9..40,300..500;1,9..40,300..400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 ```
 
-## Palette — Tokens CSS light/dark
+**Familles** — tokens nécessaires, non couverts nativement par Tailwind :
+
+| Token | Valeur | Classe Tailwind | Usage |
+|---|---|---|---|
+| `--font-display` | `'Fraunces', Georgia, serif` | `font-display` | Titres de page, KPI ≥ 28px |
+| `--font-body` | `'DM Sans', system-ui, sans-serif` | `font-body` | Corps, labels, navigation |
+| `--font-mono` | `'JetBrains Mono', ui-monospace` | `font-mono` | Montants tableaux, codes, numéros lot |
+
+> **Fraunces** produit des chiffres proportionnels non tabulaires → interdit en colonne. Utiliser `font-mono` avec `lnum tnum` pour les montants.
+
+**Échelle de taille** (`--text-*`) — exposée via `@theme inline`, remplace l'échelle Tailwind native :
+
+| Token | Valeur | Classe Tailwind | Usage |
+|---|---|---|---|
+| `--text-2xs` | `11px` | `text-2xs` | Eyebrows, footnotes, chips de statut |
+| `--text-xs`  | `12px` | `text-xs`  | Dates, captions, labels secondaires |
+| `--text-sm`  | `13px` | `text-sm`  | Lignes de tableau, list items, texte UI par défaut |
+| `--text-md`  | `14px` | `text-md`  | Corps de texte |
+| `--text-lg`  | `16px` | `text-lg`  | Titres de section, en-têtes de carte |
+
+> `text-sm` (13px) et `text-lg` (16px) divergent de Tailwind natif (14px et 18px). Toujours utiliser nos tokens.
+
+**Graisses** — utiliser les utilitaires Tailwind natifs : `font-normal` (400), `font-medium` (500), `font-semibold` (600), `font-bold` (700), `font-[800]` pour Fraunces display.
+
+> Les styles typographiques nommés sont encapsulés dans les composants atomiques `CHeading`, `CEyebrow` et `CDataText` (voir §2.1).
+
+---
+
+### 1.2 Palette de couleurs
+
+Source : `frontend/src/styles/tokens.css`. Les valeurs Dark sont dans `[data-theme="dark"]`.
 
 | Token | Light | Dark |
 |---|---|---|
 | `--color-primary` | `#643fd5` | `#c4b5fd` |
+| `--color-primary-container` | `#7d5bf0` | `#4c2fb8` |
+| `--color-on-primary` | `#ffffff` | `#2a0084` |
+| `--color-secondary` | `#5a6073` | `#bfc4dd` |
 | `--color-secondary-container` | `#dde1f9` | `#404659` |
 | `--color-on-secondary-container` | `#1a1d2e` | `#dde1f9` |
+| `--color-error` | `#ba1a1a` | `#ffb4ab` |
+| `--color-error-container` | `#ffdad6` | `#93000a` |
+| `--color-success` | `#2e7d32` | `#81c784` |
+| `--color-success-container` | `#e8f5e9` | `#1b4f23` |
+| `--color-warning` | `#e65100` | `#ffb74d` |
+| `--color-warning-container` | `#fff8e1` | `#4d3500` |
+| `--gradient-primary` | `linear-gradient(135deg, #643fd5, #7d5bf0)` | — |
+
+**Surfaces** (hiérarchie : Page → Section → Carte → Champ) :
+
+| Token | Light | Dark |
+|---|---|---|
 | `--color-surface` | `#f8f9fa` | `#111318` |
 | `--color-surface-container-lowest` | `#ffffff` | `#0c0e13` |
 | `--color-surface-container-low` | `#f3f4f5` | `#191c21` |
+| `--color-surface-container` | `#edeff0` | `#1e2026` |
 | `--color-surface-container-high` | `#e7e9ea` | `#28292f` |
+| `--color-surface-container-highest` | `#e1e3e4` | `#33353b` |
 | `--color-on-surface` | `#191c1d` | `#e2e3e8` |
 | `--color-on-surface-variant` | `#42474e` | `#c3c6cf` |
-| `--color-error` / `--color-error-container` | `#ba1a1a` / `#ffdad6` | `#ffb4ab` / `#93000a` |
-| `--color-success` / `--color-success-container` | `#2e7d32` / `#e8f5e9` | `#81c784` / `#1b4f23` |
-| `--color-warning` / `--color-warning-container` | `#e65100` / `#fff8e1` | `#ffb74d` / `#4d3500` |
-| `--gradient-primary` | `linear-gradient(135deg, #643fd5, #7d5bf0)` | `…#7d5bf0 → #c4b5fd` |
+| `--color-outline` | `#74777f` | `#8e9099` |
+| `--color-outline-variant` | `#c2c7cf` | `#43474f` |
 
-**Hiérarchie surfaces :** Page → `surface` · Section → `surface-container-low` · Carte → `surface-container-lowest` · Champ → `surface-container-high`
+**Rôles** :
 
-**Règle No-Line :** Jamais de `1px solid` pour séparer du contenu hors structures tabulaires. Décalage tonal, espacement, ou micro-ombre.
-
-**Exception tableaux :** les tableaux de données peuvent utiliser des séparateurs discrets si cela améliore la lisibilité des lignes, des colonnes ou de l'en-tête. Dans ce cas, privilégier des bordures à faible contraste, cohérentes avec les tokens de surface, et éviter l'effet grille lourde.
-
-## Élévation
-
-```css
---shadow-md:    0 8px 32px rgba(25,28,29,.07), 0 2px 8px rgba(25,28,29,.04);
---shadow-lg:    0 16px 48px rgba(25,28,29,.10), 0 4px 16px rgba(25,28,29,.06);
---shadow-glass: 0 20px 60px rgba(25,28,29,.14), 0 4px 16px rgba(25,28,29,.08);
-/* Glassmorphism modales : rgba(255,255,255,.85) + backdrop-filter:blur(20px) */
-```
-
-## Border Radius
-`--radius-sm:8px` · `--radius-md:12px` · `--radius-lg:16px` · `--radius-full:9999px`
-Jamais 0px sur un élément interactif.
-
-## Composants flottants (tooltips, dropdowns, popovers)
-
-**Règle :** tout élément flottant doit utiliser `Teleport to="body"` + `position: fixed` + calcul de position par `getBoundingClientRect`. Jamais `position: absolute` dans un parent scrollable ou `overflow: hidden`.
-
-Comportement attendu : flip vertical (au-dessus → en-dessous si espace insuffisant), clampage horizontal au viewport avec marge de 10px. L'atome de référence est `CTooltip.vue`.
-
-## Navigation (DDR-003 + DDR-004)
-
-| Breakpoint | Pattern |
-|---|---|
-| ≤ 1024px | Bottom nav — 4 items primaires filtrés par rôle + tiroir « Plus » + item Profil |
-| > 1024px | Sidebar fixe 240px |
-
-Mobile — 4 items par rôle : Syndic (Dashboard·AG·Budget·Tâches) · Conseil (Dashboard·AG·Budget·Documents) · Copropriétaire (Dashboard·AG·Budget·Consultations) · Locataire (Dashboard·Consultations·Signalements·—)
-
-La bottom nav mobile expose donc 6 actions visibles au total : 4 items primaires, 1 tiroir « Plus » pour les destinations secondaires, et 1 item Profil dédié. Le tiroir mobile est traité comme un panneau de navigation, pas comme une boîte de dialogue modale.
-
-Les icônes de navigation doivent rester immédiatement lisibles aux tailles 18px (sidebar) et 22px (bottom nav). Pour l’entrée **Prestataires**, l’icône de référence est le casque de chantier `CIconHardHat`, plus explicite qu’une silhouette avec badge outil à petite taille. Pour l’entrée **Contrats**, l’icône de référence est le document signé à plat `CIconContract`, sans coin plié, afin de conserver une lecture nette en petite taille.
-
-**DDR-004 — Groupes sidebar (pattern B — labels fixes)** : la sidebar desktop est structurée en 5 sections non-cliquables : *(solo)* Tableau de bord · **Gouvernance** (AG, Consultations, Signalements) · **Finance** (Budget, Contrats) · **Opérations** (Tâches, Sinistres, Carnet, Documents) · **Résidence** (Bâtiment, Clés de répartition, Registre, Copropriétaires). Le bloc utilisateur en pied de sidebar est cliquable et ouvre un panel contextuel (Mon compte, Notifications, Déconnexion).
-
-Préférence d'apparence : le changement de thème n'est pas exposé dans la topbar. Il est configuré dans `Profil > Mon compte` via trois états exclusifs : `Clair`, `Sombre`, `Auto`, présentés sous forme de contrôle compact à pastilles avec icône SVG. Un court texte d'aide, contextuel à l'option sélectionnée, peut préciser l'effet du choix sans exposer de détails techniques de stockage.
-
-Breadcrumb de topbar : le bloc gauche doit rester fluide (`min-width: 0`) et les libellés du breadcrumb doivent tronquer proprement si l'espace disponible diminue, sans jamais forcer une largeur fixe sur le conteneur.
-
-Contrôles segmentés : tout conteneur doit rester utilisable sur écran étroit. Si les options dépassent la largeur disponible, le conteneur devient scrollable horizontalement sans casser la hauteur des boutons.
-
-## Écrans publics d'authentification
-
-Sur mobile, les écrans publics (`/login`, `/onboarding`, invitation, reset) doivent conserver un bloc d'information de marque visible **sans** faire sortir le formulaire principal du viewport initial. Le panneau éditorial desktop devient donc un en-tête compact : logo + nom produit + message éditorial court, avec contenu secondaire tronqué ou masqué si nécessaire.
-
-Le formulaire ou wizard reste la zone scrollable principale. Les actions critiques et le début du formulaire doivent rester atteignables sans scroll initial ; l'éditorial ne doit jamais monopoliser la hauteur utile sur écran étroit.
-
-## Accessibilité
-- Contraste corps ≥ 4.5:1 (WCAG AA), critique ≥ 7:1
-- Focus : `outline: 2px solid var(--color-primary); outline-offset: 2px`
-- Touch targets : min 44×44px (imposé dans `base.css` sur tous les `button`). Exception : les boutons-icônes *embarqués* dans une zone interactive plus large (ex: `.c-tooltip-trigger`) doivent explicitement déclarer `min-width: unset; min-height: unset` pour ne pas gonfler leur conteneur.
-- Jamais couleur seule pour transmettre une information
-
-## Internationalisation
-`Intl.NumberFormat('fr-FR', { style:'currency', currency:'EUR' })` · `Intl.DateTimeFormat('fr-FR')`
-
-## Primitives de layout de vue — `base.css`
-
-`frontend/src/styles/base.css` porte les primitives globales qui ne doivent pas être surchargées sauf exception explicites.
-
-## Couche utilitaire Tailwind CSS
-
-Le frontend peut utiliser Tailwind CSS comme couche utilitaire locale, mais les tokens et primitives partagées restent normatifs dans `frontend/src/styles/tokens.css`, `base.css`, `typography.css`, `tones.css`, `forms.css`, `tables.css`, `tabs.css`, `kpi.css` et `activity-cards.css`.
-
-- Tailwind ne remplace pas les composants atomiques/moléculaires existants ni les classes globales déjà documentées dans ce fichier.
-- Les valeurs de design récurrentes doivent continuer à être exprimées via les variables CSS du design system, puis consommées depuis Tailwind si nécessaire.
-- En configuration Tailwind v4, ces tokens sont exposés aux utilitaires via `@theme inline` dans `frontend/src/styles/tailwind.css`, sans `tailwind.config.js` dédié.
-- Une vue ne doit pas introduire un empilement massif de classes utilitaires si une primitive partagée existe déjà (`view-header`, `tabs`, `activity-card`, `tone--*`, etc.).
-
-## Règle UI — Eyebrows de page
-
-- Toute page métier avec un titre principal visible doit exposer un eyebrow très court au-dessus du `h1`.
-- L'eyebrow complète le titre ; il ne doit pas répéter le nom de la page ni reprendre mot pour mot le breadcrumb.
-- Le contenu attendu est une description de 3 à 6 mots indiquant immédiatement ce que l'utilisateur trouve sur la page.
-- La primitive visuelle partagée est portée par l'atome `frontend/src/components/atoms/CEyebrow.vue`, qui encapsule désormais la typo eyebrow en style scoped ; une vue ne doit pas redéfinir localement sa typo sauf besoin exceptionnel déjà justifié.
-- Les pages détail peuvent utiliser le même pattern à l'intérieur d'une carte d'en-tête si le `h1` principal est porté par cette carte.
-
-## Règle UI — Reminder cards
-
-Les cartes de rappels synthétiques partagées entre vues métier passent par `frontend/src/components/molecules/CReminderCard.vue`.
-
-La molécule porte le conteneur, le titre de section, l’état vide et la structure de ligne (`titre`, `subtitle`, `meta`, accent temporel, actions optionnelles). Une vue ne doit pas recopier localement les wrappers `section-head`, `reminder-list`, `reminder-row`, `reminder-dot` ou leurs variantes tonales si le besoin correspond à cette carte.
-
-## Règle UI — Vues AG (`EP-003`)
-
-- Les vues AG restent des pages métier dédiées (`AssemblyListView`, `AssemblyDetailView`) et ne doivent plus consommer `src/mock/data.ts` dès le démarrage du chantier `EP-003`.
-- Toute vue AG branchée sur l'API réelle applique le pattern DDR-005 : chargement via `usePageLoader`, erreur via `CPageError`, attente via `CPageLoader`.
-- La fiche AG doit rendre immédiatement lisibles : statut, date d'AG, date limite de convocation (J-21), résolutions et état documentaire (`convocation`, annexes, `PV`).
-- Une AG `closed` bascule en lecture seule visible : les actions mutantes disparaissent ou sont désactivées explicitement, sans ambiguïté sur l'état gelé.
-- Les rôles non gestionnaires restent en lecture seule sur la préparation de l'AG ; le locataire consulte les résultats et le PV publié mais ne participe pas au vote.
-- Le chantier `EP-003` n'embarque pas les patterns avancés de conduite de séance (`président`, `scrutateurs`, quorum temps réel, notes collaboratives) qui relèvent de `EP-013`.
-- `S02` doit exposer dans la fiche AG une section documentaire compacte distinguant au minimum les annexes de convocation et le `PV`, avec upload/liaison côté manager et consultation simple côté rôles autorisés.
-- `S03` ajoute une carte latérale de présence lisible sans jargon technique : chaque lot porte un mode de participation explicite (`présent`, `mandat`, `correspondance`, `absent`) et un indicateur de tantièmes représentés ; cette carte ne doit pas dépendre du nombre de votes déjà saisis sur les résolutions.
-
-## Système de tonalités couleur — `tones.css`
-
-Défini dans `frontend/src/styles/tones.css`, importé globalement avant tout composant.
-
-Les classes `.tone--*` sont des **utilitaires purs** : elles définissent uniquement deux variables CSS — sans aucune règle de forme, taille ou layout. Elles s’appliquent à n’importe quel élément (icône, bouton, chip, badge, pill…).
-
-Une vue ne doit jamais redéclarer localement `.tone--default`, `.tone--accent`, `.tone--warn`, `.tone--err`, `.tone--disabled`, `.tone--valid` ou les variantes de rôle `.tone--manager`, `.tone--board-member`, `.tone--co-owner`, `.tone--tenant` dans son CSS scoped. Si un composant a besoin d’une forme locale, il conserve uniquement ses règles de taille / rayon / layout et consomme les variables via `background: var(--tone-bg, ...)` et `color: var(--tone-fg, ...)`.
-
-| Classe | `--tone-bg` | `--tone-fg` |
+| Token (`-bg` / `-fg`) | Background light | Foreground light |
 |---|---|---|
-| `.tone--default`  | `--color-secondary-container`       | `--color-primary`            |
-| `.tone--info`     | `--color-secondary-container`       | `--color-on-secondary-container` |
-| `.tone--accent`   | `--gradient-primary`                | `--color-on-primary`         |
-| `.tone--warn`     | `--color-warning-container`         | `--color-warning`            |
-| `.tone--err`      | `--color-error-container`           | `--color-error`              |
-| `.tone--disabled` | `--color-surface-container-highest` | `--color-on-surface-variant` |
-| `.tone--muted`    | `--color-surface-container`         | `--color-on-surface-variant` |
-| `.tone--valid`    | `--color-success-container`         | `--color-success`            |
-| `.tone--manager`  | `--color-role-manager-bg`           | `--color-role-manager-fg`    |
-| `.tone--board-member` | `--color-role-board-bg`        | `--color-role-board-fg`      |
-| `.tone--co-owner` | `--color-role-co-owner-bg`          | `--color-role-co-owner-fg`   |
-| `.tone--tenant`   | `--color-role-tenant-bg`            | `--color-role-tenant-fg`     |
+| `--color-role-manager-*` | `#e8def8` | `#21005d` |
+| `--color-role-board-*` | `#d2e4fb` | `#001d36` |
+| `--color-role-co-owner-*` | `#cef5e5` | `#00391d` |
+| `--color-role-tenant-*` | `#fcecd1` | `#3a2000` |
 
-Les éléments consommateurs déclarent :
+---
+
+### 1.3 Espacement
+
+| Token | Valeur | | Token | Valeur |
+|---|---|---|---|---|
+| `--space-1`  | `4px`  | | `--space-8`  | `32px` |
+| `--space-2`  | `8px`  | | `--space-10` | `40px` |
+| `--space-3`  | `12px` | | `--space-12` | `48px` |
+| `--space-4`  | `16px` | | `--space-16` | `64px` |
+| `--space-5`  | `20px` | | `--space-20` | `80px` |
+| `--space-6`  | `24px` | | | |
+
+---
+
+### 1.4 Rayons & Ombres
+
+| Token | Valeur |
+|---|---|
+| `--radius-sm`   | `8px` |
+| `--radius-md`   | `12px` |
+| `--radius-lg`   | `16px` |
+| `--radius-xl`   | `24px` |
+| `--radius-full` | `9999px` |
+
+> Jamais `0px` sur un élément interactif.
+
+| Token | Valeur |
+|---|---|
+| `--shadow-sm`    | `0 2px 8px rgba(25,28,29,.04)` |
+| `--shadow-md`    | `0 8px 32px rgba(25,28,29,.07), 0 2px 8px rgba(25,28,29,.04)` |
+| `--shadow-lg`    | `0 16px 48px rgba(25,28,29,.10), 0 4px 16px rgba(25,28,29,.06)` |
+| `--shadow-glass` | `0 20px 60px rgba(25,28,29,.14), 0 4px 16px rgba(25,28,29,.08)` |
+
+**Ombres de focus et d'interaction** — utilisées par les composants `CForm*` :
+
+| Token | Usage |
+|---|---|
+| `--shadow-primary-ring` | Focus ring sur les champs et boutons primaires |
+| `--shadow-error-ring` | Focus ring sur un champ en état d'erreur |
+| `--shadow-primary-lift` | Élévation hover d'un bouton primaire |
+| `--shadow-primary-lift-hover` | Élévation pressed/active d'un bouton primaire |
+
+> **Glassmorphism modales :** `background: rgba(255,255,255,.85)` + `backdrop-filter: blur(20px)`.
+
+---
+
+### 1.5 Icônes
+
+| Token | Valeur | Usage |
+|---|---|---|
+| `--icon-2xs` | `12px` | Meta footer |
+| `--icon-xs`  | `14px` | Contenu, sous-titres, chips |
+| `--icon-sm`  | `16px` | Inline, boutons, chevrons |
+| `--icon-md`  | `18px` | Cartes, headers |
+| `--icon-lg`  | `24px` | Icônes proéminentes |
+
+> Toutes les icônes sont des composants SVG Vue (`CIcon*.vue` dans `components/atoms/`). Jamais de font d'icônes ni de `<img>`.
+
+---
+
+### 1.6 Tonalités (`tones.css`)
+
+Source : `frontend/src/styles/tones.css`. Les classes `.tone--*` définissent **uniquement** deux variables CSS — aucune règle de forme, taille ou layout.
+
+Les composants consomment :
 ```css
 background: var(--tone-bg, <fallback>);
 color:      var(--tone-fg, <fallback>);
-
-`CBadge` applique désormais ce fallback directement au niveau de sa racine, avec `var(--color-surface-container-high)` et `var(--color-on-surface-variant)` pour les variantes sans tonalité dédiée.
 ```
 
-```html
-<!-- icône KPI accentée -->
-<div class="kpi-icon tone--accent">…</div>
+| Classe | `--tone-bg` | `--tone-fg` |
+|---|---|---|
+| `.tone--accent`       | `--gradient-primary`                | `--color-on-primary` |
+| `.tone--board-member` | `--color-role-board-bg`             | `--color-role-board-fg` |
+| `.tone--co-owner`     | `--color-role-co-owner-bg`          | `--color-role-co-owner-fg` |
+| `.tone--default`      | `--color-secondary-container`       | `--color-primary` |
+| `.tone--disabled`     | `--color-surface-container-highest` | `--color-on-surface-variant` |
+| `.tone--err`          | `--color-error-container`           | `--color-error` |
+| `.tone--info`         | `--color-secondary-container`       | `--color-on-secondary-container` |
+| `.tone--manager`      | `--color-role-manager-bg`           | `--color-role-manager-fg` |
+| `.tone--muted`        | `--color-surface-container`         | `--color-on-surface-variant` |
+| `.tone--tenant`       | `--color-role-tenant-bg`            | `--color-role-tenant-fg` |
+| `.tone--valid`        | `--color-success-container`         | `--color-success` |
+| `.tone--warn`         | `--color-warning-container`         | `--color-warning` |
 
-<!-- filtre actif en mode alerte -->
-<button class="kpi-filter kpi-filter--active tone--warn">…</button>
+> Une vue ne doit jamais redéclarer localement une classe `.tone--*` dans son CSS scoped.
 
-<!-- bouton destructif -->
-<button class="btn tone--err">Supprimer</button>
+---
+
+### 1.7 Transparence
+
+Tokens de mélange pour bordures et overlays légers. Valeur adaptée au thème pour maintenir un contraste cohérent.
+
+| Token | Light | Dark | Usage |
+|---|---|---|---|
+| `--tint` | `15%` | `20%` | Opacité du composant source dans un `color-mix` |
+
+**Tokens dérivés** :
+
+| Token | Valeur | Usage |
+|---|---|---|
+| `--color-outline-light` | `color-mix(in srgb, var(--color-outline) var(--tint), transparent)` | Séparateurs discrets dans les tableaux |
+
+```css
+/* Exemple d'utilisation dans CDataTable */
+border-color: var(--color-outline-light);
 ```
 
-## Règle UI — Activity cards
+> Toujours utiliser `--color-outline-light` pour les séparateurs de tableau plutôt qu'une valeur `rgba` codée en dur.
 
-Les cartes `activity-card` constituent le socle partagé des cartes de liste métier (`Contrat`, `Prestataire`, `Tâche`, `Signalement`, `Sinistre`). Toute règle transversale liée à leur structure, leur hiérarchie visuelle ou leurs primitives CSS doit être documentée ici, et non dispersée dans les sections de vues.
+---
 
-### Ossature commune
+## 2. Catalogue de composants
 
-- Les cartes reposent sur `frontend/src/styles/activity-cards.css`.
-- Dès qu’un header contient une icône métier, il utilise `activity-card__header-row activity-card__header-row--with-icon` pour conserver un centrage vertical stable entre icône, titre et chips.
-- Les titres `activity-card` restent compacts (18px), en police de texte classique (`font-body`), jamais en display.
-- La description utilise une taille de texte standard, en ton principal mais sans graisse excessive ; les metadata / secondary information restent volontairement plus légères via une teinte plus douce.
-- Les lignes compactes `activity-card` n’utilisent pas de séparateur ; le groupement repose sur l’alignement, la proximité et des espacements icône/texte serrés.
+### 2.1 Atomes (`components/atoms/`)
 
-### Primitives partagées
+| Composant | Props clés | Description |
+|---|---|---|
+| `CAlert` | `variant`, `title` | Bandeau d'alerte contextuelle |
+| `CBadge` | `variant` | Chip de statut ou de catégorie — consomme `.tone--*` |
+| `CBtn` | `variant`, `size`, `loading`, `disabled` | Bouton — variantes `primary`, `secondary`, `ghost`, `destructive` |
+| `CDataText` | `size` | Texte tabulaire JetBrains Mono — `font-mono font-medium lining-nums tabular-nums`. `size`: `sm` (défaut) \| `md` \| `lg` |
+| `CEyebrow` | — | Libellé eyebrow — `font-body text-2xs font-medium uppercase tracking-[0.06em]`. Rendu en `<div>`. |
+| `CFormCheckbox` | `label`, `checked` | Case à cocher — wrapper Radix |
+| `CFormChipInput` | `label`, `value` | Saisie d'un chip unitaire (la boucle `v-for` est dans le parent) |
+| `CFormChipSelect` | `label`, `options` | Sélection de chips |
+| `CFormDropzone` | `accept`, `multiple` | Zone de dépôt de fichiers |
+| `CFormFeedback` | `status`, `message` | Retour de formulaire — **toujours dans `#footer` de `CModal`** |
+| `CFormInput` | `type`, `label`, `error`, `hint` | Champ texte — variante `password` avec toggle de visibilité |
+| `CFormSelect` | `label`, `options`, `error` | Sélecteur — wrapper Radix `SelectRoot` |
+| `CFormTextarea` | `label`, `rows`, `error` | Zone de texte |
+| `CHeading` | `size`, `as` | Titre typographique Fraunces — semibold, italic. `size`: `lg` (24px) \| `md` (20px) \| `sm` (18px). `as`: `h1`…`h3` \| `p` |
+| `CIconWrapper` | `size` (2xs/xs/sm/md/lg) | Wrapper dimensionnel pour icône SVG |
+| `CProgressBar` | `value`, `max` | Barre de progression |
+| `CSeparator` | `orientation` | Séparateur — wrapper Radix `Separator` |
+| `CTooltip` | `content`, `placement` | Info-bulle — wrapper Radix Tooltip |
 
-Les patterns de contenu récurrents doivent être mutualisés dans `frontend/src/styles/activity-cards.css` au lieu d’être redéclarés localement.
+---
 
-- `activity-card--compact` pour les variantes de carte qui gardent la grammaire `activity-card` mais avec un rythme vertical plus serré.
-- `activity-card__chips` pour toute grappe de chips / badges d’une `activity-card`, y compris dans l’en-tête. Une vue ne doit pas introduire de wrapper alternatif dédié si ce conteneur couvre déjà le besoin.
-- Les métadonnées de carte (`date`, `auteur`, `lot`, localisation, etc.) passent par la molécule `frontend/src/components/molecules/CMeta.vue` avec style scoped ; une vue ne doit plus utiliser la classe globale `activity-card__meta`.
-- Les lignes élémentaires `icône + contenu` à l'intérieur d'une métadonnée passent par `frontend/src/components/molecules/CMetaItem.vue`, avec un slot `icon` dédié. Cette molécule porte les variantes typographiques `footer` par défaut et `sub` (`13px` / `1.5`) ; une vue ne doit plus recopier localement un wrapper `span.activity-card__line` pour ce pattern simple.
-- Les encarts d’information secondaire (`activity-card__note`) passent par la molécule `frontend/src/components/molecules/CCardNote.vue` avec style scoped ; une vue ne doit plus utiliser la classe globale `activity-card__note`.
-- Les séparateurs discrets entre lignes de métadonnées (point circulaire 3px ou ligne) utilisent l'atome `frontend/src/components/atoms/CSeparator.vue` avec variant "horizontal" ou "vertical" et style scoped.
-- `activity-card__contacts` pour la pile verticale email / téléphone.
-- `activity-card__contact-link` pour les liens de contact dans une carte, avec préfixe emoji métier (`✉️` pour l’email, `📞` pour le téléphone).
-- `activity-card__documents-button` pour le bouton inline ouvrant les pièces liées depuis `activity-card__documents`.
+### 2.2 Molécules (`components/molecules/`)
 
-Si une vue réutilise exactement l’un de ces patterns, elle doit consommer la classe partagée et supprimer le CSS local redondant.
+| Composant | Props clés | Description |
+|---|---|---|
+| `CCard` | `shadow?` | Conteneur générique — définit background, border-radius, padding et flux interne. Pour les listes avec séparateurs : `CFlexGroup`. Pour les listes sans séparateurs : wrapper Tailwind inline. Ossature d'une carte d'entité : `CCardHeader` › titre › description › `CMeta` › actions › `CCardNote`. |
+| `CCardHeader` | `withIcon?` | En-tête de carte — slots `#icon`, `#chips` |
+| `CCardNote` | `note` | Encart d'information secondaire dans une `CCard` |
+| `CDataTable` | `columns`, `rows` | Tableau de données |
+| `CDocumentList` | `documents`, `readonly?` | Liste documents avec download/retrait — `emit('remove', doc)` au parent |
+| `CEmptyState` | `icon`, `title`, `description?` | État vide — slot `#actions` |
+| `CFormAddressAutocomplete` | `label`, `value` | Champ adresse avec autocomplétion |
+| `CFormGroup` | `label`, `hint?` | Wrapper label + champ + hint |
+| `CFormLabel` | `for`, `required?` | Label de formulaire |
+| `CFormRow` | `cols` (1/2) | Grille formulaire 2 colonnes responsive |
+| `CKpiCard` | `title`, `value`, `tone` | Carte indicateur KPI |
+| `CLegalCard` | — | Carte de note légale (wraps `CLegalNotice`) |
+| `CLegalNotice` | `descriptions`, `links` | Bloc notices légales structurées |
+| `CListItem` | — | Ligne de liste générique |
+| `CMeta` | — | Conteneur de métadonnées |
+| `CMetaItem` | `variant`, `icon` | Ligne icône + contenu — variantes `footer` / `sub` |
+| `CMetaLine` | — | Rangée horizontale de `CMetaItem` avec `CSeparator` |
+| `CModal` | `open`, `title`, `saving?`, `feedback?` | Dialogue Radix `Dialog` — émettre `@submit` pour soumission |
+| `CPageHeader` | `eyebrow?`, `title`, `meta?`, `icon?`, `frozenLabel?` | En-tête de vue — slot `#actions` |
+| `CPageLoader` | — | Indicateur de chargement |
+| `CSectionHeader` | `title`, `subtitle?`, `level?` | En-tête de section dans une `CCard` — slot `#actions` |
+| `CTopbarBreadcrumb` | `crumbs[]` | Fil d'Ariane topbar |
 
-### Grammaire des cartes Opérations
+---
 
-Les cartes de liste des vues `Signalements`, `Tâches` et `Sinistres` partagent une même ossature visuelle afin d’améliorer le balayage :
+### 2.3 Organismes (`components/organisms/`)
 
-- ligne 1 : en-tête compact propre à l’entité, avec au minimum le statut visible sans ouvrir la carte ;
-- ligne 2 : titre principal ou, pour certaines cartes, reprise du titre juste sous l’en-tête si cela améliore la lisibilité ;
-- ligne 3 : description courte éventuelle, en taille de texte standard ;
-- ligne 4 : hints documentaires / photo sur leur propre ligne ;
-- ligne 5 : métadonnées compactes avec icônes, sans séparateur ;
-- ligne d’actions avec `Modifier` puis une action contextuelle accentée ;
-- bloc informatif secondaire pour les éléments métier complémentaires (délai légal, remboursement, lien prestataire, historique, etc.).
-
-### Variantes métier autorisées
-
-- `Contrat` : header `icône métier + titre + chip statut`, avec chip domaine/type sur une rangée dédiée juste sous l’en-tête ; hint documentaire ouvrable directement depuis la carte quand des pièces existent.
-- `Prestataire` : même grammaire d’en-tête que `Contrat`, sans chip de statut quand aucune information de cycle de vie n’existe.
-- `Tâche` : header compact `titre + priorité + statut`, sans icône ; l’assignation et la date de création relative sont regroupées dans les métadonnées.
-- `Signalement` : première ligne `icône + (statut + mise à jour relative simple)`, titre aligné à gauche sous l’en-tête, viewer photo compact puis agrandi.
-- `Sinistre` : icône métier obligatoire avec couleur dépendante du type ; chip de type affichée dans le header à gauche du statut ; hint documentaire positionné au-dessus des métadonnées `date/auteur`.
-
-L’ossature reste commune mais chaque entité peut substituer un équivalent métier lorsqu’une donnée n’existe pas (ex. `prestataire assigné` au lieu d’une localisation stricte sur les tâches).
-
-## Règle UI — Primitives KPI (`kpi.css`)
-
-Mutualisés dans `frontend/src/styles/kpi.css`. Consomment `--tone-bg` / `--tone-fg` fournis par `.tone--*`.
-
-| Classe | Rôle |
+| Composant | Description |
 |---|---|
-| `.kpi-icon`           | Badge icône carré 36px |
-| `.kpi-filter-row`     | Ligne de pills KPI |
-| `.kpi-filter`         | Pill KPI cliquable (inactif) |
-| `.kpi-filter--active` | Pill KPI actif — consomme la tonalité |
-| `.kpi-filter__count`  | Valeur numérique (Fraunces 24px) |
-| `.kpi-filter__label`  | Libellé secondaire (11px) |
-## États de chargement et d'erreur de page (DDR-005)
+| `AppNav` | Navigation principale (sidebar desktop + bottom nav mobile) |
+| `AuthBrandPanel` | Panneau éditorial des écrans d'authentification |
+| `CConfirmDialog` | Dialogue de confirmation destructive |
+| `CDocumentLinkActionModal` | Modale gestion des documents liés (retrait / suppression) |
+| `CFlexGroup` | Conteneur flex groupé |
+| `CLinkedDocumentsModal` | Modale liste des documents liés à une entité |
+| `CPageError` | Affichage d'erreur pleine page |
+| `CReminderCard` | Carte de rappels synthétiques partagée entre vues |
+| `CTopbar` | Barre supérieure avec breadcrumb et actions globales |
 
-La règle normative reste portée par `docs/ddr/DDR-005-page-loading-states.md`.
+---
 
-Résumé d'usage pour le design system :
-- toute vue qui charge ses données au montage passe par `usePageLoader` ;
-- l'état d'erreur s'affiche via `CPageError`, l'état de chargement via `CPageLoader` ;
-- les chargements secondaires non bloquants restent isolés pour ne pas retarder le rendu principal.
+## 3. Règles globales
 
-Références d'implémentation : `frontend/src/composables/usePageLoader.ts`, `frontend/src/components/organisms/CPageError.vue`, `frontend/src/components/molecules/CPageLoader.vue`.
+### 3.1 Accessibilité
 
-## Règle UI — Vue Contrats
+- Contraste corps ≥ 4.5:1 (WCAG AA) — critique ≥ 7:1
+- Focus visible : `outline: 2px solid var(--color-primary); outline-offset: 2px`
+- Touch targets : min **44×44px** imposé dans `base.css` sur tous les `button`  
+  Exception : boutons-icônes embarqués dans une zone interactive plus large → `min-width: unset; min-height: unset`
+- Jamais la couleur seule pour transmettre une information
+- Toute primitive interactive (Select, Checkbox, Tooltip, DropdownMenu) passe par un wrapper Radix Vue
 
-La vue `Contrats` affiche en tête les rappels à traiter, avec une action d’acquittement visible sans navigation secondaire.
+---
 
-- Les tabs de filtre `Contrats` affichent le volume d’éléments par état (`Tous`, `Actifs`, `Expirés`) directement dans chaque segment.
-- Les pièces justificatives d’un contrat se gèrent directement depuis la modale de création / modification, sans CTA documentaire primaire sur la carte.
-- Chaque carte Contrat rappelle aussi le nombre de documents actuellement liés et permet d’ouvrir une modale de consultation/téléchargement directement depuis ce hint lorsque des pièces existent.
-- La modale d’édition liste les pièces déjà liées avec deux issues explicites : retirer le lien seulement, ou retirer le lien puis supprimer définitivement le document.
-- La suppression définitive d’un contrat se déclenche depuis la modale d’édition, jamais depuis la carte.- Un contrat `active` ne peut pas être modifié sur ses champs financiers (`amount`, `start_date`, `end_date`). L'action « Modifier » est remplacée par « Créer un avenant » qui clôture le contrat courant et ouvre le formulaire pré-rempli pour le nouveau (ADR-009).
-- La fiche contrat expose la chaîne des avenants via `predecessor_id` : chaque contrat de la chaîne est affiché avec sa période de validité et ses pièces jointes propres.
-## Règle UI — Vue Carnet d'entretien
+### 3.2 Internationalisation
 
-La vue `Carnet d'entretien` expose des filtres rapides ancrés sur des périodes calendaires réelles : **mois**, **trimestre** (défaut), **semestre**, **année en cours** et **tout l'historique**.
+```ts
+Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' })
+Intl.DateTimeFormat('fr-FR')
+```
 
-- La navigation `précédent / suivant` déplace la fenêtre d'une période complète, jamais une durée flottante depuis aujourd'hui.
-- Le total des dépenses et la liste affichée sont toujours calculés sur la période active.
-- Les champs `Coût` et `Prestataire` de la modale de création restent sur une grille 2 colonnes sur desktop mais repassent en pile sur écran étroit pour éviter tout débordement.
-- Un bloc réglementaire précède la timeline et rappelle l'adresse de l'immeuble ainsi que le syndic en exercice.
-- Les contrats d'assurance et d'entretien en cours sont affichés dans des sections dédiées, séparées de la timeline, avec leur échéance et un état lisible sans navigation secondaire.
+Tous les libellés passent par `vue-i18n` — `t('...')`. Fichiers de traduction dans `src/locales/`.
 
-## Règle UI — Vue Sinistres
+---
 
-La vue `Sinistres` affiche pour chaque dossier le délai légal restant avant déclaration à l'assurance, calculé selon le type de sinistre.
+### 3.3 Tailwind v4
 
-- Les alertes de délai doivent être visibles directement sur la carte (approche d'échéance / retard / transmis).
-- L'explication juridique des délais est mutualisée dans une `CCard` contenant `CLegalNotice` en bas de page.
-- La création d'un sinistre reste faisable dans une seule modale et accepte des pièces jointes sans écran intermédiaire.
-- Les zones d'ajout de pièces jointes des modales Sinistres reprennent la dropzone standard utilisée sur les Signalements (`bordure pointillée`, état hover/drag, sélection directe de fichiers).
-- Chaque carte Sinistre expose toujours deux actions côte à côte pour les profils gestionnaires : `Modifier` puis une action contextuelle dépendante du statut courant.
-- Les actions contextuelles suivent strictement ce mapping : `Ouvert → Transmettre`, `En cours → Clore`, `Clos → Supprimer`.
-- `Transmettre` ouvre une modale dédiée avec la date de transmission à l'assurance ; `Clore` ouvre une modale dédiée avec remboursement optionnel (date + montant) et ajout de documents ; `Modifier` permet aussi de supprimer le dossier sans revenir à la carte et de gérer les documents déjà joints.
-- Les tabs de filtre `Sinistres` affichent aussi le volume par état (`Tous`, `Ouverts`, `En cours`, `Clos`) pour rendre le backlog lisible sans ouvrir chaque segment.
+Configuration via `@tailwindcss/vite` (pas de `tailwind.config.js`). Tokens exposés via `@theme inline` dans `frontend/src/styles/tailwind.css`.
 
-## Règle UI — Cartes Opérations (`Signalements` / `Tâches` / `Sinistres`)
+Tokens custom exposés via `@theme inline` dans `frontend/src/styles/tailwind.css` :
 
-La structure partagée et les primitives communes des cartes `Signalements`, `Tâches` et `Sinistres` sont définies dans la section `Règle UI — Activity cards`.
+| Utilitaire Tailwind | Token source | Remarque |
+|---|---|---|
+| `text-2xs` · `text-xs` · `text-sm` · `text-md` · `text-lg` | `--text-*` | Remplace l'échelle Tailwind native — `text-sm` 13px, `text-lg` 16px |
+| `font-display` · `font-body` · `font-mono` | `--font-*` | Familles custom |
+| `space-1` … `space-20` | `--space-*` | — |
+| `radius-sm` … `radius-full` | `--radius-*` | — |
+| `shadow-md` · `shadow-lg` · `shadow-glass` | `--shadow-*` | — |
 
-Contraintes complémentaires :
+**Règles :**
+- Jamais de valeur brute (`px`, `hex`, `rem`) dans un attribut `class` si un token Tailwind existe.
+- Les classes `.tone--*` restent des utilitaires CSS purs (non Tailwind) — utiliser directement.
+- **Zéro bloc `<style>` dans les vues de feature.** Toute mise en page locale = utilitaire Tailwind **ou** composant du catalogue. Les composants `atoms/molecules/organisms` peuvent conserver des `<style scoped>`.
 
-- les listes sont triées par `dernière modification` décroissante ;
-- la carte `Sinistre` n'expose jamais `Supprimer` dans la liste ; cette action reste confinée à la modale d'édition ;
+---
 
-## Règle UI — Obligations légales
+### 3.4 Radix Vue
 
-Les cartes de note légale globales de page utilisent `CCard` + `CLegalNotice` et suivent toujours le même schéma :
+Toute primitive Radix Vue est enveloppée dans un composant `C*` avant usage dans une vue. Jamais d'import direct de `radix-vue` dans un fichier de vue ou de feature.
 
-- un ou plusieurs `CLegalDescription` avec un titre explicite et un résumé pédagogique de l'obligation ;
-- un ou plusieurs liens légaux libellés avec une référence longue (`Article N …`) vers le texte complet sur une source officielle (`legifrance.gouv.fr` ou `service-public.fr`).
+| Primitive Radix | Wrapper | Statut |
+|---|---|---|
+| `Checkbox` | `CFormCheckbox` | 🔲 planifié |
+| `Dialog` | `CModal` | ✅ |
+| `DropdownMenu` | `CDropdownMenu` | 🔲 planifié |
+| `Select` | `CFormSelect` | 🔲 planifié |
+| `Separator` | `CSeparator` | ✅ |
+| `Tooltip` | `CTooltip` | 🔲 planifié |
 
-`CLegalDescription` porte le bloc textuel `⚖️ + titre + résumé`, tandis que `CLegalNotice` ne gère que la pile verticale et la rangée de liens. Cette séparation permet aussi les cartes juridiques multi-entrées, par exemple pour détailler plusieurs règles de majorité sur une même AG.
+---
 
-Les obligations légales compactes et strictement locales à un libellé peuvent encore utiliser `CTooltip`, mais les notes juridiques de bas de page doivent être homogènes via `CCard` + `CLegalNotice`.
+### 3.5 Composants flottants (tooltips, dropdowns, popovers)
 
-Cette règle s'applique notamment aux délais de déclaration de sinistre, au carnet d'entretien réglementaire, au registre de copropriété et aux consultations informelles.
+Tout élément flottant : `Teleport to="body"` + `position: fixed` + position via `getBoundingClientRect()`. Jamais `position: absolute` dans un parent scrollable ou `overflow: hidden`.
 
-## Règle UI — Vue Signalements
+Comportement : flip vertical si espace insuffisant, clampage horizontal viewport avec marge 10px. Référence : `CTooltip.vue`.
 
-La modale de conversion d'un signalement en tâche doit permettre au gestionnaire de choisir la **priorité** de la tâche au moment de la conversion, sans écran intermédiaire supplémentaire.
+---
 
-- La priorité proposée par défaut est `Normal`.
-- La conversion reste une action unique : création de la tâche puis redirection immédiate vers la tâche créée.
-- La modale de modification d’un signalement doit aussi afficher les images déjà jointes et permettre leur gestion sans repasser par la carte.
-- L’action `Supprimer` reste disponible uniquement dans la modale d’édition, pas sur la carte de liste.
+### 3.6 Règle No-Line
 
-## Règle UI — Gestion documentaire liée
+Jamais de `1px solid` pour séparer du contenu hors structures tabulaires — décalage tonal (`surface-container-*`), espacement ou micro-ombre.
 
-- Toute entité qui accepte des documents doit permettre leur gestion depuis la modale d’édition et, lorsqu’une vue détaillée existe, depuis cette vue détaillée également.
-- L’action de retrait d’un document lié ouvre toujours une confirmation avec deux actions distinctes : `Supprimer le lien seulement` et `Supprimer le lien et le document`.
-- Le module `Documents` doit exposer les références d’entités liées pour chaque fichier et rappeler, dans la modale de suppression, qu’un document supprimé sera d’abord retiré des entités auxquelles il est rattaché.
-- La suppression d’une entité doit aussi supprimer ses documents devenus orphelins ; un document encore rattaché ailleurs n’est pas supprimé.
-- Les dropzones documentaires inline utilisent la feuille globale `frontend/src/styles/forms.css` et la même base visuelle que l’ancienne `claim-dropzone` : bordure pointillée, état `hover/drag`, icône neutre et hint secondaire.
+**Exception tableaux :** utiliser `--color-outline-light` (voir §1.7) pour les séparateurs de cellule. Ce token garantit une bordure adaptée au thème sans valeur `rgba` codée en dur.
 
-## Règle UI — Vue Tâches
+---
 
-Le champ d'assignation prestataire dans `TasksView` doit accepter une saisie libre sans forcer le choix d'un prestataire existant.
+### 3.7 États interactifs
 
-- Tant qu'une correspondance existe, l'autocomplete continue de proposer le référentiel.
-- Si aucune correspondance n'existe, une suggestion dédiée permet d'ajouter ce prestataire au référentiel sans quitter la modale.
-- L'ajout au référentiel reste optionnel : si l'utilisateur n'active pas cette suggestion, la saisie libre ne doit pas bloquer l'enregistrement et doit rester visible sur la tâche enregistrée.
-- Le bloc `lien prestataire` de la carte doit rester visible tant qu'un token est actif ; les actions `Générer`, `Afficher` et `Révoquer` se placent au-dessus de la ligne d'actions principale, et l'URL active doit être lisible / copiable directement depuis la carte.
-- La métadonnée prestataire de la carte n'apparaît que lorsqu'une assignation existe réellement ; elle utilise l'icône métier `CIconWrench` pour un prestataire externe, `CIconUser` pour une auto-assignation, et pointe vers la fiche prestataire si `contractor_id` est connu.
-- La modale de création / modification d'une tâche reprend la dropzone documentaire standard des autres modules pour joindre des fichiers sans écran intermédiaire, puis liste aussi les documents déjà liés en édition avec téléchargement et retrait explicites.
+Les états interactifs sont gérés localement dans chaque composant — pas de token système pour hover/active. Conventions à respecter :
 
-## Règle UI — CFormFeedback dans les modales (DDR-006)
+| État | Convention |
+|---|---|
+| **Hover carte cliquable** | Surface : `--color-surface-container-low` → `--color-surface-container` |
+| **Hover bouton primary** | `box-shadow: var(--shadow-primary-lift)` |
+| **Active / pressed bouton** | `box-shadow: var(--shadow-primary-lift-hover)` |
+| **Focus champ** | `box-shadow: var(--shadow-primary-ring)` · `outline: 2px solid var(--color-primary)` |
+| **Focus champ en erreur** | `box-shadow: var(--shadow-error-ring)` |
+| **Disabled** | `.tone--disabled` — jamais `opacity: 0.5` (contraste insuffisant) |
 
-**Règle obligatoire :** tout `CModal` qui contient un formulaire ou une action destructive **doit** inclure un `CFormFeedback` dans le slot `#footer`, sur la même ligne que les boutons d'action. Le `CFormFeedback` ne doit jamais être placé dans le corps de la modale (`<template #default>`).
+---
+
+## 4. Guidelines
+
+### 4.1 Patterns transversaux
+
+#### Eyebrows de page
+
+- Toute page métier avec un `h1` visible expose un eyebrow (`CEyebrow` ou prop `eyebrow` de `CPageHeader`).
+- 3 à 6 mots — décrit ce que l'utilisateur trouve sur la page, ne répète pas le breadcrumb.
+- Jamais redéfini localement.
+
+#### Navigation & breadcrumb
+
+- **≤ 1024px** : bottom nav 4 items primaires filtrés par rôle + tiroir « Plus » + item Profil.
+- **> 1024px** : sidebar fixe 240px structurée en 5 sections non-cliquables.
+
+  | Section | Destinations |
+  |---|---|
+  | *(solo)* | Tableau de bord |
+  | Gouvernance | AG · Consultations · Signalements |
+  | Finance | Budget · Contrats |
+  | Opérations | Tâches · Sinistres · Carnet · Documents |
+  | Résidence | Bâtiment · Clés de répartition · Registre · Copropriétaires |
+
+- Bloc utilisateur en pied de sidebar → panel contextuel (Mon compte · Notifications · Déconnexion).
+- Changement de thème dans `Profil > Mon compte` uniquement (`Clair` / `Sombre` / `Auto`).
+- `CTopbarBreadcrumb` : fluide (`min-width: 0`), libellés tronquent proprement.
+
+#### Écrans d'authentification
+
+Sur mobile, les écrans publics (`/login`, `/onboarding`, invitation, reset) conservent un en-tête compact de marque sans sortir le formulaire du viewport initial. Le formulaire reste la zone scrollable principale.
+
+#### États de chargement & d'erreur
+
+- Toute vue qui charge ses données au montage passe par `usePageLoader`.
+- État d'erreur → `CPageError`. État de chargement → `CPageLoader`.
+- Les chargements secondaires non bloquants restent isolés.
+
+#### Cartes de liste
+
+`CCard` est un conteneur générique (background, border-radius, padding, flux). Chaque entité de liste est une `CCard`. La mise en liste est de la responsabilité de la vue :
+
+- **Avec séparateurs** → `CFlexGroup` comme wrapper de liste
+- **Sans séparateurs** → div Tailwind inline (`flex flex-col gap-*`)
+
+**Ossature commune d'une carte d'entité :**
+
+```
+CCard (conteneur)
+├── CCardHeader    — chips de statut / type toujours visibles
+├── Titre principal
+├── Description courte (optionnel)
+├── CMeta / CMetaItem  — métadonnées compactes
+├── Ligne d'actions    — « Modifier » + action contextuelle accentuée
+└── CCardNote          — bloc informatif secondaire (délai, remboursement, lien…)
+```
+
+**Règles :** titres en `font-body text-lg`, jamais `font-display` · métadonnées via `CMetaItem` · encarts via `CCardNote` · pas de séparateur entre cartes.
+
+Chaque vue définit ses propres variantes dans ses **règles feature** (§4.2).
+
+#### KPI
+
+Les indicateurs et filtres KPI utilisent `CKpiCard` (molécule) et `CBtn` avec `.tone--*` pour les pills de filtre. La valeur numérique (`font-display text-[56px] font-[800] tracking-[-0.04em]`) est rendue directement dans `CKpiCard` — ce style display 56px est exclusif à `CKpiCard`, pas à `CHeading`.
+
+#### Gestion documentaire liée
+
+- Toute entité qui accepte des documents expose la gestion depuis sa modale d'édition (et depuis la vue détail si elle existe).
+- Le retrait d'un document ouvre toujours `CDocumentLinkActionModal` avec deux actions : **Supprimer le lien seulement** / **Supprimer le lien et le document**.
+- `CDocumentList` émet `remove(doc)` — le parent gère l'appel API (endpoints différents par entité).
+- Un document encore rattaché à d'autres entités n'est pas supprimé.
+- Dropzones → `CFormDropzone` : bordure pointillée, état hover/drag.
+
+#### Obligations légales
+
+Les notes légales de bas de page : `CCard` + `CLegalNotice` avec `CLegalDescription` (`⚖️ + titre + résumé`) + liens Légifrance / service-public.fr. Les obligations ponctuelles sur un libellé peuvent utiliser `CTooltip`.
+
+#### Entités comptables gelées
+
+Toute entité en état terminal comptable (levy call `issued`, tâche `closed`, sinistre avec `transmitted_at`…) :
+
+- **Indicateur** : `CIconLock` + libellé en `.tone--muted` dans le header.
+- **Actions** : Modifier et Supprimer supprimés via `v-if` (jamais `disabled`).
+- **Champs immuables** : `<span>` (jamais `<input readonly>`) + mention « Donnée comptable — non modifiable » en `label-sm .tone--muted`.
+- **Pattern B (avenant)** : « Créer un avenant » remplace « Modifier » (`ghost`, non destructif).
+- **Historique** : entités avec `predecessor_id` / `parent_budget_id` → section « Historique » en lecture seule.
+
+#### CFormFeedback dans les modales
+
+Tout `CModal` avec formulaire ou action destructive inclut `CFormFeedback` dans `#footer`, avant les boutons.
 
 ```vue
-<CModal :open="showModal" title="…" @close="closeModal">
-  <form @submit.prevent="save">
-    <!-- champs du formulaire -->
-  </form>
+<CModal :open="open" title="…" @close="close">
+  <form @submit.prevent="save"><!-- champs --></form>
   <template #footer>
-    <!-- ✅ CFormFeedback TOUJOURS dans #footer, avant les boutons -->
     <CFormFeedback :status="feedback.status.value" :message="feedback.message.value" />
-    <CBtn variant="ghost" @click="closeModal">Annuler</CBtn>
+    <CBtn variant="ghost" @click="close">Annuler</CBtn>
     <CBtn variant="primary" :loading="saving" @click="save">Enregistrer</CBtn>
   </template>
 </CModal>
 ```
 
-Références d'implémentation : `frontend/src/components/atoms/CFormFeedback.vue`, `frontend/src/composables/useFormFeedback.ts`. Exemples : `ContractFormModal.vue`, `AllocationKeysView.vue`, `ContractorsView.vue`.
+`CFormFeedback` ne doit jamais apparaître dans `<template #default>`. Composable : `useFormFeedback.ts` — appeler `feedback.reset()` à l'ouverture.
 
-## Règle UI — Entités comptables gelées (ADR-009)
+#### Reminder cards
 
-Toute entité ayant atteint un état terminal comptablement (levy_call `issued`, tâche `closed`, sinistre avec `transmitted_at` renseigné, etc.) doit être visuellement distinguée des entités modifiables.
+Les rappels synthétiques partagés entre vues passent par `CReminderCard`. Ne pas recopier localement : `section-head`, `reminder-list`, `reminder-row`, `reminder-dot`.
 
-- **Badge "Gelé"** : une icône cadenas (`CIconLock`) accompagnée du libellé de l'état terminal est affichée dans le header de la carte ou de la vue détail. Elle utilise `.tone--muted`.
-- **Actions supprimées** : les boutons Modifier et Supprimer disparaissent de la carte et de la modale — ils ne sont pas simplement désactivés, afin d'éviter toute confusion.
-- **Champs en lecture seule** : dans une modale ou vue détail, les champs immuables sont rendus sous forme de `<span>` (pas `<input readonly>`), précédés d'une mention contextuelle discrète « Donnée comptable — non modifiable » en `label-sm` avec `.tone--muted`.
-- **Action de remplacement (Pattern B)** : pour les contrats actifs, l'action « Créer un avenant » remplace « Modifier » et s'affiche avec le variant `ghost` standard. Elle ne doit pas être présentée comme une action destructive.
-- **Frise d'historique** : sur les entités avec `predecessor_id` (contrats) ou `parent_budget_id` (budgets), une section « Historique » liste la chaîne des versions précédentes avec leur période de validité, sans action disponible sur les entrées historiques.
+---
 
-## DDR
-| Ref | Décision |
-|---|---|
-| DDR-001 v3 | Fraunces (display) + DM Sans (corps) + JetBrains Mono (data tabulaire) |
-| DDR-002 | Lavande/charcoal, light+dark, tokens CSS vars uniquement |
-| DDR-003 | Bottom nav mobile, sidebar desktop, filtrage par rôle |
-| DDR-004 | Groupes sidebar (pattern B labels fixes), dropdown profil utilisateur, routes `/residence/*` et `/profile/*` |
-| DDR-005 | États de chargement et d'erreur de page — `usePageLoader` + `CPageError` |
-| DDR-006 | `CFormFeedback` dans le slot `#footer` de toute `CModal` avec formulaire ou action destructive |
+### 4.2 Règles par feature
+
+#### Vues AG
+
+- Fiche AG : statut, date AG, date limite convocation (J-21), résolutions, état documentaire (convocation / annexes / PV) lisibles immédiatement.
+- AG `closed` → lecture seule complète (actions mutantes supprimées via `v-if`).
+- Rôles non gestionnaires : lecture seule sur la préparation. Locataire : résultats et PV publié uniquement.
+- Bandeau d'état AG (`draft` / `called` / `ongoing` / `closed`) implémenté inline dans la vue avec des helpers Tailwind — pas de composant dédié. Les autres entités utilisent `CBadge` dans `CEyebrow`.
+- Carte de présence latérale : mode de participation par lot + indicateur de tantièmes, indépendante des votes saisis.
+
+#### Vue Contrats
+
+- **Carte contrat** : icône métier + titre + chip statut dans `CCardHeader` · chip domaine/type sur ligne dédiée sous le header.
+- **Carte prestataire** : même structure, sans chip de statut.
+- Rappels à traiter en tête avec action d'acquittement directe.
+- Tabs : `Tous` · `Actifs` · `Expirés` avec volume.
+- Contrat `active` → `amount`, `start_date`, `end_date` gelés → « Créer un avenant » remplace « Modifier ».
+- Fiche contrat expose la chaîne des avenants via `predecessor_id`.
+- Suppression uniquement depuis la modale d'édition.
+
+#### Vue Tâches
+
+- **Carte** : titre + chips priorité et statut dans `CCardHeader`, sans icône.
+- Champ prestataire accepte une saisie libre — autocomplete si correspondance, suggestion d'ajout au référentiel si non (optionnel).
+- Métadonnée prestataire : `CIconWrench` (externe) ou `CIconUser` (auto-assignation) — visible uniquement si assignation réelle.
+- Bloc lien prestataire (token actif) : `Générer` · `Afficher` · `Révoquer` au-dessus de la ligne d'actions.
+
+#### Vue Signalements
+
+- **Carte** : icône + chip statut + date de mise à jour relative dans `CCardHeader`.
+- Conversion → tâche : choisir la priorité dans la même modale (`Normal` par défaut) → redirection vers la tâche créée.
+- `Supprimer` uniquement dans la modale d'édition.
+
+#### Vue Sinistres
+
+- **Carte** : icône obligatoire (couleur selon type) dans `CCardHeader` · chip de type à gauche du chip statut.
+- Délai légal restant avant déclaration à l'assurance visible directement sur la carte.
+- Tabs : `Tous` · `Ouverts` · `En cours` · `Clos` avec volume.
+- Actions contextuelles strictes : `Ouvert → Transmettre` · `En cours → Clore` · `Clos → Supprimer`.
+- `Supprimer` uniquement dans la modale d'édition. Note légale délais via `CCard + CLegalNotice`.
+
+#### Vue Carnet d'entretien
+
+- Filtres calendaires : `Mois` · `Trimestre` (défaut) · `Semestre` · `Année` · `Tout`.
+- Navigation `précédent / suivant` déplace d'une période complète.
+- Bloc réglementaire en tête : adresse immeuble + syndic en exercice.
+
+---
+
+## Appendice — DDR
+
+| Réf | Titre | Résumé |
+|---|---|---|
+| DDR-001 v3 | [Typographie](ddr/DDR-001-typographie.md) | Fraunces (display) + DM Sans (corps) + JetBrains Mono (data tabulaire) |
+| DDR-002 | [Couleurs](ddr/DDR-002-couleurs.md) | Palette lavande/charcoal, light + dark, tokens CSS vars uniquement |
+| DDR-003 | [Navigation](ddr/DDR-003-navigation.md) | Bottom nav mobile, sidebar desktop, filtrage par rôle |
+| DDR-004 | [Navigation sidebar](ddr/DDR-004-navigation-sidebar.md) | Groupes sidebar (pattern B — labels fixes), dropdown profil, routes `/residence/*` et `/profile/*` |
+| DDR-005 | [États de chargement](ddr/DDR-005-page-loading-states.md) | `usePageLoader` + `CPageError` + `CPageLoader` — chargements non bloquants isolés |
+| DDR-006 | CFormFeedback modales | `CFormFeedback` dans le slot `#footer` de toute `CModal` avec formulaire ou action destructive |
+| DDR-007 | [Spécification UX composants](./../outputs/bmad/planning-artifacts/ux-design-specification.md) | Catalogue Tailwind v4 + Radix Vue + nouveaux composants headers/molécules (`CPageHeader`, `CSectionHeader`, `CCardHeader`, `CTopbarBreadcrumb`, `CDocumentList`, `CEmptyState`, `CStatusBanner`…) |

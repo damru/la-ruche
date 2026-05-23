@@ -80,26 +80,42 @@ jobs/     → dépend de db/ et domain/
 
 ## Messages de commit
 
-Format : `type(scope): description courte`
+Ce projet suit la spécification **[Conventional Commits](https://www.conventionalcommits.org/)**.
+Le format est **obligatoire** à minima pour les Pull Requests.
 
-| Type       | Usage                                       |
-| ---------- | ------------------------------------------- |
-| `feat`     | Nouvelle fonctionnalité                     |
-| `fix`      | Correction de bug                           |
-| `refactor` | Refactoring sans changement de comportement |
-| `test`     | Ajout ou modification de tests              |
-| `docs`     | Documentation uniquement                    |
-| `chore`    | Build, CI, dépendances                      |
+```
+<type>(<scope>): <description courte>
+
+[corps optionnel]
+
+[pied de page optionnel — BREAKING CHANGE: ..., Closes #...]
+```
+
+| Type         | Usage                                           |
+| ------------ | ----------------------------------------------- |
+| `feat`       | Nouvelle fonctionnalité                         |
+| `fix`        | Correction de bug                               |
+| `refactor`   | Refactoring sans changement de comportement     |
+| `perf`       | Amélioration de performance                     |
+| `test`       | Ajout ou modification de tests                  |
+| `docs`       | Documentation uniquement                        |
+| `style`      | Formatage, virgules manquantes, etc.            |
+| `chore`      | Build, dépendances, outillage                   |
+| `ci`         | Workflows CI/CD                                 |
+| `build`      | Système de build, Dockerfile, Makefile          |
+| `revert`     | Annulation d'un commit précédent                |
+
+**Breaking change :** ajouter `!` avant les deux-points ou un pied de page `BREAKING CHANGE:`.
 
 Exemples :
 
 ```
 feat(ag): calcul automatique résultats art. 26
-fix(auth): rotation refresh token en cas de concurrence
-test(domain): ajouter cas limites vote unanimité
-docs(api): documenter endpoint génération appels de fonds
-feat(ui): composant CDataTable tri colonnes
-fix(i18n): clé manquante tableau de bord
+fix(backend): guard levy_call mutation après statut issued
+test(domain): cas limites vote unanimité
+docs: mettre à jour ARCHITECTURE.md — table vendor_contract
+feat!: supprimer l'endpoint PUT /levy-calls/:id (remplacé par POST /issue)
+chore(ci): ajouter job commitlint sur pull_request
 ```
 
 ***

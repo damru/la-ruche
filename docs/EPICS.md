@@ -8,7 +8,7 @@
 > Chaque feature est organisée en epic. Les stories sont ajoutées à la demande, au moment de l'implémentation.
 > Le MVP est l'ensemble des epics marquées **MVP : oui**.
 > Statuts possibles : **en attente** · **en cours** · **terminée**
-> Dernière mise à jour : 13 mai 2026
+> Dernière mise à jour : 22 mai 2026
 
 > **Lecture d'avancement (code actuel) :**
 > - **backend réel** = handlers + DB opérationnels
@@ -81,12 +81,12 @@ Cycle de vie complet d'une AG, résolutions typées par majorité, vote par lot 
 * `EP-003-S02` ✅ — Joindre les documents obligatoires à la convocation et alerter en cas de pièce manquante avant envoi (LEGAL.md §3.1)
 * `EP-003-S03` ✅ — Enregistrer les présences, procurations et votes par correspondance (LEGAL.md §3.2)
 * `EP-003-S04` ✅ — Saisir les résolutions et les votes, et calculer les résultats selon la règle de majorité applicable (art. 24/25/25-1/26/26-1/unanimité) (LEGAL.md §3.2)
-* `EP-003-S05` ✅ — Générer et stocker le PV signé en séance (LEGAL.md §3.3) (endpoint `POST /meetings/{id}/minutes` + flux pré-signé EP-005 ; verrouillage par `minutes_already_attached`)
+* `EP-003-S05` ✅ — Générer et stocker le PV signé en séance (LEGAL.md §3.3)
 * `EP-003-S06` ✅ — Tracer la date de notification du PV aux copropriétaires **opposants ou défaillants** : le syndic doit notifier dans le délai d'**un mois** à compter de la tenue de l'AG (art. 42 al. 3 loi 1965). L'implémentation affiche la date limite de contestation à J+60 depuis la date d'AG (approche conservative : suppose notification immédiate) — le délai légal exact de contestation est J+60 depuis la **date de notification** (LEGAL.md §3.4)
 * `EP-003-S07` ✅ — Exclure explicitement les lots archivés des calculs de quorum et de majorité avec piste d'audit des bases de calcul (LEGAL.md §3.2)
 * `EP-003-S08` ✅ — Détecter et traiter l'article 26-1 : si une résolution `double_majority` est rejetée avec > 1/2 des tantièmes totaux en faveur, proposer immédiatement une re-délibération à la majorité absolue (art. 26-1) dans la même séance via une nouvelle résolution liée (LEGAL.md §3.2)
-* `EP-003-S09` ✅ — Contrôler la complétude réglementaire de la convocation selon les art. 7 à 13 du décret 1967 (ordre du jour, annexes, preuve d'envoi) et l'art. 9 al. 4 (formulaire de **vote par correspondance obligatoirement joint**) avec checklist horodatée (LEGAL.md §3.1) (migration `0023_meeting_convocation_proof.sql`, module pur `domain/convocation_checklist.rs`, endpoint `GET /meetings/{id}/convocation-checklist`, `POST /call` étendu avec `{ channel, sent_at? }`, modale UI avec checklist temps réel)
-* `EP-003-S10` ✅ — Tracer la conformité du bureau de séance et des signatures du PV (président, secrétaire, scrutateurs) selon les art. 15, 17 et 17-1 du décret 1967 (LEGAL.md §3.4) (migration `0024_meeting_minutes_signatures.sql`, endpoint `POST /meetings/{id}/minutes/signatures`, signatures intégrées au template `domain/minutes_draft.rs`, modale UI dédiée)
+* `EP-003-S09` ✅ — Contrôler la complétude réglementaire de la convocation selon les art. 7 à 13 du décret 1967 (ordre du jour, annexes, preuve d'envoi) et l'art. 9 al. 4 (formulaire de **vote par correspondance obligatoirement joint**) avec checklist horodatée (LEGAL.md §3.1)
+* `EP-003-S10` ✅ — Tracer la conformité du bureau de séance et des signatures du PV (président, secrétaire, scrutateurs) selon les art. 15, 17 et 17-1 du décret 1967 (LEGAL.md §3.4)
 
 **Hors scope explicite (renvoyé à `EP-013` ou à des epics transverses) :**
 
@@ -164,7 +164,7 @@ Fiche contrat avec reconduction tacite et préavis configurables, rappels automa
 
 ### EP-007 — Tâches & Prestataires
 
-**Statut :** terminée | **MVP :** non | **Réf. PRD :** Gestion courante
+**Statut :** en cours | **MVP :** non | **Réf. PRD :** Gestion courante
 
 **État code actuel :** backend réel (CRUD tâches + token prestataire + upload staging + pré-validation prestataire en transaction + documents manager via `task_document` + assignation prestataire référentiel ou nom libre sur `task.contractor_name`) + frontend branché (liste, créer, modifier, documents manager, token, page publique prestataire, autocomplete prestataire tolérant avec création optionnelle, clôture avec coût optionnel).
 
@@ -174,10 +174,12 @@ Tâches assignées en interne, lien tokenisé éphémère pour accès prestatair
 
 * `EP-007-S01` ✅ — Créer et assigner une tâche à un intervenant interne ou à un prestataire externe
 * `EP-007-S02` ✅ — Générer un lien tokenisé éphémère pour l'accès prestataire sans compte
-* `EP-007-S03` ✅ — Permettre au prestataire de déposer des documents via le lien tokenisé (zone staging) — `POST /vendor/:token/upload-url`
-* `EP-007-S04` ✅ — Valider et archiver les documents déposés par le prestataire (bucket final) puis passer la tâche en pré-validation (`awaiting_validation`) avec commentaire et coût optionnel — dans la transaction `POST /vendor/:token/submission`
+* `EP-007-S03` ✅ — Permettre au prestataire de déposer des documents via le lien tokenisé (zone staging)
+* `EP-007-S04` ✅ — Valider et archiver les documents déposés par le prestataire (bucket final) puis passer la tâche en pré-validation (`awaiting_validation`) avec commentaire et coût optionnel
 * `EP-007-S05` ✅ — Clôturer une tâche avec coût optionnel et l'alimenter automatiquement au carnet d'entretien (→ EP-009-S03), y compris après réouverture ; inclut `vendor_name` du prestataire assigné
-* `EP-007-S06` ✅ — Assigner un prestataire du référentiel (EP-015) à une tâche via autocomplete, avec suggestion de création optionnelle si aucune correspondance n'existe et conservation d'un nom libre sur la tâche si aucun prestataire n'est créé — `contractor_id` FK sur `task` + `task.contractor_name`
+* `EP-007-S06` ✅ — Assigner un prestataire du référentiel (EP-015) à une tâche via autocomplete, avec suggestion de création optionnelle si aucune correspondance n'existe et conservation d'un nom libre sur la tâche si aucun prestataire n'est créé
+* `EP-007-S07` — Reprendre en main une tâche depuis une phase devis (`awaiting_quote` ou `quote_received`) : retour à `in_progress` sans annuler les documents reçus, sans révocation automatique du lien prestataire (PRD US-TP-012)
+* `EP-007-S08` — Supprimer ou annuler une tâche : suppression bloquée si une entrée carnet d'entretien ou une soumission prestataire y est rattachée ; annulation disponible comme alternative sans destruction des données (PRD US-TP-016, ADR-009)
 
 ***
 
@@ -233,7 +235,7 @@ Consultations initiables par tout résident sans approbation préalable, résult
 **Stories :**
 
 * `EP-010-S01` ✅ — Créer une consultation ou un sondage avec question(s) et options de réponse (minimum 2 options, `visible_to_roles` requis)
-* `EP-010-S02` ✅ — Soumettre un vote depuis l'espace résident (une réponse par utilisateur — `UNIQUE(consultation_id, user_id)` + upsert) ; contrôle `visible_to_roles`
+* `EP-010-S02` ✅ — Soumettre un vote depuis l'espace résident (une réponse par utilisateur) ; contrôle `visible_to_roles`
 * `EP-010-S03` ✅ — Afficher les résultats en temps réel avec mention obligatoire « non décisionnelle »
 
 ***
@@ -280,16 +282,16 @@ Le cycle de vie complet d'une AG est : `draft` → `called` → **`ongoing`** �
 
 **Stories :**
 
-* `EP-013-S01` ✅ — Démarrer la séance : faire passer une AG du statut `called` à `ongoing` via `POST /{id}/start` ; verrouiller l'ordre du jour et l'assiette de tantièmes à l'instant de démarrage ; exposer le statut `ongoing` dans la liste et la fiche AG (transaction backend qui fige aussi `general_meeting_attendance`)
-* `EP-013-S02` ✅ — Désigner les rôles de séance : saisir le président, le secrétaire et les scrutateurs lors du démarrage (`status = ongoing`) ; données figées à la clôture de séance (`status = closed`) (migration `0021_meeting_session_roles.sql`, DTO `StartMeetingInput`, modale dédiée dans `AssemblyDetailView.vue`)
-* `EP-013-S03` ✅ — Feuille de présence numérique en temps réel : afficher le quorum atteint (tantièmes représentés / total, nombre de copropriétaires participants) dynamiquement à mesure de l'enregistrement des présences, procurations et votes par correspondance ; mise à jour sans rechargement de page (re-fetch `meetingsApi.attendance` après `saveVotes` et `saveAttendance`)
-* `EP-013-S04` ✅ — Conduire le vote résolution par résolution : en `status = ongoing`, saisir les positions (pour / contre / abstention / non-votant) lot par lot pour chaque résolution et calculer le résultat automatiquement selon la règle de majorité applicable (art. 24 / 25 / 26 / unanimité) (modale de saisie + finalisation `POST /finalize` propageant `eligible_for_second_vote`)
-* `EP-013-S05` ✅ — Détecter et traiter l'article 25-1 : si une résolution `absolute_majority` est rejetée avec ≥ 1/3 des tantièmes totaux en faveur, proposer immédiatement une re-délibération à la majorité simple (art. 24) dans la même séance ; tracer la résolution originale et sa re-délibération (logique domaine `vote.rs`, modale `Art24Modal`, tests canoniques)
+* `EP-013-S01` ✅ — Démarrer la séance : faire passer une AG du statut `called` à `ongoing` ; verrouiller l'ordre du jour et l'assiette de tantièmes à l'instant de démarrage ; exposer le statut `ongoing` dans la liste et la fiche AG
+* `EP-013-S02` ✅ — Désigner les rôles de séance : saisir le président, le secrétaire et les scrutateurs lors du démarrage (`status = ongoing`) ; données figées à la clôture de séance (`status = closed`) (LEGAL.md §3.2)
+* `EP-013-S03` ✅ — Feuille de présence numérique en temps réel : afficher le quorum atteint (tantièmes représentés / total, nombre de copropriétaires participants) dynamiquement à mesure de l'enregistrement des présences, procurations et votes par correspondance
+* `EP-013-S04` ✅ — Conduire le vote résolution par résolution : en `status = ongoing`, saisir les positions (pour / contre / abstention / non-votant) lot par lot pour chaque résolution et calculer le résultat automatiquement selon la règle de majorité applicable (art. 24 / 25 / 26 / unanimité)
+* `EP-013-S05` ✅ — Détecter et traiter l'article 25-1 : si une résolution `absolute_majority` est rejetée avec ≥ 1/3 des tantièmes totaux en faveur, proposer immédiatement une re-délibération à la majorité simple (art. 24) dans la même séance ; tracer la résolution originale et sa re-délibération (LEGAL.md §3.3)
 * `EP-013-S06` — Prendre des notes collaboratives par résolution : saisir des annotations de séance (arguments, amendements de forme) attachées à chaque résolution ; accessibles dans le projet de PV
 * `EP-013-S07` ✅ — Clôturer la séance : faire passer l'AG de `ongoing` à `closed` via `POST /{id}/close` ; figer les votes et la feuille de présence ; bloquer toute modification ultérieure des résultats (handler backend + bouton UI `Clôturer l'AG`)
-* `EP-013-S08` ✅ — Générer et valider le projet de PV : après clôture de séance (`status = closed`), produire un projet de PV structuré (résolutions + résultats + présences + notes) et le soumettre à revue avant signature (endpoint `GET /meetings/{id}/minutes/draft` + module pur `domain/minutes_draft.rs` + tests)
+* `EP-013-S08` ✅ — Générer et valider le projet de PV : après clôture de séance (`status = closed`), produire un projet de PV structuré (résolutions + résultats + présences + notes) et le soumettre à revue avant signature (LEGAL.md §3.4)
 * `EP-013-S09` — Signer et publier le PV : finaliser le PV avec signature numérique, l'attacher à l'AG et déclencher la traçabilité de notification aux absents (→ EP-003-S06)
-* `EP-013-S10` ✅ — Détecter et traiter l'article 26-1 : si une résolution `double_majority` est rejetée avec ≥ 1/2 des tantièmes totaux en faveur, proposer immédiatement une re-délibération à la majorité absolue (art. 25) dans la même séance ; tracer la résolution originale et sa re-délibération (logique domaine `backend/src/domain/vote.rs`, propagée par le handler `finalize_resolution` ; tests `backend/tests/assembly_test.rs:art26_1_*`)
+* `EP-013-S10` ✅ — Détecter et traiter l'article 26-1 : si une résolution `double_majority` est rejetée avec ≥ 1/2 des tantièmes totaux en faveur, proposer immédiatement une re-délibération à la majorité absolue (art. 25) dans la même séance ; tracer la résolution originale et sa re-délibération (LEGAL.md §3.3)
 
 ***
 
@@ -313,7 +315,7 @@ Catalogue des prestataires de la résidence : nom, email, téléphone, domaine p
 
 **Stories :**
 
-* `EP-015-S01` ✅ — Gérer le référentiel prestataires (CRUD) : nom, email, téléphone, domaine — `GET/POST /contractors`, `GET/PUT/DELETE /contractors/:id`
+* `EP-015-S01` ✅ — Gérer le référentiel prestataires (CRUD) : nom, email, téléphone, domaine
 * `EP-015-S02` ✅ — Rechercher un prestataire par nom (autocomplete, `?q=`) pour l'assigner à une tâche
 * `EP-015-S03` ✅ — Catalogue accessible à tous les utilisateurs authentifiés de la résidence (lecture), modifiable par manager/conseil syndical
 * `EP-015-S04` ✅ — Propagation du nom de prestataire au carnet d'entretien lors de la clôture automatique d'une tâche (`vendor_name`)
@@ -389,49 +391,25 @@ Durcir les entités comptablement critiques pour empêcher toute modification r�
 
 ***
 
-## Plan de couverture ciblé (LEGAL — toutes sections)
+### EP-019 — Profil & préférences
 
-| Réf. LEGAL | Couverture backlog | Écart restant |
-|---|---|---|
-| §1.1 Immatriculation RNC | EP-012-S01, EP-012-S03 | Dépôt RNC reste manuel (hors API publique gouvernementale) |
-| §1.2 Règlement + EDD | EP-005-S06, EP-001-S09, EP-001-S10 | Contrôle documentaire avancé à implémenter |
-| §1.3 Fiche synthétique | EP-012-S02 | Génération annuelle non implémentée |
-| §1.4 Carnet d'entretien | EP-009-S01/S02/S03/S05/S06/S07/S08 | Couvert côté carnet ; PPT reste hors scope post-MVP |
-| §1.5 Liste des copropriétaires | EP-002-S01, EP-002-S04 | Données partiellement couvertes ; champ email à compléter |
-| §1.6 Espace en ligne sécurisé | EP-002/EP-003/EP-004/EP-005/EP-006/EP-009 | Couverture native (c'est l'Application elle-même) |
-| §1.7 Organes de copropriété | EP-002-S11, EP-013-S02 | Registre des mandats et gouvernance détaillée à finaliser |
-| §1.8 Missions du syndic (art. 18) | EP-001/EP-002/EP-003/EP-004/EP-009/EP-012 | Couverture partielle ; obligations encore dispersées |
-| §2.1 Intégrité somme tantièmes | EP-001-S07, EP-004-S07 | Blocage dur backend à finaliser bout-en-bout |
-| §2.2 Historique tantièmes | EP-001-S06 | Couvert côté modèle ; contrôles de restitution à renforcer |
-| §2.3 Snapshot appels | EP-004-S05 | Couvert ; vérifier adoption sur tous flux d'appels |
-| §2.4 Tantièmes et mutations | EP-002-S08, EP-002-S06/S07 | Workflows notariaux à implémenter |
-| §3.1 Convocation AG (J-21 + pièces + formulaire vote par correspondance, art. 7 à 13 et 9 décret 1967) | EP-003-S01/S02/S09 | Formulaire vote par correspondance à intégrer dans la checklist EP-003-S09 |
-| §3.2 Règles de majorité | EP-003-S03/S04/S07 | Présence par lot désormais distincte du vote ; restent à durcir les cas limites et l'exclusion des lots archivés |
-| §3.3 PV + notification absents | EP-003-S05/S06, EP-005-S07 | Workflow de notification probante à compléter |
-| §3.4 PV (signable J+8) + notification 1 mois + contestation 2 mois | EP-003-S05/S06/S10, EP-013-S08 | Délai de contestation calculé depuis date d'AG (approche conservative) ; délai exact = J+60 depuis date de notification |
-| §3.5 PV du conseil syndical en délégation | EP-002-S12 | Non implémenté |
-| §4.1 Compte bancaire séparé | Hors périmètre logiciel | Information uniquement ; pas de flux bancaire |
-| §4.2 Plan comptable normé | EP-004-S09 | Mapping comptable non implémenté |
-| §4.3 Budget + appels de fonds (incl. catégories art. 35 v6 dec. 2025) | EP-004-S01/S02/S08 | Nouvelles catégories PPT/fonds travaux/délégation CS à modéliser |
-| §4.4 Fonds travaux ≥ 5% (ou 2,5% PPT si plan adopté, art. 14-2-1 en vigueur 01/01/2023) | EP-004-S03/S10 | Seuil 2,5% PPT à implémenter ; contrôle automatique à finaliser |
-| §4.5 Arrêté de comptes | EP-004-S04 | Écrans et exports d'arrêté à finaliser |
-| §4.6 Relevé individuel de charges | EP-004-S06 | Couvert backend ; UX front à industrialiser |
-| §4.7 Recouvrement des impayés | EP-004-S11 | Fonctionnalité non implémentée |
-| §5.1 Contrat de syndic | Hors périmètre logiciel | Pas de gestion du mandat syndic |
-| §5.2 Assurance multirisque | EP-006-S05 | Suivi documentaire et alertes à implémenter |
-| §5.3 Reconduction contrats | EP-006-S01/S02/S03/S04 | Front contrats encore en mode mock |
-| §6.1 Plan pluriannuel de travaux (PPT) | EP-009-S04, EP-005-S07 | Fonctionnalité non implémentée |
-| §6.2 DPE collectif | EP-005-S07 | Gestion documentaire à implémenter |
-| §6.3 DTG | EP-005-S07 | Gestion documentaire à implémenter |
-| §7.1 État daté (15 jours) | EP-002-S06 | Workflow non implémenté |
-| §7.2 Pré-état daté | EP-002-S07 | Workflow non implémenté |
-| §8 RGPD (anonymisation + export) | EP-002-S05, EP-002-S09 | Export + anonymisation bout-en-bout à finaliser |
-| §9 Sinistres (délais) | EP-008-S01/S02/S03/S04/S05 | Couvert : workflow réel, alertes de délai, transmission assurance et pièces jointes |
-| §10 Représentation en justice + procédures | EP-002-S06, EP-002-S10 | Registre des procédures judiciaires non implémenté |
-| §11 Immutabilité comptable + audit log | EP-018-S01/S02/S03/S04/S05/S06/S07 | Implémentation transversale non démarrée ; arbitrage à faire avec EP-017 sur le modèle cible de journal d'audit |
+**Statut :** en cours | **MVP :** oui | **Réf. PRD :** Gestion courante
+
+**État code actuel :** partiel ; la préférence d'apparence est déjà exposée et persistée côté frontend, le profil utilisateur dispose d'un espace dédié, mais la feature reste encore incomplète comme hub personnel structuré de compte, notifications et préférences.
+
+Feature simple self-service permettant à chaque utilisateur authentifié de gérer ses informations personnelles utiles au produit, ses préférences de notifications et sa préférence d'apparence depuis un écran unique à onglets.
+
+**Stories :**
+
+* `EP-019-S01` — Consulter son espace profil personnel avec rappel lisible du rôle et du contexte de compte
+* `EP-019-S02` — Modifier ses informations personnelles éditables : email (identifiant de connexion) et téléphone uniquement ; `full_name` est `prefilled` depuis EP-002 (non modifiable ici) (PRD US-PP-002)
+* `EP-019-S03` — Gérer ses préférences de notifications par événement (16 événements catalogués : 3 obligatoires toggle désactivé, 13 optionnels) (PRD US-PP-004)
+* `EP-019-S04` — Définir sa préférence d'apparence (`clair`, `sombre`, `automatique`) et l'appliquer immédiatement dans l'interface
+* `EP-019-S05` — Structurer l'écran en onglets `Compte`, `Notifications`, `Apparence` pour éviter la dispersion des réglages
+* `EP-019-S06` — Gérer la première visite : afficher les valeurs par défaut de manière lisible dès la première ouverture du profil ; s'assurer que l'état initial est compréhensible sans action préalable (PRD US-PP-003)
+* `EP-019-S07` — Réinitialiser ses préférences : bouton global unique en bas de page (couvre Notifications + Apparence), avec modale de confirmation avant exécution (PRD US-PP-005)
 
 ***
-
 
 ## Tâches techniques post-MVP
 

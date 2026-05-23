@@ -25,6 +25,7 @@ Thumbs.db
 # Claude
 .claude/settings.local.json
 .claude/worktrees/**
+.claude/.mcp.json
 .mcp.json
 
 

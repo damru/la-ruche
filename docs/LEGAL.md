@@ -1,7 +1,34 @@
-# LEGAL.md — l'Application
+---
+document: LEGAL
+version: 1.0.0
+owner: Damien
+status: validé
+last_updated: 2026-05-22
+references:
+  - Loi n°65-557 du 10 juillet 1965
+  - Décret n°67-223 du 17 mars 1967
+  - Loi ALUR n°2014-366 du 24 mars 2014
+  - Loi ELAN n°2018-1021 du 23 novembre 2018
+  - Loi Climat et Résilience n°2021-1104 du 22 août 2021
+  - Arrêté du 14 mars 2005
+  - RGPD Règlement UE 2016/679
+  - ADR-009
+description: >
+  Référentiel des obligations légales de la copropriété française applicables à La Ruche.
+  Pour chaque obligation : base légale, couverture actuelle et écart à combler.
+  Source normative pour les décisions produit à contrainte légale.
+rules:
+  - Toute obligation légale nouvelle ou modifiée doit être ajoutée ici avant tout backlog ou ADR.
+  - Les références légales citent toujours le texte officiel (Légifrance LEGIARTI ou service-public.fr).
+  - Ne jamais interpréter la loi — citer les textes officiels, dater les versions en vigueur.
+  - Un écart constaté (⚠️ partielle / ❌ non couverte) doit pointer vers une Epic ou story explicite.
+  - La couverture ✅ n'est mise à jour qu'après livraison effective, pas après planification.
 
-> **Dénomination** — Dans le présent document, l'expression **« l'Application »** désigne exclusivement **La Ruche**, plateforme web open source de gestion participative de copropriété. Ces deux termes sont interchangeables et désignent la même entité logicielle.
-## Référentiel des obligations légales de la copropriété
+---
+
+# LEGAL.md — La Ruche
+
+> **Dénomination** — « l'Application » désigne exclusivement **La Ruche**, plateforme web open source de gestion participative de copropriété.
 
 > Document de référence produit. Chaque obligation légale est décrite avec ses implications techniques et fonctionnelles, et sa couverture par l'Application.
 >
@@ -232,7 +259,7 @@ Les tantièmes sont attachés au **lot**, pas au propriétaire. Une mutation (ve
 - Alerte si un document obligatoire est manquant avant envoi de la convocation.
 - Le formulaire de vote par correspondance doit être inclus dans la checklist de complétude de la convocation (EP-003-S09).
 
-**Écart constaté :** Le formulaire de vote par correspondance n'est pas encore référencé dans la checklist de convocation (EP-003-S09). → ⚠️ à compléter.
+**Écart constaté :** Le formulaire de vote par correspondance est désormais intégré dans la checklist de convocation (EP-003-S09 ✅). La couverture reste partielle car le mode d'envoi obligatoire (recommandé avec AR ou remise contre émargement) n'est pas tracé par l'Application — hors périmètre MVP.
 
 ---
 
@@ -294,7 +321,7 @@ Les copropriétaires opposants ou défaillants disposent ensuite d'un délai de 
 ### 3.5 PV du conseil syndical en délégation de pouvoirs
 
 **Référence :** Art. 21-1 décret 1967 (LEGIARTI000042077775 v1.0, en vigueur 04/07/2020) · Art. 21-1 et ss. loi 1965  
-**Couverture :** ❌ non couverte — EP-002-S12 (à créer)
+**Couverture :** ❌ non couverte — EP-002-S12
 
 Lorsque le conseil syndical bénéficie d'une délégation de pouvoirs votée en AG (art. 21-1 et ss. loi 1965), ses décisions doivent être consignées dans un **procès-verbal formel** :
 - Signé par **deux membres** du conseil syndical
@@ -684,7 +711,7 @@ L'`audit_log` est en **append-only** : aucune ligne ne peut être modifiée ou s
 | 3.2 | Tenue de séance et présidence | Art. 15 décret 1967 | ✅ | EP-013-S02, EP-013-S03 |
 | 3.3 | Règles de majorité | Art. 24/25/26 loi 1965 | ✅ | EP-003-S03/S04/S07, EP-013-S05/S10 |
 | 3.4 | PV (signable J+8) + notification 1 mois + contestation 2 mois | Art. 17, 18 décret 1967 · Art. 42 loi 1965 | ✅ | EP-003-S05/S06/S10, EP-013-S08 |
-| 3.5 | PV du conseil syndical en délégation de pouvoirs | Art. 21-1 décret 1967 | ❌ | EP-002-S12 (à créer) |
+| 3.5 | PV du conseil syndical en délégation de pouvoirs | Art. 21-1 décret 1967 | ❌ | EP-002-S12 |
 | 4.1 | Compte bancaire séparé | Art. 18 loi 1965 | 🔲 | — |
 | 4.2 | Plan comptable normé | Arrêté 14/03/2005 | ⚠️ | EP-004 |
 | 4.3 | Budget prévisionnel + appels de fonds (incl. PPT/fonds travaux/délégation CS depuis art. 35 v6 dec. 2025) | Art. 14-1 loi 1965 · Art. 35 décret 1967 v6.0 | ⚠️ | EP-004 |
@@ -700,7 +727,7 @@ L'`audit_log` est en **append-only** : aucune ligne ne peut être modifiée ou s
 | 6.3 | Diagnostic technique global (DTG) | ALUR art. L731-1 | 🔲 | EP-005 |
 | 7.1 | État daté (15 jours) | Décret 1967 art. 5 | ❌ | EP-002-S06 |
 | 7.2 | Pré-état daté | ALUR art. L721-2 | ❌ | EP-002-S07 |
-| 8 | RGPD + anonymisation | RGPD 2016/679 | ⚠️ | EP-002-S05 |
+| 8 | RGPD + anonymisation | RGPD 2016/679 | ⚠️ | EP-002-S05, EP-002-S09 |
 | 9 | Sinistres (délais déclaration) | Code des assurances | ✅ | EP-008 |
 | 10 | Représentation en justice + procédures en cours | Art. 18-I loi 1965 | ⚠️ | EP-002-S06, EP-002-S10 |
 | 11 | Immutabilité des données comptables + audit log | Art. L123-22 Code de commerce | ❌ | EP-018, ADR-009 |
