@@ -5,54 +5,54 @@
 
 :root {
   /* ── Couleurs sémantiques — Light ────────────────────────────── */
-  --color-primary:               #643fd5;
-  --color-primary-container:     #7d5bf0;
-  --color-on-primary:            #ffffff;
-  --color-secondary:             #5a6073;
-  --color-secondary-container:   #dde1f9;
-  --color-on-secondary-container:#1a1d2e;
-  --color-error:                 #ba1a1a;
-  --color-error-container:       #ffdad6;
-  --color-on-error:              #ffffff;
-  --color-success:               #2e7d32;
-  --color-success-container:     #e8f5e9;
-  --color-warning:               #e65100;
-  --color-warning-container:     #fff8e1;
-  --color-role-manager-bg:       #e8def8;
-  --color-role-manager-fg:       #21005d;
-  --color-role-board-bg:         #d2e4fb;
-  --color-role-board-fg:         #001d36;
-  --color-role-co-owner-bg:      #cef5e5;
-  --color-role-co-owner-fg:      #00391d;
-  --color-role-tenant-bg:        #fcecd1;
-  --color-role-tenant-fg:        #3a2000;
+  --color-primary:               oklch(0.503 0.2154 287.24);
+  --color-primary-container:     oklch(0.587 0.2131 288.56);
+  --color-on-primary:            oklch(1.000 0.0000 0.00);
+  --color-secondary:             oklch(0.491 0.0313 271.42);
+  --color-secondary-container:   oklch(0.914 0.0329 278.20);
+  --color-on-secondary-container:oklch(0.236 0.0330 275.89);
+  --color-error:                 oklch(0.506 0.1927 27.70);
+  --color-error-container:       oklch(0.918 0.0418 25.23);
+  --color-on-error:              oklch(1.000 0.0000 0.00);
+  --color-success:               oklch(0.523 0.1347 144.17);
+  --color-success-container:     oklch(0.957 0.0210 147.64);
+  --color-warning:               oklch(0.631 0.1970 40.25);
+  --color-warning-container:     oklch(0.979 0.0310 92.94);
+  --color-role-manager-bg:       oklch(0.916 0.0365 303.11);
+  --color-role-manager-fg:       oklch(0.242 0.1404 286.09);
+  --color-role-board-bg:         oklch(0.913 0.0369 254.57);
+  --color-role-board-fg:         oklch(0.225 0.0601 247.68);
+  --color-role-co-owner-bg:      oklch(0.938 0.0457 168.57);
+  --color-role-co-owner-fg:      oklch(0.303 0.0747 155.07);
+  --color-role-tenant-bg:        oklch(0.949 0.0395 80.90);
+  --color-role-tenant-fg:        oklch(0.272 0.0601 67.02);
   --color-tint:                  15%;
 
   /* ── Surfaces — Light ────────────────────────────────────────── */
-  --color-surface:                    #f8f9fa;
-  --color-surface-container-lowest:   #ffffff;
-  --color-surface-container-low:      #f3f4f5;
-  --color-surface-container:          #edeff0;
-  --color-surface-container-high:     #e7e9ea;
-  --color-surface-container-highest:  #e1e3e4;
-  --color-on-surface:                 #191c1d;
-  --color-on-surface-variant:         #42474e;
-  --color-outline:                    #74777f;
-  --color-outline-variant:            #c2c7cf;  
-  --color-outline-light:              color-mix(in srgb, var(--color-outline) var(--color-tint), transparent);
-  
+  --color-surface:                    oklch(0.982 0.0017 247.84);
+  --color-surface-container-lowest:   oklch(1.000 0.0000 0.00);
+  --color-surface-container-low:      oklch(0.967 0.0017 247.84);
+  --color-surface-container:          oklch(0.951 0.0025 228.79);
+  --color-surface-container-high:     oklch(0.933 0.0025 228.79);
+  --color-surface-container-highest:  oklch(0.915 0.0026 228.79);
+  --color-on-surface:                 oklch(0.224 0.0049 219.69);
+  --color-on-surface-variant:         oklch(0.396 0.0135 256.76);
+  --color-outline:                    oklch(0.569 0.0128 269.45);
+  --color-outline-variant:            oklch(0.828 0.0125 259.82);
+  --color-outline-light:              color-mix(in oklch, var(--color-outline) var(--color-tint), transparent);
+
   /* ── Gradient signature ──────────────────────────────────────── */
-  --gradient-primary: linear-gradient(135deg, #643fd5, #7d5bf0);
+  --gradient-primary: linear-gradient(135deg, oklch(0.503 0.2154 287.24), oklch(0.587 0.2131 288.56));
 
   /* ── Ombres ──────────────────────────────────────────────────── */
-  --shadow-sm:  0 2px 8px rgba(25, 28, 29, 0.04);
-  --shadow-md:  0 8px 32px rgba(25, 28, 29, 0.07), 0 2px 8px rgba(25, 28, 29, 0.04);
-  --shadow-lg:  0 16px 48px rgba(25, 28, 29, 0.10), 0 4px 16px rgba(25, 28, 29, 0.06);
-  --shadow-glass: 0 20px 60px rgba(25, 28, 29, 0.14), 0 4px 16px rgba(25, 28, 29, 0.08);
-  --shadow-primary-ring:       0 0 0 2px rgba(100, 63, 213, 0.35);
-  --shadow-error-ring:         0 0 0 2px rgba(186, 26, 26, 0.35);
-  --shadow-primary-lift:       0 4px 16px rgba(100, 63, 213, 0.25);
-  --shadow-primary-lift-hover: 0 8px 24px rgba(100, 63, 213, 0.35);
+  --shadow-sm:  0 2px 8px oklch(0.224 0.0049 219.69 / 0.04);
+  --shadow-md:  0 8px 32px oklch(0.224 0.0049 219.69 / 0.07), 0 2px 8px oklch(0.224 0.0049 219.69 / 0.04);
+  --shadow-lg:  0 16px 48px oklch(0.224 0.0049 219.69 / 0.10), 0 4px 16px oklch(0.224 0.0049 219.69 / 0.06);
+  --shadow-glass: 0 20px 60px oklch(0.224 0.0049 219.69 / 0.14), 0 4px 16px oklch(0.224 0.0049 219.69 / 0.08);
+  --shadow-primary-ring:       0 0 0 2px oklch(0.503 0.2154 287.24 / 0.35);
+  --shadow-error-ring:         0 0 0 2px oklch(0.506 0.1927 27.70 / 0.35);
+  --shadow-primary-lift:       0 4px 16px oklch(0.503 0.2154 287.24 / 0.25);
+  --shadow-primary-lift-hover: 0 8px 24px oklch(0.503 0.2154 287.24 / 0.35);
 
   /* ── Border radius ───────────────────────────────────────────── */
   --radius-sm:   8px;
