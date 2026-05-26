@@ -56,6 +56,12 @@ const savingDocument = ref(false)
 const savingAttendance = ref(false)
 const callingMeeting = ref(false)
 const closingMeeting = ref(false)
+const showCloseMeetingModal = ref(false)
+const closeMeetingFeedback = useFormFeedback()
+
+const showDeleteDocumentModal = ref(false)
+const pendingDeleteDocumentId = ref<string | null>(null)
+const pendingDeleteDocumentName = ref<string | null>(null)
 
 const showVoteModal = ref(false)
 const votingResolution = ref<Resolution | null>(null)
@@ -117,6 +123,14 @@ const notificationDeadline = computed(() => {
   const deadline = new Date(notified)
   deadline.setMonth(deadline.getMonth() + 2)
   return deadline
+})
+
+const notificationDutyVariant = computed<'info' | 'warning' | 'error'>(() => {
+  if (!notificationDutyDeadline.value) return 'info'
+  const daysLeft = Math.floor((notificationDutyDeadline.value.getTime() - Date.now()) / 86_400_000)
+  if (daysLeft < 0) return 'error'
+  if (daysLeft <= 7) return 'warning'
+  return 'info'
 })
 
 const showEditResolutionModal = ref(false)
@@ -760,6 +774,20 @@ async function detachDocument(documentId: string) {
   }
 }
 
+function promptDeleteDocument(documentId: string, name: string) {
+  pendingDeleteDocumentId.value = documentId
+  pendingDeleteDocumentName.value = name
+  showDeleteDocumentModal.value = true
+}
+
+async function confirmDetachDocument() {
+  if (!pendingDeleteDocumentId.value) return
+  await detachDocument(pendingDeleteDocumentId.value)
+  showDeleteDocumentModal.value = false
+  pendingDeleteDocumentId.value = null
+  pendingDeleteDocumentName.value = null
+}
+
 async function openDocument(documentId: string) {
   try {
     const response = await documentsApi.getDownloadUrl(documentId)
@@ -835,13 +863,14 @@ async function closeMeeting() {
   if (!meeting.value) return
 
   closingMeeting.value = true
-  documentFeedback.reset()
+  closeMeetingFeedback.reset()
 
   try {
     await meetingsApi.close(meeting.value.id)
+    showCloseMeetingModal.value = false
     await reload()
   } catch (err) {
-    documentFeedback.setError(toErrorMessage(err))
+    closeMeetingFeedback.setError(toErrorMessage(err))
   } finally {
     closingMeeting.value = false
   }
@@ -1156,10 +1185,9 @@ function toDateTimeLocal(value: string): string {
           v-else-if="topbarActionState === 'ongoing'"
           variant="primary"
           size="sm"
-          :loading="closingMeeting"
-          @click="closeMeeting"
+          @click="showCloseMeetingModal = true"
         >
-          <CIconCheck class="icon-sm" />
+          <CIconLock class="icon-sm" />
           <span class="btn-label">{{ t('meetings.close') }}</span>
         </CBtn>
 
@@ -1305,19 +1333,20 @@ function toDateTimeLocal(value: string): string {
                   {{ (meeting.minutes_scrutineers_signed ?? []).map(s => s.name).join(', ') }}
                 </span>
               </div>
-              <div class="flex items-center gap-2 flex-wrap">
-                <template v-if="auth.isManager">
-                  <span
-                    v-if="notificationDutyDeadline"
-                    class="text-xs text-on-surface-variant"
-                  >
-                    {{ t('meetings.minutes.notification_duty_hint', { date: formatDate(notificationDutyDeadline.toISOString()) }) }}<sup><a
-                      href="https://www.legifrance.gouv.fr/loda/article_lc/LEGIARTI000039329680"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      class="legal-ref"
-                    >art.&nbsp;42&nbsp;al.&nbsp;3</a></sup>
-                  </span>
+              <template v-if="auth.isManager">
+                <CAlert
+                  v-if="notificationDutyDeadline"
+                  :variant="notificationDutyVariant"
+                  class="w-full"
+                >
+                  {{ t('meetings.minutes.notification_duty_hint', { date: formatDate(notificationDutyDeadline.toISOString()) }) }}<sup><a
+                    href="https://www.legifrance.gouv.fr/loda/article_lc/LEGIARTI000039329680"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="legal-ref"
+                  >art.&nbsp;42&nbsp;al.&nbsp;3</a></sup>
+                </CAlert>
+                <div class="flex items-center gap-2 flex-wrap">
                   <CBtn
                     variant="ghost"
                     size="sm"
@@ -1328,8 +1357,8 @@ function toDateTimeLocal(value: string): string {
                     <CIconBell class="icon-sm" />
                     <span>{{ t('meetings.minutes.mark_notified') }}</span>
                   </CBtn>
-                </template>
-              </div>
+                </div>
+              </template>
             </template>
             <template v-else>
               <p class="text-xs text-on-surface-variant">
@@ -1493,6 +1522,12 @@ function toDateTimeLocal(value: string): string {
                   <p class="tally-title">
                     {{ t('meetings.vote.tally') }}
                   </p>
+                  <p
+                    v-if="resolution.status === 'pending'"
+                    class="text-2xs text-on-surface-variant"
+                  >
+                    {{ t('meetings.vote.inProgress') }}
+                  </p>
                   <div class="tally-bars">
                     <div class="tally-row">
                       <span class="tally-label">{{ t('meetings.vote.in_favor') }}</span>
@@ -1535,7 +1570,7 @@ function toDateTimeLocal(value: string): string {
                     :variant="voteResults[resolution.id].passed ? 'success' : 'error'"
                     :title="voteResults[resolution.id].passed ? t('meetings.vote.passed') : t('meetings.vote.rejected')"
                   >
-                    <p class="font-(length:--text-2xs)">
+                    <p class="text-2xs">
                       {{ voteResultSubtitle(resolution, voteResults[resolution.id]) }}
                     </p>
                     <template #side>
@@ -1547,7 +1582,7 @@ function toDateTimeLocal(value: string): string {
                     variant="warning"
                     :title="t('meetings.vote.art25_1_title')"
                   >
-                    <p class="font-(length:--text-2xs)">
+                    <p class="text-2xs">
                       {{ t('meetings.vote.explanations.absolute_majority_second_vote', { threshold: Math.ceil(voteResults[resolution.id].shares_counted / 3) }) }}
                     </p>
                   </CAlert>
@@ -1556,7 +1591,7 @@ function toDateTimeLocal(value: string): string {
                     variant="warning"
                     :title="t('meetings.vote.art26_1_title')"
                   >
-                    <p class="font-(length:--text-2xs)">
+                    <p class="text-2xs">
                       {{ t('meetings.vote.explanations.double_majority_second_vote', { threshold: Math.ceil(voteResults[resolution.id].shares_counted / 2) }) }}
                     </p>
                   </CAlert>
@@ -1699,7 +1734,7 @@ function toDateTimeLocal(value: string): string {
                       <button
                         v-if="auth.isManager"
                         class="doc-remove"
-                        @click="detachDocument(document.id)"
+                        @click="promptDeleteDocument(document.id, document.original_name)"
                       >
                         {{ t('common.delete') }}
                       </button>
@@ -1738,7 +1773,7 @@ function toDateTimeLocal(value: string): string {
                       <button
                         v-if="auth.isManager"
                         class="doc-remove"
-                        @click="detachDocument(document.id)"
+                        @click="promptDeleteDocument(document.id, document.original_name)"
                       >
                         {{ t('common.delete') }}
                       </button>
@@ -2383,6 +2418,69 @@ function toDateTimeLocal(value: string): string {
       </template>
     </CModal>
 
+    <CModal
+      :open="showCloseMeetingModal"
+      :title="t('meetings.closeMeetingTitle')"
+      size="sm"
+      @update:open="showCloseMeetingModal = $event"
+    >
+      <p class="body-sm">
+        {{ t('meetings.closeMeetingSub') }}
+      </p>
+      <template #footer>
+        <CFormFeedback
+          :status="closeMeetingFeedback.status.value"
+          :message="closeMeetingFeedback.message.value"
+        />
+        <CBtn
+          variant="ghost"
+          @click="showCloseMeetingModal = false"
+        >
+          {{ t('common.cancel') }}
+        </CBtn>
+        <CBtn
+          variant="primary"
+          :loading="closingMeeting"
+          @click="closeMeeting"
+        >
+          {{ t('meetings.closeMeetingConfirm') }}
+        </CBtn>
+      </template>
+    </CModal>
+
+    <CModal
+      :open="showDeleteDocumentModal"
+      :title="t('meetings.documents.detachTitle')"
+      size="sm"
+      @update:open="showDeleteDocumentModal = $event"
+    >
+      <p class="body-sm">
+        {{ t('meetings.documents.detachMessage') }}
+        <template v-if="pendingDeleteDocumentName">
+          <br>
+          <span class="font-medium">{{ pendingDeleteDocumentName }}</span>
+        </template>
+      </p>
+      <template #footer>
+        <CFormFeedback
+          :status="documentFeedback.status.value"
+          :message="documentFeedback.message.value"
+        />
+        <CBtn
+          variant="ghost"
+          @click="showDeleteDocumentModal = false"
+        >
+          {{ t('common.cancel') }}
+        </CBtn>
+        <CBtn
+          variant="primary"
+          @click="confirmDetachDocument"
+        >
+          {{ t('meetings.documents.detachConfirm') }}
+        </CBtn>
+      </template>
+    </CModal>
+
     <!-- EP-003-S09 — Convocation : checklist + canal + date d'envoi -->
     <CModal
       :open="showConvocationModal"
@@ -2643,32 +2741,32 @@ function toDateTimeLocal(value: string): string {
 }
 
 .status-banner--called .status-banner__icon {
-  background: color-mix(in srgb, var(--color-primary) 16%, transparent);
+  background: color-mix(in srgb, var(--color-primary) var(--color-tint), transparent);
   color: var(--color-primary);
 }
 
 .status-banner--closed {
-  background: color-mix(in srgb, var(--color-success-container) 100%, transparent);
+  background: var(--color-success-container);
   color: var(--color-on-success-container);
 }
 
 .status-banner--closed .status-banner__icon {
-  background: color-mix(in srgb, var(--color-success) 16%, transparent);
+  background: color-mix(in srgb, var(--color-success) var(--color-tint), transparent);
   color: var(--color-success);
 }
 
 .status-banner--ongoing {
-  background: color-mix(in srgb, var(--color-success-container) 100%, transparent);
-  color: var(--color-on-success-container);
+  background: var(--color-secondary-container);
+  color: var(--color-on-primary-container);
 }
 
 .status-banner--ongoing .status-banner__icon {
-  background: color-mix(in srgb, var(--color-success) 16%, transparent);
-  color: var(--color-success);
+  background: color-mix(in srgb, var(--color-primary) var(--color-tint), transparent);
+  color: var(--color-primary);
 }
 
 .status-banner--draft {
-  background: var(--color-surface-container-low);
+  background: var(--color-surface-container);
   color: var(--color-on-surface);
 }
 
@@ -2715,7 +2813,6 @@ function toDateTimeLocal(value: string): string {
 
 .resolution-list,
 .doc-list,
-.attendance-list,
 .attendance-edit-list {
   display: flex;
   flex-direction: column;
@@ -2843,9 +2940,7 @@ function toDateTimeLocal(value: string): string {
   font-size: var(--text-xs);
 }
 
-.result-pill,
-.pending-box,
-.quorum-kpi {
+.pending-box {
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -2853,19 +2948,9 @@ function toDateTimeLocal(value: string): string {
   border-radius: var(--radius-md);
 }
 
-.result-pill {
-  background: var(--tone-bg, transparent);
-  color: var(--tone-fg, inherit);
-}
-
 .pending-box {
   background: var(--color-surface-container-low);
   color: var(--color-on-surface-variant);
-}
-
-.vote-entry-action {
-  display: flex;
-  justify-content: flex-end;
 }
 
 .resolution-card__actions {
@@ -2966,11 +3051,6 @@ function toDateTimeLocal(value: string): string {
   white-space: nowrap;
 }
 
-.quorum-kpi {
-  background: var(--color-secondary-container);
-  color: var(--color-on-secondary-container);
-}
-
 .quorum-kpi strong {
   font-size: 28px;
   font-family: var(--font-display);
@@ -3046,22 +3126,8 @@ function toDateTimeLocal(value: string): string {
   color: var(--color-error);
 }
 
-.presence-kpi__label,
-.presence-kpi__value,
 .presence-kpi__detail {
   margin: 0;
-}
-
-.presence-kpi__label {
-  font-size: var(--text-xs);
-}
-
-.presence-kpi__value {
-  font-family: var(--font-display);
-  font-size: 40px;
-  font-weight: var(--fw-bold);
-  letter-spacing: -0.03em;
-  line-height: 1;
 }
 
 .presence-kpi__detail {

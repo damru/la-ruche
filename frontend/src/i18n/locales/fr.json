@@ -412,7 +412,10 @@
       "uploadFile": "Fichier",
       "uploadAction": "Ajouter une pièce",
       "minutesPending": "PV non déposé",
-      "minutesReady": "PV déposé"
+      "minutesReady": "PV déposé",
+      "detachTitle": "Retirer la pièce de l'AG",
+      "detachMessage": "Ce document sera définitivement retiré de cette assemblée.",
+      "detachConfirm": "Retirer"
     },
     "info": "Informations",
     "infoFields": {
@@ -452,7 +455,7 @@
     "resolutionDescriptionPlaceholder": "Détails de la résolution...",
     "voteRule": "Règle de vote",
     "closeMeetingTitle": "Clore l'assemblée",
-    "closeMeetingSub": "La clôture est définitive. Assurez-vous que toutes les résolutions ont été votées et que le PV a été déposé.",
+    "closeMeetingSub": "La clôture est définitive. Assurez-vous que toutes les résolutions ont été votées. Vous pourrez toujours déposer le PV et ajouter des documents après la clôture.",
     "closeMeetingConfirm": "Confirmer la clôture",
     "pvTitle": "Déposer le procès-verbal",
     "pvSub": "Le PV sera joint à cette assemblée et visible par tous les copropriétaires.",
@@ -476,6 +479,7 @@
       "results": "Résultats du vote",
       "tally": "Dépouillement",
       "pendingVote": "Vote non encore enregistré",
+      "inProgress": "Vote en cours de saisie",
       "passed": "Résolution adoptée",
       "rejected": "Résolution rejetée",
       "art25_1_title": "Art. 25-1 — Second vote possible",
