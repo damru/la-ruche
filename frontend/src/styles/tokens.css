@@ -81,7 +81,10 @@
   --text-xs:  12px;   /* dates, captions, secondary labels */
   --text-sm:  13px;   /* table rows, list items, default UI text */
   --text-md:  14px;   /* body text (matches base font-size) */
-  --text-lg:  16px;   /* section titles, card headings */  
+  --text-lg:  16px;   /* section titles, card headings */
+  --text-xl:      20px;   /* sub-display, modal titles */
+  --text-2xl:     24px;   /* page headings */
+  --text-display: 32px;   /* hero / display (Fraunces) */
   /* ── Espacement ──────────────────────────────────────────────── */
   --space-1:   4px;
   --space-2:   8px;
