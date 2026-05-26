@@ -66,7 +66,7 @@ defineOptions({ inheritAttrs: false })
         @update:checked="handleCheckedChange"
       >
         <CheckboxIndicator class="text-on-primary">
-          <svg viewBox="0 0 16 16" class="size-3" fill="none" stroke="currentColor" stroke-width="2.5">
+          <svg viewBox="0 0 16 16" class="size-3" fill="none" stroke="currentColor" stroke-width="1.5">
             <path d="M3 8l3.5 3.5L13 4.5" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </CheckboxIndicator>

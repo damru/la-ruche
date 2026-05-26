@@ -61,7 +61,7 @@ withDefaults(defineProps<{
           <span class="auth-brand__step-num">
             <CIconCheck
               v-if="step.status === 'done'"
-              stroke-width="2.5"
+              stroke-width="1.5"
               aria-hidden="true"
             />
             <template v-else>{{ i + 1 }}</template>

@@ -154,7 +154,7 @@ function recalc() {
           <path
             d="M12 10.25v5.25"
             stroke="var(--color-surface)"
-            stroke-width="2"
+            stroke-width="1.5"
             stroke-linecap="round"
           />
           <circle

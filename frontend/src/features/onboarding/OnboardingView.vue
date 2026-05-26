@@ -314,7 +314,7 @@ async function handleSubmit() {
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
-                    stroke-width="2.5"
+                    stroke-width="1.5"
                     stroke-linecap="round"
                     aria-hidden="true"
                   />
@@ -323,7 +323,7 @@ async function handleSubmit() {
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
-                    stroke-width="2.5"
+                    stroke-width="1.5"
                     stroke-linecap="round"
                     aria-hidden="true"
                   />

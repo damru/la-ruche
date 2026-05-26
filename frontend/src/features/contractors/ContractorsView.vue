@@ -10,7 +10,6 @@ import CBadge from '@/components/atoms/CBadge.vue'
 import CIconTile from '@/components/atoms/CIconTile.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CCard from '@/components/molecules/CCard.vue'
-import CMetaLine from '@/components/molecules/CMetaLine.vue'
 import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
 import CModal from '@/components/molecules/CModal.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
@@ -72,6 +71,8 @@ const authStore = useAuthStore()
 const buildingName = ref('')
 const allContractors = ref<Contractor[]>([])
 const search = ref('')
+const viewMode = ref<'list' | 'grid'>('list')
+const selectedDomains = ref<string[]>([])
 
 // ── Permissions ────────────────────────────────────────────────────
 const canEdit = computed(() =>
@@ -91,28 +92,41 @@ async function loadData() {
 const { loading, error, reload } = usePageLoader(loadData)
 onMounted(reload)
 
-// ── Filtered list ─────────────────────────────────────────────────
-const filtered = computed(() => {
-  const q = search.value.trim().toLowerCase()
-  if (!q) return allContractors.value
-  return allContractors.value.filter(
-    c =>
-      c.name.toLowerCase().includes(q) ||
-      (c.email ?? '').toLowerCase().includes(q) ||
-      c.domains.some(d => d.toLowerCase().includes(q)),
-  )
-})
-
-function openContractorDetail(contractorId: string) {
-  void router.push({ name: 'contractor-detail', params: { id: contractorId } })
-}
-
 // ── Sorted domains list (alphabetical by translated label) ────────
 const domainOptions = computed(() =>
   [...DOMAINS_RAW]
     .map(value => ({ value, label: t(`contractors.domains.${value}`) }))
     .sort((a, b) => a.label.localeCompare(b.label)),
 )
+
+// ── Domain filter toggle ──────────────────────────────────────────
+function toggleDomain(domain: string) {
+  const idx = selectedDomains.value.indexOf(domain)
+  if (idx >= 0) selectedDomains.value.splice(idx, 1)
+  else selectedDomains.value.push(domain)
+}
+
+// ── Filtered list ─────────────────────────────────────────────────
+const filtered = computed(() => {
+  const q = search.value.trim().toLowerCase()
+  return allContractors.value.filter((c) => {
+    if (selectedDomains.value.length && !c.domains.some(d => selectedDomains.value.includes(d)))
+      return false
+    if (!q) return true
+    return (
+      c.name.toLowerCase().includes(q) ||
+      (c.email ?? '').toLowerCase().includes(q) ||
+      c.domains.some(d =>
+        d.toLowerCase().includes(q) ||
+        t(`contractors.domains.${d}`).toLowerCase().includes(q),
+      )
+    )
+  })
+})
+
+function openContractorDetail(contractorId: string) {
+  void router.push({ name: 'contractor-detail', params: { id: contractorId } })
+}
 
 // ── Form modal ────────────────────────────────────────────────────
 const showModal = ref(false)
@@ -222,7 +236,7 @@ async function confirmDelete() {
       <template #left>
         <div class="topbar-breadcrumb">
           {{ buildingName }}
-          <CIconChevronRight />
+          <CIconChevronRight class="icon-xs" />
           <span>{{ t('contractors.title') }}</span>
         </div>
       </template>
@@ -233,7 +247,7 @@ async function confirmDelete() {
           size="sm"
           @click="openCreate"
         >
-          <CIconPlus style="width:16px;height:16px" />
+          <CIconPlus class="icon-sm" />
           <span class="btn-label">{{ t('contractors.newContractor') }}</span>
         </CBtn>
       </template>
@@ -247,49 +261,167 @@ async function confirmDelete() {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
-        <!-- Header + search -->
         <header class="view-header">
-          <CEyebrow>
-            {{ t('page.eyebrows.contractors') }}
-          </CEyebrow>
+          <CEyebrow>{{ t('page.eyebrows.contractors') }}</CEyebrow>
           <h1 class="display-md">
             {{ t('contractors.title') }}
           </h1>
-          <p
-            class="body-md"
-            style="color:var(--color-on-surface-variant)"
-          >
+          <p class="body-md text-on-surface-variant">
             {{ t('contractors.summary', { count: allContractors.length }) }}
           </p>
         </header>
 
-        <!-- Search bar -->
-        <CFormInput
-          v-model="search"
-          type="search"
-          :placeholder="t('contractors.searchPlaceholder')"
+        <!-- Toolbar: search + view mode toggle -->
+        <div class="list-toolbar">
+          <CFormInput
+            v-model="search"
+            type="search"
+            :placeholder="t('contractors.searchPlaceholder')"
+            class="list-toolbar__search"
+          >
+            <template #prefix>
+              <CIconSearch class="icon-sm" />
+            </template>
+          </CFormInput>
+          <div
+            class="view-toggle"
+            role="group"
+            :aria-label="t('common.viewMode', 'Vue')"
+          >
+            <button
+              :class="['view-toggle__btn', { 'view-toggle__btn--active': viewMode === 'list' }]"
+              :aria-pressed="viewMode === 'list'"
+              @click="viewMode = 'list'"
+            >
+              <svg class="icon-sm" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                <line x1="2" y1="4" x2="14" y2="4" /><line x1="2" y1="8" x2="14" y2="8" /><line x1="2" y1="12" x2="14" y2="12" />
+              </svg>
+            </button>
+            <button
+              :class="['view-toggle__btn', { 'view-toggle__btn--active': viewMode === 'grid' }]"
+              :aria-pressed="viewMode === 'grid'"
+              @click="viewMode = 'grid'"
+            >
+              <svg class="icon-sm" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="1" y="1" width="6" height="6" rx="1" /><rect x="9" y="1" width="6" height="6" rx="1" /><rect x="1" y="9" width="6" height="6" rx="1" /><rect x="9" y="9" width="6" height="6" rx="1" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Domain filter chips -->
+        <div
+          class="domain-filter"
+          role="group"
+          :aria-label="t('contractors.domainsLabel')"
         >
-          <template #prefix>
-            <CIconSearch />
-          </template>
-        </CFormInput>
+          <button
+            v-for="opt in domainOptions"
+            :key="opt.value"
+            :class="['domain-chip', { 'domain-chip--active': selectedDomains.includes(opt.value) }]"
+            :aria-pressed="selectedDomains.includes(opt.value)"
+            @click="toggleDomain(opt.value)"
+          >
+            {{ opt.label }}
+          </button>
+        </div>
 
         <!-- Empty state -->
         <div
           v-if="filtered.length === 0"
           class="empty-state"
         >
-          <CIconUsers
-            width="48"
-            height="48"
-            style="color:var(--color-on-surface-variant)"
-          />
+          <CIconUsers class="empty-state__icon" />
           <p class="body-md">
-            {{ search ? t('contractors.noResults') : t('contractors.noContractors') }}
+            {{ search || selectedDomains.length ? t('contractors.noResults') : t('contractors.noContractors') }}
           </p>
+          <CBtn
+            v-if="canEdit && !search && !selectedDomains.length"
+            variant="primary"
+            size="sm"
+            @click="openCreate"
+          >
+            <CIconPlus class="icon-sm" />
+            {{ t('contractors.newContractor') }}
+          </CBtn>
         </div>
 
-        <!-- Contractors grid -->
+        <!-- ── List view ─────────────────────────────────────────────── -->
+        <div
+          v-else-if="viewMode === 'list'"
+          class="contractor-list"
+          role="list"
+        >
+          <div
+            v-for="c in filtered"
+            :key="c.id"
+            class="contractor-row"
+            role="listitem"
+            tabindex="-1"
+            @click="openContractorDetail(c.id)"
+          >
+            <CIconTile :class="['contractor-row__icon', domainTone(c.domains)]">
+              <component
+                :is="domainIcon(c.domains)"
+                aria-hidden="true"
+              />
+            </CIconTile>
+            <button
+              class="contractor-row__name"
+              @click.stop="openContractorDetail(c.id)"
+            >
+              {{ c.name }}
+            </button>
+            <div class="contractor-row__domains">
+              <CBadge
+                v-for="d in c.domains.slice(0, 2)"
+                :key="d"
+                variant="default"
+              >{{ t(`contractors.domains.${d}`, d) }}</CBadge>
+              <CBadge
+                v-if="c.domains.length > 2"
+                variant="default"
+              >+{{ c.domains.length - 2 }}</CBadge>
+            </div>
+            <div class="contractor-row__contacts">
+              <a
+                v-if="c.email"
+                :href="`mailto:${c.email}`"
+                class="contractor-row__contact"
+                @click.stop
+              >{{ c.email }}</a>
+              <a
+                v-if="c.phone"
+                :href="`tel:${c.phone}`"
+                class="contractor-row__contact"
+                @click.stop
+              >{{ c.phone }}</a>
+            </div>
+            <div
+              v-if="canEdit"
+              class="contractor-row__actions"
+            >
+              <CBtn
+                variant="ghost"
+                size="sm"
+                :aria-label="`${t('common.edit')} ${c.name}`"
+                @click.stop="openEdit(c)"
+              >
+                <CIconEdit class="icon-sm" />
+              </CBtn>
+              <CBtn
+                variant="ghost"
+                size="sm"
+                :aria-label="`${t('common.delete')} ${c.name}`"
+                @click.stop="openDeleteModal(c)"
+              >
+                <CIconTrash class="icon-sm" />
+              </CBtn>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Grid view ─────────────────────────────────────────────── -->
         <div
           v-else
           class="contractors-grid"
@@ -299,10 +431,8 @@ async function confirmDelete() {
             :key="c.id"
             interactive
             class="activity-card"
-            tabindex="0"
+            tabindex="-1"
             @click="openContractorDetail(c.id)"
-            @keydown.enter.prevent="openContractorDetail(c.id)"
-            @keydown.space.prevent="openContractorDetail(c.id)"
           >
             <div class="activity-card__header-row activity-card__header-row--with-icon">
               <CIconTile :class="['activity-card__icon', domainTone(c.domains)]">
@@ -311,19 +441,23 @@ async function confirmDelete() {
                   aria-hidden="true"
                 />
               </CIconTile>
-              <h3 class="activity-card__title">
+              <button
+                class="activity-card__title-btn"
+                @click.stop="openContractorDetail(c.id)"
+              >
                 {{ c.name }}
-              </h3>
+              </button>
             </div>
-
             <div class="activity-card__chips">
               <CBadge
-                v-for="d in c.domains"
+                v-for="d in c.domains.slice(0, 2)"
                 :key="d"
                 variant="default"
-              >
-                {{ t(`contractors.domains.${d}`, d) }}
-              </CBadge>
+              >{{ t(`contractors.domains.${d}`, d) }}</CBadge>
+              <CBadge
+                v-if="c.domains.length > 2"
+                variant="default"
+              >+{{ c.domains.length - 2 }}</CBadge>
             </div>
             <div class="activity-card__stack">
               <p
@@ -332,25 +466,23 @@ async function confirmDelete() {
               >
                 {{ c.notes }}
               </p>
-
-              <CMetaLine
+              <div
                 v-if="c.email || c.phone"
                 class="activity-card__contacts"
               >
                 <a
                   v-if="c.email"
                   :href="`mailto:${c.email}`"
-                  class="activity-card__line activity-card__contact-link"
+                  class="activity-card__contact-link"
                   @click.stop
-                ><span aria-hidden="true">✉️</span>{{ c.email }}</a>
+                >{{ c.email }}</a>
                 <a
                   v-if="c.phone"
                   :href="`tel:${c.phone}`"
-                  class="activity-card__line activity-card__contact-link"
+                  class="activity-card__contact-link"
                   @click.stop
-                ><span aria-hidden="true">📞</span>{{ c.phone }}</a>
-              </CMetaLine>
-
+                >{{ c.phone }}</a>
+              </div>
               <div
                 v-if="canEdit"
                 class="activity-card__actions"
@@ -358,19 +490,19 @@ async function confirmDelete() {
                 <CBtn
                   variant="ghost"
                   size="sm"
-                  :aria-label="t('common.edit') + ' ' + c.name"
+                  :aria-label="`${t('common.edit')} ${c.name}`"
                   @click.stop="openEdit(c)"
                 >
-                  <CIconEdit />
+                  <CIconEdit class="icon-sm" />
                   {{ t('common.edit') }}
                 </CBtn>
                 <CBtn
-                  variant="danger"
+                  variant="ghost"
                   size="sm"
-                  :aria-label="t('common.delete') + ' ' + c.name"
+                  :aria-label="`${t('common.delete')} ${c.name}`"
                   @click.stop="openDeleteModal(c)"
                 >
-                  <CIconTrash />
+                  <CIconTrash class="icon-sm" />
                   {{ t('common.delete') }}
                 </CBtn>
               </div>
@@ -478,6 +610,7 @@ async function confirmDelete() {
 </template>
 
 <style scoped>
+/* ── Empty state ─────────────────────────────────────────────────── */
 .empty-state {
   display: flex;
   flex-direction: column;
@@ -487,11 +620,235 @@ async function confirmDelete() {
   color: var(--color-on-surface-variant);
 }
 
-/* Grid */
+.empty-state__icon {
+  width: 48px;
+  height: 48px;
+  opacity: 0.4;
+}
+
+/* ── Toolbar ─────────────────────────────────────────────────────── */
+.list-toolbar {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.list-toolbar__search {
+  flex: 1;
+}
+
+.view-toggle {
+  display: flex;
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.view-toggle__btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: var(--color-surface);
+  border: none;
+  cursor: pointer;
+  color: var(--color-on-surface-variant);
+  transition: background 150ms ease-out, color 150ms ease-out;
+}
+
+.view-toggle__btn + .view-toggle__btn {
+  border-left: 1px solid var(--color-outline-variant);
+}
+
+.view-toggle__btn:hover {
+  background: var(--color-surface-container-low);
+  color: var(--color-on-surface);
+}
+
+.view-toggle__btn--active {
+  background: var(--color-surface-container);
+  color: var(--color-on-surface);
+}
+
+/* ── Domain filter chips ─────────────────────────────────────────── */
+.domain-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.domain-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-outline-variant);
+  background: var(--color-surface);
+  color: var(--color-on-surface-variant);
+  font-size: var(--text-xs);
+  font-weight: var(--fw-medium);
+  cursor: pointer;
+  transition: background 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out;
+}
+
+.domain-chip:hover {
+  background: var(--color-surface-container-low);
+  color: var(--color-on-surface);
+}
+
+.domain-chip--active {
+  background: var(--color-primary-container);
+  border-color: var(--color-primary);
+  color: var(--color-on-primary-container);
+}
+
+/* ── List view ───────────────────────────────────────────────────── */
+.contractor-list {
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.contractor-row {
+  display: grid;
+  grid-template-columns: 36px minmax(120px, 1fr) auto minmax(0, 210px) auto;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-outline-variant);
+  cursor: pointer;
+  transition: background 150ms ease-out;
+}
+
+.contractor-row:last-child {
+  border-bottom: none;
+}
+
+.contractor-row:hover {
+  background: var(--color-surface-container-low);
+}
+
+.contractor-row__name {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--fw-medium);
+  color: var(--color-on-surface);
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.contractor-row__name:hover,
+.contractor-row__name:focus-visible {
+  color: var(--color-primary);
+  outline: none;
+}
+
+.contractor-row__domains {
+  display: flex;
+  gap: var(--space-1);
+  flex-shrink: 0;
+}
+
+.contractor-row__contacts {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+}
+
+.contractor-row__contact {
+  font-size: var(--text-xs);
+  color: var(--color-on-surface-variant);
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.contractor-row__contact:hover {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
+.contractor-row__actions {
+  display: flex;
+  gap: var(--space-1);
+  flex-shrink: 0;
+}
+
+/* ── Grid view ───────────────────────────────────────────────────── */
 .contractors-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: var(--space-4);
 }
 
+.activity-card__title-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-size: var(--text-md, 1rem);
+  font-weight: var(--fw-semibold);
+  color: var(--color-on-surface);
+  text-align: left;
+  cursor: pointer;
+  line-height: 1.3;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.activity-card__title-btn:hover,
+.activity-card__title-btn:focus-visible {
+  color: var(--color-primary);
+  outline: none;
+}
+
+.activity-card__contacts {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.activity-card__contact-link {
+  font-size: var(--text-xs);
+  color: var(--color-on-surface-variant);
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.activity-card__contact-link:hover {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
+/* ── Responsive ──────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .contractor-row {
+    grid-template-columns: 36px minmax(0, 1fr) auto;
+  }
+
+  .contractor-row__domains,
+  .contractor-row__contacts {
+    display: none;
+  }
+}
+
+/* ── Icon size utilities ─────────────────────────────────────────── */
+.icon-xs { width: var(--icon-xs); height: var(--icon-xs); flex-shrink: 0; }
+.icon-sm { width: var(--icon-sm); height: var(--icon-sm); flex-shrink: 0; }
 </style>
