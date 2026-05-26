@@ -299,7 +299,7 @@ border-color: var(--color-outline-light);
 | Composant | Props clés | Description |
 |---|---|---|
 | `CBtn` | `variant` (`primary` \| `secondary` \| `ghost` \| `destructive`), `size`, `loading`, `disabled` | Bouton |
-| `CDropdownMenu` | — | 🔲 planifié — wrapper Radix `DropdownMenu` |
+| `CDropdownMenu` | `items: DropdownItem[]`, `align?: 'start' \| 'end' \| 'center'`, slot: `trigger` | ✅ wrapper Radix `DropdownMenu` |
 | `CTabs` | `tabs` (`{ value, label, count? }[]`), `modelValue` (v-model) | 🔲 planifié — Bandeau de filtres d'état tabulaires. Flex row, indicateur de soulignement sur l'actif, badge numérique inline pour les volumes. Jamais d'icône seule. |
 
 ---
@@ -407,7 +407,7 @@ Toute primitive Radix Vue est enveloppée dans un composant `C*` avant usage dan
 |---|---|---|
 | `Checkbox` | `CFormCheckbox` | ✅ |
 | `Dialog` | `CModal` | ✅ |
-| `DropdownMenu` | `CDropdownMenu` | 🔲 planifié |
+| `DropdownMenu` | `CDropdownMenu` | ✅ |
 | `Select` | `CFormSelect` | ✅ |
 | `Separator` | `CSeparator` | ✅ |
 | `Tooltip` | `CTooltip` | ✅ |
