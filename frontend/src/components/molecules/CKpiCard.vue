@@ -1,24 +1,34 @@
 <script setup lang="ts">
 // Molecule component — CKpiCard
 // Used on the dashboard for key metrics
-
-type DeltaVariant = 'up' | 'down' | 'neutral'
+import CCard from '@/components/molecules/CCard.vue'
+import CKpiMetric from '@/components/atoms/CKpiMetric.vue'
 
 withDefaults(defineProps<{
   label: string
   value: string
+  subtitle?: string
   delta?: string
-  deltaVariant?: DeltaVariant
-  iconAccent?: boolean    // gradient on the icon
+  deltaVariant?: 'up' | 'down' | 'neutral'
+  tone?: 'default' | 'accent' | 'warn' | 'err' | 'valid' | 'info'
+  emphasize?: boolean
+  emphasizeValue?: boolean
 }>(), {
   delta: undefined,
   deltaVariant: 'neutral',
-  iconAccent: false,
+  subtitle: undefined,
+  tone: 'default',
+  emphasize: false,
+  emphasizeValue: false,
 })
 </script>
 
 <template>
-  <div class="c-kpi">
+  <CCard
+    padding="md"
+    class="min-w-40!"
+    :class="emphasize ? `tone--${tone}` : ''"
+  >
     <div class="c-kpi__header">
       <div>
         <p class="c-kpi__label">
@@ -28,39 +38,31 @@ withDefaults(defineProps<{
       <div
         v-if="$slots.icon"
         :class="[
-          'kpi-icon',
-          iconAccent ? 'tone--accent' : 'tone--default',
+          'c-kpi__icon',
+          `tone--${tone}`,
         ]"
       >
         <slot name="icon"></slot>
       </div>
     </div>
-    <p class="c-kpi__value">
-      {{ value }}
-    </p>
-    <p
-      v-if="delta"
-      :class="['c-kpi__delta', `c-kpi__delta--${deltaVariant}`]"
-    >
-      {{ delta }}
-    </p>
+    <CKpiMetric
+      :data="value"
+      :delta="delta"
+      :delta-variant="deltaVariant"
+      :subtitle="subtitle"
+      :class="emphasizeValue ? `tone--${tone}` : ''"
+    />
     <slot name="extra"></slot>
-  </div>
+  </CCard>
 </template>
 
 <style scoped>
-.c-kpi {
-  background: var(--color-surface-container-lowest);
-  border-radius: var(--radius-lg);
-  padding: var(--space-5);
-  box-shadow: var(--shadow-md);
-}
-
 .c-kpi__header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   margin-bottom: var(--space-3);
+  text-transform: uppercase;
 }
 
 .c-kpi__label {
@@ -69,25 +71,20 @@ withDefaults(defineProps<{
   font-weight: var(--fw-regular);
 }
 
-.c-kpi__value {
-  font-family: var(--font-display);
-  font-size: 32px;
-  font-weight: var(--fw-bold);
-  font-variation-settings: 'opsz' 72;
-  letter-spacing: -0.03em;
-  color: var(--color-on-surface);
-  line-height: 1;
-  margin-bottom: var(--space-1);
+.c-kpi__icon {
+  width: calc(var(--icon-md) * 2);
+  height: calc(var(--icon-md) * 2);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: var(--tone-bg, var(--color-secondary-container));
+  color: var(--tone-fg, var(--color-primary));
 }
 
-.c-kpi__delta {
-  font-size: var(--text-xs);
-  font-weight: var(--fw-medium);
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
+.c-kpi__icon :deep(svg) {
+  width: var(--icon-md);
+  height: var(--icon-md);
 }
-.c-kpi__delta--up      { color: var(--color-success); }
-.c-kpi__delta--down    { color: var(--color-error); }
-.c-kpi__delta--neutral { color: var(--color-on-surface-variant); }
 </style>

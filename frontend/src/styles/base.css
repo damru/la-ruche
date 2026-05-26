@@ -73,7 +73,7 @@ button, [role="button"], input[type="checkbox"], input[type="radio"] {
   max-width: 1200px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: var(--space-6);
 }
 .view-header {
   display: flex;

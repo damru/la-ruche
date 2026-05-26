@@ -369,7 +369,7 @@ async function saveMeeting() {
   display: flex;
   flex-direction: row;
   align-items: stretch;
-  overflow: hidden;
+  overflow: clip;
   gap: 0;
 }
 

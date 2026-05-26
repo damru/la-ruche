@@ -3,7 +3,7 @@ document: LEGAL
 version: 1.0.0
 owner: Damien
 status: validé
-last_updated: 2026-05-22
+last_updated: 2026-05-23
 references:
   - Loi n°65-557 du 10 juillet 1965
   - Décret n°67-223 du 17 mars 1967
@@ -43,7 +43,7 @@ rules:
 > - Arrêté du 14 mars 2005 (plan comptable copropriété)
 > - RGPD (Règlement UE 2016/679)
 >
-> Dernière mise à jour : 13 mai 2026 (correctifs légaux §3.1/§3.4/§4.3/§4.4/§4.6/§4.7 + nouvelle §3.5 — audit loi 65-557 / décret 67-223)
+> Dernière mise à jour : 23 mai 2026 (audit gaps légaux — §3.1 art. 9 bis + 14-1 vote correspondance ; §3.5 nouvelle art. 17-1 AA ; §4.7 art. 19-2 déchéance terme J+30 ; §7.1 art. 5 décret v7.0 25/12/2025 ; tableau synthétique mis à jour)
 
 ---
 
@@ -246,20 +246,23 @@ Les tantièmes sont attachés au **lot**, pas au propriétaire. Une mutation (ve
 
 ### 3.1 Convocation
 
-**Référence :** Art. 7 à 13 décret 1967 — Art. 9 al. 4 décret 1967 (LEGIARTI000042078632 v6.0, en vigueur 04/07/2020)  
-**Couverture :** ⚠️ partielle — EP-003-S01, EP-003-S02, EP-003-S09
+**Référence :** Art. 7 à 13 décret 1967 — Art. 9 al. 4 décret 1967 (LEGIARTI000042078632 v6.0, en vigueur 04/07/2020) — Art. 9 bis décret 1967 (LEGIARTI000042076552 v1.0, en vigueur 04/07/2020) — Art. 14-1 décret 1967 (LEGIARTI000042076720 v1.0, en vigueur 04/07/2020)  
+**Couverture :** ⚠️ partielle — EP-003-S01, EP-003-S02, EP-003-S08
 
 - Délai minimum : **21 jours** avant la date de l'AG.
 - Documents obligatoires joints : ordre du jour, projet de budget, projets de résolutions, contrats soumis au vote, état financier.
 - Depuis le décret du 2 juillet 2020, **le formulaire de vote par correspondance doit être joint à la convocation** (art. 9 al. 4 décret 67-223, LEGIARTI000042078632).
 - Mode d'envoi : recommandé avec AR ou remise en main propre contre émargement.
+- **Délai de réception du formulaire de vote par correspondance :** le formulaire doit être réceptionné par le syndic **au plus tard trois jours francs** avant la date de la réunion (art. 9 bis décret 67-223 — LEGIARTI000042076552). Lorsqu'il est transmis par courrier électronique, il est présumé réceptionné à la date d'envoi.
+- **Caducité du formulaire de vote par correspondance :** au moment du vote, le formulaire n'est pas pris en compte lorsque le copropriétaire, l'associé ou leur mandataire **est présent à l'assemblée générale** (art. 14-1 décret 67-223 — LEGIARTI000042076720), quelle que soit la date à laquelle le formulaire a été établi ou reçu.
 
 **Implications :**
 - l'Application doit calculer et afficher la date limite de convocation (= date AG − 21 jours).
 - Alerte si un document obligatoire est manquant avant envoi de la convocation.
-- Le formulaire de vote par correspondance doit être inclus dans la checklist de complétude de la convocation (EP-003-S09).
+- Le formulaire de vote par correspondance doit être inclus dans la checklist de complétude de la convocation (EP-003-S08).
+- Lors du calcul des résultats, les votes par correspondance des copropriétaires présents ou représentés en séance doivent être automatiquement annulés (EP-003 — calcul de majorité).
 
-**Écart constaté :** Le formulaire de vote par correspondance est désormais intégré dans la checklist de convocation (EP-003-S09 ✅). La couverture reste partielle car le mode d'envoi obligatoire (recommandé avec AR ou remise contre émargement) n'est pas tracé par l'Application — hors périmètre MVP.
+**Écart constaté :** Le formulaire de vote par correspondance est désormais intégré dans la checklist de convocation (EP-003-S08 ✅). La couverture reste partielle car (1) le contrôle du délai de réception J-3 et (2) la gestion de la caducité en cas de présence ne sont pas encore implémentés. Le mode d'envoi obligatoire (recommandé avec AR ou remise contre émargement) reste hors périmètre MVP.
 
 ---
 
@@ -318,7 +321,24 @@ Les copropriétaires opposants ou défaillants disposent ensuite d'un délai de 
 
 ---
 
-### 3.5 PV du conseil syndical en délégation de pouvoirs
+### 3.5 AG à la demande d'un copropriétaire
+
+**Référence :** Art. 17-1 AA loi 1965 (LEGIARTI000039301594 v1.0, en vigueur 01/06/2020)  
+**Couverture :** ❌ non couverte — à créer
+
+Tout copropriétaire peut solliciter du syndic la convocation et la tenue, **à ses frais**, d'une assemblée générale pour faire inscrire à l'ordre du jour une ou plusieurs questions **ne concernant que ses droits ou obligations**.
+
+> « Tout copropriétaire peut solliciter du syndic la convocation et la tenue, à ses frais, d'une assemblée générale pour faire inscrire à l'ordre du jour une ou plusieurs questions ne concernant que ses droits ou obligations. »
+> — Art. 17-1 AA, Loi n°65-557, LEGIARTI000039301594 v1.0, en vigueur 01/06/2020
+
+**Implications :**
+- Le syndic est tenu de donner suite à cette demande ; l'Application peut faciliter l'enregistrement de la demande et la facturation des frais au demandeur.
+- Ce workflow est distinct d'une AG ordinaire : seul le demandeur supporte les frais de convocation.
+- Couverture logicielle : traçabilité de la demande + imputation des frais au copropriétaire concerné. Priorité basse (cas d'usage peu fréquent).
+
+---
+
+### 3.6 PV du conseil syndical en délégation de pouvoirs
 
 **Référence :** Art. 21-1 décret 1967 (LEGIARTI000042077775 v1.0, en vigueur 04/07/2020) · Art. 21-1 et ss. loi 1965  
 **Couverture :** ❌ non couverte — EP-002-S12
@@ -360,7 +380,7 @@ Le plan comptable copropriété distingue les charges générales (clé généra
 
 ### 4.3 Budget prévisionnel et appels de fonds
 
-**Référence :** Art. 14-1 loi 1965 (LEGIARTI000043977299 v2.0, en vigueur 01/01/2023) · Décret 1967 art. 35 (LEGIARTI000053191341 v6.0, en vigueur 25/12/2025)  
+**Référence :** Art. 14-1 loi 1965 (LEGIARTI000043977299 v2.0, en vigueur 01/01/2023) · Décret 1967 art. 35 (LEGIARTI000053191341 v6.0, en vigueur 25/12/2025) · Décret 1967 art. 37 (LEGIARTI000006488654)  
 **Couverture :** ⚠️ partielle — EP-004
 
 Le budget prévisionnel est voté en AG. Les appels de fonds provisionnels sont versés **par quart** (sauf décision contraire de l'AG), aux dates prévues.
@@ -373,10 +393,10 @@ La version 6.0 de l'art. 35 décret (en vigueur 25/12/2025) intègre trois nouve
 **Implications :**
 - Chaque appel de fonds génère une ligne par lot, calculée au prorata des tantièmes de la clé.
 - **Cf. §2.3 :** le snapshot des tantièmes doit être figé au moment de la génération.
-- Un appel de fonds exceptionnel (travaux votés en AG) suit les mêmes règles mais référence une résolution AG.
+- Un appel de fonds exceptionnel (travaux votés en AG) suit les mêmes règles mais référence explicitement une résolution AG, avec un libellé traçable et non ambigu (art. 37 décret 1967).
 - Les catégories PPT, fonds travaux et délégation CS ajoutées en décembre 2025 doivent être typées dans l'application (EP-004-S08).
 
-**Écart constaté :** La mise à jour de l'art. 35 décret en décembre 2025 (v6.0) n'est pas encore reflétée dans la modélisation des appels de fonds.
+**Écart constaté :** La mise à jour de l'art. 35 décret en décembre 2025 (v6.0) et la traçabilité explicite art. 37 des appels exceptionnels ne sont pas encore entièrement reflétées dans la modélisation des appels de fonds.
 
 ---
 
@@ -425,7 +445,7 @@ Chaque copropriétaire doit pouvoir consulter le détail de ses charges sur l'ex
 
 ### 4.7 Recouvrement des charges impayées
 
-**Référence :** Art. 18-I loi 1965 · Décret 1967 art. 35 et 36 (LEGIARTI000006488649 v2.0) (service-public.fr/F2608)  
+**Référence :** Art. 18-I loi 1965 · Décret 1967 art. 35 et 36 (LEGIARTI000006488649 v2.0) · Art. 19-2 loi 1965 (LEGIARTI000043977271 v6.0, en vigueur 01/01/2023) (service-public.fr/F2608)  
 **Couverture :** ❌ non couverte — EP-004-S11
 
 Le syndic a l'**obligation légale** de recouvrer les charges impayées au nom du syndicat des copropriétaires. Cette obligation inclut :
@@ -435,8 +455,14 @@ Le syndic a l'**obligation légale** de recouvrer les charges impayées au nom d
 
 Les sommes dues (provisions du budget prévisionnel + dépenses hors budget) portent **intérêt au taux légal** au profit du syndicat, à compter de la mise en demeure (art. 36 décret 67-223, LEGIARTI000006488649).
 
+**Déchéance du terme (art. 19-2 loi 1965 — LEGIARTI000043977271) :** À défaut du versement d'une provision à sa date d'exigibilité, et après mise en demeure restée infructueuse passé un délai de **trente jours**, les autres provisions non encore échues ainsi que les sommes restant dues au titre des exercices précédents deviennent **immédiatement exigibles**. Le président du tribunal judiciaire, statuant selon la procédure accélérée au fond, peut alors condamner le copropriétaire défaillant au paiement. Cette règle s'applique également aux cotisations du fonds de travaux (art. 14-2-1).
+
+> « A défaut du versement à sa date d'exigibilité d'une provision due au titre de l'article 14-1, et après mise en demeure restée infructueuse passé un délai de trente jours, les autres provisions non encore échues en application du même article 14-1 ainsi que les sommes restant dues appelées au titre des exercices précédents après approbation des comptes deviennent immédiatement exigibles. »
+> — Art. 19-2, Loi n°65-557, LEGIARTI000043977271 v6.0, en vigueur 01/01/2023
+
 **Implications :**
 - l'Application doit permettre d'identifier les lots en retard de paiement (solde débiteur), d'enregistrer les relances effectuées et de tracer les dossiers contentieux.
+- À J+30 après une mise en demeure infructueuse, l'Application doit signaler que toutes les provisions restantes sont devenues exigibles (EP-004-S11).
 - Les procédures judiciaires en cours font partie des informations obligatoires de l'état daté (cf. §7.1).
 
 ---
@@ -514,17 +540,22 @@ Obligatoire lors de la mise en copropriété d'un immeuble de > 10 ans, et facul
 
 ### 7.1 État daté
 
-**Référence :** Art. 5 du décret 1967, complété ALUR 2014  
+**Référence :** Art. 5 décret 1967 (LEGIARTI000053191253 v7.0, en vigueur 25/12/2025), complété ALUR 2014  
 **Couverture :** ❌ non couverte — EP-002-S06
 
-Le syndic doit produire l'état daté dans les **15 jours** suivant la demande du notaire. Il comprend :
-- Les sommes dues par le lot (charges courantes, arriérés)
-- La quote-part fonds travaux (non remboursable)
-- Les travaux votés non encore réalisés
-- Les procédures judiciaires en cours
+Le syndic doit produire l'état daté dans les **15 jours** suivant la demande du notaire. Depuis le 25/12/2025 (v7.0), l'état daté est structuré en **trois parties obligatoires** :
+
+1. **Première partie** — Sommes pouvant rester dues par le copropriétaire cédant : provisions exigibles (budget prévisionnel + hors budget), charges impayées exercices antérieurs, avances exigibles, montant restant dû sur emprunt collectif (art. 26-4 loi 1965), montant versé par la caution en cas de défaillance (art. 26-7 et 26-12 loi 1965).
+2. **Deuxième partie** — Sommes dont le syndicat pourrait être débiteur envers le cédant : avances (art. 45-1) et provisions rendues exigibles par déchéance du terme (art. 19-2) sur exercices postérieurs.
+3. **Troisième partie** — Sommes incombant au nouveau copropriétaire : reconstitution des avances (art. 45-1), provisions non encore exigibles (budget prévisionnel + hors budget). En annexe : quote-part afférente au lot dans le budget prévisionnel et les dépenses hors budget sur les deux exercices précédents. Mention des procédures en cours dans lesquelles le syndicat est partie.
+
+> « Le syndic [...] adresse au notaire chargé de recevoir l'acte [...] un état daté comportant trois parties. [...] Il mentionne, s'il y a lieu, l'objet et l'état des procédures en cours dans lesquelles le syndicat est partie. »
+> — Art. 5, Décret n°67-223, LEGIARTI000053191253 v7.0, en vigueur 25/12/2025
 
 **Implications :**
-- Dépend de §4.3 (appels de fonds), §4.4 (fonds travaux), EP-003-S04 (résolutions travaux votées en AG).
+- La structure en 3 parties est obligatoire depuis le 25/12/2025 — EP-002-S06 doit être conçu selon cette structure.
+- Dépend de §4.3 (appels de fonds), §4.4 (fonds travaux), EP-003-S04 (résolutions travaux votées en AG), EP-002-S10 (procédures judiciaires).
+- Les informations relatives aux emprunts collectifs (art. 26-4, 26-7, 26-12) doivent être disponibles si la copropriété a souscrit un emprunt collectif.
 
 ---
 
@@ -707,25 +738,26 @@ L'`audit_log` est en **append-only** : aucune ligne ne peut être modifiée ou s
 | 2.2 | Historique tantièmes par lot | Art. 10 loi 1965 | ✅ | EP-001-S06 |
 | 2.3 | Snapshot tantièmes par appel de fonds | Art. 14-1 loi 1965 | ✅ | EP-004-S05 |
 | 2.4 | Tantièmes et mutations | Art. 6 loi 1965 | ⚠️ | EP-002-S06, EP-002-S07 |
-| 3.1 | Convocation AG + formulaire vote par correspondance (art. 7-13 et 9 al. 4 décret 1967) | Art. 9 décret 1967 | ⚠️ | EP-003-S01, EP-003-S02, EP-003-S09 |
+| 3.1 | Convocation AG + formulaire vote par correspondance + délai J-3 francs + caducité si présence (art. 7-13, 9 al. 4, 9 bis, 14-1 décret 1967) | Art. 9, 9 bis, 14-1 décret 1967 | ⚠️ | EP-003-S01, EP-003-S02, EP-003-S08 |
 | 3.2 | Tenue de séance et présidence | Art. 15 décret 1967 | ✅ | EP-013-S02, EP-013-S03 |
 | 3.3 | Règles de majorité | Art. 24/25/26 loi 1965 | ✅ | EP-003-S03/S04/S07, EP-013-S05/S10 |
 | 3.4 | PV (signable J+8) + notification 1 mois + contestation 2 mois | Art. 17, 18 décret 1967 · Art. 42 loi 1965 | ✅ | EP-003-S05/S06/S10, EP-013-S08 |
-| 3.5 | PV du conseil syndical en délégation de pouvoirs | Art. 21-1 décret 1967 | ❌ | EP-002-S12 |
+| 3.5 | AG à la demande d'un copropriétaire à ses frais | Art. 17-1 AA loi 1965 (LEGIARTI000039301594) | ❌ | à créer |
+| 3.6 | PV du conseil syndical en délégation de pouvoirs | Art. 21-1 décret 1967 | ❌ | EP-002-S12 |
 | 4.1 | Compte bancaire séparé | Art. 18 loi 1965 | 🔲 | — |
 | 4.2 | Plan comptable normé | Arrêté 14/03/2005 | ⚠️ | EP-004 |
-| 4.3 | Budget prévisionnel + appels de fonds (incl. PPT/fonds travaux/délégation CS depuis art. 35 v6 dec. 2025) | Art. 14-1 loi 1965 · Art. 35 décret 1967 v6.0 | ⚠️ | EP-004 |
+| 4.3 | Budget prévisionnel + appels de fonds (incl. PPT/fonds travaux/délégation CS depuis art. 35 v6 dec. 2025 + appels exceptionnels art. 37) | Art. 14-1 loi 1965 · Art. 35 et 37 décret 1967 | ⚠️ | EP-004 |
 | 4.4 | Fonds travaux ≥ 5% (ou 2,5% PPT si plan adopté) | Art. 14-2-1 loi 1965 (01/01/2023) | ⚠️ | EP-004 |
 | 4.5 | Arrêté de comptes | Art. 18 loi 1965 | ⚠️ | EP-004-S04 |
 | 4.6 | Relevé individuel de charges | Art. 18 loi 1965 · Arrêté 14/03/2005 | ✅ | EP-004-S06 |
-| 4.7 | Recouvrement des charges impayées | Art. 18-I loi 1965 | ❌ | EP-004-S11 |
+| 4.7 | Recouvrement des charges impayées + déchéance du terme J+30 (art. 19-2) | Art. 18-I loi 1965 · Art. 19-2 loi 1965 · Art. 35-36 décret 1967 | ❌ | EP-004-S11 |
 | 5.1 | Contrat de syndic (modèle-type) | Décret 2015 | 🔲 | — |
 | 5.2 | Assurance immeuble | Art. 9-1 loi 1965 | ⚠️ | EP-006 |
 | 5.3 | Contrats + reconductions tacites | Art. 18 loi 1965 | ✅ | EP-006 |
 | 6.1 | Plan pluriannuel de travaux (PPT) | Loi Climat 2021 | ❌ | EP-009-S04 |
 | 6.2 | DPE collectif | Loi Climat 2021 | 🔲 | EP-005 |
 | 6.3 | Diagnostic technique global (DTG) | ALUR art. L731-1 | 🔲 | EP-005 |
-| 7.1 | État daté (15 jours) | Décret 1967 art. 5 | ❌ | EP-002-S06 |
+| 7.1 | État daté (15 jours) — 3 parties obligatoires dont emprunts collectifs (v7.0 déc. 2025) | Décret 1967 art. 5 (LEGIARTI000053191253 v7.0, 25/12/2025) | ❌ | EP-002-S06 |
 | 7.2 | Pré-état daté | ALUR art. L721-2 | ❌ | EP-002-S07 |
 | 8 | RGPD + anonymisation | RGPD 2016/679 | ⚠️ | EP-002-S05, EP-002-S09 |
 | 9 | Sinistres (délais déclaration) | Code des assurances | ✅ | EP-008 |

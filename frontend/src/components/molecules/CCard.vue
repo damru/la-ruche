@@ -19,6 +19,7 @@ withDefaults(defineProps<{
 <template>
   <div
     :class="[
+      'gap-y-4',
       'c-card',
       `c-card--pad-${padding}`,
       `c-card--radius-${radius}`,
@@ -34,9 +35,11 @@ withDefaults(defineProps<{
   background: var(--tone-bg, var(--color-surface-container-lowest));
   overflow-x: auto;
   min-width: 0;
+  height: fit-content;
   color: var(--tone-fg, var(--color-on-surface-variant));
   display: flex;
   flex-direction: column;
+  flex: 1;
 }
 
 .c-card--radius-none { border-radius: 0; }

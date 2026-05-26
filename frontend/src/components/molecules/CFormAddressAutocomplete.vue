@@ -396,7 +396,7 @@ function updateField(field: keyof AddressValue, value: string) {
   background: var(--color-surface-container-lowest);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-lg);
-  overflow: hidden;
+  overflow: clip;
 }
 
 .c-addr-suggestions__item {

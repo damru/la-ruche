@@ -65,6 +65,33 @@ pub struct UpdateUnitInput {
     pub description: Option<String>,
 }
 
+#[derive(sqlx::FromRow)]
+struct LevyUnitChargeRow {
+    levy_call_id: Uuid,
+    fiscal_year: i32,
+    call_label: String,
+    due_date: chrono::NaiveDate,
+    issued_at: DateTime<Utc>,
+    total_amount: rust_decimal::Decimal,
+    charge_amount: rust_decimal::Decimal,
+    works_fund_amount: rust_decimal::Decimal,
+    status: String,
+    paid_at: Option<DateTime<Utc>>,
+}
+
+#[derive(sqlx::FromRow)]
+struct LevyBreakdownRow {
+    levy_call_id: Uuid,
+    budget_line_id: Option<Uuid>,
+    budget_line_label: Option<String>,
+    key_id: Option<Uuid>,
+    key_name: Option<String>,
+    shares_snapshot: Option<i32>,
+    shares_total_snapshot: Option<i32>,
+    amount: rust_decimal::Decimal,
+    is_works_fund: bool,
+}
+
 fn to_response(row: db::unit::UnitRow) -> UnitResponse {
     UnitResponse {
         id: row.id,
@@ -270,53 +297,98 @@ pub async fn charges(
         }
     }
 
-    let rows = sqlx::query!(
+    let rows = sqlx::query_as::<_, LevyUnitChargeRow>(
         r#"SELECT
-               lc.id,
+               lc.id                                                         AS levy_call_id,
                b.fiscal_year,
-               lc.amount,
+               lc.call_label,
                lc.due_date,
-               lc.status::text            AS status,
                lc.issued_at,
-               lc.paid_at,
-               lc.key_id,
-               ak.name                    AS key_name,
-               lc.shares_snapshot,
-               lc.shares_total_snapshot
+               SUM(lcu.amount)                                               AS total_amount,
+               SUM(lcu.amount) FILTER (WHERE lcu.budget_line_id IS NOT NULL) AS charge_amount,
+               SUM(lcu.amount) FILTER (WHERE lcu.budget_line_id IS NULL)     AS works_fund_amount,
+               CASE
+                   WHEN bool_or(lcu.status::text = 'overdue') THEN 'overdue'
+                   WHEN bool_and(lcu.status::text = 'paid')   THEN 'paid'
+                   ELSE 'issued'
+               END                                                           AS status,
+               MAX(lcu.paid_at)                                              AS paid_at
            FROM levy_call lc
-           JOIN budget b ON b.id = lc.budget_id AND b.building_id = $2
-           LEFT JOIN allocation_key ak ON ak.id = lc.key_id
-           WHERE lc.unit_id = $1
+           JOIN budget b           ON b.id             = lc.budget_id AND b.building_id = $2
+           JOIN levy_call_unit lcu ON lcu.levy_call_id = lc.id        AND lcu.unit_id   = $1
+           GROUP BY lc.id, b.fiscal_year, lc.call_label, lc.due_date, lc.issued_at
            ORDER BY lc.due_date DESC"#,
-        id,
-        auth.building_id
     )
+    .bind(id)
+    .bind(auth.building_id)
     .fetch_all(&state.pool)
     .await?;
 
-    let total_issued: rust_decimal::Decimal = rows.iter().map(|r| r.amount).sum();
+    let breakdown_rows = sqlx::query_as::<_, LevyBreakdownRow>(
+        r#"SELECT
+               lcu.levy_call_id,
+               lcu.budget_line_id,
+               bl.label                      AS budget_line_label,
+               lcu.key_id,
+               ak.name                       AS key_name,
+               lcu.shares_snapshot,
+               lcu.shares_total_snapshot,
+               lcu.amount,
+               (lcu.budget_line_id IS NULL)  AS is_works_fund
+           FROM levy_call_unit lcu
+           JOIN levy_call lc ON lc.id = lcu.levy_call_id
+           JOIN budget b     ON b.id  = lc.budget_id AND b.building_id = $2
+           LEFT JOIN budget_line bl  ON bl.id  = lcu.budget_line_id
+           LEFT JOIN allocation_key ak ON ak.id = lcu.key_id
+           WHERE lcu.unit_id = $1
+           ORDER BY lcu.levy_call_id, bl.label NULLS LAST"#,
+    )
+    .bind(id)
+    .bind(auth.building_id)
+    .fetch_all(&state.pool)
+    .await?;
+
+    let mut breakdown_map: HashMap<Uuid, Vec<serde_json::Value>> = HashMap::new();
+    for b in breakdown_rows {
+        breakdown_map
+            .entry(b.levy_call_id)
+            .or_default()
+            .push(serde_json::json!({
+                "budget_line_id":        b.budget_line_id,
+                "budget_line_label":     b.budget_line_label,
+                "key_id":               b.key_id,
+                "key_name":             b.key_name,
+                "shares_snapshot":      b.shares_snapshot,
+                "shares_total_snapshot": b.shares_total_snapshot,
+                "amount":               b.amount,
+                "is_works_fund":        b.is_works_fund,
+            }));
+    }
+
+    let total_issued: rust_decimal::Decimal = rows.iter().map(|r| r.total_amount).sum();
     let total_paid: rust_decimal::Decimal = rows
         .iter()
-        .filter(|r| r.status.as_deref() == Some("paid"))
-        .map(|r| r.amount)
+        .filter(|r| r.status == "paid")
+        .map(|r| r.total_amount)
         .sum();
     let balance = total_issued - total_paid;
 
     let levies: Vec<serde_json::Value> = rows
         .into_iter()
         .map(|r| {
+            let breakdown = breakdown_map.remove(&r.levy_call_id).unwrap_or_default();
             serde_json::json!({
-                "id":                    r.id,
-                "fiscal_year":           r.fiscal_year,
-                "amount":                r.amount,
-                "due_date":              r.due_date,
-                "status":                r.status,
-                "issued_at":             r.issued_at,
-                "paid_at":               r.paid_at,
-                "key_id":                r.key_id,
-                "key_name":              r.key_name,
-                "shares_snapshot":       r.shares_snapshot,
-                "shares_total_snapshot": r.shares_total_snapshot,
+                "id":                 r.levy_call_id,
+                "fiscal_year":        r.fiscal_year,
+                "total_amount":       r.total_amount,
+                "charge_amount":      r.charge_amount,
+                "works_fund_amount":  r.works_fund_amount,
+                "call_label":         r.call_label,
+                "due_date":           r.due_date,
+                "status":             r.status,
+                "issued_at":          r.issued_at,
+                "paid_at":            r.paid_at,
+                "breakdown":          breakdown,
             })
         })
         .collect();

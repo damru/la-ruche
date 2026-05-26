@@ -19,6 +19,7 @@ withDefaults(defineProps<{
 <style scoped>
 .c-eyebrow {
   display: flex;
+  flex-wrap: wrap-reverse;
   align-items: center;
   gap: var(--space-2);
   font-size: var(--text-2xs);

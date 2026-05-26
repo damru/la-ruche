@@ -62,7 +62,7 @@ function onInput(raw: string) {
   align-items: stretch;
   background: var(--color-secondary-container);
   border-radius: 9999px;
-  overflow: hidden;
+  overflow: clip;
   cursor: default;
 }
 

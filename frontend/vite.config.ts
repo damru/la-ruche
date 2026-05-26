@@ -43,6 +43,7 @@ export default defineConfig({
 
   server: {
     port: 5173,
+    host: true, // Listen on all addresses to be accessible from WSL and mobile devices
     proxy: {
       // All API calls (including public vendor endpoints under /api/v1/vendor/) go to backend.
       '/api': {

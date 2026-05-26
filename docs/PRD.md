@@ -176,7 +176,7 @@ llm_directives:
 - **Art. 24 loi 1965** — majorité des voix des présents et représentés
 - **Art. 25 loi 1965** — majorité absolue de tous les copropriétaires
 - **Art. 26 loi 1965** — double majorité (2/3 tantièmes + majorité en nombre)
-- **Art. 14-2 loi ALUR** — fonds travaux obligatoire ≥ 5% budget prévisionnel
+- **Art. 14-2-1 loi du 10 juillet 1965** — fonds travaux obligatoire (seuil minimal selon le droit en vigueur, modifié notamment par la loi du 22 août 2021)
 - **Art. L123-22 Code de commerce** — conservation données comptables 10 ans
 - **RGPD** — droit à l'effacement (anonymisation avec conservation données légales)
 

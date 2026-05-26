@@ -22,18 +22,18 @@ pub async fn list(
            COALESCE(my_c.choice_ids, '[]'::json) AS my_choice_ids,
            COALESCE(choices_agg.data, '[]'::json) AS choices
            FROM consultation c
-           LEFT JOIN LATERAL (
+           JOIN LATERAL (
                SELECT COUNT(*) AS cnt
                FROM consultation_response cr
                WHERE cr.consultation_id = c.id
            ) total_r ON true
-           LEFT JOIN LATERAL (
+           JOIN LATERAL (
                SELECT COALESCE(JSON_AGG(crc.choice_id::text), '[]'::json) AS choice_ids
                FROM consultation_response cr2
                JOIN consultation_response_choice crc ON crc.response_id = cr2.id
                WHERE cr2.consultation_id = c.id AND cr2.user_id = $2
            ) my_c ON true
-           LEFT JOIN LATERAL (
+           JOIN LATERAL (
                SELECT COALESCE(JSON_AGG(JSON_BUILD_OBJECT(
                    'id',          cc.id,
                    'label',       cc.label,
@@ -95,18 +95,18 @@ pub async fn get_with_choices(
            COALESCE(my_c.choice_ids, '[]'::json) AS my_choice_ids,
            COALESCE(choices_agg.data, '[]'::json) AS choices
            FROM consultation c
-           LEFT JOIN LATERAL (
+           JOIN LATERAL (
                SELECT COUNT(*) AS cnt
                FROM consultation_response cr
                WHERE cr.consultation_id = c.id
            ) total_r ON true
-           LEFT JOIN LATERAL (
+           JOIN LATERAL (
                SELECT COALESCE(JSON_AGG(crc.choice_id::text), '[]'::json) AS choice_ids
                FROM consultation_response cr2
                JOIN consultation_response_choice crc ON crc.response_id = cr2.id
                WHERE cr2.consultation_id = c.id AND cr2.user_id = $3
            ) my_c ON true
-           LEFT JOIN LATERAL (
+           JOIN LATERAL (
                SELECT COALESCE(JSON_AGG(JSON_BUILD_OBJECT(
                    'id',          cc.id,
                    'label',       cc.label,

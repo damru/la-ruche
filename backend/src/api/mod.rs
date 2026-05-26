@@ -165,6 +165,7 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
         // ── Budget ──────────────────────────────────────────────
         .route("/budgets", get(budget::list).post(budget::create))
         .route("/budgets/{id}", get(budget::get).put(budget::update))
+        .route("/budgets/{id}/close", post(budget::close))
         .route(
             "/budgets/{id}/lines",
             get(budget::list_lines).post(budget::create_line),
@@ -178,9 +179,15 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
             post(budget::generate_levies),
         )
         .route("/budgets/{id}/levies", get(budget::list_levies))
-        .route("/levies/{id}/payment", put(budget::mark_paid))
+        .route(
+            "/levies/{levy_call_id}/units/{unit_id}/payment",
+            put(budget::mark_paid),
+        )
         .route("/works-fund", get(budget::list_works_fund))
-        .route("/works-fund/{fiscal_year}", get(budget::get_works_fund))
+        .route(
+            "/works-fund/{fiscal_year}",
+            get(budget::get_works_fund).put(budget::update_works_fund),
+        )
         // ── Documents ───────────────────────────────────────────
         .route(
             "/documents",

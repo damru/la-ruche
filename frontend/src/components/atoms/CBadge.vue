@@ -7,17 +7,18 @@ import { computed } from 'vue'
 type Variant =
   | 'manager' | 'board_member' | 'co_owner' | 'tenant'
   | 'open' | 'pending' | 'closed' | 'disabled'
-  | 'valid' | 'err'
-  | 'primary' | 'default'
+  | 'valid' | 'warn' | 'err'
+  | 'primary' | 'default' | 'accent'
 
 const props = withDefaults(defineProps<{
   variant?: Variant
   dot?: boolean
-  // pulse defaults to true when variant is 'valid' or 'open', false otherwise
+  ring?: boolean
   pulse?: boolean
 }>(), {
   variant: 'default',
   dot: false,
+  ring: false,
   pulse: undefined,
 })
 
@@ -30,15 +31,17 @@ const effectivePulse = computed(() =>
   <span
     :class="['c-badge', `c-badge--${variant}`, {
       'c-badge--pulse': effectivePulse,
+      'c-badge--ring': ring,
       'tone--manager': variant === 'manager',
       'tone--board-member': variant === 'board_member',
       'tone--co-owner': variant === 'co_owner',
       'tone--tenant': variant === 'tenant',
-      'tone--default': variant === 'primary',
-      'tone--warn': variant === 'pending',
+      'tone--default': variant === 'primary' || variant === 'default',
+      'tone--accent': variant === 'accent',
+      'tone--disabled': variant === 'disabled' || variant === 'closed',
       'tone--valid': variant === 'valid' || variant === 'open',
+      'tone--warn': variant === 'pending' || variant === 'warn',
       'tone--err': variant === 'err',
-      'tone--disabled': variant === 'disabled'
     }]"
   >
     <span
@@ -61,8 +64,8 @@ const effectivePulse = computed(() =>
   white-space: nowrap;
   width: fit-content;
   height: fit-content;
-  background: var(--tone-bg, var(--color-surface-container-high));
-  color: var(--tone-fg, var(--color-on-surface-variant));
+  background: var(--tone-bg);
+  color: var(--tone-fg);
 }
 
 .c-badge__dot {
@@ -85,7 +88,8 @@ const effectivePulse = computed(() =>
   }
 }
 
-/* Empty ring dot for closed / inactive / disabled statuses */
+/* Empty ring dot for closed / inactive / disabled statuses or explicit ring */
+.c-badge--ring .c-badge__dot,
 .c-badge--closed .c-badge__dot,
 .c-badge--disabled .c-badge__dot {
   background: transparent;

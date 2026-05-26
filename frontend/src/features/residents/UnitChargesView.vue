@@ -4,13 +4,39 @@ import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import CCard from '@/components/molecules/CCard.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
+import CModal from '@/components/molecules/CModal.vue'
+import CDataTable from '@/components/molecules/CDataTable.vue'
+import CBtn from '@/components/atoms/CBtn.vue'
+import CBadge from '@/components/atoms/CBadge.vue'
+import CSeparator from '@/components/atoms/CSeparator.vue'
+import CMetaLine from '@/components/molecules/CMetaLine.vue'
+import CMetaItem from '@/components/molecules/CMetaItem.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
+import CEyebrow from '@/components/atoms/CEyebrow.vue'
+import CLegalCard from '@/components/molecules/CLegalCard.vue'
+import CLegalNotice from '@/components/molecules/CLegalNotice.vue'
+import CLegalDescription from '@/components/atoms/CLegalDescription.vue'
+import CKpiCard from '@/components/molecules/CKpiCard.vue'
+import CIconChevronRight from '@/components/atoms/CIconChevronRight.svg'
 import { unitsApi } from '@/api'
 import { usePageLoader } from '@/composables/usePageLoader'
 import { useAuthStore } from '@/stores/auth'
 import { useFormatters } from '@/composables/useFormatters'
-import type { UnitChargesResponse, UnitChargesLevy } from '@/types/domain'
+import type { UnitChargesResponse, UnitChargesLevy, UnitChargesLevyBreakdownItem } from '@/types/domain'
+import type { Column } from '@/components/molecules/CDataTable.vue'
+
+interface ConsolidatedUnitChargeRow {
+  id: string
+  fiscal_year: number
+  call_label: string
+  due_date: string
+  issued_at: string
+  paid_at: string | null
+  amount: number
+  status: UnitChargesLevy['status']
+  breakdown: UnitChargesLevyBreakdownItem[]
+}
 
 const { t } = useI18n()
 const route = useRoute()
@@ -28,6 +54,7 @@ const backLabel = computed(() =>
 
 const unitId = route.params.id as string
 const data = ref<UnitChargesResponse | null>(null)
+const selectedLevy = ref<ConsolidatedUnitChargeRow | null>(null)
 
 async function load() {
   const res = await unitsApi.charges(unitId)
@@ -37,16 +64,65 @@ async function load() {
 const { loading, error, reload } = usePageLoader(load)
 onMounted(reload)
 
-function statusClass(levy: UnitChargesLevy): string {
-  return {
-    issued: 'status-issued',
-    paid:   'status-paid',
-    overdue: 'status-overdue',
-  }[levy.status] ?? ''
-}
+// Backend returns pre-consolidated data — one row per levy_call for this unit.
+const consolidatedLevies = computed<ConsolidatedUnitChargeRow[]>(() => {
+  if (!data.value) return []
+  return data.value.levies.map(levy => ({
+    id: levy.id,
+    fiscal_year: levy.fiscal_year,
+    call_label: levy.call_label,
+    due_date: levy.due_date,
+    issued_at: levy.issued_at,
+    paid_at: levy.paid_at,
+    amount: levy.total_amount,
+    status: levy.status,
+    breakdown: levy.breakdown,
+  }))
+})
 
-function statusLabel(levy: UnitChargesLevy): string {
-  return t(`budget.levyStatuses.${levy.status}`)
+const levyTableColumns = computed<Column<Record<string, unknown>>[]>(() => [
+  { key: 'fiscal_year', label: t('budget.fiscalYear', { year: '' }).trim(), align: 'right', numeric: true },
+  { key: 'issued_at', label: t('common.issuedAt'), align: 'right', numeric: true },
+  { key: 'due_date', label: t('common.dueDate'), align: 'right', numeric: true },
+  { key: 'call_label', label: t('budget.levyCallLabel') },
+  { key: 'amount', label: t('common.amount'), align: 'right', numeric: true },
+  { key: 'status', label: t('common.status') },
+  { key: 'paid_at', label: t('common.paidAt'), align: 'right', numeric: true },
+  { key: 'actions', label: '', align: 'right', width: '1%' },
+])
+
+const levyTableRows = computed<Record<string, unknown>[]>(
+  () => consolidatedLevies.value as unknown as Record<string, unknown>[],
+)
+
+const breakdownColumns = computed<Column<Record<string, unknown>>[]>(() => [
+  { key: 'line_label', label: t('budget.lineLabel') },
+  { key: 'key_name', label: t('settings.keys.title') },
+  { key: 'shares', label: t('units.shares'), align: 'right', numeric: true },
+  { key: 'amount', label: t('common.amount'), align: 'right', numeric: true },
+])
+
+const breakdownRows = computed<Record<string, unknown>[]>(
+  () => (selectedLevy.value?.breakdown ?? []).map(d => ({
+    ...d,
+    line_label: d.is_works_fund
+      ? t('budget.worksFund')
+      : (d.budget_line_label ?? '—'),
+    shares: d.shares_snapshot !== null
+      ? `${d.shares_snapshot} / ${d.shares_total_snapshot}`
+      : null,
+  })) as unknown as Record<string, unknown>[],
+)
+
+const breakdownTotal = computed(() =>
+  (selectedLevy.value?.breakdown ?? []).reduce((sum, d) => sum + Number(d.amount), 0),
+)
+
+function statusVariant(status: UnitChargesLevy['status']): 'pending' | 'valid' | 'err' | 'default' {
+  if (status === 'issued') return 'pending'
+  if (status === 'paid') return 'valid'
+  if (status === 'overdue') return 'err'
+  return 'default'
 }
 
 </script>
@@ -83,152 +159,149 @@ function statusLabel(levy: UnitChargesLevy): string {
           <h1 class="display-md">
             {{ t('units.charges.title') }}
           </h1>
-          <p
-            class="body-md"
-            style="color:var(--color-on-surface-variant)"
-          >
-            {{ t('common.lot') }} {{ data.unit.unit_number }} · {{ data.unit.unit_type }}
-          </p>
+          <CMetaLine>
+            <CMetaItem variant="sub">
+              {{ t('common.lot') }} {{ data.unit.unit_number }} 
+            </CMetaItem>
+            <CSeparator />
+            <CMetaItem variant="sub">
+              {{ t(`units.types.${data.unit.unit_type}`) }}
+            </CMetaItem>
+          </CMetaLine>
         </header>
 
         <!-- Summary KPIs -->
-        <div class="charges-kpis">
-          <div class="kpi-card">
-            <span class="kpi-label">{{ t('units.charges.totalIssued') }}</span>
-            <span class="kpi-value">{{ formatCurrency(data.total_issued) }}</span>
-          </div>
-          <div class="kpi-card">
-            <span class="kpi-label">{{ t('units.charges.totalPaid') }}</span>
-            <span class="kpi-value kpi-paid">{{ formatCurrency(data.total_paid) }}</span>
-          </div>
-          <div
-            class="kpi-card"
-            :class="{ 'kpi-card--warn': data.balance > 0 }"
-          >
-            <span class="kpi-label">{{ t('units.charges.balance') }}</span>
-            <span
-              class="kpi-value"
-              :class="data.balance > 0 ? 'kpi-overdue' : 'kpi-paid'"
-            >
-              {{ formatCurrency(data.balance) }}
-            </span>
-          </div>
+        <div class="flex flex-wrap gap-4">
+          <CKpiCard
+            :label="t('units.charges.totalIssued')"
+            :value="formatCurrency(data.total_issued)"
+          />
+          <CKpiCard
+            :label="t('units.charges.totalPaid')"
+            :value="formatCurrency(data.total_paid)"
+            tone="valid"
+            :emphasize="true"
+          />
+          <CKpiCard
+            :label="t('units.charges.balance')"
+            :value="formatCurrency(data.balance)"
+            :tone="data.balance > 0 ? 'err' : 'valid'"
+            :emphasize="true"
+          />
         </div>
 
-        <!-- Legal note -->
-        <p class="legal-note">
-          {{ t('units.charges.legalNote') }}
-        </p>
-
-        <!-- Levy table -->
         <CCard>
           <h2 class="section-title">
             {{ t('units.charges.history') }}
           </h2>
 
-          <div
-            v-if="data.levies.length === 0"
-            class="empty-state"
+          <CDataTable
+            :columns="levyTableColumns"
+            :rows="levyTableRows"
+            :empty-text="t('units.charges.empty')"
+            class="-mx-5"
           >
-            {{ t('units.charges.empty') }}
-          </div>
-
-          <table
-            v-else
-            class="data-table"
-          >
-            <thead>
-              <tr>
-                <th>{{ t('budget.fiscalYear', { year: '' }).trim() }}</th>
-                <th>{{ t('common.date') }}</th>
-                <th>{{ t('settings.keys.title') }}</th>
-                <th>{{ t('units.shares') }}</th>
-                <th>{{ t('common.amount') }}</th>
-                <th>{{ t('common.status') }}</th>
-                <th>{{ t('common.paidAt') }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                v-for="levy in data.levies"
-                :key="levy.id"
+            <template #cell-issued_at="{ row }">
+              {{ formatDate(row.issued_at as string) }}
+            </template>
+            <template #cell-due_date="{ row }">
+              {{ formatDate(row.due_date as string) }}
+            </template>
+            <template #cell-amount="{ row }">
+              <span class="cell-numeric">
+                {{ formatCurrency(Number(row.amount)) }}
+              </span>
+            </template>
+            <template #cell-status="{ row }">
+              <CBadge
+                :variant="statusVariant(row.status as UnitChargesLevy['status'])"
+                :pulse="row.status === 'overdue'"
+                dot
+                :ring="row.status === 'issued' || row.status === 'overdue'"
               >
-                <td>{{ levy.fiscal_year }}</td>
-                <td>{{ formatDate(levy.due_date) }}</td>
-                <td>{{ levy.key_name ?? '—' }}</td>
-                <td class="shares-cell">
-                  <template v-if="levy.shares_snapshot !== null">
-                    {{ levy.shares_snapshot }} / {{ levy.shares_total_snapshot }}
-                  </template>
-                  <template v-else>
-                    —
-                  </template>
-                </td>
-                <td class="amount-cell">
-                  {{ formatCurrency(levy.amount) }}
-                </td>
-                <td>
-                  <span
-                    class="status-pill"
-                    :class="statusClass(levy)"
-                  >
-                    {{ statusLabel(levy) }}
-                  </span>
-                </td>
-                <td>{{ levy.paid_at ? formatDate(levy.paid_at) : '—' }}</td>
-              </tr>
-            </tbody>
-          </table>
+                {{ t(`budget.levyStatuses.${row.status}`) }}
+              </CBadge>
+            </template>
+            <template #cell-paid_at="{ row }">
+              {{ row.paid_at ? formatDate(row.paid_at as string) : '—' }}
+            </template>
+            <template #cell-actions="{ row }">
+              <CBtn
+                variant="ghost"
+                size="sm"
+                @click="selectedLevy = consolidatedLevies.find(l => l.id === row.id) ?? null"
+              >
+                {{ t('units.charges.detailAction') }}
+              </CBtn>
+            </template>
+          </CDataTable>
         </CCard>
+
+        <CLegalCard>
+          <CFlexGroup>
+            <CLegalNotice
+              :links="[{ label: t('units.charges.legalCard.art10linkLabel'), href: t('units.charges.legalCard.art10linkHref') }]"
+            >
+              <CLegalDescription
+                :title="t('units.charges.legalCard.art10title')"
+                :summary="t('units.charges.legalCard.art10summary')"
+              />
+            </CLegalNotice>
+            <CLegalNotice
+              :links="[{ label: t('units.charges.legalCard.art18linkLabel'), href: t('units.charges.legalCard.art18linkHref') }]"
+            >
+              <CLegalDescription
+                :title="t('units.charges.legalCard.art18title')"
+                :summary="t('units.charges.legalCard.art18summary')"
+              />
+            </CLegalNotice>
+          </CFlexGroup>
+        </CLegalCard>
+
+        <CModal
+          :open="!!selectedLevy"
+          :title="selectedLevy
+            ? t('units.charges.detailTitle', { label: selectedLevy.call_label })
+            : t('units.charges.detailAction')"
+          size="lg"
+          @update:open="open => { if (!open) selectedLevy = null }"
+        >
+          <CDataTable
+            :columns="breakdownColumns"
+            :rows="breakdownRows"
+            class="-mx-5 bg-transparent! border-b border-outline-variant"
+          >
+            <template #cell-key_name="{ row }">
+              {{ row.key_name ?? '—' }}
+            </template>
+            <template #cell-shares="{ row }">
+              <span class="text-on-surface-variant">{{ row.shares ?? '—' }}</span>
+            </template>
+            <template #cell-amount="{ row }">
+              <span class="cell-numeric">
+                {{ formatCurrency(Number(row.amount)) }}
+              </span>
+            </template>
+          </CDataTable>
+          <div class="flex items-center justify-between font-semibold text-sm mt-1">
+            <strong>{{ t('common.total') }}</strong>
+            <p class="justify-end font-mono">
+              {{ formatCurrency(breakdownTotal) }}
+            </p>
+          </div>
+          <template #footer>
+            <CBtn
+              variant="ghost"
+              @click="selectedLevy = null"
+            >
+              {{ t('common.cancel') }}
+            </CBtn>
+          </template>
+        </CModal>
       </template>
     </div>
   </div>
 </template>
 
 <style scoped>
-
-.charges-kpis {
-  display: flex;
-  gap: var(--space-4);
-  flex-wrap: wrap;
-}
-.kpi-card {
-  flex: 1;
-  min-width: 160px;
-  padding: var(--space-4) var(--space-5);
-  border-radius: var(--radius-md);
-  background: var(--color-surface-container-low);
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.kpi-card--warn { background: color-mix(in srgb, var(--color-warning, #b45309) 8%, transparent); }
-.kpi-label { font-size: var(--text-xs); color: var(--color-on-surface-variant); font-weight: var(--fw-medium); text-transform: uppercase; letter-spacing: 0.04em; }
-.kpi-value { font-size: 22px; font-weight: var(--fw-bold); font-family: var(--font-display); }
-.kpi-paid    { color: var(--color-success, #16a34a); }
-.kpi-overdue { color: var(--color-error); }
-
-.legal-note { font-size: var(--text-xs); color: var(--color-on-surface-variant); padding: var(--space-2) var(--space-3); border-left: 3px solid var(--color-outline-variant); margin: 0; }
-
-.data-table { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
-.data-table th, .data-table td { padding: var(--space-2) 10px; text-align: left; border-bottom: 1px solid var(--color-outline-variant); vertical-align: middle; }
-.data-table th { color: var(--color-on-surface-variant); font-weight: var(--fw-medium); font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.04em; }
-.data-table tbody tr:last-child td { border-bottom: none; }
-
-.shares-cell { font-variant-numeric: tabular-nums; color: var(--color-on-surface-variant); }
-.amount-cell { font-variant-numeric: tabular-nums; font-weight: var(--fw-semibold); }
-
-.status-pill {
-  display: inline-block;
-  padding: 2px var(--space-2);
-  border-radius: 999px;
-  font-size: var(--text-2xs);
-  font-weight: var(--fw-semibold);
-  white-space: nowrap;
-}
-.status-issued  { background: color-mix(in srgb, var(--color-primary) 12%, transparent); color: var(--color-primary); }
-.status-paid    { background: color-mix(in srgb, var(--color-success, #16a34a) 12%, transparent); color: var(--color-success, #16a34a); }
-.status-overdue { background: color-mix(in srgb, var(--color-error) 12%, transparent); color: var(--color-error); }
-
-.empty-state { text-align: center; color: var(--color-on-surface-variant); padding: var(--space-6) 0; }
 </style>

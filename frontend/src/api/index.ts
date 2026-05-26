@@ -209,26 +209,26 @@ export const budgetApi = {
     api.get<Budget[]>('/budgets'),
   get: (id: string) =>
     api.get<Budget>(`/budgets/${id}`),
-  create: (data: Partial<Budget>) =>
+  create: (data: { fiscal_year: number }) =>
     api.post<Budget>('/budgets', data),
-  update: (id: string, data: Partial<Budget>) =>
-    api.put<Budget>(`/budgets/${id}`, data),
+  close: (id: string) =>
+    api.post(`/budgets/${id}/close`),
   listLines: (id: string) =>
     api.get<BudgetLine[]>(`/budgets/${id}/lines`),
-  createLine: (id: string, data: Partial<BudgetLine>) =>
+  createLine: (id: string, data: { label: string; key_id: string; budgeted_amount: number }) =>
     api.post<BudgetLine>(`/budgets/${id}/lines`, data),
-  updateLine: (id: string, lid: string, data: Partial<BudgetLine>) =>
-    api.put<BudgetLine>(`/budgets/${id}/lines/${lid}`, data),
   deleteLine: (id: string, lid: string) =>
     api.delete(`/budgets/${id}/lines/${lid}`),
-  generateLevies: (id: string) =>
-    api.post(`/budgets/${id}/levies/generate`),
+  generateLevies: (id: string, data: { due_date: string; include_works_fund: boolean; call_label?: string }) =>
+    api.post<{ generated: number; total_amount: number; already_called: number; remaining_amount: number; due_date: string; call_label?: string }>(`/budgets/${id}/levies/generate`, data),
   listLevies: (id: string) =>
     api.get<LevyCall[]>(`/budgets/${id}/levies`),
-  markPaid: (levyId: string) =>
-    api.put(`/levies/${levyId}/payment`),
-  listWorksFund: () =>
-    api.get<WorksFund[]>('/works-fund'),
+  markPaid: (levyCallId: string, unitId: string) =>
+    api.put(`/levies/${levyCallId}/units/${unitId}/payment`),
+  getWorksFund: (fiscalYear: number) =>
+    api.get<WorksFund>(`/works-fund/${fiscalYear}`),
+  updateWorksFund: (fiscalYear: number, data: { contribution_rate_pct: number }) =>
+    api.put<WorksFund>(`/works-fund/${fiscalYear}`, data),
 }
 
 // ── Documents ─────────────────────────────────────────────────────

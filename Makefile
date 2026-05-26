@@ -19,6 +19,7 @@ help: ## Show this help
 # ── Development ───────────────────────────────────────────────────
 dev: ## Start the dev environment (postgres + minio + backend hot-reload)
 	docker compose up -d postgres minio
+	$(MAKE) -j1 sqlx-prepare
 	cd backend && bacon watch
 
 dev-frontend: ## Start the Vue 3 frontend in dev mode

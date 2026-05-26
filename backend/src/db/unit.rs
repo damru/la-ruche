@@ -124,13 +124,26 @@ pub async fn update(
 }
 
 pub async fn archive(pool: &PgPool, id: Uuid, building_id: Uuid) -> crate::errors::AppResult<()> {
-    sqlx::query!(
+    let mut tx = pool.begin().await?;
+
+    let archived = sqlx::query(
         "UPDATE unit SET active = false, updated_at = NOW() WHERE id = $1 AND building_id = $2",
-        id,
-        building_id
     )
-    .execute(pool)
+    .bind(id)
+    .bind(building_id)
+    .execute(&mut *tx)
     .await?;
+
+    if archived.rows_affected() > 0 {
+        sqlx::query(
+            "UPDATE unit_allocation_key SET valid_to = CURRENT_DATE WHERE unit_id = $1 AND valid_to IS NULL",
+        )
+        .bind(id)
+        .execute(&mut *tx)
+        .await?;
+    }
+
+    tx.commit().await?;
     Ok(())
 }
 

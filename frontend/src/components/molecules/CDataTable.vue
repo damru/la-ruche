@@ -5,6 +5,7 @@ export interface Column<T> {
   align?: 'left' | 'right' | 'center'
   width?: string
   sortable?: boolean
+  numeric?: boolean
 }
 </script>
 
@@ -128,7 +129,7 @@ function getCellValue(row: T, key: string): unknown {
           <td
             v-for="col in columns"
             :key="String(col.key)"
-            :class="['c-table__td', `c-table__cell--${col.align ?? 'left'}`]"
+            :class="['c-table__td', `c-table__cell--${col.align ?? 'left'}`, { 'c-table__cell--numeric': col.numeric }]"
           >
             <!-- Slot nommé par colonne pour rendu custom -->
             <slot
@@ -148,9 +149,7 @@ function getCellValue(row: T, key: string): unknown {
 <style scoped>
 .c-table-wrap {
   overflow-x: auto;
-  border-radius: var(--radius-lg);
   background: var(--color-surface-container-lowest);
-  box-shadow: var(--shadow-md);
 }
 
 .c-table {
@@ -164,18 +163,15 @@ function getCellValue(row: T, key: string): unknown {
   font-weight: var(--fw-semibold);
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--color-on-surface-variant);
+  color: var(--tone-fg, var(--color-on-surface-variant));
   padding: var(--space-3) var(--space-4);
-  background: var(--color-surface-container-low);
+  background: var(--tone-bg, var(--color-surface-container-low));
   white-space: nowrap;
   user-select: none;
 }
 
-.c-table__th:first-child { border-radius: var(--radius-sm) 0 0 0; }
-.c-table__th:last-child  { border-radius: 0 var(--radius-sm) 0 0; }
-
 .c-table__th--sortable { cursor: pointer; }
-.c-table__th--sortable:hover { color: var(--color-on-surface); }
+.c-table__th--sortable:hover { color: var(--tone-fg, var(--color-on-surface)); }
 
 .c-table__th-inner {
   display: inline-flex;
@@ -184,28 +180,35 @@ function getCellValue(row: T, key: string): unknown {
 }
 
 .c-table__sort-icon {
-  width: 12px;
-  height: 12px;
+  width: var(--icon-2xs);
+  height: var(--icon-2xs);
   opacity: 0.4;
   transition: opacity var(--transition-fast);
 }
-.c-table__sort-icon--active { opacity: 1; color: var(--color-primary); }
+.c-table__sort-icon--active { 
+  opacity: 1; 
+  color: var(--tone-fg, var(--color-primary)); 
+}
 
 .c-table__td {
   font-size: var(--text-sm);
-  color: var(--color-on-surface);
-  padding: var(--space-4) var(--space-4);
-  /* No-Line rule — subtle alternating background only when striped */
-  border-bottom: 1px solid rgba(194, 199, 207, 0.12);
+  color: var(--tone-fg, var(--color-on-surface));
+  background: var(--tone-bg, transparent);
+  padding: var(--space-1) var(--space-4);
+  border-bottom: 1px solid var(--color-outline-light);
 }
 
 .c-table__row:last-child .c-table__td { border-bottom: none; }
 
-.c-table__row { transition: background var(--transition-fast); }
-.c-table__row:hover .c-table__td { background: var(--color-surface-container-low); }
+.c-table__row { 
+  transition: background var(--transition-fast); 
+}
+.c-table__row:hover .c-table__td { 
+  background: var(--color-surface-container-low); 
+}
 
 .c-table__row--striped:nth-child(even) .c-table__td {
-  background: var(--color-surface-container);
+  background: var(--tone-bg, var(--color-surface-container));
 }
 
 /* Alignements */
@@ -216,7 +219,7 @@ function getCellValue(row: T, key: string): unknown {
 .c-table__empty {
   text-align: center;
   padding: var(--space-12) var(--space-4);
-  color: var(--color-on-surface-variant);
+  color: var(--tone-fg, var(--color-on-surface-variant));
   font-size: var(--text-md);
 }
 
@@ -225,12 +228,20 @@ function getCellValue(row: T, key: string): unknown {
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  color: var(--color-on-surface-variant);
+  color: var(--tone-fg, var(--color-on-surface-variant));
 }
 
 .c-table__spinner {
-  width: 16px;
-  height: 16px;
+  width: var(--icon-sm);
+  height: var(--icon-sm);
   animation: spin 1s linear infinite;
+}
+
+/* Numeric cells */
+.c-table .c-table__cell--numeric {
+  text-align: right;
+  font-family: var(--font-mono);
+  font-weight: var(--fw-medium);
+  font-variant-numeric: tabular-nums;
 }
 </style>
