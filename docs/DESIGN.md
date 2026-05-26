@@ -3,7 +3,7 @@ document: DESIGN
 version: 1.0.0
 owner: Damien
 status: validé
-last_updated: 2026-05-22
+last_updated: 2026-05-26
 references:
   - DDR-001
   - DDR-002
@@ -29,7 +29,6 @@ rules:
 # DESIGN.md — Design System "The Modern Registry"
 
 > **Dénomination** — « l'Application » désigne exclusivement **La Ruche**, plateforme de gestion participative de copropriété.  
-> Dernière mise à jour : 2026-05-21
 
 ---
 
@@ -47,9 +46,9 @@ Trois polices, trois rôles. Chargées depuis Google Fonts.
 
 | Token | Valeur | Classe Tailwind | Usage |
 |---|---|---|---|
-| `--font-display` | `'Fraunces', Georgia, serif` | `font-display` | Titres de page, KPI ≥ 28px |
+| `--font-display` | `'Fraunces', Georgia, serif` | `font-display` | Titres de page, grands libellés éditoriaux — **jamais pour des chiffres** |
 | `--font-body` | `'DM Sans', system-ui, sans-serif` | `font-body` | Corps, labels, navigation |
-| `--font-mono` | `'JetBrains Mono', ui-monospace` | `font-mono` | Montants tableaux, codes, numéros lot |
+| `--font-mono` | `'JetBrains Mono', ui-monospace` | `font-mono` | Montants tableaux, codes, numéros lot, KPI numériques |
 
 > **Fraunces** produit des chiffres proportionnels non tabulaires → interdit en colonne. Utiliser `font-mono` avec `lnum tnum` pour les montants.
 
@@ -59,11 +58,14 @@ Trois polices, trois rôles. Chargées depuis Google Fonts.
 |---|---|---|---|
 | `--text-2xs` | `11px` | `text-2xs` | Eyebrows, footnotes, chips de statut |
 | `--text-xs`  | `12px` | `text-xs`  | Dates, captions, labels secondaires |
-| `--text-sm`  | `13px` | `text-sm`  | Lignes de tableau, list items, texte UI par défaut |
-| `--text-md`  | `14px` | `text-md`  | Corps de texte |
-| `--text-lg`  | `16px` | `text-lg`  | Titres de section, en-têtes de carte |
+| `--text-sm`      | `13px` | `text-sm`      | Lignes de tableau, list items, texte UI par défaut |
+| `--text-md`      | `14px` | `text-md`      | Corps de texte |
+| `--text-lg`      | `16px` | `text-lg`      | Titres de section, en-têtes de carte |
+| `--text-xl`      | `20px` | `text-xl`      | Titres de carte — correspond à `CHeading sm/md` |
+| `--text-2xl`     | `24px` | `text-2xl`     | Titres de section majeurs — correspond à `CHeading lg` |
+| `--text-display` | `40px` | `text-display` | KPI numériques, valeurs comptables proéminentes — `font-mono lnum tnum` |
 
-> `text-sm` (13px) et `text-lg` (16px) divergent de Tailwind natif (14px et 18px). Toujours utiliser nos tokens.
+> `text-sm` (13px) et `text-lg` (16px) divergent de Tailwind natif (14px et 18px). `text-xl` et `text-2xl` couvrent les titres de `CHeading`; `text-display` remplace tout usage arbitraire `text-[56px]`. Jamais de valeur `text-[…px]` codée en dur.
 
 **Graisses** — utiliser les utilitaires Tailwind natifs : `font-normal` (400), `font-medium` (500), `font-semibold` (600), `font-bold` (700), `font-[800]` pour Fraunces display.
 
@@ -108,12 +110,14 @@ Source : `frontend/src/styles/tokens.css`. Les valeurs Dark sont dans `[data-the
 
 **Rôles** :
 
-| Token (`-bg` / `-fg`) | Background light | Foreground light |
-|---|---|---|
-| `--color-role-manager-*` | `#e8def8` | `#21005d` |
-| `--color-role-board-*` | `#d2e4fb` | `#001d36` |
-| `--color-role-co-owner-*` | `#cef5e5` | `#00391d` |
-| `--color-role-tenant-*` | `#fcecd1` | `#3a2000` |
+> Les valeurs hex sont les valeurs actuelles dans `tokens.css`. Migration vers OKLCH planifiée — EP-020-S01 et EP-020-S02.
+
+| Token (`-bg` / `-fg`) | Background light | Foreground light | Background dark | Foreground dark |
+|---|---|---|---|---|
+| `--color-role-manager-*` | `#e8def8` | `#21005d` | `#3d2277` | `#e8def8` |
+| `--color-role-board-*` | `#d2e4fb` | `#001d36` | `#0d2b47` | `#d2e4fb` |
+| `--color-role-co-owner-*` | `#cef5e5` | `#00391d` | `#0d3321` | `#cef5e5` |
+| `--color-role-tenant-*` | `#fcecd1` | `#3a2000` | `#3d2800` | `#fcecd1` |
 
 ---
 
@@ -121,12 +125,13 @@ Source : `frontend/src/styles/tokens.css`. Les valeurs Dark sont dans `[data-the
 
 | Token | Valeur | | Token | Valeur |
 |---|---|---|---|---|
-| `--space-1`  | `4px`  | | `--space-8`  | `32px` |
-| `--space-2`  | `8px`  | | `--space-10` | `40px` |
-| `--space-3`  | `12px` | | `--space-12` | `48px` |
-| `--space-4`  | `16px` | | `--space-16` | `64px` |
-| `--space-5`  | `20px` | | `--space-20` | `80px` |
-| `--space-6`  | `24px` | | | |
+| `--space-1`  | `4px`  | | `--space-7`  | `28px` |
+| `--space-2`  | `8px`  | | `--space-8`  | `32px` |
+| `--space-3`  | `12px` | | `--space-9`  | `36px` |
+| `--space-4`  | `16px` | | `--space-10` | `40px` |
+| `--space-5`  | `20px` | | `--space-12` | `48px` |
+| `--space-6`  | `24px` | | `--space-16` | `64px` |
+| | | | `--space-20` | `80px` |
 
 ---
 
@@ -158,7 +163,7 @@ Source : `frontend/src/styles/tokens.css`. Les valeurs Dark sont dans `[data-the
 | `--shadow-primary-lift` | Élévation hover d'un bouton primaire |
 | `--shadow-primary-lift-hover` | Élévation pressed/active d'un bouton primaire |
 
-> **Glassmorphism modales :** `background: rgba(255,255,255,.85)` + `backdrop-filter: blur(20px)`.
+> **Surface des modales :** `background: var(--color-surface-container-lowest)` + `box-shadow: var(--shadow-glass)`. Le glassmorphisme (`.c-modal--frosted` : `rgba(255,255,255,.85)` + `backdrop-filter: blur(20px)`) est un modificateur opt-in réservé aux surfaces qui l'exigent explicitement — jamais la surface par défaut.
 
 ---
 
@@ -228,17 +233,58 @@ border-color: var(--color-outline-light);
 
 ---
 
+### 1.8 Interlignage
+
+| Token | Valeur | Usage |
+|---|---|---|
+| `--leading-tight`   | `1.25`  | Titres, KPI numériques (`CHeading`, `CKpiMetric`) |
+| `--leading-snug`    | `1.375` | Labels, chips, eyebrows |
+| `--leading-normal`  | `1.5`   | Corps de texte, paragraphes (`--text-md`) |
+| `--leading-relaxed` | `1.625` | Blocs légaux, notices, texte long |
+
+> Toujours spécifier `line-height` via ces tokens dans les composants — jamais de valeur `em` ou `px` codée en dur.
+
+---
+
+### 1.9 Index de calques (z-index)
+
+| Token | Valeur | Usage |
+|---|---|---|
+| `--z-base`     | `0`   | Flux normal |
+| `--z-raised`   | `10`  | Cartes flottantes, `position: sticky` |
+| `--z-dropdown` | `100` | Menus déroulants, `CFormSelect` |
+| `--z-sticky`   | `200` | Topbar, sidebar fixes |
+| `--z-modal`    | `300` | `CModal` et tous les `Dialog` Radix |
+| `--z-tooltip`  | `400` | `CTooltip` et overlays similaires |
+
+> Ne jamais utiliser de valeurs z-index codées en dur (`z-10`, `z-50`…) — toujours `var(--z-*)`.
+
+---
+
 ## 2. Catalogue de composants
 
 ### 2.1 Atomes (`components/atoms/`)
 
+#### Affichage
+
 | Composant | Props clés | Description |
 |---|---|---|
-| `CAlert` | `variant`, `title` | Bandeau d'alerte contextuelle |
+| `CAlert` | `variant` (`error` \| `warning` \| `info` \| `success`), `title` | Bandeau d'alerte contextuelle — consomme `.tone--err/warn/info/valid` |
 | `CBadge` | `variant` | Chip de statut ou de catégorie — consomme `.tone--*` |
-| `CBtn` | `variant`, `size`, `loading`, `disabled` | Bouton — variantes `primary`, `secondary`, `ghost`, `destructive` |
-| `CDataText` | `size` | Texte tabulaire JetBrains Mono — `font-mono font-medium lining-nums tabular-nums`. `size`: `sm` (défaut) \| `md` \| `lg` |
+| `CDataText` | `size` (`sm` \| `md` \| `lg`) | 🔲 planifié — Texte tabulaire JetBrains Mono — `font-mono font-medium lining-nums tabular-nums` |
 | `CEyebrow` | — | Libellé eyebrow — `font-body text-2xs font-medium uppercase tracking-[0.06em]`. Rendu en `<div>`. |
+| `CHeading` | `size` (`lg` \| `md` \| `sm`), `as` | 🔲 planifié — Titre Fraunces semibold italic. `lg` = `text-2xl` (24px), `md` = `text-xl` (20px), `sm` = `text-lg` (18px). `as`: `h1`…`h3` \| `p` |
+| `CIconTile` | `size` (`sm` \| `md` \| `lg`) | Tuile icône avec fond tonal — consomme `.tone--*`. `sm` = 32px, `md` = 40px (défaut), `lg` = 56px. `border-radius` ajusté par taille. Slot défaut pour l'icône SVG — icône dimensionnée via `:deep(svg)`. |
+| `CLegalDescription` | `title`, `summary` | Ligne de note légale — `⚖️ titre — résumé` en `.body-xs .text-muted`. Utilisé comme item dans `CLegalNotice`. |
+| `CMockBanner` | `variant` (`mock` \| `demo`) | Bandeau de mode mock/démo — `role="status" aria-live="polite"`. Réservé aux environnements de développement. |
+| `CProgressBar` | `value`, `max` | Barre de progression |
+| `CSeparator` | `orientation` | Séparateur — wrapper Radix `Separator` |
+| `CTooltip` | `content`, `placement` | Info-bulle — wrapper Radix Tooltip |
+
+#### Formulaires
+
+| Composant | Props clés | Description |
+|---|---|---|
 | `CFormCheckbox` | `label`, `checked` | Case à cocher — wrapper Radix |
 | `CFormChipInput` | `label`, `value` | Saisie d'un chip unitaire (la boucle `v-for` est dans le parent) |
 | `CFormChipSelect` | `label`, `options` | Sélection de chips |
@@ -247,11 +293,14 @@ border-color: var(--color-outline-light);
 | `CFormInput` | `type`, `label`, `error`, `hint` | Champ texte — variante `password` avec toggle de visibilité |
 | `CFormSelect` | `label`, `options`, `error` | Sélecteur — wrapper Radix `SelectRoot` |
 | `CFormTextarea` | `label`, `rows`, `error` | Zone de texte |
-| `CHeading` | `size`, `as` | Titre typographique Fraunces — semibold, italic. `size`: `lg` (24px) \| `md` (20px) \| `sm` (18px). `as`: `h1`…`h3` \| `p` |
-| `CIconWrapper` | `size` (2xs/xs/sm/md/lg) | Wrapper dimensionnel pour icône SVG |
-| `CProgressBar` | `value`, `max` | Barre de progression |
-| `CSeparator` | `orientation` | Séparateur — wrapper Radix `Separator` |
-| `CTooltip` | `content`, `placement` | Info-bulle — wrapper Radix Tooltip |
+
+#### Interactions
+
+| Composant | Props clés | Description |
+|---|---|---|
+| `CBtn` | `variant` (`primary` \| `secondary` \| `ghost` \| `destructive`), `size`, `loading`, `disabled` | Bouton |
+| `CDropdownMenu` | — | 🔲 planifié — wrapper Radix `DropdownMenu` |
+| `CTabs` | `tabs` (`{ value, label, count? }[]`), `modelValue` (v-model) | 🔲 planifié — Bandeau de filtres d'état tabulaires. Flex row, indicateur de soulignement sur l'actif, badge numérique inline pour les volumes. Jamais d'icône seule. |
 
 ---
 
@@ -260,27 +309,28 @@ border-color: var(--color-outline-light);
 | Composant | Props clés | Description |
 |---|---|---|
 | `CCard` | `shadow?` | Conteneur générique — définit background, border-radius, padding et flux interne. Pour les listes avec séparateurs : `CFlexGroup`. Pour les listes sans séparateurs : wrapper Tailwind inline. Ossature d'une carte d'entité : `CCardHeader` › titre › description › `CMeta` › actions › `CCardNote`. |
-| `CCardHeader` | `withIcon?` | En-tête de carte — slots `#icon`, `#chips` |
+| `CCardHeader` | `withIcon?` | 🔲 planifié — En-tête de carte — slots `#icon`, `#chips` |
 | `CCardNote` | `note` | Encart d'information secondaire dans une `CCard` |
 | `CDataTable` | `columns`, `rows` | Tableau de données |
-| `CDocumentList` | `documents`, `readonly?` | Liste documents avec download/retrait — `emit('remove', doc)` au parent |
-| `CEmptyState` | `icon`, `title`, `description?` | État vide — slot `#actions` |
+| `CDocumentList` | `documents`, `readonly?` | 🔲 planifié — Liste documents avec download/retrait — `emit('remove', doc)` au parent |
+| `CEmptyState` | `icon`, `title`, `description?` | 🔲 planifié — État vide — slot `#actions` |
 | `CFormAddressAutocomplete` | `label`, `value` | Champ adresse avec autocomplétion |
-| `CFormGroup` | `label`, `hint?` | Wrapper label + champ + hint |
-| `CFormLabel` | `for`, `required?` | Label de formulaire |
-| `CFormRow` | `cols` (1/2) | Grille formulaire 2 colonnes responsive |
-| `CKpiCard` | `title`, `value`, `tone` | Carte indicateur KPI |
+| `CFormGroup` | `label`, `hint?` | 🔲 planifié — Wrapper label + champ + hint |
+| `CFormLabel` | `for`, `required?` | 🔲 planifié — Label de formulaire |
+| `CFormRow` | `cols` (1/2) | 🔲 planifié — Grille formulaire 2 colonnes responsive |
+| `CKpiCard` | `title`, `tone` | Conteneur indicateur KPI — compose `CKpiMetric` pour la valeur |
+| `CKpiMetric` | `value`, `unit?`, `size?` | Valeur numérique KPI — `text-display font-mono lnum tnum`. Ne jamais utiliser `font-display` ni `text-[…px]` ici. |
 | `CLegalCard` | — | Carte de note légale (wraps `CLegalNotice`) |
 | `CLegalNotice` | `descriptions`, `links` | Bloc notices légales structurées |
 | `CListItem` | — | Ligne de liste générique |
 | `CMeta` | — | Conteneur de métadonnées |
 | `CMetaItem` | `variant`, `icon` | Ligne icône + contenu — variantes `footer` / `sub` |
 | `CMetaLine` | — | Rangée horizontale de `CMetaItem` avec `CSeparator` |
-| `CModal` | `open`, `title`, `saving?`, `feedback?` | Dialogue Radix `Dialog` — émettre `@submit` pour soumission |
-| `CPageHeader` | `eyebrow?`, `title`, `meta?`, `icon?`, `frozenLabel?` | En-tête de vue — slot `#actions` |
+| `CModal` | `open`, `title`, `saving?`, `feedback?` | Dialogue Radix `Dialog` — émettre `@submit` pour soumission. `CFormFeedback` obligatoire dans `#footer` (DDR-006). |
+| `CPageHeader` | `eyebrow?`, `title`, `meta?`, `icon?`, `frozenLabel?` | 🔲 planifié — En-tête de vue — slot `#actions` |
 | `CPageLoader` | — | Indicateur de chargement |
-| `CSectionHeader` | `title`, `subtitle?`, `level?` | En-tête de section dans une `CCard` — slot `#actions` |
-| `CTopbarBreadcrumb` | `crumbs[]` | Fil d'Ariane topbar |
+| `CSectionHeader` | `title`, `subtitle?`, `level?` | 🔲 planifié — En-tête de section dans une `CCard` — slot `#actions` |
+| `CTopbarBreadcrumb` | `crumbs[]` | 🔲 planifié — Fil d'Ariane topbar |
 
 ---
 
@@ -296,11 +346,14 @@ border-color: var(--color-outline-light);
 | `CLinkedDocumentsModal` | Modale liste des documents liés à une entité |
 | `CPageError` | Affichage d'erreur pleine page |
 | `CReminderCard` | Carte de rappels synthétiques partagée entre vues |
+| `CStatusBanner` | Bandeau d'état en-tête (AG : `draft` / `called` / `ongoing` / `closed`) — 🔲 planifié |
 | `CTopbar` | Barre supérieure avec breadcrumb et actions globales |
 
 ---
 
 ## 3. Règles globales
+
+> **Règles critiques à mémoriser :** (1) Jamais de `1px solid` coloré comme accent — cf. §3.6. (2) `CFormFeedback` uniquement dans `#footer` de `CModal` — cf. DDR-006. (3) Pas de `z-index` codé en dur — utiliser `var(--z-*)` cf. §1.9. (4) Pas d'import direct `radix-vue` dans une vue — cf. §3.4.
 
 ### 3.1 Accessibilité
 
@@ -332,11 +385,12 @@ Tokens custom exposés via `@theme inline` dans `frontend/src/styles/tailwind.cs
 
 | Utilitaire Tailwind | Token source | Remarque |
 |---|---|---|
-| `text-2xs` · `text-xs` · `text-sm` · `text-md` · `text-lg` | `--text-*` | Remplace l'échelle Tailwind native — `text-sm` 13px, `text-lg` 16px |
+| `text-2xs` · `text-xs` · `text-sm` · `text-md` · `text-lg` · `text-xl` · `text-2xl` · `text-display` | `--text-*` | Remplace l'échelle Tailwind native — `text-sm` 13px, `text-lg` 16px, `text-display` 40px |
 | `font-display` · `font-body` · `font-mono` | `--font-*` | Familles custom |
-| `space-1` … `space-20` | `--space-*` | — |
+| `space-1` … `space-20` (dont `space-7`, `space-9`) | `--space-*` | — |
 | `radius-sm` … `radius-full` | `--radius-*` | — |
 | `shadow-md` · `shadow-lg` · `shadow-glass` | `--shadow-*` | — |
+| `leading-tight` · `leading-snug` · `leading-normal` · `leading-relaxed` | `--leading-*` | Interlignage — jamais de valeur `em` ou `px` codée en dur |
 
 **Règles :**
 - Jamais de valeur brute (`px`, `hex`, `rem`) dans un attribut `class` si un token Tailwind existe.
@@ -351,12 +405,12 @@ Toute primitive Radix Vue est enveloppée dans un composant `C*` avant usage dan
 
 | Primitive Radix | Wrapper | Statut |
 |---|---|---|
-| `Checkbox` | `CFormCheckbox` | 🔲 planifié |
+| `Checkbox` | `CFormCheckbox` | ✅ |
 | `Dialog` | `CModal` | ✅ |
 | `DropdownMenu` | `CDropdownMenu` | 🔲 planifié |
-| `Select` | `CFormSelect` | 🔲 planifié |
+| `Select` | `CFormSelect` | ✅ |
 | `Separator` | `CSeparator` | ✅ |
-| `Tooltip` | `CTooltip` | 🔲 planifié |
+| `Tooltip` | `CTooltip` | ✅ |
 
 ---
 
@@ -388,6 +442,31 @@ Les états interactifs sont gérés localement dans chaque composant — pas de 
 | **Focus champ** | `box-shadow: var(--shadow-primary-ring)` · `outline: 2px solid var(--color-primary)` |
 | **Focus champ en erreur** | `box-shadow: var(--shadow-error-ring)` |
 | **Disabled** | `.tone--disabled` — jamais `opacity: 0.5` (contraste insuffisant) |
+
+---
+
+### 3.8 Architecture CSS
+
+**Sources de vérité — immuables, jamais redéclarées :**
+
+| Fichier | Rôle |
+|---|---|
+| `styles/tokens.css` | Variables CSS de design (couleurs, espace, typographie, ombres, z-index) |
+| `styles/tones.css` | Utilitaires de tonalité sémantique — seules classes CSS pures autorisées hors composants |
+| `styles/tailwind.css` | Exposition des tokens via `@theme inline` + import Tailwind |
+
+**Règle unique :** tout nouveau pattern d'interface devient soit un composant atomique `C*` avec `<style scoped>`, soit une combinaison d'utilitaires Tailwind. Aucun nouveau fichier CSS global n'est créé. Les fichiers legacy ci-dessous ne doivent plus être étendus.
+
+**Fichiers legacy — à migrer, ne plus étendre :**
+
+| Fichier | Patterns concernés | Migration cible |
+|---|---|---|
+| `tabs.css` | `.tabs` · `.tab` · `.tab--active` · `.tab-count` | `CTabs` atom (EP-020-S07) |
+| `typography.css` | `.display-*` · `.headline-*` · `.title-*` · `.body-*` | `CHeading` atom (EP-020-S08) + utilitaires `@theme` |
+| `forms.css` | `.form-grid` · `.field` · `.search-bar` · `.dropzone` · `.icon-btn` | `CFormRow`, `CFormGroup`, `CFormLabel` molecules + atoms `CFormInput`, `CFormDropzone` existants + Tailwind inline (EP-020-S09) |
+| `tables.css` | `.data-table` et variantes · `.cards-grid` | Scoped styles `CDataTable` ; `.cards-grid` → Tailwind `grid grid-cols-[…]` inline (EP-020-S10) |
+| `base.css` | `.view-container` · `.view-header` · `.empty-state` · `.card--terminated` · `.loading-skeleton` · `.spinner` | Tailwind inline pour les layouts ; `CEmptyState`, `CPageLoader` atoms ; resets navigateur conservés (EP-020-S11) |
+| `activity-cards.css` | `.activity-card__*` | Scoped styles du composant feature consommateur (EP-020-S12) |
 
 ---
 
@@ -432,8 +511,12 @@ Sur mobile, les écrans publics (`/login`, `/onboarding`, invitation, reset) con
 
 `CCard` est un conteneur générique (background, border-radius, padding, flux). Chaque entité de liste est une `CCard`. La mise en liste est de la responsabilité de la vue :
 
-- **Avec séparateurs** → `CFlexGroup` comme wrapper de liste
-- **Sans séparateurs** → div Tailwind inline (`flex flex-col gap-*`)
+| Besoin | Solution |
+|---|---|
+| Liste avec séparateurs visuels entre items | `CFlexGroup` comme wrapper |
+| Liste sans séparateurs, espacement seul | `div` Tailwind inline (`flex flex-col gap-*`) |
+| Item unique dans une zone de contenu | `CCard` seul sans wrapper de liste |
+| Grille responsive d'entités égales | `grid grid-cols-*` inline — pas de `CFlexGroup` |
 
 **Ossature commune d'une carte d'entité :**
 
@@ -453,7 +536,7 @@ Chaque vue définit ses propres variantes dans ses **règles feature** (§4.2).
 
 #### KPI
 
-Les indicateurs et filtres KPI utilisent `CKpiCard` (molécule) et `CBtn` avec `.tone--*` pour les pills de filtre. La valeur numérique (`font-display text-[56px] font-[800] tracking-[-0.04em]`) est rendue directement dans `CKpiCard` — ce style display 56px est exclusif à `CKpiCard`, pas à `CHeading`.
+Les indicateurs et filtres KPI utilisent `CKpiCard` (molécule) + `CKpiMetric` (atome) et `CBtn` avec `.tone--*` pour les pills de filtre. La valeur numérique passe par `CKpiMetric` qui utilise `text-display` (`--text-display`, 40px) + `font-mono lnum tnum`. Ne jamais utiliser la valeur arbitraire `text-[56px]` ni `font-display` (Fraunces) pour des chiffres — non tabulaire, illisible en colonnes.
 
 #### Gestion documentaire liée
 
@@ -493,6 +576,32 @@ Tout `CModal` avec formulaire ou action destructive inclut `CFormFeedback` dans 
 ```
 
 `CFormFeedback` ne doit jamais apparaître dans `<template #default>`. Composable : `useFormFeedback.ts` — appeler `feedback.reset()` à l'ouverture.
+
+#### Tabs de navigation
+
+Toute vue avec plusieurs filtres d'état utilise `CTabs` (atome §2.1). Le composant reçoit la liste des onglets et expose un `v-model` sur la valeur active — la logique de filtrage reste dans la vue.
+
+```vue
+<CTabs
+  v-model="filter"
+  :tabs="[
+    { value: 'all',    label: t('common.all'),    count: total },
+    { value: 'active', label: t('common.active'),  count: activeCount },
+  ]"
+/>
+```
+
+**Règles :**
+- Flex row, sous l'en-tête de page, au-dessus de la liste.
+- Libellé `font-body text-sm font-medium`, neutre en `color: var(--color-on-surface-variant)`.
+- Tab actif : `color: var(--color-primary)`, indicateur `border-bottom: 2px solid var(--color-primary)`.
+- `count` : badge numérique inline — jamais `CBadge`, toujours un `<span>` stylisé dans le composant.
+- Jamais de tab avec icône seule — libellé textuel obligatoire.
+- Pas de `<style>` dans la vue qui utilise `CTabs` — toute variation passe par les props.
+
+Usage actuel : AssemblyListView, BudgetView, ClaimsView, ConsultationsView, ContractsView, ProfileView, ReportsView, ResidentsView, TasksView.
+
+---
 
 #### Reminder cards
 

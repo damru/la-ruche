@@ -1,3 +1,6 @@
+/* ⚠️ LEGACY — Ne plus étendre ce fichier.
+   Migration cible : composant `CTabs` (EP-020-S07, DESIGN.md §3.8).
+   ─────────────────────────────────────────────────────────────────────── */
 /* ── Generic tab / segment control ───────────────────────────────────────────
    .tabs        : container (pill-shaped segment strip)
    .tab         : individual tab button

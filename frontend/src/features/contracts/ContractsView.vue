@@ -3,6 +3,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useFormatters } from '@/composables/useFormatters'
 import CBadge from '@/components/atoms/CBadge.vue'
+import CIconTile from '@/components/atoms/CIconTile.vue'
 import CIconBolt from '@/components/atoms/CIconBolt.svg'
 import CIconDroplet from '@/components/atoms/CIconDroplet.svg'
 import CBtn from '@/components/atoms/CBtn.vue'
@@ -421,12 +422,12 @@ async function confirmTerminateContract() {
             :class="['activity-card', { 'card--terminated': effectiveStatus(contract) !== 'active' }]"
           >
             <div class="activity-card__header-row activity-card__header-row--with-icon">
-              <div :class="['activity-card__icon', contractIconTone(contract)]">
+              <CIconTile :class="['activity-card__icon', contractIconTone(contract)]">
                 <component
                   :is="contractTypeIcon(contract.contract_type)"
                   aria-hidden="true"
                 />
-              </div>
+              </CIconTile>
               <h3 class="activity-card__title">
                 {{ contract.vendor_name }}
               </h3>

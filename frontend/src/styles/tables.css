@@ -1,3 +1,6 @@
+/* ⚠️ LEGACY — Ne plus étendre ce fichier.
+   Migration cible : scoped styles `CDataTable` ; `.cards-grid` → Tailwind inline (EP-020-S10, DESIGN.md §3.8).
+   ─────────────────────────────────────────────────────────────────────── */
 /* ── DATA TABLES ─────────────────────────────────────────────────── */
 /* Shared style for all data tables in the application.              */
 /* Reference: RegistryView — always add white-space:nowrap on th.    */

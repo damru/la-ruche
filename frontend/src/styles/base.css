@@ -1,3 +1,8 @@
+/* ⚠️ PARTIEL LEGACY — Les classes applicatives (`.view-container`, `.empty-state`, `.spinner`, etc.)
+   sont à migrer vers Tailwind inline ou composants (EP-020-S11, DESIGN.md §3.8).
+   Les resets navigateur (html, body, :focus-visible, scrollbar, a, img, button…) sont conservés.
+   ─────────────────────────────────────────────────────────────────────────────────────────────── */
+
 /* ── BASE ────────────────────────────────────────────────────────── */
 
 html {

@@ -7,6 +7,7 @@ import { useFormFeedback } from '@/composables/useFormFeedback'
 import { useAutoClose } from '@/composables/useAutoClose'
 import { useAuthStore } from '@/stores/auth'
 import CBadge from '@/components/atoms/CBadge.vue'
+import CIconTile from '@/components/atoms/CIconTile.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CMetaLine from '@/components/molecules/CMetaLine.vue'
@@ -304,12 +305,12 @@ async function confirmDelete() {
             @keydown.space.prevent="openContractorDetail(c.id)"
           >
             <div class="activity-card__header-row activity-card__header-row--with-icon">
-              <div :class="['activity-card__icon', 'contractor-card__icon', domainTone(c.domains)]">
+              <CIconTile :class="['activity-card__icon', domainTone(c.domains)]">
                 <component
                   :is="domainIcon(c.domains)"
                   aria-hidden="true"
                 />
-              </div>
+              </CIconTile>
               <h3 class="activity-card__title">
                 {{ c.name }}
               </h3>

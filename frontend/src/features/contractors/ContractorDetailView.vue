@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n'
 import { useFormatters } from '@/composables/useFormatters'
 import { usePageLoader } from '@/composables/usePageLoader'
 import CBadge from '@/components/atoms/CBadge.vue'
+import CIconTile from '@/components/atoms/CIconTile.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CEyebrow from '@/components/atoms/CEyebrow.vue'
 import CCard from '@/components/molecules/CCard.vue'
@@ -139,13 +140,12 @@ function priorityVariant(p: string): 'err' | 'pending' | 'primary' | 'valid' | '
         <!-- Contractor detail card -->
         <CCard class="contractor-detail-card">
           <div class="contractor-header">
-            <div :class="['contractor-domain-icon', domainTone(contractor.domains)]">
+            <CIconTile size="lg" :class="domainTone(contractor.domains)">
               <component
                 :is="domainIcon(contractor.domains)"
-                class="domain-icon"
                 aria-hidden="true"
               />
-            </div>
+            </CIconTile>
             <div class="contractor-header-info">
               <CEyebrow>
                 {{ t('page.eyebrows.contractorDetail') }}
@@ -264,19 +264,6 @@ function priorityVariant(p: string): 'err' | 'pending' | 'primary' | 'valid' | '
   margin-bottom: var(--space-4);
 }
 
-.contractor-domain-icon {
-  width: 56px;
-  height: 56px;
-  border-radius: var(--radius-lg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  background: var(--tone-bg, var(--color-secondary-container));
-  color: var(--tone-fg, var(--color-primary));
-}
-
-.domain-icon { width: 24px; height: 24px; }
 
 .contractor-header-info {
   flex: 1;

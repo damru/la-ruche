@@ -1,3 +1,6 @@
+/* ⚠️ LEGACY — Ne plus étendre ce fichier.
+   Migration cible : `CHeading` atom + utilitaires Tailwind @theme (EP-020-S08, DESIGN.md §3.8).
+   ─────────────────────────────────────────────────────────────────────── */
 /* ── TYPOGRAPHIE — The Modern Registry ──────────────────────────────
    Fraunces (display/headlines) + DM Sans (body/labels)
    Référence : DDR-001

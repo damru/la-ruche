@@ -1,3 +1,7 @@
+/* ⚠️ LEGACY — Ne plus étendre ce fichier.
+   Migration cible : scoped styles du composant feature consommateur (EP-020-S12, DESIGN.md §3.8).
+   ─────────────────────────────────────────────────────────────────────── */
+
 .activity-card {
   display: flex;
   flex-direction: column;
@@ -15,23 +19,10 @@
   justify-content: flex-end;
 }
 
+/* Layout modifier only — appearance is owned by CIconTile */
 .activity-card__icon {
-  width: 40px;
-  height: 40px;
   flex-shrink: 0;
-  border-radius: var(--radius-md);
-  display: flex;
   align-self: flex-start;
-  align-items: center;
-  justify-content: center;
-  background: var(--tone-bg, var(--color-secondary-container));
-  color: var(--tone-fg, var(--color-primary));
-
-}
-
-.activity-card__icon svg {
-  width: var(--icon-md);
-  height: var(--icon-md);
 }
 
 .activity-card__stack {
