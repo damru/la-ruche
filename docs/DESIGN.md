@@ -346,7 +346,7 @@ border-color: var(--color-outline-light);
 | `CLinkedDocumentsModal` | Modale liste des documents liés à une entité |
 | `CPageError` | Affichage d'erreur pleine page |
 | `CReminderCard` | Carte de rappels synthétiques partagée entre vues |
-| `CStatusBanner` | Bandeau d'état en-tête (AG : `draft` / `called` / `ongoing` / `closed`) — 🔲 planifié |
+| `CStatusBanner` | Bandeau d'état en-tête (AG : `draft` / `called` / `ongoing` / `closed`) — ✅ |
 | `CTopbar` | Barre supérieure avec breadcrumb et actions globales |
 
 ---
