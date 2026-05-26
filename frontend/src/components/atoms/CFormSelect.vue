@@ -1,5 +1,10 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import {
+  SelectRoot, SelectTrigger, SelectValue, SelectPortal,
+  SelectContent, SelectViewport, SelectItem, SelectItemText,
+} from 'radix-vue'
 
 const props = withDefaults(defineProps<{
   modelValue?: string | number
@@ -29,168 +34,128 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
-const inputId = props.id ?? `c-select-${Math.random().toString(36).slice(2, 7)}`
+// Stable ID for aria associations — random suffix avoids collisions when multiple selects are on page
+const inputId = computed(() => props.id ?? `c-select-${Math.random().toString(36).slice(2, 7)}`)
+
+// Radix works with strings; coerce numeric values to string for the SelectRoot binding
+const stringValue = computed(() =>
+  props.modelValue !== undefined && props.modelValue !== null
+    ? String(props.modelValue)
+    : undefined,
+)
+
+// Resolve the display label for readonly mode
+const readonlyLabel = computed(() =>
+  props.options.find(o => String(o.value) === String(props.modelValue))?.label ?? props.modelValue,
+)
+
+function handleUpdate(val: string) {
+  emit('update:modelValue', val)
+}
 </script>
 
 <template>
-  <div class="c-field">
+  <div class="flex flex-col gap-1">
     <label
-      v-if="label"
+      v-if="props.label"
       :for="inputId"
-      class="c-field__label"
+      class="text-sm font-medium text-on-surface"
     >
-      {{ label }}
+      {{ props.label }}
       <span
-        v-if="required"
-        class="c-field__required"
+        v-if="props.required"
+        class="text-error ml-px"
         :aria-label="t('common.requiredAria')"
       >*</span>
     </label>
 
+    <!-- Read-only display — mirrors existing behaviour -->
     <span
-      v-if="readonly"
+      v-if="props.readonly"
       :id="inputId"
-      class="c-field__readonly"
-    >{{ options.find(o => o.value === modelValue)?.label ?? modelValue }}</span>
+      class="flex items-center h-[var(--control-height)] px-4 text-md text-on-surface
+             bg-surface-container-low rounded-radius-md w-full box-border"
+    >{{ readonlyLabel }}</span>
 
-    <div
+    <!-- Interactive select via Radix -->
+    <SelectRoot
       v-else
-      class="c-field__select-wrap"
+      :model-value="stringValue"
+      :disabled="props.disabled"
+      @update:model-value="handleUpdate"
     >
-      <select
+      <SelectTrigger
         :id="inputId"
-        :value="modelValue"
-        :disabled="disabled"
-        :required="required"
-        :aria-describedby="error ? `${inputId}-error` : hint ? `${inputId}-hint` : undefined"
-        :aria-invalid="!!error"
-        :class="['c-field__input', { 'c-field__input--error': error, 'c-field__input--placeholder': !modelValue }]"
-        @change="emit('update:modelValue', ($event.target as HTMLSelectElement).value)"
+        :aria-describedby="props.error ? `${inputId}-error` : props.hint ? `${inputId}-hint` : undefined"
+        :aria-invalid="!!props.error"
+        :aria-required="props.required"
+        class="flex items-center justify-between w-full h-[var(--control-height)] px-3 rounded-radius-md
+               bg-surface-container text-on-surface text-md outline-none cursor-pointer
+               focus:ring-2 focus:ring-primary/30 focus:bg-surface-container-low
+               data-[disabled]:opacity-50 data-[disabled]:cursor-not-allowed
+               transition-[background,box-shadow] duration-fast"
+        :class="[
+          props.error ? 'ring-2 ring-error' : '',
+          !props.modelValue ? 'text-on-surface-variant' : '',
+        ]"
       >
-        <option
-          v-if="placeholder"
-          value=""
-          disabled
-          :selected="!modelValue"
+        <SelectValue :placeholder="props.placeholder ?? t('common.selectPlaceholder', 'Sélectionner…')" />
+        <!-- Chevron icon — inline SVG to avoid external dependency -->
+        <svg
+          class="size-[var(--icon-sm)] text-on-surface-variant shrink-0 ml-2"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
         >
-          {{ placeholder }}
-        </option>
-        <option
-          v-for="opt in options"
-          :key="opt.value"
-          :value="opt.value"
-          :disabled="opt.disabled"
+          <path d="M6 9l6 6 6-6" />
+        </svg>
+      </SelectTrigger>
+
+      <SelectPortal>
+        <SelectContent
+          position="popper"
+          :side-offset="4"
+          class="min-w-[var(--radix-select-trigger-width)] rounded-radius-md
+                 bg-surface-container-lowest shadow-md z-overlay overflow-hidden"
         >
-          {{ opt.label }}
-        </option>
-      </select>
-      <CIconChevronDown
-        class="c-field__chevron"
-        aria-hidden="true"
-      />
-    </div>
+          <SelectViewport class="p-1">
+            <SelectItem
+              v-for="opt in props.options"
+              :key="opt.value"
+              :value="String(opt.value)"
+              :disabled="opt.disabled"
+              class="flex items-center px-3 py-2 text-md text-on-surface rounded-radius-sm
+                     cursor-pointer outline-none select-none
+                     hover:bg-surface-container
+                     data-[highlighted]:bg-surface-container
+                     data-[state=checked]:font-medium
+                     data-[disabled]:opacity-40 data-[disabled]:cursor-not-allowed"
+            >
+              <SelectItemText>{{ opt.label }}</SelectItemText>
+            </SelectItem>
+          </SelectViewport>
+        </SelectContent>
+      </SelectPortal>
+    </SelectRoot>
 
     <p
-      v-if="!readonly && error"
+      v-if="!props.readonly && props.error"
       :id="`${inputId}-error`"
-      class="c-field__error"
+      class="text-xs text-error flex items-center gap-1"
       role="alert"
     >
-      <CIconXCircle
-        width="12"
-        height="12"
-        aria-hidden="true"
-      />
-      {{ error }}
+      {{ props.error }}
     </p>
     <p
-      v-else-if="!readonly && hint"
+      v-else-if="!props.readonly && props.hint"
       :id="`${inputId}-hint`"
-      class="c-field__hint"
+      class="text-xs text-on-surface-variant"
     >
-      {{ hint }}
+      {{ props.hint }}
     </p>
   </div>
 </template>
-
-<style scoped>
-.c-field { display: flex; flex-direction: column; gap: var(--space-1); }
-
-.c-field__label {
-  font-size: var(--text-sm);
-  font-weight: var(--fw-medium);
-  color: var(--color-on-surface);
-}
-
-.c-field__required { color: var(--color-error); margin-left: 2px; }
-
-.c-field__select-wrap {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.c-field__input {
-  appearance: none;
-  box-sizing: border-box;
-  width: 100%;
-  height: var(--control-height);
-  padding: 0 var(--space-10) 0 var(--space-4);
-  background: var(--color-surface-container);
-  border: none;
-  border-radius: var(--radius-md);
-  font-family: var(--font-body);
-  font-size: var(--text-md);
-  color: var(--color-on-surface);
-  outline: none;
-  cursor: pointer;
-  transition:
-    background var(--transition-fast),
-    box-shadow var(--transition-fast);
-}
-
-.c-field__input--placeholder { color: var(--color-on-surface-variant); }
-
-.c-field__input:focus {
-  background: var(--color-surface-container-low);
-  box-shadow: var(--shadow-primary-ring);
-}
-
-.c-field__input--error { box-shadow: var(--shadow-error-ring); }
-
-.c-field__input:disabled { opacity: 0.5; cursor: not-allowed; }
-
-.c-field__chevron {
-  position: absolute;
-  right: var(--space-3);
-  width: var(--icon-sm);
-  height: var(--icon-sm);
-  color: var(--color-on-surface-variant);
-  pointer-events: none;
-  flex-shrink: 0;
-}
-
-.c-field__readonly {
-  display: flex;
-  align-items: center;
-  height: var(--control-height);
-  padding: 0 var(--space-4);
-  font-family: var(--font-body);
-  font-size: var(--text-md);
-  color: var(--color-on-surface);
-  background: var(--color-surface-container-low);
-  border-radius: var(--radius-md);
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.c-field__hint { font-size: var(--text-xs); color: var(--color-on-surface-variant); }
-
-.c-field__error {
-  font-size: var(--text-xs);
-  color: var(--color-error);
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-}
-</style>
