@@ -21,6 +21,7 @@
 	--color-warning: var(--color-warning);
 	--color-warning-container: var(--color-warning-container);
 	--color-surface: var(--color-surface);
+	--color-surface-container-lowest: var(--color-surface-container-lowest);
 	--color-surface-low: var(--color-surface-container-low);
 	--color-surface-container: var(--color-surface-container);
 	--color-surface-high: var(--color-surface-container-high);
@@ -81,4 +82,6 @@
 	--z-overlay: var(--z-overlay);
 	--z-modal: var(--z-modal);
 	--z-toast: var(--z-toast);
+
+	--size-dropdown-min: var(--size-dropdown-min);
 }

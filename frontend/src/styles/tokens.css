@@ -112,6 +112,7 @@
   /* ── UI Controls ───────────────────────────────────────────── */
   --control-height:    44px;   /* input, select — touch target */
   --control-height-sm: 36px;   /* small input, small button */
+  --size-dropdown-min: 160px;
 
   /* ── Icons ──────────────────────────────────────────────────── */
   --icon-2xs: 12px;  /* meta-footer */

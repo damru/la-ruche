@@ -38,7 +38,7 @@ defineOptions({ inheritAttrs: false })
       <DropdownMenuContent
         :align="props.align"
         :side-offset="4"
-        class="min-w-[160px] rounded-radius-md bg-surface-container-lowest shadow-md p-1 outline-none z-overlay"
+        class="min-w-dropdown-min rounded-radius-md bg-surface-container-lowest shadow-md p-1 outline-none z-overlay"
       >
         <template v-for="(item, i) in props.items" :key="i">
           <DropdownMenuSeparator
