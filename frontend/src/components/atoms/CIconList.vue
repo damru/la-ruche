@@ -1,7 +1,7 @@
 <template>
-  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-    <rect x="1" y="3" width="14" height="2" rx="1" fill="currentColor" />
-    <rect x="1" y="7" width="14" height="2" rx="1" fill="currentColor" />
-    <rect x="1" y="11" width="14" height="2" rx="1" fill="currentColor" />
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+    <line x1="2" y1="4" x2="14" y2="4" />
+    <line x1="2" y1="8" x2="14" y2="8" />
+    <line x1="2" y1="12" x2="14" y2="12" />
   </svg>
 </template>
