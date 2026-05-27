@@ -6,6 +6,8 @@ import {
   SelectContent, SelectViewport, SelectItem, SelectItemText,
 } from 'radix-vue'
 
+defineOptions({ inheritAttrs: false })
+
 const props = withDefaults(defineProps<{
   modelValue?: string | number
   label?: string
@@ -85,6 +87,7 @@ function handleUpdate(val: string) {
       @update:model-value="handleUpdate"
     >
       <SelectTrigger
+        v-bind="$attrs"
         :id="inputId"
         :aria-describedby="props.error ? `${inputId}-error` : props.hint ? `${inputId}-hint` : undefined"
         :aria-invalid="!!props.error"
