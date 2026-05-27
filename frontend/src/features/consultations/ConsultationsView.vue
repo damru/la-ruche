@@ -18,6 +18,7 @@ import CModal from '@/components/molecules/CModal.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
+import CTabs from '@/components/atoms/CTabs.vue'
 import { buildingApi, consultationsApi } from '@/api'
 import type { Consultation } from '@/types/domain'
 
@@ -306,19 +307,13 @@ async function confirmDelete() {
           {{ pageError }}
         </CAlert>
 
-        <div class="tabs">
-          <button
-            v-for="item in [
-              { key: 'open', label: t('consultations.filters.open'), count: openCount },
-              { key: 'closed', label: t('consultations.filters.closed'), count: closedCount },
-            ]"
-            :key="item.key"
-            :class="['tab', { 'tab--active': statusFilter === item.key }]"
-            @click="statusFilter = item.key as typeof statusFilter"
-          >
-            {{ item.label }} <span class="tab-count">{{ item.count }}</span>
-          </button>
-        </div>
+        <CTabs
+          v-model="statusFilter"
+          :tabs="[
+            { value: 'open', label: t('consultations.filters.open'), count: openCount },
+            { value: 'closed', label: t('consultations.filters.closed'), count: closedCount },
+          ]"
+        />
 
         <div class="consultation-list">
           <CCard

@@ -18,6 +18,7 @@ import CModal from '@/components/molecules/CModal.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
+import CTabs from '@/components/atoms/CTabs.vue'
 import { buildingApi, documentsApi, reportsApi, unitsApi } from '@/api'
 import type { Document, Report, ReportStatus, TaskPriority, Unit } from '@/types/domain'
 
@@ -576,22 +577,15 @@ function photoPreview(file: File): string {
         </header>
 
         <!-- Filters -->
-        <div class="tabs">
-          <button
-            v-for="item in [
-              { key: 'all', label: t('common.all'), count: allReports.length },
-              { key: 'open', label: t('reports.filters.open'), count: counts.open },
-              { key: 'in_progress', label: t('reports.filters.inProgress'), count: counts.in_progress },
-              { key: 'closed', label: t('reports.filters.closed'), count: counts.closed },
-            ]"
-            :key="item.key"
-            :class="['tab', { 'tab--active': statusFilter === item.key }]"
-            @click="statusFilter = item.key as typeof statusFilter"
-          >
-            {{ item.label }}
-            <span class="tab-count">{{ item.count }}</span>
-          </button>
-        </div>
+        <CTabs
+          v-model="statusFilter"
+          :tabs="[
+            { value: 'all', label: t('common.all'), count: allReports.length },
+            { value: 'open', label: t('reports.filters.open'), count: counts.open },
+            { value: 'in_progress', label: t('reports.filters.inProgress'), count: counts.in_progress },
+            { value: 'closed', label: t('reports.filters.closed'), count: counts.closed },
+          ]"
+        />
 
         <!-- List -->
         <div class="report-list">

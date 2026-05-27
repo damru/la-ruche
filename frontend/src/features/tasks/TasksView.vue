@@ -19,6 +19,7 @@ import CModal from '@/components/molecules/CModal.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
+import CTabs from '@/components/atoms/CTabs.vue'
 import { buildingApi, contractorsApi, documentsApi, tasksApi, usersApi } from '@/api'
 import type { Contractor, Document, Task, TaskStatus, TaskPriority, User } from '@/types/domain'
 import { extractFileExtension } from '@/utils/files'
@@ -809,24 +810,17 @@ async function copyVendorLink(taskId: string) {
         </CAlert>
 
         <!-- Filtres -->
-        <div class="tabs">
-          <button
-            v-for="item in [
-              { key: 'all', label: t('tasks.filters.all'), count: allTasks.length },
-              { key: 'open', label: t('tasks.filters.open'), count: counts.open },
-              { key: 'in_progress', label: t('tasks.filters.in_progress'), count: counts.in_progress },
-              { key: 'awaiting_vendor', label: t('tasks.filters.awaiting_vendor'), count: counts.awaiting_vendor },
-              { key: 'awaiting_validation', label: t('tasks.filters.awaiting_validation'), count: counts.awaiting_validation },
-              { key: 'closed', label: t('tasks.filters.closed'), count: counts.closed },
-            ]"
-            :key="item.key"
-            :class="['tab', { 'tab--active': statusFilter === item.key }]"
-            @click="statusFilter = item.key as typeof statusFilter"
-          >
-            {{ item.label }}
-            <span class="tab-count">{{ item.count }}</span>
-          </button>
-        </div>
+        <CTabs
+          v-model="statusFilter"
+          :tabs="[
+            { value: 'all', label: t('tasks.filters.all'), count: allTasks.length },
+            { value: 'open', label: t('tasks.filters.open'), count: counts.open },
+            { value: 'in_progress', label: t('tasks.filters.in_progress'), count: counts.in_progress },
+            { value: 'awaiting_vendor', label: t('tasks.filters.awaiting_vendor'), count: counts.awaiting_vendor },
+            { value: 'awaiting_validation', label: t('tasks.filters.awaiting_validation'), count: counts.awaiting_validation },
+            { value: 'closed', label: t('tasks.filters.closed'), count: counts.closed },
+          ]"
+        />
 
         <!-- Liste -->
         <div class="task-list">

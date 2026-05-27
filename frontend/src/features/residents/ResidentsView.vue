@@ -9,6 +9,7 @@ import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
+import CTabs from '@/components/atoms/CTabs.vue'
 import { unitsApi, allocationKeysApi, usersApi } from '@/api'
 import { usePageLoader } from '@/composables/usePageLoader'
 import { useFormFeedback } from '@/composables/useFormFeedback'
@@ -281,19 +282,13 @@ function formatLocation(unit: { block?: string | null; staircase?: string | null
           </p>
         </header>
 
-        <div class="tabs">
-          <button
-            v-for="tab in [
-              { key: 'units', label: t('residents.tabs.units', { count: allUnits.length }) },
-              { key: 'users', label: t('residents.tabs.users', { count: allUsers.length }) },
-            ]"
-            :key="tab.key"
-            :class="['tab', { 'tab--active': activeTab === tab.key }]"
-            @click="activeTab = tab.key as typeof activeTab"
-          >
-            {{ tab.label }}
-          </button>
-        </div>
+        <CTabs
+          v-model="activeTab"
+          :tabs="[
+            { value: 'units', label: t('residents.tabs.units', { count: allUnits.length }) },
+            { value: 'users', label: t('residents.tabs.users', { count: allUsers.length }) },
+          ]"
+        />
 
         <CFormInput
           v-model="search"

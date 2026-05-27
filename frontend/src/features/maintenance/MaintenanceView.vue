@@ -16,6 +16,7 @@ import CModal from '@/components/molecules/CModal.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
+import CTabs from '@/components/atoms/CTabs.vue'
 import { maintenanceApi } from '@/api'
 import type { LogbookContractSummary, LogbookSummary, MaintenanceEntry } from '@/types/domain'
 
@@ -476,16 +477,10 @@ async function deleteEntry() {
         </CLegalCard>
 
         <div class="period-toolbar">
-          <div class="tabs period-tabs">
-            <button
-              v-for="filter in ['month', 'quarter', 'semester', 'year', 'all'] as PeriodFilter[]"
-              :key="filter"
-              :class="['tab', { 'tab--active': periodFilter === filter }]"
-              @click="selectPeriod(filter)"
-            >
-              {{ t(`maintenance.filters.${filter}`) }}
-            </button>
-          </div>
+          <CTabs
+            v-model="periodFilter"
+            :tabs="(['month', 'quarter', 'semester', 'year', 'all'] as const).map(f => ({ value: f, label: t(`maintenance.filters.${f}`) }))"
+          />
           <div class="period-nav">
             <CBtn
               variant="ghost"

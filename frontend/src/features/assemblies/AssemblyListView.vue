@@ -19,6 +19,7 @@ import CModal from '@/components/molecules/CModal.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
+import CTabs, { type Tab } from '@/components/atoms/CTabs.vue'
 
 const router = useRouter()
 const { t } = useI18n()
@@ -68,6 +69,12 @@ const meetings = computed(() => {
 
 const upcomingCount = computed(() => allMeetings.value.filter(meeting => meeting.status !== 'closed').length)
 const closedCount = computed(() => allMeetings.value.filter(meeting => meeting.status === 'closed').length)
+
+const meetingTabs = computed<Tab[]>(() => [
+  { value: 'all', label: t('common.allFem'), count: allMeetings.value.length },
+  { value: 'upcoming', label: t('meetings.filterUpcoming'), count: upcomingCount.value },
+  { value: 'closed', label: t('meetings.filterClosed'), count: closedCount.value },
+])
 
 function typeLabel(type: MeetingType): string {
   return t(`meetings.typeLabel.${type}`)
@@ -182,29 +189,7 @@ async function saveMeeting() {
           </CMetaLine>
         </header>
 
-        <div class="tabs">
-          <button
-            :class="['tab', { 'tab--active': filter === 'all' }]"
-            @click="filter = 'all'"
-          >
-            {{ t('common.allFem') }}
-            <span class="tab-count">{{ allMeetings.length }}</span>
-          </button>
-          <button
-            :class="['tab', { 'tab--active': filter === 'upcoming' }]"
-            @click="filter = 'upcoming'"
-          >
-            {{ t('meetings.filterUpcoming') }}
-            <span class="tab-count">{{ upcomingCount }}</span>
-          </button>
-          <button
-            :class="['tab', { 'tab--active': filter === 'closed' }]"
-            @click="filter = 'closed'"
-          >
-            {{ t('meetings.filterClosed') }}
-            <span class="tab-count">{{ closedCount }}</span>
-          </button>
-        </div>
+        <CTabs v-model="filter" :tabs="meetingTabs" />
 
         <div
           v-if="meetings.length === 0"

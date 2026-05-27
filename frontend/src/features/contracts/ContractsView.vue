@@ -23,6 +23,7 @@ import CIconSparkles from '@/components/atoms/CIconSparkles.svg'
 import CIconWrench from '@/components/atoms/CIconWrench.svg'
 import { buildingApi, contractsApi, documentsApi } from '@/api'
 import ContractFormModal from '@/features/contracts/ContractFormModal.vue'
+import CTabs, { type Tab } from '@/components/atoms/CTabs.vue'
 import { usePageLoader, toErrorMessage } from '@/composables/usePageLoader'
 import { useFormFeedback } from '@/composables/useFormFeedback'
 import { useAutoClose } from '@/composables/useAutoClose'
@@ -221,6 +222,10 @@ const contractTabs = computed(() => [
   { key: 'expired', label: t('contracts.filters.expired'), count: contractCounts.value.expired },
 ])
 
+const contractTabsList = computed<Tab[]>(() =>
+  contractTabs.value.map(t => ({ value: t.key, label: t.label, count: t.count }))
+)
+
 const contractReminderRows = computed(() =>
   reminderViews.value.map(reminder => ({
     id: reminder.id,
@@ -381,17 +386,7 @@ async function confirmTerminateContract() {
         </CReminderCard>
 
         <div class="contracts-toolbar">
-          <div class="tabs">
-            <button
-              v-for="opt in contractTabs"
-              :key="opt.key"
-              :class="['tab', { 'tab--active': filter === opt.key }]"
-              @click="setFilter(opt.key as 'all' | 'active' | 'expired')"
-            >
-              {{ opt.label }}
-              <span class="tab-count">{{ opt.count }}</span>
-            </button>
-          </div>
+          <CTabs v-model="filter" :tabs="contractTabsList" />
 
           <CFormInput
             v-model="search"

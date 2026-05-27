@@ -14,6 +14,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useUiStore } from '@/stores/ui'
 import { authApi, adminApi } from '@/api'
 import { useFormFeedback, SUCCESS_AUTO_CLEAR_MS } from '@/composables/useFormFeedback'
+import CTabs from '@/components/atoms/CTabs.vue'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -21,8 +22,8 @@ const auth = useAuthStore()
 const ui = useUiStore()
 
 // ── Tabs ──────────────────────────────────────────────────────────
-type Tab = 'account' | 'notifications'
-const activeTab = ref<Tab>('account')
+type ProfileTab = 'account' | 'notifications'
+const activeTab = ref<ProfileTab>('account')
 
 // ── Account form ─────────────────────────────────────────────────
 const saving = ref(false)
@@ -149,22 +150,13 @@ async function confirmResetDemo() {
       </header>
 
       <!-- Tabs -->
-      <div class="tabs">
-        <button
-          class="tab"
-          :class="{ 'tab--active': activeTab === 'account' }"
-          @click="activeTab = 'account'"
-        >
-          {{ t('nav.myAccount') }}
-        </button>
-        <button
-          class="tab"
-          :class="{ 'tab--active': activeTab === 'notifications' }"
-          @click="activeTab = 'notifications'"
-        >
-          {{ t('nav.notifications') }}
-        </button>
-      </div>
+      <CTabs
+        v-model="activeTab"
+        :tabs="[
+          { value: 'account', label: t('nav.myAccount') },
+          { value: 'notifications', label: t('nav.notifications') },
+        ]"
+      />
 
       <!-- ── Account tab ─────────────────────────────────────── -->
       <template v-if="activeTab === 'account'">

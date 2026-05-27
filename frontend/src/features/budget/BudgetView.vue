@@ -18,6 +18,7 @@ import CAlert from '@/components/atoms/CAlert.vue'
 import CProgressBar from '@/components/atoms/CProgressBar.vue'
 import CDataTable from '@/components/molecules/CDataTable.vue'
 import CLegalDescription from '@/components/atoms/CLegalDescription.vue'
+import CTabs, { type Tab } from '@/components/atoms/CTabs.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CEyebrow from '@/components/atoms/CEyebrow.vue'
@@ -98,6 +99,15 @@ const buildingName = ref('')
 const buildingStats = ref<BuildingStats | null>(null)
 const budgets = ref<Budget[]>([])
 const selectedBudgetId = ref<string | null>(null)
+
+const selectedBudgetTab = computed({
+  get: () => selectedBudgetId.value ?? '',
+  set: (v: string) => { selectedBudgetId.value = v || null },
+})
+
+const budgetYearTabs = computed<Tab[]>(() =>
+  budgets.value.map(b => ({ value: b.id, label: String(b.fiscal_year) }))
+)
 const budgetLines = ref<BudgetLine[]>([])
 const levies = ref<LevyCall[]>([])
 const worksFund = ref<WorksFund | null>(null)
@@ -799,22 +809,17 @@ function formatSharePercentage(value: number): string {
           </CMetaLine>
         </div>
 
-        <div class="tabs">
-          <button
-            v-for="b in budgets"
-            :key="b.id" 
-            :class="['tab', { 'tab--active': selectedBudgetId === b.id }]"
-            @click="selectedBudgetId = b.id"
-          >
-            {{ b.fiscal_year }}
-          </button>
-          <button
+        <div class="flex items-center gap-2">
+          <CTabs v-model="selectedBudgetTab" :tabs="budgetYearTabs" />
+          <CBtn
             v-if="canManage"
-            class="tab text-primary!"
+            variant="ghost"
+            size="sm"
+            class="text-primary!"
             @click="openCreateBudgetModal"
           >
             + {{ t('budget.newFiscalYear') }}
-          </button>
+          </CBtn>
         </div>
 
         <template v-if="canEditSelectedBudget">

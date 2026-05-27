@@ -21,6 +21,7 @@ import CCardNote from '@/components/molecules/CCardNote.vue'
 import CModal from '@/components/molecules/CModal.vue'
 import CReminderCard from '@/components/organisms/CReminderCard.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
+import CTabs, { type Tab } from '@/components/atoms/CTabs.vue'
 import CIconCheckCircle from '@/components/atoms/CIconCheckCircle.svg'
 import CIconClock from '@/components/atoms/CIconClock.svg'
 import CIconCurrency from '@/components/atoms/CIconCurrency.svg'
@@ -226,6 +227,10 @@ const claimTabs = computed(() => [
   { key: 'in_progress', label: t('claims.filters.inProgress'), count: claimCounts.value.in_progress },
   { key: 'closed', label: t('claims.filters.closed'), count: claimCounts.value.closed },
 ])
+
+const claimTabsList = computed<Tab[]>(() =>
+  claimTabs.value.map(t => ({ value: t.key, label: t.label, count: t.count }))
+)
 
 const legalCardLinks = computed(() => [
   {
@@ -910,17 +915,7 @@ async function submitDelete() {
           </template>
         </CReminderCard>
 
-        <div class="tabs">
-          <button
-            v-for="option in claimTabs"
-            :key="option.key"
-            :class="['tab', { 'tab--active': filter === option.key }]"
-            @click="filter = option.key as typeof filter"
-          >
-            {{ option.label }}
-            <span class="tab-count">{{ option.count }}</span>
-          </button>
-        </div>
+        <CTabs v-model="filter" :tabs="claimTabsList" />
 
         <div class="claims-list">
           <CCard
