@@ -15,6 +15,7 @@ import CModal from '@/components/molecules/CModal.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
+import CHeading from '@/components/atoms/CHeading.vue'
 import CIconBolt from '@/components/atoms/CIconBolt.svg'
 import CIconDroplet from '@/components/atoms/CIconDroplet.svg'
 import CIconEdit from '@/components/atoms/CIconEdit.svg'
@@ -263,9 +264,9 @@ async function confirmDelete() {
       <template v-else>
         <header class="view-header">
           <CEyebrow>{{ t('page.eyebrows.contractors') }}</CEyebrow>
-          <h1 class="display-md">
+          <CHeading size="lg" as="h1">
             {{ t('contractors.title') }}
-          </h1>
+          </CHeading>
           <p class="body-md text-on-surface-variant">
             {{ t('contractors.summary', { count: allContractors.length }) }}
           </p>

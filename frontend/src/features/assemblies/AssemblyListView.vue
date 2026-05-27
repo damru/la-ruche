@@ -20,6 +20,7 @@ import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import CTabs, { type Tab } from '@/components/atoms/CTabs.vue'
+import CHeading from '@/components/atoms/CHeading.vue'
 
 const router = useRouter()
 const { t } = useI18n()
@@ -175,9 +176,9 @@ async function saveMeeting() {
           <CEyebrow>
             {{ t('page.eyebrows.assemblies') }}
           </CEyebrow>
-          <h1 class="display-md">
+          <CHeading size="lg" as="h1">
             {{ t('meetings.title') }}
-          </h1>
+          </CHeading>
           <CMetaLine>
             <CMetaItem variant="sub">
               {{ buildingName }}
@@ -256,14 +257,14 @@ async function saveMeeting() {
 
               <div class="meeting-card__resolution-row body-xs">
                 <span class="meeting-card__res-count">
-                  <span class="text-headline-sm">{{ meeting.resolution_count }}</span>
+                  <span class="font-serif font-semibold text-xl italic">{{ meeting.resolution_count }}</span>
                   {{ t('meetings.statResolutions', meeting.resolution_count) }}
                 </span>
                 <span
                   v-if="meeting.status === 'closed'"
                   class="meeting-card__res-passed tone--valid"
                 >
-                  <span class="text-headline-sm">{{ meeting.passed_count }}</span>
+                    <span class="font-serif font-semibold text-xl italic">{{ meeting.passed_count }}</span>
                   {{ t('meetings.statPassed', meeting.passed_count) }}
                 </span>
                 <span

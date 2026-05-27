@@ -19,6 +19,7 @@ import CProgressBar from '@/components/atoms/CProgressBar.vue'
 import CDataTable from '@/components/molecules/CDataTable.vue'
 import CLegalDescription from '@/components/atoms/CLegalDescription.vue'
 import CTabs, { type Tab } from '@/components/atoms/CTabs.vue'
+import CHeading from '@/components/atoms/CHeading.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CEyebrow from '@/components/atoms/CEyebrow.vue'
@@ -757,9 +758,9 @@ function formatSharePercentage(value: number): string {
       >
         <div class="view-header">
           <CEyebrow>{{ t('page.eyebrows.budget') }}</CEyebrow>
-          <h1 class="display-md">
+          <CHeading size="lg" as="h1">
             {{ t('budget.title') }}
-          </h1>
+          </CHeading>
         </div>
         <div class="empty-state empty-state--page">
           <p class="title-md text-on-surface">
@@ -793,9 +794,9 @@ function formatSharePercentage(value: number): string {
             </CBadge>
             {{ t('page.eyebrows.budget') }}
           </CEyebrow>
-          <h1 class="display-md">
+          <CHeading size="lg" as="h1">
             {{ selectedBudget ? t('budget.fiscalYear', { year: selectedBudget.fiscal_year }) : t('budget.title') }}
-          </h1>
+          </CHeading>
           <CMetaLine
             v-if="selectedBudget"
           >
@@ -920,9 +921,9 @@ function formatSharePercentage(value: number): string {
         <CCard class="works-fund-card">
           <div class="section-head">
             <div>
-              <h2 class="headline-sm">
+              <CHeading size="md" as="h2">
                 {{ t('budget.worksFund') }}
-              </h2>
+              </CHeading>
               <CMetaLine v-if="selectedBudget">
                 <CMetaItem variant="sub">
                   {{ t('budget.worksFundRateSummary', {
@@ -988,9 +989,9 @@ function formatSharePercentage(value: number): string {
         >
           <div class="section-head">
             <div>
-              <h2 class="headline-sm">
+              <CHeading size="md" as="h2">
                 {{ t('budget.latePayments') }}
-              </h2>
+              </CHeading>
               <CMetaLine>
                 <CMetaItem variant="sub">
                   {{ t('budget.latePaymentsCount', { count: overdueLevies.length }) }}
@@ -1040,9 +1041,9 @@ function formatSharePercentage(value: number): string {
         <CCard>
           <div class="section-head">
             <div>
-              <h2 class="headline-sm">
+              <CHeading size="md" as="h2">
                 {{ t('budget.consumptionByLine') }}
-              </h2>
+              </CHeading>
               <CMetaItem variant="sub">
                 {{ t('budget.forecastVsActual') }}
               </CMetaItem>
@@ -1130,9 +1131,9 @@ function formatSharePercentage(value: number): string {
         <CCard v-if="canViewLevies">
           <div class="section-head">
             <div>
-              <h2 class="headline-sm">
+              <CHeading size="md" as="h2">
                 {{ t('budget.levies') }}
-              </h2>
+              </CHeading>
               <CMetaLine>
                 <CMetaItem variant="sub">
                   {{ t('budget.levyCallsCount', { count: levyCallCount }) }}

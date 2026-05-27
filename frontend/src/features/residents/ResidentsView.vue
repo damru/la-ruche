@@ -9,6 +9,7 @@ import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
+import CHeading from '@/components/atoms/CHeading.vue'
 import CTabs from '@/components/atoms/CTabs.vue'
 import { unitsApi, allocationKeysApi, usersApi } from '@/api'
 import { usePageLoader } from '@/composables/usePageLoader'
@@ -271,9 +272,9 @@ function formatLocation(unit: { block?: string | null; staircase?: string | null
           <CEyebrow>
             {{ t('page.eyebrows.residents') }}
           </CEyebrow>
-          <h1 class="display-md">
+          <CHeading size="lg" as="h1">
             {{ t('residents.title') }}
-          </h1>
+          </CHeading>
           <p
             class="body-md"
             style="color:var(--color-on-surface-variant)"

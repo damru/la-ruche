@@ -7,6 +7,7 @@ import CBtn from '@/components/atoms/CBtn.vue'
 import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
 import CModal from '@/components/molecules/CModal.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
+import CHeading from '@/components/atoms/CHeading.vue'
 import CIconClock from '@/components/atoms/CIconClock.svg'
 import CIconMoon from '@/components/atoms/CIconMoon.svg'
 import CIconSun from '@/components/atoms/CIconSun.svg'
@@ -144,9 +145,9 @@ async function confirmResetDemo() {
         <CEyebrow>
           {{ t('page.eyebrows.profile') }}
         </CEyebrow>
-        <h1 class="display-md">
+        <CHeading size="lg" as="h1">
           {{ t('nav.account') }}
-        </h1>
+        </CHeading>
       </header>
 
       <!-- Tabs -->

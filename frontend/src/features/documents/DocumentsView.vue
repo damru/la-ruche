@@ -9,6 +9,7 @@ import CModal from '@/components/molecules/CModal.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
+import CHeading from '@/components/atoms/CHeading.vue'
 import CFormDropzone from '@/components/molecules/CFormDropzone.vue'
 import { documentsApi, buildingApi } from '@/api'
 import { toErrorMessage, usePageLoader } from '@/composables/usePageLoader'
@@ -194,9 +195,9 @@ async function confirmDeleteDoc() {
           <CEyebrow>
             {{ t('page.eyebrows.documents') }}
           </CEyebrow>
-          <h1 class="display-md">
+          <CHeading size="lg" as="h1">
             {{ t('documents.title') }}
-          </h1>
+          </CHeading>
           <p
             class="body-md"
             style="color:var(--color-on-surface-variant)"

@@ -9,6 +9,7 @@ import CModal from '@/components/molecules/CModal.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
+import CHeading from '@/components/atoms/CHeading.vue'
 import { allocationKeysApi, unitsApi } from '@/api'
 import { usePageLoader } from '@/composables/usePageLoader'
 import { useFormFeedback } from '@/composables/useFormFeedback'
@@ -219,9 +220,9 @@ onMounted(reload)
           <CEyebrow>
             {{ t('page.eyebrows.allocationKeys') }}
           </CEyebrow>
-          <h1 class="display-md">
+          <CHeading size="lg" as="h1">
             {{ t('nav.residence-keys') }}
-          </h1>
+          </CHeading>
         </header>
 
         <p

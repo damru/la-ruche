@@ -14,6 +14,7 @@ import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CReminderCard from '@/components/organisms/CReminderCard.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
+import CHeading from '@/components/atoms/CHeading.vue'
 import CIconFile from '@/components/atoms/CIconFile.svg'
 import CIconLeaf from '@/components/atoms/CIconLeaf.svg'
 import CIconLayers from '@/components/atoms/CIconLayers.svg'
@@ -356,9 +357,9 @@ async function confirmTerminateContract() {
           <CEyebrow>
             {{ t('page.eyebrows.contracts') }}
           </CEyebrow>
-          <h1 class="display-md">
+          <CHeading size="lg" as="h1">
             {{ t('contracts.title') }}
-          </h1>
+          </CHeading>
           <p
             class="body-md"
             style="color:var(--color-on-surface-variant)"

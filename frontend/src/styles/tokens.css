@@ -82,6 +82,7 @@
   --text-sm:  13px;   /* table rows, list items, default UI text */
   --text-md:  14px;   /* body text (matches base font-size) */
   --text-lg:  16px;   /* section titles, card headings */
+  --text-heading-sm: 18px; /* CHeading sm size */
   --text-xl:      20px;   /* sub-display, modal titles */
   --text-2xl:     24px;   /* page headings */
   --text-display: 32px;   /* hero / display (Fraunces) */

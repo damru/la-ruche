@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import CCard from '@/components/molecules/CCard.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
+import CHeading from '@/components/atoms/CHeading.vue'
 import CModal from '@/components/molecules/CModal.vue'
 import CDataTable from '@/components/molecules/CDataTable.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
@@ -156,9 +157,9 @@ function statusVariant(status: UnitChargesLevy['status']): 'pending' | 'valid' |
           <CEyebrow>
             {{ t('page.eyebrows.unitCharges') }}
           </CEyebrow>
-          <h1 class="display-md">
+          <CHeading size="lg" as="h1">
             {{ t('units.charges.title') }}
-          </h1>
+          </CHeading>
           <CMetaLine>
             <CMetaItem variant="sub">
               {{ t('common.lot') }} {{ data.unit.unit_number }} 

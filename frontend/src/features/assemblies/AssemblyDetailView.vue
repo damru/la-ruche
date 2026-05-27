@@ -1223,9 +1223,9 @@ function toDateTimeLocal(value: string): string {
             <span>{{ t('page.eyebrows.assemblyDetail') }}</span>
           </CEyebrow>
 
-          <h1 class="display-md">
+          <CHeading size="lg" as="h1">
             {{ typeLabel(meeting.meeting_type) }} {{ new Date(meeting.meeting_date).getFullYear() }}
-          </h1>
+          </CHeading>
 
           <CMetaLine>
             <CMetaItem variant="sub">
@@ -1442,9 +1442,9 @@ function toDateTimeLocal(value: string): string {
           <section class="main-column">
             <div class="flex flex-row justify-between items-start">
               <div>
-                <h2 class="headline-sm">
+                <CHeading size="md" as="h2">
                   {{ t('meetings.resolutions') }}
-                </h2>
+                </CHeading>
                 <p class="section-subtitle">
                   {{ t('meetings.resolutionCount', resolutions.length) }}
                 </p>
@@ -1647,7 +1647,7 @@ function toDateTimeLocal(value: string): string {
 
           <aside class="side-column">
             <CCard class="">
-              <h2 class="side-head headline-sm card-title">
+              <h2 class="flex justify-between items-start gap-3 font-serif font-semibold text-lg leading-tight tracking-tight text-on-surface">
                 {{ t('meetings.info') }}
               </h2>
               <CFlexGroup
@@ -1681,7 +1681,7 @@ function toDateTimeLocal(value: string): string {
             <CCard class="">
               <div class="side-head">
                 <div>
-                  <h2 class="headline-sm card-title">
+                  <h2 class="font-serif font-semibold text-lg leading-tight tracking-tight text-on-surface">
                     {{ t('meetings.documents.title') }}
                   </h2>
                   <p class="side-subtitle">
@@ -1804,7 +1804,7 @@ function toDateTimeLocal(value: string): string {
             <CCard class="">
               <div class="side-head">
                 <div>
-                  <h2 class="headline-sm card-title">
+                  <h2 class="font-serif font-semibold text-lg leading-tight tracking-tight text-on-surface">
                     {{ t('meetings.presenceQuorum') }}
                   </h2>
                   <p class="side-subtitle">
@@ -1887,7 +1887,7 @@ function toDateTimeLocal(value: string): string {
             </CCard>
 
             <CCard class="">
-              <h2 class="side-head headline-sm card-title">
+              <h2 class="flex justify-between items-start gap-3 font-serif font-semibold text-lg leading-tight tracking-tight text-on-surface">
                 {{ t('meetings.agenda') }}
               </h2>
               <CFlexGroup

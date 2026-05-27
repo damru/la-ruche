@@ -9,6 +9,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import CCard from '@/components/molecules/CCard.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
+import CHeading from '@/components/atoms/CHeading.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CEyebrow from '@/components/atoms/CEyebrow.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
@@ -58,9 +59,9 @@ onMounted(reload)
           <CEyebrow>
             {{ t('page.eyebrows.myCharges') }}
           </CEyebrow>
-          <h1 class="display-md">
+          <CHeading size="lg" as="h1">
             {{ t('nav.myCharges') }}
-          </h1>
+          </CHeading>
         </header>
 
         <!-- Multi-unit selection (co-owner with several units) -->

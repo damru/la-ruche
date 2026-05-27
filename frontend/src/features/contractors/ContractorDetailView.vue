@@ -12,6 +12,7 @@ import CCard from '@/components/molecules/CCard.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
+import CHeading from '@/components/atoms/CHeading.vue'
 import CIconArrowLeft from '@/components/atoms/CIconArrowLeft.svg'
 import CIconBolt from '@/components/atoms/CIconBolt.svg'
 import CIconChevronRight from '@/components/atoms/CIconChevronRight.svg'
@@ -150,9 +151,9 @@ function priorityVariant(p: string): 'err' | 'pending' | 'primary' | 'valid' | '
               <CEyebrow>
                 {{ t('page.eyebrows.contractorDetail') }}
               </CEyebrow>
-              <h1 class="display-md contractor-name">
+              <CHeading size="lg" as="h1" class="mb-2">
                 {{ contractor.name }}
-              </h1>
+              </CHeading>
               <div class="contractor-domains">
                 <CBadge
                   v-for="d in contractor.domains"

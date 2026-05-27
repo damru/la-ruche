@@ -10,6 +10,7 @@ import CCard from '@/components/molecules/CCard.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
+import CHeading from '@/components/atoms/CHeading.vue'
 import CIconArrowLeft from '@/components/atoms/CIconArrowLeft.svg'
 import CIconCheckCircle from '@/components/atoms/CIconCheckCircle.svg'
 import CIconChevronRight from '@/components/atoms/CIconChevronRight.svg'
@@ -227,9 +228,9 @@ function dotClass(variant?: TimelineEvent['variant']): string {
             </CBadge>
             {{ t('page.eyebrows.taskDetail') }}
           </CEyebrow>
-          <h1 class="display-md task-title">
+          <CHeading size="lg" as="h1" class="m-0">
             {{ task.title }}
-          </h1>
+          </CHeading>
           <p
             v-if="task.description"
             class="body-md task-desc"

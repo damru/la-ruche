@@ -19,6 +19,7 @@ import CModal from '@/components/molecules/CModal.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
+import CHeading from '@/components/atoms/CHeading.vue'
 import CTabs from '@/components/atoms/CTabs.vue'
 import { buildingApi, contractorsApi, documentsApi, tasksApi, usersApi } from '@/api'
 import type { Contractor, Document, Task, TaskStatus, TaskPriority, User } from '@/types/domain'
@@ -794,9 +795,9 @@ async function copyVendorLink(taskId: string) {
           <CEyebrow>
             {{ t('page.eyebrows.tasks') }}
           </CEyebrow>
-          <h1 class="display-md">
+          <CHeading size="lg" as="h1">
             {{ t('tasks.title') }}
-          </h1>
+          </CHeading>
           <p class="text-on-surface-variant">
             {{ t('tasks.activeSummary', { count: activeCount }) }}
           </p>
