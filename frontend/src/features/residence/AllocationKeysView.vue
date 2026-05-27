@@ -232,7 +232,7 @@ onMounted(reload)
           {{ t('settings.keys.empty') }}
         </p>
 
-        <div class="cards-grid">
+        <div class="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-4">
           <CCard
             v-for="key in keys"
             :key="key.id"
