@@ -440,18 +440,18 @@ Consolidation technique du design system : migration des tokens de couleur vers 
 
 **Stories :**
 
-* `EP-020-S01` — Migrer les tokens de couleur primaires, secondaires, d'état (error, success, warning) et de surface de `tokens.css` de hex vers OKLCH
-* `EP-020-S02` — Migrer les tokens de couleur de rôle (`role-manager`, `board`, `co-owner`, `tenant`) vers OKLCH avec valeurs dark mode vérifiées
-* `EP-020-S03` — Enregistrer dans `tailwind.css` via `@theme inline` les tokens manquants : `--text-xl`, `--text-2xl`, `--text-display`, `--space-7`, `--space-9`, `--leading-*`, `--z-*`
-* `EP-020-S04` — Implémenter `CDropdownMenu` : wrapper Radix `DropdownMenu` conforme §2.1 et §3.4 de DESIGN.md
-* `EP-020-S05` — Implémenter `CStatusBanner` : bandeau d'état en-tête pour les AG (`draft` / `called` / `ongoing` / `closed`) conforme §2.3 de DESIGN.md
-* `EP-020-S06` — Implémenter les wrappers Radix restants : `CFormCheckbox`, `CFormSelect`, `CTooltip` (§3.4 DESIGN.md — statut 🔲 planifié)
-* `EP-020-S07` — Implémenter `CTabs` : composant atomique de filtres d'état tabulaires, remplace le pattern CSS pur dans toutes les vues consommatrices (§2.1 et §4.1 DESIGN.md) ; supprimer `tabs.css`
-* `EP-020-S08` — Implémenter `CHeading` : atom Fraunces semibold italic (`lg`/`md`/`sm`, prop `as`) ; migrer les usages de `typography.css` (`.display-*`, `.headline-*`) ; supprimer `typography.css`
-* `EP-020-S09` — Créer `CFormRow`, `CFormGroup`, `CFormLabel` molecules ; migrer les vues consommatrices de `forms.css` (`.form-grid`, `.field`, `.search-bar`, `.icon-btn`) vers atoms existants et Tailwind inline ; supprimer `forms.css`
-* `EP-020-S10` — Déplacer les styles `.data-table` dans `CDataTable` scoped ; remplacer `.cards-grid` par Tailwind `grid grid-cols-[…]` inline dans les vues ; supprimer `tables.css`
-* `EP-020-S11` — Nettoyer `base.css` : conserver les seuls resets navigateur et touch targets ; migrer `.view-container`/`.view-header` vers Tailwind inline, `.empty-state` vers `CEmptyState`, `.loading-skeleton`/`.spinner` vers `CPageLoader`
-* `EP-020-S12` — Migrer `activity-cards.css` vers scoped styles du composant feature consommateur ; supprimer le fichier global
+* `EP-020-S01` ✅ — Migrer les tokens de couleur primaires, secondaires, d'état (error, success, warning) et de surface de `tokens.css` de hex vers OKLCH
+* `EP-020-S02` ✅ — Migrer les tokens de couleur de rôle (`role-manager`, `board`, `co-owner`, `tenant`) vers OKLCH avec valeurs dark mode vérifiées
+* `EP-020-S03` ✅ — Enregistrer dans `tailwind.css` via `@theme inline` les tokens manquants : `--text-xl`, `--text-2xl`, `--text-display`, `--space-7`, `--space-9`, `--leading-*`, `--z-*`
+* `EP-020-S04` ✅ — Implémenter `CDropdownMenu` : wrapper Radix `DropdownMenu` conforme §2.1 et §3.4 de DESIGN.md
+* `EP-020-S05` ✅ — Implémenter `CStatusBanner` : bandeau d'état en-tête pour les AG (`draft` / `called` / `ongoing` / `closed`) conforme §2.3 de DESIGN.md
+* `EP-020-S06` ✅ — Implémenter les wrappers Radix restants : `CFormCheckbox`, `CFormSelect`, `CTooltip` (§3.4 DESIGN.md — statut 🔲 planifié)
+* `EP-020-S07` ✅ — Implémenter `CTabs` : composant atomique de filtres d'état tabulaires, remplace le pattern CSS pur dans toutes les vues consommatrices (§2.1 et §4.1 DESIGN.md) ; supprimer `tabs.css`
+* `EP-020-S08` ✅ — Implémenter `CHeading` : atom Fraunces semibold italic (`lg`/`md`/`sm`, prop `as`) ; migrer les usages de `typography.css` (`.display-*`, `.headline-*`) ; supprimer `typography.css`
+* `EP-020-S09` ✅ — Créer `CFormRow`, `CFormGroup`, `CFormLabel` molecules ; migrer les vues consommatrices de `forms.css` (`.form-grid`, `.field`, `.search-bar`, `.icon-btn`) vers atoms existants et Tailwind inline
+* `EP-020-S10` ✅ — Déplacer les styles `.data-table` dans les scoped blocks des vues consommatrices ; remplacer `.cards-grid` par Tailwind `grid grid-cols-[…]` inline ; supprimer `tables.css`
+* `EP-020-S11` ✅ — Nettoyer `base.css` : conserver les seuls resets navigateur et touch targets ; migrer `.view-container`/`.view-header` vers Tailwind inline, `.empty-state` vers `CEmptyState` ; supprimer les classes applicatives (spinner, loading-skeleton, card--terminated)
+* `EP-020-S12` ✅ — Migrer `activity-cards.css` vers scoped styles du composant feature consommateur ; supprimer le fichier global
 
 ***
 
