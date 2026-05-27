@@ -580,6 +580,7 @@ function photoPreview(file: File): string {
 
         <!-- Filters -->
         <CTabs
+          variant="filter"
           v-model="statusFilter"
           :tabs="[
             { value: 'all', label: t('common.all'), count: allReports.length },

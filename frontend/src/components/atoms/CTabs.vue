@@ -32,9 +32,9 @@ const isFilter = computed(() => props.variant === 'filter')
       class="bg-surface-container-lowest inline-flex items-center gap-1.5 px-5 py-2 text-sm font-medium whitespace-nowrap
              transition-colors text-on-surface-variant hover:text-on-surface cursor-pointer"
       :class="[
-        isFilter ? 'min-w-fit rounded-sm' : 'border-b-2 border-transparent -mb-px',
+        isFilter ? 'min-w-fit! rounded-sm' : 'border-b-2 border-transparent -mb-px',
         model === tab.value
-          ? (isFilter ? 'bg-surface-container-lowest text-on-surface shadow-md' : 'border-primary text-primary')
+          ? (isFilter ? 'bg-surface-container-lowest! text-on-surface shadow-md' : 'border-primary text-primary')
           : ''
       ]"
       @click="model = tab.value"
