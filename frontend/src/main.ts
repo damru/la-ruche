@@ -7,7 +7,6 @@ import router from './router'
 import i18n from './i18n'
 import './styles/base.css'
 import './styles/forms.css'
-import './styles/activity-cards.css'
 import './styles/tailwind.css'
 
 // ── TanStack Query ────────────────────────────────────────────────

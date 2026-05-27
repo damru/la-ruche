@@ -198,6 +198,9 @@ function priorityVariant(p: string): 'err' | 'pending' | 'primary' | 'valid' | '
         </CCard>
 
         <!-- Assigned tasks section -->
+        <CHeading>
+          {{ t('contractors.assignedTasks', { count: assignedTasks.length }) }}
+        </CHeading>
         <h2 class="section-title title-sm">
           {{ t('contractors.assignedTasks', { count: assignedTasks.length }) }}
         </h2>

@@ -1647,10 +1647,9 @@ function toDateTimeLocal(value: string): string {
 
           <aside class="side-column">
             <CCard class="">
-              <CHeading size="xs"></CHeading>
-              <h2 class="flex justify-between items-start gap-3 font-serif font-semibold text-lg leading-tight tracking-tight text-on-surface">
+              <CHeading size="xs">
                 {{ t('meetings.info') }}
-              </h2>
+              </CHeading>
               <CFlexGroup
                 tag="dl"
                 class="[&_dt]:text-xs [&_dd]:font-medium [&_dd]:text(--color-on-surface) "
@@ -1682,9 +1681,9 @@ function toDateTimeLocal(value: string): string {
             <CCard class="">
               <div class="side-head">
                 <div>
-                  <h2 class="font-serif font-semibold text-lg leading-tight tracking-tight text-on-surface">
+                  <CHeading size="xs">
                     {{ t('meetings.documents.title') }}
-                  </h2>
+                  </CHeading>
                   <p class="side-subtitle">
                     {{ t('meetings.callReady') }}
                   </p>
@@ -1805,9 +1804,9 @@ function toDateTimeLocal(value: string): string {
             <CCard class="">
               <div class="side-head">
                 <div>
-                  <h2 class="font-serif font-semibold text-lg leading-tight tracking-tight text-on-surface">
+                  <CHeading size="xs">
                     {{ t('meetings.presenceQuorum') }}
-                  </h2>
+                  </CHeading>
                   <p class="side-subtitle">
                     {{ t('meetings.sharesRepresented') }}
                   </p>

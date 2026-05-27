@@ -162,9 +162,9 @@ async function confirmResetDemo() {
       <!-- ── Account tab ─────────────────────────────────────── -->
       <template v-if="activeTab === 'account'">
         <CCard>
-          <h2 class="section-title">
+          <CHeading size="xs">
             {{ t('settings.account.personalInfo') }}
-          </h2>
+          </CHeading>
           <CFormRow :cols="2">
             <CFormInput
               :model-value="auth.user?.first_name ?? ''"
@@ -209,9 +209,9 @@ async function confirmResetDemo() {
         </CCard>
 
         <CCard>
-          <h2 class="section-title">
+          <CHeading size="xs">
             {{ t('settings.preferences.title') }}
-          </h2>
+          </CHeading>
           <p class="preferences-subtitle">
             {{ t('settings.preferences.subtitle') }}
           </p>
@@ -246,12 +246,9 @@ async function confirmResetDemo() {
         </CCard>
 
         <CCard v-if="auth.isManager">
-          <h2
-            class="section-title"
-            style="color: var(--color-error)"
-          >
+          <CHeading size="xs" style="color: var(--color-error)">
             {{ t('settings.account.dangerZone') }}
-          </h2>
+          </CHeading>
           <p
             class="body-xs"
             style="color: var(--color-on-surface-variant); margin-bottom: 12px"
@@ -270,9 +267,9 @@ async function confirmResetDemo() {
       <!-- ── Notifications tab ───────────────────────────────── -->
       <template v-if="activeTab === 'notifications'">
         <CCard>
-          <h2 class="section-title">
+          <CHeading size="xs">
             {{ t('settings.notifications.title') }}
-          </h2>
+          </CHeading>
           <div class="notif-list">
             <div
               v-for="item in notifItems"

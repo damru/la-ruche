@@ -462,4 +462,9 @@ async function saveMeeting() {
 
 }
 
+.activity-card { display: flex; flex-direction: column; gap: var(--space-3); }
+.activity-card__header-row { display: flex; align-items: center; gap: var(--space-3); min-width: 0; }
+.activity-card__header-row > .activity-card__chips { justify-content: flex-end; }
+.activity-card__icon { flex-shrink: 0; align-self: flex-start; }
+.activity-card__title { color: var(--color-on-surface); margin: 0; font-family: var(--font-body); font-size: var(--text-lg); font-weight: var(--fw-semibold); letter-spacing: 0; line-height: 1.2; text-wrap: auto; min-width: 0; }
 </style>

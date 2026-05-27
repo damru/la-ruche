@@ -1630,4 +1630,17 @@ async function copyVendorLink(taskId: string) {
   margin-top: var(--space-2);
   color: var(--color-on-surface-variant);
 }
+
+.activity-card { display: flex; flex-direction: column; gap: var(--space-3); }
+.activity-card__header-row { display: flex; align-items: center; gap: var(--space-3); min-width: 0; }
+.activity-card__header-row--with-icon { align-items: center; }
+.activity-card__icon { flex-shrink: 0; align-self: flex-start; }
+.activity-card__stack { display: flex; flex-direction: column; gap: var(--space-3); }
+.activity-card__chips { flex: 1; align-items: center; font-size: var(--text-xs); flex-wrap: wrap-reverse; display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-2); }
+.activity-card__chips :deep(svg), .activity-card__chips > * > svg { width: var(--icon-xs); height: var(--icon-xs); }
+.activity-card__title { color: var(--color-on-surface); margin: 0; font-family: var(--font-body); font-size: var(--text-lg); font-weight: var(--fw-semibold); letter-spacing: 0; line-height: 1.2; text-wrap: auto; min-width: 0; }
+.activity-card__contacts { display: flex; flex-direction: column; gap: var(--space-1); }
+.activity-card__actions { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-2); }
+.activity-card__line { display: inline-flex; align-items: center; gap: var(--space-1); width: fit-content; color: inherit; }
+@media (max-width: 720px) { .activity-card__header-row { align-items: flex-start; } .activity-card__header-row--with-icon { align-items: center; } }
 </style>
