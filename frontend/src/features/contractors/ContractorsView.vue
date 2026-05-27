@@ -372,16 +372,18 @@ async function confirmDelete() {
             >
               {{ c.name }}
             </button>
-            <div class="contractor-row__domains">
-              <CBadge
-                v-for="d in c.domains.slice(0, 2)"
-                :key="d"
-                variant="default"
-              >{{ t(`contractors.domains.${d}`, d) }}</CBadge>
-              <CBadge
-                v-if="c.domains.length > 2"
-                variant="default"
-              >+{{ c.domains.length - 2 }}</CBadge>
+            <div class="contractor-row__domains text-xs">
+              <CMetaLine>
+                <CBadge
+                  v-for="d in c.domains.slice(0, 2)"
+                  :key="d"
+                  variant="default"
+                >{{ t(`contractors.domains.${d}`, d) }}</CBadge>
+                <CBadge
+                  v-if="c.domains.length > 2"
+                  variant="default"
+                >+{{ c.domains.length - 2 }}</CBadge>
+              </CMetaLine>
             </div>
             <div class="contractor-row__contacts">
               <a
@@ -695,18 +697,19 @@ async function confirmDelete() {
 }
 
 .domain-chip:hover {
-  background: var(--color-surface-container-low);
+  background: var(--color-secondary-container);
   color: var(--color-on-surface);
 }
 
 .domain-chip--active {
   background: var(--color-primary-container);
   border-color: var(--color-primary);
-  color: var(--color-on-primary-container);
+  color: var(--color-on-primary);
 }
 
 /* ── List view ───────────────────────────────────────────────────── */
 .contractor-list {
+  background: var(--color-surface-container-lowest);
   border: 1px solid var(--color-outline-variant);
   border-radius: var(--radius-lg);
   overflow: hidden;
@@ -718,7 +721,6 @@ async function confirmDelete() {
   align-items: center;
   gap: var(--space-4);
   padding: var(--space-3) var(--space-4);
-  background: var(--color-surface);
   border-bottom: 1px solid var(--color-outline-variant);
   cursor: pointer;
   transition: background 150ms ease-out;
@@ -744,19 +746,12 @@ async function confirmDelete() {
   cursor: pointer;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .contractor-row__name:hover,
 .contractor-row__name:focus-visible {
   color: var(--color-primary);
   outline: none;
-}
-
-.contractor-row__domains {
-  display: flex;
-  gap: var(--space-1);
-  flex-shrink: 0;
 }
 
 .contractor-row__contacts {
@@ -770,7 +765,6 @@ async function confirmDelete() {
   font-size: var(--text-xs);
   color: var(--color-on-surface-variant);
   text-decoration: none;
-  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
