@@ -193,7 +193,7 @@ async function handleSubmit() {
           >
             <CIconCheckCircle />
           </div>
-          <h2 class="already-init-title">
+          <h2 class="font-serif text-lg font-bold text-on-surface">
             {{ t('onboarding.alreadyInitTitle') }}
           </h2>
           <p class="already-init-text">
@@ -592,12 +592,6 @@ async function handleSubmit() {
   color: var(--color-primary);
 }
 .already-init-icon svg { width: 32px; height: 32px; }
-.already-init-title {
-  font-family: var(--font-display);
-  font-size: var(--text-lg);
-  font-weight: 700;
-  color: var(--color-on-surface);
-}
 .already-init-text {
   font-size: var(--text-md);
   color: var(--color-on-surface-variant);

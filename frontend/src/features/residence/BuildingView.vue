@@ -11,6 +11,7 @@ import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import CHeading from '@/components/atoms/CHeading.vue'
+import CFormRow from '@/components/molecules/CFormRow.vue'
 import { buildingApi } from '@/api'
 import { usePageLoader } from '@/composables/usePageLoader'
 import { useFormFeedback } from '@/composables/useFormFeedback'
@@ -88,7 +89,7 @@ onMounted(reload)
           <CHeading type="card" class="mb-4">
             {{ t('settings.building.title') }}
           </CHeading>
-          <div class="flex flex-col gap-4 sm:grid sm:grid-cols-2 sm:gap-4">
+          <CFormRow :cols="2">
             <CFormInput
               v-model="form.name"
               :label="t('settings.building.name')"
@@ -121,7 +122,7 @@ onMounted(reload)
               :label="t('settings.building.bylawsDate')"
               type="date"
             />
-          </div>
+          </CFormRow>
           <div class="flex items-center gap-3">
             <CBtn
               variant="primary"

@@ -321,7 +321,7 @@ onMounted(reload)
         </div>
 
         <div class="shares-section">
-          <h3 class="shares-title">
+          <h3 class="text-md font-semibold mb-3">
             {{ t('settings.keys.showShares') }}
           </h3>
 
@@ -491,8 +491,6 @@ onMounted(reload)
 }
 
 .shares-section { border-top: 1px solid var(--color-outline-variant); padding-top: var(--space-4); }
-.shares-title { font-size: var(--text-md); font-weight: var(--fw-semibold); margin-bottom: var(--space-3); }
-
 .shares-loading { display: flex; align-items: center; gap: var(--space-2); color: var(--color-on-surface-variant); font-size: var(--text-sm); }
 
 .c-chips { display: flex; flex-wrap: wrap; gap: 6px; }

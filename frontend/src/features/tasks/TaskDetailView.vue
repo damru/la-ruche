@@ -257,7 +257,7 @@ function dotClass(variant?: TimelineEvent['variant']): string {
         </header>
 
         <!-- Lifecycle timeline -->
-        <h2 class="section-title title-sm">
+        <h2 class="title-sm text-on-surface-variant mb-4">
           {{ t('tasks.lifecycle.title') }}
         </h2>
         <div class="timeline">
@@ -331,12 +331,6 @@ function dotClass(variant?: TimelineEvent['variant']): string {
   font-size: var(--text-2xs);
   color: var(--color-on-surface-variant);
   margin-top: var(--space-1);
-}
-
-/* ── Section title ───────────────────────────────────────────────── */
-.section-title {
-  margin-bottom: var(--space-4);
-  color: var(--color-on-surface-variant);
 }
 
 /* ── Timeline ────────────────────────────────────────────────────── */

@@ -1364,7 +1364,7 @@ function formatSharePercentage(value: number): string {
         type="date"
         required
       />
-      <div class="flex flex-col gap-1 gap-1">
+      <div class="flex flex-col gap-1">
         <CFormCheckbox
           v-model="generateForm.include_works_fund"
           :label="t('budget.includeWorksFund')"

@@ -61,7 +61,7 @@ function handleUpdate(val: string) {
     <label
       v-if="props.label"
       :for="inputId"
-      class="text-sm font-medium text-on-surface"
+      class="form-label"
     >
       {{ props.label }}
       <span
@@ -156,7 +156,7 @@ function handleUpdate(val: string) {
     <p
       v-else-if="!props.readonly && props.hint"
       :id="`${inputId}-hint`"
-      class="text-xs text-on-surface-variant"
+      class="form-hint"
     >
       {{ props.hint }}
     </p>

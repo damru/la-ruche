@@ -1488,7 +1488,7 @@ function toDateTimeLocal(value: string): string {
                     {{ resolution.number }}
                   </div>
                   <div class="resolution-card__body">
-                    <h3 class="resolution-title">
+                    <h3 class="font-serif text-md font-semibold">
                       {{ resolution.title }}
                     </h3>
                     <div class="resolution-chips">
@@ -2847,12 +2847,6 @@ function toDateTimeLocal(value: string): string {
   flex-direction: column;
   gap: var(--space-2);
   min-width: 0;
-}
-
-.resolution-title {
-  font-family: var(--font-display);
-  font-size: 16px;
-  font-weight: var(--fw-semibold);
 }
 
 .resolution-chips {

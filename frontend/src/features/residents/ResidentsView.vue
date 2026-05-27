@@ -10,6 +10,7 @@ import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import CHeading from '@/components/atoms/CHeading.vue'
+import CFormRow from '@/components/molecules/CFormRow.vue'
 import CTabs from '@/components/atoms/CTabs.vue'
 import { unitsApi, allocationKeysApi, usersApi } from '@/api'
 import { usePageLoader } from '@/composables/usePageLoader'
@@ -469,7 +470,7 @@ function formatLocation(unit: { block?: string | null; staircase?: string | null
         @update:open="showUnitModal = $event"
       >
         <div class="flex flex-col gap-4">
-          <div class="flex flex-col gap-4 sm:grid sm:grid-cols-2 sm:gap-4">
+          <CFormRow :cols="2">
             <CFormInput
               v-model="editingUnit.unit_number"
               :label="t('units.number')"
@@ -498,11 +499,11 @@ function formatLocation(unit: { block?: string | null; staircase?: string | null
               :label="t('residents.description')"
               class="flex flex-col gap-1 col-span-full"
             />
-          </div>
+          </CFormRow>
 
           <!-- Tantièmes généraux (clé Charges Générales) -->
           <div class="shares-section">
-            <h3 class="shares-title">
+            <h3 class="text-md font-semibold mb-3">
               {{ t('units.generalShares') }}
             </h3>
             <CFormInput

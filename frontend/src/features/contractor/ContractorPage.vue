@@ -264,7 +264,7 @@ async function submit() {
 
         <!-- Contact card -->
         <div class="contact-card">
-          <h3 class="body-md contact-title">
+          <h3 class="body-md font-semibold text-on-surface">
             {{ t('contractor.contactTitle') }}
           </h3>
           <div class="contact-row">
@@ -411,7 +411,6 @@ async function submit() {
   flex-direction: column;
   gap: var(--space-2);
 }
-.contact-title { font-weight: var(--fw-semibold); color: var(--color-on-surface); }
 .contact-row { display: flex; gap: var(--space-3); align-items: baseline; }
 .contact-label { color: var(--color-on-surface-variant); min-width: 60px; flex-shrink: 0; }
 .contact-value { color: var(--color-on-surface); }

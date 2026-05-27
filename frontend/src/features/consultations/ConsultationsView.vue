@@ -334,7 +334,7 @@ async function confirmDelete() {
             </CBadge>
 
             <!-- Title prominent, under status -->
-            <h3 class="consultation-title title-md">
+            <h3 class="title-md mb-2">
               {{ c.title }}
             </h3>
 
@@ -639,7 +639,6 @@ async function confirmDelete() {
 .consultation-list { display: flex; flex-direction: column; gap: 12px; }
 
 .status-badge { margin-bottom: var(--space-2); }
-.consultation-title { margin-bottom: var(--space-2); }
 .desc { color: var(--color-on-surface-variant); margin-bottom: var(--space-3); }
 .footer-meta { font-size: var(--text-2xs); color: var(--color-on-surface-variant); margin-top: var(--space-3); }
 .card-actions { display: flex; gap: 6px; margin-top: var(--space-3); }

@@ -21,6 +21,7 @@ import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import CHeading from '@/components/atoms/CHeading.vue'
+import CFormRow from '@/components/molecules/CFormRow.vue'
 import CTabs from '@/components/atoms/CTabs.vue'
 import { buildingApi, contractorsApi, documentsApi, tasksApi, usersApi } from '@/api'
 import type { Contractor, Document, Task, TaskStatus, TaskPriority, User } from '@/types/domain'
@@ -1104,7 +1105,7 @@ async function copyVendorLink(taskId: string) {
           class="flex flex-col gap-1 contractor-create-box"
         >
           <label class="text-sm font-medium text-on-surface-variant">{{ t('tasks.contractorCreateLabel') }}</label>
-          <div class="flex flex-col gap-4 sm:grid sm:grid-cols-2 sm:gap-4 contractor-create-grid">
+          <CFormRow :cols="2">
             <CFormInput
               v-model="contractorDraft.email"
               :label="t('contractors.email')"
@@ -1117,7 +1118,7 @@ async function copyVendorLink(taskId: string) {
               type="tel"
               :placeholder="t('contractors.phonePlaceholder')"
             />
-          </div>
+          </CFormRow>
           <span class="text-xs text-on-surface-variant">
             {{ t('tasks.contractorCreateHelp') }}
           </span>
@@ -1565,7 +1566,6 @@ async function copyVendorLink(taskId: string) {
   border-radius: var(--radius-md);
   background: var(--color-surface-container-lowest);
 }
-.contractor-create-grid { margin-bottom: 0; }
 .task-close-field { margin-top: var(--space-4); }
 .modal-footer-feedback { margin-right: auto; min-width: 0; }
 .task-selected-documents,

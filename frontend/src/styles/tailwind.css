@@ -133,7 +133,7 @@
 @utility form-label {
   font-size: var(--text-sm);
   font-weight: var(--fw-medium);
-  color: var(--color-on-surface-variant);
+  color: var(--color-on-surface);
 }
 
 /* --- Data table utility (EP-020) --- */
