@@ -145,7 +145,7 @@ function statusVariant(status: UnitChargesLevy['status']): 'pending' | 'valid' |
       </template>
     </CTopbar>
 
-    <div class="view-container">
+    <div class="flex flex-col p-10 max-w-[1200px] gap-6 max-sm:p-5">
       <CPageError
         v-if="error"
         :message="error"
@@ -153,7 +153,7 @@ function statusVariant(status: UnitChargesLevy['status']): 'pending' | 'valid' |
       />
       <CPageLoader v-else-if="loading" />
       <template v-else-if="data">
-        <header class="view-header">
+        <header class="flex flex-col items-start gap-2">
           <CEyebrow>
             {{ t('page.eyebrows.unitCharges') }}
           </CEyebrow>

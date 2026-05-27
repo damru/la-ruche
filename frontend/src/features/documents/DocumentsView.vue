@@ -183,7 +183,7 @@ async function confirmDeleteDoc() {
       </template>
     </CTopbar>
 
-    <div class="view-container">
+    <div class="flex flex-col p-10 max-w-[1200px] gap-6 max-sm:p-5">
       <CPageError
         v-if="error"
         :message="error"
@@ -191,7 +191,7 @@ async function confirmDeleteDoc() {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
-        <header class="view-header">
+        <header class="flex flex-col items-start gap-2">
           <CEyebrow>
             {{ t('page.eyebrows.documents') }}
           </CEyebrow>
@@ -314,7 +314,7 @@ async function confirmDeleteDoc() {
           </table>
           <div
             v-if="!documents.length"
-            class="empty-state"
+            class="py-8 text-center text-md text-on-surface-variant"
           >
             {{ t('documents.empty') }}
           </div>

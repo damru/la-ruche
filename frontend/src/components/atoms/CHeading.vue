@@ -1,5 +1,5 @@
 <script setup lang="ts">
-export type HeadingSize = 'lg' | 'md' | 'sm'
+export type HeadingSize = 'lg' | 'md' | 'sm' | 'xs'
 export type HeadingAs = 'h1' | 'h2' | 'h3' | 'p'
 
 withDefaults(defineProps<{
@@ -14,6 +14,7 @@ const sizeClass: Record<HeadingSize, string> = {
   lg: 'text-2xl',
   md: 'text-xl',
   sm: 'text-heading-sm',
+  xs: 'text-lg',
 }
 </script>
 

@@ -783,7 +783,7 @@ async function copyVendorLink(taskId: string) {
       </template>
     </CTopbar>
 
-    <div class="view-container">
+    <div class="flex flex-col p-10 max-w-[1200px] gap-6 max-sm:p-5">
       <CPageError
         v-if="error"
         :message="error"
@@ -791,7 +791,7 @@ async function copyVendorLink(taskId: string) {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
-        <header class="view-header">
+        <header class="flex flex-col items-start gap-2">
           <CEyebrow>
             {{ t('page.eyebrows.tasks') }}
           </CEyebrow>
@@ -829,7 +829,7 @@ async function copyVendorLink(taskId: string) {
             v-for="task in tasks"
             :key="task.id"
             :shadow="!isTerminal(task.status)"
-            :class="['activity-card', 'task-card', { 'card--terminated': isTerminal(task.status) }]"
+            :class="['activity-card', 'task-card', { 'outline outline-1 outline-outline-variant': isTerminal(task.status) }]"
             interactive
             tabindex="0"
             @click="openTaskDetail(task.id)"
@@ -1003,7 +1003,7 @@ async function copyVendorLink(taskId: string) {
 
           <div
             v-if="!tasks.length"
-            class="empty-state"
+            class="py-8 text-center text-md text-on-surface-variant"
           >
             {{ t('tasks.empty') }}
           </div>

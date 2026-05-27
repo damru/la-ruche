@@ -254,7 +254,7 @@ async function confirmDelete() {
       </template>
     </CTopbar>
 
-    <div class="view-container">
+    <div class="flex flex-col p-10 max-w-[1200px] gap-6 max-sm:p-5">
       <CPageError
         v-if="error"
         :message="error"
@@ -262,7 +262,7 @@ async function confirmDelete() {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
-        <header class="view-header">
+        <header class="flex flex-col items-start gap-2">
           <CEyebrow>{{ t('page.eyebrows.contractors') }}</CEyebrow>
           <CHeading size="lg" as="h1">
             {{ t('contractors.title') }}
@@ -330,7 +330,7 @@ async function confirmDelete() {
         <!-- Empty state -->
         <div
           v-if="filtered.length === 0"
-          class="empty-state"
+          class="py-8 text-center text-md text-on-surface-variant"
         >
           <CIconUsers class="empty-state__icon" />
           <p class="body-md">

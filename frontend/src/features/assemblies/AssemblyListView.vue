@@ -164,7 +164,7 @@ async function saveMeeting() {
       </template>
     </CTopbar>
 
-    <div class="view-container assembly-list-page">
+    <div class="flex flex-col p-10 max-w-[1200px] gap-6 max-sm:p-5 assembly-list-page">
       <CPageError
         v-if="error"
         :message="error"
@@ -172,7 +172,7 @@ async function saveMeeting() {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
-        <header class="view-header">
+        <header class="flex flex-col items-start gap-2">
           <CEyebrow>
             {{ t('page.eyebrows.assemblies') }}
           </CEyebrow>
@@ -194,7 +194,7 @@ async function saveMeeting() {
 
         <div
           v-if="meetings.length === 0"
-          class="empty-state"
+          class="py-8 text-center text-md text-on-surface-variant"
         >
           {{ t('meetings.empty') }}
         </div>
@@ -223,10 +223,7 @@ async function saveMeeting() {
             <div class="meeting-card__main">
               <div class="flex flex-col gap-x-4 gap-y-1 mb-4">
                 <div class="flex flex-row justify-between">
-                  <CHeading>{{ typeLabel(meeting.meeting_type) }} {{ new Date(meeting.meeting_date).getFullYear() }}</CHeading>
-                  <h2 class="activity-card__title meeting-card__title">
-                    {{ typeLabel(meeting.meeting_type) }} {{ new Date(meeting.meeting_date).getFullYear() }}
-                  </h2>
+                  <CHeading size="xs">{{ typeLabel(meeting.meeting_type) }} {{ new Date(meeting.meeting_date).getFullYear() }}</CHeading>
                   <CBadge
                     :variant="statusBadgeVariant(meeting.status)"
                     :pulse="meeting.status === 'called' || meeting.status === 'ongoing'"

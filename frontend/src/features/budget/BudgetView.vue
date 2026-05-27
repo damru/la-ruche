@@ -745,7 +745,7 @@ function formatSharePercentage(value: number): string {
       </template>
     </CTopbar>
 
-    <div class="view-container">
+    <div class="flex flex-col p-10 max-w-[1200px] gap-6 max-sm:p-5">
       <CPageLoader v-if="loading" />
       <CPageError
         v-else-if="error"
@@ -756,13 +756,13 @@ function formatSharePercentage(value: number): string {
       <template
         v-else-if="budgets.length === 0"
       >
-        <div class="view-header">
+        <div class="flex flex-col items-start gap-2">
           <CEyebrow>{{ t('page.eyebrows.budget') }}</CEyebrow>
           <CHeading size="lg" as="h1">
             {{ t('budget.title') }}
           </CHeading>
         </div>
-        <div class="empty-state empty-state--page">
+        <div class="empty-state--page">
           <p class="title-md text-on-surface">
             {{ t('budget.noExercice') }}
           </p>
@@ -780,7 +780,7 @@ function formatSharePercentage(value: number): string {
       </template>
 
       <template v-else>
-        <div class="view-header">
+        <div class="flex flex-col items-start gap-2">
           <CEyebrow>
             <CBadge
               v-if="canEditSelectedBudget"
@@ -1072,7 +1072,7 @@ function formatSharePercentage(value: number): string {
 
           <div
             v-if="budgetLines.length === 0"
-            class="empty-state"
+            class="py-8 text-center text-md text-on-surface-variant"
           >
             <p>{{ t('common.noData') }}</p>
           </div>
@@ -1161,7 +1161,7 @@ function formatSharePercentage(value: number): string {
 
           <div
             v-if="consolidatedLevies.length === 0"
-            class="empty-state"
+            class="py-8 text-center text-md text-on-surface-variant"
           >
             <p>{{ t('common.noData') }}</p>
           </div>
@@ -1573,6 +1573,8 @@ function formatSharePercentage(value: number): string {
   max-width: 480px;
   margin: 0 auto;
   text-align: center;
+  font-size: var(--text-md);
+  color: var(--color-on-surface-variant);
 }
 
 .works-fund-card__metrics {

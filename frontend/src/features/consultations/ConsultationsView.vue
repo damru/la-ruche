@@ -278,7 +278,7 @@ async function confirmDelete() {
       </template>
     </CTopbar>
 
-    <div class="view-container">
+    <div class="flex flex-col p-10 max-w-[1200px] gap-6 max-sm:p-5">
       <CPageError
         v-if="error"
         :message="error"
@@ -286,7 +286,7 @@ async function confirmDelete() {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
-        <header class="view-header">
+        <header class="flex flex-col items-start gap-2">
           <CEyebrow>
             {{ t('page.eyebrows.consultations') }}
           </CEyebrow>
@@ -321,7 +321,7 @@ async function confirmDelete() {
             v-for="c in consultations"
             :key="c.id"
             :shadow="c.status !== 'closed'"
-            :class="{ 'card--terminated': c.status === 'closed' }"
+            :class="{ 'outline outline-1 outline-outline-variant': c.status === 'closed' }"
           >
             <!-- Status badge top-left -->
             <CBadge
@@ -471,7 +471,7 @@ async function confirmDelete() {
 
           <div
             v-if="!consultations.length"
-            class="empty-state"
+            class="py-8 text-center text-md text-on-surface-variant"
           >
             {{ statusFilter === 'open' ? t('consultations.noOpen') : t('consultations.noClosed') }}
           </div>

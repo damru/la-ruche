@@ -105,7 +105,7 @@ const todayStr = computed(() =>
       </template>
     </CTopbar>
 
-    <div class="dashboard-content view-container">
+    <div class="flex flex-col p-10 max-w-[1200px] gap-6 max-sm:p-5 dashboard-content">
       <CMockBanner />
 
       <!-- Hero -->
@@ -273,7 +273,7 @@ const todayStr = computed(() =>
             </div>
             <div
               v-if="!priorityTasks.length"
-              class="empty-state"
+              class="py-8 text-center text-md text-on-surface-variant"
             >
               {{ t('dashboard.noTasks') }}
             </div>
@@ -345,7 +345,7 @@ const todayStr = computed(() =>
             </div>
             <div
               v-if="!reminders?.length"
-              class="empty-state"
+              class="py-8 text-center text-md text-on-surface-variant"
             >
               {{ t('dashboard.noReminders') }}
             </div>
@@ -398,7 +398,7 @@ const todayStr = computed(() =>
             </div>
             <div
               v-if="!openReports.length"
-              class="empty-state"
+              class="py-8 text-center text-md text-on-surface-variant"
             >
               {{ t('dashboard.noReports') }}
             </div>

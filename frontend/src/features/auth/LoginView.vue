@@ -202,7 +202,7 @@ async function handleResetRequest() {
           >
             <span
               v-if="passkeyLoading"
-              class="spinner spinner-dark"
+              class="inline-block w-4 h-4 border-2 border-on-surface/20 border-t-on-surface rounded-full animate-spin shrink-0"
               aria-hidden="true"
             ></span>
             <CIconUserPlus

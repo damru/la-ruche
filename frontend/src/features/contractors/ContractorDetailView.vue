@@ -130,7 +130,7 @@ function priorityVariant(p: string): 'err' | 'pending' | 'primary' | 'valid' | '
       </template>
     </CTopbar>
 
-    <div class="view-container">
+    <div class="flex flex-col p-10 max-w-[1200px] gap-6 max-sm:p-5">
       <CPageError
         v-if="error"
         :message="error"
@@ -204,7 +204,7 @@ function priorityVariant(p: string): 'err' | 'pending' | 'primary' | 'valid' | '
 
         <div
           v-if="assignedTasks.length === 0"
-          class="empty-state"
+          class="py-8 text-center text-md text-on-surface-variant"
         >
           {{ t('contractors.noAssignedTasks') }}
         </div>

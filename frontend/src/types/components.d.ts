@@ -22,6 +22,7 @@ declare module 'vue' {
     CDataTable: typeof import('./../components/molecules/CDataTable.vue')['default']
     CDocumentLinkActionModal: typeof import('./../components/organisms/CDocumentLinkActionModal.vue')['default']
     CDropdownMenu: typeof import('./../components/atoms/CDropdownMenu.vue')['default']
+    CEmptyState: typeof import('./../components/atoms/CEmptyState.vue')['default']
     CEyebrow: typeof import('./../components/atoms/CEyebrow.vue')['default']
     CFlexGroup: typeof import('./../components/organisms/CFlexGroup.vue')['default']
     CFormAddressAutocomplete: typeof import('./../components/molecules/CFormAddressAutocomplete.vue')['default']

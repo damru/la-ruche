@@ -873,7 +873,7 @@ async function submitDelete() {
       </template>
     </CTopbar>
 
-    <div class="view-container">
+    <div class="flex flex-col p-10 max-w-[1200px] gap-6 max-sm:p-5">
       <CPageError
         v-if="error"
         :message="error"
@@ -881,7 +881,7 @@ async function submitDelete() {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
-        <header class="view-header">
+        <header class="flex flex-col items-start gap-2">
           <CEyebrow>
             {{ t('page.eyebrows.claims') }}
           </CEyebrow>
@@ -923,7 +923,7 @@ async function submitDelete() {
             v-for="claim in claims"
             :key="claim.id"
             :shadow="claim.status !== 'closed'"
-            :class="['activity-card', { 'card--terminated': claim.status === 'closed' }]"
+            :class="['activity-card', { 'outline outline-1 outline-outline-variant': claim.status === 'closed' }]"
           >
             <div class="activity-card__header-row activity-card__header-row--with-icon">
               <div :class="['activity-card__icon', typeTone(claim.claim_type)]">
@@ -1052,7 +1052,7 @@ async function submitDelete() {
 
           <div
             v-if="claims.length === 0"
-            class="empty-state"
+            class="py-8 text-center text-md text-on-surface-variant"
           >
             {{ t('claims.empty') }}
           </div>

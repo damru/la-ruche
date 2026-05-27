@@ -345,7 +345,7 @@ async function confirmTerminateContract() {
       </template>
     </CTopbar>
 
-    <div class="view-container">
+    <div class="flex flex-col p-10 max-w-[1200px] gap-6 max-sm:p-5">
       <CPageError
         v-if="error"
         :message="error"
@@ -353,7 +353,7 @@ async function confirmTerminateContract() {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
-        <header class="view-header">
+        <header class="flex flex-col items-start gap-2">
           <CEyebrow>
             {{ t('page.eyebrows.contracts') }}
           </CEyebrow>
@@ -415,7 +415,7 @@ async function confirmTerminateContract() {
             v-for="contract in contracts"
             :key="contract.id"
             :shadow="effectiveStatus(contract) === 'active'"
-            :class="['activity-card', { 'card--terminated': effectiveStatus(contract) !== 'active' }]"
+            :class="['activity-card', { 'outline outline-1 outline-outline-variant': effectiveStatus(contract) !== 'active' }]"
           >
             <div class="activity-card__header-row activity-card__header-row--with-icon">
               <CIconTile :class="['activity-card__icon', contractIconTone(contract)]">

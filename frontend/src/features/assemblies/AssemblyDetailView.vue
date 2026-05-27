@@ -1203,7 +1203,7 @@ function toDateTimeLocal(value: string): string {
       </template>
     </CTopbar>
 
-    <div class="view-container">
+    <div class="flex flex-col p-10 max-w-[1200px] gap-6 max-sm:p-5">
       <CPageError
         v-if="error"
         :message="error"
@@ -1211,7 +1211,7 @@ function toDateTimeLocal(value: string): string {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else-if="meeting">
-        <header class="view-header">
+        <header class="flex flex-col items-start gap-2">
           <CEyebrow>
             <CBadge
               :variant="meetingStatusVariant(meeting.status)"
@@ -1462,7 +1462,7 @@ function toDateTimeLocal(value: string): string {
 
             <div
               v-if="resolutions.length === 0"
-              class="empty-state"
+              class="py-8 text-center text-md text-on-surface-variant"
             >
               {{ t('meetings.resolutionsEmpty') }}
             </div>
@@ -1647,6 +1647,7 @@ function toDateTimeLocal(value: string): string {
 
           <aside class="side-column">
             <CCard class="">
+              <CHeading size="xs"></CHeading>
               <h2 class="flex justify-between items-start gap-3 font-serif font-semibold text-lg leading-tight tracking-tight text-on-surface">
                 {{ t('meetings.info') }}
               </h2>
@@ -1710,7 +1711,7 @@ function toDateTimeLocal(value: string): string {
                 </p>
                 <div
                   v-if="noticeDocuments.length === 0"
-                  class="empty-state empty-state--compact"
+                  class="empty-state--compact"
                 >
                   {{ t('meetings.documents.empty') }}
                 </div>
@@ -1749,7 +1750,7 @@ function toDateTimeLocal(value: string): string {
                 </p>
                 <div
                   v-if="attachmentDocuments.length === 0"
-                  class="empty-state empty-state--compact"
+                  class="empty-state--compact"
                 >
                   {{ t('meetings.documents.empty') }}
                 </div>
@@ -1887,9 +1888,7 @@ function toDateTimeLocal(value: string): string {
             </CCard>
 
             <CCard class="">
-              <h2 class="flex justify-between items-start gap-3 font-serif font-semibold text-lg leading-tight tracking-tight text-on-surface">
-                {{ t('meetings.agenda') }}
-              </h2>
+              <CHeading size="xs">{{ t('meetings.agenda') }}</CHeading>
               <CFlexGroup
                 tag="ol"
                 class="agenda-list"
@@ -3278,7 +3277,10 @@ function toDateTimeLocal(value: string): string {
 }
 
 .empty-state--compact {
-  padding: var(--space-4);
+  padding: var(--space-8) var(--space-4);
+  text-align: center;
+  font-size: var(--text-md);
+  color: var(--color-on-surface-variant);
 }
 
 @media (max-width: 960px) {

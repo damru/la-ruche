@@ -554,7 +554,7 @@ function photoPreview(file: File): string {
       </template>
     </CTopbar>
 
-    <div class="view-container">
+    <div class="flex flex-col p-10 max-w-[1200px] gap-6 max-sm:p-5">
       <CPageError
         v-if="error"
         :message="error"
@@ -562,7 +562,7 @@ function photoPreview(file: File): string {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
-        <header class="view-header">
+        <header class="flex flex-col items-start gap-2">
           <CEyebrow>
             {{ t('page.eyebrows.reports') }}
           </CEyebrow>
@@ -594,7 +594,7 @@ function photoPreview(file: File): string {
             v-for="r in reports"
             :key="r.id"
             :shadow="r.status !== 'closed'"
-            :class="['gap-y-4', { 'card--terminated': r.status === 'closed' }]"
+            :class="['gap-y-4', { 'outline outline-1 outline-outline-variant': r.status === 'closed' }]"
           >
             <div class="activity-card__header-row activity-card__header-row--with-icon">
               <div class="activity-card__icon tone--default">
@@ -715,7 +715,7 @@ function photoPreview(file: File): string {
 
           <div
             v-if="!reports.length"
-            class="empty-state"
+            class="py-8 text-center text-md text-on-surface-variant"
           >
             {{ t('reports.empty') }}
           </div>
