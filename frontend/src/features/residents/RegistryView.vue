@@ -86,7 +86,7 @@ function formatLocation(unit: { block?: string | null; staircase?: string | null
       </template>
     </CTopbar>
 
-    <div class="flex flex-col p-10 max-w-[1200px] gap-6 max-sm:p-5">
+    <div class="view-container">
       <CPageError
         v-if="error"
         :message="error"
@@ -94,7 +94,7 @@ function formatLocation(unit: { block?: string | null; staircase?: string | null
       />
       <CPageLoader v-else-if="loading" />
       <template v-else-if="data">
-        <header class="flex flex-col items-start gap-2">
+        <header class="view-header">
           <CEyebrow>
             {{ t('page.eyebrows.registry') }}
           </CEyebrow>

@@ -206,6 +206,23 @@
   &:hover { color: var(--color-success); }
 }
 
+/* ── Icon size utilities ───────────────────────────────────────────── */
+@utility icon-2xs {
+  width: var(--icon-2xs); height: var(--icon-2xs); flex-shrink: 0;
+}
+@utility icon-xs {
+  width: var(--icon-xs); height: var(--icon-xs); flex-shrink: 0;
+}
+@utility icon-sm {
+  width: var(--icon-sm); height: var(--icon-sm); flex-shrink: 0;
+}
+@utility icon-md {
+  width: var(--icon-md); height: var(--icon-md); flex-shrink: 0;
+}
+@utility icon-lg {
+  width: var(--icon-lg); height: var(--icon-lg); flex-shrink: 0;
+}
+
 /* ── Checkbox / Radio label ────────────────────────────────────────── */
 @utility checkbox-label {
   display: inline-flex;

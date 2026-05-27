@@ -278,7 +278,7 @@ async function confirmDelete() {
       </template>
     </CTopbar>
 
-    <div class="flex flex-col p-10 max-w-[1200px] gap-6 max-sm:p-5">
+    <div class="view-container">
       <CPageError
         v-if="error"
         :message="error"
@@ -286,7 +286,7 @@ async function confirmDelete() {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
-        <header class="flex flex-col items-start gap-2">
+        <header class="view-header">
           <CEyebrow>
             {{ t('page.eyebrows.consultations') }}
           </CEyebrow>
@@ -324,7 +324,6 @@ async function confirmDelete() {
             :shadow="c.status !== 'closed'"
             :class="{ 'outline outline-1 outline-outline-variant': c.status === 'closed' }"
           >
-            <!-- Status badge top-left -->
             <CBadge
               :variant="c.status === 'open' ? 'open' : 'closed'"
               class="status-badge"
@@ -333,14 +332,15 @@ async function confirmDelete() {
               {{ t(`consultations.statuses.${c.status}`) }}
             </CBadge>
 
-            <!-- Title prominent, under status -->
-            <h3 class="title-md mb-2">
+            <CHeading 
+              type="card"
+              variant="title"
+            >
               {{ c.title }}
-            </h3>
+            </CHeading>
 
             <p
               v-if="c.description"
-              class="body-xs desc"
             >
               {{ c.description }}
             </p>
@@ -639,7 +639,6 @@ async function confirmDelete() {
 .consultation-list { display: flex; flex-direction: column; gap: 12px; }
 
 .status-badge { margin-bottom: var(--space-2); }
-.desc { color: var(--color-on-surface-variant); margin-bottom: var(--space-3); }
 .footer-meta { font-size: var(--text-2xs); color: var(--color-on-surface-variant); margin-top: var(--space-3); }
 .card-actions { display: flex; gap: 6px; margin-top: var(--space-3); }
 .response-count { color: var(--color-on-surface-variant); margin-top: var(--space-1); }

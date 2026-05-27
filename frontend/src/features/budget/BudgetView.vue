@@ -745,7 +745,7 @@ function formatSharePercentage(value: number): string {
       </template>
     </CTopbar>
 
-    <div class="flex flex-col p-10 max-w-[1200px] gap-6 max-sm:p-5">
+    <div class="view-container">
       <CPageLoader v-if="loading" />
       <CPageError
         v-else-if="error"
@@ -756,7 +756,7 @@ function formatSharePercentage(value: number): string {
       <template
         v-else-if="budgets.length === 0"
       >
-        <div class="flex flex-col items-start gap-2">
+        <div class="view-header">
           <CEyebrow>{{ t('page.eyebrows.budget') }}</CEyebrow>
           <CHeading type="header">
             {{ t('budget.title') }}
@@ -780,7 +780,7 @@ function formatSharePercentage(value: number): string {
       </template>
 
       <template v-else>
-        <div class="flex flex-col items-start gap-2">
+        <div class="view-header">
           <CEyebrow>
             <CBadge
               v-if="canEditSelectedBudget"

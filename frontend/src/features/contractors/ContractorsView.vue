@@ -256,7 +256,7 @@ async function confirmDelete() {
       </template>
     </CTopbar>
 
-    <div class="flex flex-col p-10 max-w-[1200px] gap-6 max-sm:p-5">
+    <div class="view-container">
       <CPageError
         v-if="error"
         :message="error"
@@ -264,7 +264,7 @@ async function confirmDelete() {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
-        <header class="flex flex-col items-start gap-2">
+        <header class="view-header">
           <CEyebrow>{{ t('page.eyebrows.contractors') }}</CEyebrow>
           <CHeading type="header">
             {{ t('contractors.title') }}
@@ -363,7 +363,7 @@ async function confirmDelete() {
             tabindex="-1"
             @click="openContractorDetail(c.id)"
           >
-            <CIconTile :class="['contractor-row__icon', domainTone(c.domains)]">
+            <CIconTile :class="domainTone(c.domains)">
               <component
                 :is="domainIcon(c.domains)"
                 aria-hidden="true"
@@ -782,9 +782,5 @@ async function confirmDelete() {
     display: none;
   }
 }
-
-/* ── Icon size utilities ─────────────────────────────────────────── */
-.icon-xs { width: var(--icon-xs); height: var(--icon-xs); flex-shrink: 0; }
-.icon-sm { width: var(--icon-sm); height: var(--icon-sm); flex-shrink: 0; }
 
 </style>

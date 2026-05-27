@@ -140,8 +140,8 @@ async function confirmResetDemo() {
       </template>
     </CTopbar>
 
-    <div class="flex flex-col p-10 max-w-[1200px] gap-6 max-sm:p-5">
-      <header class="flex flex-col items-start gap-2">
+    <div class="view-container">
+      <header class="view-header">
         <CEyebrow>
           {{ t('page.eyebrows.profile') }}
         </CEyebrow>

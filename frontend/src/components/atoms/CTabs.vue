@@ -29,7 +29,7 @@ const isFilter = computed(() => props.variant === 'filter')
       v-for="tab in props.tabs"
       :key="tab.value"
       type="button"
-      class="bg-surface-container-lowest inline-flex items-center gap-1.5 px-5 py-2 text-sm font-medium whitespace-nowrap
+      class="inline-flex items-center gap-1.5 px-5 py-2 text-sm font-medium whitespace-nowrap
              transition-colors text-on-surface-variant hover:text-on-surface cursor-pointer"
       :class="[
         isFilter ? 'min-w-fit! rounded-sm' : 'border-b-2 border-transparent -mb-px',

@@ -1,5 +1,0 @@
-[33m994167a[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mfeat/design-system[m[33m)[m refactor(frontend): EP-020 migrate forms.css classes to Tailwind + @utility
-[33m320c761[m feat(frontend): EP-020 add variant=filter to all CTabs usages
-[33mbf63480[m feat(frontend): enhance CTabs component with variant support and scrollbar styling
-[33m5d8f463[m docs: update PROGRESS.md with EP-020 design system migration completion
-[33m5b1eacf[m refactor(frontend): EP-020 extract data-table CSS to shared Tailwind utility

@@ -1203,7 +1203,7 @@ function toDateTimeLocal(value: string): string {
       </template>
     </CTopbar>
 
-    <div class="flex flex-col p-10 max-w-[1200px] gap-6 max-sm:p-5">
+    <div class="view-container">
       <CPageError
         v-if="error"
         :message="error"
@@ -1211,7 +1211,7 @@ function toDateTimeLocal(value: string): string {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else-if="meeting">
-        <header class="flex flex-col items-start gap-2">
+        <header class="view-header">
           <CEyebrow>
             <CBadge
               :variant="meetingStatusVariant(meeting.status)"
@@ -3291,7 +3291,4 @@ function toDateTimeLocal(value: string): string {
   }
 }
 
-/* ── Icon size token utilities ───────────────────────────────── */
-.icon-xs { width: var(--icon-xs); height: var(--icon-xs); flex-shrink: 0; }
-.icon-sm { width: var(--icon-sm); height: var(--icon-sm); flex-shrink: 0; }
 </style>

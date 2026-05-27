@@ -21,6 +21,7 @@ import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import CHeading from '@/components/atoms/CHeading.vue'
 import CTabs from '@/components/atoms/CTabs.vue'
+import CIconInfo from '@/components/atoms/CIconInfo.svg'
 import { buildingApi, documentsApi, reportsApi, unitsApi } from '@/api'
 import type { Document, Report, ReportStatus, TaskPriority, Unit } from '@/types/domain'
 
@@ -555,7 +556,7 @@ function photoPreview(file: File): string {
       </template>
     </CTopbar>
 
-    <div class="flex flex-col p-10 max-w-[1200px] gap-6 max-sm:p-5">
+    <div class="view-container">
       <CPageError
         v-if="error"
         :message="error"
@@ -563,7 +564,7 @@ function photoPreview(file: File): string {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
-        <header class="flex flex-col items-start gap-2">
+        <header class="view-header">
           <CEyebrow>
             {{ t('page.eyebrows.reports') }}
           </CEyebrow>
@@ -599,18 +600,27 @@ function photoPreview(file: File): string {
             :class="['gap-y-4', { 'outline outline-1 outline-outline-variant': r.status === 'closed' }]"
           >
             <div class="flex items-center gap-3 min-w-0">
-              <div class="tone--default">
-                <CIconInfo />
-              </div>
+              <CIconTile
+                class="tone--default"
+              >
+                <component
+                  :is=CIconInfo
+                  aria-hidden="true"
+                />
+              </CIconTile>
               
-              <CMetaLine class="[&_svg]:w-(--icon-sm) [&_svg]:h-(--icon-sm) text-xs">
+              <CMetaLine 
+                class="[&_svg]:icon-sm text-xs"
+              >
                 <CBadge
                   :variant="statusVariant(r.status)"
                   dot
                 >
                   {{ t(`reports.statuses.${r.status}`) }}
                 </CBadge>
-                <CMetaItem>
+                <CMetaItem
+                  variant="sub" 
+                >
                   <template #icon>
                     <CIconClock />
                   </template>
@@ -1273,4 +1283,5 @@ function photoPreview(file: File): string {
     justify-content: flex-start;
   }
 }
+
 </style>

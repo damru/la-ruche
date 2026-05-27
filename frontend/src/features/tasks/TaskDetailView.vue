@@ -206,7 +206,7 @@ function dotClass(variant?: TimelineEvent['variant']): string {
       </template>
     </CTopbar>
 
-    <div class="flex flex-col p-10 max-w-[1200px] gap-6 max-sm:p-5">
+    <div class="view-container">
       <CPageError
         v-if="error"
         :message="error"
@@ -215,7 +215,7 @@ function dotClass(variant?: TimelineEvent['variant']): string {
       <CPageLoader v-else-if="loading" />
       <template v-else-if="task">
         <!-- Task header card -->
-        <header class="flex flex-col items-start gap-2">
+        <header class="view-header">
           <CEyebrow>
             <CBadge :variant="priorityVariant(task.priority)">
               {{ t(`tasks.priorities.${task.priority}`) }}

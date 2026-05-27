@@ -315,7 +315,7 @@ async function deleteEntry() {
       </template>
     </CTopbar>
 
-    <div class="flex flex-col p-10 max-w-[1200px] gap-6 max-sm:p-5">
+    <div class="view-container">
       <CPageError
         v-if="error"
         :message="error"
@@ -323,7 +323,7 @@ async function deleteEntry() {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
-        <header class="flex flex-col items-start gap-2">
+        <header class="view-header">
           <CEyebrow>
             {{ t('page.eyebrows.maintenance') }}
           </CEyebrow>
