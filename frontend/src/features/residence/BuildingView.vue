@@ -85,7 +85,7 @@ onMounted(reload)
         </header>
 
         <CCard>
-          <h2 class="section-title">
+          <h2 class="font-serif text-lg font-semibold mb-4">
             {{ t('settings.building.title') }}
           </h2>
           <div class="flex flex-col gap-4 sm:grid sm:grid-cols-2 sm:gap-4">
@@ -122,7 +122,7 @@ onMounted(reload)
               type="date"
             />
           </div>
-          <div class="form-actions">
+          <div class="flex items-center gap-3">
             <CBtn
               variant="primary"
               :loading="saving"
@@ -139,7 +139,7 @@ onMounted(reload)
         </CCard>
 
         <CLegalCard>
-          <h2 class="section-title">
+          <h2 class="font-serif text-lg font-semibold mb-4">
             {{ t('settings.building.legalData') }}
           </h2>
           <CLegalNotice>
@@ -148,7 +148,7 @@ onMounted(reload)
               :summary="t('settings.building.legalText')"
             />
           </CLegalNotice>
-          <div class="form-actions">
+          <div class="flex items-center gap-3">
             <CBtn variant="secondary">
               <CIconDownload
                 width="16"

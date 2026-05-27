@@ -381,7 +381,7 @@ async function handleSubmit() {
               :disabled="loading"
             />
 
-            <div class="form-actions">
+            <div class="flex items-center gap-3">
               <CBtn
                 type="button"
                 variant="ghost"

@@ -188,7 +188,7 @@ async function confirmResetDemo() {
               :placeholder="t('common.phonePlaceholder')"
             />
           </CFormRow>
-          <div class="form-actions">
+          <div class="flex items-center gap-3">
             <CFormFeedback
               :status="profileFeedback.status.value"
               :message="profileFeedback.message.value"

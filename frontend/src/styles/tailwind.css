@@ -22,10 +22,10 @@
 	--color-warning-container: var(--color-warning-container);
 	--color-surface: var(--color-surface);
 	--color-surface-container-lowest: var(--color-surface-container-lowest);
-	--color-surface-low: var(--color-surface-container-low);
+	--color-surface-container-low: var(--color-surface-container-low);
 	--color-surface-container: var(--color-surface-container);
-	--color-surface-high: var(--color-surface-container-high);
-	--color-surface-highest: var(--color-surface-container-highest);
+	--color-surface-container-high: var(--color-surface-container-high);
+	--color-surface-container-highest: var(--color-surface-container-highest);
 	--color-on-surface: var(--color-on-surface);
 	--color-on-surface-variant: var(--color-on-surface-variant);
 	--color-outline: var(--color-outline);
@@ -177,4 +177,86 @@
   }
 
   & .row-total td { border-top: 2px solid var(--color-outline-variant); }
+}
+
+/* ── Icon button ───────────────────────────────────────────────────── */
+@utility icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-on-surface-variant);
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+
+  &:hover {
+    background: var(--color-surface-container);
+    color: var(--color-primary);
+  }
+}
+
+@utility icon-btn--danger {
+  &:hover { color: var(--color-error); }
+}
+
+@utility icon-btn--valid {
+  &:hover { color: var(--color-success); }
+}
+
+/* ── Checkbox / Radio label ────────────────────────────────────────── */
+@utility checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--color-on-surface);
+  cursor: pointer;
+  user-select: none;
+
+  & input[type="checkbox"],
+  & input[type="radio"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 18px;
+    min-width: 18px;
+    height: 18px;
+    min-height: 18px;
+    flex-shrink: 0;
+    border: 1.5px solid var(--color-outline-variant);
+    background: var(--color-surface-container-lowest);
+    cursor: pointer;
+    transition: background var(--transition-fast), border-color var(--transition-fast);
+    position: relative;
+  }
+
+  & input[type="checkbox"] { border-radius: var(--radius-sm); }
+  & input[type="radio"] { border-radius: 50%; }
+
+  & input[type="checkbox"]:checked,
+  & input[type="radio"]:checked {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+  }
+
+  & input[type="checkbox"]:checked::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url("data:image/svg+xml,%3Csvg viewBox='0 0 12 10' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 5l3.5 3.5L11 1' stroke='%23fff' stroke-width='1.8' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 12px no-repeat;
+  }
+
+  & input[type="checkbox"]:focus-visible,
+  & input[type="radio"]:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  & input[type="checkbox"]:disabled,
+  & input[type="radio"]:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
 }

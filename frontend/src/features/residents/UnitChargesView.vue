@@ -192,7 +192,7 @@ function statusVariant(status: UnitChargesLevy['status']): 'pending' | 'valid' |
         </div>
 
         <CCard>
-          <h2 class="section-title">
+          <h2 class="font-serif text-lg font-semibold mb-4">
             {{ t('units.charges.history') }}
           </h2>
 
