@@ -223,6 +223,7 @@ async function saveMeeting() {
             <div class="meeting-card__main">
               <div class="flex flex-col gap-x-4 gap-y-1 mb-4">
                 <div class="flex flex-row justify-between">
+                  <CHeading>{{ typeLabel(meeting.meeting_type) }} {{ new Date(meeting.meeting_date).getFullYear() }}</CHeading>
                   <h2 class="activity-card__title meeting-card__title">
                     {{ typeLabel(meeting.meeting_type) }} {{ new Date(meeting.meeting_date).getFullYear() }}
                   </h2>
@@ -257,14 +258,14 @@ async function saveMeeting() {
 
               <div class="meeting-card__resolution-row body-xs">
                 <span class="meeting-card__res-count">
-                  <span class="font-serif font-semibold text-xl italic">{{ meeting.resolution_count }}</span>
+                  <span class="font-serif font-semibold text-xl">{{ meeting.resolution_count }}</span>
                   {{ t('meetings.statResolutions', meeting.resolution_count) }}
                 </span>
                 <span
                   v-if="meeting.status === 'closed'"
                   class="meeting-card__res-passed tone--valid"
                 >
-                    <span class="font-serif font-semibold text-xl italic">{{ meeting.passed_count }}</span>
+                    <span class="font-serif font-semibold text-xl">{{ meeting.passed_count }}</span>
                   {{ t('meetings.statPassed', meeting.passed_count) }}
                 </span>
                 <span
@@ -286,7 +287,7 @@ async function saveMeeting() {
       @update:open="showCreateModal = $event"
     >
       <form
-        class="form-grid"
+        class="flex flex-col gap-4"
         @submit.prevent="saveMeeting"
       >
         <CFormSelect

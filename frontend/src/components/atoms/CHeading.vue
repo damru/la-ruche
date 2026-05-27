@@ -20,7 +20,7 @@ const sizeClass: Record<HeadingSize, string> = {
 <template>
   <component
     :is="$props.as"
-    class="font-serif font-semibold italic leading-tight tracking-tight text-on-surface"
+    class="font-serif font-semibold leading-tight tracking-tight text-on-surface"
     :class="sizeClass[$props.size ?? 'md']"
   ><slot /></component>
 </template>

@@ -1020,7 +1020,7 @@ async function copyVendorLink(taskId: string) {
       @update:open="showTaskModal = $event"
     >
       <form
-        class="form-grid"
+        class="flex flex-col gap-4"
         @submit.prevent="saveTask"
       >
         <CFormInput
@@ -1042,7 +1042,7 @@ async function copyVendorLink(taskId: string) {
         <!-- Contractor assignment with autocomplete (only when assignMode === 'contractor') -->
         <div
           v-if="assignMode === 'contractor'"
-          class="form-field contractor-autocomplete"
+          class="flex flex-col gap-1 contractor-autocomplete"
         >
           <CFormInput
             v-model="contractorSearch"
@@ -1098,10 +1098,10 @@ async function copyVendorLink(taskId: string) {
         </div>
         <div
           v-if="assignMode === 'contractor' && createSuggestedContractor"
-          class="form-field contractor-create-box"
+          class="flex flex-col gap-1 contractor-create-box"
         >
-          <label class="form-label">{{ t('tasks.contractorCreateLabel') }}</label>
-          <div class="form-grid-2col contractor-create-grid">
+          <label class="text-sm font-medium text-on-surface-variant">{{ t('tasks.contractorCreateLabel') }}</label>
+          <div class="flex flex-col gap-4 sm:grid sm:grid-cols-2 sm:gap-4 contractor-create-grid">
             <CFormInput
               v-model="contractorDraft.email"
               :label="t('contractors.email')"
@@ -1115,12 +1115,12 @@ async function copyVendorLink(taskId: string) {
               :placeholder="t('contractors.phonePlaceholder')"
             />
           </div>
-          <span class="field-hint">
+          <span class="text-xs text-on-surface-variant">
             {{ t('tasks.contractorCreateHelp') }}
           </span>
         </div>
-        <div class="form-field">
-          <label class="form-label">{{ t('tasks.documentsLabel') }}</label>
+        <div class="flex flex-col gap-1">
+          <label class="text-sm font-medium text-on-surface-variant">{{ t('tasks.documentsLabel') }}</label>
           <input
             ref="taskDocumentInputRef"
             type="file"
@@ -1172,7 +1172,7 @@ async function copyVendorLink(taskId: string) {
             v-if="editingTask"
             class="task-existing-documents"
           >
-            <p class="field-hint task-existing-documents__hint">
+            <p class="text-xs text-on-surface-variant task-existing-documents__hint">
               {{ t('tasks.attachedDocuments') }}
             </p>
             <CPageLoader v-if="loadingTaskFormDocuments" />
@@ -1231,9 +1231,9 @@ async function copyVendorLink(taskId: string) {
         <!-- Assignment mode: radio (visible for new tasks, open tasks, and in_progress tasks) -->
         <div
           v-if="!editingTask || ['open', 'in_progress', 'awaiting_vendor', 'awaiting_validation'].includes(editingTask.status)"
-          class="form-field"
+          class="flex flex-col gap-1"
         >
-          <label class="form-label">{{ t('tasks.assignmentSection') }}</label>
+          <label class="text-sm font-medium text-on-surface-variant">{{ t('tasks.assignmentSection') }}</label>
           <div class="assignment-options">
             <label class="checkbox-label">
               <input

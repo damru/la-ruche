@@ -303,20 +303,20 @@ onMounted(reload)
       :title="modalForm.id ? t('settings.keys.editKey') : t('settings.keys.newKey')"
       @update:open="showKeyModal = $event"
     >
-      <div class="form-grid">
-        <div class="form-grid">
+      <div class="flex flex-col gap-4">
+        <div class="flex flex-col gap-4">
           <CFormInput
             v-model="modalForm.name"
             :label="t('common.name')"
             :placeholder="t('settings.keys.namePlaceholder')"
             required
-            class="field--full"
+            class="flex flex-col gap-1 col-span-full"
           />
           <CFormTextarea
             v-model="modalForm.description"
             :label="t('settings.keys.descriptionLabel')"
             :placeholder="t('settings.keys.descriptionPlaceholder')"
-            class="field--full"
+            class="flex flex-col gap-1 col-span-full"
           />
         </div>
 

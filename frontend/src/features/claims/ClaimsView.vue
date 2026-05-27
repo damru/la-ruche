@@ -1077,7 +1077,7 @@ async function submitDelete() {
       @update:open="showCreateModal = $event"
     >
       <form
-        class="form-grid"
+        class="flex flex-col gap-4"
         @submit.prevent="submitCreate"
       >
         <CFormInput
@@ -1119,8 +1119,8 @@ async function submitDelete() {
           :rows="3"
         />
 
-        <div class="form-field">
-          <label class="form-label">{{ t('claims.fields.documents') }}</label>
+        <div class="flex flex-col gap-1">
+          <label class="text-sm font-medium text-on-surface-variant">{{ t('claims.fields.documents') }}</label>
           <input
             ref="documentInputRef"
             type="file"
@@ -1198,7 +1198,7 @@ async function submitDelete() {
       @update:open="value => !value && (claimToEdit = null)"
     >
       <form
-        class="form-grid"
+        class="flex flex-col gap-4"
         @submit.prevent="submitEdit"
       >
         <CFormInput
@@ -1240,8 +1240,8 @@ async function submitDelete() {
           :rows="3"
         />
 
-        <div class="form-field">
-          <label class="form-label">{{ t('claims.fields.documents') }}</label>
+        <div class="flex flex-col gap-1">
+          <label class="text-sm font-medium text-on-surface-variant">{{ t('claims.fields.documents') }}</label>
           <input
             ref="editDocumentInputRef"
             type="file"
@@ -1288,7 +1288,7 @@ async function submitDelete() {
           </div>
 
           <div class="claim-documents-section">
-            <p class="field-hint claim-documents-section__hint">
+            <p class="text-xs text-on-surface-variant claim-documents-section__hint">
               {{ t('claims.fields.attachedDocuments') }}
             </p>
             <CPageLoader v-if="loadingEditDocuments" />
@@ -1383,7 +1383,7 @@ async function submitDelete() {
       @update:open="value => !value && (claimToTransmit = null)"
     >
       <form
-        class="form-grid"
+        class="flex flex-col gap-4"
         @submit.prevent="submitTransmit"
       >
         <CFormInput
@@ -1425,7 +1425,7 @@ async function submitDelete() {
       @update:open="value => !value && (claimToClose = null)"
     >
       <form
-        class="form-grid"
+        class="flex flex-col gap-4"
         @submit.prevent="submitClose"
       >
         <CFormInput
@@ -1453,8 +1453,8 @@ async function submitDelete() {
           />
         </div>
 
-        <div class="form-field">
-          <label class="form-label">{{ t('claims.fields.closeDocuments') }}</label>
+        <div class="flex flex-col gap-1">
+          <label class="text-sm font-medium text-on-surface-variant">{{ t('claims.fields.closeDocuments') }}</label>
           <input
             ref="closeDocumentInputRef"
             type="file"

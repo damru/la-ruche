@@ -477,7 +477,7 @@ async function saveContract() {
           class="contract-form__checkbox"
           :label="t('contracts.autoRenewal')"
         />
-        <p class="field-hint">
+        <p class="text-xs text-on-surface-variant">
           {{ t('contracts.form.autoRenewalHint') }}
         </p>
       </div>
@@ -494,7 +494,7 @@ async function saveContract() {
       </div>
 
       <div class="contract-form__documents">
-        <label class="form-label">{{ t('contracts.documents.titleInline') }}</label>
+        <label class="text-sm font-medium text-on-surface-variant">{{ t('contracts.documents.titleInline') }}</label>
         <input
           ref="documentInputRef"
           type="file"
@@ -544,7 +544,7 @@ async function saveContract() {
           v-if="isEditing"
           class="contract-form__existing-documents"
         >
-          <p class="field-hint contract-form__documents-hint">
+          <p class="text-xs text-on-surface-variant contract-form__documents-hint">
             {{ t('contracts.documents.attached') }}
           </p>
           <CPageLoader v-if="loadingDocuments" />

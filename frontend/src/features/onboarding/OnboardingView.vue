@@ -228,11 +228,11 @@ async function handleSubmit() {
 
           <form
             v-if="step === 1"
-            class="form-grid"
+            class="flex flex-col gap-4"
             novalidate
             @submit.prevent="goNext"
           >
-            <div class="field-row">
+            <div class="flex flex-col gap-1-row">
               <CFormInput
                 id="last_name"
                 v-model="form.last_name"
@@ -270,7 +270,7 @@ async function handleSubmit() {
               @blur="touch('email')"
             />
 
-            <div class="field">
+            <div class="flex flex-col gap-1">
               <CFormInput
                 id="password"
                 v-model="form.password"
@@ -346,7 +346,7 @@ async function handleSubmit() {
 
           <form
             v-else
-            class="form-grid"
+            class="flex flex-col gap-4"
             novalidate
             @submit.prevent="handleSubmit"
           >

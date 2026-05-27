@@ -165,7 +165,7 @@ async function confirmResetDemo() {
           <h2 class="section-title">
             {{ t('settings.account.personalInfo') }}
           </h2>
-          <div class="form-grid-2col">
+          <CFormRow :cols="2">
             <CFormInput
               :model-value="auth.user?.first_name ?? ''"
               :label="t('common.firstName')"
@@ -187,7 +187,7 @@ async function confirmResetDemo() {
               type="tel"
               :placeholder="t('common.phonePlaceholder')"
             />
-          </div>
+          </CFormRow>
           <div class="form-actions">
             <CFormFeedback
               :status="profileFeedback.status.value"
@@ -240,7 +240,7 @@ async function confirmResetDemo() {
             </button>
           </div>
 
-          <p class="field-hint theme-hint">
+          <p class="text-xs text-on-surface-variant theme-hint">
             {{ t(selectedThemeOption.hintKey) }}
           </p>
         </CCard>

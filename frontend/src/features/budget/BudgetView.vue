@@ -1372,12 +1372,12 @@ function formatSharePercentage(value: number): string {
         type="date"
         required
       />
-      <div class="field gap-1">
+      <div class="flex flex-col gap-1 gap-1">
         <CFormCheckbox
           v-model="generateForm.include_works_fund"
           :label="t('budget.includeWorksFund')"
         />
-        <p class="field-hint">
+        <p class="text-xs text-on-surface-variant">
           {{ t('budget.worksFundLegal') }}
         </p>
       </div>
@@ -1501,7 +1501,7 @@ function formatSharePercentage(value: number): string {
         step="0.01"
         required
       />
-      <p class="field-hint mt-2">
+      <p class="text-xs text-on-surface-variant mt-2">
         {{ t('budget.worksFundRateHint', { minimum: formatSharePercentage(worksFundMinimumRate) }) }}
       </p>
       <template #footer>

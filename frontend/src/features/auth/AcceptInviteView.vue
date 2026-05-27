@@ -63,7 +63,7 @@ async function handleSubmit() {
           </div>
 
           <form
-            class="form-grid"
+            class="flex flex-col gap-4"
             novalidate
             @submit.prevent="handleSubmit"
           >
@@ -108,7 +108,7 @@ async function handleSubmit() {
               />
               <p
                 v-if="mismatch"
-                class="field-error"
+                class="text-xs text-error"
               >
                 {{ t('auth.passwordMismatch') }}
               </p>

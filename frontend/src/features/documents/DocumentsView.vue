@@ -356,7 +356,7 @@ async function confirmDeleteDoc() {
           </p>
 
           <div class="visibility-section">
-            <label class="field-label">{{ t('documents.visiblePar') }}</label>
+            <label class="text-sm font-medium text-on-surface-variant">{{ t('documents.visiblePar') }}</label>
             <div class="role-checkboxes">
               <CFormCheckbox
                 v-for="role in ['manager', 'board_member', 'co_owner', 'tenant']"

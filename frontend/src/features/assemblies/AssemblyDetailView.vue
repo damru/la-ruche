@@ -1932,7 +1932,7 @@ function toDateTimeLocal(value: string): string {
       @update:open="showEditMeetingModal = $event"
     >
       <form
-        class="form-grid"
+        class="flex flex-col gap-4"
         @submit.prevent="saveMeeting"
       >
         <CFormSelect
@@ -1949,8 +1949,8 @@ function toDateTimeLocal(value: string): string {
           v-model="meetingForm.location"
           :label="t('meetings.location')"
         />
-        <div class="form-field form-field--full">
-          <span class="form-label">{{ t('meetings.agenda') }}</span>
+        <div class="flex flex-col gap-1 col-span-full">
+          <span class="text-sm font-medium text-on-surface-variant">{{ t('meetings.agenda') }}</span>
           <div class="agenda-editor">
             <div
               v-for="(_, index) in meetingAgendaItems"
@@ -2009,7 +2009,7 @@ function toDateTimeLocal(value: string): string {
       @update:open="showAddResolutionModal = $event"
     >
       <form
-        class="form-grid"
+        class="flex flex-col gap-4"
         @submit.prevent="saveResolution"
       >
         <CFormInput
@@ -2149,15 +2149,15 @@ function toDateTimeLocal(value: string): string {
       @update:open="showEditResolutionModal = $event"
     >
       <form
-        class="form-grid"
+        class="flex flex-col gap-4"
         @submit.prevent="saveEditResolution"
       >
         <template v-if="meeting?.status === 'ongoing'">
           <p class="modal-subtitle resolution-locked-notice">
             {{ t('meetings.resolutionDescriptionOnly') }}
           </p>
-          <div class="form-field">
-            <span class="form-label">{{ t('meetings.resolutionLabel') }}</span>
+          <div class="flex flex-col gap-1">
+            <span class="text-sm font-medium text-on-surface-variant">{{ t('meetings.resolutionLabel') }}</span>
             <span class="form-static">{{ editingResolution?.title }}</span>
           </div>
         </template>
@@ -2194,7 +2194,7 @@ function toDateTimeLocal(value: string): string {
       @update:open="showDocumentModal = $event"
     >
       <form
-        class="form-grid"
+        class="flex flex-col gap-4"
         @submit.prevent="saveDocument"
       >
         <CFormSelect
@@ -2243,7 +2243,7 @@ function toDateTimeLocal(value: string): string {
       @update:open="showAttendanceModal = $event"
     >
       <form
-        class="form-grid"
+        class="flex flex-col gap-4"
         @submit.prevent="saveAttendance"
       >
         <p class="modal-subtitle">
@@ -2360,7 +2360,7 @@ function toDateTimeLocal(value: string): string {
       @update:open="showSignaturesModal = $event"
     >
       <form
-        class="form-grid"
+        class="flex flex-col gap-4"
         @submit.prevent="saveSignatures"
       >
         <p class="body-sm text-on-surface-variant">
@@ -2489,7 +2489,7 @@ function toDateTimeLocal(value: string): string {
       @update:open="showConvocationModal = $event"
     >
       <form
-        class="form-grid"
+        class="flex flex-col gap-4"
         @submit.prevent="confirmCallMeeting"
       >
         <p class="body-sm text-on-surface-variant">
@@ -2580,7 +2580,7 @@ function toDateTimeLocal(value: string): string {
       @update:open="showMinutesModal = $event"
     >
       <form
-        class="form-grid"
+        class="flex flex-col gap-4"
         @submit.prevent="saveMinutes"
       >
         <p class="body-sm text-on-surface-variant">
@@ -2628,7 +2628,7 @@ function toDateTimeLocal(value: string): string {
       @update:open="showStartMeetingModal = $event"
     >
       <form
-        class="form-grid"
+        class="flex flex-col gap-4"
         @submit.prevent="confirmStartMeeting"
       >
         <p class="body-sm text-on-surface-variant">
@@ -3226,12 +3226,6 @@ function toDateTimeLocal(value: string): string {
 .agenda-editor__row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: var(--space-2);
-}
-
-.form-field--full {
-  display: flex;
-  flex-direction: column;
   gap: var(--space-2);
 }
 

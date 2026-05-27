@@ -467,8 +467,8 @@ function formatLocation(unit: { block?: string | null; staircase?: string | null
         :closable="!savingUnit"
         @update:open="showUnitModal = $event"
       >
-        <div class="form-grid">
-          <div class="form-grid-2col">
+        <div class="flex flex-col gap-4">
+          <div class="flex flex-col gap-4 sm:grid sm:grid-cols-2 sm:gap-4">
             <CFormInput
               v-model="editingUnit.unit_number"
               :label="t('units.number')"
@@ -495,7 +495,7 @@ function formatLocation(unit: { block?: string | null; staircase?: string | null
             <CFormTextarea
               v-model="editingUnit.description"
               :label="t('residents.description')"
-              class="field--full"
+              class="flex flex-col gap-1 col-span-full"
             />
           </div>
 

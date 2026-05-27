@@ -732,7 +732,7 @@ function photoPreview(file: File): string {
       @update:open="showCreateModal = $event"
     >
       <form
-        class="form-grid"
+        class="flex flex-col gap-4"
         @submit.prevent="submitCreate"
       >
         <CFormInput
@@ -753,8 +753,8 @@ function photoPreview(file: File): string {
         />
 
         <!-- Photo picker -->
-        <div class="form-field">
-          <label class="form-label">{{ t('reports.photos') }}</label>
+        <div class="flex flex-col gap-1">
+          <label class="text-sm font-medium text-on-surface-variant">{{ t('reports.photos') }}</label>
           <!-- Hidden real file input -->
           <input
             ref="photoInputRef"
@@ -911,7 +911,7 @@ function photoPreview(file: File): string {
       @update:open="v => !v && (reportToEdit = null)"
     >
       <form
-        class="form-grid"
+        class="flex flex-col gap-4"
         @submit.prevent="submitEdit"
       >
         <CFormInput
@@ -932,8 +932,8 @@ function photoPreview(file: File): string {
         />
 
         <!-- Photo picker (add photos to existing report) -->
-        <div class="form-field">
-          <label class="form-label">{{ t('reports.addPhotos') }}</label>
+        <div class="flex flex-col gap-1">
+          <label class="text-sm font-medium text-on-surface-variant">{{ t('reports.addPhotos') }}</label>
           <input
             ref="editPhotoInputRef"
             type="file"
@@ -985,8 +985,8 @@ function photoPreview(file: File): string {
             style="color:var(--color-on-surface-variant)"
           >{{ t('reports.photoUploading') }}</span>
         </div>
-        <div class="form-field">
-          <label class="form-label">{{ t('reports.attachedPhotos') }}</label>
+        <div class="flex flex-col gap-1">
+          <label class="text-sm font-medium text-on-surface-variant">{{ t('reports.attachedPhotos') }}</label>
           <CPageLoader v-if="loadingEditAttachedPhotos" />
           <div
             v-else-if="editAttachedPhotos.length"

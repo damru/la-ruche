@@ -522,7 +522,7 @@ async function confirmDelete() {
       @update:open="showModal = $event"
     >
       <form
-        class="form-grid"
+        class="flex flex-col gap-4"
         @submit.prevent="save"
       >
         <CFormInput
@@ -547,14 +547,14 @@ async function confirmDelete() {
           v-model="form.domains"
           :label="t('contractors.domainsLabel')"
           :options="domainOptions"
-          class="form-field--full"
+          class="flex flex-col gap-1 col-span-full"
         />
         <CFormTextarea
           v-model="form.notes"
           :label="t('contractors.notes')"
           :rows="3"
           :placeholder="t('contractors.notesPlaceholder')"
-          class="form-field--full"
+          class="flex flex-col gap-1 col-span-full"
         />
       </form>
       <template #footer>

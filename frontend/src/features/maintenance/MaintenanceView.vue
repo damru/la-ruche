@@ -593,7 +593,7 @@ async function deleteEntry() {
       @update:open="showEntryModal = $event"
     >
       <form
-        class="form-grid"
+        class="flex flex-col gap-4"
         @submit.prevent="saveEntry"
       >
         <CFormInput

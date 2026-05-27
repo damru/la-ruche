@@ -141,7 +141,7 @@ async function handleResetRequest() {
           </div>
 
           <form
-            class="form-grid"
+            class="flex flex-col gap-4"
             novalidate
             @submit.prevent="handleLogin"
           >
@@ -232,7 +232,7 @@ async function handleResetRequest() {
           </div>
 
           <form
-            class="form-grid"
+            class="flex flex-col gap-4"
             novalidate
             @submit.prevent="handleResetRequest"
           >

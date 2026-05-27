@@ -88,7 +88,7 @@ onMounted(reload)
           <h2 class="section-title">
             {{ t('settings.building.title') }}
           </h2>
-          <div class="form-grid-2col">
+          <div class="flex flex-col gap-4 sm:grid sm:grid-cols-2 sm:gap-4">
             <CFormInput
               v-model="form.name"
               :label="t('settings.building.name')"
@@ -100,7 +100,7 @@ onMounted(reload)
             <CFormInput
               v-model="form.address_line1"
               :label="t('addressAutocomplete.addressLine1')"
-              class="field--full"
+              class="flex flex-col gap-1 col-span-full"
             />
             <CFormInput
               v-model="form.postal_code"

@@ -496,7 +496,7 @@ async function confirmDelete() {
       @update:open="showCreateModal = $event"
     >
       <form
-        class="form-grid"
+        class="flex flex-col gap-4"
         @submit.prevent="saveConsultation"
       >
         <CFormInput
@@ -509,8 +509,8 @@ async function confirmDelete() {
           :label="t('consultations.fields.description')"
           :rows="2"
         />
-        <div class="form-field">
-          <label class="form-label">{{ t('consultations.fields.choices') }} *</label>
+        <div class="flex flex-col gap-1">
+          <label class="text-sm font-medium text-on-surface-variant">{{ t('consultations.fields.choices') }} *</label>
           <div
             v-for="(_, idx) in createForm.choices"
             :key="idx"
