@@ -152,6 +152,7 @@ async function confirmResetDemo() {
 
       <!-- Tabs -->
       <CTabs
+        variant="filter"
         v-model="activeTab"
         :tabs="[
           { value: 'account', label: t('nav.myAccount') },

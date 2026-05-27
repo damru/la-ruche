@@ -104,7 +104,7 @@ Configuration via `@tailwindcss/vite` (pas de `tailwind.config.js`). Tokens expo
 | Utilitaire Tailwind | Token source | Remarque |
 |---|---|---|
 | `text-2xs` · `text-xs` · `text-sm` · `text-md` · `text-lg` · `text-xl` · `text-2xl` · `text-display` | `--text-*` | Remplace l'échelle Tailwind native — `text-sm` 13px, `text-lg` 16px, `text-display` 40px |
-| `font-display` · `font-body` · `font-mono` | `--font-*` | Familles custom |
+| `font-serif` · `font-body` · `font-mono` | `--font-*` | Familles custom |
 | `space-1` … `space-20` (dont `space-7`, `space-9`) | `--space-*` | — |
 | `radius-sm` … `radius-full` | `--radius-*` | — |
 | `shadow-md` · `shadow-lg` · `shadow-glass` | `--shadow-*` | — |

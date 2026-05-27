@@ -192,9 +192,9 @@ function statusVariant(status: UnitChargesLevy['status']): 'pending' | 'valid' |
         </div>
 
         <CCard>
-          <h2 class="font-serif text-lg font-semibold mb-4">
+          <CHeading type="card" class="mb-4">
             {{ t('units.charges.history') }}
-          </h2>
+          </CHeading>
 
           <CDataTable
             :columns="levyTableColumns"

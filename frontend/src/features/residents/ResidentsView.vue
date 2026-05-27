@@ -284,6 +284,7 @@ function formatLocation(unit: { block?: string | null; staircase?: string | null
         </header>
 
         <CTabs
+          variant="filter"
           v-model="activeTab"
           :tabs="[
             { value: 'units', label: t('residents.tabs.units', { count: allUnits.length }) },

@@ -23,7 +23,7 @@ const sizeClass: Record<HeadingType, string> = {
 }
 
 const variantClass: Record<HeadingVariant, string> = {
-  heading: 'font-display font-semibold leading-tight tracking-tight text-on-surface',
+  heading: 'font-serif font-semibold leading-tight tracking-tight text-on-surface',
   title: 'font-body font-semibold leading-tight text-on-surface',
 }
 </script>

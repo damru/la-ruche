@@ -85,9 +85,9 @@ onMounted(reload)
         </header>
 
         <CCard>
-          <h2 class="font-serif text-lg font-semibold mb-4">
+          <CHeading type="card" class="mb-4">
             {{ t('settings.building.title') }}
-          </h2>
+          </CHeading>
           <div class="flex flex-col gap-4 sm:grid sm:grid-cols-2 sm:gap-4">
             <CFormInput
               v-model="form.name"
@@ -139,9 +139,9 @@ onMounted(reload)
         </CCard>
 
         <CLegalCard>
-          <h2 class="font-serif text-lg font-semibold mb-4">
+          <CHeading type="card" class="mb-4">
             {{ t('settings.building.legalData') }}
-          </h2>
+          </CHeading>
           <CLegalNotice>
             <CLegalDescription
               title="Art. 18 loi n°65-557 du 10 juillet 1965"
