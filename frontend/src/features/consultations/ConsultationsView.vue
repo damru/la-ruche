@@ -309,6 +309,7 @@ async function confirmDelete() {
         </CAlert>
 
         <CTabs
+          variant="filter"
           v-model="statusFilter"
           :tabs="[
             { value: 'open', label: t('consultations.filters.open'), count: openCount },

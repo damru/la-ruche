@@ -190,7 +190,7 @@ async function saveMeeting() {
           </CMetaLine>
         </header>
 
-        <CTabs v-model="filter" :tabs="meetingTabs" />
+        <CTabs variant="filter" v-model="filter" :tabs="meetingTabs" />
 
         <div
           v-if="meetings.length === 0"

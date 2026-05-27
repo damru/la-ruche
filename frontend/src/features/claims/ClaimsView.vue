@@ -917,7 +917,7 @@ async function submitDelete() {
           </template>
         </CReminderCard>
 
-        <CTabs v-model="filter" :tabs="claimTabsList" />
+        <CTabs variant="filter" v-model="filter" :tabs="claimTabsList" />
 
         <div class="claims-list">
           <CCard

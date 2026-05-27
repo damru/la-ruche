@@ -479,6 +479,7 @@ async function deleteEntry() {
 
         <div class="period-toolbar">
           <CTabs
+            variant="filter"
             v-model="periodFilter"
             :tabs="(['month', 'quarter', 'semester', 'year', 'all'] as const).map(f => ({ value: f, label: t(`maintenance.filters.${f}`) }))"
           />

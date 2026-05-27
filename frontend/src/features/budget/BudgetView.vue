@@ -811,7 +811,7 @@ function formatSharePercentage(value: number): string {
         </div>
 
         <div class="flex items-center gap-2">
-          <CTabs v-model="selectedBudgetTab" :tabs="budgetYearTabs" />
+          <CTabs variant="filter" v-model="selectedBudgetTab" :tabs="budgetYearTabs" />
           <CBtn
             v-if="canManage"
             variant="ghost"

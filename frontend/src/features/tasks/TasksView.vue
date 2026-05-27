@@ -813,6 +813,7 @@ async function copyVendorLink(taskId: string) {
 
         <!-- Filtres -->
         <CTabs
+          variant="filter"
           v-model="statusFilter"
           :tabs="[
             { value: 'all', label: t('tasks.filters.all'), count: allTasks.length },
