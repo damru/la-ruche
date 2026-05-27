@@ -1708,12 +1708,12 @@ function toDateTimeLocal(value: string): string {
                 <p class="doc-group__title">
                   {{ t('meetings.documents.notice') }}
                 </p>
-                <div
+                <p
                   v-if="noticeDocuments.length === 0"
-                  class="empty-state--compact"
+                  class="py-8 px-4 text-center text-base text-on-surface-variant"
                 >
                   {{ t('meetings.documents.empty') }}
-                </div>
+                </p>
                 <div
                   v-else
                   class="doc-list"
@@ -1747,12 +1747,12 @@ function toDateTimeLocal(value: string): string {
                 <p class="doc-group__title">
                   {{ t('meetings.documents.attachment') }}
                 </p>
-                <div
+                <p
                   v-if="attachmentDocuments.length === 0"
-                  class="empty-state--compact"
+                  class="py-8 px-4 text-center text-base text-on-surface-variant"
                 >
                   {{ t('meetings.documents.empty') }}
-                </div>
+                </p>
                 <div
                   v-else
                   class="doc-list"
@@ -3273,13 +3273,6 @@ function toDateTimeLocal(value: string): string {
 .chip-art26 {
   --tone-bg: #fce8d5;
   --tone-fg: #7a3600;
-}
-
-.empty-state--compact {
-  padding: var(--space-8) var(--space-4);
-  text-align: center;
-  font-size: var(--text-md);
-  color: var(--color-on-surface-variant);
 }
 
 @media (max-width: 960px) {

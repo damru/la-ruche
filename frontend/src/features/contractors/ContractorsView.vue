@@ -10,6 +10,8 @@ import CBadge from '@/components/atoms/CBadge.vue'
 import CIconTile from '@/components/atoms/CIconTile.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CCard from '@/components/molecules/CCard.vue'
+import CCardActions from '@/components/molecules/CCardActions.vue'
+import CEmptyState from '@/components/atoms/CEmptyState.vue'
 import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
 import CModal from '@/components/molecules/CModal.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
@@ -324,24 +326,28 @@ async function confirmDelete() {
         </div>
 
         <!-- Empty state -->
-        <div
+        <CEmptyState
           v-if="filtered.length === 0"
-          class="py-8 text-center text-md text-on-surface-variant"
+          :title="search || selectedDomains.length ? t('contractors.noResults') : t('contractors.noContractors')"
+          size="page"
         >
-          <CIconUsers class="empty-state__icon" />
-          <p class="body-md">
-            {{ search || selectedDomains.length ? t('contractors.noResults') : t('contractors.noContractors') }}
-          </p>
-          <CBtn
+          <template #icon>
+            <CIconUsers />
+          </template>
+          <template
             v-if="canEdit && !search && !selectedDomains.length"
-            variant="primary"
-            size="sm"
-            @click="openCreate"
+            #actions
           >
-            <CIconPlus class="icon-sm" />
-            {{ t('contractors.newContractor') }}
-          </CBtn>
-        </div>
+            <CBtn
+              variant="primary"
+              size="sm"
+              @click="openCreate"
+            >
+              <CIconPlus class="icon-sm" />
+              {{ t('contractors.newContractor') }}
+            </CBtn>
+          </template>
+        </CEmptyState>
 
         <!-- ── List view ─────────────────────────────────────────────── -->
         <div
@@ -429,25 +435,25 @@ async function confirmDelete() {
             v-for="c in filtered"
             :key="c.id"
             interactive
-            class="activity-card"
+            gap="sm"
             tabindex="-1"
             @click="openContractorDetail(c.id)"
           >
-            <div class="activity-card__header-row activity-card__header-row--with-icon">
-              <CIconTile :class="['activity-card__icon', domainTone(c.domains)]">
+            <div class="flex items-center gap-3 min-w-0">
+              <CIconTile :class="domainTone(c.domains)">
                 <component
                   :is="domainIcon(c.domains)"
                   aria-hidden="true"
                 />
               </CIconTile>
               <button
-                class="activity-card__title-btn"
+                class="flex-1 min-w-0 overflow-hidden text-ellipsis bg-transparent border-none p-0 text-base font-semibold text-on-surface text-left cursor-pointer leading-snug hover:text-primary focus-visible:text-primary focus-visible:outline-none"
                 @click.stop="openContractorDetail(c.id)"
               >
                 {{ c.name }}
               </button>
             </div>
-            <div class="activity-card__chips">
+            <div class="flex flex-wrap gap-x-2 gap-y-1">
               <CBadge
                 v-for="d in c.domains.slice(0, 2)"
                 :key="d"
@@ -458,7 +464,7 @@ async function confirmDelete() {
                 variant="default"
               >+{{ c.domains.length - 2 }}</CBadge>
             </div>
-            <div class="activity-card__stack">
+            <div class="flex flex-col gap-3">
               <p
                 v-if="c.notes"
                 class="body-xs"
@@ -467,25 +473,22 @@ async function confirmDelete() {
               </p>
               <div
                 v-if="c.email || c.phone"
-                class="activity-card__contacts"
+                class="flex flex-col gap-1"
               >
                 <a
                   v-if="c.email"
                   :href="`mailto:${c.email}`"
-                  class="activity-card__contact-link"
+                  class="text-xs text-primary no-underline truncate hover:underline"
                   @click.stop
                 >{{ c.email }}</a>
                 <a
                   v-if="c.phone"
                   :href="`tel:${c.phone}`"
-                  class="activity-card__contact-link"
+                  class="text-xs text-primary no-underline truncate hover:underline"
                   @click.stop
                 >{{ c.phone }}</a>
               </div>
-              <div
-                v-if="canEdit"
-                class="activity-card__actions"
-              >
+              <CCardActions v-if="canEdit">
                 <CBtn
                   variant="ghost"
                   size="sm"
@@ -504,7 +507,7 @@ async function confirmDelete() {
                   <CIconTrash class="icon-sm" />
                   {{ t('common.delete') }}
                 </CBtn>
-              </div>
+              </CCardActions>
             </div>
           </CCard>
         </div>
@@ -609,22 +612,6 @@ async function confirmDelete() {
 </template>
 
 <style scoped>
-/* ── Empty state ─────────────────────────────────────────────────── */
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-12) 0;
-  color: var(--color-on-surface-variant);
-}
-
-.empty-state__icon {
-  width: 48px;
-  height: 48px;
-  opacity: 0.4;
-}
-
 /* ── Toolbar ─────────────────────────────────────────────────────── */
 .list-toolbar {
   display: flex;
@@ -784,49 +771,6 @@ async function confirmDelete() {
   gap: var(--space-4);
 }
 
-.activity-card__title-btn {
-  background: none;
-  border: none;
-  padding: 0;
-  font: inherit;
-  font-size: var(--text-md, 1rem);
-  font-weight: var(--fw-semibold);
-  color: var(--color-on-surface);
-  text-align: left;
-  cursor: pointer;
-  line-height: 1.3;
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.activity-card__title-btn:hover,
-.activity-card__title-btn:focus-visible {
-  color: var(--color-primary);
-  outline: none;
-}
-
-.activity-card__contacts {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.activity-card__contact-link {
-  font-size: var(--text-xs);
-  color: var(--color-on-surface-variant);
-  text-decoration: none;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.activity-card__contact-link:hover {
-  color: var(--color-primary);
-  text-decoration: underline;
-}
-
 /* ── Responsive ──────────────────────────────────────────────────── */
 @media (max-width: 640px) {
   .contractor-row {
@@ -843,16 +787,4 @@ async function confirmDelete() {
 .icon-xs { width: var(--icon-xs); height: var(--icon-xs); flex-shrink: 0; }
 .icon-sm { width: var(--icon-sm); height: var(--icon-sm); flex-shrink: 0; }
 
-.activity-card { display: flex; flex-direction: column; gap: var(--space-3); }
-.activity-card__header-row { display: flex; align-items: center; gap: var(--space-3); min-width: 0; }
-.activity-card__header-row--with-icon { align-items: center; }
-.activity-card__icon { flex-shrink: 0; align-self: flex-start; }
-.activity-card__stack { display: flex; flex-direction: column; gap: var(--space-3); }
-.activity-card__chips { flex: 1; align-items: center; font-size: var(--text-xs); flex-wrap: wrap-reverse; display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-2); }
-.activity-card__chips :deep(svg), .activity-card__chips > * > svg { width: var(--icon-xs); height: var(--icon-xs); }
-.activity-card__contacts { display: flex; flex-direction: column; gap: var(--space-1); }
-.activity-card__actions { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-2); }
-.activity-card__contact-link { font-size: var(--text-xs); color: var(--color-primary); text-decoration: none; }
-.activity-card__contact-link:hover { text-decoration: underline; }
-@media (max-width: 720px) { .activity-card__header-row { align-items: flex-start; } .activity-card__header-row--with-icon { align-items: center; } }
 </style>

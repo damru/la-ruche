@@ -8,6 +8,7 @@ import CIconBolt from '@/components/atoms/CIconBolt.svg'
 import CIconDroplet from '@/components/atoms/CIconDroplet.svg'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CCard from '@/components/molecules/CCard.vue'
+import CCardActions from '@/components/molecules/CCardActions.vue'
 import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
 import CLinkedDocumentsModal from '@/components/organisms/CLinkedDocumentsModal.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
@@ -415,19 +416,20 @@ async function confirmTerminateContract() {
             v-for="contract in contracts"
             :key="contract.id"
             :shadow="effectiveStatus(contract) === 'active'"
-            :class="['activity-card', { 'outline outline-1 outline-outline-variant': effectiveStatus(contract) !== 'active' }]"
+            gap="sm"
+            :class="[{ 'outline outline-1 outline-outline-variant': effectiveStatus(contract) !== 'active' }]"
           >
-            <div class="activity-card__header-row activity-card__header-row--with-icon">
-              <CIconTile :class="['activity-card__icon', contractIconTone(contract)]">
+            <div class="flex items-center gap-3 min-w-0">
+              <CIconTile :class="contractIconTone(contract)">
                 <component
                   :is="contractTypeIcon(contract.contract_type)"
                   aria-hidden="true"
                 />
               </CIconTile>
-              <h3 class="activity-card__title">
+              <h3 class="text-lg font-semibold text-on-surface m-0 leading-snug min-w-0">
                 {{ contract.vendor_name }}
               </h3>
-              <div class="activity-card__chips">
+              <div class="flex flex-wrap gap-x-2 gap-y-1">
                 <CBadge variant="default">
                   {{ t(`contracts.types.${contract.contract_type}`) }}
                 </CBadge>
@@ -439,7 +441,7 @@ async function confirmTerminateContract() {
                 </CBadge>
               </div>
             </div>
-            <div class="activity-card__stack">
+            <div class="flex flex-col gap-3">
               <p class="body-xs">
                 {{ contract.subject }}
               </p>
@@ -484,26 +486,26 @@ async function confirmTerminateContract() {
 
               <div
                 v-if="contract.vendor_email || contract.vendor_phone"
-                class="activity-card__contacts"
+                class="flex flex-col gap-1"
               >
                 <a
                   v-if="contract.vendor_email"
                   :href="`mailto:${contract.vendor_email}`"
-                  class="activity-card__line activity-card__contact-link"
+                  class="inline-flex items-center gap-1 text-xs text-primary no-underline hover:underline"
                 ><span aria-hidden="true">✉️</span>{{ contract.vendor_email }}</a>
                 <a
                   v-if="contract.vendor_phone"
                   :href="`tel:${contract.vendor_phone}`"
-                  class="activity-card__line activity-card__contact-link"
+                  class="inline-flex items-center gap-1 text-xs text-primary no-underline hover:underline"
                 ><span aria-hidden="true">📞</span>{{ contract.vendor_phone }}</a>
               </div>
 
               <div
                 v-if="(contract.document_count ?? 0) > 0"
-                class="activity-card__documents"
+                class="flex flex-wrap gap-x-2 gap-y-1 text-2xs leading-snug"
               >
                 <button
-                  class="activity-card__line activity-card__documents-button"
+                  class="inline-flex items-center gap-1 bg-transparent border-none p-0 cursor-pointer text-xs hover:text-primary"
                   @click="openContractDocuments(contract)"
                 >
                   <CIconFile />
@@ -511,7 +513,7 @@ async function confirmTerminateContract() {
                 </button>
               </div>
 
-              <div class="activity-card__actions">
+              <CCardActions>
                 <CBtn
                   variant="ghost"
                   size="sm"
@@ -529,7 +531,7 @@ async function confirmTerminateContract() {
                   <CIconArchive />
                   {{ t('contracts.terminate') }}
                 </CBtn>
-              </div>
+              </CCardActions>
             </div>
           </CCard>
         </div>
@@ -608,22 +610,4 @@ async function confirmTerminateContract() {
 
 .contract-reminders { display: flex; flex-wrap: wrap; gap: 6px; }
 
-.activity-card { display: flex; flex-direction: column; gap: var(--space-3); }
-.activity-card__header-row { display: flex; align-items: center; gap: var(--space-3); min-width: 0; }
-.activity-card__header-row > .activity-card__chips { justify-content: flex-end; }
-.activity-card__header-row--with-icon { align-items: center; }
-.activity-card__icon { flex-shrink: 0; align-self: flex-start; }
-.activity-card__stack { display: flex; flex-direction: column; gap: var(--space-3); }
-.activity-card__chips { flex: 1; align-items: center; font-size: var(--text-xs); flex-wrap: wrap-reverse; display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-2); }
-.activity-card__chips :deep(svg), .activity-card__chips > * > svg { width: var(--icon-xs); height: var(--icon-xs); }
-.activity-card__contacts { display: flex; flex-direction: column; gap: var(--space-1); }
-.activity-card__documents { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-2); font-size: var(--text-2xs); line-height: 1.4; }
-.activity-card__actions { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-2); }
-.activity-card__title { color: var(--color-on-surface); margin: 0; font-family: var(--font-body); font-size: var(--text-lg); font-weight: var(--fw-semibold); letter-spacing: 0; line-height: 1.2; text-wrap: auto; min-width: 0; }
-.activity-card__line { display: inline-flex; align-items: center; gap: var(--space-1); width: fit-content; color: inherit; }
-.activity-card__contact-link { font-size: var(--text-xs); color: var(--color-primary); text-decoration: none; }
-.activity-card__contact-link:hover { text-decoration: underline; }
-.activity-card__documents-button { background: none; border: none; padding: 0; cursor: pointer; min-width: unset; min-height: unset; }
-.activity-card__documents-button:hover { color: var(--color-primary); }
-@media (max-width: 720px) { .activity-card__header-row { align-items: flex-start; } .activity-card__header-row--with-icon { align-items: center; } }
 </style>

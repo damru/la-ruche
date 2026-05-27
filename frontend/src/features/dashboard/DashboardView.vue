@@ -233,22 +233,22 @@ const todayStr = computed(() =>
       <div class="grid3">
         <!-- Priority tasks -->
         <CCard padding="none">
-          <div class="card-head">
-            <div>
-              <h2 class="card-title">
-                {{ t('dashboard.priorityTasks') }}
-              </h2>
-              <p class="card-sub">
-                {{ t('dashboard.taskCount', { count: priorityTasks.length }) }}
-              </p>
-            </div>
-            <RouterLink
-              to="/tasks"
-              class="card-link"
-            >
-              {{ t('dashboard.allTasks') }} <CIconChevronRight />
-            </RouterLink>
-          </div>
+          <CSectionHeader class="px-5 pt-5 mb-4">
+            <CHeading type="card">
+              {{ t('dashboard.priorityTasks') }}
+            </CHeading>
+            <p class="body-sm text-muted">
+              {{ t('dashboard.taskCount', { count: priorityTasks.length }) }}
+            </p>
+            <template #actions>
+              <RouterLink
+                to="/tasks"
+                class="flex items-center gap-1 text-xs text-primary font-medium no-underline whitespace-nowrap shrink-0 hover:underline"
+              >
+                {{ t('dashboard.allTasks') }} <CIconChevronRight />
+              </RouterLink>
+            </template>
+          </CSectionHeader>
           <div class="task-list">
             <div
               v-for="task in priorityTasks"
@@ -294,22 +294,22 @@ const todayStr = computed(() =>
 
         <!-- Contract reminders + Reports -->
         <CCard padding="none">
-          <div class="card-head">
-            <div>
-              <h2 class="card-title">
-                {{ t('dashboard.contractReminders') }}
-              </h2>
-              <p class="card-sub">
-                {{ t('dashboard.nextDeadlines') }}
-              </p>
-            </div>
-            <RouterLink
-              to="/contracts"
-              class="card-link"
-            >
-              {{ t('dashboard.contracts') }} <CIconChevronRight />
-            </RouterLink>
-          </div>
+          <CSectionHeader class="px-5 pt-5 mb-4">
+            <CHeading type="card">
+              {{ t('dashboard.contractReminders') }}
+            </CHeading>
+            <p class="body-sm text-muted">
+              {{ t('dashboard.nextDeadlines') }}
+            </p>
+            <template #actions>
+              <RouterLink
+                to="/contracts"
+                class="flex items-center gap-1 text-xs text-primary font-medium no-underline whitespace-nowrap shrink-0 hover:underline"
+              >
+                {{ t('dashboard.contracts') }} <CIconChevronRight />
+              </RouterLink>
+            </template>
+          </CSectionHeader>
           <div class="reminder-list">
             <div
               v-for="reminder in reminders"
@@ -352,25 +352,22 @@ const todayStr = computed(() =>
           </div>
 
           <div class="section-divider"></div>
-          <div
-            class="card-head"
-            style="padding-top:16px"
-          >
-            <div>
-              <h2 class="card-title">
-                {{ t('dashboard.reportsTitle') }}
-              </h2>
-              <p class="card-sub">
-                {{ t('dashboard.openCount', { count: openReports.length }) }}
-              </p>
-            </div>
-            <RouterLink
-              to="/reports"
-              class="card-link"
-            >
-              {{ t('dashboard.seeReports') }} <CIconChevronRight />
-            </RouterLink>
-          </div>
+          <CSectionHeader class="px-5 pt-4 mb-4">
+            <CHeading type="card">
+              {{ t('dashboard.reportsTitle') }}
+            </CHeading>
+            <p class="body-sm text-muted">
+              {{ t('dashboard.openCount', { count: openReports.length }) }}
+            </p>
+            <template #actions>
+              <RouterLink
+                to="/reports"
+                class="flex items-center gap-1 text-xs text-primary font-medium no-underline whitespace-nowrap shrink-0 hover:underline"
+              >
+                {{ t('dashboard.seeReports') }} <CIconChevronRight />
+              </RouterLink>
+            </template>
+          </CSectionHeader>
           <div class="signal-list">
             <div
               v-for="r in openReports"
@@ -408,17 +405,19 @@ const todayStr = computed(() =>
         <!-- Right col: residents + consultation -->
         <div class="right-col">
           <CCard padding="none">
-            <div class="card-head">
-              <h2 class="card-title">
+            <CSectionHeader class="px-5 pt-5 mb-4">
+              <CHeading type="card">
                 {{ t('dashboard.residentsTitle') }}
-              </h2>
-              <RouterLink
-                to="/residents"
-                class="card-link"
-              >
-                {{ t('dashboard.seeResidents') }} <CIconChevronRight />
-              </RouterLink>
-            </div>
+              </CHeading>
+              <template #actions>
+                <RouterLink
+                  to="/residents"
+                  class="flex items-center gap-1 text-xs text-primary font-medium no-underline whitespace-nowrap shrink-0 hover:underline"
+                >
+                  {{ t('dashboard.seeResidents') }} <CIconChevronRight />
+                </RouterLink>
+              </template>
+            </CSectionHeader>
             <div class="residents-grid">
               <div class="res-stat">
                 <p class="res-stat-val">
@@ -455,19 +454,17 @@ const todayStr = computed(() =>
             v-if="consultations.length"
             padding="none"
           >
-            <div class="card-head">
-              <div>
-                <h2 class="card-title">
-                  {{ t('dashboard.activeConsultation') }}
-                </h2>
-                <p
-                  v-if="consultations[0].closed_at"
-                  class="card-sub"
-                >
-                  {{ t('dashboard.closesPrefix') }} {{ formatRelative(consultations[0].closed_at) }}
-                </p>
-              </div>
-            </div>
+            <CSectionHeader class="px-5 pt-5 mb-4">
+              <CHeading type="card">
+                {{ t('dashboard.activeConsultation') }}
+              </CHeading>
+              <p
+                v-if="consultations[0].closed_at"
+                class="body-sm text-muted"
+              >
+                {{ t('dashboard.closesPrefix') }} {{ formatRelative(consultations[0].closed_at) }}
+              </p>
+            </CSectionHeader>
             <div class="consultation-body">
               <p class="consultation-title">
                 {{ consultations[0].title }}
@@ -485,22 +482,22 @@ const todayStr = computed(() =>
           padding="none"
           class="budget-wide"
         >
-          <div class="card-head">
-            <div>
-              <h2 class="card-title">
-                {{ t('dashboard.budgetLabel', { exercice: currentBudget.fiscal_year }) }}
-              </h2>
-              <p class="card-sub">
-                {{ t('dashboard.budgetRealized', { pct: budgetExecutionRate }) }}
-              </p>
-            </div>
-            <RouterLink
-              to="/budget"
-              class="card-link"
-            >
-              {{ t('dashboard.detailLink') }} <CIconChevronRight />
-            </RouterLink>
-          </div>
+          <CSectionHeader class="px-5 pt-5 mb-4">
+            <CHeading type="card">
+              {{ t('dashboard.budgetLabel', { exercice: currentBudget.fiscal_year }) }}
+            </CHeading>
+            <p class="body-sm text-muted">
+              {{ t('dashboard.budgetRealized', { pct: budgetExecutionRate }) }}
+            </p>
+            <template #actions>
+              <RouterLink
+                to="/budget"
+                class="flex items-center gap-1 text-xs text-primary font-medium no-underline whitespace-nowrap shrink-0 hover:underline"
+              >
+                {{ t('dashboard.detailLink') }} <CIconChevronRight />
+              </RouterLink>
+            </template>
+          </CSectionHeader>
           <div class="budget-prog-list">
             <div
               v-for="line in budgetLines.slice(0, 4)"
@@ -594,17 +591,6 @@ const todayStr = computed(() =>
 @media (max-width: 1200px) { .grid3 { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 768px)  { .grid3 { grid-template-columns: 1fr; } }
 .right-col { display: flex; flex-direction: column; gap: var(--space-4); }
-
-/* ── Card helpers ─────────────────────────────────────────────────── */
-.card-head { display: flex; align-items: flex-start; justify-content: space-between; padding: var(--space-5) var(--space-5) 0; margin-bottom: var(--space-4); }
-.card-title { font-family: var(--font-display); font-size: 16px; font-weight: var(--fw-semibold); font-variation-settings: 'opsz' 36; letter-spacing: -0.01em; color: var(--color-on-surface); }
-.card-sub { font-size: 12px; color: var(--color-on-surface-variant); margin-top: 2px; }
-.card-link { font-size: 12px; color: var(--color-primary); font-weight: var(--fw-medium); text-decoration: none; display: flex; align-items: center; gap: 3px; white-space: nowrap; flex-shrink: 0; }
-.card-link svg { width: 12px; height: 12px; }
-.card-link:hover { text-decoration: underline; }
-.card-footer { padding: var(--space-2) var(--space-5) var(--space-5); }
-.section-divider { height: 1px; background: rgba(194,199,207,.2); margin: var(--space-2) var(--space-5) 0; }
-.empty-state { padding: var(--space-4) var(--space-5); font-size: 13px; color: var(--color-on-surface-variant); }
 
 /* ── Tasks ────────────────────────────────────────────────────────── */
 .task-list { padding: 0 var(--space-3) var(--space-2); display: flex; flex-direction: column; gap: var(--space-2); }

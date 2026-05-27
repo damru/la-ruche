@@ -17,6 +17,7 @@ import CLegalNotice from '@/components/molecules/CLegalNotice.vue'
 import CLegalCard from '@/components/molecules/CLegalCard.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CCard from '@/components/molecules/CCard.vue'
+import CCardActions from '@/components/molecules/CCardActions.vue'
 import CCardNote from '@/components/molecules/CCardNote.vue'
 import CModal from '@/components/molecules/CModal.vue'
 import CReminderCard from '@/components/organisms/CReminderCard.vue'
@@ -923,10 +924,11 @@ async function submitDelete() {
             v-for="claim in claims"
             :key="claim.id"
             :shadow="claim.status !== 'closed'"
-            :class="['activity-card', { 'outline outline-1 outline-outline-variant': claim.status === 'closed' }]"
+            gap="sm"
+            :class="[{ 'outline outline-1 outline-outline-variant': claim.status === 'closed' }]"
           >
-            <div class="activity-card__header-row activity-card__header-row--with-icon">
-              <div :class="['activity-card__icon', typeTone(claim.claim_type)]">
+            <div class="flex items-center gap-3 min-w-0">
+              <div :class="typeTone(claim.claim_type)">
                 <component
                   :is="typeIcon(claim.claim_type)"
                   width="18"
@@ -951,11 +953,11 @@ async function submitDelete() {
                 </CBadge>
               </CMetaLine>
             </div>
-            <div class="activity-card__stack">
+            <div class="flex flex-col gap-3">
               <CFlexGroup
                 direction="row"
               >
-                <h3 class="activity-card__title">
+                <h3 class="text-lg font-semibold text-on-surface m-0 leading-snug min-w-0">
                   {{ claim.title }}
                 </h3>
                 <CMetaItem
@@ -984,7 +986,7 @@ async function submitDelete() {
                 {{ claim.description }}
               </p>
               <template v-if="canManage">
-                <div class="activity-card__actions">
+                <CCardActions>
                   <CBtn
                     variant="ghost"
                     size="sm"
@@ -1011,15 +1013,14 @@ async function submitDelete() {
                     <CIconCheckCircle />
                     {{ t('claims.close') }}
                   </CBtn>
-                </div>
+                </CCardActions>
               </template>
-
               <CCardNote>
-                <span class="activity-card__line">
+                <span class="inline-flex items-center gap-1 w-fit">
                   <CIconCalendar />
                   {{ t('claims.declaredOn', { date: formatDate(claim.declared_at) }) }}
                 </span>
-                <span class="activity-card__line">
+                <span class="inline-flex items-center gap-1 w-fit">
                   <CIconClock
                     width="14"
                     height="14"
@@ -1028,7 +1029,7 @@ async function submitDelete() {
                 </span>
                 <span
                   v-if="claim.published_at"
-                  class="activity-card__line"
+                  class="inline-flex items-center gap-1 w-fit"
                 >
                   <CIconXCircle
                     width="14"
@@ -1038,7 +1039,7 @@ async function submitDelete() {
                 </span>
                 <span
                   v-if="claim.reimbursement_date || claim.reimbursement_amount != null"
-                  class="activity-card__line"
+                  class="inline-flex items-center gap-1 w-fit"
                 >
                   <CIconCurrency
                     width="14"
@@ -1732,16 +1733,4 @@ async function submitDelete() {
   }
 }
 
-.activity-card { display: flex; flex-direction: column; gap: var(--space-3); }
-.activity-card__header-row { display: flex; align-items: center; gap: var(--space-3); min-width: 0; }
-.activity-card__header-row > .activity-card__chips { justify-content: flex-end; }
-.activity-card__header-row--with-icon { align-items: center; }
-.activity-card__icon { flex-shrink: 0; align-self: flex-start; }
-.activity-card__stack { display: flex; flex-direction: column; gap: var(--space-3); }
-.activity-card__chips { flex: 1; align-items: center; font-size: var(--text-xs); flex-wrap: wrap-reverse; display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-2); }
-.activity-card__chips :deep(svg), .activity-card__chips > * > svg { width: var(--icon-xs); height: var(--icon-xs); }
-.activity-card__actions { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-2); }
-.activity-card__title { color: var(--color-on-surface); margin: 0; font-family: var(--font-body); font-size: var(--text-lg); font-weight: var(--fw-semibold); letter-spacing: 0; line-height: 1.2; text-wrap: auto; min-width: 0; }
-.activity-card__line { display: inline-flex; align-items: center; gap: var(--space-1); width: fit-content; color: inherit; }
-@media (max-width: 720px) { .activity-card__header-row { align-items: flex-start; } .activity-card__header-row--with-icon { align-items: center; } }
 </style>

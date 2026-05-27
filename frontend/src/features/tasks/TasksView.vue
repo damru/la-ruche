@@ -11,6 +11,7 @@ import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CDocumentLinkActionModal from '@/components/organisms/CDocumentLinkActionModal.vue'
 import CCard from '@/components/molecules/CCard.vue'
+import CCardActions from '@/components/molecules/CCardActions.vue'
 import CMetaLine from '@/components/molecules/CMetaLine.vue'
 import CMetaItem from '@/components/molecules/CMetaItem.vue'
 import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
@@ -829,15 +830,16 @@ async function copyVendorLink(taskId: string) {
             v-for="task in tasks"
             :key="task.id"
             :shadow="!isTerminal(task.status)"
-            :class="['activity-card', 'task-card', { 'outline outline-1 outline-outline-variant': isTerminal(task.status) }]"
+            gap="sm"
+            :class="['task-card', { 'outline outline-1 outline-outline-variant': isTerminal(task.status) }]"
             interactive
             tabindex="0"
             @click="openTaskDetail(task.id)"
             @keydown.enter.prevent="openTaskDetail(task.id)"
             @keydown.space.prevent="openTaskDetail(task.id)"
           >
-            <div class="activity-card__header-row">
-              <h3 class="activity-card__title">
+            <div class="flex items-center gap-3 min-w-0">
+              <h3 class="text-lg font-semibold text-on-surface m-0 leading-snug min-w-0">
                 {{ task.title }}
               </h3>
               <CMetaLine class="flex-1 justify-end text-xs">
@@ -853,7 +855,7 @@ async function copyVendorLink(taskId: string) {
               </CMetaLine>
             </div>
 
-            <div class="activity-card__stack">
+            <div class="flex flex-col gap-3">
               <p
                 v-if="task.description"
                 class="body-xs"
@@ -863,10 +865,10 @@ async function copyVendorLink(taskId: string) {
 
               <div
                 v-if="task.document_count > 0"
-                class="activity-card__documents"
+                class="flex flex-wrap gap-x-2 gap-y-1"
               >
                 <button
-                  class="activity-card__line activity-card__documents-button"
+                  class="inline-flex items-center gap-1 bg-transparent border-none p-0 cursor-pointer text-xs hover:text-primary"
                   @click.stop="openTaskDocuments(task)"
                 >
                   <CIconFile />
@@ -904,7 +906,7 @@ async function copyVendorLink(taskId: string) {
 
               <div
                 v-if="(contractorDisplayName(task) && !task.has_vendor_token && !isTerminal(task.status)) || task.has_vendor_token"
-                class="activity-card__secondary-actions"
+                class="flex flex-wrap gap-x-2 gap-y-1"
               >
                 <CBtn
                   v-if="contractorDisplayName(task) && !task.has_vendor_token && !isTerminal(task.status)"
@@ -967,7 +969,7 @@ async function copyVendorLink(taskId: string) {
                 </CBtn>
               </div>
 
-              <div class="activity-card__actions">
+              <CCardActions>
                 <CBtn
                   variant="ghost"
                   size="sm"
@@ -997,7 +999,7 @@ async function copyVendorLink(taskId: string) {
                   <CIconCheckCircle />
                   {{ closeActionLabel(task) }}
                 </CBtn>
-              </div>
+              </CCardActions>
             </div>
           </CCard>
 
@@ -1631,16 +1633,4 @@ async function copyVendorLink(taskId: string) {
   color: var(--color-on-surface-variant);
 }
 
-.activity-card { display: flex; flex-direction: column; gap: var(--space-3); }
-.activity-card__header-row { display: flex; align-items: center; gap: var(--space-3); min-width: 0; }
-.activity-card__header-row--with-icon { align-items: center; }
-.activity-card__icon { flex-shrink: 0; align-self: flex-start; }
-.activity-card__stack { display: flex; flex-direction: column; gap: var(--space-3); }
-.activity-card__chips { flex: 1; align-items: center; font-size: var(--text-xs); flex-wrap: wrap-reverse; display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-2); }
-.activity-card__chips :deep(svg), .activity-card__chips > * > svg { width: var(--icon-xs); height: var(--icon-xs); }
-.activity-card__title { color: var(--color-on-surface); margin: 0; font-family: var(--font-body); font-size: var(--text-lg); font-weight: var(--fw-semibold); letter-spacing: 0; line-height: 1.2; text-wrap: auto; min-width: 0; }
-.activity-card__contacts { display: flex; flex-direction: column; gap: var(--space-1); }
-.activity-card__actions { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-2); }
-.activity-card__line { display: inline-flex; align-items: center; gap: var(--space-1); width: fit-content; color: inherit; }
-@media (max-width: 720px) { .activity-card__header-row { align-items: flex-start; } .activity-card__header-row--with-icon { align-items: center; } }
 </style>

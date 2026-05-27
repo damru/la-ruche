@@ -10,6 +10,7 @@ import { useRole } from '@/composables/useRole'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CCard from '@/components/molecules/CCard.vue'
+import CCardActions from '@/components/molecules/CCardActions.vue'
 import CMetaLine from '@/components/molecules/CMetaLine.vue'
 import CMetaItem from '@/components/molecules/CMetaItem.vue'
 import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
@@ -596,8 +597,8 @@ function photoPreview(file: File): string {
             :shadow="r.status !== 'closed'"
             :class="['gap-y-4', { 'outline outline-1 outline-outline-variant': r.status === 'closed' }]"
           >
-            <div class="activity-card__header-row activity-card__header-row--with-icon">
-              <div class="activity-card__icon tone--default">
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="tone--default">
                 <CIconInfo />
               </div>
               
@@ -617,11 +618,11 @@ function photoPreview(file: File): string {
               </CMetaLine>
             </div>
 
-            <div class="activity-card__stack">
+            <div class="flex flex-col gap-3">
               <CFlexGroup
                 direction="row"
               >
-                <h3 class="activity-card__title">
+                <h3 class="text-lg font-semibold text-on-surface m-0 leading-snug min-w-0">
                   {{ r.title }}
                 </h3>
                 
@@ -664,11 +665,7 @@ function photoPreview(file: File): string {
                 </CMetaItem>
               </CMetaLine>
 
-              <div class="activity-card__secondary-actions">
-                <div
-                  v-if="r.status !== 'closed'"
-                  class="activity-card__secondary-actions"
-                >
+              <div v-if="r.status !== 'closed'" class="flex flex-wrap gap-x-2 gap-y-1">
                   <CBtn
                     variant="ghost"
                     size="sm"
@@ -677,11 +674,10 @@ function photoPreview(file: File): string {
                     <CIconRefresh />
                     {{ t('reports.editStatus') }}
                   </CBtn>
-                </div>
               </div>
 
               <template v-if="canManage">
-                <div class="activity-card__actions">
+                <CCardActions>
                   <CBtn
                     variant="ghost"
                     size="sm"
@@ -708,7 +704,7 @@ function photoPreview(file: File): string {
                     <CIconCheckCircle />
                     {{ t('reports.convertToTask') }}
                   </CBtn>
-                </div>
+                </CCardActions>
               </template>
             </div>
           </CCard>
