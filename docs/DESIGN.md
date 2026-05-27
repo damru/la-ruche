@@ -472,7 +472,7 @@ border-color: var(--color-outline-light);
 |---|---|---|
 | `CBtn` | `variant` (`primary` \| `secondary` \| `ghost` \| `destructive`), `size`, `loading`, `disabled` | Bouton |
 | `CDropdownMenu` | `items: DropdownItem[]`, `align?: 'start' \| 'end' \| 'center'`, slot: `trigger` | ✅ wrapper Radix `DropdownMenu` |
-| `CTabs` | `tabs` (`{ value, label, count? }[]`), `modelValue` (v-model) | 🔲 planifié — Bandeau de filtres d'état tabulaires. Flex row, indicateur de soulignement sur l'actif, badge numérique inline pour les volumes. Jamais d'icône seule. |
+| `CTabs` | `tabs` (`{ value, label, count? }[]`), `modelValue` (v-model), `variant?` (`'tab'` \| `'filter'`, défaut `'tab'`) | ✅ Bandeau d'onglets ou de filtres. `tab` (défaut) : indicateur souligné primary sur l'actif. `filter` : segment pill avec fond `surface-container-low`, active = `surface-container-lowest` + ombre, badge numérique circulaire primary. Jamais d'icône seule. |
 
 ---
 
