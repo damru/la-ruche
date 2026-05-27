@@ -151,7 +151,7 @@ function priorityVariant(p: string): 'err' | 'pending' | 'primary' | 'valid' | '
               <CEyebrow>
                 {{ t('page.eyebrows.contractorDetail') }}
               </CEyebrow>
-              <CHeading size="lg" as="h1" class="mb-2">
+              <CHeading type="header" class="mb-2">
                 {{ contractor.name }}
               </CHeading>
               <div class="contractor-domains">
@@ -201,9 +201,6 @@ function priorityVariant(p: string): 'err' | 'pending' | 'primary' | 'valid' | '
         <CHeading>
           {{ t('contractors.assignedTasks', { count: assignedTasks.length }) }}
         </CHeading>
-        <h2 class="section-title title-sm">
-          {{ t('contractors.assignedTasks', { count: assignedTasks.length }) }}
-        </h2>
 
         <div
           v-if="assignedTasks.length === 0"

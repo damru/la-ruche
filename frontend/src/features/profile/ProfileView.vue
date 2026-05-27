@@ -145,7 +145,7 @@ async function confirmResetDemo() {
         <CEyebrow>
           {{ t('page.eyebrows.profile') }}
         </CEyebrow>
-        <CHeading size="lg" as="h1">
+        <CHeading type="header">
           {{ t('nav.account') }}
         </CHeading>
       </header>
@@ -162,7 +162,7 @@ async function confirmResetDemo() {
       <!-- ── Account tab ─────────────────────────────────────── -->
       <template v-if="activeTab === 'account'">
         <CCard>
-          <CHeading size="xs">
+          <CHeading type="card">
             {{ t('settings.account.personalInfo') }}
           </CHeading>
           <CFormRow :cols="2">
@@ -209,7 +209,7 @@ async function confirmResetDemo() {
         </CCard>
 
         <CCard>
-          <CHeading size="xs">
+          <CHeading type="card">
             {{ t('settings.preferences.title') }}
           </CHeading>
           <p class="preferences-subtitle">
@@ -246,7 +246,7 @@ async function confirmResetDemo() {
         </CCard>
 
         <CCard v-if="auth.isManager">
-          <CHeading size="xs" style="color: var(--color-error)">
+          <CHeading type="card" style="color: var(--color-error)">
             {{ t('settings.account.dangerZone') }}
           </CHeading>
           <p
@@ -267,7 +267,7 @@ async function confirmResetDemo() {
       <!-- ── Notifications tab ───────────────────────────────── -->
       <template v-if="activeTab === 'notifications'">
         <CCard>
-          <CHeading size="xs">
+          <CHeading type="card">
             {{ t('settings.notifications.title') }}
           </CHeading>
           <div class="notif-list">

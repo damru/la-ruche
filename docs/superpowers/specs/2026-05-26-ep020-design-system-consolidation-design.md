@@ -161,7 +161,7 @@ Supprimer `tabs.css` et son import dans `tailwind.css` à la fin de cette story.
 
 ### 5.2 CHeading (S08)
 
-**Atom Fraunces** semibold italic.
+**Atom Fraunces** semibold.
 **Interface :**
 ```ts
 props: { size: 'lg' | 'md' | 'sm', as?: 'h1' | 'h2' | 'h3' | 'p' }

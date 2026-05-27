@@ -1223,7 +1223,7 @@ function toDateTimeLocal(value: string): string {
             <span>{{ t('page.eyebrows.assemblyDetail') }}</span>
           </CEyebrow>
 
-          <CHeading size="lg" as="h1">
+          <CHeading type="header">
             {{ typeLabel(meeting.meeting_type) }} {{ new Date(meeting.meeting_date).getFullYear() }}
           </CHeading>
 
@@ -1442,7 +1442,7 @@ function toDateTimeLocal(value: string): string {
           <section class="main-column">
             <div class="flex flex-row justify-between items-start">
               <div>
-                <CHeading size="md" as="h2">
+                <CHeading>
                   {{ t('meetings.resolutions') }}
                 </CHeading>
                 <p class="section-subtitle">
@@ -1647,7 +1647,7 @@ function toDateTimeLocal(value: string): string {
 
           <aside class="side-column">
             <CCard class="">
-              <CHeading size="xs">
+              <CHeading type="card">
                 {{ t('meetings.info') }}
               </CHeading>
               <CFlexGroup
@@ -1681,7 +1681,7 @@ function toDateTimeLocal(value: string): string {
             <CCard class="">
               <div class="side-head">
                 <div>
-                  <CHeading size="xs">
+                  <CHeading type="card">
                     {{ t('meetings.documents.title') }}
                   </CHeading>
                   <p class="side-subtitle">
@@ -1804,7 +1804,7 @@ function toDateTimeLocal(value: string): string {
             <CCard class="">
               <div class="side-head">
                 <div>
-                  <CHeading size="xs">
+                  <CHeading type="card">
                     {{ t('meetings.presenceQuorum') }}
                   </CHeading>
                   <p class="side-subtitle">
@@ -1887,7 +1887,7 @@ function toDateTimeLocal(value: string): string {
             </CCard>
 
             <CCard class="">
-              <CHeading size="xs">{{ t('meetings.agenda') }}</CHeading>
+              <CHeading type="card">{{ t('meetings.agenda') }}</CHeading>
               <CFlexGroup
                 tag="ol"
                 class="agenda-list"

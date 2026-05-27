@@ -885,7 +885,7 @@ async function submitDelete() {
           <CEyebrow>
             {{ t('page.eyebrows.claims') }}
           </CEyebrow>
-          <CHeading size="lg" as="h1">
+          <CHeading type="header">
             {{ t('claims.title') }}
           </CHeading>
           <p

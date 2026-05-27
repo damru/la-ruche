@@ -154,9 +154,9 @@ async function submit() {
       >
         <div class="contractor-card">
           <div class="task-info">
-            <h2 class="title-md">
+            <CHeading>
               {{ task.title }}
-            </h2>
+            </CHeading>
             <p
               v-if="task.description"
               class="body-xs"

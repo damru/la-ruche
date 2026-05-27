@@ -59,7 +59,7 @@ onMounted(reload)
           <CEyebrow>
             {{ t('page.eyebrows.myCharges') }}
           </CEyebrow>
-          <CHeading size="lg" as="h1">
+          <CHeading type="header">
             {{ t('nav.myCharges') }}
           </CHeading>
         </header>

@@ -98,7 +98,7 @@ function formatLocation(unit: { block?: string | null; staircase?: string | null
           <CEyebrow>
             {{ t('page.eyebrows.registry') }}
           </CEyebrow>
-          <CHeading size="lg" as="h1">
+          <CHeading type="header">
             {{ t('registry.title') }}
           </CHeading>
           <p

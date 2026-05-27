@@ -290,7 +290,7 @@ async function confirmDelete() {
           <CEyebrow>
             {{ t('page.eyebrows.consultations') }}
           </CEyebrow>
-          <CHeading size="lg" as="h1">
+          <CHeading type="header">
             {{ t('consultations.title') }}
           </CHeading>
           <p

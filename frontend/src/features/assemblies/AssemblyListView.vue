@@ -176,7 +176,7 @@ async function saveMeeting() {
           <CEyebrow>
             {{ t('page.eyebrows.assemblies') }}
           </CEyebrow>
-          <CHeading size="lg" as="h1">
+          <CHeading type="header">
             {{ t('meetings.title') }}
           </CHeading>
           <CMetaLine>
@@ -208,7 +208,7 @@ async function saveMeeting() {
             :key="meeting.id"
             padding="none"
             interactive
-            class="activity-card meeting-card"
+            class="meeting-card"
             role="button"
             tabindex="0"
             @click="openMeeting(meeting.id)"
@@ -223,7 +223,7 @@ async function saveMeeting() {
             <div class="meeting-card__main">
               <div class="flex flex-col gap-x-4 gap-y-1 mb-4">
                 <div class="flex flex-row justify-between">
-                  <CHeading size="xs">{{ typeLabel(meeting.meeting_type) }} {{ new Date(meeting.meeting_date).getFullYear() }}</CHeading>
+                  <CHeading type="card">{{ typeLabel(meeting.meeting_type) }} {{ new Date(meeting.meeting_date).getFullYear() }}</CHeading>
                   <CBadge
                     :variant="statusBadgeVariant(meeting.status)"
                     :pulse="meeting.status === 'called' || meeting.status === 'ongoing'"

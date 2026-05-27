@@ -157,7 +157,7 @@ function statusVariant(status: UnitChargesLevy['status']): 'pending' | 'valid' |
           <CEyebrow>
             {{ t('page.eyebrows.unitCharges') }}
           </CEyebrow>
-          <CHeading size="lg" as="h1">
+          <CHeading type="header">
             {{ t('units.charges.title') }}
           </CHeading>
           <CMetaLine>

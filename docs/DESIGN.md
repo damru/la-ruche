@@ -1,9 +1,9 @@
 ---
 document: DESIGN
-version: 1.0.0
+version: 2.0.0
 owner: Damien
 status: validé
-last_updated: 2026-05-26
+last_updated: 2026-05-27
 references:
   - DDR-001
   - DDR-002
@@ -18,11 +18,12 @@ description: >
   Tout composant, style ou token appliqué en frontend doit être conforme à ce document.
 rules:
   - Ce fichier fait foi. Aucune valeur brute (px, hex, rem) dans un attribut class si un token existe.
-  - Tout nouveau composant atom/molecule/organism doit être ajouté au catalogue (§2) avant usage.
+  - Tout nouveau composant atom/molecule/organism doit être ajouté au catalogue (§3) avant usage.
   - Toute nouvelle primitive interactive passe par un wrapper C* — jamais d'import direct radix-vue dans une vue.
   - Les classes .tone--* sont des utilitaires CSS purs (non Tailwind) — jamais redéfinis localement.
   - Zéro bloc <style> dans les vues de feature — mise en page locale = utilitaire Tailwind ou composant du catalogue.
   - CFormFeedback toujours dans #footer de CModal, jamais dans le body.
+  - Composant = conteneur de mise en page. Utilitaire Tailwind = style de texte. Voir §1.3.
 
 ---
 
@@ -32,9 +33,178 @@ rules:
 
 ---
 
-## 1. Tokens
+## 1. Règles globales
 
-### 1.1 Typographie
+> **Règles critiques à mémoriser :** (1) Jamais de `1px solid` coloré comme accent — cf. §1.7. (2) `CFormFeedback` uniquement dans `#footer` de `CModal` — cf. DDR-006. (3) Pas de `z-index` codé en dur — utiliser `var(--z-*)` cf. §2.9. (4) Pas d'import direct `radix-vue` dans une vue — cf. §1.5. (5) Composant = layout. Utilitaire = texte — cf. §1.3.
+
+### 1.1 Accessibilité
+
+- Contraste corps ≥ 4.5:1 (WCAG AA) — critique ≥ 7:1
+- Focus visible : `outline: 2px solid var(--color-primary); outline-offset: 2px`
+- Touch targets : min **44×44px** imposé dans `base.css` sur tous les `button`  
+  Exception : boutons-icônes embarqués dans une zone interactive plus large → `min-width: unset; min-height: unset`
+- Jamais la couleur seule pour transmettre une information
+- Toute primitive interactive (Select, Checkbox, Tooltip, DropdownMenu) passe par un wrapper Radix Vue
+
+---
+
+### 1.2 Internationalisation
+
+```ts
+Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' })
+Intl.DateTimeFormat('fr-FR')
+```
+
+Tous les libellés passent par `vue-i18n` — `t('...')`. Fichiers de traduction dans `src/locales/`.
+
+---
+
+### 1.3 Philosophie Composants / Utilitaires
+
+La règle fondamentale du système de design :
+
+**Les composants définissent la mise en page.** Un composant `C*` est responsable de :
+- Mode d'affichage (`flex`, `grid`, `block`)
+- Espacement interne (`padding`, `gap`)
+- Dimensions (`width`, `max-width`, `height`)
+- Bordures, rayons, ombres
+- Couleur de fond / dégradé
+- Alignement (`items-*`, `justify-*`, `self-*`)
+
+**Les utilitaires Tailwind définissent le style de texte.** Un `@utility` ou une classe Tailwind est réservé(e) à :
+- Famille de police, taille, graisse
+- Interlignage, espacement de lettres
+- Couleur du texte
+- Décoration, transformation de texte
+
+**Règle :** tout groupement de classes de mise en page qui se répète 3 fois ou plus dans les vues → créer un composant. Tout groupement de propriétés texte qui se répète → créer un `@utility` dans `tailwind.css`.
+
+**Frontière :** un composant ne définit jamais de style textuel inline. Un utilitaire ne définit jamais de propriété de mise en page.
+
+```vue
+<!-- ✅ Correct -->
+<CCard gap="sm">             <!-- layout : le composant -->
+  <h3 class="title-md">…</h3>  <!-- texte : l'utilitaire -->
+</CCard>
+
+<!-- ❌ Incorrect -->
+<div class="flex flex-col gap-3 rounded-lg bg-surface p-4">  <!-- layout inline interdit en vue -->
+  <h3 style="font-size: 16px; font-weight: 600">…</h3>       <!-- style textuel inline interdit -->
+</div>
+```
+
+---
+
+### 1.4 Tailwind v4
+
+Configuration via `@tailwindcss/vite` (pas de `tailwind.config.js`). Tokens exposés via `@theme inline` dans `frontend/src/styles/tailwind.css`.
+
+**Tokens custom exposés via `@theme inline` :**
+
+| Utilitaire Tailwind | Token source | Remarque |
+|---|---|---|
+| `text-2xs` · `text-xs` · `text-sm` · `text-md` · `text-lg` · `text-xl` · `text-2xl` · `text-display` | `--text-*` | Remplace l'échelle Tailwind native — `text-sm` 13px, `text-lg` 16px, `text-display` 40px |
+| `font-display` · `font-body` · `font-mono` | `--font-*` | Familles custom |
+| `space-1` … `space-20` (dont `space-7`, `space-9`) | `--space-*` | — |
+| `radius-sm` … `radius-full` | `--radius-*` | — |
+| `shadow-md` · `shadow-lg` · `shadow-glass` | `--shadow-*` | — |
+| `leading-tight` · `leading-snug` · `leading-normal` · `leading-relaxed` | `--leading-*` | Interlignage — jamais de valeur `em` ou `px` codée en dur |
+
+**Utilitaires `@utility` (styles nommés réutilisables) :**
+
+| Utilitaire | Propriétés | Usage |
+|---|---|---|
+| `body-xs` / `body-sm` / `body-md` / `body-lg` | `font-size` + `font-weight` + `line-height` | Corps de texte hiérarchisé |
+| `title-sm` / `title-md` / `title-lg` | `font-size` + `font-weight` + `letter-spacing` | Titres dans les composants |
+| `label-sm` / `label-md` / `label-lg` | `font-size` + `font-weight` + `letter-spacing` + `text-transform` | Labels, eyebrows |
+| `data-md` | `font-mono` + `tabular-nums` + `font-medium` | Données numériques tabulaires |
+| `text-muted` | `color: var(--color-on-surface-variant)` | Texte secondaire |
+| `view-container` | `flex flex-col` + `p-10` + `max-w-[1200px]` + `gap-6` + responsive `p-5` | Conteneur racine de chaque vue |
+| `view-header` | `flex flex-col items-start gap-2` | En-tête de vue (eyebrow + heading + meta) |
+| `form-hint` | `text-xs` + `color: on-surface-variant` | Texte d'aide sous un champ |
+| `form-label` | `text-sm font-medium` + `color: on-surface-variant` | Label de champ de formulaire |
+
+**Règles :**
+- Jamais de valeur brute (`px`, `hex`, `rem`) dans un attribut `class` si un token Tailwind existe.
+- Les classes `.tone--*` restent des utilitaires CSS purs (non Tailwind) — utiliser directement.
+- **Zéro bloc `<style>` dans les vues de feature.** Toute mise en page locale = utilitaire Tailwind **ou** composant du catalogue. Les composants `atoms/molecules/organisms` peuvent conserver des `<style scoped>`.
+
+---
+
+### 1.5 Radix Vue
+
+Toute primitive Radix Vue est enveloppée dans un composant `C*` avant usage dans une vue. Jamais d'import direct de `radix-vue` dans un fichier de vue ou de feature.
+
+| Primitive Radix | Wrapper | Statut |
+|---|---|---|
+| `Checkbox` | `CFormCheckbox` | ✅ |
+| `Dialog` | `CModal` | ✅ |
+| `DropdownMenu` | `CDropdownMenu` | ✅ |
+| `Select` | `CFormSelect` | ✅ |
+| `Separator` | `CSeparator` | ✅ |
+| `Tooltip` | `CTooltip` | ✅ |
+
+---
+
+### 1.6 Composants flottants (tooltips, dropdowns, popovers)
+
+Tout élément flottant : `Teleport to="body"` + `position: fixed` + position via `getBoundingClientRect()`. Jamais `position: absolute` dans un parent scrollable ou `overflow: hidden`.
+
+Comportement : flip vertical si espace insuffisant, clampage horizontal viewport avec marge 10px. Référence : `CTooltip.vue`.
+
+---
+
+### 1.7 Règle No-Line
+
+Jamais de `1px solid` pour séparer du contenu hors structures tabulaires — décalage tonal (`surface-container-*`), espacement ou micro-ombre.
+
+**Exception tableaux :** utiliser `--color-outline-light` (voir §2.7) pour les séparateurs de cellule. Ce token garantit une bordure adaptée au thème sans valeur `rgba` codée en dur.
+
+---
+
+### 1.8 États interactifs
+
+Les états interactifs sont gérés localement dans chaque composant — pas de token système pour hover/active. Conventions à respecter :
+
+| État | Convention |
+|---|---|
+| **Hover carte cliquable** | Surface : `--color-surface-container-low` → `--color-surface-container` |
+| **Hover bouton primary** | `box-shadow: var(--shadow-primary-lift)` |
+| **Active / pressed bouton** | `box-shadow: var(--shadow-primary-lift-hover)` |
+| **Focus champ** | `box-shadow: var(--shadow-primary-ring)` · `outline: 2px solid var(--color-primary)` |
+| **Focus champ en erreur** | `box-shadow: var(--shadow-error-ring)` |
+| **Disabled** | `.tone--disabled` — jamais `opacity: 0.5` (contraste insuffisant) |
+
+---
+
+### 1.9 Architecture CSS
+
+**Sources de vérité — immuables, jamais redéclarées :**
+
+| Fichier | Rôle |
+|---|---|
+| `styles/tokens.css` | Variables CSS de design (couleurs, espace, typographie, ombres, z-index) |
+| `styles/tones.css` | Utilitaires de tonalité sémantique — seules classes CSS pures autorisées hors composants |
+| `styles/tailwind.css` | Exposition des tokens via `@theme inline` + `@utility` nommés + import Tailwind |
+
+**Règle unique :** tout nouveau pattern d'interface devient soit un composant atomique `C*` avec `<style scoped>`, soit une combinaison d'utilitaires Tailwind. Aucun nouveau fichier CSS global n'est créé. Les fichiers legacy ci-dessous ne doivent plus être étendus.
+
+**Fichiers legacy — à migrer, ne plus étendre :**
+
+| Fichier | Patterns concernés | Migration cible |
+|---|---|---|
+| `tabs.css` | `.tabs` · `.tab` · `.tab--active` · `.tab-count` | `CTabs` atom (EP-020-S07) |
+| `typography.css` | `.display-*` · `.headline-*` · `.title-*` · `.body-*` | `CHeading` atom (EP-020-S08) + utilitaires `@utility` |
+| `forms.css` | `.form-grid` · `.field` · `.search-bar` · `.dropzone` · `.icon-btn` | `CFormRow`, `CFormGroup` molecules + atoms `CFormInput`, `CFormDropzone` existants + Tailwind inline (EP-020-S09) |
+| `tables.css` | `.data-table` et variantes · `.cards-grid` | `CDataTable` (✅ migré EP-020-S10) ; `.cards-grid` → Tailwind `grid grid-cols-[…]` inline |
+| `base.css` | `.view-container` · `.view-header` · `.empty-state` · `.card--terminated` · `.loading-skeleton` · `.spinner` | `view-container` / `view-header` utilitaires `@utility` ; `CEmptyState` (✅) ; `CPageLoader` (✅) ; resets navigateur conservés (EP-020-S11) |
+| `activity-cards.css` | `.activity-card__*` | ✅ migré — `CCard` + `CCardActions` + Tailwind inline + utilitaires texte (EP-020-S12) |
+
+---
+
+## 2. Tokens
+
+### 2.1 Typographie
 
 Trois polices, trois rôles. Chargées depuis Google Fonts.
 
@@ -69,11 +239,11 @@ Trois polices, trois rôles. Chargées depuis Google Fonts.
 
 **Graisses** — utiliser les utilitaires Tailwind natifs : `font-normal` (400), `font-medium` (500), `font-semibold` (600), `font-bold` (700), `font-[800]` pour Fraunces display.
 
-> Les styles typographiques nommés sont encapsulés dans les composants atomiques `CHeading`, `CEyebrow` et `CDataText` (voir §2.1).
+> Les styles typographiques nommés sont encapsulés dans les composants atomiques `CHeading`, `CEyebrow` et `CDataText` (voir §3.1).
 
 ---
 
-### 1.2 Palette de couleurs
+### 2.2 Palette de couleurs
 
 Source : `frontend/src/styles/tokens.css`. Les valeurs Dark sont dans `[data-theme="dark"]`.
 
@@ -121,7 +291,7 @@ Source : `frontend/src/styles/tokens.css`. Les valeurs Dark sont dans `[data-the
 
 ---
 
-### 1.3 Espacement
+### 2.3 Espacement
 
 | Token | Valeur | | Token | Valeur |
 |---|---|---|---|---|
@@ -135,7 +305,7 @@ Source : `frontend/src/styles/tokens.css`. Les valeurs Dark sont dans `[data-the
 
 ---
 
-### 1.4 Rayons & Ombres
+### 2.4 Rayons & Ombres
 
 | Token | Valeur |
 |---|---|
@@ -167,7 +337,7 @@ Source : `frontend/src/styles/tokens.css`. Les valeurs Dark sont dans `[data-the
 
 ---
 
-### 1.5 Icônes
+### 2.5 Icônes
 
 | Token | Valeur | Usage |
 |---|---|---|
@@ -181,7 +351,7 @@ Source : `frontend/src/styles/tokens.css`. Les valeurs Dark sont dans `[data-the
 
 ---
 
-### 1.6 Tonalités (`tones.css`)
+### 2.6 Tonalités (`tones.css`)
 
 Source : `frontend/src/styles/tones.css`. Les classes `.tone--*` définissent **uniquement** deux variables CSS — aucune règle de forme, taille ou layout.
 
@@ -210,7 +380,7 @@ color:      var(--tone-fg, <fallback>);
 
 ---
 
-### 1.7 Transparence
+### 2.7 Transparence
 
 Tokens de mélange pour bordures et overlays légers. Valeur adaptée au thème pour maintenir un contraste cohérent.
 
@@ -233,7 +403,7 @@ border-color: var(--color-outline-light);
 
 ---
 
-### 1.8 Interlignage
+### 2.8 Interlignage
 
 | Token | Valeur | Usage |
 |---|---|---|
@@ -246,7 +416,7 @@ border-color: var(--color-outline-light);
 
 ---
 
-### 1.9 Index de calques (z-index)
+### 2.9 Index de calques (z-index)
 
 | Token | Valeur | Usage |
 |---|---|---|
@@ -261,9 +431,9 @@ border-color: var(--color-outline-light);
 
 ---
 
-## 2. Catalogue de composants
+## 3. Catalogue de composants
 
-### 2.1 Atomes (`components/atoms/`)
+### 3.1 Atomes (`components/atoms/`)
 
 #### Affichage
 
@@ -273,11 +443,13 @@ border-color: var(--color-outline-light);
 | `CBadge` | `variant` | Chip de statut ou de catégorie — consomme `.tone--*` |
 | `CDataText` | `size` (`sm` \| `md` \| `lg`) | 🔲 planifié — Texte tabulaire JetBrains Mono — `font-mono font-medium lining-nums tabular-nums` |
 | `CEyebrow` | — | Libellé eyebrow — `font-body text-2xs font-medium uppercase tracking-[0.06em]`. Rendu en `<div>`. |
-| `CHeading` | `size` (`lg` \| `md` \| `sm`), `as` | 🔲 planifié — Titre Fraunces semibold italic. `lg` = `text-2xl` (24px), `md` = `text-xl` (20px), `sm` = `text-lg` (18px). `as`: `h1`…`h3` \| `p` |
+| `CHeading` | `type` (`header` \| `section` \| `card`), `variant` (`heading` \| `title`) | ✅ Titre Fraunces semibold. `header` = `text-2xl` h1, `section` = `text-xl` h2 (défaut), `card` = `text-lg` h3. Variante `title` = `font-body font-semibold`. |
 | `CIconTile` | `size` (`sm` \| `md` \| `lg`) | Tuile icône avec fond tonal — consomme `.tone--*`. `sm` = 32px, `md` = 40px (défaut), `lg` = 56px. `border-radius` ajusté par taille. Slot défaut pour l'icône SVG — icône dimensionnée via `:deep(svg)`. |
 | `CLegalDescription` | `title`, `summary` | Ligne de note légale — `⚖️ titre — résumé` en `.body-xs .text-muted`. Utilisé comme item dans `CLegalNotice`. |
 | `CMockBanner` | `variant` (`mock` \| `demo`) | Bandeau de mode mock/démo — `role="status" aria-live="polite"`. Réservé aux environnements de développement. |
 | `CProgressBar` | `value`, `max` | Barre de progression |
+| `CIconGrid` | — | ✅ Icône grille (4 carrés) — toggle vue en grille |
+| `CIconList` | — | ✅ Icône liste (3 lignes) — toggle vue en liste |
 | `CSeparator` | `orientation` | Séparateur — wrapper Radix `Separator` |
 | `CTooltip` | `content`, `placement` | Info-bulle — wrapper Radix Tooltip |
 
@@ -304,19 +476,19 @@ border-color: var(--color-outline-light);
 
 ---
 
-### 2.2 Molécules (`components/molecules/`)
+### 3.2 Molécules (`components/molecules/`)
 
 | Composant | Props clés | Description |
 |---|---|---|
-| `CCard` | `shadow?` | Conteneur générique — définit background, border-radius, padding et flux interne. Pour les listes avec séparateurs : `CFlexGroup`. Pour les listes sans séparateurs : wrapper Tailwind inline. Ossature d'une carte d'entité : `CCardHeader` › titre › description › `CMeta` › actions › `CCardNote`. |
+| `CCard` | `shadow?`, `gap?` (`none` \| `sm` \| `md`) | Conteneur générique — définit background, border-radius, padding et flux interne. `gap` : `sm` = 12px, `md` = 16px (défaut), `none` = 0. Pour les listes avec séparateurs : `CFlexGroup`. Ossature d'une carte d'entité : `CCardHeader` › titre › description › `CMeta` › `CCardActions` › `CCardNote`. |
+| `CCardActions` | — | ✅ Zone d'actions d'une carte — `flex flex-wrap gap-x-2 gap-y-1`. Remplace `.activity-card__actions`. |
 | `CCardHeader` | `withIcon?` | 🔲 planifié — En-tête de carte — slots `#icon`, `#chips` |
 | `CCardNote` | `note` | Encart d'information secondaire dans une `CCard` |
 | `CDataTable` | `columns`, `rows` | Tableau de données |
 | `CDocumentList` | `documents`, `readonly?` | 🔲 planifié — Liste documents avec download/retrait — `emit('remove', doc)` au parent |
-| `CEmptyState` | `icon`, `title`, `description?` | 🔲 planifié — État vide — slot `#actions` |
+| `CEmptyState` | `icon`, `title`, `description?`, `size?` (`page` \| `compact`) | ✅ État vide — slot `#actions`. `page` = centré + `py-8`, `compact` = plus petit pour les sections. |
 | `CFormAddressAutocomplete` | `label`, `value` | Champ adresse avec autocomplétion |
 | `CFormGroup` | `label`, `hint?` | 🔲 planifié — Wrapper label + champ + hint |
-| `CFormLabel` | `for`, `required?` | 🔲 planifié — Label de formulaire |
 | `CFormRow` | `cols` (1/2) | 🔲 planifié — Grille formulaire 2 colonnes responsive |
 | `CKpiCard` | `title`, `tone` | Conteneur indicateur KPI — compose `CKpiMetric` pour la valeur |
 | `CKpiMetric` | `value`, `unit?`, `size?` | Valeur numérique KPI — `text-display font-mono lnum tnum`. Ne jamais utiliser `font-display` ni `text-[…px]` ici. |
@@ -329,12 +501,12 @@ border-color: var(--color-outline-light);
 | `CModal` | `open`, `title`, `saving?`, `feedback?` | Dialogue Radix `Dialog` — émettre `@submit` pour soumission. `CFormFeedback` obligatoire dans `#footer` (DDR-006). |
 | `CPageHeader` | `eyebrow?`, `title`, `meta?`, `icon?`, `frozenLabel?` | 🔲 planifié — En-tête de vue — slot `#actions` |
 | `CPageLoader` | — | Indicateur de chargement |
-| `CSectionHeader` | `title`, `subtitle?`, `level?` | 🔲 planifié — En-tête de section dans une `CCard` — slot `#actions` |
+| `CSectionHeader` | — | ✅ En-tête de section — `flex items-start justify-between gap-3`. Slot default (zone titre : heading + meta). Slot `#actions` pour les boutons droite. Remplace `.section-head` / `.card-head`. |
 | `CTopbarBreadcrumb` | `crumbs[]` | 🔲 planifié — Fil d'Ariane topbar |
 
 ---
 
-### 2.3 Organismes (`components/organisms/`)
+### 3.3 Organismes (`components/organisms/`)
 
 | Composant | Description |
 |---|---|
@@ -348,125 +520,6 @@ border-color: var(--color-outline-light);
 | `CReminderCard` | Carte de rappels synthétiques partagée entre vues |
 | `CStatusBanner` | Bandeau d'état en-tête (AG : `draft` / `called` / `ongoing` / `closed`) — ✅ |
 | `CTopbar` | Barre supérieure avec breadcrumb et actions globales |
-
----
-
-## 3. Règles globales
-
-> **Règles critiques à mémoriser :** (1) Jamais de `1px solid` coloré comme accent — cf. §3.6. (2) `CFormFeedback` uniquement dans `#footer` de `CModal` — cf. DDR-006. (3) Pas de `z-index` codé en dur — utiliser `var(--z-*)` cf. §1.9. (4) Pas d'import direct `radix-vue` dans une vue — cf. §3.4.
-
-### 3.1 Accessibilité
-
-- Contraste corps ≥ 4.5:1 (WCAG AA) — critique ≥ 7:1
-- Focus visible : `outline: 2px solid var(--color-primary); outline-offset: 2px`
-- Touch targets : min **44×44px** imposé dans `base.css` sur tous les `button`  
-  Exception : boutons-icônes embarqués dans une zone interactive plus large → `min-width: unset; min-height: unset`
-- Jamais la couleur seule pour transmettre une information
-- Toute primitive interactive (Select, Checkbox, Tooltip, DropdownMenu) passe par un wrapper Radix Vue
-
----
-
-### 3.2 Internationalisation
-
-```ts
-Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' })
-Intl.DateTimeFormat('fr-FR')
-```
-
-Tous les libellés passent par `vue-i18n` — `t('...')`. Fichiers de traduction dans `src/locales/`.
-
----
-
-### 3.3 Tailwind v4
-
-Configuration via `@tailwindcss/vite` (pas de `tailwind.config.js`). Tokens exposés via `@theme inline` dans `frontend/src/styles/tailwind.css`.
-
-Tokens custom exposés via `@theme inline` dans `frontend/src/styles/tailwind.css` :
-
-| Utilitaire Tailwind | Token source | Remarque |
-|---|---|---|
-| `text-2xs` · `text-xs` · `text-sm` · `text-md` · `text-lg` · `text-xl` · `text-2xl` · `text-display` | `--text-*` | Remplace l'échelle Tailwind native — `text-sm` 13px, `text-lg` 16px, `text-display` 40px |
-| `font-display` · `font-body` · `font-mono` | `--font-*` | Familles custom |
-| `space-1` … `space-20` (dont `space-7`, `space-9`) | `--space-*` | — |
-| `radius-sm` … `radius-full` | `--radius-*` | — |
-| `shadow-md` · `shadow-lg` · `shadow-glass` | `--shadow-*` | — |
-| `leading-tight` · `leading-snug` · `leading-normal` · `leading-relaxed` | `--leading-*` | Interlignage — jamais de valeur `em` ou `px` codée en dur |
-
-**Règles :**
-- Jamais de valeur brute (`px`, `hex`, `rem`) dans un attribut `class` si un token Tailwind existe.
-- Les classes `.tone--*` restent des utilitaires CSS purs (non Tailwind) — utiliser directement.
-- **Zéro bloc `<style>` dans les vues de feature.** Toute mise en page locale = utilitaire Tailwind **ou** composant du catalogue. Les composants `atoms/molecules/organisms` peuvent conserver des `<style scoped>`.
-
----
-
-### 3.4 Radix Vue
-
-Toute primitive Radix Vue est enveloppée dans un composant `C*` avant usage dans une vue. Jamais d'import direct de `radix-vue` dans un fichier de vue ou de feature.
-
-| Primitive Radix | Wrapper | Statut |
-|---|---|---|
-| `Checkbox` | `CFormCheckbox` | ✅ |
-| `Dialog` | `CModal` | ✅ |
-| `DropdownMenu` | `CDropdownMenu` | ✅ |
-| `Select` | `CFormSelect` | ✅ |
-| `Separator` | `CSeparator` | ✅ |
-| `Tooltip` | `CTooltip` | ✅ |
-
----
-
-### 3.5 Composants flottants (tooltips, dropdowns, popovers)
-
-Tout élément flottant : `Teleport to="body"` + `position: fixed` + position via `getBoundingClientRect()`. Jamais `position: absolute` dans un parent scrollable ou `overflow: hidden`.
-
-Comportement : flip vertical si espace insuffisant, clampage horizontal viewport avec marge 10px. Référence : `CTooltip.vue`.
-
----
-
-### 3.6 Règle No-Line
-
-Jamais de `1px solid` pour séparer du contenu hors structures tabulaires — décalage tonal (`surface-container-*`), espacement ou micro-ombre.
-
-**Exception tableaux :** utiliser `--color-outline-light` (voir §1.7) pour les séparateurs de cellule. Ce token garantit une bordure adaptée au thème sans valeur `rgba` codée en dur.
-
----
-
-### 3.7 États interactifs
-
-Les états interactifs sont gérés localement dans chaque composant — pas de token système pour hover/active. Conventions à respecter :
-
-| État | Convention |
-|---|---|
-| **Hover carte cliquable** | Surface : `--color-surface-container-low` → `--color-surface-container` |
-| **Hover bouton primary** | `box-shadow: var(--shadow-primary-lift)` |
-| **Active / pressed bouton** | `box-shadow: var(--shadow-primary-lift-hover)` |
-| **Focus champ** | `box-shadow: var(--shadow-primary-ring)` · `outline: 2px solid var(--color-primary)` |
-| **Focus champ en erreur** | `box-shadow: var(--shadow-error-ring)` |
-| **Disabled** | `.tone--disabled` — jamais `opacity: 0.5` (contraste insuffisant) |
-
----
-
-### 3.8 Architecture CSS
-
-**Sources de vérité — immuables, jamais redéclarées :**
-
-| Fichier | Rôle |
-|---|---|
-| `styles/tokens.css` | Variables CSS de design (couleurs, espace, typographie, ombres, z-index) |
-| `styles/tones.css` | Utilitaires de tonalité sémantique — seules classes CSS pures autorisées hors composants |
-| `styles/tailwind.css` | Exposition des tokens via `@theme inline` + import Tailwind |
-
-**Règle unique :** tout nouveau pattern d'interface devient soit un composant atomique `C*` avec `<style scoped>`, soit une combinaison d'utilitaires Tailwind. Aucun nouveau fichier CSS global n'est créé. Les fichiers legacy ci-dessous ne doivent plus être étendus.
-
-**Fichiers legacy — à migrer, ne plus étendre :**
-
-| Fichier | Patterns concernés | Migration cible |
-|---|---|---|
-| `tabs.css` | `.tabs` · `.tab` · `.tab--active` · `.tab-count` | `CTabs` atom (EP-020-S07) |
-| `typography.css` | `.display-*` · `.headline-*` · `.title-*` · `.body-*` | `CHeading` atom (EP-020-S08) + utilitaires `@theme` |
-| `forms.css` | `.form-grid` · `.field` · `.search-bar` · `.dropzone` · `.icon-btn` | `CFormRow`, `CFormGroup`, `CFormLabel` molecules + atoms `CFormInput`, `CFormDropzone` existants + Tailwind inline (EP-020-S09) |
-| `tables.css` | `.data-table` et variantes · `.cards-grid` | Scoped styles `CDataTable` ; `.cards-grid` → Tailwind `grid grid-cols-[…]` inline (EP-020-S10) |
-| `base.css` | `.view-container` · `.view-header` · `.empty-state` · `.card--terminated` · `.loading-skeleton` · `.spinner` | Tailwind inline pour les layouts ; `CEmptyState`, `CPageLoader` atoms ; resets navigateur conservés (EP-020-S11) |
-| `activity-cards.css` | `.activity-card__*` | Scoped styles du composant feature consommateur (EP-020-S12) |
 
 ---
 
@@ -579,7 +632,7 @@ Tout `CModal` avec formulaire ou action destructive inclut `CFormFeedback` dans 
 
 #### Tabs de navigation
 
-Toute vue avec plusieurs filtres d'état utilise `CTabs` (atome §2.1). Le composant reçoit la liste des onglets et expose un `v-model` sur la valeur active — la logique de filtrage reste dans la vue.
+Toute vue avec plusieurs filtres d'état utilise `CTabs` (atome §3.1). Le composant reçoit la liste des onglets et expose un `v-model` sur la valeur active — la logique de filtrage reste dans la vue.
 
 ```vue
 <CTabs

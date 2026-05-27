@@ -195,7 +195,7 @@ async function confirmDeleteDoc() {
           <CEyebrow>
             {{ t('page.eyebrows.documents') }}
           </CEyebrow>
-          <CHeading size="lg" as="h1">
+          <CHeading type="header">
             {{ t('documents.title') }}
           </CHeading>
           <p

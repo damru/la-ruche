@@ -264,7 +264,7 @@ async function confirmDelete() {
       <template v-else>
         <header class="flex flex-col items-start gap-2">
           <CEyebrow>{{ t('page.eyebrows.contractors') }}</CEyebrow>
-          <CHeading size="lg" as="h1">
+          <CHeading type="header">
             {{ t('contractors.title') }}
           </CHeading>
           <p class="body-md text-on-surface-variant">
@@ -294,18 +294,14 @@ async function confirmDelete() {
               :aria-pressed="viewMode === 'list'"
               @click="viewMode = 'list'"
             >
-              <svg class="icon-sm" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
-                <line x1="2" y1="4" x2="14" y2="4" /><line x1="2" y1="8" x2="14" y2="8" /><line x1="2" y1="12" x2="14" y2="12" />
-              </svg>
+              <CIconList class="icon-sm" />
             </button>
             <button
               :class="['view-toggle__btn', { 'view-toggle__btn--active': viewMode === 'grid' }]"
               :aria-pressed="viewMode === 'grid'"
               @click="viewMode = 'grid'"
             >
-              <svg class="icon-sm" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="1" y="1" width="6" height="6" rx="1" /><rect x="9" y="1" width="6" height="6" rx="1" /><rect x="1" y="9" width="6" height="6" rx="1" /><rect x="9" y="9" width="6" height="6" rx="1" />
-              </svg>
+              <CIconGrid class="icon-sm" />
             </button>
           </div>
         </div>

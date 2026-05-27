@@ -272,7 +272,7 @@ function formatLocation(unit: { block?: string | null; staircase?: string | null
           <CEyebrow>
             {{ t('page.eyebrows.residents') }}
           </CEyebrow>
-          <CHeading size="lg" as="h1">
+          <CHeading type="header">
             {{ t('residents.title') }}
           </CHeading>
           <p

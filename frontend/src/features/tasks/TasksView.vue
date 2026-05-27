@@ -795,7 +795,7 @@ async function copyVendorLink(taskId: string) {
           <CEyebrow>
             {{ t('page.eyebrows.tasks') }}
           </CEyebrow>
-          <CHeading size="lg" as="h1">
+          <CHeading type="header">
             {{ t('tasks.title') }}
           </CHeading>
           <p class="text-on-surface-variant">

@@ -228,7 +228,7 @@ function dotClass(variant?: TimelineEvent['variant']): string {
             </CBadge>
             {{ t('page.eyebrows.taskDetail') }}
           </CEyebrow>
-          <CHeading size="lg" as="h1" class="m-0">
+          <CHeading type="header" class="m-0">
             {{ task.title }}
           </CHeading>
           <p

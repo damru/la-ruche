@@ -758,25 +758,25 @@ function formatSharePercentage(value: number): string {
       >
         <div class="flex flex-col items-start gap-2">
           <CEyebrow>{{ t('page.eyebrows.budget') }}</CEyebrow>
-          <CHeading size="lg" as="h1">
+          <CHeading type="header">
             {{ t('budget.title') }}
           </CHeading>
         </div>
-        <div class="empty-state--page">
-          <p class="title-md text-on-surface">
-            {{ t('budget.noExercice') }}
-          </p>
-          <p class="body-md mb-2 text-muted">
-            {{ t('budget.noExerciceHint') }}
-          </p>
-          <CBtn
-            v-if="canManage"
-            variant="primary"
-            @click="openCreateBudgetModal"
-          >
-            + {{ t('budget.newFiscalYear') }}
-          </CBtn>
-        </div>
+        <CEmptyState
+          :title="t('budget.noExercice')"
+          :description="t('budget.noExerciceHint')"
+          size="page"
+        >
+          <template #actions>
+            <CBtn
+              v-if="canManage"
+              variant="primary"
+              @click="openCreateBudgetModal"
+            >
+              + {{ t('budget.newFiscalYear') }}
+            </CBtn>
+          </template>
+        </CEmptyState>
       </template>
 
       <template v-else>
@@ -794,7 +794,7 @@ function formatSharePercentage(value: number): string {
             </CBadge>
             {{ t('page.eyebrows.budget') }}
           </CEyebrow>
-          <CHeading size="lg" as="h1">
+          <CHeading type="header">
             {{ selectedBudget ? t('budget.fiscalYear', { year: selectedBudget.fiscal_year }) : t('budget.title') }}
           </CHeading>
           <CMetaLine
@@ -919,21 +919,19 @@ function formatSharePercentage(value: number): string {
         </div>
 
         <CCard class="works-fund-card">
-          <div class="section-head">
-            <div>
-              <CHeading size="md" as="h2">
-                {{ t('budget.worksFund') }}
-              </CHeading>
-              <CMetaLine v-if="selectedBudget">
-                <CMetaItem variant="sub">
-                  {{ t('budget.worksFundRateSummary', {
-                    pct: formatSharePercentage(worksFundContributionRate),
-                    minimum: formatSharePercentage(worksFundMinimumRate),
-                  }) }}
-                </CMetaItem>
-              </CMetaLine>
-            </div>
-            <div class="inline-flex items-center gap-2">
+          <CSectionHeader>
+            <CHeading>
+              {{ t('budget.worksFund') }}
+            </CHeading>
+            <CMetaLine v-if="selectedBudget">
+              <CMetaItem variant="sub">
+                {{ t('budget.worksFundRateSummary', {
+                  pct: formatSharePercentage(worksFundContributionRate),
+                  minimum: formatSharePercentage(worksFundMinimumRate),
+                }) }}
+              </CMetaItem>
+            </CMetaLine>
+            <template #actions>
               <CBtn
                 v-if="canEditSelectedBudget && selectedBudget"
                 variant="ghost"
@@ -943,8 +941,8 @@ function formatSharePercentage(value: number): string {
                 <CIconWrench aria-hidden="true" />
                 <span class="hidden md:inline">{{ t('budget.worksFundConfigure') }}</span>
               </CBtn>
-            </div>
-          </div>
+            </template>
+          </CSectionHeader>
 
           <p>
             {{ t('budget.worksFundLegal') }}
@@ -987,22 +985,20 @@ function formatSharePercentage(value: number): string {
         <div
           v-if="canViewLevies && overdueLevies.length > 0"
         >
-          <div class="section-head">
-            <div>
-              <CHeading size="md" as="h2">
-                {{ t('budget.latePayments') }}
-              </CHeading>
-              <CMetaLine>
-                <CMetaItem variant="sub">
-                  {{ t('budget.latePaymentsCount', { count: overdueLevies.length }) }}
-                </CMetaItem>
-                <CSeparator />
-                <CMetaItem variant="sub">
-                  {{ t('budget.latePaymentsTotal', { amount: formatCurrency(overdueTotal) }) }}
-                </CMetaItem>
-              </CMetaLine>
-            </div>
-          </div>
+          <CSectionHeader>
+            <CHeading>
+              {{ t('budget.latePayments') }}
+            </CHeading>
+            <CMetaLine>
+              <CMetaItem variant="sub">
+                {{ t('budget.latePaymentsCount', { count: overdueLevies.length }) }}
+              </CMetaItem>
+              <CSeparator />
+              <CMetaItem variant="sub">
+                {{ t('budget.latePaymentsTotal', { amount: formatCurrency(overdueTotal) }) }}
+              </CMetaItem>
+            </CMetaLine>
+          </CSectionHeader>
           <CCard
             v-for="levy in overdueLevies"
             :key="levy.id"
@@ -1039,16 +1035,14 @@ function formatSharePercentage(value: number): string {
           </CCard>
         </div>
         <CCard>
-          <div class="section-head">
-            <div>
-              <CHeading size="md" as="h2">
-                {{ t('budget.consumptionByLine') }}
-              </CHeading>
-              <CMetaItem variant="sub">
-                {{ t('budget.forecastVsActual') }}
-              </CMetaItem>
-            </div>
-            <div class="inline-flex items-center gap-2">
+          <CSectionHeader>
+            <CHeading>
+              {{ t('budget.consumptionByLine') }}
+            </CHeading>
+            <CMetaItem variant="sub">
+              {{ t('budget.forecastVsActual') }}
+            </CMetaItem>
+            <template #actions>
               <CBtn
                 v-if="budgetBreakdownItems.length > 0"
                 variant="ghost"
@@ -1067,8 +1061,8 @@ function formatSharePercentage(value: number): string {
                 <CIconPlus aria-hidden="true" />
                 <span class="hidden md:inline">{{ t('budget.newLine') }}</span>
               </CBtn>
-            </div>
-          </div>
+            </template>
+          </CSectionHeader>
 
           <div
             v-if="budgetLines.length === 0"
@@ -1129,22 +1123,20 @@ function formatSharePercentage(value: number): string {
         </CCard>
         
         <CCard v-if="canViewLevies">
-          <div class="section-head">
-            <div>
-              <CHeading size="md" as="h2">
-                {{ t('budget.levies') }}
-              </CHeading>
-              <CMetaLine>
-                <CMetaItem variant="sub">
-                  {{ t('budget.levyCallsCount', { count: levyCallCount }) }}
-                </CMetaItem>
-                <CSeparator />
-                <CMetaItem variant="sub">
-                  {{ t('budget.collectionRatePct', { pct: levyCollectionRate }) }}
-                </CMetaItem>
-              </CMetaLine>
-            </div>
-            <div class="inline-flex items-center gap-2">
+          <CSectionHeader>
+            <CHeading>
+              {{ t('budget.levies') }}
+            </CHeading>
+            <CMetaLine>
+              <CMetaItem variant="sub">
+                {{ t('budget.levyCallsCount', { count: levyCallCount }) }}
+              </CMetaItem>
+              <CSeparator />
+              <CMetaItem variant="sub">
+                {{ t('budget.collectionRatePct', { pct: levyCollectionRate }) }}
+              </CMetaItem>
+            </CMetaLine>
+            <template #actions>
               <CBtn
                 v-if="canEditSelectedBudget && selectedBudgetId"
                 variant="ghost"
@@ -1154,8 +1146,8 @@ function formatSharePercentage(value: number): string {
                 <CIconMegaphone aria-hidden="true" />
                 <span class="hidden md:inline">{{ t('budget.generateLevies') }}</span>
               </CBtn>
-            </div>
-          </div>
+            </template>
+          </CSectionHeader>
 
         
 
@@ -1557,26 +1549,6 @@ function formatSharePercentage(value: number): string {
 </template>
 
 <style scoped>
-
-/* ── Section card ────────────────────────────────────────────────── */
-.section-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  margin-bottom: var(--space-3  );
-  gap: 12px;
-}
-.section-sub { font-size: 12px; color: var(--color-on-surface-variant); margin-top: 2px; }
-
-.empty-state--page {
-  padding: 64px 24px;
-  max-width: 480px;
-  margin: 0 auto;
-  text-align: center;
-  font-size: var(--text-md);
-  color: var(--color-on-surface-variant);
-}
-
 .works-fund-card__metrics {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1711,9 +1683,5 @@ function formatSharePercentage(value: number): string {
 }
 
 @media (max-width: 768px) {
-  .section-head {
-    flex-wrap: wrap;
-    align-items: flex-start;
-  }
 }
 </style>

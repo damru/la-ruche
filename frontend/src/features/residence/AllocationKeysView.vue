@@ -220,7 +220,7 @@ onMounted(reload)
           <CEyebrow>
             {{ t('page.eyebrows.allocationKeys') }}
           </CEyebrow>
-          <CHeading size="lg" as="h1">
+          <CHeading type="header">
             {{ t('nav.residence-keys') }}
           </CHeading>
         </header>

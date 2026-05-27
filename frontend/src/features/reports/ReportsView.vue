@@ -566,7 +566,7 @@ function photoPreview(file: File): string {
           <CEyebrow>
             {{ t('page.eyebrows.reports') }}
           </CEyebrow>
-          <CHeading size="lg" as="h1">
+          <CHeading type="header">
             {{ t('reports.title') }}
           </CHeading>
           <p

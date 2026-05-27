@@ -327,7 +327,7 @@ async function deleteEntry() {
           <CEyebrow>
             {{ t('page.eyebrows.maintenance') }}
           </CEyebrow>
-          <CHeading size="lg" as="h1">
+          <CHeading type="header">
             {{ t('maintenance.title') }}
           </CHeading>
           <p

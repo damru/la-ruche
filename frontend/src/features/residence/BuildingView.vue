@@ -73,7 +73,7 @@ onMounted(reload)
           <CEyebrow>
             {{ t('page.eyebrows.building') }}
           </CEyebrow>
-          <CHeading size="lg" as="h1">
+          <CHeading type="header">
             {{ t('nav.residence-info') }}
           </CHeading>
           <p

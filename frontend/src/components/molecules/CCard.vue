@@ -8,21 +8,23 @@ withDefaults(defineProps<{
   radius?: 'xs' | 'sm' | 'md' | 'lg' | 'none'
   shadow?: boolean
   interactive?: boolean   // hover lift
+  gap?: 'none' | 'sm' | 'md'
 }>(), {
   padding: 'md',
   radius: 'lg',
   shadow: true,
   interactive: false,
+  gap: 'md',
 })
 </script>
 
 <template>
   <div
     :class="[
-      'gap-y-4',
       'c-card',
       `c-card--pad-${padding}`,
       `c-card--radius-${radius}`,
+      `c-card--gap-${gap}`,
       { 'c-card--shadow': shadow, 'c-card--interactive': interactive }
     ]"
   >
@@ -53,6 +55,10 @@ withDefaults(defineProps<{
 .c-card--pad-sm   { padding: var(--space-4); }
 .c-card--pad-md   { padding: var(--space-5); }
 .c-card--pad-lg   { padding: var(--space-6); }
+
+.c-card--gap-none { gap: 0; }
+.c-card--gap-sm   { gap: var(--space-3); }
+.c-card--gap-md   { gap: var(--space-4); }
 
 .c-card--shadow { box-shadow: var(--shadow-md); }
 

@@ -357,7 +357,7 @@ async function confirmTerminateContract() {
           <CEyebrow>
             {{ t('page.eyebrows.contracts') }}
           </CEyebrow>
-          <CHeading size="lg" as="h1">
+          <CHeading type="header">
             {{ t('contracts.title') }}
           </CHeading>
           <p

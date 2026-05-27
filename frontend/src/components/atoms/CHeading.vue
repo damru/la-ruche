@@ -1,27 +1,36 @@
 <script setup lang="ts">
-export type HeadingSize = 'lg' | 'md' | 'sm' | 'xs'
-export type HeadingAs = 'h1' | 'h2' | 'h3' | 'p'
+export type HeadingType = 'header' | 'section' | 'card'
+export type HeadingVariant = 'heading' | 'title'
 
-withDefaults(defineProps<{
-  size?: HeadingSize
-  as?: HeadingAs
+const props = withDefaults(defineProps<{
+  type?: HeadingType
+  variant?: HeadingVariant
 }>(), {
-  size: 'md',
-  as: 'h2',
+  type: 'section',
+  variant: 'heading',
 })
 
-const sizeClass: Record<HeadingSize, string> = {
-  lg: 'text-2xl',
-  md: 'text-xl',
-  sm: 'text-heading-sm',
-  xs: 'text-lg',
+const tagMap: Record<HeadingType, string> = {
+  header: 'h1',
+  section: 'h2',
+  card: 'h3',
+}
+
+const sizeClass: Record<HeadingType, string> = {
+  header: 'text-2xl',
+  section: 'text-xl',
+  card: 'text-lg',
+}
+
+const variantClass: Record<HeadingVariant, string> = {
+  heading: 'font-display font-semibold leading-tight tracking-tight text-on-surface',
+  title: 'font-body font-semibold leading-tight text-on-surface',
 }
 </script>
 
 <template>
   <component
-    :is="$props.as"
-    class="font-serif font-semibold leading-tight tracking-tight text-on-surface"
-    :class="sizeClass[$props.size ?? 'md']"
+    :is="tagMap[props.type]"
+    :class="[sizeClass[props.type], variantClass[props.variant]]"
   ><slot /></component>
 </template>
