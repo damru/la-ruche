@@ -235,13 +235,4 @@ function formatLocation(unit: { block?: string | null; staircase?: string | null
 
 .sum-mismatch { color: var(--color-error); }
 
-.data-table { width: 100%; border-collapse: collapse; min-width: 600px; }
-.data-table th { padding: 10px var(--space-4); text-align: left; font-size: var(--text-xs); font-weight: var(--fw-semibold); text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-on-surface-variant); border-bottom: 1px solid var(--color-outline-variant); white-space: nowrap; }
-.data-table td { padding: 10px var(--space-4); font-size: var(--text-sm); border-bottom: 1px solid var(--color-surface-container-low); vertical-align: middle; }
-.data-table tr:last-child td { border-bottom: none; }
-.data-table .col-shrink { white-space: nowrap; width: 1%; }
-.data-table .col-right { text-align: right; white-space: nowrap; width: 1%; }
-.data-table th.col-right { text-align: right; }
-.data-table .cell-numeric { text-align: right; font-family: var(--font-mono); font-size: 13px; font-weight: var(--fw-medium); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.data-table .row-total td { border-top: 2px solid var(--color-outline-variant); }
 </style>

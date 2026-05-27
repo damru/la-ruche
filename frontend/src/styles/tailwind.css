@@ -135,3 +135,46 @@
   font-weight: var(--fw-medium);
   color: var(--color-on-surface-variant);
 }
+
+/* --- Data table utility (EP-020) --- */
+@utility data-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 600px;
+
+  & th {
+    padding: 10px var(--space-4);
+    text-align: left;
+    font-size: var(--text-xs);
+    font-weight: var(--fw-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-on-surface-variant);
+    border-bottom: 1px solid var(--color-outline-variant);
+    white-space: nowrap;
+  }
+
+  & td {
+    padding: 10px var(--space-4);
+    font-size: var(--text-sm);
+    border-bottom: 1px solid var(--color-surface-container-low);
+    vertical-align: middle;
+  }
+
+  & tr:last-child td { border-bottom: none; }
+
+  & .col-shrink { white-space: nowrap; width: 1%; }
+  & .col-right { text-align: right; white-space: nowrap; width: 1%; }
+  & th.col-right { text-align: right; }
+
+  & .cell-numeric {
+    text-align: right;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: var(--fw-medium);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  & .row-total td { border-top: 2px solid var(--color-outline-variant); }
+}
