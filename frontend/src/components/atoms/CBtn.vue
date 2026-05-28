@@ -1,7 +1,4 @@
 <script setup lang="ts">
-// Composant atomique — CBtn
-// Respecte le design system : gradient primary, ghost, secondary, danger
-// Touch target min 44px garanti par CSS base
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger'
 type Size = 'sm' | 'md' | 'lg' | 'icon'
@@ -11,8 +8,6 @@ withDefaults(defineProps<{
   size?: Size
   disabled?: boolean
   loading?: boolean
-  /** When true, disables the button and shows a left-to-right fill progress animation
-   *  (DDR-006: used during the auto-close timer after a successful modal action). */
   closing?: boolean
   type?: 'button' | 'submit' | 'reset'
 }>(), {

@@ -1164,6 +1164,7 @@ function formatSharePercentage(value: number): string {
             :columns="levyTableColumns"
             :rows="levyTableRows"
             :empty-text="t('common.noData')"
+            :striped="true"
           >
             <template #cell-owner_name="{ row }">
               <div>
@@ -1209,7 +1210,7 @@ function formatSharePercentage(value: number): string {
                 @click="markPaid(asConsolidatedLevyRow(row))"
               >
                 <CIconCheckCircle aria-hidden="true" />
-                {{ t('budget.markPaid') }}
+                <span class="hidden md:inline">{{ t('budget.markPaid') }}</span>
               </CBtn>
             </template>
           </CDataTable>
