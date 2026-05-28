@@ -209,8 +209,8 @@ async function submit() {
               class="file-item"
             >
               <CIconFile
-                width="14"
-                height="14"
+                
+                class="icon-xs"
               />
               <span class="body-xs file-name">{{ file.name }}</span>
               <button
@@ -218,8 +218,8 @@ async function submit() {
                 @click="removeFile(idx)"
               >
                 <CIconX
-                  width="14"
-                  height="14"
+                  
+                  class="icon-xs"
                 />
               </button>
             </li>

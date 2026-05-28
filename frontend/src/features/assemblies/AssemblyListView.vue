@@ -190,7 +190,11 @@ async function saveMeeting() {
           </CMetaLine>
         </header>
 
-        <CTabs variant="filter" v-model="filter" :tabs="meetingTabs" />
+        <CTabs
+          v-model="filter"
+          variant="filter"
+          :tabs="meetingTabs"
+        />
         <template
           v-if="meetings.length === 0"
         >
@@ -230,7 +234,9 @@ async function saveMeeting() {
             <div class="meeting-card__main">
               <div class="flex flex-col gap-x-4 gap-y-1 mb-4">
                 <div class="flex flex-row justify-between">
-                  <CHeading type="card">{{ typeLabel(meeting.meeting_type) }} {{ new Date(meeting.meeting_date).getFullYear() }}</CHeading>
+                  <CHeading type="card">
+                    {{ typeLabel(meeting.meeting_type) }} {{ new Date(meeting.meeting_date).getFullYear() }}
+                  </CHeading>
                   <CBadge
                     :variant="statusBadgeVariant(meeting.status)"
                     :pulse="meeting.status === 'called' || meeting.status === 'ongoing'"
@@ -269,7 +275,7 @@ async function saveMeeting() {
                   v-if="meeting.status === 'closed'"
                   class="meeting-card__res-passed tone--valid"
                 >
-                    <span class="font-serif font-semibold text-xl">{{ meeting.passed_count }}</span>
+                  <span class="font-serif font-semibold text-xl">{{ meeting.passed_count }}</span>
                   {{ t('meetings.statPassed', meeting.passed_count) }}
                 </span>
                 <span

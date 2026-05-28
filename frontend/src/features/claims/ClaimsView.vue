@@ -917,7 +917,11 @@ async function submitDelete() {
           </template>
         </CReminderCard>
 
-        <CTabs variant="filter" v-model="filter" :tabs="claimTabsList" />
+        <CTabs
+          v-model="filter"
+          variant="filter"
+          :tabs="claimTabsList"
+        />
 
         
         <template v-if="claims.length === 0">
@@ -1030,8 +1034,8 @@ async function submitDelete() {
                   </span>
                   <span class="inline-flex items-center gap-1 w-fit">
                     <CIconClock
-                      width="14"
-                      height="14"
+                      
+                      class="icon-xs"
                     />
                     {{ t('claims.deadline.reference', { date: formatDate(claim.legal_deadline_at) }) }}
                   </span>
@@ -1040,8 +1044,8 @@ async function submitDelete() {
                     class="inline-flex items-center gap-1 w-fit"
                   >
                     <CIconXCircle
-                      width="14"
-                      height="14"
+                      
+                      class="icon-xs"
                     />
                     {{ t('claims.publishedOn', { date: formatDate(claim.published_at) }) }}
                   </span>
@@ -1050,8 +1054,8 @@ async function submitDelete() {
                     class="inline-flex items-center gap-1 w-fit"
                   >
                     <CIconCurrency
-                      width="14"
-                      height="14"
+                      
+                      class="icon-xs"
                     />
                     {{ reimbursementLabel(claim) }}
                   </span>
@@ -1313,8 +1317,7 @@ async function submitDelete() {
                 <div class="claim-documents-meta">
                   <div class="claim-documents-name">
                     <CIconFile
-                      width="16"
-                      height="16"
+                      class="icon-sm"
                     />
                     <span>{{ document.original_name }}</span>
                   </div>

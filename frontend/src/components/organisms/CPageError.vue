@@ -24,8 +24,7 @@ const { t } = useI18n()
       aria-hidden="true"
     >
       <CIconXCircle
-        width="18"
-        height="18"
+        class="icon-md"
       />
     </div>
     <div class="c-page-error__body">

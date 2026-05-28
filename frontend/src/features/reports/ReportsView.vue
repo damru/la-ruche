@@ -580,8 +580,8 @@ function photoPreview(file: File): string {
         </header>
 
         <CTabs
-          variant="filter"
           v-model="statusFilter"
+          variant="filter"
           :tabs="[
             { value: 'all', label: t('common.all'), count: allReports.length },
             { value: 'open', label: t('reports.filters.open'), count: counts.open },
@@ -671,15 +671,18 @@ function photoPreview(file: File): string {
                   </CMetaItem>
                 </CMetaLine>
   
-                <div v-if="r.status !== 'closed'" class="flex flex-wrap gap-x-2 gap-y-1">
-                    <CBtn
-                      variant="ghost"
-                      size="sm"
-                      @click="openStatusModal(r)"
-                    >
-                      <CIconRefresh />
-                      {{ t('reports.editStatus') }}
-                    </CBtn>
+                <div
+                  v-if="r.status !== 'closed'"
+                  class="flex flex-wrap gap-x-2 gap-y-1"
+                >
+                  <CBtn
+                    variant="ghost"
+                    size="sm"
+                    @click="openStatusModal(r)"
+                  >
+                    <CIconRefresh />
+                    {{ t('reports.editStatus') }}
+                  </CBtn>
                 </div>
   
                 <template v-if="canManage">

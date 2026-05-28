@@ -814,8 +814,8 @@ async function copyVendorLink(taskId: string) {
 
         <!-- Filtres -->
         <CTabs
-          variant="filter"
           v-model="statusFilter"
+          variant="filter"
           :tabs="[
             { value: 'all', label: t('tasks.filters.all'), count: allTasks.length },
             { value: 'open', label: t('tasks.filters.open'), count: counts.open },
@@ -1197,8 +1197,7 @@ async function copyVendorLink(taskId: string) {
                 <div class="task-existing-documents__meta">
                   <div class="task-existing-documents__name">
                     <CIconFile
-                      width="16"
-                      height="16"
+                      class="icon-sm"
                     />
                     <span>{{ document.original_name }}</span>
                   </div>

@@ -95,8 +95,7 @@ function dismiss() {
           @click="dismiss"
         >
           <CIconX
-            width="16"
-            height="16"
+            class="icon-sm"
             aria-hidden="true"
           />
         </button>

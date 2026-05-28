@@ -1674,7 +1674,9 @@ function toDateTimeLocal(value: string): string {
             </CCard>
 
             <CCard>
-              <CHeading type="card">{{ t('meetings.agenda.title') }}</CHeading>
+              <CHeading type="card">
+                {{ t('meetings.agenda.title') }}
+              </CHeading>
               <template v-if="agendaItems.length === 0">
                 <CEmptyState
                   size="compact"
@@ -1888,7 +1890,10 @@ function toDateTimeLocal(value: string): string {
                   class="participant-row"
                 >
                   <div class="participant-row__identity">
-                    <CAvatar :name="entry.owner_name" size="sm" />
+                    <CAvatar
+                      :name="entry.owner_name"
+                      size="sm"
+                    />
                     <div>
                       <p class="participant-name">
                         {{ entry.owner_name || '—' }}
@@ -2459,7 +2464,7 @@ function toDateTimeLocal(value: string): string {
       <p class="body-sm">
         {{ t('meetings.documents.detachMessage') }}
         <template v-if="pendingDeleteDocumentName">
-          <br>
+          <br />
           <span class="font-medium">{{ pendingDeleteDocumentName }}</span>
         </template>
       </p>

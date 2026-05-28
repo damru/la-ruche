@@ -566,8 +566,7 @@ async function saveContract() {
               <div class="contract-form__documents-meta">
                 <div class="contract-form__documents-name">
                   <CIconFile
-                    width="16"
-                    height="16"
+                    class="icon-sm"
                   />
                   <span>{{ document.original_name }}</span>
                 </div>

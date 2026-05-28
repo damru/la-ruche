@@ -303,8 +303,8 @@ const userColumns = computed(() => [
         </header>
 
         <CTabs
-          variant="filter"
           v-model="activeTab"
+          variant="filter"
           :tabs="[
             { value: 'units', label: t('residents.tabs.units', { count: allUnits.length }) },
             { value: 'users', label: t('residents.tabs.users', { count: allUsers.length }) },
@@ -363,8 +363,7 @@ const userColumns = computed(() => [
                     @click="$router.push(`/residents/${row.id}/charges`)"
                   >
                     <CIconCurrency
-                      width="16"
-                      height="16"
+                      class="icon-sm"
                     />
                   </button>
                   <button
@@ -374,8 +373,7 @@ const userColumns = computed(() => [
                     @click="openEditUnit(row)"
                   >
                     <CIconEdit
-                      width="16"
-                      height="16"
+                      class="icon-sm"
                     />
                   </button>
                   <button
@@ -386,8 +384,7 @@ const userColumns = computed(() => [
                     @click="openArchiveModal(row)"
                   >
                     <CIconArchive
-                      width="16"
-                      height="16"
+                      class="icon-sm"
                     />
                   </button>
                 </div>

@@ -479,8 +479,8 @@ async function deleteEntry() {
 
         <div class="period-toolbar">
           <CTabs
-            variant="filter"
             v-model="periodFilter"
+            variant="filter"
             :tabs="(['month', 'quarter', 'semester', 'year', 'all'] as const).map(f => ({ value: f, label: t(`maintenance.filters.${f}`) }))"
           />
           <div class="period-nav">
@@ -545,8 +545,8 @@ async function deleteEntry() {
                     @click="openDeleteModal(entry)"
                   >
                     <CIconTrash
-                      width="14"
-                      height="14"
+                      
+                      class="icon-xs"
                     />
                   </button>
                 </div>
@@ -563,10 +563,9 @@ async function deleteEntry() {
                   class="vendor"
                 >
                   <CIconWrench
-                    width="13"
-                    height="13"
-                    style="margin-right:4px"
-                  />{{ entry.vendor_name }}
+                    class="icon-2xs"
+                  />
+                  {{ entry.vendor_name }}
                 </span>
                 <span
                   v-if="entry.cost != null"

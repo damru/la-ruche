@@ -75,8 +75,7 @@ function handleOpenChange(open: boolean) {
             @click="close"
           >
             <CIconX
-              width="18"
-              height="18"
+              class="icon-md"
               aria-hidden="true"
             />
           </button>

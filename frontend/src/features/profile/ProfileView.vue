@@ -174,8 +174,8 @@ async function confirmResetData() {
 
       <!-- Tabs -->
       <CTabs
-        variant="filter"
         v-model="activeTab"
+        variant="filter"
         :tabs="[
           { value: 'account', label: t('nav.myAccount') },
           { value: 'notifications', label: t('nav.notifications') },
@@ -269,7 +269,10 @@ async function confirmResetData() {
         </CCard>
 
         <CCard v-if="auth.isManager && ui.demoMode">
-          <CHeading type="card" style="color: var(--color-error)">
+          <CHeading
+            type="card"
+            style="color: var(--color-error)"
+          >
             {{ t('settings.account.dangerZone') }}
           </CHeading>
           <p

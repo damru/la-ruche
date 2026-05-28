@@ -141,7 +141,10 @@ function priorityVariant(p: string): 'err' | 'pending' | 'primary' | 'valid' | '
         <!-- Contractor detail card -->
         <CCard class="contractor-detail-card">
           <div class="contractor-header">
-            <CIconTile size="lg" :class="domainTone(contractor.domains)">
+            <CIconTile
+              size="lg"
+              :class="domainTone(contractor.domains)"
+            >
               <component
                 :is="domainIcon(contractor.domains)"
                 aria-hidden="true"
@@ -151,7 +154,10 @@ function priorityVariant(p: string): 'err' | 'pending' | 'primary' | 'valid' | '
               <CEyebrow>
                 {{ t('page.eyebrows.contractorDetail') }}
               </CEyebrow>
-              <CHeading type="header" class="mb-2">
+              <CHeading
+                type="header"
+                class="mb-2"
+              >
                 {{ contractor.name }}
               </CHeading>
               <div class="contractor-domains">

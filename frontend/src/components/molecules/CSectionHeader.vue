@@ -1,10 +1,13 @@
 <template>
   <div class="c-section-header">
     <div class="c-section-header__body">
-      <slot />
+      <slot></slot>
     </div>
-    <div v-if="$slots.actions" class="c-section-header__actions">
-      <slot name="actions" />
+    <div
+      v-if="$slots.actions"
+      class="c-section-header__actions"
+    >
+      <slot name="actions"></slot>
     </div>
   </div>
 </template>

@@ -200,7 +200,7 @@ function dotClass(variant?: TimelineEvent['variant']): string {
           size="sm"
           @click="router.push({ name: 'tasks' })"
         >
-          <CIconArrowLeft style="width:16px;height:16px" />
+          <CIconArrowLeft class="icon-sm" />
           {{ t('common.back') }}
         </CBtn>
       </template>
@@ -228,7 +228,10 @@ function dotClass(variant?: TimelineEvent['variant']): string {
             </CBadge>
             {{ t('page.eyebrows.taskDetail') }}
           </CEyebrow>
-          <CHeading type="header" class="m-0">
+          <CHeading
+            type="header"
+            class="m-0"
+          >
             {{ task.title }}
           </CHeading>
           <p
@@ -305,8 +308,7 @@ function dotClass(variant?: TimelineEvent['variant']): string {
           class="reopen-hint body-xs"
         >
           <CIconRefresh
-            width="13"
-            height="13"
+            class="icon-xs"
           />
           {{ t('tasks.lifecycle.closedNote') }}
         </div>

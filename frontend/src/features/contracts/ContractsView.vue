@@ -389,7 +389,11 @@ async function confirmTerminateContract() {
         </CReminderCard>
 
         <div class="contracts-toolbar">
-          <CTabs variant="filter" v-model="filter" :tabs="contractTabsList" />
+          <CTabs
+            v-model="filter"
+            variant="filter"
+            :tabs="contractTabsList"
+          />
 
           <CFormInput
             v-model="search"

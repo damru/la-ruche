@@ -32,5 +32,7 @@ const variantClass: Record<HeadingVariant, string> = {
   <component
     :is="tagMap[props.type]"
     :class="[sizeClass[props.type], variantClass[props.variant]]"
-  ><slot /></component>
+  >
+    <slot></slot>
+  </component>
 </template>

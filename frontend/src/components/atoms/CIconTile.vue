@@ -8,7 +8,7 @@ withDefaults(defineProps<{
 
 <template>
   <div :class="['c-icon-tile', `c-icon-tile--${size}`]">
-    <slot />
+    <slot></slot>
   </div>
 </template>
 

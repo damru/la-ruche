@@ -66,14 +66,32 @@ defineOptions({ inheritAttrs: false })
         @update:checked="handleCheckedChange"
       >
         <CheckboxIndicator class="text-on-primary">
-          <svg viewBox="0 0 16 16" class="size-3" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M3 8l3.5 3.5L13 4.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <svg
+            viewBox="0 0 16 16"
+            class="size-3"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+          >
+            <path
+              d="M3 8l3.5 3.5L13 4.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
           </svg>
         </CheckboxIndicator>
       </CheckboxRoot>
-      <span v-if="props.label" class="text-sm text-on-surface">{{ props.label }}</span>
+      <span
+        v-if="props.label"
+        class="text-sm text-on-surface"
+      >{{ props.label }}</span>
       <slot v-else></slot>
     </label>
-    <p v-if="props.error" class="text-xs text-error">{{ props.error }}</p>
+    <p
+      v-if="props.error"
+      class="text-xs text-error"
+    >
+      {{ props.error }}
+    </p>
   </div>
 </template>

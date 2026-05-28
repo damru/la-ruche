@@ -24,10 +24,10 @@ defineProps<{
       {{ title }}
     </CHeading>
     <CCard
-      :level="4"
-      :shadow="false"
       v-for="row in rows"
       :key="row.id"
+      :level="4"
+      :shadow="false"
       class="flex-row! items-center"
       :class="[row.tone ? `tone--${row.tone}` : null]"
     >

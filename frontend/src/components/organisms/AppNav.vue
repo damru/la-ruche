@@ -194,9 +194,7 @@ watch(() => route.path, closeDrawer)
           </div>
         </div>
         <CIconUser
-          class="c-sidebar__user-chevron"
-          width="14"
-          height="14"
+          class="icon-xs"
           aria-hidden="true"
         />
       </router-link>
@@ -447,7 +445,6 @@ watch(() => route.path, closeDrawer)
 }
 
 .c-sidebar__user-info { flex: 1; min-width: 0; }
-.c-sidebar__user-chevron { color: var(--color-on-surface-variant); flex-shrink: 0; }
 
 /* ── Bottom nav ───────────────────────────────────────────────── */
 .c-bottom-nav {

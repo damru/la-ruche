@@ -257,8 +257,8 @@ onMounted(reload)
                       :title="t('settings.keys.imbalanceDetail', { delta: keyBalanceDelta[key.id] })"
                     >
                       <CIconWarn
-                        width="14"
-                        height="14"
+                        
+                        class="icon-xs"
                         aria-hidden="true"
                       /> {{ t('settings.keys.imbalance') }}
                     </span>
@@ -292,8 +292,8 @@ onMounted(reload)
                     :title="t('settings.keys.generalProtected')"
                   >
                     <CIconLock
-                      width="16"
-                      height="16"
+                      class="icon-sm"
+                      
                       aria-hidden="true"
                     />
                   </span>
@@ -340,9 +340,7 @@ onMounted(reload)
             class="shares-loading"
           >
             <CIconSpinner
-              class="spin"
-              width="18"
-              height="18"
+              class="spin icon-md"
             />
             <span>{{ t('common.loading') }}</span>
           </div>

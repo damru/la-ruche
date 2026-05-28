@@ -89,8 +89,7 @@ function toggle(value: string, optionDisabled?: boolean) {
       role="alert"
     >
       <CIconXCircle
-        width="12"
-        height="12"
+        class="icon-2xs"
         aria-hidden="true"
       />
       {{ error }}

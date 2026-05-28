@@ -7,6 +7,6 @@ defineProps<{ cols?: 1 | 2 }>()
     class="flex flex-col gap-4"
     :class="$props.cols === 2 ? 'sm:grid sm:grid-cols-2 sm:gap-4' : ''"
   >
-    <slot />
+    <slot></slot>
   </div>
 </template>

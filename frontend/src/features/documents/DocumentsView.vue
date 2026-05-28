@@ -291,8 +291,7 @@ async function confirmDeleteDoc() {
                   @click="downloadDoc(row.id)"
                 >
                   <CIconDownload
-                    width="16"
-                    height="16"
+                    class="icon-sm"
                   />
                 </button>
                 <button
@@ -302,8 +301,7 @@ async function confirmDeleteDoc() {
                   @click="openDeleteDocModal(row)"
                 >
                   <CIconTrash
-                    width="16"
-                    height="16"
+                    class="icon-sm"
                   />
                 </button>
               </div>

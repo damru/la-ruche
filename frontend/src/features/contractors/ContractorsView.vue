@@ -381,11 +381,15 @@ async function confirmDelete() {
                   v-for="d in c.domains.slice(0, 2)"
                   :key="d"
                   variant="default"
-                >{{ t(`contractors.domains.${d}`, d) }}</CBadge>
+                >
+                  {{ t(`contractors.domains.${d}`, d) }}
+                </CBadge>
                 <CBadge
                   v-if="c.domains.length > 2"
                   variant="default"
-                >+{{ c.domains.length - 2 }}</CBadge>
+                >
+                  +{{ c.domains.length - 2 }}
+                </CBadge>
               </CMetaLine>
             </div>
             <div class="contractor-row__contacts">
@@ -458,11 +462,15 @@ async function confirmDelete() {
                 v-for="d in c.domains.slice(0, 2)"
                 :key="d"
                 variant="default"
-              >{{ t(`contractors.domains.${d}`, d) }}</CBadge>
+              >
+                {{ t(`contractors.domains.${d}`, d) }}
+              </CBadge>
               <CBadge
                 v-if="c.domains.length > 2"
                 variant="default"
-              >+{{ c.domains.length - 2 }}</CBadge>
+              >
+                +{{ c.domains.length - 2 }}
+              </CBadge>
             </div>
             <div class="flex flex-col gap-3">
               <p

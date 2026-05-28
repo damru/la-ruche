@@ -118,8 +118,7 @@ const inputId = props.id ?? `c-input-${Math.random().toString(36).slice(2, 7)}`
       role="alert"
     >
       <CIconXCircle
-        width="12"
-        height="12"
+        class="icon-2xs"
         aria-hidden="true"
       />
       {{ error }}

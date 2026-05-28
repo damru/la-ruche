@@ -808,7 +808,11 @@ function formatSharePercentage(value: number): string {
         </div>
 
         <div class="flex items-center gap-2">
-          <CTabs variant="filter" v-model="selectedBudgetTab" :tabs="budgetYearTabs" />
+          <CTabs
+            v-model="selectedBudgetTab"
+            variant="filter"
+            :tabs="budgetYearTabs"
+          />
           <CBtn
             v-if="canManage"
             variant="ghost"
@@ -1004,7 +1008,10 @@ function formatSharePercentage(value: number): string {
             :shadow="false"
           >
             <div class="flex gap-3">
-              <CAvatar :name="levy.owner_name" size="lg" />
+              <CAvatar
+                :name="levy.owner_name"
+                size="lg"
+              />
               <div>
                 <div class="text-on-surface font-medium">
                   {{ levy.owner_name ?? '—' }}

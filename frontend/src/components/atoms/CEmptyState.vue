@@ -10,13 +10,26 @@ withDefaults(defineProps<{
 
 <template>
   <div :class="['c-empty-state', `c-empty-state--${size}`]">
-    <div v-if="$slots.icon" class="c-empty-state__icon">
-      <slot name="icon" />
+    <div
+      v-if="$slots.icon"
+      class="c-empty-state__icon"
+    >
+      <slot name="icon"></slot>
     </div>
-    <p class="title-sm text-on-surface">{{ title }}</p>
-    <p v-if="description" class="body-sm text-muted">{{ description }}</p>
-    <div v-if="$slots.actions" class="c-empty-state__actions">
-      <slot name="actions" />
+    <p class="title-sm text-on-surface">
+      {{ title }}
+    </p>
+    <p
+      v-if="description"
+      class="body-sm text-muted"
+    >
+      {{ description }}
+    </p>
+    <div
+      v-if="$slots.actions"
+      class="c-empty-state__actions"
+    >
+      <slot name="actions"></slot>
     </div>
   </div>
 </template>

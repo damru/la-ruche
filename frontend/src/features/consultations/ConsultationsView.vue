@@ -310,8 +310,8 @@ async function confirmDelete() {
         </CAlert>
 
         <CTabs
-          variant="filter"
           v-model="statusFilter"
+          variant="filter"
           :tabs="[
             { value: 'open', label: t('consultations.filters.open'), count: openCount },
             { value: 'closed', label: t('consultations.filters.closed'), count: closedCount },
@@ -543,8 +543,8 @@ async function confirmDelete() {
               @click="removeChoice(idx)"
             >
               <CIconX
-                width="14"
-                height="14"
+                
+                class="icon-xs"
               />
             </button>
           </div>
@@ -555,8 +555,8 @@ async function confirmDelete() {
             @click="addChoice"
           >
             <CIconPlus
-              width="14"
-              height="14"
+              
+              class="icon-xs"
             /> {{ t('consultations.fields.addChoice') }}
           </CBtn>
         </div>

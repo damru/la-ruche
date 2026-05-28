@@ -147,7 +147,7 @@ function getCellValue(row: T, key: string): unknown {
             :data-type="col.numeric ? 'numeric' : undefined"
             :class="[`text-${col.align ?? 'left'}`]"
           >
-            <slot :name="`foot-${String(col.key)}`" />
+            <slot :name="`foot-${String(col.key)}`"></slot>
           </td>
         </tr>
       </tfoot>

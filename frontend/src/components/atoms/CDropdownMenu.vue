@@ -30,7 +30,10 @@ defineOptions({ inheritAttrs: false })
 
 <template>
   <DropdownMenuRoot>
-    <DropdownMenuTrigger v-bind="$attrs" as-child>
+    <DropdownMenuTrigger
+      v-bind="$attrs"
+      as-child
+    >
       <slot name="trigger"></slot>
     </DropdownMenuTrigger>
 
@@ -40,7 +43,10 @@ defineOptions({ inheritAttrs: false })
         :side-offset="4"
         class="min-w-dropdown-min rounded-radius-md bg-surface-container-lowest shadow-md p-1 outline-none z-overlay"
       >
-        <template v-for="(item, i) in props.items" :key="i">
+        <template
+          v-for="(item, i) in props.items"
+          :key="i"
+        >
           <DropdownMenuSeparator
             v-if="item.separator"
             class="h-px bg-outline-variant my-1"
@@ -53,7 +59,11 @@ defineOptions({ inheritAttrs: false })
             :class="item.destructive ? 'text-error hover:bg-error-container' : ''"
             @select="item.action"
           >
-            <component :is="item.icon" v-if="item.icon" class="size-4 shrink-0" />
+            <component
+              :is="item.icon"
+              v-if="item.icon"
+              class="size-4 shrink-0"
+            />
             {{ item.label }}
           </DropdownMenuItem>
         </template>

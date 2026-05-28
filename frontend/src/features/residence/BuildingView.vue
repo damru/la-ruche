@@ -86,7 +86,10 @@ onMounted(reload)
         </header>
 
         <CCard>
-          <CHeading type="card" class="mb-4">
+          <CHeading
+            type="card"
+            class="mb-4"
+          >
             {{ t('settings.building.title') }}
           </CHeading>
           <CFormRow :cols="2">
@@ -140,7 +143,10 @@ onMounted(reload)
         </CCard>
 
         <CLegalCard>
-          <CHeading type="card" class="mb-4">
+          <CHeading
+            type="card"
+            class="mb-4"
+          >
             {{ t('settings.building.legalData') }}
           </CHeading>
           <CLegalNotice>
@@ -152,16 +158,16 @@ onMounted(reload)
           <div class="flex items-center gap-3">
             <CBtn variant="secondary">
               <CIconDownload
-                width="16"
-                height="16"
+                class="icon-sm"
+                
                 aria-hidden="true"
               />
               {{ t('settings.exportData') }}
             </CBtn>
             <CBtn variant="secondary">
               <CIconBook
-                width="16"
-                height="16"
+                class="icon-sm"
+                
                 aria-hidden="true"
               />
               {{ t('settings.downloadBylaws') }}
