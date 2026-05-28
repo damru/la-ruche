@@ -21,7 +21,7 @@ const isFilter = computed(() => props.variant === 'filter')
   <div
     class="flex overflow-x-auto gap-1"
     :class="isFilter
-      ? 'bg-surface-container-low rounded-md p-1 w-max max-w-full overscroll-x-contain filter-scrollbar'
+      ? 'bg-surface-container-low rounded-lg p-1 w-max max-w-full overscroll-x-contain filter-scrollbar'
       : 'flex-row pb-px border-b border-outline-variant'"
     :style="!isFilter ? '-webkit-overflow-scrolling: touch; scrollbar-width: none;' : undefined"
   >

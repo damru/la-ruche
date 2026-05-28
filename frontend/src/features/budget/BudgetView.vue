@@ -922,7 +922,7 @@ function formatSharePercentage(value: number): string {
 
         <CCard class="works-fund-card">
           <CSectionHeader>
-            <CHeading>
+            <CHeading type="card">
               {{ t('budget.worksFund') }}
             </CHeading>
             <CMetaLine v-if="selectedBudget">
@@ -986,6 +986,7 @@ function formatSharePercentage(value: number): string {
 
         <div
           v-if="canViewLevies && overdueLevies.length > 0"
+          class="flex flex-col gap-4"
         >
           <CSectionHeader>
             <CHeading>
@@ -1006,6 +1007,7 @@ function formatSharePercentage(value: number): string {
             :key="levy.id"
             class="overdue-item tone--err"
             :shadow="false"
+            :level="4"
           >
             <div class="flex gap-3">
               <CAvatar
@@ -1039,7 +1041,7 @@ function formatSharePercentage(value: number): string {
         </div>
         <CCard>
           <CSectionHeader>
-            <CHeading>
+            <CHeading  type="card">
               {{ t('budget.consumptionByLine') }}
             </CHeading>
             <CMetaItem variant="sub">
@@ -1127,7 +1129,7 @@ function formatSharePercentage(value: number): string {
         
         <CCard v-if="canViewLevies">
           <CSectionHeader>
-            <CHeading>
+            <CHeading  type="card">
               {{ t('budget.levies') }}
             </CHeading>
             <CMetaLine>
@@ -1167,7 +1169,6 @@ function formatSharePercentage(value: number): string {
             :columns="levyTableColumns"
             :rows="levyTableRows"
             :empty-text="t('common.noData')"
-            :striped="true"
           >
             <template #cell-owner_name="{ row }">
               <div>
