@@ -557,6 +557,7 @@ Sur mobile, les écrans publics (`/login`, `/onboarding`, invitation, reset) con
 - Toute vue qui charge ses données au montage passe par `usePageLoader`.
 - État d'erreur → `CPageError`. État de chargement → `CPageLoader`.
 - Les chargements secondaires non bloquants restent isolés.
+- Le backend renvoie des codes d'erreurs au formt i18n. Toutes les entrées doivent être sous `errors`.
 
 #### Cartes de liste
 
@@ -649,8 +650,6 @@ Toute vue avec plusieurs filtres d'état utilise `CTabs` (atome §3.1). Le compo
 - `count` : badge numérique inline — jamais `CBadge`, toujours un `<span>` stylisé dans le composant.
 - Jamais de tab avec icône seule — libellé textuel obligatoire.
 - Pas de `<style>` dans la vue qui utilise `CTabs` — toute variation passe par les props.
-
-Usage actuel : AssemblyListView, BudgetView, ClaimsView, ConsultationsView, ContractsView, ProfileView, ReportsView, ResidentsView, TasksView.
 
 ---
 
