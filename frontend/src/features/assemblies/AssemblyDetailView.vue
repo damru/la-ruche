@@ -529,13 +529,6 @@ function attendanceModeVariant(mode: MeetingAttendanceMode): BadgeVariant {
   return 'disabled'
 }
 
-function ownerInitials(name?: string | null): string {
-  if (!name?.trim()) return '??'
-  const parts = name.trim().split(/\s+/).filter(Boolean)
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
-  return `${parts[0][0] ?? ''}${parts[parts.length - 1][0] ?? ''}`.toUpperCase()
-}
-
 function documentKindLabel(kind: MeetingDocument['kind']): string {
   return t(`meetings.documents.${kind}`)
 }
@@ -1870,9 +1863,7 @@ function toDateTimeLocal(value: string): string {
                   class="participant-row"
                 >
                   <div class="participant-row__identity">
-                    <div class="attendance-avatar">
-                      {{ ownerInitials(entry.owner_name) }}
-                    </div>
+                    <CAvatar :name="entry.owner_name" size="sm" />
                     <div>
                       <p class="participant-name">
                         {{ entry.owner_name || '—' }}
@@ -3186,21 +3177,6 @@ function toDateTimeLocal(value: string): string {
 .participant-meta {
   font-size: var(--text-xs);
   color: var(--color-on-surface-variant);
-}
-
-.attendance-avatar {
-  width: 28px;
-  height: 28px;
-  border-radius: var(--radius-full);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  font-family: var(--font-display);
-  font-size: var(--text-2xs);
-  font-weight: var(--fw-bold);
-  background: color-mix(in srgb, var(--color-primary) 16%, var(--color-surface));
-  color: var(--color-primary);
 }
 
 .attendance-shares {

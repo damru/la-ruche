@@ -713,10 +713,6 @@ function levyStatusBadgeVariant(s: LevyStatus): 'valid' | 'pending' | 'err' | 'd
   return 'disabled'
 }
 
-function initials(name: string): string {
-  return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
-}
-
 function formatSharePercentage(value: number): string {
   return sharePercentageFormatter.format(value)
 }
@@ -1006,9 +1002,7 @@ function formatSharePercentage(value: number): string {
             :shadow="false"
           >
             <div class="flex gap-3">
-              <div class="overdue-avatar">
-                {{ initials(levy.owner_name ?? '?') }}
-              </div>
+              <CAvatar :name="levy.owner_name" size="lg" />
               <div>
                 <div class="text-on-surface font-medium">
                   {{ levy.owner_name ?? '—' }}
@@ -1620,21 +1614,6 @@ function formatSharePercentage(value: number): string {
   align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
-}
-
-.overdue-avatar {
-  width: 42px;
-  height: 42px;
-  border-radius: var(--radius-full);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-display);
-  font-size: var(--text-sm);
-  font-weight: var(--fw-bold);
-  flex-shrink: 0;
-  background: var(--tone-fg);
-  color: var(--color-surface);
 }
 
 .breakdown-modal {

@@ -407,9 +407,7 @@ const userColumns = computed(() => [
             >
               <template #cell-name="{ row }">
                 <div class="user-name">
-                  <div class="avatar">
-                    {{ row.first_name[0] }}{{ row.last_name[0] }}
-                  </div>
+                  <CAvatar :name="`${row.first_name} ${row.last_name}`" />
                   <span>{{ row.first_name }} {{ row.last_name }}</span>
                 </div>
               </template>
@@ -566,20 +564,6 @@ const userColumns = computed(() => [
   display: flex;
   align-items: center;
   gap: 10px;
-}
-
-.avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: var(--gradient-primary);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: var(--text-xs);
-  font-weight: var(--fw-bold);
-  flex-shrink: 0;
 }
 
 .roles {

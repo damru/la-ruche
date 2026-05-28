@@ -14,6 +14,7 @@ declare module 'vue' {
     AppNav: typeof import('./../components/organisms/AppNav.vue')['default']
     AuthBrandPanel: typeof import('./../components/organisms/AuthBrandPanel.vue')['default']
     CAlert: typeof import('./../components/atoms/CAlert.vue')['default']
+    CAvatar: typeof import('./../components/atoms/CAvatar.vue')['default']
     CBadge: typeof import('./../components/atoms/CBadge.vue')['default']
     CBtn: typeof import('./../components/atoms/CBtn.vue')['default']
     CCard: typeof import('./../components/molecules/CCard.vue')['default']

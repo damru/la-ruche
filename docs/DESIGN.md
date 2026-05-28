@@ -439,6 +439,7 @@ border-color: var(--color-outline-light);
 | Composant | Props clés | Description |
 |---|---|---|
 | `CAlert` | `variant` (`error` \| `warning` \| `info` \| `success`), `title` | Bandeau d'alerte contextuelle — consomme `.tone--err/warn/info/valid` |
+| `CAvatar` | `name` (`string \| null \| undefined`), `size?` (`sm` \| `md` \| `lg`, défaut `md`) | Avatar initiales — hue oklch dérivé du nom par hash djb2, adapté au thème via `[data-theme="dark"]`. `sm`=28px, `md`=36px, `lg`=42px. 1 mot→2 premiers chars, multi-mots→initiales premier+dernier. |
 | `CBadge` | `variant` | Chip de statut ou de catégorie — consomme `.tone--*` |
 | `CDataText` | `size` (`sm` \| `md` \| `lg`) | 🔲 planifié — Texte tabulaire JetBrains Mono — `font-mono font-medium lining-nums tabular-nums` |
 | `CEyebrow` | — | Libellé eyebrow — `font-body text-2xs font-medium uppercase tracking-[0.06em]`. Rendu en `<div>`. |
