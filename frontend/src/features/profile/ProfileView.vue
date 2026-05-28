@@ -116,6 +116,28 @@ async function confirmResetDemo() {
     resetting.value = false
   }
 }
+
+// ── Reset data ────────────────────────────────────────────────────
+const showResetDataModal = ref(false)
+const resettingData = ref(false)
+const resetDataFeedback = useFormFeedback()
+
+async function confirmResetData() {
+  resettingData.value = true
+  resetDataFeedback.reset()
+  try {
+    await adminApi.resetData()
+    resetDataFeedback.setSuccess(t('settings.account.resetDataSuccess'))
+    setTimeout(() => {
+      showResetDataModal.value = false
+      resetDataFeedback.reset()
+    }, SUCCESS_AUTO_CLEAR_MS)
+  } catch {
+    resetDataFeedback.setError(t('settings.account.resetDataError'))
+  } finally {
+    resettingData.value = false
+  }
+}
 </script>
 
 <template>
@@ -246,7 +268,7 @@ async function confirmResetDemo() {
           </p>
         </CCard>
 
-        <CCard v-if="auth.isManager">
+        <CCard v-if="auth.isManager && ui.demoMode">
           <CHeading type="card" style="color: var(--color-error)">
             {{ t('settings.account.dangerZone') }}
           </CHeading>
@@ -256,12 +278,20 @@ async function confirmResetDemo() {
           >
             {{ t('settings.account.dangerDesc') }}
           </p>
-          <CBtn
-            variant="danger"
-            @click="showResetModal = true"
-          >
-            {{ t('settings.account.resetApp') }}
-          </CBtn>
+          <div class="flex flex-row gap-4">
+            <CBtn
+              variant="danger"
+              @click="showResetModal = true"
+            >
+              {{ t('settings.account.resetApp') }}
+            </CBtn>
+            <CBtn
+              variant="danger"
+              @click="showResetDataModal = true"
+            >
+              {{ t('settings.account.resetData') }}
+            </CBtn>
+          </div>
         </CCard>
       </template>
 
@@ -329,6 +359,38 @@ async function confirmResetDemo() {
         @click="confirmResetDemo"
       >
         {{ t('settings.account.resetAppConfirm') }}
+      </CBtn>
+    </template>
+  </CModal>
+
+  <!-- ── Reset data modal ──────────────────────────────────────── -->
+  <CModal
+    :open="showResetDataModal"
+    :title="t('settings.account.resetDataConfirmTitle')"
+    @close="showResetDataModal = false"
+  >
+    <p class="body-xs">
+      {{ t('settings.account.resetDataConfirmMessage') }}
+    </p>
+    <template #footer>
+      <CFormFeedback
+        :status="resetDataFeedback.status.value"
+        :message="resetDataFeedback.message.value"
+      />
+      <CBtn
+        variant="ghost"
+        :disabled="resettingData"
+        @click="showResetDataModal = false"
+      >
+        {{ t('common.cancel') }}
+      </CBtn>
+      <CBtn
+        variant="danger"
+        :loading="resettingData"
+        :disabled="resettingData"
+        @click="confirmResetData"
+      >
+        {{ t('settings.account.resetDataConfirm') }}
       </CBtn>
     </template>
   </CModal>

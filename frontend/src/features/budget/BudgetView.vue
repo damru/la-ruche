@@ -769,7 +769,8 @@ function formatSharePercentage(value: number): string {
               variant="primary"
               @click="openCreateBudgetModal"
             >
-              + {{ t('budget.newFiscalYear') }}
+              <CIconPlus />
+              {{ t('budget.newFiscalYear') }}
             </CBtn>
           </template>
         </CEmptyState>
@@ -815,7 +816,8 @@ function formatSharePercentage(value: number): string {
             class="text-primary!"
             @click="openCreateBudgetModal"
           >
-            + {{ t('budget.newFiscalYear') }}
+            <CIconPlus />
+            {{ t('budget.newFiscalYear') }}
           </CBtn>
         </div>
 

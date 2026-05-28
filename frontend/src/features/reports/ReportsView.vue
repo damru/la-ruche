@@ -579,7 +579,6 @@ function photoPreview(file: File): string {
           </p>
         </header>
 
-        <!-- Filters -->
         <CTabs
           variant="filter"
           v-model="statusFilter"
@@ -591,133 +590,132 @@ function photoPreview(file: File): string {
           ]"
         />
 
-        <!-- List -->
-        <div class="report-list">
-          <CCard
-            v-for="r in reports"
-            :key="r.id"
-            :shadow="r.status !== 'closed'"
-            :class="['gap-y-4', { 'outline outline-1 outline-outline-variant': r.status === 'closed' }]"
-          >
-            <div class="flex items-center gap-3 min-w-0">
-              <CMetaLine 
-                class="[&_svg]:icon-sm text-xs"
-              >
-                <CBadge
-                  :variant="statusVariant(r.status)"
-                  dot
+        <template v-if="!reports.length">
+          <CEmptyState
+            :title="t('reports.empty')"
+          />
+        </template>
+        <template v-else>
+          <div class="report-list">
+            <CCard
+              v-for="r in reports"
+              :key="r.id"
+              :shadow="r.status !== 'closed'"
+              :class="['gap-y-4', { 'outline outline-1 outline-outline-variant': r.status === 'closed' }]"
+            >
+              <div class="flex items-center gap-3 min-w-0">
+                <CMetaLine 
+                  class="[&_svg]:icon-sm text-xs"
                 >
-                  {{ t(`reports.statuses.${r.status}`) }}
-                </CBadge>
-                <CMetaItem
-                  variant="sub" 
-                >
-                  <template #icon>
-                    <CIconClock />
-                  </template>
-                  {{ formatRelative(r.updated_at) }}
-                </CMetaItem>
-              </CMetaLine>
-            </div>
-
-            <div class="flex flex-col gap-3">
-              <CFlexGroup
-                direction="row"
-              >
-                <h3 class="text-lg font-semibold text-on-surface m-0 leading-snug min-w-0">
-                  {{ r.title }}
-                </h3>
-                
-                <CMetaItem
-                  v-if="r.document_count > 0"
-                  variant="sub"
-                  as="button"
-                  @click="openReportPhotos(r)"
-                >
-                  <template #icon>
-                    <CIconFile />
-                  </template>
-                  {{ t('reports.linkedPhotosCount', r.document_count) }}
-                </CMetaItem>
-              </CFlexGroup>
-
-              <p
-                v-if="r.description"
-              >
-                {{ r.description }}
-              </p>
-              <CMetaLine>
-                <CMetaItem>
-                  <template #icon>
-                    <CIconUser />
-                  </template>
-                  {{ authorName(r) }}
-                </CMetaItem>
-                <CMetaItem>
-                  <template #icon>
-                    <CIconHome />
-                  </template>
-                  {{ unitLabel(r.unit_id) }}
-                </CMetaItem>
-                <CMetaItem>
-                  <template #icon>
-                    <CIconCalendar />
-                  </template>
-                  {{ formatDate(r.created_at) }}
-                </CMetaItem>
-              </CMetaLine>
-
-              <div v-if="r.status !== 'closed'" class="flex flex-wrap gap-x-2 gap-y-1">
-                  <CBtn
-                    variant="ghost"
-                    size="sm"
-                    @click="openStatusModal(r)"
+                  <CBadge
+                    :variant="statusVariant(r.status)"
+                    dot
                   >
-                    <CIconRefresh />
-                    {{ t('reports.editStatus') }}
-                  </CBtn>
+                    {{ t(`reports.statuses.${r.status}`) }}
+                  </CBadge>
+                  <CMetaItem
+                    variant="sub" 
+                  >
+                    <template #icon>
+                      <CIconClock />
+                    </template>
+                    {{ formatRelative(r.updated_at) }}
+                  </CMetaItem>
+                </CMetaLine>
               </div>
-
-              <template v-if="canManage">
-                <CCardActions>
-                  <CBtn
-                    variant="ghost"
-                    size="sm"
-                    @click="openEditModal(r)"
+  
+              <div class="flex flex-col gap-3">
+                <CFlexGroup
+                  direction="row"
+                >
+                  <h3 class="text-lg font-semibold text-on-surface m-0 leading-snug min-w-0">
+                    {{ r.title }}
+                  </h3>
+                  
+                  <CMetaItem
+                    v-if="r.document_count > 0"
+                    variant="sub"
+                    as="button"
+                    @click="openReportPhotos(r)"
                   >
-                    <CIconEdit />
-                    {{ t('common.edit') }}
-                  </CBtn>
-                  <CBtn
-                    v-if="r.task_id"
-                    variant="primary"
-                    size="sm"
-                    @click="router.push({ name: 'task-detail', params: { id: r.task_id } })"
-                  >
-                    <CIconCheckCircle />
-                    {{ t('reports.viewTask') }}
-                  </CBtn>
-                  <CBtn
-                    v-else-if="r.status !== 'closed'"
-                    variant="primary"
-                    size="sm"
-                    @click="openConvertModal(r)"
-                  >
-                    <CIconCheckCircle />
-                    {{ t('reports.convertToTask') }}
-                  </CBtn>
-                </CCardActions>
-              </template>
-            </div>
-          </CCard>
-
-          <div
-            v-if="!reports.length"
-            class="py-8 text-center text-md text-on-surface-variant"
-          >
-            {{ t('reports.empty') }}
+                    <template #icon>
+                      <CIconFile />
+                    </template>
+                    {{ t('reports.linkedPhotosCount', r.document_count) }}
+                  </CMetaItem>
+                </CFlexGroup>
+  
+                <p
+                  v-if="r.description"
+                >
+                  {{ r.description }}
+                </p>
+                <CMetaLine>
+                  <CMetaItem>
+                    <template #icon>
+                      <CIconUser />
+                    </template>
+                    {{ authorName(r) }}
+                  </CMetaItem>
+                  <CMetaItem>
+                    <template #icon>
+                      <CIconHome />
+                    </template>
+                    {{ unitLabel(r.unit_id) }}
+                  </CMetaItem>
+                  <CMetaItem>
+                    <template #icon>
+                      <CIconCalendar />
+                    </template>
+                    {{ formatDate(r.created_at) }}
+                  </CMetaItem>
+                </CMetaLine>
+  
+                <div v-if="r.status !== 'closed'" class="flex flex-wrap gap-x-2 gap-y-1">
+                    <CBtn
+                      variant="ghost"
+                      size="sm"
+                      @click="openStatusModal(r)"
+                    >
+                      <CIconRefresh />
+                      {{ t('reports.editStatus') }}
+                    </CBtn>
+                </div>
+  
+                <template v-if="canManage">
+                  <CCardActions>
+                    <CBtn
+                      variant="ghost"
+                      size="sm"
+                      @click="openEditModal(r)"
+                    >
+                      <CIconEdit />
+                      {{ t('common.edit') }}
+                    </CBtn>
+                    <CBtn
+                      v-if="r.task_id"
+                      variant="primary"
+                      size="sm"
+                      @click="router.push({ name: 'task-detail', params: { id: r.task_id } })"
+                    >
+                      <CIconCheckCircle />
+                      {{ t('reports.viewTask') }}
+                    </CBtn>
+                    <CBtn
+                      v-else-if="r.status !== 'closed'"
+                      variant="primary"
+                      size="sm"
+                      @click="openConvertModal(r)"
+                    >
+                      <CIconCheckCircle />
+                      {{ t('reports.convertToTask') }}
+                    </CBtn>
+                  </CCardActions>
+                </template>
+              </div>
+            </CCard>
           </div>
-        </div>
+        </template>
       </template>
     </div>
 

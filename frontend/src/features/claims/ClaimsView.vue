@@ -919,146 +919,147 @@ async function submitDelete() {
 
         <CTabs variant="filter" v-model="filter" :tabs="claimTabsList" />
 
-        <div class="flex flex-col gap-3">
-          <CCard
-            v-for="claim in claims"
-            :key="claim.id"
-            :shadow="claim.status !== 'closed'"
-            gap="sm"
-            :class="[{ 'outline outline-1 outline-outline-variant': claim.status === 'closed' }]"
-          >
-            <div class="flex items-center gap-3 min-w-0">
-              <CIconTile
-                :class="typeTone(claim.claim_type)"
-              >
-                <component
-                  :is="typeIcon(claim.claim_type)"
-                  aria-hidden="true"
-                />
-              </CIconTile>
-              <CMetaLine class="text-xs justify-end justify-self-end">
-                <CBadge
-                  :variant="statusVariant(claim.status)"
-                  dot
+        
+        <template v-if="claims.length === 0">
+          <CEmptyState
+            :title="t('claims.empty')"
+          />  
+        </template>
+        <template v-else>
+          <div class="flex flex-col gap-3">
+            <CCard
+              v-for="claim in claims"
+              :key="claim.id"
+              :shadow="claim.status !== 'closed'"
+              gap="sm"
+              :class="[{ 'outline outline-1 outline-outline-variant': claim.status === 'closed' }]"
+            >
+              <div class="flex items-center gap-3 min-w-0">
+                <CIconTile
+                  :class="typeTone(claim.claim_type)"
                 >
-                  {{ t(`claims.statuses.${claim.status}`) }}
-                </CBadge>
-                <CBadge variant="default">
-                  {{ t(`claims.types.${claim.claim_type}`) }}
-                </CBadge>
-                <CBadge
-                  :variant="deadlineVariant(claim)"
-                  :dot="deadlineVariant(claim) !== 'default'"
-                >
-                  {{ deadlineLabel(claim) }}
-                </CBadge>
-              </CMetaLine>
-            </div>
-            <div class="flex flex-col gap-3">
-              <CFlexGroup
-                direction="row"
-              >
-                <h3 class="text-lg font-semibold text-on-surface m-0 leading-snug min-w-0">
-                  {{ claim.title }}
-                </h3>
-                <CMetaItem
-                  variant="sub"
-                >
-                  <template #icon>
-                    <CIconLocation />
-                  </template>
-                  {{ unitLabel(claim.unit_id) }}
-                </CMetaItem>
-                <CMetaItem
-                  v-if="claim.document_count > 0"
-                  variant="sub"
-                  as="button"
-                  @click="openClaimDocuments(claim)"
-                >
-                  <template #icon>
-                    <CIconFile />
-                  </template>
-                  {{ t('claims.documentsCount', claim.document_count) }}
-                </CMetaItem>
-              </CFlexGroup>
-              <p
-                v-if="claim.description"
-              >
-                {{ claim.description }}
-              </p>
-              <template v-if="canManage">
-                <CCardActions>
-                  <CBtn
-                    variant="ghost"
-                    size="sm"
-                    @click="openEditModal(claim)"
-                  >
-                    <CIconEdit />
-                    {{ t('common.edit') }}
-                  </CBtn>
-                  <CBtn
-                    v-if="claim.status === 'open'"
-                    variant="primary"
-                    size="sm"
-                    @click="openTransmitModal(claim)"
-                  >
-                    <CIconUpload />
-                    {{ t('claims.transmit') }}
-                  </CBtn>
-                  <CBtn
-                    v-else-if="claim.status === 'in_progress'"
-                    variant="primary"
-                    size="sm"
-                    @click="openCloseModal(claim)"
-                  >
-                    <CIconCheckCircle />
-                    {{ t('claims.close') }}
-                  </CBtn>
-                </CCardActions>
-              </template>
-              <CCardNote>
-                <span class="inline-flex items-center gap-1 w-fit">
-                  <CIconCalendar />
-                  {{ t('claims.declaredOn', { date: formatDate(claim.declared_at) }) }}
-                </span>
-                <span class="inline-flex items-center gap-1 w-fit">
-                  <CIconClock
-                    width="14"
-                    height="14"
+                  <component
+                    :is="typeIcon(claim.claim_type)"
+                    aria-hidden="true"
                   />
-                  {{ t('claims.deadline.reference', { date: formatDate(claim.legal_deadline_at) }) }}
-                </span>
-                <span
-                  v-if="claim.published_at"
-                  class="inline-flex items-center gap-1 w-fit"
+                </CIconTile>
+                <CMetaLine class="text-xs justify-end justify-self-end">
+                  <CBadge
+                    :variant="statusVariant(claim.status)"
+                    dot
+                  >
+                    {{ t(`claims.statuses.${claim.status}`) }}
+                  </CBadge>
+                  <CBadge variant="default">
+                    {{ t(`claims.types.${claim.claim_type}`) }}
+                  </CBadge>
+                  <CBadge
+                    :variant="deadlineVariant(claim)"
+                    :dot="deadlineVariant(claim) !== 'default'"
+                  >
+                    {{ deadlineLabel(claim) }}
+                  </CBadge>
+                </CMetaLine>
+              </div>
+              <div class="flex flex-col gap-3">
+                <CFlexGroup
+                  direction="row"
                 >
-                  <CIconXCircle
-                    width="14"
-                    height="14"
-                  />
-                  {{ t('claims.publishedOn', { date: formatDate(claim.published_at) }) }}
-                </span>
-                <span
-                  v-if="claim.reimbursement_date || claim.reimbursement_amount != null"
-                  class="inline-flex items-center gap-1 w-fit"
+                  <h3 class="text-lg font-semibold text-on-surface m-0 leading-snug min-w-0">
+                    {{ claim.title }}
+                  </h3>
+                  <CMetaItem
+                    variant="sub"
+                  >
+                    <template #icon>
+                      <CIconLocation />
+                    </template>
+                    {{ unitLabel(claim.unit_id) }}
+                  </CMetaItem>
+                  <CMetaItem
+                    v-if="claim.document_count > 0"
+                    variant="sub"
+                    as="button"
+                    @click="openClaimDocuments(claim)"
+                  >
+                    <template #icon>
+                      <CIconFile />
+                    </template>
+                    {{ t('claims.documentsCount', claim.document_count) }}
+                  </CMetaItem>
+                </CFlexGroup>
+                <p
+                  v-if="claim.description"
                 >
-                  <CIconCurrency
-                    width="14"
-                    height="14"
-                  />
-                  {{ reimbursementLabel(claim) }}
-                </span>
-              </CCardNote>
-            </div>
-          </CCard>
-
-          <div
-            v-if="claims.length === 0"
-            class="py-8 text-center text-md text-on-surface-variant"
-          >
-            {{ t('claims.empty') }}
+                  {{ claim.description }}
+                </p>
+                <template v-if="canManage">
+                  <CCardActions>
+                    <CBtn
+                      variant="ghost"
+                      size="sm"
+                      @click="openEditModal(claim)"
+                    >
+                      <CIconEdit />
+                      {{ t('common.edit') }}
+                    </CBtn>
+                    <CBtn
+                      v-if="claim.status === 'open'"
+                      variant="primary"
+                      size="sm"
+                      @click="openTransmitModal(claim)"
+                    >
+                      <CIconUpload />
+                      {{ t('claims.transmit') }}
+                    </CBtn>
+                    <CBtn
+                      v-else-if="claim.status === 'in_progress'"
+                      variant="primary"
+                      size="sm"
+                      @click="openCloseModal(claim)"
+                    >
+                      <CIconCheckCircle />
+                      {{ t('claims.close') }}
+                    </CBtn>
+                  </CCardActions>
+                </template>
+                <CCardNote>
+                  <span class="inline-flex items-center gap-1 w-fit">
+                    <CIconCalendar />
+                    {{ t('claims.declaredOn', { date: formatDate(claim.declared_at) }) }}
+                  </span>
+                  <span class="inline-flex items-center gap-1 w-fit">
+                    <CIconClock
+                      width="14"
+                      height="14"
+                    />
+                    {{ t('claims.deadline.reference', { date: formatDate(claim.legal_deadline_at) }) }}
+                  </span>
+                  <span
+                    v-if="claim.published_at"
+                    class="inline-flex items-center gap-1 w-fit"
+                  >
+                    <CIconXCircle
+                      width="14"
+                      height="14"
+                    />
+                    {{ t('claims.publishedOn', { date: formatDate(claim.published_at) }) }}
+                  </span>
+                  <span
+                    v-if="claim.reimbursement_date || claim.reimbursement_amount != null"
+                    class="inline-flex items-center gap-1 w-fit"
+                  >
+                    <CIconCurrency
+                      width="14"
+                      height="14"
+                    />
+                    {{ reimbursementLabel(claim) }}
+                  </span>
+                </CCardNote>
+              </div>
+            </CCard>
           </div>
-        </div>
+        </template>
 
         <CLegalCard>
           <CLegalNotice :links="legalCardLinks">

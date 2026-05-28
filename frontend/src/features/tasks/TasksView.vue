@@ -826,192 +826,191 @@ async function copyVendorLink(taskId: string) {
           ]"
         />
 
-        <!-- Liste -->
-        <div class="task-list">
-          <CCard
-            v-for="task in tasks"
-            :key="task.id"
-            :shadow="!isTerminal(task.status)"
-            gap="sm"
-            :class="['task-card', { 'outline outline-1 outline-outline-variant': isTerminal(task.status) }]"
-            interactive
-            tabindex="0"
-            @click="openTaskDetail(task.id)"
-            @keydown.enter.prevent="openTaskDetail(task.id)"
-            @keydown.space.prevent="openTaskDetail(task.id)"
-          >
-            <div class="flex items-center gap-3 min-w-0">
-              <h3 class="text-lg font-semibold text-on-surface m-0 leading-snug min-w-0">
-                {{ task.title }}
-              </h3>
-              <CMetaLine class="flex-1 justify-end text-xs">
-                <CBadge :variant="isTerminal(task.status) ? 'disabled' : priorityVariant(task.priority)">
-                  {{ t(`tasks.priorities.${task.priority}`) }}
-                </CBadge>
-                <CBadge
-                  :variant="isTerminal(task.status) ? 'disabled' : statusVariant(task.status)"
-                  dot
-                >
-                  {{ t(`tasks.statuses.${task.status}`) }}
-                </CBadge>
-              </CMetaLine>
-            </div>
-
-            <div class="flex flex-col gap-3">
-              <p
-                v-if="task.description"
-                class="body-xs"
-              >
-                {{ task.description }}
-              </p>
-
-              <div
-                v-if="task.document_count > 0"
-                class="flex flex-wrap gap-x-2 gap-y-1"
-              >
-                <button
-                  class="inline-flex items-center gap-1 bg-transparent border-none p-0 cursor-pointer text-xs hover:text-primary"
-                  @click.stop="openTaskDocuments(task)"
-                >
-                  <CIconFile />
-                  {{ t('tasks.documentsCount', task.document_count) }}
-                </button>
-              </div>
-
-              <CMetaLine>
-                <CMetaItem
-                  v-if="hasAssignment(task)"
-                >
-                  <template #icon>
-                    <CIconWrench v-if="task.contractor_id || contractorDisplayName(task)" />
-                    <CIconUser v-else />
-                  </template>
-                  <RouterLink
-                    v-if="task.contractor_id && contractorDisplayName(task)"
-                    :to="{ name: 'contractor-detail', params: { id: task.contractor_id } }"
-                    class="task-card__meta-link"
-                    @click.stop
+        <template v-if="tasks.length === 0">
+          <CEmptyState
+            :title="t('tasks.empty')"
+          />  
+        </template>
+        <template v-else>
+          <div class="flex flex-col gap-3">
+            <CCard
+              v-for="task in tasks"
+              :key="task.id"
+              :shadow="!isTerminal(task.status)"
+              gap="sm"
+              :class="['task-card', { 'outline outline-1 outline-outline-variant': isTerminal(task.status) }]"
+              interactive
+              tabindex="0"
+              @click="openTaskDetail(task.id)"
+              @keydown.enter.prevent="openTaskDetail(task.id)"
+              @keydown.space.prevent="openTaskDetail(task.id)"
+            >
+              <div class="flex items-center gap-3 min-w-0">
+                <h3 class="text-lg font-semibold text-on-surface m-0 leading-snug min-w-0">
+                  {{ task.title }}
+                </h3>
+                <CMetaLine class="flex-1 justify-end text-xs">
+                  <CBadge :variant="isTerminal(task.status) ? 'disabled' : priorityVariant(task.priority)">
+                    {{ t(`tasks.priorities.${task.priority}`) }}
+                  </CBadge>
+                  <CBadge
+                    :variant="isTerminal(task.status) ? 'disabled' : statusVariant(task.status)"
+                    dot
                   >
-                    {{ contractorDisplayName(task) }}
-                  </RouterLink>
-                  <span v-else>
-                    {{ contractorDisplayName(task) ?? assignedUserName(task) }}
-                  </span>
-                </CMetaItem>
-                <CMetaItem>
-                  <template #icon>
-                    <CIconCalendar />
-                  </template>
-                  {{ t('tasks.lifecycle.createdRelative', { relative: formatRelative(task.created_at) }) }}
-                </CMetaItem>
-              </CMetaLine>
-
-              <div
-                v-if="(contractorDisplayName(task) && !task.has_vendor_token && !isTerminal(task.status)) || task.has_vendor_token"
-                class="flex flex-wrap gap-x-2 gap-y-1"
-              >
-                <CBtn
-                  v-if="contractorDisplayName(task) && !task.has_vendor_token && !isTerminal(task.status)"
-                  variant="ghost"
-                  size="sm"
-                  :disabled="generatingToken === task.id"
-                  :aria-label="t('tasks.generateToken')"
-                  @click.stop="generateToken(task)"
-                >
-                  <CIconLink />
-                  {{ t('tasks.generateToken') }}
-                </CBtn>
-                <CBtn
-                  v-if="task.has_vendor_token"
-                  variant="ghost"
-                  size="sm"
-                  :aria-label="t('tasks.showLink')"
-                  @click.stop="showVendorLink(task)"
-                >
-                  <CIconEye />
-                  {{ t('tasks.showLink') }}
-                </CBtn>
-                <CBtn
-                  v-if="task.has_vendor_token"
-                  variant="ghost"
-                  size="sm"
-                  :aria-label="t('tasks.revokeToken')"
-                  @click.stop="openRevokeModal(task)"
-                >
-                  <CIconX />
-                  {{ t('tasks.revokeToken') }}
-                </CBtn>
+                    {{ t(`tasks.statuses.${task.status}`) }}
+                  </CBadge>
+                </CMetaLine>
               </div>
-
-              <div
-                v-if="vendorLinks[task.id]"
-                class="task-card__vendor-link"
-              >
-                <div class="task-card__vendor-link-meta">
-                  <span class="body-xs">
-                    {{ t('tasks.vendorTokenActive', { date: formatDate(vendorLinks[task.id].expires_at) }) }}
-                  </span>
-                  <a
-                    :href="vendorLinks[task.id].url"
-                    class="task-card__vendor-link-url"
-                    target="_blank"
-                    rel="noopener"
-                    @click.stop
+  
+              <div class="flex flex-col gap-3">
+                <p
+                  v-if="task.description"
+                  class="body-xs"
+                >
+                  {{ task.description }}
+                </p>
+  
+                <div
+                  v-if="task.document_count > 0"
+                  class="flex flex-wrap gap-x-2 gap-y-1"
+                >
+                  <button
+                    class="inline-flex items-center gap-1 bg-transparent border-none p-0 cursor-pointer text-xs hover:text-primary"
+                    @click.stop="openTaskDocuments(task)"
                   >
-                    {{ vendorLinks[task.id].url }}
-                  </a>
+                    <CIconFile />
+                    {{ t('tasks.documentsCount', task.document_count) }}
+                  </button>
                 </div>
-                <CBtn
-                  variant="ghost"
-                  size="sm"
-                  @click.stop="copyVendorLink(task.id)"
+  
+                <CMetaLine>
+                  <CMetaItem
+                    v-if="hasAssignment(task)"
+                  >
+                    <template #icon>
+                      <CIconWrench v-if="task.contractor_id || contractorDisplayName(task)" />
+                      <CIconUser v-else />
+                    </template>
+                    <RouterLink
+                      v-if="task.contractor_id && contractorDisplayName(task)"
+                      :to="{ name: 'contractor-detail', params: { id: task.contractor_id } }"
+                      class="task-card__meta-link"
+                      @click.stop
+                    >
+                      {{ contractorDisplayName(task) }}
+                    </RouterLink>
+                    <span v-else>
+                      {{ contractorDisplayName(task) ?? assignedUserName(task) }}
+                    </span>
+                  </CMetaItem>
+                  <CMetaItem>
+                    <template #icon>
+                      <CIconCalendar />
+                    </template>
+                    {{ t('tasks.lifecycle.createdRelative', { relative: formatRelative(task.created_at) }) }}
+                  </CMetaItem>
+                </CMetaLine>
+  
+                <div
+                  v-if="(contractorDisplayName(task) && !task.has_vendor_token && !isTerminal(task.status)) || task.has_vendor_token"
+                  class="flex flex-wrap gap-x-2 gap-y-1"
                 >
-                  <CIconCopy />
-                  {{ copiedVendorLinkTaskId === task.id ? t('tasks.vendorTokenCopied') : t('common.copy') }}
-                </CBtn>
+                  <CBtn
+                    v-if="contractorDisplayName(task) && !task.has_vendor_token && !isTerminal(task.status)"
+                    variant="ghost"
+                    size="sm"
+                    :disabled="generatingToken === task.id"
+                    :aria-label="t('tasks.generateToken')"
+                    @click.stop="generateToken(task)"
+                  >
+                    <CIconLink />
+                    {{ t('tasks.generateToken') }}
+                  </CBtn>
+                  <CBtn
+                    v-if="task.has_vendor_token"
+                    variant="ghost"
+                    size="sm"
+                    :aria-label="t('tasks.showLink')"
+                    @click.stop="showVendorLink(task)"
+                  >
+                    <CIconEye />
+                    {{ t('tasks.showLink') }}
+                  </CBtn>
+                  <CBtn
+                    v-if="task.has_vendor_token"
+                    variant="ghost"
+                    size="sm"
+                    :aria-label="t('tasks.revokeToken')"
+                    @click.stop="openRevokeModal(task)"
+                  >
+                    <CIconX />
+                    {{ t('tasks.revokeToken') }}
+                  </CBtn>
+                </div>
+  
+                <div
+                  v-if="vendorLinks[task.id]"
+                  class="task-card__vendor-link"
+                >
+                  <div class="task-card__vendor-link-meta">
+                    <span class="body-xs">
+                      {{ t('tasks.vendorTokenActive', { date: formatDate(vendorLinks[task.id].expires_at) }) }}
+                    </span>
+                    <a
+                      :href="vendorLinks[task.id].url"
+                      class="task-card__vendor-link-url"
+                      target="_blank"
+                      rel="noopener"
+                      @click.stop
+                    >
+                      {{ vendorLinks[task.id].url }}
+                    </a>
+                  </div>
+                  <CBtn
+                    variant="ghost"
+                    size="sm"
+                    @click.stop="copyVendorLink(task.id)"
+                  >
+                    <CIconCopy />
+                    {{ copiedVendorLinkTaskId === task.id ? t('tasks.vendorTokenCopied') : t('common.copy') }}
+                  </CBtn>
+                </div>
+  
+                <CCardActions>
+                  <CBtn
+                    variant="ghost"
+                    size="sm"
+                    :aria-label="t('tasks.editTask')"
+                    @click.stop="openEditModal(task)"
+                  >
+                    <CIconEdit />
+                    {{ t('common.edit') }}
+                  </CBtn>
+                  <CBtn
+                    v-if="task.status === 'closed'"
+                    variant="primary"
+                    size="sm"
+                    :aria-label="t('tasks.reopenTask')"
+                    @click.stop="openReopenModal(task)"
+                  >
+                    <CIconRefresh />
+                    {{ t('tasks.reopenTask') }}
+                  </CBtn>
+                  <CBtn
+                    v-else-if="!isTerminal(task.status)"
+                    variant="primary"
+                    size="sm"
+                    :aria-label="closeActionLabel(task)"
+                    @click.stop="openCloseModal(task)"
+                  >
+                    <CIconCheckCircle />
+                    {{ closeActionLabel(task) }}
+                  </CBtn>
+                </CCardActions>
               </div>
-
-              <CCardActions>
-                <CBtn
-                  variant="ghost"
-                  size="sm"
-                  :aria-label="t('tasks.editTask')"
-                  @click.stop="openEditModal(task)"
-                >
-                  <CIconEdit />
-                  {{ t('common.edit') }}
-                </CBtn>
-                <CBtn
-                  v-if="task.status === 'closed'"
-                  variant="primary"
-                  size="sm"
-                  :aria-label="t('tasks.reopenTask')"
-                  @click.stop="openReopenModal(task)"
-                >
-                  <CIconRefresh />
-                  {{ t('tasks.reopenTask') }}
-                </CBtn>
-                <CBtn
-                  v-else-if="!isTerminal(task.status)"
-                  variant="primary"
-                  size="sm"
-                  :aria-label="closeActionLabel(task)"
-                  @click.stop="openCloseModal(task)"
-                >
-                  <CIconCheckCircle />
-                  {{ closeActionLabel(task) }}
-                </CBtn>
-              </CCardActions>
-            </div>
-          </CCard>
-
-          <div
-            v-if="!tasks.length"
-            class="py-8 text-center text-md text-on-surface-variant"
-          >
-            {{ t('tasks.empty') }}
+            </CCard>
           </div>
-        </div>
+        </template>
       </template>
     </div>
 
@@ -1472,8 +1471,6 @@ async function copyVendorLink(taskId: string) {
 </template>
 
 <style scoped>
-.task-list { display: flex; flex-direction: column; gap: 10px; }
-
 .task-card__meta-link {
   color: inherit;
   text-decoration: none;

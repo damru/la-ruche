@@ -38,6 +38,7 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
     let api = Router::new()
         // ── Admin ────────────────────────────────────────────────
         .route("/admin/reset-demo", post(admin::reset_demo))
+        .route("/admin/reset-data", post(admin::reset_data))
         // ── Auth ────────────────────────────────────────────────
         .route("/auth/register", post(auth::register))
         .route("/auth/login", post(auth::login))

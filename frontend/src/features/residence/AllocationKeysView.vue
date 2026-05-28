@@ -198,7 +198,6 @@ onMounted(reload)
       </template>
       <template #right>
         <CBtn
-          variant="secondary"
           size="sm"
           @click="openCreateModal"
         >
@@ -225,73 +224,84 @@ onMounted(reload)
           </CHeading>
         </header>
 
-        <p
-          v-if="keys.length === 0"
-          class="py-8 text-center text-md text-on-surface-variant"
-        >
-          {{ t('settings.keys.empty') }}
-        </p>
-
-        <div class="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-4">
-          <CCard
-            v-for="key in keys"
-            :key="key.id"
-            class="key-card"
+        <template v-if="keys.length === 0">
+          <CEmptyState
+            :title="t('settings.keys.empty')"
+            size="page"
           >
-            <div class="key-card__inner">
-              <div class="key-info">
-                <div class="key-info__name">
-                  <span class="title-sm">{{ key.name }}</span>
+            <template #actions>
+              <CBtn
+                variant="primary"
+                @click="openCreateModal"
+              >
+                <CIconPlus />
+                {{ t('settings.keys.newKey') }}
+              </CBtn>
+            </template>
+          </CEmptyState>
+        </template>
+        <template v-else>
+          <div class="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-4">
+            <CCard
+              v-for="key in keys"
+              :key="key.id"
+              class="key-card"
+            >
+              <div class="key-card__inner">
+                <div class="key-info">
+                  <div class="key-info__name">
+                    <span class="title-sm">{{ key.name }}</span>
+                    <span
+                      v-if="keyBalanceDelta[key.id] !== 0 && keyBalanceDelta[key.id] !== undefined"
+                      class="balance-badge"
+                      :title="t('settings.keys.imbalanceDetail', { delta: keyBalanceDelta[key.id] })"
+                    >
+                      <CIconWarn
+                        width="14"
+                        height="14"
+                        aria-hidden="true"
+                      /> {{ t('settings.keys.imbalance') }}
+                    </span>
+                  </div>
                   <span
-                    v-if="keyBalanceDelta[key.id] !== 0 && keyBalanceDelta[key.id] !== undefined"
-                    class="balance-badge"
-                    :title="t('settings.keys.imbalanceDetail', { delta: keyBalanceDelta[key.id] })"
+                    v-if="key.description"
+                    class="key-info__desc"
+                  >{{ key.description }}</span>
+                </div>
+                <div class="key-actions">
+                  <CBtn
+                    variant="ghost"
+                    size="sm"
+                    @click="openEditModal(key)"
                   >
-                    <CIconWarn
-                      width="14"
-                      height="14"
+                    <CIconEdit />
+                    {{ t('common.edit') }}
+                  </CBtn>
+                  <CBtn
+                    v-if="key.key_type !== 'general'"
+                    variant="danger"
+                    size="sm"
+                    @click="openDeleteKeyModal(key)"
+                  >
+                    <CIconTrash />
+                    {{ t('common.delete') }}
+                  </CBtn>
+                  <span
+                    v-else
+                    class="general-key-lock"
+                    :title="t('settings.keys.generalProtected')"
+                  >
+                    <CIconLock
+                      width="16"
+                      height="16"
                       aria-hidden="true"
-                    /> {{ t('settings.keys.imbalance') }}
+                    />
                   </span>
                 </div>
-                <span
-                  v-if="key.description"
-                  class="key-info__desc"
-                >{{ key.description }}</span>
               </div>
-              <div class="key-actions">
-                <CBtn
-                  variant="ghost"
-                  size="sm"
-                  @click="openEditModal(key)"
-                >
-                  <CIconEdit />
-                  {{ t('common.edit') }}
-                </CBtn>
-                <CBtn
-                  v-if="key.key_type !== 'general'"
-                  variant="danger"
-                  size="sm"
-                  @click="openDeleteKeyModal(key)"
-                >
-                  <CIconTrash />
-                  {{ t('common.delete') }}
-                </CBtn>
-                <span
-                  v-else
-                  class="general-key-lock"
-                  :title="t('settings.keys.generalProtected')"
-                >
-                  <CIconLock
-                    width="16"
-                    height="16"
-                    aria-hidden="true"
-                  />
-                </span>
-              </div>
-            </div>
-          </CCard>
-        </div>
+            </CCard>
+          </div>
+        </template>
       </template>
     </div>
 
@@ -443,8 +453,6 @@ onMounted(reload)
 .key-info__name .title-sm { font-weight: var(--fw-semibold); }
 .key-info__desc { font-size: var(--text-xs); color: var(--color-on-surface-variant); }
 .key-actions { display: flex; gap: var(--space-2); align-items: center; padding-top: var(--space-4); border-top: 1px solid var(--color-surface-container-high); margin-top: var(--space-3); }
-
-.empty-state { text-align: center; color: var(--color-on-surface-variant); padding: 24px 0; }
 
 /* keys-grid replaced by global .cards-grid */
 

@@ -191,18 +191,26 @@ async function saveMeeting() {
         </header>
 
         <CTabs variant="filter" v-model="filter" :tabs="meetingTabs" />
-
-        <div
+        <template
           v-if="meetings.length === 0"
-          class="py-8 text-center text-md text-on-surface-variant"
         >
-          {{ t('meetings.empty') }}
-        </div>
-
-        <div
-          v-else
-          class="meeting-list"
-        >
+          <CEmptyState
+            :title="t('meetings.empty')"
+            size="page"
+          >
+            <template #actions>
+              <CBtn
+                v-if="canManage"
+                variant="primary"
+                @click="openCreateModal"
+              >
+                <CIconPlus />
+                {{ t('meetings.create') }}
+              </CBtn>
+            </template>
+          </CEmptyState>
+        </template>
+        <template v-else>
           <CCard
             v-for="meeting in meetings"
             :key="meeting.id"
@@ -273,7 +281,7 @@ async function saveMeeting() {
               </div>
             </div>
           </CCard>
-        </div>
+        </template>
       </template>
     </div>
 

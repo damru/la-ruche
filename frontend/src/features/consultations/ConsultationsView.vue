@@ -268,11 +268,12 @@ async function confirmDelete() {
       </template>
       <template #right>
         <CBtn
+          v-if="canManage"
           variant="primary"
           size="sm"
           @click="openCreateModal"
         >
-          <CIconPlus style="width:16px;height:16px" />
+          <CIconPlus />
           <span class="btn-label">{{ t('consultations.create') }}</span>
         </CBtn>
       </template>
@@ -316,167 +317,180 @@ async function confirmDelete() {
             { value: 'closed', label: t('consultations.filters.closed'), count: closedCount },
           ]"
         />
-
-        <div class="consultation-list">
-          <CCard
-            v-for="c in consultations"
-            :key="c.id"
-            :shadow="c.status !== 'closed'"
-            :class="{ 'outline outline-1 outline-outline-variant': c.status === 'closed' }"
+        <template v-if="!consultations.length">
+          <CEmptyState
+            :title="statusFilter === 'open' ? t('consultations.noOpen') : t('consultations.noClosed')"
+            size="page"
           >
-            <CBadge
-              :variant="c.status === 'open' ? 'open' : 'closed'"
-              class="status-badge"
-              dot
+            <template 
+              #actions
             >
-              {{ t(`consultations.statuses.${c.status}`) }}
-            </CBadge>
-
-            <CHeading 
-              type="card"
-              variant="title"
-            >
-              {{ c.title }}
-            </CHeading>
-
-            <p
-              v-if="c.description"
-            >
-              {{ c.description }}
-            </p>
-
-            <!-- Choices + live result bars (CSS grid — 3 columns per choice row) -->
-            <div class="choices-results">
-              <template
-                v-for="choice in c.choices"
-                :key="choice.id"
+              <CBtn
+                v-if="canManage"
+                variant="primary"
+                @click="openCreateModal"
               >
-                <!-- Column 1: checkbox (open) or plain label (closed) -->
-                <CFormCheckbox
-                  v-if="c.status === 'open'"
-                  v-model="getInline(c).selections"
-                  :value="choice.id"
-                  :label="choice.label"
-                  :disabled="isVoteLocked(c)"
-                  class="choice-label"
-                  :class="{ 'choice-label--locked': isVoteLocked(c) }"
-                />
-                <span
-                  v-else
-                  class="choice-label"
-                >{{ choice.label }}</span>
-
-                <!-- Column 2: result bar -->
-                <div class="result-bar-bg">
-                  <div
-                    class="result-bar"
-                    :class="{ 'result-bar--dim': !hasVoted(c) && c.status === 'open' }"
-                    :style="{ width: barWidth(c, choice.votes) + '%' }"
-                  ></div>
-                </div>
-
-                <!-- Column 3: percentage -->
-                <span class="font-mono text-xs text-end">
-                  {{ hasVoted(c) || c.status === 'closed' ? (() => { const total = getTotalVotes(c); return total > 0 ? Math.round(choice.votes * 100 / total) : 0 })() + '%' : '—' }}
-                </span>
-              </template>
-            </div>
-
-            <!-- Response count -->
-            <p
-              v-if="hasVoted(c) || c.status === 'closed'"
-              class="body-xs response-count"
+                <CIconPlus />
+                {{ t('consultations.create') }}
+              </CBtn>
+            </template>
+          </CEmptyState>
+        </template>
+        <template v-else>
+          <div class="consultation-list">
+            <CCard
+              v-for="c in consultations"
+              :key="c.id"
+              :shadow="c.status !== 'closed'"
+              :class="{ 'outline outline-1 outline-outline-variant': c.status === 'closed' }"
             >
-              {{ t('consultations.responseCount', { count: c.total_responses }) }}
-            </p>
-
-            <!-- Inline vote form: comment + submit appear when ≥1 choice selected AND not locked -->
-            <div
-              v-if="c.status === 'open' && getInline(c).selections.length > 0 && !isVoteLocked(c)"
-              class="inline-vote-form"
-            >
-              <CFormTextarea
-                v-model="getInline(c).comment"
-                :rows="2"
-                :placeholder="t('consultations.respondModal.commentLabel')"
-              />
-              <div class="inline-vote-actions">
-                <p
-                  v-if="getInline(c).error"
-                  class="body-xs error-text"
+              <CBadge
+                :variant="c.status === 'open' ? 'open' : 'closed'"
+                class="status-badge"
+                dot
+              >
+                {{ t(`consultations.statuses.${c.status}`) }}
+              </CBadge>
+  
+              <CHeading 
+                type="card"
+                variant="title"
+              >
+                {{ c.title }}
+              </CHeading>
+  
+              <p
+                v-if="c.description"
+              >
+                {{ c.description }}
+              </p>
+  
+              <!-- Choices + live result bars (CSS grid — 3 columns per choice row) -->
+              <div class="choices-results">
+                <template
+                  v-for="choice in c.choices"
+                  :key="choice.id"
                 >
-                  {{ getInline(c).error }}
-                </p>
+                  <!-- Column 1: checkbox (open) or plain label (closed) -->
+                  <CFormCheckbox
+                    v-if="c.status === 'open'"
+                    v-model="getInline(c).selections"
+                    :value="choice.id"
+                    :label="choice.label"
+                    :disabled="isVoteLocked(c)"
+                    class="choice-label"
+                    :class="{ 'choice-label--locked': isVoteLocked(c) }"
+                  />
+                  <span
+                    v-else
+                    class="choice-label"
+                  >{{ choice.label }}</span>
+  
+                  <!-- Column 2: result bar -->
+                  <div class="result-bar-bg">
+                    <div
+                      class="result-bar"
+                      :class="{ 'result-bar--dim': !hasVoted(c) && c.status === 'open' }"
+                      :style="{ width: barWidth(c, choice.votes) + '%' }"
+                    ></div>
+                  </div>
+  
+                  <!-- Column 3: percentage -->
+                  <span class="font-mono text-xs text-end">
+                    {{ hasVoted(c) || c.status === 'closed' ? (() => { const total = getTotalVotes(c); return total > 0 ? Math.round(choice.votes * 100 / total) : 0 })() + '%' : '—' }}
+                  </span>
+                </template>
+              </div>
+  
+              <!-- Response count -->
+              <p
+                v-if="hasVoted(c) || c.status === 'closed'"
+                class="body-xs response-count"
+              >
+                {{ t('consultations.responseCount', { count: c.total_responses }) }}
+              </p>
+  
+              <!-- Inline vote form: comment + submit appear when ≥1 choice selected AND not locked -->
+              <div
+                v-if="c.status === 'open' && getInline(c).selections.length > 0 && !isVoteLocked(c)"
+                class="inline-vote-form"
+              >
+                <CFormTextarea
+                  v-model="getInline(c).comment"
+                  :rows="2"
+                  :placeholder="t('consultations.respondModal.commentLabel')"
+                />
+                <div class="inline-vote-actions">
+                  <p
+                    v-if="getInline(c).error"
+                    class="body-xs error-text"
+                  >
+                    {{ getInline(c).error }}
+                  </p>
+                  <CBtn
+                    variant="primary"
+                    size="sm"
+                    :loading="getInline(c).submitting"
+                    @click="submitVote(c)"
+                  >
+                    {{ hasVoted(c) ? t('consultations.updateVote') : t('consultations.respondModal.submit') }}
+                  </CBtn>
+                </div>
+              </div>
+  
+              <!-- Locked state: show "Modifier" button when already voted -->
+              <div
+                v-if="c.status === 'open' && isVoteLocked(c)"
+                class="vote-locked-actions"
+              >
+                <CBtn
+                  variant="ghost"
+                  size="sm"
+                  @click="unlockVote(c)"
+                >
+                  {{ t('consultations.modifyVote') }}
+                </CBtn>
+              </div>
+  
+              <!-- Date hint -->
+              <p class="body-xs footer-meta">
+                {{ c.status === 'open'
+                  ? t('consultations.openedAt', { date: formatRelative(c.created_at) })
+                  : t('consultations.closedAt', { date: formatDate(c.closed_at!) }) }}
+              </p>
+  
+              <!-- Manager close action (open consultations) -->
+              <div
+                v-if="c.status === 'open' && canManage"
+                class="card-actions"
+              >
                 <CBtn
                   variant="primary"
                   size="sm"
-                  :loading="getInline(c).submitting"
-                  @click="submitVote(c)"
+                  @click="openCloseModal(c)"
                 >
-                  {{ hasVoted(c) ? t('consultations.updateVote') : t('consultations.respondModal.submit') }}
+                  <CIconCheckCircle />
+                  {{ t('consultations.close') }}
                 </CBtn>
               </div>
-            </div>
-
-            <!-- Locked state: show "Modifier" button when already voted -->
-            <div
-              v-if="c.status === 'open' && isVoteLocked(c)"
-              class="vote-locked-actions"
-            >
-              <CBtn
-                variant="ghost"
-                size="sm"
-                @click="unlockVote(c)"
+  
+              <!-- Manager delete action (closed consultations) -->
+              <div
+                v-if="c.status === 'closed' && canManage"
+                class="card-actions"
               >
-                {{ t('consultations.modifyVote') }}
-              </CBtn>
-            </div>
-
-            <!-- Date hint -->
-            <p class="body-xs footer-meta">
-              {{ c.status === 'open'
-                ? t('consultations.openedAt', { date: formatRelative(c.created_at) })
-                : t('consultations.closedAt', { date: formatDate(c.closed_at!) }) }}
-            </p>
-
-            <!-- Manager close action (open consultations) -->
-            <div
-              v-if="c.status === 'open' && canManage"
-              class="card-actions"
-            >
-              <CBtn
-                variant="primary"
-                size="sm"
-                @click="openCloseModal(c)"
-              >
-                <CIconCheckCircle />
-                {{ t('consultations.close') }}
-              </CBtn>
-            </div>
-
-            <!-- Manager delete action (closed consultations) -->
-            <div
-              v-if="c.status === 'closed' && canManage"
-              class="card-actions"
-            >
-              <CBtn
-                variant="danger"
-                size="sm"
-                @click="openDeleteModal(c)"
-              >
-                <CIconTrash />
-                {{ t('common.delete') }}
-              </CBtn>
-            </div>
-          </CCard>
-
-          <div
-            v-if="!consultations.length"
-            class="py-8 text-center text-md text-on-surface-variant"
-          >
-            {{ statusFilter === 'open' ? t('consultations.noOpen') : t('consultations.noClosed') }}
+                <CBtn
+                  variant="danger"
+                  size="sm"
+                  @click="openDeleteModal(c)"
+                >
+                  <CIconTrash />
+                  {{ t('common.delete') }}
+                </CBtn>
+              </div>
+            </CCard>
           </div>
-        </div>
+        </template>
 
         <CLegalCard>
           <CLegalNotice :links="legalCardLinks">

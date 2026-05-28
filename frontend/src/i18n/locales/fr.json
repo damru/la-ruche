@@ -1348,7 +1348,13 @@
       "resetAppConfirmMessage": "Toutes les données seront effacées et remplacées par les données de démonstration. Cette action est irréversible.",
       "resetAppConfirm": "Réinitialiser",
       "resetAppSuccess": "Application réinitialisée avec les données de démonstration.",
-      "resetAppError": "Impossible de réinitialiser l'application."
+      "resetAppError": "Impossible de réinitialiser l'application.",
+      "resetData": "Supprimer toutes les données",
+      "resetDataConfirmTitle": "Supprimer toutes les données ?",
+      "resetDataConfirmMessage": "Toutes les données (bâtiments, lots, charges, assemblées…) seront effacées définitivement. Les comptes utilisateurs sont conservés. Cette action est irréversible.",
+      "resetDataConfirm": "Supprimer",
+      "resetDataSuccess": "Toutes les données ont été supprimées.",
+      "resetDataError": "Impossible de supprimer les données."
     },
     "preferences": {
       "title": "Préférences",

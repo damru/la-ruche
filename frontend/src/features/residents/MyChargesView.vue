@@ -135,5 +135,4 @@ onMounted(reload)
 }
 
 .dim { color: var(--color-on-surface-variant); }
-.empty-state { text-align: center; color: var(--color-on-surface-variant); padding: var(--space-8) 0; }
 </style>

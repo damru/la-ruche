@@ -29,6 +29,7 @@ import CTabs, { type Tab } from '@/components/atoms/CTabs.vue'
 import { usePageLoader, toErrorMessage } from '@/composables/usePageLoader'
 import { useFormFeedback } from '@/composables/useFormFeedback'
 import { useAutoClose } from '@/composables/useAutoClose'
+import { useRole } from '@/composables/useRole'
 import type { ContractReminder, ContractStatus, ContractType, Document, VendorContract } from '@/types/domain'
 
 interface ContractReminderView extends ContractReminder {
@@ -39,6 +40,7 @@ interface ContractReminderView extends ContractReminder {
 
 const { t } = useI18n()
 const { formatCurrency, formatDate, daysUntil } = useFormatters()
+const { hasAnyRole } = useRole()
 
 const filter = ref<'all' | 'active' | 'expired'>('all')
 const search = ref('')
@@ -51,6 +53,8 @@ const busyKey = ref('')
 const contractDocumentsTarget = ref<VendorContract | null>(null)
 const contractDocuments = ref<Document[]>([])
 const loadingContractDocuments = ref(false)
+
+const canManage = computed(() => hasAnyRole(['manager']))
 
 async function loadData() {
   const [buildingResponse, contractsResponse, remindersResponse] = await Promise.all([
@@ -244,10 +248,6 @@ function openCreateModal() {
   showFormModal.value = true
 }
 
-function setFilter(nextFilter: 'all' | 'active' | 'expired') {
-  filter.value = nextFilter
-}
-
 function openEditModal(contract: VendorContract) {
   editingContract.value = contract
   showFormModal.value = true
@@ -336,6 +336,7 @@ async function confirmTerminateContract() {
       </template>
       <template #right>
         <CBtn
+          v-if="canManage"
           variant="primary"
           size="sm"
           @click="openCreateModal"
@@ -401,12 +402,25 @@ async function confirmTerminateContract() {
           </CFormInput>
         </div>
 
-        <CCard
+        <template
           v-if="contracts.length === 0"
-          class="contracts-empty"
         >
-          {{ t('contracts.empty') }}
-        </CCard>
+          <CEmptyState
+            :title="t('contracts.empty')"
+            size="page"
+          >
+            <template #actions>
+              <CBtn
+                v-if="canManage && ['active', 'all'].includes(filter)"
+                variant="primary"
+                @click="openCreateModal"
+              >
+                <CIconPlus />
+                {{ t('contracts.create') }}
+              </CBtn>
+            </template>
+          </CEmptyState>
+        </template>
 
         <div
           v-else
