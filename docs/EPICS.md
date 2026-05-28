@@ -451,7 +451,7 @@ Consolidation technique du design system : migration des tokens de couleur vers 
 * `EP-020-S09` ✅ — Créer `CFormRow`, `CFormGroup`, `CFormLabel` molecules ; migrer les vues consommatrices de `forms.css` (`.form-grid`, `.field`, `.search-bar`, `.icon-btn`) vers atoms existants et Tailwind inline
 * `EP-020-S10` ✅ — Déplacer les styles `.data-table` dans les scoped blocks des vues consommatrices ; remplacer `.cards-grid` par Tailwind `grid grid-cols-[…]` inline ; supprimer `tables.css`
 * `EP-020-S11` ✅ — Nettoyer `base.css` : conserver les seuls resets navigateur et touch targets ; migrer `.view-container`/`.view-header` vers Tailwind inline, `.empty-state` vers `CEmptyState` ; supprimer les classes applicatives (spinner, loading-skeleton, card--terminated)
-* `EP-020-S12` ✅ — Migrer `activity-cards.css` vers scoped styles du composant feature consommateur ; supprimer le fichier global
+* `EP-020-S12` ✅ — Supprimer `activity-cards.css` ; remplacer par l'utilisation de CCard
 
 ***
 

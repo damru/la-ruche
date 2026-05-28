@@ -34,6 +34,8 @@ skills-lock.json
 #       ARTIFACTS FROM AI       #
 #################################
 
+# Added by code-review-graph
+.code-review-graph/
 .outputs/
 
 # MemPalace per-project files (issue #185)
@@ -43,5 +45,5 @@ entities.json
 # Graphify outputs 
 graphify-out/
 
-# Added by code-review-graph
-.code-review-graph/
+# Superpowers
+superpowers/
