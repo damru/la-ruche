@@ -600,15 +600,6 @@ function photoPreview(file: File): string {
             :class="['gap-y-4', { 'outline outline-1 outline-outline-variant': r.status === 'closed' }]"
           >
             <div class="flex items-center gap-3 min-w-0">
-              <CIconTile
-                class="tone--default"
-              >
-                <component
-                  :is=CIconInfo
-                  aria-hidden="true"
-                />
-              </CIconTile>
-              
               <CMetaLine 
                 class="[&_svg]:icon-sm text-xs"
               >

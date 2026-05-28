@@ -141,7 +141,7 @@ function formatLocation(unit: { block?: string | null; staircase?: string | null
         </CAlert>
 
         <!-- Cross-table: units × keys -->
-        <CCard padding="none">
+        <CCard class="p-0!">
           <table class="data-table">
             <thead>
               <tr>

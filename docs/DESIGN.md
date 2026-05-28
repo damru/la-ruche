@@ -480,7 +480,7 @@ border-color: var(--color-outline-light);
 
 | Composant | Props clés | Description |
 |---|---|---|
-| `CCard` | `shadow?`, `gap?` (`none` \| `sm` \| `md`) | Conteneur générique — définit background, border-radius, padding et flux interne. `gap` : `sm` = 12px, `md` = 16px (défaut), `none` = 0. Pour les listes avec séparateurs : `CFlexGroup`. Ossature d'une carte d'entité : `CCardHeader` › titre › description › `CMeta` › `CCardActions` › `CCardNote`. |
+| `CCard` | `level?` (`1`\|`2`\|`3`\|`4`, défaut `2`), `shadow?`, `gap?` (`none` \| `sm` \| `md`) | Conteneur générique — définit background, border-radius, padding et flux interne. `level` couple padding et radius : 1 = padding lg + radius xl (carte racine), 2 = padding md + radius lg (défaut), 3 = padding sm + radius md (carte imbriquée), 4 = padding xs + radius sm (carte innermost). `gap` : `sm` = 12px, `md` = 16px (défaut), `none` = 0. Pour les listes avec séparateurs : `CFlexGroup`. Ossature d'une carte d'entité : `CCardHeader` › titre › description › `CMeta` › `CCardActions` › `CCardNote`. |
 | `CCardActions` | — | ✅ Zone d'actions d'une carte — `flex flex-wrap gap-x-2 gap-y-1`. Remplace `.activity-card__actions`. |
 | `CCardHeader` | `withIcon?` | 🔲 planifié — En-tête de carte — slots `#icon`, `#chips` |
 | `CCardNote` | `note` | Encart d'information secondaire dans une `CCard` |

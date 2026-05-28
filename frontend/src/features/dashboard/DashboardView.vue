@@ -232,7 +232,7 @@ const todayStr = computed(() =>
       <!-- Main 3-col grid -->
       <div class="grid3">
         <!-- Priority tasks -->
-        <CCard padding="none">
+        <CCard noPadding>
           <CSectionHeader class="px-5 pt-5 mb-4">
             <CHeading type="card">
               {{ t('dashboard.priorityTasks') }}
@@ -293,7 +293,7 @@ const todayStr = computed(() =>
         </CCard>
 
         <!-- Contract reminders + Reports -->
-        <CCard padding="none">
+        <CCard noPadding>
           <CSectionHeader class="px-5 pt-5 mb-4">
             <CHeading type="card">
               {{ t('dashboard.contractReminders') }}
@@ -404,7 +404,7 @@ const todayStr = computed(() =>
 
         <!-- Right col: residents + consultation -->
         <div class="right-col">
-          <CCard padding="none">
+          <CCard noPadding>
             <CSectionHeader class="px-5 pt-5 mb-4">
               <CHeading type="card">
                 {{ t('dashboard.residentsTitle') }}

@@ -1,13 +1,5 @@
 <template>
-  <div class="c-card-actions">
+  <div class="flex flex-wrap pt-4 gap-2 border-t border-outline-light">
     <slot />
   </div>
 </template>
-
-<style scoped>
-.c-card-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2) var(--space-2);
-}
-</style>

@@ -216,7 +216,7 @@ async function confirmDeleteDoc() {
           </template>
         </CFormInput>
 
-        <CCard padding="none">
+        <CCard class="p-0!">
           <table class="data-table">
             <thead>
               <tr>

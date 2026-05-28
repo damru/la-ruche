@@ -1440,25 +1440,27 @@ function toDateTimeLocal(value: string): string {
 
         <div class="detail-layout">
           <section class="main-column">
-            <div class="flex flex-row justify-between items-start">
-              <div>
-                <CHeading>
-                  {{ t('meetings.resolutions') }}
-                </CHeading>
-                <p class="section-subtitle">
-                  {{ t('meetings.resolutionCount', resolutions.length) }}
-                </p>
-              </div>
-              <CBtn
+            <CSectionHeader>
+              <CHeading>
+                {{ t('meetings.resolutions') }}
+              </CHeading>
+              <p class="section-subtitle">
+                {{ t('meetings.resolutionCount', resolutions.length) }}
+              </p>
+              <template
                 v-if="canAddResolution"
-                variant="ghost"
-                size="sm"
-                @click="openResolutionModal"
+                #actions
               >
-                <CIconPlus class="icon-sm" />
-                <span class="btn-label">{{ t('meetings.addResolution') }}</span>
-              </CBtn>
-            </div>
+                <CBtn
+                  variant="ghost"
+                  size="sm"
+                  @click="openResolutionModal"
+                >
+                  <CIconPlus class="icon-sm" />
+                  <span class="btn-label">{{ t('meetings.addResolution') }}</span>
+                </CBtn>
+              </template>
+            </CSectionHeader>
 
             <div
               v-if="resolutions.length === 0"
@@ -1679,25 +1681,27 @@ function toDateTimeLocal(value: string): string {
             </CCard>
 
             <CCard class="">
-              <div class="side-head">
-                <div>
-                  <CHeading type="card">
-                    {{ t('meetings.documents.title') }}
-                  </CHeading>
-                  <p class="side-subtitle">
-                    {{ t('meetings.callReady') }}
-                  </p>
-                </div>
-                <CBtn
+              <CSectionHeader>
+                <CHeading type="card">
+                  {{ t('meetings.documents.title') }}
+                </CHeading>
+                <p class="side-subtitle">
+                  {{ t('meetings.callReady') }}
+                </p>
+                <template
                   v-if="auth.isManager"
-                  variant="ghost"
-                  size="sm"
-                  @click="openDocumentModal"
+                  #actions
                 >
-                  <CIconPlus class="icon-sm" />
-                  <span class="btn-label">{{ t('meetings.documents.uploadAction') }}</span>
-                </CBtn>
-              </div>
+                  <CBtn
+                    variant="ghost"
+                    size="sm"
+                    @click="openDocumentModal"
+                  >
+                    <CIconPlus class="icon-sm" />
+                    <span class="btn-label">{{ t('meetings.documents.uploadAction') }}</span>
+                  </CBtn>
+                </template>
+              </CSectionHeader>
 
               <CFormFeedback
                 :status="documentFeedback.status.value"
@@ -1802,25 +1806,27 @@ function toDateTimeLocal(value: string): string {
             </CCard>
 
             <CCard class="">
-              <div class="side-head">
-                <div>
-                  <CHeading type="card">
-                    {{ t('meetings.presenceQuorum') }}
-                  </CHeading>
-                  <p class="side-subtitle">
-                    {{ t('meetings.sharesRepresented') }}
-                  </p>
-                </div>
-                <CBtn
+              <CSectionHeader>
+                <CHeading type="card">
+                  {{ t('meetings.presenceQuorum') }}
+                </CHeading>
+                <p class="side-subtitle">
+                  {{ t('meetings.sharesRepresented') }}
+                </p>
+                <template
                   v-if="canEditAttendance"
-                  variant="ghost"
-                  size="sm"
-                  @click="openAttendanceModal"
+                  #actions
                 >
-                  <CIconEdit class="icon-sm" />
-                  <span class="btn-label">{{ t('meetings.attendanceAction') }}</span>
-                </CBtn>
-              </div>
+                  <CBtn
+                    variant="ghost"
+                    size="sm"
+                    @click="openAttendanceModal"
+                  >
+                    <CIconEdit class="icon-sm" />
+                    <span class="btn-label">{{ t('meetings.attendanceAction') }}</span>
+                  </CBtn>
+                </template>
+              </CSectionHeader>
 
               <div class="flex flex-col gap-2">
                 <p class="font-serif font-bold tracking-tight">
@@ -2785,13 +2791,6 @@ function toDateTimeLocal(value: string): string {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
-}
-
-.side-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: var(--space-3);
 }
 
 .card-title {

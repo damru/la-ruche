@@ -305,7 +305,7 @@ function formatLocation(unit: { block?: string | null; staircase?: string | null
 
         <!-- Lots -->
         <template v-if="activeTab === 'units'">
-          <CCard padding="none">
+          <CCard class="p-0!">
             <table class="data-table">
               <thead>
                 <tr>
@@ -398,7 +398,7 @@ function formatLocation(unit: { block?: string | null; staircase?: string | null
 
         <!-- Utilisateurs -->
         <template v-if="activeTab === 'users'">
-          <CCard padding="none">
+          <CCard class="p-0!">
             <table class="data-table">
               <thead>
                 <tr>

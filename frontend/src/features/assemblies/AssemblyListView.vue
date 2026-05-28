@@ -206,7 +206,6 @@ async function saveMeeting() {
           <CCard
             v-for="meeting in meetings"
             :key="meeting.id"
-            padding="none"
             interactive
             class="meeting-card"
             role="button"
@@ -355,6 +354,7 @@ async function saveMeeting() {
   align-items: stretch;
   overflow: clip;
   gap: 0;
+  padding: 0;
 }
 
 .meeting-card__main {

@@ -1,17 +1,19 @@
 <script setup lang="ts">
 // Molecule component — CCard
-// Surface container-lowest, shadow ambient, radius-lg
+// Surface container-lowest, shadow ambient
 // "No-Line" rule: no internal borders
+// level 1 (outermost) → padding lg / radius xl
+// level 2 (default)   → padding md / radius lg
+// level 3             → padding sm / radius md
+// level 4 (innermost) → padding xs / radius sm
 
 withDefaults(defineProps<{
-  padding?: 'xs' | 'sm' | 'md' | 'lg' | 'none'
-  radius?: 'xs' | 'sm' | 'md' | 'lg' | 'none'
+  level?: 1 | 2 | 3 | 4
   shadow?: boolean
   interactive?: boolean   // hover lift
   gap?: 'none' | 'sm' | 'md'
 }>(), {
-  padding: 'md',
-  radius: 'lg',
+  level: 2,
   shadow: true,
   interactive: false,
   gap: 'md',
@@ -22,8 +24,7 @@ withDefaults(defineProps<{
   <div
     :class="[
       'c-card',
-      `c-card--pad-${padding}`,
-      `c-card--radius-${radius}`,
+      `c-card--level-${level}`,
       `c-card--gap-${gap}`,
       { 'c-card--shadow': shadow, 'c-card--interactive': interactive }
     ]"
@@ -44,17 +45,16 @@ withDefaults(defineProps<{
   flex: 1;
 }
 
-.c-card--radius-none { border-radius: 0; }
-.c-card--radius-xs   { border-radius: var(--radius-xs, var(--radius-sm)); }
-.c-card--radius-sm   { border-radius: var(--radius-sm); }
-.c-card--radius-md   { border-radius: var(--radius-md); }
-.c-card--radius-lg   { border-radius: var(--radius-lg); }
+/* level 1 — outermost: padding lg (24px) + radius xl (24px) */
+.c-card--level-1 { padding: var(--space-6); border-radius: var(--radius-xl); }
+/* level 2 — default: padding md (20px) + radius lg (16px) */
+.c-card--level-2 { padding: var(--space-5); border-radius: var(--radius-lg); }
+/* level 3 — nested: padding sm (16px) + radius md (12px) */
+.c-card--level-3 { padding: var(--space-4); border-radius: var(--radius-md); }
+/* level 4 — innermost: padding xs (12px) + radius sm (8px) */
+.c-card--level-4 { padding: var(--space-3); border-radius: var(--radius-sm); }
 
-.c-card--pad-none { padding: 0; }
-.c-card--pad-xs   { padding: var(--space-3); }
-.c-card--pad-sm   { padding: var(--space-4); }
-.c-card--pad-md   { padding: var(--space-5); }
-.c-card--pad-lg   { padding: var(--space-6); }
+.c-card--no-padding { padding: 0; }
 
 .c-card--gap-none { gap: 0; }
 .c-card--gap-sm   { gap: var(--space-3); }
