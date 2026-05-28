@@ -387,7 +387,11 @@
     "calledAt": "Convoquée le {date}",
     "meetingDate": "Date de l'AG",
     "location": "Lieu",
-    "agenda": "Ordre du jour",
+    "agenda": {
+      "title": "Ordre du jour",
+      "empty": "Aucun point à l'ordre du jour",
+      "emptyHint": "Ajoutez des résolutions pour structurer les débats de l'AG."
+    },
     "resolutions": "Résolutions",
     "empty": "Aucune assemblée générale à afficher.",
     "resolutionsEmpty": "Aucune résolution à l'ordre du jour pour cette assemblée.",

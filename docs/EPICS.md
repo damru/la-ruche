@@ -467,7 +467,9 @@ Consolidation technique du design system : migration des tokens de couleur vers 
 | T-002-3 | Rationaliser le CSS, généralisation de tailwind, réduction des classes custom | en attente |
 | T-002-4 | Vérifier utilisation en dur de height/width sur les icônes SVG sans classes `--icon-` | en attente |
 | T-002-5 | Vérifier utilisation inline de balises de titres sans `CHeading` | en attente |
-| T-002-5 | Vérifier utilisation inline de formulaires sans `CForm*` | en attente |
+| T-002-6 | Vérifier utilisation inline de formulaires sans `CForm*` | en attente |
+| T-002-7 | Améliorer les erreurs au chargement avec des vrais messages | en attente |
+| T-002-8 | Améliorer les formulaires dans modale: message de feedback mal placé, bouton `close` inaccessible, délai de fermeture automatique trop long etc. | en attente |
 | T-003 | Durcir le contrat d'interface entre backend et frontend - utilisation d'openapi ? | en attente |
 | T-004 | Etudier l'intérêt de la création d'un crate dédié aux AG | en attente |
 

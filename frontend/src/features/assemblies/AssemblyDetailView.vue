@@ -1673,7 +1673,32 @@ function toDateTimeLocal(value: string): string {
               </CFlexGroup>
             </CCard>
 
-            <CCard class="">
+            <CCard>
+              <CHeading type="card">{{ t('meetings.agenda.title') }}</CHeading>
+              <template v-if="agendaItems.length === 0">
+                <CEmptyState
+                  size="compact"
+                  :title="t('meetings.agenda.empty')"
+                  :description="t('meetings.agenda.emptyHint')"
+                />
+              </template>
+              <CFlexGroup
+                tag="ol"
+                class="agenda-list"
+                direction="column"
+              >
+                <li
+                  v-for="(item, index) in agendaItems"
+                  :key="`${index}-${item}`"
+                  class="agenda-item"
+                >
+                  <span class="agenda-item__n">{{ index + 1 }}.</span>
+                  <span class="agenda-item__text">{{ item }}</span>
+                </li>
+              </CFlexGroup>
+            </CCard>
+
+            <CCard>
               <CSectionHeader>
                 <CHeading type="card">
                   {{ t('meetings.documents.title') }}
@@ -1705,12 +1730,12 @@ function toDateTimeLocal(value: string): string {
                 <p class="doc-group__title">
                   {{ t('meetings.documents.notice') }}
                 </p>
-                <p
-                  v-if="noticeDocuments.length === 0"
-                  class="py-8 px-4 text-center text-base text-on-surface-variant"
-                >
-                  {{ t('meetings.documents.empty') }}
-                </p>
+                <template v-if="noticeDocuments.length === 0">
+                  <CEmptyState
+                    size="compact"
+                    :title="t('meetings.documents.empty')"
+                  />
+                </template>
                 <div
                   v-else
                   class="doc-list"
@@ -1744,12 +1769,12 @@ function toDateTimeLocal(value: string): string {
                 <p class="doc-group__title">
                   {{ t('meetings.documents.attachment') }}
                 </p>
-                <p
-                  v-if="attachmentDocuments.length === 0"
-                  class="py-8 px-4 text-center text-base text-on-surface-variant"
-                >
-                  {{ t('meetings.documents.empty') }}
-                </p>
+                <template v-if="attachmentDocuments.length === 0">
+                  <CEmptyState
+                    size="compact"
+                    :title="t('meetings.documents.empty')"
+                  />
+                </template>
                 <div
                   v-else
                   class="doc-list"
@@ -1880,24 +1905,6 @@ function toDateTimeLocal(value: string): string {
                     </CBadge>
                   </div>
                 </div>
-              </CFlexGroup>
-            </CCard>
-
-            <CCard class="">
-              <CHeading type="card">{{ t('meetings.agenda') }}</CHeading>
-              <CFlexGroup
-                tag="ol"
-                class="agenda-list"
-                direction="column"
-              >
-                <li
-                  v-for="(item, index) in agendaItems"
-                  :key="`${index}-${item}`"
-                  class="agenda-item"
-                >
-                  <span class="agenda-item__n">{{ index + 1 }}.</span>
-                  <span class="agenda-item__text">{{ item }}</span>
-                </li>
               </CFlexGroup>
             </CCard>
           </aside>
