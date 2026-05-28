@@ -463,7 +463,7 @@ Consolidation technique du design system : migration des tokens de couleur vers 
 |---|-------|--------|--------|
 | T-001 | Fusionner les migrations SQL en un fichier unique | Consolider `0001_init.sql` et `0002_tantieme_audit.sql` (et toute migration ultérieure) en un seul fichier `0001_init.sql` pour simplifier l'initialisation d'une nouvelle instance. | en attente |
 | T-002-1 | Utilisation des composants radix-vue (ex: CModal > Dialog) | en attente |
-| T-002-2 | Peaufiner les écrans, création de composants atomiques | en-attente |
+| T-002-2 | Peaufiner les écrans, création de composants atomiques | en attente |
 | T-002-3 | Rationaliser le CSS, généralisation de tailwind, réduction des classes custom | en attente |
 | T-002-4 | Vérifier utilisation en dur de height/width sur les icônes SVG sans classes `--icon-` | en attente |
 | T-002-5 | Vérifier utilisation inline de balises de titres sans `CHeading` | en attente |
