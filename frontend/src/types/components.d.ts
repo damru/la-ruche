@@ -107,7 +107,6 @@ declare module 'vue' {
     CLinkedDocumentsModal: typeof import('./../components/organisms/CLinkedDocumentsModal.vue')['default']
     CListItem: typeof import('./../components/molecules/CListItem.vue')['default']
     CLogoMark: typeof import('./../components/atoms/CLogoMark.svg')['default']
-    CMeta: typeof import('./../components/molecules/CMeta.vue')['default']
     CMetaItem: typeof import('./../components/molecules/CMetaItem.vue')['default']
     CMetaLine: typeof import('./../components/molecules/CMetaLine.vue')['default']
     CMockBanner: typeof import('./../components/atoms/CMockBanner.vue')['default']

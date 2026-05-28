@@ -198,7 +198,6 @@ Les états interactifs sont gérés localement dans chaque composant — pas de 
 | `forms.css` | `.form-grid` · `.field` · `.search-bar` · `.dropzone` · `.icon-btn` | `CFormRow`, `CFormGroup` molecules + atoms `CFormInput`, `CFormDropzone` existants + Tailwind inline (EP-020-S09) |
 | `tables.css` | `.data-table` et variantes · `.cards-grid` | `CDataTable` (✅ migré EP-020-S10) ; `.cards-grid` → Tailwind `grid grid-cols-[…]` inline |
 | `base.css` | `.view-container` · `.view-header` · `.empty-state` · `.card--terminated` · `.loading-skeleton` · `.spinner` | `view-container` / `view-header` utilitaires `@utility` ; `CEmptyState` (✅) ; `CPageLoader` (✅) ; resets navigateur conservés (EP-020-S11) |
-| `activity-cards.css` | `.activity-card__*` | ✅ migré — `CCard` + `CCardActions` + Tailwind inline + utilitaires texte (EP-020-S12) |
 
 ---
 
@@ -480,8 +479,8 @@ border-color: var(--color-outline-light);
 
 | Composant | Props clés | Description |
 |---|---|---|
-| `CCard` | `level?` (`1`\|`2`\|`3`\|`4`, défaut `2`), `shadow?`, `gap?` (`none` \| `sm` \| `md`) | Conteneur générique — définit background, border-radius, padding et flux interne. `level` couple padding et radius : 1 = padding lg + radius xl (carte racine), 2 = padding md + radius lg (défaut), 3 = padding sm + radius md (carte imbriquée), 4 = padding xs + radius sm (carte innermost). `gap` : `sm` = 12px, `md` = 16px (défaut), `none` = 0. Pour les listes avec séparateurs : `CFlexGroup`. Ossature d'une carte d'entité : `CCardHeader` › titre › description › `CMeta` › `CCardActions` › `CCardNote`. |
-| `CCardActions` | — | ✅ Zone d'actions d'une carte — `flex flex-wrap gap-x-2 gap-y-1`. Remplace `.activity-card__actions`. |
+| `CCard` | `level?` (`1`\|`2`\|`3`\|`4`, défaut `2`), `shadow?`, `gap?` (`none` \| `sm` \| `md`) | Conteneur générique — définit background, border-radius, padding et flux interne. `level` couple padding et radius : 1 = padding lg + radius xl (carte racine), 2 = padding md + radius lg (défaut), 3 = padding sm + radius md (carte imbriquée), 4 = padding xs + radius sm (carte innermost). `gap` : `sm` = 12px, `md` = 16px (défaut), `none` = 0. Pour les listes avec séparateurs : `CFlexGroup`. Ossature d'une carte d'entité : `CCardHeader` › titre › description › `CMetaLine` › `CCardActions` › `CCardNote`. |
+| `CCardActions` | — | ✅ Zone d'actions d'une carte — `flex flex-wrap gap-x-2 gap-y-1`. |
 | `CCardHeader` | `withIcon?` | 🔲 planifié — En-tête de carte — slots `#icon`, `#chips` |
 | `CCardNote` | `note` | Encart d'information secondaire dans une `CCard` |
 | `CDataTable` | `columns`, `rows` | Tableau de données |
@@ -495,7 +494,6 @@ border-color: var(--color-outline-light);
 | `CLegalCard` | — | Carte de note légale (wraps `CLegalNotice`) |
 | `CLegalNotice` | `descriptions`, `links` | Bloc notices légales structurées |
 | `CListItem` | — | Ligne de liste générique |
-| `CMeta` | — | Conteneur de métadonnées |
 | `CMetaItem` | `variant`, `icon` | Ligne icône + contenu — variantes `footer` / `sub` |
 | `CMetaLine` | — | Rangée horizontale de `CMetaItem` avec `CSeparator` |
 | `CModal` | `open`, `title`, `saving?`, `feedback?` | Dialogue Radix `Dialog` — émettre `@submit` pour soumission. `CFormFeedback` obligatoire dans `#footer` (DDR-006). |
@@ -578,7 +576,7 @@ CCard (conteneur)
 ├── CCardHeader    — chips de statut / type toujours visibles
 ├── Titre principal
 ├── Description courte (optionnel)
-├── CMeta / CMetaItem  — métadonnées compactes
+├── CMetaLine / CMetaItem  — métadonnées compactes
 ├── Ligne d'actions    — « Modifier » + action contextuelle accentuée
 └── CCardNote          — bloc informatif secondaire (délai, remboursement, lien…)
 ```
