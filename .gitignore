@@ -36,7 +36,10 @@ skills-lock.json
 
 # Added by code-review-graph
 .code-review-graph/
+# Generic AI outputs
 .outputs/
+# Impeccable
+.impeccable/
 
 # MemPalace per-project files (issue #185)
 mempalace.yaml
