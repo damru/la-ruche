@@ -16,6 +16,7 @@ import { useUiStore } from '@/stores/ui'
 import { authApi, adminApi } from '@/api'
 import { useFormFeedback, SUCCESS_AUTO_CLEAR_MS } from '@/composables/useFormFeedback'
 import CTabs from '@/components/atoms/CTabs.vue'
+import { SwitchRoot, SwitchThumb } from 'radix-vue'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -327,6 +328,15 @@ async function confirmResetData() {
               >
                 <div class="toggle-thumb"></div>
               </button>
+              <SwitchRoot
+                id="airplane-mode"
+                v-model:checked="item.enabled"
+                class="w-[42px] h-[25px] focus-within:outline focus-within:outline-black flex bg-black/50 shadow-sm rounded-full relative data-[state=checked]:bg-black cursor-default"
+              >
+                <SwitchThumb
+                  class="block w-[21px] h-[21px] my-auto bg-white shadow-sm rounded-full transition-transform duration-100 translate-x-0.5 will-change-transform data-[state=checked]:translate-x-[19px]"
+                />
+              </SwitchRoot>
             </div>
           </div>
         </CCard>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 
-type Variant = 'primary' | 'secondary' | 'ghost' | 'danger'
+type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'toned'
 type Size = 'sm' | 'md' | 'lg' | 'icon'
 
 withDefaults(defineProps<{
@@ -24,7 +24,7 @@ withDefaults(defineProps<{
   <button
     :type="type"
     :disabled="disabled || loading"
-    :class="['c-btn', `c-btn--${variant}`, `c-btn--${size}`, { 'c-btn--loading': loading, 'c-btn--closing': closing, 'tone--accent': variant === 'primary', 'tone--err': variant === 'danger' }]"
+    :class="['c-btn', `c-btn--${variant}`, `c-btn--${size}`, { 'c-btn--loading': loading, 'c-btn--closing': closing, 'tone--accent': variant === 'primary', 'tone--err': variant === 'danger', 'c-btn--toned': variant === 'toned' }]"
     v-bind="$attrs"
   >
     <span
@@ -58,6 +58,8 @@ withDefaults(defineProps<{
   text-align: left;
   text-wrap: auto;
   width: fit-content;
+  background: var(--tone-bg);
+  color: var(--tone-fg);
 }
 
 .c-btn:disabled {
@@ -73,9 +75,14 @@ withDefaults(defineProps<{
 .c-btn--icon { width: 44px; height: 44px; padding: 0; border-radius: var(--radius-lg); }
 
 /* ── Variantes ────────────────────────────────────────────────── */
+.c-btn--toned {
+  border: 1px solid var(--tone-fg);
+}
+.c-btn--toned:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
 .c-btn--primary {
-  background: var(--tone-bg);
-  color: var(--tone-fg);
   box-shadow: var(--shadow-primary-lift);
 }
 .c-btn--primary:hover:not(:disabled) {
@@ -106,7 +113,7 @@ withDefaults(defineProps<{
   background: var(--tone-bg);
   color: var(--tone-fg);
 }
-.c-btn--danger:hover:not(:disabled) {
+.c-btn--danger:hover:not(:disabled){
   filter: brightness(0.96);
 }
 

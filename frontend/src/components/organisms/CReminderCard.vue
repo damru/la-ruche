@@ -28,10 +28,10 @@ defineProps<{
       :key="row.id"
       :level="4"
       :shadow="false"
-      class="flex-row! items-center"
+      class="flex-row! flex-wrap lg:flex-nowrap items-start"
       :class="[row.tone ? `tone--${row.tone}` : null]"
     >
-      <div class="c-reminder-card__dot"></div>
+      <div class="c-reminder-card__dot self-center"></div>
       <div class="c-reminder-card__info">
         <span class="c-reminder-card__row-title">{{ row.title }}</span>
         <span
@@ -77,20 +77,19 @@ defineProps<{
 
 .c-reminder-card__info {
   flex: 1;
-  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 
 .c-reminder-card__row-title {
+  white-space: nowrap;
   font-size: var(--text-sm);
   font-weight: var(--fw-medium);
 }
 
 .c-reminder-card__subtitle {
   font-size: var(--text-2xs);
-  color: var(--color-on-surface-variant);
 }
 
 .c-reminder-card__meta {
@@ -101,7 +100,6 @@ defineProps<{
 .c-reminder-card__emphasis {
   font-size: var(--text-xs);
   font-weight: var(--fw-semibold);
-  flex-shrink: 0;
   color: var(--tone-fg, var(--color-on-surface-variant));
 }
 
@@ -112,14 +110,4 @@ defineProps<{
   margin-left: auto;
 }
 
-@media (max-width: 900px) {
-  .c-reminder-card__row {
-    flex-wrap: wrap;
-  }
-
-  .c-reminder-card__actions {
-    width: 100%;
-    margin-left: 0;
-  }
-}
 </style>

@@ -907,7 +907,7 @@ async function submitDelete() {
             #actions="{ row }"
           >
             <CBtn
-              variant="primary"
+              variant="toned"
               size="sm"
               @click="openTransmitModal(claimsById.get(row.id)!)"
             >
