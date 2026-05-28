@@ -99,11 +99,6 @@ function parseLocalDate(value: string): Date | null {
   return new Date(year, month - 1, day)
 }
 
-function resetPeriod(filter: PeriodFilter) {
-  if (filter === 'all') return
-  periodAnchor.value = startOfPeriod(new Date(), filter)
-}
-
 // ── Load data ─────────────────────────────────────────────────────
 async function loadData() {
   const [summaryRes, entriesRes] = await Promise.all([
