@@ -10,10 +10,12 @@ export interface Column<T> {
 </script>
 
 <script setup lang="ts" generic="T extends Record<string, unknown>">
-import { ref } from 'vue'
+import { ref, computed, useSlots } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
+const slots = useSlots()
+const hasFoot = computed(() => Object.keys(slots).some(s => s.startsWith('foot-')))
 
 withDefaults(defineProps<{
   columns: Column<T>[]
@@ -57,7 +59,6 @@ function getCellValue(row: T, key: string): unknown {
 <template>
   <div class="overflow-auto bg-surface-container-lowest">
     <table
-      class="c-table"
       role="table"
     >
       <thead>
@@ -138,6 +139,18 @@ function getCellValue(row: T, key: string): unknown {
           </td>
         </tr>
       </tbody>
+      <tfoot v-if="hasFoot">
+        <tr>
+          <td
+            v-for="col in columns"
+            :key="String(col.key)"
+            :data-type="col.numeric ? 'numeric' : undefined"
+            :class="[`text-${col.align ?? 'left'}`]"
+          >
+            <slot :name="`foot-${String(col.key)}`" />
+          </td>
+        </tr>
+      </tfoot>
     </table>
   </div>
 </template>
@@ -170,6 +183,15 @@ th span {
 }
 
 tr:last-child td { border-bottom: none; }
+
+tfoot td {
+  border-top: 1px solid var(--color-outline-variant);
+  border-bottom: none;
+  font-weight: var(--fw-semibold) !important;
+  color: var(--tone-fg, var(--color-on-surface)) !important;
+  padding: var(--space-3) var(--space-4);
+  white-space: nowrap;
+}
 tr { 
   transition: background var(--transition-fast); 
 }

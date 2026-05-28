@@ -196,7 +196,7 @@ Les états interactifs sont gérés localement dans chaque composant — pas de 
 | `tabs.css` | `.tabs` · `.tab` · `.tab--active` · `.tab-count` | `CTabs` atom (EP-020-S07) |
 | `typography.css` | `.display-*` · `.headline-*` · `.title-*` · `.body-*` | `CHeading` atom (EP-020-S08) + utilitaires `@utility` |
 | `forms.css` | `.form-grid` · `.field` · `.search-bar` · `.dropzone` · `.icon-btn` | `CFormRow`, `CFormGroup` molecules + atoms `CFormInput`, `CFormDropzone` existants + Tailwind inline (EP-020-S09) |
-| `tables.css` | `.data-table` et variantes · `.cards-grid` | `CDataTable` (✅ migré EP-020-S10) ; `.cards-grid` → Tailwind `grid grid-cols-[…]` inline |
+| `tables.css` | `.cards-grid` | `.cards-grid` → Tailwind `grid grid-cols-[…]` inline |
 | `base.css` | `.view-container` · `.view-header` · `.empty-state` · `.card--terminated` · `.loading-skeleton` · `.spinner` | `view-container` / `view-header` utilitaires `@utility` ; `CEmptyState` (✅) ; `CPageLoader` (✅) ; resets navigateur conservés (EP-020-S11) |
 
 ---

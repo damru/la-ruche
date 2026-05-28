@@ -228,6 +228,24 @@ function formatLocation(unit: { block?: string | null; staircase?: string | null
   if (unit.floor) parts.push(t('residents.floorShort', { n: unit.floor }))
   return parts.join(' · ')
 }
+
+const unitColumns = computed(() => [
+  { key: 'unit_number', label: t('common.lot') },
+  { key: 'unit_type', label: t('common.type') },
+  { key: 'location', label: t('residents.location') },
+  { key: 'shares', label: t('units.shares'), numeric: true },
+  { key: 'owner', label: t('residents.currentOwner') },
+  { key: 'status', label: t('common.status') },
+  { key: 'actions', label: '', width: '1%' },
+])
+
+const userColumns = computed(() => [
+  { key: 'name', label: t('common.name') },
+  { key: 'email', label: t('common.email') },
+  { key: 'phone', label: t('common.phone') },
+  { key: 'roles', label: t('common.roles') },
+  { key: 'status', label: t('common.status') },
+])
 </script>
 
 <template>
@@ -306,160 +324,123 @@ function formatLocation(unit: { block?: string | null; staircase?: string | null
         <!-- Lots -->
         <template v-if="activeTab === 'units'">
           <CCard class="p-0!">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>{{ t('common.lot') }}</th>
-                  <th>{{ t('common.type') }}</th>
-                  <th>{{ t('residents.location') }}</th>
-                  <th>{{ t('units.shares') }}</th>
-                  <th>{{ t('residents.currentOwner') }}</th>
-                  <th>{{ t('common.status') }}</th>
-                  <th class="col-shrink"></th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr
-                  v-for="unit in units"
-                  :key="unit.id"
-                >
-                  <td><strong class="data-md">{{ unit.unit_number }}</strong></td>
-                  <td>{{ unitTypeIcon(unit.unit_type) }} {{ unitTypeLabel(unit.unit_type) }}</td>
-                  <td class="dim">
-                    {{ formatLocation(unit) }}
-                  </td>
-                  <td class="dim cell-numeric">
-                    {{ shareMap.get(unit.id) ?? '—' }}
-                  </td>
-                  <td>
-                    <span v-if="unit.current_owner">{{ unit.current_owner.first_name }} {{ unit.current_owner.last_name
-                    }}</span>
-                    <span
-                      v-else
-                      class="dim"
-                    >{{ t('residents.vacant') }}</span>
-                  </td>
-                  <td>
-                    <CBadge :variant="unit.active ? 'open' : 'closed'">
-                      {{ unit.active ? t('common.active') : t('common.inactive') }}
-                    </CBadge>
-                  </td>
-                  <td class="col-shrink">
-                    <div class="action-btns">
-                      <button
-                        class="icon-btn icon-btn--subtle"
-                        :title="t('units.charges.title')"
-                        :aria-label="t('units.charges.title')"
-                        @click="$router.push(`/residents/${unit.id}/charges`)"
-                      >
-                        <CIconCurrency
-                          width="16"
-                          height="16"
-                        />
-                      </button>
-                      <button
-                        class="icon-btn"
-                        :title="t('common.edit')"
-                        :aria-label="t('common.edit')"
-                        @click="openEditUnit(unit)"
-                      >
-                        <CIconEdit
-                          width="16"
-                          height="16"
-                        />
-                      </button>
-                      <button
-                        v-if="unit.active"
-                        class="icon-btn icon-btn--danger"
-                        :title="t('residents.archive')"
-                        :aria-label="t('residents.archive')"
-                        @click="openArchiveModal(unit)"
-                      >
-                        <CIconArchive
-                          width="16"
-                          height="16"
-                        />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-                <tr v-if="units.length === 0">
-                  <td
-                    colspan="7"
-                    style="text-align:center;color:var(--color-on-surface-variant);padding:24px"
+            <CDataTable
+              :columns="unitColumns"
+              :rows="units"
+              row-key="id"
+              :empty-text="t('residents.unitNotFound')"
+            >
+              <template #cell-unit_number="{ row }">
+                <strong class="data-md">{{ row.unit_number }}</strong>
+              </template>
+              <template #cell-unit_type="{ row }">
+                {{ unitTypeIcon(row.unit_type) }} {{ unitTypeLabel(row.unit_type) }}
+              </template>
+              <template #cell-location="{ row }">
+                <span class="dim">{{ formatLocation(row) }}</span>
+              </template>
+              <template #cell-shares="{ row }">
+                <span class="dim">{{ shareMap.get(row.id) ?? '—' }}</span>
+              </template>
+              <template #cell-owner="{ row }">
+                <span v-if="row.current_owner">{{ row.current_owner.first_name }} {{ row.current_owner.last_name }}</span>
+                <span
+                  v-else
+                  class="dim"
+                >{{ t('residents.vacant') }}</span>
+              </template>
+              <template #cell-status="{ row }">
+                <CBadge :variant="row.active ? 'open' : 'closed'">
+                  {{ row.active ? t('common.active') : t('common.inactive') }}
+                </CBadge>
+              </template>
+              <template #cell-actions="{ row }">
+                <div class="action-btns">
+                  <button
+                    class="icon-btn icon-btn--subtle"
+                    :title="t('units.charges.title')"
+                    :aria-label="t('units.charges.title')"
+                    @click="$router.push(`/residents/${row.id}/charges`)"
                   >
-                    {{ t('residents.unitNotFound') }}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+                    <CIconCurrency
+                      width="16"
+                      height="16"
+                    />
+                  </button>
+                  <button
+                    class="icon-btn"
+                    :title="t('common.edit')"
+                    :aria-label="t('common.edit')"
+                    @click="openEditUnit(row)"
+                  >
+                    <CIconEdit
+                      width="16"
+                      height="16"
+                    />
+                  </button>
+                  <button
+                    v-if="row.active"
+                    class="icon-btn icon-btn--danger"
+                    :title="t('residents.archive')"
+                    :aria-label="t('residents.archive')"
+                    @click="openArchiveModal(row)"
+                  >
+                    <CIconArchive
+                      width="16"
+                      height="16"
+                    />
+                  </button>
+                </div>
+              </template>
+            </CDataTable>
           </CCard>
         </template>
 
         <!-- Utilisateurs -->
         <template v-if="activeTab === 'users'">
           <CCard class="p-0!">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>{{ t('common.name') }}</th>
-                  <th>{{ t('common.email') }}</th>
-                  <th>{{ t('common.phone') }}</th>
-                  <th>{{ t('common.roles') }}</th>
-                  <th>{{ t('common.status') }}</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr
-                  v-for="user in users"
-                  :key="user.id"
-                >
-                  <td>
-                    <div class="user-name">
-                      <div class="avatar">
-                        {{ user.first_name[0] }}{{ user.last_name[0] }}
-                      </div>
-                      <span>{{ user.first_name }} {{ user.last_name }}</span>
-                    </div>
-                  </td>
-                  <td class="dim">
-                    {{ user.email }}
-                  </td>
-                  <td class="dim">
-                    <a
-                      v-if="user.phone"
-                      :href="`tel:${user.phone}`"
-                      class="phone-link"
-                    >{{ user.phone }}</a>
-                    <span v-else>—</span>
-                  </td>
-                  <td>
-                    <div class="roles">
-                      <CBadge
-                        v-for="role in user.roles"
-                        :key="role"
-                        :variant="role"
-                      >
-                        {{ t(`roles.${role}`) }}
-                      </CBadge>
-                    </div>
-                  </td>
-                  <td>
-                    <CBadge :variant="user.active ? 'open' : 'closed'">
-                      {{ user.active ? t('common.active') : t('residents.deactivated') }}
-                    </CBadge>
-                  </td>
-                </tr>
-                <tr v-if="users.length === 0">
-                  <td
-                    colspan="5"
-                    style="text-align:center;color:var(--color-on-surface-variant);padding:24px"
+            <CDataTable
+              :columns="userColumns"
+              :rows="users"
+              row-key="id"
+              :empty-text="t('residents.userNotFound')"
+            >
+              <template #cell-name="{ row }">
+                <div class="user-name">
+                  <div class="avatar">
+                    {{ row.first_name[0] }}{{ row.last_name[0] }}
+                  </div>
+                  <span>{{ row.first_name }} {{ row.last_name }}</span>
+                </div>
+              </template>
+              <template #cell-email="{ row }">
+                <span class="dim">{{ row.email }}</span>
+              </template>
+              <template #cell-phone="{ row }">
+                <a
+                  v-if="row.phone"
+                  :href="`tel:${row.phone}`"
+                  class="phone-link"
+                >{{ row.phone }}</a>
+                <span v-else>—</span>
+              </template>
+              <template #cell-roles="{ row }">
+                <div class="roles">
+                  <CBadge
+                    v-for="role in row.roles"
+                    :key="role"
+                    :variant="role"
                   >
-                    {{ t('residents.userNotFound') }}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+                    {{ t(`roles.${role}`) }}
+                  </CBadge>
+                </div>
+              </template>
+              <template #cell-status="{ row }">
+                <CBadge :variant="row.active ? 'open' : 'closed'">
+                  {{ row.active ? t('common.active') : t('residents.deactivated') }}
+                </CBadge>
+              </template>
+            </CDataTable>
           </CCard>
         </template>
       </template>
