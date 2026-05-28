@@ -56,7 +56,7 @@ const message = computed(() => (
   ),
   linear-gradient(135deg, #7c3aed14, #a855f714);
   border: 1.5px solid #7c3aed40;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   color: #5b21b6;
 }
 
@@ -71,7 +71,7 @@ const message = computed(() => (
     ),
     linear-gradient(135deg, rgba(250, 204, 21, 0.18), rgba(249, 115, 22, 0.18));
   border: 1px solid rgba(180, 83, 9, 0.28);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   color: #92400e;
 }
 

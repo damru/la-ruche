@@ -9,7 +9,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-1) var(--space-2);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-lg);
   background: var(--color-surface-container-low);
   padding: var(--space-3);
   font-size: var(--text-xs);

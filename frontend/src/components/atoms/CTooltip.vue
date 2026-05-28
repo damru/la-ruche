@@ -232,7 +232,7 @@ function recalc() {
   color: var(--color-on-surface-variant);
   opacity: 0.6;
   cursor: pointer;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-lg);
   transition: opacity var(--transition-fast), color var(--transition-fast);
   flex-shrink: 0;
 }
@@ -257,7 +257,7 @@ function recalc() {
   padding: 10px 14px;
   background: var(--color-secondary-container);
   border: 1px solid var(--color-outline-variant);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   font-family: var(--font-body);
   font-size: 12px;
   font-weight: var(--fw-medium);

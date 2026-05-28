@@ -74,7 +74,7 @@ withDefaults(defineProps<{
 .c-kpi__icon {
   width: calc(var(--icon-md) * 2);
   height: calc(var(--icon-md) * 2);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   display: flex;
   align-items: center;
   justify-content: center;

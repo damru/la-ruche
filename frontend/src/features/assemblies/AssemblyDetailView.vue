@@ -2713,7 +2713,7 @@ function toDateTimeLocal(value: string): string {
   justify-content: space-between;
   gap: var(--space-4);
   padding: var(--space-4);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-2xl);
 }
 
 .status-banner__left {
@@ -2725,7 +2725,7 @@ function toDateTimeLocal(value: string): string {
 .status-banner__icon {
   width: 40px;
   height: 40px;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2837,7 +2837,7 @@ function toDateTimeLocal(value: string): string {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   background: var(--tone-bg, var(--color-secondary-container));
   color: var(--tone-fg, var(--color-on-secondary-container));
   font-family: var(--font-display);
@@ -2939,7 +2939,7 @@ function toDateTimeLocal(value: string): string {
   flex-direction: column;
   gap: 4px;
   padding: var(--space-3);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
 }
 
 .pending-box {
@@ -2959,7 +2959,7 @@ function toDateTimeLocal(value: string): string {
   font-size: var(--text-xs);
   padding: var(--space-2) var(--space-3);
   background: var(--color-surface-container-low);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-lg);
   margin: 0;
 }
 
@@ -3010,7 +3010,7 @@ function toDateTimeLocal(value: string): string {
   justify-content: space-between;
   gap: var(--space-3);
   padding: var(--space-3);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
 }
 
 .vote-result--passed {
@@ -3090,7 +3090,7 @@ function toDateTimeLocal(value: string): string {
   gap: var(--space-3);
   align-items: center;
   padding: var(--space-3);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   background: var(--color-surface-container-low);
 }
 
@@ -3153,7 +3153,7 @@ function toDateTimeLocal(value: string): string {
 }
 
 .quorum-alert {
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-lg);
   padding: var(--space-2) var(--space-3);
   font-size: var(--text-xs);
   font-weight: var(--fw-medium);

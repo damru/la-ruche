@@ -566,7 +566,7 @@ const todayStr = computed(() =>
 
 .hero-alert {
   display: flex; align-items: center; gap: var(--space-2);
-  padding: 12px var(--space-4); border-radius: var(--radius-md); min-width: 280px; font-size: 13px;
+  padding: 12px var(--space-4); border-radius: var(--radius-xl); min-width: 280px; font-size: 13px;
   background: var(--tone-bg, var(--color-surface-container-low));
   color: var(--tone-fg, var(--color-on-surface));
 }
@@ -594,7 +594,7 @@ const todayStr = computed(() =>
 
 /* ── Tasks ────────────────────────────────────────────────────────── */
 .task-list { padding: 0 var(--space-3) var(--space-2); display: flex; flex-direction: column; gap: var(--space-2); }
-.task-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border-radius: var(--radius-md); background: var(--color-surface-container-low); cursor: pointer; transition: background var(--transition-fast); }
+.task-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border-radius: var(--radius-xl); background: var(--color-surface-container-low); cursor: pointer; transition: background var(--transition-fast); }
 .task-item:hover { background: var(--color-surface-container); }
 .task-prio { width: 4px; height: 32px; border-radius: var(--radius-full); flex-shrink: 0; margin-top: 2px; }
 .task-prio--urgent { background: var(--color-error); }
@@ -608,9 +608,9 @@ const todayStr = computed(() =>
 
 /* ── Reminders ────────────────────────────────────────────────────── */
 .reminder-list { padding: 0 var(--space-5) var(--space-2); display: flex; flex-direction: column; gap: var(--space-1); }
-.reminder-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius-md); transition: background var(--transition-fast); cursor: pointer; }
+.reminder-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius-xl); transition: background var(--transition-fast); cursor: pointer; }
 .reminder-item:hover { background: var(--color-surface-container-low); }
-.reminder-icon { width: 32px; height: 32px; min-width: unset; min-height: unset; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: var(--tone-bg, transparent); color: var(--tone-fg, inherit); }
+.reminder-icon { width: 32px; height: 32px; min-width: unset; min-height: unset; border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: var(--tone-bg, transparent); color: var(--tone-fg, inherit); }
 .reminder-icon svg { width: 15px; height: 15px; }
 .reminder-icon--low    { background: var(--color-surface-container); color: var(--color-on-surface-variant); }
 .reminder-body { flex: 1; min-width: 0; }
@@ -646,12 +646,12 @@ const todayStr = computed(() =>
 .prog-fill { height: 100%; border-radius: var(--radius-full); transition: width 0.8s cubic-bezier(0.34, 1.3, 0.64, 1); }
 .prog-fill--primary { background: var(--gradient-primary); }
 .prog-fill--over    { background: linear-gradient(135deg, #ba1a1a, #e53935); }
-.budget-total-row { display: flex; justify-content: space-between; align-items: center; padding: 12px var(--space-4); background: var(--color-surface-container-low); border-radius: var(--radius-md); font-size: 13px; font-weight: var(--fw-medium); color: var(--color-on-surface); }
+.budget-total-row { display: flex; justify-content: space-between; align-items: center; padding: 12px var(--space-4); background: var(--color-surface-container-low); border-radius: var(--radius-xl); font-size: 13px; font-weight: var(--fw-medium); color: var(--color-on-surface); }
 .budget-total-val { font-family: var(--font-mono); font-size: 13px; font-weight: var(--fw-medium); }
 
 /* ── Residents ────────────────────────────────────────────────────── */
 .residents-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 0 var(--space-5) var(--space-5); }
-.res-stat { background: var(--color-surface-container-low); border-radius: var(--radius-md); padding: 14px; }
+.res-stat { background: var(--color-surface-container-low); border-radius: var(--radius-xl); padding: 14px; }
 .res-stat-val { font-family: var(--font-display); font-size: 26px; font-weight: var(--fw-bold); font-variation-settings: 'opsz' 72; letter-spacing: -0.03em; color: var(--color-on-surface); margin-bottom: 2px; }
 .res-stat--ok .res-stat-val  { color: var(--color-success); }
 .res-stat--err .res-stat-val { color: var(--color-error); }

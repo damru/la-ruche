@@ -45,7 +45,7 @@ withDefaults(defineProps<{
   font-family: var(--font-body);
   font-weight: var(--fw-medium);
   border: none;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   cursor: pointer;
   transition:
     transform var(--transition-fast),
@@ -67,10 +67,10 @@ withDefaults(defineProps<{
 }
 
 /* ── Tailles ──────────────────────────────────────────────────── */
-.c-btn--sm  { min-height: 36px; min-width: 36px; padding: 0 var(--space-3); font-size: var(--text-sm); border-radius: var(--radius-sm); }
+.c-btn--sm  { min-height: 36px; min-width: 36px; padding: 0 var(--space-3); font-size: var(--text-sm); border-radius: var(--radius-lg); }
 .c-btn--md  { min-height: 44px; min-width: 44px; padding: 0 var(--space-5); font-size: var(--text-md); }
 .c-btn--lg  { min-height: 52px; min-width: 52px; padding: 0 var(--space-6); font-size: var(--text-lg); }
-.c-btn--icon { width: 44px; height: 44px; padding: 0; border-radius: var(--radius-sm); }
+.c-btn--icon { width: 44px; height: 44px; padding: 0; border-radius: var(--radius-lg); }
 
 /* ── Variantes ────────────────────────────────────────────────── */
 .c-btn--primary {

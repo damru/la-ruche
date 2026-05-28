@@ -634,7 +634,7 @@ async function confirmDelete() {
 .view-toggle {
   display: flex;
   border: 1px solid var(--color-outline-variant);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   overflow: hidden;
   flex-shrink: 0;
 }
@@ -703,7 +703,7 @@ async function confirmDelete() {
 .contractor-list {
   background: var(--color-surface-container-lowest);
   border: 1px solid var(--color-outline-variant);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-2xl);
   overflow: hidden;
 }
 

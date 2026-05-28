@@ -367,9 +367,10 @@ async function confirmDelete() {
   
               <!-- Choices + live result bars (CSS grid — 3 columns per choice row) -->
               <div class="choices-results">
-                <template
+                <div
                   v-for="choice in c.choices"
                   :key="choice.id"
+                  class="choice-row"
                 >
                   <!-- Column 1: checkbox (open) or plain label (closed) -->
                   <CFormCheckbox
@@ -396,10 +397,10 @@ async function confirmDelete() {
                   </div>
   
                   <!-- Column 3: percentage -->
-                  <span class="font-mono text-xs text-end">
+                  <span class="choice-percent font-mono text-xs text-end">
                     {{ hasVoted(c) || c.status === 'closed' ? (() => { const total = getTotalVotes(c); return total > 0 ? Math.round(choice.votes * 100 / total) : 0 })() + '%' : '—' }}
                   </span>
-                </template>
+                </div>
               </div>
   
               <!-- Response count -->
@@ -658,20 +659,44 @@ async function confirmDelete() {
 .response-count { color: var(--color-on-surface-variant); margin-top: var(--space-1); }
 
 /* ── Choices + result bars (CSS grid) ─────────────────────────── */
-/* 3 columns: [fit-content(50%)] [1fr] [36px]
-   Column 1 auto-sizes to the widest label, capped at 50%.
-   Each <template v-for> produces 3 direct grid children. */
+/* Desktop: 3-col grid — label | bar | result%
+   .choice-row uses display:contents so children participate in the parent grid.
+   Mobile: .choices-results becomes a flex column; each .choice-row is its own
+   2-row mini-grid — label+result% on row 1, bar full-width on row 2. */
 .choices-results {
   display: grid;
   grid-template-columns: fit-content(50%) 1fr 36px;
   align-items: center;
-  column-gap: 8px;
-  row-gap: 8px;
+  column-gap: var(--space-2);
+  row-gap: var(--space-2);
   margin-bottom: var(--space-2);
+}
+.choice-row { 
+  width: 100%;
+  display: contents; 
+}
+
+@media (max-width: 768px) {
+  .choices-results {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+  .choice-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto;
+    column-gap: var(--space-2);
+    row-gap: var(--space-1);
+    align-items: center;
+  }
+  .choice-row .choice-label  { grid-column: 1; grid-row: 1; }
+  .choice-row .choice-percent { grid-column: 2; grid-row: 1; }
+  .choice-row .result-bar-bg  { grid-column: 1 / -1; grid-row: 2; }
 }
 
 .choice-label {
-  font-size: var(--text-xs);
+  font-size: var(--text-sm);
   overflow-wrap: break-word;
   word-break: break-word;
   white-space: normal;
@@ -727,4 +752,5 @@ async function confirmDelete() {
 .choice-input-row .form-input { flex: 1; }
 
 .dim { color: var(--color-on-surface-variant); }
+
 </style>

@@ -357,7 +357,7 @@ async function submit() {
 .contractor-card {
   background: var(--color-surface);
   border: 1px solid var(--color-outline-variant);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-2xl);
   padding: var(--space-6);
   display: flex;
   flex-direction: column;
@@ -379,7 +379,7 @@ async function submit() {
   display: flex; align-items: center; gap: 8px;
   padding: 6px 10px;
   background: var(--color-surface-container);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-lg);
 }
 .file-name { flex: 1; overflow: clip; text-overflow: ellipsis; white-space: nowrap; }
 
@@ -393,7 +393,7 @@ async function submit() {
   padding: var(--space-3) var(--space-5);
   background: var(--color-primary);
   color: var(--color-on-primary);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   font-weight: var(--fw-semibold);
   font-size: var(--text-sm);
   cursor: pointer;
@@ -405,7 +405,7 @@ async function submit() {
 .contact-card {
   background: var(--color-surface);
   border: 1px solid var(--color-outline-variant);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-2xl);
   padding: var(--space-4) var(--space-6);
   display: flex;
   flex-direction: column;

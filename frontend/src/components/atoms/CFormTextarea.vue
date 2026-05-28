@@ -87,7 +87,7 @@ const inputId = props.id ?? `c-textarea-${Math.random().toString(36).slice(2, 7)
   padding: var(--space-3) var(--space-4);
   background: var(--color-surface-container);
   border: none;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   font-family: var(--font-body);
   font-size: var(--text-md);
   color: var(--color-on-surface);
@@ -114,7 +114,7 @@ const inputId = props.id ?? `c-textarea-${Math.random().toString(36).slice(2, 7)
   font-size: var(--text-md);
   color: var(--color-on-surface);
   background: var(--color-surface-container-low);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   width: 100%;
   box-sizing: border-box;
   min-height: 80px;

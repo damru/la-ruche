@@ -21,7 +21,6 @@ import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import CHeading from '@/components/atoms/CHeading.vue'
 import CTabs from '@/components/atoms/CTabs.vue'
-import CIconInfo from '@/components/atoms/CIconInfo.svg'
 import { buildingApi, documentsApi, reportsApi, unitsApi } from '@/api'
 import type { Document, Report, ReportStatus, TaskPriority, Unit } from '@/types/domain'
 
@@ -1183,11 +1182,11 @@ function photoPreview(file: File): string {
 }
 .photo-thumb {
   width: 64px; height: 64px; object-fit: cover;
-  border-radius: var(--radius-sm); border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-lg); border: 1px solid var(--color-outline-variant);
 }
 .photo-gallery-thumb {
   width: 120px; height: 120px; object-fit: cover; display: block;
-  border-radius: var(--radius-sm); border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-lg); border: 1px solid var(--color-outline-variant);
   cursor: pointer; transition: opacity 0.15s;
 }
 .photo-gallery-thumb:hover { opacity: 0.85; }
@@ -1223,7 +1222,7 @@ function photoPreview(file: File): string {
   width: var(--report-photo-thumb-size);
   height: var(--report-photo-thumb-size);
   object-fit: cover;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-lg);
   border: 1px solid var(--color-outline-variant);
   transition: opacity 0.15s;
 }
@@ -1249,7 +1248,7 @@ function photoPreview(file: File): string {
   width: 100%;
   max-height: var(--report-photo-viewer-height);
   object-fit: contain;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   background: var(--color-surface-container-low);
 }
 

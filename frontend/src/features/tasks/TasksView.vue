@@ -1042,63 +1042,6 @@ async function copyVendorLink(taskId: string) {
           :label="t('tasks.priorityLabel')"
           :options="taskPriorityOptions"
         />
-        <!-- Contractor assignment with autocomplete (only when assignMode === 'contractor') -->
-        <div
-          v-if="assignMode === 'contractor'"
-          class="flex flex-col gap-1 contractor-autocomplete"
-        >
-          <CFormInput
-            v-model="contractorSearch"
-            :label="t('tasks.contractorLabel')"
-            :placeholder="t('tasks.contractorPlaceholder')"
-            autocomplete="off"
-            :hint="selectedContractor
-              ? (selectedContractor.email || selectedContractor.phone || '')
-              : (contractorSearch.trim() ? t('tasks.contractorFreeInputHint') : '')"
-            @focus="onContractorFocus"
-            @input="onContractorInput"
-            @blur="hideSuggestions"
-          >
-            <template
-              v-if="selectedContractor"
-              #suffix
-            >
-              <button
-                type="button"
-                class="contractor-clear"
-                :aria-label="t('common.clear')"
-                @click="clearContractor"
-              >
-                ×
-              </button>
-            </template>
-          </CFormInput>
-          <ul
-            v-if="showSuggestions || canSuggestContractorCreation"
-            class="autocomplete-list"
-          >
-            <li
-              v-for="c in contractorSuggestions"
-              :key="c.id"
-              class="autocomplete-item"
-              @mousedown.prevent="selectContractorSuggestion(c)"
-            >
-              <span class="autocomplete-name">{{ c.name }}</span>
-              <span
-                v-if="c.domains.length"
-                class="autocomplete-meta"
-              >{{ contractorDomainLabel(c) }}</span>
-            </li>
-            <li
-              v-if="canSuggestContractorCreation"
-              class="autocomplete-item autocomplete-item--action"
-              @mousedown.prevent="suggestContractorCreation"
-            >
-              <span class="autocomplete-name">{{ t('tasks.contractorCreateSuggestion', { name: contractorSearch.trim() }) }}</span>
-              <span class="autocomplete-meta">{{ t('tasks.contractorCreateSuggestionHint') }}</span>
-            </li>
-          </ul>
-        </div>
         <div
           v-if="assignMode === 'contractor' && createSuggestedContractor"
           class="flex flex-col gap-1 contractor-create-box"
@@ -1262,6 +1205,64 @@ async function copyVendorLink(taskId: string) {
               {{ t('tasks.assignContractor') }}
             </label>
           </div>
+        </div>
+
+        <!-- Contractor assignment with autocomplete (only when assignMode === 'contractor') -->
+        <div
+          v-if="assignMode === 'contractor'"
+          class="flex flex-col gap-1 contractor-autocomplete"
+        >
+          <CFormInput
+            v-model="contractorSearch"
+            :label="t('tasks.contractorLabel')"
+            :placeholder="t('tasks.contractorPlaceholder')"
+            autocomplete="off"
+            :hint="selectedContractor
+              ? (selectedContractor.email || selectedContractor.phone || '')
+              : (contractorSearch.trim() ? t('tasks.contractorFreeInputHint') : '')"
+            @focus="onContractorFocus"
+            @input="onContractorInput"
+            @blur="hideSuggestions"
+          >
+            <template
+              v-if="selectedContractor"
+              #suffix
+            >
+              <button
+                type="button"
+                class="contractor-clear"
+                :aria-label="t('common.clear')"
+                @click="clearContractor"
+              >
+                ×
+              </button>
+            </template>
+          </CFormInput>
+          <ul
+            v-if="showSuggestions || canSuggestContractorCreation"
+            class="autocomplete-list"
+          >
+            <li
+              v-for="c in contractorSuggestions"
+              :key="c.id"
+              class="autocomplete-item"
+              @mousedown.prevent="selectContractorSuggestion(c)"
+            >
+              <span class="autocomplete-name">{{ c.name }}</span>
+              <span
+                v-if="c.domains.length"
+                class="autocomplete-meta"
+              >{{ contractorDomainLabel(c) }}</span>
+            </li>
+            <li
+              v-if="canSuggestContractorCreation"
+              class="autocomplete-item autocomplete-item--action"
+              @mousedown.prevent="suggestContractorCreation"
+            >
+              <span class="autocomplete-name">{{ t('tasks.contractorCreateSuggestion', { name: contractorSearch.trim() }) }}</span>
+              <span class="autocomplete-meta">{{ t('tasks.contractorCreateSuggestionHint') }}</span>
+            </li>
+          </ul>
         </div>
       </form>
       <template #footer>
@@ -1481,7 +1482,7 @@ async function copyVendorLink(taskId: string) {
   justify-content: space-between;
   gap: var(--space-3);
   padding: var(--space-3);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   background: var(--color-surface-container-low);
 }
 .task-card__vendor-link-meta {
@@ -1514,7 +1515,7 @@ async function copyVendorLink(taskId: string) {
   right: 0;
   background: var(--color-surface);
   border: 1px solid var(--color-outline);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
   list-style: none;
   margin: 2px 0 0;
@@ -1559,7 +1560,7 @@ async function copyVendorLink(taskId: string) {
 .contractor-create-box {
   padding: var(--space-3);
   border: 1px dashed var(--color-outline);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   background: var(--color-surface-container-lowest);
 }
 .task-close-field { margin-top: var(--space-4); }
@@ -1578,7 +1579,7 @@ async function copyVendorLink(taskId: string) {
   justify-content: space-between;
   gap: var(--space-3);
   padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   background: var(--color-surface-container-low);
 }
 .task-selected-document__name {

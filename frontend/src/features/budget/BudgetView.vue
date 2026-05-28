@@ -1564,7 +1564,7 @@ function formatSharePercentage(value: number): string {
   flex-direction: column;
   gap: 4px;
   padding: var(--space-3);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   background: color-mix(in srgb, var(--color-warning) var(--color-tint), transparent);
 }
 

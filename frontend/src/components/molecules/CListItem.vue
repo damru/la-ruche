@@ -53,7 +53,7 @@ const emit = defineEmits<{ click: [] }>()
   align-items: center;
   gap: var(--space-3);
   padding: var(--space-3) var(--space-4);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   background: var(--color-surface-container-lowest);
   transition: background var(--transition-fast);
 }

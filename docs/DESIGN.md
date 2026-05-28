@@ -106,7 +106,7 @@ Configuration via `@tailwindcss/vite` (pas de `tailwind.config.js`). Tokens expo
 | `text-2xs` · `text-xs` · `text-sm` · `text-md` · `text-lg` · `text-xl` · `text-2xl` · `text-display` | `--text-*` | Remplace l'échelle Tailwind native — `text-sm` 13px, `text-lg` 16px, `text-display` 40px |
 | `font-serif` · `font-body` · `font-mono` | `--font-*` | Familles custom |
 | `space-1` … `space-20` (dont `space-7`, `space-9`) | `--space-*` | — |
-| `radius-sm` … `radius-full` | `--radius-*` | — |
+| `radius-full` | `--radius-full` | Border-radius complet — `9999px` (seul token custom conservé) |
 | `shadow-md` · `shadow-lg` · `shadow-glass` | `--shadow-*` | — |
 | `leading-tight` · `leading-snug` · `leading-normal` · `leading-relaxed` | `--leading-*` | Interlignage — jamais de valeur `em` ou `px` codée en dur |
 
@@ -308,10 +308,6 @@ Source : `frontend/src/styles/tokens.css`. Les valeurs Dark sont dans `[data-the
 
 | Token | Valeur |
 |---|---|
-| `--radius-sm`   | `8px` |
-| `--radius-md`   | `12px` |
-| `--radius-lg`   | `16px` |
-| `--radius-xl`   | `24px` |
 | `--radius-full` | `9999px` |
 
 > Jamais `0px` sur un élément interactif.
@@ -480,7 +476,7 @@ border-color: var(--color-outline-light);
 
 | Composant | Props clés | Description |
 |---|---|---|
-| `CCard` | `level?` (`1`\|`2`\|`3`\|`4`, défaut `2`), `shadow?`, `gap?` (`none` \| `sm` \| `md`) | Conteneur générique — définit background, border-radius, padding et flux interne. `level` couple padding et radius : 1 = padding lg + radius xl (carte racine), 2 = padding md + radius lg (défaut), 3 = padding sm + radius md (carte imbriquée), 4 = padding xs + radius sm (carte innermost). `gap` : `sm` = 12px, `md` = 16px (défaut), `none` = 0. Pour les listes avec séparateurs : `CFlexGroup`. Ossature d'une carte d'entité : `CCardHeader` › titre › description › `CMetaLine` › `CCardActions` › `CCardNote`. |
+| `CCard` | `level?` (`1`\|`2`\|`3`\|`4`, défaut `2`), `shadow?`, `gap?` (`none` \| `sm` \| `md`) | Conteneur générique — définit background, border-radius, padding et flux interne. `level` couple padding et radius : 1 = padding lg + radius 3xl (carte racine), 2 = padding md + radius 2xl (défaut), 3 = padding sm + radius xl (carte imbriquée), 4 = padding xs + radius lg (carte innermost). `gap` : `sm` = 12px, `md` = 16px (défaut), `none` = 0. Pour les listes avec séparateurs : `CFlexGroup`. Ossature d'une carte d'entité : `CCardHeader` › titre › description › `CMetaLine` › `CCardActions` › `CCardNote`. |
 | `CCardActions` | — | ✅ Zone d'actions d'une carte — `flex flex-wrap gap-x-2 gap-y-1`. |
 | `CCardHeader` | `withIcon?` | 🔲 planifié — En-tête de carte — slots `#icon`, `#chips` |
 | `CCardNote` | `note` | Encart d'information secondaire dans une `CCard` |

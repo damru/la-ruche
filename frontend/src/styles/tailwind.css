@@ -37,10 +37,6 @@
 	--shadow-lg: var(--shadow-lg);
 	--shadow-glass: var(--shadow-glass);
 
-	--radius-sm: var(--radius-sm);
-	--radius-md: var(--radius-md);
-	--radius-lg: var(--radius-lg);
-	--radius-xl: var(--radius-xl);
 	--radius-full: var(--radius-full);
 
 	--spacing-1: var(--space-1);
@@ -146,7 +142,7 @@
   cursor: pointer;
   color: var(--color-on-surface-variant);
   padding: 4px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-lg);
   transition: all var(--transition-fast);
 
   &:hover {
@@ -206,8 +202,8 @@
     position: relative;
   }
 
-  & input[type="checkbox"] { border-radius: var(--radius-sm); }
-  & input[type="radio"] { border-radius: 50%; }
+  & input[type="checkbox"] { border-radius: var(--radius-lg); }
+  & input[type="radio"] { border-radius: var(--radius-full); }
 
   & input[type="checkbox"]:checked,
   & input[type="radio"]:checked {

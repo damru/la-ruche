@@ -46,13 +46,13 @@ withDefaults(defineProps<{
 }
 
 /* level 1 — outermost: padding lg (24px) + radius xl (24px) */
-.c-card--level-1 { padding: var(--space-6); border-radius: var(--radius-xl); }
+.c-card--level-1 { padding: var(--space-6); border-radius: var(--radius-3xl); }
 /* level 2 — default: padding md (20px) + radius lg (16px) */
-.c-card--level-2 { padding: var(--space-5); border-radius: var(--radius-lg); }
+.c-card--level-2 { padding: var(--space-5); border-radius: var(--radius-2xl); }
 /* level 3 — nested: padding sm (16px) + radius md (12px) */
-.c-card--level-3 { padding: var(--space-4); border-radius: var(--radius-md); }
+.c-card--level-3 { padding: var(--space-4); border-radius: var(--radius-xl); }
 /* level 4 — innermost: padding xs (12px) + radius sm (8px) */
-.c-card--level-4 { padding: var(--space-3); border-radius: var(--radius-sm); }
+.c-card--level-4 { padding: var(--space-3); border-radius: var(--radius-lg); }
 
 .c-card--no-padding { padding: 0; }
 

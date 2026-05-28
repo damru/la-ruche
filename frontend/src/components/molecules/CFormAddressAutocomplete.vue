@@ -337,7 +337,7 @@ function updateField(field: keyof AddressValue, value: string) {
   padding: 0 var(--space-4);
   background: var(--color-surface-container);
   border: none;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   font-family: var(--font-body);
   font-size: var(--text-md);
   color: var(--color-on-surface);
@@ -394,7 +394,7 @@ function updateField(field: keyof AddressValue, value: string) {
   margin: 0;
   padding: var(--space-1) 0;
   background: var(--color-surface-container-lowest);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   box-shadow: var(--shadow-lg);
   overflow: clip;
 }

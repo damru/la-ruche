@@ -115,7 +115,7 @@ withDefaults(defineProps<{
 .auth-brand__logo-mark {
   width: 40px;
   height: 40px;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   display: flex;
   align-items: center;
   justify-content: center;

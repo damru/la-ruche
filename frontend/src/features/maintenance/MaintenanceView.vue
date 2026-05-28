@@ -221,11 +221,6 @@ function contractStatusVariant(status: LogbookContractSummary['status']): 'open'
   return 'default'
 }
 
-function selectPeriod(filter: PeriodFilter) {
-  periodFilter.value = filter
-  resetPeriod(filter)
-}
-
 function goToPreviousPeriod() {
   if (periodFilter.value === 'all') return
   periodAnchor.value = shiftPeriod(periodAnchor.value, periodFilter.value, -1)
@@ -741,7 +736,7 @@ async function deleteEntry() {
   justify-content: space-between;
   gap: var(--space-3);
   padding: var(--space-3);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   background: var(--color-surface-container-low);
 }
 

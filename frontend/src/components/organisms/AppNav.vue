@@ -385,7 +385,7 @@ watch(() => route.path, closeDrawer)
   align-items: center;
   gap: var(--space-3);
   padding: 9px var(--space-3);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-lg);
   text-decoration: none;
   transition: background var(--transition-fast);
   color: var(--color-on-surface-variant);
@@ -418,7 +418,7 @@ watch(() => route.path, closeDrawer)
   align-items: center;
   gap: var(--space-3);
   padding: var(--space-3);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-lg);
   background: var(--color-surface-container-low);
   border: none;
   cursor: pointer;
@@ -544,7 +544,7 @@ watch(() => route.path, closeDrawer)
   right: 0;
   z-index: calc(var(--z-nav) + 2);
   background: var(--color-surface-container-lowest);
-  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
   padding-bottom: var(--nav-safe-area-bottom, 0px);
   transform: translateY(100%);
   transition: transform var(--transition-base);
@@ -590,7 +590,7 @@ watch(() => route.path, closeDrawer)
   align-items: center;
   gap: var(--space-3);
   padding: 12px var(--space-3);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-lg);
   text-decoration: none;
   color: var(--color-on-surface-variant);
   font-size: var(--text-md);

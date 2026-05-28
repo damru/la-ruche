@@ -527,7 +527,7 @@ async function handleSubmit() {
   color: var(--color-on-surface-variant);
   opacity: 0.55;
   cursor: pointer;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-lg);
   transition: opacity var(--transition-fast), color var(--transition-fast);
   flex-shrink: 0;
 }
@@ -562,7 +562,7 @@ async function handleSubmit() {
   padding: 0 var(--space-5);
   background: var(--gradient-primary);
   color: var(--color-on-primary);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-lg);
   font-family: var(--font-body);
   font-size: var(--text-sm);
   font-weight: 600;

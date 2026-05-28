@@ -116,7 +116,7 @@ function dismiss() {
   justify-content: space-between;
   gap: var(--space-3);
   padding: var(--space-3) var(--space-4);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   background: var(--tone-bg, var(--color-secondary-container));
   color: var(--tone-fg, var(--color-on-secondary-container));
 }
@@ -189,7 +189,7 @@ function dismiss() {
   justify-content: center;
   min-width: unset;
   min-height: unset;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-lg);
   opacity: 0.6;
   transition: opacity var(--transition-fast);
   justify-self: end;

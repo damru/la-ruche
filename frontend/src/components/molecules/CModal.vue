@@ -130,7 +130,7 @@ function handleOpenChange(open: boolean) {
   backdrop-filter: blur(20px);
   border: 1px solid rgba(194, 199, 207, 0.3);
   box-shadow: var(--shadow-glass);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-2xl);
   overflow: clip;
 
   max-height: 90vh;
@@ -178,7 +178,7 @@ function handleOpenChange(open: boolean) {
   height: 32px;
   min-width: unset;
   min-height: unset;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-lg);
   color: var(--color-on-surface-variant);
   flex-shrink: 0;
   transition: background var(--transition-fast), color var(--transition-fast);

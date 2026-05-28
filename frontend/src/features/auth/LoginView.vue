@@ -385,7 +385,7 @@ async function handleResetRequest() {
   gap: var(--space-2);
   height: 44px;
   width: 100%;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   font-family: var(--font-body);
   font-size: var(--text-md);
   font-weight: 500;

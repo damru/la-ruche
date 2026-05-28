@@ -1610,7 +1610,7 @@ async function submitDelete() {
   min-height: 44px;
   max-width: 100%;
   padding: 0 var(--space-4) 0 var(--space-3);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-lg);
   border: 1px solid var(--color-outline-variant);
   background: var(--color-surface-container-low);
 }
@@ -1660,7 +1660,7 @@ async function submitDelete() {
 
 .claim-documents-empty {
   padding: var(--space-3);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-lg);
   background: var(--color-surface-container-low);
   color: var(--color-on-surface-variant);
 }
@@ -1677,7 +1677,7 @@ async function submitDelete() {
   align-items: center;
   gap: var(--space-3);
   padding: var(--space-3);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-lg);
   background: var(--color-surface-container-low);
 }
 

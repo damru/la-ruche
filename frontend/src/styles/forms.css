@@ -19,7 +19,7 @@
 
 .dropzone {
   border: 1.5px dashed var(--dropzone-border-color, var(--color-outline));
-  border-radius: var(--dropzone-radius, var(--radius-sm));
+  border-radius: var(--dropzone-radius, var(--radius-lg));
   padding: var(--dropzone-padding-block, var(--space-4)) var(--dropzone-padding-inline, var(--space-3));
   display: flex;
   align-items: center;

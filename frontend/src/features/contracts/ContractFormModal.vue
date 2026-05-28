@@ -701,7 +701,7 @@ async function saveContract() {
   flex-direction: column;
   gap: var(--space-2);
   padding: var(--space-4);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   background: var(--color-surface-container-low);
 }
 
@@ -732,7 +732,7 @@ async function saveContract() {
   min-height: 44px;
   max-width: 100%;
   padding: 0 var(--space-4) 0 var(--space-3);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-lg);
   border: 1px solid var(--color-outline-variant);
   background: var(--color-surface-container-low);
 }
@@ -777,7 +777,7 @@ async function saveContract() {
 
 .contract-form__documents-empty {
   padding: var(--space-3);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-lg);
   background: var(--color-surface-container-low);
   color: var(--color-on-surface-variant);
 }
@@ -794,7 +794,7 @@ async function saveContract() {
   align-items: center;
   gap: var(--space-3);
   padding: var(--space-3);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-lg);
   background: var(--color-surface-container-low);
 }
 

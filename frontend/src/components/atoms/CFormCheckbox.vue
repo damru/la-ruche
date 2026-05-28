@@ -59,7 +59,7 @@ defineOptions({ inheritAttrs: false })
         v-bind="$attrs"
         :checked="isChecked"
         :disabled="props.disabled"
-        class="size-1 rounded-full border border-outline-variant bg-surface-container-low
+        class="min-w-[unset]! min-h-[unset]! size-4! rounded-full border border-outline-variant bg-surface-container-low
                data-[state=checked]:bg-primary data-[state=checked]:border-primary
                flex items-center justify-center outline-none flex-shrink-0
                focus-visible:ring-2 focus-visible:ring-primary/30"

@@ -472,7 +472,7 @@ onMounted(reload)
   align-items: center;
   gap: var(--space-1);
   padding: 2px var(--space-2);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-lg);
   background: color-mix(in srgb, var(--color-warning) 15%, transparent);
   color: var(--color-warning, #b45309);
   font-size: var(--text-2xs);
@@ -486,7 +486,7 @@ onMounted(reload)
   justify-content: center;
   width: 28px;
   height: 28px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-lg);
   color: var(--color-on-surface-variant);
   cursor: default;
   flex-shrink: 0;

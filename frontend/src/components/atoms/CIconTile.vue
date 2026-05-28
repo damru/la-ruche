@@ -18,7 +18,7 @@ withDefaults(defineProps<{
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   background: var(--tone-bg, var(--color-secondary-container));
   color: var(--tone-fg, var(--color-primary));
 }
@@ -26,7 +26,7 @@ withDefaults(defineProps<{
 .c-icon-tile--sm {
   width: 32px;
   height: 32px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-lg);
 }
 
 .c-icon-tile--md {
@@ -37,7 +37,7 @@ withDefaults(defineProps<{
 .c-icon-tile--lg {
   width: 56px;
   height: 56px;
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-2xl);
 }
 
 .c-icon-tile > :deep(svg) {
