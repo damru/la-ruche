@@ -132,33 +132,6 @@
   color: var(--color-on-surface);
 }
 
-/* ── Icon button ───────────────────────────────────────────────────── */
-@utility icon-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--color-on-surface-variant);
-  padding: 4px;
-  border-radius: var(--radius-lg);
-  transition: all var(--transition-fast);
-
-  &:hover {
-    background: var(--color-surface-container);
-    color: var(--color-primary);
-  }
-}
-
-@utility icon-btn--danger {
-  &:hover { color: var(--color-error); }
-}
-
-@utility icon-btn--valid {
-  &:hover { color: var(--color-success); }
-}
-
 /* ── Icon size utilities ───────────────────────────────────────────── */
 @utility icon-2xs {
   width: var(--icon-2xs); height: var(--icon-2xs); flex-shrink: 0;

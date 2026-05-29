@@ -12,6 +12,8 @@ import CTopbar from '@/components/organisms/CTopbar.vue'
 import CHeading from '@/components/atoms/CHeading.vue'
 import CFormDropzone from '@/components/molecules/CFormDropzone.vue'
 import CIconPlus from '@/components/atoms/CIconPlus.svg'
+import CIconTrash from '@/components/atoms/CIconTrash.svg'
+import CIconDownload from '@/components/atoms/CIconDownload.svg'
 import { documentsApi, buildingApi } from '@/api'
 import { toErrorMessage, usePageLoader } from '@/composables/usePageLoader'
 import { useFormFeedback } from '@/composables/useFormFeedback'
@@ -284,26 +286,23 @@ async function confirmDeleteDoc() {
             </template>
             <template #cell-actions="{ row }">
               <div class="action-btns">
-                <button
-                  class="icon-btn"
+                <CBtn
+                  variant="icon"
+                  :icon="CIconDownload"
                   :title="t('documents.downloadNewTab')"
                   :aria-label="t('documents.downloadNewTab')"
                   @click="downloadDoc(row.id)"
                 >
-                  <CIconDownload
-                    class="icon-sm"
-                  />
-                </button>
-                <button
-                  class="icon-btn icon-btn--danger"
+              </CBtn>
+                <CBtn
+                  variant="icon"
+                  :icon="CIconTrash"
+                  class="tone--err"
                   :title="t('common.delete')"
                   :aria-label="t('common.delete')"
                   @click="openDeleteDocModal(row)"
                 >
-                  <CIconTrash
-                    class="icon-sm"
-                  />
-                </button>
+                </CBtn>
               </div>
             </template>
           </CDataTable>
@@ -429,23 +428,11 @@ async function confirmDeleteDoc() {
 }
 
 .action-btns { display: flex; gap: var(--space-1); }
-.action-btns .icon-btn {
-  min-width: 36px;
-  min-height: 36px;
-}
 
 /* Upload modal */
 .upload-form { display: flex; flex-direction: column; gap: var(--space-4); }
 .selected-file { color: var(--color-on-surface); font-weight: var(--fw-medium); }
 .visibility-section { display: flex; flex-direction: column; gap: var(--space-2); }
 .role-checkboxes { display: flex; flex-wrap: wrap; gap: var(--space-3); }
-
-@media (max-width: 640px) {
-  .action-btns .icon-btn {
-    min-width: 44px;
-    min-height: 44px;
-    padding: 0;
-  }
-}
 
 </style>

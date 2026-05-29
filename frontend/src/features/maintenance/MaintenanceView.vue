@@ -21,6 +21,7 @@ import CTabs from '@/components/atoms/CTabs.vue'
 import CIconArrowLeft from '@/components/atoms/CIconArrowLeft.svg'
 import CIconArrowRight from '@/components/atoms/CIconArrowRight.svg'
 import CIconPlus from '@/components/atoms/CIconPlus.svg'
+import CIconTrash from '@/components/atoms/CIconTrash.svg'
 import { maintenanceApi } from '@/api'
 import type { LogbookContractSummary, LogbookSummary, MaintenanceEntry } from '@/types/domain'
 
@@ -531,16 +532,15 @@ async function deleteEntry() {
                 </div>
                 <div class="entry-header-right">
                   <span class="entry-date">{{ formatDate(entry.intervention_date) }}</span>
-                  <button
-                    class="icon-btn icon-btn--danger"
+                  <CBtn
+                    variant="icon"
+                    :icon="CIconTrash"
+                    class="tone--err"
                     :title="t('maintenance.deleteEntry')"
+                    :aria-label="t('maintenance.deleteEntry')"
                     @click="openDeleteModal(entry)"
                   >
-                    <CIconTrash
-                      
-                      class="icon-xs"
-                    />
-                  </button>
+                  </CBtn>
                 </div>
               </div>
               <p

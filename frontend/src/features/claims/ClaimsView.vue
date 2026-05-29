@@ -262,7 +262,6 @@ const claimReminderRows = computed(() =>
     id: claim.id,
     title: claim.title,
     subtitle: `${t(`claims.types.${claim.claim_type}`)} · ${unitLabel(claim.unit_id)}`,
-    meta: formatDate(claim.declared_at),
     emphasis: deadlineLabel(claim),
     tone: claimReminderTone(claim),
   })),
@@ -907,7 +906,7 @@ async function submitDelete() {
             #actions="{ row }"
           >
             <CBtn
-              variant="reversed"
+              variant="negative"
               size="sm"
               :icon="CIconUpload"
               :title="t('claims.transmit')"

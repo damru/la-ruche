@@ -13,7 +13,10 @@ import CHeading from '@/components/atoms/CHeading.vue'
 import CFormRow from '@/components/molecules/CFormRow.vue'
 import CTabs from '@/components/atoms/CTabs.vue'
 import CIconPlus from '@/components/atoms/CIconPlus.svg'
+import CIconCurrency from '@/components/atoms/CIconCurrency.svg'
 import CIconUserPlus from '@/components/atoms/CIconUserPlus.svg'
+import CIconEdit from '@/components/atoms/CIconEdit.svg'
+import CIconArchive from '@/components/atoms/CIconArchive.svg'
 import { unitsApi, allocationKeysApi, usersApi } from '@/api'
 import { usePageLoader } from '@/composables/usePageLoader'
 import { useFormFeedback } from '@/composables/useFormFeedback'
@@ -265,6 +268,7 @@ const userColumns = computed(() => [
           <CBtn
             variant="primary"
             size="sm"
+            shrink="sm"
             :icon="CIconPlus"
             :title="t('residents.createUnit')"
             @click="openCreateUnit"
@@ -272,6 +276,7 @@ const userColumns = computed(() => [
           <CBtn
             variant="secondary"
             size="sm"
+            shrink="sm"
             :icon="CIconUserPlus"
             :title="t('residents.invite')"
           />
@@ -356,37 +361,29 @@ const userColumns = computed(() => [
               </template>
               <template #cell-actions="{ row }">
                 <div class="action-btns">
-                  <button
-                    class="icon-btn icon-btn--subtle"
-                    :title="t('units.charges.title')"
+                  <CBtn
+                    variant="icon"
                     :aria-label="t('units.charges.title')"
+                    :title="t('units.charges.title')"
+                    :icon="CIconCurrency"
                     @click="$router.push(`/residents/${row.id}/charges`)"
-                  >
-                    <CIconCurrency
-                      class="icon-sm"
-                    />
-                  </button>
-                  <button
-                    class="icon-btn"
-                    :title="t('common.edit')"
+                  />
+                  <CBtn
+                    variant="icon"
                     :aria-label="t('common.edit')"
+                    :title="t('common.edit')"
+                    :icon="CIconEdit"
                     @click="openEditUnit(row)"
-                  >
-                    <CIconEdit
-                      class="icon-sm"
-                    />
-                  </button>
-                  <button
+                  />
+                  <CBtn
                     v-if="row.active"
-                    class="icon-btn icon-btn--danger"
+                    variant="icon"
                     :title="t('residents.archive')"
                     :aria-label="t('residents.archive')"
+                    :icon="CIconArchive"
                     @click="openArchiveModal(row)"
-                  >
-                    <CIconArchive
-                      class="icon-sm"
-                    />
-                  </button>
+                    class="tone--err"
+                  />
                 </div>
               </template>
             </CDataTable>
@@ -587,14 +584,6 @@ const userColumns = computed(() => [
   font-size: var(--text-md);
   font-weight: var(--fw-semibold);
   margin-bottom: var(--space-3);
-}
-
-@media (max-width: 640px) {
-  .action-btns .icon-btn {
-    min-width: 44px;
-    min-height: 44px;
-    padding: 0;
-  }
 }
 
 </style>

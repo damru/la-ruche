@@ -1205,13 +1205,13 @@ function formatSharePercentage(value: number): string {
             <template #cell-actions="{ row }">
               <CBtn
                 v-if="canMarkLeviesPaid && row.status !== 'paid'"
-                variant="ghost"
+                variant="icon"
                 size="sm"
                 :icon="CIconCheckCircle"
                 :title="t('budget.markPaid')"
-                shrink="sm"
                 :loading="markingPaidId === asConsolidatedLevyRow(row).id"
                 @click="markPaid(asConsolidatedLevyRow(row))"
+                class="tone--valid"
               />
             </template>
           </CDataTable>

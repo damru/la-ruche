@@ -534,17 +534,15 @@ async function confirmDelete() {
               :placeholder="`Option ${idx + 1}`"
               class="grow"
             />
-            <button
+            <CBtn
               v-if="createForm.choices.length > 2"
               type="button"
-              class="icon-btn icon-btn--danger"
+              variant="icon"
+              :icon="CIconTrash"
+              class="tone--err"
               @click="removeChoice(idx)"
             >
-              <CIconX
-                
-                class="icon-xs"
-              />
-            </button>
+            </CBtn>
           </div>
           <CBtn
             variant="ghost"

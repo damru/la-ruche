@@ -381,13 +381,12 @@ async function confirmTerminateContract() {
         >
           <template #actions="{ row }">
             <CBtn
-              variant="reversed"
+              variant="negative"
               size="sm"
               :title="t('contracts.reminders.acknowledge')"
               :loading="busyKey === `reminder:${row.id}`"
               :disabled="busyKey === `reminder:${row.id}`"
               :icon="CIconCurrency"
-              shrink="sm"
               @click="acknowledgeReminder(reminderViewsById.get(row.id)!)"
             />
           </template>

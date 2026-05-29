@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n'
 import { useFormatters } from '@/composables/useFormatters'
 import { vendorApi } from '@/api'
 import type { VendorTask } from '@/types/domain'
+import CIconX from '@/components/atoms/CIconX.svg'
 
 const route = useRoute()
 const { t } = useI18n()
@@ -213,15 +214,13 @@ async function submit() {
                 class="icon-xs"
               />
               <span class="body-xs file-name">{{ file.name }}</span>
-              <button
-                class="icon-btn icon-btn--danger"
+              <CBtn
+                variant="icon"
+                class="tone--err"
                 @click="removeFile(idx)"
+                :icon="CIconX"
               >
-                <CIconX
-                  
-                  class="icon-xs"
-                />
-              </button>
+              </CBtn>
             </li>
           </ul>
 

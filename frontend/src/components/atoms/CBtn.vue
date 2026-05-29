@@ -3,8 +3,8 @@ import type { Component } from 'vue'
 
 defineOptions({ inheritAttrs: false })
 
-type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'reversed'
-type Size = 'sm' | 'md' | 'lg'
+type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'negative' | 'icon'
+type Size = 'xs' | 'sm' | 'md' | 'lg'
 type Breakpoint = 'sm' | 'md' | 'lg' | 'xl' | '2xl'
 
 withDefaults(defineProps<{
@@ -34,21 +34,30 @@ const variantClass: Record<Variant, string> = {
   secondary: 'enabled:hover:brightness-95',
   ghost: 'bg-transparent! text-primary! enabled:hover:bg-secondary-container',
   danger: 'enabled:hover:brightness-95',
-  reversed: 'bg-(--tone-fg)! text-(--tone-bg)! enabled:hover:-translate-y-px',
+  negative: 'bg-(--tone-fg)! text-(--tone-bg)! enabled:hover:-translate-y-px',
+  icon: 'min-w-min min-h-min! p-1! rounded-md! bg-transparent! text-on-surface-variant! enabled:hover:bg-(--tone-bg,var(--color-surface-container))! enabled:hover:text-(--tone-fg,var(--color-primary))!',
 }
 
 const sizeClass: Record<Size, string> = {
+  xs: 'min-h-7 min-w-7 px-2 text-xs rounded-md [--c-btn-box:1.75rem]',
   sm: 'min-h-9 min-w-9 px-3 text-sm rounded-lg [--c-btn-box:2.25rem]',
   md: 'min-h-11 min-w-11 px-5 text-base rounded-xl [--c-btn-box:2.75rem]',
   lg: 'min-h-[3.25rem] min-w-[3.25rem] px-6 text-lg rounded-2xl [--c-btn-box:3.25rem]',
 }
 
+const iconSizeClass: Record<Size, string> = {
+  xs: 'icon-xs',
+  sm: 'icon-sm',
+  md: 'icon-md',
+  lg: 'icon-lg',
+}
+
 const shrinkClass: Record<Breakpoint, string> = {
   sm: 'max-sm:w-(--c-btn-box) max-sm:min-w-(--c-btn-box) max-sm:px-0 max-sm:gap-0 max-sm:[&_span]:hidden',
-  md: 'max-md:w-(--c-btn-box) max-md:min-w-(--c-btn-box) max-md:px-0 max-md:gap-0 max-md:[&_.c-btn__title]:hidden',
-  lg: 'max-lg:w-(--c-btn-box) max-lg:min-w-(--c-btn-box) max-lg:px-0 max-lg:gap-0 max-lg:[&_.c-btn__title]:hidden',
-  xl: 'max-xl:w-(--c-btn-box) max-xl:min-w-(--c-btn-box) max-xl:px-0 max-xl:gap-0 max-xl:[&_.c-btn__title]:hidden',
-  '2xl': 'max-2xl:w-(--c-btn-box) max-2xl:min-w-(--c-btn-box) max-2xl:px-0 max-2xl:gap-0 max-2xl:[&_.c-btn__title]:hidden',
+  md: 'max-md:w-(--c-btn-box) max-md:min-w-(--c-btn-box) max-md:px-0 max-md:gap-0 max-md:[&_span]:hidden',
+  lg: 'max-lg:w-(--c-btn-box) max-lg:min-w-(--c-btn-box) max-lg:px-0 max-lg:gap-0 max-lg:[&_span]:hidden',
+  xl: 'max-xl:w-(--c-btn-box) max-xl:min-w-(--c-btn-box) max-xl:px-0 max-xl:gap-0 max-xl:[&_span]:hidden',
+  '2xl': 'max-2xl:w-(--c-btn-box) max-2xl:min-w-(--c-btn-box) max-2xl:px-0 max-2xl:gap-0 max-2xl:[&_span]:hidden',
 }
 
 </script>
@@ -63,6 +72,7 @@ const shrinkClass: Record<Breakpoint, string> = {
         'pointer-events-none': loading, 
         'overflow-clip': closing, 
         'tone--accent': variant === 'primary', 
+        'tone--info': variant === 'secondary', 
         'tone--err': variant === 'danger', 
         'tone--disabled': disabled, 
         'c-btn--shrink': !!shrink 
@@ -84,13 +94,10 @@ const shrinkClass: Record<Breakpoint, string> = {
       <component
         :is="icon"
         v-else-if="icon"
-        class="c-btn__icon"
+        :class="iconSizeClass[size]"
         aria-hidden="true"
       />
-      <span
-        v-if="title"
-        class="c-btn__title"
-      >
+      <span v-if="title && variant !== 'icon'">
         {{ title }}
       </span>
     </template>
@@ -106,13 +113,6 @@ const shrinkClass: Record<Breakpoint, string> = {
   border-top-color: transparent;
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
-  flex-shrink: 0;
-}
-
-.c-btn__icon {
-  display: block;
-  width: var(--icon-sm);
-  height: var(--icon-sm);
   flex-shrink: 0;
 }
 
@@ -134,89 +134,19 @@ const shrinkClass: Record<Breakpoint, string> = {
   to   { transform: scaleX(1); }
 }
 
-/* ── Slot icons ───────────────────────────────────────────────── */
-:slotted(svg) {
-  display: block !important;
-  width: var(--icon-sm);
-  height: var(--icon-sm);
-  flex-shrink: 0;
-}
-
-@media (max-width: 640px) {
-  :slotted([shrink]) {
-    display: none;
-  }
-}
-
-@media (max-width: 639.98px) {
-  .c-btn--shrink-sm {
-    width: var(--c-btn-box);
-    min-width: var(--c-btn-box);
-    padding-inline: 0;
-    gap: 0;
-  }
-
-  .c-btn--shrink-sm .c-btn__title {
-    display: none;
-  }
-}
-
-@media (max-width: 767.98px) {
-  .c-btn--shrink-md {
-    width: var(--c-btn-box);
-    min-width: var(--c-btn-box);
-    padding-inline: 0;
-    gap: 0;
-  }
-
-  .c-btn--shrink-md .c-btn__title {
-    display: none;
-  }
-}
-
-@media (max-width: 1023.98px) {
-  .c-btn--shrink-lg {
-    width: var(--c-btn-box);
-    min-width: var(--c-btn-box);
-    padding-inline: 0;
-    gap: 0;
-  }
-
-  .c-btn--shrink-lg .c-btn__title {
-    display: none;
-  }
-}
-
-@media (max-width: 1279.98px) {
-  .c-btn--shrink-xl {
-    width: var(--c-btn-box);
-    min-width: var(--c-btn-box);
-    padding-inline: 0;
-    gap: 0;
-  }
-
-  .c-btn--shrink-xl .c-btn__title {
-    display: none;
-  }
-}
-
-@media (max-width: 1535.98px) {
-  .c-btn--shrink-2xl {
-    width: var(--c-btn-box);
-    min-width: var(--c-btn-box);
-    padding-inline: 0;
-    gap: 0;
-  }
-
-  .c-btn--shrink-2xl .c-btn__title {
-    display: none;
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   .c-btn__spinner,
   .c-btn--closing::before {
     animation: none;
+  }
+}
+
+/* TODO */
+@media (max-width: 640px) {
+  .action-btns .icon-btn {
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0;
   }
 }
 </style>
