@@ -176,7 +176,7 @@ async function confirmResetData() {
       <!-- Tabs -->
       <CTabs
         v-model="activeTab"
-        variant="filter"
+        variant="tab"
         :tabs="[
           { value: 'account', label: t('nav.myAccount') },
           { value: 'notifications', label: t('nav.notifications') },

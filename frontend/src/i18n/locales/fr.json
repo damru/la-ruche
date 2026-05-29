@@ -306,19 +306,19 @@
     "startingAction": "AG en séance",
     "start_modal": {
       "title": "Démarrer la séance",
-      "lead": "Désignez le président, le secrétaire et les éventuels scrutateurs avant de commencer les votes.",
-      "president_label": "Président de séance",
+      "lead": "Désignez un·e président·e, un·e secrétaire et les éventuels scrutateur·ices avant de commencer les votes.",
+      "president_label": "Président·e de séance",
       "secretary_label": "Secrétaire de séance",
-      "scrutineers_label": "Scrutateurs (optionnels)",
-      "scrutineer_placeholder": "Nom du scrutateur",
-      "add_scrutineer": "Ajouter un scrutateur",
-      "required": "Le président et le secrétaire sont obligatoires."
+      "scrutineers_label": "Scrutateur·ices (optionnels)",
+      "scrutineer_placeholder": "Nom du scrutateur·ice",
+      "add_scrutineer": "Ajouter un·e scrutateur·ice",
+      "required": "Un·e président·e et un·e secrétaire sont obligatoires."
     },
     "session_roles": {
       "title": "Rôles de séance",
-      "president": "Président",
+      "president": "Président·e",
       "secretary": "Secrétaire",
-      "scrutineers": "Scrutateurs"
+      "scrutineers": "Scrutateur·ices"
     },
     "convocation": {
       "modal_title": "Convoquer l'AG",
@@ -327,7 +327,7 @@
       "checklist_incomplete": "Au moins un point bloquant n'est pas satisfait. Complétez avant l'envoi.",
       "advisory": "non bloquant",
       "items": {
-        "j_minus_21_respected": "Délai J−21 respecté",
+        "j_minus_21_respected": "Délai J-21 respecté",
         "notice_document_attached": "Document de convocation joint",
         "agenda_present": "Ordre du jour renseigné",
         "resolutions_present": "Au moins une résolution inscrite",
@@ -348,9 +348,9 @@
       "modal_title": "Signatures du bureau de séance",
       "modal_lead": "Tracez les signatures effectives du président, du secrétaire et des scrutateurs.",
       "action_label": "Saisir les signatures",
-      "president": "Président",
+      "president": "Président·e",
       "secretary": "Secrétaire",
-      "scrutineers": "Scrutateurs",
+      "scrutineers": "Scrutateur·ices",
       "signed_on": "signé le {date}",
       "not_signed": "non signé"
     },

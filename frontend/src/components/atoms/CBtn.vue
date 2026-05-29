@@ -177,6 +177,10 @@ const shrinkClass: Record<Breakpoint, string> = {
   transform: translateY(-1px);
 }
 
+.c-btn--negative:active:not(:disabled) {
+  transform: translateY(0);
+}
+
 .c-btn--icon-variant {
   min-width: min-content;
   min-height: min-content;

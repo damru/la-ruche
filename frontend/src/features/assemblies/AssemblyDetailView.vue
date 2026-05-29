@@ -1388,47 +1388,6 @@ function toDateTimeLocal(value: string): string {
           </div>
         </CCard>
 
-        <CCard
-          v-if="meeting && ['ongoing', 'closed'].includes(meeting.status) && meeting.president_name"
-          class="session-roles-card"
-        >
-          <div class="flex flex-col gap-2">
-            <span class="label-sm">{{ t('meetings.session_roles.title') }}</span>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <div>
-                <p class="text-xs text-on-surface-variant">
-                  {{ t('meetings.session_roles.president') }}
-                </p>
-                <p class="text-sm font-medium">
-                  {{ meeting.president_name }}
-                </p>
-              </div>
-              <div>
-                <p class="text-xs text-on-surface-variant">
-                  {{ t('meetings.session_roles.secretary') }}
-                </p>
-                <p class="text-sm font-medium">
-                  {{ meeting.secretary_name }}
-                </p>
-              </div>
-              <div>
-                <p class="text-xs text-on-surface-variant">
-                  {{ t('meetings.session_roles.scrutineers') }}
-                </p>
-                <p class="text-sm font-medium">
-                  <template v-if="meeting.scrutineers.length > 0">
-                    {{ meeting.scrutineers.map(s => s.name).join(', ') }}
-                  </template>
-                  <span
-                    v-else
-                    class="text-on-surface-variant"
-                  >—</span>
-                </p>
-              </div>
-            </div>
-          </div>
-        </CCard>
-
         <div class="detail-layout">
           <section class="main-column">
             <CSectionHeader>
@@ -1634,34 +1593,40 @@ function toDateTimeLocal(value: string): string {
           </section>
 
           <aside class="side-column">
-            <CCard class="">
+            <CCard
+              v-if="meeting && ['ongoing', 'closed'].includes(meeting.status)"
+              class="session-roles-card"
+            >
               <CHeading type="card">
-                {{ t('meetings.info') }}
+                {{ t('meetings.session_roles.title') }}
               </CHeading>
-              <CFlexGroup
-                tag="dl"
-                class="[&_dt]:text-xs [&_dd]:font-medium [&_dd]:text(--color-on-surface) "
-                direction="column"
-              >
-                <div class="info-list__row">
-                  <dt>{{ t('meetings.infoFields.type') }}</dt>
-                  <dd>{{ typeLabel(meeting.meeting_type) }}</dd>
+              <CFlexGroup>
+                <div>
+                  <p class="text-xs text-on-surface-variant">
+                    {{ t('meetings.session_roles.president') }}
+                  </p>
+                  <p class="text-sm font-medium text-on-surface">
+                    {{ meeting.president_name }}
+                  </p>
                 </div>
-                <div class="info-list__row">
-                  <dt>{{ t('meetings.infoFields.date') }}</dt>
-                  <dd>{{ formatDate(meeting.meeting_date) }}</dd>
+                <div>
+                  <p class="text-xs text-on-surface-variant">
+                    {{ t('meetings.session_roles.secretary') }}
+                  </p>
+                  <p class="text-sm font-medium text-on-surface">
+                    {{ meeting.secretary_name }}azdazd zef zr
+                  </p>
                 </div>
-                <div class="info-list__row">
-                  <dt>{{ t('meetings.infoFields.location') }}</dt>
-                  <dd>{{ meeting.location || '—' }}</dd>
-                </div>
-                <div class="info-list__row">
-                  <dt>{{ t('meetings.infoFields.notice') }}</dt>
-                  <dd>{{ meeting.notice_date ? formatDate(meeting.notice_date) : '—' }}</dd>
-                </div>
-                <div class="info-list__row">
-                  <dt>{{ t('meetings.infoFields.resolutions') }}</dt>
-                  <dd>{{ resolutions.length }}</dd>
+                <div>
+                  <p class="text-xs text-on-surface-variant">
+                    {{ t('meetings.session_roles.scrutineers') }}
+                  </p>
+                  <p class="text-sm font-medium text-on-surface">
+                    <template v-if="meeting.scrutineers.length > 0">
+                      {{ meeting.scrutineers.map(s => s.name).join(', ') }}
+                    </template>
+                    <span v-else>—</span>
+                  </p>
                 </div>
               </CFlexGroup>
             </CCard>

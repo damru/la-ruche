@@ -4,10 +4,17 @@ withDefaults(defineProps<{
 }>(), {
   size: 'md',
 })
+
+const sizeClass = {
+  'sm': 'c-icon-tile--sm',
+  'md': 'c-icon-tile--md',
+  'lg': 'c-icon-tile--lg',
+}
 </script>
 
+
 <template>
-  <div :class="['c-icon-tile', `c-icon-tile--${size}`]">
+  <div :class="['c-icon-tile', sizeClass[size]]">
     <slot></slot>
   </div>
 </template>
@@ -40,15 +47,15 @@ withDefaults(defineProps<{
   border-radius: var(--radius-2xl);
 }
 
-.c-icon-tile > :deep(svg) {
-  width: var(--icon-md);
-  height: var(--icon-md);
-  flex-shrink: 0;
-}
 
 .c-icon-tile--sm > :deep(svg) {
   width: var(--icon-sm);
   height: var(--icon-sm);
+}
+
+.c-icon-tile--md > :deep(svg) {
+  width: var(--icon-md);
+  height: var(--icon-md);
 }
 
 .c-icon-tile--lg > :deep(svg) {
