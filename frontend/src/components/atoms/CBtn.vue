@@ -30,19 +30,19 @@ withDefaults(defineProps<{
 })
 
 const variantClass: Record<Variant, string> = {
-  primary: 'bg-(image:--tone-bg) shadow-(--shadow-primary-lift) enabled:hover:-translate-y-px enabled:hover:shadow-(--shadow-primary-lift-hover) enabled:active:translate-y-0 ',
-  secondary: 'enabled:hover:brightness-95',
-  ghost: 'bg-transparent! text-primary! enabled:hover:bg-secondary-container',
-  danger: 'enabled:hover:brightness-95',
-  negative: 'bg-(--tone-fg)! text-(--tone-bg)! enabled:hover:-translate-y-px',
-  icon: 'min-w-min min-h-min! p-1! rounded-md! bg-transparent! text-on-surface-variant! enabled:hover:bg-(--tone-bg,var(--color-surface-container))! enabled:hover:text-(--tone-fg,var(--color-primary))!',
+  primary: 'c-btn--primary',
+  secondary: 'c-btn--secondary',
+  ghost: 'c-btn--ghost',
+  danger: 'c-btn--danger',
+  negative: 'c-btn--negative',
+  icon: 'c-btn--icon-variant',
 }
 
 const sizeClass: Record<Size, string> = {
-  xs: 'min-h-7 min-w-7 px-2 text-xs rounded-md [--c-btn-box:1.75rem]',
-  sm: 'min-h-9 min-w-9 px-3 text-sm rounded-lg [--c-btn-box:2.25rem]',
-  md: 'min-h-11 min-w-11 px-5 text-base rounded-xl [--c-btn-box:2.75rem]',
-  lg: 'min-h-[3.25rem] min-w-[3.25rem] px-6 text-lg rounded-2xl [--c-btn-box:3.25rem]',
+  xs: 'c-btn--xs',
+  sm: 'c-btn--sm',
+  md: 'c-btn--md',
+  lg: 'c-btn--lg',
 }
 
 const iconSizeClass: Record<Size, string> = {
@@ -53,11 +53,11 @@ const iconSizeClass: Record<Size, string> = {
 }
 
 const shrinkClass: Record<Breakpoint, string> = {
-  sm: 'max-sm:w-(--c-btn-box) max-sm:min-w-(--c-btn-box) max-sm:px-0 max-sm:gap-0 max-sm:[&_span]:hidden',
-  md: 'max-md:w-(--c-btn-box) max-md:min-w-(--c-btn-box) max-md:px-0 max-md:gap-0 max-md:[&_span]:hidden',
-  lg: 'max-lg:w-(--c-btn-box) max-lg:min-w-(--c-btn-box) max-lg:px-0 max-lg:gap-0 max-lg:[&_span]:hidden',
-  xl: 'max-xl:w-(--c-btn-box) max-xl:min-w-(--c-btn-box) max-xl:px-0 max-xl:gap-0 max-xl:[&_span]:hidden',
-  '2xl': 'max-2xl:w-(--c-btn-box) max-2xl:min-w-(--c-btn-box) max-2xl:px-0 max-2xl:gap-0 max-2xl:[&_span]:hidden',
+  sm: 'c-btn--shrink-sm',
+  md: 'c-btn--shrink-md',
+  lg: 'c-btn--shrink-lg',
+  xl: 'c-btn--shrink-xl',
+  '2xl': 'c-btn--shrink-2xl',
 }
 
 </script>
@@ -67,10 +67,10 @@ const shrinkClass: Record<Breakpoint, string> = {
     :disabled="disabled"
     :type="type"
     :class="[
-      variant ? variantClass[variant] : null, sizeClass[size], 
+      variantClass[variant], sizeClass[size],
       { 
         'pointer-events-none': loading, 
-        'overflow-clip': closing, 
+        'c-btn--closing': closing, 
         'tone--accent': variant === 'primary', 
         'tone--info': variant === 'secondary', 
         'tone--err': variant === 'danger', 
@@ -79,7 +79,7 @@ const shrinkClass: Record<Breakpoint, string> = {
       }, 
       shrink ? shrinkClass[shrink] : null
     ]"
-    class="inline-flex items-center justify-center gap-2 font-sans font-medium text-left w-fit overflow-hidden bg-(--tone-bg,var(--color-primary-container)) text-(--tone-fg,var(--color-on-primary)) [transition:transform_var(--transition-fast),box-shadow_var(--transition-fast),background_var(--transition-fast),filter_var(--transition-fast)] motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline focus-visible:outline-[var(--tone-fg,var(--color-primary))] focus-visible:outline-offset-2 disabled:cursor-not-allowed!"
+    class="c-btn"
     v-bind="$attrs"
   >
     <template v-if="$slots.default">
@@ -97,7 +97,10 @@ const shrinkClass: Record<Breakpoint, string> = {
         :class="iconSizeClass[size]"
         aria-hidden="true"
       />
-      <span v-if="title && variant !== 'icon'">
+      <span
+        v-if="title && variant !== 'icon'"
+        class="c-btn__title"
+      >
         {{ title }}
       </span>
     </template>
@@ -105,6 +108,125 @@ const shrinkClass: Record<Breakpoint, string> = {
 </template>
 
 <style scoped>
+.c-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  font-family: var(--font-body);
+  font-weight: var(--fw-medium);
+  text-align: left;
+  width: fit-content;
+  min-width: 0;
+  position: relative;
+  overflow: hidden;
+  border: none;
+  background: var(--tone-bg, var(--color-primary-container));
+  color: var(--tone-fg, var(--color-on-primary));
+  cursor: pointer;
+  transition:
+    transform var(--transition-fast),
+    box-shadow var(--transition-fast),
+    background var(--transition-fast),
+    filter var(--transition-fast);
+}
+
+.c-btn:disabled {
+  cursor: not-allowed;
+}
+
+.c-btn:focus-visible {
+  outline: 2px solid var(--tone-fg, var(--color-primary));
+  outline-offset: 2px;
+}
+
+.c-btn--primary {
+  background: var(--tone-bg);
+  box-shadow: var(--shadow-primary-lift);
+}
+
+.c-btn--primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-primary-lift-hover);
+}
+
+.c-btn--primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.c-btn--secondary:hover:not(:disabled),
+.c-btn--danger:hover:not(:disabled) {
+  filter: brightness(0.95);
+}
+
+.c-btn--ghost {
+  background: transparent;
+  color: var(--color-primary);
+}
+
+.c-btn--ghost:hover:not(:disabled) {
+  background: var(--color-secondary-container);
+}
+
+.c-btn--negative {
+  background: var(--tone-fg);
+  color: var(--tone-bg);
+}
+
+.c-btn--negative:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.c-btn--icon-variant {
+  min-width: min-content;
+  min-height: min-content;
+  padding: var(--space-1);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-on-surface-variant);
+}
+
+.c-btn--icon-variant:hover:not(:disabled) {
+  background: var(--tone-bg, var(--color-surface-container));
+  color: var(--tone-fg, var(--color-primary));
+}
+
+.c-btn--xs {
+  min-height: 1.75rem;
+  min-width: 1.75rem;
+  padding: 0 0.5rem;
+  font-size: var(--text-xs);
+  border-radius: var(--radius-md);
+  --c-btn-box: 1.75rem;
+}
+
+.c-btn--sm {
+  min-height: 2.25rem;
+  min-width: 2.25rem;
+  padding: 0 0.75rem;
+  font-size: var(--text-sm);
+  border-radius: var(--radius-lg);
+  --c-btn-box: 2.25rem;
+}
+
+.c-btn--md {
+  min-height: 2.75rem;
+  min-width: 2.75rem;
+  padding: 0 1.25rem;
+  font-size: var(--text-md);
+  border-radius: var(--radius-xl);
+  --c-btn-box: 2.75rem;
+}
+
+.c-btn--lg {
+  min-height: 3.25rem;
+  min-width: 3.25rem;
+  padding: 0 1.5rem;
+  font-size: var(--text-lg);
+  border-radius: var(--radius-2xl);
+  --c-btn-box: 3.25rem;
+}
+
 /* ── Spinner ──────────────────────────────────────────────────── */
 .c-btn__spinner {
   width: var(--icon-sm);
@@ -134,19 +256,79 @@ const shrinkClass: Record<Breakpoint, string> = {
   to   { transform: scaleX(1); }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .c-btn__spinner,
-  .c-btn--closing::before {
-    animation: none;
+@media (max-width: 639.98px) {
+  .c-btn--icon-variant, .c-btn--shrink-sm {
+    width: var(--c-btn-box);
+    min-width: var(--c-btn-box);
+    padding-inline: 0;
+    gap: 0;
+  }
+
+  .c-btn--shrink-sm .c-btn__title {
+    display: none;
   }
 }
 
-/* TODO */
-@media (max-width: 640px) {
-  .action-btns .icon-btn {
-    min-width: 44px;
-    min-height: 44px;
-    padding: 0;
+@media (max-width: 767.98px) {
+  .c-btn--icon-variant, .c-btn--shrink-md {
+    width: var(--c-btn-box);
+    min-width: var(--c-btn-box);
+    padding-inline: 0;
+    gap: 0;
+  }
+
+  .c-btn--shrink-md .c-btn__title {
+    display: none;
+  }
+}
+
+@media (max-width: 1023.98px) {
+  .c-btn--icon-variant, .c-btn--shrink-lg {
+    width: var(--c-btn-box);
+    min-width: var(--c-btn-box);
+    padding-inline: 0;
+    gap: 0;
+  }
+
+  .c-btn--shrink-lg .c-btn__title {
+    display: none;
+  }
+}
+
+@media (max-width: 1279.98px) {
+  .c-btn--icon-variant, .c-btn--shrink-xl {
+    width: var(--c-btn-box);
+    min-width: var(--c-btn-box);
+    padding-inline: 0;
+    gap: 0;
+  }
+
+  .c-btn--shrink-xl .c-btn__title {
+    display: none;
+  }
+}
+
+@media (max-width: 1535.98px) {
+  .c-btn--icon-variant, .c-btn--shrink-2xl {
+    width: var(--c-btn-box);
+    min-width: var(--c-btn-box);
+    padding-inline: 0;
+    gap: 0;
+  }
+
+  .c-btn--shrink-2xl .c-btn__title {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .c-btn {
+    transition: none;
+  }
+
+  .c-btn__spinner,
+  .c-btn--closing::before {
+    animation: none;
   }
 }
 </style>

@@ -90,11 +90,5 @@
   .c-topbar {
     padding: 0 var(--space-5);
   }
-
-  /* Collapse sm buttons to square icon size */
-  .c-topbar :deep(.c-btn--sm) {
-    height: 36px;
-    width: 36px;
-  }
 }
 </style>
