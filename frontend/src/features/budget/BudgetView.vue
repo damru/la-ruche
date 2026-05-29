@@ -1039,7 +1039,7 @@ function formatSharePercentage(value: number): string {
         </div>
         <CCard>
           <CSectionHeader>
-            <CHeading  type="card">
+            <CHeading type="card">
               {{ t('budget.consumptionByLine') }}
             </CHeading>
             <CMetaItem variant="sub">
@@ -1126,7 +1126,7 @@ function formatSharePercentage(value: number): string {
         
         <CCard v-if="canViewLevies">
           <CSectionHeader>
-            <CHeading  type="card">
+            <CHeading type="card">
               {{ t('budget.levies') }}
             </CHeading>
             <CMetaLine>
@@ -1210,8 +1210,8 @@ function formatSharePercentage(value: number): string {
                 :icon="CIconCheckCircle"
                 :title="t('budget.markPaid')"
                 :loading="markingPaidId === asConsolidatedLevyRow(row).id"
-                @click="markPaid(asConsolidatedLevyRow(row))"
                 class="tone--valid"
+                @click="markPaid(asConsolidatedLevyRow(row))"
               />
             </template>
           </CDataTable>

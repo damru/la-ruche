@@ -539,8 +539,7 @@ async function deleteEntry() {
                     :title="t('maintenance.deleteEntry')"
                     :aria-label="t('maintenance.deleteEntry')"
                     @click="openDeleteModal(entry)"
-                  >
-                  </CBtn>
+                  />
                 </div>
               </div>
               <p

@@ -381,8 +381,8 @@ const userColumns = computed(() => [
                     :title="t('residents.archive')"
                     :aria-label="t('residents.archive')"
                     :icon="CIconArchive"
-                    @click="openArchiveModal(row)"
                     class="tone--err"
+                    @click="openArchiveModal(row)"
                   />
                 </div>
               </template>

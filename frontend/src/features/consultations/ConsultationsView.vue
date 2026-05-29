@@ -541,8 +541,7 @@ async function confirmDelete() {
               :icon="CIconTrash"
               class="tone--err"
               @click="removeChoice(idx)"
-            >
-            </CBtn>
+            />
           </div>
           <CBtn
             variant="ghost"

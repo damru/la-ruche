@@ -79,7 +79,7 @@ const shrinkClass: Record<Breakpoint, string> = {
       }, 
       shrink ? shrinkClass[shrink] : null
     ]"
-    class= "inline-flex items-center justify-center gap-2 font-sans font-medium text-left w-fit overflow-hidden bg-(--tone-bg,var(--color-primary-container)) text-(--tone-fg,var(--color-on-primary)) [transition:transform_var(--transition-fast),box-shadow_var(--transition-fast),background_var(--transition-fast),filter_var(--transition-fast)] motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline focus-visible:outline-[var(--tone-fg,var(--color-primary))] focus-visible:outline-offset-2 disabled:cursor-not-allowed!"
+    class="inline-flex items-center justify-center gap-2 font-sans font-medium text-left w-fit overflow-hidden bg-(--tone-bg,var(--color-primary-container)) text-(--tone-fg,var(--color-on-primary)) [transition:transform_var(--transition-fast),box-shadow_var(--transition-fast),background_var(--transition-fast),filter_var(--transition-fast)] motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline focus-visible:outline-[var(--tone-fg,var(--color-primary))] focus-visible:outline-offset-2 disabled:cursor-not-allowed!"
     v-bind="$attrs"
   >
     <template v-if="$slots.default">

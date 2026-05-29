@@ -33,7 +33,7 @@ defineProps<{
         class="flex-row! flex-wrap lg:flex-nowrap items-center"
         :class="[row.tone ? `tone--${row.tone}` : null]"
       >
-        <CIconBell class="icon-md shrink-0"/>
+        <CIconBell class="icon-md shrink-0" />
         <div class="flex flex-col flex-1">
           <span class="c-reminder-card__row-title">{{ row.title }}</span>
           <span

@@ -217,10 +217,9 @@ async function submit() {
               <CBtn
                 variant="icon"
                 class="tone--err"
-                @click="removeFile(idx)"
                 :icon="CIconX"
-              >
-              </CBtn>
+                @click="removeFile(idx)"
+              />
             </li>
           </ul>
 

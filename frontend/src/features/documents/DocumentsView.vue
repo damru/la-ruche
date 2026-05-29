@@ -292,8 +292,7 @@ async function confirmDeleteDoc() {
                   :title="t('documents.downloadNewTab')"
                   :aria-label="t('documents.downloadNewTab')"
                   @click="downloadDoc(row.id)"
-                >
-              </CBtn>
+                />
                 <CBtn
                   variant="icon"
                   :icon="CIconTrash"
@@ -301,8 +300,7 @@ async function confirmDeleteDoc() {
                   :title="t('common.delete')"
                   :aria-label="t('common.delete')"
                   @click="openDeleteDocModal(row)"
-                >
-                </CBtn>
+                />
               </div>
             </template>
           </CDataTable>
