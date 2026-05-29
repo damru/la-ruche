@@ -30,7 +30,7 @@ withDefaults(defineProps<{
 })
 
 const variantClass: Record<Variant, string> = {
-  primary: 'bg-(image:--tone-bg) enabled:hover:-translate-y-px enabled:hover:shadow-(--shadow-primary-lift) enabled:active:translate-y-0 enabled:active:shadow-(--shadow-primary-lift-hover)',
+  primary: 'bg-(image:--tone-bg) shadow-(--shadow-primary-lift) enabled:hover:-translate-y-px enabled:hover:shadow-(--shadow-primary-lift-hover) enabled:active:translate-y-0 ',
   secondary: 'enabled:hover:brightness-95',
   ghost: 'bg-transparent! text-primary! enabled:hover:bg-secondary-container',
   danger: 'enabled:hover:brightness-95',
