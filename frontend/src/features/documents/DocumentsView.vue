@@ -11,6 +11,7 @@ import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import CHeading from '@/components/atoms/CHeading.vue'
 import CFormDropzone from '@/components/molecules/CFormDropzone.vue'
+import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import { documentsApi, buildingApi } from '@/api'
 import { toErrorMessage, usePageLoader } from '@/composables/usePageLoader'
 import { useFormFeedback } from '@/composables/useFormFeedback'
@@ -185,11 +186,10 @@ async function confirmDeleteDoc() {
         <CBtn
           variant="primary"
           size="sm"
+          :icon="CIconPlus"
+          :title="t('documents.import')"
           @click="openUploadModal"
-        >
-          <CIconPlus style="width:16px;height:16px" />
-          <span class="btn-label">{{ t('documents.import') }}</span>
-        </CBtn>
+        />
       </template>
     </CTopbar>
 
@@ -361,19 +361,17 @@ async function confirmDeleteDoc() {
         <template #footer>
           <CBtn
             variant="ghost"
+            :title="t('common.cancel')"
             @click="showUpload = false"
-          >
-            {{ t('common.cancel') }}
-          </CBtn>
+          />
           <CBtn
             variant="primary"
+            :title="uploading ? t('common.saving') : t('common.upload')"
             :loading="uploading"
             :closing="uploadSuccess"
             :disabled="!selectedFile || uploading"
             @click="uploadFile"
-          >
-            {{ uploading ? t('common.saving') : t('common.upload') }}
-          </CBtn>
+          />
         </template>
       </CModal>
 
@@ -394,18 +392,16 @@ async function confirmDeleteDoc() {
           />
           <CBtn
             variant="ghost"
+            :title="t('common.cancel')"
             @click="showDeleteDocModal = false"
-          >
-            {{ t('common.cancel') }}
-          </CBtn>
+          />
           <CBtn
             variant="danger"
+            :title="t('common.deleteLabel')"
             :loading="deletingDoc"
             :closing="deleteDocFeedback.status.value === 'success'"
             @click="confirmDeleteDoc"
-          >
-            {{ t('common.deleteLabel') }}
-          </CBtn>
+          />
         </template>
       </CModal>
     </div>

@@ -35,6 +35,7 @@ import CIconShield from '@/components/atoms/CIconShield.svg'
 import CIconXCircle from '@/components/atoms/CIconXCircle.svg'
 import CIconTrash from '@/components/atoms/CIconTrash.svg'
 import CIconUpload from '@/components/atoms/CIconUpload.svg'
+import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import { buildingApi, claimsApi, documentsApi, unitsApi, usersApi } from '@/api'
 import { extractFileExtension } from '@/utils/files'
 import type { Claim, ClaimStatus, ClaimType, Document, Unit, User } from '@/types/domain'
@@ -866,11 +867,10 @@ async function submitDelete() {
         <CBtn
           variant="primary"
           size="sm"
+          :icon="CIconPlus"
+          :title="t('claims.create')"
           @click="openCreateModal"
-        >
-          <CIconPlus style="width:16px;height:16px" />
-          <span class="btn-label">{{ t('claims.create') }}</span>
-        </CBtn>
+        />
       </template>
     </CTopbar>
 
@@ -907,13 +907,12 @@ async function submitDelete() {
             #actions="{ row }"
           >
             <CBtn
-              variant="toned"
+              variant="reversed"
               size="sm"
+              :icon="CIconUpload"
+              :title="t('claims.transmit')"
               @click="openTransmitModal(claimsById.get(row.id)!)"
-            >
-              <CIconUpload />
-              {{ t('claims.transmit') }}
-            </CBtn>
+            />
           </template>
         </CReminderCard>
 
@@ -1002,29 +1001,26 @@ async function submitDelete() {
                     <CBtn
                       variant="ghost"
                       size="sm"
+                      :icon="CIconEdit"
+                      :title="t('common.edit')"
                       @click="openEditModal(claim)"
-                    >
-                      <CIconEdit />
-                      {{ t('common.edit') }}
-                    </CBtn>
+                    />
                     <CBtn
                       v-if="claim.status === 'open'"
                       variant="primary"
                       size="sm"
+                      :icon="CIconUpload"
+                      :title="t('claims.transmit')"
                       @click="openTransmitModal(claim)"
-                    >
-                      <CIconUpload />
-                      {{ t('claims.transmit') }}
-                    </CBtn>
+                    />
                     <CBtn
                       v-else-if="claim.status === 'in_progress'"
                       variant="primary"
                       size="sm"
+                      :icon="CIconCheckCircle"
+                      :title="t('claims.close')"
                       @click="openCloseModal(claim)"
-                    >
-                      <CIconCheckCircle />
-                      {{ t('claims.close') }}
-                    </CBtn>
+                    />
                   </CCardActions>
                 </template>
                 <CCardNote>
@@ -1183,18 +1179,16 @@ async function submitDelete() {
         />
         <CBtn
           variant="ghost"
+          :title="t('common.cancel')"
           @click="showCreateModal = false"
-        >
-          {{ t('common.cancel') }}
-        </CBtn>
+        />
         <CBtn
           variant="primary"
+          :title="t('common.save')"
           :loading="savingClaim || uploadingDocuments"
           :closing="createFeedback.status.value === 'success'"
           @click="submitCreate"
-        >
-          {{ t('common.save') }}
-        </CBtn>
+        />
       </template>
     </CModal>
 
@@ -1331,18 +1325,16 @@ async function submitDelete() {
                   <CBtn
                     variant="ghost"
                     size="sm"
+                    :title="t('common.download')"
                     @click="downloadClaimDocument(document.id)"
-                  >
-                    {{ t('common.download') }}
-                  </CBtn>
+                  />
                   <CBtn
                     variant="danger"
                     size="sm"
+                    :title="t('claims.detachDocument')"
                     :loading="detachingDocumentId === document.id"
                     @click="openDocumentActionModal(document)"
-                  >
-                    {{ t('claims.detachDocument') }}
-                  </CBtn>
+                  />
                 </div>
               </div>
             </div>
@@ -1354,12 +1346,11 @@ async function submitDelete() {
         <CBtn
           v-if="claimToEdit"
           variant="danger"
+          :icon="CIconTrash"
+          :title="t('common.delete')"
           style="margin-right:auto"
           @click="openDeleteFromEdit"
-        >
-          <CIconTrash />
-          {{ t('common.delete') }}
-        </CBtn>
+        />
         <CFormFeedback
           class="modal-footer-feedback"
           :status="editFeedback.status.value"
@@ -1367,18 +1358,16 @@ async function submitDelete() {
         />
         <CBtn
           variant="ghost"
+          :title="t('common.cancel')"
           @click="claimToEdit = null"
-        >
-          {{ t('common.cancel') }}
-        </CBtn>
+        />
         <CBtn
           variant="primary"
+          :title="t('common.save')"
           :loading="editingClaim || uploadingEditDocuments"
           :closing="editFeedback.status.value === 'success'"
           @click="submitEdit"
-        >
-          {{ t('common.save') }}
-        </CBtn>
+        />
       </template>
     </CModal>
 

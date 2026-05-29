@@ -23,6 +23,10 @@ import CIconSettings from '@/components/atoms/CIconSettings.svg'
 import CIconShield from '@/components/atoms/CIconShield.svg'
 import CIconSparkles from '@/components/atoms/CIconSparkles.svg'
 import CIconWrench from '@/components/atoms/CIconWrench.svg'
+import CIconPlus from '@/components/atoms/CIconPlus.svg'
+import CIconEdit from '@/components/atoms/CIconEdit.svg'
+import CIconArchive from '@/components/atoms/CIconArchive.svg'
+import CIconCurrency from '@/components/atoms/CIconCurrency.svg'
 import { buildingApi, contractsApi, documentsApi } from '@/api'
 import ContractFormModal from '@/features/contracts/ContractFormModal.vue'
 import CTabs, { type Tab } from '@/components/atoms/CTabs.vue'
@@ -339,11 +343,11 @@ async function confirmTerminateContract() {
           v-if="canManage"
           variant="primary"
           size="sm"
+          shrink="sm"
+          :icon="CIconPlus"
+          :title="t('contracts.create')"
           @click="openCreateModal"
-        >
-          <CIconPlus style="width:16px;height:16px" />
-          <span class="btn-label">{{ t('contracts.create') }}</span>
-        </CBtn>
+        />
       </template>
     </CTopbar>
 
@@ -377,14 +381,15 @@ async function confirmTerminateContract() {
         >
           <template #actions="{ row }">
             <CBtn
-              variant="secondary"
+              variant="reversed"
               size="sm"
+              :title="t('contracts.reminders.acknowledge')"
               :loading="busyKey === `reminder:${row.id}`"
               :disabled="busyKey === `reminder:${row.id}`"
+              :icon="CIconCurrency"
+              shrink="sm"
               @click="acknowledgeReminder(reminderViewsById.get(row.id)!)"
-            >
-              {{ t('contracts.reminders.acknowledge') }}
-            </CBtn>
+            />
           </template>
         </CReminderCard>
 
@@ -417,11 +422,10 @@ async function confirmTerminateContract() {
               <CBtn
                 v-if="canManage && ['active', 'all'].includes(filter)"
                 variant="primary"
+                :icon="CIconPlus"
+                :title="t('contracts.create')"
                 @click="openCreateModal"
-              >
-                <CIconPlus />
-                {{ t('contracts.create') }}
-              </CBtn>
+              />
             </template>
           </CEmptyState>
         </template>
@@ -535,20 +539,18 @@ async function confirmTerminateContract() {
                 <CBtn
                   variant="ghost"
                   size="sm"
+                  :icon="CIconEdit"
+                  :title="t('common.edit')"
                   @click="openEditModal(contract)"
-                >
-                  <CIconEdit />
-                  {{ t('common.edit') }}
-                </CBtn>
+                />
                 <CBtn
                   v-if="effectiveStatus(contract) === 'active'"
                   variant="danger"
                   size="sm"
+                  :icon="CIconArchive"
+                  :title="t('contracts.terminate')"
                   @click="openTerminateModal(contract)"
-                >
-                  <CIconArchive />
-                  {{ t('contracts.terminate') }}
-                </CBtn>
+                />
               </CCardActions>
             </div>
           </CCard>
@@ -590,18 +592,16 @@ async function confirmTerminateContract() {
       />
       <CBtn
         variant="ghost"
+        :title="t('common.cancel')"
         @click="showTerminateModal = false"
-      >
-        {{ t('common.cancel') }}
-      </CBtn>
+      />
       <CBtn
         variant="danger"
+        :title="t('contracts.terminate')"
         :loading="terminatingContract"
         :closing="terminateFeedback.status.value === 'success'"
         @click="confirmTerminateContract"
-      >
-        {{ t('contracts.terminate') }}
-      </CBtn>
+      />
     </template>
   </CModal>
 </template>

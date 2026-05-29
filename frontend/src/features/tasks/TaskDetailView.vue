@@ -198,11 +198,10 @@ function dotClass(variant?: TimelineEvent['variant']): string {
         <CBtn
           variant="ghost"
           size="sm"
+          :icon="CIconArrowLeft"
+          :title="t('common.back')"
           @click="router.push({ name: 'tasks' })"
-        >
-          <CIconArrowLeft class="icon-sm" />
-          {{ t('common.back') }}
-        </CBtn>
+        />
       </template>
     </CTopbar>
 

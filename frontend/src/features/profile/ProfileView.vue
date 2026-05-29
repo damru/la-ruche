@@ -9,6 +9,7 @@ import CModal from '@/components/molecules/CModal.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import CHeading from '@/components/atoms/CHeading.vue'
 import CIconClock from '@/components/atoms/CIconClock.svg'
+import CIconLogIn from '@/components/atoms/CIconLogIn.svg'
 import CIconMoon from '@/components/atoms/CIconMoon.svg'
 import CIconSun from '@/components/atoms/CIconSun.svg'
 import { useAuthStore } from '@/stores/auth'
@@ -153,13 +154,12 @@ async function confirmResetData() {
         <CBtn
           variant="ghost"
           size="sm"
+          :icon="CIconLogIn"
+          :title="loggingOut ? t('common.loading') : t('nav.logout')"
           :loading="loggingOut"
           :disabled="loggingOut"
           @click="logout"
-        >
-          <CIconLogIn style="width:16px;height:16px;transform:scaleX(-1)" />
-          <span class="btn-label">{{ loggingOut ? t('common.loading') : t('nav.logout') }}</span>
-        </CBtn>
+        />
       </template>
     </CTopbar>
 
@@ -220,15 +220,15 @@ async function confirmResetData() {
             />
             <CBtn
               variant="primary"
+              :title="saving ? t('common.saving') : t('settings.account.update')"
               :loading="saving"
               :disabled="saving"
               @click="saveProfile"
-            >
-              {{ saving ? t('common.saving') : t('settings.account.update') }}
-            </CBtn>
-            <CBtn variant="ghost">
-              {{ t('settings.account.changePassword') }}
-            </CBtn>
+            />
+            <CBtn
+              variant="ghost"
+              :title="t('settings.account.changePassword')"
+            />
           </div>
         </CCard>
 
@@ -285,16 +285,14 @@ async function confirmResetData() {
           <div class="flex flex-row gap-4">
             <CBtn
               variant="danger"
+              :title="t('settings.account.resetApp')"
               @click="showResetModal = true"
-            >
-              {{ t('settings.account.resetApp') }}
-            </CBtn>
+            />
             <CBtn
               variant="danger"
+              :title="t('settings.account.resetData')"
               @click="showResetDataModal = true"
-            >
-              {{ t('settings.account.resetData') }}
-            </CBtn>
+            />
           </div>
         </CCard>
       </template>
@@ -360,19 +358,17 @@ async function confirmResetData() {
       />
       <CBtn
         variant="ghost"
+        :title="t('common.cancel')"
         :disabled="resetting"
         @click="showResetModal = false"
-      >
-        {{ t('common.cancel') }}
-      </CBtn>
+      />
       <CBtn
         variant="danger"
+        :title="t('settings.account.resetAppConfirm')"
         :loading="resetting"
         :disabled="resetting"
         @click="confirmResetDemo"
-      >
-        {{ t('settings.account.resetAppConfirm') }}
-      </CBtn>
+      />
     </template>
   </CModal>
 
@@ -392,19 +388,17 @@ async function confirmResetData() {
       />
       <CBtn
         variant="ghost"
+        :title="t('common.cancel')"
         :disabled="resettingData"
         @click="showResetDataModal = false"
-      >
-        {{ t('common.cancel') }}
-      </CBtn>
+      />
       <CBtn
         variant="danger"
+        :title="t('settings.account.resetDataConfirm')"
         :loading="resettingData"
         :disabled="resettingData"
         @click="confirmResetData"
-      >
-        {{ t('settings.account.resetDataConfirm') }}
-      </CBtn>
+      />
     </template>
   </CModal>
 </template>

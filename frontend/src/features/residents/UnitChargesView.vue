@@ -233,10 +233,9 @@ function statusVariant(status: UnitChargesLevy['status']): 'pending' | 'valid' |
               <CBtn
                 variant="ghost"
                 size="sm"
+                :title="t('units.charges.detailAction')"
                 @click="selectedLevy = consolidatedLevies.find(l => l.id === row.id) ?? null"
-              >
-                {{ t('units.charges.detailAction') }}
-              </CBtn>
+              />
             </template>
           </CDataTable>
         </CCard>
@@ -296,10 +295,9 @@ function statusVariant(status: UnitChargesLevy['status']): 'pending' | 'valid' |
           <template #footer>
             <CBtn
               variant="ghost"
+              :title="t('common.cancel')"
               @click="selectedLevy = null"
-            >
-              {{ t('common.cancel') }}
-            </CBtn>
+            />
           </template>
         </CModal>
       </template>

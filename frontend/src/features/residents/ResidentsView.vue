@@ -12,6 +12,8 @@ import CTopbar from '@/components/organisms/CTopbar.vue'
 import CHeading from '@/components/atoms/CHeading.vue'
 import CFormRow from '@/components/molecules/CFormRow.vue'
 import CTabs from '@/components/atoms/CTabs.vue'
+import CIconPlus from '@/components/atoms/CIconPlus.svg'
+import CIconUserPlus from '@/components/atoms/CIconUserPlus.svg'
 import { unitsApi, allocationKeysApi, usersApi } from '@/api'
 import { usePageLoader } from '@/composables/usePageLoader'
 import { useFormFeedback } from '@/composables/useFormFeedback'
@@ -263,18 +265,16 @@ const userColumns = computed(() => [
           <CBtn
             variant="primary"
             size="sm"
+            :icon="CIconPlus"
+            :title="t('residents.createUnit')"
             @click="openCreateUnit"
-          >
-            <CIconPlus style="width:16px;height:16px" />
-            <span class="btn-label">{{ t('residents.createUnit') }}</span>
-          </CBtn>
+          />
           <CBtn
             variant="secondary"
             size="sm"
-          >
-            <CIconUserPlus style="width:16px;height:16px" />
-            <span class="btn-label">{{ t('residents.invite') }}</span>
-          </CBtn>
+            :icon="CIconUserPlus"
+            :title="t('residents.invite')"
+          />
         </div>
       </template>
     </CTopbar>
@@ -501,19 +501,17 @@ const userColumns = computed(() => [
           />
           <CBtn
             variant="ghost"
+            :title="t('common.cancel')"
             @click="showUnitModal = false"
-          >
-            {{ t('common.cancel') }}
-          </CBtn>
+          />
           <CBtn
             variant="primary"
+            :title="savingUnit ? t('common.saving') : t('common.save')"
             :loading="savingUnit"
             :closing="unitFeedback.status.value === 'success'"
             :disabled="savingUnit"
             @click="saveUnit"
-          >
-            {{ savingUnit ? t('common.saving') : t('common.save') }}
-          </CBtn>
+          />
         </template>
       </CModal>
 
@@ -534,18 +532,16 @@ const userColumns = computed(() => [
           />
           <CBtn
             variant="ghost"
+            :title="t('common.cancel')"
             @click="showArchiveModal = false"
-          >
-            {{ t('common.cancel') }}
-          </CBtn>
+          />
           <CBtn
             variant="danger"
+            :title="t('common.archiveLabel')"
             :loading="archivingUnit"
             :closing="archiveFeedback.status.value === 'success'"
             @click="confirmArchiveUnit"
-          >
-            {{ t('common.archiveLabel') }}
-          </CBtn>
+          />
         </template>
       </CModal>
     </div>

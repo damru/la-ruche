@@ -248,11 +248,10 @@ async function confirmDelete() {
           v-if="canEdit"
           variant="primary"
           size="sm"
+          :icon="CIconPlus"
+          :title="t('contractors.newContractor')"
           @click="openCreate"
-        >
-          <CIconPlus class="icon-sm" />
-          <span class="btn-label">{{ t('contractors.newContractor') }}</span>
-        </CBtn>
+        />
       </template>
     </CTopbar>
 
@@ -341,11 +340,10 @@ async function confirmDelete() {
             <CBtn
               variant="primary"
               size="sm"
+              :icon="CIconPlus"
+              :title="t('contractors.newContractor')"
               @click="openCreate"
-            >
-              <CIconPlus class="icon-sm" />
-              {{ t('contractors.newContractor') }}
-            </CBtn>
+            />
           </template>
         </CEmptyState>
 
@@ -413,19 +411,19 @@ async function confirmDelete() {
               <CBtn
                 variant="ghost"
                 size="sm"
+                :icon="CIconEdit"
+                :title="t('common.edit')"
                 :aria-label="`${t('common.edit')} ${c.name}`"
                 @click.stop="openEdit(c)"
-              >
-                <CIconEdit class="icon-sm" />
-              </CBtn>
+              />
               <CBtn
                 variant="ghost"
                 size="sm"
+                :icon="CIconTrash"
+                :title="t('common.delete')"
                 :aria-label="`${t('common.delete')} ${c.name}`"
                 @click.stop="openDeleteModal(c)"
-              >
-                <CIconTrash class="icon-sm" />
-              </CBtn>
+              />
             </div>
           </div>
         </div>
@@ -500,21 +498,19 @@ async function confirmDelete() {
                 <CBtn
                   variant="ghost"
                   size="sm"
+                  :icon="CIconEdit"
+                  :title="t('common.edit')"
                   :aria-label="`${t('common.edit')} ${c.name}`"
                   @click.stop="openEdit(c)"
-                >
-                  <CIconEdit class="icon-sm" />
-                  {{ t('common.edit') }}
-                </CBtn>
+                />
                 <CBtn
                   variant="ghost"
                   size="sm"
+                  :icon="CIconTrash"
+                  :title="t('common.delete')"
                   :aria-label="`${t('common.delete')} ${c.name}`"
                   @click.stop="openDeleteModal(c)"
-                >
-                  <CIconTrash class="icon-sm" />
-                  {{ t('common.delete') }}
-                </CBtn>
+                />
               </CCardActions>
             </div>
           </CCard>
@@ -571,18 +567,16 @@ async function confirmDelete() {
         />
         <CBtn
           variant="ghost"
+          :title="t('common.cancel')"
           @click="closeModal"
-        >
-          {{ t('common.cancel') }}
-        </CBtn>
+        />
         <CBtn
           variant="primary"
+          :title="t('common.save')"
           :loading="saving"
           :closing="feedback.status.value === 'success'"
           @click="save"
-        >
-          {{ t('common.save') }}
-        </CBtn>
+        />
       </template>
     </CModal>
 
@@ -602,18 +596,16 @@ async function confirmDelete() {
         />
         <CBtn
           variant="ghost"
+          :title="t('common.cancel')"
           @click="showDeleteModal = false"
-        >
-          {{ t('common.cancel') }}
-        </CBtn>
+        />
         <CBtn
           variant="danger"
+          :title="t('common.delete')"
           :loading="!!deletingId"
           :closing="deleteFeedback.status.value === 'success'"
           @click="confirmDelete"
-        >
-          {{ t('common.delete') }}
-        </CBtn>
+        />
       </template>
     </CModal>
   </div>

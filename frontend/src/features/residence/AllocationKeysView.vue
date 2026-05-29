@@ -10,6 +10,9 @@ import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import CHeading from '@/components/atoms/CHeading.vue'
+import CIconPlus from '@/components/atoms/CIconPlus.svg'
+import CIconEdit from '@/components/atoms/CIconEdit.svg'
+import CIconTrash from '@/components/atoms/CIconTrash.svg'
 import { allocationKeysApi, unitsApi } from '@/api'
 import { usePageLoader } from '@/composables/usePageLoader'
 import { useFormFeedback } from '@/composables/useFormFeedback'
@@ -199,11 +202,10 @@ onMounted(reload)
       <template #right>
         <CBtn
           size="sm"
+          :icon="CIconPlus"
+          :title="t('settings.keys.newKey')"
           @click="openCreateModal"
-        >
-          <CIconPlus style="width:16px;height:16px" />
-          <span class="btn-label">{{ t('settings.keys.newKey') }}</span>
-        </CBtn>
+        />
       </template>
     </CTopbar>
 
@@ -232,11 +234,10 @@ onMounted(reload)
             <template #actions>
               <CBtn
                 variant="primary"
+                :icon="CIconPlus"
+                :title="t('settings.keys.newKey')"
                 @click="openCreateModal"
-              >
-                <CIconPlus />
-                {{ t('settings.keys.newKey') }}
-              </CBtn>
+              />
             </template>
           </CEmptyState>
         </template>
@@ -272,20 +273,18 @@ onMounted(reload)
                   <CBtn
                     variant="ghost"
                     size="sm"
+                    :icon="CIconEdit"
+                    :title="t('common.edit')"
                     @click="openEditModal(key)"
-                  >
-                    <CIconEdit />
-                    {{ t('common.edit') }}
-                  </CBtn>
+                  />
                   <CBtn
                     v-if="key.key_type !== 'general'"
                     variant="danger"
                     size="sm"
+                    :icon="CIconTrash"
+                    :title="t('common.delete')"
                     @click="openDeleteKeyModal(key)"
-                  >
-                    <CIconTrash />
-                    {{ t('common.delete') }}
-                  </CBtn>
+                  />
                   <span
                     v-else
                     class="general-key-lock"
@@ -396,19 +395,17 @@ onMounted(reload)
         />
         <CBtn
           variant="ghost"
+          :title="t('common.cancel')"
           @click="showKeyModal = false"
-        >
-          {{ t('common.cancel') }}
-        </CBtn>
+        />
         <CBtn
           variant="primary"
+          :title="modalSaving ? t('common.saving') : t('common.save')"
           :loading="modalSaving"
           :closing="keyFeedback.status.value === 'success'"
           :disabled="modalSaving || modalLoading"
           @click="saveKey"
-        >
-          {{ modalSaving ? t('common.saving') : t('common.save') }}
-        </CBtn>
+        />
       </template>
     </CModal>
 
@@ -429,18 +426,16 @@ onMounted(reload)
         />
         <CBtn
           variant="ghost"
+          :title="t('common.cancel')"
           @click="showDeleteKeyModal = false"
-        >
-          {{ t('common.cancel') }}
-        </CBtn>
+        />
         <CBtn
           variant="danger"
+          :title="t('common.deleteLabel')"
           :loading="deletingKeyInProgress"
           :closing="deleteKeyFeedback.status.value === 'success'"
           @click="confirmDeleteKey"
-        >
-          {{ t('common.deleteLabel') }}
-        </CBtn>
+        />
       </template>
     </CModal>
   </div>

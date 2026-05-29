@@ -55,7 +55,6 @@
   min-width: 0;
   overflow: clip;
   text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .c-topbar :deep(.topbar-breadcrumb svg) {
@@ -89,17 +88,12 @@
 /* ── Mobile ──────────────────────────────────────────────────────── */
 @media (max-width: 640px) {
   .c-topbar {
-    padding: 0 20px;
-  }
-
-  /* Hide button labels, show icon only */
-  .c-topbar :deep(.btn-label) {
-    display: none;
+    padding: 0 var(--space-5);
   }
 
   /* Collapse sm buttons to square icon size */
   .c-topbar :deep(.c-btn--sm) {
-    padding: 0;
+    height: 36px;
     width: 36px;
   }
 }

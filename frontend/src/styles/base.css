@@ -52,12 +52,6 @@ input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
 
-/* Touch target minimum 44px ─────────────────────────────────────── */
-button, [role="button"] {
-  min-height: 44px;
-  min-width: 44px;
-}
-
 /* ── Utilitaires globaux ─────────────────────────────────────────── */
 
 /* Spinner animation (used by CIconSpinner and Tailwind animate-spin) */

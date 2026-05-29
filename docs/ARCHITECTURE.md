@@ -338,7 +338,7 @@ HTTP → Tower (CORS, trace, timeout 30s)
 - **Pas de `unwrap()` hors tests**
 - **`Decimal` pour tous les montants financiers** (pas `f64`)
 - **`SQLX_OFFLINE=true` en CI et en build Docker** — `backend/.sqlx/` est généré une seule fois dans `test-backend`, puis téléchargé par les jobs Docker
-- **Les erreurs** sont renvoyées sous forme de String représentant une clé i18n `errors.<xxxx>`. ex: `errors.unauthorized`, `errors.budget.exercice_closed`
+- **Les erreurs** sont renvoyées sous forme de code i18n (`AppError::validation_code("errors.x.y")`), jamais en strings bruts. ex: `errors.unauthorized`, `errors.budget.exercice_closed`
 
 ---
 

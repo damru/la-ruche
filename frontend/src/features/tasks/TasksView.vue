@@ -23,6 +23,16 @@ import CTopbar from '@/components/organisms/CTopbar.vue'
 import CHeading from '@/components/atoms/CHeading.vue'
 import CFormRow from '@/components/molecules/CFormRow.vue'
 import CTabs from '@/components/atoms/CTabs.vue'
+import CIconPlus from '@/components/atoms/CIconPlus.svg'
+import CIconLink from '@/components/atoms/CIconLink.svg'
+import CIconEye from '@/components/atoms/CIconEye.svg'
+import CIconX from '@/components/atoms/CIconX.svg'
+import CIconCopy from '@/components/atoms/CIconCopy.svg'
+import CIconEdit from '@/components/atoms/CIconEdit.svg'
+import CIconRefresh from '@/components/atoms/CIconRefresh.svg'
+import CIconCheckCircle from '@/components/atoms/CIconCheckCircle.svg'
+import CIconDownload from '@/components/atoms/CIconDownload.svg'
+import CIconTrash from '@/components/atoms/CIconTrash.svg'
 import { buildingApi, contractorsApi, documentsApi, tasksApi, usersApi } from '@/api'
 import type { Contractor, Document, Task, TaskStatus, TaskPriority, User } from '@/types/domain'
 import { extractFileExtension } from '@/utils/files'
@@ -777,11 +787,10 @@ async function copyVendorLink(taskId: string) {
         <CBtn
           variant="primary"
           size="sm"
+          :icon="CIconPlus"
+          :title="t('tasks.newTask')"
           @click="openCreateModal"
-        >
-          <CIconPlus style="width:16px;height:16px" />
-          <span class="btn-label">{{ t('tasks.newTask') }}</span>
-        </CBtn>
+        />
       </template>
     </CTopbar>
 
@@ -919,33 +928,30 @@ async function copyVendorLink(taskId: string) {
                     v-if="contractorDisplayName(task) && !task.has_vendor_token && !isTerminal(task.status)"
                     variant="ghost"
                     size="sm"
+                    :icon="CIconLink"
+                    :title="t('tasks.generateToken')"
                     :disabled="generatingToken === task.id"
                     :aria-label="t('tasks.generateToken')"
                     @click.stop="generateToken(task)"
-                  >
-                    <CIconLink />
-                    {{ t('tasks.generateToken') }}
-                  </CBtn>
+                  />
                   <CBtn
                     v-if="task.has_vendor_token"
                     variant="ghost"
                     size="sm"
+                    :icon="CIconEye"
+                    :title="t('tasks.showLink')"
                     :aria-label="t('tasks.showLink')"
                     @click.stop="showVendorLink(task)"
-                  >
-                    <CIconEye />
-                    {{ t('tasks.showLink') }}
-                  </CBtn>
+                  />
                   <CBtn
                     v-if="task.has_vendor_token"
                     variant="ghost"
                     size="sm"
+                    :icon="CIconX"
+                    :title="t('tasks.revokeToken')"
                     :aria-label="t('tasks.revokeToken')"
                     @click.stop="openRevokeModal(task)"
-                  >
-                    <CIconX />
-                    {{ t('tasks.revokeToken') }}
-                  </CBtn>
+                  />
                 </div>
   
                 <div
@@ -969,43 +975,39 @@ async function copyVendorLink(taskId: string) {
                   <CBtn
                     variant="ghost"
                     size="sm"
+                    :icon="CIconCopy"
+                    :title="copiedVendorLinkTaskId === task.id ? t('tasks.vendorTokenCopied') : t('common.copy')"
                     @click.stop="copyVendorLink(task.id)"
-                  >
-                    <CIconCopy />
-                    {{ copiedVendorLinkTaskId === task.id ? t('tasks.vendorTokenCopied') : t('common.copy') }}
-                  </CBtn>
+                  />
                 </div>
   
                 <CCardActions>
                   <CBtn
                     variant="ghost"
                     size="sm"
+                    :icon="CIconEdit"
+                    :title="t('common.edit')"
                     :aria-label="t('tasks.editTask')"
                     @click.stop="openEditModal(task)"
-                  >
-                    <CIconEdit />
-                    {{ t('common.edit') }}
-                  </CBtn>
+                  />
                   <CBtn
                     v-if="task.status === 'closed'"
                     variant="primary"
                     size="sm"
+                    :icon="CIconRefresh"
+                    :title="t('tasks.reopenTask')"
                     :aria-label="t('tasks.reopenTask')"
                     @click.stop="openReopenModal(task)"
-                  >
-                    <CIconRefresh />
-                    {{ t('tasks.reopenTask') }}
-                  </CBtn>
+                  />
                   <CBtn
                     v-else-if="!isTerminal(task.status)"
                     variant="primary"
                     size="sm"
+                    :icon="CIconCheckCircle"
+                    :title="closeActionLabel(task)"
                     :aria-label="closeActionLabel(task)"
                     @click.stop="openCloseModal(task)"
-                  >
-                    <CIconCheckCircle />
-                    {{ closeActionLabel(task) }}
-                  </CBtn>
+                  />
                 </CCardActions>
               </div>
             </CCard>
@@ -1154,20 +1156,18 @@ async function copyVendorLink(taskId: string) {
                   <CBtn
                     variant="ghost"
                     size="sm"
+                    :icon="CIconDownload"
+                    :title="t('common.download')"
                     @click="downloadTaskDocument(document.id)"
-                  >
-                    <CIconDownload />
-                    {{ t('common.download') }}
-                  </CBtn>
+                  />
                   <CBtn
                     variant="danger"
                     size="sm"
+                    :icon="CIconTrash"
+                    :title="t('tasks.detachDocument')"
                     :loading="taskDocumentActionLoading && pendingTaskDocument?.id === document.id"
                     @click="openTaskDocumentActionModal(document)"
-                  >
-                    <CIconTrash />
-                    {{ t('tasks.detachDocument') }}
-                  </CBtn>
+                  />
                 </div>
               </div>
             </div>
@@ -1270,31 +1270,28 @@ async function copyVendorLink(taskId: string) {
         <CBtn
           v-if="editingTask"
           variant="danger"
+          :icon="CIconTrash"
+          :title="t('common.delete')"
           :loading="savingTask"
           style="margin-right:auto"
           @click="openDeleteModal(editingTask)"
-        >
-          <CIconTrash />
-          {{ t('common.delete') }}
-        </CBtn>
+        />
         <CFormFeedback
           :status="taskFeedback.status.value"
           :message="taskFeedback.message.value"
         />
         <CBtn
           variant="ghost"
+          :title="t('common.cancel')"
           @click="showTaskModal = false"
-        >
-          {{ t('common.cancel') }}
-        </CBtn>
+        />
         <CBtn
           variant="primary"
+          :title="t('common.save')"
           :loading="savingTask || uploadingTaskDocuments"
           :closing="taskFeedback.status.value === 'success'"
           @click="saveTask"
-        >
-          {{ t('common.save') }}
-        </CBtn>
+        />
       </template>
     </CModal>
 
@@ -1315,18 +1312,16 @@ async function copyVendorLink(taskId: string) {
         />
         <CBtn
           variant="ghost"
+          :title="t('common.cancel')"
           @click="revokingTask = null"
-        >
-          {{ t('common.cancel') }}
-        </CBtn>
+        />
         <CBtn
           variant="danger"
+          :title="t('tasks.revokeToken')"
           :loading="revoking"
           :closing="revokeFeedback.status.value === 'success'"
           @click="confirmRevoke"
-        >
-          {{ t('tasks.revokeToken') }}
-        </CBtn>
+        />
       </template>
     </CModal>
 
@@ -1363,18 +1358,16 @@ async function copyVendorLink(taskId: string) {
         />
         <CBtn
           variant="ghost"
+          :title="t('common.cancel')"
           @click="closingTask = null"
-        >
-          {{ t('common.cancel') }}
-        </CBtn>
+        />
         <CBtn
           variant="primary"
+          :title="closingTask ? closeActionLabel(closingTask) : t('tasks.closeTask')"
           :loading="closingInProgress"
           :closing="closeFeedback.status.value === 'success'"
           @click="confirmCloseTask"
-        >
-          {{ closingTask ? closeActionLabel(closingTask) : t('tasks.closeTask') }}
-        </CBtn>
+        />
       </template>
     </CModal>
 
@@ -1395,18 +1388,16 @@ async function copyVendorLink(taskId: string) {
         />
         <CBtn
           variant="ghost"
+          :title="t('common.cancel')"
           @click="reopeningTask = null"
-        >
-          {{ t('common.cancel') }}
-        </CBtn>
+        />
         <CBtn
           variant="primary"
+          :title="t('tasks.reopenTask')"
           :loading="reopening"
           :closing="reopenFeedback.status.value === 'success'"
           @click="confirmReopen"
-        >
-          {{ t('tasks.reopenTask') }}
-        </CBtn>
+        />
       </template>
     </CModal>
 
@@ -1431,18 +1422,16 @@ async function copyVendorLink(taskId: string) {
         />
         <CBtn
           variant="ghost"
+          :title="t('common.cancel')"
           @click="showDeleteModal = false"
-        >
-          {{ t('common.cancel') }}
-        </CBtn>
+        />
         <CBtn
           variant="danger"
+          :title="t('common.deleteLabel')"
           :loading="deletingTask"
           :closing="deleteTaskFeedback.status.value === 'success'"
           @click="confirmDeleteTask"
-        >
-          {{ t('common.deleteLabel') }}
-        </CBtn>
+        />
       </template>
     </CModal>
 

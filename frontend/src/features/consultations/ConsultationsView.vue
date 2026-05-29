@@ -20,6 +20,9 @@ import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import CHeading from '@/components/atoms/CHeading.vue'
 import CTabs from '@/components/atoms/CTabs.vue'
+import CIconPlus from '@/components/atoms/CIconPlus.svg'
+import CIconCheckCircle from '@/components/atoms/CIconCheckCircle.svg'
+import CIconTrash from '@/components/atoms/CIconTrash.svg'
 import { buildingApi, consultationsApi } from '@/api'
 import type { Consultation } from '@/types/domain'
 
@@ -271,11 +274,10 @@ async function confirmDelete() {
           v-if="canManage"
           variant="primary"
           size="sm"
+          :icon="CIconPlus"
+          :title="t('consultations.create')"
           @click="openCreateModal"
-        >
-          <CIconPlus />
-          <span class="btn-label">{{ t('consultations.create') }}</span>
-        </CBtn>
+        />
       </template>
     </CTopbar>
 
@@ -328,11 +330,10 @@ async function confirmDelete() {
               <CBtn
                 v-if="canManage"
                 variant="primary"
+                :icon="CIconPlus"
+                :title="t('consultations.create')"
                 @click="openCreateModal"
-              >
-                <CIconPlus />
-                {{ t('consultations.create') }}
-              </CBtn>
+              />
             </template>
           </CEmptyState>
         </template>
@@ -431,11 +432,10 @@ async function confirmDelete() {
                   <CBtn
                     variant="primary"
                     size="sm"
+                    :title="hasVoted(c) ? t('consultations.updateVote') : t('consultations.respondModal.submit')"
                     :loading="getInline(c).submitting"
                     @click="submitVote(c)"
-                  >
-                    {{ hasVoted(c) ? t('consultations.updateVote') : t('consultations.respondModal.submit') }}
-                  </CBtn>
+                  />
                 </div>
               </div>
   
@@ -447,10 +447,9 @@ async function confirmDelete() {
                 <CBtn
                   variant="ghost"
                   size="sm"
+                  :title="t('consultations.modifyVote')"
                   @click="unlockVote(c)"
-                >
-                  {{ t('consultations.modifyVote') }}
-                </CBtn>
+                />
               </div>
   
               <!-- Date hint -->
@@ -468,11 +467,10 @@ async function confirmDelete() {
                 <CBtn
                   variant="primary"
                   size="sm"
+                  :icon="CIconCheckCircle"
+                  :title="t('consultations.close')"
                   @click="openCloseModal(c)"
-                >
-                  <CIconCheckCircle />
-                  {{ t('consultations.close') }}
-                </CBtn>
+                />
               </div>
   
               <!-- Manager delete action (closed consultations) -->
@@ -483,11 +481,10 @@ async function confirmDelete() {
                 <CBtn
                   variant="danger"
                   size="sm"
+                  :icon="CIconTrash"
+                  :title="t('common.delete')"
                   @click="openDeleteModal(c)"
-                >
-                  <CIconTrash />
-                  {{ t('common.delete') }}
-                </CBtn>
+                />
               </div>
             </CCard>
           </div>
@@ -553,13 +550,10 @@ async function confirmDelete() {
             variant="ghost"
             size="sm"
             type="button"
+            :icon="CIconPlus"
+            :title="t('consultations.fields.addChoice')"
             @click="addChoice"
-          >
-            <CIconPlus
-              
-              class="icon-xs"
-            /> {{ t('consultations.fields.addChoice') }}
-          </CBtn>
+          />
         </div>
       </form>
       <template #footer>
@@ -569,18 +563,16 @@ async function confirmDelete() {
         />
         <CBtn
           variant="ghost"
+          :title="t('common.cancel')"
           @click="showCreateModal = false"
-        >
-          {{ t('common.cancel') }}
-        </CBtn>
+        />
         <CBtn
           variant="primary"
+          :title="t('common.create')"
           :loading="saving"
           :closing="createFeedback.status.value === 'success'"
           @click="saveConsultation"
-        >
-          {{ t('common.create') }}
-        </CBtn>
+        />
       </template>
     </CModal>
 
@@ -601,18 +593,16 @@ async function confirmDelete() {
         />
         <CBtn
           variant="ghost"
+          :title="t('common.cancel')"
           @click="closingConsultation = null"
-        >
-          {{ t('common.cancel') }}
-        </CBtn>
+        />
         <CBtn
           variant="danger"
+          :title="t('consultations.closeAction')"
           :loading="closing"
           :closing="closeFeedback.status.value === 'success'"
           @click="confirmClose"
-        >
-          {{ t('consultations.closeAction') }}
-        </CBtn>
+        />
       </template>
     </CModal>
 
@@ -633,18 +623,16 @@ async function confirmDelete() {
         />
         <CBtn
           variant="ghost"
+          :title="t('common.cancel')"
           @click="deletingConsultation = null"
-        >
-          {{ t('common.cancel') }}
-        </CBtn>
+        />
         <CBtn
           variant="danger"
+          :title="t('common.delete')"
           :loading="deleting"
           :closing="deleteFeedback.status.value === 'success'"
           @click="confirmDelete"
-        >
-          {{ t('common.delete') }}
-        </CBtn>
+        />
       </template>
     </CModal>
   </div>

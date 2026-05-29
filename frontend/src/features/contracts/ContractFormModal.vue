@@ -580,19 +580,17 @@ async function saveContract() {
                 <CBtn
                   variant="ghost"
                   size="sm"
+                  :icon="CIconDownload"
+                  :title="t('common.download')"
                   @click="downloadDocument(document.id)"
-                >
-                  <CIconDownload />
-                  {{ t('common.download') }}
-                </CBtn>
+                />
                 <CBtn
                   variant="danger"
                   size="sm"
+                  :icon="CIconTrash"
+                  :title="t('contracts.documents.detach')"
                   @click="openDocumentActionModal(document)"
-                >
-                  <CIconTrash />
-                  {{ t('contracts.documents.detach') }}
-                </CBtn>
+                />
               </div>
             </div>
           </div>
@@ -604,13 +602,12 @@ async function saveContract() {
       <CBtn
         v-if="isEditing"
         variant="danger"
+        :icon="CIconTrash"
+        :title="t('common.delete')"
         :loading="deletingContract"
         style="margin-right:auto"
         @click="openDeleteModal"
-      >
-        <CIconTrash />
-        {{ t('common.delete') }}
-      </CBtn>
+      />
       <CFormFeedback
         :status="feedback.status.value"
         :message="feedback.message.value"
@@ -618,18 +615,16 @@ async function saveContract() {
       />
       <CBtn
         variant="ghost"
+        :title="t('common.cancel')"
         @click="closeModal"
-      >
-        {{ t('common.cancel') }}
-      </CBtn>
+      />
       <CBtn
+        :title="saving || uploadingDocuments ? t('common.saving') : t('common.save')"
         :loading="saving || uploadingDocuments"
         :closing="feedback.status.value === 'success'"
         :disabled="saving || uploadingDocuments"
         @click="saveContract"
-      >
-        {{ saving || uploadingDocuments ? t('common.saving') : t('common.save') }}
-      </CBtn>
+      />
     </template>
   </CModal>
 
@@ -662,19 +657,17 @@ async function saveContract() {
       />
       <CBtn
         variant="ghost"
+        :title="t('common.cancel')"
         :disabled="deletingContract"
         @click="showDeleteModal = false"
-      >
-        {{ t('common.cancel') }}
-      </CBtn>
+      />
       <CBtn
         variant="danger"
+        :title="t('common.deleteLabel')"
         :loading="deletingContract"
         :closing="deleteContractFeedback.status.value === 'success'"
         @click="deleteContract"
-      >
-        {{ t('common.deleteLabel') }}
-      </CBtn>
+      />
     </template>
   </CModal>
 </template>

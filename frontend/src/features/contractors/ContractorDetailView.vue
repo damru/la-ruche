@@ -122,11 +122,10 @@ function priorityVariant(p: string): 'err' | 'pending' | 'primary' | 'valid' | '
         <CBtn
           variant="ghost"
           size="sm"
+          :icon="CIconArrowLeft"
+          :title="t('common.back')"
           @click="router.push({ name: 'contractors' })"
-        >
-          <CIconArrowLeft style="width:16px;height:16px" />
-          {{ t('common.back') }}
-        </CBtn>
+        />
       </template>
     </CTopbar>
 

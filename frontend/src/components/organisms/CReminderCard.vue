@@ -23,42 +23,48 @@ defineProps<{
     <CHeading>
       {{ title }}
     </CHeading>
-    <CCard
-      v-for="row in rows"
-      :key="row.id"
-      :level="4"
-      :shadow="false"
-      class="flex-row! flex-wrap lg:flex-nowrap items-start"
-      :class="[row.tone ? `tone--${row.tone}` : null]"
-    >
-      <CIconBell class="icon-md self-center"/>
-      <div class="flex flex-col">
-        <span class="c-reminder-card__row-title">{{ row.title }}</span>
-        <span
-          v-if="row.subtitle"
-          class="c-reminder-card__subtitle"
-        >{{ row.subtitle }}</span>
-      </div>
-      <div class="flex flex-col">
-        <span
-          v-if="row.meta"
-          class="c-reminder-card__meta"
-        >{{ row.meta }}</span>
-        <span
-          v-if="row.emphasis"
-          :class="['c-reminder-card__emphasis', row.tone ? `tone--${row.tone}` : null]"
-        >{{ row.emphasis }}</span>
-      </div>
-      <div
-        v-if="$slots.actions"
-        class="c-reminder-card__actions"
+    <div class="flex flex-col gap-2">
+      <CCard
+        v-for="row in rows"
+        :key="row.id"
+        :level="4"
+        :shadow="false"
+        gap="sm"
+        class="flex-row! flex-wrap lg:flex-nowrap items-center"
+        :class="[row.tone ? `tone--${row.tone}` : null]"
       >
-        <slot
-          name="actions"
-          :row="row"
-        ></slot>
-      </div>
-    </CCard>
+        <CIconBell class="icon-md shrink-0"/>
+        <div class="flex flex-col flex-1 min-w-0">
+          <span class="c-reminder-card__row-title">{{ row.title }}</span>
+          <span
+            v-if="row.subtitle"
+            class="c-reminder-card__subtitle"
+          >{{ row.subtitle }}</span>
+        </div>
+        <div
+          v-if="row.meta || row.emphasis"
+          class="flex flex-col shrink-0 items-end"
+        >
+          <span
+            v-if="row.meta"
+            class="c-reminder-card__meta"
+          >{{ row.meta }}</span>
+          <span
+            v-if="row.emphasis"
+            :class="['c-reminder-card__emphasis', row.tone ? `tone--${row.tone}` : null]"
+          >{{ row.emphasis }}</span>
+        </div>
+        <div
+          v-if="$slots.actions"
+          class="c-reminder-card__actions"
+        >
+          <slot
+            name="actions"
+            :row="row"
+          ></slot>
+        </div>
+      </CCard>
+    </div>
   </div>
 </template>
 
@@ -87,7 +93,7 @@ defineProps<{
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  margin-left: auto;
+  flex-shrink: 0;
 }
 
 </style>

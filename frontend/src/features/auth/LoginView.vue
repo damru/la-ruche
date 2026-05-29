@@ -8,6 +8,7 @@ import AuthBrandPanel from '@/components/organisms/AuthBrandPanel.vue'
 import CAlert from '@/components/atoms/CAlert.vue'
 import CFormInput from '@/components/atoms/CFormInput.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
+import CIconLogIn from '@/components/atoms/CIconLogIn.svg'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -178,16 +179,12 @@ async function handleResetRequest() {
               type="submit"
               variant="primary"
               size="md"
+              :icon="loading ? undefined : CIconLogIn"
+              :title="loading ? t('auth.loggingIn') : t('auth.loginButton')"
               :disabled="loading || !form.email || !form.password"
               :loading="loading"
               style="width: 100%"
-            >
-              <CIconLogIn
-                v-if="!loading"
-                aria-hidden="true"
-              />
-              {{ loading ? t('auth.loggingIn') : t('auth.loginButton') }}
-            </CBtn>
+            />
           </form>
 
           <div class="divider">
@@ -250,12 +247,11 @@ async function handleResetRequest() {
             <CBtn
               type="submit"
               variant="primary"
+              :title="loading ? t('auth.resetSending') : t('auth.resetSendLink')"
               :disabled="loading || !resetEmail"
               :loading="loading"
               style="width: 100%"
-            >
-              {{ loading ? t('auth.resetSending') : t('auth.resetSendLink') }}
-            </CBtn>
+            />
           </form>
 
           <button
@@ -283,11 +279,10 @@ async function handleResetRequest() {
             </p>
             <CBtn
               variant="secondary"
+              :title="t('auth.backToLogin')"
               style="width: 100%"
               @click="mode = 'login'"
-            >
-              {{ t('auth.backToLogin') }}
-            </CBtn>
+            />
           </div>
         </template>
       </div>

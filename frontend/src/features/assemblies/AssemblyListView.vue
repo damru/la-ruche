@@ -21,6 +21,7 @@ import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import CTabs, { type Tab } from '@/components/atoms/CTabs.vue'
 import CHeading from '@/components/atoms/CHeading.vue'
+import CIconPlus from '@/components/atoms/CIconPlus.svg'
 
 const router = useRouter()
 const { t } = useI18n()
@@ -156,11 +157,11 @@ async function saveMeeting() {
           v-if="canManage"
           variant="primary"
           size="sm"
+          :title="t('meetings.create')"
+          :icon="CIconPlus"
+          shrink="sm"
           @click="openCreateModal"
-        >
-          <CIconPlus />
-          <span class="btn-label">{{ t('meetings.create') }}</span>
-        </CBtn>
+        />
       </template>
     </CTopbar>
 
@@ -206,11 +207,9 @@ async function saveMeeting() {
               <CBtn
                 v-if="canManage"
                 variant="primary"
+                :title="t('meetings.create')"
                 @click="openCreateModal"
-              >
-                <CIconPlus />
-                {{ t('meetings.create') }}
-              </CBtn>
+              />
             </template>
           </CEmptyState>
         </template>
@@ -330,18 +329,16 @@ async function saveMeeting() {
         />
         <CBtn
           variant="ghost"
+          :title="t('common.cancel')"
           @click="showCreateModal = false"
-        >
-          {{ t('common.cancel') }}
-        </CBtn>
+        />
         <CBtn
           variant="primary"
+          :title="saving ? t('common.saving') : t('common.save')"
           :loading="saving"
           :closing="createFeedback.status.value === 'success'"
           @click="saveMeeting"
-        >
-          {{ saving ? t('common.saving') : t('common.save') }}
-        </CBtn>
+        />
       </template>
     </CModal>
   </div>

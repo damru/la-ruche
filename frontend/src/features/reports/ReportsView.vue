@@ -21,6 +21,13 @@ import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import CHeading from '@/components/atoms/CHeading.vue'
 import CTabs from '@/components/atoms/CTabs.vue'
+import CIconArrowLeft from '@/components/atoms/CIconArrowLeft.svg'
+import CIconArrowRight from '@/components/atoms/CIconArrowRight.svg'
+import CIconCheckCircle from '@/components/atoms/CIconCheckCircle.svg'
+import CIconEdit from '@/components/atoms/CIconEdit.svg'
+import CIconPlus from '@/components/atoms/CIconPlus.svg'
+import CIconRefresh from '@/components/atoms/CIconRefresh.svg'
+import CIconTrash from '@/components/atoms/CIconTrash.svg'
 import { buildingApi, documentsApi, reportsApi, unitsApi } from '@/api'
 import type { Document, Report, ReportStatus, TaskPriority, Unit } from '@/types/domain'
 
@@ -547,11 +554,10 @@ function photoPreview(file: File): string {
         <CBtn
           variant="primary"
           size="sm"
+          :icon="CIconPlus"
+          :title="t('reports.newReport')"
           @click="openCreateModal"
-        >
-          <CIconPlus style="width:16px;height:16px" />
-          <span class="btn-label">{{ t('reports.newReport') }}</span>
-        </CBtn>
+        />
       </template>
     </CTopbar>
 
@@ -677,11 +683,10 @@ function photoPreview(file: File): string {
                   <CBtn
                     variant="ghost"
                     size="sm"
+                    :icon="CIconRefresh"
+                    :title="t('reports.editStatus')"
                     @click="openStatusModal(r)"
-                  >
-                    <CIconRefresh />
-                    {{ t('reports.editStatus') }}
-                  </CBtn>
+                  />
                 </div>
   
                 <template v-if="canManage">
@@ -689,29 +694,26 @@ function photoPreview(file: File): string {
                     <CBtn
                       variant="ghost"
                       size="sm"
+                      :icon="CIconEdit"
+                      :title="t('common.edit')"
                       @click="openEditModal(r)"
-                    >
-                      <CIconEdit />
-                      {{ t('common.edit') }}
-                    </CBtn>
+                    />
                     <CBtn
                       v-if="r.task_id"
                       variant="primary"
                       size="sm"
+                      :icon="CIconCheckCircle"
+                      :title="t('reports.viewTask')"
                       @click="router.push({ name: 'task-detail', params: { id: r.task_id } })"
-                    >
-                      <CIconCheckCircle />
-                      {{ t('reports.viewTask') }}
-                    </CBtn>
+                    />
                     <CBtn
                       v-else-if="r.status !== 'closed'"
                       variant="primary"
                       size="sm"
+                      :icon="CIconCheckCircle"
+                      :title="t('reports.convertToTask')"
                       @click="openConvertModal(r)"
-                    >
-                      <CIconCheckCircle />
-                      {{ t('reports.convertToTask') }}
-                    </CBtn>
+                    />
                   </CCardActions>
                 </template>
               </div>
@@ -815,18 +817,16 @@ function photoPreview(file: File): string {
         />
         <CBtn
           variant="ghost"
+          :title="t('common.cancel')"
           @click="showCreateModal = false"
-        >
-          {{ t('common.cancel') }}
-        </CBtn>
+        />
         <CBtn
           variant="primary"
+          :title="t('common.save')"
           :loading="saving || uploadingPhotos"
           :closing="createFeedback.status.value === 'success'"
           @click="submitCreate"
-        >
-          {{ t('common.save') }}
-        </CBtn>
+        />
       </template>
     </CModal>
 
@@ -849,18 +849,16 @@ function photoPreview(file: File): string {
         />
         <CBtn
           variant="ghost"
+          :title="t('common.cancel')"
           @click="reportToUpdate = null"
-        >
-          {{ t('common.cancel') }}
-        </CBtn>
+        />
         <CBtn
           variant="primary"
+          :title="t('common.save')"
           :loading="updating"
           :closing="updateFeedback.status.value === 'success'"
           @click="submitUpdateStatus"
-        >
-          {{ t('common.save') }}
-        </CBtn>
+        />
       </template>
     </CModal>
 
@@ -886,18 +884,16 @@ function photoPreview(file: File): string {
         />
         <CBtn
           variant="ghost"
+          :title="t('common.cancel')"
           @click="reportToConvert = null"
-        >
-          {{ t('common.cancel') }}
-        </CBtn>
+        />
         <CBtn
           variant="primary"
+          :title="t('reports.convertToTask')"
           :loading="converting"
           :closing="convertFeedback.status.value === 'success'"
           @click="submitConvert"
-        >
-          {{ t('reports.convertToTask') }}
-        </CBtn>
+        />
       </template>
     </CModal>
     <!-- Edit report modal -->
@@ -1026,25 +1022,22 @@ function photoPreview(file: File): string {
         <CBtn
           v-if="reportToEdit"
           variant="danger"
+          :icon="CIconTrash"
+          :title="t('common.delete')"
           @click="openDeleteFromEdit"
-        >
-          <CIconTrash />
-          {{ t('common.delete') }}
-        </CBtn>
+        />
         <CBtn
           variant="ghost"
+          :title="t('common.cancel')"
           @click="reportToEdit = null"
-        >
-          {{ t('common.cancel') }}
-        </CBtn>
+        />
         <CBtn
           variant="primary"
+          :title="t('common.save')"
           :loading="editSaving || editUploadingPhotos"
           :closing="editFeedback.status.value === 'success'"
           @click="submitEdit"
-        >
-          {{ t('common.save') }}
-        </CBtn>
+        />
       </template>
     </CModal>
 
@@ -1065,18 +1058,16 @@ function photoPreview(file: File): string {
         />
         <CBtn
           variant="ghost"
+          :title="t('common.cancel')"
           @click="reportToDelete = null"
-        >
-          {{ t('common.cancel') }}
-        </CBtn>
+        />
         <CBtn
           variant="danger"
+          :title="t('common.delete')"
           :loading="deleting"
           :closing="deleteFeedback.status.value === 'success'"
           @click="submitDelete"
-        >
-          {{ t('common.delete') }}
-        </CBtn>
+        />
       </template>
     </CModal>
     <CModal
@@ -1132,20 +1123,18 @@ function photoPreview(file: File): string {
             variant="ghost"
             size="sm"
             class="report-photo-viewer__nav"
+            :icon="CIconArrowLeft"
             :disabled="reportPhotos.length <= 1"
             @click="showPreviousReportPhoto"
-          >
-            <CIconArrowLeft />
-          </CBtn>
+          />
           <CBtn
             variant="ghost"
             size="sm"
             class="report-photo-viewer__nav"
+            :icon="CIconArrowRight"
             :disabled="reportPhotos.length <= 1"
             @click="showNextReportPhoto"
-          >
-            <CIconArrowRight />
-          </CBtn>
+          />
         </div>
       </div>
       <p

@@ -21,6 +21,15 @@ import type {
   VoteType,
 } from '@/types/domain'
 import { buildingApi, documentsApi, meetingsApi } from '@/api'
+import CIconBell from '@/components/atoms/CIconBell.svg'
+import CIconCheck from '@/components/atoms/CIconCheck.svg'
+import CIconClock from '@/components/atoms/CIconClock.svg'
+import CIconDownload from '@/components/atoms/CIconDownload.svg'
+import CIconEdit from '@/components/atoms/CIconEdit.svg'
+import CIconLock from '@/components/atoms/CIconLock.svg'
+import CIconPlus from '@/components/atoms/CIconPlus.svg'
+import CIconTrash from '@/components/atoms/CIconTrash.svg'
+import CIconUpload from '@/components/atoms/CIconUpload.svg'
 
 const route = useRoute()
 const { t } = useI18n()
@@ -1137,62 +1146,57 @@ function toDateTimeLocal(value: string): string {
           <CBtn
             variant="secondary"
             size="sm"
+            :icon="CIconEdit"
+            :title="t('common.edit')"
+            shrink="sm"
             @click="openEditMeetingModal"
-          >
-            <CIconEdit class="icon-sm" />
-            <span class="btn-label">{{ t('common.edit') }}</span>
-          </CBtn>
+          />
           <CBtn
             variant="primary"
             size="sm"
+            :icon="CIconBell"
+            :title="t('meetings.call')"
             :loading="callingMeeting"
             @click="openConvocationModal"
-          >
-            <CIconBell class="icon-sm" />
-            <span class="btn-label">{{ t('meetings.call') }}</span>
-          </CBtn>
+          />
         </template>
 
         <CBtn
           v-else-if="topbarActionState === 'called-waiting'"
           variant="secondary"
           size="sm"
+          :icon="CIconClock"
+          :title="t('meetings.waiting')"
           disabled
-        >
-          <CIconClock class="icon-sm" />
-          <span class="btn-label">{{ t('meetings.waiting') }}</span>
-        </CBtn>
+        />
 
         <CBtn
           v-else-if="topbarActionState === 'called-startable'"
           variant="primary"
           size="sm"
+          :icon="CIconCheck"
+          :title="t('meetings.start')"
           :loading="startingMeeting"
           @click="openStartMeetingModal"
-        >
-          <CIconCheck class="icon-sm" />
-          <span class="btn-label">{{ t('meetings.start') }}</span>
-        </CBtn>
+        />
 
         <CBtn
           v-else-if="topbarActionState === 'ongoing'"
           variant="primary"
           size="sm"
+          :icon="CIconLock"
+          :title="t('meetings.close')"
           @click="showCloseMeetingModal = true"
-        >
-          <CIconLock class="icon-sm" />
-          <span class="btn-label">{{ t('meetings.close') }}</span>
-        </CBtn>
+        />
 
         <CBtn
           v-else-if="topbarActionState === 'closed'"
           variant="secondary"
           size="sm"
+          :icon="CIconLock"
+          :title="t('meetings.closedAction')"
           disabled
-        >
-          <CIconLock class="icon-sm" />
-          <span class="btn-label">{{ t('meetings.closedAction') }}</span>
-        </CBtn>
+        />
       </template>
     </CTopbar>
 
@@ -1269,11 +1273,10 @@ function toDateTimeLocal(value: string): string {
             variant="ghost"
             size="sm"
             type="button"
+            :icon="CIconDownload"
+            :title="t('meetings.minutes.download_signed')"
             @click="openDocument(meeting.minutes_document_id!)"
-          >
-            <CIconDownload class="icon-sm" />
-            <span class="btn-label">{{ t('meetings.minutes.download_signed') }}</span>
-          </CBtn>
+          />
         </div>
 
         <CCard
@@ -1290,21 +1293,19 @@ function toDateTimeLocal(value: string): string {
                   variant="ghost"
                   size="sm"
                   type="button"
+                  :icon="CIconDownload"
+                  :title="t('meetings.minutes.download_signed')"
                   @click="openDocument(meeting.minutes_document_id!)"
-                >
-                  <CIconDownload class="icon-sm" />
-                  <span>{{ t('meetings.minutes.download_signed') }}</span>
-                </CBtn>
+                />
                 <CBtn
                   v-if="auth.isManager"
                   variant="ghost"
                   size="sm"
                   type="button"
+                  :icon="CIconEdit"
+                  :title="t('meetings.signatures.action_label')"
                   @click="openSignaturesModal"
-                >
-                  <CIconEdit class="icon-sm" />
-                  <span>{{ t('meetings.signatures.action_label') }}</span>
-                </CBtn>
+                />
               </div>
               <div class="flex flex-col gap-1 text-xs text-on-surface-variant">
                 <span>
@@ -1344,12 +1345,11 @@ function toDateTimeLocal(value: string): string {
                     variant="ghost"
                     size="sm"
                     type="button"
+                    :icon="CIconBell"
+                    :title="t('meetings.minutes.mark_notified')"
                     :loading="notifyingMinutes"
                     @click="markMinutesNotified"
-                  >
-                    <CIconBell class="icon-sm" />
-                    <span>{{ t('meetings.minutes.mark_notified') }}</span>
-                  </CBtn>
+                  />
                 </div>
               </template>
             </template>
@@ -1365,21 +1365,19 @@ function toDateTimeLocal(value: string): string {
                   variant="ghost"
                   size="sm"
                   type="button"
+                  :icon="CIconDownload"
+                  :title="t('meetings.minutes.download_draft')"
                   :loading="downloadingMinutesDraft"
                   @click="downloadMinutesDraft"
-                >
-                  <CIconDownload class="icon-sm" />
-                  <span>{{ t('meetings.minutes.download_draft') }}</span>
-                </CBtn>
+                />
                 <CBtn
                   variant="primary"
                   size="sm"
                   type="button"
+                  :icon="CIconUpload"
+                  :title="t('meetings.minutes.upload_signed')"
                   @click="openMinutesModal"
-                >
-                  <CIconUpload class="icon-sm" />
-                  <span>{{ t('meetings.minutes.upload_signed') }}</span>
-                </CBtn>
+                />
               </div>
             </template>
             <CFormFeedback
@@ -1447,11 +1445,10 @@ function toDateTimeLocal(value: string): string {
                 <CBtn
                   variant="ghost"
                   size="sm"
+                  :icon="CIconPlus"
+                  :title="t('meetings.addResolution')"
                   @click="openResolutionModal"
-                >
-                  <CIconPlus class="icon-sm" />
-                  <span class="btn-label">{{ t('meetings.addResolution') }}</span>
-                </CBtn>
+                />
               </template>
             </CSectionHeader>
 
@@ -1607,34 +1604,30 @@ function toDateTimeLocal(value: string): string {
                     v-if="canEditResolution"
                     size="sm"
                     variant="ghost"
+                    :title="t('meetings.editResolution')"
                     @click="openEditResolutionModal(resolution)"
-                  >
-                    {{ t('meetings.editResolution') }}
-                  </CBtn>
+                  />
                   <CBtn
                     v-if="voteResults[resolution.id]?.eligible_for_second_vote === 'art_25_1' && meeting?.status === 'ongoing'"
                     size="sm"
                     variant="ghost"
+                    :title="t('meetings.createArt24')"
                     @click="openArt24Modal(resolution)"
-                  >
-                    {{ t('meetings.createArt24') }}
-                  </CBtn>
+                  />
                   <CBtn
                     v-if="voteResults[resolution.id]?.eligible_for_second_vote === 'art_26_1' && meeting?.status === 'ongoing'"
                     size="sm"
                     variant="ghost"
+                    :title="t('meetings.createArt25')"
                     @click="openArt25Modal(resolution)"
-                  >
-                    {{ t('meetings.createArt25') }}
-                  </CBtn>
+                  />
                   <CBtn
                     v-if="canManageVotes"
                     size="sm"
                     variant="ghost"
+                    :title="t('meetings.vote.enterVotes')"
                     @click="openVoteModal(resolution)"
-                  >
-                    {{ t('meetings.vote.enterVotes') }}
-                  </CBtn>
+                  />
                 </div>
               </CCard>
             </div>
@@ -1715,11 +1708,10 @@ function toDateTimeLocal(value: string): string {
                   <CBtn
                     variant="ghost"
                     size="sm"
+                    :icon="CIconPlus"
+                    :title="t('meetings.documents.uploadAction')"
                     @click="openDocumentModal"
-                  >
-                    <CIconPlus class="icon-sm" />
-                    <span class="btn-label">{{ t('meetings.documents.uploadAction') }}</span>
-                  </CBtn>
+                  />
                 </template>
               </CSectionHeader>
 
@@ -1817,11 +1809,10 @@ function toDateTimeLocal(value: string): string {
                   size="sm"
                   type="button"
                   class="self-center"
+                  :icon="CIconDownload"
+                  :title="t('meetings.minutes.download_signed')"
                   @click="openDocument(meeting.minutes_document_id!)"
-                >
-                  <CIconDownload class="icon-sm" />
-                  <span>{{ t('meetings.minutes.download_signed') }}</span>
-                </CBtn>
+                />
               </CAlert>
             </CCard>
 
@@ -1840,11 +1831,10 @@ function toDateTimeLocal(value: string): string {
                   <CBtn
                     variant="ghost"
                     size="sm"
+                    :icon="CIconEdit"
+                    :title="t('meetings.attendanceAction')"
                     @click="openAttendanceModal"
-                  >
-                    <CIconEdit class="icon-sm" />
-                    <span class="btn-label">{{ t('meetings.attendanceAction') }}</span>
-                  </CBtn>
+                  />
                 </template>
               </CSectionHeader>
 
@@ -1971,20 +1961,18 @@ function toDateTimeLocal(value: string): string {
               <CBtn
                 variant="ghost"
                 size="sm"
+                :title="t('common.delete')"
                 @click="removeAgendaItem(index)"
-              >
-                {{ t('common.delete') }}
-              </CBtn>
+              />
             </div>
 
             <CBtn
               variant="secondary"
               size="sm"
+              :icon="CIconPlus"
+              :title="t('common.add')"
               @click="addAgendaItem"
-            >
-              <CIconPlus class="icon-sm" />
-              <span class="btn-label">{{ t('common.add') }}</span>
-            </CBtn>
+            />
           </div>
         </div>
       </form>
@@ -1996,17 +1984,15 @@ function toDateTimeLocal(value: string): string {
         />
         <CBtn
           variant="ghost"
+          :title="t('common.cancel')"
           @click="showEditMeetingModal = false"
-        >
-          {{ t('common.cancel') }}
-        </CBtn>
+        />
         <CBtn
           variant="primary"
+          :title="t('common.save')"
           :loading="savingMeeting"
           @click="saveMeeting"
-        >
-          {{ t('common.save') }}
-        </CBtn>
+        />
       </template>
     </CModal>
 
@@ -2049,17 +2035,15 @@ function toDateTimeLocal(value: string): string {
         />
         <CBtn
           variant="ghost"
+          :title="t('common.cancel')"
           @click="showAddResolutionModal = false"
-        >
-          {{ t('common.cancel') }}
-        </CBtn>
+        />
         <CBtn
           variant="primary"
+          :title="t('common.add')"
           :loading="savingResolution"
           @click="saveResolution"
-        >
-          {{ t('common.add') }}
-        </CBtn>
+        />
       </template>
     </CModal>
 
@@ -2080,17 +2064,15 @@ function toDateTimeLocal(value: string): string {
           <CBtn
             size="sm"
             variant="ghost"
+            :title="t('meetings.vote.fillAllFor')"
             @click="fillAllVotes('in_favor')"
-          >
-            {{ t('meetings.vote.fillAllFor') }}
-          </CBtn>
+          />
           <CBtn
             size="sm"
             variant="ghost"
+            :title="t('meetings.vote.fillAllAgainst')"
             @click="fillAllVotes('against')"
-          >
-            {{ t('meetings.vote.fillAllAgainst') }}
-          </CBtn>
+          />
         </div>
         <table class="vote-table">
           <thead>
@@ -2135,18 +2117,16 @@ function toDateTimeLocal(value: string): string {
         />
         <CBtn
           variant="ghost"
+          :title="t('common.cancel')"
           @click="showVoteModal = false"
-        >
-          {{ t('common.cancel') }}
-        </CBtn>
+        />
         <CBtn
           variant="primary"
+          :title="t('meetings.vote.submit')"
           :loading="savingVotes"
           :disabled="attendingUnits.length === 0"
           @click="saveVotes"
-        >
-          {{ t('meetings.vote.submit') }}
-        </CBtn>
+        />
       </template>
     </CModal>
 
@@ -2181,17 +2161,15 @@ function toDateTimeLocal(value: string): string {
         />
         <CBtn
           variant="ghost"
+          :title="t('common.cancel')"
           @click="showEditResolutionModal = false"
-        >
-          {{ t('common.cancel') }}
-        </CBtn>
+        />
         <CBtn
           variant="primary"
+          :title="t('common.save')"
           :loading="savingEditResolution"
           @click="saveEditResolution"
-        >
-          {{ t('common.save') }}
-        </CBtn>
+        />
       </template>
     </CModal>
 
@@ -2230,17 +2208,15 @@ function toDateTimeLocal(value: string): string {
         />
         <CBtn
           variant="ghost"
+          :title="t('common.cancel')"
           @click="showDocumentModal = false"
-        >
-          {{ t('common.cancel') }}
-        </CBtn>
+        />
         <CBtn
           variant="primary"
+          :title="t('common.add')"
           :loading="savingDocument"
           @click="saveDocument"
-        >
-          {{ t('common.add') }}
-        </CBtn>
+        />
       </template>
     </CModal>
 
@@ -2286,17 +2262,15 @@ function toDateTimeLocal(value: string): string {
         />
         <CBtn
           variant="ghost"
+          :title="t('common.cancel')"
           @click="showAttendanceModal = false"
-        >
-          {{ t('common.cancel') }}
-        </CBtn>
+        />
         <CBtn
           variant="primary"
+          :title="t('common.save')"
           :loading="savingAttendance"
           @click="saveAttendance"
-        >
-          {{ t('common.save') }}
-        </CBtn>
+        />
       </template>
     </CModal>
 
@@ -2316,17 +2290,15 @@ function toDateTimeLocal(value: string): string {
         />
         <CBtn
           variant="ghost"
+          :title="t('common.cancel')"
           @click="showArt24Modal = false"
-        >
-          {{ t('common.cancel') }}
-        </CBtn>
+        />
         <CBtn
           variant="primary"
+          :title="t('common.create')"
           :loading="savingArt24"
           @click="confirmArt24Resolution"
-        >
-          {{ t('common.create') }}
-        </CBtn>
+        />
       </template>
     </CModal>
 
@@ -2346,17 +2318,15 @@ function toDateTimeLocal(value: string): string {
         />
         <CBtn
           variant="ghost"
+          :title="t('common.cancel')"
           @click="showArt25Modal = false"
-        >
-          {{ t('common.cancel') }}
-        </CBtn>
+        />
         <CBtn
           variant="primary"
+          :title="t('common.create')"
           :loading="savingArt25"
           @click="confirmArt25Resolution"
-        >
-          {{ t('common.create') }}
-        </CBtn>
+        />
       </template>
     </CModal>
 
@@ -2411,17 +2381,15 @@ function toDateTimeLocal(value: string): string {
         />
         <CBtn
           variant="ghost"
+          :title="t('common.cancel')"
           @click="showSignaturesModal = false"
-        >
-          {{ t('common.cancel') }}
-        </CBtn>
+        />
         <CBtn
           variant="primary"
+          :title="t('common.save')"
           :loading="savingSignatures"
           @click="saveSignatures"
-        >
-          {{ t('common.save') }}
-        </CBtn>
+        />
       </template>
     </CModal>
 
@@ -2441,17 +2409,15 @@ function toDateTimeLocal(value: string): string {
         />
         <CBtn
           variant="ghost"
+          :title="t('common.cancel')"
           @click="showCloseMeetingModal = false"
-        >
-          {{ t('common.cancel') }}
-        </CBtn>
+        />
         <CBtn
           variant="primary"
+          :title="t('meetings.closeMeetingConfirm')"
           :loading="closingMeeting"
           @click="closeMeeting"
-        >
-          {{ t('meetings.closeMeetingConfirm') }}
-        </CBtn>
+        />
       </template>
     </CModal>
 
@@ -2475,16 +2441,14 @@ function toDateTimeLocal(value: string): string {
         />
         <CBtn
           variant="ghost"
+          :title="t('common.cancel')"
           @click="showDeleteDocumentModal = false"
-        >
-          {{ t('common.cancel') }}
-        </CBtn>
+        />
         <CBtn
           variant="primary"
+          :title="t('meetings.documents.detachConfirm')"
           @click="confirmDetachDocument"
-        >
-          {{ t('meetings.documents.detachConfirm') }}
-        </CBtn>
+        />
       </template>
     </CModal>
 
@@ -2565,18 +2529,16 @@ function toDateTimeLocal(value: string): string {
         />
         <CBtn
           variant="ghost"
+          :title="t('common.cancel')"
           @click="showConvocationModal = false"
-        >
-          {{ t('common.cancel') }}
-        </CBtn>
+        />
         <CBtn
           variant="primary"
+          :title="t('meetings.call')"
           :loading="callingMeeting"
           :disabled="!convocationChecklist?.ready_to_send"
           @click="confirmCallMeeting"
-        >
-          {{ t('meetings.call') }}
-        </CBtn>
+        />
       </template>
     </CModal>
 
@@ -2613,18 +2575,16 @@ function toDateTimeLocal(value: string): string {
         />
         <CBtn
           variant="ghost"
+          :title="t('common.cancel')"
           @click="showMinutesModal = false"
-        >
-          {{ t('common.cancel') }}
-        </CBtn>
+        />
         <CBtn
           variant="primary"
+          :title="t('meetings.minutes.upload_signed')"
           :loading="savingMinutes"
           :disabled="!minutesForm.file"
           @click="saveMinutes"
-        >
-          {{ t('meetings.minutes.upload_signed') }}
-        </CBtn>
+        />
       </template>
     </CModal>
 
@@ -2667,20 +2627,19 @@ function toDateTimeLocal(value: string): string {
               variant="ghost"
               size="sm"
               type="button"
+              :icon="CIconTrash"
+              :title="t('common.delete')"
               @click="removeScrutineer(index)"
-            >
-              <CIconTrash class="icon-sm" />
-            </CBtn>
+            />
           </div>
           <CBtn
             variant="ghost"
             size="sm"
             type="button"
+            :icon="CIconPlus"
+            :title="t('meetings.start_modal.add_scrutineer')"
             @click="addScrutineer"
-          >
-            <CIconPlus class="icon-sm" />
-            <span>{{ t('meetings.start_modal.add_scrutineer') }}</span>
-          </CBtn>
+          />
         </div>
       </form>
       <template #footer>
@@ -2690,17 +2649,15 @@ function toDateTimeLocal(value: string): string {
         />
         <CBtn
           variant="ghost"
+          :title="t('common.cancel')"
           @click="showStartMeetingModal = false"
-        >
-          {{ t('common.cancel') }}
-        </CBtn>
+        />
         <CBtn
           variant="primary"
+          :title="t('meetings.start')"
           :loading="startingMeeting"
           @click="confirmStartMeeting"
-        >
-          {{ t('meetings.start') }}
-        </CBtn>
+        />
       </template>
     </CModal>
   </div>

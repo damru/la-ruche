@@ -82,9 +82,8 @@ onMounted(reload)
             <CBtn
               variant="ghost"
               size="sm"
-            >
-              {{ t('units.charges.title') }}
-            </CBtn>
+              :title="t('units.charges.title')"
+            />
           </CCard>
         </div>
 

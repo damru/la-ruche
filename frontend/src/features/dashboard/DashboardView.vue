@@ -9,6 +9,7 @@ import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import CMockBanner from '@/components/atoms/CMockBanner.vue'
+import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import {
   mockBuildingStats, mockBudgets, mockBudgetLines, mockLevies, mockMeetings,
   mockTasks, mockReports, mockContracts, mockReminders, mockConsultations,
@@ -97,10 +98,9 @@ const todayStr = computed(() =>
           <CBtn
             variant="secondary"
             size="sm"
-          >
-            <CIconPlus />
-            <span class="btn-label">{{ t('dashboard.newAction') }}</span>
-          </CBtn>
+            :icon="CIconPlus"
+            :title="t('dashboard.newAction')"
+          />
         </RouterLink>
       </template>
     </CTopbar>
@@ -284,10 +284,9 @@ const todayStr = computed(() =>
                 variant="primary"
                 size="sm"
                 style="width:100%;justify-content:center"
-              >
-                <CIconPlus />
-                {{ t('dashboard.newTask') }}
-              </CBtn>
+                :icon="CIconPlus"
+                :title="t('dashboard.newTask')"
+              />
             </RouterLink>
           </div>
         </CCard>

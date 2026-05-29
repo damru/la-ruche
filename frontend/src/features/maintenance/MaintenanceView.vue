@@ -18,6 +18,9 @@ import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import CHeading from '@/components/atoms/CHeading.vue'
 import CTabs from '@/components/atoms/CTabs.vue'
+import CIconArrowLeft from '@/components/atoms/CIconArrowLeft.svg'
+import CIconArrowRight from '@/components/atoms/CIconArrowRight.svg'
+import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import { maintenanceApi } from '@/api'
 import type { LogbookContractSummary, LogbookSummary, MaintenanceEntry } from '@/types/domain'
 
@@ -297,11 +300,10 @@ async function deleteEntry() {
         <CBtn
           variant="primary"
           size="sm"
+          :icon="CIconPlus"
+          :title="t('maintenance.addEntry')"
           @click="openCreateModal"
-        >
-          <CIconPlus style="width:16px;height:16px" />
-          <span class="btn-label">{{ t('maintenance.addEntry') }}</span>
-        </CBtn>
+        />
       </template>
     </CTopbar>
 
@@ -477,22 +479,22 @@ async function deleteEntry() {
             <CBtn
               variant="ghost"
               size="sm"
+              :icon="CIconArrowLeft"
+              :title="t('maintenance.previousPeriod')"
               :disabled="periodFilter === 'all'"
               :aria-label="t('maintenance.previousPeriod')"
               @click="goToPreviousPeriod"
-            >
-              ←
-            </CBtn>
+            />
             <span class="period-label title-sm">{{ periodLabel }}</span>
             <CBtn
               variant="ghost"
               size="sm"
+              :icon="CIconArrowRight"
+              :title="t('maintenance.nextPeriod')"
               :disabled="!canGoNext"
               :aria-label="t('maintenance.nextPeriod')"
               @click="goToNextPeriod"
-            >
-              →
-            </CBtn>
+            />
           </div>
         </div>
 
@@ -624,18 +626,16 @@ async function deleteEntry() {
         />
         <CBtn
           variant="ghost"
+          :title="t('common.cancel')"
           @click="showEntryModal = false"
-        >
-          {{ t('common.cancel') }}
-        </CBtn>
+        />
         <CBtn
           variant="primary"
+          :title="t('common.save')"
           :loading="savingEntry"
           :closing="entryFeedback.status.value === 'success'"
           @click="saveEntry"
-        >
-          {{ t('common.save') }}
-        </CBtn>
+        />
       </template>
     </CModal>
 
@@ -655,18 +655,16 @@ async function deleteEntry() {
         />
         <CBtn
           variant="ghost"
+          :title="t('common.cancel')"
           @click="entryToDelete = null"
-        >
-          {{ t('common.cancel') }}
-        </CBtn>
+        />
         <CBtn
           variant="danger"
+          :title="t('common.delete')"
           :loading="deletingEntry"
           :closing="deleteFeedback.status.value === 'success'"
           @click="deleteEntry"
-        >
-          {{ t('common.delete') }}
-        </CBtn>
+        />
       </template>
     </CModal>
   </div>

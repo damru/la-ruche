@@ -12,6 +12,8 @@ import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import CHeading from '@/components/atoms/CHeading.vue'
 import CFormRow from '@/components/molecules/CFormRow.vue'
+import CIconBook from '@/components/atoms/CIconBook.svg'
+import CIconDownload from '@/components/atoms/CIconDownload.svg'
 import { buildingApi } from '@/api'
 import { usePageLoader } from '@/composables/usePageLoader'
 import { useFormFeedback } from '@/composables/useFormFeedback'
@@ -129,12 +131,11 @@ onMounted(reload)
           <div class="flex items-center gap-3">
             <CBtn
               variant="primary"
+              :title="saving ? t('common.saving') : t('settings.saveChanges')"
               :loading="saving"
               :disabled="saving"
               @click="saveBuilding"
-            >
-              {{ saving ? t('common.saving') : t('settings.saveChanges') }}
-            </CBtn>
+            />
             <CFormFeedback
               :status="feedback.status.value"
               :message="feedback.message.value"
@@ -156,22 +157,18 @@ onMounted(reload)
             />
           </CLegalNotice>
           <div class="flex items-center gap-3">
-            <CBtn variant="secondary">
-              <CIconDownload
-                class="icon-sm"
-                
-                aria-hidden="true"
-              />
-              {{ t('settings.exportData') }}
-            </CBtn>
-            <CBtn variant="secondary">
-              <CIconBook
-                class="icon-sm"
-                
-                aria-hidden="true"
-              />
-              {{ t('settings.downloadBylaws') }}
-            </CBtn>
+            <CBtn
+              variant="secondary"
+              :icon="CIconDownload"
+              :title="t('settings.exportData')"
+              disabled
+            />
+            <CBtn
+              variant="secondary"
+              :icon="CIconBook"
+              :title="t('settings.downloadBylaws')"
+              disabled
+            />
           </div>
         </CLegalCard>
       </template>

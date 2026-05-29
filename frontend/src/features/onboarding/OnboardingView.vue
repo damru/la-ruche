@@ -9,6 +9,8 @@ import AuthBrandPanel from '@/components/organisms/AuthBrandPanel.vue'
 import CAlert from '@/components/atoms/CAlert.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CFormAddressAutocomplete from '@/components/molecules/CFormAddressAutocomplete.vue'
+import CIconArrowLeft from '@/components/atoms/CIconArrowLeft.svg'
+import CIconArrowRight from '@/components/atoms/CIconArrowRight.svg'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -336,12 +338,11 @@ async function handleSubmit() {
               type="submit"
               variant="primary"
               size="md"
+              :icon="CIconArrowRight"
+              :title="t('onboarding.next')"
               :disabled="loading"
               style="width:100%"
-            >
-              {{ t('onboarding.next') }}
-              <CIconArrowRight aria-hidden="true" />
-            </CBtn>
+            />
           </form>
 
           <form
@@ -385,25 +386,20 @@ async function handleSubmit() {
               <CBtn
                 type="button"
                 variant="ghost"
+                :icon="CIconArrowLeft"
+                :title="t('onboarding.back')"
                 :disabled="loading"
                 @click="goBack"
-              >
-                <CIconArrowLeft aria-hidden="true" />
-                {{ t('onboarding.back') }}
-              </CBtn>
+              />
               <CBtn
                 type="submit"
                 variant="primary"
+                :icon="!loading ? CIconArrowRight : undefined"
+                :title="loading ? t('onboarding.submitting') : t('onboarding.submit')"
                 :disabled="loading"
                 :loading="loading"
                 class="btn-submit"
-              >
-                <CIconArrowRight
-                  v-if="!loading"
-                  aria-hidden="true"
-                />
-                {{ loading ? t('onboarding.submitting') : t('onboarding.submit') }}
-              </CBtn>
+              />
             </div>
           </form>
         </template>

@@ -733,11 +733,11 @@ function formatSharePercentage(value: number): string {
           v-if="canEditSelectedBudget && selectedBudgetId"
           variant="primary"
           size="sm"
+          :icon="CIconLock"
+          :title="t('budget.closeExercise')"
+          shrink="sm"
           @click="openCloseExerciseModal"
-        >
-          <CIconLock aria-hidden="true" />
-          <span class="btn-label">{{ t('budget.closeExercise') }}</span>
-        </CBtn>
+        />
       </template>
     </CTopbar>
 
@@ -767,11 +767,10 @@ function formatSharePercentage(value: number): string {
             <CBtn
               v-if="canManage"
               variant="primary"
+              :icon="CIconPlus"
+              :title="t('budget.newFiscalYear')"
               @click="openCreateBudgetModal"
-            >
-              <CIconPlus />
-              {{ t('budget.newFiscalYear') }}
-            </CBtn>
+            />
           </template>
         </CEmptyState>
       </template>
@@ -818,11 +817,10 @@ function formatSharePercentage(value: number): string {
             variant="ghost"
             size="sm"
             class="text-primary!"
+            :icon="CIconPlus"
+            :title="t('budget.newFiscalYear')"
             @click="openCreateBudgetModal"
-          >
-            <CIconPlus />
-            {{ t('budget.newFiscalYear') }}
-          </CBtn>
+          />
         </div>
 
         <template v-if="canEditSelectedBudget">
@@ -938,11 +936,11 @@ function formatSharePercentage(value: number): string {
                 v-if="canEditSelectedBudget && selectedBudget"
                 variant="ghost"
                 size="sm"
+                :icon="CIconWrench"
+                :title="t('budget.worksFundConfigure')"
+                shrink="sm"
                 @click="openWorksFundModal"
-              >
-                <CIconWrench aria-hidden="true" />
-                <span class="hidden md:inline">{{ t('budget.worksFundConfigure') }}</span>
-              </CBtn>
+              />
             </template>
           </CSectionHeader>
 
@@ -1052,20 +1050,20 @@ function formatSharePercentage(value: number): string {
                 v-if="budgetBreakdownItems.length > 0"
                 variant="ghost"
                 size="sm"
+                :icon="CIconPieChart"
+                :title="t('budget.breakdown')"
+                shrink="sm"
                 @click="showBreakdownModal = true"
-              >
-                <CIconPieChart aria-hidden="true" />
-                <span class="hidden md:inline">{{ t('budget.breakdown') }}</span>
-              </CBtn>
+              />
               <CBtn
                 v-if="canEditSelectedBudget"
                 variant="ghost"
                 size="sm"
+                :icon="CIconPlus"
+                :title="t('budget.newLine')"
+                shrink="sm"
                 @click="openCreateLineModal"
-              >
-                <CIconPlus aria-hidden="true" />
-                <span class="hidden md:inline">{{ t('budget.newLine') }}</span>
-              </CBtn>
+              />
             </template>
           </CSectionHeader>
 
@@ -1098,11 +1096,10 @@ function formatSharePercentage(value: number): string {
                     v-if="canEditSelectedBudget"
                     variant="ghost"
                     size="sm"
+                    :icon="CIconTrash"
                     :aria-label="t('common.delete')"
                     @click="lineToDelete = line"
-                  >
-                    <CIconTrash aria-hidden="true" />
-                  </CBtn>
+                  />
                 </CMetaLine>
               </div>
               <CProgressBar
@@ -1146,11 +1143,11 @@ function formatSharePercentage(value: number): string {
                 v-if="canEditSelectedBudget && selectedBudgetId"
                 variant="ghost"
                 size="sm"
+                :icon="CIconMegaphone"
+                :title="t('budget.generateLevies')"
+                shrink="sm"
                 @click="openGenerateModal"
-              >
-                <CIconMegaphone aria-hidden="true" />
-                <span class="hidden md:inline">{{ t('budget.generateLevies') }}</span>
-              </CBtn>
+              />
             </template>
           </CSectionHeader>
 
@@ -1210,12 +1207,12 @@ function formatSharePercentage(value: number): string {
                 v-if="canMarkLeviesPaid && row.status !== 'paid'"
                 variant="ghost"
                 size="sm"
+                :icon="CIconCheckCircle"
+                :title="t('budget.markPaid')"
+                shrink="sm"
                 :loading="markingPaidId === asConsolidatedLevyRow(row).id"
                 @click="markPaid(asConsolidatedLevyRow(row))"
-              >
-                <CIconCheckCircle aria-hidden="true" />
-                <span class="hidden md:inline">{{ t('budget.markPaid') }}</span>
-              </CBtn>
+              />
             </template>
           </CDataTable>
           <div class="levies-total">
@@ -1266,17 +1263,15 @@ function formatSharePercentage(value: number): string {
         />
         <CBtn
           variant="ghost"
+          :title="t('common.cancel')"
           @click="showCreateBudgetModal = false"
-        >
-          {{ t('common.cancel') }}
-        </CBtn>
+        />
         <CBtn
           variant="primary"
+          :title="t('common.create')"
           :loading="savingBudget"
           @click="saveBudget"
-        >
-          {{ t('common.create') }}
-        </CBtn>
+        />
       </template>
     </CModal>
 
@@ -1312,17 +1307,15 @@ function formatSharePercentage(value: number): string {
         />
         <CBtn
           variant="ghost"
+          :title="t('common.cancel')"
           @click="showCreateLineModal = false"
-        >
-          {{ t('common.cancel') }}
-        </CBtn>
+        />
         <CBtn
           variant="primary"
+          :title="t('common.save')"
           :loading="savingLine"
           @click="saveLine"
-        >
-          {{ t('common.save') }}
-        </CBtn>
+        />
       </template>
     </CModal>
 
@@ -1340,17 +1333,15 @@ function formatSharePercentage(value: number): string {
         />
         <CBtn
           variant="ghost"
+          :title="t('common.cancel')"
           @click="lineToDelete = null"
-        >
-          {{ t('common.cancel') }}
-        </CBtn>
+        />
         <CBtn
           variant="danger"
+          :title="t('common.delete')"
           :loading="deletingLine"
           @click="confirmDeleteLine"
-        >
-          {{ t('common.delete') }}
-        </CBtn>
+        />
       </template>
     </CModal>
 
@@ -1416,19 +1407,17 @@ function formatSharePercentage(value: number): string {
         />
         <CBtn
           variant="ghost"
+          :title="t('common.cancel')"
           @click="showGenerateModal = false"
-        >
-          {{ t('common.cancel') }}
-        </CBtn>
+        />
         <CBtn
           variant="primary"
+          :icon="CIconMegaphone"
+          :title="t('budget.generate')"
           :disabled="!canGenerateLevies"
           :loading="generatingLevies"
           @click="generateLevies"
-        >
-          <CIconMegaphone aria-hidden="true" />
-          {{ t('budget.generate') }}
-        </CBtn>
+        />
       </template>
     </CModal>
 
@@ -1508,17 +1497,15 @@ function formatSharePercentage(value: number): string {
         />
         <CBtn
           variant="ghost"
+          :title="t('common.cancel')"
           @click="showWorksFundModal = false"
-        >
-          {{ t('common.cancel') }}
-        </CBtn>
+        />
         <CBtn
           variant="primary"
+          :title="t('common.save')"
           :loading="savingWorksFund"
           @click="saveWorksFund"
-        >
-          {{ t('common.save') }}
-        </CBtn>
+        />
       </template>
     </CModal>
 
@@ -1537,17 +1524,15 @@ function formatSharePercentage(value: number): string {
         />
         <CBtn
           variant="ghost"
+          :title="t('common.cancel')"
           @click="showCloseExerciseModal = false"
-        >
-          {{ t('common.cancel') }}
-        </CBtn>
+        />
         <CBtn
           variant="danger"
+          :title="t('budget.closeExerciseConfirm')"
           :loading="closingExercise"
           @click="closeExercise"
-        >
-          {{ t('budget.closeExerciseConfirm') }}
-        </CBtn>
+        />
       </template>
     </CModal>
   </div>
@@ -1672,6 +1657,4 @@ function formatSharePercentage(value: number): string {
   }
 }
 
-@media (max-width: 768px) {
-}
 </style>
