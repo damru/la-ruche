@@ -142,6 +142,9 @@ const shrinkClass: Record<Breakpoint, string> = {
 
 .c-btn--primary {
   background: var(--tone-bg);
+}
+  
+.c-btn--primary:not(:disabled) {
   box-shadow: var(--shadow-primary-lift);
 }
 
@@ -182,12 +185,14 @@ const shrinkClass: Record<Breakpoint, string> = {
 }
 
 .c-btn--icon-variant {
+  width: var(--c-btn-box);
   min-width: min-content;
   min-height: min-content;
-  padding: var(--space-1);
   border-radius: var(--radius-md);
   background: transparent;
   color: var(--color-on-surface-variant);
+  padding: 0 !important;
+  gap: 0;
 }
 
 .c-btn--icon-variant:hover:not(:disabled) {
@@ -260,7 +265,7 @@ const shrinkClass: Record<Breakpoint, string> = {
   to   { transform: scaleX(1); }
 }
 
-@media (max-width: 639.98px) {
+@media (max-width: 640px) {
   .c-btn--icon-variant, .c-btn--shrink-sm {
     width: var(--c-btn-box);
     min-width: var(--c-btn-box);
@@ -273,8 +278,8 @@ const shrinkClass: Record<Breakpoint, string> = {
   }
 }
 
-@media (max-width: 767.98px) {
-  .c-btn--icon-variant, .c-btn--shrink-md {
+@media (max-width: 768px) {
+  .c-btn--shrink-md {
     width: var(--c-btn-box);
     min-width: var(--c-btn-box);
     padding-inline: 0;
@@ -286,8 +291,8 @@ const shrinkClass: Record<Breakpoint, string> = {
   }
 }
 
-@media (max-width: 1023.98px) {
-  .c-btn--icon-variant, .c-btn--shrink-lg {
+@media (max-width: 1024px) {
+  .c-btn--shrink-lg {
     width: var(--c-btn-box);
     min-width: var(--c-btn-box);
     padding-inline: 0;
@@ -299,8 +304,8 @@ const shrinkClass: Record<Breakpoint, string> = {
   }
 }
 
-@media (max-width: 1279.98px) {
-  .c-btn--icon-variant, .c-btn--shrink-xl {
+@media (max-width: 1280px) {
+  .c-btn--shrink-xl {
     width: var(--c-btn-box);
     min-width: var(--c-btn-box);
     padding-inline: 0;
@@ -312,8 +317,8 @@ const shrinkClass: Record<Breakpoint, string> = {
   }
 }
 
-@media (max-width: 1535.98px) {
-  .c-btn--icon-variant, .c-btn--shrink-2xl {
+@media (max-width: 1536px) {
+  .c-btn--shrink-2xl {
     width: var(--c-btn-box);
     min-width: var(--c-btn-box);
     padding-inline: 0;

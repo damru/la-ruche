@@ -102,15 +102,18 @@
 
 /* --- Layout utilities --- */
 @utility view-container {
+  max-width: 1200px;
   display: flex;
   flex-direction: column;
   padding: var(--space-10);
-  max-width: 1200px;
-  gap: var(--space-6);
+  gap: var(--space-8);
 }
 
-@media (max-width: 640px) {
-  .view-container { padding: var(--space-5); }
+@media (max-width: 639.98px) {
+  .view-container { 
+    padding: var(--space-5); 
+    gap: var(--space-6);
+  }
 }
 
 @utility view-header {

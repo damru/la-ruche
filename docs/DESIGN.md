@@ -128,6 +128,7 @@ Configuration via `@tailwindcss/vite` (pas de `tailwind.config.js`). Tokens expo
 - Jamais de valeur brute (`px`, `hex`, `rem`) dans un attribut `class` si un token Tailwind existe.
 - Les classes `.tone--*` restent des utilitaires CSS purs (non Tailwind) — utiliser directement.
 - **Zéro bloc `<style>` dans les vues de feature.** Toute mise en page locale = utilitaire Tailwind **ou** composant du catalogue. Les composants `atoms/molecules/organisms` peuvent conserver des `<style scoped>`.
+  - **Exception** faite si **2 éléments ou plus** ayant **une fonction identique** (layout, style de texte, même niveau hiérarchique) définissent **3 utilitaires identiques ou plus**.
 
 ---
 

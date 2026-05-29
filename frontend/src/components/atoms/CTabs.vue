@@ -57,6 +57,7 @@ const countClass = (isActive: boolean) => ({
   display: flex;
   gap: var(--space-1);
   overflow-x: auto;
+  margin-bottom: var(--space-4);
 }
 
 .tabs--tab {
