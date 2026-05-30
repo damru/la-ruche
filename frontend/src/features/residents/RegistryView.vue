@@ -152,7 +152,7 @@ const registryColumns = computed(() => {
           <CBtn
             size="xs"
             variant="negative"
-            @click="router.push('residence/keys')"
+            @click="router.push({ name: 'residence-keys' })"
           >
             {{ t('nav.residence-keys') }}
             <CIconArrowRight
