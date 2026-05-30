@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 import type { Component } from 'vue'
 
 defineOptions({ inheritAttrs: false })
@@ -28,6 +29,8 @@ withDefaults(defineProps<{
   icon: undefined,
   shrink: undefined,
 })
+
+const { t } = useI18n()
 
 const variantClass: Record<Variant, string> = {
   primary: 'c-btn--primary',
@@ -87,7 +90,7 @@ const shrinkClass: Record<Breakpoint, string> = {
     </template>
     <template v-else>
       <span
-        v-if="loading"
+        v-if="loading || closing"
         class="c-btn__spinner"
         aria-hidden="true"
       ></span>
@@ -97,12 +100,14 @@ const shrinkClass: Record<Breakpoint, string> = {
         :class="iconSizeClass[size]"
         aria-hidden="true"
       />
-      <span
-        v-if="title && variant !== 'icon'"
-        class="c-btn__title"
-      >
-        {{ title }}
-      </span>
+      <template v-if="title && variant !== 'icon'">
+        <span v-if="closing">
+          {{  t('common.close') }}
+        </span>
+        <span v-else class="c-btn__title">
+          {{ title }}
+        </span>
+      </template>
     </template>
   </button>
 </template>

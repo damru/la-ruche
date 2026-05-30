@@ -1912,7 +1912,7 @@ function toDateTimeLocal(value: string): string {
           :label="t('meetings.location')"
         />
         <div class="flex flex-col gap-1 col-span-full">
-          <span class="text-sm font-medium text-on-surface-variant">{{ t('meetings.agenda') }}</span>
+          <span class="text-sm font-medium text-on-surface-variant">{{ t('meetings.agenda.title') }}</span>
           <div class="agenda-editor">
             <div
               v-for="(_, index) in meetingAgendaItems"
@@ -1921,13 +1921,16 @@ function toDateTimeLocal(value: string): string {
             >
               <CFormInput
                 v-model="meetingAgendaItems[index]"
-                :placeholder="`${t('meetings.agenda')} ${index + 1}`"
+                :placeholder="`${t('meetings.agenda.title')} ${index + 1}`"
               />
               <CBtn
-                variant="ghost"
+                variant="icon"
                 size="sm"
+                :icon="CIconTrash"
                 :title="t('common.delete')"
+                :aria-label="t('common.delete')"
                 @click="removeAgendaItem(index)"
+                :disabled="meetingAgendaItems.length <= 1"
               />
             </div>
 

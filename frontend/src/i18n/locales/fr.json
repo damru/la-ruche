@@ -1,6 +1,7 @@
 {
   "common": {
     "loading": "Chargement…",
+    "select": "Sélectionner…",
     "error": "Une erreur est survenue",
     "save": "Enregistrer",
     "cancel": "Annuler",
@@ -1025,11 +1026,11 @@
     "editStatus": "Changer le statut",
     "activeCount": "{count} signalement en cours | {count} signalements en cours",
     "unitLabel": "Lot {number}",
+    "unitLabel2": "Lot concerné",
     "noUnit": "Parties communes",
     "by": "Par",
     "titleLabel": "Titre",
     "descriptionLabel": "Description",
-    "unitLabel2": "Lot concerné",
     "unitPlaceholder": "Sélectionner un lot (optionnel)",
     "statusLabel": "Nouveau statut",
     "confirmStatusTitle": "Mettre à jour le statut",

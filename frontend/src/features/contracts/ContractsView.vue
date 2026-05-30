@@ -609,8 +609,7 @@ async function confirmTerminateContract() {
 
 .contracts-toolbar {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
   gap: var(--space-3);
   flex-wrap: wrap;
 }

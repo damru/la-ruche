@@ -39,12 +39,15 @@ const { t } = useI18n()
 // Stable ID for aria associations — random suffix avoids collisions when multiple selects are on page
 const inputId = computed(() => props.id ?? `c-select-${Math.random().toString(36).slice(2, 7)}`)
 
+// Radix SelectItem rejects empty-string values — use a sentinel internally
+const EMPTY_SENTINEL = '__empty__'
+
 // Radix works with strings; coerce numeric values to string for the SelectRoot binding
-const stringValue = computed(() =>
-  props.modelValue !== undefined && props.modelValue !== null
-    ? String(props.modelValue)
-    : undefined,
-)
+const stringValue = computed(() => {
+  if (props.modelValue === undefined || props.modelValue === null) return undefined
+  const s = String(props.modelValue)
+  return s === '' ? EMPTY_SENTINEL : s
+})
 
 // Resolve the display label for readonly mode
 const readonlyLabel = computed(() =>
@@ -52,7 +55,7 @@ const readonlyLabel = computed(() =>
 )
 
 function handleUpdate(val: string) {
-  emit('update:modelValue', val)
+  emit('update:modelValue', val === EMPTY_SENTINEL ? '' : val)
 }
 </script>
 
@@ -92,7 +95,7 @@ function handleUpdate(val: string) {
         :aria-describedby="props.error ? `${inputId}-error` : props.hint ? `${inputId}-hint` : undefined"
         :aria-invalid="!!props.error"
         :aria-required="props.required"
-        class="flex items-center justify-between w-full h-[var(--control-height)] px-3 rounded-radius-md
+        class="flex items-center justify-between w-full h-[var(--control-height)] px-3 rounded-xl
                bg-surface-container text-on-surface text-md outline-none cursor-pointer
                focus:ring-2 focus:ring-primary/30 focus:bg-surface-container-low
                data-[disabled]:opacity-50 data-[disabled]:cursor-not-allowed
@@ -102,10 +105,10 @@ function handleUpdate(val: string) {
           !props.modelValue ? 'text-on-surface-variant' : '',
         ]"
       >
-        <SelectValue :placeholder="props.placeholder ?? t('common.selectPlaceholder', 'Sélectionner…')" />
+        <SelectValue :placeholder="props.placeholder ?? t('common.select')" />
         <!-- Chevron icon — inline SVG to avoid external dependency -->
         <svg
-          class="size-[var(--icon-sm)] text-on-surface-variant shrink-0 ml-2"
+          class="icon-sm text-on-surface-variant shrink-0 ml-2"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -122,16 +125,16 @@ function handleUpdate(val: string) {
         <SelectContent
           position="popper"
           :side-offset="4"
-          class="min-w-[var(--radix-select-trigger-width)] rounded-radius-md
-                 bg-surface-container-lowest shadow-md z-overlay overflow-hidden"
+          class="min-w-[var(--radix-select-trigger-width)] rounded-xl
+                 bg-surface-container-lowest shadow-md z-toast overflow-hidden"
         >
           <SelectViewport class="p-1">
             <SelectItem
               v-for="opt in props.options"
               :key="opt.value"
-              :value="String(opt.value)"
+              :value="String(opt.value) === '' ? EMPTY_SENTINEL : String(opt.value)"
               :disabled="opt.disabled"
-              class="flex items-center px-3 py-2 text-md text-on-surface rounded-radius-sm
+              class="flex items-center px-3 py-2 text-md text-on-surface rounded-md
                      cursor-pointer outline-none select-none
                      hover:bg-surface-container
                      data-[highlighted]:bg-surface-container

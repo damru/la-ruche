@@ -110,7 +110,7 @@
   gap: var(--space-8);
 }
 
-@media (max-width: 639.98px) {
+@media (max-width: 640px) {
   .view-container { 
     padding: var(--space-5); 
     gap: var(--space-6);

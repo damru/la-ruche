@@ -22,6 +22,7 @@ import CTopbar from '@/components/organisms/CTopbar.vue'
 import CTabs, { type Tab } from '@/components/atoms/CTabs.vue'
 import CHeading from '@/components/atoms/CHeading.vue'
 import CIconPlus from '@/components/atoms/CIconPlus.svg'
+import CIconTrash from '@/components/atoms/CIconTrash.svg'
 
 const router = useRouter()
 const { t } = useI18n()
@@ -45,8 +46,21 @@ function defaultMeetingForm() {
     meeting_type: 'annual' as MeetingType,
     meeting_date: '',
     location: '',
-    agenda: '',
   }
+}
+
+const createAgendaItems = ref<string[]>([''])
+
+function addCreateAgendaItem() {
+  createAgendaItems.value.push('')
+}
+
+function removeCreateAgendaItem(index: number) {
+  if (createAgendaItems.value.length <= 1) {
+    createAgendaItems.value = ['']
+    return
+  }
+  createAgendaItems.value.splice(index, 1)
 }
 
 const createForm = ref(defaultMeetingForm())
@@ -102,6 +116,7 @@ function openMeeting(meetingId: string) {
 
 function openCreateModal() {
   createForm.value = defaultMeetingForm()
+  createAgendaItems.value = ['']
   createFeedback.reset()
   showCreateModal.value = true
 }
@@ -120,12 +135,16 @@ async function saveMeeting() {
   saving.value = true
   createFeedback.reset()
 
+  const normalizedAgenda = createAgendaItems.value
+    .map(item => item.trim())
+    .filter(Boolean)
+
   try {
     const response = await meetingsApi.create({
       meeting_type: createForm.value.meeting_type,
       meeting_date: new Date(createForm.value.meeting_date).toISOString(),
       location: createForm.value.location || undefined,
-      agenda: createForm.value.agenda || undefined,
+      agenda: normalizedAgenda.length ? normalizedAgenda.join('\n') : undefined,
     })
 
     createFeedback.setSuccess(t('common.saved'))
@@ -316,10 +335,37 @@ async function saveMeeting() {
           v-model="createForm.location"
           :label="t('meetings.location')"
         />
-        <CFormTextarea
-          v-model="createForm.agenda"
-          :label="t('meetings.agenda')"
-        />
+        <div class="flex flex-col gap-1">
+          <span class="text-sm font-medium text-on-surface-variant">{{ t('meetings.agenda.title') }}</span>
+          <div class="agenda-editor">
+            <div
+              v-for="(_, index) in createAgendaItems"
+              :key="`agenda-${index}`"
+              class="agenda-editor__row"
+            >
+              <CFormInput
+                v-model="createAgendaItems[index]"
+                :placeholder="`${t('meetings.agenda.title')} ${index + 1}`"
+              />
+              <CBtn
+                variant="icon"
+                size="sm"
+                :icon="CIconTrash"
+                :title="t('common.delete')"
+                :aria-label="t('common.delete')"
+                @click="removeCreateAgendaItem(index)"
+                :disabled="createAgendaItems.length <= 1"
+              />
+            </div>
+            <CBtn
+              variant="secondary"
+              size="sm"
+              :icon="CIconPlus"
+              :title="t('common.add')"
+              @click="addCreateAgendaItem"
+            />
+          </div>
+        </div>
       </form>
 
       <template #footer>
@@ -351,6 +397,18 @@ async function saveMeeting() {
   gap: var(--space-6);
 }
 
+
+.agenda-editor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.agenda-editor__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-2);
+}
 
 .meeting-list {
   display: flex;
