@@ -156,7 +156,6 @@ async function confirmResetData() {
           size="sm"
           :icon="CIconLogIn"
           :title="t('nav.logout')"
-          :loading-label="t('common.loading')"
           :loading="loggingOut"
           :disabled="loggingOut"
           @click="logout"
@@ -222,7 +221,6 @@ async function confirmResetData() {
             <CBtn
               variant="primary"
               :title="t('settings.account.update')"
-              :loading-label="t('common.saving')"
               :loading="saving"
               :disabled="saving"
               @click="saveProfile"

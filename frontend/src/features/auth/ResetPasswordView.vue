@@ -98,7 +98,6 @@ async function handleSubmit() {
               variant="primary"
               size="md"
               :title="t('auth.resetSaveButton')"
-              :loading-label="t('common.saving')"
               :disabled="!isValid || loading"
               :loading="loading"
               style="width: 100%"

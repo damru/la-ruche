@@ -811,21 +811,21 @@ function photoPreview(file: File): string {
         </div>
       </form>
       <template #footer>
+        <CBtn
+        variant="ghost"
+        :title="t('common.cancel')"
+        @click="showCreateModal = false"
+        />
+        <CBtn
+        variant="primary"
+        :title="t('common.save')"
+        :loading="saving || uploadingPhotos"
+        :closing="createFeedback.status.value === 'success'"
+        @click="submitCreate"
+        />
         <CFormFeedback
           :status="createFeedback.status.value"
           :message="createFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          :title="t('common.cancel')"
-          @click="showCreateModal = false"
-        />
-        <CBtn
-          variant="primary"
-          :title="t('common.save')"
-          :loading="saving || uploadingPhotos"
-          :closing="createFeedback.status.value === 'success'"
-          @click="submitCreate"
         />
       </template>
     </CModal>
@@ -896,6 +896,7 @@ function photoPreview(file: File): string {
         />
       </template>
     </CModal>
+
     <!-- Edit report modal -->
     <CModal
       :open="!!reportToEdit"

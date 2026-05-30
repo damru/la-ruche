@@ -17,7 +17,6 @@ const props = withDefaults(defineProps<{
   closing?: boolean
   type?: 'button' | 'submit' | 'reset'
   title?: string
-  loadingLabel?: string
   icon?: Component | string
   shrink?: Breakpoint
 }>(), {
@@ -28,7 +27,6 @@ const props = withDefaults(defineProps<{
   closing: false,
   type: 'button',
   title: undefined,
-  loadingLabel: undefined,
   icon: undefined,
   shrink: undefined,
 })
@@ -112,20 +110,22 @@ const shrinkClass: Record<Breakpoint, string> = {
     <template v-else>
       <span
         v-if="visualLoading || closing"
+        :class="{ 'c-btn__spinner--overlay': visualLoading }"
         class="c-btn__spinner"
         aria-hidden="true"
       ></span>
       <component
         :is="icon"
-        v-else-if="icon"
-        :class="iconSizeClass[size]"
+        v-if="icon && !closing"
+        :class="[iconSizeClass[size], { 'c-btn__hidden': visualLoading }]"
         aria-hidden="true"
       />
       <span 
         v-if="title && variant !== 'icon'"
+        :class="{ 'c-btn__hidden': visualLoading }"
         class="c-btn__title"
       >
-        {{ (visualLoading && loadingLabel) ? loadingLabel : closing ? t('common.closing') : title }}
+        {{ closing ? t('common.closing') : title }}
       </span>
     </template>
   </button>
@@ -269,6 +269,17 @@ const shrinkClass: Record<Breakpoint, string> = {
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
   flex-shrink: 0;
+}
+
+/* Centered overlay: shown alone when loading, preserving button size */
+.c-btn__spinner--overlay {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+}
+
+.c-btn__hidden {
+  visibility: hidden;
 }
 
 /* ── Closing progress fill (DDR-006) ──────────────────────────── */

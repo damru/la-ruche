@@ -504,7 +504,6 @@ const userColumns = computed(() => [
           <CBtn
             variant="primary"
             :title="t('common.save')"
-            :loading-label="t('common.saving')"
             :loading="savingUnit"
             :closing="unitFeedback.status.value === 'success'"
             :disabled="savingUnit"

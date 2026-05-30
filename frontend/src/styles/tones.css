@@ -7,8 +7,8 @@
    ──────────────────────────────────────────────────────────────────────── */
 
 .toned {
-  background: var(--tone-bg, var(--color-secondary-container));
-  color: var(--tone-fg, var(--color-on-secondary-container));
+  background: var(--tone-bg, inherit);
+  color: var(--tone-fg, inherit);
 }
 
 .tone--default {

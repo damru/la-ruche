@@ -132,7 +132,6 @@ onMounted(reload)
             <CBtn
               variant="primary"
               :title="t('settings.saveChanges')"
-              :loading-label="t('common.saving')"
               :loading="saving"
               :disabled="saving"
               @click="saveBuilding"

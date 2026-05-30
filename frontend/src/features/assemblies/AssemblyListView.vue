@@ -381,7 +381,6 @@ async function saveMeeting() {
         <CBtn
           variant="primary"
           :title="t('common.save')"
-          :loading-label="t('common.saving')"
           :loading="saving"
           :closing="createFeedback.status.value === 'success'"
           @click="saveMeeting"

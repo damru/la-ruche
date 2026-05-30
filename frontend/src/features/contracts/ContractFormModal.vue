@@ -620,7 +620,6 @@ async function saveContract() {
       />
       <CBtn
         :title="t('common.save')"
-        :loading-label="t('common.saving')"
         :loading="saving || uploadingDocuments"
         :closing="feedback.status.value === 'success'"
         :disabled="saving || uploadingDocuments"
