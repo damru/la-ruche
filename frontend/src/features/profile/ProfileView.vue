@@ -229,6 +229,7 @@ async function confirmResetData() {
               <CBtn
                 variant="ghost"
                 :title="t('settings.account.changePassword')"
+                disabled
               />
             </template>
           </CForm>

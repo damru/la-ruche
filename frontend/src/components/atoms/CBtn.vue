@@ -33,7 +33,7 @@ const props = withDefaults(defineProps<{
 
 const { t } = useI18n()
 
-const MIN_LOADING_MS = 0
+const MIN_LOADING_MS = 300
 const visualLoading = ref(props.loading)
 let loadingStart = 0
 
@@ -188,7 +188,7 @@ const shrinkClass: Record<Breakpoint, string> = {
 
 .c-btn--ghost {
   background: transparent;
-  color: var(--color-primary);
+  color: var(--tone-fg, var(--color-primary));
 }
 
 .c-btn--ghost:hover:not(:disabled) {
@@ -196,8 +196,8 @@ const shrinkClass: Record<Breakpoint, string> = {
 }
 
 .c-btn--negative {
-  background: var(--tone-fg);
-  color: var(--tone-bg);
+  background: var(--tone-fg, var(--color-on-surface));
+  color: var(--tone-bg, var(--color-surface));
 }
 
 .c-btn--negative:hover:not(:disabled) {
@@ -214,7 +214,7 @@ const shrinkClass: Record<Breakpoint, string> = {
   min-height: min-content;
   border-radius: var(--radius-md);
   background: transparent;
-  color: var(--color-on-surface-variant);
+  color: var(--tone-bg, var(--color-on-surface-variant));
   padding: 0 !important;
   gap: 0;
 }
