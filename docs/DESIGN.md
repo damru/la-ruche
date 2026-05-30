@@ -118,7 +118,6 @@ Configuration via `@tailwindcss/vite` (pas de `tailwind.config.js`). Tokens expo
 | `title-sm` / `title-md` / `title-lg` | `font-size` + `font-weight` + `letter-spacing` | Titres dans les composants |
 | `label-sm` / `label-md` / `label-lg` | `font-size` + `font-weight` + `letter-spacing` + `text-transform` | Labels, eyebrows |
 | `data-md` | `font-mono` + `tabular-nums` + `font-medium` | Données numériques tabulaires |
-| `text-muted` | `color: var(--color-on-surface-variant)` | Texte secondaire |
 | `view-container` | `flex flex-col` + `p-10` + `max-w-[1200px]` + `gap-6` + responsive `p-5` | Conteneur racine de chaque vue |
 | `view-header` | `flex flex-col items-start gap-2` | En-tête de vue (eyebrow + heading + meta) |
 | `form-hint` | `text-xs` + `color: on-surface-variant` | Texte d'aide sous un champ |
@@ -349,9 +348,9 @@ Source : `frontend/src/styles/tokens.css`. Les valeurs Dark sont dans `[data-the
 
 ### 2.6 Tonalités (`tones.css`)
 
-Source : `frontend/src/styles/tones.css`. Les classes `.tone--*` définissent **uniquement** deux variables CSS — aucune règle de forme, taille ou layout.
+Source : `frontend/src/styles/tones.css`. Les classes `.tone--*` définissent **uniquement** deux variables CSS — aucune règle de forme, taille ou layout. 
 
-Les composants consomment :
+La classe `.toned` définit le schéma d'utilisation des classes `.tone--*`:
 ```css
 background: var(--tone-bg, <fallback>);
 color:      var(--tone-fg, <fallback>);
@@ -442,7 +441,7 @@ border-color: var(--color-outline-light);
 | `CEyebrow` | — | Libellé eyebrow — `font-body text-2xs font-medium uppercase tracking-[0.06em]`. Rendu en `<div>`. |
 | `CHeading` | `type` (`header` \| `section` \| `card`), `variant` (`heading` \| `title`) | ✅ Titre Fraunces semibold. `header` = `text-2xl` h1, `section` = `text-xl` h2 (défaut), `card` = `text-lg` h3. Variante `title` = `font-body font-semibold`. |
 | `CIconTile` | `size` (`sm` \| `md` \| `lg`) | Tuile icône avec fond tonal — consomme `.tone--*`. `sm` = 32px, `md` = 40px (défaut), `lg` = 56px. `border-radius` ajusté par taille. Slot défaut pour l'icône SVG — icône dimensionnée via `:deep(svg)`. |
-| `CLegalDescription` | `title`, `summary` | Ligne de note légale — `⚖️ titre — résumé` en `.body-xs .text-muted`. Utilisé comme item dans `CLegalNotice`. |
+| `CLegalDescription` | `title`, `summary` | Ligne de note légale — `⚖️ titre — résumé` en `.body-xs .text-on-surface-variant`. Utilisé comme item dans `CLegalNotice`. |
 | `CMockBanner` | `variant` (`mock` \| `demo`) | Bandeau de mode mock/démo — `role="status" aria-live="polite"`. Réservé aux environnements de développement. |
 | `CProgressBar` | `value`, `max` | Barre de progression |
 | `CIconGrid` | — | ✅ Icône grille (4 carrés) — toggle vue en grille |

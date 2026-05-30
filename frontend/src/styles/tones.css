@@ -6,6 +6,11 @@
    The consuming element is responsible for reading these variables.
    ──────────────────────────────────────────────────────────────────────── */
 
+.toned {
+  background: var(--tone-bg, var(--color-secondary-container));
+  color: var(--tone-fg, var(--color-on-secondary-container));
+}
+
 .tone--default {
   --tone-bg: var(--color-secondary-container);
   --tone-fg: var(--color-primary);

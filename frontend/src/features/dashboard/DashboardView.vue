@@ -237,7 +237,7 @@ const todayStr = computed(() =>
             <CHeading type="card">
               {{ t('dashboard.priorityTasks') }}
             </CHeading>
-            <p class="body-sm text-muted">
+            <p class="body-sm text-on-surface-variant">
               {{ t('dashboard.taskCount', { count: priorityTasks.length }) }}
             </p>
             <template #actions>
@@ -297,7 +297,7 @@ const todayStr = computed(() =>
             <CHeading type="card">
               {{ t('dashboard.contractReminders') }}
             </CHeading>
-            <p class="body-sm text-muted">
+            <p class="body-sm text-on-surface-variant">
               {{ t('dashboard.nextDeadlines') }}
             </p>
             <template #actions>
@@ -355,7 +355,7 @@ const todayStr = computed(() =>
             <CHeading type="card">
               {{ t('dashboard.reportsTitle') }}
             </CHeading>
-            <p class="body-sm text-muted">
+            <p class="body-sm text-on-surface-variant">
               {{ t('dashboard.openCount', { count: openReports.length }) }}
             </p>
             <template #actions>
@@ -459,7 +459,7 @@ const todayStr = computed(() =>
               </CHeading>
               <p
                 v-if="consultations[0].closed_at"
-                class="body-sm text-muted"
+                class="body-sm text-on-surface-variant"
               >
                 {{ t('dashboard.closesPrefix') }} {{ formatRelative(consultations[0].closed_at) }}
               </p>
@@ -485,7 +485,7 @@ const todayStr = computed(() =>
             <CHeading type="card">
               {{ t('dashboard.budgetLabel', { exercice: currentBudget.fiscal_year }) }}
             </CHeading>
-            <p class="body-sm text-muted">
+            <p class="body-sm text-on-surface-variant">
               {{ t('dashboard.budgetRealized', { pct: budgetExecutionRate }) }}
             </p>
             <template #actions>

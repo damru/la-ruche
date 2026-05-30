@@ -12,6 +12,7 @@ import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import { buildingApi } from '@/api'
 import { usePageLoader } from '@/composables/usePageLoader'
 import type { RegistryResponse, RegistryKey } from '@/types/domain'
+import router from '@/router'
 
 const { t } = useI18n()
 
@@ -115,46 +116,51 @@ const registryColumns = computed(() => {
           <CHeading type="header">
             {{ t('registry.title') }}
           </CHeading>
-          <p
-            v-if="data"
-            class="body-md dim"
-          >
-            {{ data.building.address_line1 }}, {{ data.building.postal_code }} {{ data.building.city }}
-            · {{ t('registry.totalShares') }} : {{ data.building.shares_total }}
-          </p>
+          <CMetaLine>
+            <CMetaItem variant="sub">
+              {{ data.building.address_line1 }}, {{ data.building.postal_code }} {{ data.building.city }}
+            </CMetaItem>
+          </CMetaLine>
         </header>
-        <!-- Summary cards -->
-        <div class="summary-row">
-          <CCard>
-            <div class="summary-stat">
-              <span class="summary-value">{{ data.units.length }}</span>
-              <span class="summary-label">{{ t('registry.lots') }}</span>
-            </div>
-          </CCard>
-          <CCard>
-            <div class="summary-stat">
-              <span class="summary-value">{{ data.keys.length }}</span>
-              <span class="summary-label">{{ t('registry.keys') }}</span>
-            </div>
-          </CCard>
-          <CCard>
-            <div class="summary-stat">
-              <span class="summary-value">{{ data.building.shares_total }}</span>
-              <span class="summary-label">{{ t('registry.totalShares') }}</span>
-            </div>
-          </CCard>
+        
+        <div class="grid gap-4 xs:grid-cols-3">
+          <CKpiCard
+            class="items-center text-center"
+            :subtitle="t('registry.lots')"
+            :value="data.units.length.toString()"
+          />
+          <CKpiCard
+            class="items-center text-center"
+            :subtitle="t('registry.keys')"
+            :value="data.keys.length.toString()"
+          />
+          <CKpiCard
+            class="items-center text-center"
+            :subtitle="t('registry.totalShares')"
+            :value="data.building.shares_total.toString()"
+          />
         </div>
 
-        <!-- Per-key alerts -->
         <CAlert
           v-for="key in data.keys.filter(k => isSumMismatch(k))"
           :key="key.id"
           variant="warning"
+          dismissible
         >
           {{ t('registry.keyMismatch', { key: key.name, sum: key.shares_sum, total: data.building.shares_total }) }}
+          <br/> 
+          <CBtn
+            size="xs"
+            variant="negative"
+            @click="router.push('residence/keys')"
+          >
+            {{ t('nav.residence-keys') }}
+            <CIconArrowRight class="icon-sm" aria-hidden="true" />
+          </CBtn>
+          <template #side>
+          </template>
         </CAlert>
 
-        <!-- Cross-table: units × keys -->
         <CCard class="p-0!">
           <CDataTable
             :columns="registryColumns"
@@ -185,8 +191,8 @@ const registryColumns = computed(() => {
               :key="k.id"
               #[`foot-key_${k.id}`]
             >
-              <span :class="{ 'sum-mismatch': isSumMismatch(k) }">{{ k.shares_sum }}</span>
-              <span class="dim">/{{ data.building.shares_total }}</span>
+              <span :class="{ 'text-error': isSumMismatch(k) }">{{ k.shares_sum }}</span>
+              <span class="text-on-surface-variant">/{{ data.building.shares_total }}</span>
             </template>
           </CDataTable>
         </CCard>
@@ -205,13 +211,5 @@ const registryColumns = computed(() => {
 </template>
 
 <style scoped>
-.dim { color: var(--color-on-surface-variant); }
-
-.summary-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-4); }
-.summary-stat { display: flex; flex-direction: column; align-items: center; gap: var(--space-1); }
-.summary-value { font-size: 28px; font-weight: var(--fw-bold); font-family: var(--font-display); }
-.summary-label { font-size: var(--text-sm); color: var(--color-on-surface-variant); }
-
-.sum-mismatch { color: var(--color-error); }
 
 </style>

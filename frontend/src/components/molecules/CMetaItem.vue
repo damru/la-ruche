@@ -11,11 +11,8 @@ withDefaults(defineProps<{
 <template>
   <component
     :is="as"
+    class="inline-flex items-center gap-1 text-on-surface-variant"
     :class="[  
-      'inline-flex', 
-      'items-center', 
-      'gap-1',
-      'text-on-surface-variant',
       `${variant === 'footer' ? '[&_svg]:w-(--icon-2xs) [&_svg]:h-(--icon-2xs) text-xs' : '[&_svg]:w-(--icon-sm) [&_svg]:h-(--icon-sm) text-sm'}`, 
     ]"
   >

@@ -54,7 +54,7 @@ withDefaults(defineProps<{
   font-variation-settings: 'opsz' 72;
   letter-spacing: -0.03em;
   color: var(--tone-fg, var(--color-on-surface));
-  line-height: 1;
+  line-height: 1.5;
 }
 
 .c-kpi-metric__subtitle {

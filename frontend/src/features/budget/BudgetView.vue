@@ -862,8 +862,7 @@ function formatSharePercentage(value: number): string {
           </div>
         </template>
 
-        <!-- KPI row -->
-        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div class="grid gap-4 xs:grid-cols-2 xl:grid-cols-4">
           <CKpiCard
             :label="t('budget.budgetForecastLabel')"
             :value="formatCurrency(selectedTotalForecast)"
@@ -1350,7 +1349,7 @@ function formatSharePercentage(value: number): string {
       :title="t('budget.generateLeviesTitle')"
       @update:open="showGenerateModal = $event"
     >
-      <p class="body-sm  text-muted">
+      <p class="body-sm  text-on-surface-variant">
         {{ t('budget.generateLeviesSub') }}
       </p>
       <CFormInput
@@ -1425,7 +1424,7 @@ function formatSharePercentage(value: number): string {
       size="lg"
       @update:open="showBreakdownModal = $event"
     >
-      <p class="body-sm text-muted">
+      <p class="body-sm text-on-surface-variant">
         {{ t('budget.breakdownIntro') }}
       </p>
       <div
@@ -1475,7 +1474,7 @@ function formatSharePercentage(value: number): string {
       :title="t('budget.worksFundConfigureTitle')"
       @update:open="showWorksFundModal = $event"
     >
-      <p class="body-sm mb-4 leading-6 text-muted">
+      <p class="body-sm mb-4 leading-6 text-on-surface-variant">
         {{ t('budget.worksFundConfigureHint') }}
       </p>
       <CFormInput
@@ -1514,7 +1513,7 @@ function formatSharePercentage(value: number): string {
       :title="t('budget.closeExerciseTitle')"
       @update:open="showCloseExerciseModal = $event"
     >
-      <p class="body-sm mb-4 leading-6 text-muted">
+      <p class="body-sm mb-4 leading-6 text-on-surface-variant">
         {{ t('budget.closeExerciseConfirmation', { year: selectedBudget?.fiscal_year }) }}
       </p>
       <template #footer>

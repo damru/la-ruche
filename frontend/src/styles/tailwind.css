@@ -3,6 +3,10 @@
 @import "./tokens.css";
 @import "./tones.css";
 
+@theme {
+   --breakpoint-xs: 30rem;
+}
+
 @theme inline {
 	--font-sans: var(--font-body);
 	--font-mono: var(--font-mono);
@@ -45,7 +49,9 @@
 	--spacing-4: var(--space-4);
 	--spacing-5: var(--space-5);
 	--spacing-6: var(--space-6);
+	--spacing-7: var(--space-7);
 	--spacing-8: var(--space-8);
+	--spacing-9: var(--space-9);
 	--spacing-10: var(--space-10);
 	--spacing-12: var(--space-12);
 	--spacing-16: var(--space-16);
@@ -61,10 +67,6 @@
 	--text-xl: var(--text-xl);
 	--text-2xl: var(--text-2xl);
 	--text-display: var(--text-display);
-
-	/* Spacing gaps */
-	--spacing-7: 28px;
-	--spacing-9: 36px;
 
 	/* Line heights */
 	--leading-tight: 1.25;
@@ -98,7 +100,6 @@
 @utility label-md { font-size: var(--text-xs); font-weight: var(--fw-medium); letter-spacing: 0.02em; }
 @utility label-lg { font-size: var(--text-md); font-weight: var(--fw-medium); letter-spacing: 0.01em; }
 @utility data-md { font-family: var(--font-mono); font-size: var(--text-sm); font-weight: var(--fw-medium); font-variant-numeric: tabular-nums; line-height: 1.45; }
-@utility text-muted { color: var(--color-on-surface-variant); }
 
 /* --- Layout utilities --- */
 @utility view-container {

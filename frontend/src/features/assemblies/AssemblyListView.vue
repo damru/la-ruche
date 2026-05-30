@@ -279,7 +279,7 @@ async function saveMeeting() {
                 </span>
                 <span
                   v-else
-                  class="text-muted"
+                  class="text-on-surface-variant"
                 >
                   — {{ t('meetings.statPendingVotes') }}
                 </span>

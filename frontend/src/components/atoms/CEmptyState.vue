@@ -21,7 +21,7 @@ withDefaults(defineProps<{
     </p>
     <p
       v-if="description"
-      class="body-sm text-muted"
+      class="body-sm text-on-surface-variant"
     >
       {{ description }}
     </p>
