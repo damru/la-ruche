@@ -125,7 +125,7 @@ const shrinkClass: Record<Breakpoint, string> = {
         v-if="title && variant !== 'icon'"
         class="c-btn__title"
       >
-        {{ (visualLoading && loadingLabel) ? loadingLabel : closing ? t('common.close') : title }}
+        {{ (visualLoading && loadingLabel) ? loadingLabel : closing ? t('common.closing') : title }}
       </span>
     </template>
   </button>
