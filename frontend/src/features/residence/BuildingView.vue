@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n'
 import CLegalDescription from '@/components/atoms/CLegalDescription.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
-import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
+import CFormActions from '@/components/molecules/CFormActions.vue'
 import CLegalNotice from '@/components/molecules/CLegalNotice.vue'
 import CLegalCard from '@/components/molecules/CLegalCard.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
@@ -128,7 +128,10 @@ onMounted(reload)
               type="date"
             />
           </CFormRow>
-          <div class="flex items-center gap-3">
+          <CFormActions
+            :status="feedback.status.value"
+            :message="feedback.message.value"
+          >
             <CBtn
               variant="primary"
               :title="t('settings.saveChanges')"
@@ -136,11 +139,7 @@ onMounted(reload)
               :disabled="saving"
               @click="saveBuilding"
             />
-            <CFormFeedback
-              :status="feedback.status.value"
-              :message="feedback.message.value"
-            />
-          </div>
+          </CFormActions>
         </CCard>
 
         <CLegalCard>

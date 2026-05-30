@@ -2,7 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import CBtn from '@/components/atoms/CBtn.vue'
-import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
+import CFormActions from '@/components/molecules/CFormActions.vue'
 import CIconDownload from '@/components/atoms/CIconDownload.svg'
 import CIconFile from '@/components/atoms/CIconFile.svg'
 import CIconTrash from '@/components/atoms/CIconTrash.svg'
@@ -599,32 +599,32 @@ async function saveContract() {
     </div>
 
     <template #footer>
-      <CBtn
-        v-if="isEditing"
-        variant="danger"
-        :icon="CIconTrash"
-        :title="t('common.delete')"
-        :loading="deletingContract"
-        style="margin-right:auto"
-        @click="openDeleteModal"
-      />
-      <CFormFeedback
+      <CFormActions
         :status="feedback.status.value"
         :message="feedback.message.value"
-        style="flex:1"
-      />
-      <CBtn
-        variant="ghost"
-        :title="t('common.cancel')"
-        @click="closeModal"
-      />
-      <CBtn
-        :title="t('common.save')"
-        :loading="saving || uploadingDocuments"
-        :closing="feedback.status.value === 'success'"
-        :disabled="saving || uploadingDocuments"
-        @click="saveContract"
-      />
+      >
+        <CBtn
+          v-if="isEditing"
+          variant="danger"
+          :icon="CIconTrash"
+          :title="t('common.delete')"
+          :loading="deletingContract"
+          class="mr-auto"
+          @click="openDeleteModal"
+        />
+        <CBtn
+          variant="ghost"
+          :title="t('common.cancel')"
+          @click="closeModal"
+        />
+        <CBtn
+          :title="t('common.save')"
+          :loading="saving || uploadingDocuments"
+          :closing="feedback.status.value === 'success'"
+          :disabled="saving || uploadingDocuments"
+          @click="saveContract"
+        />
+      </CFormActions>
     </template>
   </CModal>
 
@@ -651,23 +651,24 @@ async function saveContract() {
       {{ t('contracts.deleteMessage', { name: props.contract?.vendor_name ?? '' }) }}
     </p>
     <template #footer>
-      <CFormFeedback
+      <CFormActions
         :status="deleteContractFeedback.status.value"
         :message="deleteContractFeedback.message.value"
-      />
-      <CBtn
-        variant="ghost"
-        :title="t('common.cancel')"
-        :disabled="deletingContract"
-        @click="showDeleteModal = false"
-      />
-      <CBtn
-        variant="danger"
-        :title="t('common.deleteLabel')"
-        :loading="deletingContract"
-        :closing="deleteContractFeedback.status.value === 'success'"
-        @click="deleteContract"
-      />
+      >
+        <CBtn
+          variant="ghost"
+          :title="t('common.cancel')"
+          :disabled="deletingContract"
+          @click="showDeleteModal = false"
+        />
+        <CBtn
+          variant="danger"
+          :title="t('common.deleteLabel')"
+          :loading="deletingContract"
+          :closing="deleteContractFeedback.status.value === 'success'"
+          @click="deleteContract"
+        />
+      </CFormActions>
     </template>
   </CModal>
 </template>

@@ -9,7 +9,7 @@ import CIconDroplet from '@/components/atoms/CIconDroplet.svg'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CCardActions from '@/components/molecules/CCardActions.vue'
-import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
+import CFormActions from '@/components/molecules/CFormActions.vue'
 import CLinkedDocumentsModal from '@/components/organisms/CLinkedDocumentsModal.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
@@ -585,22 +585,23 @@ async function confirmTerminateContract() {
       {{ t('contracts.terminateMessage', { name: contractToTerminate?.vendor_name ?? '' }) }}
     </p>
     <template #footer>
-      <CFormFeedback
+      <CFormActions
         :status="terminateFeedback.status.value"
         :message="terminateFeedback.message.value"
-      />
-      <CBtn
-        variant="ghost"
-        :title="t('common.cancel')"
-        @click="showTerminateModal = false"
-      />
-      <CBtn
-        variant="danger"
-        :title="t('contracts.terminate')"
-        :loading="terminatingContract"
-        :closing="terminateFeedback.status.value === 'success'"
-        @click="confirmTerminateContract"
-      />
+      >
+        <CBtn
+          variant="ghost"
+          :title="t('common.cancel')"
+          @click="showTerminateModal = false"
+        />
+        <CBtn
+          variant="danger"
+          :title="t('contracts.terminate')"
+          :loading="terminatingContract"
+          :closing="terminateFeedback.status.value === 'success'"
+          @click="confirmTerminateContract"
+        />
+      </CFormActions>
     </template>
   </CModal>
 </template>

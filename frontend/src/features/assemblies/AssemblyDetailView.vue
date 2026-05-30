@@ -1893,9 +1893,8 @@ function toDateTimeLocal(value: string): string {
       :title="t('common.edit')"
       @update:open="showEditMeetingModal = $event"
     >
-      <form
-        class="flex flex-col gap-4"
-        @submit.prevent="saveMeeting"
+      <CForm
+        @submit="saveMeeting"
       >
         <CFormSelect
           v-model="meetingForm.meeting_type"
@@ -1943,24 +1942,25 @@ function toDateTimeLocal(value: string): string {
             />
           </div>
         </div>
-      </form>
+      </CForm>
 
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="meetingFeedback.status.value"
           :message="meetingFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          :title="t('common.cancel')"
-          @click="showEditMeetingModal = false"
-        />
-        <CBtn
-          variant="primary"
-          :title="t('common.save')"
-          :loading="savingMeeting"
-          @click="saveMeeting"
-        />
+        >
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="showEditMeetingModal = false"
+          />
+          <CBtn
+            variant="primary"
+            :title="t('common.save')"
+            :loading="savingMeeting"
+            @click="saveMeeting"
+          />
+        </CFormActions>
       </template>
     </CModal>
 
@@ -1969,9 +1969,8 @@ function toDateTimeLocal(value: string): string {
       :title="t('meetings.newResolution')"
       @update:open="showAddResolutionModal = $event"
     >
-      <form
-        class="flex flex-col gap-4"
-        @submit.prevent="saveResolution"
+      <CForm
+        @submit="saveResolution"
       >
         <CFormInput
           :model-value="resolutionForm.number"
@@ -1994,24 +1993,25 @@ function toDateTimeLocal(value: string): string {
           :label="t('meetings.voteRule')"
           :options="voteTypeOptions"
         />
-      </form>
+      </CForm>
 
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="resolutionFeedback.status.value"
           :message="resolutionFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          :title="t('common.cancel')"
-          @click="showAddResolutionModal = false"
-        />
-        <CBtn
-          variant="primary"
-          :title="t('common.add')"
-          :loading="savingResolution"
-          @click="saveResolution"
-        />
+        >
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="showAddResolutionModal = false"
+          />
+          <CBtn
+            variant="primary"
+            :title="t('common.add')"
+            :loading="savingResolution"
+            @click="saveResolution"
+          />
+        </CFormActions>
       </template>
     </CModal>
 
@@ -2079,22 +2079,23 @@ function toDateTimeLocal(value: string): string {
         </table>
       </template>
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="voteFeedback.status.value"
           :message="voteFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          :title="t('common.cancel')"
-          @click="showVoteModal = false"
-        />
-        <CBtn
-          variant="primary"
-          :title="t('meetings.vote.submit')"
-          :loading="savingVotes"
-          :disabled="attendingUnits.length === 0"
-          @click="saveVotes"
-        />
+        >
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="showVoteModal = false"
+          />
+          <CBtn
+            variant="primary"
+            :title="t('meetings.vote.submit')"
+            :loading="savingVotes"
+            :disabled="attendingUnits.length === 0"
+            @click="saveVotes"
+          />
+        </CFormActions>
       </template>
     </CModal>
 
@@ -2103,9 +2104,8 @@ function toDateTimeLocal(value: string): string {
       :title="t('meetings.editResolution')"
       @update:open="showEditResolutionModal = $event"
     >
-      <form
-        class="flex flex-col gap-4"
-        @submit.prevent="saveEditResolution"
+      <CForm
+        @submit="saveEditResolution"
       >
         <template v-if="meeting?.status === 'ongoing'">
           <p class="modal-subtitle resolution-locked-notice">
@@ -2121,23 +2121,24 @@ function toDateTimeLocal(value: string): string {
           :label="t('meetings.resolutionDescription')"
           :placeholder="t('meetings.resolutionDescriptionPlaceholder')"
         />
-      </form>
+      </CForm>
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="editResolutionFeedback.status.value"
           :message="editResolutionFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          :title="t('common.cancel')"
-          @click="showEditResolutionModal = false"
-        />
-        <CBtn
-          variant="primary"
-          :title="t('common.save')"
-          :loading="savingEditResolution"
-          @click="saveEditResolution"
-        />
+        >
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="showEditResolutionModal = false"
+          />
+          <CBtn
+            variant="primary"
+            :title="t('common.save')"
+            :loading="savingEditResolution"
+            @click="saveEditResolution"
+          />
+        </CFormActions>
       </template>
     </CModal>
 
@@ -2146,9 +2147,8 @@ function toDateTimeLocal(value: string): string {
       :title="t('meetings.documents.uploadTitle')"
       @update:open="showDocumentModal = $event"
     >
-      <form
-        class="flex flex-col gap-4"
-        @submit.prevent="saveDocument"
+      <CForm
+        @submit="saveDocument"
       >
         <CFormSelect
           v-model="documentForm.kind"
@@ -2167,24 +2167,25 @@ function toDateTimeLocal(value: string): string {
         >
           {{ documentForm.file.name }}
         </p>
-      </form>
+      </CForm>
 
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="documentFeedback.status.value"
           :message="documentFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          :title="t('common.cancel')"
-          @click="showDocumentModal = false"
-        />
-        <CBtn
-          variant="primary"
-          :title="t('common.add')"
-          :loading="savingDocument"
-          @click="saveDocument"
-        />
+        >
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="showDocumentModal = false"
+          />
+          <CBtn
+            variant="primary"
+            :title="t('common.add')"
+            :loading="savingDocument"
+            @click="saveDocument"
+          />
+        </CFormActions>
       </template>
     </CModal>
 
@@ -2193,9 +2194,8 @@ function toDateTimeLocal(value: string): string {
       :title="t('meetings.attendanceTitle')"
       @update:open="showAttendanceModal = $event"
     >
-      <form
-        class="flex flex-col gap-4"
-        @submit.prevent="saveAttendance"
+      <CForm
+        @submit="saveAttendance"
       >
         <p class="modal-subtitle">
           {{ t('meetings.attendanceHint') }}
@@ -2221,24 +2221,25 @@ function toDateTimeLocal(value: string): string {
             />
           </div>
         </div>
-      </form>
+      </CForm>
 
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="attendanceFeedback.status.value"
           :message="attendanceFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          :title="t('common.cancel')"
-          @click="showAttendanceModal = false"
-        />
-        <CBtn
-          variant="primary"
-          :title="t('common.save')"
-          :loading="savingAttendance"
-          @click="saveAttendance"
-        />
+        >
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="showAttendanceModal = false"
+          />
+          <CBtn
+            variant="primary"
+            :title="t('common.save')"
+            :loading="savingAttendance"
+            @click="saveAttendance"
+          />
+        </CFormActions>
       </template>
     </CModal>
 
@@ -2252,21 +2253,22 @@ function toDateTimeLocal(value: string): string {
         {{ t('meetings.createArt24Message', { title: art24ResolutionToCreate?.title ?? '' }) }}
       </p>
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="art24Feedback.status.value"
           :message="art24Feedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          :title="t('common.cancel')"
-          @click="showArt24Modal = false"
-        />
-        <CBtn
-          variant="primary"
-          :title="t('common.create')"
-          :loading="savingArt24"
-          @click="confirmArt24Resolution"
-        />
+        >
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="showArt24Modal = false"
+          />
+          <CBtn
+            variant="primary"
+            :title="t('common.create')"
+            :loading="savingArt24"
+            @click="confirmArt24Resolution"
+          />
+        </CFormActions>
       </template>
     </CModal>
 
@@ -2280,21 +2282,22 @@ function toDateTimeLocal(value: string): string {
         {{ t('meetings.createArt25Message', { title: art25ResolutionToCreate?.title ?? '' }) }}
       </p>
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="art25Feedback.status.value"
           :message="art25Feedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          :title="t('common.cancel')"
-          @click="showArt25Modal = false"
-        />
-        <CBtn
-          variant="primary"
-          :title="t('common.create')"
-          :loading="savingArt25"
-          @click="confirmArt25Resolution"
-        />
+        >
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="showArt25Modal = false"
+          />
+          <CBtn
+            variant="primary"
+            :title="t('common.create')"
+            :loading="savingArt25"
+            @click="confirmArt25Resolution"
+          />
+        </CFormActions>
       </template>
     </CModal>
 
@@ -2304,9 +2307,8 @@ function toDateTimeLocal(value: string): string {
       size="md"
       @update:open="showSignaturesModal = $event"
     >
-      <form
-        class="flex flex-col gap-4"
-        @submit.prevent="saveSignatures"
+      <CForm
+        @submit="saveSignatures"
       >
         <p class="body-sm text-on-surface-variant">
           {{ t('meetings.signatures.modal_lead') }}<sup><a
@@ -2341,23 +2343,24 @@ function toDateTimeLocal(value: string): string {
             :label="scrutineer.name"
           />
         </div>
-      </form>
+      </CForm>
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="signaturesFeedback.status.value"
           :message="signaturesFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          :title="t('common.cancel')"
-          @click="showSignaturesModal = false"
-        />
-        <CBtn
-          variant="primary"
-          :title="t('common.save')"
-          :loading="savingSignatures"
-          @click="saveSignatures"
-        />
+        >
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="showSignaturesModal = false"
+          />
+          <CBtn
+            variant="primary"
+            :title="t('common.save')"
+            :loading="savingSignatures"
+            @click="saveSignatures"
+          />
+        </CFormActions>
       </template>
     </CModal>
 
@@ -2371,21 +2374,22 @@ function toDateTimeLocal(value: string): string {
         {{ t('meetings.closeMeetingSub') }}
       </p>
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="closeMeetingFeedback.status.value"
           :message="closeMeetingFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          :title="t('common.cancel')"
-          @click="showCloseMeetingModal = false"
-        />
-        <CBtn
-          variant="primary"
-          :title="t('meetings.closeMeetingConfirm')"
-          :loading="closingMeeting"
-          @click="closeMeeting"
-        />
+        >
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="showCloseMeetingModal = false"
+          />
+          <CBtn
+            variant="primary"
+            :title="t('meetings.closeMeetingConfirm')"
+            :loading="closingMeeting"
+            @click="closeMeeting"
+          />
+        </CFormActions>
       </template>
     </CModal>
 
@@ -2403,20 +2407,21 @@ function toDateTimeLocal(value: string): string {
         </template>
       </p>
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="documentFeedback.status.value"
           :message="documentFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          :title="t('common.cancel')"
-          @click="showDeleteDocumentModal = false"
-        />
-        <CBtn
-          variant="primary"
-          :title="t('meetings.documents.detachConfirm')"
-          @click="confirmDetachDocument"
-        />
+        >
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="showDeleteDocumentModal = false"
+          />
+          <CBtn
+            variant="primary"
+            :title="t('meetings.documents.detachConfirm')"
+            @click="confirmDetachDocument"
+          />
+        </CFormActions>
       </template>
     </CModal>
 
@@ -2427,9 +2432,8 @@ function toDateTimeLocal(value: string): string {
       size="md"
       @update:open="showConvocationModal = $event"
     >
-      <form
-        class="flex flex-col gap-4"
-        @submit.prevent="confirmCallMeeting"
+      <CForm
+        @submit="confirmCallMeeting"
       >
         <p class="body-sm text-on-surface-variant">
           {{ t('meetings.convocation.modal_lead') }}<sup><a
@@ -2489,24 +2493,25 @@ function toDateTimeLocal(value: string): string {
           :label="t('meetings.convocation.sent_at_label')"
           :placeholder="t('meetings.convocation.sent_at_placeholder')"
         />
-      </form>
+      </CForm>
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="convocationFeedback.status.value"
           :message="convocationFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          :title="t('common.cancel')"
-          @click="showConvocationModal = false"
-        />
-        <CBtn
-          variant="primary"
-          :title="t('meetings.call')"
-          :loading="callingMeeting"
-          :disabled="!convocationChecklist?.ready_to_send"
-          @click="confirmCallMeeting"
-        />
+        >
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="showConvocationModal = false"
+          />
+          <CBtn
+            variant="primary"
+            :title="t('meetings.call')"
+            :loading="callingMeeting"
+            :disabled="!convocationChecklist?.ready_to_send"
+            @click="confirmCallMeeting"
+          />
+        </CFormActions>
       </template>
     </CModal>
 
@@ -2516,9 +2521,8 @@ function toDateTimeLocal(value: string): string {
       size="md"
       @update:open="showMinutesModal = $event"
     >
-      <form
-        class="flex flex-col gap-4"
-        @submit.prevent="saveMinutes"
+      <CForm
+        @submit="saveMinutes"
       >
         <p class="body-sm text-on-surface-variant">
           {{ t('meetings.minutes.modal_lead') }}
@@ -2535,24 +2539,25 @@ function toDateTimeLocal(value: string): string {
         >
           {{ minutesForm.file.name }}
         </p>
-      </form>
+      </CForm>
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="minutesFeedback.status.value"
           :message="minutesFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          :title="t('common.cancel')"
-          @click="showMinutesModal = false"
-        />
-        <CBtn
-          variant="primary"
-          :title="t('meetings.minutes.upload_signed')"
-          :loading="savingMinutes"
-          :disabled="!minutesForm.file"
-          @click="saveMinutes"
-        />
+        >
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="showMinutesModal = false"
+          />
+          <CBtn
+            variant="primary"
+            :title="t('meetings.minutes.upload_signed')"
+            :loading="savingMinutes"
+            :disabled="!minutesForm.file"
+            @click="saveMinutes"
+          />
+        </CFormActions>
       </template>
     </CModal>
 
@@ -2562,9 +2567,8 @@ function toDateTimeLocal(value: string): string {
       size="md"
       @update:open="showStartMeetingModal = $event"
     >
-      <form
-        class="flex flex-col gap-4"
-        @submit.prevent="confirmStartMeeting"
+      <CForm
+        @submit="confirmStartMeeting"
       >
         <p class="body-sm text-on-surface-variant">
           {{ t('meetings.start_modal.lead') }}
@@ -2609,23 +2613,24 @@ function toDateTimeLocal(value: string): string {
             @click="addScrutineer"
           />
         </div>
-      </form>
+      </CForm>
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="startMeetingFeedback.status.value"
           :message="startMeetingFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          :title="t('common.cancel')"
-          @click="showStartMeetingModal = false"
-        />
-        <CBtn
-          variant="primary"
-          :title="t('meetings.start')"
-          :loading="startingMeeting"
-          @click="confirmStartMeeting"
-        />
+        >
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="showStartMeetingModal = false"
+          />
+          <CBtn
+            variant="primary"
+            :title="t('meetings.start')"
+            :loading="startingMeeting"
+            @click="confirmStartMeeting"
+          />
+        </CFormActions>
       </template>
     </CModal>
   </div>

@@ -18,6 +18,7 @@ import { documentsApi, buildingApi } from '@/api'
 import { toErrorMessage, usePageLoader } from '@/composables/usePageLoader'
 import { useFormFeedback } from '@/composables/useFormFeedback'
 import { useAutoClose } from '@/composables/useAutoClose'
+import CFormActions from '@/components/molecules/CFormActions.vue'
 import type { Document } from '@/types/domain'
 import { buildDocumentDeleteMessage } from '@/utils/documents'
 import { extractFileExtension } from '@/utils/files'
@@ -383,22 +384,23 @@ async function confirmDeleteDoc() {
           {{ buildDocumentDeleteMessage(docToDelete ?? undefined, t) }}
         </p>
         <template #footer>
-          <CFormFeedback
+          <CFormActions
             :status="deleteDocFeedback.status.value"
             :message="deleteDocFeedback.message.value"
-          />
-          <CBtn
-            variant="ghost"
-            :title="t('common.cancel')"
-            @click="showDeleteDocModal = false"
-          />
-          <CBtn
-            variant="danger"
-            :title="t('common.deleteLabel')"
-            :loading="deletingDoc"
-            :closing="deleteDocFeedback.status.value === 'success'"
-            @click="confirmDeleteDoc"
-          />
+          >
+            <CBtn
+              variant="ghost"
+              :title="t('common.cancel')"
+              @click="showDeleteDocModal = false"
+            />
+            <CBtn
+              variant="danger"
+              :title="t('common.deleteLabel')"
+              :loading="deletingDoc"
+              :closing="deleteDocFeedback.status.value === 'success'"
+              @click="confirmDeleteDoc"
+            />
+          </CFormActions>
         </template>
       </CModal>
     </div>

@@ -13,7 +13,8 @@ import CCard from '@/components/molecules/CCard.vue'
 import CCardActions from '@/components/molecules/CCardActions.vue'
 import CMetaLine from '@/components/molecules/CMetaLine.vue'
 import CMetaItem from '@/components/molecules/CMetaItem.vue'
-import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
+import CFormActions from '@/components/molecules/CFormActions.vue'
+import CForm from '@/components/molecules/CForm.vue'
 import CDocumentLinkActionModal from '@/components/organisms/CDocumentLinkActionModal.vue'
 import CModal from '@/components/molecules/CModal.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
@@ -731,9 +732,8 @@ function photoPreview(file: File): string {
       :closable="!saving && !uploadingPhotos"
       @update:open="showCreateModal = $event"
     >
-      <form
-        class="flex flex-col gap-4"
-        @submit.prevent="submitCreate"
+      <CForm
+        @submit="submitCreate"
       >
         <CFormInput
           v-model="createForm.title"
@@ -809,24 +809,25 @@ function photoPreview(file: File): string {
             style="color:var(--color-on-surface-variant)"
           >{{ t('reports.photoUploading') }}</span>
         </div>
-      </form>
+      </CForm>
       <template #footer>
-        <CBtn
-        variant="ghost"
-        :title="t('common.cancel')"
-        @click="showCreateModal = false"
-        />
-        <CBtn
-        variant="primary"
-        :title="t('common.save')"
-        :loading="saving || uploadingPhotos"
-        :closing="createFeedback.status.value === 'success'"
-        @click="submitCreate"
-        />
-        <CFormFeedback
+        <CFormActions
           :status="createFeedback.status.value"
           :message="createFeedback.message.value"
-        />
+        >
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="showCreateModal = false"
+          />
+          <CBtn
+            variant="primary"
+            :title="t('common.save')"
+            :loading="saving || uploadingPhotos"
+            :closing="createFeedback.status.value === 'success'"
+            @click="submitCreate"
+          />
+        </CFormActions>
       </template>
     </CModal>
 
@@ -843,22 +844,23 @@ function photoPreview(file: File): string {
         :options="reportStatusOptions"
       />
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="updateFeedback.status.value"
           :message="updateFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          :title="t('common.cancel')"
-          @click="reportToUpdate = null"
-        />
-        <CBtn
-          variant="primary"
-          :title="t('common.save')"
-          :loading="updating"
-          :closing="updateFeedback.status.value === 'success'"
-          @click="submitUpdateStatus"
-        />
+        >
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="reportToUpdate = null"
+          />
+          <CBtn
+            variant="primary"
+            :title="t('common.save')"
+            :loading="updating"
+            :closing="updateFeedback.status.value === 'success'"
+            @click="submitUpdateStatus"
+          />
+        </CFormActions>
       </template>
     </CModal>
 
@@ -878,22 +880,23 @@ function photoPreview(file: File): string {
         :options="taskPriorityOptions"
       />
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="convertFeedback.status.value"
           :message="convertFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          :title="t('common.cancel')"
-          @click="reportToConvert = null"
-        />
-        <CBtn
-          variant="primary"
-          :title="t('reports.convertToTask')"
-          :loading="converting"
-          :closing="convertFeedback.status.value === 'success'"
-          @click="submitConvert"
-        />
+        >
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="reportToConvert = null"
+          />
+          <CBtn
+            variant="primary"
+            :title="t('reports.convertToTask')"
+            :loading="converting"
+            :closing="convertFeedback.status.value === 'success'"
+            @click="submitConvert"
+          />
+        </CFormActions>
       </template>
     </CModal>
 
@@ -905,9 +908,8 @@ function photoPreview(file: File): string {
       :closable="!editSaving && !editUploadingPhotos"
       @update:open="v => !v && (reportToEdit = null)"
     >
-      <form
-        class="flex flex-col gap-4"
-        @submit.prevent="submitEdit"
+      <CForm
+        @submit="submitEdit"
       >
         <CFormInput
           v-model="editForm.title"
@@ -1014,31 +1016,32 @@ function photoPreview(file: File): string {
             style="color:var(--color-on-surface-variant)"
           >{{ t('reports.noAttachedPhotos') }}</span>
         </div>
-      </form>
+      </CForm>
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="editFeedback.status.value"
           :message="editFeedback.message.value"
-        />
-        <CBtn
-          v-if="reportToEdit"
-          variant="danger"
-          :icon="CIconTrash"
-          :title="t('common.delete')"
-          @click="openDeleteFromEdit"
-        />
-        <CBtn
-          variant="ghost"
-          :title="t('common.cancel')"
-          @click="reportToEdit = null"
-        />
-        <CBtn
-          variant="primary"
-          :title="t('common.save')"
-          :loading="editSaving || editUploadingPhotos"
-          :closing="editFeedback.status.value === 'success'"
-          @click="submitEdit"
-        />
+        >
+          <CBtn
+            v-if="reportToEdit"
+            variant="danger"
+            :icon="CIconTrash"
+            :title="t('common.delete')"
+            @click="openDeleteFromEdit"
+          />
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="reportToEdit = null"
+          />
+          <CBtn
+            variant="primary"
+            :title="t('common.save')"
+            :loading="editSaving || editUploadingPhotos"
+            :closing="editFeedback.status.value === 'success'"
+            @click="submitEdit"
+          />
+        </CFormActions>
       </template>
     </CModal>
 
@@ -1053,22 +1056,23 @@ function photoPreview(file: File): string {
         {{ t('reports.confirmDeleteMessage', { title: reportToDelete?.title ?? '' }) }}
       </p>
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="deleteFeedback.status.value"
           :message="deleteFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          :title="t('common.cancel')"
-          @click="reportToDelete = null"
-        />
-        <CBtn
-          variant="danger"
-          :title="t('common.delete')"
-          :loading="deleting"
-          :closing="deleteFeedback.status.value === 'success'"
-          @click="submitDelete"
-        />
+        >
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="reportToDelete = null"
+          />
+          <CBtn
+            variant="danger"
+            :title="t('common.delete')"
+            :loading="deleting"
+            :closing="deleteFeedback.status.value === 'success'"
+            @click="submitDelete"
+          />
+        </CFormActions>
       </template>
     </CModal>
     <CModal

@@ -33,7 +33,7 @@ const props = withDefaults(defineProps<{
 
 const { t } = useI18n()
 
-const MIN_LOADING_MS = 1000
+const MIN_LOADING_MS = 0
 const visualLoading = ref(props.loading)
 let loadingStart = 0
 

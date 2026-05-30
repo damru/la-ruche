@@ -4,7 +4,8 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import CCard from '@/components/molecules/CCard.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
-import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
+import CForm from '@/components/molecules/CForm.vue'
+import CFormActions from '@/components/molecules/CFormActions.vue'
 import CModal from '@/components/molecules/CModal.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import CHeading from '@/components/atoms/CHeading.vue'
@@ -189,47 +190,48 @@ async function confirmResetData() {
           <CHeading type="card">
             {{ t('settings.account.personalInfo') }}
           </CHeading>
-          <CFormRow :cols="2">
-            <CFormInput
-              :model-value="auth.user?.first_name ?? ''"
-              :label="t('common.firstName')"
-              disabled
-            />
-            <CFormInput
-              :model-value="auth.user?.last_name ?? ''"
-              :label="t('common.lastName')"
-              disabled
-            />
-            <CFormInput
-              :model-value="auth.user?.email ?? ''"
-              :label="t('common.email')"
-              disabled
-            />
-            <CFormInput
-              v-model="phone"
-              :label="t('common.phone')"
-              type="tel"
-              :placeholder="t('common.phonePlaceholder')"
-            />
-          </CFormRow>
-          <div class="flex items-center gap-3">
-            <CFormFeedback
-              :status="profileFeedback.status.value"
-              :message="profileFeedback.message.value"
-              style="flex:1"
-            />
-            <CBtn
-              variant="primary"
-              :title="t('settings.account.update')"
-              :loading="saving"
-              :disabled="saving"
-              @click="saveProfile"
-            />
-            <CBtn
-              variant="ghost"
-              :title="t('settings.account.changePassword')"
-            />
-          </div>
+          <CForm
+            :status="profileFeedback.status.value"
+            :message="profileFeedback.message.value"
+            @submit="saveProfile"
+          >
+            <CFormRow :cols="2">
+              <CFormInput
+                :model-value="auth.user?.first_name ?? ''"
+                :label="t('common.firstName')"
+                disabled
+              />
+              <CFormInput
+                :model-value="auth.user?.last_name ?? ''"
+                :label="t('common.lastName')"
+                disabled
+              />
+              <CFormInput
+                :model-value="auth.user?.email ?? ''"
+                :label="t('common.email')"
+                disabled
+              />
+              <CFormInput
+                v-model="phone"
+                :label="t('common.phone')"
+                type="tel"
+                :placeholder="t('common.phonePlaceholder')"
+              />
+            </CFormRow>
+            <template #actions>
+              <CBtn
+                variant="primary"
+                type="submit"
+                :title="t('settings.account.update')"
+                :loading="saving"
+                :disabled="saving"
+              />
+              <CBtn
+                variant="ghost"
+                :title="t('settings.account.changePassword')"
+              />
+            </template>
+          </CForm>
         </CCard>
 
         <CCard>
@@ -352,23 +354,24 @@ async function confirmResetData() {
       {{ t('settings.account.resetAppConfirmMessage') }}
     </p>
     <template #footer>
-      <CFormFeedback
+      <CFormActions
         :status="resetFeedback.status.value"
         :message="resetFeedback.message.value"
-      />
-      <CBtn
-        variant="ghost"
-        :title="t('common.cancel')"
-        :disabled="resetting"
-        @click="showResetModal = false"
-      />
-      <CBtn
-        variant="danger"
-        :title="t('settings.account.resetAppConfirm')"
-        :loading="resetting"
-        :disabled="resetting"
-        @click="confirmResetDemo"
-      />
+      >
+        <CBtn
+          variant="ghost"
+          :title="t('common.cancel')"
+          :disabled="resetting"
+          @click="showResetModal = false"
+        />
+        <CBtn
+          variant="danger"
+          :title="t('settings.account.resetAppConfirm')"
+          :loading="resetting"
+          :disabled="resetting"
+          @click="confirmResetDemo"
+        />
+      </CFormActions>
     </template>
   </CModal>
 
@@ -382,23 +385,24 @@ async function confirmResetData() {
       {{ t('settings.account.resetDataConfirmMessage') }}
     </p>
     <template #footer>
-      <CFormFeedback
+      <CFormActions
         :status="resetDataFeedback.status.value"
         :message="resetDataFeedback.message.value"
-      />
-      <CBtn
-        variant="ghost"
-        :title="t('common.cancel')"
-        :disabled="resettingData"
-        @click="showResetDataModal = false"
-      />
-      <CBtn
-        variant="danger"
-        :title="t('settings.account.resetDataConfirm')"
-        :loading="resettingData"
-        :disabled="resettingData"
-        @click="confirmResetData"
-      />
+      >
+        <CBtn
+          variant="ghost"
+          :title="t('common.cancel')"
+          :disabled="resettingData"
+          @click="showResetDataModal = false"
+        />
+        <CBtn
+          variant="danger"
+          :title="t('settings.account.resetDataConfirm')"
+          :loading="resettingData"
+          :disabled="resettingData"
+          @click="confirmResetData"
+        />
+      </CFormActions>
     </template>
   </CModal>
 </template>

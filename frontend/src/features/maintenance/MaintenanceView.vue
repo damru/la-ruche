@@ -9,7 +9,8 @@ import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CLegalDescription from '@/components/atoms/CLegalDescription.vue'
 import CCard from '@/components/molecules/CCard.vue'
-import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
+import CFormActions from '@/components/molecules/CFormActions.vue'
+import CForm from '@/components/molecules/CForm.vue'
 import CLegalNotice from '@/components/molecules/CLegalNotice.vue'
 import CLegalCard from '@/components/molecules/CLegalCard.vue'
 import CModal from '@/components/molecules/CModal.vue'
@@ -583,9 +584,8 @@ async function deleteEntry() {
       size="md"
       @update:open="showEntryModal = $event"
     >
-      <form
-        class="flex flex-col gap-4"
-        @submit.prevent="saveEntry"
+      <CForm
+        @submit="saveEntry"
       >
         <CFormInput
           v-model="entryForm.title"
@@ -616,25 +616,25 @@ async function deleteEntry() {
             :label="t('maintenance.fields.vendorName')"
           />
         </div>
-      </form>
+      </CForm>
       <template #footer>
-        <CFormFeedback
-          class="modal-footer-feedback"
+        <CFormActions
           :status="entryFeedback.status.value"
           :message="entryFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          :title="t('common.cancel')"
-          @click="showEntryModal = false"
-        />
-        <CBtn
-          variant="primary"
-          :title="t('common.save')"
-          :loading="savingEntry"
-          :closing="entryFeedback.status.value === 'success'"
-          @click="saveEntry"
-        />
+        >
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="showEntryModal = false"
+          />
+          <CBtn
+            variant="primary"
+            :title="t('common.save')"
+            :loading="savingEntry"
+            :closing="entryFeedback.status.value === 'success'"
+            @click="saveEntry"
+          />
+        </CFormActions>
       </template>
     </CModal>
 
@@ -648,22 +648,23 @@ async function deleteEntry() {
         {{ t('maintenance.confirmDeleteMessage', { title: entryToDelete?.title ?? '' }) }}
       </p>
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="deleteFeedback.status.value"
           :message="deleteFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          :title="t('common.cancel')"
-          @click="entryToDelete = null"
-        />
-        <CBtn
-          variant="danger"
-          :title="t('common.delete')"
-          :loading="deletingEntry"
-          :closing="deleteFeedback.status.value === 'success'"
-          @click="deleteEntry"
-        />
+        >
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="entryToDelete = null"
+          />
+          <CBtn
+            variant="danger"
+            :title="t('common.delete')"
+            :loading="deletingEntry"
+            :closing="deleteFeedback.status.value === 'success'"
+            @click="deleteEntry"
+          />
+        </CFormActions>
       </template>
     </CModal>
   </div>

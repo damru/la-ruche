@@ -61,7 +61,10 @@ function dismiss() {
           aria-hidden="true"
         />
         <div class="flex flex-col">
-          <p v-if="title" class="text-md font-semibold">
+          <p
+            v-if="title"
+            class="text-md font-semibold"
+          >
             {{ title }}
           </p>
           <div class="text-sm">

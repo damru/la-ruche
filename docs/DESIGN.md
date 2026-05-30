@@ -22,7 +22,7 @@ rules:
   - Toute nouvelle primitive interactive passe par un wrapper C* — jamais d'import direct radix-vue dans une vue.
   - Les classes .tone--* sont des utilitaires CSS purs (non Tailwind) — jamais redéfinis localement.
   - Zéro bloc <style> dans les vues de feature — mise en page locale = utilitaire Tailwind ou composant du catalogue.
-  - CFormFeedback toujours dans #footer de CModal, jamais dans le body.
+  - `CFormFeedback` jamais directement dans les templates — toujours via `CFormActions` (footer modal) ou `CForm` (inline). Cf. DDR-006.
   - Composant = conteneur de mise en page. Utilitaire Tailwind = style de texte. Voir §1.3.
 
 ---
@@ -457,7 +457,7 @@ border-color: var(--color-outline-light);
 | `CFormChipInput` | `label`, `value` | Saisie d'un chip unitaire (la boucle `v-for` est dans le parent) |
 | `CFormChipSelect` | `label`, `options` | Sélection de chips |
 | `CFormDropzone` | `accept`, `multiple` | Zone de dépôt de fichiers |
-| `CFormFeedback` | `status`, `message` | Retour de formulaire — **toujours dans `#footer` de `CModal`** |
+| `CFormFeedback` | `status`, `message` | Retour de formulaire — utiliser via `CFormActions` ou `CForm`, jamais directement dans le markup. Animation push (grid-template-rows). |
 | `CFormInput` | `type`, `label`, `error`, `hint` | Champ texte — variante `password` avec toggle de visibilité |
 | `CFormSelect` | `label`, `options`, `error` | Sélecteur — wrapper Radix `SelectRoot` |
 | `CFormTextarea` | `label`, `rows`, `error` | Zone de texte |
@@ -483,6 +483,8 @@ border-color: var(--color-outline-light);
 | `CDataTable` | `columns`, `rows` | Tableau de données |
 | `CDocumentList` | `documents`, `readonly?` | 🔲 planifié — Liste documents avec download/retrait — `emit('remove', doc)` au parent |
 | `CEmptyState` | `icon`, `title`, `description?`, `size?` (`page` \| `compact`) | ✅ État vide — slot `#actions`. `page` = centré + `py-8`, `compact` = plus petit pour les sections. |
+| `CForm` | `status?`, `message?` | Formulaire structuré (`<form>`) — flex-col gap-4 + slot `#actions` → `CFormActions`. `@submit` émis sur soumission. Remplace `<form>` brut dans les vues. |
+| `CFormActions` | `status`, `message?` | Rangée de boutons (droite) + `CFormFeedback` push en dessous. Utiliser dans le slot `#actions` de `CForm` ou dans `#footer` de `CModal`. |
 | `CFormAddressAutocomplete` | `label`, `value` | Champ adresse avec autocomplétion |
 | `CFormGroup` | `label`, `hint?` | 🔲 planifié — Wrapper label + champ + hint |
 | `CFormRow` | `cols` (1/2) | 🔲 planifié — Grille formulaire 2 colonnes responsive |
@@ -609,22 +611,23 @@ Toute entité en état terminal comptable (levy call `issued`, tâche `closed`, 
 - **Pattern B (avenant)** : « Créer un avenant » remplace « Modifier » (`ghost`, non destructif).
 - **Historique** : entités avec `predecessor_id` / `parent_budget_id` → section « Historique » en lecture seule.
 
-#### CFormFeedback dans les modales
+#### Pattern formulaire (DDR-006)
 
-Tout `CModal` avec formulaire ou action destructive inclut `CFormFeedback` dans `#footer`, avant les boutons.
+Deux contextes, deux molécules. `CFormFeedback` n'est jamais utilisé directement dans les templates.
 
-```vue
-<CModal :open="open" title="…" @close="close">
-  <form @submit.prevent="save"><!-- champs --></form>
-  <template #footer>
-    <CFormFeedback :status="feedback.status.value" :message="feedback.message.value" />
-    <CBtn variant="ghost" @click="close">Annuler</CBtn>
-    <CBtn variant="primary" :loading="saving" @click="save">Enregistrer</CBtn>
-  </template>
-</CModal>
-```
+**Formulaire modal** — `CFormActions` dans le slot `#footer` de `CModal` :
+- Tous les boutons sont enfants de `CFormActions` (slot défaut).
+- `CFormFeedback` est rendu automatiquement sous les boutons avec animation push (grid).
+- Bouton destructif à gauche : `class="mr-auto"` sur le premier `CBtn`.
 
-`CFormFeedback` ne doit jamais apparaître dans `<template #default>`. Composable : `useFormFeedback.ts` — appeler `feedback.reset()` à l'ouverture.
+**Formulaire inline** — `CForm` remplace tout `<form>` brut dans les vues :
+- Champs dans le slot défaut, boutons dans le slot `#actions` → rendu via `CFormActions`.
+- Props `status` et `message` transmis depuis `useFormFeedback`.
+
+**Règles communes :**
+- `useFormFeedback()` gère `status` / `message`. Appeler `feedback.reset()` à l'ouverture du modal.
+- Jamais de `<form class="flex flex-col gap-4">` dans une vue — utiliser `CForm` ou le slot body de `CModal`.
+- `<form>` nu autorisé uniquement dans le body d'un `CModal` quand les actions sont dans `#footer`.
 
 #### Tabs de navigation
 
@@ -714,5 +717,5 @@ Les rappels synthétiques partagés entre vues passent par `CReminderCard`. Ne p
 | DDR-003 | [Navigation](ddr/DDR-003-navigation.md) | Bottom nav mobile, sidebar desktop, filtrage par rôle |
 | DDR-004 | [Navigation sidebar](ddr/DDR-004-navigation-sidebar.md) | Groupes sidebar (pattern B — labels fixes), dropdown profil, routes `/residence/*` et `/profile/*` |
 | DDR-005 | [États de chargement](ddr/DDR-005-page-loading-states.md) | `usePageLoader` + `CPageError` + `CPageLoader` — chargements non bloquants isolés |
-| DDR-006 | CFormFeedback modales | `CFormFeedback` dans le slot `#footer` de toute `CModal` avec formulaire ou action destructive |
+| DDR-006 | [Pattern feedback formulaire](ddr/DDR-006-form-feedback-pattern.md) | `CFormActions` + `CForm` — animation push, jamais `CFormFeedback` directement |
 | DDR-007 | [Spécification UX composants](./../outputs/bmad/planning-artifacts/ux-design-specification.md) | Catalogue Tailwind v4 + Radix Vue + nouveaux composants headers/molécules (`CPageHeader`, `CSectionHeader`, `CCardHeader`, `CTopbarBreadcrumb`, `CDocumentList`, `CEmptyState`, `CStatusBanner`…) |

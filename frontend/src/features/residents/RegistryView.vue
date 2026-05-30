@@ -148,14 +148,17 @@ const registryColumns = computed(() => {
           dismissible
         >
           {{ t('registry.keyMismatch', { key: key.name, sum: key.shares_sum, total: data.building.shares_total }) }}
-          <br/> 
+          <br /> 
           <CBtn
             size="xs"
             variant="negative"
             @click="router.push('residence/keys')"
           >
             {{ t('nav.residence-keys') }}
-            <CIconArrowRight class="icon-sm" aria-hidden="true" />
+            <CIconArrowRight
+              class="icon-sm"
+              aria-hidden="true"
+            />
           </CBtn>
           <template #side>
           </template>

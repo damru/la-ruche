@@ -13,7 +13,7 @@ import CModal from '@/components/molecules/CModal.vue'
 import CFormInput from '@/components/atoms/CFormInput.vue'
 import CFormSelect from '@/components/atoms/CFormSelect.vue'
 import CFormCheckbox from '@/components/atoms/CFormCheckbox.vue'
-import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
+import CFormActions from '@/components/molecules/CFormActions.vue'
 import CAlert from '@/components/atoms/CAlert.vue'
 import CProgressBar from '@/components/atoms/CProgressBar.vue'
 import CDataTable from '@/components/molecules/CDataTable.vue'
@@ -976,7 +976,10 @@ function formatSharePercentage(value: number): string {
             />
             <div class="prog-foot">
               <span>{{ t('budget.worksFundProgressLabel', { pct: worksFundProgressPct }) }}</span>
-              <span class="text-end font-medium" style="color: var(--color-warning)">
+              <span
+                class="text-end font-medium"
+                style="color: var(--color-warning)"
+              >
                 {{ t('budget.worksFundRemainingToCall', { amount: formatCurrency(worksFundRemainingToCall) }) }}
               </span>
             </div>
@@ -1040,188 +1043,188 @@ function formatSharePercentage(value: number): string {
           </CCard>
         </div>
         <CCard gap="md">
-        <CSectionHeader>
-          <CHeading type="card">
-            {{ t('budget.consumptionByLine') }}
-          </CHeading>
-          <CMetaItem variant="sub">
-            {{ t('budget.forecastVsActual') }}
-          </CMetaItem>
-          <template #actions>
-            <CBtn
-              v-if="budgetBreakdownItems.length > 0"
-              variant="ghost"
-              size="sm"
-              :icon="CIconPieChart"
-              :title="t('budget.breakdown')"
-              shrink="sm"
-              @click="showBreakdownModal = true"
-            />
-            <CBtn
-              v-if="canEditSelectedBudget"
-              variant="ghost"
-              size="sm"
-              :icon="CIconPlus"
-              :title="t('budget.newLine')"
-              shrink="sm"
-              @click="openCreateLineModal"
-            />
-          </template>
-        </CSectionHeader>
+          <CSectionHeader>
+            <CHeading type="card">
+              {{ t('budget.consumptionByLine') }}
+            </CHeading>
+            <CMetaItem variant="sub">
+              {{ t('budget.forecastVsActual') }}
+            </CMetaItem>
+            <template #actions>
+              <CBtn
+                v-if="budgetBreakdownItems.length > 0"
+                variant="ghost"
+                size="sm"
+                :icon="CIconPieChart"
+                :title="t('budget.breakdown')"
+                shrink="sm"
+                @click="showBreakdownModal = true"
+              />
+              <CBtn
+                v-if="canEditSelectedBudget"
+                variant="ghost"
+                size="sm"
+                :icon="CIconPlus"
+                :title="t('budget.newLine')"
+                shrink="sm"
+                @click="openCreateLineModal"
+              />
+            </template>
+          </CSectionHeader>
 
-        <div
-          v-if="budgetLines.length === 0"
-          class="py-8 text-center text-md text-on-surface-variant"
-        >
-          <p>{{ t('common.noData') }}</p>
-        </div>
-
-        <CFlexGroup v-else>
           <div
-            v-for="line in budgetLines"
-            :key="line.id"
+            v-if="budgetLines.length === 0"
+            class="py-8 text-center text-md text-on-surface-variant"
           >
-            <div class="flex justify-between items-center mb-2">
-              <span class="text-sm font-medium text-on-surface">{{ line.label }}</span>
-              <CMetaLine class="text-xs">
-                <CBadge
-                  v-if="line.key_name"
-                  variant="primary"
-                >
-                  {{ line.key_name }}
-                </CBadge>
-                <CBtn
-                  v-if="canEditSelectedBudget"
-                  variant="ghost"
-                  size="sm"
-                  :icon="CIconTrash"
-                  :aria-label="t('common.delete')"
-                  @click="lineToDelete = line"
-                />
-              </CMetaLine>
-            </div>
-            <CProgressBar
-              :value="linePct(line)"
-              :variant="lineVariant(line)"
-              :show-value="true"
-            />
-            <div class="prog-foot">
-              <span>{{ t('budget.realizedLabel') }} : <b class="text-on-surface font-medium font-mono">{{ formatCurrency(line.actual_amount ?? 0) }}</b></span>
-              <span>{{ t('budget.plannedLabel') }} : <b class="text-on-surface font-medium font-mono">{{ formatCurrency(line.budgeted_amount) }}</b></span>
-            </div>
+            <p>{{ t('common.noData') }}</p>
           </div>
-        </CFlexGroup>
-        <div
-          v-if="budgetLines.length > 0"
-          class="flex justify-between border-t border-outline-variant font-semibold text-sm text-on-surface pt-4"
-        >
-          <span>{{ t('common.total') }}</span>
-          <span class="font-mono">
-            {{ formatCurrency(selectedTotalActual) }} / {{ formatCurrency(selectedTotalForecast) }}
-          </span>
-        </div>
+
+          <CFlexGroup v-else>
+            <div
+              v-for="line in budgetLines"
+              :key="line.id"
+            >
+              <div class="flex justify-between items-center mb-2">
+                <span class="text-sm font-medium text-on-surface">{{ line.label }}</span>
+                <CMetaLine class="text-xs">
+                  <CBadge
+                    v-if="line.key_name"
+                    variant="primary"
+                  >
+                    {{ line.key_name }}
+                  </CBadge>
+                  <CBtn
+                    v-if="canEditSelectedBudget"
+                    variant="ghost"
+                    size="sm"
+                    :icon="CIconTrash"
+                    :aria-label="t('common.delete')"
+                    @click="lineToDelete = line"
+                  />
+                </CMetaLine>
+              </div>
+              <CProgressBar
+                :value="linePct(line)"
+                :variant="lineVariant(line)"
+                :show-value="true"
+              />
+              <div class="prog-foot">
+                <span>{{ t('budget.realizedLabel') }} : <b class="text-on-surface font-medium font-mono">{{ formatCurrency(line.actual_amount ?? 0) }}</b></span>
+                <span>{{ t('budget.plannedLabel') }} : <b class="text-on-surface font-medium font-mono">{{ formatCurrency(line.budgeted_amount) }}</b></span>
+              </div>
+            </div>
+          </CFlexGroup>
+          <div
+            v-if="budgetLines.length > 0"
+            class="flex justify-between border-t border-outline-variant font-semibold text-sm text-on-surface pt-4"
+          >
+            <span>{{ t('common.total') }}</span>
+            <span class="font-mono">
+              {{ formatCurrency(selectedTotalActual) }} / {{ formatCurrency(selectedTotalForecast) }}
+            </span>
+          </div>
         </CCard>
       
         <CCard
           v-if="canViewLevies"
           gap="md"
         >
-        <CSectionHeader>
-          <CHeading type="card">
-            {{ t('budget.levies') }}
-          </CHeading>
-          <CMetaLine>
-            <CMetaItem variant="sub">
-              {{ t('budget.levyCallsCount', { count: levyCallCount }) }}
-            </CMetaItem>
-            <CSeparator />
-            <CMetaItem variant="sub">
-              {{ t('budget.collectionRatePct', { pct: levyCollectionRate }) }}
-            </CMetaItem>
-          </CMetaLine>
-          <template #actions>
-            <CBtn
-              v-if="canEditSelectedBudget && selectedBudgetId"
-              variant="ghost"
-              size="sm"
-              :icon="CIconMegaphone"
-              :title="t('budget.generateLevies')"
-              shrink="sm"
-              @click="openGenerateModal"
-            />
-          </template>
-        </CSectionHeader>
+          <CSectionHeader>
+            <CHeading type="card">
+              {{ t('budget.levies') }}
+            </CHeading>
+            <CMetaLine>
+              <CMetaItem variant="sub">
+                {{ t('budget.levyCallsCount', { count: levyCallCount }) }}
+              </CMetaItem>
+              <CSeparator />
+              <CMetaItem variant="sub">
+                {{ t('budget.collectionRatePct', { pct: levyCollectionRate }) }}
+              </CMetaItem>
+            </CMetaLine>
+            <template #actions>
+              <CBtn
+                v-if="canEditSelectedBudget && selectedBudgetId"
+                variant="ghost"
+                size="sm"
+                :icon="CIconMegaphone"
+                :title="t('budget.generateLevies')"
+                shrink="sm"
+                @click="openGenerateModal"
+              />
+            </template>
+          </CSectionHeader>
 
       
 
-        <div
-          v-if="consolidatedLevies.length === 0"
-          class="py-8 text-center text-md text-on-surface-variant"
-        >
-          <p>{{ t('common.noData') }}</p>
-        </div>
+          <div
+            v-if="consolidatedLevies.length === 0"
+            class="py-8 text-center text-md text-on-surface-variant"
+          >
+            <p>{{ t('common.noData') }}</p>
+          </div>
 
-        <CDataTable
-          v-else
-          class="-mx-5 border-b border-outline-variant"
-          :columns="levyTableColumns"
-          :rows="levyTableRows"
-          :empty-text="t('common.noData')"
-        >
-          <template #cell-owner_name="{ row }">
-            <div>
-              <div>{{ row.owner_name ?? '—' }}</div>
-              <div class="text-on-surface-variant text-xs">
-                {{ t('common.lot') }} {{ asConsolidatedLevyRow(row).unit_numbers.join(', ') || '—' }}
+          <CDataTable
+            v-else
+            class="-mx-5 border-b border-outline-variant"
+            :columns="levyTableColumns"
+            :rows="levyTableRows"
+            :empty-text="t('common.noData')"
+          >
+            <template #cell-owner_name="{ row }">
+              <div>
+                <div>{{ row.owner_name ?? '—' }}</div>
+                <div class="text-on-surface-variant text-xs">
+                  {{ t('common.lot') }} {{ asConsolidatedLevyRow(row).unit_numbers.join(', ') || '—' }}
+                </div>
               </div>
-            </div>
-          </template>
-          <template #cell-amount="{ row }">
-            <span
-              :class="{ 'text-error': row.status === 'overdue' }"
-            >
-              {{ formatCurrency(Number(row.amount ?? 0)) }}
+            </template>
+            <template #cell-amount="{ row }">
+              <span
+                :class="{ 'text-error': row.status === 'overdue' }"
+              >
+                {{ formatCurrency(Number(row.amount ?? 0)) }}
+              </span>
+            </template>
+            <template #cell-due_date="{ row }">
+              <span class="text-on-surface-variant text-xs">
+                {{ asConsolidatedLevyRow(row).due_date ? formatDate(asConsolidatedLevyRow(row).due_date) : '—' }}
+              </span>
+            </template>
+            <template #cell-call_label="{ row }">
+              <span class="text-on-surface-variant text-xs">
+                {{ row.call_label || t('budget.defaultLevyLabel') }}
+              </span>
+            </template>
+            <template #cell-status="{ row }">
+              <CBadge
+                :variant="levyStatusBadgeVariant(row.status as LevyStatus)"
+                :pulse="row.status === 'overdue'"
+                :ring="row.status === 'issued' || row.status === 'overdue'"
+                dot
+              >
+                {{ t(`budget.levyStatuses.${row.status}`) }}
+              </CBadge>
+            </template>
+            <template #cell-actions="{ row }">
+              <CBtn
+                v-if="canMarkLeviesPaid && row.status !== 'paid'"
+                variant="icon"
+                size="sm"
+                :icon="CIconCheckCircle"
+                :title="t('budget.markPaid')"
+                :loading="markingPaidId === asConsolidatedLevyRow(row).id"
+                class="tone--valid"
+                @click="markPaid(asConsolidatedLevyRow(row))"
+              />
+            </template>
+          </CDataTable>
+          <div class="flex justify-between items-center text-sm font-semibold text-on-surface">
+            <span>{{ t('common.total') }}</span>
+            <span class="font-mono">
+              {{ formatCurrency(totalLeviedAmount) }}
             </span>
-          </template>
-          <template #cell-due_date="{ row }">
-            <span class="text-on-surface-variant text-xs">
-              {{ asConsolidatedLevyRow(row).due_date ? formatDate(asConsolidatedLevyRow(row).due_date) : '—' }}
-            </span>
-          </template>
-          <template #cell-call_label="{ row }">
-            <span class="text-on-surface-variant text-xs">
-              {{ row.call_label || t('budget.defaultLevyLabel') }}
-            </span>
-          </template>
-          <template #cell-status="{ row }">
-            <CBadge
-              :variant="levyStatusBadgeVariant(row.status as LevyStatus)"
-              :pulse="row.status === 'overdue'"
-              :ring="row.status === 'issued' || row.status === 'overdue'"
-              dot
-            >
-              {{ t(`budget.levyStatuses.${row.status}`) }}
-            </CBadge>
-          </template>
-          <template #cell-actions="{ row }">
-            <CBtn
-              v-if="canMarkLeviesPaid && row.status !== 'paid'"
-              variant="icon"
-              size="sm"
-              :icon="CIconCheckCircle"
-              :title="t('budget.markPaid')"
-              :loading="markingPaidId === asConsolidatedLevyRow(row).id"
-              class="tone--valid"
-              @click="markPaid(asConsolidatedLevyRow(row))"
-            />
-          </template>
-        </CDataTable>
-        <div class="flex justify-between items-center text-sm font-semibold text-on-surface">
-          <span>{{ t('common.total') }}</span>
-          <span class="font-mono">
-            {{ formatCurrency(totalLeviedAmount) }}
-          </span>
-        </div>
+          </div>
         </CCard>
 
         <CLegalCard>
@@ -1257,21 +1260,22 @@ function formatSharePercentage(value: number): string {
         required
       />
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="createBudgetFeedback.status.value"
           :message="createBudgetFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          :title="t('common.cancel')"
-          @click="showCreateBudgetModal = false"
-        />
-        <CBtn
-          variant="primary"
-          :title="t('common.create')"
-          :loading="savingBudget"
-          @click="saveBudget"
-        />
+        >
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="showCreateBudgetModal = false"
+          />
+          <CBtn
+            variant="primary"
+            :title="t('common.create')"
+            :loading="savingBudget"
+            @click="saveBudget"
+          />
+        </CFormActions>
       </template>
     </CModal>
 
@@ -1300,21 +1304,22 @@ function formatSharePercentage(value: number): string {
         required
       />
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="createLineFeedback.status.value"
           :message="createLineFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          :title="t('common.cancel')"
-          @click="showCreateLineModal = false"
-        />
-        <CBtn
-          variant="primary"
-          :title="t('common.save')"
-          :loading="savingLine"
-          @click="saveLine"
-        />
+        >
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="showCreateLineModal = false"
+          />
+          <CBtn
+            variant="primary"
+            :title="t('common.save')"
+            :loading="savingLine"
+            @click="saveLine"
+          />
+        </CFormActions>
       </template>
     </CModal>
 
@@ -1325,21 +1330,22 @@ function formatSharePercentage(value: number): string {
     >
       <p>{{ lineToDelete?.label }}</p>
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="deleteLineFeedback.status.value"
           :message="deleteLineFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          :title="t('common.cancel')"
-          @click="lineToDelete = null"
-        />
-        <CBtn
-          variant="danger"
-          :title="t('common.delete')"
-          :loading="deletingLine"
-          @click="confirmDeleteLine"
-        />
+        >
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="lineToDelete = null"
+          />
+          <CBtn
+            variant="danger"
+            :title="t('common.delete')"
+            :loading="deletingLine"
+            @click="confirmDeleteLine"
+          />
+        </CFormActions>
       </template>
     </CModal>
 
@@ -1398,23 +1404,24 @@ function formatSharePercentage(value: number): string {
         </p>
       </CCardNote>
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="generateFeedbackStatus"
           :message="generateFeedbackMessage"
-        />
-        <CBtn
-          variant="ghost"
-          :title="t('common.cancel')"
-          @click="showGenerateModal = false"
-        />
-        <CBtn
-          variant="primary"
-          :icon="CIconMegaphone"
-          :title="t('budget.generate')"
-          :disabled="!canGenerateLevies"
-          :loading="generatingLevies"
-          @click="generateLevies"
-        />
+        >
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="showGenerateModal = false"
+          />
+          <CBtn
+            variant="primary"
+            :icon="CIconMegaphone"
+            :title="t('budget.generate')"
+            :disabled="!canGenerateLevies"
+            :loading="generatingLevies"
+            @click="generateLevies"
+          />
+        </CFormActions>
       </template>
     </CModal>
 
@@ -1490,21 +1497,22 @@ function formatSharePercentage(value: number): string {
         {{ t('budget.worksFundRateHint', { minimum: formatSharePercentage(worksFundMinimumRate) }) }}
       </p>
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="worksFundFeedback.status.value"
           :message="worksFundFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          :title="t('common.cancel')"
-          @click="showWorksFundModal = false"
-        />
-        <CBtn
-          variant="primary"
-          :title="t('common.save')"
-          :loading="savingWorksFund"
-          @click="saveWorksFund"
-        />
+        >
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="showWorksFundModal = false"
+          />
+          <CBtn
+            variant="primary"
+            :title="t('common.save')"
+            :loading="savingWorksFund"
+            @click="saveWorksFund"
+          />
+        </CFormActions>
       </template>
     </CModal>
 
@@ -1517,21 +1525,22 @@ function formatSharePercentage(value: number): string {
         {{ t('budget.closeExerciseConfirmation', { year: selectedBudget?.fiscal_year }) }}
       </p>
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="closeExerciseFeedback.status.value"
           :message="closeExerciseFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          :title="t('common.cancel')"
-          @click="showCloseExerciseModal = false"
-        />
-        <CBtn
-          variant="danger"
-          :title="t('budget.closeExerciseConfirm')"
-          :loading="closingExercise"
-          @click="closeExercise"
-        />
+        >
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="showCloseExerciseModal = false"
+          />
+          <CBtn
+            variant="danger"
+            :title="t('budget.closeExerciseConfirm')"
+            :loading="closingExercise"
+            @click="closeExercise"
+          />
+        </CFormActions>
       </template>
     </CModal>
   </div>

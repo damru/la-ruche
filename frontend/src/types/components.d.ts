@@ -27,6 +27,8 @@ declare module 'vue' {
     CEmptyState: typeof import('./../components/atoms/CEmptyState.vue')['default']
     CEyebrow: typeof import('./../components/atoms/CEyebrow.vue')['default']
     CFlexGroup: typeof import('./../components/organisms/CFlexGroup.vue')['default']
+    CForm: typeof import('./../components/molecules/CForm.vue')['default']
+    CFormActions: typeof import('./../components/molecules/CFormActions.vue')['default']
     CFormAddressAutocomplete: typeof import('./../components/molecules/CFormAddressAutocomplete.vue')['default']
     CFormCheckbox: typeof import('./../components/atoms/CFormCheckbox.vue')['default']
     CFormChipInput: typeof import('./../components/atoms/CFormChipInput.vue')['default']

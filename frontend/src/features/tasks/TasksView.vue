@@ -14,7 +14,8 @@ import CCard from '@/components/molecules/CCard.vue'
 import CCardActions from '@/components/molecules/CCardActions.vue'
 import CMetaLine from '@/components/molecules/CMetaLine.vue'
 import CMetaItem from '@/components/molecules/CMetaItem.vue'
-import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
+import CFormActions from '@/components/molecules/CFormActions.vue'
+import CForm from '@/components/molecules/CForm.vue'
 import CLinkedDocumentsModal from '@/components/organisms/CLinkedDocumentsModal.vue'
 import CModal from '@/components/molecules/CModal.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
@@ -1024,9 +1025,8 @@ async function copyVendorLink(taskId: string) {
       :closable="!savingTask"
       @update:open="showTaskModal = $event"
     >
-      <form
-        class="flex flex-col gap-4"
-        @submit.prevent="saveTask"
+      <CForm
+        @submit="saveTask"
       >
         <CFormInput
           v-model="taskForm.title"
@@ -1264,34 +1264,35 @@ async function copyVendorLink(taskId: string) {
             </li>
           </ul>
         </div>
-      </form>
+      </CForm>
       <template #footer>
         <!-- Delete: visible from the modal only -->
-        <CBtn
-          v-if="editingTask"
-          variant="danger"
-          :icon="CIconTrash"
-          :title="t('common.delete')"
-          :loading="savingTask"
-          style="margin-right:auto"
-          @click="openDeleteModal(editingTask)"
-        />
-        <CFormFeedback
+        <CFormActions
           :status="taskFeedback.status.value"
           :message="taskFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          :title="t('common.cancel')"
-          @click="showTaskModal = false"
-        />
-        <CBtn
-          variant="primary"
-          :title="t('common.save')"
-          :loading="savingTask || uploadingTaskDocuments"
-          :closing="taskFeedback.status.value === 'success'"
-          @click="saveTask"
-        />
+        >
+          <CBtn
+            v-if="editingTask"
+            variant="danger"
+            :icon="CIconTrash"
+            :title="t('common.delete')"
+            :loading="savingTask"
+            class="mr-auto"
+            @click="openDeleteModal(editingTask)"
+          />
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="showTaskModal = false"
+          />
+          <CBtn
+            variant="primary"
+            :title="t('common.save')"
+            :loading="savingTask || uploadingTaskDocuments"
+            :closing="taskFeedback.status.value === 'success'"
+            @click="saveTask"
+          />
+        </CFormActions>
       </template>
     </CModal>
 
@@ -1306,22 +1307,23 @@ async function copyVendorLink(taskId: string) {
         {{ t('tasks.confirmRevokeToken') }}
       </p>
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="revokeFeedback.status.value"
           :message="revokeFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          :title="t('common.cancel')"
-          @click="revokingTask = null"
-        />
-        <CBtn
-          variant="danger"
-          :title="t('tasks.revokeToken')"
-          :loading="revoking"
-          :closing="revokeFeedback.status.value === 'success'"
-          @click="confirmRevoke"
-        />
+        >
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="revokingTask = null"
+          />
+          <CBtn
+            variant="danger"
+            :title="t('tasks.revokeToken')"
+            :loading="revoking"
+            :closing="revokeFeedback.status.value === 'success'"
+            @click="confirmRevoke"
+          />
+        </CFormActions>
       </template>
     </CModal>
 
@@ -1351,23 +1353,23 @@ async function copyVendorLink(taskId: string) {
         class="task-close-field"
       />
       <template #footer>
-        <CFormFeedback
-          class="modal-footer-feedback"
+        <CFormActions
           :status="closeFeedback.status.value"
           :message="closeFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          :title="t('common.cancel')"
-          @click="closingTask = null"
-        />
-        <CBtn
-          variant="primary"
-          :title="closingTask ? closeActionLabel(closingTask) : t('tasks.closeTask')"
-          :loading="closingInProgress"
-          :closing="closeFeedback.status.value === 'success'"
-          @click="confirmCloseTask"
-        />
+        >
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="closingTask = null"
+          />
+          <CBtn
+            variant="primary"
+            :title="closingTask ? closeActionLabel(closingTask) : t('tasks.closeTask')"
+            :loading="closingInProgress"
+            :closing="closeFeedback.status.value === 'success'"
+            @click="confirmCloseTask"
+          />
+        </CFormActions>
       </template>
     </CModal>
 
@@ -1382,22 +1384,23 @@ async function copyVendorLink(taskId: string) {
         {{ t('tasks.confirmReopenMessage', { title: reopeningTask?.title ?? '' }) }}
       </p>
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="reopenFeedback.status.value"
           :message="reopenFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          :title="t('common.cancel')"
-          @click="reopeningTask = null"
-        />
-        <CBtn
-          variant="primary"
-          :title="t('tasks.reopenTask')"
-          :loading="reopening"
-          :closing="reopenFeedback.status.value === 'success'"
-          @click="confirmReopen"
-        />
+        >
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="reopeningTask = null"
+          />
+          <CBtn
+            variant="primary"
+            :title="t('tasks.reopenTask')"
+            :loading="reopening"
+            :closing="reopenFeedback.status.value === 'success'"
+            @click="confirmReopen"
+          />
+        </CFormActions>
       </template>
     </CModal>
 
@@ -1416,22 +1419,23 @@ async function copyVendorLink(taskId: string) {
         }}
       </p>
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="deleteTaskFeedback.status.value"
           :message="deleteTaskFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          :title="t('common.cancel')"
-          @click="showDeleteModal = false"
-        />
-        <CBtn
-          variant="danger"
-          :title="t('common.deleteLabel')"
-          :loading="deletingTask"
-          :closing="deleteTaskFeedback.status.value === 'success'"
-          @click="confirmDeleteTask"
-        />
+        >
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="showDeleteModal = false"
+          />
+          <CBtn
+            variant="danger"
+            :title="t('common.deleteLabel')"
+            :loading="deletingTask"
+            :closing="deleteTaskFeedback.status.value === 'success'"
+            @click="confirmDeleteTask"
+          />
+        </CFormActions>
       </template>
     </CModal>
 

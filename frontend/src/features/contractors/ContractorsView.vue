@@ -12,7 +12,8 @@ import CBtn from '@/components/atoms/CBtn.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CCardActions from '@/components/molecules/CCardActions.vue'
 import CEmptyState from '@/components/atoms/CEmptyState.vue'
-import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
+import CFormActions from '@/components/molecules/CFormActions.vue'
+import CForm from '@/components/molecules/CForm.vue'
 import CModal from '@/components/molecules/CModal.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
@@ -524,9 +525,8 @@ async function confirmDelete() {
       :title="editingContractor ? t('contractors.editContractor') : t('contractors.newContractor')"
       @update:open="showModal = $event"
     >
-      <form
-        class="flex flex-col gap-4"
-        @submit.prevent="save"
+      <CForm
+        @submit="save"
       >
         <CFormInput
           v-model="form.name"
@@ -559,24 +559,25 @@ async function confirmDelete() {
           :placeholder="t('contractors.notesPlaceholder')"
           class="flex flex-col gap-1 col-span-full"
         />
-      </form>
+      </CForm>
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="feedback.status.value"
           :message="feedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          :title="t('common.cancel')"
-          @click="closeModal"
-        />
-        <CBtn
-          variant="primary"
-          :title="t('common.save')"
-          :loading="saving"
-          :closing="feedback.status.value === 'success'"
-          @click="save"
-        />
+        >
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="closeModal"
+          />
+          <CBtn
+            variant="primary"
+            :title="t('common.save')"
+            :loading="saving"
+            :closing="feedback.status.value === 'success'"
+            @click="save"
+          />
+        </CFormActions>
       </template>
     </CModal>
 
@@ -590,22 +591,23 @@ async function confirmDelete() {
         {{ t('contractors.deleteConfirm', { name: contractorToDelete?.name }) }}
       </p>
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="deleteFeedback.status.value"
           :message="deleteFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          :title="t('common.cancel')"
-          @click="showDeleteModal = false"
-        />
-        <CBtn
-          variant="danger"
-          :title="t('common.delete')"
-          :loading="!!deletingId"
-          :closing="deleteFeedback.status.value === 'success'"
-          @click="confirmDelete"
-        />
+        >
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="showDeleteModal = false"
+          />
+          <CBtn
+            variant="danger"
+            :title="t('common.delete')"
+            :loading="!!deletingId"
+            :closing="deleteFeedback.status.value === 'success'"
+            @click="confirmDelete"
+          />
+        </CFormActions>
       </template>
     </CModal>
   </div>

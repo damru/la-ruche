@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import CBtn from '@/components/atoms/CBtn.vue'
-import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
+import CFormActions from '@/components/molecules/CFormActions.vue'
 import CModal from '@/components/molecules/CModal.vue'
 import type { FeedbackStatus } from '@/composables/useFormFeedback'
 
@@ -49,31 +49,32 @@ const { t } = useI18n()
     </div>
 
     <template #footer>
-      <CFormFeedback
+      <CFormActions
         :status="status"
         :message="message"
-      />
-      <CBtn
-        variant="ghost"
-        :disabled="loading"
-        @click="emit('update:open', false)"
       >
-        {{ t('common.cancel') }}
-      </CBtn>
-      <CBtn
-        variant="secondary"
-        :disabled="loading"
-        @click="emit('unlink')"
-      >
-        {{ t('documents.unlinkOnly') }}
-      </CBtn>
-      <CBtn
-        variant="danger"
-        :loading="loading"
-        @click="emit('unlink-and-delete')"
-      >
-        {{ t('documents.unlinkAndDelete') }}
-      </CBtn>
+        <CBtn
+          variant="ghost"
+          :disabled="loading"
+          @click="emit('update:open', false)"
+        >
+          {{ t('common.cancel') }}
+        </CBtn>
+        <CBtn
+          variant="secondary"
+          :disabled="loading"
+          @click="emit('unlink')"
+        >
+          {{ t('documents.unlinkOnly') }}
+        </CBtn>
+        <CBtn
+          variant="danger"
+          :loading="loading"
+          @click="emit('unlink-and-delete')"
+        >
+          {{ t('documents.unlinkAndDelete') }}
+        </CBtn>
+      </CFormActions>
     </template>
   </CModal>
 </template>

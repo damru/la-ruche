@@ -5,7 +5,7 @@ import CBadge from '@/components/atoms/CBadge.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CModal from '@/components/molecules/CModal.vue'
-import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
+import CFormActions from '@/components/molecules/CFormActions.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
@@ -491,24 +491,24 @@ const userColumns = computed(() => [
           </div>
         </div>
         <template #footer>
-          <CFormFeedback
+          <CFormActions
             :status="unitFeedback.status.value"
             :message="unitFeedback.message.value"
-            style="flex:1"
-          />
-          <CBtn
-            variant="ghost"
-            :title="t('common.cancel')"
-            @click="showUnitModal = false"
-          />
-          <CBtn
-            variant="primary"
-            :title="t('common.save')"
-            :loading="savingUnit"
-            :closing="unitFeedback.status.value === 'success'"
-            :disabled="savingUnit"
-            @click="saveUnit"
-          />
+          >
+            <CBtn
+              variant="ghost"
+              :title="t('common.cancel')"
+              @click="showUnitModal = false"
+            />
+            <CBtn
+              variant="primary"
+              :title="t('common.save')"
+              :loading="savingUnit"
+              :closing="unitFeedback.status.value === 'success'"
+              :disabled="savingUnit"
+              @click="saveUnit"
+            />
+          </CFormActions>
         </template>
       </CModal>
 
@@ -523,22 +523,23 @@ const userColumns = computed(() => [
           {{ t('residents.confirmArchiveMessage', { number: unitToArchive?.unit_number ?? '' }) }}
         </p>
         <template #footer>
-          <CFormFeedback
+          <CFormActions
             :status="archiveFeedback.status.value"
             :message="archiveFeedback.message.value"
-          />
-          <CBtn
-            variant="ghost"
-            :title="t('common.cancel')"
-            @click="showArchiveModal = false"
-          />
-          <CBtn
-            variant="danger"
-            :title="t('common.archiveLabel')"
-            :loading="archivingUnit"
-            :closing="archiveFeedback.status.value === 'success'"
-            @click="confirmArchiveUnit"
-          />
+          >
+            <CBtn
+              variant="ghost"
+              :title="t('common.cancel')"
+              @click="showArchiveModal = false"
+            />
+            <CBtn
+              variant="danger"
+              :title="t('common.archiveLabel')"
+              :loading="archivingUnit"
+              :closing="archiveFeedback.status.value === 'success'"
+              @click="confirmArchiveUnit"
+            />
+          </CFormActions>
         </template>
       </CModal>
     </div>

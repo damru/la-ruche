@@ -11,7 +11,8 @@ import type { Meeting, MeetingType } from '@/types/domain'
 import { buildingApi, meetingsApi } from '@/api'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
-import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
+import CFormActions from '@/components/molecules/CFormActions.vue'
+import CForm from '@/components/molecules/CForm.vue'
 import CSeparator from '@/components/atoms/CSeparator.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CMetaLine from '@/components/molecules/CMetaLine.vue'
@@ -314,9 +315,8 @@ async function saveMeeting() {
       :title="t('meetings.create')"
       @update:open="showCreateModal = $event"
     >
-      <form
-        class="flex flex-col gap-4"
-        @submit.prevent="saveMeeting"
+      <CForm
+        @submit="saveMeeting"
       >
         <CFormSelect
           v-model="createForm.meeting_type"
@@ -366,25 +366,26 @@ async function saveMeeting() {
             />
           </div>
         </div>
-      </form>
+      </CForm>
 
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="createFeedback.status.value"
           :message="createFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          :title="t('common.cancel')"
-          @click="showCreateModal = false"
-        />
-        <CBtn
-          variant="primary"
-          :title="t('common.save')"
-          :loading="saving"
-          :closing="createFeedback.status.value === 'success'"
-          @click="saveMeeting"
-        />
+        >
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="showCreateModal = false"
+          />
+          <CBtn
+            variant="primary"
+            :title="t('common.save')"
+            :loading="saving"
+            :closing="createFeedback.status.value === 'success'"
+            @click="saveMeeting"
+          />
+        </CFormActions>
       </template>
     </CModal>
   </div>

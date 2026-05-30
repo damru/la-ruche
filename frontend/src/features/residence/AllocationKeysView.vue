@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n'
 import CCard from '@/components/molecules/CCard.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CAlert from '@/components/atoms/CAlert.vue'
-import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
+import CFormActions from '@/components/molecules/CFormActions.vue'
 import CModal from '@/components/molecules/CModal.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
@@ -388,24 +388,24 @@ onMounted(reload)
       </div>
 
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="keyFeedback.status.value"
           :message="keyFeedback.message.value"
-          style="flex:1"
-        />
-        <CBtn
-          variant="ghost"
-          :title="t('common.cancel')"
-          @click="showKeyModal = false"
-        />
-        <CBtn
-          variant="primary"
-          :title="t('common.save')"
-          :loading="modalSaving"
-          :closing="keyFeedback.status.value === 'success'"
-          :disabled="modalSaving || modalLoading"
-          @click="saveKey"
-        />
+        >
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="showKeyModal = false"
+          />
+          <CBtn
+            variant="primary"
+            :title="t('common.save')"
+            :loading="modalSaving"
+            :closing="keyFeedback.status.value === 'success'"
+            :disabled="modalSaving || modalLoading"
+            @click="saveKey"
+          />
+        </CFormActions>
       </template>
     </CModal>
 
@@ -420,22 +420,23 @@ onMounted(reload)
         {{ t('settings.keys.confirmDeleteMessage', { name: keyToDelete?.name ?? '' }) }}
       </p>
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="deleteKeyFeedback.status.value"
           :message="deleteKeyFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          :title="t('common.cancel')"
-          @click="showDeleteKeyModal = false"
-        />
-        <CBtn
-          variant="danger"
-          :title="t('common.deleteLabel')"
-          :loading="deletingKeyInProgress"
-          :closing="deleteKeyFeedback.status.value === 'success'"
-          @click="confirmDeleteKey"
-        />
+        >
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="showDeleteKeyModal = false"
+          />
+          <CBtn
+            variant="danger"
+            :title="t('common.deleteLabel')"
+            :loading="deletingKeyInProgress"
+            :closing="deleteKeyFeedback.status.value === 'success'"
+            @click="confirmDeleteKey"
+          />
+        </CFormActions>
       </template>
     </CModal>
   </div>

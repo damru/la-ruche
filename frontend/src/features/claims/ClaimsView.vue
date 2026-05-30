@@ -9,7 +9,8 @@ import { useRole } from '@/composables/useRole'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CLegalDescription from '@/components/atoms/CLegalDescription.vue'
-import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
+import CFormActions from '@/components/molecules/CFormActions.vue'
+import CForm from '@/components/molecules/CForm.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CDocumentLinkActionModal from '@/components/organisms/CDocumentLinkActionModal.vue'
 import CLinkedDocumentsModal from '@/components/organisms/CLinkedDocumentsModal.vue'
@@ -1078,9 +1079,8 @@ async function submitDelete() {
       :closable="!savingClaim && !uploadingDocuments"
       @update:open="showCreateModal = $event"
     >
-      <form
-        class="flex flex-col gap-4"
-        @submit.prevent="submitCreate"
+      <CForm
+        @submit="submitCreate"
       >
         <CFormInput
           v-model="createForm.title"
@@ -1168,26 +1168,26 @@ async function submitDelete() {
             </div>
           </div>
         </div>
-      </form>
+      </CForm>
 
       <template #footer>
-        <CFormFeedback
-          class="modal-footer-feedback"
+        <CFormActions
           :status="createFeedback.status.value"
           :message="createFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          :title="t('common.cancel')"
-          @click="showCreateModal = false"
-        />
-        <CBtn
-          variant="primary"
-          :title="t('common.save')"
-          :loading="savingClaim || uploadingDocuments"
-          :closing="createFeedback.status.value === 'success'"
-          @click="submitCreate"
-        />
+        >
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="showCreateModal = false"
+          />
+          <CBtn
+            variant="primary"
+            :title="t('common.save')"
+            :loading="savingClaim || uploadingDocuments"
+            :closing="createFeedback.status.value === 'success'"
+            @click="submitCreate"
+          />
+        </CFormActions>
       </template>
     </CModal>
 
@@ -1197,9 +1197,8 @@ async function submitDelete() {
       size="lg"
       @update:open="value => !value && (claimToEdit = null)"
     >
-      <form
-        class="flex flex-col gap-4"
-        @submit.prevent="submitEdit"
+      <CForm
+        @submit="submitEdit"
       >
         <CFormInput
           v-model="editForm.title"
@@ -1339,34 +1338,34 @@ async function submitDelete() {
             </div>
           </div>
         </div>
-      </form>
+      </CForm>
 
       <template #footer>
-        <CBtn
-          v-if="claimToEdit"
-          variant="danger"
-          :icon="CIconTrash"
-          :title="t('common.delete')"
-          style="margin-right:auto"
-          @click="openDeleteFromEdit"
-        />
-        <CFormFeedback
-          class="modal-footer-feedback"
+        <CFormActions
           :status="editFeedback.status.value"
           :message="editFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          :title="t('common.cancel')"
-          @click="claimToEdit = null"
-        />
-        <CBtn
-          variant="primary"
-          :title="t('common.save')"
-          :loading="editingClaim || uploadingEditDocuments"
-          :closing="editFeedback.status.value === 'success'"
-          @click="submitEdit"
-        />
+        >
+          <CBtn
+            v-if="claimToEdit"
+            variant="danger"
+            :icon="CIconTrash"
+            :title="t('common.delete')"
+            class="mr-auto"
+            @click="openDeleteFromEdit"
+          />
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="claimToEdit = null"
+          />
+          <CBtn
+            variant="primary"
+            :title="t('common.save')"
+            :loading="editingClaim || uploadingEditDocuments"
+            :closing="editFeedback.status.value === 'success'"
+            @click="submitEdit"
+          />
+        </CFormActions>
       </template>
     </CModal>
 
@@ -1376,9 +1375,8 @@ async function submitDelete() {
       size="sm"
       @update:open="value => !value && (claimToTransmit = null)"
     >
-      <form
-        class="flex flex-col gap-4"
-        @submit.prevent="submitTransmit"
+      <CForm
+        @submit="submitTransmit"
       >
         <CFormInput
           v-model="transmitForm.transmitted_at"
@@ -1387,28 +1385,28 @@ async function submitDelete() {
           required
           :hint="t('claims.fields.transmittedAtHint')"
         />
-      </form>
+      </CForm>
 
       <template #footer>
-        <CFormFeedback
-          class="modal-footer-feedback"
+        <CFormActions
           :status="transmitFeedback.status.value"
           :message="transmitFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          @click="claimToTransmit = null"
         >
-          {{ t('common.cancel') }}
-        </CBtn>
-        <CBtn
-          variant="primary"
-          :loading="transmittingClaim"
-          :closing="transmitFeedback.status.value === 'success'"
-          @click="submitTransmit"
-        >
-          {{ t('claims.transmit') }}
-        </CBtn>
+          <CBtn
+            variant="ghost"
+            @click="claimToTransmit = null"
+          >
+            {{ t('common.cancel') }}
+          </CBtn>
+          <CBtn
+            variant="primary"
+            :loading="transmittingClaim"
+            :closing="transmitFeedback.status.value === 'success'"
+            @click="submitTransmit"
+          >
+            {{ t('claims.transmit') }}
+          </CBtn>
+        </CFormActions>
       </template>
     </CModal>
 
@@ -1418,9 +1416,8 @@ async function submitDelete() {
       size="lg"
       @update:open="value => !value && (claimToClose = null)"
     >
-      <form
-        class="flex flex-col gap-4"
-        @submit.prevent="submitClose"
+      <CForm
+        @submit="submitClose"
       >
         <CFormInput
           v-model="closeForm.transmitted_at"
@@ -1494,28 +1491,28 @@ async function submitDelete() {
             </div>
           </div>
         </div>
-      </form>
+      </CForm>
 
       <template #footer>
-        <CFormFeedback
-          class="modal-footer-feedback"
+        <CFormActions
           :status="closeFeedback.status.value"
           :message="closeFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          @click="claimToClose = null"
         >
-          {{ t('common.cancel') }}
-        </CBtn>
-        <CBtn
-          variant="primary"
-          :loading="closingClaim || uploadingCloseDocuments"
-          :closing="closeFeedback.status.value === 'success'"
-          @click="submitClose"
-        >
-          {{ t('claims.close') }}
-        </CBtn>
+          <CBtn
+            variant="ghost"
+            @click="claimToClose = null"
+          >
+            {{ t('common.cancel') }}
+          </CBtn>
+          <CBtn
+            variant="primary"
+            :loading="closingClaim || uploadingCloseDocuments"
+            :closing="closeFeedback.status.value === 'success'"
+            @click="submitClose"
+          >
+            {{ t('claims.close') }}
+          </CBtn>
+        </CFormActions>
       </template>
     </CModal>
 
@@ -1530,25 +1527,25 @@ async function submitDelete() {
       </p>
 
       <template #footer>
-        <CFormFeedback
-          class="modal-footer-feedback"
+        <CFormActions
           :status="deleteFeedback.status.value"
           :message="deleteFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          @click="claimToDelete = null"
         >
-          {{ t('common.cancel') }}
-        </CBtn>
-        <CBtn
-          variant="danger"
-          :loading="deletingClaim"
-          :closing="deleteFeedback.status.value === 'success'"
-          @click="submitDelete"
-        >
-          {{ t('common.deleteLabel') }}
-        </CBtn>
+          <CBtn
+            variant="ghost"
+            @click="claimToDelete = null"
+          >
+            {{ t('common.cancel') }}
+          </CBtn>
+          <CBtn
+            variant="danger"
+            :loading="deletingClaim"
+            :closing="deleteFeedback.status.value === 'success'"
+            @click="submitDelete"
+          >
+            {{ t('common.deleteLabel') }}
+          </CBtn>
+        </CFormActions>
       </template>
     </CModal>
 

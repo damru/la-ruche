@@ -13,7 +13,8 @@ import CAlert from '@/components/atoms/CAlert.vue'
 import CLegalDescription from '@/components/atoms/CLegalDescription.vue'
 import CLegalNotice from '@/components/molecules/CLegalNotice.vue'
 import CLegalCard from '@/components/molecules/CLegalCard.vue'
-import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
+import CFormActions from '@/components/molecules/CFormActions.vue'
+import CForm from '@/components/molecules/CForm.vue'
 import CModal from '@/components/molecules/CModal.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
@@ -508,9 +509,8 @@ async function confirmDelete() {
       size="lg"
       @update:open="showCreateModal = $event"
     >
-      <form
-        class="flex flex-col gap-4"
-        @submit.prevent="saveConsultation"
+      <CForm
+        @submit="saveConsultation"
       >
         <CFormInput
           v-model="createForm.title"
@@ -552,24 +552,25 @@ async function confirmDelete() {
             @click="addChoice"
           />
         </div>
-      </form>
+      </CForm>
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="createFeedback.status.value"
           :message="createFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          :title="t('common.cancel')"
-          @click="showCreateModal = false"
-        />
-        <CBtn
-          variant="primary"
-          :title="t('common.create')"
-          :loading="saving"
-          :closing="createFeedback.status.value === 'success'"
-          @click="saveConsultation"
-        />
+        >
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="showCreateModal = false"
+          />
+          <CBtn
+            variant="primary"
+            :title="t('common.create')"
+            :loading="saving"
+            :closing="createFeedback.status.value === 'success'"
+            @click="saveConsultation"
+          />
+        </CFormActions>
       </template>
     </CModal>
 
@@ -584,22 +585,23 @@ async function confirmDelete() {
         {{ t('consultations.confirmCloseMessage') }}
       </p>
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="closeFeedback.status.value"
           :message="closeFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          :title="t('common.cancel')"
-          @click="closingConsultation = null"
-        />
-        <CBtn
-          variant="danger"
-          :title="t('consultations.closeAction')"
-          :loading="closing"
-          :closing="closeFeedback.status.value === 'success'"
-          @click="confirmClose"
-        />
+        >
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="closingConsultation = null"
+          />
+          <CBtn
+            variant="danger"
+            :title="t('consultations.closeAction')"
+            :loading="closing"
+            :closing="closeFeedback.status.value === 'success'"
+            @click="confirmClose"
+          />
+        </CFormActions>
       </template>
     </CModal>
 
@@ -614,22 +616,23 @@ async function confirmDelete() {
         {{ t('consultations.confirmDeleteMessage', { title: deletingConsultation?.title ?? '' }) }}
       </p>
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="deleteFeedback.status.value"
           :message="deleteFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          :title="t('common.cancel')"
-          @click="deletingConsultation = null"
-        />
-        <CBtn
-          variant="danger"
-          :title="t('common.delete')"
-          :loading="deleting"
-          :closing="deleteFeedback.status.value === 'success'"
-          @click="confirmDelete"
-        />
+        >
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="deletingConsultation = null"
+          />
+          <CBtn
+            variant="danger"
+            :title="t('common.delete')"
+            :loading="deleting"
+            :closing="deleteFeedback.status.value === 'success'"
+            @click="confirmDelete"
+          />
+        </CFormActions>
       </template>
     </CModal>
   </div>
