@@ -810,9 +810,9 @@ async function copyVendorLink(taskId: string) {
           <CHeading type="header">
             {{ t('tasks.title') }}
           </CHeading>
-          <p class="text-on-surface-variant">
-            {{ t('tasks.activeSummary', { count: activeCount }) }}
-          </p>
+          <CMetaItem variant="sub">
+            {{ t('tasks.header.activeSummary', { count: activeCount }) }}
+          </CMetaItem>
         </header>
 
         <CAlert

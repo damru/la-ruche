@@ -222,8 +222,11 @@ onMounted(reload)
             {{ t('page.eyebrows.allocationKeys') }}
           </CEyebrow>
           <CHeading type="header">
-            {{ t('nav.residence-keys') }}
+            {{ t('allocationKeys.title') }}
           </CHeading>
+          <CMetaItem variant="sub">
+            {{ t('allocationKeys.header.totalCount', { count: keys.length }) }}
+          </CMetaItem>
         </header>
 
         <template v-if="keys.length === 0">

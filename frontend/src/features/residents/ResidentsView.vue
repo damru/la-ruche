@@ -300,12 +300,15 @@ const userColumns = computed(() => [
           <CHeading type="header">
             {{ t('residents.title') }}
           </CHeading>
-          <p
-            class="body-md"
-            style="color:var(--color-on-surface-variant)"
-          >
-            {{ t('residents.summary', { units: allUnits.length, users: allUsers.length }) }}
-          </p>
+          <CMetaLine>
+            <CMetaItem variant="sub">
+              {{ t('residents.header.unitsCount', { count: allUnits.length }) }}
+            </CMetaItem>
+            <CSeparator />
+            <CMetaItem variant="sub">
+              {{ t('residents.header.usersCount', { count: allUsers.length }) }}
+            </CMetaItem>
+          </CMetaLine>
         </header>
 
         <CTabs

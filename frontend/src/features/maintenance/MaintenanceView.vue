@@ -8,11 +8,14 @@ import { useAutoClose } from '@/composables/useAutoClose'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CLegalDescription from '@/components/atoms/CLegalDescription.vue'
+import CSeparator from '@/components/atoms/CSeparator.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CFormActions from '@/components/molecules/CFormActions.vue'
 import CForm from '@/components/molecules/CForm.vue'
 import CLegalNotice from '@/components/molecules/CLegalNotice.vue'
 import CLegalCard from '@/components/molecules/CLegalCard.vue'
+import CMetaLine from '@/components/molecules/CMetaLine.vue'
+import CMetaItem from '@/components/molecules/CMetaItem.vue'
 import CModal from '@/components/molecules/CModal.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
@@ -325,12 +328,19 @@ async function deleteEntry() {
           <CHeading type="header">
             {{ t('maintenance.title') }}
           </CHeading>
-          <p
-            class="body-md"
-            style="color:var(--color-on-surface-variant)"
-          >
-            {{ t('maintenance.periodSummary', { label: periodLabel, count: periodEntries.length, cost: formatCurrency(totalCost) }) }}
-          </p>
+          <CMetaLine>
+            <CMetaItem variant="sub">
+              {{ periodLabel }}
+            </CMetaItem>
+            <CSeparator />
+            <CMetaItem variant="sub">
+              {{ t('maintenance.header.entriesCount', periodEntries.length) }}
+            </CMetaItem>
+            <CSeparator />
+            <CMetaItem variant="sub">
+              {{ t('maintenance.header.totalCost', { amount: formatCurrency(totalCost) }) }}
+            </CMetaItem>
+          </CMetaLine>
         </header>
         <div class="page-layout">
           <aside

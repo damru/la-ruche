@@ -809,8 +809,9 @@
     "create": "Nouvelle tâche",
     "newTask": "Nouvelle tâche",
     "editTask": "Modifier la tâche",
-    "activeSummary": "{count} tâche(s) active(s)",
-    "activeCount": "{count} tâche active | {count} tâches actives",
+    "header": {
+      "activeSummary": "{count} tâche active | {count} tâches actives"
+    },
     "createdRelative": "Créée {relative}",
     "updatedAt": "Mis à jour {date}",
     "closedOn": "Terminée le {date}",
@@ -1088,8 +1089,10 @@
     "confirmDeleteMessage": "L'entrée « {title} » sera supprimée définitivement.",
     "deleteSuccess": "Entrée supprimée",
     "interventionTotal": "{count} intervention — coût total : {amount} | {count} interventions — coût total : {amount}",
-    "summary": "{count} intervention(s) — coût total : {cost}",
-    "periodSummary": "{label} · {count} intervention(s) — coût total : {cost}",
+    "header": {
+      "entriesCount": "{count} intervention | {count} interventions",
+      "totalCost": "Coût total : {amount}"
+    },
     "searchPlaceholder": "Rechercher une intervention…",
     "sourceAuto": "Automatique",
     "sourceManual": "Manuel",
@@ -1275,7 +1278,10 @@
     "staircaseLabel": "Cage d'escalier",
     "floorLabel": "Étage",
     "description": "Description",
-    "summary": "{units} lots · {users} utilisateurs",
+    "header": {
+      "unitsCount": "{count} lot | {count} lots",
+      "usersCount": "{count} utilisateur | {count} utilisateurs"
+    },
     "tabs": {
       "units": "Lots ({count})",
       "users": "Utilisateurs ({count})"
@@ -1560,7 +1566,7 @@
     "title": "Prestataires",
     "newContractor": "Nouveau prestataire",
     "editContractor": "Modifier le prestataire",
-    "summary": "{count} prestataire(s) enregistré(s)",
+    "summary": "{count} prestataire enregistré | {count} prestataires enregistrés",
     "searchPlaceholder": "Rechercher par nom, domaine, email…",
     "noContractors": "Aucun prestataire enregistré",
     "noResults": "Aucun résultat",
@@ -1591,6 +1597,12 @@
       "cleaning": "Nettoyage",
       "green_spaces": "Espaces verts",
       "other": "Autre"
+    }
+  },
+  "allocationKeys": {
+    "title": "Clés de répartition",
+    "header": {
+      "totalCount": "{count} clé de répartition | {count} clés de répartition"
     }
   }
 }

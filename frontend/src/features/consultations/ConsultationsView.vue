@@ -297,12 +297,9 @@ async function confirmDelete() {
           <CHeading type="header">
             {{ t('consultations.title') }}
           </CHeading>
-          <p
-            class="body-md"
-            style="color:var(--color-on-surface-variant)"
-          >
-            {{ t('consultations.openCount', openCount) }}
-          </p>
+          <CMetaItem variant="sub">
+            {{ t('consultations.openCount', { count: openCount }) }}
+          </CMetaItem>
         </header>
 
         <CAlert

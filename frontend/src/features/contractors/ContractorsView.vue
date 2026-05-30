@@ -269,9 +269,9 @@ async function confirmDelete() {
           <CHeading type="header">
             {{ t('contractors.title') }}
           </CHeading>
-          <p class="body-md text-on-surface-variant">
-            {{ t('contractors.summary', { count: allContractors.length }) }}
-          </p>
+          <CMetaItem variant="sub">
+             {{ t('contractors.summary', { count: allContractors.length }) }}
+          </CMetaItem>
         </header>
 
         <!-- Toolbar: search + view mode toggle -->

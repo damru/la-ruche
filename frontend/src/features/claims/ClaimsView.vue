@@ -889,11 +889,13 @@ async function submitDelete() {
           <CHeading type="header">
             {{ t('claims.title') }}
           </CHeading>
+          <CMetaItem variant="sub">
+             {{ t('claims.activeCount', { count: activeClaimsCount }) }}
+          </CMetaItem>
           <p
             class="body-md"
             style="color:var(--color-on-surface-variant)"
           >
-            {{ t('claims.activeCount', activeClaimsCount) }}
           </p>
         </header>
 

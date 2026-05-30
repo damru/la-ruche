@@ -366,12 +366,9 @@ async function confirmTerminateContract() {
           <CHeading type="header">
             {{ t('contracts.title') }}
           </CHeading>
-          <p
-            class="body-md"
-            style="color:var(--color-on-surface-variant)"
-          >
+          <CMetaItem variant="sub">
             {{ t('contracts.count', { count: allContracts.length }) }}
-          </p>
+          </CMetaItem>
         </header>
 
         <CReminderCard
