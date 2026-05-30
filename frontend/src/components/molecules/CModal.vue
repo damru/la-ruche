@@ -47,11 +47,11 @@ function handleOpenChange(open: boolean) {
       <DialogOverlay
         class="c-modal__overlay"
         :style="stackStyle"
-        @click="close"
       />
       <DialogContent
         :class="['c-modal__content', `c-modal__content--${size}`]"
         :style="stackStyle"
+        :aria-describedby="undefined"
         @escape-key-down="close"
         @pointer-down-outside="e => { e.preventDefault(); close() }"
       >
