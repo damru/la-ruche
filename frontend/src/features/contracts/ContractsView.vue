@@ -392,13 +392,11 @@ async function confirmTerminateContract() {
           </template>
         </CReminderCard>
 
-        <div class="contracts-toolbar">
-          <CTabs
-            v-model="filter"
-            variant="filter"
-            :tabs="contractTabsList"
-          />
-
+        <CTabs
+          v-model="filter"
+          variant="filter"
+          :tabs="contractTabsList"
+        >
           <CFormInput
             v-model="search"
             type="search"
@@ -408,7 +406,7 @@ async function confirmTerminateContract() {
               <CIconSearch />
             </template>
           </CFormInput>
-        </div>
+        </CTabs>
 
         <template
           v-if="contracts.length === 0"
@@ -607,13 +605,6 @@ async function confirmTerminateContract() {
 </template>
 
 <style scoped>
-
-.contracts-toolbar {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  flex-wrap: wrap;
-}
 
 .contracts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: var(--space-4); }
 

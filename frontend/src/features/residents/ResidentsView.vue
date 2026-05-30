@@ -315,19 +315,18 @@ const userColumns = computed(() => [
             { value: 'units', label: t('residents.tabs.units', { count: allUnits.length }) },
             { value: 'users', label: t('residents.tabs.users', { count: allUsers.length }) },
           ]"
-        />
-
-        <CFormInput
-          v-model="search"
-          type="search"
-          :placeholder="activeTab === 'units' ? t('residents.searchUnit') : t('residents.searchUser')"
         >
-          <template #prefix>
-            <CIconSearch />
-          </template>
-        </CFormInput>
-
-        <!-- Lots -->
+          <CFormInput
+            v-model="search"
+            type="search"
+            :placeholder="activeTab === 'units' ? t('residents.searchUnit') : t('residents.searchUser')"
+          >
+            <template #prefix>
+              <CIconSearch />
+            </template>
+          </CFormInput>
+        </CTabs>
+  
         <template v-if="activeTab === 'units'">
           <CCard class="p-0!">
             <CDataTable

@@ -35,20 +35,23 @@ const countClass = (isActive: boolean) => ({
 </script>
 
 <template>
-  <div :class="['tabs', containerClass]">
-    <button
-      v-for="tab in props.tabs"
-      :key="tab.value"
-      type="button"
-      :class="tabClass(model === tab.value)"
-      @click="model = tab.value"
-    >
-      {{ tab.label }}
-      <span
-        v-if="tab.count !== undefined"
-        :class="countClass(model === tab.value)"
-      >{{ tab.count }}</span>
-    </button>
+  <div>
+    <div :class="['tabs', containerClass]">
+      <button
+        v-for="tab in props.tabs"
+        :key="tab.value"
+        type="button"
+        :class="tabClass(model === tab.value)"
+        @click="model = tab.value"
+      >
+        {{ tab.label }}
+        <span
+          v-if="tab.count !== undefined"
+          :class="countClass(model === tab.value)"
+        >{{ tab.count }}</span>
+      </button>
+    </div>
+    <slot></slot>
   </div>
 </template>
 
@@ -73,7 +76,7 @@ const countClass = (isActive: boolean) => ({
   width: max-content;
   max-width: 100%;
   padding: var(--space-1);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
   background: var(--color-surface-container-low);
   overscroll-behavior-x: contain;
 }
@@ -82,13 +85,13 @@ const countClass = (isActive: boolean) => ({
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  padding: var(--space-2) var(--space-5);
+  padding: var(--space-2) var(--space-4);
   font-size: var(--text-sm);
   font-weight: var(--fw-medium);
   white-space: nowrap;
   color: var(--color-on-surface-variant);
   cursor: pointer;
-  transition: color var(--transition-fast);
+  transition: var(--transition-fast);
 }
 
 .tabs__button:hover {
@@ -101,8 +104,9 @@ const countClass = (isActive: boolean) => ({
 }
 
 .tabs__button--filter {
+  min-height: 44px;
   min-width: fit-content;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-lg);
 }
 
 .tabs__button--active-tab {
