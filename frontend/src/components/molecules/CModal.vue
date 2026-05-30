@@ -200,6 +200,8 @@ function handleOpenChange(open: boolean) {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
+  padding-inline: 4px;
+  margin-inline: -4px;
 }
 
 .c-modal__footer {
