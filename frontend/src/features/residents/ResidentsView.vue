@@ -279,6 +279,7 @@ const userColumns = computed(() => [
             shrink="sm"
             :icon="CIconUserPlus"
             :title="t('residents.invite')"
+            disabled
           />
         </div>
       </template>
