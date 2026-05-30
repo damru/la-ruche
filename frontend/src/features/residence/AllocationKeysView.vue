@@ -400,7 +400,8 @@ onMounted(reload)
         />
         <CBtn
           variant="primary"
-          :title="modalSaving ? t('common.saving') : t('common.save')"
+          :title="t('common.save')"
+          :loading-label="t('common.saving')"
           :loading="modalSaving"
           :closing="keyFeedback.status.value === 'success'"
           :disabled="modalSaving || modalLoading"

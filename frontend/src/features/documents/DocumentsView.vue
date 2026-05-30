@@ -363,7 +363,8 @@ async function confirmDeleteDoc() {
           />
           <CBtn
             variant="primary"
-            :title="uploading ? t('common.saving') : t('common.upload')"
+            :title="t('common.upload')"
+            :loading-label="t('common.saving')"
             :loading="uploading"
             :closing="uploadSuccess"
             :disabled="!selectedFile || uploading"

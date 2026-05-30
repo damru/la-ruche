@@ -348,13 +348,13 @@ async function saveMeeting() {
                 :placeholder="`${t('meetings.agenda.title')} ${index + 1}`"
               />
               <CBtn
+                v-if="createAgendaItems.length > 1"
                 variant="icon"
                 size="sm"
                 :icon="CIconTrash"
                 :title="t('common.delete')"
                 :aria-label="t('common.delete')"
                 @click="removeCreateAgendaItem(index)"
-                :disabled="createAgendaItems.length <= 1"
               />
             </div>
             <CBtn
@@ -380,7 +380,8 @@ async function saveMeeting() {
         />
         <CBtn
           variant="primary"
-          :title="saving ? t('common.saving') : t('common.save')"
+          :title="t('common.save')"
+          :loading-label="t('common.saving')"
           :loading="saving"
           :closing="createFeedback.status.value === 'success'"
           @click="saveMeeting"

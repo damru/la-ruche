@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { Component } from 'vue'
 
@@ -8,7 +9,7 @@ type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'negative' | 'icon
 type Size = 'xs' | 'sm' | 'md' | 'lg'
 type Breakpoint = 'sm' | 'md' | 'lg' | 'xl' | '2xl'
 
-withDefaults(defineProps<{
+const props = withDefaults(defineProps<{
   variant?: Variant
   size?: Size
   disabled?: boolean
@@ -16,6 +17,7 @@ withDefaults(defineProps<{
   closing?: boolean
   type?: 'button' | 'submit' | 'reset'
   title?: string
+  loadingLabel?: string
   icon?: Component | string
   shrink?: Breakpoint
 }>(), {
@@ -26,11 +28,30 @@ withDefaults(defineProps<{
   closing: false,
   type: 'button',
   title: undefined,
+  loadingLabel: undefined,
   icon: undefined,
   shrink: undefined,
 })
 
 const { t } = useI18n()
+
+const MIN_LOADING_MS = 1000
+const visualLoading = ref(props.loading)
+let loadingStart = 0
+
+watch(() => props.loading, (val) => {
+  if (val) {
+    loadingStart = Date.now()
+    visualLoading.value = true
+  } else {
+    const remaining = MIN_LOADING_MS - (Date.now() - loadingStart)
+    if (remaining > 0) {
+      setTimeout(() => { visualLoading.value = false }, remaining)
+    } else {
+      visualLoading.value = false
+    }
+  }
+})
 
 const variantClass: Record<Variant, string> = {
   primary: 'c-btn--primary',
@@ -72,12 +93,12 @@ const shrinkClass: Record<Breakpoint, string> = {
     :class="[
       variantClass[variant], sizeClass[size],
       { 
-        'pointer-events-none': loading, 
+        'pointer-events-none': loading || visualLoading, 
         'c-btn--closing': closing, 
         'tone--accent': variant === 'primary', 
         'tone--info': variant === 'secondary', 
         'tone--err': variant === 'danger', 
-        'tone--disabled': disabled, 
+        'tone--disabled': disabled && !visualLoading, 
         'c-btn--shrink': !!shrink 
       }, 
       shrink ? shrinkClass[shrink] : null
@@ -90,7 +111,7 @@ const shrinkClass: Record<Breakpoint, string> = {
     </template>
     <template v-else>
       <span
-        v-if="loading || closing"
+        v-if="visualLoading || closing"
         class="c-btn__spinner"
         aria-hidden="true"
       ></span>
@@ -100,14 +121,12 @@ const shrinkClass: Record<Breakpoint, string> = {
         :class="iconSizeClass[size]"
         aria-hidden="true"
       />
-      <template v-if="title && variant !== 'icon'">
-        <span v-if="closing">
-          {{  t('common.close') }}
-        </span>
-        <span v-else class="c-btn__title">
-          {{ title }}
-        </span>
-      </template>
+      <span 
+        v-if="title && variant !== 'icon'"
+        class="c-btn__title"
+      >
+        {{ (visualLoading && loadingLabel) ? loadingLabel : closing ? t('common.close') : title }}
+      </span>
     </template>
   </button>
 </template>

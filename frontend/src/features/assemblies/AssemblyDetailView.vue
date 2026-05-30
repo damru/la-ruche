@@ -1924,13 +1924,13 @@ function toDateTimeLocal(value: string): string {
                 :placeholder="`${t('meetings.agenda.title')} ${index + 1}`"
               />
               <CBtn
+                v-if="meetingAgendaItems.length > 1"
                 variant="icon"
                 size="sm"
                 :icon="CIconTrash"
                 :title="t('common.delete')"
                 :aria-label="t('common.delete')"
                 @click="removeAgendaItem(index)"
-                :disabled="meetingAgendaItems.length <= 1"
               />
             </div>
 

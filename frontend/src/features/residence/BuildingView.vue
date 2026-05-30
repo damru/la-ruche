@@ -131,7 +131,8 @@ onMounted(reload)
           <div class="flex items-center gap-3">
             <CBtn
               variant="primary"
-              :title="saving ? t('common.saving') : t('settings.saveChanges')"
+              :title="t('settings.saveChanges')"
+              :loading-label="t('common.saving')"
               :loading="saving"
               :disabled="saving"
               @click="saveBuilding"
