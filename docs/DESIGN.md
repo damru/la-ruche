@@ -467,6 +467,7 @@ border-color: var(--color-outline-light);
 | Composant | Props clés | Description |
 |---|---|---|
 | `CBtn` | `variant` (`primary` \| `secondary` \| `ghost` \| `danger` \| `negative` \| `icon`), `size` (`sm` \| `md` \| `lg` \| `icon`), `type` (`button` \| `submit` \| `reset`), `loading`, `disabled`, `closing`, `title?`, `icon?`, `shrink?` (`sm` \| `md` \| `lg` \| `xl` \| `2xl`) | Bouton atomique. Pendant `loading`, seul le spinner est affiché. Usage recommandé dans les vues : props `title` + `icon` (au lieu du slot), surtout pour les actions standardisées. Si `shrink` est défini, le `title` est masqué sous le breakpoint choisi et le bouton devient carré (taille dérivée de `size`). |
+| `CToggle` | `modelValue` (v-model `boolean`), `disabled?`, `ariaLabel?` | Interrupteur on/off — wrapper Radix `SwitchRoot`. 44×24px, thumb blanc, fond `surface-container-high` → `primary` quand actif. Focus visible. Toujours fournir `ariaLabel` ou un `<label>` associé. |
 | `CDropdownMenu` | `items: DropdownItem[]`, `align?: 'start' \| 'end' \| 'center'`, slot: `trigger` | ✅ wrapper Radix `DropdownMenu` |
 | `CTabs` | `tabs` (`{ value, label, count? }[]`), `modelValue` (v-model), `variant?` (`'tab'` \| `'filter'`, défaut `'tab'`) | ✅ Bandeau d'onglets ou de filtres. `tab` (défaut) : indicateur souligné primary sur l'actif. `filter` : segment pill avec fond `surface-container-low`, active = `surface-container-lowest` + ombre, badge numérique circulaire primary. Jamais d'icône seule. |
 

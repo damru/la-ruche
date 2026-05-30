@@ -18,7 +18,7 @@ import { useUiStore } from '@/stores/ui'
 import { authApi, adminApi } from '@/api'
 import { useFormFeedback, SUCCESS_AUTO_CLEAR_MS } from '@/composables/useFormFeedback'
 import CTabs from '@/components/atoms/CTabs.vue'
-import { SwitchRoot, SwitchThumb } from 'radix-vue'
+import CToggle from '@/components/atoms/CToggle.vue'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -310,6 +310,7 @@ async function confirmResetData() {
               v-for="item in notifItems"
               :key="item.key"
               class="notif-item"
+              @click="item.enabled = !item.enabled"
             >
               <div class="notif-info">
                 <span class="title-sm">{{ t(`settings.notifications.${item.key}`) }}</span>
@@ -320,14 +321,10 @@ async function confirmResetData() {
                   {{ t(`settings.notifications.${item.key}Desc`) }}
                 </p>
               </div>
-              <button
-                :class="['toggle', { 'toggle--on': item.enabled }]"
-                :aria-pressed="item.enabled"
+              <CToggle
+                v-model="item.enabled"
                 :aria-label="t(`settings.notifications.${item.key}`)"
-                @click="item.enabled = !item.enabled"
-              >
-                <div class="toggle-thumb"></div>
-              </button>
+              />
             </div>
           </div>
         </CCard>
@@ -458,29 +455,8 @@ async function confirmResetData() {
   gap: var(--space-4);
   padding: 14px 0;
   border-bottom: 1px solid var(--color-outline-variant);
+  cursor: pointer;
 }
 .notif-item:last-child { border-bottom: none; }
 .notif-info { display: flex; flex-direction: column; gap: 2px; }
-
-.toggle {
-  width: 44px; height: 24px;
-  border-radius: 12px;
-  background: var(--color-surface-container-high);
-  border: none;
-  cursor: pointer;
-  position: relative;
-  min-height: 24px;
-  align-self: center;
-  transition: background var(--transition-fast);
-}
-.toggle--on { background: var(--color-primary); }
-.toggle-thumb {
-  position: absolute;
-  top: 3px; left: 3px;
-  width: 18px; height: 18px;
-  border-radius: 50%;
-  background: white;
-  transition: transform var(--transition-fast);
-}
-.toggle--on .toggle-thumb { transform: translateX(20px); }
 </style>
