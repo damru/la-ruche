@@ -8,6 +8,18 @@ on:
 
 jobs:
   label:
+    if: github.actor == github.repository_owner
+    runs-on: arc-runner
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: bcoe/conventional-release-labels@v1
+        with:
+          ignored_types: '["chore", "ci"]'
+          type_labels: '{"feat": "enhancement", "fix": "bug", "breaking": "breaking", "docs": "documentation"}'
+    
+  label-ext:
+    if: github.actor != github.repository_owner
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
@@ -16,3 +28,4 @@ jobs:
         with:
           ignored_types: '["chore", "ci"]'
           type_labels: '{"feat": "enhancement", "fix": "bug", "breaking": "breaking", "docs": "documentation"}'
+    
