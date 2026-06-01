@@ -47,11 +47,11 @@ function handleOpenChange(open: boolean) {
       <DialogOverlay
         class="c-modal__overlay"
         :style="stackStyle"
-        @click="close"
       />
       <DialogContent
         :class="['c-modal__content', `c-modal__content--${size}`]"
         :style="stackStyle"
+        :aria-describedby="undefined"
         @escape-key-down="close"
         @pointer-down-outside="e => { e.preventDefault(); close() }"
       >
@@ -75,8 +75,7 @@ function handleOpenChange(open: boolean) {
             @click="close"
           >
             <CIconX
-              width="18"
-              height="18"
+              class="icon-md"
               aria-hidden="true"
             />
           </button>
@@ -122,6 +121,7 @@ function handleOpenChange(open: boolean) {
   left: 50%;
   transform: translate(-50%, -50%);
   z-index: calc(var(--z-modal) + var(--c-modal-stack, 0));
+  padding: var(--space-6);
 
   /* Glassmorphism */
   background: rgba(255, 255, 255, 0.85);
@@ -131,13 +131,14 @@ function handleOpenChange(open: boolean) {
   backdrop-filter: blur(20px);
   border: 1px solid rgba(194, 199, 207, 0.3);
   box-shadow: var(--shadow-glass);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-2xl);
   overflow: clip;
 
   max-height: 90vh;
   max-width: 90vw;
   display: flex;
   flex-direction: column;
+  gap: var(--space-4);
 
   animation: c-modal-in 0.25s cubic-bezier(0.34, 1.3, 0.64, 1);
 }
@@ -157,7 +158,6 @@ function handleOpenChange(open: boolean) {
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--space-4);
-  padding: var(--space-6) var(--space-6) 0;
   flex-shrink: 0;
 }
 
@@ -179,7 +179,7 @@ function handleOpenChange(open: boolean) {
   height: 32px;
   min-width: unset;
   min-height: unset;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-lg);
   color: var(--color-on-surface-variant);
   flex-shrink: 0;
   transition: background var(--transition-fast), color var(--transition-fast);
@@ -195,13 +195,16 @@ function handleOpenChange(open: boolean) {
 }
 
 .c-modal__body {
-  padding: var(--space-5) var(--space-6);
   overflow-y: auto;
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding-inline: 4px;
+  margin-inline: -4px;
 }
 
 .c-modal__footer {
-  padding: 0 var(--space-6) var(--space-5);
   display: flex;
   justify-content: flex-end;
   gap: var(--space-2);

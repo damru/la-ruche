@@ -13,11 +13,13 @@ import CModal from '@/components/molecules/CModal.vue'
 import CFormInput from '@/components/atoms/CFormInput.vue'
 import CFormSelect from '@/components/atoms/CFormSelect.vue'
 import CFormCheckbox from '@/components/atoms/CFormCheckbox.vue'
-import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
+import CFormActions from '@/components/molecules/CFormActions.vue'
 import CAlert from '@/components/atoms/CAlert.vue'
 import CProgressBar from '@/components/atoms/CProgressBar.vue'
 import CDataTable from '@/components/molecules/CDataTable.vue'
 import CLegalDescription from '@/components/atoms/CLegalDescription.vue'
+import CTabs, { type Tab } from '@/components/atoms/CTabs.vue'
+import CHeading from '@/components/atoms/CHeading.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CEyebrow from '@/components/atoms/CEyebrow.vue'
@@ -98,6 +100,15 @@ const buildingName = ref('')
 const buildingStats = ref<BuildingStats | null>(null)
 const budgets = ref<Budget[]>([])
 const selectedBudgetId = ref<string | null>(null)
+
+const selectedBudgetTab = computed({
+  get: () => selectedBudgetId.value ?? '',
+  set: (v: string) => { selectedBudgetId.value = v || null },
+})
+
+const budgetYearTabs = computed<Tab[]>(() =>
+  budgets.value.map(b => ({ value: b.id, label: String(b.fiscal_year) }))
+)
 const budgetLines = ref<BudgetLine[]>([])
 const levies = ref<LevyCall[]>([])
 const worksFund = ref<WorksFund | null>(null)
@@ -702,10 +713,6 @@ function levyStatusBadgeVariant(s: LevyStatus): 'valid' | 'pending' | 'err' | 'd
   return 'disabled'
 }
 
-function initials(name: string): string {
-  return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
-}
-
 function formatSharePercentage(value: number): string {
   return sharePercentageFormatter.format(value)
 }
@@ -726,11 +733,11 @@ function formatSharePercentage(value: number): string {
           v-if="canEditSelectedBudget && selectedBudgetId"
           variant="primary"
           size="sm"
+          :icon="CIconLock"
+          :title="t('budget.closeExercise')"
+          shrink="sm"
           @click="openCloseExerciseModal"
-        >
-          <CIconLock aria-hidden="true" />
-          <span class="btn-label">{{ t('budget.closeExercise') }}</span>
-        </CBtn>
+        />
       </template>
     </CTopbar>
 
@@ -747,25 +754,25 @@ function formatSharePercentage(value: number): string {
       >
         <div class="view-header">
           <CEyebrow>{{ t('page.eyebrows.budget') }}</CEyebrow>
-          <h1 class="display-md">
+          <CHeading type="header">
             {{ t('budget.title') }}
-          </h1>
+          </CHeading>
         </div>
-        <div class="empty-state empty-state--page">
-          <p class="title-md text-on-surface">
-            {{ t('budget.noExercice') }}
-          </p>
-          <p class="body-md mb-2 text-muted">
-            {{ t('budget.noExerciceHint') }}
-          </p>
-          <CBtn
-            v-if="canManage"
-            variant="primary"
-            @click="openCreateBudgetModal"
-          >
-            + {{ t('budget.newFiscalYear') }}
-          </CBtn>
-        </div>
+        <CEmptyState
+          :title="t('budget.noExercice')"
+          :description="t('budget.noExerciceHint')"
+          size="page"
+        >
+          <template #actions>
+            <CBtn
+              v-if="canManage"
+              variant="primary"
+              :icon="CIconPlus"
+              :title="t('budget.newFiscalYear')"
+              @click="openCreateBudgetModal"
+            />
+          </template>
+        </CEmptyState>
       </template>
 
       <template v-else>
@@ -783,9 +790,9 @@ function formatSharePercentage(value: number): string {
             </CBadge>
             {{ t('page.eyebrows.budget') }}
           </CEyebrow>
-          <h1 class="display-md">
+          <CHeading type="header">
             {{ selectedBudget ? t('budget.fiscalYear', { year: selectedBudget.fiscal_year }) : t('budget.title') }}
-          </h1>
+          </CHeading>
           <CMetaLine
             v-if="selectedBudget"
           >
@@ -799,63 +806,63 @@ function formatSharePercentage(value: number): string {
           </CMetaLine>
         </div>
 
-        <div class="tabs">
-          <button
-            v-for="b in budgets"
-            :key="b.id" 
-            :class="['tab', { 'tab--active': selectedBudgetId === b.id }]"
-            @click="selectedBudgetId = b.id"
-          >
-            {{ b.fiscal_year }}
-          </button>
-          <button
+        <div class="flex items-center gap-2">
+          <CTabs
+            v-model="selectedBudgetTab"
+            variant="filter"
+            :tabs="budgetYearTabs"
+          />
+          <CBtn
             v-if="canManage"
-            class="tab text-primary!"
+            variant="ghost"
+            size="sm"
+            class="mb-4"
+            :icon="CIconPlus"
+            :title="t('budget.newFiscalYear')"
             @click="openCreateBudgetModal"
-          >
-            + {{ t('budget.newFiscalYear') }}
-          </button>
+          />
         </div>
 
         <template v-if="canEditSelectedBudget">
-          <CAlert
-            v-if="!worksFundRateCompliant"
-            variant="error"
-            :title="t('budget.worksFundRateAlertTitle')"
-          >
-            <p>
-              {{ t('budget.worksFundRateAlert', {
-                pct: formatSharePercentage(worksFundContributionRate),
-                minimum: formatSharePercentage(worksFundMinimumRate),
-              }) }}
-            </p>
-          </CAlert>
-          <CAlert
-            v-if="worksFund && !worksFundTargetMet"
-            variant="warning"
-            :title="t('budget.worksFundTargetAlertTitle')"
-          >
-            <p>
-              {{ t('budget.worksFundTargetAlert', {
-                amount: formatCurrency(worksFundRemainingToCall),
-              }) }}
-            </p>
-          </CAlert>
-          <CAlert
-            v-if="hasUnbalancedAllocationKeys"
-            variant="warning"
-            :title="t('budget.allocationKeysAlertTitle')"
-          >
-            <p>
-              {{ t('budget.allocationKeysAlert', {
-                keys: unbalancedAllocationKeys.join(', '),
-              }) }}
-            </p>
-          </CAlert>
+          <div class="flex flex-col gap-2">
+            <CAlert
+              v-if="!worksFundRateCompliant"
+              variant="error"
+              :title="t('budget.worksFundRateAlertTitle')"
+            >
+              <p>
+                {{ t('budget.worksFundRateAlert', {
+                  pct: formatSharePercentage(worksFundContributionRate),
+                  minimum: formatSharePercentage(worksFundMinimumRate),
+                }) }}
+              </p>
+            </CAlert>
+            <CAlert
+              v-if="worksFund && !worksFundTargetMet"
+              variant="warning"
+              :title="t('budget.worksFundTargetAlertTitle')"
+            >
+              <p>
+                {{ t('budget.worksFundTargetAlert', {
+                  amount: formatCurrency(worksFundRemainingToCall),
+                }) }}
+              </p>
+            </CAlert>
+            <CAlert
+              v-if="hasUnbalancedAllocationKeys"
+              variant="warning"
+              :title="t('budget.allocationKeysAlertTitle')"
+            >
+              <p>
+                {{ t('budget.allocationKeysAlert', {
+                  keys: unbalancedAllocationKeys.join(', '),
+                }) }}
+              </p>
+            </CAlert>
+          </div>
         </template>
 
-        <!-- KPI row -->
-        <div class="flex flex-wrap gap-4">
+        <div class="grid gap-4 xs:grid-cols-2 xl:grid-cols-4">
           <CKpiCard
             :label="t('budget.budgetForecastLabel')"
             :value="formatCurrency(selectedTotalForecast)"
@@ -912,52 +919,50 @@ function formatSharePercentage(value: number): string {
           </CKpiCard>
         </div>
 
-        <CCard class="works-fund-card">
-          <div class="section-head">
-            <div>
-              <h2 class="headline-sm">
-                {{ t('budget.worksFund') }}
-              </h2>
-              <CMetaLine v-if="selectedBudget">
-                <CMetaItem variant="sub">
-                  {{ t('budget.worksFundRateSummary', {
-                    pct: formatSharePercentage(worksFundContributionRate),
-                    minimum: formatSharePercentage(worksFundMinimumRate),
-                  }) }}
-                </CMetaItem>
-              </CMetaLine>
-            </div>
-            <div class="inline-flex items-center gap-2">
+        <CCard>
+          <CSectionHeader>
+            <CHeading type="card">
+              {{ t('budget.worksFund') }}
+            </CHeading>
+            <CMetaLine v-if="selectedBudget">
+              <CMetaItem variant="sub">
+                {{ t('budget.worksFundRateSummary', {
+                  pct: formatSharePercentage(worksFundContributionRate),
+                  minimum: formatSharePercentage(worksFundMinimumRate),
+                }) }}
+              </CMetaItem>
+            </CMetaLine>
+            <template #actions>
               <CBtn
                 v-if="canEditSelectedBudget && selectedBudget"
                 variant="ghost"
                 size="sm"
+                :icon="CIconWrench"
+                :title="t('budget.worksFundConfigure')"
+                shrink="sm"
                 @click="openWorksFundModal"
-              >
-                <CIconWrench aria-hidden="true" />
-                <span class="hidden md:inline">{{ t('budget.worksFundConfigure') }}</span>
-              </CBtn>
-            </div>
-          </div>
+              />
+            </template>
+          </CSectionHeader>
 
           <p>
             {{ t('budget.worksFundLegal') }}
           </p>
 
-          <div class="works-fund-card__metrics">
-            <div class="works-fund-card__metric">
+          <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
+            <div class="wf-metric">
               <span class="text-xs">{{ t('budget.worksFundTarget') }}</span>
               <strong class="font-mono">{{ formatCurrency(worksFundContributionTarget) }}</strong>
             </div>
-            <div class="works-fund-card__metric">
+            <div class="wf-metric">
               <span class="text-xs">{{ t('budget.worksFundRate') }}</span>
               <strong>{{ formatSharePercentage(worksFundContributionRate) }}%</strong>
             </div>
-            <div class="works-fund-card__metric">
+            <div class="wf-metric">
               <span class="text-xs">{{ t('budget.worksFundCalled') }}</span>
               <strong class="font-mono">{{ formatCurrency(worksFundCalledAmount) }}</strong>
             </div>
-            <div class="works-fund-card__metric">
+            <div class="wf-metric">
               <span class="text-xs">{{ t('budget.worksFundAvailable') }}</span>
               <strong class="font-mono">{{ formatCurrency(worksFundAvailableAmount) }}</strong>
             </div>
@@ -969,9 +974,12 @@ function formatSharePercentage(value: number): string {
               variant="warning"
               :show-value="true"
             />
-            <div class="ft-prog-foot">
+            <div class="prog-foot">
               <span>{{ t('budget.worksFundProgressLabel', { pct: worksFundProgressPct }) }}</span>
-              <span class="ft-prog-available text-end">
+              <span
+                class="text-end font-medium"
+                style="color: var(--color-warning)"
+              >
                 {{ t('budget.worksFundRemainingToCall', { amount: formatCurrency(worksFundRemainingToCall) }) }}
               </span>
             </div>
@@ -980,33 +988,35 @@ function formatSharePercentage(value: number): string {
 
         <div
           v-if="canViewLevies && overdueLevies.length > 0"
+          class="flex flex-col gap-4"
         >
-          <div class="section-head">
-            <div>
-              <h2 class="headline-sm">
-                {{ t('budget.latePayments') }}
-              </h2>
-              <CMetaLine>
-                <CMetaItem variant="sub">
-                  {{ t('budget.latePaymentsCount', { count: overdueLevies.length }) }}
-                </CMetaItem>
-                <CSeparator />
-                <CMetaItem variant="sub">
-                  {{ t('budget.latePaymentsTotal', { amount: formatCurrency(overdueTotal) }) }}
-                </CMetaItem>
-              </CMetaLine>
-            </div>
-          </div>
+          <CSectionHeader>
+            <CHeading>
+              {{ t('budget.latePayments') }}
+            </CHeading>
+            <CMetaLine>
+              <CMetaItem variant="sub">
+                {{ t('budget.latePaymentsCount', { count: overdueLevies.length }) }}
+              </CMetaItem>
+              <CSeparator />
+              <CMetaItem variant="sub">
+                {{ t('budget.latePaymentsTotal', { amount: formatCurrency(overdueTotal) }) }}
+              </CMetaItem>
+            </CMetaLine>
+          </CSectionHeader>
           <CCard
             v-for="levy in overdueLevies"
             :key="levy.id"
-            class="overdue-item tone--err"
+            class="tone--err"
             :shadow="false"
+            :level="4"
+            :style="{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--space-4)' }"
           >
             <div class="flex gap-3">
-              <div class="overdue-avatar">
-                {{ initials(levy.owner_name ?? '?') }}
-              </div>
+              <CAvatar
+                :name="levy.owner_name"
+                size="lg"
+              />
               <div>
                 <div class="text-on-surface font-medium">
                   {{ levy.owner_name ?? '—' }}
@@ -1032,56 +1042,50 @@ function formatSharePercentage(value: number): string {
             </div>
           </CCard>
         </div>
-        <CCard>
-          <div class="section-head">
-            <div>
-              <h2 class="headline-sm">
-                {{ t('budget.consumptionByLine') }}
-              </h2>
-              <CMetaItem variant="sub">
-                {{ t('budget.forecastVsActual') }}
-              </CMetaItem>
-            </div>
-            <div class="inline-flex items-center gap-2">
+        <CCard gap="md">
+          <CSectionHeader>
+            <CHeading type="card">
+              {{ t('budget.consumptionByLine') }}
+            </CHeading>
+            <CMetaItem variant="sub">
+              {{ t('budget.forecastVsActual') }}
+            </CMetaItem>
+            <template #actions>
               <CBtn
                 v-if="budgetBreakdownItems.length > 0"
                 variant="ghost"
                 size="sm"
+                :icon="CIconPieChart"
+                :title="t('budget.breakdown')"
+                shrink="sm"
                 @click="showBreakdownModal = true"
-              >
-                <CIconPieChart aria-hidden="true" />
-                <span class="hidden md:inline">{{ t('budget.breakdown') }}</span>
-              </CBtn>
+              />
               <CBtn
                 v-if="canEditSelectedBudget"
                 variant="ghost"
                 size="sm"
+                :icon="CIconPlus"
+                :title="t('budget.newLine')"
+                shrink="sm"
                 @click="openCreateLineModal"
-              >
-                <CIconPlus aria-hidden="true" />
-                <span class="hidden md:inline">{{ t('budget.newLine') }}</span>
-              </CBtn>
-            </div>
-          </div>
+              />
+            </template>
+          </CSectionHeader>
 
           <div
             v-if="budgetLines.length === 0"
-            class="empty-state"
+            class="py-8 text-center text-md text-on-surface-variant"
           >
             <p>{{ t('common.noData') }}</p>
           </div>
 
-          <CFlexGroup
-            v-else
-            class="prog-list"
-          >
+          <CFlexGroup v-else>
             <div
               v-for="line in budgetLines"
               :key="line.id"
-              class="prog-item"
             >
-              <div class="prog-item__header">
-                <span class="prog-item__label">{{ line.label }}</span>
+              <div class="flex justify-between items-center mb-2">
+                <span class="text-sm font-medium text-on-surface">{{ line.label }}</span>
                 <CMetaLine class="text-xs">
                   <CBadge
                     v-if="line.key_name"
@@ -1093,11 +1097,10 @@ function formatSharePercentage(value: number): string {
                     v-if="canEditSelectedBudget"
                     variant="ghost"
                     size="sm"
+                    :icon="CIconTrash"
                     :aria-label="t('common.delete')"
                     @click="lineToDelete = line"
-                  >
-                    <CIconTrash aria-hidden="true" />
-                  </CBtn>
+                  />
                 </CMetaLine>
               </div>
               <CProgressBar
@@ -1105,15 +1108,15 @@ function formatSharePercentage(value: number): string {
                 :variant="lineVariant(line)"
                 :show-value="true"
               />
-              <div class="prog-item__foot">
-                <span>{{ t('budget.realizedLabel') }} : <b>{{ formatCurrency(line.actual_amount ?? 0) }}</b></span>
-                <span>{{ t('budget.plannedLabel') }} : <b>{{ formatCurrency(line.budgeted_amount) }}</b></span>
+              <div class="prog-foot">
+                <span>{{ t('budget.realizedLabel') }} : <b class="text-on-surface font-medium font-mono">{{ formatCurrency(line.actual_amount ?? 0) }}</b></span>
+                <span>{{ t('budget.plannedLabel') }} : <b class="text-on-surface font-medium font-mono">{{ formatCurrency(line.budgeted_amount) }}</b></span>
               </div>
             </div>
           </CFlexGroup>
           <div
             v-if="budgetLines.length > 0"
-            class="prog-total"
+            class="flex justify-between border-t border-outline-variant font-semibold text-sm text-on-surface pt-4"
           >
             <span>{{ t('common.total') }}</span>
             <span class="font-mono">
@@ -1121,41 +1124,42 @@ function formatSharePercentage(value: number): string {
             </span>
           </div>
         </CCard>
-        
-        <CCard v-if="canViewLevies">
-          <div class="section-head">
-            <div>
-              <h2 class="headline-sm">
-                {{ t('budget.levies') }}
-              </h2>
-              <CMetaLine>
-                <CMetaItem variant="sub">
-                  {{ t('budget.levyCallsCount', { count: levyCallCount }) }}
-                </CMetaItem>
-                <CSeparator />
-                <CMetaItem variant="sub">
-                  {{ t('budget.collectionRatePct', { pct: levyCollectionRate }) }}
-                </CMetaItem>
-              </CMetaLine>
-            </div>
-            <div class="inline-flex items-center gap-2">
+      
+        <CCard
+          v-if="canViewLevies"
+          gap="md"
+        >
+          <CSectionHeader>
+            <CHeading type="card">
+              {{ t('budget.levies') }}
+            </CHeading>
+            <CMetaLine>
+              <CMetaItem variant="sub">
+                {{ t('budget.levyCallsCount', { count: levyCallCount }) }}
+              </CMetaItem>
+              <CSeparator />
+              <CMetaItem variant="sub">
+                {{ t('budget.collectionRatePct', { pct: levyCollectionRate }) }}
+              </CMetaItem>
+            </CMetaLine>
+            <template #actions>
               <CBtn
                 v-if="canEditSelectedBudget && selectedBudgetId"
                 variant="ghost"
                 size="sm"
+                :icon="CIconMegaphone"
+                :title="t('budget.generateLevies')"
+                shrink="sm"
                 @click="openGenerateModal"
-              >
-                <CIconMegaphone aria-hidden="true" />
-                <span class="hidden md:inline">{{ t('budget.generateLevies') }}</span>
-              </CBtn>
-            </div>
-          </div>
+              />
+            </template>
+          </CSectionHeader>
 
-        
+      
 
           <div
             v-if="consolidatedLevies.length === 0"
-            class="empty-state"
+            class="py-8 text-center text-md text-on-surface-variant"
           >
             <p>{{ t('common.noData') }}</p>
           </div>
@@ -1170,7 +1174,7 @@ function formatSharePercentage(value: number): string {
             <template #cell-owner_name="{ row }">
               <div>
                 <div>{{ row.owner_name ?? '—' }}</div>
-                <div class="cell-muted">
+                <div class="text-on-surface-variant text-xs">
                   {{ t('common.lot') }} {{ asConsolidatedLevyRow(row).unit_numbers.join(', ') || '—' }}
                 </div>
               </div>
@@ -1183,12 +1187,12 @@ function formatSharePercentage(value: number): string {
               </span>
             </template>
             <template #cell-due_date="{ row }">
-              <span class="cell-muted">
+              <span class="text-on-surface-variant text-xs">
                 {{ asConsolidatedLevyRow(row).due_date ? formatDate(asConsolidatedLevyRow(row).due_date) : '—' }}
               </span>
             </template>
             <template #cell-call_label="{ row }">
-              <span class="cell-muted">
+              <span class="text-on-surface-variant text-xs">
                 {{ row.call_label || t('budget.defaultLevyLabel') }}
               </span>
             </template>
@@ -1205,17 +1209,17 @@ function formatSharePercentage(value: number): string {
             <template #cell-actions="{ row }">
               <CBtn
                 v-if="canMarkLeviesPaid && row.status !== 'paid'"
-                variant="ghost"
+                variant="icon"
                 size="sm"
+                :icon="CIconCheckCircle"
+                :title="t('budget.markPaid')"
                 :loading="markingPaidId === asConsolidatedLevyRow(row).id"
+                class="tone--valid"
                 @click="markPaid(asConsolidatedLevyRow(row))"
-              >
-                <CIconCheckCircle aria-hidden="true" />
-                {{ t('budget.markPaid') }}
-              </CBtn>
+              />
             </template>
           </CDataTable>
-          <div class="levies-total">
+          <div class="flex justify-between items-center text-sm font-semibold text-on-surface">
             <span>{{ t('common.total') }}</span>
             <span class="font-mono">
               {{ formatCurrency(totalLeviedAmount) }}
@@ -1242,7 +1246,6 @@ function formatSharePercentage(value: number): string {
       </template>
     </div>
 
-    <!-- ── Modal: Nouvel exercice (S01) ──────────────────────────── -->
     <CModal
       :open="showCreateBudgetModal"
       :title="t('budget.newFiscalYear')"
@@ -1257,27 +1260,25 @@ function formatSharePercentage(value: number): string {
         required
       />
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="createBudgetFeedback.status.value"
           :message="createBudgetFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          @click="showCreateBudgetModal = false"
         >
-          {{ t('common.cancel') }}
-        </CBtn>
-        <CBtn
-          variant="primary"
-          :loading="savingBudget"
-          @click="saveBudget"
-        >
-          {{ t('common.create') }}
-        </CBtn>
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="showCreateBudgetModal = false"
+          />
+          <CBtn
+            variant="primary"
+            :title="t('common.create')"
+            :loading="savingBudget"
+            @click="saveBudget"
+          />
+        </CFormActions>
       </template>
     </CModal>
 
-    <!-- ── Modal: Nouvelle ligne (S01) ───────────────────────────── -->
     <CModal
       :open="showCreateLineModal"
       :title="t('budget.addLine')"
@@ -1303,27 +1304,25 @@ function formatSharePercentage(value: number): string {
         required
       />
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="createLineFeedback.status.value"
           :message="createLineFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          @click="showCreateLineModal = false"
         >
-          {{ t('common.cancel') }}
-        </CBtn>
-        <CBtn
-          variant="primary"
-          :loading="savingLine"
-          @click="saveLine"
-        >
-          {{ t('common.save') }}
-        </CBtn>
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="showCreateLineModal = false"
+          />
+          <CBtn
+            variant="primary"
+            :title="t('common.save')"
+            :loading="savingLine"
+            @click="saveLine"
+          />
+        </CFormActions>
       </template>
     </CModal>
 
-    <!-- ── Modal: Supprimer ligne (S01) ──────────────────────────── -->
     <CModal
       :open="!!lineToDelete"
       :title="t('common.confirmDelete')"
@@ -1331,33 +1330,32 @@ function formatSharePercentage(value: number): string {
     >
       <p>{{ lineToDelete?.label }}</p>
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="deleteLineFeedback.status.value"
           :message="deleteLineFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          @click="lineToDelete = null"
         >
-          {{ t('common.cancel') }}
-        </CBtn>
-        <CBtn
-          variant="danger"
-          :loading="deletingLine"
-          @click="confirmDeleteLine"
-        >
-          {{ t('common.delete') }}
-        </CBtn>
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="lineToDelete = null"
+          />
+          <CBtn
+            variant="danger"
+            :title="t('common.delete')"
+            :loading="deletingLine"
+            @click="confirmDeleteLine"
+          />
+        </CFormActions>
       </template>
     </CModal>
 
-    <!-- ── Modal: Générer les appels (S02) ───────────────────────── -->
     <CModal
+      size="lg"
       :open="showGenerateModal"
       :title="t('budget.generateLeviesTitle')"
       @update:open="showGenerateModal = $event"
     >
-      <p class="body-sm mb-4 leading-6 text-muted">
+      <p class="body-sm  text-on-surface-variant">
         {{ t('budget.generateLeviesSub') }}
       </p>
       <CFormInput
@@ -1366,12 +1364,12 @@ function formatSharePercentage(value: number): string {
         type="date"
         required
       />
-      <div class="field gap-1">
+      <div class="flex flex-col gap-1">
         <CFormCheckbox
           v-model="generateForm.include_works_fund"
           :label="t('budget.includeWorksFund')"
         />
-        <p class="field-hint">
+        <p class="text-xs text-on-surface-variant">
           {{ t('budget.worksFundLegal') }}
         </p>
       </div>
@@ -1380,52 +1378,50 @@ function formatSharePercentage(value: number): string {
         :label="t('budget.callLabel')"
         :placeholder="t('budget.callLabelPlaceholder')"
       />
-      <div
+      <CCardNote
         v-if="selectedTotalForecast > 0"
-        class="mt-2 rounded-md bg-secondary-container px-3.5 py-3 text-sm text-on-secondary-container"
+        class="flex-col"
       >
         <strong>{{ t('budget.generateSummaryLabel') }}</strong>
-        <div class="mt-2.5 grid gap-3 md:grid-cols-3">
-          <div class="flex flex-col gap-1">
-            <span class="text-[11px] opacity-80">{{ t('budget.generateSummaryLotsLabel') }}</span>
+        <div class="grid gap-3 grid-cols-3">
+          <div class="stat-cell">
+            <span class="text-2xs opacity-80">{{ t('budget.generateSummaryLotsLabel') }}</span>
             <strong>{{ impactedLotsCount }}</strong>
           </div>
-          <div class="flex flex-col gap-1">
-            <span class="text-[11px] opacity-80">{{ t('budget.generateSummaryAlreadyCalledLabel') }}</span>
+          <div class="stat-cell">
+            <span class="text-2xs opacity-80">{{ t('budget.generateSummaryAlreadyCalledLabel') }}</span>
             <strong class="font-mono tabular-nums">{{ formatCurrency(alreadyCalledDisplayAmount) }}</strong>
           </div>
-          <div class="flex flex-col gap-1">
-            <span class="text-[11px] opacity-80">{{ t('budget.generateSummaryRemainingLabel') }}</span>
+          <div class="stat-cell">
+            <span class="text-2xs opacity-80">{{ t('budget.generateSummaryRemainingLabel') }}</span>
             <strong class="font-mono tabular-nums">{{ formatCurrency(generatePreviewTotal) }}</strong>
           </div>
         </div>
         <p
           v-if="generatePreviewTotal === 0"
-          class="mt-2.5 text-xs"
         >
           {{ t('budget.generateSummaryNothingToGenerate') }}
         </p>
-      </div>
+      </CCardNote>
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="generateFeedbackStatus"
           :message="generateFeedbackMessage"
-        />
-        <CBtn
-          variant="ghost"
-          @click="showGenerateModal = false"
         >
-          {{ t('common.cancel') }}
-        </CBtn>
-        <CBtn
-          variant="primary"
-          :disabled="!canGenerateLevies"
-          :loading="generatingLevies"
-          @click="generateLevies"
-        >
-          <CIconMegaphone aria-hidden="true" />
-          {{ t('budget.generate') }}
-        </CBtn>
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="showGenerateModal = false"
+          />
+          <CBtn
+            variant="primary"
+            :icon="CIconMegaphone"
+            :title="t('budget.generate')"
+            :disabled="!canGenerateLevies"
+            :loading="generatingLevies"
+            @click="generateLevies"
+          />
+        </CFormActions>
       </template>
     </CModal>
 
@@ -1435,32 +1431,34 @@ function formatSharePercentage(value: number): string {
       size="lg"
       @update:open="showBreakdownModal = $event"
     >
-      <p class="body-sm text-muted">
+      <p class="body-sm text-on-surface-variant">
         {{ t('budget.breakdownIntro') }}
       </p>
-      <div class="breakdown-modal">
+      <div
+        class="mt-4 grid items-center gap-6 sm:grid-cols-[1fr_auto]"
+      >
         <div class="flex justify-center">
           <div
-            class="breakdown-modal__chart"
-            :style="budgetBreakdownStyle"
+            class="w-[min(280px,56vw)] aspect-square rounded-full"
+            :style="{ ...budgetBreakdownStyle, boxShadow: 'inset 0 0 0 1px rgba(25,28,29,0.05)' }"
             role="img"
             :aria-label="t('budget.breakdownAriaLabel')"
           ></div>
         </div>
 
-        <div class="breakdown-modal__legend">
+        <div class="flex flex-col gap-3">
           <div
             v-for="item in budgetBreakdownItems"
             :key="item.id"
-            class="breakdown-modal__legend-item"
+            class="flex items-start gap-3"
           >
             <span
-              class="breakdown-modal__swatch"
+              class="mt-1 size-3 shrink-0 rounded-full"
               :style="{ background: item.color }"
               aria-hidden="true"
             ></span>
-            <div class="breakdown-modal__legend-copy">
-              <strong>{{ item.label }}</strong>
+            <div class="flex min-w-0 flex-col gap-1">
+              <strong class="text-sm text-on-surface">{{ item.label }}</strong>
               <CFlexGroup
                 direction="row"
                 class="flex-wrap"
@@ -1483,7 +1481,7 @@ function formatSharePercentage(value: number): string {
       :title="t('budget.worksFundConfigureTitle')"
       @update:open="showWorksFundModal = $event"
     >
-      <p class="body-sm mb-4 leading-6 text-muted">
+      <p class="body-sm mb-4 leading-6 text-on-surface-variant">
         {{ t('budget.worksFundConfigureHint') }}
       </p>
       <CFormInput
@@ -1495,27 +1493,26 @@ function formatSharePercentage(value: number): string {
         step="0.01"
         required
       />
-      <p class="field-hint mt-2">
+      <p class="text-xs text-on-surface-variant mt-2">
         {{ t('budget.worksFundRateHint', { minimum: formatSharePercentage(worksFundMinimumRate) }) }}
       </p>
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="worksFundFeedback.status.value"
           :message="worksFundFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          @click="showWorksFundModal = false"
         >
-          {{ t('common.cancel') }}
-        </CBtn>
-        <CBtn
-          variant="primary"
-          :loading="savingWorksFund"
-          @click="saveWorksFund"
-        >
-          {{ t('common.save') }}
-        </CBtn>
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="showWorksFundModal = false"
+          />
+          <CBtn
+            variant="primary"
+            :title="t('common.save')"
+            :loading="savingWorksFund"
+            @click="saveWorksFund"
+          />
+        </CFormActions>
       </template>
     </CModal>
 
@@ -1524,188 +1521,53 @@ function formatSharePercentage(value: number): string {
       :title="t('budget.closeExerciseTitle')"
       @update:open="showCloseExerciseModal = $event"
     >
-      <p class="body-sm mb-4 leading-6 text-muted">
+      <p class="body-sm mb-4 leading-6 text-on-surface-variant">
         {{ t('budget.closeExerciseConfirmation', { year: selectedBudget?.fiscal_year }) }}
       </p>
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="closeExerciseFeedback.status.value"
           :message="closeExerciseFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          @click="showCloseExerciseModal = false"
         >
-          {{ t('common.cancel') }}
-        </CBtn>
-        <CBtn
-          variant="danger"
-          :loading="closingExercise"
-          @click="closeExercise"
-        >
-          {{ t('budget.closeExerciseConfirm') }}
-        </CBtn>
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="showCloseExerciseModal = false"
+          />
+          <CBtn
+            variant="danger"
+            :title="t('budget.closeExerciseConfirm')"
+            :loading="closingExercise"
+            @click="closeExercise"
+          />
+        </CFormActions>
       </template>
     </CModal>
   </div>
 </template>
 
 <style scoped>
-
-/* ── Section card ────────────────────────────────────────────────── */
-.section-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  margin-bottom: var(--space-3  );
-  gap: 12px;
-}
-.section-sub { font-size: 12px; color: var(--color-on-surface-variant); margin-top: 2px; }
-
-.empty-state--page {
-  padding: 64px 24px;
-  max-width: 480px;
-  margin: 0 auto;
-  text-align: center;
-}
-
-.works-fund-card__metrics {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--space-3);
-}
-
-.works-fund-card__metric {
+.wf-metric {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-1);
   padding: var(--space-3);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   background: color-mix(in srgb, var(--color-warning) var(--color-tint), transparent);
 }
 
-.works-fund-card__alerts {
-  display: grid;
-  gap: var(--space-3);
-}
-
-/* ── Progress bars ───────────────────────────────────────────────── */
-.prog-item__header {
+.prog-foot {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 6px;
-}
-.prog-item__label { font-size: 13px; font-weight: var(--fw-medium); color: var(--color-on-surface); }
-
-.prog-item__foot {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 5px;
-  font-size: 11px;
+  margin-top: var(--space-1);
+  font-size: var(--text-2xs);
   color: var(--color-on-surface-variant);
 }
-.prog-item__foot b { color: var(--color-on-surface); font-weight: var(--fw-medium); font-family: var(--font-mono); }
 
-.prog-total {
-  display: flex;
-  justify-content: space-between;
-  border-top: 1px solid var(--color-outline-variant);
-  font-weight: var(--fw-semibold);
-  font-size: var(--text-sm);
-  color: var(--color-on-surface);
-  padding-top: var(--space-4);
-}
-
-/* ── Table overrides for this view ───────────────────────────────── */
-.levies-total {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: var(--text-sm);
-  font-weight: var(--fw-semibold);
-  color: var(--color-on-surface);
-}
-.cell-muted { color: var(--color-on-surface-variant); font-size: var(--text-xs); }
-
-/* ── Works fund card ─────────────────────────────────────────────── */
-.ft-prog-foot { display: flex; justify-content: space-between; margin-top: 5px; font-size: 11px; color: var(--color-on-surface-variant); }
-.ft-prog-available { color: var(--color-warning, #e65100); font-weight: var(--fw-medium); }
-
-/* ── Mini card (overdue) ─────────────────────────────────────────── */
-
-.overdue-item {
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
-}
-
-.overdue-avatar {
-  width: 42px;
-  height: 42px;
-  border-radius: var(--radius-full);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-display);
-  font-size: var(--text-sm);
-  font-weight: var(--fw-bold);
-  flex-shrink: 0;
-  background: var(--tone-fg);
-  color: var(--color-surface);
-}
-
-.breakdown-modal {
-  display: grid;
-  grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
-  gap: 24px;
-  align-items: center;
-  margin-top: 16px;
-}
-.breakdown-modal__chart {
-  width: min(280px, 56vw);
-  aspect-ratio: 1;
-  border-radius: 50%;
-  box-shadow: inset 0 0 0 1px rgba(25, 28, 29, 0.05);
-}
-.breakdown-modal__legend-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-}
-.breakdown-modal__swatch {
-  width: 12px;
-  height: 12px;
-  border-radius: 999px;
-  margin-top: 4px;
-  flex-shrink: 0;
-}
-.breakdown-modal__legend-copy {
+.stat-cell {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-.breakdown-modal__legend-copy strong {
-  font-size: 13px;
-  color: var(--color-on-surface);
-}
-
-@media (max-width: 1024px) {
-  .breakdown-modal {
-    grid-template-columns: 1fr;
-  }
-
-  .works-fund-card__metrics {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 768px) {
-  .section-head {
-    flex-wrap: wrap;
-    align-items: flex-start;
-  }
+  gap: var(--space-1);
 }
 </style>
+

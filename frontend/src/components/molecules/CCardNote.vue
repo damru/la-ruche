@@ -8,10 +8,11 @@
 .c-card-note {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-1) var(--space-2);
-  border-radius: var(--radius-sm);
-  background: var(--color-surface-container-low);
-  padding: var(--space-3);
+  gap: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-secondary-container);
+  color: var(--color-on-secondary-container);
+  padding: var(--space-3) var(--space-4);
   font-size: var(--text-xs);
   line-height: 1.4;
 }

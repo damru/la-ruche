@@ -21,6 +21,15 @@ import type {
   VoteType,
 } from '@/types/domain'
 import { buildingApi, documentsApi, meetingsApi } from '@/api'
+import CIconBell from '@/components/atoms/CIconBell.svg'
+import CIconCheck from '@/components/atoms/CIconCheck.svg'
+import CIconClock from '@/components/atoms/CIconClock.svg'
+import CIconDownload from '@/components/atoms/CIconDownload.svg'
+import CIconEdit from '@/components/atoms/CIconEdit.svg'
+import CIconLock from '@/components/atoms/CIconLock.svg'
+import CIconPlus from '@/components/atoms/CIconPlus.svg'
+import CIconTrash from '@/components/atoms/CIconTrash.svg'
+import CIconUpload from '@/components/atoms/CIconUpload.svg'
 
 const route = useRoute()
 const { t } = useI18n()
@@ -56,6 +65,12 @@ const savingDocument = ref(false)
 const savingAttendance = ref(false)
 const callingMeeting = ref(false)
 const closingMeeting = ref(false)
+const showCloseMeetingModal = ref(false)
+const closeMeetingFeedback = useFormFeedback()
+
+const showDeleteDocumentModal = ref(false)
+const pendingDeleteDocumentId = ref<string | null>(null)
+const pendingDeleteDocumentName = ref<string | null>(null)
 
 const showVoteModal = ref(false)
 const votingResolution = ref<Resolution | null>(null)
@@ -117,6 +132,14 @@ const notificationDeadline = computed(() => {
   const deadline = new Date(notified)
   deadline.setMonth(deadline.getMonth() + 2)
   return deadline
+})
+
+const notificationDutyVariant = computed<'info' | 'warning' | 'error'>(() => {
+  if (!notificationDutyDeadline.value) return 'info'
+  const daysLeft = Math.floor((notificationDutyDeadline.value.getTime() - Date.now()) / 86_400_000)
+  if (daysLeft < 0) return 'error'
+  if (daysLeft <= 7) return 'warning'
+  return 'info'
 })
 
 const showEditResolutionModal = ref(false)
@@ -515,13 +538,6 @@ function attendanceModeVariant(mode: MeetingAttendanceMode): BadgeVariant {
   return 'disabled'
 }
 
-function ownerInitials(name?: string | null): string {
-  if (!name?.trim()) return '??'
-  const parts = name.trim().split(/\s+/).filter(Boolean)
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
-  return `${parts[0][0] ?? ''}${parts[parts.length - 1][0] ?? ''}`.toUpperCase()
-}
-
 function documentKindLabel(kind: MeetingDocument['kind']): string {
   return t(`meetings.documents.${kind}`)
 }
@@ -760,6 +776,20 @@ async function detachDocument(documentId: string) {
   }
 }
 
+function promptDeleteDocument(documentId: string, name: string) {
+  pendingDeleteDocumentId.value = documentId
+  pendingDeleteDocumentName.value = name
+  showDeleteDocumentModal.value = true
+}
+
+async function confirmDetachDocument() {
+  if (!pendingDeleteDocumentId.value) return
+  await detachDocument(pendingDeleteDocumentId.value)
+  showDeleteDocumentModal.value = false
+  pendingDeleteDocumentId.value = null
+  pendingDeleteDocumentName.value = null
+}
+
 async function openDocument(documentId: string) {
   try {
     const response = await documentsApi.getDownloadUrl(documentId)
@@ -835,13 +865,14 @@ async function closeMeeting() {
   if (!meeting.value) return
 
   closingMeeting.value = true
-  documentFeedback.reset()
+  closeMeetingFeedback.reset()
 
   try {
     await meetingsApi.close(meeting.value.id)
+    showCloseMeetingModal.value = false
     await reload()
   } catch (err) {
-    documentFeedback.setError(toErrorMessage(err))
+    closeMeetingFeedback.setError(toErrorMessage(err))
   } finally {
     closingMeeting.value = false
   }
@@ -1115,63 +1146,57 @@ function toDateTimeLocal(value: string): string {
           <CBtn
             variant="secondary"
             size="sm"
+            :icon="CIconEdit"
+            :title="t('common.edit')"
+            shrink="sm"
             @click="openEditMeetingModal"
-          >
-            <CIconEdit class="icon-sm" />
-            <span class="btn-label">{{ t('common.edit') }}</span>
-          </CBtn>
+          />
           <CBtn
             variant="primary"
             size="sm"
+            :icon="CIconBell"
+            :title="t('meetings.call')"
             :loading="callingMeeting"
             @click="openConvocationModal"
-          >
-            <CIconBell class="icon-sm" />
-            <span class="btn-label">{{ t('meetings.call') }}</span>
-          </CBtn>
+          />
         </template>
 
         <CBtn
           v-else-if="topbarActionState === 'called-waiting'"
           variant="secondary"
           size="sm"
+          :icon="CIconClock"
+          :title="t('meetings.waiting')"
           disabled
-        >
-          <CIconClock class="icon-sm" />
-          <span class="btn-label">{{ t('meetings.waiting') }}</span>
-        </CBtn>
+        />
 
         <CBtn
           v-else-if="topbarActionState === 'called-startable'"
           variant="primary"
           size="sm"
+          :icon="CIconCheck"
+          :title="t('meetings.start')"
           :loading="startingMeeting"
           @click="openStartMeetingModal"
-        >
-          <CIconCheck class="icon-sm" />
-          <span class="btn-label">{{ t('meetings.start') }}</span>
-        </CBtn>
+        />
 
         <CBtn
           v-else-if="topbarActionState === 'ongoing'"
           variant="primary"
           size="sm"
-          :loading="closingMeeting"
-          @click="closeMeeting"
-        >
-          <CIconCheck class="icon-sm" />
-          <span class="btn-label">{{ t('meetings.close') }}</span>
-        </CBtn>
+          :icon="CIconLock"
+          :title="t('meetings.close')"
+          @click="showCloseMeetingModal = true"
+        />
 
         <CBtn
           v-else-if="topbarActionState === 'closed'"
           variant="secondary"
           size="sm"
+          :icon="CIconLock"
+          :title="t('meetings.closedAction')"
           disabled
-        >
-          <CIconLock class="icon-sm" />
-          <span class="btn-label">{{ t('meetings.closedAction') }}</span>
-        </CBtn>
+        />
       </template>
     </CTopbar>
 
@@ -1195,9 +1220,9 @@ function toDateTimeLocal(value: string): string {
             <span>{{ t('page.eyebrows.assemblyDetail') }}</span>
           </CEyebrow>
 
-          <h1 class="display-md">
+          <CHeading type="header">
             {{ typeLabel(meeting.meeting_type) }} {{ new Date(meeting.meeting_date).getFullYear() }}
-          </h1>
+          </CHeading>
 
           <CMetaLine>
             <CMetaItem variant="sub">
@@ -1248,11 +1273,10 @@ function toDateTimeLocal(value: string): string {
             variant="ghost"
             size="sm"
             type="button"
+            :icon="CIconDownload"
+            :title="t('meetings.minutes.download_signed')"
             @click="openDocument(meeting.minutes_document_id!)"
-          >
-            <CIconDownload class="icon-sm" />
-            <span class="btn-label">{{ t('meetings.minutes.download_signed') }}</span>
-          </CBtn>
+          />
         </div>
 
         <CCard
@@ -1269,21 +1293,19 @@ function toDateTimeLocal(value: string): string {
                   variant="ghost"
                   size="sm"
                   type="button"
+                  :icon="CIconDownload"
+                  :title="t('meetings.minutes.download_signed')"
                   @click="openDocument(meeting.minutes_document_id!)"
-                >
-                  <CIconDownload class="icon-sm" />
-                  <span>{{ t('meetings.minutes.download_signed') }}</span>
-                </CBtn>
+                />
                 <CBtn
                   v-if="auth.isManager"
                   variant="ghost"
                   size="sm"
                   type="button"
+                  :icon="CIconEdit"
+                  :title="t('meetings.signatures.action_label')"
                   @click="openSignaturesModal"
-                >
-                  <CIconEdit class="icon-sm" />
-                  <span>{{ t('meetings.signatures.action_label') }}</span>
-                </CBtn>
+                />
               </div>
               <div class="flex flex-col gap-1 text-xs text-on-surface-variant">
                 <span>
@@ -1305,31 +1327,31 @@ function toDateTimeLocal(value: string): string {
                   {{ (meeting.minutes_scrutineers_signed ?? []).map(s => s.name).join(', ') }}
                 </span>
               </div>
-              <div class="flex items-center gap-2 flex-wrap">
-                <template v-if="auth.isManager">
-                  <span
-                    v-if="notificationDutyDeadline"
-                    class="text-xs text-on-surface-variant"
-                  >
-                    {{ t('meetings.minutes.notification_duty_hint', { date: formatDate(notificationDutyDeadline.toISOString()) }) }}<sup><a
-                      href="https://www.legifrance.gouv.fr/loda/article_lc/LEGIARTI000039329680"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      class="legal-ref"
-                    >art.&nbsp;42&nbsp;al.&nbsp;3</a></sup>
-                  </span>
+              <template v-if="auth.isManager">
+                <CAlert
+                  v-if="notificationDutyDeadline"
+                  :variant="notificationDutyVariant"
+                  class="w-full"
+                >
+                  {{ t('meetings.minutes.notification_duty_hint', { date: formatDate(notificationDutyDeadline.toISOString()) }) }}<sup><a
+                    href="https://www.legifrance.gouv.fr/loda/article_lc/LEGIARTI000039329680"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="legal-ref"
+                  >art.&nbsp;42&nbsp;al.&nbsp;3</a></sup>
+                </CAlert>
+                <div class="flex items-center gap-2 flex-wrap">
                   <CBtn
                     variant="ghost"
                     size="sm"
                     type="button"
+                    :icon="CIconBell"
+                    :title="t('meetings.minutes.mark_notified')"
                     :loading="notifyingMinutes"
                     @click="markMinutesNotified"
-                  >
-                    <CIconBell class="icon-sm" />
-                    <span>{{ t('meetings.minutes.mark_notified') }}</span>
-                  </CBtn>
-                </template>
-              </div>
+                  />
+                </div>
+              </template>
             </template>
             <template v-else>
               <p class="text-xs text-on-surface-variant">
@@ -1343,21 +1365,19 @@ function toDateTimeLocal(value: string): string {
                   variant="ghost"
                   size="sm"
                   type="button"
+                  :icon="CIconDownload"
+                  :title="t('meetings.minutes.download_draft')"
                   :loading="downloadingMinutesDraft"
                   @click="downloadMinutesDraft"
-                >
-                  <CIconDownload class="icon-sm" />
-                  <span>{{ t('meetings.minutes.download_draft') }}</span>
-                </CBtn>
+                />
                 <CBtn
                   variant="primary"
                   size="sm"
                   type="button"
+                  :icon="CIconUpload"
+                  :title="t('meetings.minutes.upload_signed')"
                   @click="openMinutesModal"
-                >
-                  <CIconUpload class="icon-sm" />
-                  <span>{{ t('meetings.minutes.upload_signed') }}</span>
-                </CBtn>
+                />
               </div>
             </template>
             <CFormFeedback
@@ -1368,72 +1388,32 @@ function toDateTimeLocal(value: string): string {
           </div>
         </CCard>
 
-        <CCard
-          v-if="meeting && ['ongoing', 'closed'].includes(meeting.status) && meeting.president_name"
-          class="session-roles-card"
-        >
-          <div class="flex flex-col gap-2">
-            <span class="label-sm">{{ t('meetings.session_roles.title') }}</span>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <div>
-                <p class="text-xs text-on-surface-variant">
-                  {{ t('meetings.session_roles.president') }}
-                </p>
-                <p class="text-sm font-medium">
-                  {{ meeting.president_name }}
-                </p>
-              </div>
-              <div>
-                <p class="text-xs text-on-surface-variant">
-                  {{ t('meetings.session_roles.secretary') }}
-                </p>
-                <p class="text-sm font-medium">
-                  {{ meeting.secretary_name }}
-                </p>
-              </div>
-              <div>
-                <p class="text-xs text-on-surface-variant">
-                  {{ t('meetings.session_roles.scrutineers') }}
-                </p>
-                <p class="text-sm font-medium">
-                  <template v-if="meeting.scrutineers.length > 0">
-                    {{ meeting.scrutineers.map(s => s.name).join(', ') }}
-                  </template>
-                  <span
-                    v-else
-                    class="text-on-surface-variant"
-                  >—</span>
-                </p>
-              </div>
-            </div>
-          </div>
-        </CCard>
-
         <div class="detail-layout">
           <section class="main-column">
-            <div class="flex flex-row justify-between items-start">
-              <div>
-                <h2 class="headline-sm">
-                  {{ t('meetings.resolutions') }}
-                </h2>
-                <p class="section-subtitle">
-                  {{ t('meetings.resolutionCount', resolutions.length) }}
-                </p>
-              </div>
-              <CBtn
+            <CSectionHeader>
+              <CHeading>
+                {{ t('meetings.resolutions') }}
+              </CHeading>
+              <p class="section-subtitle">
+                {{ t('meetings.resolutionCount', resolutions.length) }}
+              </p>
+              <template
                 v-if="canAddResolution"
-                variant="ghost"
-                size="sm"
-                @click="openResolutionModal"
+                #actions
               >
-                <CIconPlus class="icon-sm" />
-                <span class="btn-label">{{ t('meetings.addResolution') }}</span>
-              </CBtn>
-            </div>
+                <CBtn
+                  variant="ghost"
+                  size="sm"
+                  :icon="CIconPlus"
+                  :title="t('meetings.addResolution')"
+                  @click="openResolutionModal"
+                />
+              </template>
+            </CSectionHeader>
 
             <div
               v-if="resolutions.length === 0"
-              class="empty-state"
+              class="py-8 text-center text-md text-on-surface-variant"
             >
               {{ t('meetings.resolutionsEmpty') }}
             </div>
@@ -1459,7 +1439,7 @@ function toDateTimeLocal(value: string): string {
                     {{ resolution.number }}
                   </div>
                   <div class="resolution-card__body">
-                    <h3 class="resolution-title">
+                    <h3 class="font-serif text-md font-semibold">
                       {{ resolution.title }}
                     </h3>
                     <div class="resolution-chips">
@@ -1492,6 +1472,12 @@ function toDateTimeLocal(value: string): string {
                 >
                   <p class="tally-title">
                     {{ t('meetings.vote.tally') }}
+                  </p>
+                  <p
+                    v-if="resolution.status === 'pending'"
+                    class="text-2xs text-on-surface-variant"
+                  >
+                    {{ t('meetings.vote.inProgress') }}
                   </p>
                   <div class="tally-bars">
                     <div class="tally-row">
@@ -1535,7 +1521,7 @@ function toDateTimeLocal(value: string): string {
                     :variant="voteResults[resolution.id].passed ? 'success' : 'error'"
                     :title="voteResults[resolution.id].passed ? t('meetings.vote.passed') : t('meetings.vote.rejected')"
                   >
-                    <p class="font-(length:--text-2xs)">
+                    <p class="text-2xs">
                       {{ voteResultSubtitle(resolution, voteResults[resolution.id]) }}
                     </p>
                     <template #side>
@@ -1547,7 +1533,7 @@ function toDateTimeLocal(value: string): string {
                     variant="warning"
                     :title="t('meetings.vote.art25_1_title')"
                   >
-                    <p class="font-(length:--text-2xs)">
+                    <p class="text-2xs">
                       {{ t('meetings.vote.explanations.absolute_majority_second_vote', { threshold: Math.ceil(voteResults[resolution.id].shares_counted / 3) }) }}
                     </p>
                   </CAlert>
@@ -1556,7 +1542,7 @@ function toDateTimeLocal(value: string): string {
                     variant="warning"
                     :title="t('meetings.vote.art26_1_title')"
                   >
-                    <p class="font-(length:--text-2xs)">
+                    <p class="text-2xs">
                       {{ t('meetings.vote.explanations.double_majority_second_vote', { threshold: Math.ceil(voteResults[resolution.id].shares_counted / 2) }) }}
                     </p>
                   </CAlert>
@@ -1577,92 +1563,122 @@ function toDateTimeLocal(value: string): string {
                     v-if="canEditResolution"
                     size="sm"
                     variant="ghost"
+                    :title="t('meetings.editResolution')"
                     @click="openEditResolutionModal(resolution)"
-                  >
-                    {{ t('meetings.editResolution') }}
-                  </CBtn>
+                  />
                   <CBtn
                     v-if="voteResults[resolution.id]?.eligible_for_second_vote === 'art_25_1' && meeting?.status === 'ongoing'"
                     size="sm"
                     variant="ghost"
+                    :title="t('meetings.createArt24')"
                     @click="openArt24Modal(resolution)"
-                  >
-                    {{ t('meetings.createArt24') }}
-                  </CBtn>
+                  />
                   <CBtn
                     v-if="voteResults[resolution.id]?.eligible_for_second_vote === 'art_26_1' && meeting?.status === 'ongoing'"
                     size="sm"
                     variant="ghost"
+                    :title="t('meetings.createArt25')"
                     @click="openArt25Modal(resolution)"
-                  >
-                    {{ t('meetings.createArt25') }}
-                  </CBtn>
+                  />
                   <CBtn
                     v-if="canManageVotes"
                     size="sm"
                     variant="ghost"
+                    :title="t('meetings.vote.enterVotes')"
                     @click="openVoteModal(resolution)"
-                  >
-                    {{ t('meetings.vote.enterVotes') }}
-                  </CBtn>
+                  />
                 </div>
               </CCard>
             </div>
           </section>
 
           <aside class="side-column">
-            <CCard class="">
-              <h2 class="side-head headline-sm card-title">
-                {{ t('meetings.info') }}
-              </h2>
-              <CFlexGroup
-                tag="dl"
-                class="[&_dt]:text-xs [&_dd]:font-medium [&_dd]:text(--color-on-surface) "
-                direction="column"
-              >
-                <div class="info-list__row">
-                  <dt>{{ t('meetings.infoFields.type') }}</dt>
-                  <dd>{{ typeLabel(meeting.meeting_type) }}</dd>
+            <CCard
+              v-if="meeting && ['ongoing', 'closed'].includes(meeting.status)"
+              class="session-roles-card"
+            >
+              <CHeading type="card">
+                {{ t('meetings.session_roles.title') }}
+              </CHeading>
+              <CFlexGroup>
+                <div>
+                  <p class="text-xs text-on-surface-variant">
+                    {{ t('meetings.session_roles.president') }}
+                  </p>
+                  <p class="text-sm font-medium text-on-surface">
+                    {{ meeting.president_name }}
+                  </p>
                 </div>
-                <div class="info-list__row">
-                  <dt>{{ t('meetings.infoFields.date') }}</dt>
-                  <dd>{{ formatDate(meeting.meeting_date) }}</dd>
+                <div>
+                  <p class="text-xs text-on-surface-variant">
+                    {{ t('meetings.session_roles.secretary') }}
+                  </p>
+                  <p class="text-sm font-medium text-on-surface">
+                    {{ meeting.secretary_name }}azdazd zef zr
+                  </p>
                 </div>
-                <div class="info-list__row">
-                  <dt>{{ t('meetings.infoFields.location') }}</dt>
-                  <dd>{{ meeting.location || '—' }}</dd>
-                </div>
-                <div class="info-list__row">
-                  <dt>{{ t('meetings.infoFields.notice') }}</dt>
-                  <dd>{{ meeting.notice_date ? formatDate(meeting.notice_date) : '—' }}</dd>
-                </div>
-                <div class="info-list__row">
-                  <dt>{{ t('meetings.infoFields.resolutions') }}</dt>
-                  <dd>{{ resolutions.length }}</dd>
+                <div>
+                  <p class="text-xs text-on-surface-variant">
+                    {{ t('meetings.session_roles.scrutineers') }}
+                  </p>
+                  <p class="text-sm font-medium text-on-surface">
+                    <template v-if="meeting.scrutineers.length > 0">
+                      {{ meeting.scrutineers.map(s => s.name).join(', ') }}
+                    </template>
+                    <span v-else>—</span>
+                  </p>
                 </div>
               </CFlexGroup>
             </CCard>
 
-            <CCard class="">
-              <div class="side-head">
-                <div>
-                  <h2 class="headline-sm card-title">
-                    {{ t('meetings.documents.title') }}
-                  </h2>
-                  <p class="side-subtitle">
-                    {{ t('meetings.callReady') }}
-                  </p>
-                </div>
-                <CBtn
-                  v-if="auth.isManager"
-                  variant="ghost"
-                  size="sm"
-                  @click="openDocumentModal"
+            <CCard>
+              <CHeading type="card">
+                {{ t('meetings.agenda.title') }}
+              </CHeading>
+              <template v-if="agendaItems.length === 0">
+                <CEmptyState
+                  size="compact"
+                  :title="t('meetings.agenda.empty')"
+                  :description="t('meetings.agenda.emptyHint')"
+                />
+              </template>
+              <CFlexGroup
+                tag="ol"
+                class="agenda-list"
+                direction="column"
+              >
+                <li
+                  v-for="(item, index) in agendaItems"
+                  :key="`${index}-${item}`"
+                  class="agenda-item"
                 >
-                  <CIconPlus class="icon-sm" />
-                  <span class="btn-label">{{ t('meetings.documents.uploadAction') }}</span>
-                </CBtn>
-              </div>
+                  <span class="agenda-item__n">{{ index + 1 }}.</span>
+                  <span class="agenda-item__text">{{ item }}</span>
+                </li>
+              </CFlexGroup>
+            </CCard>
+
+            <CCard>
+              <CSectionHeader>
+                <CHeading type="card">
+                  {{ t('meetings.documents.title') }}
+                </CHeading>
+                <p class="side-subtitle">
+                  {{ t('meetings.callReady') }}
+                </p>
+                <template
+                  v-if="auth.isManager"
+                  #actions
+                >
+                  <CBtn
+                    variant="ghost"
+                    size="sm"
+                    :icon="CIconPlus"
+                    :title="t('meetings.documents.uploadAction')"
+                    @click="openDocumentModal"
+                  />
+                </template>
+              </CSectionHeader>
 
               <CFormFeedback
                 :status="documentFeedback.status.value"
@@ -1673,12 +1689,12 @@ function toDateTimeLocal(value: string): string {
                 <p class="doc-group__title">
                   {{ t('meetings.documents.notice') }}
                 </p>
-                <div
-                  v-if="noticeDocuments.length === 0"
-                  class="empty-state empty-state--compact"
-                >
-                  {{ t('meetings.documents.empty') }}
-                </div>
+                <template v-if="noticeDocuments.length === 0">
+                  <CEmptyState
+                    size="compact"
+                    :title="t('meetings.documents.empty')"
+                  />
+                </template>
                 <div
                   v-else
                   class="doc-list"
@@ -1699,7 +1715,7 @@ function toDateTimeLocal(value: string): string {
                       <button
                         v-if="auth.isManager"
                         class="doc-remove"
-                        @click="detachDocument(document.id)"
+                        @click="promptDeleteDocument(document.id, document.original_name)"
                       >
                         {{ t('common.delete') }}
                       </button>
@@ -1712,12 +1728,12 @@ function toDateTimeLocal(value: string): string {
                 <p class="doc-group__title">
                   {{ t('meetings.documents.attachment') }}
                 </p>
-                <div
-                  v-if="attachmentDocuments.length === 0"
-                  class="empty-state empty-state--compact"
-                >
-                  {{ t('meetings.documents.empty') }}
-                </div>
+                <template v-if="attachmentDocuments.length === 0">
+                  <CEmptyState
+                    size="compact"
+                    :title="t('meetings.documents.empty')"
+                  />
+                </template>
                 <div
                   v-else
                   class="doc-list"
@@ -1738,7 +1754,7 @@ function toDateTimeLocal(value: string): string {
                       <button
                         v-if="auth.isManager"
                         class="doc-remove"
-                        @click="detachDocument(document.id)"
+                        @click="promptDeleteDocument(document.id, document.original_name)"
                       >
                         {{ t('common.delete') }}
                       </button>
@@ -1758,34 +1774,34 @@ function toDateTimeLocal(value: string): string {
                   size="sm"
                   type="button"
                   class="self-center"
+                  :icon="CIconDownload"
+                  :title="t('meetings.minutes.download_signed')"
                   @click="openDocument(meeting.minutes_document_id!)"
-                >
-                  <CIconDownload class="icon-sm" />
-                  <span>{{ t('meetings.minutes.download_signed') }}</span>
-                </CBtn>
+                />
               </CAlert>
             </CCard>
 
             <CCard class="">
-              <div class="side-head">
-                <div>
-                  <h2 class="headline-sm card-title">
-                    {{ t('meetings.presenceQuorum') }}
-                  </h2>
-                  <p class="side-subtitle">
-                    {{ t('meetings.sharesRepresented') }}
-                  </p>
-                </div>
-                <CBtn
+              <CSectionHeader>
+                <CHeading type="card">
+                  {{ t('meetings.presenceQuorum') }}
+                </CHeading>
+                <p class="side-subtitle">
+                  {{ t('meetings.sharesRepresented') }}
+                </p>
+                <template
                   v-if="canEditAttendance"
-                  variant="ghost"
-                  size="sm"
-                  @click="openAttendanceModal"
+                  #actions
                 >
-                  <CIconEdit class="icon-sm" />
-                  <span class="btn-label">{{ t('meetings.attendanceAction') }}</span>
-                </CBtn>
-              </div>
+                  <CBtn
+                    variant="ghost"
+                    size="sm"
+                    :icon="CIconEdit"
+                    :title="t('meetings.attendanceAction')"
+                    @click="openAttendanceModal"
+                  />
+                </template>
+              </CSectionHeader>
 
               <div class="flex flex-col gap-2">
                 <p class="font-serif font-bold tracking-tight">
@@ -1829,9 +1845,10 @@ function toDateTimeLocal(value: string): string {
                   class="participant-row"
                 >
                   <div class="participant-row__identity">
-                    <div class="attendance-avatar">
-                      {{ ownerInitials(entry.owner_name) }}
-                    </div>
+                    <CAvatar
+                      :name="entry.owner_name"
+                      size="sm"
+                    />
                     <div>
                       <p class="participant-name">
                         {{ entry.owner_name || '—' }}
@@ -1848,26 +1865,6 @@ function toDateTimeLocal(value: string): string {
                     </CBadge>
                   </div>
                 </div>
-              </CFlexGroup>
-            </CCard>
-
-            <CCard class="">
-              <h2 class="side-head headline-sm card-title">
-                {{ t('meetings.agenda') }}
-              </h2>
-              <CFlexGroup
-                tag="ol"
-                class="agenda-list"
-                direction="column"
-              >
-                <li
-                  v-for="(item, index) in agendaItems"
-                  :key="`${index}-${item}`"
-                  class="agenda-item"
-                >
-                  <span class="agenda-item__n">{{ index + 1 }}.</span>
-                  <span class="agenda-item__text">{{ item }}</span>
-                </li>
               </CFlexGroup>
             </CCard>
           </aside>
@@ -1896,9 +1893,8 @@ function toDateTimeLocal(value: string): string {
       :title="t('common.edit')"
       @update:open="showEditMeetingModal = $event"
     >
-      <form
-        class="form-grid"
-        @submit.prevent="saveMeeting"
+      <CForm
+        @submit="saveMeeting"
       >
         <CFormSelect
           v-model="meetingForm.meeting_type"
@@ -1914,8 +1910,8 @@ function toDateTimeLocal(value: string): string {
           v-model="meetingForm.location"
           :label="t('meetings.location')"
         />
-        <div class="form-field form-field--full">
-          <span class="form-label">{{ t('meetings.agenda') }}</span>
+        <div class="flex flex-col gap-1 col-span-full">
+          <span class="text-sm font-medium text-on-surface-variant">{{ t('meetings.agenda.title') }}</span>
           <div class="agenda-editor">
             <div
               v-for="(_, index) in meetingAgendaItems"
@@ -1924,47 +1920,47 @@ function toDateTimeLocal(value: string): string {
             >
               <CFormInput
                 v-model="meetingAgendaItems[index]"
-                :placeholder="`${t('meetings.agenda')} ${index + 1}`"
+                :placeholder="`${t('meetings.agenda.title')} ${index + 1}`"
               />
               <CBtn
-                variant="ghost"
+                v-if="meetingAgendaItems.length > 1"
+                variant="icon"
                 size="sm"
+                :icon="CIconTrash"
+                :title="t('common.delete')"
+                :aria-label="t('common.delete')"
                 @click="removeAgendaItem(index)"
-              >
-                {{ t('common.delete') }}
-              </CBtn>
+              />
             </div>
 
             <CBtn
               variant="secondary"
               size="sm"
+              :icon="CIconPlus"
+              :title="t('common.add')"
               @click="addAgendaItem"
-            >
-              <CIconPlus class="icon-sm" />
-              <span class="btn-label">{{ t('common.add') }}</span>
-            </CBtn>
+            />
           </div>
         </div>
-      </form>
+      </CForm>
 
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="meetingFeedback.status.value"
           :message="meetingFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          @click="showEditMeetingModal = false"
         >
-          {{ t('common.cancel') }}
-        </CBtn>
-        <CBtn
-          variant="primary"
-          :loading="savingMeeting"
-          @click="saveMeeting"
-        >
-          {{ t('common.save') }}
-        </CBtn>
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="showEditMeetingModal = false"
+          />
+          <CBtn
+            variant="primary"
+            :title="t('common.save')"
+            :loading="savingMeeting"
+            @click="saveMeeting"
+          />
+        </CFormActions>
       </template>
     </CModal>
 
@@ -1973,9 +1969,8 @@ function toDateTimeLocal(value: string): string {
       :title="t('meetings.newResolution')"
       @update:open="showAddResolutionModal = $event"
     >
-      <form
-        class="form-grid"
-        @submit.prevent="saveResolution"
+      <CForm
+        @submit="saveResolution"
       >
         <CFormInput
           :model-value="resolutionForm.number"
@@ -1998,26 +1993,25 @@ function toDateTimeLocal(value: string): string {
           :label="t('meetings.voteRule')"
           :options="voteTypeOptions"
         />
-      </form>
+      </CForm>
 
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="resolutionFeedback.status.value"
           :message="resolutionFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          @click="showAddResolutionModal = false"
         >
-          {{ t('common.cancel') }}
-        </CBtn>
-        <CBtn
-          variant="primary"
-          :loading="savingResolution"
-          @click="saveResolution"
-        >
-          {{ t('common.add') }}
-        </CBtn>
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="showAddResolutionModal = false"
+          />
+          <CBtn
+            variant="primary"
+            :title="t('common.add')"
+            :loading="savingResolution"
+            @click="saveResolution"
+          />
+        </CFormActions>
       </template>
     </CModal>
 
@@ -2038,17 +2032,15 @@ function toDateTimeLocal(value: string): string {
           <CBtn
             size="sm"
             variant="ghost"
+            :title="t('meetings.vote.fillAllFor')"
             @click="fillAllVotes('in_favor')"
-          >
-            {{ t('meetings.vote.fillAllFor') }}
-          </CBtn>
+          />
           <CBtn
             size="sm"
             variant="ghost"
+            :title="t('meetings.vote.fillAllAgainst')"
             @click="fillAllVotes('against')"
-          >
-            {{ t('meetings.vote.fillAllAgainst') }}
-          </CBtn>
+          />
         </div>
         <table class="vote-table">
           <thead>
@@ -2087,24 +2079,23 @@ function toDateTimeLocal(value: string): string {
         </table>
       </template>
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="voteFeedback.status.value"
           :message="voteFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          @click="showVoteModal = false"
         >
-          {{ t('common.cancel') }}
-        </CBtn>
-        <CBtn
-          variant="primary"
-          :loading="savingVotes"
-          :disabled="attendingUnits.length === 0"
-          @click="saveVotes"
-        >
-          {{ t('meetings.vote.submit') }}
-        </CBtn>
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="showVoteModal = false"
+          />
+          <CBtn
+            variant="primary"
+            :title="t('meetings.vote.submit')"
+            :loading="savingVotes"
+            :disabled="attendingUnits.length === 0"
+            @click="saveVotes"
+          />
+        </CFormActions>
       </template>
     </CModal>
 
@@ -2113,16 +2104,15 @@ function toDateTimeLocal(value: string): string {
       :title="t('meetings.editResolution')"
       @update:open="showEditResolutionModal = $event"
     >
-      <form
-        class="form-grid"
-        @submit.prevent="saveEditResolution"
+      <CForm
+        @submit="saveEditResolution"
       >
         <template v-if="meeting?.status === 'ongoing'">
           <p class="modal-subtitle resolution-locked-notice">
             {{ t('meetings.resolutionDescriptionOnly') }}
           </p>
-          <div class="form-field">
-            <span class="form-label">{{ t('meetings.resolutionLabel') }}</span>
+          <div class="flex flex-col gap-1">
+            <span class="text-sm font-medium text-on-surface-variant">{{ t('meetings.resolutionLabel') }}</span>
             <span class="form-static">{{ editingResolution?.title }}</span>
           </div>
         </template>
@@ -2131,25 +2121,24 @@ function toDateTimeLocal(value: string): string {
           :label="t('meetings.resolutionDescription')"
           :placeholder="t('meetings.resolutionDescriptionPlaceholder')"
         />
-      </form>
+      </CForm>
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="editResolutionFeedback.status.value"
           :message="editResolutionFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          @click="showEditResolutionModal = false"
         >
-          {{ t('common.cancel') }}
-        </CBtn>
-        <CBtn
-          variant="primary"
-          :loading="savingEditResolution"
-          @click="saveEditResolution"
-        >
-          {{ t('common.save') }}
-        </CBtn>
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="showEditResolutionModal = false"
+          />
+          <CBtn
+            variant="primary"
+            :title="t('common.save')"
+            :loading="savingEditResolution"
+            @click="saveEditResolution"
+          />
+        </CFormActions>
       </template>
     </CModal>
 
@@ -2158,9 +2147,8 @@ function toDateTimeLocal(value: string): string {
       :title="t('meetings.documents.uploadTitle')"
       @update:open="showDocumentModal = $event"
     >
-      <form
-        class="form-grid"
-        @submit.prevent="saveDocument"
+      <CForm
+        @submit="saveDocument"
       >
         <CFormSelect
           v-model="documentForm.kind"
@@ -2179,26 +2167,25 @@ function toDateTimeLocal(value: string): string {
         >
           {{ documentForm.file.name }}
         </p>
-      </form>
+      </CForm>
 
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="documentFeedback.status.value"
           :message="documentFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          @click="showDocumentModal = false"
         >
-          {{ t('common.cancel') }}
-        </CBtn>
-        <CBtn
-          variant="primary"
-          :loading="savingDocument"
-          @click="saveDocument"
-        >
-          {{ t('common.add') }}
-        </CBtn>
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="showDocumentModal = false"
+          />
+          <CBtn
+            variant="primary"
+            :title="t('common.add')"
+            :loading="savingDocument"
+            @click="saveDocument"
+          />
+        </CFormActions>
       </template>
     </CModal>
 
@@ -2207,9 +2194,8 @@ function toDateTimeLocal(value: string): string {
       :title="t('meetings.attendanceTitle')"
       @update:open="showAttendanceModal = $event"
     >
-      <form
-        class="form-grid"
-        @submit.prevent="saveAttendance"
+      <CForm
+        @submit="saveAttendance"
       >
         <p class="modal-subtitle">
           {{ t('meetings.attendanceHint') }}
@@ -2235,26 +2221,25 @@ function toDateTimeLocal(value: string): string {
             />
           </div>
         </div>
-      </form>
+      </CForm>
 
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="attendanceFeedback.status.value"
           :message="attendanceFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          @click="showAttendanceModal = false"
         >
-          {{ t('common.cancel') }}
-        </CBtn>
-        <CBtn
-          variant="primary"
-          :loading="savingAttendance"
-          @click="saveAttendance"
-        >
-          {{ t('common.save') }}
-        </CBtn>
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="showAttendanceModal = false"
+          />
+          <CBtn
+            variant="primary"
+            :title="t('common.save')"
+            :loading="savingAttendance"
+            @click="saveAttendance"
+          />
+        </CFormActions>
       </template>
     </CModal>
 
@@ -2268,23 +2253,22 @@ function toDateTimeLocal(value: string): string {
         {{ t('meetings.createArt24Message', { title: art24ResolutionToCreate?.title ?? '' }) }}
       </p>
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="art24Feedback.status.value"
           :message="art24Feedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          @click="showArt24Modal = false"
         >
-          {{ t('common.cancel') }}
-        </CBtn>
-        <CBtn
-          variant="primary"
-          :loading="savingArt24"
-          @click="confirmArt24Resolution"
-        >
-          {{ t('common.create') }}
-        </CBtn>
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="showArt24Modal = false"
+          />
+          <CBtn
+            variant="primary"
+            :title="t('common.create')"
+            :loading="savingArt24"
+            @click="confirmArt24Resolution"
+          />
+        </CFormActions>
       </template>
     </CModal>
 
@@ -2298,23 +2282,22 @@ function toDateTimeLocal(value: string): string {
         {{ t('meetings.createArt25Message', { title: art25ResolutionToCreate?.title ?? '' }) }}
       </p>
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="art25Feedback.status.value"
           :message="art25Feedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          @click="showArt25Modal = false"
         >
-          {{ t('common.cancel') }}
-        </CBtn>
-        <CBtn
-          variant="primary"
-          :loading="savingArt25"
-          @click="confirmArt25Resolution"
-        >
-          {{ t('common.create') }}
-        </CBtn>
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="showArt25Modal = false"
+          />
+          <CBtn
+            variant="primary"
+            :title="t('common.create')"
+            :loading="savingArt25"
+            @click="confirmArt25Resolution"
+          />
+        </CFormActions>
       </template>
     </CModal>
 
@@ -2324,9 +2307,8 @@ function toDateTimeLocal(value: string): string {
       size="md"
       @update:open="showSignaturesModal = $event"
     >
-      <form
-        class="form-grid"
-        @submit.prevent="saveSignatures"
+      <CForm
+        @submit="saveSignatures"
       >
         <p class="body-sm text-on-surface-variant">
           {{ t('meetings.signatures.modal_lead') }}<sup><a
@@ -2361,25 +2343,85 @@ function toDateTimeLocal(value: string): string {
             :label="scrutineer.name"
           />
         </div>
-      </form>
+      </CForm>
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="signaturesFeedback.status.value"
           :message="signaturesFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          @click="showSignaturesModal = false"
         >
-          {{ t('common.cancel') }}
-        </CBtn>
-        <CBtn
-          variant="primary"
-          :loading="savingSignatures"
-          @click="saveSignatures"
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="showSignaturesModal = false"
+          />
+          <CBtn
+            variant="primary"
+            :title="t('common.save')"
+            :loading="savingSignatures"
+            @click="saveSignatures"
+          />
+        </CFormActions>
+      </template>
+    </CModal>
+
+    <CModal
+      :open="showCloseMeetingModal"
+      :title="t('meetings.closeMeetingTitle')"
+      size="sm"
+      @update:open="showCloseMeetingModal = $event"
+    >
+      <p class="body-sm">
+        {{ t('meetings.closeMeetingSub') }}
+      </p>
+      <template #footer>
+        <CFormActions
+          :status="closeMeetingFeedback.status.value"
+          :message="closeMeetingFeedback.message.value"
         >
-          {{ t('common.save') }}
-        </CBtn>
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="showCloseMeetingModal = false"
+          />
+          <CBtn
+            variant="primary"
+            :title="t('meetings.closeMeetingConfirm')"
+            :loading="closingMeeting"
+            @click="closeMeeting"
+          />
+        </CFormActions>
+      </template>
+    </CModal>
+
+    <CModal
+      :open="showDeleteDocumentModal"
+      :title="t('meetings.documents.detachTitle')"
+      size="sm"
+      @update:open="showDeleteDocumentModal = $event"
+    >
+      <p class="body-sm">
+        {{ t('meetings.documents.detachMessage') }}
+        <template v-if="pendingDeleteDocumentName">
+          <br />
+          <span class="font-medium">{{ pendingDeleteDocumentName }}</span>
+        </template>
+      </p>
+      <template #footer>
+        <CFormActions
+          :status="documentFeedback.status.value"
+          :message="documentFeedback.message.value"
+        >
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="showDeleteDocumentModal = false"
+          />
+          <CBtn
+            variant="primary"
+            :title="t('meetings.documents.detachConfirm')"
+            @click="confirmDetachDocument"
+          />
+        </CFormActions>
       </template>
     </CModal>
 
@@ -2390,9 +2432,8 @@ function toDateTimeLocal(value: string): string {
       size="md"
       @update:open="showConvocationModal = $event"
     >
-      <form
-        class="form-grid"
-        @submit.prevent="confirmCallMeeting"
+      <CForm
+        @submit="confirmCallMeeting"
       >
         <p class="body-sm text-on-surface-variant">
           {{ t('meetings.convocation.modal_lead') }}<sup><a
@@ -2452,26 +2493,25 @@ function toDateTimeLocal(value: string): string {
           :label="t('meetings.convocation.sent_at_label')"
           :placeholder="t('meetings.convocation.sent_at_placeholder')"
         />
-      </form>
+      </CForm>
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="convocationFeedback.status.value"
           :message="convocationFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          @click="showConvocationModal = false"
         >
-          {{ t('common.cancel') }}
-        </CBtn>
-        <CBtn
-          variant="primary"
-          :loading="callingMeeting"
-          :disabled="!convocationChecklist?.ready_to_send"
-          @click="confirmCallMeeting"
-        >
-          {{ t('meetings.call') }}
-        </CBtn>
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="showConvocationModal = false"
+          />
+          <CBtn
+            variant="primary"
+            :title="t('meetings.call')"
+            :loading="callingMeeting"
+            :disabled="!convocationChecklist?.ready_to_send"
+            @click="confirmCallMeeting"
+          />
+        </CFormActions>
       </template>
     </CModal>
 
@@ -2481,9 +2521,8 @@ function toDateTimeLocal(value: string): string {
       size="md"
       @update:open="showMinutesModal = $event"
     >
-      <form
-        class="form-grid"
-        @submit.prevent="saveMinutes"
+      <CForm
+        @submit="saveMinutes"
       >
         <p class="body-sm text-on-surface-variant">
           {{ t('meetings.minutes.modal_lead') }}
@@ -2500,26 +2539,25 @@ function toDateTimeLocal(value: string): string {
         >
           {{ minutesForm.file.name }}
         </p>
-      </form>
+      </CForm>
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="minutesFeedback.status.value"
           :message="minutesFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          @click="showMinutesModal = false"
         >
-          {{ t('common.cancel') }}
-        </CBtn>
-        <CBtn
-          variant="primary"
-          :loading="savingMinutes"
-          :disabled="!minutesForm.file"
-          @click="saveMinutes"
-        >
-          {{ t('meetings.minutes.upload_signed') }}
-        </CBtn>
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="showMinutesModal = false"
+          />
+          <CBtn
+            variant="primary"
+            :title="t('meetings.minutes.upload_signed')"
+            :loading="savingMinutes"
+            :disabled="!minutesForm.file"
+            @click="saveMinutes"
+          />
+        </CFormActions>
       </template>
     </CModal>
 
@@ -2529,9 +2567,8 @@ function toDateTimeLocal(value: string): string {
       size="md"
       @update:open="showStartMeetingModal = $event"
     >
-      <form
-        class="form-grid"
-        @submit.prevent="confirmStartMeeting"
+      <CForm
+        @submit="confirmStartMeeting"
       >
         <p class="body-sm text-on-surface-variant">
           {{ t('meetings.start_modal.lead') }}
@@ -2562,40 +2599,38 @@ function toDateTimeLocal(value: string): string {
               variant="ghost"
               size="sm"
               type="button"
+              :icon="CIconTrash"
+              :title="t('common.delete')"
               @click="removeScrutineer(index)"
-            >
-              <CIconTrash class="icon-sm" />
-            </CBtn>
+            />
           </div>
           <CBtn
             variant="ghost"
             size="sm"
             type="button"
+            :icon="CIconPlus"
+            :title="t('meetings.start_modal.add_scrutineer')"
             @click="addScrutineer"
-          >
-            <CIconPlus class="icon-sm" />
-            <span>{{ t('meetings.start_modal.add_scrutineer') }}</span>
-          </CBtn>
+          />
         </div>
-      </form>
+      </CForm>
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="startMeetingFeedback.status.value"
           :message="startMeetingFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          @click="showStartMeetingModal = false"
         >
-          {{ t('common.cancel') }}
-        </CBtn>
-        <CBtn
-          variant="primary"
-          :loading="startingMeeting"
-          @click="confirmStartMeeting"
-        >
-          {{ t('meetings.start') }}
-        </CBtn>
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="showStartMeetingModal = false"
+          />
+          <CBtn
+            variant="primary"
+            :title="t('meetings.start')"
+            :loading="startingMeeting"
+            @click="confirmStartMeeting"
+          />
+        </CFormActions>
       </template>
     </CModal>
   </div>
@@ -2608,7 +2643,7 @@ function toDateTimeLocal(value: string): string {
   justify-content: space-between;
   gap: var(--space-4);
   padding: var(--space-4);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-2xl);
 }
 
 .status-banner__left {
@@ -2620,7 +2655,7 @@ function toDateTimeLocal(value: string): string {
 .status-banner__icon {
   width: 40px;
   height: 40px;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2643,32 +2678,32 @@ function toDateTimeLocal(value: string): string {
 }
 
 .status-banner--called .status-banner__icon {
-  background: color-mix(in srgb, var(--color-primary) 16%, transparent);
+  background: color-mix(in srgb, var(--color-primary) var(--color-tint), transparent);
   color: var(--color-primary);
 }
 
 .status-banner--closed {
-  background: color-mix(in srgb, var(--color-success-container) 100%, transparent);
+  background: var(--color-success-container);
   color: var(--color-on-success-container);
 }
 
 .status-banner--closed .status-banner__icon {
-  background: color-mix(in srgb, var(--color-success) 16%, transparent);
+  background: color-mix(in srgb, var(--color-success) var(--color-tint), transparent);
   color: var(--color-success);
 }
 
 .status-banner--ongoing {
-  background: color-mix(in srgb, var(--color-success-container) 100%, transparent);
-  color: var(--color-on-success-container);
+  background: var(--color-secondary-container);
+  color: var(--color-on-primary-container);
 }
 
 .status-banner--ongoing .status-banner__icon {
-  background: color-mix(in srgb, var(--color-success) 16%, transparent);
-  color: var(--color-success);
+  background: color-mix(in srgb, var(--color-primary) var(--color-tint), transparent);
+  color: var(--color-primary);
 }
 
 .status-banner--draft {
-  background: var(--color-surface-container-low);
+  background: var(--color-surface-container);
   color: var(--color-on-surface);
 }
 
@@ -2691,13 +2726,6 @@ function toDateTimeLocal(value: string): string {
   gap: var(--space-4);
 }
 
-.side-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: var(--space-3);
-}
-
 .card-title {
   font-size: var(--text-lg);
 }
@@ -2715,7 +2743,6 @@ function toDateTimeLocal(value: string): string {
 
 .resolution-list,
 .doc-list,
-.attendance-list,
 .attendance-edit-list {
   display: flex;
   flex-direction: column;
@@ -2740,7 +2767,7 @@ function toDateTimeLocal(value: string): string {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   background: var(--tone-bg, var(--color-secondary-container));
   color: var(--tone-fg, var(--color-on-secondary-container));
   font-family: var(--font-display);
@@ -2752,12 +2779,6 @@ function toDateTimeLocal(value: string): string {
   flex-direction: column;
   gap: var(--space-2);
   min-width: 0;
-}
-
-.resolution-title {
-  font-family: var(--font-display);
-  font-size: 16px;
-  font-weight: var(--fw-semibold);
 }
 
 .resolution-chips {
@@ -2843,29 +2864,17 @@ function toDateTimeLocal(value: string): string {
   font-size: var(--text-xs);
 }
 
-.result-pill,
-.pending-box,
-.quorum-kpi {
+.pending-box {
   display: flex;
   flex-direction: column;
   gap: 4px;
   padding: var(--space-3);
-  border-radius: var(--radius-md);
-}
-
-.result-pill {
-  background: var(--tone-bg, transparent);
-  color: var(--tone-fg, inherit);
+  border-radius: var(--radius-xl);
 }
 
 .pending-box {
   background: var(--color-surface-container-low);
   color: var(--color-on-surface-variant);
-}
-
-.vote-entry-action {
-  display: flex;
-  justify-content: flex-end;
 }
 
 .resolution-card__actions {
@@ -2880,7 +2889,7 @@ function toDateTimeLocal(value: string): string {
   font-size: var(--text-xs);
   padding: var(--space-2) var(--space-3);
   background: var(--color-surface-container-low);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-lg);
   margin: 0;
 }
 
@@ -2931,7 +2940,7 @@ function toDateTimeLocal(value: string): string {
   justify-content: space-between;
   gap: var(--space-3);
   padding: var(--space-3);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
 }
 
 .vote-result--passed {
@@ -2964,11 +2973,6 @@ function toDateTimeLocal(value: string): string {
   font-size: var(--text-sm);
   font-weight: var(--fw-medium);
   white-space: nowrap;
-}
-
-.quorum-kpi {
-  background: var(--color-secondary-container);
-  color: var(--color-on-secondary-container);
 }
 
 .quorum-kpi strong {
@@ -3016,7 +3020,7 @@ function toDateTimeLocal(value: string): string {
   gap: var(--space-3);
   align-items: center;
   padding: var(--space-3);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   background: var(--color-surface-container-low);
 }
 
@@ -3046,22 +3050,8 @@ function toDateTimeLocal(value: string): string {
   color: var(--color-error);
 }
 
-.presence-kpi__label,
-.presence-kpi__value,
 .presence-kpi__detail {
   margin: 0;
-}
-
-.presence-kpi__label {
-  font-size: var(--text-xs);
-}
-
-.presence-kpi__value {
-  font-family: var(--font-display);
-  font-size: 40px;
-  font-weight: var(--fw-bold);
-  letter-spacing: -0.03em;
-  line-height: 1;
 }
 
 .presence-kpi__detail {
@@ -3093,7 +3083,7 @@ function toDateTimeLocal(value: string): string {
 }
 
 .quorum-alert {
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-lg);
   padding: var(--space-2) var(--space-3);
   font-size: var(--text-xs);
   font-weight: var(--fw-medium);
@@ -3131,21 +3121,6 @@ function toDateTimeLocal(value: string): string {
   color: var(--color-on-surface-variant);
 }
 
-.attendance-avatar {
-  width: 28px;
-  height: 28px;
-  border-radius: var(--radius-full);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  font-family: var(--font-display);
-  font-size: var(--text-2xs);
-  font-weight: var(--fw-bold);
-  background: color-mix(in srgb, var(--color-primary) 16%, var(--color-surface));
-  color: var(--color-primary);
-}
-
 .attendance-shares {
   font-family: var(--font-mono);
   color: var(--color-on-surface-variant);
@@ -3160,12 +3135,6 @@ function toDateTimeLocal(value: string): string {
 .agenda-editor__row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: var(--space-2);
-}
-
-.form-field--full {
-  display: flex;
-  flex-direction: column;
   gap: var(--space-2);
 }
 
@@ -3217,10 +3186,6 @@ function toDateTimeLocal(value: string): string {
   --tone-fg: #7a3600;
 }
 
-.empty-state--compact {
-  padding: var(--space-4);
-}
-
 @media (max-width: 960px) {
   .detail-layout {
     grid-template-columns: 1fr;
@@ -3243,7 +3208,4 @@ function toDateTimeLocal(value: string): string {
   }
 }
 
-/* ── Icon size token utilities ───────────────────────────────── */
-.icon-xs { width: var(--icon-xs); height: var(--icon-xs); flex-shrink: 0; }
-.icon-sm { width: var(--icon-sm); height: var(--icon-sm); flex-shrink: 0; }
 </style>

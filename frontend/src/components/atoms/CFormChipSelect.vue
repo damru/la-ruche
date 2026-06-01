@@ -44,7 +44,7 @@ function toggle(value: string, optionDisabled?: boolean) {
     <label
       v-if="label"
       :for="inputId"
-      class="c-field__label"
+      class="form-label"
     >
       {{ label }}
       <span
@@ -89,8 +89,7 @@ function toggle(value: string, optionDisabled?: boolean) {
       role="alert"
     >
       <CIconXCircle
-        width="12"
-        height="12"
+        class="icon-2xs"
         aria-hidden="true"
       />
       {{ error }}
@@ -98,7 +97,7 @@ function toggle(value: string, optionDisabled?: boolean) {
     <p
       v-else-if="hint"
       :id="`${inputId}-hint`"
-      class="c-field__hint"
+      class="form-hint"
     >
       {{ hint }}
     </p>
@@ -107,12 +106,6 @@ function toggle(value: string, optionDisabled?: boolean) {
 
 <style scoped>
 .c-field { display: flex; flex-direction: column; gap: var(--space-1); }
-
-.c-field__label {
-  font-size: var(--text-sm);
-  font-weight: var(--fw-medium);
-  color: var(--color-on-surface);
-}
 
 .c-field__required { color: var(--color-error); margin-left: 2px; }
 
@@ -166,11 +159,6 @@ function toggle(value: string, optionDisabled?: boolean) {
 .c-chip-select__icon {
   width: var(--icon-xs);
   height: var(--icon-xs);
-}
-
-.c-field__hint {
-  font-size: var(--text-xs);
-  color: var(--color-on-surface-variant);
 }
 
 .c-field__error {

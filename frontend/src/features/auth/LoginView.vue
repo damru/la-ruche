@@ -8,6 +8,7 @@ import AuthBrandPanel from '@/components/organisms/AuthBrandPanel.vue'
 import CAlert from '@/components/atoms/CAlert.vue'
 import CFormInput from '@/components/atoms/CFormInput.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
+import CIconLogIn from '@/components/atoms/CIconLogIn.svg'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -141,7 +142,7 @@ async function handleResetRequest() {
           </div>
 
           <form
-            class="form-grid"
+            class="flex flex-col gap-4"
             novalidate
             @submit.prevent="handleLogin"
           >
@@ -178,16 +179,12 @@ async function handleResetRequest() {
               type="submit"
               variant="primary"
               size="md"
+              :icon="loading ? undefined : CIconLogIn"
+              :title="loading ? t('auth.loggingIn') : t('auth.loginButton')"
               :disabled="loading || !form.email || !form.password"
               :loading="loading"
               style="width: 100%"
-            >
-              <CIconLogIn
-                v-if="!loading"
-                aria-hidden="true"
-              />
-              {{ loading ? t('auth.loggingIn') : t('auth.loginButton') }}
-            </CBtn>
+            />
           </form>
 
           <div class="divider">
@@ -202,7 +199,7 @@ async function handleResetRequest() {
           >
             <span
               v-if="passkeyLoading"
-              class="spinner spinner-dark"
+              class="inline-block w-4 h-4 border-2 border-on-surface/20 border-t-on-surface rounded-full animate-spin shrink-0"
               aria-hidden="true"
             ></span>
             <CIconUserPlus
@@ -232,7 +229,7 @@ async function handleResetRequest() {
           </div>
 
           <form
-            class="form-grid"
+            class="flex flex-col gap-4"
             novalidate
             @submit.prevent="handleResetRequest"
           >
@@ -250,12 +247,11 @@ async function handleResetRequest() {
             <CBtn
               type="submit"
               variant="primary"
+              :title="loading ? t('auth.resetSending') : t('auth.resetSendLink')"
               :disabled="loading || !resetEmail"
               :loading="loading"
               style="width: 100%"
-            >
-              {{ loading ? t('auth.resetSending') : t('auth.resetSendLink') }}
-            </CBtn>
+            />
           </form>
 
           <button
@@ -283,11 +279,10 @@ async function handleResetRequest() {
             </p>
             <CBtn
               variant="secondary"
+              :title="t('auth.backToLogin')"
               style="width: 100%"
               @click="mode = 'login'"
-            >
-              {{ t('auth.backToLogin') }}
-            </CBtn>
+            />
           </div>
         </template>
       </div>
@@ -385,7 +380,7 @@ async function handleResetRequest() {
   gap: var(--space-2);
   height: 44px;
   width: 100%;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   font-family: var(--font-body);
   font-size: var(--text-md);
   font-weight: 500;

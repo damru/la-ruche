@@ -2,7 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import CBtn from '@/components/atoms/CBtn.vue'
-import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
+import CFormActions from '@/components/molecules/CFormActions.vue'
 import CIconDownload from '@/components/atoms/CIconDownload.svg'
 import CIconFile from '@/components/atoms/CIconFile.svg'
 import CIconTrash from '@/components/atoms/CIconTrash.svg'
@@ -477,7 +477,7 @@ async function saveContract() {
           class="contract-form__checkbox"
           :label="t('contracts.autoRenewal')"
         />
-        <p class="field-hint">
+        <p class="text-xs text-on-surface-variant">
           {{ t('contracts.form.autoRenewalHint') }}
         </p>
       </div>
@@ -494,7 +494,7 @@ async function saveContract() {
       </div>
 
       <div class="contract-form__documents">
-        <label class="form-label">{{ t('contracts.documents.titleInline') }}</label>
+        <label class="text-sm font-medium text-on-surface-variant">{{ t('contracts.documents.titleInline') }}</label>
         <input
           ref="documentInputRef"
           type="file"
@@ -544,7 +544,7 @@ async function saveContract() {
           v-if="isEditing"
           class="contract-form__existing-documents"
         >
-          <p class="field-hint contract-form__documents-hint">
+          <p class="text-xs text-on-surface-variant contract-form__documents-hint">
             {{ t('contracts.documents.attached') }}
           </p>
           <CPageLoader v-if="loadingDocuments" />
@@ -566,8 +566,7 @@ async function saveContract() {
               <div class="contract-form__documents-meta">
                 <div class="contract-form__documents-name">
                   <CIconFile
-                    width="16"
-                    height="16"
+                    class="icon-sm"
                   />
                   <span>{{ document.original_name }}</span>
                 </div>
@@ -581,19 +580,17 @@ async function saveContract() {
                 <CBtn
                   variant="ghost"
                   size="sm"
+                  :icon="CIconDownload"
+                  :title="t('common.download')"
                   @click="downloadDocument(document.id)"
-                >
-                  <CIconDownload />
-                  {{ t('common.download') }}
-                </CBtn>
+                />
                 <CBtn
                   variant="danger"
                   size="sm"
+                  :icon="CIconTrash"
+                  :title="t('contracts.documents.detach')"
                   @click="openDocumentActionModal(document)"
-                >
-                  <CIconTrash />
-                  {{ t('contracts.documents.detach') }}
-                </CBtn>
+                />
               </div>
             </div>
           </div>
@@ -602,35 +599,32 @@ async function saveContract() {
     </div>
 
     <template #footer>
-      <CBtn
-        v-if="isEditing"
-        variant="danger"
-        :loading="deletingContract"
-        style="margin-right:auto"
-        @click="openDeleteModal"
-      >
-        <CIconTrash />
-        {{ t('common.delete') }}
-      </CBtn>
-      <CFormFeedback
+      <CFormActions
         :status="feedback.status.value"
         :message="feedback.message.value"
-        style="flex:1"
-      />
-      <CBtn
-        variant="ghost"
-        @click="closeModal"
       >
-        {{ t('common.cancel') }}
-      </CBtn>
-      <CBtn
-        :loading="saving || uploadingDocuments"
-        :closing="feedback.status.value === 'success'"
-        :disabled="saving || uploadingDocuments"
-        @click="saveContract"
-      >
-        {{ saving || uploadingDocuments ? t('common.saving') : t('common.save') }}
-      </CBtn>
+        <CBtn
+          v-if="isEditing"
+          variant="danger"
+          :icon="CIconTrash"
+          :title="t('common.delete')"
+          :loading="deletingContract"
+          class="mr-auto"
+          @click="openDeleteModal"
+        />
+        <CBtn
+          variant="ghost"
+          :title="t('common.cancel')"
+          @click="closeModal"
+        />
+        <CBtn
+          :title="t('common.save')"
+          :loading="saving || uploadingDocuments"
+          :closing="feedback.status.value === 'success'"
+          :disabled="saving || uploadingDocuments"
+          @click="saveContract"
+        />
+      </CFormActions>
     </template>
   </CModal>
 
@@ -657,25 +651,24 @@ async function saveContract() {
       {{ t('contracts.deleteMessage', { name: props.contract?.vendor_name ?? '' }) }}
     </p>
     <template #footer>
-      <CFormFeedback
+      <CFormActions
         :status="deleteContractFeedback.status.value"
         :message="deleteContractFeedback.message.value"
-      />
-      <CBtn
-        variant="ghost"
-        :disabled="deletingContract"
-        @click="showDeleteModal = false"
       >
-        {{ t('common.cancel') }}
-      </CBtn>
-      <CBtn
-        variant="danger"
-        :loading="deletingContract"
-        :closing="deleteContractFeedback.status.value === 'success'"
-        @click="deleteContract"
-      >
-        {{ t('common.deleteLabel') }}
-      </CBtn>
+        <CBtn
+          variant="ghost"
+          :title="t('common.cancel')"
+          :disabled="deletingContract"
+          @click="showDeleteModal = false"
+        />
+        <CBtn
+          variant="danger"
+          :title="t('common.deleteLabel')"
+          :loading="deletingContract"
+          :closing="deleteContractFeedback.status.value === 'success'"
+          @click="deleteContract"
+        />
+      </CFormActions>
     </template>
   </CModal>
 </template>
@@ -702,7 +695,7 @@ async function saveContract() {
   flex-direction: column;
   gap: var(--space-2);
   padding: var(--space-4);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   background: var(--color-surface-container-low);
 }
 
@@ -733,7 +726,7 @@ async function saveContract() {
   min-height: 44px;
   max-width: 100%;
   padding: 0 var(--space-4) 0 var(--space-3);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-lg);
   border: 1px solid var(--color-outline-variant);
   background: var(--color-surface-container-low);
 }
@@ -778,7 +771,7 @@ async function saveContract() {
 
 .contract-form__documents-empty {
   padding: var(--space-3);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-lg);
   background: var(--color-surface-container-low);
   color: var(--color-on-surface-variant);
 }
@@ -795,7 +788,7 @@ async function saveContract() {
   align-items: center;
   gap: var(--space-3);
   padding: var(--space-3);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-lg);
   background: var(--color-surface-container-low);
 }
 

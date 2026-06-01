@@ -60,7 +60,7 @@ async function handleSubmit() {
           </div>
 
           <form
-            class="form-grid"
+            class="flex flex-col gap-4"
             novalidate
             @submit.prevent="handleSubmit"
           >
@@ -87,7 +87,7 @@ async function handleSubmit() {
               />
               <p
                 v-if="mismatch"
-                class="field-error"
+                class="text-xs text-error"
               >
                 {{ t('auth.passwordMismatch') }}
               </p>
@@ -97,12 +97,11 @@ async function handleSubmit() {
               type="submit"
               variant="primary"
               size="md"
+              :title="t('auth.resetSaveButton')"
               :disabled="!isValid || loading"
               :loading="loading"
               style="width: 100%"
-            >
-              {{ loading ? t('common.saving') : t('auth.resetSaveButton') }}
-            </CBtn>
+            />
           </form>
 
           <button
@@ -130,11 +129,10 @@ async function handleSubmit() {
             </p>
             <CBtn
               variant="primary"
+              :title="t('auth.loginButton')"
               style="width: 100%"
               @click="router.push({ name: 'login' })"
-            >
-              {{ t('auth.loginButton') }}
-            </CBtn>
+            />
           </div>
         </template>
       </div>

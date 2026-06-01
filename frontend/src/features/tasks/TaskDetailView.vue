@@ -10,6 +10,7 @@ import CCard from '@/components/molecules/CCard.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
+import CHeading from '@/components/atoms/CHeading.vue'
 import CIconArrowLeft from '@/components/atoms/CIconArrowLeft.svg'
 import CIconCheckCircle from '@/components/atoms/CIconCheckCircle.svg'
 import CIconChevronRight from '@/components/atoms/CIconChevronRight.svg'
@@ -197,11 +198,10 @@ function dotClass(variant?: TimelineEvent['variant']): string {
         <CBtn
           variant="ghost"
           size="sm"
+          :icon="CIconArrowLeft"
+          :title="t('common.back')"
           @click="router.push({ name: 'tasks' })"
-        >
-          <CIconArrowLeft style="width:16px;height:16px" />
-          {{ t('common.back') }}
-        </CBtn>
+        />
       </template>
     </CTopbar>
 
@@ -227,9 +227,12 @@ function dotClass(variant?: TimelineEvent['variant']): string {
             </CBadge>
             {{ t('page.eyebrows.taskDetail') }}
           </CEyebrow>
-          <h1 class="display-md task-title">
+          <CHeading
+            type="header"
+            class="m-0"
+          >
             {{ task.title }}
-          </h1>
+          </CHeading>
           <p
             v-if="task.description"
             class="body-md task-desc"
@@ -256,7 +259,7 @@ function dotClass(variant?: TimelineEvent['variant']): string {
         </header>
 
         <!-- Lifecycle timeline -->
-        <h2 class="section-title title-sm">
+        <h2 class="title-sm text-on-surface-variant mb-4">
           {{ t('tasks.lifecycle.title') }}
         </h2>
         <div class="timeline">
@@ -304,8 +307,7 @@ function dotClass(variant?: TimelineEvent['variant']): string {
           class="reopen-hint body-xs"
         >
           <CIconRefresh
-            width="13"
-            height="13"
+            class="icon-xs"
           />
           {{ t('tasks.lifecycle.closedNote') }}
         </div>
@@ -330,12 +332,6 @@ function dotClass(variant?: TimelineEvent['variant']): string {
   font-size: var(--text-2xs);
   color: var(--color-on-surface-variant);
   margin-top: var(--space-1);
-}
-
-/* ── Section title ───────────────────────────────────────────────── */
-.section-title {
-  margin-bottom: var(--space-4);
-  color: var(--color-on-surface-variant);
 }
 
 /* ── Timeline ────────────────────────────────────────────────────── */

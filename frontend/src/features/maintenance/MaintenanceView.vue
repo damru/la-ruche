@@ -8,14 +8,24 @@ import { useAutoClose } from '@/composables/useAutoClose'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CLegalDescription from '@/components/atoms/CLegalDescription.vue'
+import CSeparator from '@/components/atoms/CSeparator.vue'
 import CCard from '@/components/molecules/CCard.vue'
-import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
+import CFormActions from '@/components/molecules/CFormActions.vue'
+import CForm from '@/components/molecules/CForm.vue'
 import CLegalNotice from '@/components/molecules/CLegalNotice.vue'
 import CLegalCard from '@/components/molecules/CLegalCard.vue'
+import CMetaLine from '@/components/molecules/CMetaLine.vue'
+import CMetaItem from '@/components/molecules/CMetaItem.vue'
 import CModal from '@/components/molecules/CModal.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
+import CHeading from '@/components/atoms/CHeading.vue'
+import CTabs from '@/components/atoms/CTabs.vue'
+import CIconArrowLeft from '@/components/atoms/CIconArrowLeft.svg'
+import CIconArrowRight from '@/components/atoms/CIconArrowRight.svg'
+import CIconPlus from '@/components/atoms/CIconPlus.svg'
+import CIconTrash from '@/components/atoms/CIconTrash.svg'
 import { maintenanceApi } from '@/api'
 import type { LogbookContractSummary, LogbookSummary, MaintenanceEntry } from '@/types/domain'
 
@@ -95,11 +105,6 @@ function parseLocalDate(value: string): Date | null {
   if ([year, month, day].some(Number.isNaN)) return null
 
   return new Date(year, month - 1, day)
-}
-
-function resetPeriod(filter: PeriodFilter) {
-  if (filter === 'all') return
-  periodAnchor.value = startOfPeriod(new Date(), filter)
 }
 
 // ── Load data ─────────────────────────────────────────────────────
@@ -219,11 +224,6 @@ function contractStatusVariant(status: LogbookContractSummary['status']): 'open'
   return 'default'
 }
 
-function selectPeriod(filter: PeriodFilter) {
-  periodFilter.value = filter
-  resetPeriod(filter)
-}
-
 function goToPreviousPeriod() {
   if (periodFilter.value === 'all') return
   periodAnchor.value = shiftPeriod(periodAnchor.value, periodFilter.value, -1)
@@ -305,11 +305,10 @@ async function deleteEntry() {
         <CBtn
           variant="primary"
           size="sm"
+          :icon="CIconPlus"
+          :title="t('maintenance.addEntry')"
           @click="openCreateModal"
-        >
-          <CIconPlus style="width:16px;height:16px" />
-          <span class="btn-label">{{ t('maintenance.addEntry') }}</span>
-        </CBtn>
+        />
       </template>
     </CTopbar>
 
@@ -321,148 +320,263 @@ async function deleteEntry() {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
+
         <header class="view-header">
           <CEyebrow>
             {{ t('page.eyebrows.maintenance') }}
           </CEyebrow>
-          <h1 class="display-md">
+          <CHeading type="header">
             {{ t('maintenance.title') }}
-          </h1>
-          <p
-            class="body-md"
-            style="color:var(--color-on-surface-variant)"
-          >
-            {{ t('maintenance.periodSummary', { label: periodLabel, count: periodEntries.length, cost: formatCurrency(totalCost) }) }}
-          </p>
+          </CHeading>
+          <CMetaLine>
+            <CMetaItem variant="sub">
+              {{ periodLabel }}
+            </CMetaItem>
+            <CSeparator />
+            <CMetaItem variant="sub">
+              {{ t('maintenance.header.entriesCount', periodEntries.length) }}
+            </CMetaItem>
+            <CSeparator />
+            <CMetaItem variant="sub">
+              {{ t('maintenance.header.totalCost', { amount: formatCurrency(totalCost) }) }}
+            </CMetaItem>
+          </CMetaLine>
         </header>
+        <div class="page-layout">
+          <aside
+            v-if="logbookSummary"
+            class="page-sidebar"
+          >
+            <div class="regulatory-grid">
+              <CCard class="regulatory-card">
+                <div class="regulatory-card__header">
+                  <span class="title-sm">{{ t('maintenance.regulatory.title') }}</span>
+                  <CBadge variant="default">
+                    {{ t('maintenance.regulatory.decree') }}
+                  </CBadge>
+                </div>
+                <div class="regulatory-card__body">
+                  <div>
+                    <span class="regulatory-card__label">{{ t('maintenance.regulatory.building') }}</span>
+                    <p class="body-xs regulatory-card__value">
+                      {{ buildingAddress }}
+                    </p>
+                  </div>
+                  <div>
+                    <span class="regulatory-card__label">{{ t('maintenance.regulatory.manager') }}</span>
+                    <p class="body-xs regulatory-card__value">
+                      {{ currentManagerLabel }}
+                    </p>
+                    <p
+                      v-if="logbookSummary.current_manager?.email"
+                      class="body-xs regulatory-card__hint"
+                    >
+                      {{ logbookSummary.current_manager.email }}
+                      <template v-if="logbookSummary.current_manager.phone">
+                        · {{ logbookSummary.current_manager.phone }}
+                      </template>
+                    </p>
+                  </div>
+                </div>
+              </CCard>
 
-        <div
-          v-if="logbookSummary"
-          class="regulatory-grid"
-        >
-          <CCard class="regulatory-card">
-            <div class="regulatory-card__header">
-              <span class="title-sm">{{ t('maintenance.regulatory.title') }}</span>
-              <CBadge variant="default">
-                {{ t('maintenance.regulatory.decree') }}
-              </CBadge>
-            </div>
-            <div class="regulatory-card__body">
-              <div>
-                <span class="regulatory-card__label">{{ t('maintenance.regulatory.building') }}</span>
-                <p class="body-xs regulatory-card__value">
-                  {{ buildingAddress }}
-                </p>
-              </div>
-              <div>
-                <span class="regulatory-card__label">{{ t('maintenance.regulatory.manager') }}</span>
-                <p class="body-xs regulatory-card__value">
-                  {{ currentManagerLabel }}
-                </p>
+              <CCard class="regulatory-card">
+                <div class="regulatory-card__header">
+                  <span class="title-sm">{{ t('maintenance.regulatory.insuranceContracts') }}</span>
+                  <CBadge
+                    variant="default"
+                    :dot="logbookSummary.insurance_contracts.length > 0"
+                  >
+                    {{ t('maintenance.regulatory.contractsCount', logbookSummary.insurance_contracts.length) }}
+                  </CBadge>
+                </div>
+                <div
+                  v-if="logbookSummary.insurance_contracts.length > 0"
+                  class="contract-list"
+                >
+                  <div
+                    v-for="contract in logbookSummary.insurance_contracts"
+                    :key="contract.id"
+                    class="contract-list__item"
+                  >
+                    <div>
+                      <p class="body-xs contract-list__title">
+                        {{ contract.subject }}
+                      </p>
+                      <p class="body-xs contract-list__meta">
+                        {{ contract.vendor_name }}
+                      </p>
+                    </div>
+                    <div class="contract-list__aside">
+                      <CBadge :variant="contractStatusVariant(contract.status)">
+                        {{ t(`contracts.statuses.${contract.status}`) }}
+                      </CBadge>
+                      <span class="contract-list__deadline">
+                        {{ t('maintenance.regulatory.endsOn', { date: formatDate(contract.end_date) }) }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
                 <p
-                  v-if="logbookSummary.current_manager?.email"
+                  v-else
                   class="body-xs regulatory-card__hint"
                 >
-                  {{ logbookSummary.current_manager.email }}
-                  <template v-if="logbookSummary.current_manager.phone">
-                    · {{ logbookSummary.current_manager.phone }}
-                  </template>
+                  {{ t('maintenance.regulatory.noInsuranceContracts') }}
                 </p>
-              </div>
-            </div>
-          </CCard>
+              </CCard>
 
-          <CCard class="regulatory-card">
-            <div class="regulatory-card__header">
-              <span class="title-sm">{{ t('maintenance.regulatory.insuranceContracts') }}</span>
-              <CBadge
-                variant="default"
-                :dot="logbookSummary.insurance_contracts.length > 0"
-              >
-                {{ t('maintenance.regulatory.contractsCount', logbookSummary.insurance_contracts.length) }}
-              </CBadge>
-            </div>
-            <div
-              v-if="logbookSummary.insurance_contracts.length > 0"
-              class="contract-list"
-            >
-              <div
-                v-for="contract in logbookSummary.insurance_contracts"
-                :key="contract.id"
-                class="contract-list__item"
-              >
-                <div>
-                  <p class="body-xs contract-list__title">
-                    {{ contract.subject }}
-                  </p>
-                  <p class="body-xs contract-list__meta">
-                    {{ contract.vendor_name }}
-                  </p>
-                </div>
-                <div class="contract-list__aside">
-                  <CBadge :variant="contractStatusVariant(contract.status)">
-                    {{ t(`contracts.statuses.${contract.status}`) }}
+              <CCard class="regulatory-card">
+                <div class="regulatory-card__header">
+                  <span class="title-sm">{{ t('maintenance.regulatory.maintenanceContracts') }}</span>
+                  <CBadge
+                    variant="default"
+                    :dot="logbookSummary.maintenance_contracts.length > 0"
+                  >
+                    {{ t('maintenance.regulatory.contractsCount', logbookSummary.maintenance_contracts.length) }}
                   </CBadge>
-                  <span class="contract-list__deadline">
-                    {{ t('maintenance.regulatory.endsOn', { date: formatDate(contract.end_date) }) }}
-                  </span>
                 </div>
-              </div>
+                <div
+                  v-if="logbookSummary.maintenance_contracts.length > 0"
+                  class="contract-list"
+                >
+                  <div
+                    v-for="contract in logbookSummary.maintenance_contracts"
+                    :key="contract.id"
+                    class="contract-list__item"
+                  >
+                    <div>
+                      <p class="body-xs contract-list__title">
+                        {{ contract.subject }}
+                      </p>
+                      <p class="body-xs contract-list__meta">
+                        {{ contract.vendor_name }} · {{ t(`contracts.types.${contract.contract_type}`) }}
+                      </p>
+                    </div>
+                    <div class="contract-list__aside">
+                      <CBadge :variant="contractStatusVariant(contract.status)">
+                        {{ t(`contracts.statuses.${contract.status}`) }}
+                      </CBadge>
+                      <span class="contract-list__deadline">
+                        {{ t('maintenance.regulatory.endsOn', { date: formatDate(contract.end_date) }) }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <p
+                  v-else
+                  class="body-xs regulatory-card__hint"
+                >
+                  {{ t('maintenance.regulatory.noMaintenanceContracts') }}
+                </p>
+              </CCard>
             </div>
-            <p
-              v-else
-              class="body-xs regulatory-card__hint"
-            >
-              {{ t('maintenance.regulatory.noInsuranceContracts') }}
-            </p>
-          </CCard>
+          </aside>
 
-          <CCard class="regulatory-card">
-            <div class="regulatory-card__header">
-              <span class="title-sm">{{ t('maintenance.regulatory.maintenanceContracts') }}</span>
-              <CBadge
-                variant="default"
-                :dot="logbookSummary.maintenance_contracts.length > 0"
-              >
-                {{ t('maintenance.regulatory.contractsCount', logbookSummary.maintenance_contracts.length) }}
-              </CBadge>
-            </div>
-            <div
-              v-if="logbookSummary.maintenance_contracts.length > 0"
-              class="contract-list"
+          <div class="page-main">
+            <CTabs
+              v-model="periodFilter"
+              variant="filter"
+              :tabs="(['month', 'quarter', 'semester', 'year', 'all'] as const).map(f => ({ value: f, label: t(`maintenance.filters.${f}`) }))"
             >
-              <div
-                v-for="contract in logbookSummary.maintenance_contracts"
-                :key="contract.id"
-                class="contract-list__item"
+              <CFormInput
+                v-model="search"
+                type="search"
+                :placeholder="t('maintenance.searchPlaceholder')"
               >
-                <div>
-                  <p class="body-xs contract-list__title">
-                    {{ contract.subject }}
-                  </p>
-                  <p class="body-xs contract-list__meta">
-                    {{ contract.vendor_name }} · {{ t(`contracts.types.${contract.contract_type}`) }}
-                  </p>
+                <template #prefix>
+                  <CIconSearch />
+                </template>
+              </CFormInput>
+            </CTabs>
+            <div class="flex flex-col gap-4">
+              <div class="period-nav">
+                <CBtn
+                  variant="ghost"
+                  size="sm"
+                  :icon="CIconArrowLeft"
+                  :title="t('maintenance.previousPeriod')"
+                  :disabled="periodFilter === 'all'"
+                  :aria-label="t('maintenance.previousPeriod')"
+                  @click="goToPreviousPeriod"
+                />
+                <span class="period-label title-sm">{{ periodLabel }}</span>
+                <CBtn
+                  variant="ghost"
+                  size="sm"
+                  :icon="CIconArrowRight"
+                  :title="t('maintenance.nextPeriod')"
+                  :disabled="!canGoNext"
+                  :aria-label="t('maintenance.nextPeriod')"
+                  @click="goToNextPeriod"
+                />
+              </div>
+              <div class="timeline">
+                <div
+                  v-for="entry in periodEntries"
+                  :key="entry.id"
+                  class="timeline-item"
+                >
+                  <div
+                    class="timeline-dot"
+                    :class="entry.source === 'automatic' ? 'timeline-dot--auto' : ''"
+                  ></div>
+                  <CCard class="timeline-card">
+                    <div class="entry-header">
+                      <div>
+                        <span class="title-sm">{{ entry.title }}</span>
+                        <CBadge
+                          :variant="entry.source === 'automatic' ? 'primary' : 'default'"
+                          style="margin-left:8px"
+                        >
+                          {{ entry.source === 'automatic' ? t('maintenance.automatic') : t('maintenance.manual') }}
+                        </CBadge>
+                      </div>
+                      <div class="entry-header-right">
+                        <span class="entry-date">{{ formatDate(entry.intervention_date) }}</span>
+                        <CBtn
+                          variant="icon"
+                          :icon="CIconTrash"
+                          class="tone--err"
+                          :title="t('maintenance.deleteEntry')"
+                          :aria-label="t('maintenance.deleteEntry')"
+                          @click="openDeleteModal(entry)"
+                        />
+                      </div>
+                    </div>
+                    <p
+                      v-if="entry.description"
+                      class="body-xs entry-desc"
+                    >
+                      {{ entry.description }}
+                    </p>
+                    <div class="entry-footer">
+                      <span
+                        v-if="entry.vendor_name"
+                        class="vendor"
+                      >
+                        <CIconWrench
+                          class="icon-2xs"
+                        />
+                        {{ entry.vendor_name }}
+                      </span>
+                      <span
+                        v-if="entry.cost != null"
+                        class="cost"
+                      >{{ formatCurrency(entry.cost) }}</span>
+                    </div>
+                  </CCard>
                 </div>
-                <div class="contract-list__aside">
-                  <CBadge :variant="contractStatusVariant(contract.status)">
-                    {{ t(`contracts.statuses.${contract.status}`) }}
-                  </CBadge>
-                  <span class="contract-list__deadline">
-                    {{ t('maintenance.regulatory.endsOn', { date: formatDate(contract.end_date) }) }}
-                  </span>
+      
+                <div
+                  v-if="!periodEntries.length"
+                  class="py-8 text-center text-md text-on-surface-variant"
+                >
+                  {{ t('maintenance.emptyPeriod') }}
                 </div>
               </div>
             </div>
-            <p
-              v-else
-              class="body-xs regulatory-card__hint"
-            >
-              {{ t('maintenance.regulatory.noMaintenanceContracts') }}
-            </p>
-          </CCard>
+          </div>
         </div>
-
         <CLegalCard
           v-if="logbookSummary"
           class="regulatory-legal-card"
@@ -474,118 +588,6 @@ async function deleteEntry() {
             />
           </CLegalNotice>
         </CLegalCard>
-
-        <div class="period-toolbar">
-          <div class="tabs period-tabs">
-            <button
-              v-for="filter in ['month', 'quarter', 'semester', 'year', 'all'] as PeriodFilter[]"
-              :key="filter"
-              :class="['tab', { 'tab--active': periodFilter === filter }]"
-              @click="selectPeriod(filter)"
-            >
-              {{ t(`maintenance.filters.${filter}`) }}
-            </button>
-          </div>
-          <div class="period-nav">
-            <CBtn
-              variant="ghost"
-              size="sm"
-              :disabled="periodFilter === 'all'"
-              :aria-label="t('maintenance.previousPeriod')"
-              @click="goToPreviousPeriod"
-            >
-              ←
-            </CBtn>
-            <span class="period-label title-sm">{{ periodLabel }}</span>
-            <CBtn
-              variant="ghost"
-              size="sm"
-              :disabled="!canGoNext"
-              :aria-label="t('maintenance.nextPeriod')"
-              @click="goToNextPeriod"
-            >
-              →
-            </CBtn>
-          </div>
-        </div>
-
-        <CFormInput
-          v-model="search"
-          type="search"
-          :placeholder="t('maintenance.searchPlaceholder')"
-        >
-          <template #prefix>
-            <CIconSearch />
-          </template>
-        </CFormInput>
-
-        <div class="timeline">
-          <div
-            v-for="entry in periodEntries"
-            :key="entry.id"
-            class="timeline-item"
-          >
-            <div
-              class="timeline-dot"
-              :class="entry.source === 'automatic' ? 'timeline-dot--auto' : ''"
-            ></div>
-            <CCard class="timeline-card">
-              <div class="entry-header">
-                <div>
-                  <span class="title-sm">{{ entry.title }}</span>
-                  <CBadge
-                    :variant="entry.source === 'automatic' ? 'primary' : 'default'"
-                    style="margin-left:8px"
-                  >
-                    {{ entry.source === 'automatic' ? t('maintenance.automatic') : t('maintenance.manual') }}
-                  </CBadge>
-                </div>
-                <div class="entry-header-right">
-                  <span class="entry-date">{{ formatDate(entry.intervention_date) }}</span>
-                  <button
-                    class="icon-btn icon-btn--danger"
-                    :title="t('maintenance.deleteEntry')"
-                    @click="openDeleteModal(entry)"
-                  >
-                    <CIconTrash
-                      width="14"
-                      height="14"
-                    />
-                  </button>
-                </div>
-              </div>
-              <p
-                v-if="entry.description"
-                class="body-xs entry-desc"
-              >
-                {{ entry.description }}
-              </p>
-              <div class="entry-footer">
-                <span
-                  v-if="entry.vendor_name"
-                  class="vendor"
-                >
-                  <CIconWrench
-                    width="13"
-                    height="13"
-                    style="margin-right:4px"
-                  />{{ entry.vendor_name }}
-                </span>
-                <span
-                  v-if="entry.cost != null"
-                  class="cost"
-                >{{ formatCurrency(entry.cost) }}</span>
-              </div>
-            </CCard>
-          </div>
-
-          <div
-            v-if="!periodEntries.length"
-            class="empty-state"
-          >
-            {{ t('maintenance.emptyPeriod') }}
-          </div>
-        </div>
       </template>
     </div>
 
@@ -596,9 +598,8 @@ async function deleteEntry() {
       size="md"
       @update:open="showEntryModal = $event"
     >
-      <form
-        class="form-grid"
-        @submit.prevent="saveEntry"
+      <CForm
+        @submit="saveEntry"
       >
         <CFormInput
           v-model="entryForm.title"
@@ -629,27 +630,25 @@ async function deleteEntry() {
             :label="t('maintenance.fields.vendorName')"
           />
         </div>
-      </form>
+      </CForm>
       <template #footer>
-        <CFormFeedback
-          class="modal-footer-feedback"
+        <CFormActions
           :status="entryFeedback.status.value"
           :message="entryFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          @click="showEntryModal = false"
         >
-          {{ t('common.cancel') }}
-        </CBtn>
-        <CBtn
-          variant="primary"
-          :loading="savingEntry"
-          :closing="entryFeedback.status.value === 'success'"
-          @click="saveEntry"
-        >
-          {{ t('common.save') }}
-        </CBtn>
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="showEntryModal = false"
+          />
+          <CBtn
+            variant="primary"
+            :title="t('common.save')"
+            :loading="savingEntry"
+            :closing="entryFeedback.status.value === 'success'"
+            @click="saveEntry"
+          />
+        </CFormActions>
       </template>
     </CModal>
 
@@ -663,24 +662,23 @@ async function deleteEntry() {
         {{ t('maintenance.confirmDeleteMessage', { title: entryToDelete?.title ?? '' }) }}
       </p>
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="deleteFeedback.status.value"
           :message="deleteFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          @click="entryToDelete = null"
         >
-          {{ t('common.cancel') }}
-        </CBtn>
-        <CBtn
-          variant="danger"
-          :loading="deletingEntry"
-          :closing="deleteFeedback.status.value === 'success'"
-          @click="deleteEntry"
-        >
-          {{ t('common.delete') }}
-        </CBtn>
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="entryToDelete = null"
+          />
+          <CBtn
+            variant="danger"
+            :title="t('common.delete')"
+            :loading="deletingEntry"
+            :closing="deleteFeedback.status.value === 'success'"
+            @click="deleteEntry"
+          />
+        </CFormActions>
       </template>
     </CModal>
   </div>
@@ -688,11 +686,26 @@ async function deleteEntry() {
 
 <style scoped>
 .timeline { display: flex; flex-direction: column; gap: 0; }
+
+/* ── Page layout ─────────────────────────────────────── */
+.page-layout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.page-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  min-width: 0;
+}
+
+/* Regulatory cards: always a vertical stack */
 .regulatory-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  display: flex;
+  flex-direction: column;
   gap: var(--space-3);
-  margin-bottom: var(--space-4);
 }
 
 .regulatory-card {
@@ -745,7 +758,7 @@ async function deleteEntry() {
   justify-content: space-between;
   gap: var(--space-3);
   padding: var(--space-3);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   background: var(--color-surface-container-low);
 }
 
@@ -809,19 +822,11 @@ async function deleteEntry() {
 }
 .modal-footer-feedback { margin-right: auto; min-width: 0; }
 
-.period-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-  margin-bottom: var(--space-4);
-}
-
 .period-tabs { flex: 1; min-width: 0; }
 
 .period-nav {
   display: flex;
+  align-self: center;
   align-items: center;
   gap: var(--space-2);
 }
@@ -833,11 +838,19 @@ async function deleteEntry() {
 
 .form-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
 
-@media (max-width: 720px) {
-  .regulatory-grid {
-    grid-template-columns: 1fr;
+@media (min-width: 1024px) {
+  .page-layout {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    grid-template-areas: "main sidebar";
+    align-items: start;
   }
 
+  .page-main   { grid-area: main; }
+  .page-sidebar { grid-area: sidebar; }
+}
+
+@media (max-width: 720px) {
   .contract-list__item {
     flex-direction: column;
   }

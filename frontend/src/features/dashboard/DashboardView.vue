@@ -9,6 +9,7 @@ import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import CMockBanner from '@/components/atoms/CMockBanner.vue'
+import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import {
   mockBuildingStats, mockBudgets, mockBudgetLines, mockLevies, mockMeetings,
   mockTasks, mockReports, mockContracts, mockReminders, mockConsultations,
@@ -97,15 +98,14 @@ const todayStr = computed(() =>
           <CBtn
             variant="secondary"
             size="sm"
-          >
-            <CIconPlus />
-            <span class="btn-label">{{ t('dashboard.newAction') }}</span>
-          </CBtn>
+            :icon="CIconPlus"
+            :title="t('dashboard.newAction')"
+          />
         </RouterLink>
       </template>
     </CTopbar>
 
-    <div class="dashboard-content view-container">
+    <div class="view-container dashboard-content">
       <CMockBanner />
 
       <!-- Hero -->
@@ -232,23 +232,23 @@ const todayStr = computed(() =>
       <!-- Main 3-col grid -->
       <div class="grid3">
         <!-- Priority tasks -->
-        <CCard padding="none">
-          <div class="card-head">
-            <div>
-              <h2 class="card-title">
-                {{ t('dashboard.priorityTasks') }}
-              </h2>
-              <p class="card-sub">
-                {{ t('dashboard.taskCount', { count: priorityTasks.length }) }}
-              </p>
-            </div>
-            <RouterLink
-              to="/tasks"
-              class="card-link"
-            >
-              {{ t('dashboard.allTasks') }} <CIconChevronRight />
-            </RouterLink>
-          </div>
+        <CCard class="p-0!">
+          <CSectionHeader class="px-5 pt-5 mb-4">
+            <CHeading type="card">
+              {{ t('dashboard.priorityTasks') }}
+            </CHeading>
+            <p class="body-sm text-on-surface-variant">
+              {{ t('dashboard.taskCount', { count: priorityTasks.length }) }}
+            </p>
+            <template #actions>
+              <RouterLink
+                to="/tasks"
+                class="flex items-center gap-1 text-xs text-primary font-medium no-underline whitespace-nowrap shrink-0 hover:underline"
+              >
+                {{ t('dashboard.allTasks') }} <CIconChevronRight />
+              </RouterLink>
+            </template>
+          </CSectionHeader>
           <div class="task-list">
             <div
               v-for="task in priorityTasks"
@@ -273,7 +273,7 @@ const todayStr = computed(() =>
             </div>
             <div
               v-if="!priorityTasks.length"
-              class="empty-state"
+              class="py-8 text-center text-md text-on-surface-variant"
             >
               {{ t('dashboard.noTasks') }}
             </div>
@@ -284,32 +284,31 @@ const todayStr = computed(() =>
                 variant="primary"
                 size="sm"
                 style="width:100%;justify-content:center"
-              >
-                <CIconPlus />
-                {{ t('dashboard.newTask') }}
-              </CBtn>
+                :icon="CIconPlus"
+                :title="t('dashboard.newTask')"
+              />
             </RouterLink>
           </div>
         </CCard>
 
         <!-- Contract reminders + Reports -->
-        <CCard padding="none">
-          <div class="card-head">
-            <div>
-              <h2 class="card-title">
-                {{ t('dashboard.contractReminders') }}
-              </h2>
-              <p class="card-sub">
-                {{ t('dashboard.nextDeadlines') }}
-              </p>
-            </div>
-            <RouterLink
-              to="/contracts"
-              class="card-link"
-            >
-              {{ t('dashboard.contracts') }} <CIconChevronRight />
-            </RouterLink>
-          </div>
+        <CCard class="p-0!">
+          <CSectionHeader class="px-5 pt-5 mb-4">
+            <CHeading type="card">
+              {{ t('dashboard.contractReminders') }}
+            </CHeading>
+            <p class="body-sm text-on-surface-variant">
+              {{ t('dashboard.nextDeadlines') }}
+            </p>
+            <template #actions>
+              <RouterLink
+                to="/contracts"
+                class="flex items-center gap-1 text-xs text-primary font-medium no-underline whitespace-nowrap shrink-0 hover:underline"
+              >
+                {{ t('dashboard.contracts') }} <CIconChevronRight />
+              </RouterLink>
+            </template>
+          </CSectionHeader>
           <div class="reminder-list">
             <div
               v-for="reminder in reminders"
@@ -345,32 +344,29 @@ const todayStr = computed(() =>
             </div>
             <div
               v-if="!reminders?.length"
-              class="empty-state"
+              class="py-8 text-center text-md text-on-surface-variant"
             >
               {{ t('dashboard.noReminders') }}
             </div>
           </div>
 
           <div class="section-divider"></div>
-          <div
-            class="card-head"
-            style="padding-top:16px"
-          >
-            <div>
-              <h2 class="card-title">
-                {{ t('dashboard.reportsTitle') }}
-              </h2>
-              <p class="card-sub">
-                {{ t('dashboard.openCount', { count: openReports.length }) }}
-              </p>
-            </div>
-            <RouterLink
-              to="/reports"
-              class="card-link"
-            >
-              {{ t('dashboard.seeReports') }} <CIconChevronRight />
-            </RouterLink>
-          </div>
+          <CSectionHeader class="px-5 pt-4 mb-4">
+            <CHeading type="card">
+              {{ t('dashboard.reportsTitle') }}
+            </CHeading>
+            <p class="body-sm text-on-surface-variant">
+              {{ t('dashboard.openCount', { count: openReports.length }) }}
+            </p>
+            <template #actions>
+              <RouterLink
+                to="/reports"
+                class="flex items-center gap-1 text-xs text-primary font-medium no-underline whitespace-nowrap shrink-0 hover:underline"
+              >
+                {{ t('dashboard.seeReports') }} <CIconChevronRight />
+              </RouterLink>
+            </template>
+          </CSectionHeader>
           <div class="signal-list">
             <div
               v-for="r in openReports"
@@ -398,7 +394,7 @@ const todayStr = computed(() =>
             </div>
             <div
               v-if="!openReports.length"
-              class="empty-state"
+              class="py-8 text-center text-md text-on-surface-variant"
             >
               {{ t('dashboard.noReports') }}
             </div>
@@ -407,18 +403,20 @@ const todayStr = computed(() =>
 
         <!-- Right col: residents + consultation -->
         <div class="right-col">
-          <CCard padding="none">
-            <div class="card-head">
-              <h2 class="card-title">
+          <CCard class="p-0!">
+            <CSectionHeader class="px-5 pt-5 mb-4">
+              <CHeading type="card">
                 {{ t('dashboard.residentsTitle') }}
-              </h2>
-              <RouterLink
-                to="/residents"
-                class="card-link"
-              >
-                {{ t('dashboard.seeResidents') }} <CIconChevronRight />
-              </RouterLink>
-            </div>
+              </CHeading>
+              <template #actions>
+                <RouterLink
+                  to="/residents"
+                  class="flex items-center gap-1 text-xs text-primary font-medium no-underline whitespace-nowrap shrink-0 hover:underline"
+                >
+                  {{ t('dashboard.seeResidents') }} <CIconChevronRight />
+                </RouterLink>
+              </template>
+            </CSectionHeader>
             <div class="residents-grid">
               <div class="res-stat">
                 <p class="res-stat-val">
@@ -455,19 +453,17 @@ const todayStr = computed(() =>
             v-if="consultations.length"
             padding="none"
           >
-            <div class="card-head">
-              <div>
-                <h2 class="card-title">
-                  {{ t('dashboard.activeConsultation') }}
-                </h2>
-                <p
-                  v-if="consultations[0].closed_at"
-                  class="card-sub"
-                >
-                  {{ t('dashboard.closesPrefix') }} {{ formatRelative(consultations[0].closed_at) }}
-                </p>
-              </div>
-            </div>
+            <CSectionHeader class="px-5 pt-5 mb-4">
+              <CHeading type="card">
+                {{ t('dashboard.activeConsultation') }}
+              </CHeading>
+              <p
+                v-if="consultations[0].closed_at"
+                class="body-sm text-on-surface-variant"
+              >
+                {{ t('dashboard.closesPrefix') }} {{ formatRelative(consultations[0].closed_at) }}
+              </p>
+            </CSectionHeader>
             <div class="consultation-body">
               <p class="consultation-title">
                 {{ consultations[0].title }}
@@ -485,22 +481,22 @@ const todayStr = computed(() =>
           padding="none"
           class="budget-wide"
         >
-          <div class="card-head">
-            <div>
-              <h2 class="card-title">
-                {{ t('dashboard.budgetLabel', { exercice: currentBudget.fiscal_year }) }}
-              </h2>
-              <p class="card-sub">
-                {{ t('dashboard.budgetRealized', { pct: budgetExecutionRate }) }}
-              </p>
-            </div>
-            <RouterLink
-              to="/budget"
-              class="card-link"
-            >
-              {{ t('dashboard.detailLink') }} <CIconChevronRight />
-            </RouterLink>
-          </div>
+          <CSectionHeader class="px-5 pt-5 mb-4">
+            <CHeading type="card">
+              {{ t('dashboard.budgetLabel', { exercice: currentBudget.fiscal_year }) }}
+            </CHeading>
+            <p class="body-sm text-on-surface-variant">
+              {{ t('dashboard.budgetRealized', { pct: budgetExecutionRate }) }}
+            </p>
+            <template #actions>
+              <RouterLink
+                to="/budget"
+                class="flex items-center gap-1 text-xs text-primary font-medium no-underline whitespace-nowrap shrink-0 hover:underline"
+              >
+                {{ t('dashboard.detailLink') }} <CIconChevronRight />
+              </RouterLink>
+            </template>
+          </CSectionHeader>
           <div class="budget-prog-list">
             <div
               v-for="line in budgetLines.slice(0, 4)"
@@ -569,7 +565,7 @@ const todayStr = computed(() =>
 
 .hero-alert {
   display: flex; align-items: center; gap: var(--space-2);
-  padding: 12px var(--space-4); border-radius: var(--radius-md); min-width: 280px; font-size: 13px;
+  padding: 12px var(--space-4); border-radius: var(--radius-xl); min-width: 280px; font-size: 13px;
   background: var(--tone-bg, var(--color-surface-container-low));
   color: var(--tone-fg, var(--color-on-surface));
 }
@@ -595,20 +591,9 @@ const todayStr = computed(() =>
 @media (max-width: 768px)  { .grid3 { grid-template-columns: 1fr; } }
 .right-col { display: flex; flex-direction: column; gap: var(--space-4); }
 
-/* ── Card helpers ─────────────────────────────────────────────────── */
-.card-head { display: flex; align-items: flex-start; justify-content: space-between; padding: var(--space-5) var(--space-5) 0; margin-bottom: var(--space-4); }
-.card-title { font-family: var(--font-display); font-size: 16px; font-weight: var(--fw-semibold); font-variation-settings: 'opsz' 36; letter-spacing: -0.01em; color: var(--color-on-surface); }
-.card-sub { font-size: 12px; color: var(--color-on-surface-variant); margin-top: 2px; }
-.card-link { font-size: 12px; color: var(--color-primary); font-weight: var(--fw-medium); text-decoration: none; display: flex; align-items: center; gap: 3px; white-space: nowrap; flex-shrink: 0; }
-.card-link svg { width: 12px; height: 12px; }
-.card-link:hover { text-decoration: underline; }
-.card-footer { padding: var(--space-2) var(--space-5) var(--space-5); }
-.section-divider { height: 1px; background: rgba(194,199,207,.2); margin: var(--space-2) var(--space-5) 0; }
-.empty-state { padding: var(--space-4) var(--space-5); font-size: 13px; color: var(--color-on-surface-variant); }
-
 /* ── Tasks ────────────────────────────────────────────────────────── */
 .task-list { padding: 0 var(--space-3) var(--space-2); display: flex; flex-direction: column; gap: var(--space-2); }
-.task-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border-radius: var(--radius-md); background: var(--color-surface-container-low); cursor: pointer; transition: background var(--transition-fast); }
+.task-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border-radius: var(--radius-xl); background: var(--color-surface-container-low); cursor: pointer; transition: background var(--transition-fast); }
 .task-item:hover { background: var(--color-surface-container); }
 .task-prio { width: 4px; height: 32px; border-radius: var(--radius-full); flex-shrink: 0; margin-top: 2px; }
 .task-prio--urgent { background: var(--color-error); }
@@ -622,9 +607,9 @@ const todayStr = computed(() =>
 
 /* ── Reminders ────────────────────────────────────────────────────── */
 .reminder-list { padding: 0 var(--space-5) var(--space-2); display: flex; flex-direction: column; gap: var(--space-1); }
-.reminder-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius-md); transition: background var(--transition-fast); cursor: pointer; }
+.reminder-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius-xl); transition: background var(--transition-fast); cursor: pointer; }
 .reminder-item:hover { background: var(--color-surface-container-low); }
-.reminder-icon { width: 32px; height: 32px; min-width: unset; min-height: unset; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: var(--tone-bg, transparent); color: var(--tone-fg, inherit); }
+.reminder-icon { width: 32px; height: 32px; min-width: unset; min-height: unset; border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: var(--tone-bg, transparent); color: var(--tone-fg, inherit); }
 .reminder-icon svg { width: 15px; height: 15px; }
 .reminder-icon--low    { background: var(--color-surface-container); color: var(--color-on-surface-variant); }
 .reminder-body { flex: 1; min-width: 0; }
@@ -660,12 +645,12 @@ const todayStr = computed(() =>
 .prog-fill { height: 100%; border-radius: var(--radius-full); transition: width 0.8s cubic-bezier(0.34, 1.3, 0.64, 1); }
 .prog-fill--primary { background: var(--gradient-primary); }
 .prog-fill--over    { background: linear-gradient(135deg, #ba1a1a, #e53935); }
-.budget-total-row { display: flex; justify-content: space-between; align-items: center; padding: 12px var(--space-4); background: var(--color-surface-container-low); border-radius: var(--radius-md); font-size: 13px; font-weight: var(--fw-medium); color: var(--color-on-surface); }
+.budget-total-row { display: flex; justify-content: space-between; align-items: center; padding: 12px var(--space-4); background: var(--color-surface-container-low); border-radius: var(--radius-xl); font-size: 13px; font-weight: var(--fw-medium); color: var(--color-on-surface); }
 .budget-total-val { font-family: var(--font-mono); font-size: 13px; font-weight: var(--fw-medium); }
 
 /* ── Residents ────────────────────────────────────────────────────── */
 .residents-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 0 var(--space-5) var(--space-5); }
-.res-stat { background: var(--color-surface-container-low); border-radius: var(--radius-md); padding: 14px; }
+.res-stat { background: var(--color-surface-container-low); border-radius: var(--radius-xl); padding: 14px; }
 .res-stat-val { font-family: var(--font-display); font-size: 26px; font-weight: var(--fw-bold); font-variation-settings: 'opsz' 72; letter-spacing: -0.03em; color: var(--color-on-surface); margin-bottom: 2px; }
 .res-stat--ok .res-stat-val  { color: var(--color-success); }
 .res-stat--err .res-stat-val { color: var(--color-error); }

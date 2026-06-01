@@ -5,7 +5,7 @@ import CCard from '@/components/molecules/CCard.vue'
 import CKpiMetric from '@/components/atoms/CKpiMetric.vue'
 
 withDefaults(defineProps<{
-  label: string
+  label?: string
   value: string
   subtitle?: string
   delta?: string
@@ -29,7 +29,10 @@ withDefaults(defineProps<{
     class="min-w-40!"
     :class="emphasize ? `tone--${tone}` : ''"
   >
-    <div class="c-kpi__header">
+    <div 
+      v-if="label || $slots.icon" 
+      class="c-kpi__header"
+    >
       <div>
         <p class="c-kpi__label">
           {{ label }}
@@ -74,7 +77,7 @@ withDefaults(defineProps<{
 .c-kpi__icon {
   width: calc(var(--icon-md) * 2);
   height: calc(var(--icon-md) * 2);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   display: flex;
   align-items: center;
   justify-content: center;

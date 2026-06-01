@@ -1,3 +1,8 @@
+/* ⚠️ PARTIEL LEGACY — Les classes applicatives (`.view-container`, `.empty-state`, `.spinner`, etc.)
+   sont à migrer vers Tailwind inline ou composants (EP-020-S11, DESIGN.md §3.8).
+   Les resets navigateur (html, body, :focus-visible, scrollbar, a, img, button…) sont conservés.
+   ─────────────────────────────────────────────────────────────────────────────────────────────── */
+
 /* ── BASE ────────────────────────────────────────────────────────── */
 
 html {
@@ -35,105 +40,24 @@ body {
 a { color: var(--color-primary); text-decoration: none; }
 a:hover { text-decoration: underline; }
 
-/* Legal article reference — inline superscript footnote link */
-sup > a.legal-ref {
-  font-size: var(--text-2xs);
-  color: var(--color-on-surface-variant);
-  text-decoration: none;
-  white-space: nowrap;
-}
-sup > a.legal-ref:hover { text-decoration: underline; }
-
 /* Images ────────────────────────────────────────────────────────── */
 img, svg { display: block; max-width: 100%; }
 
 /* Inputs reset ──────────────────────────────────────────────────── */
-button { cursor: pointer; font-family: inherit; border: none; background: none; }
+button { cursor: pointer; font-family: inherit; font-size: inherit; }
 input, textarea, select { font-family: inherit; font-size: inherit; }
+
+/* Fixes radix select modal being behind modal overlay */
+[data-radix-popper-content-wrapper] {
+  z-index: var(--z-toast) !important;
+}
 
 /* Hide number input spinners globally */
 input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
 
-/* Touch target minimum 44px ─────────────────────────────────────── */
-button, [role="button"], input[type="checkbox"], input[type="radio"] {
-  min-height: 44px;
-  min-width: 44px;
-}
-
-/* ── View layout ─────────────────────────────────────────────────── */
-/*
- * Shared layout primitives used by all feature views.
- * Per-view max-width / gap are overridden via CSS custom properties
- * in each view's scoped <style>, keeping the template untouched.
- */
-.view-container {
-  padding: 40px;
-  max-width: 1200px;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-6);
-}
-.view-header {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--space-2);
-}
-
-.empty-state {
-  padding: var(--space-8);
-  text-align: center;
-  font-size: var(--text-md);
-  color: var(--color-on-surface-variant);
-}
-@media (max-width: 640px) {
-  .view-container { padding: 20px; }
-}
-
-/* ── Card state modifiers ────────────────────────────────────────── */
-/*
- * Applied to any CCard that represents a terminated / closed / expired entity.
- * Pairs with :shadow="false" on CCard (which removes box-shadow without !important).
- * Only adds the outline — no override cascade needed.
- */
-.card--terminated {
-  outline: 1px solid var(--color-outline-variant);
-}
-
 /* ── Utilitaires globaux ─────────────────────────────────────────── */
 
-/* Spinner (on dark/coloured background) */
+/* Spinner animation (used by CIconSpinner and Tailwind animate-spin) */
 @keyframes spin { to { transform: rotate(360deg); } }
-
-/* Skeleton loader */
-@keyframes skeleton-pulse {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0.4; }
-}
-
-.loading-skeleton {
-  background: var(--color-surface-container-high);
-  border-radius: var(--radius-sm);
-  animation: skeleton-pulse 1.5s ease-in-out infinite;
-  pointer-events: none;
-  user-select: none;
-}
-
-.spinner {
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-  border: 2px solid rgba(255, 255, 255, 0.35);
-  border-top-color: #fff;
-  border-radius: 50%;
-  animation: spin 0.7s linear infinite;
-  flex-shrink: 0;
-}
-
-/* Spinner (sur fond clair) */
-.spinner-dark {
-  border-color: rgba(25, 28, 29, 0.2);
-  border-top-color: var(--color-on-surface);
-}

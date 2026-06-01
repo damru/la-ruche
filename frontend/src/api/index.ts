@@ -435,4 +435,6 @@ export const vendorApi = {
 export const adminApi = {
   resetDemo: () =>
     api.post('/admin/reset-demo'),
+  resetData: () =>
+    api.post('/admin/reset-data'),
 }

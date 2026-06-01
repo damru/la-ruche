@@ -5,12 +5,14 @@ import { useI18n } from 'vue-i18n'
 import { useFormatters } from '@/composables/useFormatters'
 import { usePageLoader } from '@/composables/usePageLoader'
 import CBadge from '@/components/atoms/CBadge.vue'
+import CIconTile from '@/components/atoms/CIconTile.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CEyebrow from '@/components/atoms/CEyebrow.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
+import CHeading from '@/components/atoms/CHeading.vue'
 import CIconArrowLeft from '@/components/atoms/CIconArrowLeft.svg'
 import CIconBolt from '@/components/atoms/CIconBolt.svg'
 import CIconChevronRight from '@/components/atoms/CIconChevronRight.svg'
@@ -120,11 +122,10 @@ function priorityVariant(p: string): 'err' | 'pending' | 'primary' | 'valid' | '
         <CBtn
           variant="ghost"
           size="sm"
+          :icon="CIconArrowLeft"
+          :title="t('common.back')"
           @click="router.push({ name: 'contractors' })"
-        >
-          <CIconArrowLeft style="width:16px;height:16px" />
-          {{ t('common.back') }}
-        </CBtn>
+        />
       </template>
     </CTopbar>
 
@@ -139,20 +140,25 @@ function priorityVariant(p: string): 'err' | 'pending' | 'primary' | 'valid' | '
         <!-- Contractor detail card -->
         <CCard class="contractor-detail-card">
           <div class="contractor-header">
-            <div :class="['contractor-domain-icon', domainTone(contractor.domains)]">
+            <CIconTile
+              size="lg"
+              :class="domainTone(contractor.domains)"
+            >
               <component
                 :is="domainIcon(contractor.domains)"
-                class="domain-icon"
                 aria-hidden="true"
               />
-            </div>
+            </CIconTile>
             <div class="contractor-header-info">
               <CEyebrow>
                 {{ t('page.eyebrows.contractorDetail') }}
               </CEyebrow>
-              <h1 class="display-md contractor-name">
+              <CHeading
+                type="header"
+                class="mb-2"
+              >
                 {{ contractor.name }}
-              </h1>
+              </CHeading>
               <div class="contractor-domains">
                 <CBadge
                   v-for="d in contractor.domains"
@@ -197,13 +203,13 @@ function priorityVariant(p: string): 'err' | 'pending' | 'primary' | 'valid' | '
         </CCard>
 
         <!-- Assigned tasks section -->
-        <h2 class="section-title title-sm">
+        <CHeading>
           {{ t('contractors.assignedTasks', { count: assignedTasks.length }) }}
-        </h2>
+        </CHeading>
 
         <div
           v-if="assignedTasks.length === 0"
-          class="empty-state"
+          class="py-8 text-center text-md text-on-surface-variant"
         >
           {{ t('contractors.noAssignedTasks') }}
         </div>
@@ -264,19 +270,6 @@ function priorityVariant(p: string): 'err' | 'pending' | 'primary' | 'valid' | '
   margin-bottom: var(--space-4);
 }
 
-.contractor-domain-icon {
-  width: 56px;
-  height: 56px;
-  border-radius: var(--radius-lg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  background: var(--tone-bg, var(--color-secondary-container));
-  color: var(--tone-fg, var(--color-primary));
-}
-
-.domain-icon { width: 24px; height: 24px; }
 
 .contractor-header-info {
   flex: 1;

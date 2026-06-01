@@ -6,11 +6,13 @@ import CCard from '@/components/molecules/CCard.vue'
 import CLegalNotice from '@/components/molecules/CLegalNotice.vue'
 import CLegalCard from '@/components/molecules/CLegalCard.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
+import CHeading from '@/components/atoms/CHeading.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import { buildingApi } from '@/api'
 import { usePageLoader } from '@/composables/usePageLoader'
 import type { RegistryResponse, RegistryKey } from '@/types/domain'
+import router from '@/router'
 
 const { t } = useI18n()
 
@@ -71,6 +73,20 @@ function formatLocation(unit: { block?: string | null; staircase?: string | null
   if (unit.floor) parts.push(t('residents.floorShort', { n: unit.floor }))
   return parts.join(' · ')
 }
+
+const registryColumns = computed(() => {
+  if (!data.value) return []
+  return [
+    { key: 'unit_number', label: t('common.lot') },
+    { key: 'unit_type', label: t('common.type') },
+    { key: 'location', label: t('residents.location') },
+    ...data.value.keys.map(k => ({
+      key: `key_${k.id}`,
+      label: k.name,
+      numeric: true,
+    })),
+  ]
+})
 </script>
 
 <template>
@@ -97,118 +113,91 @@ function formatLocation(unit: { block?: string | null; staircase?: string | null
           <CEyebrow>
             {{ t('page.eyebrows.registry') }}
           </CEyebrow>
-          <h1 class="display-md">
+          <CHeading type="header">
             {{ t('registry.title') }}
-          </h1>
-          <p
-            v-if="data"
-            class="body-md dim"
-          >
-            {{ data.building.address_line1 }}, {{ data.building.postal_code }} {{ data.building.city }}
-            · {{ t('registry.totalShares') }} : {{ data.building.shares_total }}
-          </p>
+          </CHeading>
+          <CMetaLine>
+            <CMetaItem variant="sub">
+              {{ data.building.address_line1 }}, {{ data.building.postal_code }} {{ data.building.city }}
+            </CMetaItem>
+          </CMetaLine>
         </header>
-        <!-- Summary cards -->
-        <div class="summary-row">
-          <CCard>
-            <div class="summary-stat">
-              <span class="summary-value">{{ data.units.length }}</span>
-              <span class="summary-label">{{ t('registry.lots') }}</span>
-            </div>
-          </CCard>
-          <CCard>
-            <div class="summary-stat">
-              <span class="summary-value">{{ data.keys.length }}</span>
-              <span class="summary-label">{{ t('registry.keys') }}</span>
-            </div>
-          </CCard>
-          <CCard>
-            <div class="summary-stat">
-              <span class="summary-value">{{ data.building.shares_total }}</span>
-              <span class="summary-label">{{ t('registry.totalShares') }}</span>
-            </div>
-          </CCard>
+        
+        <div class="grid gap-4 xs:grid-cols-3">
+          <CKpiCard
+            class="items-center text-center"
+            :subtitle="t('registry.lots')"
+            :value="data.units.length.toString()"
+          />
+          <CKpiCard
+            class="items-center text-center"
+            :subtitle="t('registry.keys')"
+            :value="data.keys.length.toString()"
+          />
+          <CKpiCard
+            class="items-center text-center"
+            :subtitle="t('registry.totalShares')"
+            :value="data.building.shares_total.toString()"
+          />
         </div>
 
-        <!-- Per-key alerts -->
         <CAlert
           v-for="key in data.keys.filter(k => isSumMismatch(k))"
           :key="key.id"
           variant="warning"
+          dismissible
         >
           {{ t('registry.keyMismatch', { key: key.name, sum: key.shares_sum, total: data.building.shares_total }) }}
+          <br /> 
+          <CBtn
+            size="xs"
+            variant="negative"
+            @click="router.push({ name: 'residence-keys' })"
+          >
+            {{ t('nav.residence-keys') }}
+            <CIconArrowRight
+              class="icon-sm"
+              aria-hidden="true"
+            />
+          </CBtn>
+          <template #side>
+          </template>
         </CAlert>
 
-        <!-- Cross-table: units × keys -->
-        <CCard padding="none">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th class="col-shrink">
-                  {{ t('common.lot') }}
-                </th>
-                <th class="col-shrink">
-                  {{ t('common.type') }}
-                </th>
-                <th class="col-shrink">
-                  {{ t('residents.location') }}
-                </th>
-                <th
-                  v-for="key in data.keys"
-                  :key="key.id"
-                  class="col-right"
-                >
-                  {{ key.name }}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                v-for="unit in sortedUnits"
-                :key="unit.id"
-              >
-                <td class="col-shrink">
-                  <strong class="data-md">{{ unit.unit_number }}</strong>
-                </td>
-                <td class="col-shrink">
-                  {{ unitTypeIcon(unit.unit_type) }} {{ t(`units.types.${unit.unit_type}`) }}
-                </td>
-                <td class="col-shrink dim">
-                  {{ formatLocation(unit) }}
-                </td>
-                <td
-                  v-for="key in data.keys"
-                  :key="key.id"
-                  class="cell-numeric"
-                >
-                  {{ sharesMatrix.get(unit.id)?.get(key.id) ?? '—' }}
-                </td>
-              </tr>
-            </tbody>
-            <tfoot>
-              <tr class="row-total">
-                <td
-                  colspan="3"
-                  style="font-weight:600"
-                >
-                  {{ t('common.total') }}
-                </td>
-                <td
-                  v-for="key in data.keys"
-                  :key="key.id"
-                  class="cell-numeric"
-                >
-                  <span
-                    :class="{ 'sum-mismatch': isSumMismatch(key) }"
-                    style="font-weight:600"
-                  >
-                    {{ key.shares_sum }}
-                  </span>
-                  <span class="dim">/{{ data.building.shares_total }}</span>
-                </td>
-              </tr>
-            </tfoot>
-          </table>
+        <CCard class="p-0!">
+          <CDataTable
+            :columns="registryColumns"
+            :rows="sortedUnits"
+            row-key="id"
+          >
+            <template #cell-unit_number="{ row }">
+              <strong class="data-md">{{ row.unit_number }}</strong>
+            </template>
+            <template #cell-unit_type="{ row }">
+              {{ unitTypeIcon(row.unit_type) }} {{ t(`units.types.${row.unit_type}`) }}
+            </template>
+            <template #cell-location="{ row }">
+              <span class="dim">{{ formatLocation(row) }}</span>
+            </template>
+            <template
+              v-for="k in (data?.keys ?? [])"
+              :key="k.id"
+              #[`cell-key_${k.id}`]="{ row }"
+            >
+              {{ sharesMatrix.get(row.id)?.get(k.id) ?? '—' }}
+            </template>
+            <template #foot-unit_number>
+              {{ t('common.total') }}
+            </template>
+            <template
+              v-for="k in (data?.keys ?? [])"
+              :key="k.id"
+              #[`foot-key_${k.id}`]
+            >
+              <span :class="{ 'text-error': isSumMismatch(k) }">{{ k.shares_sum }}</span>
+              <span class="text-on-surface-variant">/{{ data.building.shares_total }}</span>
+            </template>
+          </CDataTable>
         </CCard>
 
         <CLegalCard>
@@ -225,12 +214,5 @@ function formatLocation(unit: { block?: string | null; staircase?: string | null
 </template>
 
 <style scoped>
-.dim { color: var(--color-on-surface-variant); }
 
-.summary-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-4); }
-.summary-stat { display: flex; flex-direction: column; align-items: center; gap: var(--space-1); }
-.summary-value { font-size: 28px; font-weight: var(--fw-bold); font-family: var(--font-display); }
-.summary-label { font-size: var(--text-sm); color: var(--color-on-surface-variant); }
-
-.sum-mismatch { color: var(--color-error); }
 </style>

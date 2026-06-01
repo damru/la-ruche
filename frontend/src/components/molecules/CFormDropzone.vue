@@ -119,7 +119,7 @@ function onDragOver(e: DragEvent) {
   justify-content: center;
   gap: var(--space-2);
   padding: var(--space-10) var(--space-6);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-2xl);
   background: var(--color-surface-container);
   /* Ghost border — accessibility only */
   border: 2px dashed rgba(194, 199, 207, 0.5);

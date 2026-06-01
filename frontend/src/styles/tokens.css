@@ -5,60 +5,56 @@
 
 :root {
   /* ── Couleurs sémantiques — Light ────────────────────────────── */
-  --color-primary:               #643fd5;
-  --color-primary-container:     #7d5bf0;
-  --color-on-primary:            #ffffff;
-  --color-secondary:             #5a6073;
-  --color-secondary-container:   #dde1f9;
-  --color-on-secondary-container:#1a1d2e;
-  --color-error:                 #ba1a1a;
-  --color-error-container:       #ffdad6;
-  --color-on-error:              #ffffff;
-  --color-success:               #2e7d32;
-  --color-success-container:     #e8f5e9;
-  --color-warning:               #e65100;
-  --color-warning-container:     #fff8e1;
-  --color-role-manager-bg:       #e8def8;
-  --color-role-manager-fg:       #21005d;
-  --color-role-board-bg:         #d2e4fb;
-  --color-role-board-fg:         #001d36;
-  --color-role-co-owner-bg:      #cef5e5;
-  --color-role-co-owner-fg:      #00391d;
-  --color-role-tenant-bg:        #fcecd1;
-  --color-role-tenant-fg:        #3a2000;
+  --color-primary:               oklch(0.503 0.2154 287.24);
+  --color-primary-container:     oklch(0.587 0.2131 288.56);
+  --color-on-primary:            oklch(1.000 0.0000 0.00);
+  --color-secondary:             oklch(0.491 0.0313 271.42);
+  --color-secondary-container:   oklch(0.914 0.0329 278.20);
+  --color-on-secondary-container:oklch(0.236 0.0330 275.89);
+  --color-error:                 oklch(0.506 0.1927 27.70);
+  --color-error-container:       oklch(0.918 0.0418 25.23);
+  --color-on-error:              oklch(1.000 0.0000 0.00);
+  --color-success:               oklch(0.523 0.1347 144.17);
+  --color-success-container:     oklch(0.957 0.0210 147.64);
+  --color-warning:               oklch(0.631 0.1970 40.25);
+  --color-warning-container:     oklch(0.979 0.0310 92.94);
+  --color-role-manager-bg:       oklch(0.916 0.0365 303.11);
+  --color-role-manager-fg:       oklch(0.242 0.1404 286.09);
+  --color-role-board-bg:         oklch(0.913 0.0369 254.57);
+  --color-role-board-fg:         oklch(0.225 0.0601 247.68);
+  --color-role-co-owner-bg:      oklch(0.938 0.0457 168.57);
+  --color-role-co-owner-fg:      oklch(0.303 0.0747 155.07);
+  --color-role-tenant-bg:        oklch(0.949 0.0395 80.90);
+  --color-role-tenant-fg:        oklch(0.272 0.0601 67.02);
   --color-tint:                  15%;
 
   /* ── Surfaces — Light ────────────────────────────────────────── */
-  --color-surface:                    #f8f9fa;
-  --color-surface-container-lowest:   #ffffff;
-  --color-surface-container-low:      #f3f4f5;
-  --color-surface-container:          #edeff0;
-  --color-surface-container-high:     #e7e9ea;
-  --color-surface-container-highest:  #e1e3e4;
-  --color-on-surface:                 #191c1d;
-  --color-on-surface-variant:         #42474e;
-  --color-outline:                    #74777f;
-  --color-outline-variant:            #c2c7cf;  
-  --color-outline-light:              color-mix(in srgb, var(--color-outline) var(--color-tint), transparent);
-  
+  --color-surface:                    oklch(0.982 0.0017 247.84);
+  --color-surface-container-lowest:   oklch(1.000 0.0000 0.00);
+  --color-surface-container-low:      oklch(0.967 0.0017 247.84);
+  --color-surface-container:          oklch(0.951 0.0025 228.79);
+  --color-surface-container-high:     oklch(0.933 0.0025 228.79);
+  --color-surface-container-highest:  oklch(0.915 0.0026 228.79);
+  --color-on-surface:                 oklch(0.224 0.0049 219.69);
+  --color-on-surface-variant:         oklch(0.396 0.0135 256.76);
+  --color-outline:                    oklch(0.569 0.0128 269.45);
+  --color-outline-variant:            oklch(0.828 0.0125 259.82);
+  --color-outline-light:              color-mix(in oklch, var(--color-outline) var(--color-tint), transparent);
+
   /* ── Gradient signature ──────────────────────────────────────── */
-  --gradient-primary: linear-gradient(135deg, #643fd5, #7d5bf0);
+  --gradient-primary: linear-gradient(135deg, oklch(0.503 0.2154 287.24), oklch(0.587 0.2131 288.56));
 
   /* ── Ombres ──────────────────────────────────────────────────── */
-  --shadow-sm:  0 2px 8px rgba(25, 28, 29, 0.04);
-  --shadow-md:  0 8px 32px rgba(25, 28, 29, 0.07), 0 2px 8px rgba(25, 28, 29, 0.04);
-  --shadow-lg:  0 16px 48px rgba(25, 28, 29, 0.10), 0 4px 16px rgba(25, 28, 29, 0.06);
-  --shadow-glass: 0 20px 60px rgba(25, 28, 29, 0.14), 0 4px 16px rgba(25, 28, 29, 0.08);
-  --shadow-primary-ring:       0 0 0 2px rgba(100, 63, 213, 0.35);
-  --shadow-error-ring:         0 0 0 2px rgba(186, 26, 26, 0.35);
-  --shadow-primary-lift:       0 4px 16px rgba(100, 63, 213, 0.25);
-  --shadow-primary-lift-hover: 0 8px 24px rgba(100, 63, 213, 0.35);
+  --shadow-sm:  0 2px 8px oklch(0.224 0.0049 219.69 / 0.04);
+  --shadow-md:  0 8px 32px oklch(0.224 0.0049 219.69 / 0.07), 0 2px 8px oklch(0.224 0.0049 219.69 / 0.04);
+  --shadow-lg:  0 16px 48px oklch(0.224 0.0049 219.69 / 0.10), 0 4px 16px oklch(0.224 0.0049 219.69 / 0.06);
+  --shadow-glass: 0 20px 60px oklch(0.224 0.0049 219.69 / 0.14), 0 4px 16px oklch(0.224 0.0049 219.69 / 0.08);
+  --shadow-primary-ring:       0 0 0 2px oklch(0.503 0.2154 287.24 / 0.35);
+  --shadow-error-ring:         0 0 0 2px oklch(0.506 0.1927 27.70 / 0.35);
+  --shadow-primary-lift:       0 4px 16px oklch(0.503 0.2154 287.24 / 0.25);
+  --shadow-primary-lift-hover: 0 8px 24px oklch(0.503 0.2154 287.24 / 0.35);
 
   /* ── Border radius ───────────────────────────────────────────── */
-  --radius-sm:   8px;
-  --radius-md:   12px;
-  --radius-lg:   16px;
-  --radius-xl:   24px;
   --radius-full: 9999px;
 
   /* ── Typographie ─────────────────────────────────────────────── */
@@ -81,7 +77,11 @@
   --text-xs:  12px;   /* dates, captions, secondary labels */
   --text-sm:  13px;   /* table rows, list items, default UI text */
   --text-md:  14px;   /* body text (matches base font-size) */
-  --text-lg:  16px;   /* section titles, card headings */  
+  --text-lg:  16px;   /* section titles, card headings */
+  --text-heading-sm: 18px; /* CHeading sm size */
+  --text-xl:      20px;   /* sub-display, modal titles */
+  --text-2xl:     24px;   /* page headings */
+  --text-display: 32px;   /* hero / display (Fraunces) */
   /* ── Espacement ──────────────────────────────────────────────── */
   --space-1:   4px;
   --space-2:   8px;
@@ -89,7 +89,9 @@
   --space-4:  16px;
   --space-5:  20px;
   --space-6:  24px;
+  --space-7:  28px;
   --space-8:  32px;
+  --space-9:  36px;
   --space-10: 40px;
   --space-12: 48px;
   --space-16: 64px;
@@ -109,6 +111,7 @@
   /* ── UI Controls ───────────────────────────────────────────── */
   --control-height:    44px;   /* input, select — touch target */
   --control-height-sm: 36px;   /* small input, small button */
+  --size-dropdown-min: 160px;
 
   /* ── Icons ──────────────────────────────────────────────────── */
   --icon-2xs: 12px;  /* meta-footer */
@@ -128,49 +131,49 @@
 
 /* ── Dark mode ───────────────────────────────────────────────────── */
 [data-theme="dark"] {
-  --color-primary:               #c4b5fd;
-  --color-primary-container:     #4c2fb8;
-  --color-on-primary:            #2a0084;
-  --color-secondary:             #bfc4dd;
-  --color-secondary-container:   #404659;
-  --color-on-secondary-container:#dde1f9;
-  --color-error:                 #ffb4ab;
-  --color-error-container:       #93000a;
-  --color-on-error:              #690005;
-  --color-success:               #81c784;
-  --color-success-container:     #1b4f23;
-  --color-warning:               #ffb74d;
-  --color-warning-container:     #4d3500;
-  --color-role-manager-bg:       #4a4458;
-  --color-role-manager-fg:       #e8def8;
-  --color-role-board-bg:         #00345b;
-  --color-role-board-fg:         #d2e4fb;
-  --color-role-co-owner-bg:      #00522b;
-  --color-role-co-owner-fg:      #cef5e5;
-  --color-role-tenant-bg:        #573200;
-  --color-role-tenant-fg:        #fcecd1;
+  --color-primary:               oklch(0.811 0.1013 293.57);
+  --color-primary-container:     oklch(0.434 0.2006 283.98);
+  --color-on-primary:            oklch(0.302 0.1811 281.25);
+  --color-secondary:             oklch(0.824 0.0354 276.63);
+  --color-secondary-container:   oklch(0.396 0.0331 271.15);
+  --color-on-secondary-container:oklch(0.914 0.0329 278.20);
+  --color-error:                 oklch(0.838 0.0891 26.76);
+  --color-error-container:       oklch(0.417 0.1702 27.38);
+  --color-on-error:              oklch(0.328 0.1336 27.32);
+  --color-success:               oklch(0.766 0.1179 145.30);
+  --color-success-container:     oklch(0.381 0.0909 146.40);
+  --color-warning:               oklch(0.829 0.1452 73.54);
+  --color-warning-container:     oklch(0.348 0.0719 80.56);
+  --color-role-manager-bg:       oklch(0.401 0.0340 298.59);
+  --color-role-manager-fg:       oklch(0.916 0.0365 303.11);
+  --color-role-board-bg:         oklch(0.317 0.0856 248.05);
+  --color-role-board-fg:         oklch(0.913 0.0369 254.57);
+  --color-role-co-owner-bg:      oklch(0.385 0.0963 154.41);
+  --color-role-co-owner-fg:      oklch(0.938 0.0457 168.57);
+  --color-role-tenant-bg:        oklch(0.355 0.0789 66.30);
+  --color-role-tenant-fg:        oklch(0.949 0.0395 80.90);
   --color-tint:                  20%;
 
-  --color-surface:                    #111318;
-  --color-surface-container-lowest:   #0c0e13;
-  --color-surface-container-low:      #191c21;
-  --color-surface-container:          #1e2026;
-  --color-surface-container-high:     #28292f;
-  --color-surface-container-highest:  #33353b;
-  --color-on-surface:                 #e2e3e8;
-  --color-on-surface-variant:         #c3c6cf;
-  --color-outline:                    #8e9099;
-  --color-outline-variant:            #43474f;
+  --color-surface:                    oklch(0.187 0.0107 268.11);
+  --color-surface-container-lowest:   oklch(0.164 0.0111 268.01);
+  --color-surface-container-low:      oklch(0.225 0.0107 260.68);
+  --color-surface-container:          oklch(0.244 0.0118 270.90);
+  --color-surface-container-high:     oklch(0.282 0.0110 278.15);
+  --color-surface-container-highest:  oklch(0.329 0.0109 271.07);
+  --color-on-surface:                 oklch(0.917 0.0068 277.16);
+  --color-on-surface-variant:         oklch(0.827 0.0130 271.26);
+  --color-outline:                    oklch(0.655 0.0135 275.99);
+  --color-outline-variant:            oklch(0.397 0.0145 264.40);
 
-  --gradient-primary: linear-gradient(135deg, #7d5bf0, #c4b5fd);
+  --gradient-primary: linear-gradient(135deg, oklch(0.587 0.2131 288.56), oklch(0.811 0.1013 293.57));
 
-  --shadow-sm:  0 2px 8px rgba(0, 0, 0, 0.16);
-  --shadow-md:  0 8px 32px rgba(0, 0, 0, 0.22), 0 2px 8px rgba(0, 0, 0, 0.16);
-  --shadow-lg:  0 16px 48px rgba(0, 0, 0, 0.32), 0 4px 16px rgba(0, 0, 0, 0.22);
-  --shadow-glass: 0 20px 60px rgba(0, 0, 0, 0.40), 0 4px 16px rgba(0, 0, 0, 0.28);
+  --shadow-sm:  0 2px 8px oklch(0.000 0.0000 0.00 / 0.16);
+  --shadow-md:  0 8px 32px oklch(0.000 0.0000 0.00 / 0.22), 0 2px 8px oklch(0.000 0.0000 0.00 / 0.16);
+  --shadow-lg:  0 16px 48px oklch(0.000 0.0000 0.00 / 0.32), 0 4px 16px oklch(0.000 0.0000 0.00 / 0.22);
+  --shadow-glass: 0 20px 60px oklch(0.000 0.0000 0.00 / 0.40), 0 4px 16px oklch(0.000 0.0000 0.00 / 0.28);
 
-  --shadow-primary-ring:       0 0 0 2px rgba(196, 181, 253, 0.35);
-  --shadow-error-ring:         0 0 0 2px rgba(255, 180, 171, 0.35);
-  --shadow-primary-lift:       0 4px 16px rgba(196, 181, 253, 0.20);
-  --shadow-primary-lift-hover: 0 8px 24px rgba(196, 181, 253, 0.30);
+  --shadow-primary-ring:       0 0 0 2px oklch(0.811 0.1013 293.57 / 0.35);
+  --shadow-error-ring:         0 0 0 2px oklch(0.838 0.0891 26.76 / 0.35);
+  --shadow-primary-lift:       0 4px 16px oklch(0.811 0.1013 293.57 / 0.20);
+  --shadow-primary-lift-hover: 0 8px 24px oklch(0.811 0.1013 293.57 / 0.30);
 }

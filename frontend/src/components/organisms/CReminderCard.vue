@@ -19,114 +19,73 @@ defineProps<{
 </script>
 
 <template>
-  <CCard
-    padding="none"
-    class="c-reminder-card"
-  >
-    <div class="c-reminder-card__head">
-      <h2 class="c-reminder-card__title">
-        {{ title }}
-      </h2>
-    </div>
-    <div class="c-reminder-card__list">
-      <div
+  <div class="flex flex-col gap-3">
+    <CHeading>
+      {{ title }}
+    </CHeading>
+    <div class="flex flex-col gap-2">
+      <CCard
         v-for="row in rows"
         :key="row.id"
-        :class="['c-reminder-card__row', row.tone ? `tone--${row.tone}` : null]"
+        :level="4"
+        :shadow="false"
+        gap="sm"
+        class="flex-row! flex-wrap lg:flex-nowrap items-center"
+        :class="[row.tone ? `tone--${row.tone}` : null]"
       >
-        <div class="c-reminder-card__dot"></div>
-        <div class="c-reminder-card__info">
+        <CIconBell class="icon-md shrink-0" />
+        <div class="flex flex-col flex-1">
           <span class="c-reminder-card__row-title">{{ row.title }}</span>
           <span
             v-if="row.subtitle"
             class="c-reminder-card__subtitle"
           >{{ row.subtitle }}</span>
         </div>
-        <span
-          v-if="row.meta"
-          class="c-reminder-card__meta"
-        >{{ row.meta }}</span>
-        <span
-          v-if="row.emphasis"
-          :class="['c-reminder-card__emphasis', row.tone ? `tone--${row.tone}` : null]"
-        >{{ row.emphasis }}</span>
+        <div
+          v-if="row.meta || row.emphasis"
+          class="flex flex-col shrink-0 items-end"
+        >
+          <span
+            v-if="row.meta"
+            class="c-reminder-card__meta"
+          >{{ row.meta }}</span>
+          <span
+            v-if="row.emphasis"
+            :class="['c-reminder-card__emphasis', row.tone ? `tone--${row.tone}` : null]"
+          >{{ row.emphasis }}</span>
+        </div>
         <div
           v-if="$slots.actions"
-          class="c-reminder-card__actions"
+          class="c-reminder-card__actions ml-auto"
         >
           <slot
             name="actions"
             :row="row"
           ></slot>
         </div>
-      </div>
+      </CCard>
     </div>
-  </CCard>
+  </div>
 </template>
 
 <style scoped>
-.c-reminder-card__head {
-  padding: var(--space-4) var(--space-5) 0;
-}
-
-.c-reminder-card__title {
-  font-size: var(--text-lg);
-  font-weight: var(--fw-semibold);
-  color: var(--color-on-surface);
-}
-
-.c-reminder-card__list {
-  padding: var(--space-3) var(--space-5) var(--space-4);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.c-reminder-card__row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-sm);
-  color: var(--tone-fg, var(--color-on-surface));
-  background: var(--tone-bg, transparent);
-}
-
-.c-reminder-card__dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: currentColor;
-  flex-shrink: 0;
-}
-
-.c-reminder-card__info {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
 .c-reminder-card__row-title {
-  font-size: var(--text-sm);
+  white-space: nowrap;
   font-weight: var(--fw-medium);
 }
 
 .c-reminder-card__subtitle {
   font-size: var(--text-2xs);
-  color: var(--color-on-surface-variant);
 }
 
 .c-reminder-card__meta {
-  font-size: var(--text-sm);
+  font-size: var(--text-xs);
   flex-shrink: 0;
 }
 
 .c-reminder-card__emphasis {
-  font-size: var(--text-xs);
+  font-size: var(--text-sm);
   font-weight: var(--fw-semibold);
-  flex-shrink: 0;
   color: var(--tone-fg, var(--color-on-surface-variant));
 }
 
@@ -134,17 +93,7 @@ defineProps<{
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  margin-left: auto;
+  flex-shrink: 0;
 }
 
-@media (max-width: 900px) {
-  .c-reminder-card__row {
-    flex-wrap: wrap;
-  }
-
-  .c-reminder-card__actions {
-    width: 100%;
-    margin-left: 0;
-  }
-}
 </style>

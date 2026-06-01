@@ -11,14 +11,29 @@ import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CDocumentLinkActionModal from '@/components/organisms/CDocumentLinkActionModal.vue'
 import CCard from '@/components/molecules/CCard.vue'
+import CCardActions from '@/components/molecules/CCardActions.vue'
 import CMetaLine from '@/components/molecules/CMetaLine.vue'
 import CMetaItem from '@/components/molecules/CMetaItem.vue'
-import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
+import CFormActions from '@/components/molecules/CFormActions.vue'
+import CForm from '@/components/molecules/CForm.vue'
 import CLinkedDocumentsModal from '@/components/organisms/CLinkedDocumentsModal.vue'
 import CModal from '@/components/molecules/CModal.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
+import CHeading from '@/components/atoms/CHeading.vue'
+import CFormRow from '@/components/molecules/CFormRow.vue'
+import CTabs from '@/components/atoms/CTabs.vue'
+import CIconPlus from '@/components/atoms/CIconPlus.svg'
+import CIconLink from '@/components/atoms/CIconLink.svg'
+import CIconEye from '@/components/atoms/CIconEye.svg'
+import CIconX from '@/components/atoms/CIconX.svg'
+import CIconCopy from '@/components/atoms/CIconCopy.svg'
+import CIconEdit from '@/components/atoms/CIconEdit.svg'
+import CIconRefresh from '@/components/atoms/CIconRefresh.svg'
+import CIconCheckCircle from '@/components/atoms/CIconCheckCircle.svg'
+import CIconDownload from '@/components/atoms/CIconDownload.svg'
+import CIconTrash from '@/components/atoms/CIconTrash.svg'
 import { buildingApi, contractorsApi, documentsApi, tasksApi, usersApi } from '@/api'
 import type { Contractor, Document, Task, TaskStatus, TaskPriority, User } from '@/types/domain'
 import { extractFileExtension } from '@/utils/files'
@@ -773,11 +788,10 @@ async function copyVendorLink(taskId: string) {
         <CBtn
           variant="primary"
           size="sm"
+          :icon="CIconPlus"
+          :title="t('tasks.newTask')"
           @click="openCreateModal"
-        >
-          <CIconPlus style="width:16px;height:16px" />
-          <span class="btn-label">{{ t('tasks.newTask') }}</span>
-        </CBtn>
+        />
       </template>
     </CTopbar>
 
@@ -793,12 +807,12 @@ async function copyVendorLink(taskId: string) {
           <CEyebrow>
             {{ t('page.eyebrows.tasks') }}
           </CEyebrow>
-          <h1 class="display-md">
+          <CHeading type="header">
             {{ t('tasks.title') }}
-          </h1>
-          <p class="text-on-surface-variant">
-            {{ t('tasks.activeSummary', { count: activeCount }) }}
-          </p>
+          </CHeading>
+          <CMetaItem variant="sub">
+            {{ t('tasks.header.activeSummary', { count: activeCount }) }}
+          </CMetaItem>
         </header>
 
         <CAlert
@@ -809,210 +823,197 @@ async function copyVendorLink(taskId: string) {
         </CAlert>
 
         <!-- Filtres -->
-        <div class="tabs">
-          <button
-            v-for="item in [
-              { key: 'all', label: t('tasks.filters.all'), count: allTasks.length },
-              { key: 'open', label: t('tasks.filters.open'), count: counts.open },
-              { key: 'in_progress', label: t('tasks.filters.in_progress'), count: counts.in_progress },
-              { key: 'awaiting_vendor', label: t('tasks.filters.awaiting_vendor'), count: counts.awaiting_vendor },
-              { key: 'awaiting_validation', label: t('tasks.filters.awaiting_validation'), count: counts.awaiting_validation },
-              { key: 'closed', label: t('tasks.filters.closed'), count: counts.closed },
-            ]"
-            :key="item.key"
-            :class="['tab', { 'tab--active': statusFilter === item.key }]"
-            @click="statusFilter = item.key as typeof statusFilter"
-          >
-            {{ item.label }}
-            <span class="tab-count">{{ item.count }}</span>
-          </button>
-        </div>
+        <CTabs
+          v-model="statusFilter"
+          variant="filter"
+          :tabs="[
+            { value: 'all', label: t('tasks.filters.all'), count: allTasks.length },
+            { value: 'open', label: t('tasks.filters.open'), count: counts.open },
+            { value: 'in_progress', label: t('tasks.filters.in_progress'), count: counts.in_progress },
+            { value: 'awaiting_vendor', label: t('tasks.filters.awaiting_vendor'), count: counts.awaiting_vendor },
+            { value: 'awaiting_validation', label: t('tasks.filters.awaiting_validation'), count: counts.awaiting_validation },
+            { value: 'closed', label: t('tasks.filters.closed'), count: counts.closed },
+          ]"
+        />
 
-        <!-- Liste -->
-        <div class="task-list">
-          <CCard
-            v-for="task in tasks"
-            :key="task.id"
-            :shadow="!isTerminal(task.status)"
-            :class="['activity-card', 'task-card', { 'card--terminated': isTerminal(task.status) }]"
-            interactive
-            tabindex="0"
-            @click="openTaskDetail(task.id)"
-            @keydown.enter.prevent="openTaskDetail(task.id)"
-            @keydown.space.prevent="openTaskDetail(task.id)"
-          >
-            <div class="activity-card__header-row">
-              <h3 class="activity-card__title">
-                {{ task.title }}
-              </h3>
-              <CMetaLine class="flex-1 justify-end text-xs">
-                <CBadge :variant="isTerminal(task.status) ? 'disabled' : priorityVariant(task.priority)">
-                  {{ t(`tasks.priorities.${task.priority}`) }}
-                </CBadge>
-                <CBadge
-                  :variant="isTerminal(task.status) ? 'disabled' : statusVariant(task.status)"
-                  dot
-                >
-                  {{ t(`tasks.statuses.${task.status}`) }}
-                </CBadge>
-              </CMetaLine>
-            </div>
-
-            <div class="activity-card__stack">
-              <p
-                v-if="task.description"
-                class="body-xs"
-              >
-                {{ task.description }}
-              </p>
-
-              <div
-                v-if="task.document_count > 0"
-                class="activity-card__documents"
-              >
-                <button
-                  class="activity-card__line activity-card__documents-button"
-                  @click.stop="openTaskDocuments(task)"
-                >
-                  <CIconFile />
-                  {{ t('tasks.documentsCount', task.document_count) }}
-                </button>
-              </div>
-
-              <CMetaLine>
-                <CMetaItem
-                  v-if="hasAssignment(task)"
-                >
-                  <template #icon>
-                    <CIconWrench v-if="task.contractor_id || contractorDisplayName(task)" />
-                    <CIconUser v-else />
-                  </template>
-                  <RouterLink
-                    v-if="task.contractor_id && contractorDisplayName(task)"
-                    :to="{ name: 'contractor-detail', params: { id: task.contractor_id } }"
-                    class="task-card__meta-link"
-                    @click.stop
+        <template v-if="tasks.length === 0">
+          <CEmptyState
+            :title="t('tasks.empty')"
+          />  
+        </template>
+        <template v-else>
+          <div class="flex flex-col gap-3">
+            <CCard
+              v-for="task in tasks"
+              :key="task.id"
+              :shadow="!isTerminal(task.status)"
+              gap="sm"
+              :class="['task-card', { 'outline outline-1 outline-outline-variant': isTerminal(task.status) }]"
+              interactive
+              tabindex="0"
+              @click="openTaskDetail(task.id)"
+              @keydown.enter.prevent="openTaskDetail(task.id)"
+              @keydown.space.prevent="openTaskDetail(task.id)"
+            >
+              <div class="flex items-center gap-3 min-w-0">
+                <h3 class="text-lg font-semibold text-on-surface m-0 leading-snug min-w-0">
+                  {{ task.title }}
+                </h3>
+                <CMetaLine class="flex-1 justify-end text-xs">
+                  <CBadge :variant="isTerminal(task.status) ? 'disabled' : priorityVariant(task.priority)">
+                    {{ t(`tasks.priorities.${task.priority}`) }}
+                  </CBadge>
+                  <CBadge
+                    :variant="isTerminal(task.status) ? 'disabled' : statusVariant(task.status)"
+                    dot
                   >
-                    {{ contractorDisplayName(task) }}
-                  </RouterLink>
-                  <span v-else>
-                    {{ contractorDisplayName(task) ?? assignedUserName(task) }}
-                  </span>
-                </CMetaItem>
-                <CMetaItem>
-                  <template #icon>
-                    <CIconCalendar />
-                  </template>
-                  {{ t('tasks.lifecycle.createdRelative', { relative: formatRelative(task.created_at) }) }}
-                </CMetaItem>
-              </CMetaLine>
-
-              <div
-                v-if="(contractorDisplayName(task) && !task.has_vendor_token && !isTerminal(task.status)) || task.has_vendor_token"
-                class="activity-card__secondary-actions"
-              >
-                <CBtn
-                  v-if="contractorDisplayName(task) && !task.has_vendor_token && !isTerminal(task.status)"
-                  variant="ghost"
-                  size="sm"
-                  :disabled="generatingToken === task.id"
-                  :aria-label="t('tasks.generateToken')"
-                  @click.stop="generateToken(task)"
-                >
-                  <CIconLink />
-                  {{ t('tasks.generateToken') }}
-                </CBtn>
-                <CBtn
-                  v-if="task.has_vendor_token"
-                  variant="ghost"
-                  size="sm"
-                  :aria-label="t('tasks.showLink')"
-                  @click.stop="showVendorLink(task)"
-                >
-                  <CIconEye />
-                  {{ t('tasks.showLink') }}
-                </CBtn>
-                <CBtn
-                  v-if="task.has_vendor_token"
-                  variant="ghost"
-                  size="sm"
-                  :aria-label="t('tasks.revokeToken')"
-                  @click.stop="openRevokeModal(task)"
-                >
-                  <CIconX />
-                  {{ t('tasks.revokeToken') }}
-                </CBtn>
+                    {{ t(`tasks.statuses.${task.status}`) }}
+                  </CBadge>
+                </CMetaLine>
               </div>
-
-              <div
-                v-if="vendorLinks[task.id]"
-                class="task-card__vendor-link"
-              >
-                <div class="task-card__vendor-link-meta">
-                  <span class="body-xs">
-                    {{ t('tasks.vendorTokenActive', { date: formatDate(vendorLinks[task.id].expires_at) }) }}
-                  </span>
-                  <a
-                    :href="vendorLinks[task.id].url"
-                    class="task-card__vendor-link-url"
-                    target="_blank"
-                    rel="noopener"
-                    @click.stop
+  
+              <div class="flex flex-col gap-3">
+                <p
+                  v-if="task.description"
+                  class="body-xs"
+                >
+                  {{ task.description }}
+                </p>
+  
+                <div
+                  v-if="task.document_count > 0"
+                  class="flex flex-wrap gap-x-2 gap-y-1"
+                >
+                  <button
+                    class="inline-flex items-center gap-1 bg-transparent border-none p-0 cursor-pointer text-xs hover:text-primary"
+                    @click.stop="openTaskDocuments(task)"
                   >
-                    {{ vendorLinks[task.id].url }}
-                  </a>
+                    <CIconFile />
+                    {{ t('tasks.documentsCount', task.document_count) }}
+                  </button>
                 </div>
-                <CBtn
-                  variant="ghost"
-                  size="sm"
-                  @click.stop="copyVendorLink(task.id)"
+  
+                <CMetaLine>
+                  <CMetaItem
+                    v-if="hasAssignment(task)"
+                  >
+                    <template #icon>
+                      <CIconWrench v-if="task.contractor_id || contractorDisplayName(task)" />
+                      <CIconUser v-else />
+                    </template>
+                    <RouterLink
+                      v-if="task.contractor_id && contractorDisplayName(task)"
+                      :to="{ name: 'contractor-detail', params: { id: task.contractor_id } }"
+                      class="task-card__meta-link"
+                      @click.stop
+                    >
+                      {{ contractorDisplayName(task) }}
+                    </RouterLink>
+                    <span v-else>
+                      {{ contractorDisplayName(task) ?? assignedUserName(task) }}
+                    </span>
+                  </CMetaItem>
+                  <CMetaItem>
+                    <template #icon>
+                      <CIconCalendar />
+                    </template>
+                    {{ t('tasks.lifecycle.createdRelative', { relative: formatRelative(task.created_at) }) }}
+                  </CMetaItem>
+                </CMetaLine>
+  
+                <div
+                  v-if="(contractorDisplayName(task) && !task.has_vendor_token && !isTerminal(task.status)) || task.has_vendor_token"
+                  class="flex flex-wrap gap-x-2 gap-y-1"
                 >
-                  <CIconCopy />
-                  {{ copiedVendorLinkTaskId === task.id ? t('tasks.vendorTokenCopied') : t('common.copy') }}
-                </CBtn>
+                  <CBtn
+                    v-if="contractorDisplayName(task) && !task.has_vendor_token && !isTerminal(task.status)"
+                    variant="ghost"
+                    size="sm"
+                    :icon="CIconLink"
+                    :title="t('tasks.generateToken')"
+                    :disabled="generatingToken === task.id"
+                    :aria-label="t('tasks.generateToken')"
+                    @click.stop="generateToken(task)"
+                  />
+                  <CBtn
+                    v-if="task.has_vendor_token"
+                    variant="ghost"
+                    size="sm"
+                    :icon="CIconEye"
+                    :title="t('tasks.showLink')"
+                    :aria-label="t('tasks.showLink')"
+                    @click.stop="showVendorLink(task)"
+                  />
+                  <CBtn
+                    v-if="task.has_vendor_token"
+                    variant="ghost"
+                    size="sm"
+                    :icon="CIconX"
+                    :title="t('tasks.revokeToken')"
+                    :aria-label="t('tasks.revokeToken')"
+                    @click.stop="openRevokeModal(task)"
+                  />
+                </div>
+  
+                <div
+                  v-if="vendorLinks[task.id]"
+                  class="task-card__vendor-link"
+                >
+                  <div class="task-card__vendor-link-meta">
+                    <span class="body-xs">
+                      {{ t('tasks.vendorTokenActive', { date: formatDate(vendorLinks[task.id].expires_at) }) }}
+                    </span>
+                    <a
+                      :href="vendorLinks[task.id].url"
+                      class="task-card__vendor-link-url"
+                      target="_blank"
+                      rel="noopener"
+                      @click.stop
+                    >
+                      {{ vendorLinks[task.id].url }}
+                    </a>
+                  </div>
+                  <CBtn
+                    variant="ghost"
+                    size="sm"
+                    :icon="CIconCopy"
+                    :title="copiedVendorLinkTaskId === task.id ? t('tasks.vendorTokenCopied') : t('common.copy')"
+                    @click.stop="copyVendorLink(task.id)"
+                  />
+                </div>
+  
+                <CCardActions>
+                  <CBtn
+                    variant="ghost"
+                    size="sm"
+                    :icon="CIconEdit"
+                    :title="t('common.edit')"
+                    :aria-label="t('tasks.editTask')"
+                    @click.stop="openEditModal(task)"
+                  />
+                  <CBtn
+                    v-if="task.status === 'closed'"
+                    variant="primary"
+                    size="sm"
+                    :icon="CIconRefresh"
+                    :title="t('tasks.reopenTask')"
+                    :aria-label="t('tasks.reopenTask')"
+                    @click.stop="openReopenModal(task)"
+                  />
+                  <CBtn
+                    v-else-if="!isTerminal(task.status)"
+                    variant="primary"
+                    size="sm"
+                    :icon="CIconCheckCircle"
+                    :title="closeActionLabel(task)"
+                    :aria-label="closeActionLabel(task)"
+                    @click.stop="openCloseModal(task)"
+                  />
+                </CCardActions>
               </div>
-
-              <div class="activity-card__actions">
-                <CBtn
-                  variant="ghost"
-                  size="sm"
-                  :aria-label="t('tasks.editTask')"
-                  @click.stop="openEditModal(task)"
-                >
-                  <CIconEdit />
-                  {{ t('common.edit') }}
-                </CBtn>
-                <CBtn
-                  v-if="task.status === 'closed'"
-                  variant="primary"
-                  size="sm"
-                  :aria-label="t('tasks.reopenTask')"
-                  @click.stop="openReopenModal(task)"
-                >
-                  <CIconRefresh />
-                  {{ t('tasks.reopenTask') }}
-                </CBtn>
-                <CBtn
-                  v-else-if="!isTerminal(task.status)"
-                  variant="primary"
-                  size="sm"
-                  :aria-label="closeActionLabel(task)"
-                  @click.stop="openCloseModal(task)"
-                >
-                  <CIconCheckCircle />
-                  {{ closeActionLabel(task) }}
-                </CBtn>
-              </div>
-            </div>
-          </CCard>
-
-          <div
-            v-if="!tasks.length"
-            class="empty-state"
-          >
-            {{ t('tasks.empty') }}
+            </CCard>
           </div>
-        </div>
+        </template>
       </template>
     </div>
 
@@ -1024,9 +1025,8 @@ async function copyVendorLink(taskId: string) {
       :closable="!savingTask"
       @update:open="showTaskModal = $event"
     >
-      <form
-        class="form-grid"
-        @submit.prevent="saveTask"
+      <CForm
+        @submit="saveTask"
       >
         <CFormInput
           v-model="taskForm.title"
@@ -1044,10 +1044,173 @@ async function copyVendorLink(taskId: string) {
           :label="t('tasks.priorityLabel')"
           :options="taskPriorityOptions"
         />
+        <div
+          v-if="assignMode === 'contractor' && createSuggestedContractor"
+          class="flex flex-col gap-1 contractor-create-box"
+        >
+          <label class="text-sm font-medium text-on-surface-variant">{{ t('tasks.contractorCreateLabel') }}</label>
+          <CFormRow :cols="2">
+            <CFormInput
+              v-model="contractorDraft.email"
+              :label="t('contractors.email')"
+              type="email"
+              :placeholder="t('contractors.emailPlaceholder')"
+            />
+            <CFormInput
+              v-model="contractorDraft.phone"
+              :label="t('contractors.phone')"
+              type="tel"
+              :placeholder="t('contractors.phonePlaceholder')"
+            />
+          </CFormRow>
+          <span class="text-xs text-on-surface-variant">
+            {{ t('tasks.contractorCreateHelp') }}
+          </span>
+        </div>
+        <div class="flex flex-col gap-1">
+          <label class="text-sm font-medium text-on-surface-variant">{{ t('tasks.documentsLabel') }}</label>
+          <input
+            ref="taskDocumentInputRef"
+            type="file"
+            multiple
+            style="display:none"
+            @change="onTaskDocumentChange"
+          />
+          <div
+            :class="['dropzone', { 'dropzone--over': taskDocumentsDragOver }]"
+            role="button"
+            tabindex="0"
+            @click="openTaskDocumentPicker"
+            @keydown.enter.prevent="openTaskDocumentPicker"
+            @keydown.space.prevent="openTaskDocumentPicker"
+            @dragenter.prevent="taskDocumentsDragOver = true"
+            @dragover.prevent="taskDocumentsDragOver = true"
+            @dragleave.prevent="taskDocumentsDragOver = false"
+            @drop.prevent="onTaskDocumentDrop"
+          >
+            <CIconUpload class="dropzone__icon" />
+            <span class="body-xs dropzone__hint">
+              {{ editingTask ? t('tasks.editDocumentHint') : t('tasks.documentHint') }}
+            </span>
+          </div>
+
+          <div
+            v-if="selectedTaskDocuments.length > 0"
+            class="task-selected-documents"
+          >
+            <div
+              v-for="(document, index) in selectedTaskDocuments"
+              :key="`${document.name}-${index}`"
+              class="task-selected-document"
+            >
+              <span class="task-selected-document__name">{{ document.name }}</span>
+              <button
+                type="button"
+                class="task-selected-document__remove"
+                :title="t('tasks.removeDocument')"
+                :aria-label="t('tasks.removeDocument')"
+                @click="removeSelectedTaskDocument(index)"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+
+          <div
+            v-if="editingTask"
+            class="task-existing-documents"
+          >
+            <p class="text-xs text-on-surface-variant task-existing-documents__hint">
+              {{ t('tasks.attachedDocuments') }}
+            </p>
+            <CPageLoader v-if="loadingTaskFormDocuments" />
+            <div
+              v-else-if="existingTaskDocuments.length === 0"
+              class="task-existing-documents__empty"
+            >
+              {{ t('tasks.noAttachedDocuments') }}
+            </div>
+            <div
+              v-else
+              class="task-existing-documents__list"
+            >
+              <div
+                v-for="document in existingTaskDocuments"
+                :key="document.id"
+                class="task-existing-documents__row"
+              >
+                <div class="task-existing-documents__meta">
+                  <div class="task-existing-documents__name">
+                    <CIconFile
+                      class="icon-sm"
+                    />
+                    <span>{{ document.original_name }}</span>
+                  </div>
+                  <div class="task-existing-documents__details">
+                    <span>{{ formatFileSize(document.size_bytes) }}</span>
+                    <span>·</span>
+                    <span>{{ formatDate(document.created_at) }}</span>
+                  </div>
+                </div>
+                <div class="task-existing-documents__actions">
+                  <CBtn
+                    variant="ghost"
+                    size="sm"
+                    :icon="CIconDownload"
+                    :title="t('common.download')"
+                    @click="downloadTaskDocument(document.id)"
+                  />
+                  <CBtn
+                    variant="danger"
+                    size="sm"
+                    :icon="CIconTrash"
+                    :title="t('tasks.detachDocument')"
+                    :loading="taskDocumentActionLoading && pendingTaskDocument?.id === document.id"
+                    @click="openTaskDocumentActionModal(document)"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Assignment mode: radio (visible for new tasks, open tasks, and in_progress tasks) -->
+        <div
+          v-if="!editingTask || ['open', 'in_progress', 'awaiting_vendor', 'awaiting_validation'].includes(editingTask.status)"
+          class="flex flex-col gap-1"
+        >
+          <label class="text-sm font-medium text-on-surface-variant">{{ t('tasks.assignmentSection') }}</label>
+          <div class="assignment-options">
+            <label class="checkbox-label">
+              <input
+                v-model="assignMode"
+                type="radio"
+                value="none"
+              />
+              {{ t('tasks.assignNone') }}
+            </label>
+            <label class="checkbox-label">
+              <input
+                v-model="assignMode"
+                type="radio"
+                value="self"
+              />
+              {{ t('tasks.assignSelf') }}
+            </label>
+            <label class="checkbox-label">
+              <input
+                v-model="assignMode"
+                type="radio"
+                value="contractor"
+              />
+              {{ t('tasks.assignContractor') }}
+            </label>
+          </div>
+        </div>
+
         <!-- Contractor assignment with autocomplete (only when assignMode === 'contractor') -->
         <div
           v-if="assignMode === 'contractor'"
-          class="form-field contractor-autocomplete"
+          class="flex flex-col gap-1 contractor-autocomplete"
         >
           <CFormInput
             v-model="contractorSearch"
@@ -1101,202 +1264,35 @@ async function copyVendorLink(taskId: string) {
             </li>
           </ul>
         </div>
-        <div
-          v-if="assignMode === 'contractor' && createSuggestedContractor"
-          class="form-field contractor-create-box"
-        >
-          <label class="form-label">{{ t('tasks.contractorCreateLabel') }}</label>
-          <div class="form-grid-2col contractor-create-grid">
-            <CFormInput
-              v-model="contractorDraft.email"
-              :label="t('contractors.email')"
-              type="email"
-              :placeholder="t('contractors.emailPlaceholder')"
-            />
-            <CFormInput
-              v-model="contractorDraft.phone"
-              :label="t('contractors.phone')"
-              type="tel"
-              :placeholder="t('contractors.phonePlaceholder')"
-            />
-          </div>
-          <span class="field-hint">
-            {{ t('tasks.contractorCreateHelp') }}
-          </span>
-        </div>
-        <div class="form-field">
-          <label class="form-label">{{ t('tasks.documentsLabel') }}</label>
-          <input
-            ref="taskDocumentInputRef"
-            type="file"
-            multiple
-            style="display:none"
-            @change="onTaskDocumentChange"
-          />
-          <div
-            :class="['dropzone', { 'dropzone--over': taskDocumentsDragOver }]"
-            role="button"
-            tabindex="0"
-            @click="openTaskDocumentPicker"
-            @keydown.enter.prevent="openTaskDocumentPicker"
-            @keydown.space.prevent="openTaskDocumentPicker"
-            @dragenter.prevent="taskDocumentsDragOver = true"
-            @dragover.prevent="taskDocumentsDragOver = true"
-            @dragleave.prevent="taskDocumentsDragOver = false"
-            @drop.prevent="onTaskDocumentDrop"
-          >
-            <CIconUpload class="dropzone__icon" />
-            <span class="body-xs dropzone__hint">
-              {{ editingTask ? t('tasks.editDocumentHint') : t('tasks.documentHint') }}
-            </span>
-          </div>
-
-          <div
-            v-if="selectedTaskDocuments.length > 0"
-            class="task-selected-documents"
-          >
-            <div
-              v-for="(document, index) in selectedTaskDocuments"
-              :key="`${document.name}-${index}`"
-              class="task-selected-document"
-            >
-              <span class="task-selected-document__name">{{ document.name }}</span>
-              <button
-                type="button"
-                class="task-selected-document__remove"
-                :title="t('tasks.removeDocument')"
-                :aria-label="t('tasks.removeDocument')"
-                @click="removeSelectedTaskDocument(index)"
-              >
-                ×
-              </button>
-            </div>
-          </div>
-
-          <div
-            v-if="editingTask"
-            class="task-existing-documents"
-          >
-            <p class="field-hint task-existing-documents__hint">
-              {{ t('tasks.attachedDocuments') }}
-            </p>
-            <CPageLoader v-if="loadingTaskFormDocuments" />
-            <div
-              v-else-if="existingTaskDocuments.length === 0"
-              class="task-existing-documents__empty"
-            >
-              {{ t('tasks.noAttachedDocuments') }}
-            </div>
-            <div
-              v-else
-              class="task-existing-documents__list"
-            >
-              <div
-                v-for="document in existingTaskDocuments"
-                :key="document.id"
-                class="task-existing-documents__row"
-              >
-                <div class="task-existing-documents__meta">
-                  <div class="task-existing-documents__name">
-                    <CIconFile
-                      width="16"
-                      height="16"
-                    />
-                    <span>{{ document.original_name }}</span>
-                  </div>
-                  <div class="task-existing-documents__details">
-                    <span>{{ formatFileSize(document.size_bytes) }}</span>
-                    <span>·</span>
-                    <span>{{ formatDate(document.created_at) }}</span>
-                  </div>
-                </div>
-                <div class="task-existing-documents__actions">
-                  <CBtn
-                    variant="ghost"
-                    size="sm"
-                    @click="downloadTaskDocument(document.id)"
-                  >
-                    <CIconDownload />
-                    {{ t('common.download') }}
-                  </CBtn>
-                  <CBtn
-                    variant="danger"
-                    size="sm"
-                    :loading="taskDocumentActionLoading && pendingTaskDocument?.id === document.id"
-                    @click="openTaskDocumentActionModal(document)"
-                  >
-                    <CIconTrash />
-                    {{ t('tasks.detachDocument') }}
-                  </CBtn>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <!-- Assignment mode: radio (visible for new tasks, open tasks, and in_progress tasks) -->
-        <div
-          v-if="!editingTask || ['open', 'in_progress', 'awaiting_vendor', 'awaiting_validation'].includes(editingTask.status)"
-          class="form-field"
-        >
-          <label class="form-label">{{ t('tasks.assignmentSection') }}</label>
-          <div class="assignment-options">
-            <label class="checkbox-label">
-              <input
-                v-model="assignMode"
-                type="radio"
-                value="none"
-              />
-              {{ t('tasks.assignNone') }}
-            </label>
-            <label class="checkbox-label">
-              <input
-                v-model="assignMode"
-                type="radio"
-                value="self"
-              />
-              {{ t('tasks.assignSelf') }}
-            </label>
-            <label class="checkbox-label">
-              <input
-                v-model="assignMode"
-                type="radio"
-                value="contractor"
-              />
-              {{ t('tasks.assignContractor') }}
-            </label>
-          </div>
-        </div>
-      </form>
+      </CForm>
       <template #footer>
         <!-- Delete: visible from the modal only -->
-        <CBtn
-          v-if="editingTask"
-          variant="danger"
-          :loading="savingTask"
-          style="margin-right:auto"
-          @click="openDeleteModal(editingTask)"
-        >
-          <CIconTrash />
-          {{ t('common.delete') }}
-        </CBtn>
-        <CFormFeedback
+        <CFormActions
           :status="taskFeedback.status.value"
           :message="taskFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          @click="showTaskModal = false"
         >
-          {{ t('common.cancel') }}
-        </CBtn>
-        <CBtn
-          variant="primary"
-          :loading="savingTask || uploadingTaskDocuments"
-          :closing="taskFeedback.status.value === 'success'"
-          @click="saveTask"
-        >
-          {{ t('common.save') }}
-        </CBtn>
+          <CBtn
+            v-if="editingTask"
+            variant="danger"
+            :icon="CIconTrash"
+            :title="t('common.delete')"
+            :loading="savingTask"
+            class="mr-auto"
+            @click="openDeleteModal(editingTask)"
+          />
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="showTaskModal = false"
+          />
+          <CBtn
+            variant="primary"
+            :title="t('common.save')"
+            :loading="savingTask || uploadingTaskDocuments"
+            :closing="taskFeedback.status.value === 'success'"
+            @click="saveTask"
+          />
+        </CFormActions>
       </template>
     </CModal>
 
@@ -1311,24 +1307,23 @@ async function copyVendorLink(taskId: string) {
         {{ t('tasks.confirmRevokeToken') }}
       </p>
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="revokeFeedback.status.value"
           :message="revokeFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          @click="revokingTask = null"
         >
-          {{ t('common.cancel') }}
-        </CBtn>
-        <CBtn
-          variant="danger"
-          :loading="revoking"
-          :closing="revokeFeedback.status.value === 'success'"
-          @click="confirmRevoke"
-        >
-          {{ t('tasks.revokeToken') }}
-        </CBtn>
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="revokingTask = null"
+          />
+          <CBtn
+            variant="danger"
+            :title="t('tasks.revokeToken')"
+            :loading="revoking"
+            :closing="revokeFeedback.status.value === 'success'"
+            @click="confirmRevoke"
+          />
+        </CFormActions>
       </template>
     </CModal>
 
@@ -1358,25 +1353,23 @@ async function copyVendorLink(taskId: string) {
         class="task-close-field"
       />
       <template #footer>
-        <CFormFeedback
-          class="modal-footer-feedback"
+        <CFormActions
           :status="closeFeedback.status.value"
           :message="closeFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          @click="closingTask = null"
         >
-          {{ t('common.cancel') }}
-        </CBtn>
-        <CBtn
-          variant="primary"
-          :loading="closingInProgress"
-          :closing="closeFeedback.status.value === 'success'"
-          @click="confirmCloseTask"
-        >
-          {{ closingTask ? closeActionLabel(closingTask) : t('tasks.closeTask') }}
-        </CBtn>
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="closingTask = null"
+          />
+          <CBtn
+            variant="primary"
+            :title="closingTask ? closeActionLabel(closingTask) : t('tasks.closeTask')"
+            :loading="closingInProgress"
+            :closing="closeFeedback.status.value === 'success'"
+            @click="confirmCloseTask"
+          />
+        </CFormActions>
       </template>
     </CModal>
 
@@ -1391,24 +1384,23 @@ async function copyVendorLink(taskId: string) {
         {{ t('tasks.confirmReopenMessage', { title: reopeningTask?.title ?? '' }) }}
       </p>
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="reopenFeedback.status.value"
           :message="reopenFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          @click="reopeningTask = null"
         >
-          {{ t('common.cancel') }}
-        </CBtn>
-        <CBtn
-          variant="primary"
-          :loading="reopening"
-          :closing="reopenFeedback.status.value === 'success'"
-          @click="confirmReopen"
-        >
-          {{ t('tasks.reopenTask') }}
-        </CBtn>
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="reopeningTask = null"
+          />
+          <CBtn
+            variant="primary"
+            :title="t('tasks.reopenTask')"
+            :loading="reopening"
+            :closing="reopenFeedback.status.value === 'success'"
+            @click="confirmReopen"
+          />
+        </CFormActions>
       </template>
     </CModal>
 
@@ -1427,24 +1419,23 @@ async function copyVendorLink(taskId: string) {
         }}
       </p>
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="deleteTaskFeedback.status.value"
           :message="deleteTaskFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          @click="showDeleteModal = false"
         >
-          {{ t('common.cancel') }}
-        </CBtn>
-        <CBtn
-          variant="danger"
-          :loading="deletingTask"
-          :closing="deleteTaskFeedback.status.value === 'success'"
-          @click="confirmDeleteTask"
-        >
-          {{ t('common.deleteLabel') }}
-        </CBtn>
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="showDeleteModal = false"
+          />
+          <CBtn
+            variant="danger"
+            :title="t('common.deleteLabel')"
+            :loading="deletingTask"
+            :closing="deleteTaskFeedback.status.value === 'success'"
+            @click="confirmDeleteTask"
+          />
+        </CFormActions>
       </template>
     </CModal>
 
@@ -1473,8 +1464,6 @@ async function copyVendorLink(taskId: string) {
 </template>
 
 <style scoped>
-.task-list { display: flex; flex-direction: column; gap: 10px; }
-
 .task-card__meta-link {
   color: inherit;
   text-decoration: none;
@@ -1486,7 +1475,7 @@ async function copyVendorLink(taskId: string) {
   justify-content: space-between;
   gap: var(--space-3);
   padding: var(--space-3);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   background: var(--color-surface-container-low);
 }
 .task-card__vendor-link-meta {
@@ -1519,7 +1508,7 @@ async function copyVendorLink(taskId: string) {
   right: 0;
   background: var(--color-surface);
   border: 1px solid var(--color-outline);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
   list-style: none;
   margin: 2px 0 0;
@@ -1564,10 +1553,9 @@ async function copyVendorLink(taskId: string) {
 .contractor-create-box {
   padding: var(--space-3);
   border: 1px dashed var(--color-outline);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   background: var(--color-surface-container-lowest);
 }
-.contractor-create-grid { margin-bottom: 0; }
 .task-close-field { margin-top: var(--space-4); }
 .modal-footer-feedback { margin-right: auto; min-width: 0; }
 .task-selected-documents,
@@ -1584,7 +1572,7 @@ async function copyVendorLink(taskId: string) {
   justify-content: space-between;
   gap: var(--space-3);
   padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   background: var(--color-surface-container-low);
 }
 .task-selected-document__name {
@@ -1635,4 +1623,5 @@ async function copyVendorLink(taskId: string) {
   margin-top: var(--space-2);
   color: var(--color-on-surface-variant);
 }
+
 </style>

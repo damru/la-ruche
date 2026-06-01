@@ -4,12 +4,16 @@ import { useI18n } from 'vue-i18n'
 import CLegalDescription from '@/components/atoms/CLegalDescription.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
-import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
+import CFormActions from '@/components/molecules/CFormActions.vue'
 import CLegalNotice from '@/components/molecules/CLegalNotice.vue'
 import CLegalCard from '@/components/molecules/CLegalCard.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
+import CHeading from '@/components/atoms/CHeading.vue'
+import CFormRow from '@/components/molecules/CFormRow.vue'
+import CIconBook from '@/components/atoms/CIconBook.svg'
+import CIconDownload from '@/components/atoms/CIconDownload.svg'
 import { buildingApi } from '@/api'
 import { usePageLoader } from '@/composables/usePageLoader'
 import { useFormFeedback } from '@/composables/useFormFeedback'
@@ -72,9 +76,9 @@ onMounted(reload)
           <CEyebrow>
             {{ t('page.eyebrows.building') }}
           </CEyebrow>
-          <h1 class="display-md">
+          <CHeading type="header">
             {{ t('nav.residence-info') }}
-          </h1>
+          </CHeading>
           <p
             class="body-md"
             style="color:var(--color-on-surface-variant)"
@@ -84,10 +88,13 @@ onMounted(reload)
         </header>
 
         <CCard>
-          <h2 class="section-title">
+          <CHeading
+            type="card"
+            class="mb-4"
+          >
             {{ t('settings.building.title') }}
-          </h2>
-          <div class="form-grid-2col">
+          </CHeading>
+          <CFormRow :cols="2">
             <CFormInput
               v-model="form.name"
               :label="t('settings.building.name')"
@@ -99,7 +106,7 @@ onMounted(reload)
             <CFormInput
               v-model="form.address_line1"
               :label="t('addressAutocomplete.addressLine1')"
-              class="field--full"
+              class="flex flex-col gap-1 col-span-full"
             />
             <CFormInput
               v-model="form.postal_code"
@@ -120,50 +127,47 @@ onMounted(reload)
               :label="t('settings.building.bylawsDate')"
               type="date"
             />
-          </div>
-          <div class="form-actions">
+          </CFormRow>
+          <CFormActions
+            :status="feedback.status.value"
+            :message="feedback.message.value"
+          >
             <CBtn
               variant="primary"
+              :title="t('settings.saveChanges')"
               :loading="saving"
               :disabled="saving"
               @click="saveBuilding"
-            >
-              {{ saving ? t('common.saving') : t('settings.saveChanges') }}
-            </CBtn>
-            <CFormFeedback
-              :status="feedback.status.value"
-              :message="feedback.message.value"
             />
-          </div>
+          </CFormActions>
         </CCard>
 
         <CLegalCard>
-          <h2 class="section-title">
+          <CHeading
+            type="card"
+            class="mb-4"
+          >
             {{ t('settings.building.legalData') }}
-          </h2>
+          </CHeading>
           <CLegalNotice>
             <CLegalDescription
               title="Art. 18 loi n°65-557 du 10 juillet 1965"
               :summary="t('settings.building.legalText')"
             />
           </CLegalNotice>
-          <div class="form-actions">
-            <CBtn variant="secondary">
-              <CIconDownload
-                width="16"
-                height="16"
-                aria-hidden="true"
-              />
-              {{ t('settings.exportData') }}
-            </CBtn>
-            <CBtn variant="secondary">
-              <CIconBook
-                width="16"
-                height="16"
-                aria-hidden="true"
-              />
-              {{ t('settings.downloadBylaws') }}
-            </CBtn>
+          <div class="flex items-center gap-3">
+            <CBtn
+              variant="secondary"
+              :icon="CIconDownload"
+              :title="t('settings.exportData')"
+              disabled
+            />
+            <CBtn
+              variant="secondary"
+              :icon="CIconBook"
+              :title="t('settings.downloadBylaws')"
+              disabled
+            />
           </div>
         </CLegalCard>
       </template>

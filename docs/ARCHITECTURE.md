@@ -251,7 +251,7 @@ Invariants techniques implémentés :
 - Chaque création de `budget` initialise ou réutilise l'entrée `works_fund` du même exercice, qui porte le taux de cotisation cible utilisé par la génération d'appels et par les contrôles de clôture.
 - La génération des appels de fonds côté backend refuse désormais l'opération si au moins une clé de répartition active n'est pas équilibrée sur le total des tantièmes de l'immeuble.
 - La clôture d'un `budget` refuse la transition si le taux du `works_fund` est sous le seuil légal configuré ou si les appels émis sur l'exercice n'ont pas atteint la cible calculée sur ce taux.
-- `BudgetView` mutualise désormais ses KPI via `CHeroCard`, dérive le récapitulatif de génération d'appels à partir des montants déjà appelés côté frontend, expose une modale de répartition circulaire calculée depuis `budget_line`, une carte dédiée de pilotage du fonds travaux branchée sur l'API réelle et une lecture consolidée des appels par copropriétaire.
+- `BudgetView` mutualise désormais ses KPI via `CKpiCard`, dérive le récapitulatif de génération d'appels à partir des montants déjà appelés côté frontend, expose une modale de répartition circulaire calculée depuis `budget_line`, une carte dédiée de pilotage du fonds travaux branchée sur l'API réelle et une lecture consolidée des appels par copropriétaire.
 - Le chantier `EP-003` validé en mai 2026 cible d'abord le branchement des vues AG sur l'API réelle existante (`meetings`, `resolutions`, `votes`, `results`, transitions `call` / `close`) avant toute extension de conduite de séance.
 - La frontière documentaire et technique entre `EP-003` et `EP-013` est la suivante : `EP-003` couvre la préparation juridique de l'AG, la saisie des résolutions, le calcul des résultats, le dépôt du PV signé et une traçabilité simple de notification ; `EP-013` couvre la feuille de présence avancée, les rôles de séance, les notes collaboratives et la validation/signature probante du PV.
 - Les besoins documentaires minimaux d'`EP-003` doivent réutiliser le module `Documents` existant ; une refonte typée des pièces réglementaires AG au-delà de `convocation` / annexes / `PV` reste renvoyée aux chantiers documentaires dédiés.
@@ -338,6 +338,7 @@ HTTP → Tower (CORS, trace, timeout 30s)
 - **Pas de `unwrap()` hors tests**
 - **`Decimal` pour tous les montants financiers** (pas `f64`)
 - **`SQLX_OFFLINE=true` en CI et en build Docker** — `backend/.sqlx/` est généré une seule fois dans `test-backend`, puis téléchargé par les jobs Docker
+- **Les erreurs** sont renvoyées sous forme de code i18n (`AppError::validation_code("errors.x.y")`), jamais en strings bruts. ex: `errors.unauthorized`, `errors.budget.exercice_closed`
 
 ---
 

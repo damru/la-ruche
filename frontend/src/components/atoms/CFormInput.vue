@@ -53,7 +53,7 @@ const inputId = props.id ?? `c-input-${Math.random().toString(36).slice(2, 7)}`
     <label
       v-if="label"
       :for="inputId"
-      class="c-field__label"
+      class="form-label"
     >
       {{ label }}
       <span
@@ -118,8 +118,7 @@ const inputId = props.id ?? `c-input-${Math.random().toString(36).slice(2, 7)}`
       role="alert"
     >
       <CIconXCircle
-        width="12"
-        height="12"
+        class="icon-2xs"
         aria-hidden="true"
       />
       {{ error }}
@@ -127,7 +126,7 @@ const inputId = props.id ?? `c-input-${Math.random().toString(36).slice(2, 7)}`
     <p
       v-else-if="!readonly && hint"
       :id="`${inputId}-hint`"
-      class="c-field__hint"
+      class="form-hint"
     >
       {{ hint }}
     </p>
@@ -137,13 +136,6 @@ const inputId = props.id ?? `c-input-${Math.random().toString(36).slice(2, 7)}`
 <style scoped>
 .c-field { display: flex; flex-direction: column; gap: var(--space-1); }
 
-.c-field__label {
-  font-family: var(--font-body);
-  font-size: var(--text-sm);
-  font-weight: var(--fw-medium);
-  color: var(--color-on-surface);
-}
-
 .c-field__required { color: var(--color-error); margin-left: 2px; }
 
 .c-field__input {
@@ -152,7 +144,7 @@ const inputId = props.id ?? `c-input-${Math.random().toString(36).slice(2, 7)}`
   padding: 0 var(--space-4);
   background: var(--color-surface-container);
   border: none;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   font-family: var(--font-body);
   font-size: var(--text-md);
   color: var(--color-on-surface);
@@ -225,14 +217,9 @@ const inputId = props.id ?? `c-input-${Math.random().toString(36).slice(2, 7)}`
   font-size: var(--text-md);
   color: var(--color-on-surface);
   background: var(--color-surface-container-low);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   width: 100%;
   box-sizing: border-box;
-}
-
-.c-field__hint {
-  font-size: var(--text-xs);
-  color: var(--color-on-surface-variant);
 }
 
 .c-field__error {

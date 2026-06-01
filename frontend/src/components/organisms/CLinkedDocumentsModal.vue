@@ -105,7 +105,7 @@ const { formatDate, formatFileSize } = useFormatters()
   align-items: center;
   gap: var(--space-3);
   padding: var(--space-3);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   background: var(--color-surface-container-low);
 }
 

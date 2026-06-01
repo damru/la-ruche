@@ -7,14 +7,18 @@ import { useFormFeedback } from '@/composables/useFormFeedback'
 import { useAutoClose } from '@/composables/useAutoClose'
 import { useAuthStore } from '@/stores/auth'
 import CBadge from '@/components/atoms/CBadge.vue'
+import CIconTile from '@/components/atoms/CIconTile.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CCard from '@/components/molecules/CCard.vue'
-import CMetaLine from '@/components/molecules/CMetaLine.vue'
-import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
+import CCardActions from '@/components/molecules/CCardActions.vue'
+import CEmptyState from '@/components/atoms/CEmptyState.vue'
+import CFormActions from '@/components/molecules/CFormActions.vue'
+import CForm from '@/components/molecules/CForm.vue'
 import CModal from '@/components/molecules/CModal.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
+import CHeading from '@/components/atoms/CHeading.vue'
 import CIconBolt from '@/components/atoms/CIconBolt.svg'
 import CIconDroplet from '@/components/atoms/CIconDroplet.svg'
 import CIconEdit from '@/components/atoms/CIconEdit.svg'
@@ -71,6 +75,8 @@ const authStore = useAuthStore()
 const buildingName = ref('')
 const allContractors = ref<Contractor[]>([])
 const search = ref('')
+const viewMode = ref<'list' | 'grid'>('list')
+const selectedDomains = ref<string[]>([])
 
 // ── Permissions ────────────────────────────────────────────────────
 const canEdit = computed(() =>
@@ -90,28 +96,41 @@ async function loadData() {
 const { loading, error, reload } = usePageLoader(loadData)
 onMounted(reload)
 
-// ── Filtered list ─────────────────────────────────────────────────
-const filtered = computed(() => {
-  const q = search.value.trim().toLowerCase()
-  if (!q) return allContractors.value
-  return allContractors.value.filter(
-    c =>
-      c.name.toLowerCase().includes(q) ||
-      (c.email ?? '').toLowerCase().includes(q) ||
-      c.domains.some(d => d.toLowerCase().includes(q)),
-  )
-})
-
-function openContractorDetail(contractorId: string) {
-  void router.push({ name: 'contractor-detail', params: { id: contractorId } })
-}
-
 // ── Sorted domains list (alphabetical by translated label) ────────
 const domainOptions = computed(() =>
   [...DOMAINS_RAW]
     .map(value => ({ value, label: t(`contractors.domains.${value}`) }))
     .sort((a, b) => a.label.localeCompare(b.label)),
 )
+
+// ── Domain filter toggle ──────────────────────────────────────────
+function toggleDomain(domain: string) {
+  const idx = selectedDomains.value.indexOf(domain)
+  if (idx >= 0) selectedDomains.value.splice(idx, 1)
+  else selectedDomains.value.push(domain)
+}
+
+// ── Filtered list ─────────────────────────────────────────────────
+const filtered = computed(() => {
+  const q = search.value.trim().toLowerCase()
+  return allContractors.value.filter((c) => {
+    if (selectedDomains.value.length && !c.domains.some(d => selectedDomains.value.includes(d)))
+      return false
+    if (!q) return true
+    return (
+      c.name.toLowerCase().includes(q) ||
+      (c.email ?? '').toLowerCase().includes(q) ||
+      c.domains.some(d =>
+        d.toLowerCase().includes(q) ||
+        t(`contractors.domains.${d}`).toLowerCase().includes(q),
+      )
+    )
+  })
+})
+
+function openContractorDetail(contractorId: string) {
+  void router.push({ name: 'contractor-detail', params: { id: contractorId } })
+}
 
 // ── Form modal ────────────────────────────────────────────────────
 const showModal = ref(false)
@@ -221,7 +240,7 @@ async function confirmDelete() {
       <template #left>
         <div class="topbar-breadcrumb">
           {{ buildingName }}
-          <CIconChevronRight />
+          <CIconChevronRight class="icon-xs" />
           <span>{{ t('contractors.title') }}</span>
         </div>
       </template>
@@ -230,11 +249,10 @@ async function confirmDelete() {
           v-if="canEdit"
           variant="primary"
           size="sm"
+          :icon="CIconPlus"
+          :title="t('contractors.newContractor')"
           @click="openCreate"
-        >
-          <CIconPlus style="width:16px;height:16px" />
-          <span class="btn-label">{{ t('contractors.newContractor') }}</span>
-        </CBtn>
+        />
       </template>
     </CTopbar>
 
@@ -246,49 +264,172 @@ async function confirmDelete() {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
-        <!-- Header + search -->
         <header class="view-header">
-          <CEyebrow>
-            {{ t('page.eyebrows.contractors') }}
-          </CEyebrow>
-          <h1 class="display-md">
+          <CEyebrow>{{ t('page.eyebrows.contractors') }}</CEyebrow>
+          <CHeading type="header">
             {{ t('contractors.title') }}
-          </h1>
-          <p
-            class="body-md"
-            style="color:var(--color-on-surface-variant)"
-          >
-            {{ t('contractors.summary', { count: allContractors.length }) }}
-          </p>
+          </CHeading>
+          <CMetaItem variant="sub">
+             {{ t('contractors.summary', { count: allContractors.length }) }}
+          </CMetaItem>
         </header>
 
-        <!-- Search bar -->
-        <CFormInput
-          v-model="search"
-          type="search"
-          :placeholder="t('contractors.searchPlaceholder')"
-        >
-          <template #prefix>
-            <CIconSearch />
-          </template>
-        </CFormInput>
-
-        <!-- Empty state -->
-        <div
-          v-if="filtered.length === 0"
-          class="empty-state"
-        >
-          <CIconUsers
-            width="48"
-            height="48"
-            style="color:var(--color-on-surface-variant)"
-          />
-          <p class="body-md">
-            {{ search ? t('contractors.noResults') : t('contractors.noContractors') }}
-          </p>
+        <!-- Toolbar: search + view mode toggle -->
+        <div class="list-toolbar">
+          <CFormInput
+            v-model="search"
+            type="search"
+            :placeholder="t('contractors.searchPlaceholder')"
+            class="list-toolbar__search"
+          >
+            <template #prefix>
+              <CIconSearch class="icon-sm" />
+            </template>
+          </CFormInput>
+          <div
+            class="view-toggle"
+            role="group"
+            :aria-label="t('common.viewMode', 'Vue')"
+          >
+            <button
+              :class="['view-toggle__btn', { 'view-toggle__btn--active': viewMode === 'list' }]"
+              :aria-pressed="viewMode === 'list'"
+              @click="viewMode = 'list'"
+            >
+              <CIconList class="icon-sm" />
+            </button>
+            <button
+              :class="['view-toggle__btn', { 'view-toggle__btn--active': viewMode === 'grid' }]"
+              :aria-pressed="viewMode === 'grid'"
+              @click="viewMode = 'grid'"
+            >
+              <CIconGrid class="icon-sm" />
+            </button>
+          </div>
         </div>
 
-        <!-- Contractors grid -->
+        <!-- Domain filter chips -->
+        <div
+          class="domain-filter"
+          role="group"
+          :aria-label="t('contractors.domainsLabel')"
+        >
+          <button
+            v-for="opt in domainOptions"
+            :key="opt.value"
+            :class="['domain-chip', { 'domain-chip--active': selectedDomains.includes(opt.value) }]"
+            :aria-pressed="selectedDomains.includes(opt.value)"
+            @click="toggleDomain(opt.value)"
+          >
+            {{ opt.label }}
+          </button>
+        </div>
+
+        <!-- Empty state -->
+        <CEmptyState
+          v-if="filtered.length === 0"
+          :title="search || selectedDomains.length ? t('contractors.noResults') : t('contractors.noContractors')"
+          size="page"
+        >
+          <template #icon>
+            <CIconUsers />
+          </template>
+          <template
+            v-if="canEdit && !search && !selectedDomains.length"
+            #actions
+          >
+            <CBtn
+              variant="primary"
+              size="sm"
+              :icon="CIconPlus"
+              :title="t('contractors.newContractor')"
+              @click="openCreate"
+            />
+          </template>
+        </CEmptyState>
+
+        <!-- ── List view ─────────────────────────────────────────────── -->
+        <div
+          v-else-if="viewMode === 'list'"
+          class="contractor-list"
+          role="list"
+        >
+          <div
+            v-for="c in filtered"
+            :key="c.id"
+            class="contractor-row"
+            role="listitem"
+            tabindex="-1"
+            @click="openContractorDetail(c.id)"
+          >
+            <CIconTile :class="domainTone(c.domains)">
+              <component
+                :is="domainIcon(c.domains)"
+                aria-hidden="true"
+              />
+            </CIconTile>
+            <button
+              class="contractor-row__name"
+              @click.stop="openContractorDetail(c.id)"
+            >
+              {{ c.name }}
+            </button>
+            <div class="contractor-row__domains text-xs">
+              <CMetaLine>
+                <CBadge
+                  v-for="d in c.domains.slice(0, 2)"
+                  :key="d"
+                  variant="default"
+                >
+                  {{ t(`contractors.domains.${d}`, d) }}
+                </CBadge>
+                <CBadge
+                  v-if="c.domains.length > 2"
+                  variant="default"
+                >
+                  +{{ c.domains.length - 2 }}
+                </CBadge>
+              </CMetaLine>
+            </div>
+            <div class="contractor-row__contacts">
+              <a
+                v-if="c.email"
+                :href="`mailto:${c.email}`"
+                class="contractor-row__contact"
+                @click.stop
+              >{{ c.email }}</a>
+              <a
+                v-if="c.phone"
+                :href="`tel:${c.phone}`"
+                class="contractor-row__contact"
+                @click.stop
+              >{{ c.phone }}</a>
+            </div>
+            <div
+              v-if="canEdit"
+              class="contractor-row__actions"
+            >
+              <CBtn
+                variant="ghost"
+                size="sm"
+                :icon="CIconEdit"
+                :title="t('common.edit')"
+                :aria-label="`${t('common.edit')} ${c.name}`"
+                @click.stop="openEdit(c)"
+              />
+              <CBtn
+                variant="ghost"
+                size="sm"
+                :icon="CIconTrash"
+                :title="t('common.delete')"
+                :aria-label="`${t('common.delete')} ${c.name}`"
+                @click.stop="openDeleteModal(c)"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Grid view ─────────────────────────────────────────────── -->
         <div
           v-else
           class="contractors-grid"
@@ -297,82 +438,81 @@ async function confirmDelete() {
             v-for="c in filtered"
             :key="c.id"
             interactive
-            class="activity-card"
-            tabindex="0"
+            gap="sm"
+            tabindex="-1"
             @click="openContractorDetail(c.id)"
-            @keydown.enter.prevent="openContractorDetail(c.id)"
-            @keydown.space.prevent="openContractorDetail(c.id)"
           >
-            <div class="activity-card__header-row activity-card__header-row--with-icon">
-              <div :class="['activity-card__icon', 'contractor-card__icon', domainTone(c.domains)]">
+            <div class="flex items-center gap-3 min-w-0">
+              <CIconTile :class="domainTone(c.domains)">
                 <component
                   :is="domainIcon(c.domains)"
                   aria-hidden="true"
                 />
-              </div>
-              <h3 class="activity-card__title">
+              </CIconTile>
+              <button
+                class="flex-1 min-w-0 overflow-hidden text-ellipsis bg-transparent border-none p-0 text-base font-semibold text-on-surface text-left cursor-pointer leading-snug hover:text-primary focus-visible:text-primary focus-visible:outline-none"
+                @click.stop="openContractorDetail(c.id)"
+              >
                 {{ c.name }}
-              </h3>
+              </button>
             </div>
-
-            <div class="activity-card__chips">
+            <div class="flex flex-wrap gap-x-2 gap-y-1">
               <CBadge
-                v-for="d in c.domains"
+                v-for="d in c.domains.slice(0, 2)"
                 :key="d"
                 variant="default"
               >
                 {{ t(`contractors.domains.${d}`, d) }}
               </CBadge>
+              <CBadge
+                v-if="c.domains.length > 2"
+                variant="default"
+              >
+                +{{ c.domains.length - 2 }}
+              </CBadge>
             </div>
-            <div class="activity-card__stack">
+            <div class="flex flex-col gap-3">
               <p
                 v-if="c.notes"
                 class="body-xs"
               >
                 {{ c.notes }}
               </p>
-
-              <CMetaLine
+              <div
                 v-if="c.email || c.phone"
-                class="activity-card__contacts"
+                class="flex flex-col gap-1"
               >
                 <a
                   v-if="c.email"
                   :href="`mailto:${c.email}`"
-                  class="activity-card__line activity-card__contact-link"
+                  class="text-xs text-primary no-underline truncate hover:underline"
                   @click.stop
-                ><span aria-hidden="true">✉️</span>{{ c.email }}</a>
+                >{{ c.email }}</a>
                 <a
                   v-if="c.phone"
                   :href="`tel:${c.phone}`"
-                  class="activity-card__line activity-card__contact-link"
+                  class="text-xs text-primary no-underline truncate hover:underline"
                   @click.stop
-                ><span aria-hidden="true">📞</span>{{ c.phone }}</a>
-              </CMetaLine>
-
-              <div
-                v-if="canEdit"
-                class="activity-card__actions"
-              >
+                >{{ c.phone }}</a>
+              </div>
+              <CCardActions v-if="canEdit">
                 <CBtn
                   variant="ghost"
                   size="sm"
-                  :aria-label="t('common.edit') + ' ' + c.name"
+                  :icon="CIconEdit"
+                  :title="t('common.edit')"
+                  :aria-label="`${t('common.edit')} ${c.name}`"
                   @click.stop="openEdit(c)"
-                >
-                  <CIconEdit />
-                  {{ t('common.edit') }}
-                </CBtn>
+                />
                 <CBtn
-                  variant="danger"
+                  variant="ghost"
                   size="sm"
-                  :aria-label="t('common.delete') + ' ' + c.name"
+                  :icon="CIconTrash"
+                  :title="t('common.delete')"
+                  :aria-label="`${t('common.delete')} ${c.name}`"
                   @click.stop="openDeleteModal(c)"
-                >
-                  <CIconTrash />
-                  {{ t('common.delete') }}
-                </CBtn>
-              </div>
+                />
+              </CCardActions>
             </div>
           </CCard>
         </div>
@@ -385,9 +525,8 @@ async function confirmDelete() {
       :title="editingContractor ? t('contractors.editContractor') : t('contractors.newContractor')"
       @update:open="showModal = $event"
     >
-      <form
-        class="form-grid"
-        @submit.prevent="save"
+      <CForm
+        @submit="save"
       >
         <CFormInput
           v-model="form.name"
@@ -411,35 +550,34 @@ async function confirmDelete() {
           v-model="form.domains"
           :label="t('contractors.domainsLabel')"
           :options="domainOptions"
-          class="form-field--full"
+          class="flex flex-col gap-1 col-span-full"
         />
         <CFormTextarea
           v-model="form.notes"
           :label="t('contractors.notes')"
           :rows="3"
           :placeholder="t('contractors.notesPlaceholder')"
-          class="form-field--full"
+          class="flex flex-col gap-1 col-span-full"
         />
-      </form>
+      </CForm>
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="feedback.status.value"
           :message="feedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          @click="closeModal"
         >
-          {{ t('common.cancel') }}
-        </CBtn>
-        <CBtn
-          variant="primary"
-          :loading="saving"
-          :closing="feedback.status.value === 'success'"
-          @click="save"
-        >
-          {{ t('common.save') }}
-        </CBtn>
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="closeModal"
+          />
+          <CBtn
+            variant="primary"
+            :title="t('common.save')"
+            :loading="saving"
+            :closing="feedback.status.value === 'success'"
+            @click="save"
+          />
+        </CFormActions>
       </template>
     </CModal>
 
@@ -453,44 +591,198 @@ async function confirmDelete() {
         {{ t('contractors.deleteConfirm', { name: contractorToDelete?.name }) }}
       </p>
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="deleteFeedback.status.value"
           :message="deleteFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          @click="showDeleteModal = false"
         >
-          {{ t('common.cancel') }}
-        </CBtn>
-        <CBtn
-          variant="danger"
-          :loading="!!deletingId"
-          :closing="deleteFeedback.status.value === 'success'"
-          @click="confirmDelete"
-        >
-          {{ t('common.delete') }}
-        </CBtn>
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="showDeleteModal = false"
+          />
+          <CBtn
+            variant="danger"
+            :title="t('common.delete')"
+            :loading="!!deletingId"
+            :closing="deleteFeedback.status.value === 'success'"
+            @click="confirmDelete"
+          />
+        </CFormActions>
       </template>
     </CModal>
   </div>
 </template>
 
 <style scoped>
-.empty-state {
+/* ── Toolbar ─────────────────────────────────────────────────────── */
+.list-toolbar {
   display: flex;
-  flex-direction: column;
-  align-items: center;
   gap: var(--space-3);
-  padding: var(--space-12) 0;
-  color: var(--color-on-surface-variant);
+  align-items: center;
 }
 
-/* Grid */
+.list-toolbar__search {
+  flex: 1;
+}
+
+.view-toggle {
+  display: flex;
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.view-toggle__btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: var(--color-surface);
+  border: none;
+  cursor: pointer;
+  color: var(--color-on-surface-variant);
+  transition: background 150ms ease-out, color 150ms ease-out;
+}
+
+.view-toggle__btn + .view-toggle__btn {
+  border-left: 1px solid var(--color-outline-variant);
+}
+
+.view-toggle__btn:hover {
+  background: var(--color-surface-container-low);
+  color: var(--color-on-surface);
+}
+
+.view-toggle__btn--active {
+  background: var(--color-surface-container);
+  color: var(--color-on-surface);
+}
+
+/* ── Domain filter chips ─────────────────────────────────────────── */
+.domain-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.domain-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-outline-variant);
+  background: var(--color-surface);
+  color: var(--color-on-surface-variant);
+  font-size: var(--text-xs);
+  font-weight: var(--fw-medium);
+  cursor: pointer;
+  transition: background 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out;
+}
+
+.domain-chip:hover {
+  background: var(--color-secondary-container);
+  color: var(--color-on-surface);
+}
+
+.domain-chip--active {
+  background: var(--color-primary-container);
+  border-color: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+/* ── List view ───────────────────────────────────────────────────── */
+.contractor-list {
+  background: var(--color-surface-container-lowest);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-2xl);
+  overflow: hidden;
+}
+
+.contractor-row {
+  display: grid;
+  grid-template-columns: 36px minmax(120px, 1fr) auto minmax(0, 210px) auto;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-outline-variant);
+  cursor: pointer;
+  transition: background 150ms ease-out;
+}
+
+.contractor-row:last-child {
+  border-bottom: none;
+}
+
+.contractor-row:hover {
+  background: var(--color-surface-container-low);
+}
+
+.contractor-row__name {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--fw-medium);
+  color: var(--color-on-surface);
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.contractor-row__name:hover,
+.contractor-row__name:focus-visible {
+  color: var(--color-primary);
+  outline: none;
+}
+
+.contractor-row__contacts {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+}
+
+.contractor-row__contact {
+  font-size: var(--text-xs);
+  color: var(--color-on-surface-variant);
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.contractor-row__contact:hover {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
+.contractor-row__actions {
+  display: flex;
+  gap: var(--space-1);
+  flex-shrink: 0;
+}
+
+/* ── Grid view ───────────────────────────────────────────────────── */
 .contractors-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: var(--space-4);
+}
+
+/* ── Responsive ──────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .contractor-row {
+    grid-template-columns: 36px minmax(0, 1fr) auto;
+  }
+
+  .contractor-row__domains,
+  .contractor-row__contacts {
+    display: none;
+  }
 }
 
 </style>

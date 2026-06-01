@@ -9,6 +9,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import CCard from '@/components/molecules/CCard.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
+import CHeading from '@/components/atoms/CHeading.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CEyebrow from '@/components/atoms/CEyebrow.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
@@ -58,15 +59,15 @@ onMounted(reload)
           <CEyebrow>
             {{ t('page.eyebrows.myCharges') }}
           </CEyebrow>
-          <h1 class="display-md">
+          <CHeading type="header">
             {{ t('nav.myCharges') }}
-          </h1>
+          </CHeading>
         </header>
 
         <!-- Multi-unit selection (co-owner with several units) -->
         <div
           v-if="ownedUnits.length > 1"
-          class="cards-grid"
+          class="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-4"
         >
           <CCard
             v-for="unit in ownedUnits"
@@ -81,16 +82,15 @@ onMounted(reload)
             <CBtn
               variant="ghost"
               size="sm"
-            >
-              {{ t('units.charges.title') }}
-            </CBtn>
+              :title="t('units.charges.title')"
+            />
           </CCard>
         </div>
 
         <!-- No owned unit -->
         <p
           v-else-if="ownedUnits.length === 0 && !error"
-          class="empty-state"
+          class="py-8 text-center text-md text-on-surface-variant"
         >
           {{ t('units.charges.noUnit') }}
         </p>
@@ -134,5 +134,4 @@ onMounted(reload)
 }
 
 .dim { color: var(--color-on-surface-variant); }
-.empty-state { text-align: center; color: var(--color-on-surface-variant); padding: var(--space-8) 0; }
 </style>

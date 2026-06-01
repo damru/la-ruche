@@ -26,15 +26,14 @@ withDefaults(defineProps<{
 <style scoped>
 /* Horizontal — circular dot between inline items */
 .c-separator--horizontal {
-  width: 0.25em;
-  height: 0.25em;
+  width: var(--space-1);
+  height: var(--space-1);
   border-radius: var(--radius-full);
   background: var(--color-outline);
 }
 
 /* Vertical — thin rule between stacked sections */
 .c-separator--vertical {
-  height: 1px;
-  background: var(--color-outline-light);
+  border-bottom: 1px solid var(--color-outline-light);
 }
 </style>

@@ -9,7 +9,8 @@ import { useRole } from '@/composables/useRole'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CLegalDescription from '@/components/atoms/CLegalDescription.vue'
-import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
+import CFormActions from '@/components/molecules/CFormActions.vue'
+import CForm from '@/components/molecules/CForm.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CDocumentLinkActionModal from '@/components/organisms/CDocumentLinkActionModal.vue'
 import CLinkedDocumentsModal from '@/components/organisms/CLinkedDocumentsModal.vue'
@@ -17,10 +18,13 @@ import CLegalNotice from '@/components/molecules/CLegalNotice.vue'
 import CLegalCard from '@/components/molecules/CLegalCard.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CCard from '@/components/molecules/CCard.vue'
+import CCardActions from '@/components/molecules/CCardActions.vue'
 import CCardNote from '@/components/molecules/CCardNote.vue'
 import CModal from '@/components/molecules/CModal.vue'
 import CReminderCard from '@/components/organisms/CReminderCard.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
+import CHeading from '@/components/atoms/CHeading.vue'
+import CTabs, { type Tab } from '@/components/atoms/CTabs.vue'
 import CIconCheckCircle from '@/components/atoms/CIconCheckCircle.svg'
 import CIconClock from '@/components/atoms/CIconClock.svg'
 import CIconCurrency from '@/components/atoms/CIconCurrency.svg'
@@ -32,6 +36,7 @@ import CIconShield from '@/components/atoms/CIconShield.svg'
 import CIconXCircle from '@/components/atoms/CIconXCircle.svg'
 import CIconTrash from '@/components/atoms/CIconTrash.svg'
 import CIconUpload from '@/components/atoms/CIconUpload.svg'
+import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import { buildingApi, claimsApi, documentsApi, unitsApi, usersApi } from '@/api'
 import { extractFileExtension } from '@/utils/files'
 import type { Claim, ClaimStatus, ClaimType, Document, Unit, User } from '@/types/domain'
@@ -227,6 +232,10 @@ const claimTabs = computed(() => [
   { key: 'closed', label: t('claims.filters.closed'), count: claimCounts.value.closed },
 ])
 
+const claimTabsList = computed<Tab[]>(() =>
+  claimTabs.value.map(t => ({ value: t.key, label: t.label, count: t.count }))
+)
+
 const legalCardLinks = computed(() => [
   {
     label: t('claims.legalCard.currentLinkLabel'),
@@ -254,7 +263,6 @@ const claimReminderRows = computed(() =>
     id: claim.id,
     title: claim.title,
     subtitle: `${t(`claims.types.${claim.claim_type}`)} · ${unitLabel(claim.unit_id)}`,
-    meta: formatDate(claim.declared_at),
     emphasis: deadlineLabel(claim),
     tone: claimReminderTone(claim),
   })),
@@ -859,11 +867,10 @@ async function submitDelete() {
         <CBtn
           variant="primary"
           size="sm"
+          :icon="CIconPlus"
+          :title="t('claims.create')"
           @click="openCreateModal"
-        >
-          <CIconPlus style="width:16px;height:16px" />
-          <span class="btn-label">{{ t('claims.create') }}</span>
-        </CBtn>
+        />
       </template>
     </CTopbar>
 
@@ -879,14 +886,16 @@ async function submitDelete() {
           <CEyebrow>
             {{ t('page.eyebrows.claims') }}
           </CEyebrow>
-          <h1 class="display-md">
+          <CHeading type="header">
             {{ t('claims.title') }}
-          </h1>
+          </CHeading>
+          <CMetaItem variant="sub">
+             {{ t('claims.activeCount', { count: activeClaimsCount }) }}
+          </CMetaItem>
           <p
             class="body-md"
             style="color:var(--color-on-surface-variant)"
           >
-            {{ t('claims.activeCount', activeClaimsCount) }}
           </p>
         </header>
 
@@ -900,167 +909,159 @@ async function submitDelete() {
             #actions="{ row }"
           >
             <CBtn
-              variant="primary"
+              variant="negative"
               size="sm"
+              :icon="CIconUpload"
+              :title="t('claims.transmit')"
               @click="openTransmitModal(claimsById.get(row.id)!)"
-            >
-              <CIconUpload />
-              {{ t('claims.transmit') }}
-            </CBtn>
+            />
           </template>
         </CReminderCard>
 
-        <div class="tabs">
-          <button
-            v-for="option in claimTabs"
-            :key="option.key"
-            :class="['tab', { 'tab--active': filter === option.key }]"
-            @click="filter = option.key as typeof filter"
-          >
-            {{ option.label }}
-            <span class="tab-count">{{ option.count }}</span>
-          </button>
-        </div>
+        <CTabs
+          v-model="filter"
+          variant="filter"
+          :tabs="claimTabsList"
+        />
 
-        <div class="claims-list">
-          <CCard
-            v-for="claim in claims"
-            :key="claim.id"
-            :shadow="claim.status !== 'closed'"
-            :class="['activity-card', { 'card--terminated': claim.status === 'closed' }]"
-          >
-            <div class="activity-card__header-row activity-card__header-row--with-icon">
-              <div :class="['activity-card__icon', typeTone(claim.claim_type)]">
-                <component
-                  :is="typeIcon(claim.claim_type)"
-                  width="18"
-                  height="18"
-                />
+        
+        <template v-if="claims.length === 0">
+          <CEmptyState
+            :title="t('claims.empty')"
+          />  
+        </template>
+        <template v-else>
+          <div class="flex flex-col gap-3">
+            <CCard
+              v-for="claim in claims"
+              :key="claim.id"
+              :shadow="claim.status !== 'closed'"
+              gap="sm"
+              :class="[{ 'outline outline-1 outline-outline-variant': claim.status === 'closed' }]"
+            >
+              <div class="flex items-center gap-3 min-w-0">
+                <CIconTile
+                  :class="typeTone(claim.claim_type)"
+                >
+                  <component
+                    :is="typeIcon(claim.claim_type)"
+                    aria-hidden="true"
+                  />
+                </CIconTile>
+                <CMetaLine class="text-xs justify-end justify-self-end">
+                  <CBadge
+                    :variant="statusVariant(claim.status)"
+                    dot
+                  >
+                    {{ t(`claims.statuses.${claim.status}`) }}
+                  </CBadge>
+                  <CBadge variant="default">
+                    {{ t(`claims.types.${claim.claim_type}`) }}
+                  </CBadge>
+                  <CBadge
+                    :variant="deadlineVariant(claim)"
+                    :dot="deadlineVariant(claim) !== 'default'"
+                  >
+                    {{ deadlineLabel(claim) }}
+                  </CBadge>
+                </CMetaLine>
               </div>
-              <CMetaLine class="text-xs justify-end justify-self-end">
-                <CBadge
-                  :variant="statusVariant(claim.status)"
-                  dot
+              <div class="flex flex-col gap-3">
+                <CFlexGroup
+                  direction="row"
                 >
-                  {{ t(`claims.statuses.${claim.status}`) }}
-                </CBadge>
-                <CBadge variant="default">
-                  {{ t(`claims.types.${claim.claim_type}`) }}
-                </CBadge>
-                <CBadge
-                  :variant="deadlineVariant(claim)"
-                  :dot="deadlineVariant(claim) !== 'default'"
-                >
-                  {{ deadlineLabel(claim) }}
-                </CBadge>
-              </CMetaLine>
-            </div>
-            <div class="activity-card__stack">
-              <CFlexGroup
-                direction="row"
-              >
-                <h3 class="activity-card__title">
-                  {{ claim.title }}
-                </h3>
-                <CMetaItem
-                  variant="sub"
-                >
-                  <template #icon>
-                    <CIconLocation />
-                  </template>
-                  {{ unitLabel(claim.unit_id) }}
-                </CMetaItem>
-                <CMetaItem
-                  v-if="claim.document_count > 0"
-                  variant="sub"
-                  as="button"
-                  @click="openClaimDocuments(claim)"
-                >
-                  <template #icon>
-                    <CIconFile />
-                  </template>
-                  {{ t('claims.documentsCount', claim.document_count) }}
-                </CMetaItem>
-              </CFlexGroup>
-              <p
-                v-if="claim.description"
-              >
-                {{ claim.description }}
-              </p>
-              <template v-if="canManage">
-                <div class="activity-card__actions">
-                  <CBtn
-                    variant="ghost"
-                    size="sm"
-                    @click="openEditModal(claim)"
+                  <h3 class="text-lg font-semibold text-on-surface m-0 leading-snug min-w-0">
+                    {{ claim.title }}
+                  </h3>
+                  <CMetaItem
+                    variant="sub"
                   >
-                    <CIconEdit />
-                    {{ t('common.edit') }}
-                  </CBtn>
-                  <CBtn
-                    v-if="claim.status === 'open'"
-                    variant="primary"
-                    size="sm"
-                    @click="openTransmitModal(claim)"
+                    <template #icon>
+                      <CIconLocation />
+                    </template>
+                    {{ unitLabel(claim.unit_id) }}
+                  </CMetaItem>
+                  <CMetaItem
+                    v-if="claim.document_count > 0"
+                    variant="sub"
+                    as="button"
+                    @click="openClaimDocuments(claim)"
                   >
-                    <CIconUpload />
-                    {{ t('claims.transmit') }}
-                  </CBtn>
-                  <CBtn
-                    v-else-if="claim.status === 'in_progress'"
-                    variant="primary"
-                    size="sm"
-                    @click="openCloseModal(claim)"
+                    <template #icon>
+                      <CIconFile />
+                    </template>
+                    {{ t('claims.documentsCount', claim.document_count) }}
+                  </CMetaItem>
+                </CFlexGroup>
+                <p
+                  v-if="claim.description"
+                >
+                  {{ claim.description }}
+                </p>
+                <template v-if="canManage">
+                  <CCardActions>
+                    <CBtn
+                      variant="ghost"
+                      size="sm"
+                      :icon="CIconEdit"
+                      :title="t('common.edit')"
+                      @click="openEditModal(claim)"
+                    />
+                    <CBtn
+                      v-if="claim.status === 'open'"
+                      variant="primary"
+                      size="sm"
+                      :icon="CIconUpload"
+                      :title="t('claims.transmit')"
+                      @click="openTransmitModal(claim)"
+                    />
+                    <CBtn
+                      v-else-if="claim.status === 'in_progress'"
+                      variant="primary"
+                      size="sm"
+                      :icon="CIconCheckCircle"
+                      :title="t('claims.close')"
+                      @click="openCloseModal(claim)"
+                    />
+                  </CCardActions>
+                </template>
+                <CCardNote>
+                  <span class="inline-flex items-center gap-1 w-fit">
+                    <CIconCalendar />
+                    {{ t('claims.declaredOn', { date: formatDate(claim.declared_at) }) }}
+                  </span>
+                  <span class="inline-flex items-center gap-1 w-fit">
+                    <CIconClock
+                      
+                      class="icon-xs"
+                    />
+                    {{ t('claims.deadline.reference', { date: formatDate(claim.legal_deadline_at) }) }}
+                  </span>
+                  <span
+                    v-if="claim.published_at"
+                    class="inline-flex items-center gap-1 w-fit"
                   >
-                    <CIconCheckCircle />
-                    {{ t('claims.close') }}
-                  </CBtn>
-                </div>
-              </template>
-
-              <CCardNote>
-                <span class="activity-card__line">
-                  <CIconCalendar />
-                  {{ t('claims.declaredOn', { date: formatDate(claim.declared_at) }) }}
-                </span>
-                <span class="activity-card__line">
-                  <CIconClock
-                    width="14"
-                    height="14"
-                  />
-                  {{ t('claims.deadline.reference', { date: formatDate(claim.legal_deadline_at) }) }}
-                </span>
-                <span
-                  v-if="claim.published_at"
-                  class="activity-card__line"
-                >
-                  <CIconXCircle
-                    width="14"
-                    height="14"
-                  />
-                  {{ t('claims.publishedOn', { date: formatDate(claim.published_at) }) }}
-                </span>
-                <span
-                  v-if="claim.reimbursement_date || claim.reimbursement_amount != null"
-                  class="activity-card__line"
-                >
-                  <CIconCurrency
-                    width="14"
-                    height="14"
-                  />
-                  {{ reimbursementLabel(claim) }}
-                </span>
-              </CCardNote>
-            </div>
-          </CCard>
-
-          <div
-            v-if="claims.length === 0"
-            class="empty-state"
-          >
-            {{ t('claims.empty') }}
+                    <CIconXCircle
+                      
+                      class="icon-xs"
+                    />
+                    {{ t('claims.publishedOn', { date: formatDate(claim.published_at) }) }}
+                  </span>
+                  <span
+                    v-if="claim.reimbursement_date || claim.reimbursement_amount != null"
+                    class="inline-flex items-center gap-1 w-fit"
+                  >
+                    <CIconCurrency
+                      
+                      class="icon-xs"
+                    />
+                    {{ reimbursementLabel(claim) }}
+                  </span>
+                </CCardNote>
+              </div>
+            </CCard>
           </div>
-        </div>
+        </template>
 
         <CLegalCard>
           <CLegalNotice :links="legalCardLinks">
@@ -1080,9 +1081,8 @@ async function submitDelete() {
       :closable="!savingClaim && !uploadingDocuments"
       @update:open="showCreateModal = $event"
     >
-      <form
-        class="form-grid"
-        @submit.prevent="submitCreate"
+      <CForm
+        @submit="submitCreate"
       >
         <CFormInput
           v-model="createForm.title"
@@ -1123,8 +1123,8 @@ async function submitDelete() {
           :rows="3"
         />
 
-        <div class="form-field">
-          <label class="form-label">{{ t('claims.fields.documents') }}</label>
+        <div class="flex flex-col gap-1">
+          <label class="text-sm font-medium text-on-surface-variant">{{ t('claims.fields.documents') }}</label>
           <input
             ref="documentInputRef"
             type="file"
@@ -1170,28 +1170,26 @@ async function submitDelete() {
             </div>
           </div>
         </div>
-      </form>
+      </CForm>
 
       <template #footer>
-        <CFormFeedback
-          class="modal-footer-feedback"
+        <CFormActions
           :status="createFeedback.status.value"
           :message="createFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          @click="showCreateModal = false"
         >
-          {{ t('common.cancel') }}
-        </CBtn>
-        <CBtn
-          variant="primary"
-          :loading="savingClaim || uploadingDocuments"
-          :closing="createFeedback.status.value === 'success'"
-          @click="submitCreate"
-        >
-          {{ t('common.save') }}
-        </CBtn>
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="showCreateModal = false"
+          />
+          <CBtn
+            variant="primary"
+            :title="t('common.save')"
+            :loading="savingClaim || uploadingDocuments"
+            :closing="createFeedback.status.value === 'success'"
+            @click="submitCreate"
+          />
+        </CFormActions>
       </template>
     </CModal>
 
@@ -1201,9 +1199,8 @@ async function submitDelete() {
       size="lg"
       @update:open="value => !value && (claimToEdit = null)"
     >
-      <form
-        class="form-grid"
-        @submit.prevent="submitEdit"
+      <CForm
+        @submit="submitEdit"
       >
         <CFormInput
           v-model="editForm.title"
@@ -1244,8 +1241,8 @@ async function submitDelete() {
           :rows="3"
         />
 
-        <div class="form-field">
-          <label class="form-label">{{ t('claims.fields.documents') }}</label>
+        <div class="flex flex-col gap-1">
+          <label class="text-sm font-medium text-on-surface-variant">{{ t('claims.fields.documents') }}</label>
           <input
             ref="editDocumentInputRef"
             type="file"
@@ -1292,7 +1289,7 @@ async function submitDelete() {
           </div>
 
           <div class="claim-documents-section">
-            <p class="field-hint claim-documents-section__hint">
+            <p class="text-xs text-on-surface-variant claim-documents-section__hint">
               {{ t('claims.fields.attachedDocuments') }}
             </p>
             <CPageLoader v-if="loadingEditDocuments" />
@@ -1314,8 +1311,7 @@ async function submitDelete() {
                 <div class="claim-documents-meta">
                   <div class="claim-documents-name">
                     <CIconFile
-                      width="16"
-                      height="16"
+                      class="icon-sm"
                     />
                     <span>{{ document.original_name }}</span>
                   </div>
@@ -1329,54 +1325,49 @@ async function submitDelete() {
                   <CBtn
                     variant="ghost"
                     size="sm"
+                    :title="t('common.download')"
                     @click="downloadClaimDocument(document.id)"
-                  >
-                    {{ t('common.download') }}
-                  </CBtn>
+                  />
                   <CBtn
                     variant="danger"
                     size="sm"
+                    :title="t('claims.detachDocument')"
                     :loading="detachingDocumentId === document.id"
                     @click="openDocumentActionModal(document)"
-                  >
-                    {{ t('claims.detachDocument') }}
-                  </CBtn>
+                  />
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </form>
+      </CForm>
 
       <template #footer>
-        <CBtn
-          v-if="claimToEdit"
-          variant="danger"
-          style="margin-right:auto"
-          @click="openDeleteFromEdit"
-        >
-          <CIconTrash />
-          {{ t('common.delete') }}
-        </CBtn>
-        <CFormFeedback
-          class="modal-footer-feedback"
+        <CFormActions
           :status="editFeedback.status.value"
           :message="editFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          @click="claimToEdit = null"
         >
-          {{ t('common.cancel') }}
-        </CBtn>
-        <CBtn
-          variant="primary"
-          :loading="editingClaim || uploadingEditDocuments"
-          :closing="editFeedback.status.value === 'success'"
-          @click="submitEdit"
-        >
-          {{ t('common.save') }}
-        </CBtn>
+          <CBtn
+            v-if="claimToEdit"
+            variant="danger"
+            :icon="CIconTrash"
+            :title="t('common.delete')"
+            class="mr-auto"
+            @click="openDeleteFromEdit"
+          />
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="claimToEdit = null"
+          />
+          <CBtn
+            variant="primary"
+            :title="t('common.save')"
+            :loading="editingClaim || uploadingEditDocuments"
+            :closing="editFeedback.status.value === 'success'"
+            @click="submitEdit"
+          />
+        </CFormActions>
       </template>
     </CModal>
 
@@ -1386,9 +1377,8 @@ async function submitDelete() {
       size="sm"
       @update:open="value => !value && (claimToTransmit = null)"
     >
-      <form
-        class="form-grid"
-        @submit.prevent="submitTransmit"
+      <CForm
+        @submit="submitTransmit"
       >
         <CFormInput
           v-model="transmitForm.transmitted_at"
@@ -1397,28 +1387,28 @@ async function submitDelete() {
           required
           :hint="t('claims.fields.transmittedAtHint')"
         />
-      </form>
+      </CForm>
 
       <template #footer>
-        <CFormFeedback
-          class="modal-footer-feedback"
+        <CFormActions
           :status="transmitFeedback.status.value"
           :message="transmitFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          @click="claimToTransmit = null"
         >
-          {{ t('common.cancel') }}
-        </CBtn>
-        <CBtn
-          variant="primary"
-          :loading="transmittingClaim"
-          :closing="transmitFeedback.status.value === 'success'"
-          @click="submitTransmit"
-        >
-          {{ t('claims.transmit') }}
-        </CBtn>
+          <CBtn
+            variant="ghost"
+            @click="claimToTransmit = null"
+          >
+            {{ t('common.cancel') }}
+          </CBtn>
+          <CBtn
+            variant="primary"
+            :loading="transmittingClaim"
+            :closing="transmitFeedback.status.value === 'success'"
+            @click="submitTransmit"
+          >
+            {{ t('claims.transmit') }}
+          </CBtn>
+        </CFormActions>
       </template>
     </CModal>
 
@@ -1428,9 +1418,8 @@ async function submitDelete() {
       size="lg"
       @update:open="value => !value && (claimToClose = null)"
     >
-      <form
-        class="form-grid"
-        @submit.prevent="submitClose"
+      <CForm
+        @submit="submitClose"
       >
         <CFormInput
           v-model="closeForm.transmitted_at"
@@ -1457,8 +1446,8 @@ async function submitDelete() {
           />
         </div>
 
-        <div class="form-field">
-          <label class="form-label">{{ t('claims.fields.closeDocuments') }}</label>
+        <div class="flex flex-col gap-1">
+          <label class="text-sm font-medium text-on-surface-variant">{{ t('claims.fields.closeDocuments') }}</label>
           <input
             ref="closeDocumentInputRef"
             type="file"
@@ -1504,28 +1493,28 @@ async function submitDelete() {
             </div>
           </div>
         </div>
-      </form>
+      </CForm>
 
       <template #footer>
-        <CFormFeedback
-          class="modal-footer-feedback"
+        <CFormActions
           :status="closeFeedback.status.value"
           :message="closeFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          @click="claimToClose = null"
         >
-          {{ t('common.cancel') }}
-        </CBtn>
-        <CBtn
-          variant="primary"
-          :loading="closingClaim || uploadingCloseDocuments"
-          :closing="closeFeedback.status.value === 'success'"
-          @click="submitClose"
-        >
-          {{ t('claims.close') }}
-        </CBtn>
+          <CBtn
+            variant="ghost"
+            @click="claimToClose = null"
+          >
+            {{ t('common.cancel') }}
+          </CBtn>
+          <CBtn
+            variant="primary"
+            :loading="closingClaim || uploadingCloseDocuments"
+            :closing="closeFeedback.status.value === 'success'"
+            @click="submitClose"
+          >
+            {{ t('claims.close') }}
+          </CBtn>
+        </CFormActions>
       </template>
     </CModal>
 
@@ -1540,25 +1529,25 @@ async function submitDelete() {
       </p>
 
       <template #footer>
-        <CFormFeedback
-          class="modal-footer-feedback"
+        <CFormActions
           :status="deleteFeedback.status.value"
           :message="deleteFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          @click="claimToDelete = null"
         >
-          {{ t('common.cancel') }}
-        </CBtn>
-        <CBtn
-          variant="danger"
-          :loading="deletingClaim"
-          :closing="deleteFeedback.status.value === 'success'"
-          @click="submitDelete"
-        >
-          {{ t('common.deleteLabel') }}
-        </CBtn>
+          <CBtn
+            variant="ghost"
+            @click="claimToDelete = null"
+          >
+            {{ t('common.cancel') }}
+          </CBtn>
+          <CBtn
+            variant="danger"
+            :loading="deletingClaim"
+            :closing="deleteFeedback.status.value === 'success'"
+            @click="submitDelete"
+          >
+            {{ t('common.deleteLabel') }}
+          </CBtn>
+        </CFormActions>
       </template>
     </CModal>
 
@@ -1608,7 +1597,7 @@ async function submitDelete() {
   min-height: 44px;
   max-width: 100%;
   padding: 0 var(--space-4) 0 var(--space-3);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-lg);
   border: 1px solid var(--color-outline-variant);
   background: var(--color-surface-container-low);
 }
@@ -1658,7 +1647,7 @@ async function submitDelete() {
 
 .claim-documents-empty {
   padding: var(--space-3);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-lg);
   background: var(--color-surface-container-low);
   color: var(--color-on-surface-variant);
 }
@@ -1675,7 +1664,7 @@ async function submitDelete() {
   align-items: center;
   gap: var(--space-3);
   padding: var(--space-3);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-lg);
   background: var(--color-surface-container-low);
 }
 
@@ -1735,4 +1724,5 @@ async function submitDelete() {
     align-items: flex-start;
   }
 }
+
 </style>

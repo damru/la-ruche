@@ -3,16 +3,19 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useFormatters } from '@/composables/useFormatters'
 import CBadge from '@/components/atoms/CBadge.vue'
+import CIconTile from '@/components/atoms/CIconTile.vue'
 import CIconBolt from '@/components/atoms/CIconBolt.svg'
 import CIconDroplet from '@/components/atoms/CIconDroplet.svg'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CCard from '@/components/molecules/CCard.vue'
-import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
+import CCardActions from '@/components/molecules/CCardActions.vue'
+import CFormActions from '@/components/molecules/CFormActions.vue'
 import CLinkedDocumentsModal from '@/components/organisms/CLinkedDocumentsModal.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CReminderCard from '@/components/organisms/CReminderCard.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
+import CHeading from '@/components/atoms/CHeading.vue'
 import CIconFile from '@/components/atoms/CIconFile.svg'
 import CIconLeaf from '@/components/atoms/CIconLeaf.svg'
 import CIconLayers from '@/components/atoms/CIconLayers.svg'
@@ -20,11 +23,17 @@ import CIconSettings from '@/components/atoms/CIconSettings.svg'
 import CIconShield from '@/components/atoms/CIconShield.svg'
 import CIconSparkles from '@/components/atoms/CIconSparkles.svg'
 import CIconWrench from '@/components/atoms/CIconWrench.svg'
+import CIconPlus from '@/components/atoms/CIconPlus.svg'
+import CIconEdit from '@/components/atoms/CIconEdit.svg'
+import CIconArchive from '@/components/atoms/CIconArchive.svg'
+import CIconCurrency from '@/components/atoms/CIconCurrency.svg'
 import { buildingApi, contractsApi, documentsApi } from '@/api'
 import ContractFormModal from '@/features/contracts/ContractFormModal.vue'
+import CTabs, { type Tab } from '@/components/atoms/CTabs.vue'
 import { usePageLoader, toErrorMessage } from '@/composables/usePageLoader'
 import { useFormFeedback } from '@/composables/useFormFeedback'
 import { useAutoClose } from '@/composables/useAutoClose'
+import { useRole } from '@/composables/useRole'
 import type { ContractReminder, ContractStatus, ContractType, Document, VendorContract } from '@/types/domain'
 
 interface ContractReminderView extends ContractReminder {
@@ -35,6 +44,7 @@ interface ContractReminderView extends ContractReminder {
 
 const { t } = useI18n()
 const { formatCurrency, formatDate, daysUntil } = useFormatters()
+const { hasAnyRole } = useRole()
 
 const filter = ref<'all' | 'active' | 'expired'>('all')
 const search = ref('')
@@ -47,6 +57,8 @@ const busyKey = ref('')
 const contractDocumentsTarget = ref<VendorContract | null>(null)
 const contractDocuments = ref<Document[]>([])
 const loadingContractDocuments = ref(false)
+
+const canManage = computed(() => hasAnyRole(['manager']))
 
 async function loadData() {
   const [buildingResponse, contractsResponse, remindersResponse] = await Promise.all([
@@ -220,6 +232,10 @@ const contractTabs = computed(() => [
   { key: 'expired', label: t('contracts.filters.expired'), count: contractCounts.value.expired },
 ])
 
+const contractTabsList = computed<Tab[]>(() =>
+  contractTabs.value.map(t => ({ value: t.key, label: t.label, count: t.count }))
+)
+
 const contractReminderRows = computed(() =>
   reminderViews.value.map(reminder => ({
     id: reminder.id,
@@ -234,10 +250,6 @@ const contractReminderRows = computed(() =>
 function openCreateModal() {
   editingContract.value = null
   showFormModal.value = true
-}
-
-function setFilter(nextFilter: 'all' | 'active' | 'expired') {
-  filter.value = nextFilter
 }
 
 function openEditModal(contract: VendorContract) {
@@ -328,13 +340,14 @@ async function confirmTerminateContract() {
       </template>
       <template #right>
         <CBtn
+          v-if="canManage"
           variant="primary"
           size="sm"
+          shrink="sm"
+          :icon="CIconPlus"
+          :title="t('contracts.create')"
           @click="openCreateModal"
-        >
-          <CIconPlus style="width:16px;height:16px" />
-          <span class="btn-label">{{ t('contracts.create') }}</span>
-        </CBtn>
+        />
       </template>
     </CTopbar>
 
@@ -350,15 +363,12 @@ async function confirmTerminateContract() {
           <CEyebrow>
             {{ t('page.eyebrows.contracts') }}
           </CEyebrow>
-          <h1 class="display-md">
+          <CHeading type="header">
             {{ t('contracts.title') }}
-          </h1>
-          <p
-            class="body-md"
-            style="color:var(--color-on-surface-variant)"
-          >
+          </CHeading>
+          <CMetaItem variant="sub">
             {{ t('contracts.count', { count: allContracts.length }) }}
-          </p>
+          </CMetaItem>
         </header>
 
         <CReminderCard
@@ -368,30 +378,22 @@ async function confirmTerminateContract() {
         >
           <template #actions="{ row }">
             <CBtn
-              variant="secondary"
+              variant="negative"
               size="sm"
+              :title="t('contracts.reminders.acknowledge')"
               :loading="busyKey === `reminder:${row.id}`"
               :disabled="busyKey === `reminder:${row.id}`"
+              :icon="CIconCurrency"
               @click="acknowledgeReminder(reminderViewsById.get(row.id)!)"
-            >
-              {{ t('contracts.reminders.acknowledge') }}
-            </CBtn>
+            />
           </template>
         </CReminderCard>
 
-        <div class="contracts-toolbar">
-          <div class="tabs">
-            <button
-              v-for="opt in contractTabs"
-              :key="opt.key"
-              :class="['tab', { 'tab--active': filter === opt.key }]"
-              @click="setFilter(opt.key as 'all' | 'active' | 'expired')"
-            >
-              {{ opt.label }}
-              <span class="tab-count">{{ opt.count }}</span>
-            </button>
-          </div>
-
+        <CTabs
+          v-model="filter"
+          variant="filter"
+          :tabs="contractTabsList"
+        >
           <CFormInput
             v-model="search"
             type="search"
@@ -401,14 +403,26 @@ async function confirmTerminateContract() {
               <CIconSearch />
             </template>
           </CFormInput>
-        </div>
+        </CTabs>
 
-        <CCard
+        <template
           v-if="contracts.length === 0"
-          class="contracts-empty"
         >
-          {{ t('contracts.empty') }}
-        </CCard>
+          <CEmptyState
+            :title="t('contracts.empty')"
+            size="page"
+          >
+            <template #actions>
+              <CBtn
+                v-if="canManage && ['active', 'all'].includes(filter)"
+                variant="primary"
+                :icon="CIconPlus"
+                :title="t('contracts.create')"
+                @click="openCreateModal"
+              />
+            </template>
+          </CEmptyState>
+        </template>
 
         <div
           v-else
@@ -418,19 +432,20 @@ async function confirmTerminateContract() {
             v-for="contract in contracts"
             :key="contract.id"
             :shadow="effectiveStatus(contract) === 'active'"
-            :class="['activity-card', { 'card--terminated': effectiveStatus(contract) !== 'active' }]"
+            gap="sm"
+            :class="[{ 'outline outline-1 outline-outline-variant': effectiveStatus(contract) !== 'active' }]"
           >
-            <div class="activity-card__header-row activity-card__header-row--with-icon">
-              <div :class="['activity-card__icon', contractIconTone(contract)]">
+            <div class="flex items-center gap-3 min-w-0">
+              <CIconTile :class="contractIconTone(contract)">
                 <component
                   :is="contractTypeIcon(contract.contract_type)"
                   aria-hidden="true"
                 />
-              </div>
-              <h3 class="activity-card__title">
+              </CIconTile>
+              <h3 class="text-lg font-semibold text-on-surface m-0 leading-snug min-w-0">
                 {{ contract.vendor_name }}
               </h3>
-              <div class="activity-card__chips">
+              <div class="flex flex-wrap gap-x-2 gap-y-1">
                 <CBadge variant="default">
                   {{ t(`contracts.types.${contract.contract_type}`) }}
                 </CBadge>
@@ -442,7 +457,7 @@ async function confirmTerminateContract() {
                 </CBadge>
               </div>
             </div>
-            <div class="activity-card__stack">
+            <div class="flex flex-col gap-3">
               <p class="body-xs">
                 {{ contract.subject }}
               </p>
@@ -487,26 +502,26 @@ async function confirmTerminateContract() {
 
               <div
                 v-if="contract.vendor_email || contract.vendor_phone"
-                class="activity-card__contacts"
+                class="flex flex-col gap-1"
               >
                 <a
                   v-if="contract.vendor_email"
                   :href="`mailto:${contract.vendor_email}`"
-                  class="activity-card__line activity-card__contact-link"
+                  class="inline-flex items-center gap-1 text-xs text-primary no-underline hover:underline"
                 ><span aria-hidden="true">✉️</span>{{ contract.vendor_email }}</a>
                 <a
                   v-if="contract.vendor_phone"
                   :href="`tel:${contract.vendor_phone}`"
-                  class="activity-card__line activity-card__contact-link"
+                  class="inline-flex items-center gap-1 text-xs text-primary no-underline hover:underline"
                 ><span aria-hidden="true">📞</span>{{ contract.vendor_phone }}</a>
               </div>
 
               <div
                 v-if="(contract.document_count ?? 0) > 0"
-                class="activity-card__documents"
+                class="flex flex-wrap gap-x-2 gap-y-1 text-2xs leading-snug"
               >
                 <button
-                  class="activity-card__line activity-card__documents-button"
+                  class="inline-flex items-center gap-1 bg-transparent border-none p-0 cursor-pointer text-xs hover:text-primary"
                   @click="openContractDocuments(contract)"
                 >
                   <CIconFile />
@@ -514,25 +529,23 @@ async function confirmTerminateContract() {
                 </button>
               </div>
 
-              <div class="activity-card__actions">
+              <CCardActions>
                 <CBtn
                   variant="ghost"
                   size="sm"
+                  :icon="CIconEdit"
+                  :title="t('common.edit')"
                   @click="openEditModal(contract)"
-                >
-                  <CIconEdit />
-                  {{ t('common.edit') }}
-                </CBtn>
+                />
                 <CBtn
                   v-if="effectiveStatus(contract) === 'active'"
                   variant="danger"
                   size="sm"
+                  :icon="CIconArchive"
+                  :title="t('contracts.terminate')"
                   @click="openTerminateModal(contract)"
-                >
-                  <CIconArchive />
-                  {{ t('contracts.terminate') }}
-                </CBtn>
-              </div>
+                />
+              </CCardActions>
             </div>
           </CCard>
         </div>
@@ -567,37 +580,28 @@ async function confirmTerminateContract() {
       {{ t('contracts.terminateMessage', { name: contractToTerminate?.vendor_name ?? '' }) }}
     </p>
     <template #footer>
-      <CFormFeedback
+      <CFormActions
         :status="terminateFeedback.status.value"
         :message="terminateFeedback.message.value"
-      />
-      <CBtn
-        variant="ghost"
-        @click="showTerminateModal = false"
       >
-        {{ t('common.cancel') }}
-      </CBtn>
-      <CBtn
-        variant="danger"
-        :loading="terminatingContract"
-        :closing="terminateFeedback.status.value === 'success'"
-        @click="confirmTerminateContract"
-      >
-        {{ t('contracts.terminate') }}
-      </CBtn>
+        <CBtn
+          variant="ghost"
+          :title="t('common.cancel')"
+          @click="showTerminateModal = false"
+        />
+        <CBtn
+          variant="danger"
+          :title="t('contracts.terminate')"
+          :loading="terminatingContract"
+          :closing="terminateFeedback.status.value === 'success'"
+          @click="confirmTerminateContract"
+        />
+      </CFormActions>
     </template>
   </CModal>
 </template>
 
 <style scoped>
-
-.contracts-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-  flex-wrap: wrap;
-}
 
 .contracts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: var(--space-4); }
 

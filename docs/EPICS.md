@@ -3,7 +3,7 @@ document: EPICS
 version: 1.0.0
 owner: Damien
 status: validé
-last_updated: 2026-05-23
+last_updated: 2026-05-26
 description: >
   Backlog officiel du projet La Ruche — épics et stories organisées par domaine fonctionnel.
   Chaque story référence un PRD, un ADR ou une obligation légale (LEGAL.md §X.Y).
@@ -25,7 +25,7 @@ rules:
 > Chaque feature est organisée en epic. Les stories sont ajoutées à la demande, au moment de l'implémentation.
 > Le MVP est l'ensemble des epics marquées **MVP : oui**.
 > Statuts possibles : **en attente** · **en cours** · **terminée**
-> Dernière mise à jour : 23 mai 2026
+> Dernière mise à jour : 26 mai 2026
 
 > **Lecture d'avancement (code actuel) :**
 > - **backend réel** = handlers + DB opérationnels
@@ -430,6 +430,31 @@ Feature simple self-service permettant à chaque utilisateur authentifié de gé
 
 ***
 
+### EP-020 — Design system : consolidation tokens & wrappers Radix
+
+**Statut :** en attente | **MVP :** non | **Réf. PRD :** DESIGN.md
+
+**État code actuel :** les tokens définis dans `DESIGN.md` ne sont pas tous enregistrés dans `tailwind.css` (`@theme inline`) ; la palette reste en hex au lieu d'OKLCH ; plusieurs wrappers Radix Vue restent à créer.
+
+Consolidation technique du design system : migration des tokens de couleur vers OKLCH pour garantir des relations chroma/luminosité vérifiables en thème sombre, enregistrement des tokens manquants dans Tailwind v4, et implémentation des wrappers de primitives Radix Vue restants.
+
+**Stories :**
+
+* `EP-020-S01` ✅ — Migrer les tokens de couleur primaires, secondaires, d'état (error, success, warning) et de surface de `tokens.css` de hex vers OKLCH
+* `EP-020-S02` ✅ — Migrer les tokens de couleur de rôle (`role-manager`, `board`, `co-owner`, `tenant`) vers OKLCH avec valeurs dark mode vérifiées
+* `EP-020-S03` ✅ — Enregistrer dans `tailwind.css` via `@theme inline` les tokens manquants : `--text-xl`, `--text-2xl`, `--text-display`, `--space-7`, `--space-9`, `--leading-*`, `--z-*`
+* `EP-020-S04` ✅ — Implémenter `CDropdownMenu` : wrapper Radix `DropdownMenu` conforme §2.1 et §3.4 de DESIGN.md
+* `EP-020-S05` ✅ — Implémenter `CStatusBanner` : bandeau d'état en-tête pour les AG (`draft` / `called` / `ongoing` / `closed`) conforme §2.3 de DESIGN.md
+* `EP-020-S06` ✅ — Implémenter les wrappers Radix restants : `CFormCheckbox`, `CFormSelect`, `CTooltip` (§3.4 DESIGN.md — statut 🔲 planifié)
+* `EP-020-S07` ✅ — Implémenter `CTabs` : composant atomique de filtres d'état tabulaires, remplace le pattern CSS pur dans toutes les vues consommatrices (§2.1 et §4.1 DESIGN.md) ; supprimer `tabs.css`
+* `EP-020-S08` ✅ — Implémenter `CHeading` : atom Fraunces semibold italic (`lg`/`md`/`sm`, prop `as`) ; migrer les usages de `typography.css` (`.display-*`, `.headline-*`) ; supprimer `typography.css`
+* `EP-020-S09` ✅ — Créer `CFormRow`, `CFormGroup`, `CFormLabel` molecules ; migrer les vues consommatrices de `forms.css` (`.form-grid`, `.field`, `.search-bar`, `.icon-btn`) vers atoms existants et Tailwind inline
+* `EP-020-S10` ✅ — Déplacer les styles `.data-table` dans les scoped blocks des vues consommatrices ; remplacer `.cards-grid` par Tailwind `grid grid-cols-[…]` inline ; supprimer `tables.css`
+* `EP-020-S11` ✅ — Nettoyer `base.css` : conserver les seuls resets navigateur et touch targets ; migrer `.view-container`/`.view-header` vers Tailwind inline, `.empty-state` vers `CEmptyState` ; supprimer les classes applicatives (spinner, loading-skeleton, card--terminated)
+* `EP-020-S12` ✅ — Supprimer `activity-cards.css` ; remplacer par l'utilisation de CCard
+
+***
+
 ## Tâches techniques post-MVP
 
 > À traiter en priorité une fois la livraison du MVP validée. Ces tâches ne sont pas des fonctionnalités produit mais des améliorations structurelles de la base de code.
@@ -438,8 +463,13 @@ Feature simple self-service permettant à chaque utilisateur authentifié de gé
 |---|-------|--------|--------|
 | T-001 | Fusionner les migrations SQL en un fichier unique | Consolider `0001_init.sql` et `0002_tantieme_audit.sql` (et toute migration ultérieure) en un seul fichier `0001_init.sql` pour simplifier l'initialisation d'une nouvelle instance. | en attente |
 | T-002-1 | Utilisation des composants radix-vue (ex: CModal > Dialog) | en attente |
-| T-002-2 | Peaufiner les écrans, création de composants atomiques | en-attente |
+| T-002-2 | Peaufiner les écrans, création de composants atomiques | en attente |
 | T-002-3 | Rationaliser le CSS, généralisation de tailwind, réduction des classes custom | en attente |
+| T-002-4 | Vérifier utilisation en dur de height/width sur les icônes SVG sans classes `--icon-` | en attente |
+| T-002-5 | Vérifier utilisation inline de balises de titres sans `CHeading` | en attente |
+| T-002-6 | Vérifier utilisation inline de formulaires sans `CForm*` | en attente |
+| T-002-7 | Améliorer les erreurs au chargement avec des vrais messages | en attente |
+| T-002-8 | Améliorer les formulaires dans modale: message de feedback mal placé, bouton `close` inaccessible, délai de fermeture automatique trop long etc. | en attente |
 | T-003 | Durcir le contrat d'interface entre backend et frontend - utilisation d'openapi ? | en attente |
 | T-004 | Etudier l'intérêt de la création d'un crate dédié aux AG | en attente |
 

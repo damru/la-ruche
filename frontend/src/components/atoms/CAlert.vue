@@ -50,35 +50,26 @@ function dismiss() {
   <Transition name="c-alert-fade">
     <div
       v-if="visible"
+      class="flex justify-between gap-3 py-3 px-4 rounded-xl bg-secondary-container toned"
       :class="['c-alert', toneClassMap[variant]]"
       role="alert"
     >
-      <div class="c-alert__main">
-        <div
-          v-if="title"
-          class="c-alert__header"
-        >
-          <component
-            :is="iconMap[variant]"
-            class="c-alert__icon"
-            aria-hidden="true"
-          />
-          <p class="c-alert__title">
+      <div class="flex flex-1 gap-2 min-w-0 ">
+        <component
+          :is="iconMap[variant]"
+          class="icon-md"
+          aria-hidden="true"
+        />
+        <div class="flex flex-col">
+          <p
+            v-if="title"
+            class="text-md font-semibold"
+          >
             {{ title }}
           </p>
-        </div>
-        <div
-          v-else
-          class="c-alert__header"
-        >
-          <component
-            :is="iconMap[variant]"
-            class="c-alert__icon"
-            aria-hidden="true"
-          />
-        </div>
-        <div class="c-alert__body">
-          <slot></slot>
+          <div class="text-sm">
+            <slot></slot>
+          </div>
         </div>
       </div>
       <div
@@ -95,8 +86,7 @@ function dismiss() {
           @click="dismiss"
         >
           <CIconX
-            width="16"
-            height="16"
+            class="icon-sm"
             aria-hidden="true"
           />
         </button>
@@ -112,61 +102,6 @@ function dismiss() {
 </template>
 
 <style scoped>
-.c-alert {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--space-3);
-  padding: var(--space-3) var(--space-4);
-  border-radius: var(--radius-md);
-  background: var(--tone-bg, var(--color-secondary-container));
-  color: var(--tone-fg, var(--color-on-secondary-container));
-}
-
-.c-alert__main {
-  flex: 1;
-  min-width: 0;
-  align-self: flex-start;
-}
-
-.c-alert__header {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.c-alert__icon {
-  width: 18px;
-  height: 18px;
-  flex-shrink: 0;
-}
-
-.c-alert__body {
-  min-width: 0;
-  margin-top: 2px;
-}
-
-.c-alert__title {
-  font-size: var(--text-sm);
-  font-weight: var(--fw-semibold);
-  margin: 0;
-}
-
-.c-alert__body :deep(p) {
-  margin: 0;
-}
-
-.c-alert__body {
-  font-size: var(--text-sm);
-  opacity: 0.9;
-  line-height: 1.4;
-}
-
-.c-alert__side {
-  display: flex;
-  flex-shrink: 0;
-  align-self: stretch;
-}
-
 .c-alert__side--with-close {
   display: grid;
   grid-template-rows: auto 1fr;
@@ -190,7 +125,7 @@ function dismiss() {
   justify-content: center;
   min-width: unset;
   min-height: unset;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-lg);
   opacity: 0.6;
   transition: opacity var(--transition-fast);
   justify-self: end;

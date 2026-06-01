@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import CCard from '@/components/molecules/CCard.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
+import CHeading from '@/components/atoms/CHeading.vue'
 import CModal from '@/components/molecules/CModal.vue'
 import CDataTable from '@/components/molecules/CDataTable.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
@@ -156,9 +157,9 @@ function statusVariant(status: UnitChargesLevy['status']): 'pending' | 'valid' |
           <CEyebrow>
             {{ t('page.eyebrows.unitCharges') }}
           </CEyebrow>
-          <h1 class="display-md">
+          <CHeading type="header">
             {{ t('units.charges.title') }}
-          </h1>
+          </CHeading>
           <CMetaLine>
             <CMetaItem variant="sub">
               {{ t('common.lot') }} {{ data.unit.unit_number }} 
@@ -191,9 +192,12 @@ function statusVariant(status: UnitChargesLevy['status']): 'pending' | 'valid' |
         </div>
 
         <CCard>
-          <h2 class="section-title">
+          <CHeading
+            type="card"
+            class="mb-4"
+          >
             {{ t('units.charges.history') }}
-          </h2>
+          </CHeading>
 
           <CDataTable
             :columns="levyTableColumns"
@@ -229,10 +233,9 @@ function statusVariant(status: UnitChargesLevy['status']): 'pending' | 'valid' |
               <CBtn
                 variant="ghost"
                 size="sm"
+                :title="t('units.charges.detailAction')"
                 @click="selectedLevy = consolidatedLevies.find(l => l.id === row.id) ?? null"
-              >
-                {{ t('units.charges.detailAction') }}
-              </CBtn>
+              />
             </template>
           </CDataTable>
         </CCard>
@@ -292,10 +295,9 @@ function statusVariant(status: UnitChargesLevy['status']): 'pending' | 'valid' |
           <template #footer>
             <CBtn
               variant="ghost"
+              :title="t('common.cancel')"
               @click="selectedLevy = null"
-            >
-              {{ t('common.cancel') }}
-            </CBtn>
+            />
           </template>
         </CModal>
       </template>

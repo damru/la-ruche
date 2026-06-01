@@ -58,9 +58,14 @@ export async function tryRefreshSession(): Promise<boolean> {
 }
 
 // ── Response interceptor — transparent token refresh ─────────────────
-// Auth probe URLs — failures here are expected during session restoration
+// Auth probe requests — failures here are expected during session restoration
 // and must NOT trigger a session-expired redirect.
-const AUTH_PROBE_URLS = new Set(['/auth/me', '/auth/refresh'])
+// Identified by both URL and method to avoid blocking PATCH /auth/me.
+function isAuthProbe(url: string | undefined, method: string | undefined): boolean {
+  const u = url ?? ''
+  const m = (method ?? '').toUpperCase()
+  return (u === '/auth/me' && m === 'GET') || u === '/auth/refresh'
+}
 
 api.interceptors.response.use(
   response => response,
@@ -78,7 +83,7 @@ api.interceptors.response.use(
     if (shouldRefresh) {
       // Never attempt refresh or dispatch session-expired for auth probe requests
       // (called by restoreSession during initial session restoration)
-      if (AUTH_PROBE_URLS.has(original.url ?? '')) {
+      if (isAuthProbe(original.url, original.method)) {
         return Promise.reject(error)
       }
 

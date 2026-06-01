@@ -10,14 +10,25 @@ import { useRole } from '@/composables/useRole'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CCard from '@/components/molecules/CCard.vue'
+import CCardActions from '@/components/molecules/CCardActions.vue'
 import CMetaLine from '@/components/molecules/CMetaLine.vue'
 import CMetaItem from '@/components/molecules/CMetaItem.vue'
-import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
+import CFormActions from '@/components/molecules/CFormActions.vue'
+import CForm from '@/components/molecules/CForm.vue'
 import CDocumentLinkActionModal from '@/components/organisms/CDocumentLinkActionModal.vue'
 import CModal from '@/components/molecules/CModal.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
+import CHeading from '@/components/atoms/CHeading.vue'
+import CTabs from '@/components/atoms/CTabs.vue'
+import CIconArrowLeft from '@/components/atoms/CIconArrowLeft.svg'
+import CIconArrowRight from '@/components/atoms/CIconArrowRight.svg'
+import CIconCheckCircle from '@/components/atoms/CIconCheckCircle.svg'
+import CIconEdit from '@/components/atoms/CIconEdit.svg'
+import CIconPlus from '@/components/atoms/CIconPlus.svg'
+import CIconRefresh from '@/components/atoms/CIconRefresh.svg'
+import CIconTrash from '@/components/atoms/CIconTrash.svg'
 import { buildingApi, documentsApi, reportsApi, unitsApi } from '@/api'
 import type { Document, Report, ReportStatus, TaskPriority, Unit } from '@/types/domain'
 
@@ -544,11 +555,10 @@ function photoPreview(file: File): string {
         <CBtn
           variant="primary"
           size="sm"
+          :icon="CIconPlus"
+          :title="t('reports.newReport')"
           @click="openCreateModal"
-        >
-          <CIconPlus style="width:16px;height:16px" />
-          <span class="btn-label">{{ t('reports.newReport') }}</span>
-        </CBtn>
+        />
       </template>
     </CTopbar>
 
@@ -564,9 +574,9 @@ function photoPreview(file: File): string {
           <CEyebrow>
             {{ t('page.eyebrows.reports') }}
           </CEyebrow>
-          <h1 class="display-md">
+          <CHeading type="header">
             {{ t('reports.title') }}
-          </h1>
+          </CHeading>
           <p
             class="body-md"
             style="color:var(--color-on-surface-variant)"
@@ -575,156 +585,142 @@ function photoPreview(file: File): string {
           </p>
         </header>
 
-        <!-- Filters -->
-        <div class="tabs">
-          <button
-            v-for="item in [
-              { key: 'all', label: t('common.all'), count: allReports.length },
-              { key: 'open', label: t('reports.filters.open'), count: counts.open },
-              { key: 'in_progress', label: t('reports.filters.inProgress'), count: counts.in_progress },
-              { key: 'closed', label: t('reports.filters.closed'), count: counts.closed },
-            ]"
-            :key="item.key"
-            :class="['tab', { 'tab--active': statusFilter === item.key }]"
-            @click="statusFilter = item.key as typeof statusFilter"
-          >
-            {{ item.label }}
-            <span class="tab-count">{{ item.count }}</span>
-          </button>
-        </div>
+        <CTabs
+          v-model="statusFilter"
+          variant="filter"
+          :tabs="[
+            { value: 'all', label: t('common.all'), count: allReports.length },
+            { value: 'open', label: t('reports.filters.open'), count: counts.open },
+            { value: 'in_progress', label: t('reports.filters.inProgress'), count: counts.in_progress },
+            { value: 'closed', label: t('reports.filters.closed'), count: counts.closed },
+          ]"
+        />
 
-        <!-- List -->
-        <div class="report-list">
-          <CCard
-            v-for="r in reports"
-            :key="r.id"
-            :shadow="r.status !== 'closed'"
-            :class="['gap-y-4', { 'card--terminated': r.status === 'closed' }]"
-          >
-            <div class="activity-card__header-row activity-card__header-row--with-icon">
-              <div class="activity-card__icon tone--default">
-                <CIconInfo />
+        <template v-if="!reports.length">
+          <CEmptyState
+            :title="t('reports.empty')"
+          />
+        </template>
+        <template v-else>
+          <div class="report-list">
+            <CCard
+              v-for="r in reports"
+              :key="r.id"
+              :shadow="r.status !== 'closed'"
+              :class="['gap-y-4', { 'outline outline-1 outline-outline-variant': r.status === 'closed' }]"
+            >
+              <div class="flex items-center gap-3 min-w-0">
+                <CMetaLine 
+                  class="[&_svg]:icon-sm text-xs"
+                >
+                  <CBadge
+                    :variant="statusVariant(r.status)"
+                    dot
+                  >
+                    {{ t(`reports.statuses.${r.status}`) }}
+                  </CBadge>
+                  <CMetaItem
+                    variant="sub" 
+                  >
+                    <template #icon>
+                      <CIconClock />
+                    </template>
+                    {{ formatRelative(r.updated_at) }}
+                  </CMetaItem>
+                </CMetaLine>
               </div>
-              
-              <CMetaLine class="[&_svg]:w-(--icon-sm) [&_svg]:h-(--icon-sm) text-xs">
-                <CBadge
-                  :variant="statusVariant(r.status)"
-                  dot
+  
+              <div class="flex flex-col gap-3">
+                <CFlexGroup
+                  direction="row"
                 >
-                  {{ t(`reports.statuses.${r.status}`) }}
-                </CBadge>
-                <CMetaItem>
-                  <template #icon>
-                    <CIconClock />
-                  </template>
-                  {{ formatRelative(r.updated_at) }}
-                </CMetaItem>
-              </CMetaLine>
-            </div>
-
-            <div class="activity-card__stack">
-              <CFlexGroup
-                direction="row"
-              >
-                <h3 class="activity-card__title">
-                  {{ r.title }}
-                </h3>
-                
-                <CMetaItem
-                  v-if="r.document_count > 0"
-                  variant="sub"
-                  as="button"
-                  @click="openReportPhotos(r)"
+                  <h3 class="text-lg font-semibold text-on-surface m-0 leading-snug min-w-0">
+                    {{ r.title }}
+                  </h3>
+                  
+                  <CMetaItem
+                    v-if="r.document_count > 0"
+                    variant="sub"
+                    as="button"
+                    @click="openReportPhotos(r)"
+                  >
+                    <template #icon>
+                      <CIconFile />
+                    </template>
+                    {{ t('reports.linkedPhotosCount', r.document_count) }}
+                  </CMetaItem>
+                </CFlexGroup>
+  
+                <p
+                  v-if="r.description"
                 >
-                  <template #icon>
-                    <CIconFile />
-                  </template>
-                  {{ t('reports.linkedPhotosCount', r.document_count) }}
-                </CMetaItem>
-              </CFlexGroup>
-
-              <p
-                v-if="r.description"
-              >
-                {{ r.description }}
-              </p>
-              <CMetaLine>
-                <CMetaItem>
-                  <template #icon>
-                    <CIconUser />
-                  </template>
-                  {{ authorName(r) }}
-                </CMetaItem>
-                <CMetaItem>
-                  <template #icon>
-                    <CIconHome />
-                  </template>
-                  {{ unitLabel(r.unit_id) }}
-                </CMetaItem>
-                <CMetaItem>
-                  <template #icon>
-                    <CIconCalendar />
-                  </template>
-                  {{ formatDate(r.created_at) }}
-                </CMetaItem>
-              </CMetaLine>
-
-              <div class="activity-card__secondary-actions">
+                  {{ r.description }}
+                </p>
+                <CMetaLine>
+                  <CMetaItem>
+                    <template #icon>
+                      <CIconUser />
+                    </template>
+                    {{ authorName(r) }}
+                  </CMetaItem>
+                  <CMetaItem>
+                    <template #icon>
+                      <CIconHome />
+                    </template>
+                    {{ unitLabel(r.unit_id) }}
+                  </CMetaItem>
+                  <CMetaItem>
+                    <template #icon>
+                      <CIconCalendar />
+                    </template>
+                    {{ formatDate(r.created_at) }}
+                  </CMetaItem>
+                </CMetaLine>
+  
                 <div
                   v-if="r.status !== 'closed'"
-                  class="activity-card__secondary-actions"
+                  class="flex flex-wrap gap-x-2 gap-y-1"
                 >
                   <CBtn
                     variant="ghost"
                     size="sm"
+                    :icon="CIconRefresh"
+                    :title="t('reports.editStatus')"
                     @click="openStatusModal(r)"
-                  >
-                    <CIconRefresh />
-                    {{ t('reports.editStatus') }}
-                  </CBtn>
+                  />
                 </div>
+  
+                <template v-if="canManage">
+                  <CCardActions>
+                    <CBtn
+                      variant="ghost"
+                      size="sm"
+                      :icon="CIconEdit"
+                      :title="t('common.edit')"
+                      @click="openEditModal(r)"
+                    />
+                    <CBtn
+                      v-if="r.task_id"
+                      variant="primary"
+                      size="sm"
+                      :icon="CIconCheckCircle"
+                      :title="t('reports.viewTask')"
+                      @click="router.push({ name: 'task-detail', params: { id: r.task_id } })"
+                    />
+                    <CBtn
+                      v-else-if="r.status !== 'closed'"
+                      variant="primary"
+                      size="sm"
+                      :icon="CIconCheckCircle"
+                      :title="t('reports.convertToTask')"
+                      @click="openConvertModal(r)"
+                    />
+                  </CCardActions>
+                </template>
               </div>
-
-              <template v-if="canManage">
-                <div class="activity-card__actions">
-                  <CBtn
-                    variant="ghost"
-                    size="sm"
-                    @click="openEditModal(r)"
-                  >
-                    <CIconEdit />
-                    {{ t('common.edit') }}
-                  </CBtn>
-                  <CBtn
-                    v-if="r.task_id"
-                    variant="primary"
-                    size="sm"
-                    @click="router.push({ name: 'task-detail', params: { id: r.task_id } })"
-                  >
-                    <CIconCheckCircle />
-                    {{ t('reports.viewTask') }}
-                  </CBtn>
-                  <CBtn
-                    v-else-if="r.status !== 'closed'"
-                    variant="primary"
-                    size="sm"
-                    @click="openConvertModal(r)"
-                  >
-                    <CIconCheckCircle />
-                    {{ t('reports.convertToTask') }}
-                  </CBtn>
-                </div>
-              </template>
-            </div>
-          </CCard>
-
-          <div
-            v-if="!reports.length"
-            class="empty-state"
-          >
-            {{ t('reports.empty') }}
+            </CCard>
           </div>
-        </div>
+        </template>
       </template>
     </div>
 
@@ -736,9 +732,8 @@ function photoPreview(file: File): string {
       :closable="!saving && !uploadingPhotos"
       @update:open="showCreateModal = $event"
     >
-      <form
-        class="form-grid"
-        @submit.prevent="submitCreate"
+      <CForm
+        @submit="submitCreate"
       >
         <CFormInput
           v-model="createForm.title"
@@ -758,8 +753,8 @@ function photoPreview(file: File): string {
         />
 
         <!-- Photo picker -->
-        <div class="form-field">
-          <label class="form-label">{{ t('reports.photos') }}</label>
+        <div class="flex flex-col gap-1">
+          <label class="text-sm font-medium text-on-surface-variant">{{ t('reports.photos') }}</label>
           <!-- Hidden real file input -->
           <input
             ref="photoInputRef"
@@ -814,26 +809,25 @@ function photoPreview(file: File): string {
             style="color:var(--color-on-surface-variant)"
           >{{ t('reports.photoUploading') }}</span>
         </div>
-      </form>
+      </CForm>
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="createFeedback.status.value"
           :message="createFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          @click="showCreateModal = false"
         >
-          {{ t('common.cancel') }}
-        </CBtn>
-        <CBtn
-          variant="primary"
-          :loading="saving || uploadingPhotos"
-          :closing="createFeedback.status.value === 'success'"
-          @click="submitCreate"
-        >
-          {{ t('common.save') }}
-        </CBtn>
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="showCreateModal = false"
+          />
+          <CBtn
+            variant="primary"
+            :title="t('common.save')"
+            :loading="saving || uploadingPhotos"
+            :closing="createFeedback.status.value === 'success'"
+            @click="submitCreate"
+          />
+        </CFormActions>
       </template>
     </CModal>
 
@@ -850,24 +844,23 @@ function photoPreview(file: File): string {
         :options="reportStatusOptions"
       />
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="updateFeedback.status.value"
           :message="updateFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          @click="reportToUpdate = null"
         >
-          {{ t('common.cancel') }}
-        </CBtn>
-        <CBtn
-          variant="primary"
-          :loading="updating"
-          :closing="updateFeedback.status.value === 'success'"
-          @click="submitUpdateStatus"
-        >
-          {{ t('common.save') }}
-        </CBtn>
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="reportToUpdate = null"
+          />
+          <CBtn
+            variant="primary"
+            :title="t('common.save')"
+            :loading="updating"
+            :closing="updateFeedback.status.value === 'success'"
+            @click="submitUpdateStatus"
+          />
+        </CFormActions>
       </template>
     </CModal>
 
@@ -887,26 +880,26 @@ function photoPreview(file: File): string {
         :options="taskPriorityOptions"
       />
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="convertFeedback.status.value"
           :message="convertFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          @click="reportToConvert = null"
         >
-          {{ t('common.cancel') }}
-        </CBtn>
-        <CBtn
-          variant="primary"
-          :loading="converting"
-          :closing="convertFeedback.status.value === 'success'"
-          @click="submitConvert"
-        >
-          {{ t('reports.convertToTask') }}
-        </CBtn>
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="reportToConvert = null"
+          />
+          <CBtn
+            variant="primary"
+            :title="t('reports.convertToTask')"
+            :loading="converting"
+            :closing="convertFeedback.status.value === 'success'"
+            @click="submitConvert"
+          />
+        </CFormActions>
       </template>
     </CModal>
+
     <!-- Edit report modal -->
     <CModal
       :open="!!reportToEdit"
@@ -915,9 +908,8 @@ function photoPreview(file: File): string {
       :closable="!editSaving && !editUploadingPhotos"
       @update:open="v => !v && (reportToEdit = null)"
     >
-      <form
-        class="form-grid"
-        @submit.prevent="submitEdit"
+      <CForm
+        @submit="submitEdit"
       >
         <CFormInput
           v-model="editForm.title"
@@ -937,8 +929,8 @@ function photoPreview(file: File): string {
         />
 
         <!-- Photo picker (add photos to existing report) -->
-        <div class="form-field">
-          <label class="form-label">{{ t('reports.addPhotos') }}</label>
+        <div class="flex flex-col gap-1">
+          <label class="text-sm font-medium text-on-surface-variant">{{ t('reports.addPhotos') }}</label>
           <input
             ref="editPhotoInputRef"
             type="file"
@@ -990,8 +982,8 @@ function photoPreview(file: File): string {
             style="color:var(--color-on-surface-variant)"
           >{{ t('reports.photoUploading') }}</span>
         </div>
-        <div class="form-field">
-          <label class="form-label">{{ t('reports.attachedPhotos') }}</label>
+        <div class="flex flex-col gap-1">
+          <label class="text-sm font-medium text-on-surface-variant">{{ t('reports.attachedPhotos') }}</label>
           <CPageLoader v-if="loadingEditAttachedPhotos" />
           <div
             v-else-if="editAttachedPhotos.length"
@@ -1024,34 +1016,32 @@ function photoPreview(file: File): string {
             style="color:var(--color-on-surface-variant)"
           >{{ t('reports.noAttachedPhotos') }}</span>
         </div>
-      </form>
+      </CForm>
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="editFeedback.status.value"
           :message="editFeedback.message.value"
-        />
-        <CBtn
-          v-if="reportToEdit"
-          variant="danger"
-          @click="openDeleteFromEdit"
         >
-          <CIconTrash />
-          {{ t('common.delete') }}
-        </CBtn>
-        <CBtn
-          variant="ghost"
-          @click="reportToEdit = null"
-        >
-          {{ t('common.cancel') }}
-        </CBtn>
-        <CBtn
-          variant="primary"
-          :loading="editSaving || editUploadingPhotos"
-          :closing="editFeedback.status.value === 'success'"
-          @click="submitEdit"
-        >
-          {{ t('common.save') }}
-        </CBtn>
+          <CBtn
+            v-if="reportToEdit"
+            variant="danger"
+            :icon="CIconTrash"
+            :title="t('common.delete')"
+            @click="openDeleteFromEdit"
+          />
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="reportToEdit = null"
+          />
+          <CBtn
+            variant="primary"
+            :title="t('common.save')"
+            :loading="editSaving || editUploadingPhotos"
+            :closing="editFeedback.status.value === 'success'"
+            @click="submitEdit"
+          />
+        </CFormActions>
       </template>
     </CModal>
 
@@ -1066,24 +1056,23 @@ function photoPreview(file: File): string {
         {{ t('reports.confirmDeleteMessage', { title: reportToDelete?.title ?? '' }) }}
       </p>
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="deleteFeedback.status.value"
           :message="deleteFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          @click="reportToDelete = null"
         >
-          {{ t('common.cancel') }}
-        </CBtn>
-        <CBtn
-          variant="danger"
-          :loading="deleting"
-          :closing="deleteFeedback.status.value === 'success'"
-          @click="submitDelete"
-        >
-          {{ t('common.delete') }}
-        </CBtn>
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="reportToDelete = null"
+          />
+          <CBtn
+            variant="danger"
+            :title="t('common.delete')"
+            :loading="deleting"
+            :closing="deleteFeedback.status.value === 'success'"
+            @click="submitDelete"
+          />
+        </CFormActions>
       </template>
     </CModal>
     <CModal
@@ -1139,20 +1128,18 @@ function photoPreview(file: File): string {
             variant="ghost"
             size="sm"
             class="report-photo-viewer__nav"
+            :icon="CIconArrowLeft"
             :disabled="reportPhotos.length <= 1"
             @click="showPreviousReportPhoto"
-          >
-            <CIconArrowLeft />
-          </CBtn>
+          />
           <CBtn
             variant="ghost"
             size="sm"
             class="report-photo-viewer__nav"
+            :icon="CIconArrowRight"
             :disabled="reportPhotos.length <= 1"
             @click="showNextReportPhoto"
-          >
-            <CIconArrowRight />
-          </CBtn>
+          />
         </div>
       </div>
       <p
@@ -1189,11 +1176,11 @@ function photoPreview(file: File): string {
 }
 .photo-thumb {
   width: 64px; height: 64px; object-fit: cover;
-  border-radius: var(--radius-sm); border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-lg); border: 1px solid var(--color-outline-variant);
 }
 .photo-gallery-thumb {
   width: 120px; height: 120px; object-fit: cover; display: block;
-  border-radius: var(--radius-sm); border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-lg); border: 1px solid var(--color-outline-variant);
   cursor: pointer; transition: opacity 0.15s;
 }
 .photo-gallery-thumb:hover { opacity: 0.85; }
@@ -1229,7 +1216,7 @@ function photoPreview(file: File): string {
   width: var(--report-photo-thumb-size);
   height: var(--report-photo-thumb-size);
   object-fit: cover;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-lg);
   border: 1px solid var(--color-outline-variant);
   transition: opacity 0.15s;
 }
@@ -1255,7 +1242,7 @@ function photoPreview(file: File): string {
   width: 100%;
   max-height: var(--report-photo-viewer-height);
   object-fit: contain;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   background: var(--color-surface-container-low);
 }
 
@@ -1281,4 +1268,5 @@ function photoPreview(file: File): string {
     justify-content: flex-start;
   }
 }
+
 </style>

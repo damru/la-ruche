@@ -10,10 +10,12 @@ export interface Column<T> {
 </script>
 
 <script setup lang="ts" generic="T extends Record<string, unknown>">
-import { ref } from 'vue'
+import { ref, computed, useSlots } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
+const slots = useSlots()
+const hasFoot = computed(() => Object.keys(slots).some(s => s.startsWith('foot-')))
 
 withDefaults(defineProps<{
   columns: Column<T>[]
@@ -55,9 +57,8 @@ function getCellValue(row: T, key: string): unknown {
 </script>
 
 <template>
-  <div class="c-table-wrap">
+  <div class="overflow-auto bg-surface-container-lowest">
     <table
-      class="c-table"
       role="table"
     >
       <thead>
@@ -66,10 +67,10 @@ function getCellValue(row: T, key: string): unknown {
             v-for="col in columns"
             :key="String(col.key)"
             :style="col.width ? { width: col.width } : undefined"
-            :class="['c-table__th', `c-table__cell--${col.align ?? 'left'}`, { 'c-table__th--sortable': col.sortable }]"
+            :class="['c-table__th', `text-${col.align ?? 'left'}`, { 'c-table__th--sortable': col.sortable }]"
             @click="handleSort(col)"
           >
-            <span class="c-table__th-inner">
+            <span>
               {{ col.label }}
               <template v-if="col.sortable">
                 <CIconChevronDown
@@ -91,7 +92,6 @@ function getCellValue(row: T, key: string): unknown {
       </thead>
 
       <tbody>
-        <!-- Loading -->
         <tr v-if="loading">
           <td
             :colspan="columns.length"
@@ -107,7 +107,6 @@ function getCellValue(row: T, key: string): unknown {
           </td>
         </tr>
 
-        <!-- Vide -->
         <tr v-else-if="!rows.length">
           <td
             :colspan="columns.length"
@@ -117,21 +116,19 @@ function getCellValue(row: T, key: string): unknown {
           </td>
         </tr>
 
-        <!-- Données -->
         <tr
           v-for="row in rows"
           v-else
           :key="String(getCellValue(row, String(rowKey)))"
-          class="c-table__row"
-          :class="{ 'c-table__row--striped': striped }"
+          :striped="striped ? '' : undefined"
           @click="emit('rowClick', row)"
         >
           <td
             v-for="col in columns"
             :key="String(col.key)"
-            :class="['c-table__td', `c-table__cell--${col.align ?? 'left'}`, { 'c-table__cell--numeric': col.numeric }]"
+            :data-type="col.numeric ? 'numeric' : undefined"
+            :class="[`text-${col.align ?? 'left'}`]"
           >
-            <!-- Slot nommé par colonne pour rendu custom -->
             <slot
               :name="`cell-${String(col.key)}`"
               :row="row"
@@ -142,23 +139,31 @@ function getCellValue(row: T, key: string): unknown {
           </td>
         </tr>
       </tbody>
+      <tfoot v-if="hasFoot">
+        <tr>
+          <td
+            v-for="col in columns"
+            :key="String(col.key)"
+            :data-type="col.numeric ? 'numeric' : undefined"
+            :class="[`text-${col.align ?? 'left'}`]"
+          >
+            <slot :name="`foot-${String(col.key)}`"></slot>
+          </td>
+        </tr>
+      </tfoot>
     </table>
   </div>
 </template>
 
 <style scoped>
-.c-table-wrap {
-  overflow-x: auto;
-  background: var(--color-surface-container-lowest);
-}
 
-.c-table {
+table {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
 }
 
-.c-table__th {
+th {
   font-size: var(--text-2xs);
   font-weight: var(--fw-semibold);
   letter-spacing: 0.06em;
@@ -169,14 +174,46 @@ function getCellValue(row: T, key: string): unknown {
   white-space: nowrap;
   user-select: none;
 }
-
-.c-table__th--sortable { cursor: pointer; }
-.c-table__th--sortable:hover { color: var(--tone-fg, var(--color-on-surface)); }
-
-.c-table__th-inner {
+th[sortable] { cursor: pointer; }
+th[sortable]:hover { color: var(--tone-fg, var(--color-on-surface)); }
+th span {
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
+}
+
+tr:last-child td { border-bottom: none; }
+
+tfoot td {
+  border-top: 1px solid var(--color-outline-variant);
+  border-bottom: none;
+  font-weight: var(--fw-semibold) !important;
+  color: var(--tone-fg, var(--color-on-surface)) !important;
+  padding: var(--space-3) var(--space-4);
+  white-space: nowrap;
+}
+tr { 
+  transition: background var(--transition-fast); 
+}
+tr:hover td { 
+  background: var(--color-surface-container-low); 
+}
+tr[striped]:nth-child(even) td {
+  background: var(--tone-bg, var(--color-surface-container));
+}
+
+td {
+  font-size: var(--text-sm);
+  color: var(--tone-fg, var(--color-on-surface));
+  background: var(--tone-bg, transparent);
+  padding: var(--space-1) var(--space-4);
+  border-bottom: 1px solid var(--color-outline-light);
+}
+td[data-type="numeric"] {
+  text-align: right;
+  font-family: var(--font-mono);
+  font-weight: var(--fw-medium);
+  font-variant-numeric: tabular-nums;
 }
 
 .c-table__sort-icon {
@@ -189,32 +226,6 @@ function getCellValue(row: T, key: string): unknown {
   opacity: 1; 
   color: var(--tone-fg, var(--color-primary)); 
 }
-
-.c-table__td {
-  font-size: var(--text-sm);
-  color: var(--tone-fg, var(--color-on-surface));
-  background: var(--tone-bg, transparent);
-  padding: var(--space-1) var(--space-4);
-  border-bottom: 1px solid var(--color-outline-light);
-}
-
-.c-table__row:last-child .c-table__td { border-bottom: none; }
-
-.c-table__row { 
-  transition: background var(--transition-fast); 
-}
-.c-table__row:hover .c-table__td { 
-  background: var(--color-surface-container-low); 
-}
-
-.c-table__row--striped:nth-child(even) .c-table__td {
-  background: var(--tone-bg, var(--color-surface-container));
-}
-
-/* Alignements */
-.c-table__cell--left   { text-align: left; }
-.c-table__cell--right  { text-align: right; }
-.c-table__cell--center { text-align: center; }
 
 .c-table__empty {
   text-align: center;
@@ -237,11 +248,4 @@ function getCellValue(row: T, key: string): unknown {
   animation: spin 1s linear infinite;
 }
 
-/* Numeric cells */
-.c-table .c-table__cell--numeric {
-  text-align: right;
-  font-family: var(--font-mono);
-  font-weight: var(--fw-medium);
-  font-variant-numeric: tabular-nums;
-}
 </style>

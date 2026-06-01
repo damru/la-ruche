@@ -9,6 +9,8 @@ import AuthBrandPanel from '@/components/organisms/AuthBrandPanel.vue'
 import CAlert from '@/components/atoms/CAlert.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CFormAddressAutocomplete from '@/components/molecules/CFormAddressAutocomplete.vue'
+import CIconArrowLeft from '@/components/atoms/CIconArrowLeft.svg'
+import CIconArrowRight from '@/components/atoms/CIconArrowRight.svg'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -193,7 +195,7 @@ async function handleSubmit() {
           >
             <CIconCheckCircle />
           </div>
-          <h2 class="already-init-title">
+          <h2 class="font-serif text-lg font-bold text-on-surface">
             {{ t('onboarding.alreadyInitTitle') }}
           </h2>
           <p class="already-init-text">
@@ -228,11 +230,11 @@ async function handleSubmit() {
 
           <form
             v-if="step === 1"
-            class="form-grid"
+            class="flex flex-col gap-4"
             novalidate
             @submit.prevent="goNext"
           >
-            <div class="field-row">
+            <div class="flex flex-col gap-1-row">
               <CFormInput
                 id="last_name"
                 v-model="form.last_name"
@@ -270,7 +272,7 @@ async function handleSubmit() {
               @blur="touch('email')"
             />
 
-            <div class="field">
+            <div class="flex flex-col gap-1">
               <CFormInput
                 id="password"
                 v-model="form.password"
@@ -314,7 +316,7 @@ async function handleSubmit() {
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
-                    stroke-width="2.5"
+                    stroke-width="1.5"
                     stroke-linecap="round"
                     aria-hidden="true"
                   />
@@ -323,7 +325,7 @@ async function handleSubmit() {
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
-                    stroke-width="2.5"
+                    stroke-width="1.5"
                     stroke-linecap="round"
                     aria-hidden="true"
                   />
@@ -336,17 +338,16 @@ async function handleSubmit() {
               type="submit"
               variant="primary"
               size="md"
+              :icon="CIconArrowRight"
+              :title="t('onboarding.next')"
               :disabled="loading"
               style="width:100%"
-            >
-              {{ t('onboarding.next') }}
-              <CIconArrowRight aria-hidden="true" />
-            </CBtn>
+            />
           </form>
 
           <form
             v-else
-            class="form-grid"
+            class="flex flex-col gap-4"
             novalidate
             @submit.prevent="handleSubmit"
           >
@@ -381,29 +382,24 @@ async function handleSubmit() {
               :disabled="loading"
             />
 
-            <div class="form-actions">
+            <div class="flex items-center gap-3">
               <CBtn
                 type="button"
                 variant="ghost"
+                :icon="CIconArrowLeft"
+                :title="t('onboarding.back')"
                 :disabled="loading"
                 @click="goBack"
-              >
-                <CIconArrowLeft aria-hidden="true" />
-                {{ t('onboarding.back') }}
-              </CBtn>
+              />
               <CBtn
                 type="submit"
                 variant="primary"
+                :icon="!loading ? CIconArrowRight : undefined"
+                :title="loading ? t('onboarding.submitting') : t('onboarding.submit')"
                 :disabled="loading"
                 :loading="loading"
                 class="btn-submit"
-              >
-                <CIconArrowRight
-                  v-if="!loading"
-                  aria-hidden="true"
-                />
-                {{ loading ? t('onboarding.submitting') : t('onboarding.submit') }}
-              </CBtn>
+              />
             </div>
           </form>
         </template>
@@ -527,7 +523,7 @@ async function handleSubmit() {
   color: var(--color-on-surface-variant);
   opacity: 0.55;
   cursor: pointer;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-lg);
   transition: opacity var(--transition-fast), color var(--transition-fast);
   flex-shrink: 0;
 }
@@ -562,7 +558,7 @@ async function handleSubmit() {
   padding: 0 var(--space-5);
   background: var(--gradient-primary);
   color: var(--color-on-primary);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-lg);
   font-family: var(--font-body);
   font-size: var(--text-sm);
   font-weight: 600;
@@ -592,12 +588,6 @@ async function handleSubmit() {
   color: var(--color-primary);
 }
 .already-init-icon svg { width: 32px; height: 32px; }
-.already-init-title {
-  font-family: var(--font-display);
-  font-size: var(--text-lg);
-  font-weight: 700;
-  color: var(--color-on-surface);
-}
 .already-init-text {
   font-size: var(--text-md);
   color: var(--color-on-surface-variant);

@@ -9,6 +9,68 @@ Domain-specific rules in `.agents/rules/` are automatically injected into contex
 
 ---
 
+## 1. Think Before Coding
+
+**Don't assume. Don't hide confusion. Surface tradeoffs.**
+
+Before implementing:
+- State your assumptions explicitly. If uncertain, ask.
+- If multiple interpretations exist, present them - don't pick silently.
+- If a simpler approach exists, say so. Push back when warranted.
+- If something is unclear, stop. Name what's confusing. Ask.
+
+## 2. Simplicity First
+
+**Minimum code that solves the problem. Nothing speculative.**
+
+- No features beyond what was asked.
+- No abstractions for single-use code.
+- No "flexibility" or "configurability" that wasn't requested.
+- No error handling for impossible scenarios.
+- If you write 200 lines and it could be 50, rewrite it.
+
+Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
+
+## 3. Surgical Changes
+
+**Touch only what you must. Clean up only your own mess.**
+
+When editing existing code:
+- Don't "improve" adjacent code, comments, or formatting.
+- Don't refactor things that aren't broken.
+- Match existing style, even if you'd do it differently.
+- If you notice unrelated dead code, mention it - don't delete it.
+
+When your changes create orphans:
+- Remove imports/variables/functions that YOUR changes made unused.
+- Don't remove pre-existing dead code unless asked.
+
+The test: Every changed line should trace directly to the user's request.
+
+## 4. Goal-Driven Execution
+
+**Define success criteria. Loop until verified.**
+
+Transform tasks into verifiable goals:
+- "Add validation" → "Write tests for invalid inputs, then make them pass"
+- "Fix the bug" → "Write a test that reproduces it, then make it pass"
+- "Refactor X" → "Ensure tests pass before and after"
+
+For multi-step tasks, state a brief plan:
+```
+1. [Step] → verify: [check]
+2. [Step] → verify: [check]
+3. [Step] → verify: [check]
+```
+
+Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
+
+---
+
+**These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
+
+---
+
 ## Commits
 
 **All commits must follow [Conventional Commits](https://www.conventionalcommits.org/).**
@@ -75,10 +137,8 @@ cargo sqlx prepare                 # regenerate .sqlx/ (offline mode)
 
 ## Frontend (Vue 3 + TypeScript + Tailwind v4)
 
-- Composition API only. No Options API.
 - No raw values (`px`, `hex`, `rem`) in `class`/`style` — use Tailwind utilities or CSS tokens.
 - No `<style>` block in feature views — Tailwind utilities or catalogue components only.
-- `CFormFeedback` in `#footer` slot of `CModal` only, never in body.
 - No direct `radix-vue` import in feature views — use `C*` wrappers.
 - New component → add to catalogue in `docs/DESIGN.md §2` before use.
 
@@ -107,37 +167,8 @@ Follow these steps **in order** for any new feature or significant change:
 
 ---
 
-## Accounting immutability (ADR-009)
-
-Full rules → `.agents/rules/accounting-immutability.instructions.md`
-
-Short version: financial amounts, legal dates, lifecycle statuses → freeze on terminal state (Pattern A), close+recreate for amendments (Pattern B), or append-only (Pattern C). Never generic `PUT`/`PATCH` on frozen fields.
-
----
-
-## Domain rules index
-
-| Domain | Rule file |
-|---|---|
-| Architecture / backend docs | `.agents/rules/doc-architecture.instructions.md` |
-| Design system / frontend docs | `.agents/rules/doc-design.instructions.md` |
-| Legal / compliance | `.agents/rules/doc-legal.instructions.md` |
-| Product / PRD | `.agents/rules/doc-prd.instructions.md` |
-| Backlog / Epics | `.agents/rules/doc-epics.instructions.md` |
-| Accounting immutability | `.agents/rules/accounting-immutability.instructions.md` |
-| Rust conventions | `.agents/rules/rust.instructions.md` |
-| Vue.js conventions | `.agents/rules/vue.instructions.md` |
-| Tailwind CSS v4 | `.agents/rules/tailwind-v4-vite.instructions.md` |
-| Knowledge graph (MCP) | `.agents/rules/code-review-graph.instructions.md` |
-
----
-
 ## Security
 
-- JWT: `httpOnly` + `Secure` + `SameSite=Strict`. Refresh token hashed SHA-256, never in plain text.
-- All queries filter on `building_id` — no cross-tenant leaks.
-- 403 (not 404) on protected routes.
-- Files: private S3 bucket, pre-signed URLs only.
 - Never commit secrets or `.env` files.
 
 ---

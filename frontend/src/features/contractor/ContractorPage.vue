@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n'
 import { useFormatters } from '@/composables/useFormatters'
 import { vendorApi } from '@/api'
 import type { VendorTask } from '@/types/domain'
+import CIconX from '@/components/atoms/CIconX.svg'
 
 const route = useRoute()
 const { t } = useI18n()
@@ -154,9 +155,9 @@ async function submit() {
       >
         <div class="contractor-card">
           <div class="task-info">
-            <h2 class="title-md">
+            <CHeading>
               {{ task.title }}
-            </h2>
+            </CHeading>
             <p
               v-if="task.description"
               class="body-xs"
@@ -209,19 +210,16 @@ async function submit() {
               class="file-item"
             >
               <CIconFile
-                width="14"
-                height="14"
+                
+                class="icon-xs"
               />
               <span class="body-xs file-name">{{ file.name }}</span>
-              <button
-                class="icon-btn icon-btn--danger"
+              <CBtn
+                variant="icon"
+                class="tone--err"
+                :icon="CIconX"
                 @click="removeFile(idx)"
-              >
-                <CIconX
-                  width="14"
-                  height="14"
-                />
-              </button>
+              />
             </li>
           </ul>
 
@@ -264,7 +262,7 @@ async function submit() {
 
         <!-- Contact card -->
         <div class="contact-card">
-          <h3 class="body-md contact-title">
+          <h3 class="body-md font-semibold text-on-surface">
             {{ t('contractor.contactTitle') }}
           </h3>
           <div class="contact-row">
@@ -357,7 +355,7 @@ async function submit() {
 .contractor-card {
   background: var(--color-surface);
   border: 1px solid var(--color-outline-variant);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-2xl);
   padding: var(--space-6);
   display: flex;
   flex-direction: column;
@@ -379,7 +377,7 @@ async function submit() {
   display: flex; align-items: center; gap: 8px;
   padding: 6px 10px;
   background: var(--color-surface-container);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-lg);
 }
 .file-name { flex: 1; overflow: clip; text-overflow: ellipsis; white-space: nowrap; }
 
@@ -393,7 +391,7 @@ async function submit() {
   padding: var(--space-3) var(--space-5);
   background: var(--color-primary);
   color: var(--color-on-primary);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   font-weight: var(--fw-semibold);
   font-size: var(--text-sm);
   cursor: pointer;
@@ -405,13 +403,12 @@ async function submit() {
 .contact-card {
   background: var(--color-surface);
   border: 1px solid var(--color-outline-variant);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-2xl);
   padding: var(--space-4) var(--space-6);
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
 }
-.contact-title { font-weight: var(--fw-semibold); color: var(--color-on-surface); }
 .contact-row { display: flex; gap: var(--space-3); align-items: baseline; }
 .contact-label { color: var(--color-on-surface-variant); min-width: 60px; flex-shrink: 0; }
 .contact-value { color: var(--color-on-surface); }

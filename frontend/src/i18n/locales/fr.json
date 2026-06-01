@@ -1,6 +1,7 @@
 {
   "common": {
     "loading": "Chargement…",
+    "select": "Sélectionner…",
     "error": "Une erreur est survenue",
     "save": "Enregistrer",
     "cancel": "Annuler",
@@ -8,6 +9,7 @@
     "edit": "Modifier",
     "create": "Créer",
     "close": "Fermer",
+    "closing": "Fermeture…",
     "confirm": "Confirmer",
     "copy": "Copier",
     "back": "Retour",
@@ -306,19 +308,19 @@
     "startingAction": "AG en séance",
     "start_modal": {
       "title": "Démarrer la séance",
-      "lead": "Désignez le président, le secrétaire et les éventuels scrutateurs avant de commencer les votes.",
-      "president_label": "Président de séance",
+      "lead": "Désignez un·e président·e, un·e secrétaire et les éventuels scrutateur·ices avant de commencer les votes.",
+      "president_label": "Président·e de séance",
       "secretary_label": "Secrétaire de séance",
-      "scrutineers_label": "Scrutateurs (optionnels)",
-      "scrutineer_placeholder": "Nom du scrutateur",
-      "add_scrutineer": "Ajouter un scrutateur",
-      "required": "Le président et le secrétaire sont obligatoires."
+      "scrutineers_label": "Scrutateur·ices (optionnels)",
+      "scrutineer_placeholder": "Nom du scrutateur·ice",
+      "add_scrutineer": "Ajouter un·e scrutateur·ice",
+      "required": "Un·e président·e et un·e secrétaire sont obligatoires."
     },
     "session_roles": {
       "title": "Rôles de séance",
-      "president": "Président",
+      "president": "Président·e",
       "secretary": "Secrétaire",
-      "scrutineers": "Scrutateurs"
+      "scrutineers": "Scrutateur·ices"
     },
     "convocation": {
       "modal_title": "Convoquer l'AG",
@@ -327,7 +329,7 @@
       "checklist_incomplete": "Au moins un point bloquant n'est pas satisfait. Complétez avant l'envoi.",
       "advisory": "non bloquant",
       "items": {
-        "j_minus_21_respected": "Délai J−21 respecté",
+        "j_minus_21_respected": "Délai J-21 respecté",
         "notice_document_attached": "Document de convocation joint",
         "agenda_present": "Ordre du jour renseigné",
         "resolutions_present": "Au moins une résolution inscrite",
@@ -348,9 +350,9 @@
       "modal_title": "Signatures du bureau de séance",
       "modal_lead": "Tracez les signatures effectives du président, du secrétaire et des scrutateurs.",
       "action_label": "Saisir les signatures",
-      "president": "Président",
+      "president": "Président·e",
       "secretary": "Secrétaire",
-      "scrutineers": "Scrutateurs",
+      "scrutineers": "Scrutateur·ices",
       "signed_on": "signé le {date}",
       "not_signed": "non signé"
     },
@@ -387,7 +389,11 @@
     "calledAt": "Convoquée le {date}",
     "meetingDate": "Date de l'AG",
     "location": "Lieu",
-    "agenda": "Ordre du jour",
+    "agenda": {
+      "title": "Ordre du jour",
+      "empty": "Aucun point à l'ordre du jour",
+      "emptyHint": "Ajoutez des résolutions pour structurer les débats de l'AG."
+    },
     "resolutions": "Résolutions",
     "empty": "Aucune assemblée générale à afficher.",
     "resolutionsEmpty": "Aucune résolution à l'ordre du jour pour cette assemblée.",
@@ -412,7 +418,10 @@
       "uploadFile": "Fichier",
       "uploadAction": "Ajouter une pièce",
       "minutesPending": "PV non déposé",
-      "minutesReady": "PV déposé"
+      "minutesReady": "PV déposé",
+      "detachTitle": "Retirer la pièce de l'AG",
+      "detachMessage": "Ce document sera définitivement retiré de cette assemblée.",
+      "detachConfirm": "Retirer"
     },
     "info": "Informations",
     "infoFields": {
@@ -452,7 +461,7 @@
     "resolutionDescriptionPlaceholder": "Détails de la résolution...",
     "voteRule": "Règle de vote",
     "closeMeetingTitle": "Clore l'assemblée",
-    "closeMeetingSub": "La clôture est définitive. Assurez-vous que toutes les résolutions ont été votées et que le PV a été déposé.",
+    "closeMeetingSub": "La clôture est définitive. Assurez-vous que toutes les résolutions ont été votées. Vous pourrez toujours déposer le PV et ajouter des documents après la clôture.",
     "closeMeetingConfirm": "Confirmer la clôture",
     "pvTitle": "Déposer le procès-verbal",
     "pvSub": "Le PV sera joint à cette assemblée et visible par tous les copropriétaires.",
@@ -476,6 +485,7 @@
       "results": "Résultats du vote",
       "tally": "Dépouillement",
       "pendingVote": "Vote non encore enregistré",
+      "inProgress": "Vote en cours de saisie",
       "passed": "Résolution adoptée",
       "rejected": "Résolution rejetée",
       "art25_1_title": "Art. 25-1 — Second vote possible",
@@ -799,8 +809,9 @@
     "create": "Nouvelle tâche",
     "newTask": "Nouvelle tâche",
     "editTask": "Modifier la tâche",
-    "activeSummary": "{count} tâche(s) active(s)",
-    "activeCount": "{count} tâche active | {count} tâches actives",
+    "header": {
+      "activeSummary": "{count} tâche active | {count} tâches actives"
+    },
     "createdRelative": "Créée {relative}",
     "updatedAt": "Mis à jour {date}",
     "closedOn": "Terminée le {date}",
@@ -1017,11 +1028,11 @@
     "editStatus": "Changer le statut",
     "activeCount": "{count} signalement en cours | {count} signalements en cours",
     "unitLabel": "Lot {number}",
+    "unitLabel2": "Lot concerné",
     "noUnit": "Parties communes",
     "by": "Par",
     "titleLabel": "Titre",
     "descriptionLabel": "Description",
-    "unitLabel2": "Lot concerné",
     "unitPlaceholder": "Sélectionner un lot (optionnel)",
     "statusLabel": "Nouveau statut",
     "confirmStatusTitle": "Mettre à jour le statut",
@@ -1078,8 +1089,10 @@
     "confirmDeleteMessage": "L'entrée « {title} » sera supprimée définitivement.",
     "deleteSuccess": "Entrée supprimée",
     "interventionTotal": "{count} intervention — coût total : {amount} | {count} interventions — coût total : {amount}",
-    "summary": "{count} intervention(s) — coût total : {cost}",
-    "periodSummary": "{label} · {count} intervention(s) — coût total : {cost}",
+    "header": {
+      "entriesCount": "{count} intervention | {count} interventions",
+      "totalCost": "Coût total : {amount}"
+    },
     "searchPlaceholder": "Rechercher une intervention…",
     "sourceAuto": "Automatique",
     "sourceManual": "Manuel",
@@ -1265,7 +1278,10 @@
     "staircaseLabel": "Cage d'escalier",
     "floorLabel": "Étage",
     "description": "Description",
-    "summary": "{units} lots · {users} utilisateurs",
+    "header": {
+      "unitsCount": "{count} lot | {count} lots",
+      "usersCount": "{count} utilisateur | {count} utilisateurs"
+    },
     "tabs": {
       "units": "Lots ({count})",
       "users": "Utilisateurs ({count})"
@@ -1344,7 +1360,13 @@
       "resetAppConfirmMessage": "Toutes les données seront effacées et remplacées par les données de démonstration. Cette action est irréversible.",
       "resetAppConfirm": "Réinitialiser",
       "resetAppSuccess": "Application réinitialisée avec les données de démonstration.",
-      "resetAppError": "Impossible de réinitialiser l'application."
+      "resetAppError": "Impossible de réinitialiser l'application.",
+      "resetData": "Supprimer toutes les données",
+      "resetDataConfirmTitle": "Supprimer toutes les données ?",
+      "resetDataConfirmMessage": "Toutes les données (bâtiments, lots, charges, assemblées…) seront effacées définitivement. Les comptes utilisateurs sont conservés. Cette action est irréversible.",
+      "resetDataConfirm": "Supprimer",
+      "resetDataSuccess": "Toutes les données ont été supprimées.",
+      "resetDataError": "Impossible de supprimer les données."
     },
     "preferences": {
       "title": "Préférences",
@@ -1544,7 +1566,7 @@
     "title": "Prestataires",
     "newContractor": "Nouveau prestataire",
     "editContractor": "Modifier le prestataire",
-    "summary": "{count} prestataire(s) enregistré(s)",
+    "summary": "{count} prestataire enregistré | {count} prestataires enregistrés",
     "searchPlaceholder": "Rechercher par nom, domaine, email…",
     "noContractors": "Aucun prestataire enregistré",
     "noResults": "Aucun résultat",
@@ -1575,6 +1597,12 @@
       "cleaning": "Nettoyage",
       "green_spaces": "Espaces verts",
       "other": "Autre"
+    }
+  },
+  "allocationKeys": {
+    "title": "Clés de répartition",
+    "header": {
+      "totalCount": "{count} clé de répartition | {count} clés de répartition"
     }
   }
 }

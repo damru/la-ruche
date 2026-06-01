@@ -1,7 +1,7 @@
 <!--
-  ╔═══════════════════════════════════════════════════════════════════╗
-  ║                    La Ruche — Pull Request                       ║
-  ╚═══════════════════════════════════════════════════════════════════╝
+  ╔═══════════════════════════════╗
+  ║                    La Ruche — Pull Request                    ║
+  ╚═══════════════════════════════╝
 
   PR title must follow Conventional Commits:
   feat(scope): description  |  fix(scope): description  |  docs: …
@@ -33,8 +33,6 @@
   - `EP-XXX-SYY` ⏳ → ✅ — _story title_
   - `EP-XXX-SZZ` ⏳ → ✅ — _story title_
 
----
-
 ## 🛠️ Implementation
 
 <!--
@@ -45,8 +43,6 @@
 
 - 
 - 
-
----
 
 ## ✔️ Ship criteria
 

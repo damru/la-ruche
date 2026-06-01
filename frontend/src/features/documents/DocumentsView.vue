@@ -9,11 +9,16 @@ import CModal from '@/components/molecules/CModal.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
+import CHeading from '@/components/atoms/CHeading.vue'
 import CFormDropzone from '@/components/molecules/CFormDropzone.vue'
+import CIconPlus from '@/components/atoms/CIconPlus.svg'
+import CIconTrash from '@/components/atoms/CIconTrash.svg'
+import CIconDownload from '@/components/atoms/CIconDownload.svg'
 import { documentsApi, buildingApi } from '@/api'
 import { toErrorMessage, usePageLoader } from '@/composables/usePageLoader'
 import { useFormFeedback } from '@/composables/useFormFeedback'
 import { useAutoClose } from '@/composables/useAutoClose'
+import CFormActions from '@/components/molecules/CFormActions.vue'
 import type { Document } from '@/types/domain'
 import { buildDocumentDeleteMessage } from '@/utils/documents'
 import { extractFileExtension } from '@/utils/files'
@@ -67,6 +72,16 @@ function mimeLabel(mime: string): string {
   if (mime.includes('word')) return 'Word'
   return t('documents.fileTypeFallback')
 }
+
+const docColumns = computed(() => [
+  { key: 'original_name', label: t('documents.columns.fileName') },
+  { key: 'mime_type', label: t('documents.columns.type') },
+  { key: 'visible_roles', label: t('documents.columns.visibility') },
+  { key: 'references', label: t('documents.columns.references') },
+  { key: 'size_bytes', label: t('documents.columns.size') },
+  { key: 'created_at', label: t('documents.columns.addedDate') },
+  { key: 'actions', label: '' },
+])
 
 function openUploadModal() {
   selectedFile.value = null
@@ -174,11 +189,10 @@ async function confirmDeleteDoc() {
         <CBtn
           variant="primary"
           size="sm"
+          :icon="CIconPlus"
+          :title="t('documents.import')"
           @click="openUploadModal"
-        >
-          <CIconPlus style="width:16px;height:16px" />
-          <span class="btn-label">{{ t('documents.import') }}</span>
-        </CBtn>
+        />
       </template>
     </CTopbar>
 
@@ -194,9 +208,9 @@ async function confirmDeleteDoc() {
           <CEyebrow>
             {{ t('page.eyebrows.documents') }}
           </CEyebrow>
-          <h1 class="display-md">
+          <CHeading type="header">
             {{ t('documents.title') }}
-          </h1>
+          </CHeading>
           <p
             class="body-md"
             style="color:var(--color-on-surface-variant)"
@@ -215,108 +229,82 @@ async function confirmDeleteDoc() {
           </template>
         </CFormInput>
 
-        <CCard padding="none">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>{{ t('documents.columns.fileName') }}</th>
-                <th>{{ t('documents.columns.type') }}</th>
-                <th>{{ t('documents.columns.visibility') }}</th>
-                <th>{{ t('documents.columns.references') }}</th>
-                <th>{{ t('documents.columns.size') }}</th>
-                <th>{{ t('documents.columns.addedDate') }}</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                v-for="doc in documents"
-                :key="doc.id"
-              >
-                <td>
-                  <div class="doc-name-cell">
-                    <CIconFile
-                      class="doc-icon"
-                      aria-hidden="true"
-                    />
-                    <span class="doc-name">{{ doc.original_name }}</span>
-                  </div>
-                </td>
-                <td>
-                  <CBadge variant="default">
-                    {{ mimeLabel(doc.mime_type) }}
-                  </CBadge>
-                </td>
-                <td>
-                  <div class="roles-list">
-                    <CBadge
-                      v-for="role in doc.visible_roles"
-                      :key="role"
-                      :variant="role"
-                    >
-                      {{ t(`roles.${role}`) }}
-                    </CBadge>
-                  </div>
-                </td>
-                <td>
-                  <div
-                    v-if="documentReferences(doc).length"
-                    class="doc-references"
-                  >
-                    <span
-                      v-for="reference in documentReferences(doc)"
-                      :key="reference"
-                      class="doc-reference"
-                    >
-                      {{ reference }}
-                    </span>
-                  </div>
-                  <span
-                    v-else
-                    class="dim"
-                  >—</span>
-                </td>
-                <td class="dim">
-                  {{ formatFileSize(doc.size_bytes) }}
-                </td>
-                <td class="dim">
-                  {{ formatDate(doc.created_at) }}
-                </td>
-                <td>
-                  <div class="action-btns">
-                    <button
-                      class="icon-btn"
-                      :title="t('documents.downloadNewTab')"
-                      :aria-label="t('documents.downloadNewTab')"
-                      @click="downloadDoc(doc.id)"
-                    >
-                      <CIconDownload
-                        width="16"
-                        height="16"
-                      />
-                    </button>
-                    <button
-                      class="icon-btn icon-btn--danger"
-                      :title="t('common.delete')"
-                      :aria-label="t('common.delete')"
-                      @click="openDeleteDocModal(doc)"
-                    >
-                      <CIconTrash
-                        width="16"
-                        height="16"
-                      />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-          <div
-            v-if="!documents.length"
-            class="empty-state"
+        <CCard class="p-0!">
+          <CDataTable
+            :columns="docColumns"
+            :rows="documents"
+            row-key="id"
+            :empty-text="t('documents.empty')"
           >
-            {{ t('documents.empty') }}
-          </div>
+            <template #cell-original_name="{ row }">
+              <div class="doc-name-cell">
+                <CIconFile
+                  class="doc-icon"
+                  aria-hidden="true"
+                />
+                <span class="doc-name">{{ row.original_name }}</span>
+              </div>
+            </template>
+            <template #cell-mime_type="{ row }">
+              <CBadge variant="default">
+                {{ mimeLabel(row.mime_type) }}
+              </CBadge>
+            </template>
+            <template #cell-visible_roles="{ row }">
+              <div class="roles-list">
+                <CBadge
+                  v-for="role in row.visible_roles"
+                  :key="role"
+                  :variant="role"
+                >
+                  {{ t(`roles.${role}`) }}
+                </CBadge>
+              </div>
+            </template>
+            <template #cell-references="{ row }">
+              <div
+                v-if="documentReferences(row).length"
+                class="doc-references"
+              >
+                <span
+                  v-for="reference in documentReferences(row)"
+                  :key="reference"
+                  class="doc-reference"
+                >
+                  {{ reference }}
+                </span>
+              </div>
+              <span
+                v-else
+                class="dim"
+              >—</span>
+            </template>
+            <template #cell-size_bytes="{ row }">
+              <span class="dim">{{ formatFileSize(row.size_bytes) }}</span>
+            </template>
+            <template #cell-created_at="{ row }">
+              <span class="dim">{{ formatDate(row.created_at) }}</span>
+            </template>
+            <template #cell-actions="{ row }">
+              <div class="action-btns">
+                <CBtn
+                  variant="icon"
+                  :icon="CIconDownload"
+                  :title="t('documents.downloadNewTab')"
+                  :aria-label="t('documents.downloadNewTab')"
+                  @click="downloadDoc(row.id)"
+                />
+                <CBtn
+                  variant="icon"
+                  :icon="CIconTrash"
+                  class="tone--err"
+                  :title="t('common.delete')"
+                  :aria-label="t('common.delete')"
+                  @click="openDeleteDocModal(row)"
+                />
+              </div>
+            </template>
+          </CDataTable>
         </CCard>
       </template>
 
@@ -355,7 +343,7 @@ async function confirmDeleteDoc() {
           </p>
 
           <div class="visibility-section">
-            <label class="field-label">{{ t('documents.visiblePar') }}</label>
+            <label class="text-sm font-medium text-on-surface-variant">{{ t('documents.visiblePar') }}</label>
             <div class="role-checkboxes">
               <CFormCheckbox
                 v-for="role in ['manager', 'board_member', 'co_owner', 'tenant']"
@@ -371,19 +359,17 @@ async function confirmDeleteDoc() {
         <template #footer>
           <CBtn
             variant="ghost"
+            :title="t('common.cancel')"
             @click="showUpload = false"
-          >
-            {{ t('common.cancel') }}
-          </CBtn>
+          />
           <CBtn
             variant="primary"
+            :title="t('common.upload')"
             :loading="uploading"
             :closing="uploadSuccess"
             :disabled="!selectedFile || uploading"
             @click="uploadFile"
-          >
-            {{ uploading ? t('common.saving') : t('common.upload') }}
-          </CBtn>
+          />
         </template>
       </CModal>
 
@@ -398,24 +384,23 @@ async function confirmDeleteDoc() {
           {{ buildDocumentDeleteMessage(docToDelete ?? undefined, t) }}
         </p>
         <template #footer>
-          <CFormFeedback
+          <CFormActions
             :status="deleteDocFeedback.status.value"
             :message="deleteDocFeedback.message.value"
-          />
-          <CBtn
-            variant="ghost"
-            @click="showDeleteDocModal = false"
           >
-            {{ t('common.cancel') }}
-          </CBtn>
-          <CBtn
-            variant="danger"
-            :loading="deletingDoc"
-            :closing="deleteDocFeedback.status.value === 'success'"
-            @click="confirmDeleteDoc"
-          >
-            {{ t('common.deleteLabel') }}
-          </CBtn>
+            <CBtn
+              variant="ghost"
+              :title="t('common.cancel')"
+              @click="showDeleteDocModal = false"
+            />
+            <CBtn
+              variant="danger"
+              :title="t('common.deleteLabel')"
+              :loading="deletingDoc"
+              :closing="deleteDocFeedback.status.value === 'success'"
+              @click="confirmDeleteDoc"
+            />
+          </CFormActions>
         </template>
       </CModal>
     </div>
@@ -443,10 +428,6 @@ async function confirmDeleteDoc() {
 }
 
 .action-btns { display: flex; gap: var(--space-1); }
-.action-btns .icon-btn {
-  min-width: 36px;
-  min-height: 36px;
-}
 
 /* Upload modal */
 .upload-form { display: flex; flex-direction: column; gap: var(--space-4); }
@@ -454,11 +435,4 @@ async function confirmDeleteDoc() {
 .visibility-section { display: flex; flex-direction: column; gap: var(--space-2); }
 .role-checkboxes { display: flex; flex-wrap: wrap; gap: var(--space-3); }
 
-@media (max-width: 640px) {
-  .action-btns .icon-btn {
-    min-width: 44px;
-    min-height: 44px;
-    padding: 0;
-  }
-}
 </style>

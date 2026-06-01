@@ -63,7 +63,7 @@ async function handleSubmit() {
           </div>
 
           <form
-            class="form-grid"
+            class="flex flex-col gap-4"
             novalidate
             @submit.prevent="handleSubmit"
           >
@@ -108,7 +108,7 @@ async function handleSubmit() {
               />
               <p
                 v-if="mismatch"
-                class="field-error"
+                class="text-xs text-error"
               >
                 {{ t('auth.passwordMismatch') }}
               </p>
@@ -118,12 +118,11 @@ async function handleSubmit() {
               type="submit"
               variant="primary"
               size="md"
+              :title="loading ? t('auth.joining') : t('auth.joinButton')"
               :disabled="!isValid || loading"
               :loading="loading"
               style="width: 100%"
-            >
-              {{ loading ? t('auth.joining') : t('auth.joinButton') }}
-            </CBtn>
+            />
           </form>
         </template>
 
@@ -144,11 +143,10 @@ async function handleSubmit() {
             </p>
             <CBtn
               variant="primary"
+              :title="t('auth.loginButton')"
               style="width: 100%"
               @click="router.push({ name: 'login' })"
-            >
-              {{ t('auth.loginButton') }}
-            </CBtn>
+            />
           </div>
         </template>
       </div>

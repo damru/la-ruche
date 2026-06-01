@@ -11,7 +11,8 @@ import type { Meeting, MeetingType } from '@/types/domain'
 import { buildingApi, meetingsApi } from '@/api'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
-import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
+import CFormActions from '@/components/molecules/CFormActions.vue'
+import CForm from '@/components/molecules/CForm.vue'
 import CSeparator from '@/components/atoms/CSeparator.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CMetaLine from '@/components/molecules/CMetaLine.vue'
@@ -19,6 +20,10 @@ import CModal from '@/components/molecules/CModal.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
+import CTabs, { type Tab } from '@/components/atoms/CTabs.vue'
+import CHeading from '@/components/atoms/CHeading.vue'
+import CIconPlus from '@/components/atoms/CIconPlus.svg'
+import CIconTrash from '@/components/atoms/CIconTrash.svg'
 
 const router = useRouter()
 const { t } = useI18n()
@@ -42,8 +47,21 @@ function defaultMeetingForm() {
     meeting_type: 'annual' as MeetingType,
     meeting_date: '',
     location: '',
-    agenda: '',
   }
+}
+
+const createAgendaItems = ref<string[]>([''])
+
+function addCreateAgendaItem() {
+  createAgendaItems.value.push('')
+}
+
+function removeCreateAgendaItem(index: number) {
+  if (createAgendaItems.value.length <= 1) {
+    createAgendaItems.value = ['']
+    return
+  }
+  createAgendaItems.value.splice(index, 1)
 }
 
 const createForm = ref(defaultMeetingForm())
@@ -69,6 +87,12 @@ const meetings = computed(() => {
 const upcomingCount = computed(() => allMeetings.value.filter(meeting => meeting.status !== 'closed').length)
 const closedCount = computed(() => allMeetings.value.filter(meeting => meeting.status === 'closed').length)
 
+const meetingTabs = computed<Tab[]>(() => [
+  { value: 'all', label: t('common.allFem'), count: allMeetings.value.length },
+  { value: 'upcoming', label: t('meetings.filterUpcoming'), count: upcomingCount.value },
+  { value: 'closed', label: t('meetings.filterClosed'), count: closedCount.value },
+])
+
 function typeLabel(type: MeetingType): string {
   return t(`meetings.typeLabel.${type}`)
 }
@@ -93,6 +117,7 @@ function openMeeting(meetingId: string) {
 
 function openCreateModal() {
   createForm.value = defaultMeetingForm()
+  createAgendaItems.value = ['']
   createFeedback.reset()
   showCreateModal.value = true
 }
@@ -111,12 +136,16 @@ async function saveMeeting() {
   saving.value = true
   createFeedback.reset()
 
+  const normalizedAgenda = createAgendaItems.value
+    .map(item => item.trim())
+    .filter(Boolean)
+
   try {
     const response = await meetingsApi.create({
       meeting_type: createForm.value.meeting_type,
       meeting_date: new Date(createForm.value.meeting_date).toISOString(),
       location: createForm.value.location || undefined,
-      agenda: createForm.value.agenda || undefined,
+      agenda: normalizedAgenda.length ? normalizedAgenda.join('\n') : undefined,
     })
 
     createFeedback.setSuccess(t('common.saved'))
@@ -148,11 +177,11 @@ async function saveMeeting() {
           v-if="canManage"
           variant="primary"
           size="sm"
+          :title="t('meetings.create')"
+          :icon="CIconPlus"
+          shrink="sm"
           @click="openCreateModal"
-        >
-          <CIconPlus />
-          <span class="btn-label">{{ t('meetings.create') }}</span>
-        </CBtn>
+        />
       </template>
     </CTopbar>
 
@@ -168,9 +197,9 @@ async function saveMeeting() {
           <CEyebrow>
             {{ t('page.eyebrows.assemblies') }}
           </CEyebrow>
-          <h1 class="display-md">
+          <CHeading type="header">
             {{ t('meetings.title') }}
-          </h1>
+          </CHeading>
           <CMetaLine>
             <CMetaItem variant="sub">
               {{ buildingName }}
@@ -182,47 +211,34 @@ async function saveMeeting() {
           </CMetaLine>
         </header>
 
-        <div class="tabs">
-          <button
-            :class="['tab', { 'tab--active': filter === 'all' }]"
-            @click="filter = 'all'"
-          >
-            {{ t('common.allFem') }}
-            <span class="tab-count">{{ allMeetings.length }}</span>
-          </button>
-          <button
-            :class="['tab', { 'tab--active': filter === 'upcoming' }]"
-            @click="filter = 'upcoming'"
-          >
-            {{ t('meetings.filterUpcoming') }}
-            <span class="tab-count">{{ upcomingCount }}</span>
-          </button>
-          <button
-            :class="['tab', { 'tab--active': filter === 'closed' }]"
-            @click="filter = 'closed'"
-          >
-            {{ t('meetings.filterClosed') }}
-            <span class="tab-count">{{ closedCount }}</span>
-          </button>
-        </div>
-
-        <div
+        <CTabs
+          v-model="filter"
+          variant="filter"
+          :tabs="meetingTabs"
+        />
+        <template
           v-if="meetings.length === 0"
-          class="empty-state"
         >
-          {{ t('meetings.empty') }}
-        </div>
-
-        <div
-          v-else
-          class="meeting-list"
-        >
+          <CEmptyState
+            :title="t('meetings.empty')"
+            size="page"
+          >
+            <template #actions>
+              <CBtn
+                v-if="canManage"
+                variant="primary"
+                :title="t('meetings.create')"
+                @click="openCreateModal"
+              />
+            </template>
+          </CEmptyState>
+        </template>
+        <template v-else>
           <CCard
             v-for="meeting in meetings"
             :key="meeting.id"
-            padding="none"
             interactive
-            class="activity-card meeting-card"
+            class="meeting-card"
             role="button"
             tabindex="0"
             @click="openMeeting(meeting.id)"
@@ -237,9 +253,9 @@ async function saveMeeting() {
             <div class="meeting-card__main">
               <div class="flex flex-col gap-x-4 gap-y-1 mb-4">
                 <div class="flex flex-row justify-between">
-                  <h2 class="activity-card__title meeting-card__title">
+                  <CHeading type="card">
                     {{ typeLabel(meeting.meeting_type) }} {{ new Date(meeting.meeting_date).getFullYear() }}
-                  </h2>
+                  </CHeading>
                   <CBadge
                     :variant="statusBadgeVariant(meeting.status)"
                     :pulse="meeting.status === 'called' || meeting.status === 'ongoing'"
@@ -271,26 +287,26 @@ async function saveMeeting() {
 
               <div class="meeting-card__resolution-row body-xs">
                 <span class="meeting-card__res-count">
-                  <span class="text-headline-sm">{{ meeting.resolution_count }}</span>
+                  <span class="font-serif font-semibold text-xl">{{ meeting.resolution_count }}</span>
                   {{ t('meetings.statResolutions', meeting.resolution_count) }}
                 </span>
                 <span
                   v-if="meeting.status === 'closed'"
                   class="meeting-card__res-passed tone--valid"
                 >
-                  <span class="text-headline-sm">{{ meeting.passed_count }}</span>
+                  <span class="font-serif font-semibold text-xl">{{ meeting.passed_count }}</span>
                   {{ t('meetings.statPassed', meeting.passed_count) }}
                 </span>
                 <span
                   v-else
-                  class="text-muted"
+                  class="text-on-surface-variant"
                 >
                   — {{ t('meetings.statPendingVotes') }}
                 </span>
               </div>
             </div>
           </CCard>
-        </div>
+        </template>
       </template>
     </div>
 
@@ -299,9 +315,8 @@ async function saveMeeting() {
       :title="t('meetings.create')"
       @update:open="showCreateModal = $event"
     >
-      <form
-        class="form-grid"
-        @submit.prevent="saveMeeting"
+      <CForm
+        @submit="saveMeeting"
       >
         <CFormSelect
           v-model="createForm.meeting_type"
@@ -320,31 +335,57 @@ async function saveMeeting() {
           v-model="createForm.location"
           :label="t('meetings.location')"
         />
-        <CFormTextarea
-          v-model="createForm.agenda"
-          :label="t('meetings.agenda')"
-        />
-      </form>
+        <div class="flex flex-col gap-1">
+          <span class="text-sm font-medium text-on-surface-variant">{{ t('meetings.agenda.title') }}</span>
+          <div class="agenda-editor">
+            <div
+              v-for="(_, index) in createAgendaItems"
+              :key="`agenda-${index}`"
+              class="agenda-editor__row"
+            >
+              <CFormInput
+                v-model="createAgendaItems[index]"
+                :placeholder="`${t('meetings.agenda.title')} ${index + 1}`"
+              />
+              <CBtn
+                v-if="createAgendaItems.length > 1"
+                variant="icon"
+                size="sm"
+                :icon="CIconTrash"
+                :title="t('common.delete')"
+                :aria-label="t('common.delete')"
+                @click="removeCreateAgendaItem(index)"
+              />
+            </div>
+            <CBtn
+              variant="secondary"
+              size="sm"
+              :icon="CIconPlus"
+              :title="t('common.add')"
+              @click="addCreateAgendaItem"
+            />
+          </div>
+        </div>
+      </CForm>
 
       <template #footer>
-        <CFormFeedback
+        <CFormActions
           :status="createFeedback.status.value"
           :message="createFeedback.message.value"
-        />
-        <CBtn
-          variant="ghost"
-          @click="showCreateModal = false"
         >
-          {{ t('common.cancel') }}
-        </CBtn>
-        <CBtn
-          variant="primary"
-          :loading="saving"
-          :closing="createFeedback.status.value === 'success'"
-          @click="saveMeeting"
-        >
-          {{ saving ? t('common.saving') : t('common.save') }}
-        </CBtn>
+          <CBtn
+            variant="ghost"
+            :title="t('common.cancel')"
+            @click="showCreateModal = false"
+          />
+          <CBtn
+            variant="primary"
+            :title="t('common.save')"
+            :loading="saving"
+            :closing="createFeedback.status.value === 'success'"
+            @click="saveMeeting"
+          />
+        </CFormActions>
       </template>
     </CModal>
   </div>
@@ -357,6 +398,18 @@ async function saveMeeting() {
   gap: var(--space-6);
 }
 
+
+.agenda-editor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.agenda-editor__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-2);
+}
 
 .meeting-list {
   display: flex;
@@ -371,6 +424,7 @@ async function saveMeeting() {
   align-items: stretch;
   overflow: clip;
   gap: 0;
+  padding: 0;
 }
 
 .meeting-card__main {

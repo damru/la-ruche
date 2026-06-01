@@ -61,7 +61,7 @@ withDefaults(defineProps<{
           <span class="auth-brand__step-num">
             <CIconCheck
               v-if="step.status === 'done'"
-              stroke-width="2.5"
+              stroke-width="1.5"
               aria-hidden="true"
             />
             <template v-else>{{ i + 1 }}</template>
@@ -115,7 +115,7 @@ withDefaults(defineProps<{
 .auth-brand__logo-mark {
   width: 40px;
   height: 40px;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-xl);
   display: flex;
   align-items: center;
   justify-content: center;

@@ -4,16 +4,21 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import CCard from '@/components/molecules/CCard.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
-import CFormFeedback from '@/components/atoms/CFormFeedback.vue'
+import CForm from '@/components/molecules/CForm.vue'
+import CFormActions from '@/components/molecules/CFormActions.vue'
 import CModal from '@/components/molecules/CModal.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
+import CHeading from '@/components/atoms/CHeading.vue'
 import CIconClock from '@/components/atoms/CIconClock.svg'
+import CIconLogIn from '@/components/atoms/CIconLogIn.svg'
 import CIconMoon from '@/components/atoms/CIconMoon.svg'
 import CIconSun from '@/components/atoms/CIconSun.svg'
 import { useAuthStore } from '@/stores/auth'
 import { useUiStore } from '@/stores/ui'
 import { authApi, adminApi } from '@/api'
 import { useFormFeedback, SUCCESS_AUTO_CLEAR_MS } from '@/composables/useFormFeedback'
+import CTabs from '@/components/atoms/CTabs.vue'
+import CToggle from '@/components/atoms/CToggle.vue'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -21,8 +26,8 @@ const auth = useAuthStore()
 const ui = useUiStore()
 
 // ── Tabs ──────────────────────────────────────────────────────────
-type Tab = 'account' | 'notifications'
-const activeTab = ref<Tab>('account')
+type ProfileTab = 'account' | 'notifications'
+const activeTab = ref<ProfileTab>('account')
 
 // ── Account form ─────────────────────────────────────────────────
 const saving = ref(false)
@@ -114,6 +119,28 @@ async function confirmResetDemo() {
     resetting.value = false
   }
 }
+
+// ── Reset data ────────────────────────────────────────────────────
+const showResetDataModal = ref(false)
+const resettingData = ref(false)
+const resetDataFeedback = useFormFeedback()
+
+async function confirmResetData() {
+  resettingData.value = true
+  resetDataFeedback.reset()
+  try {
+    await adminApi.resetData()
+    resetDataFeedback.setSuccess(t('settings.account.resetDataSuccess'))
+    setTimeout(() => {
+      showResetDataModal.value = false
+      resetDataFeedback.reset()
+    }, SUCCESS_AUTO_CLEAR_MS)
+  } catch {
+    resetDataFeedback.setError(t('settings.account.resetDataError'))
+  } finally {
+    resettingData.value = false
+  }
+}
 </script>
 
 <template>
@@ -128,13 +155,12 @@ async function confirmResetDemo() {
         <CBtn
           variant="ghost"
           size="sm"
+          :icon="CIconLogIn"
+          :title="t('nav.logout')"
           :loading="loggingOut"
           :disabled="loggingOut"
           @click="logout"
-        >
-          <CIconLogIn style="width:16px;height:16px;transform:scaleX(-1)" />
-          <span class="btn-label">{{ loggingOut ? t('common.loading') : t('nav.logout') }}</span>
-        </CBtn>
+        />
       </template>
     </CTopbar>
 
@@ -143,82 +169,76 @@ async function confirmResetDemo() {
         <CEyebrow>
           {{ t('page.eyebrows.profile') }}
         </CEyebrow>
-        <h1 class="display-md">
+        <CHeading type="header">
           {{ t('nav.account') }}
-        </h1>
+        </CHeading>
       </header>
 
       <!-- Tabs -->
-      <div class="tabs">
-        <button
-          class="tab"
-          :class="{ 'tab--active': activeTab === 'account' }"
-          @click="activeTab = 'account'"
-        >
-          {{ t('nav.myAccount') }}
-        </button>
-        <button
-          class="tab"
-          :class="{ 'tab--active': activeTab === 'notifications' }"
-          @click="activeTab = 'notifications'"
-        >
-          {{ t('nav.notifications') }}
-        </button>
-      </div>
+      <CTabs
+        v-model="activeTab"
+        variant="tab"
+        :tabs="[
+          { value: 'account', label: t('nav.myAccount') },
+          { value: 'notifications', label: t('nav.notifications') },
+        ]"
+      />
 
       <!-- ── Account tab ─────────────────────────────────────── -->
       <template v-if="activeTab === 'account'">
         <CCard>
-          <h2 class="section-title">
+          <CHeading type="card">
             {{ t('settings.account.personalInfo') }}
-          </h2>
-          <div class="form-grid-2col">
-            <CFormInput
-              :model-value="auth.user?.first_name ?? ''"
-              :label="t('common.firstName')"
-              disabled
-            />
-            <CFormInput
-              :model-value="auth.user?.last_name ?? ''"
-              :label="t('common.lastName')"
-              disabled
-            />
-            <CFormInput
-              :model-value="auth.user?.email ?? ''"
-              :label="t('common.email')"
-              disabled
-            />
-            <CFormInput
-              v-model="phone"
-              :label="t('common.phone')"
-              type="tel"
-              :placeholder="t('common.phonePlaceholder')"
-            />
-          </div>
-          <div class="form-actions">
-            <CFormFeedback
-              :status="profileFeedback.status.value"
-              :message="profileFeedback.message.value"
-              style="flex:1"
-            />
-            <CBtn
-              variant="primary"
-              :loading="saving"
-              :disabled="saving"
-              @click="saveProfile"
-            >
-              {{ saving ? t('common.saving') : t('settings.account.update') }}
-            </CBtn>
-            <CBtn variant="ghost">
-              {{ t('settings.account.changePassword') }}
-            </CBtn>
-          </div>
+          </CHeading>
+          <CForm
+            :status="profileFeedback.status.value"
+            :message="profileFeedback.message.value"
+            @submit="saveProfile"
+          >
+            <CFormRow :cols="2">
+              <CFormInput
+                :model-value="auth.user?.first_name ?? ''"
+                :label="t('common.firstName')"
+                disabled
+              />
+              <CFormInput
+                :model-value="auth.user?.last_name ?? ''"
+                :label="t('common.lastName')"
+                disabled
+              />
+              <CFormInput
+                :model-value="auth.user?.email ?? ''"
+                :label="t('common.email')"
+                disabled
+              />
+              <CFormInput
+                v-model="phone"
+                :label="t('common.phone')"
+                type="tel"
+                :placeholder="t('common.phonePlaceholder')"
+              />
+            </CFormRow>
+            <template #actions>
+              <CBtn
+                variant="primary"
+                type="submit"
+                :title="t('settings.account.update')"
+                :loading="saving"
+                :disabled="saving"
+              />
+              <CBtn
+                variant="ghost"
+                :title="t('settings.account.changePassword')"
+                disabled
+              />
+            </template>
+          </CForm>
         </CCard>
 
         <CCard>
-          <h2 class="section-title">
+          <CHeading type="card">
             {{ t('settings.preferences.title') }}
-          </h2>
+          </CHeading>
           <p class="preferences-subtitle">
             {{ t('settings.preferences.subtitle') }}
           </p>
@@ -247,44 +267,51 @@ async function confirmResetDemo() {
             </button>
           </div>
 
-          <p class="field-hint theme-hint">
+          <p class="text-xs text-on-surface-variant theme-hint">
             {{ t(selectedThemeOption.hintKey) }}
           </p>
         </CCard>
 
-        <CCard v-if="auth.isManager">
-          <h2
-            class="section-title"
+        <CCard v-if="auth.isManager && ui.demoMode">
+          <CHeading
+            type="card"
             style="color: var(--color-error)"
           >
             {{ t('settings.account.dangerZone') }}
-          </h2>
+          </CHeading>
           <p
             class="body-xs"
             style="color: var(--color-on-surface-variant); margin-bottom: 12px"
           >
             {{ t('settings.account.dangerDesc') }}
           </p>
-          <CBtn
-            variant="danger"
-            @click="showResetModal = true"
-          >
-            {{ t('settings.account.resetApp') }}
-          </CBtn>
+          <div class="flex flex-row gap-4">
+            <CBtn
+              variant="danger"
+              :title="t('settings.account.resetApp')"
+              @click="showResetModal = true"
+            />
+            <CBtn
+              variant="danger"
+              :title="t('settings.account.resetData')"
+              @click="showResetDataModal = true"
+            />
+          </div>
         </CCard>
       </template>
 
       <!-- ── Notifications tab ───────────────────────────────── -->
       <template v-if="activeTab === 'notifications'">
         <CCard>
-          <h2 class="section-title">
+          <CHeading type="card">
             {{ t('settings.notifications.title') }}
-          </h2>
+          </CHeading>
           <div class="notif-list">
             <div
               v-for="item in notifItems"
               :key="item.key"
               class="notif-item"
+              @click="item.enabled = !item.enabled"
             >
               <div class="notif-info">
                 <span class="title-sm">{{ t(`settings.notifications.${item.key}`) }}</span>
@@ -295,14 +322,10 @@ async function confirmResetDemo() {
                   {{ t(`settings.notifications.${item.key}Desc`) }}
                 </p>
               </div>
-              <button
-                :class="['toggle', { 'toggle--on': item.enabled }]"
-                :aria-pressed="item.enabled"
+              <CToggle
+                v-model="item.enabled"
                 :aria-label="t(`settings.notifications.${item.key}`)"
-                @click="item.enabled = !item.enabled"
-              >
-                <div class="toggle-thumb"></div>
-              </button>
+              />
             </div>
           </div>
         </CCard>
@@ -320,25 +343,55 @@ async function confirmResetDemo() {
       {{ t('settings.account.resetAppConfirmMessage') }}
     </p>
     <template #footer>
-      <CFormFeedback
+      <CFormActions
         :status="resetFeedback.status.value"
         :message="resetFeedback.message.value"
-      />
-      <CBtn
-        variant="ghost"
-        :disabled="resetting"
-        @click="showResetModal = false"
       >
-        {{ t('common.cancel') }}
-      </CBtn>
-      <CBtn
-        variant="danger"
-        :loading="resetting"
-        :disabled="resetting"
-        @click="confirmResetDemo"
+        <CBtn
+          variant="ghost"
+          :title="t('common.cancel')"
+          :disabled="resetting"
+          @click="showResetModal = false"
+        />
+        <CBtn
+          variant="danger"
+          :title="t('settings.account.resetAppConfirm')"
+          :loading="resetting"
+          :disabled="resetting"
+          @click="confirmResetDemo"
+        />
+      </CFormActions>
+    </template>
+  </CModal>
+
+  <!-- ── Reset data modal ──────────────────────────────────────── -->
+  <CModal
+    :open="showResetDataModal"
+    :title="t('settings.account.resetDataConfirmTitle')"
+    @close="showResetDataModal = false"
+  >
+    <p class="body-xs">
+      {{ t('settings.account.resetDataConfirmMessage') }}
+    </p>
+    <template #footer>
+      <CFormActions
+        :status="resetDataFeedback.status.value"
+        :message="resetDataFeedback.message.value"
       >
-        {{ t('settings.account.resetAppConfirm') }}
-      </CBtn>
+        <CBtn
+          variant="ghost"
+          :title="t('common.cancel')"
+          :disabled="resettingData"
+          @click="showResetDataModal = false"
+        />
+        <CBtn
+          variant="danger"
+          :title="t('settings.account.resetDataConfirm')"
+          :loading="resettingData"
+          :disabled="resettingData"
+          @click="confirmResetData"
+        />
+      </CFormActions>
     </template>
   </CModal>
 </template>
@@ -403,29 +456,8 @@ async function confirmResetDemo() {
   gap: var(--space-4);
   padding: 14px 0;
   border-bottom: 1px solid var(--color-outline-variant);
+  cursor: pointer;
 }
 .notif-item:last-child { border-bottom: none; }
 .notif-info { display: flex; flex-direction: column; gap: 2px; }
-
-.toggle {
-  width: 44px; height: 24px;
-  border-radius: 12px;
-  background: var(--color-surface-container-high);
-  border: none;
-  cursor: pointer;
-  position: relative;
-  min-height: 24px;
-  align-self: center;
-  transition: background var(--transition-fast);
-}
-.toggle--on { background: var(--color-primary); }
-.toggle-thumb {
-  position: absolute;
-  top: 3px; left: 3px;
-  width: 18px; height: 18px;
-  border-radius: 50%;
-  background: white;
-  transition: transform var(--transition-fast);
-}
-.toggle--on .toggle-thumb { transform: translateX(20px); }
 </style>
