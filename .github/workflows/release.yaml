@@ -30,7 +30,8 @@ env:
 jobs:
   github:
     if: github.event_name == 'workflow_dispatch' || inputs.workflow_call
-    runs-on: ubuntu-latest
+    # runs-on: ${{ github.actor == github.repository_owner && 'small' || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest 
     permissions:
       contents: write
     steps:
@@ -51,7 +52,7 @@ jobs:
         run: gh release create --generate-notes --title "${VERSION/v/}" ${VERSION}
   docker:
     if: github.event_name == 'release'
-    runs-on: ubuntu-latest
+    runs-on: ${{ github.actor == github.repository_owner && 'small' || 'ubuntu-latest' }}
     steps:
       - name: Docker meta
         id: meta
