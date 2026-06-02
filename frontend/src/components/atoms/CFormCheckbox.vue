@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { CheckboxRoot, CheckboxIndicator } from 'radix-vue'
+import { useFieldValidation } from '@/composables/useFieldValidation'
 
 const props = withDefaults(defineProps<{
   /**
@@ -14,24 +16,43 @@ const props = withDefaults(defineProps<{
   label?: string
   disabled?: boolean
   error?: string
+  required?: boolean
+  name?: string
 }>(), {
   modelValue: undefined,
   value: undefined,
   label: undefined,
   disabled: false,
   error: undefined,
+  required: false,
+  name: undefined,
 })
 
 const emit = defineEmits<{
   'update:modelValue': [value: boolean | unknown[]]
 }>()
 
+const { t } = useI18n()
+
 const isChecked = computed<boolean>(() => {
   if (Array.isArray(props.modelValue)) return props.modelValue.includes(props.value)
   return !!props.modelValue
 })
 
+const { displayError, onFieldBlur, onFieldInput } = useFieldValidation({
+  externalError: () => props.error,
+  getInternalError: () => {
+    if (!props.required) return undefined
+    return isChecked.value ? undefined : t('common.required')
+  },
+  watchSources: [
+    () => props.required,
+    () => isChecked.value,
+  ],
+})
+
 function handleCheckedChange(checked: boolean) {
+  onFieldBlur()
   if (Array.isArray(props.modelValue)) {
     const arr = [...props.modelValue]
     if (checked) {
@@ -44,6 +65,11 @@ function handleCheckedChange(checked: boolean) {
   } else {
     emit('update:modelValue', checked)
   }
+  onFieldInput()
+}
+
+function handleBlur() {
+  onFieldBlur()
 }
 
 defineOptions({ inheritAttrs: false })
@@ -59,10 +85,13 @@ defineOptions({ inheritAttrs: false })
         v-bind="$attrs"
         :checked="isChecked"
         :disabled="props.disabled"
+        :aria-required="props.required"
+        :aria-invalid="!!displayError"
         class="min-w-[unset]! min-h-[unset]! size-4! rounded-full border border-outline-variant bg-surface-container-low
                data-[state=checked]:bg-primary data-[state=checked]:border-primary
                flex items-center justify-center outline-none flex-shrink-0
                focus-visible:ring-2 focus-visible:ring-primary/30"
+        @blur="handleBlur"
         @update:checked="handleCheckedChange"
       >
         <CheckboxIndicator class="text-on-primary">
@@ -84,14 +113,22 @@ defineOptions({ inheritAttrs: false })
       <span
         v-if="props.label"
         class="text-sm text-on-surface"
-      >{{ props.label }}</span>
+      >
+        {{ props.label }}
+        <span
+          v-if="props.required"
+          class="ml-px text-error"
+          :aria-label="t('common.requiredAria')"
+        >*</span>
+      </span>
       <slot v-else></slot>
     </label>
-    <p
-      v-if="props.error"
-      class="text-xs text-error"
-    >
-      {{ props.error }}
-    </p>
+    <CFormFieldProxyFeedback
+      :name="props.name"
+      :required="props.required"
+      proxy-type="checkbox"
+      :proxy-checked="isChecked"
+      :display-error="displayError"
+    />
   </div>
 </template>

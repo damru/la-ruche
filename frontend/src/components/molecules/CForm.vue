@@ -7,7 +7,6 @@ withDefaults(defineProps<{
   message?: string
 }>(), {
   status: 'idle',
-  message: undefined,
 })
 
 const emit = defineEmits<{ submit: [] }>()
@@ -21,7 +20,7 @@ const emit = defineEmits<{ submit: [] }>()
     <slot></slot>
     <CFormActions
       v-if="$slots.actions"
-      :status="status ?? 'idle'"
+      :status="status"
       :message="message"
     >
       <slot name="actions"></slot>

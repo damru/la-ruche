@@ -1042,7 +1042,6 @@ async function submitDelete() {
                     class="inline-flex items-center gap-1 w-fit"
                   >
                     <CIconXCircle
-                      
                       class="icon-xs"
                     />
                     {{ t('claims.publishedOn', { date: formatDate(claim.published_at) }) }}

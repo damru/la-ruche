@@ -453,20 +453,21 @@ border-color: var(--color-outline-light);
 
 | Composant | Props clés | Description |
 |---|---|---|
-| `CFormCheckbox` | `label`, `checked` | Case à cocher — wrapper Radix |
+| `CFormCheckbox` | `label`, `checked`, `required` | Case à cocher — wrapper Radix. Erreur `required` affichée après interaction/perte de focus |
 | `CFormChipInput` | `label`, `value` | Saisie d'un chip unitaire (la boucle `v-for` est dans le parent) |
-| `CFormChipSelect` | `label`, `options` | Sélection de chips |
+| `CFormChipSelect` | `label`, `options`, `required` | Sélection de chips. Erreur `required` affichée après interaction/perte de focus |
 | `CFormDropzone` | `accept`, `multiple` | Zone de dépôt de fichiers |
 | `CFormFeedback` | `status`, `message` | Retour de formulaire — utiliser via `CFormActions` ou `CForm`, jamais directement dans le markup. Animation push (grid-template-rows). |
-| `CFormInput` | `type`, `label`, `error`, `hint` | Champ texte — variante `password` avec toggle de visibilité |
-| `CFormSelect` | `label`, `options`, `error` | Sélecteur — wrapper Radix `SelectRoot` |
-| `CFormTextarea` | `label`, `rows`, `error` | Zone de texte |
+| `CFormFieldProxyFeedback` | `name`, `required`, `proxyType`, `proxyValue?`, `proxyChecked?`, `displayError?`, `errorId?`, `hint?`, `hintId?`, `showProxy?` | Atome interne de mutualisation pour les `CForm*` : rend l'input proxy caché (optionnel) pour la validité native du `<form>` et le bloc de feedback (`error`/`hint`) |
+| `CFormInput` | `type`, `label`, `error`, `hint`, `required` | Champ texte — variante `password` avec toggle de visibilité. Si `required`/contrainte native invalide, erreur affichée après premier `blur` (priorité à `error` externe) |
+| `CFormSelect` | `label`, `options`, `error`, `required` | Sélecteur — wrapper Radix `SelectRoot`. Erreur `required` affichée après `blur` + proxy natif caché pour la validité du `<form>` |
+| `CFormTextarea` | `label`, `rows`, `error`, `required` | Zone de texte. Si `required`/contrainte native invalide, erreur affichée après premier `blur` (priorité à `error` externe) |
 
 #### Interactions
 
 | Composant | Props clés | Description |
 |---|---|---|
-| `CBtn` | `variant` (`primary` \| `secondary` \| `ghost` \| `danger` \| `negative` \| `icon`), `size` (`sm` \| `md` \| `lg` \| `icon`), `type` (`button` \| `submit` \| `reset`), `loading`, `disabled`, `closing`, `title?`, `icon?`, `shrink?` (`sm` \| `md` \| `lg` \| `xl` \| `2xl`) | Bouton atomique. Pendant `loading`, seul le spinner est affiché. Usage recommandé dans les vues : props `title` + `icon` (au lieu du slot), surtout pour les actions standardisées. Si `shrink` est défini, le `title` est masqué sous le breakpoint choisi et le bouton devient carré (taille dérivée de `size`). |
+| `CBtn` | `variant` (`primary` \| `secondary` \| `ghost` \| `danger` \| `negative` \| `icon`), `size` (`sm` \| `md` \| `lg` \| `icon`), `type` (`button` \| `submit` \| `reset`), `loading`, `disabled`, `closing`, `disableWhenFormInvalid?`, `title?`, `icon?`, `shrink?` (`sm` \| `md` \| `lg` \| `xl` \| `2xl`) | Bouton atomique. Pendant `loading`, seul le spinner est affiché. Usage recommandé dans les vues : props `title` + `icon` (au lieu du slot), surtout pour les actions standardisées. Si `type="submit"`, le bouton est désactivé tant que le `<form>` est invalide (`disableWhenFormInvalid=true` par défaut). Si `shrink` est défini, le `title` est masqué sous le breakpoint choisi et le bouton devient carré (taille dérivée de `size`). |
 | `CToggle` | `modelValue` (v-model `boolean`), `disabled?`, `ariaLabel?` | Interrupteur on/off — wrapper Radix `SwitchRoot`. 44×24px, thumb blanc, fond `surface-container-high` → `primary` quand actif. Focus visible. Toujours fournir `ariaLabel` ou un `<label>` associé. |
 | `CDropdownMenu` | `items: DropdownItem[]`, `align?: 'start' \| 'end' \| 'center'`, slot: `trigger` | ✅ wrapper Radix `DropdownMenu` |
 | `CTabs` | `tabs` (`{ value, label, count? }[]`), `modelValue` (v-model), `variant?` (`'tab'` \| `'filter'`, défaut `'tab'`) | ✅ Bandeau d'onglets ou de filtres. `tab` (défaut) : indicateur souligné primary sur l'actif. `filter` : segment pill avec fond `surface-container-low`, active = `surface-container-lowest` + ombre, badge numérique circulaire primary. Jamais d'icône seule. |
@@ -627,8 +628,11 @@ Deux contextes, deux molécules. `CFormFeedback` n'est jamais utilisé directeme
 
 **Règles communes :**
 - `useFormFeedback()` gère `status` / `message`. Appeler `feedback.reset()` à l'ouverture du modal.
+- La logique `required + touched + blur + erreur interne` est mutualisée via le composable `useFieldValidation` (`frontend/src/composables/useFieldValidation.ts`) — ne pas la réimplémenter dans chaque `CForm*`.
 - Jamais de `<form class="flex flex-col gap-4">` dans une vue — utiliser `CForm` ou le slot body de `CModal`.
 - `<form>` nu autorisé uniquement dans le body d'un `CModal` quand les actions sont dans `#footer`.
+- Champ requis (`required`) : après premier focus puis `blur`, si la valeur reste invalide (vide ou contrainte native non respectée), l'erreur est affichée immédiatement sous le champ.
+- Action de soumission (`CBtn type="submit"`) : désactivée tant que les champs requis du formulaire ne sont pas valides.
 
 #### Tabs de navigation
 
