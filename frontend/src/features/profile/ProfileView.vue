@@ -61,14 +61,12 @@ const selectedThemeOption = computed(
 
 async function saveProfile() {
   saving.value = true
-  profileFeedback.reset()
   try {
     const res = await authApi.updateProfile({ phone: phone.value || null })
     if (auth.user) {
       auth.user.phone = res.data.phone
     }
     profileFeedback.setSuccess(t('common.saved'))
-    setTimeout(() => profileFeedback.reset(), SUCCESS_AUTO_CLEAR_MS)
   } catch {
     profileFeedback.setError(t('common.error'))
   } finally {
@@ -194,30 +192,29 @@ async function confirmResetData() {
             :status="profileFeedback.status.value"
             :message="profileFeedback.message.value"
             @submit="saveProfile"
+            :cols="2"
           >
-            <CFormRow :cols="2">
-              <CFormInput
-                :model-value="auth.user?.first_name ?? ''"
-                :label="t('common.firstName')"
-                disabled
-              />
-              <CFormInput
-                :model-value="auth.user?.last_name ?? ''"
-                :label="t('common.lastName')"
-                disabled
-              />
-              <CFormInput
-                :model-value="auth.user?.email ?? ''"
-                :label="t('common.email')"
-                disabled
-              />
-              <CFormInput
-                v-model="phone"
-                :label="t('common.phone')"
-                type="tel"
-                :placeholder="t('common.phonePlaceholder')"
-              />
-            </CFormRow>
+            <CFormInput
+              :model-value="auth.user?.first_name ?? ''"
+              :label="t('common.firstName')"
+              disabled
+            />
+            <CFormInput
+              :model-value="auth.user?.last_name ?? ''"
+              :label="t('common.lastName')"
+              disabled
+            />
+            <CFormInput
+              :model-value="auth.user?.email ?? ''"
+              :label="t('common.email')"
+              disabled
+            />
+            <CFormInput
+              v-model="phone"
+              :label="t('common.phone')"
+              type="tel"
+              :placeholder="t('common.phonePlaceholder')"
+            />
             <template #actions>
               <CBtn
                 variant="primary"

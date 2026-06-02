@@ -445,7 +445,10 @@ const userColumns = computed(() => [
         :closable="!savingUnit"
         @update:open="showUnitModal = $event"
       >
-        <div class="flex flex-col gap-4">
+        <CForm
+          id="unit-form"
+          @submit="saveUnit"
+        >
           <CFormRow :cols="2">
             <CFormInput
               v-model="editingUnit.unit_number"
@@ -492,7 +495,7 @@ const userColumns = computed(() => [
               style="max-width:240px"
             />
           </div>
-        </div>
+        </CForm>
         <template #footer>
           <CFormActions
             :status="unitFeedback.status.value"
@@ -505,11 +508,12 @@ const userColumns = computed(() => [
             />
             <CBtn
               variant="primary"
+              type="submit"
+              form="unit-form"
               :title="t('common.save')"
               :loading="savingUnit"
               :closing="unitFeedback.status.value === 'success'"
               :disabled="savingUnit"
-              @click="saveUnit"
             />
           </CFormActions>
         </template>

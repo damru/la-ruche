@@ -526,6 +526,7 @@ async function confirmDelete() {
       @update:open="showModal = $event"
     >
       <CForm
+        id="contractor-form"
         @submit="save"
       >
         <CFormInput
@@ -572,10 +573,11 @@ async function confirmDelete() {
           />
           <CBtn
             variant="primary"
+            type="submit"
+            form="contractor-form"
             :title="t('common.save')"
             :loading="saving"
             :closing="feedback.status.value === 'success'"
-            @click="save"
           />
         </CFormActions>
       </template>

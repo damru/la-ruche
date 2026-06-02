@@ -411,7 +411,11 @@ async function saveContract() {
     :title="isEditing ? t('contracts.form.editTitle') : t('contracts.form.createTitle')"
     @update:open="emit('update:open', $event)"
   >
-    <div class="contract-form">
+    <CForm
+      id="contract-form"
+      class="contract-form"
+      @submit="saveContract"
+    >
       <div class="contract-form__grid">
         <CFormInput
           v-model="form.vendor_name"
@@ -596,7 +600,7 @@ async function saveContract() {
           </div>
         </div>
       </div>
-    </div>
+    </CForm>
 
     <template #footer>
       <CFormActions
@@ -619,10 +623,11 @@ async function saveContract() {
         />
         <CBtn
           :title="t('common.save')"
+          type="submit"
+          form="contract-form"
           :loading="saving || uploadingDocuments"
           :closing="feedback.status.value === 'success'"
           :disabled="saving || uploadingDocuments"
-          @click="saveContract"
         />
       </CFormActions>
     </template>
