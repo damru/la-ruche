@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, useAttrs, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { Component } from 'vue'
 
@@ -27,12 +27,14 @@ const props = withDefaults(defineProps<{
   loading: false,
   closing: false,
   type: 'button',
+  disableWhenFormInvalid: undefined,
   title: undefined,
   icon: undefined,
   shrink: undefined,
 })
 
 const { t } = useI18n()
+const attrs = useAttrs()
 
 const MIN_LOADING_MS = 300
 const visualLoading = ref(props.loading)
@@ -48,7 +50,10 @@ function resolveForm(): HTMLFormElement | null {
   const button = buttonRef.value
   if (!button) return null
 
-  return button.form ?? button.closest('form')
+  const formId = attrs.form as string | undefined
+  if (formId) return document.getElementById(formId) as HTMLFormElement | null
+
+  return button.closest('form')
 }
 
 function recomputeFormValidity() {
@@ -67,13 +72,12 @@ function onFormEvent() {
 
 function attachFormListeners() {
   const form = resolveForm()
-  if (parentForm === form) return
+  if (form !== null && parentForm === form) return
   if (parentForm) {
     parentForm.removeEventListener('input', onFormEvent, true)
     parentForm.removeEventListener('change', onFormEvent, true)
     parentForm.removeEventListener('reset', onFormEvent, true)
     parentForm.removeEventListener('blur', onFormEvent, true)
-    parentForm.removeEventListener('invalid', onFormEvent, true)
   }
   parentForm = form
   if (parentForm) {
@@ -81,7 +85,6 @@ function attachFormListeners() {
     parentForm.addEventListener('change', onFormEvent, true)
     parentForm.addEventListener('reset', onFormEvent, true)
     parentForm.addEventListener('blur', onFormEvent, true)
-    parentForm.addEventListener('invalid', onFormEvent, true)
   }
 }
 
@@ -100,7 +103,7 @@ watch(() => props.loading, (val) => {
 })
 
 watch(
-  () => [props.type, props.disableWhenFormInvalid],
+  () => [props.type, props.disableWhenFormInvalid, attrs.form],
   () => {
     attachFormListeners()
     void nextTick(recomputeFormValidity)
@@ -108,8 +111,10 @@ watch(
 )
 
 onMounted(() => {
-  attachFormListeners()
-  void nextTick(recomputeFormValidity)
+  void nextTick(() => {
+    attachFormListeners()
+    recomputeFormValidity()
+  })
 })
 
 onUnmounted(() => {
@@ -118,7 +123,6 @@ onUnmounted(() => {
   parentForm.removeEventListener('change', onFormEvent, true)
   parentForm.removeEventListener('reset', onFormEvent, true)
   parentForm.removeEventListener('blur', onFormEvent, true)
-  parentForm.removeEventListener('invalid', onFormEvent, true)
 })
 
 const variantClass: Record<Variant, string> = {
@@ -285,7 +289,7 @@ const shrinkClass: Record<Breakpoint, string> = {
   min-height: min-content;
   border-radius: var(--radius-md);
   background: transparent;
-  color: var(--tone-bg, var(--color-on-surface-variant));
+  color: var(--tone-fg, var(--color-on-surface-variant));
   padding: 0 !important;
   gap: 0;
 }
