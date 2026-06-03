@@ -81,6 +81,7 @@ Historique de propriété tracé avec dates de cession, invitation par lien toke
 * `EP-002-S10` — Enregistrer et suivre les procédures judiciaires en cours impliquant le syndicat (demandeur ou défendeur), avec date d'ouverture, type, statut ; requis pour l'état daté (LEGAL.md §7.1, §10)
 * `EP-002-S11` — Tenir un registre de gouvernance (syndic en exercice, membres du conseil syndical, périodes de mandat) pour auditer la séparation des organes (LEGAL.md §1.7, §1.8)
 * `EP-002-S12` — PV du conseil syndical en délégation de pouvoirs : créer, stocker et consulter les PV formels des décisions prises par le conseil syndical sous délégation d'AG (signé par 2 membres, noms + sens des votes, inscrit au registre des PV d'AG) — art. 21-1 décret 67-223, LEGIARTI000042077775 (LEGAL.md §3.5)
+* `EP-002-S13` 🆕 — Créer un résident sans invitation immédiate et déclencher l'invitation depuis la liste (PRD US-GP-008)
 
 ***
 

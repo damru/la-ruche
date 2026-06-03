@@ -1,9 +1,9 @@
 ---
 product: Gestion des propriétaires
-version: 1.0.0
+version: 1.1.0
 owner: Damien
 status: validé
-last_updated: 2026-05-21
+last_updated: 2026-06-03
 references:
   - EP-002
   - LEGAL.md §1.5
@@ -144,14 +144,17 @@ Trois risques à couvrir :
 ### Utilisateurs
 
 ```
-pending_invite ──(acceptation)──▶ active ──(archivage)──▶ archived ──(RGPD)──▶ anonymized
-                                      │                  │
-                                      └─(réactivation*)─▶ active
-                                      * si non anonymisé
+no_access ──(invitation envoyée)──▶ pending_invite ──(acceptation)──▶ active ──(archivage)──▶ archived ──(RGPD)──▶ anonymized
+    │                                                                      │          │
+    └──(email ajouté + invitation tardive)──▶ pending_invite              │          └─(réactivation*)──▶ active
+                                                                           │          * si non anonymisé
+                                               (révocation invite)        │
+pending_invite ──────────────────────────────────────────────────▶ no_access (email conservé)
 ```
 
 | État | Description |
 |---|---|
+| `no_access` | Résident enregistré dans le registre, sans email ou sans invitation — aucun accès à l'Application |
 | `pending_invite` | Lien généré, non encore accepté — pas d'accès à l'Application |
 | `active` | Résident actif avec accès selon son rôle |
 | `archived` | Accès révoqué, données conservées intactes |
@@ -159,6 +162,9 @@ pending_invite ──(acceptation)──▶ active ──(archivage)──▶ ar
 
 | Transition | Déclencheur | Condition | US |
 |---|---|---|---|
+| création → `no_access` | Syndic | Email absent ou invitation non demandée | US-GP-008 |
+| `no_access` → `pending_invite` | Syndic | Email présent + envoi invitation | US-GP-008 |
+| `pending_invite` → `no_access` | Syndic | Révocation du lien | US-GP-002 |
 | `pending_invite` → `active` | Résident — accept. du lien | Token valide, non expiré | US-GP-002 |
 | `active` → `archived` | Syndic | Confirmation + date de départ | US-GP-004 |
 | `archived` → `active` | Syndic — réactivation | Compte non anonymisé | US-GP-004 |
@@ -219,11 +225,12 @@ Un même utilisateur peut être copropriétaire dans plusieurs copropriétés g�
 
 | Priorité | Ref | Action | Attendu produit |
 |---|---|---|---|
-| Must | US-GP-001 | Gérer la liste des résidents | CRUD complet avec état civil, lots, coordonnées |
+| Must | US-GP-001 | Gérer la liste des résidents | CRUD complet avec état civil, lots, coordonnées — email optionnel |
 | Must | US-GP-002 | Inviter un résident | Lien tokenisé, expiration, usage unique |
 | Must | US-GP-003 | Enregistrer une mutation de propriété | Archivage ancien, création nouveau lien lot↔propriétaire |
 | Must | US-GP-004 | Archiver un compte résident | Désactivation sans suppression des données |
 | Must | US-GP-005 | Anonymiser un compte (RGPD) | Remplacement données personnelles, conservation comptable |
+| Must | US-GP-008 | Créer un résident sans invitation immédiate | Ajout au registre sans email, invitation différée depuis la liste |
 | Should | US-GP-006 | Gérer les rôles des résidents | Attribution et révocation des rôles |
 | Should | US-GP-007 | Consulter l'historique de propriété d'un lot | Vue chronologique par lot |
 
@@ -237,8 +244,9 @@ Un même utilisateur peut être copropriétaire dans plusieurs copropriétés g�
 
 **Critères d'acceptation** :
 
-- **AC-GP-001-A** : Une fiche résident DOIT contenir : nom, prénom, email, téléphone (optionnel), adresse postale, lot(s) associé(s), rôle.
-- **AC-GP-001-B** : L'email DOIT être unique dans le système — doublon DOIT retourner une erreur de validation explicite.
+- **AC-GP-001-A** : Une fiche résident DOIT contenir : nom, prénom, email **(optionnel)**, téléphone (optionnel), lot(s) associé(s), rôle.
+- **AC-GP-001-B** : Si un email est renseigné, il DOIT être unique dans le système — doublon DOIT retourner une erreur de validation explicite. Un résident sans email n'est pas soumis à cette contrainte.
+- **AC-GP-001-F** : Un résident créé sans email se trouve à l'état `no_access` : aucun accès à l'Application, aucune invitation en attente. La liste DOIT l'indiquer visuellement.
 - **AC-GP-001-C** : Un copropriétaire PEUT être associé à plusieurs lots de la même copropriété.
 - **AC-GP-001-D** : La liste DOIT distinguer clairement les résidents actifs des archivés.
 - **AC-GP-001-E** : La liste DOIT être filtrable par rôle (propriétaire / locataire / conseil / syndic) et par lot.
@@ -328,6 +336,24 @@ Un même utilisateur peut être copropriétaire dans plusieurs copropriétés g�
 - **AC-GP-007-B** : La consultation DOIT être réservée au Syndic et au Conseil.
 - **AC-GP-007-C** : Les données anonymisées NE DOIVENT PAS afficher d'informations permettant la réidentification.
 
+#### US-GP-008 — Créer un résident sans invitation immédiate
+
+**En tant que** `Persona-Syndic`,
+**je veux** pouvoir enregistrer un résident dans le registre sans lui envoyer d'invitation immédiatement,
+**afin de** maintenir un registre exact des occupants même lorsque l'adresse email n'est pas disponible ou que l'invitation doit être différée.
+
+**Contexte** : Un syndic bénévole peut recevoir les informations d'un nouveau copropriétaire (nom, lot, date d'entrée) avant d'avoir son adresse email. Il doit pouvoir créer la fiche résident dans le registre, puis déclencher l'invitation ultérieurement depuis la liste — sans avoir à recréer la fiche.
+
+**Critères d'acceptation** :
+
+- **AC-GP-008-A** : Le formulaire de création d'un résident DOIT accepter la soumission sans adresse email — le résident est alors créé à l'état `no_access`.
+- **AC-GP-008-B** : Si une adresse email est saisie lors de la création, un bouton **« Inviter maintenant »** optionnel DOIT apparaître. L'invitation N'EST PAS déclenchée automatiquement — c'est un choix explicite du Syndic.
+- **AC-GP-008-C** : Depuis la liste des résidents, le Syndic DOIT pouvoir ouvrir la fiche d'un résident à l'état `no_access` pour y ajouter ou modifier son adresse email.
+- **AC-GP-008-D** : Depuis la liste des résidents, un résident à l'état `no_access` disposant d'un email DOIT afficher un bouton **« Envoyer l'invitation »** déclenchant le flux d'invitation existant (US-GP-002) sans quitter la liste.
+- **AC-GP-008-E** : Un résident à l'état `no_access` DOIT être distingué visuellement dans la liste par un badge dédié — distinct de `pending_invite` et `active`.
+- **AC-GP-008-F** : L'invitation tardive DOIT appliquer les mêmes règles que l'invitation initiale : token CSPRNG, usage unique, expiration 72 h, invalidation du précédent token en attente (AC-GP-002-A, AC-GP-002-B, AC-GP-002-G).
+- **AC-GP-008-G** : Un résident à l'état `no_access` PEUT être associé à un lot et avoir un rôle — ces données sont fonctionnelles (tantièmes, quorum AG) même sans accès à l'Application.
+
 ---
 
 ## 7. Exigences non fonctionnelles
@@ -383,10 +409,11 @@ Un même utilisateur peut être copropriétaire dans plusieurs copropriétés g�
 
 | US | Priorité | ACs | Domaine CRUD |
 |---|---|---|---|
-| US-GP-001 | Must | AC-GP-001-A à E | Liste résidents (C/R/U) |
+| US-GP-001 | Must | AC-GP-001-A à F | Liste résidents (C/R/U) — email optionnel |
 | US-GP-002 | Must | AC-GP-002-A à H | Invitations (C/R/D) |
 | US-GP-003 | Must | AC-GP-003-A à F | Mutations de propriété (C/R) |
 | US-GP-004 | Must | AC-GP-004-A à D | Archivage compte (U) |
 | US-GP-005 | Must | AC-GP-005-A à F | Anonymisation RGPD (U irréversible) |
 | US-GP-006 | Should | AC-GP-006-A à D | Rôles résidents (C/U/D) |
 | US-GP-007 | Should | AC-GP-007-A à C | Historique propriété (R) |
+| US-GP-008 | Must | AC-GP-008-A à G | Création sans invite + invitation différée (C/U) |
