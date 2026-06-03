@@ -54,15 +54,15 @@ const props = withDefaults(defineProps<{
     <div
       v-if="!props.readonly && (props.displayError || props.hint)"
       :key="props.displayError ? 'error' : 'hint'"
-      class="field-feedback-wrap"
+      class="text-xs text-error flex items-center gap-1 pt-1"
     >
+      <CIconInfo class="icon-2xs"/>
       <p
         v-if="props.displayError"
         :id="props.errorId"
-        class="field-feedback text-xs text-error flex items-center gap-1"
         role="alert"
       >
-        ✗ {{ props.displayError }}
+        {{ props.displayError }}
       </p>
       <p
         v-else
@@ -82,20 +82,6 @@ const props = withDefaults(defineProps<{
   height: 1px;
   opacity: 0;
   pointer-events: none;
-}
-
-.field-feedback-wrap {
-  display: grid;
-  grid-template-rows: 1fr;
-  width: 100%;
-}
-
-.field-feedback-wrap > .field-feedback {
-  overflow: hidden;
-}
-
-.field-feedback {
-  padding-top: var(--space-1);
 }
 
 .field-feedback-enter-active,
