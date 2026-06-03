@@ -52,6 +52,8 @@ export const authApi = {
     api.patch<LoginResponse>('/auth/me', data),
   acceptInvite: (token: string, password: string, last_name: string, first_name: string) =>
     api.post('/auth/invite/accept', { token, password, last_name, first_name }),
+  validateInvite: (token: string) =>
+    api.get<{ email: string; role: string | null; unit_id: string | null; expires_at: string }>(`/auth/invite/validate?token=${encodeURIComponent(token)}`),
   passkeyRegisterStart: () =>
     api.post('/auth/passkey/register/start'),
   passkeyRegisterFinish: (credential: unknown) =>
@@ -119,11 +121,15 @@ export const usersApi = {
   get: (id: string) =>
     api.get<User>(`/users/${id}`),
   invite: (email: string, role: string, unit_id?: string) =>
-    api.post('/users/invite', { email, role, unit_id }),
+    api.post<{ token: string; email: string; role: string; expires_at: string; invite_link: string }>('/users/invite', { email, role, unit_id }),
+  revokeInvite: (tokenId: string) =>
+    api.delete(`/users/invites/${tokenId}`),
   updateRoles: (id: string, roles: string[]) =>
     api.put(`/users/${id}/roles`, { roles }),
   deactivate: (id: string) =>
     api.delete(`/users/${id}`),
+  anonymize: (id: string, confirm_name: string) =>
+    api.post(`/users/${id}/anonymize`, { confirm_name }),
 }
 
 // ── Meetings ──────────────────────────────────────────────────────

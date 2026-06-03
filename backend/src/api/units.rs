@@ -6,7 +6,7 @@ use axum::{
     extract::{Path, State},
     http::StatusCode,
 };
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -14,7 +14,7 @@ use validator::Validate;
 
 use crate::{
     db::{self, AppState},
-    domain::{AuthUser, Role},
+    domain::{AuthUser, Role, owners},
     errors::{AppError, AppResult},
 };
 
@@ -247,22 +247,66 @@ pub async fn archive(
     Ok(StatusCode::NO_CONTENT)
 }
 
-/// GET /units/{id}/owners — EP-002
+/// GET /units/{id}/owners — ownership history (EP-002-S02, US-GP-007)
 pub async fn owners(
-    _state: State<Arc<AppState>>,
-    _auth: AuthUser,
-    _id: Path<Uuid>,
-) -> AppResult<StatusCode> {
-    Ok(StatusCode::NOT_IMPLEMENTED)
+    State(state): State<Arc<AppState>>,
+    auth: AuthUser,
+    Path(id): Path<Uuid>,
+) -> AppResult<Json<Vec<db::unit::OwnerRecord>>> {
+    // Managers and board members only (AC-GP-007-B)
+    if !auth.roles.iter().any(|r| *r == Role::Manager || *r == Role::BoardMember) {
+        return Err(AppError::Forbidden);
+    }
+    // Verify unit belongs to this building
+    db::unit::get(&state.pool, id, auth.building_id)
+        .await?
+        .ok_or(AppError::NotFound)?;
+
+    let records = db::unit::list_owners(&state.pool, id, auth.building_id).await?;
+    Ok(Json(records))
 }
 
-/// POST /units/{id}/transfer — EP-002
+#[derive(Deserialize, Validate)]
+pub struct TransferInput {
+    pub user_id: Uuid,
+    pub start_date: NaiveDate,
+}
+
+/// POST /units/{id}/transfer — ownership transfer (EP-002-S02, US-GP-003)
 pub async fn transfer(
-    _state: State<Arc<AppState>>,
-    _auth: AuthUser,
-    _id: Path<Uuid>,
+    State(state): State<Arc<AppState>>,
+    auth: AuthUser,
+    Path(id): Path<Uuid>,
+    Json(input): Json<TransferInput>,
 ) -> AppResult<StatusCode> {
-    Ok(StatusCode::NOT_IMPLEMENTED)
+    require_manager(&auth)?;
+
+    let today = chrono::Utc::now().naive_utc().date();
+    owners::validate_transfer_date(input.start_date, today)
+        .map_err(AppError::validation_code)?;
+
+    // Verify unit belongs to this building
+    db::unit::get(&state.pool, id, auth.building_id)
+        .await?
+        .ok_or(AppError::NotFound)?;
+
+    // Verify new owner exists and belongs to this building
+    let exists: bool = sqlx::query_scalar(
+        "SELECT EXISTS(SELECT 1 FROM user_building WHERE user_id = $1 AND building_id = $2)",
+    )
+    .bind(input.user_id)
+    .bind(auth.building_id)
+    .fetch_one(&state.pool)
+    .await?;
+
+    if !exists {
+        return Err(AppError::validation_code("errors.owners.new_owner_not_found"));
+    }
+
+    db::unit::transfer_ownership(&state.pool, id, auth.building_id, input.user_id, input.start_date)
+        .await?;
+
+    Ok(StatusCode::NO_CONTENT)
 }
 
 /// GET /units/{id}/charges — EP-004-S06

@@ -75,7 +75,6 @@
     "none": "Aucun",
     "compliant": "Pilotage conforme",
     "actionRequired": "Action requise"
-
   },
   "page": {
     "onboarding": "Bienvenue",
@@ -217,7 +216,9 @@
     "welcomeSubtitle": "Bienvenue dans votre espace copropriété",
     "brandEyebrow": "Gestion participative",
     "brandTitle": "La copropriété, simplement.",
-    "brandSub": "Transparence, conformité légale et gestion collaborative pour syndics bénévoles, copropriétaires et locataires."
+    "brandSub": "Transparence, conformité légale et gestion collaborative pour syndics bénévoles, copropriétaires et locataires.",
+    "tokenExpiredOrUsed": "Ce lien d'invitation a déjà été utilisé ou est expiré.",
+    "invalidToken": "Ce lien d'invitation est invalide."
   },
   "dashboard": {
     "newAction": "Nouvelle action",
@@ -1300,7 +1301,29 @@
     "deactivated": "Désactivé",
     "confirmArchiveTitle": "Archiver le lot",
     "confirmArchiveMessage": "Le lot {number} sera archivé. Cette action est réversible par un administrateur.",
-    "archiveSuccess": "Lot archivé"
+    "archiveSuccess": "Lot archivé",
+    "pendingInvite": "Invitation en attente",
+    "inviteExpires": "Expire le {date}",
+    "revokeInvite": "Révoquer l'invitation",
+    "confirmRevokeTitle": "Révoquer l'invitation",
+    "confirmRevokeMessage": "L'invitation envoyée à {email} sera révoquée. L'utilisateur ne pourra plus rejoindre avec ce lien.",
+    "revokeSuccess": "Invitation révoquée",
+    "inviteTitle": "Inviter un résident",
+    "inviteRole": "Rôle",
+    "inviteUnit": "Lot associé",
+    "inviteUnitHint": "Obligatoire pour le rôle locataire",
+    "inviteSendButton": "Envoyer l'invitation",
+    "inviteSuccess": "Invitation envoyée",
+    "inviteLinkTitle": "Lien d'invitation",
+    "inviteLinkHint": "Partagez ce lien avec la personne invitée. Il expire dans 72h.",
+    "inviteCopied": "Lien copié !",
+    "inviteCopyLink": "Copier le lien",
+    "inviteEmail": "Adresse e-mail",
+    "userActions": "Actions utilisateur",
+    "deactivateUser": "Désactiver l'accès",
+    "confirmDeactivateTitle": "Désactiver l'accès",
+    "confirmDeactivateMessage": "L'accès de {name} sera révoqué. Les données sont conservées.",
+    "deactivateSuccess": "Accès révoqué"
   },
   "registry": {
     "title": "Registre de la copropriété",

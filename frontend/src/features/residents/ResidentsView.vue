@@ -17,6 +17,8 @@ import CIconCurrency from '@/components/atoms/CIconCurrency.svg'
 import CIconUserPlus from '@/components/atoms/CIconUserPlus.svg'
 import CIconEdit from '@/components/atoms/CIconEdit.svg'
 import CIconArchive from '@/components/atoms/CIconArchive.svg'
+import CIconTrash from '@/components/atoms/CIconTrash.svg'
+import InviteUserModal from './InviteUserModal.vue'
 import { unitsApi, allocationKeysApi, usersApi } from '@/api'
 import { usePageLoader } from '@/composables/usePageLoader'
 import { useFormFeedback } from '@/composables/useFormFeedback'
@@ -250,7 +252,42 @@ const userColumns = computed(() => [
   { key: 'phone', label: t('common.phone') },
   { key: 'roles', label: t('common.roles') },
   { key: 'status', label: t('common.status') },
+  { key: 'actions', label: '', width: '1%' },
 ])
+
+// ── Invite user modal ─────────────────────────────────────────────
+const showInviteModal = ref(false)
+
+// ── Revoke invite ─────────────────────────────────────────────────
+const showRevokeModal = ref(false)
+const userToRevoke = ref<User | null>(null)
+const revokingInvite = ref(false)
+const revokeFeedback = useFormFeedback()
+const { schedule: scheduleRevokeClose, forceExpire: forceRevokeClose } = useAutoClose()
+watch(showRevokeModal, (open) => { if (!open) forceRevokeClose() })
+
+function openRevokeModal(user: User) {
+  userToRevoke.value = user
+  revokeFeedback.reset()
+  showRevokeModal.value = true
+}
+
+async function confirmRevokeInvite() {
+  if (revokeFeedback.status.value === 'success') { forceRevokeClose(); return }
+  if (!userToRevoke.value?.invite_token_id) return
+  revokingInvite.value = true
+  revokeFeedback.reset()
+  try {
+    await usersApi.revokeInvite(userToRevoke.value.invite_token_id)
+    revokeFeedback.setSuccess(t('residents.revokeSuccess'))
+    await loadData()
+    scheduleRevokeClose(() => { showRevokeModal.value = false })
+  } catch {
+    revokeFeedback.setError(t('common.error'))
+  } finally {
+    revokingInvite.value = false
+  }
+}
 </script>
 
 <template>
@@ -279,7 +316,7 @@ const userColumns = computed(() => [
             shrink="sm"
             :icon="CIconUserPlus"
             :title="t('residents.invite')"
-            disabled
+            @click="showInviteModal = true"
           />
         </div>
       </template>
@@ -404,8 +441,15 @@ const userColumns = computed(() => [
             >
               <template #cell-name="{ row }">
                 <div class="user-name">
-                  <CAvatar :name="`${row.first_name} ${row.last_name}`" />
-                  <span>{{ row.first_name }} {{ row.last_name }}</span>
+                  <CAvatar
+                    v-if="row.status !== 'pending_invite'"
+                    :name="`${row.first_name} ${row.last_name}`"
+                  />
+                  <span v-if="row.status !== 'pending_invite'">{{ row.first_name }} {{ row.last_name }}</span>
+                  <span
+                    v-else
+                    class="dim"
+                  >{{ t('residents.pendingInvite') }}</span>
                 </div>
               </template>
               <template #cell-email="{ row }">
@@ -431,9 +475,31 @@ const userColumns = computed(() => [
                 </div>
               </template>
               <template #cell-status="{ row }">
-                <CBadge :variant="row.active ? 'open' : 'closed'">
+                <CBadge
+                  v-if="row.status === 'pending_invite'"
+                  variant="pending"
+                >
+                  {{ t('residents.pendingInvite') }}
+                </CBadge>
+                <CBadge
+                  v-else
+                  :variant="row.active ? 'open' : 'closed'"
+                >
                   {{ row.active ? t('common.active') : t('residents.deactivated') }}
                 </CBadge>
+              </template>
+              <template #cell-actions="{ row }">
+                <div class="action-btns">
+                  <CBtn
+                    v-if="row.status === 'pending_invite'"
+                    variant="icon"
+                    :title="t('residents.revokeInvite')"
+                    :aria-label="t('residents.revokeInvite')"
+                    :icon="CIconTrash"
+                    class="tone--err"
+                    @click="openRevokeModal(row)"
+                  />
+                </div>
               </template>
             </CDataTable>
           </CCard>
@@ -545,6 +611,45 @@ const userColumns = computed(() => [
               :loading="archivingUnit"
               :closing="archiveFeedback.status.value === 'success'"
               @click="confirmArchiveUnit"
+            />
+          </CFormActions>
+        </template>
+      </CModal>
+
+      <!-- Invite user modal -->
+      <InviteUserModal
+        :open="showInviteModal"
+        :units="allUnits"
+        @update:open="showInviteModal = $event"
+        @invited="loadData"
+      />
+
+      <!-- Revoke invite modal -->
+      <CModal
+        :open="showRevokeModal"
+        :title="t('residents.confirmRevokeTitle')"
+        size="sm"
+        @update:open="showRevokeModal = $event"
+      >
+        <p class="body-md">
+          {{ t('residents.confirmRevokeMessage', { email: userToRevoke?.email ?? '' }) }}
+        </p>
+        <template #footer>
+          <CFormActions
+            :status="revokeFeedback.status.value"
+            :message="revokeFeedback.message.value"
+          >
+            <CBtn
+              variant="ghost"
+              :title="t('common.cancel')"
+              @click="showRevokeModal = false"
+            />
+            <CBtn
+              variant="danger"
+              :title="t('residents.revokeInvite')"
+              :loading="revokingInvite"
+              :closing="revokeFeedback.status.value === 'success'"
+              @click="confirmRevokeInvite"
             />
           </CFormActions>
         </template>

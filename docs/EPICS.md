@@ -61,22 +61,22 @@ La fiche identitaire de la copropriété (nom, adresse, SIRET syndic), le règle
 
 ### EP-002 — Gestion des propriétaires
 
-**Statut :** en cours | **MVP :** oui | **Réf. PRD :** Fondations légales
+**Statut :** en cours ⏳ | **MVP :** oui | **Réf. PRD :** Fondations légales
 
-**État code actuel :** partiel ; lecture des utilisateurs et base d'invitation présentes, mais les flux coeur propriétaires/mutations restent non livrés côté produit (`/units/{id}/owners` et `/units/{id}/transfer` encore en `501 NOT_IMPLEMENTED`).
+**État code actuel :** S01–S05 et S08 livrés côté backend (domaine + DB + API) et frontend (liste résidents, invitation tokenisée avec TTL, révocation d’invitation, mutation de lot avec historique, anonymisation RGPD, accès par lien `/invite/:token`). Migration `0026_user_token_unit_id.sql` appliquée. S06, S07, S09, S10, S12 hors scope MVP.
 
 Historique de propriété tracé avec dates de cession, invitation par lien tokenisé, anonymisation RGPD à la demande (conservation des données comptables 10 ans).
 
 **Stories :**
 
-* `EP-002-S01` — Créer un propriétaire et l’associer à un ou plusieurs lots
-* `EP-002-S02` — Gérer l’historique de propriété avec dates d’entrée, de sortie et cessions
-* `EP-002-S03` — Inviter un propriétaire par lien tokenisé pour activer son accès
-* `EP-002-S04` — Consulter la fiche propriétaire avec lots détenus, rôle et état d’activation
-* `EP-002-S05` — Lancer l'anonymisation RGPD en préservant les obligations de conservation comptable (LEGAL.md §8)
+* `EP-002-S01` ⏳ — Créer un propriétaire et l’associer à un ou plusieurs lots
+* `EP-002-S02` ⏳ — Gérer l’historique de propriété avec dates d’entrée, de sortie et cessions
+* `EP-002-S03` ⏳ — Inviter un propriétaire par lien tokenisé pour activer son accès
+* `EP-002-S04` ⏳ — Consulter la fiche propriétaire avec lots détenus, rôle et état d’activation
+* `EP-002-S05` ⏳ — Lancer l’anonymisation RGPD en préservant les obligations de conservation comptable (LEGAL.md §8)
 * `EP-002-S06` — Générer l'état daté d'un lot à la demande (charges courantes, arriérés, fonds travaux, travaux votés non réalisés, procédures en cours) dans un délai de 15 jours (LEGAL.md §7.1)
 * `EP-002-S07` — Générer le pré-état daté pour signature du compromis de vente (synthèse financière de la copropriété) (LEGAL.md §7.2)
-* `EP-002-S08` — Garantir en mutation que les tantièmes restent attachés au lot (pas au propriétaire) et exposer la quote-part vendeur/acquéreur à date (LEGAL.md §2.4)
+* `EP-002-S08` ⏳ — Garantir en mutation que les tantièmes restent attachés au lot (pas au propriétaire) et exposer la quote-part vendeur/acquéreur à date (LEGAL.md §2.4)
 * `EP-002-S09` — Exporter les données personnelles d'un copropriétaire (droit d'accès RGPD) avec périmètre horodaté et traçabilité de la demande (LEGAL.md §8)
 * `EP-002-S10` — Enregistrer et suivre les procédures judiciaires en cours impliquant le syndicat (demandeur ou défendeur), avec date d'ouverture, type, statut ; requis pour l'état daté (LEGAL.md §7.1, §10)
 * `EP-002-S11` — Tenir un registre de gouvernance (syndic en exercice, membres du conseil syndical, périodes de mandat) pour auditer la séparation des organes (LEGAL.md §1.7, §1.8)

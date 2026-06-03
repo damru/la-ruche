@@ -1,6 +1,7 @@
 pub mod charges;
 pub mod convocation_checklist;
 pub mod minutes_draft;
+pub mod owners;
 pub mod processor;
 pub mod reminders;
 pub mod vote;

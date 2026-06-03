@@ -97,8 +97,11 @@ export interface User {
   first_name: string
   active: boolean
   roles: Role[]
-  created_at: string
-  phone?: string
+  created_at?: string
+  phone?: string | null
+  status?: 'active' | 'pending_invite'
+  expires_at?: string
+  invite_token_id?: string
 }
 
 export interface MeetingScrutineer {
