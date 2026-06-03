@@ -19,6 +19,8 @@ import CIconEdit from '@/components/atoms/CIconEdit.svg'
 import CIconArchive from '@/components/atoms/CIconArchive.svg'
 import CIconTrash from '@/components/atoms/CIconTrash.svg'
 import InviteUserModal from './InviteUserModal.vue'
+import CreateResidentModal from './CreateResidentModal.vue'
+import SendInviteModal from './SendInviteModal.vue'
 import { unitsApi, allocationKeysApi, usersApi } from '@/api'
 import { usePageLoader } from '@/composables/usePageLoader'
 import { useFormFeedback } from '@/composables/useFormFeedback'
@@ -255,8 +257,20 @@ const userColumns = computed(() => [
   { key: 'actions', label: '', width: '1%' },
 ])
 
-// ── Invite user modal ─────────────────────────────────────────────
+// ── Invite user modal (email-first flow) ─────────────────────────
 const showInviteModal = ref(false)
+
+// ── Create resident modal ─────────────────────────────────────────
+const showCreateResidentModal = ref(false)
+
+// ── Send invite to no_access user ─────────────────────────────────
+const showSendInviteModal = ref(false)
+const userToInvite = ref<User | null>(null)
+
+function openSendInviteModal(user: User) {
+  userToInvite.value = user
+  showSendInviteModal.value = true
+}
 
 // ── Revoke invite ─────────────────────────────────────────────────
 const showRevokeModal = ref(false)
@@ -315,8 +329,8 @@ async function confirmRevokeInvite() {
             size="sm"
             shrink="sm"
             :icon="CIconUserPlus"
-            :title="t('residents.invite')"
-            @click="showInviteModal = true"
+            :title="t('residents.addResident')"
+            @click="showCreateResidentModal = true"
           />
         </div>
       </template>
@@ -453,7 +467,14 @@ async function confirmRevokeInvite() {
                 </div>
               </template>
               <template #cell-email="{ row }">
-                <span class="dim">{{ row.email }}</span>
+                <span
+                  v-if="row.email"
+                  class="dim"
+                >{{ row.email }}</span>
+                <span
+                  v-else
+                  class="dim"
+                >—</span>
               </template>
               <template #cell-phone="{ row }">
                 <a
@@ -482,6 +503,12 @@ async function confirmRevokeInvite() {
                   {{ t('residents.pendingInvite') }}
                 </CBadge>
                 <CBadge
+                  v-else-if="row.status === 'no_access'"
+                  variant="disabled"
+                >
+                  {{ t('residents.noAccess') }}
+                </CBadge>
+                <CBadge
                   v-else
                   :variant="row.active ? 'open' : 'closed'"
                 >
@@ -490,6 +517,14 @@ async function confirmRevokeInvite() {
               </template>
               <template #cell-actions="{ row }">
                 <div class="action-btns">
+                  <CBtn
+                    v-if="row.status === 'no_access'"
+                    variant="icon"
+                    :title="t('residents.sendInvite')"
+                    :aria-label="t('residents.sendInvite')"
+                    :icon="CIconUserPlus"
+                    @click="openSendInviteModal(row)"
+                  />
                   <CBtn
                     v-if="row.status === 'pending_invite'"
                     variant="icon"
@@ -616,11 +651,27 @@ async function confirmRevokeInvite() {
         </template>
       </CModal>
 
-      <!-- Invite user modal -->
+      <!-- Invite user modal (email-first flow) -->
       <InviteUserModal
         :open="showInviteModal"
         :units="allUnits"
         @update:open="showInviteModal = $event"
+        @invited="loadData"
+      />
+
+      <!-- Create resident modal (name-first, no invite required) -->
+      <CreateResidentModal
+        :open="showCreateResidentModal"
+        :units="allUnits"
+        @update:open="showCreateResidentModal = $event"
+        @created="loadData"
+      />
+
+      <!-- Send invite to no_access user -->
+      <SendInviteModal
+        :open="showSendInviteModal"
+        :user="userToInvite"
+        @update:open="showSendInviteModal = $event"
         @invited="loadData"
       />
 

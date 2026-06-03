@@ -53,7 +53,7 @@ export const authApi = {
   acceptInvite: (token: string, password: string, last_name: string, first_name: string) =>
     api.post('/auth/invite/accept', { token, password, last_name, first_name }),
   validateInvite: (token: string) =>
-    api.get<{ email: string; role: string | null; unit_id: string | null; expires_at: string }>(`/auth/invite/validate?token=${encodeURIComponent(token)}`),
+    api.get<{ email: string; role: string | null; unit_id: string | null; expires_at: string; first_name?: string | null; last_name?: string | null }>(`/auth/invite/validate?token=${encodeURIComponent(token)}`),
   passkeyRegisterStart: () =>
     api.post('/auth/passkey/register/start'),
   passkeyRegisterFinish: (credential: unknown) =>
@@ -115,13 +115,15 @@ export const unitsApi = {
 }
 
 // ── Users ─────────────────────────────────────────────────────────
+type InviteResponse = { token: string; email: string; role: string; expires_at: string; invite_link: string }
+
 export const usersApi = {
   list: () =>
     api.get<User[]>('/users'),
   get: (id: string) =>
     api.get<User>(`/users/${id}`),
   invite: (email: string, role: string, unit_id?: string) =>
-    api.post<{ token: string; email: string; role: string; expires_at: string; invite_link: string }>('/users/invite', { email, role, unit_id }),
+    api.post<InviteResponse>('/users/invite', { email, role, unit_id }),
   revokeInvite: (tokenId: string) =>
     api.delete(`/users/invites/${tokenId}`),
   updateRoles: (id: string, roles: string[]) =>
@@ -130,6 +132,10 @@ export const usersApi = {
     api.delete(`/users/${id}`),
   anonymize: (id: string, confirm_name: string) =>
     api.post(`/users/${id}/anonymize`, { confirm_name }),
+  createResident: (data: { first_name: string; last_name: string; email?: string | null; role: string; unit_id?: string | null }) =>
+    api.post<{ id: string }>('/users', data),
+  sendInvite: (id: string, email?: string | null) =>
+    api.post<InviteResponse>(`/users/${id}/invite`, { email }),
 }
 
 // ── Meetings ──────────────────────────────────────────────────────

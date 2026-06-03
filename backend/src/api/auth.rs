@@ -184,7 +184,7 @@ pub async fn login(
         &state.pool,
         user.id,
         building_id,
-        &user.email,
+        user.email.as_deref().unwrap_or(""),
         &refresh_hash,
         expire_at,
     )
@@ -293,7 +293,7 @@ pub async fn reset_password_request(
         ));
         db::user::create_token(
             &state.pool,
-            &user.email,
+            user.email.as_deref().unwrap_or(""),
             "reset_password",
             &hash,
             None,
@@ -302,7 +302,8 @@ pub async fn reset_password_request(
         )
         .await?;
         // TODO post-MVP: send email with reset link /reset/{plain}
-        tracing::info!(email = %user.email, "Password reset token generated (email not sent -- post-MVP)");
+        let email_str = user.email.as_deref().unwrap_or("");
+        tracing::info!(email = %email_str, "Password reset token generated (email not sent -- post-MVP)");
         let _ = plain;
     }
 
@@ -359,6 +360,8 @@ pub async fn validate_invite(
         "role": info.invited_role,
         "unit_id": info.unit_id,
         "expires_at": info.expires_at,
+        "first_name": info.first_name,
+        "last_name": info.last_name,
     })))
 }
 
@@ -394,33 +397,56 @@ pub async fn invite_accept(
 
     let hash = password::hash_password(&input.password, &state.cfg.auth)?;
 
-    // Create or update user account
-    let user = match db::user::find_by_email(&state.pool, email).await? {
-        Some(existing) => {
-            // User already exists — update name/password and add to building
-            sqlx::query(
-                "UPDATE user_account SET last_name = $2, first_name = $3, password_hash = $4, active = TRUE, updated_at = NOW() WHERE id = $1"
-            )
-            .bind(existing.id)
-            .bind(&input.last_name)
-            .bind(&input.first_name)
-            .bind(&hash)
-            .execute(&state.pool)
-            .await?;
-            existing
-        }
-        None => {
-            db::user::create(&state.pool, email, &input.last_name, &input.first_name, &hash).await?
+    let user_id = if let Some(linked_id) = info.user_id {
+        // Token linked to a pre-registered no_access user — activate their account.
+        // Email and names are set; only password (and possibly email) need updating.
+        sqlx::query(
+            r#"UPDATE user_account
+               SET email = $2, last_name = $3, first_name = $4, password_hash = $5,
+                   active = TRUE, updated_at = NOW()
+               WHERE id = $1"#,
+        )
+        .bind(linked_id)
+        .bind(email)
+        .bind(&input.last_name)
+        .bind(&input.first_name)
+        .bind(&hash)
+        .execute(&state.pool)
+        .await?;
+        linked_id
+    } else {
+        // Standard flow: create or update user account by email
+        match db::user::find_by_email(&state.pool, email).await? {
+            Some(existing) => {
+                sqlx::query(
+                    r#"UPDATE user_account
+                       SET last_name = $2, first_name = $3, password_hash = $4,
+                           active = TRUE, updated_at = NOW()
+                       WHERE id = $1"#,
+                )
+                .bind(existing.id)
+                .bind(&input.last_name)
+                .bind(&input.first_name)
+                .bind(&hash)
+                .execute(&state.pool)
+                .await?;
+                existing.id
+            }
+            None => {
+                db::user::create(&state.pool, email, &input.last_name, &input.first_name, &hash)
+                    .await?
+                    .id
+            }
         }
     };
 
-    // Add to building
-    db::user::create_user_building(&state.pool, user.id, building_id, role).await?;
+    // Add to building (ON CONFLICT DO NOTHING handles pre-registered users)
+    db::user::create_user_building(&state.pool, user_id, building_id, role).await?;
 
     // If tenant invite with unit_id, create unit_owner record
     if let Some(unit_id) = info.unit_id {
         let today = chrono::Utc::now().naive_utc().date();
-        db::unit::transfer_ownership(&state.pool, unit_id, building_id, user.id, today).await?;
+        db::unit::transfer_ownership(&state.pool, unit_id, building_id, user_id, today).await?;
     }
 
     Ok(StatusCode::CREATED)
@@ -450,7 +476,7 @@ pub async fn me(
         roles: auth.roles.iter().map(|r| r.to_string()).collect(),
         last_name: user.last_name,
         first_name: user.first_name,
-        email: Some(user.email),
+        email: user.email,
         phone,
     }))
 }
@@ -477,7 +503,7 @@ pub async fn update_me(
         roles: auth.roles.iter().map(|r| r.to_string()).collect(),
         last_name: user.last_name,
         first_name: user.first_name,
-        email: Some(user.email),
+        email: user.email,
         phone,
     }))
 }

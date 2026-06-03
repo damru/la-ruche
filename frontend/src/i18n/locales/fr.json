@@ -1323,7 +1323,19 @@
     "deactivateUser": "Désactiver l'accès",
     "confirmDeactivateTitle": "Désactiver l'accès",
     "confirmDeactivateMessage": "L'accès de {name} sera révoqué. Les données sont conservées.",
-    "deactivateSuccess": "Accès révoqué"
+    "deactivateSuccess": "Accès révoqué",
+    "addResident": "Ajouter un résident",
+    "noAccess": "Sans accès",
+    "createResidentTitle": "Ajouter un résident",
+    "createResidentButton": "Ajouter",
+    "createResidentSuccess": "Résident ajouté",
+    "emailOptional": "Adresse e-mail (optionnelle)",
+    "emailOptionalHint": "Si renseignée, l'invitation peut être envoyée depuis la liste.",
+    "emailAlreadyExists": "Cette adresse e-mail est déjà utilisée",
+    "userAlreadyHasAccess": "Cet utilisateur a déjà un accès",
+    "sendInvite": "Envoyer une invitation",
+    "sendInviteTitle": "Envoyer une invitation",
+    "sendInviteMessage": "Envoyer un lien d'invitation à {name}."
   },
   "registry": {
     "title": "Registre de la copropriété",

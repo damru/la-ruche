@@ -36,6 +36,8 @@ onMounted(async () => {
   try {
     const res = await authApi.validateInvite(token.value)
     prefilledEmail.value = res.data.email
+    if (res.data.first_name) form.first_name = res.data.first_name
+    if (res.data.last_name) form.last_name = res.data.last_name
   } catch (e: unknown) {
     const status = (e as { response?: { status?: number } })?.response?.status
     if (status === 409) {

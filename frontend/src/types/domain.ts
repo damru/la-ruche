@@ -59,7 +59,7 @@ export interface UnitOwner {
   id: string
   first_name: string
   last_name: string
-  email: string
+  email?: string | null
 }
 
 export interface Unit {
@@ -92,16 +92,17 @@ export interface UnitShare {
 
 export interface User {
   id: string
-  email: string
+  email?: string | null
   last_name: string
   first_name: string
   active: boolean
   roles: Role[]
   created_at?: string
   phone?: string | null
-  status?: 'active' | 'pending_invite'
+  status?: 'active' | 'pending_invite' | 'no_access'
   expires_at?: string
   invite_token_id?: string
+  has_access?: boolean
 }
 
 export interface MeetingScrutineer {

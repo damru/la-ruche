@@ -49,6 +49,24 @@ pub struct AnonymizeInput {
     pub confirm_name: String,
 }
 
+#[derive(Deserialize, Validate)]
+pub struct CreateResidentInput {
+    #[validate(length(min = 1))]
+    pub first_name: String,
+    #[validate(length(min = 1))]
+    pub last_name: String,
+    #[validate(email)]
+    pub email: Option<String>,
+    pub role: String,
+    pub unit_id: Option<Uuid>,
+}
+
+#[derive(Deserialize, Validate)]
+pub struct SendInviteInput {
+    #[validate(email)]
+    pub email: Option<String>,
+}
+
 #[derive(Serialize)]
 pub struct UserUnitSummary {
     pub unit_id: Uuid,
@@ -60,11 +78,12 @@ pub struct UserUnitSummary {
 #[derive(Serialize)]
 pub struct UserDetailResponse {
     pub id: Uuid,
-    pub email: String,
+    pub email: Option<String>,
     pub last_name: String,
     pub first_name: String,
     pub phone: Option<String>,
     pub active: bool,
+    pub has_access: bool,
     pub roles: Vec<String>,
     pub created_at: DateTime<Utc>,
     pub units: Vec<UserUnitSummary>,
@@ -182,6 +201,7 @@ pub async fn get(
         first_name: detail.first_name,
         phone: detail.phone,
         active: detail.active,
+        has_access: detail.has_access,
         roles: detail.roles,
         created_at: detail.created_at,
         units,
@@ -275,4 +295,132 @@ pub async fn revoke_invite(
         return Err(AppError::NotFound);
     }
     Ok(StatusCode::NO_CONTENT)
+}
+
+/// POST /users — create a resident without immediate invitation (EP-002-S13, US-GP-008)
+pub async fn create(
+    State(state): State<Arc<AppState>>,
+    auth: AuthUser,
+    Json(input): Json<CreateResidentInput>,
+) -> AppResult<(StatusCode, Json<serde_json::Value>)> {
+    require_manager(&auth)?;
+    input
+        .validate()
+        .map_err(|_| AppError::validation_code("errors.users.invalid_create_payload"))?;
+
+    owners::validate_resident_creation(&input.first_name, &input.last_name)
+        .map_err(AppError::validation_code)?;
+
+    let role = input.role.as_str();
+    if !["manager", "board_member", "co_owner", "tenant"].contains(&role) {
+        return Err(AppError::validation_code("errors.users.invalid_role"));
+    }
+
+    let email = input.email.as_deref().map(str::to_lowercase);
+    let user_id = db::user::create_resident(
+        &state.pool,
+        &input.first_name,
+        &input.last_name,
+        email.as_deref(),
+    )
+    .await
+    .map_err(|e| {
+        // Unique partial index violation → duplicate email
+        if e.to_string().contains("user_account_email_unique") {
+            AppError::Conflict("errors.users.email_already_exists".into())
+        } else {
+            e
+        }
+    })?;
+
+    db::user::create_user_building(&state.pool, user_id, auth.building_id, role).await?;
+
+    Ok((StatusCode::CREATED, Json(serde_json::json!({ "id": user_id }))))
+}
+
+/// POST /users/{id}/invite — send invitation to an existing no_access resident (EP-002-S13, AC-GP-008-D/F)
+pub async fn send_invite(
+    State(state): State<Arc<AppState>>,
+    auth: AuthUser,
+    Path(id): Path<Uuid>,
+    Json(input): Json<SendInviteInput>,
+) -> AppResult<(StatusCode, Json<InviteResponse>)> {
+    require_manager(&auth)?;
+
+    if let Some(ref e) = input.email {
+        input
+            .validate()
+            .map_err(|_| AppError::validation_code("errors.users.invalid_email"))?;
+        let _ = e; // validated
+    }
+
+    let detail = db::user::get_user_detail(&state.pool, id, auth.building_id)
+        .await?
+        .ok_or(AppError::NotFound)?;
+
+    if detail.has_access {
+        return Err(AppError::validation_code("errors.users.user_already_has_access"));
+    }
+
+    // Resolve email: use provided email or existing one
+    let email = match (input.email.as_deref(), detail.email.as_deref()) {
+        (Some(new_email), _) => new_email.to_lowercase(),
+        (None, Some(existing)) => existing.to_string(),
+        (None, None) => {
+            return Err(AppError::validation_code("errors.users.no_email_for_invite"));
+        }
+    };
+
+    // If a new email was provided, update the user account
+    if let Some(ref new_email) = input.email {
+        let normalized = new_email.to_lowercase();
+        if detail.email.as_deref() != Some(&normalized) {
+            db::user::update_user_email(&state.pool, id, &normalized)
+                .await
+                .map_err(|e| {
+                    if e.to_string().contains("user_account_email_unique") {
+                        AppError::Conflict("errors.users.email_already_exists".into())
+                    } else {
+                        e
+                    }
+                })?;
+        }
+    }
+
+    // Invalidate any prior pending invites for this user (AC-GP-002-G)
+    db::user::revoke_pending_invites_by_user_id(&state.pool, id, auth.building_id).await?;
+
+    let expires_at = Utc::now() + Duration::hours(72);
+    let (plain, hash, _) = token::generate_token(Duration::hours(72));
+
+    let role = detail.roles.first().map(|r| r.as_str()).unwrap_or("co_owner");
+
+    db::user::create_invite_for_existing_user(
+        &state.pool,
+        id,
+        &email,
+        &hash,
+        auth.building_id,
+        role,
+        None,
+        expires_at,
+    )
+    .await?;
+
+    let invite_link = format!(
+        "{}/invite/{}",
+        state.cfg.app.public_url.trim_end_matches('/'),
+        plain
+    );
+
+    Ok((
+        StatusCode::CREATED,
+        Json(InviteResponse {
+            token: plain,
+            email,
+            role: role.to_string(),
+            expires_at,
+            invite_link,
+        }),
+    ))
 }

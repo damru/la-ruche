@@ -22,6 +22,18 @@ pub fn validate_anonymize_confirmation(stored_full_name: &str, confirm_name: &st
     stored_full_name.trim().eq_ignore_ascii_case(confirm_name.trim())
 }
 
+/// Validate required name fields when creating a resident without an invitation.
+/// Email is NOT validated here — it is optional and validated at the API boundary.
+pub fn validate_resident_creation(first_name: &str, last_name: &str) -> Result<(), &'static str> {
+    if first_name.trim().is_empty() {
+        return Err("errors.residents.first_name_required");
+    }
+    if last_name.trim().is_empty() {
+        return Err("errors.residents.last_name_required");
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -87,6 +99,44 @@ mod tests {
     #[test]
     fn anonymize_confirmation_mismatch_rejected() {
         assert!(!validate_anonymize_confirmation("Jean Dupont", "Marie Martin"));
+    }
+
+    // ── US-GP-008: validate_resident_creation ────────────────────
+
+    #[test]
+    fn resident_creation_valid_names() {
+        assert!(validate_resident_creation("Marie", "Dupont").is_ok());
+    }
+
+    #[test]
+    fn resident_creation_empty_first_name_fails() {
+        let result = validate_resident_creation("", "Dupont");
+        assert_eq!(result, Err("errors.residents.first_name_required"));
+    }
+
+    #[test]
+    fn resident_creation_whitespace_first_name_fails() {
+        let result = validate_resident_creation("   ", "Dupont");
+        assert_eq!(result, Err("errors.residents.first_name_required"));
+    }
+
+    #[test]
+    fn resident_creation_empty_last_name_fails() {
+        let result = validate_resident_creation("Marie", "");
+        assert_eq!(result, Err("errors.residents.last_name_required"));
+    }
+
+    #[test]
+    fn resident_creation_whitespace_last_name_fails() {
+        let result = validate_resident_creation("Marie", "  ");
+        assert_eq!(result, Err("errors.residents.last_name_required"));
+    }
+
+    #[test]
+    fn resident_creation_no_email_is_a_domain_noop() {
+        // Email absence is an Option at the API layer; domain validates names only.
+        // This test documents that validate_resident_creation is indifferent to email.
+        assert!(validate_resident_creation("Jean", "Martin").is_ok());
     }
 
     #[test]
