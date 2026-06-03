@@ -1042,7 +1042,6 @@ async function submitDelete() {
                     class="inline-flex items-center gap-1 w-fit"
                   >
                     <CIconXCircle
-                      
                       class="icon-xs"
                     />
                     {{ t('claims.publishedOn', { date: formatDate(claim.published_at) }) }}
@@ -1082,6 +1081,7 @@ async function submitDelete() {
       @update:open="showCreateModal = $event"
     >
       <CForm
+        id="claim-create"
         @submit="submitCreate"
       >
         <CFormInput
@@ -1187,7 +1187,8 @@ async function submitDelete() {
             :title="t('common.save')"
             :loading="savingClaim || uploadingDocuments"
             :closing="createFeedback.status.value === 'success'"
-            @click="submitCreate"
+            type="submit"
+            form="claim-create"
           />
         </CFormActions>
       </template>
@@ -1200,6 +1201,7 @@ async function submitDelete() {
       @update:open="value => !value && (claimToEdit = null)"
     >
       <CForm
+        id="claim-edit"
         @submit="submitEdit"
       >
         <CFormInput
@@ -1365,7 +1367,8 @@ async function submitDelete() {
             :title="t('common.save')"
             :loading="editingClaim || uploadingEditDocuments"
             :closing="editFeedback.status.value === 'success'"
-            @click="submitEdit"
+            type="submit"
+            form="claim-edit"
           />
         </CFormActions>
       </template>
@@ -1378,6 +1381,7 @@ async function submitDelete() {
       @update:open="value => !value && (claimToTransmit = null)"
     >
       <CForm
+        id="claim-transmit"
         @submit="submitTransmit"
       >
         <CFormInput
@@ -1404,7 +1408,8 @@ async function submitDelete() {
             variant="primary"
             :loading="transmittingClaim"
             :closing="transmitFeedback.status.value === 'success'"
-            @click="submitTransmit"
+            type="submit"
+            form="claim-transmit"
           >
             {{ t('claims.transmit') }}
           </CBtn>
@@ -1419,6 +1424,7 @@ async function submitDelete() {
       @update:open="value => !value && (claimToClose = null)"
     >
       <CForm
+        id="claim-close"
         @submit="submitClose"
       >
         <CFormInput
@@ -1510,7 +1516,8 @@ async function submitDelete() {
             variant="primary"
             :loading="closingClaim || uploadingCloseDocuments"
             :closing="closeFeedback.status.value === 'success'"
-            @click="submitClose"
+            type="submit"
+            form="claim-close"
           >
             {{ t('claims.close') }}
           </CBtn>

@@ -316,6 +316,7 @@ async function saveMeeting() {
       @update:open="showCreateModal = $event"
     >
       <CForm
+        id="meeting-create"
         @submit="saveMeeting"
       >
         <CFormSelect
@@ -380,10 +381,11 @@ async function saveMeeting() {
           />
           <CBtn
             variant="primary"
+            type="submit"
+            form="meeting-create"
             :title="t('common.save')"
             :loading="saving"
             :closing="createFeedback.status.value === 'success'"
-            @click="saveMeeting"
           />
         </CFormActions>
       </template>

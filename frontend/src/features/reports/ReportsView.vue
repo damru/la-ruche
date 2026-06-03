@@ -734,6 +734,7 @@ function photoPreview(file: File): string {
     >
       <CForm
         @submit="submitCreate"
+        id="create-report"
       >
         <CFormInput
           v-model="createForm.title"
@@ -825,7 +826,8 @@ function photoPreview(file: File): string {
             :title="t('common.save')"
             :loading="saving || uploadingPhotos"
             :closing="createFeedback.status.value === 'success'"
-            @click="submitCreate"
+            type="submit"
+            form="create-report"
           />
         </CFormActions>
       </template>
@@ -838,11 +840,16 @@ function photoPreview(file: File): string {
       size="sm"
       @update:open="v => !v && (reportToUpdate = null)"
     >
-      <CFormSelect
-        v-model="statusForm"
-        :label="t('reports.statusLabel')"
-        :options="reportStatusOptions"
-      />
+      <CForm
+        id="report-update-status"
+        @submit="submitUpdateStatus"
+      >
+        <CFormSelect
+          v-model="statusForm"
+          :label="t('reports.statusLabel')"
+          :options="reportStatusOptions"
+        />
+      </CForm>
       <template #footer>
         <CFormActions
           :status="updateFeedback.status.value"
@@ -858,7 +865,8 @@ function photoPreview(file: File): string {
             :title="t('common.save')"
             :loading="updating"
             :closing="updateFeedback.status.value === 'success'"
-            @click="submitUpdateStatus"
+            type="submit"
+            form="report-update-status"
           />
         </CFormActions>
       </template>
@@ -874,11 +882,16 @@ function photoPreview(file: File): string {
       <p class="body-xs">
         {{ t('reports.confirmConvertMessage', { title: reportToConvert?.title ?? '' }) }}
       </p>
-      <CFormSelect
-        v-model="convertPriority"
-        :label="t('tasks.priorityLabel')"
-        :options="taskPriorityOptions"
-      />
+      <CForm
+        id="report-convert"
+        @submit="submitConvert"
+      >
+        <CFormSelect
+          v-model="convertPriority"
+          :label="t('tasks.priorityLabel')"
+          :options="taskPriorityOptions"
+        />
+      </CForm>
       <template #footer>
         <CFormActions
           :status="convertFeedback.status.value"
@@ -894,7 +907,8 @@ function photoPreview(file: File): string {
             :title="t('reports.convertToTask')"
             :loading="converting"
             :closing="convertFeedback.status.value === 'success'"
-            @click="submitConvert"
+            type="submit"
+            form="report-convert"
           />
         </CFormActions>
       </template>
@@ -910,6 +924,7 @@ function photoPreview(file: File): string {
     >
       <CForm
         @submit="submitEdit"
+        id="edit-report"
       >
         <CFormInput
           v-model="editForm.title"
@@ -1039,7 +1054,8 @@ function photoPreview(file: File): string {
             :title="t('common.save')"
             :loading="editSaving || editUploadingPhotos"
             :closing="editFeedback.status.value === 'success'"
-            @click="submitEdit"
+            type="submit"
+            form="edit-report"
           />
         </CFormActions>
       </template>

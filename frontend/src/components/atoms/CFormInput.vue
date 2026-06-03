@@ -1,5 +1,7 @@
 <script setup lang="ts">
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useFieldValidation } from '@/composables/useFieldValidation'
 
 const props = withDefaults(defineProps<{
   modelValue?: string | number
@@ -46,6 +48,44 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 const inputId = props.id ?? `c-input-${Math.random().toString(36).slice(2, 7)}`
+const inputRef = ref<HTMLInputElement | null>(null)
+const showPassword = ref(false)
+const isPasswordType = computed(() => props.type === 'password')
+const inputType = computed(() => {
+  if (!isPasswordType.value) return props.type
+  return showPassword.value ? 'text' : 'password'
+})
+const passwordToggleAriaLabel = computed(() =>
+  showPassword.value ? t('auth.hidePassword') : t('auth.showPassword'),
+)
+const {
+  displayError,
+  onFieldBlur,
+  onFieldInput,
+} = useFieldValidation({
+  externalError: () => props.error,
+  readonly: () => props.readonly,
+  watchSources: [
+    () => props.modelValue,
+    () => props.required,
+    () => props.readonly,
+  ],
+  getInternalError: () => {
+    const input = inputRef.value
+    if (!input || input.validity.valid) return undefined
+    return input.validity.valueMissing ? t('common.required') : input.validationMessage
+  },
+})
+
+function handleInput(event: Event) {
+  emit('update:modelValue', (event.target as HTMLInputElement).value)
+  onFieldInput()
+}
+
+function handleBlur(event: FocusEvent) {
+  onFieldBlur()
+  emit('blur', event)
+}
 </script>
 
 <template>
@@ -81,7 +121,8 @@ const inputId = props.id ?? `c-input-${Math.random().toString(36).slice(2, 7)}`
       </span>
       <input
         :id="inputId"
-        :type="type"
+        ref="inputRef"
+        :type="inputType"
         :value="modelValue"
         :placeholder="placeholder"
         :disabled="disabled"
@@ -93,43 +134,53 @@ const inputId = props.id ?? `c-input-${Math.random().toString(36).slice(2, 7)}`
         :autocomplete="autocomplete"
         :inputmode="inputmode"
         :name="name"
-        :aria-describedby="error ? `${inputId}-error` : hint ? `${inputId}-hint` : undefined"
-        :aria-invalid="!!error"
+        :aria-describedby="displayError ? `${inputId}-error` : hint ? `${inputId}-hint` : undefined"
+        :aria-invalid="!!displayError"
         :class="['c-field__input', {
-          'c-field__input--error': error,
+          'c-field__input--error': displayError,
           'c-field__input--with-prefix': $slots.prefix,
-          'c-field__input--with-suffix': $slots.suffix,
+          'c-field__input--with-suffix': $slots.suffix || isPasswordType,
         }]"
-        @input="emit('update:modelValue', ($event.target as HTMLInputElement).value)"
-        @blur="emit('blur', $event)"
+        @input="handleInput"
+        @blur="handleBlur"
       />
       <span
-        v-if="$slots.suffix"
+        v-if="$slots.suffix || isPasswordType"
         class="c-field__suffix"
       >
         <slot name="suffix"></slot>
+        <button
+          v-if="isPasswordType"
+          type="button"
+          class="c-field__toggle"
+          :disabled="disabled"
+          :aria-label="passwordToggleAriaLabel"
+          @mousedown.prevent
+          @click="showPassword = !showPassword"
+        >
+          <CIconEye
+            v-if="showPassword"
+            class="icon-sm"
+            aria-hidden="true"
+          />
+          <CIconEyeOff
+            v-else
+            class="icon-sm"
+            aria-hidden="true"
+          />
+        </button>
       </span>
     </div>
 
-    <p
-      v-if="!readonly && error"
-      :id="`${inputId}-error`"
-      class="c-field__error"
-      role="alert"
-    >
-      <CIconXCircle
-        class="icon-2xs"
-        aria-hidden="true"
-      />
-      {{ error }}
-    </p>
-    <p
-      v-else-if="!readonly && hint"
-      :id="`${inputId}-hint`"
-      class="form-hint"
-    >
-      {{ hint }}
-    </p>
+    <CFormFieldProxyFeedback
+      :readonly="readonly"
+      :show-proxy="false"
+      :display-error="displayError"
+      :error-id="`${inputId}-error`"
+      :hint="hint"
+      :hint-id="`${inputId}-hint`"
+      hint-class="form-hint"
+    />
   </div>
 </template>
 
@@ -191,7 +242,36 @@ const inputId = props.id ?? `c-input-${Math.random().toString(36).slice(2, 7)}`
   right: var(--space-2);
   display: inline-flex;
   align-items: center;
+  gap: var(--space-1);
   color: var(--color-on-surface-variant);
+}
+
+.c-field__toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  min-width: unset;
+  min-height: unset;
+  border-radius: var(--radius-lg);
+  color: var(--color-on-surface-variant);
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.c-field__toggle:hover:not(:disabled) {
+  background: var(--color-surface-container-high);
+  color: var(--color-on-surface);
+}
+
+.c-field__toggle:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.c-field__toggle:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 .c-field__suffix :deep(svg) {
@@ -222,11 +302,4 @@ const inputId = props.id ?? `c-input-${Math.random().toString(36).slice(2, 7)}`
   box-sizing: border-box;
 }
 
-.c-field__error {
-  font-size: var(--text-xs);
-  color: var(--color-error);
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-}
 </style>

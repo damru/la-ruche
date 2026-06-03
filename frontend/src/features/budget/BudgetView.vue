@@ -14,6 +14,7 @@ import CFormInput from '@/components/atoms/CFormInput.vue'
 import CFormSelect from '@/components/atoms/CFormSelect.vue'
 import CFormCheckbox from '@/components/atoms/CFormCheckbox.vue'
 import CFormActions from '@/components/molecules/CFormActions.vue'
+import CForm from '@/components/molecules/CForm.vue'
 import CAlert from '@/components/atoms/CAlert.vue'
 import CProgressBar from '@/components/atoms/CProgressBar.vue'
 import CDataTable from '@/components/molecules/CDataTable.vue'
@@ -1251,14 +1252,19 @@ function formatSharePercentage(value: number): string {
       :title="t('budget.newFiscalYear')"
       @update:open="showCreateBudgetModal = $event"
     >
-      <CFormInput
-        v-model="createBudgetForm.fiscal_year"
-        :label="t('budget.fiscalYearLabel')"
-        type="number"
-        :min="2020"
-        :max="2099"
-        required
-      />
+      <CForm
+        id="budget-create"
+        @submit="saveBudget"
+      >
+        <CFormInput
+          v-model="createBudgetForm.fiscal_year"
+          :label="t('budget.fiscalYearLabel')"
+          type="number"
+          :min="2020"
+          :max="2099"
+          required
+        />
+      </CForm>
       <template #footer>
         <CFormActions
           :status="createBudgetFeedback.status.value"
@@ -1273,7 +1279,8 @@ function formatSharePercentage(value: number): string {
             variant="primary"
             :title="t('common.create')"
             :loading="savingBudget"
-            @click="saveBudget"
+            type="submit"
+            form="budget-create"
           />
         </CFormActions>
       </template>
@@ -1284,25 +1291,30 @@ function formatSharePercentage(value: number): string {
       :title="t('budget.addLine')"
       @update:open="showCreateLineModal = $event"
     >
-      <CFormInput
-        v-model="createLineForm.label"
-        :label="t('budget.lineLabel')"
-        required
-      />
-      <CFormSelect
-        v-model="createLineForm.key_id"
-        :label="t('budget.lineKey')"
-        :options="keyOptions"
-        required
-      />
-      <CFormInput
-        v-model="createLineForm.budgeted_amount"
-        :label="t('budget.lineBudgetedAmount')"
-        type="number"
-        :min="0"
-        step="0.01"
-        required
-      />
+      <CForm
+        id="budget-line-create"
+        @submit="saveLine"
+      >
+        <CFormInput
+          v-model="createLineForm.label"
+          :label="t('budget.lineLabel')"
+          required
+        />
+        <CFormSelect
+          v-model="createLineForm.key_id"
+          :label="t('budget.lineKey')"
+          :options="keyOptions"
+          required
+        />
+        <CFormInput
+          v-model="createLineForm.budgeted_amount"
+          :label="t('budget.lineBudgetedAmount')"
+          type="number"
+          :min="0"
+          step="0.01"
+          required
+        />
+      </CForm>
       <template #footer>
         <CFormActions
           :status="createLineFeedback.status.value"
@@ -1317,7 +1329,8 @@ function formatSharePercentage(value: number): string {
             variant="primary"
             :title="t('common.save')"
             :loading="savingLine"
-            @click="saveLine"
+            type="submit"
+            form="budget-line-create"
           />
         </CFormActions>
       </template>
@@ -1358,26 +1371,31 @@ function formatSharePercentage(value: number): string {
       <p class="body-sm  text-on-surface-variant">
         {{ t('budget.generateLeviesSub') }}
       </p>
-      <CFormInput
-        v-model="generateForm.due_date"
-        :label="t('common.dueDate')"
-        type="date"
-        required
-      />
-      <div class="flex flex-col gap-1">
-        <CFormCheckbox
-          v-model="generateForm.include_works_fund"
-          :label="t('budget.includeWorksFund')"
+      <CForm
+        id="budget-generate"
+        @submit="generateLevies"
+      >
+        <CFormInput
+          v-model="generateForm.due_date"
+          :label="t('common.dueDate')"
+          type="date"
+          required
         />
-        <p class="text-xs text-on-surface-variant">
-          {{ t('budget.worksFundLegal') }}
-        </p>
-      </div>
-      <CFormInput
-        v-model="generateForm.call_label"
-        :label="t('budget.callLabel')"
-        :placeholder="t('budget.callLabelPlaceholder')"
-      />
+        <div class="flex flex-col gap-1">
+          <CFormCheckbox
+            v-model="generateForm.include_works_fund"
+            :label="t('budget.includeWorksFund')"
+          />
+          <p class="text-xs text-on-surface-variant">
+            {{ t('budget.worksFundLegal') }}
+          </p>
+        </div>
+        <CFormInput
+          v-model="generateForm.call_label"
+          :label="t('budget.callLabel')"
+          :placeholder="t('budget.callLabelPlaceholder')"
+        />
+      </CForm>
       <CCardNote
         v-if="selectedTotalForecast > 0"
         class="flex-col"
@@ -1419,7 +1437,8 @@ function formatSharePercentage(value: number): string {
             :title="t('budget.generate')"
             :disabled="!canGenerateLevies"
             :loading="generatingLevies"
-            @click="generateLevies"
+            type="submit"
+            form="budget-generate"
           />
         </CFormActions>
       </template>
@@ -1481,6 +1500,10 @@ function formatSharePercentage(value: number): string {
       :title="t('budget.worksFundConfigureTitle')"
       @update:open="showWorksFundModal = $event"
     >
+      <CForm
+        id="works-fund-form"
+        @submit="saveWorksFund"
+      >
       <p class="body-sm mb-4 leading-6 text-on-surface-variant">
         {{ t('budget.worksFundConfigureHint') }}
       </p>
@@ -1496,6 +1519,7 @@ function formatSharePercentage(value: number): string {
       <p class="text-xs text-on-surface-variant mt-2">
         {{ t('budget.worksFundRateHint', { minimum: formatSharePercentage(worksFundMinimumRate) }) }}
       </p>
+      </CForm>
       <template #footer>
         <CFormActions
           :status="worksFundFeedback.status.value"
@@ -1508,9 +1532,10 @@ function formatSharePercentage(value: number): string {
           />
           <CBtn
             variant="primary"
+            type="submit"
+            form="works-fund-form"
             :title="t('common.save')"
             :loading="savingWorksFund"
-            @click="saveWorksFund"
           />
         </CFormActions>
       </template>

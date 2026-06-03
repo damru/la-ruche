@@ -1894,6 +1894,7 @@ function toDateTimeLocal(value: string): string {
       @update:open="showEditMeetingModal = $event"
     >
       <CForm
+        id="meeting-edit"
         @submit="saveMeeting"
       >
         <CFormSelect
@@ -1956,9 +1957,10 @@ function toDateTimeLocal(value: string): string {
           />
           <CBtn
             variant="primary"
+            type="submit"
+            form="meeting-edit"
             :title="t('common.save')"
             :loading="savingMeeting"
-            @click="saveMeeting"
           />
         </CFormActions>
       </template>
@@ -1970,6 +1972,7 @@ function toDateTimeLocal(value: string): string {
       @update:open="showAddResolutionModal = $event"
     >
       <CForm
+        id="meeting-resolution"
         @submit="saveResolution"
       >
         <CFormInput
@@ -2007,9 +2010,10 @@ function toDateTimeLocal(value: string): string {
           />
           <CBtn
             variant="primary"
+            type="submit"
+            form="meeting-resolution"
             :title="t('common.add')"
             :loading="savingResolution"
-            @click="saveResolution"
           />
         </CFormActions>
       </template>
@@ -2105,6 +2109,7 @@ function toDateTimeLocal(value: string): string {
       @update:open="showEditResolutionModal = $event"
     >
       <CForm
+        id="meeting-edit-resolution"
         @submit="saveEditResolution"
       >
         <template v-if="meeting?.status === 'ongoing'">
@@ -2134,9 +2139,10 @@ function toDateTimeLocal(value: string): string {
           />
           <CBtn
             variant="primary"
+            type="submit"
+            form="meeting-edit-resolution"
             :title="t('common.save')"
             :loading="savingEditResolution"
-            @click="saveEditResolution"
           />
         </CFormActions>
       </template>
@@ -2148,6 +2154,7 @@ function toDateTimeLocal(value: string): string {
       @update:open="showDocumentModal = $event"
     >
       <CForm
+        id="meeting-document"
         @submit="saveDocument"
       >
         <CFormSelect
@@ -2181,9 +2188,10 @@ function toDateTimeLocal(value: string): string {
           />
           <CBtn
             variant="primary"
+            type="submit"
+            form="meeting-document"
             :title="t('common.add')"
             :loading="savingDocument"
-            @click="saveDocument"
           />
         </CFormActions>
       </template>
@@ -2195,6 +2203,7 @@ function toDateTimeLocal(value: string): string {
       @update:open="showAttendanceModal = $event"
     >
       <CForm
+        id="meeting-attendance"
         @submit="saveAttendance"
       >
         <p class="modal-subtitle">
@@ -2235,9 +2244,10 @@ function toDateTimeLocal(value: string): string {
           />
           <CBtn
             variant="primary"
+            type="submit"
+            form="meeting-attendance"
             :title="t('common.save')"
             :loading="savingAttendance"
-            @click="saveAttendance"
           />
         </CFormActions>
       </template>
@@ -2308,6 +2318,7 @@ function toDateTimeLocal(value: string): string {
       @update:open="showSignaturesModal = $event"
     >
       <CForm
+        id="meeting-signatures"
         @submit="saveSignatures"
       >
         <p class="body-sm text-on-surface-variant">
@@ -2356,9 +2367,10 @@ function toDateTimeLocal(value: string): string {
           />
           <CBtn
             variant="primary"
+            type="submit"
+            form="meeting-signatures"
             :title="t('common.save')"
             :loading="savingSignatures"
-            @click="saveSignatures"
           />
         </CFormActions>
       </template>
@@ -2433,6 +2445,7 @@ function toDateTimeLocal(value: string): string {
       @update:open="showConvocationModal = $event"
     >
       <CForm
+        id="meeting-convocation"
         @submit="confirmCallMeeting"
       >
         <p class="body-sm text-on-surface-variant">
@@ -2506,10 +2519,11 @@ function toDateTimeLocal(value: string): string {
           />
           <CBtn
             variant="primary"
+            type="submit"
+            form="meeting-convocation"
             :title="t('meetings.call')"
             :loading="callingMeeting"
             :disabled="!convocationChecklist?.ready_to_send"
-            @click="confirmCallMeeting"
           />
         </CFormActions>
       </template>
@@ -2522,6 +2536,7 @@ function toDateTimeLocal(value: string): string {
       @update:open="showMinutesModal = $event"
     >
       <CForm
+        id="meeting-minutes"
         @submit="saveMinutes"
       >
         <p class="body-sm text-on-surface-variant">
@@ -2552,10 +2567,11 @@ function toDateTimeLocal(value: string): string {
           />
           <CBtn
             variant="primary"
+            type="submit"
+            form="meeting-minutes"
             :title="t('meetings.minutes.upload_signed')"
             :loading="savingMinutes"
             :disabled="!minutesForm.file"
-            @click="saveMinutes"
           />
         </CFormActions>
       </template>
@@ -2568,6 +2584,7 @@ function toDateTimeLocal(value: string): string {
       @update:open="showStartMeetingModal = $event"
     >
       <CForm
+        id="meeting-start"
         @submit="confirmStartMeeting"
       >
         <p class="body-sm text-on-surface-variant">
@@ -2626,9 +2643,10 @@ function toDateTimeLocal(value: string): string {
           />
           <CBtn
             variant="primary"
+            type="submit"
+            form="meeting-start"
             :title="t('meetings.start')"
             :loading="startingMeeting"
-            @click="confirmStartMeeting"
           />
         </CFormActions>
       </template>

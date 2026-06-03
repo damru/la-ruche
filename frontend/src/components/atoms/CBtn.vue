@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, useAttrs, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { Component } from 'vue'
 
@@ -16,6 +16,7 @@ const props = withDefaults(defineProps<{
   loading?: boolean
   closing?: boolean
   type?: 'button' | 'submit' | 'reset'
+  disableWhenFormInvalid?: boolean
   title?: string
   icon?: Component | string
   shrink?: Breakpoint
@@ -26,16 +27,66 @@ const props = withDefaults(defineProps<{
   loading: false,
   closing: false,
   type: 'button',
+  disableWhenFormInvalid: undefined,
   title: undefined,
   icon: undefined,
   shrink: undefined,
 })
 
 const { t } = useI18n()
+const attrs = useAttrs()
 
 const MIN_LOADING_MS = 300
 const visualLoading = ref(props.loading)
 let loadingStart = 0
+const buttonRef = ref<HTMLButtonElement | null>(null)
+const formInvalid = ref(false)
+let parentForm: HTMLFormElement | null = null
+
+const shouldAutoDisable = computed(() => props.disableWhenFormInvalid ?? props.type === 'submit')
+const isDisabled = computed(() => props.disabled || (shouldAutoDisable.value && formInvalid.value))
+
+function resolveForm(): HTMLFormElement | null {
+  const button = buttonRef.value
+  if (!button) return null
+
+  const formId = attrs.form as string | undefined
+  if (formId) return document.getElementById(formId) as HTMLFormElement | null
+
+  return button.closest('form')
+}
+
+function recomputeFormValidity() {
+  if (!shouldAutoDisable.value) {
+    formInvalid.value = false
+    return
+  }
+  const form = resolveForm()
+  parentForm = form
+  formInvalid.value = form ? !form.checkValidity() : false
+}
+
+function onFormEvent() {
+  void nextTick(recomputeFormValidity)
+}
+
+function attachFormListeners() {
+  const form = resolveForm()
+  if (form !== null && parentForm === form) return
+  if (parentForm) {
+    parentForm.removeEventListener('input', onFormEvent, true)
+    parentForm.removeEventListener('change', onFormEvent, true)
+    parentForm.removeEventListener('reset', onFormEvent, true)
+    parentForm.removeEventListener('blur', onFormEvent, true)
+  }
+  parentForm = form
+  if (parentForm) {
+    parentForm.addEventListener('input', onFormEvent, true)
+    parentForm.addEventListener('change', onFormEvent, true)
+    parentForm.addEventListener('reset', onFormEvent, true)
+    parentForm.addEventListener('blur', onFormEvent, true)
+  }
+}
 
 watch(() => props.loading, (val) => {
   if (val) {
@@ -49,6 +100,29 @@ watch(() => props.loading, (val) => {
       visualLoading.value = false
     }
   }
+})
+
+watch(
+  () => [props.type, props.disableWhenFormInvalid, attrs.form],
+  () => {
+    attachFormListeners()
+    void nextTick(recomputeFormValidity)
+  },
+)
+
+onMounted(() => {
+  void nextTick(() => {
+    attachFormListeners()
+    recomputeFormValidity()
+  })
+})
+
+onUnmounted(() => {
+  if (!parentForm) return
+  parentForm.removeEventListener('input', onFormEvent, true)
+  parentForm.removeEventListener('change', onFormEvent, true)
+  parentForm.removeEventListener('reset', onFormEvent, true)
+  parentForm.removeEventListener('blur', onFormEvent, true)
 })
 
 const variantClass: Record<Variant, string> = {
@@ -86,7 +160,8 @@ const shrinkClass: Record<Breakpoint, string> = {
 
 <template>
   <button
-    :disabled="disabled"
+    ref="buttonRef"
+    :disabled="isDisabled"
     :type="type"
     :class="[
       variantClass[variant], sizeClass[size],
@@ -96,7 +171,7 @@ const shrinkClass: Record<Breakpoint, string> = {
         'tone--accent': variant === 'primary', 
         'tone--info': variant === 'secondary', 
         'tone--err': variant === 'danger', 
-        'tone--disabled': disabled && !visualLoading, 
+        'tone--disabled': isDisabled && !visualLoading, 
         'c-btn--shrink': !!shrink 
       }, 
       shrink ? shrinkClass[shrink] : null
@@ -214,7 +289,7 @@ const shrinkClass: Record<Breakpoint, string> = {
   min-height: min-content;
   border-radius: var(--radius-md);
   background: transparent;
-  color: var(--tone-bg, var(--color-on-surface-variant));
+  color: var(--tone-fg, var(--color-on-surface-variant));
   padding: 0 !important;
   gap: 0;
 }

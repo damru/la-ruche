@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
+import { useFieldValidation } from '@/composables/useFieldValidation'
 
 const props = withDefaults(defineProps<{
   modelValue: string[]
@@ -10,6 +11,7 @@ const props = withDefaults(defineProps<{
   required?: boolean
   disabled?: boolean
   id?: string
+  name?: string
 }>(), {
   label: undefined,
   hint: undefined,
@@ -17,6 +19,7 @@ const props = withDefaults(defineProps<{
   required: false,
   disabled: false,
   id: undefined,
+  name: undefined,
 })
 
 const emit = defineEmits<{
@@ -25,6 +28,17 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 const inputId = props.id ?? `c-chip-select-${Math.random().toString(36).slice(2, 7)}`
+const { displayError, onFieldBlur, onFieldInput } = useFieldValidation({
+  externalError: () => props.error,
+  getInternalError: () => {
+    if (!props.required) return undefined
+    return props.modelValue.length > 0 ? undefined : t('common.required')
+  },
+  watchSources: [
+    () => props.required,
+    () => props.modelValue.length,
+  ],
+})
 
 function isSelected(value: string): boolean {
   return props.modelValue.includes(value)
@@ -32,10 +46,19 @@ function isSelected(value: string): boolean {
 
 function toggle(value: string, optionDisabled?: boolean) {
   if (props.disabled || optionDisabled) return
+  onFieldBlur()
   const next = isSelected(value)
     ? props.modelValue.filter(v => v !== value)
     : [...props.modelValue, value]
   emit('update:modelValue', next)
+  onFieldInput()
+}
+
+function handleFocusOut(event: FocusEvent) {
+  const current = event.currentTarget as HTMLElement | null
+  const related = event.relatedTarget as Node | null
+  if (current && related && current.contains(related)) return
+  onFieldBlur()
 }
 </script>
 
@@ -58,7 +81,10 @@ function toggle(value: string, optionDisabled?: boolean) {
       :id="inputId"
       class="c-chip-select"
       role="group"
-      :aria-describedby="error ? `${inputId}-error` : hint ? `${inputId}-hint` : undefined"
+      :aria-describedby="displayError ? `${inputId}-error` : hint ? `${inputId}-hint` : undefined"
+      :aria-invalid="!!displayError"
+      :aria-required="required"
+      @focusout="handleFocusOut"
     >
       <button
         v-for="option in options"
@@ -82,20 +108,16 @@ function toggle(value: string, optionDisabled?: boolean) {
       </button>
     </div>
 
+    <CFormFieldProxyFeedback
+      :name="name"
+      :required="required"
+      proxy-type="text"
+      :proxy-value="modelValue.join(',')"
+      :display-error="displayError"
+      :error-id="`${inputId}-error`"
+    />
     <p
-      v-if="error"
-      :id="`${inputId}-error`"
-      class="c-field__error"
-      role="alert"
-    >
-      <CIconXCircle
-        class="icon-2xs"
-        aria-hidden="true"
-      />
-      {{ error }}
-    </p>
-    <p
-      v-else-if="hint"
+      v-if="!displayError && hint"
       :id="`${inputId}-hint`"
       class="form-hint"
     >
@@ -161,11 +183,4 @@ function toggle(value: string, optionDisabled?: boolean) {
   height: var(--icon-xs);
 }
 
-.c-field__error {
-  font-size: var(--text-xs);
-  color: var(--color-error);
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-}
 </style>

@@ -4,14 +4,12 @@ import { useI18n } from 'vue-i18n'
 import CLegalDescription from '@/components/atoms/CLegalDescription.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
-import CFormActions from '@/components/molecules/CFormActions.vue'
 import CLegalNotice from '@/components/molecules/CLegalNotice.vue'
 import CLegalCard from '@/components/molecules/CLegalCard.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import CHeading from '@/components/atoms/CHeading.vue'
-import CFormRow from '@/components/molecules/CFormRow.vue'
 import CIconBook from '@/components/atoms/CIconBook.svg'
 import CIconDownload from '@/components/atoms/CIconDownload.svg'
 import { buildingApi } from '@/api'
@@ -36,8 +34,7 @@ async function saveBuilding() {
   feedback.reset()
   saving.value = true
   try {
-    const res = await buildingApi.update(form.value)
-    form.value = res.data
+    await buildingApi.update(form.value)
     feedback.setSuccess(t('common.saved'))
   } catch (e: unknown) {
     feedback.setError((e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? t('common.error'))
@@ -94,7 +91,12 @@ onMounted(reload)
           >
             {{ t('settings.building.title') }}
           </CHeading>
-          <CFormRow :cols="2">
+          <CForm 
+            :status="feedback.status.value"
+            :message="feedback.message.value"
+            @submit="saveBuilding" 
+            :cols="2"
+          >
             <CFormInput
               v-model="form.name"
               :label="t('settings.building.name')"
@@ -127,19 +129,16 @@ onMounted(reload)
               :label="t('settings.building.bylawsDate')"
               type="date"
             />
-          </CFormRow>
-          <CFormActions
-            :status="feedback.status.value"
-            :message="feedback.message.value"
-          >
-            <CBtn
-              variant="primary"
-              :title="t('settings.saveChanges')"
-              :loading="saving"
-              :disabled="saving"
-              @click="saveBuilding"
-            />
-          </CFormActions>
+            <template #actions>
+              <CBtn
+                variant="primary"
+                type="submit"
+                :title="t('settings.saveChanges')"
+                :loading="saving"
+                :disabled="saving"
+              />
+            </template>
+          </CForm>
         </CCard>
 
         <CLegalCard>

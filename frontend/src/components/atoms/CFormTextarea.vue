@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { useFieldValidation } from '@/composables/useFieldValidation'
+
 const props = withDefaults(defineProps<{
   modelValue?: string
   label?: string
@@ -23,8 +27,38 @@ const props = withDefaults(defineProps<{
   id: undefined,
 })
 
-const emit = defineEmits<{ 'update:modelValue': [value: string] }>()
+const emit = defineEmits<{
+  'update:modelValue': [value: string]
+  'blur': [event: FocusEvent]
+}>()
+
+const { t } = useI18n()
 const inputId = props.id ?? `c-textarea-${Math.random().toString(36).slice(2, 7)}`
+const textareaRef = ref<HTMLTextAreaElement | null>(null)
+const { displayError, onFieldBlur, onFieldInput } = useFieldValidation({
+  externalError: () => props.error,
+  readonly: () => props.readonly,
+  getInternalError: () => {
+    const textarea = textareaRef.value
+    if (!textarea || textarea.validity.valid) return undefined
+    return textarea.validity.valueMissing ? t('common.required') : textarea.validationMessage
+  },
+  watchSources: [
+    () => props.modelValue,
+    () => props.required,
+    () => props.readonly,
+  ],
+})
+
+function handleInput(event: Event) {
+  emit('update:modelValue', (event.target as HTMLTextAreaElement).value)
+  onFieldInput()
+}
+
+function handleBlur(event: FocusEvent) {
+  onFieldBlur()
+  emit('blur', event)
+}
 </script>
 
 <template>
@@ -50,32 +84,28 @@ const inputId = props.id ?? `c-textarea-${Math.random().toString(36).slice(2, 7)
     <textarea
       v-else
       :id="inputId"
+      ref="textareaRef"
       :value="modelValue"
       :placeholder="placeholder"
       :disabled="disabled"
       :required="required"
       :rows="rows"
-      :aria-describedby="error ? `${inputId}-error` : hint ? `${inputId}-hint` : undefined"
-      :aria-invalid="!!error"
-      :class="['c-field__textarea', { 'c-field__textarea--error': error }]"
-      @input="emit('update:modelValue', ($event.target as HTMLTextAreaElement).value)"
+      :aria-describedby="displayError ? `${inputId}-error` : hint ? `${inputId}-hint` : undefined"
+      :aria-invalid="!!displayError"
+      :class="['c-field__textarea', { 'c-field__textarea--error': displayError }]"
+      @input="handleInput"
+      @blur="handleBlur"
     ></textarea>
 
-    <p
-      v-if="!readonly && error"
-      :id="`${inputId}-error`"
-      class="c-field__error"
-      role="alert"
-    >
-      {{ error }}
-    </p>
-    <p
-      v-else-if="!readonly && hint"
-      :id="`${inputId}-hint`"
-      class="form-hint"
-    >
-      {{ hint }}
-    </p>
+    <CFormFieldProxyFeedback
+      :readonly="readonly"
+      :show-proxy="false"
+      :display-error="displayError"
+      :error-id="`${inputId}-error`"
+      :hint="hint"
+      :hint-id="`${inputId}-hint`"
+      hint-class="form-hint"
+    />
   </div>
 </template>
 
@@ -105,7 +135,6 @@ const inputId = props.id ?? `c-textarea-${Math.random().toString(36).slice(2, 7)
 }
 .c-field__textarea--error { box-shadow: var(--shadow-error-ring); }
 .c-field__textarea:disabled { opacity: 0.5; cursor: not-allowed; }
-.c-field__error { font-size: var(--text-xs); color: var(--color-error); }
 
 .c-field__readonly {
   display: block;

@@ -315,7 +315,10 @@ onMounted(reload)
       :title="modalForm.id ? t('settings.keys.editKey') : t('settings.keys.newKey')"
       @update:open="showKeyModal = $event"
     >
-      <div class="flex flex-col gap-4">
+      <CForm
+        id="key-form"
+        @submit="saveKey"
+      >
         <div class="flex flex-col gap-4">
           <CFormInput
             v-model="modalForm.name"
@@ -388,7 +391,7 @@ onMounted(reload)
             </template>
           </template>
         </div>
-      </div>
+      </CForm>
 
       <template #footer>
         <CFormActions
@@ -402,11 +405,12 @@ onMounted(reload)
           />
           <CBtn
             variant="primary"
+            type="submit"
+            form="key-form"
             :title="t('common.save')"
             :loading="modalSaving"
             :closing="keyFeedback.status.value === 'success'"
             :disabled="modalSaving || modalLoading"
-            @click="saveKey"
           />
         </CFormActions>
       </template>

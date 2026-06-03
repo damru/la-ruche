@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useFieldValidation } from '@/composables/useFieldValidation'
 import {
   SelectRoot, SelectTrigger, SelectValue, SelectPortal,
   SelectContent, SelectViewport, SelectItem, SelectItemText,
@@ -18,6 +19,7 @@ const props = withDefaults(defineProps<{
   disabled?: boolean
   readonly?: boolean
   id?: string
+  name?: string
   options: Array<{ value: string | number; label: string; disabled?: boolean }>
 }>(), {
   modelValue: undefined,
@@ -29,10 +31,12 @@ const props = withDefaults(defineProps<{
   disabled: false,
   readonly: false,
   id: undefined,
+  name: undefined,
 })
 
 const emit = defineEmits<{
   'update:modelValue': [value: string]
+  'blur': [event: FocusEvent]
 }>()
 
 const { t } = useI18n()
@@ -54,8 +58,37 @@ const readonlyLabel = computed(() =>
   props.options.find(o => String(o.value) === String(props.modelValue))?.label ?? props.modelValue,
 )
 
+const isRequiredMissing = computed(() => {
+  if (!props.required) return false
+  const val = stringValue.value
+  return val === undefined || val === EMPTY_SENTINEL
+})
+
+const { displayError, onFieldBlur, onFieldInput } = useFieldValidation({
+  externalError: () => props.error,
+  readonly: () => props.readonly,
+  getInternalError: () => (isRequiredMissing.value ? t('common.required') : undefined),
+  watchSources: [
+    () => props.required,
+    () => props.readonly,
+    () => stringValue.value,
+  ],
+})
+
+const nativeProxyValue = computed(() => {
+  const val = stringValue.value
+  if (val === undefined || val === EMPTY_SENTINEL) return ''
+  return val
+})
+
 function handleUpdate(val: string) {
   emit('update:modelValue', val === EMPTY_SENTINEL ? '' : val)
+  onFieldInput()
+}
+
+function handleBlur(event: FocusEvent) {
+  onFieldBlur()
+  emit('blur', event)
 }
 </script>
 
@@ -92,8 +125,8 @@ function handleUpdate(val: string) {
       <SelectTrigger
         v-bind="$attrs"
         :id="inputId"
-        :aria-describedby="props.error ? `${inputId}-error` : props.hint ? `${inputId}-hint` : undefined"
-        :aria-invalid="!!props.error"
+        :aria-describedby="displayError ? `${inputId}-error` : props.hint ? `${inputId}-hint` : undefined"
+        :aria-invalid="!!displayError"
         :aria-required="props.required"
         class="flex items-center justify-between w-full h-[var(--control-height)] px-3 rounded-xl
                bg-surface-container text-on-surface text-md outline-none cursor-pointer
@@ -101,9 +134,10 @@ function handleUpdate(val: string) {
                data-[disabled]:opacity-50 data-[disabled]:cursor-not-allowed
                transition-[background,box-shadow] duration-fast"
         :class="[
-          props.error ? 'ring-2 ring-error' : '',
+          displayError ? 'ring-2 ring-error' : '',
           !props.modelValue ? 'text-on-surface-variant' : '',
         ]"
+        @blur="handleBlur"
       >
         <SelectValue :placeholder="props.placeholder ?? t('common.select')" />
         <!-- Chevron icon — inline SVG to avoid external dependency -->
@@ -148,16 +182,17 @@ function handleUpdate(val: string) {
       </SelectPortal>
     </SelectRoot>
 
+    <CFormFieldProxyFeedback
+      :readonly="props.readonly"
+      :name="props.name"
+      :required="props.required"
+      proxy-type="text"
+      :proxy-value="nativeProxyValue"
+      :display-error="displayError"
+      :error-id="`${inputId}-error`"
+    />
     <p
-      v-if="!props.readonly && props.error"
-      :id="`${inputId}-error`"
-      class="text-xs text-error flex items-center gap-1"
-      role="alert"
-    >
-      {{ props.error }}
-    </p>
-    <p
-      v-else-if="!props.readonly && props.hint"
+      v-if="!props.readonly && !displayError && props.hint"
       :id="`${inputId}-hint`"
       class="form-hint"
     >
@@ -165,3 +200,4 @@ function handleUpdate(val: string) {
     </p>
   </div>
 </template>
+

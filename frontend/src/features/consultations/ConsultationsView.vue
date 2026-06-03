@@ -507,6 +507,7 @@ async function confirmDelete() {
       @update:open="showCreateModal = $event"
     >
       <CForm
+        id="consultation-create"
         @submit="saveConsultation"
       >
         <CFormInput
@@ -562,10 +563,11 @@ async function confirmDelete() {
           />
           <CBtn
             variant="primary"
+            type="submit"
+            form="consultation-create"
             :title="t('common.create')"
             :loading="saving"
             :closing="createFeedback.status.value === 'success'"
-            @click="saveConsultation"
           />
         </CFormActions>
       </template>

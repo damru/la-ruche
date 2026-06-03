@@ -35,6 +35,7 @@ declare module 'vue' {
     CFormChipSelect: typeof import('./../components/atoms/CFormChipSelect.vue')['default']
     CFormDropzone: typeof import('./../components/molecules/CFormDropzone.vue')['default']
     CFormFeedback: typeof import('./../components/atoms/CFormFeedback.vue')['default']
+    CFormFieldProxyFeedback: typeof import('./../components/atoms/CFormFieldProxyFeedback.vue')['default']
     CFormGroup: typeof import('./../components/molecules/CFormGroup.vue')['default']
     CFormInput: typeof import('./../components/atoms/CFormInput.vue')['default']
     CFormRow: typeof import('./../components/molecules/CFormRow.vue')['default']

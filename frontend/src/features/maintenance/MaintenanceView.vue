@@ -599,6 +599,7 @@ async function deleteEntry() {
       @update:open="showEntryModal = $event"
     >
       <CForm
+        id="maintenance-entry"
         @submit="saveEntry"
       >
         <CFormInput
@@ -646,7 +647,8 @@ async function deleteEntry() {
             :title="t('common.save')"
             :loading="savingEntry"
             :closing="entryFeedback.status.value === 'success'"
-            @click="saveEntry"
+            type="submit"
+            form="maintenance-entry"
           />
         </CFormActions>
       </template>

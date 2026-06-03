@@ -1026,6 +1026,7 @@ async function copyVendorLink(taskId: string) {
       @update:open="showTaskModal = $event"
     >
       <CForm
+        id="task-form"
         @submit="saveTask"
       >
         <CFormInput
@@ -1290,7 +1291,8 @@ async function copyVendorLink(taskId: string) {
             :title="t('common.save')"
             :loading="savingTask || uploadingTaskDocuments"
             :closing="taskFeedback.status.value === 'success'"
-            @click="saveTask"
+            type="submit"
+            form="task-form"
           />
         </CFormActions>
       </template>
@@ -1341,17 +1343,22 @@ async function copyVendorLink(taskId: string) {
             : t('tasks.confirmCloseMessage', { title: closingTask?.title ?? '' })
         }}
       </p>
-      <CFormInput
-        v-model="closeAmount"
-        :label="t('tasks.completionCostLabel')"
-        type="number"
-        :min="0"
-        :step="0.01"
-        :hint="closingTask?.status === 'awaiting_validation' && closingTask?.completion_cost != null
-          ? t('tasks.completionCostVendorHint')
-          : t('tasks.completionCostHint')"
-        class="task-close-field"
-      />
+      <CForm
+        id="task-close"
+        @submit="confirmCloseTask"
+      >
+        <CFormInput
+          v-model="closeAmount"
+          :label="t('tasks.completionCostLabel')"
+          type="number"
+          :min="0"
+          :step="0.01"
+          :hint="closingTask?.status === 'awaiting_validation' && closingTask?.completion_cost != null
+            ? t('tasks.completionCostVendorHint')
+            : t('tasks.completionCostHint')"
+          class="task-close-field"
+        />
+      </CForm>
       <template #footer>
         <CFormActions
           :status="closeFeedback.status.value"
@@ -1367,7 +1374,8 @@ async function copyVendorLink(taskId: string) {
             :title="closingTask ? closeActionLabel(closingTask) : t('tasks.closeTask')"
             :loading="closingInProgress"
             :closing="closeFeedback.status.value === 'success'"
-            @click="confirmCloseTask"
+            type="submit"
+            form="task-close"
           />
         </CFormActions>
       </template>
