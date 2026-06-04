@@ -20,11 +20,12 @@ import CLegalDescription from '@/components/atoms/CLegalDescription.vue'
 import CKpiCard from '@/components/molecules/CKpiCard.vue'
 import type { Column } from '@/components/molecules/CDataTable.vue'
 import CIconChevronRight from '@/components/atoms/CIconChevronRight.svg'
+import CFormSelect from '@/components/atoms/CFormSelect.vue'
 import { unitsApi } from '@/api'
 import { usePageLoader } from '@/composables/usePageLoader'
 import { useAuthStore } from '@/stores/auth'
 import { useFormatters } from '@/composables/useFormatters'
-import type { UnitChargesResponse, UnitChargesLevy, UnitChargesLevyBreakdownItem } from '@/types/domain'
+import type { UnitChargesResponse, UnitChargesLevy, UnitChargesLevyBreakdownItem, UnitOwnerRecord } from '@/types/domain'
 
 interface ConsolidatedUnitChargeRow {
   id: string
@@ -56,9 +57,42 @@ const unitId = route.params.id as string
 const data = ref<UnitChargesResponse | null>(null)
 const selectedLevy = ref<ConsolidatedUnitChargeRow | null>(null)
 
+interface OwnerFilterOption {
+  value: string
+  label: string
+  start_date: string
+  end_date: string | null
+}
+
+const ownerFilterId = ref<string | null>(null)
+const ownerFilterOptions = ref<OwnerFilterOption[]>([])
+const ownerFilterIdModel = computed<string>({
+  get: () => ownerFilterId.value ?? '',
+  set: (v: string) => { ownerFilterId.value = v || null },
+})
+
 async function load() {
   const res = await unitsApi.charges(unitId)
   data.value = res.data
+
+  if (auth.isManager) {
+    try {
+      const ownersRes = await unitsApi.owners(unitId)
+      const seen = new Set<string>()
+      const options: OwnerFilterOption[] = []
+      for (const rec of ownersRes.data as UnitOwnerRecord[]) {
+        if (!rec.user_id || seen.has(rec.user_id)) continue
+        seen.add(rec.user_id)
+        const period = rec.end_date
+          ? `${rec.start_date} → ${rec.end_date}`
+          : `${rec.start_date} →`
+        options.push({ value: rec.user_id, label: `${rec.display_name} (${period})`, start_date: rec.start_date, end_date: rec.end_date })
+      }
+      ownerFilterOptions.value = options
+    } catch {
+      ownerFilterOptions.value = []
+    }
+  }
 }
 
 const { loading, error, reload } = usePageLoader(load)
@@ -80,6 +114,15 @@ const consolidatedLevies = computed<ConsolidatedUnitChargeRow[]>(() => {
   }))
 })
 
+const filteredLevies = computed<ConsolidatedUnitChargeRow[]>(() => {
+  if (!ownerFilterId.value) return consolidatedLevies.value
+  const opt = ownerFilterOptions.value.find(o => o.value === ownerFilterId.value)
+  if (!opt) return consolidatedLevies.value
+  return consolidatedLevies.value.filter(l =>
+    l.issued_at >= opt.start_date && (opt.end_date === null || l.issued_at <= opt.end_date),
+  )
+})
+
 const levyTableColumns = computed<Column<Record<string, unknown>>[]>(() => [
   { key: 'fiscal_year', label: t('budget.fiscalYear', { year: '' }).trim(), align: 'right', numeric: true },
   { key: 'issued_at', label: t('common.issuedAt'), align: 'right', numeric: true },
@@ -92,7 +135,7 @@ const levyTableColumns = computed<Column<Record<string, unknown>>[]>(() => [
 ])
 
 const levyTableRows = computed<Record<string, unknown>[]>(
-  () => consolidatedLevies.value as unknown as Record<string, unknown>[],
+  () => filteredLevies.value as unknown as Record<string, unknown>[],
 )
 
 function statusVariant(status: UnitChargesLevy['status']): 'pending' | 'valid' | 'err' | 'default' {
@@ -168,12 +211,18 @@ function statusVariant(status: UnitChargesLevy['status']): 'pending' | 'valid' |
         </div>
 
         <CCard>
-          <CHeading
-            type="card"
-            class="mb-4"
-          >
-            {{ t('units.charges.history') }}
-          </CHeading>
+          <div class="flex items-center justify-between mb-4">
+            <CHeading type="card">
+              {{ t('units.charges.history') }}
+            </CHeading>
+            <CFormSelect
+              v-if="auth.isManager && ownerFilterOptions.length > 0"
+              v-model="ownerFilterIdModel"
+              :placeholder="t('budget.filterByOwner')"
+              :options="[{ value: '', label: t('budget.filterAll') }, ...ownerFilterOptions]"
+              class="min-w-48"
+            />
+          </div>
 
           <CDataTable
             :columns="levyTableColumns"

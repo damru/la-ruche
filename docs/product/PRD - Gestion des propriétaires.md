@@ -366,9 +366,9 @@ Un même utilisateur peut être copropriétaire dans plusieurs copropriétés g�
 **Critères d'acceptation** :
 
 - **AC-GP-009-A** : La vue des charges DOIT afficher les appels de fonds regroupés par lot (numéro de lot), pour le propriétaire courant par défaut.
-- **AC-GP-009-B** : Si un lot a eu plusieurs propriétaires, un sélecteur DOIT permettre de filtrer les appels de fonds par propriétaire (liste déroulante présentant chaque propriétaire historique avec sa période de propriété).
+- **AC-GP-009-B** : Si un lot a eu plusieurs propriétaires, un sélecteur DOIT permettre au syndic de filtrer les appels de fonds par propriétaire historique (liste déroulante avec période de propriété). Ce sélecteur est visible uniquement pour le rôle `syndic` ; le filtre s'applique côté client sur les données de la vue détail du lot (`UnitChargesView`).
 - **AC-GP-009-C** : Les appels de fonds DOIVENT rester rattachés au lot, pas à la personne — la mutation ne doit pas altérer ni déplacer les enregistrements existants.
-- **AC-GP-009-D** : La vue DOIT être accessible uniquement aux rôles `syndic` et `board_member`.
+- **AC-GP-009-D** : La vue des charges par lot (`UnitChargesView`) est accessible aux rôles `syndic`, `board_member` et `owner` (copropriétaire pour ses propres lots). Le filtre propriétaire historique (AC-GP-009-B) est réservé au rôle `syndic` uniquement.
 - **AC-GP-009-E** : Un lot en état `pending_transfer` (sans propriétaire actif) DOIT afficher ses appels de fonds sans propriétaire associé, avec une indication visuelle claire.
 
 ---

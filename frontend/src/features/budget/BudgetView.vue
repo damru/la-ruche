@@ -40,11 +40,10 @@ import CIconChevronRight from '@/components/atoms/CIconChevronRight.svg'
 import CreateBudgetModal from './CreateBudgetModal.vue'
 import CloseExerciseModal from './CloseExerciseModal.vue'
 import WorksFundModal from './WorksFundModal.vue'
-import { budgetApi, allocationKeysApi, buildingApi, unitsApi } from '@/api'
+import { budgetApi, allocationKeysApi, buildingApi } from '@/api'
 import GenerateLeviesModal from './GenerateLeviesModal.vue'
 import BreakdownModal from './BreakdownModal.vue'
-import CFormSelect from '@/components/atoms/CFormSelect.vue'
-import type { Budget, BudgetLine, LevyCall, WorksFund, AllocationKey, LevyStatus, BuildingStats, UnitOwnerRecord } from '@/types/domain'
+import type { Budget, BudgetLine, LevyCall, WorksFund, AllocationKey, LevyStatus, BuildingStats } from '@/types/domain'
 import type { Column } from '@/components/molecules/CDataTable.vue'
 
 interface ConsolidatedLevyRow {
@@ -115,15 +114,6 @@ const levies = ref<LevyCall[]>([])
 const worksFund = ref<WorksFund | null>(null)
 const allocationKeys = ref<AllocationKey[]>([])
 const unbalancedAllocationKeys = ref<string[]>([])
-// EP-002-S19: owner filter for levy history
-const ownerFilterId = ref<string | null>(null)
-const ownerFilterOptions = ref<{ value: string; label: string }[]>([])
-// CFormSelect requires string; empty string maps to null (all current owners)
-const ownerFilterIdModel = computed<string>({
-  get: () => ownerFilterId.value ?? '',
-  set: (v: string) => { ownerFilterId.value = v || null },
-})
-
 // ── Derived ───────────────────────────────────────────────────────
 
 const selectedBudget = computed(() =>
@@ -369,27 +359,9 @@ async function loadBudgets() {
   }
 }
 
-async function loadOwnerHistories(unitIds: string[]) {
-  if (unitIds.length === 0) return
-  const results = await Promise.all(unitIds.map(uid => unitsApi.owners(uid).catch(() => ({ data: [] as UnitOwnerRecord[] }))))
-  const allOwners = results.flatMap(r => r.data)
-  // Build unique owner options from historical records that have a known user_id
-  const seen = new Set<string>()
-  const options: { value: string; label: string }[] = []
-  for (const rec of allOwners) {
-    if (!rec.user_id || seen.has(rec.user_id)) continue
-    seen.add(rec.user_id)
-    const period = rec.end_date
-      ? `${rec.start_date} → ${rec.end_date}`
-      : `${rec.start_date} →`
-    options.push({ value: rec.user_id, label: `${rec.display_name} (${period})` })
-  }
-  ownerFilterOptions.value = options
-}
-
 async function loadBudgetData(budgetId: string) {
   const leviesRequest = canViewLevies.value
-    ? budgetApi.listLevies(budgetId, ownerFilterId.value ?? undefined).catch((error: unknown) => {
+    ? budgetApi.listLevies(budgetId).catch((error: unknown) => {
         if ((error as { response?: { status?: number } })?.response?.status === 403) {
           return { data: [] as LevyCall[] }
         }
@@ -422,12 +394,6 @@ async function loadBudgetData(budgetId: string) {
         : levy.call_label,
   }))
 
-  // Load owner histories for the filter dropdown (only on initial load, not on filter change)
-  if (!ownerFilterId.value) {
-    const unitIds = [...new Set(levies.value.map(l => l.unit_id))]
-    loadOwnerHistories(unitIds)
-  }
-
   // Load works fund for selected year
   if (selectedBudget.value) {
     try {
@@ -458,27 +424,7 @@ onMounted(reload)
 
 watch(selectedBudgetId, async (id) => {
   if (!id || loading.value) return
-  ownerFilterId.value = null
-  ownerFilterOptions.value = []
   await loadBudgetData(id)
-})
-
-watch(ownerFilterId, async () => {
-  if (!selectedBudgetId.value) return
-  const ownerId = ownerFilterId.value ?? undefined
-  const request = canViewLevies.value
-    ? budgetApi.listLevies(selectedBudgetId.value, ownerId).catch(() => ({ data: [] as LevyCall[] }))
-    : Promise.resolve({ data: [] as LevyCall[] })
-  const res = await request
-  levies.value = (res.data as LevyCall[]).map(levy => ({
-    ...levy,
-    amount: Number(levy.amount),
-    charge_amount: levy.charge_amount != null ? Number(levy.charge_amount) : Number(levy.amount),
-    works_fund_amount: levy.works_fund_amount != null ? Number(levy.works_fund_amount) : 0,
-    call_label: !levy.call_label || levy.call_label === 'Levy call'
-      ? t('budget.defaultLevyLabel')
-      : levy.call_label,
-  }))
 })
 
 // ── Create budget modal ─────────────────────────────────────
@@ -1001,13 +947,6 @@ function formatSharePercentage(value: number): string {
               </CMetaItem>
             </CMetaLine>
             <template #actions>
-              <CFormSelect
-                v-if="ownerFilterOptions.length > 0"
-                v-model="ownerFilterIdModel"
-                :placeholder="t('budget.filterByOwner')"
-                :options="[{ value: '', label: t('budget.allCurrentOwners') }, ...ownerFilterOptions]"
-                class="min-w-48"
-              />
               <CBtn
                 v-if="canEditSelectedBudget && selectedBudgetId"
                 variant="ghost"

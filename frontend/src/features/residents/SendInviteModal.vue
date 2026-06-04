@@ -56,7 +56,6 @@ async function handleSubmit() {
     inviteLink.value = res.data.invite_link
     feedback.setSuccess(t('residents.inviteSuccess'))
     emit('invited')
-    scheduleClose(() => { emit('update:open', false) })
   } catch (e: unknown) {
     const status = (e as { response?: { status?: number } })?.response?.status
     const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? ''
@@ -163,6 +162,12 @@ async function copyLink() {
           :title="t('residents.inviteSendButton')"
           :loading="loading"
           :disabled="!isValid || loading"
+        />
+        <CBtn
+          v-else
+          variant="primary"
+          :title="t('common.close')"
+          @click="$emit('update:open', false)"
         />
       </CFormActions>
     </template>
