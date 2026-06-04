@@ -890,7 +890,7 @@ async function submitDelete() {
             {{ t('claims.title') }}
           </CHeading>
           <CMetaItem variant="sub">
-             {{ t('claims.activeCount', { count: activeClaimsCount }) }}
+            {{ t('claims.activeCount', { count: activeClaimsCount }) }}
           </CMetaItem>
           <p
             class="body-md"

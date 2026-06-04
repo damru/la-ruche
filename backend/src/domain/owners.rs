@@ -19,7 +19,9 @@ pub fn validate_transfer_date(date: NaiveDate, today: NaiveDate) -> Result<(), &
 
 /// Validate the anonymization confirmation name matches the stored full name.
 pub fn validate_anonymize_confirmation(stored_full_name: &str, confirm_name: &str) -> bool {
-    stored_full_name.trim().eq_ignore_ascii_case(confirm_name.trim())
+    stored_full_name
+        .trim()
+        .eq_ignore_ascii_case(confirm_name.trim())
 }
 
 /// Validate required name fields when creating a resident without an invitation.
@@ -83,22 +85,34 @@ mod tests {
 
     #[test]
     fn anonymize_confirmation_matches() {
-        assert!(validate_anonymize_confirmation("Jean Dupont", "Jean Dupont"));
+        assert!(validate_anonymize_confirmation(
+            "Jean Dupont",
+            "Jean Dupont"
+        ));
     }
 
     #[test]
     fn anonymize_confirmation_case_insensitive() {
-        assert!(validate_anonymize_confirmation("Jean Dupont", "jean dupont"));
+        assert!(validate_anonymize_confirmation(
+            "Jean Dupont",
+            "jean dupont"
+        ));
     }
 
     #[test]
     fn anonymize_confirmation_trims_whitespace() {
-        assert!(validate_anonymize_confirmation("Jean Dupont", "  Jean Dupont  "));
+        assert!(validate_anonymize_confirmation(
+            "Jean Dupont",
+            "  Jean Dupont  "
+        ));
     }
 
     #[test]
     fn anonymize_confirmation_mismatch_rejected() {
-        assert!(!validate_anonymize_confirmation("Jean Dupont", "Marie Martin"));
+        assert!(!validate_anonymize_confirmation(
+            "Jean Dupont",
+            "Marie Martin"
+        ));
     }
 
     // ── US-GP-008: validate_resident_creation ────────────────────

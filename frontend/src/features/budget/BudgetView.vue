@@ -1504,21 +1504,21 @@ function formatSharePercentage(value: number): string {
         id="works-fund-form"
         @submit="saveWorksFund"
       >
-      <p class="body-sm mb-4 leading-6 text-on-surface-variant">
-        {{ t('budget.worksFundConfigureHint') }}
-      </p>
-      <CFormInput
-        v-model="worksFundForm.contribution_rate_pct"
-        :label="t('budget.worksFundRate')"
-        type="number"
-        :min="0"
-        :max="100"
-        step="0.01"
-        required
-      />
-      <p class="text-xs text-on-surface-variant mt-2">
-        {{ t('budget.worksFundRateHint', { minimum: formatSharePercentage(worksFundMinimumRate) }) }}
-      </p>
+        <p class="body-sm mb-4 leading-6 text-on-surface-variant">
+          {{ t('budget.worksFundConfigureHint') }}
+        </p>
+        <CFormInput
+          v-model="worksFundForm.contribution_rate_pct"
+          :label="t('budget.worksFundRate')"
+          type="number"
+          :min="0"
+          :max="100"
+          step="0.01"
+          required
+        />
+        <p class="text-xs text-on-surface-variant mt-2">
+          {{ t('budget.worksFundRateHint', { minimum: formatSharePercentage(worksFundMinimumRate) }) }}
+        </p>
       </CForm>
       <template #footer>
         <CFormActions

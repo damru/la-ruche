@@ -97,10 +97,7 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
         // ── Users ───────────────────────────────────────────────
         .route("/users", get(users::list).post(users::create))
         .route("/users/invite", post(users::invite))
-        .route(
-            "/users/{id}",
-            get(users::get).delete(users::deactivate),
-        )
+        .route("/users/{id}", get(users::get).delete(users::deactivate))
         .route("/users/{id}/roles", put(users::update_roles))
         .route("/users/{id}/anonymize", post(users::anonymize))
         .route("/users/{id}/invite", post(users::send_invite))

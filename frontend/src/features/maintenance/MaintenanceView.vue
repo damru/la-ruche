@@ -320,7 +320,6 @@ async function deleteEntry() {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
-
         <header class="view-header">
           <CEyebrow>
             {{ t('page.eyebrows.maintenance') }}

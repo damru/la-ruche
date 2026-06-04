@@ -94,8 +94,8 @@ onMounted(reload)
           <CForm 
             :status="feedback.status.value"
             :message="feedback.message.value"
-            @submit="saveBuilding" 
-            :cols="2"
+            :cols="2" 
+            @submit="saveBuilding"
           >
             <CFormInput
               v-model="form.name"

@@ -270,7 +270,7 @@ async function confirmDelete() {
             {{ t('contractors.title') }}
           </CHeading>
           <CMetaItem variant="sub">
-             {{ t('contractors.summary', { count: allContractors.length }) }}
+            {{ t('contractors.summary', { count: allContractors.length }) }}
           </CMetaItem>
         </header>
 

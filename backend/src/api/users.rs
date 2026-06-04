@@ -131,7 +131,9 @@ pub async fn invite(
 
     // Validate unit_id is required for tenant role (AC-GP-002-H)
     if role == "tenant" && input.unit_id.is_none() {
-        return Err(AppError::validation_code("errors.users.tenant_requires_unit"));
+        return Err(AppError::validation_code(
+            "errors.users.tenant_requires_unit",
+        ));
     }
 
     // Invalidate any prior pending invites for this email/building (AC-GP-002-G)
@@ -218,7 +220,9 @@ pub async fn deactivate(
 
     // Prevent self-deactivation
     if id == auth.user_id {
-        return Err(AppError::validation_code("errors.users.cannot_deactivate_self"));
+        return Err(AppError::validation_code(
+            "errors.users.cannot_deactivate_self",
+        ));
     }
 
     let found = db::user::archive_user(&state.pool, id, auth.building_id).await?;
@@ -246,7 +250,9 @@ pub async fn update_roles(
 
     // Prevent removing manager role from self without replacement (AC-GP-006-D)
     if id == auth.user_id && !input.roles.contains(&"manager".to_string()) {
-        return Err(AppError::validation_code("errors.users.cannot_remove_own_manager_role"));
+        return Err(AppError::validation_code(
+            "errors.users.cannot_remove_own_manager_role",
+        ));
     }
 
     db::user::update_roles(&state.pool, id, auth.building_id, &input.roles).await?;
@@ -272,7 +278,9 @@ pub async fn anonymize(
     // Require confirmation with exact full name (AC-GP-005-C)
     let full_name = format!("{} {}", detail.first_name, detail.last_name);
     if !owners::validate_anonymize_confirmation(&full_name, &input.confirm_name) {
-        return Err(AppError::validation_code("errors.users.anonymize_confirmation_mismatch"));
+        return Err(AppError::validation_code(
+            "errors.users.anonymize_confirmation_mismatch",
+        ));
     }
 
     let anon_id = Uuid::new_v4();
@@ -335,7 +343,10 @@ pub async fn create(
 
     db::user::create_user_building(&state.pool, user_id, auth.building_id, role).await?;
 
-    Ok((StatusCode::CREATED, Json(serde_json::json!({ "id": user_id }))))
+    Ok((
+        StatusCode::CREATED,
+        Json(serde_json::json!({ "id": user_id })),
+    ))
 }
 
 /// POST /users/{id}/invite — send invitation to an existing no_access resident (EP-002-S13, AC-GP-008-D/F)
@@ -359,7 +370,9 @@ pub async fn send_invite(
         .ok_or(AppError::NotFound)?;
 
     if detail.has_access {
-        return Err(AppError::validation_code("errors.users.user_already_has_access"));
+        return Err(AppError::validation_code(
+            "errors.users.user_already_has_access",
+        ));
     }
 
     // Resolve email: use provided email or existing one
@@ -367,7 +380,9 @@ pub async fn send_invite(
         (Some(new_email), _) => new_email.to_lowercase(),
         (None, Some(existing)) => existing.to_string(),
         (None, None) => {
-            return Err(AppError::validation_code("errors.users.no_email_for_invite"));
+            return Err(AppError::validation_code(
+                "errors.users.no_email_for_invite",
+            ));
         }
     };
 
@@ -393,7 +408,11 @@ pub async fn send_invite(
     let expires_at = Utc::now() + Duration::hours(72);
     let (plain, hash, _) = token::generate_token(Duration::hours(72));
 
-    let role = detail.roles.first().map(|r| r.as_str()).unwrap_or("co_owner");
+    let role = detail
+        .roles
+        .first()
+        .map(|r| r.as_str())
+        .unwrap_or("co_owner");
 
     db::user::create_invite_for_existing_user(
         &state.pool,

@@ -595,12 +595,10 @@ pub async fn anonymize_user(
     .await?;
 
     // Revoke all tokens
-    sqlx::query(
-        "UPDATE user_token SET used_at = NOW() WHERE user_id = $1 AND used_at IS NULL",
-    )
-    .bind(user_id)
-    .execute(&mut *tx)
-    .await?;
+    sqlx::query("UPDATE user_token SET used_at = NOW() WHERE user_id = $1 AND used_at IS NULL")
+        .bind(user_id)
+        .execute(&mut *tx)
+        .await?;
 
     // Close all unit_owner records and mark anonymized
     sqlx::query(
@@ -653,13 +651,12 @@ pub async fn update_user_email(
     user_id: Uuid,
     email: &str,
 ) -> crate::errors::AppResult<bool> {
-    let result = sqlx::query(
-        "UPDATE user_account SET email = $2, updated_at = NOW() WHERE id = $1",
-    )
-    .bind(user_id)
-    .bind(email)
-    .execute(pool)
-    .await?;
+    let result =
+        sqlx::query("UPDATE user_account SET email = $2, updated_at = NOW() WHERE id = $1")
+            .bind(user_id)
+            .bind(email)
+            .execute(pool)
+            .await?;
     Ok(result.rows_affected() > 0)
 }
 

@@ -191,8 +191,8 @@ async function confirmResetData() {
           <CForm
             :status="profileFeedback.status.value"
             :message="profileFeedback.message.value"
-            @submit="saveProfile"
             :cols="2"
+            @submit="saveProfile"
           >
             <CFormInput
               :model-value="auth.user?.first_name ?? ''"

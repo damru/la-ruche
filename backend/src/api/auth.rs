@@ -433,9 +433,15 @@ pub async fn invite_accept(
                 existing.id
             }
             None => {
-                db::user::create(&state.pool, email, &input.last_name, &input.first_name, &hash)
-                    .await?
-                    .id
+                db::user::create(
+                    &state.pool,
+                    email,
+                    &input.last_name,
+                    &input.first_name,
+                    &hash,
+                )
+                .await?
+                .id
             }
         }
     };

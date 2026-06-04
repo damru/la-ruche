@@ -733,8 +733,8 @@ function photoPreview(file: File): string {
       @update:open="showCreateModal = $event"
     >
       <CForm
-        @submit="submitCreate"
         id="create-report"
+        @submit="submitCreate"
       >
         <CFormInput
           v-model="createForm.title"
@@ -923,8 +923,8 @@ function photoPreview(file: File): string {
       @update:open="v => !v && (reportToEdit = null)"
     >
       <CForm
-        @submit="submitEdit"
         id="edit-report"
+        @submit="submitEdit"
       >
         <CFormInput
           v-model="editForm.title"

@@ -18,8 +18,8 @@ const emit = defineEmits<{ submit: [] }>()
   <form
     class="flex flex-col gap-4"
     :class="$props.cols === 2 ? 'sm:grid sm:grid-cols-2' : ''"
-    @submit.prevent="emit('submit')"
     novalidate
+    @submit.prevent="emit('submit')"
   >
     <slot></slot>
     <CFormActions

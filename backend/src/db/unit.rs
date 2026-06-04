@@ -198,7 +198,7 @@ pub struct CurrentOwnerRow {
     pub user_id: Uuid,
     pub first_name: String,
     pub last_name: String,
-    pub email: String,
+    pub email: Option<String>,
 }
 
 /// Fetches the current owner (end_date IS NULL) for each of the given unit IDs.

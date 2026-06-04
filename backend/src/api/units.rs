@@ -25,7 +25,7 @@ pub struct OwnerSummary {
     pub id: Uuid,
     pub first_name: String,
     pub last_name: String,
-    pub email: String,
+    pub email: Option<String>,
 }
 
 #[derive(Serialize, ToSchema)]
@@ -254,7 +254,11 @@ pub async fn owners(
     Path(id): Path<Uuid>,
 ) -> AppResult<Json<Vec<db::unit::OwnerRecord>>> {
     // Managers and board members only (AC-GP-007-B)
-    if !auth.roles.iter().any(|r| *r == Role::Manager || *r == Role::BoardMember) {
+    if !auth
+        .roles
+        .iter()
+        .any(|r| *r == Role::Manager || *r == Role::BoardMember)
+    {
         return Err(AppError::Forbidden);
     }
     // Verify unit belongs to this building
@@ -282,8 +286,7 @@ pub async fn transfer(
     require_manager(&auth)?;
 
     let today = chrono::Utc::now().naive_utc().date();
-    owners::validate_transfer_date(input.start_date, today)
-        .map_err(AppError::validation_code)?;
+    owners::validate_transfer_date(input.start_date, today).map_err(AppError::validation_code)?;
 
     // Verify unit belongs to this building
     db::unit::get(&state.pool, id, auth.building_id)
@@ -300,11 +303,19 @@ pub async fn transfer(
     .await?;
 
     if !exists {
-        return Err(AppError::validation_code("errors.owners.new_owner_not_found"));
+        return Err(AppError::validation_code(
+            "errors.owners.new_owner_not_found",
+        ));
     }
 
-    db::unit::transfer_ownership(&state.pool, id, auth.building_id, input.user_id, input.start_date)
-        .await?;
+    db::unit::transfer_ownership(
+        &state.pool,
+        id,
+        auth.building_id,
+        input.user_id,
+        input.start_date,
+    )
+    .await?;
 
     Ok(StatusCode::NO_CONTENT)
 }
