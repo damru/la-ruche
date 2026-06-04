@@ -62,6 +62,16 @@ export interface UnitOwner {
   email?: string | null
 }
 
+export interface UnitOwnerRecord {
+  id: string
+  unit_id: string
+  user_id: string | null
+  display_name: string
+  start_date: string
+  end_date: string | null
+  anonymized: boolean
+}
+
 export interface Unit {
   id: string
   building_id: string

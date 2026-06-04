@@ -583,6 +583,8 @@
     "levies": "Appels de fonds",
     "levyCallsCount": "{count} appel | {count} appels",
     "collectionRatePct": "Taux de recouvrement {pct}%",
+    "filterByOwner": "Filtrer par propriétaire",
+    "allCurrentOwners": "Tous (propriétaire courant)",
     "generateLevies": "Générer les appels",
     "generateLeviesTitle": "Générer les appels de fonds",
     "generateLeviesSub": "Les appels seront calculés au prorata des tantièmes de chaque lot.",

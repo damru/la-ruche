@@ -8,7 +8,7 @@ import type {
   LogbookSummary,
   Report, Consultation, ConsultationResults, VendorTask, VendorDocument,
   Document, UploadUrlResponse, DownloadUrlResponse,
-  Building, Unit, User, AllocationKey, UnitShare,
+  Building, Unit, UnitOwnerRecord, User, AllocationKey, UnitShare,
   OnboardingStatus, RuntimeStatus, BootstrapInput, BootstrapResponse,
   LoginResponse, BuildingStats, RegistryResponse, UnitChargesResponse,
   Contractor,
@@ -107,7 +107,7 @@ export const unitsApi = {
   archive: (id: string) =>
     api.delete(`/units/${id}`),
   owners: (id: string) =>
-    api.get(`/units/${id}/owners`),
+    api.get<UnitOwnerRecord[]>(`/units/${id}/owners`),
   transfer: (id: string, data: { user_id: string; start_date: string }) =>
     api.post(`/units/${id}/transfer`, data),
   charges: (id: string) =>
@@ -237,8 +237,8 @@ export const budgetApi = {
     api.delete(`/budgets/${id}/lines/${lid}`),
   generateLevies: (id: string, data: { due_date: string; include_works_fund: boolean; call_label?: string }) =>
     api.post<{ generated: number; total_amount: number; already_called: number; remaining_amount: number; due_date: string; call_label?: string }>(`/budgets/${id}/levies/generate`, data),
-  listLevies: (id: string) =>
-    api.get<LevyCall[]>(`/budgets/${id}/levies`),
+  listLevies: (id: string, ownerId?: string) =>
+    api.get<LevyCall[]>(`/budgets/${id}/levies${ownerId ? `?owner_id=${ownerId}` : ''}`),
   markPaid: (levyCallId: string, unitId: string) =>
     api.put(`/levies/${levyCallId}/units/${unitId}/payment`),
   getWorksFund: (fiscalYear: number) =>
