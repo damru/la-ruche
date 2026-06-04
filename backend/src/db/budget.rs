@@ -568,9 +568,9 @@ pub async fn list_levies(
                lc.issued_at,
                u.id    AS unit_id,
                u.unit_number,
-               SUM(lcu.amount)::numeric                                               AS amount,
-               SUM(lcu.amount) FILTER (WHERE lcu.budget_line_id IS NOT NULL)::numeric AS charge_amount,
-               SUM(lcu.amount) FILTER (WHERE lcu.budget_line_id IS NULL)::numeric     AS works_fund_amount,
+               SUM(lcu.amount)::numeric                                                              AS amount,
+               COALESCE(SUM(lcu.amount) FILTER (WHERE lcu.budget_line_id IS NOT NULL), 0)::numeric AS charge_amount,
+               COALESCE(SUM(lcu.amount) FILTER (WHERE lcu.budget_line_id IS NULL), 0)::numeric     AS works_fund_amount,
                CASE
                    WHEN bool_or(lcu.status::text = 'overdue') THEN 'overdue'
                    WHEN bool_and(lcu.status::text = 'paid')   THEN 'paid'
