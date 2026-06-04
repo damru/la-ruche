@@ -11,7 +11,7 @@ import { meetingsApi } from '@/api'
 import { useFormFeedback } from '@/composables/useFormFeedback'
 import { useAutoClose } from '@/composables/useAutoClose'
 import { toErrorMessage } from '@/composables/usePageLoader'
-import type { MeetingAttendanceEntry, MeetingAttendanceMode } from '@/types/domain'
+import type { MeetingAttendanceEntry } from '@/types/domain'
 
 const props = defineProps<{
   open: boolean

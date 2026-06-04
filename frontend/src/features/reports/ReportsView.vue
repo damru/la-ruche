@@ -20,7 +20,6 @@ import CIconCheckCircle from '@/components/atoms/CIconCheckCircle.svg'
 import CIconEdit from '@/components/atoms/CIconEdit.svg'
 import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import CIconRefresh from '@/components/atoms/CIconRefresh.svg'
-import CIconTrash from '@/components/atoms/CIconTrash.svg'
 import CreateReportModal from './CreateReportModal.vue'
 import UpdateReportStatusModal from './UpdateReportStatusModal.vue'
 import ConvertReportToTaskModal from './ConvertReportToTaskModal.vue'
@@ -56,7 +55,6 @@ function openCreateModal() { showCreateModal.value = true }
 function openStatusModal(report: Report) { reportToUpdate.value = report }
 function openConvertModal(report: Report) { reportToConvert.value = report }
 function openEditModal(report: Report) { reportToEdit.value = report }
-function openDeleteModal(report: Report) { reportToDelete.value = report }
 function openReportPhotos(report: Report) { reportPhotoGalleryTarget.value = report }
 function handleEditDelete() {
   const r = reportToEdit.value

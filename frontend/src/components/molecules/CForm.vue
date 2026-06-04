@@ -7,6 +7,7 @@ withDefaults(defineProps<{
   message?: string
   cols?: number
 }>(), {
+  message: undefined,
   status: 'idle',
   cols: 1,
 })

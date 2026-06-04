@@ -5,12 +5,6 @@ import CModal from '@/components/molecules/CModal.vue'
 import CMetaItem from '@/components/molecules/CMetaItem.vue'
 import CFlexGroup from '@/components/organisms/CFlexGroup.vue'
 
-const props = defineProps<{
-  open: boolean
-  items: Array<{ id: string; label: string; amount: number; color: string; sharePct: number }>
-  breakdownStyle: Record<string, string>
-}>()
-
 defineEmits<{
   'update:open': [value: boolean]
 }>()

@@ -6,7 +6,10 @@ const props = withDefaults(
     name?: string | null
     size?: 'sm' | 'md' | 'lg'
   }>(),
-  { size: 'md' },
+  { 
+    name: undefined,
+    size: 'md' 
+  },
 )
 
 function nameToHue(name: string): number {
