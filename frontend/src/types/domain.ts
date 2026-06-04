@@ -99,7 +99,7 @@ export interface User {
   roles: Role[]
   created_at?: string
   phone?: string | null
-  status?: 'active' | 'pending_invite' | 'no_access'
+  status?: 'active' | 'pending_invite' | 'no_access' | 'archived'
   expires_at?: string
   invite_token_id?: string
   has_access?: boolean

@@ -43,6 +43,22 @@ pub struct UpdateRolesInput {
     pub roles: Vec<String>,
 }
 
+#[derive(Deserialize, Default)]
+pub struct DeactivateInput {
+    pub departure_date: Option<NaiveDate>,
+}
+
+#[derive(Deserialize, Validate)]
+pub struct UpdateResidentInput {
+    #[validate(length(min = 1))]
+    pub first_name: String,
+    #[validate(length(min = 1))]
+    pub last_name: String,
+    #[validate(email)]
+    pub email: Option<String>,
+    pub phone: Option<String>,
+}
+
 #[derive(Deserialize, Validate)]
 pub struct AnonymizeInput {
     #[validate(length(min = 1))]
@@ -210,11 +226,12 @@ pub async fn get(
     }))
 }
 
-/// DELETE /users/{id} — archive user (revoke access, keep data) (EP-002-S04, US-GP-004)
+/// DELETE /users/{id} — archive user (revoke access, keep data) (EP-002-S16, US-GP-004)
 pub async fn deactivate(
     State(state): State<Arc<AppState>>,
     auth: AuthUser,
     Path(id): Path<Uuid>,
+    body: Option<Json<DeactivateInput>>,
 ) -> AppResult<StatusCode> {
     require_manager(&auth)?;
 
@@ -225,7 +242,11 @@ pub async fn deactivate(
         ));
     }
 
-    let found = db::user::archive_user(&state.pool, id, auth.building_id).await?;
+    let departure_date = body
+        .and_then(|b| b.departure_date)
+        .unwrap_or_else(|| chrono::Utc::now().naive_utc().date());
+
+    let found = db::user::archive_user(&state.pool, id, auth.building_id, departure_date).await?;
     if !found {
         return Err(AppError::NotFound);
     }
@@ -442,4 +463,54 @@ pub async fn send_invite(
             invite_link,
         }),
     ))
+}
+
+/// PUT /users/{id} — update resident profile fields (EP-002-S14, US-GP-001)
+pub async fn update_resident(
+    State(state): State<Arc<AppState>>,
+    auth: AuthUser,
+    Path(id): Path<Uuid>,
+    Json(input): Json<UpdateResidentInput>,
+) -> AppResult<StatusCode> {
+    require_manager(&auth)?;
+    input
+        .validate()
+        .map_err(|_| AppError::validation_code("errors.users.invalid_update_payload"))?;
+
+    let email = input.email.as_deref().map(|e| e.to_lowercase());
+    let phone = input.phone.as_deref().filter(|p| !p.trim().is_empty());
+
+    db::user::update_resident(
+        &state.pool,
+        id,
+        input.first_name.trim(),
+        input.last_name.trim(),
+        email.as_deref(),
+        phone,
+    )
+    .await
+    .map_err(|e| {
+        if e.to_string().contains("user_account_email_unique") {
+            AppError::Conflict("errors.users.email_already_exists".into())
+        } else {
+            e
+        }
+    })?;
+
+    Ok(StatusCode::NO_CONTENT)
+}
+
+/// POST /users/{id}/reactivate — restore building access for an archived user (EP-002-S16, US-GP-004)
+pub async fn reactivate(
+    State(state): State<Arc<AppState>>,
+    auth: AuthUser,
+    Path(id): Path<Uuid>,
+) -> AppResult<StatusCode> {
+    require_manager(&auth)?;
+
+    let found = db::user::reactivate_user(&state.pool, id, auth.building_id).await?;
+    if !found {
+        return Err(AppError::NotFound);
+    }
+    Ok(StatusCode::NO_CONTENT)
 }

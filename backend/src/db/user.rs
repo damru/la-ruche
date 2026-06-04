@@ -43,18 +43,22 @@ pub async fn list(
         r#"SELECT u.id, u.email, u.last_name, u.first_name, u.active, u.phone,
                   ub.roles::text[] AS roles,
                   CASE
+                    WHEN ub.end_date IS NOT NULL THEN 'archived'
                     WHEN u.password_hash IS NOT NULL OR u.passkey_credential IS NOT NULL THEN 'active'
                     ELSE 'no_access'
                   END AS status
            FROM user_account u
-           JOIN user_building ub ON ub.user_id = u.id AND ub.end_date IS NULL
-           WHERE ub.building_id = $1 AND u.active = true
-             AND NOT EXISTS (
-               SELECT 1 FROM user_token ut
-               WHERE ut.user_id = u.id
-                 AND ut.token_type = 'invitation'
-                 AND ut.used_at IS NULL
-                 AND ut.expires_at > NOW()
+           JOIN user_building ub ON ub.user_id = u.id AND ub.building_id = $1
+           WHERE u.active = true
+             AND (
+               ub.end_date IS NOT NULL
+               OR NOT EXISTS (
+                 SELECT 1 FROM user_token ut
+                 WHERE ut.user_id = u.id
+                   AND ut.token_type = 'invitation'
+                   AND ut.used_at IS NULL
+                   AND ut.expires_at > NOW()
+               )
              )
            ORDER BY u.last_name NULLS LAST, u.first_name NULLS LAST"#,
     )
@@ -549,13 +553,15 @@ pub async fn archive_user(
     pool: &PgPool,
     user_id: Uuid,
     building_id: Uuid,
+    departure_date: NaiveDate,
 ) -> crate::errors::AppResult<bool> {
     let result = sqlx::query(
-        r#"UPDATE user_building SET end_date = CURRENT_DATE, updated_at = NOW()
+        r#"UPDATE user_building SET end_date = $3, updated_at = NOW()
            WHERE user_id = $1 AND building_id = $2 AND end_date IS NULL"#,
     )
     .bind(user_id)
     .bind(building_id)
+    .bind(departure_date)
     .execute(pool)
     .await?;
 
@@ -569,6 +575,47 @@ pub async fn archive_user(
     .await?;
 
     Ok(result.rows_affected() > 0)
+}
+
+/// Reactivate an archived user (restore building access).
+pub async fn reactivate_user(
+    pool: &PgPool,
+    user_id: Uuid,
+    building_id: Uuid,
+) -> crate::errors::AppResult<bool> {
+    let result = sqlx::query(
+        r#"UPDATE user_building SET end_date = NULL, updated_at = NOW()
+           WHERE user_id = $1 AND building_id = $2 AND end_date IS NOT NULL"#,
+    )
+    .bind(user_id)
+    .bind(building_id)
+    .execute(pool)
+    .await?;
+    Ok(result.rows_affected() > 0)
+}
+
+/// Update a resident's profile fields (name, email, phone).
+pub async fn update_resident(
+    pool: &PgPool,
+    user_id: Uuid,
+    first_name: &str,
+    last_name: &str,
+    email: Option<&str>,
+    phone: Option<&str>,
+) -> crate::errors::AppResult<()> {
+    sqlx::query(
+        r#"UPDATE user_account
+           SET first_name = $2, last_name = $3, email = $4, phone = $5, updated_at = NOW()
+           WHERE id = $1"#,
+    )
+    .bind(user_id)
+    .bind(first_name)
+    .bind(last_name)
+    .bind(email)
+    .bind(phone)
+    .execute(pool)
+    .await?;
+    Ok(())
 }
 
 /// Anonymize a user account (RGPD art. 17).

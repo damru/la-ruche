@@ -128,14 +128,18 @@ export const usersApi = {
     api.delete(`/users/invites/${tokenId}`),
   updateRoles: (id: string, roles: string[]) =>
     api.put(`/users/${id}/roles`, { roles }),
-  deactivate: (id: string) =>
-    api.delete(`/users/${id}`),
+  deactivate: (id: string, departure_date?: string) =>
+    api.delete(`/users/${id}`, { data: { departure_date } }),
+  reactivate: (id: string) =>
+    api.post(`/users/${id}/reactivate`),
   anonymize: (id: string, confirm_name: string) =>
     api.post(`/users/${id}/anonymize`, { confirm_name }),
   createResident: (data: { first_name: string; last_name: string; email?: string | null; role: string; unit_id?: string | null }) =>
     api.post<{ id: string }>('/users', data),
   sendInvite: (id: string, email?: string | null) =>
     api.post<InviteResponse>(`/users/${id}/invite`, { email }),
+  updateResident: (id: string, data: { first_name: string; last_name: string; email?: string | null; phone?: string | null }) =>
+    api.put(`/users/${id}`, data),
 }
 
 // ── Meetings ──────────────────────────────────────────────────────

@@ -308,6 +308,14 @@ pub async fn transfer(
         ));
     }
 
+    // Find the current owner before transfer (to revoke access if they have no other units)
+    let old_owner_id: Option<Uuid> = sqlx::query_scalar(
+        "SELECT user_id FROM unit_owner WHERE unit_id = $1 AND end_date IS NULL",
+    )
+    .bind(id)
+    .fetch_optional(&state.pool)
+    .await?;
+
     db::unit::transfer_ownership(
         &state.pool,
         id,
@@ -316,6 +324,25 @@ pub async fn transfer(
         input.start_date,
     )
     .await?;
+
+    // Revoke building access for old owner if they have no remaining active units (AC-GP-003-B)
+    if let Some(old_id) = old_owner_id
+        && old_id != input.user_id
+    {
+        let other_units: i64 = sqlx::query_scalar(
+            r#"SELECT COUNT(*) FROM unit_owner uo
+               JOIN unit u ON u.id = uo.unit_id
+               WHERE uo.user_id = $1 AND u.building_id = $2 AND uo.end_date IS NULL"#,
+        )
+        .bind(old_id)
+        .bind(auth.building_id)
+        .fetch_one(&state.pool)
+        .await?;
+
+        if other_units == 0 {
+            db::user::archive_user(&state.pool, old_id, auth.building_id, input.start_date).await?;
+        }
+    }
 
     Ok(StatusCode::NO_CONTENT)
 }
