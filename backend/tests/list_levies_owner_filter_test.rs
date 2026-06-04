@@ -61,7 +61,11 @@ async fn manager_can_filter_budget_levies_by_historical_owner() {
              VALUES ($1, $2, $3, $4, 'hash')",
         )
         .bind(uid)
-        .bind(format!("{}-lft-{}@test.local", email_prefix, Uuid::new_v4()))
+        .bind(format!(
+            "{}-lft-{}@test.local",
+            email_prefix,
+            Uuid::new_v4()
+        ))
         .bind(last)
         .bind(first)
         .execute(&pool)
@@ -162,7 +166,9 @@ async fn manager_can_filter_budget_levies_by_historical_owner() {
     assert_eq!(levies.len(), 2, "unfiltered: both levies");
     // Current owner shown for both rows
     assert!(
-        levies.iter().all(|l| l["owner_id"] == new_owner_id.to_string()),
+        levies
+            .iter()
+            .all(|l| l["owner_id"] == new_owner_id.to_string()),
         "unfiltered: current owner on all rows"
     );
 
