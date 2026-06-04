@@ -1,18 +1,14 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useFormatters } from '@/composables/useFormatters'
 import { usePageLoader, toErrorMessage } from '@/composables/usePageLoader'
 import { useFormFeedback } from '@/composables/useFormFeedback'
-import { useAutoClose } from '@/composables/useAutoClose'
 import { useAuthStore } from '@/stores/auth'
 import type {
-  ConvocationChannel,
-  ConvocationChecklist,
   Meeting,
   MeetingAttendance,
-  MeetingAttendanceEntry,
   MeetingAttendanceMode,
   MeetingDocument,
   MeetingType,
@@ -28,8 +24,21 @@ import CIconDownload from '@/components/atoms/CIconDownload.svg'
 import CIconEdit from '@/components/atoms/CIconEdit.svg'
 import CIconLock from '@/components/atoms/CIconLock.svg'
 import CIconPlus from '@/components/atoms/CIconPlus.svg'
-import CIconTrash from '@/components/atoms/CIconTrash.svg'
 import CIconUpload from '@/components/atoms/CIconUpload.svg'
+import VoteModal from './VoteModal.vue'
+import StartMeetingModal from './StartMeetingModal.vue'
+import CloseMeetingModal from './CloseMeetingModal.vue'
+import ConvocationModal from './ConvocationModal.vue'
+import UploadDocumentModal from './UploadDocumentModal.vue'
+import DeleteDocumentModal from './DeleteDocumentModal.vue'
+import AttendanceModal from './AttendanceModal.vue'
+import EditMeetingModal from './EditMeetingModal.vue'
+import AddResolutionModal from './AddResolutionModal.vue'
+import EditResolutionModal from './EditResolutionModal.vue'
+import Art24Modal from './Art24Modal.vue'
+import Art25Modal from './Art25Modal.vue'
+import MinutesModal from './MinutesModal.vue'
+import SignaturesModal from './SignaturesModal.vue'
 
 const route = useRoute()
 const { t } = useI18n()
@@ -54,19 +63,7 @@ const showAddResolutionModal = ref(false)
 const showDocumentModal = ref(false)
 const showAttendanceModal = ref(false)
 
-const meetingFeedback = useFormFeedback()
-const resolutionFeedback = useFormFeedback()
-const documentFeedback = useFormFeedback()
-const attendanceFeedback = useFormFeedback()
-
-const savingMeeting = ref(false)
-const savingResolution = ref(false)
-const savingDocument = ref(false)
-const savingAttendance = ref(false)
-const callingMeeting = ref(false)
-const closingMeeting = ref(false)
 const showCloseMeetingModal = ref(false)
-const closeMeetingFeedback = useFormFeedback()
 
 const showDeleteDocumentModal = ref(false)
 const pendingDeleteDocumentId = ref<string | null>(null)
@@ -74,49 +71,16 @@ const pendingDeleteDocumentName = ref<string | null>(null)
 
 const showVoteModal = ref(false)
 const votingResolution = ref<Resolution | null>(null)
-const unitVotes = ref<Record<string, string>>({})
-const savingVotes = ref(false)
-const voteFeedback = useFormFeedback()
-
-const startingMeeting = ref(false)
 
 const showStartMeetingModal = ref(false)
-const startMeetingForm = ref(defaultStartMeetingForm())
-const startMeetingFeedback = useFormFeedback()
 
-function defaultStartMeetingForm() {
-  return {
-    president_name: '',
-    secretary_name: '',
-    scrutineers: [] as Array<{ name: string }>,
-  }
-}
-
-// EP-003-S09 — Convocation : checklist + canal + date d'envoi
 const showConvocationModal = ref(false)
-const convocationForm = ref<{ channel: ConvocationChannel; sent_at: string }>({
-  channel: 'lrar',
-  sent_at: '',
-})
-const convocationChecklist = ref<ConvocationChecklist | null>(null)
-const loadingConvocationChecklist = ref(false)
-const convocationFeedback = useFormFeedback()
 
 const showMinutesModal = ref(false)
-const minutesForm = ref<{ file: File | null }>({ file: null })
-const savingMinutes = ref(false)
-const downloadingMinutesDraft = ref(false)
 const notifyingMinutes = ref(false)
 const minutesFeedback = useFormFeedback()
 
 const showSignaturesModal = ref(false)
-const signaturesForm = ref({
-  president_signed: false,
-  secretary_signed: false,
-  scrutineers_signed: [] as string[],
-})
-const savingSignatures = ref(false)
-const signaturesFeedback = useFormFeedback()
 
 const notificationDutyDeadline = computed(() => {
   if (!meeting.value?.meeting_date) return null
@@ -143,80 +107,13 @@ const notificationDutyVariant = computed<'info' | 'warning' | 'error'>(() => {
 })
 
 const showEditResolutionModal = ref(false)
-const editingResolution = ref<Resolution | null>(null)
-const editResolutionForm = ref({ description: '' })
-const savingEditResolution = ref(false)
-const editResolutionFeedback = useFormFeedback()
+const resolutionToEdit = ref<Resolution | null>(null)
 
 const showArt24Modal = ref(false)
-const art24ResolutionToCreate = ref<Resolution | null>(null)
-const savingArt24 = ref(false)
-const art24Feedback = useFormFeedback()
+const art24SourceResolution = ref<Resolution | null>(null)
 
 const showArt25Modal = ref(false)
-const art25ResolutionToCreate = ref<Resolution | null>(null)
-const savingArt25 = ref(false)
-const art25Feedback = useFormFeedback()
-
-const { schedule: scheduleMeetingClose, forceExpire: forceMeetingClose } = useAutoClose()
-const { schedule: scheduleResolutionClose, forceExpire: forceResolutionClose } = useAutoClose()
-const { schedule: scheduleDocumentClose, forceExpire: forceDocumentClose } = useAutoClose()
-const { schedule: scheduleAttendanceClose, forceExpire: forceAttendanceClose } = useAutoClose()
-const { schedule: scheduleVoteClose, forceExpire: forceVoteClose } = useAutoClose()
-const { schedule: scheduleEditResolutionClose, forceExpire: forceEditResolutionClose } = useAutoClose()
-const { schedule: scheduleArt24Close, forceExpire: forceArt24Close } = useAutoClose()
-const { schedule: scheduleArt25Close, forceExpire: forceArt25Close } = useAutoClose()
-
-watch(showEditMeetingModal, (open) => { if (!open) forceMeetingClose() })
-watch(showAddResolutionModal, (open) => { if (!open) forceResolutionClose() })
-watch(showDocumentModal, (open) => { if (!open) forceDocumentClose() })
-watch(showAttendanceModal, (open) => { if (!open) forceAttendanceClose() })
-watch(showVoteModal, (open) => { if (!open) forceVoteClose() })
-watch(showEditResolutionModal, (open) => { if (!open) forceEditResolutionClose() })
-watch(showArt24Modal, (open) => { if (!open) forceArt24Close() })
-watch(showArt25Modal, (open) => { if (!open) forceArt25Close() })
-
-const { schedule: scheduleStartMeetingClose, forceExpire: forceStartMeetingClose } = useAutoClose()
-watch(showStartMeetingModal, (open) => { if (!open) forceStartMeetingClose() })
-
-const { schedule: scheduleMinutesClose, forceExpire: forceMinutesClose } = useAutoClose()
-watch(showMinutesModal, (open) => { if (!open) forceMinutesClose() })
-
-const { schedule: scheduleConvocationClose, forceExpire: forceConvocationClose } = useAutoClose()
-watch(showConvocationModal, (open) => { if (!open) forceConvocationClose() })
-
-const { schedule: scheduleSignaturesClose, forceExpire: forceSignaturesClose } = useAutoClose()
-watch(showSignaturesModal, (open) => { if (!open) forceSignaturesClose() })
-
-function defaultMeetingForm() {
-  return {
-    meeting_type: 'annual' as MeetingType,
-    meeting_date: '',
-    location: '',
-  }
-}
-
-function defaultResolutionForm() {
-  return {
-    number: 1,
-    title: '',
-    description: '',
-    vote_type: 'simple_majority' as VoteType,
-  }
-}
-
-function defaultDocumentForm() {
-  return {
-    kind: 'notice' as 'notice' | 'attachment',
-    file: null as File | null,
-  }
-}
-
-const meetingForm = ref(defaultMeetingForm())
-const resolutionForm = ref(defaultResolutionForm())
-const documentForm = ref(defaultDocumentForm())
-const attendanceDraft = ref<MeetingAttendanceEntry[]>([])
-const meetingAgendaItems = ref<string[]>([''])
+const art25SourceResolution = ref<Resolution | null>(null)
 
 const canAddResolution = computed(() => auth.isManager && ['draft', 'called'].includes(meeting.value?.status ?? ''))
 const canManageVotes = computed(() => auth.isManager && ['ongoing'].includes(meeting.value?.status ?? ''))
@@ -226,12 +123,6 @@ const sortedAttendanceEntries = computed(() =>
   [...attendance.value.entries].sort((a, b) => parseInt(a.unit_number, 10) - parseInt(b.unit_number, 10))
 )
 const attendingUnits = computed(() => sortedAttendanceEntries.value.filter(e => e.mode !== 'absent'))
-const votePositionOptions = computed(() => [
-  { value: '', label: t('meetings.vote.notSet') },
-  { value: 'in_favor', label: t('meetings.vote.in_favor') },
-  { value: 'against', label: t('meetings.vote.against') },
-  { value: 'abstain', label: t('meetings.vote.abstain') },
-])
 const noticeDocuments = computed(() => documents.value.filter(document => document.kind === 'notice'))
 const attachmentDocuments = computed(() => documents.value.filter(document => document.kind === 'attachment'))
 const isMeetingPast = computed(() => {
@@ -380,34 +271,8 @@ async function loadData() {
 
 const { loading, error, reload } = usePageLoader(loadData)
 
-const meetingTypeOptions = computed(() => [
-  { value: 'annual', label: t('meetings.types.annual') },
-  { value: 'extraordinary', label: t('meetings.types.extraordinary') },
-])
 
-const voteTypeOptions = computed(() => [
-  { value: 'simple_majority', label: t('meetings.vote.types.simple_majority') },
-  { value: 'absolute_majority', label: t('meetings.vote.types.absolute_majority') },
-  { value: 'double_majority', label: t('meetings.vote.types.double_majority') },
-  { value: 'unanimity', label: t('meetings.vote.types.unanimity') },
-])
 
-const documentKindOptions = computed(() => [
-  { value: 'notice', label: t('meetings.documents.notice') },
-  { value: 'attachment', label: t('meetings.documents.attachment') },
-  { value: 'vote_by_mail_form', label: t('meetings.documents.vote_by_mail_form') },
-])
-
-const attendanceModeOptions = computed(() => [
-  { value: 'present', label: t('meetings.attendanceModes.present') },
-  { value: 'proxy', label: t('meetings.attendanceModes.proxy') },
-  { value: 'correspondence', label: t('meetings.attendanceModes.correspondence') },
-  { value: 'absent', label: t('meetings.attendanceModes.absent') },
-])
-
-function setResolutionNumber(v: string) {
-  resolutionForm.value.number = parseInt(v, 10) || 1
-}
 onMounted(reload)
 
 function typeLabel(type: MeetingType): string {
@@ -543,236 +408,40 @@ function documentKindLabel(kind: MeetingDocument['kind']): string {
 }
 
 function openEditMeetingModal() {
-  if (!meeting.value) return
-
-  const agenda = (meeting.value.agenda ?? '')
-    .split(/\r?\n/)
-    .map(item => item.trim())
-    .filter(Boolean)
-
-  meetingForm.value = {
-    meeting_type: meeting.value.meeting_type,
-    meeting_date: toDateTimeLocal(meeting.value.meeting_date),
-    location: meeting.value.location ?? '',
-  }
-  meetingAgendaItems.value = agenda.length ? agenda : ['']
-  meetingFeedback.reset()
   showEditMeetingModal.value = true
 }
 
-function addAgendaItem() {
-  meetingAgendaItems.value.push('')
-}
-
-function removeAgendaItem(index: number) {
-  if (meetingAgendaItems.value.length <= 1) {
-    meetingAgendaItems.value = ['']
-    return
-  }
-  meetingAgendaItems.value.splice(index, 1)
-}
-
 function openResolutionModal() {
-  resolutionForm.value = {
-    ...defaultResolutionForm(),
-    number: resolutions.value.length + 1,
-  }
-  resolutionFeedback.reset()
   showAddResolutionModal.value = true
 }
 
 function openDocumentModal() {
-  documentForm.value = defaultDocumentForm()
-  documentFeedback.reset()
   showDocumentModal.value = true
 }
 
 function openAttendanceModal() {
-  attendanceDraft.value = attendance.value.entries.map(entry => ({ ...entry }))
-  attendanceFeedback.reset()
   showAttendanceModal.value = true
-}
-
-async function saveMeeting() {
-  if (!meeting.value || !meetingForm.value.meeting_date) return
-
-  savingMeeting.value = true
-  meetingFeedback.reset()
-
-  const normalizedAgenda = meetingAgendaItems.value
-    .map(item => item.trim())
-    .filter(Boolean)
-
-  try {
-    await meetingsApi.update(meeting.value.id, {
-      meeting_type: meetingForm.value.meeting_type,
-      meeting_date: new Date(meetingForm.value.meeting_date).toISOString(),
-      location: meetingForm.value.location || undefined,
-      agenda: normalizedAgenda.length ? normalizedAgenda.join('\n') : undefined,
-    })
-
-    meetingFeedback.setSuccess(t('common.saved'))
-    scheduleMeetingClose(async () => {
-      showEditMeetingModal.value = false
-      await reload()
-    })
-  } catch (err) {
-    meetingFeedback.setError(toErrorMessage(err))
-  } finally {
-    savingMeeting.value = false
-  }
-}
-
-async function saveResolution() {
-  if (!meeting.value || !resolutionForm.value.title.trim()) return
-
-  savingResolution.value = true
-  resolutionFeedback.reset()
-
-  try {
-    await meetingsApi.createResolution(meeting.value.id, {
-      number: resolutionForm.value.number,
-      title: resolutionForm.value.title,
-      description: resolutionForm.value.description || undefined,
-      vote_type: resolutionForm.value.vote_type,
-    })
-
-    resolutionFeedback.setSuccess(t('common.saved'))
-    scheduleResolutionClose(async () => {
-      showAddResolutionModal.value = false
-      await reload()
-    })
-  } catch (err) {
-    resolutionFeedback.setError(toErrorMessage(err))
-  } finally {
-    savingResolution.value = false
-  }
 }
 
 async function openVoteModal(resolution: Resolution) {
   votingResolution.value = resolution
-  unitVotes.value = {}
-  voteFeedback.reset()
   showVoteModal.value = true
-  try {
-    const res = await meetingsApi.listVotes(meeting.value!.id, resolution.id)
-    for (const v of res.data) {
-      unitVotes.value[v.unit_id] = v.position
-    }
-  } catch {
-    // pre-fill failure non-blocking — manager can still enter votes
-  }
 }
 
-function fillAllVotes(position: 'in_favor' | 'against') {
-  for (const entry of attendingUnits.value) {
-    unitVotes.value[entry.unit_id] = position
+async function handleVoteSaved(payload: { resolutionId: string; result: VoteResult | null; finalized: boolean; eligibleForSecondVote: string | null }) {
+  if (payload.result) {
+    voteResults.value = { ...voteResults.value, [payload.resolutionId]: payload.result }
   }
-}
-
-async function saveVotes() {
-  if (!votingResolution.value || !meeting.value) return
-  savingVotes.value = true
-  voteFeedback.reset()
-  try {
-    await Promise.all(
-      attendingUnits.value
-        .filter(e => unitVotes.value[e.unit_id])
-        .map(e => meetingsApi.vote(meeting.value!.id, votingResolution.value!.id, {
-          unit_id: e.unit_id,
-          position: unitVotes.value[e.unit_id],
-        })),
+  if (payload.finalized && payload.result) {
+    resolutions.value = resolutions.value.map(r =>
+      r.id === payload.resolutionId
+        ? { ...r, status: payload.result!.passed ? 'passed' : 'rejected' }
+        : r,
     )
-
-    // Attempt finalization — server checks if all attending units have voted
-    const finalizeRes = await meetingsApi.finalizeResolution(
-      meeting.value.id,
-      votingResolution.value.id,
-    )
-
-    if (finalizeRes.data.finalized && finalizeRes.data.result) {
-      // Update local resolution status immediately without a full reload
-      const rid = votingResolution.value.id
-      resolutions.value = resolutions.value.map(r =>
-        r.id === rid
-          ? { ...r, status: finalizeRes.data.result!.passed ? 'passed' : 'rejected' }
-          : r,
-      )
-      voteResults.value = { ...voteResults.value, [rid]: finalizeRes.data.result }
-      const msgKey = finalizeRes.data.eligible_for_second_vote === 'art_25_1'
-        ? 'meetings.vote.eligibleSecondVote25_1'
-        : finalizeRes.data.eligible_for_second_vote === 'art_26_1'
-          ? 'meetings.vote.eligibleSecondVote26_1'
-          : finalizeRes.data.result.passed
-            ? 'meetings.vote.passed'
-            : 'meetings.vote.rejected'
-      voteFeedback.setSuccess(t(msgKey))
-    } else {
-      // Votes saved but not all units have voted yet — just refresh the tally
-      const result = await meetingsApi.results(meeting.value.id, votingResolution.value.id)
-      voteResults.value = { ...voteResults.value, [votingResolution.value.id]: result.data }
-      voteFeedback.setSuccess(t('meetings.vote.voteSaved'))
-    }
-
-    // EP-013-S03: Re-fetch attendance after each vote so the denominator
-    // (shares_present) reflects the updated server-side AG record.
+  }
+  if (meeting.value) {
     const attendanceRes = await meetingsApi.attendance(meeting.value.id)
     attendance.value = attendanceRes.data
-
-    scheduleVoteClose(async () => { showVoteModal.value = false })
-  } catch (err) {
-    voteFeedback.setError(toErrorMessage(err))
-  } finally {
-    savingVotes.value = false
-  }
-}
-
-async function saveDocument() {
-  if (!meeting.value || !documentForm.value.file) return
-
-  savingDocument.value = true
-  documentFeedback.reset()
-
-  try {
-    const file = documentForm.value.file
-    const extension = file.name.includes('.') ? file.name.split('.').pop() ?? 'pdf' : 'pdf'
-    const upload = await documentsApi.getUploadUrl(extension, file.type || 'application/pdf', file.size)
-    await documentsApi.uploadToS3(file, upload.data.url, file.type || 'application/pdf')
-
-    const confirmed = await documentsApi.confirmUpload({
-      key: upload.data.key,
-      bucket: upload.data.bucket,
-      original_name: file.name,
-      mime_type: file.type || 'application/pdf',
-      size_bytes: file.size,
-      visible_roles: ['manager', 'board_member', 'co_owner'],
-    })
-
-    await meetingsApi.attachDocument(meeting.value.id, {
-      document_id: confirmed.data.id,
-      kind: documentForm.value.kind,
-    })
-
-    documentFeedback.setSuccess(t('common.saved'))
-    scheduleDocumentClose(async () => {
-      showDocumentModal.value = false
-      await reload()
-    })
-  } catch (err) {
-    documentFeedback.setError(toErrorMessage(err))
-  } finally {
-    savingDocument.value = false
-  }
-}
-
-async function detachDocument(documentId: string) {
-  if (!meeting.value) return
-
-  try {
-    await meetingsApi.detachDocument(meeting.value.id, documentId)
-    await reload()
-  } catch (err) {
-    documentFeedback.setError(toErrorMessage(err))
   }
 }
 
@@ -782,170 +451,21 @@ function promptDeleteDocument(documentId: string, name: string) {
   showDeleteDocumentModal.value = true
 }
 
-async function confirmDetachDocument() {
-  if (!pendingDeleteDocumentId.value) return
-  await detachDocument(pendingDeleteDocumentId.value)
-  showDeleteDocumentModal.value = false
-  pendingDeleteDocumentId.value = null
-  pendingDeleteDocumentName.value = null
-}
-
 async function openDocument(documentId: string) {
-  try {
-    const response = await documentsApi.getDownloadUrl(documentId)
-    window.open(response.data.url, '_blank', 'noopener')
-  } catch (err) {
-    documentFeedback.setError(toErrorMessage(err))
-  }
-}
-
-async function saveAttendance() {
-  if (!meeting.value) return
-
-  savingAttendance.value = true
-  attendanceFeedback.reset()
-
-  try {
-    await meetingsApi.saveAttendance(meeting.value.id, attendanceDraft.value)
-    attendanceFeedback.setSuccess(t('common.saved'))
-    scheduleAttendanceClose(async () => {
-      showAttendanceModal.value = false
-      await reload()
-    })
-  } catch (err) {
-    attendanceFeedback.setError(toErrorMessage(err))
-  } finally {
-    savingAttendance.value = false
-  }
-}
-
-// EP-003-S09 — Ouvre la modale convocation (checklist + canal + date d'envoi).
-async function openConvocationModal() {
-  if (!meeting.value) return
-  convocationFeedback.reset()
-  convocationForm.value = { channel: 'lrar', sent_at: '' }
-  loadingConvocationChecklist.value = true
-  try {
-    const res = await meetingsApi.getConvocationChecklist(meeting.value.id)
-    convocationChecklist.value = res.data
-  } catch (err) {
-    convocationFeedback.setError(toErrorMessage(err))
-  } finally {
-    loadingConvocationChecklist.value = false
-  }
-  showConvocationModal.value = true
-}
-
-async function confirmCallMeeting() {
-  if (!meeting.value) return
-  if (!convocationChecklist.value?.ready_to_send) {
-    convocationFeedback.setError(t('meetings.convocation.checklist_incomplete'))
-    return
-  }
-  callingMeeting.value = true
-  convocationFeedback.reset()
-  try {
-    await meetingsApi.call(meeting.value.id, {
-      channel: convocationForm.value.channel,
-      sent_at: convocationForm.value.sent_at || undefined,
-    })
-    convocationFeedback.setSuccess(t('common.saved'))
-    scheduleConvocationClose(async () => {
-      showConvocationModal.value = false
-      await reload()
-    })
-  } catch (err) {
-    convocationFeedback.setError(toErrorMessage(err))
-  } finally {
-    callingMeeting.value = false
-  }
-}
-
-async function closeMeeting() {
-  if (!meeting.value) return
-
-  closingMeeting.value = true
-  closeMeetingFeedback.reset()
-
-  try {
-    await meetingsApi.close(meeting.value.id)
-    showCloseMeetingModal.value = false
-    await reload()
-  } catch (err) {
-    closeMeetingFeedback.setError(toErrorMessage(err))
-  } finally {
-    closingMeeting.value = false
-  }
+  const response = await documentsApi.getDownloadUrl(documentId)
+  window.open(response.data.url, '_blank', 'noopener')
 }
 
 function openStartMeetingModal() {
-  startMeetingForm.value = defaultStartMeetingForm()
-  startMeetingFeedback.reset()
   showStartMeetingModal.value = true
 }
 
-function addScrutineer() {
-  startMeetingForm.value.scrutineers.push({ name: '' })
-}
-
-function removeScrutineer(index: number) {
-  startMeetingForm.value.scrutineers.splice(index, 1)
-}
-
-async function downloadMinutesDraft() {
-  if (!meeting.value) return
-  downloadingMinutesDraft.value = true
-  try {
-    const response = await meetingsApi.getMinutesDraft(meeting.value.id)
-    const blob = new Blob([response.data.markdown], { type: 'text/markdown;charset=utf-8' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `pv-ag-${meeting.value.id}.md`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    URL.revokeObjectURL(url)
-  } catch (err) {
-    minutesFeedback.setError(toErrorMessage(err))
-  } finally {
-    downloadingMinutesDraft.value = false
-  }
-}
-
 function openMinutesModal() {
-  minutesForm.value = { file: null }
-  minutesFeedback.reset()
   showMinutesModal.value = true
 }
 
 function openSignaturesModal() {
-  if (!meeting.value) return
-  signaturesForm.value = {
-    president_signed: !!meeting.value.minutes_president_signed_at,
-    secretary_signed: !!meeting.value.minutes_secretary_signed_at,
-    scrutineers_signed: (meeting.value.minutes_scrutineers_signed ?? []).map(s => s.name),
-  }
-  signaturesFeedback.reset()
   showSignaturesModal.value = true
-}
-
-async function saveSignatures() {
-  if (!meeting.value) return
-  savingSignatures.value = true
-  signaturesFeedback.reset()
-  try {
-    await meetingsApi.signMinutes(meeting.value.id, signaturesForm.value)
-    signaturesFeedback.setSuccess(t('common.saved'))
-    scheduleSignaturesClose(async () => {
-      showSignaturesModal.value = false
-      await reload()
-    })
-  } catch (err) {
-    signaturesFeedback.setError(toErrorMessage(err))
-  } finally {
-    savingSignatures.value = false
-  }
 }
 
 async function markMinutesNotified() {
@@ -963,164 +483,20 @@ async function markMinutesNotified() {
   }
 }
 
-async function saveMinutes() {
-  if (!meeting.value || !minutesForm.value.file) return
-  savingMinutes.value = true
-  minutesFeedback.reset()
-  try {
-    const file = minutesForm.value.file
-    const extension = file.name.includes('.') ? file.name.split('.').pop() ?? 'pdf' : 'pdf'
-    const upload = await documentsApi.getUploadUrl(extension, file.type || 'application/pdf', file.size)
-    await documentsApi.uploadToS3(file, upload.data.url, file.type || 'application/pdf')
-    const confirmed = await documentsApi.confirmUpload({
-      key: upload.data.key,
-      bucket: upload.data.bucket,
-      original_name: file.name,
-      mime_type: file.type || 'application/pdf',
-      size_bytes: file.size,
-      visible_roles: ['manager', 'board_member', 'co_owner'],
-    })
-    await meetingsApi.attachMinutes(meeting.value.id, confirmed.data.id)
-    minutesFeedback.setSuccess(t('common.saved'))
-    scheduleMinutesClose(async () => {
-      showMinutesModal.value = false
-      await reload()
-    })
-  } catch (err) {
-    minutesFeedback.setError(toErrorMessage(err))
-  } finally {
-    savingMinutes.value = false
-  }
-}
-
-async function confirmStartMeeting() {
-  if (!meeting.value) return
-  if (!startMeetingForm.value.president_name.trim() || !startMeetingForm.value.secretary_name.trim()) {
-    startMeetingFeedback.setError(t('meetings.start_modal.required'))
-    return
-  }
-  startingMeeting.value = true
-  startMeetingFeedback.reset()
-  try {
-    await meetingsApi.start(meeting.value.id, {
-      president_name: startMeetingForm.value.president_name.trim(),
-      secretary_name: startMeetingForm.value.secretary_name.trim(),
-      scrutineers: startMeetingForm.value.scrutineers
-        .map(s => ({ name: s.name.trim() }))
-        .filter(s => s.name.length > 0),
-    })
-    startMeetingFeedback.setSuccess(t('common.saved'))
-    scheduleStartMeetingClose(async () => {
-      showStartMeetingModal.value = false
-      await reload()
-    })
-  } catch (err) {
-    startMeetingFeedback.setError(toErrorMessage(err))
-  } finally {
-    startingMeeting.value = false
-  }
-}
-
 function openEditResolutionModal(resolution: Resolution) {
-  editingResolution.value = resolution
-  editResolutionForm.value = { description: resolution.description ?? '' }
-  editResolutionFeedback.reset()
+  resolutionToEdit.value = resolution
   showEditResolutionModal.value = true
 }
 
-async function saveEditResolution() {
-  if (!editingResolution.value || !meeting.value) return
-  savingEditResolution.value = true
-  editResolutionFeedback.reset()
-  try {
-    if (meeting.value.status === 'draft') {
-      await meetingsApi.updateResolution(meeting.value.id, editingResolution.value.id, {
-        number: editingResolution.value.number,
-        title: editingResolution.value.title,
-        description: editResolutionForm.value.description || undefined,
-        vote_type: editingResolution.value.vote_type,
-      })
-    } else {
-      await meetingsApi.patchResolution(meeting.value.id, editingResolution.value.id, {
-        description: editResolutionForm.value.description || undefined,
-      })
-    }
-    editResolutionFeedback.setSuccess(t('common.saved'))
-    scheduleEditResolutionClose(async () => {
-      showEditResolutionModal.value = false
-      await reload()
-    })
-  } catch (err) {
-    editResolutionFeedback.setError(toErrorMessage(err))
-  } finally {
-    savingEditResolution.value = false
-  }
-}
-
 function openArt24Modal(resolution: Resolution) {
-  art24ResolutionToCreate.value = resolution
-  art24Feedback.reset()
+  art24SourceResolution.value = resolution
   showArt24Modal.value = true
 }
 
-async function confirmArt24Resolution() {
-  if (!meeting.value || !art24ResolutionToCreate.value) return
-  savingArt24.value = true
-  art24Feedback.reset()
-  try {
-    await meetingsApi.createResolution(meeting.value.id, {
-      number: resolutions.value.length + 1,
-      title: `${art24ResolutionToCreate.value.title} (Art. 24)`,
-      description: art24ResolutionToCreate.value.description,
-      vote_type: 'simple_majority',
-    })
-    art24Feedback.setSuccess(t('common.saved'))
-    scheduleArt24Close(async () => {
-      showArt24Modal.value = false
-      await reload()
-    })
-  } catch (err) {
-    art24Feedback.setError(toErrorMessage(err))
-  } finally {
-    savingArt24.value = false
-  }
-}
-
 function openArt25Modal(resolution: Resolution) {
-  art25ResolutionToCreate.value = resolution
-  art25Feedback.reset()
+  art25SourceResolution.value = resolution
   showArt25Modal.value = true
 }
-
-async function confirmArt25Resolution() {
-  if (!meeting.value || !art25ResolutionToCreate.value) return
-  savingArt25.value = true
-  art25Feedback.reset()
-  try {
-    await meetingsApi.createResolution(meeting.value.id, {
-      number: resolutions.value.length + 1,
-      title: `${art25ResolutionToCreate.value.title} (Art. 25)`,
-      description: art25ResolutionToCreate.value.description,
-      vote_type: 'absolute_majority',
-    })
-    art25Feedback.setSuccess(t('common.saved'))
-    scheduleArt25Close(async () => {
-      showArt25Modal.value = false
-      await reload()
-    })
-  } catch (err) {
-    art25Feedback.setError(toErrorMessage(err))
-  } finally {
-    savingArt25.value = false
-  }
-}
-
-function toDateTimeLocal(value: string): string {
-  const date = new Date(value)
-  const offsetMs = date.getTimezoneOffset() * 60_000
-  return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16)
-}
-
 
 </script>
 
@@ -1156,8 +532,7 @@ function toDateTimeLocal(value: string): string {
             size="sm"
             :icon="CIconBell"
             :title="t('meetings.call')"
-            :loading="callingMeeting"
-            @click="openConvocationModal"
+            @click="showConvocationModal = true"
           />
         </template>
 
@@ -1176,7 +551,6 @@ function toDateTimeLocal(value: string): string {
           size="sm"
           :icon="CIconCheck"
           :title="t('meetings.start')"
-          :loading="startingMeeting"
           @click="openStartMeetingModal"
         />
 
@@ -1361,15 +735,6 @@ function toDateTimeLocal(value: string): string {
                 v-if="auth.isManager"
                 class="flex gap-2 flex-wrap"
               >
-                <CBtn
-                  variant="ghost"
-                  size="sm"
-                  type="button"
-                  :icon="CIconDownload"
-                  :title="t('meetings.minutes.download_draft')"
-                  :loading="downloadingMinutesDraft"
-                  @click="downloadMinutesDraft"
-                />
                 <CBtn
                   variant="primary"
                   size="sm"
@@ -1680,11 +1045,6 @@ function toDateTimeLocal(value: string): string {
                 </template>
               </CSectionHeader>
 
-              <CFormFeedback
-                :status="documentFeedback.status.value"
-                :message="documentFeedback.message.value"
-              />
-
               <div class="doc-group">
                 <p class="doc-group__title">
                   {{ t('meetings.documents.notice') }}
@@ -1888,769 +1248,112 @@ function toDateTimeLocal(value: string): string {
       </template>
     </div>
 
-    <CModal
-      :open="showEditMeetingModal"
-      :title="t('common.edit')"
-      @update:open="showEditMeetingModal = $event"
-    >
-      <CForm
-        id="meeting-edit"
-        @submit="saveMeeting"
-      >
-        <CFormSelect
-          v-model="meetingForm.meeting_type"
-          :label="t('meetings.infoFields.type')"
-          :options="meetingTypeOptions"
-        />
-        <CFormInput
-          v-model="meetingForm.meeting_date"
-          :label="t('meetings.meetingDate')"
-          type="datetime-local"
-        />
-        <CFormInput
-          v-model="meetingForm.location"
-          :label="t('meetings.location')"
-        />
-        <div class="flex flex-col gap-1 col-span-full">
-          <span class="text-sm font-medium text-on-surface-variant">{{ t('meetings.agenda.title') }}</span>
-          <div class="agenda-editor">
-            <div
-              v-for="(_, index) in meetingAgendaItems"
-              :key="`agenda-${index}`"
-              class="agenda-editor__row"
-            >
-              <CFormInput
-                v-model="meetingAgendaItems[index]"
-                :placeholder="`${t('meetings.agenda.title')} ${index + 1}`"
-              />
-              <CBtn
-                v-if="meetingAgendaItems.length > 1"
-                variant="icon"
-                size="sm"
-                :icon="CIconTrash"
-                :title="t('common.delete')"
-                :aria-label="t('common.delete')"
-                @click="removeAgendaItem(index)"
-              />
-            </div>
+    <EditMeetingModal
+      v-if="meeting"
+      v-model:open="showEditMeetingModal"
+      :meeting="meeting"
+      @updated="reload"
+    />
 
-            <CBtn
-              variant="secondary"
-              size="sm"
-              :icon="CIconPlus"
-              :title="t('common.add')"
-              @click="addAgendaItem"
-            />
-          </div>
-        </div>
-      </CForm>
+    <AddResolutionModal
+      v-if="meeting"
+      v-model:open="showAddResolutionModal"
+      :meeting-id="meeting.id"
+      :next-number="resolutions.length + 1"
+      @created="reload"
+    />
 
-      <template #footer>
-        <CFormActions
-          :status="meetingFeedback.status.value"
-          :message="meetingFeedback.message.value"
-        >
-          <CBtn
-            variant="ghost"
-            :title="t('common.cancel')"
-            @click="showEditMeetingModal = false"
-          />
-          <CBtn
-            variant="primary"
-            type="submit"
-            form="meeting-edit"
-            :title="t('common.save')"
-            :loading="savingMeeting"
-          />
-        </CFormActions>
-      </template>
-    </CModal>
-
-    <CModal
-      :open="showAddResolutionModal"
-      :title="t('meetings.newResolution')"
-      @update:open="showAddResolutionModal = $event"
-    >
-      <CForm
-        id="meeting-resolution"
-        @submit="saveResolution"
-      >
-        <CFormInput
-          :model-value="resolutionForm.number"
-          label="#"
-          type="number"
-          @update:model-value="setResolutionNumber"
-        />
-        <CFormInput
-          v-model="resolutionForm.title"
-          :label="t('meetings.resolutionLabel')"
-          :placeholder="t('meetings.resolutionLabelPlaceholder')"
-        />
-        <CFormTextarea
-          v-model="resolutionForm.description"
-          :label="t('meetings.resolutionDescription')"
-          :placeholder="t('meetings.resolutionDescriptionPlaceholder')"
-        />
-        <CFormSelect
-          v-model="resolutionForm.vote_type"
-          :label="t('meetings.voteRule')"
-          :options="voteTypeOptions"
-        />
-      </CForm>
-
-      <template #footer>
-        <CFormActions
-          :status="resolutionFeedback.status.value"
-          :message="resolutionFeedback.message.value"
-        >
-          <CBtn
-            variant="ghost"
-            :title="t('common.cancel')"
-            @click="showAddResolutionModal = false"
-          />
-          <CBtn
-            variant="primary"
-            type="submit"
-            form="meeting-resolution"
-            :title="t('common.add')"
-            :loading="savingResolution"
-          />
-        </CFormActions>
-      </template>
-    </CModal>
-
-    <CModal
+    <VoteModal
       :open="showVoteModal"
-      size="lg"
-      :title="votingResolution ? t('meetings.vote.enterVotesTitle', { title: votingResolution.title }) : ''"
+      :meeting-id="meeting?.id ?? ''"
+      :resolution="votingResolution"
+      :attending-units="attendingUnits"
       @update:open="showVoteModal = $event"
-    >
-      <p
-        v-if="attendingUnits.length === 0"
-        class="body-sm tone--muted"
-      >
-        {{ t('meetings.vote.noAttendees') }}
-      </p>
-      <template v-else>
-        <div class="vote-quick-actions">
-          <CBtn
-            size="sm"
-            variant="ghost"
-            :title="t('meetings.vote.fillAllFor')"
-            @click="fillAllVotes('in_favor')"
-          />
-          <CBtn
-            size="sm"
-            variant="ghost"
-            :title="t('meetings.vote.fillAllAgainst')"
-            @click="fillAllVotes('against')"
-          />
-        </div>
-        <table class="vote-table">
-          <thead>
-            <tr>
-              <th>{{ t('units.number') }}</th>
-              <th>{{ t('units.owner') }}</th>
-              <th>{{ t('meetings.participants') }}</th>
-              <th>{{ t('meetings.vote.myVote') }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="entry in attendingUnits"
-              :key="entry.unit_id"
-            >
-              <td class="font-mono">
-                {{ entry.unit_number }}
-              </td>
-              <td>
-                {{ entry.owner_name || '—' }}
-              </td>
-              <td>
-                <CBadge :variant="attendanceModeVariant(entry.mode)">
-                  {{ attendanceModeLabel(entry.mode) }}
-                </CBadge>
-              </td>
-              <td :class="[!unitVotes[entry.unit_id] && 'vote-table__select--empty']">
-                <CFormSelect
-                  :model-value="unitVotes[entry.unit_id] ?? ''"
-                  :options="votePositionOptions"
-                  @update:model-value="unitVotes[entry.unit_id] = $event"
-                />
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </template>
-      <template #footer>
-        <CFormActions
-          :status="voteFeedback.status.value"
-          :message="voteFeedback.message.value"
-        >
-          <CBtn
-            variant="ghost"
-            :title="t('common.cancel')"
-            @click="showVoteModal = false"
-          />
-          <CBtn
-            variant="primary"
-            :title="t('meetings.vote.submit')"
-            :loading="savingVotes"
-            :disabled="attendingUnits.length === 0"
-            @click="saveVotes"
-          />
-        </CFormActions>
-      </template>
-    </CModal>
+      @saved="handleVoteSaved"
+    />
 
-    <CModal
-      :open="showEditResolutionModal"
-      :title="t('meetings.editResolution')"
-      @update:open="showEditResolutionModal = $event"
-    >
-      <CForm
-        id="meeting-edit-resolution"
-        @submit="saveEditResolution"
-      >
-        <template v-if="meeting?.status === 'ongoing'">
-          <p class="modal-subtitle resolution-locked-notice">
-            {{ t('meetings.resolutionDescriptionOnly') }}
-          </p>
-          <div class="flex flex-col gap-1">
-            <span class="text-sm font-medium text-on-surface-variant">{{ t('meetings.resolutionLabel') }}</span>
-            <span class="form-static">{{ editingResolution?.title }}</span>
-          </div>
-        </template>
-        <CFormTextarea
-          v-model="editResolutionForm.description"
-          :label="t('meetings.resolutionDescription')"
-          :placeholder="t('meetings.resolutionDescriptionPlaceholder')"
-        />
-      </CForm>
-      <template #footer>
-        <CFormActions
-          :status="editResolutionFeedback.status.value"
-          :message="editResolutionFeedback.message.value"
-        >
-          <CBtn
-            variant="ghost"
-            :title="t('common.cancel')"
-            @click="showEditResolutionModal = false"
-          />
-          <CBtn
-            variant="primary"
-            type="submit"
-            form="meeting-edit-resolution"
-            :title="t('common.save')"
-            :loading="savingEditResolution"
-          />
-        </CFormActions>
-      </template>
-    </CModal>
+    <EditResolutionModal
+      v-if="meeting"
+      v-model:open="showEditResolutionModal"
+      :meeting-id="meeting.id"
+      :meeting-status="meeting.status"
+      :resolution="resolutionToEdit"
+      @updated="reload"
+    />
 
-    <CModal
+    <UploadDocumentModal
       :open="showDocumentModal"
-      :title="t('meetings.documents.uploadTitle')"
+      :meeting-id="meeting?.id ?? ''"
       @update:open="showDocumentModal = $event"
-    >
-      <CForm
-        id="meeting-document"
-        @submit="saveDocument"
-      >
-        <CFormSelect
-          v-model="documentForm.kind"
-          :label="t('meetings.documents.uploadType')"
-          :options="documentKindOptions"
-        />
-        <CFormDropzone
-          accept="application/pdf,.pdf,.doc,.docx,.png,.jpg,.jpeg"
-          :uploading="savingDocument"
-          @files="documentForm.file = $event[0] ?? null"
-          @error="documentFeedback.setError($event)"
-        />
-        <p
-          v-if="documentForm.file"
-          class="text-xs text-on-surface-variant"
-        >
-          {{ documentForm.file.name }}
-        </p>
-      </CForm>
+      @created="reload"
+    />
 
-      <template #footer>
-        <CFormActions
-          :status="documentFeedback.status.value"
-          :message="documentFeedback.message.value"
-        >
-          <CBtn
-            variant="ghost"
-            :title="t('common.cancel')"
-            @click="showDocumentModal = false"
-          />
-          <CBtn
-            variant="primary"
-            type="submit"
-            form="meeting-document"
-            :title="t('common.add')"
-            :loading="savingDocument"
-          />
-        </CFormActions>
-      </template>
-    </CModal>
-
-    <CModal
+    <AttendanceModal
       :open="showAttendanceModal"
-      :title="t('meetings.attendanceTitle')"
+      :meeting-id="meeting?.id ?? ''"
+      :entries="attendance.entries"
       @update:open="showAttendanceModal = $event"
-    >
-      <CForm
-        id="meeting-attendance"
-        @submit="saveAttendance"
-      >
-        <p class="modal-subtitle">
-          {{ t('meetings.attendanceHint') }}
-        </p>
-        <div class="attendance-edit-list">
-          <div
-            v-for="entry in attendanceDraft"
-            :key="entry.unit_id"
-            class="attendance-edit-row"
-          >
-            <div class="attendance-edit-row__identity">
-              <strong>{{ entry.unit_number }}</strong>
-              <span>{{ entry.owner_name || '—' }}</span>
-            </div>
-            <CFormSelect
-              v-model="entry.mode"
-              :options="attendanceModeOptions"
-            />
-            <CFormInput
-              v-if="entry.mode === 'proxy'"
-              v-model="entry.representative_name"
-              :placeholder="t('meetings.attendanceRepresentative')"
-            />
-          </div>
-        </div>
-      </CForm>
+      @updated="reload"
+    />
 
-      <template #footer>
-        <CFormActions
-          :status="attendanceFeedback.status.value"
-          :message="attendanceFeedback.message.value"
-        >
-          <CBtn
-            variant="ghost"
-            :title="t('common.cancel')"
-            @click="showAttendanceModal = false"
-          />
-          <CBtn
-            variant="primary"
-            type="submit"
-            form="meeting-attendance"
-            :title="t('common.save')"
-            :loading="savingAttendance"
-          />
-        </CFormActions>
-      </template>
-    </CModal>
+    <Art24Modal
+      v-model:open="showArt24Modal"
+      :meeting-id="meeting?.id ?? ''"
+      :resolution="art24SourceResolution"
+      :next-number="resolutions.length + 1"
+      @created="reload"
+    />
 
-    <CModal
-      :open="showArt24Modal"
-      :title="t('meetings.createArt24Title')"
-      size="sm"
-      @update:open="showArt24Modal = $event"
-    >
-      <p class="body-sm">
-        {{ t('meetings.createArt24Message', { title: art24ResolutionToCreate?.title ?? '' }) }}
-      </p>
-      <template #footer>
-        <CFormActions
-          :status="art24Feedback.status.value"
-          :message="art24Feedback.message.value"
-        >
-          <CBtn
-            variant="ghost"
-            :title="t('common.cancel')"
-            @click="showArt24Modal = false"
-          />
-          <CBtn
-            variant="primary"
-            :title="t('common.create')"
-            :loading="savingArt24"
-            @click="confirmArt24Resolution"
-          />
-        </CFormActions>
-      </template>
-    </CModal>
+    <Art25Modal
+      v-model:open="showArt25Modal"
+      :meeting-id="meeting?.id ?? ''"
+      :resolution="art25SourceResolution"
+      :next-number="resolutions.length + 1"
+      @created="reload"
+    />
 
-    <CModal
-      :open="showArt25Modal"
-      :title="t('meetings.createArt25Title')"
-      size="sm"
-      @update:open="showArt25Modal = $event"
-    >
-      <p class="body-sm">
-        {{ t('meetings.createArt25Message', { title: art25ResolutionToCreate?.title ?? '' }) }}
-      </p>
-      <template #footer>
-        <CFormActions
-          :status="art25Feedback.status.value"
-          :message="art25Feedback.message.value"
-        >
-          <CBtn
-            variant="ghost"
-            :title="t('common.cancel')"
-            @click="showArt25Modal = false"
-          />
-          <CBtn
-            variant="primary"
-            :title="t('common.create')"
-            :loading="savingArt25"
-            @click="confirmArt25Resolution"
-          />
-        </CFormActions>
-      </template>
-    </CModal>
+    <SignaturesModal
+      v-model:open="showSignaturesModal"
+      :meeting-id="meeting?.id ?? ''"
+      :meeting="meeting!"
+      @saved="reload"
+    />
 
-    <CModal
-      :open="showSignaturesModal"
-      :title="t('meetings.signatures.modal_title')"
-      size="md"
-      @update:open="showSignaturesModal = $event"
-    >
-      <CForm
-        id="meeting-signatures"
-        @submit="saveSignatures"
-      >
-        <p class="body-sm text-on-surface-variant">
-          {{ t('meetings.signatures.modal_lead') }}<sup><a
-            href="https://www.legifrance.gouv.fr/loda/article_lc/LEGIARTI000042078689/"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="legal-ref"
-          >art.&nbsp;17–17-1</a></sup>
-        </p>
-        <CFormCheckbox v-model="signaturesForm.president_signed">
-          {{ t('meetings.signatures.president') }}
-          <template v-if="meeting?.president_name">
-            — {{ meeting.president_name }}
-          </template>
-        </CFormCheckbox>
-        <CFormCheckbox v-model="signaturesForm.secretary_signed">
-          {{ t('meetings.signatures.secretary') }}
-          <template v-if="meeting?.secretary_name">
-            — {{ meeting.secretary_name }}
-          </template>
-        </CFormCheckbox>
-        <div
-          v-if="(meeting?.scrutineers ?? []).length > 0"
-          class="flex flex-col gap-1"
-        >
-          <span class="label-sm">{{ t('meetings.signatures.scrutineers') }}</span>
-          <CFormCheckbox
-            v-for="scrutineer in meeting?.scrutineers ?? []"
-            :key="scrutineer.name"
-            v-model="signaturesForm.scrutineers_signed"
-            :value="scrutineer.name"
-            :label="scrutineer.name"
-          />
-        </div>
-      </CForm>
-      <template #footer>
-        <CFormActions
-          :status="signaturesFeedback.status.value"
-          :message="signaturesFeedback.message.value"
-        >
-          <CBtn
-            variant="ghost"
-            :title="t('common.cancel')"
-            @click="showSignaturesModal = false"
-          />
-          <CBtn
-            variant="primary"
-            type="submit"
-            form="meeting-signatures"
-            :title="t('common.save')"
-            :loading="savingSignatures"
-          />
-        </CFormActions>
-      </template>
-    </CModal>
-
-    <CModal
+    <CloseMeetingModal
       :open="showCloseMeetingModal"
-      :title="t('meetings.closeMeetingTitle')"
-      size="sm"
+      :meeting-id="meeting?.id ?? ''"
       @update:open="showCloseMeetingModal = $event"
-    >
-      <p class="body-sm">
-        {{ t('meetings.closeMeetingSub') }}
-      </p>
-      <template #footer>
-        <CFormActions
-          :status="closeMeetingFeedback.status.value"
-          :message="closeMeetingFeedback.message.value"
-        >
-          <CBtn
-            variant="ghost"
-            :title="t('common.cancel')"
-            @click="showCloseMeetingModal = false"
-          />
-          <CBtn
-            variant="primary"
-            :title="t('meetings.closeMeetingConfirm')"
-            :loading="closingMeeting"
-            @click="closeMeeting"
-          />
-        </CFormActions>
-      </template>
-    </CModal>
+      @closed="reload"
+    />
 
-    <CModal
+    <DeleteDocumentModal
       :open="showDeleteDocumentModal"
-      :title="t('meetings.documents.detachTitle')"
-      size="sm"
+      :meeting-id="meeting?.id ?? ''"
+      :document-id="pendingDeleteDocumentId"
+      :document-name="pendingDeleteDocumentName"
       @update:open="showDeleteDocumentModal = $event"
-    >
-      <p class="body-sm">
-        {{ t('meetings.documents.detachMessage') }}
-        <template v-if="pendingDeleteDocumentName">
-          <br />
-          <span class="font-medium">{{ pendingDeleteDocumentName }}</span>
-        </template>
-      </p>
-      <template #footer>
-        <CFormActions
-          :status="documentFeedback.status.value"
-          :message="documentFeedback.message.value"
-        >
-          <CBtn
-            variant="ghost"
-            :title="t('common.cancel')"
-            @click="showDeleteDocumentModal = false"
-          />
-          <CBtn
-            variant="primary"
-            :title="t('meetings.documents.detachConfirm')"
-            @click="confirmDetachDocument"
-          />
-        </CFormActions>
-      </template>
-    </CModal>
+      @deleted="reload"
+    />
 
-    <!-- EP-003-S09 — Convocation : checklist + canal + date d'envoi -->
-    <CModal
+    <ConvocationModal
       :open="showConvocationModal"
-      :title="t('meetings.convocation.modal_title')"
-      size="md"
+      :meeting-id="meeting?.id ?? ''"
       @update:open="showConvocationModal = $event"
-    >
-      <CForm
-        id="meeting-convocation"
-        @submit="confirmCallMeeting"
-      >
-        <p class="body-sm text-on-surface-variant">
-          {{ t('meetings.convocation.modal_lead') }}<sup><a
-            href="https://www.legifrance.gouv.fr/loda/id/JORFTEXT000000508310"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="legal-ref"
-          >art.&nbsp;7–13</a></sup>
-        </p>
-        <div
-          v-if="loadingConvocationChecklist"
-          class="text-sm text-on-surface-variant"
-        >
-          {{ t('common.loading') }}
-        </div>
-        <div
-          v-else-if="convocationChecklist"
-          class="flex flex-col gap-2"
-        >
-          <span class="label-sm">{{ t('meetings.convocation.checklist_title') }}</span>
-          <ul class="flex flex-col gap-1">
-            <li
-              v-for="item in convocationChecklist.items"
-              :key="item.key"
-              class="flex items-center gap-2 text-sm"
-            >
-              <CIconCheck
-                v-if="item.satisfied"
-                class="text-success icon-sm"
-              />
-              <CIconX
-                v-else
-                :class="[item.severity === 'Blocking' ? 'text-error' : 'text-on-surface-variant', 'icon-sm']"
-              />
-              <span>{{ t('meetings.convocation.items.' + item.key) }}</span>
-              <span
-                v-if="!item.satisfied && item.severity === 'Advisory'"
-                class="text-xs text-on-surface-variant"
-              >
-                ({{ t('meetings.convocation.advisory') }})
-              </span>
-            </li>
-          </ul>
-        </div>
-        <CFormSelect
-          v-model="convocationForm.channel"
-          :label="t('meetings.convocation.channel_label')"
-          :options="[
-            { value: 'lrar', label: t('meetings.convocation.channels.lrar') },
-            { value: 'hand_delivery', label: t('meetings.convocation.channels.hand_delivery') },
-            { value: 'email', label: t('meetings.convocation.channels.email') },
-          ]"
-        />
-        <CFormInput
-          v-model="convocationForm.sent_at"
-          type="datetime-local"
-          :label="t('meetings.convocation.sent_at_label')"
-          :placeholder="t('meetings.convocation.sent_at_placeholder')"
-        />
-      </CForm>
-      <template #footer>
-        <CFormActions
-          :status="convocationFeedback.status.value"
-          :message="convocationFeedback.message.value"
-        >
-          <CBtn
-            variant="ghost"
-            :title="t('common.cancel')"
-            @click="showConvocationModal = false"
-          />
-          <CBtn
-            variant="primary"
-            type="submit"
-            form="meeting-convocation"
-            :title="t('meetings.call')"
-            :loading="callingMeeting"
-            :disabled="!convocationChecklist?.ready_to_send"
-          />
-        </CFormActions>
-      </template>
-    </CModal>
+      @called="reload"
+    />
 
-    <CModal
-      :open="showMinutesModal"
-      :title="t('meetings.minutes.modal_title')"
-      size="md"
-      @update:open="showMinutesModal = $event"
-    >
-      <CForm
-        id="meeting-minutes"
-        @submit="saveMinutes"
-      >
-        <p class="body-sm text-on-surface-variant">
-          {{ t('meetings.minutes.modal_lead') }}
-        </p>
-        <CFormDropzone
-          accept="application/pdf,.pdf,.md,.txt"
-          :uploading="savingMinutes"
-          @files="minutesForm.file = $event[0] ?? null"
-          @error="minutesFeedback.setError($event)"
-        />
-        <p
-          v-if="minutesForm.file"
-          class="text-xs text-on-surface-variant"
-        >
-          {{ minutesForm.file.name }}
-        </p>
-      </CForm>
-      <template #footer>
-        <CFormActions
-          :status="minutesFeedback.status.value"
-          :message="minutesFeedback.message.value"
-        >
-          <CBtn
-            variant="ghost"
-            :title="t('common.cancel')"
-            @click="showMinutesModal = false"
-          />
-          <CBtn
-            variant="primary"
-            type="submit"
-            form="meeting-minutes"
-            :title="t('meetings.minutes.upload_signed')"
-            :loading="savingMinutes"
-            :disabled="!minutesForm.file"
-          />
-        </CFormActions>
-      </template>
-    </CModal>
+    <MinutesModal
+      v-model:open="showMinutesModal"
+      :meeting-id="meeting?.id ?? ''"
+      @saved="reload"
+    />
 
-    <CModal
+    <StartMeetingModal
       :open="showStartMeetingModal"
-      :title="t('meetings.start_modal.title')"
-      size="md"
+      :meeting-id="meeting?.id ?? ''"
       @update:open="showStartMeetingModal = $event"
-    >
-      <CForm
-        id="meeting-start"
-        @submit="confirmStartMeeting"
-      >
-        <p class="body-sm text-on-surface-variant">
-          {{ t('meetings.start_modal.lead') }}
-        </p>
-        <CFormInput
-          v-model="startMeetingForm.president_name"
-          :label="t('meetings.start_modal.president_label')"
-          required
-        />
-        <CFormInput
-          v-model="startMeetingForm.secretary_name"
-          :label="t('meetings.start_modal.secretary_label')"
-          required
-        />
-        <div class="flex flex-col gap-2">
-          <span class="label-sm">{{ t('meetings.start_modal.scrutineers_label') }}</span>
-          <div
-            v-for="(scrutineer, index) in startMeetingForm.scrutineers"
-            :key="index"
-            class="flex gap-2 items-center"
-          >
-            <CFormInput
-              v-model="scrutineer.name"
-              :placeholder="t('meetings.start_modal.scrutineer_placeholder')"
-              class="grow"
-            />
-            <CBtn
-              variant="ghost"
-              size="sm"
-              type="button"
-              :icon="CIconTrash"
-              :title="t('common.delete')"
-              @click="removeScrutineer(index)"
-            />
-          </div>
-          <CBtn
-            variant="ghost"
-            size="sm"
-            type="button"
-            :icon="CIconPlus"
-            :title="t('meetings.start_modal.add_scrutineer')"
-            @click="addScrutineer"
-          />
-        </div>
-      </CForm>
-      <template #footer>
-        <CFormActions
-          :status="startMeetingFeedback.status.value"
-          :message="startMeetingFeedback.message.value"
-        >
-          <CBtn
-            variant="ghost"
-            :title="t('common.cancel')"
-            @click="showStartMeetingModal = false"
-          />
-          <CBtn
-            variant="primary"
-            type="submit"
-            form="meeting-start"
-            :title="t('meetings.start')"
-            :loading="startingMeeting"
-          />
-        </CFormActions>
-      </template>
-    </CModal>
+      @started="reload"
+    />
   </div>
 </template>
 

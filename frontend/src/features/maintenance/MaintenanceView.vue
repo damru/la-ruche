@@ -1,22 +1,17 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useFormatters } from '@/composables/useFormatters'
-import { usePageLoader, toErrorMessage } from '@/composables/usePageLoader'
-import { useFormFeedback } from '@/composables/useFormFeedback'
-import { useAutoClose } from '@/composables/useAutoClose'
+import { usePageLoader } from '@/composables/usePageLoader'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CLegalDescription from '@/components/atoms/CLegalDescription.vue'
 import CSeparator from '@/components/atoms/CSeparator.vue'
 import CCard from '@/components/molecules/CCard.vue'
-import CFormActions from '@/components/molecules/CFormActions.vue'
-import CForm from '@/components/molecules/CForm.vue'
 import CLegalNotice from '@/components/molecules/CLegalNotice.vue'
 import CLegalCard from '@/components/molecules/CLegalCard.vue'
 import CMetaLine from '@/components/molecules/CMetaLine.vue'
 import CMetaItem from '@/components/molecules/CMetaItem.vue'
-import CModal from '@/components/molecules/CModal.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
@@ -26,6 +21,8 @@ import CIconArrowLeft from '@/components/atoms/CIconArrowLeft.svg'
 import CIconArrowRight from '@/components/atoms/CIconArrowRight.svg'
 import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import CIconTrash from '@/components/atoms/CIconTrash.svg'
+import MaintenanceEntryModal from '@/features/maintenance/MaintenanceEntryModal.vue'
+import DeleteMaintenanceEntryModal from '@/features/maintenance/DeleteMaintenanceEntryModal.vue'
 import { maintenanceApi } from '@/api'
 import type { LogbookContractSummary, LogbookSummary, MaintenanceEntry } from '@/types/domain'
 
@@ -44,25 +41,7 @@ const periodAnchor = ref(startOfPeriod(new Date(), 'quarter'))
 
 // ── Entry form modal ───────────────────────────────────────────────
 const showEntryModal = ref(false)
-const entryFeedback = useFormFeedback()
-const savingEntry = ref(false)
-const { schedule: scheduleEntryClose, forceExpire: forceEntryClose } = useAutoClose()
-watch(showEntryModal, (open) => { if (!open) forceEntryClose() })
-
 const entryToDelete = ref<MaintenanceEntry | null>(null)
-const deleteFeedback = useFormFeedback()
-const deletingEntry = ref(false)
-const { schedule: scheduleDeleteClose, forceExpire: forceDeleteClose } = useAutoClose()
-watch(entryToDelete, (entry) => { if (!entry) forceDeleteClose() })
-
-const defaultForm = () => ({
-  title: '',
-  description: '',
-  intervention_date: new Date().toISOString().slice(0, 10),
-  cost: '',
-  vendor_name: '',
-})
-const entryForm = ref(defaultForm())
 
 function startOfDay(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate())
@@ -236,58 +215,11 @@ function goToNextPeriod() {
 
 // ── Entry modal actions ────────────────────────────────────────────
 function openCreateModal() {
-  entryForm.value = defaultForm()
-  entryFeedback.reset()
   showEntryModal.value = true
-}
-
-async function saveEntry() {
-  if (entryFeedback.status.value === 'success') { forceEntryClose(); return }
-  if (!entryForm.value.title.trim()) return
-  savingEntry.value = true
-  entryFeedback.reset()
-  try {
-    await maintenanceApi.create({
-      title: entryForm.value.title,
-      description: entryForm.value.description || undefined,
-      intervention_date: entryForm.value.intervention_date,
-      cost: entryForm.value.cost ? Number(entryForm.value.cost) : undefined,
-      vendor_name: entryForm.value.vendor_name || undefined,
-    })
-    entryFeedback.setSuccess(t('common.saved'))
-    scheduleEntryClose(() => {
-      showEntryModal.value = false
-      reload()
-    })
-  } catch (err) {
-    entryFeedback.setError(toErrorMessage(err))
-  } finally {
-    savingEntry.value = false
-  }
 }
 
 function openDeleteModal(entry: MaintenanceEntry) {
   entryToDelete.value = entry
-  deleteFeedback.reset()
-}
-
-async function deleteEntry() {
-  if (deleteFeedback.status.value === 'success') { forceDeleteClose(); return }
-  if (!entryToDelete.value) return
-  deletingEntry.value = true
-  deleteFeedback.reset()
-  try {
-    await maintenanceApi.delete(entryToDelete.value.id)
-    deleteFeedback.setSuccess(t('maintenance.deleteSuccess'))
-    scheduleDeleteClose(() => {
-      entryToDelete.value = null
-      reload()
-    })
-  } catch (err) {
-    deleteFeedback.setError(toErrorMessage(err))
-  } finally {
-    deletingEntry.value = false
-  }
 }
 </script>
 
@@ -590,98 +522,18 @@ async function deleteEntry() {
       </template>
     </div>
 
-    <!-- Create entry modal -->
-    <CModal
+    <MaintenanceEntryModal
       :open="showEntryModal"
-      :title="t('maintenance.addEntry')"
-      size="md"
       @update:open="showEntryModal = $event"
-    >
-      <CForm
-        id="maintenance-entry"
-        @submit="saveEntry"
-      >
-        <CFormInput
-          v-model="entryForm.title"
-          :label="t('maintenance.fields.title')"
-          required
-        />
-        <CFormTextarea
-          v-model="entryForm.description"
-          :label="t('maintenance.fields.description')"
-          :rows="2"
-        />
-        <CFormInput
-          v-model="entryForm.intervention_date"
-          :label="t('maintenance.fields.interventionDate')"
-          type="date"
-          required
-        />
-        <div class="form-row">
-          <CFormInput
-            v-model="entryForm.cost"
-            :label="t('maintenance.fields.cost')"
-            type="number"
-            :step="0.01"
-            :min="0"
-          />
-          <CFormInput
-            v-model="entryForm.vendor_name"
-            :label="t('maintenance.fields.vendorName')"
-          />
-        </div>
-      </CForm>
-      <template #footer>
-        <CFormActions
-          :status="entryFeedback.status.value"
-          :message="entryFeedback.message.value"
-        >
-          <CBtn
-            variant="ghost"
-            :title="t('common.cancel')"
-            @click="showEntryModal = false"
-          />
-          <CBtn
-            variant="primary"
-            :title="t('common.save')"
-            :loading="savingEntry"
-            :closing="entryFeedback.status.value === 'success'"
-            type="submit"
-            form="maintenance-entry"
-          />
-        </CFormActions>
-      </template>
-    </CModal>
+      @saved="reload"
+    />
 
-    <CModal
+    <DeleteMaintenanceEntryModal
       :open="!!entryToDelete"
-      :title="t('maintenance.confirmDeleteTitle')"
-      size="sm"
+      :entry="entryToDelete"
       @update:open="v => !v && (entryToDelete = null)"
-    >
-      <p class="body-xs">
-        {{ t('maintenance.confirmDeleteMessage', { title: entryToDelete?.title ?? '' }) }}
-      </p>
-      <template #footer>
-        <CFormActions
-          :status="deleteFeedback.status.value"
-          :message="deleteFeedback.message.value"
-        >
-          <CBtn
-            variant="ghost"
-            :title="t('common.cancel')"
-            @click="entryToDelete = null"
-          />
-          <CBtn
-            variant="danger"
-            :title="t('common.delete')"
-            :loading="deletingEntry"
-            :closing="deleteFeedback.status.value === 'success'"
-            @click="deleteEntry"
-          />
-        </CFormActions>
-      </template>
-    </CModal>
+      @deleted="() => { entryToDelete = null; reload() }"
+    />
   </div>
 </template>
 

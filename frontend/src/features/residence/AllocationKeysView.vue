@@ -1,11 +1,8 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import CCard from '@/components/molecules/CCard.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
-import CAlert from '@/components/atoms/CAlert.vue'
-import CFormActions from '@/components/molecules/CFormActions.vue'
-import CModal from '@/components/molecules/CModal.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
@@ -13,48 +10,44 @@ import CHeading from '@/components/atoms/CHeading.vue'
 import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import CIconEdit from '@/components/atoms/CIconEdit.svg'
 import CIconTrash from '@/components/atoms/CIconTrash.svg'
-import { allocationKeysApi, unitsApi } from '@/api'
+import { allocationKeysApi } from '@/api'
 import { usePageLoader } from '@/composables/usePageLoader'
-import { useFormFeedback } from '@/composables/useFormFeedback'
-import { useAutoClose } from '@/composables/useAutoClose'
+import KeyFormModal from '@/features/residence/KeyFormModal.vue'
+import DeleteKeyModal from '@/features/residence/DeleteKeyModal.vue'
 import type { AllocationKey } from '@/types/domain'
 
 const { t } = useI18n()
 
 const keys = ref<AllocationKey[]>([])
-const keyBalanceDelta = ref<Record<string, number>>({})  // EP-001-S07: imbalance badge per key
-const keyFeedback = useFormFeedback()
+const keyBalanceDelta = ref<Record<string, number>>({})
 
 // ── Modal state ───────────────────────────────────────────────────
 const showKeyModal = ref(false)
-const { schedule: scheduleKeyClose, forceExpire: forceKeyClose } = useAutoClose()
-watch(showKeyModal, (open) => { if (!open) forceKeyClose() })
-const modalForm = ref<{
-  id?: string
-  name: string
-  description: string
-  shares: { unit_id: string; unit_number: string; share_value: number }[]
-  sharesTotal: number
-}>({ name: '', description: '', shares: [], sharesTotal: 0 })
-const modalLoading = ref(false)
-const modalSaving = ref(false)
+const keyToEdit = ref<AllocationKey | null>(null)
+const showDeleteKeyModal = ref(false)
+const keyToDelete = ref<AllocationKey | null>(null)
 
-// ── Derived ───────────────────────────────────────────────────────
-
-const modalSharesSum = computed(() =>
-  modalForm.value.shares.reduce((acc, s) => acc + (s.share_value || 0), 0)
-)
-
-function sortSharesByUnit(shares: { unit_id: string; unit_number: string; share_value: number }[]) {
-  return [...shares].sort((a, b) =>
-    a.unit_number.localeCompare(b.unit_number, undefined, { numeric: true })
-  )
+function openCreateModal() {
+  keyToEdit.value = null
+  showKeyModal.value = true
 }
 
-const isSumMismatch = computed(() => {
-  const total = modalForm.value.sharesTotal
-  return total > 0 && modalSharesSum.value !== total
-})
+function openEditModal(key: AllocationKey) {
+  keyToEdit.value = key
+  showKeyModal.value = true
+}
+
+function openDeleteKeyModal(key: AllocationKey) {
+  keyToDelete.value = key
+  showDeleteKeyModal.value = true
+}
+
+function handleKeySaved(key: AllocationKey, balanceDelta: number | null) {
+  const idx = keys.value.findIndex(k => k.id === key.id)
+  if (idx >= 0) keys.value[idx] = key
+  else keys.value.push(key)
+  if (balanceDelta !== null) keyBalanceDelta.value[key.id] = balanceDelta
+}
 
 // ── Load ──────────────────────────────────────────────────────────
 
@@ -68,121 +61,6 @@ async function loadKeys() {
       keyBalanceDelta.value[k.id] = b.data.delta
     } catch { /* non-blocking */ }
   }))
-}
-
-// ── Modal open ────────────────────────────────────────────────────
-
-async function openCreateModal() {
-  keyFeedback.reset()
-  modalForm.value = { name: '', description: '', shares: [], sharesTotal: 0 }
-  showKeyModal.value = true
-  modalLoading.value = true
-  try {
-    // Load all units to allow share assignment at creation time
-    const res = await unitsApi.list()
-    modalForm.value.shares = sortSharesByUnit(
-      res.data
-        .filter(u => u.active)
-        .map(u => ({ unit_id: u.id, unit_number: u.unit_number, share_value: 0 }))
-    )
-  } catch { /* units failed to load — shares section will show empty state */ }
-  finally { modalLoading.value = false }
-}
-
-async function openEditModal(key: AllocationKey) {
-  keyFeedback.reset()
-  modalForm.value = { id: key.id, name: key.name, description: key.description ?? '', shares: [], sharesTotal: 0 }
-  showKeyModal.value = true
-  modalLoading.value = true
-  try {
-    const res = await allocationKeysApi.listShares(key.id)
-    modalForm.value.shares = sortSharesByUnit(res.data.shares.map(s => ({ ...s })))
-    modalForm.value.sharesTotal = res.data.shares_total
-  } catch { /* non-blocking — shares section will show empty state */ }
-  finally { modalLoading.value = false }
-}
-
-// ── Save ──────────────────────────────────────────────────────────
-
-async function saveKey() {
-  if (keyFeedback.status.value === 'success') { forceKeyClose(); return }
-  if (!modalForm.value.name.trim()) {
-    keyFeedback.setError(t('common.required'))
-    return
-  }
-  keyFeedback.reset()
-  modalSaving.value = true
-  try {
-    let keyId = modalForm.value.id
-    if (keyId) {
-      const res = await allocationKeysApi.update(keyId, {
-        name: modalForm.value.name,
-        description: modalForm.value.description || undefined,
-      })
-      const idx = keys.value.findIndex(k => k.id === keyId)
-      if (idx >= 0) keys.value[idx] = res.data
-    } else {
-      const res = await allocationKeysApi.create({
-        name: modalForm.value.name,
-        description: modalForm.value.description || undefined,
-      })
-      keyId = res.data.id
-      keys.value.push(res.data)
-    }
-
-    if (modalForm.value.shares.length > 0) {
-      await allocationKeysApi.setShares(keyId!, modalForm.value.shares.map(s => ({
-        unit_id: s.unit_id,
-        share_value: Number(s.share_value),
-      })))
-    }
-
-    // EP-001-S07: refresh balance delta after save
-    try {
-      const bal = await allocationKeysApi.balance(keyId!)
-      keyBalanceDelta.value[keyId!] = bal.data.delta
-    } catch { /* non-blocking */ }
-
-    keyFeedback.setSuccess(t('common.saved'))
-    scheduleKeyClose(() => { showKeyModal.value = false })
-  } catch (e: unknown) {
-    keyFeedback.setError((e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? t('common.error'))
-  } finally {
-    modalSaving.value = false
-  }
-}
-
-// ── Delete ────────────────────────────────────────────────────────
-
-const showDeleteKeyModal = ref(false)
-const keyToDelete = ref<AllocationKey | null>(null)
-const deletingKeyInProgress = ref(false)
-const deleteKeyFeedback = useFormFeedback()
-const { schedule: scheduleDeleteKeyClose, forceExpire: forceDeleteKeyClose } = useAutoClose()
-watch(showDeleteKeyModal, (open) => { if (!open) forceDeleteKeyClose() })
-
-function openDeleteKeyModal(key: AllocationKey) {
-  keyToDelete.value = key
-  deleteKeyFeedback.reset()
-  showDeleteKeyModal.value = true
-}
-
-async function confirmDeleteKey() {
-  if (deleteKeyFeedback.status.value === 'success') { forceDeleteKeyClose(); return }
-  if (!keyToDelete.value) return
-  const keyId = keyToDelete.value.id
-  deletingKeyInProgress.value = true
-  deleteKeyFeedback.reset()
-  try {
-    await allocationKeysApi.delete(keyId)
-    keys.value = keys.value.filter(k => k.id !== keyId)
-    deleteKeyFeedback.setSuccess(t('settings.keys.deleteSuccess'))
-    scheduleDeleteKeyClose(() => { showDeleteKeyModal.value = false })
-  } catch (e: unknown) {
-    deleteKeyFeedback.setError((e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? t('common.error'))
-  } finally {
-    deletingKeyInProgress.value = false
-  }
 }
 
 const { loading, error, reload } = usePageLoader(loadKeys)
@@ -307,145 +185,19 @@ onMounted(reload)
       </template>
     </div>
 
-    <!-- Create / Edit modal -->
-    <CModal
+    <KeyFormModal
       :open="showKeyModal"
-      size="lg"
-      :closable="!modalSaving"
-      :title="modalForm.id ? t('settings.keys.editKey') : t('settings.keys.newKey')"
+      :key-to-edit="keyToEdit"
       @update:open="showKeyModal = $event"
-    >
-      <CForm
-        id="key-form"
-        @submit="saveKey"
-      >
-        <div class="flex flex-col gap-4">
-          <CFormInput
-            v-model="modalForm.name"
-            :label="t('common.name')"
-            :placeholder="t('settings.keys.namePlaceholder')"
-            required
-            class="flex flex-col gap-1 col-span-full"
-          />
-          <CFormTextarea
-            v-model="modalForm.description"
-            :label="t('settings.keys.descriptionLabel')"
-            :placeholder="t('settings.keys.descriptionPlaceholder')"
-            class="flex flex-col gap-1 col-span-full"
-          />
-        </div>
+      @saved="handleKeySaved"
+    />
 
-        <div class="shares-section">
-          <h3 class="text-md font-semibold mb-3">
-            {{ t('settings.keys.showShares') }}
-          </h3>
-
-          <div
-            v-if="modalLoading"
-            class="shares-loading"
-          >
-            <CIconSpinner
-              class="spin icon-md"
-            />
-            <span>{{ t('common.loading') }}</span>
-          </div>
-          <template v-else>
-            <p
-              v-if="modalForm.shares.length === 0"
-              class="dim"
-            >
-              {{ t('settings.keys.noUnits') }}
-            </p>
-            <template v-else>
-              <div class="c-chips">
-                <CFormChipInput
-                  v-for="share in modalForm.shares"
-                  :key="share.unit_id"
-                  v-model="share.share_value"
-                  :label="share.unit_number"
-                  type="number"
-                  :step="1"
-                  :min="0"
-                />
-              </div>
-              <div class="shares-summary">
-                <span>{{ t('common.total') }} :</span>
-                <span
-                  :class="{ 'sum-mismatch': isSumMismatch }"
-                  style="font-weight:var(--fw-semibold)"
-                >
-                  {{ modalSharesSum }}
-                </span>
-                <span
-                  v-if="modalForm.sharesTotal > 0"
-                  class="dim"
-                >/ {{ modalForm.sharesTotal }}</span>
-              </div>
-              <CAlert
-                v-if="isSumMismatch"
-                variant="warning"
-                style="margin-top:var(--space-3)"
-              >
-                {{ t('settings.keys.sumMismatch') }}
-              </CAlert>
-            </template>
-          </template>
-        </div>
-      </CForm>
-
-      <template #footer>
-        <CFormActions
-          :status="keyFeedback.status.value"
-          :message="keyFeedback.message.value"
-        >
-          <CBtn
-            variant="ghost"
-            :title="t('common.cancel')"
-            @click="showKeyModal = false"
-          />
-          <CBtn
-            variant="primary"
-            type="submit"
-            form="key-form"
-            :title="t('common.save')"
-            :loading="modalSaving"
-            :closing="keyFeedback.status.value === 'success'"
-            :disabled="modalSaving || modalLoading"
-          />
-        </CFormActions>
-      </template>
-    </CModal>
-
-    <!-- Delete key modal -->
-    <CModal
+    <DeleteKeyModal
       :open="showDeleteKeyModal"
-      :title="t('settings.keys.confirmDeleteTitle')"
-      size="sm"
+      :key-to-delete="keyToDelete"
       @update:open="showDeleteKeyModal = $event"
-    >
-      <p class="body-md">
-        {{ t('settings.keys.confirmDeleteMessage', { name: keyToDelete?.name ?? '' }) }}
-      </p>
-      <template #footer>
-        <CFormActions
-          :status="deleteKeyFeedback.status.value"
-          :message="deleteKeyFeedback.message.value"
-        >
-          <CBtn
-            variant="ghost"
-            :title="t('common.cancel')"
-            @click="showDeleteKeyModal = false"
-          />
-          <CBtn
-            variant="danger"
-            :title="t('common.deleteLabel')"
-            :loading="deletingKeyInProgress"
-            :closing="deleteKeyFeedback.status.value === 'success'"
-            @click="confirmDeleteKey"
-          />
-        </CFormActions>
-      </template>
-    </CModal>
+      @deleted="(id) => { keys.value = keys.value.filter(k => k.id !== id) }"
+    />
   </div>
 </template>
 

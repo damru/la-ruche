@@ -5,8 +5,6 @@ import { useRouter } from 'vue-router'
 import CCard from '@/components/molecules/CCard.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CForm from '@/components/molecules/CForm.vue'
-import CFormActions from '@/components/molecules/CFormActions.vue'
-import CModal from '@/components/molecules/CModal.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import CHeading from '@/components/atoms/CHeading.vue'
 import CIconClock from '@/components/atoms/CIconClock.svg'
@@ -15,10 +13,12 @@ import CIconMoon from '@/components/atoms/CIconMoon.svg'
 import CIconSun from '@/components/atoms/CIconSun.svg'
 import { useAuthStore } from '@/stores/auth'
 import { useUiStore } from '@/stores/ui'
-import { authApi, adminApi } from '@/api'
-import { useFormFeedback, SUCCESS_AUTO_CLEAR_MS } from '@/composables/useFormFeedback'
+import { authApi } from '@/api'
+import { useFormFeedback } from '@/composables/useFormFeedback'
 import CTabs from '@/components/atoms/CTabs.vue'
 import CToggle from '@/components/atoms/CToggle.vue'
+import ResetDemoModal from './ResetDemoModal.vue'
+import ResetDataModal from './ResetDataModal.vue'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -98,47 +98,9 @@ async function logout() {
 
 // ── Reset demo ────────────────────────────────────────────────────
 const showResetModal = ref(false)
-const resetting = ref(false)
-const resetFeedback = useFormFeedback()
-
-async function confirmResetDemo() {
-  resetting.value = true
-  resetFeedback.reset()
-  try {
-    await adminApi.resetDemo()
-    resetFeedback.setSuccess(t('settings.account.resetAppSuccess'))
-    setTimeout(() => {
-      showResetModal.value = false
-      resetFeedback.reset()
-    }, SUCCESS_AUTO_CLEAR_MS)
-  } catch {
-    resetFeedback.setError(t('settings.account.resetAppError'))
-  } finally {
-    resetting.value = false
-  }
-}
 
 // ── Reset data ────────────────────────────────────────────────────
 const showResetDataModal = ref(false)
-const resettingData = ref(false)
-const resetDataFeedback = useFormFeedback()
-
-async function confirmResetData() {
-  resettingData.value = true
-  resetDataFeedback.reset()
-  try {
-    await adminApi.resetData()
-    resetDataFeedback.setSuccess(t('settings.account.resetDataSuccess'))
-    setTimeout(() => {
-      showResetDataModal.value = false
-      resetDataFeedback.reset()
-    }, SUCCESS_AUTO_CLEAR_MS)
-  } catch {
-    resetDataFeedback.setError(t('settings.account.resetDataError'))
-  } finally {
-    resettingData.value = false
-  }
-}
 </script>
 
 <template>
@@ -331,66 +293,10 @@ async function confirmResetData() {
   </div>
 
   <!-- ── Reset demo modal ─────────────────────────────────────── -->
-  <CModal
-    :open="showResetModal"
-    :title="t('settings.account.resetAppConfirmTitle')"
-    @close="showResetModal = false"
-  >
-    <p class="body-xs">
-      {{ t('settings.account.resetAppConfirmMessage') }}
-    </p>
-    <template #footer>
-      <CFormActions
-        :status="resetFeedback.status.value"
-        :message="resetFeedback.message.value"
-      >
-        <CBtn
-          variant="ghost"
-          :title="t('common.cancel')"
-          :disabled="resetting"
-          @click="showResetModal = false"
-        />
-        <CBtn
-          variant="danger"
-          :title="t('settings.account.resetAppConfirm')"
-          :loading="resetting"
-          :disabled="resetting"
-          @click="confirmResetDemo"
-        />
-      </CFormActions>
-    </template>
-  </CModal>
+  <ResetDemoModal v-model:open="showResetModal" />
 
   <!-- ── Reset data modal ──────────────────────────────────────── -->
-  <CModal
-    :open="showResetDataModal"
-    :title="t('settings.account.resetDataConfirmTitle')"
-    @close="showResetDataModal = false"
-  >
-    <p class="body-xs">
-      {{ t('settings.account.resetDataConfirmMessage') }}
-    </p>
-    <template #footer>
-      <CFormActions
-        :status="resetDataFeedback.status.value"
-        :message="resetDataFeedback.message.value"
-      >
-        <CBtn
-          variant="ghost"
-          :title="t('common.cancel')"
-          :disabled="resettingData"
-          @click="showResetDataModal = false"
-        />
-        <CBtn
-          variant="danger"
-          :title="t('settings.account.resetDataConfirm')"
-          :loading="resettingData"
-          :disabled="resettingData"
-          @click="confirmResetData"
-        />
-      </CFormActions>
-    </template>
-  </CModal>
+  <ResetDataModal v-model:open="showResetDataModal" />
 </template>
 
 <style scoped>

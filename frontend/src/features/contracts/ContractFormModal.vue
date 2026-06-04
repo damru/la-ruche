@@ -652,7 +652,7 @@ async function saveContract() {
     size="sm"
     @update:open="showDeleteModal = $event"
   >
-    <p class="body-xs">
+    <p class="body-sm">
       {{ t('contracts.deleteMessage', { name: props.contract?.vendor_name ?? '' }) }}
     </p>
     <template #footer>

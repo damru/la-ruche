@@ -1,16 +1,13 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
-import CModal from '@/components/molecules/CModal.vue'
-import CFormActions from '@/components/molecules/CFormActions.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import CHeading from '@/components/atoms/CHeading.vue'
-import CFormRow from '@/components/molecules/CFormRow.vue'
 import CTabs from '@/components/atoms/CTabs.vue'
 import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import CIconCurrency from '@/components/atoms/CIconCurrency.svg'
@@ -21,11 +18,12 @@ import CIconTrash from '@/components/atoms/CIconTrash.svg'
 import InviteUserModal from './InviteUserModal.vue'
 import CreateResidentModal from './CreateResidentModal.vue'
 import SendInviteModal from './SendInviteModal.vue'
+import EditUnitModal from './EditUnitModal.vue'
+import ArchiveUnitModal from './ArchiveUnitModal.vue'
+import RevokeInviteModal from './RevokeInviteModal.vue'
 import { unitsApi, allocationKeysApi, usersApi } from '@/api'
 import { usePageLoader } from '@/composables/usePageLoader'
-import { useFormFeedback } from '@/composables/useFormFeedback'
-import { useAutoClose } from '@/composables/useAutoClose'
-import type { Unit, User, UnitType, AllocationKey } from '@/types/domain'
+import type { Unit, User, AllocationKey } from '@/types/domain'
 
 const { t } = useI18n()
 
@@ -42,28 +40,7 @@ const generalKey = computed(() => allKeys.value.find(k => k.key_type === 'genera
 
 // ── Unit form state ───────────────────────────────────────────────
 const showUnitModal = ref(false)
-const unitFeedback = useFormFeedback()
-const savingUnit = ref(false)
-const { schedule: scheduleUnitClose, forceExpire: forceUnitClose } = useAutoClose()
-watch(showUnitModal, (open) => { if (!open) forceUnitClose() })
-const editingUnit = ref<{
-  id?: string
-  unit_number: string
-  unit_type: UnitType
-  block: string
-  staircase: string
-  floor: string
-  description: string
-  general_shares: number | string
-}>({
-  unit_number: '', unit_type: 'apartment', block: '', staircase: '', floor: '', description: '', general_shares: 0,
-})
-
-const unitTypes: UnitType[] = ['apartment', 'cellar', 'parking', 'commercial_unit', 'other']
-
-const unitTypeOptions = computed(() =>
-  unitTypes.map(ut => ({ value: ut, label: t(`units.types.${ut}`) })),
-)
+const unitToEdit = ref<Unit | null>(null)
 
 const units = computed(() => {
   const q = search.value.toLowerCase()
@@ -118,115 +95,23 @@ function unitTypeLabel(type: string): string {
 }
 
 function openCreateUnit() {
-  editingUnit.value = { unit_number: '', unit_type: 'apartment', block: '', staircase: '', floor: '', description: '', general_shares: 0 }
-  unitFeedback.reset()
+  unitToEdit.value = null
   showUnitModal.value = true
 }
 
-async function openEditUnit(unit: Unit) {
-  editingUnit.value = {
-    id: unit.id,
-    unit_number: unit.unit_number,
-    unit_type: unit.unit_type,
-    block: unit.block ?? '',
-    staircase: unit.staircase ?? '',
-    floor: unit.floor ?? '',
-    description: unit.description ?? '',
-    general_shares: shareMap.value.get(unit.id) ?? 0,
-  }
-  unitFeedback.reset()
+function openEditUnit(unit: Unit) {
+  unitToEdit.value = unit
   showUnitModal.value = true
-
-  // If the share map doesn't have exact data yet, fetch the general key shares
-  if (generalKey.value) {
-    try {
-      const res = await allocationKeysApi.listShares(generalKey.value.id)
-      const match = res.data.shares.find((s: { unit_id: string; share_value: number }) => s.unit_id === unit.id)
-      editingUnit.value.general_shares = match?.share_value ?? 0
-    } catch { /* keep current value */ }
-  }
-}
-
-async function saveUnit() {
-  if (unitFeedback.status.value === 'success') { forceUnitClose(); return }
-  if (!editingUnit.value.unit_number.trim()) {
-    unitFeedback.setError(t('common.required'))
-    return
-  }
-  savingUnit.value = true
-  unitFeedback.reset()
-  try {
-    const data = {
-      unit_number: editingUnit.value.unit_number,
-      unit_type: editingUnit.value.unit_type,
-      block: editingUnit.value.block || undefined,
-      staircase: editingUnit.value.staircase || undefined,
-      floor: editingUnit.value.floor || undefined,
-      description: editingUnit.value.description || undefined,
-    }
-    let unitId = editingUnit.value.id
-    if (unitId) {
-      await unitsApi.update(unitId, data)
-    } else {
-      const res = await unitsApi.create(data)
-      unitId = res.data.id
-    }
-
-    // Assign general shares to the general key only
-    if (generalKey.value && unitId) {
-      await allocationKeysApi.setShares(generalKey.value.id, [
-        { unit_id: unitId, share_value: Number(editingUnit.value.general_shares) },
-      ])
-    }
-
-    unitFeedback.setSuccess(t('common.saved'))
-    await loadData()
-    scheduleUnitClose(() => { showUnitModal.value = false })
-  } catch (e: unknown) {
-    const status = (e as { response?: { status?: number } })?.response?.status
-    const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? ''
-    if (status === 409 && msg === 'UNIT_NUMBER_ARCHIVED') {
-      unitFeedback.setError(t('residents.unitNumberArchived'))
-    } else if (status === 409) {
-      unitFeedback.setError(t('residents.unitNumberExists'))
-    } else {
-      unitFeedback.setError(t('common.error'))
-    }
-  } finally {
-    savingUnit.value = false
-  }
 }
 
 // ── Archive unit modal ────────────────────────────────────────────
 
 const showArchiveModal = ref(false)
 const unitToArchive = ref<Unit | null>(null)
-const archivingUnit = ref(false)
-const archiveFeedback = useFormFeedback()
-const { schedule: scheduleArchiveClose, forceExpire: forceArchiveClose } = useAutoClose()
-watch(showArchiveModal, (open) => { if (!open) forceArchiveClose() })
 
 function openArchiveModal(unit: Unit) {
   unitToArchive.value = unit
-  archiveFeedback.reset()
   showArchiveModal.value = true
-}
-
-async function confirmArchiveUnit() {
-  if (archiveFeedback.status.value === 'success') { forceArchiveClose(); return }
-  if (!unitToArchive.value) return
-  archivingUnit.value = true
-  archiveFeedback.reset()
-  try {
-    await unitsApi.archive(unitToArchive.value.id)
-    archiveFeedback.setSuccess(t('residents.archiveSuccess'))
-    await loadData()
-    scheduleArchiveClose(() => { showArchiveModal.value = false })
-  } catch {
-    archiveFeedback.setError(t('common.error'))
-  } finally {
-    archivingUnit.value = false
-  }
 }
 
 // Format staircase + floor with abbreviated labels, no spurious separator
@@ -275,32 +160,10 @@ function openSendInviteModal(user: User) {
 // ── Revoke invite ─────────────────────────────────────────────────
 const showRevokeModal = ref(false)
 const userToRevoke = ref<User | null>(null)
-const revokingInvite = ref(false)
-const revokeFeedback = useFormFeedback()
-const { schedule: scheduleRevokeClose, forceExpire: forceRevokeClose } = useAutoClose()
-watch(showRevokeModal, (open) => { if (!open) forceRevokeClose() })
 
 function openRevokeModal(user: User) {
   userToRevoke.value = user
-  revokeFeedback.reset()
   showRevokeModal.value = true
-}
-
-async function confirmRevokeInvite() {
-  if (revokeFeedback.status.value === 'success') { forceRevokeClose(); return }
-  if (!userToRevoke.value?.invite_token_id) return
-  revokingInvite.value = true
-  revokeFeedback.reset()
-  try {
-    await usersApi.revokeInvite(userToRevoke.value.invite_token_id)
-    revokeFeedback.setSuccess(t('residents.revokeSuccess'))
-    await loadData()
-    scheduleRevokeClose(() => { showRevokeModal.value = false })
-  } catch {
-    revokeFeedback.setError(t('common.error'))
-  } finally {
-    revokingInvite.value = false
-  }
 }
 </script>
 
@@ -540,116 +403,24 @@ async function confirmRevokeInvite() {
           </CCard>
         </template>
       </template>
-      <CModal
+      <EditUnitModal
         :open="showUnitModal"
-        :title="editingUnit.id ? t('residents.editUnit') : t('residents.createUnit')"
-        :closable="!savingUnit"
+        :units="allUnits"
+        :unit="unitToEdit"
+        :general-key-id="generalKey?.id ?? null"
+        :general-key-name="generalKey?.name ?? null"
+        :share-value="unitToEdit ? shareMap.get(unitToEdit.id) : undefined"
         @update:open="showUnitModal = $event"
-      >
-        <CForm
-          id="unit-form"
-          @submit="saveUnit"
-        >
-          <CFormRow :cols="2">
-            <CFormInput
-              v-model="editingUnit.unit_number"
-              :label="t('units.number')"
-              placeholder="A01"
-              required
-            />
-            <CFormSelect
-              v-model="editingUnit.unit_type"
-              :label="t('common.type')"
-              :options="unitTypeOptions"
-            />
-            <CFormInput
-              v-model="editingUnit.block"
-              :label="t('residents.block')"
-            />
-            <CFormInput
-              v-model="editingUnit.staircase"
-              :label="t('residents.staircaseLabel')"
-            />
-            <CFormInput
-              v-model="editingUnit.floor"
-              :label="t('residents.floorLabel')"
-            />
-            <CFormTextarea
-              v-model="editingUnit.description"
-              :label="t('residents.description')"
-              class="flex flex-col gap-1 col-span-full"
-            />
-          </CFormRow>
-
-          <!-- Tantièmes généraux (clé Charges Générales) -->
-          <div class="shares-section">
-            <h3 class="text-md font-semibold mb-3">
-              {{ t('units.generalShares') }}
-            </h3>
-            <CFormInput
-              v-model="editingUnit.general_shares"
-              :label="generalKey ? generalKey.name : t('units.shares')"
-              type="number"
-              :step="1"
-              :min="0"
-              :hint="t('units.generalSharesHint')"
-              style="max-width:240px"
-            />
-          </div>
-        </CForm>
-        <template #footer>
-          <CFormActions
-            :status="unitFeedback.status.value"
-            :message="unitFeedback.message.value"
-          >
-            <CBtn
-              variant="ghost"
-              :title="t('common.cancel')"
-              @click="showUnitModal = false"
-            />
-            <CBtn
-              variant="primary"
-              type="submit"
-              form="unit-form"
-              :title="t('common.save')"
-              :loading="savingUnit"
-              :closing="unitFeedback.status.value === 'success'"
-              :disabled="savingUnit"
-            />
-          </CFormActions>
-        </template>
-      </CModal>
+        @saved="loadData"
+      />
 
       <!-- Archive unit modal -->
-      <CModal
+      <ArchiveUnitModal
         :open="showArchiveModal"
-        :title="t('residents.confirmArchiveTitle')"
-        size="sm"
+        :unit="unitToArchive"
         @update:open="showArchiveModal = $event"
-      >
-        <p class="body-md">
-          {{ t('residents.confirmArchiveMessage', { number: unitToArchive?.unit_number ?? '' }) }}
-        </p>
-        <template #footer>
-          <CFormActions
-            :status="archiveFeedback.status.value"
-            :message="archiveFeedback.message.value"
-          >
-            <CBtn
-              variant="ghost"
-              :title="t('common.cancel')"
-              @click="showArchiveModal = false"
-            />
-            <CBtn
-              variant="danger"
-              :title="t('common.archiveLabel')"
-              :loading="archivingUnit"
-              :closing="archiveFeedback.status.value === 'success'"
-              @click="confirmArchiveUnit"
-            />
-          </CFormActions>
-        </template>
-      </CModal>
+        @archived="loadData"
+      />
 
       <!-- Invite user modal (email-first flow) -->
       <InviteUserModal
@@ -676,35 +447,12 @@ async function confirmRevokeInvite() {
       />
 
       <!-- Revoke invite modal -->
-      <CModal
+      <RevokeInviteModal
         :open="showRevokeModal"
-        :title="t('residents.confirmRevokeTitle')"
-        size="sm"
+        :user="userToRevoke"
         @update:open="showRevokeModal = $event"
-      >
-        <p class="body-md">
-          {{ t('residents.confirmRevokeMessage', { email: userToRevoke?.email ?? '' }) }}
-        </p>
-        <template #footer>
-          <CFormActions
-            :status="revokeFeedback.status.value"
-            :message="revokeFeedback.message.value"
-          >
-            <CBtn
-              variant="ghost"
-              :title="t('common.cancel')"
-              @click="showRevokeModal = false"
-            />
-            <CBtn
-              variant="danger"
-              :title="t('residents.revokeInvite')"
-              :loading="revokingInvite"
-              :closing="revokeFeedback.status.value === 'success'"
-              @click="confirmRevokeInvite"
-            />
-          </CFormActions>
-        </template>
-      </CModal>
+        @revoked="loadData"
+      />
     </div>
   </div>
 </template>
@@ -739,15 +487,5 @@ async function confirmRevokeInvite() {
   align-items: center;
 }
 
-.shares-section {
-  border-top: 1px solid var(--color-outline-variant);
-  padding-top: var(--space-4);
-}
-
-.shares-title {
-  font-size: var(--text-md);
-  font-weight: var(--fw-semibold);
-  margin-bottom: var(--space-3);
-}
 
 </style>

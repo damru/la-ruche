@@ -1,28 +1,21 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useFormatters } from '@/composables/useFormatters'
 import { usePageLoader, toErrorMessage } from '@/composables/usePageLoader'
-import { useFormFeedback } from '@/composables/useFormFeedback'
-import { useAutoClose } from '@/composables/useAutoClose'
 import CAlert from '@/components/atoms/CAlert.vue'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
-import CDocumentLinkActionModal from '@/components/organisms/CDocumentLinkActionModal.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CCardActions from '@/components/molecules/CCardActions.vue'
 import CMetaLine from '@/components/molecules/CMetaLine.vue'
 import CMetaItem from '@/components/molecules/CMetaItem.vue'
-import CFormActions from '@/components/molecules/CFormActions.vue'
-import CForm from '@/components/molecules/CForm.vue'
 import CLinkedDocumentsModal from '@/components/organisms/CLinkedDocumentsModal.vue'
-import CModal from '@/components/molecules/CModal.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import CHeading from '@/components/atoms/CHeading.vue'
-import CFormRow from '@/components/molecules/CFormRow.vue'
 import CTabs from '@/components/atoms/CTabs.vue'
 import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import CIconLink from '@/components/atoms/CIconLink.svg'
@@ -32,14 +25,16 @@ import CIconCopy from '@/components/atoms/CIconCopy.svg'
 import CIconEdit from '@/components/atoms/CIconEdit.svg'
 import CIconRefresh from '@/components/atoms/CIconRefresh.svg'
 import CIconCheckCircle from '@/components/atoms/CIconCheckCircle.svg'
-import CIconDownload from '@/components/atoms/CIconDownload.svg'
-import CIconTrash from '@/components/atoms/CIconTrash.svg'
+import SaveTaskModal from './SaveTaskModal.vue'
+import CloseTaskModal from './CloseTaskModal.vue'
+import DeleteTaskModal from './DeleteTaskModal.vue'
+import RevokeTokenModal from './RevokeTokenModal.vue'
+import ReopenTaskModal from './ReopenTaskModal.vue'
 import { buildingApi, contractorsApi, documentsApi, tasksApi, usersApi } from '@/api'
-import type { Contractor, Document, Task, TaskStatus, TaskPriority, User } from '@/types/domain'
-import { extractFileExtension } from '@/utils/files'
+import type { Contractor, Document, Task, TaskStatus, User } from '@/types/domain'
 
 const { t } = useI18n()
-const { formatDate, formatFileSize, formatRelative } = useFormatters()
+const { formatDate, formatRelative } = useFormatters()
 const router = useRouter()
 
 // ── State ─────────────────────────────────────────────────────────
@@ -48,155 +43,20 @@ const allTasks = ref<Task[]>([])
 const allContractors = ref<Contractor[]>([])
 const allUsers = ref<User[]>([])
 const statusFilter = ref<'all' | TaskStatus>('all')
-const TASK_MODAL_ERROR_CLOSE_DELAY_MS = 2200
 const VENDOR_LINK_COPY_FEEDBACK_DELAY_MS = 1800
 
-// ── Task form modal ───────────────────────────────────────────────
+// ── Modal trigger state ───────────────────────────────────────────
 const showTaskModal = ref(false)
-const taskFeedback = useFormFeedback()
-const savingTask = ref(false)
 const editingTask = ref<Task | null>(null)
-const { schedule: scheduleTaskClose, forceExpire: forceTaskClose } = useAutoClose()
-watch(showTaskModal, (open) => { if (!open) forceTaskClose() })
 
-// Assignment mode within the modal for open tasks
-// 'none' = not assigned | 'self' = self-assign (in_progress) | 'contractor' = assign contractor
-const assignMode = ref<'none' | 'self' | 'contractor'>('none')
+const closingTask = ref<Task | null>(null)
 
-// Contractor autocomplete state
-const contractorSearch = ref('')
-const contractorSuggestions = ref<Contractor[]>([])
-const showSuggestions = ref(false)
-const selectedContractor = ref<Contractor | null>(null)
-const createSuggestedContractor = ref(false)
-function createDefaultContractorDraft() {
-  return {
-    name: '',
-    email: '',
-    phone: '',
-  }
-}
-const contractorDraft = ref(createDefaultContractorDraft())
+const showDeleteModal = ref(false)
+const taskToDelete = ref<Task | null>(null)
 
-function emptyStringToUndefined(value: string) {
-  return value.trim() || undefined
-}
+const revokingTask = ref<Task | null>(null)
 
-function contractorDomainLabel(c: Contractor): string {
-  if (!c.domains.length) return ''
-  return c.domains.map(d => t(`contractors.domains.${d}`, d)).join(', ')
-}
-
-// Max suggestions shown when typing (narrows the list) vs on focus (shows all)
-const MAX_SUGGESTIONS = 10
-
-function populateSuggestions(query: string) {
-  const q = query.trim().toLowerCase()
-  if (!q) {
-    contractorSuggestions.value = allContractors.value.slice(0, MAX_SUGGESTIONS)
-  } else {
-    contractorSuggestions.value = allContractors.value
-      .filter(c => c.name.toLowerCase().includes(q))
-      .slice(0, MAX_SUGGESTIONS)
-  }
-  showSuggestions.value = contractorSuggestions.value.length > 0
-}
-
-// Offer inline contractor creation only when the user explicitly chose contractor
-// assignment, typed something, and no known contractor currently matches.
-const canSuggestContractorCreation = computed(() => (
-  assignMode.value === 'contractor'
-  && !selectedContractor.value
-  && contractorSearch.value.trim().length > 0
-  && contractorSuggestions.value.length === 0
-))
-
-function onContractorInput() {
-  // Any manual text edit deselects the current contractor
-  selectedContractor.value = null
-  createSuggestedContractor.value = false
-  populateSuggestions(contractorSearch.value)
-}
-
-function onContractorFocus() {
-  populateSuggestions(contractorSearch.value)
-}
-
-function selectContractorSuggestion(c: Contractor) {
-  selectedContractor.value = c
-  contractorSearch.value = c.name
-  createSuggestedContractor.value = false
-  contractorDraft.value = createDefaultContractorDraft()
-  // Hide immediately — mousedown.prevent on the item ensures this fires before blur
-  showSuggestions.value = false
-}
-
-function suggestContractorCreation() {
-  createSuggestedContractor.value = true
-  contractorDraft.value = {
-    name: contractorSearch.value.trim(),
-    email: '',
-    phone: '',
-  }
-  showSuggestions.value = false
-}
-
-function hideSuggestions() {
-  // Small delay so mousedown on a suggestion item fires before the list is hidden.
-  // mousedown.prevent on each item prevents default focus steal, so the blur fires
-  // after the click is processed by selectContractorSuggestion.
-  window.setTimeout(() => { showSuggestions.value = false }, 100)
-}
-
-function clearContractor() {
-  selectedContractor.value = null
-  contractorSearch.value = ''
-  createSuggestedContractor.value = false
-  contractorDraft.value = createDefaultContractorDraft()
-  showSuggestions.value = false
-}
-
-function contractorDisplayName(task: Task): string | undefined {
-  return contractorsById.value.get(task.contractor_id ?? '')?.name ?? task.contractor_name
-}
-
-async function resolveContractorSelection() {
-  if (assignMode.value !== 'contractor') {
-    return {
-      contractorId: null,
-      contractorName: null,
-    }
-  }
-  if (selectedContractor.value) {
-    return {
-      contractorId: selectedContractor.value.id,
-      contractorName: selectedContractor.value.name,
-    }
-  }
-  if (createSuggestedContractor.value && contractorDraft.value.name) {
-    const createdContractor = await contractorsApi.create({
-      name: contractorDraft.value.name,
-      email: emptyStringToUndefined(contractorDraft.value.email),
-      phone: emptyStringToUndefined(contractorDraft.value.phone),
-    })
-    allContractors.value = [createdContractor.data, ...allContractors.value]
-    return {
-      contractorId: createdContractor.data.id,
-      contractorName: createdContractor.data.name,
-    }
-  }
-  return {
-    contractorId: null,
-    contractorName: emptyStringToUndefined(contractorSearch.value) ?? null,
-  }
-}
-
-// Auto-clear contractor when switching away from contractor mode
-watch(assignMode, (newMode) => {
-  if (newMode !== 'contractor') {
-    clearContractor()
-  }
-})
+const reopeningTask = ref<Task | null>(null)
 
 // Map for looking up contractor name by id on task cards
 const contractorsById = computed(() =>
@@ -206,29 +66,6 @@ const contractorsById = computed(() =>
 const usersById = computed(() =>
   new Map(allUsers.value.map(user => [user.id, user])),
 )
-
-const defaultForm = () => ({
-  title: '',
-  description: '',
-  priority: 'normal' as string,
-})
-
-const taskPriorityOptions = computed(() =>
-  (['low', 'normal', 'high', 'urgent'] as const).map(p => ({
-    value: p,
-    label: t(`tasks.priorities.${p}`),
-  })),
-)
-const taskForm = ref(defaultForm())
-const selectedTaskDocuments = ref<File[]>([])
-const taskDocumentInputRef = ref<HTMLInputElement | null>(null)
-const taskDocumentsDragOver = ref(false)
-const loadingTaskFormDocuments = ref(false)
-const uploadingTaskDocuments = ref(false)
-const existingTaskDocuments = ref<Document[]>([])
-const pendingTaskDocument = ref<Document | null>(null)
-const taskDocumentActionFeedback = useFormFeedback()
-const taskDocumentActionLoading = ref(false)
 
 // ── Load data ─────────────────────────────────────────────────────
 async function loadData() {
@@ -269,7 +106,6 @@ const activeCount = computed(() =>
 )
 
 // ── Helpers ───────────────────────────────────────────────────────
-/** Returns true for any terminal task status (closed or cancelled). */
 function isTerminal(status: string): boolean {
   return status === 'closed' || status === 'cancelled'
 }
@@ -297,6 +133,10 @@ function priorityVariant(p: string): 'err' | 'pending' | 'primary' | 'valid' | '
   return 'default'
 }
 
+function contractorDisplayName(task: Task): string | undefined {
+  return contractorsById.value.get(task.contractor_id ?? '')?.name ?? task.contractor_name
+}
+
 function assignedUserName(task: Task): string | null {
   const assignedUser = task.assigned_to ? usersById.value.get(task.assigned_to) : undefined
   if (!assignedUser) return null
@@ -311,86 +151,67 @@ function openTaskDetail(taskId: string) {
   void router.push({ name: 'task-detail', params: { id: taskId } })
 }
 
-function openTaskDocumentPicker() {
-  taskDocumentInputRef.value?.click()
+// ── Modal openers ─────────────────────────────────────────────────
+function openCreateModal() {
+  editingTask.value = null
+  showTaskModal.value = true
 }
 
-function appendTaskDocuments(files: File[]) {
-  if (!files.length) return
-  selectedTaskDocuments.value = [...selectedTaskDocuments.value, ...files]
+function openEditModal(task: Task) {
+  editingTask.value = task
+  showTaskModal.value = true
 }
 
-function onTaskDocumentChange(event: Event) {
-  const input = event.target as HTMLInputElement
-  appendTaskDocuments(Array.from(input.files ?? []))
-  if (taskDocumentInputRef.value) taskDocumentInputRef.value.value = ''
+function openCloseModal(task: Task) {
+  closingTask.value = task
 }
 
-function onTaskDocumentDrop(event: DragEvent) {
-  taskDocumentsDragOver.value = false
-  appendTaskDocuments(Array.from(event.dataTransfer?.files ?? []))
+function openReopenModal(task: Task) {
+  reopeningTask.value = task
 }
 
-function removeSelectedTaskDocument(index: number) {
-  selectedTaskDocuments.value = selectedTaskDocuments.value.filter((_, currentIndex) => currentIndex !== index)
+function openRevokeModal(task: Task) {
+  revokingTask.value = task
 }
 
-async function uploadTaskDocument(taskId: string, file: File) {
-  const extension = extractFileExtension(file.name)
-  const mimeType = file.type || 'application/octet-stream'
-  const uploadUrl = await documentsApi.getUploadUrl(extension, mimeType, file.size)
-
-  await documentsApi.uploadToS3(file, uploadUrl.data.url, mimeType)
-
-  const document = await documentsApi.confirmUpload({
-    key: uploadUrl.data.key,
-    bucket: uploadUrl.data.bucket,
-    original_name: file.name,
-    mime_type: mimeType,
-    size_bytes: file.size,
-    visible_roles: ['manager', 'board_member'],
-  })
-
-  await tasksApi.attachDocument(taskId, document.data.id)
+function openDeleteModal(task: Task) {
+  showTaskModal.value = false
+  taskToDelete.value = task
+  showDeleteModal.value = true
 }
 
-async function attachSelectedTaskDocuments(taskId: string) {
-  const failedDocuments: string[] = []
+// ── Modal event handlers ──────────────────────────────────────────
+function onTaskSaved() {
+  reload()
+}
 
-  for (const document of selectedTaskDocuments.value) {
-    try {
-      await uploadTaskDocument(taskId, document)
-    } catch {
-      failedDocuments.push(document.name)
-    }
+function onTaskDeleteRequest(task: Task) {
+  openDeleteModal(task)
+}
+
+function onTaskDeleted() {
+  showDeleteModal.value = false
+  reload()
+}
+
+function onTaskClosed() {
+  reload()
+}
+
+function onTaskReopened() {
+  reload()
+}
+
+function onTokenRevoked() {
+  if (revokingTask.value) delete vendorLinks.value[revokingTask.value.id]
+  reload()
+}
+
+function onDocumentDetached(taskId: string, documentId: string) {
+  updateTaskDocumentCount(taskId, -1)
+  if (taskDocumentsTarget.value?.id === taskId) {
+    taskDocuments.value = taskDocuments.value.filter(d => d.id !== documentId)
   }
-
-  return failedDocuments
-}
-
-async function loadTaskFormDocuments(taskId: string) {
-  loadingTaskFormDocuments.value = true
-  taskDocumentActionFeedback.reset()
-
-  try {
-    const response = await tasksApi.listDocuments(taskId)
-    existingTaskDocuments.value = response.data
-  } catch (err) {
-    taskFeedback.setError(toErrorMessage(err, t('tasks.documentsLoadError')))
-  } finally {
-    loadingTaskFormDocuments.value = false
-  }
-}
-
-function openTaskDocumentActionModal(document: Document) {
-  pendingTaskDocument.value = document
-  taskDocumentActionFeedback.reset()
-}
-
-function closeTaskDocumentActionModal() {
-  if (taskDocumentActionLoading.value) return
-  pendingTaskDocument.value = null
-  taskDocumentActionFeedback.reset()
 }
 
 function updateTaskDocumentCount(taskId: string, delta: number) {
@@ -400,36 +221,64 @@ function updateTaskDocumentCount(taskId: string, delta: number) {
   }
 }
 
-async function handleTaskDocumentAction(deleteDocument: boolean) {
-  if (!editingTask.value || !pendingTaskDocument.value) return
+// ── Vendor token actions ───────────────────────────────────────────
+const generatingToken = ref<string | null>(null)
+const vendorLinks = ref<Record<string, { url: string; expires_at: string }>>({})
+const pageError = ref('')
+const copiedVendorLinkTaskId = ref<string | null>(null)
 
-  taskDocumentActionLoading.value = true
-  taskDocumentActionFeedback.reset()
-
+async function generateToken(task: Task) {
+  generatingToken.value = task.id
+  pageError.value = ''
   try {
-    if (deleteDocument) {
-      await documentsApi.delete(pendingTaskDocument.value.id)
-    } else {
-      await tasksApi.detachDocument(editingTask.value.id, pendingTaskDocument.value.id)
-    }
-
-    existingTaskDocuments.value = existingTaskDocuments.value.filter(document => document.id !== pendingTaskDocument.value?.id)
-    if (taskDocumentsTarget.value?.id === editingTask.value.id) {
-      taskDocuments.value = taskDocuments.value.filter(document => document.id !== pendingTaskDocument.value?.id)
-    }
-    updateTaskDocumentCount(editingTask.value.id, -1)
-    pendingTaskDocument.value = null
+    const res = await tasksApi.generateToken(task.id)
+    const tokenStr = res.data.token
+    const url = `${window.location.origin}/vendor/${tokenStr}`
+    vendorLinks.value[task.id] = { url, expires_at: res.data.expires_at }
+    await reload()
   } catch (err) {
-    taskDocumentActionFeedback.setError(
-      toErrorMessage(
-        err,
-        deleteDocument ? t('tasks.documentsDeleteError') : t('tasks.documentsDetachError'),
-      ),
-    )
+    pageError.value = toErrorMessage(err)
   } finally {
-    taskDocumentActionLoading.value = false
+    generatingToken.value = null
   }
 }
+
+async function showVendorLink(task: Task) {
+  if (vendorLinks.value[task.id]) return
+  pageError.value = ''
+  try {
+    const res = await tasksApi.getVendorTokenUrl(task.id)
+    const parsedPath = new URL(res.data.url).pathname
+    const tokenSegment = parsedPath.split('/vendor/')[1]
+    const url = tokenSegment
+      ? `${window.location.origin}/vendor/${tokenSegment}`
+      : res.data.url
+    vendorLinks.value[task.id] = { url, expires_at: res.data.expires_at }
+  } catch (err) {
+    pageError.value = toErrorMessage(err)
+  }
+}
+
+async function copyVendorLink(taskId: string) {
+  const vendorLink = vendorLinks.value[taskId]
+  if (!vendorLink) return
+  try {
+    await navigator.clipboard.writeText(vendorLink.url)
+    copiedVendorLinkTaskId.value = taskId
+    window.setTimeout(() => {
+      if (copiedVendorLinkTaskId.value === taskId) {
+        copiedVendorLinkTaskId.value = null
+      }
+    }, VENDOR_LINK_COPY_FEEDBACK_DELAY_MS)
+  } catch (err) {
+    pageError.value = toErrorMessage(err)
+  }
+}
+
+// ── Linked documents modal ─────────────────────────────────────────
+const taskDocumentsTarget = ref<Task | null>(null)
+const taskDocuments = ref<Document[]>([])
+const loadingTaskDocuments = ref(false)
 
 async function openTaskDocuments(task: Task) {
   taskDocumentsTarget.value = task
@@ -450,323 +299,6 @@ async function downloadTaskDocument(documentId: string) {
   try {
     const response = await documentsApi.getDownloadUrl(documentId)
     window.open(response.data.url, '_blank', 'noopener')
-  } catch (err) {
-    pageError.value = toErrorMessage(err)
-  }
-}
-
-// ── Task modal actions ────────────────────────────────────────────
-function openCreateModal() {
-  editingTask.value = null
-  taskForm.value = defaultForm()
-  selectedTaskDocuments.value = []
-  taskDocumentsDragOver.value = false
-  existingTaskDocuments.value = []
-  pendingTaskDocument.value = null
-  selectedContractor.value = null
-  contractorSearch.value = ''
-  createSuggestedContractor.value = false
-  contractorDraft.value = createDefaultContractorDraft()
-  assignMode.value = 'none'
-  taskFeedback.reset()
-  showTaskModal.value = true
-}
-
-async function openEditModal(task: Task) {
-  editingTask.value = task
-  taskForm.value = {
-    title: task.title,
-    description: task.description ?? '',
-    priority: task.priority,
-  }
-  selectedTaskDocuments.value = []
-  taskDocumentsDragOver.value = false
-  existingTaskDocuments.value = []
-  pendingTaskDocument.value = null
-  // Pre-fill contractor from loaded referential
-  if (task.contractor_id) {
-    const c = contractorsById.value.get(task.contractor_id)
-    selectedContractor.value = c ?? null
-    contractorSearch.value = c?.name ?? task.contractor_name ?? ''
-    assignMode.value = 'contractor'
-    createSuggestedContractor.value = false
-    contractorDraft.value = createDefaultContractorDraft()
-  } else if (task.contractor_name) {
-    selectedContractor.value = null
-    contractorSearch.value = task.contractor_name
-    createSuggestedContractor.value = false
-    contractorDraft.value = createDefaultContractorDraft()
-    assignMode.value = 'contractor'
-  } else if (task.status === 'in_progress') {
-    selectedContractor.value = null
-    contractorSearch.value = ''
-    createSuggestedContractor.value = false
-    contractorDraft.value = createDefaultContractorDraft()
-    assignMode.value = 'self'
-  } else {
-    selectedContractor.value = null
-    contractorSearch.value = ''
-    createSuggestedContractor.value = false
-    contractorDraft.value = createDefaultContractorDraft()
-    assignMode.value = 'none'
-  }
-  taskFeedback.reset()
-  showTaskModal.value = true
-  await loadTaskFormDocuments(task.id)
-}
-
-async function saveTask() {
-  if (taskFeedback.status.value === 'success') { forceTaskClose(); return }
-  if (!taskForm.value.title.trim()) return
-  savingTask.value = true
-  taskFeedback.reset()
-  try {
-    const { contractorId, contractorName } = await resolveContractorSelection()
-    let taskId: string
-
-    if (editingTask.value) {
-      // Reflect assignment mode change in DB:
-      // 'self'       → in_progress (self-assigned, no contractor)
-      // 'none'       → open (unassigned)
-      // 'contractor' → keep current status (contractor_id drives the assignment)
-      let statusPatch: string | undefined
-      if (assignMode.value === 'self') {
-        statusPatch = 'in_progress'
-      } else if (assignMode.value === 'none') {
-        statusPatch = 'open'
-      }
-      await tasksApi.update(editingTask.value.id, {
-        title: taskForm.value.title,
-        description: taskForm.value.description || null,
-        priority: taskForm.value.priority,
-        contractor_id: assignMode.value === 'contractor' ? contractorId : null,
-        contractor_name: assignMode.value === 'contractor' ? contractorName : null,
-        ...(statusPatch ? { status: statusPatch } : {}),
-      })
-      taskId = editingTask.value.id
-    } else {
-      const response = await tasksApi.create({
-        title: taskForm.value.title,
-        description: taskForm.value.description || undefined,
-        priority: taskForm.value.priority as TaskPriority,
-        contractor_id: assignMode.value === 'contractor' ? contractorId : null,
-        contractor_name: assignMode.value === 'contractor' ? contractorName : null,
-      })
-      taskId = response.data.id
-    }
-
-    if (selectedTaskDocuments.value.length > 0) {
-      uploadingTaskDocuments.value = true
-      const failedDocuments = await attachSelectedTaskDocuments(taskId)
-      uploadingTaskDocuments.value = false
-
-      if (failedDocuments.length > 0) {
-        taskFeedback.setError(`${t('tasks.documentUploadError')}: ${failedDocuments.join(', ')}`)
-        if (editingTask.value) {
-          await loadTaskFormDocuments(taskId)
-          await reload()
-        } else {
-          window.setTimeout(() => {
-            showTaskModal.value = false
-            reload()
-          }, TASK_MODAL_ERROR_CLOSE_DELAY_MS)
-        }
-        return
-      }
-    }
-
-    taskFeedback.setSuccess(t('common.saved'))
-    scheduleTaskClose(() => { showTaskModal.value = false; reload() })
-  } catch (err) {
-    taskFeedback.setError(toErrorMessage(err))
-  } finally {
-    savingTask.value = false
-    uploadingTaskDocuments.value = false
-  }
-}
-
-// ── Close task from card (for any non-closed task) ────────────────
-const closingTask = ref<Task | null>(null)
-const closeFeedback = useFormFeedback()
-const closingInProgress = ref(false)
-const closeAmount = ref('')
-const { schedule: scheduleCloseTask, forceExpire: forceCloseTask } = useAutoClose()
-watch(closingTask, (task) => { if (!task) forceCloseTask() })
-
-function openCloseModal(task: Task) {
-  closingTask.value = task
-  closeAmount.value = task.completion_cost != null ? String(task.completion_cost) : ''
-  closeFeedback.reset()
-}
-
-async function confirmCloseTask() {
-  if (closeFeedback.status.value === 'success') { forceCloseTask(); return }
-  if (!closingTask.value) return
-  closingInProgress.value = true
-  closeFeedback.reset()
-  try {
-    await tasksApi.update(closingTask.value.id, {
-      status: 'closed',
-      completion_cost: closeAmount.value ? Number(closeAmount.value) : null,
-    })
-    closeFeedback.setSuccess(t('tasks.closeSuccess'))
-    scheduleCloseTask(() => { closingTask.value = null; reload() })
-  } catch (err) {
-    closeFeedback.setError(toErrorMessage(err))
-  } finally {
-    closingInProgress.value = false
-  }
-}
-
-// ── Delete task modal ─────────────────────────────────────────────
-const showDeleteModal = ref(false)
-const taskToDelete = ref<Task | null>(null)
-const deletingTask = ref(false)
-const deleteTaskFeedback = useFormFeedback()
-const pageError = ref('')
-const taskDocumentsTarget = ref<Task | null>(null)
-const taskDocuments = ref<Document[]>([])
-const loadingTaskDocuments = ref(false)
-const { schedule: scheduleDeleteTask, forceExpire: forceDeleteTask } = useAutoClose()
-watch(showDeleteModal, (open) => { if (!open) forceDeleteTask() })
-
-function openDeleteModal(task: Task) {
-  // Close the edit modal if it is open to avoid modal stacking
-  showTaskModal.value = false
-  taskToDelete.value = task
-  deleteTaskFeedback.reset()
-  showDeleteModal.value = true
-}
-
-async function confirmDeleteTask() {
-  if (deleteTaskFeedback.status.value === 'success') { forceDeleteTask(); return }
-  if (!taskToDelete.value) return
-  deletingTask.value = true
-  deleteTaskFeedback.reset()
-  try {
-    await tasksApi.delete(taskToDelete.value.id)
-    deleteTaskFeedback.setSuccess(t('tasks.deleteSuccess'))
-    scheduleDeleteTask(() => { showDeleteModal.value = false; reload() })
-  } catch (err) {
-    deleteTaskFeedback.setError(toErrorMessage(err))
-  } finally {
-    deletingTask.value = false
-  }
-}
-
-// ── Vendor token actions ───────────────────────────────────────────
-const generatingToken = ref<string | null>(null)
-// vendorLinks: task.id → { url, expires_at } — populated on demand
-const vendorLinks = ref<Record<string, { url: string; expires_at: string }>>({})
-
-// ── Revoke token modal ─────────────────────────────────────────────
-const revokingTask = ref<Task | null>(null)
-const revokeFeedback = useFormFeedback()
-const revoking = ref(false)
-const { schedule: scheduleRevokeTask, forceExpire: forceRevokeTask } = useAutoClose()
-watch(revokingTask, (task) => { if (!task) forceRevokeTask() })
-
-function openRevokeModal(task: Task) {
-  revokingTask.value = task
-  revokeFeedback.reset()
-}
-
-async function confirmRevoke() {
-  if (revokeFeedback.status.value === 'success') { forceRevokeTask(); return }
-  if (!revokingTask.value) return
-  revoking.value = true
-  revokeFeedback.reset()
-  try {
-    await tasksApi.revokeToken(revokingTask.value.id)
-    delete vendorLinks.value[revokingTask.value.id]
-    revokeFeedback.setSuccess(t('tasks.revokeSuccess'))
-    scheduleRevokeTask(() => { revokingTask.value = null; reload() })
-  } catch (err) {
-    revokeFeedback.setError(toErrorMessage(err))
-  } finally {
-    revoking.value = false
-  }
-}
-
-// ── Reopen task modal ─────────────────────────────────────────────
-const reopeningTask = ref<Task | null>(null)
-const reopenFeedback = useFormFeedback()
-const reopening = ref(false)
-const { schedule: scheduleReopenTask, forceExpire: forceReopenTask } = useAutoClose()
-watch(reopeningTask, (task) => { if (!task) forceReopenTask() })
-
-function openReopenModal(task: Task) {
-  reopeningTask.value = task
-  reopenFeedback.reset()
-}
-
-async function confirmReopen() {
-  if (reopenFeedback.status.value === 'success') { forceReopenTask(); return }
-  if (!reopeningTask.value) return
-  reopening.value = true
-  reopenFeedback.reset()
-  try {
-    await tasksApi.update(reopeningTask.value.id, { status: 'open' })
-    reopenFeedback.setSuccess(t('tasks.reopenSuccess'))
-    scheduleReopenTask(() => { reopeningTask.value = null; reload() })
-  } catch (err) {
-    reopenFeedback.setError(toErrorMessage(err))
-  } finally {
-    reopening.value = false
-  }
-}
-
-async function generateToken(task: Task) {
-  generatingToken.value = task.id
-  pageError.value = ''
-  try {
-    const res = await tasksApi.generateToken(task.id)
-    // Rebuild with window.location.origin: the backend's public_url may differ from the
-    // actual frontend origin in dev/staging/multi-tenant deployments. The token UUID is
-    // what matters — the vendor route (/vendor/:token) is always on the frontend SPA.
-    const tokenStr = res.data.token
-    const url = `${window.location.origin}/vendor/${tokenStr}`
-    vendorLinks.value[task.id] = { url, expires_at: res.data.expires_at }
-    await reload()
-  } catch (err) {
-    pageError.value = toErrorMessage(err)
-  } finally {
-    generatingToken.value = null
-  }
-}
-
-async function showVendorLink(task: Task) {
-  if (vendorLinks.value[task.id]) return // already loaded
-  pageError.value = ''
-  try {
-    const res = await tasksApi.getVendorTokenUrl(task.id)
-    // Parse the token from the backend URL using URL API for robustness,
-    // then rebuild with window.location.origin (see generateToken for rationale).
-    const parsedPath = new URL(res.data.url).pathname
-    const tokenSegment = parsedPath.split('/vendor/')[1]
-    const url = tokenSegment
-      ? `${window.location.origin}/vendor/${tokenSegment}`
-      : res.data.url
-    vendorLinks.value[task.id] = { url, expires_at: res.data.expires_at }
-  } catch (err) {
-    pageError.value = toErrorMessage(err)
-  }
-}
-
-const copiedVendorLinkTaskId = ref<string | null>(null)
-
-async function copyVendorLink(taskId: string) {
-  const vendorLink = vendorLinks.value[taskId]
-  if (!vendorLink) return
-
-  try {
-    await navigator.clipboard.writeText(vendorLink.url)
-    copiedVendorLinkTaskId.value = taskId
-    window.setTimeout(() => {
-      if (copiedVendorLinkTaskId.value === taskId) {
-        copiedVendorLinkTaskId.value = null
-      }
-    }, VENDOR_LINK_COPY_FEEDBACK_DELAY_MS)
   } catch (err) {
     pageError.value = toErrorMessage(err)
   }
@@ -1017,435 +549,43 @@ async function copyVendorLink(taskId: string) {
       </template>
     </div>
 
-    <!-- Create / Edit task modal -->
-    <CModal
+    <SaveTaskModal
       :open="showTaskModal"
-      :title="editingTask ? t('tasks.editTask') : t('tasks.newTask')"
-      size="md"
-      :closable="!savingTask"
+      :task="editingTask"
+      :contractors="allContractors"
       @update:open="showTaskModal = $event"
-    >
-      <CForm
-        id="task-form"
-        @submit="saveTask"
-      >
-        <CFormInput
-          v-model="taskForm.title"
-          :label="t('tasks.titleLabel')"
-          :placeholder="t('tasks.titleLabel')"
-          required
-        />
-        <CFormTextarea
-          v-model="taskForm.description"
-          :label="t('tasks.descriptionLabel')"
-          :rows="3"
-        />
-        <CFormSelect
-          v-model="taskForm.priority"
-          :label="t('tasks.priorityLabel')"
-          :options="taskPriorityOptions"
-        />
-        <div
-          v-if="assignMode === 'contractor' && createSuggestedContractor"
-          class="flex flex-col gap-1 contractor-create-box"
-        >
-          <label class="text-sm font-medium text-on-surface-variant">{{ t('tasks.contractorCreateLabel') }}</label>
-          <CFormRow :cols="2">
-            <CFormInput
-              v-model="contractorDraft.email"
-              :label="t('contractors.email')"
-              type="email"
-              :placeholder="t('contractors.emailPlaceholder')"
-            />
-            <CFormInput
-              v-model="contractorDraft.phone"
-              :label="t('contractors.phone')"
-              type="tel"
-              :placeholder="t('contractors.phonePlaceholder')"
-            />
-          </CFormRow>
-          <span class="text-xs text-on-surface-variant">
-            {{ t('tasks.contractorCreateHelp') }}
-          </span>
-        </div>
-        <div class="flex flex-col gap-1">
-          <label class="text-sm font-medium text-on-surface-variant">{{ t('tasks.documentsLabel') }}</label>
-          <input
-            ref="taskDocumentInputRef"
-            type="file"
-            multiple
-            style="display:none"
-            @change="onTaskDocumentChange"
-          />
-          <div
-            :class="['dropzone', { 'dropzone--over': taskDocumentsDragOver }]"
-            role="button"
-            tabindex="0"
-            @click="openTaskDocumentPicker"
-            @keydown.enter.prevent="openTaskDocumentPicker"
-            @keydown.space.prevent="openTaskDocumentPicker"
-            @dragenter.prevent="taskDocumentsDragOver = true"
-            @dragover.prevent="taskDocumentsDragOver = true"
-            @dragleave.prevent="taskDocumentsDragOver = false"
-            @drop.prevent="onTaskDocumentDrop"
-          >
-            <CIconUpload class="dropzone__icon" />
-            <span class="body-xs dropzone__hint">
-              {{ editingTask ? t('tasks.editDocumentHint') : t('tasks.documentHint') }}
-            </span>
-          </div>
+      @saved="onTaskSaved"
+      @delete="onTaskDeleteRequest"
+      @document-detached="onDocumentDetached"
+    />
 
-          <div
-            v-if="selectedTaskDocuments.length > 0"
-            class="task-selected-documents"
-          >
-            <div
-              v-for="(document, index) in selectedTaskDocuments"
-              :key="`${document.name}-${index}`"
-              class="task-selected-document"
-            >
-              <span class="task-selected-document__name">{{ document.name }}</span>
-              <button
-                type="button"
-                class="task-selected-document__remove"
-                :title="t('tasks.removeDocument')"
-                :aria-label="t('tasks.removeDocument')"
-                @click="removeSelectedTaskDocument(index)"
-              >
-                ×
-              </button>
-            </div>
-          </div>
-
-          <div
-            v-if="editingTask"
-            class="task-existing-documents"
-          >
-            <p class="text-xs text-on-surface-variant task-existing-documents__hint">
-              {{ t('tasks.attachedDocuments') }}
-            </p>
-            <CPageLoader v-if="loadingTaskFormDocuments" />
-            <div
-              v-else-if="existingTaskDocuments.length === 0"
-              class="task-existing-documents__empty"
-            >
-              {{ t('tasks.noAttachedDocuments') }}
-            </div>
-            <div
-              v-else
-              class="task-existing-documents__list"
-            >
-              <div
-                v-for="document in existingTaskDocuments"
-                :key="document.id"
-                class="task-existing-documents__row"
-              >
-                <div class="task-existing-documents__meta">
-                  <div class="task-existing-documents__name">
-                    <CIconFile
-                      class="icon-sm"
-                    />
-                    <span>{{ document.original_name }}</span>
-                  </div>
-                  <div class="task-existing-documents__details">
-                    <span>{{ formatFileSize(document.size_bytes) }}</span>
-                    <span>·</span>
-                    <span>{{ formatDate(document.created_at) }}</span>
-                  </div>
-                </div>
-                <div class="task-existing-documents__actions">
-                  <CBtn
-                    variant="ghost"
-                    size="sm"
-                    :icon="CIconDownload"
-                    :title="t('common.download')"
-                    @click="downloadTaskDocument(document.id)"
-                  />
-                  <CBtn
-                    variant="danger"
-                    size="sm"
-                    :icon="CIconTrash"
-                    :title="t('tasks.detachDocument')"
-                    :loading="taskDocumentActionLoading && pendingTaskDocument?.id === document.id"
-                    @click="openTaskDocumentActionModal(document)"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <!-- Assignment mode: radio (visible for new tasks, open tasks, and in_progress tasks) -->
-        <div
-          v-if="!editingTask || ['open', 'in_progress', 'awaiting_vendor', 'awaiting_validation'].includes(editingTask.status)"
-          class="flex flex-col gap-1"
-        >
-          <label class="text-sm font-medium text-on-surface-variant">{{ t('tasks.assignmentSection') }}</label>
-          <div class="assignment-options">
-            <label class="checkbox-label">
-              <input
-                v-model="assignMode"
-                type="radio"
-                value="none"
-              />
-              {{ t('tasks.assignNone') }}
-            </label>
-            <label class="checkbox-label">
-              <input
-                v-model="assignMode"
-                type="radio"
-                value="self"
-              />
-              {{ t('tasks.assignSelf') }}
-            </label>
-            <label class="checkbox-label">
-              <input
-                v-model="assignMode"
-                type="radio"
-                value="contractor"
-              />
-              {{ t('tasks.assignContractor') }}
-            </label>
-          </div>
-        </div>
-
-        <!-- Contractor assignment with autocomplete (only when assignMode === 'contractor') -->
-        <div
-          v-if="assignMode === 'contractor'"
-          class="flex flex-col gap-1 contractor-autocomplete"
-        >
-          <CFormInput
-            v-model="contractorSearch"
-            :label="t('tasks.contractorLabel')"
-            :placeholder="t('tasks.contractorPlaceholder')"
-            autocomplete="off"
-            :hint="selectedContractor
-              ? (selectedContractor.email || selectedContractor.phone || '')
-              : (contractorSearch.trim() ? t('tasks.contractorFreeInputHint') : '')"
-            @focus="onContractorFocus"
-            @input="onContractorInput"
-            @blur="hideSuggestions"
-          >
-            <template
-              v-if="selectedContractor"
-              #suffix
-            >
-              <button
-                type="button"
-                class="contractor-clear"
-                :aria-label="t('common.clear')"
-                @click="clearContractor"
-              >
-                ×
-              </button>
-            </template>
-          </CFormInput>
-          <ul
-            v-if="showSuggestions || canSuggestContractorCreation"
-            class="autocomplete-list"
-          >
-            <li
-              v-for="c in contractorSuggestions"
-              :key="c.id"
-              class="autocomplete-item"
-              @mousedown.prevent="selectContractorSuggestion(c)"
-            >
-              <span class="autocomplete-name">{{ c.name }}</span>
-              <span
-                v-if="c.domains.length"
-                class="autocomplete-meta"
-              >{{ contractorDomainLabel(c) }}</span>
-            </li>
-            <li
-              v-if="canSuggestContractorCreation"
-              class="autocomplete-item autocomplete-item--action"
-              @mousedown.prevent="suggestContractorCreation"
-            >
-              <span class="autocomplete-name">{{ t('tasks.contractorCreateSuggestion', { name: contractorSearch.trim() }) }}</span>
-              <span class="autocomplete-meta">{{ t('tasks.contractorCreateSuggestionHint') }}</span>
-            </li>
-          </ul>
-        </div>
-      </CForm>
-      <template #footer>
-        <!-- Delete: visible from the modal only -->
-        <CFormActions
-          :status="taskFeedback.status.value"
-          :message="taskFeedback.message.value"
-        >
-          <CBtn
-            v-if="editingTask"
-            variant="danger"
-            :icon="CIconTrash"
-            :title="t('common.delete')"
-            :loading="savingTask"
-            class="mr-auto"
-            @click="openDeleteModal(editingTask)"
-          />
-          <CBtn
-            variant="ghost"
-            :title="t('common.cancel')"
-            @click="showTaskModal = false"
-          />
-          <CBtn
-            variant="primary"
-            :title="t('common.save')"
-            :loading="savingTask || uploadingTaskDocuments"
-            :closing="taskFeedback.status.value === 'success'"
-            type="submit"
-            form="task-form"
-          />
-        </CFormActions>
-      </template>
-    </CModal>
-
-    <!-- Revoke token modal -->
-    <CModal
+    <RevokeTokenModal
       :open="!!revokingTask"
-      :title="t('tasks.confirmRevokeTitle')"
-      size="sm"
+      :task="revokingTask"
       @update:open="v => !v && (revokingTask = null)"
-    >
-      <p class="body-xs">
-        {{ t('tasks.confirmRevokeToken') }}
-      </p>
-      <template #footer>
-        <CFormActions
-          :status="revokeFeedback.status.value"
-          :message="revokeFeedback.message.value"
-        >
-          <CBtn
-            variant="ghost"
-            :title="t('common.cancel')"
-            @click="revokingTask = null"
-          />
-          <CBtn
-            variant="danger"
-            :title="t('tasks.revokeToken')"
-            :loading="revoking"
-            :closing="revokeFeedback.status.value === 'success'"
-            @click="confirmRevoke"
-          />
-        </CFormActions>
-      </template>
-    </CModal>
+      @revoked="onTokenRevoked"
+    />
 
-    <!-- Close task modal -->
-    <CModal
+    <CloseTaskModal
       :open="!!closingTask"
-      :title="closingTask?.status === 'awaiting_validation' ? t('tasks.confirmCloseValidationTitle') : t('tasks.confirmCloseTitle')"
-      size="sm"
+      :task="closingTask"
       @update:open="v => !v && (closingTask = null)"
-    >
-      <p class="body-xs">
-        {{
-          closingTask?.status === 'awaiting_validation'
-            ? t('tasks.confirmCloseValidationMessage', { title: closingTask?.title ?? '' })
-            : t('tasks.confirmCloseMessage', { title: closingTask?.title ?? '' })
-        }}
-      </p>
-      <CForm
-        id="task-close"
-        @submit="confirmCloseTask"
-      >
-        <CFormInput
-          v-model="closeAmount"
-          :label="t('tasks.completionCostLabel')"
-          type="number"
-          :min="0"
-          :step="0.01"
-          :hint="closingTask?.status === 'awaiting_validation' && closingTask?.completion_cost != null
-            ? t('tasks.completionCostVendorHint')
-            : t('tasks.completionCostHint')"
-          class="task-close-field"
-        />
-      </CForm>
-      <template #footer>
-        <CFormActions
-          :status="closeFeedback.status.value"
-          :message="closeFeedback.message.value"
-        >
-          <CBtn
-            variant="ghost"
-            :title="t('common.cancel')"
-            @click="closingTask = null"
-          />
-          <CBtn
-            variant="primary"
-            :title="closingTask ? closeActionLabel(closingTask) : t('tasks.closeTask')"
-            :loading="closingInProgress"
-            :closing="closeFeedback.status.value === 'success'"
-            type="submit"
-            form="task-close"
-          />
-        </CFormActions>
-      </template>
-    </CModal>
+      @closed="onTaskClosed"
+    />
 
-    <!-- Reopen task modal -->
-    <CModal
+    <ReopenTaskModal
       :open="!!reopeningTask"
-      :title="t('tasks.confirmReopenTitle')"
-      size="sm"
+      :task="reopeningTask"
       @update:open="v => !v && (reopeningTask = null)"
-    >
-      <p class="body-xs">
-        {{ t('tasks.confirmReopenMessage', { title: reopeningTask?.title ?? '' }) }}
-      </p>
-      <template #footer>
-        <CFormActions
-          :status="reopenFeedback.status.value"
-          :message="reopenFeedback.message.value"
-        >
-          <CBtn
-            variant="ghost"
-            :title="t('common.cancel')"
-            @click="reopeningTask = null"
-          />
-          <CBtn
-            variant="primary"
-            :title="t('tasks.reopenTask')"
-            :loading="reopening"
-            :closing="reopenFeedback.status.value === 'success'"
-            @click="confirmReopen"
-          />
-        </CFormActions>
-      </template>
-    </CModal>
+      @reopened="onTaskReopened"
+    />
 
-    <!-- Delete task modal -->
-    <CModal
+    <DeleteTaskModal
       :open="showDeleteModal"
-      :title="t('tasks.confirmDeleteTitle')"
-      size="sm"
+      :task="taskToDelete"
       @update:open="showDeleteModal = $event"
-    >
-      <p class="body-xs">
-        {{
-          taskToDelete?.is_in_logbook
-            ? t('tasks.confirmDeleteLogbookMessage', { title: taskToDelete?.title ?? '' })
-            : t('tasks.confirmDeleteMessage', { title: taskToDelete?.title ?? '' })
-        }}
-      </p>
-      <template #footer>
-        <CFormActions
-          :status="deleteTaskFeedback.status.value"
-          :message="deleteTaskFeedback.message.value"
-        >
-          <CBtn
-            variant="ghost"
-            :title="t('common.cancel')"
-            @click="showDeleteModal = false"
-          />
-          <CBtn
-            variant="danger"
-            :title="t('common.deleteLabel')"
-            :loading="deletingTask"
-            :closing="deleteTaskFeedback.status.value === 'success'"
-            @click="confirmDeleteTask"
-          />
-        </CFormActions>
-      </template>
-    </CModal>
+      @deleted="onTaskDeleted"
+    />
 
     <CLinkedDocumentsModal
       :open="!!taskDocumentsTarget"
@@ -1455,18 +595,6 @@ async function copyVendorLink(taskId: string) {
       :empty-message="t('tasks.noLinkedDocuments')"
       @update:open="value => !value && (taskDocumentsTarget = null)"
       @download="downloadTaskDocument"
-    />
-    <CDocumentLinkActionModal
-      :open="!!pendingTaskDocument"
-      :title="t('tasks.documentsDetachTitle')"
-      :description="t('tasks.documentsDetachMessage', { name: pendingTaskDocument?.original_name ?? '', title: editingTask?.title ?? '' })"
-      :warning="t('tasks.documentsDeleteWarning', { name: pendingTaskDocument?.original_name ?? '' })"
-      :loading="taskDocumentActionLoading"
-      :status="taskDocumentActionFeedback.status.value"
-      :message="taskDocumentActionFeedback.message.value"
-      @update:open="value => !value && closeTaskDocumentActionModal()"
-      @unlink="handleTaskDocumentAction(false)"
-      @unlink-and-delete="handleTaskDocumentAction(true)"
     />
   </div>
 </template>
@@ -1498,138 +626,4 @@ async function copyVendorLink(taskId: string) {
   word-break: break-all;
 }
 .task-card__vendor-link-url:hover { text-decoration: underline; }
-
-.assignment-options {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  padding: var(--space-2) 0;
-}
-
-/* Contractor autocomplete */
-.contractor-autocomplete { position: relative; }
-
-.autocomplete-list {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  background: var(--color-surface);
-  border: 1px solid var(--color-outline);
-  border-radius: var(--radius-xl);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  list-style: none;
-  margin: 2px 0 0;
-  padding: 4px 0;
-  z-index: 100;
-  max-height: 200px;
-  overflow-y: auto;
-}
-
-.autocomplete-item {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--space-2);
-  padding: 8px 12px;
-  cursor: pointer;
-  font-size: var(--text-sm);
-}
-
-.autocomplete-item:hover { background: var(--color-surface-container); }
-.autocomplete-name { font-weight: var(--fw-medium); }
-.autocomplete-meta { font-size: var(--text-xs); color: var(--color-on-surface-variant); }
-/* Vertical layout reserved for the "create contractor" suggestion row. */
-.autocomplete-item--action {
-  align-items: flex-start;
-  flex-direction: column;
-}
-
-.contractor-clear {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 16px;
-  color: var(--color-on-surface-variant);
-  padding: 0 4px;
-  pointer-events: auto;
-  min-height: unset;
-  min-width: unset;
-}
-
-.field-hint { font-size: var(--text-xs); color: var(--color-on-surface-variant); }
-.contractor-create-box {
-  padding: var(--space-3);
-  border: 1px dashed var(--color-outline);
-  border-radius: var(--radius-xl);
-  background: var(--color-surface-container-lowest);
-}
-.task-close-field { margin-top: var(--space-4); }
-.modal-footer-feedback { margin-right: auto; min-width: 0; }
-.task-selected-documents,
-.task-existing-documents__list {
-  margin-top: var(--space-3);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-.task-selected-document,
-.task-existing-documents__row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-xl);
-  background: var(--color-surface-container-low);
-}
-.task-selected-document__name {
-  min-width: 0;
-  overflow: clip;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.task-selected-document__remove {
-  border: none;
-  background: none;
-  color: var(--color-on-surface-variant);
-  cursor: pointer;
-}
-.task-existing-documents {
-  margin-top: var(--space-3);
-}
-.task-existing-documents__meta {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
-.task-existing-documents__name {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  min-width: 0;
-}
-.task-existing-documents__name span {
-  overflow: clip;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.task-existing-documents__details {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  color: var(--color-on-surface-variant);
-  font-size: var(--text-xs);
-}
-.task-existing-documents__actions {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-.task-existing-documents__empty {
-  margin-top: var(--space-2);
-  color: var(--color-on-surface-variant);
-}
-
 </style>

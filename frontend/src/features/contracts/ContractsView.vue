@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useFormatters } from '@/composables/useFormatters'
 import CBadge from '@/components/atoms/CBadge.vue'
@@ -9,7 +9,6 @@ import CIconDroplet from '@/components/atoms/CIconDroplet.svg'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CCardActions from '@/components/molecules/CCardActions.vue'
-import CFormActions from '@/components/molecules/CFormActions.vue'
 import CLinkedDocumentsModal from '@/components/organisms/CLinkedDocumentsModal.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
@@ -30,9 +29,8 @@ import CIconCurrency from '@/components/atoms/CIconCurrency.svg'
 import { buildingApi, contractsApi, documentsApi } from '@/api'
 import ContractFormModal from '@/features/contracts/ContractFormModal.vue'
 import CTabs, { type Tab } from '@/components/atoms/CTabs.vue'
-import { usePageLoader, toErrorMessage } from '@/composables/usePageLoader'
-import { useFormFeedback } from '@/composables/useFormFeedback'
-import { useAutoClose } from '@/composables/useAutoClose'
+import { usePageLoader } from '@/composables/usePageLoader'
+import TerminateContractModal from '@/features/contracts/TerminateContractModal.vue'
 import { useRole } from '@/composables/useRole'
 import type { ContractReminder, ContractStatus, ContractType, Document, VendorContract } from '@/types/domain'
 
@@ -299,32 +297,10 @@ async function acknowledgeReminder(reminder: ContractReminder) {
 
 const showTerminateModal = ref(false)
 const contractToTerminate = ref<VendorContract | null>(null)
-const terminatingContract = ref(false)
-const terminateFeedback = useFormFeedback()
-const { schedule: scheduleTerminateClose, forceExpire: forceTerminateClose } = useAutoClose()
-watch(showTerminateModal, (open) => { if (!open) forceTerminateClose() })
 
 function openTerminateModal(contract: VendorContract) {
   contractToTerminate.value = contract
-  terminateFeedback.reset()
   showTerminateModal.value = true
-}
-
-async function confirmTerminateContract() {
-  if (terminateFeedback.status.value === 'success') { forceTerminateClose(); return }
-  if (!contractToTerminate.value) return
-  terminatingContract.value = true
-  terminateFeedback.reset()
-  try {
-    await contractsApi.terminate(contractToTerminate.value.id)
-    terminateFeedback.setSuccess(t('contracts.terminateSuccess'))
-    await reload()
-    scheduleTerminateClose(() => { showTerminateModal.value = false })
-  } catch (currentError: unknown) {
-    terminateFeedback.setError(toErrorMessage(currentError, t('contracts.terminateError')))
-  } finally {
-    terminatingContract.value = false
-  }
 }
 </script>
 
@@ -569,36 +545,12 @@ async function confirmTerminateContract() {
     @download="downloadContractDocument"
   />
 
-  <!-- Terminate contract modal -->
-  <CModal
+  <TerminateContractModal
     :open="showTerminateModal"
-    :title="t('contracts.terminateTitle')"
-    size="sm"
+    :contract="contractToTerminate"
     @update:open="showTerminateModal = $event"
-  >
-    <p class="body-md">
-      {{ t('contracts.terminateMessage', { name: contractToTerminate?.vendor_name ?? '' }) }}
-    </p>
-    <template #footer>
-      <CFormActions
-        :status="terminateFeedback.status.value"
-        :message="terminateFeedback.message.value"
-      >
-        <CBtn
-          variant="ghost"
-          :title="t('common.cancel')"
-          @click="showTerminateModal = false"
-        />
-        <CBtn
-          variant="danger"
-          :title="t('contracts.terminate')"
-          :loading="terminatingContract"
-          :closing="terminateFeedback.status.value === 'success'"
-          @click="confirmTerminateContract"
-        />
-      </CFormActions>
-    </template>
-  </CModal>
+    @terminated="reload"
+  />
 </template>
 
 <style scoped>

@@ -1,29 +1,24 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useFormatters } from '@/composables/useFormatters'
-import { usePageLoader, toErrorMessage } from '@/composables/usePageLoader'
-import { useFormFeedback } from '@/composables/useFormFeedback'
-import { useAutoClose } from '@/composables/useAutoClose'
+import { usePageLoader } from '@/composables/usePageLoader'
 import { useAuthStore } from '@/stores/auth'
 import type { Meeting, MeetingType } from '@/types/domain'
 import { buildingApi, meetingsApi } from '@/api'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
-import CFormActions from '@/components/molecules/CFormActions.vue'
-import CForm from '@/components/molecules/CForm.vue'
 import CSeparator from '@/components/atoms/CSeparator.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CMetaLine from '@/components/molecules/CMetaLine.vue'
-import CModal from '@/components/molecules/CModal.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import CTabs, { type Tab } from '@/components/atoms/CTabs.vue'
 import CHeading from '@/components/atoms/CHeading.vue'
 import CIconPlus from '@/components/atoms/CIconPlus.svg'
-import CIconTrash from '@/components/atoms/CIconTrash.svg'
+import CreateMeetingModal from './CreateMeetingModal.vue'
 
 const router = useRouter()
 const { t } = useI18n()
@@ -37,34 +32,6 @@ const filter = ref<'all' | 'upcoming' | 'closed'>('all')
 const canManage = computed(() => auth.isManager)
 
 const showCreateModal = ref(false)
-const createFeedback = useFormFeedback()
-const saving = ref(false)
-const { schedule: scheduleCreateClose, forceExpire: forceCreateClose } = useAutoClose()
-watch(showCreateModal, (open) => { if (!open) forceCreateClose() })
-
-function defaultMeetingForm() {
-  return {
-    meeting_type: 'annual' as MeetingType,
-    meeting_date: '',
-    location: '',
-  }
-}
-
-const createAgendaItems = ref<string[]>([''])
-
-function addCreateAgendaItem() {
-  createAgendaItems.value.push('')
-}
-
-function removeCreateAgendaItem(index: number) {
-  if (createAgendaItems.value.length <= 1) {
-    createAgendaItems.value = ['']
-    return
-  }
-  createAgendaItems.value.splice(index, 1)
-}
-
-const createForm = ref(defaultMeetingForm())
 
 async function loadData() {
   const [buildingRes, meetingsRes] = await Promise.all([
@@ -116,49 +83,12 @@ function openMeeting(meetingId: string) {
 }
 
 function openCreateModal() {
-  createForm.value = defaultMeetingForm()
-  createAgendaItems.value = ['']
-  createFeedback.reset()
   showCreateModal.value = true
 }
 
-async function saveMeeting() {
-  if (createFeedback.status.value === 'success') {
-    forceCreateClose()
-    return
-  }
-
-  if (!createForm.value.meeting_date) {
-    createFeedback.setError(t('common.error'))
-    return
-  }
-
-  saving.value = true
-  createFeedback.reset()
-
-  const normalizedAgenda = createAgendaItems.value
-    .map(item => item.trim())
-    .filter(Boolean)
-
-  try {
-    const response = await meetingsApi.create({
-      meeting_type: createForm.value.meeting_type,
-      meeting_date: new Date(createForm.value.meeting_date).toISOString(),
-      location: createForm.value.location || undefined,
-      agenda: normalizedAgenda.length ? normalizedAgenda.join('\n') : undefined,
-    })
-
-    createFeedback.setSuccess(t('common.saved'))
-    scheduleCreateClose(async () => {
-      showCreateModal.value = false
-      await reload()
-      router.push(`/meetings/${response.data.id}`)
-    })
-  } catch (err) {
-    createFeedback.setError(toErrorMessage(err))
-  } finally {
-    saving.value = false
-  }
+async function onMeetingCreated(meetingId: string) {
+  await reload()
+  router.push(`/meetings/${meetingId}`)
 }
 </script>
 
@@ -310,86 +240,11 @@ async function saveMeeting() {
       </template>
     </div>
 
-    <CModal
+    <CreateMeetingModal
       :open="showCreateModal"
-      :title="t('meetings.create')"
       @update:open="showCreateModal = $event"
-    >
-      <CForm
-        id="meeting-create"
-        @submit="saveMeeting"
-      >
-        <CFormSelect
-          v-model="createForm.meeting_type"
-          :label="t('meetings.infoFields.type')"
-          :options="[
-            { value: 'annual', label: t('meetings.types.annual') },
-            { value: 'extraordinary', label: t('meetings.types.extraordinary') },
-          ]"
-        />
-        <CFormInput
-          v-model="createForm.meeting_date"
-          :label="t('meetings.meetingDate')"
-          type="datetime-local"
-        />
-        <CFormInput
-          v-model="createForm.location"
-          :label="t('meetings.location')"
-        />
-        <div class="flex flex-col gap-1">
-          <span class="text-sm font-medium text-on-surface-variant">{{ t('meetings.agenda.title') }}</span>
-          <div class="agenda-editor">
-            <div
-              v-for="(_, index) in createAgendaItems"
-              :key="`agenda-${index}`"
-              class="agenda-editor__row"
-            >
-              <CFormInput
-                v-model="createAgendaItems[index]"
-                :placeholder="`${t('meetings.agenda.title')} ${index + 1}`"
-              />
-              <CBtn
-                v-if="createAgendaItems.length > 1"
-                variant="icon"
-                size="sm"
-                :icon="CIconTrash"
-                :title="t('common.delete')"
-                :aria-label="t('common.delete')"
-                @click="removeCreateAgendaItem(index)"
-              />
-            </div>
-            <CBtn
-              variant="secondary"
-              size="sm"
-              :icon="CIconPlus"
-              :title="t('common.add')"
-              @click="addCreateAgendaItem"
-            />
-          </div>
-        </div>
-      </CForm>
-
-      <template #footer>
-        <CFormActions
-          :status="createFeedback.status.value"
-          :message="createFeedback.message.value"
-        >
-          <CBtn
-            variant="ghost"
-            :title="t('common.cancel')"
-            @click="showCreateModal = false"
-          />
-          <CBtn
-            variant="primary"
-            type="submit"
-            form="meeting-create"
-            :title="t('common.save')"
-            :loading="saving"
-            :closing="createFeedback.status.value === 'success'"
-          />
-        </CFormActions>
-      </template>
-    </CModal>
+      @created="onMeetingCreated"
+    />
   </div>
 </template>
 
@@ -400,18 +255,6 @@ async function saveMeeting() {
   gap: var(--space-6);
 }
 
-
-.agenda-editor {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.agenda-editor__row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: var(--space-2);
-}
 
 .meeting-list {
   display: flex;
