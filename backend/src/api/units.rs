@@ -391,9 +391,9 @@ pub async fn charges(
                lc.call_label,
                lc.due_date,
                lc.issued_at,
-               SUM(lcu.amount)                                               AS total_amount,
-               SUM(lcu.amount) FILTER (WHERE lcu.budget_line_id IS NOT NULL) AS charge_amount,
-               SUM(lcu.amount) FILTER (WHERE lcu.budget_line_id IS NULL)     AS works_fund_amount,
+               SUM(lcu.amount)                                                              AS total_amount,
+               COALESCE(SUM(lcu.amount) FILTER (WHERE lcu.budget_line_id IS NOT NULL), 0) AS charge_amount,
+               COALESCE(SUM(lcu.amount) FILTER (WHERE lcu.budget_line_id IS NULL), 0)     AS works_fund_amount,
                CASE
                    WHEN bool_or(lcu.status::text = 'overdue') THEN 'overdue'
                    WHEN bool_and(lcu.status::text = 'paid')   THEN 'paid'
