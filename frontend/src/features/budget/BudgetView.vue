@@ -309,23 +309,6 @@ const budgetBreakdownItems = computed(() => {
       }
     })
 })
-const budgetBreakdownStyle = computed(() => {
-  if (budgetBreakdownItems.value.length === 0) {
-    return {}
-  }
-
-  let start = 0
-  const segments = budgetBreakdownItems.value.map((item) => {
-    const end = start + (item.sharePct / 100) * 360
-    const segment = `${item.color} ${start}deg ${end}deg`
-    start = end
-    return segment
-  })
-
-  return {
-    background: `conic-gradient(${segments.join(', ')})`,
-  }
-})
 
 const legalCardLinksLevies = computed(() => [
   {
@@ -1105,7 +1088,6 @@ function formatSharePercentage(value: number): string {
     <BreakdownModal
       :open="showBreakdownModal"
       :items="budgetBreakdownItems"
-      :breakdown-style="budgetBreakdownStyle"
       @update:open="showBreakdownModal = $event"
     />
 

@@ -244,6 +244,18 @@ function openCreateModal() {
   showCreateModal.value = true
 }
 
+function openEditModal(claim: Claim) {
+  claimToEdit.value = claim
+}
+
+function openTransmitModal(claim: Claim) {
+  claimToTransmit.value = claim
+}
+
+function openCloseModal(claim: Claim) {
+  claimToClose.value = claim
+}
+
 async function openClaimDocuments(claim: Claim) {
   claimDocumentsTarget.value = claim
   claimDocuments.value = []

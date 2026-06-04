@@ -49,6 +49,10 @@ function handleKeySaved(key: AllocationKey, balanceDelta: number | null) {
   if (balanceDelta !== null) keyBalanceDelta.value[key.id] = balanceDelta
 }
 
+function handleKeyDeleted(id: string) {
+  keys.value = keys.value.filter(k => k.id !== id)
+}
+
 // ── Load ──────────────────────────────────────────────────────────
 
 async function loadKeys() {
@@ -196,7 +200,7 @@ onMounted(reload)
       :open="showDeleteKeyModal"
       :key-to-delete="keyToDelete"
       @update:open="showDeleteKeyModal = $event"
-      @deleted="(id) => { keys.value = keys.value.filter(k => k.id !== id) }"
+      @deleted="handleKeyDeleted"
     />
   </div>
 </template>

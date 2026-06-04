@@ -5,12 +5,36 @@ import CModal from '@/components/molecules/CModal.vue'
 import CMetaItem from '@/components/molecules/CMetaItem.vue'
 import CFlexGroup from '@/components/organisms/CFlexGroup.vue'
 
+const props = defineProps<{
+  open: boolean
+  items: Array<{ id: string; label: string; amount: number; color: string; sharePct: number }>
+}>()
+
 defineEmits<{
   'update:open': [value: boolean]
 }>()
 
 const { t } = useI18n()
 const { formatCurrency } = useFormatters()
+
+
+const breakdownStyle = computed((): Record<string, string> => {
+  if (props.items.length === 0) {
+    return {}
+  }
+
+  let start = 0
+  const segments = props.items.map((item) => {
+    const end = start + (item.sharePct / 100) * 360
+    const segment = `${item.color} ${start}deg ${end}deg`
+    start = end
+    return segment
+  })
+
+  return {
+    background: `conic-gradient(${segments.join(', ')})`,
+  }
+})
 
 const sharePercentageFormatter = new Intl.NumberFormat('fr-FR', {
   minimumFractionDigits: 1,
@@ -24,7 +48,7 @@ function formatSharePercentage(value: number): string {
 
 <template>
   <CModal
-    :open="open"
+    :open="props.open"
     :title="t('budget.breakdownTitle')"
     size="lg"
     @update:open="$emit('update:open', $event)"
@@ -43,7 +67,7 @@ function formatSharePercentage(value: number): string {
       </div>
       <div class="flex flex-col gap-3">
         <div
-          v-for="item in items"
+          v-for="item in props.items"
           :key="item.id"
           class="flex items-start gap-3"
         >
