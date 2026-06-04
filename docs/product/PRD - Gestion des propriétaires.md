@@ -233,6 +233,7 @@ Un même utilisateur peut être copropriétaire dans plusieurs copropriétés g�
 | Must | US-GP-008 | Créer un résident sans invitation immédiate | Ajout au registre sans email, invitation différée depuis la liste |
 | Should | US-GP-006 | Gérer les rôles des résidents | Attribution et révocation des rôles |
 | Should | US-GP-007 | Consulter l'historique de propriété d'un lot | Vue chronologique par lot |
+| Should | US-GP-009 | Vue des charges par lot avec filtre propriétaire | Tableau de bord syndic : appels de fonds par lot, filtrable par propriétaire historique |
 
 ### User stories détaillées
 
@@ -354,6 +355,22 @@ Un même utilisateur peut être copropriétaire dans plusieurs copropriétés g�
 - **AC-GP-008-F** : L'invitation tardive DOIT appliquer les mêmes règles que l'invitation initiale : token CSPRNG, usage unique, expiration 72 h, invalidation du précédent token en attente (AC-GP-002-A, AC-GP-002-B, AC-GP-002-G).
 - **AC-GP-008-G** : Un résident à l'état `no_access` PEUT être associé à un lot et avoir un rôle — ces données sont fonctionnelles (tantièmes, quorum AG) même sans accès à l'Application.
 
+#### US-GP-009 — Vue des charges par lot avec filtre propriétaire
+
+**En tant que** `Persona-Syndic`,
+**je veux** consulter les appels de fonds lot par lot et filtrer par propriétaire lorsqu'un lot a changé de main,
+**afin de** suivre les charges courantes et historiques indépendamment des mutations de propriété.
+
+**Contexte** : Après une mutation, un même lot peut avoir plusieurs propriétaires successifs dans l'historique. Le syndic doit pouvoir identifier les charges rattachées à chaque période de propriété — notamment pour préparer un état daté ou vérifier qu'un appel de fonds impayé était bien adressé à l'ancien ou au nouveau propriétaire.
+
+**Critères d'acceptation** :
+
+- **AC-GP-009-A** : La vue des charges DOIT afficher les appels de fonds regroupés par lot (numéro de lot), pour le propriétaire courant par défaut.
+- **AC-GP-009-B** : Si un lot a eu plusieurs propriétaires, un sélecteur DOIT permettre de filtrer les appels de fonds par propriétaire (liste déroulante présentant chaque propriétaire historique avec sa période de propriété).
+- **AC-GP-009-C** : Les appels de fonds DOIVENT rester rattachés au lot, pas à la personne — la mutation ne doit pas altérer ni déplacer les enregistrements existants.
+- **AC-GP-009-D** : La vue DOIT être accessible uniquement aux rôles `syndic` et `board_member`.
+- **AC-GP-009-E** : Un lot en état `pending_transfer` (sans propriétaire actif) DOIT afficher ses appels de fonds sans propriétaire associé, avec une indication visuelle claire.
+
 ---
 
 ## 7. Exigences non fonctionnelles
@@ -417,3 +434,4 @@ Un même utilisateur peut être copropriétaire dans plusieurs copropriétés g�
 | US-GP-006 | Should | AC-GP-006-A à D | Rôles résidents (C/U/D) |
 | US-GP-007 | Should | AC-GP-007-A à C | Historique propriété (R) |
 | US-GP-008 | Must | AC-GP-008-A à G | Création sans invite + invitation différée (C/U) |
+| US-GP-009 | Should | AC-GP-009-A à E | Vue charges par lot avec filtre propriétaire (R) |

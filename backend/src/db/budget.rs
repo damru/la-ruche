@@ -579,11 +579,19 @@ pub async fn list_levies(
                ua.id                           AS owner_id,
                ua.first_name || ' ' || ua.last_name AS owner_name
            FROM levy_call lc
-           JOIN budget b         ON b.id           = lc.budget_id AND b.building_id = $2
-           JOIN levy_call_unit lcu ON lcu.levy_call_id = lc.id
-           JOIN unit u           ON u.id           = lcu.unit_id
-           LEFT JOIN unit_owner uo   ON uo.unit_id  = u.id AND uo.end_date IS NULL
-           LEFT JOIN user_account ua ON ua.id       = uo.user_id
+           JOIN budget b              ON b.id           = lc.budget_id AND b.building_id = $2
+           JOIN levy_call_unit lcu    ON lcu.levy_call_id = lc.id
+           JOIN unit u                ON u.id           = lcu.unit_id
+           -- LATERAL LIMIT 1 guarantees exactly one owner row per unit even if the
+           -- unit_owner table has stale duplicates with end_date IS NULL.
+           LEFT JOIN LATERAL (
+               SELECT uo2.user_id
+               FROM unit_owner uo2
+               WHERE uo2.unit_id = u.id AND uo2.end_date IS NULL
+               ORDER BY uo2.created_at DESC
+               LIMIT 1
+           ) cur_uo ON true
+           LEFT JOIN user_account ua ON ua.id = cur_uo.user_id
            WHERE lc.budget_id = $1
            GROUP BY lc.id, lc.call_label, lc.due_date, lc.issued_at,
                     u.id, u.unit_number, ua.id, ua.first_name, ua.last_name

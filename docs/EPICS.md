@@ -172,6 +172,7 @@ Historique de propriété tracé avec dates de cession, invitation par lien toke
 * `EP-002-S16` ✅ — Archiver un compte résident : désactiver l'accès à une date effective, conserver les données intactes, et permettre la réactivation si le compte n'est pas encore anonymisé ; transition `active → archived → active` (PRD US-GP-004, cycle de vie §4)
 * `EP-002-S17` ✅ — Enregistrer la mutation complète d'un lot : saisir date effective, ancien et nouveau propriétaire (existant ou à créer), révoquer l'accès de l'ancien propriétaire à la date effective, créer le nouveau lien `unit_ownership`, gérer l'état `pending_transfer` entre l'archivage vendeur et l'acceptation acquéreur, bloquer deux propriétaires actifs simultanément (422) et tracer les charges courantes non soldées à la date de mutation (PRD US-GP-003)
 * `EP-002-S18` ✅ — Attribuer et révoquer les rôles des résidents (`syndic`, `board_member`, `owner`, `tenant`) : unicité du syndic actif par copropriété, invalidation immédiate du cache de permissions à la révocation, contrainte d'auto-révocation du syndic bloquée sans désignation de successeur (PRD US-GP-006)
+* `EP-002-S19` — Vue des charges par lot avec filtre propriétaire historique : afficher les appels de fonds regroupés par lot pour le propriétaire courant, avec sélecteur pour filtrer par propriétaire passé quand plusieurs mutations ont eu lieu (PRD US-GP-009)
 
 ***
 
