@@ -349,8 +349,9 @@ pub async fn transfer(
 
 /// GET /units/{id}/charges — EP-004-S06
 /// Individual charge statement: all levy_calls for this unit with snapshot data.
-/// Co-owners can only access units they currently own; managers and board members
-/// can access any unit in their building.
+/// Co-owners can only access units they currently own and only see levies issued
+/// from their ownership start date. Managers and board members can access the full
+/// unit history in their building.
 pub async fn charges(
     State(state): State<Arc<AppState>>,
     auth: AuthUser,
@@ -366,18 +367,22 @@ pub async fn charges(
         .roles
         .iter()
         .any(|r| *r == Role::Manager || *r == Role::BoardMember);
-    if !is_privileged {
-        let owns: bool = sqlx::query_scalar(
-            "SELECT EXISTS(SELECT 1 FROM unit_owner WHERE unit_id = $1 AND user_id = $2 AND end_date IS NULL)"
+    let ownership_start_date = if !is_privileged {
+        let start_date: Option<NaiveDate> = sqlx::query_scalar(
+            "SELECT start_date FROM unit_owner WHERE unit_id = $1 AND user_id = $2 AND end_date IS NULL ORDER BY start_date DESC LIMIT 1"
         )
         .bind(id)
         .bind(auth.user_id)
-        .fetch_one(&state.pool)
+        .fetch_optional(&state.pool)
         .await?;
-        if !owns {
+
+        if start_date.is_none() {
             return Err(AppError::Forbidden);
         }
-    }
+        start_date
+    } else {
+        None
+    };
 
     let rows = sqlx::query_as::<_, LevyUnitChargeRow>(
         r#"SELECT
@@ -398,11 +403,13 @@ pub async fn charges(
            FROM levy_call lc
            JOIN budget b           ON b.id             = lc.budget_id AND b.building_id = $2
            JOIN levy_call_unit lcu ON lcu.levy_call_id = lc.id        AND lcu.unit_id   = $1
+            WHERE ($3::date IS NULL OR COALESCE(lc.issued_at::date, lc.due_date) >= $3::date)
            GROUP BY lc.id, b.fiscal_year, lc.call_label, lc.due_date, lc.issued_at
            ORDER BY lc.due_date DESC"#,
     )
     .bind(id)
     .bind(auth.building_id)
+    .bind(ownership_start_date)
     .fetch_all(&state.pool)
     .await?;
 
@@ -422,11 +429,13 @@ pub async fn charges(
            JOIN budget b     ON b.id  = lc.budget_id AND b.building_id = $2
            LEFT JOIN budget_line bl  ON bl.id  = lcu.budget_line_id
            LEFT JOIN allocation_key ak ON ak.id = lcu.key_id
-           WHERE lcu.unit_id = $1
+            WHERE lcu.unit_id = $1
+              AND ($3::date IS NULL OR COALESCE(lc.issued_at::date, lc.due_date) >= $3::date)
            ORDER BY lcu.levy_call_id, bl.label NULLS LAST"#,
     )
     .bind(id)
     .bind(auth.building_id)
+    .bind(ownership_start_date)
     .fetch_all(&state.pool)
     .await?;
 

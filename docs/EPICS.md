@@ -32,6 +32,91 @@ rules:
 > - **frontend branché** = vue connectée à l'API réelle
 > - **stub/mock** = endpoint `501 NOT_IMPLEMENTED` ou vue alimentée par `src/mock/data.ts`
 
+## Traçabilité PRD Must/Should (complément)
+
+Objectif : garantir que chaque US de priorité Must ou Should issue des PRD produit est reliée à au moins un item du backlog EPICS.
+
+| Priorité | US PRD | Item EPICS de rattachement |
+|---|---|---|
+| Must | US-AG-001 | EP-003-S01 |
+| Must | US-AG-004 | EP-003-S02, EP-003-S08 |
+| Must | US-AG-005 | EP-003-S01, EP-003-S08 |
+| Must | US-AG-006 | EP-003-S03, EP-013-S03 |
+| Must | US-AG-007 | EP-013-S01 |
+| Must | US-AG-008 | EP-003-S04, EP-013-S04 |
+| Must | US-AG-009 | EP-013-S07 |
+| Must | US-AG-010 | EP-003-S05, EP-013-S08, EP-013-S09 |
+| Must | US-AG-011 | EP-003-S06 |
+| Should | US-AG-012 | EP-013-S02 |
+| Should | US-AG-013 | EP-013-S05, EP-013-S10 |
+| Must | US-BC-001 | EP-004-S01 |
+| Must | US-BC-002 | EP-004-S01 |
+| Must | US-BC-003 | EP-004-S02, EP-004-S05, EP-004-S07 |
+| Must | US-BC-004 | EP-004-S08, EP-018-S03 |
+| Must | US-BC-005 | EP-004-S03, EP-004-S10 |
+| Must | US-BC-006 | EP-004-S06 |
+| Must | US-BC-013 | EP-004-S14 |
+| Must | US-BC-007 | EP-018-S07 |
+| Should | US-BC-008 | EP-004-S04 |
+| Should | US-BC-009 | EP-018-S06 |
+| Should | US-BC-011 | EP-004-S09 |
+| Must | US-CE-001 | EP-009-S01 |
+| Must | US-CE-002 | EP-009-S02 |
+| Must | US-CE-003 | EP-009-S03 |
+| Must | US-CF-001 | EP-006-S01 |
+| Must | US-CF-003 | EP-006-S03 |
+| Must | US-CF-004 | EP-006-S04 |
+| Must | US-CF-005 | EP-006-S04 |
+| Should | US-CF-006 | EP-018-S05 |
+| Should | US-CF-008 | EP-006-S05 |
+| Must | US-CR-001 | EP-012-S02 |
+| Must | US-CS-001 | EP-010-S01 |
+| Must | US-CS-002 | EP-010-S02 |
+| Must | US-CS-003 | EP-010-S03 |
+| Must | US-DOC-001 | EP-005-S01 |
+| Must | US-DOC-002 | EP-005-S04, EP-005-S05 |
+| Must | US-DOC-003 | EP-005-S03, EP-005-S04 |
+| Should | US-DOC-005 | EP-005-S02 |
+| Should | US-DOC-006 | EP-005-S03 |
+| Must | US-GP-005 | EP-002-S05 |
+| Should | US-GP-007 | EP-002-S02 |
+| Must | US-JA-001 | EP-017-S04 |
+| Must | US-JA-002 | EP-017-S04, EP-017-S05 |
+| Should | US-JA-003 | EP-017-S05 |
+| Must | US-PP-001 | EP-019-S01 |
+| Must | US-PP-006 | EP-019-S04 |
+| Must | US-RC-001 | EP-001-S01 |
+| Must | US-RC-002 | EP-001-S02 |
+| Must | US-RC-003 | EP-001-S03 |
+| Must | US-RC-004 | EP-001-S04 |
+| Must | US-RC-005 | EP-001-S04, EP-001-S06 |
+| Must | US-RC-006 | EP-001-S07 |
+| Should | US-RC-007 | EP-001-S05 |
+| Should | US-RC-008 | EP-001-S04 |
+| Must | US-RP-001 | EP-015-S01 |
+| Must | US-RP-002 | EP-015-S02 |
+| Must | US-RP-003 | EP-007-S06, EP-006-S07 |
+| Must | US-RP-005 | EP-015-S03 |
+| Must | US-SIG-001 | EP-011-S01 |
+| Must | US-SIG-002 | EP-011-S02 |
+| Must | US-SIG-003 | EP-011-S02 |
+| Must | US-SIG-004 | EP-011-S02 |
+| Should | US-SIG-005 | EP-011-S03 |
+| Must | US-SIN-001 | EP-008-S01, EP-008-S06 |
+| Must | US-SIN-002 | EP-008-S02 |
+| Must | US-SIN-003 | EP-008-S05 |
+| Must | US-SIN-005 | EP-008-S04 |
+| Must | US-TP-001 | EP-007-S01 |
+| Must | US-TP-002 | EP-011-S03 |
+| Must | US-TP-004 | EP-007-S01 |
+| Must | US-TP-006 | EP-007-S06 |
+| Must | US-TP-007 | EP-007-S02 |
+| Must | US-TP-008 | EP-007-S07 |
+| Must | US-TP-009 | EP-007-S07 |
+| Must | US-TP-011 | EP-007-S04, EP-007-S05 |
+| Must | US-TP-014 | EP-018-S04 |
+| Must | US-TP-015 | EP-017-S01, EP-017-S02 |
+
 ***
 
 ## Epics
@@ -143,7 +228,7 @@ Budget prévisionnel par exercice, appels de fonds générés par tantièmes, fo
 * `EP-004-S03` ✅ — Suivre et alimenter le fonds travaux (≥ 5% du budget prévisionnel, compte séparé) — `GET /works-fund/{fiscal_year}` + `PUT /works-fund/{fiscal_year}` ; entrée `works_fund` créée avec l'exercice, carte dédiée de pilotage, objectif annuel, progression d'appel, taux configurable et notice légale
 * `EP-004-S04` ✅ — Produire l'arrêté de comptes (réalisé vs prévisionnel) — barres de progression par poste budgétaire avec données réelles API
 * `EP-004-S05` ✅ — Snapshot des tantièmes dans chaque appel de fonds généré (`shares_snapshot`, `shares_total_snapshot`, `key_id`) — immuabilité comptable (LEGAL.md §2.3, ADR-006)
-* `EP-004-S06` ✅ — Relevé individuel de charges par lot : liste des appels reçus, montants, statuts, solde courant (LEGAL.md §4.6)
+* `EP-004-S06` ✅ — Relevé individuel de charges par lot : liste des appels reçus, montants, statuts, solde courant, avec séparation des avoirs (LEGAL.md §4.6)
 * `EP-004-S07` ✅ — Blocage dur côté backend de toute génération d'appel de fonds tant qu'une clé active est déséquilibrée (`Σ tantièmes ≠ total_clé`) (LEGAL.md §2.1)
 * `EP-004-S08` — Émission trimestrielle paramétrable et contrôles d'échéances par exercice (quart par défaut) avec piste d'audit (LEGAL.md §4.3) — Prendre en compte les catégories de l'art. 35 décret v6.0 (25/12/2025) : avances PPT, cotisations fonds travaux (art. 14-2-1), provisions délégation CS
 * `EP-004-S09` — Implémenter le mapping plan comptable copropriété (arrêté 14/03/2005) sur lignes budgétaires et exports comptables (LEGAL.md §4.2)
@@ -151,6 +236,7 @@ Budget prévisionnel par exercice, appels de fonds générés par tantièmes, fo
 * `EP-004-S11` — Recouvrement des charges impayées : identification des lots en solde débiteur, enregistrement des relances (mise en demeure), suivi des dossiers contentieux jusqu'à clôture ; déclencher et signaler la **déchéance du terme à J+30** après mise en demeure infructueuse (toutes provisions restantes deviennent exigibles, art. 19-2 loi 1965, LEGIARTI000043977271) (LEGAL.md §4.7)
 * `EP-004-S12` — Permettre au Conseil syndical et aux copropriétaires de consulter le budget prévisionnel, les lignes budgétaires par clé et le récapitulatif réalisé vs prévisionnel dans leur périmètre de droits (PRD US-BC-010)
 * `EP-004-S13` — Générer les documents comptables légaux obligatoires (Annexes I, II et III décret 1967) à partir des lignes budgétaires et des données d'exercice (PRD US-BC-012, LEGAL.md §4.2)
+* `EP-004-S14` ✅ — Borner le relevé copropriétaire à la période de propriété du lot : après mutation, le nouvel acquéreur ne voit pas les appels antérieurs à sa date de début ; Syndic et Conseil conservent la vue historique complète (PRD US-BC-013)
 
 ***
 
