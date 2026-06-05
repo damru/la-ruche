@@ -24,7 +24,7 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 const feedback = useFormFeedback()
-const { schedule: scheduleClose, forceExpire: forceClose } = useAutoClose()
+const { forceExpire: forceClose } = useAutoClose()
 const loading = ref(false)
 const inviteLink = ref('')
 const copied = ref(false)
