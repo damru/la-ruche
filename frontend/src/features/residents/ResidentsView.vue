@@ -1,27 +1,36 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
-import CModal from '@/components/molecules/CModal.vue'
-import CFormActions from '@/components/molecules/CFormActions.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import CHeading from '@/components/atoms/CHeading.vue'
-import CFormRow from '@/components/molecules/CFormRow.vue'
 import CTabs from '@/components/atoms/CTabs.vue'
 import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import CIconCurrency from '@/components/atoms/CIconCurrency.svg'
 import CIconUserPlus from '@/components/atoms/CIconUserPlus.svg'
 import CIconEdit from '@/components/atoms/CIconEdit.svg'
 import CIconArchive from '@/components/atoms/CIconArchive.svg'
+import CIconTrash from '@/components/atoms/CIconTrash.svg'
+import CIconRefresh from '@/components/atoms/CIconRefresh.svg'
+import CIconArrowRight from '@/components/atoms/CIconArrowRight.svg'
+import CIconShield from '@/components/atoms/CIconShield.svg'
+import InviteUserModal from './InviteUserModal.vue'
+import CreateResidentModal from './CreateResidentModal.vue'
+import SendInviteModal from './SendInviteModal.vue'
+import EditUnitModal from './EditUnitModal.vue'
+import ArchiveUnitModal from './ArchiveUnitModal.vue'
+import RevokeInviteModal from './RevokeInviteModal.vue'
+import EditResidentModal from './EditResidentModal.vue'
+import ArchiveUserModal from './ArchiveUserModal.vue'
+import EditRolesModal from './EditRolesModal.vue'
+import TransferOwnershipModal from './TransferOwnershipModal.vue'
 import { unitsApi, allocationKeysApi, usersApi } from '@/api'
 import { usePageLoader } from '@/composables/usePageLoader'
-import { useFormFeedback } from '@/composables/useFormFeedback'
-import { useAutoClose } from '@/composables/useAutoClose'
-import type { Unit, User, UnitType, AllocationKey } from '@/types/domain'
+import type { Unit, User, AllocationKey } from '@/types/domain'
 
 const { t } = useI18n()
 
@@ -38,28 +47,7 @@ const generalKey = computed(() => allKeys.value.find(k => k.key_type === 'genera
 
 // ── Unit form state ───────────────────────────────────────────────
 const showUnitModal = ref(false)
-const unitFeedback = useFormFeedback()
-const savingUnit = ref(false)
-const { schedule: scheduleUnitClose, forceExpire: forceUnitClose } = useAutoClose()
-watch(showUnitModal, (open) => { if (!open) forceUnitClose() })
-const editingUnit = ref<{
-  id?: string
-  unit_number: string
-  unit_type: UnitType
-  block: string
-  staircase: string
-  floor: string
-  description: string
-  general_shares: number | string
-}>({
-  unit_number: '', unit_type: 'apartment', block: '', staircase: '', floor: '', description: '', general_shares: 0,
-})
-
-const unitTypes: UnitType[] = ['apartment', 'cellar', 'parking', 'commercial_unit', 'other']
-
-const unitTypeOptions = computed(() =>
-  unitTypes.map(ut => ({ value: ut, label: t(`units.types.${ut}`) })),
-)
+const unitToEdit = ref<Unit | null>(null)
 
 const units = computed(() => {
   const q = search.value.toLowerCase()
@@ -114,115 +102,23 @@ function unitTypeLabel(type: string): string {
 }
 
 function openCreateUnit() {
-  editingUnit.value = { unit_number: '', unit_type: 'apartment', block: '', staircase: '', floor: '', description: '', general_shares: 0 }
-  unitFeedback.reset()
+  unitToEdit.value = null
   showUnitModal.value = true
 }
 
-async function openEditUnit(unit: Unit) {
-  editingUnit.value = {
-    id: unit.id,
-    unit_number: unit.unit_number,
-    unit_type: unit.unit_type,
-    block: unit.block ?? '',
-    staircase: unit.staircase ?? '',
-    floor: unit.floor ?? '',
-    description: unit.description ?? '',
-    general_shares: shareMap.value.get(unit.id) ?? 0,
-  }
-  unitFeedback.reset()
+function openEditUnit(unit: Unit) {
+  unitToEdit.value = unit
   showUnitModal.value = true
-
-  // If the share map doesn't have exact data yet, fetch the general key shares
-  if (generalKey.value) {
-    try {
-      const res = await allocationKeysApi.listShares(generalKey.value.id)
-      const match = res.data.shares.find((s: { unit_id: string; share_value: number }) => s.unit_id === unit.id)
-      editingUnit.value.general_shares = match?.share_value ?? 0
-    } catch { /* keep current value */ }
-  }
-}
-
-async function saveUnit() {
-  if (unitFeedback.status.value === 'success') { forceUnitClose(); return }
-  if (!editingUnit.value.unit_number.trim()) {
-    unitFeedback.setError(t('common.required'))
-    return
-  }
-  savingUnit.value = true
-  unitFeedback.reset()
-  try {
-    const data = {
-      unit_number: editingUnit.value.unit_number,
-      unit_type: editingUnit.value.unit_type,
-      block: editingUnit.value.block || undefined,
-      staircase: editingUnit.value.staircase || undefined,
-      floor: editingUnit.value.floor || undefined,
-      description: editingUnit.value.description || undefined,
-    }
-    let unitId = editingUnit.value.id
-    if (unitId) {
-      await unitsApi.update(unitId, data)
-    } else {
-      const res = await unitsApi.create(data)
-      unitId = res.data.id
-    }
-
-    // Assign general shares to the general key only
-    if (generalKey.value && unitId) {
-      await allocationKeysApi.setShares(generalKey.value.id, [
-        { unit_id: unitId, share_value: Number(editingUnit.value.general_shares) },
-      ])
-    }
-
-    unitFeedback.setSuccess(t('common.saved'))
-    await loadData()
-    scheduleUnitClose(() => { showUnitModal.value = false })
-  } catch (e: unknown) {
-    const status = (e as { response?: { status?: number } })?.response?.status
-    const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? ''
-    if (status === 409 && msg === 'UNIT_NUMBER_ARCHIVED') {
-      unitFeedback.setError(t('residents.unitNumberArchived'))
-    } else if (status === 409) {
-      unitFeedback.setError(t('residents.unitNumberExists'))
-    } else {
-      unitFeedback.setError(t('common.error'))
-    }
-  } finally {
-    savingUnit.value = false
-  }
 }
 
 // ── Archive unit modal ────────────────────────────────────────────
 
 const showArchiveModal = ref(false)
 const unitToArchive = ref<Unit | null>(null)
-const archivingUnit = ref(false)
-const archiveFeedback = useFormFeedback()
-const { schedule: scheduleArchiveClose, forceExpire: forceArchiveClose } = useAutoClose()
-watch(showArchiveModal, (open) => { if (!open) forceArchiveClose() })
 
 function openArchiveModal(unit: Unit) {
   unitToArchive.value = unit
-  archiveFeedback.reset()
   showArchiveModal.value = true
-}
-
-async function confirmArchiveUnit() {
-  if (archiveFeedback.status.value === 'success') { forceArchiveClose(); return }
-  if (!unitToArchive.value) return
-  archivingUnit.value = true
-  archiveFeedback.reset()
-  try {
-    await unitsApi.archive(unitToArchive.value.id)
-    archiveFeedback.setSuccess(t('residents.archiveSuccess'))
-    await loadData()
-    scheduleArchiveClose(() => { showArchiveModal.value = false })
-  } catch {
-    archiveFeedback.setError(t('common.error'))
-  } finally {
-    archivingUnit.value = false
-  }
 }
 
 // Format staircase + floor with abbreviated labels, no spurious separator
@@ -250,8 +146,74 @@ const userColumns = computed(() => [
   { key: 'phone', label: t('common.phone') },
   { key: 'roles', label: t('common.roles') },
   { key: 'status', label: t('common.status') },
+  { key: 'actions', label: '', width: '1%' },
 ])
-</script>
+
+// ── Invite user modal (email-first flow) ─────────────────────────
+const showInviteModal = ref(false)
+
+// ── Create resident modal ─────────────────────────────────────────
+const showCreateResidentModal = ref(false)
+
+// ── Send invite to no_access user ─────────────────────────────────
+const showSendInviteModal = ref(false)
+const userToInvite = ref<User | null>(null)
+
+function openSendInviteModal(user: User) {
+  userToInvite.value = user
+  showSendInviteModal.value = true
+}
+
+// ── Revoke invite ─────────────────────────────────────────────────
+const showRevokeModal = ref(false)
+const userToRevoke = ref<User | null>(null)
+
+function openRevokeModal(user: User) {
+  userToRevoke.value = user
+  showRevokeModal.value = true
+}
+
+// ── Edit resident modal ───────────────────────────────────────────
+const showEditResidentModal = ref(false)
+const userToEdit = ref<User | null>(null)
+
+function openEditResidentModal(user: User) {
+  userToEdit.value = user
+  showEditResidentModal.value = true
+}
+
+// ── Archive user modal ────────────────────────────────────────────
+const showArchiveUserModal = ref(false)
+const userToArchive = ref<User | null>(null)
+
+function openArchiveUserModal(user: User) {
+  userToArchive.value = user
+  showArchiveUserModal.value = true
+}
+
+// ── Reactivate user (inline, no modal needed) ─────────────────────
+async function reactivateUser(user: User) {
+  await usersApi.reactivate(user.id)
+  await loadData()
+}
+
+// ── Edit roles modal ──────────────────────────────────────────────
+const showEditRolesModal = ref(false)
+const userForRoles = ref<User | null>(null)
+
+function openEditRolesModal(user: User) {
+  userForRoles.value = user
+  showEditRolesModal.value = true
+}
+
+// ── Transfer ownership modal ──────────────────────────────────────
+const showTransferModal = ref(false)
+const unitToTransfer = ref<Unit | null>(null)
+
+function openTransferModal(unit: Unit) {
+  unitToTransfer.value = unit
+  showTransferModal.value = true
+}</script>
 
 <template>
   <div class="view-page">
@@ -278,8 +240,8 @@ const userColumns = computed(() => [
             size="sm"
             shrink="sm"
             :icon="CIconUserPlus"
-            :title="t('residents.invite')"
-            disabled
+            :title="t('residents.addResident')"
+            @click="showCreateResidentModal = true"
           />
         </div>
       </template>
@@ -373,6 +335,13 @@ const userColumns = computed(() => [
                   />
                   <CBtn
                     variant="icon"
+                    :aria-label="t('residents.transferOwnership')"
+                    :title="t('residents.transferOwnership')"
+                    :icon="CIconArrowRight"
+                    @click="openTransferModal(row)"
+                  />
+                  <CBtn
+                    variant="icon"
                     :aria-label="t('common.edit')"
                     :title="t('common.edit')"
                     :icon="CIconEdit"
@@ -404,12 +373,26 @@ const userColumns = computed(() => [
             >
               <template #cell-name="{ row }">
                 <div class="user-name">
-                  <CAvatar :name="`${row.first_name} ${row.last_name}`" />
-                  <span>{{ row.first_name }} {{ row.last_name }}</span>
+                  <CAvatar
+                    v-if="row.status !== 'pending_invite'"
+                    :name="`${row.first_name} ${row.last_name}`"
+                  />
+                  <span v-if="row.status !== 'pending_invite'">{{ row.first_name }} {{ row.last_name }}</span>
+                  <span
+                    v-else
+                    class="dim"
+                  >{{ t('residents.pendingInvite') }}</span>
                 </div>
               </template>
               <template #cell-email="{ row }">
-                <span class="dim">{{ row.email }}</span>
+                <span
+                  v-if="row.email"
+                  class="dim"
+                >{{ row.email }}</span>
+                <span
+                  v-else
+                  class="dim"
+                >—</span>
               </template>
               <template #cell-phone="{ row }">
                 <a
@@ -431,124 +414,172 @@ const userColumns = computed(() => [
                 </div>
               </template>
               <template #cell-status="{ row }">
-                <CBadge :variant="row.active ? 'open' : 'closed'">
-                  {{ row.active ? t('common.active') : t('residents.deactivated') }}
+                <CBadge
+                  v-if="row.status === 'pending_invite'"
+                  variant="pending"
+                >
+                  {{ t('residents.pendingInvite') }}
                 </CBadge>
+                <CBadge
+                  v-else-if="row.status === 'no_access'"
+                  variant="disabled"
+                >
+                  {{ t('residents.noAccess') }}
+                </CBadge>
+                <CBadge
+                  v-else-if="row.status === 'archived'"
+                  variant="closed"
+                >
+                  {{ t('residents.archived') }}
+                </CBadge>
+                <CBadge
+                  v-else
+                  variant="open"
+                >
+                  {{ t('common.active') }}
+                </CBadge>
+              </template>
+              <template #cell-actions="{ row }">
+                <div class="action-btns">
+                  <CBtn
+                    v-if="row.status === 'no_access'"
+                    variant="icon"
+                    :title="t('residents.sendInvite')"
+                    :aria-label="t('residents.sendInvite')"
+                    :icon="CIconUserPlus"
+                    @click="openSendInviteModal(row)"
+                  />
+                  <CBtn
+                    v-if="row.status === 'pending_invite'"
+                    variant="icon"
+                    :title="t('residents.revokeInvite')"
+                    :aria-label="t('residents.revokeInvite')"
+                    :icon="CIconTrash"
+                    class="tone--err"
+                    @click="openRevokeModal(row)"
+                  />
+                  <template v-if="row.status !== 'pending_invite'">
+                    <CBtn
+                      variant="icon"
+                      :title="t('residents.editResident')"
+                      :aria-label="t('residents.editResident')"
+                      :icon="CIconEdit"
+                      @click="openEditResidentModal(row)"
+                    />
+                    <CBtn
+                      variant="icon"
+                      :title="t('residents.editRoles')"
+                      :aria-label="t('residents.editRoles')"
+                      :icon="CIconShield"
+                      @click="openEditRolesModal(row)"
+                    />
+                    <CBtn
+                      v-if="row.status !== 'archived'"
+                      variant="icon"
+                      :title="t('residents.archiveUser')"
+                      :aria-label="t('residents.archiveUser')"
+                      :icon="CIconArchive"
+                      class="tone--err"
+                      @click="openArchiveUserModal(row)"
+                    />
+                    <CBtn
+                      v-if="row.status === 'archived'"
+                      variant="icon"
+                      :title="t('residents.reactivateUser')"
+                      :aria-label="t('residents.reactivateUser')"
+                      :icon="CIconRefresh"
+                      @click="reactivateUser(row)"
+                    />
+                  </template>
+                </div>
               </template>
             </CDataTable>
           </CCard>
         </template>
       </template>
-      <CModal
+      <EditUnitModal
         :open="showUnitModal"
-        :title="editingUnit.id ? t('residents.editUnit') : t('residents.createUnit')"
-        :closable="!savingUnit"
+        :units="allUnits"
+        :unit="unitToEdit"
+        :general-key-id="generalKey?.id ?? null"
+        :general-key-name="generalKey?.name ?? null"
+        :share-value="unitToEdit ? shareMap.get(unitToEdit.id) : undefined"
         @update:open="showUnitModal = $event"
-      >
-        <CForm
-          id="unit-form"
-          @submit="saveUnit"
-        >
-          <CFormRow :cols="2">
-            <CFormInput
-              v-model="editingUnit.unit_number"
-              :label="t('units.number')"
-              placeholder="A01"
-              required
-            />
-            <CFormSelect
-              v-model="editingUnit.unit_type"
-              :label="t('common.type')"
-              :options="unitTypeOptions"
-            />
-            <CFormInput
-              v-model="editingUnit.block"
-              :label="t('residents.block')"
-            />
-            <CFormInput
-              v-model="editingUnit.staircase"
-              :label="t('residents.staircaseLabel')"
-            />
-            <CFormInput
-              v-model="editingUnit.floor"
-              :label="t('residents.floorLabel')"
-            />
-            <CFormTextarea
-              v-model="editingUnit.description"
-              :label="t('residents.description')"
-              class="flex flex-col gap-1 col-span-full"
-            />
-          </CFormRow>
-
-          <!-- Tantièmes généraux (clé Charges Générales) -->
-          <div class="shares-section">
-            <h3 class="text-md font-semibold mb-3">
-              {{ t('units.generalShares') }}
-            </h3>
-            <CFormInput
-              v-model="editingUnit.general_shares"
-              :label="generalKey ? generalKey.name : t('units.shares')"
-              type="number"
-              :step="1"
-              :min="0"
-              :hint="t('units.generalSharesHint')"
-              style="max-width:240px"
-            />
-          </div>
-        </CForm>
-        <template #footer>
-          <CFormActions
-            :status="unitFeedback.status.value"
-            :message="unitFeedback.message.value"
-          >
-            <CBtn
-              variant="ghost"
-              :title="t('common.cancel')"
-              @click="showUnitModal = false"
-            />
-            <CBtn
-              variant="primary"
-              type="submit"
-              form="unit-form"
-              :title="t('common.save')"
-              :loading="savingUnit"
-              :closing="unitFeedback.status.value === 'success'"
-              :disabled="savingUnit"
-            />
-          </CFormActions>
-        </template>
-      </CModal>
+        @saved="loadData"
+      />
 
       <!-- Archive unit modal -->
-      <CModal
+      <ArchiveUnitModal
         :open="showArchiveModal"
-        :title="t('residents.confirmArchiveTitle')"
-        size="sm"
+        :unit="unitToArchive"
         @update:open="showArchiveModal = $event"
-      >
-        <p class="body-md">
-          {{ t('residents.confirmArchiveMessage', { number: unitToArchive?.unit_number ?? '' }) }}
-        </p>
-        <template #footer>
-          <CFormActions
-            :status="archiveFeedback.status.value"
-            :message="archiveFeedback.message.value"
-          >
-            <CBtn
-              variant="ghost"
-              :title="t('common.cancel')"
-              @click="showArchiveModal = false"
-            />
-            <CBtn
-              variant="danger"
-              :title="t('common.archiveLabel')"
-              :loading="archivingUnit"
-              :closing="archiveFeedback.status.value === 'success'"
-              @click="confirmArchiveUnit"
-            />
-          </CFormActions>
-        </template>
-      </CModal>
+        @archived="loadData"
+      />
+
+      <!-- Invite user modal (email-first flow) -->
+      <InviteUserModal
+        :open="showInviteModal"
+        :units="allUnits"
+        @update:open="showInviteModal = $event"
+        @invited="loadData"
+      />
+
+      <!-- Create resident modal (name-first, no invite required) -->
+      <CreateResidentModal
+        :open="showCreateResidentModal"
+        :units="allUnits"
+        @update:open="showCreateResidentModal = $event"
+        @created="loadData"
+      />
+
+      <!-- Send invite to no_access user -->
+      <SendInviteModal
+        :open="showSendInviteModal"
+        :user="userToInvite"
+        @update:open="showSendInviteModal = $event"
+        @invited="loadData"
+      />
+
+      <!-- Revoke invite modal -->
+      <RevokeInviteModal
+        :open="showRevokeModal"
+        :user="userToRevoke"
+        @update:open="showRevokeModal = $event"
+        @revoked="loadData"
+      />
+
+      <!-- Edit resident modal -->
+      <EditResidentModal
+        :open="showEditResidentModal"
+        :user="userToEdit"
+        @update:open="showEditResidentModal = $event"
+        @saved="loadData"
+      />
+
+      <!-- Archive user modal -->
+      <ArchiveUserModal
+        :open="showArchiveUserModal"
+        :user="userToArchive"
+        @update:open="showArchiveUserModal = $event"
+        @archived="loadData"
+      />
+
+      <!-- Edit roles modal -->
+      <EditRolesModal
+        :open="showEditRolesModal"
+        :user="userForRoles"
+        @update:open="showEditRolesModal = $event"
+        @saved="loadData"
+      />
+
+      <!-- Transfer ownership modal -->
+      <TransferOwnershipModal
+        :open="showTransferModal"
+        :unit="unitToTransfer"
+        :residents="allUsers"
+        @update:open="showTransferModal = $event"
+        @transferred="loadData"
+      />
     </div>
   </div>
 </template>
@@ -583,15 +614,5 @@ const userColumns = computed(() => [
   align-items: center;
 }
 
-.shares-section {
-  border-top: 1px solid var(--color-outline-variant);
-  padding-top: var(--space-4);
-}
-
-.shares-title {
-  font-size: var(--text-md);
-  font-weight: var(--fw-semibold);
-  margin-bottom: var(--space-3);
-}
 
 </style>

@@ -2,19 +2,11 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useFormatters } from '@/composables/useFormatters'
-import { usePageLoader, toErrorMessage } from '@/composables/usePageLoader'
-import { useFormFeedback } from '@/composables/useFormFeedback'
-import { useAutoClose } from '@/composables/useAutoClose'
+import { usePageLoader } from '@/composables/usePageLoader'
 import { useRole } from '@/composables/useRole'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
-import CModal from '@/components/molecules/CModal.vue'
-import CFormInput from '@/components/atoms/CFormInput.vue'
-import CFormSelect from '@/components/atoms/CFormSelect.vue'
-import CFormCheckbox from '@/components/atoms/CFormCheckbox.vue'
-import CFormActions from '@/components/molecules/CFormActions.vue'
-import CForm from '@/components/molecules/CForm.vue'
 import CAlert from '@/components/atoms/CAlert.vue'
 import CProgressBar from '@/components/atoms/CProgressBar.vue'
 import CDataTable from '@/components/molecules/CDataTable.vue'
@@ -32,6 +24,8 @@ import CSeparator from '@/components/atoms/CSeparator.vue'
 import CLegalNotice from '@/components/molecules/CLegalNotice.vue'
 import CLegalCard from '@/components/molecules/CLegalCard.vue'
 import CFlexGroup from '@/components/organisms/CFlexGroup.vue'
+import CreateLineModal from './CreateLineModal.vue'
+import DeleteLineModal from './DeleteLineModal.vue'
 import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import CIconCheckCircle from '@/components/atoms/CIconCheckCircle.svg'
 import CIconCurrency from '@/components/atoms/CIconCurrency.svg'
@@ -43,7 +37,12 @@ import CIconMegaphone from '@/components/atoms/CIconMegaphone.svg'
 import CIconPieChart from '@/components/atoms/CIconPieChart.svg'
 import CIconLock from '@/components/atoms/CIconLock.svg'
 import CIconChevronRight from '@/components/atoms/CIconChevronRight.svg'
+import CreateBudgetModal from './CreateBudgetModal.vue'
+import CloseExerciseModal from './CloseExerciseModal.vue'
+import WorksFundModal from './WorksFundModal.vue'
 import { budgetApi, allocationKeysApi, buildingApi } from '@/api'
+import GenerateLeviesModal from './GenerateLeviesModal.vue'
+import BreakdownModal from './BreakdownModal.vue'
 import type { Budget, BudgetLine, LevyCall, WorksFund, AllocationKey, LevyStatus, BuildingStats } from '@/types/domain'
 import type { Column } from '@/components/molecules/CDataTable.vue'
 
@@ -115,7 +114,6 @@ const levies = ref<LevyCall[]>([])
 const worksFund = ref<WorksFund | null>(null)
 const allocationKeys = ref<AllocationKey[]>([])
 const unbalancedAllocationKeys = ref<string[]>([])
-
 // ── Derived ───────────────────────────────────────────────────────
 
 const selectedBudget = computed(() =>
@@ -230,8 +228,7 @@ const alreadyCalledWorksFundAmount = computed(() =>
   levies.value.reduce((sum, levy) => sum + Number(levy.works_fund_amount ?? 0), 0)
 )
 const alreadyCalledDisplayAmount = computed(() =>
-  alreadyCalledChargeAmount.value
-  + (generateForm.value.include_works_fund ? alreadyCalledWorksFundAmount.value : 0)
+  alreadyCalledChargeAmount.value + alreadyCalledWorksFundAmount.value
 )
 const levyCollectionRate = computed(() =>
   levyCallCount.value > 0 ? Math.round((levyPaidCount.value / levyCallCount.value) * 100) : 0
@@ -266,9 +263,7 @@ const generatePreviewChargeTotal = computed(() =>
   Math.max(selectedTotalForecast.value - alreadyCalledChargeAmount.value, 0)
 )
 const generatePreviewWorksFundTotal = computed(() =>
-  generateForm.value.include_works_fund
-    ? Math.max(worksFundContributionTarget.value - alreadyCalledWorksFundAmount.value, 0)
-    : 0
+  Math.max(worksFundContributionTarget.value - alreadyCalledWorksFundAmount.value, 0)
 )
 const generatePreviewTotal = computed(() =>
   generatePreviewChargeTotal.value + generatePreviewWorksFundTotal.value
@@ -277,33 +272,9 @@ const canGenerateLevies = computed(() =>
   selectedBudget.value?.status !== 'closed'
   && generatePreviewTotal.value > 0
   && !hasUnbalancedAllocationKeys.value
-  && (!generateForm.value.include_works_fund || worksFundRateCompliant.value)
+  && worksFundRateCompliant.value
 )
-const generateBlockingReason = computed(() => {
-  if (hasUnbalancedAllocationKeys.value) {
-    return t('budget.allocationKeysBlocked', {
-      keys: unbalancedAllocationKeys.value.join(', '),
-    })
-  }
 
-  if (generateForm.value.include_works_fund && !worksFundRateCompliant.value) {
-    return t('budget.worksFundRateBlocked', {
-      minimum: formatSharePercentage(worksFundMinimumRate.value),
-    })
-  }
-
-  return ''
-})
-const generateFeedbackStatus = computed(() =>
-  generateFeedback.status.value !== 'idle'
-    ? generateFeedback.status.value
-    : (generateBlockingReason.value ? 'error' : 'idle')
-)
-const generateFeedbackMessage = computed(() =>
-  generateFeedback.status.value !== 'idle'
-    ? generateFeedback.message.value
-    : generateBlockingReason.value
-)
 const levyTableColumns = computed<Column<Record<string, unknown>>[]>(() => {
   const columns: Column<Record<string, unknown>>[] = [
     { key: 'owner_name', label: t('common.coOwner') },
@@ -336,23 +307,6 @@ const budgetBreakdownItems = computed(() => {
         color: PIE_CHART_COLORS[index % PIE_CHART_COLORS.length],
       }
     })
-})
-const budgetBreakdownStyle = computed(() => {
-  if (budgetBreakdownItems.value.length === 0) {
-    return {}
-  }
-
-  let start = 0
-  const segments = budgetBreakdownItems.value.map((item) => {
-    const end = start + (item.sharePct / 100) * 360
-    const segment = `${item.color} ${start}deg ${end}deg`
-    start = end
-    return segment
-  })
-
-  return {
-    background: `conic-gradient(${segments.join(', ')})`,
-  }
 })
 
 const legalCardLinksLevies = computed(() => [
@@ -476,176 +430,39 @@ watch(selectedBudgetId, async (id) => {
 // ── Create budget modal ─────────────────────────────────────
 
 const showCreateBudgetModal = ref(false)
-const createBudgetFeedback = useFormFeedback()
-const savingBudget = ref(false)
-const createBudgetForm = ref({ fiscal_year: new Date().getFullYear() + 1 })
-const { forceExpire: forceCreateBudgetClose } = useAutoClose()
-watch(showCreateBudgetModal, open => { if (!open) forceCreateBudgetClose() })
 
 function openCreateBudgetModal() {
-  createBudgetFeedback.reset()
-  createBudgetForm.value = { fiscal_year: new Date().getFullYear() + 1 }
   showCreateBudgetModal.value = true
 }
 
-async function saveBudget() {
-  savingBudget.value = true
-  createBudgetFeedback.reset()
-  try {
-    const res = await budgetApi.create({ fiscal_year: Number(createBudgetForm.value.fiscal_year) })
-    await loadBudgets()
-    selectedBudgetId.value = res.data.id
-    showCreateBudgetModal.value = false
-  } catch (err) {
-    createBudgetFeedback.setError(toErrorMessage(err))
-  } finally {
-    savingBudget.value = false
-  }
+async function handleBudgetCreated(id: string) {
+  await loadBudgets()
+  selectedBudgetId.value = id
 }
 
 // ── Create line modal ───────────────────────────────────────
 
 const showCreateLineModal = ref(false)
-const createLineFeedback = useFormFeedback()
-const savingLine = ref(false)
-const createLineForm = ref({ label: '', key_id: '', budgeted_amount: '' })
-const { forceExpire: forceCreateLineClose } = useAutoClose()
-watch(showCreateLineModal, open => { if (!open) forceCreateLineClose() })
-
-function openCreateLineModal() {
-  createLineFeedback.reset()
-  createLineForm.value = { label: '', key_id: keyOptions.value[0]?.value ?? '', budgeted_amount: '' }
-  showCreateLineModal.value = true
-}
-
-async function saveLine() {
-  if (!selectedBudgetId.value) return
-  const amount = parseFloat(createLineForm.value.budgeted_amount)
-  if (!createLineForm.value.label.trim() || !createLineForm.value.key_id || isNaN(amount) || amount <= 0) {
-    createLineFeedback.setError(t('common.required'))
-    return
-  }
-  savingLine.value = true
-  createLineFeedback.reset()
-  try {
-    await budgetApi.createLine(selectedBudgetId.value, {
-      label: createLineForm.value.label.trim(),
-      key_id: createLineForm.value.key_id,
-      budgeted_amount: amount,
-    })
-    await loadBudgetData(selectedBudgetId.value)
-    showCreateLineModal.value = false
-  } catch (err) {
-    createLineFeedback.setError(toErrorMessage(err))
-  } finally {
-    savingLine.value = false
-  }
-}
 
 // ── Delete line ─────────────────────────────────────────────
 
 const lineToDelete = ref<BudgetLine | null>(null)
-const deletingLine = ref(false)
-const deleteLineFeedback = useFormFeedback()
-
-async function confirmDeleteLine() {
-  if (!lineToDelete.value || !selectedBudgetId.value) return
-  deletingLine.value = true
-  deleteLineFeedback.reset()
-  try {
-    await budgetApi.deleteLine(selectedBudgetId.value, lineToDelete.value.id)
-    await loadBudgetData(selectedBudgetId.value)
-    lineToDelete.value = null
-  } catch (err) {
-    deleteLineFeedback.setError(toErrorMessage(err))
-  } finally {
-    deletingLine.value = false
-  }
-}
 
 // ── Generate levies modal ───────────────────────────────────
 
 const showGenerateModal = ref(false)
 const showBreakdownModal = ref(false)
-const generateFeedback = useFormFeedback()
-const generatingLevies = ref(false)
-const generateForm = ref({ due_date: '', include_works_fund: true, call_label: '' })
-const { forceExpire: forceGenerateClose } = useAutoClose()
-watch(showGenerateModal, open => { if (!open) forceGenerateClose() })
-
-function openGenerateModal() {
-  generateFeedback.reset()
-  // Default due date = 1st day of next quarter
-  const now = new Date()
-  const nextQ = new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3 + 3, 1)
-  generateForm.value = {
-    due_date: nextQ.toISOString().slice(0, 10),
-    include_works_fund: true,
-    call_label: '',
-  }
-  showGenerateModal.value = true
-}
-
-async function generateLevies() {
-  if (!selectedBudgetId.value || !generateForm.value.due_date) return
-  generatingLevies.value = true
-  generateFeedback.reset()
-  try {
-    await budgetApi.generateLevies(selectedBudgetId.value, {
-      due_date: generateForm.value.due_date,
-      include_works_fund: generateForm.value.include_works_fund,
-      call_label: generateForm.value.call_label.trim() || undefined,
-    })
-    await loadBudgetData(selectedBudgetId.value)
-    showGenerateModal.value = false
-  } catch (err) {
-    generateFeedback.setError(toErrorMessage(err))
-  } finally {
-    generatingLevies.value = false
-  }
-}
 
 // ── Works fund settings modal ────────────────────────────────────
 
 const showWorksFundModal = ref(false)
-const savingWorksFund = ref(false)
-const worksFundFeedback = useFormFeedback()
-const worksFundForm = ref({ contribution_rate_pct: '' })
 
 function openWorksFundModal() {
-  worksFundFeedback.reset()
-  worksFundForm.value = {
-    contribution_rate_pct: worksFund.value
-      ? worksFundContributionRate.value.toFixed(2)
-      : worksFundMinimumRate.value.toFixed(2),
-  }
   showWorksFundModal.value = true
 }
 
-async function saveWorksFund() {
-  if (!selectedBudget.value) return
-
-  const contributionRatePct = Number.parseFloat(worksFundForm.value.contribution_rate_pct)
-  if (!Number.isFinite(contributionRatePct) || contributionRatePct < 0 || contributionRatePct > 100) {
-    worksFundFeedback.setError(t('errors.budget.works_fund_rate_invalid'))
-    return
-  }
-
-  savingWorksFund.value = true
-  worksFundFeedback.reset()
-  try {
-    await budgetApi.updateWorksFund(selectedBudget.value.fiscal_year, {
-      contribution_rate_pct: contributionRatePct,
-    })
-    if (selectedBudgetId.value) {
-      await loadBudgetData(selectedBudgetId.value)
-    }
-    showWorksFundModal.value = false
-  } catch (err) {
-    worksFundFeedback.setError(toErrorMessage(err))
-  } finally {
-    savingWorksFund.value = false
-  }
+async function handleWorksFundSaved() {
+  if (selectedBudgetId.value) await loadBudgetData(selectedBudgetId.value)
 }
 
 // ── Mark paid ───────────────────────────────────────────────
@@ -670,27 +487,13 @@ async function markPaid(levy: ConsolidatedLevyRow) {
 // ── Close exercise modal ───────────────────────────────────────────
 
 const showCloseExerciseModal = ref(false)
-const closingExercise = ref(false)
-const closeExerciseFeedback = useFormFeedback()
 
 function openCloseExerciseModal() {
-  closeExerciseFeedback.reset()
   showCloseExerciseModal.value = true
 }
 
-async function closeExercise() {
-  if (!selectedBudgetId.value) return
-  closingExercise.value = true
-  closeExerciseFeedback.reset()
-  try {
-    await budgetApi.close(selectedBudgetId.value)
-    await loadBudgetData(selectedBudgetId.value)
-    showCloseExerciseModal.value = false
-  } catch (err) {
-    closeExerciseFeedback.setError(toErrorMessage(err))
-  } finally {
-    closingExercise.value = false
-  }
+async function handleExerciseClosed() {
+  if (selectedBudgetId.value) await loadBudgetData(selectedBudgetId.value)
 }
 
 // ── Helpers ───────────────────────────────────────────────────────
@@ -1068,7 +871,7 @@ function formatSharePercentage(value: number): string {
                 :icon="CIconPlus"
                 :title="t('budget.newLine')"
                 shrink="sm"
-                @click="openCreateLineModal"
+                @click="showCreateLineModal = true"
               />
             </template>
           </CSectionHeader>
@@ -1151,7 +954,7 @@ function formatSharePercentage(value: number): string {
                 :icon="CIconMegaphone"
                 :title="t('budget.generateLevies')"
                 shrink="sm"
-                @click="openGenerateModal"
+                @click="showGenerateModal = true"
               />
             </template>
           </CSectionHeader>
@@ -1247,327 +1050,62 @@ function formatSharePercentage(value: number): string {
       </template>
     </div>
 
-    <CModal
+    <CreateBudgetModal
       :open="showCreateBudgetModal"
-      :title="t('budget.newFiscalYear')"
       @update:open="showCreateBudgetModal = $event"
-    >
-      <CForm
-        id="budget-create"
-        @submit="saveBudget"
-      >
-        <CFormInput
-          v-model="createBudgetForm.fiscal_year"
-          :label="t('budget.fiscalYearLabel')"
-          type="number"
-          :min="2020"
-          :max="2099"
-          required
-        />
-      </CForm>
-      <template #footer>
-        <CFormActions
-          :status="createBudgetFeedback.status.value"
-          :message="createBudgetFeedback.message.value"
-        >
-          <CBtn
-            variant="ghost"
-            :title="t('common.cancel')"
-            @click="showCreateBudgetModal = false"
-          />
-          <CBtn
-            variant="primary"
-            :title="t('common.create')"
-            :loading="savingBudget"
-            type="submit"
-            form="budget-create"
-          />
-        </CFormActions>
-      </template>
-    </CModal>
+      @created="handleBudgetCreated"
+    />
 
-    <CModal
+    <CreateLineModal
       :open="showCreateLineModal"
-      :title="t('budget.addLine')"
+      :budget-id="selectedBudgetId ?? ''"
+      :key-options="keyOptions"
       @update:open="showCreateLineModal = $event"
-    >
-      <CForm
-        id="budget-line-create"
-        @submit="saveLine"
-      >
-        <CFormInput
-          v-model="createLineForm.label"
-          :label="t('budget.lineLabel')"
-          required
-        />
-        <CFormSelect
-          v-model="createLineForm.key_id"
-          :label="t('budget.lineKey')"
-          :options="keyOptions"
-          required
-        />
-        <CFormInput
-          v-model="createLineForm.budgeted_amount"
-          :label="t('budget.lineBudgetedAmount')"
-          type="number"
-          :min="0"
-          step="0.01"
-          required
-        />
-      </CForm>
-      <template #footer>
-        <CFormActions
-          :status="createLineFeedback.status.value"
-          :message="createLineFeedback.message.value"
-        >
-          <CBtn
-            variant="ghost"
-            :title="t('common.cancel')"
-            @click="showCreateLineModal = false"
-          />
-          <CBtn
-            variant="primary"
-            :title="t('common.save')"
-            :loading="savingLine"
-            type="submit"
-            form="budget-line-create"
-          />
-        </CFormActions>
-      </template>
-    </CModal>
+      @created="loadBudgetData(selectedBudgetId!)"
+    />
 
-    <CModal
+    <DeleteLineModal
       :open="!!lineToDelete"
-      :title="t('common.confirmDelete')"
+      :budget-id="selectedBudgetId ?? ''"
+      :line="lineToDelete"
       @update:open="v => { if (!v) lineToDelete = null }"
-    >
-      <p>{{ lineToDelete?.label }}</p>
-      <template #footer>
-        <CFormActions
-          :status="deleteLineFeedback.status.value"
-          :message="deleteLineFeedback.message.value"
-        >
-          <CBtn
-            variant="ghost"
-            :title="t('common.cancel')"
-            @click="lineToDelete = null"
-          />
-          <CBtn
-            variant="danger"
-            :title="t('common.delete')"
-            :loading="deletingLine"
-            @click="confirmDeleteLine"
-          />
-        </CFormActions>
-      </template>
-    </CModal>
+      @deleted="loadBudgetData(selectedBudgetId!)"
+    />
 
-    <CModal
-      size="lg"
+    <GenerateLeviesModal
       :open="showGenerateModal"
-      :title="t('budget.generateLeviesTitle')"
+      :budget-id="selectedBudgetId!"
+      :impacted-lots-count="impactedLotsCount"
+      :already-called-display-amount="alreadyCalledDisplayAmount"
+      :generate-preview-total="generatePreviewTotal"
+      :selected-total-forecast="selectedTotalForecast"
+      :can-generate-levies="canGenerateLevies"
       @update:open="showGenerateModal = $event"
-    >
-      <p class="body-sm  text-on-surface-variant">
-        {{ t('budget.generateLeviesSub') }}
-      </p>
-      <CForm
-        id="budget-generate"
-        @submit="generateLevies"
-      >
-        <CFormInput
-          v-model="generateForm.due_date"
-          :label="t('common.dueDate')"
-          type="date"
-          required
-        />
-        <div class="flex flex-col gap-1">
-          <CFormCheckbox
-            v-model="generateForm.include_works_fund"
-            :label="t('budget.includeWorksFund')"
-          />
-          <p class="text-xs text-on-surface-variant">
-            {{ t('budget.worksFundLegal') }}
-          </p>
-        </div>
-        <CFormInput
-          v-model="generateForm.call_label"
-          :label="t('budget.callLabel')"
-          :placeholder="t('budget.callLabelPlaceholder')"
-        />
-      </CForm>
-      <CCardNote
-        v-if="selectedTotalForecast > 0"
-        class="flex-col"
-      >
-        <strong>{{ t('budget.generateSummaryLabel') }}</strong>
-        <div class="grid gap-3 grid-cols-3">
-          <div class="stat-cell">
-            <span class="text-2xs opacity-80">{{ t('budget.generateSummaryLotsLabel') }}</span>
-            <strong>{{ impactedLotsCount }}</strong>
-          </div>
-          <div class="stat-cell">
-            <span class="text-2xs opacity-80">{{ t('budget.generateSummaryAlreadyCalledLabel') }}</span>
-            <strong class="font-mono tabular-nums">{{ formatCurrency(alreadyCalledDisplayAmount) }}</strong>
-          </div>
-          <div class="stat-cell">
-            <span class="text-2xs opacity-80">{{ t('budget.generateSummaryRemainingLabel') }}</span>
-            <strong class="font-mono tabular-nums">{{ formatCurrency(generatePreviewTotal) }}</strong>
-          </div>
-        </div>
-        <p
-          v-if="generatePreviewTotal === 0"
-        >
-          {{ t('budget.generateSummaryNothingToGenerate') }}
-        </p>
-      </CCardNote>
-      <template #footer>
-        <CFormActions
-          :status="generateFeedbackStatus"
-          :message="generateFeedbackMessage"
-        >
-          <CBtn
-            variant="ghost"
-            :title="t('common.cancel')"
-            @click="showGenerateModal = false"
-          />
-          <CBtn
-            variant="primary"
-            :icon="CIconMegaphone"
-            :title="t('budget.generate')"
-            :disabled="!canGenerateLevies"
-            :loading="generatingLevies"
-            type="submit"
-            form="budget-generate"
-          />
-        </CFormActions>
-      </template>
-    </CModal>
+      @generated="loadBudgetData(selectedBudgetId!)"
+    />
 
-    <CModal
+    <BreakdownModal
       :open="showBreakdownModal"
-      :title="t('budget.breakdownTitle')"
-      size="lg"
+      :items="budgetBreakdownItems"
       @update:open="showBreakdownModal = $event"
-    >
-      <p class="body-sm text-on-surface-variant">
-        {{ t('budget.breakdownIntro') }}
-      </p>
-      <div
-        class="mt-4 grid items-center gap-6 sm:grid-cols-[1fr_auto]"
-      >
-        <div class="flex justify-center">
-          <div
-            class="w-[min(280px,56vw)] aspect-square rounded-full"
-            :style="{ ...budgetBreakdownStyle, boxShadow: 'inset 0 0 0 1px rgba(25,28,29,0.05)' }"
-            role="img"
-            :aria-label="t('budget.breakdownAriaLabel')"
-          ></div>
-        </div>
+    />
 
-        <div class="flex flex-col gap-3">
-          <div
-            v-for="item in budgetBreakdownItems"
-            :key="item.id"
-            class="flex items-start gap-3"
-          >
-            <span
-              class="mt-1 size-3 shrink-0 rounded-full"
-              :style="{ background: item.color }"
-              aria-hidden="true"
-            ></span>
-            <div class="flex min-w-0 flex-col gap-1">
-              <strong class="text-sm text-on-surface">{{ item.label }}</strong>
-              <CFlexGroup
-                direction="row"
-                class="flex-wrap"
-              >
-                <CMetaItem variant="sub">
-                  {{ formatCurrency(item.amount) }}
-                </CMetaItem>
-                <CMetaItem variant="sub">
-                  {{ t('budget.breakdownShare', { pct: formatSharePercentage(item.sharePct) }) }}
-                </CMetaItem>
-              </CFlexGroup>
-            </div>
-          </div>
-        </div>
-      </div>
-    </CModal>
-
-    <CModal
+    <WorksFundModal
       :open="showWorksFundModal"
-      :title="t('budget.worksFundConfigureTitle')"
+      :fiscal-year="selectedBudget?.fiscal_year ?? 0"
+      :current-rate="worksFundContributionRate"
+      :minimum-rate="worksFundMinimumRate"
       @update:open="showWorksFundModal = $event"
-    >
-      <CForm
-        id="works-fund-form"
-        @submit="saveWorksFund"
-      >
-      <p class="body-sm mb-4 leading-6 text-on-surface-variant">
-        {{ t('budget.worksFundConfigureHint') }}
-      </p>
-      <CFormInput
-        v-model="worksFundForm.contribution_rate_pct"
-        :label="t('budget.worksFundRate')"
-        type="number"
-        :min="0"
-        :max="100"
-        step="0.01"
-        required
-      />
-      <p class="text-xs text-on-surface-variant mt-2">
-        {{ t('budget.worksFundRateHint', { minimum: formatSharePercentage(worksFundMinimumRate) }) }}
-      </p>
-      </CForm>
-      <template #footer>
-        <CFormActions
-          :status="worksFundFeedback.status.value"
-          :message="worksFundFeedback.message.value"
-        >
-          <CBtn
-            variant="ghost"
-            :title="t('common.cancel')"
-            @click="showWorksFundModal = false"
-          />
-          <CBtn
-            variant="primary"
-            type="submit"
-            form="works-fund-form"
-            :title="t('common.save')"
-            :loading="savingWorksFund"
-          />
-        </CFormActions>
-      </template>
-    </CModal>
+      @saved="handleWorksFundSaved"
+    />
 
-    <CModal
+    <CloseExerciseModal
       :open="showCloseExerciseModal"
-      :title="t('budget.closeExerciseTitle')"
+      :budget-id="selectedBudgetId ?? ''"
+      :fiscal-year="selectedBudget?.fiscal_year ?? 0"
       @update:open="showCloseExerciseModal = $event"
-    >
-      <p class="body-sm mb-4 leading-6 text-on-surface-variant">
-        {{ t('budget.closeExerciseConfirmation', { year: selectedBudget?.fiscal_year }) }}
-      </p>
-      <template #footer>
-        <CFormActions
-          :status="closeExerciseFeedback.status.value"
-          :message="closeExerciseFeedback.message.value"
-        >
-          <CBtn
-            variant="ghost"
-            :title="t('common.cancel')"
-            @click="showCloseExerciseModal = false"
-          />
-          <CBtn
-            variant="danger"
-            :title="t('budget.closeExerciseConfirm')"
-            :loading="closingExercise"
-            @click="closeExercise"
-          />
-        </CFormActions>
-      </template>
-    </CModal>
+      @closed="handleExerciseClosed"
+    />
   </div>
 </template>
 
@@ -1595,4 +1133,3 @@ function formatSharePercentage(value: number): string {
   gap: var(--space-1);
 }
 </style>
-

@@ -30,9 +30,11 @@ export default defineComponent({
       const defaultSlot = slots.default?.() ?? []
 
       // Flatten one level of Fragment (produced by v-for or <template> wrappers)
+      /* eslint-disable @typescript-eslint/no-explicit-any */
       const flat: any[] = []
       for (const vnode of defaultSlot) {
         if (vnode.type === Fragment) {
+          /* eslint-disable @typescript-eslint/no-explicit-any */
           for (const child of (vnode.children as any[]) ?? []) {
             flat.push(child)
           }
@@ -47,6 +49,7 @@ export default defineComponent({
       )
 
       // Interleave with separators
+      /* eslint-disable @typescript-eslint/no-explicit-any */
       const children: any[] = []
       nodes.forEach((node, i) => {
         children.push(node)

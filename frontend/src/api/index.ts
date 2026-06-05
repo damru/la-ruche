@@ -8,7 +8,7 @@ import type {
   LogbookSummary,
   Report, Consultation, ConsultationResults, VendorTask, VendorDocument,
   Document, UploadUrlResponse, DownloadUrlResponse,
-  Building, Unit, User, AllocationKey, UnitShare,
+  Building, Unit, UnitOwnerRecord, User, AllocationKey, UnitShare,
   OnboardingStatus, RuntimeStatus, BootstrapInput, BootstrapResponse,
   LoginResponse, BuildingStats, RegistryResponse, UnitChargesResponse,
   Contractor,
@@ -52,6 +52,8 @@ export const authApi = {
     api.patch<LoginResponse>('/auth/me', data),
   acceptInvite: (token: string, password: string, last_name: string, first_name: string) =>
     api.post('/auth/invite/accept', { token, password, last_name, first_name }),
+  validateInvite: (token: string) =>
+    api.get<{ email: string; role: string | null; unit_id: string | null; expires_at: string; first_name?: string | null; last_name?: string | null }>(`/auth/invite/validate?token=${encodeURIComponent(token)}`),
   passkeyRegisterStart: () =>
     api.post('/auth/passkey/register/start'),
   passkeyRegisterFinish: (credential: unknown) =>
@@ -105,7 +107,7 @@ export const unitsApi = {
   archive: (id: string) =>
     api.delete(`/units/${id}`),
   owners: (id: string) =>
-    api.get(`/units/${id}/owners`),
+    api.get<UnitOwnerRecord[]>(`/units/${id}/owners`),
   transfer: (id: string, data: { user_id: string; start_date: string }) =>
     api.post(`/units/${id}/transfer`, data),
   charges: (id: string) =>
@@ -113,17 +115,31 @@ export const unitsApi = {
 }
 
 // ── Users ─────────────────────────────────────────────────────────
+type InviteResponse = { token: string; email: string; role: string; expires_at: string; invite_link: string }
+
 export const usersApi = {
   list: () =>
     api.get<User[]>('/users'),
   get: (id: string) =>
     api.get<User>(`/users/${id}`),
   invite: (email: string, role: string, unit_id?: string) =>
-    api.post('/users/invite', { email, role, unit_id }),
+    api.post<InviteResponse>('/users/invite', { email, role, unit_id }),
+  revokeInvite: (tokenId: string) =>
+    api.delete(`/users/invites/${tokenId}`),
   updateRoles: (id: string, roles: string[]) =>
     api.put(`/users/${id}/roles`, { roles }),
-  deactivate: (id: string) =>
-    api.delete(`/users/${id}`),
+  deactivate: (id: string, departure_date?: string) =>
+    api.delete(`/users/${id}`, { data: { departure_date } }),
+  reactivate: (id: string) =>
+    api.post(`/users/${id}/reactivate`),
+  anonymize: (id: string, confirm_name: string) =>
+    api.post(`/users/${id}/anonymize`, { confirm_name }),
+  createResident: (data: { first_name: string; last_name: string; email?: string | null; role: string; unit_id?: string | null }) =>
+    api.post<{ id: string }>('/users', data),
+  sendInvite: (id: string, email?: string | null) =>
+    api.post<InviteResponse>(`/users/${id}/invite`, { email }),
+  updateResident: (id: string, data: { first_name: string; last_name: string; email?: string | null; phone?: string | null }) =>
+    api.put(`/users/${id}`, data),
 }
 
 // ── Meetings ──────────────────────────────────────────────────────
@@ -221,8 +237,8 @@ export const budgetApi = {
     api.delete(`/budgets/${id}/lines/${lid}`),
   generateLevies: (id: string, data: { due_date: string; include_works_fund: boolean; call_label?: string }) =>
     api.post<{ generated: number; total_amount: number; already_called: number; remaining_amount: number; due_date: string; call_label?: string }>(`/budgets/${id}/levies/generate`, data),
-  listLevies: (id: string) =>
-    api.get<LevyCall[]>(`/budgets/${id}/levies`),
+  listLevies: (id: string, ownerId?: string) =>
+    api.get<LevyCall[]>(`/budgets/${id}/levies${ownerId ? `?owner_id=${ownerId}` : ''}`),
   markPaid: (levyCallId: string, unitId: string) =>
     api.put(`/levies/${levyCallId}/units/${unitId}/payment`),
   getWorksFund: (fiscalYear: number) =>

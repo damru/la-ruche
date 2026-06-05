@@ -3,7 +3,7 @@ document: EPICS
 version: 1.0.0
 owner: Damien
 status: validé
-last_updated: 2026-05-26
+last_updated: 2026-06-04
 description: >
   Backlog officiel du projet La Ruche — épics et stories organisées par domaine fonctionnel.
   Chaque story référence un PRD, un ADR ou une obligation légale (LEGAL.md §X.Y).
@@ -25,12 +25,97 @@ rules:
 > Chaque feature est organisée en epic. Les stories sont ajoutées à la demande, au moment de l'implémentation.
 > Le MVP est l'ensemble des epics marquées **MVP : oui**.
 > Statuts possibles : **en attente** · **en cours** · **terminée**
-> Dernière mise à jour : 26 mai 2026
+> Dernière mise à jour : 4 juin 2026
 
 > **Lecture d'avancement (code actuel) :**
 > - **backend réel** = handlers + DB opérationnels
 > - **frontend branché** = vue connectée à l'API réelle
 > - **stub/mock** = endpoint `501 NOT_IMPLEMENTED` ou vue alimentée par `src/mock/data.ts`
+
+## Traçabilité PRD Must/Should (complément)
+
+Objectif : garantir que chaque US de priorité Must ou Should issue des PRD produit est reliée à au moins un item du backlog EPICS.
+
+| Priorité | US PRD | Item EPICS de rattachement |
+|---|---|---|
+| Must | US-AG-001 | EP-003-S01 |
+| Must | US-AG-004 | EP-003-S02, EP-003-S08 |
+| Must | US-AG-005 | EP-003-S01, EP-003-S08 |
+| Must | US-AG-006 | EP-003-S03, EP-013-S03 |
+| Must | US-AG-007 | EP-013-S01 |
+| Must | US-AG-008 | EP-003-S04, EP-013-S04 |
+| Must | US-AG-009 | EP-013-S07 |
+| Must | US-AG-010 | EP-003-S05, EP-013-S08, EP-013-S09 |
+| Must | US-AG-011 | EP-003-S06 |
+| Should | US-AG-012 | EP-013-S02 |
+| Should | US-AG-013 | EP-013-S05, EP-013-S10 |
+| Must | US-BC-001 | EP-004-S01 |
+| Must | US-BC-002 | EP-004-S01 |
+| Must | US-BC-003 | EP-004-S02, EP-004-S05, EP-004-S07 |
+| Must | US-BC-004 | EP-004-S08, EP-018-S03 |
+| Must | US-BC-005 | EP-004-S03, EP-004-S10 |
+| Must | US-BC-006 | EP-004-S06 |
+| Must | US-BC-013 | EP-004-S14 |
+| Must | US-BC-007 | EP-018-S07 |
+| Should | US-BC-008 | EP-004-S04 |
+| Should | US-BC-009 | EP-018-S06 |
+| Should | US-BC-011 | EP-004-S09 |
+| Must | US-CE-001 | EP-009-S01 |
+| Must | US-CE-002 | EP-009-S02 |
+| Must | US-CE-003 | EP-009-S03 |
+| Must | US-CF-001 | EP-006-S01 |
+| Must | US-CF-003 | EP-006-S03 |
+| Must | US-CF-004 | EP-006-S04 |
+| Must | US-CF-005 | EP-006-S04 |
+| Should | US-CF-006 | EP-018-S05 |
+| Should | US-CF-008 | EP-006-S05 |
+| Must | US-CR-001 | EP-012-S02 |
+| Must | US-CS-001 | EP-010-S01 |
+| Must | US-CS-002 | EP-010-S02 |
+| Must | US-CS-003 | EP-010-S03 |
+| Must | US-DOC-001 | EP-005-S01 |
+| Must | US-DOC-002 | EP-005-S04, EP-005-S05 |
+| Must | US-DOC-003 | EP-005-S03, EP-005-S04 |
+| Should | US-DOC-005 | EP-005-S02 |
+| Should | US-DOC-006 | EP-005-S03 |
+| Must | US-GP-005 | EP-002-S05 |
+| Should | US-GP-007 | EP-002-S02 |
+| Must | US-JA-001 | EP-017-S04 |
+| Must | US-JA-002 | EP-017-S04, EP-017-S05 |
+| Should | US-JA-003 | EP-017-S05 |
+| Must | US-PP-001 | EP-019-S01 |
+| Must | US-PP-006 | EP-019-S04 |
+| Must | US-RC-001 | EP-001-S01 |
+| Must | US-RC-002 | EP-001-S02 |
+| Must | US-RC-003 | EP-001-S03 |
+| Must | US-RC-004 | EP-001-S04 |
+| Must | US-RC-005 | EP-001-S04, EP-001-S06 |
+| Must | US-RC-006 | EP-001-S07 |
+| Should | US-RC-007 | EP-001-S05 |
+| Should | US-RC-008 | EP-001-S04 |
+| Must | US-RP-001 | EP-015-S01 |
+| Must | US-RP-002 | EP-015-S02 |
+| Must | US-RP-003 | EP-007-S06, EP-006-S07 |
+| Must | US-RP-005 | EP-015-S03 |
+| Must | US-SIG-001 | EP-011-S01 |
+| Must | US-SIG-002 | EP-011-S02 |
+| Must | US-SIG-003 | EP-011-S02 |
+| Must | US-SIG-004 | EP-011-S02 |
+| Should | US-SIG-005 | EP-011-S03 |
+| Must | US-SIN-001 | EP-008-S01, EP-008-S06 |
+| Must | US-SIN-002 | EP-008-S02 |
+| Must | US-SIN-003 | EP-008-S05 |
+| Must | US-SIN-005 | EP-008-S04 |
+| Must | US-TP-001 | EP-007-S01 |
+| Must | US-TP-002 | EP-011-S03 |
+| Must | US-TP-004 | EP-007-S01 |
+| Must | US-TP-006 | EP-007-S06 |
+| Must | US-TP-007 | EP-007-S02 |
+| Must | US-TP-008 | EP-007-S07 |
+| Must | US-TP-009 | EP-007-S07 |
+| Must | US-TP-011 | EP-007-S04, EP-007-S05 |
+| Must | US-TP-014 | EP-018-S04 |
+| Must | US-TP-015 | EP-017-S01, EP-017-S02 |
 
 ***
 
@@ -61,26 +146,33 @@ La fiche identitaire de la copropriété (nom, adresse, SIRET syndic), le règle
 
 ### EP-002 — Gestion des propriétaires
 
-**Statut :** en cours | **MVP :** oui | **Réf. PRD :** Fondations légales
+**Statut :** en cours ⏳ | **MVP :** oui | **Réf. PRD :** Fondations légales
 
-**État code actuel :** partiel ; lecture des utilisateurs et base d'invitation présentes, mais les flux coeur propriétaires/mutations restent non livrés côté produit (`/units/{id}/owners` et `/units/{id}/transfer` encore en `501 NOT_IMPLEMENTED`).
+**État code actuel :** S01–S05 et S08 livrés côté backend (domaine + DB + API) et frontend (liste résidents, invitation tokenisée avec TTL, révocation d’invitation, mutation de lot avec historique, anonymisation RGPD, accès par lien `/invite/:token`). Migration `0026_user_token_unit_id.sql` appliquée. S06, S07, S09, S10, S12 hors scope MVP.
 
 Historique de propriété tracé avec dates de cession, invitation par lien tokenisé, anonymisation RGPD à la demande (conservation des données comptables 10 ans).
 
 **Stories :**
 
-* `EP-002-S01` — Créer un propriétaire et l’associer à un ou plusieurs lots
-* `EP-002-S02` — Gérer l’historique de propriété avec dates d’entrée, de sortie et cessions
-* `EP-002-S03` — Inviter un propriétaire par lien tokenisé pour activer son accès
-* `EP-002-S04` — Consulter la fiche propriétaire avec lots détenus, rôle et état d’activation
-* `EP-002-S05` — Lancer l'anonymisation RGPD en préservant les obligations de conservation comptable (LEGAL.md §8)
+* `EP-002-S01` ✅ — Créer un propriétaire et l’associer à un ou plusieurs lots
+* `EP-002-S02` ✅ — Gérer l’historique de propriété avec dates d’entrée, de sortie et cessions
+* `EP-002-S03` ✅ — Inviter un propriétaire par lien tokenisé pour activer son accès
+* `EP-002-S04` ✅ — Consulter la fiche propriétaire avec lots détenus, rôle et état d’activation
+* `EP-002-S05` ✅ — Lancer l’anonymisation RGPD en préservant les obligations de conservation comptable (LEGAL.md §8)
 * `EP-002-S06` — Générer l'état daté d'un lot à la demande (charges courantes, arriérés, fonds travaux, travaux votés non réalisés, procédures en cours) dans un délai de 15 jours (LEGAL.md §7.1)
 * `EP-002-S07` — Générer le pré-état daté pour signature du compromis de vente (synthèse financière de la copropriété) (LEGAL.md §7.2)
-* `EP-002-S08` — Garantir en mutation que les tantièmes restent attachés au lot (pas au propriétaire) et exposer la quote-part vendeur/acquéreur à date (LEGAL.md §2.4)
+* `EP-002-S08` ✅ — Garantir en mutation que les tantièmes restent attachés au lot (pas au propriétaire) et exposer la quote-part vendeur/acquéreur à date (LEGAL.md §2.4)
 * `EP-002-S09` — Exporter les données personnelles d'un copropriétaire (droit d'accès RGPD) avec périmètre horodaté et traçabilité de la demande (LEGAL.md §8)
 * `EP-002-S10` — Enregistrer et suivre les procédures judiciaires en cours impliquant le syndicat (demandeur ou défendeur), avec date d'ouverture, type, statut ; requis pour l'état daté (LEGAL.md §7.1, §10)
 * `EP-002-S11` — Tenir un registre de gouvernance (syndic en exercice, membres du conseil syndical, périodes de mandat) pour auditer la séparation des organes (LEGAL.md §1.7, §1.8)
 * `EP-002-S12` — PV du conseil syndical en délégation de pouvoirs : créer, stocker et consulter les PV formels des décisions prises par le conseil syndical sous délégation d'AG (signé par 2 membres, noms + sens des votes, inscrit au registre des PV d'AG) — art. 21-1 décret 67-223, LEGIARTI000042077775 (LEGAL.md §3.5)
+* `EP-002-S13` ✅ — Créer un résident sans invitation immédiate et déclencher l'invitation depuis la liste (PRD US-GP-008)
+* `EP-002-S14` ✅ — Modifier la fiche d'un résident existant (nom, prénom, email, téléphone, rôle) depuis la liste des résidents — syndic uniquement ; email soumis à contrainte d'unicité (PRD US-GP-001 §U, matrice CRUD « Fiche résident » Syndic = C/R/U/D)
+* `EP-002-S15` ✅ — Permettre au syndic de corriger ou renseigner l'adresse email d'un résident au moment de déclencher l'envoi de l'invitation depuis la liste (`SendInviteModal`) ; l'email mis à jour est persisté sur la fiche résident avant génération du token (PRD US-GP-002, US-GP-008)
+* `EP-002-S16` ✅ — Archiver un compte résident : désactiver l'accès à une date effective, conserver les données intactes, et permettre la réactivation si le compte n'est pas encore anonymisé ; transition `active → archived → active` (PRD US-GP-004, cycle de vie §4)
+* `EP-002-S17` ✅ — Enregistrer la mutation complète d'un lot : saisir date effective, ancien et nouveau propriétaire (existant ou à créer), révoquer l'accès de l'ancien propriétaire à la date effective, créer le nouveau lien `unit_ownership`, gérer l'état `pending_transfer` entre l'archivage vendeur et l'acceptation acquéreur, bloquer deux propriétaires actifs simultanément (422) et tracer les charges courantes non soldées à la date de mutation (PRD US-GP-003)
+* `EP-002-S18` ✅ — Attribuer et révoquer les rôles des résidents (`syndic`, `board_member`, `owner`, `tenant`) : unicité du syndic actif par copropriété, invalidation immédiate du cache de permissions à la révocation, contrainte d'auto-révocation du syndic bloquée sans désignation de successeur (PRD US-GP-006)
+* `EP-002-S19` ⏳ — Vue des charges par lot avec filtre propriétaire historique : dans `UnitChargesView`, sélecteur (syndic uniquement) pour filtrer les appels de fonds par période de propriété quand un lot a eu plusieurs propriétaires successifs (PRD US-GP-009)
 
 ***
 
@@ -105,6 +197,9 @@ Cycle de vie complet d'une AG, résolutions typées par majorité, vote par lot 
 * `EP-003-S09` ✅ — Tracer la conformité du bureau de séance et des signatures du PV (président, secrétaire, scrutateurs) selon les art. 15, 17 et 17-1 du décret 1967 (LEGAL.md §3.4) (migration `0024_meeting_minutes_signatures.sql`, endpoint `POST /meetings/{id}/minutes/signatures`, signatures intégrées au template `domain/minutes_draft.rs`, modale UI dédiée)
 * `EP-003-S10` — Valider que le formulaire de vote par correspondance est réceptionné par le syndic **au plus tard J-3 francs** avant la date de l'AG (art. 9 bis décret 67-223, LEGIARTI000042076552) et annuler automatiquement un vote par correspondance si le copropriétaire est présent ou représenté en séance (art. 14-1 décret 67-223, LEGIARTI000042076720) (LEGAL.md §3.1)
 * `EP-003-S11` — Enregistrer et traiter la demande de convocation d'AG formulée par un copropriétaire pour ses propres questions (art. 17-1 AA loi 1965, LEGIARTI000039301594) avec imputation des frais de convocation au copropriétaire demandeur (LEGAL.md §3.5)
+* `EP-003-S12` — Modifier ou supprimer un brouillon d'AG : éditer les métadonnées (date, type, ordre du jour) et supprimer une AG tant qu'elle est en statut `draft` ; le passage à `called` bloque la modification et interdit la suppression (PRD US-AG-002)
+* `EP-003-S13` — Gérer les résolutions d'une AG (CRUD + ordre + qualification de majorité) : créer, modifier, supprimer et réordonner les résolutions avec leur règle de majorité applicable (art. 24/25/25-1/26/26-1/unanimité) ; seul le statut `draft` autorise les modifications (PRD US-AG-003)
+* `EP-003-S14` — Consulter le dossier AG et les décisions votées (vue lecture résidents) : accès en lecture aux résolutions, résultats, convocation et PV pour les résidents selon leur rôle et la visibilité de l'AG (PRD US-AG-014)
 
 **Hors scope explicite (renvoyé à `EP-013` ou à des epics transverses) :**
 
@@ -134,12 +229,15 @@ Budget prévisionnel par exercice, appels de fonds générés par tantièmes, fo
 * `EP-004-S03` ✅ — Suivre et alimenter le fonds travaux (≥ 5% du budget prévisionnel, compte séparé) — `GET /works-fund/{fiscal_year}` + `PUT /works-fund/{fiscal_year}` ; entrée `works_fund` créée avec l'exercice, carte dédiée de pilotage, objectif annuel, progression d'appel, taux configurable et notice légale
 * `EP-004-S04` ✅ — Produire l'arrêté de comptes (réalisé vs prévisionnel) — barres de progression par poste budgétaire avec données réelles API
 * `EP-004-S05` ✅ — Snapshot des tantièmes dans chaque appel de fonds généré (`shares_snapshot`, `shares_total_snapshot`, `key_id`) — immuabilité comptable (LEGAL.md §2.3, ADR-006)
-* `EP-004-S06` ✅ — Relevé individuel de charges par lot : liste des appels reçus, montants, statuts, solde courant (LEGAL.md §4.6)
+* `EP-004-S06` ✅ — Relevé individuel de charges par lot : liste des appels reçus, montants, statuts, solde courant, avec séparation des avoirs (LEGAL.md §4.6)
 * `EP-004-S07` ✅ — Blocage dur côté backend de toute génération d'appel de fonds tant qu'une clé active est déséquilibrée (`Σ tantièmes ≠ total_clé`) (LEGAL.md §2.1)
 * `EP-004-S08` — Émission trimestrielle paramétrable et contrôles d'échéances par exercice (quart par défaut) avec piste d'audit (LEGAL.md §4.3) — Prendre en compte les catégories de l'art. 35 décret v6.0 (25/12/2025) : avances PPT, cotisations fonds travaux (art. 14-2-1), provisions délégation CS
 * `EP-004-S09` — Implémenter le mapping plan comptable copropriété (arrêté 14/03/2005) sur lignes budgétaires et exports comptables (LEGAL.md §4.2)
 * `EP-004-S10` — Contrôle et alerte du seuil minimum fonds travaux avant validation de l'exercice : **branche sans PPT partiellement couverte** via alerte UI + blocage de clôture si le taux configuré est < 5% ou si le montant appelé est insuffisant ; **branche PPT 2,5%** encore à implémenter (art. 14-2-1 loi 1965, LEGIARTI000043967792, en vigueur 01/01/2023 — LEGAL.md §4.4)
 * `EP-004-S11` — Recouvrement des charges impayées : identification des lots en solde débiteur, enregistrement des relances (mise en demeure), suivi des dossiers contentieux jusqu'à clôture ; déclencher et signaler la **déchéance du terme à J+30** après mise en demeure infructueuse (toutes provisions restantes deviennent exigibles, art. 19-2 loi 1965, LEGIARTI000043977271) (LEGAL.md §4.7)
+* `EP-004-S12` — Permettre au Conseil syndical et aux copropriétaires de consulter le budget prévisionnel, les lignes budgétaires par clé et le récapitulatif réalisé vs prévisionnel dans leur périmètre de droits (PRD US-BC-010)
+* `EP-004-S13` — Générer les documents comptables légaux obligatoires (Annexes I, II et III décret 1967) à partir des lignes budgétaires et des données d'exercice (PRD US-BC-012, LEGAL.md §4.2)
+* `EP-004-S14` ✅ — Borner le relevé copropriétaire à la période de propriété du lot : après mutation, le nouvel acquéreur ne voit pas les appels antérieurs à sa date de début ; Syndic et Conseil conservent la vue historique complète (PRD US-BC-013)
 
 ***
 
@@ -160,6 +258,9 @@ Upload direct S3 via pre-signed URL, contrôle d'accès par rôle, téléchargem
 * `EP-005-S05` ✅ — Télécharger un document via un accès sécurisé sans exposition publique du bucket
 * `EP-005-S06` — Typer et verrouiller les documents fondateurs (`Règlement`, `EDD`) avec version courante explicite et historique consultable (LEGAL.md §1.2)
 * `EP-005-S07` — Catégoriser et archiver les pièces réglementaires techniques (`DPE collectif`, `DTG`, `PPT`, `PV`) avec règles de conservation adaptées (LEGAL.md §3.3, §6.1, §6.2, §6.3)
+* `EP-005-S08` — Supprimer un document : soft-delete avec conservation de la métadonnée ; pour les documents critiques (`Règlement`, `EDD`, PV signé), déclencher un workflow de remplacement avec justification horodatée avant invalidation du fichier courant (PRD US-DOC-004, US-DOC-007)
+* `EP-005-S09` — Nettoyage périodique des objets S3 orphelins (fichiers sans métadonnée `document` active) et application des règles de rétention par catégorie (PRD US-DOC-008)
+* `EP-005-S10` — Émettre des événements internes au dépôt d'un document pour permettre aux modules consommateurs (signalements, tâches, AG) de déclencher des notifications contextuelles (PRD US-DOC-009)
 
 ***
 
@@ -178,6 +279,8 @@ Fiche contrat avec reconduction tacite et préavis configurables, rappels automa
 * `EP-006-S03` ✅ — Calculer automatiquement les dates d'alerte : préavis entrant, reconduction imminente, expiration (LEGAL.md §5.3)
 * `EP-006-S04` ✅ — Acquitter manuellement une alerte ou enregistrer la résiliation d'un contrat
 * `EP-006-S05` ✅ — Suivre le contrat d'assurance multirisque immeuble (échéance, pièces, rappels) en tant qu'aide de gestion documentaire (LEGAL.md §5.2)
+* `EP-006-S06` — Lister et consulter les contrats fournisseurs avec filtres par statut (actif / résilié / expiré), prestataire et type d'objet ; vue tabulaire avec accès direct à la fiche contrat (PRD US-CF-002)
+* `EP-006-S07` — Rattacher des documents à un contrat fournisseur (contrat signé, avenants, attestations) via le module Documents (EP-005) avec visibilité réservée au Syndic (PRD US-CF-007)
 
 ***
 
@@ -199,6 +302,10 @@ Tâches assignées en interne, lien tokenisé éphémère pour accès prestatair
 * `EP-007-S06` ✅ — Assigner un prestataire du référentiel (EP-015) à une tâche via autocomplete, avec suggestion de création optionnelle si aucune correspondance n'existe et conservation d'un nom libre sur la tâche si aucun prestataire n'est créé
 * `EP-007-S07` — Reprendre en main une tâche depuis une phase devis (`awaiting_quote` ou `quote_received`) : retour à `in_progress` sans annuler les documents reçus, sans révocation automatique du lien prestataire (PRD US-TP-012)
 * `EP-007-S08` — Supprimer ou annuler une tâche : suppression bloquée si une entrée carnet d'entretien ou une soumission prestataire y est rattachée ; annulation disponible comme alternative sans destruction des données (PRD US-TP-016, ADR-009)
+* `EP-007-S09` — Consulter, filtrer et rechercher les tâches : liste paginée avec filtres par statut, priorité, assignataire et prestataire, recherche par titre (PRD US-TP-003)
+* `EP-007-S10` — Gérer les documents rattachés à une tâche côté gestionnaire : ajout append-only après clôture, suppression bloquée si la tâche est clôturée ; indépendant du flux prestataire (PRD US-TP-005)
+* `EP-007-S11` — Déclarer la fin d'intervention depuis l'accès prestataire : le prestataire soumet ses livrables finaux et passe la tâche en `report_received` pour déclencher la validation gestionnaire (PRD US-TP-010)
+* `EP-007-S12` — Réouvrir une tâche clôturée ou annulée vers `in_progress` : le syndic peut relancer une tâche fermée sans perte des documents et de l'historique ; nouvelle clôture génère une entrée carnet d'entretien additionnelle si un coût est renseigné (PRD US-TP-013)
 
 ***
 
@@ -217,6 +324,9 @@ Déclaration et suivi de sinistres (lot ou parties communes) avec documents asso
 * `EP-008-S03` ✅ — Alerter automatiquement si le délai légal de déclaration approche (LEGAL.md §9)
 * `EP-008-S04` ✅ — Suivre le statut du sinistre avec actions contextuelles (`Modifier`, `Transmettre`, `Clore`, `Supprimer`) selon l'état courant
 * `EP-008-S05` ✅ — Tracer la date de transmission à l'assurance, le remboursement éventuel et contrôler le respect du délai légal selon le type de sinistre (LEGAL.md §9)
+* `EP-008-S06` — Formaliser la déclaration de sinistre : transition explicite `draft → declared` par le syndic, déclenchant le calcul du délai légal et les alertes associées ; un sinistre en `draft` n'est visible que du syndic (PRD US-SIN-001b)
+* `EP-008-S07` — Ajouter des notes de suivi à un sinistre : journal append-only horodaté (auteur + date + note) pendant toute la vie du sinistre, consultable par Syndic et Conseil (PRD US-SIN-004)
+* `EP-008-S08` — Rattacher des documents à un sinistre (PJ déclaration, photos, courrier assureur) via le module Documents (EP-005), avec accès restreint au Syndic (PRD US-SIN-006)
 
 ***
 
@@ -238,6 +348,8 @@ Historique des interventions alimenté manuellement ou automatiquement depuis un
 * `EP-009-S06` ✅ — En-tête réglementaire du carnet : afficher dans la vue carnet l'adresse de l'immeuble et l'identité du syndic en exercice (depuis EP-001-S01), conformément au décret n°2001-477 art. 1 (LEGAL.md §1.4)
 * `EP-009-S07` ✅ — Référencer dans le carnet les contrats d'assurance souscrits par le syndicat (multirisque et dommages-ouvrage) avec leurs dates d'échéance, en lien avec EP-006-S05 (LEGAL.md §1.4)
 * `EP-009-S08` ✅ — Lister dans le carnet les contrats d'entretien et de maintenance d'équipements communs en cours (ascenseur, chaufferie…) avec leurs dates d'échéance, en lien avec EP-006 (LEGAL.md §1.4)
+* `EP-009-S09` — Exporter le carnet d'entretien en PDF : document imprimable avec en-tête réglementaire, chronologie des interventions et listing des contrats actifs (PRD US-CE-004)
+* `EP-009-S10` — Filtrer les entrées du carnet par catégorie (travaux, contrat, sinistre), période et source (manuelle / automatique / prestataire) (PRD US-CE-005)
 
 ***
 
@@ -256,6 +368,8 @@ Consultations initiables par tout résident sans approbation préalable, résult
 * `EP-010-S01` ✅ — Créer une consultation ou un sondage avec question(s) et options de réponse (minimum 2 options, `visible_to_roles` requis)
 * `EP-010-S02` ✅ — Soumettre un vote depuis l'espace résident (une réponse par utilisateur) ; contrôle `visible_to_roles`
 * `EP-010-S03` ✅ — Afficher les résultats en temps réel avec mention obligatoire « non décisionnelle »
+* `EP-010-S04` — Gérer le cycle de vie brouillon : créer une consultation en statut `draft`, la modifier librement, puis l'ouvrir explicitement (`draft → open`) pour déclencher la notification aux participants (PRD US-CS-001b)
+* `EP-010-S05` — Relancer les non-répondants d'une consultation ouverte : le Syndic peut envoyer une notification de rappel aux participants n'ayant pas encore soumis de réponse (PRD US-CS-004)
 
 ***
 
@@ -272,6 +386,8 @@ Signalement par tout résident avec description et lot optionnel, suivi de statu
 * `EP-011-S01` ✅ — Créer un signalement (titre, description, lot concerné)
 * `EP-011-S02` ✅ — Suivre et mettre à jour le statut (reçu → en cours → clos) — manager/conseil syndical
 * `EP-011-S03` ✅ — Convertir un signalement en tâche — crée une tâche avec titre/description + priorité choisie depuis le signalement, passe automatiquement le signalement en `in_progress`, puis le clôture quand la tâche liée est effectivement fermée
+* `EP-011-S04` — Ajouter un commentaire de suivi à un signalement : le Syndic et le Conseil syndical peuvent poster des commentaires horodatés visibles du déclarant, pour communiquer sur l'avancement (PRD US-SIG-006)
+* `EP-011-S05` — Gérer l'anonymat du déclarant : le résident choisit à la création du signalement de rester anonyme ; son identité n'est jamais exposée aux autres résidents ni au Syndic dans la vue liste (PRD US-SIG-007)
 
 ***
 
@@ -286,6 +402,10 @@ Export des données de la copropriété au format RNC et génération de la fich
 * `EP-012-S01` — Exporter les données de la copropriété au format attendu par le Registre National des Copropriétés (RNC) pour faciliter la mise à jour annuelle (LEGAL.md §1.1)
 * `EP-012-S02` — Générer la fiche synthétique annuelle de copropriété (nombre de lots, budget, données techniques) (LEGAL.md §1.3)
 * `EP-012-S03` — Générer un dossier de déclaration annuelle RNC prêt à dépôt (contrôles de complétude + export + journal horodaté) (LEGAL.md §1.1)
+* `EP-012-S04` — Permettre au Syndic de vérifier et corriger le brouillon de fiche synthétique auto-rempli : formulaire pré-rempli depuis les modules actifs (EP-001, EP-004), modifiable avant publication (PRD US-CR-002)
+* `EP-012-S05` — Publier la fiche synthétique annuelle : action explicite du Syndic rendant la fiche accessible en lecture aux copropriétaires et membres du Conseil (PRD US-CR-003)
+* `EP-012-S06` — Consulter la fiche synthétique publiée depuis l'espace résident : accès en lecture pour les copropriétaires et le Conseil syndical à la dernière fiche validée (PRD US-CR-004)
+* `EP-012-S07` — Exporter la fiche synthétique en PDF : génération d'un document imprimable à en-tête copropriété depuis la fiche publiée (PRD US-CR-005)
 
 ***
 
@@ -320,11 +440,15 @@ Le cycle de vie complet d'une AG est : `draft` → `called` → **`ongoing`** �
 
 Calendrier partagé centralisant AG, interventions et réunions avec liens contextuels vers les entités correspondantes, export iCal.
 
-**Stories :** _à définir_
+**Stories :**
 
-***
+* `EP-014-S01` — Afficher la vue calendaire des événements de la copropriété (AG, interventions, réunions) dans les modes mensuel, hebdomadaire et liste avec lien contextuel vers les entités correspondantes (PRD US-CAL-001)
+* `EP-014-S02` — Filtrer les événements du calendrier par type (AG, tâche, sinistre, contrat, autre) et par période (PRD US-CAL-002)
+* `EP-014-S03` — Créer, modifier et supprimer des événements manuels sur le calendrier (réunion informelle, rappel, rendez-vous) réservé au Syndic et au Conseil (PRD US-CAL-005)
+* `EP-014-S04` — Exporter le calendrier au format ICS pour intégration dans les agendas personnels (Google Calendar, Outlook, Apple Calendar) (PRD US-CAL-003)
+* `EP-014-S05` — Afficher une vue agenda (prochains 30 jours) depuis le tableau de bord avec les 5 prochains événements (PRD US-CAL-004)
 
-### EP-015 — Référentiel prestataires
+*** — Référentiel prestataires
 
 **Statut :** en cours | **MVP :** non | **Réf. PRD :** Gestion courante
 
@@ -339,6 +463,7 @@ Catalogue des prestataires de la résidence : nom, email, téléphone, domaine p
 * `EP-015-S03` ✅ — Catalogue accessible à tous les utilisateurs authentifiés de la résidence (lecture), modifiable par manager/conseil syndical
 * `EP-015-S04` ✅ — Propagation du nom de prestataire au carnet d'entretien lors de la clôture automatique d'une tâche (`vendor_name`)
 * `EP-015-S05` ✅ — Ajouter le numéro de téléphone au profil utilisateur (`user_account.phone`) et l'exposer dans la carte contact syndic sur la page prestataire — migration 0007
+* `EP-015-S06` — Rattacher une attestation d'assurance à un prestataire via le module Documents (EP-005) avec vérification de la validité à la date de l'intervention (PRD US-RP-004)
 
 ***
 
@@ -427,6 +552,7 @@ Feature simple self-service permettant à chaque utilisateur authentifié de gé
 * `EP-019-S05` — Structurer l'écran en onglets `Compte`, `Notifications`, `Apparence` pour éviter la dispersion des réglages
 * `EP-019-S06` — Gérer la première visite : afficher les valeurs par défaut de manière lisible dès la première ouverture du profil ; s'assurer que l'état initial est compréhensible sans action préalable (PRD US-PP-003)
 * `EP-019-S07` — Réinitialiser ses préférences : bouton global unique en bas de page (couvre Notifications + Apparence), avec modale de confirmation avant exécution (PRD US-PP-005)
+* `EP-019-S08` — Afficher le contexte utilisateur : rôle actif, résidence de rattachement et périmètre des droits depuis l'écran profil (PRD US-PP-007)
 
 ***
 

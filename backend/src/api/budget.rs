@@ -1,6 +1,6 @@
 use axum::{
     Json,
-    extract::{Path, State},
+    extract::{Path, Query, State},
     http::StatusCode,
 };
 use chrono::{Datelike, NaiveDate};
@@ -433,13 +433,20 @@ pub async fn generate_levies(
     })))
 }
 
+#[derive(Deserialize)]
+pub struct ListLeviesQuery {
+    owner_id: Option<Uuid>,
+}
+
 pub async fn list_levies(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
+    Query(params): Query<ListLeviesQuery>,
 ) -> AppResult<Json<serde_json::Value>> {
     auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
-    let levies = db::budget::list_levies(&state.pool, id, auth.building_id).await?;
+    let levies =
+        db::budget::list_levies(&state.pool, id, auth.building_id, params.owner_id).await?;
     Ok(Json(
         serde_json::to_value(levies).map_err(|e| AppError::Internal(e.into()))?,
     ))

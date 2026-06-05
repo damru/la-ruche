@@ -175,6 +175,7 @@ Le budget et les charges représentent le cœur de la relation contractuelle ent
 | Must | US-BC-004 | Émettre les appels de fonds | Transition `draft` → `issued`, blocage si clé ⚠️ |
 | Must | US-BC-005 | Gérer le fonds travaux | Dotation, alerte seuil légal, non-remboursabilité |
 | Must | US-BC-006 | Consulter le relevé individuel de charges | Par lot, par exercice, avec avoirs |
+| Must | US-BC-013 | Borner le relevé au périmètre de propriété | Un copropriétaire ne voit que les charges émises pendant sa période de propriété |
 | Must | US-BC-007 | Corriger un appel émis (avoir) | Nouvelle ligne montant négatif — Pattern C |
 | Should | US-BC-008 | Produire l'arrêté de comptes | Comparatif prévu/réalisé par clé |
 | Should | US-BC-009 | Créer un budget rectificatif | Nouveau budget avec `parent_budget_id` — Pattern B |
@@ -265,6 +266,20 @@ Le budget et les charges représentent le cœur de la relation contractuelle ent
 - **AC-BC-006-B** : Le relevé DOIT être filtrable par exercice fiscal.
 - **AC-BC-006-C** : Un copropriétaire NE DOIT voir que ses propres lots — aucun accès aux charges des autres.
 - **AC-BC-006-D** : Le relevé DOIT afficher les avoirs (corrections) distinctement des appels initiaux, avec référence à l'appel d'origine.
+- **AC-BC-006-E** : Pour un copropriétaire, les appels affichés DOIVENT être bornés à sa période de propriété du lot (aucun appel antérieur à sa date de début de propriété).
+
+#### US-BC-013 — Isoler le relevé de charges par période de propriété
+
+**En tant que** `Persona-Copro`,
+**je veux** que le relevé du lot soit automatiquement borné à ma période de propriété,
+**afin de** ne jamais voir les charges d'un propriétaire précédent lors d'une mutation.
+
+**Critères d'acceptation** :
+
+- **AC-BC-013-A** : Lorsqu'un lot est transféré, le nouveau propriétaire NE DOIT PAS voir les appels émis avant sa date de début de propriété.
+- **AC-BC-013-B** : Le calcul `total_issued`, `total_paid` et `balance` DOIT être effectué uniquement sur le périmètre de charges visible pour l'utilisateur copropriétaire.
+- **AC-BC-013-C** : Les profils `Persona-Syndic` et `Persona-Conseil` conservent une vue complète du lot (historique intégral), car ils opèrent au nom du syndicat.
+- **AC-BC-013-D** : En cas de mutation sans trou de continuité, aucun appel émis à partir de la date effective de mutation ne doit rester rattaché au propriétaire précédent dans la vue copropriétaire.
 
 #### US-BC-007 — Corriger un appel émis (avoir)
 
@@ -425,7 +440,8 @@ Le budget et les charges représentent le cœur de la relation contractuelle ent
 | US-BC-003 | Must | AC-BC-003-A à F | Appels de fonds (C — génération) |
 | US-BC-004 | Must | AC-BC-004-A à E | Appels de fonds (transition draft→issued) |
 | US-BC-005 | Must | AC-BC-005-A à E | Fonds travaux (C/R/U) |
-| US-BC-006 | Must | AC-BC-006-A à D | Relevé charges (R) |
+| US-BC-006 | Must | AC-BC-006-A à E | Relevé charges (R) |
+| US-BC-013 | Must | AC-BC-013-A à D | Relevé charges par période de propriété (R) |
 | US-BC-007 | Must | AC-BC-007-A à E | Avoir sur appel (C) |
 | US-BC-008 | Should | AC-BC-008-A à D | Arrêté de comptes (C/R) |
 | US-BC-009 | Should | AC-BC-009-A à F | Budget rectificatif (C) |

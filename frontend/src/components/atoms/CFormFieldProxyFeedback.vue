@@ -50,13 +50,16 @@ const props = withDefaults(defineProps<{
     class="c-field__native-proxy"
   />
 
-  <Transition name="field-feedback" mode="out-in">
+  <Transition
+    name="field-feedback"
+    mode="out-in"
+  >
     <div
       v-if="!props.readonly && (props.displayError || props.hint)"
       :key="props.displayError ? 'error' : 'hint'"
       class="text-xs text-error flex items-center gap-1 pt-1"
     >
-      <CIconInfo class="icon-2xs"/>
+      <CIconInfo class="icon-2xs" />
       <p
         v-if="props.displayError"
         :id="props.errorId"

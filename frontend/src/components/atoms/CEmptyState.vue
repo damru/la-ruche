@@ -4,6 +4,7 @@ withDefaults(defineProps<{
   description?: string
   size?: 'page' | 'compact'
 }>(), {
+  description: undefined,
   size: 'page',
 })
 </script>

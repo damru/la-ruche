@@ -1,34 +1,74 @@
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, reactive, computed, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import AuthBrandPanel from '@/components/organisms/AuthBrandPanel.vue'
 import CAlert from '@/components/atoms/CAlert.vue'
 import CFormInput from '@/components/atoms/CFormInput.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
+import { authApi } from '@/api'
 
 const { t } = useI18n()
 const router = useRouter()
+const route = useRoute()
+
+const token = computed(() => route.params.token as string)
 
 const loading = ref(false)
+const validating = ref(true)
 const done = ref(false)
 const error = ref('')
+const prefilledEmail = ref('')
 
 const form = reactive({ first_name: '', last_name: '', password: '', confirm: '' })
 
 const isValid = computed(() =>
-  !!form.first_name && !!form.last_name && form.password.length >= 8 && form.password === form.confirm
+  !!form.first_name && !!form.last_name && form.password.length >= 8 && form.password === form.confirm,
 )
-
 const mismatch = computed(() => !!form.confirm && form.password !== form.confirm)
 
-// Mock — no backend call
+onMounted(async () => {
+  if (!token.value) {
+    error.value = t('auth.invalidToken')
+    validating.value = false
+    return
+  }
+  try {
+    const res = await authApi.validateInvite(token.value)
+    prefilledEmail.value = res.data.email
+    if (res.data.first_name) form.first_name = res.data.first_name
+    if (res.data.last_name) form.last_name = res.data.last_name
+  } catch (e: unknown) {
+    const status = (e as { response?: { status?: number } })?.response?.status
+    if (status === 409) {
+      error.value = t('auth.tokenExpiredOrUsed')
+    } else if (status === 404) {
+      error.value = t('auth.invalidToken')
+    } else {
+      error.value = t('auth.invalidToken')
+    }
+  } finally {
+    validating.value = false
+  }
+})
+
 async function handleSubmit() {
-  if (!isValid.value) return
+  if (!isValid.value || !token.value) return
   loading.value = true
-  await new Promise(r => setTimeout(r, 600))
-  loading.value = false
-  done.value = true
+  error.value = ''
+  try {
+    await authApi.acceptInvite(token.value, form.password, form.last_name, form.first_name)
+    done.value = true
+  } catch (e: unknown) {
+    const status = (e as { response?: { status?: number } })?.response?.status
+    if (status === 409) {
+      error.value = t('auth.tokenExpiredOrUsed')
+    } else {
+      error.value = t('common.error')
+    }
+  } finally {
+    loading.value = false
+  }
 }
 </script>
 
@@ -43,22 +83,43 @@ async function handleSubmit() {
 
     <main class="auth-panel">
       <div class="auth-form-wrap">
-        <CAlert
-          v-if="error"
-          variant="error"
-          :title="t('errors.title')"
-        >
-          {{ error }}
-        </CAlert>
+        <!-- Loading state while validating token -->
+        <template v-if="validating">
+          <div class="flex items-center justify-center py-10">
+            <span class="dim">{{ t('common.loading') }}</span>
+          </div>
+        </template>
 
-        <!-- ── Formulaire ──────────────────────────────────────── -->
-        <template v-if="!done">
+        <!-- Error state (invalid/expired token) -->
+        <template v-else-if="error && !done">
+          <CAlert
+            variant="error"
+            :title="t('errors.title')"
+          >
+            {{ error }}
+          </CAlert>
+          <CBtn
+            variant="ghost"
+            :title="t('auth.backToLogin')"
+            style="width: 100%; margin-top: 16px"
+            @click="router.push({ name: 'login' })"
+          />
+        </template>
+
+        <!-- Registration form -->
+        <template v-else-if="!done">
           <div class="form-header">
             <h2 class="form-title">
               {{ t('auth.inviteWelcomeTitle') }}
             </h2>
             <p class="form-sub">
               {{ t('auth.inviteWelcomeSub') }}
+            </p>
+            <p
+              v-if="prefilledEmail"
+              class="form-email"
+            >
+              {{ prefilledEmail }}
             </p>
           </div>
 
@@ -108,7 +169,7 @@ async function handleSubmit() {
               />
               <p
                 v-if="mismatch"
-                class="text-xs text-error"
+                class="text-xs text-error mt-1"
               >
                 {{ t('auth.passwordMismatch') }}
               </p>
@@ -126,7 +187,7 @@ async function handleSubmit() {
           </form>
         </template>
 
-        <!-- ── Succès ──────────────────────────────────────────── -->
+        <!-- Success state -->
         <template v-else>
           <div class="success-state">
             <div
@@ -197,6 +258,13 @@ async function handleSubmit() {
   color: var(--color-on-surface-variant);
   line-height: 1.5;
 }
+.form-email {
+  font-size: var(--text-sm);
+  color: var(--color-on-surface-variant);
+  margin-top: var(--space-2);
+  font-weight: var(--fw-medium);
+}
+.dim { color: var(--color-on-surface-variant); }
 .success-state {
   display: flex;
   flex-direction: column;
@@ -219,13 +287,11 @@ async function handleSubmit() {
   height: 24px;
   stroke: var(--color-success);
 }
-
 @media (max-width: 768px) {
   .auth-panel {
     align-items: flex-start;
     padding: 0 var(--space-4) var(--space-5);
   }
-
   .auth-form-wrap {
     padding-top: var(--space-3);
   }

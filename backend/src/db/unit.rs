@@ -192,13 +192,13 @@ pub async fn list_owners(
         .collect())
 }
 
-#[derive(Debug)]
+#[derive(Debug, sqlx::FromRow)]
 pub struct CurrentOwnerRow {
     pub unit_id: Uuid,
     pub user_id: Uuid,
     pub first_name: String,
     pub last_name: String,
-    pub email: String,
+    pub email: Option<String>,
 }
 
 /// Fetches the current owner (end_date IS NULL) for each of the given unit IDs.
@@ -210,7 +210,7 @@ pub async fn list_current_owners(
     if unit_ids.is_empty() {
         return Ok(vec![]);
     }
-    let rows = sqlx::query!(
+    Ok(sqlx::query_as::<_, CurrentOwnerRow>(
         r#"
         SELECT uo.unit_id, ua.id as user_id, ua.first_name, ua.last_name, ua.email
         FROM unit_owner uo
@@ -219,21 +219,10 @@ pub async fn list_current_owners(
           AND uo.end_date IS NULL
           AND uo.user_id IS NOT NULL
         "#,
-        unit_ids as &[Uuid]
     )
+    .bind(unit_ids)
     .fetch_all(pool)
-    .await?;
-
-    Ok(rows
-        .into_iter()
-        .map(|r| CurrentOwnerRow {
-            unit_id: r.unit_id,
-            user_id: r.user_id,
-            first_name: r.first_name,
-            last_name: r.last_name,
-            email: r.email,
-        })
-        .collect())
+    .await?)
 }
 
 pub async fn transfer_ownership(

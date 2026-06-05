@@ -3,8 +3,6 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useFormatters } from '@/composables/useFormatters'
 import { usePageLoader, toErrorMessage } from '@/composables/usePageLoader'
-import { useFormFeedback } from '@/composables/useFormFeedback'
-import { useAutoClose } from '@/composables/useAutoClose'
 import { useAuthStore } from '@/stores/auth'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
@@ -13,9 +11,6 @@ import CAlert from '@/components/atoms/CAlert.vue'
 import CLegalDescription from '@/components/atoms/CLegalDescription.vue'
 import CLegalNotice from '@/components/molecules/CLegalNotice.vue'
 import CLegalCard from '@/components/molecules/CLegalCard.vue'
-import CFormActions from '@/components/molecules/CFormActions.vue'
-import CForm from '@/components/molecules/CForm.vue'
-import CModal from '@/components/molecules/CModal.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
@@ -24,6 +19,9 @@ import CTabs from '@/components/atoms/CTabs.vue'
 import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import CIconCheckCircle from '@/components/atoms/CIconCheckCircle.svg'
 import CIconTrash from '@/components/atoms/CIconTrash.svg'
+import CreateConsultationModal from './CreateConsultationModal.vue'
+import CloseConsultationModal from './CloseConsultationModal.vue'
+import DeleteConsultationModal from './DeleteConsultationModal.vue'
 import { buildingApi, consultationsApi } from '@/api'
 import type { Consultation } from '@/types/domain'
 
@@ -41,16 +39,6 @@ const pageError = ref('')
 
 // ── Create modal ───────────────────────────────────────────────────
 const showCreateModal = ref(false)
-const createFeedback = useFormFeedback()
-const saving = ref(false)
-const { schedule: scheduleCreateClose, forceExpire: forceCreateClose } = useAutoClose()
-watch(showCreateModal, (open) => { if (!open) forceCreateClose() })
-const defaultCreateForm = () => ({
-  title: '',
-  description: '',
-  choices: ['', ''],
-})
-const createForm = ref(defaultCreateForm())
 
 // ── Inline vote state (per consultation ID) ────────────────────────
 interface InlineVote {
@@ -101,17 +89,9 @@ function unlockVote(c: Consultation) {
 
 // ── Close modal ────────────────────────────────────────────────────
 const closingConsultation = ref<Consultation | null>(null)
-const closeFeedback = useFormFeedback()
-const closing = ref(false)
-const { schedule: scheduleCloseConsultation, forceExpire: forceCloseConsultation } = useAutoClose()
-watch(closingConsultation, (c) => { if (!c) forceCloseConsultation() })
 
 // ── Delete modal ───────────────────────────────────────────────────
 const deletingConsultation = ref<Consultation | null>(null)
-const deleteFeedback = useFormFeedback()
-const deleting = ref(false)
-const { schedule: scheduleDeleteConsultation, forceExpire: forceDeleteConsultation } = useAutoClose()
-watch(deletingConsultation, (c) => { if (!c) forceDeleteConsultation() })
 
 async function loadData() {
   const [buildingRes, listRes] = await Promise.all([
@@ -172,35 +152,7 @@ const legalCardLinks = computed(() => [
 ])
 
 function openCreateModal() {
-  createForm.value = defaultCreateForm()
-  createFeedback.reset()
   showCreateModal.value = true
-}
-
-function addChoice() { createForm.value.choices.push('') }
-function removeChoice(idx: number) {
-  if (createForm.value.choices.length > 2) createForm.value.choices.splice(idx, 1)
-}
-
-async function saveConsultation() {
-  if (createFeedback.status.value === 'success') { forceCreateClose(); return }
-  if (!createForm.value.title.trim() || createForm.value.choices.filter(c => c.trim()).length < 2) return
-  saving.value = true
-  createFeedback.reset()
-  try {
-    await consultationsApi.create({
-      title: createForm.value.title,
-      description: createForm.value.description || undefined,
-      visible_to_roles: ['manager', 'board_member', 'co_owner', 'tenant'],
-      choices: createForm.value.choices.filter(c => c.trim()),
-    })
-    createFeedback.setSuccess(t('common.saved'))
-    scheduleCreateClose(() => { showCreateModal.value = false; reload() })
-  } catch (err) {
-    createFeedback.setError(toErrorMessage(err))
-  } finally {
-    saving.value = false
-  }
 }
 
 async function submitVote(c: Consultation) {
@@ -219,44 +171,10 @@ async function submitVote(c: Consultation) {
 
 function openCloseModal(c: Consultation) {
   closingConsultation.value = c
-  closeFeedback.reset()
-}
-
-async function confirmClose() {
-  if (closeFeedback.status.value === 'success') { forceCloseConsultation(); return }
-  if (!closingConsultation.value) return
-  closing.value = true
-  closeFeedback.reset()
-  try {
-    await consultationsApi.close(closingConsultation.value.id)
-    closeFeedback.setSuccess(t('consultations.closeSuccess'))
-    scheduleCloseConsultation(async () => { closingConsultation.value = null; await reload() })
-  } catch (err) {
-    closeFeedback.setError(toErrorMessage(err))
-  } finally {
-    closing.value = false
-  }
 }
 
 function openDeleteModal(c: Consultation) {
   deletingConsultation.value = c
-  deleteFeedback.reset()
-}
-
-async function confirmDelete() {
-  if (deleteFeedback.status.value === 'success') { forceDeleteConsultation(); return }
-  if (!deletingConsultation.value) return
-  deleting.value = true
-  deleteFeedback.reset()
-  try {
-    await consultationsApi.delete(deletingConsultation.value.id)
-    deleteFeedback.setSuccess(t('consultations.deleteSuccess'))
-    scheduleDeleteConsultation(async () => { deletingConsultation.value = null; await reload() })
-  } catch (err) {
-    deleteFeedback.setError(toErrorMessage(err))
-  } finally {
-    deleting.value = false
-  }
 }
 </script>
 
@@ -499,141 +417,24 @@ async function confirmDelete() {
       </template>
     </div>
 
-    <!-- Create modal -->
-    <CModal
-      :open="showCreateModal"
-      :title="t('consultations.create')"
-      size="lg"
-      @update:open="showCreateModal = $event"
-    >
-      <CForm
-        id="consultation-create"
-        @submit="saveConsultation"
-      >
-        <CFormInput
-          v-model="createForm.title"
-          :label="t('consultations.fields.title')"
-          required
-        />
-        <CFormTextarea
-          v-model="createForm.description"
-          :label="t('consultations.fields.description')"
-          :rows="2"
-        />
-        <div class="flex flex-col gap-1">
-          <label class="text-sm font-medium text-on-surface-variant">{{ t('consultations.fields.choices') }} *</label>
-          <div
-            v-for="(_, idx) in createForm.choices"
-            :key="idx"
-            class="choice-input-row"
-          >
-            <CFormInput
-              v-model="createForm.choices[idx]"
-              :placeholder="`Option ${idx + 1}`"
-              class="grow"
-            />
-            <CBtn
-              v-if="createForm.choices.length > 2"
-              type="button"
-              variant="icon"
-              :icon="CIconTrash"
-              class="tone--err"
-              @click="removeChoice(idx)"
-            />
-          </div>
-          <CBtn
-            variant="ghost"
-            size="sm"
-            type="button"
-            :icon="CIconPlus"
-            :title="t('consultations.fields.addChoice')"
-            @click="addChoice"
-          />
-        </div>
-      </CForm>
-      <template #footer>
-        <CFormActions
-          :status="createFeedback.status.value"
-          :message="createFeedback.message.value"
-        >
-          <CBtn
-            variant="ghost"
-            :title="t('common.cancel')"
-            @click="showCreateModal = false"
-          />
-          <CBtn
-            variant="primary"
-            type="submit"
-            form="consultation-create"
-            :title="t('common.create')"
-            :loading="saving"
-            :closing="createFeedback.status.value === 'success'"
-          />
-        </CFormActions>
-      </template>
-    </CModal>
+    <CreateConsultationModal
+      v-model:open="showCreateModal"
+      @created="reload"
+    />
 
-    <!-- Close consultation modal -->
-    <CModal
+    <CloseConsultationModal
       :open="!!closingConsultation"
-      :title="t('consultations.confirmCloseTitle')"
-      size="sm"
+      :consultation="closingConsultation"
       @update:open="v => !v && (closingConsultation = null)"
-    >
-      <p class="body-xs">
-        {{ t('consultations.confirmCloseMessage') }}
-      </p>
-      <template #footer>
-        <CFormActions
-          :status="closeFeedback.status.value"
-          :message="closeFeedback.message.value"
-        >
-          <CBtn
-            variant="ghost"
-            :title="t('common.cancel')"
-            @click="closingConsultation = null"
-          />
-          <CBtn
-            variant="danger"
-            :title="t('consultations.closeAction')"
-            :loading="closing"
-            :closing="closeFeedback.status.value === 'success'"
-            @click="confirmClose"
-          />
-        </CFormActions>
-      </template>
-    </CModal>
+      @closed="reload"
+    />
 
-    <!-- Delete consultation modal -->
-    <CModal
+    <DeleteConsultationModal
       :open="!!deletingConsultation"
-      :title="t('consultations.confirmDeleteTitle')"
-      size="sm"
+      :consultation="deletingConsultation"
       @update:open="v => !v && (deletingConsultation = null)"
-    >
-      <p class="body-xs">
-        {{ t('consultations.confirmDeleteMessage', { title: deletingConsultation?.title ?? '' }) }}
-      </p>
-      <template #footer>
-        <CFormActions
-          :status="deleteFeedback.status.value"
-          :message="deleteFeedback.message.value"
-        >
-          <CBtn
-            variant="ghost"
-            :title="t('common.cancel')"
-            @click="deletingConsultation = null"
-          />
-          <CBtn
-            variant="danger"
-            :title="t('common.delete')"
-            :loading="deleting"
-            :closing="deleteFeedback.status.value === 'success'"
-            @click="confirmDelete"
-          />
-        </CFormActions>
-      </template>
-    </CModal>
+      @deleted="reload"
+    />
   </div>
 </template>
 
@@ -733,10 +534,6 @@ async function confirmDelete() {
   gap: var(--space-2);
 }
 .error-text { color: var(--color-error); flex: 1; }
-
-/* ── Create-form styles ────────────────────────────────────────── */
-.choice-input-row { display: flex; align-items: center; gap: 8px; }
-.choice-input-row .form-input { flex: 1; }
 
 .dim { color: var(--color-on-surface-variant); }
 

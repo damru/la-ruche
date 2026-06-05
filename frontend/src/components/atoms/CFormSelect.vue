@@ -159,8 +159,8 @@ function handleBlur(event: FocusEvent) {
         <SelectContent
           position="popper"
           :side-offset="4"
-          class="min-w-[var(--radix-select-trigger-width)] rounded-xl
-                 bg-surface-container-lowest shadow-md z-toast overflow-hidden"
+          class="min-w-[var(--radix-select-trigger-width)] max-h-80 rounded-xl
+                 bg-surface-container-lowest shadow-md"
         >
           <SelectViewport class="p-1">
             <SelectItem

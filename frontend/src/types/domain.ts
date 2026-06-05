@@ -59,7 +59,17 @@ export interface UnitOwner {
   id: string
   first_name: string
   last_name: string
-  email: string
+  email?: string | null
+}
+
+export interface UnitOwnerRecord {
+  id: string
+  unit_id: string
+  user_id: string | null
+  display_name: string
+  start_date: string
+  end_date: string | null
+  anonymized: boolean
 }
 
 export interface Unit {
@@ -92,13 +102,17 @@ export interface UnitShare {
 
 export interface User {
   id: string
-  email: string
+  email?: string | null
   last_name: string
   first_name: string
   active: boolean
   roles: Role[]
-  created_at: string
-  phone?: string
+  created_at?: string
+  phone?: string | null
+  status?: 'active' | 'pending_invite' | 'no_access' | 'archived'
+  expires_at?: string
+  invite_token_id?: string
+  has_access?: boolean
 }
 
 export interface MeetingScrutineer {

@@ -4,6 +4,7 @@ use axum::{
     http::{HeaderMap, HeaderValue, StatusCode, header},
     response::{IntoResponse, Response},
 };
+use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use utoipa::ToSchema;
@@ -183,7 +184,7 @@ pub async fn login(
         &state.pool,
         user.id,
         building_id,
-        &user.email,
+        user.email.as_deref().unwrap_or(""),
         &refresh_hash,
         expire_at,
     )
@@ -292,7 +293,7 @@ pub async fn reset_password_request(
         ));
         db::user::create_token(
             &state.pool,
-            &user.email,
+            user.email.as_deref().unwrap_or(""),
             "reset_password",
             &hash,
             None,
@@ -301,7 +302,8 @@ pub async fn reset_password_request(
         )
         .await?;
         // TODO post-MVP: send email with reset link /reset/{plain}
-        tracing::info!(email = %user.email, "Password reset token generated (email not sent -- post-MVP)");
+        let email_str = user.email.as_deref().unwrap_or("");
+        tracing::info!(email = %email_str, "Password reset token generated (email not sent -- post-MVP)");
         let _ = plain;
     }
 
@@ -333,7 +335,37 @@ pub async fn reset_password_confirm(
     Ok(StatusCode::NO_CONTENT)
 }
 
-/// POST /auth/invite/accept
+/// GET /auth/invite/validate?token=... — check invitation without consuming (EP-002-S03)
+pub async fn validate_invite(
+    State(state): State<Arc<AppState>>,
+    axum::extract::Query(params): axum::extract::Query<std::collections::HashMap<String, String>>,
+) -> AppResult<Json<serde_json::Value>> {
+    let plain = params
+        .get("token")
+        .filter(|t| !t.is_empty())
+        .ok_or_else(|| AppError::validation_code("errors.auth.missing_token"))?;
+
+    let token_hash = token::hash_token(plain);
+    let info = db::user::peek_invite_token(&state.pool, &token_hash)
+        .await?
+        .ok_or(AppError::NotFound)?;
+
+    let now = Utc::now();
+    if info.expires_at <= now {
+        return Err(AppError::Conflict("errors.auth.invite_expired".into()));
+    }
+
+    Ok(Json(serde_json::json!({
+        "email": info.email,
+        "role": info.invited_role,
+        "unit_id": info.unit_id,
+        "expires_at": info.expires_at,
+        "first_name": info.first_name,
+        "last_name": info.last_name,
+    })))
+}
+
+/// POST /auth/invite/accept — complete account creation from invitation (EP-002-S03)
 pub async fn invite_accept(
     State(state): State<Arc<AppState>>,
     Json(input): Json<AcceptInviteInput>,
@@ -343,34 +375,85 @@ pub async fn invite_accept(
         .map_err(|_| AppError::validation_code("errors.auth.invalid_invite_accept_payload"))?;
 
     let token_hash = token::hash_token(&input.token);
-    let info = db::user::consume_token(&state.pool, &token_hash, "invitation")
+
+    // Peek first to differentiate expired vs already-used (AC-GP-002-C, AC-GP-002-D)
+    let peek = db::user::peek_invite_token(&state.pool, &token_hash)
         .await?
         .ok_or(AppError::TokenInvalid)?;
 
-    let email = info["email"].as_str().ok_or(AppError::TokenInvalid)?;
-    let building_id: uuid::Uuid = info["building_id"]
-        .as_str()
-        .and_then(|s| s.parse().ok())
-        .ok_or(AppError::TokenInvalid)?;
-    let role = info["invited_role"]
-        .as_str()
-        .unwrap_or("co_owner")
-        .to_string();
+    if peek.expires_at <= Utc::now() {
+        // 410 Gone — expired
+        return Err(AppError::Conflict("errors.auth.invite_expired".into()));
+    }
+
+    // Consume atomically — returns None if already used
+    let info = db::user::consume_invite_token(&state.pool, &token_hash)
+        .await?
+        .ok_or_else(|| AppError::Conflict("errors.auth.invite_already_used".into()))?;
+
+    let email = &info.email;
+    let building_id = info.building_id.ok_or(AppError::TokenInvalid)?;
+    let role = info.invited_role.as_deref().unwrap_or("co_owner");
 
     let hash = password::hash_password(&input.password, &state.cfg.auth)?;
-    let user = db::user::create(
-        &state.pool,
-        email,
-        &input.last_name,
-        &input.first_name,
-        &hash,
-    )
-    .await?;
 
-    sqlx::query!(
-        "INSERT INTO user_building (user_id, building_id, roles) VALUES ($1, $2, ARRAY[$3::user_role])",
-        user.id, building_id, role as _
-    ).execute(&state.pool).await?;
+    let user_id = if let Some(linked_id) = info.user_id {
+        // Token linked to a pre-registered no_access user — activate their account.
+        // Email and names are set; only password (and possibly email) need updating.
+        sqlx::query(
+            r#"UPDATE user_account
+               SET email = $2, last_name = $3, first_name = $4, password_hash = $5,
+                   active = TRUE, updated_at = NOW()
+               WHERE id = $1"#,
+        )
+        .bind(linked_id)
+        .bind(email)
+        .bind(&input.last_name)
+        .bind(&input.first_name)
+        .bind(&hash)
+        .execute(&state.pool)
+        .await?;
+        linked_id
+    } else {
+        // Standard flow: create or update user account by email
+        match db::user::find_by_email(&state.pool, email).await? {
+            Some(existing) => {
+                sqlx::query(
+                    r#"UPDATE user_account
+                       SET last_name = $2, first_name = $3, password_hash = $4,
+                           active = TRUE, updated_at = NOW()
+                       WHERE id = $1"#,
+                )
+                .bind(existing.id)
+                .bind(&input.last_name)
+                .bind(&input.first_name)
+                .bind(&hash)
+                .execute(&state.pool)
+                .await?;
+                existing.id
+            }
+            None => {
+                db::user::create(
+                    &state.pool,
+                    email,
+                    &input.last_name,
+                    &input.first_name,
+                    &hash,
+                )
+                .await?
+                .id
+            }
+        }
+    };
+
+    // Add to building (ON CONFLICT DO NOTHING handles pre-registered users)
+    db::user::create_user_building(&state.pool, user_id, building_id, role).await?;
+
+    // If tenant invite with unit_id, create unit_owner record
+    if let Some(unit_id) = info.unit_id {
+        let today = chrono::Utc::now().naive_utc().date();
+        db::unit::transfer_ownership(&state.pool, unit_id, building_id, user_id, today).await?;
+    }
 
     Ok(StatusCode::CREATED)
 }
@@ -399,7 +482,7 @@ pub async fn me(
         roles: auth.roles.iter().map(|r| r.to_string()).collect(),
         last_name: user.last_name,
         first_name: user.first_name,
-        email: Some(user.email),
+        email: user.email,
         phone,
     }))
 }
@@ -426,7 +509,7 @@ pub async fn update_me(
         roles: auth.roles.iter().map(|r| r.to_string()).collect(),
         last_name: user.last_name,
         first_name: user.first_name,
-        email: Some(user.email),
+        email: user.email,
         phone,
     }))
 }

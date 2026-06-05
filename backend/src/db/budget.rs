@@ -558,6 +558,7 @@ pub async fn list_levies(
     pool: &PgPool,
     budget_id: Uuid,
     building_id: Uuid,
+    owner_id: Option<Uuid>,
 ) -> crate::errors::AppResult<Vec<serde_json::Value>> {
     let rows = sqlx::query_as::<_, LevyListRow>(
         r#"SELECT
@@ -567,30 +568,48 @@ pub async fn list_levies(
                lc.issued_at,
                u.id    AS unit_id,
                u.unit_number,
-               SUM(lcu.amount)::numeric                                               AS amount,
-               SUM(lcu.amount) FILTER (WHERE lcu.budget_line_id IS NOT NULL)::numeric AS charge_amount,
-               SUM(lcu.amount) FILTER (WHERE lcu.budget_line_id IS NULL)::numeric     AS works_fund_amount,
+               SUM(lcu.amount)::numeric                                                              AS amount,
+               COALESCE(SUM(lcu.amount) FILTER (WHERE lcu.budget_line_id IS NOT NULL), 0)::numeric AS charge_amount,
+               COALESCE(SUM(lcu.amount) FILTER (WHERE lcu.budget_line_id IS NULL), 0)::numeric     AS works_fund_amount,
                CASE
                    WHEN bool_or(lcu.status::text = 'overdue') THEN 'overdue'
                    WHEN bool_and(lcu.status::text = 'paid')   THEN 'paid'
                    ELSE 'issued'
                END                              AS status,
                MAX(lcu.paid_at)                AS paid_at,
-               ua.id                           AS owner_id,
+               uo.user_id                      AS owner_id,
                ua.first_name || ' ' || ua.last_name AS owner_name
            FROM levy_call lc
-           JOIN budget b         ON b.id           = lc.budget_id AND b.building_id = $2
-           JOIN levy_call_unit lcu ON lcu.levy_call_id = lc.id
-           JOIN unit u           ON u.id           = lcu.unit_id
-           LEFT JOIN unit_owner uo   ON uo.unit_id  = u.id AND uo.end_date IS NULL
-           LEFT JOIN user_account ua ON ua.id       = uo.user_id
+           JOIN budget b              ON b.id           = lc.budget_id AND b.building_id = $2
+           JOIN levy_call_unit lcu    ON lcu.levy_call_id = lc.id
+           JOIN unit u                ON u.id           = lcu.unit_id
+           -- When owner_id filter is set: join to that owner's period covering the levy due_date.
+           -- When no filter: get the current owner (end_date IS NULL), LIMIT 1 for safety.
+           LEFT JOIN LATERAL (
+               SELECT uo2.user_id
+               FROM unit_owner uo2
+               WHERE uo2.unit_id = u.id
+                 AND (
+                     ($3::uuid IS NULL AND uo2.end_date IS NULL)
+                     OR
+                     ($3::uuid IS NOT NULL
+                      AND uo2.user_id = $3::uuid
+                      AND lc.due_date >= uo2.start_date
+                      AND (uo2.end_date IS NULL OR lc.due_date < uo2.end_date))
+                 )
+               ORDER BY uo2.created_at DESC
+               LIMIT 1
+           ) uo ON true
+           LEFT JOIN user_account ua ON ua.id = uo.user_id
            WHERE lc.budget_id = $1
+             AND ($3::uuid IS NULL OR uo.user_id IS NOT NULL)
            GROUP BY lc.id, lc.call_label, lc.due_date, lc.issued_at,
-                    u.id, u.unit_number, ua.id, ua.first_name, ua.last_name
+                    u.id, u.unit_number, uo.user_id, ua.first_name, ua.last_name
            ORDER BY lc.due_date DESC, u.unit_number"#,
     )
     .bind(budget_id)
     .bind(building_id)
+    .bind(owner_id)
     .fetch_all(pool)
     .await?;
 

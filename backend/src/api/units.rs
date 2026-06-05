@@ -6,7 +6,7 @@ use axum::{
     extract::{Path, State},
     http::StatusCode,
 };
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -14,7 +14,7 @@ use validator::Validate;
 
 use crate::{
     db::{self, AppState},
-    domain::{AuthUser, Role},
+    domain::{AuthUser, Role, owners},
     errors::{AppError, AppResult},
 };
 
@@ -25,7 +25,7 @@ pub struct OwnerSummary {
     pub id: Uuid,
     pub first_name: String,
     pub last_name: String,
-    pub email: String,
+    pub email: Option<String>,
 }
 
 #[derive(Serialize, ToSchema)]
@@ -247,28 +247,111 @@ pub async fn archive(
     Ok(StatusCode::NO_CONTENT)
 }
 
-/// GET /units/{id}/owners — EP-002
+/// GET /units/{id}/owners — ownership history (EP-002-S02, US-GP-007)
 pub async fn owners(
-    _state: State<Arc<AppState>>,
-    _auth: AuthUser,
-    _id: Path<Uuid>,
-) -> AppResult<StatusCode> {
-    Ok(StatusCode::NOT_IMPLEMENTED)
+    State(state): State<Arc<AppState>>,
+    auth: AuthUser,
+    Path(id): Path<Uuid>,
+) -> AppResult<Json<Vec<db::unit::OwnerRecord>>> {
+    // Managers and board members only (AC-GP-007-B)
+    if !auth
+        .roles
+        .iter()
+        .any(|r| *r == Role::Manager || *r == Role::BoardMember)
+    {
+        return Err(AppError::Forbidden);
+    }
+    // Verify unit belongs to this building
+    db::unit::get(&state.pool, id, auth.building_id)
+        .await?
+        .ok_or(AppError::NotFound)?;
+
+    let records = db::unit::list_owners(&state.pool, id, auth.building_id).await?;
+    Ok(Json(records))
 }
 
-/// POST /units/{id}/transfer — EP-002
+#[derive(Deserialize, Validate)]
+pub struct TransferInput {
+    pub user_id: Uuid,
+    pub start_date: NaiveDate,
+}
+
+/// POST /units/{id}/transfer — ownership transfer (EP-002-S02, US-GP-003)
 pub async fn transfer(
-    _state: State<Arc<AppState>>,
-    _auth: AuthUser,
-    _id: Path<Uuid>,
+    State(state): State<Arc<AppState>>,
+    auth: AuthUser,
+    Path(id): Path<Uuid>,
+    Json(input): Json<TransferInput>,
 ) -> AppResult<StatusCode> {
-    Ok(StatusCode::NOT_IMPLEMENTED)
+    require_manager(&auth)?;
+
+    let today = chrono::Utc::now().naive_utc().date();
+    owners::validate_transfer_date(input.start_date, today).map_err(AppError::validation_code)?;
+
+    // Verify unit belongs to this building
+    db::unit::get(&state.pool, id, auth.building_id)
+        .await?
+        .ok_or(AppError::NotFound)?;
+
+    // Verify new owner exists and belongs to this building
+    let exists: bool = sqlx::query_scalar(
+        "SELECT EXISTS(SELECT 1 FROM user_building WHERE user_id = $1 AND building_id = $2)",
+    )
+    .bind(input.user_id)
+    .bind(auth.building_id)
+    .fetch_one(&state.pool)
+    .await?;
+
+    if !exists {
+        return Err(AppError::validation_code(
+            "errors.owners.new_owner_not_found",
+        ));
+    }
+
+    // Find the current owner before transfer (to revoke access if they have no other units)
+    let old_owner_id: Option<Uuid> = sqlx::query_scalar(
+        "SELECT user_id FROM unit_owner WHERE unit_id = $1 AND end_date IS NULL",
+    )
+    .bind(id)
+    .fetch_optional(&state.pool)
+    .await?;
+
+    db::unit::transfer_ownership(
+        &state.pool,
+        id,
+        auth.building_id,
+        input.user_id,
+        input.start_date,
+    )
+    .await?;
+
+    // Revoke building access for old owner if they have no remaining active units (AC-GP-003-B)
+    if let Some(old_id) = old_owner_id
+        && old_id != input.user_id
+    {
+        let other_units: i64 = sqlx::query_scalar(
+            r#"SELECT COUNT(*) FROM unit_owner uo
+               JOIN unit u ON u.id = uo.unit_id
+               WHERE uo.user_id = $1 AND u.building_id = $2 AND uo.end_date IS NULL"#,
+        )
+        .bind(old_id)
+        .bind(auth.building_id)
+        .fetch_one(&state.pool)
+        .await?;
+
+        if other_units == 0 {
+            db::user::archive_user(&state.pool, old_id, auth.building_id, input.start_date).await?;
+        }
+    }
+
+    Ok(StatusCode::NO_CONTENT)
 }
 
 /// GET /units/{id}/charges — EP-004-S06
 /// Individual charge statement: all levy_calls for this unit with snapshot data.
-/// Co-owners can only access units they currently own; managers and board members
-/// can access any unit in their building.
+/// Co-owners can only access units they currently own and only see levies issued
+/// from their ownership start date. Managers and board members can access the full
+/// unit history in their building.
 pub async fn charges(
     State(state): State<Arc<AppState>>,
     auth: AuthUser,
@@ -284,18 +367,22 @@ pub async fn charges(
         .roles
         .iter()
         .any(|r| *r == Role::Manager || *r == Role::BoardMember);
-    if !is_privileged {
-        let owns: bool = sqlx::query_scalar(
-            "SELECT EXISTS(SELECT 1 FROM unit_owner WHERE unit_id = $1 AND user_id = $2 AND end_date IS NULL)"
+    let ownership_start_date = if !is_privileged {
+        let start_date: Option<NaiveDate> = sqlx::query_scalar(
+            "SELECT start_date FROM unit_owner WHERE unit_id = $1 AND user_id = $2 AND end_date IS NULL ORDER BY start_date DESC LIMIT 1"
         )
         .bind(id)
         .bind(auth.user_id)
-        .fetch_one(&state.pool)
+        .fetch_optional(&state.pool)
         .await?;
-        if !owns {
+
+        if start_date.is_none() {
             return Err(AppError::Forbidden);
         }
-    }
+        start_date
+    } else {
+        None
+    };
 
     let rows = sqlx::query_as::<_, LevyUnitChargeRow>(
         r#"SELECT
@@ -304,9 +391,9 @@ pub async fn charges(
                lc.call_label,
                lc.due_date,
                lc.issued_at,
-               SUM(lcu.amount)                                               AS total_amount,
-               SUM(lcu.amount) FILTER (WHERE lcu.budget_line_id IS NOT NULL) AS charge_amount,
-               SUM(lcu.amount) FILTER (WHERE lcu.budget_line_id IS NULL)     AS works_fund_amount,
+               SUM(lcu.amount)                                                              AS total_amount,
+               COALESCE(SUM(lcu.amount) FILTER (WHERE lcu.budget_line_id IS NOT NULL), 0) AS charge_amount,
+               COALESCE(SUM(lcu.amount) FILTER (WHERE lcu.budget_line_id IS NULL), 0)     AS works_fund_amount,
                CASE
                    WHEN bool_or(lcu.status::text = 'overdue') THEN 'overdue'
                    WHEN bool_and(lcu.status::text = 'paid')   THEN 'paid'
@@ -316,11 +403,13 @@ pub async fn charges(
            FROM levy_call lc
            JOIN budget b           ON b.id             = lc.budget_id AND b.building_id = $2
            JOIN levy_call_unit lcu ON lcu.levy_call_id = lc.id        AND lcu.unit_id   = $1
+            WHERE ($3::date IS NULL OR COALESCE(lc.issued_at::date, lc.due_date) >= $3::date)
            GROUP BY lc.id, b.fiscal_year, lc.call_label, lc.due_date, lc.issued_at
            ORDER BY lc.due_date DESC"#,
     )
     .bind(id)
     .bind(auth.building_id)
+    .bind(ownership_start_date)
     .fetch_all(&state.pool)
     .await?;
 
@@ -340,11 +429,13 @@ pub async fn charges(
            JOIN budget b     ON b.id  = lc.budget_id AND b.building_id = $2
            LEFT JOIN budget_line bl  ON bl.id  = lcu.budget_line_id
            LEFT JOIN allocation_key ak ON ak.id = lcu.key_id
-           WHERE lcu.unit_id = $1
+            WHERE lcu.unit_id = $1
+              AND ($3::date IS NULL OR COALESCE(lc.issued_at::date, lc.due_date) >= $3::date)
            ORDER BY lcu.levy_call_id, bl.label NULLS LAST"#,
     )
     .bind(id)
     .bind(auth.building_id)
+    .bind(ownership_start_date)
     .fetch_all(&state.pool)
     .await?;
 

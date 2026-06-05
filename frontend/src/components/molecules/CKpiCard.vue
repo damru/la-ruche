@@ -14,6 +14,7 @@ withDefaults(defineProps<{
   emphasize?: boolean
   emphasizeValue?: boolean
 }>(), {
+  label: undefined,
   delta: undefined,
   deltaVariant: 'neutral',
   subtitle: undefined,

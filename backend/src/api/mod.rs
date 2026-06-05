@@ -67,6 +67,7 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
             post(auth::reset_password_confirm),
         )
         .route("/auth/invite/accept", post(auth::invite_accept))
+        .route("/auth/invite/validate", get(auth::validate_invite))
         // ── Building ────────────────────────────────────────────
         .route("/building", get(building::get).put(building::update))
         .route("/building/stats", get(building::stats))
@@ -94,13 +95,19 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
         .route("/units/{id}/transfer", post(units::transfer))
         .route("/units/{id}/charges", get(units::charges))
         // ── Users ───────────────────────────────────────────────
-        .route("/users", get(users::list))
-        .route("/users/invite", post(stubs::users::invite))
+        .route("/users", get(users::list).post(users::create))
+        .route("/users/invite", post(users::invite))
         .route(
             "/users/{id}",
-            get(stubs::users::get).delete(stubs::users::deactivate),
+            get(users::get)
+                .put(users::update_resident)
+                .delete(users::deactivate),
         )
-        .route("/users/{id}/roles", put(stubs::users::update_roles))
+        .route("/users/{id}/roles", put(users::update_roles))
+        .route("/users/{id}/anonymize", post(users::anonymize))
+        .route("/users/{id}/invite", post(users::send_invite))
+        .route("/users/{id}/reactivate", post(users::reactivate))
+        .route("/users/invites/{id}", delete(users::revoke_invite))
         // ── Meetings ────────────────────────────────────────────
         .route("/meetings", get(assemblies::list).post(assemblies::create))
         .route(
