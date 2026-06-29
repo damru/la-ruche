@@ -542,12 +542,13 @@ struct LevyListRow {
     id: Uuid,
     call_label: String,
     due_date: NaiveDate,
-    issued_at: DateTime<Utc>,
+    issued_at: Option<DateTime<Utc>>,
     unit_id: Uuid,
     unit_number: String,
     amount: Decimal,
     charge_amount: Decimal,
     works_fund_amount: Decimal,
+    call_status: String,
     status: String,
     paid_at: Option<DateTime<Utc>>,
     owner_id: Option<Uuid>,
@@ -571,6 +572,7 @@ pub async fn list_levies(
                SUM(lcu.amount)::numeric                                                              AS amount,
                COALESCE(SUM(lcu.amount) FILTER (WHERE lcu.budget_line_id IS NOT NULL), 0)::numeric AS charge_amount,
                COALESCE(SUM(lcu.amount) FILTER (WHERE lcu.budget_line_id IS NULL), 0)::numeric     AS works_fund_amount,
+               lc.status::text                 AS call_status,
                CASE
                    WHEN bool_or(lcu.status::text = 'overdue') THEN 'overdue'
                    WHEN bool_and(lcu.status::text = 'paid')   THEN 'paid'
@@ -603,7 +605,7 @@ pub async fn list_levies(
            LEFT JOIN user_account ua ON ua.id = uo.user_id
            WHERE lc.budget_id = $1
              AND ($3::uuid IS NULL OR uo.user_id IS NOT NULL)
-           GROUP BY lc.id, lc.call_label, lc.due_date, lc.issued_at,
+           GROUP BY lc.id, lc.call_label, lc.due_date, lc.issued_at, lc.status,
                     u.id, u.unit_number, uo.user_id, ua.first_name, ua.last_name
            ORDER BY lc.due_date DESC, u.unit_number"#,
     )
@@ -627,6 +629,7 @@ pub async fn list_levies(
                 "works_fund_amount": r.works_fund_amount,
                 "due_date":          r.due_date,
                 "call_label":        r.call_label,
+                "call_status":       r.call_status,
                 "status":            r.status,
                 "issued_at":         r.issued_at,
                 "paid_at":           r.paid_at,
@@ -665,6 +668,38 @@ pub async fn levy_amount_totals(
         charge_amount: row.charge_total,
         works_fund_amount: row.works_total,
     })
+}
+
+/// Transitions a levy_call from 'draft' to 'issued'. Returns AppError::NotFound if the
+/// levy_call doesn't exist in this building, or the immutability error if already issued.
+pub async fn issue_levy_call(
+    pool: &PgPool,
+    levy_call_id: Uuid,
+    building_id: Uuid,
+) -> crate::errors::AppResult<()> {
+    let status: Option<String> = sqlx::query_scalar(
+        r#"SELECT lc.status::text
+           FROM levy_call lc
+           JOIN budget b ON b.id = lc.budget_id
+           WHERE lc.id = $1 AND b.building_id = $2"#,
+    )
+    .bind(levy_call_id)
+    .bind(building_id)
+    .fetch_optional(pool)
+    .await?;
+
+    let status = status.ok_or(crate::errors::AppError::NotFound)?;
+    crate::domain::immutability::assert_mutable(
+        &crate::domain::immutability::Entity::LevyCall,
+        &status,
+    )?;
+
+    sqlx::query("UPDATE levy_call SET status = 'issued', issued_at = NOW() WHERE id = $1")
+        .bind(levy_call_id)
+        .execute(pool)
+        .await?;
+
+    Ok(())
 }
 
 /// Mark all levy_call_unit rows for a given (levy_call, unit) pair as paid.

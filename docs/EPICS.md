@@ -172,7 +172,7 @@ Historique de propriété tracé avec dates de cession, invitation par lien toke
 * `EP-002-S16` ✅ — Archiver un compte résident : désactiver l'accès à une date effective, conserver les données intactes, et permettre la réactivation si le compte n'est pas encore anonymisé ; transition `active → archived → active` (PRD US-GP-004, cycle de vie §4)
 * `EP-002-S17` ✅ — Enregistrer la mutation complète d'un lot : saisir date effective, ancien et nouveau propriétaire (existant ou à créer), révoquer l'accès de l'ancien propriétaire à la date effective, créer le nouveau lien `unit_ownership`, gérer l'état `pending_transfer` entre l'archivage vendeur et l'acceptation acquéreur, bloquer deux propriétaires actifs simultanément (422) et tracer les charges courantes non soldées à la date de mutation (PRD US-GP-003)
 * `EP-002-S18` ✅ — Attribuer et révoquer les rôles des résidents (`syndic`, `board_member`, `owner`, `tenant`) : unicité du syndic actif par copropriété, invalidation immédiate du cache de permissions à la révocation, contrainte d'auto-révocation du syndic bloquée sans désignation de successeur (PRD US-GP-006)
-* `EP-002-S19` ⏳ — Vue des charges par lot avec filtre propriétaire historique : dans `UnitChargesView`, sélecteur (syndic uniquement) pour filtrer les appels de fonds par période de propriété quand un lot a eu plusieurs propriétaires successifs (PRD US-GP-009)
+* `EP-002-S19` ✅ — Vue des charges par lot avec filtre propriétaire historique : dans `UnitChargesView`, sélecteur (syndic uniquement) pour filtrer les appels de fonds par période de propriété quand un lot a eu plusieurs propriétaires successifs (PRD US-GP-009)
 
 ***
 
@@ -526,8 +526,8 @@ Durcir les entités comptablement critiques pour empêcher toute modification r�
 **Stories :**
 
 * `EP-018-S01` — Entériner l’arbitrage documentaire avec `EP-017` : `audit_log` réservé aux mutations comptables/juridiques probantes, `activity_log` réservé aux événements métier de timeline, avec frontière de responsabilité documentée et non ambiguë
-* `EP-018-S02` — Créer l'infrastructure transverse d'immutabilité : module `domain/immutability`, guards `is_mutable()` / `is_deletable()`, repository de journal append-only et points d'appel obligatoires avant mutation
-* `EP-018-S03` — Sécuriser `levy_call` selon le Pattern A : ajout du statut `draft`, endpoint d'émission explicite (`POST /levy-calls/{id}/issue`), blocage des `UPDATE` / `DELETE` hors `draft` et trigger PG défensif
+* ✅ `EP-018-S02` — Créer l'infrastructure transverse d'immutabilité : module `domain/immutability`, guards `is_mutable()` / `is_deletable()`, repository de journal append-only et points d'appel obligatoires avant mutation
+* ✅ `EP-018-S03` — Sécuriser `levy_call` selon le Pattern A : ajout du statut `draft`, endpoint d'émission explicite (`POST /levy-calls/{id}/issue`), blocage des `UPDATE` / `DELETE` hors `draft` et trigger PG défensif
 * `EP-018-S04` — Appliquer le Pattern A sur `task`, `claim`, `vote`, `resolution` et `maintenance_log` automatique : champs financiers figés après état terminal, suppression interdite selon les règles ADR-009, et masquage UI des actions `Modifier` / `Supprimer`
 * `EP-018-S05` — Appliquer le Pattern B sur `vendor_contract` : ajouter `predecessor_id`, remplacer `Modifier` par `Créer un avenant`, clôturer l'ancien contrat à la date d'effet et exposer la chaîne d'avenants
 * `EP-018-S06` — Appliquer le Pattern B sur `budget` / `budget_line` : ajouter `parent_budget_id`, remplacer l'unicité annuelle par une contrainte compatible rectificatifs, versionner `budget_line` via `valid_from` / `valid_to` et créer le workflow de budget rectificatif

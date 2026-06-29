@@ -187,6 +187,7 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
             post(budget::generate_levies),
         )
         .route("/budgets/{id}/levies", get(budget::list_levies))
+        .route("/levy-calls/{id}/issue", post(budget::issue_levy_call))
         .route(
             "/levies/{levy_call_id}/units/{unit_id}/payment",
             put(budget::mark_paid),

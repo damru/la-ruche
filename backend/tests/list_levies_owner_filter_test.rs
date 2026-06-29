@@ -120,8 +120,8 @@ async fn manager_can_filter_budget_levies_by_historical_owner() {
     ] {
         sqlx::query(
             "INSERT INTO levy_call (id, budget_id, call_label, due_date, charge_amount, \
-             works_fund_amount, issued_at) \
-             VALUES ($1, $2, $3, $4, 100.00, 0.00, $5::timestamptz)",
+             works_fund_amount, issued_at, status) \
+             VALUES ($1, $2, $3, $4, 100.00, 0.00, $5::timestamptz, 'issued'::levy_status)",
         )
         .bind(lid)
         .bind(budget_id)

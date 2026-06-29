@@ -452,6 +452,16 @@ pub async fn list_levies(
     ))
 }
 
+pub async fn issue_levy_call(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+    Path(levy_call_id): Path<Uuid>,
+) -> AppResult<StatusCode> {
+    auth.require_role(&Role::Manager)?;
+    db::budget::issue_levy_call(&state.pool, levy_call_id, auth.building_id).await?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
 pub async fn mark_paid(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,
