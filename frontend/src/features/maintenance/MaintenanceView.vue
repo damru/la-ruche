@@ -465,6 +465,7 @@ function openDeleteModal(entry: MaintenanceEntry) {
                       <div class="entry-header-right">
                         <span class="entry-date">{{ formatDate(entry.intervention_date) }}</span>
                         <CBtn
+                          v-if="entry.source !== 'automatic'"
                           variant="icon"
                           :icon="CIconTrash"
                           class="tone--err"

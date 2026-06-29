@@ -240,7 +240,7 @@ pub async fn create(
 }
 
 /// Only managers and board members can edit manual log entries.
-/// Automatic entries (source = 'automatic') cannot be edited through this endpoint.
+/// Automatic entries (source = 'automatic') are frozen — assert_mutable enforces this.
 pub async fn update(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,
@@ -248,7 +248,13 @@ pub async fn update(
     Json(input): Json<UpdateLogbookInput>,
 ) -> AppResult<Json<serde_json::Value>> {
     auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
-
+    let existing = db::maintenance_log::get(&state.pool, id, auth.building_id)
+        .await?
+        .ok_or(AppError::NotFound)?;
+    crate::domain::immutability::assert_mutable(
+        &crate::domain::immutability::Entity::MaintenanceLog,
+        &existing.source,
+    )?;
     if input.title.trim().is_empty() {
         return Err(AppError::validation_code("errors.logbook.title_required"));
     }
@@ -270,13 +276,20 @@ pub async fn update(
     json_value(entry)
 }
 
-/// Only managers can delete logbook entries.
+/// Only managers can delete logbook entries. Automatic entries are frozen.
 pub async fn delete(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
 ) -> AppResult<StatusCode> {
     auth.require_role(&Role::Manager)?;
+    let existing = db::maintenance_log::get(&state.pool, id, auth.building_id)
+        .await?
+        .ok_or(AppError::NotFound)?;
+    crate::domain::immutability::assert_mutable(
+        &crate::domain::immutability::Entity::MaintenanceLog,
+        &existing.source,
+    )?;
     db::maintenance_log::delete(&state.pool, id, auth.building_id).await?;
     Ok(StatusCode::NO_CONTENT)
 }

@@ -440,6 +440,7 @@ function handleDocumentCountChanged(claimId: string, delta: number) {
                 <template v-if="canManage">
                   <CCardActions>
                     <CBtn
+                      v-if="!claim.transmitted_at"
                       variant="ghost"
                       size="sm"
                       :icon="CIconEdit"

@@ -863,6 +863,21 @@ pub async fn detach_document(
     Ok(deleted > 0)
 }
 
+pub async fn get_meeting_status(
+    pool: &PgPool,
+    meeting_id: Uuid,
+    building_id: Uuid,
+) -> crate::errors::AppResult<Option<String>> {
+    Ok(sqlx::query_scalar!(
+        "SELECT status::text FROM general_meeting WHERE id = $1 AND building_id = $2",
+        meeting_id,
+        building_id
+    )
+    .fetch_optional(pool)
+    .await?
+    .flatten())
+}
+
 pub async fn list_attendance(
     pool: &PgPool,
     meeting_id: Uuid,

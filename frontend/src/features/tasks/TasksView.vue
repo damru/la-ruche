@@ -516,6 +516,7 @@ async function downloadTaskDocument(documentId: string) {
   
                 <CCardActions>
                   <CBtn
+                    v-if="!isTerminal(task.status)"
                     variant="ghost"
                     size="sm"
                     :icon="CIconEdit"

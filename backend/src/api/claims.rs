@@ -49,6 +49,18 @@ pub async fn update(
     Json(mut input): Json<db::claim::UpdateClaimInput>,
 ) -> AppResult<Json<serde_json::Value>> {
     auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
+    let existing = db::claim::get(&state.pool, id, auth.building_id)
+        .await?
+        .ok_or(AppError::NotFound)?;
+    let imm_status = if existing.transmitted_at.is_some() {
+        "transmitted"
+    } else {
+        "open"
+    };
+    crate::domain::immutability::assert_mutable(
+        &crate::domain::immutability::Entity::Claim,
+        imm_status,
+    )?;
     input.title = input.title.trim().to_string();
     let claim = db::claim::update(&state.pool, id, auth.building_id, input)
         .await?
@@ -62,6 +74,18 @@ pub async fn delete(
     Path(id): Path<Uuid>,
 ) -> AppResult<StatusCode> {
     auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
+    let existing = db::claim::get(&state.pool, id, auth.building_id)
+        .await?
+        .ok_or(AppError::NotFound)?;
+    let imm_status = if existing.transmitted_at.is_some() {
+        "transmitted"
+    } else {
+        "open"
+    };
+    crate::domain::immutability::assert_mutable(
+        &crate::domain::immutability::Entity::Claim,
+        imm_status,
+    )?;
     let deleted_documents = db::claim::delete(&state.pool, id, auth.building_id).await?;
     let Some(deleted_documents) = deleted_documents else {
         return Err(AppError::NotFound);
