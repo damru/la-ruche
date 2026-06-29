@@ -215,6 +215,12 @@ export interface Budget {
   total_actual?: number
 }
 
+export interface AccountingCode {
+  code: string
+  label: string
+  category: string
+}
+
 export interface BudgetLine {
   id: string
   budget_id: string
@@ -223,6 +229,9 @@ export interface BudgetLine {
   key_name?: string
   budgeted_amount: number
   actual_amount?: number
+  account_code?: string
+  account_code_label?: string
+  account_code_category?: string
 }
 
 export interface LevyCall {

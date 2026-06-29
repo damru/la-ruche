@@ -168,6 +168,7 @@ pub struct CreateLineInput {
     pub label: String,
     pub key_id: Uuid,
     pub budgeted_amount: Decimal,
+    pub account_code: Option<String>,
 }
 
 pub async fn create_line(
@@ -184,6 +185,7 @@ pub async fn create_line(
         &input.label,
         input.key_id,
         input.budgeted_amount,
+        input.account_code.as_deref(),
     )
     .await?;
     Ok((
@@ -560,6 +562,16 @@ pub async fn get_works_fund(
         works_fund,
         legal_minimum_works_fund_rate_pct(),
     )))
+}
+
+pub async fn list_accounting_codes(
+    _auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+) -> AppResult<Json<serde_json::Value>> {
+    let codes = db::accounting_code::list(&state.pool).await?;
+    Ok(Json(
+        serde_json::to_value(codes).map_err(|e| AppError::Internal(e.into()))?,
+    ))
 }
 
 pub async fn update_works_fund(

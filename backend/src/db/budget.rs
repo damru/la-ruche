@@ -26,6 +26,7 @@ pub struct BudgetLineRow {
     pub key_id: Uuid,
     pub budgeted_amount: Decimal,
     pub actual_amount: Option<Decimal>,
+    pub account_code: Option<String>,
 }
 
 #[derive(Debug, Serialize, sqlx::FromRow)]
@@ -370,16 +371,15 @@ pub async fn list_lines(
     budget_id: Uuid,
     building_id: Uuid,
 ) -> crate::errors::AppResult<Vec<BudgetLineRow>> {
-    Ok(sqlx::query_as!(
-        BudgetLineRow,
+    Ok(sqlx::query_as::<_, BudgetLineRow>(
         r#"SELECT bl.id, bl.budget_id, bl.label, bl.key_id,
-           bl.budgeted_amount, bl.actual_amount
+           bl.budgeted_amount, bl.actual_amount, bl.account_code
            FROM budget_line bl
            JOIN budget b ON b.id = bl.budget_id AND b.building_id = $2
            WHERE bl.budget_id = $1"#,
-        budget_id,
-        building_id
     )
+    .bind(budget_id)
+    .bind(building_id)
     .fetch_all(pool)
     .await?)
 }
@@ -390,17 +390,18 @@ pub async fn create_line(
     label: &str,
     key_id: Uuid,
     budgeted_amount: Decimal,
+    account_code: Option<&str>,
 ) -> crate::errors::AppResult<BudgetLineRow> {
-    Ok(sqlx::query_as!(
-        BudgetLineRow,
-        r#"INSERT INTO budget_line (budget_id, label, key_id, budgeted_amount)
-           VALUES ($1, $2, $3, $4)
-           RETURNING id, budget_id, label, key_id, budgeted_amount, actual_amount"#,
-        budget_id,
-        label,
-        key_id,
-        budgeted_amount
+    Ok(sqlx::query_as::<_, BudgetLineRow>(
+        r#"INSERT INTO budget_line (budget_id, label, key_id, budgeted_amount, account_code)
+           VALUES ($1, $2, $3, $4, $5)
+           RETURNING id, budget_id, label, key_id, budgeted_amount, actual_amount, account_code"#,
     )
+    .bind(budget_id)
+    .bind(label)
+    .bind(key_id)
+    .bind(budgeted_amount)
+    .bind(account_code)
     .fetch_one(pool)
     .await?)
 }

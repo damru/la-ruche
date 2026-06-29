@@ -2,7 +2,7 @@ import { api } from './client'
 import axios from 'axios'
 import type {
   Meeting, MeetingAttendance, MeetingDocument, Resolution, VoteResult, UnitVote,
-  Budget, BudgetLine, LevyCall, WorksFund,
+  Budget, BudgetLine, LevyCall, WorksFund, AccountingCode,
   VendorContract, ContractReminder,
     Task, Claim, MaintenanceEntry,
   LogbookSummary,
@@ -231,8 +231,10 @@ export const budgetApi = {
     api.post(`/budgets/${id}/close`),
   listLines: (id: string) =>
     api.get<BudgetLine[]>(`/budgets/${id}/lines`),
-  createLine: (id: string, data: { label: string; key_id: string; budgeted_amount: number }) =>
+  createLine: (id: string, data: { label: string; key_id: string; budgeted_amount: number; account_code?: string }) =>
     api.post<BudgetLine>(`/budgets/${id}/lines`, data),
+  listAccountingCodes: () =>
+    api.get<AccountingCode[]>('/accounting-codes'),
   deleteLine: (id: string, lid: string) =>
     api.delete(`/budgets/${id}/lines/${lid}`),
   generateLevies: (id: string, data: { due_date: string; include_works_fund: boolean; call_label?: string }) =>

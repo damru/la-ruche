@@ -649,6 +649,8 @@
     "lineLabel": "Libellé du poste",
     "lineKey": "Clé de répartition",
     "lineBudgetedAmount": "Montant prévisionnel (€)",
+    "lineAccountCode": "Code comptable (plan comptable copropriété)",
+    "byAccountCategory": "Répartition par catégorie comptable",
     "includeWorksFund": "Inclure cotisation fonds travaux",
     "generateSummaryLabel": "Récapitulatif",
     "generateSummaryLotsLabel": "Lots impactés",
