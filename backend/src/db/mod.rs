@@ -1,5 +1,6 @@
 pub mod allocation_key;
 pub mod assembly;
+pub mod audit;
 pub mod budget;
 pub mod building;
 pub mod claim;

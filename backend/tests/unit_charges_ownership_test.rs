@@ -113,8 +113,8 @@ async fn co_owner_charges_are_limited_to_current_ownership_period() {
     .expect("insert budget");
 
     sqlx::query(
-        r#"INSERT INTO levy_call (id, budget_id, call_label, due_date, charge_amount, works_fund_amount, issued_at)
-           VALUES ($1, $2, 'Appel avant mutation', $3, 120.00, 0.00, '2026-02-10T10:00:00Z'::timestamptz)"#,
+        r#"INSERT INTO levy_call (id, budget_id, call_label, due_date, charge_amount, works_fund_amount, issued_at, status)
+           VALUES ($1, $2, 'Appel avant mutation', $3, 120.00, 0.00, '2026-02-10T10:00:00Z'::timestamptz, 'issued'::levy_status)"#,
     )
     .bind(levy_before_id)
     .bind(budget_id)
@@ -124,8 +124,8 @@ async fn co_owner_charges_are_limited_to_current_ownership_period() {
     .expect("insert levy before transfer");
 
     sqlx::query(
-        r#"INSERT INTO levy_call (id, budget_id, call_label, due_date, charge_amount, works_fund_amount, issued_at)
-           VALUES ($1, $2, 'Appel après mutation', $3, 180.00, 0.00, '2026-03-20T10:00:00Z'::timestamptz)"#,
+        r#"INSERT INTO levy_call (id, budget_id, call_label, due_date, charge_amount, works_fund_amount, issued_at, status)
+           VALUES ($1, $2, 'Appel après mutation', $3, 180.00, 0.00, '2026-03-20T10:00:00Z'::timestamptz, 'issued'::levy_status)"#,
     )
     .bind(levy_after_id)
     .bind(budget_id)
@@ -201,5 +201,73 @@ async fn co_owner_charges_are_limited_to_current_ownership_period() {
         manager_levies.len(),
         2,
         "manager must keep full historical visibility"
+    );
+    assert_eq!(
+        manager_body["pending_transfer"], false,
+        "unit with an active owner must not be pending_transfer"
+    );
+}
+
+#[tokio::test]
+async fn charges_pending_transfer_flag_when_no_active_owner() {
+    dotenvy::dotenv().ok();
+    let cfg = laruche::config::AppConfig::load().expect("config");
+    let pool = sqlx::PgPool::connect(&cfg.db.url).await.expect("db");
+    sqlx::migrate!("./migrations")
+        .run(&pool)
+        .await
+        .expect("migrations");
+
+    let building_id = Uuid::new_v4();
+    let manager_id = Uuid::new_v4();
+    let old_owner_id = Uuid::new_v4();
+    let unit_id = Uuid::new_v4();
+
+    let unit_number = format!("PT-{}", &Uuid::new_v4().simple().to_string()[..8]);
+    sqlx::query(
+        "INSERT INTO building (id, name, address_line1, postal_code, city, shares_total) VALUES ($1, 'PT Building', '1 rue PT', '75001', 'Paris', 1000)"
+    ).bind(building_id).execute(&pool).await.expect("building");
+
+    sqlx::query(
+        "INSERT INTO unit (id, building_id, unit_number, unit_type) VALUES ($1, $2, $3, 'apartment'::unit_type)"
+    ).bind(unit_id).bind(building_id).bind(&unit_number).execute(&pool).await.expect("unit");
+
+    sqlx::query(
+        "INSERT INTO user_account (id, email, last_name, first_name, password_hash) VALUES ($1, $2, 'Old', 'Owner', 'hash')"
+    ).bind(old_owner_id)
+     .bind(format!("old-pt-{}@test.local", Uuid::new_v4()))
+     .execute(&pool).await.expect("old owner");
+
+    sqlx::query(
+        "INSERT INTO user_account (id, email, last_name, first_name, password_hash) VALUES ($1, $2, 'Mgr', 'PT', 'hash')"
+    ).bind(manager_id)
+     .bind(format!("mgr-pt-{}@test.local", Uuid::new_v4()))
+     .execute(&pool).await.expect("manager");
+
+    // Old owner sold — all ownerships have an end_date → pending_transfer state
+    sqlx::query(
+        "INSERT INTO unit_owner (unit_id, user_id, start_date, end_date) VALUES ($1, $2, '2025-01-01', '2026-06-01')"
+    ).bind(unit_id).bind(old_owner_id).execute(&pool).await.expect("closed ownership");
+
+    let token = laruche::auth::jwt::generate_access_token(
+        manager_id,
+        building_id,
+        vec![laruche::domain::Role::Manager],
+        &cfg.auth.jwt_secret,
+        cfg.auth.access_token_ttl_secs,
+    )
+    .expect("token");
+
+    let server = common::test_server().await;
+    let resp = server
+        .get(&format!("/api/v1/units/{}/charges", unit_id))
+        .add_header("Authorization", format!("Bearer {}", token))
+        .await;
+    assert_eq!(resp.status_code(), axum::http::StatusCode::OK);
+
+    let body: Value = resp.json();
+    assert_eq!(
+        body["pending_transfer"], true,
+        "unit with no active owner must have pending_transfer=true"
     );
 }

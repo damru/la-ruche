@@ -20,6 +20,7 @@ import CLegalDescription from '@/components/atoms/CLegalDescription.vue'
 import CKpiCard from '@/components/molecules/CKpiCard.vue'
 import type { Column } from '@/components/molecules/CDataTable.vue'
 import CIconChevronRight from '@/components/atoms/CIconChevronRight.svg'
+import CIconWarn from '@/components/atoms/CIconWarn.svg'
 import CFormSelect from '@/components/atoms/CFormSelect.vue'
 import { unitsApi } from '@/api'
 import { usePageLoader } from '@/composables/usePageLoader'
@@ -190,6 +191,15 @@ function statusVariant(status: UnitChargesLevy['status']): 'pending' | 'valid' |
           </CMetaLine>
         </header>
 
+        <CBadge
+          v-if="data.pending_transfer"
+          variant="warn"
+          class="flex items-center gap-1"
+        >
+          <CIconWarn class="size-4 shrink-0" />
+          {{ t('units.charges.pendingTransfer') }}
+        </CBadge>
+
         <!-- Summary KPIs -->
         <div class="flex flex-wrap gap-4">
           <CKpiCard
@@ -216,7 +226,7 @@ function statusVariant(status: UnitChargesLevy['status']): 'pending' | 'valid' |
               {{ t('units.charges.history') }}
             </CHeading>
             <CFormSelect
-              v-if="auth.isManager && ownerFilterOptions.length > 0"
+              v-if="auth.isManager && ownerFilterOptions.length > 1"
               v-model="ownerFilterIdModel"
               :placeholder="t('budget.filterByOwner')"
               :options="[{ value: '', label: t('budget.filterAll') }, ...ownerFilterOptions]"

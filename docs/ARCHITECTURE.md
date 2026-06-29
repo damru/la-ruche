@@ -230,10 +230,9 @@ Le frontend conserve les feuilles globales historiques (`tokens.css`, `base.css`
 | Carnet | `maintenance_log`, `maintenance_log_document` |
 | Signalements | `report`, `report_document` — `report.task_id` FK informatif (EP-017, conversion signalement → tâche) |
 | Consultations | `consultation`, `consultation_choice`, `consultation_response`, `consultation_response_choice` |
+| Audit comptable | `audit_log` — journal probant append-only (ADR-009) ; champs : `entity_type`, `entity_id`, `operation`, `changed_by`, `old_values`/`new_values` JSONB (champs modifiés seulement). Aucun UPDATE/DELETE applicatif. `activity_log` (timeline UX EP-017) reste une cible backlog. |
 
 Conventions : UUID v4, TIMESTAMPTZ, soft delete via `active`/`status`, `updated_at` via triggers, JSONB pour OCR futur.
-
-> **Note** — Les tables `audit_log` (traçabilité comptable ADR-009) et `activity_log` (timeline UX EP-017/EP-018) sont **définies comme cibles d'architecture** mais pas encore créées en base. Elles feront l'objet de migrations dédiées.
 
 **Règle de gestion transverse — Upload = GED (2026-05-22)**
 Tout upload de fichier depuis n'importe quel module de l'application **crée systématiquement un enregistrement dans la table `document`** (GED centrale) avant d'être associé à l'entité source via une table de liaison dédiée (`{entite}_document`). Il n'existe pas de pièce jointe "privée" hors GED. Cette règle s'applique à tous les modules existants et à tout nouveau module qui introduit un mécanisme d'upload.

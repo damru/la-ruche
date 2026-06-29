@@ -693,6 +693,7 @@
       "totalPaid": "Total payé",
       "balance": "Solde dû",
       "empty": "Aucun appel de fonds pour ce lot",
+      "pendingTransfer": "Lot en cours de mutation — aucun propriétaire actif",
       "legalCard": {
         "art10title": "Participations aux charges",
         "art10summary": "Les propriétaires sont tenus de participer aux charges communes selon les tantièmes de leur lot, sauf disposition contraire prévue par le règlement de copropriété ou la loi.",

@@ -593,4 +593,5 @@ export interface UnitChargesResponse {
   total_issued: number
   total_paid: number
   balance: number
+  pending_transfer: boolean
 }
