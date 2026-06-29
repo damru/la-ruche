@@ -309,6 +309,20 @@ const budgetBreakdownItems = computed(() => {
     })
 })
 
+const totalsPerKey = computed(() => {
+  const map = new Map<string, { keyName: string; total: number }>()
+  for (const line of budgetLines.value) {
+    const keyName = line.key_name ?? t('common.noKey')
+    const existing = map.get(line.key_id)
+    if (existing) {
+      existing.total += Number(line.budgeted_amount ?? 0)
+    } else {
+      map.set(line.key_id, { keyName, total: Number(line.budgeted_amount ?? 0) })
+    }
+  }
+  return Array.from(map.values()).sort((a, b) => a.keyName.localeCompare(b.keyName))
+})
+
 const legalCardLinksLevies = computed(() => [
   {
     label: t('budget.legalCard.article35LinkLabel'),
@@ -883,7 +897,23 @@ function formatSharePercentage(value: number): string {
             <p>{{ t('common.noData') }}</p>
           </div>
 
-          <CFlexGroup v-else>
+          <template v-else>
+            <div
+              v-if="totalsPerKey.length > 0"
+              class="flex flex-wrap gap-3 pb-2 border-b border-outline-variant"
+            >
+              <div
+                v-for="kt in totalsPerKey"
+                :key="kt.keyName"
+                class="flex flex-col gap-0.5"
+              >
+                <span class="text-xs text-on-surface-variant">{{ kt.keyName }}</span>
+                <span class="font-mono font-medium text-sm">{{ formatCurrency(kt.total) }}</span>
+              </div>
+            </div>
+          </template>
+
+          <CFlexGroup v-if="budgetLines.length > 0">
             <div
               v-for="line in budgetLines"
               :key="line.id"

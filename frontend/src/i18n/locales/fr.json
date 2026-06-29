@@ -25,6 +25,7 @@
     "required": "Champ obligatoire",
     "optional": "Optionnel",
     "noData": "Aucune donnée",
+    "noKey": "Sans clé",
     "seeAll": "Voir tout",
     "actions": "Actions",
     "add": "Ajouter",

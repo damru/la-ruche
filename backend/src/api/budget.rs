@@ -46,13 +46,27 @@ fn serialize_works_fund(
     })
 }
 
+fn can_see_draft(auth: &AuthUser) -> bool {
+    auth.roles
+        .iter()
+        .any(|r| matches!(r, Role::Manager | Role::BoardMember))
+}
+
 pub async fn list(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,
 ) -> AppResult<Json<serde_json::Value>> {
     let budgets = db::budget::list(&state.pool, auth.building_id).await?;
+    let visible: Vec<_> = if can_see_draft(&auth) {
+        budgets
+    } else {
+        budgets
+            .into_iter()
+            .filter(|b| b.status != "draft")
+            .collect()
+    };
     Ok(Json(
-        serde_json::to_value(budgets).map_err(|e| AppError::Internal(e.into()))?,
+        serde_json::to_value(visible).map_err(|e| AppError::Internal(e.into()))?,
     ))
 }
 
@@ -64,6 +78,9 @@ pub async fn get(
     let b = db::budget::get(&state.pool, id, auth.building_id)
         .await?
         .ok_or(AppError::NotFound)?;
+    if b.status == "draft" && !can_see_draft(&auth) {
+        return Err(AppError::NotFound);
+    }
     Ok(Json(
         serde_json::to_value(b).map_err(|e| AppError::Internal(e.into()))?,
     ))
