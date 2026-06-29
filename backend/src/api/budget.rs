@@ -19,6 +19,15 @@ use crate::{
     errors::{AppError, AppResult},
 };
 
+/// Minimum legal annual works-fund contribution rate, as a percentage of the
+/// provisional budget (art. 14-2-1 loi 1965).
+///
+/// Returns the no-PPT floor of 5 %, which applies to every case the MVP can
+/// represent. When a *plan pluriannuel de travaux* (PPT) is adopted the law adds
+/// a second, cumulative floor — the contribution must also be ≥ 2,5 % of the PPT
+/// works amount. That branch needs a PPT data model, which is out of MVP scope
+/// (see docs/LEGAL.md §4.4 and EP-009-S04); it is deferred there. Until then no
+/// PPT can exist, so 5 % is the applicable floor for all budgets.
 fn legal_minimum_works_fund_rate_pct() -> Decimal {
     Decimal::new(5, 0)
 }
@@ -608,4 +617,32 @@ pub async fn update_works_fund(
         works_fund,
         legal_minimum_works_fund_rate_pct(),
     )))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn legal_floor_is_five_percent_without_ppt() {
+        assert_eq!(legal_minimum_works_fund_rate_pct(), Decimal::new(5, 0));
+    }
+
+    #[test]
+    fn target_amount_is_exact_for_round_inputs() {
+        // 5 % of 10 000 = 500.00
+        assert_eq!(
+            works_fund_target_amount(Decimal::new(10_000, 0), Decimal::new(5, 0)),
+            Decimal::new(50_000, 2)
+        );
+    }
+
+    #[test]
+    fn target_amount_rounds_to_two_decimals() {
+        // 5 % of 333.33 = 16.6665 -> 16.67 at 2 dp
+        assert_eq!(
+            works_fund_target_amount(Decimal::new(33_333, 2), Decimal::new(5, 0)),
+            Decimal::new(1_667, 2)
+        );
+    }
 }

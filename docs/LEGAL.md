@@ -417,6 +417,8 @@ Les sommes versées au fonds de travaux sont attachées aux lots et entrent déf
 
 **Écart constaté :** La référence précédente (art. 14-2 ALUR 2014 + « minimum 5% ») ne reflète plus l'état du droit depuis 01/01/2023. L'art. 14-2-1 (loi Climat 2021) est la référence applicable.
 
+**État d'implémentation (EP-004-S10) :** le plancher **5 % sans PPT** est appliqué et bloque la clôture / l'émission si la dotation est insuffisante (`legal_minimum_works_fund_rate_pct`). Le second plancher cumulatif **2,5 % du montant du PPT** nécessite un modèle de PPT — hors scope MVP (§ ci-dessus, EP-009-S04) — et y est **différé**. Tant qu'aucun PPT ne peut être saisi dans l'application, le plancher applicable reste 5 % pour tous les budgets : la branche 2,5 % est inatteignable et son ajout serait spéculatif.
+
 ---
 
 ### 4.5 Arrêté de comptes
