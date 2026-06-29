@@ -188,6 +188,7 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
         )
         .route("/budgets/{id}/levies", get(budget::list_levies))
         .route("/levy-calls/{id}/issue", post(budget::issue_levy_call))
+        .route("/levy-calls/{id}/credit-note", post(budget::credit_note))
         .route(
             "/levies/{levy_call_id}/units/{unit_id}/payment",
             put(budget::mark_paid),
@@ -287,6 +288,7 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
                 .put(logbook::update)
                 .delete(logbook::delete),
         )
+        .route("/logbook/{id}/correction", post(logbook::correction))
         // ── Reports ─────────────────────────────────────────────
         .route("/reports", get(reports::list).post(reports::create))
         .route(

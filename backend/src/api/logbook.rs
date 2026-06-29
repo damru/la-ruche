@@ -293,3 +293,44 @@ pub async fn delete(
     db::maintenance_log::delete(&state.pool, id, auth.building_id).await?;
     Ok(StatusCode::NO_CONTENT)
 }
+
+/// Input for a correction entry (append-only amendment of a frozen manual entry).
+#[derive(Deserialize)]
+pub struct CorrectionInput {
+    pub title: String,
+    pub description: Option<String>,
+    pub intervention_date: NaiveDate,
+    pub cost: Option<Decimal>,
+    pub vendor_name: Option<String>,
+    pub contract_id: Option<Uuid>,
+}
+
+/// Creates a correction entry referencing an existing manual log entry (EP-018-S07 Pattern C).
+pub async fn correction(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+    Json(input): Json<CorrectionInput>,
+) -> AppResult<(StatusCode, Json<serde_json::Value>)> {
+    auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
+
+    if input.title.trim().is_empty() {
+        return Err(AppError::validation_code("errors.logbook.title_required"));
+    }
+
+    let entry = db::maintenance_log::create_correction(
+        &state.pool,
+        id,
+        auth.building_id,
+        auth.user_id,
+        &input.title,
+        input.description.as_deref(),
+        input.intervention_date,
+        input.cost,
+        input.vendor_name.as_deref(),
+        input.contract_id,
+    )
+    .await?;
+
+    Ok((StatusCode::CREATED, json_value(entry)?))
+}

@@ -727,3 +727,69 @@ pub async fn mark_paid(
     .await?;
     Ok(())
 }
+
+/// Creates a credit note (avoir) for a non-draft levy_call.
+/// Returns the new levy_call id.
+pub async fn create_credit_note(
+    pool: &PgPool,
+    levy_call_id: Uuid,
+    building_id: Uuid,
+) -> crate::errors::AppResult<Uuid> {
+    #[derive(sqlx::FromRow)]
+    struct LevyCallSourceRow {
+        budget_id: Uuid,
+        call_label: String,
+        charge_amount: Decimal,
+        works_fund_amount: Decimal,
+        status: String,
+    }
+
+    let source = sqlx::query_as::<_, LevyCallSourceRow>(
+        r#"SELECT lc.budget_id, lc.call_label, lc.charge_amount, lc.works_fund_amount,
+                  lc.status::text AS status
+           FROM levy_call lc
+           JOIN budget b ON b.id = lc.budget_id
+           WHERE lc.id = $1 AND b.building_id = $2"#,
+    )
+    .bind(levy_call_id)
+    .bind(building_id)
+    .fetch_optional(pool)
+    .await?
+    .ok_or(crate::errors::AppError::NotFound)?;
+
+    if source.status == "draft" {
+        return Err(crate::errors::AppError::validation_code(
+            "errors.levy_call.credit_note_requires_issued",
+        ));
+    }
+
+    let new_id: Uuid = sqlx::query_scalar(
+        r#"INSERT INTO levy_call
+               (budget_id, call_label, charge_amount, works_fund_amount, corrects_levy_call_id, status)
+           VALUES ($1, $2, $3, $4, $5, 'draft'::levy_status)
+           RETURNING id"#,
+    )
+    .bind(source.budget_id)
+    .bind(format!("AVOIR — {}", source.call_label))
+    .bind(-source.charge_amount)
+    .bind(-source.works_fund_amount)
+    .bind(levy_call_id)
+    .fetch_one(pool)
+    .await?;
+
+    sqlx::query(
+        r#"INSERT INTO levy_call_unit
+               (levy_call_id, unit_id, budget_line_id, key_id, amount,
+                shares_snapshot, shares_total_snapshot)
+           SELECT $1, unit_id, budget_line_id, key_id, -amount,
+                  shares_snapshot, shares_total_snapshot
+           FROM levy_call_unit
+           WHERE levy_call_id = $2"#,
+    )
+    .bind(new_id)
+    .bind(levy_call_id)
+    .execute(pool)
+    .await?;
+
+    Ok(new_id)
+}

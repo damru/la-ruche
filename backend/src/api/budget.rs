@@ -462,6 +462,20 @@ pub async fn issue_levy_call(
     Ok(StatusCode::NO_CONTENT)
 }
 
+pub async fn credit_note(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+    Path(levy_call_id): Path<Uuid>,
+) -> AppResult<(StatusCode, Json<serde_json::Value>)> {
+    auth.require_role(&Role::Manager)?;
+    let new_id =
+        db::budget::create_credit_note(&state.pool, levy_call_id, auth.building_id).await?;
+    Ok((
+        StatusCode::CREATED,
+        Json(serde_json::json!({ "id": new_id })),
+    ))
+}
+
 pub async fn mark_paid(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,

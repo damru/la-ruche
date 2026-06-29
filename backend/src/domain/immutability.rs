@@ -18,7 +18,7 @@ pub enum Entity {
     Task,
     /// Financial fields frozen once `transmitted_at IS NOT NULL` (pass "transmitted").
     Claim,
-    /// Source `automatic` entries are always frozen; `manual` entries are mutable.
+    /// All entries frozen (EP-018-S07 Pattern C); corrections use append-only correction entries.
     MaintenanceLog,
 }
 
@@ -30,7 +30,7 @@ pub enum Entity {
 /// - `Resolution`     → parent assembly's meeting_status
 /// - `Task`           → task_status string
 /// - `Claim`          → "transmitted" when transmitted_at IS NOT NULL, else any other value
-/// - `MaintenanceLog` → log_source string ("automatic" | "manual")
+/// - `MaintenanceLog` → ignored; always frozen (EP-018-S07 Pattern C)
 pub fn is_mutable(entity: &Entity, status: &str) -> bool {
     match entity {
         Entity::LevyCall => status == "draft",
@@ -38,7 +38,7 @@ pub fn is_mutable(entity: &Entity, status: &str) -> bool {
         Entity::Resolution => status != "closed",
         Entity::Task => !matches!(status, "closed" | "cancelled"),
         Entity::Claim => status != "transmitted",
-        Entity::MaintenanceLog => status != "automatic",
+        Entity::MaintenanceLog => false,
     }
 }
 
@@ -106,9 +106,9 @@ mod tests {
     }
 
     #[test]
-    fn maintenance_log_automatic_always_frozen() {
+    fn maintenance_log_always_frozen() {
         assert!(!is_mutable(&Entity::MaintenanceLog, "automatic"));
-        assert!(is_mutable(&Entity::MaintenanceLog, "manual"));
+        assert!(!is_mutable(&Entity::MaintenanceLog, "manual"));
     }
 
     #[test]
@@ -118,6 +118,7 @@ mod tests {
             (&Entity::LevyCall, "draft", true),
             (&Entity::Task, "closed", false),
             (&Entity::MaintenanceLog, "automatic", false),
+            (&Entity::MaintenanceLog, "manual", false),
         ] {
             assert_eq!(is_deletable(entity, status), expected);
         }
