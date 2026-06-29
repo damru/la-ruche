@@ -964,7 +964,7 @@ function formatSharePercentage(value: number): string {
                 <CMetaLine class="text-xs">
                   <CBadge
                     v-if="line.account_code"
-                    variant="secondary"
+                    variant="default"
                     :title="line.account_code_label"
                   >
                     {{ line.account_code }}
