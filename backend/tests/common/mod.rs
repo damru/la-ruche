@@ -140,6 +140,52 @@ pub async fn test_db() -> (AppConfig, PgPool) {
 /// requests on the same server instance.
 pub async fn test_server() -> TestServer {
     let (cfg, pool) = test_db().await;
+    server_for(cfg, pool).await
+}
+
+/// Like [`test_server`], but wired to a brand-new, freshly-migrated database
+/// dedicated to the caller. Use this for flows that require a pristine instance
+/// (e.g. first-run onboarding, which asserts an empty `user_account` and relies
+/// on the bootstrap first-run guard): the shared test database is polluted by
+/// every other integration binary, so order-independent isolation is mandatory.
+pub async fn isolated_test_server() -> TestServer {
+    let infra = infra().await;
+
+    // Carve out a uniquely-named database on the same PostgreSQL server.
+    // The name is a server-generated UUID identifier — no user input — so the
+    // `AssertSqlSafe` wrapper required by sqlx 0.9 carries no injection risk.
+    let db_name = format!("laruche_test_{}", uuid::Uuid::new_v4().simple());
+    let admin = PgPool::connect(&infra.cfg.db.url)
+        .await
+        .expect("connect to create isolated database");
+    sqlx::query(sqlx::AssertSqlSafe(format!(
+        "CREATE DATABASE \"{db_name}\""
+    )))
+    .execute(&admin)
+    .await
+    .expect("create isolated database");
+    admin.close().await;
+
+    // Point a config clone at the new database and migrate it.
+    let mut url = url::Url::parse(&infra.cfg.db.url).expect("parse test database url");
+    url.set_path(&format!("/{db_name}"));
+    let db_url = url.to_string();
+
+    let pool = PgPool::connect(&db_url)
+        .await
+        .expect("connect to isolated database");
+    sqlx::migrate!("./migrations")
+        .run(&pool)
+        .await
+        .expect("run migrations on isolated database");
+
+    let mut cfg = infra.cfg.clone();
+    cfg.db.url = db_url;
+    server_for(cfg, pool).await
+}
+
+/// Assembles the application stack into a cookie-persisting `TestServer`.
+async fn server_for(cfg: AppConfig, pool: PgPool) -> TestServer {
     let storage = laruche::storage::client::StorageClient::new(&cfg.s3)
         .await
         .expect("storage");

@@ -12,7 +12,7 @@ use serde_json::{Value, json};
 
 #[tokio::test]
 async fn nominal_api_flow() {
-    let server = common::test_server().await;
+    let server = common::isolated_test_server().await;
 
     // ── Onboarding: fresh instance needs onboarding ───────────────────
     let status = server.get("/api/v1/onboarding/status").await;
