@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import CCard from '@/components/molecules/CCard.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
@@ -19,7 +19,17 @@ import type { AllocationKey } from '@/types/domain'
 const { t } = useI18n()
 
 const keys = ref<AllocationKey[]>([])
-const keyBalanceDelta = ref<Record<string, number>>({})
+
+type KeyBalance = { shares_sum: number; shares_total: number; delta: number }
+const keyBalance = ref<Record<string, KeyBalance>>({})
+
+const columns = computed(() => [
+  { key: 'name', label: t('common.name') },
+  { key: 'description', label: t('settings.keys.descriptionLabel') },
+  { key: 'shares', label: t('units.shares'), numeric: true },
+  { key: 'balance', label: t('common.status') },
+  { key: 'actions', label: '', width: '1%' },
+])
 
 // ── Modal state ───────────────────────────────────────────────────
 const showKeyModal = ref(false)
@@ -42,11 +52,14 @@ function openDeleteKeyModal(key: AllocationKey) {
   showDeleteKeyModal.value = true
 }
 
-function handleKeySaved(key: AllocationKey, balanceDelta: number | null) {
+async function handleKeySaved(key: AllocationKey) {
   const idx = keys.value.findIndex(k => k.id === key.id)
   if (idx >= 0) keys.value[idx] = key
   else keys.value.push(key)
-  if (balanceDelta !== null) keyBalanceDelta.value[key.id] = balanceDelta
+  try {
+    const b = await allocationKeysApi.balance(key.id)
+    keyBalance.value[key.id] = { shares_sum: b.data.shares_sum, shares_total: b.data.shares_total, delta: b.data.delta }
+  } catch { /* non-blocking */ }
 }
 
 function handleKeyDeleted(id: string) {
@@ -58,11 +71,11 @@ function handleKeyDeleted(id: string) {
 async function loadKeys() {
   const res = await allocationKeysApi.list()
   keys.value = res.data
-  // EP-001-S07: fetch balance delta for each key (non-blocking, best-effort)
+  // EP-001-S07: fetch balance for each key (non-blocking, best-effort)
   await Promise.all(res.data.map(async (k) => {
     try {
       const b = await allocationKeysApi.balance(k.id)
-      keyBalanceDelta.value[k.id] = b.data.delta
+      keyBalance.value[k.id] = { shares_sum: b.data.shares_sum, shares_total: b.data.shares_total, delta: b.data.delta }
     } catch { /* non-blocking */ }
   }))
 }
@@ -127,48 +140,71 @@ onMounted(reload)
           </CEmptyState>
         </template>
         <template v-else>
-          <div class="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-4">
-            <CCard
-              v-for="key in keys"
-              :key="key.id"
-              class="key-card"
+          <CCard class="p-0!">
+            <CDataTable
+              :columns="columns"
+              :rows="keys"
+              row-key="id"
+              :empty-text="t('settings.keys.empty')"
             >
-              <div class="key-card__inner">
-                <div class="key-info">
-                  <div class="key-info__name">
-                    <span class="title-sm">{{ key.name }}</span>
-                    <span
-                      v-if="keyBalanceDelta[key.id] !== 0 && keyBalanceDelta[key.id] !== undefined"
-                      class="balance-badge"
-                      :title="t('settings.keys.imbalanceDetail', { delta: keyBalanceDelta[key.id] })"
-                    >
-                      <CIconWarn
-                        
-                        class="icon-xs"
-                        aria-hidden="true"
-                      /> {{ t('settings.keys.imbalance') }}
-                    </span>
-                  </div>
-                  <span
-                    v-if="key.description"
-                    class="key-info__desc"
-                  >{{ key.description }}</span>
+              <template #cell-name="{ row }">
+                <div class="flex flex-wrap items-center gap-2">
+                  <strong>{{ row.name }}</strong>
+                  <CBadge
+                    v-if="row.key_type === 'general'"
+                    variant="default"
+                  >
+                    {{ t('settings.keys.general') }}
+                  </CBadge>
                 </div>
-                <div class="key-actions">
+              </template>
+              <template #cell-description="{ row }">
+                <span class="dim">{{ row.description || '—' }}</span>
+              </template>
+              <template #cell-shares="{ row }">
+                <span
+                  v-if="keyBalance[row.id]"
+                  class="data-md whitespace-nowrap"
+                >
+                  {{ keyBalance[row.id].shares_sum }} / {{ keyBalance[row.id].shares_total }}
+                </span>
+                <span
+                  v-else
+                  class="dim"
+                >—</span>
+              </template>
+              <template #cell-balance="{ row }">
+                <CBadge
+                  v-if="keyBalance[row.id] && keyBalance[row.id].delta !== 0"
+                  variant="warn"
+                  :title="t('settings.keys.imbalanceDetail', { delta: keyBalance[row.id].delta })"
+                >
+                  {{ t('settings.keys.imbalance') }}
+                </CBadge>
+                <CBadge
+                  v-else
+                  variant="valid"
+                >
+                  {{ t('settings.keys.balanced') }}
+                </CBadge>
+              </template>
+              <template #cell-actions="{ row }">
+                <div class="action-btns">
                   <CBtn
-                    variant="ghost"
-                    size="sm"
+                    variant="icon"
                     :icon="CIconEdit"
                     :title="t('common.edit')"
-                    @click="openEditModal(key)"
+                    :aria-label="t('common.edit')"
+                    @click="openEditModal(row)"
                   />
                   <CBtn
-                    v-if="key.key_type !== 'general'"
-                    variant="danger"
-                    size="sm"
+                    v-if="row.key_type !== 'general'"
+                    variant="icon"
+                    class="tone--err"
                     :icon="CIconTrash"
                     :title="t('common.delete')"
-                    @click="openDeleteKeyModal(key)"
+                    :aria-label="t('common.delete')"
+                    @click="openDeleteKeyModal(row)"
                   />
                   <span
                     v-else
@@ -177,14 +213,13 @@ onMounted(reload)
                   >
                     <CIconLock
                       class="icon-sm"
-                      
                       aria-hidden="true"
                     />
                   </span>
                 </div>
-              </div>
-            </CCard>
-          </div>
+              </template>
+            </CDataTable>
+          </CCard>
         </template>
       </template>
     </div>
@@ -206,67 +241,24 @@ onMounted(reload)
 </template>
 
 <style scoped>
-.key-info__name { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; margin-bottom: 2px; }
-.key-info__name .title-sm { font-weight: var(--fw-semibold); }
-.key-info__desc { font-size: var(--text-xs); color: var(--color-on-surface-variant); }
-.key-actions { display: flex; gap: var(--space-2); align-items: center; padding-top: var(--space-4); border-top: 1px solid var(--color-surface-container-high); margin-top: var(--space-3); }
+.dim { color: var(--color-on-surface-variant); }
 
-/* keys-grid replaced by global .cards-grid */
-
-/* Column layout: info grows, actions pinned to bottom */
-.key-card :deep(.c-card) {
-  height: 100%;
-}
-
-.key-card__inner {
+.action-btns {
   display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-
-.key-info { display: flex; flex-direction: column; gap: var(--space-1); flex: 1; }
-
-.balance-badge {
-  display: inline-flex;
-  align-items: center;
   gap: var(--space-1);
-  padding: 2px var(--space-2);
-  border-radius: var(--radius-lg);
-  background: color-mix(in srgb, var(--color-warning) 15%, transparent);
-  color: var(--color-warning, #b45309);
-  font-size: var(--text-2xs);
-  font-weight: var(--fw-semibold);
-  white-space: nowrap;
+  justify-content: flex-end;
+  align-items: center;
 }
 
 .general-key-lock {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: var(--radius-lg);
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: var(--radius-md);
   color: var(--color-on-surface-variant);
   cursor: default;
   flex-shrink: 0;
 }
-.general-key-lock:hover {
-  background: var(--color-surface-container-low);
-  color: var(--color-on-surface);
-}
-
-.shares-section { border-top: 1px solid var(--color-outline-variant); padding-top: var(--space-4); }
-.shares-loading { display: flex; align-items: center; gap: var(--space-2); color: var(--color-on-surface-variant); font-size: var(--text-sm); }
-
-.c-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-
-.shares-summary {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: var(--text-sm);
-  color: var(--color-on-surface-variant);
-}
-.sum-mismatch { color: var(--color-error); }
-.dim { color: var(--color-on-surface-variant); }
 </style>

@@ -1562,6 +1562,7 @@
       "sumMismatch": "La somme des tantièmes ne correspond pas au total de la copropriété. Vérifiez les valeurs avant d'enregistrer.",
       "imbalance": "Déséquilibre",
       "imbalanceDetail": "Écart de {delta} tantième(s) par rapport au total — les appels de fonds ne peuvent pas être générés tant que ce déséquilibre persiste.",
+      "balanced": "Équilibrée",
       "general": "Clé système",
       "generalProtected": "Cette clé est obligatoire et ne peut pas être supprimée (art. 10 loi 1965).",
       "confirmDeleteTitle": "Supprimer la clé de répartition",
