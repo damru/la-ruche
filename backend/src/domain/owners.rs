@@ -162,7 +162,6 @@ mod tests {
         // unit_allocation_key are independent tables sharing only unit_id.
         // There is no FK or cascade from unit_owner to unit_allocation_key.
         // → Ownership transfer preserves tantièmes by design (art. 6 loi 1965).
-        let unit_id = Uuid::new_v4();
         // Simulate: unit has shares 250/1000 on key "Charges Générales"
         let share_value_before = 250i32;
         // After a transfer (new owner assigned), share_value must remain 250

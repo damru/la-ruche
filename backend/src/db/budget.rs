@@ -764,6 +764,10 @@ pub async fn create_credit_note(
         ));
     }
 
+    // Header + per-unit copy must be atomic: a failure on the second insert would
+    // otherwise leave an orphan credit-note header without its unit breakdown.
+    let mut tx = pool.begin().await?;
+
     let new_id: Uuid = sqlx::query_scalar(
         r#"INSERT INTO levy_call
                (budget_id, call_label, charge_amount, works_fund_amount, corrects_levy_call_id, status)
@@ -775,7 +779,7 @@ pub async fn create_credit_note(
     .bind(-source.charge_amount)
     .bind(-source.works_fund_amount)
     .bind(levy_call_id)
-    .fetch_one(pool)
+    .fetch_one(&mut *tx)
     .await?;
 
     sqlx::query(
@@ -789,8 +793,10 @@ pub async fn create_credit_note(
     )
     .bind(new_id)
     .bind(levy_call_id)
-    .execute(pool)
+    .execute(&mut *tx)
     .await?;
+
+    tx.commit().await?;
 
     Ok(new_id)
 }
