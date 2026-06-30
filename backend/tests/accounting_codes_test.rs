@@ -40,12 +40,15 @@ async fn accounting_codes_list_is_nonempty() {
     .expect("building");
 
     let unique_email = format!("mgr-ac-{}@test.local", Uuid::new_v4());
+    let password_hash =
+        laruche::auth::password::hash_password("MotDePasse123!", &cfg.auth).expect("hash");
     sqlx::query(
         "INSERT INTO user_account (id, email, last_name, first_name, password_hash) \
-         VALUES ($1, $2, 'AC', 'Mgr', '$argon2id$v=19$m=65536,t=2,p=1$c2FsdHNhbHRzYWx0c2FsdA$VFRwGI84UZI0aBE3YoNfCi0cgF9sVIGh6MgIR6LNDNM')",
+         VALUES ($1, $2, 'AC', 'Mgr', $3)",
     )
     .bind(manager_id)
     .bind(&unique_email)
+    .bind(&password_hash)
     .execute(&pool)
     .await
     .expect("user");
@@ -115,12 +118,15 @@ async fn budget_line_stores_account_code() {
     .expect("building");
 
     let unique_email = format!("mgr-acl-{}@test.local", Uuid::new_v4());
+    let password_hash =
+        laruche::auth::password::hash_password("MotDePasse123!", &cfg.auth).expect("hash");
     sqlx::query(
         "INSERT INTO user_account (id, email, last_name, first_name, password_hash) \
-         VALUES ($1, $2, 'ACL', 'Mgr', '$argon2id$v=19$m=65536,t=2,p=1$c2FsdHNhbHRzYWx0c2FsdA$VFRwGI84UZI0aBE3YoNfCi0cgF9sVIGh6MgIR6LNDNM')",
+         VALUES ($1, $2, 'ACL', 'Mgr', $3)",
     )
     .bind(manager_id)
     .bind(&unique_email)
+    .bind(&password_hash)
     .execute(&pool)
     .await
     .expect("user");
