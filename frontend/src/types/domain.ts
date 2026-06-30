@@ -604,3 +604,44 @@ export interface UnitChargesResponse {
   balance: number
   pending_transfer: boolean
 }
+
+// ── Judicial proceedings register (EP-002-S10) ───────────────────
+
+export type JudicialProceedingType = 'debt_recovery' | 'works_dispute' | 'liability' | 'other'
+export type JudicialProceedingStatus = 'ongoing' | 'suspended' | 'closed'
+
+export interface JudicialProceeding {
+  id: string
+  building_id: string
+  proceeding_type: JudicialProceedingType
+  status: JudicialProceedingStatus
+  subject: string
+  claimant: string
+  defendant: string
+  jurisdiction: string | null
+  case_reference: string | null
+  opened_at: string
+  closed_at: string | null
+  outcome: string | null
+  created_by: string
+  created_at: string
+  updated_at: string
+}
+
+// ── Governance register (EP-002-S11) ─────────────────────────────
+
+export type GovernanceRole = 'syndic' | 'council_president' | 'council_member'
+
+export interface GovernanceMandate {
+  id: string
+  building_id: string
+  role: GovernanceRole
+  holder_name: string
+  user_id: string | null
+  start_date: string
+  end_date: string | null
+  notes: string | null
+  created_by: string
+  created_at: string
+  updated_at: string
+}

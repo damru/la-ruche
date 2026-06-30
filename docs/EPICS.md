@@ -162,7 +162,7 @@ Historique de propriété tracé avec dates de cession, invitation par lien toke
 * `EP-002-S06` — Générer l'état daté d'un lot à la demande (charges courantes, arriérés, fonds travaux, travaux votés non réalisés, procédures en cours) dans un délai de 15 jours (LEGAL.md §7.1)
 * `EP-002-S07` — Générer le pré-état daté pour signature du compromis de vente (synthèse financière de la copropriété) (LEGAL.md §7.2)
 * `EP-002-S08` ✅ — Garantir en mutation que les tantièmes restent attachés au lot (pas au propriétaire) et exposer la quote-part vendeur/acquéreur à date (LEGAL.md §2.4)
-* `EP-002-S09` — Exporter les données personnelles d'un copropriétaire (droit d'accès RGPD) avec périmètre horodaté et traçabilité de la demande (LEGAL.md §8)
+* `EP-002-S09` ⏸️ — *(reporté post-MVP → EP-021-S01)* Exporter les données personnelles d'un copropriétaire (droit d'accès RGPD) avec périmètre horodaté et traçabilité de la demande (LEGAL.md §8)
 * `EP-002-S10` — Enregistrer et suivre les procédures judiciaires en cours impliquant le syndicat (demandeur ou défendeur), avec date d'ouverture, type, statut ; requis pour l'état daté (LEGAL.md §7.1, §10)
 * `EP-002-S11` — Tenir un registre de gouvernance (syndic en exercice, membres du conseil syndical, périodes de mandat) pour auditer la séparation des organes (LEGAL.md §1.7, §1.8)
 * `EP-002-S12` — PV du conseil syndical en délégation de pouvoirs : créer, stocker et consulter les PV formels des décisions prises par le conseil syndical sous délégation d'AG (signé par 2 membres, noms + sens des votes, inscrit au registre des PV d'AG) — art. 21-1 décret 67-223, LEGIARTI000042077775 (LEGAL.md §3.5)
@@ -578,6 +578,22 @@ Consolidation technique du design system : migration des tokens de couleur vers 
 * `EP-020-S10` ✅ — Déplacer les styles `.data-table` dans les scoped blocks des vues consommatrices ; remplacer `.cards-grid` par Tailwind `grid grid-cols-[…]` inline ; supprimer `tables.css`
 * `EP-020-S11` ✅ — Nettoyer `base.css` : conserver les seuls resets navigateur et touch targets ; migrer `.view-container`/`.view-header` vers Tailwind inline, `.empty-state` vers `CEmptyState` ; supprimer les classes applicatives (spinner, loading-skeleton, card--terminated)
 * `EP-020-S12` ✅ — Supprimer `activity-cards.css` ; remplacer par l'utilisation de CCard
+
+***
+
+### EP-021 — Conformité différée : RGPD, courriers automatiques & audit log
+
+**Statut :** en attente | **MVP :** non | **Réf. PRD :** LEGAL.md §8, §4.7 ; ADR-009
+
+**État code actuel :** la table `audit_log` existe (migration `0029`, ADR-009) mais n'a aucun écrivain applicatif ; aucun export RGPD ni envoi de courrier n'est implémenté. Décision 2026-06-30 (Damien) : prioriser d'abord l'implémentation correcte de tous les évènements fonctionnels, puis traiter ces obligations transverses.
+
+Obligations de conformité reportées après la livraison du MVP : export RGPD du dossier d'un copropriétaire, envoi de courrier automatique (mise en demeure recommandée), et câblage effectif du journal d'audit probant sur les mutations comptables.
+
+**Stories :**
+
+* `EP-021-S01` — Exporter les données personnelles d'un copropriétaire (droit d'accès RGPD) : bundle horodaté (profil, lots, traçabilité des charges) avec trace de la demande, dans le respect de la conservation comptable 10 ans (ex `EP-002-S09`, LEGAL.md §8)
+* `EP-021-S02` — Envoi de courrier automatique : générer et expédier la mise en demeure recommandée de l'art. 19-2 (déchéance du terme) — au MVP la mise en demeure est purement informative sous forme de notification in-app (LEGAL.md §4.7)
+* `EP-021-S03` — Câbler `audit_log` : écrire un enregistrement append-only à chaque mutation comptable probante (UPDATE/DELETE budget, appels de fonds, corrections) avec diff ciblé `old_values`/`new_values`, sans UPDATE/DELETE applicatif (ADR-009, EP-018-S02)
 
 ***
 

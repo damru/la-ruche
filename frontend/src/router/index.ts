@@ -24,6 +24,8 @@ const ConsultationsView       = () => import('@/features/consultations/Consultat
 const ReportsView             = () => import('@/features/reports/ReportsView.vue')
 const ResidentsView           = () => import('@/features/residents/ResidentsView.vue')
 const RegistryView            = () => import('@/features/residents/RegistryView.vue')
+const JudicialProceedingsView = () => import('@/features/registers/JudicialProceedingsView.vue')
+const GovernanceMandatesView  = () => import('@/features/registers/GovernanceMandatesView.vue')
 const UnitChargesView         = () => import('@/features/residents/UnitChargesView.vue')
 const MyChargesView           = () => import('@/features/residents/MyChargesView.vue')
 const BuildingView            = () => import('@/features/residence/BuildingView.vue')
@@ -170,6 +172,18 @@ const routes: RouteRecordRaw[] = [
         name: 'registry',
         component: RegistryView,
         meta: { title: 'nav.registry', roles: ['manager', 'board_member', 'co_owner'] },
+      },
+      {
+        path: 'judicial-proceedings',
+        name: 'judicial-proceedings',
+        component: JudicialProceedingsView,
+        meta: { title: 'nav.judicialProceedings', roles: ['manager', 'board_member', 'co_owner'] },
+      },
+      {
+        path: 'governance',
+        name: 'governance',
+        component: GovernanceMandatesView,
+        meta: { title: 'nav.governance', roles: ['manager', 'board_member', 'co_owner'] },
       },
       // ── Residence ───────────────────────────────────────────
       {

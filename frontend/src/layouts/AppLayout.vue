@@ -65,6 +65,12 @@ onUnmounted(() => {
       <template #icon-registry>
         <CIconFile />
       </template>
+      <template #icon-judicial-proceedings>
+        <CIconContract />
+      </template>
+      <template #icon-governance>
+        <CIconShield />
+      </template>
       <template #icon-residence-building>
         <CIconSettings />
       </template>

@@ -133,6 +133,8 @@
     "reports": "Signalements",
     "residents": "Copropriétaires",
     "registry": "Registre",
+    "judicialProceedings": "Procédures judiciaires",
+    "governance": "Gouvernance",
     "myCharges": "Mes appels de fonds",
     "residence-info": "Informations",
     "residence-keys": "Clés de répartition",
@@ -1377,6 +1379,65 @@
       "summary": "La quote-part des parties communes afférente à chaque lot est proportionnelle à la valeur relative de chaque partie privative par rapport à l'ensemble des valeurs desdites parties.",
       "linkLabel": "Article 5 de la loi n°65-557 du 10 juillet 1965",
       "linkHref": "https://www.legifrance.gouv.fr/loda/article_lc/LEGIARTI000006460030"
+    }
+  },
+  "registers": {
+    "eyebrow": "Registres",
+    "judicial": {
+      "title": "Procédures judiciaires",
+      "summary": "{count} procédure(s) — {ongoing} en cours",
+      "empty": "Aucune procédure judiciaire enregistrée",
+      "new": "Nouvelle procédure",
+      "edit": "Modifier la procédure",
+      "subject": "Objet du litige",
+      "type": "Nature",
+      "parties": "Parties",
+      "claimant": "Demandeur",
+      "defendant": "Défendeur",
+      "jurisdiction": "Juridiction",
+      "caseReference": "Référence du dossier",
+      "openedAt": "Date d'ouverture",
+      "closedAt": "Date de clôture",
+      "outcome": "Issue / décision",
+      "partiesRequired": "L'objet, le demandeur et le défendeur sont requis.",
+      "openedAtRequired": "La date d'ouverture est requise.",
+      "closedAtRequired": "Une date de clôture est requise pour une procédure clôturée.",
+      "deleteTitle": "Supprimer la procédure ?",
+      "deleteMessage": "La procédure « {subject} » sera définitivement supprimée du registre.",
+      "types": {
+        "debt_recovery": "Recouvrement de charges",
+        "works_dispute": "Litige travaux",
+        "liability": "Responsabilité",
+        "other": "Autre"
+      },
+      "statuses": {
+        "ongoing": "En cours",
+        "suspended": "Suspendue",
+        "closed": "Clôturée"
+      }
+    },
+    "governance": {
+      "title": "Gouvernance",
+      "summary": "{count} mandat(s) — {active} actif(s)",
+      "empty": "Aucun mandat enregistré",
+      "new": "Nouveau mandat",
+      "edit": "Modifier le mandat",
+      "holder": "Titulaire",
+      "role": "Fonction",
+      "startDate": "Début du mandat",
+      "endDate": "Fin du mandat",
+      "endDateHint": "Laisser vide pour un mandat en cours.",
+      "active": "Actif",
+      "notes": "Notes",
+      "holderRequired": "Le nom du titulaire est requis.",
+      "startDateRequired": "La date de début est requise.",
+      "deleteTitle": "Supprimer le mandat ?",
+      "deleteMessage": "Le mandat de « {name} » sera définitivement supprimé du registre.",
+      "roles": {
+        "syndic": "Syndic",
+        "council_president": "Président du conseil syndical",
+        "council_member": "Membre du conseil syndical"
+      }
     }
   },
   "settings": {

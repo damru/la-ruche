@@ -9,6 +9,8 @@ pub mod contractor;
 pub mod contractors;
 pub mod contracts;
 pub mod documents;
+pub mod governance;
+pub mod judicial_proceedings;
 pub mod logbook;
 pub mod onboarding;
 pub mod reports;
@@ -321,7 +323,29 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
         )
         .route("/consultations/{id}/respond", post(consultations::respond))
         .route("/consultations/{id}/results", get(consultations::results))
-        .route("/consultations/{id}/close", post(consultations::close));
+        .route("/consultations/{id}/close", post(consultations::close))
+        // ── Judicial proceedings register ───────────────────────
+        .route(
+            "/judicial-proceedings",
+            get(judicial_proceedings::list).post(judicial_proceedings::create),
+        )
+        .route(
+            "/judicial-proceedings/{id}",
+            get(judicial_proceedings::get)
+                .put(judicial_proceedings::update)
+                .delete(judicial_proceedings::delete),
+        )
+        // ── Governance register ─────────────────────────────────
+        .route(
+            "/governance/mandates",
+            get(governance::list).post(governance::create),
+        )
+        .route(
+            "/governance/mandates/{id}",
+            get(governance::get)
+                .put(governance::update)
+                .delete(governance::delete),
+        );
 
     // ── Public routes (vendor token, no JWT) ─────────────────────
     // Vendor routes live under /api/v1 (without auth middleware) so that the
