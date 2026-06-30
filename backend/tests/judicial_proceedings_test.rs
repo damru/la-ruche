@@ -16,13 +16,7 @@ struct Ctx {
 }
 
 async fn setup() -> Ctx {
-    dotenvy::dotenv().ok();
-    let cfg = laruche::config::AppConfig::load().expect("config");
-    let pool = sqlx::PgPool::connect(&cfg.db.url).await.expect("db");
-    sqlx::migrate!("./migrations")
-        .run(&pool)
-        .await
-        .expect("migrations");
+    let (cfg, pool) = common::test_db().await;
 
     let building_id = Uuid::new_v4();
     sqlx::query(

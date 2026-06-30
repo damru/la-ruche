@@ -20,13 +20,7 @@ async fn accounting_codes_requires_auth() {
 /// Seeded accounting codes are returned as a non-empty list.
 #[tokio::test]
 async fn accounting_codes_list_is_nonempty() {
-    dotenvy::dotenv().ok();
-    let cfg = laruche::config::AppConfig::load().expect("config");
-    let pool = sqlx::PgPool::connect(&cfg.db.url).await.expect("db");
-    sqlx::migrate!("./migrations")
-        .run(&pool)
-        .await
-        .expect("migrations");
+    let (cfg, pool) = common::test_db().await;
 
     let building_id = Uuid::new_v4();
     let manager_id = Uuid::new_v4();
@@ -96,13 +90,7 @@ async fn accounting_codes_list_is_nonempty() {
 /// A budget line created with an account_code is returned with that code.
 #[tokio::test]
 async fn budget_line_stores_account_code() {
-    dotenvy::dotenv().ok();
-    let cfg = laruche::config::AppConfig::load().expect("config");
-    let pool = sqlx::PgPool::connect(&cfg.db.url).await.expect("db");
-    sqlx::migrate!("./migrations")
-        .run(&pool)
-        .await
-        .expect("migrations");
+    let (cfg, pool) = common::test_db().await;
 
     let building_id = Uuid::new_v4();
     let manager_id = Uuid::new_v4();

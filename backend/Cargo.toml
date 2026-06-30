@@ -93,6 +93,8 @@ hex = "0.4.3"
 axum-test = "21.0.0"                      # tests d'intégration handlers
 tokio-test = "0.4.5"
 rstest = "0.26.1"                       # tests paramétrés
+postgresql_embedded = "0.20.4"            # base PostgreSQL éphémère embarquée pour tests
+wiremock = "0.6.5"                        # serveur HTTP mock (stub S3/MinIO) pour tests
 
 [profile.release]
 opt-level = 3
