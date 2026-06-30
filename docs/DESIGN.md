@@ -261,6 +261,10 @@ Source : `frontend/src/styles/tokens.css`. Les valeurs Dark sont dans `[data-the
 | `--color-warning` | `#e65100` | `#ffb74d` |
 | `--color-warning-container` | `#fff8e1` | `#4d3500` |
 | `--gradient-primary` | `linear-gradient(135deg, #643fd5, #7d5bf0)` | — |
+| `--gradient-success` | dérivé de `--color-success` (foncé → base) | auto |
+| `--gradient-error` | dérivé de `--color-error` (foncé → base) | auto |
+| `--gradient-warning` | dérivé de `--color-warning` (foncé → base) | auto |
+| `--color-primary-tint` | `--color-primary` @ 10% (color-mix) | auto |
 
 **Surfaces** (hiérarchie : Page → Section → Carte → Champ) :
 
@@ -417,10 +421,10 @@ border-color: var(--color-outline-light);
 |---|---|---|
 | `--z-base`     | `0`   | Flux normal |
 | `--z-raised`   | `10`  | Cartes flottantes, `position: sticky` |
-| `--z-dropdown` | `100` | Menus déroulants, `CFormSelect` |
-| `--z-sticky`   | `200` | Topbar, sidebar fixes |
+| `--z-nav`      | `100` | Navigation : topbar, sidebar, menus déroulants |
+| `--z-overlay`  | `200` | Overlays sous-modaux : autocomplete, popovers |
 | `--z-modal`    | `300` | `CModal` et tous les `Dialog` Radix |
-| `--z-tooltip`  | `400` | `CTooltip` et overlays similaires |
+| `--z-toast`    | `400` | Toasts, notifications, tooltips |
 
 > Ne jamais utiliser de valeurs z-index codées en dur (`z-10`, `z-50`…) — toujours `var(--z-*)`.
 
@@ -482,9 +486,11 @@ border-color: var(--color-outline-light);
 | `CCardActions` | — | ✅ Zone d'actions d'une carte — `flex flex-wrap gap-x-2 gap-y-1`. |
 | `CCardHeader` | `withIcon?` | 🔲 planifié — En-tête de carte — slots `#icon`, `#chips` |
 | `CCardNote` | `note` | Encart d'information secondaire dans une `CCard` |
+| `CCopyField` | `value`, `label?`, `hint?`, `copyTitle?`, `copiedTitle?` | ✅ Champ lecture seule + bouton copier (presse-papiers). Gère son propre état « copié ». Remplace les blocs `invite-link-box`. |
 | `CDataTable` | `columns`, `rows` | Tableau de données |
 | `CDocumentList` | `documents`, `readonly?` | 🔲 planifié — Liste documents avec download/retrait — `emit('remove', doc)` au parent |
 | `CEmptyState` | `icon`, `title`, `description?`, `size?` (`page` \| `compact`) | ✅ État vide — slot `#actions`. `page` = centré + `py-8`, `compact` = plus petit pour les sections. |
+| `CFileDropzone` | `files` (v-model:files `File[]`), `hint?`, `removeLabel?`, `multiple?`, `accept?` | ✅ Zone de dépôt + sélection de fichiers locaux avant envoi. Prévisualisation par puces (nom + retrait) par défaut ; slot `#preview="{ files, remove }"` pour un rendu custom (ex. vignettes images). À distinguer de `CFormDropzone` (upload direct serveur). |
 | `CForm` | `status?`, `message?` | Formulaire structuré (`<form>`) — flex-col gap-4 + slot `#actions` → `CFormActions`. `@submit` émis sur soumission. Remplace `<form>` brut dans les vues. |
 | `CFormActions` | `status`, `message?` | Rangée de boutons (droite) + `CFormFeedback` push en dessous. Utiliser dans le slot `#actions` de `CForm` ou dans `#footer` de `CModal`. |
 | `CFormAddressAutocomplete` | `label`, `value` | Champ adresse avec autocomplétion |
@@ -501,6 +507,7 @@ border-color: var(--color-outline-light);
 | `CPageHeader` | `eyebrow?`, `title`, `meta?`, `icon?`, `frozenLabel?` | 🔲 planifié — En-tête de vue — slot `#actions` |
 | `CPageLoader` | — | Indicateur de chargement |
 | `CSectionHeader` | — | ✅ En-tête de section — `flex items-start justify-between gap-3`. Slot default (zone titre : heading + meta). Slot `#actions` pour les boutons droite. Remplace `.section-head` / `.card-head`. |
+| `CSectionLink` | `to` | ✅ Lien « voir tout » d'en-tête de section — `RouterLink` + chevron. À utiliser dans le slot `#actions` de `CSectionHeader`. |
 | `CTopbarBreadcrumb` | `crumbs[]` | 🔲 planifié — Fil d'Ariane topbar |
 
 ---
