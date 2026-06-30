@@ -6,6 +6,7 @@ import { useFormatters } from '@/composables/useFormatters'
 import { usePageLoader } from '@/composables/usePageLoader'
 import CKpiCard from '@/components/molecules/CKpiCard.vue'
 import CCard from '@/components/molecules/CCard.vue'
+import CProgressBar from '@/components/atoms/CProgressBar.vue'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
@@ -148,7 +149,7 @@ const todayStr = computed(() =>
 </script>
 
 <template>
-  <div class="dashboard-page view-page">
+  <div class="view-page">
     <CTopbar>
       <template #left>
         <div>
@@ -588,13 +589,11 @@ const todayStr = computed(() =>
                     </span>
                   </div>
                 </div>
-                <div class="prog-track">
-                  <div
-                    class="prog-fill"
-                    :class="Number(line.actual_amount ?? 0) > Number(line.budgeted_amount) ? 'prog-fill--over' : 'prog-fill--primary'"
-                    :style="`width:${Math.min(100, line.budgeted_amount ? Math.round(((line.actual_amount ?? 0) / line.budgeted_amount) * 100) : 0)}%`"
-                  ></div>
-                </div>
+                <CProgressBar
+                  :value="line.budgeted_amount ? Math.round(((line.actual_amount ?? 0) / line.budgeted_amount) * 100) : 0"
+                  :variant="Number(line.actual_amount ?? 0) > Number(line.budgeted_amount) ? 'error' : 'primary'"
+                  :show-value="false"
+                />
               </div>
               <div class="budget-total-row">
                 <span>{{ t('dashboard.totalRealized') }}</span>
@@ -609,8 +608,6 @@ const todayStr = computed(() =>
 </template>
 
 <style scoped>
-.dashboard-page { display: flex; flex-direction: column; flex: 1; }
-
 /* ── Hero ─────────────────────────────────────────────────────────── */
 .dashboard-hero { display: grid; grid-template-columns: 1fr auto; gap: var(--space-6); align-items: end; }
 @media (max-width: 900px) { .dashboard-hero { grid-template-columns: 1fr; } }
@@ -696,10 +693,6 @@ const todayStr = computed(() =>
 .budget-prog-pct { font-size: 12px; font-weight: var(--fw-semibold); min-width: 36px; text-align: right; }
 .pct--normal { color: var(--color-primary); }
 .pct--over   { color: var(--color-error); }
-.prog-track { height: 8px; border-radius: var(--radius-full); background: var(--color-surface-container-high); overflow: hidden; }
-.prog-fill { height: 100%; border-radius: var(--radius-full); transition: width 0.8s cubic-bezier(0.34, 1.3, 0.64, 1); }
-.prog-fill--primary { background: var(--gradient-primary); }
-.prog-fill--over    { background: linear-gradient(135deg, #ba1a1a, #e53935); }
 .budget-total-row { display: flex; justify-content: space-between; align-items: center; padding: 12px var(--space-4); background: var(--color-surface-container-low); border-radius: var(--radius-xl); font-size: 13px; font-weight: var(--fw-medium); color: var(--color-on-surface); }
 .budget-total-val { font-family: var(--font-mono); font-size: 13px; font-weight: var(--fw-medium); }
 

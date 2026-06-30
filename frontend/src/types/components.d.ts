@@ -87,6 +87,7 @@ declare module 'vue' {
     CIconPlus: typeof import('./../components/atoms/CIconPlus.svg')['default']
     CIconReceipt: typeof import('./../components/atoms/CIconReceipt.svg')['default']
     CIconRefresh: typeof import('./../components/atoms/CIconRefresh.svg')['default']
+    CIconScale: typeof import('./../components/atoms/CIconScale.svg')['default']
     CIconSearch: typeof import('./../components/atoms/CIconSearch.svg')['default']
     CIconSettings: typeof import('./../components/atoms/CIconSettings.svg')['default']
     CIconShield: typeof import('./../components/atoms/CIconShield.svg')['default']
