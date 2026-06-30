@@ -1,10 +1,11 @@
 // Shared helpers for La Ruche integration tests.
 // Each integration test file imports this module with `mod common;`.
 //
-// The harness is fully self-contained: it boots a real ephemeral PostgreSQL
-// instance (postgresql_embedded — binary cached after first download) and a
-// wiremock HTTP server standing in for S3/MinIO. No external services or
-// environment configuration are required to run the tests.
+// Database: when `DATABASE_URL` is set (CI, docker-compose) the harness uses
+// that PostgreSQL instance directly. Otherwise it boots a real ephemeral
+// PostgreSQL (postgresql_embedded — binary cached after first download) so the
+// suite stays runnable with zero external services on a developer machine.
+// S3/MinIO is always replaced by an in-process wiremock HTTP stub.
 #![allow(dead_code)]
 
 use std::sync::Arc;
@@ -23,7 +24,9 @@ use wiremock::{Mock, MockServer, ResponseTemplate};
 /// the whole process lifetime by holding them here.
 struct Infra {
     cfg: AppConfig,
-    _pg: PostgreSQL,
+    // Kept alive for the whole process when we booted an embedded server;
+    // `None` when an external `DATABASE_URL` (CI / docker) is used.
+    _pg: Option<PostgreSQL>,
     _s3: MockServer,
 }
 
@@ -32,17 +35,25 @@ static INFRA: OnceCell<Infra> = OnceCell::const_new();
 async fn infra() -> &'static Infra {
     INFRA
         .get_or_init(|| async {
-            // ── Embedded PostgreSQL ───────────────────────────────────
-            let mut pg = PostgreSQL::default();
-            pg.setup().await.expect("embedded postgres setup");
-            pg.start().await.expect("embedded postgres start");
-            let db_name = "laruche_test";
-            pg.create_database(db_name)
-                .await
-                .expect("create test database");
-            let db_url = pg.settings().url(db_name);
+            // ── PostgreSQL ────────────────────────────────────────────
+            // Prefer an externally provided database (CI, docker-compose);
+            // fall back to an embedded server for local zero-setup runs.
+            let (db_url, pg) = match std::env::var("DATABASE_URL") {
+                Ok(url) if !url.is_empty() => (url, None),
+                _ => {
+                    let mut pg = PostgreSQL::default();
+                    pg.setup().await.expect("embedded postgres setup");
+                    pg.start().await.expect("embedded postgres start");
+                    let db_name = "laruche_test";
+                    pg.create_database(db_name)
+                        .await
+                        .expect("create test database");
+                    let url = pg.settings().url(db_name);
+                    (url, Some(pg))
+                }
+            };
 
-            // Run migrations once against the shared test database.
+            // Run migrations once against the test database.
             let pool = PgPool::connect(&db_url)
                 .await
                 .expect("connect for migrations");
@@ -112,7 +123,7 @@ fn test_config(db_url: String, s3_uri: String) -> AppConfig {
     }
 }
 
-/// Returns the shared test config and a fresh pool to the embedded database.
+/// Returns the shared test config and a fresh pool to the test database.
 /// Both `test_db()` and `test_server()` target the same database, so data
 /// seeded via the returned pool is visible to the running application.
 pub async fn test_db() -> (AppConfig, PgPool) {
