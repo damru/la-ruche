@@ -173,3 +173,30 @@ impl AppConfig {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn app_settings(host: &str, port: u16) -> AppSettings {
+        AppSettings {
+            host: host.to_string(),
+            port,
+            public_url: "http://localhost".to_string(),
+            name: "La Ruche".to_string(),
+            demo_mode: false,
+        }
+    }
+
+    #[test]
+    fn listen_addr_parses_valid_host_and_port() {
+        let addr = app_settings("127.0.0.1", 8080).listen_addr().unwrap();
+        assert_eq!(addr.to_string(), "127.0.0.1:8080");
+    }
+
+    #[test]
+    fn listen_addr_rejects_non_ip_host() {
+        let err = app_settings("not a host", 8080).listen_addr().unwrap_err();
+        assert!(err.to_string().contains("Invalid listen address"));
+    }
+}

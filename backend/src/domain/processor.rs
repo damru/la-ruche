@@ -41,3 +41,30 @@ impl DocumentProcessor for NoopProcessor {
         &[]
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn sample_doc() -> DocumentMeta {
+        DocumentMeta {
+            id: Uuid::new_v4(),
+            original_name: "facture.pdf".to_string(),
+            mime_type: "application/pdf".to_string(),
+            storage_path: "documents/facture.pdf".to_string(),
+            bucket: "laruche".to_string(),
+        }
+    }
+
+    #[test]
+    fn noop_processor_supports_no_types() {
+        assert!(NoopProcessor.supported_types().is_empty());
+    }
+
+    #[tokio::test]
+    async fn noop_processor_extract_returns_empty_low_confidence_result() {
+        let result = NoopProcessor.extract(&sample_doc()).await.unwrap();
+        assert_eq!(result.data, serde_json::json!({}));
+        assert_eq!(result.confidence, 0.0);
+    }
+}
