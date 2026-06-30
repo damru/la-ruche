@@ -52,7 +52,6 @@ watch(() => props.open, (open) => {
   form.role = 'co_owner'
   form.unit_id = ''
   inviteLink.value = ''
-  copied.value = false
   feedback.reset()
 })
 

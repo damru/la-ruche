@@ -41,7 +41,6 @@ watch(() => props.open, (open) => {
   if (!open) { forceClose(); return }
   form.email = ''
   inviteLink.value = ''
-  copied.value = false
   feedback.reset()
 })
 

@@ -270,7 +270,6 @@ watch(() => props.open, async (open) => {
   if (!open) { forceClose(); return }
   feedback.reset()
   selectedDocuments.value = []
-  documentsDragOver.value = false
   existingDocuments.value = []
   pendingDocument.value = null
   if (props.task) {
