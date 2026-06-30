@@ -60,7 +60,7 @@ const props = withDefaults(defineProps<{
       class="text-xs flex items-center gap-1 pt-1"
       :class="[{ 'text-error': props.displayError }]"
     >
-      <CIconInfo class="icon-2xs self-start mt-[1px]" />
+      <CIconInfo class="icon-2xs self-start mt-px" />
       <p
         v-if="props.displayError"
         :id="props.errorId"

@@ -214,8 +214,8 @@ async function handleSubmit() {
   margin-bottom: var(--space-1);
 }
 .success-icon svg {
-  width: 24px;
-  height: 24px;
+  width: var(--icon-lg);
+  height: var(--icon-lg);
   stroke: var(--color-success);
 }
 

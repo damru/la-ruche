@@ -31,7 +31,8 @@ import ClaimEditModal from './ClaimEditModal.vue'
 import ClaimTransmitModal from './ClaimTransmitModal.vue'
 import ClaimCloseModal from './ClaimCloseModal.vue'
 import ClaimDeleteModal from './ClaimDeleteModal.vue'
-import { buildingApi, claimsApi, documentsApi, unitsApi, usersApi } from '@/api'
+import { claimsApi, documentsApi, unitsApi, usersApi } from '@/api'
+import { useBuildingStore } from '@/stores/building'
 import type { Claim, ClaimStatus, ClaimType, Document, Unit, User } from '@/types/domain'
 
 const { t } = useI18n()
@@ -55,14 +56,14 @@ const claimDocuments = ref<Document[]>([])
 const loadingClaimDocuments = ref(false)
 
 async function loadData() {
-  const [buildingResponse, claimsResponse, unitsResponse, usersResponse] = await Promise.all([
-    buildingApi.get(),
+  const [building, claimsResponse, unitsResponse, usersResponse] = await Promise.all([
+    useBuildingStore().fetch(),
     claimsApi.list(),
     unitsApi.list(),
     usersApi.list(),
   ])
 
-  buildingName.value = buildingResponse.data.name
+  buildingName.value = building.name
   allClaims.value = claimsResponse.data
   allUnits.value = unitsResponse.data
   allUsers.value = usersResponse.data
@@ -562,18 +563,3 @@ function handleDocumentCountChanged(claimId: string, delta: number) {
     />
   </div>
 </template>
-
-<style scoped>
-.claims-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-
-.modal-footer-feedback {
-  margin-right: auto;
-  min-width: 0;
-}
-
-
-</style>

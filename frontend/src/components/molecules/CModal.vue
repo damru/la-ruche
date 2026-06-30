@@ -106,7 +106,6 @@ function handleOpenChange(open: boolean) {
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
   -moz-backdrop-filter: blur(4px);
-  backdrop-filter: blur(4px);
   z-index: calc(var(--z-overlay) + var(--c-modal-stack, 0));
   animation: c-overlay-in 0.2s ease;
 }
@@ -128,7 +127,6 @@ function handleOpenChange(open: boolean) {
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   -moz-backdrop-filter: blur(20px);
-  backdrop-filter: blur(20px);
   border: 1px solid rgba(194, 199, 207, 0.3);
   box-shadow: var(--shadow-glass);
   border-radius: var(--radius-2xl);
@@ -163,7 +161,7 @@ function handleOpenChange(open: boolean) {
 
 .c-modal__title {
   font-family: var(--font-display);
-  font-size: 20px;
+  font-size: var(--text-xl);
   font-weight: var(--fw-semibold);
   font-variation-settings: 'opsz' 36;
   letter-spacing: -0.01em;
@@ -175,8 +173,8 @@ function handleOpenChange(open: boolean) {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: var(--space-8);
+  height: var(--space-8);
   min-width: unset;
   min-height: unset;
   border-radius: var(--radius-lg);
@@ -200,7 +198,7 @@ function handleOpenChange(open: boolean) {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
-  padding: 4px;
+  padding: var(--space-1);
   margin: -4px;
 }
 

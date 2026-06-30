@@ -101,7 +101,7 @@ async function handleSubmit() {
           <CBtn
             variant="ghost"
             :title="t('auth.backToLogin')"
-            style="width: 100%; margin-top: 16px"
+            style="width: 100%; margin-top: var(--space-4)"
             @click="router.push({ name: 'login' })"
           />
         </template>
@@ -283,8 +283,8 @@ async function handleSubmit() {
   margin-bottom: var(--space-1);
 }
 .success-icon svg {
-  width: 24px;
-  height: 24px;
+  width: var(--icon-lg);
+  height: var(--icon-lg);
   stroke: var(--color-success);
 }
 @media (max-width: 768px) {

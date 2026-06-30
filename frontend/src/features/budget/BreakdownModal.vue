@@ -60,7 +60,7 @@ function formatSharePercentage(value: number): string {
       <div class="flex justify-center">
         <div
           class="w-[min(280px,56vw)] aspect-square rounded-full"
-          :style="{ ...breakdownStyle, boxShadow: 'inset 0 0 0 1px rgba(25,28,29,0.05)' }"
+          :style="{ ...breakdownStyle, boxShadow: 'inset 0 0 0 1px color-mix(in srgb, var(--color-on-surface) 5%, transparent)' }"
           role="img"
           :aria-label="t('budget.breakdownAriaLabel')"
         ></div>

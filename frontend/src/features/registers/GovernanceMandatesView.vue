@@ -14,7 +14,8 @@ import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import CIconEdit from '@/components/atoms/CIconEdit.svg'
 import CIconTrash from '@/components/atoms/CIconTrash.svg'
 import GovernanceMandateFormModal from '@/features/registers/GovernanceMandateFormModal.vue'
-import { buildingApi, governanceApi } from '@/api'
+import { governanceApi } from '@/api'
+import { useBuildingStore } from '@/stores/building'
 import type { GovernanceMandate } from '@/types/domain'
 
 const { t } = useI18n()
@@ -28,11 +29,11 @@ const mandates = ref<GovernanceMandate[]>([])
 const canEdit = computed(() => authStore.isManager)
 
 async function loadData() {
-  const [buildingRes, listRes] = await Promise.all([
-    buildingApi.get(),
+  const [building, listRes] = await Promise.all([
+    useBuildingStore().fetch(),
     governanceApi.list(),
   ])
-  buildingName.value = buildingRes.data.name
+  buildingName.value = building.name
   mandates.value = listRes.data
 }
 

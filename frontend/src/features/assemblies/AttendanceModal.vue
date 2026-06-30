@@ -71,7 +71,7 @@ async function handleSubmit() {
       id="meeting-attendance"
       @submit="handleSubmit"
     >
-      <p class="modal-subtitle">
+      <p class="form-hint m-0">
         {{ t('meetings.attendanceHint') }}
       </p>
       <div class="attendance-edit-list">
@@ -120,12 +120,6 @@ async function handleSubmit() {
 </template>
 
 <style scoped>
-.modal-subtitle {
-  color: var(--color-on-surface-variant);
-  font-size: var(--text-xs);
-  margin: 0;
-}
-
 .attendance-edit-list {
   display: flex;
   flex-direction: column;
@@ -146,7 +140,7 @@ async function handleSubmit() {
 .attendance-edit-row__identity {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-1);
 }
 
 .attendance-edit-row__identity span {

@@ -192,7 +192,7 @@ async function handleResetRequest() {
           </div>
 
           <button
-            class="btn-passkey"
+            class="btn-passkey rounded-xl"
             :disabled="passkeyLoading || !passkeySupported"
             :title="!passkeySupported ? t('auth.passkeyNotSupported') : undefined"
             @click="handlePasskey"
@@ -343,23 +343,9 @@ async function handleResetRequest() {
   line-height: 1.5;
 }
 
-/* Password field (label row + forgot link — unique to Login) */
-
-.field-label-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.field-input::placeholder { color: var(--color-on-surface-variant); }
-.field-input:focus {
-  background: var(--color-surface-container);
-  box-shadow: 0 0 0 2px rgba(100, 63, 213, 0.35);
-}
-.field-input:disabled { opacity: 0.5; cursor: not-allowed; }
-
+/* Forgot-password link (unique to Login) */
 .forgot-link {
-  font-size: 12px;
+  font-size: var(--text-xs);
   color: var(--color-primary);
   background: none;
   border: none;
@@ -378,19 +364,18 @@ async function handleResetRequest() {
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  height: 44px;
+  height: var(--control-height);
   width: 100%;
-  border-radius: var(--radius-xl);
   font-family: var(--font-body);
   font-size: var(--text-md);
   font-weight: 500;
   background: var(--color-surface-container-low);
   color: var(--color-on-surface);
-  border: 1px solid rgba(194, 199, 207, 0.4);
+  border: 1px solid var(--color-outline-variant);
   cursor: pointer;
   transition: background var(--transition-fast);
 }
-.btn-passkey svg { width: 16px; height: 16px; flex-shrink: 0; }
+.btn-passkey svg { width: var(--icon-sm); height: var(--icon-sm); flex-shrink: 0; }
 .btn-passkey:hover:not(:disabled) { background: var(--color-surface-container); }
 .btn-passkey:disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
 
@@ -420,10 +405,10 @@ async function handleResetRequest() {
   content: '';
   flex: 1;
   height: 1px;
-  background: rgba(194, 199, 207, 0.35);
+  background: var(--color-outline-light);
 }
 .divider-text {
-  font-size: 12px;
+  font-size: var(--text-xs);
   color: var(--color-on-surface-variant);
   flex-shrink: 0;
 }
@@ -431,7 +416,7 @@ async function handleResetRequest() {
 /* ── Notice ───────────────────────────────────────────────────── */
 .login-notice {
   text-align: center;
-  font-size: 13px;
+  font-size: var(--text-sm);
   color: var(--color-on-surface-variant);
 }
 .login-notice a { color: var(--color-primary); font-weight: 500; }
@@ -456,8 +441,8 @@ async function handleResetRequest() {
   margin-bottom: var(--space-1);
 }
 .success-icon svg {
-  width: 24px;
-  height: 24px;
+  width: var(--icon-lg);
+  height: var(--icon-lg);
   stroke: var(--color-success);
 }
 

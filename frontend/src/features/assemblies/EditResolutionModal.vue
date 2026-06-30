@@ -77,7 +77,7 @@ async function handleSubmit() {
       @submit="handleSubmit"
     >
       <template v-if="meetingStatus === 'ongoing'">
-        <p class="modal-subtitle resolution-locked-notice">
+        <p class="form-hint m-0 resolution-locked-notice">
           {{ t('meetings.resolutionDescriptionOnly') }}
         </p>
         <div class="flex flex-col gap-1">
@@ -114,12 +114,6 @@ async function handleSubmit() {
 </template>
 
 <style scoped>
-.modal-subtitle {
-  color: var(--color-on-surface-variant);
-  font-size: var(--text-xs);
-  margin: 0;
-}
-
 .resolution-locked-notice {
   grid-column: 1 / -1;
   padding: var(--space-2) var(--space-3);

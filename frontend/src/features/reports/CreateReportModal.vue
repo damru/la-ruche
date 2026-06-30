@@ -8,7 +8,6 @@ import CFormTextarea from '@/components/atoms/CFormTextarea.vue'
 import CFormSelect from '@/components/atoms/CFormSelect.vue'
 import CFormActions from '@/components/molecules/CFormActions.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
-import CIconUpload from '@/components/atoms/CIconUpload.svg'
 import { documentsApi, reportsApi } from '@/api'
 import { useFormFeedback } from '@/composables/useFormFeedback'
 import { useAutoClose } from '@/composables/useAutoClose'
@@ -32,37 +31,16 @@ const uploadingPhotos = ref(false)
 
 const form = ref({ title: '', description: '', unit_id: '' })
 const selectedPhotos = ref<File[]>([])
-const photoInputRef = ref<HTMLInputElement | null>(null)
-const photoDragOver = ref(false)
 
 watch(() => props.open, (open) => {
   if (open) {
     form.value = { title: '', description: '', unit_id: '' }
     selectedPhotos.value = []
-    photoDragOver.value = false
     feedback.reset()
   } else {
     forceClose()
   }
 })
-
-function onPhotoChange(e: Event) {
-  const input = e.target as HTMLInputElement
-  if (input.files) {
-    selectedPhotos.value = [...selectedPhotos.value, ...Array.from(input.files)]
-  }
-  if (photoInputRef.value) photoInputRef.value.value = ''
-}
-
-function onPhotoDrop(e: DragEvent) {
-  photoDragOver.value = false
-  const files = Array.from(e.dataTransfer?.files ?? []).filter(f => f.type.startsWith('image/'))
-  selectedPhotos.value = [...selectedPhotos.value, ...files]
-}
-
-function removePhoto(idx: number) {
-  selectedPhotos.value = selectedPhotos.value.filter((_, i) => i !== idx)
-}
 
 function photoPreview(file: File): string {
   return URL.createObjectURL(file)
@@ -157,51 +135,35 @@ async function submit() {
 
       <div class="flex flex-col gap-1">
         <label class="text-sm font-medium text-on-surface-variant">{{ t('reports.photos') }}</label>
-        <input
-          ref="photoInputRef"
-          type="file"
+        <CFileDropzone
+          v-model:files="selectedPhotos"
+          :hint="t('reports.photoHint')"
           accept="image/*"
-          multiple
-          style="display:none"
-          @change="onPhotoChange"
-        />
-        <div
-          :class="['dropzone', { 'dropzone--over': photoDragOver }]"
-          role="button"
-          tabindex="0"
-          @click="photoInputRef?.click()"
-          @keydown.enter="photoInputRef?.click()"
-          @dragover.prevent="photoDragOver = true"
-          @dragleave.prevent="photoDragOver = false"
-          @drop.prevent="onPhotoDrop"
         >
-          <CIconUpload class="dropzone__icon" />
-          <span class="body-xs dropzone__hint">{{ t('reports.photoHint') }}</span>
-        </div>
-        <div
-          v-if="selectedPhotos.length"
-          class="photo-preview-strip"
-        >
-          <div
-            v-for="(photo, idx) in selectedPhotos"
-            :key="idx"
-            class="photo-preview-item"
-          >
-            <img
-              :src="photoPreview(photo)"
-              :alt="photo.name"
-              class="photo-thumb"
-            />
-            <button
-              type="button"
-              class="photo-remove"
-              :title="t('reports.removePhoto')"
-              @click="removePhoto(idx)"
-            >
-              ×
-            </button>
-          </div>
-        </div>
+          <template #preview="{ files, remove }">
+            <div class="photo-preview-strip">
+              <div
+                v-for="(photo, idx) in files"
+                :key="idx"
+                class="photo-preview-item"
+              >
+                <img
+                  :src="photoPreview(photo)"
+                  :alt="photo.name"
+                  class="photo-thumb"
+                />
+                <button
+                  type="button"
+                  class="photo-remove"
+                  :title="t('reports.removePhoto')"
+                  @click="remove(idx)"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+          </template>
+        </CFileDropzone>
         <span
           v-if="uploadingPhotos"
           class="body-xs"
@@ -237,16 +199,16 @@ async function submit() {
   display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-2);
 }
 .photo-preview-item {
-  position: relative; width: 64px; height: 64px; flex-shrink: 0;
+  position: relative; width: var(--space-16); height: var(--space-16); flex-shrink: 0;
 }
 .photo-thumb {
-  width: 64px; height: 64px; object-fit: cover;
+  width: var(--space-16); height: var(--space-16); object-fit: cover;
   border-radius: var(--radius-lg); border: 1px solid var(--color-outline-variant);
 }
 .photo-remove {
   position: absolute; top: -6px; right: -6px;
-  background: var(--color-error); color: #fff; border: none;
-  border-radius: 50%; width: 20px; height: 20px;
+  background: var(--color-error); color: var(--color-on-error); border: none;
+  border-radius: var(--radius-full); width: var(--space-5); height: var(--space-5);
   display: flex; align-items: center; justify-content: center;
   cursor: pointer; font-size: 14px; line-height: 1;
   min-height: unset; min-width: unset;

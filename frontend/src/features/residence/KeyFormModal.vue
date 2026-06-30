@@ -194,8 +194,8 @@ async function save() {
             <div class="shares-summary">
               <span>{{ t('common.total') }} :</span>
               <span
+                class="font-semibold"
                 :class="{ 'sum-mismatch': isSumMismatch }"
-                style="font-weight:var(--fw-semibold)"
               >
                 {{ sharesSum }}
               </span>
@@ -207,7 +207,7 @@ async function save() {
             <CAlert
               v-if="isSumMismatch"
               variant="warning"
-              style="margin-top:var(--space-3)"
+              class="mt-3"
             >
               {{ t('settings.keys.sumMismatch') }}
             </CAlert>
@@ -241,7 +241,7 @@ async function save() {
 </template>
 
 <style scoped>
-.shares-section { border-top: 1px solid var(--color-outline-variant); padding-top: var(--space-4); }
+.shares-section { padding-top: var(--space-4); }
 .shares-loading { display: flex; align-items: center; gap: var(--space-2); color: var(--color-on-surface-variant); font-size: var(--text-sm); }
 .c-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .shares-summary {

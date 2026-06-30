@@ -12,6 +12,7 @@ import CLegalNotice from '@/components/molecules/CLegalNotice.vue'
 import CLegalCard from '@/components/molecules/CLegalCard.vue'
 import CMetaLine from '@/components/molecules/CMetaLine.vue'
 import CMetaItem from '@/components/molecules/CMetaItem.vue'
+import CSectionHeader from '@/components/molecules/CSectionHeader.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
@@ -280,12 +281,14 @@ function openDeleteModal(entry: MaintenanceEntry) {
           >
             <div class="regulatory-grid">
               <CCard class="regulatory-card">
-                <div class="regulatory-card__header">
+                <CSectionHeader>
                   <span class="title-sm">{{ t('maintenance.regulatory.title') }}</span>
-                  <CBadge variant="default">
-                    {{ t('maintenance.regulatory.decree') }}
-                  </CBadge>
-                </div>
+                  <template #actions>
+                    <CBadge variant="default">
+                      {{ t('maintenance.regulatory.decree') }}
+                    </CBadge>
+                  </template>
+                </CSectionHeader>
                 <div class="regulatory-card__body">
                   <div>
                     <span class="regulatory-card__label">{{ t('maintenance.regulatory.building') }}</span>
@@ -312,15 +315,17 @@ function openDeleteModal(entry: MaintenanceEntry) {
               </CCard>
 
               <CCard class="regulatory-card">
-                <div class="regulatory-card__header">
+                <CSectionHeader>
                   <span class="title-sm">{{ t('maintenance.regulatory.insuranceContracts') }}</span>
-                  <CBadge
-                    variant="default"
-                    :dot="logbookSummary.insurance_contracts.length > 0"
-                  >
-                    {{ t('maintenance.regulatory.contractsCount', logbookSummary.insurance_contracts.length) }}
-                  </CBadge>
-                </div>
+                  <template #actions>
+                    <CBadge
+                      variant="default"
+                      :dot="logbookSummary.insurance_contracts.length > 0"
+                    >
+                      {{ t('maintenance.regulatory.contractsCount', logbookSummary.insurance_contracts.length) }}
+                    </CBadge>
+                  </template>
+                </CSectionHeader>
                 <div
                   v-if="logbookSummary.insurance_contracts.length > 0"
                   class="contract-list"
@@ -357,15 +362,17 @@ function openDeleteModal(entry: MaintenanceEntry) {
               </CCard>
 
               <CCard class="regulatory-card">
-                <div class="regulatory-card__header">
+                <CSectionHeader>
                   <span class="title-sm">{{ t('maintenance.regulatory.maintenanceContracts') }}</span>
-                  <CBadge
-                    variant="default"
-                    :dot="logbookSummary.maintenance_contracts.length > 0"
-                  >
-                    {{ t('maintenance.regulatory.contractsCount', logbookSummary.maintenance_contracts.length) }}
-                  </CBadge>
-                </div>
+                  <template #actions>
+                    <CBadge
+                      variant="default"
+                      :dot="logbookSummary.maintenance_contracts.length > 0"
+                    >
+                      {{ t('maintenance.regulatory.contractsCount', logbookSummary.maintenance_contracts.length) }}
+                    </CBadge>
+                  </template>
+                </CSectionHeader>
                 <div
                   v-if="logbookSummary.maintenance_contracts.length > 0"
                   class="contract-list"
@@ -457,7 +464,7 @@ function openDeleteModal(entry: MaintenanceEntry) {
                         <span class="title-sm">{{ entry.title }}</span>
                         <CBadge
                           :variant="entry.source === 'automatic' ? 'primary' : 'default'"
-                          style="margin-left:8px"
+                          class="ml-2"
                         >
                           {{ entry.source === 'automatic' ? t('maintenance.automatic') : t('maintenance.manual') }}
                         </CBadge>
@@ -568,13 +575,6 @@ function openDeleteModal(entry: MaintenanceEntry) {
   gap: var(--space-3);
 }
 
-.regulatory-card__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-2);
-}
-
 .regulatory-card__body {
   display: flex;
   flex-direction: column;
@@ -585,7 +585,7 @@ function openDeleteModal(entry: MaintenanceEntry) {
   display: block;
   font-size: var(--text-xs);
   color: var(--color-on-surface-variant);
-  margin-bottom: 4px;
+  margin-bottom: var(--space-1);
 }
 
 .regulatory-card__value {
@@ -593,7 +593,7 @@ function openDeleteModal(entry: MaintenanceEntry) {
 }
 
 .regulatory-card__hint {
-  margin: 4px 0 0;
+  margin: var(--space-1) 0 0;
   color: var(--color-on-surface-variant);
 }
 
@@ -635,8 +635,8 @@ function openDeleteModal(entry: MaintenanceEntry) {
 }
 
 .timeline-item {
-  display: flex; gap: 16px; align-items: stretch;
-  padding-bottom: 16px;
+  display: flex; gap: var(--space-4); align-items: stretch;
+  padding-bottom: var(--space-4);
   position: relative;
 }
 
@@ -644,7 +644,7 @@ function openDeleteModal(entry: MaintenanceEntry) {
   width: var(--icon-xs); height: var(--icon-xs); border-radius: 50%; flex-shrink: 0;
   background: var(--color-primary);
   border: 3px solid var(--color-surface);
-  margin-top: 16px;
+  margin-top: var(--space-4);
   z-index: 1;
   position: relative;
 }
@@ -653,7 +653,7 @@ function openDeleteModal(entry: MaintenanceEntry) {
 .timeline-item::before {
   content: '';
   position: absolute;
-  left: 7px; top: 28px; bottom: 0;
+  left: 7px; top: var(--space-7); bottom: 0;
   width: 2px;
   background: var(--color-outline-variant);
 }
@@ -662,7 +662,7 @@ function openDeleteModal(entry: MaintenanceEntry) {
 .timeline-card { flex: 1; }
 
 .entry-header { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); margin-bottom: 6px; }
-.entry-header-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.entry-header-right { display: flex; align-items: center; gap: var(--space-2); flex-shrink: 0; }
 .entry-date { font-size: var(--text-xs); color: var(--color-on-surface-variant); }
 .entry-desc { color: var(--color-on-surface-variant); margin-bottom: var(--space-2); }
 .entry-footer { display: flex; justify-content: flex-start; gap: var(--space-3); flex-wrap: wrap; font-size: var(--text-sm); align-items: center; }
@@ -674,9 +674,6 @@ function openDeleteModal(entry: MaintenanceEntry) {
   color: var(--color-on-surface);
   font-variant-numeric: tabular-nums;
 }
-.modal-footer-feedback { margin-right: auto; min-width: 0; }
-
-.period-tabs { flex: 1; min-width: 0; }
 
 .period-nav {
   display: flex;
@@ -689,8 +686,6 @@ function openDeleteModal(entry: MaintenanceEntry) {
   min-width: 9rem;
   text-align: center;
 }
-
-.form-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
 
 @media (min-width: 1024px) {
   .page-layout {
@@ -721,10 +716,6 @@ function openDeleteModal(entry: MaintenanceEntry) {
   .period-label {
     flex: 1;
     min-width: 0;
-  }
-
-  .form-row {
-    grid-template-columns: 1fr;
   }
 }
 </style>

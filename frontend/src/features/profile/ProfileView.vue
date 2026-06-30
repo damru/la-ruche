@@ -16,7 +16,8 @@ import CIconMoon from '@/components/atoms/CIconMoon.svg'
 import CIconSun from '@/components/atoms/CIconSun.svg'
 import { useAuthStore } from '@/stores/auth'
 import { useUiStore, NOTIF_EVENTS } from '@/stores/ui'
-import { authApi, buildingApi } from '@/api'
+import { authApi } from '@/api'
+import { useBuildingStore } from '@/stores/building'
 import { useFormFeedback } from '@/composables/useFormFeedback'
 import { useConfirm } from '@/composables/useConfirm'
 import ResetDemoModal from './ResetDemoModal.vue'
@@ -42,8 +43,8 @@ const phone = ref(auth.user?.phone ?? '')
 const buildingName = ref('')
 onMounted(async () => {
   try {
-    const { data } = await buildingApi.get()
-    buildingName.value = data.name
+    const building = await useBuildingStore().fetch()
+    buildingName.value = building.name
   } catch {
     // Scope name is optional context — silently skip if unavailable.
   }

@@ -66,8 +66,6 @@ const closingClaim = ref(false)
 const uploading = ref(false)
 const form = ref({ transmitted_at: todayIso(), reimbursement_date: '', reimbursement_amount: '' })
 const selectedDocuments = ref<File[]>([])
-const documentInputRef = ref<HTMLInputElement | null>(null)
-const dragOver = ref(false)
 
 watch(() => props.open, (open) => {
   if (!open) { forceClose(); return }
@@ -78,26 +76,8 @@ watch(() => props.open, (open) => {
     reimbursement_amount: props.claim.reimbursement_amount != null ? String(props.claim.reimbursement_amount) : '',
   }
   selectedDocuments.value = []
-  dragOver.value = false
   feedback.reset()
 })
-
-function onDocumentChange(event: Event) {
-  const input = event.target as HTMLInputElement
-  const files = Array.from(input.files ?? [])
-  if (files.length > 0) selectedDocuments.value = [...selectedDocuments.value, ...files]
-  if (documentInputRef.value) documentInputRef.value.value = ''
-}
-
-function onDocumentDrop(event: DragEvent) {
-  dragOver.value = false
-  const files = Array.from(event.dataTransfer?.files ?? [])
-  if (files.length > 0) selectedDocuments.value = [...selectedDocuments.value, ...files]
-}
-
-function removeDocument(index: number) {
-  selectedDocuments.value = selectedDocuments.value.filter((_, i) => i !== index)
-}
 
 async function uploadDocument(claimId: string, file: File): Promise<void> {
   const extension = extractFileExtension(file.name)
@@ -226,50 +206,11 @@ async function handleSubmit() {
 
       <div class="flex flex-col gap-1">
         <label class="text-sm font-medium text-on-surface-variant">{{ t('claims.fields.closeDocuments') }}</label>
-        <input
-          ref="documentInputRef"
-          type="file"
-          multiple
-          style="display:none"
-          @change="onDocumentChange"
+        <CFileDropzone
+          v-model:files="selectedDocuments"
+          :hint="t('claims.closeDocumentHint')"
+          :remove-label="t('claims.removeDocument')"
         />
-        <div
-          :class="['dropzone', { 'dropzone--over': dragOver }]"
-          role="button"
-          tabindex="0"
-          @click="documentInputRef?.click()"
-          @keydown.enter.prevent="documentInputRef?.click()"
-          @keydown.space.prevent="documentInputRef?.click()"
-          @dragenter.prevent="dragOver = true"
-          @dragover.prevent="dragOver = true"
-          @dragleave.prevent="dragOver = false"
-          @drop.prevent="onDocumentDrop"
-        >
-          <CIconUpload class="dropzone__icon" />
-          <span class="body-xs dropzone__hint">{{ t('claims.closeDocumentHint') }}</span>
-        </div>
-
-        <div
-          v-if="selectedDocuments.length > 0"
-          class="claim-preview-strip"
-        >
-          <div
-            v-for="(document, index) in selectedDocuments"
-            :key="`${document.name}-${index}`"
-            class="claim-preview-item"
-          >
-            <span class="claim-preview-name">{{ document.name }}</span>
-            <button
-              type="button"
-              class="claim-remove"
-              :title="t('claims.removeDocument')"
-              :aria-label="t('claims.removeDocument')"
-              @click="removeDocument(index)"
-            >
-              ×
-            </button>
-          </div>
-        </div>
       </div>
     </CForm>
 
@@ -309,59 +250,5 @@ async function handleSubmit() {
   .form-row {
     grid-template-columns: 1fr;
   }
-}
-
-.claim-preview-strip {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  margin-top: var(--space-2);
-}
-
-.claim-preview-item {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  max-width: 100%;
-  padding: 0 var(--space-4) 0 var(--space-3);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--color-outline-variant);
-  background: var(--color-surface-container-low);
-}
-
-.claim-preview-name {
-  max-width: 220px;
-  overflow: clip;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--color-on-surface-variant);
-  font-size: var(--text-sm);
-}
-
-.claim-remove {
-  position: absolute;
-  top: -6px;
-  right: -6px;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: var(--color-error);
-  color: #fff;
-  border: none;
-  cursor: pointer;
-  font-size: var(--text-md);
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  min-height: unset;
-  min-width: unset;
-}
-
-.claim-remove:hover {
-  background: var(--color-error-dark, var(--color-error));
-  opacity: 0.85;
 }
 </style>

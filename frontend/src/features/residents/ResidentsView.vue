@@ -226,7 +226,7 @@ function openTransferModal(unit: Unit) {
         </div>
       </template>
       <template #right>
-        <div style="display:flex;gap:8px">
+        <div class="flex gap-2">
           <CBtn
             variant="primary"
             size="sm"
@@ -609,7 +609,7 @@ function openTransferModal(unit: Unit) {
 
 .action-btns {
   display: flex;
-  gap: 4px;
+  gap: var(--space-1);
   justify-content: flex-end;
   align-items: center;
 }

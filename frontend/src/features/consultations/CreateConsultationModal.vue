@@ -91,7 +91,7 @@ async function handleSubmit() {
         <div
           v-for="(_, idx) in form.choices"
           :key="idx"
-          class="choice-input-row"
+          class="flex items-center gap-2"
         >
           <CFormInput
             v-model="form.choices[idx]"
@@ -140,7 +140,3 @@ async function handleSubmit() {
   </CModal>
 </template>
 
-<style scoped>
-.choice-input-row { display: flex; align-items: center; gap: 8px; }
-.choice-input-row .form-input { flex: 1; }
-</style>

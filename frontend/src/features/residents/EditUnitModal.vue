@@ -168,7 +168,7 @@ async function saveUnit() {
         />
       </CFormRow>
 
-      <div class="shares-section">
+      <div class="pt-4">
         <h3 class="text-md font-semibold mb-3">
           {{ t('units.generalShares') }}
         </h3>
@@ -179,7 +179,7 @@ async function saveUnit() {
           :step="1"
           :min="0"
           :hint="t('units.generalSharesHint')"
-          style="max-width:240px"
+          class="max-w-60"
         />
       </div>
     </CForm>
@@ -206,10 +206,3 @@ async function saveUnit() {
     </template>
   </CModal>
 </template>
-
-<style scoped>
-.shares-section {
-  border-top: 1px solid var(--color-outline-variant);
-  padding-top: var(--space-4);
-}
-</style>

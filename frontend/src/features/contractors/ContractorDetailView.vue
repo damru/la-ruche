@@ -23,7 +23,8 @@ import CIconSettings from '@/components/atoms/CIconSettings.svg'
 import CIconShield from '@/components/atoms/CIconShield.svg'
 import CIconSparkles from '@/components/atoms/CIconSparkles.svg'
 import CIconWrench from '@/components/atoms/CIconWrench.svg'
-import { buildingApi, contractorsApi, tasksApi } from '@/api'
+import { contractorsApi, tasksApi } from '@/api'
+import { useBuildingStore } from '@/stores/building'
 import type { Contractor, Task } from '@/types/domain'
 
 const { t } = useI18n()
@@ -38,12 +39,12 @@ const assignedTasks = ref<Task[]>([])
 
 // ── Load data ─────────────────────────────────────────────────────
 async function loadData() {
-  const [buildingRes, contractorRes, tasksRes] = await Promise.all([
-    buildingApi.get(),
+  const [building, contractorRes, tasksRes] = await Promise.all([
+    useBuildingStore().fetch(),
     contractorsApi.get(contractorId.value),
     tasksApi.list(),
   ])
-  buildingName.value = buildingRes.data.name
+  buildingName.value = building.name
   contractor.value = contractorRes.data
   assignedTasks.value = tasksRes.data.filter(
     t => t.contractor_id === contractorId.value,
@@ -169,8 +170,7 @@ function priorityVariant(p: string): 'err' | 'pending' | 'primary' | 'valid' | '
                 </CBadge>
                 <span
                   v-if="!contractor.domains.length"
-                  class="body-xs"
-                  style="color: var(--color-on-surface-variant)"
+                  class="body-xs text-on-surface-variant"
                 >
                   {{ t('contractors.noDomain') }}
                 </span>
@@ -276,8 +276,6 @@ function priorityVariant(p: string): 'err' | 'pending' | 'primary' | 'valid' | '
   min-width: 0;
 }
 
-.contractor-name { margin: 0 0 var(--space-2); }
-
 .contractor-domains {
   display: flex;
   gap: var(--space-1);
@@ -304,12 +302,6 @@ function priorityVariant(p: string): 'err' | 'pending' | 'primary' | 'valid' | '
   white-space: pre-line;
 }
 
-/* ── Section title ───────────────────────────────────────────────── */
-.section-title {
-  margin-bottom: var(--space-4);
-  color: var(--color-on-surface-variant);
-}
-
 /* ── Task list ───────────────────────────────────────────────────── */
 .task-list {
   display: flex;
@@ -326,7 +318,7 @@ function priorityVariant(p: string): 'err' | 'pending' | 'primary' | 'valid' | '
   transition: box-shadow 0.15s;
 }
 .task-item:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-sm);
 }
 
 .task-item-row {

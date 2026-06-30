@@ -122,7 +122,7 @@ function onDragOver(e: DragEvent) {
   border-radius: var(--radius-2xl);
   background: var(--color-surface-container);
   /* Ghost border — accessibility only */
-  border: 2px dashed rgba(194, 199, 207, 0.5);
+  border: 2px dashed var(--color-outline-variant);
   cursor: pointer;
   transition:
     background var(--transition-fast),
@@ -134,7 +134,7 @@ function onDragOver(e: DragEvent) {
 .c-dropzone:hover,
 .c-dropzone:focus-visible {
   background: var(--color-secondary-container-low);
-  border-color: rgba(100, 63, 213, 0.4);
+  border-color: color-mix(in oklch, var(--color-primary) 40%, transparent);
 }
 
 .c-dropzone--dragging {
@@ -176,7 +176,7 @@ function onDragOver(e: DragEvent) {
 
 .c-dropzone__progress-wrap {
   width: 160px;
-  height: 4px;
+  height: var(--space-1);
   background: var(--color-surface-container-highest);
   border-radius: var(--radius-full);
   overflow: hidden;

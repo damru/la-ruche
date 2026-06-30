@@ -154,7 +154,7 @@ function statusVariant(status: UnitChargesLevy['status']): 'pending' | 'valid' |
       <template #left>
         <div class="topbar-breadcrumb">
           <span
-            style="cursor:pointer"
+            class="cursor-pointer"
             @click="router.push(backRoute)"
           >{{ backLabel }}</span>
           <CIconChevronRight />
@@ -305,6 +305,3 @@ function statusVariant(status: UnitChargesLevy['status']): 'pending' | 'valid' |
     </div>
   </div>
 </template>
-
-<style scoped>
-</style>

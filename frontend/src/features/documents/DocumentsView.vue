@@ -12,7 +12,8 @@ import CHeading from '@/components/atoms/CHeading.vue'
 import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import CIconTrash from '@/components/atoms/CIconTrash.svg'
 import CIconDownload from '@/components/atoms/CIconDownload.svg'
-import { documentsApi, buildingApi } from '@/api'
+import { documentsApi } from '@/api'
+import { useBuildingStore } from '@/stores/building'
 import { usePageLoader } from '@/composables/usePageLoader'
 import type { Document } from '@/types/domain'
 import UploadDocumentModal from './UploadDocumentModal.vue'
@@ -36,12 +37,12 @@ const documents = computed(() => {
 })
 
 async function loadData() {
-  const [docsRes, buildingRes] = await Promise.all([
+  const [docsRes, building] = await Promise.all([
     documentsApi.list(),
-    buildingApi.get(),
+    useBuildingStore().fetch(),
   ])
   allDocuments.value = docsRes.data
-  buildingName.value = buildingRes.data.name
+  buildingName.value = building.name
 }
 
 const { loading, error, reload } = usePageLoader(loadData)
@@ -241,8 +242,8 @@ function onDocumentDeleted(id: string) {
 <style scoped>
 
 .doc-name-cell { display: flex; align-items: center; gap: 10px; }
-.doc-icon { width: 18px; height: 18px; color: var(--color-primary); flex-shrink: 0; }
-.doc-name { font-weight: 500; }
+.doc-icon { width: var(--icon-md); height: var(--icon-md); color: var(--color-primary); flex-shrink: 0; }
+.doc-name { font-weight: var(--fw-medium); }
 .dim { color: var(--color-on-surface-variant); }
 
 .roles-list { display: flex; flex-wrap: wrap; gap: var(--space-1); }
@@ -250,7 +251,7 @@ function onDocumentDeleted(id: string) {
 .doc-references {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-1);
 }
 
 .doc-reference {

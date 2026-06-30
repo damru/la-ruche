@@ -378,7 +378,7 @@ watch(() => route.path, closeDrawer)
   letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--color-on-surface-variant);
-  padding: 14px var(--space-3) 4px;
+  padding: 14px var(--space-3) var(--space-1);
   opacity: 0.6;
 }
 
@@ -401,8 +401,8 @@ watch(() => route.path, closeDrawer)
 }
 .c-sidebar__item--active .c-sidebar__item-icon { color: var(--color-primary); }
 
-.c-sidebar__item-icon { width: 18px; height: 18px; flex-shrink: 0; }
-.c-sidebar__item-icon :deep(svg) { width: 18px; height: 18px; }
+.c-sidebar__item-icon { width: var(--icon-md); height: var(--icon-md); flex-shrink: 0; }
+.c-sidebar__item-icon :deep(svg) { width: var(--icon-md); height: var(--icon-md); }
 
 .c-sidebar__item-label { font-size: 13px; font-weight: 500; }
 
@@ -480,7 +480,7 @@ watch(() => route.path, closeDrawer)
 }
 
 .c-bottom-nav__icon-wrap {
-  padding: 4px 16px;
+  padding: var(--space-1) var(--space-4);
   border-radius: var(--radius-full);
   transition: background var(--transition-fast);
   display: flex;
@@ -559,7 +559,7 @@ watch(() => route.path, closeDrawer)
 .c-nav-drawer__handle-area {
   display: flex;
   justify-content: center;
-  padding: 12px 0 8px;
+  padding: var(--space-3) 0 var(--space-2);
   cursor: pointer;
 }
 
@@ -583,7 +583,7 @@ watch(() => route.path, closeDrawer)
   letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--color-on-surface-variant);
-  padding: 14px var(--space-3) 4px;
+  padding: 14px var(--space-3) var(--space-1);
   opacity: 0.6;
 }
 
@@ -591,7 +591,7 @@ watch(() => route.path, closeDrawer)
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  padding: 12px var(--space-3);
+  padding: var(--space-3) var(--space-3);
   border-radius: var(--radius-lg);
   text-decoration: none;
   color: var(--color-on-surface-variant);

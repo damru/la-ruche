@@ -82,18 +82,18 @@ async function uploadFile() {
     :title="t('documents.upload')"
     @update:open="$emit('update:open', $event)"
   >
-    <div class="upload-form">
+    <div class="flex flex-col gap-4">
       <CAlert
         v-if="uploadSuccess"
         variant="success"
-        style="margin-bottom:12px"
+        class="mb-3"
       >
         {{ t('common.saved') }}
       </CAlert>
       <CAlert
         v-if="uploadError"
         variant="error"
-        style="margin-bottom:12px"
+        class="mb-3"
       >
         {{ uploadError }}
       </CAlert>
@@ -105,14 +105,14 @@ async function uploadFile() {
       />
       <p
         v-if="selectedFile"
-        class="selected-file"
+        class="text-on-surface font-medium"
       >
         {{ selectedFile.name }} ({{ formatFileSize(selectedFile.size) }})
       </p>
 
-      <div class="visibility-section">
+      <div class="flex flex-col gap-2">
         <label class="text-sm font-medium text-on-surface-variant">{{ t('documents.visiblePar') }}</label>
-        <div class="role-checkboxes">
+        <div class="flex flex-wrap gap-3">
           <CFormCheckbox
             v-for="role in ['manager', 'board_member', 'co_owner', 'tenant']"
             :key="role"
@@ -141,10 +141,3 @@ async function uploadFile() {
     </template>
   </CModal>
 </template>
-
-<style scoped>
-.upload-form { display: flex; flex-direction: column; gap: var(--space-4); }
-.selected-file { color: var(--color-on-surface); font-weight: var(--fw-medium); }
-.visibility-section { display: flex; flex-direction: column; gap: var(--space-2); }
-.role-checkboxes { display: flex; flex-wrap: wrap; gap: var(--space-3); }
-</style>

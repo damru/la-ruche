@@ -98,8 +98,7 @@ onMounted(reload)
         <!-- Single unit: spinner while redirect is in flight -->
         <p
           v-else
-          class="dim"
-          style="padding: var(--space-6) 0"
+          class="dim py-6"
         >
           {{ t('common.loading') }}
         </p>

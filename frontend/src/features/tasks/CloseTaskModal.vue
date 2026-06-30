@@ -95,7 +95,7 @@ async function handleSubmit() {
         :hint="task?.status === 'awaiting_validation' && task?.completion_cost != null
           ? t('tasks.completionCostVendorHint')
           : t('tasks.completionCostHint')"
-        class="task-close-field"
+        class="mt-4"
       />
     </CForm>
     <template #footer>
@@ -120,7 +120,3 @@ async function handleSubmit() {
     </template>
   </CModal>
 </template>
-
-<style scoped>
-.task-close-field { margin-top: var(--space-4); }
-</style>

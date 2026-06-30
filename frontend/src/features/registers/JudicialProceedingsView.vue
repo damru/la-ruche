@@ -14,7 +14,8 @@ import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import CIconEdit from '@/components/atoms/CIconEdit.svg'
 import CIconTrash from '@/components/atoms/CIconTrash.svg'
 import JudicialProceedingFormModal from '@/features/registers/JudicialProceedingFormModal.vue'
-import { buildingApi, judicialProceedingsApi } from '@/api'
+import { judicialProceedingsApi } from '@/api'
+import { useBuildingStore } from '@/stores/building'
 import type { JudicialProceeding } from '@/types/domain'
 
 const { t } = useI18n()
@@ -28,11 +29,11 @@ const proceedings = ref<JudicialProceeding[]>([])
 const canEdit = computed(() => authStore.isManager)
 
 async function loadData() {
-  const [buildingRes, listRes] = await Promise.all([
-    buildingApi.get(),
+  const [building, listRes] = await Promise.all([
+    useBuildingStore().fetch(),
     judicialProceedingsApi.list(),
   ])
-  buildingName.value = buildingRes.data.name
+  buildingName.value = building.name
   proceedings.value = listRes.data
 }
 

@@ -6,7 +6,6 @@ import CFormActions from '@/components/molecules/CFormActions.vue'
 import CIconDownload from '@/components/atoms/CIconDownload.svg'
 import CIconFile from '@/components/atoms/CIconFile.svg'
 import CIconTrash from '@/components/atoms/CIconTrash.svg'
-import CIconUpload from '@/components/atoms/CIconUpload.svg'
 import CFormCheckbox from '@/components/atoms/CFormCheckbox.vue'
 import CFormInput from '@/components/atoms/CFormInput.vue'
 import CFormSelect from '@/components/atoms/CFormSelect.vue'
@@ -54,8 +53,6 @@ const loadingDocuments = ref(false)
 const uploadingDocuments = ref(false)
 const existingDocuments = ref<Document[]>([])
 const selectedDocuments = ref<File[]>([])
-const documentInputRef = ref<HTMLInputElement | null>(null)
-const documentsDragOver = ref(false)
 const documentActionFeedback = useFormFeedback()
 const documentActionLoading = ref(false)
 const pendingDocument = ref<Document | null>(null)
@@ -116,7 +113,6 @@ function resetForm() {
   fieldErrors.value = {}
   existingDocuments.value = []
   selectedDocuments.value = []
-  documentsDragOver.value = false
   feedback.reset()
   documentActionFeedback.reset()
   deleteContractFeedback.reset()
@@ -144,7 +140,6 @@ function hydrateForm(contract?: VendorContract | null) {
   }
   fieldErrors.value = {}
   selectedDocuments.value = []
-  documentsDragOver.value = false
   feedback.reset()
 }
 
@@ -207,31 +202,6 @@ async function loadDocuments(contractId: string) {
   } finally {
     loadingDocuments.value = false
   }
-}
-
-function openDocumentPicker() {
-  if (!documentInputRef.value) return
-  documentInputRef.value.click()
-}
-
-function appendDocuments(files: File[]) {
-  if (!files.length) return
-  selectedDocuments.value = [...selectedDocuments.value, ...files]
-}
-
-function onDocumentChange(event: Event) {
-  const input = event.target as HTMLInputElement
-  appendDocuments(Array.from(input.files ?? []))
-  if (documentInputRef.value) documentInputRef.value.value = ''
-}
-
-function onDocumentDrop(event: DragEvent) {
-  documentsDragOver.value = false
-  appendDocuments(Array.from(event.dataTransfer?.files ?? []))
-}
-
-function removeSelectedDocument(index: number) {
-  selectedDocuments.value = selectedDocuments.value.filter((_, currentIndex) => currentIndex !== index)
 }
 
 async function uploadDocument(contractId: string, file: File) {
@@ -499,50 +469,11 @@ async function saveContract() {
 
       <div class="contract-form__documents">
         <label class="text-sm font-medium text-on-surface-variant">{{ t('contracts.documents.titleInline') }}</label>
-        <input
-          ref="documentInputRef"
-          type="file"
-          class="contract-form__file-input"
-          multiple
-          @change="onDocumentChange"
+        <CFileDropzone
+          v-model:files="selectedDocuments"
+          :hint="t('contracts.documents.hint')"
+          :remove-label="t('common.delete')"
         />
-        <div
-          :class="['dropzone', { 'dropzone--over': documentsDragOver }]"
-          role="button"
-          tabindex="0"
-          @click="openDocumentPicker"
-          @keydown.enter.prevent="openDocumentPicker"
-          @keydown.space.prevent="openDocumentPicker"
-          @dragenter.prevent="documentsDragOver = true"
-          @dragover.prevent="documentsDragOver = true"
-          @dragleave.prevent="documentsDragOver = false"
-          @drop.prevent="onDocumentDrop"
-        >
-          <CIconUpload class="dropzone__icon" />
-          <span class="body-xs dropzone__hint">{{ t('contracts.documents.hint') }}</span>
-        </div>
-
-        <div
-          v-if="selectedDocuments.length"
-          class="contract-form__selected-documents"
-        >
-          <div
-            v-for="(document, index) in selectedDocuments"
-            :key="`${document.name}-${index}`"
-            class="contract-form__selected-document"
-          >
-            <span class="contract-form__selected-name">{{ document.name }}</span>
-            <button
-              type="button"
-              class="contract-form__remove-document"
-              :title="t('common.delete')"
-              :aria-label="t('common.delete')"
-              @click="removeSelectedDocument(index)"
-            >
-              ×
-            </button>
-          </div>
-        </div>
 
         <div
           v-if="isEditing"
@@ -714,56 +645,6 @@ async function saveContract() {
   gap: var(--space-3);
 }
 
-.contract-form__file-input {
-  display: none;
-}
-
-.contract-form__selected-documents {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-}
-
-.contract-form__selected-document {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  max-width: 100%;
-  padding: 0 var(--space-4) 0 var(--space-3);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--color-outline-variant);
-  background: var(--color-surface-container-low);
-}
-
-.contract-form__selected-name {
-  max-width: 220px;
-  overflow: clip;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--color-on-surface-variant);
-  font-size: var(--text-sm);
-}
-
-.contract-form__remove-document {
-  position: absolute;
-  top: -6px;
-  right: -6px;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: var(--color-error);
-  color: #fff;
-  border: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: unset;
-  min-height: unset;
-  padding: 0;
-}
-
 .contract-form__existing-documents {
   display: flex;
   flex-direction: column;
@@ -801,7 +682,7 @@ async function saveContract() {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-1);
 }
 
 .contract-form__documents-name {

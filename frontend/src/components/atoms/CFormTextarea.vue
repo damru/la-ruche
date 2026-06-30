@@ -125,7 +125,7 @@ function handleBlur(event: FocusEvent) {
   resize: vertical;
   min-height: 80px;
   width: 100%;
-  line-height: 1.5;
+  line-height: var(--leading-normal);
   transition: background var(--transition-fast), box-shadow var(--transition-fast);
 }
 .c-field__textarea::placeholder { color: var(--color-on-surface-variant); }
@@ -147,7 +147,7 @@ function handleBlur(event: FocusEvent) {
   width: 100%;
   box-sizing: border-box;
   min-height: 80px;
-  line-height: 1.5;
+  line-height: var(--leading-normal);
   white-space: pre-wrap;
 }
 </style>

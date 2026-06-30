@@ -820,7 +820,7 @@ function formatSharePercentage(value: number): string {
               variant="warning"
               :show-value="true"
             />
-            <div class="prog-foot">
+            <div class="flex justify-between mt-1 text-2xs text-on-surface-variant">
               <span>{{ t('budget.worksFundProgressLabel', { pct: worksFundProgressPct }) }}</span>
               <span
                 class="text-end font-medium"
@@ -990,7 +990,7 @@ function formatSharePercentage(value: number): string {
                 :variant="lineVariant(line)"
                 :show-value="true"
               />
-              <div class="prog-foot">
+              <div class="flex justify-between mt-1 text-2xs text-on-surface-variant">
                 <span>{{ t('budget.realizedLabel') }} : <b class="text-on-surface font-medium font-mono">{{ formatCurrency(line.actual_amount ?? 0) }}</b></span>
                 <span>{{ t('budget.plannedLabel') }} : <b class="text-on-surface font-medium font-mono">{{ formatCurrency(line.budgeted_amount) }}</b></span>
               </div>
@@ -1196,19 +1196,5 @@ function formatSharePercentage(value: number): string {
   padding: var(--space-3);
   border-radius: var(--radius-xl);
   background: color-mix(in srgb, var(--color-warning) var(--color-tint), transparent);
-}
-
-.prog-foot {
-  display: flex;
-  justify-content: space-between;
-  margin-top: var(--space-1);
-  font-size: var(--text-2xs);
-  color: var(--color-on-surface-variant);
-}
-
-.stat-cell {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
 }
 </style>

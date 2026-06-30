@@ -81,8 +81,6 @@ const form = ref<ClaimEditorForm>(defaultForm())
 const editDocuments = ref<Document[]>([])
 const loadingEditDocuments = ref(false)
 const selectedEditDocuments = ref<File[]>([])
-const editDocumentInputRef = ref<HTMLInputElement | null>(null)
-const editDocumentsDragOver = ref(false)
 const detachingDocumentId = ref<string | null>(null)
 const pendingDocumentAction = ref<Document | null>(null)
 
@@ -103,7 +101,6 @@ watch(() => props.open, async (open) => {
   if (!props.claim) return
   form.value = formFromClaim(props.claim)
   selectedEditDocuments.value = []
-  editDocumentsDragOver.value = false
   editDocuments.value = []
   feedback.reset()
   await loadEditDocuments(props.claim.id)
@@ -140,23 +137,6 @@ async function loadEditDocuments(claimId: string) {
   } finally {
     loadingEditDocuments.value = false
   }
-}
-
-function onEditDocumentChange(event: Event) {
-  const input = event.target as HTMLInputElement
-  const files = Array.from(input.files ?? [])
-  if (files.length > 0) selectedEditDocuments.value = [...selectedEditDocuments.value, ...files]
-  if (editDocumentInputRef.value) editDocumentInputRef.value.value = ''
-}
-
-function onEditDocumentDrop(event: DragEvent) {
-  editDocumentsDragOver.value = false
-  const files = Array.from(event.dataTransfer?.files ?? [])
-  if (files.length > 0) selectedEditDocuments.value = [...selectedEditDocuments.value, ...files]
-}
-
-function removeEditDocument(index: number) {
-  selectedEditDocuments.value = selectedEditDocuments.value.filter((_, i) => i !== index)
 }
 
 async function downloadClaimDocument(documentId: string) {
@@ -334,50 +314,11 @@ async function handleSubmit() {
 
       <div class="flex flex-col gap-1">
         <label class="text-sm font-medium text-on-surface-variant">{{ t('claims.fields.documents') }}</label>
-        <input
-          ref="editDocumentInputRef"
-          type="file"
-          multiple
-          style="display:none"
-          @change="onEditDocumentChange"
+        <CFileDropzone
+          v-model:files="selectedEditDocuments"
+          :hint="t('claims.editDocumentHint')"
+          :remove-label="t('claims.removeDocument')"
         />
-        <div
-          :class="['dropzone', { 'dropzone--over': editDocumentsDragOver }]"
-          role="button"
-          tabindex="0"
-          @click="editDocumentInputRef?.click()"
-          @keydown.enter.prevent="editDocumentInputRef?.click()"
-          @keydown.space.prevent="editDocumentInputRef?.click()"
-          @dragenter.prevent="editDocumentsDragOver = true"
-          @dragover.prevent="editDocumentsDragOver = true"
-          @dragleave.prevent="editDocumentsDragOver = false"
-          @drop.prevent="onEditDocumentDrop"
-        >
-          <CIconUpload class="dropzone__icon" />
-          <span class="body-xs dropzone__hint">{{ t('claims.editDocumentHint') }}</span>
-        </div>
-
-        <div
-          v-if="selectedEditDocuments.length > 0"
-          class="claim-preview-strip"
-        >
-          <div
-            v-for="(document, index) in selectedEditDocuments"
-            :key="`${document.name}-${index}`"
-            class="claim-preview-item"
-          >
-            <span class="claim-preview-name">{{ document.name }}</span>
-            <button
-              type="button"
-              class="claim-remove"
-              :title="t('claims.removeDocument')"
-              :aria-label="t('claims.removeDocument')"
-              @click="removeEditDocument(index)"
-            >
-              ×
-            </button>
-          </div>
-        </div>
 
         <div class="claim-documents-section">
           <p class="text-xs text-on-surface-variant claim-documents-section__hint">
@@ -493,60 +434,6 @@ async function handleSubmit() {
   }
 }
 
-.claim-preview-strip {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  margin-top: var(--space-2);
-}
-
-.claim-preview-item {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  max-width: 100%;
-  padding: 0 var(--space-4) 0 var(--space-3);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--color-outline-variant);
-  background: var(--color-surface-container-low);
-}
-
-.claim-preview-name {
-  max-width: 220px;
-  overflow: clip;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--color-on-surface-variant);
-  font-size: var(--text-sm);
-}
-
-.claim-remove {
-  position: absolute;
-  top: -6px;
-  right: -6px;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: var(--color-error);
-  color: #fff;
-  border: none;
-  cursor: pointer;
-  font-size: var(--text-md);
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  min-height: unset;
-  min-width: unset;
-}
-
-.claim-remove:hover {
-  background: var(--color-error-dark, var(--color-error));
-  opacity: 0.85;
-}
-
 .claim-documents-section {
   margin-top: var(--space-3);
 }
@@ -582,7 +469,7 @@ async function handleSubmit() {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-1);
 }
 
 .claim-documents-name {

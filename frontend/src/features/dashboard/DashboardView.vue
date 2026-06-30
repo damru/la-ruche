@@ -320,12 +320,9 @@ const todayStr = computed(() =>
                 {{ t('dashboard.taskCount', { count: priorityTasks.length }) }}
               </p>
               <template #actions>
-                <RouterLink
-                  to="/tasks"
-                  class="flex items-center gap-1 text-xs text-primary font-medium no-underline whitespace-nowrap shrink-0 hover:underline"
-                >
-                  {{ t('dashboard.allTasks') }} <CIconChevronRight />
-                </RouterLink>
+                <CSectionLink to="/tasks">
+                  {{ t('dashboard.allTasks') }}
+                </CSectionLink>
               </template>
             </CSectionHeader>
             <div class="task-list">
@@ -380,12 +377,9 @@ const todayStr = computed(() =>
                 {{ t('dashboard.nextDeadlines') }}
               </p>
               <template #actions>
-                <RouterLink
-                  to="/contracts"
-                  class="flex items-center gap-1 text-xs text-primary font-medium no-underline whitespace-nowrap shrink-0 hover:underline"
-                >
-                  {{ t('dashboard.contracts') }} <CIconChevronRight />
-                </RouterLink>
+                <CSectionLink to="/contracts">
+                  {{ t('dashboard.contracts') }}
+                </CSectionLink>
               </template>
             </CSectionHeader>
             <div class="reminder-list">
@@ -437,12 +431,9 @@ const todayStr = computed(() =>
                 {{ t('dashboard.openCount', { count: openReports.length }) }}
               </p>
               <template #actions>
-                <RouterLink
-                  to="/reports"
-                  class="flex items-center gap-1 text-xs text-primary font-medium no-underline whitespace-nowrap shrink-0 hover:underline"
-                >
-                  {{ t('dashboard.seeReports') }} <CIconChevronRight />
-                </RouterLink>
+                <CSectionLink to="/reports">
+                  {{ t('dashboard.seeReports') }}
+                </CSectionLink>
               </template>
             </CSectionHeader>
             <div class="signal-list">
@@ -487,12 +478,9 @@ const todayStr = computed(() =>
                   {{ t('dashboard.residentsTitle') }}
                 </CHeading>
                 <template #actions>
-                  <RouterLink
-                    to="/residents"
-                    class="flex items-center gap-1 text-xs text-primary font-medium no-underline whitespace-nowrap shrink-0 hover:underline"
-                  >
-                    {{ t('dashboard.seeResidents') }} <CIconChevronRight />
-                  </RouterLink>
+                  <CSectionLink to="/residents">
+                    {{ t('dashboard.seeResidents') }}
+                  </CSectionLink>
                 </template>
               </CSectionHeader>
               <div class="residents-grid">
@@ -563,12 +551,9 @@ const todayStr = computed(() =>
                 {{ t('dashboard.budgetRealized', { pct: budgetExecutionRate }) }}
               </p>
               <template #actions>
-                <RouterLink
-                  to="/budget"
-                  class="flex items-center gap-1 text-xs text-primary font-medium no-underline whitespace-nowrap shrink-0 hover:underline"
-                >
-                  {{ t('dashboard.detailLink') }} <CIconChevronRight />
-                </RouterLink>
+                <CSectionLink to="/budget">
+                  {{ t('dashboard.detailLink') }}
+                </CSectionLink>
               </template>
             </CSectionHeader>
             <div class="budget-prog-list">
@@ -617,13 +602,13 @@ const todayStr = computed(() =>
 
 .hero-alert {
   display: flex; align-items: center; gap: var(--space-2);
-  padding: 12px var(--space-4); border-radius: var(--radius-xl); min-width: 280px; font-size: 13px;
+  padding: var(--space-3) var(--space-4); border-radius: var(--radius-xl); min-width: 280px; font-size: var(--text-sm);
   background: var(--tone-bg, var(--color-surface-container-low));
   color: var(--tone-fg, var(--color-on-surface));
 }
-.hero-alert svg { width: 16px; height: 16px; flex-shrink: 0; }
+.hero-alert svg { width: var(--icon-sm); height: var(--icon-sm); flex-shrink: 0; }
 .hero-alert div strong { font-weight: var(--fw-semibold); display: block; }
-.hero-alert div span  { font-size: 11px; opacity: 0.85; }
+.hero-alert div span  { font-size: var(--text-2xs); opacity: 0.85; }
 
 /* ── KPI ──────────────────────────────────────────────────────────── */
 .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-4); }
@@ -632,9 +617,9 @@ const todayStr = computed(() =>
 .kpi-prog { height: 3px; border-radius: var(--radius-full); background: var(--color-surface-container-high); overflow: hidden; margin-top: var(--space-3); }
 .kpi-prog__fill { height: 100%; border-radius: var(--radius-full); transition: width 0.8s cubic-bezier(0.34, 1.3, 0.64, 1); }
 .kpi-prog__fill--primary { background: var(--gradient-primary); }
-.kpi-prog__fill--success { background: linear-gradient(135deg, #1b5e20, #43a047); }
-.kpi-prog__fill--error   { background: linear-gradient(135deg, #ba1a1a, #e53935); }
-.kpi-prog__fill--warning { background: linear-gradient(135deg, #e65100, #ff9800); }
+.kpi-prog__fill--success { background: var(--gradient-success); }
+.kpi-prog__fill--error   { background: var(--gradient-error); }
+.kpi-prog__fill--warning { background: var(--gradient-warning); }
 
 /* ── Grid ─────────────────────────────────────────────────────────── */
 .grid3 { display: grid; grid-template-columns: 1fr 1fr 320px; gap: var(--space-6); align-items: start; }
@@ -645,7 +630,7 @@ const todayStr = computed(() =>
 
 /* ── Tasks ────────────────────────────────────────────────────────── */
 .task-list { display: flex; flex-direction: column; gap: var(--space-2); }
-.task-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border-radius: var(--radius-xl); background: var(--color-surface-container-low); cursor: pointer; transition: background var(--transition-fast); }
+.task-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px var(--space-3); border-radius: var(--radius-xl); background: var(--color-surface-container-low); cursor: pointer; transition: background var(--transition-fast); }
 .task-item:hover { background: var(--color-surface-container); }
 .task-prio { width: 4px; height: 32px; border-radius: var(--radius-full); flex-shrink: 0; margin-top: 2px; }
 .task-prio--urgent { background: var(--color-error); }
@@ -653,59 +638,57 @@ const todayStr = computed(() =>
 .task-prio--normal { background: var(--color-primary); }
 .task-prio--low    { background: var(--color-outline-variant); }
 .task-body { flex: 1; min-width: 0; }
-.task-title { font-size: 13px; font-weight: var(--fw-medium); color: var(--color-on-surface); margin-bottom: 3px; }
+.task-title { font-size: var(--text-sm); font-weight: var(--fw-medium); color: var(--color-on-surface); margin-bottom: 3px; }
 .task-meta  { display: flex; align-items: center; gap: var(--space-2); }
-.task-date  { font-size: 11px; color: var(--color-on-surface-variant); }
+.task-date  { font-size: var(--text-2xs); color: var(--color-on-surface-variant); }
 
 /* ── Reminders ────────────────────────────────────────────────────── */
 .reminder-list { display: flex; flex-direction: column; gap: var(--space-1); }
-.reminder-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius-xl); transition: background var(--transition-fast); cursor: pointer; }
+.reminder-item { display: flex; align-items: center; gap: 10px; padding: 10px var(--space-3); border-radius: var(--radius-xl); transition: background var(--transition-fast); cursor: pointer; }
 .reminder-item:hover { background: var(--color-surface-container-low); }
 .reminder-icon { width: 32px; height: 32px; min-width: unset; min-height: unset; border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: var(--tone-bg, transparent); color: var(--tone-fg, inherit); }
 .reminder-icon svg { width: 15px; height: 15px; }
-.reminder-icon--low    { background: var(--color-surface-container); color: var(--color-on-surface-variant); }
 .reminder-body { flex: 1; min-width: 0; }
-.reminder-title { font-size: 12px; font-weight: var(--fw-medium); color: var(--color-on-surface); }
-.reminder-sub   { font-size: 11px; color: var(--color-on-surface-variant); margin-top: 1px; }
-.reminder-date { font-family: var(--font-mono); font-size: 11px; font-weight: var(--fw-medium); flex-shrink: 0; }
+.reminder-title { font-size: var(--text-xs); font-weight: var(--fw-medium); color: var(--color-on-surface); }
+.reminder-sub   { font-size: var(--text-2xs); color: var(--color-on-surface-variant); margin-top: 1px; }
+.reminder-date { font-family: var(--font-mono); font-size: var(--text-2xs); font-weight: var(--fw-medium); flex-shrink: 0; }
 .reminder-date--high   { color: var(--color-error); }
 .reminder-date--medium { color: var(--color-warning); }
 .reminder-date--low    { color: var(--color-on-surface-variant); }
 
 /* ── Signals ──────────────────────────────────────────────────────── */
 .signal-list { display: flex; flex-direction: column; gap: var(--space-1); }
-.signal-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid rgba(194,199,207,.12); }
-.signal-item:last-child { border-bottom: none; }
+.signal-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; }
 .signal-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 .signal-dot--open        { background: var(--color-warning); }
 .signal-dot--in_progress { background: var(--color-primary); }
 .signal-dot--closed      { background: var(--color-success); }
 .signal-body { flex: 1; min-width: 0; }
-.signal-title { font-size: 12px; font-weight: var(--fw-medium); color: var(--color-on-surface); }
-.signal-meta  { font-size: 11px; color: var(--color-on-surface-variant); margin-top: 1px; }
+.signal-title { font-size: var(--text-xs); font-weight: var(--fw-medium); color: var(--color-on-surface); }
+.signal-meta  { font-size: var(--text-2xs); color: var(--color-on-surface-variant); margin-top: 1px; }
 
 /* ── Budget progress ──────────────────────────────────────────────── */
 .budget-prog-list { display: flex; flex-direction: column; gap: var(--space-4); }
 .budget-prog-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-1); }
-.budget-prog-label { font-size: 13px; font-weight: var(--fw-medium); color: var(--color-on-surface); }
+.budget-prog-label { font-size: var(--text-sm); font-weight: var(--fw-medium); color: var(--color-on-surface); }
 .budget-prog-meta { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-.budget-prog-amounts { font-family: var(--font-mono); font-size: 11px; color: var(--color-on-surface-variant); }
-.budget-prog-pct { font-size: 12px; font-weight: var(--fw-semibold); min-width: 36px; text-align: right; }
+.budget-prog-amounts { font-family: var(--font-mono); font-size: var(--text-2xs); color: var(--color-on-surface-variant); }
+.budget-prog-pct { font-size: var(--text-xs); font-weight: var(--fw-semibold); min-width: 36px; text-align: right; }
 .pct--normal { color: var(--color-primary); }
 .pct--over   { color: var(--color-error); }
-.budget-total-row { display: flex; justify-content: space-between; align-items: center; padding: 12px var(--space-4); background: var(--color-surface-container-low); border-radius: var(--radius-xl); font-size: 13px; font-weight: var(--fw-medium); color: var(--color-on-surface); }
-.budget-total-val { font-family: var(--font-mono); font-size: 13px; font-weight: var(--fw-medium); }
+.budget-total-row { display: flex; justify-content: space-between; align-items: center; padding: var(--space-3) var(--space-4); background: var(--color-surface-container-low); border-radius: var(--radius-xl); font-size: var(--text-sm); font-weight: var(--fw-medium); color: var(--color-on-surface); }
+.budget-total-val { font-family: var(--font-mono); font-size: var(--text-sm); font-weight: var(--fw-medium); }
 
 /* ── Residents ────────────────────────────────────────────────────── */
-.residents-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.residents-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-3); }
 .res-stat { background: var(--color-surface-container-low); border-radius: var(--radius-xl); padding: 14px; }
 .res-stat-val { font-family: var(--font-display); font-size: 26px; font-weight: var(--fw-bold); font-variation-settings: 'opsz' 72; letter-spacing: -0.03em; color: var(--color-on-surface); margin-bottom: 2px; }
 .res-stat--ok .res-stat-val  { color: var(--color-success); }
 .res-stat--err .res-stat-val { color: var(--color-error); }
-.res-stat-label { font-size: 11px; color: var(--color-on-surface-variant); }
+.res-stat-label { font-size: var(--text-2xs); color: var(--color-on-surface-variant); }
 
 /* ── Consultation ─────────────────────────────────────────────────── */
 .consultation-body { display: flex; flex-direction: column; gap: var(--space-2); }
-.consultation-title { font-size: 14px; font-weight: var(--fw-medium); color: var(--color-on-surface); }
-.consultation-legal { font-size: 11px; color: var(--color-on-surface-variant); }
+.consultation-title { font-size: var(--text-md); font-weight: var(--fw-medium); color: var(--color-on-surface); }
+.consultation-legal { font-size: var(--text-2xs); color: var(--color-on-surface-variant); }
 </style>

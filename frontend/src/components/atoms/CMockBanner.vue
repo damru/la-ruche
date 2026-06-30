@@ -42,7 +42,7 @@ const message = computed(() => (
   align-items: center;
   gap: var(--space-2);
   padding: 10px var(--space-4);
-  font-size: 13px;
+  font-size: var(--text-sm);
   margin: var(--space-2);
 }
 
@@ -103,8 +103,8 @@ const message = computed(() => (
 }
 
 .mock-banner svg {
-  width: 16px;
-  height: 16px;
+  width: var(--icon-sm);
+  height: var(--icon-sm);
   flex-shrink: 0;
   opacity: 0.8;
 }

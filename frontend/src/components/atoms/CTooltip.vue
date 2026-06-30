@@ -259,7 +259,7 @@ function recalc() {
   border: 1px solid var(--color-outline-variant);
   border-radius: var(--radius-xl);
   font-family: var(--font-body);
-  font-size: 12px;
+  font-size: var(--text-xs);
   font-weight: var(--fw-medium);
   line-height: 1.55;
   color: var(--color-on-surface);

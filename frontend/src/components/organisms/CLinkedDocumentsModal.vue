@@ -113,7 +113,7 @@ const { formatDate, formatFileSize } = useFormatters()
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-1);
 }
 
 .linked-documents-modal__name {
