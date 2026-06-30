@@ -54,8 +54,8 @@ async fn accounting_codes_list_is_nonempty() {
     .expect("user");
 
     sqlx::query(
-        "INSERT INTO user_building_role (user_id, building_id, role) \
-         VALUES ($1, $2, 'manager'::building_role)",
+        "INSERT INTO user_building (user_id, building_id, roles) \
+         VALUES ($1, $2, ARRAY['manager']::user_role[])",
     )
     .bind(manager_id)
     .bind(building_id)
@@ -63,16 +63,16 @@ async fn accounting_codes_list_is_nonempty() {
     .await
     .expect("role");
 
+    let jwt = laruche::auth::jwt::generate_access_token(
+        manager_id,
+        building_id,
+        vec![laruche::domain::Role::Manager],
+        &cfg.auth.jwt_secret,
+        cfg.auth.access_token_ttl_secs,
+    )
+    .expect("manager token");
+
     let server = common::test_server().await;
-    let login_resp = server
-        .post("/api/v1/auth/login")
-        .json(&json!({ "email": unique_email, "password": "MotDePasse123!" }))
-        .await;
-    assert_eq!(login_resp.status_code(), StatusCode::OK, "login failed");
-
-    let token: Value = login_resp.json();
-    let jwt = token["access_token"].as_str().expect("access_token");
-
     let resp = server
         .get("/api/v1/accounting-codes")
         .add_header("Authorization", format!("Bearer {jwt}"))
@@ -132,8 +132,8 @@ async fn budget_line_stores_account_code() {
     .expect("user");
 
     sqlx::query(
-        "INSERT INTO user_building_role (user_id, building_id, role) \
-         VALUES ($1, $2, 'manager'::building_role)",
+        "INSERT INTO user_building (user_id, building_id, roles) \
+         VALUES ($1, $2, ARRAY['manager']::user_role[])",
     )
     .bind(manager_id)
     .bind(building_id)
@@ -142,8 +142,8 @@ async fn budget_line_stores_account_code() {
     .expect("role");
 
     sqlx::query(
-        "INSERT INTO allocation_key (id, building_id, name, is_general) \
-         VALUES ($1, $2, 'Charges Générales', true)",
+        "INSERT INTO allocation_key (id, building_id, name, key_type) \
+         VALUES ($1, $2, 'Charges Générales', 'general'::allocation_key_type)",
     )
     .bind(key_id)
     .bind(building_id)
@@ -160,14 +160,16 @@ async fn budget_line_stores_account_code() {
     .await
     .expect("budget");
 
+    let jwt = laruche::auth::jwt::generate_access_token(
+        manager_id,
+        building_id,
+        vec![laruche::domain::Role::Manager],
+        &cfg.auth.jwt_secret,
+        cfg.auth.access_token_ttl_secs,
+    )
+    .expect("manager token");
+
     let server = common::test_server().await;
-    let login_resp = server
-        .post("/api/v1/auth/login")
-        .json(&json!({ "email": unique_email, "password": "MotDePasse123!" }))
-        .await;
-    assert_eq!(login_resp.status_code(), StatusCode::OK);
-    let token: Value = login_resp.json();
-    let jwt = token["access_token"].as_str().expect("access_token");
 
     // Create a budget line with account_code '6152' (entretien immobilier)
     let create_resp = server
