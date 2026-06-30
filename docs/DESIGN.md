@@ -594,6 +594,17 @@ CCard (conteneur)
 
 Chaque vue définit ses propres variantes dans ses **règles feature** (§4.2).
 
+#### Actions de ligne (tableaux & cartes)
+
+Les actions répétées sur une ligne de `CDataTable` utilisent **toujours** `CBtn variant="icon"` — bouton carré, icône seule, jamais de libellé textuel.
+
+| Règle | Détail |
+|---|---|
+| Variante | `variant="icon"` (jamais `ghost`/`secondary` avec `:title` visible) |
+| Libellé | `:title` (tooltip natif) **et** `:aria-label` obligatoires — jamais de texte rendu |
+| Action destructive | ajouter `class="tone--err"` (Supprimer, Archiver, Révoquer) |
+| Conteneur | `flex gap-1 justify-end` (tableau) ou `CCardActions` (carte) |
+
 #### KPI
 
 Les indicateurs et filtres KPI utilisent `CKpiCard` (molécule) + `CKpiMetric` (atome) et `CBtn` avec `.tone--*` pour les pills de filtre. La valeur numérique passe par `CKpiMetric` qui utilise `text-display` (`--text-display`, 40px) + `font-mono lnum tnum`. Ne jamais utiliser la valeur arbitraire `text-[56px]` ni `font-display` (Fraunces) pour des chiffres — non tabulaire, illisible en colonnes.

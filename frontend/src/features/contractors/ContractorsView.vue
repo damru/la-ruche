@@ -347,19 +347,18 @@ function openDeleteModal(c: Contractor) {
                 class="flex gap-1 justify-end"
               >
                 <CBtn
-                  variant="ghost"
-                  size="sm"
+                  variant="icon"
                   :icon="CIconEdit"
                   :title="t('common.edit')"
                   :aria-label="`${t('common.edit')} ${row.name}`"
                   @click.stop="openEdit(row)"
                 />
                 <CBtn
-                  variant="ghost"
-                  size="sm"
+                  variant="icon"
                   :icon="CIconTrash"
                   :title="t('common.delete')"
                   :aria-label="`${t('common.delete')} ${row.name}`"
+                  class="tone--err"
                   @click.stop="openDeleteModal(row)"
                 />
               </div>
@@ -435,19 +434,18 @@ function openDeleteModal(c: Contractor) {
               </div>
               <CCardActions v-if="canEdit">
                 <CBtn
-                  variant="ghost"
-                  size="sm"
+                  variant="icon"
                   :icon="CIconEdit"
                   :title="t('common.edit')"
                   :aria-label="`${t('common.edit')} ${c.name}`"
                   @click.stop="openEdit(c)"
                 />
                 <CBtn
-                  variant="ghost"
-                  size="sm"
+                  variant="icon"
                   :icon="CIconTrash"
                   :title="t('common.delete')"
                   :aria-label="`${t('common.delete')} ${c.name}`"
+                  class="tone--err"
                   @click.stop="openDeleteModal(c)"
                 />
               </CCardActions>

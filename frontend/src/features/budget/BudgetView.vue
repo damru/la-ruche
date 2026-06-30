@@ -1095,6 +1095,7 @@ function formatSharePercentage(value: number): string {
                 size="sm"
                 :icon="CIconCheckCircle"
                 :title="t('budget.markPaid')"
+                :aria-label="t('budget.markPaid')"
                 :loading="markingPaidId === asConsolidatedLevyRow(row).id"
                 class="tone--valid"
                 @click="markPaid(asConsolidatedLevyRow(row))"
