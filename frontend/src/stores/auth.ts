@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { authApi, onboardingApi } from '@/api'
 import { tryRefreshSession } from '@/api/client'
+import { useBuildingStore } from './building'
 import type { AuthUser, Role } from '@/types/domain'
 
 export const useAuthStore = defineStore('auth', () => {
@@ -63,6 +64,7 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = null
     needsOnboarding.value = null
     sessionRestored = false
+    useBuildingStore().reset()
   }
 
   // ── Restore session from httpOnly cookie (called once on first navigation) ──
