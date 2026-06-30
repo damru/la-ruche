@@ -451,61 +451,73 @@ pub async fn generate_levies(
     .fetch_one(&mut *tx)
     .await?;
 
-    // Build aggregate totals per budget_line while inserting per-unit rows.
+    // Collect every levy_call_unit row (per budget-line allocations + the
+    // works_fund portion) and the per-line totals in one pass, then bulk-insert.
+    let mut unit_rows: Vec<(Uuid, Option<Uuid>, Uuid, Decimal, i32, i32)> = Vec::new();
     let mut line_totals: HashMap<Uuid, Decimal> = HashMap::new();
 
     for l in levies {
-        // One levy_call_unit row per (unit, budget_line).
         for line_alloc in &l.line_allocations {
-            sqlx::query(
-                r#"INSERT INTO levy_call_unit
-                       (levy_call_id, unit_id, budget_line_id, key_id, amount,
-                        shares_snapshot, shares_total_snapshot)
-                   VALUES ($1, $2, $3, $4, $5, $6, $7)"#,
-            )
-            .bind(levy_call_id)
-            .bind(l.unit_id)
-            .bind(line_alloc.budget_line_id)
-            .bind(l.key_id)
-            .bind(line_alloc.amount)
-            .bind(l.shares_snapshot as i32)
-            .bind(l.shares_total_snapshot as i32)
-            .execute(&mut *tx)
-            .await?;
-
+            unit_rows.push((
+                l.unit_id,
+                Some(line_alloc.budget_line_id),
+                l.key_id,
+                line_alloc.amount,
+                l.shares_snapshot as i32,
+                l.shares_total_snapshot as i32,
+            ));
             *line_totals.entry(line_alloc.budget_line_id).or_default() += line_alloc.amount;
         }
 
-        // One levy_call_unit row for the works_fund portion (budget_line_id = NULL).
+        // Works_fund portion carries a NULL budget_line_id.
         if l.works_fund_amount > Decimal::ZERO {
-            sqlx::query(
-                r#"INSERT INTO levy_call_unit
-                       (levy_call_id, unit_id, budget_line_id, key_id, amount,
-                        shares_snapshot, shares_total_snapshot)
-                   VALUES ($1, $2, NULL, $3, $4, $5, $6)"#,
-            )
-            .bind(levy_call_id)
-            .bind(l.unit_id)
-            .bind(l.key_id)
-            .bind(l.works_fund_amount)
-            .bind(l.shares_snapshot as i32)
-            .bind(l.shares_total_snapshot as i32)
-            .execute(&mut *tx)
-            .await?;
+            unit_rows.push((
+                l.unit_id,
+                None,
+                l.key_id,
+                l.works_fund_amount,
+                l.shares_snapshot as i32,
+                l.shares_total_snapshot as i32,
+            ));
         }
     }
 
-    // Insert aggregate totals per budget_line into levy_call_line.
-    for (budget_line_id, amount) in &line_totals {
-        sqlx::query(
-            r#"INSERT INTO levy_call_line (levy_call_id, budget_line_id, amount)
-               VALUES ($1, $2, $3)"#,
-        )
-        .bind(levy_call_id)
-        .bind(budget_line_id)
-        .bind(amount)
-        .execute(&mut *tx)
-        .await?;
+    // Bulk-insert levy_call_unit rows (7 binds/row → chunk well under the 65k cap).
+    for chunk in unit_rows.chunks(1000) {
+        let mut qb = sqlx::QueryBuilder::new(
+            "INSERT INTO levy_call_unit \
+             (levy_call_id, unit_id, budget_line_id, key_id, amount, \
+              shares_snapshot, shares_total_snapshot) ",
+        );
+        qb.push_values(
+            chunk,
+            |mut b, &(unit_id, line_id, key_id, amount, shares, total)| {
+                b.push_bind(levy_call_id)
+                    .push_bind(unit_id)
+                    .push_bind(line_id)
+                    .push_bind(key_id)
+                    .push_bind(amount)
+                    .push_bind(shares)
+                    .push_bind(total);
+            },
+        );
+        qb.build().execute(&mut *tx).await?;
+    }
+
+    // Bulk-insert aggregate totals per budget_line into levy_call_line.
+    if !line_totals.is_empty() {
+        let line_rows: Vec<(Uuid, Decimal)> = line_totals.into_iter().collect();
+        for chunk in line_rows.chunks(1000) {
+            let mut qb = sqlx::QueryBuilder::new(
+                "INSERT INTO levy_call_line (levy_call_id, budget_line_id, amount) ",
+            );
+            qb.push_values(chunk, |mut b, &(budget_line_id, amount)| {
+                b.push_bind(levy_call_id)
+                    .push_bind(budget_line_id)
+                    .push_bind(amount);
+            });
+            qb.build().execute(&mut *tx).await?;
+        }
     }
 
     if total_works_fund > Decimal::ZERO {

@@ -201,24 +201,24 @@ pub async fn respond(
     choice_ids: &[Uuid],
     comment: Option<&str>,
 ) -> AppResult<()> {
-    // Validate each choice belongs to this open consultation
-    for &choice_id in choice_ids {
-        let valid = sqlx::query(
-            r#"SELECT cc.id FROM consultation_choice cc
-               JOIN consultation c ON c.id = cc.consultation_id
-               WHERE cc.id = $1 AND c.id = $2 AND c.building_id = $3 AND c.status = 'open'"#,
-        )
-        .bind(choice_id)
-        .bind(id)
-        .bind(building_id)
-        .fetch_optional(pool)
-        .await?;
+    // Validate that every requested choice belongs to this open consultation
+    // in a single query rather than one round-trip per choice.
+    let distinct_ids: std::collections::HashSet<Uuid> = choice_ids.iter().copied().collect();
+    let valid_count: i64 = sqlx::query_scalar(
+        r#"SELECT COUNT(*) FROM consultation_choice cc
+           JOIN consultation c ON c.id = cc.consultation_id
+           WHERE cc.id = ANY($1) AND c.id = $2 AND c.building_id = $3 AND c.status = 'open'"#,
+    )
+    .bind(choice_ids)
+    .bind(id)
+    .bind(building_id)
+    .fetch_one(pool)
+    .await?;
 
-        if valid.is_none() {
-            return Err(crate::errors::AppError::conflict_code(
-                "errors.consultations.not_found_or_closed",
-            ));
-        }
+    if valid_count as usize != distinct_ids.len() {
+        return Err(crate::errors::AppError::conflict_code(
+            "errors.consultations.not_found_or_closed",
+        ));
     }
 
     let mut tx = pool.begin().await?;
