@@ -12,7 +12,7 @@ use serde_json::{Value, json};
 
 #[tokio::test]
 async fn nominal_api_flow() {
-    let server = common::isolated_test_server().await;
+    let mut server = common::isolated_test_server().await;
 
     // ── Onboarding: fresh instance needs onboarding ───────────────────
     let status = server.get("/api/v1/onboarding/status").await;
@@ -29,6 +29,8 @@ async fn nominal_api_flow() {
     assert!(bootstrap_body["user_id"].is_string());
     assert!(bootstrap_body["building_id"].is_string());
     assert_eq!(bootstrap_body["roles"], json!(["manager"]));
+    // Explicitly carry session cookies forward; belt-and-suspenders over save_cookies().
+    server.add_cookies(bootstrap.cookies());
 
     // ── Onboarding status flips to false once a user exists ───────────
     let status_after = server.get("/api/v1/onboarding/status").await;
@@ -37,7 +39,13 @@ async fn nominal_api_flow() {
 
     // ── Authenticated session carries over via the saved cookie ───────
     let me = server.get("/api/v1/auth/me").await;
-    assert_eq!(me.status_code(), StatusCode::OK);
+    assert_eq!(
+        me.status_code(),
+        StatusCode::OK,
+        "auth/me failed — status {} body: {}",
+        me.status_code(),
+        me.text()
+    );
     let me_body: Value = me.json();
     assert_eq!(me_body["email"], "syndic@test.fr");
     assert_eq!(me_body["roles"], json!(["manager"]));
