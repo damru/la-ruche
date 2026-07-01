@@ -19,7 +19,8 @@ import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import CIconRefresh from '@/components/atoms/CIconRefresh.svg'
 import CIconUser from '@/components/atoms/CIconUser.svg'
 import CIconWrench from '@/components/atoms/CIconWrench.svg'
-import { buildingApi, contractorsApi, maintenanceApi, tasksApi } from '@/api'
+import { contractorsApi, maintenanceApi, tasksApi } from '@/api'
+import { useBuildingStore } from '@/stores/building'
 import type { Contractor, MaintenanceEntry, Task } from '@/types/domain'
 
 const { t } = useI18n()
@@ -35,12 +36,12 @@ const logbookEntries = ref<MaintenanceEntry[]>([])
 
 // ── Load data ─────────────────────────────────────────────────────
 async function loadData() {
-  const [buildingRes, taskRes, entriesRes] = await Promise.all([
-    buildingApi.get(),
+  const [building, taskRes, entriesRes] = await Promise.all([
+    useBuildingStore().fetch(),
     tasksApi.get(taskId.value),
     maintenanceApi.list(),
   ])
-  buildingName.value = buildingRes.data.name
+  buildingName.value = building.name
   task.value = taskRes.data
 
   logbookEntries.value = entriesRes.data
@@ -235,11 +236,11 @@ function dotClass(variant?: TimelineEvent['variant']): string {
           </CHeading>
           <p
             v-if="task.description"
-            class="body-md task-desc"
+            class="body-md text-on-surface-variant m-0"
           >
             {{ task.description }}
           </p>
-          <div class="task-meta">
+          <div class="text-2xs text-on-surface-variant mt-1">
             <span>{{ t('tasks.lifecycle.createdRelative', { relative: formatRelative(task.created_at) }) }}</span>
             <span v-if="task.closed_at">
               · {{ t('tasks.closedAt', { date: formatDate(task.closed_at) }) }}
@@ -317,23 +318,6 @@ function dotClass(variant?: TimelineEvent['variant']): string {
 </template>
 
 <style scoped>
-/* ── Task header card ────────────────────────────────────────────── */
-.task-header-card {
-  display: flex;
-  align-items: stretch;
-  padding: 0;
-  overflow: clip;
-  margin-bottom: var(--space-6);
-}
-
-.task-title { margin: 0; }
-.task-desc { color: var(--color-on-surface-variant); margin: 0; }
-.task-meta {
-  font-size: var(--text-2xs);
-  color: var(--color-on-surface-variant);
-  margin-top: var(--space-1);
-}
-
 /* ── Timeline ────────────────────────────────────────────────────── */
 .timeline { display: flex; flex-direction: column; gap: 0; }
 
@@ -349,7 +333,7 @@ function dotClass(variant?: TimelineEvent['variant']): string {
   content: '';
   position: absolute;
   left: 17px;
-  top: 36px;
+  top: var(--space-9);
   bottom: 0;
   width: 2px;
   background: var(--color-outline-variant);
@@ -358,17 +342,17 @@ function dotClass(variant?: TimelineEvent['variant']): string {
 .timeline-item--last::before { display: none; }
 
 .timeline-dot {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
+  width: var(--space-9);
+  height: var(--space-9);
+  border-radius: var(--radius-full);
   flex-shrink: 0;
   background: var(--color-primary);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1;
+  z-index: var(--z-raised);
   position: relative;
-  margin-top: 4px;
+  margin-top: var(--space-1);
 }
 
 .timeline-dot--success  { background: var(--color-success); }
@@ -377,9 +361,9 @@ function dotClass(variant?: TimelineEvent['variant']): string {
 .timeline-dot--secondary { background: var(--color-secondary, var(--color-on-surface-variant)); }
 
 .timeline-icon {
-  width: 16px;
-  height: 16px;
-  color: #fff;
+  width: var(--icon-sm);
+  height: var(--icon-sm);
+  color: var(--color-on-primary);
   flex-shrink: 0;
 }
 

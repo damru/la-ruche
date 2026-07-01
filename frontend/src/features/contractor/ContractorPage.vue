@@ -5,7 +5,6 @@ import { useI18n } from 'vue-i18n'
 import { useFormatters } from '@/composables/useFormatters'
 import { vendorApi } from '@/api'
 import type { VendorTask } from '@/types/domain'
-import CIconX from '@/components/atoms/CIconX.svg'
 
 const route = useRoute()
 const { t } = useI18n()
@@ -22,9 +21,6 @@ const success = ref(false)
 const comment = ref('')
 const cost = ref('')
 const selectedFiles = ref<File[]>([])
-const dragOver = ref(false)
-
-const fileInputRef = ref<HTMLInputElement | null>(null)
 
 async function loadTask() {
   loading.value = true
@@ -40,24 +36,6 @@ async function loadTask() {
 }
 
 onMounted(loadTask)
-
-function onFileChange(e: Event) {
-  const input = e.target as HTMLInputElement
-  if (input.files) {
-    selectedFiles.value = Array.from(input.files)
-  }
-}
-
-function onDrop(e: DragEvent) {
-  dragOver.value = false
-  if (e.dataTransfer?.files) {
-    selectedFiles.value = Array.from(e.dataTransfer.files)
-  }
-}
-
-function removeFile(idx: number) {
-  selectedFiles.value.splice(idx, 1)
-}
 
 async function submit() {
   uploading.value = true
@@ -160,15 +138,13 @@ async function submit() {
             </CHeading>
             <p
               v-if="task.description"
-              class="body-xs"
-              style="color:var(--color-on-surface-variant)"
+              class="body-xs text-on-surface-variant"
             >
               {{ task.description }}
             </p>
             <p
               v-if="task.token_expires_at"
-              class="body-xs"
-              style="color:var(--color-on-surface-variant)"
+              class="body-xs text-on-surface-variant"
             >
               {{ t('contractor.expiresAt', { date: formatDate(task.token_expires_at) }) }}
             </p>
@@ -178,50 +154,11 @@ async function submit() {
             {{ t('contractor.subtitle') }}
           </p>
 
-          <!-- Dropzone -->
-          <div
-            :class="['dropzone', { 'dropzone--over': dragOver }]"
-            @dragover.prevent="dragOver = true"
-            @dragleave="dragOver = false"
-            @drop.prevent="onDrop"
-            @click="fileInputRef?.click()"
-          >
-            <CIconFile class="dropzone__icon dropzone__icon--lg" />
-            <p class="body-xs">
-              {{ t('contractor.dropzone') }}
-            </p>
-            <input
-              ref="fileInputRef"
-              type="file"
-              multiple
-              class="file-input-hidden"
-              @change="onFileChange"
-            />
-          </div>
-
-          <!-- Selected files -->
-          <ul
-            v-if="selectedFiles.length"
-            class="file-list"
-          >
-            <li
-              v-for="(file, idx) in selectedFiles"
-              :key="idx"
-              class="file-item"
-            >
-              <CIconFile
-                
-                class="icon-xs"
-              />
-              <span class="body-xs file-name">{{ file.name }}</span>
-              <CBtn
-                variant="icon"
-                class="tone--err"
-                :icon="CIconX"
-                @click="removeFile(idx)"
-              />
-            </li>
-          </ul>
+          <!-- Dropzone + selected files -->
+          <CFileDropzone
+            v-model:files="selectedFiles"
+            :hint="t('contractor.dropzone')"
+          />
 
           <CFormTextarea
             v-model="comment"
@@ -247,17 +184,15 @@ async function submit() {
           </p>
 
           <!-- Submit -->
-          <button
-            class="submit-btn"
+          <CBtn
+            variant="primary"
+            size="lg"
+            class="w-full"
+            :loading="uploading"
             :disabled="uploading"
+            :title="t('contractor.submit')"
             @click="submit"
-          >
-            <CIconSpinner
-              v-if="uploading"
-              class="spinner-sm"
-            />
-            {{ uploading ? t('contractor.submitting') : t('contractor.submit') }}
-          </button>
+          />
         </div>
 
         <!-- Contact card -->
@@ -370,34 +305,7 @@ async function submit() {
   border-bottom: 1px solid var(--color-outline-variant);
 }
 
-.file-input-hidden { display: none; }
-
-.file-list { list-style: none; display: flex; flex-direction: column; gap: 6px; }
-.file-item {
-  display: flex; align-items: center; gap: 8px;
-  padding: 6px 10px;
-  background: var(--color-surface-container);
-  border-radius: var(--radius-lg);
-}
-.file-name { flex: 1; overflow: clip; text-overflow: ellipsis; white-space: nowrap; }
-
 .error-msg { color: var(--color-error); }
-
-.submit-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
-  padding: var(--space-3) var(--space-5);
-  background: var(--color-primary);
-  color: var(--color-on-primary);
-  border-radius: var(--radius-xl);
-  font-weight: var(--fw-semibold);
-  font-size: var(--text-sm);
-  cursor: pointer;
-  transition: opacity var(--transition-fast);
-}
-.submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* Contact card */
 .contact-card {
@@ -415,7 +323,6 @@ async function submit() {
 a.contact-value { color: var(--color-primary); text-decoration: none; }
 a.contact-value:hover { text-decoration: underline; }
 
-.spinner { width: 24px; height: 24px; animation: spin 1s linear infinite; }
-.spinner-sm { width: 16px; height: 16px; animation: spin 1s linear infinite; }
+.spinner { width: var(--icon-lg); height: var(--icon-lg); animation: spin 1s linear infinite; }
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 </style>

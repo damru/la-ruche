@@ -104,7 +104,7 @@ const countClass = (isActive: boolean) => ({
 }
 
 .tabs__button--filter {
-  min-height: 44px;
+  min-height: var(--control-height);
   min-width: fit-content;
   border-radius: var(--radius-lg);
 }

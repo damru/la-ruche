@@ -581,7 +581,7 @@ pub async fn load_minutes_context(
 
     let resolutions = sqlx::query!(
         r#"
-        SELECT r.number, r.title, r.description, r.vote_type::text as "vote_type!",
+        SELECT r.id, r.number, r.title, r.description, r.vote_type::text as "vote_type!",
                r.status::text as "status!"
         FROM resolution r
         WHERE r.meeting_id = $1
@@ -594,13 +594,7 @@ pub async fn load_minutes_context(
 
     let mut minutes_resolutions: Vec<MinutesResolution> = Vec::with_capacity(resolutions.len());
     for r in resolutions {
-        let resolution_id = sqlx::query_scalar!(
-            "SELECT id FROM resolution WHERE meeting_id = $1 AND number = $2",
-            meeting_id,
-            r.number
-        )
-        .fetch_one(pool)
-        .await?;
+        let resolution_id = r.id;
 
         let (_info, tally) = get_tally(pool, meeting_id, resolution_id, building_id).await?;
 
@@ -861,6 +855,21 @@ pub async fn detach_document(
     .rows_affected();
 
     Ok(deleted > 0)
+}
+
+pub async fn get_meeting_status(
+    pool: &PgPool,
+    meeting_id: Uuid,
+    building_id: Uuid,
+) -> crate::errors::AppResult<Option<String>> {
+    Ok(sqlx::query_scalar!(
+        "SELECT status::text FROM general_meeting WHERE id = $1 AND building_id = $2",
+        meeting_id,
+        building_id
+    )
+    .fetch_optional(pool)
+    .await?
+    .flatten())
 }
 
 pub async fn list_attendance(

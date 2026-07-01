@@ -9,6 +9,7 @@ import CIconTile from '@/components/atoms/CIconTile.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CCardActions from '@/components/molecules/CCardActions.vue'
+import CDataTable, { type Column } from '@/components/molecules/CDataTable.vue'
 import CEmptyState from '@/components/atoms/CEmptyState.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
@@ -30,7 +31,8 @@ import CIconWrench from '@/components/atoms/CIconWrench.svg'
 import CIconChevronRight from '@/components/atoms/CIconChevronRight.svg'
 import ContractorFormModal from '@/features/contractors/ContractorFormModal.vue'
 import DeleteContractorModal from '@/features/contractors/DeleteContractorModal.vue'
-import { buildingApi, contractorsApi } from '@/api'
+import { contractorsApi } from '@/api'
+import { useBuildingStore } from '@/stores/building'
 import type { Contractor } from '@/types/domain'
 
 const DOMAINS_RAW = ['maintenance', 'insurance', 'service', 'energy', 'water', 'cleaning', 'green_spaces', 'other']
@@ -82,11 +84,11 @@ const canEdit = computed(() =>
 
 // ── Load data ─────────────────────────────────────────────────────
 async function loadData() {
-  const [buildingRes, contractorsRes] = await Promise.all([
-    buildingApi.get(),
+  const [building, contractorsRes] = await Promise.all([
+    useBuildingStore().fetch(),
     contractorsApi.list(),
   ])
-  buildingName.value = buildingRes.data.name
+  buildingName.value = building.name
   allContractors.value = contractorsRes.data
 }
 
@@ -99,6 +101,15 @@ const domainOptions = computed(() =>
     .map(value => ({ value, label: t(`contractors.domains.${value}`) }))
     .sort((a, b) => a.label.localeCompare(b.label)),
 )
+
+// ── Table columns (list view) ─────────────────────────────────────
+const contractorColumns = computed<Column<Contractor>[]>(() => [
+  { key: 'name', label: t('contractors.name') },
+  { key: 'domains', label: t('contractors.domainsLabel') },
+  { key: 'email', label: t('common.email') },
+  { key: 'phone', label: t('common.phone') },
+  { key: 'actions', label: '', width: '1%' },
+])
 
 // ── Domain filter toggle ──────────────────────────────────────────
 function toggleDomain(domain: string) {
@@ -268,85 +279,92 @@ function openDeleteModal(c: Contractor) {
         </CEmptyState>
 
         <!-- ── List view ─────────────────────────────────────────────── -->
-        <div
+        <CCard
           v-else-if="viewMode === 'list'"
-          class="contractor-list"
-          role="list"
+          class="p-0!"
         >
-          <div
-            v-for="c in filtered"
-            :key="c.id"
-            class="contractor-row"
-            role="listitem"
-            tabindex="-1"
-            @click="openContractorDetail(c.id)"
+          <CDataTable
+            :columns="contractorColumns"
+            :rows="filtered"
+            row-key="id"
+            @row-click="openContractorDetail($event.id)"
           >
-            <CIconTile :class="domainTone(c.domains)">
-              <component
-                :is="domainIcon(c.domains)"
-                aria-hidden="true"
-              />
-            </CIconTile>
-            <button
-              class="contractor-row__name"
-              @click.stop="openContractorDetail(c.id)"
-            >
-              {{ c.name }}
-            </button>
-            <div class="contractor-row__domains text-xs">
-              <CMetaLine>
+            <template #cell-name="{ row }">
+              <div class="flex items-center gap-3 min-w-0">
+                <CIconTile :class="domainTone(row.domains)">
+                  <component
+                    :is="domainIcon(row.domains)"
+                    aria-hidden="true"
+                  />
+                </CIconTile>
+                <span class="font-medium text-on-surface truncate">{{ row.name }}</span>
+              </div>
+            </template>
+            <template #cell-domains="{ row }">
+              <div class="flex flex-wrap gap-x-2 gap-y-1">
                 <CBadge
-                  v-for="d in c.domains.slice(0, 2)"
+                  v-for="d in row.domains.slice(0, 2)"
                   :key="d"
                   variant="default"
                 >
                   {{ t(`contractors.domains.${d}`, d) }}
                 </CBadge>
                 <CBadge
-                  v-if="c.domains.length > 2"
+                  v-if="row.domains.length > 2"
                   variant="default"
                 >
-                  +{{ c.domains.length - 2 }}
+                  +{{ row.domains.length - 2 }}
                 </CBadge>
-              </CMetaLine>
-            </div>
-            <div class="contractor-row__contacts">
+              </div>
+            </template>
+            <template #cell-email="{ row }">
               <a
-                v-if="c.email"
-                :href="`mailto:${c.email}`"
-                class="contractor-row__contact"
+                v-if="row.email"
+                :href="`mailto:${row.email}`"
+                class="text-xs text-primary no-underline truncate hover:underline"
                 @click.stop
-              >{{ c.email }}</a>
+              >{{ row.email }}</a>
+              <span
+                v-else
+                class="text-on-surface-variant"
+              >—</span>
+            </template>
+            <template #cell-phone="{ row }">
               <a
-                v-if="c.phone"
-                :href="`tel:${c.phone}`"
-                class="contractor-row__contact"
+                v-if="row.phone"
+                :href="`tel:${row.phone}`"
+                class="text-xs text-primary no-underline whitespace-nowrap hover:underline"
                 @click.stop
-              >{{ c.phone }}</a>
-            </div>
-            <div
-              v-if="canEdit"
-              class="contractor-row__actions"
-            >
-              <CBtn
-                variant="ghost"
-                size="sm"
-                :icon="CIconEdit"
-                :title="t('common.edit')"
-                :aria-label="`${t('common.edit')} ${c.name}`"
-                @click.stop="openEdit(c)"
-              />
-              <CBtn
-                variant="ghost"
-                size="sm"
-                :icon="CIconTrash"
-                :title="t('common.delete')"
-                :aria-label="`${t('common.delete')} ${c.name}`"
-                @click.stop="openDeleteModal(c)"
-              />
-            </div>
-          </div>
-        </div>
+              >{{ row.phone }}</a>
+              <span
+                v-else
+                class="text-on-surface-variant"
+              >—</span>
+            </template>
+            <template #cell-actions="{ row }">
+              <div
+                v-if="canEdit"
+                class="flex gap-1 justify-end"
+              >
+                <CBtn
+                  variant="icon"
+                  :icon="CIconEdit"
+                  :title="t('common.edit')"
+                  :aria-label="`${t('common.edit')} ${row.name}`"
+                  @click.stop="openEdit(row)"
+                />
+                <CBtn
+                  variant="icon"
+                  :icon="CIconTrash"
+                  :title="t('common.delete')"
+                  :aria-label="`${t('common.delete')} ${row.name}`"
+                  class="tone--err"
+                  @click.stop="openDeleteModal(row)"
+                />
+              </div>
+            </template>
+          </CDataTable>
+        </CCard>
 
         <!-- ── Grid view ─────────────────────────────────────────────── -->
         <div
@@ -416,19 +434,18 @@ function openDeleteModal(c: Contractor) {
               </div>
               <CCardActions v-if="canEdit">
                 <CBtn
-                  variant="ghost"
-                  size="sm"
+                  variant="icon"
                   :icon="CIconEdit"
                   :title="t('common.edit')"
                   :aria-label="`${t('common.edit')} ${c.name}`"
                   @click.stop="openEdit(c)"
                 />
                 <CBtn
-                  variant="ghost"
-                  size="sm"
+                  variant="icon"
                   :icon="CIconTrash"
                   :title="t('common.delete')"
                   :aria-label="`${t('common.delete')} ${c.name}`"
+                  class="tone--err"
                   @click.stop="openDeleteModal(c)"
                 />
               </CCardActions>
@@ -534,96 +551,11 @@ function openDeleteModal(c: Contractor) {
   color: var(--color-on-primary);
 }
 
-/* ── List view ───────────────────────────────────────────────────── */
-.contractor-list {
-  background: var(--color-surface-container-lowest);
-  border: 1px solid var(--color-outline-variant);
-  border-radius: var(--radius-2xl);
-  overflow: hidden;
-}
-
-.contractor-row {
-  display: grid;
-  grid-template-columns: 36px minmax(120px, 1fr) auto minmax(0, 210px) auto;
-  align-items: center;
-  gap: var(--space-4);
-  padding: var(--space-3) var(--space-4);
-  border-bottom: 1px solid var(--color-outline-variant);
-  cursor: pointer;
-  transition: background 150ms ease-out;
-}
-
-.contractor-row:last-child {
-  border-bottom: none;
-}
-
-.contractor-row:hover {
-  background: var(--color-surface-container-low);
-}
-
-.contractor-row__name {
-  background: none;
-  border: none;
-  padding: 0;
-  font: inherit;
-  font-size: var(--text-sm);
-  font-weight: var(--fw-medium);
-  color: var(--color-on-surface);
-  text-align: left;
-  cursor: pointer;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.contractor-row__name:hover,
-.contractor-row__name:focus-visible {
-  color: var(--color-primary);
-  outline: none;
-}
-
-.contractor-row__contacts {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  overflow: hidden;
-}
-
-.contractor-row__contact {
-  font-size: var(--text-xs);
-  color: var(--color-on-surface-variant);
-  text-decoration: none;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.contractor-row__contact:hover {
-  color: var(--color-primary);
-  text-decoration: underline;
-}
-
-.contractor-row__actions {
-  display: flex;
-  gap: var(--space-1);
-  flex-shrink: 0;
-}
-
 /* ── Grid view ───────────────────────────────────────────────────── */
 .contractors-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: var(--space-4);
-}
-
-/* ── Responsive ──────────────────────────────────────────────────── */
-@media (max-width: 640px) {
-  .contractor-row {
-    grid-template-columns: 36px minmax(0, 1fr) auto;
-  }
-
-  .contractor-row__domains,
-  .contractor-row__contacts {
-    display: none;
-  }
 }
 
 </style>

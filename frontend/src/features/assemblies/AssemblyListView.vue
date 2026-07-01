@@ -6,7 +6,8 @@ import { useFormatters } from '@/composables/useFormatters'
 import { usePageLoader } from '@/composables/usePageLoader'
 import { useAuthStore } from '@/stores/auth'
 import type { Meeting, MeetingType } from '@/types/domain'
-import { buildingApi, meetingsApi } from '@/api'
+import { meetingsApi } from '@/api'
+import { useBuildingStore } from '@/stores/building'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CSeparator from '@/components/atoms/CSeparator.vue'
@@ -34,11 +35,11 @@ const canManage = computed(() => auth.isManager)
 const showCreateModal = ref(false)
 
 async function loadData() {
-  const [buildingRes, meetingsRes] = await Promise.all([
-    buildingApi.get(),
+  const [building, meetingsRes] = await Promise.all([
+    useBuildingStore().fetch(),
     meetingsApi.list(),
   ])
-  buildingName.value = buildingRes.data.name
+  buildingName.value = building.name
   allMeetings.value = meetingsRes.data.slice().sort((left, right) => right.meeting_date.localeCompare(left.meeting_date))
 }
 
@@ -115,7 +116,7 @@ async function onMeetingCreated(meetingId: string) {
       </template>
     </CTopbar>
 
-    <div class="view-container assembly-list-page">
+    <div class="view-container">
       <CPageError
         v-if="error"
         :message="error"
@@ -249,19 +250,6 @@ async function onMeetingCreated(meetingId: string) {
 </template>
 
 <style scoped>
-.assembly-list-page {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-6);
-}
-
-
-.meeting-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-
 .meeting-card {
   width: 100%;
   display: flex;
@@ -296,7 +284,7 @@ async function onMeetingCreated(meetingId: string) {
 
 .meeting-badge--closed,
 .meeting-badge--ongoing {
-  background: linear-gradient(135deg, #1b5e20, #43a047);
+  background: var(--gradient-success);
 }
 
 .meeting-badge--pulse {
@@ -306,8 +294,8 @@ async function onMeetingCreated(meetingId: string) {
 .meeting-badge--pulse::after {
   content: '';
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: var(--space-2);
+  right: var(--space-2);
   width: 7px;
   height: 7px;
   border-radius: 50%;
@@ -341,12 +329,8 @@ async function onMeetingCreated(meetingId: string) {
 
 .meeting-badge__year {
   font-family: var(--font-mono);
-  font-size: 16px;
+  font-size: var(--text-lg);
   font-weight: var(--fw-bold);
-}
-
-.meeting-card__title {
-  font-family: var(--font-display);
 }
 
 .meeting-card__resolution-row {
@@ -360,13 +344,13 @@ async function onMeetingCreated(meetingId: string) {
 .meeting-card__res-count {
   display: inline-flex;
   align-items: baseline;
-  gap: 4px;
+  gap: var(--space-1);
 }
 
 .meeting-card__res-passed {
   display: inline-flex;
   align-items: baseline;
-  gap: 4px;
+  gap: var(--space-1);
   color: var(--tone-fg, inherit);
 }
 

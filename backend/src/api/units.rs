@@ -403,7 +403,8 @@ pub async fn charges(
            FROM levy_call lc
            JOIN budget b           ON b.id             = lc.budget_id AND b.building_id = $2
            JOIN levy_call_unit lcu ON lcu.levy_call_id = lc.id        AND lcu.unit_id   = $1
-            WHERE ($3::date IS NULL OR COALESCE(lc.issued_at::date, lc.due_date) >= $3::date)
+           WHERE lc.status = 'issued'
+             AND ($3::date IS NULL OR COALESCE(lc.issued_at::date, lc.due_date) >= $3::date)
            GROUP BY lc.id, b.fiscal_year, lc.call_label, lc.due_date, lc.issued_at
            ORDER BY lc.due_date DESC"#,
     )
@@ -429,8 +430,9 @@ pub async fn charges(
            JOIN budget b     ON b.id  = lc.budget_id AND b.building_id = $2
            LEFT JOIN budget_line bl  ON bl.id  = lcu.budget_line_id
            LEFT JOIN allocation_key ak ON ak.id = lcu.key_id
-            WHERE lcu.unit_id = $1
-              AND ($3::date IS NULL OR COALESCE(lc.issued_at::date, lc.due_date) >= $3::date)
+           WHERE lcu.unit_id = $1
+             AND lc.status = 'issued'
+             AND ($3::date IS NULL OR COALESCE(lc.issued_at::date, lc.due_date) >= $3::date)
            ORDER BY lcu.levy_call_id, bl.label NULLS LAST"#,
     )
     .bind(id)
@@ -455,6 +457,13 @@ pub async fn charges(
                 "is_works_fund":        b.is_works_fund,
             }));
     }
+
+    let pending_transfer: bool = sqlx::query_scalar(
+        "SELECT NOT EXISTS(SELECT 1 FROM unit_owner WHERE unit_id = $1 AND end_date IS NULL)",
+    )
+    .bind(id)
+    .fetch_one(&state.pool)
+    .await?;
 
     let total_issued: rust_decimal::Decimal = rows.iter().map(|r| r.total_amount).sum();
     let total_paid: rust_decimal::Decimal = rows
@@ -490,9 +499,10 @@ pub async fn charges(
             "unit_number": unit.unit_number,
             "unit_type":   unit.unit_type,
         },
-        "levies":       levies,
-        "total_issued": total_issued,
-        "total_paid":   total_paid,
-        "balance":      balance,
+        "levies":            levies,
+        "total_issued":      total_issued,
+        "total_paid":        total_paid,
+        "balance":           balance,
+        "pending_transfer":  pending_transfer,
     })))
 }

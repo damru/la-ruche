@@ -22,7 +22,8 @@ import CIconTrash from '@/components/atoms/CIconTrash.svg'
 import CreateConsultationModal from './CreateConsultationModal.vue'
 import CloseConsultationModal from './CloseConsultationModal.vue'
 import DeleteConsultationModal from './DeleteConsultationModal.vue'
-import { buildingApi, consultationsApi } from '@/api'
+import { consultationsApi } from '@/api'
+import { useBuildingStore } from '@/stores/building'
 import type { Consultation } from '@/types/domain'
 
 const { t } = useI18n()
@@ -94,11 +95,11 @@ const closingConsultation = ref<Consultation | null>(null)
 const deletingConsultation = ref<Consultation | null>(null)
 
 async function loadData() {
-  const [buildingRes, listRes] = await Promise.all([
-    buildingApi.get(),
+  const [building, listRes] = await Promise.all([
+    useBuildingStore().fetch(),
     consultationsApi.list(),
   ])
-  buildingName.value = buildingRes.data.name
+  buildingName.value = building.name
   allConsultations.value = listRes.data.consultations ?? []
 
   // Re-initialize inline vote state for existing consultations
@@ -439,7 +440,7 @@ function openDeleteModal(c: Consultation) {
 </template>
 
 <style scoped>
-.consultation-list { display: flex; flex-direction: column; gap: 12px; }
+.consultation-list { display: flex; flex-direction: column; gap: var(--space-3); }
 
 .status-badge { margin-bottom: var(--space-2); }
 .footer-meta { font-size: var(--text-2xs); color: var(--color-on-surface-variant); margin-top: var(--space-3); }
@@ -453,7 +454,7 @@ function openDeleteModal(c: Consultation) {
    2-row mini-grid — label+result% on row 1, bar full-width on row 2. */
 .choices-results {
   display: grid;
-  grid-template-columns: fit-content(50%) 1fr 36px;
+  grid-template-columns: fit-content(50%) 1fr var(--space-9);
   align-items: center;
   column-gap: var(--space-2);
   row-gap: var(--space-2);
@@ -491,12 +492,6 @@ function openDeleteModal(c: Consultation) {
   min-width: 0;
 }
 
-.choice-label.checkbox-label {
-  display: inline-flex;
-  align-items: flex-start;
-  gap: var(--space-2);
-}
-
 .choice-label--locked {
   opacity: 0.6;
 }
@@ -525,7 +520,6 @@ function openDeleteModal(c: Consultation) {
   gap: var(--space-2);
   margin-top: var(--space-3);
   padding-top: var(--space-3);
-  border-top: 1px solid var(--color-outline-variant);
 }
 .inline-vote-actions {
   display: flex;
@@ -534,7 +528,5 @@ function openDeleteModal(c: Consultation) {
   gap: var(--space-2);
 }
 .error-text { color: var(--color-error); flex: 1; }
-
-.dim { color: var(--color-on-surface-variant); }
 
 </style>

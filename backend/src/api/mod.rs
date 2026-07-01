@@ -9,6 +9,8 @@ pub mod contractor;
 pub mod contractors;
 pub mod contracts;
 pub mod documents;
+pub mod governance;
+pub mod judicial_proceedings;
 pub mod logbook;
 pub mod onboarding;
 pub mod reports;
@@ -187,6 +189,8 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
             post(budget::generate_levies),
         )
         .route("/budgets/{id}/levies", get(budget::list_levies))
+        .route("/levy-calls/{id}/issue", post(budget::issue_levy_call))
+        .route("/levy-calls/{id}/credit-note", post(budget::credit_note))
         .route(
             "/levies/{levy_call_id}/units/{unit_id}/payment",
             put(budget::mark_paid),
@@ -196,6 +200,7 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
             "/works-fund/{fiscal_year}",
             get(budget::get_works_fund).put(budget::update_works_fund),
         )
+        .route("/accounting-codes", get(budget::list_accounting_codes))
         // ── Documents ───────────────────────────────────────────
         .route(
             "/documents",
@@ -286,6 +291,7 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
                 .put(logbook::update)
                 .delete(logbook::delete),
         )
+        .route("/logbook/{id}/correction", post(logbook::correction))
         // ── Reports ─────────────────────────────────────────────
         .route("/reports", get(reports::list).post(reports::create))
         .route(
@@ -317,7 +323,29 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
         )
         .route("/consultations/{id}/respond", post(consultations::respond))
         .route("/consultations/{id}/results", get(consultations::results))
-        .route("/consultations/{id}/close", post(consultations::close));
+        .route("/consultations/{id}/close", post(consultations::close))
+        // ── Judicial proceedings register ───────────────────────
+        .route(
+            "/judicial-proceedings",
+            get(judicial_proceedings::list).post(judicial_proceedings::create),
+        )
+        .route(
+            "/judicial-proceedings/{id}",
+            get(judicial_proceedings::get)
+                .put(judicial_proceedings::update)
+                .delete(judicial_proceedings::delete),
+        )
+        // ── Governance register ─────────────────────────────────
+        .route(
+            "/governance/mandates",
+            get(governance::list).post(governance::create),
+        )
+        .route(
+            "/governance/mandates/{id}",
+            get(governance::get)
+                .put(governance::update)
+                .delete(governance::delete),
+        );
 
     // ── Public routes (vendor token, no JWT) ─────────────────────
     // Vendor routes live under /api/v1 (without auth middleware) so that the

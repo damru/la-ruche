@@ -26,7 +26,8 @@ import ConvertReportToTaskModal from './ConvertReportToTaskModal.vue'
 import EditReportModal from './EditReportModal.vue'
 import DeleteReportModal from './DeleteReportModal.vue'
 import ReportPhotosModal from './ReportPhotosModal.vue'
-import { buildingApi, reportsApi, unitsApi } from '@/api'
+import { reportsApi, unitsApi } from '@/api'
+import { useBuildingStore } from '@/stores/building'
 import type { Report, ReportStatus, Unit } from '@/types/domain'
 
 const { t } = useI18n()
@@ -64,12 +65,12 @@ function handleEditDelete() {
 
 // ── Load data ─────────────────────────────────────────────────────
 async function loadData() {
-  const [buildingRes, reportsRes, unitsRes] = await Promise.all([
-    buildingApi.get(),
+  const [building, reportsRes, unitsRes] = await Promise.all([
+    useBuildingStore().fetch(),
     reportsApi.list(),
     unitsApi.list(),
   ])
-  buildingName.value = buildingRes.data.name
+  buildingName.value = building.name
   allReports.value = reportsRes.data
   allUnits.value = unitsRes.data
 }
@@ -188,7 +189,7 @@ function authorName(r: Report): string {
           />
         </template>
         <template v-else>
-          <div class="report-list">
+          <div class="flex flex-col gap-3">
             <CCard
               v-for="r in reports"
               :key="r.id"
@@ -354,8 +355,3 @@ function authorName(r: Report): string {
     />
   </div>
 </template>
-
-<style scoped>
-/* ── Report cards ───────────────────────────────────────────────── */
-.report-list { display: flex; flex-direction: column; gap: var(--space-3); }
-</style>

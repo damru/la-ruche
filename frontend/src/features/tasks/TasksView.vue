@@ -30,7 +30,8 @@ import CloseTaskModal from './CloseTaskModal.vue'
 import DeleteTaskModal from './DeleteTaskModal.vue'
 import RevokeTokenModal from './RevokeTokenModal.vue'
 import ReopenTaskModal from './ReopenTaskModal.vue'
-import { buildingApi, contractorsApi, documentsApi, tasksApi, usersApi } from '@/api'
+import { contractorsApi, documentsApi, tasksApi, usersApi } from '@/api'
+import { useBuildingStore } from '@/stores/building'
 import type { Contractor, Document, Task, TaskStatus, User } from '@/types/domain'
 
 const { t } = useI18n()
@@ -69,14 +70,14 @@ const usersById = computed(() =>
 
 // ── Load data ─────────────────────────────────────────────────────
 async function loadData() {
-  const [usersRes, buildingRes, tasksRes, contractorsRes] = await Promise.all([
+  const [usersRes, building, tasksRes, contractorsRes] = await Promise.all([
     usersApi.list(),
-    buildingApi.get(),
+    useBuildingStore().fetch(),
     tasksApi.list(),
     contractorsApi.list(),
   ])
   allUsers.value = usersRes.data
-  buildingName.value = buildingRes.data.name
+  buildingName.value = building.name
   allTasks.value = tasksRes.data
   allContractors.value = contractorsRes.data
 }
@@ -516,6 +517,7 @@ async function downloadTaskDocument(documentId: string) {
   
                 <CCardActions>
                   <CBtn
+                    v-if="!isTerminal(task.status)"
                     variant="ghost"
                     size="sm"
                     :icon="CIconEdit"

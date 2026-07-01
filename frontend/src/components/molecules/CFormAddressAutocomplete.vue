@@ -122,7 +122,7 @@ function recalcDropdown() {
     top:    `${rect.bottom + 4}px`,
     left:   `${clampedLeft}px`,
     width:  `${w}px`,
-    zIndex: '200',
+    zIndex: 'var(--z-overlay)',
   }
 }
 
@@ -318,8 +318,8 @@ function updateField(field: keyof AddressValue, value: string) {
 
 .c-addr__label {
   font-family: var(--font-body);
-  font-size: 13px;
-  font-weight: 500;
+  font-size: var(--text-sm);
+  font-weight: var(--fw-medium);
   color: var(--color-on-surface);
 }
 
@@ -333,7 +333,7 @@ function updateField(field: keyof AddressValue, value: string) {
 
 .c-addr__input {
   width: 100%;
-  height: 44px;
+  height: var(--control-height);
   padding: 0 var(--space-4);
   background: var(--color-surface-container);
   border: none;
@@ -363,8 +363,8 @@ function updateField(field: keyof AddressValue, value: string) {
 .c-addr__spinner {
   position: absolute;
   right: var(--space-3);
-  width: 16px;
-  height: 16px;
+  width: var(--icon-sm);
+  height: var(--icon-sm);
   color: var(--color-primary);
   animation: c-addr-spin 0.8s linear infinite;
   flex-shrink: 0;
@@ -374,7 +374,7 @@ function updateField(field: keyof AddressValue, value: string) {
 
 .c-addr__error {
   font-family: var(--font-body);
-  font-size: 12px;
+  font-size: var(--text-xs);
   color: var(--color-error);
 }
 

@@ -39,13 +39,22 @@ When editing existing code:
 - Don't "improve" adjacent code, comments, or formatting.
 - Don't refactor things that aren't broken.
 - Match existing style, even if you'd do it differently.
-- If you notice unrelated dead code, mention it - don't delete it.
 
 When your changes create orphans:
 - Remove imports/variables/functions that YOUR changes made unused.
-- Don't remove pre-existing dead code unless asked.
 
-The test: Every changed line should trace directly to the user's request.
+The test: Every changed line should trace directly to the user's request — **except** for the boy-scout fixes covered by principle 5.
+
+## 5. Boy-Scout Fixes
+
+**When you find dead code or a pre-existing error, fix it — even out of scope.**
+
+- Spotted dead code (unused variable/function/import, unreachable branch) → remove it.
+- Spotted a pre-existing bug, warning, or broken invariant → fix it.
+- Keep boy-scout fixes in a separate, clearly-labelled commit from the feature work.
+- Exception: if a fix has genuine structural trade-offs (schema, public API, behaviour change), flag it and confirm before touching it instead of fixing silently.
+
+The test: leave every file you touch cleaner than you found it.
 
 ## 4. Goal-Driven Execution
 

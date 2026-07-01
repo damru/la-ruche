@@ -171,37 +171,12 @@ const taskForm = ref(defaultForm())
 
 // ── Documents ─────────────────────────────────────────────────────
 const selectedDocuments = ref<File[]>([])
-const documentInputRef = ref<HTMLInputElement | null>(null)
-const documentsDragOver = ref(false)
 const loadingFormDocuments = ref(false)
 const existingDocuments = ref<Document[]>([])
 const pendingDocument = ref<Document | null>(null)
 const documentActionFeedback = useFormFeedback()
 const documentActionLoading = ref(false)
 
-function openDocumentPicker() {
-  documentInputRef.value?.click()
-}
-
-function appendDocuments(files: File[]) {
-  if (!files.length) return
-  selectedDocuments.value = [...selectedDocuments.value, ...files]
-}
-
-function onDocumentChange(event: Event) {
-  const input = event.target as HTMLInputElement
-  appendDocuments(Array.from(input.files ?? []))
-  if (documentInputRef.value) documentInputRef.value.value = ''
-}
-
-function onDocumentDrop(event: DragEvent) {
-  documentsDragOver.value = false
-  appendDocuments(Array.from(event.dataTransfer?.files ?? []))
-}
-
-function removeSelectedDocument(index: number) {
-  selectedDocuments.value = selectedDocuments.value.filter((_, i) => i !== index)
-}
 
 async function uploadDocument(taskId: string, file: File) {
   const extension = extractFileExtension(file.name)
@@ -295,7 +270,6 @@ watch(() => props.open, async (open) => {
   if (!open) { forceClose(); return }
   feedback.reset()
   selectedDocuments.value = []
-  documentsDragOver.value = false
   existingDocuments.value = []
   pendingDocument.value = null
   if (props.task) {
@@ -463,52 +437,11 @@ async function handleSubmit() {
       </div>
       <div class="flex flex-col gap-1">
         <label class="text-sm font-medium text-on-surface-variant">{{ t('tasks.documentsLabel') }}</label>
-        <input
-          ref="documentInputRef"
-          type="file"
-          multiple
-          style="display:none"
-          @change="onDocumentChange"
+        <CFileDropzone
+          v-model:files="selectedDocuments"
+          :hint="task ? t('tasks.editDocumentHint') : t('tasks.documentHint')"
+          :remove-label="t('tasks.removeDocument')"
         />
-        <div
-          :class="['dropzone', { 'dropzone--over': documentsDragOver }]"
-          role="button"
-          tabindex="0"
-          @click="openDocumentPicker"
-          @keydown.enter.prevent="openDocumentPicker"
-          @keydown.space.prevent="openDocumentPicker"
-          @dragenter.prevent="documentsDragOver = true"
-          @dragover.prevent="documentsDragOver = true"
-          @dragleave.prevent="documentsDragOver = false"
-          @drop.prevent="onDocumentDrop"
-        >
-          <CIconUpload class="dropzone__icon" />
-          <span class="body-xs dropzone__hint">
-            {{ task ? t('tasks.editDocumentHint') : t('tasks.documentHint') }}
-          </span>
-        </div>
-
-        <div
-          v-if="selectedDocuments.length > 0"
-          class="task-selected-documents"
-        >
-          <div
-            v-for="(document, index) in selectedDocuments"
-            :key="`${document.name}-${index}`"
-            class="task-selected-document"
-          >
-            <span class="task-selected-document__name">{{ document.name }}</span>
-            <button
-              type="button"
-              class="task-selected-document__remove"
-              :title="t('tasks.removeDocument')"
-              :aria-label="t('tasks.removeDocument')"
-              @click="removeSelectedDocument(index)"
-            >
-              ×
-            </button>
-          </div>
-        </div>
 
         <div
           v-if="task"
@@ -722,11 +655,11 @@ async function handleSubmit() {
   background: var(--color-surface);
   border: 1px solid var(--color-outline);
   border-radius: var(--radius-xl);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  box-shadow: var(--shadow-md);
   list-style: none;
   margin: 2px 0 0;
-  padding: 4px 0;
-  z-index: 100;
+  padding: var(--space-1) 0;
+  z-index: var(--z-nav);
   max-height: 200px;
   overflow-y: auto;
 }
@@ -736,7 +669,7 @@ async function handleSubmit() {
   align-items: baseline;
   justify-content: space-between;
   gap: var(--space-2);
-  padding: 8px 12px;
+  padding: var(--space-2) var(--space-3);
   cursor: pointer;
   font-size: var(--text-sm);
 }
@@ -753,9 +686,9 @@ async function handleSubmit() {
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 16px;
+  font-size: var(--text-lg);
   color: var(--color-on-surface-variant);
-  padding: 0 4px;
+  padding: 0 var(--space-1);
   pointer-events: auto;
   min-height: unset;
   min-width: unset;
@@ -768,7 +701,6 @@ async function handleSubmit() {
   background: var(--color-surface-container-lowest);
 }
 
-.task-selected-documents,
 .task-existing-documents__list {
   margin-top: var(--space-3);
   display: flex;
@@ -776,7 +708,6 @@ async function handleSubmit() {
   gap: var(--space-2);
 }
 
-.task-selected-document,
 .task-existing-documents__row {
   display: flex;
   align-items: center;
@@ -785,20 +716,6 @@ async function handleSubmit() {
   padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-xl);
   background: var(--color-surface-container-low);
-}
-
-.task-selected-document__name {
-  min-width: 0;
-  overflow: clip;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.task-selected-document__remove {
-  border: none;
-  background: none;
-  color: var(--color-on-surface-variant);
-  cursor: pointer;
 }
 
 .task-existing-documents {

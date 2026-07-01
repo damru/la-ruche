@@ -16,7 +16,8 @@ import type {
   VoteResult,
   VoteType,
 } from '@/types/domain'
-import { buildingApi, documentsApi, meetingsApi } from '@/api'
+import { documentsApi, meetingsApi } from '@/api'
+import { useBuildingStore } from '@/stores/building'
 import CIconBell from '@/components/atoms/CIconBell.svg'
 import CIconCheck from '@/components/atoms/CIconCheck.svg'
 import CIconClock from '@/components/atoms/CIconClock.svg'
@@ -237,16 +238,16 @@ const majorityLegalDescriptions = computed(() => {
 
 async function loadData() {
   const meetingId = route.params.id as string
-  const [buildingRes, meetingRes, resolutionRes, documentsRes, attendanceRes] = await Promise.all([
-    buildingApi.get(),
+  const [building, meetingRes, resolutionRes, documentsRes, attendanceRes] = await Promise.all([
+    useBuildingStore().fetch(),
     meetingsApi.get(meetingId),
     meetingsApi.listResolutions(meetingId),
     meetingsApi.listDocuments(meetingId),
     meetingsApi.attendance(meetingId),
   ])
 
-  buildingName.value = buildingRes.data.name
-  buildingSharesTotal.value = buildingRes.data.shares_total
+  buildingName.value = building.name
+  buildingSharesTotal.value = building.shares_total
   meeting.value = meetingRes.data
   resolutions.value = resolutionRes.data.map(resolution => ({
     ...resolution,
@@ -979,7 +980,7 @@ function openArt25Modal(resolution: Resolution) {
                     {{ t('meetings.session_roles.secretary') }}
                   </p>
                   <p class="text-sm font-medium text-on-surface">
-                    {{ meeting.secretary_name }}azdazd zef zr
+                    {{ meeting.secretary_name }}
                   </p>
                 </div>
                 <div>
@@ -1166,7 +1167,7 @@ function openArt25Modal(resolution: Resolution) {
               <div class="flex flex-col gap-2">
                 <p class="font-serif font-bold tracking-tight">
                   <span class="text-on-surface text-[40px]">{{ attendance.shares_present }}</span> 
-                  <span class="text-[20px] ">/ {{ attendance.total_shares }}</span>
+                  <span class="text-xl">/ {{ attendance.total_shares }}</span>
                 </p>
                 <CAlert
                   v-if="hasSharesTotalMismatch"
@@ -1374,8 +1375,8 @@ function openArt25Modal(resolution: Resolution) {
 }
 
 .status-banner__icon {
-  width: 40px;
-  height: 40px;
+  width: var(--space-10);
+  height: var(--space-10);
   border-radius: var(--radius-xl);
   display: flex;
   align-items: center;
@@ -1384,8 +1385,8 @@ function openArt25Modal(resolution: Resolution) {
 }
 
 .status-banner__icon :deep(svg) {
-  width: 20px;
-  height: 20px;
+  width: var(--space-5);
+  height: var(--space-5);
   stroke: currentColor;
   fill: none;
   stroke-width: 2;
@@ -1447,24 +1448,14 @@ function openArt25Modal(resolution: Resolution) {
   gap: var(--space-4);
 }
 
-.card-title {
-  font-size: var(--text-lg);
-}
-
 .section-subtitle,
-.side-subtitle,
-.modal-subtitle {
+.side-subtitle {
   color: var(--color-on-surface-variant);
   font-size: var(--text-xs);
 }
 
-.modal-subtitle {
-  margin: 0;
-}
-
 .resolution-list,
-.doc-list,
-.attendance-edit-list {
+.doc-list {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
@@ -1482,8 +1473,8 @@ function openArt25Modal(resolution: Resolution) {
 }
 
 .resolution-number {
-  width: 40px;
-  height: 40px;
+  width: var(--space-10);
+  height: var(--space-10);
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -1549,7 +1540,7 @@ function openArt25Modal(resolution: Resolution) {
 }
 
 .tally-track {
-  height: 8px;
+  height: var(--space-2);
   border-radius: var(--radius-full);
   overflow: hidden;
   background: var(--color-surface-container-high);
@@ -1561,11 +1552,11 @@ function openArt25Modal(resolution: Resolution) {
 }
 
 .tally-fill--for {
-  background: linear-gradient(135deg, #1b5e20, #43a047);
+  background: var(--gradient-success);
 }
 
 .tally-fill--against {
-  background: linear-gradient(135deg, #ba1a1a, #e53935);
+  background: var(--gradient-error);
 }
 
 .tally-fill--abstain {
@@ -1588,7 +1579,7 @@ function openArt25Modal(resolution: Resolution) {
 .pending-box {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-1);
   padding: var(--space-3);
   border-radius: var(--radius-xl);
 }
@@ -1604,120 +1595,8 @@ function openArt25Modal(resolution: Resolution) {
   gap: var(--space-2);
 }
 
-.resolution-locked-notice {
-  grid-column: 1 / -1;
+.doc-kind {
   color: var(--color-on-surface-variant);
-  font-size: var(--text-xs);
-  padding: var(--space-2) var(--space-3);
-  background: var(--color-surface-container-low);
-  border-radius: var(--radius-lg);
-  margin: 0;
-}
-
-.form-static {
-  font-size: var(--text-sm);
-  color: var(--color-on-surface);
-  padding: var(--space-2) 0;
-}
-
-.vote-quick-actions {
-  display: flex;
-  gap: var(--space-2);
-  margin-bottom: var(--space-3);
-}
-
-.vote-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: var(--text-sm);
-}
-
-.vote-table th {
-  text-align: left;
-  padding: var(--space-2) var(--space-3);
-  font-size: var(--text-xs);
-  font-weight: var(--fw-medium);
-  color: var(--color-on-surface-variant);
-  border-bottom: 1px solid var(--color-outline-variant);
-}
-
-.vote-table td {
-  padding: var(--space-2) var(--space-3);
-  border-bottom: 1px solid var(--color-outline-variant);
-  vertical-align: middle;
-}
-
-.vote-table tbody tr:last-child td {
-  border-bottom: none;
-}
-
-.vote-table__select--empty :deep(select) {
-  box-shadow: var(--shadow-error-ring);
-}
-
-.vote-result {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-  padding: var(--space-3);
-  border-radius: var(--radius-xl);
-}
-
-.vote-result--passed {
-  background: color-mix(in srgb, var(--color-success-container) 100%, transparent);
-  color: var(--color-on-success-container);
-}
-
-.vote-result--rejected {
-  background: color-mix(in srgb, var(--color-error-container) 100%, transparent);
-  color: var(--color-on-error-container);
-}
-
-.vote-result__text,
-.vote-result__sub {
-  margin: 0;
-}
-
-.vote-result__text {
-  font-size: var(--text-sm);
-  font-weight: var(--fw-semibold);
-}
-
-.vote-result__sub {
-  font-size: var(--text-xs);
-  opacity: 0.82;
-}
-
-.vote-result__value {
-  font-family: var(--font-mono);
-  font-size: var(--text-sm);
-  font-weight: var(--fw-medium);
-  white-space: nowrap;
-}
-
-.quorum-kpi strong {
-  font-size: 28px;
-  font-family: var(--font-display);
-}
-
-.info-list__row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--space-3);
-}
-
-.info-list__row dt,
-.doc-kind,
-.attendance-row p,
-.attendance-edit-row__identity span {
-  color: var(--color-on-surface-variant);
-}
-
-.info-list__row dd {
-  margin: 0;
-  text-align: right;
 }
 
 .doc-group {
@@ -1734,8 +1613,7 @@ function openArt25Modal(resolution: Resolution) {
   letter-spacing: 0.08em;
 }
 
-.doc-row,
-.attendance-edit-row {
+.doc-row {
   display: flex;
   justify-content: space-between;
   gap: var(--space-3);
@@ -1847,29 +1725,6 @@ function openArt25Modal(resolution: Resolution) {
   color: var(--color-on-surface-variant);
 }
 
-.agenda-editor {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.agenda-editor__row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: var(--space-2);
-}
-
-.attendance-edit-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(160px, 220px) minmax(0, 1fr);
-}
-
-.attendance-edit-row__identity {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
 .agenda-list {
   margin: 0;
   padding: 0;
@@ -1882,7 +1737,7 @@ function openArt25Modal(resolution: Resolution) {
 }
 
 .agenda-item__n {
-  width: 20px;
+  width: var(--space-5);
   flex-shrink: 0;
   padding-top: 1px;
   font-family: var(--font-mono);
@@ -1918,14 +1773,6 @@ function openArt25Modal(resolution: Resolution) {
 
   .tally-shares {
     display: none;
-  }
-
-  .attendance-edit-row {
-    grid-template-columns: 1fr;
-  }
-
-  .agenda-editor__row {
-    grid-template-columns: 1fr;
   }
 }
 

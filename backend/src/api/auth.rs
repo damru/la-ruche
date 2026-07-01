@@ -487,22 +487,42 @@ pub async fn me(
     }))
 }
 
-#[derive(Deserialize, ToSchema)]
+#[derive(Deserialize, Validate, ToSchema)]
 pub struct UpdateMeInput {
     pub phone: Option<String>,
+    #[validate(email)]
+    pub email: Option<String>,
 }
 
-/// PATCH /auth/me — update the current user's profile (phone)
+/// PATCH /auth/me — update the current user's own profile (email login + phone)
 pub async fn update_me(
     State(state): State<Arc<AppState>>,
     auth: crate::domain::AuthUser,
     Json(input): Json<UpdateMeInput>,
 ) -> AppResult<impl axum::response::IntoResponse> {
+    input
+        .validate()
+        .map_err(|_| AppError::validation_code("errors.users.invalid_email"))?;
+
     db::user::update_phone(&state.pool, auth.user_id, input.phone.as_deref()).await?;
+
+    if let Some(new_email) = input.email.as_deref() {
+        let normalized = new_email.to_lowercase();
+        db::user::update_user_email(&state.pool, auth.user_id, &normalized)
+            .await
+            .map_err(|e| {
+                if e.to_string().contains("user_account_email_unique") {
+                    AppError::Conflict("errors.users.email_already_exists".into())
+                } else {
+                    e
+                }
+            })?;
+    }
+
     let user = db::user::find_by_id(&state.pool, auth.user_id)
         .await?
         .ok_or(AppError::NotFound)?;
-    let phone = db::user::get_phone(&state.pool, auth.user_id).await?;
+    // ponytail: phone was just written above, so echo input back instead of re-querying.
     Ok(Json(LoginResponse {
         user_id: auth.user_id,
         building_id: auth.building_id,
@@ -510,7 +530,7 @@ pub async fn update_me(
         last_name: user.last_name,
         first_name: user.first_name,
         email: user.email,
-        phone,
+        phone: input.phone,
     }))
 }
 

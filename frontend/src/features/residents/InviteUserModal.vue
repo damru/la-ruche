@@ -7,7 +7,7 @@ import CFormInput from '@/components/atoms/CFormInput.vue'
 import CFormSelect from '@/components/atoms/CFormSelect.vue'
 import CFormActions from '@/components/molecules/CFormActions.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
-import CIconCopy from '@/components/atoms/CIconCopy.svg'
+import CCopyField from '@/components/molecules/CCopyField.vue'
 import { usersApi } from '@/api'
 import { useFormFeedback } from '@/composables/useFormFeedback'
 import { useAutoClose } from '@/composables/useAutoClose'
@@ -28,7 +28,6 @@ const feedback = useFormFeedback()
 const { schedule: scheduleClose, forceExpire: forceClose } = useAutoClose()
 const loading = ref(false)
 const inviteLink = ref('')
-const copied = ref(false)
 
 const form = reactive({ email: '', role: 'co_owner', unit_id: '' })
 
@@ -53,7 +52,6 @@ watch(() => props.open, (open) => {
   form.role = 'co_owner'
   form.unit_id = ''
   inviteLink.value = ''
-  copied.value = false
   feedback.reset()
 })
 
@@ -80,13 +78,6 @@ async function handleSubmit() {
   } finally {
     loading.value = false
   }
-}
-
-async function copyLink() {
-  if (!inviteLink.value) return
-  await navigator.clipboard.writeText(inviteLink.value)
-  copied.value = true
-  setTimeout(() => { copied.value = false }, 2000)
 }
 </script>
 
@@ -128,32 +119,14 @@ async function copyLink() {
       />
 
       <!-- Generated invite link -->
-      <div
+      <CCopyField
         v-if="inviteLink"
-        class="invite-link-box"
-      >
-        <p class="invite-link-label label-sm">
-          {{ t('residents.inviteLinkTitle') }}
-        </p>
-        <div class="invite-link-row">
-          <input
-            :value="inviteLink"
-            readonly
-            class="invite-link-input"
-            @click="($event.target as HTMLInputElement).select()"
-          />
-          <CBtn
-            variant="secondary"
-            size="sm"
-            :icon="CIconCopy"
-            :title="copied ? t('residents.inviteCopied') : t('residents.inviteCopyLink')"
-            @click.prevent="copyLink"
-          />
-        </div>
-        <p class="invite-link-hint label-sm tone--muted">
-          {{ t('residents.inviteLinkHint') }}
-        </p>
-      </div>
+        :value="inviteLink"
+        :label="t('residents.inviteLinkTitle')"
+        :hint="t('residents.inviteLinkHint')"
+        :copy-title="t('residents.inviteCopyLink')"
+        :copied-title="t('residents.inviteCopied')"
+      />
     </CForm>
 
     <template #footer>
@@ -180,38 +153,3 @@ async function copyLink() {
   </CModal>
 </template>
 
-<style scoped>
-.invite-link-box {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  padding: var(--space-3);
-  background: var(--color-surface-container);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--color-outline-variant);
-}
-.invite-link-label {
-  font-weight: var(--fw-medium);
-  color: var(--color-on-surface-variant);
-}
-.invite-link-row {
-  display: flex;
-  gap: var(--space-2);
-  align-items: center;
-}
-.invite-link-input {
-  flex: 1;
-  font-size: var(--text-sm);
-  font-family: var(--font-mono, monospace);
-  color: var(--color-on-surface);
-  background: var(--color-surface);
-  border: 1px solid var(--color-outline);
-  border-radius: var(--radius-sm);
-  padding: var(--space-1) var(--space-2);
-  min-width: 0;
-  outline: none;
-}
-.invite-link-hint {
-  margin-top: var(--space-1);
-}
-</style>

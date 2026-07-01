@@ -43,7 +43,7 @@ import WorksFundModal from './WorksFundModal.vue'
 import { budgetApi, allocationKeysApi, buildingApi } from '@/api'
 import GenerateLeviesModal from './GenerateLeviesModal.vue'
 import BreakdownModal from './BreakdownModal.vue'
-import type { Budget, BudgetLine, LevyCall, WorksFund, AllocationKey, LevyStatus, BuildingStats } from '@/types/domain'
+import type { Budget, BudgetLine, LevyCall, WorksFund, AllocationKey, LevyStatus, BuildingStats, AccountingCode } from '@/types/domain'
 import type { Column } from '@/components/molecules/CDataTable.vue'
 
 interface ConsolidatedLevyRow {
@@ -100,6 +100,7 @@ const buildingName = ref('')
 const buildingStats = ref<BuildingStats | null>(null)
 const budgets = ref<Budget[]>([])
 const selectedBudgetId = ref<string | null>(null)
+const accountingCodes = ref<AccountingCode[]>([])
 
 const selectedBudgetTab = computed({
   get: () => selectedBudgetId.value ?? '',
@@ -202,6 +203,27 @@ const levyTableRows = computed<Record<string, unknown>[]>(() => consolidatedLevi
 const keyOptions = computed(() =>
   allocationKeys.value.map(k => ({ value: k.id, label: k.name }))
 )
+
+const accountingCodeOptions = computed(() =>
+  accountingCodes.value.map(c => ({ value: c.code, label: `${c.code} — ${c.label}` }))
+)
+
+const totalsPerCategory = computed(() => {
+  const map = new Map<string, { category: string; total: number }>()
+  for (const line of budgetLines.value) {
+    if (!line.account_code_category) continue
+    const existing = map.get(line.account_code_category)
+    if (existing) {
+      existing.total += Number(line.budgeted_amount ?? 0)
+    } else {
+      map.set(line.account_code_category, {
+        category: line.account_code_category,
+        total: Number(line.budgeted_amount ?? 0),
+      })
+    }
+  }
+  return Array.from(map.values()).sort((a, b) => a.category.localeCompare(b.category))
+})
 
 const selectedTotalForecast = computed(() =>
   Number(selectedBudget.value?.total_forecast ?? 0)
@@ -309,6 +331,20 @@ const budgetBreakdownItems = computed(() => {
     })
 })
 
+const totalsPerKey = computed(() => {
+  const map = new Map<string, { keyName: string; total: number }>()
+  for (const line of budgetLines.value) {
+    const keyName = line.key_name ?? t('common.noKey')
+    const existing = map.get(line.key_id)
+    if (existing) {
+      existing.total += Number(line.budgeted_amount ?? 0)
+    } else {
+      map.set(line.key_id, { keyName, total: Number(line.budgeted_amount ?? 0) })
+    }
+  }
+  return Array.from(map.values()).sort((a, b) => a.keyName.localeCompare(b.keyName))
+})
+
 const legalCardLinksLevies = computed(() => [
   {
     label: t('budget.legalCard.article35LinkLabel'),
@@ -330,13 +366,15 @@ const legalCardLinksWorksFund = computed(() => [
 // ── Loaders ───────────────────────────────────────────────────────
 
 async function loadMeta() {
-  const [statsRes, keysRes] = await Promise.all([
+  const [statsRes, keysRes, codesRes] = await Promise.all([
     buildingApi.stats(),
     allocationKeysApi.list(),
+    budgetApi.listAccountingCodes(),
   ])
   buildingStats.value = statsRes.data
   buildingName.value = statsRes.data.name
   allocationKeys.value = keysRes.data
+  accountingCodes.value = codesRes.data
 
   try {
     const balances = await Promise.all(
@@ -376,13 +414,17 @@ async function loadBudgetData(budgetId: string) {
   ])
   const refreshed = budgetRes.data
   budgets.value = budgets.value.map(b => (b.id === refreshed.id ? refreshed : b))
-  // Enrich lines with key names
-  budgetLines.value = linesRes.data.map(l => ({
-    ...l,
-    budgeted_amount: Number(l.budgeted_amount),
-    actual_amount: l.actual_amount != null ? Number(l.actual_amount) : undefined,
-    key_name: allocationKeys.value.find(k => k.id === l.key_id)?.name,
-  }))
+  budgetLines.value = linesRes.data.map(l => {
+    const code = accountingCodes.value.find(c => c.code === l.account_code)
+    return {
+      ...l,
+      budgeted_amount: Number(l.budgeted_amount),
+      actual_amount: l.actual_amount != null ? Number(l.actual_amount) : undefined,
+      key_name: allocationKeys.value.find(k => k.id === l.key_id)?.name,
+      account_code_label: code?.label,
+      account_code_category: code?.category,
+    }
+  })
   levies.value = (leviesRes.data as LevyCall[]).map(levy => ({
     ...levy,
     amount: Number(levy.amount),
@@ -778,7 +820,7 @@ function formatSharePercentage(value: number): string {
               variant="warning"
               :show-value="true"
             />
-            <div class="prog-foot">
+            <div class="flex justify-between mt-1 text-2xs text-on-surface-variant">
               <span>{{ t('budget.worksFundProgressLabel', { pct: worksFundProgressPct }) }}</span>
               <span
                 class="text-end font-medium"
@@ -883,7 +925,36 @@ function formatSharePercentage(value: number): string {
             <p>{{ t('common.noData') }}</p>
           </div>
 
-          <CFlexGroup v-else>
+          <template v-else>
+            <div
+              v-if="totalsPerKey.length > 0"
+              class="flex flex-wrap gap-3 pb-2 border-b border-outline-variant"
+            >
+              <div
+                v-for="kt in totalsPerKey"
+                :key="kt.keyName"
+                class="flex flex-col gap-0.5"
+              >
+                <span class="text-xs text-on-surface-variant">{{ kt.keyName }}</span>
+                <span class="font-mono font-medium text-sm">{{ formatCurrency(kt.total) }}</span>
+              </div>
+            </div>
+            <div
+              v-if="totalsPerCategory.length > 0"
+              class="flex flex-wrap gap-3 pb-2 border-b border-outline-variant"
+            >
+              <div
+                v-for="ct in totalsPerCategory"
+                :key="ct.category"
+                class="flex flex-col gap-0.5"
+              >
+                <span class="text-xs text-on-surface-variant">{{ t('budget.byAccountCategory') }} — {{ ct.category }}</span>
+                <span class="font-mono font-medium text-sm">{{ formatCurrency(ct.total) }}</span>
+              </div>
+            </div>
+          </template>
+
+          <CFlexGroup v-if="budgetLines.length > 0">
             <div
               v-for="line in budgetLines"
               :key="line.id"
@@ -891,6 +962,13 @@ function formatSharePercentage(value: number): string {
               <div class="flex justify-between items-center mb-2">
                 <span class="text-sm font-medium text-on-surface">{{ line.label }}</span>
                 <CMetaLine class="text-xs">
+                  <CBadge
+                    v-if="line.account_code"
+                    variant="default"
+                    :title="line.account_code_label"
+                  >
+                    {{ line.account_code }}
+                  </CBadge>
                   <CBadge
                     v-if="line.key_name"
                     variant="primary"
@@ -912,7 +990,7 @@ function formatSharePercentage(value: number): string {
                 :variant="lineVariant(line)"
                 :show-value="true"
               />
-              <div class="prog-foot">
+              <div class="flex justify-between mt-1 text-2xs text-on-surface-variant">
                 <span>{{ t('budget.realizedLabel') }} : <b class="text-on-surface font-medium font-mono">{{ formatCurrency(line.actual_amount ?? 0) }}</b></span>
                 <span>{{ t('budget.plannedLabel') }} : <b class="text-on-surface font-medium font-mono">{{ formatCurrency(line.budgeted_amount) }}</b></span>
               </div>
@@ -1017,6 +1095,7 @@ function formatSharePercentage(value: number): string {
                 size="sm"
                 :icon="CIconCheckCircle"
                 :title="t('budget.markPaid')"
+                :aria-label="t('budget.markPaid')"
                 :loading="markingPaidId === asConsolidatedLevyRow(row).id"
                 class="tone--valid"
                 @click="markPaid(asConsolidatedLevyRow(row))"
@@ -1060,6 +1139,7 @@ function formatSharePercentage(value: number): string {
       :open="showCreateLineModal"
       :budget-id="selectedBudgetId ?? ''"
       :key-options="keyOptions"
+      :accounting-code-options="accountingCodeOptions"
       @update:open="showCreateLineModal = $event"
       @created="loadBudgetData(selectedBudgetId!)"
     />
@@ -1117,19 +1197,5 @@ function formatSharePercentage(value: number): string {
   padding: var(--space-3);
   border-radius: var(--radius-xl);
   background: color-mix(in srgb, var(--color-warning) var(--color-tint), transparent);
-}
-
-.prog-foot {
-  display: flex;
-  justify-content: space-between;
-  margin-top: var(--space-1);
-  font-size: var(--text-2xs);
-  color: var(--color-on-surface-variant);
-}
-
-.stat-cell {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
 }
 </style>

@@ -8,13 +8,7 @@ use uuid::Uuid;
 /// Verifies AC-GP-009-A (default = current owner) and AC-GP-009-B (filter by past owner).
 #[tokio::test]
 async fn manager_can_filter_budget_levies_by_historical_owner() {
-    dotenvy::dotenv().ok();
-    let cfg = laruche::config::AppConfig::load().expect("config");
-    let pool = sqlx::PgPool::connect(&cfg.db.url).await.expect("db");
-    sqlx::migrate!("./migrations")
-        .run(&pool)
-        .await
-        .expect("migrations");
+    let (cfg, pool) = common::test_db().await;
 
     let building_id = Uuid::new_v4();
     let unit_id = Uuid::new_v4();
@@ -120,8 +114,8 @@ async fn manager_can_filter_budget_levies_by_historical_owner() {
     ] {
         sqlx::query(
             "INSERT INTO levy_call (id, budget_id, call_label, due_date, charge_amount, \
-             works_fund_amount, issued_at) \
-             VALUES ($1, $2, $3, $4, 100.00, 0.00, $5::timestamptz)",
+             works_fund_amount, issued_at, status) \
+             VALUES ($1, $2, $3, $4, 100.00, 0.00, $5::timestamptz, 'issued'::levy_status)",
         )
         .bind(lid)
         .bind(budget_id)

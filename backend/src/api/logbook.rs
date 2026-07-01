@@ -240,7 +240,7 @@ pub async fn create(
 }
 
 /// Only managers and board members can edit manual log entries.
-/// Automatic entries (source = 'automatic') cannot be edited through this endpoint.
+/// Automatic entries (source = 'automatic') are frozen — assert_mutable enforces this.
 pub async fn update(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,
@@ -248,7 +248,13 @@ pub async fn update(
     Json(input): Json<UpdateLogbookInput>,
 ) -> AppResult<Json<serde_json::Value>> {
     auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
-
+    let existing = db::maintenance_log::get(&state.pool, id, auth.building_id)
+        .await?
+        .ok_or(AppError::NotFound)?;
+    crate::domain::immutability::assert_mutable(
+        &crate::domain::immutability::Entity::MaintenanceLog,
+        &existing.source,
+    )?;
     if input.title.trim().is_empty() {
         return Err(AppError::validation_code("errors.logbook.title_required"));
     }
@@ -270,13 +276,61 @@ pub async fn update(
     json_value(entry)
 }
 
-/// Only managers can delete logbook entries.
+/// Only managers can delete logbook entries. Automatic entries are frozen.
 pub async fn delete(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
 ) -> AppResult<StatusCode> {
     auth.require_role(&Role::Manager)?;
+    let existing = db::maintenance_log::get(&state.pool, id, auth.building_id)
+        .await?
+        .ok_or(AppError::NotFound)?;
+    crate::domain::immutability::assert_mutable(
+        &crate::domain::immutability::Entity::MaintenanceLog,
+        &existing.source,
+    )?;
     db::maintenance_log::delete(&state.pool, id, auth.building_id).await?;
     Ok(StatusCode::NO_CONTENT)
+}
+
+/// Input for a correction entry (append-only amendment of a frozen manual entry).
+#[derive(Deserialize)]
+pub struct CorrectionInput {
+    pub title: String,
+    pub description: Option<String>,
+    pub intervention_date: NaiveDate,
+    pub cost: Option<Decimal>,
+    pub vendor_name: Option<String>,
+    pub contract_id: Option<Uuid>,
+}
+
+/// Creates a correction entry referencing an existing manual log entry (EP-018-S07 Pattern C).
+pub async fn correction(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+    Json(input): Json<CorrectionInput>,
+) -> AppResult<(StatusCode, Json<serde_json::Value>)> {
+    auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
+
+    if input.title.trim().is_empty() {
+        return Err(AppError::validation_code("errors.logbook.title_required"));
+    }
+
+    let entry = db::maintenance_log::create_correction(
+        &state.pool,
+        id,
+        auth.building_id,
+        auth.user_id,
+        &input.title,
+        input.description.as_deref(),
+        input.intervention_date,
+        input.cost,
+        input.vendor_name.as_deref(),
+        input.contract_id,
+    )
+    .await?;
+
+    Ok((StatusCode::CREATED, json_value(entry)?))
 }

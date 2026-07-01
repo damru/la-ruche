@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import CCard from '@/components/molecules/CCard.vue'
@@ -7,16 +7,19 @@ import CBtn from '@/components/atoms/CBtn.vue'
 import CForm from '@/components/molecules/CForm.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import CHeading from '@/components/atoms/CHeading.vue'
+import CTabs from '@/components/atoms/CTabs.vue'
+import CToggle from '@/components/atoms/CToggle.vue'
+import CBadge from '@/components/atoms/CBadge.vue'
 import CIconClock from '@/components/atoms/CIconClock.svg'
 import CIconLogIn from '@/components/atoms/CIconLogIn.svg'
 import CIconMoon from '@/components/atoms/CIconMoon.svg'
 import CIconSun from '@/components/atoms/CIconSun.svg'
 import { useAuthStore } from '@/stores/auth'
-import { useUiStore } from '@/stores/ui'
+import { useUiStore, NOTIF_EVENTS } from '@/stores/ui'
 import { authApi } from '@/api'
+import { useBuildingStore } from '@/stores/building'
 import { useFormFeedback } from '@/composables/useFormFeedback'
-import CTabs from '@/components/atoms/CTabs.vue'
-import CToggle from '@/components/atoms/CToggle.vue'
+import { useConfirm } from '@/composables/useConfirm'
 import ResetDemoModal from './ResetDemoModal.vue'
 import ResetDataModal from './ResetDataModal.vue'
 
@@ -24,16 +27,60 @@ const { t } = useI18n()
 const router = useRouter()
 const auth = useAuthStore()
 const ui = useUiStore()
+const { confirm } = useConfirm()
 
 // ── Tabs ──────────────────────────────────────────────────────────
-type ProfileTab = 'account' | 'notifications'
+type ProfileTab = 'account' | 'notifications' | 'appearance'
 const activeTab = ref<ProfileTab>('account')
 
-// ── Account form ─────────────────────────────────────────────────
+// ── Account form (email = login, phone) ───────────────────────────
 const saving = ref(false)
 const profileFeedback = useFormFeedback()
+const email = ref(auth.user?.email ?? '')
 const phone = ref(auth.user?.phone ?? '')
 
+// ── Access context (role + building scope) ────────────────────────
+const buildingName = ref('')
+onMounted(async () => {
+  try {
+    const building = await useBuildingStore().fetch()
+    buildingName.value = building.name
+  } catch {
+    // Scope name is optional context — silently skip if unavailable.
+  }
+})
+
+async function saveProfile() {
+  saving.value = true
+  profileFeedback.reset()
+  try {
+    const payload: { phone: string | null; email?: string } = {
+      phone: phone.value.trim() || null,
+    }
+    const nextEmail = email.value.trim().toLowerCase()
+    if (nextEmail && nextEmail !== (auth.user?.email ?? '').toLowerCase()) {
+      payload.email = nextEmail
+    }
+    const res = await authApi.updateProfile(payload)
+    if (auth.user) {
+      auth.user.phone = res.data.phone
+      auth.user.email = res.data.email ?? auth.user.email
+    }
+    profileFeedback.setSuccess(t('common.saved'))
+  } catch (e: unknown) {
+    const status = (e as { response?: { status?: number } })?.response?.status
+    const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? ''
+    if (status === 409 && msg.includes('email_already_exists')) {
+      profileFeedback.setError(t('settings.account.emailTaken'))
+    } else {
+      profileFeedback.setError(t('common.error'))
+    }
+  } finally {
+    saving.value = false
+  }
+}
+
+// ── Theme (appearance tab) ────────────────────────────────────────
 const themeOptions = [
   {
     value: 'light',
@@ -59,29 +106,17 @@ const selectedThemeOption = computed(
   () => themeOptions.find((option) => option.value === ui.themePreference) ?? themeOptions[2]
 )
 
-async function saveProfile() {
-  saving.value = true
-  try {
-    const res = await authApi.updateProfile({ phone: phone.value || null })
-    if (auth.user) {
-      auth.user.phone = res.data.phone
-    }
-    profileFeedback.setSuccess(t('common.saved'))
-  } catch {
-    profileFeedback.setError(t('common.error'))
-  } finally {
-    saving.value = false
+// ── Notifications ─────────────────────────────────────────────────
+async function resetNotifPrefs() {
+  const ok = await confirm({
+    title: t('settings.notifications.resetConfirmTitle'),
+    message: t('settings.notifications.resetConfirmMessage'),
+    variant: 'primary',
+  })
+  if (ok) {
+    ui.resetNotifPrefs()
   }
 }
-
-// ── Notifications ─────────────────────────────────────────────────
-const notifItems = ref([
-  { key: 'contractReminders', enabled: true },
-  { key: 'newReports', enabled: true },
-  { key: 'lateCallsForFunds', enabled: true },
-  { key: 'openConsultations', enabled: false },
-  { key: 'weeklyDigest', enabled: false },
-])
 
 // ── Logout ────────────────────────────────────────────────────────
 const loggingOut = ref(false)
@@ -96,10 +131,8 @@ async function logout() {
   }
 }
 
-// ── Reset demo ────────────────────────────────────────────────────
+// ── Reset demo / data (manager + demo only) ───────────────────────
 const showResetModal = ref(false)
-
-// ── Reset data ────────────────────────────────────────────────────
 const showResetDataModal = ref(false)
 </script>
 
@@ -141,6 +174,7 @@ const showResetDataModal = ref(false)
         :tabs="[
           { value: 'account', label: t('nav.myAccount') },
           { value: 'notifications', label: t('nav.notifications') },
+          { value: 'appearance', label: t('nav.appearance') },
         ]"
       />
 
@@ -167,9 +201,10 @@ const showResetDataModal = ref(false)
               disabled
             />
             <CFormInput
-              :model-value="auth.user?.email ?? ''"
+              v-model="email"
               :label="t('common.email')"
-              disabled
+              type="email"
+              required
             />
             <CFormInput
               v-model="phone"
@@ -194,6 +229,110 @@ const showResetDataModal = ref(false)
           </CForm>
         </CCard>
 
+        <CCard>
+          <CHeading type="card">
+            {{ t('settings.account.accessTitle') }}
+          </CHeading>
+          <div class="access-grid">
+            <div class="access-row">
+              <span class="body-xs access-label">{{ t('settings.account.roleLabel') }}</span>
+              <div class="access-badges">
+                <CBadge
+                  v-for="role in auth.user?.roles ?? []"
+                  :key="role"
+                  :variant="role"
+                >
+                  {{ t(`roles.${role}`) }}
+                </CBadge>
+              </div>
+            </div>
+            <div
+              v-if="buildingName"
+              class="access-row"
+            >
+              <span class="body-xs access-label">{{ t('settings.account.scopeLabel') }}</span>
+              <span class="title-sm">{{ buildingName }}</span>
+            </div>
+          </div>
+        </CCard>
+
+        <CCard v-if="auth.isManager && ui.demoMode">
+          <CHeading
+            type="card"
+            class="danger-title"
+          >
+            {{ t('settings.account.dangerZone') }}
+          </CHeading>
+          <p class="body-xs danger-desc">
+            {{ t('settings.account.dangerDesc') }}
+          </p>
+          <div class="flex flex-row gap-4">
+            <CBtn
+              variant="danger"
+              :title="t('settings.account.resetApp')"
+              @click="showResetModal = true"
+            />
+            <CBtn
+              variant="danger"
+              :title="t('settings.account.resetData')"
+              @click="showResetDataModal = true"
+            />
+          </div>
+        </CCard>
+      </template>
+
+      <!-- ── Notifications tab ───────────────────────────────── -->
+      <template v-if="activeTab === 'notifications'">
+        <CCard>
+          <div class="notif-header">
+            <div class="notif-header__text">
+              <CHeading type="card">
+                {{ t('settings.notifications.title') }}
+              </CHeading>
+              <p class="body-xs notif-subtitle">
+                {{ t('settings.notifications.subtitle') }}
+              </p>
+            </div>
+            <CBtn
+              variant="ghost"
+              size="sm"
+              :title="t('settings.notifications.reset')"
+              @click="resetNotifPrefs"
+            />
+          </div>
+          <div class="notif-list">
+            <div
+              v-for="event in NOTIF_EVENTS"
+              :key="event.id"
+              class="notif-item"
+            >
+              <div class="notif-info">
+                <div class="notif-head">
+                  <span class="title-sm">{{ t(`settings.notifications.events.${event.id}`) }}</span>
+                  <CBadge
+                    v-if="event.mandatory"
+                    variant="default"
+                  >
+                    {{ t('settings.notifications.mandatory') }}
+                  </CBadge>
+                </div>
+                <p class="body-xs notif-desc">
+                  {{ t(`settings.notifications.events.${event.id}Desc`) }}
+                </p>
+              </div>
+              <CToggle
+                :model-value="ui.notifPrefs[event.id]"
+                :disabled="event.mandatory"
+                :aria-label="t(`settings.notifications.events.${event.id}`)"
+                @update:model-value="ui.setNotifPref(event.id, $event)"
+              />
+            </div>
+          </div>
+        </CCard>
+      </template>
+
+      <!-- ── Appearance tab ──────────────────────────────────── -->
+      <template v-if="activeTab === 'appearance'">
         <CCard>
           <CHeading type="card">
             {{ t('settings.preferences.title') }}
@@ -230,64 +369,6 @@ const showResetDataModal = ref(false)
             {{ t(selectedThemeOption.hintKey) }}
           </p>
         </CCard>
-
-        <CCard v-if="auth.isManager && ui.demoMode">
-          <CHeading
-            type="card"
-            style="color: var(--color-error)"
-          >
-            {{ t('settings.account.dangerZone') }}
-          </CHeading>
-          <p
-            class="body-xs"
-            style="color: var(--color-on-surface-variant); margin-bottom: 12px"
-          >
-            {{ t('settings.account.dangerDesc') }}
-          </p>
-          <div class="flex flex-row gap-4">
-            <CBtn
-              variant="danger"
-              :title="t('settings.account.resetApp')"
-              @click="showResetModal = true"
-            />
-            <CBtn
-              variant="danger"
-              :title="t('settings.account.resetData')"
-              @click="showResetDataModal = true"
-            />
-          </div>
-        </CCard>
-      </template>
-
-      <!-- ── Notifications tab ───────────────────────────────── -->
-      <template v-if="activeTab === 'notifications'">
-        <CCard>
-          <CHeading type="card">
-            {{ t('settings.notifications.title') }}
-          </CHeading>
-          <div class="notif-list">
-            <div
-              v-for="item in notifItems"
-              :key="item.key"
-              class="notif-item"
-              @click="item.enabled = !item.enabled"
-            >
-              <div class="notif-info">
-                <span class="title-sm">{{ t(`settings.notifications.${item.key}`) }}</span>
-                <p
-                  class="body-xs"
-                  style="color: var(--color-on-surface-variant)"
-                >
-                  {{ t(`settings.notifications.${item.key}Desc`) }}
-                </p>
-              </div>
-              <CToggle
-                v-model="item.enabled"
-                :aria-label="t(`settings.notifications.${item.key}`)"
-              />
-            </div>
-          </div>
-        </CCard>
       </template>
     </div>
   </div>
@@ -315,8 +396,8 @@ const showResetDataModal = ref(false)
 .theme-option {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 14px;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
   border-radius: var(--radius-full);
   background: var(--color-surface-container-low);
   color: var(--color-on-surface);
@@ -339,8 +420,8 @@ const showResetDataModal = ref(false)
 }
 
 .theme-option__icon {
-  width: 16px;
-  height: 16px;
+  width: var(--icon-sm);
+  height: var(--icon-sm);
   flex: 0 0 auto;
 }
 
@@ -348,19 +429,75 @@ const showResetDataModal = ref(false)
   margin-bottom: 0;
 }
 
-/* Form */
+/* Access context */
+.access-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.access-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+.access-label {
+  min-width: var(--space-20);
+  color: var(--color-on-surface-variant);
+}
+.access-badges {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* Danger zone */
+.danger-title {
+  color: var(--color-error);
+}
+.danger-desc {
+  color: var(--color-on-surface-variant);
+  margin-bottom: var(--space-3);
+}
 
 /* Notifications */
-.notif-list { display: flex; flex-direction: column; gap: 0; }
+.notif-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-2);
+}
+.notif-subtitle {
+  color: var(--color-on-surface-variant);
+}
+.notif-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
 .notif-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
-  padding: 14px 0;
+  padding: var(--space-4) 0;
   border-bottom: 1px solid var(--color-outline-variant);
-  cursor: pointer;
 }
-.notif-item:last-child { border-bottom: none; }
-.notif-info { display: flex; flex-direction: column; gap: 2px; }
+.notif-item:last-child {
+  border-bottom: none;
+}
+.notif-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.notif-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.notif-desc {
+  color: var(--color-on-surface-variant);
+}
 </style>

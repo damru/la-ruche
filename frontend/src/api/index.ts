@@ -2,7 +2,7 @@ import { api } from './client'
 import axios from 'axios'
 import type {
   Meeting, MeetingAttendance, MeetingDocument, Resolution, VoteResult, UnitVote,
-  Budget, BudgetLine, LevyCall, WorksFund,
+  Budget, BudgetLine, LevyCall, WorksFund, AccountingCode,
   VendorContract, ContractReminder,
     Task, Claim, MaintenanceEntry,
   LogbookSummary,
@@ -11,7 +11,7 @@ import type {
   Building, Unit, UnitOwnerRecord, User, AllocationKey, UnitShare,
   OnboardingStatus, RuntimeStatus, BootstrapInput, BootstrapResponse,
   LoginResponse, BuildingStats, RegistryResponse, UnitChargesResponse,
-  Contractor,
+  Contractor, JudicialProceeding, GovernanceMandate,
 } from '@/types/domain'
 
 // Public axios instance — no JWT, no interceptors (vendor endpoints)
@@ -48,7 +48,7 @@ export const authApi = {
     api.post('/auth/reset-password/confirm', { token, password }),
   me: () =>
     api.get<LoginResponse>('/auth/me'),
-  updateProfile: (data: { phone?: string | null }) =>
+  updateProfile: (data: { phone?: string | null; email?: string }) =>
     api.patch<LoginResponse>('/auth/me', data),
   acceptInvite: (token: string, password: string, last_name: string, first_name: string) =>
     api.post('/auth/invite/accept', { token, password, last_name, first_name }),
@@ -231,8 +231,10 @@ export const budgetApi = {
     api.post(`/budgets/${id}/close`),
   listLines: (id: string) =>
     api.get<BudgetLine[]>(`/budgets/${id}/lines`),
-  createLine: (id: string, data: { label: string; key_id: string; budgeted_amount: number }) =>
+  createLine: (id: string, data: { label: string; key_id: string; budgeted_amount: number; account_code?: string }) =>
     api.post<BudgetLine>(`/budgets/${id}/lines`, data),
+  listAccountingCodes: () =>
+    api.get<AccountingCode[]>('/accounting-codes'),
   deleteLine: (id: string, lid: string) =>
     api.delete(`/budgets/${id}/lines/${lid}`),
   generateLevies: (id: string, data: { due_date: string; include_works_fund: boolean; call_label?: string }) =>
@@ -338,6 +340,34 @@ export const contractorsApi = {
     api.put<Contractor>(`/contractors/${id}`, data),
   delete: (id: string) =>
     api.delete(`/contractors/${id}`),
+}
+
+// ── Judicial proceedings register (EP-002-S10) ────────────────────
+export const judicialProceedingsApi = {
+  list: () =>
+    api.get<JudicialProceeding[]>('/judicial-proceedings'),
+  get: (id: string) =>
+    api.get<JudicialProceeding>(`/judicial-proceedings/${id}`),
+  create: (data: { proceeding_type: string; subject: string; claimant: string; defendant: string; jurisdiction?: string; case_reference?: string; opened_at: string }) =>
+    api.post<JudicialProceeding>('/judicial-proceedings', data),
+  update: (id: string, data: { proceeding_type: string; status: string; subject: string; claimant: string; defendant: string; jurisdiction?: string | null; case_reference?: string | null; opened_at: string; closed_at?: string | null; outcome?: string | null }) =>
+    api.put<JudicialProceeding>(`/judicial-proceedings/${id}`, data),
+  delete: (id: string) =>
+    api.delete(`/judicial-proceedings/${id}`),
+}
+
+// ── Governance register (EP-002-S11) ──────────────────────────────
+export const governanceApi = {
+  list: () =>
+    api.get<GovernanceMandate[]>('/governance/mandates'),
+  get: (id: string) =>
+    api.get<GovernanceMandate>(`/governance/mandates/${id}`),
+  create: (data: { role: string; holder_name: string; user_id?: string | null; start_date: string; end_date?: string | null; notes?: string | null }) =>
+    api.post<GovernanceMandate>('/governance/mandates', data),
+  update: (id: string, data: { role: string; holder_name: string; user_id?: string | null; start_date: string; end_date?: string | null; notes?: string | null }) =>
+    api.put<GovernanceMandate>(`/governance/mandates/${id}`, data),
+  delete: (id: string) =>
+    api.delete(`/governance/mandates/${id}`),
 }
 
 // ── Claims ────────────────────────────────────────────────────────

@@ -123,3 +123,69 @@ pub fn json_value<T: Serialize>(value: T) -> AppResult<Json<serde_json::Value>> 
         serde_json::to_value(value).map_err(|e| AppError::Internal(e.into()))?,
     ))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn validation_code_builds_validation_variant_with_message() {
+        let err = AppError::validation_code("errors.foo.bar");
+        match err {
+            AppError::Validation(msg) => assert_eq!(msg, "errors.foo.bar"),
+            other => panic!("expected Validation, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn bad_request_code_builds_bad_request_variant_with_message() {
+        let err = AppError::bad_request_code("errors.foo.bad");
+        match err {
+            AppError::BadRequest(msg) => assert_eq!(msg, "errors.foo.bad"),
+            other => panic!("expected BadRequest, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn conflict_code_builds_conflict_variant_with_message() {
+        let err = AppError::conflict_code("errors.foo.conflict");
+        match err {
+            AppError::Conflict(msg) => assert_eq!(msg, "errors.foo.conflict"),
+            other => panic!("expected Conflict, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn into_response_maps_each_variant_to_expected_status() {
+        let cases = [
+            (AppError::Validation("x".into()), StatusCode::BAD_REQUEST),
+            (AppError::BadRequest("x".into()), StatusCode::BAD_REQUEST),
+            (AppError::Unauthorized, StatusCode::UNAUTHORIZED),
+            (AppError::TokenInvalid, StatusCode::UNAUTHORIZED),
+            (AppError::Forbidden, StatusCode::FORBIDDEN),
+            (AppError::NotFound, StatusCode::NOT_FOUND),
+            (AppError::Conflict("x".into()), StatusCode::CONFLICT),
+            (
+                AppError::Database(sqlx::Error::RowNotFound),
+                StatusCode::INTERNAL_SERVER_ERROR,
+            ),
+            (
+                AppError::Storage("x".into()),
+                StatusCode::INTERNAL_SERVER_ERROR,
+            ),
+            (
+                AppError::Internal(anyhow::anyhow!("boom")),
+                StatusCode::INTERNAL_SERVER_ERROR,
+            ),
+        ];
+        for (err, expected) in cases {
+            assert_eq!(err.into_response().status(), expected);
+        }
+    }
+
+    #[test]
+    fn json_value_serializes_value_into_ok_json() {
+        let result = json_value(serde_json::json!({ "a": 1 }));
+        assert!(result.is_ok());
+    }
+}

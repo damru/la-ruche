@@ -311,6 +311,14 @@ pub async fn update_resolution(
     Json(input): Json<CreateResolutionInput>,
 ) -> AppResult<Json<serde_json::Value>> {
     auth.require_role(&Role::Manager)?;
+    let meeting_status =
+        crate::db::assembly::get_meeting_status(&state.pool, meeting_id, auth.building_id)
+            .await?
+            .ok_or(AppError::NotFound)?;
+    crate::domain::immutability::assert_mutable(
+        &crate::domain::immutability::Entity::Resolution,
+        &meeting_status,
+    )?;
     let resolution = crate::db::assembly::update_resolution(
         &state.pool,
         meeting_id,
@@ -519,6 +527,14 @@ pub async fn patch_resolution(
     Json(input): Json<PatchResolutionInput>,
 ) -> AppResult<Json<serde_json::Value>> {
     auth.require_role(&Role::Manager)?;
+    let meeting_status =
+        crate::db::assembly::get_meeting_status(&state.pool, meeting_id, auth.building_id)
+            .await?
+            .ok_or(AppError::NotFound)?;
+    crate::domain::immutability::assert_mutable(
+        &crate::domain::immutability::Entity::Resolution,
+        &meeting_status,
+    )?;
     let resolution = crate::db::assembly::patch_resolution_description(
         &state.pool,
         meeting_id,

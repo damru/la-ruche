@@ -5,6 +5,7 @@ import CModal from '@/components/molecules/CModal.vue'
 import CForm from '@/components/molecules/CForm.vue'
 import CFormInput from '@/components/atoms/CFormInput.vue'
 import CFormTextarea from '@/components/atoms/CFormTextarea.vue'
+import CFormRow from '@/components/molecules/CFormRow.vue'
 import CFormActions from '@/components/molecules/CFormActions.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import { maintenanceApi } from '@/api'
@@ -95,7 +96,7 @@ async function save() {
         type="date"
         required
       />
-      <div class="form-row">
+      <CFormRow :cols="2">
         <CFormInput
           v-model="form.cost"
           :label="t('maintenance.fields.cost')"
@@ -107,7 +108,7 @@ async function save() {
           v-model="form.vendor_name"
           :label="t('maintenance.fields.vendorName')"
         />
-      </div>
+      </CFormRow>
     </CForm>
     <template #footer>
       <CFormActions
@@ -131,8 +132,3 @@ async function save() {
     </template>
   </CModal>
 </template>
-
-<style scoped>
-.form-row { display: flex; gap: var(--space-3); }
-.form-row > * { flex: 1; }
-</style>

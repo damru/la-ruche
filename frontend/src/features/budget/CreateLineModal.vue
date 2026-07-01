@@ -15,6 +15,7 @@ const props = defineProps<{
   open: boolean
   budgetId: string
   keyOptions: Array<{ value: string; label: string }>
+  accountingCodeOptions?: Array<{ value: string; label: string }>
 }>()
 
 const emit = defineEmits<{
@@ -26,7 +27,7 @@ const { t } = useI18n()
 const feedback = useFormFeedback()
 const { forceExpire: forceClose } = useAutoClose()
 const saving = ref(false)
-const form = reactive({ label: '', key_id: '', budgeted_amount: '' })
+const form = reactive({ label: '', key_id: '', budgeted_amount: '', account_code: '' })
 
 const isValid = computed(() =>
   !!form.label.trim() && !!form.key_id && parseFloat(form.budgeted_amount) > 0
@@ -37,6 +38,7 @@ watch(() => props.open, (open) => {
   form.label = ''
   form.key_id = props.keyOptions[0]?.value ?? ''
   form.budgeted_amount = ''
+  form.account_code = ''
   feedback.reset()
 })
 
@@ -52,6 +54,7 @@ async function handleSubmit() {
       label: form.label.trim(),
       key_id: form.key_id,
       budgeted_amount: parseFloat(form.budgeted_amount),
+      account_code: form.account_code || undefined,
     })
     emit('created')
     emit('update:open', false)
@@ -91,6 +94,12 @@ async function handleSubmit() {
         :min="0"
         step="0.01"
         required
+      />
+      <CFormSelect
+        v-if="accountingCodeOptions && accountingCodeOptions.length > 0"
+        v-model="form.account_code"
+        :label="t('budget.lineAccountCode')"
+        :options="[{ value: '', label: t('common.none') }, ...accountingCodeOptions]"
       />
     </CForm>
     <template #footer>

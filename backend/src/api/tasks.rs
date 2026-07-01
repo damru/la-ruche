@@ -145,6 +145,13 @@ pub async fn update(
     Json(input): Json<UpdateTaskInput>,
 ) -> AppResult<StatusCode> {
     auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
+    let task = db::task::get(&state.pool, id, auth.building_id)
+        .await?
+        .ok_or(AppError::NotFound)?;
+    crate::domain::immutability::assert_mutable(
+        &crate::domain::immutability::Entity::Task,
+        &task.status,
+    )?;
     if let Some(ref t) = input.title
         && t.trim().is_empty()
     {
@@ -183,6 +190,13 @@ pub async fn delete_task(
     Path(id): Path<Uuid>,
 ) -> AppResult<StatusCode> {
     auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
+    let task = db::task::get(&state.pool, id, auth.building_id)
+        .await?
+        .ok_or(AppError::NotFound)?;
+    crate::domain::immutability::assert_mutable(
+        &crate::domain::immutability::Entity::Task,
+        &task.status,
+    )?;
     let deleted_documents = db::task::delete(&state.pool, id, auth.building_id).await?;
     let storage = state.storage.clone();
     tokio::spawn(async move {

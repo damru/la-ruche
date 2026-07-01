@@ -1,5 +1,7 @@
+pub mod accounting_code;
 pub mod allocation_key;
 pub mod assembly;
+pub mod audit;
 pub mod budget;
 pub mod building;
 pub mod claim;
@@ -7,6 +9,8 @@ pub mod consultation;
 pub mod contract;
 pub mod contractor;
 pub mod document;
+pub mod governance_mandate;
+pub mod judicial_proceeding;
 pub mod maintenance_log;
 pub mod report;
 pub mod task;

@@ -26,7 +26,8 @@ import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import CIconEdit from '@/components/atoms/CIconEdit.svg'
 import CIconArchive from '@/components/atoms/CIconArchive.svg'
 import CIconCurrency from '@/components/atoms/CIconCurrency.svg'
-import { buildingApi, contractsApi, documentsApi } from '@/api'
+import { contractsApi, documentsApi } from '@/api'
+import { useBuildingStore } from '@/stores/building'
 import ContractFormModal from '@/features/contracts/ContractFormModal.vue'
 import CTabs, { type Tab } from '@/components/atoms/CTabs.vue'
 import { toErrorMessage, usePageLoader } from '@/composables/usePageLoader'
@@ -59,13 +60,13 @@ const loadingContractDocuments = ref(false)
 const canManage = computed(() => hasAnyRole(['manager']))
 
 async function loadData() {
-  const [buildingResponse, contractsResponse, remindersResponse] = await Promise.all([
-    buildingApi.get(),
+  const [building, contractsResponse, remindersResponse] = await Promise.all([
+    useBuildingStore().fetch(),
     contractsApi.list(),
     contractsApi.listAllReminders(),
   ])
 
-  buildingName.value = buildingResponse.data.name
+  buildingName.value = building.name
   allContracts.value = contractsResponse.data
   allReminders.value = remindersResponse.data
 }
@@ -556,10 +557,6 @@ function openTerminateModal(contract: VendorContract) {
 <style scoped>
 
 .contracts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: var(--space-4); }
-
-.contracts-empty {
-  color: var(--color-on-surface-variant);
-}
 
 .contract-details { display: flex; flex-direction: column; gap: var(--space-1); }
 .detail-row { display: flex; justify-content: space-between; font-size: var(--text-sm); }

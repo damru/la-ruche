@@ -25,6 +25,7 @@ references:
   - ADR-008
   - ADR-009
   - ADR-010
+  - ADR-011
 
 ---
 
@@ -214,7 +215,7 @@ Le frontend conserve les feuilles globales historiques (`tokens.css`, `base.css`
 
 ---
 
-## Schéma DB — 36 tables
+## Schéma DB — 38 tables
 
 | Domaine | Tables |
 |---|---|
@@ -230,10 +231,10 @@ Le frontend conserve les feuilles globales historiques (`tokens.css`, `base.css`
 | Carnet | `maintenance_log`, `maintenance_log_document` |
 | Signalements | `report`, `report_document` — `report.task_id` FK informatif (EP-017, conversion signalement → tâche) |
 | Consultations | `consultation`, `consultation_choice`, `consultation_response`, `consultation_response_choice` |
+| Registres | `judicial_proceeding` (procédures judiciaires en cours/clôturées — EP-002-S10), `governance_mandate` (registre des mandats syndic/conseil syndical — EP-002-S11) |
+| Audit comptable | `audit_log` — journal probant append-only (ADR-009) ; champs : `entity_type`, `entity_id`, `operation`, `changed_by`, `old_values`/`new_values` JSONB (champs modifiés seulement). Aucun UPDATE/DELETE applicatif. `activity_log` (timeline UX EP-017) reste une cible backlog. |
 
 Conventions : UUID v4, TIMESTAMPTZ, soft delete via `active`/`status`, `updated_at` via triggers, JSONB pour OCR futur.
-
-> **Note** — Les tables `audit_log` (traçabilité comptable ADR-009) et `activity_log` (timeline UX EP-017/EP-018) sont **définies comme cibles d'architecture** mais pas encore créées en base. Elles feront l'objet de migrations dédiées.
 
 **Règle de gestion transverse — Upload = GED (2026-05-22)**
 Tout upload de fichier depuis n'importe quel module de l'application **crée systématiquement un enregistrement dans la table `document`** (GED centrale) avant d'être associé à l'entité source via une table de liaison dédiée (`{entite}_document`). Il n'existe pas de pièce jointe "privée" hors GED. Cette règle s'applique à tous les modules existants et à tout nouveau module qui introduit un mécanisme d'upload.
@@ -257,6 +258,8 @@ Invariants techniques implémentés :
 - Les besoins documentaires minimaux d'`EP-003` doivent réutiliser le module `Documents` existant ; une refonte typée des pièces réglementaires AG au-delà de `convocation` / annexes / `PV` reste renvoyée aux chantiers documentaires dédiés.
 - Pour `EP-003-S02`, les pièces AG non-PV sont rattachées via une liaison dédiée `general_meeting_document`, tandis que le PV signé continue d'être référencé sur `general_meeting.minutes_document_id`.
 - Pour `EP-003-S03`, la présence AG est portée par un registre dédié au niveau réunion (présent / procuration / vote par correspondance / absent) ; le vote par résolution reste stocké dans `vote` et ne sert plus de substitut implicite à la feuille de présence.
+- `judicial_proceeding` (EP-002-S10) tient le registre des procédures judiciaires de la copropriété : statut `ongoing` / `suspended` / `closed`, cohérence `closed ⟺ closed_at NOT NULL` et `closed_at >= opened_at` garantie par CHECK et revalidée côté domaine ; lecture ouverte à tous les rôles, écriture réservée au gestionnaire. `list_ongoing` alimente l'état daté (EP-002-S06).
+- `governance_mandate` (EP-002-S11) tient le registre des mandats (`syndic` / `council_president` / `council_member`) avec `end_date >= start_date`. Invariant **syndic actif unique** : deux mandats `syndic` du même immeuble ne peuvent se chevaucher dans le temps (mandats ouverts = `infinity`), garanti à la fois par un index partiel unique DB (`uniq_active_syndic_per_building`) et par un contrôle de chevauchement applicatif sur création/mise à jour ; écriture réservée au gestionnaire.
 
 Arbitrage documentaire : le nom `audit_log` est réservé à la traçabilité probante d'ADR-009 (mutations comptables, diff ciblé, conservation longue, valeur de preuve). Les besoins de timeline UX et de suivi de cycle de vie de `report` / `task` relèveront d'un flux séparé `activity_log`, afin d'éviter de mélanger journal juridique append-only et événements métier orientés interface.
 
@@ -356,3 +359,4 @@ HTTP → Tower (CORS, trace, timeout 30s)
 | ADR-008 | Traçabilité tâches / carnet / soumissions prestataire | `maintenance_log.task_id` et `vendor_submission.task_id` deviennent informatifs (`ON DELETE SET NULL`) ; suppression de l'unicité 1 tâche → 1 entrée ; `task.completion_cost` porte le montant courant jusqu'à la clôture validée |
 | ADR-009 | Immutabilité des données comptables + audit log | Guards `is_mutable`/`is_deletable` dans `domain/` ; table `audit_log` append-only (diff JSONB `old_values`/`new_values` ; statut `draft` sur `levy_call` ; `predecessor_id` sur `vendor_contract` (pattern avenant) ; `parent_budget_id` + `valid_from`/`valid_to` sur `budget_line` ; trigger PG défensif sur `levy_call` |
 | ADR-010 | PV conseil syndical | Extension `meeting_type` ENUM (`annual` / `extraordinary` / `council`) ; réutilisation de `general_meeting` + `general_meeting_document` ; champ `minutes_document_id` référence le PV signé — pas de nouvelle table |
+| ADR-011 | Génération PDF réglementaire | Génération serveur via crate Rust pur (`typst` par défaut, `genpdf` repli) ; module `domain/` dédié ; PDF persisté en GED ; rendu déterministe ; syndic uniquement — débloque S06/S07/S13 |

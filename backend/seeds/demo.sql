@@ -318,7 +318,8 @@ INSERT INTO levy_call (
     charge_amount,
     works_fund_amount,
     issued_at,
-    created_at
+    created_at,
+    status
 )
 VALUES
     (
@@ -329,7 +330,8 @@ VALUES
         8566.87,
         469.56,
         NOW() - INTERVAL '60 days',
-        NOW() - INTERVAL '60 days'
+        NOW() - INTERVAL '60 days',
+        'issued'
     ),
     (
         '00000000-0000-0000-0000-000000000481',
@@ -339,7 +341,8 @@ VALUES
         10433.13,
         530.44,
         NOW() - INTERVAL '5 days',
-        NOW() - INTERVAL '5 days'
+        NOW() - INTERVAL '5 days',
+        'issued'
     )
 ON CONFLICT (id) DO NOTHING;
 

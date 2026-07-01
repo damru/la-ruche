@@ -105,7 +105,7 @@ const fillStyle = computed(() => ({
 }
 
 .c-progress__fill--primary { background: var(--gradient-primary); }
-.c-progress__fill--warning  { background: linear-gradient(135deg, #e65100, #ff9800); }
-.c-progress__fill--success  { background: linear-gradient(135deg, #1b5e20, #43a047); }
-.c-progress__fill--error    { background: linear-gradient(135deg, #93000a, #ba1a1a); }
+.c-progress__fill--warning  { background: var(--gradient-warning); }
+.c-progress__fill--success  { background: var(--gradient-success); }
+.c-progress__fill--error    { background: var(--gradient-error); }
 </style>

@@ -61,7 +61,7 @@ function onInput(raw: string) {
   display: inline-flex;
   align-items: stretch;
   background: var(--color-secondary-container);
-  border-radius: 9999px;
+  border-radius: var(--radius-full);
   overflow: clip;
   cursor: default;
 }
@@ -86,7 +86,7 @@ function onInput(raw: string) {
   text-align: right;
   background: var(--color-surface-container);
   border: none;
-  border-radius: 0 9999px 9999px 0;
+  border-radius: 0 var(--radius-full) var(--radius-full) 0;
   color: var(--color-on-surface);
   outline: none;
   transition: background var(--transition-fast), box-shadow var(--transition-fast);

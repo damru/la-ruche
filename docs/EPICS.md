@@ -162,7 +162,7 @@ Historique de propriété tracé avec dates de cession, invitation par lien toke
 * `EP-002-S06` — Générer l'état daté d'un lot à la demande (charges courantes, arriérés, fonds travaux, travaux votés non réalisés, procédures en cours) dans un délai de 15 jours (LEGAL.md §7.1)
 * `EP-002-S07` — Générer le pré-état daté pour signature du compromis de vente (synthèse financière de la copropriété) (LEGAL.md §7.2)
 * `EP-002-S08` ✅ — Garantir en mutation que les tantièmes restent attachés au lot (pas au propriétaire) et exposer la quote-part vendeur/acquéreur à date (LEGAL.md §2.4)
-* `EP-002-S09` — Exporter les données personnelles d'un copropriétaire (droit d'accès RGPD) avec périmètre horodaté et traçabilité de la demande (LEGAL.md §8)
+* `EP-002-S09` ⏸️ — *(reporté post-MVP → EP-021-S01)* Exporter les données personnelles d'un copropriétaire (droit d'accès RGPD) avec périmètre horodaté et traçabilité de la demande (LEGAL.md §8)
 * `EP-002-S10` — Enregistrer et suivre les procédures judiciaires en cours impliquant le syndicat (demandeur ou défendeur), avec date d'ouverture, type, statut ; requis pour l'état daté (LEGAL.md §7.1, §10)
 * `EP-002-S11` — Tenir un registre de gouvernance (syndic en exercice, membres du conseil syndical, périodes de mandat) pour auditer la séparation des organes (LEGAL.md §1.7, §1.8)
 * `EP-002-S12` — PV du conseil syndical en délégation de pouvoirs : créer, stocker et consulter les PV formels des décisions prises par le conseil syndical sous délégation d'AG (signé par 2 membres, noms + sens des votes, inscrit au registre des PV d'AG) — art. 21-1 décret 67-223, LEGIARTI000042077775 (LEGAL.md §3.5)
@@ -172,7 +172,7 @@ Historique de propriété tracé avec dates de cession, invitation par lien toke
 * `EP-002-S16` ✅ — Archiver un compte résident : désactiver l'accès à une date effective, conserver les données intactes, et permettre la réactivation si le compte n'est pas encore anonymisé ; transition `active → archived → active` (PRD US-GP-004, cycle de vie §4)
 * `EP-002-S17` ✅ — Enregistrer la mutation complète d'un lot : saisir date effective, ancien et nouveau propriétaire (existant ou à créer), révoquer l'accès de l'ancien propriétaire à la date effective, créer le nouveau lien `unit_ownership`, gérer l'état `pending_transfer` entre l'archivage vendeur et l'acceptation acquéreur, bloquer deux propriétaires actifs simultanément (422) et tracer les charges courantes non soldées à la date de mutation (PRD US-GP-003)
 * `EP-002-S18` ✅ — Attribuer et révoquer les rôles des résidents (`syndic`, `board_member`, `owner`, `tenant`) : unicité du syndic actif par copropriété, invalidation immédiate du cache de permissions à la révocation, contrainte d'auto-révocation du syndic bloquée sans désignation de successeur (PRD US-GP-006)
-* `EP-002-S19` ⏳ — Vue des charges par lot avec filtre propriétaire historique : dans `UnitChargesView`, sélecteur (syndic uniquement) pour filtrer les appels de fonds par période de propriété quand un lot a eu plusieurs propriétaires successifs (PRD US-GP-009)
+* `EP-002-S19` ✅ — Vue des charges par lot avec filtre propriétaire historique : dans `UnitChargesView`, sélecteur (syndic uniquement) pour filtrer les appels de fonds par période de propriété quand un lot a eu plusieurs propriétaires successifs (PRD US-GP-009)
 
 ***
 
@@ -235,7 +235,7 @@ Budget prévisionnel par exercice, appels de fonds générés par tantièmes, fo
 * `EP-004-S09` — Implémenter le mapping plan comptable copropriété (arrêté 14/03/2005) sur lignes budgétaires et exports comptables (LEGAL.md §4.2)
 * `EP-004-S10` — Contrôle et alerte du seuil minimum fonds travaux avant validation de l'exercice : **branche sans PPT partiellement couverte** via alerte UI + blocage de clôture si le taux configuré est < 5% ou si le montant appelé est insuffisant ; **branche PPT 2,5%** encore à implémenter (art. 14-2-1 loi 1965, LEGIARTI000043967792, en vigueur 01/01/2023 — LEGAL.md §4.4)
 * `EP-004-S11` — Recouvrement des charges impayées : identification des lots en solde débiteur, enregistrement des relances (mise en demeure), suivi des dossiers contentieux jusqu'à clôture ; déclencher et signaler la **déchéance du terme à J+30** après mise en demeure infructueuse (toutes provisions restantes deviennent exigibles, art. 19-2 loi 1965, LEGIARTI000043977271) (LEGAL.md §4.7)
-* `EP-004-S12` — Permettre au Conseil syndical et aux copropriétaires de consulter le budget prévisionnel, les lignes budgétaires par clé et le récapitulatif réalisé vs prévisionnel dans leur périmètre de droits (PRD US-BC-010)
+* ✅ `EP-004-S12` — Permettre au Conseil syndical et aux copropriétaires de consulter le budget prévisionnel, les lignes budgétaires par clé et le récapitulatif réalisé vs prévisionnel dans leur périmètre de droits (PRD US-BC-010)
 * `EP-004-S13` — Générer les documents comptables légaux obligatoires (Annexes I, II et III décret 1967) à partir des lignes budgétaires et des données d'exercice (PRD US-BC-012, LEGAL.md §4.2)
 * `EP-004-S14` ✅ — Borner le relevé copropriétaire à la période de propriété du lot : après mutation, le nouvel acquéreur ne voit pas les appels antérieurs à sa date de début ; Syndic et Conseil conservent la vue historique complète (PRD US-BC-013)
 
@@ -526,12 +526,12 @@ Durcir les entités comptablement critiques pour empêcher toute modification r�
 **Stories :**
 
 * `EP-018-S01` — Entériner l’arbitrage documentaire avec `EP-017` : `audit_log` réservé aux mutations comptables/juridiques probantes, `activity_log` réservé aux événements métier de timeline, avec frontière de responsabilité documentée et non ambiguë
-* `EP-018-S02` — Créer l'infrastructure transverse d'immutabilité : module `domain/immutability`, guards `is_mutable()` / `is_deletable()`, repository de journal append-only et points d'appel obligatoires avant mutation
-* `EP-018-S03` — Sécuriser `levy_call` selon le Pattern A : ajout du statut `draft`, endpoint d'émission explicite (`POST /levy-calls/{id}/issue`), blocage des `UPDATE` / `DELETE` hors `draft` et trigger PG défensif
-* `EP-018-S04` — Appliquer le Pattern A sur `task`, `claim`, `vote`, `resolution` et `maintenance_log` automatique : champs financiers figés après état terminal, suppression interdite selon les règles ADR-009, et masquage UI des actions `Modifier` / `Supprimer`
+* ✅ `EP-018-S02` — Créer l'infrastructure transverse d'immutabilité : module `domain/immutability`, guards `is_mutable()` / `is_deletable()`, repository de journal append-only et points d'appel obligatoires avant mutation
+* ✅ `EP-018-S03` — Sécuriser `levy_call` selon le Pattern A : ajout du statut `draft`, endpoint d'émission explicite (`POST /levy-calls/{id}/issue`), blocage des `UPDATE` / `DELETE` hors `draft` et trigger PG défensif
+* ✅ `EP-018-S04` — Appliquer le Pattern A sur `task`, `claim`, `vote`, `resolution` et `maintenance_log` automatique : champs financiers figés après état terminal, suppression interdite selon les règles ADR-009, et masquage UI des actions `Modifier` / `Supprimer`
 * `EP-018-S05` — Appliquer le Pattern B sur `vendor_contract` : ajouter `predecessor_id`, remplacer `Modifier` par `Créer un avenant`, clôturer l'ancien contrat à la date d'effet et exposer la chaîne d'avenants
 * `EP-018-S06` — Appliquer le Pattern B sur `budget` / `budget_line` : ajouter `parent_budget_id`, remplacer l'unicité annuelle par une contrainte compatible rectificatifs, versionner `budget_line` via `valid_from` / `valid_to` et créer le workflow de budget rectificatif
-* `EP-018-S07` — Appliquer le Pattern C sur les corrections comptables : avoirs sur `levy_call`, corrections append-only sur `maintenance_log` manuel, et journalisation des opérations `UPDATE` / `DELETE` financières avec diff ciblé (`old_values` / `new_values`)
+* ✅ `EP-018-S07` — Appliquer le Pattern C sur les corrections comptables : avoirs sur `levy_call`, corrections append-only sur `maintenance_log` manuel, et journalisation des opérations `UPDATE` / `DELETE` financières avec diff ciblé (`old_values` / `new_values`)
 
 ***
 
@@ -578,6 +578,22 @@ Consolidation technique du design system : migration des tokens de couleur vers 
 * `EP-020-S10` ✅ — Déplacer les styles `.data-table` dans les scoped blocks des vues consommatrices ; remplacer `.cards-grid` par Tailwind `grid grid-cols-[…]` inline ; supprimer `tables.css`
 * `EP-020-S11` ✅ — Nettoyer `base.css` : conserver les seuls resets navigateur et touch targets ; migrer `.view-container`/`.view-header` vers Tailwind inline, `.empty-state` vers `CEmptyState` ; supprimer les classes applicatives (spinner, loading-skeleton, card--terminated)
 * `EP-020-S12` ✅ — Supprimer `activity-cards.css` ; remplacer par l'utilisation de CCard
+
+***
+
+### EP-021 — Conformité différée : RGPD, courriers automatiques & audit log
+
+**Statut :** en attente | **MVP :** non | **Réf. PRD :** LEGAL.md §8, §4.7 ; ADR-009
+
+**État code actuel :** la table `audit_log` existe (migration `0029`, ADR-009) mais n'a aucun écrivain applicatif ; aucun export RGPD ni envoi de courrier n'est implémenté. Décision 2026-06-30 (Damien) : prioriser d'abord l'implémentation correcte de tous les évènements fonctionnels, puis traiter ces obligations transverses.
+
+Obligations de conformité reportées après la livraison du MVP : export RGPD du dossier d'un copropriétaire, envoi de courrier automatique (mise en demeure recommandée), et câblage effectif du journal d'audit probant sur les mutations comptables.
+
+**Stories :**
+
+* `EP-021-S01` — Exporter les données personnelles d'un copropriétaire (droit d'accès RGPD) : bundle horodaté (profil, lots, traçabilité des charges) avec trace de la demande, dans le respect de la conservation comptable 10 ans (ex `EP-002-S09`, LEGAL.md §8)
+* `EP-021-S02` — Envoi de courrier automatique : générer et expédier la mise en demeure recommandée de l'art. 19-2 (déchéance du terme) — au MVP la mise en demeure est purement informative sous forme de notification in-app (LEGAL.md §4.7)
+* `EP-021-S03` — Câbler `audit_log` : écrire un enregistrement append-only à chaque mutation comptable probante (UPDATE/DELETE budget, appels de fonds, corrections) avec diff ciblé `old_values`/`new_values`, sans UPDATE/DELETE applicatif (ADR-009, EP-018-S02)
 
 ***
 

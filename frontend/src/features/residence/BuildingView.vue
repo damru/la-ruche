@@ -13,6 +13,7 @@ import CHeading from '@/components/atoms/CHeading.vue'
 import CIconBook from '@/components/atoms/CIconBook.svg'
 import CIconDownload from '@/components/atoms/CIconDownload.svg'
 import { buildingApi } from '@/api'
+import { useBuildingStore } from '@/stores/building'
 import { usePageLoader } from '@/composables/usePageLoader'
 import { useFormFeedback } from '@/composables/useFormFeedback'
 import type { Building } from '@/types/domain'
@@ -34,7 +35,8 @@ async function saveBuilding() {
   feedback.reset()
   saving.value = true
   try {
-    await buildingApi.update(form.value)
+    const res = await buildingApi.update(form.value)
+    useBuildingStore().set(res.data)
     feedback.setSuccess(t('common.saved'))
   } catch (e: unknown) {
     feedback.setError((e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? t('common.error'))
@@ -173,6 +175,3 @@ onMounted(reload)
     </div>
   </div>
 </template>
-
-<style scoped>
-</style>

@@ -40,9 +40,15 @@
   --color-outline:                    oklch(0.569 0.0128 269.45);
   --color-outline-variant:            oklch(0.828 0.0125 259.82);
   --color-outline-light:              color-mix(in oklch, var(--color-outline) var(--color-tint), transparent);
+  /* Primary tint — primary at 10% alpha, for subtle focus glows / icon backgrounds */
+  --color-primary-tint:               color-mix(in oklch, var(--color-primary) 10%, transparent);
 
   /* ── Gradient signature ──────────────────────────────────────── */
   --gradient-primary: linear-gradient(135deg, oklch(0.503 0.2154 287.24), oklch(0.587 0.2131 288.56));
+  /* Status gradients — derived from semantic colors (auto theme-aware via var()) */
+  --gradient-success: linear-gradient(135deg, color-mix(in oklch, var(--color-success), black 18%), var(--color-success));
+  --gradient-error:   linear-gradient(135deg, color-mix(in oklch, var(--color-error), black 12%), var(--color-error));
+  --gradient-warning: linear-gradient(135deg, color-mix(in oklch, var(--color-warning), black 8%), var(--color-warning));
 
   /* ── Ombres ──────────────────────────────────────────────────── */
   --shadow-sm:  0 2px 8px oklch(0.224 0.0049 219.69 / 0.04);

@@ -43,7 +43,7 @@ defineProps<{
 .form-feedback {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-1);
   padding-top: var(--space-2); /* spacing from buttons; clipped during 0fr */
   font-size: var(--text-sm);
   font-weight: var(--fw-medium);

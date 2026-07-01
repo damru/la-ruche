@@ -26,6 +26,7 @@ pub struct BudgetLineRow {
     pub key_id: Uuid,
     pub budgeted_amount: Decimal,
     pub actual_amount: Option<Decimal>,
+    pub account_code: Option<String>,
 }
 
 #[derive(Debug, Serialize, sqlx::FromRow)]
@@ -370,16 +371,15 @@ pub async fn list_lines(
     budget_id: Uuid,
     building_id: Uuid,
 ) -> crate::errors::AppResult<Vec<BudgetLineRow>> {
-    Ok(sqlx::query_as!(
-        BudgetLineRow,
+    Ok(sqlx::query_as::<_, BudgetLineRow>(
         r#"SELECT bl.id, bl.budget_id, bl.label, bl.key_id,
-           bl.budgeted_amount, bl.actual_amount
+           bl.budgeted_amount, bl.actual_amount, bl.account_code
            FROM budget_line bl
            JOIN budget b ON b.id = bl.budget_id AND b.building_id = $2
            WHERE bl.budget_id = $1"#,
-        budget_id,
-        building_id
     )
+    .bind(budget_id)
+    .bind(building_id)
     .fetch_all(pool)
     .await?)
 }
@@ -390,17 +390,18 @@ pub async fn create_line(
     label: &str,
     key_id: Uuid,
     budgeted_amount: Decimal,
+    account_code: Option<&str>,
 ) -> crate::errors::AppResult<BudgetLineRow> {
-    Ok(sqlx::query_as!(
-        BudgetLineRow,
-        r#"INSERT INTO budget_line (budget_id, label, key_id, budgeted_amount)
-           VALUES ($1, $2, $3, $4)
-           RETURNING id, budget_id, label, key_id, budgeted_amount, actual_amount"#,
-        budget_id,
-        label,
-        key_id,
-        budgeted_amount
+    Ok(sqlx::query_as::<_, BudgetLineRow>(
+        r#"INSERT INTO budget_line (budget_id, label, key_id, budgeted_amount, account_code)
+           VALUES ($1, $2, $3, $4, $5)
+           RETURNING id, budget_id, label, key_id, budgeted_amount, actual_amount, account_code"#,
     )
+    .bind(budget_id)
+    .bind(label)
+    .bind(key_id)
+    .bind(budgeted_amount)
+    .bind(account_code)
     .fetch_one(pool)
     .await?)
 }
@@ -450,61 +451,73 @@ pub async fn generate_levies(
     .fetch_one(&mut *tx)
     .await?;
 
-    // Build aggregate totals per budget_line while inserting per-unit rows.
+    // Collect every levy_call_unit row (per budget-line allocations + the
+    // works_fund portion) and the per-line totals in one pass, then bulk-insert.
+    let mut unit_rows: Vec<(Uuid, Option<Uuid>, Uuid, Decimal, i32, i32)> = Vec::new();
     let mut line_totals: HashMap<Uuid, Decimal> = HashMap::new();
 
     for l in levies {
-        // One levy_call_unit row per (unit, budget_line).
         for line_alloc in &l.line_allocations {
-            sqlx::query(
-                r#"INSERT INTO levy_call_unit
-                       (levy_call_id, unit_id, budget_line_id, key_id, amount,
-                        shares_snapshot, shares_total_snapshot)
-                   VALUES ($1, $2, $3, $4, $5, $6, $7)"#,
-            )
-            .bind(levy_call_id)
-            .bind(l.unit_id)
-            .bind(line_alloc.budget_line_id)
-            .bind(l.key_id)
-            .bind(line_alloc.amount)
-            .bind(l.shares_snapshot as i32)
-            .bind(l.shares_total_snapshot as i32)
-            .execute(&mut *tx)
-            .await?;
-
+            unit_rows.push((
+                l.unit_id,
+                Some(line_alloc.budget_line_id),
+                l.key_id,
+                line_alloc.amount,
+                l.shares_snapshot as i32,
+                l.shares_total_snapshot as i32,
+            ));
             *line_totals.entry(line_alloc.budget_line_id).or_default() += line_alloc.amount;
         }
 
-        // One levy_call_unit row for the works_fund portion (budget_line_id = NULL).
+        // Works_fund portion carries a NULL budget_line_id.
         if l.works_fund_amount > Decimal::ZERO {
-            sqlx::query(
-                r#"INSERT INTO levy_call_unit
-                       (levy_call_id, unit_id, budget_line_id, key_id, amount,
-                        shares_snapshot, shares_total_snapshot)
-                   VALUES ($1, $2, NULL, $3, $4, $5, $6)"#,
-            )
-            .bind(levy_call_id)
-            .bind(l.unit_id)
-            .bind(l.key_id)
-            .bind(l.works_fund_amount)
-            .bind(l.shares_snapshot as i32)
-            .bind(l.shares_total_snapshot as i32)
-            .execute(&mut *tx)
-            .await?;
+            unit_rows.push((
+                l.unit_id,
+                None,
+                l.key_id,
+                l.works_fund_amount,
+                l.shares_snapshot as i32,
+                l.shares_total_snapshot as i32,
+            ));
         }
     }
 
-    // Insert aggregate totals per budget_line into levy_call_line.
-    for (budget_line_id, amount) in &line_totals {
-        sqlx::query(
-            r#"INSERT INTO levy_call_line (levy_call_id, budget_line_id, amount)
-               VALUES ($1, $2, $3)"#,
-        )
-        .bind(levy_call_id)
-        .bind(budget_line_id)
-        .bind(amount)
-        .execute(&mut *tx)
-        .await?;
+    // Bulk-insert levy_call_unit rows (7 binds/row → chunk well under the 65k cap).
+    for chunk in unit_rows.chunks(1000) {
+        let mut qb = sqlx::QueryBuilder::new(
+            "INSERT INTO levy_call_unit \
+             (levy_call_id, unit_id, budget_line_id, key_id, amount, \
+              shares_snapshot, shares_total_snapshot) ",
+        );
+        qb.push_values(
+            chunk,
+            |mut b, &(unit_id, line_id, key_id, amount, shares, total)| {
+                b.push_bind(levy_call_id)
+                    .push_bind(unit_id)
+                    .push_bind(line_id)
+                    .push_bind(key_id)
+                    .push_bind(amount)
+                    .push_bind(shares)
+                    .push_bind(total);
+            },
+        );
+        qb.build().execute(&mut *tx).await?;
+    }
+
+    // Bulk-insert aggregate totals per budget_line into levy_call_line.
+    if !line_totals.is_empty() {
+        let line_rows: Vec<(Uuid, Decimal)> = line_totals.into_iter().collect();
+        for chunk in line_rows.chunks(1000) {
+            let mut qb = sqlx::QueryBuilder::new(
+                "INSERT INTO levy_call_line (levy_call_id, budget_line_id, amount) ",
+            );
+            qb.push_values(chunk, |mut b, &(budget_line_id, amount)| {
+                b.push_bind(levy_call_id)
+                    .push_bind(budget_line_id)
+                    .push_bind(amount);
+            });
+            qb.build().execute(&mut *tx).await?;
+        }
     }
 
     if total_works_fund > Decimal::ZERO {
@@ -542,12 +555,13 @@ struct LevyListRow {
     id: Uuid,
     call_label: String,
     due_date: NaiveDate,
-    issued_at: DateTime<Utc>,
+    issued_at: Option<DateTime<Utc>>,
     unit_id: Uuid,
     unit_number: String,
     amount: Decimal,
     charge_amount: Decimal,
     works_fund_amount: Decimal,
+    call_status: String,
     status: String,
     paid_at: Option<DateTime<Utc>>,
     owner_id: Option<Uuid>,
@@ -571,6 +585,7 @@ pub async fn list_levies(
                SUM(lcu.amount)::numeric                                                              AS amount,
                COALESCE(SUM(lcu.amount) FILTER (WHERE lcu.budget_line_id IS NOT NULL), 0)::numeric AS charge_amount,
                COALESCE(SUM(lcu.amount) FILTER (WHERE lcu.budget_line_id IS NULL), 0)::numeric     AS works_fund_amount,
+               lc.status::text                 AS call_status,
                CASE
                    WHEN bool_or(lcu.status::text = 'overdue') THEN 'overdue'
                    WHEN bool_and(lcu.status::text = 'paid')   THEN 'paid'
@@ -603,7 +618,7 @@ pub async fn list_levies(
            LEFT JOIN user_account ua ON ua.id = uo.user_id
            WHERE lc.budget_id = $1
              AND ($3::uuid IS NULL OR uo.user_id IS NOT NULL)
-           GROUP BY lc.id, lc.call_label, lc.due_date, lc.issued_at,
+           GROUP BY lc.id, lc.call_label, lc.due_date, lc.issued_at, lc.status,
                     u.id, u.unit_number, uo.user_id, ua.first_name, ua.last_name
            ORDER BY lc.due_date DESC, u.unit_number"#,
     )
@@ -627,6 +642,7 @@ pub async fn list_levies(
                 "works_fund_amount": r.works_fund_amount,
                 "due_date":          r.due_date,
                 "call_label":        r.call_label,
+                "call_status":       r.call_status,
                 "status":            r.status,
                 "issued_at":         r.issued_at,
                 "paid_at":           r.paid_at,
@@ -667,6 +683,38 @@ pub async fn levy_amount_totals(
     })
 }
 
+/// Transitions a levy_call from 'draft' to 'issued'. Returns AppError::NotFound if the
+/// levy_call doesn't exist in this building, or the immutability error if already issued.
+pub async fn issue_levy_call(
+    pool: &PgPool,
+    levy_call_id: Uuid,
+    building_id: Uuid,
+) -> crate::errors::AppResult<()> {
+    let status: Option<String> = sqlx::query_scalar(
+        r#"SELECT lc.status::text
+           FROM levy_call lc
+           JOIN budget b ON b.id = lc.budget_id
+           WHERE lc.id = $1 AND b.building_id = $2"#,
+    )
+    .bind(levy_call_id)
+    .bind(building_id)
+    .fetch_optional(pool)
+    .await?;
+
+    let status = status.ok_or(crate::errors::AppError::NotFound)?;
+    crate::domain::immutability::assert_mutable(
+        &crate::domain::immutability::Entity::LevyCall,
+        &status,
+    )?;
+
+    sqlx::query("UPDATE levy_call SET status = 'issued', issued_at = NOW() WHERE id = $1")
+        .bind(levy_call_id)
+        .execute(pool)
+        .await?;
+
+    Ok(())
+}
+
 /// Mark all levy_call_unit rows for a given (levy_call, unit) pair as paid.
 pub async fn mark_paid(
     pool: &PgPool,
@@ -691,4 +739,76 @@ pub async fn mark_paid(
     .execute(pool)
     .await?;
     Ok(())
+}
+
+/// Creates a credit note (avoir) for a non-draft levy_call.
+/// Returns the new levy_call id.
+pub async fn create_credit_note(
+    pool: &PgPool,
+    levy_call_id: Uuid,
+    building_id: Uuid,
+) -> crate::errors::AppResult<Uuid> {
+    #[derive(sqlx::FromRow)]
+    struct LevyCallSourceRow {
+        budget_id: Uuid,
+        call_label: String,
+        charge_amount: Decimal,
+        works_fund_amount: Decimal,
+        status: String,
+    }
+
+    let source = sqlx::query_as::<_, LevyCallSourceRow>(
+        r#"SELECT lc.budget_id, lc.call_label, lc.charge_amount, lc.works_fund_amount,
+                  lc.status::text AS status
+           FROM levy_call lc
+           JOIN budget b ON b.id = lc.budget_id
+           WHERE lc.id = $1 AND b.building_id = $2"#,
+    )
+    .bind(levy_call_id)
+    .bind(building_id)
+    .fetch_optional(pool)
+    .await?
+    .ok_or(crate::errors::AppError::NotFound)?;
+
+    if source.status == "draft" {
+        return Err(crate::errors::AppError::validation_code(
+            "errors.levy_call.credit_note_requires_issued",
+        ));
+    }
+
+    // Header + per-unit copy must be atomic: a failure on the second insert would
+    // otherwise leave an orphan credit-note header without its unit breakdown.
+    let mut tx = pool.begin().await?;
+
+    let new_id: Uuid = sqlx::query_scalar(
+        r#"INSERT INTO levy_call
+               (budget_id, call_label, charge_amount, works_fund_amount, corrects_levy_call_id, status)
+           VALUES ($1, $2, $3, $4, $5, 'draft'::levy_status)
+           RETURNING id"#,
+    )
+    .bind(source.budget_id)
+    .bind(format!("AVOIR — {}", source.call_label))
+    .bind(-source.charge_amount)
+    .bind(-source.works_fund_amount)
+    .bind(levy_call_id)
+    .fetch_one(&mut *tx)
+    .await?;
+
+    sqlx::query(
+        r#"INSERT INTO levy_call_unit
+               (levy_call_id, unit_id, budget_line_id, key_id, amount,
+                shares_snapshot, shares_total_snapshot)
+           SELECT $1, unit_id, budget_line_id, key_id, -amount,
+                  shares_snapshot, shares_total_snapshot
+           FROM levy_call_unit
+           WHERE levy_call_id = $2"#,
+    )
+    .bind(new_id)
+    .bind(levy_call_id)
+    .execute(&mut *tx)
+    .await?;
+
+    tx.commit().await?;
+
+    Ok(new_id)
 }

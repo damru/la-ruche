@@ -186,6 +186,48 @@ where
     Ok(())
 }
 
+/// Creates a correction entry for an existing maintenance_log row.
+/// The original row is preserved; the correction supersedes it.
+pub async fn create_correction(
+    pool: &PgPool,
+    original_id: Uuid,
+    building_id: Uuid,
+    user_id: Uuid,
+    title: &str,
+    description: Option<&str>,
+    intervention_date: NaiveDate,
+    cost: Option<Decimal>,
+    vendor_name: Option<&str>,
+    contract_id: Option<Uuid>,
+) -> AppResult<MaintenanceLogRow> {
+    // Verify original exists and belongs to this building.
+    let original = get(pool, original_id, building_id)
+        .await?
+        .ok_or(crate::errors::AppError::NotFound)?;
+
+    let row = sqlx::query(
+        r#"INSERT INTO maintenance_log
+           (building_id, created_by, title, description, intervention_date,
+            cost, vendor_name, contract_id, source, corrects_entry_id)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'manual'::log_source,$9)
+           RETURNING id, building_id, title, description, intervention_date, cost,
+           vendor_name, contract_id, task_id, source::text AS source, created_at"#,
+    )
+    .bind(building_id)
+    .bind(user_id)
+    .bind(title)
+    .bind(description)
+    .bind(intervention_date)
+    .bind(cost)
+    .bind(vendor_name)
+    .bind(contract_id)
+    .bind(original.id)
+    .fetch_one(pool)
+    .await?;
+
+    row_from_pg(&row).map_err(Into::into)
+}
+
 pub async fn from_task(
     pool: &PgPool,
     task_id: Uuid,

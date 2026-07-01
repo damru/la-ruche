@@ -455,23 +455,7 @@ async function handleSubmit() {
 .form-sub {
   font-size: var(--text-md);
   color: var(--color-on-surface-variant);
-  line-height: 1.5;
-}
-
-/* ── Form ───────────────────────────────────────────── */
-.form { display: flex; flex-direction: column; gap: var(--space-4); }
-
-.field-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-4);
-}
-.required { color: var(--color-error); }
-
-/* ── Field error state ─────────────────────────────────────────── */
-.field-input--error {
-  border-color: var(--color-error);
-  box-shadow: 0 0 0 3px rgba(176, 0, 32, 0.1);
+  line-height: var(--leading-normal);
 }
 
 /* ── Password checklist ────────────────────────────────────────── */
@@ -489,7 +473,7 @@ async function handleSubmit() {
   display: flex;
   align-items: center;
   gap: var(--space-1);
-  font-size: 12px;
+  font-size: var(--text-xs);
   line-height: 1.4;
   transition: color var(--transition-fast);
 }
@@ -500,23 +484,14 @@ async function handleSubmit() {
 .pwd-rule--ok svg,
 .pwd-rule--err svg { width: 13px; height: 13px; flex-shrink: 0; }
 
-/* Bordered inputs — specific style for this first-launch form */
-.field-input-wrap {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-.field-input-wrap .field-input {
-  padding-right: 40px; /* room for the toggle */
-}
 .pwd-toggle {
   position: absolute;
   right: var(--space-2);
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: var(--space-7);
+  height: var(--space-7);
   padding: 0;
   border: none;
   background: transparent;
@@ -529,22 +504,7 @@ async function handleSubmit() {
 }
 .pwd-toggle:hover  { opacity: 1; color: var(--color-primary); }
 .pwd-toggle:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; opacity: 1; }
-.pwd-toggle svg { width: 16px; height: 16px; }
-
-.field-input::placeholder { color: var(--color-on-surface-variant); opacity: 0.55; }
-.field-input:hover:not(:disabled) { border-color: var(--color-secondary); }
-.field-input:focus {
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(100, 63, 213, 0.12);
-}
-.field-input:disabled { opacity: 0.5; cursor: not-allowed; }
-
-/* ── Label row (label + CTooltip) ────────────────────────────── */
-.field-label-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-}
+.pwd-toggle svg { width: var(--icon-sm); height: var(--icon-sm); }
 
 /* ── Actions (Back + Submit side by side) ───────────────────── */
 .btn-submit { flex: 1; }
@@ -554,7 +514,7 @@ async function handleSubmit() {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 44px;
+  height: var(--control-height);
   padding: 0 var(--space-5);
   background: var(--gradient-primary);
   color: var(--color-on-primary);
@@ -563,10 +523,10 @@ async function handleSubmit() {
   font-size: var(--text-sm);
   font-weight: 600;
   text-decoration: none;
-  box-shadow: 0 2px 12px rgba(100, 63, 213, 0.2);
+  box-shadow: var(--shadow-primary-lift);
   transition: box-shadow var(--transition-fast), transform var(--transition-fast);
 }
-.link-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(100, 63, 213, 0.3); }
+.link-btn:hover { transform: translateY(-1px); box-shadow: var(--shadow-primary-lift-hover); }
 
 /* ── Already-initialised state ────────────────────────────── */
 .already-init {
@@ -578,10 +538,10 @@ async function handleSubmit() {
   padding: var(--space-10) var(--space-4);
 }
 .already-init-icon {
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  background: rgba(100, 63, 213, 0.1);
+  width: var(--space-16);
+  height: var(--space-16);
+  border-radius: var(--radius-full);
+  background: var(--color-primary-tint);
   display: flex;
   align-items: center;
   justify-content: center;
