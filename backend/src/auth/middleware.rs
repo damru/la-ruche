@@ -28,13 +28,16 @@ impl FromRequestParts<Arc<AppState>> for AuthUser {
 }
 
 fn extract_token(parts: &Parts) -> Option<String> {
-    // 1. Cookie httpOnly (prioritaire)
-    if let Some(cookie_header) = parts.headers.get(header::COOKIE) {
-        let cookies = cookie_header.to_str().ok()?;
-        for cookie in cookies.split(';') {
-            let cookie = cookie.trim();
-            if let Some(val) = cookie.strip_prefix("access_token=") {
-                return Some(val.to_string());
+    // 1. Cookie httpOnly (prioritaire) — iterate all Cookie headers because
+    //    HTTP allows multiple Cookie headers and some clients (e.g. axum-test)
+    //    send each cookie as a separate header instead of combining them.
+    for cookie_header in parts.headers.get_all(header::COOKIE) {
+        if let Ok(cookies) = cookie_header.to_str() {
+            for cookie in cookies.split(';') {
+                let cookie = cookie.trim();
+                if let Some(val) = cookie.strip_prefix("access_token=") {
+                    return Some(val.to_string());
+                }
             }
         }
     }
