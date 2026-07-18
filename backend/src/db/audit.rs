@@ -2,7 +2,7 @@
 //! No UPDATE or DELETE — every row is a permanent accounting record.
 
 use serde_json::Value;
-use sqlx::PgPool;
+use sqlx::{PgPool, Postgres};
 use uuid::Uuid;
 
 use crate::errors::AppResult;
@@ -32,7 +32,15 @@ pub struct AuditEntry {
 }
 
 /// Records one mutation event. Returns the new row's id.
-pub async fn insert(pool: &PgPool, entry: NewAuditEntry<'_>) -> AppResult<Uuid> {
+///
+/// Generic over `Executor` so callers inside an open transaction can pass
+/// `&mut *tx` — the audit row must land atomically with the mutation it
+/// documents (same commit/rollback boundary), never on a separate pool
+/// connection.
+pub async fn insert<'e, E>(executor: E, entry: NewAuditEntry<'_>) -> AppResult<Uuid>
+where
+    E: sqlx::Executor<'e, Database = Postgres>,
+{
     let id = sqlx::query_scalar(
         r#"INSERT INTO audit_log
                (building_id, entity_type, entity_id, operation, changed_by, old_values, new_values)
@@ -46,7 +54,7 @@ pub async fn insert(pool: &PgPool, entry: NewAuditEntry<'_>) -> AppResult<Uuid> 
     .bind(entry.changed_by)
     .bind(entry.old_values)
     .bind(entry.new_values)
-    .fetch_one(pool)
+    .fetch_one(executor)
     .await?;
 
     Ok(id)

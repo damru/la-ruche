@@ -59,10 +59,63 @@ pub async fn update(
     Json(input): Json<db::contract::CreateVendorContractInput>,
 ) -> AppResult<Json<serde_json::Value>> {
     auth.require_role(&Role::Manager)?;
+    let current = db::contract::get(&state.pool, id, auth.building_id)
+        .await?
+        .ok_or(AppError::NotFound)?;
+
+    use crate::domain::immutability::{Entity, is_mutable};
+    if !is_mutable(&Entity::VendorContract, &current.status) {
+        let frozen_field_changed = input.amount != current.amount
+            || input.start_date != current.start_date
+            || input.end_date != current.end_date
+            || input.notice_days != current.notice_days
+            || input.contract_type != current.contract_type
+            || input.payment_frequency != current.payment_frequency
+            || input.auto_renewal != current.auto_renewal;
+        if frozen_field_changed {
+            return Err(AppError::validation_code("errors.immutability.frozen"));
+        }
+    }
+
     let c = db::contract::update(&state.pool, id, auth.building_id, input)
         .await?
         .ok_or(AppError::NotFound)?;
     json_value(c)
+}
+
+pub async fn create_amendment(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+    Json(input): Json<db::contract::CreateAmendmentInput>,
+) -> AppResult<(StatusCode, Json<serde_json::Value>)> {
+    auth.require_role(&Role::Manager)?;
+    let created =
+        db::contract::create_amendment(&state.pool, id, auth.building_id, auth.user_id, input)
+            .await?
+            .ok_or(AppError::NotFound)?;
+    Ok((StatusCode::CREATED, json_value(created)?))
+}
+
+pub async fn activate(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+) -> AppResult<Json<serde_json::Value>> {
+    auth.require_role(&Role::Manager)?;
+    let activated = db::contract::activate(&state.pool, id, auth.building_id, auth.user_id)
+        .await?
+        .ok_or(AppError::NotFound)?;
+    json_value(activated)
+}
+
+pub async fn amendment_chain(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+) -> AppResult<Json<serde_json::Value>> {
+    auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
+    json_value(db::contract::amendment_chain(&state.pool, id, auth.building_id).await?)
 }
 
 pub async fn terminate(

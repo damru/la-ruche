@@ -286,6 +286,12 @@ export const contractsApi = {
     api.put<VendorContract>(`/contracts/${id}`, data),
   terminate: (id: string) =>
     api.put(`/contracts/${id}/terminate`),
+  activate: (id: string) =>
+    api.post<VendorContract>(`/contracts/${id}/activate`),
+  createAmendment: (id: string, data: Partial<VendorContract>) =>
+    api.post<VendorContract>(`/contracts/${id}/amendments`, data),
+  amendmentChain: (id: string) =>
+    api.get<VendorContract[]>(`/contracts/${id}/amendments`),
   delete: (id: string) =>
     api.delete(`/contracts/${id}`),
   listAllReminders: () =>

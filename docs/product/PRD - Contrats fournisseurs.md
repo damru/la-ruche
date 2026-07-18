@@ -57,7 +57,7 @@ Trois risques concrets pour un syndic bénévole :
 ### Immuabilité des contrats actifs
 
 - Un contrat au statut `draft` est modifiable librement.
-- Un contrat au statut `active` est immuable sur les champs financiers et légaux (`supplier_id`, `amount`, `start_date`, `end_date`, `notice_days`) — aucun `PUT`/`PATCH` direct autorisé.
+- Un contrat au statut `active` est immuable sur les champs financiers et légaux (`supplier_id`, `amount`, `start_date`, `end_date`, `notice_days`, `contract_type`, `payment_frequency`, `auto_renewal`) — aucun `PUT`/`PATCH` direct autorisé. Les champs descriptifs (`vendor_name`, `vendor_email`, `vendor_phone`, `subject`) restent modifiables sans passer par un avenant.
 - Tout amendement sur un contrat actif DOIT créer un nouveau contrat au statut `draft` avec `predecessor_id` référençant le contrat actif. L'activation du nouvel avenant DOIT clore l'ancien en une transaction atomique.
 - La clôture et la résiliation DOIVENT passer par des endpoints dédiés (`POST /{id}/activate`, `POST /{id}/terminate`).
 - Chaque transition de statut DOIT être tracée dans le journal d'audit.
@@ -242,6 +242,7 @@ draft ──(activation)──▶ active ──(résiliation)──▶ terminate
 - **AC-CF-006-B** : L'activation du nouveau contrat DOIT clore l'ancien (`terminated`) en une transaction atomique.
 - **AC-CF-006-C** : Un seul avenant `draft` peut coexister avec un contrat actif — toute tentative de créer un second avenant DOIT retourner 422.
 - **AC-CF-006-D** : La vue détail du contrat original DOIT afficher le lien vers son avenant, et vice-versa.
+- **AC-CF-006-E** : La chaîne d'avenants successifs (`predecessor_id`) N'A PAS de limite de profondeur — un avenant activé peut lui-même être amendé (Q-CF-001, tranché).
 
 #### US-CF-007 — Rattacher des documents au contrat
 
@@ -307,7 +308,7 @@ draft ──(activation)──▶ active ──(résiliation)──▶ terminate
 
 | # | Question | Owner | Condition de révision |
 |---|---|---|---|
-| Q-CF-001 | Un contrat peut-il avoir plusieurs avenants successifs (chaîne `predecessor_id` de profondeur > 2) ? | Damien | Avant implémentation US-CF-006 |
+| ~~Q-CF-001~~ | ~~Un contrat peut-il avoir plusieurs avenants successifs (chaîne `predecessor_id` de profondeur > 2) ?~~ | Damien | **Tranchée 2026-07-18 : oui, profondeur illimitée.** Cf. AC-CF-006-E. |
 | Q-CF-002 | Les rappels sont-ils déclenchés par le module de notification transverse ou par un job autonome dédié ? | Damien | Avant implémentation US-CF-003 |
 | Q-CF-003 | Le Conseil syndical doit-il pouvoir valider formellement le renouvellement ou la résiliation d'un contrat ? | Damien | Avant implémentation lot futur |
 

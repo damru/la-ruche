@@ -184,6 +184,45 @@ pub async fn isolated_test_server() -> TestServer {
     server_for(cfg, pool).await
 }
 
+/// Like [`isolated_test_server`], but also returns a second pool connected to
+/// the same isolated database, for tests that need to assert on rows written
+/// as a side effect of an API call (e.g. the audit trail) without an HTTP
+/// surface to read them back through.
+pub async fn isolated_test_server_with_pool() -> (TestServer, PgPool) {
+    let infra = infra().await;
+
+    let db_name = format!("laruche_test_{}", uuid::Uuid::new_v4().simple());
+    let admin = PgPool::connect(&infra.cfg.db.url)
+        .await
+        .expect("connect to create isolated database");
+    sqlx::query(sqlx::AssertSqlSafe(format!(
+        "CREATE DATABASE \"{db_name}\""
+    )))
+    .execute(&admin)
+    .await
+    .expect("create isolated database");
+    admin.close().await;
+
+    let mut url = url::Url::parse(&infra.cfg.db.url).expect("parse test database url");
+    url.set_path(&format!("/{db_name}"));
+    let db_url = url.to_string();
+
+    let pool = PgPool::connect(&db_url)
+        .await
+        .expect("connect to isolated database");
+    sqlx::migrate!("./migrations")
+        .run(&pool)
+        .await
+        .expect("run migrations on isolated database");
+
+    let audit_pool = pool.clone();
+
+    let mut cfg = infra.cfg.clone();
+    cfg.db.url = db_url;
+    let server = server_for(cfg, pool).await;
+    (server, audit_pool)
+}
+
 /// Assembles the application stack into a cookie-persisting `TestServer`.
 async fn server_for(cfg: AppConfig, pool: PgPool) -> TestServer {
     let storage = laruche::storage::client::StorageClient::new(&cfg.s3)
