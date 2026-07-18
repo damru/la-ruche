@@ -529,17 +529,6 @@ border-color: var(--color-outline-light);
 
 ---
 
-### 3.4 Composants métier — Contrats (`features/contracts/`)
-
-| Composant | Props | Description |
-|---|---|---|
-| `ContractFormModal` | `open`, `contract?` | Création / édition d'un contrat. Sur un contrat non-`draft`, les champs gelés (`amount`, `start_date`, `end_date`, `notice_days`, `contract_type`, `payment_frequency`, `auto_renewal`) passent en lecture seule. |
-| `TerminateContractModal` | `open`, `contract` | Confirmation de résiliation (fin sans successeur). |
-| `AmendContractModal` | `open`, `contract` | Création d'un avenant (Pattern B, ADR-009) : formulaire pré-rempli depuis le contrat actif ; à la soumission → `createAmendment` → nouvel avenant en `draft` (à activer ensuite). |
-| `AmendmentChainModal` | `open`, `contract` | Timeline chronologique de la chaîne d'avenants (`amendmentChain`) : dates, montant, statut par maillon, mise en évidence du contrat courant. |
-
----
-
 ## 4. Guidelines
 
 ### 4.1 Patterns transversaux
