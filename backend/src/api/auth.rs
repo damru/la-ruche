@@ -492,6 +492,10 @@ pub struct UpdateMeInput {
     pub phone: Option<String>,
     #[validate(email)]
     pub email: Option<String>,
+    /// Rendered `prefilled` in the frontend (AC-PP-002-B) — present here only
+    /// so an attempt to modify it can be detected and rejected (AC-PP-002-D).
+    pub first_name: Option<String>,
+    pub last_name: Option<String>,
 }
 
 /// PATCH /auth/me — update the current user's own profile (email login + phone)
@@ -504,18 +508,35 @@ pub async fn update_me(
         .validate()
         .map_err(|_| AppError::validation_code("errors.users.invalid_email"))?;
 
+    let current = db::user::find_by_id(&state.pool, auth.user_id)
+        .await?
+        .ok_or(AppError::NotFound)?;
+
+    // full_name is prefilled/locked — reject any attempt to change it (AC-PP-002-D)
+    if let Some(ref first_name) = input.first_name
+        && *first_name != current.first_name
+    {
+        return Err(AppError::Forbidden);
+    }
+    if let Some(ref last_name) = input.last_name
+        && *last_name != current.last_name
+    {
+        return Err(AppError::Forbidden);
+    }
+
     db::user::update_phone(&state.pool, auth.user_id, input.phone.as_deref()).await?;
 
     if let Some(new_email) = input.email.as_deref() {
         let normalized = new_email.to_lowercase();
         db::user::update_user_email(&state.pool, auth.user_id, &normalized)
             .await
-            .map_err(|e| {
-                if e.to_string().contains("user_account_email_unique") {
+            .map_err(|e| match &e {
+                AppError::Database(sqlx::Error::Database(db_err))
+                    if db_err.constraint() == Some("user_account_email_unique") =>
+                {
                     AppError::Conflict("errors.users.email_already_exists".into())
-                } else {
-                    e
                 }
+                _ => e,
             })?;
     }
 
