@@ -33,7 +33,7 @@ export type ContractType =
   | 'cleaning'
   | 'green_spaces'
   | 'other'
-export type ContractStatus = 'active' | 'terminated' | 'expired'
+export type ContractStatus = 'draft' | 'active' | 'terminated' | 'expired'
 export type ReminderType = 'renewal' | 'payment_due' | 'expiration' | 'termination'
 export type ReminderStatus = 'pending' | 'sent' | 'acknowledged'
 
@@ -288,6 +288,7 @@ export interface VendorContract {
   auto_renewal: boolean
   notice_days?: number
   status: ContractStatus
+  predecessor_id?: string | null
   document_count?: number
   created_at: string
 }

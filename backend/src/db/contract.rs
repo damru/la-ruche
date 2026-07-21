@@ -4,9 +4,10 @@ use sqlx::PgPool;
 use sqlx::types::Decimal;
 use uuid::Uuid;
 
+use crate::db::audit::{self, NewAuditEntry};
 use crate::db::document::DocumentListRow;
 use crate::domain::reminders::{ContractReminderSpec, ReminderKind, compute_reminders};
-use crate::errors::AppResult;
+use crate::errors::{AppError, AppResult};
 
 #[derive(Debug, Clone, Serialize, sqlx::FromRow)]
 pub struct VendorContractRow {
@@ -24,6 +25,7 @@ pub struct VendorContractRow {
     pub auto_renewal: bool,
     pub notice_days: Option<i32>,
     pub status: String,
+    pub predecessor_id: Option<Uuid>,
     pub created_at: DateTime<Utc>,
     pub document_count: i64,
 }
@@ -70,6 +72,7 @@ pub async fn list(pool: &PgPool, building_id: Uuid) -> AppResult<Vec<VendorContr
                   vc.auto_renewal,
                   vc.notice_days,
                   vc.status::text AS status,
+                  vc.predecessor_id,
                   vc.created_at,
                   COUNT(cd.document_id)::bigint AS document_count
            FROM vendor_contract vc
@@ -143,6 +146,7 @@ pub async fn get(
                   vc.auto_renewal,
                   vc.notice_days,
                   vc.status::text AS status,
+                  vc.predecessor_id,
                   vc.created_at,
                   0::bigint AS document_count
            FROM vendor_contract vc
@@ -173,12 +177,12 @@ pub async fn create(
         r#"INSERT INTO vendor_contract
            (building_id, vendor_name, vendor_email, vendor_phone,
              subject, contract_type, start_date, end_date, amount, payment_frequency,
-             auto_renewal, notice_days, created_by)
-           VALUES ($1,$2,$3,$4,$5,$6::text::contract_type,$7,$8,$9,$10::text::payment_frequency,$11,$12,$13)
+             auto_renewal, notice_days, status, created_by)
+           VALUES ($1,$2,$3,$4,$5,$6::text::contract_type,$7,$8,$9,$10::text::payment_frequency,$11,$12,'draft',$13)
            RETURNING id, building_id, vendor_name, vendor_email, vendor_phone,
            subject, contract_type::text as contract_type, start_date, end_date, amount,
            payment_frequency::text as payment_frequency,
-           auto_renewal, notice_days, status::text as status, created_at,
+           auto_renewal, notice_days, status::text as status, predecessor_id, created_at,
            0::bigint as document_count"#,
     )
     .bind(building_id)
@@ -197,6 +201,213 @@ pub async fn create(
     .fetch_one(&mut *tx)
     .await?;
 
+    tx.commit().await?;
+    Ok(row)
+}
+
+/// Payload for `POST /contracts/{id}/amendments`. Creates a new contract in
+/// `draft`, pre-filled from the active predecessor, linked via
+/// predecessor_id. The predecessor is NOT closed yet — closure happens on
+/// activation of this amendment (see `activate`).
+#[derive(Debug, Deserialize)]
+pub struct CreateAmendmentInput {
+    #[serde(flatten)]
+    pub contract: CreateVendorContractInput,
+}
+
+/// Pattern B (ADR-009): creates a draft amendment linked to an active
+/// contract via predecessor_id. Enforces AC-CF-006-C: only one pending
+/// (draft) amendment per predecessor at a time.
+pub async fn create_amendment(
+    pool: &PgPool,
+    predecessor_id: Uuid,
+    building_id: Uuid,
+    user_id: Uuid,
+    input: CreateAmendmentInput,
+) -> AppResult<Option<VendorContractRow>> {
+    let mut tx = pool.begin().await?;
+
+    let predecessor = sqlx::query_as::<_, VendorContractRow>(
+        r#"SELECT vc.id, vc.building_id, vc.vendor_name, vc.vendor_email, vc.vendor_phone,
+                  vc.subject, vc.contract_type::text AS contract_type, vc.start_date, vc.end_date,
+                  vc.amount, vc.payment_frequency::text AS payment_frequency, vc.auto_renewal,
+                  vc.notice_days, vc.status::text AS status, vc.predecessor_id, vc.created_at,
+                  0::bigint AS document_count
+           FROM vendor_contract vc
+           WHERE vc.id = $1 AND vc.building_id = $2
+           FOR UPDATE"#,
+    )
+    .bind(predecessor_id)
+    .bind(building_id)
+    .fetch_optional(&mut *tx)
+    .await?;
+
+    let predecessor = match predecessor {
+        Some(row) => row,
+        None => return Ok(None),
+    };
+
+    if predecessor.status != "active" {
+        return Err(AppError::validation_code("errors.contracts.not_amendable"));
+    }
+
+    // AC-CF-006-C: only one pending draft amendment per predecessor.
+    let existing_draft = sqlx::query_scalar::<_, bool>(
+        "SELECT EXISTS(SELECT 1 FROM vendor_contract WHERE predecessor_id = $1 AND status = 'draft')",
+    )
+    .bind(predecessor_id)
+    .fetch_one(&mut *tx)
+    .await?;
+    if existing_draft {
+        return Err(AppError::validation_code(
+            "errors.contracts.amendment_already_pending",
+        ));
+    }
+
+    let c = &input.contract;
+    let row = sqlx::query_as::<_, VendorContractRow>(
+        r#"INSERT INTO vendor_contract
+           (building_id, vendor_name, vendor_email, vendor_phone, subject, contract_type,
+            start_date, end_date, amount, payment_frequency, auto_renewal, notice_days,
+            predecessor_id, status, created_by)
+           VALUES ($1,$2,$3,$4,$5,$6::text::contract_type,$7,$8,$9,
+                   $10::text::payment_frequency,$11,$12,$13,'draft',$14)
+           RETURNING id, building_id, vendor_name, vendor_email, vendor_phone,
+           subject, contract_type::text AS contract_type, start_date, end_date, amount,
+           payment_frequency::text AS payment_frequency, auto_renewal, notice_days,
+           status::text AS status, predecessor_id, created_at, 0::bigint AS document_count"#,
+    )
+    .bind(building_id)
+    .bind(&c.vendor_name)
+    .bind(&c.vendor_email)
+    .bind(&c.vendor_phone)
+    .bind(&c.subject)
+    .bind(&c.contract_type)
+    .bind(c.start_date)
+    .bind(c.end_date)
+    .bind(c.amount)
+    .bind(&c.payment_frequency)
+    .bind(c.auto_renewal)
+    .bind(c.notice_days)
+    .bind(predecessor_id)
+    .bind(user_id)
+    .fetch_one(&mut *tx)
+    .await?;
+
+    audit::insert(
+        &mut *tx,
+        NewAuditEntry {
+            building_id,
+            entity_type: "vendor_contract",
+            entity_id: row.id,
+            operation: "UPDATE",
+            changed_by: Some(user_id),
+            old_values: None,
+            new_values: Some(serde_json::json!({
+                "status": "draft",
+                "predecessor_id": predecessor_id,
+            })),
+        },
+    )
+    .await?;
+
+    tx.commit().await?;
+    Ok(Some(row))
+}
+
+/// Activates a draft contract: status -> 'active', reminders computed.
+/// If the contract has a predecessor (amendment), the predecessor is closed
+/// ('terminated') atomically — Pattern B activation (PRD AC-CF-006-B).
+pub async fn activate(
+    pool: &PgPool,
+    id: Uuid,
+    building_id: Uuid,
+    user_id: Uuid,
+) -> AppResult<Option<VendorContractRow>> {
+    let mut tx = pool.begin().await?;
+
+    let current = sqlx::query_as::<_, VendorContractRow>(
+        r#"SELECT vc.id, vc.building_id, vc.vendor_name, vc.vendor_email, vc.vendor_phone,
+                  vc.subject, vc.contract_type::text AS contract_type, vc.start_date, vc.end_date,
+                  vc.amount, vc.payment_frequency::text AS payment_frequency, vc.auto_renewal,
+                  vc.notice_days, vc.status::text AS status, vc.predecessor_id, vc.created_at,
+                  0::bigint AS document_count
+           FROM vendor_contract vc
+           WHERE vc.id = $1 AND vc.building_id = $2
+           FOR UPDATE"#,
+    )
+    .bind(id)
+    .bind(building_id)
+    .fetch_optional(&mut *tx)
+    .await?;
+
+    let current = match current {
+        Some(row) => row,
+        None => return Ok(None),
+    };
+    if current.status != "draft" {
+        return Err(AppError::validation_code(
+            "errors.contracts.not_activatable",
+        ));
+    }
+
+    let row = sqlx::query_as::<_, VendorContractRow>(
+        r#"UPDATE vendor_contract SET status = 'active', updated_at = NOW()
+           WHERE id = $1
+           RETURNING id, building_id, vendor_name, vendor_email, vendor_phone,
+           subject, contract_type::text AS contract_type, start_date, end_date, amount,
+           payment_frequency::text AS payment_frequency, auto_renewal, notice_days,
+           status::text AS status, predecessor_id, created_at, 0::bigint AS document_count"#,
+    )
+    .bind(id)
+    .fetch_one(&mut *tx)
+    .await?;
+
+    audit::insert(
+        &mut *tx,
+        NewAuditEntry {
+            building_id,
+            entity_type: "vendor_contract",
+            entity_id: row.id,
+            operation: "UPDATE",
+            changed_by: Some(user_id),
+            old_values: Some(serde_json::json!({ "status": "draft" })),
+            new_values: Some(serde_json::json!({ "status": "active" })),
+        },
+    )
+    .await?;
+
+    // AC-CF-006-B: activating an amendment closes its predecessor atomically.
+    if let Some(predecessor_id) = row.predecessor_id {
+        sqlx::query!(
+            "UPDATE vendor_contract SET status = 'terminated', updated_at = NOW() WHERE id = $1",
+            predecessor_id,
+        )
+        .execute(&mut *tx)
+        .await?;
+
+        audit::insert(
+            &mut *tx,
+            NewAuditEntry {
+                building_id,
+                entity_type: "vendor_contract",
+                entity_id: predecessor_id,
+                operation: "UPDATE",
+                changed_by: Some(user_id),
+                old_values: Some(serde_json::json!({ "status": "active" })),
+                new_values: Some(serde_json::json!({ "status": "terminated" })),
+            },
+        )
+        .await?;
+
+        sqlx::query!(
+            "DELETE FROM contract_reminder WHERE contract_id = $1 AND status = 'pending'",
+            predecessor_id,
+        )
+        .execute(&mut *tx)
+        .await?;
+    }
+    // Compute reminders now that the contract is active (PRD §"Calcul des rappels").
     let spec = ContractReminderSpec {
         start_date: row.start_date,
         end_date: row.end_date,
@@ -204,7 +415,6 @@ pub async fn create(
         notice_days: row.notice_days.map(|d| d as u32),
         payment_frequency_months: frequency_to_months(row.payment_frequency.as_deref()),
     };
-
     let today = chrono::Local::now().date_naive();
     for reminder in compute_reminders(&spec, today) {
         let kind_str = reminder_kind_to_str(&reminder.kind);
@@ -215,7 +425,52 @@ pub async fn create(
     }
 
     tx.commit().await?;
-    Ok(row)
+    Ok(Some(row))
+}
+
+/// Returns the full amendment chain the given contract belongs to,
+/// ordered chronologically (original first, latest last).
+pub async fn amendment_chain(
+    pool: &PgPool,
+    contract_id: Uuid,
+    building_id: Uuid,
+) -> AppResult<Vec<VendorContractRow>> {
+    Ok(sqlx::query_as::<_, VendorContractRow>(
+        r#"
+        WITH RECURSIVE ancestors AS (
+            SELECT id, predecessor_id FROM vendor_contract WHERE id = $1 AND building_id = $2
+            UNION
+            SELECT vc.id, vc.predecessor_id
+            FROM vendor_contract vc
+            JOIN ancestors a ON vc.id = a.predecessor_id
+        ),
+        descendants AS (
+            SELECT id FROM vendor_contract WHERE id = $1 AND building_id = $2
+            UNION
+            SELECT vc.id
+            FROM vendor_contract vc
+            JOIN descendants d ON vc.predecessor_id = d.id
+        ),
+        chain AS (
+            SELECT id FROM ancestors
+            UNION
+            SELECT id FROM descendants
+        )
+        SELECT vc.id, vc.building_id, vc.vendor_name, vc.vendor_email, vc.vendor_phone,
+               vc.subject, vc.contract_type::text AS contract_type, vc.start_date, vc.end_date,
+               vc.amount, vc.payment_frequency::text AS payment_frequency, vc.auto_renewal,
+               vc.notice_days, vc.status::text AS status, vc.predecessor_id, vc.created_at,
+               0::bigint AS document_count
+        FROM vendor_contract vc
+        JOIN chain c ON c.id = vc.id
+        WHERE vc.building_id = $2
+        ORDER BY vc.start_date, vc.created_at
+        "#,
+    )
+    .bind(contract_id)
+    .bind(building_id)
+    .fetch_all(pool)
+    .await?)
 }
 
 /// Recalculates reminders on every contract update.
@@ -237,7 +492,7 @@ pub async fn update(
            RETURNING id, building_id, vendor_name, vendor_email, vendor_phone,
            subject, contract_type::text as contract_type, start_date, end_date, amount,
            payment_frequency::text as payment_frequency,
-           auto_renewal, notice_days, status::text as status, created_at,
+           auto_renewal, notice_days, status::text as status, predecessor_id, created_at,
            (
                SELECT COUNT(*)::bigint
                FROM contract_document cd
@@ -323,6 +578,18 @@ pub async fn delete(
     .bind(building_id)
     .fetch_all(&mut *tx)
     .await?;
+
+    let has_successor = sqlx::query_scalar::<_, bool>(
+        "SELECT EXISTS(SELECT 1 FROM vendor_contract WHERE predecessor_id = $1)",
+    )
+    .bind(id)
+    .fetch_one(&mut *tx)
+    .await?;
+    if has_successor {
+        return Err(crate::errors::AppError::validation_code(
+            "errors.contracts.has_successor",
+        ));
+    }
 
     sqlx::query!("DELETE FROM contract_reminder WHERE contract_id = $1", id)
         .execute(&mut *tx)

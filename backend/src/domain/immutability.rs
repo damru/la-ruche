@@ -20,6 +20,11 @@ pub enum Entity {
     Claim,
     /// All entries frozen (EP-018-S07 Pattern C); corrections use append-only correction entries.
     MaintenanceLog,
+    /// Financial/legal fields (`amount`, `start_date`, `end_date`, `notice_days`,
+    /// `contract_type`, `payment_frequency`, `auto_renewal`) frozen once
+    /// `status != 'draft'`. Amended via `POST /contracts/{id}/amendments`
+    /// (Pattern B, ADR-009, PRD Contrats fournisseurs §4).
+    VendorContract,
 }
 
 /// Returns `true` when the entity may still be mutated.
@@ -39,6 +44,7 @@ pub fn is_mutable(entity: &Entity, status: &str) -> bool {
         Entity::Task => !matches!(status, "closed" | "cancelled"),
         Entity::Claim => status != "transmitted",
         Entity::MaintenanceLog => false,
+        Entity::VendorContract => status == "draft",
     }
 }
 
@@ -109,6 +115,14 @@ mod tests {
     fn maintenance_log_always_frozen() {
         assert!(!is_mutable(&Entity::MaintenanceLog, "automatic"));
         assert!(!is_mutable(&Entity::MaintenanceLog, "manual"));
+    }
+
+    #[test]
+    fn vendor_contract_draft_is_mutable() {
+        assert!(is_mutable(&Entity::VendorContract, "draft"));
+        assert!(!is_mutable(&Entity::VendorContract, "active"));
+        assert!(!is_mutable(&Entity::VendorContract, "terminated"));
+        assert!(!is_mutable(&Entity::VendorContract, "expired"));
     }
 
     #[test]

@@ -26,9 +26,13 @@ import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import CIconEdit from '@/components/atoms/CIconEdit.svg'
 import CIconArchive from '@/components/atoms/CIconArchive.svg'
 import CIconCurrency from '@/components/atoms/CIconCurrency.svg'
+import CIconHistory from '@/components/atoms/CIconClock.svg'
+import CIconCheck from '@/components/atoms/CIconCheck.svg'
 import { contractsApi, documentsApi } from '@/api'
 import { useBuildingStore } from '@/stores/building'
 import ContractFormModal from '@/features/contracts/ContractFormModal.vue'
+import AmendContractModal from '@/features/contracts/AmendContractModal.vue'
+import AmendmentChainModal from '@/features/contracts/AmendmentChainModal.vue'
 import CTabs, { type Tab } from '@/components/atoms/CTabs.vue'
 import { toErrorMessage, usePageLoader } from '@/composables/usePageLoader'
 import TerminateContractModal from '@/features/contracts/TerminateContractModal.vue'
@@ -125,6 +129,7 @@ function todayIso(): string {
 }
 
 function effectiveStatus(contract: VendorContract): ContractStatus {
+  if (contract.status === 'draft') return 'draft'
   if (contract.status === 'terminated') return 'terminated'
   if (contract.status === 'expired') return 'expired'
   if (contract.end_date && contract.end_date < todayIso()) return 'expired'
@@ -144,6 +149,7 @@ function reminderTone(urgency: 'high' | 'medium' | 'low'): 'err' | 'warn' | 'mut
 
 function statusVariant(status: ContractStatus): 'open' | 'pending' | 'closed' | 'default' {
   if (status === 'active') return 'open'
+  if (status === 'draft') return 'pending'
   if (status === 'terminated' || status === 'expired') return 'closed'
   return 'default'
 }
@@ -302,6 +308,41 @@ const contractToTerminate = ref<VendorContract | null>(null)
 function openTerminateModal(contract: VendorContract) {
   contractToTerminate.value = contract
   showTerminateModal.value = true
+}
+
+// ── Amendment (Pattern B — ADR-009) ───────────────────────────────
+// "Modifier" only edits descriptive fields on non-active contracts (draft).
+// Once active, the 7 frozen fields (amount/start_date/end_date/notice_days/
+// contract_type/payment_frequency/auto_renewal) require a new amendment
+// contract instead — see docs/adr/ADR-009-accounting-immutability.md.
+
+const showAmendModal = ref(false)
+const contractToAmend = ref<VendorContract | null>(null)
+const showChainModal = ref(false)
+const contractForChain = ref<VendorContract | null>(null)
+const activatingId = ref('')
+
+function openAmendModal(contract: VendorContract) {
+  contractToAmend.value = contract
+  showAmendModal.value = true
+}
+
+function openChainModal(contract: VendorContract) {
+  contractForChain.value = contract
+  showChainModal.value = true
+}
+
+async function activateContract(contract: VendorContract) {
+  activatingId.value = contract.id
+
+  try {
+    await contractsApi.activate(contract.id)
+    await reload()
+  } catch (currentError: unknown) {
+    error.value = toErrorMessage(currentError, t('contracts.activateError'))
+  } finally {
+    activatingId.value = ''
+  }
 }
 </script>
 
@@ -508,11 +549,37 @@ function openTerminateModal(contract: VendorContract) {
 
               <CCardActions>
                 <CBtn
+                  v-if="effectiveStatus(contract) === 'draft'"
+                  variant="primary"
+                  size="sm"
+                  :icon="CIconCheck"
+                  :title="t('contracts.activate')"
+                  :loading="activatingId === contract.id"
+                  :disabled="activatingId === contract.id"
+                  @click="activateContract(contract)"
+                />
+                <CBtn
                   variant="ghost"
                   size="sm"
                   :icon="CIconEdit"
                   :title="t('common.edit')"
                   @click="openEditModal(contract)"
+                />
+                <CBtn
+                  v-if="effectiveStatus(contract) === 'active'"
+                  variant="ghost"
+                  size="sm"
+                  :icon="CIconEdit"
+                  :title="t('contracts.amend')"
+                  @click="openAmendModal(contract)"
+                />
+                <CBtn
+                  v-if="contract.predecessor_id || effectiveStatus(contract) !== 'draft'"
+                  variant="ghost"
+                  size="sm"
+                  :icon="CIconHistory"
+                  :title="t('contracts.history')"
+                  @click="openChainModal(contract)"
                 />
                 <CBtn
                   v-if="effectiveStatus(contract) === 'active'"
@@ -551,6 +618,19 @@ function openTerminateModal(contract: VendorContract) {
     :contract="contractToTerminate"
     @update:open="showTerminateModal = $event"
     @terminated="reload"
+  />
+
+  <AmendContractModal
+    :open="showAmendModal"
+    :contract="contractToAmend"
+    @update:open="showAmendModal = $event"
+    @amended="reload"
+  />
+
+  <AmendmentChainModal
+    :open="showChainModal"
+    :contract="contractForChain"
+    @update:open="showChainModal = $event"
   />
 </template>
 
