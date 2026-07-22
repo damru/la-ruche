@@ -232,6 +232,8 @@ export interface BudgetLine {
   account_code?: string
   account_code_label?: string
   account_code_category?: string
+  valid_from?: string
+  valid_to?: string
 }
 
 export interface LevyCall {

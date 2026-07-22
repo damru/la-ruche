@@ -27,6 +27,8 @@ pub struct BudgetLineRow {
     pub budgeted_amount: Decimal,
     pub actual_amount: Option<Decimal>,
     pub account_code: Option<String>,
+    pub valid_from: NaiveDate,
+    pub valid_to: Option<NaiveDate>,
 }
 
 #[derive(Debug, Serialize, sqlx::FromRow)]
@@ -366,6 +368,9 @@ pub async fn close(
     Ok(result.rows_affected() > 0)
 }
 
+/// Lists only the currently active version of each budget_line
+/// (valid_to IS NULL). Historical (closed) versions are excluded — see
+/// ADR-009 §Versioning temporel.
 pub async fn list_lines(
     pool: &PgPool,
     budget_id: Uuid,
@@ -373,10 +378,11 @@ pub async fn list_lines(
 ) -> crate::errors::AppResult<Vec<BudgetLineRow>> {
     Ok(sqlx::query_as::<_, BudgetLineRow>(
         r#"SELECT bl.id, bl.budget_id, bl.label, bl.key_id,
-           bl.budgeted_amount, bl.actual_amount, bl.account_code
+           bl.budgeted_amount, bl.actual_amount, bl.account_code,
+           bl.valid_from, bl.valid_to
            FROM budget_line bl
            JOIN budget b ON b.id = bl.budget_id AND b.building_id = $2
-           WHERE bl.budget_id = $1"#,
+           WHERE bl.budget_id = $1 AND bl.valid_to IS NULL"#,
     )
     .bind(budget_id)
     .bind(building_id)
@@ -395,7 +401,8 @@ pub async fn create_line(
     Ok(sqlx::query_as::<_, BudgetLineRow>(
         r#"INSERT INTO budget_line (budget_id, label, key_id, budgeted_amount, account_code)
            VALUES ($1, $2, $3, $4, $5)
-           RETURNING id, budget_id, label, key_id, budgeted_amount, actual_amount, account_code"#,
+           RETURNING id, budget_id, label, key_id, budgeted_amount, actual_amount, account_code,
+           valid_from, valid_to"#,
     )
     .bind(budget_id)
     .bind(label)
