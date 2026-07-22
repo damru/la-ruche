@@ -50,3 +50,4 @@ graphify-out/
 
 # Superpowers
 superpowers/
+.worktrees/
