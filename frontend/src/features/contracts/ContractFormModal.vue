@@ -83,6 +83,12 @@ const form = ref<ContractFormState>(defaultFormState())
 
 const isEditing = computed(() => !!props.contract?.id)
 const showDocumentActionModal = computed(() => pendingDocument.value !== null)
+// Pattern B (ADR-009): once a contract leaves `draft`, the 7 structuring
+// fields are gelés (frozen) — amount/start_date/end_date/notice_days/
+// contract_type/payment_frequency/auto_renewal. They render read-only here;
+// the backend also rejects any attempt to change them via PATCH. Use
+// "Créer un avenant" (AmendContractModal) to propose a new version instead.
+const isFrozen = computed(() => !!props.contract && props.contract.status !== 'draft')
 
 const contractTypeOptions = computed(() =>
   [
@@ -397,6 +403,7 @@ async function saveContract() {
           v-model="form.contract_type"
           :label="t('contracts.form.contractType')"
           :options="contractTypeOptions"
+          :disabled="isFrozen"
         />
         <CFormInput
           v-model="form.subject"
@@ -420,6 +427,7 @@ async function saveContract() {
           :error="fieldErrors.start_date"
           type="date"
           required
+          :disabled="isFrozen"
         />
         <CFormInput
           v-model="form.end_date"
@@ -427,6 +435,7 @@ async function saveContract() {
           :hint="t('contracts.form.endDateHint')"
           :error="fieldErrors.end_date"
           type="date"
+          :disabled="isFrozen"
         />
         <CFormInput
           v-model="form.amount"
@@ -435,6 +444,7 @@ async function saveContract() {
           :error="fieldErrors.amount"
           type="text"
           placeholder="0,00"
+          :disabled="isFrozen"
         />
         <CFormSelect
           v-model="form.payment_frequency"
@@ -442,6 +452,7 @@ async function saveContract() {
           :placeholder="t('contracts.form.paymentFrequencyPlaceholder')"
           :options="paymentFrequencyOptions"
           :error="fieldErrors.payment_frequency"
+          :disabled="isFrozen"
         />
       </div>
 
@@ -450,6 +461,7 @@ async function saveContract() {
           v-model="form.auto_renewal"
           class="contract-form__checkbox"
           :label="t('contracts.autoRenewal')"
+          :disabled="isFrozen"
         />
         <p class="text-xs text-on-surface-variant">
           {{ t('contracts.form.autoRenewalHint') }}
@@ -463,7 +475,7 @@ async function saveContract() {
           :hint="t('contracts.form.noticeDaysHint')"
           :error="fieldErrors.notice_days"
           type="number"
-          :disabled="!form.auto_renewal"
+          :disabled="!form.auto_renewal || isFrozen"
         />
       </div>
 
