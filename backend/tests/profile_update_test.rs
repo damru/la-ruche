@@ -134,3 +134,20 @@ async fn update_me_rejects_full_name_modification() {
         resp.text()
     );
 }
+
+#[tokio::test]
+async fn update_me_rejects_invalid_email_format() {
+    let server = profile_test_server().await;
+
+    let resp = server
+        .patch("/api/v1/auth/me")
+        .json(&json!({ "email": "not-an-email" }))
+        .await;
+    assert_eq!(
+        resp.status_code(),
+        StatusCode::BAD_REQUEST,
+        "expected bad request, got {}: {}",
+        resp.status_code(),
+        resp.text()
+    );
+}
