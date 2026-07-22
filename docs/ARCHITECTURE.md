@@ -222,7 +222,7 @@ Le frontend conserve les feuilles globales historiques (`tokens.css`, `base.css`
 | Copropriété | `building`, `unit`, `allocation_key`, `unit_allocation_key` |
 | Utilisateurs | `user_account`, `user_token`, `user_building`, `unit_owner` |
 | AG | `general_meeting`, `general_meeting_document`, `general_meeting_attendance`, `resolution`, `vote` |
-| Budget | `budget`, `budget_line`, `levy_call`, `works_fund` — champ `category` sur `levy_call` **prévu** |
+| Budget | `budget`, `budget_line`, `levy_call`, `works_fund` — champ `category` sur `levy_call` **prévu** ; `budget.parent_budget_id` (Pattern B, budget rectificatif) |
 | Documents | `document` |
 | Contrats | `vendor_contract`, `contract_document`, `contract_reminder` |
 | Prestataires | `contractor` |
@@ -245,6 +245,7 @@ Invariants techniques implémentés :
 - Les documents de tâche sont répartis entre `task_document` (gestionnaires) et `vendor_submission_document` (soumissions prestataire) ; les endpoints manager `GET/POST/DELETE /tasks/{id}/documents` et `document_count` agrègent ces deux sources.
 - `claim_document` suit le même modèle d'association documentaire que `report_document`, avec nettoyage des liens lors des suppressions d'entité.
 - `maintenance_log.task_id` et `maintenance_log.contract_id` restent des liens de traçabilité souples, sans cascade destructive depuis les tâches ou contrats.
+- `budget.parent_budget_id` (`UUID REFERENCES budget(id)`, nullable) lie un budget rectificatif à son budget approuvé d'origine (ADR-009, Pattern B) ; un budget racine a `parent_budget_id IS NULL`. Le workflow de création du rectificatif et le versioning `valid_from`/`valid_to` de `budget_line` restent un chantier séparé (EP-018-S06).
 - La clôture d'un `budget` (`status = closed`) gèle les mutations de l'exercice : création/suppression de lignes et génération de nouveaux appels ; le marquage `paid` d'un appel existant reste autorisé.
 - Les appels de fonds portent un `call_label` persisted côté backend pour différencier explicitement la nature de chaque appel dans les vues comptables.
 - Les appels de fonds persistés portent une décomposition `charge_amount` / `works_fund_amount` sur `levy_call` pour isoler le calcul du solde à appeler selon l'inclusion du fonds travaux.
