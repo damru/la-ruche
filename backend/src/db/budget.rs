@@ -1,9 +1,12 @@
 use chrono::{DateTime, NaiveDate, Utc};
 use serde::Serialize;
+use serde_json;
 use sqlx::PgPool;
 use sqlx::types::Decimal;
 use std::collections::HashMap;
 use uuid::Uuid;
+
+use crate::db::audit::{self, NewAuditEntry};
 
 #[derive(Debug, Serialize, sqlx::FromRow)]
 pub struct BudgetRow {
@@ -12,6 +15,7 @@ pub struct BudgetRow {
     pub fiscal_year: i32,
     pub status: String,
     pub approval_meeting_id: Option<Uuid>,
+    pub parent_budget_id: Option<Uuid>,
     pub total_forecast: Decimal,
     pub total_actual: Decimal,
     pub created_at: DateTime<Utc>,
@@ -366,6 +370,204 @@ pub async fn close(
     .execute(pool)
     .await?;
     Ok(result.rows_affected() > 0)
+}
+
+/// Creates a rectificatif (amendment) budget for an existing approved budget.
+/// Pattern B (ADR-009): creates a new draft budget with parent_budget_id
+/// referencing the original. The original budget is NOT closed yet — it will be
+/// closed when the rectificatif is approved.
+/// Budget lines are copied with new valid_from dates.
+///
+/// Returns the newly created rectificatif budget in draft status.
+pub async fn create_rectificatif(
+    pool: &PgPool,
+    original_budget_id: Uuid,
+    building_id: Uuid,
+    user_id: Uuid,
+) -> crate::errors::AppResult<BudgetRow> {
+    let mut tx = pool.begin().await?;
+
+    // Verify original budget exists and is approved
+    let original = sqlx::query_as::<_, BudgetRow>(
+        r#"SELECT id, building_id, fiscal_year, status, approval_meeting_id,
+              total_forecast, total_actual, created_at, updated_at
+           FROM budget
+           WHERE id = $1 AND building_id = $2
+           FOR UPDATE"#,
+    )
+    .bind(original_budget_id)
+    .bind(building_id)
+    .fetch_optional(&mut *tx)
+    .await?;
+
+    let original = match original {
+        Some(b) => b,
+        None => return Err(crate::errors::AppError::NotFound),
+    };
+
+    if original.status != "approved" {
+        return Err(crate::errors::AppError::validation_code(
+            "errors.budget.rectificatif_requires_approved",
+        ));
+    }
+
+    // Create the rectificatif budget with parent_budget_id
+    let rectificatif = sqlx::query_as!(
+        BudgetRow,
+        r#"INSERT INTO budget (building_id, fiscal_year, status, parent_budget_id)
+           VALUES ($1, $2, 'draft', $3)
+           RETURNING
+           id,
+           building_id,
+           fiscal_year,
+           status::text as "status!",
+           approval_meeting_id,
+           parent_budget_id,
+           0::numeric as "total_forecast!",
+           0::numeric as "total_actual!",
+           created_at,
+           updated_at"#,
+        building_id,
+        original.fiscal_year,
+        original_budget_id
+    )
+    .fetch_one(&mut *tx)
+    .await?;
+
+    // Close the original budget's lines by setting valid_to to yesterday
+    // This ensures temporal versioning: old lines are closed, new rectificatif lines are active
+    let today = chrono::Local::now().date_naive();
+    sqlx::query!(
+        r#"UPDATE budget_line
+           SET valid_to = $1
+           WHERE budget_id = $2 AND valid_to IS NULL"#,
+        today.pred(), // yesterday
+        original_budget_id
+    )
+    .execute(&mut *tx)
+    .await?;
+
+    // Copy budget lines from original to rectificatif with new valid_from
+    sqlx::query!(
+        r#"INSERT INTO budget_line
+               (budget_id, label, key_id, budgeted_amount, actual_amount,
+                account_code, valid_from, valid_to)
+           SELECT $1, label, key_id, budgeted_amount, actual_amount,
+                  account_code, $2, NULL
+           FROM budget_line
+           WHERE budget_id = $3"#,
+        rectificatif.id,
+        today,
+        original_budget_id
+    )
+    .execute(&mut *tx)
+    .await?;
+
+    // Insert audit log entry
+    audit::insert(
+        &mut *tx,
+        NewAuditEntry {
+            building_id,
+            entity_type: "budget",
+            entity_id: rectificatif.id,
+            operation: "CREATE",
+            changed_by: Some(user_id),
+            old_values: None,
+            new_values: Some(serde_json::json!({
+                "status": "draft",
+                "parent_budget_id": original_budget_id,
+                "fiscal_year": original.fiscal_year,
+            })),
+        },
+    )
+    .await?;
+
+    tx.commit().await?;
+    Ok(rectificatif)
+}
+
+/// Approves a draft budget, transitioning it to 'approved' status.
+/// For a rectificatif budget (with parent_budget_id), this makes it the active
+/// budget for its fiscal year.
+pub async fn approve(
+    pool: &PgPool,
+    budget_id: Uuid,
+    building_id: Uuid,
+    approval_meeting_id: Uuid,
+    user_id: Uuid,
+) -> crate::errors::AppResult<BudgetRow> {
+    let mut tx = pool.begin().await?;
+
+    let budget = sqlx::query_as::<_, BudgetRow>(
+        r#"UPDATE budget
+           SET status = 'approved',
+               approval_meeting_id = $1,
+               updated_at = NOW()
+           WHERE id = $2 AND building_id = $3 AND status = 'draft'
+           RETURNING
+           id, building_id, fiscal_year,
+           status::text as "status!",
+           approval_meeting_id,
+           parent_budget_id,
+           0::numeric as "total_forecast!",
+           0::numeric as "total_actual!",
+           created_at,
+           updated_at"#,
+    )
+    .bind(approval_meeting_id)
+    .bind(budget_id)
+    .bind(building_id)
+    .fetch_optional(&mut *tx)
+    .await?;
+
+    let budget = match budget {
+        Some(b) => b,
+        None => return Err(crate::errors::AppError::NotFound),
+    };
+
+    // If this is a rectificatif (has parent_budget_id), close the parent budget
+    if let Some(parent_id) = budget.parent_budget_id {
+        sqlx::query!(
+            r#"UPDATE budget
+               SET status = 'closed'
+               WHERE id = $1 AND building_id = $2"#,
+            parent_id,
+            building_id
+        )
+        .execute(&mut *tx)
+        .await?;
+
+        // Also close any remaining open lines from the parent budget
+        let today = chrono::Local::now().date_naive();
+        sqlx::query!(
+            r#"UPDATE budget_line
+               SET valid_to = $1
+               WHERE budget_id = $2 AND valid_to IS NULL"#,
+            today.pred(), // yesterday
+            parent_id
+        )
+        .execute(&mut *tx)
+        .await?;
+    }
+    audit::insert(
+        &mut *tx,
+        NewAuditEntry {
+            building_id,
+            entity_type: "budget",
+            entity_id: budget_id,
+            operation: "UPDATE",
+            changed_by: Some(user_id),
+            old_values: Some(serde_json::json!({ "status": "draft" })),
+            new_values: Some(serde_json::json!({
+                "status": "approved",
+                "approval_meeting_id": approval_meeting_id,
+            })),
+        },
+    )
+    .await?;
+
+    tx.commit().await?;
+    Ok(budget)
 }
 
 /// Lists only the currently active version of each budget_line

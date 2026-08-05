@@ -619,6 +619,61 @@ pub async fn update_works_fund(
     )))
 }
 
+#[derive(Deserialize)]
+pub struct CreateRectificatifInput {
+    pub approval_meeting_id: Uuid,
+}
+
+/// Creates a rectificatif (amendment) budget for an existing approved budget.
+/// Pattern B (ADR-009): closes the original approved budget and creates a new
+/// draft budget with parent_budget_id referencing the original.
+/// Budget lines are versioned with valid_from/valid_to.
+pub async fn create_rectificatif(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+    Path(original_budget_id): Path<Uuid>,
+    Json(input): Json<CreateRectificatifInput>,
+) -> AppResult<(StatusCode, Json<serde_json::Value>)> {
+    auth.require_role(&Role::Manager)?;
+
+    let rectificatif = db::budget::create_rectificatif(
+        &state.pool,
+        original_budget_id,
+        auth.building_id,
+        auth.user_id,
+    )
+    .await?;
+
+    Ok((
+        StatusCode::CREATED,
+        Json(serde_json::to_value(rectificatif).map_err(|e| AppError::Internal(e.into()))?),
+    ))
+}
+
+/// Approves a draft budget, transitioning it to 'approved' status.
+pub async fn approve(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+    Path(budget_id): Path<Uuid>,
+    Json(input): Json<CreateRectificatifInput>,
+) -> AppResult<(StatusCode, Json<serde_json::Value>)> {
+    auth.require_role(&Role::Manager)?;
+
+    let budget = db::budget::approve(
+        &state.pool,
+        budget_id,
+        auth.building_id,
+        input.approval_meeting_id,
+        auth.user_id,
+    )
+    .await?;
+
+    Ok((
+        StatusCode::OK,
+        Json(serde_json::to_value(budget).map_err(|e| AppError::Internal(e.into()))?),
+    ))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

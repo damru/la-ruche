@@ -51,3 +51,4 @@ graphify-out/
 # Superpowers
 superpowers/
 .worktrees/
+proxmox-jobs.sqlite3
