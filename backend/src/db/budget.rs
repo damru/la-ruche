@@ -33,6 +33,10 @@ pub struct BudgetLineRow {
     pub account_code: Option<String>,
     pub valid_from: NaiveDate,
     pub valid_to: Option<NaiveDate>,
+    pub parent_budget_id: Option<Uuid>,
+    pub year: Option<i32>,
+    pub line_type: Option<String>,
+    pub rectification_number: Option<i32>,
 }
 
 #[derive(Debug, Serialize, sqlx::FromRow)]
@@ -451,11 +455,14 @@ pub async fn create_rectificatif(
     sqlx::query!(
         r#"INSERT INTO budget_line
                (budget_id, label, key_id, budgeted_amount, actual_amount,
-                account_code, valid_from, valid_to)
+                account_code, valid_from, valid_to, parent_budget_id,
+                year, line_type, rectification_number)
            SELECT $1, label, key_id, budgeted_amount, actual_amount,
-                  account_code, $2, NULL
-           FROM budget_line
-           WHERE budget_id = $3"#,
+                  account_code, $2, NULL, $3,
+                  b.fiscal_year, line_type, 1
+           FROM budget_line bl
+           JOIN budget b ON b.id = bl.budget_id
+           WHERE bl.budget_id = $4"#,
         rectificatif.id,
         today,
         original_budget_id
@@ -581,7 +588,8 @@ pub async fn list_lines(
     Ok(sqlx::query_as::<_, BudgetLineRow>(
         r#"SELECT bl.id, bl.budget_id, bl.label, bl.key_id,
            bl.budgeted_amount, bl.actual_amount, bl.account_code,
-           bl.valid_from, bl.valid_to
+           bl.valid_from, bl.valid_to, bl.parent_budget_id,
+           bl.year, bl.line_type, bl.rectification_number
            FROM budget_line bl
            JOIN budget b ON b.id = bl.budget_id AND b.building_id = $2
            WHERE bl.budget_id = $1 AND bl.valid_to IS NULL"#,
@@ -604,7 +612,8 @@ pub async fn create_line(
         r#"INSERT INTO budget_line (budget_id, label, key_id, budgeted_amount, account_code)
            VALUES ($1, $2, $3, $4, $5)
            RETURNING id, budget_id, label, key_id, budgeted_amount, actual_amount, account_code,
-           valid_from, valid_to"#,
+           valid_from, valid_to, parent_budget_id,
+           year, line_type, rectification_number"#,
     )
     .bind(budget_id)
     .bind(label)
