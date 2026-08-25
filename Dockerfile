@@ -14,7 +14,7 @@ RUN npm run build
 # ---------------------------------------------------------------------------
 # Stage 2: Build Rust backend
 # ---------------------------------------------------------------------------
-FROM rust:1.97.1-slim AS backend-builder
+FROM rust:1.98.0-slim AS backend-builder
 
 # CARGO_PROFILE=release → optimised prod binary (slower build)
 # CARGO_PROFILE=debug   → fast dev build (default)
