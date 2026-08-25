@@ -672,7 +672,6 @@ pub async fn create_rectificatif(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,
     Path(original_budget_id): Path<Uuid>,
-    Json(input): Json<CreateRectificatifInput>,
 ) -> AppResult<(StatusCode, Json<serde_json::Value>)> {
     auth.require_role(&Role::Manager)?;
 
