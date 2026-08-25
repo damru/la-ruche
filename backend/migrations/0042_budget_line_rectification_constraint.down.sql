@@ -14,4 +14,4 @@ CREATE UNIQUE INDEX budget_line_unique_active
 ALTER TABLE budget_line
     DROP COLUMN IF EXISTS year,
     DROP COLUMN IF EXISTS line_type,
-    DROP COLUMN IF EXISTS rectification_number;
+    DROP COLUMN IF EXISTS rectificatif_version;
