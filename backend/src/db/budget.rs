@@ -431,6 +431,50 @@ pub async fn validate_non_rectified_line_uniqueness(
     }
 }
 
+/// Validates that rectified lines (rectificatif_version IS NOT NULL) are unique
+/// per (budget_id, year, line_type, rectificatif_version), mirroring the
+/// idx_budget_line_rectif partial unique index from migration 0042 so that a
+/// duplicate surfaces as a clean 400 instead of an unhandled DB constraint error.
+pub async fn validate_rectified_line_uniqueness(
+    pool: &PgPool,
+    budget_id: Uuid,
+    year: Option<i32>,
+    line_type: Option<&str>,
+    line_id: Option<Uuid>,
+    rectificatif_version: Option<i32>,
+) -> crate::errors::AppResult<()> {
+    // Only validate for rectified lines
+    if rectificatif_version.is_none() {
+        return Ok(());
+    }
+
+    let existing_count: i64 = sqlx::query_scalar(
+        r#"SELECT COUNT(*)
+           FROM budget_line
+           WHERE budget_id = $1
+             AND year = $2
+             AND line_type = $3
+             AND rectificatif_version = $4
+             AND ($5::uuid IS NULL OR id != $5)"#,
+    )
+    .bind(budget_id)
+    .bind(year)
+    .bind(line_type)
+    .bind(rectificatif_version)
+    .bind(line_id)
+    .fetch_one(pool)
+    .await
+    .map_err(|e| crate::errors::AppError::Internal(e.into()))?;
+
+    if existing_count > 0 {
+        Err(crate::errors::AppError::validation_code(
+            "errors.budget_line.duplicate_rectification_number",
+        ))
+    } else {
+        Ok(())
+    }
+}
+
 /// Validates that parent_budget_id, if provided, references an existing budget
 /// with the same fiscal year as the budget the line belongs to.
 pub async fn validate_budget_line_parent(
@@ -754,6 +798,17 @@ pub async fn create_line(
     )
     .await?;
 
+    // Validate rectified lines are unique per (budget_id, year, line_type, rectificatif_version)
+    validate_rectified_line_uniqueness(
+        pool,
+        budget_id,
+        year,
+        line_type,
+        None,
+        rectificatif_version,
+    )
+    .await?;
+
     Ok(sqlx::query_as::<_, BudgetLineRow>(
         r#"INSERT INTO budget_line (budget_id, label, key_id, budgeted_amount, account_code, year, line_type, rectificatif_version, parent_budget_id)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
@@ -801,6 +856,17 @@ pub async fn update_line(
         year,
         key_id,
         label,
+        Some(line_id),
+        rectificatif_version,
+    )
+    .await?;
+
+    // Validate rectified lines are unique per (budget_id, year, line_type, rectificatif_version)
+    validate_rectified_line_uniqueness(
+        pool,
+        budget_id,
+        year,
+        line_type,
         Some(line_id),
         rectificatif_version,
     )

@@ -583,3 +583,349 @@ async fn test_parent_budget_id_same_fiscal_year_succeeds() {
         "Creating line with parent_budget_id from same fiscal year should succeed"
     );
 }
+
+// ============================================================================
+// TEST: Create budget with rectified lines; assert uniqueness per rectification_number
+// ============================================================================
+
+#[tokio::test]
+async fn test_rectified_lines_uniqueness_per_rectification_number() {
+    let (cfg, pool) = common::test_db().await;
+    let (building_id, manager_id, budget_id, fiscal_year, key_id) = setup_test_context(&pool).await;
+    let token = create_auth_token(&pool, manager_id, building_id).await;
+
+    let server = common::test_server_with_pool(cfg, pool).await;
+
+    let label = "Rectified Charge";
+
+    // Create first rectified line with rectificatif_version = 1
+    let create_input1 = json!({
+        "label": label,
+        "key_id": key_id,
+        "budgeted_amount": Decimal::new(1000, 0),
+        "account_code": "602",
+        "year": fiscal_year,
+        "line_type": "charge",
+        "rectificatif_version": 1,
+        "parent_budget_id": budget_id,
+    });
+
+    let resp1 = server
+        .post(&format!("/api/v1/budgets/{}/lines", budget_id))
+        .add_header("Authorization", format!("Bearer {}", token))
+        .json(&create_input1)
+        .await;
+
+    assert_eq!(resp1.status_code(), StatusCode::CREATED);
+
+    // Try to create duplicate with same rectificatif_version - should fail
+    let resp2 = server
+        .post(&format!("/api/v1/budgets/{}/lines", budget_id))
+        .add_header("Authorization", format!("Bearer {}", token))
+        .json(&create_input1)
+        .await;
+
+    assert_eq!(
+        resp2.status_code(),
+        StatusCode::BAD_REQUEST,
+        "Duplicate rectified line with same rectification_number should be rejected"
+    );
+}
+
+// ============================================================================
+// TEST: Create non-rectified lines; assert duplicates allowed across years
+// ============================================================================
+
+#[tokio::test]
+async fn test_non_rectified_duplicates_allowed_across_years() {
+    let (cfg, pool) = common::test_db().await;
+    let (building_id, manager_id, budget_id, fiscal_year, key_id) = setup_test_context(&pool).await;
+    let token = create_auth_token(&pool, manager_id, building_id).await;
+
+    let server = common::test_server_with_pool(cfg, pool.clone()).await;
+
+    let label = "Annual Charge";
+
+    // Create non-rectified line for year 2025
+    let create_input_2025 = json!({
+        "label": label,
+        "key_id": key_id,
+        "budgeted_amount": Decimal::new(1000, 0),
+        "account_code": "602",
+        "year": fiscal_year,
+        "line_type": "charge",
+        "rectificatif_version": Value::Null,
+        "parent_budget_id": Value::Null,
+    });
+
+    let resp1 = server
+        .post(&format!("/api/v1/budgets/{}/lines", budget_id))
+        .add_header("Authorization", format!("Bearer {}", token))
+        .json(&create_input_2025)
+        .await;
+
+    assert_eq!(resp1.status_code(), StatusCode::CREATED);
+
+    // Create a second budget for year 2026
+    let budget_id_2026 = Uuid::new_v4();
+    sqlx::query(
+        "INSERT INTO budget (id, building_id, fiscal_year, status) \
+         VALUES ($1, $2, 2026, 'draft')",
+    )
+    .bind(budget_id_2026)
+    .bind(building_id)
+    .execute(&pool)
+    .await
+    .expect("budget_2026");
+
+    // Create non-rectified line for year 2026 with same label and key_id - should succeed
+    let create_input_2026 = json!({
+        "label": label,
+        "key_id": key_id,
+        "budgeted_amount": Decimal::new(1500, 0),
+        "account_code": "602",
+        "year": 2026,
+        "line_type": "charge",
+        "rectificatif_version": Value::Null,
+        "parent_budget_id": Value::Null,
+    });
+
+    let resp2 = server
+        .post(&format!("/api/v1/budgets/{}/lines", budget_id_2026))
+        .add_header("Authorization", format!("Bearer {}", token))
+        .json(&create_input_2026)
+        .await;
+
+    assert_eq!(
+        resp2.status_code(),
+        StatusCode::CREATED,
+        "Non-rectified duplicates should be allowed across different years"
+    );
+}
+
+// ============================================================================
+// TEST: Update existing line to rectified; assert version increments and uniqueness applies
+// ============================================================================
+
+#[tokio::test]
+async fn test_update_line_to_rectified() {
+    let (cfg, pool) = common::test_db().await;
+    let (building_id, manager_id, budget_id, fiscal_year, key_id) = setup_test_context(&pool).await;
+    let token = create_auth_token(&pool, manager_id, building_id).await;
+
+    let server = common::test_server_with_pool(cfg, pool).await;
+
+    let label = "To Be Rectified";
+
+    // Create a non-rectified line
+    let create_input = json!({
+        "label": label,
+        "key_id": key_id,
+        "budgeted_amount": Decimal::new(1000, 0),
+        "account_code": "602",
+        "year": fiscal_year,
+        "line_type": "charge",
+        "rectificatif_version": Value::Null,
+        "parent_budget_id": Value::Null,
+    });
+
+    let create_resp = server
+        .post(&format!("/api/v1/budgets/{}/lines", budget_id))
+        .add_header("Authorization", format!("Bearer {}", token))
+        .json(&create_input)
+        .await;
+
+    assert_eq!(create_resp.status_code(), StatusCode::CREATED);
+    let created_line: Value = create_resp.json();
+    let line_id = created_line["id"].as_str().unwrap();
+    let initial_version = created_line["version"].as_i64().unwrap();
+
+    // Update the line to be rectified (set rectificatif_version and parent_budget_id)
+    let update_input = json!({
+        "label": label,
+        "key_id": key_id,
+        "budgeted_amount": Decimal::new(1500, 0),
+        "account_code": "602",
+        "version": initial_version,
+        "year": fiscal_year,
+        "line_type": "charge",
+        "rectificatif_version": 1,
+        "parent_budget_id": budget_id,
+    });
+
+    let update_resp = server
+        .put(&format!("/api/v1/budgets/{}/lines/{}", budget_id, line_id))
+        .add_header("Authorization", format!("Bearer {}", token))
+        .json(&update_input)
+        .await;
+
+    assert_eq!(update_resp.status_code(), StatusCode::OK);
+    let updated_line: Value = update_resp.json();
+    let updated_version = updated_line["version"].as_i64().unwrap();
+
+    // Verify version was incremented
+    assert_eq!(
+        updated_version,
+        initial_version + 1,
+        "Version should be incremented when updating to rectified"
+    );
+
+    // Verify rectificatif_version is set
+    assert_eq!(
+        updated_line["rectificatif_version"].as_i64().unwrap(),
+        1,
+        "rectificatif_version should be set to 1"
+    );
+
+    // Verify parent_budget_id is set
+    assert_eq!(
+        updated_line["parent_budget_id"].as_str().unwrap(),
+        budget_id.to_string(),
+        "parent_budget_id should be set"
+    );
+
+    // Try to create another rectified line with same rectificatif_version - should fail
+    let duplicate_input = json!({
+        "label": label,
+        "key_id": key_id,
+        "budgeted_amount": Decimal::new(2000, 0),
+        "account_code": "602",
+        "year": fiscal_year,
+        "line_type": "charge",
+        "rectificatif_version": 1,
+        "parent_budget_id": budget_id,
+    });
+
+    let duplicate_resp = server
+        .post(&format!("/api/v1/budgets/{}/lines", budget_id))
+        .add_header("Authorization", format!("Bearer {}", token))
+        .json(&duplicate_input)
+        .await;
+
+    assert_eq!(
+        duplicate_resp.status_code(),
+        StatusCode::BAD_REQUEST,
+        "Duplicate rectified line with same rectification_number should be rejected after update"
+    );
+}
+
+// ============================================================================
+// TEST: Concurrent updates with version check; assert optimistic locking works
+// ============================================================================
+
+#[tokio::test]
+async fn test_concurrent_updates_optimistic_locking() {
+    let (cfg, pool) = common::test_db().await;
+    let (building_id, manager_id, budget_id, fiscal_year, key_id) = setup_test_context(&pool).await;
+    let token = create_auth_token(&pool, manager_id, building_id).await;
+
+    let server = common::test_server_with_pool(cfg, pool).await;
+
+    let label = "Concurrent Charge";
+
+    // Create a line
+    let create_input = json!({
+        "label": label,
+        "key_id": key_id,
+        "budgeted_amount": Decimal::new(1000, 0),
+        "account_code": "602",
+        "year": fiscal_year,
+        "line_type": "charge",
+        "rectificatif_version": Value::Null,
+        "parent_budget_id": Value::Null,
+    });
+
+    let create_resp = server
+        .post(&format!("/api/v1/budgets/{}/lines", budget_id))
+        .add_header("Authorization", format!("Bearer {}", token))
+        .json(&create_input)
+        .await;
+
+    assert_eq!(create_resp.status_code(), StatusCode::CREATED);
+    let created_line: Value = create_resp.json();
+    let line_id = created_line["id"].as_str().unwrap();
+    let initial_version = created_line["version"].as_i64().unwrap();
+
+    // First update with correct version - should succeed
+    let update_input1 = json!({
+        "label": "Updated Once",
+        "key_id": key_id,
+        "budgeted_amount": Decimal::new(1500, 0),
+        "account_code": "602",
+        "version": initial_version,
+        "year": fiscal_year,
+        "line_type": "charge",
+        "rectificatif_version": Value::Null,
+        "parent_budget_id": Value::Null,
+    });
+
+    let update_resp1 = server
+        .put(&format!("/api/v1/budgets/{}/lines/{}", budget_id, line_id))
+        .add_header("Authorization", format!("Bearer {}", token))
+        .json(&update_input1)
+        .await;
+
+    assert_eq!(update_resp1.status_code(), StatusCode::OK);
+    let updated_line1: Value = update_resp1.json();
+    let version_after_first = updated_line1["version"].as_i64().unwrap();
+
+    assert_eq!(version_after_first, initial_version + 1);
+
+    // Second update with OLD version (simulating concurrent update) - should fail
+    let stale_update_input = json!({
+        "label": "Stale Update",
+        "key_id": key_id,
+        "budgeted_amount": Decimal::new(2000, 0),
+        "account_code": "602",
+        "version": initial_version,
+        "year": fiscal_year,
+        "line_type": "charge",
+        "rectificatif_version": Value::Null,
+        "parent_budget_id": Value::Null,
+    });
+
+    let stale_resp = server
+        .put(&format!("/api/v1/budgets/{}/lines/{}", budget_id, line_id))
+        .add_header("Authorization", format!("Bearer {}", token))
+        .json(&stale_update_input)
+        .await;
+
+    assert_eq!(
+        stale_resp.status_code(),
+        StatusCode::CONFLICT,
+        "Concurrent update with stale version should be rejected (optimistic locking)"
+    );
+
+    // Third update with CORRECT version (version_after_first) - should succeed
+    let update_input2 = json!({
+        "label": "Updated Twice",
+        "key_id": key_id,
+        "budgeted_amount": Decimal::new(2500, 0),
+        "account_code": "602",
+        "version": version_after_first,
+        "year": fiscal_year,
+        "line_type": "charge",
+        "rectificatif_version": Value::Null,
+        "parent_budget_id": Value::Null,
+    });
+
+    let update_resp2 = server
+        .put(&format!("/api/v1/budgets/{}/lines/{}", budget_id, line_id))
+        .add_header("Authorization", format!("Bearer {}", token))
+        .json(&update_input2)
+        .await;
+
+    assert_eq!(
+        update_resp2.status_code(),
+        StatusCode::OK,
+        "Update with correct version should succeed"
+    );
+    let updated_line2: Value = update_resp2.json();
+    let version_after_second = updated_line2["version"].as_i64().unwrap();
+
+    assert_eq!(
+        version_after_second,
+        version_after_first + 1,
+        "Version should increment on each successful update"
+    );
+}
