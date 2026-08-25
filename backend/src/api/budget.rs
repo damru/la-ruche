@@ -178,6 +178,10 @@ pub struct CreateLineInput {
     pub key_id: Uuid,
     pub budgeted_amount: Decimal,
     pub account_code: Option<String>,
+    pub year: Option<i32>,
+    pub line_type: Option<String>,
+    pub rectificatif_version: Option<i32>,
+    pub parent_budget_id: Option<Uuid>,
 }
 
 pub async fn create_line(
@@ -195,6 +199,10 @@ pub async fn create_line(
         input.key_id,
         input.budgeted_amount,
         input.account_code.as_deref(),
+        input.year,
+        input.line_type.as_deref(),
+        input.rectificatif_version,
+        input.parent_budget_id,
     )
     .await?;
     Ok((
@@ -203,13 +211,45 @@ pub async fn create_line(
     ))
 }
 
+#[derive(Deserialize)]
+pub struct UpdateLineInput {
+    pub label: String,
+    pub key_id: Uuid,
+    pub budgeted_amount: Decimal,
+    pub account_code: Option<String>,
+    pub version: i32,
+    pub year: Option<i32>,
+    pub line_type: Option<String>,
+    pub rectificatif_version: Option<i32>,
+    pub parent_budget_id: Option<Uuid>,
+}
+
 pub async fn update_line(
     auth: AuthUser,
-    State(_): State<Arc<AppState>>,
-    Path((_, _)): Path<(Uuid, Uuid)>,
-) -> AppResult<StatusCode> {
+    State(state): State<Arc<AppState>>,
+    Path((budget_id, line_id)): Path<(Uuid, Uuid)>,
+    Json(input): Json<UpdateLineInput>,
+) -> AppResult<Json<serde_json::Value>> {
     auth.require_role(&Role::Manager)?;
-    Ok(StatusCode::NO_CONTENT)
+    db::budget::ensure_budget_is_mutable(&state.pool, budget_id, auth.building_id).await?;
+    let l = db::budget::update_line(
+        &state.pool,
+        line_id,
+        budget_id,
+        &input.label,
+        input.key_id,
+        input.budgeted_amount,
+        input.account_code.as_deref(),
+        input.version,
+        input.year,
+        input.line_type.as_deref(),
+        input.rectificatif_version,
+        input.parent_budget_id,
+    )
+    .await?;
+    Ok(Json(
+        serde_json::to_value(l).map_err(|e| AppError::Internal(e.into()))?,
+    ))
 }
 
 pub async fn delete_line(

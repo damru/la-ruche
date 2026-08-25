@@ -36,7 +36,7 @@ pub struct BudgetLineRow {
     pub parent_budget_id: Option<Uuid>,
     pub year: Option<i32>,
     pub line_type: Option<String>,
-    pub rectification_number: Option<i32>,
+    pub rectificatif_version: Option<i32>,
 }
 
 #[derive(Debug, Serialize, sqlx::FromRow)]
@@ -171,6 +171,7 @@ pub async fn list(pool: &PgPool, building_id: Uuid) -> crate::errors::AppResult<
             b.fiscal_year,
             b.status::text as "status!",
             b.approval_meeting_id,
+            b.parent_budget_id,
             COALESCE((SELECT SUM(bl.budgeted_amount) FROM budget_line bl WHERE bl.budget_id = b.id), 0)::numeric as "total_forecast!",
             COALESCE((SELECT SUM(bl.actual_amount) FROM budget_line bl WHERE bl.budget_id = b.id), 0)::numeric as "total_actual!",
             b.created_at,
@@ -197,6 +198,7 @@ pub async fn get(
             b.fiscal_year,
             b.status::text as "status!",
             b.approval_meeting_id,
+            b.parent_budget_id,
             COALESCE((SELECT SUM(bl.budgeted_amount) FROM budget_line bl WHERE bl.budget_id = b.id), 0)::numeric as "total_forecast!",
             COALESCE((SELECT SUM(bl.actual_amount) FROM budget_line bl WHERE bl.budget_id = b.id), 0)::numeric as "total_actual!",
             b.created_at,
@@ -227,6 +229,7 @@ pub async fn create(
            fiscal_year,
            status::text as "status!",
            approval_meeting_id,
+           parent_budget_id,
            0::numeric as "total_forecast!",
            0::numeric as "total_actual!",
            created_at,
@@ -359,6 +362,45 @@ pub async fn ensure_budget_is_mutable(
     Ok(())
 }
 
+/// Validates that parent_budget_id, if provided, references an existing budget
+/// with the same fiscal year as the budget the line belongs to.
+pub async fn validate_budget_line_parent(
+    pool: &PgPool,
+    budget_id: Uuid,
+    parent_budget_id: Option<Uuid>,
+) -> crate::errors::AppResult<()> {
+    let parent_budget_id = match parent_budget_id {
+        Some(id) => id,
+        None => return Ok(()),
+    };
+
+    // Check parent budget exists and get its fiscal year
+    let parent_fiscal_year: Option<i32> =
+        sqlx::query_scalar(r#"SELECT fiscal_year FROM budget WHERE id = $1"#)
+            .bind(parent_budget_id)
+            .fetch_optional(pool)
+            .await?;
+
+    let parent_fiscal_year = parent_fiscal_year.ok_or(crate::errors::AppError::NotFound)?;
+
+    // Get the fiscal year of the budget the line belongs to
+    let budget_fiscal_year: Option<i32> =
+        sqlx::query_scalar(r#"SELECT fiscal_year FROM budget WHERE id = $1"#)
+            .bind(budget_id)
+            .fetch_optional(pool)
+            .await?;
+
+    let budget_fiscal_year = budget_fiscal_year.ok_or(crate::errors::AppError::NotFound)?;
+
+    if parent_fiscal_year != budget_fiscal_year {
+        return Err(crate::errors::AppError::validation_code(
+            "errors.budget_line.parent_fiscal_year_mismatch",
+        ));
+    }
+
+    Ok(())
+}
+
 pub async fn close(
     pool: &PgPool,
     budget_id: Uuid,
@@ -451,20 +493,33 @@ pub async fn create_rectificatif(
     .execute(&mut *tx)
     .await?;
 
+    // Compute next rectificatif_version: max existing version for original budget + 1
+    let next_rectificatif_version: i32 = sqlx::query_scalar(
+        r#"SELECT COALESCE(MAX(rectificatif_version), 0) + 1
+           FROM budget_line
+           WHERE budget_id = $1"#,
+    )
+    .bind(original_budget_id)
+    .fetch_one(&mut *tx)
+    .await
+    .map_err(|e| crate::errors::AppError::Internal(e.into()))?;
+
     // Copy budget lines from original to rectificatif with new valid_from
     sqlx::query!(
         r#"INSERT INTO budget_line
                (budget_id, label, key_id, budgeted_amount, actual_amount,
                 account_code, valid_from, valid_to, parent_budget_id,
-                year, line_type, rectification_number)
+                year, line_type, rectificatif_version)
            SELECT $1, label, key_id, budgeted_amount, actual_amount,
                   account_code, $2, NULL, $3,
-                  b.fiscal_year, line_type, 1
+                  b.fiscal_year, line_type, $4
            FROM budget_line bl
            JOIN budget b ON b.id = bl.budget_id
-           WHERE bl.budget_id = $4"#,
+           WHERE bl.budget_id = $5"#,
         rectificatif.id,
         today,
+        original_budget_id,
+        next_rectificatif_version,
         original_budget_id
     )
     .execute(&mut *tx)
@@ -589,7 +644,7 @@ pub async fn list_lines(
         r#"SELECT bl.id, bl.budget_id, bl.label, bl.key_id,
            bl.budgeted_amount, bl.actual_amount, bl.account_code,
            bl.valid_from, bl.valid_to, bl.parent_budget_id,
-           bl.year, bl.line_type, bl.rectification_number
+           bl.year, bl.line_type, bl.rectificatif_version
            FROM budget_line bl
            JOIN budget b ON b.id = bl.budget_id AND b.building_id = $2
            WHERE bl.budget_id = $1 AND bl.valid_to IS NULL"#,
@@ -607,19 +662,70 @@ pub async fn create_line(
     key_id: Uuid,
     budgeted_amount: Decimal,
     account_code: Option<&str>,
+    year: Option<i32>,
+    line_type: Option<&str>,
+    rectificatif_version: Option<i32>,
+    parent_budget_id: Option<Uuid>,
 ) -> crate::errors::AppResult<BudgetLineRow> {
+    // Validate parent_budget_id if provided
+    validate_budget_line_parent(pool, budget_id, parent_budget_id).await?;
+
     Ok(sqlx::query_as::<_, BudgetLineRow>(
-        r#"INSERT INTO budget_line (budget_id, label, key_id, budgeted_amount, account_code)
-           VALUES ($1, $2, $3, $4, $5)
+        r#"INSERT INTO budget_line (budget_id, label, key_id, budgeted_amount, account_code, year, line_type, rectificatif_version, parent_budget_id)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
            RETURNING id, budget_id, label, key_id, budgeted_amount, actual_amount, account_code,
            valid_from, valid_to, parent_budget_id,
-           year, line_type, rectification_number"#,
+           year, line_type, rectificatif_version"#,
     )
     .bind(budget_id)
     .bind(label)
     .bind(key_id)
     .bind(budgeted_amount)
     .bind(account_code)
+    .bind(year)
+    .bind(line_type)
+    .bind(rectificatif_version)
+    .bind(parent_budget_id)
+    .fetch_one(pool)
+    .await?)
+}
+
+pub async fn update_line(
+    pool: &PgPool,
+    line_id: Uuid,
+    budget_id: Uuid,
+    label: &str,
+    key_id: Uuid,
+    budgeted_amount: Decimal,
+    account_code: Option<&str>,
+    version: i32,
+    year: Option<i32>,
+    line_type: Option<&str>,
+    rectificatif_version: Option<i32>,
+    parent_budget_id: Option<Uuid>,
+) -> crate::errors::AppResult<BudgetLineRow> {
+    // Validate parent_budget_id if provided
+    validate_budget_line_parent(pool, budget_id, parent_budget_id).await?;
+
+    Ok(sqlx::query_as::<_, BudgetLineRow>(
+        r#"UPDATE budget_line
+           SET label = $1, key_id = $2, budgeted_amount = $3, account_code = $4,
+               year = $5, line_type = $6, rectificatif_version = $7, parent_budget_id = $8
+           WHERE id = $9 AND budget_id = $10
+           RETURNING id, budget_id, label, key_id, budgeted_amount, actual_amount, account_code,
+           valid_from, valid_to, parent_budget_id,
+           year, line_type, rectificatif_version"#,
+    )
+    .bind(label)
+    .bind(key_id)
+    .bind(budgeted_amount)
+    .bind(account_code)
+    .bind(year)
+    .bind(line_type)
+    .bind(rectificatif_version)
+    .bind(parent_budget_id)
+    .bind(line_id)
+    .bind(budget_id)
     .fetch_one(pool)
     .await?)
 }
