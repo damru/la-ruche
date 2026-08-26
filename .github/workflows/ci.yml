@@ -62,7 +62,7 @@ jobs:
           cache-workspace-crates: true
 
       - name: Install sccache
-        uses: mozilla-actions/sccache-action@v0.0.10
+        uses: mozilla-actions/sccache-action@v0.0.11
 
       - name: Reset sccache stats
         run: sccache --zero-stats

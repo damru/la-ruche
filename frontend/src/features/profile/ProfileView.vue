@@ -38,6 +38,7 @@ const saving = ref(false)
 const profileFeedback = useFormFeedback()
 const email = ref(auth.user?.email ?? '')
 const phone = ref(auth.user?.phone ?? '')
+const emailError = ref('')
 
 // ── Access context (role + building scope) ────────────────────────
 const buildingName = ref('')
@@ -53,6 +54,7 @@ onMounted(async () => {
 async function saveProfile() {
   saving.value = true
   profileFeedback.reset()
+  emailError.value = ''
   try {
     const payload: { phone: string | null; email?: string } = {
       phone: phone.value.trim() || null,
@@ -71,7 +73,9 @@ async function saveProfile() {
     const status = (e as { response?: { status?: number } })?.response?.status
     const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? ''
     if (status === 409 && msg.includes('email_already_exists')) {
-      profileFeedback.setError(t('settings.account.emailTaken'))
+      emailError.value = t('settings.account.emailTaken')
+    } else if (status === 400 && msg.includes('invalid_email')) {
+      emailError.value = t('settings.account.emailInvalid')
     } else {
       profileFeedback.setError(t('common.error'))
     }
@@ -205,6 +209,8 @@ const showResetDataModal = ref(false)
               :label="t('common.email')"
               type="email"
               required
+              :error="emailError"
+              @update:model-value="emailError = ''"
             />
             <CFormInput
               v-model="phone"

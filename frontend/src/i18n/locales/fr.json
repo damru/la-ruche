@@ -1529,6 +1529,7 @@
       "update": "Mettre à jour",
       "changePassword": "Changer le mot de passe",
       "emailTaken": "Cette adresse e-mail est déjà utilisée.",
+      "emailInvalid": "Adresse e-mail invalide.",
       "accessTitle": "Votre accès",
       "roleLabel": "Rôle",
       "scopeLabel": "Copropriété",
