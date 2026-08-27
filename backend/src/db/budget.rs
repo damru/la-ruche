@@ -383,6 +383,7 @@ pub async fn ensure_budget_lines_mutable(
         &crate::domain::immutability::Entity::Budget,
         &status,
     )
+    .map_err(|_| crate::errors::AppError::unprocessable_entity_code("errors.immutability.frozen"))
 }
 
 /// Maps the budget/budget_line unique and check constraints to i18n error codes.
@@ -480,7 +481,7 @@ pub async fn create_rectificatif(
 
     // Only a budget voted in AG can be amended: a draft is simply edited.
     if original.status != "approved" {
-        return Err(crate::errors::AppError::validation_code(
+        return Err(crate::errors::AppError::unprocessable_entity_code(
             "errors.budget.rectificatif_requires_approved",
         ));
     }
@@ -590,11 +591,13 @@ pub async fn approve(
     .fetch_optional(&mut *tx)
     .await?
     .ok_or_else(|| {
-        crate::errors::AppError::validation_code("errors.budget.approval_meeting_not_found")
+        crate::errors::AppError::unprocessable_entity_code(
+            "errors.budget.approval_meeting_not_found",
+        )
     })?;
 
     if meeting_status != "closed" {
-        return Err(crate::errors::AppError::validation_code(
+        return Err(crate::errors::AppError::unprocessable_entity_code(
             "errors.budget.approval_meeting_not_closed",
         ));
     }
