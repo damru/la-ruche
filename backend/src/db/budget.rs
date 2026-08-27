@@ -261,7 +261,9 @@ pub async fn get_by_fiscal_year(
             b.created_at,
             b.updated_at
            FROM budget b
-           WHERE b.building_id = $1 AND b.fiscal_year = $2"#,
+           WHERE b.building_id = $1 AND b.fiscal_year = $2
+           ORDER BY (b.status = 'approved') DESC
+           LIMIT 1"#,
     )
     .bind(building_id)
     .bind(fiscal_year)
@@ -630,19 +632,50 @@ pub async fn approve(
         .execute(&mut *tx)
         .await?;
 
+        audit::insert(
+            &mut *tx,
+            NewAuditEntry {
+                building_id,
+                entity_type: "budget",
+                entity_id: parent_id,
+                operation: "UPDATE",
+                changed_by: Some(user_id),
+                old_values: Some(serde_json::json!({ "status": "approved" })),
+                new_values: Some(serde_json::json!({ "status": "closed" })),
+            },
+        )
+        .await?;
+
         // Date out the amended budget's lines. `valid_to = CURRENT_DATE` is
-        // exclusive and matches the convention used by allocation_key/unit
+        // inclusive and matches the convention used by allocation_key/unit
         // versioning (ADR-006); it also cannot invert the validity period when
         // the rectificatif is approved the same day the lines were created.
-        sqlx::query!(
+        let closed_line_ids: Vec<Uuid> = sqlx::query_scalar(
             r#"UPDATE budget_line
                SET valid_to = CURRENT_DATE
-               WHERE budget_id = $1 AND valid_to IS NULL"#,
-            parent_id
+               WHERE budget_id = $1 AND valid_to IS NULL
+               RETURNING id"#,
         )
-        .execute(&mut *tx)
+        .bind(parent_id)
+        .fetch_all(&mut *tx)
         .await
         .map_err(map_budget_constraint)?;
+
+        for line_id in closed_line_ids {
+            audit::insert(
+                &mut *tx,
+                NewAuditEntry {
+                    building_id,
+                    entity_type: "budget_line",
+                    entity_id: line_id,
+                    operation: "UPDATE",
+                    changed_by: Some(user_id),
+                    old_values: Some(serde_json::json!({ "valid_to": null })),
+                    new_values: Some(serde_json::json!({ "valid_to": "CURRENT_DATE" })),
+                },
+            )
+            .await?;
+        }
     }
 
     let budget = sqlx::query_as!(
