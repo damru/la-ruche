@@ -77,6 +77,13 @@ Le budget et les charges représentent le cœur de la relation contractuelle ent
 - Un budget au statut `draft` est modifiable librement.
 - Un budget au statut `approved` est immuable — tout rectificatif voté en AG crée un **nouveau budget** avec `parent_budget_id` référençant le budget approuvé. L'ancien reste consultable.
 - La contrainte `UNIQUE(building_id, fiscal_year)` DOIT être levée pour autoriser deux budgets (approuvé + rectificatif) sur le même exercice fiscal.
+- L'approbation d'un budget DOIT être justifiée par une AG tenue : l'assemblée référencée DOIT appartenir à la copropriété et être au statut `closed`.
+- La création d'un rectificatif ne DOIT modifier ni le statut ni les lignes du budget approuvé : celui-ci reste l'acte en vigueur jusqu'au vote du rectificatif. C'est l'approbation du rectificatif qui clôt le budget précédent.
+- Un seul rectificatif en préparation par budget modifié, et un seul budget en vigueur par exercice.
+- Les lignes budgétaires sont versionnées dans le temps par `valid_from` / `valid_to` (borne de fin exclusive) : une correction clôt la version en vigueur et en crée une nouvelle, sans jamais réécrire ni supprimer l'ancienne. Une ligne dont la version est clôturée n'est plus modifiable ni supprimable.
+- `budget_line.rectificatif_version` porte le numéro du rectificatif d'origine de la ligne (`NULL` sur un budget racine). Cette valeur, comme `parent_budget_id`, est assignée par le workflow de rectificatif et n'est jamais acceptée depuis une requête client.
+- `budget_line.version` est un jeton de verrouillage optimiste protégeant l'édition concurrente des lignes de brouillon. Il n'a aucune valeur probante et n'apparaît dans aucun document réglementaire.
+- Les totaux prévisionnel et réalisé d'un budget sont calculés sur ses lignes **en vigueur** uniquement.
 
 ### Snapshot des tantièmes
 

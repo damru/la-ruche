@@ -143,14 +143,14 @@ export const mockBudgets: Budget[] = [
 ]
 
 export const mockBudgetLines: BudgetLine[] = [
-  { id: 'bl-001', budget_id: 'bud-001', label: 'Entretien parties communes', key_id: 'k1', key_name: 'Clé générale', budgeted_amount: 8_000, actual_amount: 3_200 },
-  { id: 'bl-002', budget_id: 'bud-001', label: 'Ascenseur – maintenance', key_id: 'k1', key_name: 'Clé générale', budgeted_amount: 5_400, actual_amount: 2_700 },
-  { id: 'bl-003', budget_id: 'bud-001', label: 'Assurance immeuble', key_id: 'k1', key_name: 'Clé générale', budgeted_amount: 6_800, actual_amount: 6_800 },
-  { id: 'bl-004', budget_id: 'bud-001', label: 'Nettoyage et gardiennage', key_id: 'k1', key_name: 'Clé générale', budgeted_amount: 9_200, actual_amount: 4_600 },
-  { id: 'bl-005', budget_id: 'bud-001', label: 'Eau froide parties communes', key_id: 'k2', key_name: 'Eau commune', budgeted_amount: 3_600, actual_amount: 1_240 },
-  { id: 'bl-006', budget_id: 'bud-001', label: 'Honoraires syndic', key_id: 'k1', key_name: 'Clé générale', budgeted_amount: 6_600, actual_amount: 2_800 },
-  { id: 'bl-007', budget_id: 'bud-001', label: 'Électricité parties communes', key_id: 'k1', key_name: 'Clé générale', budgeted_amount: 2_800, actual_amount: 0 },
-  { id: 'bl-008', budget_id: 'bud-001', label: 'Fonds de travaux (art. 14-2)', key_id: 'k1', key_name: 'Clé générale', budgeted_amount: 6_100, actual_amount: 0 },
+  { id: 'bl-001', budget_id: 'bud-001', label: 'Entretien parties communes', key_id: 'k1', key_name: 'Clé générale', budgeted_amount: 8_000, actual_amount: 3_200, valid_from: '2026-01-01', version: 1 },
+  { id: 'bl-002', budget_id: 'bud-001', label: 'Ascenseur – maintenance', key_id: 'k1', key_name: 'Clé générale', budgeted_amount: 5_400, actual_amount: 2_700, valid_from: '2026-01-01', version: 1 },
+  { id: 'bl-003', budget_id: 'bud-001', label: 'Assurance immeuble', key_id: 'k1', key_name: 'Clé générale', budgeted_amount: 6_800, actual_amount: 6_800, valid_from: '2026-01-01', version: 1 },
+  { id: 'bl-004', budget_id: 'bud-001', label: 'Nettoyage et gardiennage', key_id: 'k1', key_name: 'Clé générale', budgeted_amount: 9_200, actual_amount: 4_600, valid_from: '2026-01-01', version: 1 },
+  { id: 'bl-005', budget_id: 'bud-001', label: 'Eau froide parties communes', key_id: 'k2', key_name: 'Eau commune', budgeted_amount: 3_600, actual_amount: 1_240, valid_from: '2026-01-01', version: 1 },
+  { id: 'bl-006', budget_id: 'bud-001', label: 'Honoraires syndic', key_id: 'k1', key_name: 'Clé générale', budgeted_amount: 6_600, actual_amount: 2_800, valid_from: '2026-01-01', version: 1 },
+  { id: 'bl-007', budget_id: 'bud-001', label: 'Électricité parties communes', key_id: 'k1', key_name: 'Clé générale', budgeted_amount: 2_800, actual_amount: 0, valid_from: '2026-01-01', version: 1 },
+  { id: 'bl-008', budget_id: 'bud-001', label: 'Fonds de travaux (art. 14-2)', key_id: 'k1', key_name: 'Clé générale', budgeted_amount: 6_100, actual_amount: 0, valid_from: '2026-01-01', version: 1 },
 ]
 
 export const mockLevies: LevyCall[] = [

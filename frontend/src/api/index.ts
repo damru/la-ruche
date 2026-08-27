@@ -233,10 +233,20 @@ export const budgetApi = {
     api.get<BudgetLine[]>(`/budgets/${id}/lines`),
   createLine: (id: string, data: { label: string; key_id: string; budgeted_amount: number; account_code?: string }) =>
     api.post<BudgetLine>(`/budgets/${id}/lines`, data),
+  // `version` is the optimistic-locking token read from the line being edited.
+  updateLine: (id: string, lid: string, data: { label: string; key_id: string; budgeted_amount: number; account_code?: string; version: number }) =>
+    api.put<BudgetLine>(`/budgets/${id}/lines/${lid}`, data),
   listAccountingCodes: () =>
     api.get<AccountingCode[]>('/accounting-codes'),
   deleteLine: (id: string, lid: string) =>
     api.delete(`/budgets/${id}/lines/${lid}`),
+  // Pattern B (ADR-009) — approving a budget requires the AG that voted it.
+  approve: (id: string, data: { approval_meeting_id: string }) =>
+    api.post<Budget>(`/budgets/${id}/approve`, data),
+  createRectificatif: (id: string) =>
+    api.post<Budget>(`/budgets/${id}/rectificatif`),
+  rectificatifChain: (id: string) =>
+    api.get<Budget[]>(`/budgets/${id}/rectificatifs`),
   generateLevies: (id: string, data: { due_date: string; include_works_fund: boolean; call_label?: string }) =>
     api.post<{ generated: number; total_amount: number; already_called: number; remaining_amount: number; due_date: string; call_label?: string }>(`/budgets/${id}/levies/generate`, data),
   listLevies: (id: string, ownerId?: string) =>

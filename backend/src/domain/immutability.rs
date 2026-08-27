@@ -25,6 +25,10 @@ pub enum Entity {
     /// `status != 'draft'`. Amended via `POST /contracts/{id}/amendments`
     /// (Pattern B, ADR-009, PRD Contrats fournisseurs §4).
     VendorContract,
+    /// Budget and its lines are frozen once approved in AG: the budget becomes a
+    /// legal act. Amended via `POST /budgets/{id}/rectificatif`
+    /// (Pattern B, ADR-009, PRD Budget et charges §Immuabilité).
+    Budget,
 }
 
 /// Returns `true` when the entity may still be mutated.
@@ -45,6 +49,7 @@ pub fn is_mutable(entity: &Entity, status: &str) -> bool {
         Entity::Claim => status != "transmitted",
         Entity::MaintenanceLog => false,
         Entity::VendorContract => status == "draft",
+        Entity::Budget => status == "draft",
     }
 }
 
@@ -123,6 +128,13 @@ mod tests {
         assert!(!is_mutable(&Entity::VendorContract, "active"));
         assert!(!is_mutable(&Entity::VendorContract, "terminated"));
         assert!(!is_mutable(&Entity::VendorContract, "expired"));
+    }
+
+    #[test]
+    fn budget_frozen_once_approved() {
+        assert!(is_mutable(&Entity::Budget, "draft"));
+        assert!(!is_mutable(&Entity::Budget, "approved"));
+        assert!(!is_mutable(&Entity::Budget, "closed"));
     }
 
     #[test]

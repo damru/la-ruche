@@ -39,6 +39,8 @@ import CIconLock from '@/components/atoms/CIconLock.svg'
 import CIconChevronRight from '@/components/atoms/CIconChevronRight.svg'
 import CreateBudgetModal from './CreateBudgetModal.vue'
 import CloseExerciseModal from './CloseExerciseModal.vue'
+import ApproveBudgetModal from './ApproveBudgetModal.vue'
+import CreateRectificatifModal from './CreateRectificatifModal.vue'
 import WorksFundModal from './WorksFundModal.vue'
 import { budgetApi, allocationKeysApi, buildingApi } from '@/api'
 import GenerateLeviesModal from './GenerateLeviesModal.vue'
@@ -78,6 +80,15 @@ const { hasAnyRole } = useRole()
 const canManage = computed(() => hasAnyRole(['manager']))
 const canViewLevies = computed(() => hasAnyRole(['manager', 'board_member']))
 const canEditSelectedBudget = computed(() => canManage.value && selectedBudget.value?.status !== 'closed')
+// Pattern B (ADR-009): once voted in AG the budget is a legal act. Its lines are
+// frozen and amended through a rectificatif, never edited in place. Exercise-level
+// actions (clôture, fonds travaux, appels de fonds) stay available — they act on
+// an approved budget by design, which is why they keep using
+// `canEditSelectedBudget`.
+const canEditBudgetLines = computed(() => canManage.value && selectedBudget.value?.status === 'draft')
+const canApproveBudget = computed(() => canManage.value && selectedBudget.value?.status === 'draft')
+const canCreateRectificatif = computed(() => canManage.value && selectedBudget.value?.status === 'approved')
+const selectedIsRectificatif = computed(() => !!selectedBudget.value?.parent_budget_id)
 const canMarkLeviesPaid = computed(() => hasAnyRole(['manager', 'board_member']))
 const sharePercentageFormatter = new Intl.NumberFormat('fr-FR', {
   minimumFractionDigits: 1,
@@ -107,9 +118,23 @@ const selectedBudgetTab = computed({
   set: (v: string) => { selectedBudgetId.value = v || null },
 })
 
-const budgetYearTabs = computed<Tab[]>(() =>
-  budgets.value.map(b => ({ value: b.id, label: String(b.fiscal_year) }))
-)
+// A rectificatif shares its fiscal year with the budget it amends, so the year
+// alone would produce duplicate tab labels. Number them by their rank within the
+// year (Pattern B, ADR-009).
+const budgetYearTabs = computed<Tab[]>(() => {
+  const rankByYear = new Map<number, number>()
+  return budgets.value.map((b) => {
+    if (!b.parent_budget_id) {
+      return { value: b.id, label: String(b.fiscal_year) }
+    }
+    const rank = (rankByYear.get(b.fiscal_year) ?? 0) + 1
+    rankByYear.set(b.fiscal_year, rank)
+    return {
+      value: b.id,
+      label: t('budget.rectificatifTabLabel', { year: b.fiscal_year, n: rank }),
+    }
+  })
+})
 const budgetLines = ref<BudgetLine[]>([])
 const levies = ref<LevyCall[]>([])
 const worksFund = ref<WorksFund | null>(null)
@@ -526,6 +551,23 @@ async function markPaid(levy: ConsolidatedLevyRow) {
   }
 }
 
+// ── Approve / rectificatif modals (Pattern B, ADR-009) ─────────────
+
+const showApproveModal = ref(false)
+const showRectificatifModal = ref(false)
+
+async function handleBudgetApproved() {
+  // The amended budget flips to `closed` in the same transaction, so the whole
+  // list is refetched rather than just the selected budget.
+  await loadBudgets()
+  if (selectedBudgetId.value) await loadBudgetData(selectedBudgetId.value)
+}
+
+async function handleRectificatifCreated(id: string) {
+  await loadBudgets()
+  selectedBudgetId.value = id
+}
+
 // ── Close exercise modal ───────────────────────────────────────────
 
 const showCloseExerciseModal = ref(false)
@@ -575,6 +617,24 @@ function formatSharePercentage(value: number): string {
         </div>
       </template>
       <template #right>
+        <CBtn
+          v-if="canApproveBudget && selectedBudgetId"
+          variant="primary"
+          size="sm"
+          :icon="CIconCheck"
+          :title="t('budget.approve')"
+          shrink="sm"
+          @click="showApproveModal = true"
+        />
+        <CBtn
+          v-if="canCreateRectificatif && selectedBudgetId"
+          variant="primary"
+          size="sm"
+          :icon="CIconPlus"
+          :title="t('budget.rectificatif')"
+          shrink="sm"
+          @click="showRectificatifModal = true"
+        />
         <CBtn
           v-if="canEditSelectedBudget && selectedBudgetId"
           variant="primary"
@@ -907,7 +967,7 @@ function formatSharePercentage(value: number): string {
                 @click="showBreakdownModal = true"
               />
               <CBtn
-                v-if="canEditSelectedBudget"
+                v-if="canEditBudgetLines"
                 variant="ghost"
                 size="sm"
                 :icon="CIconPlus"
@@ -976,7 +1036,7 @@ function formatSharePercentage(value: number): string {
                     {{ line.key_name }}
                   </CBadge>
                   <CBtn
-                    v-if="canEditSelectedBudget"
+                    v-if="canEditBudgetLines"
                     variant="ghost"
                     size="sm"
                     :icon="CIconTrash"
@@ -1185,6 +1245,23 @@ function formatSharePercentage(value: number): string {
       :fiscal-year="selectedBudget?.fiscal_year ?? 0"
       @update:open="showCloseExerciseModal = $event"
       @closed="handleExerciseClosed"
+    />
+
+    <ApproveBudgetModal
+      :open="showApproveModal"
+      :budget-id="selectedBudgetId ?? ''"
+      :fiscal-year="selectedBudget?.fiscal_year ?? 0"
+      :is-rectificatif="selectedIsRectificatif"
+      @update:open="showApproveModal = $event"
+      @approved="handleBudgetApproved"
+    />
+
+    <CreateRectificatifModal
+      :open="showRectificatifModal"
+      :budget-id="selectedBudgetId ?? ''"
+      :fiscal-year="selectedBudget?.fiscal_year ?? 0"
+      @update:open="showRectificatifModal = $event"
+      @created="handleRectificatifCreated"
     />
   </div>
 </template>

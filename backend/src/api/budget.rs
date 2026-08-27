@@ -165,23 +165,20 @@ pub async fn list_lines(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
-) -> AppResult<Json<serde_json::Value>> {
+) -> AppResult<Json<Vec<db::budget::BudgetLineRow>>> {
     let lines = db::budget::list_lines(&state.pool, id, auth.building_id).await?;
-    Ok(Json(
-        serde_json::to_value(lines).map_err(|e| AppError::Internal(e.into()))?,
-    ))
+    Ok(Json(lines))
 }
 
+/// `rectificatif_version` and `parent_budget_id` are deliberately absent: they
+/// are chain metadata owned by `POST /budgets/{id}/rectificatif`. Accepting them
+/// here would let a client hand-forge a rectificatif and bypass Pattern B.
 #[derive(Deserialize)]
 pub struct CreateLineInput {
     pub label: String,
     pub key_id: Uuid,
     pub budgeted_amount: Decimal,
     pub account_code: Option<String>,
-    pub year: Option<i32>,
-    pub line_type: Option<String>,
-    pub rectificatif_version: Option<i32>,
-    pub parent_budget_id: Option<Uuid>,
 }
 
 pub async fn create_line(
@@ -189,9 +186,9 @@ pub async fn create_line(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
     Json(input): Json<CreateLineInput>,
-) -> AppResult<(StatusCode, Json<serde_json::Value>)> {
+) -> AppResult<(StatusCode, Json<db::budget::BudgetLineRow>)> {
     auth.require_role(&Role::Manager)?;
-    db::budget::ensure_budget_is_mutable(&state.pool, id, auth.building_id).await?;
+    db::budget::ensure_budget_lines_mutable(&state.pool, id, auth.building_id).await?;
     let l = db::budget::create_line(
         &state.pool,
         id,
@@ -199,16 +196,9 @@ pub async fn create_line(
         input.key_id,
         input.budgeted_amount,
         input.account_code.as_deref(),
-        input.year,
-        input.line_type.as_deref(),
-        input.rectificatif_version,
-        input.parent_budget_id,
     )
     .await?;
-    Ok((
-        StatusCode::CREATED,
-        Json(serde_json::to_value(l).map_err(|e| AppError::Internal(e.into()))?),
-    ))
+    Ok((StatusCode::CREATED, Json(l)))
 }
 
 #[derive(Deserialize)]
@@ -217,11 +207,8 @@ pub struct UpdateLineInput {
     pub key_id: Uuid,
     pub budgeted_amount: Decimal,
     pub account_code: Option<String>,
+    /// Optimistic-locking token read from the line being edited.
     pub version: i32,
-    pub year: Option<i32>,
-    pub line_type: Option<String>,
-    pub rectificatif_version: Option<i32>,
-    pub parent_budget_id: Option<Uuid>,
 }
 
 pub async fn update_line(
@@ -229,27 +216,23 @@ pub async fn update_line(
     State(state): State<Arc<AppState>>,
     Path((budget_id, line_id)): Path<(Uuid, Uuid)>,
     Json(input): Json<UpdateLineInput>,
-) -> AppResult<Json<serde_json::Value>> {
+) -> AppResult<Json<db::budget::BudgetLineRow>> {
     auth.require_role(&Role::Manager)?;
-    db::budget::ensure_budget_is_mutable(&state.pool, budget_id, auth.building_id).await?;
+    db::budget::ensure_budget_lines_mutable(&state.pool, budget_id, auth.building_id).await?;
     let l = db::budget::update_line(
         &state.pool,
         line_id,
         budget_id,
+        auth.building_id,
         &input.label,
         input.key_id,
         input.budgeted_amount,
         input.account_code.as_deref(),
         input.version,
-        input.year,
-        input.line_type.as_deref(),
-        input.rectificatif_version,
-        input.parent_budget_id,
+        auth.user_id,
     )
     .await?;
-    Ok(Json(
-        serde_json::to_value(l).map_err(|e| AppError::Internal(e.into()))?,
-    ))
+    Ok(Json(l))
 }
 
 pub async fn delete_line(
@@ -258,8 +241,15 @@ pub async fn delete_line(
     Path((budget_id, line_id)): Path<(Uuid, Uuid)>,
 ) -> AppResult<StatusCode> {
     auth.require_role(&Role::Manager)?;
-    db::budget::ensure_budget_is_mutable(&state.pool, budget_id, auth.building_id).await?;
-    db::budget::delete_line(&state.pool, line_id, budget_id).await?;
+    db::budget::ensure_budget_lines_mutable(&state.pool, budget_id, auth.building_id).await?;
+    db::budget::delete_line(
+        &state.pool,
+        line_id,
+        budget_id,
+        auth.building_id,
+        auth.user_id,
+    )
+    .await?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -660,19 +650,23 @@ pub async fn update_works_fund(
 }
 
 #[derive(Deserialize)]
-pub struct CreateRectificatifInput {
+pub struct ApproveBudgetInput {
+    /// The AG that voted the budget — the legal basis of the approval
+    /// (art. 24 loi 1965). Must be a closed meeting of the same building.
     pub approval_meeting_id: Uuid,
 }
 
 /// Creates a rectificatif (amendment) budget for an existing approved budget.
-/// Pattern B (ADR-009): closes the original approved budget and creates a new
-/// draft budget with parent_budget_id referencing the original.
-/// Budget lines are versioned with valid_from/valid_to.
+///
+/// Pattern B (ADR-009): a new draft budget is created with `parent_budget_id`
+/// referencing the amended budget, whose lines are copied into it. The amended
+/// budget is left untouched and stays in force until the rectificatif is voted
+/// in AG (`POST /budgets/{id}/approve`).
 pub async fn create_rectificatif(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,
     Path(original_budget_id): Path<Uuid>,
-) -> AppResult<(StatusCode, Json<serde_json::Value>)> {
+) -> AppResult<(StatusCode, Json<db::budget::BudgetRow>)> {
     auth.require_role(&Role::Manager)?;
 
     let rectificatif = db::budget::create_rectificatif(
@@ -683,19 +677,17 @@ pub async fn create_rectificatif(
     )
     .await?;
 
-    Ok((
-        StatusCode::CREATED,
-        Json(serde_json::to_value(rectificatif).map_err(|e| AppError::Internal(e.into()))?),
-    ))
+    Ok((StatusCode::CREATED, Json(rectificatif)))
 }
 
-/// Approves a draft budget, transitioning it to 'approved' status.
+/// Approves a draft budget, transitioning it to 'approved' status. For a
+/// rectificatif this closes the amended budget in the same transaction.
 pub async fn approve(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,
     Path(budget_id): Path<Uuid>,
-    Json(input): Json<CreateRectificatifInput>,
-) -> AppResult<(StatusCode, Json<serde_json::Value>)> {
+    Json(input): Json<ApproveBudgetInput>,
+) -> AppResult<Json<db::budget::BudgetRow>> {
     auth.require_role(&Role::Manager)?;
 
     let budget = db::budget::approve(
@@ -707,10 +699,21 @@ pub async fn approve(
     )
     .await?;
 
-    Ok((
-        StatusCode::OK,
-        Json(serde_json::to_value(budget).map_err(|e| AppError::Internal(e.into()))?),
-    ))
+    Ok(Json(budget))
+}
+
+/// Returns the rectificatif chain the budget belongs to, root first, so the UI
+/// can expose the amendment history (Pattern B, ADR-009).
+pub async fn rectificatif_chain(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+    Path(budget_id): Path<Uuid>,
+) -> AppResult<Json<Vec<db::budget::BudgetRow>>> {
+    let chain = db::budget::rectificatif_chain(&state.pool, budget_id, auth.building_id).await?;
+    if chain.is_empty() {
+        return Err(AppError::NotFound);
+    }
+    Ok(Json(chain))
 }
 
 #[cfg(test)]

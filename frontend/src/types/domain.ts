@@ -210,6 +210,8 @@ export interface Budget {
   fiscal_year: number
   status: BudgetStatus
   approval_meeting_id?: string
+  /** Set on a rectificatif: the budget it amends (Pattern B, ADR-009). */
+  parent_budget_id?: string
   created_at: string
   total_forecast?: number
   total_actual?: number
@@ -232,8 +234,14 @@ export interface BudgetLine {
   account_code?: string
   account_code_label?: string
   account_code_category?: string
-  valid_from?: string
+  /** Always present: the date this version took effect. */
+  valid_from: string
+  /** Set once the version is closed by a rectificatif; exclusive bound. */
   valid_to?: string
+  /** NULL on a root budget's lines, 1..N on a rectificatif's. */
+  rectificatif_version?: number
+  /** Optimistic-locking token — must be echoed back on update. */
+  version: number
 }
 
 export interface LevyCall {

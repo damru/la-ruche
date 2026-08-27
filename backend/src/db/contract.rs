@@ -415,7 +415,7 @@ pub async fn activate(
         notice_days: row.notice_days.map(|d| d as u32),
         payment_frequency_months: frequency_to_months(row.payment_frequency.as_deref()),
     };
-    let today = chrono::Local::now().date_naive();
+    let today = chrono::Utc::now().date_naive();
     for reminder in compute_reminders(&spec, today) {
         let kind_str = reminder_kind_to_str(&reminder.kind);
         sqlx::query!(
@@ -531,7 +531,7 @@ pub async fn update(
             payment_frequency_months: frequency_to_months(row.payment_frequency.as_deref()),
         };
 
-        let today = chrono::Local::now().date_naive();
+        let today = chrono::Utc::now().date_naive();
         for reminder in compute_reminders(&spec, today) {
             let kind_str = reminder_kind_to_str(&reminder.kind);
             sqlx::query!(
