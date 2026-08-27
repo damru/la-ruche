@@ -1,9 +1,9 @@
 ---
 document: DESIGN
-version: 2.0.0
+version: 2.0.1
 owner: Damien
 status: validé
-last_updated: 2026-05-27
+last_updated: 2026-08-27
 references:
   - DDR-001
   - DDR-002
@@ -193,10 +193,10 @@ Les états interactifs sont gérés localement dans chaque composant — pas de 
 
 | Fichier | Patterns concernés | Migration cible |
 |---|---|---|
-| `tabs.css` | `.tabs` · `.tab` · `.tab--active` · `.tab-count` | `CTabs` atom (EP-020-S07) |
-| `typography.css` | `.display-*` · `.headline-*` · `.title-*` · `.body-*` | `CHeading` atom (EP-020-S08) + utilitaires `@utility` |
-| `forms.css` | `.form-grid` · `.field` · `.search-bar` · `.dropzone` · `.icon-btn` | `CFormRow`, `CFormGroup` molecules + atoms `CFormInput`, `CFormDropzone` existants + Tailwind inline (EP-020-S09) |
-| `tables.css` | `.cards-grid` | `.cards-grid` → Tailwind `grid grid-cols-[…]` inline |
+| `tabs.css` | `.tabs` · `.tab` · `.tab--active` · `.tab-count` | ✅ migré vers `CTabs` (EP-020-S07) — fichier supprimé |
+| `typography.css` | `.display-*` · `.headline-*` · `.title-*` · `.body-*` | ✅ migré vers `CHeading` + `@utility` (EP-020-S08) — fichier supprimé |
+| `forms.css` | `.form-grid` · `.field` · `.search-bar` · `.dropzone` · `.icon-btn` | `CFormRow`, `CFormGroup` molecules + atoms `CFormInput`, `CFormDropzone` existants + Tailwind inline (EP-020-S09) — fichier encore présent, reliquats à migrer |
+| `tables.css` | `.cards-grid` | ✅ `.cards-grid` → Tailwind `grid grid-cols-[…]` inline (EP-020-S10) — fichier supprimé |
 | `base.css` | `.view-container` · `.view-header` · `.card--terminated` · `.loading-skeleton` · `.spinner` | `view-container` / `view-header` utilitaires `@utility` ; `CEmptyState` (✅) ; `CPageLoader` (✅) ; resets navigateur conservés (EP-020-S11) |
 
 ---
@@ -283,7 +283,7 @@ Source : `frontend/src/styles/tokens.css`. Les valeurs Dark sont dans `[data-the
 
 **Rôles** :
 
-> Les valeurs hex sont les valeurs actuelles dans `tokens.css`. Migration vers OKLCH planifiée — EP-020-S01 et EP-020-S02.
+> Migration OKLCH réalisée (EP-020-S01 et EP-020-S02) — `tokens.css` est en OKLCH ; les valeurs hex de ce tableau sont les équivalents historiques indicatifs.
 
 | Token (`-bg` / `-fg`) | Background light | Foreground light | Background dark | Foreground dark |
 |---|---|---|---|---|
@@ -441,7 +441,7 @@ border-color: var(--color-outline-light);
 | `CAlert` | `variant` (`error` \| `warning` \| `info` \| `success`), `title` | Bandeau d'alerte contextuelle — consomme `.tone--err/warn/info/valid` |
 | `CAvatar` | `name` (`string \| null \| undefined`), `size?` (`sm` \| `md` \| `lg`, défaut `md`) | Avatar initiales — hue oklch dérivé du nom par hash djb2, adapté au thème via `[data-theme="dark"]`. `sm`=28px, `md`=36px, `lg`=42px. 1 mot→2 premiers chars, multi-mots→initiales premier+dernier. |
 | `CBadge` | `variant` | Chip de statut ou de catégorie — consomme `.tone--*` |
-| `CDataText` | `size` (`sm` \| `md` \| `lg`) | 🔲 planifié — Texte tabulaire JetBrains Mono — `font-mono font-medium lining-nums tabular-nums` |
+| `CDataText` | `size` (`sm` \| `md` \| `lg`) | 🔲 planifié (EP-020-S17) — Texte tabulaire JetBrains Mono — `font-mono font-medium lining-nums tabular-nums` |
 | `CEyebrow` | — | Libellé eyebrow — `font-body text-2xs font-medium uppercase tracking-[0.06em]`. Rendu en `<div>`. |
 | `CHeading` | `type` (`header` \| `section` \| `card`), `variant` (`heading` \| `title`) | ✅ Titre Fraunces semibold. `header` = `text-2xl` h1, `section` = `text-xl` h2 (défaut), `card` = `text-lg` h3. Variante `title` = `font-body font-semibold`. |
 | `CIconTile` | `size` (`sm` \| `md` \| `lg`) | Tuile icône avec fond tonal — consomme `.tone--*`. `sm` = 32px, `md` = 40px (défaut), `lg` = 56px. `border-radius` ajusté par taille. Slot défaut pour l'icône SVG — icône dimensionnée via `:deep(svg)`. |
@@ -484,18 +484,18 @@ border-color: var(--color-outline-light);
 |---|---|---|
 | `CCard` | `level?` (`1`\|`2`\|`3`\|`4`, défaut `2`), `shadow?`, `gap?` (`none` \| `sm` \| `md`) | Conteneur générique — définit background, border-radius, padding et flux interne. `level` couple padding et radius : 1 = padding lg + radius 3xl (carte racine), 2 = padding md + radius 2xl (défaut), 3 = padding sm + radius xl (carte imbriquée), 4 = padding xs + radius lg (carte innermost). `gap` : `sm` = 12px, `md` = 16px (défaut), `none` = 0. Pour les listes avec séparateurs : `CFlexGroup`. Ossature d'une carte d'entité : `CCardHeader` › titre › description › `CMetaLine` › `CCardActions` › `CCardNote`. |
 | `CCardActions` | — | ✅ Zone d'actions d'une carte — `flex flex-wrap gap-x-2 gap-y-1`. |
-| `CCardHeader` | `withIcon?` | 🔲 planifié — En-tête de carte — slots `#icon`, `#chips` |
+| `CCardHeader` | `withIcon?` | 🔲 planifié (EP-020-S15) — En-tête de carte — slots `#icon`, `#chips` |
 | `CCardNote` | `note` | Encart d'information secondaire dans une `CCard` |
 | `CCopyField` | `value`, `label?`, `hint?`, `copyTitle?`, `copiedTitle?` | ✅ Champ lecture seule + bouton copier (presse-papiers). Gère son propre état « copié ». Remplace les blocs `invite-link-box`. |
 | `CDataTable` | `columns`, `rows` | Tableau de données |
-| `CDocumentList` | `documents`, `readonly?` | 🔲 planifié — Liste documents avec download/retrait — `emit('remove', doc)` au parent |
+| `CDocumentList` | `documents`, `readonly?` | 🔲 planifié (EP-020-S16) — Liste documents avec download/retrait — `emit('remove', doc)` au parent |
 | `CEmptyState` | `icon`, `title`, `description?`, `size?` (`page` \| `compact`) | ✅ État vide — slot `#actions`. `page` = centré + `py-8`, `compact` = plus petit pour les sections. |
 | `CFileDropzone` | `files` (v-model:files `File[]`), `hint?`, `removeLabel?`, `multiple?`, `accept?` | ✅ Zone de dépôt + sélection de fichiers locaux avant envoi. Prévisualisation par puces (nom + retrait) par défaut ; slot `#preview="{ files, remove }"` pour un rendu custom (ex. vignettes images). À distinguer de `CFormDropzone` (upload direct serveur). |
 | `CForm` | `status?`, `message?` | Formulaire structuré (`<form>`) — flex-col gap-4 + slot `#actions` → `CFormActions`. `@submit` émis sur soumission. Remplace `<form>` brut dans les vues. |
 | `CFormActions` | `status`, `message?` | Rangée de boutons (droite) + `CFormFeedback` push en dessous. Utiliser dans le slot `#actions` de `CForm` ou dans `#footer` de `CModal`. |
 | `CFormAddressAutocomplete` | `label`, `value` | Champ adresse avec autocomplétion |
-| `CFormGroup` | `label`, `hint?` | 🔲 planifié — Wrapper label + champ + hint |
-| `CFormRow` | `cols` (1/2) | 🔲 planifié — Grille formulaire 2 colonnes responsive |
+| `CFormGroup` | `label`, `hint?` | ✅ Wrapper label + champ + hint (EP-020-S09) |
+| `CFormRow` | `cols` (1/2) | ✅ Grille formulaire 2 colonnes responsive (EP-020-S09) |
 | `CKpiCard` | `title`, `tone` | Conteneur indicateur KPI — compose `CKpiMetric` pour la valeur |
 | `CKpiMetric` | `value`, `unit?`, `size?` | Valeur numérique KPI — `text-display font-mono lnum tnum`. Ne jamais utiliser `font-display` ni `text-[…px]` ici. |
 | `CLegalCard` | — | Carte de note légale (wraps `CLegalNotice`) |
@@ -504,11 +504,11 @@ border-color: var(--color-outline-light);
 | `CMetaItem` | `variant`, `icon` | Ligne icône + contenu — variantes `footer` / `sub` |
 | `CMetaLine` | — | Rangée horizontale de `CMetaItem` avec `CSeparator` |
 | `CModal` | `open`, `title`, `saving?`, `feedback?` | Dialogue Radix `Dialog` — émettre `@submit` pour soumission. `CFormFeedback` obligatoire dans `#footer` (DDR-006). |
-| `CPageHeader` | `eyebrow?`, `title`, `meta?`, `icon?`, `frozenLabel?` | 🔲 planifié — En-tête de vue — slot `#actions` |
+| `CPageHeader` | `eyebrow?`, `title`, `meta?`, `icon?`, `frozenLabel?` | 🔲 planifié (EP-020-S13) — En-tête de vue — slot `#actions` |
 | `CPageLoader` | — | Indicateur de chargement |
 | `CSectionHeader` | — | ✅ En-tête de section — `flex items-start justify-between gap-3`. Slot default (zone titre : heading + meta). Slot `#actions` pour les boutons droite. Remplace `.section-head` / `.card-head`. |
 | `CSectionLink` | `to` | ✅ Lien « voir tout » d'en-tête de section — `RouterLink` + chevron. À utiliser dans le slot `#actions` de `CSectionHeader`. |
-| `CTopbarBreadcrumb` | `crumbs[]` | 🔲 planifié — Fil d'Ariane topbar |
+| `CTopbarBreadcrumb` | `crumbs[]` | 🔲 planifié (EP-020-S14) — Fil d'Ariane topbar |
 
 ---
 
