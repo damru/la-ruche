@@ -3,7 +3,7 @@ document: LEGAL
 version: 1.0.0
 owner: Damien
 status: validé
-last_updated: 2026-05-23
+last_updated: 2026-08-27
 references:
   - Loi n°65-557 du 10 juillet 1965
   - Décret n°67-223 du 17 mars 1967
@@ -44,6 +44,7 @@ rules:
 > - RGPD (Règlement UE 2016/679)
 >
 > Dernière mise à jour : 23 mai 2026 (audit gaps légaux — §3.1 art. 9 bis + 14-1 vote correspondance ; §3.5 nouvelle art. 17-1 AA ; §4.7 art. 19-2 déchéance terme J+30 ; §7.1 art. 5 décret v7.0 25/12/2025 ; tableau synthétique mis à jour)
+> Mise à jour du 27 août 2026 (audit statuts vs code) : §3.5 rattachée à EP-003-S11 ; §11 passée à ⚠️ (EP-018 livré, reste EP-021-S03) ; §1.7 et §10 annotées des livraisons EP-002-S11 (registre de gouvernance) et EP-002-S10 (procédures judiciaires).
 
 ---
 
@@ -151,7 +152,7 @@ Depuis le 1er janvier 2015, tout syndic professionnel doit mettre à disposition
 ### 1.7 Organes de la copropriété
 
 **Références :** Art. 14, 18 et 21 loi 1965  
-**Couverture :** ⚠️ partielle — EP-002, EP-003
+**Couverture :** ⚠️ partielle — EP-002, EP-003 ; registre de gouvernance (syndic, conseil syndical, mandats) livré via EP-002-S11 ✅
 
 La gouvernance d'une copropriété repose sur trois organes juridiquement distincts.
 
@@ -324,7 +325,7 @@ Les copropriétaires opposants ou défaillants disposent ensuite d'un délai de 
 ### 3.5 AG à la demande d'un copropriétaire
 
 **Référence :** Art. 17-1 AA loi 1965 (LEGIARTI000039301594 v1.0, en vigueur 01/06/2020)  
-**Couverture :** ❌ non couverte — à créer
+**Couverture :** ❌ non couverte — EP-003-S11
 
 Tout copropriétaire peut solliciter du syndic la convocation et la tenue, **à ses frais**, d'une assemblée générale pour faire inscrire à l'ordre du jour une ou plusieurs questions **ne concernant que ses droits ou obligations**.
 
@@ -611,7 +612,7 @@ Le syndicat des copropriétaires est responsable de traitement. Les données tra
 ## 10. Représentation en justice et suivi des procédures
 
 **Référence :** Art. 18-I loi 1965 (service-public.fr/F2608)  
-**Couverture :** ⚠️ partielle — EP-002-S06, EP-002-S10
+**Couverture :** ⚠️ partielle — EP-002-S10 ✅ (registre des procédures judiciaires livré backend + frontend), EP-002-S06 (intégration à l'état daté restante)
 
 Le syndic représente le syndicat des copropriétaires en justice, tant en demande qu'en défense. Il peut engager des actions pour défendre les intérêts de la copropriété sans vote en AG (sauf actions exceptionnelles nécessitant une autorisation AG).
 
@@ -624,7 +625,7 @@ Le syndic représente le syndicat des copropriétaires en justice, tant en deman
 ## 11. Immutabilité des données comptables
 
 **Références :** Art. L123-22 Code de commerce (conservation 10 ans) · Art. 14-1 loi 1965 · Art. 17 loi 1965 · Décret 2001-477 · Code des assurances  
-**Couverture :** ❌ non couverte — EP-018 (backlog), ADR-009 (cadrage)
+**Couverture :** 🟡 partiellement couverte — EP-018-S01 à S07 livrées (Patterns A, B et C implémentés, guards en `domain/immutability`), ADR-009 · ADR-012 (cadrage). Reste : câblage exhaustif de `audit_log` sur toutes les mutations comptables (EP-021-S03), lien `resolution_id` sur `budget` (AC-BC-009-F).
 
 L'obligation de conservation comptable (art. L123-22 Code de commerce, 10 ans) et la valeur probatoire des actes produits en copropriété imposent que certaines données ne puissent pas être modifiées ou supprimées une fois qu'elles ont acquis une valeur juridique ou financière.
 
@@ -674,6 +675,8 @@ Deux patterns distincts s'appliquent selon la nature de l'entité :
 **Correction d'erreur (Pattern A/C) :** aucune modification rétroactive. La correction s'effectue par une nouvelle écriture explicite (avoir, nouvelle entrée) — jamais par écrasement d'une donnée émise.
 
 **Avenant contractuel (Pattern B) :** l'ancien contrat est terminé à la date de signature de l'avenant. Le nouveau contrat démarre à cette même date et référence le prédécesseur via `predecessor_id`. L'historique complet reste consultable en remontant la chaîne.
+
+**Budget rectificatif (Pattern B) :** le budget approuvé n'est ni modifié ni clôturé à la *création* du rectificatif — il demeure l'acte en vigueur jusqu'au vote de celui-ci en AG. C'est l'approbation du rectificatif qui clôt le budget précédent et date ses lignes (`valid_to`). L'approbation exige une AG tenue (statut `closed`) de la même copropriété, conformément à la majorité de l'art. 24 loi 1965. Les lignes budgétaires clôturées sont conservées et redeviennent lisibles en remontant la chaîne `parent_budget_id`, au titre de la conservation décennale.
 
 ---
 
@@ -744,7 +747,7 @@ L'`audit_log` est en **append-only** : aucune ligne ne peut être modifiée ou s
 | 3.2 | Tenue de séance et présidence | Art. 15 décret 1967 | ✅ | EP-013-S02, EP-013-S03 |
 | 3.3 | Règles de majorité | Art. 24/25/26 loi 1965 | ✅ | EP-003-S03/S04/S07, EP-013-S05/S10 |
 | 3.4 | PV (signable J+8) + notification 1 mois + contestation 2 mois | Art. 17, 18 décret 1967 · Art. 42 loi 1965 | ✅ | EP-003-S05/S06/S10, EP-013-S08 |
-| 3.5 | AG à la demande d'un copropriétaire à ses frais | Art. 17-1 AA loi 1965 (LEGIARTI000039301594) | ❌ | à créer |
+| 3.5 | AG à la demande d'un copropriétaire à ses frais | Art. 17-1 AA loi 1965 (LEGIARTI000039301594) | ❌ | EP-003-S11 |
 | 3.6 | PV du conseil syndical en délégation de pouvoirs | Art. 21-1 décret 1967 | ❌ | EP-002-S12 |
 | 4.1 | Compte bancaire séparé | Art. 18 loi 1965 | 🔲 | — |
 | 4.2 | Plan comptable normé | Arrêté 14/03/2005 | ⚠️ | EP-004 |
@@ -763,5 +766,5 @@ L'`audit_log` est en **append-only** : aucune ligne ne peut être modifiée ou s
 | 7.2 | Pré-état daté | ALUR art. L721-2 | ❌ | EP-002-S07 |
 | 8 | RGPD + anonymisation | RGPD 2016/679 | ⚠️ | EP-002-S05, EP-002-S09 |
 | 9 | Sinistres (délais déclaration) | Code des assurances | ✅ | EP-008 |
-| 10 | Représentation en justice + procédures en cours | Art. 18-I loi 1965 | ⚠️ | EP-002-S06, EP-002-S10 |
-| 11 | Immutabilité des données comptables + audit log | Art. L123-22 Code de commerce | ❌ | EP-018, ADR-009 |
+| 10 | Représentation en justice + procédures en cours | Art. 18-I loi 1965 | ⚠️ | EP-002-S10 ✅, EP-002-S06 |
+| 11 | Immutabilité des données comptables + audit log | Art. L123-22 Code de commerce | ⚠️ | EP-018 (S01–S07 livrées), EP-021-S03, ADR-009 |

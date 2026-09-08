@@ -1,9 +1,9 @@
 ---
 document: EPICS
-version: 1.0.0
+version: 1.1.0
 owner: Damien
 status: validé
-last_updated: 2026-06-04
+last_updated: 2026-08-26
 description: >
   Backlog officiel du projet La Ruche — épics et stories organisées par domaine fonctionnel.
   Chaque story référence un PRD, un ADR ou une obligation légale (LEGAL.md §X.Y).
@@ -25,7 +25,7 @@ rules:
 > Chaque feature est organisée en epic. Les stories sont ajoutées à la demande, au moment de l'implémentation.
 > Le MVP est l'ensemble des epics marquées **MVP : oui**.
 > Statuts possibles : **en attente** · **en cours** · **terminée**
-> Dernière mise à jour : 4 juin 2026
+> Dernière mise à jour : 26 août 2026
 
 > **Lecture d'avancement (code actuel) :**
 > - **backend réel** = handlers + DB opérationnels
@@ -148,7 +148,7 @@ La fiche identitaire de la copropriété (nom, adresse, SIRET syndic), le règle
 
 **Statut :** en cours ⏳ | **MVP :** oui | **Réf. PRD :** Fondations légales
 
-**État code actuel :** S01–S05 et S08 livrés côté backend (domaine + DB + API) et frontend (liste résidents, invitation tokenisée avec TTL, révocation d’invitation, mutation de lot avec historique, anonymisation RGPD, accès par lien `/invite/:token`). Migration `0026_user_token_unit_id.sql` appliquée. S06, S07, S09, S10, S12 hors scope MVP.
+**État code actuel :** S01–S05 et S08 livrés côté backend (domaine + DB + API) et frontend (liste résidents, invitation tokenisée avec TTL, révocation d’invitation, mutation de lot avec historique, anonymisation RGPD, accès par lien `/invite/:token`). Migration `0026_user_token_unit_id.sql` appliquée. S10 (procédures judiciaires) et S11 (registre de gouvernance) livrés backend + frontend. S06, S07, S09, S12 hors scope MVP.
 
 Historique de propriété tracé avec dates de cession, invitation par lien tokenisé, anonymisation RGPD à la demande (conservation des données comptables 10 ans).
 
@@ -163,8 +163,8 @@ Historique de propriété tracé avec dates de cession, invitation par lien toke
 * `EP-002-S07` — Générer le pré-état daté pour signature du compromis de vente (synthèse financière de la copropriété) (LEGAL.md §7.2)
 * `EP-002-S08` ✅ — Garantir en mutation que les tantièmes restent attachés au lot (pas au propriétaire) et exposer la quote-part vendeur/acquéreur à date (LEGAL.md §2.4)
 * `EP-002-S09` ⏸️ — *(reporté post-MVP → EP-021-S01)* Exporter les données personnelles d'un copropriétaire (droit d'accès RGPD) avec périmètre horodaté et traçabilité de la demande (LEGAL.md §8)
-* `EP-002-S10` — Enregistrer et suivre les procédures judiciaires en cours impliquant le syndicat (demandeur ou défendeur), avec date d'ouverture, type, statut ; requis pour l'état daté (LEGAL.md §7.1, §10)
-* `EP-002-S11` — Tenir un registre de gouvernance (syndic en exercice, membres du conseil syndical, périodes de mandat) pour auditer la séparation des organes (LEGAL.md §1.7, §1.8)
+* `EP-002-S10` ✅ — Enregistrer et suivre les procédures judiciaires en cours impliquant le syndicat (demandeur ou défendeur), avec date d'ouverture, type, statut ; requis pour l'état daté (LEGAL.md §7.1, §10)
+* `EP-002-S11` ✅ — Tenir un registre de gouvernance (syndic en exercice, membres du conseil syndical, périodes de mandat) pour auditer la séparation des organes (LEGAL.md §1.7, §1.8)
 * `EP-002-S12` — PV du conseil syndical en délégation de pouvoirs : créer, stocker et consulter les PV formels des décisions prises par le conseil syndical sous délégation d'AG (signé par 2 membres, noms + sens des votes, inscrit au registre des PV d'AG) — art. 21-1 décret 67-223, LEGIARTI000042077775 (LEGAL.md §3.5)
 * `EP-002-S13` ✅ — Créer un résident sans invitation immédiate et déclencher l'invitation depuis la liste (PRD US-GP-008)
 * `EP-002-S14` ✅ — Modifier la fiche d'un résident existant (nom, prénom, email, téléphone, rôle) depuis la liste des résidents — syndic uniquement ; email soumis à contrainte d'unicité (PRD US-GP-001 §U, matrice CRUD « Fiche résident » Syndic = C/R/U/D)
@@ -431,6 +431,7 @@ Le cycle de vie complet d'une AG est : `draft` → `called` → **`ongoing`** �
 * `EP-013-S08` ✅ — Générer et valider le projet de PV : après clôture de séance (`status = closed`), produire un projet de PV structuré (résolutions + résultats + présences + notes) et le soumettre à revue avant signature (LEGAL.md §3.4)
 * `EP-013-S09` — Signer et publier le PV : finaliser le PV avec signature numérique, l'attacher à l'AG et déclencher la traçabilité de notification aux absents (→ EP-003-S06)
 * `EP-013-S10` ✅ — Détecter et traiter l'article 26-1 : si une résolution `double_majority` est rejetée avec ≥ 1/2 des tantièmes totaux en faveur, proposer immédiatement une re-délibération à la majorité absolue (art. 25) dans la même séance ; tracer la résolution originale et sa re-délibération (LEGAL.md §3.3)
+* `EP-013-S11` — Garde backend de séance : refuser l'enregistrement des présences et des votes hors statut `ongoing` et figer toute mutation après `closed` — aujourd'hui seule l'UI restreint ces actions, le backend accepte un vote sur une AG `called` ou `closed` (LEGAL.md §11.1)
 
 ***
 
@@ -448,7 +449,9 @@ Calendrier partagé centralisant AG, interventions et réunions avec liens conte
 * `EP-014-S04` — Exporter le calendrier au format ICS pour intégration dans les agendas personnels (Google Calendar, Outlook, Apple Calendar) (PRD US-CAL-003)
 * `EP-014-S05` — Afficher une vue agenda (prochains 30 jours) depuis le tableau de bord avec les 5 prochains événements (PRD US-CAL-004)
 
-*** — Référentiel prestataires
+***
+
+### EP-015 — Référentiel prestataires
 
 **Statut :** en cours | **MVP :** non | **Réf. PRD :** Gestion courante
 
@@ -517,20 +520,20 @@ Vue unifiée du cycle de vie d’un signalement et/ou d’une tâche, de la cré
 
 ### EP-018 — Immutabilité comptable & auditabilité probante
 
-**Statut :** en attente | **MVP :** oui | **Réf. LEGAL :** §11 · **Réf. ADR :** ADR-009
+**Statut :** en cours | **MVP :** oui | **Réf. LEGAL :** §11 · **Réf. ADR :** ADR-009 · ADR-012
 
-**État code actuel :** non implémenté ; ADR-009 est accepté mais aucun backlog explicite ne couvrait encore les guards d'immuabilité, les workflows de correction juridique et le journal append-only associé. L'arbitrage documentaire cible est désormais le suivant : `audit_log` reste la piste probante comptable de `EP-018`, tandis que `EP-017` porte une frise métier distincte via `activity_log`.
+**État code actuel :** S01 à S07 livrées. Le module `domain/immutability` porte les guards `is_mutable()` / `is_deletable()` pour `levy_call`, `task`, `claim`, `vote`, `resolution`, `maintenance_log`, `vendor_contract` et `budget`. Les Patterns A, B et C sont implémentés sur leurs entités respectives. Reste ouvert : le câblage exhaustif de `audit_log` sur l'ensemble des mutations comptables (porté par `EP-021-S03`), et le lien `resolution_id` sur `budget` (AC-BC-009-F, à trancher avec `EP-003`). L'arbitrage documentaire est le suivant : `audit_log` reste la piste probante comptable de `EP-018`, tandis que `EP-017` porte une frise métier distincte via `activity_log`.
 
 Durcir les entités comptablement critiques pour empêcher toute modification rétroactive après état terminal, imposer les patterns `gel`, `clôturer + recréer` ou `append-only` selon les cas, et conserver une piste d'audit probante alignée sur l'ADR-009.
 
 **Stories :**
 
-* `EP-018-S01` — Entériner l’arbitrage documentaire avec `EP-017` : `audit_log` réservé aux mutations comptables/juridiques probantes, `activity_log` réservé aux événements métier de timeline, avec frontière de responsabilité documentée et non ambiguë
+* ✅ `EP-018-S01` — Entériner l’arbitrage documentaire avec `EP-017` : `audit_log` réservé aux mutations comptables/juridiques probantes, `activity_log` réservé aux événements métier de timeline, avec frontière de responsabilité documentée et non ambiguë
 * ✅ `EP-018-S02` — Créer l'infrastructure transverse d'immutabilité : module `domain/immutability`, guards `is_mutable()` / `is_deletable()`, repository de journal append-only et points d'appel obligatoires avant mutation
 * ✅ `EP-018-S03` — Sécuriser `levy_call` selon le Pattern A : ajout du statut `draft`, endpoint d'émission explicite (`POST /levy-calls/{id}/issue`), blocage des `UPDATE` / `DELETE` hors `draft` et trigger PG défensif
 * ✅ `EP-018-S04` — Appliquer le Pattern A sur `task`, `claim`, `vote`, `resolution` et `maintenance_log` automatique : champs financiers figés après état terminal, suppression interdite selon les règles ADR-009, et masquage UI des actions `Modifier` / `Supprimer`
-* `EP-018-S05` — ✅ Appliquer le Pattern B sur `vendor_contract` : ajouter `predecessor_id`, remplacer `Modifier` par `Créer un avenant` sur les champs gelés, clôturer l'ancien contrat à l'activation de l'avenant et exposer la chaîne d'avenants
-* `EP-018-S06` — Appliquer le Pattern B sur `budget` / `budget_line` : ajouter `parent_budget_id`, remplacer l'unicité annuelle par une contrainte compatible rectificatifs, versionner `budget_line` via `valid_from` / `valid_to` et créer le workflow de budget rectificatif
+* ✅ `EP-018-S05` — Appliquer le Pattern B sur `vendor_contract` : ajouter `predecessor_id`, remplacer `Modifier` par `Créer un avenant` sur les champs gelés, clôturer l'ancien contrat à l'activation de l'avenant et exposer la chaîne d'avenants
+* ✅ `EP-018-S06` — Appliquer le Pattern B sur `budget` / `budget_line` : ajouter `parent_budget_id`, remplacer l'unicité annuelle par une contrainte compatible rectificatifs, versionner `budget_line` via `valid_from` / `valid_to` et créer le workflow de budget rectificatif
 * ✅ `EP-018-S07` — Appliquer le Pattern C sur les corrections comptables : avoirs sur `levy_call`, corrections append-only sur `maintenance_log` manuel, et journalisation des opérations `UPDATE` / `DELETE` financières avec diff ciblé (`old_values` / `new_values`)
 
 ***
@@ -545,22 +548,22 @@ Feature simple self-service permettant à chaque utilisateur authentifié de gé
 
 **Stories :**
 
-* `EP-019-S01` — Consulter son espace profil personnel avec rappel lisible du rôle et du contexte de compte
-* `EP-019-S02` — Modifier ses informations personnelles éditables : email (identifiant de connexion) et téléphone uniquement ; `full_name` est `prefilled` depuis EP-002 (non modifiable ici) (PRD US-PP-002)
-* `EP-019-S03` — Gérer ses préférences de notifications par événement (16 événements catalogués : 3 obligatoires toggle désactivé, 13 optionnels) (PRD US-PP-004)
-* `EP-019-S04` — Définir sa préférence d'apparence (`clair`, `sombre`, `automatique`) et l'appliquer immédiatement dans l'interface
-* `EP-019-S05` — Structurer l'écran en onglets `Compte`, `Notifications`, `Apparence` pour éviter la dispersion des réglages
-* `EP-019-S06` — Gérer la première visite : afficher les valeurs par défaut de manière lisible dès la première ouverture du profil ; s'assurer que l'état initial est compréhensible sans action préalable (PRD US-PP-003)
-* `EP-019-S07` — Réinitialiser ses préférences : bouton global unique en bas de page (couvre Notifications + Apparence), avec modale de confirmation avant exécution (PRD US-PP-005)
-* `EP-019-S08` — Afficher le contexte utilisateur : rôle actif, résidence de rattachement et périmètre des droits depuis l'écran profil (PRD US-PP-007)
+* `EP-019-S01` ✅ — Consulter son espace profil personnel avec rappel lisible du rôle et du contexte de compte
+* `EP-019-S02` ✅ — Modifier ses informations personnelles éditables : email (identifiant de connexion) et téléphone uniquement ; `full_name` est `prefilled` depuis EP-002 (non modifiable ici) (PRD US-PP-002)
+* `EP-019-S03` — Gérer ses préférences de notifications par événement (16 événements catalogués : 3 obligatoires toggle désactivé, 13 optionnels) (PRD US-PP-004) — UI livrée mais persistance localStorage uniquement ; reste la persistance serveur
+* `EP-019-S04` ✅ — Définir sa préférence d'apparence (`clair`, `sombre`, `automatique`) et l'appliquer immédiatement dans l'interface
+* `EP-019-S05` ✅ — Structurer l'écran en onglets `Compte`, `Notifications`, `Apparence` pour éviter la dispersion des réglages
+* `EP-019-S06` ✅ — Gérer la première visite : afficher les valeurs par défaut de manière lisible dès la première ouverture du profil ; s'assurer que l'état initial est compréhensible sans action préalable (PRD US-PP-003)
+* `EP-019-S07` — Réinitialiser ses préférences : bouton global unique en bas de page (couvre Notifications + Apparence), avec modale de confirmation avant exécution (PRD US-PP-005) — livré partiellement : reset Notifications seul, placé dans l'onglet ; reste le bouton global couvrant aussi l'Apparence
+* `EP-019-S08` ✅ — Afficher le contexte utilisateur : rôle actif, résidence de rattachement et périmètre des droits depuis l'écran profil (PRD US-PP-007)
 
 ***
 
 ### EP-020 — Design system : consolidation tokens & wrappers Radix
 
-**Statut :** en attente | **MVP :** non | **Réf. PRD :** DESIGN.md
+**Statut :** en cours | **MVP :** non | **Réf. PRD :** DESIGN.md
 
-**État code actuel :** les tokens définis dans `DESIGN.md` ne sont pas tous enregistrés dans `tailwind.css` (`@theme inline`) ; la palette reste en hex au lieu d'OKLCH ; plusieurs wrappers Radix Vue restent à créer.
+**État code actuel :** S01–S12 livrées (tokens OKLCH, `@theme inline`, wrappers Radix, suppression des CSS legacy). Restent les composants catalogués « 🔲 planifié » dans DESIGN.md §3 et absents du code : `CPageHeader`, `CTopbarBreadcrumb`, `CCardHeader`, `CDocumentList`, `CDataText` (S13–S17). Nota : `CFormGroup` et `CFormRow` existent déjà — DESIGN.md à rafraîchir.
 
 Consolidation technique du design system : migration des tokens de couleur vers OKLCH pour garantir des relations chroma/luminosité vérifiables en thème sombre, enregistrement des tokens manquants dans Tailwind v4, et implémentation des wrappers de primitives Radix Vue restants.
 
@@ -578,6 +581,11 @@ Consolidation technique du design system : migration des tokens de couleur vers 
 * `EP-020-S10` ✅ — Déplacer les styles `.data-table` dans les scoped blocks des vues consommatrices ; remplacer `.cards-grid` par Tailwind `grid grid-cols-[…]` inline ; supprimer `tables.css`
 * `EP-020-S11` ✅ — Nettoyer `base.css` : conserver les seuls resets navigateur et touch targets ; migrer `.view-container`/`.view-header` vers Tailwind inline, `.empty-state` vers `CEmptyState` ; supprimer les classes applicatives (spinner, loading-skeleton, card--terminated)
 * `EP-020-S12` ✅ — Supprimer `activity-cards.css` ; remplacer par l'utilisation de CCard
+* `EP-020-S13` — Implémenter `CPageHeader` (molecule) : en-tête de vue (`eyebrow?`, `title`, `meta?`, `icon?`, `frozenLabel?`, slot `#actions`) remplaçant les blocs `view-header` répétés (DESIGN.md §3.2 — 🔲 planifié)
+* `EP-020-S14` — Implémenter `CTopbarBreadcrumb` (molecule) : fil d'Ariane topbar fluide (`min-width: 0`, troncature propre) intégré à `CTopbar` (DESIGN.md §3.2 — 🔲 planifié)
+* `EP-020-S15` — Implémenter `CCardHeader` (molecule) : en-tête de carte d'entité (`withIcon?`, slots `#icon`, `#chips`) conforme à l'ossature commune des cartes de liste (DESIGN.md §3.2, §4.1 — 🔲 planifié)
+* `EP-020-S16` — Implémenter `CDocumentList` (molecule) : liste de documents avec téléchargement/retrait (`documents`, `readonly?`, `emit('remove', doc)`) mutualisant le markup dupliqué des vues contrats/sinistres/tâches (DESIGN.md §3.2 — 🔲 planifié)
+* `EP-020-S17` — Implémenter `CDataText` (atom) : texte tabulaire JetBrains Mono (`size` sm|md|lg, `font-mono font-medium lining-nums tabular-nums`) remplaçant les spans mono ad hoc (DESIGN.md §3.1 — 🔲 planifié)
 
 ***
 

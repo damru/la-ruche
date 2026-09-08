@@ -30,6 +30,10 @@ Thumbs.db
 
 skills-lock.json
 
+# Others
+.worktrees/
+proxmox-jobs.sqlite3
+
 #################################
 #       ARTIFACTS FROM AI       #
 #################################
@@ -40,13 +44,14 @@ skills-lock.json
 .outputs/
 # Impeccable
 .impeccable/
-
 # MemPalace per-project files (issue #185)
 mempalace.yaml
 entities.json
-
 # Graphify outputs 
 graphify-out/
-
 # Superpowers
 superpowers/
+# TokenSave
+.tokensave/
+# Serena
+.serena/

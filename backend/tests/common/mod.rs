@@ -74,7 +74,7 @@ async fn infra() -> &'static Infra {
                 .await;
             let s3_uri = s3.uri();
 
-            let cfg = test_config(db_url, s3_uri);
+            let cfg = test_config_from(db_url, s3_uri);
             Infra {
                 cfg,
                 _pg: pg,
@@ -84,8 +84,14 @@ async fn infra() -> &'static Infra {
         .await
 }
 
+/// Returns the shared test config (same one used by `test_db`/`test_server`),
+/// for callers that need `cfg.auth` (e.g. to hash a password) without a pool.
+pub async fn test_config() -> AppConfig {
+    infra().await.cfg.clone()
+}
+
 /// Builds a fully programmatic test configuration — no config file or env vars.
-fn test_config(db_url: String, s3_uri: String) -> AppConfig {
+fn test_config_from(db_url: String, s3_uri: String) -> AppConfig {
     AppConfig {
         app: AppSettings {
             host: "127.0.0.1".to_string(),
@@ -221,6 +227,12 @@ pub async fn isolated_test_server_with_pool() -> (TestServer, PgPool) {
     cfg.db.url = db_url;
     let server = server_for(cfg, pool).await;
     (server, audit_pool)
+}
+
+/// Like [`test_server`], but reuses an already-obtained pool (e.g. from
+/// `test_db`) that the caller seeded, instead of opening a new connection.
+pub async fn test_server_with_pool(cfg: AppConfig, pool: PgPool) -> TestServer {
+    server_for(cfg, pool).await
 }
 
 /// Assembles the application stack into a cookie-persisting `TestServer`.

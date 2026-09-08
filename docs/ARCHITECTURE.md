@@ -222,7 +222,7 @@ Le frontend conserve les feuilles globales historiques (`tokens.css`, `base.css`
 | Copropriété | `building`, `unit`, `allocation_key`, `unit_allocation_key` |
 | Utilisateurs | `user_account`, `user_token`, `user_building`, `unit_owner` |
 | AG | `general_meeting`, `general_meeting_document`, `general_meeting_attendance`, `resolution`, `vote` |
-| Budget | `budget`, `budget_line`, `levy_call`, `works_fund` — champ `category` sur `levy_call` **prévu** |
+| Budget | `budget`, `budget_line`, `levy_call`, `works_fund` — champ `category` sur `levy_call` **prévu** ; `budget.parent_budget_id` ; `budget_line.valid_from` / `valid_to` / `rectificatif_version` / `version` |
 | Documents | `document` |
 | Contrats | `vendor_contract`, `contract_document`, `contract_reminder` |
 | Prestataires | `contractor` |
@@ -245,6 +245,14 @@ Invariants techniques implémentés :
 - Les documents de tâche sont répartis entre `task_document` (gestionnaires) et `vendor_submission_document` (soumissions prestataire) ; les endpoints manager `GET/POST/DELETE /tasks/{id}/documents` et `document_count` agrègent ces deux sources.
 - `claim_document` suit le même modèle d'association documentaire que `report_document`, avec nettoyage des liens lors des suppressions d'entité.
 - `maintenance_log.task_id` et `maintenance_log.contract_id` restent des liens de traçabilité souples, sans cascade destructive depuis les tâches ou contrats.
+- `budget.parent_budget_id` (`UUID REFERENCES budget(id)`, nullable) lie un budget rectificatif au budget qu'il modifie ; un budget racine a `parent_budget_id IS NULL`.
+- L'unicité annuelle du budget est portée par trois index partiels, et non par une contrainte de table : `budget_unique_root_per_year (building_id, fiscal_year) WHERE parent_budget_id IS NULL` (un seul budget racine par exercice), `budget_unique_pending_rectificatif (parent_budget_id) WHERE parent_budget_id IS NOT NULL AND status = 'draft'` (un seul rectificatif en préparation par budget modifié), et `budget_unique_approved_per_year (building_id, fiscal_year) WHERE status = 'approved'` (un seul budget en vigueur par exercice).
+- `budget_line` est versionnée temporellement par `valid_from` (`DATE NOT NULL`) et `valid_to` (`DATE`, nullable, borne exclusive) : `valid_to IS NULL` marque la version en vigueur. L'identité logique d'une ligne à travers ses versions est `(budget_id, key_id, label)`, garantie par `budget_line_unique_active … WHERE valid_to IS NULL` — au plus une version active à la fois. `CHECK (valid_to IS NULL OR valid_to >= valid_from)` interdit un intervalle inversé.
+- `budget_line.rectificatif_version` (`INTEGER`, nullable, `CHECK … >= 1`) porte le numéro du rectificatif dont la ligne provient ; `NULL` sur les lignes d'un budget racine. La valeur est assignée par le workflow de création du rectificatif et n'est jamais acceptée depuis une requête client.
+- `budget_line.version` (`INTEGER NOT NULL DEFAULT 1`) est un jeton de verrouillage optimiste, distinct du versioning temporel : il protège l'édition concurrente d'une ligne de brouillon. Il est incrémenté par le trigger `budget_line_version_trigger`, dont la clause `WHEN (OLD.valid_to IS NOT DISTINCT FROM NEW.valid_to)` exclut la clôture d'une ligne — une opération système ne doit pas invalider le jeton détenu par un client.
+- Les lignes d'un `budget` ne sont mutables qu'au statut `draft` : `POST/PUT/DELETE /budgets/{id}/lines[/{lid}]` sont refusés dès que le budget est approuvé, et `PUT`/`DELETE` portent `valid_to IS NULL` dans leur clause `WHERE` — une version historique clôturée n'est jamais réécrite ni supprimée. Les corrections passent par `POST /budgets/{id}/rectificatif`, qui recopie les lignes actives dans un nouveau budget `draft` sans toucher au budget modifié, puis par `POST /budgets/{id}/approve`, qui clôt le budget modifié et date ses lignes. `GET /budgets/{id}/rectificatifs` expose la chaîne, racine d'abord.
+- `POST /budgets/{id}/approve` exige un `approval_meeting_id` référençant une `general_meeting` du même immeuble au statut `closed`.
+- Les mutations `UPDATE` / `DELETE` sur `budget_line` écrivent une entrée `audit_log` avec un diff ciblé `old_values` / `new_values`.
 - La clôture d'un `budget` (`status = closed`) gèle les mutations de l'exercice : création/suppression de lignes et génération de nouveaux appels ; le marquage `paid` d'un appel existant reste autorisé.
 - Les appels de fonds portent un `call_label` persisted côté backend pour différencier explicitement la nature de chaque appel dans les vues comptables.
 - Les appels de fonds persistés portent une décomposition `charge_amount` / `works_fund_amount` sur `levy_call` pour isoler le calcul du solde à appeler selon l'inclusion du fonds travaux.

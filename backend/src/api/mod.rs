@@ -176,6 +176,15 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
         .route("/budgets", get(budget::list).post(budget::create))
         .route("/budgets/{id}", get(budget::get).put(budget::update))
         .route("/budgets/{id}/close", post(budget::close))
+        .route("/budgets/{id}/approve", post(budget::approve))
+        .route(
+            "/budgets/{id}/rectificatif",
+            post(budget::create_rectificatif),
+        )
+        .route(
+            "/budgets/{id}/rectificatifs",
+            get(budget::rectificatif_chain),
+        )
         .route(
             "/budgets/{id}/lines",
             get(budget::list_lines).post(budget::create_line),

@@ -36,6 +36,10 @@ pub enum AppError {
     #[error("Conflict: {0}")]
     Conflict(String),
 
+    // ── 422 ─────────────────────────────────────────────────────
+    #[error("Unprocessable entity: {0}")]
+    UnprocessableEntity(String),
+
     // ── 500 ─────────────────────────────────────────────────────
     #[error("Database error")]
     Database(#[from] sqlx::Error),
@@ -58,6 +62,10 @@ impl AppError {
 
     pub fn conflict_code(code: &'static str) -> Self {
         Self::Conflict(code.into())
+    }
+
+    pub fn unprocessable_entity_code(code: &'static str) -> Self {
+        Self::UnprocessableEntity(code.into())
     }
 }
 
@@ -86,6 +94,11 @@ impl IntoResponse for AppError {
             AppError::Forbidden => (StatusCode::FORBIDDEN, "forbidden", self.to_string()),
             AppError::NotFound => (StatusCode::NOT_FOUND, "not_found", self.to_string()),
             AppError::Conflict(msg) => (StatusCode::CONFLICT, "conflict", msg.clone()),
+            AppError::UnprocessableEntity(msg) => (
+                StatusCode::UNPROCESSABLE_ENTITY,
+                "unprocessable_entity",
+                msg.clone(),
+            ),
             // 5xx: generic message to client, details in logs
             AppError::Database(_) => (
                 StatusCode::INTERNAL_SERVER_ERROR,
@@ -156,6 +169,15 @@ mod tests {
     }
 
     #[test]
+    fn unprocessable_entity_code_builds_variant_with_message() {
+        let err = AppError::unprocessable_entity_code("errors.foo.unprocessable");
+        match err {
+            AppError::UnprocessableEntity(msg) => assert_eq!(msg, "errors.foo.unprocessable"),
+            other => panic!("expected UnprocessableEntity, got {other:?}"),
+        }
+    }
+
+    #[test]
     fn into_response_maps_each_variant_to_expected_status() {
         let cases = [
             (AppError::Validation("x".into()), StatusCode::BAD_REQUEST),
@@ -165,6 +187,10 @@ mod tests {
             (AppError::Forbidden, StatusCode::FORBIDDEN),
             (AppError::NotFound, StatusCode::NOT_FOUND),
             (AppError::Conflict("x".into()), StatusCode::CONFLICT),
+            (
+                AppError::UnprocessableEntity("x".into()),
+                StatusCode::UNPROCESSABLE_ENTITY,
+            ),
             (
                 AppError::Database(sqlx::Error::RowNotFound),
                 StatusCode::INTERNAL_SERVER_ERROR,
