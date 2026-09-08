@@ -91,8 +91,24 @@ impl From<db::document::DocumentRow> for DocumentVersionItem {
     }
 }
 
-/// Valid `document_category` enum values (EP-005-S06, LEGAL §1.2).
-const VALID_CATEGORIES: &[&str] = &["reglement_copropriete", "edd", "autre"];
+/// Valid `document_category` enum values (EP-005-S06/S07, LEGAL §1.2, §3.4, §6.1-6.3).
+const VALID_CATEGORIES: &[&str] = &[
+    "reglement_copropriete",
+    "edd",
+    "pv_ag",
+    "comptabilite",
+    "appel_fonds",
+    "budget",
+    "contrat",
+    "diagnostic",
+    "sinistre",
+    "tache",
+    "libre",
+    "signalement",
+    "carnet_entretien",
+    "prestataire",
+    "autre",
+];
 
 #[derive(Deserialize, Validate, ToSchema)]
 pub struct ConfirmUploadInput {
