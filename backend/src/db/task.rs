@@ -546,6 +546,7 @@ pub async fn list_documents(
         r#"SELECT DISTINCT d.id, d.original_name, d.mime_type, d.size_bytes, d.created_at
            FROM document d
            WHERE d.building_id = $2
+             AND d.deleted_at IS NULL
              AND d.id IN (
                SELECT td.document_id
                FROM task_document td

@@ -420,7 +420,7 @@ pub async fn list_documents(
         r#"SELECT d.id, d.original_name, d.mime_type, d.size_bytes, d.created_at
            FROM claim_document cd
            JOIN document d ON d.id = cd.document_id AND d.building_id = $2
-           WHERE cd.claim_id = $1
+           WHERE cd.claim_id = $1 AND d.deleted_at IS NULL
            ORDER BY d.created_at ASC"#,
     )
     .bind(claim_id)

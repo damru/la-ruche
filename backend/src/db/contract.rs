@@ -694,6 +694,7 @@ pub async fn list_documents(
         WHERE cd_current.contract_id = $1
           AND vc.building_id = $2
           AND d.building_id = $2
+          AND d.deleted_at IS NULL
           AND d.visible_to_roles::text[] && $3
         GROUP BY d.id, d.original_name, d.mime_type, d.size_bytes, d.visible_to_roles,
                  d.category, d.supersedes_id, d.is_current, d.created_at

@@ -771,6 +771,7 @@ pub async fn list_documents(
         WHERE gmd.meeting_id = $1
           AND gm.building_id = $2
           AND d.building_id = $2
+          AND d.deleted_at IS NULL
           AND d.visible_to_roles::text[] && $3
         ORDER BY CASE WHEN gmd.kind = 'notice' THEN 0 ELSE 1 END, d.created_at DESC
         "#,

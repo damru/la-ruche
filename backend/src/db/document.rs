@@ -349,8 +349,8 @@ pub async fn delete(
     deleted_by: Uuid,
     deletion_reason: Option<&str>,
 ) -> AppResult<Option<()>> {
-    let doc = sqlx::query_as::<_, (String, bool)>(
-        "SELECT category::text, supersedes_id IS NOT NULL AS has_predecessor
+    let doc = sqlx::query_scalar::<_, String>(
+        "SELECT category::text
          FROM document WHERE id = $1 AND building_id = $2 AND deleted_at IS NULL",
     )
     .bind(id)
@@ -358,7 +358,7 @@ pub async fn delete(
     .fetch_optional(pool)
     .await?;
 
-    let Some((category, _)) = doc else {
+    let Some(category) = doc else {
         return Ok(None);
     };
 
@@ -427,6 +427,9 @@ pub async fn delete_orphaned_tx(
           AND d.building_id = $2
           AND d.deleted_at IS NULL
           AND d.category NOT IN ('reglement_copropriete', 'edd')
+          AND NOT EXISTS (
+              SELECT 1 FROM document successor WHERE successor.supersedes_id = d.id
+          )
           AND NOT EXISTS (
               SELECT 1 FROM contract_document cd WHERE cd.document_id = d.id
           )

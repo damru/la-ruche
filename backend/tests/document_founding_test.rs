@@ -362,6 +362,138 @@ async fn a_current_founding_document_cannot_be_hard_deleted_either() {
 }
 
 #[tokio::test]
+async fn soft_deleted_document_is_excluded_from_claim_listing() {
+    let (cfg, pool) = common::test_db().await;
+    let f = setup(&pool).await;
+    let token = token_for(f.manager_id, f.building_id, &cfg);
+    let server = common::test_server_with_pool(cfg, pool.clone()).await;
+    let auth = format!("Bearer {token}");
+
+    let upload = confirm_upload(
+        &server,
+        &auth,
+        f.building_id,
+        "facture.pdf",
+        "autre",
+        None,
+        None,
+    )
+    .await;
+    let doc_id: Uuid = upload.json::<Value>()["id"]
+        .as_str()
+        .unwrap()
+        .parse()
+        .unwrap();
+
+    let claim_id = Uuid::new_v4();
+    sqlx::query(
+        "INSERT INTO claim (id, building_id, title, declared_at, status, created_by)
+         VALUES ($1, $2, 'Test claim', CURRENT_DATE, 'open', $3)",
+    )
+    .bind(claim_id)
+    .bind(f.building_id)
+    .bind(f.manager_id)
+    .execute(&pool)
+    .await
+    .expect("claim");
+
+    let attach = server
+        .post(&format!("/api/v1/claims/{claim_id}/documents"))
+        .add_header("Authorization", &auth)
+        .json(&json!({ "document_id": doc_id }))
+        .await;
+    assert_eq!(attach.status_code(), StatusCode::NO_CONTENT);
+
+    let before = server
+        .get(&format!("/api/v1/claims/{claim_id}/documents"))
+        .add_header("Authorization", &auth)
+        .await
+        .json::<Vec<Value>>();
+    assert_eq!(before.len(), 1);
+
+    sqlx::query("UPDATE document SET deleted_at = now() WHERE id = $1")
+        .bind(doc_id)
+        .execute(&pool)
+        .await
+        .expect("soft delete");
+
+    let after = server
+        .get(&format!("/api/v1/claims/{claim_id}/documents"))
+        .add_header("Authorization", &auth)
+        .await
+        .json::<Vec<Value>>();
+    assert!(after.is_empty());
+}
+
+#[tokio::test]
+async fn deleting_the_owning_entity_preserves_a_document_with_a_successor() {
+    let (cfg, pool) = common::test_db().await;
+    let f = setup(&pool).await;
+    let token = token_for(f.manager_id, f.building_id, &cfg);
+    let server = common::test_server_with_pool(cfg, pool.clone()).await;
+    let auth = format!("Bearer {token}");
+
+    let v1 = confirm_upload(
+        &server,
+        &auth,
+        f.building_id,
+        "devis-v1.pdf",
+        "autre",
+        None,
+        None,
+    )
+    .await;
+    let v1_id: Uuid = v1.json::<Value>()["id"].as_str().unwrap().parse().unwrap();
+
+    let v2 = confirm_upload(
+        &server,
+        &auth,
+        f.building_id,
+        "devis-v2.pdf",
+        "autre",
+        Some(v1_id),
+        None,
+    )
+    .await;
+    assert_eq!(v2.status_code(), StatusCode::CREATED);
+
+    let claim_id = Uuid::new_v4();
+    sqlx::query(
+        "INSERT INTO claim (id, building_id, title, declared_at, status, created_by)
+         VALUES ($1, $2, 'Test claim', CURRENT_DATE, 'open', $3)",
+    )
+    .bind(claim_id)
+    .bind(f.building_id)
+    .bind(f.manager_id)
+    .execute(&pool)
+    .await
+    .expect("claim");
+
+    let attach = server
+        .post(&format!("/api/v1/claims/{claim_id}/documents"))
+        .add_header("Authorization", &auth)
+        .json(&json!({ "document_id": v1_id }))
+        .await;
+    assert_eq!(attach.status_code(), StatusCode::NO_CONTENT);
+
+    let delete = server
+        .delete(&format!("/api/v1/claims/{claim_id}"))
+        .add_header("Authorization", &auth)
+        .await;
+    assert_eq!(delete.status_code(), StatusCode::NO_CONTENT);
+
+    // The claim (and its claim_document link) is gone, but v1 must survive
+    // because v2 supersedes it: the version chain must stay intact.
+    let deleted_at: Option<chrono::DateTime<chrono::Utc>> =
+        sqlx::query_scalar("SELECT deleted_at FROM document WHERE id = $1")
+            .bind(v1_id)
+            .fetch_one(&pool)
+            .await
+            .expect("v1 row");
+    assert!(deleted_at.is_none());
+}
+
+#[tokio::test]
 async fn non_founding_documents_are_not_subject_to_the_uniqueness_constraint() {
     let (cfg, pool) = common::test_db().await;
     let f = setup(&pool).await;
