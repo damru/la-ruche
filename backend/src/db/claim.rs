@@ -442,11 +442,7 @@ pub async fn list_documents(
         .collect())
 }
 
-pub async fn delete(
-    pool: &PgPool,
-    id: Uuid,
-    building_id: Uuid,
-) -> AppResult<Option<Vec<(String, String)>>> {
+pub async fn delete(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<Option<()>> {
     let mut tx = pool.begin().await?;
     let linked_document_ids = sqlx::query_scalar::<_, Uuid>(
         r#"
@@ -471,10 +467,9 @@ pub async fn delete(
         return Ok(None);
     }
 
-    let deleted_documents =
-        crate::db::document::delete_orphaned_tx(&mut tx, &linked_document_ids, building_id).await?;
+    crate::db::document::delete_orphaned_tx(&mut tx, &linked_document_ids, building_id).await?;
     tx.commit().await?;
-    Ok(Some(deleted_documents))
+    Ok(Some(()))
 }
 
 pub async fn attach_document(
