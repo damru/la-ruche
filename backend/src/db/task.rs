@@ -322,12 +322,8 @@ pub async fn get_vendor_token(
     }))
 }
 
-/// Deletes a task and returns the physical files that became orphaned.
-pub async fn delete(
-    pool: &PgPool,
-    id: Uuid,
-    building_id: Uuid,
-) -> AppResult<Vec<(String, String)>> {
+/// Deletes a task; documents that become orphaned are soft-deleted.
+pub async fn delete(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()> {
     let mut tx = pool.begin().await?;
 
     let linked_document_ids = sqlx::query_scalar::<_, Uuid>(
@@ -377,10 +373,9 @@ pub async fn delete(
         return Err(crate::errors::AppError::NotFound);
     }
 
-    let deleted_documents =
-        crate::db::document::delete_orphaned_tx(&mut tx, &linked_document_ids, building_id).await?;
+    crate::db::document::delete_orphaned_tx(&mut tx, &linked_document_ids, building_id).await?;
     tx.commit().await?;
-    Ok(deleted_documents)
+    Ok(())
 }
 
 /// Updates mutable task fields. `None` values leave the existing field unchanged.
@@ -551,6 +546,7 @@ pub async fn list_documents(
         r#"SELECT DISTINCT d.id, d.original_name, d.mime_type, d.size_bytes, d.created_at
            FROM document d
            WHERE d.building_id = $2
+             AND d.deleted_at IS NULL
              AND d.id IN (
                SELECT td.document_id
                FROM task_document td

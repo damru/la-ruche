@@ -42,6 +42,9 @@ pub struct DocumentListItem {
     pub linked_report_titles: Vec<String>,
     pub linked_claim_titles: Vec<String>,
     pub linked_report_count: i64,
+    pub category: String,
+    pub supersedes_id: Option<Uuid>,
+    pub is_current: bool,
     pub created_at: chrono::DateTime<chrono::Utc>,
 }
 
@@ -57,10 +60,39 @@ impl From<db::document::DocumentListRow> for DocumentListItem {
             linked_report_titles: document.linked_report_titles,
             linked_claim_titles: document.linked_claim_titles,
             linked_report_count: document.linked_report_count,
+            category: document.category,
+            supersedes_id: document.supersedes_id,
+            is_current: document.is_current,
             created_at: document.created_at,
         }
     }
 }
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct DocumentVersionItem {
+    pub id: Uuid,
+    pub original_name: String,
+    pub category: String,
+    pub supersedes_id: Option<Uuid>,
+    pub is_current: bool,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+}
+
+impl From<db::document::DocumentRow> for DocumentVersionItem {
+    fn from(document: db::document::DocumentRow) -> Self {
+        Self {
+            id: document.id,
+            original_name: document.original_name,
+            category: document.category,
+            supersedes_id: document.supersedes_id,
+            is_current: document.is_current,
+            created_at: document.created_at,
+        }
+    }
+}
+
+/// Valid `document_category` enum values (EP-005-S06, LEGAL §1.2).
+const VALID_CATEGORIES: &[&str] = &["reglement_copropriete", "edd", "autre"];
 
 #[derive(Deserialize, Validate, ToSchema)]
 pub struct ConfirmUploadInput {
@@ -73,6 +105,16 @@ pub struct ConfirmUploadInput {
     pub mime_type: String,
     pub size_bytes: i64,
     pub visible_roles: Vec<String>,
+    /// Founding document category (`reglement_copropriete` | `edd` | `autre`); defaults to `autre`.
+    #[serde(default)]
+    pub category: Option<String>,
+    /// When set, publishes a new version replacing this document (must be the current version, same category).
+    #[serde(default)]
+    pub supersedes_id: Option<Uuid>,
+    /// Justification, required when replacing a founding document
+    /// (`reglement_copropriete` | `edd`) via `supersedes_id` (US-DOC-007).
+    #[serde(default)]
+    pub reason: Option<String>,
 }
 
 /// POST /api/v1/documents/upload-url
@@ -134,18 +176,56 @@ pub async fn confirm_upload(
         return Err(AppError::Forbidden);
     }
 
-    let doc = db::document::create(
-        &state.pool,
-        auth.building_id,
-        auth.user_id,
-        &input.original_name,
-        &input.key,
-        &input.bucket,
-        &input.mime_type,
-        input.size_bytes,
-        &input.visible_roles,
-    )
-    .await?;
+    let category = input.category.as_deref().unwrap_or("autre");
+    if !VALID_CATEGORIES.contains(&category) {
+        return Err(AppError::validation_code(
+            "errors.documents.invalid_category",
+        ));
+    }
+
+    let doc = if let Some(supersedes_id) = input.supersedes_id {
+        db::document::create_version(
+            &state.pool,
+            auth.building_id,
+            auth.user_id,
+            &input.original_name,
+            &input.key,
+            &input.bucket,
+            &input.mime_type,
+            input.size_bytes,
+            &input.visible_roles,
+            category,
+            supersedes_id,
+            input.reason.as_deref(),
+        )
+        .await?
+    } else {
+        db::document::create(
+            &state.pool,
+            auth.building_id,
+            auth.user_id,
+            &input.original_name,
+            &input.key,
+            &input.bucket,
+            &input.mime_type,
+            input.size_bytes,
+            &input.visible_roles,
+            category,
+        )
+        .await
+        .map_err(|e| match e {
+            AppError::Database(ref db_err)
+                if db_err
+                    .as_database_error()
+                    .and_then(|d| d.constraint())
+                    .map(|c| c == "document_current_founding_unique")
+                    .unwrap_or(false) =>
+            {
+                AppError::unprocessable_entity_code("errors.documents.current_already_exists")
+            }
+            other => other,
+        })?
+    };
 
     if let Err(e) = state
         .storage
@@ -161,6 +241,9 @@ pub async fn confirm_upload(
             "id": doc.id,
             "original_name": doc.original_name,
             "size_bytes": doc.size_bytes,
+            "category": doc.category,
+            "is_current": doc.is_current,
+            "supersedes_id": doc.supersedes_id,
             "created_at": doc.created_at,
         })),
     ))
@@ -176,6 +259,18 @@ pub async fn list(
     let rows = db::document::list(&state.pool, auth.building_id, &roles).await?;
 
     Ok(Json(rows.into_iter().map(DocumentListItem::from).collect()))
+}
+
+/// GET /api/v1/documents/:id/versions — full version chain (EP-005-S06)
+pub async fn versions(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+) -> AppResult<Json<Vec<DocumentVersionItem>>> {
+    let rows = db::document::version_chain(&state.pool, id, auth.building_id).await?;
+    Ok(Json(
+        rows.into_iter().map(DocumentVersionItem::from).collect(),
+    ))
 }
 
 /// GET /api/v1/documents/:id/download-url
@@ -202,23 +297,30 @@ pub async fn get_download_url(
     Ok(Json(serde_json::json!({ "url": url })))
 }
 
+#[derive(Deserialize, Validate, ToSchema)]
+pub struct DeleteDocumentInput {
+    #[serde(default)]
+    pub reason: Option<String>,
+}
+
 /// DELETE /api/v1/documents/:id
 pub async fn delete(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
+    Json(input): Json<DeleteDocumentInput>,
 ) -> AppResult<StatusCode> {
     auth.require_role(&crate::domain::Role::Manager)?;
 
-    let deleted = db::document::delete(&state.pool, id, auth.building_id).await?;
-    if let Some((bucket, key)) = deleted {
-        let storage = state.storage.clone();
-        tokio::spawn(async move {
-            if let Err(e) = storage.delete_object(&bucket, &key).await {
-                tracing::error!(error = %e, "S3 delete error");
-            }
-        });
-    }
+    let deleted = db::document::delete(
+        &state.pool,
+        id,
+        auth.building_id,
+        auth.user_id,
+        input.reason.as_deref(),
+    )
+    .await?;
+    deleted.ok_or(AppError::NotFound)?;
 
     Ok(StatusCode::NO_CONTENT)
 }

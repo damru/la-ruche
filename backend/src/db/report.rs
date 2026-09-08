@@ -286,11 +286,7 @@ pub async fn update(
     Ok(())
 }
 
-pub async fn delete(
-    pool: &PgPool,
-    id: Uuid,
-    building_id: Uuid,
-) -> AppResult<Vec<(String, String)>> {
+pub async fn delete(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()> {
     let mut tx = pool.begin().await?;
     let linked_document_ids = sqlx::query_scalar::<_, Uuid>(
         r#"
@@ -316,10 +312,9 @@ pub async fn delete(
         return Err(AppError::NotFound);
     }
 
-    let deleted_documents =
-        crate::db::document::delete_orphaned_tx(&mut tx, &linked_document_ids, building_id).await?;
+    crate::db::document::delete_orphaned_tx(&mut tx, &linked_document_ids, building_id).await?;
     tx.commit().await?;
-    Ok(deleted_documents)
+    Ok(())
 }
 
 // ── Document attachment ───────────────────────────────────────────
@@ -334,7 +329,7 @@ pub async fn list_documents(
         r#"SELECT d.id, d.original_name, d.mime_type, d.size_bytes, d.created_at
            FROM report_document rd
            JOIN document d ON d.id = rd.document_id AND d.building_id = $2
-           WHERE rd.report_id = $1
+           WHERE rd.report_id = $1 AND d.deleted_at IS NULL
            ORDER BY d.created_at ASC"#,
     )
     .bind(report_id)

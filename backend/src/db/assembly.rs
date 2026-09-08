@@ -739,28 +739,46 @@ pub async fn list_documents(
     building_id: Uuid,
     roles: &[String],
 ) -> AppResult<Vec<MeetingDocumentResponse>> {
-    let rows = sqlx::query!(
+    #[derive(sqlx::FromRow)]
+    struct Row {
+        id: Uuid,
+        original_name: String,
+        mime_type: String,
+        size_bytes: i64,
+        visible_roles: Option<Vec<String>>,
+        category: String,
+        supersedes_id: Option<Uuid>,
+        is_current: bool,
+        created_at: chrono::DateTime<chrono::Utc>,
+        kind: String,
+    }
+
+    let rows = sqlx::query_as::<_, Row>(
         r#"
         SELECT d.id,
                d.original_name,
                d.mime_type,
                d.size_bytes,
                d.visible_to_roles::text[] as visible_roles,
+               d.category::text as category,
+               d.supersedes_id,
+               d.is_current,
                d.created_at,
-               gmd.kind::text as "kind!"
+               gmd.kind::text as kind
         FROM general_meeting_document gmd
         JOIN general_meeting gm ON gm.id = gmd.meeting_id
         JOIN document d ON d.id = gmd.document_id
         WHERE gmd.meeting_id = $1
           AND gm.building_id = $2
           AND d.building_id = $2
+          AND d.deleted_at IS NULL
           AND d.visible_to_roles::text[] && $3
         ORDER BY CASE WHEN gmd.kind = 'notice' THEN 0 ELSE 1 END, d.created_at DESC
         "#,
-        meeting_id,
-        building_id,
-        roles,
     )
+    .bind(meeting_id)
+    .bind(building_id)
+    .bind(roles)
     .fetch_all(pool)
     .await?;
 
@@ -777,6 +795,9 @@ pub async fn list_documents(
                 linked_report_titles: Vec::new(),
                 linked_claim_titles: Vec::new(),
                 linked_report_count: 0,
+                category: row.category,
+                supersedes_id: row.supersedes_id,
+                is_current: row.is_current,
                 created_at: row.created_at,
             },
             kind: meeting_document_kind_from_db(&row.kind),

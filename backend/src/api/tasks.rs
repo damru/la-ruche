@@ -197,15 +197,7 @@ pub async fn delete_task(
         &crate::domain::immutability::Entity::Task,
         &task.status,
     )?;
-    let deleted_documents = db::task::delete(&state.pool, id, auth.building_id).await?;
-    let storage = state.storage.clone();
-    tokio::spawn(async move {
-        for (bucket, key) in deleted_documents {
-            if let Err(error) = storage.delete_object(&bucket, &key).await {
-                tracing::error!(error = %error, "S3 delete error");
-            }
-        }
-    });
+    db::task::delete(&state.pool, id, auth.building_id).await?;
     Ok(StatusCode::NO_CONTENT)
 }
 

@@ -560,11 +560,7 @@ pub async fn terminate(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<
     Ok(())
 }
 
-pub async fn delete(
-    pool: &PgPool,
-    id: Uuid,
-    building_id: Uuid,
-) -> AppResult<Vec<(String, String)>> {
+pub async fn delete(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()> {
     let mut tx = pool.begin().await?;
     let linked_document_ids = sqlx::query_scalar::<_, Uuid>(
         r#"
@@ -608,10 +604,9 @@ pub async fn delete(
         return Err(crate::errors::AppError::NotFound);
     }
 
-    let deleted_documents =
-        crate::db::document::delete_orphaned_tx(&mut tx, &linked_document_ids, building_id).await?;
+    crate::db::document::delete_orphaned_tx(&mut tx, &linked_document_ids, building_id).await?;
     tx.commit().await?;
-    Ok(deleted_documents)
+    Ok(())
 }
 
 pub async fn list_reminders(
@@ -685,6 +680,9 @@ pub async fn list_documents(
                 ) AS linked_report_titles,
                 ARRAY[]::text[] AS linked_claim_titles,
                 COUNT(DISTINCT rd.report_id) AS linked_report_count,
+                d.category::text AS category,
+                d.supersedes_id,
+                d.is_current,
                 d.created_at
         FROM contract_document cd_current
         JOIN vendor_contract vc ON vc.id = cd_current.contract_id
@@ -696,8 +694,10 @@ pub async fn list_documents(
         WHERE cd_current.contract_id = $1
           AND vc.building_id = $2
           AND d.building_id = $2
+          AND d.deleted_at IS NULL
           AND d.visible_to_roles::text[] && $3
-        GROUP BY d.id, d.original_name, d.mime_type, d.size_bytes, d.visible_to_roles, d.created_at
+        GROUP BY d.id, d.original_name, d.mime_type, d.size_bytes, d.visible_to_roles,
+                 d.category, d.supersedes_id, d.is_current, d.created_at
         ORDER BY d.created_at DESC
         "#,
     )

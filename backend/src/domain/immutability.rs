@@ -69,6 +69,19 @@ pub fn assert_mutable(entity: &Entity, status: &str) -> AppResult<()> {
     }
 }
 
+/// Founding documents (règlement de copropriété, EDD) are permanent legal
+/// acts (LEGAL §1.2): hard delete is forbidden, replacement only via a new
+/// version (`supersedes_id` chain).
+pub(crate) fn is_document_deletable(category: &str) -> bool {
+    !matches!(category, "reglement_copropriete" | "edd")
+}
+
+/// Critical categories require the justified-replacement workflow
+/// (US-DOC-007): plain deletion is refused, replacement demands a reason.
+pub(crate) fn document_requires_replacement_reason(category: &str) -> bool {
+    matches!(category, "reglement_copropriete" | "edd")
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -161,5 +174,29 @@ mod tests {
     #[test]
     fn assert_mutable_ok_when_mutable() {
         assert!(assert_mutable(&Entity::Task, "open").is_ok());
+    }
+
+    #[test]
+    fn founding_categories_are_not_deletable() {
+        assert!(!is_document_deletable("reglement_copropriete"));
+        assert!(!is_document_deletable("edd"));
+    }
+
+    #[test]
+    fn non_founding_category_is_deletable() {
+        assert!(is_document_deletable("autre"));
+    }
+
+    #[test]
+    fn founding_categories_require_replacement() {
+        assert!(document_requires_replacement_reason(
+            "reglement_copropriete"
+        ));
+        assert!(document_requires_replacement_reason("edd"));
+    }
+
+    #[test]
+    fn non_founding_category_does_not_require_replacement() {
+        assert!(!document_requires_replacement_reason("autre"));
     }
 }
