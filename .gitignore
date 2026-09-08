@@ -53,3 +53,5 @@ graphify-out/
 superpowers/
 # TokenSave
 .tokensave/
+# Serena
+.serena/

@@ -236,7 +236,7 @@ export interface BudgetLine {
   account_code_category?: string
   /** Always present: the date this version took effect. */
   valid_from: string
-  /** Set once the version is closed by a rectificatif; exclusive bound. */
+  /** Set once the version is closed by a rectificatif; inclusive bound. */
   valid_to?: string
   /** NULL on a root budget's lines, 1..N on a rectificatif's. */
   rectificatif_version?: number
