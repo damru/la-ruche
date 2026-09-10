@@ -524,3 +524,59 @@ async fn non_founding_documents_are_not_subject_to_the_uniqueness_constraint() {
     .await;
     assert_eq!(second.status_code(), StatusCode::CREATED);
 }
+
+/// EP-005-S07 (LEGAL §3.4, §6.2, §6.3): technical regulatory documents
+/// (DTG / DPE collectif → `diagnostic`, PV → `pv_ag`) are accepted as
+/// non-founding categories — not subject to the founding uniqueness
+/// constraint nor the replacement-reason workflow.
+#[tokio::test]
+async fn technical_regulatory_categories_are_accepted_and_not_founding() {
+    let (cfg, pool) = common::test_db().await;
+    let f = setup(&pool).await;
+    let token = token_for(f.manager_id, f.building_id, &cfg);
+    let server = common::test_server_with_pool(cfg, pool.clone()).await;
+    let auth = format!("Bearer {token}");
+
+    let dtg = confirm_upload(
+        &server,
+        &auth,
+        f.building_id,
+        "dtg-2026.pdf",
+        "diagnostic",
+        None,
+        None,
+    )
+    .await;
+    assert_eq!(dtg.status_code(), StatusCode::CREATED);
+    let dtg_body: Value = dtg.json();
+    assert_eq!(dtg_body["category"].as_str().unwrap(), "diagnostic");
+
+    // A second `diagnostic` document (e.g. DPE collectif) for the same
+    // building must not collide with the founding uniqueness index, which
+    // is scoped to `reglement_copropriete`/`edd` only.
+    let dpe = confirm_upload(
+        &server,
+        &auth,
+        f.building_id,
+        "dpe-collectif.pdf",
+        "diagnostic",
+        None,
+        None,
+    )
+    .await;
+    assert_eq!(dpe.status_code(), StatusCode::CREATED);
+
+    let pv = confirm_upload(
+        &server,
+        &auth,
+        f.building_id,
+        "pv-ag-2026.pdf",
+        "pv_ag",
+        None,
+        None,
+    )
+    .await;
+    assert_eq!(pv.status_code(), StatusCode::CREATED);
+    let pv_body: Value = pv.json();
+    assert_eq!(pv_body["category"].as_str().unwrap(), "pv_ag");
+}
