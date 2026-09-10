@@ -102,4 +102,47 @@ impl StorageClient {
             .map(|_| ())
             .map_err(|e| AppError::Storage(e.to_string()))
     }
+
+    /// Lists every object key in a bucket, with its `last_modified` timestamp.
+    /// Paginates through the SDK's continuation token. A missing/nonexistent
+    /// bucket (no upload has happened yet for that building) is treated as
+    /// empty rather than an error (EP-005-S09).
+    pub async fn list_objects(
+        &self,
+        bucket: &str,
+    ) -> AppResult<Vec<(String, Option<aws_sdk_s3::primitives::DateTime>)>> {
+        let mut objects = Vec::new();
+        let mut continuation_token: Option<String> = None;
+
+        loop {
+            let mut req = self.inner.list_objects_v2().bucket(bucket);
+            if let Some(token) = continuation_token.take() {
+                req = req.continuation_token(token);
+            }
+
+            let resp = match req.send().await {
+                Ok(resp) => resp,
+                Err(e) => {
+                    let msg = e.to_string();
+                    if msg.contains("NoSuchBucket") {
+                        return Ok(Vec::new());
+                    }
+                    return Err(AppError::Storage(msg));
+                }
+            };
+
+            for object in resp.contents() {
+                if let Some(key) = object.key() {
+                    objects.push((key.to_string(), object.last_modified().copied()));
+                }
+            }
+
+            match resp.next_continuation_token() {
+                Some(token) => continuation_token = Some(token.to_string()),
+                None => break,
+            }
+        }
+
+        Ok(objects)
+    }
 }
