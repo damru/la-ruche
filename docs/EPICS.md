@@ -257,7 +257,7 @@ Upload direct S3 via pre-signed URL, contrôle d'accès par rôle, téléchargem
 * `EP-005-S04` ✅ — Appliquer les droits d’accès par rôle sur la consultation et le téléchargement
 * `EP-005-S05` ✅ — Télécharger un document via un accès sécurisé sans exposition publique du bucket
 * [EP-005-S06](docs/specs/EP-005-S06-spec.md) ✅ — Typer et verrouiller les documents fondateurs (`Règlement`, `EDD`) avec version courante explicite et historique consultable (LEGAL.md §1.2)
-* [EP-005-S07](docs/specs/EP-005-S07-spec.md) — Catégoriser et archiver les pièces réglementaires techniques (`DPE collectif`, `DTG`, `PPT`, `PV`) avec règles de conservation adaptées (LEGAL.md §3.3, §6.1, §6.2, §6.3)
+* [EP-005-S07](docs/specs/EP-005-S07-spec.md) ✅ — Catégoriser et archiver les pièces réglementaires techniques (`DPE collectif`, `DTG`, `PPT`, `PV`) avec règles de conservation adaptées (LEGAL.md §3.3, §6.1, §6.2, §6.3)
 * [EP-005-S08](docs/specs/EP-005-S08-spec.md) ✅ — Supprimer un document : soft-delete avec conservation de la métadonnée ; pour les documents critiques (`Règlement`, `EDD`, PV signé), déclencher un workflow de remplacement avec justification horodatée avant invalidation du fichier courant (PRD US-DOC-004, US-DOC-007)
 * [EP-005-S09](docs/specs/EP-005-S09-spec.md) — Nettoyage périodique des objets S3 orphelins (fichiers sans métadonnée `document` active) et application des règles de rétention par catégorie (PRD US-DOC-008)
 * [EP-005-S10](docs/specs/EP-005-S10-spec.md) — Émettre des événements internes au dépôt d'un document pour permettre aux modules consommateurs (signalements, tâches, AG) de déclencher des notifications contextuelles (PRD US-DOC-009)
