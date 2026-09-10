@@ -111,7 +111,8 @@ pub async fn create(
     visible_to_roles: &[String],
     category: &str,
 ) -> AppResult<DocumentRow> {
-    Ok(sqlx::query_as::<_, DocumentRow>(
+    let mut tx = pool.begin().await?;
+    let doc = sqlx::query_as::<_, DocumentRow>(
         r#"INSERT INTO document (building_id, uploaded_by, original_name, storage_path,
            bucket, mime_type, size_bytes, visible_to_roles, category)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8::user_role[], $9::text::document_category)
@@ -132,8 +133,26 @@ pub async fn create(
     .bind(size_bytes)
     .bind(visible_to_roles)
     .bind(category)
-    .fetch_one(pool)
-    .await?)
+    .fetch_one(&mut *tx)
+    .await?;
+
+    sqlx::query!(
+        r#"INSERT INTO document_event (building_id, document_id, event_type, actor_id, payload)
+           VALUES ($1, $2, 'uploaded', $3, $4)"#,
+        building_id,
+        doc.id,
+        user_id,
+        serde_json::json!({
+            "original_name": doc.original_name,
+            "category": doc.category,
+            "visible_roles": doc.visible_roles,
+        }),
+    )
+    .execute(&mut *tx)
+    .await?;
+
+    tx.commit().await?;
+    Ok(doc)
 }
 
 /// Same as `create` but executes within an existing transaction.
@@ -268,6 +287,24 @@ pub async fn create_version(
     .bind(supersedes_id)
     .bind(reason)
     .fetch_one(&mut *tx)
+    .await?;
+
+    // Emit 'replaced' event for the new version
+    sqlx::query!(
+        r#"INSERT INTO document_event (building_id, document_id, event_type, actor_id, payload)
+           VALUES ($1, $2, 'replaced', $3, $4)"#,
+        building_id,
+        row.id,
+        user_id,
+        serde_json::json!({
+            "original_name": row.original_name,
+            "category": row.category,
+            "visible_roles": row.visible_roles,
+            "supersedes_id": row.supersedes_id,
+            "replacement_reason": row.replacement_reason,
+        }),
+    )
+    .execute(&mut *tx)
     .await?;
 
     crate::db::audit::insert(

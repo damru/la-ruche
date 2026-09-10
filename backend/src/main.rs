@@ -132,6 +132,10 @@ async fn main() -> anyhow::Result<()> {
     tokio::spawn(async move {
         jobs::reminders::run(state_jobs).await;
     });
+    let state_jobs_events = Arc::clone(&state);
+    tokio::spawn(async move {
+        jobs::document_events::run(state_jobs_events).await;
+    });
 
     let state_s3_cleanup = Arc::clone(&state);
     tokio::spawn(async move {

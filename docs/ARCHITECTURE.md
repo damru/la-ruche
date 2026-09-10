@@ -223,7 +223,7 @@ Le frontend conserve les feuilles globales historiques (`tokens.css`, `base.css`
 | Utilisateurs | `user_account`, `user_token`, `user_building`, `unit_owner` |
 | AG | `general_meeting`, `general_meeting_document`, `general_meeting_attendance`, `resolution`, `vote` |
 | Budget | `budget`, `budget_line`, `levy_call`, `works_fund` — champ `category` sur `levy_call` **prévu** ; `budget.parent_budget_id` ; `budget_line.valid_from` / `valid_to` / `rectificatif_version` / `version` |
-| Documents | `document` |
+| Documents | `document`, `document_event` |
 | Contrats | `vendor_contract`, `contract_document`, `contract_reminder` |
 | Prestataires | `contractor` |
 | Tâches | `task` (`contractor_id` FK → `contractor`, `contractor_name` texte libre, `vendor_token` ephemeral), `task_document`, `vendor_submission`, `vendor_submission_document` |
