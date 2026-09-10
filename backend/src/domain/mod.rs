@@ -5,6 +5,7 @@ pub mod minutes_draft;
 pub mod owners;
 pub mod processor;
 pub mod reminders;
+pub mod retention;
 pub mod vote;
 
 use serde::{Deserialize, Serialize};

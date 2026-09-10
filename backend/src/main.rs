@@ -133,6 +133,11 @@ async fn main() -> anyhow::Result<()> {
         jobs::reminders::run(state_jobs).await;
     });
 
+    let state_s3_cleanup = Arc::clone(&state);
+    tokio::spawn(async move {
+        jobs::s3_cleanup::run(state_s3_cleanup).await;
+    });
+
     // ── Serveur ─────────────────────────────────────────────────
     let addr = cfg.app.listen_addr()?;
     let listener = tokio::net::TcpListener::bind(&addr).await?;

@@ -132,6 +132,15 @@ pub struct S3Settings {
     /// Required when endpoint_url is an internal Docker hostname (e.g. http://minio:9000)
     /// and the browser must reach MinIO on a different address (e.g. http://localhost:9000).
     pub public_url: Option<String>,
+    /// Enables the periodic S3 cleanup job (EP-005-S09): orphan purge + deferred
+    /// retention purge of soft-deleted documents. Disabled in e2e/test environments
+    /// to avoid interfering with fixtures. Defaults to `true`.
+    #[serde(default = "default_cleanup_enabled")]
+    pub cleanup_enabled: bool,
+}
+
+fn default_cleanup_enabled() -> bool {
+    true
 }
 
 #[derive(Debug, Clone, Deserialize)]
