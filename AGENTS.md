@@ -160,6 +160,7 @@ cargo sqlx prepare                 # regenerate .sqlx/ (offline mode)
     - ADR for structural technical decisions with real alternatives. DDR for structural UI/UX decisions.
     - Create ADR/DDR only when there are genuine alternatives to document.
 - If domain rule files conflict with each other or with user requests, flag the conflict to the user and await resolution before proceeding.
+- When working on a user story, always use the relevant specs under `docs/specs/` for that story. If the story has no spec, ask for clarification before starting.
 
 ## Feature Implementation Checklist
 
