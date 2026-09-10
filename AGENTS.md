@@ -173,6 +173,7 @@ Follow these steps **in order** for any new feature or significant change:
 6. Implement frontend changes.
 7. Run `graphify update .` to keep the knowledge graph current.
 8. Add a dated entry to `docs/PROGRESS.md` with Epic/Story ref (started / completed / abandoned).
+9. Open a PR for the branch (`gh pr create`) and route it to Hopper for review (`kanban_request_review`). Pushing a branch without an open PR is not a completed task.
 
 ---
 
