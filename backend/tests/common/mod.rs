@@ -113,6 +113,7 @@ fn test_config_from(db_url: String, s3_uri: String) -> AppConfig {
             staging_bucket: "laruche-staging".to_string(),
             presigned_ttl_secs: 900,
             public_url: Some(s3_uri),
+            cleanup_enabled: false,
         },
         auth: AuthSettings {
             // 256-bit secret (min required by the jwt module).

@@ -465,3 +465,78 @@ pub async fn delete_orphaned_tx(
 }
 
 // End of module.
+
+/// All building ids — used by the S3 orphan-cleanup job to iterate per
+/// building bucket (EP-005-S09).
+pub async fn all_building_ids(pool: &PgPool) -> AppResult<Vec<Uuid>> {
+    Ok(sqlx::query_scalar::<_, Uuid>("SELECT id FROM building")
+        .fetch_all(pool)
+        .await?)
+}
+
+/// All storage keys (including soft-deleted and archived) recorded in DB for
+/// a building — used by the S3 orphan-cleanup job to diff against the bucket
+/// listing (EP-005-S09).
+pub async fn all_storage_keys_for_building(
+    pool: &PgPool,
+    building_id: Uuid,
+) -> AppResult<std::collections::HashSet<String>> {
+    Ok(
+        sqlx::query_scalar::<_, String>("SELECT storage_path FROM document WHERE building_id = $1")
+            .bind(building_id)
+            .fetch_all(pool)
+            .await?
+            .into_iter()
+            .collect(),
+    )
+}
+
+/// A soft-deleted document candidate for the deferred retention purge
+/// (EP-005-S09 passe 2).
+#[derive(Debug, Clone, sqlx::FromRow)]
+pub struct PurgeCandidate {
+    pub id: Uuid,
+    pub bucket: String,
+    pub storage_path: String,
+    pub category: String,
+    pub deleted_at: DateTime<Utc>,
+}
+
+/// All soft-deleted documents, regardless of category — the retention
+/// decision (`domain::retention::is_purgeable`) is applied in Rust, not SQL.
+pub async fn soft_deleted_candidates(pool: &PgPool) -> AppResult<Vec<PurgeCandidate>> {
+    Ok(sqlx::query_as::<_, PurgeCandidate>(
+        r#"SELECT id, bucket, storage_path, category::text AS category, deleted_at
+           FROM document
+           WHERE deleted_at IS NOT NULL"#,
+    )
+    .fetch_all(pool)
+    .await?)
+}
+
+/// Physically deletes a soft-deleted document row after its retention has
+/// elapsed. Guards against dangling links — none should exist at this stage
+/// (they were cleared at soft-delete time), but this is a safety net.
+pub async fn purge(pool: &PgPool, id: Uuid) -> AppResult<()> {
+    sqlx::query(
+        r#"
+        DELETE FROM document d
+        WHERE d.id = $1
+          AND d.deleted_at IS NOT NULL
+          AND NOT EXISTS (SELECT 1 FROM document successor WHERE successor.supersedes_id = d.id)
+          AND NOT EXISTS (SELECT 1 FROM contract_document cd WHERE cd.document_id = d.id)
+          AND NOT EXISTS (SELECT 1 FROM general_meeting_document gmd WHERE gmd.document_id = d.id)
+          AND NOT EXISTS (SELECT 1 FROM general_meeting gm WHERE gm.minutes_document_id = d.id)
+          AND NOT EXISTS (SELECT 1 FROM report_document rd WHERE rd.document_id = d.id)
+          AND NOT EXISTS (SELECT 1 FROM claim_document cld WHERE cld.document_id = d.id)
+          AND NOT EXISTS (SELECT 1 FROM task_document td WHERE td.document_id = d.id)
+          AND NOT EXISTS (SELECT 1 FROM maintenance_log_document mld WHERE mld.document_id = d.id)
+          AND NOT EXISTS (SELECT 1 FROM vendor_submission_document vsd WHERE vsd.document_id = d.id)
+        "#,
+    )
+    .bind(id)
+    .execute(pool)
+    .await?;
+
+    Ok(())
+}
