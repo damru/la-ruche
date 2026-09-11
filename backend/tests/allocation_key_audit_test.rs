@@ -119,7 +119,7 @@ async fn justification_over_limit_is_rejected() {
             "justification": long_justification,
         }))
         .await;
-    assert_eq!(created.status_code(), StatusCode::UNPROCESSABLE_ENTITY);
+    assert_eq!(created.status_code(), StatusCode::BAD_REQUEST);
 }
 
 #[tokio::test]
