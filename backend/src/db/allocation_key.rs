@@ -3,6 +3,8 @@ use serde::Serialize;
 use sqlx::PgPool;
 use uuid::Uuid;
 
+use crate::db::audit::{self, NewAuditEntry};
+
 #[derive(Debug, Serialize, sqlx::FromRow)]
 pub struct AllocationKeyRow {
     pub id: Uuid,
@@ -62,8 +64,12 @@ pub async fn create(
     building_id: Uuid,
     name: &str,
     description: Option<&str>,
+    user_id: Uuid,
+    justification: Option<&str>,
 ) -> crate::errors::AppResult<AllocationKeyRow> {
-    Ok(sqlx::query_as::<_, AllocationKeyRow>(
+    let mut tx = pool.begin().await?;
+
+    let row = sqlx::query_as::<_, AllocationKeyRow>(
         "INSERT INTO allocation_key (building_id, name, description) \
          VALUES ($1, $2, $3) \
          RETURNING id, building_id, name, description, key_type::text, created_at",
@@ -71,8 +77,29 @@ pub async fn create(
     .bind(building_id)
     .bind(name)
     .bind(description)
-    .fetch_one(pool)
-    .await?)
+    .fetch_one(&mut *tx)
+    .await?;
+
+    audit::insert(
+        &mut *tx,
+        NewAuditEntry {
+            building_id,
+            entity_type: "allocation_key",
+            entity_id: row.id,
+            operation: "allocation_key.created",
+            changed_by: Some(user_id),
+            old_values: None,
+            new_values: Some(serde_json::json!({
+                "name": row.name,
+                "description": row.description,
+                "justification": justification,
+            })),
+        },
+    )
+    .await?;
+
+    tx.commit().await?;
+    Ok(row)
 }
 
 pub async fn update(
@@ -81,8 +108,26 @@ pub async fn update(
     building_id: Uuid,
     name: &str,
     description: Option<&str>,
+    user_id: Uuid,
+    justification: Option<&str>,
 ) -> crate::errors::AppResult<Option<AllocationKeyRow>> {
-    Ok(sqlx::query_as::<_, AllocationKeyRow>(
+    let mut tx = pool.begin().await?;
+
+    let before = sqlx::query_as::<_, AllocationKeyRow>(
+        "SELECT id, building_id, name, description, key_type::text, created_at \
+         FROM allocation_key WHERE id = $1 AND building_id = $2 AND deleted_at IS NULL",
+    )
+    .bind(id)
+    .bind(building_id)
+    .fetch_optional(&mut *tx)
+    .await?;
+
+    let before = match before {
+        Some(row) => row,
+        None => return Ok(None),
+    };
+
+    let row = sqlx::query_as::<_, AllocationKeyRow>(
         "UPDATE allocation_key SET name = $3, description = $4 \
          WHERE id = $1 AND building_id = $2 AND deleted_at IS NULL \
          RETURNING id, building_id, name, description, key_type::text, created_at",
@@ -91,28 +136,65 @@ pub async fn update(
     .bind(building_id)
     .bind(name)
     .bind(description)
-    .fetch_optional(pool)
-    .await?)
+    .fetch_optional(&mut *tx)
+    .await?;
+
+    let row = match row {
+        Some(row) => row,
+        None => return Ok(None),
+    };
+
+    audit::insert(
+        &mut *tx,
+        NewAuditEntry {
+            building_id,
+            entity_type: "allocation_key",
+            entity_id: row.id,
+            operation: "allocation_key.updated",
+            changed_by: Some(user_id),
+            old_values: Some(serde_json::json!({
+                "name": before.name,
+                "description": before.description,
+            })),
+            new_values: Some(serde_json::json!({
+                "name": row.name,
+                "description": row.description,
+                "justification": justification,
+            })),
+        },
+    )
+    .await?;
+
+    tx.commit().await?;
+    Ok(Some(row))
 }
 
-pub async fn delete(pool: &PgPool, id: Uuid, building_id: Uuid) -> crate::errors::AppResult<bool> {
+pub async fn delete(
+    pool: &PgPool,
+    id: Uuid,
+    building_id: Uuid,
+    user_id: Uuid,
+    justification: Option<&str>,
+) -> crate::errors::AppResult<bool> {
     // Protect the general key — it is the legal accounting foundation
-    let key_type: Option<String> = sqlx::query_scalar(
-        "SELECT key_type::text FROM allocation_key WHERE id = $1 AND building_id = $2 AND deleted_at IS NULL",
+    let key: Option<AllocationKeyRow> = sqlx::query_as::<_, AllocationKeyRow>(
+        "SELECT id, building_id, name, description, key_type::text, created_at \
+         FROM allocation_key WHERE id = $1 AND building_id = $2 AND deleted_at IS NULL",
     )
     .bind(id)
     .bind(building_id)
     .fetch_optional(pool)
     .await?;
 
-    match key_type.as_deref() {
+    let key = match key {
         None => return Ok(false),
-        Some("general") => {
-            return Err(crate::errors::AppError::conflict_code(
-                "errors.allocation_keys.general_key_protected",
-            ));
-        }
-        _ => {}
+        Some(key) => key,
+    };
+
+    if key.key_type == "general" {
+        return Err(crate::errors::AppError::conflict_code(
+            "errors.allocation_keys.general_key_protected",
+        ));
     }
 
     let mut tx = pool.begin().await?;
@@ -134,6 +216,24 @@ pub async fn delete(pool: &PgPool, id: Uuid, building_id: Uuid) -> crate::errors
     .bind(id)
     .bind(building_id)
     .execute(&mut *tx)
+    .await?;
+
+    audit::insert(
+        &mut *tx,
+        NewAuditEntry {
+            building_id,
+            entity_type: "allocation_key",
+            entity_id: id,
+            operation: "allocation_key.deleted",
+            changed_by: Some(user_id),
+            old_values: Some(serde_json::json!({
+                "name": key.name,
+                "description": key.description,
+                "justification": justification,
+            })),
+            new_values: None,
+        },
+    )
     .await?;
 
     tx.commit().await?;
@@ -263,6 +363,9 @@ pub async fn set_share(
     unit_id: Uuid,
     key_id: Uuid,
     share_value: i32,
+    building_id: Uuid,
+    user_id: Uuid,
+    justification: Option<&str>,
 ) -> crate::errors::AppResult<()> {
     // Check current active value to avoid spurious history entries
     let current: Option<i32> = sqlx::query_scalar(
@@ -299,6 +402,24 @@ pub async fn set_share(
     .bind(key_id)
     .bind(share_value)
     .execute(&mut *tx)
+    .await?;
+
+    audit::insert(
+        &mut *tx,
+        NewAuditEntry {
+            building_id,
+            entity_type: "allocation_key",
+            entity_id: key_id,
+            operation: "allocation_key.share_set",
+            changed_by: Some(user_id),
+            old_values: Some(serde_json::json!({ "unit_id": unit_id, "share_value": current })),
+            new_values: Some(serde_json::json!({
+                "unit_id": unit_id,
+                "share_value": share_value,
+                "justification": justification,
+            })),
+        },
+    )
     .await?;
 
     tx.commit().await?;
