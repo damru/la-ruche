@@ -94,6 +94,18 @@ export interface AllocationKey {
   key_type: AllocationKeyType
 }
 
+export interface AuditEntry {
+  id: string
+  building_id: string
+  entity_type: string
+  entity_id: string
+  operation: string
+  changed_by?: string
+  changed_at: string
+  old_values?: Record<string, unknown>
+  new_values?: Record<string, unknown>
+}
+
 export interface UnitShare {
   unit_id: string
   unit_number: string

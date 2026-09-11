@@ -22,6 +22,7 @@ struct Fixture {
     fiscal_year: i32,
     meeting_id: Uuid,
     key_id_1: Uuid,
+    #[allow(dead_code)]
     key_id_2: Uuid,
 }
 

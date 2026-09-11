@@ -170,6 +170,8 @@ pub struct AllocationKeyInput {
     #[validate(length(min = 1, max = 100))]
     pub name: String,
     pub description: Option<String>,
+    #[validate(length(max = 500))]
+    pub justification: Option<String>,
 }
 
 #[derive(Serialize, ToSchema)]
@@ -179,15 +181,23 @@ pub struct UnitShareResponse {
     pub share_value: i32,
 }
 
-#[derive(Deserialize, ToSchema)]
+#[derive(Deserialize, Validate, ToSchema)]
 pub struct SetSharesInput {
     pub shares: Vec<UnitShareItem>,
+    #[validate(length(max = 500))]
+    pub justification: Option<String>,
 }
 
 #[derive(Deserialize, ToSchema)]
 pub struct UnitShareItem {
     pub unit_id: Uuid,
     pub share_value: i32,
+}
+
+#[derive(Deserialize, ToSchema)]
+pub struct DeleteKeyInput {
+    #[serde(default)]
+    pub justification: Option<String>,
 }
 
 fn require_manager(auth: &crate::domain::AuthUser) -> crate::errors::AppResult<()> {
@@ -232,6 +242,8 @@ pub async fn create_key(
         auth.building_id,
         &input.name,
         input.description.as_deref(),
+        auth.user_id,
+        input.justification.as_deref(),
     )
     .await?;
 
@@ -264,6 +276,8 @@ pub async fn update_key(
         auth.building_id,
         &input.name,
         input.description.as_deref(),
+        auth.user_id,
+        input.justification.as_deref(),
     )
     .await?
     .ok_or(AppError::NotFound)?;
@@ -281,9 +295,24 @@ pub async fn delete_key(
     State(state): State<Arc<AppState>>,
     auth: AuthUser,
     Path(id): Path<Uuid>,
+    Json(input): Json<DeleteKeyInput>,
 ) -> AppResult<StatusCode> {
     require_manager(&auth)?;
-    let deleted = db::allocation_key::delete(&state.pool, id, auth.building_id).await?;
+    if let Some(j) = &input.justification
+        && j.len() > 500
+    {
+        return Err(AppError::validation_code(
+            "errors.allocation_keys.justification_too_long",
+        ));
+    }
+    let deleted = db::allocation_key::delete(
+        &state.pool,
+        id,
+        auth.building_id,
+        auth.user_id,
+        input.justification.as_deref(),
+    )
+    .await?;
     if deleted {
         Ok(StatusCode::NO_CONTENT)
     } else {
@@ -346,6 +375,8 @@ pub async fn set_key_shares(
     Json(body): Json<SetSharesInput>,
 ) -> AppResult<StatusCode> {
     require_manager(&auth)?;
+    body.validate()
+        .map_err(|_| AppError::validation_code("errors.allocation_keys.justification_too_long"))?;
 
     // Validate all values first
     let mut parsed: Vec<(Uuid, i32)> = Vec::with_capacity(body.shares.len());
@@ -370,10 +401,34 @@ pub async fn set_key_shares(
     }
 
     for (unit_id, share_value) in parsed {
-        db::allocation_key::set_share(&state.pool, unit_id, id, share_value).await?;
+        db::allocation_key::set_share(
+            &state.pool,
+            unit_id,
+            id,
+            share_value,
+            auth.building_id,
+            auth.user_id,
+            body.justification.as_deref(),
+        )
+        .await?;
     }
 
     Ok(StatusCode::NO_CONTENT)
+}
+
+/// GET /building/keys/{id}/audit
+pub async fn key_audit(
+    State(state): State<Arc<AppState>>,
+    auth: AuthUser,
+    Path(id): Path<Uuid>,
+) -> AppResult<Json<Vec<crate::db::audit::AuditEntry>>> {
+    auth.require_any_role(&[
+        crate::domain::Role::Manager,
+        crate::domain::Role::BoardMember,
+    ])?;
+    let entries =
+        db::audit::list_by_entity(&state.pool, auth.building_id, "allocation_key", id).await?;
+    Ok(Json(entries))
 }
 
 // ── Registry (consolidated view) ─────────────────────────────────

@@ -1604,7 +1604,19 @@
       "generalProtected": "Cette clé est obligatoire et ne peut pas être supprimée (art. 10 loi 1965).",
       "confirmDeleteTitle": "Supprimer la clé de répartition",
       "confirmDeleteMessage": "La clé « {name} » sera archivée. L'historique des appels de fonds associés sera conservé.",
-      "deleteSuccess": "Clé de répartition supprimée"
+      "deleteSuccess": "Clé de répartition supprimée",
+      "justificationLabel": "Justification",
+      "justificationPlaceholder": "Motif de la modification (optionnel, conservé dans le journal d'audit)",
+      "history": "Historique",
+      "historyTitle": "Historique de la clé « {name} »",
+      "historyEmpty": "Aucune modification enregistrée.",
+      "historyClose": "Fermer",
+      "historyActions": {
+        "allocation_key.created": "Création",
+        "allocation_key.updated": "Modification",
+        "allocation_key.deleted": "Suppression",
+        "allocation_key.share_set": "Modification des tantièmes"
+      }
     },
     "phone": "Téléphone",
     "phonePlaceholder": "06 00 00 00 00"

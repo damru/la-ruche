@@ -34,9 +34,10 @@ const saving = ref(false)
 const form = ref<{
   name: string
   description: string
+  justification: string
   shares: { unit_id: string; unit_number: string; share_value: number }[]
   sharesTotal: number
-}>({ name: '', description: '', shares: [], sharesTotal: 0 })
+}>({ name: '', description: '', justification: '', shares: [], sharesTotal: 0 })
 
 function sortSharesByUnit(shares: { unit_id: string; unit_number: string; share_value: number }[]) {
   return [...shares].sort((a, b) =>
@@ -59,7 +60,7 @@ watch(() => props.open, async (open) => {
     return
   }
   feedback.reset()
-  form.value = { name: '', description: '', shares: [], sharesTotal: 0 }
+  form.value = { name: '', description: '', justification: '', shares: [], sharesTotal: 0 }
   loading.value = true
   try {
     if (props.keyToEdit) {
@@ -96,6 +97,7 @@ async function save() {
       const res = await allocationKeysApi.update(props.keyToEdit.id, {
         name: form.value.name,
         description: form.value.description || undefined,
+        justification: form.value.justification || undefined,
       })
       savedKey = res.data
       keyId = res.data.id
@@ -103,6 +105,7 @@ async function save() {
       const res = await allocationKeysApi.create({
         name: form.value.name,
         description: form.value.description || undefined,
+        justification: form.value.justification || undefined,
       })
       savedKey = res.data
       keyId = res.data.id
@@ -112,7 +115,7 @@ async function save() {
       await allocationKeysApi.setShares(keyId, form.value.shares.map(s => ({
         unit_id: s.unit_id,
         share_value: Number(s.share_value),
-      })))
+      })), form.value.justification || undefined)
     }
 
     let balanceDelta: number | null = null
@@ -156,6 +159,13 @@ async function save() {
           v-model="form.description"
           :label="t('settings.keys.descriptionLabel')"
           :placeholder="t('settings.keys.descriptionPlaceholder')"
+          class="flex flex-col gap-1 col-span-full"
+        />
+        <CFormTextarea
+          v-model="form.justification"
+          :label="t('settings.keys.justificationLabel')"
+          :placeholder="t('settings.keys.justificationPlaceholder')"
+          :maxlength="500"
           class="flex flex-col gap-1 col-span-full"
         />
       </div>
