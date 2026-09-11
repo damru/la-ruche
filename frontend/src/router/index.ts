@@ -30,6 +30,7 @@ const UnitChargesView         = () => import('@/features/residents/UnitChargesVi
 const MyChargesView           = () => import('@/features/residents/MyChargesView.vue')
 const BuildingView            = () => import('@/features/residence/BuildingView.vue')
 const AllocationKeysView      = () => import('@/features/residence/AllocationKeysView.vue')
+const EddView                 = () => import('@/features/residence/EddView.vue')
 const ProfileView             = () => import('@/features/profile/ProfileView.vue')
 const ContractorPage          = () => import('@/features/contractor/ContractorPage.vue')
 const AppLayout               = () => import('@/layouts/AppLayout.vue')
@@ -197,6 +198,12 @@ const routes: RouteRecordRaw[] = [
         name: 'residence-keys',
         component: AllocationKeysView,
         meta: { title: 'nav.residence-keys', roles: ['manager'] },
+      },
+      {
+        path: 'residence/edd',
+        name: 'residence-edd',
+        component: EddView,
+        meta: { title: 'nav.residence-edd', roles: ['manager'] },
       },
       // ── Profile ──────────────────────────────────────────────
       {
