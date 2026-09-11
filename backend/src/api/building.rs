@@ -542,6 +542,8 @@ pub async fn edd_check(
         "reference": to_edd_reference_response(reference),
         "discrepancies": report.discrepancies,
     })))
+}
+
 /// GET /building/keys/{id}/audit
 pub async fn key_audit(
     State(state): State<Arc<AppState>>,
