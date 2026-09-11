@@ -117,4 +117,4 @@ Handlers sans logique métier ; le calcul J+15 et l'assemblage vivent en domain.
 3. `db/etat_date.rs`.
 4. `api/etat_date.rs` + routes `api/mod.rs` + erreurs i18n.
 5. Frontend (types, api client, vue liste + imprimable) — cataloguer les `C*` nouveaux d'abord.
-6. Tests E2E, `graphify update .`, entrée `docs/PROGRESS.md`.
+6. Tests E2E, entrée `docs/PROGRESS.md`.

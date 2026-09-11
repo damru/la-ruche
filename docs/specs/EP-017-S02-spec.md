@@ -112,4 +112,4 @@ Aucun changement (lecture en EP-017-S03/S04/S05).
 2. Instrumentation `db/report.rs` (4 actions) → tests 1-3.
 3. Instrumentation `db/task.rs` (6 actions) + propagation `actor_id` depuis `api/tasks.rs` / `api/contractor.rs` → tests 4-7.
 4. `cargo test --lib --tests`, `cargo clippy -- -D warnings`, `cargo fmt --check`.
-5. `docs/EPICS.md`, `docs/PROGRESS.md`, `graphify update .`.
+5. `docs/EPICS.md`, `docs/PROGRESS.md`.

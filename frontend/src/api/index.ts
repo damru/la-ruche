@@ -8,7 +8,7 @@ import type {
   LogbookSummary,
   Report, Consultation, ConsultationResults, VendorTask, VendorDocument,
   Document, UploadUrlResponse, DownloadUrlResponse,
-  Building, Unit, UnitOwnerRecord, User, AllocationKey, UnitShare,
+  Building, Unit, UnitOwnerRecord, User, AllocationKey, UnitShare, AuditEntry,
   OnboardingStatus, RuntimeStatus, BootstrapInput, BootstrapResponse,
   LoginResponse, BuildingStats, RegistryResponse, UnitChargesResponse,
   Contractor, JudicialProceeding, GovernanceMandate,
@@ -80,18 +80,20 @@ export const buildingApi = {
 export const allocationKeysApi = {
   list: () =>
     api.get<AllocationKey[]>('/building/keys'),
-  create: (data: { name: string; description?: string }) =>
+  create: (data: { name: string; description?: string; justification?: string }) =>
     api.post<AllocationKey>('/building/keys', data),
-  update: (id: string, data: { name: string; description?: string }) =>
+  update: (id: string, data: { name: string; description?: string; justification?: string }) =>
     api.put<AllocationKey>(`/building/keys/${id}`, data),
-  delete: (id: string) =>
-    api.delete(`/building/keys/${id}`),
+  delete: (id: string, data?: { justification?: string }) =>
+    api.delete(`/building/keys/${id}`, { data }),
   listShares: (id: string) =>
     api.get<{ shares: UnitShare[]; shares_sum: number; shares_total: number }>(`/building/keys/${id}/shares`),
-  setShares: (id: string, shares: { unit_id: string; share_value: number }[]) =>
-    api.put(`/building/keys/${id}/shares`, { shares }),
+  setShares: (id: string, shares: { unit_id: string; share_value: number }[], justification?: string) =>
+    api.put(`/building/keys/${id}/shares`, { shares, justification }),
   balance: (id: string) =>
     api.get<{ shares_sum: number; shares_total: number; balanced: boolean; delta: number }>(`/building/keys/${id}/balance`),
+  listAudit: (id: string) =>
+    api.get<AuditEntry[]>(`/building/keys/${id}/audit`),
 }
 
 // ── Units ─────────────────────────────────────────────────────────

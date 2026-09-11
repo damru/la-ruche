@@ -86,4 +86,4 @@ Slot optionnel `#empty` — état vide (défaut : rien ; les parents affichent d
 2. Créer `CDocumentList.vue` (markup extrait de `ContractFormModal.vue:505-543`).
 3. Migrer `ContractFormModal` (pilote), tester le flux complet.
 4. Migrer `SaveTaskModal`, `ClaimEditModal` (+ modales claims sœurs le cas échéant), `EditReportModal` ; supprimer les styles orphelins.
-5. `graphify update .` + entrée datée dans `docs/PROGRESS.md` (réf. EP-020-S16).
+5. Entrée datée dans `docs/PROGRESS.md` (réf. EP-020-S16).

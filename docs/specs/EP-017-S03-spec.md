@@ -141,4 +141,4 @@ Type `TimelineEvent` dans `frontend/src/types/domain.ts` (miroir du contrat §4.
 2. Handlers `tasks::timeline` / `reports::timeline` + routes → `cargo build` + clippy.
 3. Tests e2e §8 → vert.
 4. Frontend : type `TimelineEvent` + méthodes `timeline` des deux clients → `npm --prefix frontend run build && lint`.
-5. `docs/EPICS.md` (statut + correction libellé S03), `docs/PROGRESS.md`, `graphify update .`.
+5. `docs/EPICS.md` (statut + correction libellé S03), `docs/PROGRESS.md`.

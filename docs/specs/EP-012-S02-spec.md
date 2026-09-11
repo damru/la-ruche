@@ -142,4 +142,4 @@ pub struct FichePayload {
 3. `db/fiche_synthetique.rs` (`collect_sources`, `create_draft`, `get`, `list`).
 4. `api/fiche_synthetique.rs` + routes + tests e2e.
 5. Frontend (types, `ficheApi`, `FicheSynthetiqueView.vue`, route, navigation).
-6. `graphify update .` + entrée `docs/PROGRESS.md` (EP-012-S02).
+6. Entrée `docs/PROGRESS.md` (EP-012-S02).

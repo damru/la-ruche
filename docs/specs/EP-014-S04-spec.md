@@ -115,4 +115,4 @@ Défaut de plage si `from`/`to` absents : aujourd'hui → +365 jours (l'export �
 2. `api/calendar.rs::export_ics` + route → `cargo clippy -- -D warnings`.
 3. Tests e2e (§7), boucler jusqu'au vert ; import manuel de vérification dans Google Calendar.
 4. Frontend : `calendarApi.exportIcs` + bouton dans `CalendarView` → `npm --prefix frontend run build && npm --prefix frontend run lint`.
-5. Docs : `docs/EPICS.md` (statut S04), `docs/PROGRESS.md`, `graphify update .`.
+5. Docs : `docs/EPICS.md` (statut S04), `docs/PROGRESS.md`.

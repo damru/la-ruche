@@ -176,4 +176,4 @@ E2e (`backend/tests/api_e2e_test.rs`) :
 3. `api/reports.rs` : handlers + guard lecture déclarant ; route dans `api/mod.rs` → `cargo clippy -- -D warnings`.
 4. Tests e2e §8, boucler jusqu'au vert.
 5. Frontend : type `ReportComment`, `reportsApi`, section « Suivi » sur la fiche signalement + i18n.
-6. `npm --prefix frontend run build && npm --prefix frontend run lint` ; corriger `docs/PROGRESS.md` L235 + entrée datée ; `docs/EPICS.md` ; `graphify update .`.
+6. `npm --prefix frontend run build && npm --prefix frontend run lint` ; corriger `docs/PROGRESS.md` L235 + entrée datée ; `docs/EPICS.md`.

@@ -10,10 +10,12 @@ import CHeading from '@/components/atoms/CHeading.vue'
 import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import CIconEdit from '@/components/atoms/CIconEdit.svg'
 import CIconTrash from '@/components/atoms/CIconTrash.svg'
+import CIconClock from '@/components/atoms/CIconClock.svg'
 import { allocationKeysApi } from '@/api'
 import { usePageLoader } from '@/composables/usePageLoader'
 import KeyFormModal from '@/features/residence/KeyFormModal.vue'
 import DeleteKeyModal from '@/features/residence/DeleteKeyModal.vue'
+import KeyAuditModal from '@/features/residence/KeyAuditModal.vue'
 import type { AllocationKey } from '@/types/domain'
 
 const { t } = useI18n()
@@ -36,6 +38,8 @@ const showKeyModal = ref(false)
 const keyToEdit = ref<AllocationKey | null>(null)
 const showDeleteKeyModal = ref(false)
 const keyToDelete = ref<AllocationKey | null>(null)
+const showAuditModal = ref(false)
+const keyToShowAudit = ref<AllocationKey | null>(null)
 
 function openCreateModal() {
   keyToEdit.value = null
@@ -50,6 +54,11 @@ function openEditModal(key: AllocationKey) {
 function openDeleteKeyModal(key: AllocationKey) {
   keyToDelete.value = key
   showDeleteKeyModal.value = true
+}
+
+function openAuditModal(key: AllocationKey) {
+  keyToShowAudit.value = key
+  showAuditModal.value = true
 }
 
 async function handleKeySaved(key: AllocationKey) {
@@ -192,6 +201,13 @@ onMounted(reload)
                 <div class="action-btns">
                   <CBtn
                     variant="icon"
+                    :icon="CIconClock"
+                    :title="t('settings.keys.history')"
+                    :aria-label="t('settings.keys.history')"
+                    @click="openAuditModal(row)"
+                  />
+                  <CBtn
+                    variant="icon"
                     :icon="CIconEdit"
                     :title="t('common.edit')"
                     :aria-label="t('common.edit')"
@@ -236,6 +252,12 @@ onMounted(reload)
       :key-to-delete="keyToDelete"
       @update:open="showDeleteKeyModal = $event"
       @deleted="handleKeyDeleted"
+    />
+
+    <KeyAuditModal
+      :open="showAuditModal"
+      :key-to-show="keyToShowAudit"
+      @update:open="showAuditModal = $event"
     />
   </div>
 </template>

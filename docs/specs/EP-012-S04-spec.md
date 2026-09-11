@@ -105,4 +105,4 @@ Validation du payload entrant : désérialisation stricte `FichePayload` (`deny_
 3. `db::update_payload`.
 4. `api::update` + route + tests e2e.
 5. Frontend (`FicheEditForm.vue`, `ficheApi.update`, marquage overrides) + `docs/DESIGN.md` si nouveau composant catalogue.
-6. `graphify update .` + entrée `docs/PROGRESS.md` (EP-012-S04).
+6. Entrée `docs/PROGRESS.md` (EP-012-S04).

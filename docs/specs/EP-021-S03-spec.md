@@ -146,4 +146,4 @@ Rien : l'audit est un effet transactionnel du repo, pas une règle métier. Aucu
 2. Câbler site par site (étendre les signatures avec `user_id`, introduire les tx manquantes) — un commit par groupe cohérent, e2e au fil de l'eau.
 3. Endpoint `GET /audit` (+ scoping immeuble dans `list_by_entity` si absent) + i18n.
 4. Frontend : `AuditHistorySection.vue` (catalogue DESIGN.md) + intégrations.
-5. Vérif finale → `graphify update .` + `docs/PROGRESS.md`.
+5. Vérif finale → `docs/PROGRESS.md`.

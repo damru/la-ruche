@@ -136,4 +136,4 @@ Handlers minces ; notif d'autrui → `404`.
 6. API (3 routes) + i18n (dont corps de lettre).
 7. Tests e2e.
 8. Frontend (cloche, bandeau, `NoticeLetterView.vue`, catalogue DESIGN.md).
-9. `graphify update .` + `docs/PROGRESS.md`.
+9. `docs/PROGRESS.md`.

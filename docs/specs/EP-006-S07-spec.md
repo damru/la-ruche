@@ -94,4 +94,4 @@ Pas de nouveau modèle de visibilité par document, pas d'ACL fine — le mécan
 1. Présenter A/B au product owner avec l'argument art. 21 loi 1965 → décision.
 2. Option A : amendement PRD + vérif garde écriture + test non-régression.
 3. Option B : backend (rôles) → migration de reprise (après analyse des doubles liens) → frontend → tests.
-4. `docs/PROGRESS.md`, `graphify update .` si du code a changé.
+4. `docs/PROGRESS.md` si du code a changé.

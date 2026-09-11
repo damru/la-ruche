@@ -97,4 +97,4 @@ Réponses `delete` (nouvelles) : `400 errors.tasks.has_submissions` · `400 erro
 2. API : handler + route + i18n.
 3. Tests e2e, boucler au vert.
 4. Frontend : api client, `DeleteTaskModal`, action annuler dans `TasksView`.
-5. `graphify update .`, `docs/PROGRESS.md`.
+5. `docs/PROGRESS.md`.

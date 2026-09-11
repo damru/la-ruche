@@ -74,4 +74,4 @@
 3. Intégrer dans `DashboardView.vue` (`Promise.allSettled` + grille) + i18n.
 4. Tests frontend (§7) ou passe manuelle 4 rôles.
 5. `npm --prefix frontend run build && npm --prefix frontend run lint`.
-6. Docs : `docs/EPICS.md` (statut S05), `docs/PROGRESS.md` (entrée datée), `graphify update .` ; ouvrir la discussion « fusion des blocs redondants » (§5).
+6. Docs : `docs/EPICS.md` (statut S05), `docs/PROGRESS.md` (entrée datée) ; ouvrir la discussion « fusion des blocs redondants » (§5).

@@ -87,4 +87,4 @@ AC-CAL-002-B demande une persistance « dans les préférences utilisateur ». *
 3. Tests e2e (§7), boucler jusqu'au vert.
 4. Frontend : `calendarApi` (param `types`) → `CalendarFilterBar.vue` (catalogue d'abord) → intégration `CalendarView` + persistance `localStorage` → i18n.
 5. `npm --prefix frontend run build && npm --prefix frontend run lint`.
-6. Docs : `docs/EPICS.md` (statut S02), `docs/PROGRESS.md`, `graphify update .`.
+6. Docs : `docs/EPICS.md` (statut S02), `docs/PROGRESS.md`.

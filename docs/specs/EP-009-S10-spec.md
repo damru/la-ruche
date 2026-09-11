@@ -95,4 +95,4 @@ Valeur `sinistre` : aucun backfill automatique (pas de FK claim sur `maintenance
 3. Validation API + i18n.
 4. Tests e2e.
 5. Frontend : types, formulaire, filtres catégorie + source, badges.
-6. `graphify update .`, `docs/PROGRESS.md`.
+6. `docs/PROGRESS.md`.

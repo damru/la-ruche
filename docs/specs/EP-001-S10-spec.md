@@ -95,4 +95,4 @@ Route à déclarer dans `backend/src/api/mod.rs` :
 2. Câblage audit dans `db/allocation_key.rs` (4 mutations, même transaction) — `cargo sqlx prepare` ensuite.
 3. Endpoint de lecture + route `api/mod.rs`.
 4. Frontend : champ justification + modale historique (cataloguer tout nouveau `C*` dans DESIGN.md §3 d'abord).
-5. Tests E2E, `graphify update .`, entrée `docs/PROGRESS.md`.
+5. Tests E2E, entrée `docs/PROGRESS.md`.

@@ -82,4 +82,4 @@ Slot défaut : la valeur (déjà formatée par le parent — `formatCurrency`, p
 2. Créer `CDataText.vue` (convention `sizeClass` de `CHeading.vue`).
 3. Migrer `BudgetView` (pilote), vérifier l'alignement des colonnes.
 4. Migrer les occurrences restantes (§4, étapes 2-3) et supprimer les règles CSS orphelines.
-5. `graphify update .` + entrée datée dans `docs/PROGRESS.md` (réf. EP-020-S17).
+5. Entrée datée dans `docs/PROGRESS.md` (réf. EP-020-S17).

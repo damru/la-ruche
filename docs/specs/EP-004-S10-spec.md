@@ -93,4 +93,4 @@ seuil_minimal = max(0.05 × budget_previsionnel_total, 0.025 × montant_ppt_adop
 2. Domain `legal_minimum_works_fund` + tests.
 3. Brancher les 2 points de contrôle + exposer le seuil dans la réponse API.
 4. Frontend (libellé avec base de calcul).
-5. `docs/PROGRESS.md` + `graphify update .`.
+5. `docs/PROGRESS.md`.

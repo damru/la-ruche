@@ -163,4 +163,4 @@ Aucun changement.
 2. `db/document.rs::create` transactionnel + événement → `cargo build`, e2e upload toujours vert.
 3. `jobs/document_events.rs` + `jobs/mod.rs` + spawn.
 4. Tests (§8) → vert ; `clippy -D warnings`.
-5. `docs/PROGRESS.md`, `graphify update .`.
+5. `docs/PROGRESS.md`.

@@ -158,4 +158,4 @@ Unitaire : `validate_input` (titre vide, < 2 choix, rôle invalide).
 3. `cargo sqlx prepare` si requêtes macro modifiées ; tests e2e §8, boucler jusqu'au vert.
 4. Frontend : `api/index.ts` (`update`, `openDraft` → POST), `CreateConsultationModal` mode édition, `ConsultationsView` onglet Brouillons + actions.
 5. `npm --prefix frontend run build && npm --prefix frontend run lint`.
-6. `docs/EPICS.md` / `docs/PROGRESS.md` (entrée datée), `graphify update .`.
+6. `docs/EPICS.md` / `docs/PROGRESS.md` (entrée datée).

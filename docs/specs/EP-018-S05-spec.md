@@ -669,7 +669,7 @@ Le repo ne montre pas de suite de tests composants Vue pour `contracts/`. Si `vi
 7. **Frontend composants** : `AmendContractModal.vue`, `AmendmentChainModal.vue` — cataloguer dans `docs/DESIGN.md §2` avant usage.
 8. **Frontend vue** : `ContractsView.vue` (actions conditionnelles par statut), `ContractFormModal.vue` (champs gelés en lecture seule sur non-`draft`).
 9. **Vérif finale** : `cargo test --lib --tests`, `cargo clippy -- -D warnings`, `cargo fmt --check`, `npm --prefix frontend run build`, `npm --prefix frontend run lint`.
-10. **Docs & suivi** : `docs/ARCHITECTURE.md` (déjà à jour — mentionne `predecessor_id` sur `vendor_contract`, vérifier la cohérence avec le cycle `draft` ajouté), `docs/EPICS.md` (statut `EP-018-S05`), `docs/PROGRESS.md` (entrée datée), `graphify update .`.
+10. **Docs & suivi** : `docs/ARCHITECTURE.md` (déjà à jour — mentionne `predecessor_id` sur `vendor_contract`, vérifier la cohérence avec le cycle `draft` ajouté), `docs/EPICS.md` (statut `EP-018-S05`), `docs/PROGRESS.md` (entrée datée).
 
 ---
 

@@ -139,4 +139,4 @@ pub struct ListContractsQuery {
 3. Frontend api + types.
 4. `ContractsView.vue` : rangée de filtres, navigation carte → fiche.
 5. `ContractDetailView.vue` + route (cataloguer tout nouveau `C*` dans `docs/DESIGN.md` §3 avant usage).
-6. `npm run build` + `lint` ; `docs/PROGRESS.md`, `graphify update .`.
+6. `npm run build` + `lint` ; `docs/PROGRESS.md`.

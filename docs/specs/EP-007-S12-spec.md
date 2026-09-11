@@ -105,4 +105,4 @@ Le handler `update` (`:148-154`) reste inchangé — il continue de refuser tout
 3. API handler + route + i18n.
 4. Tests e2e, boucler au vert.
 5. Frontend : api client + `ReopenTaskModal.vue` (endpoint + message).
-6. `graphify update .`, `docs/PROGRESS.md`.
+6. `docs/PROGRESS.md`.

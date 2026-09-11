@@ -121,4 +121,4 @@ Réponses : `200` tâche mise à jour · `400 errors.tasks.not_in_quote_phase` �
 4. API handler + route + i18n.
 5. Tests e2e.
 6. Frontend types/api/vue.
-7. `graphify update .`, `docs/PROGRESS.md`.
+7. `docs/PROGRESS.md`.

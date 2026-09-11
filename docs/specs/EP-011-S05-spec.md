@@ -132,4 +132,4 @@ E2e (`backend/tests/api_e2e_test.rs`) :
 4. `api/reports.rs` : `is_anonymous` dans l'input, masquage sur toutes les sorties, audit `convert_to_task` → `cargo clippy -- -D warnings`.
 5. Tests e2e §8, boucler jusqu'au vert.
 6. Frontend : types, payload `create`, case à cocher `CreateReportModal.vue`, badge « Anonyme » liste/fiche + i18n.
-7. `npm --prefix frontend run build && npm --prefix frontend run lint` ; `docs/EPICS.md` / `docs/PROGRESS.md` ; `graphify update .`.
+7. `npm --prefix frontend run build && npm --prefix frontend run lint` ; `docs/EPICS.md` / `docs/PROGRESS.md`.

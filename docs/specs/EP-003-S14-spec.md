@@ -99,4 +99,4 @@ Pas de nouveau code i18n : l'invisibilité se matérialise en 404 (pattern exist
 2. `api/assemblies.rs` : rôles élargis + filtre tenant (list/get/résolutions) → `cargo clippy -- -D warnings`.
 3. Tests e2e, boucler jusqu'au vert.
 4. Frontend : routes (router/index.ts L78, L84), états par rôle dans les vues.
-5. `docs/PROGRESS.md` + `graphify update .`.
+5. `docs/PROGRESS.md`.

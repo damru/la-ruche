@@ -124,4 +124,4 @@ pub(crate) fn is_form_received_in_time(received: NaiveDate, meeting_date: NaiveD
 3. `db/assembly.rs` : `save_attendance` (validation + caducité), exclusion dans les tallies, guard `cast_vote`.
 4. Tests e2e, boucler jusqu'au vert (`cargo test --lib --tests`, `cargo clippy -- -D warnings`).
 5. Frontend : payload api, champ date, badge caducité.
-6. `docs/PROGRESS.md` (entrée datée) + `graphify update .`.
+6. `docs/PROGRESS.md` (entrée datée).

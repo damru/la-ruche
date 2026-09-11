@@ -91,4 +91,4 @@ Les codes sont des clés i18n stables (`rnc.checks.registration_number_missing`,
 2. `db::rnc_export::latest_for_year` + extension `insert`.
 3. `api/rnc.rs` : `dossier` (dry-run), durcissement `create`, implémentation `list` + tests e2e.
 4. Frontend (workflow 3 étapes + i18n).
-5. `graphify update .` + entrée `docs/PROGRESS.md` (EP-012-S03).
+5. Entrée `docs/PROGRESS.md` (EP-012-S03).

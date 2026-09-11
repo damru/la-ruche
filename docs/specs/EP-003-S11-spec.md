@@ -143,4 +143,4 @@ Règles :
 5. `api/meeting_requests.rs` + routes → `cargo clippy -- -D warnings`.
 6. Tests e2e.
 7. Frontend (api client, formulaire, liste, actions) — cataloguer les composants dans `docs/DESIGN.md §3` avant usage.
-8. `docs/PROGRESS.md` + `graphify update .`.
+8. `docs/PROGRESS.md`.

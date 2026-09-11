@@ -73,4 +73,4 @@ Vérifier que l'UI documents dans `ClaimsView.vue` (ou composant dédié) est d�
 1. Ajouter les deux guards (`claims.rs:104-114`, `:121-133`).
 2. Tests e2e (§7), boucler au vert.
 3. Vérifier le masquage UI par rôle.
-4. Commit dédié (fix sécurité, séparé de tout autre travail), `docs/PROGRESS.md`, `graphify update .`.
+4. Commit dédié (fix sécurité, séparé de tout autre travail), `docs/PROGRESS.md`.

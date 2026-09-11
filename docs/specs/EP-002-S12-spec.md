@@ -120,4 +120,4 @@ Rôles : **manager + membres du conseil** en écriture ; **copropriétaires en l
 3. `db/council_pv.rs`.
 4. `api/council_pv.rs` + routes `api/mod.rs` + intégration listing registre des PV + erreurs i18n.
 5. Frontend (types, `councilPvApi`, `CouncilPvView.vue`, intégration registre) — cataloguer les `C*` nouveaux d'abord.
-6. Tests E2E, `graphify update .`, entrée `docs/PROGRESS.md`.
+6. Tests E2E, entrée `docs/PROGRESS.md`.

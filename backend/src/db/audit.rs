@@ -1,6 +1,7 @@
 //! Append-only audit log repository (ADR-009).
 //! No UPDATE or DELETE — every row is a permanent accounting record.
 
+use serde::Serialize;
 use serde_json::Value;
 use sqlx::{PgPool, Postgres};
 use uuid::Uuid;
@@ -18,7 +19,7 @@ pub struct NewAuditEntry<'a> {
     pub new_values: Option<Value>,
 }
 
-#[derive(Debug, sqlx::FromRow)]
+#[derive(Debug, Serialize, sqlx::FromRow)]
 pub struct AuditEntry {
     pub id: Uuid,
     pub building_id: Uuid,

@@ -156,4 +156,4 @@ Aucune logique en handler : checks catégorie/chaîne dans `db/` + `domain/`.
 4. `api/documents.rs` + route `GET /documents/{id}/versions` dans `api/mod.rs` → `clippy -D warnings`.
 5. Tests e2e → vert.
 6. Frontend : types, api, catalogage `CDocumentVersionsModal` dans `docs/DESIGN.md` §3, UI.
-7. `docs/PROGRESS.md` (entrée datée EP-005-S06), `graphify update .`.
+7. `docs/PROGRESS.md` (entrée datée EP-005-S06).

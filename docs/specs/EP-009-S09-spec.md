@@ -98,4 +98,4 @@ Aucun nouvel appel si les endpoints existants suffisent (summary + list + contra
 2. `MaintenancePrintView.vue` + route + guards.
 3. Bouton d'export dans `MaintenanceView.vue`.
 4. Ajustements CSS print, tests manuels.
-5. `graphify update .`, `docs/PROGRESS.md`.
+5. `docs/PROGRESS.md`.

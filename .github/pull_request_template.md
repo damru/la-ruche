@@ -1,6 +1,6 @@
 <!--
   ╔═══════════════════════════════╗
-  ║                    La Ruche — Pull Request                    ║
+  ║    La Ruche — Pull Request    ║
   ╚═══════════════════════════════╝
 
   PR title must follow Conventional Commits:
@@ -66,3 +66,6 @@
 ---
 
 > _"Le syndic reste responsable de la conformité légale de sa copropriété."_
+
+<!-- Indiquer le nom exact des modèles utilisés, ou « Aucun ». -->
+<sub>🤖 Implementation : `TBD` ·  🕵 Code review : `TBD`</sub>
