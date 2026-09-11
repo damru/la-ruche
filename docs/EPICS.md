@@ -139,7 +139,7 @@ La fiche identitaire de la copropriété (nom, adresse, SIRET syndic), le règle
 * `EP-001-S06` ✅ — Versioning des tantièmes : toute modification d'un `share_value` ferme l'enregistrement courant et crée un nouvel enregistrement daté (`valid_from`/`valid_to`) — immuabilité historique (LEGAL.md §2.2, ADR-006)
 * `EP-001-S07` ✅ — Alerte de déséquilibre : bloquer la génération d'appels de fonds si `Σ tantièmes ≠ total_clé` (LEGAL.md §2.1)
 * `EP-001-S08` ✅ — Clé Charges Générales système : `key_type` enum (`general` / `special`) + soft delete sur `allocation_key` ; créée automatiquement à l'onboarding, non supprimable (ADR-007, LEGAL.md §2.1)
-* [EP-001-S09](docs/specs/EP-001-S09-spec.md) — Contrôle de cohérence EDD : comparer les tantièmes configurés avec le dernier EDD déposé et produire un rapport d'écarts (non bloquant) (LEGAL.md §1.2)
+* [EP-001-S09](docs/specs/EP-001-S09-spec.md) ✅ — Contrôle de cohérence EDD : comparer les tantièmes configurés avec le dernier EDD déposé et produire un rapport d'écarts (non bloquant) (LEGAL.md §1.2)
 * [EP-001-S10](docs/specs/EP-001-S10-spec.md) — Journal d'audit des modifications de clés (qui, quoi, quand, justification) pour traçabilité syndic (LEGAL.md §1.2, §2.1)
 
 ***

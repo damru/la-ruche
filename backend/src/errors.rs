@@ -32,6 +32,9 @@ pub enum AppError {
     #[error("Resource not found")]
     NotFound,
 
+    #[error("Resource not found: {0}")]
+    NotFoundCode(String),
+
     // ── 409 ─────────────────────────────────────────────────────
     #[error("Conflict: {0}")]
     Conflict(String),
@@ -64,6 +67,10 @@ impl AppError {
         Self::Conflict(code.into())
     }
 
+    pub fn not_found_code(code: &'static str) -> Self {
+        Self::NotFoundCode(code.into())
+    }
+
     pub fn unprocessable_entity_code(code: &'static str) -> Self {
         Self::UnprocessableEntity(code.into())
     }
@@ -93,6 +100,7 @@ impl IntoResponse for AppError {
             AppError::TokenInvalid => (StatusCode::UNAUTHORIZED, "token_invalid", self.to_string()),
             AppError::Forbidden => (StatusCode::FORBIDDEN, "forbidden", self.to_string()),
             AppError::NotFound => (StatusCode::NOT_FOUND, "not_found", self.to_string()),
+            AppError::NotFoundCode(msg) => (StatusCode::NOT_FOUND, "not_found", msg.clone()),
             AppError::Conflict(msg) => (StatusCode::CONFLICT, "conflict", msg.clone()),
             AppError::UnprocessableEntity(msg) => (
                 StatusCode::UNPROCESSABLE_ENTITY,
