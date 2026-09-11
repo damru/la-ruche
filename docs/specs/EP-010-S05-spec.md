@@ -179,4 +179,4 @@ E2e (`backend/tests/api_e2e_test.rs`) :
 3. `api/consultations.rs` + routes `api/mod.rs` → `cargo clippy -- -D warnings`.
 4. Tests e2e §8, boucler jusqu'au vert.
 5. Frontend : `api/index.ts`, `ConsultationsView.vue` (compteur + bouton + confirmation + i18n).
-6. `npm --prefix frontend run build && npm --prefix frontend run lint` ; `docs/EPICS.md` / `docs/PROGRESS.md` ; `graphify update .`.
+6. `npm --prefix frontend run build && npm --prefix frontend run lint` ; `docs/EPICS.md` / `docs/PROGRESS.md`.

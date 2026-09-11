@@ -116,4 +116,4 @@ Routes à déclarer dans `backend/src/api/mod.rs` :
 4. `db/edd_reference.rs`.
 5. Handlers + routes `api/mod.rs` + erreurs i18n.
 6. Frontend (types, `eddApi`, section UI) — cataloguer tout nouveau `C*` dans DESIGN.md §3 au préalable.
-7. Tests E2E, puis `graphify update .` et entrée `docs/PROGRESS.md`.
+7. Tests E2E, puis entrée `docs/PROGRESS.md`.

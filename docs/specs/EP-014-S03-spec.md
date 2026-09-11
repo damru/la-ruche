@@ -127,4 +127,4 @@ Validation : `title` non vide et `event_date` requis (AC-CAL-005-A) → `400 err
 5. Tests e2e (§7), boucler jusqu'au vert.
 6. Frontend : types + `calendarEventsApi` → modales (catalogue d'abord) → intégration `CalendarView` → i18n.
 7. `npm --prefix frontend run build && npm --prefix frontend run lint`.
-8. Docs : `docs/EPICS.md` (statut S03), `docs/PROGRESS.md`, `graphify update .`.
+8. Docs : `docs/EPICS.md` (statut S03), `docs/PROGRESS.md`.

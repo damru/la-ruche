@@ -139,4 +139,4 @@ Réponse : JSON avec `Content-Disposition: attachment; filename="export-rgpd-{us
 5. API (3 routes) + i18n.
 6. Tests e2e.
 7. Frontend (section profil + action manager + historique).
-8. `graphify update .` + `docs/PROGRESS.md`.
+8. `docs/PROGRESS.md`.

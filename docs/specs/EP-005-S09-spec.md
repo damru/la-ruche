@@ -138,4 +138,4 @@ Aucun. Job purement serveur.
 2. `domain/retention.rs` : `is_purgeable` + tests unitaires.
 3. `jobs/s3_cleanup.rs` : `run_once` (passe 1 puis passe 2), boucle `run`, déclaration `jobs/mod.rs` + spawn au démarrage.
 4. Tests d'intégration MinIO → vert.
-5. `docs/PROGRESS.md` (noter la dépendance S07/S08 si livraison partielle passe 1 seule), `graphify update .`.
+5. `docs/PROGRESS.md` (noter la dépendance S07/S08 si livraison partielle passe 1 seule).

@@ -94,4 +94,4 @@ Aucun changement fonctionnel (l'UI restreint déjà). Vérifier seulement que le
 2. `db/assembly.rs` : check transactionnel dans `cast_vote` puis `save_attendance` → `cargo build`.
 3. Tests e2e (called/closed/draft), boucler jusqu'au vert (`cargo test --lib --tests`, `cargo clippy -- -D warnings`).
 4. Frontend : traduction du code d'erreur (toast), rien d'autre.
-5. `docs/PROGRESS.md` (nouvelle story EP-013-S11 référencée) + `graphify update .`.
+5. `docs/PROGRESS.md` (nouvelle story EP-013-S11 référencée).

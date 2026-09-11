@@ -136,4 +136,4 @@ pub(crate) fn signature_matches(stored_sha256: &str, current_sha256: &str) -> bo
 5. API : handlers + route GET → `cargo clippy -- -D warnings`.
 6. Tests e2e, boucler jusqu'au vert.
 7. Frontend : sélection document à la signature, notifications par destinataire.
-8. `docs/PROGRESS.md` + `graphify update .`.
+8. `docs/PROGRESS.md`.

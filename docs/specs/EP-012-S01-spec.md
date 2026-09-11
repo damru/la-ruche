@@ -140,4 +140,4 @@ Fonctions pures (testables sans DB) :
 3. `db/rnc_export.rs` (sources + insert + list).
 4. `api/rnc.rs` + routes `mod.rs` + tests e2e.
 5. Frontend (`types`, `api`, `RncExportView.vue`, route) + `docs/DESIGN.md` si nouveau composant.
-6. `graphify update .` + entrée datée `docs/PROGRESS.md` (EP-012-S01).
+6. Entrée datée `docs/PROGRESS.md` (EP-012-S01).

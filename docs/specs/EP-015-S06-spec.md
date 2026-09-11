@@ -161,4 +161,4 @@ Pas de blocage ni de logique dans le handler tâche : le **frontend** interroge 
 4. `db/contractor.rs` : link/unlink/list/insurance_links → `cargo build`.
 5. `api/contractors.rs` + routes dans `api/mod.rs` → `clippy`, e2e.
 6. Frontend : types, api, section fiche prestataire, avertissement formulaire tâche (cataloguer les nouveaux `C*` dans `docs/DESIGN.md` §3 avant usage).
-7. `docs/PROGRESS.md`, `graphify update .`.
+7. `docs/PROGRESS.md`.

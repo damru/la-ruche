@@ -133,4 +133,4 @@ Aucun changement frontend dans cette story.
 2. Migrations `0040_activity_log.up.sql` / `.down.sql` → `cargo sqlx migrate run` → `cargo sqlx prepare`.
 3. `backend/src/db/activity_log.rs` + déclaration `db/mod.rs` → `cargo build`.
 4. Tests §8 → vert. `cargo clippy -- -D warnings`, `cargo fmt --check`.
-5. `docs/EPICS.md` (statut S01), `docs/PROGRESS.md` (entrée datée), `graphify update .`.
+5. `docs/EPICS.md` (statut S01), `docs/PROGRESS.md` (entrée datée).

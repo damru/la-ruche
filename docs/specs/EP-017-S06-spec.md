@@ -127,4 +127,4 @@ fn sensitive_actions_restricted_to_managers() {
 1. `domain/activity_visibility.rs` + tests unitaires §8.1 → `cargo test --lib`.
 2. Branchement du filtre dans les deux handlers timeline → `cargo clippy -- -D warnings`.
 3. Tests e2e §8.2 → vert ; `cargo fmt --check`.
-4. `docs/EPICS.md` (statut S06 — clôt l'épic EP-017), `docs/PROGRESS.md`, `graphify update .`.
+4. `docs/EPICS.md` (statut S06 — clôt l'épic EP-017), `docs/PROGRESS.md`.

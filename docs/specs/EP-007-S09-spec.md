@@ -105,4 +105,4 @@ Note : adapter les noms de colonnes (`assignee_id`/`contractor_id`) aux colonnes
 2. API `ListTasksQuery` + validation + réponse `{items, total}`.
 3. Tests e2e.
 4. Frontend api client + `TasksView` (filtres, recherche, pagination).
-5. `graphify update .`, `docs/PROGRESS.md`.
+5. `docs/PROGRESS.md`.

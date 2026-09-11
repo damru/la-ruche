@@ -78,4 +78,4 @@ Aucun emit.
 2. Créer `CCardHeader.vue`.
 3. Migrer `ContractsView` (pilote), valider visuellement.
 4. Migrer `ClaimsView` (après validation de l'écart d'ordre), puis les vues restantes (§4).
-5. `graphify update .` + entrée datée dans `docs/PROGRESS.md` (réf. EP-020-S15).
+5. Entrée datée dans `docs/PROGRESS.md` (réf. EP-020-S15).

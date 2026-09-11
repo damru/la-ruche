@@ -102,4 +102,4 @@ Si `vitest` est disponible, un test de `TimelineEventList` (mapping action → l
 2. `git mv TaskDetailView.vue TaskTimelineView.vue`, purge du computed L81-175, branchement `tasksApi.timeline`.
 3. `router/index.ts` (import/composant).
 4. `npm --prefix frontend run build && run lint`, vérification manuelle §8.
-5. `docs/EPICS.md` (statut S04), `docs/PROGRESS.md`, `graphify update .`.
+5. `docs/EPICS.md` (statut S04), `docs/PROGRESS.md`.

@@ -103,4 +103,4 @@ Aucun nouveau repo : réutiliser les fonctions de chargement introduites par S06
 2. `assemble_pre_etat_date` en domain + tests purs.
 3. Handler + route `api/mod.rs` (+ `cargo sqlx prepare` si nouvelles requêtes).
 4. Frontend (type, api client, vue imprimable) — cataloguer les `C*` nouveaux d'abord.
-5. Tests E2E, `graphify update .`, entrée `docs/PROGRESS.md`.
+5. Tests E2E, entrée `docs/PROGRESS.md`.

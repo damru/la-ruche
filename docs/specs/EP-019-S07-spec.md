@@ -129,4 +129,4 @@ Pas de backend. Frontend :
 2. `ProfileView.vue` : suppression du bouton d'en-tête, handler global, bloc bas de page.
 3. i18n : nouvelles clés `settings.preferences.reset*`, suppression des clés orphelines.
 4. `npm --prefix frontend run build && npm --prefix frontend run lint` ; vérification manuelle §7.
-5. `docs/EPICS.md` (statut EP-019-S07) / `docs/PROGRESS.md` (entrée datée) ; `graphify update .`.
+5. `docs/EPICS.md` (statut EP-019-S07) / `docs/PROGRESS.md` (entrée datée).

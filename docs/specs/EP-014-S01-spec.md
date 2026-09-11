@@ -136,4 +136,4 @@ Ajouter le tag OpenAPI `(name = "calendar", ...)`.
 4. Tests e2e (§7), boucler jusqu'au vert.
 5. Frontend : types + `calendarApi` → composants (catalogue `docs/DESIGN.md §2` d'abord) → route + navigation → i18n.
 6. `npm --prefix frontend run build && npm --prefix frontend run lint`.
-7. Docs : `docs/EPICS.md` (statut S01), `docs/PROGRESS.md` (entrée datée), `graphify update .`.
+7. Docs : `docs/EPICS.md` (statut S01), `docs/PROGRESS.md` (entrée datée).

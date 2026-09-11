@@ -83,4 +83,4 @@ Si `vitest` est disponible : test de rendu conditionnel de l'encart conversion (
 2. Branchement `reportsApi.timeline` + `TimelineEventList` + états chargement/vide/erreur.
 3. Encart conversion conditionné par `task_id` et le rôle ; clic-through depuis `ReportsView.vue`.
 4. `npm --prefix frontend run build && run lint`, vérification manuelle §8.
-5. `docs/EPICS.md` (statut S05), `docs/PROGRESS.md`, `graphify update .`.
+5. `docs/EPICS.md` (statut S05), `docs/PROGRESS.md`.

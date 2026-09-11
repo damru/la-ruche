@@ -150,4 +150,4 @@ Déclarer dans `domain/mod.rs`.
 4. `db/document.rs` (filtres, archive/unarchive) → `api/documents.rs` + routes → `clippy`.
 5. Tests e2e → vert.
 6. Frontend (types, api, filtres, actions).
-7. `docs/PROGRESS.md`, `graphify update .`.
+7. `docs/PROGRESS.md`.

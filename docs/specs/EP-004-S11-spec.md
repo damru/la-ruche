@@ -137,4 +137,4 @@ Handlers minces ; erreurs via `AppError::validation_code`.
 5. API + routes + i18n.
 6. Tests e2e.
 7. Frontend (vue, modale, dashboard, catalogue DESIGN.md).
-8. `graphify update .` + `docs/PROGRESS.md`.
+8. `docs/PROGRESS.md`.

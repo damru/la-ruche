@@ -139,4 +139,4 @@ Génération à la volée (pas de snapshot persisté au MVP) : les annexes refl�
 5. API + routes + i18n.
 6. Tests e2e.
 7. Frontend (`AnnexesView.vue`, print, catalogue DESIGN.md).
-8. `graphify update .` + `docs/PROGRESS.md`.
+8. `docs/PROGRESS.md`.

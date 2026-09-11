@@ -143,4 +143,4 @@ pub(crate) fn document_requires_replacement(category: &str) -> bool {
 4. `api/documents.rs` : DELETE (reason, plus de S3), route `/replace` dans `api/mod.rs` → `clippy`.
 5. Tests e2e → vert.
 6. Frontend (types, api, `CDocumentReplaceModal` cataloguée puis créée, historique enrichi).
-7. `docs/PROGRESS.md`, `graphify update .`.
+7. `docs/PROGRESS.md`.

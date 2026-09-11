@@ -100,4 +100,4 @@ Le filtre `AND status = 'draft'` en SQL suit le même pattern que `update` (L244
 2. `api/assemblies.rs` : handler `delete` + route dans `mod.rs` → `cargo clippy -- -D warnings`.
 3. Tests e2e, boucler jusqu'au vert.
 4. Frontend : api client + action dans `AssemblyDetailView.vue`.
-5. `docs/PROGRESS.md` + `graphify update .`.
+5. `docs/PROGRESS.md`.

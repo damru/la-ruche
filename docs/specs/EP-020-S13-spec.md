@@ -90,4 +90,4 @@ La migration peut être découpée en plusieurs commits (une feature par commit)
 3. Migrer une vue pilote (`ContractsView`) et valider visuellement.
 4. Migrer les vues restantes par lots (§4, étapes 1 → 3).
 5. Supprimer l'utilitaire `view-header` de `tailwind.css`.
-6. `graphify update .` + entrée datée dans `docs/PROGRESS.md` (réf. EP-020-S13).
+6. Entrée datée dans `docs/PROGRESS.md` (réf. EP-020-S13).

@@ -73,4 +73,4 @@ Aucun changement backend. Le contrôle « `published` uniquement » (AC-CR-005-A
 1. Variante dense/print des composants de section partagés.
 2. `FichePrintView.vue` + route + garde de rôle.
 3. Boutons d'entrée dans les deux vues (condition `published`).
-4. `docs/DESIGN.md` §2 + `graphify update .` + entrée `docs/PROGRESS.md` (EP-012-S07).
+4. `docs/DESIGN.md` §2 + entrée `docs/PROGRESS.md` (EP-012-S07).

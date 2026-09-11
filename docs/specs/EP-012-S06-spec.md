@@ -80,4 +80,4 @@ pub async fn latest_published(pool, building_id) -> AppResult<Option<FicheRow>>
 1. `db::latest_published`.
 2. `api::published` + route (ordre de déclaration §4.3) + tests e2e.
 3. Factorisation des composants de section + `FichePubliqueView.vue` + route + navigation.
-4. `graphify update .` + entrée `docs/PROGRESS.md` (EP-012-S06).
+4. Entrée `docs/PROGRESS.md` (EP-012-S06).

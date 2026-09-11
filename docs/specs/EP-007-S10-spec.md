@@ -91,4 +91,4 @@ Aucune nouvelle route. Code d'erreur réutilisé : `errors.immutability.frozen` 
 1. Guard `assert_mutable` dans `detach_document` + commentaire de décision dans `attach_document`.
 2. Tests e2e (§8), boucler au vert.
 3. Frontend : conditionner le bouton de suppression au statut.
-4. `graphify update .`, `docs/PROGRESS.md`.
+4. `docs/PROGRESS.md`.

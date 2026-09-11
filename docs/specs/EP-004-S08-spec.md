@@ -145,4 +145,4 @@ Aucune logique dans les handlers : validations dans `domain/`, SQL dans `db/`.
 5. API (2 routes calendrier, `GenerateLeviesInput` enrichi) + clés i18n.
 6. Tests e2e.
 7. Frontend (types, api, modale, BudgetView).
-8. `graphify update .` + entrée `docs/PROGRESS.md`.
+8. Entrée `docs/PROGRESS.md`.

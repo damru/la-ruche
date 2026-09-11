@@ -164,4 +164,4 @@ Frontend (si vitest configuré) : hydratation, rollback sur échec `update`, mig
 3. `db/notification_preference.rs` → `api/notification_preferences.rs` → routes → `cargo clippy -- -D warnings`.
 4. Tests e2e §8, boucler jusqu'au vert.
 5. Frontend : `notificationPreferencesApi`, refonte `ui.ts` (hydratation, optimiste, migration, repli), appel dans `ProfileView.vue`.
-6. `npm --prefix frontend run build && npm --prefix frontend run lint` ; `docs/EPICS.md` / `docs/PROGRESS.md` ; `graphify update .`.
+6. `npm --prefix frontend run build && npm --prefix frontend run lint` ; `docs/EPICS.md` / `docs/PROGRESS.md`.

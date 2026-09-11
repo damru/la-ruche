@@ -114,4 +114,4 @@ Mettre à jour le test L92-96 (qui affirme aujourd'hui la mutabilité en called/
 4. `api/assemblies.rs` + routes `mod.rs` → `cargo clippy -- -D warnings`.
 5. Tests e2e, boucler jusqu'au vert.
 6. Frontend (api client, actions draft-only, reorder par flèches).
-7. `docs/PROGRESS.md` + `graphify update .`.
+7. `docs/PROGRESS.md`.

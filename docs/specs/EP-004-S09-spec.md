@@ -132,4 +132,4 @@ Retour `axum::response::Response` avec les en-têtes CSV ci-dessus. `404` si bud
 3. API : 2 handlers + routes → `cargo build` + clippy.
 4. Tests e2e.
 5. Frontend : api client + bouton export + i18n.
-6. `graphify update .` + entrée `docs/PROGRESS.md`.
+6. Entrée `docs/PROGRESS.md`.

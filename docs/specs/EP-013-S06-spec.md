@@ -128,4 +128,4 @@ et injecter dans le template du projet de PV une section « Notes de séance » 
 5. API : handlers + route → `cargo clippy -- -D warnings`.
 6. Tests e2e, boucler jusqu'au vert.
 7. Frontend : api client + fil de notes en séance.
-8. `docs/PROGRESS.md` + `graphify update .`.
+8. `docs/PROGRESS.md`.

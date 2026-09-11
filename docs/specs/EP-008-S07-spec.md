@@ -117,4 +117,4 @@ Réponses : `201` note créée · `200` liste chronologique · `400 errors.claim
 3. API handlers + route + i18n.
 4. Tests e2e, boucler au vert.
 5. Frontend types/api/UI timeline.
-6. `graphify update .`, `docs/PROGRESS.md`.
+6. `docs/PROGRESS.md`.

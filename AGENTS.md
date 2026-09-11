@@ -2,7 +2,6 @@
 
 ## Project
 
-Open-source webapp for French co-ownership management (syndic bénévole).
 Monorepo: `backend/` (Rust) + `frontend/` (Vue 3).
 
 Domain-specific rules in `.agents/rules/` are automatically injected into context by the IDE when editing files in the matching domain. Do not re-read them manually.
@@ -43,9 +42,9 @@ When editing existing code:
 When your changes create orphans:
 - Remove imports/variables/functions that YOUR changes made unused.
 
-The test: Every changed line should trace directly to the user's request — **except** for the boy-scout fixes covered by principle 5.
+The test: Every changed line should trace directly to the user's request — **except** for the boy-scout fixes covered by principle 4.
 
-## 5. Boy-Scout Fixes
+## 4. Boy-Scout Fixes
 
 **When you find dead code or a pre-existing error, fix it — even out of scope.**
 
@@ -56,7 +55,7 @@ The test: Every changed line should trace directly to the user's request — **e
 
 The test: leave every file you touch cleaner than you found it.
 
-## 4. Goal-Driven Execution
+## 5. Goal-Driven Execution
 
 **Define success criteria. Loop until verified.**
 
@@ -172,24 +171,14 @@ Follow these steps **in order** for any new feature or significant change:
 4. Regenerate offline query data (`cargo sqlx prepare`) and commit `backend/.sqlx/`.
 5. Implement backend changes (domain → db → api layers).
 6. Implement frontend changes.
-7. Run `graphify update .` to keep the knowledge graph current.
-8. Add a dated entry to `docs/PROGRESS.md` with Epic/Story ref (started / completed / abandoned).
-9. Open a PR for the branch (`gh pr create`) and route it to Hopper for review (`kanban_request_review`). Pushing a branch without an open PR is not a completed task.
+7. Add a dated entry to `docs/PROGRESS.md` with Epic/Story ref (started / completed / abandoned).
+8. Open a PR for the branch (`gh pr create`) and route it to Hopper for review (`kanban_request_review`). Pushing a branch without an open PR is not a completed task.
 
 ---
 
 ## Security
 
 - Never commit secrets or `.env` files.
-
----
-
-## graphify
-
-Knowledge graph at `graphify-out/`.
-
-- Architecture/codebase questions → read `graphify-out/GRAPH_REPORT.md` first.
-- After modifying code files → run `graphify update .` to keep the graph current (also step 7 of the Feature Implementation Checklist).
 
 <!-- code-review-graph MCP tools -->
 ## MCP Tools: code-review-graph
