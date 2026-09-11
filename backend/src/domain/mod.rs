@@ -1,5 +1,6 @@
 pub mod charges;
 pub mod convocation_checklist;
+pub mod edd_check;
 pub mod immutability;
 pub mod minutes_draft;
 pub mod owners;

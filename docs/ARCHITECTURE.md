@@ -219,7 +219,7 @@ Le frontend conserve les feuilles globales historiques (`tokens.css`, `base.css`
 
 | Domaine | Tables |
 |---|---|
-| Copropriété | `building`, `unit`, `allocation_key`, `unit_allocation_key` |
+| Copropriété | `building`, `unit`, `allocation_key`, `unit_allocation_key`, `edd_reference`, `edd_reference_share` |
 | Utilisateurs | `user_account`, `user_token`, `user_building`, `unit_owner` |
 | AG | `general_meeting`, `general_meeting_document`, `general_meeting_attendance`, `resolution`, `vote` |
 | Budget | `budget`, `budget_line`, `levy_call`, `works_fund` — champ `category` sur `levy_call` **prévu** ; `budget.parent_budget_id` ; `budget_line.valid_from` / `valid_to` / `rectificatif_version` / `version` |
@@ -258,6 +258,7 @@ Invariants techniques implémentés :
 - Les mutations `UPDATE` / `DELETE` sur `budget_line` écrivent une entrée `audit_log` avec un diff ciblé `old_values` / `new_values`.
 - La clôture d'un `budget` (`status = closed`) gèle les mutations de l'exercice : création/suppression de lignes et génération de nouveaux appels ; le marquage `paid` d'un appel existant reste autorisé.
 - Les appels de fonds portent un `call_label` persisted côté backend pour différencier explicitement la nature de chaque appel dans les vues comptables.
+- `edd_reference` (EP-001-S09, LEGAL §1.2) porte une référence EDD saisie manuellement (`label`, `edd_date`, `document_id` nullable vers `document` en catégorie `edd` — non encore raccordé côté saisie, EP-005-S06 fournit le typage). `edd_reference_share` porte les tantièmes de référence par `(unit_id, allocation_key_id)`. `GET /building/edd-check` compare la référence la plus récente (`edd_date` puis `created_at` DESC) aux `unit_allocation_key` actifs et retourne un rapport d'écarts (`domain::edd_check::compare`, fonction pure) : purement informatif, ne bloque ni la configuration des clés ni la génération d'appels.
 - Les appels de fonds persistés portent une décomposition `charge_amount` / `works_fund_amount` sur `levy_call` pour isoler le calcul du solde à appeler selon l'inclusion du fonds travaux.
 - La génération des appels de fonds répartit la part `charges courantes` ligne budgétaire par ligne budgétaire à partir de `budget_line.key_id` et des tantièmes actifs de cette clé ; `levy_call` conserve le snapshot immuable par lot et une table append-only de ventilation relie chaque appel à ses `budget_line` sources pour recalculer le « déjà appelé » par ligne et par lot sans mutation destructive.
 - Chaque création de `budget` initialise ou réutilise l'entrée `works_fund` du même exercice, qui porte le taux de cotisation cible utilisé par la génération d'appels et par les contrôles de clôture.

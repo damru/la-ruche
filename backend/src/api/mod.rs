@@ -88,6 +88,11 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
             "/building/keys/{id}/shares",
             get(building::list_key_shares).put(building::set_key_shares),
         )
+        .route(
+            "/building/edd-references",
+            get(building::list_edd_references).post(building::create_edd_reference),
+        )
+        .route("/building/edd-check", get(building::edd_check))
         // ── Units ───────────────────────────────────────────────
         .route("/units", get(units::list).post(units::create))
         .route(

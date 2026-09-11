@@ -416,6 +416,134 @@ pub async fn set_key_shares(
     Ok(StatusCode::NO_CONTENT)
 }
 
+// ── EDD coherence check (EP-001-S09, LEGAL §1.2) ─────────────────
+
+#[derive(Serialize, ToSchema)]
+pub struct EddReferenceResponse {
+    pub id: Uuid,
+    pub label: String,
+    pub edd_date: NaiveDate,
+    pub document_id: Option<Uuid>,
+    pub created_at: DateTime<Utc>,
+}
+
+#[derive(Deserialize, Validate, ToSchema)]
+pub struct CreateEddReferenceInput {
+    #[validate(length(min = 1, max = 200))]
+    pub label: String,
+    pub edd_date: NaiveDate,
+    pub shares: Vec<EddReferenceShareInput>,
+}
+
+#[derive(Deserialize, ToSchema)]
+pub struct EddReferenceShareInput {
+    pub unit_id: Uuid,
+    pub allocation_key_id: Uuid,
+    #[schema(value_type = f64)]
+    pub share_value: Decimal,
+}
+
+fn to_edd_reference_response(row: db::edd_reference::EddReferenceRow) -> EddReferenceResponse {
+    EddReferenceResponse {
+        id: row.id,
+        label: row.label,
+        edd_date: row.edd_date,
+        document_id: row.document_id,
+        created_at: row.created_at,
+    }
+}
+
+/// POST /building/edd-references
+pub async fn create_edd_reference(
+    State(state): State<Arc<AppState>>,
+    auth: AuthUser,
+    Json(input): Json<CreateEddReferenceInput>,
+) -> AppResult<(StatusCode, Json<EddReferenceResponse>)> {
+    require_manager(&auth)?;
+    input
+        .validate()
+        .map_err(|_| AppError::validation_code("errors.edd.shares_required"))?;
+
+    for share in &input.shares {
+        if share.share_value < Decimal::ZERO {
+            return Err(AppError::validation_code("errors.edd.invalid_share_value"));
+        }
+    }
+
+    let shares: Vec<db::edd_reference::NewEddReferenceShare> = input
+        .shares
+        .into_iter()
+        .map(|s| db::edd_reference::NewEddReferenceShare {
+            unit_id: s.unit_id,
+            allocation_key_id: s.allocation_key_id,
+            share_value: s.share_value,
+        })
+        .collect();
+
+    let row = db::edd_reference::create(
+        &state.pool,
+        auth.building_id,
+        &input.label,
+        input.edd_date,
+        auth.user_id,
+        &shares,
+    )
+    .await?;
+
+    Ok((StatusCode::CREATED, Json(to_edd_reference_response(row))))
+}
+
+/// GET /building/edd-references
+pub async fn list_edd_references(
+    State(state): State<Arc<AppState>>,
+    auth: AuthUser,
+) -> AppResult<Json<Vec<EddReferenceResponse>>> {
+    let rows = db::edd_reference::list(&state.pool, auth.building_id).await?;
+    Ok(Json(
+        rows.into_iter().map(to_edd_reference_response).collect(),
+    ))
+}
+
+/// GET /building/edd-check
+/// Compares the latest EDD reference with currently configured tantièmes and
+/// returns a non-blocking discrepancy report (EP-001-S09, LEGAL §1.2).
+pub async fn edd_check(
+    State(state): State<Arc<AppState>>,
+    auth: AuthUser,
+) -> AppResult<Json<serde_json::Value>> {
+    let reference = db::edd_reference::get_latest(&state.pool, auth.building_id)
+        .await?
+        .ok_or_else(|| AppError::not_found_code("errors.edd.no_reference"))?;
+
+    let reference_shares = db::edd_reference::list_shares(&state.pool, reference.id).await?;
+    let current_shares =
+        db::edd_reference::list_current_shares(&state.pool, auth.building_id).await?;
+
+    let report = crate::domain::edd_check::compare(
+        &reference_shares
+            .into_iter()
+            .map(|s| crate::domain::edd_check::EddRefShare {
+                unit_id: s.unit_id,
+                allocation_key_id: s.allocation_key_id,
+                share_value: s.share_value,
+            })
+            .collect::<Vec<_>>(),
+        &current_shares
+            .into_iter()
+            .map(|s| crate::domain::edd_check::CurrentShare {
+                unit_id: s.unit_id,
+                allocation_key_id: s.allocation_key_id,
+                share_value: s.share_value,
+            })
+            .collect::<Vec<_>>(),
+    );
+
+    Ok(Json(serde_json::json!({
+        "reference": to_edd_reference_response(reference),
+        "discrepancies": report.discrepancies,
+    })))
+}
+
 /// GET /building/keys/{id}/audit
 pub async fn key_audit(
     State(state): State<Arc<AppState>>,
