@@ -12,6 +12,7 @@ import type {
   OnboardingStatus, RuntimeStatus, BootstrapInput, BootstrapResponse,
   LoginResponse, BuildingStats, RegistryResponse, UnitChargesResponse,
   Contractor, JudicialProceeding, GovernanceMandate,
+  EddReference, EddReferenceShareInput, EddCheckResponse,
 } from '@/types/domain'
 
 // Public axios instance — no JWT, no interceptors (vendor endpoints)
@@ -94,6 +95,16 @@ export const allocationKeysApi = {
     api.get<{ shares_sum: number; shares_total: number; balanced: boolean; delta: number }>(`/building/keys/${id}/balance`),
   listAudit: (id: string) =>
     api.get<AuditEntry[]>(`/building/keys/${id}/audit`),
+}
+
+// ── EDD coherence check (EP-001-S09) ───────────────────────────────
+export const eddApi = {
+  listReferences: () =>
+    api.get<EddReference[]>('/building/edd-references'),
+  createReference: (data: { label: string; edd_date: string; shares: EddReferenceShareInput[] }) =>
+    api.post<EddReference>('/building/edd-references', data),
+  check: () =>
+    api.get<EddCheckResponse>('/building/edd-check'),
 }
 
 // ── Units ─────────────────────────────────────────────────────────

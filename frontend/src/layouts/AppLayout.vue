@@ -77,6 +77,9 @@ onUnmounted(() => {
       <template #icon-residence-keys>
         <CIconLayers />
       </template>
+      <template #icon-residence-edd>
+        <CIconScale />
+      </template>
       <template #icon-my-charges>
         <CIconReceipt />
       </template>

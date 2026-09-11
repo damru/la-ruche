@@ -102,6 +102,7 @@
       "contractorDetail": "Coordonnées et historique",
       "allocationKeys": "Bases de répartition",
       "building": "Données de l'immeuble",
+      "edd": "Contrôle de cohérence EDD",
       "residents": "Lots et occupants",
       "registry": "Référentiel lots et tantièmes",
       "profile": "Préférences du compte",
@@ -138,6 +139,7 @@
     "myCharges": "Mes appels de fonds",
     "residence-info": "Informations",
     "residence-keys": "Clés de répartition",
+    "residence-edd": "Contrôle EDD",
     "account": "Profil",
     "myAccount": "Mon compte",
     "appearance": "Apparence",
@@ -1619,7 +1621,33 @@
       }
     },
     "phone": "Téléphone",
-    "phonePlaceholder": "06 00 00 00 00"
+    "phonePlaceholder": "06 00 00 00 00",
+    "edd": {
+      "title": "Contrôle de cohérence EDD",
+      "subtitle": "Comparez les tantièmes configurés avec le dernier état descriptif de division (EDD) déposé.",
+      "nonBlockingNotice": "Ce contrôle est purement informatif : il ne bloque ni la configuration des clés ni la génération des appels de fonds.",
+      "newReference": "Nouvelle référence EDD",
+      "empty": "Aucune référence EDD saisie",
+      "emptyDescription": "Saisissez une référence EDD (libellé, date, tantièmes par lot) pour activer le contrôle de cohérence.",
+      "currentReference": "Référence EDD actuelle",
+      "reportTitle": "Rapport d'écarts",
+      "reportEmpty": "Aucun écart détecté : les tantièmes configurés correspondent à la référence EDD.",
+      "labelField": "Libellé",
+      "dateField": "Date de l'acte",
+      "sharesField": "Tantièmes de référence (par lot)",
+      "discrepancy": {
+        "kind": {
+          "missing_in_edd": "Absent de l'EDD",
+          "missing_in_config": "Absent de la config",
+          "value_mismatch": "Valeur divergente",
+          "total_mismatch": "Total divergent"
+        },
+        "missingInEdd": "Lot {unit} / clé « {key} » : configuré dans l'application mais absent de la référence EDD.",
+        "missingInConfig": "Lot {unit} / clé « {key} » : référencé dans l'EDD mais non configuré (ou lot archivé).",
+        "valueMismatch": "Lot {unit} / clé « {key} » : {expected} tantièmes attendus (EDD), {actual} configurés.",
+        "totalMismatch": "Clé « {key} » : total EDD {expected}, total configuré {actual}."
+      }
+    }
   },
   "errors": {
     "title": "Erreur",
@@ -1642,6 +1670,11 @@
       "share_value_negative": "Les tantièmes ne peuvent pas être négatifs.",
       "shares_exceed_total": "La somme des tantièmes dépasse le total de la copropriété.",
       "general_key_protected": "La clé Charges Générales est obligatoire et ne peut pas être supprimée (art. 10 loi 1965)."
+    },
+    "edd": {
+      "no_reference": "Aucune référence EDD n'a encore été saisie.",
+      "shares_required": "La référence EDD doit contenir au moins un tantième.",
+      "invalid_share_value": "Les tantièmes de la référence EDD ne peuvent pas être négatifs."
     },
     "budget": {
       "exercise_closed": "Cet exercice est clôturé et ne peut plus être modifié.",

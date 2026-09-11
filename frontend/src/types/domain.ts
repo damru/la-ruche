@@ -651,6 +651,33 @@ export interface JudicialProceeding {
   updated_at: string
 }
 
+// ── EDD coherence check (EP-001-S09) ──────────────────────────────
+
+export interface EddReference {
+  id: string
+  label: string
+  edd_date: string
+  document_id?: string | null
+  created_at: string
+}
+
+export interface EddReferenceShareInput {
+  unit_id: string
+  allocation_key_id: string
+  share_value: number
+}
+
+export type EddDiscrepancy =
+  | { kind: 'missing_in_edd'; unit_id: string; allocation_key_id: string }
+  | { kind: 'missing_in_config'; unit_id: string; allocation_key_id: string }
+  | { kind: 'value_mismatch'; unit_id: string; allocation_key_id: string; expected: number; actual: number }
+  | { kind: 'total_mismatch'; allocation_key_id: string; expected: number; actual: number }
+
+export interface EddCheckResponse {
+  reference: EddReference
+  discrepancies: EddDiscrepancy[]
+}
+
 // ── Governance register (EP-002-S11) ─────────────────────────────
 
 export type GovernanceRole = 'syndic' | 'council_president' | 'council_member'
