@@ -1673,7 +1673,8 @@
       "invalid_payload": "La clé de répartition est invalide.",
       "share_value_negative": "Les tantièmes ne peuvent pas être négatifs.",
       "shares_exceed_total": "La somme des tantièmes dépasse le total de la copropriété.",
-      "general_key_protected": "La clé Charges Générales est obligatoire et ne peut pas être supprimée (art. 10 loi 1965)."
+      "general_key_protected": "La clé Charges Générales est obligatoire et ne peut pas être supprimée (art. 10 loi 1965).",
+      "justification_too_long": "La justification est trop longue."
     },
     "edd": {
       "no_reference": "Aucune référence EDD n'a encore été saisie.",
