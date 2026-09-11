@@ -298,12 +298,12 @@ pub async fn delete_key(
     Json(input): Json<DeleteKeyInput>,
 ) -> AppResult<StatusCode> {
     require_manager(&auth)?;
-    if let Some(j) = &input.justification {
-        if j.len() > 500 {
-            return Err(AppError::validation_code(
-                "errors.allocation_keys.justification_too_long",
-            ));
-        }
+    if let Some(j) = &input.justification
+        && j.len() > 500
+    {
+        return Err(AppError::validation_code(
+            "errors.allocation_keys.justification_too_long",
+        ));
     }
     let deleted = db::allocation_key::delete(
         &state.pool,
@@ -422,7 +422,10 @@ pub async fn key_audit(
     auth: AuthUser,
     Path(id): Path<Uuid>,
 ) -> AppResult<Json<Vec<crate::db::audit::AuditEntry>>> {
-    auth.require_any_role(&[crate::domain::Role::Manager, crate::domain::Role::BoardMember])?;
+    auth.require_any_role(&[
+        crate::domain::Role::Manager,
+        crate::domain::Role::BoardMember,
+    ])?;
     let entries =
         db::audit::list_by_entity(&state.pool, auth.building_id, "allocation_key", id).await?;
     Ok(Json(entries))
