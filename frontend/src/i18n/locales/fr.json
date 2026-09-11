@@ -1614,11 +1614,15 @@
       "historyEmpty": "Aucune modification enregistrée.",
       "historyClose": "Fermer",
       "historyActions": {
-        "allocation_key.created": "Création",
-        "allocation_key.updated": "Modification",
-        "allocation_key.deleted": "Suppression",
-        "allocation_key.share_set": "Modification des tantièmes"
-      }
+        "allocation_key": {
+          "created": "Création",
+          "updated": "Modification",
+          "deleted": "Suppression",
+          "share_set": "Modification des tantièmes"
+        }
+      },
+      "historyShareChange": "Lot {unit} : {oldValue} → {newValue} tantièmes",
+      "historyNameChange": "{oldName} → {newName}"
     },
     "phone": "Téléphone",
     "phonePlaceholder": "06 00 00 00 00",

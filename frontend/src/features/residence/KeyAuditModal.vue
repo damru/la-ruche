@@ -6,8 +6,8 @@ import CBtn from '@/components/atoms/CBtn.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CEmptyState from '@/components/atoms/CEmptyState.vue'
-import { allocationKeysApi } from '@/api'
-import type { AllocationKey, AuditEntry } from '@/types/domain'
+import { allocationKeysApi, unitsApi } from '@/api'
+import type { AllocationKey, AuditEntry, Unit } from '@/types/domain'
 
 const props = defineProps<{
   open: boolean
@@ -22,9 +22,12 @@ const { t } = useI18n()
 const loading = ref(false)
 const error = ref('')
 const entries = ref<AuditEntry[]>([])
+const units = ref<Unit[]>([])
 
 function actionLabel(operation: string) {
-  return t(`settings.keys.historyActions.${operation}`, operation)
+  const key = `settings.keys.historyActions.${operation}`
+  const translated = t(key)
+  return translated === key ? operation : translated
 }
 
 function justificationOf(entry: AuditEntry) {
@@ -33,14 +36,46 @@ function justificationOf(entry: AuditEntry) {
     ?? '—'
 }
 
+function unitLabel(unitId: string) {
+  return units.value.find(u => u.id === unitId)?.unit_number ?? unitId
+}
+
+function detailsOf(entry: AuditEntry): string {
+  const newValues = entry.new_values ?? {}
+  const oldValues = entry.old_values ?? {}
+  if (entry.operation === 'allocation_key.share_set') {
+    const unitId = newValues.unit_id as string | undefined
+    const newValue = newValues.share_value as number | undefined
+    const oldValue = oldValues.share_value as number | undefined
+    if (unitId === undefined || newValue === undefined) return '—'
+    return t('settings.keys.historyShareChange', {
+      unit: unitLabel(unitId),
+      oldValue: oldValue ?? 0,
+      newValue,
+    })
+  }
+  if (entry.operation === 'allocation_key.updated') {
+    return t('settings.keys.historyNameChange', {
+      oldName: (oldValues.name as string | undefined) ?? '—',
+      newName: (newValues.name as string | undefined) ?? '—',
+    })
+  }
+  const name = (newValues.name as string | undefined) ?? (oldValues.name as string | undefined)
+  return name ?? '—'
+}
+
 watch(() => props.open, async (open) => {
   if (!open || !props.keyToShow) return
   loading.value = true
   error.value = ''
   entries.value = []
   try {
-    const res = await allocationKeysApi.listAudit(props.keyToShow.id)
-    entries.value = res.data
+    const [auditRes, unitsRes] = await Promise.all([
+      allocationKeysApi.listAudit(props.keyToShow.id),
+      unitsApi.list(),
+    ])
+    entries.value = auditRes.data
+    units.value = unitsRes.data
   } catch {
     error.value = t('common.error')
   } finally {
@@ -79,7 +114,13 @@ watch(() => props.open, async (open) => {
             <strong>{{ actionLabel(entry.operation) }}</strong>
             <span class="dim">{{ new Date(entry.changed_at).toLocaleString() }}</span>
           </div>
-          <p class="dim">
+          <p>
+            {{ detailsOf(entry) }}
+          </p>
+          <p
+            v-if="justificationOf(entry) !== '—'"
+            class="dim"
+          >
             {{ justificationOf(entry) }}
           </p>
         </li>
