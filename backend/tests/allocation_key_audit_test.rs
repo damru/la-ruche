@@ -137,3 +137,45 @@ async fn manager_can_read_audit_endpoint() {
         .await;
     assert_eq!(audit.status_code(), StatusCode::OK);
 }
+
+#[tokio::test]
+async fn co_owner_cannot_read_audit_endpoint() {
+    let (server, pool) = common::isolated_test_server_with_pool().await;
+    let bootstrap = server
+        .post("/api/v1/onboarding/bootstrap")
+        .json(&common::bootstrap_payload())
+        .await;
+    assert_eq!(bootstrap.status_code(), StatusCode::CREATED);
+    let bootstrap_body: Value = bootstrap.json();
+    let building_id: uuid::Uuid = bootstrap_body["building_id"]
+        .as_str()
+        .expect("building_id")
+        .parse()
+        .expect("valid uuid");
+
+    let mut manager_server = server;
+    manager_server.add_cookies(bootstrap.cookies());
+    let created = manager_server
+        .post("/api/v1/building/keys")
+        .json(&json!({ "name": "Clé test" }))
+        .await;
+    assert_eq!(created.status_code(), StatusCode::CREATED);
+    let key_id = created.json::<Value>()["id"].as_str().unwrap().to_string();
+
+    let cfg = common::test_config().await;
+    let co_owner_token = laruche::auth::jwt::generate_access_token(
+        uuid::Uuid::new_v4(),
+        building_id,
+        vec![laruche::domain::Role::CoOwner],
+        &cfg.auth.jwt_secret,
+        cfg.auth.access_token_ttl_secs,
+    )
+    .expect("co-owner token");
+
+    let co_owner_server = common::test_server_with_pool(cfg, pool).await;
+    let audit = co_owner_server
+        .get(&format!("/api/v1/building/keys/{key_id}/audit"))
+        .add_header("Authorization", format!("Bearer {co_owner_token}"))
+        .await;
+    assert_eq!(audit.status_code(), StatusCode::FORBIDDEN);
+}
