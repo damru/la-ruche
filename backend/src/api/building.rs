@@ -170,6 +170,8 @@ pub struct AllocationKeyInput {
     #[validate(length(min = 1, max = 100))]
     pub name: String,
     pub description: Option<String>,
+    #[validate(length(max = 500))]
+    pub justification: Option<String>,
 }
 
 #[derive(Serialize, ToSchema)]
@@ -179,15 +181,23 @@ pub struct UnitShareResponse {
     pub share_value: i32,
 }
 
-#[derive(Deserialize, ToSchema)]
+#[derive(Deserialize, Validate, ToSchema)]
 pub struct SetSharesInput {
     pub shares: Vec<UnitShareItem>,
+    #[validate(length(max = 500))]
+    pub justification: Option<String>,
 }
 
 #[derive(Deserialize, ToSchema)]
 pub struct UnitShareItem {
     pub unit_id: Uuid,
     pub share_value: i32,
+}
+
+#[derive(Deserialize, ToSchema)]
+pub struct DeleteKeyInput {
+    #[serde(default)]
+    pub justification: Option<String>,
 }
 
 fn require_manager(auth: &crate::domain::AuthUser) -> crate::errors::AppResult<()> {
@@ -232,6 +242,8 @@ pub async fn create_key(
         auth.building_id,
         &input.name,
         input.description.as_deref(),
+        auth.user_id,
+        input.justification.as_deref(),
     )
     .await?;
 
@@ -264,6 +276,8 @@ pub async fn update_key(
         auth.building_id,
         &input.name,
         input.description.as_deref(),
+        auth.user_id,
+        input.justification.as_deref(),
     )
     .await?
     .ok_or(AppError::NotFound)?;
@@ -281,9 +295,24 @@ pub async fn delete_key(
     State(state): State<Arc<AppState>>,
     auth: AuthUser,
     Path(id): Path<Uuid>,
+    Json(input): Json<DeleteKeyInput>,
 ) -> AppResult<StatusCode> {
     require_manager(&auth)?;
-    let deleted = db::allocation_key::delete(&state.pool, id, auth.building_id).await?;
+    if let Some(j) = &input.justification {
+        if j.len() > 500 {
+            return Err(AppError::validation_code(
+                "errors.allocation_keys.justification_too_long",
+            ));
+        }
+    }
+    let deleted = db::allocation_key::delete(
+        &state.pool,
+        id,
+        auth.building_id,
+        auth.user_id,
+        input.justification.as_deref(),
+    )
+    .await?;
     if deleted {
         Ok(StatusCode::NO_CONTENT)
     } else {
@@ -346,6 +375,8 @@ pub async fn set_key_shares(
     Json(body): Json<SetSharesInput>,
 ) -> AppResult<StatusCode> {
     require_manager(&auth)?;
+    body.validate()
+        .map_err(|_| AppError::validation_code("errors.allocation_keys.justification_too_long"))?;
 
     // Validate all values first
     let mut parsed: Vec<(Uuid, i32)> = Vec::with_capacity(body.shares.len());
@@ -370,10 +401,159 @@ pub async fn set_key_shares(
     }
 
     for (unit_id, share_value) in parsed {
-        db::allocation_key::set_share(&state.pool, unit_id, id, share_value).await?;
+        db::allocation_key::set_share(
+            &state.pool,
+            unit_id,
+            id,
+            share_value,
+            auth.building_id,
+            auth.user_id,
+            body.justification.as_deref(),
+        )
+        .await?;
     }
 
     Ok(StatusCode::NO_CONTENT)
+}
+
+/// GET /building/keys/{id}/audit
+pub async fn key_audit(
+    State(state): State<Arc<AppState>>,
+    auth: AuthUser,
+    Path(id): Path<Uuid>,
+) -> AppResult<Json<Vec<crate::db::audit::AuditEntry>>> {
+    auth.require_any_role(&[crate::domain::Role::Manager, crate::domain::Role::BoardMember])?;
+    let entries =
+        db::audit::list_by_entity(&state.pool, auth.building_id, "allocation_key", id).await?;
+    Ok(Json(entries))
+}
+
+// ── EDD coherence check (EP-001-S09, LEGAL §1.2) ─────────────────
+
+#[derive(Serialize, ToSchema)]
+pub struct EddReferenceResponse {
+    pub id: Uuid,
+    pub label: String,
+    pub edd_date: NaiveDate,
+    pub document_id: Option<Uuid>,
+    pub created_at: DateTime<Utc>,
+}
+
+#[derive(Deserialize, Validate, ToSchema)]
+pub struct CreateEddReferenceInput {
+    #[validate(length(min = 1, max = 200))]
+    pub label: String,
+    pub edd_date: NaiveDate,
+    pub shares: Vec<EddReferenceShareInput>,
+}
+
+#[derive(Deserialize, ToSchema)]
+pub struct EddReferenceShareInput {
+    pub unit_id: Uuid,
+    pub allocation_key_id: Uuid,
+    #[schema(value_type = f64)]
+    pub share_value: Decimal,
+}
+
+fn to_edd_reference_response(row: db::edd_reference::EddReferenceRow) -> EddReferenceResponse {
+    EddReferenceResponse {
+        id: row.id,
+        label: row.label,
+        edd_date: row.edd_date,
+        document_id: row.document_id,
+        created_at: row.created_at,
+    }
+}
+
+/// POST /building/edd-references
+pub async fn create_edd_reference(
+    State(state): State<Arc<AppState>>,
+    auth: AuthUser,
+    Json(input): Json<CreateEddReferenceInput>,
+) -> AppResult<(StatusCode, Json<EddReferenceResponse>)> {
+    require_manager(&auth)?;
+    input
+        .validate()
+        .map_err(|_| AppError::validation_code("errors.edd.shares_required"))?;
+
+    for share in &input.shares {
+        if share.share_value < Decimal::ZERO {
+            return Err(AppError::validation_code("errors.edd.invalid_share_value"));
+        }
+    }
+
+    let shares: Vec<db::edd_reference::NewEddReferenceShare> = input
+        .shares
+        .into_iter()
+        .map(|s| db::edd_reference::NewEddReferenceShare {
+            unit_id: s.unit_id,
+            allocation_key_id: s.allocation_key_id,
+            share_value: s.share_value,
+        })
+        .collect();
+
+    let row = db::edd_reference::create(
+        &state.pool,
+        auth.building_id,
+        &input.label,
+        input.edd_date,
+        auth.user_id,
+        &shares,
+    )
+    .await?;
+
+    Ok((StatusCode::CREATED, Json(to_edd_reference_response(row))))
+}
+
+/// GET /building/edd-references
+pub async fn list_edd_references(
+    State(state): State<Arc<AppState>>,
+    auth: AuthUser,
+) -> AppResult<Json<Vec<EddReferenceResponse>>> {
+    let rows = db::edd_reference::list(&state.pool, auth.building_id).await?;
+    Ok(Json(
+        rows.into_iter().map(to_edd_reference_response).collect(),
+    ))
+}
+
+/// GET /building/edd-check
+/// Compares the latest EDD reference with currently configured tantièmes and
+/// returns a non-blocking discrepancy report (EP-001-S09, LEGAL §1.2).
+pub async fn edd_check(
+    State(state): State<Arc<AppState>>,
+    auth: AuthUser,
+) -> AppResult<Json<serde_json::Value>> {
+    let reference = db::edd_reference::get_latest(&state.pool, auth.building_id)
+        .await?
+        .ok_or_else(|| AppError::not_found_code("errors.edd.no_reference"))?;
+
+    let reference_shares = db::edd_reference::list_shares(&state.pool, reference.id).await?;
+    let current_shares =
+        db::edd_reference::list_current_shares(&state.pool, auth.building_id).await?;
+
+    let report = crate::domain::edd_check::compare(
+        &reference_shares
+            .into_iter()
+            .map(|s| crate::domain::edd_check::EddRefShare {
+                unit_id: s.unit_id,
+                allocation_key_id: s.allocation_key_id,
+                share_value: s.share_value,
+            })
+            .collect::<Vec<_>>(),
+        &current_shares
+            .into_iter()
+            .map(|s| crate::domain::edd_check::CurrentShare {
+                unit_id: s.unit_id,
+                allocation_key_id: s.allocation_key_id,
+                share_value: s.share_value,
+            })
+            .collect::<Vec<_>>(),
+    );
+
+    Ok(Json(serde_json::json!({
+        "reference": to_edd_reference_response(reference),
+        "discrepancies": report.discrepancies,
+    })))
 }
 
 // ── Registry (consolidated view) ─────────────────────────────────
