@@ -432,6 +432,7 @@ pub struct CreateEddReferenceInput {
     #[validate(length(min = 1, max = 200))]
     pub label: String,
     pub edd_date: NaiveDate,
+    pub document_id: Option<Uuid>,
     pub shares: Vec<EddReferenceShareInput>,
 }
 
@@ -485,6 +486,7 @@ pub async fn create_edd_reference(
         auth.building_id,
         &input.label,
         input.edd_date,
+        input.document_id,
         auth.user_id,
         &shares,
     )

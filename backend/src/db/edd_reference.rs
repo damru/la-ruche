@@ -33,19 +33,21 @@ pub async fn create(
     building_id: Uuid,
     label: &str,
     edd_date: NaiveDate,
+    document_id: Option<Uuid>,
     created_by: Uuid,
     shares: &[NewEddReferenceShare],
 ) -> crate::errors::AppResult<EddReferenceRow> {
     let mut tx = pool.begin().await?;
 
     let reference = sqlx::query_as::<_, EddReferenceRow>(
-        "INSERT INTO edd_reference (building_id, label, edd_date, created_by) \
-         VALUES ($1, $2, $3, $4) \
+        "INSERT INTO edd_reference (building_id, label, edd_date, document_id, created_by) \
+         VALUES ($1, $2, $3, $4, $5) \
          RETURNING id, building_id, label, edd_date, document_id, created_by, created_at",
     )
     .bind(building_id)
     .bind(label)
     .bind(edd_date)
+    .bind(document_id)
     .bind(created_by)
     .fetch_one(&mut *tx)
     .await?;

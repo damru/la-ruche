@@ -83,6 +83,7 @@ async fn edd_reference_create_and_get_latest_roundtrip() {
         building_id,
         "EDD notariée 2024",
         chrono::NaiveDate::from_ymd_opt(2024, 1, 1).unwrap(),
+        None,
         user_id,
         &shares,
     )

@@ -101,7 +101,7 @@ export const allocationKeysApi = {
 export const eddApi = {
   listReferences: () =>
     api.get<EddReference[]>('/building/edd-references'),
-  createReference: (data: { label: string; edd_date: string; shares: EddReferenceShareInput[] }) =>
+  createReference: (data: { label: string; edd_date: string; document_id?: string | null; shares: EddReferenceShareInput[] }) =>
     api.post<EddReference>('/building/edd-references', data),
   check: () =>
     api.get<EddCheckResponse>('/building/edd-check'),
@@ -278,7 +278,7 @@ export const documentsApi = {
     api.get<Document[]>('/documents'),
   getUploadUrl: (extension: string, content_type: string, size_bytes: number) =>
     api.post<UploadUrlResponse>('/documents/upload-url', { extension, content_type, size_bytes }),
-  confirmUpload: (data: { key: string; bucket: string; original_name: string; mime_type: string; size_bytes: number; visible_roles: string[] }) =>
+  confirmUpload: (data: { key: string; bucket: string; original_name: string; mime_type: string; size_bytes: number; visible_roles: string[]; category?: string; supersedes_id?: string }) =>
     api.post<Document>('/documents', data),
   getDownloadUrl: (id: string) =>
     api.get<DownloadUrlResponse>(`/documents/${id}/download-url`),
