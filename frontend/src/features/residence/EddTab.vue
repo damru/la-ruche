@@ -4,7 +4,6 @@ import { useI18n } from 'vue-i18n'
 import CCard from '@/components/molecules/CCard.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CBadge from '@/components/atoms/CBadge.vue'
-import CAlert from '@/components/atoms/CAlert.vue'
 import CEmptyState from '@/components/atoms/CEmptyState.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
@@ -14,6 +13,9 @@ import CFormInput from '@/components/atoms/CFormInput.vue'
 import CFormChipInput from '@/components/atoms/CFormChipInput.vue'
 import CFileDropzone from '@/components/molecules/CFileDropzone.vue'
 import CLinkedDocumentsModal from '@/components/organisms/CLinkedDocumentsModal.vue'
+import CLegalCard from '@/components/molecules/CLegalCard.vue'
+import CLegalNotice from '@/components/molecules/CLegalNotice.vue'
+import CLegalDescription from '@/components/atoms/CLegalDescription.vue'
 import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import CIconDownload from '@/components/atoms/CIconDownload.svg'
 import CIconClock from '@/components/atoms/CIconClock.svg'
@@ -205,10 +207,6 @@ function discrepancyVariant(d: EddDiscrepancy): 'warn' | 'err' {
         />
       </div>
 
-      <CAlert variant="info">
-        {{ t('settings.edd.nonBlockingNotice') }}
-      </CAlert>
-
       <template v-if="!showForm">
         <template v-if="!hasReference">
           <CCard>
@@ -372,6 +370,15 @@ function discrepancyVariant(d: EddDiscrepancy): 'warn' | 'err' {
           </template>
         </CForm>
       </CCard>
+
+      <CLegalCard>
+        <CLegalNotice>
+          <CLegalDescription
+            :title="t('settings.edd.legalCard.title')"
+            :summary="t('settings.edd.legalCard.summary')"
+          />
+        </CLegalNotice>
+      </CLegalCard>
     </template>
 
     <CLinkedDocumentsModal

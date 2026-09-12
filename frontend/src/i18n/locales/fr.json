@@ -1627,7 +1627,10 @@
     "edd": {
       "title": "Contrôle de cohérence — État Descriptif de Division (EDD)",
       "subtitle": "Comparez les tantièmes configurés avec le dernier état descriptif de division (EDD) déposé.",
-      "nonBlockingNotice": "Ce contrôle est purement informatif : il ne bloque ni la configuration des clés ni la génération des appels de fonds.",
+      "legalCard": {
+        "title": "Contrôle informatif",
+        "summary": "Ce contrôle est purement informatif : il ne bloque ni la configuration des clés ni la génération des appels de fonds."
+      },
       "newReference": "Nouvelle référence EDD",
       "newReferenceTitle": "Nouvelle référence EDD",
       "archivedUnit": "Lot archivé",
