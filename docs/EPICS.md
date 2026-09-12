@@ -142,7 +142,7 @@ La fiche identitaire de la copropriété (nom, adresse, SIRET syndic), le règle
 * [EP-001-S09](docs/specs/EP-001-S09-spec.md) ✅ — Contrôle de cohérence EDD : comparer les tantièmes configurés avec le dernier EDD déposé et produire un rapport d'écarts (non bloquant) (LEGAL.md §1.2)
 * [EP-001-S10](docs/specs/EP-001-S10-spec.md) ✅ — Journal d'audit des modifications de clés (qui, quoi, quand, justification) pour traçabilité syndic (LEGAL.md §1.2, §2.1)
 * [EP-001-S11](docs/specs/EP-001-S11-spec.md) ✅ — Intégrer l'EDD comme onglet de la page « Clés de répartition », avec attache/téléchargement/historique du document EDD réel (LEGAL.md §1.2)
-* [EP-001-S12](docs/specs/EP-001-S12-spec.md) — Follow-up UI/UX onglet EDD : espacements, style du sélecteur de document, ajout de lots archivés à la saisie, clarification du sigle EDD, repositionnement du bouton de création (LEGAL.md §1.2)
+* [EP-001-S12](docs/specs/EP-001-S12-spec.md) ✅ — Follow-up UI/UX onglet EDD : espacements, style du sélecteur de document, ajout de lots archivés à la saisie, clarification du sigle EDD, repositionnement du bouton de création (LEGAL.md §1.2)
 
 ***
 

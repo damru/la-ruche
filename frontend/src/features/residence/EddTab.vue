@@ -12,6 +12,7 @@ import CHeading from '@/components/atoms/CHeading.vue'
 import CForm from '@/components/molecules/CForm.vue'
 import CFormInput from '@/components/atoms/CFormInput.vue'
 import CFormChipInput from '@/components/atoms/CFormChipInput.vue'
+import CFileDropzone from '@/components/molecules/CFileDropzone.vue'
 import CLinkedDocumentsModal from '@/components/organisms/CLinkedDocumentsModal.vue'
 import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import CIconDownload from '@/components/atoms/CIconDownload.svg'
@@ -42,7 +43,7 @@ async function loadAll() {
     allocationKeysApi.list(),
     eddApi.listReferences(),
   ])
-  units.value = unitsRes.data.filter(u => u.active)
+  units.value = unitsRes.data
   keys.value = keysRes.data
   references.value = refsRes.data
 
@@ -68,31 +69,26 @@ onMounted(reload)
 const showForm = ref(false)
 const feedback = useFormFeedback()
 const saving = ref(false)
-const selectedFile = ref<File | null>(null)
+const selectedFiles = ref<File[]>([])
 
 const form = ref<{
   label: string
   edd_date: string
-  shares: { unit_id: string; unit_number: string; allocation_key_id: string; share_value: number }[]
+  shares: { unit_id: string; unit_number: string; allocation_key_id: string; share_value: number; archived: boolean }[]
 }>({ label: '', edd_date: '', shares: [] })
 
 function openForm() {
   feedback.reset()
-  selectedFile.value = null
+  selectedFiles.value = []
   const generalKey = keys.value.find(k => k.key_type === 'general')
   form.value = {
     label: '',
     edd_date: '',
     shares: generalKey
-      ? units.value.map(u => ({ unit_id: u.id, unit_number: u.unit_number, allocation_key_id: generalKey.id, share_value: 0 }))
+      ? units.value.map(u => ({ unit_id: u.id, unit_number: u.unit_number, allocation_key_id: generalKey.id, share_value: 0, archived: !u.active }))
       : [],
   }
   showForm.value = true
-}
-
-function onFileChange(e: Event) {
-  const input = e.target as HTMLInputElement
-  selectedFile.value = input.files?.[0] ?? null
 }
 
 async function uploadEddDocument(file: File): Promise<string> {
@@ -121,8 +117,8 @@ async function saveReference() {
   saving.value = true
   try {
     let documentId: string | null = null
-    if (selectedFile.value) {
-      documentId = await uploadEddDocument(selectedFile.value)
+    if (selectedFiles.value[0]) {
+      documentId = await uploadEddDocument(selectedFiles.value[0])
     }
     await eddApi.createReference({
       label: form.value.label,
@@ -142,6 +138,8 @@ async function saveReference() {
 }
 
 const latestReference = computed(() => references.value[0])
+
+defineExpose({ openForm, showForm })
 
 async function downloadDocument(documentId: string) {
   try {
@@ -195,17 +193,10 @@ function discrepancyVariant(d: EddDiscrepancy): 'warn' | 'err' {
     <CPageLoader v-else-if="loading" />
     <template v-else>
       <div
-        v-if="!showForm"
-        class="edd-tab-actions"
+        v-if="!showForm && references.length > 0"
+        class="flex justify-end mb-3"
       >
         <CBtn
-          size="sm"
-          :icon="CIconPlus"
-          :title="t('settings.edd.newReference')"
-          @click="openForm"
-        />
-        <CBtn
-          v-if="references.length > 0"
           size="sm"
           variant="ghost"
           :icon="CIconClock"
@@ -238,14 +229,14 @@ function discrepancyVariant(d: EddDiscrepancy): 'warn' | 'err' {
           </CCard>
         </template>
         <template v-else>
-          <CCard>
+          <CCard class="mb-4">
             <CHeading
               type="card"
               class="mb-2"
             >
               {{ t('settings.edd.currentReference') }}
             </CHeading>
-            <div class="edd-current-reference">
+            <div class="flex items-center justify-between gap-3">
               <p class="body-sm text-on-surface-variant">
                 {{ latestReference?.label }} — {{ latestReference?.edd_date }}
               </p>
@@ -275,12 +266,12 @@ function discrepancyVariant(d: EddDiscrepancy): 'warn' | 'err' {
             />
             <ul
               v-else
-              class="discrepancy-list"
+              class="flex flex-col gap-3"
             >
               <li
                 v-for="(d, idx) in discrepancies"
                 :key="idx"
-                class="discrepancy-item"
+                class="flex items-center gap-2 text-sm border-b border-outline-light pb-2 last:border-b-0 last:pb-0"
               >
                 <CBadge :variant="discrepancyVariant(d)">
                   {{ t(`settings.edd.discrepancy.kind.${d.kind}`) }}
@@ -297,7 +288,7 @@ function discrepancyVariant(d: EddDiscrepancy): 'warn' | 'err' {
           type="card"
           class="mb-4"
         >
-          {{ t('settings.edd.newReference') }}
+          {{ t('settings.edd.newReferenceTitle') }}
         </CHeading>
         <CForm
           :status="feedback.status.value"
@@ -320,39 +311,47 @@ function discrepancyVariant(d: EddDiscrepancy): 'warn' | 'err' {
 
           <div class="flex flex-col gap-1">
             <label class="text-sm font-semibold">{{ t('settings.edd.documentField') }}</label>
-            <input
-              type="file"
+            <CFileDropzone
+              v-model:files="selectedFiles"
+              :multiple="false"
               accept="application/pdf"
-              @change="onFileChange"
+              :hint="t('settings.edd.documentFieldHint')"
             />
-            <p class="body-xs text-on-surface-variant">
-              {{ t('settings.edd.documentFieldHint') }}
-            </p>
           </div>
 
-          <div class="shares-section">
+          <div class="pt-2">
             <h3 class="text-md font-semibold mb-3">
               {{ t('settings.edd.sharesField') }}
             </h3>
             <p
               v-if="form.shares.length === 0"
-              class="dim"
+              class="text-on-surface-variant"
             >
               {{ t('settings.keys.noUnits') }}
             </p>
             <div
               v-else
-              class="c-chips"
+              class="flex flex-wrap gap-1.5"
             >
-              <CFormChipInput
+              <div
                 v-for="share in form.shares"
                 :key="share.unit_id"
-                v-model="share.share_value"
-                :label="share.unit_number"
-                type="number"
-                :step="1"
-                :min="0"
-              />
+                class="flex items-center gap-1"
+              >
+                <CFormChipInput
+                  v-model="share.share_value"
+                  :label="share.unit_number"
+                  type="number"
+                  :step="1"
+                  :min="0"
+                />
+                <CBadge
+                  v-if="share.archived"
+                  variant="default"
+                >
+                  {{ t('settings.edd.archivedUnit') }}
+                </CBadge>
+              </div>
             </div>
           </div>
 
@@ -385,31 +384,3 @@ function discrepancyVariant(d: EddDiscrepancy): 'warn' | 'err' {
     />
   </div>
 </template>
-
-<style scoped>
-.dim { color: var(--color-on-surface-variant); }
-.shares-section { padding-top: var(--space-2); }
-.c-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.discrepancy-list { display: flex; flex-direction: column; gap: var(--space-3); }
-.discrepancy-item {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  font-size: var(--text-sm);
-  border-bottom: 1px solid var(--color-outline-light);
-  padding-bottom: var(--space-2);
-}
-.discrepancy-item:last-child { border-bottom: none; padding-bottom: 0; }
-.edd-tab-actions {
-  display: flex;
-  gap: var(--space-2);
-  justify-content: flex-end;
-  margin-bottom: var(--space-3);
-}
-.edd-current-reference {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-}
-</style>
