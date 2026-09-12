@@ -194,6 +194,15 @@ function discrepancyVariant(d: EddDiscrepancy): 'warn' | 'err' {
     />
     <CPageLoader v-else-if="loading" />
     <template v-else>
+      <header class="mb-4">
+        <CHeading type="section">
+          {{ t('settings.edd.title') }}
+        </CHeading>
+        <p class="body-sm text-on-surface-variant">
+          {{ t('settings.edd.subtitle') }}
+        </p>
+      </header>
+
       <div
         v-if="!showForm && references.length > 0"
         class="flex justify-end mb-3"
@@ -371,7 +380,7 @@ function discrepancyVariant(d: EddDiscrepancy): 'warn' | 'err' {
         </CForm>
       </CCard>
 
-      <CLegalCard>
+      <CLegalCard class="mt-8">
         <CLegalNotice>
           <CLegalDescription
             :title="t('settings.edd.legalCard.title')"
