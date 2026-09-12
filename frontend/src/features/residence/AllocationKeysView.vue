@@ -28,6 +28,12 @@ const tabs = computed(() => [
   { value: 'edd', label: t('allocationKeys.tabs.edd') },
 ])
 
+const eddTabRef = ref<InstanceType<typeof EddTab> | null>(null)
+
+function openEddForm() {
+  eddTabRef.value?.openForm()
+}
+
 const keys = ref<AllocationKey[]>([])
 
 type KeyBalance = { shares_sum: number; shares_total: number; delta: number }
@@ -118,6 +124,13 @@ onMounted(reload)
           :icon="CIconPlus"
           :title="t('settings.keys.newKey')"
           @click="openCreateModal"
+        />
+        <CBtn
+          v-if="activeTab === 'edd' && !eddTabRef?.showForm"
+          size="sm"
+          :icon="CIconPlus"
+          :title="t('settings.edd.newReference')"
+          @click="openEddForm"
         />
       </template>
     </CTopbar>
@@ -253,7 +266,7 @@ onMounted(reload)
             </template>
           </template>
           <template v-else>
-            <EddTab />
+            <EddTab ref="eddTabRef" />
           </template>
         </CTabs>
       </template>

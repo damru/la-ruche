@@ -1625,10 +1625,12 @@
     "phone": "Téléphone",
     "phonePlaceholder": "06 00 00 00 00",
     "edd": {
-      "title": "Contrôle de cohérence EDD",
+      "title": "Contrôle de cohérence — État Descriptif de Division (EDD)",
       "subtitle": "Comparez les tantièmes configurés avec le dernier état descriptif de division (EDD) déposé.",
       "nonBlockingNotice": "Ce contrôle est purement informatif : il ne bloque ni la configuration des clés ni la génération des appels de fonds.",
       "newReference": "Nouvelle référence EDD",
+      "newReferenceTitle": "Nouvelle référence EDD",
+      "archivedUnit": "Lot archivé",
       "empty": "Aucune référence EDD saisie",
       "emptyDescription": "Saisissez une référence EDD (libellé, date, tantièmes par lot) pour activer le contrôle de cohérence.",
       "currentReference": "Référence EDD actuelle",
