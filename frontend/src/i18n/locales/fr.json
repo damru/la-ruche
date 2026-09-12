@@ -102,7 +102,6 @@
       "contractorDetail": "Coordonnées et historique",
       "allocationKeys": "Bases de répartition",
       "building": "Données de l'immeuble",
-      "edd": "Contrôle de cohérence EDD",
       "residents": "Lots et occupants",
       "registry": "Référentiel lots et tantièmes",
       "profile": "Préférences du compte",
@@ -139,7 +138,6 @@
     "myCharges": "Mes appels de fonds",
     "residence-info": "Informations",
     "residence-keys": "Clés de répartition",
-    "residence-edd": "Contrôle EDD",
     "account": "Profil",
     "myAccount": "Mon compte",
     "appearance": "Apparence",
@@ -1638,7 +1636,13 @@
       "reportEmpty": "Aucun écart détecté : les tantièmes configurés correspondent à la référence EDD.",
       "labelField": "Libellé",
       "dateField": "Date de l'acte",
+      "documentField": "Document EDD (PDF)",
+      "documentFieldHint": "Optionnel : joignez le PDF notarié pour l'attacher à cette référence.",
       "sharesField": "Tantièmes de référence (par lot)",
+      "history": "Historique",
+      "historyEmpty": "Aucun document EDD dans l'historique.",
+      "download": "Télécharger",
+      "downloadError": "Impossible de télécharger le document EDD.",
       "discrepancy": {
         "kind": {
           "missing_in_edd": "Absent de l'EDD",
@@ -1863,6 +1867,10 @@
     "title": "Clés de répartition",
     "header": {
       "totalCount": "{count} clé de répartition | {count} clés de répartition"
+    },
+    "tabs": {
+      "keys": "Clés",
+      "edd": "EDD"
     }
   }
 }
