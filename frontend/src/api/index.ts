@@ -11,7 +11,7 @@ import type {
   Building, Unit, UnitOwnerRecord, User, AllocationKey, UnitShare, AuditEntry,
   OnboardingStatus, RuntimeStatus, BootstrapInput, BootstrapResponse,
   LoginResponse, BuildingStats, RegistryResponse, UnitChargesResponse,
-  Contractor, JudicialProceeding, GovernanceMandate,
+  Contractor, JudicialProceeding, GovernanceMandate, EtatDateRequest,
   EddReference, EddReferenceShareInput, EddCheckResponse,
   CalendarEvent,
 } from '@/types/domain'
@@ -398,6 +398,18 @@ export const governanceApi = {
     api.put<GovernanceMandate>(`/governance/mandates/${id}`, data),
   delete: (id: string) =>
     api.delete(`/governance/mandates/${id}`),
+}
+
+// ── État daté (EP-002-S06) ────────────────────────────────────────
+export const etatDateApi = {
+  list: () =>
+    api.get<EtatDateRequest[]>('/etat-date-requests'),
+  get: (id: string) =>
+    api.get<EtatDateRequest>(`/etat-date-requests/${id}`),
+  create: (unitId: string, data: { requested_at: string; requester_name: string }) =>
+    api.post<EtatDateRequest>(`/units/${unitId}/etat-date-requests`, data),
+  generate: (id: string) =>
+    api.post<EtatDateRequest>(`/etat-date-requests/${id}/generate`),
 }
 
 // ── Claims ────────────────────────────────────────────────────────

@@ -69,6 +69,7 @@ const allGroups: NavGroup[] = [
       { name: 'registry',           route: '/registry',           label: t('nav.registry'),       roles: ['manager', 'board_member', 'co_owner'] },
       { name: 'judicial-proceedings', route: '/judicial-proceedings', label: t('nav.judicialProceedings'), roles: ['manager', 'board_member', 'co_owner'] },
       { name: 'governance',         route: '/governance',         label: t('nav.governance'),     roles: ['manager', 'board_member', 'co_owner'] },
+      { name: 'etat-date',          route: '/etat-date',          label: t('nav.etatDate'),       roles: ['manager'] },
       { name: 'residents',          route: '/residents',          label: t('nav.residents'),      roles: ['manager'] },
     ],
   },
