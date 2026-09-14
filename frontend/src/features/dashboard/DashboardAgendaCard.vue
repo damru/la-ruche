@@ -57,41 +57,28 @@ function onEventClick(event: CalendarEvent) {
     />
     <div
       v-else
-      class="agenda-list"
+      class="flex flex-col gap-1"
     >
       <button
         v-for="event in visibleEvents"
         :key="event.id"
         type="button"
-        class="agenda-item"
+        class="flex items-center gap-2.5 w-full text-left px-3 py-2.5 rounded-xl border-none bg-transparent cursor-pointer transition-colors duration-150 hover:bg-surface-container-low"
         @click="onEventClick(event)"
       >
         <CBadge :variant="SOURCE_BADGE_VARIANT[event.source]">
           {{ t(`calendar.sources.${event.source}`) }}
         </CBadge>
-        <span class="agenda-title">{{ event.title }}</span>
-        <span class="agenda-date">{{ formatRelative(event.date) }}</span>
+        <span class="flex-1 min-w-0 text-xs font-medium text-on-surface overflow-hidden text-ellipsis whitespace-nowrap">{{ event.title }}</span>
+        <span class="text-2xs text-on-surface-variant shrink-0">{{ formatRelative(event.date) }}</span>
       </button>
       <RouterLink
         v-if="extraCount > 0"
         to="/calendar"
-        class="agenda-more"
+        class="block text-center p-2 text-xs font-medium text-primary"
       >
         {{ t('dashboard.agenda.moreEvents', { count: extraCount }) }}
       </RouterLink>
     </div>
   </CCard>
 </template>
-
-<style scoped>
-.agenda-list { display: flex; flex-direction: column; gap: var(--space-1); }
-.agenda-item {
-  display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
-  padding: 10px var(--space-3); border-radius: var(--radius-xl); background: none; border: none; cursor: pointer;
-  transition: background var(--transition-fast);
-}
-.agenda-item:hover { background: var(--color-surface-container-low); }
-.agenda-title { flex: 1; min-width: 0; font-size: var(--text-xs); font-weight: var(--fw-medium); color: var(--color-on-surface); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.agenda-date { font-size: var(--text-2xs); color: var(--color-on-surface-variant); flex-shrink: 0; }
-.agenda-more { display: block; text-align: center; padding: var(--space-2); font-size: var(--text-xs); font-weight: var(--fw-medium); color: var(--color-primary); }
-</style>
