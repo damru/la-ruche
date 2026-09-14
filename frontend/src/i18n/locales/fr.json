@@ -273,6 +273,13 @@
     "nextDeadlines": "Prochaines échéances",
     "contracts": "Contrats",
     "noReminders": "Aucun rappel dans les 60 prochains jours",
+    "agenda": {
+      "title": "Agenda — 30 prochains jours",
+      "seeCalendar": "Voir le calendrier",
+      "emptyTitle": "Aucun événement",
+      "emptyDescription": "Aucun événement dans les 30 prochains jours.",
+      "moreEvents": "+{count} autres"
+    },
     "reportsTitle": "Signalements",
     "openCount": "{count} ouvert | {count} ouverts",
     "seeReports": "Voir",
