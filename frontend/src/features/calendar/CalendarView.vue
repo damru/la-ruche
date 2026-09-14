@@ -1,0 +1,159 @@
+<script setup lang="ts">
+// CalendarView — EP-014-S01. Monthly / weekly / list toggle with period nav.
+// Visibility rules are enforced server-side (`/calendar/events` filters by
+// caller role); this view only renders whatever events come back.
+
+import { computed, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { calendarApi } from '@/api'
+import { usePageLoader } from '@/composables/usePageLoader'
+import CTopbar from '@/components/organisms/CTopbar.vue'
+import CPageError from '@/components/organisms/CPageError.vue'
+import CPageLoader from '@/components/molecules/CPageLoader.vue'
+import CEyebrow from '@/components/atoms/CEyebrow.vue'
+import CHeading from '@/components/atoms/CHeading.vue'
+import CTabs from '@/components/atoms/CTabs.vue'
+import CBtn from '@/components/atoms/CBtn.vue'
+import CIconArrowLeft from '@/components/atoms/CIconArrowLeft.svg'
+import CIconArrowRight from '@/components/atoms/CIconArrowRight.svg'
+import CalendarGrid from './CalendarGrid.vue'
+import CalendarListMode from './CalendarListMode.vue'
+import type { CalendarEvent } from '@/types/domain'
+
+type Mode = 'month' | 'week' | 'list'
+
+const { t } = useI18n()
+
+const mode = ref<Mode>('month')
+const anchor = ref(new Date())
+const events = ref<CalendarEvent[]>([])
+
+function periodRange(date: Date, currentMode: Mode): { from: Date; to: Date } {
+  if (currentMode === 'week') {
+    const day = (date.getDay() + 6) % 7 // Monday = 0
+    const from = new Date(date.getFullYear(), date.getMonth(), date.getDate() - day)
+    const to = new Date(from)
+    to.setDate(from.getDate() + 6)
+    return { from, to }
+  }
+  // month + list share the same monthly fetch window
+  const from = new Date(date.getFullYear(), date.getMonth(), 1)
+  const to = new Date(date.getFullYear(), date.getMonth() + 1, 0)
+  return { from, to }
+}
+
+function toIsoDate(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+}
+
+async function loadData() {
+  const { from, to } = periodRange(anchor.value, mode.value)
+  const response = await calendarApi.events(toIsoDate(from), toIsoDate(to))
+  events.value = response.data
+}
+
+const { loading, error, reload } = usePageLoader(loadData)
+onMounted(reload)
+
+const periodLabel = computed(() => {
+  if (mode.value === 'week') {
+    const { from, to } = periodRange(anchor.value, mode.value)
+    return `${from.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })} – ${to.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}`
+  }
+  return anchor.value.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
+})
+
+function shiftPeriod(delta: number) {
+  const next = new Date(anchor.value)
+  if (mode.value === 'week') {
+    next.setDate(next.getDate() + delta * 7)
+  } else {
+    next.setMonth(next.getMonth() + delta)
+  }
+  anchor.value = next
+  reload()
+}
+
+function onModeChange() {
+  reload()
+}
+
+function onShowDay(date: string) {
+  mode.value = 'list'
+  anchor.value = new Date(`${date}T00:00:00`)
+  reload()
+}
+</script>
+
+<template>
+  <div class="view-page">
+    <CTopbar>
+      <template #left>
+        <div class="topbar-breadcrumb">
+          {{ t('calendar.title') }}
+        </div>
+      </template>
+    </CTopbar>
+
+    <div class="view-container">
+      <CPageError
+        v-if="error"
+        :message="error"
+        @retry="reload"
+      />
+      <CPageLoader v-else-if="loading" />
+      <template v-else>
+        <header class="view-header">
+          <CEyebrow>
+            {{ t('page.eyebrows.calendar') }}
+          </CEyebrow>
+          <CHeading type="header">
+            {{ t('calendar.title') }}
+          </CHeading>
+        </header>
+
+        <CTabs
+          v-model="mode"
+          variant="filter"
+          :tabs="(['month', 'week', 'list'] as const).map(m => ({ value: m, label: t(`calendar.modes.${m}`) }))"
+          @update:model-value="onModeChange"
+        />
+
+        <div
+          v-if="mode !== 'list'"
+          class="flex items-center gap-3"
+        >
+          <CBtn
+            variant="ghost"
+            size="sm"
+            :icon="CIconArrowLeft"
+            :title="t('calendar.previousPeriod')"
+            :aria-label="t('calendar.previousPeriod')"
+            @click="shiftPeriod(-1)"
+          />
+          <span class="title-sm">{{ periodLabel }}</span>
+          <CBtn
+            variant="ghost"
+            size="sm"
+            :icon="CIconArrowRight"
+            :title="t('calendar.nextPeriod')"
+            :aria-label="t('calendar.nextPeriod')"
+            @click="shiftPeriod(1)"
+          />
+        </div>
+
+        <CalendarGrid
+          v-if="mode === 'month' || mode === 'week'"
+          :mode="mode"
+          :anchor="anchor"
+          :events="events"
+          @show-day="onShowDay"
+        />
+        <CalendarListMode
+          v-else
+          :events="events"
+        />
+      </template>
+    </div>
+  </div>
+</template>
