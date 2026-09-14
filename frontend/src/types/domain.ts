@@ -695,3 +695,17 @@ export interface GovernanceMandate {
   created_at: string
   updated_at: string
 }
+
+// ── Calendar (EP-014-S01) ──────────────────────────────────────────
+
+export type CalendarSource = 'meeting' | 'contract' | 'task' | 'claim' | 'maintenance' | 'manual'
+
+export interface CalendarEvent {
+  id: string
+  source: CalendarSource
+  title: string
+  date: string           // YYYY-MM-DD
+  time: string | null    // HH:MM:SS, populated for TIMESTAMPTZ-backed sources
+  link: string           // SPA path to the source entity
+  is_deadline: boolean
+}
