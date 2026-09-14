@@ -26,6 +26,7 @@ const ResidentsView           = () => import('@/features/residents/ResidentsView
 const RegistryView            = () => import('@/features/residents/RegistryView.vue')
 const JudicialProceedingsView = () => import('@/features/registers/JudicialProceedingsView.vue')
 const GovernanceMandatesView  = () => import('@/features/registers/GovernanceMandatesView.vue')
+const EtatDateView            = () => import('@/features/registers/EtatDateView.vue')
 const UnitChargesView         = () => import('@/features/residents/UnitChargesView.vue')
 const MyChargesView           = () => import('@/features/residents/MyChargesView.vue')
 const BuildingView            = () => import('@/features/residence/BuildingView.vue')
@@ -184,6 +185,12 @@ const routes: RouteRecordRaw[] = [
         name: 'governance',
         component: GovernanceMandatesView,
         meta: { title: 'nav.governance', roles: ['manager', 'board_member', 'co_owner'] },
+      },
+      {
+        path: 'etat-date',
+        name: 'etat-date',
+        component: EtatDateView,
+        meta: { title: 'nav.etatDate', roles: ['manager'] },
       },
       // ── Residence ───────────────────────────────────────────
       {

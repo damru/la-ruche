@@ -10,6 +10,7 @@ pub mod contract;
 pub mod contractor;
 pub mod document;
 pub mod edd_reference;
+pub mod etat_date;
 pub mod governance_mandate;
 pub mod judicial_proceeding;
 pub mod maintenance_log;

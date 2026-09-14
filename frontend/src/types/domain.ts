@@ -695,3 +695,49 @@ export interface GovernanceMandate {
   created_at: string
   updated_at: string
 }
+
+// ── État daté (EP-002-S06, LEGAL.md §7.1) ─────────────────────────
+
+export type EtatDateStatus = 'requested' | 'generated' | 'sent' | 'cancelled'
+
+export interface EtatDateLigneMontant {
+  label: string
+  amount: number
+}
+
+export interface EtatDateExercice {
+  fiscal_year: number
+  charge_amount: number
+  works_fund_amount: number
+  total_amount: number
+}
+
+export interface EtatDateProcedure {
+  subject: string
+  proceeding_type: string
+  opened_at: string
+  jurisdiction: string | null
+}
+
+export interface EtatDateSnapshot {
+  partie1_sommes_dues_par_cedant: EtatDateLigneMontant[]
+  partie2_sommes_dues_par_syndicat: EtatDateLigneMontant[]
+  partie3_sommes_incombant_acquereur: EtatDateLigneMontant[]
+  annexe_quote_part: EtatDateExercice[]
+  procedures: EtatDateProcedure[]
+  travaux_votes_non_realises: string[]
+  emprunts_collectifs: string
+}
+
+export interface EtatDateRequest {
+  id: string
+  unit_id: string
+  requested_at: string
+  due_date: string
+  requester_name: string
+  status: EtatDateStatus
+  snapshot: EtatDateSnapshot | null
+  generated_at: string | null
+  created_by: string
+  created_at: string
+}
