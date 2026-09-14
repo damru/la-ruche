@@ -233,7 +233,7 @@ Chaque appel de fonds doit être traçable : quel lot, quelle clé, quels tanti�
 ### 2.4 Tantièmes et mutations de propriété
 
 **Référence :** Art. 6 loi 1965 + notaire (état daté)  
-**Couverture :** ⚠️ partielle — EP-002-S06, EP-002-S07
+**Couverture :** ⚠️ partielle — EP-002-S06 ⚠️, EP-002-S07
 
 Les tantièmes sont attachés au **lot**, pas au propriétaire. Une mutation (vente) ne modifie pas les tantièmes — mais la quote-part des charges non soldées au jour de la mutation est à répartir entre vendeur et acquéreur via l'état daté.
 
@@ -544,7 +544,7 @@ Obligatoire lors de la mise en copropriété d'un immeuble de > 10 ans, et facul
 ### 7.1 État daté
 
 **Référence :** Art. 5 décret 1967 (LEGIARTI000053191253 v7.0, en vigueur 25/12/2025), complété ALUR 2014  
-**Couverture :** ❌ non couverte — EP-002-S06
+**Couverture :** ⚠️ partielle — EP-002-S06 ⚠️ (travaux votés non réalisés non alimentée, cf. limitation ci-dessous) ; EP-002-S07 (pré-état daté) reste à implémenter.
 
 Le syndic doit produire l'état daté dans les **15 jours** suivant la demande du notaire. Depuis le 25/12/2025 (v7.0), l'état daté est structuré en **trois parties obligatoires** :
 
@@ -559,6 +559,7 @@ Le syndic doit produire l'état daté dans les **15 jours** suivant la demande d
 - La structure en 3 parties est obligatoire depuis le 25/12/2025 — EP-002-S06 doit être conçu selon cette structure.
 - Dépend de §4.3 (appels de fonds), §4.4 (fonds travaux), EP-003-S04 (résolutions travaux votées en AG), EP-002-S10 (procédures judiciaires).
 - Les informations relatives aux emprunts collectifs (art. 26-4, 26-7, 26-12) doivent être disponibles si la copropriété a souscrit un emprunt collectif.
+- **Écart constaté :** la rubrique « travaux votés non réalisés » n'est pas alimentée — le schéma ne relie pas `resolution` (votes AG) à `task` (réalisation des travaux). Limitation documentée dans `docs/specs/EP-002-S06-spec.md`. Nécessite une évolution de schéma (colonne de liaison résolution ↔ tâche) avant de pouvoir passer cette couverture à ✅.
 
 ---
 
@@ -612,7 +613,7 @@ Le syndicat des copropriétaires est responsable de traitement. Les données tra
 ## 10. Représentation en justice et suivi des procédures
 
 **Référence :** Art. 18-I loi 1965 (service-public.fr/F2608)  
-**Couverture :** ⚠️ partielle — EP-002-S10 ✅ (registre des procédures judiciaires livré backend + frontend), EP-002-S06 (intégration à l'état daté restante)
+**Couverture :** ⚠️ partielle — EP-002-S10 ✅ (registre des procédures judiciaires livré backend + frontend), EP-002-S06 ⚠️ (intégration à l'état daté livrée ; travaux votés non réalisés non alimentée)
 
 Le syndic représente le syndicat des copropriétaires en justice, tant en demande qu'en défense. Il peut engager des actions pour défendre les intérêts de la copropriété sans vote en AG (sauf actions exceptionnelles nécessitant une autorisation AG).
 
@@ -762,9 +763,9 @@ L'`audit_log` est en **append-only** : aucune ligne ne peut être modifiée ou s
 | 6.1 | Plan pluriannuel de travaux (PPT) | Loi Climat 2021 | ❌ | EP-009-S04 |
 | 6.2 | DPE collectif | Loi Climat 2021 | 🔲 | EP-005 |
 | 6.3 | Diagnostic technique global (DTG) | ALUR art. L731-1 | 🔲 | EP-005 |
-| 7.1 | État daté (15 jours) — 3 parties obligatoires dont emprunts collectifs (v7.0 déc. 2025) | Décret 1967 art. 5 (LEGIARTI000053191253 v7.0, 25/12/2025) | ❌ | EP-002-S06 |
+| 7.1 | État daté (15 jours) — 3 parties obligatoires dont emprunts collectifs (v7.0 déc. 2025) | Décret 1967 art. 5 (LEGIARTI000053191253 v7.0, 25/12/2025) | ⚠️ | EP-002-S06 (travaux votés non réalisés non alimentée) |
 | 7.2 | Pré-état daté | ALUR art. L721-2 | ❌ | EP-002-S07 |
 | 8 | RGPD + anonymisation | RGPD 2016/679 | ⚠️ | EP-002-S05, EP-002-S09 |
 | 9 | Sinistres (délais déclaration) | Code des assurances | ✅ | EP-008 |
-| 10 | Représentation en justice + procédures en cours | Art. 18-I loi 1965 | ⚠️ | EP-002-S10 ✅, EP-002-S06 |
+| 10 | Représentation en justice + procédures en cours | Art. 18-I loi 1965 | ⚠️ | EP-002-S10 ✅, EP-002-S06 ⚠️ |
 | 11 | Immutabilité des données comptables + audit log | Art. L123-22 Code de commerce | ⚠️ | EP-018 (S01–S07 livrées), EP-021-S03, ADR-009 |
