@@ -137,6 +137,7 @@
     "registry": "Registre",
     "judicialProceedings": "Procédures judiciaires",
     "governance": "Gouvernance",
+    "etatDate": "État daté",
     "myCharges": "Mes appels de fonds",
     "residence-info": "Informations",
     "residence-keys": "Clés de répartition",
@@ -1509,6 +1510,37 @@
         "syndic": "Syndic",
         "council_president": "Président du conseil syndical",
         "council_member": "Membre du conseil syndical"
+      }
+    },
+    "etatDate": {
+      "title": "État daté",
+      "summary": "{count} demande(s)",
+      "empty": "Aucune demande d'état daté enregistrée",
+      "new": "Nouvelle demande",
+      "requesterName": "Notaire / étude",
+      "requesterRequired": "Le nom du notaire ou de l'étude est requis.",
+      "unitRequired": "Le lot est requis.",
+      "requestedAt": "Date de la demande",
+      "dueDate": "Échéance (J+15)",
+      "overdue": "Échéance dépassée",
+      "generate": "Générer",
+      "regenerate": "Régénérer",
+      "view": "Consulter",
+      "print": "Imprimer",
+      "documentTitle": "État daté",
+      "generatedAt": "Généré le",
+      "partie1": "1. Sommes dues par le cédant",
+      "partie2": "2. Sommes dont le syndicat est débiteur",
+      "partie3": "3. Sommes incombant à l'acquéreur",
+      "annexeQuotePart": "Annexe — quote-part sur les 2 derniers exercices",
+      "procedures": "Procédures judiciaires en cours",
+      "emprunts": "Emprunts collectifs",
+      "none": "Néant",
+      "statuses": {
+        "requested": "Demandé",
+        "generated": "Généré",
+        "sent": "Envoyé",
+        "cancelled": "Annulé"
       }
     }
   },

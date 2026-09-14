@@ -10,6 +10,7 @@ pub mod contractor;
 pub mod contractors;
 pub mod contracts;
 pub mod documents;
+pub mod etat_date;
 pub mod governance;
 pub mod judicial_proceedings;
 pub mod logbook;
@@ -103,6 +104,14 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
         .route("/units/{id}/owners", get(units::owners))
         .route("/units/{id}/transfer", post(units::transfer))
         .route("/units/{id}/charges", get(units::charges))
+        .route("/units/{id}/etat-date-requests", post(etat_date::create))
+        // ── État daté ───────────────────────────────────────────
+        .route("/etat-date-requests", get(etat_date::list))
+        .route("/etat-date-requests/{id}", get(etat_date::get))
+        .route(
+            "/etat-date-requests/{id}/generate",
+            post(etat_date::generate),
+        )
         // ── Users ───────────────────────────────────────────────
         .route("/users", get(users::list).post(users::create))
         .route("/users/invite", post(users::invite))
