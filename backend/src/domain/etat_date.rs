@@ -64,9 +64,12 @@ pub struct EtatDate {
     pub partie3_sommes_incombant_acquereur: Vec<LigneMontant>,
     pub annexe_quote_part: Vec<ExerciceQuotePart>,
     pub procedures: Vec<ProcedureSummary>,
-    /// Travaux votés en AG non encore réalisés. Toujours vide : l'application
-    /// ne trace pas d'état d'achèvement des travaux votés (limitation actée,
-    /// même traitement que les emprunts collectifs ci-dessous).
+    /// Travaux votés en AG non encore réalisés. Toujours vide : le schéma ne
+    /// relie pas `resolution` (votes AG) à `task` (suivi de réalisation des
+    /// travaux) — aucune colonne `task.resolution_id` n'existe. Limitation
+    /// actée, documentée dans docs/specs/EP-002-S06-spec.md et LEGAL.md §7.1
+    /// (couverture ⚠️ partielle tant que ce lien n'existe pas), même
+    /// traitement que les emprunts collectifs ci-dessous.
     pub travaux_votes_non_realises: Vec<String>,
     /// Toujours « néant — emprunts collectifs non gérés » (limitation actée §1).
     pub emprunts_collectifs: String,

@@ -23,6 +23,8 @@ La story couvre : (a) le **suivi de la demande** (date de réception, échéance
 
 **Limitation actée :** les emprunts collectifs ne sont pas modélisés dans l'application → la rubrique correspondante est rendue avec la mention explicite « néant — emprunts collectifs non gérés », section vide mais présente.
 
+**Limitation actée (2) :** le schéma ne relie pas les résolutions d'AG (`resolution`, `vote_type` impliquant des travaux) à un suivi d'achèvement des travaux (`task` n'a pas de colonne `resolution_id` — aucune jointure possible entre une résolution votée et sa réalisation effective). La rubrique `travaux_votes_non_realises` est donc toujours vide, section présente mais non alimentée. Cette limitation nécessite une évolution de schéma hors périmètre de cette story ; suivi : t_5adbc63d. LEGAL.md §7.1 reste marquée ⚠️ partielle tant que ce lien n'existe pas.
+
 ## 2. État actuel du code (points d'ancrage)
 
 | Élément | Emplacement |
