@@ -149,6 +149,7 @@ cargo sqlx prepare                 # regenerate .sqlx/ (offline mode)
 - No `<style>` block in feature views — Tailwind utilities or catalogue components only.
 - No direct `radix-vue` import in feature views — use `C*` wrappers.
 - New component → add to catalogue in `docs/DESIGN.md §2` before use.
+- **Before writing any new UI markup (component or feature view), grep the catalogue first**: search `docs/DESIGN.md §3` and `frontend/src/components/{atoms,molecules,organisms}/` for an existing `C*` that already covers the layout/pattern needed. Only build new markup if no catalogue component fits. A spec that describes a UI pattern without naming the `C*` component to reuse is incomplete — resolve the catalogue lookup before implementation, not after a review round-trip.
 
 ---
 
@@ -170,9 +171,10 @@ Follow these steps **in order** for any new feature or significant change:
 3. Write and apply the migration (`cargo sqlx migrate run`).
 4. Regenerate offline query data (`cargo sqlx prepare`) and commit `backend/.sqlx/`.
 5. Implement backend changes (domain → db → api layers).
-6. Implement frontend changes.
-7. Add a dated entry to `docs/PROGRESS.md` with Epic/Story ref (started / completed / abandoned).
-8. Open a PR for the branch (`gh pr create`) and route it to Hopper for review (`kanban_request_review`). Pushing a branch without an open PR is not a completed task.
+6. Catalogue lookup (mandatory, before frontend work): grep `docs/DESIGN.md §3` and `frontend/src/components/` for any UI/UX pattern named in the spec. Record in the spec or PR which `C*` component(s) are reused, or justify why none fits (candidate for catalogue addition per the Frontend rule above).
+7. Implement frontend changes.
+8. Add a dated entry to `docs/PROGRESS.md` with Epic/Story ref (started / completed / abandoned).
+9. Open a PR for the branch (`gh pr create`) and route it to Hopper for review (`kanban_request_review`). Pushing a branch without an open PR is not a completed task.
 
 ---
 
