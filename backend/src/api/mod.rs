@@ -3,6 +3,7 @@ pub mod assemblies;
 pub mod auth;
 pub mod budget;
 pub mod building;
+pub mod calendar;
 pub mod claims;
 pub mod consultations;
 pub mod contractor;
@@ -366,7 +367,9 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
             get(governance::get)
                 .put(governance::update)
                 .delete(governance::delete),
-        );
+        )
+        // ── Calendar ─────────────────────────────────────────────
+        .route("/calendar/events", get(calendar::events));
 
     // ── Public routes (vendor token, no JWT) ─────────────────────
     // Vendor routes live under /api/v1 (without auth middleware) so that the
@@ -421,6 +424,7 @@ async fn notice() -> &'static str {
         (name = "claims", description = "Claims"),
         (name = "logbook", description = "Maintenance logbook"),
         (name = "reports", description = "Reports"),
+        (name = "calendar", description = "Aggregated calendar feed"),
         (name = "consultations", description = "Consultations / polls"),
         (name = "contractor", description = "Contractor access (token)"),
     )

@@ -38,6 +38,7 @@ const allGroups: NavGroup[] = [
     label: t('nav.groups.governance'),
     items: [
       { name: 'assemblies',    route: '/meetings',      label: t('nav.meetings'),      mobileLabel: t('nav.mobile.assemblies'),    roles: ['manager', 'board_member', 'co_owner'], mobileOrder: 10 },
+      { name: 'calendar',      route: '/calendar',      label: t('nav.calendar'),      mobileLabel: t('nav.mobile.calendar'),      roles: [],                                      mobileOrder: 9 },
       { name: 'consultations', route: '/consultations', label: t('nav.consultations'), mobileLabel: t('nav.mobile.consultations'), roles: [],                                      mobileOrder: 4 },
       { name: 'reports',       route: '/reports',       label: t('nav.reports'),       mobileLabel: t('nav.mobile.reports'),       roles: [],                                      mobileOrder: 2 },
     ],

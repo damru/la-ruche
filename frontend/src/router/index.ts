@@ -31,6 +31,7 @@ const MyChargesView           = () => import('@/features/residents/MyChargesView
 const BuildingView            = () => import('@/features/residence/BuildingView.vue')
 const AllocationKeysView      = () => import('@/features/residence/AllocationKeysView.vue')
 const ProfileView             = () => import('@/features/profile/ProfileView.vue')
+const CalendarView            = () => import('@/features/calendar/CalendarView.vue')
 const ContractorPage          = () => import('@/features/contractor/ContractorPage.vue')
 const AppLayout               = () => import('@/layouts/AppLayout.vue')
 const ForbiddenView           = () => import('@/views/ForbiddenView.vue')
@@ -130,6 +131,12 @@ const routes: RouteRecordRaw[] = [
         name: 'claims',
         component: ClaimsView,
         meta: { title: 'nav.claims', roles: ['manager', 'board_member'] },
+      },
+      {
+        path: 'calendar',
+        name: 'calendar',
+        component: CalendarView,
+        meta: { title: 'nav.calendar', roles: [] },
       },
       {
         path: 'logbook',

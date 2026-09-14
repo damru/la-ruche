@@ -106,7 +106,8 @@
       "registry": "Référentiel lots et tantièmes",
       "profile": "Préférences du compte",
       "myCharges": "Vue copropriétaire",
-      "unitCharges": "Historique d'un lot"
+      "unitCharges": "Historique d'un lot",
+      "calendar": "Vue d'ensemble des échéances"
     }
   },
   "addressAutocomplete": {
@@ -123,6 +124,7 @@
     "appTagline": "Gestion participative",
     "dashboard": "Tableau de bord",
     "meetings": "Assemblées générales",
+    "calendar": "Calendrier",
     "budget": "Budget & Charges",
     "documents": "Documents",
     "tasks": "Tâches",
@@ -144,6 +146,7 @@
     "mobile": {
       "dashboard": "Accueil",
       "assemblies": "AG",
+      "calendar": "Calendrier",
       "budget": "Budget",
       "documents": "Docs",
       "tasks": "Tâches",
@@ -280,6 +283,26 @@
     "openConsultation": "Consultation ouverte",
     "closesIn": "Clôture {relative}",
     "seeResults": "Voir les résultats →"
+  },
+  "calendar": {
+    "title": "Calendrier",
+    "empty": "Aucun événement sur cette période",
+    "previous": "Précédent",
+    "next": "Suivant",
+    "today": "Aujourd'hui",
+    "modes": {
+      "month": "Mois",
+      "week": "Semaine",
+      "list": "Liste"
+    },
+    "sources": {
+      "meeting": "Assemblée générale",
+      "contract": "Contrat",
+      "task": "Tâche",
+      "claim": "Sinistre",
+      "maintenance": "Carnet d'entretien",
+      "manual": "Événement"
+    }
   },
   "meetings": {
     "title": "Assemblées générales",

@@ -695,3 +695,17 @@ export interface GovernanceMandate {
   created_at: string
   updated_at: string
 }
+
+// ── Calendar (EP-014-S01) ─────────────────────────────────────────
+
+export type CalendarSource = 'meeting' | 'contract' | 'task' | 'claim' | 'maintenance' | 'manual'
+
+export interface CalendarEvent {
+  id: string
+  source: CalendarSource
+  title: string
+  date: string
+  time: string | null
+  link: string
+  is_deadline: boolean
+}
