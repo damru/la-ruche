@@ -107,3 +107,27 @@ pub async fn generate(
 
     json_value(updated)
 }
+
+/// GET /units/{id}/pre-etat-date — manager only. Generated on demand, no
+/// workflow/snapshot (EP-002-S07, LEGAL.md §7.2).
+pub async fn pre_etat_date(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+    Path(unit_id): Path<Uuid>,
+) -> AppResult<Json<serde_json::Value>> {
+    auth.require_role(&Role::Manager)?;
+
+    db::unit::get(&state.pool, unit_id, auth.building_id)
+        .await?
+        .ok_or(AppError::NotFound)?;
+
+    let inputs = db::etat_date::load_inputs(&state.pool, unit_id, auth.building_id).await?;
+    let extras = db::etat_date::load_pre_etat_date_extras(&state.pool, auth.building_id).await?;
+    let pre_etat_date = crate::domain::etat_date::assemble_pre_etat_date(
+        inputs,
+        extras.impayes_globaux_syndicat,
+        extras.fonds_travaux_derniere_cotisation,
+    );
+
+    json_value(pre_etat_date)
+}

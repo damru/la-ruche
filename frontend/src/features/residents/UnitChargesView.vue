@@ -22,6 +22,7 @@ import type { Column } from '@/components/molecules/CDataTable.vue'
 import CIconChevronRight from '@/components/atoms/CIconChevronRight.svg'
 import CIconWarn from '@/components/atoms/CIconWarn.svg'
 import CFormSelect from '@/components/atoms/CFormSelect.vue'
+import PreEtatDateModal from '@/features/registers/PreEtatDateModal.vue'
 import { unitsApi } from '@/api'
 import { usePageLoader } from '@/composables/usePageLoader'
 import { useAuthStore } from '@/stores/auth'
@@ -146,6 +147,8 @@ function statusVariant(status: UnitChargesLevy['status']): 'pending' | 'valid' |
   return 'default'
 }
 
+const showPreEtatDateModal = ref(false)
+
 </script>
 
 <template>
@@ -190,6 +193,18 @@ function statusVariant(status: UnitChargesLevy['status']): 'pending' | 'valid' |
             </CMetaItem>
           </CMetaLine>
         </header>
+
+        <div
+          v-if="auth.isManager"
+          class="flex justify-end"
+        >
+          <CBtn
+            variant="ghost"
+            size="sm"
+            :title="t('registers.preEtatDate.action')"
+            @click="showPreEtatDateModal = true"
+          />
+        </div>
 
         <CBadge
           v-if="data.pending_transfer"
@@ -300,6 +315,11 @@ function statusVariant(status: UnitChargesLevy['status']): 'pending' | 'valid' |
           :open="!!selectedLevy"
           :levy="selectedLevy"
           @update:open="open => { if (!open) selectedLevy = null }"
+        />
+        <PreEtatDateModal
+          v-model:open="showPreEtatDateModal"
+          :unit-id="unitId"
+          :unit-number="data.unit.unit_number"
         />
       </template>
     </div>

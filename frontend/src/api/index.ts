@@ -11,7 +11,7 @@ import type {
   Building, Unit, UnitOwnerRecord, User, AllocationKey, UnitShare, AuditEntry,
   OnboardingStatus, RuntimeStatus, BootstrapInput, BootstrapResponse,
   LoginResponse, BuildingStats, RegistryResponse, UnitChargesResponse,
-  Contractor, JudicialProceeding, GovernanceMandate, EtatDateRequest,
+  Contractor, JudicialProceeding, GovernanceMandate, EtatDateRequest, PreEtatDate,
   EddReference, EddReferenceShareInput, EddCheckResponse,
   CalendarEvent,
   ManualCalendarEvent, CalendarEventCategory,
@@ -411,6 +411,8 @@ export const etatDateApi = {
     api.post<EtatDateRequest>(`/units/${unitId}/etat-date-requests`, data),
   generate: (id: string) =>
     api.post<EtatDateRequest>(`/etat-date-requests/${id}/generate`),
+  preEtatDate: (unitId: string) =>
+    api.get<PreEtatDate>(`/units/${unitId}/pre-etat-date`),
 }
 
 // ── Claims ────────────────────────────────────────────────────────

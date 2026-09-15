@@ -77,6 +77,55 @@ pub struct EtatDate {
 
 const EMPRUNTS_COLLECTIFS_NEANT: &str = "néant — emprunts collectifs non gérés";
 
+/// Pré-état daté (EP-002-S07, LEGAL.md §7.2, art. L721-2 CCH) — informative
+/// document generated on demand, no workflow/snapshot, reusing the same
+/// `EtatDateInputs` boundary as the état daté (S06).
+#[derive(Debug, Clone, Serialize, PartialEq)]
+pub struct PreEtatDate {
+    /// Charges courantes du budget prévisionnel, exercice N-1. `None` si
+    /// aucun appel émis sur cet exercice (« non disponible », jamais un zéro
+    /// fabriqué).
+    pub charges_courantes_n1: Option<Decimal>,
+    pub charges_courantes_n2: Option<Decimal>,
+    pub charges_hors_budget_n1: Option<Decimal>,
+    pub charges_hors_budget_n2: Option<Decimal>,
+    pub sommes_dues_par_cedant: Decimal,
+    pub impayes_globaux_syndicat: Decimal,
+    /// Toujours `None` : la dette fournisseurs n'est pas modélisée finement
+    /// (limitation actée §6, rendue « non disponible » à l'affichage).
+    pub dette_fournisseurs: Option<Decimal>,
+    pub fonds_travaux_quote_part: Decimal,
+    pub fonds_travaux_derniere_cotisation: Decimal,
+    pub procedures_en_cours: usize,
+}
+
+/// Assembles the pré-état daté L721-2 synthesis. `impayes_globaux_syndicat`
+/// and `fonds_travaux_derniere_cotisation` are loaded separately from
+/// `EtatDateInputs` (building-wide / last-call figures, not part of the état
+/// daté's per-lot boundary) — see `db::etat_date::load_pre_etat_date_extras`.
+pub fn assemble_pre_etat_date(
+    inputs: EtatDateInputs,
+    impayes_globaux_syndicat: Decimal,
+    fonds_travaux_derniere_cotisation: Decimal,
+) -> PreEtatDate {
+    let mut exercices = inputs.exercices.into_iter();
+    let n1 = exercices.next();
+    let n2 = exercices.next();
+
+    PreEtatDate {
+        charges_courantes_n1: n1.as_ref().map(|e| e.charge_amount),
+        charges_courantes_n2: n2.as_ref().map(|e| e.charge_amount),
+        charges_hors_budget_n1: n1.as_ref().map(|e| e.works_fund_amount),
+        charges_hors_budget_n2: n2.as_ref().map(|e| e.works_fund_amount),
+        sommes_dues_par_cedant: inputs.arrears,
+        impayes_globaux_syndicat,
+        dette_fournisseurs: None,
+        fonds_travaux_quote_part: inputs.fonds_travaux_quote_part,
+        fonds_travaux_derniere_cotisation,
+        procedures_en_cours: inputs.procedures.len(),
+    }
+}
+
 /// Assembles the regulatory 3-part état daté structure. Lines are always
 /// present, even at zero (structure réglementaire fixe — cas limites §6).
 pub fn assemble(inputs: EtatDateInputs) -> EtatDate {
@@ -231,6 +280,76 @@ mod tests {
         };
         let result = assemble(inputs);
         assert_eq!(result.annexe_quote_part.len(), 1);
+    }
+
+    #[test]
+    fn pre_etat_date_full_history_two_exercises() {
+        let inputs = EtatDateInputs {
+            arrears: Decimal::new(50000, 2),
+            fonds_travaux_quote_part: Decimal::new(30000, 2),
+            exercices: vec![
+                ExerciceQuotePart {
+                    fiscal_year: 2026,
+                    charge_amount: Decimal::new(100000, 2),
+                    works_fund_amount: Decimal::new(5000, 2),
+                    total_amount: Decimal::new(105000, 2),
+                },
+                ExerciceQuotePart {
+                    fiscal_year: 2025,
+                    charge_amount: Decimal::new(90000, 2),
+                    works_fund_amount: Decimal::new(4000, 2),
+                    total_amount: Decimal::new(94000, 2),
+                },
+            ],
+            procedures: vec![ProcedureSummary {
+                subject: "Recouvrement".to_string(),
+                proceeding_type: "debt_recovery".to_string(),
+                opened_at: date(2026, 1, 1),
+                jurisdiction: None,
+            }],
+            ..base_inputs()
+        };
+        let result = assemble_pre_etat_date(inputs, Decimal::new(20000, 2), Decimal::new(15000, 2));
+        assert_eq!(result.charges_courantes_n1, Some(Decimal::new(100000, 2)));
+        assert_eq!(result.charges_courantes_n2, Some(Decimal::new(90000, 2)));
+        assert_eq!(result.charges_hors_budget_n1, Some(Decimal::new(5000, 2)));
+        assert_eq!(result.charges_hors_budget_n2, Some(Decimal::new(4000, 2)));
+        assert_eq!(result.sommes_dues_par_cedant, Decimal::new(50000, 2));
+        assert_eq!(result.impayes_globaux_syndicat, Decimal::new(20000, 2));
+        assert_eq!(result.dette_fournisseurs, None);
+        assert_eq!(result.fonds_travaux_quote_part, Decimal::new(30000, 2));
+        assert_eq!(
+            result.fonds_travaux_derniere_cotisation,
+            Decimal::new(15000, 2)
+        );
+        assert_eq!(result.procedures_en_cours, 1);
+    }
+
+    #[test]
+    fn pre_etat_date_single_exercise_n2_non_disponible() {
+        let inputs = EtatDateInputs {
+            exercices: vec![ExerciceQuotePart {
+                fiscal_year: 2026,
+                charge_amount: Decimal::new(100000, 2),
+                works_fund_amount: Decimal::new(5000, 2),
+                total_amount: Decimal::new(105000, 2),
+            }],
+            ..base_inputs()
+        };
+        let result = assemble_pre_etat_date(inputs, Decimal::ZERO, Decimal::ZERO);
+        assert!(result.charges_courantes_n1.is_some());
+        assert_eq!(result.charges_courantes_n2, None);
+        assert_eq!(result.charges_hors_budget_n2, None);
+    }
+
+    #[test]
+    fn pre_etat_date_lot_vierge_all_zeros_and_dette_non_disponible() {
+        let result = assemble_pre_etat_date(base_inputs(), Decimal::ZERO, Decimal::ZERO);
+        assert_eq!(result.charges_courantes_n1, None);
+        assert_eq!(result.charges_courantes_n2, None);
+        assert_eq!(result.sommes_dues_par_cedant, Decimal::ZERO);
+        assert_eq!(result.dette_fournisseurs, None);
+        assert_eq!(result.procedures_en_cours, 0);
     }
 
     #[test]

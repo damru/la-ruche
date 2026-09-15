@@ -756,6 +756,22 @@ export interface EtatDateRequest {
   created_at: string
 }
 
+// ── Pré-état daté (EP-002-S07, LEGAL.md §7.2, art. L721-2 CCH) ────
+// Generated on demand, no workflow/snapshot — reproducible at any time.
+
+export interface PreEtatDate {
+  charges_courantes_n1: number | null
+  charges_courantes_n2: number | null
+  charges_hors_budget_n1: number | null
+  charges_hors_budget_n2: number | null
+  sommes_dues_par_cedant: number
+  impayes_globaux_syndicat: number
+  dette_fournisseurs: number | null
+  fonds_travaux_quote_part: number
+  fonds_travaux_derniere_cotisation: number
+  procedures_en_cours: number
+}
+
 // ── Calendar manual events (EP-014-S03) ─────────────────────────────
 
 export type CalendarEventCategory = 'reunion' | 'visite' | 'permanence' | 'autre'
