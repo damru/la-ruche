@@ -1164,6 +1164,7 @@
     "previousPeriod": "Période précédente",
     "nextPeriod": "Période suivante",
     "moreEvents": "+{count}",
+    "export": "Exporter (.ics)",
     "empty": {
       "title": "Aucun événement",
       "description": "Aucun événement à afficher sur cette période."
