@@ -1573,6 +1573,25 @@
         "sent": "Envoyé",
         "cancelled": "Annulé"
       }
+    },
+    "preEtatDate": {
+      "action": "Pré-état daté",
+      "documentTitle": "Pré-état daté",
+      "editedAt": "Édité le",
+      "notAvailable": "Non disponible",
+      "charges": "Charges courantes (budget prévisionnel et hors budget)",
+      "chargesCourantesN1": "Charges budget prévisionnel — exercice N-1",
+      "chargesCourantesN2": "Charges budget prévisionnel — exercice N-2",
+      "chargesHorsBudgetN1": "Charges hors budget — exercice N-1",
+      "chargesHorsBudgetN2": "Charges hors budget — exercice N-2",
+      "sommesDues": "Sommes dues au syndicat",
+      "sommesDuesParCedant": "Sommes dues par le cédant",
+      "impayesGlobaux": "État global des impayés du syndicat",
+      "detteFournisseurs": "Dette fournisseurs",
+      "fondsTravaux": "Fonds travaux",
+      "fondsTravauxQuotePart": "Quote-part du lot",
+      "fondsTravauxDerniereCotisation": "Dernière cotisation",
+      "procedures": "Procédures judiciaires en cours"
     }
   },
   "settings": {

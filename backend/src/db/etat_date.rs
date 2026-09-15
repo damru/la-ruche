@@ -297,3 +297,54 @@ pub async fn load_inputs(
         procedures,
     })
 }
+
+/// Extra inputs for the pré-état daté (EP-002-S07) not carried by
+/// `EtatDateInputs`: the syndicat's global unpaid balance (all lots, not just
+/// the cédant's) and the works fund's last contribution call amount.
+pub struct PreEtatDateExtras {
+    pub impayes_globaux_syndicat: Decimal,
+    pub fonds_travaux_derniere_cotisation: Decimal,
+}
+
+pub async fn load_pre_etat_date_extras(
+    pool: &PgPool,
+    building_id: Uuid,
+) -> AppResult<PreEtatDateExtras> {
+    // État global des impayés du syndicat : toutes les charges émises et non
+    // soldées, tous lots confondus (hors fonds travaux).
+    let impayes_globaux_syndicat: Decimal = sqlx::query_scalar(
+        r#"SELECT COALESCE(SUM(lcu.amount), 0)::numeric
+           FROM levy_call_unit lcu
+           JOIN levy_call lc ON lc.id = lcu.levy_call_id
+           JOIN budget b     ON b.id = lc.budget_id AND b.building_id = $1
+           WHERE lc.status = 'issued'
+             AND lcu.status <> 'paid'
+             AND lcu.budget_line_id IS NOT NULL
+             AND lcu.amount > 0"#,
+    )
+    .bind(building_id)
+    .fetch_one(pool)
+    .await?;
+
+    // Dernière cotisation au fonds travaux : montant du dernier appel émis
+    // comportant une part fonds travaux.
+    let fonds_travaux_derniere_cotisation: Decimal = sqlx::query_scalar(
+        r#"SELECT COALESCE(
+               (SELECT lc.works_fund_amount
+                FROM levy_call lc
+                JOIN budget b ON b.id = lc.budget_id AND b.building_id = $1
+                WHERE lc.works_fund_amount > 0
+                ORDER BY lc.issued_at DESC
+                LIMIT 1),
+               0
+           )::numeric"#,
+    )
+    .bind(building_id)
+    .fetch_one(pool)
+    .await?;
+
+    Ok(PreEtatDateExtras {
+        impayes_globaux_syndicat,
+        fonds_travaux_derniere_cotisation,
+    })
+}
