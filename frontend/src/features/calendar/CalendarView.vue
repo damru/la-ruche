@@ -16,6 +16,7 @@ import CTabs from '@/components/atoms/CTabs.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CIconArrowLeft from '@/components/atoms/CIconArrowLeft.svg'
 import CIconArrowRight from '@/components/atoms/CIconArrowRight.svg'
+import CIconDownload from '@/components/atoms/CIconDownload.svg'
 import CalendarGrid from './CalendarGrid.vue'
 import CalendarListMode from './CalendarListMode.vue'
 import type { CalendarEvent } from '@/types/domain'
@@ -83,6 +84,19 @@ function onShowDay(date: string) {
   anchor.value = new Date(`${date}T00:00:00`)
   reload()
 }
+
+async function exportIcs() {
+  const { from, to } = periodRange(anchor.value, mode.value)
+  const response = await calendarApi.exportIcs(toIsoDate(from), toIsoDate(to))
+  const url = URL.createObjectURL(response.data)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = 'laruche-calendar.ics'
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+}
 </script>
 
 <template>
@@ -119,27 +133,37 @@ function onShowDay(date: string) {
           @update:model-value="onModeChange"
         />
 
-        <div
-          v-if="mode !== 'list'"
-          class="flex items-center gap-3"
-        >
+        <div class="flex items-center justify-between gap-3">
+          <div
+            v-if="mode !== 'list'"
+            class="flex items-center gap-3"
+          >
+            <CBtn
+              variant="ghost"
+              size="sm"
+              :icon="CIconArrowLeft"
+              :title="t('calendar.previousPeriod')"
+              :aria-label="t('calendar.previousPeriod')"
+              @click="shiftPeriod(-1)"
+            />
+            <span class="title-sm">{{ periodLabel }}</span>
+            <CBtn
+              variant="ghost"
+              size="sm"
+              :icon="CIconArrowRight"
+              :title="t('calendar.nextPeriod')"
+              :aria-label="t('calendar.nextPeriod')"
+              @click="shiftPeriod(1)"
+            />
+          </div>
           <CBtn
             variant="ghost"
             size="sm"
-            :icon="CIconArrowLeft"
-            :title="t('calendar.previousPeriod')"
-            :aria-label="t('calendar.previousPeriod')"
-            @click="shiftPeriod(-1)"
-          />
-          <span class="title-sm">{{ periodLabel }}</span>
-          <CBtn
-            variant="ghost"
-            size="sm"
-            :icon="CIconArrowRight"
-            :title="t('calendar.nextPeriod')"
-            :aria-label="t('calendar.nextPeriod')"
-            @click="shiftPeriod(1)"
-          />
+            :icon="CIconDownload"
+            @click="exportIcs"
+          >
+            {{ t('calendar.export') }}
+          </CBtn>
         </div>
 
         <CalendarGrid
