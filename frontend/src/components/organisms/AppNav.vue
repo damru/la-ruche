@@ -32,6 +32,7 @@ const allGroups: NavGroup[] = [
   {
     items: [
       { name: 'dashboard', route: '/dashboard', label: t('nav.dashboard'), mobileLabel: t('nav.mobile.dashboard'), roles: [], mobileOrder: 1 },
+      { name: 'calendar', route: '/calendar', label: t('nav.calendar'), mobileLabel: t('nav.mobile.calendar'), roles: [], mobileOrder: 9 },
     ],
   },
   {

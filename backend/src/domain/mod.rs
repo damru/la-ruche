@@ -1,3 +1,4 @@
+pub mod calendar;
 pub mod charges;
 pub mod convocation_checklist;
 pub mod edd_check;

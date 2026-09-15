@@ -13,12 +13,13 @@ import CTopbar from '@/components/organisms/CTopbar.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CIconPlus from '@/components/atoms/CIconPlus.svg'
+import DashboardAgendaCard from './DashboardAgendaCard.vue'
 import {
-  buildingApi, budgetApi, consultationsApi, contractsApi,
+  buildingApi, budgetApi, calendarApi, consultationsApi, contractsApi,
   meetingsApi, reportsApi, tasksApi,
 } from '@/api'
 import type {
-  Budget, BudgetLine, BuildingStats, Consultation, ContractReminder,
+  Budget, BudgetLine, BuildingStats, CalendarEvent, Consultation, ContractReminder,
   LevyCall, Meeting, Report, Task, TaskPriority, VendorContract,
 } from '@/types/domain'
 
@@ -37,14 +38,25 @@ const reports = ref<Report[]>([])
 const contracts = ref<VendorContract[]>([])
 const rawReminders = ref<ContractReminder[]>([])
 const rawConsultations = ref<Consultation[]>([])
+const agendaEvents = ref<CalendarEvent[]>([])
 
 // ── Load data ─────────────────────────────────────────────────────
 function valueOr<T>(result: PromiseSettledResult<{ data: T }>, fallback: T): T {
   return result.status === 'fulfilled' ? result.value.data : fallback
 }
 
+function todayIso(): string {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+function isoInDays(days: number): string {
+  const d = new Date()
+  d.setDate(d.getDate() + days)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 async function loadData() {
-  const [statsRes, budgetsRes, meetingsRes, tasksRes, reportsRes, contractsRes, remindersRes, consultationsRes] =
+  const [statsRes, budgetsRes, meetingsRes, tasksRes, reportsRes, contractsRes, remindersRes, consultationsRes, agendaRes] =
     await Promise.allSettled([
       buildingApi.stats(),
       budgetApi.list(),
@@ -54,6 +66,7 @@ async function loadData() {
       contractsApi.list(),
       contractsApi.listAllReminders(),
       consultationsApi.list(),
+      calendarApi.events(todayIso(), isoInDays(30)),
     ])
 
   // Building stats back the page shell — a full-page error only when they fail.
@@ -66,6 +79,7 @@ async function loadData() {
   contracts.value = valueOr(contractsRes, [])
   rawReminders.value = valueOr(remindersRes, [])
   rawConsultations.value = valueOr(consultationsRes, { consultations: [] }).consultations
+  agendaEvents.value = valueOr(agendaRes, [])
 
   const budgets = valueOr(budgetsRes, [])
   const budget = budgets.find(b => b.status === 'approved') ?? budgets[0] ?? null
@@ -470,8 +484,10 @@ const todayStr = computed(() =>
             </div>
           </CCard>
 
-          <!-- Right col: residents + consultation -->
+          <!-- Right col: agenda + residents + consultation -->
           <div class="right-col">
+            <DashboardAgendaCard :events="agendaEvents" />
+
             <CCard>
               <CSectionHeader>
                 <CHeading type="card">

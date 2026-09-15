@@ -95,6 +95,7 @@
       "contracts": "Marchés et échéances",
       "documents": "Bibliothèque partagée",
       "maintenance": "Historique d'entretien",
+      "calendar": "Vue d'ensemble",
       "reports": "Incidents et anomalies",
       "tasks": "Suivi des interventions",
       "taskDetail": "Historique de la tâche",
@@ -129,6 +130,7 @@
     "contracts": "Contrats",
     "claims": "Sinistres",
     "maintenance": "Carnet d'entretien",
+    "calendar": "Calendrier",
     "consultations": "Consultations",
     "reports": "Signalements",
     "residents": "Copropriétaires",
@@ -153,6 +155,7 @@
       "contracts": "Contrats",
       "claims": "Sinistres",
       "maintenance": "Carnet",
+      "calendar": "Agenda",
       "registry": "Registre",
       "residents": "Copro.",
       "residence-building": "Infos",
@@ -270,6 +273,13 @@
     "nextDeadlines": "Prochaines échéances",
     "contracts": "Contrats",
     "noReminders": "Aucun rappel dans les 60 prochains jours",
+    "agenda": {
+      "title": "Agenda — 30 prochains jours",
+      "seeCalendar": "Voir le calendrier",
+      "emptyTitle": "Aucun événement",
+      "emptyDescription": "Aucun événement dans les 30 prochains jours.",
+      "moreEvents": "+{count} autres"
+    },
     "reportsTitle": "Signalements",
     "openCount": "{count} ouvert | {count} ouverts",
     "seeReports": "Voir",
@@ -1125,6 +1135,38 @@
       "open": "Ouverts",
       "inProgress": "En cours",
       "closed": "Clos"
+    }
+  },
+  "calendar": {
+    "title": "Calendrier",
+    "modes": {
+      "month": "Mois",
+      "week": "Semaine",
+      "list": "Liste"
+    },
+    "weekdays": {
+      "mon": "Lun",
+      "tue": "Mar",
+      "wed": "Mer",
+      "thu": "Jeu",
+      "fri": "Ven",
+      "sat": "Sam",
+      "sun": "Dim"
+    },
+    "sources": {
+      "meeting": "Assemblée",
+      "contract": "Contrat",
+      "task": "Tâche",
+      "claim": "Sinistre",
+      "maintenance": "Entretien",
+      "manual": "Événement"
+    },
+    "previousPeriod": "Période précédente",
+    "nextPeriod": "Période suivante",
+    "moreEvents": "+{count}",
+    "empty": {
+      "title": "Aucun événement",
+      "description": "Aucun événement à afficher sur cette période."
     }
   },
   "maintenance": {

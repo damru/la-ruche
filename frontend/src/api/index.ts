@@ -13,6 +13,7 @@ import type {
   LoginResponse, BuildingStats, RegistryResponse, UnitChargesResponse,
   Contractor, JudicialProceeding, GovernanceMandate, EtatDateRequest,
   EddReference, EddReferenceShareInput, EddCheckResponse,
+  CalendarEvent,
 } from '@/types/domain'
 
 // Public axios instance — no JWT, no interceptors (vendor endpoints)
@@ -524,4 +525,10 @@ export const adminApi = {
     api.post('/admin/reset-demo'),
   resetData: () =>
     api.post('/admin/reset-data'),
+}
+
+// ── Calendar (EP-014-S01) ───────────────────────────────────────────
+export const calendarApi = {
+  events: (from: string, to: string) =>
+    api.get<CalendarEvent[]>('/calendar/events', { params: { from, to } }),
 }
