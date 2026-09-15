@@ -2,11 +2,14 @@
 // CalendarView — EP-014-S01. Monthly / weekly / list toggle with period nav.
 // Visibility rules are enforced server-side (`/calendar/events` filters by
 // caller role); this view only renders whatever events come back.
+// EP-014-S03: manual event create/edit/delete (Manager/BoardMember only).
 
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRoute, useRouter } from 'vue-router'
 import { calendarApi } from '@/api'
 import { usePageLoader } from '@/composables/usePageLoader'
+import { useAuthStore } from '@/stores/auth'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
@@ -18,15 +21,27 @@ import CIconArrowLeft from '@/components/atoms/CIconArrowLeft.svg'
 import CIconArrowRight from '@/components/atoms/CIconArrowRight.svg'
 import CalendarGrid from './CalendarGrid.vue'
 import CalendarListMode from './CalendarListMode.vue'
-import type { CalendarEvent } from '@/types/domain'
+import EventFormModal from './EventFormModal.vue'
+import EventDetailModal from './EventDetailModal.vue'
+import type { CalendarEvent, ManualCalendarEvent } from '@/types/domain'
 
 type Mode = 'month' | 'week' | 'list'
 
 const { t } = useI18n()
+const route = useRoute()
+const router = useRouter()
+const auth = useAuthStore()
 
 const mode = ref<Mode>('month')
 const anchor = ref(new Date())
 const events = ref<CalendarEvent[]>([])
+
+const canManage = auth.hasAnyRole(['manager', 'board_member'])
+
+const detailOpen = ref(false)
+const detailEventId = ref<string | null>(null)
+const formOpen = ref(false)
+const editingEvent = ref<ManualCalendarEvent | null>(null)
 
 function periodRange(date: Date, currentMode: Mode): { from: Date; to: Date } {
   if (currentMode === 'week') {
@@ -83,6 +98,40 @@ function onShowDay(date: string) {
   anchor.value = new Date(`${date}T00:00:00`)
   reload()
 }
+
+// Manual events navigate to `/calendar?event={id}` (db/calendar.rs link).
+watch(() => route.query.event, (eventId) => {
+  if (typeof eventId === 'string') {
+    detailEventId.value = eventId
+    detailOpen.value = true
+  }
+}, { immediate: true })
+
+function closeDetail(open: boolean) {
+  detailOpen.value = open
+  if (!open && route.query.event) {
+    router.replace({ query: { ...route.query, event: undefined } })
+  }
+}
+
+function openCreate() {
+  editingEvent.value = null
+  formOpen.value = true
+}
+
+function openEdit(event: ManualCalendarEvent) {
+  editingEvent.value = event
+  detailOpen.value = false
+  formOpen.value = true
+}
+
+function onSaved() {
+  reload()
+}
+
+function onDeleted() {
+  reload()
+}
 </script>
 
 <template>
@@ -103,13 +152,21 @@ function onShowDay(date: string) {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
-        <header class="view-header">
-          <CEyebrow>
-            {{ t('page.eyebrows.calendar') }}
-          </CEyebrow>
-          <CHeading type="header">
-            {{ t('calendar.title') }}
-          </CHeading>
+        <header class="view-header flex items-start justify-between gap-3">
+          <div>
+            <CEyebrow>
+              {{ t('page.eyebrows.calendar') }}
+            </CEyebrow>
+            <CHeading type="header">
+              {{ t('calendar.title') }}
+            </CHeading>
+          </div>
+          <CBtn
+            v-if="canManage"
+            variant="primary"
+            :title="t('calendar.newEvent')"
+            @click="openCreate"
+          />
         </header>
 
         <CTabs
@@ -155,5 +212,19 @@ function onShowDay(date: string) {
         />
       </template>
     </div>
+
+    <EventDetailModal
+      :open="detailOpen"
+      :event-id="detailEventId"
+      @update:open="closeDetail"
+      @edit="openEdit"
+      @deleted="onDeleted"
+    />
+    <EventFormModal
+      :open="formOpen"
+      :event="editingEvent"
+      @update:open="formOpen = $event"
+      @saved="onSaved"
+    />
   </div>
 </template>

@@ -4,6 +4,7 @@ pub mod auth;
 pub mod budget;
 pub mod building;
 pub mod calendar;
+pub mod calendar_events;
 pub mod claims;
 pub mod consultations;
 pub mod contractor;
@@ -378,7 +379,26 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
                 .delete(governance::delete),
         )
         // ── Calendar ─────────────────────────────────────────────
-        .route("/calendar/events", get(calendar::events));
+        .route("/calendar/events", get(calendar::events))
+        .route("/calendar/export.ics", get(calendar::export_ics))
+        .route(
+            "/calendar/manual-events",
+            get(calendar_events::list).post(calendar_events::create),
+        )
+        .route(
+            "/calendar/manual-events/{id}",
+            get(calendar_events::get)
+                .put(calendar_events::update)
+                .delete(calendar_events::remove),
+        )
+        .route(
+            "/calendar/manual-events/{id}/documents",
+            get(calendar_events::list_documents).post(calendar_events::attach_document),
+        )
+        .route(
+            "/calendar/manual-events/{id}/documents/{document_id}",
+            delete(calendar_events::detach_document),
+        );
 
     // ── Public routes (vendor token, no JWT) ─────────────────────
     // Vendor routes live under /api/v1 (without auth middleware) so that the

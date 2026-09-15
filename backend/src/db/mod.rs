@@ -5,6 +5,7 @@ pub mod audit;
 pub mod budget;
 pub mod building;
 pub mod calendar;
+pub mod calendar_event;
 pub mod claim;
 pub mod consultation;
 pub mod contract;

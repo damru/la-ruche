@@ -302,11 +302,48 @@ async fn maintenance_log_events(
         .map_err(Into::into)
 }
 
+async fn manual_events(
+    pool: &PgPool,
+    building_id: Uuid,
+    from: NaiveDate,
+    to: NaiveDate,
+) -> AppResult<Vec<CalendarEvent>> {
+    let rows = sqlx::query(
+        r#"
+        SELECT id, title, event_date, event_time
+        FROM calendar_event
+        WHERE building_id = $1
+          AND event_date BETWEEN $2 AND $3
+        "#,
+    )
+    .bind(building_id)
+    .bind(from)
+    .bind(to)
+    .fetch_all(pool)
+    .await?;
+
+    rows.into_iter()
+        .map(|r| {
+            let id: Uuid = r.try_get("id")?;
+            let title: String = r.try_get("title")?;
+            let event_date: NaiveDate = r.try_get("event_date")?;
+            let event_time: Option<chrono::NaiveTime> = r.try_get("event_time")?;
+            Ok(CalendarEvent {
+                id: format!("manual:{id}"),
+                source: CalendarSource::Manual,
+                title,
+                date: event_date,
+                time: event_time,
+                link: format!("/calendar?event={id}"),
+                is_deadline: false,
+            })
+        })
+        .collect::<Result<Vec<_>, sqlx::Error>>()
+        .map_err(Into::into)
+}
+
 /// Aggregates calendar events across every visible source for the given
 /// building and date range, sorted by `(date, time)`.
-///
-/// The `Manual` source (table `calendar_event`, EP-014-S03) doesn't exist
-/// yet — that branch is a no-op until the table is created.
 pub async fn events(
     pool: &PgPool,
     building_id: Uuid,
@@ -338,8 +375,10 @@ pub async fn events(
             CalendarSource::Maintenance => {
                 events.extend(maintenance_log_events(pool, building_id, from, to).await?);
             }
-            // Manual events (calendar_event table) land in EP-014-S03.
-            CalendarSource::Manual => {}
+            // Manual events (calendar_event table, EP-014-S03).
+            CalendarSource::Manual => {
+                events.extend(manual_events(pool, building_id, from, to).await?);
+            }
         }
     }
 

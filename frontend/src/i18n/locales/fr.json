@@ -1167,6 +1167,29 @@
     "empty": {
       "title": "Aucun événement",
       "description": "Aucun événement à afficher sur cette période."
+    },
+    "newEvent": "Nouvel événement",
+    "event": {
+      "create": "Nouvel événement",
+      "edit": "Modifier l'événement",
+      "detailTitle": "Détail de l'événement",
+      "categoryNone": "Aucune catégorie",
+      "categories": {
+        "reunion": "Réunion",
+        "visite": "Visite",
+        "permanence": "Permanence",
+        "autre": "Autre"
+      },
+      "fields": {
+        "title": "Titre",
+        "description": "Description",
+        "date": "Date",
+        "time": "Heure",
+        "category": "Catégorie",
+        "documents": "Pièces jointes"
+      },
+      "documentHint": "Glissez-déposez ou cliquez pour joindre un document.",
+      "documentUploadError": "Échec de l'envoi de certains documents"
     }
   },
   "maintenance": {
