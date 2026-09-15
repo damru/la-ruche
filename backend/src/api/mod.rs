@@ -378,7 +378,8 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
                 .delete(governance::delete),
         )
         // ── Calendar ─────────────────────────────────────────────
-        .route("/calendar/events", get(calendar::events));
+        .route("/calendar/events", get(calendar::events))
+        .route("/calendar/export.ics", get(calendar::export_ics));
 
     // ── Public routes (vendor token, no JWT) ─────────────────────
     // Vendor routes live under /api/v1 (without auth middleware) so that the
