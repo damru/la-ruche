@@ -159,6 +159,15 @@ function print() {
           {{ data.procedures_en_cours === 0 ? t('registers.etatDate.none') : data.procedures_en_cours }}
         </p>
       </section>
+
+      <section>
+        <h3 class="data-md font-semibold mb-2">
+          {{ t('registers.etatDate.emprunts') }}
+        </h3>
+        <p class="data-sm opacity-70">
+          {{ data.emprunts_collectifs }}
+        </p>
+      </section>
     </div>
     <template #footer>
       <CBtn

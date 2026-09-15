@@ -162,7 +162,7 @@ Historique de propriété tracé avec dates de cession, invitation par lien toke
 * `EP-002-S04` ✅ — Consulter la fiche propriétaire avec lots détenus, rôle et état d’activation
 * `EP-002-S05` ✅ — Lancer l’anonymisation RGPD en préservant les obligations de conservation comptable (LEGAL.md §8)
 * `EP-002-S06` ⚠️ — Générer l'état daté d'un lot à la demande (charges courantes, arriérés, fonds travaux, travaux votés non réalisés, procédures en cours) dans un délai de 15 jours (LEGAL.md §7.1). Limitation : « travaux votés non réalisés » non alimentée (pas de lien schéma résolution↔tâche) — cf. docs/specs/EP-002-S06-spec.md.
-* [EP-002-S07](docs/specs/EP-002-S07-spec.md) — Générer le pré-état daté pour signature du compromis de vente (synthèse financière de la copropriété) (LEGAL.md §7.2)
+* [EP-002-S07](docs/specs/EP-002-S07-spec.md) ⚠️ — Générer le pré-état daté pour signature du compromis de vente (synthèse financière de la copropriété) (LEGAL.md §7.2). Limitations : dette fournisseurs et travaux votés non réalisés non alimentés (mêmes limitations que S06).
 * `EP-002-S08` ✅ — Garantir en mutation que les tantièmes restent attachés au lot (pas au propriétaire) et exposer la quote-part vendeur/acquéreur à date (LEGAL.md §2.4)
 * `EP-002-S09` ⏸️ — *(reporté post-MVP → EP-021-S01)* Exporter les données personnelles d'un copropriétaire (droit d'accès RGPD) avec périmètre horodaté et traçabilité de la demande (LEGAL.md §8)
 * `EP-002-S10` ✅ — Enregistrer et suivre les procédures judiciaires en cours impliquant le syndicat (demandeur ou défendeur), avec date d'ouverture, type, statut ; requis pour l'état daté (LEGAL.md §7.1, §10)

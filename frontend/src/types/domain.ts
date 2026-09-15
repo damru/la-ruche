@@ -770,6 +770,7 @@ export interface PreEtatDate {
   fonds_travaux_quote_part: number
   fonds_travaux_derniere_cotisation: number
   procedures_en_cours: number
+  emprunts_collectifs: string
 }
 
 // ── Calendar manual events (EP-014-S03) ─────────────────────────────

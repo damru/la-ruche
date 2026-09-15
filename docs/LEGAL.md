@@ -544,7 +544,7 @@ Obligatoire lors de la mise en copropriété d'un immeuble de > 10 ans, et facul
 ### 7.1 État daté
 
 **Référence :** Art. 5 décret 1967 (LEGIARTI000053191253 v7.0, en vigueur 25/12/2025), complété ALUR 2014  
-**Couverture :** ⚠️ partielle — EP-002-S06 ⚠️ (travaux votés non réalisés non alimentée, cf. limitation ci-dessous) ; EP-002-S07 (pré-état daté) reste à implémenter.
+**Couverture :** ⚠️ partielle — EP-002-S06 ⚠️ (travaux votés non réalisés non alimentée, cf. limitation ci-dessous) ; EP-002-S07 (pré-état daté) ⚠️ (mêmes limitations).
 
 Le syndic doit produire l'état daté dans les **15 jours** suivant la demande du notaire. Depuis le 25/12/2025 (v7.0), l'état daté est structuré en **trois parties obligatoires** :
 
@@ -566,7 +566,7 @@ Le syndic doit produire l'état daté dans les **15 jours** suivant la demande d
 ### 7.2 Pré-état daté
 
 **Référence :** Art. L721-2 Code de la construction (loi ALUR)  
-**Couverture :** ❌ non couverte — EP-002-S07
+**Couverture :** ⚠️ partielle — EP-002-S07 (dette fournisseurs et travaux votés non réalisés non alimentés, cf. limitation §7.1)
 
 Document synthétique fourni au promettant-acheteur avant la signature du compromis. Contient les données financières clés de la copropriété.
 
@@ -764,7 +764,7 @@ L'`audit_log` est en **append-only** : aucune ligne ne peut être modifiée ou s
 | 6.2 | DPE collectif | Loi Climat 2021 | 🔲 | EP-005 |
 | 6.3 | Diagnostic technique global (DTG) | ALUR art. L731-1 | 🔲 | EP-005 |
 | 7.1 | État daté (15 jours) — 3 parties obligatoires dont emprunts collectifs (v7.0 déc. 2025) | Décret 1967 art. 5 (LEGIARTI000053191253 v7.0, 25/12/2025) | ⚠️ | EP-002-S06 (travaux votés non réalisés non alimentée) |
-| 7.2 | Pré-état daté | ALUR art. L721-2 | ❌ | EP-002-S07 |
+| 7.2 | Pré-état daté | ALUR art. L721-2 | ⚠️ | EP-002-S07 (dette fournisseurs et travaux votés non alimentés) |
 | 8 | RGPD + anonymisation | RGPD 2016/679 | ⚠️ | EP-002-S05, EP-002-S09 |
 | 9 | Sinistres (délais déclaration) | Code des assurances | ✅ | EP-008 |
 | 10 | Représentation en justice + procédures en cours | Art. 18-I loi 1965 | ⚠️ | EP-002-S10 ✅, EP-002-S06 ⚠️ |

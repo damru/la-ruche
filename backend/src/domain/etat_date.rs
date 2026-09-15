@@ -97,6 +97,8 @@ pub struct PreEtatDate {
     pub fonds_travaux_quote_part: Decimal,
     pub fonds_travaux_derniere_cotisation: Decimal,
     pub procedures_en_cours: usize,
+    /// Toujours « néant — emprunts collectifs non gérés » (même limitation actée que S06).
+    pub emprunts_collectifs: String,
 }
 
 /// Assembles the pré-état daté L721-2 synthesis. `impayes_globaux_syndicat`
@@ -123,6 +125,7 @@ pub fn assemble_pre_etat_date(
         fonds_travaux_quote_part: inputs.fonds_travaux_quote_part,
         fonds_travaux_derniere_cotisation,
         procedures_en_cours: inputs.procedures.len(),
+        emprunts_collectifs: EMPRUNTS_COLLECTIFS_NEANT.to_string(),
     }
 }
 
@@ -323,6 +326,7 @@ mod tests {
             Decimal::new(15000, 2)
         );
         assert_eq!(result.procedures_en_cours, 1);
+        assert_eq!(result.emprunts_collectifs, EMPRUNTS_COLLECTIFS_NEANT);
     }
 
     #[test]
