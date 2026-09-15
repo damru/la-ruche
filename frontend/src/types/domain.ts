@@ -755,3 +755,20 @@ export interface EtatDateRequest {
   created_by: string
   created_at: string
 }
+
+// ── Calendar manual events (EP-014-S03) ─────────────────────────────
+
+export type CalendarEventCategory = 'reunion' | 'visite' | 'permanence' | 'autre'
+
+export interface ManualCalendarEvent {
+  id: string
+  building_id: string
+  title: string
+  description?: string | null
+  event_date: string             // YYYY-MM-DD
+  event_time?: string | null     // HH:MM:SS
+  category?: CalendarEventCategory | null
+  created_by: string
+  created_at: string
+  updated_at: string
+}
