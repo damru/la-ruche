@@ -51,13 +51,6 @@ const detailEventId = ref<string | null>(null)
 const formOpen = ref(false)
 const editingEvent = ref<ManualCalendarEvent | null>(null)
 
-const canManage = auth.hasAnyRole(['manager', 'board_member'])
-
-const detailOpen = ref(false)
-const detailEventId = ref<string | null>(null)
-const formOpen = ref(false)
-const editingEvent = ref<ManualCalendarEvent | null>(null)
-
 function periodRange(date: Date, currentMode: Mode): { from: Date; to: Date } {
   if (currentMode === 'week') {
     const day = (date.getDay() + 6) % 7 // Monday = 0
