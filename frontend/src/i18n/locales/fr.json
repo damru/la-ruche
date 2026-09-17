@@ -1139,6 +1139,7 @@
   },
   "calendar": {
     "title": "Calendrier",
+    "count": "{count} événement | {count} événements",
     "modes": {
       "month": "Mois",
       "week": "Semaine",
