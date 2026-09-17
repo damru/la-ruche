@@ -557,23 +557,3 @@ export const calendarEventsApi = {
   detachDocument: (id: string, document_id: string) =>
     api.delete(`/calendar/manual-events/${id}/documents/${document_id}`),
 }
-
-// ── Calendar manual events (EP-014-S03) ─────────────────────────────
-export const calendarEventsApi = {
-  list: () =>
-    api.get<ManualCalendarEvent[]>('/calendar/manual-events'),
-  get: (id: string) =>
-    api.get<ManualCalendarEvent>(`/calendar/manual-events/${id}`),
-  create: (data: { title: string; description?: string; event_date: string; event_time?: string; category?: CalendarEventCategory }) =>
-    api.post<ManualCalendarEvent>('/calendar/manual-events', data),
-  update: (id: string, data: { title: string; description?: string; event_date: string; event_time?: string; category?: CalendarEventCategory }) =>
-    api.put<ManualCalendarEvent>(`/calendar/manual-events/${id}`, data),
-  remove: (id: string) =>
-    api.delete(`/calendar/manual-events/${id}`),
-  documents: (id: string) =>
-    api.get<Document[]>(`/calendar/manual-events/${id}/documents`),
-  attachDocument: (id: string, document_id: string) =>
-    api.post(`/calendar/manual-events/${id}/documents`, { document_id }),
-  detachDocument: (id: string, document_id: string) =>
-    api.delete(`/calendar/manual-events/${id}/documents/${document_id}`),
-}
