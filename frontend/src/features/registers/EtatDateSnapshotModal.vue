@@ -36,7 +36,7 @@ function print() {
         </p>
 
         <section>
-          <h3 class="data-md font-semibold mb-2">
+          <h3 class="title-md font-semibold mb-2">
             {{ t('registers.etatDate.partie1') }}
           </h3>
           <ul>
@@ -46,13 +46,13 @@ function print() {
               class="flex justify-between"
             >
               <span>{{ line.label }}</span>
-              <span>{{ formatCurrency(line.amount) }}</span>
+              <span class="data-md">{{ formatCurrency(line.amount) }}</span>
             </li>
           </ul>
         </section>
 
         <section>
-          <h3 class="data-md font-semibold mb-2">
+          <h3 class="title-md font-semibold mb-2">
             {{ t('registers.etatDate.partie2') }}
           </h3>
           <ul>
@@ -62,13 +62,13 @@ function print() {
               class="flex justify-between"
             >
               <span>{{ line.label }}</span>
-              <span>{{ formatCurrency(line.amount) }}</span>
+              <span class="data-md">{{ formatCurrency(line.amount) }}</span>
             </li>
           </ul>
         </section>
 
         <section>
-          <h3 class="data-md font-semibold mb-2">
+          <h3 class="title-md font-semibold mb-2">
             {{ t('registers.etatDate.partie3') }}
           </h3>
           <ul>
@@ -78,13 +78,13 @@ function print() {
               class="flex justify-between"
             >
               <span>{{ line.label }}</span>
-              <span>{{ formatCurrency(line.amount) }}</span>
+              <span class="data-md">{{ formatCurrency(line.amount) }}</span>
             </li>
           </ul>
         </section>
 
         <section>
-          <h3 class="data-md font-semibold mb-2">
+          <h3 class="title-md font-semibold mb-2">
             {{ t('registers.etatDate.annexeQuotePart') }}
           </h3>
           <p
@@ -100,13 +100,13 @@ function print() {
               class="flex justify-between"
             >
               <span>{{ ex.fiscal_year }}</span>
-              <span>{{ formatCurrency(ex.total_amount) }}</span>
+              <span class="data-md">{{ formatCurrency(ex.total_amount) }}</span>
             </li>
           </ul>
         </section>
 
         <section>
-          <h3 class="data-md font-semibold mb-2">
+          <h3 class="title-md font-semibold mb-2">
             {{ t('registers.etatDate.procedures') }}
           </h3>
           <p
@@ -126,7 +126,7 @@ function print() {
         </section>
 
         <section>
-          <h3 class="data-md font-semibold mb-2">
+          <h3 class="title-md font-semibold mb-2">
             {{ t('registers.etatDate.emprunts') }}
           </h3>
           <p class="data-sm opacity-70">
