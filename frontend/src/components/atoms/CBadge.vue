@@ -15,11 +15,13 @@ const props = withDefaults(defineProps<{
   dot?: boolean
   ring?: boolean
   pulse?: boolean
+  truncate?: boolean
 }>(), {
   variant: 'default',
   dot: false,
   ring: false,
   pulse: undefined,
+  truncate: false,
 })
 
 const effectivePulse = computed(() =>
@@ -32,6 +34,7 @@ const effectivePulse = computed(() =>
     :class="['c-badge', `c-badge--${variant}`, {
       'c-badge--pulse': effectivePulse,
       'c-badge--ring': ring,
+      'c-badge--truncate': truncate,
       'tone--manager': variant === 'manager',
       'tone--board-member': variant === 'board_member',
       'tone--co-owner': variant === 'co_owner',
@@ -66,6 +69,16 @@ const effectivePulse = computed(() =>
   height: fit-content;
   background: var(--tone-bg);
   color: var(--tone-fg);
+}
+
+/* Truncate long labels (e.g. calendar event titles) within the parent width.
+   `display: block` is required: text-overflow only ellipsizes block containers,
+   and inline-flex clips without the "…". */
+.c-badge--truncate {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .c-badge__dot {
