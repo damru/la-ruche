@@ -2,7 +2,7 @@
 // CalendarGrid — shared month/week grid (EP-014-S01, AC-CAL-001-A/B).
 // Renders 6 weeks (monthly) or 1 week (weekly). Each event is a colored
 // badge by source; clicking navigates to `event.link`. Beyond 3 events in a
-// monthly cell, a "+N" link routes to the list mode for that day.
+// monthly cell, a "+N" link routes to the agenda mode for that day.
 
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
@@ -141,7 +141,10 @@ const weekdayLabels = computed(() => [
             class="text-left"
             @click="onEventClick(event)"
           >
-            <CBadge :variant="SOURCE_BADGE_VARIANT[event.source]">
+            <CBadge
+              :variant="SOURCE_BADGE_VARIANT[event.source]"
+              truncate
+            >
               {{ event.title }}
             </CBadge>
           </button>

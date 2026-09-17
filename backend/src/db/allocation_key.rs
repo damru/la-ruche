@@ -176,6 +176,19 @@ pub async fn delete(
     user_id: Uuid,
     justification: Option<&str>,
 ) -> crate::errors::AppResult<bool> {
+    let mut tx = pool.begin().await?;
+
+    // Serialize concurrent delete calls on the same key. Without this lock,
+    // N racers can all read the same "before" row (fetched outside any
+    // lock), all pass the not-yet-deleted check, and all write their own
+    // `allocation_key.deleted` audit entry even though only the first
+    // UPDATE actually flips deleted_at — corrupting the audit trail with
+    // duplicate entries for a single deletion.
+    sqlx::query("SELECT pg_advisory_xact_lock(hashtextextended($1::text, 0))")
+        .bind(id)
+        .execute(&mut *tx)
+        .await?;
+
     // Protect the general key — it is the legal accounting foundation
     let key: Option<AllocationKeyRow> = sqlx::query_as::<_, AllocationKeyRow>(
         "SELECT id, building_id, name, description, key_type::text, created_at \
@@ -183,11 +196,14 @@ pub async fn delete(
     )
     .bind(id)
     .bind(building_id)
-    .fetch_optional(pool)
+    .fetch_optional(&mut *tx)
     .await?;
 
     let key = match key {
-        None => return Ok(false),
+        None => {
+            tx.commit().await?;
+            return Ok(false);
+        }
         Some(key) => key,
     };
 
@@ -196,8 +212,6 @@ pub async fn delete(
             "errors.allocation_keys.general_key_protected",
         ));
     }
-
-    let mut tx = pool.begin().await?;
 
     // Close active shares for this key (ADR-006 versioning invariant)
     sqlx::query(
@@ -218,6 +232,14 @@ pub async fn delete(
     .execute(&mut *tx)
     .await?;
 
+    if result.rows_affected() == 0 {
+        // Another racer already deleted it between our lock acquisition and
+        // now — should be unreachable given the advisory lock above, but
+        // guard against writing a stray audit entry if it ever happens.
+        tx.commit().await?;
+        return Ok(false);
+    }
+
     audit::insert(
         &mut *tx,
         NewAuditEntry {
@@ -237,7 +259,7 @@ pub async fn delete(
     .await?;
 
     tx.commit().await?;
-    Ok(result.rows_affected() > 0)
+    Ok(true)
 }
 
 pub async fn list_shares(
@@ -367,6 +389,20 @@ pub async fn set_share(
     user_id: Uuid,
     justification: Option<&str>,
 ) -> crate::errors::AppResult<()> {
+    let mut tx = pool.begin().await?;
+
+    // Serialize concurrent set_share calls on the same (unit, key) pair.
+    // Without this lock, two concurrent callers can both read the same
+    // "current" active row (or both see none), both close it, and both
+    // insert a new active row — racing into `uak_unique_active`
+    // (unit_allocation_key unique partial index). The advisory lock is
+    // released automatically at transaction end (commit or rollback).
+    sqlx::query("SELECT pg_advisory_xact_lock(hashtextextended($1::text || ':' || $2::text, 0))")
+        .bind(unit_id)
+        .bind(key_id)
+        .execute(&mut *tx)
+        .await?;
+
     // Check current active value to avoid spurious history entries
     let current: Option<i32> = sqlx::query_scalar(
         "SELECT share_value FROM unit_allocation_key \
@@ -374,14 +410,13 @@ pub async fn set_share(
     )
     .bind(unit_id)
     .bind(key_id)
-    .fetch_optional(pool)
+    .fetch_optional(&mut *tx)
     .await?;
 
     if current == Some(share_value) {
+        tx.commit().await?;
         return Ok(());
     }
-
-    let mut tx = pool.begin().await?;
 
     // Close the current record if it exists
     sqlx::query(

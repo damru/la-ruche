@@ -539,6 +539,8 @@ export const adminApi = {
 export const calendarApi = {
   events: (from: string, to: string) =>
     api.get<CalendarEvent[]>('/calendar/events', { params: { from, to } }),
+  exportIcs: (from: string, to: string) =>
+    api.get<Blob>('/calendar/export.ics', { params: { from, to }, responseType: 'blob' }),
 }
 
 // ── Calendar manual events (EP-014-S03) ─────────────────────────────

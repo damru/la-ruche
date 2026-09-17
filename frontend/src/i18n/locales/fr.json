@@ -1139,10 +1139,11 @@
   },
   "calendar": {
     "title": "Calendrier",
+    "count": "{count} événement | {count} événements",
     "modes": {
       "month": "Mois",
       "week": "Semaine",
-      "list": "Liste"
+      "agenda": "Agenda"
     },
     "weekdays": {
       "mon": "Lun",
@@ -1164,6 +1165,7 @@
     "previousPeriod": "Période précédente",
     "nextPeriod": "Période suivante",
     "moreEvents": "+{count}",
+    "export": "Exporter (.ics)",
     "empty": {
       "title": "Aucun événement",
       "description": "Aucun événement à afficher sur cette période."
