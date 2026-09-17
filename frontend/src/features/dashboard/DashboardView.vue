@@ -614,7 +614,7 @@ const todayStr = computed(() =>
 @media (max-width: 900px) { .dashboard-hero { grid-template-columns: 1fr; } }
 
 .hero-alerts { display: flex; flex-direction: column; gap: var(--space-2); align-items: flex-end; }
-@media (max-width: 900px) { .hero-alerts { align-items: stretch; } }
+@media (max-width: 900px) { .hero-alerts { align-items: stretch; } .hero-alert { min-width: 0; } }
 
 .hero-alert {
   display: flex; align-items: center; gap: var(--space-2);
@@ -623,6 +623,7 @@ const todayStr = computed(() =>
   color: var(--tone-fg, var(--color-on-surface));
 }
 .hero-alert svg { width: var(--icon-sm); height: var(--icon-sm); flex-shrink: 0; }
+.hero-alert > div { min-width: 0; }
 .hero-alert div strong { font-weight: var(--fw-semibold); display: block; }
 .hero-alert div span  { font-size: var(--text-2xs); opacity: 0.85; }
 
