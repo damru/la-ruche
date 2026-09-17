@@ -107,6 +107,10 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
         .route("/units/{id}/charges", get(units::charges))
         .route("/units/{id}/etat-date-requests", post(etat_date::create))
         .route("/units/{id}/pre-etat-date", get(etat_date::pre_etat_date))
+        .route(
+            "/units/{id}/pre-etat-date/pdf",
+            get(etat_date::pre_etat_date_pdf),
+        )
         // ── État daté ───────────────────────────────────────────
         .route("/etat-date-requests", get(etat_date::list))
         .route("/etat-date-requests/{id}", get(etat_date::get))
@@ -114,6 +118,7 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
             "/etat-date-requests/{id}/generate",
             post(etat_date::generate),
         )
+        .route("/etat-date-requests/{id}/pdf", get(etat_date::export_pdf))
         // ── Users ───────────────────────────────────────────────
         .route("/users", get(users::list).post(users::create))
         .route("/users/invite", post(users::invite))

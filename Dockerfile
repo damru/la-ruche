@@ -42,6 +42,7 @@ RUN mkdir src && echo "fn main() {}" > src/main.rs && \
 COPY backend/src ./src
 COPY backend/migrations ./migrations
 COPY backend/seeds ./seeds
+COPY backend/assets ./assets
 # ⚠️  Requires `make sqlx-prepare` before docker build (creates backend/.sqlx/)
 COPY backend/.sqlx ./.sqlx
 
