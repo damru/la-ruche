@@ -234,13 +234,14 @@ pub async fn delete(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<boo
     Ok(result.rows_affected() > 0)
 }
 
-/// Holder name of the currently-active syndic mandate (role='syndic', open-ended
-/// or not yet ended), most recent first. Used to render the syndic line in
-/// regulatory document headers (état daté / pré-état daté).
+/// Holder name of the currently-active syndic mandate (role='syndic', already
+/// started, open-ended or not yet ended), most recent first. Used to render the
+/// syndic line in regulatory document headers (état daté / pré-état daté).
 pub async fn current_syndic_name(pool: &PgPool, building_id: Uuid) -> AppResult<Option<String>> {
     sqlx::query_scalar::<_, String>(
         r#"SELECT holder_name FROM governance_mandate
            WHERE building_id = $1 AND role = 'syndic'
+             AND start_date <= CURRENT_DATE
              AND (end_date IS NULL OR end_date >= CURRENT_DATE)
            ORDER BY start_date DESC
            LIMIT 1"#,

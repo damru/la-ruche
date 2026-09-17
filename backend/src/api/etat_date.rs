@@ -207,6 +207,10 @@ async fn build_header(
     let unit = db::unit::get(pool, unit_id, building_id)
         .await?
         .ok_or(AppError::NotFound)?;
+    // Syndic name comes from the active governance mandate; SIRET comes from
+    // `building.manager_siret` (governance_mandate has no SIRET column). This is
+    // a known data-model coupling: a syndic change must also update manager_siret
+    // (documented in ADR-011 amendment).
     let syndic_name = db::governance_mandate::current_syndic_name(pool, building_id).await?;
 
     let mut address = building.address_line1.clone();

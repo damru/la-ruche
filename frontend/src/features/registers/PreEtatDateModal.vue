@@ -206,6 +206,7 @@ async function downloadPdf() {
         @click="emit('update:open', false)"
       />
       <CBtn
+        v-if="data"
         variant="ghost"
         :title="t('registers.etatDate.print')"
         @click="print"
