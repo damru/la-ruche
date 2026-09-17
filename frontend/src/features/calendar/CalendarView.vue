@@ -50,6 +50,7 @@ const detailOpen = ref(false)
 const detailEventId = ref<string | null>(null)
 const formOpen = ref(false)
 const editingEvent = ref<ManualCalendarEvent | null>(null)
+const exporting = ref(false)
 
 function periodRange(date: Date, currentMode: Mode): { from: Date; to: Date } {
   if (currentMode === 'week') {
