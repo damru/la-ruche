@@ -29,6 +29,9 @@ onUnmounted(() => {
       <template #icon-dashboard>
         <CIconHome />
       </template>
+      <template #icon-calendar>
+        <CIconCalendar />
+      </template>
       <template #icon-assemblies>
         <CIconAgora />
       </template>

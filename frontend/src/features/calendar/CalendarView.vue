@@ -10,15 +10,22 @@ import { useRoute, useRouter } from 'vue-router'
 import { calendarApi } from '@/api'
 import { usePageLoader } from '@/composables/usePageLoader'
 import { useAuthStore } from '@/stores/auth'
+import { useBuildingStore } from '@/stores/building'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CEyebrow from '@/components/atoms/CEyebrow.vue'
 import CHeading from '@/components/atoms/CHeading.vue'
+import CMetaLine from '@/components/molecules/CMetaLine.vue'
+import CMetaItem from '@/components/molecules/CMetaItem.vue'
+import CSeparator from '@/components/atoms/CSeparator.vue'
 import CTabs from '@/components/atoms/CTabs.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
+import CIconChevronRight from '@/components/atoms/CIconChevronRight.svg'
+import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import CIconArrowLeft from '@/components/atoms/CIconArrowLeft.svg'
 import CIconArrowRight from '@/components/atoms/CIconArrowRight.svg'
+import CIconDownload from '@/components/atoms/CIconDownload.svg'
 import CalendarGrid from './CalendarGrid.vue'
 import CalendarAgendaMode from './CalendarAgendaMode.vue'
 import EventFormModal from './EventFormModal.vue'
@@ -35,6 +42,14 @@ const auth = useAuthStore()
 const mode = ref<Mode>('month')
 const anchor = ref(new Date())
 const events = ref<CalendarEvent[]>([])
+const buildingName = ref('')
+
+const canManage = auth.hasAnyRole(['manager', 'board_member'])
+
+const detailOpen = ref(false)
+const detailEventId = ref<string | null>(null)
+const formOpen = ref(false)
+const editingEvent = ref<ManualCalendarEvent | null>(null)
 
 const canManage = auth.hasAnyRole(['manager', 'board_member'])
 
@@ -63,7 +78,11 @@ function toIsoDate(date: Date): string {
 
 async function loadData() {
   const { from, to } = periodRange(anchor.value, mode.value)
-  const response = await calendarApi.events(toIsoDate(from), toIsoDate(to))
+  const [building, response] = await Promise.all([
+    useBuildingStore().fetch(),
+    calendarApi.events(toIsoDate(from), toIsoDate(to)),
+  ])
+  buildingName.value = building.name
   events.value = response.data
 }
 
@@ -132,6 +151,19 @@ function onSaved() {
 function onDeleted() {
   reload()
 }
+
+async function exportIcs() {
+  const { from, to } = periodRange(anchor.value, mode.value)
+  const response = await calendarApi.exportIcs(toIsoDate(from), toIsoDate(to))
+  const url = URL.createObjectURL(response.data)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = 'laruche-calendar.ics'
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+}
 </script>
 
 <template>
@@ -139,8 +171,21 @@ function onDeleted() {
     <CTopbar>
       <template #left>
         <div class="topbar-breadcrumb">
-          {{ t('calendar.title') }}
+          {{ buildingName || '...' }}
+          <CIconChevronRight aria-hidden="true" />
+          <span>{{ t('calendar.title') }}</span>
         </div>
+      </template>
+      <template #right>
+        <CBtn
+          v-if="canManage"
+          variant="primary"
+          size="sm"
+          :icon="CIconPlus"
+          :title="t('calendar.newEvent')"
+          shrink="sm"
+          @click="openCreate"
+        />
       </template>
     </CTopbar>
 
@@ -152,21 +197,22 @@ function onDeleted() {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
-        <header class="view-header flex items-start justify-between gap-3">
-          <div>
-            <CEyebrow>
-              {{ t('page.eyebrows.calendar') }}
-            </CEyebrow>
-            <CHeading type="header">
-              {{ t('calendar.title') }}
-            </CHeading>
-          </div>
-          <CBtn
-            v-if="canManage"
-            variant="primary"
-            :title="t('calendar.newEvent')"
-            @click="openCreate"
-          />
+        <header class="view-header">
+          <CEyebrow>
+            {{ t('page.eyebrows.calendar') }}
+          </CEyebrow>
+          <CHeading type="header">
+            {{ t('calendar.title') }}
+          </CHeading>
+          <CMetaLine>
+            <CMetaItem variant="sub">
+              {{ periodLabel }}
+            </CMetaItem>
+            <CSeparator />
+            <CMetaItem variant="sub">
+              {{ t('calendar.count', events.length) }}
+            </CMetaItem>
+          </CMetaLine>
         </header>
 
         <CTabs
@@ -176,27 +222,37 @@ function onDeleted() {
           @update:model-value="onModeChange"
         />
 
-        <div
-          v-if="mode !== 'agenda'"
-          class="flex items-center gap-3"
-        >
+        <div class="flex items-center justify-between gap-3">
+          <div
+            v-if="mode !== 'agenda'"
+            class="flex items-center gap-3"
+          >
+            <CBtn
+              variant="icon"
+              size="sm"
+              :icon="CIconArrowLeft"
+              :title="t('calendar.previousPeriod')"
+              :aria-label="t('calendar.previousPeriod')"
+              @click="shiftPeriod(-1)"
+            />
+            <span class="title-sm">{{ periodLabel }}</span>
+            <CBtn
+              variant="icon"
+              size="sm"
+              :icon="CIconArrowRight"
+              :title="t('calendar.nextPeriod')"
+              :aria-label="t('calendar.nextPeriod')"
+              @click="shiftPeriod(1)"
+            />
+          </div>
           <CBtn
             variant="ghost"
             size="sm"
-            :icon="CIconArrowLeft"
-            :title="t('calendar.previousPeriod')"
-            :aria-label="t('calendar.previousPeriod')"
-            @click="shiftPeriod(-1)"
-          />
-          <span class="title-sm">{{ periodLabel }}</span>
-          <CBtn
-            variant="ghost"
-            size="sm"
-            :icon="CIconArrowRight"
-            :title="t('calendar.nextPeriod')"
-            :aria-label="t('calendar.nextPeriod')"
-            @click="shiftPeriod(1)"
-          />
+            :icon="CIconDownload"
+            @click="exportIcs"
+          >
+            {{ t('calendar.export') }}
+          </CBtn>
         </div>
 
         <CalendarGrid

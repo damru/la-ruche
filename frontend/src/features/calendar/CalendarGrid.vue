@@ -141,7 +141,10 @@ const weekdayLabels = computed(() => [
             class="text-left"
             @click="onEventClick(event)"
           >
-            <CBadge :variant="SOURCE_BADGE_VARIANT[event.source]">
+            <CBadge
+              :variant="SOURCE_BADGE_VARIANT[event.source]"
+              truncate
+            >
               {{ event.title }}
             </CBadge>
           </button>
