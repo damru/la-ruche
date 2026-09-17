@@ -163,6 +163,7 @@ const shrinkClass: Record<Breakpoint, string> = {
     ref="buttonRef"
     :disabled="isDisabled"
     :type="type"
+    :title="variant === 'icon' ? title : undefined"
     :class="[
       variantClass[variant], sizeClass[size],
       { 

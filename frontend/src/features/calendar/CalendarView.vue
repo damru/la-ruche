@@ -221,7 +221,7 @@ async function exportIcs() {
             class="flex items-center gap-3"
           >
             <CBtn
-              variant="ghost"
+              variant="icon"
               size="sm"
               :icon="CIconArrowLeft"
               :title="t('calendar.previousPeriod')"
@@ -230,7 +230,7 @@ async function exportIcs() {
             />
             <span class="title-sm">{{ periodLabel }}</span>
             <CBtn
-              variant="ghost"
+              variant="icon"
               size="sm"
               :icon="CIconArrowRight"
               :title="t('calendar.nextPeriod')"
