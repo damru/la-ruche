@@ -1142,7 +1142,7 @@
     "modes": {
       "month": "Mois",
       "week": "Semaine",
-      "list": "Liste"
+      "agenda": "Agenda"
     },
     "weekdays": {
       "mon": "Lun",
