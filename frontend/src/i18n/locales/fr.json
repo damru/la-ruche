@@ -1169,6 +1169,7 @@
       "description": "Aucun événement à afficher sur cette période."
     },
     "newEvent": "Nouvel événement",
+    "export": "Exporter (.ics)",
     "event": {
       "create": "Nouvel événement",
       "edit": "Modifier l'événement",

@@ -19,6 +19,7 @@ import CTabs from '@/components/atoms/CTabs.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CIconArrowLeft from '@/components/atoms/CIconArrowLeft.svg'
 import CIconArrowRight from '@/components/atoms/CIconArrowRight.svg'
+import CIconDownload from '@/components/atoms/CIconDownload.svg'
 import CalendarGrid from './CalendarGrid.vue'
 import CalendarListMode from './CalendarListMode.vue'
 import EventFormModal from './EventFormModal.vue'
@@ -42,6 +43,7 @@ const detailOpen = ref(false)
 const detailEventId = ref<string | null>(null)
 const formOpen = ref(false)
 const editingEvent = ref<ManualCalendarEvent | null>(null)
+const exporting = ref(false)
 
 function periodRange(date: Date, currentMode: Mode): { from: Date; to: Date } {
   if (currentMode === 'week') {
@@ -132,6 +134,28 @@ function onSaved() {
 function onDeleted() {
   reload()
 }
+
+// EP-014-S04: download the current view's period as an ICS file.
+async function exportCalendar() {
+  if (exporting.value) return
+  exporting.value = true
+  try {
+    const { from, to } = periodRange(anchor.value, mode.value)
+    const response = await calendarApi.exportIcs(toIsoDate(from), toIsoDate(to))
+    const url = URL.createObjectURL(response.data)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = 'laruche-calendar.ics'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  } catch {
+    // Download errors are non-critical in this context.
+  } finally {
+    exporting.value = false
+  }
+}
 </script>
 
 <template>
@@ -161,12 +185,22 @@ function onDeleted() {
               {{ t('calendar.title') }}
             </CHeading>
           </div>
-          <CBtn
-            v-if="canManage"
-            variant="primary"
-            :title="t('calendar.newEvent')"
-            @click="openCreate"
-          />
+          <div class="flex items-center gap-2">
+            <CBtn
+              variant="icon"
+              :icon="CIconDownload"
+              :title="t('calendar.export')"
+              :aria-label="t('calendar.export')"
+              :loading="exporting"
+              @click="exportCalendar"
+            />
+            <CBtn
+              v-if="canManage"
+              variant="primary"
+              :title="t('calendar.newEvent')"
+              @click="openCreate"
+            />
+          </div>
         </header>
 
         <CTabs
