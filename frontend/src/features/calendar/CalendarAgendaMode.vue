@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// CalendarListMode — chronological list grouped by day (EP-014-S01, AC-CAL-001-C).
+// CalendarAgendaMode — chronological agenda grouped by day (EP-014-S01, AC-CAL-001-C).
 
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'

@@ -534,7 +534,6 @@ export const adminApi = {
 export const calendarApi = {
   events: (from: string, to: string) =>
     api.get<CalendarEvent[]>('/calendar/events', { params: { from, to } }),
-  // EP-014-S04: ICS export of the same visibility-filtered feed.
   exportIcs: (from: string, to: string) =>
     api.get<Blob>('/calendar/export.ics', { params: { from, to }, responseType: 'blob' }),
 }
