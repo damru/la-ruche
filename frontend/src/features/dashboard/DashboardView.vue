@@ -175,16 +175,6 @@ const todayStr = computed(() =>
           </p>
         </div>
       </template>
-      <template #right>
-        <RouterLink to="/tasks">
-          <CBtn
-            variant="secondary"
-            size="sm"
-            :icon="CIconPlus"
-            :title="t('dashboard.newAction')"
-          />
-        </RouterLink>
-      </template>
     </CTopbar>
 
     <div class="view-container">
