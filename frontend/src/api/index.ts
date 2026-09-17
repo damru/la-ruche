@@ -413,6 +413,11 @@ export const etatDateApi = {
     api.post<EtatDateRequest>(`/etat-date-requests/${id}/generate`),
   preEtatDate: (unitId: string) =>
     api.get<PreEtatDate>(`/units/${unitId}/pre-etat-date`),
+  // PDF downloads (ADR-011) — binary response, handled as a blob.
+  exportPdf: (id: string) =>
+    api.get<Blob>(`/etat-date-requests/${id}/pdf`, { responseType: 'blob' }),
+  preEtatDatePdf: (unitId: string) =>
+    api.get<Blob>(`/units/${unitId}/pre-etat-date/pdf`, { responseType: 'blob' }),
 }
 
 // ── Claims ────────────────────────────────────────────────────────

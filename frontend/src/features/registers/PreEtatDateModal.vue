@@ -28,6 +28,8 @@ const data = ref<PreEtatDate | null>(null)
 const loading = ref(false)
 const error = ref('')
 const editionDate = ref('')
+const downloading = ref(false)
+const downloadError = ref('')
 
 watch(
   () => props.open,
@@ -58,6 +60,28 @@ function amount(value: number | null): string {
 
 function print() {
   window.print()
+}
+
+// Downloads the pré-état daté rendered server-side as a PDF (ADR-011).
+async function downloadPdf() {
+  downloading.value = true
+  downloadError.value = ''
+  try {
+    const response = await etatDateApi.preEtatDatePdf(props.unitId)
+    const blob = new Blob([response.data], { type: 'application/pdf' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `pre-etat-date-${props.unitId}.pdf`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  } catch (err) {
+    downloadError.value = toErrorMessage(err)
+  } finally {
+    downloading.value = false
+  }
 }
 </script>
 
@@ -169,6 +193,12 @@ function print() {
         </p>
       </section>
     </div>
+    <p
+      v-if="downloadError"
+      class="tone--err data-sm"
+    >
+      {{ downloadError }}
+    </p>
     <template #footer>
       <CBtn
         variant="ghost"
@@ -176,10 +206,16 @@ function print() {
         @click="emit('update:open', false)"
       />
       <CBtn
-        v-if="data"
-        variant="primary"
+        variant="ghost"
         :title="t('registers.etatDate.print')"
         @click="print"
+      />
+      <CBtn
+        v-if="data"
+        variant="primary"
+        :loading="downloading"
+        :title="t('registers.preEtatDate.downloadPdf')"
+        @click="downloadPdf"
       />
     </template>
   </CModal>
