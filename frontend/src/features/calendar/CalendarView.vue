@@ -146,7 +146,6 @@ function onDeleted() {
   reload()
 }
 
-// EP-014-S04: download the current view's period as an ICS file.
 async function exportCalendar() {
   if (exporting.value) return
   exporting.value = true
