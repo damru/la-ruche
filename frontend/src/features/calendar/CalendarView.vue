@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// CalendarView — EP-014-S01. Monthly / weekly / list toggle with period nav.
+// CalendarView — EP-014-S01. Monthly / weekly / agenda toggle with period nav.
 // Visibility rules are enforced server-side (`/calendar/events` filters by
 // caller role); this view only renders whatever events come back.
 // EP-014-S03: manual event create/edit/delete (Manager/BoardMember only).
@@ -27,12 +27,12 @@ import CIconArrowLeft from '@/components/atoms/CIconArrowLeft.svg'
 import CIconArrowRight from '@/components/atoms/CIconArrowRight.svg'
 import CIconDownload from '@/components/atoms/CIconDownload.svg'
 import CalendarGrid from './CalendarGrid.vue'
-import CalendarListMode from './CalendarListMode.vue'
+import CalendarAgendaMode from './CalendarAgendaMode.vue'
 import EventFormModal from './EventFormModal.vue'
 import EventDetailModal from './EventDetailModal.vue'
 import type { CalendarEvent, ManualCalendarEvent } from '@/types/domain'
 
-type Mode = 'month' | 'week' | 'list'
+type Mode = 'month' | 'week' | 'agenda'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -59,7 +59,7 @@ function periodRange(date: Date, currentMode: Mode): { from: Date; to: Date } {
     to.setDate(from.getDate() + 6)
     return { from, to }
   }
-  // month + list share the same monthly fetch window
+  // month + agenda share the same monthly fetch window
   const from = new Date(date.getFullYear(), date.getMonth(), 1)
   const to = new Date(date.getFullYear(), date.getMonth() + 1, 0)
   return { from, to }
@@ -106,7 +106,7 @@ function onModeChange() {
 }
 
 function onShowDay(date: string) {
-  mode.value = 'list'
+  mode.value = 'agenda'
   anchor.value = new Date(`${date}T00:00:00`)
   reload()
 }
@@ -211,13 +211,13 @@ async function exportIcs() {
         <CTabs
           v-model="mode"
           variant="filter"
-          :tabs="(['month', 'week', 'list'] as const).map(m => ({ value: m, label: t(`calendar.modes.${m}`) }))"
+          :tabs="(['month', 'week', 'agenda'] as const).map(m => ({ value: m, label: t(`calendar.modes.${m}`) }))"
           @update:model-value="onModeChange"
         />
 
         <div class="flex items-center justify-between gap-3">
           <div
-            v-if="mode !== 'list'"
+            v-if="mode !== 'agenda'"
             class="flex items-center gap-3"
           >
             <CBtn
@@ -255,7 +255,7 @@ async function exportIcs() {
           :events="events"
           @show-day="onShowDay"
         />
-        <CalendarListMode
+        <CalendarAgendaMode
           v-else
           :events="events"
         />
