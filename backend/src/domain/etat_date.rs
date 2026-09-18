@@ -9,20 +9,20 @@
 
 use chrono::NaiveDate;
 use rust_decimal::Decimal;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 /// J+15 legal deadline for producing the état daté after the notaire's request.
 pub fn compute_due_date(requested_at: NaiveDate) -> NaiveDate {
     requested_at + chrono::Duration::days(15)
 }
 
-#[derive(Debug, Clone, Serialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct LigneMontant {
     pub label: String,
     pub amount: Decimal,
 }
 
-#[derive(Debug, Clone, Serialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ExerciceQuotePart {
     pub fiscal_year: i32,
     pub charge_amount: Decimal,
@@ -30,7 +30,7 @@ pub struct ExerciceQuotePart {
     pub total_amount: Decimal,
 }
 
-#[derive(Debug, Clone, Serialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ProcedureSummary {
     pub subject: String,
     pub proceeding_type: String,
@@ -57,7 +57,7 @@ pub struct EtatDateInputs {
     pub procedures: Vec<ProcedureSummary>,
 }
 
-#[derive(Debug, Clone, Serialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct EtatDate {
     pub partie1_sommes_dues_par_cedant: Vec<LigneMontant>,
     pub partie2_sommes_dues_par_syndicat: Vec<LigneMontant>,
@@ -80,7 +80,7 @@ const EMPRUNTS_COLLECTIFS_NEANT: &str = "néant — emprunts collectifs non gér
 /// Pré-état daté (EP-002-S07, LEGAL.md §7.2, art. L721-2 CCH) — informative
 /// document generated on demand, no workflow/snapshot, reusing the same
 /// `EtatDateInputs` boundary as the état daté (S06).
-#[derive(Debug, Clone, Serialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct PreEtatDate {
     /// Charges courantes du budget prévisionnel, exercice N-1. `None` si
     /// aucun appel émis sur cet exercice (« non disponible », jamais un zéro

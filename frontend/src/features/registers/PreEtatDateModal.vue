@@ -28,6 +28,8 @@ const data = ref<PreEtatDate | null>(null)
 const loading = ref(false)
 const error = ref('')
 const editionDate = ref('')
+const downloading = ref(false)
+const downloadError = ref('')
 
 watch(
   () => props.open,
@@ -59,6 +61,28 @@ function amount(value: number | null): string {
 function print() {
   window.print()
 }
+
+// Downloads the pré-état daté rendered server-side as a PDF (ADR-011).
+async function downloadPdf() {
+  downloading.value = true
+  downloadError.value = ''
+  try {
+    const response = await etatDateApi.preEtatDatePdf(props.unitId)
+    const blob = new Blob([response.data], { type: 'application/pdf' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `pre-etat-date-${props.unitId}.pdf`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  } catch (err) {
+    downloadError.value = toErrorMessage(err)
+  } finally {
+    downloading.value = false
+  }
+}
 </script>
 
 <template>
@@ -80,7 +104,7 @@ function print() {
       class="pre-etat-date-print flex flex-col gap-4"
     >
       <header class="flex flex-col gap-1">
-        <p class="data-md font-semibold">
+        <p class="title-md font-semibold">
           {{ buildingName }}
         </p>
         <p class="data-sm">
@@ -92,67 +116,67 @@ function print() {
       </header>
 
       <section>
-        <h3 class="data-md font-semibold mb-2">
+        <h3 class="title-md font-semibold mb-2">
           {{ t('registers.preEtatDate.charges') }}
         </h3>
         <ul>
           <li class="flex justify-between">
             <span>{{ t('registers.preEtatDate.chargesCourantesN1') }}</span>
-            <span>{{ amount(data.charges_courantes_n1) }}</span>
+            <span class="data-md">{{ amount(data.charges_courantes_n1) }}</span>
           </li>
           <li class="flex justify-between">
             <span>{{ t('registers.preEtatDate.chargesCourantesN2') }}</span>
-            <span>{{ amount(data.charges_courantes_n2) }}</span>
+            <span class="data-md">{{ amount(data.charges_courantes_n2) }}</span>
           </li>
           <li class="flex justify-between">
             <span>{{ t('registers.preEtatDate.chargesHorsBudgetN1') }}</span>
-            <span>{{ amount(data.charges_hors_budget_n1) }}</span>
+            <span class="data-md">{{ amount(data.charges_hors_budget_n1) }}</span>
           </li>
           <li class="flex justify-between">
             <span>{{ t('registers.preEtatDate.chargesHorsBudgetN2') }}</span>
-            <span>{{ amount(data.charges_hors_budget_n2) }}</span>
+            <span class="data-md">{{ amount(data.charges_hors_budget_n2) }}</span>
           </li>
         </ul>
       </section>
 
       <section>
-        <h3 class="data-md font-semibold mb-2">
+        <h3 class="title-md font-semibold mb-2">
           {{ t('registers.preEtatDate.sommesDues') }}
         </h3>
         <ul>
           <li class="flex justify-between">
             <span>{{ t('registers.preEtatDate.sommesDuesParCedant') }}</span>
-            <span>{{ formatCurrency(data.sommes_dues_par_cedant) }}</span>
+            <span class="data-md">{{ formatCurrency(data.sommes_dues_par_cedant) }}</span>
           </li>
           <li class="flex justify-between">
             <span>{{ t('registers.preEtatDate.impayesGlobaux') }}</span>
-            <span>{{ formatCurrency(data.impayes_globaux_syndicat) }}</span>
+            <span class="data-md">{{ formatCurrency(data.impayes_globaux_syndicat) }}</span>
           </li>
           <li class="flex justify-between">
             <span>{{ t('registers.preEtatDate.detteFournisseurs') }}</span>
-            <span>{{ amount(data.dette_fournisseurs) }}</span>
+            <span class="data-md">{{ amount(data.dette_fournisseurs) }}</span>
           </li>
         </ul>
       </section>
 
       <section>
-        <h3 class="data-md font-semibold mb-2">
+        <h3 class="title-md font-semibold mb-2">
           {{ t('registers.preEtatDate.fondsTravaux') }}
         </h3>
         <ul>
           <li class="flex justify-between">
             <span>{{ t('registers.preEtatDate.fondsTravauxQuotePart') }}</span>
-            <span>{{ formatCurrency(data.fonds_travaux_quote_part) }}</span>
+            <span class="data-md">{{ formatCurrency(data.fonds_travaux_quote_part) }}</span>
           </li>
           <li class="flex justify-between">
             <span>{{ t('registers.preEtatDate.fondsTravauxDerniereCotisation') }}</span>
-            <span>{{ formatCurrency(data.fonds_travaux_derniere_cotisation) }}</span>
+            <span class="data-md">{{ formatCurrency(data.fonds_travaux_derniere_cotisation) }}</span>
           </li>
         </ul>
       </section>
 
       <section>
-        <h3 class="data-md font-semibold mb-2">
+        <h3 class="title-md font-semibold mb-2">
           {{ t('registers.preEtatDate.procedures') }}
         </h3>
         <p class="data-sm opacity-70">
@@ -161,7 +185,7 @@ function print() {
       </section>
 
       <section>
-        <h3 class="data-md font-semibold mb-2">
+        <h3 class="title-md font-semibold mb-2">
           {{ t('registers.etatDate.emprunts') }}
         </h3>
         <p class="data-sm opacity-70">
@@ -169,6 +193,12 @@ function print() {
         </p>
       </section>
     </div>
+    <p
+      v-if="downloadError"
+      class="tone--err data-sm"
+    >
+      {{ downloadError }}
+    </p>
     <template #footer>
       <CBtn
         variant="ghost"
@@ -177,9 +207,16 @@ function print() {
       />
       <CBtn
         v-if="data"
-        variant="primary"
+        variant="ghost"
         :title="t('registers.etatDate.print')"
         @click="print"
+      />
+      <CBtn
+        v-if="data"
+        variant="primary"
+        :loading="downloading"
+        :title="t('registers.preEtatDate.downloadPdf')"
+        @click="downloadPdf"
       />
     </template>
   </CModal>

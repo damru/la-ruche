@@ -5,6 +5,7 @@ pub mod edd_check;
 pub mod etat_date;
 pub mod ics;
 pub mod immutability;
+pub mod legal_documents;
 pub mod minutes_draft;
 pub mod owners;
 pub mod processor;

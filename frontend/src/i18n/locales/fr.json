@@ -1558,6 +1558,7 @@
       "regenerate": "Régénérer",
       "view": "Consulter",
       "print": "Imprimer",
+      "downloadPdf": "Télécharger le PDF",
       "documentTitle": "État daté",
       "generatedAt": "Généré le",
       "partie1": "1. Sommes dues par le cédant",
@@ -1577,6 +1578,7 @@
     "preEtatDate": {
       "action": "Pré-état daté",
       "documentTitle": "Pré-état daté",
+      "downloadPdf": "Télécharger le PDF",
       "editedAt": "Édité le",
       "notAvailable": "Non disponible",
       "charges": "Charges courantes (budget prévisionnel et hors budget)",
