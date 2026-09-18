@@ -63,3 +63,34 @@ des documents tabulaires.
   client spécifique au MVP.
 - `ARCHITECTURE.md` devra référencer ADR-011 lors de l'implémentation de la première
   story de génération PDF.
+
+---
+
+## Amendement (2026-09-17) — EP-002-S06 / EP-002-S07
+
+L'implémentation de la première story de génération PDF (état daté S06, pré-état daté
+S07) dévie de trois principes de la Décision initiale. Cet amendement réconcilie l'ADR
+avec le code livré.
+
+- **Livraison en téléchargement direct.** Le PDF n'est **pas** persisté dans la GED ni
+  servi via flux pré-signé S3 : il est renvoyé en réponse directe (`application/pdf` +
+  `Content-Disposition: attachment`). L'archivage est explicitement reporté par la spec
+  EP-002-S07 §3 (« hors scope »), et le document probant est déjà l'instantané JSONB figé
+  (S06) — le PDF n'en est qu'un rendu de présentation.
+- **Rendu non déterministe accepté.** `genpdf`/`printpdf` inscrivent un identifiant de
+  document aléatoire et la date de création ; le flux d'octets n'est donc pas déterministe
+  d'une exécution à l'autre. Acceptable : la valeur probatoire est portée par l'instantané
+  JSONB, pas par le PDF.
+- **Rendu accessible à tout membre authentifié de l'immeuble.** La *génération* de
+  l'instantané reste réservée au syndic (`Role::Manager`), mais le *rendu* PDF de l'état
+  daté reflète l'accès de `get` (tout membre authentifié). Le pré-état daté (données
+  vivantes) reste, lui, réservé au syndic.
+- **Crate effectivement retenu : `genpdf`** (le repli de l'ADR). `typst` impose un moteur
+  de composition complet et une implémentation `World` de résolution de polices jugée trop
+  lourde pour ce périmètre.
+
+Source de vérité des champs d'en-tête : le nom du syndic provient du mandat actif
+(`governance_mandate.current_syndic_name`, rôle `syndic`, mandat commencé et non terminé),
+tandis que le SIRET provient de `building.manager_siret`. La table `governance_mandate`
+ne porte pas de colonne SIRET : ce découplage est une limitation connue du modèle de
+données — un changement de syndic doit aussi mettre à jour `manager_siret`.

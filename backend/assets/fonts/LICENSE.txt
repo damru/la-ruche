@@ -1,0 +1,10 @@
+Liberation Sans — Regular & Bold
+
+Copyright © 2012 Google Inc. and Red Hat, Inc.
+Licensed under the SIL Open Font License, Version 1.1.
+
+These font files are embedded into the compiled binary at build time and used
+to render regulatory PDF documents (état daté, pré-état daté) deterministically
+without any system font dependency.
+
+Full license text: https://openfontlicense.org/open-font-license-official-text/

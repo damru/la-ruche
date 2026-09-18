@@ -1,8 +1,11 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import CModal from '@/components/molecules/CModal.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import { useFormatters } from '@/composables/useFormatters'
+import { etatDateApi } from '@/api'
+import { toErrorMessage } from '@/composables/usePageLoader'
 import type { EtatDateRequest } from '@/types/domain'
 
 const props = defineProps<{
@@ -17,8 +20,34 @@ const emit = defineEmits<{
 const { t } = useI18n()
 const { formatCurrency, formatDate } = useFormatters()
 
+const downloading = ref(false)
+const downloadError = ref('')
+
 function print() {
   window.print()
+}
+
+// Downloads the frozen snapshot rendered server-side as a PDF (ADR-011).
+async function downloadPdf() {
+  if (!props.request) return
+  downloading.value = true
+  downloadError.value = ''
+  try {
+    const response = await etatDateApi.exportPdf(props.request.id)
+    const blob = new Blob([response.data], { type: 'application/pdf' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `etat-date-${props.request.id}.pdf`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  } catch (err) {
+    downloadError.value = toErrorMessage(err)
+  } finally {
+    downloading.value = false
+  }
 }
 </script>
 
@@ -36,7 +65,7 @@ function print() {
         </p>
 
         <section>
-          <h3 class="data-md font-semibold mb-2">
+          <h3 class="title-md font-semibold mb-2">
             {{ t('registers.etatDate.partie1') }}
           </h3>
           <ul>
@@ -46,13 +75,13 @@ function print() {
               class="flex justify-between"
             >
               <span>{{ line.label }}</span>
-              <span>{{ formatCurrency(line.amount) }}</span>
+              <span class="data-md">{{ formatCurrency(line.amount) }}</span>
             </li>
           </ul>
         </section>
 
         <section>
-          <h3 class="data-md font-semibold mb-2">
+          <h3 class="title-md font-semibold mb-2">
             {{ t('registers.etatDate.partie2') }}
           </h3>
           <ul>
@@ -62,13 +91,13 @@ function print() {
               class="flex justify-between"
             >
               <span>{{ line.label }}</span>
-              <span>{{ formatCurrency(line.amount) }}</span>
+              <span class="data-md">{{ formatCurrency(line.amount) }}</span>
             </li>
           </ul>
         </section>
 
         <section>
-          <h3 class="data-md font-semibold mb-2">
+          <h3 class="title-md font-semibold mb-2">
             {{ t('registers.etatDate.partie3') }}
           </h3>
           <ul>
@@ -78,13 +107,13 @@ function print() {
               class="flex justify-between"
             >
               <span>{{ line.label }}</span>
-              <span>{{ formatCurrency(line.amount) }}</span>
+              <span class="data-md">{{ formatCurrency(line.amount) }}</span>
             </li>
           </ul>
         </section>
 
         <section>
-          <h3 class="data-md font-semibold mb-2">
+          <h3 class="title-md font-semibold mb-2">
             {{ t('registers.etatDate.annexeQuotePart') }}
           </h3>
           <p
@@ -100,13 +129,13 @@ function print() {
               class="flex justify-between"
             >
               <span>{{ ex.fiscal_year }}</span>
-              <span>{{ formatCurrency(ex.total_amount) }}</span>
+              <span class="data-md">{{ formatCurrency(ex.total_amount) }}</span>
             </li>
           </ul>
         </section>
 
         <section>
-          <h3 class="data-md font-semibold mb-2">
+          <h3 class="title-md font-semibold mb-2">
             {{ t('registers.etatDate.procedures') }}
           </h3>
           <p
@@ -126,7 +155,7 @@ function print() {
         </section>
 
         <section>
-          <h3 class="data-md font-semibold mb-2">
+          <h3 class="title-md font-semibold mb-2">
             {{ t('registers.etatDate.emprunts') }}
           </h3>
           <p class="data-sm opacity-70">
@@ -134,6 +163,12 @@ function print() {
           </p>
         </section>
       </div>
+      <p
+        v-if="downloadError"
+        class="tone--err data-sm"
+      >
+        {{ downloadError }}
+      </p>
     </template>
     <template #footer>
       <CBtn
@@ -142,9 +177,15 @@ function print() {
         @click="emit('update:open', false)"
       />
       <CBtn
-        variant="primary"
+        variant="ghost"
         :title="t('registers.etatDate.print')"
         @click="print"
+      />
+      <CBtn
+        variant="primary"
+        :loading="downloading"
+        :title="t('registers.etatDate.downloadPdf')"
+        @click="downloadPdf"
       />
     </template>
   </CModal>

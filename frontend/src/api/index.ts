@@ -413,6 +413,11 @@ export const etatDateApi = {
     api.post<EtatDateRequest>(`/etat-date-requests/${id}/generate`),
   preEtatDate: (unitId: string) =>
     api.get<PreEtatDate>(`/units/${unitId}/pre-etat-date`),
+  // PDF downloads (ADR-011) — binary response, handled as a blob.
+  exportPdf: (id: string) =>
+    api.get<Blob>(`/etat-date-requests/${id}/pdf`, { responseType: 'blob' }),
+  preEtatDatePdf: (unitId: string) =>
+    api.get<Blob>(`/units/${unitId}/pre-etat-date/pdf`, { responseType: 'blob' }),
 }
 
 // ── Claims ────────────────────────────────────────────────────────
@@ -534,6 +539,28 @@ export const adminApi = {
 export const calendarApi = {
   events: (from: string, to: string) =>
     api.get<CalendarEvent[]>('/calendar/events', { params: { from, to } }),
+  exportIcs: (from: string, to: string) =>
+    api.get<Blob>('/calendar/export.ics', { params: { from, to }, responseType: 'blob' }),
+}
+
+// ── Calendar manual events (EP-014-S03) ─────────────────────────────
+export const calendarEventsApi = {
+  list: () =>
+    api.get<ManualCalendarEvent[]>('/calendar/manual-events'),
+  get: (id: string) =>
+    api.get<ManualCalendarEvent>(`/calendar/manual-events/${id}`),
+  create: (data: { title: string; description?: string; event_date: string; event_time?: string; category?: CalendarEventCategory }) =>
+    api.post<ManualCalendarEvent>('/calendar/manual-events', data),
+  update: (id: string, data: { title: string; description?: string; event_date: string; event_time?: string; category?: CalendarEventCategory }) =>
+    api.put<ManualCalendarEvent>(`/calendar/manual-events/${id}`, data),
+  remove: (id: string) =>
+    api.delete(`/calendar/manual-events/${id}`),
+  documents: (id: string) =>
+    api.get<Document[]>(`/calendar/manual-events/${id}/documents`),
+  attachDocument: (id: string, document_id: string) =>
+    api.post(`/calendar/manual-events/${id}/documents`, { document_id }),
+  detachDocument: (id: string, document_id: string) =>
+    api.delete(`/calendar/manual-events/${id}/documents/${document_id}`),
 }
 
 // ── Calendar manual events (EP-014-S03) ─────────────────────────────
