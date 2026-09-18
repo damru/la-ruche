@@ -229,7 +229,6 @@
     "invalidToken": "Ce lien d'invitation est invalide."
   },
   "dashboard": {
-    "newAction": "Nouvelle action",
     "overview": "Vue d'ensemble",
     "overdueLots": "{count} lot(s) en retard de paiement",
     "overdueTotal": "Total : {amount}",
