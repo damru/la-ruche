@@ -2,7 +2,7 @@
 // AC1: request tracking (J+15 due date, status). AC2: generation freezes a
 // 3-part regulatory document (snapshot). AC3: regeneration allowed until
 // `sent`; manager-only writes.
-// Requires a PostgreSQL test database (DATABASE_URL) + MinIO.
+// Requires a PostgreSQL test database (DATABASE_URL) + S3-compatible storage.
 // Run with: cargo test --test etat_date_test
 
 mod common;

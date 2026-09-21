@@ -17,8 +17,8 @@ help: ## Show this help
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
 
 # ── Development ───────────────────────────────────────────────────
-dev: ## Start the dev environment (postgres + minio + backend hot-reload)
-	docker compose up -d postgres minio
+dev: ## Start the dev environment (postgres + S3 storage + backend hot-reload)
+	docker compose up -d postgres rustfs
 	$(MAKE) -j1 sqlx-prepare
 	cd backend && bacon watch
 
@@ -109,7 +109,7 @@ setup-hooks: ## Install git hooks (pre-commit: cargo fmt + clippy)
 setup: ## Full initial setup
 	cp backend/.env.example backend/.env
 	$(MAKE) setup-hooks
-	docker compose up -d postgres minio
+	docker compose up -d postgres rustfs
 	sleep 3
 	$(MAKE) migrate
 	@echo "✅ La Ruche ready — run 'make dev'"

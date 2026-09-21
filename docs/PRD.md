@@ -196,6 +196,6 @@ llm_directives:
 | Frontend | Vue 3 + Vite + TypeScript + Tailwind CSS (couche utilitaire) |
 | Typographie | Fraunces + DM Sans + JetBrains Mono |
 | Design | "The Modern Registry" — lavande/charcoal |
-| Stockage | S3-compatible (MinIO self-hosted) |
+| Stockage | S3-compatible (self-hosted) |
 | Licence | AGPL-3.0 + licence commerciale |
-| Déploiement | Docker Compose (backend + postgres + minio + caddy) |
+| Déploiement | Docker Compose (backend + postgres + stockage S3 + caddy) |

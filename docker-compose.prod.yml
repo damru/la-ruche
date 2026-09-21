@@ -22,8 +22,8 @@ services:
     volumes:
       - ./scripts/pg_backup.sh:/pg_backup.sh:ro
 
-  minio:
+  rustfs:
     ports: []   # Console web désactivée en prod
-    command: server /data
     environment:
-      MINIO_BROWSER: "off"
+      RUSTFS_CONSOLE_ENABLE: "false"
+      RUSTFS_CORS_ALLOWED_ORIGINS: "${PUBLIC_URL:-http://localhost}"

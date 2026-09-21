@@ -123,7 +123,7 @@ Aucun. Job purement serveur.
 ## 9. Plan de tests
 
 - **Unitaires** : fonction pure `is_purgeable(category, deleted_at, now) -> bool` extraite dans `domain/retention.rs` — cas rétention finie écoulée/non écoulée, rétention `None`.
-- **Intégration** (harness e2e avec MinIO du docker-compose) :
+- **Intégration** (harness e2e avec le stockage S3 du docker-compose) :
   1. Poser un objet S3 sans ligne DB, `LastModified` forcé vieux (ou grace=0 en config test) → passe 1 le supprime.
   2. Objet récent → conservé.
   3. Document soft-deleted avec `deleted_at` antidaté au-delà de la rétention → passe 2 purge DB + S3.
@@ -137,5 +137,5 @@ Aucun. Job purement serveur.
 1. Vérifier/ajouter `list_objects` au client storage → `cargo build`.
 2. `domain/retention.rs` : `is_purgeable` + tests unitaires.
 3. `jobs/s3_cleanup.rs` : `run_once` (passe 1 puis passe 2), boucle `run`, déclaration `jobs/mod.rs` + spawn au démarrage.
-4. Tests d'intégration MinIO → vert.
+4. Tests d'intégration stockage S3 → vert.
 5. `docs/PROGRESS.md` (noter la dépendance S07/S08 si livraison partielle passe 1 seule).

@@ -6,7 +6,7 @@
 # Services :
 #   laruche   — unified image (Caddy + backend, frontend)
 #   postgres  — database
-#   minio     — S3 compatible storage (self-hosted)
+#   rustfs    — S3 compatible storage (self-hosted)
 
 services:
 
@@ -26,11 +26,11 @@ services:
       LA_RUCHE__APP__NAME: "La Ruche"
       LA_RUCHE__DB__URL: "postgres://laruche:${POSTGRES_PASSWORD:-laruche}@postgres:5432/laruche"
       LA_RUCHE__DB__MAX_CONNECTIONS: "20"
-      LA_RUCHE__S3__ENDPOINT_URL: "${S3_ENDPOINT_URL:-http://minio:9000}"
+      LA_RUCHE__S3__ENDPOINT_URL: "${S3_ENDPOINT_URL:-http://rustfs:9000}"
       LA_RUCHE__S3__PUBLIC_URL: "${S3_PUBLIC_URL:-http://localhost:9000}"
       LA_RUCHE__S3__REGION: "${S3_REGION:-us-east-1}"
-      LA_RUCHE__S3__ACCESS_KEY_ID: "${S3_ACCESS_KEY_ID:-minioadmin}"
-      LA_RUCHE__S3__SECRET_ACCESS_KEY: "${S3_SECRET_ACCESS_KEY:-minioadmin}"
+      LA_RUCHE__S3__ACCESS_KEY_ID: "${S3_ACCESS_KEY_ID:-s3admin}"
+      LA_RUCHE__S3__SECRET_ACCESS_KEY: "${S3_SECRET_ACCESS_KEY:-s3admin}"
       LA_RUCHE__S3__BUCKET_PREFIX: "laruche"
       LA_RUCHE__S3__STAGING_BUCKET: "laruche-staging"
       LA_RUCHE__S3__PRESIGNED_TTL_SECS: "900"
@@ -47,7 +47,7 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      minio:
+      rustfs:
         condition: service_healthy
 
   postgres:
@@ -67,24 +67,24 @@ services:
     ports: # dev only
       - "5432:5432"
 
-  minio:
-    image: minio/minio:latest
+  rustfs:
+    image: rustfs/rustfs:latest
     restart: unless-stopped
-    command: server /data --console-address ":9001"
     environment:
-      MINIO_ROOT_USER: "${S3_ACCESS_KEY_ID:-minioadmin}"
-      MINIO_ROOT_PASSWORD: "${S3_SECRET_ACCESS_KEY:-minioadmin}"
+      RUSTFS_ACCESS_KEY: "${S3_ACCESS_KEY_ID:-s3admin}"
+      RUSTFS_SECRET_KEY: "${S3_SECRET_ACCESS_KEY:-s3admin}"
+      RUSTFS_CORS_ALLOWED_ORIGINS: "${PUBLIC_URL:-*}"
     # volumes:
-    #   - minio_data:/data
+    #   - rustfs_data:/data
     healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
+      test: ["CMD", "curl", "-f", "http://localhost:9000/health"]
       interval: 5s
       timeout: 5s
       retries: 5
     ports: # dev only
       - "9000:9000"   # API S3
-      - "9001:9001"   # Console web MinIO (dev only)
+      - "9001:9001"   # Console web RustFS (dev only)
 
 volumes:
   postgres_data:
-  minio_data:
+  rustfs_data:
