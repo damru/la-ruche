@@ -3,7 +3,7 @@
 // (no request/workflow, no snapshot). AC2: 404 for unknown lot, 403 for
 // non-manager role. AC3: lot without calls still returns 200 with zeroed
 // rubriques.
-// Requires a PostgreSQL test database (DATABASE_URL) + MinIO.
+// Requires a PostgreSQL test database (DATABASE_URL) + S3-compatible storage.
 // Run with: cargo test --test pre_etat_date_test
 
 mod common;

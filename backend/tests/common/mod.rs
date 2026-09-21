@@ -5,7 +5,7 @@
 // that PostgreSQL instance directly. Otherwise it boots a real ephemeral
 // PostgreSQL (postgresql_embedded — binary cached after first download) so the
 // suite stays runnable with zero external services on a developer machine.
-// S3/MinIO is always replaced by an in-process wiremock HTTP stub.
+// S3-compatible storage is always replaced by an in-process wiremock HTTP stub.
 #![allow(dead_code)]
 
 use std::sync::Arc;
@@ -63,7 +63,7 @@ async fn infra() -> &'static Infra {
                 .expect("run migrations");
             pool.close().await;
 
-            // ── HTTP mock standing in for S3/MinIO ────────────────────
+            // ── HTTP mock standing in for S3-compatible storage ───────
             // A catch-all 200 covers the bucket/object operations performed
             // during tests (CreateBucket, CopyObject, DeleteObject, …).
             // Presigning is computed locally and makes no HTTP call.

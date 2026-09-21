@@ -1,6 +1,6 @@
 // Integration tests — EP-002-S11: governance register (registre des mandats).
 // AC1: CRUD mandates (manager-only). AC2: single active syndic invariant enforced.
-// Requires a PostgreSQL test database (DATABASE_URL) + MinIO.
+// Requires a PostgreSQL test database (DATABASE_URL) + S3-compatible storage.
 // Run with: cargo test --test governance_register_test
 
 mod common;

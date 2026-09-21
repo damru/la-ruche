@@ -28,7 +28,7 @@ Pour permettre cette double licence, tout contributeur externe doit signer le **
 git clone https://github.com/damru/la-ruche
 cd laruche
 make install-tools
-make setup        # copie .env, démarre postgres+minio, migrations
+make setup        # copie .env, démarre postgres+stockage S3, migrations
 make dev          # backend hot-reload
 make dev-frontend # frontend Vite (autre terminal)
 ```

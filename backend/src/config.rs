@@ -118,7 +118,7 @@ pub struct DbSettings {
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct S3Settings {
-    pub endpoint_url: String, // e.g. http://minio:9000 — internal Docker endpoint
+    pub endpoint_url: String, // e.g. http://object-storage:9000 — internal Docker endpoint
     pub region: String,
     pub access_key_id: String,
     pub secret_access_key: String,
@@ -129,8 +129,8 @@ pub struct S3Settings {
     /// Pre-signed URL TTL in seconds
     pub presigned_ttl_secs: u64,
     /// Public-facing base URL rewriting presigned URLs for browser use.
-    /// Required when endpoint_url is an internal Docker hostname (e.g. http://minio:9000)
-    /// and the browser must reach MinIO on a different address (e.g. http://localhost:9000).
+    /// Required when endpoint_url is an internal Docker hostname (e.g. http://object-storage:9000)
+    /// and the browser must reach the S3-compatible store on a different address (e.g. http://localhost:9000).
     pub public_url: Option<String>,
     /// Enables the periodic S3 cleanup job (EP-005-S09): orphan purge + deferred
     /// retention purge of soft-deleted documents. Disabled in e2e/test environments

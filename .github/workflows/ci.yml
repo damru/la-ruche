@@ -113,8 +113,8 @@ jobs:
           LA_RUCHE__S3__ENDPOINT_URL: http://127.0.0.1:9000
           LA_RUCHE__S3__PUBLIC_URL: http://127.0.0.1:9000
           LA_RUCHE__S3__REGION: us-east-1
-          LA_RUCHE__S3__ACCESS_KEY_ID: minioadmin
-          LA_RUCHE__S3__SECRET_ACCESS_KEY: minioadmin
+          LA_RUCHE__S3__ACCESS_KEY_ID: s3admin
+          LA_RUCHE__S3__SECRET_ACCESS_KEY: s3admin
           LA_RUCHE__S3__BUCKET_PREFIX: laruche-test
           LA_RUCHE__S3__STAGING_BUCKET: laruche-test-staging
           LA_RUCHE__S3__PRESIGNED_TTL_SECS: "900"

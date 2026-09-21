@@ -24,8 +24,8 @@ help: ## Show this help
 	}
 
 # ── Development ───────────────────────────────────────────────────
-dev: ## Start the dev environment (postgres + minio + backend hot-reload)
-	docker compose up -d postgres minio
+dev: ## Start the dev environment (postgres + S3 storage + backend hot-reload)
+	docker compose up -d postgres rustfs
 	$(MAKE) -f Makefile.win sqlx-prepare
 	Set-Location backend; bacon watch
 
@@ -113,7 +113,7 @@ setup-hooks: ## Install git hooks (pre-commit: cargo fmt + clippy)
 setup: ## Full initial setup
 	Copy-Item backend\.env.example backend\.env
 	$(MAKE) -f Makefile.win setup-hooks
-	docker compose up -d postgres minio
+	docker compose up -d postgres rustfs
 	Start-Sleep 3
 	$(MAKE) -f Makefile.win migrate
 	Write-Host "La Ruche ready — run 'make -f Makefile.win dev'" -ForegroundColor Green

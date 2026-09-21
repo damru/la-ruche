@@ -17,7 +17,7 @@ pub struct StorageClient {
 }
 
 /// Builds an S3 client with path-style URLs forced.
-/// Required for MinIO which does not support virtual-hosted-style by default.
+/// Required for self-hosted S3-compatible stores which may not support virtual-hosted-style by default.
 fn build_client(base: &aws_config::SdkConfig, force_path_style: bool) -> Client {
     let s3_config = Builder::from(base)
         .force_path_style(force_path_style)
@@ -35,7 +35,7 @@ impl StorageClient {
             "laruche-static",
         );
 
-        // Force path-style when endpoint_url is set (MinIO / self-hosted).
+        // Force path-style when endpoint_url is set (self-hosted S3-compatible store).
         // AWS S3 itself does not use path-style, so this is safe to always
         // enable when a custom endpoint is configured.
         let force_path_style = true;

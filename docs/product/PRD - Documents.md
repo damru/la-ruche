@@ -63,7 +63,7 @@ Trois risques à couvrir :
 
 - **Backend** : Rust (Axum / SQLx / PostgreSQL)
 - **Frontend** : Vue 3 Composition API + TypeScript
-- **Stockage** : S3-compatible (MinIO self-hosted)
+- **Stockage** : S3-compatible (self-hosted)
 - **Auth** : JWT / tokens opaques
 
 ### Upload via pre-signed URL

@@ -1,6 +1,6 @@
 // Integration tests for the periodic S3 cleanup job (EP-005-S09):
 // deferred retention purge of soft-deleted documents (pass 2). Pass 1
-// (orphan detection) requires a real S3/MinIO `ListObjectsV2` XML response,
+// (orphan detection) requires a real S3-compatible `ListObjectsV2` XML response,
 // which the shared wiremock catch-all stub does not provide — it is
 // exercised at the unit level in `domain::retention` and by inspection;
 // this test asserts that a pass-1 failure (unparseable mock response) is

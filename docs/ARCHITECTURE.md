@@ -47,7 +47,7 @@ references:
 | ORM / Query | SQLx 0.8 (compile-time) | ADR-001 |
 | Migrations | SQLx migrate (embedded) | ADR-001 |
 | Auth | JWT + Argon2id + webauthn-rs (passkeys **stubs** — `auth/passkey.rs` compilable, 4 handlers retournent `tracing::warn!` + 501 ; pas de roadmap active) | ADR-002 |
-| Stockage | S3-compatible — MinIO self-hosted | schema.sql |
+| Stockage | S3-compatible — self-hosted | schema.sql |
 | API | REST JSON + OpenAPI (utoipa) | ADR-001 |
 | Edge runtime | Caddy sur Debian slim | ADR-005 |
 | Distribution image conteneur | Docker Hub (`docker.io/damru/la-ruche`) | CI GitHub Actions |
@@ -142,7 +142,7 @@ laruche/
 │           └── presigned.rs
 ├── CONTRIBUTING.md
 ├── docker-compose.prod.yml     ← override production, image Docker Hub
-├── docker-compose.yml          ← laruche + postgres + minio
+├── docker-compose.yml          ← laruche + postgres + stockage S3
 ├── docker/
 │   ├── Caddyfile               ← config Caddy (SPA + reverse proxy)
 │   └── entrypoint.sh           ← démarrage backend + Caddy

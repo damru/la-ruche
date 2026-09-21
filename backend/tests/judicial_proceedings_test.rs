@@ -1,6 +1,6 @@
 // Integration tests — EP-002-S10: judicial proceedings register.
 // AC1: CRUD proceedings (manager-only). AC2: feeds état daté (list_ongoing covered in unit tests).
-// Requires a PostgreSQL test database (DATABASE_URL) + MinIO.
+// Requires a PostgreSQL test database (DATABASE_URL) + S3-compatible storage.
 // Run with: cargo test --test judicial_proceedings_test
 
 mod common;
