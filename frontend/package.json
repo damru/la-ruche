@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "@tanstack/vue-query": "^5.100.13",
-    "@vueuse/core": "^14.3.0",
+    "@vueuse/core": "^15.0.0",
     "axios": "^1.16.1",
     "pinia": "^3.0.4",
     "radix-vue": "^1.9.17",
