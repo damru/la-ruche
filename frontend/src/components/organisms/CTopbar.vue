@@ -14,8 +14,8 @@
   position: sticky;
   top: 0;
   z-index: var(--z-nav);
-  height: var(--topbar-height);
-  padding: 0 var(--space-10);
+  min-height: var(--topbar-height);
+  padding: var(--space-3) var(--space-10);
   display: flex;
   align-items: center;
   justify-content: space-between;
