@@ -632,7 +632,7 @@ const todayStr = computed(() =>
 .grid3 { display: grid; grid-template-columns: 1fr 1fr 320px; gap: var(--space-6); align-items: start; }
 .budget-wide { grid-column: span 2; }
 @media (max-width: 1200px) { .grid3 { grid-template-columns: 1fr 1fr; } }
-@media (max-width: 768px)  { .grid3 { grid-template-columns: 1fr; } }
+@media (max-width: 768px)  { .grid3 { grid-template-columns: 1fr; } .budget-wide { grid-column: auto; } }
 .right-col { display: flex; flex-direction: column; gap: var(--space-6); }
 
 /* ── Tasks ────────────────────────────────────────────────────────── */
