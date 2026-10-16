@@ -27,7 +27,6 @@ withDefaults(defineProps<{
 <template>
   <CCard
     padding="md"
-    class="min-w-40!"
     :class="emphasize ? `tone--${tone}` : ''"
   >
     <div 
