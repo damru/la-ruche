@@ -27,6 +27,7 @@ const TRUNCATE_SQL: &str = "TRUNCATE TABLE \
     contractor, \
     unit_allocation_key, \
     allocation_key, \
+    governance_mandate, \
     unit_owner, \
     unit, \
     document \

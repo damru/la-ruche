@@ -14,6 +14,7 @@
 --   • 3 claims    : all claim statuses covered
 --   • 4 assemblies: draft, called, closed, ongoing
 --   • 2 consults  : open + closed with seeded choices/responses
+--   • 3 mandates : syndic + conseil syndical (président, membre)
 --
 -- All accounts share the same password: Demo1234!
 -- (Argon2id hash, m=4096 t=1 p=1 — dev-only lightweight params)
@@ -41,6 +42,7 @@ TRUNCATE TABLE
     unit_allocation_key,
     allocation_key,
     unit_owner,
+    governance_mandate,
     user_building,
     user_token,
     user_account,
@@ -221,6 +223,17 @@ VALUES
     ('00000000-0000-0000-0000-000000000309', '00000000-0000-0000-0000-000000000209', '00000000-0000-0000-0000-000000000001', '{tenant}'),
     ('00000000-0000-0000-0000-000000000310', '00000000-0000-0000-0000-000000000210', '00000000-0000-0000-0000-000000000001', '{tenant}')
 ON CONFLICT (user_id, building_id) DO NOTHING;
+
+-- ============================================================
+-- 6b. GOVERNANCE MANDATES (EP-002-S11)
+-- Syndic + conseil syndical: 1 président, 1 membre (mandats ouverts).
+-- ============================================================
+INSERT INTO governance_mandate (id, building_id, role, holder_name, user_id, start_date, end_date, notes, created_by)
+VALUES
+    ('00000000-0000-0000-0000-000000000321', '00000000-0000-0000-0000-000000000001', 'syndic', 'Alice Martin', '00000000-0000-0000-0000-000000000201', '2023-05-01', NULL, 'Syndic bénévole élue en AG.', '00000000-0000-0000-0000-000000000201'),
+    ('00000000-0000-0000-0000-000000000322', '00000000-0000-0000-0000-000000000001', 'council_president', 'Bernard Dupont', '00000000-0000-0000-0000-000000000202', '2024-01-01', NULL, 'Président du conseil syndical.', '00000000-0000-0000-0000-000000000201'),
+    ('00000000-0000-0000-0000-000000000323', '00000000-0000-0000-0000-000000000001', 'council_member', 'Camille Rousseau', '00000000-0000-0000-0000-000000000203', '2024-01-01', NULL, 'Membre du conseil syndical.', '00000000-0000-0000-0000-000000000201')
+ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================
 -- 7. UNIT OWNERSHIP HISTORY
@@ -1756,5 +1769,6 @@ ON CONFLICT (id) DO NOTHING;
 -- Claims        | 3 fixtures                         | open, in_progress, closed
 -- Assemblies    | 4 fixtures                         | draft (empty), called (multi-line agenda + pending resolutions), closed (multi-line agenda + mixed attendance + votes, incl. art. 25 and art. 26 cases), ongoing (extraordinary — art. 24 ✓/✗, art. 25 ✓/✗ with art. 25-1 eligible case)
 -- Consultations | 2 fixtures                         | open, closed (+ choices & responses)
+-- Mandates      | 3 fixtures                         | syndic, council_president, council_member (ouverts)
 --
 -- Password (all accounts): Demo1234!
