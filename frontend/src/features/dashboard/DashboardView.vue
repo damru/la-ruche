@@ -312,8 +312,14 @@ const todayStr = computed(() =>
           </CKpiCard>
         </div>
 
-        <!-- Main 3-col grid -->
-        <div class="grid3">
+        <!-- Summary grid: 3 columns on desktop, 1 column on mobile.
+             Agenda and budget are the only wide cards (2 columns, starting at the first one). -->
+        <div class="summary-grid">
+          <!-- Agenda (wide) -->
+          <div class="summary-wide">
+            <DashboardAgendaCard :events="agendaEvents" />
+          </div>
+
           <!-- Priority tasks -->
           <CCard>
             <CSectionHeader>
@@ -370,6 +376,57 @@ const todayStr = computed(() =>
               </RouterLink>
             </div>
           </CCard>
+
+          <!-- Budget (wide) -->
+          <div
+            v-if="currentBudget"
+            class="summary-wide"
+          >
+            <CCard>
+              <CSectionHeader>
+                <CHeading type="card">
+                  {{ t('dashboard.budgetLabel', { exercice: currentBudget.fiscal_year }) }}
+                </CHeading>
+                <p class="body-sm text-on-surface-variant">
+                  {{ t('dashboard.budgetRealized', { pct: budgetExecutionRate }) }}
+                </p>
+                <template #actions>
+                  <CSectionLink to="/budget">
+                    {{ t('dashboard.detailLink') }}
+                  </CSectionLink>
+                </template>
+              </CSectionHeader>
+              <div class="budget-prog-list">
+                <div
+                  v-for="line in budgetLines.slice(0, 4)"
+                  :key="line.id"
+                  class="budget-prog-item"
+                >
+                  <div class="budget-prog-header">
+                    <span class="budget-prog-label">{{ line.label }}</span>
+                    <div class="budget-prog-meta">
+                      <span class="budget-prog-amounts">{{ formatCurrency(line.actual_amount ?? 0) }} / {{ formatCurrency(line.budgeted_amount) }}</span>
+                      <span
+                        class="budget-prog-pct"
+                        :class="Number(line.actual_amount ?? 0) > Number(line.budgeted_amount) ? 'pct--over' : 'pct--normal'"
+                      >
+                        {{ line.budgeted_amount ? Math.round(((line.actual_amount ?? 0) / line.budgeted_amount) * 100) : 0 }}%
+                      </span>
+                    </div>
+                  </div>
+                  <CProgressBar
+                    :value="line.budgeted_amount ? Math.round(((line.actual_amount ?? 0) / line.budgeted_amount) * 100) : 0"
+                    :variant="Number(line.actual_amount ?? 0) > Number(line.budgeted_amount) ? 'error' : 'primary'"
+                    :show-value="false"
+                  />
+                </div>
+                <div class="budget-total-row">
+                  <span>{{ t('dashboard.totalRealized') }}</span>
+                  <span class="budget-total-val">{{ formatCurrency(totalActual) }} / {{ formatCurrency(totalForecast) }}</span>
+                </div>
+              </div>
+            </CCard>
+          </div>
 
           <!-- Contract reminders + Reports -->
           <CCard>
@@ -474,130 +531,72 @@ const todayStr = computed(() =>
             </div>
           </CCard>
 
-          <!-- Right col: agenda -->
-          <div class="right-col">
-            <DashboardAgendaCard :events="agendaEvents" />
-          </div>
-
-          <!-- ROW 2: budget + residents + consultation -->
-          <div
-            class="grid2"
-            :class="{ 'grid2--single': !currentBudget }"
-          >
-            <!-- Budget -->
-            <CCard
-              v-if="currentBudget"
-            >
-              <CSectionHeader>
-                <CHeading type="card">
-                  {{ t('dashboard.budgetLabel', { exercice: currentBudget.fiscal_year }) }}
-                </CHeading>
-                <p class="body-sm text-on-surface-variant">
-                  {{ t('dashboard.budgetRealized', { pct: budgetExecutionRate }) }}
+          <!-- Residents -->
+          <CCard>
+            <CSectionHeader>
+              <CHeading type="card">
+                {{ t('dashboard.residentsTitle') }}
+              </CHeading>
+              <template #actions>
+                <CSectionLink to="/residents">
+                  {{ t('dashboard.seeResidents') }}
+                </CSectionLink>
+              </template>
+            </CSectionHeader>
+            <div class="residents-grid">
+              <div class="res-stat">
+                <p class="res-stat-val">
+                  {{ stats?.nb_lots }}
+                </p><p class="res-stat-label">
+                  {{ t('dashboard.lotsLabel') }}
                 </p>
-                <template #actions>
-                  <CSectionLink to="/budget">
-                    {{ t('dashboard.detailLink') }}
-                  </CSectionLink>
-                </template>
-              </CSectionHeader>
-              <div class="budget-prog-list">
-                <div
-                  v-for="line in budgetLines.slice(0, 4)"
-                  :key="line.id"
-                  class="budget-prog-item"
-                >
-                  <div class="budget-prog-header">
-                    <span class="budget-prog-label">{{ line.label }}</span>
-                    <div class="budget-prog-meta">
-                      <span class="budget-prog-amounts">{{ formatCurrency(line.actual_amount ?? 0) }} / {{ formatCurrency(line.budgeted_amount) }}</span>
-                      <span
-                        class="budget-prog-pct"
-                        :class="Number(line.actual_amount ?? 0) > Number(line.budgeted_amount) ? 'pct--over' : 'pct--normal'"
-                      >
-                        {{ line.budgeted_amount ? Math.round(((line.actual_amount ?? 0) / line.budgeted_amount) * 100) : 0 }}%
-                      </span>
-                    </div>
-                  </div>
-                  <CProgressBar
-                    :value="line.budgeted_amount ? Math.round(((line.actual_amount ?? 0) / line.budgeted_amount) * 100) : 0"
-                    :variant="Number(line.actual_amount ?? 0) > Number(line.budgeted_amount) ? 'error' : 'primary'"
-                    :show-value="false"
-                  />
-                </div>
-                <div class="budget-total-row">
-                  <span>{{ t('dashboard.totalRealized') }}</span>
-                  <span class="budget-total-val">{{ formatCurrency(totalActual) }} / {{ formatCurrency(totalForecast) }}</span>
-                </div>
               </div>
-            </CCard>
-            <div class="right-col">
-              <CCard>
-                <CSectionHeader>
-                  <CHeading type="card">
-                    {{ t('dashboard.residentsTitle') }}
-                  </CHeading>
-                  <template #actions>
-                    <CSectionLink to="/residents">
-                      {{ t('dashboard.seeResidents') }}
-                    </CSectionLink>
-                  </template>
-                </CSectionHeader>
-                <div class="residents-grid">
-                  <div class="res-stat">
-                    <p class="res-stat-val">
-                      {{ stats?.nb_lots }}
-                    </p><p class="res-stat-label">
-                      {{ t('dashboard.lotsLabel') }}
-                    </p>
-                  </div>
-                  <div class="res-stat">
-                    <p class="res-stat-val">
-                      {{ levies.filter(l => l.status === 'paid').length }}
-                    </p><p class="res-stat-label">
-                      {{ t('dashboard.paidLabel') }}
-                    </p>
-                  </div>
-                  <div class="res-stat res-stat--ok">
-                    <p class="res-stat-val">
-                      {{ collectionRate }}%
-                    </p><p class="res-stat-label">
-                      {{ t('dashboard.recoveryLabel') }}
-                    </p>
-                  </div>
-                  <div class="res-stat res-stat--err">
-                    <p class="res-stat-val">
-                      {{ overdueLevies.length }}
-                    </p><p class="res-stat-label">
-                      {{ t('dashboard.lateLabel') }}
-                    </p>
-                  </div>
-                </div>
-              </CCard>
-
-              <CCard v-if="consultations.length">
-                <CSectionHeader>
-                  <CHeading type="card">
-                    {{ t('dashboard.activeConsultation') }}
-                  </CHeading>
-                  <p
-                    v-if="consultations[0].closed_at"
-                    class="body-sm text-on-surface-variant"
-                  >
-                    {{ t('dashboard.closesPrefix') }} {{ formatRelative(consultations[0].closed_at) }}
-                  </p>
-                </CSectionHeader>
-                <div class="consultation-body">
-                  <p class="consultation-title">
-                    {{ consultations[0].title }}
-                  </p>
-                  <p class="consultation-legal">
-                    ⚠️ {{ t('consultations.informalNote') }}
-                  </p>
-                </div>
-              </CCard>
+              <div class="res-stat">
+                <p class="res-stat-val">
+                  {{ levies.filter(l => l.status === 'paid').length }}
+                </p><p class="res-stat-label">
+                  {{ t('dashboard.paidLabel') }}
+                </p>
+              </div>
+              <div class="res-stat res-stat--ok">
+                <p class="res-stat-val">
+                  {{ collectionRate }}%
+                </p><p class="res-stat-label">
+                  {{ t('dashboard.recoveryLabel') }}
+                </p>
+              </div>
+              <div class="res-stat res-stat--err">
+                <p class="res-stat-val">
+                  {{ overdueLevies.length }}
+                </p><p class="res-stat-label">
+                  {{ t('dashboard.lateLabel') }}
+                </p>
+              </div>
             </div>
-          </div>
+          </CCard>
+
+          <!-- Consultation -->
+          <CCard v-if="consultations.length">
+            <CSectionHeader>
+              <CHeading type="card">
+                {{ t('dashboard.activeConsultation') }}
+              </CHeading>
+              <p
+                v-if="consultations[0].closed_at"
+                class="body-sm text-on-surface-variant"
+              >
+                {{ t('dashboard.closesPrefix') }} {{ formatRelative(consultations[0].closed_at) }}
+              </p>
+            </CSectionHeader>
+            <div class="consultation-body">
+              <p class="consultation-title">
+                {{ consultations[0].title }}
+              </p>
+              <p class="consultation-legal">
+                ⚠️ {{ t('consultations.informalNote') }}
+              </p>
+            </div>
+          </CCard>
         </div>
       </template>
     </div>
@@ -634,14 +633,16 @@ const todayStr = computed(() =>
 .kpi-prog__fill--error   { background: var(--gradient-error); }
 .kpi-prog__fill--warning { background: var(--gradient-warning); }
 
-/* ── Grid ─────────────────────────────────────────────────────────── */
-.grid3 { display: grid; grid-template-columns: 1fr 1fr 320px; gap: var(--space-6); align-items: start; }
-@media (max-width: 1200px) { .grid3 { grid-template-columns: 1fr 1fr; } }
-@media (max-width: 768px)  { .grid3 { grid-template-columns: 1fr; } }
-.right-col { display: flex; flex-direction: column; gap: var(--space-6); }
-.grid2 { display: grid; grid-template-columns: 1fr 320px; gap: var(--space-6); align-items: start; }
-.grid2--single { grid-template-columns: 1fr; }
-@media (max-width: 1200px) { .grid2 { grid-template-columns: 1fr; } }
+/* ── Summary grid ────────────────────────────────────────────────────
+   Base: 3 columns. Agenda and budget are the only wide cards:
+   2 columns, starting at the first one. All other cards take 1 column. */
+.summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-6); align-items: start; }
+.summary-wide { grid-column: 1 / span 2; }
+@media (max-width: 1200px) { .summary-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 768px) {
+  .summary-grid { grid-template-columns: 1fr; }
+  .summary-wide { grid-column: 1 / span 1; }
+}
 
 /* ── Tasks ────────────────────────────────────────────────────────── */
 .task-list { display: flex; flex-direction: column; gap: var(--space-2); }
