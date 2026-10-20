@@ -831,22 +831,6 @@ CREATE TRIGGER trg_works_fund_updated_at
     BEFORE UPDATE ON works_fund
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
-
--- ============================================================
--- Squashed from migrations/0030_levy_call_draft.sql
--- ============================================================
--- ('draft' enum value inlined above in CREATE TYPE levy_status; original standalone ALTER TYPE ... ADD VALUE cannot be reused in the same transaction on a fresh install)
-
-
--- ============================================================
--- Squashed from migrations/0036_vendor_contract_draft_status.sql
--- ============================================================
--- ('draft' enum value inlined above in CREATE TYPE contract_status; same reason)
-
-
--- ============================================================
--- Squashed from migrations/0002_user_token_unit_id.sql
--- ============================================================
 -- EP-002-S03: Add unit_id to user_token for tenant invitation association (AC-GP-002-H).
 -- A tenant invitation may be linked to a specific unit so that on acceptance the
 -- unit_owner record is created automatically.
@@ -862,10 +846,6 @@ CREATE UNIQUE INDEX IF NOT EXISTS user_account_email_unique
     ON user_account (email)
     WHERE email IS NOT NULL;
 
-
--- ============================================================
--- Squashed from migrations/0028_unit_owner_unique_current.sql
--- ============================================================
 -- Remove duplicate current-owner rows that may have been created without a uniqueness guard,
 -- keeping the most recently created row per unit.
 DELETE FROM unit_owner
@@ -880,10 +860,6 @@ AND end_date IS NULL;
 -- Guarantee at the DB level that a unit has at most one current owner (end_date IS NULL).
 CREATE UNIQUE INDEX uq_unit_owner_current ON unit_owner(unit_id) WHERE end_date IS NULL;
 
-
--- ============================================================
--- Squashed from migrations/0029_audit_log.sql
--- ============================================================
 -- EP-018-S02: Append-only audit log for accounting immutability (ADR-009)
 -- Conservation 10 ans (art. L123-22 Code de commerce)
 CREATE TABLE audit_log (
@@ -901,10 +877,6 @@ CREATE TABLE audit_log (
 CREATE INDEX idx_audit_log_entity ON audit_log(entity_type, entity_id);
 CREATE INDEX idx_audit_log_building ON audit_log(building_id, changed_at DESC);
 
-
--- ============================================================
--- Squashed from migrations/0031_pattern_c_corrections.sql
--- ============================================================
 -- EP-018-S07: Pattern C — append-only corrections
 --
 -- 1. levy_call: credit notes reference the levy_call they compensate
@@ -938,10 +910,6 @@ CREATE TRIGGER maintenance_log_immutable
     BEFORE UPDATE OR DELETE ON maintenance_log
     FOR EACH ROW EXECUTE FUNCTION trg_maintenance_log_manual_immutable();
 
-
--- ============================================================
--- Squashed from migrations/0032_accounting_codes.sql
--- ============================================================
 -- EP-004-S09: Plan comptable copropriété (arrêté 14/03/2005)
 --
 -- Read-only reference table seeded with common codes.
@@ -976,10 +944,6 @@ INSERT INTO accounting_code (code, label, category) VALUES
 ALTER TABLE budget_line
     ADD COLUMN account_code TEXT REFERENCES accounting_code(code);
 
-
--- ============================================================
--- Squashed from migrations/0033_levy_call_draft_status.sql
--- ============================================================
 -- EP-018-S03: Pattern A — levy_call draft/issue lifecycle (part 2: status column)
 --
 -- Split from 0030: the 'draft' enum value added there is now committed in a
@@ -1012,10 +976,6 @@ CREATE TRIGGER levy_call_immutable
     BEFORE UPDATE OR DELETE ON levy_call
     FOR EACH ROW EXECUTE FUNCTION trg_levy_call_immutable();
 
-
--- ============================================================
--- Squashed from migrations/0034_judicial_proceedings.sql
--- ============================================================
 -- EP-002-S10: Judicial proceedings register (LEGAL.md §7.1, §10)
 --
 -- Tracks proceedings involving the syndicat (as claimant or defendant).
@@ -1066,10 +1026,6 @@ CREATE TRIGGER trg_judicial_proceeding_updated_at
     BEFORE UPDATE ON judicial_proceeding
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
-
--- ============================================================
--- Squashed from migrations/0035_governance_register.sql
--- ============================================================
 -- EP-002-S11: Governance register (LEGAL.md §1.7, §1.8)
 --
 -- Register of the syndic in office and council members with mandate periods,
@@ -1112,10 +1068,6 @@ CREATE TRIGGER trg_governance_mandate_updated_at
     BEFORE UPDATE ON governance_mandate
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
-
--- ============================================================
--- Squashed from migrations/0037_vendor_contract_predecessor.sql
--- ============================================================
 -- EP-018-S05: Pattern B — vendor_contract amendments (part 2)
 --
 -- An amendment is a distinct legal act, not an in-place edit. Adding
@@ -1169,10 +1121,6 @@ CREATE TRIGGER vendor_contract_immutable
     BEFORE UPDATE ON vendor_contract
     FOR EACH ROW EXECUTE FUNCTION trg_vendor_contract_immutable();
 
-
--- ============================================================
--- Squashed from migrations/0038_budget_rectificatif_schema.up.sql
--- ============================================================
 -- EP-018-S06: Pattern B — budget rectificatif schema (ADR-009).
 --
 -- A budget rectificatif is a *new* budget row for the same building and fiscal
@@ -1217,10 +1165,6 @@ CREATE TRIGGER budget_line_version_trigger
     WHEN (OLD.valid_to IS NOT DISTINCT FROM NEW.valid_to)
 EXECUTE FUNCTION increment_budget_line_version();
 
-
--- ============================================================
--- Squashed from migrations/0039_budget_rectificatif_constraints.up.sql
--- ============================================================
 -- EP-018-S06: Pattern B — budget rectificatif invariants (ADR-009).
 --
 -- These indexes are the *only* guard on the invariants below: application-side
@@ -1266,10 +1210,6 @@ ALTER TABLE budget_line
     ADD CONSTRAINT budget_line_rectificatif_version_positive
         CHECK (rectificatif_version IS NULL OR rectificatif_version >= 1);
 
-
--- ============================================================
--- Squashed from migrations/0040_document_category.up.sql
--- ============================================================
 -- EP-005-S06: founding document types + version chain (LEGAL §1.2)
 
 CREATE TYPE document_category AS ENUM ('reglement_copropriete', 'edd', 'autre');
@@ -1288,10 +1228,6 @@ CREATE UNIQUE INDEX document_current_founding_unique
     ON document (building_id, category)
     WHERE is_current AND category IN ('reglement_copropriete', 'edd');
 
-
--- ============================================================
--- Squashed from migrations/0041_document_soft_delete.up.sql
--- ============================================================
 -- EP-005-S08: soft-delete with metadata retention (PRD US-DOC-004/US-DOC-007).
 -- The DB row and the S3 object are both kept after deletion; physical purge
 -- is deferred to the S3 cleanup job (EP-005-S09) once the category's legal
@@ -1305,10 +1241,6 @@ ALTER TABLE document
 
 CREATE INDEX document_deleted_idx ON document (building_id) WHERE deleted_at IS NOT NULL;
 
-
--- ============================================================
--- Squashed from migrations/0042_document_category_extend.up.sql
--- ============================================================
 -- EP-005-S07: extend document_category with all PRD categories (LEGAL §3.4, §6.1-6.3)
 -- This migration extends the document_category enum to include all categories
 -- defined in docs/product/PRD - Documents.md §4, including technical regulatory
@@ -1364,10 +1296,6 @@ CREATE UNIQUE INDEX IF NOT EXISTS document_current_founding_unique
 -- Drop the old enum type
 DROP TYPE IF EXISTS document_category_old;
 
-
--- ============================================================
--- Squashed from migrations/0043_document_event.sql
--- ============================================================
 -- EP-005-S10: outbox-lite for document events (PRD US-DOC-009).
 -- Written in the SAME transaction as the document insert; consumers poll
 -- (jobs/) and mark rows processed. Real notification delivery is out of
@@ -1386,10 +1314,6 @@ CREATE TABLE document_event (
 
 CREATE INDEX document_event_pending_idx ON document_event (created_at) WHERE processed_at IS NULL;
 
-
--- ============================================================
--- Squashed from migrations/0044_edd_reference.sql
--- ============================================================
 -- EP-001-S09: manual EDD reference totals for coherence check (LEGAL.md §1.2)
 -- Manual entry of EDD (état descriptif de division) reference tantièmes,
 -- used by a read-only, non-blocking coherence check against configured
@@ -1417,10 +1341,6 @@ CREATE TABLE edd_reference_share (
 
 CREATE INDEX edd_reference_building_idx ON edd_reference (building_id, edd_date DESC, created_at DESC);
 
-
--- ============================================================
--- Squashed from migrations/0045_etat_date_request.sql
--- ============================================================
 -- EP-002-S06: etat date request tracking (LEGAL.md §7.1, 15-day legal deadline)
 CREATE TYPE etat_date_status AS ENUM ('requested', 'generated', 'sent', 'cancelled');
 
@@ -1438,10 +1358,6 @@ CREATE TABLE etat_date_request (
 );
 CREATE INDEX etat_date_request_unit_idx ON etat_date_request (unit_id);
 
-
--- ============================================================
--- Squashed from migrations/0046_calendar_event.sql
--- ============================================================
 -- EP-014-S03: manual calendar events (PRD Calendrier §3, US-CAL-005)
 
 CREATE TYPE calendar_event_category AS ENUM ('reunion', 'visite', 'permanence', 'autre');
