@@ -439,7 +439,7 @@ const todayStr = computed(() =>
                       size="sm"
                       style="width:100%;justify-content:center"
                       :icon="CIconPlus"
-                      :title="t('dashboard.newReport')"
+                      :title="t('reports.create')"
                     />
                   </RouterLink>
                 </div>
