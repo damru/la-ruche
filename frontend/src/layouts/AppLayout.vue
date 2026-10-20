@@ -117,7 +117,7 @@ onUnmounted(() => {
     flex-direction: column;
   }
   .app-layout__main {
-    padding-bottom: calc(var(--nav-bottom-height) + var(--nav-safe-area-bottom));
+    padding-bottom: calc(var(--nav-bottom-height) + var(--space-5) + var(--nav-safe-area-bottom));
   }
 }
 </style>
