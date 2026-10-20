@@ -27,6 +27,18 @@ const { t } = useI18n()
 const auth = useAuthStore()
 const { formatCurrency, formatDate, formatRelative, daysUntil } = useFormatters()
 
+// ── Permissions (miroir des meta.roles du router) ───────────────────
+// Une carte / un KPI ne s'affiche que si sa page cible est accessible
+// à l'utilisateur courant — et les données ne sont chargées que si permises.
+const canViewBudget = computed(() => auth.hasAnyRole(['manager', 'board_member', 'co_owner']))
+const canViewMeetings = computed(() => auth.hasAnyRole(['manager', 'board_member', 'co_owner']))
+const canViewGovernance = computed(() => auth.hasAnyRole(['manager', 'board_member', 'co_owner']))
+const canViewTasks = computed(() => auth.hasAnyRole(['manager', 'board_member']))
+const canViewAccounting = computed(() => auth.hasAnyRole(['manager', 'board_member']))
+const canViewContracts = computed(() => auth.hasRole('manager'))
+const canViewResidents = computed(() => auth.hasRole('manager'))
+const canViewMyCharges = computed(() => auth.hasRole('co_owner'))
+
 // ── State ─────────────────────────────────────────────────────────
 const stats = ref<BuildingStats | null>(null)
 const currentBudget = ref<Budget | null>(null)
@@ -40,6 +52,8 @@ const rawReminders = ref<ContractReminder[]>([])
 const rawConsultations = ref<Consultation[]>([])
 const governanceMandates = ref<GovernanceMandate[]>([])
 const agendaEvents = ref<CalendarEvent[]>([])
+// Appels de fonds individuels (copropriétaire — KPI « Mes appels de fonds »)
+const myLevies = ref<LevyCall[]>([])
 
 // ── Load data ─────────────────────────────────────────────────────
 function valueOr<T>(result: PromiseSettledResult<{ data: T }>, fallback: T): T {
@@ -57,17 +71,20 @@ function isoInDays(days: number): string {
 }
 
 async function loadData() {
+  // Requêtes conditionnées par les rôles : pas d'appel (ni de 403) vers les
+  // endpoints dont la page cible est interdite à l'utilisateur courant.
+  const skip = <T>(fallback: T) => Promise.resolve({ data: fallback } as { data: T })
   const [statsRes, budgetsRes, meetingsRes, tasksRes, reportsRes, contractsRes, remindersRes, consultationsRes, governanceRes, agendaRes] =
     await Promise.allSettled([
       buildingApi.stats(),
-      budgetApi.list(),
-      meetingsApi.list(),
-      tasksApi.list(),
+      canViewBudget.value ? budgetApi.list() : skip<Budget[]>([]),
+      canViewMeetings.value ? meetingsApi.list() : skip<Meeting[]>([]),
+      canViewTasks.value ? tasksApi.list() : skip<Task[]>([]),
       reportsApi.list(),
-      contractsApi.list(),
-      contractsApi.listAllReminders(),
+      canViewContracts.value ? contractsApi.list() : skip<VendorContract[]>([]),
+      canViewContracts.value ? contractsApi.listAllReminders() : skip<ContractReminder[]>([]),
       consultationsApi.list(),
-      governanceApi.list(),
+      canViewGovernance.value ? governanceApi.list() : skip<GovernanceMandate[]>([]),
       calendarApi.events(todayIso(), isoInDays(30)),
     ])
 
@@ -88,15 +105,18 @@ async function loadData() {
   const budget = budgets.find(b => b.status === 'approved') ?? budgets[0] ?? null
   currentBudget.value = budget
   if (budget) {
-    const [linesRes, leviesRes] = await Promise.allSettled([
-      budgetApi.listLines(budget.id),
-      budgetApi.listLevies(budget.id),
+    const [linesRes, leviesRes, myLeviesRes] = await Promise.allSettled([
+      canViewBudget.value ? budgetApi.listLines(budget.id) : skip<BudgetLine[]>([]),
+      canViewAccounting.value ? budgetApi.listLevies(budget.id) : skip<LevyCall[]>([]),
+      canViewMyCharges.value ? budgetApi.listLevies(budget.id, auth.user?.user_id) : skip<LevyCall[]>([]),
     ])
     budgetLines.value = valueOr(linesRes, [])
     levies.value = valueOr(leviesRes, [])
+    myLevies.value = valueOr(myLeviesRes, [])
   } else {
     budgetLines.value = []
     levies.value = []
+    myLevies.value = []
   }
 }
 
@@ -139,6 +159,17 @@ function contactInitials(name: string): string {
 }
 
 const overdueLevies = computed(() => levies.value.filter(l => l.status === 'overdue'))
+
+// Appels de fonds individuels (copropriétaire)
+const myUnpaidLevies = computed(() => myLevies.value.filter(l => l.status !== 'paid'))
+const myOverdueLevies = computed(() => myLevies.value.filter(l => l.status === 'overdue'))
+const myOverdueAmount = computed(() => myOverdueLevies.value.reduce((sum, l) => sum + Number(l.amount), 0))
+const myNextDueLevy = computed(() =>
+  myUnpaidLevies.value
+    .filter(l => l.due_date)
+    .sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())[0]
+)
+
 const nextMeeting = computed(() =>
   meetings.value
     .filter(m => m.status !== 'closed')
@@ -227,7 +258,7 @@ const todayStr = computed(() =>
           </header>
           <div class="hero-alerts">
             <div
-              v-if="overdueLevies.length"
+              v-if="canViewAccounting && overdueLevies.length"
               class="hero-alert tone--err"
             >
               <CIconWarn aria-hidden="true" />
@@ -260,9 +291,14 @@ const todayStr = computed(() =>
           </div>
         </div>
 
-        <!-- KPIs -->
-        <div class="kpi-grid">
+        <!-- KPIs — chaque KPI est gated par rôle ; la ligne disparaît
+             si l'utilisateur n'a accès à aucune page de destination. -->
+        <div
+          v-if="canViewBudget || canViewMeetings || canViewAccounting || canViewMyCharges"
+          class="kpi-grid"
+        >
           <CKpiCard
+            v-if="canViewBudget"
             :label="t('dashboard.budgetLabel', { exercice: new Date().getFullYear() })"
             :value="formatCurrency(totalActual)"
             :delta="`sur ${formatCurrency(totalForecast)}`"
@@ -282,6 +318,7 @@ const todayStr = computed(() =>
           </CKpiCard>
 
           <CKpiCard
+            v-if="canViewMeetings"
             :label="t('dashboard.nextAg')"
             :value="nextMeeting ? formatDate(nextMeeting.meeting_date, 'long') : t('dashboard.nextAgNone')"
             :delta="nextMeeting ? formatRelative(nextMeeting.meeting_date) : ''"
@@ -294,6 +331,7 @@ const todayStr = computed(() =>
           </CKpiCard>
 
           <CKpiCard
+            v-if="canViewAccounting"
             :label="t('dashboard.recoveryRate')"
             :value="String(overdueLevies.length)"
             :delta="overdueLevies.length ? t('dashboard.overdueAmount', { amount: formatCurrency(overdueAmount) }) : t('dashboard.unitsUpToDate')"
@@ -315,6 +353,7 @@ const todayStr = computed(() =>
           </CKpiCard>
 
           <CKpiCard
+            v-if="canViewBudget"
             :label="t('dashboard.worksFundLabel')"
             :value="formatCurrency(stats?.works_fund_available ?? 0)"
             :delta="stats?.works_fund_pct ? t('dashboard.worksFundPct', { pct: 100 - stats.works_fund_pct }) : ''"
@@ -333,6 +372,22 @@ const todayStr = computed(() =>
               </div>
             </template>
           </CKpiCard>
+
+          <!-- KPI individuelle copropriétaire : ses appels de fonds -->
+          <CKpiCard
+            v-if="canViewMyCharges"
+            :label="t('nav.myCharges')"
+            :value="myOverdueLevies.length ? String(myOverdueLevies.length) : String(myUnpaidLevies.length)"
+            :delta="myOverdueLevies.length
+              ? t('dashboard.overdueAmount', { amount: formatCurrency(myOverdueAmount) })
+              : (myNextDueLevy ? `${t('common.dueDate')} : ${formatDate(myNextDueLevy.due_date)}` : t('dashboard.unitsUpToDate'))"
+            :delta-variant="myOverdueLevies.length ? 'down' : 'neutral'"
+            :tone="myOverdueLevies.length ? 'err' : undefined"
+          >
+            <template #icon>
+              <CIconCurrency />
+            </template>
+          </CKpiCard>
         </div>
 
         <!-- Summary: two columns (2/3 · 1/3). Each column is a flex stack so
@@ -342,7 +397,7 @@ const todayStr = computed(() =>
           <div class="summary-col summary-col--main">
             <DashboardAgendaCard :events="agendaEvents" />
 
-            <CCard v-if="currentBudget">
+            <CCard v-if="canViewBudget && currentBudget">
               <CSectionHeader>
                 <CHeading type="card">
                   {{ t('dashboard.budgetLabel', { exercice: currentBudget.fiscal_year }) }}
@@ -472,7 +527,7 @@ const todayStr = computed(() =>
           <!-- Colonne latérale (1/3) -->
           <div class="summary-col">
             <!-- Informations résidence : contacts syndic + conseil syndical -->
-            <CCard>
+            <CCard v-if="canViewGovernance">
               <CSectionHeader>
                 <CHeading type="card">
                   {{ t('dashboard.residenceInfo') }}
@@ -512,7 +567,7 @@ const todayStr = computed(() =>
             </CCard>
 
             <!-- Rappels contrats -->
-            <CCard>
+            <CCard v-if="canViewContracts">
               <CSectionHeader>
                 <CHeading type="card">
                   {{ t('dashboard.contractReminders') }}
@@ -569,7 +624,7 @@ const todayStr = computed(() =>
             </CCard>
 
             <!-- Tâches prioritaires -->
-            <CCard>
+            <CCard v-if="canViewTasks">
               <CSectionHeader>
                 <CHeading type="card">
                   {{ t('dashboard.priorityTasks') }}
@@ -629,7 +684,7 @@ const todayStr = computed(() =>
             </CCard>
 
             <!-- Résidents -->
-            <CCard>
+            <CCard v-if="canViewResidents">
               <CSectionHeader>
                 <CHeading type="card">
                   {{ t('dashboard.residentsTitle') }}
@@ -698,8 +753,10 @@ const todayStr = computed(() =>
 .hero-alert div span  { font-size: var(--text-2xs); opacity: 0.85; }
 
 /* ── KPI ──────────────────────────────────────────────────────────── */
-.kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-4); }
-@media (max-width: 1100px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+/* auto-fit : le nombre de KPI visibles dépend des rôles — les pistes
+   vides se replient au lieu de laisser des colonnes mortes. */
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--space-4); }
+@media (max-width: 1100px) { .kpi-grid { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); } }
 
 .kpi-prog { height: 3px; border-radius: var(--radius-full); background: var(--color-surface-container-high); overflow: hidden; margin-top: var(--space-3); }
 .kpi-prog__fill { height: 100%; border-radius: var(--radius-full); transition: width 0.8s cubic-bezier(0.34, 1.3, 0.64, 1); }
@@ -790,4 +847,3 @@ const todayStr = computed(() =>
 .consultation-title { font-size: var(--text-md); font-weight: var(--fw-medium); color: var(--color-on-surface); }
 .consultation-legal { font-size: var(--text-2xs); color: var(--color-on-surface-variant); }
 </style>
-
