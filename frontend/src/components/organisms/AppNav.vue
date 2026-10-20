@@ -247,7 +247,7 @@ watch(() => route.path, closeDrawer)
       to="/profile"
       class="c-bottom-nav__item c-bottom-nav__item--profile"
       :class="{ 'c-bottom-nav__item--active': route.path.startsWith('/profile') }"
-      :aria-label="t('nav.account')"
+      :aria-label="auth.user?.first_name ?? t('nav.account')"
     >
       <div
         class="c-bottom-nav__avatar"
@@ -255,7 +255,7 @@ watch(() => route.path, closeDrawer)
       >
         {{ auth.user?.first_name?.[0] }}{{ auth.user?.last_name?.[0] }}
       </div>
-      <span class="c-bottom-nav__label">{{ t('nav.account') }}</span>
+      <span class="c-bottom-nav__label">{{ auth.user?.first_name ?? t('nav.account') }}</span>
     </router-link>
   </nav>
 
