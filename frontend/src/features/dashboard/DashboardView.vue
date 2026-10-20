@@ -16,11 +16,11 @@ import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import DashboardAgendaCard from './DashboardAgendaCard.vue'
 import {
   buildingApi, budgetApi, calendarApi, consultationsApi, contractsApi,
-  meetingsApi, reportsApi, tasksApi,
+  governanceApi, meetingsApi, reportsApi, tasksApi,
 } from '@/api'
 import type {
   Budget, BudgetLine, BuildingStats, CalendarEvent, Consultation, ContractReminder,
-  LevyCall, Meeting, Report, Task, TaskPriority, VendorContract,
+  GovernanceMandate, LevyCall, Meeting, Report, Task, TaskPriority, VendorContract,
 } from '@/types/domain'
 
 const { t } = useI18n()
@@ -38,6 +38,7 @@ const reports = ref<Report[]>([])
 const contracts = ref<VendorContract[]>([])
 const rawReminders = ref<ContractReminder[]>([])
 const rawConsultations = ref<Consultation[]>([])
+const governanceMandates = ref<GovernanceMandate[]>([])
 const agendaEvents = ref<CalendarEvent[]>([])
 
 // ── Load data ─────────────────────────────────────────────────────
@@ -56,7 +57,7 @@ function isoInDays(days: number): string {
 }
 
 async function loadData() {
-  const [statsRes, budgetsRes, meetingsRes, tasksRes, reportsRes, contractsRes, remindersRes, consultationsRes, agendaRes] =
+  const [statsRes, budgetsRes, meetingsRes, tasksRes, reportsRes, contractsRes, remindersRes, consultationsRes, governanceRes, agendaRes] =
     await Promise.allSettled([
       buildingApi.stats(),
       budgetApi.list(),
@@ -66,6 +67,7 @@ async function loadData() {
       contractsApi.list(),
       contractsApi.listAllReminders(),
       consultationsApi.list(),
+      governanceApi.list(),
       calendarApi.events(todayIso(), isoInDays(30)),
     ])
 
@@ -79,6 +81,7 @@ async function loadData() {
   contracts.value = valueOr(contractsRes, [])
   rawReminders.value = valueOr(remindersRes, [])
   rawConsultations.value = valueOr(consultationsRes, { consultations: [] }).consultations
+  governanceMandates.value = valueOr(governanceRes, [])
   agendaEvents.value = valueOr(agendaRes, [])
 
   const budgets = valueOr(budgetsRes, [])
@@ -116,6 +119,24 @@ const reminders = computed(() =>
 const consultations = computed(() =>
   rawConsultations.value.filter(c => c.status === 'open'),
 )
+
+// Active governance mandates — syndic first, then council president, then members.
+const governanceContacts = computed(() => {
+  const today = todayIso()
+  const roleOrder: Record<string, number> = { syndic: 0, council_president: 1, council_member: 2 }
+  return governanceMandates.value
+    .filter(m => !m.end_date || m.end_date >= today)
+    .sort((a, b) => (roleOrder[a.role] ?? 9) - (roleOrder[b.role] ?? 9))
+})
+
+function contactInitials(name: string): string {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map(part => part[0]?.toUpperCase() ?? '')
+    .join('')
+}
 
 const overdueLevies = computed(() => levies.value.filter(l => l.status === 'overdue'))
 const nextMeeting = computed(() =>
@@ -314,80 +335,14 @@ const todayStr = computed(() =>
           </CKpiCard>
         </div>
 
-        <!-- Summary grid: 3 columns on desktop, 1 column on mobile.
-             Agenda, budget and consultation are the wide cards (2 columns, starting at the first one). -->
+        <!-- Summary: two columns (2/3 · 1/3). Each column is a flex stack so
+             cards take all available vertical space without leaving gaps. -->
         <div class="summary-grid">
-          <!-- Agenda (wide) -->
-          <div class="summary-wide">
+          <!-- Colonne principale (2/3) -->
+          <div class="summary-col summary-col--main">
             <DashboardAgendaCard :events="agendaEvents" />
-          </div>
 
-          <!-- Priority tasks -->
-          <CCard>
-            <CSectionHeader>
-              <CHeading type="card">
-                {{ t('dashboard.priorityTasks') }}
-              </CHeading>
-              <p class="body-sm text-on-surface-variant">
-                {{ t('dashboard.taskCount', { count: priorityTasks.length }) }}
-              </p>
-              <template #actions>
-                <CSectionLink to="/tasks">
-                  {{ t('dashboard.allTasks') }}
-                </CSectionLink>
-              </template>
-            </CSectionHeader>
-            <div class="task-list">
-              <div
-                v-for="task in priorityTasks"
-                :key="task.id"
-                class="task-item"
-              >
-                <div
-                  :class="['task-prio', `task-prio--${task.priority}`]"
-                  aria-hidden="true"
-                ></div>
-                <div class="task-body">
-                  <p class="task-title">
-                    {{ task.title }}
-                  </p>
-                  <div class="task-meta">
-                    <span class="task-date">{{ formatRelative(task.created_at) }}</span>
-                  </div>
-                </div>
-                <CBadge
-                  :variant="statusBadgeVariant(task.status)"
-                  class="badge-xs"
-                >
-                  {{ t(`tasks.statuses.${task.status}`) }}
-                </CBadge>
-              </div>
-              <div
-                v-if="!priorityTasks.length"
-                class="py-8 text-center text-md text-on-surface-variant"
-              >
-                {{ t('dashboard.noTasks') }}
-              </div>
-            </div>
-            <div class="card-footer">
-              <RouterLink to="/tasks">
-                <CBtn
-                  variant="primary"
-                  size="sm"
-                  style="width:100%;justify-content:center"
-                  :icon="CIconPlus"
-                  :title="t('dashboard.newTask')"
-                />
-              </RouterLink>
-            </div>
-          </CCard>
-
-          <!-- Budget (wide) -->
-          <div
-            v-if="currentBudget"
-            class="summary-wide"
-          >
-            <CCard>
+            <CCard v-if="currentBudget">
               <CSectionHeader>
                 <CHeading type="card">
                   {{ t('dashboard.budgetLabel', { exercice: currentBudget.fiscal_year }) }}
@@ -431,179 +386,289 @@ const todayStr = computed(() =>
                 </div>
               </div>
             </CCard>
+
+            <!-- Signalements + Consultation côte à côte -->
+            <div class="summary-duo">
+              <CCard>
+                <CSectionHeader>
+                  <CHeading type="card">
+                    {{ t('dashboard.reportsTitle') }}
+                  </CHeading>
+                  <p class="body-sm text-on-surface-variant">
+                    {{ t('dashboard.openCount', { count: openReports.length }) }}
+                  </p>
+                  <template #actions>
+                    <CSectionLink to="/reports">
+                      {{ t('dashboard.seeReports') }}
+                    </CSectionLink>
+                  </template>
+                </CSectionHeader>
+                <div class="signal-list">
+                  <div
+                    v-for="r in openReports"
+                    :key="r.id"
+                    class="signal-item"
+                  >
+                    <div class="signal-body">
+                      <p class="signal-title">
+                        {{ r.title }}
+                      </p>
+                      <p class="signal-meta">
+                        {{ formatDate(r.created_at) }}
+                      </p>
+                    </div>
+                    <CBadge
+                      :variant="statusBadgeVariant(r.status)"
+                      class="badge-xs"
+                      dot
+                    >
+                      {{ t(`reports.statuses.${r.status}`) }}
+                    </CBadge>
+                  </div>
+                  <div
+                    v-if="!openReports.length"
+                    class="py-8 text-center text-md text-on-surface-variant"
+                  >
+                    {{ t('dashboard.noReports') }}
+                  </div>
+                </div>
+                <div class="card-footer">
+                  <RouterLink to="/reports">
+                    <CBtn
+                      variant="primary"
+                      size="sm"
+                      style="width:100%;justify-content:center"
+                      :icon="CIconPlus"
+                      :title="t('dashboard.newReport')"
+                    />
+                  </RouterLink>
+                </div>
+              </CCard>
+
+              <CCard v-if="consultations.length">
+                <CSectionHeader>
+                  <CHeading type="card">
+                    {{ t('dashboard.activeConsultation') }}
+                  </CHeading>
+                  <p
+                    v-if="consultations[0].closed_at"
+                    class="body-sm text-on-surface-variant"
+                  >
+                    {{ t('dashboard.closesPrefix') }} {{ formatRelative(consultations[0].closed_at) }}
+                  </p>
+                </CSectionHeader>
+                <div class="consultation-body">
+                  <p class="consultation-title">
+                    {{ consultations[0].title }}
+                  </p>
+                  <p class="consultation-legal">
+                    ⚠️ {{ t('consultations.informalNote') }}
+                  </p>
+                </div>
+              </CCard>
+            </div>
           </div>
 
-          <!-- Contract reminders -->
-          <CCard>
-            <CSectionHeader>
-              <CHeading type="card">
-                {{ t('dashboard.contractReminders') }}
-              </CHeading>
-              <p class="body-sm text-on-surface-variant">
-                {{ t('dashboard.nextDeadlines') }}
-              </p>
-              <template #actions>
-                <CSectionLink to="/contracts">
-                  {{ t('dashboard.contracts') }}
-                </CSectionLink>
-              </template>
-            </CSectionHeader>
-            <div class="reminder-list">
-              <div
-                v-for="reminder in reminders"
-                :key="reminder.id"
-                class="reminder-item"
-              >
-                <div
-                  :class="[
-                    'reminder-icon',
-                    {
-                      'tone--err': reminderUrgency(reminder.reminder_date) === 'high',
-                      'tone--warn': reminderUrgency(reminder.reminder_date) === 'medium',
-                      'tone--muted': reminderUrgency(reminder.reminder_date) === 'low',
-                    },
-                  ]"
-                >
-                  <CIconFile />
-                </div>
-                <div class="reminder-body">
-                  <p class="reminder-title">
-                    {{ reminder.contract?.vendor_name }}
-                  </p>
-                  <p class="reminder-sub">
-                    {{ t(`contracts.reminderTypes.${reminder.reminder_type}`) }}
-                  </p>
-                </div>
-                <span
-                  class="reminder-date"
-                  :class="`reminder-date--${reminderUrgency(reminder.reminder_date)}`"
-                >
-                  {{ formatDate(reminder.reminder_date) }}
-                </span>
-              </div>
-              <div
-                v-if="!reminders?.length"
-                class="py-8 text-center text-md text-on-surface-variant"
-              >
-                {{ t('dashboard.noReminders') }}
-              </div>
-            </div>
-          </CCard>
-
-          <!-- Reports -->
-          <CCard>
-            <CSectionHeader>
-              <CHeading type="card">
-                {{ t('dashboard.reportsTitle') }}
-              </CHeading>
-              <p class="body-sm text-on-surface-variant">
-                {{ t('dashboard.openCount', { count: openReports.length }) }}
-              </p>
-              <template #actions>
-                <CSectionLink to="/reports">
-                  {{ t('dashboard.seeReports') }}
-                </CSectionLink>
-              </template>
-            </CSectionHeader>
-            <div class="signal-list">
-              <div
-                v-for="r in openReports"
-                :key="r.id"
-                class="signal-item"
-              >
-                <div class="signal-body">
-                  <p class="signal-title">
-                    {{ r.title }}
-                  </p>
-                  <p class="signal-meta">
-                    {{ formatDate(r.created_at) }}
-                  </p>
-                </div>
-                <CBadge
-                  :variant="statusBadgeVariant(r.status)"
-                  class="badge-xs"
-                  dot
-                >
-                  {{ t(`reports.statuses.${r.status}`) }}
-                </CBadge>
-              </div>
-              <div
-                v-if="!openReports.length"
-                class="py-8 text-center text-md text-on-surface-variant"
-              >
-                {{ t('dashboard.noReports') }}
-              </div>
-            </div>
-          </CCard>
-
-          <!-- Residents -->
-          <CCard>
-            <CSectionHeader>
-              <CHeading type="card">
-                {{ t('dashboard.residentsTitle') }}
-              </CHeading>
-              <template #actions>
-                <CSectionLink to="/residents">
-                  {{ t('dashboard.seeResidents') }}
-                </CSectionLink>
-              </template>
-            </CSectionHeader>
-            <div class="residents-grid">
-              <div class="res-stat">
-                <p class="res-stat-val">
-                  {{ stats?.nb_lots }}
-                </p><p class="res-stat-label">
-                  {{ t('dashboard.lotsLabel') }}
-                </p>
-              </div>
-              <div class="res-stat">
-                <p class="res-stat-val">
-                  {{ levies.filter(l => l.status === 'paid').length }}
-                </p><p class="res-stat-label">
-                  {{ t('dashboard.paidLabel') }}
-                </p>
-              </div>
-              <div class="res-stat res-stat--ok">
-                <p class="res-stat-val">
-                  {{ collectionRate }}%
-                </p><p class="res-stat-label">
-                  {{ t('dashboard.recoveryLabel') }}
-                </p>
-              </div>
-              <div class="res-stat res-stat--err">
-                <p class="res-stat-val">
-                  {{ overdueLevies.length }}
-                </p><p class="res-stat-label">
-                  {{ t('dashboard.lateLabel') }}
-                </p>
-              </div>
-            </div>
-          </CCard>
-
-          <!-- Consultation (wide) -->
-          <div
-            v-if="consultations.length"
-            class="summary-wide"
-          >
+          <!-- Colonne latérale (1/3) -->
+          <div class="summary-col">
+            <!-- Informations résidence : contacts syndic + conseil syndical -->
             <CCard>
               <CSectionHeader>
                 <CHeading type="card">
-                  {{ t('dashboard.activeConsultation') }}
+                  {{ t('dashboard.residenceInfo') }}
                 </CHeading>
-                <p
-                  v-if="consultations[0].closed_at"
-                  class="body-sm text-on-surface-variant"
-                >
-                  {{ t('dashboard.closesPrefix') }} {{ formatRelative(consultations[0].closed_at) }}
+                <p class="body-sm text-on-surface-variant">
+                  {{ t('dashboard.contacts') }}
                 </p>
               </CSectionHeader>
-              <div class="consultation-body">
-                <p class="consultation-title">
-                  {{ consultations[0].title }}
+              <div class="contact-list">
+                <div
+                  v-for="m in governanceContacts"
+                  :key="m.id"
+                  class="contact-item"
+                >
+                  <div
+                    class="contact-avatar"
+                    aria-hidden="true"
+                  >
+                    {{ contactInitials(m.holder_name) }}
+                  </div>
+                  <div class="contact-body">
+                    <p class="contact-name">
+                      {{ m.holder_name }}
+                    </p>
+                    <p class="contact-role">
+                      {{ t(`registers.governance.roles.${m.role}`) }}
+                    </p>
+                  </div>
+                </div>
+                <div
+                  v-if="!governanceContacts.length"
+                  class="py-8 text-center text-md text-on-surface-variant"
+                >
+                  {{ t('dashboard.noContacts') }}
+                </div>
+              </div>
+            </CCard>
+
+            <!-- Rappels contrats -->
+            <CCard>
+              <CSectionHeader>
+                <CHeading type="card">
+                  {{ t('dashboard.contractReminders') }}
+                </CHeading>
+                <p class="body-sm text-on-surface-variant">
+                  {{ t('dashboard.nextDeadlines') }}
                 </p>
-                <p class="consultation-legal">
-                  ⚠️ {{ t('consultations.informalNote') }}
+                <template #actions>
+                  <CSectionLink to="/contracts">
+                    {{ t('dashboard.contracts') }}
+                  </CSectionLink>
+                </template>
+              </CSectionHeader>
+              <div class="reminder-list">
+                <div
+                  v-for="reminder in reminders"
+                  :key="reminder.id"
+                  class="reminder-item"
+                >
+                  <div
+                    :class="[
+                      'reminder-icon',
+                      {
+                        'tone--err': reminderUrgency(reminder.reminder_date) === 'high',
+                        'tone--warn': reminderUrgency(reminder.reminder_date) === 'medium',
+                        'tone--muted': reminderUrgency(reminder.reminder_date) === 'low',
+                      },
+                    ]"
+                  >
+                    <CIconFile />
+                  </div>
+                  <div class="reminder-body">
+                    <p class="reminder-title">
+                      {{ reminder.contract?.vendor_name }}
+                    </p>
+                    <p class="reminder-sub">
+                      {{ t(`contracts.reminderTypes.${reminder.reminder_type}`) }}
+                    </p>
+                  </div>
+                  <span
+                    class="reminder-date"
+                    :class="`reminder-date--${reminderUrgency(reminder.reminder_date)}`"
+                  >
+                    {{ formatDate(reminder.reminder_date) }}
+                  </span>
+                </div>
+                <div
+                  v-if="!reminders?.length"
+                  class="py-8 text-center text-md text-on-surface-variant"
+                >
+                  {{ t('dashboard.noReminders') }}
+                </div>
+              </div>
+            </CCard>
+
+            <!-- Tâches prioritaires -->
+            <CCard>
+              <CSectionHeader>
+                <CHeading type="card">
+                  {{ t('dashboard.priorityTasks') }}
+                </CHeading>
+                <p class="body-sm text-on-surface-variant">
+                  {{ t('dashboard.taskCount', { count: priorityTasks.length }) }}
                 </p>
+                <template #actions>
+                  <CSectionLink to="/tasks">
+                    {{ t('dashboard.allTasks') }}
+                  </CSectionLink>
+                </template>
+              </CSectionHeader>
+              <div class="task-list">
+                <div
+                  v-for="task in priorityTasks"
+                  :key="task.id"
+                  class="task-item"
+                >
+                  <div
+                    :class="['task-prio', `task-prio--${task.priority}`]"
+                    aria-hidden="true"
+                  ></div>
+                  <div class="task-body">
+                    <p class="task-title">
+                      {{ task.title }}
+                    </p>
+                    <div class="task-meta">
+                      <span class="task-date">{{ formatRelative(task.created_at) }}</span>
+                    </div>
+                  </div>
+                  <CBadge
+                    :variant="statusBadgeVariant(task.status)"
+                    class="badge-xs"
+                  >
+                    {{ t(`tasks.statuses.${task.status}`) }}
+                  </CBadge>
+                </div>
+                <div
+                  v-if="!priorityTasks.length"
+                  class="py-8 text-center text-md text-on-surface-variant"
+                >
+                  {{ t('dashboard.noTasks') }}
+                </div>
+              </div>
+              <div class="card-footer">
+                <RouterLink to="/tasks">
+                  <CBtn
+                    variant="primary"
+                    size="sm"
+                    style="width:100%;justify-content:center"
+                    :icon="CIconPlus"
+                    :title="t('dashboard.newTask')"
+                  />
+                </RouterLink>
+              </div>
+            </CCard>
+
+            <!-- Résidents -->
+            <CCard>
+              <CSectionHeader>
+                <CHeading type="card">
+                  {{ t('dashboard.residentsTitle') }}
+                </CHeading>
+                <template #actions>
+                  <CSectionLink to="/residents">
+                    {{ t('dashboard.seeResidents') }}
+                  </CSectionLink>
+                </template>
+              </CSectionHeader>
+              <div class="residents-grid">
+                <div class="res-stat">
+                  <p class="res-stat-val">
+                    {{ stats?.nb_lots }}
+                  </p><p class="res-stat-label">
+                    {{ t('dashboard.lotsLabel') }}
+                  </p>
+                </div>
+                <div class="res-stat">
+                  <p class="res-stat-val">
+                    {{ levies.filter(l => l.status === 'paid').length }}
+                  </p><p class="res-stat-label">
+                    {{ t('dashboard.paidLabel') }}
+                  </p>
+                </div>
+                <div class="res-stat res-stat--ok">
+                  <p class="res-stat-val">
+                    {{ collectionRate }}%
+                  </p><p class="res-stat-label">
+                    {{ t('dashboard.recoveryLabel') }}
+                  </p>
+                </div>
+                <div class="res-stat res-stat--err">
+                  <p class="res-stat-val">
+                    {{ overdueLevies.length }}
+                  </p><p class="res-stat-label">
+                    {{ t('dashboard.lateLabel') }}
+                  </p>
+                </div>
               </div>
             </CCard>
           </div>
@@ -643,24 +708,27 @@ const todayStr = computed(() =>
 .kpi-prog__fill--error   { background: var(--gradient-error); }
 .kpi-prog__fill--warning { background: var(--gradient-warning); }
 
-/* ── Summary grid ────────────────────────────────────────────────────
-   Base: 3 columns. Agenda, budget and consultation are the wide cards:
-   2 columns, starting at the first one. All other cards take 1 column.
-   Tracks use minmax(0, 1fr) instead of 1fr: a bare `1fr` track has an
-   `auto` minimum, so a card whose content cannot shrink (long mono
-   amounts, nowrap badges…) forces the track wider than the container
-   and overflows horizontally in single-column mode. */
-.summary-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-6); align-items: start; }
-.summary-grid > * { min-width: 0; }
-.summary-wide { grid-column: 1 / span 2; }
-@media (max-width: 1200px) { .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 768px) {
-  .summary-grid { grid-template-columns: minmax(0, 1fr); }
-  .summary-wide { grid-column: 1 / span 1; }
-}
+/* ── Summary layout ──────────────────────────────────────────────────
+   Two columns (2/3 · 1/3). Each column is a flex stack: cards flow
+   vertically without leaving empty grid cells (no row-based placement).
+   Tracks use minmax(0, 1fr) to keep shrinkable minimums (no overflow). */
+.summary-grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: var(--space-6); align-items: start; }
+.summary-col { display: flex; flex-direction: column; gap: var(--space-6); min-width: 0; }
+.summary-duo { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-6); }
+@media (max-width: 1100px) { .summary-grid { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 768px) { .summary-duo { grid-template-columns: minmax(0, 1fr); } }
 
 /* ── Badges ───────────────────────────────────────────────────────── */
 .badge-xs { font-size: var(--text-xs); }
+
+/* ── Contacts (résidence) ─────────────────────────────────────────── */
+.contact-list { display: flex; flex-direction: column; gap: var(--space-1); }
+.contact-item { display: flex; align-items: center; gap: 10px; padding: 8px var(--space-3); border-radius: var(--radius-xl); transition: background var(--transition-fast); }
+.contact-item:hover { background: var(--color-surface-container-low); }
+.contact-avatar { width: 32px; height: 32px; min-width: 32px; border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: var(--gradient-primary); color: white; font-size: var(--text-2xs); font-weight: var(--fw-semibold); letter-spacing: 0.02em; }
+.contact-body { flex: 1; min-width: 0; }
+.contact-name { font-size: var(--text-xs); font-weight: var(--fw-medium); color: var(--color-on-surface); }
+.contact-role  { font-size: var(--text-2xs); color: var(--color-on-surface-variant); margin-top: 1px; }
 
 /* ── Tasks ────────────────────────────────────────────────────────── */
 .task-list { display: flex; flex-direction: column; gap: var(--space-2); }
@@ -722,3 +790,4 @@ const todayStr = computed(() =>
 .consultation-title { font-size: var(--text-md); font-weight: var(--fw-medium); color: var(--color-on-surface); }
 .consultation-legal { font-size: var(--text-2xs); color: var(--color-on-surface-variant); }
 </style>
+

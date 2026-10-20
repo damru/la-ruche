@@ -289,7 +289,11 @@
     "progress": "Avancement",
     "openConsultation": "Consultation ouverte",
     "closesIn": "Clôture {relative}",
-    "seeResults": "Voir les résultats →"
+    "seeResults": "Voir les résultats →",
+    "residenceInfo": "Informations résidence",
+    "contacts": "Contacts",
+    "noContacts": "Aucun contact enregistré",
+    "newReport": "Nouveau signalement"
   },
   "meetings": {
     "title": "Assemblées générales",
