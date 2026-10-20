@@ -118,6 +118,25 @@ CREATE TYPE extraction_status AS ENUM (
     'pending', 'complete', 'failed'
 );
 
+-- EP-005-S06/S07: document categories (PRD Documents §4, LEGAL §3.4, §6.1-6.3)
+CREATE TYPE document_category AS ENUM (
+    'reglement_copropriete',
+    'edd',
+    'pv_ag',
+    'comptabilite',
+    'appel_fonds',
+    'budget',
+    'contrat',
+    'diagnostic',
+    'sinistre',
+    'tache',
+    'libre',
+    'signalement',
+    'carnet_entretien',
+    'prestataire',
+    'autre'
+);
+
 -- allocation_key_type added by migration 0003
 CREATE TYPE allocation_key_type AS ENUM ('general', 'special');
 
@@ -226,7 +245,7 @@ CREATE UNIQUE INDEX uak_unique_active
 
 CREATE TABLE user_account (
     id                  UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    email               TEXT NOT NULL UNIQUE,
+    email               TEXT,                       -- nullable (US-GP-008: residents without email)
     last_name           TEXT NOT NULL,
     first_name          TEXT NOT NULL,
     phone               TEXT,
@@ -248,6 +267,7 @@ CREATE TABLE user_token (
     invited_role    user_role,                   -- role to assign on invitation
     expires_at      TIMESTAMPTZ NOT NULL,
     used_at         TIMESTAMPTZ,
+    unit_id         UUID REFERENCES unit(id),       -- tenant invitation → unit_owner on acceptance (EP-002-S03)
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -279,6 +299,9 @@ CREATE TABLE unit_owner (
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- A unit has at most one current owner (end_date IS NULL)
+CREATE UNIQUE INDEX uq_unit_owner_current ON unit_owner(unit_id) WHERE end_date IS NULL;
+
 -- ============================================================
 -- DOCUMENTS
 -- ============================================================
@@ -293,12 +316,33 @@ CREATE TABLE document (
     size_bytes          BIGINT NOT NULL,
     visible_to_roles    user_role[] NOT NULL,    -- access control
     uploaded_by         UUID REFERENCES user_account(id),
+    -- Version chain (EP-005-S06, LEGAL §1.2)
+    category            document_category NOT NULL DEFAULT 'autre',
+    supersedes_id       UUID REFERENCES document(id),   -- linear version chain
+    is_current          BOOLEAN NOT NULL DEFAULT TRUE,  -- current version of its category
+    -- Soft delete (EP-005-S08): row + S3 object kept until legal retention elapses
+    deleted_at          TIMESTAMPTZ,
+    deleted_by          UUID REFERENCES user_account(id),
+    deletion_reason     TEXT,
+    replacement_reason  TEXT,
     -- OCR/NLP (post-MVP)
     extraction_status   extraction_status,
     extraction_data     JSONB,
     extraction_at       TIMESTAMPTZ,
     created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Linear version chain: a version has at most one successor (EP-005-S06)
+CREATE UNIQUE INDEX document_supersedes_unique
+    ON document (supersedes_id) WHERE supersedes_id IS NOT NULL;
+
+-- At most one current version per founding category per building (EP-005-S06)
+CREATE UNIQUE INDEX document_current_founding_unique
+    ON document (building_id, category)
+    WHERE is_current AND category IN ('reglement_copropriete', 'edd');
+
+-- Soft-deleted documents per building (EP-005-S08)
+CREATE INDEX document_deleted_idx ON document (building_id) WHERE deleted_at IS NOT NULL;
 
 -- ============================================================
 -- GENERAL MEETING (assemblee_generale)
@@ -385,6 +429,38 @@ CREATE TABLE vote (
 );
 
 -- ============================================================
+-- ACCOUNTING CODES (plan comptable copropriété, arrêté 14/03/2005 — EP-004-S09)
+-- Read-only reference table seeded with common codes.
+-- budget_line.account_code is optional (required only for legal document generation).
+-- ============================================================
+
+CREATE TABLE accounting_code (
+    code     TEXT PRIMARY KEY,
+    label    TEXT NOT NULL,
+    category TEXT NOT NULL DEFAULT 'general'
+);
+
+INSERT INTO accounting_code (code, label, category) VALUES
+('602',   'Achats de fournitures non stockées',                   'charges'),
+('6152',  'Entretien et réparations des biens immobiliers',       'charges'),
+('6156',  'Entretien et réparations des biens mobiliers',         'charges'),
+('6161',  'Primes d''assurance — multirisque immeuble',           'assurance'),
+('6163',  'Primes d''assurance — responsabilité civile',          'assurance'),
+('6226',  'Honoraires syndic',                                    'honoraires'),
+('6228',  'Rémunérations d''intermédiaires divers',               'honoraires'),
+('6231',  'Annonces et insertions légales',                       'frais'),
+('6251',  'Déplacements et réceptions',                           'frais'),
+('6270',  'Services bancaires',                                   'frais'),
+('6282',  'Gardiennage et surveillance',                          'charges'),
+('6311',  'Taxe foncière',                                        'taxes'),
+('6412',  'Salaires et traitements',                              'personnel'),
+('6450',  'Charges patronales',                                   'personnel'),
+('7320',  'Provisions pour charges — copropriétaires',            'produits'),
+('7321',  'Provisions pour travaux — copropriétaires',            'produits'),
+('10200', 'Provisions pour charges de copropriété',               'fonds'),
+('10300', 'Fonds de travaux (art. 14-2-1 loi 1965)',              'fonds');
+
+-- ============================================================
 -- BUDGET & LEVY CALLS (ADR-009: accounting immutability)
 -- ============================================================
 
@@ -394,10 +470,30 @@ CREATE TABLE budget (
     fiscal_year         INTEGER NOT NULL,
     status              budget_status NOT NULL DEFAULT 'draft',
     approval_meeting_id UUID REFERENCES general_meeting(id),
+    parent_budget_id    UUID REFERENCES budget (id),  -- rectificatif chain (EP-018-S06, ADR-009)
     created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    UNIQUE (building_id, fiscal_year)
+    updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- One root budget per (building, fiscal year); rectificatifs chain via parent_budget_id
+CREATE UNIQUE INDEX budget_unique_root_per_year
+    ON budget (building_id, fiscal_year)
+    WHERE parent_budget_id IS NULL;
+
+-- At most one rectificatif in preparation per amended budget (AC-BC-009-C)
+CREATE UNIQUE INDEX budget_unique_pending_rectificatif
+    ON budget (parent_budget_id)
+    WHERE parent_budget_id IS NOT NULL AND status = 'draft';
+
+-- At most one budget in force per fiscal year (AC-BC-009-C)
+CREATE UNIQUE INDEX budget_unique_approved_per_year
+    ON budget (building_id, fiscal_year)
+    WHERE status = 'approved';
+
+-- Walking a rectificatif chain (GET /budgets/{id}/rectificatifs)
+CREATE INDEX budget_parent_budget_id_idx
+    ON budget (parent_budget_id)
+    WHERE parent_budget_id IS NOT NULL;
 
 CREATE TABLE budget_line (
     id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -406,8 +502,23 @@ CREATE TABLE budget_line (
     key_id          UUID NOT NULL REFERENCES allocation_key(id),
     budgeted_amount NUMERIC(12, 2) NOT NULL,
     actual_amount   NUMERIC(12, 2),
-    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    account_code    TEXT REFERENCES accounting_code(code),  -- optional (EP-004-S09)
+    -- Temporal versioning (EP-018-S06, ADR-009): valid_to IS NULL = version in effect
+    valid_from      DATE NOT NULL DEFAULT CURRENT_DATE,
+    valid_to        DATE,
+    rectificatif_version INTEGER,                    -- NULL = root line
+    version        INTEGER NOT NULL DEFAULT 1,       -- optimistic-locking metadata
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT budget_line_valid_period
+        CHECK (valid_to IS NULL OR valid_to >= valid_from),
+    CONSTRAINT budget_line_rectificatif_version_positive
+        CHECK (rectificatif_version IS NULL OR rectificatif_version >= 1)
 );
+
+-- At most one version of a logical line (budget_id, key_id, label) in effect
+CREATE UNIQUE INDEX budget_line_unique_active
+    ON budget_line (budget_id, key_id, label)
+    WHERE valid_to IS NULL;
 
 -- Header record per generation batch (ADR-009)
 CREATE TABLE levy_call (
@@ -417,7 +528,9 @@ CREATE TABLE levy_call (
     due_date          DATE NOT NULL,
     charge_amount     NUMERIC(12, 2) NOT NULL DEFAULT 0,
     works_fund_amount NUMERIC(12, 2) NOT NULL DEFAULT 0,
-    issued_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    status            levy_status NOT NULL DEFAULT 'draft',   -- EP-018-S03: draft → issued on issue
+    issued_at         TIMESTAMPTZ DEFAULT NOW(),              -- NULL while draft, set on issue
+    corrects_levy_call_id UUID REFERENCES levy_call(id),      -- credit note (EP-018-S07)
     created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -487,10 +600,19 @@ CREATE TABLE vendor_contract (
     auto_renewal        BOOLEAN NOT NULL DEFAULT FALSE,
     notice_days         INTEGER,                -- termination notice in days
     status              contract_status NOT NULL DEFAULT 'active',
+    predecessor_id      UUID REFERENCES vendor_contract(id),  -- amendment chain (EP-018-S05)
     created_by          UUID NOT NULL REFERENCES user_account(id),
     created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Linear amendment chain: a predecessor has at most one activated successor (EP-018-S05)
+CREATE UNIQUE INDEX vendor_contract_predecessor_unique
+    ON vendor_contract (predecessor_id)
+    WHERE predecessor_id IS NOT NULL;
+
+CREATE INDEX vendor_contract_predecessor_idx
+    ON vendor_contract (predecessor_id);
 
 CREATE TABLE contract_document (
     contract_id     UUID NOT NULL REFERENCES vendor_contract(id),
@@ -633,6 +755,7 @@ CREATE TABLE maintenance_log (
     contract_id         UUID REFERENCES vendor_contract(id),
     task_id             UUID REFERENCES task(id) ON DELETE SET NULL,
     source              log_source NOT NULL DEFAULT 'manual',
+    corrects_entry_id   UUID REFERENCES maintenance_log(id),  -- append-only correction (EP-018-S07)
     created_by          UUID NOT NULL REFERENCES user_account(id),
     created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -716,6 +839,11 @@ CREATE TABLE consultation_response_choice (
 -- ============================================================
 -- INDEXES
 -- ============================================================
+
+-- Emails unique when present (US-GP-008: residents without email allowed)
+CREATE UNIQUE INDEX user_account_email_unique
+    ON user_account (email)
+    WHERE email IS NOT NULL;
 
 -- Access by building (most frequent queries)
 CREATE INDEX idx_unit_building           ON unit(building_id);
@@ -831,37 +959,11 @@ CREATE TRIGGER trg_works_fund_updated_at
     BEFORE UPDATE ON works_fund
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
--- EP-002-S03: Add unit_id to user_token for tenant invitation association (AC-GP-002-H).
--- A tenant invitation may be linked to a specific unit so that on acceptance the
--- unit_owner record is created automatically.
-ALTER TABLE user_token ADD COLUMN unit_id UUID REFERENCES unit(id);
-
--- US-GP-008: allow creating residents without email (no_access state).
--- A syndic can register a resident by name+role before having their email address.
--- The NOT NULL constraint is dropped and replaced by a partial unique index so that
--- multiple NULL values are allowed while duplicate emails are still rejected.
-ALTER TABLE user_account ALTER COLUMN email DROP NOT NULL;
-ALTER TABLE user_account DROP CONSTRAINT IF EXISTS user_account_email_key;
-CREATE UNIQUE INDEX IF NOT EXISTS user_account_email_unique
-    ON user_account (email)
-    WHERE email IS NOT NULL;
-
--- Remove duplicate current-owner rows that may have been created without a uniqueness guard,
--- keeping the most recently created row per unit.
-DELETE FROM unit_owner
-WHERE id NOT IN (
-    SELECT DISTINCT ON (unit_id) id
-    FROM unit_owner
-    WHERE end_date IS NULL
-    ORDER BY unit_id, created_at DESC
-)
-AND end_date IS NULL;
-
--- Guarantee at the DB level that a unit has at most one current owner (end_date IS NULL).
-CREATE UNIQUE INDEX uq_unit_owner_current ON unit_owner(unit_id) WHERE end_date IS NULL;
-
--- EP-018-S02: Append-only audit log for accounting immutability (ADR-009)
+-- ============================================================
+-- AUDIT LOG (append-only — EP-018-S02, ADR-009)
 -- Conservation 10 ans (art. L123-22 Code de commerce)
+-- ============================================================
+
 CREATE TABLE audit_log (
     id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     building_id  UUID NOT NULL REFERENCES building(id),
@@ -877,109 +979,11 @@ CREATE TABLE audit_log (
 CREATE INDEX idx_audit_log_entity ON audit_log(entity_type, entity_id);
 CREATE INDEX idx_audit_log_building ON audit_log(building_id, changed_at DESC);
 
--- EP-018-S07: Pattern C — append-only corrections
---
--- 1. levy_call: credit notes reference the levy_call they compensate
--- 2. maintenance_log: corrections reference the entry they supersede
---    Manual entries become immutable; corrections are the only way to amend them.
-
--- Credit note model for levy_call
-ALTER TABLE levy_call
-    ADD COLUMN corrects_levy_call_id UUID REFERENCES levy_call(id);
-
--- Correction model for maintenance_log
-ALTER TABLE maintenance_log
-    ADD COLUMN corrects_entry_id UUID REFERENCES maintenance_log(id);
-
--- Manual maintenance_log entries are now immutable (append-only corrections only).
--- Re-use the same trigger function pattern as levy_call_immutable.
-CREATE OR REPLACE FUNCTION trg_maintenance_log_manual_immutable()
-RETURNS trigger LANGUAGE plpgsql AS $$
-BEGIN
-    -- Automatic entries: already guarded at application layer (EP-018-S04).
-    -- Manual entries: immutable after creation; use POST /logbook/{id}/correction instead.
-    IF OLD.source = 'manual' THEN
-        RAISE EXCEPTION 'maintenance_log % is immutable (source=manual); create a correction instead', OLD.id;
-    END IF;
-    IF TG_OP = 'DELETE' THEN RETURN OLD; END IF;
-    RETURN NEW;
-END;
-$$;
-
-CREATE TRIGGER maintenance_log_immutable
-    BEFORE UPDATE OR DELETE ON maintenance_log
-    FOR EACH ROW EXECUTE FUNCTION trg_maintenance_log_manual_immutable();
-
--- EP-004-S09: Plan comptable copropriété (arrêté 14/03/2005)
---
--- Read-only reference table seeded with common codes.
--- budget_line.account_code is optional (required only for legal document generation).
-
-CREATE TABLE accounting_code (
-    code     TEXT PRIMARY KEY,
-    label    TEXT NOT NULL,
-    category TEXT NOT NULL DEFAULT 'general'
-);
-
-INSERT INTO accounting_code (code, label, category) VALUES
-('602',   'Achats de fournitures non stockées',                   'charges'),
-('6152',  'Entretien et réparations des biens immobiliers',       'charges'),
-('6156',  'Entretien et réparations des biens mobiliers',         'charges'),
-('6161',  'Primes d''assurance — multirisque immeuble',           'assurance'),
-('6163',  'Primes d''assurance — responsabilité civile',          'assurance'),
-('6226',  'Honoraires syndic',                                    'honoraires'),
-('6228',  'Rémunérations d''intermédiaires divers',               'honoraires'),
-('6231',  'Annonces et insertions légales',                       'frais'),
-('6251',  'Déplacements et réceptions',                           'frais'),
-('6270',  'Services bancaires',                                   'frais'),
-('6282',  'Gardiennage et surveillance',                          'charges'),
-('6311',  'Taxe foncière',                                        'taxes'),
-('6412',  'Salaires et traitements',                              'personnel'),
-('6450',  'Charges patronales',                                   'personnel'),
-('7320',  'Provisions pour charges — copropriétaires',            'produits'),
-('7321',  'Provisions pour travaux — copropriétaires',            'produits'),
-('10200', 'Provisions pour charges de copropriété',               'fonds'),
-('10300', 'Fonds de travaux (art. 14-2-1 loi 1965)',              'fonds');
-
-ALTER TABLE budget_line
-    ADD COLUMN account_code TEXT REFERENCES accounting_code(code);
-
--- EP-018-S03: Pattern A — levy_call draft/issue lifecycle (part 2: status column)
---
--- Split from 0030: the 'draft' enum value added there is now committed in a
--- prior transaction, so it is safe to use in column defaults here.
---
--- 1. Add status column to levy_call (default 'draft' for new calls)
--- 2. Make issued_at nullable (NULL while draft, set on issue)
--- 3. Backfill existing rows: all pre-migration calls were already issued
--- 4. PG trigger: defensive guard that mirrors domain/immutability.rs
-
-ALTER TABLE levy_call
-    ADD COLUMN status levy_status NOT NULL DEFAULT 'draft',
-    ALTER COLUMN issued_at DROP NOT NULL;
-
--- All pre-migration rows were created in 'issued' state (no draft concept existed)
-UPDATE levy_call SET status = 'issued';
-
-CREATE OR REPLACE FUNCTION trg_levy_call_immutable()
-RETURNS trigger LANGUAGE plpgsql AS $$
-BEGIN
-    IF OLD.status <> 'draft' THEN
-        RAISE EXCEPTION 'levy_call % is frozen (status=%)', OLD.id, OLD.status;
-    END IF;
-    IF TG_OP = 'DELETE' THEN RETURN OLD; END IF;
-    RETURN NEW;
-END;
-$$;
-
-CREATE TRIGGER levy_call_immutable
-    BEFORE UPDATE OR DELETE ON levy_call
-    FOR EACH ROW EXECUTE FUNCTION trg_levy_call_immutable();
-
--- EP-002-S10: Judicial proceedings register (LEGAL.md §7.1, §10)
---
+-- ============================================================
+-- JUDICIAL PROCEEDINGS (LEGAL.md §7.1, §10 — EP-002-S10)
 -- Tracks proceedings involving the syndicat (as claimant or defendant).
 -- Feeds the état daté (EP-002-S06): ongoing proceedings of a building.
+-- ============================================================
 
 CREATE TYPE judicial_proceeding_type AS ENUM (
     'debt_recovery',   -- recouvrement de charges (art. 19-2)
@@ -1026,11 +1030,12 @@ CREATE TRIGGER trg_judicial_proceeding_updated_at
     BEFORE UPDATE ON judicial_proceeding
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
--- EP-002-S11: Governance register (LEGAL.md §1.7, §1.8)
---
+-- ============================================================
+-- GOVERNANCE REGISTER (LEGAL.md §1.7, §1.8 — EP-002-S11)
 -- Register of the syndic in office and council members with mandate periods,
 -- to audit the separation of organs (art. 17 / 21 loi 1965).
 -- Invariant: at most one active syndic mandate per building at any time.
+-- ============================================================
 
 CREATE TYPE governance_role AS ENUM (
     'syndic',
@@ -1043,8 +1048,7 @@ CREATE TABLE governance_mandate (
     building_id   UUID NOT NULL REFERENCES building(id),
     role          governance_role NOT NULL,
     holder_name   TEXT NOT NULL,
-    -- Optional link to an application account; mandate holders may be external.
-    user_id       UUID REFERENCES user_account(id),
+    user_id       UUID REFERENCES user_account(id),  -- optional: mandate holders may be external
     start_date    DATE NOT NULL,
     end_date      DATE,                 -- NULL = open-ended (still in office)
     notes         TEXT,
@@ -1068,238 +1072,12 @@ CREATE TRIGGER trg_governance_mandate_updated_at
     BEFORE UPDATE ON governance_mandate
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
--- EP-018-S05: Pattern B — vendor_contract amendments (part 2)
---
--- An amendment is a distinct legal act, not an in-place edit. Adding
--- predecessor_id turns vendor_contract into an explicit temporal chain:
--- each amendment is created in 'draft', pre-filled from its predecessor.
--- Activating the amendment closes the predecessor (status='terminated')
--- atomically. The chain head (original contract) has predecessor_id NULL.
---
--- All pre-migration rows were created directly 'active' (no draft concept
--- existed before this migration) — no backfill needed for status, they
--- simply keep their current status.
-
-ALTER TABLE vendor_contract
-    ADD COLUMN predecessor_id UUID REFERENCES vendor_contract(id);
-
--- One contract can have at most one *pending* (draft) amendment at a time —
--- enforced at the application layer (§6, AC-CF-006-C), not by this index.
--- This index only guarantees a linear chain once activated: a given
--- predecessor can have at most one activated successor recorded against it.
-CREATE UNIQUE INDEX vendor_contract_predecessor_unique
-    ON vendor_contract (predecessor_id)
-    WHERE predecessor_id IS NOT NULL;
-
-CREATE INDEX vendor_contract_predecessor_idx
-    ON vendor_contract (predecessor_id);
-
--- Defensive trigger mirroring domain/immutability.rs: financial/legal fields
--- are frozen once the contract leaves 'draft'. Descriptive fields
--- (vendor_name, vendor_email, vendor_phone, subject) stay mutable via the
--- regular UPDATE path regardless of status — enforced by comparing OLD/NEW
--- only on the frozen columns.
-CREATE OR REPLACE FUNCTION trg_vendor_contract_immutable()
-RETURNS trigger LANGUAGE plpgsql AS $$
-BEGIN
-    IF OLD.status <> 'draft' AND (
-        NEW.amount IS DISTINCT FROM OLD.amount OR
-        NEW.start_date IS DISTINCT FROM OLD.start_date OR
-        NEW.end_date IS DISTINCT FROM OLD.end_date OR
-        NEW.notice_days IS DISTINCT FROM OLD.notice_days OR
-        NEW.contract_type IS DISTINCT FROM OLD.contract_type OR
-        NEW.payment_frequency IS DISTINCT FROM OLD.payment_frequency OR
-        NEW.auto_renewal IS DISTINCT FROM OLD.auto_renewal
-    ) THEN
-        RAISE EXCEPTION 'vendor_contract % is frozen on financial/legal fields (status=%)', OLD.id, OLD.status;
-    END IF;
-    RETURN NEW;
-END;
-$$;
-
-CREATE TRIGGER vendor_contract_immutable
-    BEFORE UPDATE ON vendor_contract
-    FOR EACH ROW EXECUTE FUNCTION trg_vendor_contract_immutable();
-
--- EP-018-S06: Pattern B — budget rectificatif schema (ADR-009).
---
--- A budget rectificatif is a *new* budget row for the same building and fiscal
--- year, linked to the budget it amends via `parent_budget_id`. The amended
--- budget is never edited in place: its lines are closed with `valid_to` and
--- copied into the rectificatif, preserving the accounting history required by
--- LEGAL.md §11 (conservation 10 ans, non-rétroactivité).
---
--- Logical identity of a budget_line across versions is (budget_id, key_id,
--- label) — same pattern as unit_allocation_key (ADR-006). `valid_to IS NULL`
--- marks the version currently in effect.
---
--- `version` is optimistic-locking metadata only, unrelated to the temporal
--- versioning above: it guards concurrent edits of a draft line.
-
-ALTER TABLE budget
-    ADD COLUMN parent_budget_id UUID REFERENCES budget (id);
-
-ALTER TABLE budget_line
-    ADD COLUMN valid_from            DATE    NOT NULL DEFAULT CURRENT_DATE,
-    ADD COLUMN valid_to              DATE,
-    ADD COLUMN rectificatif_version  INTEGER,
-    ADD COLUMN version               INTEGER NOT NULL DEFAULT 1;
-
--- Pre-existing rows are open-ended current versions dated from their creation.
-UPDATE budget_line SET valid_from = created_at::date;
-
--- Optimistic locking. The trigger deliberately does NOT fire on the `valid_to`
--- closing performed by the rectificatif workflow: closing a line is a system
--- operation and must not invalidate a client's concurrency token.
-CREATE OR REPLACE FUNCTION increment_budget_line_version()
-    RETURNS TRIGGER AS $$
-BEGIN
-    NEW.version = OLD.version + 1;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER budget_line_version_trigger
-    BEFORE UPDATE ON budget_line
-    FOR EACH ROW
-    WHEN (OLD.valid_to IS NOT DISTINCT FROM NEW.valid_to)
-EXECUTE FUNCTION increment_budget_line_version();
-
--- EP-018-S06: Pattern B — budget rectificatif invariants (ADR-009).
---
--- These indexes are the *only* guard on the invariants below: application-side
--- pre-checks would be check-then-act races. Constraint names are mapped to i18n
--- error codes in `db/budget.rs`.
-
--- The original UNIQUE (building_id, fiscal_year) forbade more than one budget
--- per year, which is incompatible with rectificatifs. The one-budget-per-year
--- rule is preserved for root budgets only.
-ALTER TABLE budget
-    DROP CONSTRAINT budget_building_id_fiscal_year_key;
-
-CREATE UNIQUE INDEX budget_unique_root_per_year
-    ON budget (building_id, fiscal_year)
-    WHERE parent_budget_id IS NULL;
-
--- AC-BC-009-C: at most one rectificatif in preparation per amended budget.
-CREATE UNIQUE INDEX budget_unique_pending_rectificatif
-    ON budget (parent_budget_id)
-    WHERE parent_budget_id IS NOT NULL AND status = 'draft';
-
--- AC-BC-009-C: at most one budget in force per fiscal year. `approve` closes
--- the amended budget before promoting the rectificatif, so the two never
--- overlap.
-CREATE UNIQUE INDEX budget_unique_approved_per_year
-    ON budget (building_id, fiscal_year)
-    WHERE status = 'approved';
-
--- Walking a rectificatif chain (GET /budgets/{id}/rectificatifs).
-CREATE INDEX budget_parent_budget_id_idx
-    ON budget (parent_budget_id)
-    WHERE parent_budget_id IS NOT NULL;
-
--- At most one version of a logical line in effect at any time. This is the
--- invariant the whole valid_from/valid_to design rests on.
-CREATE UNIQUE INDEX budget_line_unique_active
-    ON budget_line (budget_id, key_id, label)
-    WHERE valid_to IS NULL;
-
-ALTER TABLE budget_line
-    ADD CONSTRAINT budget_line_valid_period
-        CHECK (valid_to IS NULL OR valid_to >= valid_from),
-    ADD CONSTRAINT budget_line_rectificatif_version_positive
-        CHECK (rectificatif_version IS NULL OR rectificatif_version >= 1);
-
--- EP-005-S06: founding document types + version chain (LEGAL §1.2)
-
-CREATE TYPE document_category AS ENUM ('reglement_copropriete', 'edd', 'autre');
-
-ALTER TABLE document
-    ADD COLUMN category document_category NOT NULL DEFAULT 'autre',
-    ADD COLUMN supersedes_id UUID REFERENCES document(id),
-    ADD COLUMN is_current BOOLEAN NOT NULL DEFAULT TRUE;
-
--- Linear version chain: a version has at most one successor.
-CREATE UNIQUE INDEX document_supersedes_unique
-    ON document (supersedes_id) WHERE supersedes_id IS NOT NULL;
-
--- At most one current version per founding category per building.
-CREATE UNIQUE INDEX document_current_founding_unique
-    ON document (building_id, category)
-    WHERE is_current AND category IN ('reglement_copropriete', 'edd');
-
--- EP-005-S08: soft-delete with metadata retention (PRD US-DOC-004/US-DOC-007).
--- The DB row and the S3 object are both kept after deletion; physical purge
--- is deferred to the S3 cleanup job (EP-005-S09) once the category's legal
--- retention has elapsed.
-
-ALTER TABLE document
-    ADD COLUMN deleted_at         TIMESTAMPTZ,
-    ADD COLUMN deleted_by         UUID REFERENCES user_account(id),
-    ADD COLUMN deletion_reason    TEXT,
-    ADD COLUMN replacement_reason TEXT;
-
-CREATE INDEX document_deleted_idx ON document (building_id) WHERE deleted_at IS NOT NULL;
-
--- EP-005-S07: extend document_category with all PRD categories (LEGAL §3.4, §6.1-6.3)
--- This migration extends the document_category enum to include all categories
--- defined in docs/product/PRD - Documents.md §4, including technical regulatory
--- documents (DPE, DTG, PPT, PV) with their retention rules.
-
--- First, rename the existing enum to preserve data
-ALTER TYPE document_category RENAME TO document_category_old;
-
--- Create the new enum with all categories from PRD Documents §4
-CREATE TYPE document_category AS ENUM (
-    'reglement_copropriete',
-    'edd',
-    'pv_ag',
-    'comptabilite',
-    'appel_fonds',
-    'budget',
-    'contrat',
-    'diagnostic',
-    'sinistre',
-    'tache',
-    'libre',
-    'signalement',
-    'carnet_entretien',
-    'prestataire',
-    'autre'
-);
-
--- Add the new column with the extended enum type
-ALTER TABLE document ADD COLUMN category_new document_category;
-
--- Migrate existing data from old enum to new enum
--- Map old values to new enum values
-UPDATE document SET category_new = 
-    CASE category::text
-        WHEN 'reglement_copropriete' THEN 'reglement_copropriete'::document_category
-        WHEN 'edd' THEN 'edd'::document_category
-        WHEN 'autre' THEN 'autre'::document_category
-        ELSE 'autre'::document_category
-    END;
-
--- Drop the old column and rename the new one
-ALTER TABLE document DROP COLUMN IF EXISTS category;
-ALTER TABLE document RENAME COLUMN category_new TO category;
-
--- Recreate the indexes with the new enum
-CREATE UNIQUE INDEX IF NOT EXISTS document_supersedes_unique
-    ON document (supersedes_id) WHERE supersedes_id IS NOT NULL;
-
-CREATE UNIQUE INDEX IF NOT EXISTS document_current_founding_unique
-    ON document (building_id, category)
-    WHERE is_current AND category IN ('reglement_copropriete', 'edd');
-
--- Drop the old enum type
-DROP TYPE IF EXISTS document_category_old;
-
--- EP-005-S10: outbox-lite for document events (PRD US-DOC-009).
+-- ============================================================
+-- DOCUMENT EVENTS (outbox-lite — EP-005-S10, PRD US-DOC-009)
 -- Written in the SAME transaction as the document insert; consumers poll
 -- (jobs/) and mark rows processed. Real notification delivery is out of
 -- scope (EPICS "hors scope") — the MVP consumer only logs.
+-- ============================================================
 
 CREATE TABLE document_event (
     id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -1314,11 +1092,12 @@ CREATE TABLE document_event (
 
 CREATE INDEX document_event_pending_idx ON document_event (created_at) WHERE processed_at IS NULL;
 
--- EP-001-S09: manual EDD reference totals for coherence check (LEGAL.md §1.2)
+-- ============================================================
+-- EDD REFERENCE (EP-001-S09, LEGAL.md §1.2)
 -- Manual entry of EDD (état descriptif de division) reference tantièmes,
 -- used by a read-only, non-blocking coherence check against configured
--- allocation key shares. document_id is nullable until EP-005-S06 typing
--- is wired up from the frontend (schema support already exists).
+-- allocation key shares.
+-- ============================================================
 
 CREATE TABLE edd_reference (
     id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -1341,7 +1120,10 @@ CREATE TABLE edd_reference_share (
 
 CREATE INDEX edd_reference_building_idx ON edd_reference (building_id, edd_date DESC, created_at DESC);
 
--- EP-002-S06: etat date request tracking (LEGAL.md §7.1, 15-day legal deadline)
+-- ============================================================
+-- ETAT DATE REQUEST (LEGAL.md §7.1, 15-day legal deadline — EP-002-S06)
+-- ============================================================
+
 CREATE TYPE etat_date_status AS ENUM ('requested', 'generated', 'sent', 'cancelled');
 
 CREATE TABLE etat_date_request (
@@ -1358,7 +1140,9 @@ CREATE TABLE etat_date_request (
 );
 CREATE INDEX etat_date_request_unit_idx ON etat_date_request (unit_id);
 
--- EP-014-S03: manual calendar events (PRD Calendrier §3, US-CAL-005)
+-- ============================================================
+-- CALENDAR EVENTS (PRD Calendrier §3, US-CAL-005 — EP-014-S03)
+-- ============================================================
 
 CREATE TYPE calendar_event_category AS ENUM ('reunion', 'visite', 'permanence', 'autre');
 
@@ -1384,3 +1168,81 @@ CREATE TABLE calendar_event_document (
     document_id UUID NOT NULL REFERENCES document(id) ON DELETE CASCADE,
     PRIMARY KEY (event_id, document_id)
 );
+
+-- ============================================================
+-- DOMAIN IMMUTABILITY TRIGGERS (mirror domain/immutability.rs)
+-- ============================================================
+
+-- levy_call frozen once issued (EP-018-S03, Pattern A)
+CREATE OR REPLACE FUNCTION trg_levy_call_immutable()
+RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+    IF OLD.status <> 'draft' THEN
+        RAISE EXCEPTION 'levy_call % is frozen (status=%)', OLD.id, OLD.status;
+    END IF;
+    IF TG_OP = 'DELETE' THEN RETURN OLD; END IF;
+    RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER levy_call_immutable
+    BEFORE UPDATE OR DELETE ON levy_call
+    FOR EACH ROW EXECUTE FUNCTION trg_levy_call_immutable();
+
+-- maintenance_log: manual entries immutable, append-only corrections only (EP-018-S07, Pattern C)
+CREATE OR REPLACE FUNCTION trg_maintenance_log_manual_immutable()
+RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+    -- Automatic entries: already guarded at application layer (EP-018-S04).
+    -- Manual entries: immutable after creation; use POST /logbook/{id}/correction instead.
+    IF OLD.source = 'manual' THEN
+        RAISE EXCEPTION 'maintenance_log % is immutable (source=manual); create a correction instead', OLD.id;
+    END IF;
+    IF TG_OP = 'DELETE' THEN RETURN OLD; END IF;
+    RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER maintenance_log_immutable
+    BEFORE UPDATE OR DELETE ON maintenance_log
+    FOR EACH ROW EXECUTE FUNCTION trg_maintenance_log_manual_immutable();
+
+-- vendor_contract: financial/legal fields frozen once out of draft (EP-018-S05, Pattern B)
+CREATE OR REPLACE FUNCTION trg_vendor_contract_immutable()
+RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+    IF OLD.status <> 'draft' AND (
+        NEW.amount IS DISTINCT FROM OLD.amount OR
+        NEW.start_date IS DISTINCT FROM OLD.start_date OR
+        NEW.end_date IS DISTINCT FROM OLD.end_date OR
+        NEW.notice_days IS DISTINCT FROM OLD.notice_days OR
+        NEW.contract_type IS DISTINCT FROM OLD.contract_type OR
+        NEW.payment_frequency IS DISTINCT FROM OLD.payment_frequency OR
+        NEW.auto_renewal IS DISTINCT FROM OLD.auto_renewal
+    ) THEN
+        RAISE EXCEPTION 'vendor_contract % is frozen on financial/legal fields (status=%)', OLD.id, OLD.status;
+    END IF;
+    RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER vendor_contract_immutable
+    BEFORE UPDATE ON vendor_contract
+    FOR EACH ROW EXECUTE FUNCTION trg_vendor_contract_immutable();
+
+-- budget_line optimistic locking (EP-018-S06): version++ on every edit EXCEPT
+-- closing valid_to — a system operation that must not invalidate a client's
+-- concurrency token.
+CREATE OR REPLACE FUNCTION increment_budget_line_version()
+    RETURNS TRIGGER AS $$
+BEGIN
+    NEW.version = OLD.version + 1;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER budget_line_version_trigger
+    BEFORE UPDATE ON budget_line
+    FOR EACH ROW
+    WHEN (OLD.valid_to IS NOT DISTINCT FROM NEW.valid_to)
+EXECUTE FUNCTION increment_budget_line_version();
