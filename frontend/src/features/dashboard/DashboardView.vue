@@ -277,6 +277,7 @@ const todayStr = computed(() =>
             :value="String(overdueLevies.length)"
             :delta="overdueLevies.length ? t('dashboard.overdueAmount', { amount: formatCurrency(overdueAmount) }) : t('dashboard.unitsUpToDate')"
             :delta-variant="overdueLevies.length ? 'down' : 'up'"
+            :tone="overdueLevies.length ? 'err' : 'valid'"
           >
             <template #icon>
               <CIconWarn />
@@ -297,6 +298,7 @@ const todayStr = computed(() =>
             :value="formatCurrency(stats?.works_fund_available ?? 0)"
             :delta="stats?.works_fund_pct ? t('dashboard.worksFundPct', { pct: 100 - stats.works_fund_pct }) : ''"
             delta-variant="neutral"
+            tone="warn"
           >
             <template #icon>
               <CIconWrench />
@@ -313,7 +315,7 @@ const todayStr = computed(() =>
         </div>
 
         <!-- Summary grid: 3 columns on desktop, 1 column on mobile.
-             Agenda and budget are the only wide cards (2 columns, starting at the first one). -->
+             Agenda, budget and consultation are the wide cards (2 columns, starting at the first one). -->
         <div class="summary-grid">
           <!-- Agenda (wide) -->
           <div class="summary-wide">
@@ -353,7 +355,10 @@ const todayStr = computed(() =>
                     <span class="task-date">{{ formatRelative(task.created_at) }}</span>
                   </div>
                 </div>
-                <CBadge :variant="statusBadgeVariant(task.status)">
+                <CBadge
+                  :variant="statusBadgeVariant(task.status)"
+                  class="badge-xs"
+                >
                   {{ t(`tasks.statuses.${task.status}`) }}
                 </CBadge>
               </div>
@@ -428,7 +433,7 @@ const todayStr = computed(() =>
             </CCard>
           </div>
 
-          <!-- Contract reminders + Reports -->
+          <!-- Contract reminders -->
           <CCard>
             <CSectionHeader>
               <CHeading type="card">
@@ -483,7 +488,10 @@ const todayStr = computed(() =>
                 {{ t('dashboard.noReminders') }}
               </div>
             </div>
+          </CCard>
 
+          <!-- Reports -->
+          <CCard>
             <CSectionHeader>
               <CHeading type="card">
                 {{ t('dashboard.reportsTitle') }}
@@ -503,10 +511,6 @@ const todayStr = computed(() =>
                 :key="r.id"
                 class="signal-item"
               >
-                <span
-                  :class="['signal-dot', `signal-dot--${r.status}`]"
-                  aria-hidden="true"
-                ></span>
                 <div class="signal-body">
                   <p class="signal-title">
                     {{ r.title }}
@@ -517,6 +521,7 @@ const todayStr = computed(() =>
                 </div>
                 <CBadge
                   :variant="statusBadgeVariant(r.status)"
+                  class="badge-xs"
                   dot
                 >
                   {{ t(`reports.statuses.${r.status}`) }}
@@ -575,28 +580,33 @@ const todayStr = computed(() =>
             </div>
           </CCard>
 
-          <!-- Consultation -->
-          <CCard v-if="consultations.length">
-            <CSectionHeader>
-              <CHeading type="card">
-                {{ t('dashboard.activeConsultation') }}
-              </CHeading>
-              <p
-                v-if="consultations[0].closed_at"
-                class="body-sm text-on-surface-variant"
-              >
-                {{ t('dashboard.closesPrefix') }} {{ formatRelative(consultations[0].closed_at) }}
-              </p>
-            </CSectionHeader>
-            <div class="consultation-body">
-              <p class="consultation-title">
-                {{ consultations[0].title }}
-              </p>
-              <p class="consultation-legal">
-                ⚠️ {{ t('consultations.informalNote') }}
-              </p>
-            </div>
-          </CCard>
+          <!-- Consultation (wide) -->
+          <div
+            v-if="consultations.length"
+            class="summary-wide"
+          >
+            <CCard>
+              <CSectionHeader>
+                <CHeading type="card">
+                  {{ t('dashboard.activeConsultation') }}
+                </CHeading>
+                <p
+                  v-if="consultations[0].closed_at"
+                  class="body-sm text-on-surface-variant"
+                >
+                  {{ t('dashboard.closesPrefix') }} {{ formatRelative(consultations[0].closed_at) }}
+                </p>
+              </CSectionHeader>
+              <div class="consultation-body">
+                <p class="consultation-title">
+                  {{ consultations[0].title }}
+                </p>
+                <p class="consultation-legal">
+                  ⚠️ {{ t('consultations.informalNote') }}
+                </p>
+              </div>
+            </CCard>
+          </div>
         </div>
       </template>
     </div>
@@ -634,15 +644,23 @@ const todayStr = computed(() =>
 .kpi-prog__fill--warning { background: var(--gradient-warning); }
 
 /* ── Summary grid ────────────────────────────────────────────────────
-   Base: 3 columns. Agenda and budget are the only wide cards:
-   2 columns, starting at the first one. All other cards take 1 column. */
-.summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-6); align-items: start; }
+   Base: 3 columns. Agenda, budget and consultation are the wide cards:
+   2 columns, starting at the first one. All other cards take 1 column.
+   Tracks use minmax(0, 1fr) instead of 1fr: a bare `1fr` track has an
+   `auto` minimum, so a card whose content cannot shrink (long mono
+   amounts, nowrap badges…) forces the track wider than the container
+   and overflows horizontally in single-column mode. */
+.summary-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-6); align-items: start; }
+.summary-grid > * { min-width: 0; }
 .summary-wide { grid-column: 1 / span 2; }
-@media (max-width: 1200px) { .summary-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 1200px) { .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 768px) {
-  .summary-grid { grid-template-columns: 1fr; }
+  .summary-grid { grid-template-columns: minmax(0, 1fr); }
   .summary-wide { grid-column: 1 / span 1; }
 }
+
+/* ── Badges ───────────────────────────────────────────────────────── */
+.badge-xs { font-size: var(--text-xs); }
 
 /* ── Tasks ────────────────────────────────────────────────────────── */
 .task-list { display: flex; flex-direction: column; gap: var(--space-2); }
@@ -675,10 +693,6 @@ const todayStr = computed(() =>
 /* ── Signals ──────────────────────────────────────────────────────── */
 .signal-list { display: flex; flex-direction: column; gap: var(--space-1); }
 .signal-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; }
-.signal-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.signal-dot--open        { background: var(--color-warning); }
-.signal-dot--in_progress { background: var(--color-primary); }
-.signal-dot--closed      { background: var(--color-success); }
 .signal-body { flex: 1; min-width: 0; }
 .signal-title { font-size: var(--text-xs); font-weight: var(--fw-medium); color: var(--color-on-surface); }
 .signal-meta  { font-size: var(--text-2xs); color: var(--color-on-surface-variant); margin-top: 1px; }
