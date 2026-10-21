@@ -17,4 +17,4 @@ jobs:
           fetch-depth: 0
       - uses: tirth8205/code-review-graph@v2.3.9
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.GH_TOKEN }}
