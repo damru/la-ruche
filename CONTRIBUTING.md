@@ -51,7 +51,7 @@ laruche/
     └── package.json
 ```
 
-Voir [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) pour la structure complète.
+Voir [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) pour l'architecture technique et la description des modules.
 
 **Règles de modules Rust — violations = refus de PR :**
 
@@ -74,7 +74,7 @@ jobs/     → dépend de db/ et domain/
 4. **Tests** : `make test-all` doit passer
 5. **Lint** : `make lint` sans erreurs
 6. **Commit** avec un message conventionnel (voir ci-dessous)
-7. **Pull Request** vers `develop` (pas `main`)
+7. **Pull Request** vers `main`
 
 ***
 
@@ -148,7 +148,7 @@ chore(ci): ajouter job commitlint sur pull_request
 
 ## Signaler un bug
 
-Utilise les Issues GitHub avec le template fourni. Pour les failles de sécurité, **ne pas ouvrir une issue publique** — envoyer un email à security@\[DOMAINE].
+Utilise les Issues GitHub avec le template fourni. Pour les failles de sécurité, **ne pas ouvrir une issue publique** — envoyer un email à bonjour@damienrubio.com.
 
 ***
 

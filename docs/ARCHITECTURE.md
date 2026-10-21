@@ -1,11 +1,11 @@
 ---
 document: ARCHITECTURE
-version: 2.1.0
+version: 2.2.0
 owner: Damien
 status: validé
-last_updated: 2026-05-22
+last_updated: 2026-10-21
 description: >
-  Source de vérité de l'architecture technique de La Ruche — stack, structure du projet,
+  Source de vérité de l'architecture technique de La Ruche — stack,
   schéma DB, flux principaux, sécurité, CI/CD et principes de code.
   S'applique à l'intégralité du backend (Rust/Axum/SQLx) et aux points de contact frontend/API.
 rules:
@@ -26,6 +26,7 @@ references:
   - ADR-009
   - ADR-010
   - ADR-011
+  - ADR-012
 
 ---
 
@@ -33,7 +34,7 @@ references:
 
 > **Dénomination** — Dans le présent document, l'expression **« l'Application »** désigne exclusivement **La Ruche**, plateforme web open source de gestion participative de copropriété. Ces deux termes sont interchangeables et désignent la même entité logicielle.
 
-> Document vivant. Dernière mise à jour : 2026-05-22
+> Document vivant. Dernière mise à jour : 2026-10-21
 
 ---
 
@@ -44,10 +45,10 @@ references:
 | Runtime | Rust (édition 2024) | ADR-001 |
 | Framework HTTP | Axum 0.8 | ADR-001 |
 | Base de données | PostgreSQL 16 | ADR-001 |
-| ORM / Query | SQLx 0.8 (compile-time) | ADR-001 |
+| ORM / Query | SQLx 0.9 (compile-time) | ADR-001 |
 | Migrations | SQLx migrate (embedded) | ADR-001 |
 | Auth | JWT + Argon2id + webauthn-rs (passkeys **stubs** — `auth/passkey.rs` compilable, 4 handlers retournent `tracing::warn!` + 501 ; pas de roadmap active) | ADR-002 |
-| Stockage | S3-compatible — self-hosted | schema.sql |
+| Stockage | S3-compatible — self-hosted (RustFS) | ADR-001 |
 | API | REST JSON + OpenAPI (utoipa) | ADR-001 |
 | Edge runtime | Caddy sur Debian slim | ADR-005 |
 | Distribution image conteneur | Docker Hub (`docker.io/damru/la-ruche`) | CI GitHub Actions |
@@ -65,153 +66,6 @@ references:
 | HTTP client | Axios + intercepteurs refresh | — |
 | i18n | vue-i18n (fr uniquement MVP) | — |
 | Accessibilité | Radix Vue (Dialog, Dropdown) | — |
-
----
-
-## Structure du projet
-
-```
-laruche/
-├── backend/
-│   ├── migrations/
-│   │   └── 0001_init.sql       ← 36 tables, 25 ENUMs, UUID, triggers updated_at
-│   ├── seeds/
-│   │   └── demo.sql            ← données de démonstration (rejoué au démarrage si DEMO_MODE)
-│   └── src/
-│       ├── api/                ← handlers (zéro logique métier)
-│       │   ├── admin.rs        ← POST /admin/reset-demo (manager only, DEMO_MODE)
-│       │   ├── assemblies.rs   ← CRUD AG, résolutions, votes, présence, documents, convocation, clôture
-│       │   ├── auth.rs         ← login/logout, refresh JWT, reset password, invitation, profil, passkey (stubs)
-│       │   ├── budget.rs       ← CRUD budgets et lignes, appels de charges, marquage paiement, fonds travaux
-│       │   ├── building.rs     ← lecture/update immeuble, CRUD clés de répartition, tantièmes, stats, registre
-│       │   ├── claims.rs       ← CRUD sinistres + documents attachés
-│       │   ├── consultations.rs ← CRUD consultations, réponse, résultats, clôture
-│       │   ├── contractor.rs   ← portail prestataire : tâche, URL upload, soumission devis (accès token)
-│       │   ├── contractors.rs  ← CRUD référentiel prestataires
-│       │   ├── contracts.rs    ← CRUD contrats fournisseurs, résiliation, rappels, documents attachés
-│       │   ├── documents.rs    ← upload (pre-signed URL), confirmation, liste, download, suppression
-│       │   ├── logbook.rs      ← CRUD carnet d'entretien (maintenance_log)
-│       │   ├── mod.rs          ← router principal Axum + OpenAPI
-│       │   ├── onboarding.rs   ← statut onboarding + bootstrap immeuble
-│       │   ├── reports.rs      ← CRUD signalements, transitions statut, conversion en tâche, documents
-│       │   ├── runtime.rs      ← GET /runtime/status (demo_mode flag)
-│       │   ├── stubs.rs        ← placeholders pour routes non encore implémentées
-│       │   ├── tasks.rs        ← CRUD tâches, documents, génération/révocation token prestataire
-│       │   ├── units.rs        ← CRUD lots, archivage, historique propriétaires, transfert, charges
-│       │   └── users.rs        ← liste des utilisateurs
-│       ├── auth/               ← jwt, middleware, passkey, password, token
-│       │   ├── jwt.rs
-│       │   ├── middleware.rs
-│       │   ├── mod.rs
-│       │   ├── passkey.rs
-│       │   ├── password.rs
-│       │   └── token.rs
-│       ├── config.rs           ← typed config from env
-│       ├── db/                 ← repositories SQLx (14 repos + mod.rs)
-│       │   ├── allocation_key.rs
-│       │   ├── assembly.rs
-│       │   ├── budget.rs
-│       │   ├── building.rs
-│       │   ├── claim.rs
-│       │   ├── consultation.rs
-│       │   ├── contract.rs
-│       │   ├── contractor.rs
-│       │   ├── document.rs
-│       │   ├── maintenance_log.rs
-│       │   ├── mod.rs
-│       │   ├── report.rs
-│       │   ├── task.rs
-│       │   ├── unit.rs
-│       │   └── user.rs
-│       ├── domain/             ← pure logic, no I/O
-│       │   ├── charges.rs              ← répartition des charges par tantième (Decimal)
-│       │   ├── convocation_checklist.rs ← checklist légale convocation AG (art. 7-13 décret 1967)
-│       │   ├── minutes_draft.rs        ← génération PV draft Markdown (art. 17 décret 67-223)
-│       │   ├── mod.rs                  ← Role, AuthUser, re-exports
-│       │   ├── processor.rs            ← trait DocumentProcessor + NoopProcessor (OCR/NLP futur)
-│       │   ├── reminders.rs            ← calcul dates de rappel contrat fournisseur
-│       │   └── vote.rs                 ← quorums art. 24/25/25-1/26/26-1 (testé)
-│       ├── errors.rs           ← unified AppError → JSON HTTP
-│       ├── jobs/
-│       │   ├── mod.rs
-│       │   └── reminders.rs    ← hourly poll, prêt pour notifications
-│       ├── main.rs             ← assembly, auto-migrations, jobs
-│       └── storage/            ← client S3, presigned URLs
-│           ├── client.rs
-│           ├── mod.rs
-│           └── presigned.rs
-├── CONTRIBUTING.md
-├── docker-compose.prod.yml     ← override production, image Docker Hub
-├── docker-compose.yml          ← laruche + postgres + stockage S3
-├── docker/
-│   ├── Caddyfile               ← config Caddy (SPA + reverse proxy)
-│   └── entrypoint.sh           ← démarrage backend + Caddy
-├── Dockerfile                  ← multi-stage unique (Node + Rust + Caddy)
-├── docs/
-│   ├── adr/                    ← ADR-001 à ADR-009
-│   ├── product/                ← PRD détaillés par feature
-│   ├── ARCHITECTURE.md
-│   ├── DESIGN.md
-│   ├── EPICS.md
-│   ├── LEGAL.md
-│   ├── PRD.md
-│   └── PROGRESS.md
-├── frontend/src/
-│   ├── api/
-│   │   ├── client.ts           ← instance Axios + intercepteurs refresh + publicApi (token prestataire)
-│   │   └── index.ts            ← tous les modules API regroupés
-│   ├── components/
-│   │   ├── atoms/              ← CAlert, CBadge, CBtn, CEyebrow,
-│   │   │                          CFormCheckbox, CFormChipInput, CFormChipSelect,
-│   │   │                          CFormFeedback, CFormInput, CFormSelect, CFormTextarea,
-│   │   │                          CLegalDescription, CMockBanner, CProgressBar,
-│   │   │                          CSeparator, CTooltip + icônes SVG (CIcon*.svg)
-│   │   ├── molecules/          ← CCard, CCardNote, CDataTable,
-│   │   │                          CFormAddressAutocomplete, CFormDropzone,
-│   │   │                          CKpiCard, CLegalCard, CLegalNotice,
-│   │   │                          CListItem, CMeta, CMetaItem, CMetaLine,
-│   │   │                          CModal, CPageLoader
-│   │   └── organisms/          ← AppNav
-│   ├── composables/            ← hooks transverses
-│   │   ├── useAutoClose.ts
-│   │   ├── useConfirm.ts
-│   │   ├── useFormatters.ts    ← formatage Intl natif (fr-FR), sans date-fns
-│   │   ├── useFormFeedback.ts
-│   │   ├── usePageLoader.ts
-│   │   └── useRole.ts
-│   ├── features/               ← vues lazy-loaded par domaine
-│   │   ├── assemblies/
-│   │   ├── auth/
-│   │   ├── budget/
-│   │   ├── claims/
-│   │   ├── consultations/
-│   │   ├── contractor/         ← portail prestataire (accès token, sans JWT)
-│   │   ├── contractors/
-│   │   ├── contracts/
-│   │   ├── dashboard/
-│   │   ├── documents/
-│   │   ├── maintenance/
-│   │   ├── onboarding/
-│   │   ├── profile/
-│   │   ├── reports/
-│   │   ├── residence/
-│   │   ├── residents/
-│   │   └── tasks/
-│   ├── layouts/                ← AppLayout
-│   ├── router/index.ts         ← lazy routes, guards (403 vs 404, onboarding, redirects)
-│   ├── stores/
-│   │   ├── auth.ts             ← session utilisateur (Pinia)
-│   │   ├── documents.ts        ← état GED partagé
-│   │   ├── files.ts            ← upload / presigned URLs
-│   │   └── ui.ts               ← préférences apparence (localStorage)
-│   ├── styles/                 ← tailwind.css, tokens.css, base.css, typography.css
-│   ├── types/domain.ts         ← types TS miroir schéma Rust
-│   ├── utils/                  ← utilitaires purs (pas de composables)
-│   └── views/                  ← ForbiddenView, NotFoundView
-└── Makefile                    ← cibles make (dev, test, docker…)
-```
-
-Le frontend conserve les feuilles globales historiques (`tokens.css`, `base.css`, `tones.css`, etc.) comme source normative du design system. Tailwind CSS n'est ajouté que comme couche utilitaire optionnelle via `@tailwindcss/vite` (sans `tailwind.config.js`). Les tokens custom sont exposés via `@theme inline` dans `frontend/src/styles/tailwind.css`.
 
 ---
 
@@ -376,3 +230,4 @@ HTTP → Tower (CORS, trace, timeout 30s)
 | ADR-009 | Immutabilité des données comptables + audit log | Guards `is_mutable`/`is_deletable` dans `domain/` ; table `audit_log` append-only (diff JSONB `old_values`/`new_values` ; statut `draft` sur `levy_call` ; `predecessor_id` sur `vendor_contract` (pattern avenant) ; `parent_budget_id` + `valid_from`/`valid_to` sur `budget_line` ; trigger PG défensif sur `levy_call` |
 | ADR-010 | PV conseil syndical | Extension `meeting_type` ENUM (`annual` / `extraordinary` / `council`) ; réutilisation de `general_meeting` + `general_meeting_document` ; champ `minutes_document_id` référence le PV signé — pas de nouvelle table |
 | ADR-011 | Génération PDF réglementaire | Génération serveur via crate Rust pur (`typst` par défaut, `genpdf` repli) ; module `domain/` dédié ; syndic uniquement — débloque S06/S07/S13. Implémentation S06/S07 : `genpdf` (repli, API directe sans langage de balisage) + polices Liberation Sans embarquées ; rendu direct (non persisté en GED, le snapshot JSONB restant la valeur probante) |
+| ADR-012 | Verrouillage optimiste des lignes budgétaires | Colonne `budget_line.version` cantonnée au contrôle de concurrence (409 sur jeton périmé) ; incrément par trigger, clôture système exclue ; distinct du versioning temporel |

@@ -29,7 +29,7 @@ You only need to sign once — it covers all future contributions.
 ## Agreement text
 
 Thank you for your interest in contributing to La Ruche ("Project"), maintained
-by Damien Ruscassie ("Licensor").
+by Damien Rubio ("Licensor").
 
 By signing this CLA, you agree to the following terms for all past and future
 contributions ("Contribution") submitted to the Project.
@@ -110,7 +110,7 @@ Signatures are recorded automatically by CLA Assistant on GitHub.
 The record is available at: https://cla-assistant.io/damru/la-ruche
 
 For manual signature (organizations or contributors without GitHub access),
-contact: [contact email to be defined]
+contact: bonjour@damienrubio.com
 
 | Name | GitHub username | Date | Scope |
 |---|---|---|---|

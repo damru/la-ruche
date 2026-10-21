@@ -3,7 +3,7 @@ document: EPICS
 version: 1.1.0
 owner: Damien
 status: validé
-last_updated: 2026-08-26
+last_updated: 2026-10-21
 description: >
   Backlog officiel du projet La Ruche — épics et stories organisées par domaine fonctionnel.
   Chaque story référence un PRD, un ADR ou une obligation légale (LEGAL.md §X.Y).
@@ -25,7 +25,7 @@ rules:
 > Chaque feature est organisée en epic. Les stories sont ajoutées à la demande, au moment de l'implémentation.
 > Le MVP est l'ensemble des epics marquées **MVP : oui**.
 > Statuts possibles : **en attente** · **en cours** · **terminée**
-> Dernière mise à jour : 26 août 2026
+> Dernière mise à jour : 21 octobre 2026
 
 > **Lecture d'avancement (code actuel) :**
 > - **backend réel** = handlers + DB opérationnels
@@ -150,7 +150,7 @@ La fiche identitaire de la copropriété (nom, adresse, SIRET syndic), le règle
 
 **Statut :** en cours ⏳ | **MVP :** oui | **Réf. PRD :** Fondations légales
 
-**État code actuel :** S01–S05 et S08 livrés côté backend (domaine + DB + API) et frontend (liste résidents, invitation tokenisée avec TTL, révocation d’invitation, mutation de lot avec historique, anonymisation RGPD, accès par lien `/invite/:token`). Migration `0026_user_token_unit_id.sql` appliquée. S10 (procédures judiciaires) et S11 (registre de gouvernance) livrés backend + frontend. S06, S07, S09, S12 hors scope MVP.
+**État code actuel :** S01–S05 et S08 livrés côté backend (domaine + DB + API) et frontend (liste résidents, invitation tokenisée avec TTL, révocation d’invitation, mutation de lot avec historique, anonymisation RGPD, accès par lien `/invite/:token`). S10 (procédures judiciaires) et S11 (registre de gouvernance) livrés backend + frontend. S06, S07, S09, S12 hors scope MVP.
 
 Historique de propriété tracé avec dates de cession, invitation par lien tokenisé, anonymisation RGPD à la demande (conservation des données comptables 10 ans).
 
@@ -196,7 +196,7 @@ Cycle de vie complet d'une AG, résolutions typées par majorité, vote par lot 
 * `EP-003-S06` ✅ — Tracer la date de notification du PV aux copropriétaires **opposants ou défaillants** : le syndic doit notifier dans le délai d'**un mois** à compter de la tenue de l'AG (art. 42 al. 3 loi 1965). L'implémentation affiche la date limite de contestation à J+60 depuis la date d'AG (approche conservative : suppose notification immédiate) — le délai légal exact de contestation est J+60 depuis la **date de notification** (LEGAL.md §3.4)
 * `EP-003-S07` ✅ — Exclure explicitement les lots archivés des calculs de quorum et de majorité avec piste d'audit des bases de calcul (LEGAL.md §3.2)
 * `EP-003-S08` ✅ — Contrôler la complétude réglementaire de la convocation selon les art. 7 à 13 du décret 1967 (ordre du jour, annexes, preuve d'envoi) et l'art. 9 al. 4 (formulaire de **vote par correspondance obligatoirement joint**) avec checklist horodatée (LEGAL.md §3.1)
-* `EP-003-S09` ✅ — Tracer la conformité du bureau de séance et des signatures du PV (président, secrétaire, scrutateurs) selon les art. 15, 17 et 17-1 du décret 1967 (LEGAL.md §3.4) (migration `0024_meeting_minutes_signatures.sql`, endpoint `POST /meetings/{id}/minutes/signatures`, signatures intégrées au template `domain/minutes_draft.rs`, modale UI dédiée)
+* `EP-003-S09` ✅ — Tracer la conformité du bureau de séance et des signatures du PV (président, secrétaire, scrutateurs) selon les art. 15, 17 et 17-1 du décret 1967 (LEGAL.md §3.4) 
 * [EP-003-S10](docs/specs/EP-003-S10-spec.md) — Valider que le formulaire de vote par correspondance est réceptionné par le syndic **au plus tard J-3 francs** avant la date de l'AG (art. 9 bis décret 67-223, LEGIARTI000042076552) et annuler automatiquement un vote par correspondance si le copropriétaire est présent ou représenté en séance (art. 14-1 décret 67-223, LEGIARTI000042076720) (LEGAL.md §3.1)
 * [EP-003-S11](docs/specs/EP-003-S11-spec.md) — Enregistrer et traiter la demande de convocation d'AG formulée par un copropriétaire pour ses propres questions (art. 17-1 AA loi 1965, LEGIARTI000039301594) avec imputation des frais de convocation au copropriétaire demandeur (LEGAL.md §3.5)
 * [EP-003-S12](docs/specs/EP-003-S12-spec.md) — Modifier ou supprimer un brouillon d'AG : éditer les métadonnées (date, type, ordre du jour) et supprimer une AG tant qu'elle est en statut `draft` ; le passage à `called` bloque la modification et interdit la suppression (PRD US-AG-002)
@@ -415,7 +415,7 @@ Export des données de la copropriété au format RNC et génération de la fich
 
 **Statut :** en attente | **MVP :** non | **Réf. PRD :** Fonctionnalités avancées — extension EP-003
 
-**État code actuel :** statut `ongoing` disponible (migration `0019_meeting_ongoing_status`) ; transitions `POST /{id}/start` (`called` → `ongoing`) et `POST /{id}/close` (`ongoing` → `closed`) opérationnelles backend. Aucune vue frontend dédiée à la conduite de séance n'existe encore.
+**État code actuel :** statut `ongoing` disponible ; transitions `POST /{id}/start` (`called` → `ongoing`) et `POST /{id}/close` (`ongoing` → `closed`) opérationnelles backend. Aucune vue frontend dédiée à la conduite de séance n'existe encore.
 
 Conduite de séance : désignation des rôles (président, secrétaire, scrutateurs), feuille de présence numérique, quorum en temps réel, notes collaboratives, génération et validation du PV avec signature numérique. `EP-013` démarre là où `EP-003` s'arrête : préparation juridique, votes et clôture simple restent dans `EP-003`, tandis que l'assistance complète de séance et la validation probante du PV relèvent de cette extension post-MVP.
 
@@ -467,7 +467,7 @@ Catalogue des prestataires de la résidence : nom, email, téléphone, domaine p
 * `EP-015-S02` ✅ — Rechercher un prestataire par nom (autocomplete, `?q=`) pour l'assigner à une tâche
 * `EP-015-S03` ✅ — Catalogue accessible à tous les utilisateurs authentifiés de la résidence (lecture), modifiable par manager/conseil syndical
 * `EP-015-S04` ✅ — Propagation du nom de prestataire au carnet d'entretien lors de la clôture automatique d'une tâche (`vendor_name`)
-* `EP-015-S05` ✅ — Ajouter le numéro de téléphone au profil utilisateur (`user_account.phone`) et l'exposer dans la carte contact syndic sur la page prestataire — migration 0007
+* `EP-015-S05` ✅ — Ajouter le numéro de téléphone au profil utilisateur (`user_account.phone`) et l'exposer dans la carte contact syndic sur la page prestataire
 * [EP-015-S06](docs/specs/EP-015-S06-spec.md) — Rattacher une attestation d'assurance à un prestataire via le module Documents (EP-005) avec vérification de la validité à la date de l'intervention (PRD US-RP-004)
 
 ***
@@ -595,7 +595,7 @@ Consolidation technique du design system : migration des tokens de couleur vers 
 
 **Statut :** en attente | **MVP :** non | **Réf. PRD :** LEGAL.md §8, §4.7 ; ADR-009
 
-**État code actuel :** la table `audit_log` existe (migration `0029`, ADR-009) mais n'a aucun écrivain applicatif ; aucun export RGPD ni envoi de courrier n'est implémenté. Décision 2026-06-30 (Damien) : prioriser d'abord l'implémentation correcte de tous les évènements fonctionnels, puis traiter ces obligations transverses.
+**État code actuel :** la table `audit_log` existe (ADR-009) mais n'a aucun écrivain applicatif ; aucun export RGPD ni envoi de courrier n'est implémenté. Décision 2026-06-30 (Damien) : prioriser d'abord l'implémentation correcte de tous les évènements fonctionnels, puis traiter ces obligations transverses.
 
 Obligations de conformité reportées après la livraison du MVP : export RGPD du dossier d'un copropriétaire, envoi de courrier automatique (mise en demeure recommandée), et câblage effectif du journal d'audit probant sur les mutations comptables.
 
@@ -613,10 +613,10 @@ Obligations de conformité reportées après la livraison du MVP : export RGPD d
 
 | # | Tâche | Détail | Statut |
 |---|-------|--------|--------|
-| T-001 | Fusionner les migrations SQL en un fichier unique | Consolider `0001_init.sql` et `0002_tantieme_audit.sql` (et toute migration ultérieure) en un seul fichier `0001_init.sql` pour simplifier l'initialisation d'une nouvelle instance. | en attente |
-| T-002-1 | Utilisation des composants radix-vue (ex: CModal > Dialog) | en attente |
+| T-001 | Fusionner les migrations SQL en un fichier unique | Consolider `0001_init.sql` et `0002_tantieme_audit.sql` (et toute migration ultérieure) en un seul fichier `0001_init.sql` pour simplifier l'initialisation d'une nouvelle instance. | ✅ livrée |
+| T-002-1 | Utilisation des composants radix-vue (ex: CModal > Dialog) | ✅ livrée (wrappers Radix, EP-020-S04/S06) |
 | T-002-2 | Peaufiner les écrans, création de composants atomiques | en attente |
-| T-002-3 | Rationaliser le CSS, généralisation de tailwind, réduction des classes custom | en attente |
+| T-002-3 | Rationaliser le CSS, généralisation de tailwind, réduction des classes custom | ✅ livrée (EP-020-S07 à S12, fichiers legacy supprimés) |
 | T-002-4 | Vérifier utilisation en dur de height/width sur les icônes SVG sans classes `--icon-` | en attente |
 | T-002-5 | Vérifier utilisation inline de balises de titres sans `CHeading` | en attente |
 | T-002-6 | Vérifier utilisation inline de formulaires sans `CForm*` | en attente |

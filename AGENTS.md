@@ -4,7 +4,7 @@
 
 Monorepo: `backend/` (Rust) + `frontend/` (Vue 3).
 
-Domain-specific rules in `.agents/rules/` are automatically injected into context by the IDE when editing files in the matching domain. Do not re-read them manually.
+Domain-specific rules in `.claude/rules/` are automatically injected into context by the IDE when editing files in the matching domain. Do not re-read them manually.
 
 ---
 
@@ -100,7 +100,7 @@ feat!: remove deprecated PUT /levy-calls/:id
 chore(ci): add commitlint workflow on pull_request
 ```
 
-Use the `caveman:caveman-commit` skill when writing commit messages.
+Use the `git-commit` skill (`.claude/skills/git-commit`) when writing commit messages.
 
 ---
 
@@ -129,7 +129,7 @@ cargo sqlx prepare                 # regenerate .sqlx/ (offline mode)
 ## Language
 
 - **Code + comments** → English only.
-- **Docs** (PRD, DESIGN, ARCHITECTURE, PROGRESS, ADR, DDR) → French. Code identifiers stay English inside docs.
+- **Docs** (PRD, DESIGN, ARCHITECTURE, ADR, DDR) → French. Code identifiers stay English inside docs.
 
 ---
 
@@ -155,7 +155,7 @@ cargo sqlx prepare                 # regenerate .sqlx/ (offline mode)
 
 ## Workflow
 
-- Request matches existing PRD → [request matches an Epic or a Story][request does not matches an Epic or a Story → confirm with user to create a new item] → update related item status → add entry in docs/PROGRESS.md.
+- Request matches existing PRD → [request matches an Epic or a Story][request does not matches an Epic or a Story → confirm with user to create a new item] → update the related item status in `docs/EPICS.md`.
 - Request does not match existing PRD  → it is not trivial (ADR/DDR/PRD could be created) → discuss with user before starting
     - ADR for structural technical decisions with real alternatives. DDR for structural UI/UX decisions.
     - Create ADR/DDR only when there are genuine alternatives to document.
@@ -173,8 +173,7 @@ Follow these steps **in order** for any new feature or significant change:
 5. Implement backend changes (domain → db → api layers).
 6. Catalogue lookup (mandatory, before frontend work): grep `docs/DESIGN.md §3` and `frontend/src/components/` for any UI/UX pattern named in the spec. Record in the spec or PR which `C*` component(s) are reused, or justify why none fits (candidate for catalogue addition per the Frontend rule above).
 7. Implement frontend changes.
-8. Add a dated entry to `docs/PROGRESS.md` with Epic/Story ref (started / completed / abandoned).
-9. Open a PR for the branch (`gh pr create`) and route it to Hopper for review (`kanban_request_review`). Pushing a branch without an open PR is not a completed task.
+8. Open a PR for the branch (`gh pr create`) and route it to Hopper for review (`kanban_request_review`). Pushing a branch without an open PR is not a completed task.
 
 ---
 
