@@ -25,9 +25,8 @@ Before creating an ADR, collect the following inputs from the user or conversati
 
 ### 2. Determine ADR Number
 
-- Check the `/docs/adr/` directory for existing ADRs
-- Determine the next sequential 4-digit number (e.g., 0001, 0002, etc.)
-- If the directory doesn't exist, start with 0001
+- Check the `docs/adr/` directory for existing ADRs
+- Determine the next sequential number, zero-padded on 3 digits (the repo currently holds ADR-001 through ADR-012, so the next one is ADR-013)
 
 ### 3. Generate ADR Document in Markdown
 
@@ -39,7 +38,7 @@ Create an ADR as a markdown file following the standardized format below with th
 - Document all alternatives with clear rejection rationale
 - Use coded bullet points (3-letter codes + 3-digit numbers) for multi-item sections
 - Structure content for both machine parsing and human reference
-- Save the file to `/docs/adr/` with proper naming convention
+- Save the file to `docs/adr/` with proper naming convention
 
 ---
 
@@ -49,7 +48,7 @@ Create an ADR as a markdown file following the standardized format below with th
 
 ```yaml
 ---
-title: "ADR-NNNN: [Decision Title]"
+title: "ADR-NNN: [Decision Title]"
 status: "Proposed"
 date: "YYYY-MM-DD"
 authors: "[Stakeholder Names/Roles]"
@@ -153,17 +152,13 @@ For each alternative:
 
 ### Naming Convention
 
-`adr-NNNN-[title-slug].md`
+`ADR-NNN-[title-slug].md` (N = number zero-padded on 3 digits, kebab-case slug)
 
-**Examples:**
-
-- `adr-0001-database-selection.md`
-- `adr-0015-microservices-architecture.md`
-- `adr-0042-authentication-strategy.md`
+This matches the convention of the existing ADRs in the repo (e.g. `ADR-006-tantieme-versioning.md`, `ADR-012-budget-optimistic-locking.md`).
 
 ### Location
 
-All ADRs must be saved in: `/docs/adr/`
+All ADRs must be saved in: `docs/adr/`
 
 ### Title Slug Guidelines
 
@@ -179,7 +174,7 @@ All ADRs must be saved in: `/docs/adr/`
 Before finalizing the ADR, verify:
 
 - [ ] ADR number is sequential and correct
-- [ ] File name follows naming convention
+- [ ] File name follows the naming convention of existing ADRs
 - [ ] Front matter is complete with all required fields
 - [ ] Status is set appropriately (default: "Proposed")
 - [ ] Date is in YYYY-MM-DD format
@@ -215,7 +210,7 @@ Before finalizing the ADR, verify:
 
 Your work is complete when:
 
-1. ADR file is created in `/docs/adr/` with correct naming
+1. ADR file is created in `docs/adr/` with correct naming
 2. All required sections are filled with meaningful content
 3. Consequences realistically reflect the decision's impact
 4. Alternatives are thoroughly documented with clear rejection reasons

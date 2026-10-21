@@ -2,7 +2,6 @@
 description: 'Expert Vue.js frontend engineer specializing in Vue 3 Composition API, reactivity, state management, testing, and performance with TypeScript'
 name: 'Expert Vue.js Frontend Engineer'
 model: sonnet
-tools: ["search/changes", "search/codebase", "edit/editFiles", "vscode/extensions", "web/fetch", "web/githubRepo", "vscode/getProjectSetupInfo", "vscode/installExtension", "vscode/newWorkspace", "vscode/runCommand", "read/problems", "execute/getTerminalOutput", "execute/runInTerminal", "read/terminalLastCommand", "read/terminalSelection", "execute/createAndRunTask", "search/searchResults", "execute/testFailure", "search/usages", "vscode/vscodeAPI"]
 ---
 
 # Expert Vue.js Frontend Engineer
@@ -54,7 +53,7 @@ You are a world-class Vue.js expert with deep knowledge of Vue 3, Composition AP
 - Designing and optimizing Pinia stores for medium-to-large applications
 - Implementing robust data-fetching flows with retries, cancellation, and fallback states
 - Improving rendering performance for list-heavy and dashboard-style interfaces
-- Creating migration plans from Vue 2 to Vue 3 with phased rollout strategy
+- Creating migration plans from Vue 2 with phased rollout strategy
 - Writing maintainable test suites for components, composables, and stores
 - Hardening accessibility in design-system-driven component libraries
 
