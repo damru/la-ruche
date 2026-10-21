@@ -27,8 +27,8 @@ Le Syndic ouvre le brouillon généré (S02), modifie n'importe quel champ du pa
 ```sql
 -- EP-012-S04: trace manual corrections on draft fiches (AC-CR-002-B)
 ALTER TABLE fiche_synthetique
-    ADD COLUMN manual_overrides JSONB NOT NULL DEFAULT '[]'::jsonb;
-    -- array of { "field": "financial.closed_year_charges",
+    ADD COLUMN manual_overrides JSONB NOT NULL DEFAULT '[]'::jsonb
+    -- array of { "field": "financial.closed_year_charges"
     --            "previous": <json>, "at": timestamptz, "by": uuid }
 ```
 
@@ -50,10 +50,10 @@ Colonne sur table existante (pas de nouvelle table → pas d'entrée ARCHITECTUR
 ```rust
 // PUT /fiche-synthetique/{id}
 pub async fn update(...) -> AppResult<Json<FicheResponse>> {
-    auth.require_role(&Role::Manager)?;
-    let current = db::fiche_synthetique::get(...).ok_or(AppError::NotFound)?;
+    auth.require_role(&Role::Manager)?
+    let current = db::fiche_synthetique::get(...).ok_or(AppError::NotFound)?
     if !domain::fiche_synthetique::can_edit(&current.status) {
-        return Err(AppError::validation_code("errors.fiche.not_editable"));
+        return Err(AppError::validation_code("errors.fiche.not_editable"))
     }
     let overrides = domain::fiche_synthetique::diff_payload(&current.payload, &input.payload)
         .stamped(auth.user_id); // fills at/by
@@ -105,4 +105,4 @@ Validation du payload entrant : désérialisation stricte `FichePayload` (`deny_
 3. `db::update_payload`.
 4. `api::update` + route + tests e2e.
 5. Frontend (`FicheEditForm.vue`, `ficheApi.update`, marquage overrides) + `docs/DESIGN.md` si nouveau composant catalogue.
-6. Entrée `docs/PROGRESS.md` (EP-012-S04).
+6. Entrée.

@@ -36,8 +36,8 @@ Aucune migration.
 
 **Aucun nouveau code requis** si les données suffisent via les endpoints existants :
 
-- en-tête réglementaire : endpoint summary (adresse de l'immeuble + identité du syndic) ;
-- chronologie : `GET` liste carnet (déjà exhaustive) ;
+- en-tête réglementaire : endpoint summary (adresse de l'immeuble + identité du syndic)
+- chronologie : `GET` liste carnet (déjà exhaustive)
 - contrats actifs : `GET /contracts` (filtrage client par `status` et `contract_type` assurance/maintenance).
 
 Si le summary n'expose pas tous les champs d'en-tête réglementaires (adresse complète, nom du syndic), l'étendre — modification mineure de la couche db/api existante, pas de nouvelle route.
@@ -98,4 +98,3 @@ Aucun nouvel appel si les endpoints existants suffisent (summary + list + contra
 2. `MaintenancePrintView.vue` + route + guards.
 3. Bouton d'export dans `MaintenanceView.vue`.
 4. Ajustements CSS print, tests manuels.
-5. `docs/PROGRESS.md`.

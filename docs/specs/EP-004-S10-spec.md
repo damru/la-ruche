@@ -28,7 +28,7 @@ Rien à modifier tant que le modèle PPT n'existe pas.
 
 La branche 2,5 % devient implémentable **dès que EP-009-S04 (modèle PPT) livre** :
 
-- une table PPT portant le **montant total adopté** (`Decimal`) et le **statut d'adoption** (le PPT voté en AG) ;
+- une table PPT portant le **montant total adopté** (`Decimal`) et le **statut d'adoption** (le PPT voté en AG)
 - un accès repo type `db::ppt::get_adopted(pool, building_id) -> Option<PptRow>`.
 
 Tant que ce prérequis n'existe pas, **aucun travail sur cette story** — le seuil effectif reste 5 % du budget, ce qui est légalement correct pour une copropriété sans PPT adopté.
@@ -49,13 +49,13 @@ seuil_minimal = max(0.05 × budget_previsionnel_total, 0.025 × montant_ppt_adop
 1. **Domain** : extraire une fonction pure (nouveau `domain/works_fund.rs` ou module budget) :
    ```rust
    pub(crate) fn legal_minimum_works_fund(
-       budget_total: Decimal,
-       adopted_ppt_amount: Option<Decimal>,
+       budget_total: Decimal
+       adopted_ppt_amount: Option<Decimal>
    ) -> Decimal {
-       let five_pct = budget_total * dec!(0.05);
+       let five_pct = budget_total * dec!(0.05)
        match adopted_ppt_amount {
-           Some(ppt) => five_pct.max(ppt * dec!(0.025)),
-           None => five_pct,
+           Some(ppt) => five_pct.max(ppt * dec!(0.025))
+           None => five_pct
        }
    }
    ```
@@ -93,4 +93,3 @@ seuil_minimal = max(0.05 × budget_previsionnel_total, 0.025 × montant_ppt_adop
 2. Domain `legal_minimum_works_fund` + tests.
 3. Brancher les 2 points de contrôle + exposer le seuil dans la réponse API.
 4. Frontend (libellé avec base de calcul).
-5. `docs/PROGRESS.md`.

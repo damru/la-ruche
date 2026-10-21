@@ -33,24 +33,24 @@ Migration `backend/migrations/NNNN_council_decision_pv.sql` (numéro en flux sur
 
 ```sql
 -- EP-002-S12: council decision minutes under AG delegation (art. 21-1 decret 67-223)
-CREATE TYPE council_pv_status AS ENUM ('draft', 'signed');
+CREATE TYPE council_pv_status AS ENUM ('draft', 'signed')
 
 CREATE TABLE council_decision_pv (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    building_id UUID NOT NULL REFERENCES building(id),
-    decision_date DATE NOT NULL,
-    subject TEXT NOT NULL,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid()
+    building_id UUID NOT NULL REFERENCES building(id)
+    decision_date DATE NOT NULL
+    subject TEXT NOT NULL
     delegation_reference TEXT NOT NULL,  -- AG resolution granting the delegation
     -- [{"member_name": "...", "mandate_id": "...", "vote": "for|against|abstain"}]
-    votes JSONB NOT NULL,
+    votes JSONB NOT NULL
     -- [{"member_name": "...", "mandate_id": "...", "signed_at": "..."}] (>= 2 to sign off)
-    signatures JSONB NOT NULL DEFAULT '[]',
-    status council_pv_status NOT NULL DEFAULT 'draft',
-    created_by UUID NOT NULL REFERENCES app_user(id),
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    signatures JSONB NOT NULL DEFAULT '[]'
+    status council_pv_status NOT NULL DEFAULT 'draft'
+    created_by UUID NOT NULL REFERENCES app_user(id)
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-CREATE INDEX council_decision_pv_building_idx ON council_decision_pv (building_id);
+)
+CREATE INDEX council_decision_pv_building_idx ON council_decision_pv (building_id)
 ```
 
 JSONB pour votes/signatures : structure de restitution documentaire, pas de requête relationnelle nécessaire — pas d'alternative structurelle réelle, donc pas d'ADR. Étape associée : **mettre à jour `docs/ARCHITECTURE.md`** avant la migration.
@@ -108,9 +108,9 @@ Rôles : **manager + membres du conseil** en écriture ; **copropriétaires en l
 
 - **Domaine pur** : `can_sign_off` (0/1/2 signatures, doublon de membre) ; validation votes (valeur invalide, participant sans vote) ; `is_mutable`/`is_deletable` selon statut.
 - **E2E** (`backend/tests/api_e2e_test.rs`, `common::isolated_test_server()`) :
-  - création → 1 signature (reste draft) → 2ᵉ signature (→ `signed`) ;
-  - PUT/DELETE sur `signed` → 422 `errors.council_pv.immutable_after_signing` ;
-  - signature par un non-membre → 422 ; double signature même membre → 422 ;
+  - création → 1 signature (reste draft) → 2ᵉ signature (→ `signed`)
+  - PUT/DELETE sur `signed` → 422 `errors.council_pv.immutable_after_signing`
+  - signature par un non-membre → 422 ; double signature même membre → 422
   - copropriétaire : liste ne contient que les `signed` ; le listing registre des PV inclut le PV du conseil signé.
 
 ## 9. Ordre d'implémentation
@@ -120,4 +120,4 @@ Rôles : **manager + membres du conseil** en écriture ; **copropriétaires en l
 3. `db/council_pv.rs`.
 4. `api/council_pv.rs` + routes `api/mod.rs` + intégration listing registre des PV + erreurs i18n.
 5. Frontend (types, `councilPvApi`, `CouncilPvView.vue`, intégration registre) — cataloguer les `C*` nouveaux d'abord.
-6. Tests E2E, entrée `docs/PROGRESS.md`.
+6. Tests E2E.

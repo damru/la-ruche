@@ -38,7 +38,7 @@ Ajouter le guard de séance à côté des entités existantes :
 /// Votes and attendance are session-bound: writable only while the meeting
 /// is 'ongoing'. Frozen forever once 'closed' (LEGAL §11.1 — votes are
 /// legally immutable), and not yet open in 'draft'/'called'.
-Entity::MeetingSession => status == "ongoing",
+Entity::MeetingSession => status == "ongoing"
 ```
 
 avec test unitaire couvrant les quatre statuts.
@@ -82,10 +82,10 @@ Aucun changement fonctionnel (l'UI restreint déjà). Vérifier seulement que le
 
 - **Unitaires** (`domain/immutability.rs`) : `MeetingSession` mutable uniquement en `ongoing`.
 - **E2E** (`backend/tests/api_e2e_test.rs`) :
-  1. meeting `draft` : cast_vote → 400 ; save_attendance → 400 ;
-  2. meeting `called` : idem → 400 ;
-  3. meeting `ongoing` : les deux → 200 (non-régression) ;
-  4. clôturer le meeting puis cast_vote → 400 ; save_attendance → 400 ; les décomptes existants sont inchangés ;
+  1. meeting `draft` : cast_vote → 400 ; save_attendance → 400
+  2. meeting `called` : idem → 400
+  3. meeting `ongoing` : les deux → 200 (non-régression)
+  4. clôturer le meeting puis cast_vote → 400 ; save_attendance → 400 ; les décomptes existants sont inchangés
   5. vérifier le code d'erreur exact `errors.meetings.not_ongoing` dans le corps.
 
 ## 9. Ordre d'implémentation
@@ -94,4 +94,3 @@ Aucun changement fonctionnel (l'UI restreint déjà). Vérifier seulement que le
 2. `db/assembly.rs` : check transactionnel dans `cast_vote` puis `save_attendance` → `cargo build`.
 3. Tests e2e (called/closed/draft), boucler jusqu'au vert (`cargo test --lib --tests`, `cargo clippy -- -D warnings`).
 4. Frontend : traduction du code d'erreur (toast), rien d'autre.
-5. `docs/PROGRESS.md` (nouvelle story EP-013-S11 référencée).

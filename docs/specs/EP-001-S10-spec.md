@@ -83,9 +83,9 @@ Route à déclarer dans `backend/src/api/mod.rs` :
 ## 8. Plan de tests
 
 - **E2E** (`backend/tests/api_e2e_test.rs`, harnais `common::isolated_test_server()`) :
-  - create → update → set_share → delete d'une clé, puis `GET .../audit` : 4 entrées, actions et acteurs corrects, justification présente ;
-  - set_share idempotent (même valeur) → pas d'entrée supplémentaire ;
-  - justification > borne → 422 `errors.allocation_keys.justification_too_long` ;
+  - create → update → set_share → delete d'une clé, puis `GET .../audit` : 4 entrées, actions et acteurs corrects, justification présente
+  - set_share idempotent (même valeur) → pas d'entrée supplémentaire
+  - justification > borne → 422 `errors.allocation_keys.justification_too_long`
   - rôle copropriétaire sur l'endpoint audit → 403.
 - Pas de logique domaine nouvelle → pas de test domaine pur dédié (le diff ciblé est testable via E2E, à l'image de budget/contrats).
 
@@ -95,4 +95,4 @@ Route à déclarer dans `backend/src/api/mod.rs` :
 2. Câblage audit dans `db/allocation_key.rs` (4 mutations, même transaction) — `cargo sqlx prepare` ensuite.
 3. Endpoint de lecture + route `api/mod.rs`.
 4. Frontend : champ justification + modale historique (cataloguer tout nouveau `C*` dans DESIGN.md §3 d'abord).
-5. Tests E2E, entrée `docs/PROGRESS.md`.
+5. Tests E2E.

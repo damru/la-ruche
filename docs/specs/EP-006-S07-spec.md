@@ -25,7 +25,7 @@ Le rattachement, le détachement, le listing et l'UI fonctionnent. **Aucun déve
 
 - Le PRD US-CF-007 demande une visibilité **Syndic uniquement** (rôle `manager`).
 - Le code implémente **manager + board_member** :
-  - upload pré-câblé avec `visible_roles: ['manager','board_member']` (`frontend/src/features/contracts/ContractFormModal.vue` L226) ;
+  - upload pré-câblé avec `visible_roles: ['manager','board_member']` (`frontend/src/features/contracts/ContractFormModal.vue` L226)
   - endpoints de lecture ouverts aux deux rôles (`api/contracts.rs` L173).
 
 ## 3. Décision à prendre (objet réel de cette spec)
@@ -51,7 +51,7 @@ Changements exhaustifs si cette option est retenue :
 3. **Données existantes** — migration de reprise : retirer `board_member` de `visible_to_roles` des documents liés à un contrat :
    ```sql
    UPDATE document d SET visible_to_roles = array_remove(visible_to_roles, 'board_member')
-   WHERE EXISTS (SELECT 1 FROM contract_document cd WHERE cd.document_id = d.id);
+   WHERE EXISTS (SELECT 1 FROM contract_document cd WHERE cd.document_id = d.id)
    ```
    (avec les précautions : un document lié à la fois à un contrat et à un rapport visible du conseil ne doit pas perdre sa visibilité rapport — analyser les doubles liens avant d'écrire la migration ; c'est le principal coût caché de l'option B).
 4. **UI conseil syndical** : masquer l'entrée contrats/documents pour `board_member` là où elle apparaît.
@@ -78,7 +78,7 @@ Pas de nouveau modèle de visibilité par document, pas d'ACL fine — le mécan
 1. La décision A/B est actée par le product owner et tracée (PRD amendé, ou changements B livrés).
 2. Option A : PRD mis à jour ; attach/detach vérifiés `manager`-only ; aucun autre diff.
 3. Option B : lecture `board_member` → `403`, uploads futurs `['manager']`, reprise de données sans casser les doubles liens, tests e2e verts.
-4. `docs/PROGRESS.md` : entrée datée EP-006-S07 (statut : terminée, avec la décision retenue).
+4.  : entrée datée EP-006-S07 (statut : terminée, avec la décision retenue).
 
 ---
 
@@ -94,4 +94,4 @@ Pas de nouveau modèle de visibilité par document, pas d'ACL fine — le mécan
 1. Présenter A/B au product owner avec l'argument art. 21 loi 1965 → décision.
 2. Option A : amendement PRD + vérif garde écriture + test non-régression.
 3. Option B : backend (rôles) → migration de reprise (après analyse des doubles liens) → frontend → tests.
-4. `docs/PROGRESS.md` si du code a changé.
+4.  si du code a changé.

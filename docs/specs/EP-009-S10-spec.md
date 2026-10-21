@@ -29,14 +29,14 @@ Migration `backend/migrations/NNNN_maintenance_log_category.sql` — nouvelle co
 
 ```sql
 -- EP-009-S10: logbook category (PRD US-CE-005).
-CREATE TYPE maintenance_category AS ENUM ('travaux', 'contrat', 'sinistre', 'autre');
+CREATE TYPE maintenance_category AS ENUM ('travaux', 'contrat', 'sinistre', 'autre')
 
 ALTER TABLE maintenance_log
-    ADD COLUMN category maintenance_category NOT NULL DEFAULT 'autre';
+    ADD COLUMN category maintenance_category NOT NULL DEFAULT 'autre'
 
 -- Backfill heuristic: linked contract => 'contrat', linked task => 'travaux', else 'autre'.
-UPDATE maintenance_log SET category = 'contrat' WHERE contract_id IS NOT NULL;
-UPDATE maintenance_log SET category = 'travaux' WHERE task_id IS NOT NULL AND contract_id IS NULL;
+UPDATE maintenance_log SET category = 'contrat' WHERE contract_id IS NOT NULL
+UPDATE maintenance_log SET category = 'travaux' WHERE task_id IS NOT NULL AND contract_id IS NULL
 ```
 
 Note : `CREATE TYPE` + usage immédiat sont permis dans la même transaction (la contrainte PostgreSQL ne vise que `ALTER TYPE … ADD VALUE`). Une seule migration suffit. Puis `cargo sqlx migrate run` + `cargo sqlx prepare`.
@@ -54,9 +54,9 @@ Valeur `sinistre` : aucun backfill automatique (pas de FK claim sur `maintenance
 - `frontend/src/types/domain.ts` : `type MaintenanceCategory = 'travaux' | 'contrat' | 'sinistre' | 'autre'` ; champ `category` sur l'entrée carnet.
 - Formulaire d'entrée carnet (create/edit) : select catégorie (défaut `autre`).
 - `MaintenanceView.vue` :
-  - **Filtre catégorie** : select (ou `CTabs` secondaires) sur les 4 valeurs + « Toutes » ;
-  - **Filtre source** : select sur les valeurs de `source` existantes (déjà connues pour les badges `:459,466,475`) + « Toutes » ;
-  - Les deux filtres se **combinent** (ET) avec la recherche `:422` et les onglets période `:417` existants — même mécanique computed côté client ;
+  - **Filtre catégorie** : select (ou `CTabs` secondaires) sur les 4 valeurs + « Toutes »
+  - **Filtre source** : select sur les valeurs de `source` existantes (déjà connues pour les badges `:459,466,475`) + « Toutes »
+  - Les deux filtres se **combinent** (ET) avec la recherche `:422` et les onglets période `:417` existants — même mécanique computed côté client
   - Badge catégorie sur chaque ligne (couleurs tokens, pas de valeurs brutes).
 - Aucun nouveau composant catalogue attendu (selects `C*` existants).
 
@@ -95,4 +95,3 @@ Valeur `sinistre` : aucun backfill automatique (pas de FK claim sur `maintenance
 3. Validation API + i18n.
 4. Tests e2e.
 5. Frontend : types, formulaire, filtres catégorie + source, badges.
-6. `docs/PROGRESS.md`.

@@ -30,10 +30,10 @@ Aucune migration. Optionnel (perf, si volumétrie le justifie plus tard) : index
 ```rust
 #[derive(Debug, Deserialize)]
 pub struct ListTasksQuery {
-    pub status: Option<String>,
-    pub priority: Option<String>,
-    pub assignee_id: Option<Uuid>,
-    pub contractor_id: Option<Uuid>,
+    pub status: Option<String>
+    pub priority: Option<String>
+    pub assignee_id: Option<Uuid>
+    pub contractor_id: Option<Uuid>
     pub q: Option<String>,          // search in title + description
     pub limit: Option<i64>,         // default 50, cap 200
     pub offset: Option<i64>,        // default 0
@@ -65,10 +65,10 @@ Note : adapter les noms de colonnes (`assignee_id`/`contractor_id`) aux colonnes
 
 - `frontend/src/api/index.ts` (`tasksApi.list`) : accepter un objet de filtres optionnel sérialisé en query string ; nouveau type de réponse `{ items, total }`.
 - `TasksView.vue` :
-  - conserver les onglets statut existants (`CTabs`, `:363-368`) mais les brancher sur le param `status` de l'API ;
-  - ajouter une rangée de filtres : select priorité, select assigné, select prestataire (composants catalogue `C*`) ;
-  - champ de recherche (debounce ~300 ms) branché sur `q` ;
-  - pagination simple « Charger plus » ou pages numérotées (`limit=50`) ;
+  - conserver les onglets statut existants (`CTabs`, `:363-368`) mais les brancher sur le param `status` de l'API
+  - ajouter une rangée de filtres : select priorité, select assigné, select prestataire (composants catalogue `C*`)
+  - champ de recherche (debounce ~300 ms) branché sur `q`
+  - pagination simple « Charger plus » ou pages numérotées (`limit=50`)
   - **fallback client-side conservé simple** : tant que `total <= limit`, le filtrage local actuel peut rester en secours, mais la source de vérité devient l'API.
 - Pas de nouveau composant catalogue attendu ; si un composant de pagination est créé, l'ajouter à `docs/DESIGN.md §2` avant usage.
 
@@ -105,4 +105,3 @@ Note : adapter les noms de colonnes (`assignee_id`/`contractor_id`) aux colonnes
 2. API `ListTasksQuery` + validation + réponse `{items, total}`.
 3. Tests e2e.
 4. Frontend api client + `TasksView` (filtres, recherche, pagination).
-5. `docs/PROGRESS.md`.

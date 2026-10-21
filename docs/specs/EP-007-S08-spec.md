@@ -32,16 +32,16 @@ Aucune migration. Les liens existent déjà (`vendor_submission.task_id`, `maint
 
 ```rust
 let has_submissions = sqlx::query_scalar::<_, bool>(
-    "SELECT EXISTS(SELECT 1 FROM vendor_submission WHERE task_id = $1)",
-).bind(id).fetch_one(&mut *tx).await?;
+    "SELECT EXISTS(SELECT 1 FROM vendor_submission WHERE task_id = $1)"
+).bind(id).fetch_one(&mut *tx).await?
 if has_submissions {
-    return Err(AppError::validation_code("errors.tasks.has_submissions"));
+    return Err(AppError::validation_code("errors.tasks.has_submissions"))
 }
 let in_logbook = sqlx::query_scalar::<_, bool>(
-    "SELECT EXISTS(SELECT 1 FROM maintenance_log WHERE task_id = $1)",
-).bind(id).fetch_one(&mut *tx).await?;
+    "SELECT EXISTS(SELECT 1 FROM maintenance_log WHERE task_id = $1)"
+).bind(id).fetch_one(&mut *tx).await?
 if in_logbook {
-    return Err(AppError::validation_code("errors.tasks.has_logbook_entry"));
+    return Err(AppError::validation_code("errors.tasks.has_logbook_entry"))
 }
 ```
 
@@ -97,4 +97,3 @@ Réponses `delete` (nouvelles) : `400 errors.tasks.has_submissions` · `400 erro
 2. API : handler + route + i18n.
 3. Tests e2e, boucler au vert.
 4. Frontend : api client, `DeleteTaskModal`, action annuler dans `TasksView`.
-5. `docs/PROGRESS.md`.

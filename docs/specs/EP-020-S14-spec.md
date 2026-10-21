@@ -59,9 +59,9 @@ Ni slot, ni emit. Le chevron séparateur (`CIconChevronRight`, `aria-hidden="tru
   <template #left>
     <CTopbarBreadcrumb
       :crumbs="[
-        { label: buildingName || '…' },
-        { label: t('meetings.title'), to: { name: 'assembly-list' } },
-        { label: assembly.title },
+        { label: buildingName || '…' }
+        { label: t('meetings.title'), to: { name: 'assembly-list' } }
+        { label: assembly.title }
       ]"
     />
   </template>
@@ -96,4 +96,4 @@ Ni slot, ni emit. Le chevron séparateur (`CIconChevronRight`, `aria-hidden="tru
 2. Créer `CTopbarBreadcrumb.vue` (style repris des sélecteurs `:deep` actuels de `CTopbar.vue`).
 3. Migrer une vue pilote 2 niveaux (`ClaimsView`) puis une vue 3 niveaux (`AssemblyDetailView`).
 4. Migrer les vues restantes ; nettoyer `CTopbar.vue` et les imports orphelins.
-5. Entrée datée dans `docs/PROGRESS.md` (réf. EP-020-S14).
+5. Entrée datée dans.

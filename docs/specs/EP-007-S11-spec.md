@@ -55,7 +55,7 @@ Aucun changement (option 2). Vérifier que le libellé FR du badge `awaiting_val
 ## 7. Documentation à mettre à jour
 
 - `docs/product/PRD` (EP-007 / US-TP-010) : remplacer la mention `report_received` par `awaiting_validation`, en explicitant l'équivalence et la limite « toute soumission est finale ».
-- `docs/PROGRESS.md` : entrée datée « EP-007-S11 — décision : pas de nouveau statut, PRD amendé ».
+-  : entrée datée « EP-007-S11 — décision : pas de nouveau statut, PRD amendé ».
 
 ## 8. Critères d'acceptation
 
@@ -75,4 +75,3 @@ Aucun changement (option 2). Vérifier que le libellé FR du badge `awaiting_val
 2. Amender le PRD.
 3. Commentaire d'ancrage + éventuel libellé i18n.
 4. Vérifier/ajouter le test e2e de non-régression.
-5. `docs/PROGRESS.md`.
