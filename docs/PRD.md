@@ -63,17 +63,13 @@ llm_directives:
 
 ## Utilisateurs cibles
 
-**Syndic bénévole** (primaire) — Copropriétaire élu, pas nécessairement à l'aise avec le numérique. Il gère l'immeuble entre son travail et sa vie personnelle, souvent depuis son téléphone dans les parties communes ou à son bureau le soir. Son job : administrer, rester conforme, déléguer sans perdre le contrôle. Il a besoin de clarté, de guidage, et de ne jamais se sentir seul face à une obligation légale.
-
-**Conseil syndical** (secondaire) — 2 à 5 membres élus. Ils supervisent, valident avant les AG, consultent la comptabilité. Contexte mixte desktop/mobile. Besoin de transparence et de flux décisionnels clairs.
-
-**Copropriétaire** (tertiaire) — Résident propriétaire. Accède à ses charges, vote en AG, consulte les documents, signale des problèmes, participe aux consultations. Confiance et lisibilité avant tout.
-
-**Locataire** (tertiaire) — Signale des problèmes, participe aux consultations, consulte les résultats d'AG accessibles au public. Accès limité par rôle. Doit se sentir entendu, pas exclu.
-
-**Prestataire** (périphérique) — Accès via lien tokenisé uniquement. Dépose des documents, clôture une tâche. Première visite souvent sur mobile. Zéro apprentissage attendu.
-
-| Rôle | Profil | Besoins principaux |
+| Rôle | Profil | Besoins principaux | Contexte d'usage |
+|---|---|---|---|
+| **Syndic bénévole** (primaire) | Copropriétaire élu, pas forcément technique | Administration complète, conformité légale, guidage, ne jamais se sentir seul face à une obligation légale | Mobile sur le terrain + bureau le soir |
+| **Conseil syndical** (secondaire) | 2–5 membres élus en AG | Supervision, validation pre-AG, accès comptabilité, flux décisionnels clairs | Desktop + mobile |
+| **Copropriétaire** (tertiaire) | Résident propriétaire | Transparence, votes AG, consultation de ses charges, signalements | Mobile principalement |
+| **Locataire** (tertiaire) | Résident non-propriétaire | Signalements, consultations informelles, informations pratiques, se sentir entendu | Mobile principalement |
+| **Prestataire** (périphérique) | Entreprise externe | Dépôt de documents via lien tokenisé, clôture de tâche, zéro apprentissage | Mobile, première visite |
 |---|---|---|
 | **Syndic bénévole** | Copropriétaire élu, pas forcément technique | Administration complète, conformité légale, gain de temps |
 | **Conseil syndical** | 2–5 membres élus en AG | Supervision, validation pre-AG, accès comptabilité |
