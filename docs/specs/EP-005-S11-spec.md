@@ -19,6 +19,29 @@ Cible :
 - Aucun contournement des droits d'accès : la visualisation emprunte exactement le même chemin de contrôle que le téléchargement (EP-005-S04 / S05). Un utilisateur autorisé à consulter peut visualiser ; un utilisateur non autorisé n'obtient ni le rendu ni le fichier.
 - Une dégradation propre : si le rendu inline échoue (fichier volumineux, navigateur sans lecteur PDF intégré, mobile), le bouton Télécharger reste toujours disponible.
 
+### 1.1 Périmètre explicite : documents générés prévisualisables
+
+Le visualiseur couvre tout PDF produit ou archivé par l'Application. Liste explicite, avec la story d'origine et son statut :
+
+| Document | Story d'origine | Statut |
+|---|---|---|
+| Projet de PV d'AG (résolutions + résultats + présences + notes) | EP-013-S08 | ✅ livré |
+| PV d'AG signé | EP-003-S05, EP-013-S09 | ✅ livré (dépôt) · signature en attente |
+| PV du conseil syndical en délégation de pouvoirs (art. 21-1 décret 67-223) | EP-002-S12 | ⏳ en attente |
+| Convocation d'AG et pièces obligatoires | EP-003-S01, EP-003-S02, EP-003-S08 | ✅ livré |
+| Appels de fonds trimestriels (et appel fonds travaux) | EP-004-S02 | ✅ livré |
+| Relevé individuel de charges par lot | EP-004-S06 | ✅ livré |
+| Relances d'appels de fonds impayés / mise en demeure (art. 19-2 loi 1965) | EP-004-S11, EP-021-S02 | ⏳ en attente |
+| Annexes comptables I, II et III (décret 1967) | EP-004-S13 | ⏳ en attente |
+| État daté d'un lot (LEGAL.md §7.1) | EP-002-S06 | ⚠️ livré avec limitations |
+| Pré-état daté pour compromis de vente (LEGAL.md §7.2) | EP-002-S07 | ⚠️ livré avec limitations |
+| Carnet d'entretien exporté en PDF | EP-009-S09 | ⏳ en attente |
+| Fiche synthétique annuelle de copropriété en PDF | EP-012-S07 | ⏳ en attente |
+| Dossier de déclaration annuelle RNC | EP-012-S03 | ⏳ en attente |
+| Reçu PDF de paiement d'appel de fonds (paiement en ligne) | EP-016 | ⏸️ post-MVP |
+
+Tout nouveau document généré par une story future entre automatiquement dans le périmètre du visualiseur dès lors qu'il est déposé dans le module Documents au format PDF : le viewer est une couche de présentation indépendante des modules producteurs.
+
 ---
 
 ## 2. État actuel du code (points d'ancrage)
