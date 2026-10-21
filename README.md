@@ -15,16 +15,11 @@
 <p align="center">
   <a href="https://www.rust-lang.org"><img src="https://img.shields.io/badge/Rust-1.85%2B%20(edition%202024)-DEA584?logo=rust&logoColor=white" alt="Rust"></a>
   <a href="https://vuejs.org"><img src="https://img.shields.io/badge/Vue-3.5-42B883?logo=vuedotjs&logoColor=white" alt="Vue 3"></a>
-  <a href="https://www.postgresql.org"><img src="https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white" alt="PostgreSQL 16"></a>
-  <a href="https://tailwindcss.com"><img src="https://img.shields.io/badge/Tailwind-v4-38BDF8?logo=tailwindcss&logoColor=white" alt="Tailwind v4"></a>
-  <a href="https://www.docker.com"><img src="https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white" alt="Docker Compose"></a>
 </p>
 
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/licence-AGPL--3.0%20%2F%20commerciale-643fd5" alt="Licence AGPL-3.0 / commerciale"></a>
   <a href="docs/"><img src="https://img.shields.io/badge/docs-la--ruche-643fd5?logo=gitbook&logoColor=white" alt="Documentation"></a>
-  <img src="https://img.shields.io/badge/t%C3%A9l%C3%A9m%C3%A9trie-aucune-643fd5" alt="Aucune télémétrie">
-  <a href="CONTRIBUTING.md"><img src="https://img.shields.io/badge/PRs-bienvenues-643fd5" alt="PRs bienvenues"></a>
 </p>
 
 ---
@@ -56,10 +51,10 @@ Backend Rust (Axum, SQLx) sur PostgreSQL 16, frontend Vue 3 + TypeScript + Tailw
 
 ## 🚀 Démarrage rapide (développement)
 
-```bash
+\`\`\`bash
 make setup      # base de données, secrets, seeds
 make dev        # backend + frontend
-```
+\`\`\`
 
 ## 📦 Déploiement
 
@@ -67,28 +62,28 @@ make dev        # backend + frontend
 
 Un environnement de démonstration autonome, avec données factices réinitialisables.
 
-```bash
+\`\`\`bash
 LA_RUCHE__APP__DEMO_MODE=true docker compose up --build
-```
+\`\`\`
 
 - Application : http://localhost:8080 (Caddy, HTTP) ou https://localhost:443 (HTTPS).
 - Console RustFS : http://localhost:9001 (stockage : port 9000).
-- La base est (re)jouée depuis `backend/seeds/demo.sql`. L'endpoint administrateur `POST /admin/reset-demo` réinitialise la démo.
+- La base est (re)jouée depuis \`backend/seeds/demo.sql\`. L'endpoint administrateur \`POST /admin/reset-demo\` réinitialise la démo.
 
 ### 🏭 Production
 
-```bash
+\`\`\`bash
 docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-```
+\`\`\`
 
-- Image de production : `docker.io/damru/la-ruche`.
+- Image de production : \`docker.io/damru/la-ruche\`.
 - Ports PostgreSQL et RustFS non exposés publiquement ; l'application est servie par Caddy sur 443 (HTTPS via ACME si un domaine est configuré dans le Caddyfile) et sur 8080 (HTTP interne).
-- Surchargez impérativement les secrets par variables d'environnement : `JWT_SECRET`, `POSTGRES_PASSWORD`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`.
-- Logs applicatifs JSON en rotation (50 Mo × 5), `RUST_LOG=info`.
+- Surchargez impérativement les secrets par variables d'environnement : \`JWT_SECRET\`, \`POSTGRES_PASSWORD\`, \`S3_ACCESS_KEY_ID\`, \`S3_SECRET_ACCESS_KEY\`.
+- Logs applicatifs JSON en rotation (50 Mo × 5), \`RUST_LOG=info\`.
 
 ### ⚙️ Variables de configuration
 
-La configuration suit le préfixe `LA_RUCHE__` (structure `LA_RUCHE__SECTION__CLE`, ex. `LA_RUCHE__APP__DEMO_MODE`). Voir `config/` et `docker-compose.yml`.
+La configuration suit le préfixe \`LA_RUCHE__\` (structure \`LA_RUCHE__SECTION__CLE\`, ex. \`LA_RUCHE__APP__DEMO_MODE\`). Voir \`config/\` et \`docker-compose.yml\`.
 
 ## ⚖️ Licence
 
@@ -96,7 +91,7 @@ Double licence : AGPL-3.0 (usage non commercial) et licence commerciale. Voir [L
 
 ## 🤝 Contribuer
 
-Voir [CONTRIBUTING.md](CONTRIBUTING.md). Pull requests vers `main`, commits au format Conventional Commits.
+Voir [CONTRIBUTING.md](CONTRIBUTING.md). Pull requests vers \`main\`, commits au format Conventional Commits.
 
 ## 📚 Documentation
 
