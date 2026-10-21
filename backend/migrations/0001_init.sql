@@ -1,6 +1,5 @@
 -- ============================================================
--- La Ruche — PostgreSQL Schema (consolidated)
--- Generated from migrations 0001 → 0025
+-- La Ruche — PostgreSQL Schema
 -- Licence : AGPL-3.0
 -- ============================================================
 -- Conventions:
@@ -61,7 +60,7 @@ CREATE TYPE payment_frequency AS ENUM (
 );
 
 CREATE TYPE levy_status AS ENUM (
-    'issued', 'paid', 'overdue'
+    'draft', 'issued', 'paid', 'overdue'
 );
 
 -- 'awaiting_validation' added by migration 0012
@@ -99,7 +98,7 @@ CREATE TYPE contract_type AS ENUM (
 );
 
 CREATE TYPE contract_status AS ENUM (
-    'active', 'terminated', 'expired'
+    'draft', 'active', 'terminated', 'expired'
 );
 
 CREATE TYPE reminder_type AS ENUM (
@@ -116,6 +115,25 @@ CREATE TYPE log_source AS ENUM (
 
 CREATE TYPE extraction_status AS ENUM (
     'pending', 'complete', 'failed'
+);
+
+-- EP-005-S06/S07: document categories (PRD Documents §4, LEGAL §3.4, §6.1-6.3)
+CREATE TYPE document_category AS ENUM (
+    'reglement_copropriete',
+    'edd',
+    'pv_ag',
+    'comptabilite',
+    'appel_fonds',
+    'budget',
+    'contrat',
+    'diagnostic',
+    'sinistre',
+    'tache',
+    'libre',
+    'signalement',
+    'carnet_entretien',
+    'prestataire',
+    'autre'
 );
 
 -- allocation_key_type added by migration 0003
@@ -226,7 +244,7 @@ CREATE UNIQUE INDEX uak_unique_active
 
 CREATE TABLE user_account (
     id                  UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    email               TEXT NOT NULL UNIQUE,
+    email               TEXT,                       -- nullable (US-GP-008: residents without email)
     last_name           TEXT NOT NULL,
     first_name          TEXT NOT NULL,
     phone               TEXT,
@@ -248,6 +266,7 @@ CREATE TABLE user_token (
     invited_role    user_role,                   -- role to assign on invitation
     expires_at      TIMESTAMPTZ NOT NULL,
     used_at         TIMESTAMPTZ,
+    unit_id         UUID REFERENCES unit(id),       -- tenant invitation → unit_owner on acceptance (EP-002-S03)
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -279,6 +298,9 @@ CREATE TABLE unit_owner (
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- A unit has at most one current owner (end_date IS NULL)
+CREATE UNIQUE INDEX uq_unit_owner_current ON unit_owner(unit_id) WHERE end_date IS NULL;
+
 -- ============================================================
 -- DOCUMENTS
 -- ============================================================
@@ -293,12 +315,33 @@ CREATE TABLE document (
     size_bytes          BIGINT NOT NULL,
     visible_to_roles    user_role[] NOT NULL,    -- access control
     uploaded_by         UUID REFERENCES user_account(id),
+    -- Version chain (EP-005-S06, LEGAL §1.2)
+    category            document_category NOT NULL DEFAULT 'autre',
+    supersedes_id       UUID REFERENCES document(id),   -- linear version chain
+    is_current          BOOLEAN NOT NULL DEFAULT TRUE,  -- current version of its category
+    -- Soft delete (EP-005-S08): row + S3 object kept until legal retention elapses
+    deleted_at          TIMESTAMPTZ,
+    deleted_by          UUID REFERENCES user_account(id),
+    deletion_reason     TEXT,
+    replacement_reason  TEXT,
     -- OCR/NLP (post-MVP)
     extraction_status   extraction_status,
     extraction_data     JSONB,
     extraction_at       TIMESTAMPTZ,
     created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Linear version chain: a version has at most one successor (EP-005-S06)
+CREATE UNIQUE INDEX document_supersedes_unique
+    ON document (supersedes_id) WHERE supersedes_id IS NOT NULL;
+
+-- At most one current version per founding category per building (EP-005-S06)
+CREATE UNIQUE INDEX document_current_founding_unique
+    ON document (building_id, category)
+    WHERE is_current AND category IN ('reglement_copropriete', 'edd');
+
+-- Soft-deleted documents per building (EP-005-S08)
+CREATE INDEX document_deleted_idx ON document (building_id) WHERE deleted_at IS NOT NULL;
 
 -- ============================================================
 -- GENERAL MEETING (assemblee_generale)
@@ -385,6 +428,38 @@ CREATE TABLE vote (
 );
 
 -- ============================================================
+-- ACCOUNTING CODES (plan comptable copropriété, arrêté 14/03/2005 — EP-004-S09)
+-- Read-only reference table seeded with common codes.
+-- budget_line.account_code is optional (required only for legal document generation).
+-- ============================================================
+
+CREATE TABLE accounting_code (
+    code     TEXT PRIMARY KEY,
+    label    TEXT NOT NULL,
+    category TEXT NOT NULL DEFAULT 'general'
+);
+
+INSERT INTO accounting_code (code, label, category) VALUES
+('602',   'Achats de fournitures non stockées',                   'charges'),
+('6152',  'Entretien et réparations des biens immobiliers',       'charges'),
+('6156',  'Entretien et réparations des biens mobiliers',         'charges'),
+('6161',  'Primes d''assurance — multirisque immeuble',           'assurance'),
+('6163',  'Primes d''assurance — responsabilité civile',          'assurance'),
+('6226',  'Honoraires syndic',                                    'honoraires'),
+('6228',  'Rémunérations d''intermédiaires divers',               'honoraires'),
+('6231',  'Annonces et insertions légales',                       'frais'),
+('6251',  'Déplacements et réceptions',                           'frais'),
+('6270',  'Services bancaires',                                   'frais'),
+('6282',  'Gardiennage et surveillance',                          'charges'),
+('6311',  'Taxe foncière',                                        'taxes'),
+('6412',  'Salaires et traitements',                              'personnel'),
+('6450',  'Charges patronales',                                   'personnel'),
+('7320',  'Provisions pour charges — copropriétaires',            'produits'),
+('7321',  'Provisions pour travaux — copropriétaires',            'produits'),
+('10200', 'Provisions pour charges de copropriété',               'fonds'),
+('10300', 'Fonds de travaux (art. 14-2-1 loi 1965)',              'fonds');
+
+-- ============================================================
 -- BUDGET & LEVY CALLS (ADR-009: accounting immutability)
 -- ============================================================
 
@@ -394,10 +469,30 @@ CREATE TABLE budget (
     fiscal_year         INTEGER NOT NULL,
     status              budget_status NOT NULL DEFAULT 'draft',
     approval_meeting_id UUID REFERENCES general_meeting(id),
+    parent_budget_id    UUID REFERENCES budget (id),  -- rectificatif chain (EP-018-S06, ADR-009)
     created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    UNIQUE (building_id, fiscal_year)
+    updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- One root budget per (building, fiscal year); rectificatifs chain via parent_budget_id
+CREATE UNIQUE INDEX budget_unique_root_per_year
+    ON budget (building_id, fiscal_year)
+    WHERE parent_budget_id IS NULL;
+
+-- At most one rectificatif in preparation per amended budget (AC-BC-009-C)
+CREATE UNIQUE INDEX budget_unique_pending_rectificatif
+    ON budget (parent_budget_id)
+    WHERE parent_budget_id IS NOT NULL AND status = 'draft';
+
+-- At most one budget in force per fiscal year (AC-BC-009-C)
+CREATE UNIQUE INDEX budget_unique_approved_per_year
+    ON budget (building_id, fiscal_year)
+    WHERE status = 'approved';
+
+-- Walking a rectificatif chain (GET /budgets/{id}/rectificatifs)
+CREATE INDEX budget_parent_budget_id_idx
+    ON budget (parent_budget_id)
+    WHERE parent_budget_id IS NOT NULL;
 
 CREATE TABLE budget_line (
     id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -406,8 +501,23 @@ CREATE TABLE budget_line (
     key_id          UUID NOT NULL REFERENCES allocation_key(id),
     budgeted_amount NUMERIC(12, 2) NOT NULL,
     actual_amount   NUMERIC(12, 2),
-    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    account_code    TEXT REFERENCES accounting_code(code),  -- optional (EP-004-S09)
+    -- Temporal versioning (EP-018-S06, ADR-009): valid_to IS NULL = version in effect
+    valid_from      DATE NOT NULL DEFAULT CURRENT_DATE,
+    valid_to        DATE,
+    rectificatif_version INTEGER,                    -- NULL = root line
+    version        INTEGER NOT NULL DEFAULT 1,       -- optimistic-locking metadata
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT budget_line_valid_period
+        CHECK (valid_to IS NULL OR valid_to >= valid_from),
+    CONSTRAINT budget_line_rectificatif_version_positive
+        CHECK (rectificatif_version IS NULL OR rectificatif_version >= 1)
 );
+
+-- At most one version of a logical line (budget_id, key_id, label) in effect
+CREATE UNIQUE INDEX budget_line_unique_active
+    ON budget_line (budget_id, key_id, label)
+    WHERE valid_to IS NULL;
 
 -- Header record per generation batch (ADR-009)
 CREATE TABLE levy_call (
@@ -417,7 +527,9 @@ CREATE TABLE levy_call (
     due_date          DATE NOT NULL,
     charge_amount     NUMERIC(12, 2) NOT NULL DEFAULT 0,
     works_fund_amount NUMERIC(12, 2) NOT NULL DEFAULT 0,
-    issued_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    status            levy_status NOT NULL DEFAULT 'draft',   -- EP-018-S03: draft → issued on issue
+    issued_at         TIMESTAMPTZ DEFAULT NOW(),              -- NULL while draft, set on issue
+    corrects_levy_call_id UUID REFERENCES levy_call(id),      -- credit note (EP-018-S07)
     created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -487,10 +599,19 @@ CREATE TABLE vendor_contract (
     auto_renewal        BOOLEAN NOT NULL DEFAULT FALSE,
     notice_days         INTEGER,                -- termination notice in days
     status              contract_status NOT NULL DEFAULT 'active',
+    predecessor_id      UUID REFERENCES vendor_contract(id),  -- amendment chain (EP-018-S05)
     created_by          UUID NOT NULL REFERENCES user_account(id),
     created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Linear amendment chain: a predecessor has at most one activated successor (EP-018-S05)
+CREATE UNIQUE INDEX vendor_contract_predecessor_unique
+    ON vendor_contract (predecessor_id)
+    WHERE predecessor_id IS NOT NULL;
+
+CREATE INDEX vendor_contract_predecessor_idx
+    ON vendor_contract (predecessor_id);
 
 CREATE TABLE contract_document (
     contract_id     UUID NOT NULL REFERENCES vendor_contract(id),
@@ -633,6 +754,7 @@ CREATE TABLE maintenance_log (
     contract_id         UUID REFERENCES vendor_contract(id),
     task_id             UUID REFERENCES task(id) ON DELETE SET NULL,
     source              log_source NOT NULL DEFAULT 'manual',
+    corrects_entry_id   UUID REFERENCES maintenance_log(id),  -- append-only correction (EP-018-S07)
     created_by          UUID NOT NULL REFERENCES user_account(id),
     created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -716,6 +838,11 @@ CREATE TABLE consultation_response_choice (
 -- ============================================================
 -- INDEXES
 -- ============================================================
+
+-- Emails unique when present (US-GP-008: residents without email allowed)
+CREATE UNIQUE INDEX user_account_email_unique
+    ON user_account (email)
+    WHERE email IS NOT NULL;
 
 -- Access by building (most frequent queries)
 CREATE INDEX idx_unit_building           ON unit(building_id);
@@ -830,3 +957,291 @@ CREATE TRIGGER trg_consultation_updated_at
 CREATE TRIGGER trg_works_fund_updated_at
     BEFORE UPDATE ON works_fund
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+-- ============================================================
+-- AUDIT LOG (append-only — EP-018-S02, ADR-009)
+-- Conservation 10 ans (art. L123-22 Code de commerce)
+-- ============================================================
+
+CREATE TABLE audit_log (
+    id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    building_id  UUID NOT NULL REFERENCES building(id),
+    entity_type  TEXT NOT NULL,        -- 'task' | 'claim' | 'levy_call' | …
+    entity_id    UUID NOT NULL,
+    operation    TEXT NOT NULL,        -- 'UPDATE' | 'DELETE'
+    changed_by   UUID REFERENCES user_account(id),  -- NULL = system action
+    changed_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    old_values   JSONB,                -- modified fields only, values before
+    new_values   JSONB                 -- modified fields only, values after (NULL if DELETE)
+);
+
+CREATE INDEX idx_audit_log_entity ON audit_log(entity_type, entity_id);
+CREATE INDEX idx_audit_log_building ON audit_log(building_id, changed_at DESC);
+
+-- ============================================================
+-- JUDICIAL PROCEEDINGS (LEGAL.md §7.1, §10 — EP-002-S10)
+-- Tracks proceedings involving the syndicat (as claimant or defendant).
+-- Feeds the état daté (EP-002-S06): ongoing proceedings of a building.
+-- ============================================================
+
+CREATE TYPE judicial_proceeding_type AS ENUM (
+    'debt_recovery',   -- recouvrement de charges (art. 19-2)
+    'works_dispute',   -- litige travaux / malfaçon
+    'liability',       -- responsabilité / dommages
+    'other'
+);
+
+CREATE TYPE judicial_proceeding_status AS ENUM (
+    'ongoing',
+    'suspended',
+    'closed'
+);
+
+CREATE TABLE judicial_proceeding (
+    id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    building_id     UUID NOT NULL REFERENCES building(id),
+    proceeding_type judicial_proceeding_type NOT NULL DEFAULT 'other',
+    status          judicial_proceeding_status NOT NULL DEFAULT 'ongoing',
+    subject         TEXT NOT NULL,
+    claimant        TEXT NOT NULL,
+    defendant       TEXT NOT NULL,
+    jurisdiction    TEXT,
+    case_reference  TEXT,
+    opened_at       DATE NOT NULL,
+    closed_at       DATE,
+    outcome         TEXT,
+    created_by      UUID NOT NULL REFERENCES user_account(id),
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT judicial_proceeding_closed_after_opened_check
+        CHECK (closed_at IS NULL OR closed_at >= opened_at),
+    CONSTRAINT judicial_proceeding_closed_consistency_check
+        CHECK (
+            (status = 'closed' AND closed_at IS NOT NULL)
+            OR (status <> 'closed' AND closed_at IS NULL)
+        )
+);
+
+CREATE INDEX idx_judicial_proceeding_building
+    ON judicial_proceeding(building_id, status);
+
+CREATE TRIGGER trg_judicial_proceeding_updated_at
+    BEFORE UPDATE ON judicial_proceeding
+    FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+-- ============================================================
+-- GOVERNANCE REGISTER (LEGAL.md §1.7, §1.8 — EP-002-S11)
+-- Register of the syndic in office and council members with mandate periods,
+-- to audit the separation of organs (art. 17 / 21 loi 1965).
+-- Invariant: at most one active syndic mandate per building at any time.
+-- ============================================================
+
+CREATE TYPE governance_role AS ENUM (
+    'syndic',
+    'council_president',
+    'council_member'
+);
+
+CREATE TABLE governance_mandate (
+    id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    building_id   UUID NOT NULL REFERENCES building(id),
+    role          governance_role NOT NULL,
+    holder_name   TEXT NOT NULL,
+    user_id       UUID REFERENCES user_account(id),  -- optional: mandate holders may be external
+    start_date    DATE NOT NULL,
+    end_date      DATE,                 -- NULL = open-ended (still in office)
+    notes         TEXT,
+    created_by    UUID NOT NULL REFERENCES user_account(id),
+    created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT governance_mandate_period_check
+        CHECK (end_date IS NULL OR end_date >= start_date)
+);
+
+CREATE INDEX idx_governance_mandate_building
+    ON governance_mandate(building_id, role);
+
+-- DB backstop for "single active syndic": at most one open-ended syndic mandate
+-- per building. Overlapping fixed-term syndic mandates are rejected in the domain layer.
+CREATE UNIQUE INDEX uniq_active_syndic_per_building
+    ON governance_mandate(building_id)
+    WHERE role = 'syndic' AND end_date IS NULL;
+
+CREATE TRIGGER trg_governance_mandate_updated_at
+    BEFORE UPDATE ON governance_mandate
+    FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+-- ============================================================
+-- DOCUMENT EVENTS (outbox-lite — EP-005-S10, PRD US-DOC-009)
+-- Written in the SAME transaction as the document insert; consumers poll
+-- (jobs/) and mark rows processed. Real notification delivery is out of
+-- scope (EPICS "hors scope") — the MVP consumer only logs.
+-- ============================================================
+
+CREATE TABLE document_event (
+    id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    building_id   UUID NOT NULL REFERENCES building(id),
+    document_id   UUID NOT NULL REFERENCES document(id),
+    event_type    TEXT NOT NULL,                -- 'uploaded' (extensible: 'replaced', 'deleted')
+    actor_id      UUID REFERENCES user_account(id),
+    payload       JSONB NOT NULL DEFAULT '{}',  -- {original_name, category, visible_roles}
+    created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    processed_at  TIMESTAMPTZ
+);
+
+CREATE INDEX document_event_pending_idx ON document_event (created_at) WHERE processed_at IS NULL;
+
+-- ============================================================
+-- EDD REFERENCE (EP-001-S09, LEGAL.md §1.2)
+-- Manual entry of EDD (état descriptif de division) reference tantièmes,
+-- used by a read-only, non-blocking coherence check against configured
+-- allocation key shares.
+-- ============================================================
+
+CREATE TABLE edd_reference (
+    id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    building_id  UUID NOT NULL REFERENCES building(id),
+    label        TEXT NOT NULL,
+    edd_date     DATE NOT NULL,
+    document_id  UUID NULL REFERENCES document(id),
+    created_by   UUID NOT NULL REFERENCES user_account(id),
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE edd_reference_share (
+    id                 UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    edd_reference_id   UUID NOT NULL REFERENCES edd_reference(id) ON DELETE CASCADE,
+    unit_id            UUID NOT NULL REFERENCES unit(id),
+    allocation_key_id  UUID NOT NULL REFERENCES allocation_key(id),
+    share_value        NUMERIC(12,2) NOT NULL,
+    UNIQUE (edd_reference_id, unit_id, allocation_key_id)
+);
+
+CREATE INDEX edd_reference_building_idx ON edd_reference (building_id, edd_date DESC, created_at DESC);
+
+-- ============================================================
+-- ETAT DATE REQUEST (LEGAL.md §7.1, 15-day legal deadline — EP-002-S06)
+-- ============================================================
+
+CREATE TYPE etat_date_status AS ENUM ('requested', 'generated', 'sent', 'cancelled');
+
+CREATE TABLE etat_date_request (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    unit_id UUID NOT NULL REFERENCES unit(id),
+    requested_at DATE NOT NULL,                      -- date de la demande du notaire
+    due_date DATE NOT NULL,                          -- requested_at + 15 jours (calculé en domain)
+    requester_name TEXT NOT NULL,                    -- notaire / étude
+    status etat_date_status NOT NULL DEFAULT 'requested',
+    snapshot JSONB NULL,                             -- état daté figé à la génération
+    generated_at TIMESTAMPTZ NULL,
+    created_by UUID NOT NULL REFERENCES user_account(id),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX etat_date_request_unit_idx ON etat_date_request (unit_id);
+
+-- ============================================================
+-- CALENDAR EVENTS (PRD Calendrier §3, US-CAL-005 — EP-014-S03)
+-- ============================================================
+
+CREATE TYPE calendar_event_category AS ENUM ('reunion', 'visite', 'permanence', 'autre');
+
+CREATE TABLE calendar_event (
+    id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    building_id  UUID NOT NULL REFERENCES building(id),
+    title        TEXT NOT NULL,
+    description  TEXT,
+    event_date   DATE NOT NULL,
+    event_time   TIME,                          -- heure optionnelle (PRD §3)
+    category     calendar_event_category,       -- optionnelle (AC-CAL-005-B)
+    created_by   UUID NOT NULL REFERENCES user_account(id),
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_calendar_event_building_date ON calendar_event (building_id, event_date);
+
+-- AC-CAL-005-C: attachments live in the GED (document) and are linked here,
+-- mirroring maintenance_log_document / task_document.
+CREATE TABLE calendar_event_document (
+    event_id    UUID NOT NULL REFERENCES calendar_event(id) ON DELETE CASCADE,
+    document_id UUID NOT NULL REFERENCES document(id) ON DELETE CASCADE,
+    PRIMARY KEY (event_id, document_id)
+);
+
+-- ============================================================
+-- DOMAIN IMMUTABILITY TRIGGERS (mirror domain/immutability.rs)
+-- ============================================================
+
+-- levy_call frozen once issued (EP-018-S03, Pattern A)
+CREATE OR REPLACE FUNCTION trg_levy_call_immutable()
+RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+    IF OLD.status <> 'draft' THEN
+        RAISE EXCEPTION 'levy_call % is frozen (status=%)', OLD.id, OLD.status;
+    END IF;
+    IF TG_OP = 'DELETE' THEN RETURN OLD; END IF;
+    RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER levy_call_immutable
+    BEFORE UPDATE OR DELETE ON levy_call
+    FOR EACH ROW EXECUTE FUNCTION trg_levy_call_immutable();
+
+-- maintenance_log: manual entries immutable, append-only corrections only (EP-018-S07, Pattern C)
+CREATE OR REPLACE FUNCTION trg_maintenance_log_manual_immutable()
+RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+    -- Automatic entries: already guarded at application layer (EP-018-S04).
+    -- Manual entries: immutable after creation; use POST /logbook/{id}/correction instead.
+    IF OLD.source = 'manual' THEN
+        RAISE EXCEPTION 'maintenance_log % is immutable (source=manual); create a correction instead', OLD.id;
+    END IF;
+    IF TG_OP = 'DELETE' THEN RETURN OLD; END IF;
+    RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER maintenance_log_immutable
+    BEFORE UPDATE OR DELETE ON maintenance_log
+    FOR EACH ROW EXECUTE FUNCTION trg_maintenance_log_manual_immutable();
+
+-- vendor_contract: financial/legal fields frozen once out of draft (EP-018-S05, Pattern B)
+CREATE OR REPLACE FUNCTION trg_vendor_contract_immutable()
+RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+    IF OLD.status <> 'draft' AND (
+        NEW.amount IS DISTINCT FROM OLD.amount OR
+        NEW.start_date IS DISTINCT FROM OLD.start_date OR
+        NEW.end_date IS DISTINCT FROM OLD.end_date OR
+        NEW.notice_days IS DISTINCT FROM OLD.notice_days OR
+        NEW.contract_type IS DISTINCT FROM OLD.contract_type OR
+        NEW.payment_frequency IS DISTINCT FROM OLD.payment_frequency OR
+        NEW.auto_renewal IS DISTINCT FROM OLD.auto_renewal
+    ) THEN
+        RAISE EXCEPTION 'vendor_contract % is frozen on financial/legal fields (status=%)', OLD.id, OLD.status;
+    END IF;
+    RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER vendor_contract_immutable
+    BEFORE UPDATE ON vendor_contract
+    FOR EACH ROW EXECUTE FUNCTION trg_vendor_contract_immutable();
+
+-- budget_line optimistic locking (EP-018-S06): version++ on every edit EXCEPT
+-- closing valid_to — a system operation that must not invalidate a client's
+-- concurrency token.
+CREATE OR REPLACE FUNCTION increment_budget_line_version()
+    RETURNS TRIGGER AS $$
+BEGIN
+    NEW.version = OLD.version + 1;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER budget_line_version_trigger
+    BEFORE UPDATE ON budget_line
+    FOR EACH ROW
+    WHEN (OLD.valid_to IS NOT DISTINCT FROM NEW.valid_to)
+EXECUTE FUNCTION increment_budget_line_version();
