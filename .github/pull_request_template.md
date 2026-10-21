@@ -61,7 +61,6 @@
 - [ ] `docs/DESIGN.md §2` — new component added to catalogue
 - [ ] `docs/EPICS.md` — story status updated (⏳ / ✅)
 - [ ] `docs/LEGAL.md` — coverage updated after delivery
-- [ ] `docs/PROGRESS.md` — dated entry with Epic/Story ref
 
 ---
 
