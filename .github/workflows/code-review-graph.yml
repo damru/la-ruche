@@ -15,7 +15,6 @@ jobs:
         with:
           # Full history so detect-changes can resolve the merge base with the PR base branch.
           fetch-depth: 0
-      - id: crg
-        uses: tirth8205/code-review-graph@v2.3.9
+      - uses: tirth8205/code-review-graph@v2.3.9
         with:
           github-token: ${{ secrets.GH_TOKEN }}
