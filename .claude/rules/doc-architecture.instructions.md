@@ -5,7 +5,7 @@ applyTo: 'docs/ARCHITECTURE.md,docs/adr/**/*.md'
 
 # Architecture Docs Rules
 
-Source of truth: `docs/ARCHITECTURE.md`. References: ADR-001 to ADR-010.
+Source of truth: `docs/ARCHITECTURE.md`. References: ADR-001 to ADR-012.
 
 ## When to modify
 
