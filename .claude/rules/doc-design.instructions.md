@@ -5,7 +5,7 @@ applyTo: 'docs/DESIGN.md,docs/ddr/**/*.md,frontend/src/**/*.vue,frontend/src/**/
 
 # Design System Docs Rules
 
-Source of truth: `docs/DESIGN.md`. References: DDR-001 to DDR-007.
+Source of truth: `docs/DESIGN.md`. References: DDR-001 to DDR-006.
 
 ## When to modify
 

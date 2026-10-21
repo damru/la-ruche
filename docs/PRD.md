@@ -70,12 +70,6 @@ llm_directives:
 | **Copropriétaire** (tertiaire) | Résident propriétaire | Transparence, votes AG, consultation de ses charges, signalements | Mobile principalement |
 | **Locataire** (tertiaire) | Résident non-propriétaire | Signalements, consultations informelles, informations pratiques, se sentir entendu | Mobile principalement |
 | **Prestataire** (périphérique) | Entreprise externe | Dépôt de documents via lien tokenisé, clôture de tâche, zéro apprentissage | Mobile, première visite |
-|---|---|---|
-| **Syndic bénévole** | Copropriétaire élu, pas forcément technique | Administration complète, conformité légale, gain de temps |
-| **Conseil syndical** | 2–5 membres élus en AG | Supervision, validation pre-AG, accès comptabilité |
-| **Copropriétaire** | Résident propriétaire | Transparence, votes AG, consultation de ses charges |
-| **Locataire** | Résident non-propriétaire | Signalements, consultations informelles, informations pratiques |
-| **Prestataire** | Entreprise externe | Dépôt de documents via lien tokenisé, clôture de tâche |
 
 > **Note locataire** : le locataire participe au même niveau que le copropriétaire, sauf pour le vote en AG (remplacé par un droit de consultation).
 

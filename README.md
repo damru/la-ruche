@@ -53,7 +53,7 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 ```
 
 - Image de production : `docker.io/damru/la-ruche`.
-- Ports PostgreSQL et RustFS non exposés publiquement; Caddy écoute sur le port 80 (HTTPS automatique via ACME si un domaine est configuré dans le Caddyfile).
+- Ports PostgreSQL et RustFS non exposés publiquement; l'application est servie par Caddy sur 443 (HTTPS via ACME si un domaine est configuré dans le Caddyfile) et sur 8080 (HTTP interne).
 - Surchargez impérativement les secrets par variables d'environnement : `JWT_SECRET`, `POSTGRES_PASSWORD`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`.
 - Logs applicatifs JSON en rotation (50 Mo × 5), `RUST_LOG=info`.
 
