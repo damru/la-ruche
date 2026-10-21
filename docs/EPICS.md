@@ -263,6 +263,7 @@ Upload direct S3 via pre-signed URL, contrôle d'accès par rôle, téléchargem
 * [EP-005-S08](docs/specs/EP-005-S08-spec.md) ✅ — Supprimer un document : soft-delete avec conservation de la métadonnée ; pour les documents critiques (`Règlement`, `EDD`, PV signé), déclencher un workflow de remplacement avec justification horodatée avant invalidation du fichier courant (PRD US-DOC-004, US-DOC-007)
 * [EP-005-S09](docs/specs/EP-005-S09-spec.md) ✅ — Nettoyage périodique des objets S3 orphelins (fichiers sans métadonnée `document` active) et application des règles de rétention par catégorie (PRD US-DOC-008)
 * [EP-005-S10](docs/specs/EP-005-S10-spec.md) ✅ — Émettre des événements internes au dépôt d'un document pour permettre aux modules consommateurs (signalements, tâches, AG) de déclencher des notifications contextuelles (PRD US-DOC-009)
+* [EP-005-S11](docs/specs/EP-005-S11-spec.md) — Visualiser les documents PDF générés (PV d'AG, relances d'appels de fonds, tout courrier réglementaire envoyé par voie postale et/ou électronique en pièce jointe) directement dans l'Application sans téléchargement préalable, dans le respect des droits d'accès par rôle (→ EP-004-S11, EP-013-S09, LEGAL.md §3.4, §4.7)
 
 ***
 
