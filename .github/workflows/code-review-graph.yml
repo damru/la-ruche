@@ -1,0 +1,20 @@
+name: code-review-graph
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # Full history so detect-changes can resolve the merge base with the PR base branch.
+          fetch-depth: 0
+      - uses: tirth8205/code-review-graph@v2.3.9
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
