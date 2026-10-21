@@ -1,9 +1,9 @@
 ---
 document: DESIGN
-version: 2.0.1
+version: 2.1.0
 owner: Damien
 status: validé
-last_updated: 2026-08-27
+last_updated: 2026-10-21
 references:
   - DDR-001
   - DDR-002
@@ -11,7 +11,6 @@ references:
   - DDR-004
   - DDR-005
   - DDR-006
-  - DDR-007
 description: >
   Source de vérité du design system "The Modern Registry" de La Ruche — tokens, catalogue de composants
   et guidelines UX. S'applique à l'intégralité du frontend Vue 3.
@@ -33,6 +32,46 @@ rules:
 
 ---
 
+## 0. Identité produit & principes de design
+
+La Ruche est une webapp open source de gestion participative de copropriété, conçue pour les syndics bénévoles français. Elle rend la gestion d'immeuble transparente, collaborative et accessible sans les coûts ni la complexité des logiciels professionnels. Le produit distingue clairement les actes légaux contraignants (votes AG, appels de fonds) des décisions informelles (consultations, sondages).
+
+### Personnalité de marque
+
+Sobre, collaboratif, civique, éducatif.
+
+Ton : direct et humain. Pas de jargon juridique brut, mais pas de condescendance non plus. Le produit parle à des adultes compétents qui ont besoin d'être guidés, pas infantilisés.
+
+Émotion cible : confiance et sérénité. L'utilisateur doit sentir qu'il est bien organisé, que rien ne lui échappe, que la complexité légale est gérée pour lui.
+
+### Principes de design
+
+1. **La complexité légale s'explique, elle ne s'impose pas.** Quand la loi contraint une action (délai, format, majorité requise), l'interface l'indique avec le contexte suffisant pour comprendre — jamais un champ vide avec une obligation cachée dans les docs.
+
+2. **Confiance avant action irréversible.** Appels de fonds émis, PV signés, données anonymisées : ces actes sont irréversibles. Le design marque la différence entre préparer et valider, entre brouillon et acte légal. La confirmation n'est pas de la friction, c'est du soin.
+
+3. **Un rôle, une lecture.** Les mêmes données s'affichent différemment selon le rôle. Les restrictions de permission ne se vivent jamais comme une punition : un locataire qui n'a pas accès à la comptabilité voit un état vide clair, pas une erreur 403.
+
+4. **Sobre sur la forme, riche sur le fond.** Pas de décoration gratuite. L'espace blanc, la typographie et la couleur servent l'information, pas l'inverse. La richesse est dans la donnée bien présentée, pas dans l'UI.
+
+5. **Le guidage est une fonctionnalité.** Wizards, états vides actifs, tooltips légaux et rappels contextuels ne sont pas des détails UX — ils sont le produit pour un syndic bénévole non-technique. Les ignorer revient à abandonner l'utilisateur primaire.
+
+### Références produit
+
+- **Matera** — clarté du parcours syndic, densité assumée de l'information métier
+- **Qonto** — précision des états financiers, hiérarchie des données comptables, feedback instantané sur les actions
+- **Goodvest** — pédagogie intégrée à l'interface (tooltips contextuels, wizards progressifs), ton rassurant sans être condescendant
+- **Luko** — wizards d'onboarding et de déclaration : progression claire, une seule question par écran, abandon facile
+
+### Anti-références
+
+- Logiciels syndic traditionnels (Gestimmo, Syndic One, ICS Copro) — interfaces tabulaires grises, formulaires à 40 champs, aucune guidance
+- Outils enterprise lourds (Jira, Monday, SAP) — navigation complexe, tout-sur-tout, sentiment d'usine
+- Portails administratifs français de 2010 — zéro feedback, arborescences profondes
+- Dashboards SaaS génériques — grille de KPI cards identiques, gradient text, purple-on-dark sans motif
+
+---
+
 ## 1. Règles globales
 
 > **Règles critiques à mémoriser :** (1) Jamais de `1px solid` coloré comme accent — cf. §1.7. (2) `CFormFeedback` uniquement dans `#footer` de `CModal` — cf. DDR-006. (3) Pas de `z-index` codé en dur — utiliser `var(--z-*)` cf. §2.9. (4) Pas d'import direct `radix-vue` dans une vue — cf. §1.5. (5) Composant = layout. Utilitaire = texte — cf. §1.3.
@@ -45,6 +84,9 @@ rules:
   Exception : boutons-icônes embarqués dans une zone interactive plus large → `min-width: unset; min-height: unset`
 - Jamais la couleur seule pour transmettre une information
 - Toute primitive interactive (Select, Checkbox, Tooltip, DropdownMenu) passe par un wrapper Radix Vue
+- Jamais d'icône seule pour une action destructive — libellé textuel explicite
+- Messages d'erreur en langage naturel, jamais de code technique brut
+- Usage mobile prioritaire pour les rôles résidents (copropriétaire, locataire, prestataire) ; desktop prioritaire pour les rôles gestionnaires (syndic, conseil syndical)
 
 ---
 
@@ -741,4 +783,3 @@ Les rappels synthétiques partagés entre vues passent par `CReminderCard`. Ne p
 | DDR-004 | [Navigation sidebar](ddr/DDR-004-navigation-sidebar.md) | Groupes sidebar (pattern B — labels fixes), dropdown profil, routes `/residence/*` et `/profile/*` |
 | DDR-005 | [États de chargement](ddr/DDR-005-page-loading-states.md) | `usePageLoader` + `CPageError` + `CPageLoader` — chargements non bloquants isolés |
 | DDR-006 | [Pattern feedback formulaire](ddr/DDR-006-form-feedback-pattern.md) | `CFormActions` + `CForm` — animation push, jamais `CFormFeedback` directement |
-| DDR-007 | [Spécification UX composants](./../outputs/bmad/planning-artifacts/ux-design-specification.md) | Catalogue Tailwind v4 + Radix Vue + nouveaux composants headers/molécules (`CPageHeader`, `CSectionHeader`, `CCardHeader`, `CTopbarBreadcrumb`, `CDocumentList`, `CEmptyState`, `CStatusBanner`…) |

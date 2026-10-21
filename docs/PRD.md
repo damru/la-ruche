@@ -1,9 +1,9 @@
 ---
 product: La Ruche
-version: 2.0.0
+version: 2.1.0
 owner: Damien
 status: validé
-last_updated: 2026-05-22
+last_updated: 2026-10-21
 features:
   - product/PRD - Registre de la copropriété.md
   - product/PRD - Gestion des propriétaires.md
@@ -63,6 +63,16 @@ llm_directives:
 
 ## Utilisateurs cibles
 
+**Syndic bénévole** (primaire) — Copropriétaire élu, pas nécessairement à l'aise avec le numérique. Il gère l'immeuble entre son travail et sa vie personnelle, souvent depuis son téléphone dans les parties communes ou à son bureau le soir. Son job : administrer, rester conforme, déléguer sans perdre le contrôle. Il a besoin de clarté, de guidage, et de ne jamais se sentir seul face à une obligation légale.
+
+**Conseil syndical** (secondaire) — 2 à 5 membres élus. Ils supervisent, valident avant les AG, consultent la comptabilité. Contexte mixte desktop/mobile. Besoin de transparence et de flux décisionnels clairs.
+
+**Copropriétaire** (tertiaire) — Résident propriétaire. Accède à ses charges, vote en AG, consulte les documents, signale des problèmes, participe aux consultations. Confiance et lisibilité avant tout.
+
+**Locataire** (tertiaire) — Signale des problèmes, participe aux consultations, consulte les résultats d'AG accessibles au public. Accès limité par rôle. Doit se sentir entendu, pas exclu.
+
+**Prestataire** (périphérique) — Accès via lien tokenisé uniquement. Dépose des documents, clôture une tâche. Première visite souvent sur mobile. Zéro apprentissage attendu.
+
 | Rôle | Profil | Besoins principaux |
 |---|---|---|
 | **Syndic bénévole** | Copropriétaire élu, pas forcément technique | Administration complète, conformité légale, gain de temps |
@@ -70,6 +80,8 @@ llm_directives:
 | **Copropriétaire** | Résident propriétaire | Transparence, votes AG, consultation de ses charges |
 | **Locataire** | Résident non-propriétaire | Signalements, consultations informelles, informations pratiques |
 | **Prestataire** | Entreprise externe | Dépôt de documents via lien tokenisé, clôture de tâche |
+
+> **Note locataire** : le locataire participe au même niveau que le copropriétaire, sauf pour le vote en AG (remplacé par un droit de consultation).
 
 ---
 
