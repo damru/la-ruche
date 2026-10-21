@@ -28,7 +28,15 @@ onUnmounted(() => {
 
 <template>
   <div class="app-layout">
-    <AppNav>
+    <!-- Bannière mode démo : plein écran au-dessus de la sidebar et du contenu -->
+    <CMockBanner
+      v-if="ui.demoMode"
+      variant="demo"
+      class="app-layout__banner"
+    />
+
+    <div class="app-layout__row">
+      <AppNav>
       <!-- Icônes SVG par nom de route — passées en slots nommés -->
       <template #icon-dashboard>
         <CIconHome />
@@ -95,25 +103,28 @@ onUnmounted(() => {
       </template>
     </AppNav>
 
-    <!-- Zone de contenu -->
-    <main class="app-layout__main">
-      <!-- Bannière mode démo : rendue dans la colonne de contenu pour ne pas
-           décaler la sidebar ni la bottom nav vers le bas -->
-      <CMockBanner
-        v-if="ui.demoMode"
-        variant="demo"
-        class="app-layout__banner"
-      />
-      <RouterView />
-    </main>
+      <!-- Zone de contenu -->
+      <main class="app-layout__main">
+        <RouterView />
+      </main>
+    </div>
   </div>
 </template>
 
 <style scoped>
 .app-layout {
   display: flex;
+  flex-direction: column;
   min-height: 100vh;
   background: var(--color-surface);
+}
+
+/* Rangée sidebar + contenu : la bannière démo, quand visible,
+   s'affiche au-dessus des deux sans les décaler latéralement. */
+.app-layout__row {
+  display: flex;
+  flex: 1;
+  min-height: 0;
 }
 
 .app-layout__main {
@@ -129,7 +140,7 @@ onUnmounted(() => {
 }
 
 @media (max-width: 1024px) {
-  .app-layout {
+  .app-layout__row {
     flex-direction: column;
   }
   .app-layout__main {
