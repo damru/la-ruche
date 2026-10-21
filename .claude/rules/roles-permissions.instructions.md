@@ -1,12 +1,12 @@
 ---
-description: 'Rôles et permissions : manager/board_member/owner/tenant + jeton prestataire, 403 plutôt que 404, isolation building_id, garde v-if par rôle.'
+description: 'Roles and permissions: manager/board_member/owner/tenant + vendor token, 403 over 404, building_id isolation, role-based v-if guards.'
 applyTo: 'backend/src/**,frontend/src/**'
 ---
 
-# Rôles & permissions
+# Roles & permissions
 
-- Rôles applicatifs : `manager` (syndic), `board_member` (conseil syndical), `owner` (copropriétaire), `tenant` (locataire). Les prestataires accèdent via un **jeton dédié**, limité à leur intervention.
-- Refus d'accès → **403**, pas 404. Ne pas masquer l'existence d'une ressource à un utilisateur authentifié qui a un droit de lecture nul mais une légitimité partielle ; en revanche l'isolation par `building_id` est stricte.
-- Toute requête backend vérifie le rôle **et** l'appartenance au bâtiment (`building_id`), sans exception.
-- Côté frontend, les éléments d'UI réservés sont gardés par `v-if` sur le rôle (composable/store d'auth) ; le masquage frontend ne remplace jamais la vérification backend.
-- Toute nouvelle route backend doit définir son rôle minimum dans la couche d'auth et toute vue son niveau d'accès.
+- Application roles: `manager` (syndic), `board_member` (council), `owner`, `tenant`. Vendors access through a dedicated **token**, scoped to their intervention.
+- Access denial → **403**, not 404. Do not mask the existence of a resource from an authenticated user; `building_id` isolation however is strict.
+- Every backend query checks the role **and** the building scope (`building_id`), no exception.
+- On the frontend, privileged UI elements are guarded by role `v-if` (auth composable/store); frontend hiding never replaces the backend check.
+- Any new backend route must declare its minimum role in the auth layer; any new view must declare its access level.

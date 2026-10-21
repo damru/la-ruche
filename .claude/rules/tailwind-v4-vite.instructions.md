@@ -1,29 +1,29 @@
 ---
-description: 'Conventions Tailwind CSS v4 du projet La Ruche : intégration Vite, tokens @theme, utilitaires texte uniquement.'
+description: 'La Ruche Tailwind CSS v4 conventions: Vite integration, @theme tokens, text-only utilities.'
 applyTo: 'frontend/src/**/*.{vue,ts,css}'
 ---
 
-# Tailwind CSS v4 — conventions projet
+# Tailwind CSS v4 — project conventions
 
-## Intégration
+## Integration
 
-- Tailwind v4 via le plugin `@tailwindcss/vite` (Vite), pas de PostCSS ni de CLI.
-- Aucun `tailwind.config.js` : la configuration se fait en CSS.
-- Entrée unique : `frontend/src/styles/tailwind.css`.
+- Tailwind v4 via the `@tailwindcss/vite` plugin (Vite). No PostCSS, no CLI.
+- No `tailwind.config.js`: configuration lives in CSS.
+- Single entry point: `frontend/src/styles/tailwind.css`.
 
-## Tokens de design
+## Design tokens
 
-- Les tokens (couleurs, typographie, espacements, radii, ombres, z-index) sont définis via `@theme inline` dans `frontend/src/styles/tailwind.css`, en référence aux variables CSS du design system (`frontend/src/styles/base.css`).
-- Toute nouvelle valeur de token passe par `@theme inline`, jamais par une valeur magique dans un composant.
+- Tokens (colors, typography, spacing, radii, shadows, z-index) are defined via `@theme inline` in `frontend/src/styles/tailwind.css`, referencing the design system CSS variables (`frontend/src/styles/base.css`).
+- Any new token value goes through `@theme inline`, never a magic value in a component.
 
-## Utilitaires personnalisés
+## Custom utilities
 
-- Créer un utilitaire nommé avec `@utility` (ex. `@utility text-title`).
-- Règle fondatrice : les utilitaires Tailwind servent au **texte uniquement** (tailles, graisses, couleurs de texte). Le layout et la structure visuelle relèvent des composants CSS du design system.
-- Les classes `.tone--*` (tons de couleur) sont du **CSS pur** du design system, pas des utilitaires Tailwind.
+- Create named utilities with `@utility` (e.g. `@utility text-title`).
+- Foundational rule: Tailwind utilities are for **text only** (sizes, weights, text colors). Layout and visual structure belong to the design system CSS components.
+- The `.tone--*` classes (color tones) are **pure CSS** from the design system, not Tailwind utilities.
 
-## Interdits
+## Forbidden
 
-- Pas de `@apply` en cascade pour reconstruire des composants dans le markup.
-- Pas de configuration JS résiduelle, pas de plugins tiers non validés par ADR.
-- Pas de styles inline dans les templates `<template>` des composants Vue.
+- No `@apply` cascades rebuilding components in markup.
+- No residual JS configuration, no third-party plugins unless validated by an ADR.
+- No inline styles in Vue `<template>` blocks.

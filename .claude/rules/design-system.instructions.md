@@ -1,11 +1,11 @@
 ---
-description: 'Conventions design system La Ruche : composant = layout, utilitaire = texte, pas de <style> dans les .vue, z-index via variables.'
+description: 'La Ruche design system conventions: component = layout, utility = text, no <style> in .vue, z-index via variables.'
 applyTo: 'frontend/src/**/*.{vue,ts,css}'
 ---
 
 # Design system
 
-- Séparation de responsabilité : un **composant** porte le layout/la structure visuelle (classes du design system, CSS pur) ; un **utilitaire** Tailwind ne porte que du texte.
-- Aucun bloc `<style>` dans les composants `.vue` : les styles vivent dans le design system CSS (base/design-system) ou dans `@utility` déclarés.
-- Les `z-index` passent toujours par les variables `--z-*` du design system ; jamais de valeur numérique en dur.
-- Le style visuel suit les principes de `docs/DESIGN.md` (identité produit, accessibilité, anti-références) ; aucune bibliothèque UI tierce par-dessus le design system.
+- Separation of concerns: a **component** carries layout/visual structure (design system classes, pure CSS); a Tailwind **utility** carries text only.
+- No `<style>` blocks in `.vue` components: styles live in the design system CSS (base/design-system) or in declared `@utility` rules.
+- `z-index` always goes through the design system `--z-*` variables; never a hard numeric value.
+- The visual style follows `docs/DESIGN.md` (product identity, accessibility, anti-references); no third-party UI library on top of the design system.

@@ -1,13 +1,13 @@
 ---
-description: 'Conventions base de données : UUID v4, TIMESTAMPTZ, soft-delete unique par table, triggers updated_at, baseline migratoire unique.'
+description: 'Database conventions: UUID v4, TIMESTAMPTZ, one soft-delete per table, updated_at triggers, single migration baseline.'
 applyTo: 'backend/migrations/**,backend/src/**'
 ---
 
-# Conventions PostgreSQL
+# PostgreSQL conventions
 
-- Clés primaires : UUID v4 générés côté application, type `uuid` dans PostgreSQL.
-- Horodatage : `TIMESTAMPTZ` uniquement, jamais `TIMESTAMP` sans fuseau.
-- Une table possède **un seul mécanisme de soft-delete** (`deleted_at` ou équivalent) ; on n'ajoute jamais un second drapeau redondant.
-- Chaque table mutable porte un trigger `updated_at` ; l'application ne met pas à jour `updated_at` à la main.
-- Baseline migratoire unique : `backend/migrations/0001_init.sql` (squash). Toute évolution de schéma = nouvelle migration incrémentale, jamais de modification de la baseline.
-- Toute nouvelle table doit refléter ses invariants dans `docs/ARCHITECTURE.md` et respecter les ADR en vigueur (cf. ADR-006/007/012 selon le domaine).
+- Primary keys: UUID v4 generated application-side, type `uuid` in PostgreSQL.
+- Timestamps: `TIMESTAMPTZ` only, never `TIMESTAMP` without time zone.
+- A table has exactly **one soft-delete mechanism** (`deleted_at` or equivalent); never add a second redundant flag.
+- Every mutable table has an `updated_at` trigger; the application never sets `updated_at` manually.
+- Single migration baseline: `backend/migrations/0001_init.sql` (squashed). Any schema evolution is a new incremental migration, never a baseline edit.
+- Any new table must reflect its invariants in `docs/ARCHITECTURE.md` and respect the ADRs in force (e.g. ADR-006/007/012 depending on the domain).
