@@ -42,7 +42,7 @@ Un environnement de démonstration autonome, avec données factices réinitialis
 LA_RUCHE__APP__DEMO_MODE=true docker compose up --build
 ```
 
-- Application : http://localhost:443 (Caddy) ou http://localhost:8080 (backend direct).
+- Application : http://localhost:8080 (Caddy, HTTP) ou https://localhost:443 (HTTPS).
 - Console RustFS : http://localhost:9001 (stockage : port 9000).
 - La base est (re)jouée depuis `backend/seeds/demo.sql`. L'endpoint administrateur `POST /admin/reset-demo` réinitialise la démo.
 
