@@ -6,9 +6,13 @@
 import { onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import AppNav from '@/components/organisms/AppNav.vue'
+import CMockBanner from '@/components/atoms/CMockBanner.vue'
+import { useUiStore } from '@/stores/ui'
 
 // Listen for session-expired event
 const router = useRouter()
+
+const ui = useUiStore()
 
 const onSessionExpired = () => {
   router.push({ name: 'login', query: { reason: 'expired' } })
@@ -93,6 +97,13 @@ onUnmounted(() => {
 
     <!-- Zone de contenu -->
     <main class="app-layout__main">
+      <!-- Bannière mode démo : rendue dans la colonne de contenu pour ne pas
+           décaler la sidebar ni la bottom nav vers le bas -->
+      <CMockBanner
+        v-if="ui.demoMode"
+        variant="demo"
+        class="app-layout__banner"
+      />
       <RouterView />
     </main>
   </div>
@@ -110,6 +121,11 @@ onUnmounted(() => {
   min-width: 0;
   /* Padding bas pour bottom nav sur mobile */
   padding-bottom: 0;
+}
+
+.app-layout__banner {
+  position: relative;
+  z-index: var(--z-nav);
 }
 
 @media (max-width: 1024px) {
