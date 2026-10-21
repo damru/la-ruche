@@ -51,7 +51,7 @@ Vérifier que l'UI documents dans `ClaimsView.vue` (ou composant dédié) est d�
 | co_owner / tenant → `POST /claims/{id}/documents` | `403` |
 | BoardMember → GET/POST/DELETE | `200`/`201`/`204` (aligné sur `detach`) |
 | Claim d'un autre immeuble | `404` (comportement existant conservé) |
-| Documents déjà attachés par un co_owner avant le correctif | Conservés — pas de purge rétroactive ; noter dans `PROGRESS.md` |
+| Documents déjà attachés par un co_owner avant le correctif | Conservés — pas de purge rétroactive |
 
 ## 6. Critères d'acceptation
 
@@ -73,4 +73,4 @@ Vérifier que l'UI documents dans `ClaimsView.vue` (ou composant dédié) est d�
 1. Ajouter les deux guards (`claims.rs:104-114`, `:121-133`).
 2. Tests e2e (§7), boucler au vert.
 3. Vérifier le masquage UI par rôle.
-4. Commit dédié (fix sécurité, séparé de tout autre travail), `docs/PROGRESS.md`.
+4. Commit dédié (fix sécurité, séparé de tout autre travail).

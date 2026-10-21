@@ -6,7 +6,6 @@
 **Réf. PRD :** US-SIG-006
 **État :** NON IMPLÉMENTÉ.
 
-> ⚠️ **Anomalie de suivi :** `docs/PROGRESS.md` L235 marque « EP-011-S04 » comme terminée, mais l'entrée décrit en réalité les **pièces jointes photo** (attach/detach documents). L'étiquette est erronée — la story commentaires n'existe nulle part dans le code (aucune table `report_comment`, aucun endpoint). Corriger l'étiquette dans `PROGRESS.md` lors de la clôture de cette story.
 
 ---
 
@@ -156,7 +155,6 @@ Section **« Suivi »** sur la fiche signalement :
 2. Le déclarant voit les commentaires de son signalement, sans pouvoir en poster.
 3. Un tiers non habilité ne voit pas les commentaires.
 4. Les commentaires sont immuables (aucune API d'édition/suppression).
-5. `PROGRESS.md` corrigé : l'entrée L235 ré-étiquetée (pièces jointes) et une nouvelle entrée datée pour cette story.
 
 ## 8. Plan de tests
 
@@ -176,4 +174,4 @@ E2e (`backend/tests/api_e2e_test.rs`) :
 3. `api/reports.rs` : handlers + guard lecture déclarant ; route dans `api/mod.rs` → `cargo clippy -- -D warnings`.
 4. Tests e2e §8, boucler jusqu'au vert.
 5. Frontend : type `ReportComment`, `reportsApi`, section « Suivi » sur la fiche signalement + i18n.
-6. `npm --prefix frontend run build && npm --prefix frontend run lint` ; corriger `docs/PROGRESS.md` L235 + entrée datée ; `docs/EPICS.md`.
+6. `npm --prefix frontend run build && npm --prefix frontend run lint` ; `docs/EPICS.md`.
