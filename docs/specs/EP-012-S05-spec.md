@@ -11,7 +11,7 @@
 Action explicite `POST /fiche-synthetique/{id}/publish` (Syndic). Effets atomiques (une transaction) :
 1. la fiche `draft` passe `published` (`published_at = NOW()`, `published_by = auth.user_id`) — immuable dès lors (AC-CR-003-A) ;
 2. si une fiche `published` existe déjà pour le même exercice, elle passe `archived` (AC-CR-003-B) ;
-3. les copropriétaires sont notifiés de la disponibilité (AC-CR-003-C) via le mécanisme de notification existant du projet — si aucun mécanisme n'est disponible au moment de l'implémentation, le point est dégradé en évènement d'audit + bandeau frontend, et signalé dans PROGRESS.md.
+3. les copropriétaires sont notifiés de la disponibilité (AC-CR-003-C) via le mécanisme de notification existant du projet — si aucun mécanisme n'est disponible au moment de l'implémentation, le point est dégradé en évènement d'audit + bandeau frontend.
 
 ## 2. État actuel du code (points d'ancrage)
 
@@ -91,4 +91,3 @@ pub async fn publish(pool, id, building_id, user_id) -> AppResult<Option<FicheRo
 1. `db::publish` (transaction + FOR UPDATE) + tests e2e transitions.
 2. `api::publish` + route + notification post-commit.
 3. Frontend (bouton, modale, badges) + `docs/DESIGN.md`.
-4. Entrée `docs/PROGRESS.md` (EP-012-S05).
