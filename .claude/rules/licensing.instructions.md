@@ -1,6 +1,6 @@
 ---
 description: 'Règles de licence : double licence AGPL-3.0 / commerciale, dépendances AGPL-compatibles, zéro télémétrie, CLA obligatoire.'
-applyTo: 'Cargo.toml', 
+applyTo: 'Cargo.toml'
 ---
 
 # Licence & conformité
