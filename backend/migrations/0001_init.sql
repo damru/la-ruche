@@ -1,6 +1,5 @@
 -- ============================================================
--- La Ruche — PostgreSQL Schema (consolidated)
--- Generated from migrations 0001 → 0046 (squashed baseline: single migration, as if first)
+-- La Ruche — PostgreSQL Schema
 -- Licence : AGPL-3.0
 -- ============================================================
 -- Conventions:
