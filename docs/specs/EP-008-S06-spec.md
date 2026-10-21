@@ -106,4 +106,4 @@ Réponses `declare` : `200` (status `open`, `declared_at` posé) · `400 errors.
 4. API handler + filtrage rôle + route + i18n.
 5. Tests e2e.
 6. Frontend types/api/vue.
-7. Docs (`ARCHITECTURE.md` enum, `PROGRESS.md`).
+7. Docs (`ARCHITECTURE.md` enum).
