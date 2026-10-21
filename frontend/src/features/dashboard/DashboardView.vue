@@ -503,19 +503,30 @@ const todayStr = computed(() =>
               <CCard v-if="consultations.length">
                 <CSectionHeader>
                   <CHeading type="card">
-                    {{ t('dashboard.activeConsultation') }}
+                    {{ t('dashboard.activeConsultation', { count: consultations.length }) }}
                   </CHeading>
-                  <p
-                    v-if="consultations[0].closed_at"
-                    class="body-sm text-on-surface-variant"
-                  >
-                    {{ t('dashboard.closesPrefix') }} {{ formatRelative(consultations[0].closed_at) }}
-                  </p>
+                  <template #actions>
+                    <CSectionLink to="/consultations">
+                      {{ t('dashboard.seeConsultations') }}
+                    </CSectionLink>
+                  </template>
                 </CSectionHeader>
                 <div class="consultation-body">
-                  <p class="consultation-title">
-                    {{ consultations[0].title }}
-                  </p>
+                  <div
+                    v-for="c in consultations"
+                    :key="c.id"
+                    class="consultation-item"
+                  >
+                    <p class="consultation-title">
+                      {{ c.title }}
+                    </p>
+                    <p
+                      v-if="c.closed_at"
+                      class="consultation-legal"
+                    >
+                      {{ t('dashboard.closesPrefix') }} {{ formatRelative(c.closed_at) }}
+                    </p>
+                  </div>
                   <p class="consultation-legal">
                     ⚠️ {{ t('consultations.informalNote') }}
                   </p>
@@ -843,7 +854,9 @@ const todayStr = computed(() =>
 .res-stat-label { font-size: var(--text-2xs); color: var(--color-on-surface-variant); }
 
 /* ── Consultation ─────────────────────────────────────────────────── */
-.consultation-body { display: flex; flex-direction: column; gap: var(--space-2); }
+.consultation-body { display: flex; flex-direction: column; gap: var(--space-3); }
+.consultation-item { display: flex; flex-direction: column; gap: var(--space-1); }
+.consultation-item + .consultation-item { padding-top: var(--space-2); border-top: 1px solid var(--color-outline-variant); }
 .consultation-title { font-size: var(--text-md); font-weight: var(--fw-medium); color: var(--color-on-surface); }
 .consultation-legal { font-size: var(--text-2xs); color: var(--color-on-surface-variant); }
 </style>
