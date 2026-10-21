@@ -18,35 +18,4 @@ jobs:
       - id: crg
         uses: tirth8205/code-review-graph@v2.3.9
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          # Upstream v2.3.9 builds its sticky-comment author filter from
-          # `gh api user`. With the default GITHUB_TOKEN (an installation
-          # token) that endpoint answers 403 and the raw error JSON is
-          # injected into the jq filter, failing the job with
-          # "failed to parse jq expression". Disable the built-in comment
-          # step and upsert below, where the login is known exactly:
-          # GITHUB_TOKEN comments are authored by github-actions[bot].
-          comment: "false"
-      - name: Upsert sticky PR comment
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          COMMENT_FILE: ${{ steps.crg.outputs.comment-file }}
-        run: |
-          set -euo pipefail
-          comment_id=$(gh api \
-            "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments" \
-            --paginate \
-            --jq '.[] | select(
-              .user.login == "github-actions[bot]" and
-              (.body | startswith("<!-- code-review-graph-report -->"))
-            ) | .id' | sed -n '1p')
-          if [ -n "${comment_id}" ]; then
-            gh api --method PATCH --silent \
-              "repos/${GITHUB_REPOSITORY}/issues/comments/${comment_id}" \
-              -F body=@"${COMMENT_FILE}"
-          else
-            gh api --method POST --silent \
-              "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments" \
-              -F body=@"${COMMENT_FILE}"
-          fi
+          github-token: ${{ secrets.GH_TOKEN }}
