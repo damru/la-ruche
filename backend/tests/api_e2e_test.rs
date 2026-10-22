@@ -515,3 +515,524 @@ async fn login_with_invalid_credentials_is_unauthorized() {
         .await;
     assert_eq!(resp.status_code(), StatusCode::UNAUTHORIZED);
 }
+
+// ── EP-010-S04 / EP-010-S05: consultation draft lifecycle + reminders ──
+
+/// Boots an isolated server, bootstraps a manager session, and returns the
+/// manager-authenticated server plus a pool for seeding extra users.
+/// Tests that act as a seeded (non-manager) user build a second server from
+/// the same database via `user_server` so the manager cookie never leaks.
+async fn consultation_test_server() -> (TestServer, sqlx::PgPool) {
+    let (mut server, pool) = common::isolated_test_server_with_pool().await;
+    let bootstrap = server
+        .post("/api/v1/onboarding/bootstrap")
+        .json(&common::bootstrap_payload())
+        .await;
+    assert_eq!(bootstrap.status_code(), StatusCode::CREATED);
+    server.add_cookies(bootstrap.cookies());
+    (server, pool)
+}
+
+/// Rebuilds a cookie-free server from the same database, authenticated as the
+/// given JWT user via the Authorization header.
+async fn user_server(pool: &sqlx::PgPool, jwt: &str) -> TestServer {
+    let mut cfg = common::test_config().await;
+    let db_name = pool
+        .connect_options()
+        .get_database()
+        .expect("db name")
+        .to_string();
+    let base = url::Url::parse(&std::env::var("DATABASE_URL").expect("DATABASE_URL"))
+        .expect("parse base url");
+    let mut db_url = base.clone();
+    db_url.set_path(&format!("/{db_name}"));
+    cfg.db.url = db_url.to_string();
+    let mut server = common::test_server_with_pool(cfg, pool.clone()).await;
+    server.add_header("Authorization", format!("Bearer {jwt}"));
+    server
+}
+
+fn consultation_payload() -> Value {
+    json!({
+        "title": "Travaux ascenseur",
+        "description": "Devis à valider",
+        "visible_to_roles": ["manager", "board_member", "co_owner", "tenant"],
+        "choices": ["Oui", "Non"]
+    })
+}
+
+/// Seeds a user with the given roles in the manager's building; returns
+/// (user_id, jwt) so the test can act as that user.
+async fn seed_user(
+    pool: &sqlx::PgPool,
+    building_id: uuid::Uuid,
+    roles: &[&str],
+) -> (uuid::Uuid, String) {
+    let cfg = common::test_config().await;
+    let user_id = uuid::Uuid::new_v4();
+    let email = format!("user-{}@test.local", user_id.simple());
+    let password_hash =
+        laruche::auth::password::hash_password("MotDePasse123!", &cfg.auth).expect("hash");
+    sqlx::query(
+        "INSERT INTO user_account (id, email, last_name, first_name, password_hash) \
+         VALUES ($1, $2, 'Doe', 'John', $3)",
+    )
+    .bind(user_id)
+    .bind(&email)
+    .bind(&password_hash)
+    .execute(pool)
+    .await
+    .expect("user");
+    let role_list: Vec<laruche::domain::Role> = roles
+        .iter()
+        .map(|r| r.parse::<laruche::domain::Role>().expect("role"))
+        .collect();
+    sqlx::query("INSERT INTO user_building (user_id, building_id, roles) VALUES ($1, $2, $3)")
+        .bind(user_id)
+        .bind(building_id)
+        .bind(&role_list)
+        .execute(pool)
+        .await
+        .expect("role");
+    let jwt = laruche::auth::jwt::generate_access_token(
+        user_id,
+        building_id,
+        role_list,
+        &cfg.auth.jwt_secret,
+        cfg.auth.access_token_ttl_secs,
+    )
+    .expect("jwt");
+    (user_id, jwt)
+}
+
+async fn manager_building_id(server: &TestServer) -> uuid::Uuid {
+    let me = server.get("/api/v1/auth/me").await;
+    assert_eq!(me.status_code(), StatusCode::OK);
+    uuid::Uuid::parse_str(
+        me.json::<Value>()["building_id"]
+            .as_str()
+            .expect("building_id"),
+    )
+    .expect("uuid")
+}
+
+// S04-1: POST /consultations creates a draft, absent from the open list.
+#[tokio::test]
+async fn consultation_created_as_draft_not_in_open_list() {
+    let (server, _pool) = consultation_test_server().await;
+
+    let created = server
+        .post("/api/v1/consultations")
+        .json(&consultation_payload())
+        .await;
+    assert_eq!(
+        created.status_code(),
+        StatusCode::CREATED,
+        "create failed: {}",
+        created.text()
+    );
+    let id = created.json::<Value>()["id"]
+        .as_str()
+        .expect("id")
+        .to_string();
+
+    let got = server.get(&format!("/api/v1/consultations/{id}")).await;
+    assert_eq!(got.status_code(), StatusCode::OK);
+    assert_eq!(got.json::<Value>()["consultation"]["status"], "draft");
+
+    let list = server.get("/api/v1/consultations").await;
+    let arr = list.json::<Value>()["consultations"]
+        .as_array()
+        .expect("array")
+        .clone();
+    let open: Vec<_> = arr.iter().filter(|c| c["status"] == "open").collect();
+    assert!(
+        open.is_empty(),
+        "a draft must not appear among open consultations"
+    );
+    let drafts: Vec<_> = arr.iter().filter(|c| c["status"] == "draft").collect();
+    assert_eq!(drafts.len(), 1, "the draft must be listed for its creator");
+}
+
+// S04-2/3: PUT edits a draft (title + choices); PUT on an open one → 404.
+#[tokio::test]
+async fn draft_is_editable_and_open_is_not() {
+    let (server, _pool) = consultation_test_server().await;
+
+    let created = server
+        .post("/api/v1/consultations")
+        .json(&consultation_payload())
+        .await;
+    let id = created.json::<Value>()["id"]
+        .as_str()
+        .expect("id")
+        .to_string();
+
+    let mut payload = consultation_payload();
+    payload["title"] = json!("Travaux ascenseur — v2");
+    payload["choices"] = json!(["Oui", "Non", "À discuter"]);
+    let updated = server
+        .put(&format!("/api/v1/consultations/{id}"))
+        .json(&payload)
+        .await;
+    assert_eq!(
+        updated.status_code(),
+        StatusCode::NO_CONTENT,
+        "draft edit failed: {}",
+        updated.text()
+    );
+
+    let got = server.get(&format!("/api/v1/consultations/{id}")).await;
+    let c = &got.json::<Value>()["consultation"];
+    assert_eq!(c["title"], "Travaux ascenseur — v2");
+    assert_eq!(c["choices"].as_array().expect("choices").len(), 3);
+
+    // Open it, then try to edit again → 404 (guard status='draft').
+    let opened = server
+        .post(&format!("/api/v1/consultations/{id}/open"))
+        .await;
+    assert_eq!(opened.status_code(), StatusCode::NO_CONTENT);
+
+    let edit_open = server
+        .put(&format!("/api/v1/consultations/{id}"))
+        .json(&payload)
+        .await;
+    assert_eq!(edit_open.status_code(), StatusCode::NOT_FOUND);
+}
+
+// S04-4: POST /open transitions draft → open; a second open → 404.
+#[tokio::test]
+async fn open_transitions_draft_to_open_once() {
+    let (server, _pool) = consultation_test_server().await;
+
+    let created = server
+        .post("/api/v1/consultations")
+        .json(&consultation_payload())
+        .await;
+    let id = created.json::<Value>()["id"]
+        .as_str()
+        .expect("id")
+        .to_string();
+
+    let first = server
+        .post(&format!("/api/v1/consultations/{id}/open"))
+        .await;
+    assert_eq!(first.status_code(), StatusCode::NO_CONTENT);
+    let got = server.get(&format!("/api/v1/consultations/{id}")).await;
+    assert_eq!(got.json::<Value>()["consultation"]["status"], "open");
+
+    let second = server
+        .post(&format!("/api/v1/consultations/{id}/open"))
+        .await;
+    assert_eq!(second.status_code(), StatusCode::NOT_FOUND);
+}
+
+// S04-5: POST /respond on a draft → 400 errors.consultations.not_open.
+#[tokio::test]
+async fn respond_on_draft_is_rejected() {
+    let (server, _pool) = consultation_test_server().await;
+
+    let created = server
+        .post("/api/v1/consultations")
+        .json(&consultation_payload())
+        .await;
+    let id = created.json::<Value>()["id"]
+        .as_str()
+        .expect("id")
+        .to_string();
+
+    let got = server.get(&format!("/api/v1/consultations/{id}")).await;
+    let choice_id = got.json::<Value>()["consultation"]["choices"][0]["id"]
+        .as_str()
+        .expect("choice id")
+        .to_string();
+
+    let resp = server
+        .post(&format!("/api/v1/consultations/{id}/respond"))
+        .json(&json!({ "choice_ids": [choice_id] }))
+        .await;
+    assert_eq!(resp.status_code(), StatusCode::BAD_REQUEST);
+    assert_eq!(
+        resp.json::<Value>()["message"],
+        "errors.consultations.not_open"
+    );
+}
+
+// S04-6: DELETE a draft → 204; DELETE an open consultation → 404.
+#[tokio::test]
+async fn draft_deletable_open_not_deletable() {
+    let (server, _pool) = consultation_test_server().await;
+
+    let created = server
+        .post("/api/v1/consultations")
+        .json(&consultation_payload())
+        .await;
+    let id = created.json::<Value>()["id"]
+        .as_str()
+        .expect("id")
+        .to_string();
+
+    // Open one → delete must fail (only closed/draft).
+    let opened = server
+        .post(&format!("/api/v1/consultations/{id}/open"))
+        .await;
+    assert_eq!(opened.status_code(), StatusCode::NO_CONTENT);
+    let del_open = server.delete(&format!("/api/v1/consultations/{id}")).await;
+    assert_eq!(del_open.status_code(), StatusCode::NOT_FOUND);
+
+    // A fresh draft → delete succeeds.
+    let created2 = server
+        .post("/api/v1/consultations")
+        .json(&consultation_payload())
+        .await;
+    let id2 = created2.json::<Value>()["id"]
+        .as_str()
+        .expect("id")
+        .to_string();
+    let del_draft = server.delete(&format!("/api/v1/consultations/{id2}")).await;
+    assert_eq!(del_draft.status_code(), StatusCode::NO_CONTENT);
+}
+
+// S04-7: a plain resident does not see other people's drafts in list.
+#[tokio::test]
+async fn resident_does_not_see_others_drafts() {
+    let (server, pool) = consultation_test_server().await;
+    let building_id = manager_building_id(&server).await;
+
+    // Manager creates a draft.
+    let created = server
+        .post("/api/v1/consultations")
+        .json(&consultation_payload())
+        .await;
+    let draft_id = created.json::<Value>()["id"]
+        .as_str()
+        .expect("id")
+        .to_string();
+
+    // Seed a plain co_owner and act as them (cookie-free server).
+    let (_resident_id, jwt) = seed_user(&pool, building_id, &["co_owner"]).await;
+    let resident = user_server(&pool, &jwt).await;
+    let list = resident.get("/api/v1/consultations").await;
+    assert_eq!(list.status_code(), StatusCode::OK);
+    let arr = list.json::<Value>()["consultations"]
+        .as_array()
+        .expect("array")
+        .clone();
+    assert!(
+        !arr.iter().any(|c| c["id"] == draft_id),
+        "a resident must not see someone else's draft"
+    );
+}
+
+// S05-1/2: open consultation, 2 eligible users, 0 responses → count == 2;
+// one responds → count == 1; a user outside visible_to_roles never counted.
+#[tokio::test]
+async fn non_respondents_count_tracks_responses() {
+    let (server, pool) = consultation_test_server().await;
+    let building_id = manager_building_id(&server).await;
+
+    let (co_owner_id, co_owner_jwt) = seed_user(&pool, building_id, &["co_owner"]).await;
+    let (_tenant_id, tenant_jwt) = seed_user(&pool, building_id, &["tenant"]).await;
+    // A manager outside the building is never expected (same building here, but
+    // create a user whose role is excluded from visible_to_roles instead).
+    let (_out_id, out_jwt) = seed_user(&pool, building_id, &["co_owner"]).await;
+
+    // Consultation visible only to co_owners → tenant excluded, 2 co_owners expected.
+    let mut payload = consultation_payload();
+    payload["visible_to_roles"] = json!(["co_owner"]);
+    let created = server.post("/api/v1/consultations").json(&payload).await;
+    let id = created.json::<Value>()["id"]
+        .as_str()
+        .expect("id")
+        .to_string();
+    let opened = server
+        .post(&format!("/api/v1/consultations/{id}/open"))
+        .await;
+    assert_eq!(opened.status_code(), StatusCode::NO_CONTENT);
+
+    let nr = server
+        .get(&format!("/api/v1/consultations/{id}/non-respondents"))
+        .await;
+    assert_eq!(nr.status_code(), StatusCode::OK);
+    // The manager (bootstrap user) also has the manager role → intersects co_owner?
+    // No: manager role is not in visible_to_roles=['co_owner'], so only the 2 co_owners.
+    assert_eq!(nr.json::<Value>()["count"], 2);
+
+    // One co_owner responds → count drops to 1.
+    let got = server.get(&format!("/api/v1/consultations/{id}")).await;
+    let choice_id = got.json::<Value>()["consultation"]["choices"][0]["id"]
+        .as_str()
+        .expect("choice id")
+        .to_string();
+    let voter = user_server(&pool, &co_owner_jwt).await;
+    let resp = voter
+        .post(&format!("/api/v1/consultations/{id}/respond"))
+        .json(&json!({ "choice_ids": [choice_id] }))
+        .await;
+    assert_eq!(resp.status_code(), StatusCode::NO_CONTENT);
+
+    let nr2 = server
+        .get(&format!("/api/v1/consultations/{id}/non-respondents"))
+        .await;
+    let body = nr2.json::<Value>();
+    assert_eq!(body["count"], 1);
+    assert_ne!(body["users"][0]["id"], co_owner_id.to_string());
+
+    // Sanity: the excluded-role user's JWT is valid but sees nothing extra.
+    let _ = tenant_jwt;
+    let _ = out_jwt;
+}
+
+// S05-3: POST /remind → 200 recipient_count; list exposes last_reminder_at.
+#[tokio::test]
+async fn remind_records_and_exposes_last_reminder_at() {
+    let (server, pool) = consultation_test_server().await;
+    let building_id = manager_building_id(&server).await;
+    let (_co_owner_id, _jwt) = seed_user(&pool, building_id, &["co_owner"]).await;
+
+    let created = server
+        .post("/api/v1/consultations")
+        .json(&consultation_payload())
+        .await;
+    let id = created.json::<Value>()["id"]
+        .as_str()
+        .expect("id")
+        .to_string();
+    let opened = server
+        .post(&format!("/api/v1/consultations/{id}/open"))
+        .await;
+    assert_eq!(opened.status_code(), StatusCode::NO_CONTENT);
+
+    let reminded = server
+        .post(&format!("/api/v1/consultations/{id}/remind"))
+        .await;
+    assert_eq!(
+        reminded.status_code(),
+        StatusCode::OK,
+        "remind failed: {}",
+        reminded.text()
+    );
+    // Manager + co_owner are both eligible → 2 recipients.
+    assert_eq!(reminded.json::<Value>()["recipient_count"], 2);
+
+    let list = server.get("/api/v1/consultations").await;
+    let arr = list.json::<Value>()["consultations"]
+        .as_array()
+        .expect("array")
+        .clone();
+    let c = arr.iter().find(|c| c["id"] == id).expect("consultation");
+    assert!(
+        c["last_reminder_at"].is_string(),
+        "last_reminder_at must be exposed after a reminder"
+    );
+}
+
+// S05-4: remind on a closed consultation → 400 not_open.
+#[tokio::test]
+async fn remind_on_closed_consultation_is_rejected() {
+    let (server, _pool) = consultation_test_server().await;
+
+    let created = server
+        .post("/api/v1/consultations")
+        .json(&consultation_payload())
+        .await;
+    let id = created.json::<Value>()["id"]
+        .as_str()
+        .expect("id")
+        .to_string();
+    server
+        .post(&format!("/api/v1/consultations/{id}/open"))
+        .await;
+    let closed = server
+        .post(&format!("/api/v1/consultations/{id}/close"))
+        .await;
+    assert_eq!(closed.status_code(), StatusCode::NO_CONTENT);
+
+    let resp = server
+        .post(&format!("/api/v1/consultations/{id}/remind"))
+        .await;
+    assert_eq!(resp.status_code(), StatusCode::BAD_REQUEST);
+    assert_eq!(
+        resp.json::<Value>()["message"],
+        "errors.consultations.not_open"
+    );
+}
+
+// S05-5: everyone responded → remind → 400 no_non_respondents.
+#[tokio::test]
+async fn remind_without_non_respondents_is_rejected() {
+    let (server, pool) = consultation_test_server().await;
+    let building_id = manager_building_id(&server).await;
+    let (co_owner_id, co_owner_jwt) = seed_user(&pool, building_id, &["co_owner"]).await;
+
+    let mut payload = consultation_payload();
+    payload["visible_to_roles"] = json!(["co_owner", "manager"]);
+    let created = server.post("/api/v1/consultations").json(&payload).await;
+    let id = created.json::<Value>()["id"]
+        .as_str()
+        .expect("id")
+        .to_string();
+    server
+        .post(&format!("/api/v1/consultations/{id}/open"))
+        .await;
+
+    let got = server.get(&format!("/api/v1/consultations/{id}")).await;
+    let choice_id = got.json::<Value>()["consultation"]["choices"][0]["id"]
+        .as_str()
+        .expect("choice id")
+        .to_string();
+
+    // Both eligible users (manager via cookie session, co_owner via JWT) respond.
+    let voter = user_server(&pool, &co_owner_jwt).await;
+    let resp = voter
+        .post(&format!("/api/v1/consultations/{id}/respond"))
+        .json(&json!({ "choice_ids": [choice_id.clone()] }))
+        .await;
+    assert_eq!(resp.status_code(), StatusCode::NO_CONTENT);
+    let resp = server
+        .post(&format!("/api/v1/consultations/{id}/respond"))
+        .json(&json!({ "choice_ids": [choice_id] }))
+        .await;
+    assert_eq!(resp.status_code(), StatusCode::NO_CONTENT);
+    let _ = co_owner_id;
+
+    let resp = server
+        .post(&format!("/api/v1/consultations/{id}/remind"))
+        .await;
+    assert_eq!(resp.status_code(), StatusCode::BAD_REQUEST);
+    assert_eq!(
+        resp.json::<Value>()["message"],
+        "errors.consultations.no_non_respondents"
+    );
+}
+
+// S05-6: a plain co_owner gets 403 on non-respondents and remind.
+#[tokio::test]
+async fn resident_forbidden_on_reminder_endpoints() {
+    let (server, pool) = consultation_test_server().await;
+    let building_id = manager_building_id(&server).await;
+    let (_id, jwt) = seed_user(&pool, building_id, &["co_owner"]).await;
+
+    let created = server
+        .post("/api/v1/consultations")
+        .json(&consultation_payload())
+        .await;
+    let id = created.json::<Value>()["id"]
+        .as_str()
+        .expect("id")
+        .to_string();
+    server
+        .post(&format!("/api/v1/consultations/{id}/open"))
+        .await;
+
+    let resident = user_server(&pool, &jwt).await;
+    let nr = resident
+        .get(&format!("/api/v1/consultations/{id}/non-respondents"))
+        .await;
+    assert_eq!(nr.status_code(), StatusCode::FORBIDDEN);
+
+    let remind = resident
+        .post(&format!("/api/v1/consultations/{id}/remind"))
+        .await;
+    assert_eq!(remind.status_code(), StatusCode::FORBIDDEN);
+}

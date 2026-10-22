@@ -943,7 +943,8 @@
     },
     "filters": {
       "open": "Ouvertes",
-      "closed": "Fermées"
+      "closed": "Fermées",
+      "draft": "Brouillons"
     },
     "respond": "Répondre",
     "updateVote": "Mettre à jour mon vote",
@@ -987,7 +988,21 @@
       "commentLabel": "Commentaire (optionnel)",
       "submit": "Envoyer ma réponse"
     },
-    "create": "Nouvelle consultation"
+    "create": "Nouvelle consultation",
+    "noDraft": "Aucun brouillon",
+    "draftedAt": "Brouillon modifié {date}",
+    "openAction": "Ouvrir",
+    "confirmOpenTitle": "Ouvrir la consultation",
+    "confirmOpenMessage": "La consultation deviendra visible et votable par les participants. Elle ne sera plus modifiable.",
+    "nonRespondents": "{count} participant n'a pas encore répondu | {count} participants n'ont pas encore répondu",
+    "lastReminder": "Dernière relance : {date}",
+    "remind": "Relancer ({count})",
+    "confirmRemindTitle": "Relancer les non-répondants",
+    "confirmRemindMessage": "Une relance sera enregistrée pour {count} participant(s). L'envoi effectif (e-mail) n'est pas encore actif. | Une relance sera enregistrée pour {count} participants. L'envoi effectif (e-mail) n'est pas encore actif.",
+    "remindNote": "L'envoi effectif des notifications n'est pas encore actif.",
+    "edit": {
+      "title": "Modifier le brouillon"
+    }
   },
   "reports": {
     "activeCount": "{count} signalement en cours | {count} signalements en cours",
@@ -1683,7 +1698,9 @@
       "choice_label_required": "Chaque choix doit avoir un libellé.",
       "visible_roles_required": "Au moins un rôle visible doit être sélectionné.",
       "invalid_visible_role": "Un des rôles visibles est invalide.",
-      "not_found_or_closed": "La consultation est introuvable, clôturée ou l'option sélectionnée ne lui appartient pas."
+      "not_found_or_closed": "La consultation est introuvable, clôturée ou l'option sélectionnée ne lui appartient pas.",
+      "not_open": "La consultation n'est pas ouverte.",
+      "no_non_respondents": "Tous les participants ont déjà répondu."
     },
     "contractor": {
       "invalid_file_extension": "L'extension du fichier est invalide."

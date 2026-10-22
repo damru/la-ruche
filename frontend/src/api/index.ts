@@ -492,9 +492,11 @@ export const consultationsApi = {
     api.get<{ consultation: Consultation }>(`/consultations/${id}`),
   create: (data: { title: string; description?: string; visible_to_roles: string[]; choices: string[]; closed_at?: string }) =>
     api.post<Consultation>('/consultations', data),
+  update: (id: string, data: { title: string; description?: string; visible_to_roles: string[]; choices: string[]; closed_at?: string }) =>
+    api.put(`/consultations/${id}`, data),
   /** Opens a draft consultation (transitions draft → open). */
   openDraft: (id: string) =>
-    api.put(`/consultations/${id}`),
+    api.post(`/consultations/${id}/open`),
   respond: (id: string, choice_ids: string[], comment?: string) =>
     api.post(`/consultations/${id}/respond`, { choice_ids, comment }),
   results: (id: string) =>
@@ -503,6 +505,10 @@ export const consultationsApi = {
     api.post(`/consultations/${id}/close`),
   delete: (id: string) =>
     api.delete(`/consultations/${id}`),
+  nonRespondents: (id: string) =>
+    api.get<{ count: number; users: { id: string; first_name: string; last_name: string }[] }>(`/consultations/${id}/non-respondents`),
+  remind: (id: string) =>
+    api.post<{ recipient_count: number }>(`/consultations/${id}/remind`),
 }
 
 // ── Contractor (public, tokenized — no JWT) ───────────────────────

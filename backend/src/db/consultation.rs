@@ -18,10 +18,17 @@ pub async fn list(
         r#"SELECT
            c.id, c.title, c.description, c.status::text AS status,
            c.visible_to_roles::text[] AS visible_to_roles, c.closed_at, c.created_at, c.updated_at,
+           c.created_by,
            total_r.cnt AS total_responses,
+           lr.last_reminder_at,
            COALESCE(my_c.choice_ids, '[]'::json) AS my_choice_ids,
            COALESCE(choices_agg.data, '[]'::json) AS choices
            FROM consultation c
+           JOIN LATERAL (
+               SELECT MAX(created_at) AS last_reminder_at
+               FROM consultation_reminder cr0
+               WHERE cr0.consultation_id = c.id
+           ) lr ON true
            JOIN LATERAL (
                SELECT COUNT(*) AS cnt
                FROM consultation_response cr
@@ -51,6 +58,16 @@ pub async fn list(
                WHERE cc.consultation_id = c.id
            ) choices_agg ON true
            WHERE c.building_id = $1
+             AND (
+                 c.status <> 'draft'
+                 OR c.created_by = $2
+                 OR EXISTS (
+                     SELECT 1 FROM user_building ub
+                     WHERE ub.user_id = $2 AND ub.building_id = c.building_id
+                       AND ub.roles && ARRAY['manager'::user_role, 'board_member'::user_role]
+                       AND (ub.end_date IS NULL OR ub.end_date >= CURRENT_DATE)
+                 )
+             )
            ORDER BY c.updated_at DESC"#,
     )
     .bind(building_id)
@@ -66,10 +83,12 @@ pub async fn list(
                 "description": r.try_get::<Option<String>, _>("description")?,
                 "status": r.try_get::<String, _>("status")?,
                  "visible_to_roles": r.try_get::<Vec<String>, _>("visible_to_roles")?,
+                 "created_by": r.try_get::<Uuid, _>("created_by")?,
                  "closed_at": r.try_get::<Option<DateTime<Utc>>, _>("closed_at")?,
                  "created_at": r.try_get::<DateTime<Utc>, _>("created_at")?,
                  "updated_at": r.try_get::<DateTime<Utc>, _>("updated_at")?,
                  "total_responses": r.try_get::<i64, _>("total_responses")?,
+                 "last_reminder_at": r.try_get::<Option<DateTime<Utc>>, _>("last_reminder_at")?,
                  "my_choice_ids": r.try_get::<serde_json::Value, _>("my_choice_ids")?,
                  "choices": r.try_get::<serde_json::Value, _>("choices")?,
             }))
@@ -91,10 +110,17 @@ pub async fn get_with_choices(
         r#"SELECT
            c.id, c.title, c.description, c.status::text AS status,
            c.visible_to_roles::text[] AS visible_to_roles, c.closed_at, c.created_at, c.updated_at,
+           c.created_by,
            total_r.cnt AS total_responses,
+           lr.last_reminder_at,
            COALESCE(my_c.choice_ids, '[]'::json) AS my_choice_ids,
            COALESCE(choices_agg.data, '[]'::json) AS choices
            FROM consultation c
+           JOIN LATERAL (
+               SELECT MAX(created_at) AS last_reminder_at
+               FROM consultation_reminder cr0
+               WHERE cr0.consultation_id = c.id
+           ) lr ON true
            JOIN LATERAL (
                SELECT COUNT(*) AS cnt
                FROM consultation_response cr
@@ -139,15 +165,18 @@ pub async fn get_with_choices(
         "description": r.try_get::<Option<String>, _>("description")?,
         "status": r.try_get::<String, _>("status")?,
                 "visible_to_roles": r.try_get::<Vec<String>, _>("visible_to_roles")?,
+                "created_by": r.try_get::<Uuid, _>("created_by")?,
                 "closed_at": r.try_get::<Option<DateTime<Utc>>, _>("closed_at")?,
                 "created_at": r.try_get::<DateTime<Utc>, _>("created_at")?,
                 "updated_at": r.try_get::<DateTime<Utc>, _>("updated_at")?,
                 "total_responses": r.try_get::<i64, _>("total_responses")?,
+        "last_reminder_at": r.try_get::<Option<DateTime<Utc>>, _>("last_reminder_at")?,
         "my_choice_ids": r.try_get::<serde_json::Value, _>("my_choice_ids")?,
         "choices": r.try_get::<serde_json::Value, _>("choices")?,
     })))
 }
 
+/// Creates a consultation in 'draft' status (EP-010-S04) with its choices.
 #[allow(clippy::too_many_arguments)]
 pub async fn create(
     pool: &PgPool,
@@ -164,7 +193,7 @@ pub async fn create(
     let id: Uuid = sqlx::query(
         r#"INSERT INTO consultation (building_id, created_by, title, description,
            visible_to_roles, status, closed_at)
-           VALUES ($1, $2, $3, $4, $5::user_role[], 'open'::poll_status, $6) RETURNING id"#,
+           VALUES ($1, $2, $3, $4, $5::user_role[], 'draft'::poll_status, $6) RETURNING id"#,
     )
     .bind(building_id)
     .bind(user_id)
@@ -191,6 +220,59 @@ pub async fn create(
     Ok(serde_json::json!({ "id": id, "title": title }))
 }
 
+/// Updates a draft consultation (title, description, visible roles,
+/// closed_at) and replaces its choices. 404 if not found or not draft.
+/// Safe to replace choices: no response can reference a draft.
+#[allow(clippy::too_many_arguments)]
+pub async fn update_draft(
+    pool: &PgPool,
+    id: Uuid,
+    building_id: Uuid,
+    title: &str,
+    description: Option<&str>,
+    visible_to_roles: &[String],
+    closed_at: Option<DateTime<Utc>>,
+    choices: &[String],
+) -> AppResult<()> {
+    let mut tx = pool.begin().await?;
+
+    let result = sqlx::query(
+        r#"UPDATE consultation
+           SET title=$3, description=$4, visible_to_roles=$5::user_role[], closed_at=$6
+           WHERE id=$1 AND building_id=$2 AND status='draft'"#,
+    )
+    .bind(id)
+    .bind(building_id)
+    .bind(title)
+    .bind(description)
+    .bind(visible_to_roles)
+    .bind(closed_at)
+    .execute(&mut *tx)
+    .await?;
+    if result.rows_affected() == 0 {
+        return Err(crate::errors::AppError::NotFound);
+    }
+
+    sqlx::query("DELETE FROM consultation_choice WHERE consultation_id=$1")
+        .bind(id)
+        .execute(&mut *tx)
+        .await?;
+
+    for (i, label) in choices.iter().enumerate() {
+        sqlx::query(
+            "INSERT INTO consultation_choice (consultation_id, label, order_index) VALUES ($1, $2, $3)",
+        )
+        .bind(id)
+        .bind(label)
+        .bind(i as i32)
+        .execute(&mut *tx)
+        .await?;
+    }
+
+    tx.commit().await?;
+    Ok(())
+}
+
 /// Submit or update a multi-choice response.
 /// Each user may select one or more choices; calling again replaces the previous selection.
 pub async fn respond(
@@ -201,13 +283,30 @@ pub async fn respond(
     choice_ids: &[Uuid],
     comment: Option<&str>,
 ) -> AppResult<()> {
-    // Validate that every requested choice belongs to this open consultation
+    // A response is only possible on an open consultation (EP-010-S04 guard).
+    let status: Option<String> =
+        sqlx::query_scalar("SELECT status::text FROM consultation WHERE id=$1 AND building_id=$2")
+            .bind(id)
+            .bind(building_id)
+            .fetch_optional(pool)
+            .await?;
+    match status.as_deref() {
+        None => return Err(crate::errors::AppError::NotFound),
+        Some("open") => {}
+        _ => {
+            return Err(crate::errors::AppError::bad_request_code(
+                "errors.consultations.not_open",
+            ));
+        }
+    }
+
+    // Validate that every requested choice belongs to this consultation
     // in a single query rather than one round-trip per choice.
     let distinct_ids: std::collections::HashSet<Uuid> = choice_ids.iter().copied().collect();
     let valid_count: i64 = sqlx::query_scalar(
         r#"SELECT COUNT(*) FROM consultation_choice cc
            JOIN consultation c ON c.id = cc.consultation_id
-           WHERE cc.id = ANY($1) AND c.id = $2 AND c.building_id = $3 AND c.status = 'open'"#,
+           WHERE cc.id = ANY($1) AND c.id = $2 AND c.building_id = $3"#,
     )
     .bind(choice_ids)
     .bind(id)
@@ -338,15 +437,15 @@ pub async fn open(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()> {
     Ok(())
 }
 
-/// Deletes a closed consultation and all its related data (choices, responses).
-/// Returns 404 if not found or not in closed state.
+/// Deletes a closed consultation (or a draft, EP-010-S04) and all its related
+/// data (choices, responses). Returns 404 if not found or not deletable.
 pub async fn delete(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()> {
     // Delete in dependency order: response_choices → responses → choices → consultation
     let mut tx = pool.begin().await?;
 
-    // Verify the consultation exists and is closed
+    // Verify the consultation exists and is closed or draft
     let row = sqlx::query(
-        "SELECT id FROM consultation WHERE id=$1 AND building_id=$2 AND status='closed'",
+        "SELECT id FROM consultation WHERE id=$1 AND building_id=$2 AND status IN ('closed','draft')",
     )
     .bind(id)
     .bind(building_id)
@@ -389,4 +488,108 @@ pub async fn delete(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()>
 
     tx.commit().await?;
     Ok(())
+}
+
+/// Users expected to respond (active building members whose roles intersect
+/// visible_to_roles) who have no response yet. Returns (user_id, first_name,
+/// last_name) rows. 404 upstream if the consultation doesn't exist.
+pub async fn non_respondents(
+    pool: &PgPool,
+    id: Uuid,
+    building_id: Uuid,
+) -> AppResult<Vec<serde_json::Value>> {
+    let rows = sqlx::query(
+        r#"SELECT u.id, u.first_name, u.last_name
+           FROM consultation c
+           JOIN user_building ub ON ub.building_id = c.building_id
+           JOIN user_account u ON u.id = ub.user_id AND u.active
+           WHERE c.id = $1 AND c.building_id = $2
+             AND ub.roles && c.visible_to_roles
+             AND (ub.end_date IS NULL OR ub.end_date >= CURRENT_DATE)
+             AND NOT EXISTS (
+                 SELECT 1 FROM consultation_response r
+                 WHERE r.consultation_id = c.id AND r.user_id = u.id
+             )
+           ORDER BY u.last_name, u.first_name"#,
+    )
+    .bind(id)
+    .bind(building_id)
+    .fetch_all(pool)
+    .await?;
+
+    Ok(rows
+        .iter()
+        .map(|r| -> Result<_, sqlx::Error> {
+            Ok(serde_json::json!({
+                "id": r.try_get::<Uuid, _>("id")?,
+                "first_name": r.try_get::<String, _>("first_name")?,
+                "last_name": r.try_get::<String, _>("last_name")?,
+            }))
+        })
+        .collect::<Result<Vec<_>, _>>()?)
+}
+
+/// Records a reminder for an OPEN consultation. Guards status='open'
+/// (errors.consultations.not_open otherwise). Returns recipient_count.
+/// Zero non-respondents yields errors.consultations.no_non_respondents.
+pub async fn remind_non_respondents(
+    pool: &PgPool,
+    id: Uuid,
+    building_id: Uuid,
+    sent_by: Uuid,
+) -> AppResult<i64> {
+    let mut tx = pool.begin().await?;
+
+    let status: Option<String> = sqlx::query_scalar(
+        "SELECT status::text FROM consultation WHERE id=$1 AND building_id=$2 FOR UPDATE",
+    )
+    .bind(id)
+    .bind(building_id)
+    .fetch_optional(&mut *tx)
+    .await?;
+    match status.as_deref() {
+        None => return Err(crate::errors::AppError::NotFound),
+        Some("open") => {}
+        _ => {
+            return Err(crate::errors::AppError::bad_request_code(
+                "errors.consultations.not_open",
+            ));
+        }
+    }
+
+    let recipients: i64 = sqlx::query_scalar(
+        r#"SELECT COUNT(*) FROM user_building ub
+           JOIN user_account u ON u.id = ub.user_id AND u.active
+           JOIN consultation c ON c.building_id = ub.building_id
+           WHERE c.id = $1 AND c.building_id = $2
+             AND ub.roles && c.visible_to_roles
+             AND (ub.end_date IS NULL OR ub.end_date >= CURRENT_DATE)
+             AND NOT EXISTS (
+                 SELECT 1 FROM consultation_response r
+                 WHERE r.consultation_id = c.id AND r.user_id = u.id
+             )"#,
+    )
+    .bind(id)
+    .bind(building_id)
+    .fetch_one(&mut *tx)
+    .await?;
+
+    if recipients == 0 {
+        return Err(crate::errors::AppError::bad_request_code(
+            "errors.consultations.no_non_respondents",
+        ));
+    }
+
+    sqlx::query(
+        r#"INSERT INTO consultation_reminder (consultation_id, sent_by, recipient_count)
+           VALUES ($1, $2, $3)"#,
+    )
+    .bind(id)
+    .bind(sent_by)
+    .bind(recipients as i32)
+    .execute(&mut *tx)
+    .await?;
+
+    tx.commit().await?;
+    Ok(recipients)
 }

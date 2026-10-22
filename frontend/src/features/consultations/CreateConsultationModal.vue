@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import CModal from '@/components/molecules/CModal.vue'
 import CForm from '@/components/molecules/CForm.vue'
@@ -13,14 +13,18 @@ import { consultationsApi } from '@/api'
 import { useFormFeedback } from '@/composables/useFormFeedback'
 import { useAutoClose } from '@/composables/useAutoClose'
 import { toErrorMessage } from '@/composables/usePageLoader'
+import type { Consultation } from '@/types/domain'
 
 const props = defineProps<{
   open: boolean
+  /** When set, the modal edits this draft instead of creating a new one (EP-010-S04). */
+  consultation?: Consultation | null
 }>()
 
 const emit = defineEmits<{
   'update:open': [value: boolean]
   'created': []
+  'updated': []
 }>()
 
 const { t } = useI18n()
@@ -28,12 +32,24 @@ const feedback = useFormFeedback()
 const { schedule: scheduleClose, forceExpire: forceClose } = useAutoClose()
 const saving = ref(false)
 
+const isEdit = computed(() => !!props.consultation)
+
 const defaultForm = () => ({ title: '', description: '', choices: ['', ''] })
 const form = ref(defaultForm())
 
 watch(() => props.open, (open) => {
   if (!open) { forceClose(); return }
-  form.value = defaultForm()
+  if (props.consultation) {
+    form.value = {
+      title: props.consultation.title,
+      description: props.consultation.description ?? '',
+      choices: props.consultation.choices.length >= 2
+        ? props.consultation.choices.map(c => c.label)
+        : ['', ''],
+    }
+  } else {
+    form.value = defaultForm()
+  }
   feedback.reset()
 })
 
@@ -47,15 +63,22 @@ async function handleSubmit() {
   if (!form.value.title.trim() || form.value.choices.filter(c => c.trim()).length < 2) return
   saving.value = true
   feedback.reset()
+  const payload = {
+    title: form.value.title,
+    description: form.value.description || undefined,
+    visible_to_roles: props.consultation?.visible_to_roles
+      ?? ['manager', 'board_member', 'co_owner', 'tenant'],
+    choices: form.value.choices.filter(c => c.trim()),
+  }
   try {
-    await consultationsApi.create({
-      title: form.value.title,
-      description: form.value.description || undefined,
-      visible_to_roles: ['manager', 'board_member', 'co_owner', 'tenant'],
-      choices: form.value.choices.filter(c => c.trim()),
-    })
+    if (isEdit.value && props.consultation) {
+      await consultationsApi.update(props.consultation.id, payload)
+      emit('updated')
+    } else {
+      await consultationsApi.create(payload)
+      emit('created')
+    }
     feedback.setSuccess(t('common.saved'))
-    emit('created')
     scheduleClose(() => { emit('update:open', false) })
   } catch (err) {
     feedback.setError(toErrorMessage(err))
@@ -68,7 +91,7 @@ async function handleSubmit() {
 <template>
   <CModal
     :open="open"
-    :title="t('consultations.create')"
+    :title="isEdit ? t('consultations.edit.title') : t('consultations.create')"
     size="lg"
     @update:open="$emit('update:open', $event)"
   >
@@ -131,7 +154,7 @@ async function handleSubmit() {
           variant="primary"
           type="submit"
           form="consultation-create"
-          :title="t('common.create')"
+          :title="isEdit ? t('common.save') : t('common.create')"
           :loading="saving"
           :closing="feedback.status.value === 'success'"
         />

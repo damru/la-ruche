@@ -421,6 +421,8 @@ export interface Consultation {
   description?: string
   status: PollStatus
   visible_roles: Role[]
+  visible_to_roles?: string[]
+  created_by?: string
   closed_at?: string
   created_at: string
   updated_at: string
@@ -429,6 +431,8 @@ export interface Consultation {
   my_choice_ids: string[]
   /** Total number of distinct voters. */
   total_responses: number
+  /** ISO timestamp of the last recorded reminder (EP-010-S05), null when never reminded. */
+  last_reminder_at?: string | null
 }
 
 export interface ConsultationChoice {

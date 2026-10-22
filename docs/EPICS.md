@@ -361,7 +361,7 @@ Historique des interventions alimenté manuellement ou automatiquement depuis un
 
 **Statut :** terminée | **MVP :** oui | **Réf. PRD :** Participatif
 
-**État code actuel :** backend réel (list, get, create as 'open', respond/upsert 1 réponse par utilisateur, results, close) + frontend branché (liste open/closed, modale create, modale respond, clôture, résultats).
+**État code actuel :** backend réel (list, get, create en `draft`, édition brouillon, open, respond/upsert 1 réponse par utilisateur, results, close, delete, relance non-répondants) + frontend branché (liste open/brouillons/fermées, modale create/édition, modale respond, clôture, résultats, compteur et relance des non-répondants).
 
 Consultations initiables par tout résident sans approbation préalable, résultats en temps réel, mention obligatoire "non décisionnelle".
 
@@ -372,8 +372,8 @@ Consultations initiables par tout résident sans approbation préalable, résult
 * `EP-010-S01` ✅ — Créer une consultation ou un sondage avec question(s) et options de réponse (minimum 2 options, `visible_to_roles` requis)
 * `EP-010-S02` ✅ — Soumettre un vote depuis l'espace résident (une réponse par utilisateur) ; contrôle `visible_to_roles`
 * `EP-010-S03` ✅ — Afficher les résultats en temps réel avec mention obligatoire « non décisionnelle »
-* [EP-010-S04](specs/EP-010-S04-spec.md) — Gérer le cycle de vie brouillon : créer une consultation en statut `draft`, la modifier librement, puis l'ouvrir explicitement (`draft → open`) pour déclencher la notification aux participants (PRD US-CS-001b)
-* [EP-010-S05](specs/EP-010-S05-spec.md) — Relancer les non-répondants d'une consultation ouverte : le Syndic peut envoyer une notification de rappel aux participants n'ayant pas encore soumis de réponse (PRD US-CS-004)
+* [EP-010-S04](specs/EP-010-S04-spec.md) ✅ — Gérer le cycle de vie brouillon : créer une consultation en statut `draft`, la modifier librement, puis l'ouvrir explicitement (`draft → open`) pour déclencher la notification aux participants (PRD US-CS-001b)
+* [EP-010-S05](specs/EP-010-S05-spec.md) ✅ — Relancer les non-répondants d'une consultation ouverte : le Syndic peut envoyer une notification de rappel aux participants n'ayant pas encore soumis de réponse (PRD US-CS-004)
 
 ***
 
