@@ -441,7 +441,8 @@
       "minutesReady": "PV déposé",
       "detachTitle": "Retirer la pièce de l'AG",
       "detachMessage": "Ce document sera définitivement retiré de cette assemblée.",
-      "detachConfirm": "Retirer"
+      "detachConfirm": "Retirer",
+      "detachSuccess": "Pièce retirée de l'assemblée."
     },
     "info": "Informations",
     "infoFields": {
@@ -573,7 +574,8 @@
         "linkLabel": "Unanimité",
         "linkHref": "https://www.legifrance.gouv.fr/loda/id/JORFTEXT000000880200"
       }
-    }
+    },
+    "closeMeetingSuccess": "Assemblée clôturée"
   },
   "budget": {
     "title": "Budget & Charges",
@@ -702,7 +704,8 @@
       "article37LinkHref": "https://www.legifrance.gouv.fr/loda/article_lc/LEGIARTI000006488654",
       "article14_2_1LinkLabel": "Article 14-2-1 de la loi n°65-557 du 10 juillet 1965",
       "article14_2_1LinkHref": "https://www.legifrance.gouv.fr/loda/article_lc/LEGIARTI000043967792"
-    }
+    },
+    "lineDeleteSuccess": "Ligne supprimée"
   },
   "units": {
     "title": "Lots",
@@ -1194,7 +1197,8 @@
         "documents": "Pièces jointes"
       },
       "documentHint": "Glissez-déposez ou cliquez pour joindre un document.",
-      "documentUploadError": "Échec de l'envoi de certains documents"
+      "documentUploadError": "Échec de l'envoi de certains documents",
+      "deleteSuccess": "Événement supprimé"
     }
   },
   "maintenance": {
@@ -1522,7 +1526,8 @@
         "ongoing": "En cours",
         "suspended": "Suspendue",
         "closed": "Clôturée"
-      }
+      },
+      "deleteSuccess": "Procédure supprimée"
     },
     "governance": {
       "title": "Gouvernance",
@@ -1545,7 +1550,8 @@
         "syndic": "Syndic",
         "council_president": "Président du conseil syndical",
         "council_member": "Membre du conseil syndical"
-      }
+      },
+      "deleteSuccess": "Mandat supprimé"
     },
     "etatDate": {
       "title": "État daté",

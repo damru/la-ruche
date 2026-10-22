@@ -15,6 +15,7 @@ import CIconTrash from '@/components/atoms/CIconTrash.svg'
 import { calendarEventsApi, documentsApi } from '@/api'
 import { useAuthStore } from '@/stores/auth'
 import { useFormFeedback } from '@/composables/useFormFeedback'
+import { useAutoClose } from '@/composables/useAutoClose'
 import { useFormatters } from '@/composables/useFormatters'
 import { toErrorMessage } from '@/composables/usePageLoader'
 import type { Document, ManualCalendarEvent } from '@/types/domain'
@@ -34,6 +35,7 @@ const { t } = useI18n()
 const { formatDate, formatFileSize } = useFormatters()
 const auth = useAuthStore()
 const feedback = useFormFeedback()
+const { schedule: scheduleClose, forceExpire: forceClose } = useAutoClose()
 
 const loading = ref(false)
 const deleting = ref(false)
@@ -43,7 +45,8 @@ const documents = ref<Document[]>([])
 const canManage = auth.hasAnyRole(['manager', 'board_member'])
 
 watch(() => props.open, async (open) => {
-  if (!open || !props.eventId) return
+  if (!open) { forceClose(); return }
+  if (!props.eventId) return
   feedback.reset()
   loading.value = true
   event.value = null
@@ -72,13 +75,15 @@ async function downloadDocument(documentId: string) {
 }
 
 async function confirmDelete() {
+  if (feedback.status.value === 'success') { forceClose(); return }
   if (!event.value) return
   deleting.value = true
   feedback.reset()
   try {
     await calendarEventsApi.remove(event.value.id)
+    feedback.setSuccess(t('calendar.event.deleteSuccess'))
     emit('deleted')
-    emit('update:open', false)
+    scheduleClose(() => { emit('update:open', false) })
   } catch (err) {
     feedback.setError(toErrorMessage(err))
   } finally {
@@ -154,6 +159,7 @@ async function confirmDelete() {
           :icon="CIconTrash"
           :title="t('common.delete')"
           :loading="deleting"
+          :closing="feedback.status.value === 'success'"
           class="mr-auto"
           @click="confirmDelete"
         />

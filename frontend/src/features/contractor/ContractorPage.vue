@@ -3,6 +3,7 @@ import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useFormatters } from '@/composables/useFormatters'
+import { toErrorMessage } from '@/composables/usePageLoader'
 import { vendorApi } from '@/api'
 import type { VendorTask } from '@/types/domain'
 
@@ -64,8 +65,8 @@ async function submit() {
       documents,
     })
     success.value = true
-  } catch {
-    error.value = t('contractor.uploadError')
+  } catch (e: unknown) {
+    error.value = toErrorMessage(e, 'contractor.uploadError')
   } finally {
     uploading.value = false
   }

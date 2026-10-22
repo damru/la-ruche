@@ -6,6 +6,7 @@ import CFormActions from '@/components/molecules/CFormActions.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import { meetingsApi } from '@/api'
 import { useFormFeedback } from '@/composables/useFormFeedback'
+import { useAutoClose } from '@/composables/useAutoClose'
 import { toErrorMessage } from '@/composables/usePageLoader'
 
 const props = defineProps<{
@@ -20,19 +21,23 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 const feedback = useFormFeedback()
+const { schedule: scheduleClose, forceExpire: forceClose } = useAutoClose()
 const closing = ref(false)
 
 watch(() => props.open, (open) => {
-  if (!open) feedback.reset()
+  if (!open) { forceClose(); feedback.reset(); return }
+  feedback.reset()
 })
 
 async function handleConfirm() {
+  if (feedback.status.value === 'success') { forceClose(); return }
   closing.value = true
   feedback.reset()
   try {
     await meetingsApi.close(props.meetingId)
-    emit('update:open', false)
+    feedback.setSuccess(t('meetings.closeMeetingSuccess'))
     emit('closed')
+    scheduleClose(() => { emit('update:open', false) })
   } catch (err) {
     feedback.setError(toErrorMessage(err))
   } finally {
@@ -65,6 +70,7 @@ async function handleConfirm() {
           variant="primary"
           :title="t('meetings.closeMeetingConfirm')"
           :loading="closing"
+          :closing="feedback.status.value === 'success'"
           @click="handleConfirm"
         />
       </CFormActions>
