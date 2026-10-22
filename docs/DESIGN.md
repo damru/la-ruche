@@ -3,7 +3,7 @@ document: DESIGN
 version: 2.1.0
 owner: Damien
 status: validé
-last_updated: 2026-10-21
+last_updated: 2026-10-22
 references:
   - DDR-001
   - DDR-002
@@ -597,6 +597,7 @@ border-color: var(--color-outline-light);
 
 - Bloc utilisateur en pied de sidebar → panel contextuel (Mon compte · Notifications · Déconnexion).
 - Changement de thème dans `Profil > Mon compte` uniquement (`Clair` / `Sombre` / `Auto`).
+- Délai de fermeture automatique des modales après succès, réglable dans le même onglet (`0` = immédiat à `10` s, défaut `3` s — DDR-006) ; l'animation de fermeture du bouton dure exactement le délai choisi.
 - `CTopbarBreadcrumb` : fluide (`min-width: 0`), libellés tronquent proprement.
 
 #### Écrans d'authentification
@@ -689,6 +690,7 @@ Deux contextes, deux molécules. `CFormFeedback` n'est jamais utilisé directeme
 
 **Règles communes :**
 - `useFormFeedback()` gère `status` / `message`. Appeler `feedback.reset()` à l'ouverture du modal.
+- Après succès, la fermeture automatique de la modale suit la **préférence utilisateur de délai** (0–10 s, défaut 3 s — DDR-006) ; à `0`, fermeture immédiate sans fenêtre de succès. L'état `closing` du bouton et son animation durent exactement le délai choisi.
 - La logique `required + touched + blur + erreur interne` est mutualisée via le composable `useFieldValidation` (`frontend/src/composables/useFieldValidation.ts`) — ne pas la réimplémenter dans chaque `CForm*`.
 - Jamais de `<form class="flex flex-col gap-4">` dans une vue — utiliser `CForm` ou le slot body de `CModal`.
 - `<form>` nu autorisé uniquement dans le body d'un `CModal` quand les actions sont dans `#footer`.

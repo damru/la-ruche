@@ -33,6 +33,16 @@ Transition CSS grid (`grid-template-rows: 0fr → 1fr`) sur un wrapper, couplée
 
 `CFormFeedback` **ne s'utilise jamais directement** dans les templates. Toujours passer par `CFormActions` (modal `#footer`) ou `CForm` (formulaire inline).
 
+## Fenêtre de succès et fermeture automatique
+
+Après une validation réussie, le bouton de soumission passe en état `closing` (remplissage animé + libellé « Fermeture… ») et la modale se ferme automatiquement à l'expiration du délai. Ce délai est **une préférence utilisateur** (EP-019-S09, PRD US-PP-008), réglable de `0` (fermeture immédiate, fenêtre de succès désactivée) à `10` secondes, **défaut 3 s** :
+
+- Le délai se lit depuis le store UI (`autoCloseDelayMs`) — jamais de constante locale dans une modale.
+- `0` signifie exécution immédiate du callback de fermeture, sans état `closing` visible.
+- L'animation `c-btn-fill` de `CBtn` DOIT durer exactement le délai choisi (custom property `--c-btn-closing-duration`, fallback 3 s) — cohérence visuelle entre le compte à rebours animé et la fermeture effective.
+- Le délai s'applique uniformément à toutes les modales utilisant ce pattern ; aucun réglage par écran.
+- Le timer de nettoyage du message de succès inline (`useFormFeedback`) reste à 3 s fixe et n'est pas concerné par cette préférence.
+
 ## Alternatives écartées
 
 | Option | Raison du rejet |

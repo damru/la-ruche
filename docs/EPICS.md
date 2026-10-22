@@ -3,7 +3,7 @@ document: EPICS
 version: 1.1.0
 owner: Damien
 status: validé
-last_updated: 2026-10-21
+last_updated: 2026-10-22
 description: >
   Backlog officiel du projet La Ruche — épics et stories organisées par domaine fonctionnel.
   Chaque story référence un PRD, un ADR ou une obligation légale (LEGAL.md §X.Y).
@@ -25,7 +25,7 @@ rules:
 > Chaque feature est organisée en epic. Les stories sont ajoutées à la demande, au moment de l'implémentation.
 > Le MVP est l'ensemble des epics marquées **MVP : oui**.
 > Statuts possibles : **en attente** · **en cours** · **terminée**
-> Dernière mise à jour : 21 octobre 2026
+> Dernière mise à jour : 22 octobre 2026
 
 > **Lecture d'avancement (code actuel) :**
 > - **backend réel** = handlers + DB opérationnels
@@ -85,6 +85,7 @@ Objectif : garantir que chaque US de priorité Must ou Should issue des PRD prod
 | Should | US-JA-003 | EP-017-S05 |
 | Must | US-PP-001 | EP-019-S01 |
 | Must | US-PP-006 | EP-019-S04 |
+| Should | US-PP-008 | EP-019-S09 |
 | Must | US-RC-001 | EP-001-S01 |
 | Must | US-RC-002 | EP-001-S02 |
 | Must | US-RC-003 | EP-001-S03 |
@@ -545,7 +546,7 @@ Durcir les entités comptablement critiques pour empêcher toute modification r�
 
 **Statut :** en cours | **MVP :** oui | **Réf. PRD :** Gestion courante
 
-**État code actuel :** partiel ; la préférence d'apparence est déjà exposée et persistée côté frontend, le profil utilisateur dispose d'un espace dédié, mais la feature reste encore incomplète comme hub personnel structuré de compte, notifications et préférences.
+**État code actuel :** partiel ; la préférence d'apparence est déjà exposée et persistée côté frontend, le profil utilisateur dispose d'un espace dédié, mais la feature reste encore incomplète comme hub personnel structuré de compte, notifications et préférences. La fermeture automatique des modales après succès est à délai fixe (3 s, DDR-006) — pas encore configurable.
 
 Feature simple self-service permettant à chaque utilisateur authentifié de gérer ses informations personnelles utiles au produit, ses préférences de notifications et sa préférence d'apparence depuis un écran unique à onglets.
 
@@ -559,6 +560,7 @@ Feature simple self-service permettant à chaque utilisateur authentifié de gé
 * `EP-019-S06` ✅ — Gérer la première visite : afficher les valeurs par défaut de manière lisible dès la première ouverture du profil ; s'assurer que l'état initial est compréhensible sans action préalable (PRD US-PP-003)
 * [EP-019-S07](docs/specs/EP-019-S07-spec.md) — Réinitialiser ses préférences : bouton global unique en bas de page (couvre Notifications + Apparence), avec modale de confirmation avant exécution (PRD US-PP-005) — livré partiellement : reset Notifications seul, placé dans l'onglet ; reste le bouton global couvrant aussi l'Apparence
 * `EP-019-S08` ✅ — Afficher le contexte utilisateur : rôle actif, résidence de rattachement et périmètre des droits depuis l'écran profil (PRD US-PP-007)
+* [EP-019-S09](docs/specs/EP-019-S09-spec.md) 🆕 — Régler le délai de fermeture automatique des modales après succès (0 = immédiat à 10 s, défaut 3 s), dans le même esprit que la préférence d'apparence, persisté côté frontend (PRD US-PP-008) — la fermeture auto est aujourd'hui à délai fixe de 3 s (DDR-006)
 
 ***
 
