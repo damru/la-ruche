@@ -1,7 +1,6 @@
-// Integration tests for resolution CRUD and reorder (EP-003-S13).
-// Agenda frozen at convocation (art. 9/11 décret 67-223): structural
-// mutations are draft-only; the second-vote passerelle (art. 25-1/26-1,
-// EP-013-S10) may still inscribe a resolution while `ongoing`.
+// Integration tests for resolution CRUD and reorder.
+// Agenda frozen at convocation, except the second-vote passerelle
+// (art. 25-1/26-1) which may still inscribe a resolution while `ongoing`.
 
 mod common;
 
@@ -329,3 +328,4 @@ async fn ongoing_session_keeps_vote_patch_and_passerelle() {
         .await;
     assert_eq!(delete.status_code(), StatusCode::NOT_FOUND);
 }
+

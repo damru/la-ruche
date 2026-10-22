@@ -1206,8 +1206,8 @@ pub async fn create_resolution(
     building_id: Uuid,
     input: CreateResolutionInput,
 ) -> AppResult<serde_json::Value> {
-    // EP-003-S13 — agenda frozen at convocation (art. 9/11 décret 67-223),
-    // except the second-vote passerelle (art. 25-1/26-1, EP-013-S10).
+    // Agenda frozen at convocation, except the second-vote passerelle
+    // (art. 25-1/26-1) which may still inscribe a resolution during the séance.
     let exists = sqlx::query_scalar!(
         "SELECT EXISTS(SELECT 1 FROM general_meeting WHERE id = $1 AND building_id = $2 AND status IN ('draft','ongoing'))",
         meeting_id, building_id
@@ -1246,7 +1246,7 @@ pub async fn create_resolution(
     }))
 }
 
-/// EP-003-S13 — deletes a draft resolution and its votes; the draft-only
+/// Deletes a draft resolution and its votes; the draft-only
 /// SQL filter yields no row outside `draft` → 404.
 pub async fn delete_resolution(
     pool: &PgPool,
@@ -1299,8 +1299,8 @@ pub async fn delete_resolution(
     Ok(deleted > 0)
 }
 
-/// EP-003-S13 — renumbers the draft agenda from an ordered id list;
-/// refuses non-draft meetings (409) and inexact permutations (400).
+/// Renumbers the draft agenda from an ordered id list; refuses non-draft
+/// meetings (409) and inexact permutations (400).
 pub async fn reorder_resolutions(
     pool: &PgPool,
     meeting_id: Uuid,
@@ -1833,3 +1833,4 @@ pub async fn patch_resolution_description(
         })
     }))
 }
+

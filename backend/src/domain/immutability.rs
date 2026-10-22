@@ -12,9 +12,9 @@ pub enum Entity {
     LevyCall,
     /// Frozen once the parent assembly reaches `ongoing` or `closed`.
     Vote,
-    /// Frozen at convocation (art. 9/11 décret 67-223): structural mutations draft-only (EP-003-S13).
+    /// Frozen once convoked.
     Resolution,
-    /// Vote-time description patch, `ongoing` only (EP-003-S13).
+    /// Vote-time description patch, `ongoing` only.
     ResolutionVote,
     /// `completion_cost` / `closed_at` frozen when `status = 'closed'`.
     Task,
@@ -38,8 +38,8 @@ pub enum Entity {
 /// `status` semantics per entity:
 /// - `LevyCall`       → levy_status string ("draft" | "issued" | "paid" | "overdue")
 /// - `Vote`           → parent assembly's meeting_status
-/// - `Resolution`     → parent assembly's meeting_status (draft-only since convocation, EP-003-S13)
-/// - `ResolutionVote` → parent assembly's meeting_status (ongoing-only, EP-003-S13)
+/// - `Resolution`     → parent assembly's meeting_status
+/// - `ResolutionVote` → parent assembly's meeting_status
 /// - `Task`           → task_status string
 /// - `Claim`          → "transmitted" when transmitted_at IS NOT NULL, else any other value
 /// - `MaintenanceLog` → ignored; always frozen (EP-018-S07 Pattern C)
@@ -213,3 +213,4 @@ mod tests {
         assert!(!document_requires_replacement_reason("autre"));
     }
 }
+

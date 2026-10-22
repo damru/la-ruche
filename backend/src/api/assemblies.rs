@@ -126,7 +126,7 @@ pub struct CreateResolutionInput {
     pub number: i32,
 }
 
-/// EP-003-S13 — ordered agenda ids; must be an exact permutation of the draft resolutions.
+/// Ordered agenda ids; must be an exact permutation of the current draft resolutions.
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct ReorderResolutionsInput {
     pub ordered_ids: Vec<Uuid>,
@@ -337,7 +337,7 @@ pub async fn update_resolution(
     Ok(Json(resolution))
 }
 
-/// EP-003-S13 — deletes a draft agenda resolution (404 once convoked, art. 9/11 décret 67-223).
+/// Deletes a draft agenda resolution (404 once convoked).
 pub async fn delete_resolution(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,
@@ -357,7 +357,7 @@ pub async fn delete_resolution(
     Ok(StatusCode::NO_CONTENT)
 }
 
-/// EP-003-S13 — reorders the draft agenda and renumbers it 1..N.
+/// Reorders the draft agenda and renumbers it 1..N.
 pub async fn reorder_resolutions(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,
@@ -666,3 +666,4 @@ fn parse_vote_rule(s: &str) -> AppResult<VoteRule> {
         )),
     }
 }
+
