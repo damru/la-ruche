@@ -9,7 +9,7 @@ use crate::{
 };
 
 pub fn hash_password(password: &str, cfg: &AuthSettings) -> AppResult<String> {
-    // argon2 0.6 : le sel est une suite d'octets bruts (SaltString supprimé).
+    // argon2 0.6: salt is raw bytes (SaltString was removed).
     let salt = generate_salt();
     let params = Params::new(
         cfg.argon2_memory_kb,
@@ -28,7 +28,7 @@ pub fn hash_password(password: &str, cfg: &AuthSettings) -> AppResult<String> {
 }
 
 pub fn verify_password(password: &str, hash: &str) -> AppResult<()> {
-    // argon2 0.6 : PasswordVerifier<str> parse le hash PHC lui-même.
+    // argon2 0.6: PasswordVerifier<str> parses the PHC string itself.
     Argon2::default()
         .verify_password(password.as_bytes(), hash)
         .map_err(|_| AppError::Unauthorized)
