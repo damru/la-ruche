@@ -41,6 +41,7 @@ import AmendmentChainModal from '@/features/contracts/AmendmentChainModal.vue'
 import CTabs, { type Tab } from '@/components/atoms/CTabs.vue'
 import { toErrorMessage, usePageLoader } from '@/composables/usePageLoader'
 import TerminateContractModal from '@/features/contracts/TerminateContractModal.vue'
+import { effectiveContractStatus } from '@/utils/contracts'
 import { useRole } from '@/composables/useRole'
 import type { ContractReminder, ContractStatus, ContractType, Document, VendorContract } from '@/types/domain'
 
@@ -74,27 +75,35 @@ const loadingContractDocuments = ref(false)
 
 const canManage = computed(() => hasAnyRole(['manager']))
 
+async function loadFilterOptions() {
+  const [vendorsResponse, typesResponse] = await Promise.all([
+    contractsApi.vendors(),
+    contractsApi.types(),
+  ])
+  vendorOptions.value = vendorsResponse.data
+  typeOptions.value = typesResponse.data
+}
+
 async function loadData() {
-  const [building, contractsResponse, remindersResponse, vendorsResponse, typesResponse] = await Promise.all([
+  const [building, contractsResponse, remindersResponse] = await Promise.all([
     useBuildingStore().fetch(),
     contractsApi.list({
       contract_type: typeFilter.value || undefined,
       vendor: vendorFilter.value || undefined,
     }),
     contractsApi.listAllReminders(),
-    contractsApi.vendors(),
-    contractsApi.types(),
   ])
 
   buildingName.value = building.name
   allContracts.value = contractsResponse.data
   allReminders.value = remindersResponse.data
-  vendorOptions.value = vendorsResponse.data
-  typeOptions.value = typesResponse.data
 }
 
 const { loading, error, reload } = usePageLoader(loadData)
-onMounted(reload)
+onMounted(() => {
+  reload()
+  loadFilterOptions()
+})
 
 // Server-side filters (type / vendor) — the status tab stays client-side so
 // the tab counters always reflect the whole list.
@@ -144,21 +153,7 @@ const reminderViewsById = computed(() =>
   new Map(reminderViews.value.map(reminder => [reminder.id, reminder])),
 )
 
-function todayIso(): string {
-  const today = new Date()
-  const year = today.getFullYear()
-  const month = String(today.getMonth() + 1).padStart(2, '0')
-  const day = String(today.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
-}
-
-function effectiveStatus(contract: VendorContract): ContractStatus {
-  if (contract.status === 'draft') return 'draft'
-  if (contract.status === 'terminated') return 'terminated'
-  if (contract.status === 'expired') return 'expired'
-  if (contract.end_date && contract.end_date < todayIso()) return 'expired'
-  return 'active'
-}
+const effectiveStatus = effectiveContractStatus
 
 function reminderUrgency(dateStr: string): 'high' | 'medium' | 'low' {
   const d = daysUntil(dateStr)

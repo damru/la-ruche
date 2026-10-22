@@ -272,7 +272,7 @@ Upload direct S3 via pre-signed URL, contrôle d'accès par rôle, téléchargem
 
 **Statut :** terminée | **MVP :** oui | **Réf. PRD :** Gestion courante
 
-**État code actuel :** backend + frontend réels sur CRUD, rappels, acquittement, résiliation, pièces justificatives liées au contrat, filtres serveur (statut/type/prestataire) et fiche contrat détaillée.
+**État code actuel :** backend + frontend réels sur CRUD, rappels, acquittement, résiliation, pièces justificatives liées au contrat, filtres serveur (statut/type/prestataire) et fiche contrat détaillée. Liste et fiche contrat accessibles en lecture au Conseil syndical (art. 21 loi 1965), écriture Syndic seul.
 
 Fiche contrat avec reconduction tacite et préavis configurables, rappels automatiques calculés à la création/MAJ, acquittement manuel. Liste filtrable par statut (onglets), type et prestataire avec bascule cartes/tableau ; chaque contrat ouvre une fiche dédiée (en-tête, chaîne d'avenants, documents liés, rappels).
 

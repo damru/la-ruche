@@ -33,6 +33,7 @@ import CIconCheck from '@/components/atoms/CIconCheck.svg'
 import CIconEdit from '@/components/atoms/CIconEdit.svg'
 import CIconArchive from '@/components/atoms/CIconArchive.svg'
 import { contractsApi, documentsApi } from '@/api'
+import { effectiveContractStatus } from '@/utils/contracts'
 import { useBuildingStore } from '@/stores/building'
 import ContractFormModal from '@/features/contracts/ContractFormModal.vue'
 import AmendContractModal from '@/features/contracts/AmendContractModal.vue'
@@ -78,23 +79,9 @@ async function loadData() {
 const { loading, error, reload } = usePageLoader(loadData)
 onMounted(reload)
 
-function todayIso(): string {
-  const today = new Date()
-  const year = today.getFullYear()
-  const month = String(today.getMonth() + 1).padStart(2, '0')
-  const day = String(today.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
-}
-
-const currentStatus = computed<ContractStatus>(() => {
-  const c = contract.value
-  if (!c) return 'draft'
-  if (c.status === 'draft') return 'draft'
-  if (c.status === 'terminated') return 'terminated'
-  if (c.status === 'expired') return 'expired'
-  if (c.end_date && c.end_date < todayIso()) return 'expired'
-  return 'active'
-})
+const currentStatus = computed<ContractStatus>(() =>
+  contract.value ? effectiveContractStatus(contract.value) : 'draft',
+)
 
 function chainLevel(item: VendorContract): 2 | 3 {
   return contract.value && item.id === contract.value.id ? 2 : 3
@@ -386,16 +373,6 @@ async function activateContract() {
           <CHeading type="section">
             {{ t('contracts.documents.titleInline') }}
           </CHeading>
-          <template #actions>
-            <CBtn
-              v-if="canManage"
-              variant="ghost"
-              size="sm"
-              :icon="CIconEdit"
-              :title="t('common.edit')"
-              @click="showFormModal = true"
-            />
-          </template>
         </CSectionHeader>
         <CCard>
           <p class="body-xs text-on-surface-variant contracts-documents-hint">

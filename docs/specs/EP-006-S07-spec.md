@@ -6,7 +6,7 @@
 **Réf. PRD :** US-CF-007
 **Statut : IMPLÉMENTÉ (backend + frontend) — décision Option A actée (2026-10-22, product owner).**
 
-**Décision §3 actée : Option A — conserver la lecture Conseil syndical** (art. 21 de la loi du 10 juillet 1965 : le conseil syndical contrôle la gestion du syndic et peut prendre connaissance de toutes pièces se rapportant à cette gestion). L'écriture (rattachement / détachement) reste réservée au `manager`. Le PRD US-CF-007 est amendé (nouvel AC-CF-007-D, Q-CF-005 tranchée). Test de non-régression e2e : lecture `board_member` → 200, attach/detach `board_member` → 403 (`backend/tests/contract_filters_test.rs`).
+**Décision §3 actée : Option A — conserver la lecture Conseil syndical** (art. 21 de la loi du 10 juillet 1965 : le conseil syndical contrôle la gestion du syndic et peut prendre connaissance de toutes pièces se rapportant à cette gestion). L'écriture (rattachement / détachement) reste réservée au `manager`. Le PRD US-CF-007 est amendé (nouvel AC-CF-007-D, Q-CF-005 tranchée) et US-CF-002 amendé (nouvel AC-CF-002-E : liste et fiche contrat accessibles en lecture au Conseil syndical, routes frontend ouvertes au `board_member`). Test de non-régression e2e : lecture `board_member` → 200, attach/detach `board_member` → 403 (`backend/tests/contract_filters_test.rs`).
 
 ---
 

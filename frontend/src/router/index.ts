@@ -126,13 +126,13 @@ const routes: RouteRecordRaw[] = [
         path: 'contracts',
         name: 'contracts',
         component: ContractsView,
-        meta: { title: 'nav.contracts', roles: ['manager'] },
+        meta: { title: 'nav.contracts', roles: ['manager', 'board_member'] },
       },
       {
         path: 'contracts/:id',
         name: 'contract-detail',
         component: ContractDetailView,
-        meta: { title: 'page.contractDetail', roles: ['manager'] },
+        meta: { title: 'page.contractDetail', roles: ['manager', 'board_member'] },
       },
       {
         path: 'claims',
