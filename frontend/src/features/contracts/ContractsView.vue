@@ -232,7 +232,7 @@ const contractCounts = computed(() =>
 )
 
 const contractTabs = computed(() => [
-  { key: 'all', label: t('common.all'), count: contractCounts.value.all },
+  { key: 'all', label: t('common.allMasc'), count: contractCounts.value.all },
   { key: 'active', label: t('contracts.filters.active'), count: contractCounts.value.active },
   { key: 'expired', label: t('contracts.filters.expired'), count: contractCounts.value.expired },
 ])

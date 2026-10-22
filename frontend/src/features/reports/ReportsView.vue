@@ -176,7 +176,7 @@ function authorName(r: Report): string {
           v-model="statusFilter"
           variant="filter"
           :tabs="[
-            { value: 'all', label: t('common.all'), count: allReports.length },
+            { value: 'all', label: t('common.allMasc'), count: allReports.length },
             { value: 'open', label: t('reports.filters.open'), count: counts.open },
             { value: 'in_progress', label: t('reports.filters.inProgress'), count: counts.in_progress },
             { value: 'closed', label: t('reports.filters.closed'), count: counts.closed },

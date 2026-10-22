@@ -244,7 +244,7 @@ const showPreEtatDateModal = ref(false)
               v-if="auth.isManager && ownerFilterOptions.length > 1"
               v-model="ownerFilterIdModel"
               :placeholder="t('budget.filterByOwner')"
-              :options="[{ value: '', label: t('common.all') }, ...ownerFilterOptions]"
+              :options="[{ value: '', label: t('common.allMasc') }, ...ownerFilterOptions]"
               class="min-w-48"
             />
           </div>

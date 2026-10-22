@@ -11,6 +11,7 @@
     "address": "Adresse",
     "agenda": "Agenda",
     "allFem": "Toutes",
+    "allMasc": "Tout",
     "allocationKeys": "Clés de répartition",
     "allocationKeysBlockedMessage": "Les appels de fonds restent bloqués tant que les clés suivantes sont déséquilibrées : {keys}.",
     "alreadyCalled": "Déjà appelé",

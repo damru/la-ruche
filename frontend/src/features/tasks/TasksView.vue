@@ -360,7 +360,7 @@ async function downloadTaskDocument(documentId: string) {
           v-model="statusFilter"
           variant="filter"
           :tabs="[
-            { value: 'all', label: t('common.allFem'), count: allTasks.length },
+            { value: 'all', label: t('common.allMasc'), count: allTasks.length },
             { value: 'open', label: t('tasks.filters.open'), count: counts.open },
             { value: 'in_progress', label: t('tasks.filters.in_progress'), count: counts.in_progress },
             { value: 'awaiting_vendor', label: t('tasks.filters.awaiting_vendor'), count: counts.awaiting_vendor },
