@@ -969,7 +969,7 @@ function openArt25Modal(resolution: Resolution) {
                     size="sm"
                     variant="ghost"
                     :disabled="index === 0 || reordering"
-                    :title="t('meetings.moveResolutionUp')"
+                    :title="t('common.moveUp')"
                     @click="moveResolution(index, -1)"
                   />
                   <CBtn
@@ -977,7 +977,7 @@ function openArt25Modal(resolution: Resolution) {
                     size="sm"
                     variant="ghost"
                     :disabled="index === resolutions.length - 1 || reordering"
-                    :title="t('meetings.moveResolutionDown')"
+                    :title="t('common.moveDown')"
                     @click="moveResolution(index, 1)"
                   />
                   <CBtn
