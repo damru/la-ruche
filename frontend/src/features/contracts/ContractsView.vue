@@ -437,7 +437,10 @@ async function activateContract(contract: VendorContract) {
           :title="t('contracts.upcomingReminders')"
           :rows="contractReminderRows"
         >
-          <template #actions="{ row }">
+          <template
+            v-if="canManage"
+            #actions="{ row }"
+          >
             <CBtn
               variant="negative"
               size="sm"
@@ -666,7 +669,7 @@ async function activateContract(contract: VendorContract) {
                 </button>
               </div>
 
-              <CCardActions>
+              <CCardActions v-if="canManage">
                 <CBtn
                   v-if="effectiveStatus(contract) === 'draft'"
                   variant="primary"
@@ -707,6 +710,16 @@ async function activateContract(contract: VendorContract) {
                   :icon="CIconArchive"
                   :title="t('contracts.terminate')"
                   @click="openTerminateModal(contract)"
+                />
+              </CCardActions>
+              <CCardActions v-else>
+                <CBtn
+                  v-if="contract.predecessor_id || effectiveStatus(contract) !== 'draft'"
+                  variant="ghost"
+                  size="sm"
+                  :icon="CIconHistory"
+                  :title="t('contracts.history')"
+                  @click="openChainModal(contract)"
                 />
               </CCardActions>
             </div>
