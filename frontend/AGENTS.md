@@ -1,6 +1,6 @@
 # Frontend — Vue.js Instructions
 
-> Project-wide rules and accounting-immutability frontend rules live in the root `CLAUDE.md`. This file covers Vue/Tailwind specifics.
+> Project-wide instructions live in the root `AGENTS.md` (aliased as `CLAUDE.md`). Matching `.claude/rules/` are auto-injected by the IDE when editing frontend files. This file covers Vue/Tailwind specifics not covered by a rule.
 
 ## General
 

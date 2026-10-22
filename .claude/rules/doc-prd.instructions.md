@@ -1,6 +1,6 @@
 ---
 description: 'Rules for modifying docs/PRD.md and docs/product/PRD - *.md feature files.'
-applyTo: 'docs/PRD.md,docs/product/**/*.md,docs/EPICS.md'
+applyTo: 'docs/PRD.md,docs/product/**/*.md'
 ---
 
 # PRD Docs Rules

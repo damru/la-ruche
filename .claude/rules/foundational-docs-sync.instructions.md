@@ -1,6 +1,6 @@
 ---
 description: 'Foundational docs (ARCHITECTURE, DESIGN, EPICS, PRD) must be updated in the same change as the code that invalidates them.'
-applyTo: 'docs/ARCHITECTURE.md,docs/DESIGN.md,docs/EPICS.md,docs/PRD.md'
+applyTo: '**'
 ---
 
 # Foundational document sync

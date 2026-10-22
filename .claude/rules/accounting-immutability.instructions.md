@@ -1,6 +1,6 @@
 ---
 description: 'Accounting immutability rules — apply whenever creating or modifying an entity that carries financial amounts, legal dates, or lifecycle statuses (DB migrations, Rust structs/handlers/domain, Vue forms/modals/cards).'
-applyTo: '**/*.rs,**/*.vue,**/*.ts,**/migrations/*.sql'
+applyTo: 'backend/**/*.rs,backend/migrations/**/*.sql,frontend/src/**/*.{vue,ts}'
 ---
 
 # Accounting Immutability (ADR-009)
