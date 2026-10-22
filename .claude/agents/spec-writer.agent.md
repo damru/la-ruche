@@ -50,6 +50,15 @@ between the PRD (the what) and the code (the how), for a given epic.
 4. End with the implementation order and the list of documents to update
    once the story is delivered.
 
+## Status tracking
+
+The spec header carries a `Statut actuel` line describing the current state
+of the code (`NON IMPLÉMENTÉ`, `PARTIEL` with remaining gaps, `IMPLÉMENTÉ
+(backend + frontend)`). When a story is delivered, update this line in the
+same change as the code (see `foundational-docs-sync` rule) — the spec
+describes what is, and a delivered story must read as delivered, in sync
+with the `✅` marker in `docs/EPICS.md`.
+
 ## Constraints
 
 - Never modify code: you produce documentation.

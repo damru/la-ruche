@@ -17,7 +17,11 @@ The four foundational docs are contracts, not archives:
 - Any change that invalidates a foundational doc (new table/module/route,
   new design component, story delivered, feature scope change) updates the
   doc **in the same commit**, not in a follow-up.
-- Story delivery updates its status in `docs/EPICS.md`; a new design-system
+- Story delivery updates its status in `docs/EPICS.md` **and** the
+  `Statut actuel` line of its spec in `docs/specs/EP-XXX-SYY-spec.md`
+  (the spec describes the current state of the code: a delivered story is
+  marked `IMPLÉMENTÉ (backend + frontend)`, a partial one `PARTIEL` with the
+  remaining gaps); a new design-system
   component updates `docs/DESIGN.md`; a schema change updates
   `docs/ARCHITECTURE.md`.
 - Structural changes only: keep these docs free of implementation detail;

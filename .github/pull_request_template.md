@@ -60,6 +60,7 @@
 - [ ] `docs/ARCHITECTURE.md` — new table / handler / module
 - [ ] `docs/DESIGN.md §2` — new component added to catalogue
 - [ ] `docs/EPICS.md` — story status updated (⏳ / ✅)
+- [ ] `docs/specs/` — `Statut actuel` de la spec mise à jour si la story est livrée (✅)
 - [ ] `docs/LEGAL.md` — coverage updated after delivery
 
 ---

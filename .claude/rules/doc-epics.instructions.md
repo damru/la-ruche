@@ -16,7 +16,7 @@ Source of truth for backlog: `docs/EPICS.md`. Legal coverage table: `docs/LEGAL.
 | Trigger | Action |
 |---|---|
 | Work started on a story | Add `⏳` |
-| Story delivered (backend + frontend on real API) | Add `✅`, update epic status, update "État code actuel" |
+| Story delivered (backend + frontend on real API) | Add `✅`, update epic status, update "État code actuel", update the story spec's `Statut actuel` line in `docs/specs/` (e.g. `IMPLÉMENTÉ (backend + frontend)`) |
 | New story from PRD, ADR or legal obligation | Add story with explicit ref (`LEGAL.md §X.Y` / `PRD US-XX` / `ADR-XXX`) and reopen the epic if necessary |
 | New epic decided | Add with status, PRD/ADR/DDR ref, and at least one story |
 | Story out of scope | Move to "Fonctionnalités hors scope" with justification |
