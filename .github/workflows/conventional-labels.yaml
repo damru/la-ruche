@@ -2,18 +2,43 @@ name: conventional release labels
 
 on:
   pull_request_target:
-    types: 
+    types:
       - opened
-      - edited      
+      - edited
+
+permissions:
+  pull-requests: write
 
 jobs:
   label:
-    # runs-on: ${{ github.actor == github.repository_owner && 'small' || 'ubuntu-latest' }}
-    runs-on: ubuntu-latest 
-    permissions:
-      pull-requests: write
+    runs-on: ubuntu-latest
     steps:
-      - uses: bcoe/conventional-release-labels@v1
-        with:
-          ignored_types: '["chore", "ci"]'
-          type_labels: '{"feat": "enhancement", "fix": "bug", "breaking": "breaking", "docs": "documentation"}'
+      - name: Apply conventional label if missing
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          TYPE_LABELS: '{"feat": "enhancement", "fix": "bug", "breaking": "breaking", "docs": "documentation"}'
+        run: |
+          label="$(node -e '
+            const title = process.env.PR_TITLE;
+            const match = title.match(/^(\w+)(?:\([^)]*\))?!?:/);
+            if (!match) process.exit(0);
+            const type = match[1];
+            if (type === "chore" || type === "ci") process.exit(0);
+            const labels = JSON.parse(process.env.TYPE_LABELS);
+            const label = title.includes("!:") && labels.breaking
+              ? labels.breaking
+              : labels[type];
+            if (label) console.log(label);
+          ')"
+          if [ -z "$label" ]; then
+            echo "No label to apply."
+            exit 0
+          fi
+          existing="$(gh pr view "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --json labels --jq '.labels[].name')"
+          if printf '%s\n' "$existing" | grep -Fxq "$label"; then
+            echo "Label '$label' already present, nothing to do."
+            exit 0
+          fi
+          gh pr edit "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --add-label "$label"
