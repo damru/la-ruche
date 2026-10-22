@@ -74,9 +74,10 @@ pub async fn list(pool: &PgPool, building_id: Uuid) -> AppResult<Vec<VendorContr
                   vc.status::text AS status,
                   vc.predecessor_id,
                   vc.created_at,
-                  COUNT(cd.document_id)::bigint AS document_count
+                  COUNT(d.id)::bigint AS document_count
            FROM vendor_contract vc
            LEFT JOIN contract_document cd ON cd.contract_id = vc.id
+           LEFT JOIN document d ON d.id = cd.document_id AND d.deleted_at IS NULL
            WHERE vc.building_id = $1
            GROUP BY vc.id
            ORDER BY vc.vendor_name"#,
@@ -496,6 +497,7 @@ pub async fn update(
            (
                SELECT COUNT(*)::bigint
                FROM contract_document cd
+               JOIN document d ON d.id = cd.document_id AND d.deleted_at IS NULL
                WHERE cd.contract_id = vendor_contract.id
            ) AS document_count"#,
     )
@@ -802,8 +804,9 @@ where
     Ok(sqlx::query_scalar::<_, i64>(
         r#"
         SELECT COUNT(*)::bigint
-        FROM contract_document
-        WHERE contract_id = $1
+        FROM contract_document cd
+        JOIN document d ON d.id = cd.document_id AND d.deleted_at IS NULL
+        WHERE cd.contract_id = $1
         "#,
     )
     .bind(contract_id)

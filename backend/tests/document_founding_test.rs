@@ -672,6 +672,83 @@ async fn deleting_a_document_with_json_content_type_and_empty_body_is_not_reject
     assert_eq!(reason, None);
 }
 
+/// US-DOC-004 / EP-005-S08: deleting a document from /documents must drop the
+/// entity card's document counter. The link row (`report_document`) survives
+/// the soft delete (retention), but `document_count` must only count live
+/// documents — otherwise the card keeps showing "1 photo" after deletion.
+#[tokio::test]
+async fn deleting_a_document_from_documents_updates_the_report_document_count() {
+    let (cfg, pool) = common::test_db().await;
+    let f = setup(&pool).await;
+    let token = token_for(f.manager_id, f.building_id, &cfg);
+    let server = common::test_server_with_pool(cfg, pool.clone()).await;
+    let auth = format!("Bearer {token}");
+
+    let upload = confirm_upload(
+        &server,
+        &auth,
+        f.building_id,
+        "photo-signalement.pdf",
+        "autre",
+        None,
+        None,
+    )
+    .await;
+    assert_eq!(upload.status_code(), StatusCode::CREATED);
+    let doc_id: Uuid = upload.json::<Value>()["id"]
+        .as_str()
+        .unwrap()
+        .parse()
+        .unwrap();
+
+    let report = server
+        .post("/api/v1/reports")
+        .add_header("Authorization", &auth)
+        .json(&json!({ "title": "Fuite constatee", "description": null, "unit_id": null }))
+        .await;
+    assert_eq!(report.status_code(), StatusCode::CREATED);
+    let report_id: Uuid = report.json::<Value>()["id"]
+        .as_str()
+        .unwrap()
+        .parse()
+        .unwrap();
+
+    let attach = server
+        .post(&format!("/api/v1/reports/{report_id}/documents"))
+        .add_header("Authorization", &auth)
+        .json(&json!({ "document_id": doc_id }))
+        .await;
+    assert_eq!(attach.status_code(), StatusCode::NO_CONTENT);
+
+    let count_before = server
+        .get("/api/v1/reports")
+        .add_header("Authorization", &auth)
+        .await
+        .json::<Vec<Value>>();
+    let card = count_before
+        .iter()
+        .find(|r| r["id"].as_str().unwrap() == report_id.to_string())
+        .expect("report in list");
+    assert_eq!(card["document_count"].as_i64(), Some(1));
+
+    let delete = server
+        .delete(&format!("/api/v1/documents/{doc_id}"))
+        .add_header("Authorization", &auth)
+        .await;
+    assert_eq!(delete.status_code(), StatusCode::NO_CONTENT);
+
+    let count_after = server
+        .get("/api/v1/reports")
+        .add_header("Authorization", &auth)
+        .await
+        .json::<Vec<Value>>();
+    let card = count_after
+        .iter()
+        .find(|r| r["id"].as_str().unwrap() == report_id.to_string())
+        .expect("report in list");
+    assert_eq!(card["document_count"].as_i64(), Some(0));
+}
+
 /// US-DOC-004: a soft-deleted document is excluded from the listing and the
 /// S3 object row is preserved (soft delete, not hard delete).
 #[tokio::test]
