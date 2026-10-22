@@ -32,7 +32,7 @@ Décision produit actée avec l'utilisateur :
 | Upload inline + attache document (pattern à répliquer) | `frontend/src/features/tasks/SaveTaskModal.vue` (`uploadDocument`, `documentsApi.getUploadUrl/uploadToS3/confirmUpload`, `tasksApi.attachDocument`) |
 | Modale liste documents liés (réutilisable) | `frontend/src/components/organisms/CLinkedDocumentsModal.vue` |
 | Enum catégories document | `backend/migrations/0042_document_category_extend.up.sql` (`edd` inclus) |
-| Typage document fondateur + historique + remplacement | `backend/src/db/document.rs` (`create`, `replace`/`supersedes_id`, `is_current`), spec `docs/specs/EP-005-S06-spec.md`, `docs/specs/EP-005-S08-spec.md` |
+| Typage document fondateur + historique + remplacement | `backend/src/db/document.rs` (`create`, `replace`/`supersedes_id`, `is_current`), spec `EP-005-S06-spec.md`, `EP-005-S08-spec.md` |
 | `document_id` nullable sur `edd_reference` | `backend/migrations/NNNN_edd_reference.sql` (EP-001-S09) — prévu pour être raccordé ici |
 
 ## 3. Backend
