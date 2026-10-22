@@ -206,7 +206,6 @@ export const meetingsApi = {
     api.post<Resolution>(`/meetings/${meetingId}/resolutions`, data),
   updateResolution: (meetingId: string, rid: string, data: Partial<Resolution>) =>
     api.put<Resolution>(`/meetings/${meetingId}/resolutions/${rid}`, data),
-  // EP-003-S13 — structural deletion & reorder, draft-only
   deleteResolution: (meetingId: string, rid: string) =>
     api.delete(`/meetings/${meetingId}/resolutions/${rid}`),
   reorderResolutions: (meetingId: string, orderedIds: string[]) =>

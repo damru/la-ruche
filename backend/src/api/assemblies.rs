@@ -126,8 +126,7 @@ pub struct CreateResolutionInput {
     pub number: i32,
 }
 
-/// EP-003-S13 — full ordered id list of the agenda; must be an exact
-/// permutation of the current draft resolutions.
+/// EP-003-S13 — ordered agenda ids; must be an exact permutation of the draft resolutions.
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct ReorderResolutionsInput {
     pub ordered_ids: Vec<Uuid>,
@@ -338,8 +337,7 @@ pub async fn update_resolution(
     Ok(Json(resolution))
 }
 
-/// EP-003-S13 — deletes a resolution from the agenda. Draft-only: once
-/// convoked the agenda is a legal act (art. 9/11 décret 67-223) → 404.
+/// EP-003-S13 — deletes a draft agenda resolution (404 once convoked, art. 9/11 décret 67-223).
 pub async fn delete_resolution(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,
@@ -359,8 +357,7 @@ pub async fn delete_resolution(
     Ok(StatusCode::NO_CONTENT)
 }
 
-/// EP-003-S13 — reorders the agenda from an explicit id permutation.
-/// Draft-only; renumbers 1..N and returns the updated list.
+/// EP-003-S13 — reorders the draft agenda and renumbers it 1..N.
 pub async fn reorder_resolutions(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,
@@ -567,8 +564,6 @@ pub struct PatchResolutionInput {
     pub description: Option<String>,
 }
 
-/// EP-003-S13 — vote-time description patch, only while the assembly is
-/// `ongoing` (guard `Entity::ResolutionVote`).
 pub async fn patch_resolution(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,

@@ -1206,10 +1206,8 @@ pub async fn create_resolution(
     building_id: Uuid,
     input: CreateResolutionInput,
 ) -> AppResult<serde_json::Value> {
-    // EP-003-S13 — agenda frozen at convocation (art. 9/11 décret 67-223):
-    // creation is draft-only, with the deliberate exception of the
-    // second-vote passerelle (art. 25-1 / 26-1, EP-013-S10) which may
-    // still inscribe a resolution during the séance (`ongoing`).
+    // EP-003-S13 — agenda frozen at convocation (art. 9/11 décret 67-223),
+    // except the second-vote passerelle (art. 25-1/26-1, EP-013-S10).
     let exists = sqlx::query_scalar!(
         "SELECT EXISTS(SELECT 1 FROM general_meeting WHERE id = $1 AND building_id = $2 AND status IN ('draft','ongoing'))",
         meeting_id, building_id
@@ -1248,9 +1246,8 @@ pub async fn create_resolution(
     }))
 }
 
-/// EP-003-S13 — hard-deletes a draft resolution (and its votes) from the agenda.
-/// Draft-only by SQL filter: once convoked the agenda is a legal act
-/// (art. 9/11 décret 67-223), so any non-draft meeting matches no row → 404.
+/// EP-003-S13 — deletes a draft resolution and its votes; the draft-only
+/// SQL filter yields no row outside `draft` → 404.
 pub async fn delete_resolution(
     pool: &PgPool,
     meeting_id: Uuid,
@@ -1302,9 +1299,8 @@ pub async fn delete_resolution(
     Ok(deleted > 0)
 }
 
-/// EP-003-S13 — renumbers the draft agenda from the client's ordered id list.
-/// Refuses non-draft meetings (409) and any list that is not an exact
-/// permutation of the current resolutions (400).
+/// EP-003-S13 — renumbers the draft agenda from an ordered id list;
+/// refuses non-draft meetings (409) and inexact permutations (400).
 pub async fn reorder_resolutions(
     pool: &PgPool,
     meeting_id: Uuid,
@@ -1336,7 +1332,6 @@ pub async fn reorder_resolutions(
     .fetch_all(&mut *tx)
     .await?;
 
-    // Exact-permutation check — catches missing, unknown and duplicated ids.
     let mut expected = existing.clone();
     expected.sort_unstable();
     let mut provided = ordered_ids.clone();

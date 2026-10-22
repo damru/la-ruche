@@ -1,13 +1,7 @@
 // Integration tests for resolution CRUD and reorder (EP-003-S13).
-//
-// Option A (validated with the product owner): the agenda is frozen at
-// convocation (art. 9/11 décret 67-223) — structural mutations
-// (create/update/delete/reorder) are draft-only. Vote-time description
-// patches remain available while `ongoing`, and the second-vote passerelle
-// (art. 25-1 / 26-1, EP-013-S10) may still inscribe a resolution during the
-// séance.
-//
-// Run with: cargo test --test resolution_crud_test
+// Agenda frozen at convocation (art. 9/11 décret 67-223): structural
+// mutations are draft-only; the second-vote passerelle (art. 25-1/26-1,
+// EP-013-S10) may still inscribe a resolution while `ongoing`.
 
 mod common;
 
@@ -77,7 +71,6 @@ fn token_for(user_id: Uuid, building_id: Uuid, cfg: &laruche::config::AppConfig)
     .expect("token")
 }
 
-/// Creates a meeting in `draft` status and returns its id.
 async fn create_meeting(server: &TestServer, auth: &str) -> Uuid {
     let resp = server
         .post("/api/v1/meetings")
@@ -97,7 +90,6 @@ async fn create_meeting(server: &TestServer, auth: &str) -> Uuid {
         .unwrap()
 }
 
-/// Creates a resolution on a draft meeting and returns its id.
 async fn create_resolution(server: &TestServer, auth: &str, meeting_id: Uuid, number: i32) -> Uuid {
     let resp = server
         .post(&format!("/api/v1/meetings/{meeting_id}/resolutions"))
@@ -125,7 +117,6 @@ async fn list_resolutions(server: &TestServer, auth: &str, meeting_id: Uuid) -> 
         .json::<Vec<Value>>()
 }
 
-/// Uploads (confirm-only) a document and returns its id.
 async fn create_document(server: &TestServer, auth: &str, building_id: Uuid) -> Uuid {
     let bucket = format!("laruche-{}", building_id.simple());
     let resp = server
@@ -149,8 +140,7 @@ async fn create_document(server: &TestServer, auth: &str, building_id: Uuid) -> 
         .unwrap()
 }
 
-/// Full convocation path: notice document → attach → call. Leaves the meeting
-/// in `called` status.
+/// Full convocation path; leaves the meeting in `called` status.
 async fn convene(server: &TestServer, auth: &str, building_id: Uuid, meeting_id: Uuid) {
     let document_id = create_document(server, auth, building_id).await;
 
@@ -182,7 +172,6 @@ async fn draft_resolution_delete_and_reorder_flow() {
     let r2 = create_resolution(&server, &auth, meeting_id, 2).await;
     let r3 = create_resolution(&server, &auth, meeting_id, 3).await;
 
-    // Structural deletion is allowed while draft.
     let delete = server
         .delete(&format!("/api/v1/meetings/{meeting_id}/resolutions/{r2}"))
         .add_header("Authorization", &auth)
@@ -194,7 +183,6 @@ async fn draft_resolution_delete_and_reorder_flow() {
     assert_eq!(after_delete[0]["id"].as_str().unwrap(), r1.to_string());
     assert_eq!(after_delete[1]["id"].as_str().unwrap(), r3.to_string());
 
-    // Reorder inverts the agenda and renumbers 1..N.
     let reorder = server
         .post(&format!(
             "/api/v1/meetings/{meeting_id}/resolutions/reorder"
@@ -216,7 +204,6 @@ async fn draft_resolution_delete_and_reorder_flow() {
     assert_eq!(listed[1]["id"].as_str().unwrap(), r1.to_string());
     assert_eq!(listed[1]["number"], 2);
 
-    // Missing id → exact-permutation violation.
     let missing = server
         .post(&format!(
             "/api/v1/meetings/{meeting_id}/resolutions/reorder"
@@ -230,7 +217,6 @@ async fn draft_resolution_delete_and_reorder_flow() {
         "errors.resolutions.reorder_mismatch"
     );
 
-    // Duplicated id → exact-permutation violation.
     let duplicated = server
         .post(&format!(
             "/api/v1/meetings/{meeting_id}/resolutions/reorder"
@@ -257,15 +243,12 @@ async fn structural_mutations_refused_after_convocation() {
     let r1 = create_resolution(&server, &auth, meeting_id, 1).await;
     convene(&server, &auth, f.building_id, meeting_id).await;
 
-    // Structural deletion is refused once the agenda is frozen (SQL filter
-    // pattern → 404).
     let delete = server
         .delete(&format!("/api/v1/meetings/{meeting_id}/resolutions/{r1}"))
         .add_header("Authorization", &auth)
         .await;
     assert_eq!(delete.status_code(), StatusCode::NOT_FOUND);
 
-    // Reorder is refused outside draft.
     let reorder = server
         .post(&format!(
             "/api/v1/meetings/{meeting_id}/resolutions/reorder"
@@ -279,7 +262,6 @@ async fn structural_mutations_refused_after_convocation() {
         "errors.meetings.not_in_draft_status"
     );
 
-    // Creation is refused once convoked: the agenda is a legal act.
     let create = server
         .post(&format!("/api/v1/meetings/{meeting_id}/resolutions"))
         .add_header("Authorization", &auth)
@@ -319,8 +301,6 @@ async fn ongoing_session_keeps_vote_patch_and_passerelle() {
         .await;
     assert_eq!(start.status_code(), StatusCode::NO_CONTENT);
 
-    // Vote-time description patch stays available while ongoing
-    // (guard `Entity::ResolutionVote`) — non-regression.
     let patch = server
         .patch(&format!("/api/v1/meetings/{meeting_id}/resolutions/{r1}"))
         .add_header("Authorization", &auth)
@@ -332,8 +312,6 @@ async fn ongoing_session_keeps_vote_patch_and_passerelle() {
         "Mise à jour en séance"
     );
 
-    // The second-vote passerelle (art. 25-1 / 26-1) still inscribes a new
-    // resolution during the séance — deliberately kept open in `ongoing`.
     let passerelle = server
         .post(&format!("/api/v1/meetings/{meeting_id}/resolutions"))
         .add_header("Authorization", &auth)
@@ -345,7 +323,6 @@ async fn ongoing_session_keeps_vote_patch_and_passerelle() {
         .await;
     assert_eq!(passerelle.status_code(), StatusCode::CREATED);
 
-    // Structural deletion remains refused while ongoing.
     let delete = server
         .delete(&format!("/api/v1/meetings/{meeting_id}/resolutions/{r1}"))
         .add_header("Authorization", &auth)

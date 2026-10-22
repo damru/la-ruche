@@ -12,12 +12,9 @@ pub enum Entity {
     LevyCall,
     /// Frozen once the parent assembly reaches `ongoing` or `closed`.
     Vote,
-    /// Frozen once convoked: structural mutations (create/update/delete/
-    /// reorder) are draft-only — the agenda is a legal act once the
-    /// convocation is sent (art. 9/11 décret 67-223, EP-003-S13).
+    /// Frozen at convocation (art. 9/11 décret 67-223): structural mutations draft-only (EP-003-S13).
     Resolution,
-    /// Vote-time resolution patch (description): only while the parent
-    /// assembly is `ongoing` (EP-003-S13).
+    /// Vote-time description patch, `ongoing` only (EP-003-S13).
     ResolutionVote,
     /// `completion_cost` / `closed_at` frozen when `status = 'closed'`.
     Task,
@@ -41,8 +38,8 @@ pub enum Entity {
 /// `status` semantics per entity:
 /// - `LevyCall`       → levy_status string ("draft" | "issued" | "paid" | "overdue")
 /// - `Vote`           → parent assembly's meeting_status
-/// - `Resolution`     → parent assembly's meeting_status (draft-only: frozen at convocation, EP-003-S13)
-/// - `ResolutionVote` → parent assembly's meeting_status (ongoing-only vote-time patch, EP-003-S13)
+/// - `Resolution`     → parent assembly's meeting_status (draft-only since convocation, EP-003-S13)
+/// - `ResolutionVote` → parent assembly's meeting_status (ongoing-only, EP-003-S13)
 /// - `Task`           → task_status string
 /// - `Claim`          → "transmitted" when transmitted_at IS NOT NULL, else any other value
 /// - `MaintenanceLog` → ignored; always frozen (EP-018-S07 Pattern C)
@@ -115,7 +112,6 @@ mod tests {
 
     #[test]
     fn resolution_mutable_only_in_draft() {
-        // EP-003-S13: the agenda is frozen at convocation (art. 9/11 décret 67-223).
         assert!(is_mutable(&Entity::Resolution, "draft"));
         assert!(!is_mutable(&Entity::Resolution, "called"));
         assert!(!is_mutable(&Entity::Resolution, "ongoing"));
