@@ -1,5 +1,5 @@
 ---
-description: 'Pull requests must follow .github/pull_request_template.md (ALWAYS, when present) and Conventional Commits.'
+description: 'Pull requests must follow .github/PULL_REQUEST_TEMPLATE.md or .github/pull_request_template.md (ALWAYS, when present) and Conventional Commits.'
 applyTo: '**'
 ---
 
