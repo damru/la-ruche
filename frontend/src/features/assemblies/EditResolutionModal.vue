@@ -37,6 +37,7 @@ watch(() => props.open, (open) => {
 })
 
 async function handleSubmit() {
+  if (feedback.status.value === 'success') { forceClose(); return }
   if (!props.resolution) return
   saving.value = true
   feedback.reset()
