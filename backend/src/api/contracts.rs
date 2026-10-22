@@ -1,6 +1,6 @@
 use axum::{
     Json,
-    extract::{Path, State},
+    extract::{Path, Query, State},
     http::StatusCode,
 };
 use serde::Deserialize;
@@ -14,12 +14,35 @@ use crate::{
     errors::{AppError, AppResult, json_value},
 };
 
+#[derive(Deserialize)]
+pub struct ListContractsQuery {
+    pub status: Option<String>,
+    pub contract_type: Option<String>,
+    pub vendor: Option<String>,
+}
+
 pub async fn list(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,
+    Query(query): Query<ListContractsQuery>,
 ) -> AppResult<Json<serde_json::Value>> {
     auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
-    json_value(db::contract::list(&state.pool, auth.building_id).await?)
+    let filter = db::contract::ListContractsFilter {
+        status: query.status,
+        contract_type: query.contract_type,
+        vendor_name: query.vendor,
+    };
+    json_value(db::contract::list(&state.pool, auth.building_id, &filter).await?)
+}
+
+pub async fn list_vendors(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+) -> AppResult<Json<Vec<String>>> {
+    auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
+    Ok(Json(
+        db::contract::vendor_names(&state.pool, auth.building_id).await?,
+    ))
 }
 
 pub async fn list_all_reminders(

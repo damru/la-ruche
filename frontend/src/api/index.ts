@@ -304,9 +304,17 @@ export const documentsApi = {
 }
 
 // ── Contracts ─────────────────────────────────────────────────────
+export interface ContractListParams {
+  status?: string
+  contract_type?: string
+  vendor?: string
+}
+
 export const contractsApi = {
-  list: () =>
-    api.get<VendorContract[]>('/contracts'),
+  list: (params?: ContractListParams) =>
+    api.get<VendorContract[]>('/contracts', { params: params ?? undefined }),
+  vendors: () =>
+    api.get<string[]>('/contracts/vendors'),
   get: (id: string) =>
     api.get<VendorContract>(`/contracts/${id}`),
   create: (data: Partial<VendorContract>) =>

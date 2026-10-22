@@ -109,6 +109,7 @@
     "notFound": "Page introuvable",
     "contractors": "Catalogue prestataires",
     "contractorDetail": "Fiche prestataire",
+    "contractDetail": "Fiche contrat",
     "eyebrows": {
       "dashboard": "Pilotage de la résidence",
       "budget": "Prévisions et appels",
@@ -123,6 +124,7 @@
       "tasks": "Suivi des interventions",
       "contractors": "Annuaire des prestataires",
       "contractorDetail": "Coordonnées et historique",
+      "contractDetail": "Engagement et échéances",
       "allocationKeys": "Bases de répartition",
       "building": "Données de l'immeuble",
       "residents": "Lots et occupants",
@@ -719,7 +721,22 @@
     },
     "filters": {
       "active": "Actifs",
-      "expired": "Expirés / Résiliés"
+      "expired": "Expirés / Résiliés",
+      "type": "Type",
+      "typeAll": "Tous les types",
+      "vendor": "Prestataire",
+      "vendorAll": "Tous les prestataires",
+      "status": "Statut",
+      "statusLabel": "Statut",
+      "vendorLabel": "Prestataire",
+      "subjectLabel": "Objet",
+      "viewCards": "Vue cartes",
+      "viewTable": "Vue tableau",
+      "reminderStatuses": {
+        "pending": "En attente",
+        "sent": "Envoyé",
+        "acknowledged": "Acquitté"
+      }
     },
     "frequencies": {
       "monthly": "Mensuel",
@@ -811,7 +828,21 @@
       "termination": "Résiliation"
     },
     "create": "Nouveau contrat",
-    "count": "{count} contrat | {count} contrats"
+    "count": "{count} contrat | {count} contrats",
+    "detail": {
+      "eyebrow": "Fiche contrat fournisseur",
+      "amendments": "Chaîne d'avenants",
+      "amendmentsEmpty": "Aucun avenant pour ce contrat.",
+      "documents": "Pièces justificatives",
+      "documentsEmpty": "Aucune pièce liée à ce contrat pour le moment.",
+      "documentsHint": "Ajoutez ici les pièces utiles à ce contrat. Elles restent visibles aussi dans le module Documents.",
+      "reminders": "Rappels",
+      "remindersEmpty": "Aucun rappel pour ce contrat.",
+      "draftBanner": "Brouillon — à activer",
+      "activate": "Activer",
+      "activateError": "Impossible d'activer ce contrat.",
+      "noticeDays": "Préavis (jours)"
+    }
   },
   "tasks": {
     "editTask": "Modifier la tâche",
@@ -1687,6 +1718,9 @@
     },
     "contractor": {
       "invalid_file_extension": "L'extension du fichier est invalide."
+    },
+    "contracts": {
+      "invalid_filter": "Le filtre demandé est invalide."
     },
     "contractors": {
       "name_required": "Le nom du prestataire est obligatoire."

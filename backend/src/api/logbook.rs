@@ -164,7 +164,12 @@ pub async fn summary(
         .find_map(|manager| manager.transpose())
         .transpose()?;
 
-    let contracts = db::contract::list(&state.pool, auth.building_id).await?;
+    let contracts = db::contract::list(
+        &state.pool,
+        auth.building_id,
+        &db::contract::ListContractsFilter::default(),
+    )
+    .await?;
     let active_contracts = contracts
         .into_iter()
         .filter(|contract| is_contract_active(contract, today))

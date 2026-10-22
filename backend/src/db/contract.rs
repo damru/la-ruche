@@ -45,6 +45,15 @@ pub struct CreateVendorContractInput {
     pub notice_days: Option<i32>,
 }
 
+/// Optional server-side filters for the contract list (EP-006-S06).
+/// `status` uses the raw enum values: draft|active|terminated|expired.
+#[derive(Debug, Default, Clone)]
+pub struct ListContractsFilter {
+    pub status: Option<String>,
+    pub contract_type: Option<String>,
+    pub vendor_name: Option<String>,
+}
+
 #[derive(Debug, Clone, sqlx::FromRow)]
 struct ContractReminderCandidateRow {
     id: Uuid,
@@ -56,7 +65,41 @@ struct ContractReminderCandidateRow {
     contract_status: String,
 }
 
-pub async fn list(pool: &PgPool, building_id: Uuid) -> AppResult<Vec<VendorContractRow>> {
+const CONTRACT_STATUSES: [&str; 4] = ["draft", "active", "terminated", "expired"];
+const CONTRACT_TYPES: [&str; 8] = [
+    "maintenance",
+    "insurance",
+    "service",
+    "energy",
+    "water",
+    "cleaning",
+    "green_spaces",
+    "other",
+];
+
+/// Validates raw filter values against the `contract_status` / `contract_type`
+/// enum domains (EP-006-S06): invalid values are rejected with a validation
+/// error instead of leaking a SQL cast failure.
+pub fn validate_list_filter(filter: &ListContractsFilter) -> AppResult<()> {
+    if let Some(status) = &filter.status
+        && !CONTRACT_STATUSES.contains(&status.as_str())
+    {
+        return Err(AppError::validation_code("errors.contracts.invalid_filter"));
+    }
+    if let Some(contract_type) = &filter.contract_type
+        && !CONTRACT_TYPES.contains(&contract_type.as_str())
+    {
+        return Err(AppError::validation_code("errors.contracts.invalid_filter"));
+    }
+    Ok(())
+}
+
+pub async fn list(
+    pool: &PgPool,
+    building_id: Uuid,
+    filter: &ListContractsFilter,
+) -> AppResult<Vec<VendorContractRow>> {
+    validate_list_filter(filter)?;
     Ok(sqlx::query_as::<_, VendorContractRow>(
         r#"SELECT vc.id,
                   vc.building_id,
@@ -79,8 +122,28 @@ pub async fn list(pool: &PgPool, building_id: Uuid) -> AppResult<Vec<VendorContr
            LEFT JOIN contract_document cd ON cd.contract_id = vc.id
            LEFT JOIN document d ON d.id = cd.document_id AND d.deleted_at IS NULL
            WHERE vc.building_id = $1
+             AND ($2::text IS NULL OR vc.status::text = $2)
+             AND ($3::text IS NULL OR vc.contract_type::text = $3)
+             AND ($4::text IS NULL OR vc.vendor_name = $4)
            GROUP BY vc.id
            ORDER BY vc.vendor_name"#,
+    )
+    .bind(building_id)
+    .bind(filter.status.as_deref())
+    .bind(filter.contract_type.as_deref())
+    .bind(filter.vendor_name.as_deref())
+    .fetch_all(pool)
+    .await?)
+}
+
+/// Distinct vendor names for the building's contracts, alphabetically
+/// ordered — feeds the vendor filter select (EP-006-S06).
+pub async fn vendor_names(pool: &PgPool, building_id: Uuid) -> AppResult<Vec<String>> {
+    Ok(sqlx::query_scalar(
+        r#"SELECT DISTINCT vendor_name
+           FROM vendor_contract
+           WHERE building_id = $1
+           ORDER BY vendor_name"#,
     )
     .bind(building_id)
     .fetch_all(pool)
@@ -895,6 +958,36 @@ fn reminder_target_date(row: &ContractReminderCandidateRow) -> NaiveDate {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn validate_list_filter_accepts_known_values() {
+        let filter = ListContractsFilter {
+            status: Some("active".to_string()),
+            contract_type: Some("maintenance".to_string()),
+            vendor_name: Some("ACME".to_string()),
+        };
+        assert!(validate_list_filter(&filter).is_ok());
+        assert!(validate_list_filter(&ListContractsFilter::default()).is_ok());
+    }
+
+    #[test]
+    fn validate_list_filter_rejects_unknown_enum_values() {
+        for filter in [
+            ListContractsFilter {
+                status: Some("unknown".to_string()),
+                ..Default::default()
+            },
+            ListContractsFilter {
+                contract_type: Some("unknown".to_string()),
+                ..Default::default()
+            },
+        ] {
+            let err = validate_list_filter(&filter).unwrap_err();
+            assert!(
+                matches!(err, AppError::Validation(code) if code == "errors.contracts.invalid_filter")
+            );
+        }
+    }
 
     fn reminder_row(
         contract_id: Uuid,

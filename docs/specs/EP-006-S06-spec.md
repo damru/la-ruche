@@ -4,7 +4,9 @@
 
 **Épic :** EP-006 — Contrats fournisseurs
 **Réf. PRD :** `docs/product/PRD - Contrats fournisseurs.md` US-CF-002
-**Statut : PARTIEL** — la liste avec onglets de statut et recherche libre existe ; manquent les filtres type/prestataire, le filtrage côté backend et la fiche contrat.
+**Statut : IMPLÉMENTÉ (backend + frontend)** — filtres type/prestataire côté backend (`GET /contracts?status=&contract_type=&vendor=`), route `GET /contracts/vendors`, rangée de filtres + bascule cartes/tableau dans la liste, fiche contrat `ContractDetailView` sur `/contracts/:id` (en-tête, chaîne d'avenants, documents liés, rappels).
+
+**Décision §2 actée (2026-10-22, product owner) : cartes conservées par défaut + bascule vers un tableau (`CDataTable`).** Le PRD US-CF-002 (AC-CF-002-B) est amendé en conséquence (Q-CF-004 tranchée).
 
 ---
 

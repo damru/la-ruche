@@ -1,10 +1,12 @@
 # Spécification technique — EP-006-S07
 
-**Story :** Rattacher des documents à un contrat fournisseur, visibilité « Syndic uniquement » (PRD US-CF-007).
+**Story :** Rattacher des documents à un contrat fournisseur, visibilité lecture Syndic + Conseil syndical (PRD US-CF-007).
 
 **Épic :** EP-006 — Contrats fournisseurs
 **Réf. PRD :** US-CF-007
-**Statut : PARTIEL — la fonctionnalité est implémentée ; il reste un écart de conformité PRD sur la visibilité, à trancher.**
+**Statut : IMPLÉMENTÉ (backend + frontend) — décision Option A actée (2026-10-22, product owner).**
+
+**Décision §3 actée : Option A — conserver la lecture Conseil syndical** (art. 21 de la loi du 10 juillet 1965 : le conseil syndical contrôle la gestion du syndic et peut prendre connaissance de toutes pièces se rapportant à cette gestion). L'écriture (rattachement / détachement) reste réservée au `manager`. Le PRD US-CF-007 est amendé (nouvel AC-CF-007-D, Q-CF-005 tranchée). Test de non-régression e2e : lecture `board_member` → 200, attach/detach `board_member` → 403 (`backend/tests/contract_filters_test.rs`).
 
 ---
 

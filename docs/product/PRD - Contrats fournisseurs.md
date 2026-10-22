@@ -185,10 +185,10 @@ draft ──(activation)──▶ active ──(résiliation)──▶ terminate
 
 **Critères d'acceptation :**
 
-- **AC-CF-002-A** : La liste DOIT être filtrable par statut (`draft`, `active`, `terminated`, `expired`) et par type de contrat.
-- **AC-CF-002-B** : La liste DOIT afficher, pour chaque contrat : fournisseur, objet, type, dates, statut et le prochain rappel actif non acquitté le cas échéant.
+- **AC-CF-002-A** : La liste DOIT être filtrable par statut (`draft`, `active`, `terminated`, `expired`), par type de contrat et par prestataire (nom exact).
+- **AC-CF-002-B** : La liste DOIT afficher, pour chaque contrat : fournisseur, objet, type, dates, statut et le prochain rappel actif non acquitté le cas échéant. Deux vues sont proposées au choix de l'utilisateur : **cartes** (vue par défaut) et **tableau** — la carte porte déjà l'ensemble des informations du tableau à l'échelle d'une copropriété (dizaines de contrats).
 - **AC-CF-002-C** : Les contrats avec au moins un rappel actif non acquitté DOIVENT être mis en évidence visuellement dans la liste.
-- **AC-CF-002-D** : La vue détail DOIT afficher l'historique des avenants (chaîne `predecessor_id`) et la liste des pièces jointes rattachées.
+- **AC-CF-002-D** : La vue détail DOIT afficher l'historique des avenants (chaîne `predecessor_id`) et la liste des pièces jointes rattachées. Chaque contrat de la liste DOIT donner un accès direct à sa vue détail.
 
 #### US-CF-003 — Configurer les rappels
 
@@ -255,6 +255,7 @@ draft ──(activation)──▶ active ──(résiliation)──▶ terminate
 - **AC-CF-007-A** : Les documents DOIVENT être déposés via le module Documents — catégorie `CONTRAT`, avec `contract_id` comme référence d'entité.
 - **AC-CF-007-B** : La vue détail du contrat DOIT afficher la liste des documents rattachés avec leur nom et date de dépôt.
 - **AC-CF-007-C** : La suppression d'un contrat DOIT être refusée (422) si des documents rattachés existent — le syndic doit d'abord détacher ou supprimer les documents.
+- **AC-CF-007-D** : La **lecture** des documents rattachés est ouverte au Syndic et au Conseil syndical (art. 21 de la loi du 10 juillet 1965 : le conseil syndical contrôle la gestion du syndic et peut prendre connaissance de toutes pièces se rapportant à cette gestion). La **gestion des rattachements** (dépôt, retrait) reste réservée au Syndic.
 
 #### US-CF-008 — Gérer le contrat d'assurance MRI
 
@@ -311,6 +312,8 @@ draft ──(activation)──▶ active ──(résiliation)──▶ terminate
 | ~~Q-CF-001~~ | ~~Un contrat peut-il avoir plusieurs avenants successifs (chaîne `predecessor_id` de profondeur > 2) ?~~ | Damien | **Tranchée 2026-07-18 : oui, profondeur illimitée.** Cf. AC-CF-006-E. |
 | Q-CF-002 | Les rappels sont-ils déclenchés par le module de notification transverse ou par un job autonome dédié ? | Damien | Avant implémentation US-CF-003 |
 | Q-CF-003 | Le Conseil syndical doit-il pouvoir valider formellement le renouvellement ou la résiliation d'un contrat ? | Damien | Avant implémentation lot futur |
+| ~~Q-CF-004~~ | ~~La liste des contrats doit-elle être présentée en tableau ou en cartes ?~~ | Damien | **Tranchée 2026-10-22 (EP-006-S06) : cartes conservées par défaut + bascule tableau.** Cf. AC-CF-002-B. |
+| ~~Q-CF-005~~ | ~~Les documents rattachés à un contrat sont-ils visibles du Conseil syndical ou réservés au Syndic ?~~ | Damien | **Tranchée 2026-10-22 (EP-006-S07) : lecture Syndic + Conseil syndical (art. 21 loi 1965), écriture Syndic seul.** Cf. AC-CF-007-D. |
 
 ---
 
@@ -324,5 +327,5 @@ draft ──(activation)──▶ active ──(résiliation)──▶ terminate
 | US-CF-004 | Must | AC-CF-004-A à D | Rappels (U — acquittement) |
 | US-CF-005 | Must | AC-CF-005-A à E | Contrats (transition → `terminated`) |
 | US-CF-006 | Should | AC-CF-006-A à D | Avenants (C — Pattern B) |
-| US-CF-007 | Should | AC-CF-007-A à C | Documents liés (C / R) |
+| US-CF-007 | Should | AC-CF-007-A à D | Documents liés (C / R) |
 | US-CF-008 | Should | AC-CF-008-A à C | Assurance MRI (alerte permanente) |

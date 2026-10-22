@@ -272,9 +272,9 @@ Upload direct S3 via pre-signed URL, contrôle d'accès par rôle, téléchargem
 
 **Statut :** terminée | **MVP :** oui | **Réf. PRD :** Gestion courante
 
-**État code actuel :** backend + frontend réels sur CRUD, rappels, acquittement, résiliation et pièces justificatives liées au contrat.
+**État code actuel :** backend + frontend réels sur CRUD, rappels, acquittement, résiliation, pièces justificatives liées au contrat, filtres serveur (statut/type/prestataire) et fiche contrat détaillée.
 
-Fiche contrat avec reconduction tacite et préavis configurables, rappels automatiques calculés à la création/MAJ, acquittement manuel.
+Fiche contrat avec reconduction tacite et préavis configurables, rappels automatiques calculés à la création/MAJ, acquittement manuel. Liste filtrable par statut (onglets), type et prestataire avec bascule cartes/tableau ; chaque contrat ouvre une fiche dédiée (en-tête, chaîne d'avenants, documents liés, rappels).
 
 **Stories :**
 
@@ -283,8 +283,8 @@ Fiche contrat avec reconduction tacite et préavis configurables, rappels automa
 * `EP-006-S03` ✅ — Calculer automatiquement les dates d'alerte : préavis entrant, reconduction imminente, expiration (LEGAL.md §5.3)
 * `EP-006-S04` ✅ — Acquitter manuellement une alerte ou enregistrer la résiliation d'un contrat
 * `EP-006-S05` ✅ — Suivre le contrat d'assurance multirisque immeuble (échéance, pièces, rappels) en tant qu'aide de gestion documentaire (LEGAL.md §5.2)
-* [EP-006-S06](docs/specs/EP-006-S06-spec.md) — Lister et consulter les contrats fournisseurs avec filtres par statut (actif / résilié / expiré), prestataire et type d'objet ; vue tabulaire avec accès direct à la fiche contrat (PRD US-CF-002)
-* [EP-006-S07](docs/specs/EP-006-S07-spec.md) — Rattacher des documents à un contrat fournisseur (contrat signé, avenants, attestations) via le module Documents (EP-005) avec visibilité réservée au Syndic (PRD US-CF-007)
+* [EP-006-S06](docs/specs/EP-006-S06-spec.md) ✅ — Lister et consulter les contrats fournisseurs avec filtres par statut (actif / résilié / expiré), prestataire et type d'objet ; vue filtrable (cartes par défaut, bascule tableau) avec accès direct à la fiche contrat (PRD US-CF-002)
+* [EP-006-S07](docs/specs/EP-006-S07-spec.md) ✅ — Rattacher des documents à un contrat fournisseur (contrat signé, avenants, attestations) via le module Documents (EP-005) — lecture Syndic + Conseil syndical (art. 21 loi 1965), gestion des rattachements réservée au Syndic (PRD US-CF-007)
 
 ***
 
