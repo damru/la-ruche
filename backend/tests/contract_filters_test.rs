@@ -5,8 +5,19 @@
 mod common;
 
 use axum::http::StatusCode;
+use axum_test::TestServer;
 use serde_json::{Value, json};
 use uuid::Uuid;
+
+async fn create_contract(server: &TestServer, jwt: &str, payload: &Value) -> String {
+    let resp = server
+        .post("/api/v1/contracts")
+        .add_header("Authorization", format!("Bearer {jwt}"))
+        .json(payload)
+        .await;
+    assert_eq!(resp.status_code(), StatusCode::CREATED, "{}", resp.text());
+    resp.json::<Value>()["id"].as_str().unwrap().to_string()
+}
 
 struct Ctx {
     manager_jwt: String,
@@ -61,26 +72,13 @@ async fn setup() -> Ctx {
     let board_member_jwt = jwt(board_member_id, laruche::domain::Role::BoardMember);
 
     let server = common::test_server().await;
-    let create = |payload: &Value| {
-        let server = &server;
-        let jwt = &manager_jwt;
-        async move {
-            let resp = server
-                .post("/api/v1/contracts")
-                .add_header("Authorization", format!("Bearer {jwt}"))
-                .json(payload)
-                .await;
-            assert_eq!(resp.status_code(), StatusCode::CREATED, "{}", resp.text());
-            resp.json::<Value>()["id"].as_str().unwrap().to_string()
-        }
-    };
 
     // Contract A: ACME / maintenance, activated (status active).
-    let contract_a = create(&contract_payload(
-        "ACME Nettoyage",
-        "maintenance",
-        "Entretien",
-    ))
+    let contract_a = create_contract(
+        &server,
+        &manager_jwt,
+        &contract_payload("ACME Nettoyage", "maintenance", "Entretien"),
+    )
     .await;
     let resp = server
         .post(&format!("/api/v1/contracts/{contract_a}/activate"))
@@ -89,11 +87,11 @@ async fn setup() -> Ctx {
     assert_eq!(resp.status_code(), StatusCode::OK, "{}", resp.text());
 
     // Contract B: Beta / cleaning, left in draft.
-    let contract_b = create(&contract_payload(
-        "Beta Jardins",
-        "cleaning",
-        "Espaces verts",
-    ))
+    let contract_b = create_contract(
+        &server,
+        &manager_jwt,
+        &contract_payload("Beta Jardins", "cleaning", "Espaces verts"),
+    )
     .await;
 
     // A document attached to contract A (upload flow: presign -> confirm -> attach).
