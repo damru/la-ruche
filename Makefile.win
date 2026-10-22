@@ -14,7 +14,7 @@ DB_URL_TEST := postgres://laruche:laruche@localhost:5432/laruche_test
         lint lint-fix check \
         migrate migrate-test migrate-revert sqlx-prepare \
         docker docker-up docker-down docker-prod docker-logs \
-        clean install-tools setup setup-hooks commit fmt
+        clean install-tools setup setup-hooks commit fmt sync-rules sync-rules-check
 
 help: ## Show this help
 	Select-String -Path Makefile.win -Pattern '^[a-zA-Z_-]+:.*?##' | ForEach-Object { \
@@ -106,9 +106,15 @@ install-tools: ## Install development tools
 	cargo install bacon --locked
 	Set-Location frontend; npm ci
 
-setup-hooks: ## Install git hooks (pre-commit: cargo fmt + clippy)
+setup-hooks: ## Install git hooks (pre-commit: cargo fmt + clippy, pre-push: AGENTS.md sync check)
 	git config core.hooksPath .githooks
 	Write-Host 'Git hooks configured (.githooks/)' -ForegroundColor Green
+
+sync-rules: ## Regenerate AGENTS.md files from .claude/rules/ (for Vibe Code)
+	python scripts/sync-claude-rules.py
+
+sync-rules-check: ## Verify AGENTS.md files are in sync with .claude/rules/ (CI mode)
+	python scripts/sync-claude-rules.py --check
 
 setup: ## Full initial setup
 	Copy-Item backend\.env.example backend\.env

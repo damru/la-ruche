@@ -1,0 +1,20 @@
+#!/usr/bin/env sh
+# Keep generated AGENTS.md files in sync with .claude/rules/ before every push.
+set -e
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+
+if command -v python3 >/dev/null 2>&1; then
+  PYTHON=python3
+elif command -v python >/dev/null 2>&1; then
+  PYTHON=python
+else
+  echo "[pre-push] python3 not found, skipping AGENTS.md sync check."
+  exit 0
+fi
+
+"$PYTHON" "$REPO_ROOT/scripts/sync-claude-rules.py" --check || {
+  echo "[pre-push] AGENTS.md files are out of sync with .claude/rules/."
+  echo "[pre-push] Run 'python3 scripts/sync-claude-rules.py' (or 'make sync-rules'), commit the result, then push again."
+  exit 1
+}

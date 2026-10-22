@@ -6,7 +6,7 @@
         lint lint-fix check \
         migrate migrate-test migrate-revert sqlx-prepare \
         docker docker-up docker-down docker-prod docker-logs \
-        clean install-tools setup setup-hooks commit fmt
+        clean install-tools setup setup-hooks commit fmt sync-rules
 
 # Variables
 DB_URL      := postgres://laruche:laruche@localhost:5432/laruche
@@ -101,10 +101,16 @@ install-tools: ## Install development tools
 	cargo install bacon --locked
 	cd frontend && npm ci
 
-setup-hooks: ## Install git hooks (pre-commit: cargo fmt + clippy)
+setup-hooks: ## Install git hooks (pre-commit: cargo fmt + clippy, pre-push: AGENTS.md sync check)
 	git config core.hooksPath .githooks
-	chmod +x .githooks/pre-commit
+	chmod +x .githooks/pre-commit .githooks/pre-push
 	@echo "✅ Git hooks installed (.githooks/)"
+
+sync-rules: ## Regenerate AGENTS.md files from .claude/rules/ (for Vibe Code)
+	python3 scripts/sync-claude-rules.py
+
+sync-rules-check: ## Verify AGENTS.md files are in sync with .claude/rules/ (CI mode)
+	python3 scripts/sync-claude-rules.py --check
 
 setup: ## Full initial setup
 	cp backend/.env.example backend/.env

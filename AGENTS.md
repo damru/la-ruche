@@ -4,7 +4,7 @@
 
 Monorepo: `backend/` (Rust) + `frontend/` (Vue 3).
 
-Domain-specific rules in `.claude/rules/` are automatically injected into context by the IDE when editing files in the matching domain. If a rule relevant to your task is not in your context, read it from `.claude/rules/` — never guess or assume its content.
+Domain-specific rules live in `.claude/rules/`. Always read their frontmatter (`applyTo`) to know which files they cover. They are mirrored into the `AGENTS.md` of each matching directory (`backend/`, `frontend/`, `docs/`) by `scripts/sync-claude-rules.py`, so Vibe Code loads them automatically. If a rule relevant to your task is not in your context, read it full from `.claude/rules/` — never guess or assume its content.
 
 ---
 
@@ -134,6 +134,10 @@ npm --prefix frontend run lint     # lint
 docker compose up -d postgres      # start postgres
 cargo sqlx migrate run             # apply migrations
 cargo sqlx prepare                 # regenerate .sqlx/ (offline mode)
+
+# Rules sync (AGENTS.md generation for Vibe Code)
+python3 scripts/sync-claude-rules.py          # regenerate AGENTS.md from .claude/rules/
+python3 scripts/sync-claude-rules.py --check  # verify sync (CI, pre-push hook)
 ```
 
 ---
@@ -215,7 +219,7 @@ Fall back to Grep/Glob/Read **only** when the graph doesn't cover what you need.
 ### Key Tools
 
 | Tool | Use when |
-| ------ | ---------- |
+| ------ | --------- |
 | `detect_changes` | Reviewing code changes — gives risk-scored analysis |
 | `get_review_context` | Need source snippets for review — token-efficient |
 | `get_impact_radius` | Understanding blast radius of a change |
@@ -231,3 +235,52 @@ Fall back to Grep/Glob/Read **only** when the graph doesn't cover what you need.
 2. Use `detect_changes` for code review.
 3. Use `get_affected_flows` to understand impact.
 4. Use `query_graph` pattern="tests_for" to check coverage.
+
+<!-- BEGIN GENERATED RULES (scripts/sync-claude-rules.py) -->
+
+## Project rules (mirrored from .claude/rules/)
+
+Project-wide rules from `.claude/rules/` are mirrored below. Domain rules for `backend/`, `frontend/` and `docs/` live in the `AGENTS.md` of each directory and take priority there.
+
+## Rule: foundational-docs-sync
+
+_Foundational docs (ARCHITECTURE, DESIGN, EPICS, PRD) must be updated in the same change as the code that invalidates them._
+
+# Foundational document sync
+
+The four foundational docs are contracts, not archives:
+
+- `docs/ARCHITECTURE.md` — technical architecture and module descriptions.
+- `docs/DESIGN.md` — product identity and design system.
+- `docs/EPICS.md` — epic/story backlog and delivery status.
+- `docs/PRD.md` — product vision, users, features, constraints.
+
+## Rules
+
+- Any change that invalidates a foundational doc (new table/module/route,
+  new design component, story delivered, feature scope change) updates the
+  doc **in the same commit**, not in a follow-up.
+- Story delivery updates its status in `docs/EPICS.md`; a new design-system
+  component updates `docs/DESIGN.md`; a schema change updates
+  `docs/ARCHITECTURE.md`.
+- Structural changes only: keep these docs free of implementation detail;
+  detail belongs in `docs/specs/`, ADRs and DDRs.
+- Never delete an invariant from a foundational doc without verifying it is
+  no longer enforced in code.
+- If a change is too large for in-place update, flag the doc with a dated
+  "outdated" note and open an issue — never leave silent drift.
+
+## Rule: pull-request-template
+
+_Pull requests must follow .github/PULL_REQUEST_TEMPLATE.md and Conventional Commits._
+
+# Pull request conventions
+
+- Every PR must be filled in following `.github/PULL_REQUEST_TEMPLATE.md` (all its sections, in order).
+- Title follows Conventional Commits (`type(scope): summary`), same as every commit in the branch.
+- PRs target `main`; never commit directly to `main`.
+- The description must list: what changed, why, doc impact (foundational docs updated or untouched with justification), and testing evidence.
+- If the PR changes schema, API contracts, or the design system, link the corresponding ADR/DDR and doc sections.
+
+<!-- END GENERATED RULES -->
+
