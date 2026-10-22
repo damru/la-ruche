@@ -2,7 +2,6 @@
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { usePageLoader } from '@/composables/usePageLoader'
-import { useConfirm } from '@/composables/useConfirm'
 import { useFormatters } from '@/composables/useFormatters'
 import { useAuthStore } from '@/stores/auth'
 import CTopbar from '@/components/organisms/CTopbar.vue'
@@ -14,13 +13,13 @@ import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import CIconEdit from '@/components/atoms/CIconEdit.svg'
 import CIconTrash from '@/components/atoms/CIconTrash.svg'
 import JudicialProceedingFormModal from '@/features/registers/JudicialProceedingFormModal.vue'
+import JudicialProceedingDeleteModal from '@/features/registers/JudicialProceedingDeleteModal.vue'
 import { judicialProceedingsApi } from '@/api'
 import { useBuildingStore } from '@/stores/building'
 import type { JudicialProceeding } from '@/types/domain'
 
 const { t } = useI18n()
 const { formatDate } = useFormatters()
-const { confirm } = useConfirm()
 const authStore = useAuthStore()
 
 const buildingName = ref('')
@@ -72,14 +71,12 @@ function openEdit(p: JudicialProceeding) {
   showModal.value = true
 }
 
-async function remove(p: JudicialProceeding) {
-  const ok = await confirm({
-    title: t('registers.judicial.deleteTitle'),
-    message: t('registers.judicial.deleteMessage', { subject: p.subject }),
-  })
-  if (!ok) return
-  await judicialProceedingsApi.delete(p.id)
-  await reload()
+const showDeleteModal = ref(false)
+const deletingProceeding = ref<JudicialProceeding | null>(null)
+
+function openDelete(p: JudicialProceeding) {
+  deletingProceeding.value = p
+  showDeleteModal.value = true
 }
 </script>
 
@@ -198,7 +195,7 @@ async function remove(p: JudicialProceeding) {
                   class="tone--err"
                   :title="t('common.delete')"
                   :aria-label="t('common.delete')"
-                  @click="remove(row)"
+                  @click="openDelete(row)"
                 />
               </div>
             </template>
@@ -211,6 +208,12 @@ async function remove(p: JudicialProceeding) {
       v-model:open="showModal"
       :proceeding="editing"
       @saved="reload"
+    />
+
+    <JudicialProceedingDeleteModal
+      v-model:open="showDeleteModal"
+      :proceeding="deletingProceeding"
+      @deleted="reload"
     />
   </div>
 </template>
