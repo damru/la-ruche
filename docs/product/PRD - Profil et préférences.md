@@ -1,12 +1,13 @@
 ---
 product: Profil et préférences
-version: 1.0.0
+version: 1.1.0
 owner: Damien
 status: validé
-last_updated: 2026-05-22
+last_updated: 2026-10-22
 references:
   - EP-019
   - DDR-004
+  - DDR-006
   - LEGAL.md §8
 llm_directives:
   temperature: 0.2
@@ -97,6 +98,7 @@ Aucun KPI prioritaire n'est retenu à ce stade. La feature est un socle de confo
 - En tant que `utilisateur authentifié`, je veux comprendre dès ma première visite quels réglages sont déjà définis.
 - En tant que `utilisateur authentifié`, je veux choisir mes préférences de notifications pour ne recevoir que l'utile.
 - En tant que `utilisateur authentifié`, je veux choisir l'apparence claire, sombre ou automatique selon mon contexte.
+- En tant que `utilisateur authentifié`, je veux régler le délai de fermeture automatique des modales après une validation réussie, pour l'adapter à mon rythme de lecture.
 
 ### Matrice CRUD
 
@@ -138,9 +140,16 @@ Aucun KPI prioritaire n'est retenu à ce stade. La feature est un socle de confo
 
 ### Réinitialisation des préférences
 
-- La réinitialisation aux valeurs par défaut NE DOIT affecter QUE les préférences non critiques (notifications, apparence).
+- La réinitialisation aux valeurs par défaut NE DOIT affecter QUE les préférences non critiques (notifications, apparence, comportement d'interface).
 - Une réinitialisation DOIT être confirmée explicitement avant exécution.
 - La réinitialisation NE DOIT PAS modifier les informations personnelles de l'utilisateur.
+
+### Fermeture automatique des modales
+
+- Après une validation réussie dans une modale, un retour visuel de succès est affiché, puis la modale se ferme automatiquement après un délai configurable.
+- La valeur par défaut est de 3 secondes si aucun choix explicite n'a été fait.
+- La valeur `0` désactive le délai : la modale se ferme immédiatement après la validation, sans fenêtre de succès intermédiaire.
+- Le délai s'applique uniformément à toutes les modales présentant ce comportement de fermeture automatique.
 
 ---
 
@@ -155,6 +164,7 @@ Aucun KPI prioritaire n'est retenu à ce stade. La feature est un socle de confo
 | Must | US-PP-003 | Gérer la première visite et les valeurs par défaut | État initial lisible, valeurs par défaut visibles |
 | Must | US-PP-004 | Gérer ses préférences de notifications | Activation/désactivation, distinction obligatoire/optionnel |
 | Must | US-PP-006 | Gérer sa préférence d'apparence | Clair / Sombre / Automatique — effet immédiat |
+| Should | US-PP-008 | Régler le délai de fermeture automatique des modales | 0 (immédiat) à 10 s — défaut 3 s |
 | Should | US-PP-005 | Réinitialiser ses préférences | Retour aux valeurs par défaut avec confirmation |
 | Should | US-PP-007 | Afficher le contexte utilisateur | Rôle, résidence, périmètre de compte en lecture seule |
 
@@ -266,6 +276,22 @@ Aucun KPI prioritaire n'est retenu à ce stade. La feature est un socle de confo
 - **AC-PP-006-C** : Le changement de thème DOIT être visible immédiatement sans rechargement de page.
 - **AC-PP-006-D** : La préférence DOIT être persistée en base et restaurée à la reconnexion sur tout appareil.
 
+#### US-PP-008 — Régler le délai de fermeture automatique des modales
+
+**En tant que** `utilisateur authentifié`,
+**je veux** choisir le délai après lequel une modale se ferme automatiquement après une validation réussie,
+**afin d'** adapter ce comportement à mon rythme de lecture (fermeture immédiate ou attente prolongée).
+
+**Critères d'acceptation** :
+
+- **AC-PP-008-A** : L'utilisateur PEUT régler le délai de fermeture automatique des modales entre `0` et `10` secondes (valeurs entières).
+- **AC-PP-008-B** : La valeur par défaut est `3` secondes si aucun choix explicite n'a été fait, et cette valeur DOIT être affichée lisiblement avant toute personnalisation.
+- **AC-PP-008-C** : La valeur `0` désactive la fenêtre de succès : la modale DOIT se fermer immédiatement après la validation réussie.
+- **AC-PP-008-D** : Le délai choisi DOIT s'appliquer à toutes les modales présentant une fermeture automatique après succès, sans exception par écran.
+- **AC-PP-008-E** : Le changement de délai DOIT prendre effet immédiatement, sans rechargement de page, y compris pour une modale déjà ouverte en attente de fermeture.
+- **AC-PP-008-F** : La préférence DOIT être persistée localement et restaurée à la reconnexion sur tout appareil.
+- **AC-PP-008-G** : La réinitialisation des préférences (US-PP-005) DOIT ramener le délai à sa valeur par défaut de 3 secondes.
+
 #### US-PP-007 — Afficher le contexte utilisateur
 
 **En tant que** `utilisateur authentifié`,
@@ -337,3 +363,4 @@ Aucun KPI prioritaire n'est retenu à ce stade. La feature est un socle de confo
 | US-PP-005 | Should | AC-PP-005-A à D | Notifications + Apparence (reset) |
 | US-PP-006 | Must | AC-PP-006-A à D | Apparence (U) |
 | US-PP-007 | Should | AC-PP-007-A à C | Contexte de compte (R) |
+| US-PP-008 | Should | AC-PP-008-A à G | Comportement d'interface (U) |
