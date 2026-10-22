@@ -13,7 +13,7 @@ import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import CIconEdit from '@/components/atoms/CIconEdit.svg'
 import CIconTrash from '@/components/atoms/CIconTrash.svg'
 import GovernanceMandateFormModal from '@/features/registers/GovernanceMandateFormModal.vue'
-import GovernanceMandateDeleteModal from '@/features/registers/GovernanceMandateDeleteModal.vue'
+import CDeleteConfirmModal from '@/components/organisms/CDeleteConfirmModal.vue'
 import { governanceApi } from '@/api'
 import { useBuildingStore } from '@/stores/building'
 import type { GovernanceMandate } from '@/types/domain'
@@ -200,9 +200,12 @@ function openDelete(m: GovernanceMandate) {
       @saved="reload"
     />
 
-    <GovernanceMandateDeleteModal
+    <CDeleteConfirmModal
       v-model:open="showDeleteModal"
-      :mandate="deletingMandate"
+      :title="t('registers.governance.deleteTitle')"
+      :message="t('registers.governance.deleteMessage', { name: deletingMandate?.holder_name ?? '' })"
+      :success-message="t('registers.governance.deleteSuccess')"
+      :on-delete="() => governanceApi.delete(deletingMandate!.id).then(() => {})"
       @deleted="reload"
     />
   </div>

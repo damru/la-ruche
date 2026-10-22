@@ -561,6 +561,7 @@ border-color: var(--color-outline-light);
 | `AppNav` | Navigation principale (sidebar desktop + bottom nav mobile) |
 | `AuthBrandPanel` | Panneau éditorial des écrans d'authentification |
 | `CConfirmDialog` | Dialogue de confirmation destructive |
+| `CDeleteConfirmModal` | Modale de suppression générique (DDR-006) — props `title`, `message`, `successMessage`, `onDelete` ; émet `deleted`. Remplace les modales de suppression clonées par entité. |
 | `CDocumentLinkActionModal` | Modale gestion des documents liés (retrait / suppression) |
 | `CFlexGroup` | Conteneur flex groupé |
 | `CLinkedDocumentsModal` | Modale liste des documents liés à une entité |
