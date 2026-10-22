@@ -36,6 +36,7 @@ import AttendanceModal from './AttendanceModal.vue'
 import EditMeetingModal from './EditMeetingModal.vue'
 import AddResolutionModal from './AddResolutionModal.vue'
 import EditResolutionModal from './EditResolutionModal.vue'
+import DeleteResolutionModal from './DeleteResolutionModal.vue'
 import Art24Modal from './Art24Modal.vue'
 import Art25Modal from './Art25Modal.vue'
 import MinutesModal from './MinutesModal.vue'
@@ -110,13 +111,17 @@ const notificationDutyVariant = computed<'info' | 'warning' | 'error'>(() => {
 const showEditResolutionModal = ref(false)
 const resolutionToEdit = ref<Resolution | null>(null)
 
+const showDeleteResolutionModal = ref(false)
+const resolutionToDelete = ref<Resolution | null>(null)
+
 const showArt24Modal = ref(false)
 const art24SourceResolution = ref<Resolution | null>(null)
 
 const showArt25Modal = ref(false)
 const art25SourceResolution = ref<Resolution | null>(null)
 
-const canAddResolution = computed(() => auth.isManager && ['draft', 'called'].includes(meeting.value?.status ?? ''))
+const canManageResolutions = computed(() => auth.isManager && meeting.value?.status === 'draft')
+const canAddResolution = canManageResolutions
 const canManageVotes = computed(() => auth.isManager && ['ongoing'].includes(meeting.value?.status ?? ''))
 const canEditResolution = computed(() => auth.isManager && ['draft', 'ongoing'].includes(meeting.value?.status ?? ''))
 const canEditAttendance = computed(() => auth.isManager && meeting.value?.status !== 'closed')
@@ -489,6 +494,31 @@ function openEditResolutionModal(resolution: Resolution) {
   showEditResolutionModal.value = true
 }
 
+function promptDeleteResolution(resolution: Resolution) {
+  resolutionToDelete.value = resolution
+  showDeleteResolutionModal.value = true
+}
+
+const reordering = ref(false)
+
+async function moveResolution(index: number, direction: -1 | 1) {
+  const current = meeting.value
+  if (!current || reordering.value) return
+  const target = index + direction
+  if (target < 0 || target >= resolutions.value.length) return
+  const ordered = [...resolutions.value]
+  const moved = ordered.splice(index, 1)[0]
+  if (!moved) return
+  ordered.splice(target, 0, moved)
+  reordering.value = true
+  try {
+    await meetingsApi.reorderResolutions(current.id, ordered.map(resolution => resolution.id))
+    await reload()
+  } finally {
+    reordering.value = false
+  }
+}
+
 function openArt24Modal(resolution: Resolution) {
   art24SourceResolution.value = resolution
   showArt24Modal.value = true
@@ -789,7 +819,7 @@ function openArt25Modal(resolution: Resolution) {
               class="resolution-list"
             >
               <CCard
-                v-for="resolution in resolutions"
+                v-for="(resolution, index) in resolutions"
                 :key="resolution.id"
                 class="resolution-card "
               >
@@ -922,15 +952,38 @@ function openArt25Modal(resolution: Resolution) {
                 </div>
 
                 <div
-                  v-if="canEditResolution || canManageVotes" 
+                  v-if="canManageResolutions || canEditResolution || canManageVotes"
                   class="resolution-card__actions"
                 >
+                  <CBtn
+                    v-if="canManageResolutions"
+                    size="sm"
+                    variant="ghost"
+                    :disabled="index === 0 || reordering"
+                    :title="t('meetings.moveResolutionUp')"
+                    @click="moveResolution(index, -1)"
+                  />
+                  <CBtn
+                    v-if="canManageResolutions"
+                    size="sm"
+                    variant="ghost"
+                    :disabled="index === resolutions.length - 1 || reordering"
+                    :title="t('meetings.moveResolutionDown')"
+                    @click="moveResolution(index, 1)"
+                  />
                   <CBtn
                     v-if="canEditResolution"
                     size="sm"
                     variant="ghost"
                     :title="t('meetings.editResolution')"
                     @click="openEditResolutionModal(resolution)"
+                  />
+                  <CBtn
+                    v-if="canManageResolutions"
+                    size="sm"
+                    variant="ghost"
+                    :title="t('meetings.deleteResolution')"
+                    @click="promptDeleteResolution(resolution)"
                   />
                   <CBtn
                     v-if="voteResults[resolution.id]?.eligible_for_second_vote === 'art_25_1' && meeting?.status === 'ongoing'"
@@ -1280,6 +1333,15 @@ function openArt25Modal(resolution: Resolution) {
       :meeting-status="meeting.status"
       :resolution="resolutionToEdit"
       @updated="reload"
+    />
+
+    <DeleteResolutionModal
+      v-if="meeting"
+      :open="showDeleteResolutionModal"
+      :meeting-id="meeting.id"
+      :resolution="resolutionToDelete"
+      @update:open="showDeleteResolutionModal = $event"
+      @deleted="reload"
     />
 
     <UploadDocumentModal

@@ -182,7 +182,7 @@ Historique de propriété tracé avec dates de cession, invitation par lien toke
 
 **Statut :** en cours | **MVP :** oui | **Réf. PRD :** Fondations légales
 
-**État code actuel :** backend + frontend réels sur tout le cycle de vie (`draft → called → ongoing → closed`). Génération du projet de PV markdown server-side, upload du PV signé via flux pré-signé, traçabilité de la date de notification aux absents avec calcul du délai légal art. 42 loi 1965 (J+60). Calculs de majorité art. 24/25/25-1/26/26-1/unanimité couverts par tests canoniques.
+**État code actuel :** backend + frontend réels sur tout le cycle de vie (`draft → called → ongoing → closed`). Génération du projet de PV markdown server-side, upload du PV signé via flux pré-signé, traçabilité de la date de notification aux absents avec calcul du délai légal art. 42 loi 1965 (J+60). Calculs de majorité art. 24/25/25-1/26/26-1/unanimité couverts par tests canoniques. CRUD complet des résolutions (création, modification, suppression, réordonnancement) restreint au statut `draft`, patch de description en séance et passerelle art. 25-1/26-1 préservées (EP-003-S13).
 
 Cycle de vie complet d'une AG, résolutions typées par majorité, vote par lot avec procurations, calcul automatique des résultats, dépôt du PV signé.
 

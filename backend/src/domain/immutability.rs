@@ -12,8 +12,13 @@ pub enum Entity {
     LevyCall,
     /// Frozen once the parent assembly reaches `ongoing` or `closed`.
     Vote,
-    /// Frozen once the parent assembly reaches `closed`.
+    /// Frozen once convoked: structural mutations (create/update/delete/
+    /// reorder) are draft-only — the agenda is a legal act once the
+    /// convocation is sent (art. 9/11 décret 67-223, EP-003-S13).
     Resolution,
+    /// Vote-time resolution patch (description): only while the parent
+    /// assembly is `ongoing` (EP-003-S13).
+    ResolutionVote,
     /// `completion_cost` / `closed_at` frozen when `status = 'closed'`.
     Task,
     /// Financial fields frozen once `transmitted_at IS NOT NULL` (pass "transmitted").
@@ -36,7 +41,8 @@ pub enum Entity {
 /// `status` semantics per entity:
 /// - `LevyCall`       → levy_status string ("draft" | "issued" | "paid" | "overdue")
 /// - `Vote`           → parent assembly's meeting_status
-/// - `Resolution`     → parent assembly's meeting_status
+/// - `Resolution`     → parent assembly's meeting_status (draft-only: frozen at convocation, EP-003-S13)
+/// - `ResolutionVote` → parent assembly's meeting_status (ongoing-only vote-time patch, EP-003-S13)
 /// - `Task`           → task_status string
 /// - `Claim`          → "transmitted" when transmitted_at IS NOT NULL, else any other value
 /// - `MaintenanceLog` → ignored; always frozen (EP-018-S07 Pattern C)
@@ -44,7 +50,8 @@ pub fn is_mutable(entity: &Entity, status: &str) -> bool {
     match entity {
         Entity::LevyCall => status == "draft",
         Entity::Vote => !matches!(status, "ongoing" | "closed"),
-        Entity::Resolution => status != "closed",
+        Entity::Resolution => status == "draft",
+        Entity::ResolutionVote => status == "ongoing",
         Entity::Task => !matches!(status, "closed" | "cancelled"),
         Entity::Claim => status != "transmitted",
         Entity::MaintenanceLog => false,
@@ -107,10 +114,20 @@ mod tests {
     }
 
     #[test]
-    fn resolution_frozen_only_on_closed() {
-        assert!(!is_mutable(&Entity::Resolution, "closed"));
-        assert!(is_mutable(&Entity::Resolution, "ongoing"));
+    fn resolution_mutable_only_in_draft() {
+        // EP-003-S13: the agenda is frozen at convocation (art. 9/11 décret 67-223).
         assert!(is_mutable(&Entity::Resolution, "draft"));
+        assert!(!is_mutable(&Entity::Resolution, "called"));
+        assert!(!is_mutable(&Entity::Resolution, "ongoing"));
+        assert!(!is_mutable(&Entity::Resolution, "closed"));
+    }
+
+    #[test]
+    fn resolution_vote_mutable_only_in_ongoing() {
+        assert!(is_mutable(&Entity::ResolutionVote, "ongoing"));
+        assert!(!is_mutable(&Entity::ResolutionVote, "draft"));
+        assert!(!is_mutable(&Entity::ResolutionVote, "called"));
+        assert!(!is_mutable(&Entity::ResolutionVote, "closed"));
     }
 
     #[test]

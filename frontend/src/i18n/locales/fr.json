@@ -395,6 +395,11 @@
     "bannerOngoingSub": "{resolved} résolutions votées · {pending} en attente",
     "bannerResolutionsResolved": "résolutions adoptées",
     "editResolution": "Modifier",
+    "deleteResolution": "Supprimer",
+    "moveResolutionUp": "Monter",
+    "moveResolutionDown": "Descendre",
+    "deleteResolutionTitle": "Supprimer la résolution",
+    "deleteResolutionMessage": "Supprimer définitivement cette résolution de l'ordre du jour ?",
     "resolutionDescriptionOnly": "Titre et règle de vote verrouillés pendant la séance.",
     "createArt24": "Créer sous Art. 24",
     "createArt25": "Créer sous Art. 25",
@@ -1849,6 +1854,9 @@
       "session_roles_required": "Le président et le secrétaire de séance sont obligatoires pour démarrer l'AG.",
       "minutes_already_attached": "Un PV signé est déjà attaché à cette assemblée.",
       "minutes_not_signed": "Le PV doit être signé et attaché avant d'être notifié aux absents."
+    },
+    "resolutions": {
+      "reorder_mismatch": "La liste fournie ne correspond pas exactement aux résolutions de l'ordre du jour."
     },
     "auth": {
       "invalid_login_payload": "Les identifiants fournis sont incomplets ou invalides.",
