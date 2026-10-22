@@ -77,7 +77,7 @@ async function handleSubmit() {
   <div class="auth-root">
     <AuthBrandPanel
       class="auth-brand"
-      :eyebrow="t('common.appTagline')"
+      :eyebrow="t('auth.brandEyebrow')"
       :title="t('auth.brandTitle')"
       :sub="t('auth.brandSub')"
     />
@@ -151,7 +151,7 @@ async function handleSubmit() {
               id="password"
               v-model="form.password"
               type="password"
-              :label="t('common.newPassword')"
+              :label="t('auth.newPassword')"
               :placeholder="t('auth.passwordPlaceholder')"
               autocomplete="new-password"
               :required="true"

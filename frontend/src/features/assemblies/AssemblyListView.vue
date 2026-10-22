@@ -100,7 +100,7 @@ async function onMeetingCreated(meetingId: string) {
         <div class="topbar-breadcrumb">
           {{ buildingName || '...' }}
           <CIconChevronRight />
-          <span>{{ t('common.meetings') }}</span>
+          <span>{{ t('nav.meetings') }}</span>
         </div>
       </template>
       <template #right>
@@ -129,7 +129,7 @@ async function onMeetingCreated(meetingId: string) {
             {{ t('page.eyebrows.assemblies') }}
           </CEyebrow>
           <CHeading type="header">
-            {{ t('common.meetings') }}
+            {{ t('nav.meetings') }}
           </CHeading>
           <CMetaLine>
             <CMetaItem variant="sub">

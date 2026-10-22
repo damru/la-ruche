@@ -51,7 +51,7 @@ async function handleSubmit() {
 <template>
   <CModal
     :open="open"
-    :title="t('common.reopenTask')"
+    :title="t('tasks.reopenTask')"
     size="sm"
     @update:open="$emit('update:open', $event)"
   >
@@ -70,7 +70,7 @@ async function handleSubmit() {
         />
         <CBtn
           variant="primary"
-          :title="t('common.reopenTask')"
+          :title="t('tasks.reopenTask')"
           :loading="reopening"
           :closing="feedback.status.value === 'success'"
           @click="handleSubmit"

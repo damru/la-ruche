@@ -123,7 +123,7 @@ function statusVariant(s: string): 'valid' | 'open' | 'pending' | 'closed' | 'de
 function closeActionLabel(task: Task): string {
   return task.status === 'awaiting_validation'
     ? t('tasks.validateTask')
-    : t('common.closeTask')
+    : t('tasks.closeTask')
 }
 
 function priorityVariant(p: string): 'err' | 'pending' | 'primary' | 'valid' | 'default' {
@@ -314,7 +314,7 @@ async function downloadTaskDocument(documentId: string) {
         <div class="topbar-breadcrumb">
           {{ buildingName }}
           <CIconChevronRight />
-          <span>{{ t('common.tasks') }}</span>
+          <span>{{ t('nav.tasks') }}</span>
         </div>
       </template>
       <template #right>
@@ -322,7 +322,7 @@ async function downloadTaskDocument(documentId: string) {
           variant="primary"
           size="sm"
           :icon="CIconPlus"
-          :title="t('common.newTask')"
+          :title="t('tasks.create')"
           @click="openCreateModal"
         />
       </template>
@@ -341,7 +341,7 @@ async function downloadTaskDocument(documentId: string) {
             {{ t('page.eyebrows.tasks') }}
           </CEyebrow>
           <CHeading type="header">
-            {{ t('common.tasks') }}
+            {{ t('nav.tasks') }}
           </CHeading>
           <CMetaItem variant="sub">
             {{ t('tasks.header.activeSummary', { count: activeCount }) }}
@@ -371,7 +371,7 @@ async function downloadTaskDocument(documentId: string) {
 
         <template v-if="tasks.length === 0">
           <CEmptyState
-            :title="t('common.noTasksInCategory')"
+            :title="t('tasks.emptyState')"
           />  
         </template>
         <template v-else>
@@ -450,7 +450,7 @@ async function downloadTaskDocument(documentId: string) {
                     <template #icon>
                       <CIconCalendar />
                     </template>
-                    {{ t('common.createdRelative', { relative: formatRelative(task.created_at) }) }}
+                    {{ t('tasks.lifecycle.createdRelative', { relative: formatRelative(task.created_at) }) }}
                   </CMetaItem>
                 </CMetaLine>
   
@@ -530,8 +530,8 @@ async function downloadTaskDocument(documentId: string) {
                     variant="primary"
                     size="sm"
                     :icon="CIconRefresh"
-                    :title="t('common.reopenTask')"
-                    :aria-label="t('common.reopenTask')"
+                    :title="t('tasks.reopenTask')"
+                    :aria-label="t('tasks.reopenTask')"
                     @click.stop="openReopenModal(task)"
                   />
                   <CBtn

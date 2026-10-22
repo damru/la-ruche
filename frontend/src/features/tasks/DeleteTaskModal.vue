@@ -51,7 +51,7 @@ async function handleSubmit() {
 <template>
   <CModal
     :open="open"
-    :title="t('common.deleteTask')"
+    :title="t('tasks.deleteTask')"
     size="sm"
     @update:open="$emit('update:open', $event)"
   >

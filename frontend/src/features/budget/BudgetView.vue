@@ -613,7 +613,7 @@ function formatSharePercentage(value: number): string {
         <div class="topbar-breadcrumb">
           {{ buildingName }}
           <CIconChevronRight aria-hidden="true" />
-          <span>{{ t('common.budget') }}</span>
+          <span>{{ t('nav.budget') }}</span>
         </div>
       </template>
       <template #right>
@@ -640,7 +640,7 @@ function formatSharePercentage(value: number): string {
           variant="primary"
           size="sm"
           :icon="CIconLock"
-          :title="t('common.closeExercise')"
+          :title="t('budget.closeExercise')"
           shrink="sm"
           @click="openCloseExerciseModal"
         />
@@ -661,7 +661,7 @@ function formatSharePercentage(value: number): string {
         <div class="view-header">
           <CEyebrow>{{ t('page.eyebrows.budget') }}</CEyebrow>
           <CHeading type="header">
-            {{ t('common.budget') }}
+            {{ t('nav.budget') }}
           </CHeading>
         </div>
         <CEmptyState
@@ -697,7 +697,7 @@ function formatSharePercentage(value: number): string {
             {{ t('page.eyebrows.budget') }}
           </CEyebrow>
           <CHeading type="header">
-            {{ selectedBudget ? t('common.fiscalYear', { year: selectedBudget.fiscal_year }) : t('common.budget') }}
+            {{ selectedBudget ? t('budget.fiscalYear', { year: selectedBudget.fiscal_year }) : t('nav.budget') }}
           </CHeading>
           <CMetaLine
             v-if="selectedBudget"
@@ -760,7 +760,7 @@ function formatSharePercentage(value: number): string {
               :title="t('budget.allocationKeysAlertTitle')"
             >
               <p>
-                {{ t('common.allocationKeysBlockedMessage', {
+                {{ t('budget.allocationKeysAlert', {
                   keys: unbalancedAllocationKeys.join(', '),
                 }) }}
               </p>
@@ -796,7 +796,7 @@ function formatSharePercentage(value: number): string {
             v-if="canViewLevies"
             :label="t('budget.overdueCallsLabel')"
             :value="overdueLevies.length > 0 ? String(overdueLevies.length) : t('common.none')"
-            :subtitle="t('common.pendingAmount', { amount: formatCurrency(overdueTotal) })"
+            :subtitle="t('budget.pendingAmount', { amount: formatCurrency(overdueTotal) })"
             :emphasize-value="true"
             :tone="overdueLevies.length > 0 ? 'err' : 'valid'"
           >
@@ -814,7 +814,7 @@ function formatSharePercentage(value: number): string {
 
           <CKpiCard
             v-if="canViewLevies"
-            :label="t('common.alreadyCalled')"
+            :label="t('budget.worksFundCalled')"
             :value="formatCurrency(totalLeviedAmount)"
             :subtitle="t('budget.levyCallsCount', { count: levyCallCount })"
             tone="accent"
@@ -828,7 +828,7 @@ function formatSharePercentage(value: number): string {
         <CCard>
           <CSectionHeader>
             <CHeading type="card">
-              {{ t('common.worksFund') }}
+              {{ t('budget.worksFund') }}
             </CHeading>
             <CMetaLine v-if="selectedBudget">
               <CMetaItem variant="sub">
@@ -865,7 +865,7 @@ function formatSharePercentage(value: number): string {
               <strong>{{ formatSharePercentage(worksFundContributionRate) }}%</strong>
             </div>
             <div class="wf-metric">
-              <span class="text-xs">{{ t('common.alreadyCalled') }}</span>
+              <span class="text-xs">{{ t('budget.worksFundCalled') }}</span>
               <strong class="font-mono">{{ formatCurrency(worksFundCalledAmount) }}</strong>
             </div>
             <div class="wf-metric">
@@ -902,7 +902,7 @@ function formatSharePercentage(value: number): string {
             </CHeading>
             <CMetaLine>
               <CMetaItem variant="sub">
-                {{ t('common.lateUnitsCount', { count: overdueLevies.length }) }}
+                {{ t('budget.latePaymentsCount', { count: overdueLevies.length }) }}
               </CMetaItem>
               <CSeparator />
               <CMetaItem variant="sub">
@@ -1051,7 +1051,7 @@ function formatSharePercentage(value: number): string {
                 :show-value="true"
               />
               <div class="flex justify-between mt-1 text-2xs text-on-surface-variant">
-                <span>{{ t('common.actual') }} : <b class="text-on-surface font-medium font-mono">{{ formatCurrency(line.actual_amount ?? 0) }}</b></span>
+                <span>{{ t('budget.realizedLabel') }} : <b class="text-on-surface font-medium font-mono">{{ formatCurrency(line.actual_amount ?? 0) }}</b></span>
                 <span>{{ t('budget.plannedLabel') }} : <b class="text-on-surface font-medium font-mono">{{ formatCurrency(line.budgeted_amount) }}</b></span>
               </div>
             </div>

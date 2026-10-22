@@ -1,69 +1,32 @@
 {
   "common": {
-    "accessRevokedMessage": "L'accès de {name} sera révoqué. Les données sont conservées.",
     "actionRequired": "Action requise",
     "actions": "Actions",
-    "actual": "Réalisé",
     "add": "Ajouter",
-    "addEntry": "Ajouter une entrée",
-    "addResident": "Ajouter un résident",
     "addedDate": "Date d'ajout",
     "address": "Adresse",
-    "agenda": "Agenda",
     "allFem": "Toutes",
     "allMasc": "Tout",
-    "allocationKeys": "Clés de répartition",
-    "allocationKeysBlockedMessage": "Les appels de fonds restent bloqués tant que les clés suivantes sont déséquilibrées : {keys}.",
-    "alreadyCalled": "Déjà appelé",
     "amount": "Montant",
     "and": "et",
-    "annualMeetingClosed": "AG close",
-    "annualMeetingShort": "AG",
-    "appTagline": "Gestion participative",
-    "appearance": "Apparence",
     "archiveLabel": "Archiver",
-    "archiveResident": "Archiver le résident",
-    "article24LinkLabel": "Article 24 de la loi n°65-557 du 10 juillet 1965",
-    "assignedVendor": "Prestataire assigné",
-    "attachSignedMinutes": "Attacher le PV signé",
-    "attachedDocuments": "Documents déjà joints",
     "attachments": "Pièces jointes",
     "automatic": "Automatique",
     "back": "Retour",
-    "budget": "Budget & Charges",
-    "building": "Bâtiment",
-    "calendar": "Calendrier",
-    "callMeeting": "Convoquer l'AG",
     "cancel": "Annuler",
-    "changeStatus": "Changer le statut",
     "city": "Ville",
-    "claims": "Sinistres",
     "clear": "Effacer",
     "close": "Fermer",
-    "closeExercise": "Clore l'exercice",
-    "closeTask": "Terminer la tâche",
-    "closedOn": "Terminée le {date}",
     "closing": "Fermeture…",
-    "coOwnership": "Copropriété",
-    "commonAreas": "Parties communes",
     "compliant": "Pilotage conforme",
     "confirm": "Confirmer",
     "confirmArchive": "Confirmer l'archivage",
-    "confirmClose": "Confirmer la clôture",
     "confirmDelete": "Confirmer la suppression",
-    "consultations": "Consultations",
-    "contracts": "Contrats",
-    "contractsCount": "{count} contrat | {count} contrats",
-    "convertToTask": "Convertir en tâche",
     "copy": "Copier",
     "create": "Créer",
-    "createdRelative": "Créée {relative}",
-    "dashboard": "Tableau de bord",
     "date": "Date",
     "delete": "Supprimer",
-    "deleteEntry": "Supprimer l'entrée",
     "deleteLabel": "Supprimer définitivement",
-    "deleteTask": "Supprimer la tâche",
     "deleted": "Supprimé",
     "demoModeMessage": "Cette instance utilise des données de démonstration réinitialisables.",
     "demoModeTitle": "Mode démonstration",
@@ -74,17 +37,11 @@
     "documents": "Documents",
     "documentsCount": "{count} document | {count} documents",
     "download": "Télécharger",
-    "downloadPdf": "Télécharger le PDF",
-    "dropzoneExtraHint": "Glisser-déposer ou cliquer pour ajouter des pièces complémentaires",
     "dueDate": "Échéance",
     "edit": "Modifier",
-    "editProfile": "Modifier le profil",
-    "editRoles": "Modifier les rôles",
     "email": "Adresse e-mail",
     "endDate": "Fin",
     "error": "Une erreur est survenue",
-    "etatDate": "État daté",
-    "expiresOn": "Expire le {date}",
     "export": "Exporter",
     "file": "Fichier",
     "fileDropzoneAria": "Zone de dépôt de fichier",
@@ -93,109 +50,53 @@
     "fileName": "Nom du fichier",
     "filter": "Filtrer",
     "firstName": "Prénom",
-    "fiscalYear": "Exercice {year}",
-    "generate": "Générer",
-    "governance": "Gouvernance",
     "history": "Historique",
     "inactive": "Inactif",
     "informations": "Informations",
-    "interventionCost": "Coût de l'intervention (€)",
-    "inviteResident": "Inviter un résident",
     "issuedAt": "Date d'appel",
-    "judicialProceedings": "Procédures judiciaires",
-    "keys": "Clés",
     "label": "Libellé",
-    "lateUnitsCount": "{count} lot en retard | {count} lots en retard",
     "loadError": "Impossible de charger les données",
     "loading": "Chargement…",
-    "location": "Lieu",
-    "logbook": "Carnet d'entretien",
     "lot": "Lot",
-    "lotArchive": "Lot archivé",
     "manual": "Manuel",
-    "meetings": "Assemblées générales",
     "mockModeMessage": "Toutes les données sont fictives.",
-    "myAccount": "Mon compte",
-    "newConsultation": "Nouvelle consultation",
-    "newContract": "Nouveau contrat",
-    "newEddReference": "Nouvelle référence EDD",
-    "newEvent": "Nouvel événement",
-    "newPassword": "Nouveau mot de passe",
-    "newReport": "Nouveau signalement",
-    "newTask": "Nouvelle tâche",
-    "nextPeriod": "Période suivante",
     "no": "Non",
     "noData": "Aucune donnée",
     "noDocumentsFound": "Aucun document trouvé.",
-    "noEvents": "Aucun événement",
     "noKey": "Sans clé",
-    "noTasksInCategory": "Aucune tâche dans cette catégorie.",
     "none": "Aucun",
     "notes": "Notes",
-    "notice": "Convocation",
-    "notifications": "Notifications",
-    "onboardingCoOwner": "Votre copropriété",
-    "onboardingManager": "Votre compte syndic",
-    "ongoingProceedings": "Procédures judiciaires en cours",
     "optional": "Optionnel",
     "or": "ou",
     "overdue": "En retard",
     "overview": "Vue d'ensemble",
     "paidAt": "Payé le",
     "pending": "En attente",
-    "pendingAmount": "{amount} en attente",
     "phone": "Téléphone",
     "phonePlaceholder": "06 00 00 00 00",
-    "photosCount": "{count} photo | {count} photos",
     "postalCode": "Code postal",
-    "preEtatDate": "Pré-état daté",
-    "president": "Président·e",
-    "previousPeriod": "Période précédente",
-    "registry": "Registre",
-    "relatedUnit": "Lot concerné",
     "remove": "Retirer",
-    "reopenTask": "Ré-ouvrir la tâche",
-    "reports": "Signalements",
     "required": "Champ obligatoire",
     "requiredAria": "obligatoire",
-    "resolutions": "Résolutions",
     "retry": "Réessayer",
-    "revokeInvitation": "Révoquer l'invitation",
     "role": "Rôle",
     "roles": "Rôle(s)",
     "save": "Enregistrer",
     "saved": "Enregistré",
     "saving": "Enregistrement…",
-    "scrutineers": "Scrutateur·ices",
     "search": "Rechercher",
-    "secretary": "Secrétaire",
     "see": "Voir",
     "seeAll": "Voir tout",
     "select": "Sélectionner…",
-    "sendInvitation": "Envoyer une invitation",
-    "shares": "Tantièmes",
     "size": "Taille",
     "startDate": "Début",
     "submit": "Valider",
-    "taskClosed": "Tâche terminée",
-    "taskCreated": "Tâche créée",
-    "taskHistory": "Historique de la tâche",
-    "tasks": "Tâches",
     "title": "Titre",
     "total": "Total",
-    "totalShares": "Tantièmes totaux",
-    "transferOwnership": "Mutation de propriété",
     "type": "Type",
-    "unanimity": "Unanimité",
-    "unitLabel": "Lot {number}",
-    "units": "Lots",
-    "unitsCount": "{count} lot | {count} lots",
     "upload": "Déposer un fichier",
     "uploadInProgress": "Envoi en cours…",
-    "vendor": "Prestataire",
-    "vendors": "Prestataires",
     "visibility": "Visibilité",
-    "worksFund": "Fonds travaux",
     "yes": "Oui"
   },
   "page": {
@@ -255,7 +156,21 @@
       "finance": "Finance",
       "operations": "Opérations",
       "residence": "Résidence"
-    }
+    },
+    "dashboard": "Tableau de bord",
+    "calendar": "Calendrier",
+    "tasks": "Tâches",
+    "reports": "Signalements",
+    "claims": "Sinistres",
+    "contracts": "Contrats",
+    "consultations": "Consultations",
+    "meetings": "Assemblées générales",
+    "registry": "Registre",
+    "governance": "Gouvernance",
+    "judicialProceedings": "Procédures judiciaires",
+    "maintenance": "Carnet d'entretien",
+    "budget": "Budget & Charges",
+    "myAccount": "Mon compte"
   },
   "roles": {
     "manager": "Syndic bénévole",
@@ -306,7 +221,9 @@
     "brandTitle": "La copropriété, simplement.",
     "brandSub": "Transparence, conformité légale et gestion collaborative pour syndics bénévoles, copropriétaires et locataires.",
     "tokenExpiredOrUsed": "Ce lien d'invitation a déjà été utilisé ou est expiré.",
-    "invalidToken": "Ce lien d'invitation est invalide."
+    "invalidToken": "Ce lien d'invitation est invalide.",
+    "newPassword": "Nouveau mot de passe",
+    "brandEyebrow": "Gestion participative"
   },
   "dashboard": {
     "overdueLots": "{count} lot(s) en retard de paiement",
@@ -397,7 +314,10 @@
       "required": "Un·e président·e et un·e secrétaire sont obligatoires."
     },
     "session_roles": {
-      "title": "Rôles de séance"
+      "title": "Rôles de séance",
+      "president": "Président·e",
+      "secretary": "Secrétaire",
+      "scrutineers": "Scrutateur·ices"
     },
     "convocation": {
       "modal_lead": "Vérifiez la complétude réglementaire et tracez le canal d'envoi.",
@@ -440,7 +360,8 @@
       "notified_at": "Notifié aux absents le {date}",
       "not_yet_notified_at": "Non notifié aux absents",
       "notification_duty_hint": "Délai de notification syndic : avant le {date} (J+30 — art. 42 al. 3 loi 65-557)",
-      "deadline_hint": "Délai de contestation jusqu'au {date} (2 mois depuis la notification — art. 42 loi 1965)"
+      "deadline_hint": "Délai de contestation jusqu'au {date} (2 mois depuis la notification — art. 42 loi 1965)",
+      "upload_signed": "Attacher le PV signé"
     },
     "bannerOngoing": "AG en cours · Votes en séance",
     "bannerOngoingSub": "{resolved} résolutions votées · {pending} en attente",
@@ -484,7 +405,8 @@
       "minutesReady": "PV déposé",
       "detachTitle": "Retirer la pièce de l'AG",
       "detachMessage": "Ce document sera définitivement retiré de cette assemblée.",
-      "detachSuccess": "Pièce retirée de l'assemblée."
+      "detachSuccess": "Pièce retirée de l'assemblée.",
+      "notice": "Convocation"
     },
     "infoFields": {},
     "presenceQuorum": "Présence & Quorum",
@@ -605,7 +527,11 @@
         "linkHref": "https://www.legifrance.gouv.fr/loda/id/JORFTEXT000000880200"
       }
     },
-    "closeMeetingSuccess": "Assemblée clôturée"
+    "closeMeetingSuccess": "Assemblée clôturée",
+    "call": "Convoquer l'AG",
+    "bannerClosed": "AG close",
+    "location": "Lieu",
+    "resolutions": "Résolutions"
   },
   "budget": {
     "newFiscalYear": "Nouvel exercice",
@@ -715,7 +641,17 @@
       "article14_2_1LinkLabel": "Article 14-2-1 de la loi n°65-557 du 10 juillet 1965",
       "article14_2_1LinkHref": "https://www.legifrance.gouv.fr/loda/article_lc/LEGIARTI000043967792"
     },
-    "lineDeleteSuccess": "Ligne supprimée"
+    "lineDeleteSuccess": "Ligne supprimée",
+    "closeExercise": "Clore l'exercice",
+    "closeExerciseConfirm": "Confirmer la clôture",
+    "generate": "Générer",
+    "latePaymentsCount": "{count} lot en retard | {count} lots en retard",
+    "pendingAmount": "{amount} en attente",
+    "fiscalYear": "Exercice {year}",
+    "allocationKeysAlert": "Les appels de fonds restent bloqués tant que les clés suivantes sont déséquilibrées : {keys}.",
+    "realizedLabel": "Réalisé",
+    "worksFundCalled": "Déjà appelé",
+    "worksFund": "Fonds travaux"
   },
   "units": {
     "number": "N° de lot",
@@ -752,7 +688,8 @@
         "art18linkHref": "https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000049398867"
       },
       "noUnit": "Aucun lot n'est associé à votre compte. Contactez votre syndic."
-    }
+    },
+    "shares": "Tantièmes"
   },
   "contracts": {
     "title": "Contrats fournisseurs",
@@ -836,7 +773,8 @@
       "amountInvalid": "Saisissez un montant strictement positif.",
       "frequencyRequired": "Renseignez une périodicité si un montant est saisi.",
       "noticeRequired": "Renseignez un préavis valide pour une reconduction tacite.",
-      "saveError": "Impossible d'enregistrer le contrat."
+      "saveError": "Impossible d'enregistrer le contrat.",
+      "vendorName": "Prestataire"
     },
     "documents": {
       "title": "Pièces justificatives — {name}",
@@ -866,7 +804,9 @@
       "payment_due": "Échéance paiement",
       "expiration": "Expiration",
       "termination": "Résiliation"
-    }
+    },
+    "create": "Nouveau contrat",
+    "count": "{count} contrat | {count} contrats"
   },
   "tasks": {
     "editTask": "Modifier la tâche",
@@ -944,8 +884,23 @@
     "lifecycle": {
       "assignedSelf": "Prise en charge",
       "vendorLink": "Lien prestataire actif",
-      "closedNote": "Cette tâche peut être ré-ouverte depuis la liste des tâches."
-    }
+      "closedNote": "Cette tâche peut être ré-ouverte depuis la liste des tâches.",
+      "title": "Historique de la tâche",
+      "createdRelative": "Créée {relative}",
+      "created": "Tâche créée",
+      "closed": "Tâche terminée"
+    },
+    "create": "Nouvelle tâche",
+    "closeTask": "Terminer la tâche",
+    "deleteTask": "Supprimer la tâche",
+    "reopenTask": "Ré-ouvrir la tâche",
+    "updateStatus": "Changer le statut",
+    "tokenExpires": "Expire le {date}",
+    "closedAt": "Terminée le {date}",
+    "emptyState": "Aucune tâche dans cette catégorie.",
+    "contractorLabel": "Prestataire assigné",
+    "attachedDocuments": "Documents déjà joints",
+    "completionCostLabel": "Coût de l'intervention (€)"
   },
   "documents": {
     "upload": "Déposer un document",
@@ -1006,7 +961,8 @@
       "summary": "Cette consultation permet de recueillir l'avis des copropriétaires et des locataires, sans valeur décisionnelle légale ni effet de vote d'assemblée générale.",
       "article17LinkLabel": "Article 17 de la loi n°65-557 du 10 juillet 1965",
       "article17LinkHref": "https://www.legifrance.gouv.fr/loda/article_lc/LEGIARTI000006460042",
-      "article24LinkHref": "https://www.legifrance.gouv.fr/loda/article_lc/LEGIARTI000006460050"
+      "article24LinkHref": "https://www.legifrance.gouv.fr/loda/article_lc/LEGIARTI000006460050",
+      "article24LinkLabel": "Article 24 de la loi n°65-557 du 10 juillet 1965"
     },
     "fields": {
       "visibleToRoles": "Accessible aux rôles",
@@ -1025,7 +981,8 @@
       "chooseOption": "Choisissez une option",
       "commentLabel": "Commentaire (optionnel)",
       "submit": "Envoyer ma réponse"
-    }
+    },
+    "create": "Nouvelle consultation"
   },
   "reports": {
     "activeCount": "{count} signalement en cours | {count} signalements en cours",
@@ -1064,7 +1021,10 @@
       "open": "Ouverts",
       "inProgress": "En cours",
       "closed": "Clos"
-    }
+    },
+    "create": "Nouveau signalement",
+    "convertToTask": "Convertir en tâche",
+    "linkedPhotosCount": "{count} photo | {count} photos"
   },
   "calendar": {
     "count": "{count} événement | {count} événements",
@@ -1093,7 +1053,8 @@
     "moreEvents": "+{count}",
     "export": "Exporter (.ics)",
     "empty": {
-      "description": "Aucun événement à afficher sur cette période."
+      "description": "Aucun événement à afficher sur cette période.",
+      "title": "Aucun événement"
     },
     "event": {
       "edit": "Modifier l'événement",
@@ -1111,8 +1072,11 @@
       },
       "documentHint": "Glissez-déposez ou cliquez pour joindre un document.",
       "documentUploadError": "Échec de l'envoi de certains documents",
-      "deleteSuccess": "Événement supprimé"
-    }
+      "deleteSuccess": "Événement supprimé",
+      "create": "Nouvel événement"
+    },
+    "previousPeriod": "Période précédente",
+    "nextPeriod": "Période suivante"
   },
   "maintenance": {
     "editEntry": "Modifier l'entrée",
@@ -1166,7 +1130,9 @@
         "linkLabel": "Article 1 du décret n°2001-477 du 30 mai 2001",
         "linkHref": "https://www.legifrance.gouv.fr/loda/article_lc/LEGIARTI000023944595"
       }
-    }
+    },
+    "deleteEntry": "Supprimer l'entrée",
+    "addEntry": "Ajouter une entrée"
   },
   "claims": {
     "create": "Déclarer un sinistre",
@@ -1223,7 +1189,8 @@
       "reimbursementDate": "Date de remboursement",
       "reimbursementAmount": "Montant remboursé (€)",
       "reimbursementAmountHint": "Laissez vide si l'assurance n'a pas encore remboursé le dossier ou si le montant n'est pas connu.",
-      "closeDocuments": "Pièces de clôture"
+      "closeDocuments": "Pièces de clôture",
+      "unit": "Lot concerné"
     },
     "deadline": {
       "remaining": "{days} jour(s) restant(s) — échéance au {date}",
@@ -1248,7 +1215,10 @@
       "open": "Ouverts",
       "inProgress": "En instruction",
       "closed": "Clos"
-    }
+    },
+    "unitLabel": "Lot {number}",
+    "commonAreas": "Parties communes",
+    "editDocumentHint": "Glisser-déposer ou cliquer pour ajouter des pièces complémentaires"
   },
   "contractor": {
     "title": "Dépôt prestataire",
@@ -1275,7 +1245,8 @@
     "staircaseLabel": "Cage d'escalier",
     "floorLabel": "Étage",
     "header": {
-      "usersCount": "{count} utilisateur | {count} utilisateurs"
+      "usersCount": "{count} utilisateur | {count} utilisateurs",
+      "unitsCount": "{count} lot | {count} lots"
     },
     "tabs": {
       "units": "Lots ({count})",
@@ -1327,7 +1298,16 @@
     "transferDate": "Date de mutation",
     "transferNewOwner": "Nouveau propriétaire",
     "transferSuccess": "Mutation effectuée",
-    "transferNoResidents": "Aucun résident disponible"
+    "transferNoResidents": "Aucun résident disponible",
+    "invite": "Inviter un résident",
+    "addResident": "Ajouter un résident",
+    "sendInvite": "Envoyer une invitation",
+    "archiveUser": "Archiver le résident",
+    "editResident": "Modifier le profil",
+    "editRoles": "Modifier les rôles",
+    "transferOwnership": "Mutation de propriété",
+    "confirmRevokeTitle": "Révoquer l'invitation",
+    "archiveUserMessage": "L'accès de {name} sera révoqué. Les données sont conservées."
   },
   "registry": {
     "title": "Registre de la copropriété",
@@ -1337,7 +1317,9 @@
       "summary": "La quote-part des parties communes afférente à chaque lot est proportionnelle à la valeur relative de chaque partie privative par rapport à l'ensemble des valeurs desdites parties.",
       "linkLabel": "Article 5 de la loi n°65-557 du 10 juillet 1965",
       "linkHref": "https://www.legifrance.gouv.fr/loda/article_lc/LEGIARTI000006460030"
-    }
+    },
+    "lots": "Lots",
+    "totalShares": "Tantièmes totaux"
   },
   "registers": {
     "eyebrow": "Registres",
@@ -1424,7 +1406,9 @@
         "generated": "Généré",
         "sent": "Envoyé",
         "cancelled": "Annulé"
-      }
+      },
+      "downloadPdf": "Télécharger le PDF",
+      "title": "État daté"
     },
     "preEtatDate": {
       "editedAt": "Édité le",
@@ -1439,7 +1423,9 @@
       "impayesGlobaux": "État global des impayés du syndicat",
       "detteFournisseurs": "Dette fournisseurs",
       "fondsTravauxQuotePart": "Quote-part du lot",
-      "fondsTravauxDerniereCotisation": "Dernière cotisation"
+      "fondsTravauxDerniereCotisation": "Dernière cotisation",
+      "documentTitle": "Pré-état daté",
+      "procedures": "Procédures judiciaires en cours"
     }
   },
   "settings": {
@@ -1447,7 +1433,10 @@
     "saveChanges": "Enregistrer les modifications",
     "exportData": "Exporter les données",
     "downloadBylaws": "Télécharger le règlement",
-    "tabs": {},
+    "tabs": {
+      "notifications": "Notifications",
+      "building": "Bâtiment"
+    },
     "building": {
       "title": "Informations de la résidence",
       "subtitle": "Gérez les informations générales de votre copropriété.",
@@ -1519,7 +1508,8 @@
       "resetDataConfirmTitle": "Supprimer toutes les données ?",
       "resetDataConfirmMessage": "Toutes les données (bâtiments, lots, charges, assemblées…) seront effacées définitivement. Les comptes utilisateurs sont conservés. Cette action est irréversible.",
       "resetDataSuccess": "Toutes les données ont été supprimées.",
-      "resetDataError": "Impossible de supprimer les données."
+      "resetDataError": "Impossible de supprimer les données.",
+      "scopeLabel": "Copropriété"
     },
     "preferences": {
       "title": "Préférences",
@@ -1537,7 +1527,8 @@
         "auto": {
           "label": "Auto",
           "hint": "L'application suit automatiquement l'apparence de votre appareil."
-        }
+        },
+        "label": "Apparence"
       }
     },
     "keys": {
@@ -1602,7 +1593,9 @@
         "missingInConfig": "Lot {unit} / clé « {key} » : référencé dans l'EDD mais non configuré (ou lot archivé).",
         "valueMismatch": "Lot {unit} / clé « {key} » : {expected} tantièmes attendus (EDD), {actual} configurés.",
         "totalMismatch": "Clé « {key} » : total EDD {expected}, total configuré {actual}."
-      }
+      },
+      "archivedUnit": "Lot archivé",
+      "newReference": "Nouvelle référence EDD"
     }
   },
   "errors": {
@@ -1762,7 +1755,9 @@
     "submit": "Créer mon instance",
     "submitting": "Initialisation en cours…",
     "alreadyInitTitle": "Instance déjà configurée",
-    "alreadyInitText": "Cette instance a déjà été initialisée. Connectez-vous avec votre compte existant."
+    "alreadyInitText": "Cette instance a déjà été initialisée. Connectez-vous avec votre compte existant.",
+    "titleStep1": "Votre compte syndic",
+    "titleStep2": "Votre copropriété"
   },
   "contractors": {
     "newContractor": "Nouveau prestataire",
@@ -1794,14 +1789,17 @@
       "cleaning": "Nettoyage",
       "green_spaces": "Espaces verts",
       "other": "Autre"
-    }
+    },
+    "title": "Prestataires"
   },
   "allocationKeys": {
     "header": {
       "totalCount": "{count} clé de répartition | {count} clés de répartition"
     },
     "tabs": {
-      "edd": "EDD"
-    }
+      "edd": "EDD",
+      "keys": "Clés"
+    },
+    "title": "Clés de répartition"
   }
 }

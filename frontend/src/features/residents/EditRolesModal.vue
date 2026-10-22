@@ -70,7 +70,7 @@ async function handleSave() {
 <template>
   <CModal
     :open="open"
-    :title="t('common.editRoles')"
+    :title="t('residents.editRoles')"
     size="sm"
     @update:open="$emit('update:open', $event)"
   >

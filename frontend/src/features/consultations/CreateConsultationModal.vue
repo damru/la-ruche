@@ -68,7 +68,7 @@ async function handleSubmit() {
 <template>
   <CModal
     :open="open"
-    :title="t('common.newConsultation')"
+    :title="t('consultations.create')"
     size="lg"
     @update:open="$emit('update:open', $event)"
   >

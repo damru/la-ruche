@@ -104,7 +104,7 @@ async function handleResetRequest() {
     <!-- Panneau gauche — éditorial -->
     <AuthBrandPanel
       class="login-brand"
-      :eyebrow="t('common.appTagline')"
+      :eyebrow="t('auth.brandEyebrow')"
       :title="t('auth.brandTitle')"
       :sub="t('auth.brandSub')"
     />

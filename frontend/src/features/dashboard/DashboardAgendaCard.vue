@@ -52,7 +52,7 @@ function onEventClick(event: CalendarEvent) {
 
     <CEmptyState
       v-if="visibleEvents.length === 0"
-      :title="t('common.noEvents')"
+      :title="t('calendar.empty.title')"
       :description="t('dashboard.agenda.emptyDescription')"
     />
     <div

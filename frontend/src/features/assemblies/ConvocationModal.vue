@@ -80,7 +80,7 @@ async function handleSubmit() {
 <template>
   <CModal
     :open="open"
-    :title="t('common.callMeeting')"
+    :title="t('meetings.call')"
     size="md"
     @update:open="$emit('update:open', $event)"
   >
@@ -161,7 +161,7 @@ async function handleSubmit() {
           variant="primary"
           type="submit"
           form="meeting-convocation"
-          :title="t('common.callMeeting')"
+          :title="t('meetings.call')"
           :loading="calling"
           :disabled="!checklist?.ready_to_send"
         />

@@ -30,13 +30,13 @@ const closeAmount = ref('')
 const modalTitle = computed(() =>
   props.task?.status === 'awaiting_validation'
     ? t('tasks.confirmCloseValidationTitle')
-    : t('common.closeTask'),
+    : t('tasks.closeTask'),
 )
 
 const confirmButtonLabel = computed(() =>
   props.task?.status === 'awaiting_validation'
     ? t('tasks.validateTask')
-    : t('common.closeTask'),
+    : t('tasks.closeTask'),
 )
 
 const bodyMessage = computed(() =>
@@ -61,7 +61,7 @@ async function handleSubmit() {
       status: 'closed',
       completion_cost: closeAmount.value ? Number(closeAmount.value) : null,
     })
-    feedback.setSuccess(t('common.taskClosed'))
+    feedback.setSuccess(t('tasks.lifecycle.closed'))
     emit('closed')
     scheduleClose(() => { emit('update:open', false) })
   } catch (err) {
@@ -88,7 +88,7 @@ async function handleSubmit() {
     >
       <CFormInput
         v-model="closeAmount"
-        :label="t('common.interventionCost')"
+        :label="t('tasks.completionCostLabel')"
         type="number"
         :min="0"
         :step="0.01"

@@ -80,13 +80,13 @@ async function handleSubmit() {
         >art.&nbsp;17–17-1</a></sup>
       </p>
       <CFormCheckbox v-model="form.president_signed">
-        {{ t('common.president') }}
+        {{ t('meetings.session_roles.president') }}
         <template v-if="meeting.president_name">
           — {{ meeting.president_name }}
         </template>
       </CFormCheckbox>
       <CFormCheckbox v-model="form.secretary_signed">
-        {{ t('common.secretary') }}
+        {{ t('meetings.session_roles.secretary') }}
         <template v-if="meeting.secretary_name">
           — {{ meeting.secretary_name }}
         </template>
@@ -95,7 +95,7 @@ async function handleSubmit() {
         v-if="(meeting.scrutineers ?? []).length > 0"
         class="flex flex-col gap-1"
       >
-        <span class="label-sm">{{ t('common.scrutineers') }}</span>
+        <span class="label-sm">{{ t('meetings.session_roles.scrutineers') }}</span>
         <CFormCheckbox
           v-for="scrutineer in meeting.scrutineers ?? []"
           :key="scrutineer.name"

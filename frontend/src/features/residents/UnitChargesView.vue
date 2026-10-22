@@ -126,7 +126,7 @@ const filteredLevies = computed<ConsolidatedUnitChargeRow[]>(() => {
 })
 
 const levyTableColumns = computed<Column<Record<string, unknown>>[]>(() => [
-  { key: 'fiscal_year', label: t('common.fiscalYear', { year: '' }).trim(), align: 'right', numeric: true },
+  { key: 'fiscal_year', label: t('budget.fiscalYear', { year: '' }).trim(), align: 'right', numeric: true },
   { key: 'issued_at', label: t('common.issuedAt'), align: 'right', numeric: true },
   { key: 'due_date', label: t('common.dueDate'), align: 'right', numeric: true },
   { key: 'call_label', label: t('common.label') },
@@ -201,7 +201,7 @@ const showPreEtatDateModal = ref(false)
           <CBtn
             variant="ghost"
             size="sm"
-            :title="t('common.preEtatDate')"
+            :title="t('registers.preEtatDate.documentTitle')"
             @click="showPreEtatDateModal = true"
           />
         </div>

@@ -248,11 +248,11 @@ const todayStr = computed(() =>
             </CHeading>
             <CMetaLine>
               <CMetaItem variant="sub">
-                {{ t('common.unitsCount', stats?.nb_lots ?? 0) }}
+                {{ t('residents.header.unitsCount', stats?.nb_lots ?? 0) }}
               </CMetaItem>
               <CSeparator />
               <CMetaItem variant="sub">
-                {{ t('common.fiscalYear', { year: new Date().getFullYear() }) }}
+                {{ t('budget.fiscalYear', { year: new Date().getFullYear() }) }}
               </CMetaItem>
             </CMetaLine>
           </header>
@@ -334,7 +334,7 @@ const todayStr = computed(() =>
             v-if="canViewAccounting"
             :label="t('dashboard.recoveryRate')"
             :value="String(overdueLevies.length)"
-            :delta="overdueLevies.length ? t('common.pendingAmount', { amount: formatCurrency(overdueAmount) }) : t('dashboard.unitsUpToDate')"
+            :delta="overdueLevies.length ? t('budget.pendingAmount', { amount: formatCurrency(overdueAmount) }) : t('dashboard.unitsUpToDate')"
             :delta-variant="overdueLevies.length ? 'down' : 'up'"
             :tone="overdueLevies.length ? 'err' : 'valid'"
           >
@@ -354,7 +354,7 @@ const todayStr = computed(() =>
 
           <CKpiCard
             v-if="canViewBudget"
-            :label="t('common.worksFund')"
+            :label="t('budget.worksFund')"
             :value="formatCurrency(stats?.works_fund_available ?? 0)"
             :delta="stats?.works_fund_pct ? t('dashboard.worksFundPct', { pct: 100 - stats.works_fund_pct }) : ''"
             delta-variant="neutral"
@@ -379,7 +379,7 @@ const todayStr = computed(() =>
             :label="t('nav.myCharges')"
             :value="myOverdueLevies.length ? String(myOverdueLevies.length) : String(myUnpaidLevies.length)"
             :delta="myOverdueLevies.length
-              ? t('common.pendingAmount', { amount: formatCurrency(myOverdueAmount) })
+              ? t('budget.pendingAmount', { amount: formatCurrency(myOverdueAmount) })
               : (myNextDueLevy ? `${t('common.dueDate')} : ${formatDate(myNextDueLevy.due_date)}` : t('dashboard.unitsUpToDate'))"
             :delta-variant="myOverdueLevies.length ? 'down' : 'neutral'"
             :tone="myOverdueLevies.length ? 'err' : undefined"
@@ -447,7 +447,7 @@ const todayStr = computed(() =>
               <CCard>
                 <CSectionHeader>
                   <CHeading type="card">
-                    {{ t('common.reports') }}
+                    {{ t('nav.reports') }}
                   </CHeading>
                   <p class="body-sm text-on-surface-variant">
                     {{ t('dashboard.openCount', { count: openReports.length }) }}
@@ -494,7 +494,7 @@ const todayStr = computed(() =>
                       size="sm"
                       style="width:100%;justify-content:center"
                       :icon="CIconPlus"
-                      :title="t('common.newReport')"
+                      :title="t('reports.create')"
                     />
                   </RouterLink>
                 </div>
@@ -588,7 +588,7 @@ const todayStr = computed(() =>
                 </p>
                 <template #actions>
                   <CSectionLink to="/contracts">
-                    {{ t('common.contracts') }}
+                    {{ t('nav.contracts') }}
                   </CSectionLink>
                 </template>
               </CSectionHeader>
@@ -688,7 +688,7 @@ const todayStr = computed(() =>
                     size="sm"
                     style="width:100%;justify-content:center"
                     :icon="CIconPlus"
-                    :title="t('common.newTask')"
+                    :title="t('tasks.create')"
                   />
                 </RouterLink>
               </div>
@@ -711,7 +711,7 @@ const todayStr = computed(() =>
                   <p class="res-stat-val">
                     {{ stats?.nb_lots }}
                   </p><p class="res-stat-label">
-                    {{ t('common.units') }}
+                    {{ t('registry.lots') }}
                   </p>
                 </div>
                 <div class="res-stat">

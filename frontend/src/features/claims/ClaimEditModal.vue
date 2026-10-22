@@ -89,10 +89,10 @@ const claimTypeOptions = computed(() =>
 )
 
 const unitOptions = computed(() => [
-  { value: '', label: t('common.commonAreas') },
+  { value: '', label: t('claims.commonAreas') },
   ...props.units.map(unit => ({
     value: unit.id,
-    label: t('common.unitLabel', { number: unit.unit_number }),
+    label: t('claims.unitLabel', { number: unit.unit_number }),
   })),
 ])
 
@@ -303,7 +303,7 @@ async function handleSubmit() {
 
       <CFormSelect
         v-model="form.unit_id"
-        :label="t('common.relatedUnit')"
+        :label="t('claims.fields.unit')"
         :options="unitOptions"
       />
       <CFormTextarea
@@ -316,13 +316,13 @@ async function handleSubmit() {
         <label class="text-sm font-medium text-on-surface-variant">{{ t('common.attachments') }}</label>
         <CFileDropzone
           v-model:files="selectedEditDocuments"
-          :hint="t('common.dropzoneExtraHint')"
+          :hint="t('claims.editDocumentHint')"
           :remove-label="t('common.remove')"
         />
 
         <div class="claim-documents-section">
           <p class="text-xs text-on-surface-variant claim-documents-section__hint">
-            {{ t('common.attachedDocuments') }}
+            {{ t('tasks.attachedDocuments') }}
           </p>
           <CPageLoader v-if="loadingEditDocuments" />
           <div

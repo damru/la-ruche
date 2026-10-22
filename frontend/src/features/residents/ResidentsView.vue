@@ -134,7 +134,7 @@ const unitColumns = computed(() => [
   { key: 'unit_number', label: t('common.lot') },
   { key: 'unit_type', label: t('common.type') },
   { key: 'location', label: t('residents.location') },
-  { key: 'shares', label: t('common.shares'), numeric: true },
+  { key: 'shares', label: t('units.shares'), numeric: true },
   { key: 'owner', label: t('residents.currentOwner') },
   { key: 'status', label: t('status') },
   { key: 'actions', label: '', width: '1%' },
@@ -240,7 +240,7 @@ function openTransferModal(unit: Unit) {
             size="sm"
             shrink="sm"
             :icon="CIconUserPlus"
-            :title="t('common.addResident')"
+            :title="t('residents.addResident')"
             @click="showCreateResidentModal = true"
           />
         </div>
@@ -264,7 +264,7 @@ function openTransferModal(unit: Unit) {
           </CHeading>
           <CMetaLine>
             <CMetaItem variant="sub">
-              {{ t('common.unitsCount', { count: allUnits.length }) }}
+              {{ t('residents.header.unitsCount', { count: allUnits.length }) }}
             </CMetaItem>
             <CSeparator />
             <CMetaItem variant="sub">
@@ -335,8 +335,8 @@ function openTransferModal(unit: Unit) {
                   />
                   <CBtn
                     variant="icon"
-                    :aria-label="t('common.transferOwnership')"
-                    :title="t('common.transferOwnership')"
+                    :aria-label="t('residents.transferOwnership')"
+                    :title="t('residents.transferOwnership')"
                     :icon="CIconArrowRight"
                     @click="openTransferModal(row)"
                   />
@@ -444,16 +444,16 @@ function openTransferModal(unit: Unit) {
                   <CBtn
                     v-if="row.status === 'no_access'"
                     variant="icon"
-                    :title="t('common.sendInvitation')"
-                    :aria-label="t('common.sendInvitation')"
+                    :title="t('residents.sendInvite')"
+                    :aria-label="t('residents.sendInvite')"
                     :icon="CIconUserPlus"
                     @click="openSendInviteModal(row)"
                   />
                   <CBtn
                     v-if="row.status === 'pending_invite'"
                     variant="icon"
-                    :title="t('common.revokeInvitation')"
-                    :aria-label="t('common.revokeInvitation')"
+                    :title="t('residents.confirmRevokeTitle')"
+                    :aria-label="t('residents.confirmRevokeTitle')"
                     :icon="CIconTrash"
                     class="tone--err"
                     @click="openRevokeModal(row)"
@@ -461,23 +461,23 @@ function openTransferModal(unit: Unit) {
                   <template v-if="row.status !== 'pending_invite'">
                     <CBtn
                       variant="icon"
-                      :title="t('common.editProfile')"
-                      :aria-label="t('common.editProfile')"
+                      :title="t('residents.editResident')"
+                      :aria-label="t('residents.editResident')"
                       :icon="CIconEdit"
                       @click="openEditResidentModal(row)"
                     />
                     <CBtn
                       variant="icon"
-                      :title="t('common.editRoles')"
-                      :aria-label="t('common.editRoles')"
+                      :title="t('residents.editRoles')"
+                      :aria-label="t('residents.editRoles')"
                       :icon="CIconShield"
                       @click="openEditRolesModal(row)"
                     />
                     <CBtn
                       v-if="row.status !== 'archived'"
                       variant="icon"
-                      :title="t('common.archiveResident')"
-                      :aria-label="t('common.archiveResident')"
+                      :title="t('residents.archiveUser')"
+                      :aria-label="t('residents.archiveUser')"
                       :icon="CIconArchive"
                       class="tone--err"
                       @click="openArchiveUserModal(row)"

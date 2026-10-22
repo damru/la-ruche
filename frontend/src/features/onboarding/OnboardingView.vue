@@ -38,8 +38,8 @@ const passwordDirty = computed(() => form.password.length > 0)
 
 // ── Brand panel steps ────────────────────────────────────────────
 const brandSteps = computed(() => [
-  { label: t('common.onboardingManager'), status: (step.value > 1 ? 'done' : step.value === 1 ? 'active' : 'future') as 'done' | 'active' | 'future' },
-  { label: t('common.onboardingCoOwner'), status: (step.value === 2 ? 'active' : 'future') as 'done' | 'active' | 'future' },
+  { label: t('onboarding.titleStep1'), status: (step.value > 1 ? 'done' : step.value === 1 ? 'active' : 'future') as 'done' | 'active' | 'future' },
+  { label: t('onboarding.titleStep2'), status: (step.value === 2 ? 'active' : 'future') as 'done' | 'active' | 'future' },
   { label: t('onboarding.step3Label'), status: 'future' as const },
 ])
 
@@ -212,7 +212,7 @@ async function handleSubmit() {
         <template v-else>
           <div class="form-header">
             <h2 class="form-title">
-              {{ step === 1 ? t('common.onboardingManager') : t('common.onboardingCoOwner') }}
+              {{ step === 1 ? t('onboarding.titleStep1') : t('onboarding.titleStep2') }}
             </h2>
             <p class="form-sub">
               {{ step === 1 ? t('onboarding.subtitleStep1') : t('onboarding.subtitleStep2') }}
@@ -375,7 +375,7 @@ async function handleSubmit() {
             <CFormInput
               id="shares_total"
               v-model="form.shares_total"
-              :label="t('common.totalShares')"
+              :label="t('registry.totalShares')"
               :placeholder="t('onboarding.sharesTotalPlaceholder')"
               :hint="t('onboarding.sharesTotalHint')"
               inputmode="numeric"

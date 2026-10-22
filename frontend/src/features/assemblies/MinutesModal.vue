@@ -87,7 +87,7 @@ async function saveMinutes() {
 <template>
   <CModal
     :open="open"
-    :title="t('common.attachSignedMinutes')"
+    :title="t('meetings.minutes.upload_signed')"
     size="md"
     @update:open="$emit('update:open', $event)"
   >
@@ -134,7 +134,7 @@ async function saveMinutes() {
           variant="primary"
           type="submit"
           form="meeting-minutes"
-          :title="t('common.attachSignedMinutes')"
+          :title="t('meetings.minutes.upload_signed')"
           :loading="savingMinutes"
           :disabled="!minutesForm.file"
         />

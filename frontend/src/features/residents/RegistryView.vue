@@ -126,17 +126,17 @@ const registryColumns = computed(() => {
         <div class="grid gap-4 xs:grid-cols-3">
           <CKpiCard
             class="items-center text-center"
-            :subtitle="t('common.units')"
+            :subtitle="t('registry.lots')"
             :value="data.units.length.toString()"
           />
           <CKpiCard
             class="items-center text-center"
-            :subtitle="t('common.allocationKeys')"
+            :subtitle="t('allocationKeys.title')"
             :value="data.keys.length.toString()"
           />
           <CKpiCard
             class="items-center text-center"
-            :subtitle="t('common.totalShares')"
+            :subtitle="t('registry.totalShares')"
             :value="data.building.shares_total.toString()"
           />
         </div>
@@ -154,7 +154,7 @@ const registryColumns = computed(() => {
             variant="negative"
             @click="router.push({ name: 'residence-keys' })"
           >
-            {{ t('common.allocationKeys') }}
+            {{ t('allocationKeys.title') }}
             <CIconArrowRight
               class="icon-sm"
               aria-hidden="true"

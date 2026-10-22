@@ -196,7 +196,7 @@ async function submit() {
       />
       <CFormSelect
         v-model="form.unit_id"
-        :label="t('common.relatedUnit')"
+        :label="t('claims.fields.unit')"
         :options="unitOptions"
       />
 

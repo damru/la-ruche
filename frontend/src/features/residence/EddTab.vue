@@ -228,7 +228,7 @@ function discrepancyVariant(d: EddDiscrepancy): 'warn' | 'err' {
                 <CBtn
                   variant="primary"
                   :icon="CIconPlus"
-                  :title="t('common.newEddReference')"
+                  :title="t('settings.edd.newReference')"
                   @click="openForm"
                 />
               </template>
@@ -295,7 +295,7 @@ function discrepancyVariant(d: EddDiscrepancy): 'warn' | 'err' {
           type="card"
           class="mb-4"
         >
-          {{ t('common.newEddReference') }}
+          {{ t('settings.edd.newReference') }}
         </CHeading>
         <CForm
           :status="feedback.status.value"
@@ -356,7 +356,7 @@ function discrepancyVariant(d: EddDiscrepancy): 'warn' | 'err' {
                   v-if="share.archived"
                   variant="default"
                 >
-                  {{ t('common.lotArchive') }}
+                  {{ t('settings.edd.archivedUnit') }}
                 </CBadge>
               </div>
             </div>

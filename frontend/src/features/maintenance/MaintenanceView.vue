@@ -231,7 +231,7 @@ function openDeleteModal(entry: MaintenanceEntry) {
         <div class="topbar-breadcrumb">
           {{ buildingName }}
           <CIconChevronRight />
-          <span>{{ t('common.logbook') }}</span>
+          <span>{{ t('nav.maintenance') }}</span>
         </div>
       </template>
       <template #right>
@@ -239,7 +239,7 @@ function openDeleteModal(entry: MaintenanceEntry) {
           variant="primary"
           size="sm"
           :icon="CIconPlus"
-          :title="t('common.addEntry')"
+          :title="t('maintenance.addEntry')"
           @click="openCreateModal"
         />
       </template>
@@ -258,7 +258,7 @@ function openDeleteModal(entry: MaintenanceEntry) {
             {{ t('page.eyebrows.maintenance') }}
           </CEyebrow>
           <CHeading type="header">
-            {{ t('common.logbook') }}
+            {{ t('nav.maintenance') }}
           </CHeading>
           <CMetaLine>
             <CMetaItem variant="sub">
@@ -322,7 +322,7 @@ function openDeleteModal(entry: MaintenanceEntry) {
                       variant="default"
                       :dot="logbookSummary.insurance_contracts.length > 0"
                     >
-                      {{ t('common.contractsCount', logbookSummary.insurance_contracts.length) }}
+                      {{ t('contracts.count', logbookSummary.insurance_contracts.length) }}
                     </CBadge>
                   </template>
                 </CSectionHeader>
@@ -369,7 +369,7 @@ function openDeleteModal(entry: MaintenanceEntry) {
                       variant="default"
                       :dot="logbookSummary.maintenance_contracts.length > 0"
                     >
-                      {{ t('common.contractsCount', logbookSummary.maintenance_contracts.length) }}
+                      {{ t('contracts.count', logbookSummary.maintenance_contracts.length) }}
                     </CBadge>
                   </template>
                 </CSectionHeader>
@@ -432,9 +432,9 @@ function openDeleteModal(entry: MaintenanceEntry) {
                   variant="ghost"
                   size="sm"
                   :icon="CIconArrowLeft"
-                  :title="t('common.previousPeriod')"
+                  :title="t('calendar.previousPeriod')"
                   :disabled="periodFilter === 'all'"
-                  :aria-label="t('common.previousPeriod')"
+                  :aria-label="t('calendar.previousPeriod')"
                   @click="goToPreviousPeriod"
                 />
                 <span class="period-label title-sm">{{ periodLabel }}</span>
@@ -442,9 +442,9 @@ function openDeleteModal(entry: MaintenanceEntry) {
                   variant="ghost"
                   size="sm"
                   :icon="CIconArrowRight"
-                  :title="t('common.nextPeriod')"
+                  :title="t('calendar.nextPeriod')"
                   :disabled="!canGoNext"
-                  :aria-label="t('common.nextPeriod')"
+                  :aria-label="t('calendar.nextPeriod')"
                   @click="goToNextPeriod"
                 />
               </div>
@@ -476,8 +476,8 @@ function openDeleteModal(entry: MaintenanceEntry) {
                           variant="icon"
                           :icon="CIconTrash"
                           class="tone--err"
-                          :title="t('common.deleteEntry')"
-                          :aria-label="t('common.deleteEntry')"
+                          :title="t('maintenance.deleteEntry')"
+                          :aria-label="t('maintenance.deleteEntry')"
                           @click="openDeleteModal(entry)"
                         />
                       </div>

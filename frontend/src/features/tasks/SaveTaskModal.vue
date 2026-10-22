@@ -387,7 +387,7 @@ async function handleSubmit() {
 <template>
   <CModal
     :open="open"
-    :title="task ? t('tasks.editTask') : t('common.newTask')"
+    :title="task ? t('tasks.editTask') : t('tasks.create')"
     size="md"
     :closable="!saving"
     @update:open="$emit('update:open', $event)"
@@ -439,7 +439,7 @@ async function handleSubmit() {
         <label class="text-sm font-medium text-on-surface-variant">{{ t('common.attachments') }}</label>
         <CFileDropzone
           v-model:files="selectedDocuments"
-          :hint="task ? t('common.dropzoneExtraHint') : t('tasks.documentHint')"
+          :hint="task ? t('claims.editDocumentHint') : t('tasks.documentHint')"
           :remove-label="t('common.remove')"
         />
 
@@ -448,7 +448,7 @@ async function handleSubmit() {
           class="task-existing-documents"
         >
           <p class="text-xs text-on-surface-variant task-existing-documents__hint">
-            {{ t('common.attachedDocuments') }}
+            {{ t('tasks.attachedDocuments') }}
           </p>
           <CPageLoader v-if="loadingFormDocuments" />
           <div
@@ -541,7 +541,7 @@ async function handleSubmit() {
       >
         <CFormInput
           v-model="contractorSearch"
-          :label="t('common.assignedVendor')"
+          :label="t('tasks.contractorLabel')"
           :placeholder="t('tasks.contractorPlaceholder')"
           autocomplete="off"
           :hint="selectedContractor

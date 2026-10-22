@@ -176,9 +176,9 @@ const showResetDataModal = ref(false)
         v-model="activeTab"
         variant="tab"
         :tabs="[
-          { value: 'account', label: t('common.myAccount') },
-          { value: 'notifications', label: t('common.notifications') },
-          { value: 'appearance', label: t('common.appearance') },
+          { value: 'account', label: t('nav.myAccount') },
+          { value: 'notifications', label: t('settings.tabs.notifications') },
+          { value: 'appearance', label: t('settings.preferences.theme.label') },
         ]"
       />
 
@@ -256,7 +256,7 @@ const showResetDataModal = ref(false)
               v-if="buildingName"
               class="access-row"
             >
-              <span class="body-xs access-label">{{ t('common.coOwnership') }}</span>
+              <span class="body-xs access-label">{{ t('settings.account.scopeLabel') }}</span>
               <span class="title-sm">{{ buildingName }}</span>
             </div>
           </div>
@@ -350,7 +350,7 @@ const showResetDataModal = ref(false)
           <div
             class="theme-options"
             role="radiogroup"
-            :aria-label="t('common.appearance')"
+            :aria-label="t('settings.preferences.theme.label')"
           >
             <button
               v-for="option in themeOptions"

@@ -105,7 +105,7 @@ const unitOptions = computed(() => [
   { value: '', label: t('reports.unitPlaceholder') },
   ...allUnits.value.map(u => ({
     value: u.id,
-    label: t('common.unitLabel', { number: u.unit_number }),
+    label: t('claims.unitLabel', { number: u.unit_number }),
   })),
 ])
 
@@ -118,9 +118,9 @@ function statusVariant(s: string): 'valid' | 'open' | 'pending' | 'closed' | 'de
 }
 
 function unitLabel(unitId?: string): string {
-  if (!unitId) return t('common.commonAreas')
+  if (!unitId) return t('claims.commonAreas')
   const u = unitsById.value.get(unitId)
-  return u ? t('common.unitLabel', { number: u.unit_number }) : '—'
+  return u ? t('claims.unitLabel', { number: u.unit_number }) : '—'
 }
 
 function authorName(r: Report): string {
@@ -135,7 +135,7 @@ function authorName(r: Report): string {
         <div class="topbar-breadcrumb">
           {{ buildingName }}
           <CIconChevronRight />
-          <span>{{ t('common.reports') }}</span>
+          <span>{{ t('nav.reports') }}</span>
         </div>
       </template>
       <template #right>
@@ -143,7 +143,7 @@ function authorName(r: Report): string {
           variant="primary"
           size="sm"
           :icon="CIconPlus"
-          :title="t('common.newReport')"
+          :title="t('reports.create')"
           @click="openCreateModal"
         />
       </template>
@@ -162,7 +162,7 @@ function authorName(r: Report): string {
             {{ t('page.eyebrows.reports') }}
           </CEyebrow>
           <CHeading type="header">
-            {{ t('common.reports') }}
+            {{ t('nav.reports') }}
           </CHeading>
           <p
             class="body-md"
@@ -234,7 +234,7 @@ function authorName(r: Report): string {
                     <template #icon>
                       <CIconFile />
                     </template>
-                    {{ t('common.photosCount', r.document_count) }}
+                    {{ t('reports.linkedPhotosCount', r.document_count) }}
                   </CMetaItem>
                 </CFlexGroup>
   
@@ -272,7 +272,7 @@ function authorName(r: Report): string {
                     variant="ghost"
                     size="sm"
                     :icon="CIconRefresh"
-                    :title="t('common.changeStatus')"
+                    :title="t('tasks.updateStatus')"
                     @click="openStatusModal(r)"
                   />
                 </div>
@@ -299,7 +299,7 @@ function authorName(r: Report): string {
                       variant="primary"
                       size="sm"
                       :icon="CIconCheckCircle"
-                      :title="t('common.convertToTask')"
+                      :title="t('reports.convertToTask')"
                       @click="openConvertModal(r)"
                     />
                   </CCardActions>

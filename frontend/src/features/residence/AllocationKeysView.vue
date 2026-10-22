@@ -24,7 +24,7 @@ const { t } = useI18n()
 
 const activeTab = ref('keys')
 const tabs = computed(() => [
-  { value: 'keys', label: t('common.keys') },
+  { value: 'keys', label: t('allocationKeys.tabs.keys') },
   { value: 'edd', label: t('allocationKeys.tabs.edd') },
 ])
 
@@ -42,7 +42,7 @@ const keyBalance = ref<Record<string, KeyBalance>>({})
 const columns = computed(() => [
   { key: 'name', label: t('lastName') },
   { key: 'description', label: t('common.description') },
-  { key: 'shares', label: t('common.shares'), numeric: true },
+  { key: 'shares', label: t('units.shares'), numeric: true },
   { key: 'balance', label: t('status') },
   { key: 'actions', label: '', width: '1%' },
 ])
@@ -114,7 +114,7 @@ onMounted(reload)
         <div class="topbar-breadcrumb">
           <span>{{ t('nav.groups.residence') }}</span>
           <CIconChevronRight />
-          <span>{{ t('common.allocationKeys') }}</span>
+          <span>{{ t('allocationKeys.title') }}</span>
         </div>
       </template>
       <template #right>
@@ -129,7 +129,7 @@ onMounted(reload)
           v-if="activeTab === 'edd' && !eddTabRef?.showForm"
           size="sm"
           :icon="CIconPlus"
-          :title="t('common.newEddReference')"
+          :title="t('settings.edd.newReference')"
           @click="openEddForm"
         />
       </template>
@@ -148,7 +148,7 @@ onMounted(reload)
             {{ t('page.eyebrows.allocationKeys') }}
           </CEyebrow>
           <CHeading type="header">
-            {{ t('common.allocationKeys') }}
+            {{ t('allocationKeys.title') }}
           </CHeading>
           <CMetaItem variant="sub">
             {{ t('allocationKeys.header.totalCount', { count: keys.length }) }}

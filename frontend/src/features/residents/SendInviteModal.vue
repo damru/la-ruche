@@ -73,7 +73,7 @@ async function handleSubmit() {
 <template>
   <CModal
     :open="open"
-    :title="t('common.sendInvitation')"
+    :title="t('residents.sendInvite')"
     :closable="!loading"
     @update:open="$emit('update:open', $event)"
   >

@@ -169,7 +169,7 @@ async function submit() {
           />
           <CFormInput
             v-model="cost"
-            :label="t('common.interventionCost')"
+            :label="t('tasks.completionCostLabel')"
             type="number"
             :min="0"
             :step="0.01"

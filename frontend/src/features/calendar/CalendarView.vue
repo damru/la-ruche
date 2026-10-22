@@ -175,7 +175,7 @@ async function exportCalendar() {
         <div class="topbar-breadcrumb">
           {{ buildingName || '...' }}
           <CIconChevronRight aria-hidden="true" />
-          <span>{{ t('common.calendar') }}</span>
+          <span>{{ t('nav.calendar') }}</span>
         </div>
       </template>
       <template #right>
@@ -184,7 +184,7 @@ async function exportCalendar() {
           variant="primary"
           size="sm"
           :icon="CIconPlus"
-          :title="t('common.newEvent')"
+          :title="t('calendar.event.create')"
           shrink="sm"
           @click="openCreate"
         />
@@ -204,7 +204,7 @@ async function exportCalendar() {
             {{ t('common.overview') }}
           </CEyebrow>
           <CHeading type="header">
-            {{ t('common.calendar') }}
+            {{ t('nav.calendar') }}
           </CHeading>
           <CMetaLine>
             <CMetaItem variant="sub">
@@ -233,8 +233,8 @@ async function exportCalendar() {
               variant="icon"
               size="sm"
               :icon="CIconArrowLeft"
-              :title="t('common.previousPeriod')"
-              :aria-label="t('common.previousPeriod')"
+              :title="t('calendar.previousPeriod')"
+              :aria-label="t('calendar.previousPeriod')"
               @click="shiftPeriod(-1)"
             />
             <span class="title-sm">{{ periodLabel }}</span>
@@ -242,8 +242,8 @@ async function exportCalendar() {
               variant="icon"
               size="sm"
               :icon="CIconArrowRight"
-              :title="t('common.nextPeriod')"
-              :aria-label="t('common.nextPeriod')"
+              :title="t('calendar.nextPeriod')"
+              :aria-label="t('calendar.nextPeriod')"
               @click="shiftPeriod(1)"
             />
           </div>

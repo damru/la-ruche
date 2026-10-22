@@ -171,7 +171,7 @@ function openDeleteModal(c: Contractor) {
         <div class="topbar-breadcrumb">
           {{ buildingName }}
           <CIconChevronRight class="icon-xs" />
-          <span>{{ t('common.vendors') }}</span>
+          <span>{{ t('contractors.title') }}</span>
         </div>
       </template>
       <template #right>
@@ -197,7 +197,7 @@ function openDeleteModal(c: Contractor) {
         <header class="view-header">
           <CEyebrow>{{ t('page.eyebrows.contractors') }}</CEyebrow>
           <CHeading type="header">
-            {{ t('common.vendors') }}
+            {{ t('contractors.title') }}
           </CHeading>
           <CMetaItem variant="sub">
             {{ t('contractors.summary', { count: allContractors.length }) }}

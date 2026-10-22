@@ -136,7 +136,7 @@ async function handleSubmit() {
 <template>
   <CModal
     :open="open"
-    :title="event ? t('calendar.event.edit') : t('common.newEvent')"
+    :title="event ? t('calendar.event.edit') : t('calendar.event.create')"
     size="md"
     :closable="!saving"
     @update:open="emit('update:open', $event)"

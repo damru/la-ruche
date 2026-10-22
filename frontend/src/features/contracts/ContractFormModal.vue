@@ -384,7 +384,7 @@ async function saveContract() {
   <CModal
     :open="open"
     size="lg"
-    :title="isEditing ? t('contracts.form.editTitle') : t('common.newContract')"
+    :title="isEditing ? t('contracts.form.editTitle') : t('contracts.create')"
     @update:open="emit('update:open', $event)"
   >
     <CForm
@@ -395,7 +395,7 @@ async function saveContract() {
       <div class="contract-form__grid">
         <CFormInput
           v-model="form.vendor_name"
-          :label="t('common.vendor')"
+          :label="t('contracts.form.vendorName')"
           :error="fieldErrors.vendor_name"
           required
         />

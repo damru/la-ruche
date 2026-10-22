@@ -50,7 +50,7 @@ async function confirmRevokeInvite() {
 <template>
   <CModal
     :open="open"
-    :title="t('common.revokeInvitation')"
+    :title="t('residents.confirmRevokeTitle')"
     size="sm"
     @update:open="$emit('update:open', $event)"
   >
@@ -69,7 +69,7 @@ async function confirmRevokeInvite() {
         />
         <CBtn
           variant="danger"
-          :title="t('common.revokeInvitation')"
+          :title="t('residents.confirmRevokeTitle')"
           :loading="revokingInvite"
           :closing="revokeFeedback.status.value === 'success'"
           @click="confirmRevokeInvite"

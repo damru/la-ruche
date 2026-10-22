@@ -53,12 +53,12 @@ async function confirmArchive() {
 <template>
   <CModal
     :open="open"
-    :title="t('common.archiveResident')"
+    :title="t('residents.archiveUser')"
     size="sm"
     @update:open="$emit('update:open', $event)"
   >
     <p class="body-sm">
-      {{ t('common.accessRevokedMessage', { name: `${user?.first_name ?? ''} ${user?.last_name ?? ''}`.trim() }) }}
+      {{ t('residents.archiveUserMessage', { name: `${user?.first_name ?? ''} ${user?.last_name ?? ''}`.trim() }) }}
     </p>
     <CFormInput
       v-model="departureDate"
@@ -78,7 +78,7 @@ async function confirmArchive() {
         />
         <CBtn
           variant="danger"
-          :title="t('common.archiveResident')"
+          :title="t('residents.archiveUser')"
           :loading="loading"
           :closing="feedback.status.value === 'success'"
           @click="confirmArchive"

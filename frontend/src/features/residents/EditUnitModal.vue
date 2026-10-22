@@ -151,7 +151,7 @@ async function saveUnit() {
         />
         <CFormInput
           v-model="editingUnit.block"
-          :label="t('common.building')"
+          :label="t('settings.tabs.building')"
         />
         <CFormInput
           v-model="editingUnit.staircase"
@@ -174,7 +174,7 @@ async function saveUnit() {
         </h3>
         <CFormInput
           v-model="editingUnit.general_shares"
-          :label="generalKeyName ?? t('common.shares')"
+          :label="generalKeyName ?? t('units.shares')"
           type="number"
           :step="1"
           :min="0"

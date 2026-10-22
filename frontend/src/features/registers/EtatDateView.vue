@@ -99,7 +99,7 @@ function viewSnapshot(request: EtatDateRequest) {
         <div class="topbar-breadcrumb">
           {{ buildingName }}
           <CIconChevronRight class="icon-xs" />
-          <span>{{ t('common.etatDate') }}</span>
+          <span>{{ t('registers.etatDate.title') }}</span>
         </div>
       </template>
       <template #right>
@@ -125,7 +125,7 @@ function viewSnapshot(request: EtatDateRequest) {
         <header class="view-header">
           <CEyebrow>{{ t('registers.eyebrow') }}</CEyebrow>
           <CHeading type="header">
-            {{ t('common.etatDate') }}
+            {{ t('registers.etatDate.title') }}
           </CHeading>
           <CMetaItem variant="sub">
             {{ t('registers.etatDate.summary', { count: requests.length }) }}
@@ -188,7 +188,7 @@ function viewSnapshot(request: EtatDateRequest) {
                   variant="ghost"
                   size="sm"
                   :loading="generatingId === row.id"
-                  :title="row.status === 'requested' ? t('common.generate') : t('registers.etatDate.regenerate')"
+                  :title="row.status === 'requested' ? t('budget.generate') : t('registers.etatDate.regenerate')"
                   @click="generate(row)"
                 />
                 <CBtn

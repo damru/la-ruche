@@ -58,10 +58,10 @@ const claimTypeOptions = computed(() =>
 )
 
 const unitOptions = computed(() => [
-  { value: '', label: t('common.commonAreas') },
+  { value: '', label: t('claims.commonAreas') },
   ...props.units.map(unit => ({
     value: unit.id,
-    label: t('common.unitLabel', { number: unit.unit_number }),
+    label: t('claims.unitLabel', { number: unit.unit_number }),
   })),
 ])
 
@@ -194,7 +194,7 @@ async function handleSubmit() {
 
       <CFormSelect
         v-model="form.unit_id"
-        :label="t('common.relatedUnit')"
+        :label="t('claims.fields.unit')"
         :options="unitOptions"
       />
       <CFormTextarea

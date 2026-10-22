@@ -123,7 +123,7 @@ async function handleSubmit() {
       />
       <CFormInput
         v-model="form.location"
-        :label="t('common.location')"
+        :label="t('meetings.location')"
       />
       <div class="flex flex-col gap-1">
         <span class="text-sm font-medium text-on-surface-variant">{{ t('meetings.agenda.title') }}</span>

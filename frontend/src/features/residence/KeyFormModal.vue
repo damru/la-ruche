@@ -172,7 +172,7 @@ async function save() {
 
       <div class="shares-section">
         <h3 class="text-md font-semibold mb-3">
-          {{ t('common.shares') }}
+          {{ t('units.shares') }}
         </h3>
 
         <div
