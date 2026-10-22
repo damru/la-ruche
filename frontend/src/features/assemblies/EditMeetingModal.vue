@@ -115,7 +115,7 @@ async function handleSubmit() {
     >
       <CFormSelect
         v-model="form.meeting_type"
-        :label="t('meetings.infoFields.type')"
+        :label="t('common.type')"
         :options="meetingTypeOptions"
       />
       <CFormInput

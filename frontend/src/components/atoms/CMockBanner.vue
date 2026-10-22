@@ -10,11 +10,7 @@ const props = withDefaults(defineProps<{
 
 const { t } = useI18n()
 
-const title = computed(() => (
-  props.variant === 'demo'
-    ? t('common.demoModeTitle')
-    : t('common.mockModeTitle')
-))
+const title = computed(() => t('common.demoModeTitle'))
 
 const message = computed(() => (
   props.variant === 'demo'

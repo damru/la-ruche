@@ -317,7 +317,7 @@ async function handleSubmit() {
         <CFileDropzone
           v-model:files="selectedEditDocuments"
           :hint="t('claims.editDocumentHint')"
-          :remove-label="t('claims.removeDocument')"
+          :remove-label="t('common.remove')"
         />
 
         <div class="claim-documents-section">

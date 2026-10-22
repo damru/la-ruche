@@ -350,8 +350,8 @@ function openTransferModal(unit: Unit) {
                   <CBtn
                     v-if="row.active"
                     variant="icon"
-                    :title="t('residents.archive')"
-                    :aria-label="t('residents.archive')"
+                    :title="t('common.archiveLabel')"
+                    :aria-label="t('common.archiveLabel')"
                     :icon="CIconArchive"
                     class="tone--err"
                     @click="openArchiveModal(row)"

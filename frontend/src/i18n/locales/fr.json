@@ -32,7 +32,6 @@
     "submit": "Valider",
     "all": "Tous",
     "allFem": "Toutes",
-    "mockModeTitle": "Mode démonstration",
     "mockModeMessage": "Toutes les données sont fictives.",
     "demoModeTitle": "Mode démonstration",
     "demoModeMessage": "Cette instance utilise des données de démonstration réinitialisables.",
@@ -182,7 +181,6 @@
   "auth": {
     "login": "Connexion",
     "loggingIn": "Connexion…",
-    "email": "Adresse e-mail",
     "emailPlaceholder": "vous{'@'}exemple.fr",
     "password": "Mot de passe",
     "passwordPlaceholder": "••••••••",
@@ -267,7 +265,6 @@
     "alertOpenReportsDetails": "— Traitement en attente.",
     "priorityTasks": "Tâches prioritaires",
     "taskCount": "{count} en cours",
-    "allTasks": "Toutes",
     "noTasks": "Aucune tâche en cours",
     "contractReminders": "Rappels contrats",
     "nextDeadlines": "Prochaines échéances",
@@ -394,7 +391,6 @@
     "bannerOngoing": "AG en cours · Votes en séance",
     "bannerOngoingSub": "{resolved} résolutions votées · {pending} en attente",
     "bannerResolutionsResolved": "résolutions adoptées",
-    "editResolution": "Modifier",
     "resolutionDescriptionOnly": "Titre et règle de vote verrouillés pendant la séance.",
     "createArt24": "Créer sous Art. 24",
     "createArt25": "Créer sous Art. 25",
@@ -441,13 +437,10 @@
       "minutesReady": "PV déposé",
       "detachTitle": "Retirer la pièce de l'AG",
       "detachMessage": "Ce document sera définitivement retiré de cette assemblée.",
-      "detachConfirm": "Retirer",
       "detachSuccess": "Pièce retirée de l'assemblée."
     },
     "info": "Informations",
     "infoFields": {
-      "type": "Type",
-      "date": "Date",
       "location": "Lieu",
       "notice": "Convocation",
       "resolutions": "Résolutions"
@@ -886,7 +879,6 @@
     "titleLabel": "Titre",
     "descriptionLabel": "Description",
     "priorityLabel": "Priorité",
-    "statusLabel": "Statut",
     "updateStatus": "Changer le statut",
     "vendorToken": "Lien prestataire",
     "vendorTokenActive": "Lien actif — expire le {date}",
@@ -901,10 +893,8 @@
       "cancelled": "Annulée"
     },
     "filters": {
-      "all": "Toutes",
       "open": "Ouvertes",
       "in_progress": "En cours",
-      "inProgress": "En cours",
       "awaiting_vendor": "Prestataire",
       "awaiting_validation": "À valider",
       "vendor": "Prestataire",
@@ -937,7 +927,6 @@
     "documentsDetachTitle": "Retirer la pièce de la tâche",
     "documentsDetachMessage": "Le document « {name} » est actuellement lié à la tâche « {title} ».",
     "documentsDeleteWarning": "Le document « {name} » sera supprimé définitivement du registre documentaire après retrait. Cette action est irréversible.",
-    "removeDocument": "Retirer",
     "detachDocument": "Retirer de la tâche",
     "attachedDocuments": "Documents déjà joints",
     "noAttachedDocuments": "Aucun document joint pour cette tâche.",
@@ -996,7 +985,6 @@
     "emptyState": "Aucun document trouvé.",
     "columns": {
       "fileName": "Nom du fichier",
-      "type": "Type",
       "visibility": "Visibilité",
       "references": "Entités liées",
       "size": "Taille",
@@ -1075,7 +1063,6 @@
     "roles": {
       "manager": "Syndic",
       "board_member": "Conseil syndical",
-      "co_owner": "Copropriétaire",
       "tenant": "Locataire"
     },
     "respondModal": {
@@ -1107,9 +1094,7 @@
     "confirmConvertTitle": "Convertir en tâche",
     "confirmConvertMessage": "Créer une tâche à partir du signalement « {title} » ?",
     "convertSuccess": "Tâche créée",
-    "editReport": "Modifier",
     "editSuccess": "Signalement mis à jour",
-    "deleteReport": "Supprimer",
     "confirmDeleteTitle": "Supprimer le signalement",
     "confirmDeleteMessage": "Le signalement « {title} » sera supprimé définitivement.",
     "deleteSuccess": "Signalement supprimé",
@@ -1126,7 +1111,6 @@
     "photoCount": "{count} photo | {count} photos",
     "photoUploading": "Chargement des photos…",
     "photoUploadError": "Erreur lors du chargement d'une photo",
-    "removePhoto": "Supprimer",
     "deletePhoto": "Supprimer la photo",
     "deletePhotoConfirm": "La photo sera retirée du signalement puis supprimée définitivement. Cette action est irréversible.",
     "deletePhotoDetachMessage": "L'image « {name} » est actuellement liée au signalement « {title} ».",
@@ -1191,7 +1175,6 @@
       "fields": {
         "title": "Titre",
         "description": "Description",
-        "date": "Date",
         "time": "Heure",
         "category": "Catégorie",
         "documents": "Pièces jointes"
@@ -1302,7 +1285,6 @@
     "documentsDeleteWarning": "Le document « {name} » sera supprimé définitivement du registre documentaire après retrait. Cette action est irréversible.",
     "closeDocumentHint": "Ajouter les pièces de clôture (courrier, décompte, justificatif de remboursement...)",
     "closeDocumentUploadError": "Le sinistre a été clôturé mais certains documents n'ont pas pu être rattachés",
-    "removeDocument": "Retirer",
     "detachDocument": "Retirer du sinistre",
     "documentsCount": "{count} document | {count} documents",
     "noAttachedDocuments": "Aucun document joint pour ce sinistre.",
@@ -1374,19 +1356,16 @@
     "comment": "Commentaire",
     "commentPlaceholder": "Décrivez l'intervention réalisée (optionnel)",
     "cost": "Coût de l'intervention (€)",
-    "costPlaceholder": "Optionnel",
     "selectFiles": "Sélectionner des fichiers",
     "dropzone": "Glissez vos fichiers ici ou cliquez pour parcourir",
     "filesSelected": "{count} fichier sélectionné | {count} fichiers sélectionnés",
     "submit": "Envoyer la pré-validation",
-    "submitting": "Envoi en cours…",
     "success": "Pré-validation enregistrée avec succès. Le syndic peut maintenant clôturer la tâche.",
     "expired": "Ce lien a expiré ou est invalide.",
     "uploadError": "Erreur lors de l'envoi d'un fichier.",
     "contactTitle": "Contact syndic",
     "contactEmail": "E-mail",
-    "contactAddress": "Adresse",
-    "contactPhone": "Téléphone"
+    "contactAddress": "Adresse"
   },
   "residents": {
     "title": "Résidents & Lots",
@@ -1395,7 +1374,6 @@
     "unitNumberExists": "Un lot avec ce numéro existe déjà",
     "unitNumberArchived": "Ce numéro est utilisé par un lot archivé — réactivez-le ou choisissez un autre numéro",
     "editUnit": "Modifier le lot",
-    "archive": "Archiver",
     "block": "Bâtiment",
     "staircaseLabel": "Cage d'escalier",
     "floorLabel": "Étage",
@@ -1439,7 +1417,6 @@
     "inviteLinkHint": "Partagez ce lien avec la personne invitée. Il expire dans 72h.",
     "inviteCopied": "Lien copié !",
     "inviteCopyLink": "Copier le lien",
-    "inviteEmail": "Adresse e-mail",
     "userActions": "Actions utilisateur",
     "deactivateUser": "Désactiver l'accès",
     "confirmDeactivateTitle": "Désactiver l'accès",
@@ -1448,7 +1425,6 @@
     "addResident": "Ajouter un résident",
     "noAccess": "Sans accès",
     "createResidentTitle": "Ajouter un résident",
-    "createResidentButton": "Ajouter",
     "createResidentSuccess": "Résident ajouté",
     "emailOptional": "Adresse e-mail (optionnelle)",
     "emailOptionalHint": "Si renseignée, l'invitation peut être envoyée depuis la liste.",
@@ -1689,7 +1665,6 @@
       "resetData": "Supprimer toutes les données",
       "resetDataConfirmTitle": "Supprimer toutes les données ?",
       "resetDataConfirmMessage": "Toutes les données (bâtiments, lots, charges, assemblées…) seront effacées définitivement. Les comptes utilisateurs sont conservés. Cette action est irréversible.",
-      "resetDataConfirm": "Supprimer",
       "resetDataSuccess": "Toutes les données ont été supprimées.",
       "resetDataError": "Impossible de supprimer les données."
     },
@@ -1739,7 +1714,6 @@
       "history": "Historique",
       "historyTitle": "Historique de la clé « {name} »",
       "historyEmpty": "Aucune modification enregistrée.",
-      "historyClose": "Fermer",
       "historyActions": {
         "allocation_key": {
           "created": "Création",
@@ -1751,8 +1725,6 @@
       "historyShareChange": "Lot {unit} : {oldValue} → {newValue} tantièmes",
       "historyNameChange": "{oldName} → {newName}"
     },
-    "phone": "Téléphone",
-    "phonePlaceholder": "06 00 00 00 00",
     "edd": {
       "title": "Contrôle de cohérence — État Descriptif de Division (EDD)",
       "subtitle": "Comparez les tantièmes configurés avec le dernier état descriptif de division (EDD) déposé.",
@@ -1775,7 +1747,6 @@
       "sharesField": "Tantièmes de référence (par lot)",
       "history": "Historique",
       "historyEmpty": "Aucun document EDD dans l'historique.",
-      "download": "Télécharger",
       "downloadError": "Impossible de télécharger le document EDD.",
       "discrepancy": {
         "kind": {
@@ -1936,7 +1907,6 @@
     "subtitleStep2": "Informations de base sur l'immeuble. Tout peut être modifié ultérieurement.",
     "lastName": "Nom de famille",
     "lastNamePlaceholder": "Dupont",
-    "firstName": "Prénom",
     "firstNamePlaceholder": "Marie",
     "passwordHint": "Minimum 8 caractères.",
     "passwordRuleLength": "Minimum 8 caractères",
@@ -1954,7 +1924,6 @@
     "sharesTotalHint": "Base de répartition définie dans le règlement de copropriété (ex. 1 000 ou 10 000). Peut être modifiée dans les paramètres.",
     "sharesTotalTooltipLabel": "En savoir plus sur les tantièmes",
     "next": "Continuer",
-    "back": "Retour",
     "submit": "Créer mon instance",
     "submitting": "Initialisation en cours…",
     "alreadyInitTitle": "Instance déjà configurée",
@@ -1968,14 +1937,11 @@
     "searchPlaceholder": "Rechercher par nom, domaine, email…",
     "noContractors": "Aucun prestataire enregistré",
     "noResults": "Aucun résultat",
-    "name": "Nom",
     "namePlaceholder": "Nom de l'entreprise ou de l'intervenant",
     "nameRequired": "Le nom est obligatoire",
     "domain": "Domaine",
     "email": "Email",
     "emailPlaceholder": "contact{'@'}entreprise.fr",
-    "phone": "Téléphone",
-    "phonePlaceholder": "06 00 00 00 00",
     "deleteTitle": "Supprimer le prestataire",
     "deleteConfirm": "Supprimer définitivement « {name} » ? Cette action est irréversible.",
     "deleteSuccess": "Prestataire supprimé",
