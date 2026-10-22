@@ -91,7 +91,7 @@ async function handleSubmit() {
       <CFormInput
         v-if="user?.email && !needsEmail"
         :model-value="user.email"
-        :label="t('residents.inviteEmail')"
+        :label="t('common.email')"
         type="email"
         disabled
       />
@@ -99,7 +99,7 @@ async function handleSubmit() {
         v-else
         v-model="form.email"
         type="email"
-        :label="t('residents.inviteEmail')"
+        :label="t('common.email')"
         placeholder="prenom.nom@exemple.fr"
         autocomplete="email"
         required

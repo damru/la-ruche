@@ -95,7 +95,7 @@ async function handleSubmit() {
       <CFormInput
         v-model="form.email"
         type="email"
-        :label="t('residents.inviteEmail')"
+        :label="t('common.email')"
         placeholder="prenom.nom@exemple.fr"
         autocomplete="email"
         required

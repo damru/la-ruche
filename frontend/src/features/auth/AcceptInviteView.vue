@@ -132,7 +132,7 @@ async function handleSubmit() {
             <CFormInput
               id="first-name"
               v-model="form.first_name"
-              :label="t('onboarding.firstName')"
+              :label="t('common.firstName')"
               placeholder="Marie"
               autocomplete="given-name"
               :required="true"

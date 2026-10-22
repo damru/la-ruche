@@ -104,7 +104,7 @@ const domainOptions = computed(() =>
 
 // ── Table columns (list view) ─────────────────────────────────────
 const contractorColumns = computed<Column<Contractor>[]>(() => [
-  { key: 'name', label: t('contractors.name') },
+  { key: 'name', label: t('common.name') },
   { key: 'domains', label: t('contractors.domainsLabel') },
   { key: 'email', label: t('common.email') },
   { key: 'phone', label: t('common.phone') },

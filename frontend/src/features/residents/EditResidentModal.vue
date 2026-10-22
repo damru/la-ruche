@@ -80,7 +80,7 @@ async function handleSubmit() {
       <CFormRow :cols="2">
         <CFormInput
           v-model="form.first_name"
-          :label="t('onboarding.firstName')"
+          :label="t('common.firstName')"
           autocomplete="given-name"
           required
           :disabled="loading"
