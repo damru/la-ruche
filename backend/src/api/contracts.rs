@@ -45,6 +45,14 @@ pub async fn list_vendors(
     ))
 }
 
+pub async fn list_types(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+) -> AppResult<Json<Vec<String>>> {
+    auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
+    Ok(Json(db::contract::contract_types(&state.pool).await?))
+}
+
 pub async fn list_all_reminders(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,

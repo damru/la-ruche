@@ -315,6 +315,8 @@ export const contractsApi = {
     api.get<VendorContract[]>('/contracts', { params: params ?? undefined }),
   vendors: () =>
     api.get<string[]>('/contracts/vendors'),
+  types: () =>
+    api.get<string[]>('/contracts/types'),
   get: (id: string) =>
     api.get<VendorContract>(`/contracts/${id}`),
   create: (data: Partial<VendorContract>) =>

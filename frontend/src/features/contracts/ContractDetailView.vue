@@ -75,7 +75,7 @@ async function loadData() {
   reminders.value = remindersRes.data
 }
 
-const { loading, error, reload } = usePageLoader(loadData, 'contracts.detail.loadError')
+const { loading, error, reload } = usePageLoader(loadData)
 onMounted(reload)
 
 function todayIso(): string {
@@ -145,6 +145,11 @@ function chainLabel(index: number): string {
     : t('contracts.chainAmendment', { index })
 }
 
+function reminderStatusLabel(status: string): string {
+  if (status === 'pending') return t('common.pending')
+  return t(`contracts.filters.reminderStatuses.${status}`)
+}
+
 async function downloadDocument(documentId: string) {
   try {
     const response = await documentsApi.getDownloadUrl(documentId)
@@ -161,7 +166,7 @@ async function activateContract() {
     await contractsApi.activate(contract.value.id)
     await reload()
   } catch (currentError: unknown) {
-    error.value = toErrorMessage(currentError, t('contracts.detail.activateError'))
+    error.value = toErrorMessage(currentError, t('contracts.activateError'))
   } finally {
     activating.value = false
   }
@@ -207,14 +212,14 @@ async function activateContract() {
         <CAlert
           v-if="currentStatus === 'draft'"
           variant="warning"
-          :title="t('contracts.detail.draftBanner')"
+          :title="t('contracts.draftBanner')"
         >
           <CBtn
             v-if="canManage"
             variant="primary"
             size="sm"
             :icon="CIconCheck"
-            :title="t('contracts.detail.activate')"
+            :title="t('contracts.activate')"
             :loading="activating"
             :disabled="activating"
             @click="activateContract"
@@ -313,7 +318,7 @@ async function activateContract() {
               v-if="contract.notice_days"
               class="detail-row"
             >
-              <span class="detail-label">{{ t('contracts.detail.noticeDays') }}</span>
+              <span class="detail-label">{{ t('contracts.noticePeriod') }}</span>
               <span>{{ contract.notice_days }}</span>
             </div>
           </div>
@@ -338,14 +343,14 @@ async function activateContract() {
         <!-- Amendment chain -->
         <CSectionHeader>
           <CHeading type="section">
-            {{ t('contracts.detail.amendments') }}
+            {{ t('contracts.amendments') }}
           </CHeading>
         </CSectionHeader>
         <div
           v-if="amendmentChain.length === 0"
           class="py-4 text-center text-md text-on-surface-variant"
         >
-          {{ t('contracts.detail.amendmentsEmpty') }}
+          {{ t('contracts.historyEmpty') }}
         </div>
         <div
           v-else
@@ -379,7 +384,7 @@ async function activateContract() {
         <!-- Linked documents -->
         <CSectionHeader>
           <CHeading type="section">
-            {{ t('contracts.detail.documents') }}
+            {{ t('contracts.documents.titleInline') }}
           </CHeading>
           <template #actions>
             <CBtn
@@ -394,13 +399,13 @@ async function activateContract() {
         </CSectionHeader>
         <CCard>
           <p class="body-xs text-on-surface-variant contracts-documents-hint">
-            {{ t('contracts.detail.documentsHint') }}
+            {{ t('contracts.documents.hint') }}
           </p>
           <div
             v-if="documents.length === 0"
             class="py-4 text-center text-md text-on-surface-variant"
           >
-            {{ t('contracts.detail.documentsEmpty') }}
+            {{ t('contracts.documents.empty') }}
           </div>
           <div
             v-else
@@ -436,14 +441,14 @@ async function activateContract() {
         <!-- Reminders -->
         <CSectionHeader>
           <CHeading type="section">
-            {{ t('contracts.detail.reminders') }}
+            {{ t('contracts.remindersTitle') }}
           </CHeading>
         </CSectionHeader>
         <div
           v-if="reminders.length === 0"
           class="py-4 text-center text-md text-on-surface-variant"
         >
-          {{ t('contracts.detail.remindersEmpty') }}
+          {{ t('contracts.remindersEmpty') }}
         </div>
         <div
           v-else
@@ -463,7 +468,7 @@ async function activateContract() {
               :variant="reminder.status === 'acknowledged' ? 'valid' : 'pending'"
               dot
             >
-              {{ t(`contracts.filters.reminderStatuses.${reminder.status}`) }}
+              {{ reminderStatusLabel(reminder.status) }}
             </CBadge>
           </CCard>
         </div>

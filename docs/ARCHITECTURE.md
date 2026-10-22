@@ -78,7 +78,7 @@ references:
 | AG | `general_meeting`, `general_meeting_document`, `general_meeting_attendance`, `resolution`, `vote` |
 | Budget | `budget`, `budget_line`, `levy_call`, `works_fund` — champ `category` sur `levy_call` **prévu** ; `budget.parent_budget_id` ; `budget_line.valid_from` / `valid_to` / `rectificatif_version` / `version` |
 | Documents | `document`, `document_event` |
-| Contrats | `vendor_contract`, `contract_document`, `contract_reminder` — liste filtrable côté serveur : `GET /contracts?status=&contract_type=&vendor=` (EP-006-S06) ; prestataires distincts : `GET /contracts/vendors` |
+| Contrats | `vendor_contract`, `contract_document`, `contract_reminder` |
 | Prestataires | `contractor` |
 | Tâches | `task` (`contractor_id` FK → `contractor`, `contractor_name` texte libre, `vendor_token` ephemeral), `task_document`, `vendor_submission`, `vendor_submission_document` |
 | Sinistres | `claim`, `claim_document` |

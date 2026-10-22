@@ -45,7 +45,7 @@ pub struct CreateVendorContractInput {
     pub notice_days: Option<i32>,
 }
 
-/// Optional server-side filters for the contract list (EP-006-S06).
+/// Optional server-side filters for the contract list.
 /// `status` uses the raw enum values: draft|active|terminated|expired.
 #[derive(Debug, Default, Clone)]
 pub struct ListContractsFilter {
@@ -78,8 +78,8 @@ const CONTRACT_TYPES: [&str; 8] = [
 ];
 
 /// Validates raw filter values against the `contract_status` / `contract_type`
-/// enum domains (EP-006-S06): invalid values are rejected with a validation
-/// error instead of leaking a SQL cast failure.
+/// enum domains: invalid values are rejected with a validation error instead
+/// of leaking a SQL cast failure.
 pub fn validate_list_filter(filter: &ListContractsFilter) -> AppResult<()> {
     if let Some(status) = &filter.status
         && !CONTRACT_STATUSES.contains(&status.as_str())
@@ -137,7 +137,7 @@ pub async fn list(
 }
 
 /// Distinct vendor names for the building's contracts, alphabetically
-/// ordered — feeds the vendor filter select (EP-006-S06).
+/// ordered — feeds the vendor filter select.
 pub async fn vendor_names(pool: &PgPool, building_id: Uuid) -> AppResult<Vec<String>> {
     Ok(sqlx::query_scalar(
         r#"SELECT DISTINCT vendor_name
@@ -146,6 +146,16 @@ pub async fn vendor_names(pool: &PgPool, building_id: Uuid) -> AppResult<Vec<Str
            ORDER BY vendor_name"#,
     )
     .bind(building_id)
+    .fetch_all(pool)
+    .await?)
+}
+
+/// All values of the `contract_type` enum, in definition order — the database
+/// is the source of truth for the filter select.
+pub async fn contract_types(pool: &PgPool) -> AppResult<Vec<String>> {
+    Ok(sqlx::query_scalar(
+        r#"SELECT unnest(enum_range(NULL::contract_type))::text AS contract_type"#,
+    )
     .fetch_all(pool)
     .await?)
 }

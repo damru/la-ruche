@@ -44,17 +44,6 @@ import TerminateContractModal from '@/features/contracts/TerminateContractModal.
 import { useRole } from '@/composables/useRole'
 import type { ContractReminder, ContractStatus, ContractType, Document, VendorContract } from '@/types/domain'
 
-const CONTRACT_TYPES: ContractType[] = [
-  'maintenance',
-  'insurance',
-  'service',
-  'energy',
-  'water',
-  'cleaning',
-  'green_spaces',
-  'other',
-]
-
 interface ContractReminderView extends ContractReminder {
   targetDate: string
   urgency: 'high' | 'medium' | 'low'
@@ -71,6 +60,7 @@ const search = ref('')
 const typeFilter = ref('')
 const vendorFilter = ref('')
 const viewMode = ref<'cards' | 'table'>('cards')
+const typeOptions = ref<string[]>([])
 const vendorOptions = ref<string[]>([])
 const buildingName = ref('')
 const allContracts = ref<VendorContract[]>([])
@@ -85,7 +75,7 @@ const loadingContractDocuments = ref(false)
 const canManage = computed(() => hasAnyRole(['manager']))
 
 async function loadData() {
-  const [building, contractsResponse, remindersResponse, vendorsResponse] = await Promise.all([
+  const [building, contractsResponse, remindersResponse, vendorsResponse, typesResponse] = await Promise.all([
     useBuildingStore().fetch(),
     contractsApi.list({
       contract_type: typeFilter.value || undefined,
@@ -93,12 +83,14 @@ async function loadData() {
     }),
     contractsApi.listAllReminders(),
     contractsApi.vendors(),
+    contractsApi.types(),
   ])
 
   buildingName.value = building.name
   allContracts.value = contractsResponse.data
   allReminders.value = remindersResponse.data
   vendorOptions.value = vendorsResponse.data
+  typeOptions.value = typesResponse.data
 }
 
 const { loading, error, reload } = usePageLoader(loadData)
@@ -250,7 +242,7 @@ const contracts = computed(() => {
 
 const contractTypeOptions = computed(() => [
   { value: '', label: t('contracts.filters.typeAll') },
-  ...CONTRACT_TYPES.map(type => ({ value: type, label: t(`contracts.types.${type}`) })),
+  ...typeOptions.value.map(type => ({ value: type, label: t(`contracts.types.${type}`) })),
 ])
 
 const contractVendorOptions = computed(() => [
@@ -259,13 +251,13 @@ const contractVendorOptions = computed(() => [
 ])
 
 const contractTableColumns = computed<Column<VendorContract>[]>(() => [
-  { key: 'vendor_name', label: t('contracts.filters.vendorLabel') },
-  { key: 'subject', label: t('contracts.detail.subject') },
+  { key: 'vendor_name', label: t('contracts.form.vendorName') },
+  { key: 'subject', label: t('contracts.form.subject') },
   { key: 'contract_type', label: t('common.type') },
   { key: 'start_date', label: t('common.startDate') },
   { key: 'end_date', label: t('common.endDate') },
   { key: 'amount', label: t('common.amount'), align: 'right' },
-  { key: 'status', label: t('contracts.filters.statusLabel') },
+  { key: 'status', label: t('common.status') },
 ])
 
 function openContractDetail(contract: VendorContract) {
@@ -483,13 +475,13 @@ async function activateContract(contract: VendorContract) {
           <CFormSelect
             v-model="typeFilter"
             :options="contractTypeOptions"
-            :aria-label="t('contracts.filters.type')"
+            :aria-label="t('common.type')"
             class="contracts-toolbar__select"
           />
           <CFormSelect
             v-model="vendorFilter"
             :options="contractVendorOptions"
-            :aria-label="t('contracts.filters.vendor')"
+            :aria-label="t('contracts.form.vendorName')"
             class="contracts-toolbar__select"
           />
           <div
