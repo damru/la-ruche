@@ -163,8 +163,14 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
             get(assemblies::list_resolutions).post(assemblies::create_resolution),
         )
         .route(
+            "/meetings/{id}/resolutions/reorder",
+            post(assemblies::reorder_resolutions),
+        )
+        .route(
             "/meetings/{id}/resolutions/{rid}",
-            put(assemblies::update_resolution).patch(assemblies::patch_resolution),
+            put(assemblies::update_resolution)
+                .patch(assemblies::patch_resolution)
+                .delete(assemblies::delete_resolution),
         )
         .route(
             "/meetings/{id}/resolutions/{rid}/vote",

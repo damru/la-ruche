@@ -185,7 +185,8 @@ Follow these steps **in order** for any new feature or significant change:
 5. Implement backend changes (domain → db → api layers).
 6. Catalogue lookup (mandatory, before frontend work): grep `docs/DESIGN.md §3` and `frontend/src/components/` for any UI/UX pattern named in the spec. Record in the spec or PR which `C*` component(s) are reused, or justify why none fits (candidate for catalogue addition per the Frontend rule above).
 7. Implement frontend changes.
-8. Open a PR for the branch (`gh pr create`) and route it to Hopper for review (`kanban_request_review`). Pushing a branch without an open PR is not a completed task.
+8. Update delivery status before opening the PR: in `docs/EPICS.md`, mark the story ✅ (only when backend + frontend are both on the real API — see `.claude/rules/doc-epics.instructions.md`); if the story has a spec in `docs/specs/`, update its `Statut actuel` line to reflect the delivered state (e.g. `IMPLÉMENTÉ (backend + frontend)`).
+9. Open a PR for the branch (`gh pr create`) and route it to Hopper for review (`kanban_request_review`). Pushing a branch without an open PR is not a completed task.
 
 ---
 

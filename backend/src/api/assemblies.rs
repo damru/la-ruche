@@ -126,6 +126,12 @@ pub struct CreateResolutionInput {
     pub number: i32,
 }
 
+/// Ordered agenda ids; must be an exact permutation of the current draft resolutions.
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct ReorderResolutionsInput {
+    pub ordered_ids: Vec<Uuid>,
+}
+
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct VoteInput {
     pub unit_id: Uuid,
@@ -331,6 +337,44 @@ pub async fn update_resolution(
     Ok(Json(resolution))
 }
 
+/// Deletes a draft agenda resolution (404 once convoked).
+pub async fn delete_resolution(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+    Path((meeting_id, resolution_id)): Path<(Uuid, Uuid)>,
+) -> AppResult<StatusCode> {
+    auth.require_role(&Role::Manager)?;
+    let deleted = crate::db::assembly::delete_resolution(
+        &state.pool,
+        meeting_id,
+        resolution_id,
+        auth.building_id,
+    )
+    .await?;
+    if !deleted {
+        return Err(AppError::NotFound);
+    }
+    Ok(StatusCode::NO_CONTENT)
+}
+
+/// Reorders the draft agenda and renumbers it 1..N.
+pub async fn reorder_resolutions(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+    Json(input): Json<ReorderResolutionsInput>,
+) -> AppResult<Json<serde_json::Value>> {
+    auth.require_role(&Role::Manager)?;
+    let resolutions = crate::db::assembly::reorder_resolutions(
+        &state.pool,
+        id,
+        auth.building_id,
+        input.ordered_ids,
+    )
+    .await?;
+    Ok(Json(resolutions))
+}
+
 pub async fn vote(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,
@@ -532,7 +576,7 @@ pub async fn patch_resolution(
             .await?
             .ok_or(AppError::NotFound)?;
     crate::domain::immutability::assert_mutable(
-        &crate::domain::immutability::Entity::Resolution,
+        &crate::domain::immutability::Entity::ResolutionVote,
         &meeting_status,
     )?;
     let resolution = crate::db::assembly::patch_resolution_description(

@@ -1206,8 +1206,10 @@ pub async fn create_resolution(
     building_id: Uuid,
     input: CreateResolutionInput,
 ) -> AppResult<serde_json::Value> {
+    // Agenda frozen at convocation, except the second-vote passerelle
+    // (art. 25-1/26-1) which may still inscribe a resolution during the séance.
     let exists = sqlx::query_scalar!(
-        "SELECT EXISTS(SELECT 1 FROM general_meeting WHERE id = $1 AND building_id = $2 AND status IN ('draft','called','ongoing'))",
+        "SELECT EXISTS(SELECT 1 FROM general_meeting WHERE id = $1 AND building_id = $2 AND status IN ('draft','ongoing'))",
         meeting_id, building_id
     )
     .fetch_one(pool)
@@ -1242,6 +1244,130 @@ pub async fn create_resolution(
         "vote_type": row.vote_type,
         "status": row.status,
     }))
+}
+
+/// Deletes a draft resolution and its votes; the draft-only
+/// SQL filter yields no row outside `draft` → 404.
+pub async fn delete_resolution(
+    pool: &PgPool,
+    meeting_id: Uuid,
+    resolution_id: Uuid,
+    building_id: Uuid,
+) -> AppResult<bool> {
+    let mut tx = pool.begin().await?;
+
+    sqlx::query!(
+        r#"
+        DELETE FROM vote v
+        USING resolution r, general_meeting gm
+        WHERE v.resolution_id = r.id
+          AND r.id = $2
+          AND r.meeting_id = $1
+          AND gm.id = r.meeting_id
+          AND gm.building_id = $3
+          AND gm.status = 'draft'
+        "#,
+        meeting_id,
+        resolution_id,
+        building_id,
+    )
+    .execute(&mut *tx)
+    .await?;
+
+    let deleted = sqlx::query!(
+        r#"
+        DELETE FROM resolution r
+        WHERE r.id = $2
+          AND r.meeting_id = $1
+          AND EXISTS (
+              SELECT 1
+              FROM general_meeting gm
+              WHERE gm.id = r.meeting_id
+                AND gm.building_id = $3
+                AND gm.status = 'draft'
+          )
+        "#,
+        meeting_id,
+        resolution_id,
+        building_id,
+    )
+    .execute(&mut *tx)
+    .await?
+    .rows_affected();
+
+    tx.commit().await?;
+    Ok(deleted > 0)
+}
+
+/// Renumbers the draft agenda from an ordered id list; refuses non-draft
+/// meetings (409) and inexact permutations (400).
+pub async fn reorder_resolutions(
+    pool: &PgPool,
+    meeting_id: Uuid,
+    building_id: Uuid,
+    ordered_ids: Vec<Uuid>,
+) -> AppResult<serde_json::Value> {
+    let mut tx = pool.begin().await?;
+
+    let status = sqlx::query_scalar!(
+        "SELECT status::text FROM general_meeting WHERE id = $1 AND building_id = $2",
+        meeting_id,
+        building_id
+    )
+    .fetch_optional(&mut *tx)
+    .await?
+    .flatten()
+    .ok_or(AppError::NotFound)?;
+
+    if status != "draft" {
+        return Err(AppError::conflict_code(
+            "errors.meetings.not_in_draft_status",
+        ));
+    }
+
+    let existing: Vec<Uuid> = sqlx::query_scalar!(
+        "SELECT id FROM resolution WHERE meeting_id = $1",
+        meeting_id
+    )
+    .fetch_all(&mut *tx)
+    .await?;
+
+    let mut expected = existing.clone();
+    expected.sort_unstable();
+    let mut provided = ordered_ids.clone();
+    provided.sort_unstable();
+    if expected != provided {
+        return Err(AppError::bad_request_code(
+            "errors.resolutions.reorder_mismatch",
+        ));
+    }
+
+    // Two-phase renumber: first negate every number (UNIQUE (meeting_id,
+    // number) can never collide), then assign the final 1..N positions.
+    sqlx::query!(
+        "UPDATE resolution SET number = -number WHERE meeting_id = $1",
+        meeting_id
+    )
+    .execute(&mut *tx)
+    .await?;
+
+    sqlx::query!(
+        r#"
+        UPDATE resolution r
+        SET number = t.ord::int
+        FROM unnest($2::uuid[]) WITH ORDINALITY AS t(id, ord)
+        WHERE r.meeting_id = $1
+          AND r.id = t.id
+        "#,
+        meeting_id,
+        &ordered_ids,
+    )
+    .execute(&mut *tx)
+    .await?;
+
+    tx.commit().await?;
+
+    list_resolutions(pool, meeting_id, building_id).await
 }
 
 pub async fn update_resolution(

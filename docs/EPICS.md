@@ -182,7 +182,7 @@ Historique de propriété tracé avec dates de cession, invitation par lien toke
 
 **Statut :** en cours | **MVP :** oui | **Réf. PRD :** Fondations légales
 
-**État code actuel :** backend + frontend réels sur tout le cycle de vie (`draft → called → ongoing → closed`). Génération du projet de PV markdown server-side, upload du PV signé via flux pré-signé, traçabilité de la date de notification aux absents avec calcul du délai légal art. 42 loi 1965 (J+60). Calculs de majorité art. 24/25/25-1/26/26-1/unanimité couverts par tests canoniques.
+**État code actuel :** backend + frontend réels sur tout le cycle de vie (`draft → called → ongoing → closed`). Génération du projet de PV markdown server-side, upload du PV signé via flux pré-signé, traçabilité de la date de notification aux absents avec calcul du délai légal art. 42 loi 1965 (J+60). Calculs de majorité art. 24/25/25-1/26/26-1/unanimité couverts par tests canoniques. CRUD complet des résolutions (création, modification, suppression, réordonnancement) restreint au statut `draft`, patch de description en séance et passerelle art. 25-1/26-1 préservées (EP-003-S13).
 
 Cycle de vie complet d'une AG, résolutions typées par majorité, vote par lot avec procurations, calcul automatique des résultats, dépôt du PV signé.
 
@@ -200,7 +200,7 @@ Cycle de vie complet d'une AG, résolutions typées par majorité, vote par lot 
 * [EP-003-S10](docs/specs/EP-003-S10-spec.md) — Valider que le formulaire de vote par correspondance est réceptionné par le syndic **au plus tard J-3 francs** avant la date de l'AG (art. 9 bis décret 67-223, LEGIARTI000042076552) et annuler automatiquement un vote par correspondance si le copropriétaire est présent ou représenté en séance (art. 14-1 décret 67-223, LEGIARTI000042076720) (LEGAL.md §3.1)
 * [EP-003-S11](docs/specs/EP-003-S11-spec.md) — Enregistrer et traiter la demande de convocation d'AG formulée par un copropriétaire pour ses propres questions (art. 17-1 AA loi 1965, LEGIARTI000039301594) avec imputation des frais de convocation au copropriétaire demandeur (LEGAL.md §3.5)
 * [EP-003-S12](docs/specs/EP-003-S12-spec.md) — Modifier ou supprimer un brouillon d'AG : éditer les métadonnées (date, type, ordre du jour) et supprimer une AG tant qu'elle est en statut `draft` ; le passage à `called` bloque la modification et interdit la suppression (PRD US-AG-002)
-* [EP-003-S13](docs/specs/EP-003-S13-spec.md) — Gérer les résolutions d'une AG (CRUD + ordre + qualification de majorité) : créer, modifier, supprimer et réordonner les résolutions avec leur règle de majorité applicable (art. 24/25/25-1/26/26-1/unanimité) ; seul le statut `draft` autorise les modifications (PRD US-AG-003)
+* [EP-003-S13](docs/specs/EP-003-S13-spec.md) ✅ — Gérer les résolutions d'une AG (CRUD + ordre + qualification de majorité) : créer, modifier, supprimer et réordonner les résolutions avec leur règle de majorité applicable (art. 24/25/25-1/26/26-1/unanimité) ; seul le statut `draft` autorise les modifications (PRD US-AG-003)
 * [EP-003-S14](docs/specs/EP-003-S14-spec.md) — Consulter le dossier AG et les décisions votées (vue lecture résidents) : accès en lecture aux résolutions, résultats, convocation et PV pour les résidents selon leur rôle et la visibilité de l'AG (PRD US-AG-014)
 
 **Hors scope explicite (renvoyé à `EP-013` ou à des epics transverses) :**
