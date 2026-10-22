@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useFormatters } from '@/composables/useFormatters'
 import { usePageLoader, toErrorMessage } from '@/composables/usePageLoader'
@@ -37,12 +37,14 @@ import EditMeetingModal from './EditMeetingModal.vue'
 import AddResolutionModal from './AddResolutionModal.vue'
 import EditResolutionModal from './EditResolutionModal.vue'
 import DeleteResolutionModal from './DeleteResolutionModal.vue'
+import DeleteMeetingModal from './DeleteMeetingModal.vue'
 import Art24Modal from './Art24Modal.vue'
 import Art25Modal from './Art25Modal.vue'
 import MinutesModal from './MinutesModal.vue'
 import SignaturesModal from './SignaturesModal.vue'
 
 const route = useRoute()
+const router = useRouter()
 const { t } = useI18n()
 const { formatDate } = useFormatters()
 const auth = useAuthStore()
@@ -61,6 +63,7 @@ const attendance = ref<MeetingAttendance>({
 })
 
 const showEditMeetingModal = ref(false)
+const showDeleteMeetingModal = ref(false)
 const showAddResolutionModal = ref(false)
 const showDocumentModal = ref(false)
 const showAttendanceModal = ref(false)
@@ -416,6 +419,14 @@ function openEditMeetingModal() {
   showEditMeetingModal.value = true
 }
 
+function openDeleteMeetingModal() {
+  showDeleteMeetingModal.value = true
+}
+
+async function handleMeetingDeleted() {
+  await router.push({ name: 'assembly-list' })
+}
+
 function openResolutionModal() {
   showAddResolutionModal.value = true
 }
@@ -560,6 +571,13 @@ function openArt25Modal(resolution: Resolution) {
             :title="t('common.edit')"
             shrink="sm"
             @click="openEditMeetingModal"
+          />
+          <CBtn
+            variant="secondary"
+            size="sm"
+            :title="t('common.delete')"
+            shrink="sm"
+            @click="openDeleteMeetingModal"
           />
           <CBtn
             variant="primary"
@@ -1316,6 +1334,15 @@ function openArt25Modal(resolution: Resolution) {
       v-model:open="showEditMeetingModal"
       :meeting="meeting"
       @updated="reload"
+    />
+
+    <DeleteMeetingModal
+      v-if="meeting"
+      :open="showDeleteMeetingModal"
+      :meeting-id="meeting.id"
+      :meeting-label="`${typeLabel(meeting.meeting_type)} ${new Date(meeting.meeting_date).getFullYear()}`"
+      @update:open="showDeleteMeetingModal = $event"
+      @deleted="handleMeetingDeleted"
     />
 
     <AddResolutionModal
