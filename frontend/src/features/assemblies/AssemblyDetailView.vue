@@ -121,7 +121,6 @@ const showArt25Modal = ref(false)
 const art25SourceResolution = ref<Resolution | null>(null)
 
 const canManageResolutions = computed(() => auth.isManager && meeting.value?.status === 'draft')
-const canAddResolution = canManageResolutions
 const canManageVotes = computed(() => auth.isManager && ['ongoing'].includes(meeting.value?.status ?? ''))
 const canEditResolution = computed(() => auth.isManager && ['draft', 'ongoing'].includes(meeting.value?.status ?? ''))
 const canEditAttendance = computed(() => auth.isManager && meeting.value?.status !== 'closed')
@@ -500,6 +499,7 @@ function promptDeleteResolution(resolution: Resolution) {
 }
 
 const reordering = ref(false)
+const reorderFeedback = useFormFeedback()
 
 async function moveResolution(index: number, direction: -1 | 1) {
   const current = meeting.value
@@ -511,9 +511,12 @@ async function moveResolution(index: number, direction: -1 | 1) {
   if (!moved) return
   ordered.splice(target, 0, moved)
   reordering.value = true
+  reorderFeedback.reset()
   try {
     await meetingsApi.reorderResolutions(current.id, ordered.map(resolution => resolution.id))
     await reload()
+  } catch (err) {
+    reorderFeedback.setError(toErrorMessage(err))
   } finally {
     reordering.value = false
   }
@@ -794,7 +797,7 @@ function openArt25Modal(resolution: Resolution) {
                 {{ t('meetings.resolutionCount', resolutions.length) }}
               </p>
               <template
-                v-if="canAddResolution"
+                v-if="canManageResolutions"
                 #actions
               >
                 <CBtn
@@ -806,6 +809,12 @@ function openArt25Modal(resolution: Resolution) {
                 />
               </template>
             </CSectionHeader>
+
+            <CFormFeedback
+              v-if="reorderFeedback.status.value !== 'idle'"
+              :status="reorderFeedback.status.value"
+              :message="reorderFeedback.message.value"
+            />
 
             <div
               v-if="resolutions.length === 0"

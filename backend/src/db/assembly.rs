@@ -1351,20 +1351,19 @@ pub async fn reorder_resolutions(
     .execute(&mut *tx)
     .await?;
 
-    for (index, id) in ordered_ids.iter().enumerate() {
-        sqlx::query!(
-            r#"
-            UPDATE resolution
-            SET number = $3
-            WHERE id = $2 AND meeting_id = $1
-            "#,
-            meeting_id,
-            id,
-            (index as i32) + 1,
-        )
-        .execute(&mut *tx)
-        .await?;
-    }
+    sqlx::query!(
+        r#"
+        UPDATE resolution r
+        SET number = t.ord::int
+        FROM unnest($2::uuid[]) WITH ORDINALITY AS t(id, ord)
+        WHERE r.meeting_id = $1
+          AND r.id = t.id
+        "#,
+        meeting_id,
+        &ordered_ids,
+    )
+    .execute(&mut *tx)
+    .await?;
 
     tx.commit().await?;
 
