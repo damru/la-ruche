@@ -167,7 +167,6 @@ export const meetingsApi = {
     api.post<Meeting>('/meetings', data),
   update: (id: string, data: Partial<Meeting>) =>
     api.put<Meeting>(`/meetings/${id}`, data),
-  // EP-003-S12 — Suppression d'un brouillon d'AG (draft uniquement)
   delete: (id: string) =>
     api.delete(`/meetings/${id}`),
   // EP-003-S09 — channel et date d'envoi requis pour preuve d'envoi
