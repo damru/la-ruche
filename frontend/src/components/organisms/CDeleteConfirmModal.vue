@@ -1,18 +1,23 @@
 <script setup lang="ts">
+// Organism — CDeleteConfirmModal
+// Generic destructive-action confirmation modal following DDR-006:
+// success feedback + 3 s auto-close + error message from backend code.
+
 import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import CModal from '@/components/molecules/CModal.vue'
 import CFormActions from '@/components/molecules/CFormActions.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
-import { governanceApi } from '@/api'
 import { useFormFeedback } from '@/composables/useFormFeedback'
 import { useAutoClose } from '@/composables/useAutoClose'
 import { toErrorMessage } from '@/composables/usePageLoader'
-import type { GovernanceMandate } from '@/types/domain'
 
 const props = defineProps<{
   open: boolean
-  mandate: GovernanceMandate | null
+  title: string
+  message: string
+  successMessage: string
+  onDelete: () => Promise<void>
 }>()
 
 const emit = defineEmits<{
@@ -32,12 +37,11 @@ watch(() => props.open, (open) => {
 
 async function handleDelete() {
   if (feedback.status.value === 'success') { forceClose(); return }
-  if (!props.mandate) return
   deleting.value = true
   feedback.reset()
   try {
-    await governanceApi.delete(props.mandate.id)
-    feedback.setSuccess(t('registers.governance.deleteSuccess'))
+    await props.onDelete()
+    feedback.setSuccess(props.successMessage)
     emit('deleted')
     scheduleClose(() => { emit('update:open', false) })
   } catch (err) {
@@ -51,12 +55,12 @@ async function handleDelete() {
 <template>
   <CModal
     :open="open"
-    :title="t('registers.governance.deleteTitle')"
+    :title="title"
     size="sm"
     @update:open="$emit('update:open', $event)"
   >
     <p class="body-sm">
-      {{ t('registers.governance.deleteMessage', { name: mandate?.holder_name ?? '' }) }}
+      {{ message }}
     </p>
     <template #footer>
       <CFormActions
@@ -70,7 +74,7 @@ async function handleDelete() {
         />
         <CBtn
           variant="danger"
-          :title="t('common.deleteLabel')"
+          :title="t('common.delete')"
           :loading="deleting"
           :closing="feedback.status.value === 'success'"
           @click="handleDelete"

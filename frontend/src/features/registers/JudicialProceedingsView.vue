@@ -13,7 +13,7 @@ import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import CIconEdit from '@/components/atoms/CIconEdit.svg'
 import CIconTrash from '@/components/atoms/CIconTrash.svg'
 import JudicialProceedingFormModal from '@/features/registers/JudicialProceedingFormModal.vue'
-import JudicialProceedingDeleteModal from '@/features/registers/JudicialProceedingDeleteModal.vue'
+import CDeleteConfirmModal from '@/components/organisms/CDeleteConfirmModal.vue'
 import { judicialProceedingsApi } from '@/api'
 import { useBuildingStore } from '@/stores/building'
 import type { JudicialProceeding } from '@/types/domain'
@@ -210,9 +210,12 @@ function openDelete(p: JudicialProceeding) {
       @saved="reload"
     />
 
-    <JudicialProceedingDeleteModal
+    <CDeleteConfirmModal
       v-model:open="showDeleteModal"
-      :proceeding="deletingProceeding"
+      :title="t('registers.judicial.deleteTitle')"
+      :message="t('registers.judicial.deleteMessage', { subject: deletingProceeding?.subject ?? '' })"
+      :success-message="t('registers.judicial.deleteSuccess')"
+      :on-delete="() => judicialProceedingsApi.delete(deletingProceeding!.id).then(() => {})"
       @deleted="reload"
     />
   </div>
