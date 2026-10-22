@@ -125,7 +125,7 @@ async function handleSubmit() {
           <strong>{{ impactedLotsCount }}</strong>
         </div>
         <div class="flex flex-col gap-1">
-          <span class="text-2xs opacity-80">{{ t('budget.generateSummaryAlreadyCalledLabel') }}</span>
+          <span class="text-2xs opacity-80">{{ t('budget.worksFundCalled') }}</span>
           <strong class="font-mono tabular-nums">{{ formatCurrency(alreadyCalledDisplayAmount) }}</strong>
         </div>
         <div class="flex flex-col gap-1">

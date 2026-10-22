@@ -75,7 +75,7 @@ async function handleConfirm() {
         />
         <CBtn
           variant="primary"
-          :title="t('meetings.documents.detachConfirm')"
+          :title="t('common.remove')"
           :loading="deleting"
           :closing="feedback.status.value === 'success'"
           @click="handleConfirm"

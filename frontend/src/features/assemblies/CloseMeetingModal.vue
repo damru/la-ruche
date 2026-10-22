@@ -68,7 +68,7 @@ async function handleConfirm() {
         />
         <CBtn
           variant="primary"
-          :title="t('meetings.closeMeetingConfirm')"
+          :title="t('budget.closeExerciseConfirm')"
           :loading="closing"
           :closing="feedback.status.value === 'success'"
           @click="handleConfirm"

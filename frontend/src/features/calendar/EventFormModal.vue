@@ -147,18 +147,18 @@ async function handleSubmit() {
     >
       <CFormInput
         v-model="form.title"
-        :label="t('calendar.event.fields.title')"
+        :label="t('common.title')"
         required
       />
       <CFormTextarea
         v-model="form.description"
-        :label="t('calendar.event.fields.description')"
+        :label="t('common.description')"
         :rows="2"
       />
       <CFormRow :cols="2">
         <CFormInput
           v-model="form.event_date"
-          :label="t('calendar.event.fields.date')"
+          :label="t('common.date')"
           type="date"
           required
         />
@@ -174,7 +174,7 @@ async function handleSubmit() {
         :options="categoryOptions"
       />
       <div class="flex flex-col gap-1">
-        <label class="text-sm font-medium text-on-surface-variant">{{ t('calendar.event.fields.documents') }}</label>
+        <label class="text-sm font-medium text-on-surface-variant">{{ t('common.attachments') }}</label>
         <CFileDropzone
           v-model:files="selectedDocuments"
           :hint="t('calendar.event.documentHint')"

@@ -67,7 +67,7 @@ async function handleSubmit() {
 <template>
   <CModal
     :open="open"
-    :title="t('meetings.minutes.modal_title')"
+    :title="t('meetings.minutes.upload_signed')"
     size="md"
     @update:open="$emit('update:open', $event)"
   >

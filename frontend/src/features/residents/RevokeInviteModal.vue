@@ -69,7 +69,7 @@ async function confirmRevokeInvite() {
         />
         <CBtn
           variant="danger"
-          :title="t('residents.revokeInvite')"
+          :title="t('residents.confirmRevokeTitle')"
           :loading="revokingInvite"
           :closing="revokeFeedback.status.value === 'success'"
           @click="confirmRevokeInvite"

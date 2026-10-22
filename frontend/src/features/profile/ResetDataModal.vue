@@ -66,7 +66,7 @@ async function confirm() {
         />
         <CBtn
           variant="danger"
-          :title="t('settings.account.resetDataConfirm')"
+          :title="t('common.delete')"
           :loading="loading"
           :disabled="loading"
           @click="confirm"

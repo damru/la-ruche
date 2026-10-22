@@ -80,7 +80,7 @@ async function handleSubmit() {
 <template>
   <CModal
     :open="open"
-    :title="t('meetings.convocation.modal_title')"
+    :title="t('meetings.call')"
     size="md"
     @update:open="$emit('update:open', $event)"
   >

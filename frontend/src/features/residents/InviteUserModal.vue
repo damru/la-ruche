@@ -84,7 +84,7 @@ async function handleSubmit() {
 <template>
   <CModal
     :open="open"
-    :title="t('residents.inviteTitle')"
+    :title="t('residents.invite')"
     :closable="!loading"
     @update:open="$emit('update:open', $event)"
   >
@@ -95,7 +95,7 @@ async function handleSubmit() {
       <CFormInput
         v-model="form.email"
         type="email"
-        :label="t('residents.inviteEmail')"
+        :label="t('common.email')"
         placeholder="prenom.nom@exemple.fr"
         autocomplete="email"
         required
@@ -103,7 +103,7 @@ async function handleSubmit() {
       />
       <CFormSelect
         v-model="form.role"
-        :label="t('residents.inviteRole')"
+        :label="t('common.role')"
         :options="roleOptions"
         required
         :disabled="loading || !!inviteLink"

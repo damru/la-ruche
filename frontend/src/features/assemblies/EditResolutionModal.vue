@@ -69,7 +69,7 @@ async function handleSubmit() {
 <template>
   <CModal
     :open="open"
-    :title="t('meetings.editResolution')"
+    :title="t('common.edit')"
     @update:open="$emit('update:open', $event)"
   >
     <CForm
@@ -87,7 +87,7 @@ async function handleSubmit() {
       </template>
       <CFormTextarea
         v-model="form.description"
-        :label="t('meetings.resolutionDescription')"
+        :label="t('common.description')"
         :placeholder="t('meetings.resolutionDescriptionPlaceholder')"
       />
     </CForm>

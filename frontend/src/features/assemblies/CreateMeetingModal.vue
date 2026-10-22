@@ -110,7 +110,7 @@ async function handleSubmit() {
     >
       <CFormSelect
         v-model="form.meeting_type"
-        :label="t('meetings.infoFields.type')"
+        :label="t('common.type')"
         :options="[
           { value: 'annual', label: t('meetings.types.annual') },
           { value: 'extraordinary', label: t('meetings.types.extraordinary') },

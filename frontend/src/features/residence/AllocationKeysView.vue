@@ -40,10 +40,10 @@ type KeyBalance = { shares_sum: number; shares_total: number; delta: number }
 const keyBalance = ref<Record<string, KeyBalance>>({})
 
 const columns = computed(() => [
-  { key: 'name', label: t('common.name') },
-  { key: 'description', label: t('settings.keys.descriptionLabel') },
+  { key: 'name', label: t('lastName') },
+  { key: 'description', label: t('common.description') },
   { key: 'shares', label: t('units.shares'), numeric: true },
-  { key: 'balance', label: t('common.status') },
+  { key: 'balance', label: t('status') },
   { key: 'actions', label: '', width: '1%' },
 ])
 
@@ -114,7 +114,7 @@ onMounted(reload)
         <div class="topbar-breadcrumb">
           <span>{{ t('nav.groups.residence') }}</span>
           <CIconChevronRight />
-          <span>{{ t('nav.residence-keys') }}</span>
+          <span>{{ t('allocationKeys.title') }}</span>
         </div>
       </template>
       <template #right>
@@ -229,8 +229,8 @@ onMounted(reload)
                       <CBtn
                         variant="icon"
                         :icon="CIconClock"
-                        :title="t('settings.keys.history')"
-                        :aria-label="t('settings.keys.history')"
+                        :title="t('common.history')"
+                        :aria-label="t('common.history')"
                         @click="openAuditModal(row)"
                       />
                       <CBtn

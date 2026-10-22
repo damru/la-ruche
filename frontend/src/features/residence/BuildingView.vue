@@ -58,7 +58,7 @@ onMounted(reload)
           <CIconChevronRight />
           <span>{{ t('nav.groups.residence') }}</span>
           <CIconChevronRight />
-          <span>{{ t('nav.residence-info') }}</span>
+          <span>{{ t('common.informations') }}</span>
         </div>
       </template>
     </CTopbar>
@@ -76,7 +76,7 @@ onMounted(reload)
             {{ t('page.eyebrows.building') }}
           </CEyebrow>
           <CHeading type="header">
-            {{ t('nav.residence-info') }}
+            {{ t('common.informations') }}
           </CHeading>
           <p
             class="body-md"
@@ -109,16 +109,16 @@ onMounted(reload)
             />
             <CFormInput
               v-model="form.address_line1"
-              :label="t('addressAutocomplete.addressLine1')"
+              :label="t('common.address')"
               class="flex flex-col gap-1 col-span-full"
             />
             <CFormInput
               v-model="form.postal_code"
-              :label="t('addressAutocomplete.postalCode')"
+              :label="t('common.postalCode')"
             />
             <CFormInput
               v-model="form.city"
-              :label="t('addressAutocomplete.city')"
+              :label="t('common.city')"
             />
             <CFormInput
               v-model="form.shares_total"

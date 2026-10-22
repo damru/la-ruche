@@ -106,7 +106,7 @@ const timelineEvents = computed((): TimelineEvent[] => {
   if ((t_.contractor_id && contractor.value) || t_.contractor_name) {
     events.push({
       key: 'assigned_contractor',
-      label: t('tasks.lifecycle.assignedContractor'),
+      label: t('tasks.contractorLabel'),
       detail: contractor.value?.name ?? t_.contractor_name,
       icon: CIconWrench,
       variant: 'warning',
@@ -126,7 +126,7 @@ const timelineEvents = computed((): TimelineEvent[] => {
       key: 'vendor_link',
       date: t_.token_expires_at,
       label: t('tasks.lifecycle.vendorLink'),
-      detail: t('tasks.lifecycle.vendorLinkExpiry', { date: formatDate(t_.token_expires_at) }),
+      detail: t('tasks.tokenExpires', { date: formatDate(t_.token_expires_at) }),
       icon: CIconLink,
       variant: 'secondary',
     })
@@ -189,7 +189,7 @@ function dotClass(variant?: TimelineEvent['variant']): string {
             :to="{ name: 'tasks' }"
             class="topbar-breadcrumb-link"
           >
-            {{ t('tasks.title') }}
+            {{ t('nav.tasks') }}
           </RouterLink>
           <CIconChevronRight />
           <span>{{ task?.title ?? '…' }}</span>
@@ -226,7 +226,7 @@ function dotClass(variant?: TimelineEvent['variant']): string {
             >
               {{ t(`tasks.statuses.${task.status}`) }}
             </CBadge>
-            {{ t('page.eyebrows.taskDetail') }}
+            {{ t('tasks.lifecycle.title') }}
           </CEyebrow>
           <CHeading
             type="header"

@@ -151,7 +151,7 @@ async function saveUnit() {
         />
         <CFormInput
           v-model="editingUnit.block"
-          :label="t('residents.block')"
+          :label="t('settings.tabs.building')"
         />
         <CFormInput
           v-model="editingUnit.staircase"
@@ -163,7 +163,7 @@ async function saveUnit() {
         />
         <CFormTextarea
           v-model="editingUnit.description"
-          :label="t('residents.description')"
+          :label="t('common.description')"
           class="flex flex-col gap-1 col-span-full"
         />
       </CFormRow>

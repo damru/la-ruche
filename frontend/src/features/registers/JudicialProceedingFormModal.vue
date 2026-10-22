@@ -159,7 +159,7 @@ async function save() {
       <CFormSelect
         v-if="isEdit"
         v-model="form.status"
-        :label="t('common.status')"
+        :label="t('status')"
         :options="statusOptions"
         required
       />

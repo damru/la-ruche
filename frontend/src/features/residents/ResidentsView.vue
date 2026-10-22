@@ -136,16 +136,16 @@ const unitColumns = computed(() => [
   { key: 'location', label: t('residents.location') },
   { key: 'shares', label: t('units.shares'), numeric: true },
   { key: 'owner', label: t('residents.currentOwner') },
-  { key: 'status', label: t('common.status') },
+  { key: 'status', label: t('status') },
   { key: 'actions', label: '', width: '1%' },
 ])
 
 const userColumns = computed(() => [
-  { key: 'name', label: t('common.name') },
+  { key: 'name', label: t('lastName') },
   { key: 'email', label: t('common.email') },
   { key: 'phone', label: t('common.phone') },
   { key: 'roles', label: t('common.roles') },
-  { key: 'status', label: t('common.status') },
+  { key: 'status', label: t('status') },
   { key: 'actions', label: '', width: '1%' },
 ])
 
@@ -321,7 +321,7 @@ function openTransferModal(unit: Unit) {
               </template>
               <template #cell-status="{ row }">
                 <CBadge :variant="row.active ? 'open' : 'closed'">
-                  {{ row.active ? t('common.active') : t('common.inactive') }}
+                  {{ row.active ? t('active') : t('common.inactive') }}
                 </CBadge>
               </template>
               <template #cell-actions="{ row }">
@@ -350,8 +350,8 @@ function openTransferModal(unit: Unit) {
                   <CBtn
                     v-if="row.active"
                     variant="icon"
-                    :title="t('residents.archive')"
-                    :aria-label="t('residents.archive')"
+                    :title="t('common.archiveLabel')"
+                    :aria-label="t('common.archiveLabel')"
                     :icon="CIconArchive"
                     class="tone--err"
                     @click="openArchiveModal(row)"
@@ -436,7 +436,7 @@ function openTransferModal(unit: Unit) {
                   v-else
                   variant="open"
                 >
-                  {{ t('common.active') }}
+                  {{ t('active') }}
                 </CBadge>
               </template>
               <template #cell-actions="{ row }">
@@ -452,8 +452,8 @@ function openTransferModal(unit: Unit) {
                   <CBtn
                     v-if="row.status === 'pending_invite'"
                     variant="icon"
-                    :title="t('residents.revokeInvite')"
-                    :aria-label="t('residents.revokeInvite')"
+                    :title="t('residents.confirmRevokeTitle')"
+                    :aria-label="t('residents.confirmRevokeTitle')"
                     :icon="CIconTrash"
                     class="tone--err"
                     @click="openRevokeModal(row)"

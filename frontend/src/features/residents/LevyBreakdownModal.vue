@@ -34,7 +34,7 @@ const { formatCurrency } = useFormatters()
 
 const breakdownColumns = computed<Column<Record<string, unknown>>[]>(() => [
   { key: 'line_label', label: t('budget.lineLabel') },
-  { key: 'key_name', label: t('settings.keys.title') },
+  { key: 'key_name', label: t('allocationKeys.title') },
   { key: 'shares', label: t('units.shares'), align: 'right', numeric: true },
   { key: 'amount', label: t('common.amount'), align: 'right', numeric: true },
 ])
@@ -61,7 +61,7 @@ const breakdownTotal = computed(() =>
     :open="open"
     :title="levy
       ? t('units.charges.detailTitle', { label: levy.call_label })
-      : t('units.charges.detailAction')"
+      : t('common.details')"
     size="lg"
     @update:open="emit('update:open', $event)"
   >

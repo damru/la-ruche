@@ -48,7 +48,7 @@ async function handleClose() {
 <template>
   <CModal
     :open="open"
-    :title="t('budget.closeExerciseTitle')"
+    :title="t('budget.closeExercise')"
     @update:open="$emit('update:open', $event)"
   >
     <p class="body-sm">

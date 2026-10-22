@@ -55,7 +55,7 @@ async function downloadPdf() {
   <CModal
     :open="open"
     size="lg"
-    :title="t('registers.etatDate.documentTitle')"
+    :title="t('registers.etatDate.title')"
     @update:open="emit('update:open', $event)"
   >
     <template v-if="props.request?.snapshot">
@@ -136,7 +136,7 @@ async function downloadPdf() {
 
         <section>
           <h3 class="title-md font-semibold mb-2">
-            {{ t('registers.etatDate.procedures') }}
+            {{ t('registers.preEtatDate.procedures') }}
           </h3>
           <p
             v-if="props.request.snapshot.procedures.length === 0"

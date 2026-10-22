@@ -51,7 +51,7 @@ async function handleSubmit() {
 <template>
   <CModal
     :open="open"
-    :title="t('tasks.confirmReopenTitle')"
+    :title="t('tasks.reopenTask')"
     size="sm"
     @update:open="$emit('update:open', $event)"
   >

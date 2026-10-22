@@ -248,11 +248,11 @@ const todayStr = computed(() =>
             </CHeading>
             <CMetaLine>
               <CMetaItem variant="sub">
-                {{ t('dashboard.lotsMeta', stats?.nb_lots ?? 0) }}
+                {{ t('residents.header.unitsCount', stats?.nb_lots ?? 0) }}
               </CMetaItem>
               <CSeparator />
               <CMetaItem variant="sub">
-                {{ t('dashboard.fiscalYearMeta', { year: new Date().getFullYear() }) }}
+                {{ t('budget.fiscalYear', { year: new Date().getFullYear() }) }}
               </CMetaItem>
             </CMetaLine>
           </header>
@@ -334,7 +334,7 @@ const todayStr = computed(() =>
             v-if="canViewAccounting"
             :label="t('dashboard.recoveryRate')"
             :value="String(overdueLevies.length)"
-            :delta="overdueLevies.length ? t('dashboard.overdueAmount', { amount: formatCurrency(overdueAmount) }) : t('dashboard.unitsUpToDate')"
+            :delta="overdueLevies.length ? t('budget.pendingAmount', { amount: formatCurrency(overdueAmount) }) : t('dashboard.unitsUpToDate')"
             :delta-variant="overdueLevies.length ? 'down' : 'up'"
             :tone="overdueLevies.length ? 'err' : 'valid'"
           >
@@ -354,7 +354,7 @@ const todayStr = computed(() =>
 
           <CKpiCard
             v-if="canViewBudget"
-            :label="t('dashboard.worksFundLabel')"
+            :label="t('budget.worksFund')"
             :value="formatCurrency(stats?.works_fund_available ?? 0)"
             :delta="stats?.works_fund_pct ? t('dashboard.worksFundPct', { pct: 100 - stats.works_fund_pct }) : ''"
             delta-variant="neutral"
@@ -379,7 +379,7 @@ const todayStr = computed(() =>
             :label="t('nav.myCharges')"
             :value="myOverdueLevies.length ? String(myOverdueLevies.length) : String(myUnpaidLevies.length)"
             :delta="myOverdueLevies.length
-              ? t('dashboard.overdueAmount', { amount: formatCurrency(myOverdueAmount) })
+              ? t('budget.pendingAmount', { amount: formatCurrency(myOverdueAmount) })
               : (myNextDueLevy ? `${t('common.dueDate')} : ${formatDate(myNextDueLevy.due_date)}` : t('dashboard.unitsUpToDate'))"
             :delta-variant="myOverdueLevies.length ? 'down' : 'neutral'"
             :tone="myOverdueLevies.length ? 'err' : undefined"
@@ -407,7 +407,7 @@ const todayStr = computed(() =>
                 </p>
                 <template #actions>
                   <CSectionLink to="/budget">
-                    {{ t('dashboard.detailLink') }}
+                    {{ t('common.details') }}
                   </CSectionLink>
                 </template>
               </CSectionHeader>
@@ -447,14 +447,14 @@ const todayStr = computed(() =>
               <CCard>
                 <CSectionHeader>
                   <CHeading type="card">
-                    {{ t('dashboard.reportsTitle') }}
+                    {{ t('nav.reports') }}
                   </CHeading>
                   <p class="body-sm text-on-surface-variant">
                     {{ t('dashboard.openCount', { count: openReports.length }) }}
                   </p>
                   <template #actions>
                     <CSectionLink to="/reports">
-                      {{ t('dashboard.seeReports') }}
+                      {{ t('common.see') }}
                     </CSectionLink>
                   </template>
                 </CSectionHeader>
@@ -507,7 +507,7 @@ const todayStr = computed(() =>
                   </CHeading>
                   <template #actions>
                     <CSectionLink to="/consultations">
-                      {{ t('dashboard.seeConsultations') }}
+                      {{ t('common.see') }}
                     </CSectionLink>
                   </template>
                 </CSectionHeader>
@@ -588,7 +588,7 @@ const todayStr = computed(() =>
                 </p>
                 <template #actions>
                   <CSectionLink to="/contracts">
-                    {{ t('dashboard.contracts') }}
+                    {{ t('nav.contracts') }}
                   </CSectionLink>
                 </template>
               </CSectionHeader>
@@ -645,7 +645,7 @@ const todayStr = computed(() =>
                 </p>
                 <template #actions>
                   <CSectionLink to="/tasks">
-                    {{ t('dashboard.allTasks') }}
+                    {{ t('common.allFem') }}
                   </CSectionLink>
                 </template>
               </CSectionHeader>
@@ -688,7 +688,7 @@ const todayStr = computed(() =>
                     size="sm"
                     style="width:100%;justify-content:center"
                     :icon="CIconPlus"
-                    :title="t('dashboard.newTask')"
+                    :title="t('tasks.create')"
                   />
                 </RouterLink>
               </div>
@@ -711,7 +711,7 @@ const todayStr = computed(() =>
                   <p class="res-stat-val">
                     {{ stats?.nb_lots }}
                   </p><p class="res-stat-label">
-                    {{ t('dashboard.lotsLabel') }}
+                    {{ t('registry.lots') }}
                   </p>
                 </div>
                 <div class="res-stat">
@@ -732,7 +732,7 @@ const todayStr = computed(() =>
                   <p class="res-stat-val">
                     {{ overdueLevies.length }}
                   </p><p class="res-stat-label">
-                    {{ t('dashboard.lateLabel') }}
+                    {{ t('common.overdue') }}
                   </p>
                 </div>
               </div>

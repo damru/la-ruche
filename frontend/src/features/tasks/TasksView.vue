@@ -314,7 +314,7 @@ async function downloadTaskDocument(documentId: string) {
         <div class="topbar-breadcrumb">
           {{ buildingName }}
           <CIconChevronRight />
-          <span>{{ t('tasks.title') }}</span>
+          <span>{{ t('nav.tasks') }}</span>
         </div>
       </template>
       <template #right>
@@ -322,7 +322,7 @@ async function downloadTaskDocument(documentId: string) {
           variant="primary"
           size="sm"
           :icon="CIconPlus"
-          :title="t('tasks.newTask')"
+          :title="t('tasks.create')"
           @click="openCreateModal"
         />
       </template>
@@ -341,7 +341,7 @@ async function downloadTaskDocument(documentId: string) {
             {{ t('page.eyebrows.tasks') }}
           </CEyebrow>
           <CHeading type="header">
-            {{ t('tasks.title') }}
+            {{ t('nav.tasks') }}
           </CHeading>
           <CMetaItem variant="sub">
             {{ t('tasks.header.activeSummary', { count: activeCount }) }}
@@ -360,7 +360,7 @@ async function downloadTaskDocument(documentId: string) {
           v-model="statusFilter"
           variant="filter"
           :tabs="[
-            { value: 'all', label: t('tasks.filters.all'), count: allTasks.length },
+            { value: 'all', label: t('common.allMasc'), count: allTasks.length },
             { value: 'open', label: t('tasks.filters.open'), count: counts.open },
             { value: 'in_progress', label: t('tasks.filters.in_progress'), count: counts.in_progress },
             { value: 'awaiting_vendor', label: t('tasks.filters.awaiting_vendor'), count: counts.awaiting_vendor },
@@ -371,7 +371,7 @@ async function downloadTaskDocument(documentId: string) {
 
         <template v-if="tasks.length === 0">
           <CEmptyState
-            :title="t('tasks.empty')"
+            :title="t('tasks.emptyState')"
           />  
         </template>
         <template v-else>
@@ -422,7 +422,7 @@ async function downloadTaskDocument(documentId: string) {
                     @click.stop="openTaskDocuments(task)"
                   >
                     <CIconFile />
-                    {{ t('tasks.documentsCount', task.document_count) }}
+                    {{ t('common.documentsCount', task.document_count) }}
                   </button>
                 </div>
   

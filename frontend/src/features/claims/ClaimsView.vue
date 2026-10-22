@@ -106,7 +106,7 @@ const claimCounts = computed(() =>
 )
 
 const claimTabs = computed(() => [
-  { key: 'all', label: t('common.all'), count: claimCounts.value.all },
+  { key: 'all', label: t('common.allMasc'), count: claimCounts.value.all },
   { key: 'open', label: t('claims.filters.open'), count: claimCounts.value.open },
   { key: 'in_progress', label: t('claims.filters.inProgress'), count: claimCounts.value.in_progress },
   { key: 'closed', label: t('claims.filters.closed'), count: claimCounts.value.closed },
@@ -300,7 +300,7 @@ function handleDocumentCountChanged(claimId: string, delta: number) {
         <div class="topbar-breadcrumb">
           {{ buildingName || '…' }}
           <CIconChevronRight />
-          <span>{{ t('claims.title') }}</span>
+          <span>{{ t('nav.claims') }}</span>
         </div>
       </template>
       <template #right>
@@ -327,7 +327,7 @@ function handleDocumentCountChanged(claimId: string, delta: number) {
             {{ t('page.eyebrows.claims') }}
           </CEyebrow>
           <CHeading type="header">
-            {{ t('claims.title') }}
+            {{ t('nav.claims') }}
           </CHeading>
           <CMetaItem variant="sub">
             {{ t('claims.activeCount', { count: activeClaimsCount }) }}
@@ -430,7 +430,7 @@ function handleDocumentCountChanged(claimId: string, delta: number) {
                     <template #icon>
                       <CIconFile />
                     </template>
-                    {{ t('claims.documentsCount', claim.document_count) }}
+                    {{ t('common.documentsCount', claim.document_count) }}
                   </CMetaItem>
                 </CFlexGroup>
                 <p

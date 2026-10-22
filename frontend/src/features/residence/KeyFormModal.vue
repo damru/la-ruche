@@ -150,14 +150,14 @@ async function save() {
       <div class="flex flex-col gap-4">
         <CFormInput
           v-model="form.name"
-          :label="t('common.name')"
+          :label="t('lastName')"
           :placeholder="t('settings.keys.namePlaceholder')"
           required
           class="flex flex-col gap-1 col-span-full"
         />
         <CFormTextarea
           v-model="form.description"
-          :label="t('settings.keys.descriptionLabel')"
+          :label="t('common.description')"
           :placeholder="t('settings.keys.descriptionPlaceholder')"
           class="flex flex-col gap-1 col-span-full"
         />
@@ -172,7 +172,7 @@ async function save() {
 
       <div class="shares-section">
         <h3 class="text-md font-semibold mb-3">
-          {{ t('settings.keys.showShares') }}
+          {{ t('units.shares') }}
         </h3>
 
         <div

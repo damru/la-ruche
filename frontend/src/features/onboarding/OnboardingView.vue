@@ -38,8 +38,8 @@ const passwordDirty = computed(() => form.password.length > 0)
 
 // ── Brand panel steps ────────────────────────────────────────────
 const brandSteps = computed(() => [
-  { label: t('onboarding.step1Label'), status: (step.value > 1 ? 'done' : step.value === 1 ? 'active' : 'future') as 'done' | 'active' | 'future' },
-  { label: t('onboarding.step2Label'), status: (step.value === 2 ? 'active' : 'future') as 'done' | 'active' | 'future' },
+  { label: t('onboarding.titleStep1'), status: (step.value > 1 ? 'done' : step.value === 1 ? 'active' : 'future') as 'done' | 'active' | 'future' },
+  { label: t('onboarding.titleStep2'), status: (step.value === 2 ? 'active' : 'future') as 'done' | 'active' | 'future' },
   { label: t('onboarding.step3Label'), status: 'future' as const },
 ])
 
@@ -249,7 +249,7 @@ async function handleSubmit() {
               <CFormInput
                 id="first_name"
                 v-model="form.first_name"
-                :label="t('onboarding.firstName')"
+                :label="t('common.firstName')"
                 :placeholder="t('onboarding.firstNamePlaceholder')"
                 :error="err.first_name ? t('onboarding.fieldRequired') : undefined"
                 autocomplete="given-name"
@@ -263,7 +263,7 @@ async function handleSubmit() {
               id="email"
               v-model="form.email"
               type="email"
-              :label="t('auth.email')"
+              :label="t('common.email')"
               :placeholder="t('auth.emailPlaceholder')"
               :error="err.email ? t('onboarding.fieldRequired') : undefined"
               autocomplete="email"
@@ -375,7 +375,7 @@ async function handleSubmit() {
             <CFormInput
               id="shares_total"
               v-model="form.shares_total"
-              :label="t('onboarding.sharesTotal')"
+              :label="t('registry.totalShares')"
               :placeholder="t('onboarding.sharesTotalPlaceholder')"
               :hint="t('onboarding.sharesTotalHint')"
               inputmode="numeric"
@@ -387,7 +387,7 @@ async function handleSubmit() {
                 type="button"
                 variant="ghost"
                 :icon="CIconArrowLeft"
-                :title="t('onboarding.back')"
+                :title="t('common.back')"
                 :disabled="loading"
                 @click="goBack"
               />

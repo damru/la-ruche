@@ -60,16 +60,16 @@ function mimeLabel(mime: string): string {
   if (mime.includes('pdf')) return 'PDF'
   if (mime.includes('sheet') || mime.includes('excel')) return 'Excel'
   if (mime.includes('word')) return 'Word'
-  return t('documents.fileTypeFallback')
+  return t('common.file')
 }
 
 const docColumns = computed(() => [
-  { key: 'original_name', label: t('documents.columns.fileName') },
-  { key: 'mime_type', label: t('documents.columns.type') },
-  { key: 'visible_roles', label: t('documents.columns.visibility') },
+  { key: 'original_name', label: t('common.fileName') },
+  { key: 'mime_type', label: t('common.type') },
+  { key: 'visible_roles', label: t('common.visibility') },
   { key: 'references', label: t('documents.columns.references') },
-  { key: 'size_bytes', label: t('documents.columns.size') },
-  { key: 'created_at', label: t('documents.columns.addedDate') },
+  { key: 'size_bytes', label: t('common.size') },
+  { key: 'created_at', label: t('common.addedDate') },
   { key: 'actions', label: '' },
 ])
 
@@ -99,7 +99,7 @@ function onDocumentDeleted(id: string) {
         <div class="topbar-breadcrumb">
           {{ buildingName || '...' }}
           <CIconChevronRight />
-          <span>{{ t('documents.title') }}</span>
+          <span>{{ t('common.documents') }}</span>
         </div>
       </template>
       <template #right>
@@ -126,13 +126,13 @@ function onDocumentDeleted(id: string) {
             {{ t('page.eyebrows.documents') }}
           </CEyebrow>
           <CHeading type="header">
-            {{ t('documents.title') }}
+            {{ t('common.documents') }}
           </CHeading>
           <p
             class="body-md"
             style="color:var(--color-on-surface-variant)"
           >
-            {{ t('documents.count', { count: allDocuments.length }) }}
+            {{ t('common.documentsCount', { count: allDocuments.length }) }}
           </p>
         </header>
 
@@ -151,7 +151,7 @@ function onDocumentDeleted(id: string) {
             :columns="docColumns"
             :rows="documents"
             row-key="id"
-            :empty-text="t('documents.empty')"
+            :empty-text="t('common.noDocumentsFound')"
           >
             <template #cell-original_name="{ row }">
               <div class="doc-name-cell">

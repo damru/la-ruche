@@ -53,7 +53,7 @@ async function confirmArchive() {
 <template>
   <CModal
     :open="open"
-    :title="t('residents.archiveUserTitle')"
+    :title="t('residents.archiveUser')"
     size="sm"
     @update:open="$emit('update:open', $event)"
   >

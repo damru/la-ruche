@@ -166,7 +166,7 @@ async function handleSubmit() {
     >
       <CFormInput
         v-model="form.title"
-        :label="t('claims.fields.title')"
+        :label="t('common.label')"
         required
       />
       <CFormSelect
@@ -199,16 +199,16 @@ async function handleSubmit() {
       />
       <CFormTextarea
         v-model="form.description"
-        :label="t('claims.fields.description')"
+        :label="t('common.description')"
         :rows="3"
       />
 
       <div class="flex flex-col gap-1">
-        <label class="text-sm font-medium text-on-surface-variant">{{ t('claims.fields.documents') }}</label>
+        <label class="text-sm font-medium text-on-surface-variant">{{ t('common.attachments') }}</label>
         <CFileDropzone
           v-model:files="selectedDocuments"
           :hint="t('claims.documentHint')"
-          :remove-label="t('claims.removeDocument')"
+          :remove-label="t('common.remove')"
         />
       </div>
     </CForm>
