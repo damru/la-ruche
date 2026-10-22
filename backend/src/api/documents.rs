@@ -320,11 +320,13 @@ pub struct DeleteDocumentInput {
 }
 
 /// DELETE /api/v1/documents/:id
+/// The JSON body (`{ "reason": "..." }`) is optional — a DELETE without a
+/// `Content-Type: application/json` header must not be rejected with 415.
 pub async fn delete(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
-    Json(input): Json<DeleteDocumentInput>,
+    input: Option<Json<DeleteDocumentInput>>,
 ) -> AppResult<StatusCode> {
     auth.require_role(&crate::domain::Role::Manager)?;
 
@@ -333,7 +335,7 @@ pub async fn delete(
         id,
         auth.building_id,
         auth.user_id,
-        input.reason.as_deref(),
+        input.and_then(|Json(input)| input.reason).as_deref(),
     )
     .await?;
     deleted.ok_or(AppError::NotFound)?;

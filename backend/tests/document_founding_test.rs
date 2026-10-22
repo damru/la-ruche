@@ -580,3 +580,83 @@ async fn technical_regulatory_categories_are_accepted_and_not_founding() {
     let pv_body: Value = pv.json();
     assert_eq!(pv_body["category"].as_str().unwrap(), "pv_ag");
 }
+
+/// US-DOC-004: DELETE /api/v1/documents/:id without a JSON body (no
+/// Content-Type header) must not be rejected with 415 — the reason is optional.
+#[tokio::test]
+async fn deleting_a_document_without_a_json_body_is_not_rejected() {
+    let (cfg, pool) = common::test_db().await;
+    let f = setup(&pool).await;
+    let token = token_for(f.manager_id, f.building_id, &cfg);
+    let server = common::test_server_with_pool(cfg, pool.clone()).await;
+    let auth = format!("Bearer {token}");
+
+    let upload = confirm_upload(
+        &server,
+        &auth,
+        f.building_id,
+        "facture-a-supprimer.pdf",
+        "autre",
+        None,
+        None,
+    )
+    .await;
+    assert_eq!(upload.status_code(), StatusCode::CREATED);
+    let doc_id: Uuid = upload.json::<Value>()["id"].as_str().unwrap().parse().unwrap();
+
+    let delete = server
+        .delete(&format!("/api/v1/documents/{doc_id}"))
+        .add_header("Authorization", &auth)
+        .await;
+    assert_eq!(delete.status_code(), StatusCode::NO_CONTENT);
+
+    let still = server
+        .get("/api/v1/documents")
+        .add_header("Authorization", &auth)
+        .await;
+    let docs = still.json::<Vec<Value>>();
+    assert!(docs.iter().all(|d| d["id"].as_str().unwrap() != doc_id.to_string()));
+}
+
+/// US-DOC-004: a soft-deleted document is excluded from the listing and the
+/// S3 object row is preserved (soft delete, not hard delete).
+#[tokio::test]
+async fn soft_deleting_a_document_with_a_json_body_records_the_reason() {
+    let (cfg, pool) = common::test_db().await;
+    let f = setup(&pool).await;
+    let token = token_for(f.manager_id, f.building_id, &cfg);
+    let server = common::test_server_with_pool(cfg, pool.clone()).await;
+    let auth = format!("Bearer {token}");
+
+    let upload = confirm_upload(
+        &server,
+        &auth,
+        f.building_id,
+        "facture-raison.pdf",
+        "autre",
+        None,
+        None,
+    )
+    .await;
+    assert_eq!(upload.status_code(), StatusCode::CREATED);
+    let doc_id: Uuid = upload.json::<Value>()["id"].as_str().unwrap().parse().unwrap();
+
+    let delete = server
+        .delete(&format!("/api/v1/documents/{doc_id}"))
+        .add_header("Authorization", &auth)
+        .json(&json!({ "reason": "obsolète" }))
+        .await;
+    assert_eq!(delete.status_code(), StatusCode::NO_CONTENT);
+
+    let row: Option<(Option<chrono::DateTime<chrono::Utc>>, Option<String>)> =
+        sqlx::query_as(
+            "SELECT deleted_at, deletion_reason FROM document WHERE id = $1",
+        )
+        .bind(doc_id)
+        .fetch_optional(&pool)
+        .await
+        .expect("query");
+    let (deleted_at, reason) = row.expect("row kept (soft delete)");
+    assert!(deleted_at.is_some());
+    assert_eq!(reason.as_deref(), Some("obsolète"));
+}

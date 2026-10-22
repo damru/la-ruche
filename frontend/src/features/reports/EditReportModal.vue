@@ -154,7 +154,6 @@ async function submit() {
       uploadingPhotos.value = false
       if (photoErrors.length) {
         feedback.setError(t('reports.photoUploadError') + ': ' + photoErrors.join(', '))
-        setTimeout(() => { emit('saved'); emit('update:open', false) }, 2000)
         return
       }
     }

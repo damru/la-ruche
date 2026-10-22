@@ -88,7 +88,6 @@ async function submit() {
       uploadingPhotos.value = false
       if (errors.length) {
         feedback.setError(t('reports.photoUploadError') + ': ' + errors.join(', '))
-        setTimeout(() => { emit('created'); emit('update:open', false) }, 2000)
         return
       }
     }

@@ -130,6 +130,7 @@ async function handleSubmit() {
           form="meeting-resolution"
           :title="t('common.add')"
           :loading="saving"
+          :closing="feedback.status.value === 'success'"
         />
       </CFormActions>
     </template>
