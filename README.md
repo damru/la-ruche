@@ -26,6 +26,8 @@
 
 Application web de gestion de copropriété participative. Elle couvre l'ensemble du cycle de vie d'une copropriété : registre des lots, assemblées générales, budget et appels de fonds, contrats et prestataires, carnet d'entretien, tâches et sinistres, et mise à disposition des documents aux copropriétaires.
 
+# L'application
+
 ## 🐝 Fonctionnalités
 
 - 🗂️ **Registre** : lots, copropriétaires, locataires, tantièmes et répartition.
@@ -40,12 +42,32 @@ Application web de gestion de copropriété participative. Elle couvre l'ensembl
 
 ## 👥 Rôles
 
-- 🪄 **Syndic (manager)** : accès complet.
+- 🦄 **Syndic (manager)** : accès complet.
 - 🧭 **Conseil syndical (board_member)** : accès élargi, sans gestion du budget.
 - 🔑 **Copropriétaire (owner)** et **locataire (tenant)** : accès à leurs lots et aux documents partagés.
-- 🎫 **Prestataire (token)** : accès par jeton, limité à l'intervention concernée.
+- 🎭 **Prestataire (token)** : accès par jeton, limité à l'intervention concernée.
 
-## 🧱 Stack technique
+## ⚖️ Couverture légale
+
+La Ruche est conçue à partir des textes qui régissent la copropriété française, en commençant par la loi du 10 juillet 1965 et son décret d'application de 1967. Les obligations couvertes aujourd'hui par l'application :
+
+| Obligation | Base légale |
+|---|---|
+| Espace en ligne sécurisé des copropriétaires | Art. 18-I-5° loi 1965 (ALUR) |
+| Historique des tantièmes par lot | Art. 10 loi 1965 |
+| Snapshot des tantièmes pour chaque appel de fonds | Art. 14-1 loi 1965, art. 35 décret 1967 |
+| Tenue de séance (président, secrétaire, scrutateurs) | Art. 15 décret 1967 |
+| Règles de majorité (art. 24, 25, 25-1, 26) | Art. 24 à 26 loi 1965 |
+| PV signable 8 jours après l'AG, notifié sous 1 mois, contestable 2 mois | Art. 17, 18 décret 1967, art. 42 loi 1965 |
+| Relevé individuel de charges | Art. 18 loi 1965, arrêté du 14 mars 2005 |
+| Contrats et reconductions tacites | Art. 18 loi 1965 |
+| Sinistres (délais de déclaration) | Code des assurances |
+
+S'y ajoutent les lois ALUR, ELAN et Climat et Résilience, le plan comptable de l'arrêté du 14 mars 2005, le carnet d'entretien (décret 2001-477) et le RGPD. Le point complet, article par article, est tenu à jour dans [docs/LEGAL.md](docs/LEGAL.md).
+
+# La technique
+
+## 🧱 Stack
 
 Backend Rust (Axum, SQLx) sur PostgreSQL 16, frontend Vue 3 + TypeScript + Tailwind v4, stockage objet RustFS, reverse-proxy Caddy, conteneurs Docker Compose. Détails : [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
@@ -84,39 +106,6 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 ### ⚙️ Variables de configuration
 
 La configuration suit le préfixe `LA_RUCHE__` (structure `LA_RUCHE__SECTION__CLE`, ex. `LA_RUCHE__APP__DEMO_MODE`). Voir `config/` et `docker-compose.yml`.
-
-## ⚖️ Couverture légale
-
-La Ruche implémente et respecte les obligations légales de la copropriété française. Le référentiel complet, article par article, est maintenu dans [docs/LEGAL.md](docs/LEGAL.md) (couverture : ✅ couverte · ⚠️ partielle · 🔲 hors périmètre logiciel · ❌ non couverte).
-
-### Textes de référence
-
-- **Loi n°65-557 du 10 juillet 1965** — statut de la copropriété (syndicat, syndic, conseil syndical, charges, majorités).
-- **Décret n°67-223 du 17 mars 1967** — application de la loi de 1965 (convocations, PV, état daté, appels de fonds).
-- **Loi ALUR n°2014-366 du 24 mars 2014** — espace en ligne sécurisé, immatriculation RNC, pré-état daté.
-- **Loi ELAN n°2018-1021 du 23 novembre 2018** — évolutions de la gouvernance et de la transaction.
-- **Loi Climat et Résilience n°2021-1104 du 22 août 2021** — plan pluriannuel de travaux, fonds travaux.
-- **Arrêté du 14 mars 2005** — plan comptable des copropriétés.
-- **Décret n°2001-477 du 30 mai 2001** — carnet d'entretien de l'immeuble.
-- **RGPD (Règlement UE 2016/679)** — protection des données personnelles.
-
-### Obligations couvertes (✅)
-
-| Obligation | Base légale |
-|---|---|
-| Espace en ligne sécurisé des copropriétaires | Art. 18-I-5° loi 1965 (ALUR) |
-| Historique des tantièmes par lot | Art. 10 loi 1965 |
-| Snapshot des tantièmes par appel de fonds | Art. 14-1 loi 1965 · art. 35 décret 1967 |
-| Tenue de séance (président, secrétaire, scrutateurs) | Art. 15 décret 1967 |
-| Règles de majorité (art. 24, 25, 26, 25-1) | Art. 24, 25, 25-1, 26 loi 1965 |
-| PV signable (J+8), notification (1 mois), contestation (2 mois) | Art. 17, 18 décret 1967 · art. 42 loi 1965 |
-| Relevé individuel de charges | Art. 18 loi 1965 · arrêté 14/03/2005 |
-| Contrats et reconductions tacites | Art. 18 loi 1965 |
-| Sinistres (délais de déclaration) | Code des assurances |
-
-### Couvertures partielles et en cours (⚠️ / ❌)
-
-Le détail exhaustif des couvertures partielles (RNC, carnet d'entretien, budget et appels de fonds, fonds travaux, état daté, RGPD, PPT…) et des écarts à combler, avec les épopées et stories correspondantes, figure dans le tableau synthétique de [docs/LEGAL.md](docs/LEGAL.md).
 
 ## 📜 Licence
 
