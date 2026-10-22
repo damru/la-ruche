@@ -1,6 +1,6 @@
 ---
 description: 'Licensing rules: dual AGPL-3.0 / commercial license, AGPL-compatible dependencies, zero telemetry, mandatory CLA.'
-applyTo: 'Cargo.toml'
+applyTo: 'Cargo.toml,frontend/package.json,LICENSE,NOTICE,docs/LEGAL.md'
 ---
 
 # License & compliance
