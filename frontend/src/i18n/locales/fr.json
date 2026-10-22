@@ -619,7 +619,8 @@
     "addLine": "Ajouter une ligne",
     "levyStatuses": {
       "issued": "Émis",
-      "paid": "Payé"
+      "paid": "Payé",
+      "overdue": "En retard"
     },
     "markPaid": "Marquer comme payé",
     "fiscalYearLabel": "Exercice fiscal",

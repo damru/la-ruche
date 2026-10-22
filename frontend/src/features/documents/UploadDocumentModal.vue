@@ -3,10 +3,12 @@ import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useFormatters } from '@/composables/useFormatters'
 import CModal from '@/components/molecules/CModal.vue'
+import CFormActions from '@/components/molecules/CFormActions.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CFormDropzone from '@/components/molecules/CFormDropzone.vue'
 import { documentsApi } from '@/api'
 import { toErrorMessage } from '@/composables/usePageLoader'
+import { useFormFeedback } from '@/composables/useFormFeedback'
 import { useAutoClose } from '@/composables/useAutoClose'
 import { extractFileExtension } from '@/utils/files'
 
@@ -21,19 +23,17 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 const { formatFileSize } = useFormatters()
+const feedback = useFormFeedback()
 const { schedule: scheduleClose, forceExpire: forceClose } = useAutoClose()
 
 const uploading = ref(false)
-const uploadError = ref('')
-const uploadSuccess = ref(false)
 const selectedFile = ref<File | null>(null)
 const selectedRoles = ref<string[]>(['manager', 'board_member', 'co_owner'])
 
 watch(() => props.open, (open) => {
   if (!open) { forceClose(); return }
   selectedFile.value = null
-  uploadError.value = ''
-  uploadSuccess.value = false
+  feedback.reset()
   selectedRoles.value = ['manager', 'board_member', 'co_owner']
 })
 
@@ -42,10 +42,10 @@ function onDropzoneFiles(files: File[]) {
 }
 
 async function uploadFile() {
-  if (uploadSuccess.value) { forceClose(); return }
+  if (feedback.status.value === 'success') { forceClose(); return }
   if (!selectedFile.value) return
   uploading.value = true
-  uploadError.value = ''
+  feedback.reset()
 
   try {
     const file = selectedFile.value
@@ -65,11 +65,11 @@ async function uploadFile() {
       visible_roles: selectedRoles.value,
     })
 
-    uploadSuccess.value = true
+    feedback.setSuccess(t('common.saved'))
     emit('uploaded')
-    scheduleClose(() => { emit('update:open', false); uploadSuccess.value = false })
+    scheduleClose(() => { emit('update:open', false) })
   } catch (e: unknown) {
-    uploadError.value = toErrorMessage(e, t('documents.uploadFailed'))
+    feedback.setError(toErrorMessage(e, t('documents.uploadFailed')))
   } finally {
     uploading.value = false
   }
@@ -80,28 +80,14 @@ async function uploadFile() {
   <CModal
     :open="open"
     :title="t('documents.upload')"
+    :closable="!uploading"
     @update:open="$emit('update:open', $event)"
   >
     <div class="flex flex-col gap-4">
-      <CAlert
-        v-if="uploadSuccess"
-        variant="success"
-        class="mb-3"
-      >
-        {{ t('common.saved') }}
-      </CAlert>
-      <CAlert
-        v-if="uploadError"
-        variant="error"
-        class="mb-3"
-      >
-        {{ uploadError }}
-      </CAlert>
-
       <CFormDropzone
         :uploading="uploading"
         @files="onDropzoneFiles"
-        @error="uploadError = $event"
+        @error="feedback.setError($event)"
       />
       <p
         v-if="selectedFile"
@@ -125,19 +111,24 @@ async function uploadFile() {
     </div>
 
     <template #footer>
-      <CBtn
-        variant="ghost"
-        :title="t('common.cancel')"
-        @click="$emit('update:open', false)"
-      />
-      <CBtn
-        variant="primary"
-        :title="t('common.upload')"
-        :loading="uploading"
-        :closing="uploadSuccess"
-        :disabled="!selectedFile || uploading"
-        @click="uploadFile"
-      />
+      <CFormActions
+        :status="feedback.status.value"
+        :message="feedback.message.value"
+      >
+        <CBtn
+          variant="ghost"
+          :title="t('common.cancel')"
+          @click="$emit('update:open', false)"
+        />
+        <CBtn
+          variant="primary"
+          :title="t('common.upload')"
+          :loading="uploading"
+          :closing="feedback.status.value === 'success'"
+          :disabled="!selectedFile || uploading"
+          @click="uploadFile"
+        />
+      </CFormActions>
     </template>
   </CModal>
 </template>

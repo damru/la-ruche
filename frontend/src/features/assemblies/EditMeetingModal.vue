@@ -79,6 +79,7 @@ function removeAgendaItem(index: number) {
 }
 
 async function handleSubmit() {
+  if (feedback.status.value === 'success') { forceClose(); return }
   if (!form.value.meeting_date) return
   saving.value = true
   feedback.reset()
@@ -176,6 +177,7 @@ async function handleSubmit() {
           form="meeting-edit"
           :title="t('common.save')"
           :loading="saving"
+          :closing="feedback.status.value === 'success'"
         />
       </CFormActions>
     </template>

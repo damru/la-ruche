@@ -167,6 +167,7 @@ pub async fn list(pool: &PgPool, building_id: Uuid) -> AppResult<Vec<TaskRow>> {
                 JOIN vendor_submission vs ON vs.id = vsd.submission_id
                 WHERE vs.task_id = t.id
               ) AS task_documents
+              JOIN document d ON d.id = task_documents.document_id AND d.deleted_at IS NULL
             ) AS document_count,
            EXISTS(SELECT 1 FROM maintenance_log WHERE task_id = t.id) AS is_in_logbook
            FROM task t WHERE t.building_id = $1
@@ -199,6 +200,7 @@ pub async fn get(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<Option
                 JOIN vendor_submission vs ON vs.id = vsd.submission_id
                 WHERE vs.task_id = t.id
               ) AS task_documents
+              JOIN document d ON d.id = task_documents.document_id AND d.deleted_at IS NULL
             ) AS document_count,
            EXISTS(SELECT 1 FROM maintenance_log WHERE task_id = t.id) AS is_in_logbook
            FROM task t WHERE t.id = $1 AND t.building_id = $2"#,
@@ -520,6 +522,7 @@ pub async fn get_by_token(pool: &PgPool, token: Uuid) -> AppResult<Option<TaskRo
                 JOIN vendor_submission vs ON vs.id = vsd.submission_id
                 WHERE vs.task_id = t.id
               ) AS task_documents
+              JOIN document d ON d.id = task_documents.document_id AND d.deleted_at IS NULL
             ) AS document_count,
            EXISTS(SELECT 1 FROM maintenance_log WHERE task_id = t.id) AS is_in_logbook
            FROM task t

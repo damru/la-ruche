@@ -322,14 +322,14 @@ function authorName(r: Report): string {
       :open="!!reportToUpdate"
       :report="reportToUpdate"
       @update:open="v => !v && (reportToUpdate = null)"
-      @updated="() => { reportToUpdate = null; reload() }"
+      @updated="reload"
     />
 
     <ConvertReportToTaskModal
       :open="!!reportToConvert"
       :report="reportToConvert"
       @update:open="v => !v && (reportToConvert = null)"
-      @converted="() => { reportToConvert = null; reload() }"
+      @converted="reload"
     />
 
     <EditReportModal
@@ -337,7 +337,7 @@ function authorName(r: Report): string {
       :report="reportToEdit"
       :unit-options="unitOptions"
       @update:open="v => !v && (reportToEdit = null)"
-      @saved="() => { reportToEdit = null; reload() }"
+      @saved="reload"
       @delete="handleEditDelete"
     />
 
@@ -345,7 +345,7 @@ function authorName(r: Report): string {
       :open="!!reportToDelete"
       :report="reportToDelete"
       @update:open="v => !v && (reportToDelete = null)"
-      @deleted="() => { reportToDelete = null; reload() }"
+      @deleted="reload"
     />
 
     <ReportPhotosModal

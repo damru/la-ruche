@@ -1,7 +1,8 @@
 use axum::{
     Json,
+    body::Bytes,
     extract::{Path, State},
-    http::StatusCode,
+    http::{HeaderMap, StatusCode},
 };
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -320,23 +321,71 @@ pub struct DeleteDocumentInput {
 }
 
 /// DELETE /api/v1/documents/:id
+///
+/// The JSON body (`{ "reason": "..." }`) is fully optional. This handler reads
+/// the raw body and parses it manually because the shared axios client sets
+/// `Content-Type: application/json` on **every** request — including DELETEs
+/// with no body. Axum's `Json<T>` / `Option<Json<T>>` extractors reject that
+/// combination with 415 (`MissingJsonContentType`): even `Option<Json<T>>`
+/// returns the rejection when a `Content-Type` header is present but doesn't
+/// match JSON, and an empty body with `Content-Type: application/json` fails
+/// deserialization. An empty body here simply means "no reason".
 pub async fn delete(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
-    Json(input): Json<DeleteDocumentInput>,
+    headers: HeaderMap,
+    body: Bytes,
 ) -> AppResult<StatusCode> {
     auth.require_role(&crate::domain::Role::Manager)?;
+
+    let reason = parse_optional_json_body::<DeleteDocumentInput>(&headers, &body)?
+        .and_then(|input| input.reason);
 
     let deleted = db::document::delete(
         &state.pool,
         id,
         auth.building_id,
         auth.user_id,
-        input.reason.as_deref(),
+        reason.as_deref(),
     )
     .await?;
     deleted.ok_or(AppError::NotFound)?;
 
     Ok(StatusCode::NO_CONTENT)
+}
+
+/// Parses an optional JSON body.
+///
+/// - Empty body → `Ok(None)` (no reason), whatever the `Content-Type`.
+/// - Non-empty body → must be valid JSON (400 otherwise). The `Content-Type`
+///   is only checked when present and clearly not JSON (e.g. `text/plain`) —
+///   the shared axios client sets `application/json` globally, so being strict
+///   here would reintroduce 415s for bodyless DELETEs.
+fn parse_optional_json_body<T: serde::de::DeserializeOwned>(
+    headers: &HeaderMap,
+    body: &Bytes,
+) -> AppResult<Option<T>> {
+    if body.is_empty() {
+        return Ok(None);
+    }
+
+    let content_type_is_clearly_not_json = headers
+        .get(axum::http::header::CONTENT_TYPE)
+        .and_then(|v| v.to_str().ok())
+        .map(|ct| {
+            let ct = ct.to_ascii_lowercase();
+            ct.starts_with("text/")
+                || ct.starts_with("multipart/")
+                || ct.starts_with("application/x-www-form-urlencoded")
+        })
+        .unwrap_or(false);
+
+    if content_type_is_clearly_not_json {
+        return Err(AppError::validation_code("errors.validation_error"));
+    }
+
+    serde_json::from_slice(body)
+        .map(Some)
+        .map_err(|_| AppError::validation_code("errors.validation_error"))
 }
