@@ -33,7 +33,7 @@ async function handleSubmit() {
   <div class="auth-root">
     <AuthBrandPanel
       class="auth-brand"
-      :eyebrow="t('auth.brandEyebrow')"
+      :eyebrow="t('common.appTagline')"
       :title="t('auth.brandTitle')"
       :sub="t('auth.brandSub')"
     />
@@ -52,7 +52,7 @@ async function handleSubmit() {
         <template v-if="!done">
           <div class="form-header">
             <h2 class="form-title">
-              {{ t('auth.resetNewTitle') }}
+              {{ t('common.newPassword') }}
             </h2>
             <p class="form-sub">
               {{ t('auth.resetNewSub') }}
@@ -68,7 +68,7 @@ async function handleSubmit() {
               id="password"
               v-model="form.password"
               type="password"
-              :label="t('auth.newPassword')"
+              :label="t('common.newPassword')"
               :placeholder="t('auth.passwordPlaceholder')"
               autocomplete="new-password"
               :required="true"

@@ -97,7 +97,7 @@ const timelineEvents = computed((): TimelineEvent[] => {
   events.push({
     key: 'created',
     date: t_.created_at,
-    label: t('tasks.lifecycle.created'),
+    label: t('common.taskCreated'),
     icon: CIconPlus,
     variant: 'primary',
   })
@@ -106,7 +106,7 @@ const timelineEvents = computed((): TimelineEvent[] => {
   if ((t_.contractor_id && contractor.value) || t_.contractor_name) {
     events.push({
       key: 'assigned_contractor',
-      label: t('tasks.lifecycle.assignedContractor'),
+      label: t('common.assignedVendor'),
       detail: contractor.value?.name ?? t_.contractor_name,
       icon: CIconWrench,
       variant: 'warning',
@@ -126,7 +126,7 @@ const timelineEvents = computed((): TimelineEvent[] => {
       key: 'vendor_link',
       date: t_.token_expires_at,
       label: t('tasks.lifecycle.vendorLink'),
-      detail: t('tasks.lifecycle.vendorLinkExpiry', { date: formatDate(t_.token_expires_at) }),
+      detail: t('common.expiresOn', { date: formatDate(t_.token_expires_at) }),
       icon: CIconLink,
       variant: 'secondary',
     })
@@ -158,7 +158,7 @@ const timelineEvents = computed((): TimelineEvent[] => {
     events.push({
       key: 'closed',
       date: t_.closed_at,
-      label: t('tasks.lifecycle.closed'),
+      label: t('common.taskClosed'),
       icon: CIconCheckCircle,
       variant: 'success',
     })
@@ -189,7 +189,7 @@ function dotClass(variant?: TimelineEvent['variant']): string {
             :to="{ name: 'tasks' }"
             class="topbar-breadcrumb-link"
           >
-            {{ t('tasks.title') }}
+            {{ t('common.tasks') }}
           </RouterLink>
           <CIconChevronRight />
           <span>{{ task?.title ?? '…' }}</span>
@@ -226,7 +226,7 @@ function dotClass(variant?: TimelineEvent['variant']): string {
             >
               {{ t(`tasks.statuses.${task.status}`) }}
             </CBadge>
-            {{ t('page.eyebrows.taskDetail') }}
+            {{ t('common.taskHistory') }}
           </CEyebrow>
           <CHeading
             type="header"
@@ -241,9 +241,9 @@ function dotClass(variant?: TimelineEvent['variant']): string {
             {{ task.description }}
           </p>
           <div class="text-2xs text-on-surface-variant mt-1">
-            <span>{{ t('tasks.lifecycle.createdRelative', { relative: formatRelative(task.created_at) }) }}</span>
+            <span>{{ t('common.createdRelative', { relative: formatRelative(task.created_at) }) }}</span>
             <span v-if="task.closed_at">
-              · {{ t('tasks.closedAt', { date: formatDate(task.closed_at) }) }}
+              · {{ t('common.closedOn', { date: formatDate(task.closed_at) }) }}
             </span>
             <span v-if="contractor || task.contractor_name">
               · <RouterLink
@@ -261,7 +261,7 @@ function dotClass(variant?: TimelineEvent['variant']): string {
 
         <!-- Lifecycle timeline -->
         <h2 class="title-sm text-on-surface-variant mb-4">
-          {{ t('tasks.lifecycle.title') }}
+          {{ t('common.taskHistory') }}
         </h2>
         <div class="timeline">
           <div

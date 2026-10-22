@@ -79,13 +79,13 @@ async function saveSignatures() {
         >art.&nbsp;17–17-1</a></sup>
       </p>
       <CFormCheckbox v-model="signaturesForm.president_signed">
-        {{ t('meetings.signatures.president') }}
+        {{ t('common.president') }}
         <template v-if="meeting.president_name">
           — {{ meeting.president_name }}
         </template>
       </CFormCheckbox>
       <CFormCheckbox v-model="signaturesForm.secretary_signed">
-        {{ t('meetings.signatures.secretary') }}
+        {{ t('common.secretary') }}
         <template v-if="meeting.secretary_name">
           — {{ meeting.secretary_name }}
         </template>
@@ -94,7 +94,7 @@ async function saveSignatures() {
         v-if="(meeting.scrutineers ?? []).length > 0"
         class="flex flex-col gap-1"
       >
-        <span class="label-sm">{{ t('meetings.signatures.scrutineers') }}</span>
+        <span class="label-sm">{{ t('common.scrutineers') }}</span>
         <CFormCheckbox
           v-for="scrutineer in meeting.scrutineers ?? []"
           :key="scrutineer.name"

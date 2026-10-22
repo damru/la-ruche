@@ -34,8 +34,8 @@ const { formatCurrency } = useFormatters()
 
 const breakdownColumns = computed<Column<Record<string, unknown>>[]>(() => [
   { key: 'line_label', label: t('budget.lineLabel') },
-  { key: 'key_name', label: t('settings.keys.title') },
-  { key: 'shares', label: t('units.shares'), align: 'right', numeric: true },
+  { key: 'key_name', label: t('common.allocationKeys') },
+  { key: 'shares', label: t('common.shares'), align: 'right', numeric: true },
   { key: 'amount', label: t('common.amount'), align: 'right', numeric: true },
 ])
 
@@ -43,7 +43,7 @@ const breakdownRows = computed<Record<string, unknown>[]>(
   () => (props.levy?.breakdown ?? []).map(d => ({
     ...d,
     line_label: d.is_works_fund
-      ? t('budget.worksFund')
+      ? t('common.worksFund')
       : (d.budget_line_label ?? '—'),
     shares: d.shares_snapshot !== null
       ? `${d.shares_snapshot} / ${d.shares_total_snapshot}`
@@ -61,7 +61,7 @@ const breakdownTotal = computed(() =>
     :open="open"
     :title="levy
       ? t('units.charges.detailTitle', { label: levy.call_label })
-      : t('units.charges.detailAction')"
+      : t('common.details')"
     size="lg"
     @update:open="emit('update:open', $event)"
   >

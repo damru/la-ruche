@@ -185,18 +185,18 @@ async function submit() {
     >
       <CFormInput
         v-model="form.title"
-        :label="t('reports.titleLabel')"
-        :placeholder="t('reports.titleLabel')"
+        :label="t('common.title')"
+        :placeholder="t('common.title')"
         required
       />
       <CFormTextarea
         v-model="form.description"
-        :label="t('reports.descriptionLabel')"
+        :label="t('common.description')"
         :rows="3"
       />
       <CFormSelect
         v-model="form.unit_id"
-        :label="t('reports.unitLabel2')"
+        :label="t('common.relatedUnit')"
         :options="unitOptions"
       />
 

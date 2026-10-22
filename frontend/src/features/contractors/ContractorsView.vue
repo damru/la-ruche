@@ -104,7 +104,7 @@ const domainOptions = computed(() =>
 
 // ── Table columns (list view) ─────────────────────────────────────
 const contractorColumns = computed<Column<Contractor>[]>(() => [
-  { key: 'name', label: t('common.name') },
+  { key: 'name', label: t('lastName') },
   { key: 'domains', label: t('contractors.domainsLabel') },
   { key: 'email', label: t('common.email') },
   { key: 'phone', label: t('common.phone') },
@@ -171,7 +171,7 @@ function openDeleteModal(c: Contractor) {
         <div class="topbar-breadcrumb">
           {{ buildingName }}
           <CIconChevronRight class="icon-xs" />
-          <span>{{ t('contractors.title') }}</span>
+          <span>{{ t('common.vendors') }}</span>
         </div>
       </template>
       <template #right>
@@ -197,7 +197,7 @@ function openDeleteModal(c: Contractor) {
         <header class="view-header">
           <CEyebrow>{{ t('page.eyebrows.contractors') }}</CEyebrow>
           <CHeading type="header">
-            {{ t('contractors.title') }}
+            {{ t('common.vendors') }}
           </CHeading>
           <CMetaItem variant="sub">
             {{ t('contractors.summary', { count: allContractors.length }) }}

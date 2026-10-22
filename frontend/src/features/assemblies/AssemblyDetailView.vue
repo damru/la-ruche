@@ -178,7 +178,7 @@ const majorityLegalDescriptions = computed(() => {
       summary: t('meetings.legalCard.descriptions.simple_majority'),
       legalLinks: [
         {
-          label: t('meetings.legalCard.simple_majority.linkLabel'),
+          label: t('common.article24LinkLabel'),
           href: t('meetings.legalCard.simple_majority.linkHref'),
         },
       ],
@@ -226,7 +226,7 @@ const majorityLegalDescriptions = computed(() => {
       summary: t('meetings.legalCard.descriptions.unanimity'),
       legalLinks: [
         {
-          label: t('meetings.legalCard.unanimity.linkLabel'),
+          label: t('common.unanimity'),
           href: t('meetings.legalCard.unanimity.linkHref'),
         },
       ],
@@ -304,7 +304,7 @@ function meetingBannerTitle(meeting: Meeting): string {
   const state = meetingState(meeting.status)
   if (state === 'called') return t('meetings.bannerCalled')
   if (state === 'ongoing') return t('meetings.bannerOngoing')
-  if (state === 'closed') return `${t('meetings.bannerClosed')} · ${meeting.minutes_notified_at ? t('meetings.documents.minutesReady') : t('meetings.documents.minutesPending')}`
+  if (state === 'closed') return `${t('common.annualMeetingClosed')} · ${meeting.minutes_notified_at ? t('meetings.documents.minutesReady') : t('meetings.documents.minutesPending')}`
   return meetingStatusLabel(state)
 }
 
@@ -512,7 +512,7 @@ function openArt25Modal(resolution: Resolution) {
             :to="{ name: 'assembly-list' }"
             class="topbar-breadcrumb-link"
           >
-            {{ t('meetings.title') }}
+            {{ t('common.meetings') }}
           </RouterLink>
           <CIconChevronRight class="icon-xs" />
           <span>{{ meeting ? `${typeLabel(meeting.meeting_type)} ${new Date(meeting.meeting_date).getFullYear()}` : '…' }}</span>
@@ -532,7 +532,7 @@ function openArt25Modal(resolution: Resolution) {
             variant="primary"
             size="sm"
             :icon="CIconBell"
-            :title="t('meetings.call')"
+            :title="t('common.callMeeting')"
             @click="showConvocationModal = true"
           />
         </template>
@@ -542,7 +542,7 @@ function openArt25Modal(resolution: Resolution) {
           variant="secondary"
           size="sm"
           :icon="CIconClock"
-          :title="t('meetings.waiting')"
+          :title="t('common.pending')"
           disabled
         />
 
@@ -569,7 +569,7 @@ function openArt25Modal(resolution: Resolution) {
           variant="secondary"
           size="sm"
           :icon="CIconLock"
-          :title="t('meetings.closedAction')"
+          :title="t('common.annualMeetingClosed')"
           disabled
         />
       </template>
@@ -684,21 +684,21 @@ function openArt25Modal(resolution: Resolution) {
               </div>
               <div class="flex flex-col gap-1 text-xs text-on-surface-variant">
                 <span>
-                  {{ t('meetings.signatures.president') }} :
+                  {{ t('common.president') }} :
                   <template v-if="meeting.minutes_president_signed_at">
                     {{ t('meetings.signatures.signed_on', { date: formatDate(meeting.minutes_president_signed_at) }) }}
                   </template>
                   <span v-else>{{ t('meetings.signatures.not_signed') }}</span>
                 </span>
                 <span>
-                  {{ t('meetings.signatures.secretary') }} :
+                  {{ t('common.secretary') }} :
                   <template v-if="meeting.minutes_secretary_signed_at">
                     {{ t('meetings.signatures.signed_on', { date: formatDate(meeting.minutes_secretary_signed_at) }) }}
                   </template>
                   <span v-else>{{ t('meetings.signatures.not_signed') }}</span>
                 </span>
                 <span v-if="(meeting.minutes_scrutineers_signed ?? []).length > 0">
-                  {{ t('meetings.signatures.scrutineers') }} :
+                  {{ t('common.scrutineers') }} :
                   {{ (meeting.minutes_scrutineers_signed ?? []).map(s => s.name).join(', ') }}
                 </span>
               </div>
@@ -741,7 +741,7 @@ function openArt25Modal(resolution: Resolution) {
                   size="sm"
                   type="button"
                   :icon="CIconUpload"
-                  :title="t('meetings.minutes.upload_signed')"
+                  :title="t('common.attachSignedMinutes')"
                   @click="openMinutesModal"
                 />
               </div>
@@ -758,7 +758,7 @@ function openArt25Modal(resolution: Resolution) {
           <section class="main-column">
             <CSectionHeader>
               <CHeading>
-                {{ t('meetings.resolutions') }}
+                {{ t('common.resolutions') }}
               </CHeading>
               <p class="section-subtitle">
                 {{ t('meetings.resolutionCount', resolutions.length) }}
@@ -969,7 +969,7 @@ function openArt25Modal(resolution: Resolution) {
               <CFlexGroup>
                 <div>
                   <p class="text-xs text-on-surface-variant">
-                    {{ t('meetings.session_roles.president') }}
+                    {{ t('common.president') }}
                   </p>
                   <p class="text-sm font-medium text-on-surface">
                     {{ meeting.president_name }}
@@ -977,7 +977,7 @@ function openArt25Modal(resolution: Resolution) {
                 </div>
                 <div>
                   <p class="text-xs text-on-surface-variant">
-                    {{ t('meetings.session_roles.secretary') }}
+                    {{ t('common.secretary') }}
                   </p>
                   <p class="text-sm font-medium text-on-surface">
                     {{ meeting.secretary_name }}
@@ -985,7 +985,7 @@ function openArt25Modal(resolution: Resolution) {
                 </div>
                 <div>
                   <p class="text-xs text-on-surface-variant">
-                    {{ t('meetings.session_roles.scrutineers') }}
+                    {{ t('common.scrutineers') }}
                   </p>
                   <p class="text-sm font-medium text-on-surface">
                     <template v-if="meeting.scrutineers.length > 0">
@@ -1048,7 +1048,7 @@ function openArt25Modal(resolution: Resolution) {
 
               <div class="doc-group">
                 <p class="doc-group__title">
-                  {{ t('meetings.documents.notice') }}
+                  {{ t('common.notice') }}
                 </p>
                 <template v-if="noticeDocuments.length === 0">
                   <CEmptyState

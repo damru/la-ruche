@@ -24,7 +24,7 @@ const { t } = useI18n()
 
 const activeTab = ref('keys')
 const tabs = computed(() => [
-  { value: 'keys', label: t('allocationKeys.tabs.keys') },
+  { value: 'keys', label: t('common.keys') },
   { value: 'edd', label: t('allocationKeys.tabs.edd') },
 ])
 
@@ -40,10 +40,10 @@ type KeyBalance = { shares_sum: number; shares_total: number; delta: number }
 const keyBalance = ref<Record<string, KeyBalance>>({})
 
 const columns = computed(() => [
-  { key: 'name', label: t('common.name') },
-  { key: 'description', label: t('settings.keys.descriptionLabel') },
-  { key: 'shares', label: t('units.shares'), numeric: true },
-  { key: 'balance', label: t('common.status') },
+  { key: 'name', label: t('lastName') },
+  { key: 'description', label: t('common.description') },
+  { key: 'shares', label: t('common.shares'), numeric: true },
+  { key: 'balance', label: t('status') },
   { key: 'actions', label: '', width: '1%' },
 ])
 
@@ -114,7 +114,7 @@ onMounted(reload)
         <div class="topbar-breadcrumb">
           <span>{{ t('nav.groups.residence') }}</span>
           <CIconChevronRight />
-          <span>{{ t('nav.residence-keys') }}</span>
+          <span>{{ t('common.allocationKeys') }}</span>
         </div>
       </template>
       <template #right>
@@ -129,7 +129,7 @@ onMounted(reload)
           v-if="activeTab === 'edd' && !eddTabRef?.showForm"
           size="sm"
           :icon="CIconPlus"
-          :title="t('settings.edd.newReference')"
+          :title="t('common.newEddReference')"
           @click="openEddForm"
         />
       </template>
@@ -148,7 +148,7 @@ onMounted(reload)
             {{ t('page.eyebrows.allocationKeys') }}
           </CEyebrow>
           <CHeading type="header">
-            {{ t('allocationKeys.title') }}
+            {{ t('common.allocationKeys') }}
           </CHeading>
           <CMetaItem variant="sub">
             {{ t('allocationKeys.header.totalCount', { count: keys.length }) }}
@@ -229,8 +229,8 @@ onMounted(reload)
                       <CBtn
                         variant="icon"
                         :icon="CIconClock"
-                        :title="t('settings.keys.history')"
-                        :aria-label="t('settings.keys.history')"
+                        :title="t('common.history')"
+                        :aria-label="t('common.history')"
                         @click="openAuditModal(row)"
                       />
                       <CBtn

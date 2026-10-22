@@ -89,10 +89,10 @@ const claimTypeOptions = computed(() =>
 )
 
 const unitOptions = computed(() => [
-  { value: '', label: t('claims.commonAreas') },
+  { value: '', label: t('common.commonAreas') },
   ...props.units.map(unit => ({
     value: unit.id,
-    label: t('claims.unitLabel', { number: unit.unit_number }),
+    label: t('common.unitLabel', { number: unit.unit_number }),
   })),
 ])
 
@@ -175,7 +175,7 @@ async function handleDocumentAction(deleteDocument: boolean) {
     pendingDocumentAction.value = null
   } catch (err: unknown) {
     documentActionFeedback.setError(
-      toErrorMessage(err, deleteDocument ? t('claims.documentsDeleteError') : t('claims.documentsDetachError')),
+      toErrorMessage(err, deleteDocument ? t('common.documentDeleteError') : t('claims.documentsDetachError')),
     )
   } finally {
     detachingDocumentId.value = null
@@ -275,7 +275,7 @@ async function handleSubmit() {
     >
       <CFormInput
         v-model="form.title"
-        :label="t('claims.fields.title')"
+        :label="t('common.label')"
         required
       />
       <CFormSelect
@@ -303,26 +303,26 @@ async function handleSubmit() {
 
       <CFormSelect
         v-model="form.unit_id"
-        :label="t('claims.fields.unit')"
+        :label="t('common.relatedUnit')"
         :options="unitOptions"
       />
       <CFormTextarea
         v-model="form.description"
-        :label="t('claims.fields.description')"
+        :label="t('common.description')"
         :rows="3"
       />
 
       <div class="flex flex-col gap-1">
-        <label class="text-sm font-medium text-on-surface-variant">{{ t('claims.fields.documents') }}</label>
+        <label class="text-sm font-medium text-on-surface-variant">{{ t('common.attachments') }}</label>
         <CFileDropzone
           v-model:files="selectedEditDocuments"
-          :hint="t('claims.editDocumentHint')"
+          :hint="t('common.dropzoneExtraHint')"
           :remove-label="t('common.remove')"
         />
 
         <div class="claim-documents-section">
           <p class="text-xs text-on-surface-variant claim-documents-section__hint">
-            {{ t('claims.fields.attachedDocuments') }}
+            {{ t('common.attachedDocuments') }}
           </p>
           <CPageLoader v-if="loadingEditDocuments" />
           <div
@@ -406,7 +406,7 @@ async function handleSubmit() {
     :open="!!pendingDocumentAction"
     :title="t('claims.documentsDetachTitle')"
     :description="t('claims.documentsDetachMessage', { name: pendingDocumentAction?.original_name ?? '', title: claim?.title ?? '' })"
-    :warning="t('claims.documentsDeleteWarning', { name: pendingDocumentAction?.original_name ?? '' })"
+    :warning="t('common.documentDeleteWarning', { name: pendingDocumentAction?.original_name ?? '' })"
     :loading="!!detachingDocumentId"
     :status="documentActionFeedback.status.value"
     :message="documentActionFeedback.message.value"

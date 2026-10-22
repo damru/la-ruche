@@ -147,7 +147,7 @@ const legalCardLinks = computed(() => [
     href: t('consultations.legalCard.article17LinkHref'),
   },
   {
-    label: t('consultations.legalCard.article24LinkLabel'),
+    label: t('common.article24LinkLabel'),
     href: t('consultations.legalCard.article24LinkHref'),
   },
 ])
@@ -186,7 +186,7 @@ function openDeleteModal(c: Consultation) {
         <div class="topbar-breadcrumb">
           {{ buildingName }}
           <CIconChevronRight />
-          <span>{{ t('consultations.title') }}</span>
+          <span>{{ t('common.consultations') }}</span>
         </div>
       </template>
       <template #right>
@@ -195,7 +195,7 @@ function openDeleteModal(c: Consultation) {
           variant="primary"
           size="sm"
           :icon="CIconPlus"
-          :title="t('consultations.create')"
+          :title="t('common.newConsultation')"
           @click="openCreateModal"
         />
       </template>
@@ -214,7 +214,7 @@ function openDeleteModal(c: Consultation) {
             {{ t('page.eyebrows.consultations') }}
           </CEyebrow>
           <CHeading type="header">
-            {{ t('consultations.title') }}
+            {{ t('common.consultations') }}
           </CHeading>
           <CMetaItem variant="sub">
             {{ t('consultations.openCount', { count: openCount }) }}
@@ -248,7 +248,7 @@ function openDeleteModal(c: Consultation) {
                 v-if="canManage"
                 variant="primary"
                 :icon="CIconPlus"
-                :title="t('consultations.create')"
+                :title="t('common.newConsultation')"
                 @click="openCreateModal"
               />
             </template>

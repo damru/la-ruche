@@ -363,7 +363,7 @@ async function activateContract(contract: VendorContract) {
           size="sm"
           shrink="sm"
           :icon="CIconPlus"
-          :title="t('contracts.create')"
+          :title="t('common.newContract')"
           @click="openCreateModal"
         />
       </template>
@@ -385,7 +385,7 @@ async function activateContract(contract: VendorContract) {
             {{ t('contracts.title') }}
           </CHeading>
           <CMetaItem variant="sub">
-            {{ t('contracts.count', { count: allContracts.length }) }}
+            {{ t('common.contractsCount', { count: allContracts.length }) }}
           </CMetaItem>
         </header>
 
@@ -435,7 +435,7 @@ async function activateContract(contract: VendorContract) {
                 v-if="canManage && ['active', 'all'].includes(filter)"
                 variant="primary"
                 :icon="CIconPlus"
-                :title="t('contracts.create')"
+                :title="t('common.newContract')"
                 @click="openCreateModal"
               />
             </template>

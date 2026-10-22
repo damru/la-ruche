@@ -384,7 +384,7 @@ async function saveContract() {
   <CModal
     :open="open"
     size="lg"
-    :title="isEditing ? t('contracts.form.editTitle') : t('contracts.form.createTitle')"
+    :title="isEditing ? t('contracts.form.editTitle') : t('common.newContract')"
     @update:open="emit('update:open', $event)"
   >
     <CForm
@@ -395,7 +395,7 @@ async function saveContract() {
       <div class="contract-form__grid">
         <CFormInput
           v-model="form.vendor_name"
-          :label="t('contracts.form.vendorName')"
+          :label="t('common.vendor')"
           :error="fieldErrors.vendor_name"
           required
         />
@@ -580,7 +580,7 @@ async function saveContract() {
     :open="showDocumentActionModal"
     :title="t('contracts.documents.detachTitle')"
     :description="t('contracts.documents.detachMessage', { name: pendingDocument?.original_name ?? '', contract: props.contract?.vendor_name ?? '' })"
-    :warning="t('contracts.documents.deleteWarning', { name: pendingDocument?.original_name ?? '' })"
+    :warning="t('common.documentDeleteWarning', { name: pendingDocument?.original_name ?? '' })"
     :loading="documentActionLoading"
     :status="documentActionFeedback.status.value"
     :message="documentActionFeedback.message.value"

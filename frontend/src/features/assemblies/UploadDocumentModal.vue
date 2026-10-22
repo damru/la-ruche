@@ -36,7 +36,7 @@ function defaultForm() {
 }
 
 const documentKindOptions = computed(() => [
-  { value: 'notice', label: t('meetings.documents.notice') },
+  { value: 'notice', label: t('common.notice') },
   { value: 'attachment', label: t('meetings.documents.attachment') },
   { value: 'vote_by_mail_form', label: t('meetings.documents.vote_by_mail_form') },
 ])

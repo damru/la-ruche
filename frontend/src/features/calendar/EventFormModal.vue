@@ -136,7 +136,7 @@ async function handleSubmit() {
 <template>
   <CModal
     :open="open"
-    :title="event ? t('calendar.event.edit') : t('calendar.event.create')"
+    :title="event ? t('calendar.event.edit') : t('common.newEvent')"
     size="md"
     :closable="!saving"
     @update:open="emit('update:open', $event)"
@@ -147,12 +147,12 @@ async function handleSubmit() {
     >
       <CFormInput
         v-model="form.title"
-        :label="t('calendar.event.fields.title')"
+        :label="t('common.title')"
         required
       />
       <CFormTextarea
         v-model="form.description"
-        :label="t('calendar.event.fields.description')"
+        :label="t('common.description')"
         :rows="2"
       />
       <CFormRow :cols="2">
@@ -174,7 +174,7 @@ async function handleSubmit() {
         :options="categoryOptions"
       />
       <div class="flex flex-col gap-1">
-        <label class="text-sm font-medium text-on-surface-variant">{{ t('calendar.event.fields.documents') }}</label>
+        <label class="text-sm font-medium text-on-surface-variant">{{ t('common.attachments') }}</label>
         <CFileDropzone
           v-model:files="selectedDocuments"
           :hint="t('calendar.event.documentHint')"

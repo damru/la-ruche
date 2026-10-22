@@ -68,7 +68,7 @@ async function handleSubmit() {
 <template>
   <CModal
     :open="open"
-    :title="t('residents.transferOwnershipTitle')"
+    :title="t('common.transferOwnership')"
     :closable="!loading"
     @update:open="$emit('update:open', $event)"
   >
@@ -107,7 +107,7 @@ async function handleSubmit() {
           variant="primary"
           type="submit"
           form="transfer-form"
-          :title="t('residents.transferOwnership')"
+          :title="t('common.transferOwnership')"
           :loading="loading"
           :closing="feedback.status.value === 'success'"
           :disabled="!isValid || loading"

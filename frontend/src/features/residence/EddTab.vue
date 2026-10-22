@@ -211,7 +211,7 @@ function discrepancyVariant(d: EddDiscrepancy): 'warn' | 'err' {
           size="sm"
           variant="ghost"
           :icon="CIconClock"
-          :title="t('settings.edd.history')"
+          :title="t('common.history')"
           @click="openHistory"
         />
       </div>
@@ -228,7 +228,7 @@ function discrepancyVariant(d: EddDiscrepancy): 'warn' | 'err' {
                 <CBtn
                   variant="primary"
                   :icon="CIconPlus"
-                  :title="t('settings.edd.newReference')"
+                  :title="t('common.newEddReference')"
                   @click="openForm"
                 />
               </template>
@@ -295,7 +295,7 @@ function discrepancyVariant(d: EddDiscrepancy): 'warn' | 'err' {
           type="card"
           class="mb-4"
         >
-          {{ t('settings.edd.newReferenceTitle') }}
+          {{ t('common.newEddReference') }}
         </CHeading>
         <CForm
           :status="feedback.status.value"
@@ -304,7 +304,7 @@ function discrepancyVariant(d: EddDiscrepancy): 'warn' | 'err' {
         >
           <CFormInput
             v-model="form.label"
-            :label="t('settings.edd.labelField')"
+            :label="t('common.label')"
             required
             class="flex flex-col gap-1"
           />
@@ -356,7 +356,7 @@ function discrepancyVariant(d: EddDiscrepancy): 'warn' | 'err' {
                   v-if="share.archived"
                   variant="default"
                 >
-                  {{ t('settings.edd.archivedUnit') }}
+                  {{ t('common.lotArchive') }}
                 </CBadge>
               </div>
             </div>
@@ -392,7 +392,7 @@ function discrepancyVariant(d: EddDiscrepancy): 'warn' | 'err' {
 
     <CLinkedDocumentsModal
       :open="showHistory"
-      :title="t('settings.edd.history')"
+      :title="t('common.history')"
       :documents="historyDocuments"
       :empty-message="t('settings.edd.historyEmpty')"
       @update:open="showHistory = $event"

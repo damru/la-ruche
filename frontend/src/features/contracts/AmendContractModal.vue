@@ -223,7 +223,7 @@ async function submitAmendment() {
       <div class="amend-form__grid">
         <CFormInput
           v-model="form.vendor_name"
-          :label="t('contracts.form.vendorName')"
+          :label="t('common.vendor')"
           :error="fieldErrors.vendor_name"
           required
         />

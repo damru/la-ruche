@@ -89,7 +89,7 @@ async function downloadPdf() {
   <CModal
     :open="open"
     size="lg"
-    :title="t('registers.preEtatDate.documentTitle')"
+    :title="t('common.preEtatDate')"
     @update:open="emit('update:open', $event)"
   >
     <CPageLoader v-if="loading" />
@@ -161,7 +161,7 @@ async function downloadPdf() {
 
       <section>
         <h3 class="title-md font-semibold mb-2">
-          {{ t('registers.preEtatDate.fondsTravaux') }}
+          {{ t('common.worksFund') }}
         </h3>
         <ul>
           <li class="flex justify-between">
@@ -177,7 +177,7 @@ async function downloadPdf() {
 
       <section>
         <h3 class="title-md font-semibold mb-2">
-          {{ t('registers.preEtatDate.procedures') }}
+          {{ t('common.ongoingProceedings') }}
         </h3>
         <p class="data-sm opacity-70">
           {{ data.procedures_en_cours === 0 ? t('registers.etatDate.none') : data.procedures_en_cours }}
@@ -215,7 +215,7 @@ async function downloadPdf() {
         v-if="data"
         variant="primary"
         :loading="downloading"
-        :title="t('registers.preEtatDate.downloadPdf')"
+        :title="t('common.downloadPdf')"
         @click="downloadPdf"
       />
     </template>

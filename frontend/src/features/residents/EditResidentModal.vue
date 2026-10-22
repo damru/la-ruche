@@ -69,7 +69,7 @@ async function handleSubmit() {
 <template>
   <CModal
     :open="open"
-    :title="t('residents.editResidentTitle')"
+    :title="t('common.editProfile')"
     :closable="!loading"
     @update:open="$emit('update:open', $event)"
   >

@@ -58,10 +58,10 @@ const claimTypeOptions = computed(() =>
 )
 
 const unitOptions = computed(() => [
-  { value: '', label: t('claims.commonAreas') },
+  { value: '', label: t('common.commonAreas') },
   ...props.units.map(unit => ({
     value: unit.id,
-    label: t('claims.unitLabel', { number: unit.unit_number }),
+    label: t('common.unitLabel', { number: unit.unit_number }),
   })),
 ])
 
@@ -166,7 +166,7 @@ async function handleSubmit() {
     >
       <CFormInput
         v-model="form.title"
-        :label="t('claims.fields.title')"
+        :label="t('common.label')"
         required
       />
       <CFormSelect
@@ -194,17 +194,17 @@ async function handleSubmit() {
 
       <CFormSelect
         v-model="form.unit_id"
-        :label="t('claims.fields.unit')"
+        :label="t('common.relatedUnit')"
         :options="unitOptions"
       />
       <CFormTextarea
         v-model="form.description"
-        :label="t('claims.fields.description')"
+        :label="t('common.description')"
         :rows="3"
       />
 
       <div class="flex flex-col gap-1">
-        <label class="text-sm font-medium text-on-surface-variant">{{ t('claims.fields.documents') }}</label>
+        <label class="text-sm font-medium text-on-surface-variant">{{ t('common.attachments') }}</label>
         <CFileDropzone
           v-model:files="selectedDocuments"
           :hint="t('claims.documentHint')"

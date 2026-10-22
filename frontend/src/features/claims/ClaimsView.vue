@@ -176,8 +176,8 @@ function typeTone(type: ClaimType): string {
 }
 
 function unitLabel(unitId?: string): string {
-  if (!unitId) return t('claims.commonAreas')
-  return t('claims.unitLabel', { number: unitsById.value.get(unitId)?.unit_number ?? '—' })
+  if (!unitId) return t('common.commonAreas')
+  return t('common.unitLabel', { number: unitsById.value.get(unitId)?.unit_number ?? '—' })
 }
 
 function deadlineVariant(claim: Claim): 'valid' | 'pending' | 'err' | 'default' {
@@ -300,7 +300,7 @@ function handleDocumentCountChanged(claimId: string, delta: number) {
         <div class="topbar-breadcrumb">
           {{ buildingName || '…' }}
           <CIconChevronRight />
-          <span>{{ t('claims.title') }}</span>
+          <span>{{ t('common.claims') }}</span>
         </div>
       </template>
       <template #right>
@@ -327,7 +327,7 @@ function handleDocumentCountChanged(claimId: string, delta: number) {
             {{ t('page.eyebrows.claims') }}
           </CEyebrow>
           <CHeading type="header">
-            {{ t('claims.title') }}
+            {{ t('common.claims') }}
           </CHeading>
           <CMetaItem variant="sub">
             {{ t('claims.activeCount', { count: activeClaimsCount }) }}
@@ -430,7 +430,7 @@ function handleDocumentCountChanged(claimId: string, delta: number) {
                     <template #icon>
                       <CIconFile />
                     </template>
-                    {{ t('claims.documentsCount', claim.document_count) }}
+                    {{ t('common.documentsCount', claim.document_count) }}
                   </CMetaItem>
                 </CFlexGroup>
                 <p

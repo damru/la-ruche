@@ -127,7 +127,7 @@ async function confirmDelete() {
         v-if="documents.length"
         class="flex flex-col gap-2"
       >
-        <span class="text-xs text-on-surface-variant">{{ t('calendar.event.fields.documents') }}</span>
+        <span class="text-xs text-on-surface-variant">{{ t('common.attachments') }}</span>
         <div
           v-for="document in documents"
           :key="document.id"

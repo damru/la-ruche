@@ -95,7 +95,7 @@ async function handleSubmit() {
 <template>
   <CModal
     :open="open"
-    :title="t('residents.createResidentTitle')"
+    :title="t('common.addResident')"
     :closable="!loading"
     @update:open="$emit('update:open', $event)"
   >
@@ -123,7 +123,7 @@ async function handleSubmit() {
       </CFormRow>
       <CFormSelect
         v-model="form.role"
-        :label="t('residents.inviteRole')"
+        :label="t('common.role')"
         :options="roleOptions"
         required
         :disabled="loading"

@@ -48,7 +48,7 @@ async function handleClose() {
 <template>
   <CModal
     :open="open"
-    :title="t('budget.closeExerciseTitle')"
+    :title="t('common.closeExercise')"
     @update:open="$emit('update:open', $event)"
   >
     <p class="body-sm">
@@ -66,7 +66,7 @@ async function handleClose() {
         />
         <CBtn
           variant="danger"
-          :title="t('budget.closeExerciseConfirm')"
+          :title="t('common.confirmClose')"
           :loading="closing"
           @click="handleClose"
         />

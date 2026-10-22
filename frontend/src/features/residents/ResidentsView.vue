@@ -134,18 +134,18 @@ const unitColumns = computed(() => [
   { key: 'unit_number', label: t('common.lot') },
   { key: 'unit_type', label: t('common.type') },
   { key: 'location', label: t('residents.location') },
-  { key: 'shares', label: t('units.shares'), numeric: true },
+  { key: 'shares', label: t('common.shares'), numeric: true },
   { key: 'owner', label: t('residents.currentOwner') },
-  { key: 'status', label: t('common.status') },
+  { key: 'status', label: t('status') },
   { key: 'actions', label: '', width: '1%' },
 ])
 
 const userColumns = computed(() => [
-  { key: 'name', label: t('common.name') },
+  { key: 'name', label: t('lastName') },
   { key: 'email', label: t('common.email') },
   { key: 'phone', label: t('common.phone') },
   { key: 'roles', label: t('common.roles') },
-  { key: 'status', label: t('common.status') },
+  { key: 'status', label: t('status') },
   { key: 'actions', label: '', width: '1%' },
 ])
 
@@ -240,7 +240,7 @@ function openTransferModal(unit: Unit) {
             size="sm"
             shrink="sm"
             :icon="CIconUserPlus"
-            :title="t('residents.addResident')"
+            :title="t('common.addResident')"
             @click="showCreateResidentModal = true"
           />
         </div>
@@ -264,7 +264,7 @@ function openTransferModal(unit: Unit) {
           </CHeading>
           <CMetaLine>
             <CMetaItem variant="sub">
-              {{ t('residents.header.unitsCount', { count: allUnits.length }) }}
+              {{ t('common.unitsCount', { count: allUnits.length }) }}
             </CMetaItem>
             <CSeparator />
             <CMetaItem variant="sub">
@@ -321,7 +321,7 @@ function openTransferModal(unit: Unit) {
               </template>
               <template #cell-status="{ row }">
                 <CBadge :variant="row.active ? 'open' : 'closed'">
-                  {{ row.active ? t('common.active') : t('common.inactive') }}
+                  {{ row.active ? t('active') : t('common.inactive') }}
                 </CBadge>
               </template>
               <template #cell-actions="{ row }">
@@ -335,8 +335,8 @@ function openTransferModal(unit: Unit) {
                   />
                   <CBtn
                     variant="icon"
-                    :aria-label="t('residents.transferOwnership')"
-                    :title="t('residents.transferOwnership')"
+                    :aria-label="t('common.transferOwnership')"
+                    :title="t('common.transferOwnership')"
                     :icon="CIconArrowRight"
                     @click="openTransferModal(row)"
                   />
@@ -436,7 +436,7 @@ function openTransferModal(unit: Unit) {
                   v-else
                   variant="open"
                 >
-                  {{ t('common.active') }}
+                  {{ t('active') }}
                 </CBadge>
               </template>
               <template #cell-actions="{ row }">
@@ -444,16 +444,16 @@ function openTransferModal(unit: Unit) {
                   <CBtn
                     v-if="row.status === 'no_access'"
                     variant="icon"
-                    :title="t('residents.sendInvite')"
-                    :aria-label="t('residents.sendInvite')"
+                    :title="t('common.sendInvitation')"
+                    :aria-label="t('common.sendInvitation')"
                     :icon="CIconUserPlus"
                     @click="openSendInviteModal(row)"
                   />
                   <CBtn
                     v-if="row.status === 'pending_invite'"
                     variant="icon"
-                    :title="t('residents.revokeInvite')"
-                    :aria-label="t('residents.revokeInvite')"
+                    :title="t('common.revokeInvitation')"
+                    :aria-label="t('common.revokeInvitation')"
                     :icon="CIconTrash"
                     class="tone--err"
                     @click="openRevokeModal(row)"
@@ -461,23 +461,23 @@ function openTransferModal(unit: Unit) {
                   <template v-if="row.status !== 'pending_invite'">
                     <CBtn
                       variant="icon"
-                      :title="t('residents.editResident')"
-                      :aria-label="t('residents.editResident')"
+                      :title="t('common.editProfile')"
+                      :aria-label="t('common.editProfile')"
                       :icon="CIconEdit"
                       @click="openEditResidentModal(row)"
                     />
                     <CBtn
                       variant="icon"
-                      :title="t('residents.editRoles')"
-                      :aria-label="t('residents.editRoles')"
+                      :title="t('common.editRoles')"
+                      :aria-label="t('common.editRoles')"
                       :icon="CIconShield"
                       @click="openEditRolesModal(row)"
                     />
                     <CBtn
                       v-if="row.status !== 'archived'"
                       variant="icon"
-                      :title="t('residents.archiveUser')"
-                      :aria-label="t('residents.archiveUser')"
+                      :title="t('common.archiveResident')"
+                      :aria-label="t('common.archiveResident')"
                       :icon="CIconArchive"
                       class="tone--err"
                       @click="openArchiveUserModal(row)"

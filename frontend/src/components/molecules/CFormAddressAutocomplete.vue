@@ -166,7 +166,7 @@ function updateField(field: keyof AddressValue, value: string) {
         for="address_line1"
         class="c-addr__label"
       >
-        {{ t('addressAutocomplete.addressLine1') }}
+        {{ t('common.address') }}
         <span
           class="c-addr__required"
           aria-hidden="true"
@@ -240,7 +240,7 @@ function updateField(field: keyof AddressValue, value: string) {
           for="postal_code"
           class="c-addr__label"
         >
-          {{ t('addressAutocomplete.postalCode') }}
+          {{ t('common.postalCode') }}
           <span
             class="c-addr__required"
             aria-hidden="true"
@@ -273,7 +273,7 @@ function updateField(field: keyof AddressValue, value: string) {
           for="city"
           class="c-addr__label"
         >
-          {{ t('addressAutocomplete.city') }}
+          {{ t('common.city') }}
           <span
             class="c-addr__required"
             aria-hidden="true"

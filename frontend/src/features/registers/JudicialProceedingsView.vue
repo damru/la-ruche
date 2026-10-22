@@ -47,7 +47,7 @@ const columns = computed(() => [
   { key: 'subject', label: t('registers.judicial.subject') },
   { key: 'proceeding_type', label: t('registers.judicial.type') },
   { key: 'parties', label: t('registers.judicial.parties') },
-  { key: 'status', label: t('common.status') },
+  { key: 'status', label: t('status') },
   { key: 'opened_at', label: t('registers.judicial.openedAt') },
   ...(canEdit.value ? [{ key: 'actions', label: '', numeric: true }] : []),
 ])

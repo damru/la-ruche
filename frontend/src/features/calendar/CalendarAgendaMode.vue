@@ -59,7 +59,7 @@ function onEventClick(event: CalendarEvent) {
 <template>
   <CEmptyState
     v-if="groups.length === 0"
-    :title="t('calendar.empty.title')"
+    :title="t('common.noEvents')"
     :description="t('calendar.empty.description')"
   />
   <div

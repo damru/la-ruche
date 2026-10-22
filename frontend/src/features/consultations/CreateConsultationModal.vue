@@ -68,7 +68,7 @@ async function handleSubmit() {
 <template>
   <CModal
     :open="open"
-    :title="t('consultations.create')"
+    :title="t('common.newConsultation')"
     size="lg"
     @update:open="$emit('update:open', $event)"
   >
@@ -78,12 +78,12 @@ async function handleSubmit() {
     >
       <CFormInput
         v-model="form.title"
-        :label="t('consultations.fields.title')"
+        :label="t('common.title')"
         required
       />
       <CFormTextarea
         v-model="form.description"
-        :label="t('consultations.fields.description')"
+        :label="t('common.description')"
         :rows="2"
       />
       <div class="flex flex-col gap-1">

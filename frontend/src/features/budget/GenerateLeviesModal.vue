@@ -125,7 +125,7 @@ async function handleSubmit() {
           <strong>{{ impactedLotsCount }}</strong>
         </div>
         <div class="flex flex-col gap-1">
-          <span class="text-2xs opacity-80">{{ t('budget.generateSummaryAlreadyCalledLabel') }}</span>
+          <span class="text-2xs opacity-80">{{ t('common.alreadyCalled') }}</span>
           <strong class="font-mono tabular-nums">{{ formatCurrency(alreadyCalledDisplayAmount) }}</strong>
         </div>
         <div class="flex flex-col gap-1">
@@ -150,7 +150,7 @@ async function handleSubmit() {
         <CBtn
           variant="primary"
           :icon="CIconMegaphone"
-          :title="t('budget.generate')"
+          :title="t('common.generate')"
           :disabled="!canGenerateLevies"
           :loading="loading"
           type="submit"

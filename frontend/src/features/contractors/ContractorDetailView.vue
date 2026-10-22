@@ -113,7 +113,7 @@ function priorityVariant(p: string): 'err' | 'pending' | 'primary' | 'valid' | '
             :to="{ name: 'contractors' }"
             class="topbar-breadcrumb-link"
           >
-            {{ t('contractors.title') }}
+            {{ t('common.vendors') }}
           </RouterLink>
           <CIconChevronRight />
           <span>{{ contractor?.name ?? '…' }}</span>

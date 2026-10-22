@@ -169,7 +169,7 @@ async function submit() {
           />
           <CFormInput
             v-model="cost"
-            :label="t('contractor.cost')"
+            :label="t('common.interventionCost')"
             type="number"
             :min="0"
             :step="0.01"
@@ -219,7 +219,7 @@ async function submit() {
             >{{ task.manager_phone }}</a>
           </div>
           <div class="contact-row">
-            <span class="contact-label body-xs">{{ t('contractor.contactAddress') }}</span>
+            <span class="contact-label body-xs">{{ t('common.address') }}</span>
             <span class="body-xs contact-value">{{ task.building_address }}</span>
           </div>
         </div>

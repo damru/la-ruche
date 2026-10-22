@@ -57,7 +57,7 @@ async function submit() {
     const res = await reportsApi.convertToTask(props.report.id, {
       priority: convertPriority.value,
     })
-    feedback.setSuccess(t('reports.convertSuccess'))
+    feedback.setSuccess(t('common.taskCreated'))
     emit('converted', res.data.task_id)
     scheduleClose(() => {
       emit('update:open', false)
@@ -74,7 +74,7 @@ async function submit() {
 <template>
   <CModal
     :open="open"
-    :title="t('reports.confirmConvertTitle')"
+    :title="t('common.convertToTask')"
     size="sm"
     @update:open="emit('update:open', $event)"
   >
@@ -103,7 +103,7 @@ async function submit() {
         />
         <CBtn
           variant="primary"
-          :title="t('reports.convertToTask')"
+          :title="t('common.convertToTask')"
           :loading="converting"
           :closing="feedback.status.value === 'success'"
           type="submit"

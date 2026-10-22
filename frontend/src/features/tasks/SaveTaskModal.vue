@@ -257,7 +257,7 @@ async function handleDocumentAction(deleteDocument: boolean) {
     documentActionFeedback.setError(
       toErrorMessage(
         err,
-        deleteDocument ? t('tasks.documentsDeleteError') : t('tasks.documentsDetachError'),
+        deleteDocument ? t('common.documentDeleteError') : t('tasks.documentsDetachError'),
       ),
     )
   } finally {
@@ -387,7 +387,7 @@ async function handleSubmit() {
 <template>
   <CModal
     :open="open"
-    :title="task ? t('tasks.editTask') : t('tasks.newTask')"
+    :title="task ? t('tasks.editTask') : t('common.newTask')"
     size="md"
     :closable="!saving"
     @update:open="$emit('update:open', $event)"
@@ -398,13 +398,13 @@ async function handleSubmit() {
     >
       <CFormInput
         v-model="taskForm.title"
-        :label="t('tasks.titleLabel')"
-        :placeholder="t('tasks.titleLabel')"
+        :label="t('common.title')"
+        :placeholder="t('common.title')"
         required
       />
       <CFormTextarea
         v-model="taskForm.description"
-        :label="t('tasks.descriptionLabel')"
+        :label="t('common.description')"
         :rows="3"
       />
       <CFormSelect
@@ -436,10 +436,10 @@ async function handleSubmit() {
         </span>
       </div>
       <div class="flex flex-col gap-1">
-        <label class="text-sm font-medium text-on-surface-variant">{{ t('tasks.documentsLabel') }}</label>
+        <label class="text-sm font-medium text-on-surface-variant">{{ t('common.attachments') }}</label>
         <CFileDropzone
           v-model:files="selectedDocuments"
-          :hint="task ? t('tasks.editDocumentHint') : t('tasks.documentHint')"
+          :hint="task ? t('common.dropzoneExtraHint') : t('tasks.documentHint')"
           :remove-label="t('common.remove')"
         />
 
@@ -448,7 +448,7 @@ async function handleSubmit() {
           class="task-existing-documents"
         >
           <p class="text-xs text-on-surface-variant task-existing-documents__hint">
-            {{ t('tasks.attachedDocuments') }}
+            {{ t('common.attachedDocuments') }}
           </p>
           <CPageLoader v-if="loadingFormDocuments" />
           <div
@@ -541,7 +541,7 @@ async function handleSubmit() {
       >
         <CFormInput
           v-model="contractorSearch"
-          :label="t('tasks.contractorLabel')"
+          :label="t('common.assignedVendor')"
           :placeholder="t('tasks.contractorPlaceholder')"
           autocomplete="off"
           :hint="selectedContractor
@@ -627,7 +627,7 @@ async function handleSubmit() {
     :open="!!pendingDocument"
     :title="t('tasks.documentsDetachTitle')"
     :description="t('tasks.documentsDetachMessage', { name: pendingDocument?.original_name ?? '', title: task?.title ?? '' })"
-    :warning="t('tasks.documentsDeleteWarning', { name: pendingDocument?.original_name ?? '' })"
+    :warning="t('common.documentDeleteWarning', { name: pendingDocument?.original_name ?? '' })"
     :loading="documentActionLoading"
     :status="documentActionFeedback.status.value"
     :message="documentActionFeedback.message.value"

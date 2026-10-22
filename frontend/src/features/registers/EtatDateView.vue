@@ -62,7 +62,7 @@ const columns = computed(() => [
   { key: 'unit', label: t('common.lot') },
   { key: 'requester_name', label: t('registers.etatDate.requesterName') },
   { key: 'due_date', label: t('registers.etatDate.dueDate') },
-  { key: 'status', label: t('common.status') },
+  { key: 'status', label: t('status') },
   ...(canEdit.value ? [{ key: 'actions', label: '', numeric: true }] : []),
 ])
 
@@ -99,7 +99,7 @@ function viewSnapshot(request: EtatDateRequest) {
         <div class="topbar-breadcrumb">
           {{ buildingName }}
           <CIconChevronRight class="icon-xs" />
-          <span>{{ t('registers.etatDate.title') }}</span>
+          <span>{{ t('common.etatDate') }}</span>
         </div>
       </template>
       <template #right>
@@ -125,7 +125,7 @@ function viewSnapshot(request: EtatDateRequest) {
         <header class="view-header">
           <CEyebrow>{{ t('registers.eyebrow') }}</CEyebrow>
           <CHeading type="header">
-            {{ t('registers.etatDate.title') }}
+            {{ t('common.etatDate') }}
           </CHeading>
           <CMetaItem variant="sub">
             {{ t('registers.etatDate.summary', { count: requests.length }) }}
@@ -188,7 +188,7 @@ function viewSnapshot(request: EtatDateRequest) {
                   variant="ghost"
                   size="sm"
                   :loading="generatingId === row.id"
-                  :title="row.status === 'requested' ? t('registers.etatDate.generate') : t('registers.etatDate.regenerate')"
+                  :title="row.status === 'requested' ? t('common.generate') : t('registers.etatDate.regenerate')"
                   @click="generate(row)"
                 />
                 <CBtn

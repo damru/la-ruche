@@ -53,7 +53,7 @@ async function confirm() {
 <template>
   <CModal
     :open="open"
-    :title="t('maintenance.confirmDeleteTitle')"
+    :title="t('common.deleteEntry')"
     size="sm"
     @update:open="emit('update:open', $event)"
   >

@@ -36,7 +36,7 @@ async function confirmArchiveUnit() {
   archiveFeedback.reset()
   try {
     await unitsApi.archive(props.unit.id)
-    archiveFeedback.setSuccess(t('residents.archiveSuccess'))
+    archiveFeedback.setSuccess(t('common.lotArchive'))
     emit('archived')
     scheduleArchiveClose(() => { emit('update:open', false) })
   } catch {

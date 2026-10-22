@@ -176,9 +176,9 @@ const showResetDataModal = ref(false)
         v-model="activeTab"
         variant="tab"
         :tabs="[
-          { value: 'account', label: t('nav.myAccount') },
-          { value: 'notifications', label: t('nav.notifications') },
-          { value: 'appearance', label: t('nav.appearance') },
+          { value: 'account', label: t('common.myAccount') },
+          { value: 'notifications', label: t('common.notifications') },
+          { value: 'appearance', label: t('common.appearance') },
         ]"
       />
 
@@ -201,7 +201,7 @@ const showResetDataModal = ref(false)
             />
             <CFormInput
               :model-value="auth.user?.last_name ?? ''"
-              :label="t('common.lastName')"
+              :label="t('lastName')"
               disabled
             />
             <CFormInput
@@ -241,7 +241,7 @@ const showResetDataModal = ref(false)
           </CHeading>
           <div class="access-grid">
             <div class="access-row">
-              <span class="body-xs access-label">{{ t('settings.account.roleLabel') }}</span>
+              <span class="body-xs access-label">{{ t('common.role') }}</span>
               <div class="access-badges">
                 <CBadge
                   v-for="role in auth.user?.roles ?? []"
@@ -256,7 +256,7 @@ const showResetDataModal = ref(false)
               v-if="buildingName"
               class="access-row"
             >
-              <span class="body-xs access-label">{{ t('settings.account.scopeLabel') }}</span>
+              <span class="body-xs access-label">{{ t('common.coOwnership') }}</span>
               <span class="title-sm">{{ buildingName }}</span>
             </div>
           </div>
@@ -350,7 +350,7 @@ const showResetDataModal = ref(false)
           <div
             class="theme-options"
             role="radiogroup"
-            :aria-label="t('settings.preferences.theme.label')"
+            :aria-label="t('common.appearance')"
           >
             <button
               v-for="option in themeOptions"

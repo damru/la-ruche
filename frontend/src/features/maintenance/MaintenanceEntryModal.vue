@@ -72,7 +72,7 @@ async function save() {
 <template>
   <CModal
     :open="open"
-    :title="t('maintenance.addEntry')"
+    :title="t('common.addEntry')"
     size="md"
     @update:open="emit('update:open', $event)"
   >
@@ -82,12 +82,12 @@ async function save() {
     >
       <CFormInput
         v-model="form.title"
-        :label="t('maintenance.fields.title')"
+        :label="t('common.title')"
         required
       />
       <CFormTextarea
         v-model="form.description"
-        :label="t('maintenance.fields.description')"
+        :label="t('common.description')"
         :rows="2"
       />
       <CFormInput
@@ -106,7 +106,7 @@ async function save() {
         />
         <CFormInput
           v-model="form.vendor_name"
-          :label="t('maintenance.fields.vendorName')"
+          :label="t('common.vendor')"
         />
       </CFormRow>
     </CForm>

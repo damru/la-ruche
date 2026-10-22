@@ -126,12 +126,12 @@ const filteredLevies = computed<ConsolidatedUnitChargeRow[]>(() => {
 })
 
 const levyTableColumns = computed<Column<Record<string, unknown>>[]>(() => [
-  { key: 'fiscal_year', label: t('budget.fiscalYear', { year: '' }).trim(), align: 'right', numeric: true },
+  { key: 'fiscal_year', label: t('common.fiscalYear', { year: '' }).trim(), align: 'right', numeric: true },
   { key: 'issued_at', label: t('common.issuedAt'), align: 'right', numeric: true },
   { key: 'due_date', label: t('common.dueDate'), align: 'right', numeric: true },
-  { key: 'call_label', label: t('budget.levyCallLabel') },
+  { key: 'call_label', label: t('common.label') },
   { key: 'amount', label: t('common.amount'), align: 'right', numeric: true },
-  { key: 'status', label: t('common.status') },
+  { key: 'status', label: t('status') },
   { key: 'paid_at', label: t('common.paidAt'), align: 'right', numeric: true },
   { key: 'actions', label: '', align: 'right', width: '1%' },
 ])
@@ -201,7 +201,7 @@ const showPreEtatDateModal = ref(false)
           <CBtn
             variant="ghost"
             size="sm"
-            :title="t('registers.preEtatDate.action')"
+            :title="t('common.preEtatDate')"
             @click="showPreEtatDateModal = true"
           />
         </div>
@@ -244,7 +244,7 @@ const showPreEtatDateModal = ref(false)
               v-if="auth.isManager && ownerFilterOptions.length > 1"
               v-model="ownerFilterIdModel"
               :placeholder="t('budget.filterByOwner')"
-              :options="[{ value: '', label: t('budget.filterAll') }, ...ownerFilterOptions]"
+              :options="[{ value: '', label: t('common.all') }, ...ownerFilterOptions]"
               class="min-w-48"
             />
           </div>
@@ -283,7 +283,7 @@ const showPreEtatDateModal = ref(false)
               <CBtn
                 variant="ghost"
                 size="sm"
-                :title="t('units.charges.detailAction')"
+                :title="t('common.details')"
                 @click="selectedLevy = consolidatedLevies.find(l => l.id === row.id) ?? null"
               />
             </template>
