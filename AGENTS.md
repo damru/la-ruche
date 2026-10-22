@@ -104,6 +104,18 @@ Use the `git-commit` skill (`.claude/skills/git-commit`) when writing commit mes
 
 ---
 
+## Pre-PR / Pre-Push Checks (MANDATORY)
+
+Before opening a PR, and before every push to an open PR branch, the relevant checks below MUST pass. Never open a PR or push a commit with these failing.
+
+- **Frontend modified** → `cd frontend && npm run lint`
+  - Fix with: `cd frontend && npm run lint -- --fix`
+- **Backend modified** → `cd backend && cargo fmt --check` and `cd backend && cargo clippy -- -D warnings`
+  - Fix with: `cd backend && cargo fmt` and `cd backend && cargo clippy --fix --allow-dirty`
+- **If `make` is available**: `make lint` (checks) and `make lint-fix` (fixes) cover everything above.
+
+---
+
 ## Commands
 
 ```bash
