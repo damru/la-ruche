@@ -328,4 +328,3 @@ async fn ongoing_session_keeps_vote_patch_and_passerelle() {
         .await;
     assert_eq!(delete.status_code(), StatusCode::NOT_FOUND);
 }
-

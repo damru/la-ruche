@@ -213,4 +213,3 @@ mod tests {
         assert!(!document_requires_replacement_reason("autre"));
     }
 }
-

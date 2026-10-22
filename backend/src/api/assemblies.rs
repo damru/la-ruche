@@ -666,4 +666,3 @@ fn parse_vote_rule(s: &str) -> AppResult<VoteRule> {
         )),
     }
 }
-

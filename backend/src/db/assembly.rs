@@ -1832,4 +1832,3 @@ pub async fn patch_resolution_description(
         })
     }))
 }
-
