@@ -130,7 +130,7 @@ watch(() => props.open, async (open) => {
     <template #footer>
       <CBtn
         variant="ghost"
-        :title="t('settings.keys.historyClose')"
+        :title="t('common.close')"
         @click="emit('update:open', false)"
       />
     </template>

@@ -158,7 +158,7 @@ async function handleSubmit() {
       <CFormRow :cols="2">
         <CFormInput
           v-model="form.event_date"
-          :label="t('calendar.event.fields.date')"
+          :label="t('common.date')"
           type="date"
           required
         />

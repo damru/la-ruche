@@ -426,9 +426,9 @@ async function handleSubmit() {
           />
           <CFormInput
             v-model="contractorDraft.phone"
-            :label="t('contractors.phone')"
+            :label="t('common.phone')"
             type="tel"
-            :placeholder="t('contractors.phonePlaceholder')"
+            :placeholder="t('common.phonePlaceholder')"
           />
         </CFormRow>
         <span class="text-xs text-on-surface-variant">
@@ -440,7 +440,7 @@ async function handleSubmit() {
         <CFileDropzone
           v-model:files="selectedDocuments"
           :hint="task ? t('tasks.editDocumentHint') : t('tasks.documentHint')"
-          :remove-label="t('tasks.removeDocument')"
+          :remove-label="t('common.remove')"
         />
 
         <div

@@ -174,7 +174,7 @@ async function submit() {
 <template>
   <CModal
     :open="open"
-    :title="t('reports.editReport')"
+    :title="t('common.edit')"
     size="md"
     :closable="!saving && !uploadingPhotos"
     @update:open="emit('update:open', $event)"
@@ -223,7 +223,7 @@ async function submit() {
                 <button
                   type="button"
                   class="photo-remove"
-                  :title="t('reports.removePhoto')"
+                  :title="t('common.delete')"
                   @click="remove(idx)"
                 >
                   ×

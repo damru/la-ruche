@@ -173,7 +173,7 @@ async function submit() {
             type="number"
             :min="0"
             :step="0.01"
-            :placeholder="t('contractor.costPlaceholder')"
+            :placeholder="t('common.optional')"
           />
 
           <!-- Error inline -->
@@ -212,7 +212,7 @@ async function submit() {
             v-if="task.manager_phone"
             class="contact-row"
           >
-            <span class="contact-label body-xs">{{ t('contractor.contactPhone') }}</span>
+            <span class="contact-label body-xs">{{ t('common.phone') }}</span>
             <a
               :href="`tel:${task.manager_phone}`"
               class="body-xs contact-value"

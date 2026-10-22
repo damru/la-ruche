@@ -155,7 +155,7 @@ async function submit() {
                 <button
                   type="button"
                   class="photo-remove"
-                  :title="t('reports.removePhoto')"
+                  :title="t('common.delete')"
                   @click="remove(idx)"
                 >
                   ×

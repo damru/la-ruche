@@ -110,7 +110,7 @@ async function save() {
     >
       <CFormInput
         v-model="form.name"
-        :label="t('contractors.name')"
+        :label="t('common.name')"
         :placeholder="t('contractors.namePlaceholder')"
         required
       />
@@ -122,9 +122,9 @@ async function save() {
       />
       <CFormInput
         v-model="form.phone"
-        :label="t('contractors.phone')"
+        :label="t('common.phone')"
         type="tel"
-        :placeholder="t('contractors.phonePlaceholder')"
+        :placeholder="t('common.phonePlaceholder')"
       />
       <CFormChipSelect
         v-model="form.domains"

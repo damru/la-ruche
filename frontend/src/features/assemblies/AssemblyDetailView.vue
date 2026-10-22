@@ -929,7 +929,7 @@ function openArt25Modal(resolution: Resolution) {
                     v-if="canEditResolution"
                     size="sm"
                     variant="ghost"
-                    :title="t('meetings.editResolution')"
+                    :title="t('common.edit')"
                     @click="openEditResolutionModal(resolution)"
                   />
                   <CBtn

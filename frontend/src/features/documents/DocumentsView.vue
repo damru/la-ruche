@@ -65,7 +65,7 @@ function mimeLabel(mime: string): string {
 
 const docColumns = computed(() => [
   { key: 'original_name', label: t('documents.columns.fileName') },
-  { key: 'mime_type', label: t('documents.columns.type') },
+  { key: 'mime_type', label: t('common.type') },
   { key: 'visible_roles', label: t('documents.columns.visibility') },
   { key: 'references', label: t('documents.columns.references') },
   { key: 'size_bytes', label: t('documents.columns.size') },

@@ -106,7 +106,7 @@ async function handleSubmit() {
       <CFormRow :cols="2">
         <CFormInput
           v-model="form.first_name"
-          :label="t('onboarding.firstName')"
+          :label="t('common.firstName')"
           placeholder="Marie"
           autocomplete="given-name"
           required
@@ -162,7 +162,7 @@ async function handleSubmit() {
           variant="primary"
           type="submit"
           form="create-resident-form"
-          :title="t('residents.createResidentButton')"
+          :title="t('common.add')"
           :loading="loading"
           :closing="feedback.status.value === 'success'"
           :disabled="!isValid || loading"

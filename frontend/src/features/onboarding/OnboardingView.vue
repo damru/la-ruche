@@ -249,7 +249,7 @@ async function handleSubmit() {
               <CFormInput
                 id="first_name"
                 v-model="form.first_name"
-                :label="t('onboarding.firstName')"
+                :label="t('common.firstName')"
                 :placeholder="t('onboarding.firstNamePlaceholder')"
                 :error="err.first_name ? t('onboarding.fieldRequired') : undefined"
                 autocomplete="given-name"
@@ -263,7 +263,7 @@ async function handleSubmit() {
               id="email"
               v-model="form.email"
               type="email"
-              :label="t('auth.email')"
+              :label="t('common.email')"
               :placeholder="t('auth.emailPlaceholder')"
               :error="err.email ? t('onboarding.fieldRequired') : undefined"
               autocomplete="email"
@@ -387,7 +387,7 @@ async function handleSubmit() {
                 type="button"
                 variant="ghost"
                 :icon="CIconArrowLeft"
-                :title="t('onboarding.back')"
+                :title="t('common.back')"
                 :disabled="loading"
                 @click="goBack"
               />

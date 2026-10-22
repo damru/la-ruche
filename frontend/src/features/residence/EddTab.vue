@@ -252,7 +252,7 @@ function discrepancyVariant(d: EddDiscrepancy): 'warn' | 'err' {
                 variant="ghost"
                 size="sm"
                 :icon="CIconDownload"
-                :title="t('settings.edd.download')"
+                :title="t('common.download')"
                 @click="downloadDocument(latestReference.document_id as string)"
               />
             </div>

@@ -69,7 +69,7 @@ async function handleSubmit() {
 <template>
   <CModal
     :open="open"
-    :title="t('meetings.editResolution')"
+    :title="t('common.edit')"
     @update:open="$emit('update:open', $event)"
   >
     <CForm

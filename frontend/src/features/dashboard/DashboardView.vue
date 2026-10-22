@@ -645,7 +645,7 @@ const todayStr = computed(() =>
                 </p>
                 <template #actions>
                   <CSectionLink to="/tasks">
-                    {{ t('dashboard.allTasks') }}
+                    {{ t('common.allFem') }}
                   </CSectionLink>
                 </template>
               </CSectionHeader>
