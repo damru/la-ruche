@@ -793,6 +793,59 @@ async fn draft_deletable_open_not_deletable() {
     assert_eq!(del_draft.status_code(), StatusCode::NO_CONTENT);
 }
 
+// S04-6b: a non-manager creator can delete their own draft; a non-manager
+// cannot delete someone else's draft (403) nor a closed consultation (403).
+#[tokio::test]
+async fn creator_can_delete_own_draft_only() {
+    let (server, pool) = consultation_test_server().await;
+    let building_id = manager_building_id(&server).await;
+    let (creator_id, creator_jwt) = seed_user(&pool, building_id, &["co_owner"]).await;
+
+    // Manager creates a draft (someone else's).
+    let created = server
+        .post("/api/v1/consultations")
+        .json(&consultation_payload())
+        .await;
+    let other_draft = created.json::<Value>()["id"]
+        .as_str()
+        .expect("id")
+        .to_string();
+
+    // The creator (co_owner) creates their own draft via the API.
+    let creator_server = user_server(&pool, &creator_jwt).await;
+    let own = creator_server
+        .post("/api/v1/consultations")
+        .json(&consultation_payload())
+        .await;
+    assert_eq!(own.status_code(), StatusCode::CREATED);
+    let own_draft = own.json::<Value>()["id"].as_str().expect("id").to_string();
+    let own_body = own.json::<Value>();
+    assert_eq!(own_body["id"], own_draft);
+
+    // Deleting someone else's draft → 403.
+    let del_other = creator_server
+        .delete(&format!("/api/v1/consultations/{other_draft}"))
+        .await;
+    assert_eq!(del_other.status_code(), StatusCode::FORBIDDEN);
+
+    // Deleting their own draft → 204.
+    let del_own = creator_server
+        .delete(&format!("/api/v1/consultations/{own_draft}"))
+        .await;
+    assert_eq!(del_own.status_code(), StatusCode::NO_CONTENT);
+
+    // Sanity: the creator is indeed the created_by of their draft.
+    let got = server
+        .get(&format!("/api/v1/consultations/{own_draft}"))
+        .await;
+    assert_eq!(
+        got.status_code(),
+        StatusCode::NOT_FOUND,
+        "draft must be gone"
+    );
+    let _ = creator_id;
+}
+
 // S04-7: a plain resident does not see other people's drafts in list.
 #[tokio::test]
 async fn resident_does_not_see_others_drafts() {

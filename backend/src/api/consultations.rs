@@ -288,14 +288,29 @@ pub async fn results(
     })))
 }
 
-/// DELETE /consultations/{id} — managers only; only closed consultations can be deleted.
+/// DELETE /consultations/{id} — managers/board members, or the creator of a
+/// draft; only closed consultations and drafts can be deleted (EP-010-S04).
 /// Deletes the consultation and all related choices and responses.
 pub async fn delete(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
 ) -> AppResult<StatusCode> {
-    auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
+    let can_manage = auth.has_role(&Role::Manager) || auth.has_role(&Role::BoardMember);
+    if !can_manage {
+        // A non-manager may only delete their own draft.
+        let c = db::consultation::get_with_choices(&state.pool, id, auth.building_id, auth.user_id)
+            .await?
+            .ok_or(AppError::NotFound)?;
+        let created_by = c
+            .get("created_by")
+            .and_then(|v| v.as_str())
+            .and_then(|s| Uuid::parse_str(s).ok())
+            .ok_or(AppError::NotFound)?;
+        if created_by != auth.user_id || c.get("status").and_then(|v| v.as_str()) != Some("draft") {
+            return Err(AppError::Forbidden);
+        }
+    }
     db::consultation::delete(&state.pool, id, auth.building_id).await?;
     Ok(StatusCode::NO_CONTENT)
 }

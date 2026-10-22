@@ -999,7 +999,6 @@
     "remind": "Relancer ({count})",
     "confirmRemindTitle": "Relancer les non-répondants",
     "confirmRemindMessage": "Une relance sera enregistrée pour {count} participant(s). L'envoi effectif (e-mail) n'est pas encore actif. | Une relance sera enregistrée pour {count} participants. L'envoi effectif (e-mail) n'est pas encore actif.",
-    "remindNote": "L'envoi effectif des notifications n'est pas encore actif.",
     "edit": {
       "title": "Modifier le brouillon"
     }
