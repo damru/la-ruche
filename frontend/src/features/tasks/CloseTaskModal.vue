@@ -30,7 +30,7 @@ const closeAmount = ref('')
 const modalTitle = computed(() =>
   props.task?.status === 'awaiting_validation'
     ? t('tasks.confirmCloseValidationTitle')
-    : t('tasks.confirmCloseTitle'),
+    : t('tasks.closeTask'),
 )
 
 const confirmButtonLabel = computed(() =>
@@ -61,7 +61,7 @@ async function handleSubmit() {
       status: 'closed',
       completion_cost: closeAmount.value ? Number(closeAmount.value) : null,
     })
-    feedback.setSuccess(t('tasks.closeSuccess'))
+    feedback.setSuccess(t('tasks.lifecycle.closed'))
     emit('closed')
     scheduleClose(() => { emit('update:open', false) })
   } catch (err) {

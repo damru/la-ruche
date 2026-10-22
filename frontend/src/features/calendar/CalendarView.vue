@@ -175,7 +175,7 @@ async function exportCalendar() {
         <div class="topbar-breadcrumb">
           {{ buildingName || '...' }}
           <CIconChevronRight aria-hidden="true" />
-          <span>{{ t('calendar.title') }}</span>
+          <span>{{ t('nav.calendar') }}</span>
         </div>
       </template>
       <template #right>
@@ -184,7 +184,7 @@ async function exportCalendar() {
           variant="primary"
           size="sm"
           :icon="CIconPlus"
-          :title="t('calendar.newEvent')"
+          :title="t('calendar.event.create')"
           shrink="sm"
           @click="openCreate"
         />
@@ -201,10 +201,10 @@ async function exportCalendar() {
       <template v-else>
         <header class="view-header">
           <CEyebrow>
-            {{ t('page.eyebrows.calendar') }}
+            {{ t('common.overview') }}
           </CEyebrow>
           <CHeading type="header">
-            {{ t('calendar.title') }}
+            {{ t('nav.calendar') }}
           </CHeading>
           <CMetaLine>
             <CMetaItem variant="sub">

@@ -104,7 +104,7 @@ async function handleSubmit() {
       />
       <CFormTextarea
         v-model="form.description"
-        :label="t('meetings.resolutionDescription')"
+        :label="t('common.description')"
         :placeholder="t('meetings.resolutionDescriptionPlaceholder')"
       />
       <CFormSelect

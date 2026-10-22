@@ -197,7 +197,6 @@ jobs:
           tags: |
             type=ref,event=branch
             type=ref,event=branch,suffix=.{{date 'YYYYMMDDHHmmss'}}
-            type=ref,event=pr
             type=schedule,pattern=nightly
             type=schedule,pattern={{date 'YYYYMMDD'}}
             type=sha
@@ -205,7 +204,18 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
+      # Cache export only on branch pushes: per-PR scopes are never read again
+      # and waste the 10 GB GHA budget. Empty output on PRs disables cache-to.
+      - name: Resolve cache-to
+        id: cache
+        run: |
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            echo "to=type=gha,mode=max,scope=docker-${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Login and push only on branch pushes; PRs build without pushing to Docker Hub.
       - name: Login to Docker Hub
+        if: github.event_name != 'pull_request'
         uses: docker/login-action@v4
         with:
           registry: docker.io
@@ -216,12 +226,15 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           context: .
-          push: true
+          push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          # Branch-scoped caches keep feature branches from evicting each other's layers while preserving warm rebuilds within the same branch.
-          cache-from: type=gha,scope=docker-${{ github.ref_name }}
-          cache-to: type=gha,mode=max,scope=docker-${{ github.ref_name }}
+          # PRs read the main/develop caches instead of a cold ephemeral per-PR scope.
+          cache-from: |
+            type=gha,scope=docker-${{ github.ref_name }}
+            type=gha,scope=docker-main
+            type=gha,scope=docker-develop
+          cache-to: ${{ steps.cache.outputs.to }}
           build-args: |
             CARGO_PROFILE=release
             SQLX_OFFLINE=true

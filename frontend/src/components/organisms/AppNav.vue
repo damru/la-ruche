@@ -32,15 +32,15 @@ const allGroups: NavGroup[] = [
   {
     items: [
       { name: 'dashboard', route: '/dashboard', label: t('nav.dashboard'), mobileLabel: t('nav.mobile.dashboard'), roles: [], mobileOrder: 1 },
-      { name: 'calendar', route: '/calendar', label: t('nav.calendar'), mobileLabel: t('nav.mobile.calendar'), roles: [], mobileOrder: 9 },
+      { name: 'calendar', route: '/calendar', label: t('nav.calendar'), mobileLabel: t('calendar.modes.agenda'), roles: [], mobileOrder: 9 },
     ],
   },
   {
-    label: t('nav.groups.governance'),
+    label: t('nav.governance'),
     items: [
-      { name: 'assemblies',    route: '/meetings',      label: t('nav.meetings'),      mobileLabel: t('nav.mobile.assemblies'),    roles: ['manager', 'board_member', 'co_owner'], mobileOrder: 10 },
+      { name: 'assemblies',    route: '/meetings',      label: t('nav.meetings'),      mobileLabel: t('meetings.typeLabel.annualShort'),    roles: ['manager', 'board_member', 'co_owner'], mobileOrder: 10 },
       { name: 'consultations', route: '/consultations', label: t('nav.consultations'), mobileLabel: t('nav.mobile.consultations'), roles: [],                                      mobileOrder: 4 },
-      { name: 'reports',       route: '/reports',       label: t('nav.reports'),       mobileLabel: t('nav.mobile.reports'),       roles: [],                                      mobileOrder: 2 },
+      { name: 'reports',       route: '/reports',       label: t('nav.reports'),       mobileLabel: t('nav.reports'),       roles: [],                                      mobileOrder: 2 },
     ],
   },
   {
@@ -48,28 +48,28 @@ const allGroups: NavGroup[] = [
     items: [
       { name: 'budget',      route: '/budget',      label: t('nav.budget'),      mobileLabel: t('nav.mobile.budget'),      roles: ['manager', 'board_member', 'co_owner'], mobileOrder: 11 },
       { name: 'my-charges',  route: '/my-charges',  label: t('nav.myCharges'),   mobileLabel: t('nav.myCharges'),           roles: ['co_owner'],                            mobileOrder: 3 },
-      { name: 'contracts',   route: '/contracts',   label: t('nav.contracts'),   mobileLabel: t('nav.mobile.contracts'),   roles: ['manager'],                             mobileOrder: 6 },
+      { name: 'contracts',   route: '/contracts',   label: t('nav.contracts'),   mobileLabel: t('nav.contracts'),   roles: ['manager'],                             mobileOrder: 6 },
     ],
   },
   {
     label: t('nav.groups.operations'),
     items: [
-      { name: 'tasks',        route: '/tasks',        label: t('nav.tasks'),        mobileLabel: t('nav.mobile.tasks'),        roles: ['manager', 'board_member'], mobileOrder: 4 },
-      { name: 'contractors',  route: '/contractors',  label: t('nav.contractors'),  mobileLabel: t('nav.mobile.contractors'),  roles: [],                          mobileOrder: 3 },
-      { name: 'claims',       route: '/claims',       label: t('nav.claims'),       mobileLabel: t('nav.mobile.claims'),       roles: ['manager', 'board_member'], mobileOrder: 7 },
+      { name: 'tasks',        route: '/tasks',        label: t('nav.tasks'),        mobileLabel: t('nav.tasks'),        roles: ['manager', 'board_member'], mobileOrder: 4 },
+      { name: 'contractors',  route: '/contractors',  label: t('contractors.title'),  mobileLabel: t('contractors.title'),  roles: [],                          mobileOrder: 3 },
+      { name: 'claims',       route: '/claims',       label: t('nav.claims'),       mobileLabel: t('nav.claims'),       roles: ['manager', 'board_member'], mobileOrder: 7 },
       { name: 'maintenance', route: '/logbook',   label: t('nav.maintenance'), mobileLabel: t('nav.mobile.maintenance'), roles: ['manager', 'board_member'], mobileOrder: 8 },
-      { name: 'documents',   route: '/documents', label: t('nav.documents'),   mobileLabel: t('nav.mobile.documents'),   roles: ['manager', 'board_member', 'co_owner', 'tenant'], mobileOrder: 5 },
+      { name: 'documents',   route: '/documents', label: t('common.documents'),   mobileLabel: t('nav.mobile.documents'),   roles: ['manager', 'board_member', 'co_owner', 'tenant'], mobileOrder: 5 },
     ],
   },
   {
     label: t('nav.groups.residence'),
     items: [
-      { name: 'residence-building', route: '/residence/building', label: t('nav.residence-info'), roles: ['manager'] },
-      { name: 'residence-keys',     route: '/residence/keys',     label: t('nav.residence-keys'), roles: ['manager'] },
+      { name: 'residence-building', route: '/residence/building', label: t('common.informations'), roles: ['manager'] },
+      { name: 'residence-keys',     route: '/residence/keys',     label: t('allocationKeys.title'), roles: ['manager'] },
       { name: 'registry',           route: '/registry',           label: t('nav.registry'),       roles: ['manager', 'board_member', 'co_owner'] },
       { name: 'judicial-proceedings', route: '/judicial-proceedings', label: t('nav.judicialProceedings'), roles: ['manager', 'board_member', 'co_owner'] },
       { name: 'governance',         route: '/governance',         label: t('nav.governance'),     roles: ['manager', 'board_member', 'co_owner'] },
-      { name: 'etat-date',          route: '/etat-date',          label: t('nav.etatDate'),       roles: ['manager'] },
+      { name: 'etat-date',          route: '/etat-date',          label: t('registers.etatDate.title'),       roles: ['manager'] },
       { name: 'residents',          route: '/residents',          label: t('nav.residents'),      roles: ['manager'] },
     ],
   },
@@ -134,7 +134,7 @@ watch(() => route.path, closeDrawer)
           {{ t('nav.appName') }}
         </div>
         <div class="c-sidebar__logo-sub">
-          {{ t('nav.appTagline') }}
+          {{ t('auth.brandEyebrow') }}
         </div>
       </div>
     </div>
@@ -247,7 +247,7 @@ watch(() => route.path, closeDrawer)
       to="/profile"
       class="c-bottom-nav__item c-bottom-nav__item--profile"
       :class="{ 'c-bottom-nav__item--active': route.path.startsWith('/profile') }"
-      :aria-label="auth.user?.first_name ?? t('nav.account')"
+      :aria-label="auth.user?.first_name || t('nav.account')"
     >
       <div
         class="c-bottom-nav__avatar"
@@ -255,7 +255,7 @@ watch(() => route.path, closeDrawer)
       >
         {{ auth.user?.first_name?.[0] }}{{ auth.user?.last_name?.[0] }}
       </div>
-      <span class="c-bottom-nav__label">{{ auth.user?.first_name ?? t('nav.account') }}</span>
+      <span class="c-bottom-nav__label">{{ auth.user?.first_name || t('nav.account') }}</span>
     </router-link>
   </nav>
 

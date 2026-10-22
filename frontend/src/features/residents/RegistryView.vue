@@ -131,7 +131,7 @@ const registryColumns = computed(() => {
           />
           <CKpiCard
             class="items-center text-center"
-            :subtitle="t('registry.keys')"
+            :subtitle="t('allocationKeys.title')"
             :value="data.keys.length.toString()"
           />
           <CKpiCard
@@ -154,7 +154,7 @@ const registryColumns = computed(() => {
             variant="negative"
             @click="router.push({ name: 'residence-keys' })"
           >
-            {{ t('nav.residence-keys') }}
+            {{ t('allocationKeys.title') }}
             <CIconArrowRight
               class="icon-sm"
               aria-hidden="true"

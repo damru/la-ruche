@@ -186,7 +186,7 @@ function openDeleteModal(c: Consultation) {
         <div class="topbar-breadcrumb">
           {{ buildingName }}
           <CIconChevronRight />
-          <span>{{ t('consultations.title') }}</span>
+          <span>{{ t('nav.consultations') }}</span>
         </div>
       </template>
       <template #right>
@@ -214,7 +214,7 @@ function openDeleteModal(c: Consultation) {
             {{ t('page.eyebrows.consultations') }}
           </CEyebrow>
           <CHeading type="header">
-            {{ t('consultations.title') }}
+            {{ t('nav.consultations') }}
           </CHeading>
           <CMetaItem variant="sub">
             {{ t('consultations.openCount', { count: openCount }) }}

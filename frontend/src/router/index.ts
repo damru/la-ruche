@@ -95,7 +95,7 @@ const routes: RouteRecordRaw[] = [
         path: 'documents',
         name: 'documents',
         component: DocumentsView,
-        meta: { title: 'nav.documents', roles: ['manager', 'board_member', 'co_owner', 'tenant'] },
+        meta: { title: 'common.documents', roles: ['manager', 'board_member', 'co_owner', 'tenant'] },
       },
       {
         path: 'tasks',
@@ -113,7 +113,7 @@ const routes: RouteRecordRaw[] = [
         path: 'contractors',
         name: 'contractors',
         component: ContractorsView,
-        meta: { title: 'nav.contractors', roles: [] },
+        meta: { title: 'contractors.title', roles: [] },
       },
       {
         path: 'contractors/:id',
@@ -197,20 +197,20 @@ const routes: RouteRecordRaw[] = [
         path: 'etat-date',
         name: 'etat-date',
         component: EtatDateView,
-        meta: { title: 'nav.etatDate', roles: ['manager'] },
+        meta: { title: 'registers.etatDate.title', roles: ['manager'] },
       },
       // ── Residence ───────────────────────────────────────────
       {
         path: 'residence/building',
         name: 'residence-building',
         component: BuildingView,
-        meta: { title: 'nav.residence-info', roles: ['manager'] },
+        meta: { title: 'common.informations', roles: ['manager'] },
       },
       {
         path: 'residence/keys',
         name: 'residence-keys',
         component: AllocationKeysView,
-        meta: { title: 'nav.residence-keys', roles: ['manager'] },
+        meta: { title: 'allocationKeys.title', roles: ['manager'] },
       },
       // ── Profile ──────────────────────────────────────────────
       {

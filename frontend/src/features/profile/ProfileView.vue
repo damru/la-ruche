@@ -177,8 +177,8 @@ const showResetDataModal = ref(false)
         variant="tab"
         :tabs="[
           { value: 'account', label: t('nav.myAccount') },
-          { value: 'notifications', label: t('nav.notifications') },
-          { value: 'appearance', label: t('nav.appearance') },
+          { value: 'notifications', label: t('settings.tabs.notifications') },
+          { value: 'appearance', label: t('settings.preferences.theme.label') },
         ]"
       />
 
@@ -201,7 +201,7 @@ const showResetDataModal = ref(false)
             />
             <CFormInput
               :model-value="auth.user?.last_name ?? ''"
-              :label="t('common.lastName')"
+              :label="t('lastName')"
               disabled
             />
             <CFormInput
@@ -241,7 +241,7 @@ const showResetDataModal = ref(false)
           </CHeading>
           <div class="access-grid">
             <div class="access-row">
-              <span class="body-xs access-label">{{ t('settings.account.roleLabel') }}</span>
+              <span class="body-xs access-label">{{ t('common.role') }}</span>
               <div class="access-badges">
                 <CBadge
                   v-for="role in auth.user?.roles ?? []"

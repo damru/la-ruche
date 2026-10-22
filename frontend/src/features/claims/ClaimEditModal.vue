@@ -175,7 +175,7 @@ async function handleDocumentAction(deleteDocument: boolean) {
     pendingDocumentAction.value = null
   } catch (err: unknown) {
     documentActionFeedback.setError(
-      toErrorMessage(err, deleteDocument ? t('claims.documentsDeleteError') : t('claims.documentsDetachError')),
+      toErrorMessage(err, deleteDocument ? t('common.documentDeleteError') : t('claims.documentsDetachError')),
     )
   } finally {
     detachingDocumentId.value = null
@@ -275,7 +275,7 @@ async function handleSubmit() {
     >
       <CFormInput
         v-model="form.title"
-        :label="t('claims.fields.title')"
+        :label="t('common.label')"
         required
       />
       <CFormSelect
@@ -308,21 +308,21 @@ async function handleSubmit() {
       />
       <CFormTextarea
         v-model="form.description"
-        :label="t('claims.fields.description')"
+        :label="t('common.description')"
         :rows="3"
       />
 
       <div class="flex flex-col gap-1">
-        <label class="text-sm font-medium text-on-surface-variant">{{ t('claims.fields.documents') }}</label>
+        <label class="text-sm font-medium text-on-surface-variant">{{ t('common.attachments') }}</label>
         <CFileDropzone
           v-model:files="selectedEditDocuments"
           :hint="t('claims.editDocumentHint')"
-          :remove-label="t('claims.removeDocument')"
+          :remove-label="t('common.remove')"
         />
 
         <div class="claim-documents-section">
           <p class="text-xs text-on-surface-variant claim-documents-section__hint">
-            {{ t('claims.fields.attachedDocuments') }}
+            {{ t('tasks.attachedDocuments') }}
           </p>
           <CPageLoader v-if="loadingEditDocuments" />
           <div
@@ -406,7 +406,7 @@ async function handleSubmit() {
     :open="!!pendingDocumentAction"
     :title="t('claims.documentsDetachTitle')"
     :description="t('claims.documentsDetachMessage', { name: pendingDocumentAction?.original_name ?? '', title: claim?.title ?? '' })"
-    :warning="t('claims.documentsDeleteWarning', { name: pendingDocumentAction?.original_name ?? '' })"
+    :warning="t('common.documentDeleteWarning', { name: pendingDocumentAction?.original_name ?? '' })"
     :loading="!!detachingDocumentId"
     :status="documentActionFeedback.status.value"
     :message="documentActionFeedback.message.value"

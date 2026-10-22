@@ -182,7 +182,7 @@ const majorityLegalDescriptions = computed(() => {
       summary: t('meetings.legalCard.descriptions.simple_majority'),
       legalLinks: [
         {
-          label: t('meetings.legalCard.simple_majority.linkLabel'),
+          label: t('consultations.legalCard.article24LinkLabel'),
           href: t('meetings.legalCard.simple_majority.linkHref'),
         },
       ],
@@ -230,7 +230,7 @@ const majorityLegalDescriptions = computed(() => {
       summary: t('meetings.legalCard.descriptions.unanimity'),
       legalLinks: [
         {
-          label: t('meetings.legalCard.unanimity.linkLabel'),
+          label: t('meetings.vote.types.unanimity'),
           href: t('meetings.legalCard.unanimity.linkHref'),
         },
       ],
@@ -545,7 +545,7 @@ function openArt25Modal(resolution: Resolution) {
             :to="{ name: 'assembly-list' }"
             class="topbar-breadcrumb-link"
           >
-            {{ t('meetings.title') }}
+            {{ t('nav.meetings') }}
           </RouterLink>
           <CIconChevronRight class="icon-xs" />
           <span>{{ meeting ? `${typeLabel(meeting.meeting_type)} ${new Date(meeting.meeting_date).getFullYear()}` : '…' }}</span>
@@ -575,7 +575,7 @@ function openArt25Modal(resolution: Resolution) {
           variant="secondary"
           size="sm"
           :icon="CIconClock"
-          :title="t('meetings.waiting')"
+          :title="t('common.pending')"
           disabled
         />
 
@@ -602,7 +602,7 @@ function openArt25Modal(resolution: Resolution) {
           variant="secondary"
           size="sm"
           :icon="CIconLock"
-          :title="t('meetings.closedAction')"
+          :title="t('meetings.bannerClosed')"
           disabled
         />
       </template>
@@ -717,21 +717,21 @@ function openArt25Modal(resolution: Resolution) {
               </div>
               <div class="flex flex-col gap-1 text-xs text-on-surface-variant">
                 <span>
-                  {{ t('meetings.signatures.president') }} :
+                  {{ t('meetings.session_roles.president') }} :
                   <template v-if="meeting.minutes_president_signed_at">
                     {{ t('meetings.signatures.signed_on', { date: formatDate(meeting.minutes_president_signed_at) }) }}
                   </template>
                   <span v-else>{{ t('meetings.signatures.not_signed') }}</span>
                 </span>
                 <span>
-                  {{ t('meetings.signatures.secretary') }} :
+                  {{ t('meetings.session_roles.secretary') }} :
                   <template v-if="meeting.minutes_secretary_signed_at">
                     {{ t('meetings.signatures.signed_on', { date: formatDate(meeting.minutes_secretary_signed_at) }) }}
                   </template>
                   <span v-else>{{ t('meetings.signatures.not_signed') }}</span>
                 </span>
                 <span v-if="(meeting.minutes_scrutineers_signed ?? []).length > 0">
-                  {{ t('meetings.signatures.scrutineers') }} :
+                  {{ t('meetings.session_roles.scrutineers') }} :
                   {{ (meeting.minutes_scrutineers_signed ?? []).map(s => s.name).join(', ') }}
                 </span>
               </div>
@@ -984,14 +984,14 @@ function openArt25Modal(resolution: Resolution) {
                     v-if="canEditResolution"
                     size="sm"
                     variant="ghost"
-                    :title="t('meetings.editResolution')"
+                    :title="t('common.edit')"
                     @click="openEditResolutionModal(resolution)"
                   />
                   <CBtn
                     v-if="canManageResolutions"
                     size="sm"
                     variant="ghost"
-                    :title="t('meetings.deleteResolution')"
+                    :title="t('common.delete')"
                     @click="promptDeleteResolution(resolution)"
                   />
                   <CBtn

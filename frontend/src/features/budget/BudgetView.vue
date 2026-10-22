@@ -324,11 +324,11 @@ const canGenerateLevies = computed(() =>
 
 const levyTableColumns = computed<Column<Record<string, unknown>>[]>(() => {
   const columns: Column<Record<string, unknown>>[] = [
-    { key: 'owner_name', label: t('common.coOwner') },
+    { key: 'owner_name', label: t('coOwner') },
     { key: 'amount', label: t('common.amount'), align: 'right', numeric: true },
     { key: 'due_date', label: t('common.dueDate'), numeric: true },
-    { key: 'call_label', label: t('budget.levyCallLabel') },
-    { key: 'status', label: t('common.status') },
+    { key: 'call_label', label: t('common.label') },
+    { key: 'status', label: t('status') },
   ]
 
   if (canMarkLeviesPaid.value) {
@@ -613,7 +613,7 @@ function formatSharePercentage(value: number): string {
         <div class="topbar-breadcrumb">
           {{ buildingName }}
           <CIconChevronRight aria-hidden="true" />
-          <span>{{ t('budget.title') }}</span>
+          <span>{{ t('nav.budget') }}</span>
         </div>
       </template>
       <template #right>
@@ -661,7 +661,7 @@ function formatSharePercentage(value: number): string {
         <div class="view-header">
           <CEyebrow>{{ t('page.eyebrows.budget') }}</CEyebrow>
           <CHeading type="header">
-            {{ t('budget.title') }}
+            {{ t('nav.budget') }}
           </CHeading>
         </div>
         <CEmptyState
@@ -697,7 +697,7 @@ function formatSharePercentage(value: number): string {
             {{ t('page.eyebrows.budget') }}
           </CEyebrow>
           <CHeading type="header">
-            {{ selectedBudget ? t('budget.fiscalYear', { year: selectedBudget.fiscal_year }) : t('budget.title') }}
+            {{ selectedBudget ? t('budget.fiscalYear', { year: selectedBudget.fiscal_year }) : t('nav.budget') }}
           </CHeading>
           <CMetaLine
             v-if="selectedBudget"
@@ -814,7 +814,7 @@ function formatSharePercentage(value: number): string {
 
           <CKpiCard
             v-if="canViewLevies"
-            :label="t('budget.generateSummaryAlreadyCalledLabel')"
+            :label="t('budget.worksFundCalled')"
             :value="formatCurrency(totalLeviedAmount)"
             :subtitle="t('budget.levyCallsCount', { count: levyCallCount })"
             tone="accent"

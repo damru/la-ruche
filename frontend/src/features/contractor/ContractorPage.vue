@@ -3,6 +3,7 @@ import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useFormatters } from '@/composables/useFormatters'
+import { toErrorMessage } from '@/composables/usePageLoader'
 import { vendorApi } from '@/api'
 import type { VendorTask } from '@/types/domain'
 
@@ -64,8 +65,8 @@ async function submit() {
       documents,
     })
     success.value = true
-  } catch {
-    error.value = t('contractor.uploadError')
+  } catch (e: unknown) {
+    error.value = toErrorMessage(e, 'contractor.uploadError')
   } finally {
     uploading.value = false
   }
@@ -168,11 +169,11 @@ async function submit() {
           />
           <CFormInput
             v-model="cost"
-            :label="t('contractor.cost')"
+            :label="t('tasks.completionCostLabel')"
             type="number"
             :min="0"
             :step="0.01"
-            :placeholder="t('contractor.costPlaceholder')"
+            :placeholder="t('common.optional')"
           />
 
           <!-- Error inline -->
@@ -211,14 +212,14 @@ async function submit() {
             v-if="task.manager_phone"
             class="contact-row"
           >
-            <span class="contact-label body-xs">{{ t('contractor.contactPhone') }}</span>
+            <span class="contact-label body-xs">{{ t('common.phone') }}</span>
             <a
               :href="`tel:${task.manager_phone}`"
               class="body-xs contact-value"
             >{{ task.manager_phone }}</a>
           </div>
           <div class="contact-row">
-            <span class="contact-label body-xs">{{ t('contractor.contactAddress') }}</span>
+            <span class="contact-label body-xs">{{ t('common.address') }}</span>
             <span class="body-xs contact-value">{{ task.building_address }}</span>
           </div>
         </div>

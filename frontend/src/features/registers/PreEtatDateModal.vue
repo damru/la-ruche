@@ -161,7 +161,7 @@ async function downloadPdf() {
 
       <section>
         <h3 class="title-md font-semibold mb-2">
-          {{ t('registers.preEtatDate.fondsTravaux') }}
+          {{ t('budget.worksFund') }}
         </h3>
         <ul>
           <li class="flex justify-between">
@@ -215,7 +215,7 @@ async function downloadPdf() {
         v-if="data"
         variant="primary"
         :loading="downloading"
-        :title="t('registers.preEtatDate.downloadPdf')"
+        :title="t('registers.etatDate.downloadPdf')"
         @click="downloadPdf"
       />
     </template>

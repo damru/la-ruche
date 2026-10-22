@@ -4,7 +4,7 @@
 
 Monorepo: `backend/` (Rust) + `frontend/` (Vue 3).
 
-Domain-specific rules in `.claude/rules/` are automatically injected into context by the IDE when editing files in the matching domain. Do not re-read them manually.
+Domain-specific rules in `.claude/rules/` are automatically injected into context by the IDE when editing files in the matching domain. If a rule relevant to your task is not in your context, read it from `.claude/rules/` — never guess or assume its content.
 
 ---
 

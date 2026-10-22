@@ -105,7 +105,7 @@ const unitOptions = computed(() => [
   { value: '', label: t('reports.unitPlaceholder') },
   ...allUnits.value.map(u => ({
     value: u.id,
-    label: t('reports.unitLabel', { number: u.unit_number }),
+    label: t('claims.unitLabel', { number: u.unit_number }),
   })),
 ])
 
@@ -118,9 +118,9 @@ function statusVariant(s: string): 'valid' | 'open' | 'pending' | 'closed' | 'de
 }
 
 function unitLabel(unitId?: string): string {
-  if (!unitId) return t('reports.noUnit')
+  if (!unitId) return t('claims.commonAreas')
   const u = unitsById.value.get(unitId)
-  return u ? t('reports.unitLabel', { number: u.unit_number }) : '—'
+  return u ? t('claims.unitLabel', { number: u.unit_number }) : '—'
 }
 
 function authorName(r: Report): string {
@@ -135,7 +135,7 @@ function authorName(r: Report): string {
         <div class="topbar-breadcrumb">
           {{ buildingName }}
           <CIconChevronRight />
-          <span>{{ t('reports.title') }}</span>
+          <span>{{ t('nav.reports') }}</span>
         </div>
       </template>
       <template #right>
@@ -143,7 +143,7 @@ function authorName(r: Report): string {
           variant="primary"
           size="sm"
           :icon="CIconPlus"
-          :title="t('reports.newReport')"
+          :title="t('reports.create')"
           @click="openCreateModal"
         />
       </template>
@@ -162,7 +162,7 @@ function authorName(r: Report): string {
             {{ t('page.eyebrows.reports') }}
           </CEyebrow>
           <CHeading type="header">
-            {{ t('reports.title') }}
+            {{ t('nav.reports') }}
           </CHeading>
           <p
             class="body-md"
@@ -176,7 +176,7 @@ function authorName(r: Report): string {
           v-model="statusFilter"
           variant="filter"
           :tabs="[
-            { value: 'all', label: t('common.all'), count: allReports.length },
+            { value: 'all', label: t('common.allMasc'), count: allReports.length },
             { value: 'open', label: t('reports.filters.open'), count: counts.open },
             { value: 'in_progress', label: t('reports.filters.inProgress'), count: counts.in_progress },
             { value: 'closed', label: t('reports.filters.closed'), count: counts.closed },
@@ -272,7 +272,7 @@ function authorName(r: Report): string {
                     variant="ghost"
                     size="sm"
                     :icon="CIconRefresh"
-                    :title="t('reports.editStatus')"
+                    :title="t('tasks.updateStatus')"
                     @click="openStatusModal(r)"
                   />
                 </div>

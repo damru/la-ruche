@@ -62,7 +62,7 @@ const columns = computed(() => [
   { key: 'unit', label: t('common.lot') },
   { key: 'requester_name', label: t('registers.etatDate.requesterName') },
   { key: 'due_date', label: t('registers.etatDate.dueDate') },
-  { key: 'status', label: t('common.status') },
+  { key: 'status', label: t('status') },
   ...(canEdit.value ? [{ key: 'actions', label: '', numeric: true }] : []),
 ])
 
@@ -188,7 +188,7 @@ function viewSnapshot(request: EtatDateRequest) {
                   variant="ghost"
                   size="sm"
                   :loading="generatingId === row.id"
-                  :title="row.status === 'requested' ? t('registers.etatDate.generate') : t('registers.etatDate.regenerate')"
+                  :title="row.status === 'requested' ? t('budget.generate') : t('registers.etatDate.regenerate')"
                   @click="generate(row)"
                 />
                 <CBtn

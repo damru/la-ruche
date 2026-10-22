@@ -2,7 +2,6 @@
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { usePageLoader } from '@/composables/usePageLoader'
-import { useConfirm } from '@/composables/useConfirm'
 import { useFormatters } from '@/composables/useFormatters'
 import { useAuthStore } from '@/stores/auth'
 import CTopbar from '@/components/organisms/CTopbar.vue'
@@ -14,13 +13,13 @@ import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import CIconEdit from '@/components/atoms/CIconEdit.svg'
 import CIconTrash from '@/components/atoms/CIconTrash.svg'
 import GovernanceMandateFormModal from '@/features/registers/GovernanceMandateFormModal.vue'
+import CDeleteConfirmModal from '@/components/organisms/CDeleteConfirmModal.vue'
 import { governanceApi } from '@/api'
 import { useBuildingStore } from '@/stores/building'
 import type { GovernanceMandate } from '@/types/domain'
 
 const { t } = useI18n()
 const { formatDate } = useFormatters()
-const { confirm } = useConfirm()
 const authStore = useAuthStore()
 
 const buildingName = ref('')
@@ -71,14 +70,12 @@ function openEdit(m: GovernanceMandate) {
   showModal.value = true
 }
 
-async function remove(m: GovernanceMandate) {
-  const ok = await confirm({
-    title: t('registers.governance.deleteTitle'),
-    message: t('registers.governance.deleteMessage', { name: m.holder_name }),
-  })
-  if (!ok) return
-  await governanceApi.delete(m.id)
-  await reload()
+const showDeleteModal = ref(false)
+const deletingMandate = ref<GovernanceMandate | null>(null)
+
+function openDelete(m: GovernanceMandate) {
+  deletingMandate.value = m
+  showDeleteModal.value = true
 }
 </script>
 
@@ -188,7 +185,7 @@ async function remove(m: GovernanceMandate) {
                   class="tone--err"
                   :title="t('common.delete')"
                   :aria-label="t('common.delete')"
-                  @click="remove(row)"
+                  @click="openDelete(row)"
                 />
               </div>
             </template>
@@ -201,6 +198,15 @@ async function remove(m: GovernanceMandate) {
       v-model:open="showModal"
       :mandate="editing"
       @saved="reload"
+    />
+
+    <CDeleteConfirmModal
+      v-model:open="showDeleteModal"
+      :title="t('registers.governance.deleteTitle')"
+      :message="t('registers.governance.deleteMessage', { name: deletingMandate?.holder_name ?? '' })"
+      :success-message="t('registers.governance.deleteSuccess')"
+      :on-delete="() => governanceApi.delete(deletingMandate!.id).then(() => {})"
+      @deleted="reload"
     />
   </div>
 </template>

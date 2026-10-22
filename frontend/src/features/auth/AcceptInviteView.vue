@@ -7,6 +7,7 @@ import CAlert from '@/components/atoms/CAlert.vue'
 import CFormInput from '@/components/atoms/CFormInput.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import { authApi } from '@/api'
+import { extractApiError } from '@/api/client'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -64,7 +65,7 @@ async function handleSubmit() {
     if (status === 409) {
       error.value = t('auth.tokenExpiredOrUsed')
     } else {
-      error.value = t('common.error')
+      error.value = t(extractApiError(e))
     }
   } finally {
     loading.value = false
@@ -131,7 +132,7 @@ async function handleSubmit() {
             <CFormInput
               id="first-name"
               v-model="form.first_name"
-              :label="t('onboarding.firstName')"
+              :label="t('common.firstName')"
               placeholder="Marie"
               autocomplete="given-name"
               :required="true"

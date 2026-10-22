@@ -1,6 +1,6 @@
 ---
 description: 'Vue.js coding conventions and best practices'
-applyTo: '**/*.vue'
+applyTo: 'frontend/src/**/*.vue'
 ---
 
 # Vue.js Coding Conventions and Best Practices

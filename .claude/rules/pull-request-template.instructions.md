@@ -1,6 +1,6 @@
 ---
 description: 'Pull requests must follow .github/PULL_REQUEST_TEMPLATE.md and Conventional Commits.'
-applyTo: '.github/**'
+applyTo: '**'
 ---
 
 # Pull request conventions

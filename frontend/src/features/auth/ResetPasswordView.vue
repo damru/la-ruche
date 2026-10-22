@@ -52,7 +52,7 @@ async function handleSubmit() {
         <template v-if="!done">
           <div class="form-header">
             <h2 class="form-title">
-              {{ t('auth.resetNewTitle') }}
+              {{ t('auth.newPassword') }}
             </h2>
             <p class="form-sub">
               {{ t('auth.resetNewSub') }}

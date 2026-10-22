@@ -55,7 +55,7 @@ uuid = { version = "1.23.1", features = ["v4", "serde"] }
 chrono = { version = "0.4.44", features = ["serde"] }
 
 # ── Auth : mots de passe ──────────────────────────────────────
-argon2 = "0.5.3"
+argon2 = "0.6.0"
 
 # ── Auth : JWT ────────────────────────────────────────────────
 jsonwebtoken = { version = "11.0.0", features = ["rust_crypto"] }
@@ -95,12 +95,12 @@ genpdf = "0.2"
 [dev-dependencies]
 axum-test = "21.0.0"                      # tests d'intégration handlers
 tokio-test = "0.4.5"
-rstest = "0.26.1"                       # tests paramétrés
-postgresql_embedded = "0.21.0"            # base PostgreSQL éphémère embarquée pour tests
+rstest = "0.28.0"                       # tests paramétrés
+postgresql_embedded = "0.22.0"            # base PostgreSQL éphémère embarquée pour tests
 wiremock = "0.6.5"                        # serveur HTTP mock (stub S3) pour tests
 
 [profile.release]
 opt-level = 3
-lto = true
-codegen-units = 1
+lto = "thin"                        # thin LTO : link bien plus rapide en CI, perf runtime quasi identique
+codegen-units = 16                  # 16 : codegen parallélisé (1 = quasi mono-threadé)
 strip = true                          # strip symbols → binaire plus petit
