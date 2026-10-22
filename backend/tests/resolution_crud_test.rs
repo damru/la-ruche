@@ -90,7 +90,11 @@ async fn create_meeting(server: &TestServer, auth: &str) -> Uuid {
         }))
         .await;
     assert_eq!(resp.status_code(), StatusCode::CREATED);
-    resp.json::<Value>()["id"].as_str().unwrap().parse().unwrap()
+    resp.json::<Value>()["id"]
+        .as_str()
+        .unwrap()
+        .parse()
+        .unwrap()
 }
 
 /// Creates a resolution on a draft meeting and returns its id.
@@ -106,7 +110,11 @@ async fn create_resolution(server: &TestServer, auth: &str, meeting_id: Uuid, nu
         }))
         .await;
     assert_eq!(resp.status_code(), StatusCode::CREATED);
-    resp.json::<Value>()["id"].as_str().unwrap().parse().unwrap()
+    resp.json::<Value>()["id"]
+        .as_str()
+        .unwrap()
+        .parse()
+        .unwrap()
 }
 
 async fn list_resolutions(server: &TestServer, auth: &str, meeting_id: Uuid) -> Vec<Value> {
@@ -134,7 +142,11 @@ async fn create_document(server: &TestServer, auth: &str, building_id: Uuid) -> 
         }))
         .await;
     assert_eq!(resp.status_code(), StatusCode::CREATED);
-    resp.json::<Value>()["id"].as_str().unwrap().parse().unwrap()
+    resp.json::<Value>()["id"]
+        .as_str()
+        .unwrap()
+        .parse()
+        .unwrap()
 }
 
 /// Full convocation path: notice document → attach → call. Leaves the meeting
@@ -184,7 +196,9 @@ async fn draft_resolution_delete_and_reorder_flow() {
 
     // Reorder inverts the agenda and renumbers 1..N.
     let reorder = server
-        .post(&format!("/api/v1/meetings/{meeting_id}/resolutions/reorder"))
+        .post(&format!(
+            "/api/v1/meetings/{meeting_id}/resolutions/reorder"
+        ))
         .add_header("Authorization", &auth)
         .json(&json!({ "ordered_ids": [r3, r1] }))
         .await;
@@ -204,7 +218,9 @@ async fn draft_resolution_delete_and_reorder_flow() {
 
     // Missing id → exact-permutation violation.
     let missing = server
-        .post(&format!("/api/v1/meetings/{meeting_id}/resolutions/reorder"))
+        .post(&format!(
+            "/api/v1/meetings/{meeting_id}/resolutions/reorder"
+        ))
         .add_header("Authorization", &auth)
         .json(&json!({ "ordered_ids": [r1] }))
         .await;
@@ -216,7 +232,9 @@ async fn draft_resolution_delete_and_reorder_flow() {
 
     // Duplicated id → exact-permutation violation.
     let duplicated = server
-        .post(&format!("/api/v1/meetings/{meeting_id}/resolutions/reorder"))
+        .post(&format!(
+            "/api/v1/meetings/{meeting_id}/resolutions/reorder"
+        ))
         .add_header("Authorization", &auth)
         .json(&json!({ "ordered_ids": [r1, r1] }))
         .await;
@@ -249,7 +267,9 @@ async fn structural_mutations_refused_after_convocation() {
 
     // Reorder is refused outside draft.
     let reorder = server
-        .post(&format!("/api/v1/meetings/{meeting_id}/resolutions/reorder"))
+        .post(&format!(
+            "/api/v1/meetings/{meeting_id}/resolutions/reorder"
+        ))
         .add_header("Authorization", &auth)
         .json(&json!({ "ordered_ids": [r1] }))
         .await;
