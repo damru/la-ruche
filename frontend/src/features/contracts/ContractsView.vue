@@ -11,6 +11,7 @@ import CBtn from '@/components/atoms/CBtn.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CCardActions from '@/components/molecules/CCardActions.vue'
 import CDataTable, { type Column } from '@/components/molecules/CDataTable.vue'
+import CFormMultiSelect from '@/components/atoms/CFormMultiSelect.vue'
 import CIconGrid from '@/components/atoms/CIconGrid.svg'
 import CIconList from '@/components/atoms/CIconList.svg'
 import CLinkedDocumentsModal from '@/components/organisms/CLinkedDocumentsModal.vue'
@@ -234,23 +235,15 @@ const contracts = computed(() => {
     .sort((left, right) => left.vendor_name.localeCompare(right.vendor_name))
 })
 
-const contractTypeChips = computed(() =>
+const contractTypeOptions = computed(() =>
   [...typeOptions.value]
     .map(value => ({ value, label: t(`contracts.types.${value}`) }))
     .sort((a, b) => a.label.localeCompare(b.label)),
 )
 
-function toggleType(type: string) {
-  const idx = selectedTypes.value.indexOf(type)
-  if (idx >= 0) selectedTypes.value.splice(idx, 1)
-  else selectedTypes.value.push(type)
-}
-
-function toggleVendor(vendor: string) {
-  const idx = selectedVendors.value.indexOf(vendor)
-  if (idx >= 0) selectedVendors.value.splice(idx, 1)
-  else selectedVendors.value.push(vendor)
-}
+const contractVendorOptions = computed(() =>
+  vendorOptions.value.map(vendor => ({ value: vendor, label: vendor })),
+)
 
 const contractTableColumns = computed<Column<VendorContract>[]>(() => [
   { key: 'vendor_name', label: t('contracts.form.vendorName') },
@@ -502,40 +495,27 @@ async function activateContract(contract: VendorContract) {
           </div>
         </CTabs>
 
-        <!-- Type filter chips -->
+        <!-- Filters toolbar: multi-selects -->
         <div
-          v-if="contractTypeChips.length > 0"
-          class="chip-filter"
-          role="group"
-          :aria-label="t('common.type')"
+          v-if="contractTypeOptions.length > 0 || contractVendorOptions.length > 0"
+          class="contracts-toolbar"
         >
-          <button
-            v-for="opt in contractTypeChips"
-            :key="opt.value"
-            :class="['chip-filter__chip', { 'chip-filter__chip--active': selectedTypes.includes(opt.value) }]"
-            :aria-pressed="selectedTypes.includes(opt.value)"
-            @click="toggleType(opt.value)"
-          >
-            {{ opt.label }}
-          </button>
-        </div>
-
-        <!-- Vendor filter chips -->
-        <div
-          v-if="vendorOptions.length > 0"
-          class="chip-filter"
-          role="group"
-          :aria-label="t('contracts.form.vendorName')"
-        >
-          <button
-            v-for="vendor in vendorOptions"
-            :key="vendor"
-            :class="['chip-filter__chip', { 'chip-filter__chip--active': selectedVendors.includes(vendor) }]"
-            :aria-pressed="selectedVendors.includes(vendor)"
-            @click="toggleVendor(vendor)"
-          >
-            {{ vendor }}
-          </button>
+          <CFormMultiSelect
+            v-if="contractTypeOptions.length > 0"
+            v-model="selectedTypes"
+            :options="contractTypeOptions"
+            :placeholder="t('common.type')"
+            :aria-label="t('common.type')"
+            class="contracts-toolbar__select"
+          />
+          <CFormMultiSelect
+            v-if="contractVendorOptions.length > 0"
+            v-model="selectedVendors"
+            :options="contractVendorOptions"
+            :placeholder="t('contracts.form.vendorName')"
+            :aria-label="t('contracts.form.vendorName')"
+            class="contracts-toolbar__select"
+          />
         </div>
 
         <template
@@ -846,38 +826,8 @@ async function activateContract(contract: VendorContract) {
   color: var(--color-on-surface);
 }
 
-.chip-filter {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  margin-bottom: var(--space-3);
-}
-
-.chip-filter__chip {
-  display: inline-flex;
-  align-items: center;
-  height: 28px;
-  padding: 0 var(--space-3);
-  border-radius: var(--radius-full);
-  border: 1px solid var(--color-outline-variant);
-  background: var(--color-surface);
-  color: var(--color-on-surface-variant);
-  font-size: var(--text-xs);
-  font-weight: var(--fw-medium);
-  cursor: pointer;
-  transition: background 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out;
-}
-
-.chip-filter__chip:hover {
-  background: var(--color-secondary-container);
-  color: var(--color-on-surface);
-}
-
-.chip-filter__chip--active {
-  background: var(--color-primary-container);
-  border-color: var(--color-primary);
-  color: var(--color-on-primary);
-}
+.contracts-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-bottom: var(--space-4); }
+.contracts-toolbar__select { min-width: 200px; }
 
 .contract-details { display: flex; flex-direction: column; gap: var(--space-1); }
 .detail-row { display: flex; justify-content: space-between; font-size: var(--text-sm); }
