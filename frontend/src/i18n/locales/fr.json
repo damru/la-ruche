@@ -370,6 +370,8 @@
     "bannerResolutionsResolved": "résolutions adoptées",
     "deleteResolutionTitle": "Supprimer la résolution",
     "deleteResolutionMessage": "Supprimer définitivement cette résolution de l'ordre du jour ?",
+    "deleteMeetingTitle": "Supprimer le brouillon d'AG",
+    "deleteMeetingMessage": "Supprimer définitivement ce brouillon d'AG et toutes ses données (ordre du jour, pièces jointes) ? Cette action est irréversible.",
     "resolutionDescriptionOnly": "Titre et règle de vote verrouillés pendant la séance.",
     "createArt24": "Créer sous Art. 24",
     "createArt25": "Créer sous Art. 25",

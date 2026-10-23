@@ -167,6 +167,8 @@ export const meetingsApi = {
     api.post<Meeting>('/meetings', data),
   update: (id: string, data: Partial<Meeting>) =>
     api.put<Meeting>(`/meetings/${id}`, data),
+  delete: (id: string) =>
+    api.delete(`/meetings/${id}`),
   // EP-003-S09 — channel et date d'envoi requis pour preuve d'envoi
   call: (id: string, data: { channel: 'lrar' | 'hand_delivery' | 'email'; sent_at?: string }) =>
     api.post(`/meetings/${id}/call`, data),
