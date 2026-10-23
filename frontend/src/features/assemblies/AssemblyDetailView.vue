@@ -126,7 +126,7 @@ const art25SourceResolution = ref<Resolution | null>(null)
 const canManageResolutions = computed(() => auth.isManager && meeting.value?.status === 'draft')
 const canManageVotes = computed(() => auth.isManager && ['ongoing'].includes(meeting.value?.status ?? ''))
 const canEditResolution = computed(() => auth.isManager && ['draft', 'ongoing'].includes(meeting.value?.status ?? ''))
-const canEditAttendance = computed(() => auth.isManager && meeting.value?.status !== 'closed')
+const canEditAttendance = computed(() => auth.isManager && meeting.value?.status === 'ongoing')
 const sortedAttendanceEntries = computed(() =>
   [...attendance.value.entries].sort((a, b) => parseInt(a.unit_number, 10) - parseInt(b.unit_number, 10))
 )
