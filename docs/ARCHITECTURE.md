@@ -84,7 +84,7 @@ references:
 | Sinistres | `claim`, `claim_document` |
 | Carnet | `maintenance_log`, `maintenance_log_document` |
 | Signalements | `report`, `report_document` — `report.task_id` FK informatif (EP-017, conversion signalement → tâche) |
-| Consultations | `consultation`, `consultation_choice`, `consultation_response`, `consultation_response_choice`, `consultation_reminder` (journal des relances non-r\u00e9pondants \u2014 aucune livraison email/push, la table alimente un futur dispatcher de notifications) |
+| Consultations | `consultation`, `consultation_choice`, `consultation_response`, `consultation_response_choice`, `consultation_reminder` |
 | Calendrier | `calendar_event`, `calendar_event_document` — événements manuels (réunion informelle, rappel, rendez-vous), EP-014-S03 |
 | Registres | `judicial_proceeding` (procédures judiciaires en cours/clôturées — EP-002-S10), `governance_mandate` (registre des mandats syndic/conseil syndical — EP-002-S11) |
 | État daté | `etat_date_request` (suivi de la demande + snapshot JSONB du document généré — EP-002-S06) |
