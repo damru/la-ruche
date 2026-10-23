@@ -5,7 +5,7 @@
 **Épic :** EP-003 — Assemblées générales
 **Réf. LEGAL :** — (un brouillon n'a pas d'existence légale) · **Réf. PRD :** US-AG-* (gestion des brouillons) · **Réf. ADR :** aucun
 
-**Statut actuel : PARTIEL** — la modification existe et est correcte ; **la suppression n'existe pas**. Cette spec ne couvre que la suppression.
+**Statut actuel : IMPLÉMENTÉ (backend + frontend)** — modification et suppression d'un brouillon d'AG livrées (`DELETE /meetings/{id}`, cascade transactionnelle, bouton + modale de confirmation côté frontend, statut `draft` uniquement).
 
 ---
 

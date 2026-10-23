@@ -4,7 +4,7 @@
 
 **Épic :** EP-010 — Consultations informelles
 **Réf. PRD :** US-CS-004
-**État :** NON IMPLÉMENTÉ.
+**État :** IMPLÉMENTÉ (backend + frontend) — compteur de non-répondants, enregistrement des relances (`consultation_reminder`), affichage de la dernière relance et bouton de relance. La livraison effective (email/push) reste différée : la relance est un enregistrement en base + retour applicatif.
 
 > **Périmètre notification :** aucune infrastructure de livraison (email/push) n'existe dans le repo. La « relance » est donc un **enregistrement en base + retour applicatif** (compteur, horodatage de dernière relance). La livraison réelle est différée et se branchera sur `consultation_reminder` le jour venu.
 

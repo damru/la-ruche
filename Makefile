@@ -12,6 +12,7 @@
 DB_URL      := postgres://laruche:laruche@localhost:5432/laruche
 DB_URL_TEST := postgres://laruche:laruche@localhost:5432/laruche_test
 BINARY      := backend/target/release/laruche
+LOG_LEVEL  ?= debug
 
 help: ## Show this help
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
@@ -20,7 +21,7 @@ help: ## Show this help
 dev: ## Start the dev environment (postgres + S3 storage + backend hot-reload)
 	docker compose up -d postgres rustfs
 	$(MAKE) -j1 sqlx-prepare
-	cd backend && bacon watch
+	cd backend && RUST_LOG=$(LOG_LEVEL) bacon watch
 
 dev-frontend: ## Start the Vue 3 frontend in dev mode
 	cd frontend && npm run dev

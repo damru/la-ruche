@@ -200,7 +200,7 @@ Cycle de vie complet d'une AG, résolutions typées par majorité, vote par lot 
 * `EP-003-S09` ✅ — Tracer la conformité du bureau de séance et des signatures du PV (président, secrétaire, scrutateurs) selon les art. 15, 17 et 17-1 du décret 1967 (LEGAL.md §3.4) 
 * [EP-003-S10](specs/EP-003-S10-spec.md) — Valider que le formulaire de vote par correspondance est réceptionné par le syndic **au plus tard J-3 francs** avant la date de l'AG (art. 9 bis décret 67-223, LEGIARTI000042076552) et annuler automatiquement un vote par correspondance si le copropriétaire est présent ou représenté en séance (art. 14-1 décret 67-223, LEGIARTI000042076720) (LEGAL.md §3.1)
 * [EP-003-S11](specs/EP-003-S11-spec.md) — Enregistrer et traiter la demande de convocation d'AG formulée par un copropriétaire pour ses propres questions (art. 17-1 AA loi 1965, LEGIARTI000039301594) avec imputation des frais de convocation au copropriétaire demandeur (LEGAL.md §3.5)
-* [EP-003-S12](specs/EP-003-S12-spec.md) — Modifier ou supprimer un brouillon d'AG : éditer les métadonnées (date, type, ordre du jour) et supprimer une AG tant qu'elle est en statut `draft` ; le passage à `called` bloque la modification et interdit la suppression (PRD US-AG-002)
+* [EP-003-S12](specs/EP-003-S12-spec.md) ✅ — Modifier ou supprimer un brouillon d'AG : éditer les métadonnées (date, type, ordre du jour) et supprimer une AG tant qu'elle est en statut `draft` ; le passage à `called` bloque la modification et interdit la suppression (PRD US-AG-002)
 * [EP-003-S13](specs/EP-003-S13-spec.md) ✅ — Gérer les résolutions d'une AG (CRUD + ordre + qualification de majorité) : créer, modifier, supprimer et réordonner les résolutions avec leur règle de majorité applicable (art. 24/25/25-1/26/26-1/unanimité) ; seul le statut `draft` autorise les modifications (PRD US-AG-003)
 * [EP-003-S14](specs/EP-003-S14-spec.md) — Consulter le dossier AG et les décisions votées (vue lecture résidents) : accès en lecture aux résolutions, résultats, convocation et PV pour les résidents selon leur rôle et la visibilité de l'AG (PRD US-AG-014)
 
@@ -361,7 +361,7 @@ Historique des interventions alimenté manuellement ou automatiquement depuis un
 
 **Statut :** terminée | **MVP :** oui | **Réf. PRD :** Participatif
 
-**État code actuel :** backend réel (list, get, create as 'open', respond/upsert 1 réponse par utilisateur, results, close) + frontend branché (liste open/closed, modale create, modale respond, clôture, résultats).
+**État code actuel :** backend réel (list, get, create en `draft`, édition brouillon, open, respond/upsert 1 réponse par utilisateur, results, close, delete, relance non-répondants) + frontend branché (liste open/brouillons/fermées, modale create/édition, modale respond, clôture, résultats, compteur et relance des non-répondants).
 
 Consultations initiables par tout résident sans approbation préalable, résultats en temps réel, mention obligatoire "non décisionnelle".
 
@@ -372,8 +372,8 @@ Consultations initiables par tout résident sans approbation préalable, résult
 * `EP-010-S01` ✅ — Créer une consultation ou un sondage avec question(s) et options de réponse (minimum 2 options, `visible_to_roles` requis)
 * `EP-010-S02` ✅ — Soumettre un vote depuis l'espace résident (une réponse par utilisateur) ; contrôle `visible_to_roles`
 * `EP-010-S03` ✅ — Afficher les résultats en temps réel avec mention obligatoire « non décisionnelle »
-* [EP-010-S04](specs/EP-010-S04-spec.md) — Gérer le cycle de vie brouillon : créer une consultation en statut `draft`, la modifier librement, puis l'ouvrir explicitement (`draft → open`) pour déclencher la notification aux participants (PRD US-CS-001b)
-* [EP-010-S05](specs/EP-010-S05-spec.md) — Relancer les non-répondants d'une consultation ouverte : le Syndic peut envoyer une notification de rappel aux participants n'ayant pas encore soumis de réponse (PRD US-CS-004)
+* [EP-010-S04](specs/EP-010-S04-spec.md) ✅ — Gérer le cycle de vie brouillon : créer une consultation en statut `draft`, la modifier librement, puis l'ouvrir explicitement (`draft → open`) pour déclencher la notification aux participants (PRD US-CS-001b)
+* [EP-010-S05](specs/EP-010-S05-spec.md) ✅ — Relancer les non-répondants d'une consultation ouverte : le Syndic peut envoyer une notification de rappel aux participants n'ayant pas encore soumis de réponse (PRD US-CS-004)
 
 ***
 
