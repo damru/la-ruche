@@ -25,6 +25,7 @@ struct Ctx {
     contract_a: String,
     contract_b: String,
     document_id: String,
+    reminder_id: String,
 }
 
 fn contract_payload(vendor_name: &str, contract_type: &str, subject: &str) -> Value {
@@ -136,12 +137,25 @@ async fn setup() -> Ctx {
         attach.text()
     );
 
+    // A pending reminder on contract A (acknowledge is manager-only per AC-CF-002-E).
+    let reminder_id = Uuid::new_v4().to_string();
+    sqlx::query(
+        "INSERT INTO contract_reminder (id, contract_id, reminder_type, reminder_date, status) \
+         VALUES ($1, $2, 'renewal', '2026-06-01', 'pending')",
+    )
+    .bind(Uuid::parse_str(&reminder_id).expect("uuid"))
+    .bind(Uuid::parse_str(&contract_a).expect("uuid"))
+    .execute(&pool)
+    .await
+    .expect("reminder");
+
     Ctx {
         manager_jwt,
         board_member_jwt,
         contract_a,
         contract_b,
         document_id,
+        reminder_id,
     }
 }
 
@@ -314,4 +328,29 @@ async fn board_member_reads_linked_documents_but_cannot_write() {
         .add_header("Authorization", format!("Bearer {}", ctx.board_member_jwt))
         .await;
     assert_eq!(resp.status_code(), StatusCode::FORBIDDEN);
+
+    // Acknowledge a reminder as board member -> 403 (manager-only, AC-CF-002-E).
+    let resp = server
+        .put(&format!(
+            "/api/v1/contracts/{}/reminders/{}/acknowledge",
+            ctx.contract_a, ctx.reminder_id
+        ))
+        .add_header("Authorization", format!("Bearer {}", ctx.board_member_jwt))
+        .await;
+    assert_eq!(resp.status_code(), StatusCode::FORBIDDEN);
+
+    // Acknowledge as manager -> 204.
+    let resp = server
+        .put(&format!(
+            "/api/v1/contracts/{}/reminders/{}/acknowledge",
+            ctx.contract_a, ctx.reminder_id
+        ))
+        .add_header("Authorization", format!("Bearer {}", ctx.manager_jwt))
+        .await;
+    assert_eq!(
+        resp.status_code(),
+        StatusCode::NO_CONTENT,
+        "{}",
+        resp.text()
+    );
 }

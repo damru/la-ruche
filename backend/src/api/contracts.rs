@@ -183,7 +183,7 @@ pub async fn acknowledge_reminder(
     State(state): State<Arc<AppState>>,
     Path((id, rid)): Path<(Uuid, Uuid)>,
 ) -> AppResult<StatusCode> {
-    auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
+    auth.require_role(&Role::Manager)?;
     db::contract::acknowledge_reminder(&state.pool, rid, id, auth.building_id).await?;
     Ok(StatusCode::NO_CONTENT)
 }

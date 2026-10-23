@@ -189,7 +189,7 @@ draft ──(activation)──▶ active ──(résiliation)──▶ terminate
 - **AC-CF-002-B** : La liste DOIT afficher, pour chaque contrat : fournisseur, objet, type, dates, statut et le prochain rappel actif non acquitté le cas échéant. Deux vues sont proposées au choix de l'utilisateur : **cartes** (vue par défaut) et **tableau** — la carte porte déjà l'ensemble des informations du tableau à l'échelle d'une copropriété (dizaines de contrats).
 - **AC-CF-002-C** : Les contrats avec au moins un rappel actif non acquitté DOIVENT être mis en évidence visuellement dans la liste.
 - **AC-CF-002-D** : La vue détail DOIT afficher l'historique des avenants (chaîne `predecessor_id`) et la liste des pièces jointes rattachées. Chaque contrat de la liste DOIT donner un accès direct à sa vue détail.
-- **AC-CF-002-E** : La liste et la vue détail des contrats DOIVENT être accessibles en lecture au Syndic et au Conseil syndical (art. 21 de la loi du 10 juillet 1965). Toutes les actions de modification (création, édition, activation, avenant, résiliation, suppression, rattachement de documents) restent réservées au Syndic.
+- **AC-CF-002-E** : La liste et la vue détail des contrats DOIVENT être accessibles en lecture au Syndic et au Conseil syndical (art. 21 de la loi du 10 juillet 1965). Toutes les actions de modification (création, édition, activation, avenant, résiliation, suppression, rattachement de documents, acquittement de rappel) restent réservées au Syndic.
 
 #### US-CF-003 — Configurer les rappels
 
