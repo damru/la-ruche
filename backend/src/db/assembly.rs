@@ -24,9 +24,9 @@ use crate::{
     errors::{AppError, AppResult},
 };
 
-/// Locks the meeting row and enforces the session guard (EP-013-S11): votes and
-/// attendance are writable only while the meeting is `ongoing`. Must run inside
-/// the caller's transaction so a concurrent `/close` cannot slip between the
+/// Locks the meeting row and enforces the session guard: votes and attendance
+/// are writable only while the meeting is `ongoing`. Must run inside the
+/// caller's transaction so a concurrent `/close` cannot slip between the
 /// check and the write (`FOR UPDATE` serialises with the closing UPDATE).
 async fn lock_meeting_for_session(
     tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
@@ -1171,7 +1171,7 @@ pub async fn save_attendance(
 ) -> AppResult<()> {
     let mut tx = pool.begin().await?;
 
-    // EP-013-S11 — session guard: attendance is writable only while `ongoing`.
+    // Session guard: attendance is writable only while `ongoing`.
     // The row lock serialises against a concurrent `/close`.
     lock_meeting_for_session(&mut tx, meeting_id, building_id).await?;
 
@@ -1469,9 +1469,9 @@ pub async fn cast_vote(
     user_id: Uuid,
     input: VoteInput,
 ) -> AppResult<()> {
-    // EP-013-S11 — session guard: votes are writable only while the meeting is
-    // `ongoing`, checked inside the write transaction (FOR UPDATE) so a
-    // concurrent `/close` cannot interleave.
+    // Session guard: votes are writable only while the meeting is `ongoing`,
+    // checked inside the write transaction (FOR UPDATE) so a concurrent
+    // `/close` cannot interleave.
     let mut tx = pool.begin().await?;
     lock_meeting_for_session(&mut tx, meeting_id, building_id).await?;
 

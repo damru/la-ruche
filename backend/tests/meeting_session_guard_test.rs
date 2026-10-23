@@ -1,5 +1,5 @@
-// EP-013-S11 — session guard: votes and attendance are rejected unless the
-// meeting is `ongoing`, and stay frozen once `closed` (LEGAL.md §11.1).
+// Session guard: votes and attendance are rejected unless the meeting is
+// `ongoing`, and stay frozen once `closed` (LEGAL.md §11.1).
 //
 // AC1: vote + attendance on `draft` / `called` → 400 errors.meetings.not_ongoing.
 // AC2: both succeed while `ongoing` (non-regression).

@@ -326,8 +326,8 @@ pub async fn get_unit_general_share(
     .await?)
 }
 
-/// Same lookup, executed on the caller's transaction (EP-013-S11): the share
-/// read participates in the `cast_vote` session-guard lock.
+/// Same lookup, executed on the caller's transaction: the share read
+/// participates in the `cast_vote` session-guard lock.
 pub(crate) async fn get_unit_general_share_in_tx(
     tx: &mut sqlx::Transaction<'_, Postgres>,
     unit_id: Uuid,
