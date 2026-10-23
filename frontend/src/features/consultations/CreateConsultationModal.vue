@@ -17,7 +17,7 @@ import type { Consultation } from '@/types/domain'
 
 const props = defineProps<{
   open: boolean
-  /** When set, the modal edits this draft instead of creating a new one (EP-010-S04). */
+  /** When set, the modal edits this draft instead of creating a new one. */
   consultation?: Consultation | null
 }>()
 

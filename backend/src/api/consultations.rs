@@ -1,4 +1,4 @@
-// ── api/consultations.rs — Informal consultations (EP-010) ────
+// ── api/consultations.rs — Informal consultations ────
 //
 // LEGAL: These consultations are informal and have no decision-making
 // legal value under the law of 10 July 1965 (arts. 17 and 24).
@@ -73,7 +73,7 @@ pub async fn get(
     })))
 }
 
-/// Shared payload validation for create and update (EP-010-S04).
+/// Shared payload validation for create and update.
 fn validate_input(input: &CreateConsultationInput) -> AppResult<()> {
     if input.title.trim().is_empty() {
         return Err(AppError::validation_code(
@@ -108,7 +108,7 @@ fn validate_input(input: &CreateConsultationInput) -> AppResult<()> {
 }
 
 /// Any authenticated user can create a consultation.
-/// It is created in 'draft' state (EP-010-S04) and opened explicitly.
+/// It is created in 'draft' state and opened explicitly.
 pub async fn create(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,
@@ -131,7 +131,7 @@ pub async fn create(
     Ok((StatusCode::CREATED, json_value(result)?))
 }
 
-/// PUT /consultations/{id} — edits a draft consultation (EP-010-S04).
+/// PUT /consultations/{id} — edits a draft consultation.
 /// Managers and board members can edit any draft; the creator can edit their own.
 pub async fn update(
     auth: AuthUser,
@@ -196,7 +196,7 @@ pub async fn open(
     Ok(StatusCode::NO_CONTENT)
 }
 
-/// GET /consultations/{id}/non-respondents — manager | board_member (EP-010-S05).
+/// GET /consultations/{id}/non-respondents — manager | board_member.
 pub async fn non_respondents(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,
@@ -212,7 +212,7 @@ pub async fn non_respondents(
 }
 
 /// POST /consultations/{id}/remind — records a reminder for non-respondents
-/// of an open consultation (EP-010-S05).
+/// of an open consultation.
 pub async fn remind(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,
@@ -289,7 +289,7 @@ pub async fn results(
 }
 
 /// DELETE /consultations/{id} — managers/board members, or the creator of a
-/// draft; only closed consultations and drafts can be deleted (EP-010-S04).
+/// draft; only closed consultations and drafts can be deleted.
 /// Deletes the consultation and all related choices and responses.
 pub async fn delete(
     auth: AuthUser,

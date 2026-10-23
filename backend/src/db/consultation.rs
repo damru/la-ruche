@@ -176,7 +176,7 @@ pub async fn get_with_choices(
     })))
 }
 
-/// Creates a consultation in 'draft' status (EP-010-S04) with its choices.
+/// Creates a consultation in 'draft' status with its choices.
 #[allow(clippy::too_many_arguments)]
 pub async fn create(
     pool: &PgPool,
@@ -283,7 +283,7 @@ pub async fn respond(
     choice_ids: &[Uuid],
     comment: Option<&str>,
 ) -> AppResult<()> {
-    // A response is only possible on an open consultation (EP-010-S04 guard).
+    // A response is only possible on an open consultation.
     let status: Option<String> =
         sqlx::query_scalar("SELECT status::text FROM consultation WHERE id=$1 AND building_id=$2")
             .bind(id)
@@ -437,7 +437,7 @@ pub async fn open(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()> {
     Ok(())
 }
 
-/// Deletes a closed consultation (or a draft, EP-010-S04) and all its related
+/// Deletes a closed consultation (or a draft) and all its related
 /// data (choices, responses). Returns 404 if not found or not deletable.
 pub async fn delete(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()> {
     // Delete in dependency order: response_choices → responses → choices → consultation

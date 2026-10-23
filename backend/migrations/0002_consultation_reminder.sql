@@ -1,4 +1,4 @@
--- EP-010-S05: reminder log for consultation non-respondents (US-CS-004).
+-- Reminder log for consultation non-respondents.
 -- Delivery infrastructure does not exist yet; this table records the intent
 -- (who triggered a reminder, when, how many recipients) and will feed the
 -- future notification dispatcher.

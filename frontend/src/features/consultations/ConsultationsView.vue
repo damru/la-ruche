@@ -48,7 +48,7 @@ const pageError = ref('')
 const showCreateModal = ref(false)
 const editingConsultation = ref<Consultation | null>(null)
 
-// ── Non-respondents (EP-010-S05): per-consultation count for open cards ──
+// ── Non-respondents: per-consultation count for open cards ──
 const nonRespondentsCount = ref<Record<string, number>>({})
 const remindingId = ref<string | null>(null)
 
@@ -113,7 +113,7 @@ async function loadData() {
   buildingName.value = building.name
   allConsultations.value = listRes.data.consultations ?? []
 
-  // Non-respondents counters for open consultations (managers only, EP-010-S05)
+  // Non-respondents counters for open consultations (managers only)
   if (canManage.value) {
     const counts: Record<string, number> = {}
     await Promise.all(
@@ -460,7 +460,7 @@ function openDeleteModal(c: Consultation) {
                     : t('consultations.closedAt', { date: formatDate(c.closed_at!) }) }}
               </p>
 
-              <!-- Non-respondents + remind (open consultations, managers only, EP-010-S05) -->
+              <!-- Non-respondents + remind (open consultations, managers only) -->
               <div
                 v-if="c.status === 'open' && canManage"
                 class="remind-block"
@@ -485,7 +485,7 @@ function openDeleteModal(c: Consultation) {
                 />
               </div>
 
-              <!-- Draft actions: edit / open / delete (EP-010-S04) -->
+              <!-- Draft actions: edit / open / delete -->
               <div
                 v-if="c.status === 'draft' && canManageDraft(c)"
                 class="card-actions"

@@ -431,7 +431,7 @@ export interface Consultation {
   my_choice_ids: string[]
   /** Total number of distinct voters. */
   total_responses: number
-  /** ISO timestamp of the last recorded reminder (EP-010-S05), null when never reminded. */
+  /** ISO timestamp of the last recorded reminder, null when never reminded. */
   last_reminder_at?: string | null
 }
 

@@ -516,7 +516,7 @@ async fn login_with_invalid_credentials_is_unauthorized() {
     assert_eq!(resp.status_code(), StatusCode::UNAUTHORIZED);
 }
 
-// ── EP-010-S04 / EP-010-S05: consultation draft lifecycle + reminders ──
+// ── Consultation draft lifecycle + non-respondent reminders ──
 
 /// Boots an isolated server, bootstraps a manager session, and returns the
 /// manager-authenticated server plus a pool for seeding extra users.
@@ -616,7 +616,7 @@ async fn manager_building_id(server: &TestServer) -> uuid::Uuid {
     .expect("uuid")
 }
 
-// S04-1: POST /consultations creates a draft, absent from the open list.
+// Draft lifecycle — creation: POST /consultations creates a draft, absent from the open list.
 #[tokio::test]
 async fn consultation_created_as_draft_not_in_open_list() {
     let (server, _pool) = consultation_test_server().await;
@@ -654,7 +654,7 @@ async fn consultation_created_as_draft_not_in_open_list() {
     assert_eq!(drafts.len(), 1, "the draft must be listed for its creator");
 }
 
-// S04-2/3: PUT edits a draft (title + choices); PUT on an open one → 404.
+// Draft lifecycle — edition: PUT edits a draft (title + choices); PUT on an open one → 404.
 #[tokio::test]
 async fn draft_is_editable_and_open_is_not() {
     let (server, _pool) = consultation_test_server().await;
@@ -700,7 +700,7 @@ async fn draft_is_editable_and_open_is_not() {
     assert_eq!(edit_open.status_code(), StatusCode::NOT_FOUND);
 }
 
-// S04-4: POST /open transitions draft → open; a second open → 404.
+// Draft lifecycle — open transition: POST /open transitions draft → open; a second open → 404.
 #[tokio::test]
 async fn open_transitions_draft_to_open_once() {
     let (server, _pool) = consultation_test_server().await;
@@ -727,7 +727,7 @@ async fn open_transitions_draft_to_open_once() {
     assert_eq!(second.status_code(), StatusCode::NOT_FOUND);
 }
 
-// S04-5: POST /respond on a draft → 400 errors.consultations.not_open.
+// Draft lifecycle — respond guard: POST /respond on a draft → 400 errors.consultations.not_open.
 #[tokio::test]
 async fn respond_on_draft_is_rejected() {
     let (server, _pool) = consultation_test_server().await;
@@ -758,7 +758,7 @@ async fn respond_on_draft_is_rejected() {
     );
 }
 
-// S04-6: DELETE a draft → 204; DELETE an open consultation → 404.
+// Draft lifecycle — delete: DELETE a draft → 204; DELETE an open consultation → 404.
 #[tokio::test]
 async fn draft_deletable_open_not_deletable() {
     let (server, _pool) = consultation_test_server().await;
@@ -793,7 +793,7 @@ async fn draft_deletable_open_not_deletable() {
     assert_eq!(del_draft.status_code(), StatusCode::NO_CONTENT);
 }
 
-// S04-6b: a non-manager creator can delete their own draft; a non-manager
+// Draft lifecycle — delete ownership: a non-manager creator can delete their own draft; a non-manager
 // cannot delete someone else's draft (403) nor a closed consultation (403).
 #[tokio::test]
 async fn creator_can_delete_own_draft_only() {
@@ -846,7 +846,7 @@ async fn creator_can_delete_own_draft_only() {
     let _ = creator_id;
 }
 
-// S04-7: a plain resident does not see other people's drafts in list.
+// Draft lifecycle — list visibility: a plain resident does not see other people's drafts in list.
 #[tokio::test]
 async fn resident_does_not_see_others_drafts() {
     let (server, pool) = consultation_test_server().await;
@@ -877,7 +877,7 @@ async fn resident_does_not_see_others_drafts() {
     );
 }
 
-// S05-1/2: open consultation, 2 eligible users, 0 responses → count == 2;
+// Reminders — non-respondents count: open consultation, 2 eligible users, 0 responses → count == 2;
 // one responds → count == 1; a user outside visible_to_roles never counted.
 #[tokio::test]
 async fn non_respondents_count_tracks_responses() {
@@ -936,7 +936,7 @@ async fn non_respondents_count_tracks_responses() {
     let _ = out_jwt;
 }
 
-// S05-3: POST /remind → 200 recipient_count; list exposes last_reminder_at.
+// Reminders — remind: POST /remind → 200 recipient_count; list exposes last_reminder_at.
 #[tokio::test]
 async fn remind_records_and_exposes_last_reminder_at() {
     let (server, pool) = consultation_test_server().await;
@@ -980,7 +980,7 @@ async fn remind_records_and_exposes_last_reminder_at() {
     );
 }
 
-// S05-4: remind on a closed consultation → 400 not_open.
+// Reminders — remind on closed: remind on a closed consultation → 400 not_open.
 #[tokio::test]
 async fn remind_on_closed_consultation_is_rejected() {
     let (server, _pool) = consultation_test_server().await;
@@ -1011,7 +1011,7 @@ async fn remind_on_closed_consultation_is_rejected() {
     );
 }
 
-// S05-5: everyone responded → remind → 400 no_non_respondents.
+// Reminders — remind without non-respondents: everyone responded → remind → 400 no_non_respondents.
 #[tokio::test]
 async fn remind_without_non_respondents_is_rejected() {
     let (server, pool) = consultation_test_server().await;
@@ -1059,7 +1059,7 @@ async fn remind_without_non_respondents_is_rejected() {
     );
 }
 
-// S05-6: a plain co_owner gets 403 on non-respondents and remind.
+// Reminders — resident forbidden: a plain co_owner gets 403 on non-respondents and remind.
 #[tokio::test]
 async fn resident_forbidden_on_reminder_endpoints() {
     let (server, pool) = consultation_test_server().await;
