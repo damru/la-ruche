@@ -11,7 +11,7 @@ rules:
   - Ne jamais marquer ✅ si backend + frontend ne sont pas tous deux sur l'API réelle.
   - Aucun détail d'implémentation dans une story (pas de noms de fichiers, schémas DB, fonctions, endpoints).
   - Toute story d'origine légale doit pointer vers LEGAL.md §X.Y.
-  - À chaque création d'item ou livraison effective, mettre à jour le statut de la story, de l'epic et "État code actuel".
+  - À chaque création d'item ou livraison effective, mettre à jour le statut de la story et "État code actuel".
 
 ---
 
@@ -24,7 +24,6 @@ rules:
 > Ce document est le backlog officiel du projet.
 > Chaque feature est organisée en epic. Les stories sont ajoutées à la demande, au moment de l'implémentation.
 > Le MVP est l'ensemble des epics marquées **MVP : oui**.
-> Statuts possibles : **en attente** · **en cours** · **terminée**
 > Dernière mise à jour : 22 octobre 2026
 
 > **Lecture d'avancement (code actuel) :**
@@ -124,7 +123,7 @@ Objectif : garantir que chaque US de priorité Must ou Should issue des PRD prod
 
 ### EP-001 — Registre de la copropriété
 
-**Statut :** en cours | **MVP :** oui | **Réf. PRD :** Fondations légales
+**MVP :** oui | **Réf. :** [PRD - Registre de la copropriété.md](product/PRD%20-%20Registre%20de%20la%20copropri%C3%A9t%C3%A9.md) | [LEGAL.md](LEGAL.md) §1
 
 **État code actuel :** backend réel + frontend branché sur le périmètre registre ; contrôle de blocage strict des appels de fonds en cas de déséquilibre encore partiel.
 
@@ -149,7 +148,7 @@ La fiche identitaire de la copropriété (nom, adresse, SIRET syndic), le règle
 
 ### EP-002 — Gestion des propriétaires
 
-**Statut :** en cours ⏳ | **MVP :** oui | **Réf. PRD :** Fondations légales
+**MVP :** oui | **Réf. :** [PRD - Gestion des propriétaires.md](product/PRD%20-%20Gestion%20des%20propri%C3%A9taires.md) | [LEGAL.md](LEGAL.md) §1.5, §2.4
 
 **État code actuel :** S01–S05 et S08 livrés côté backend (domaine + DB + API) et frontend (liste résidents, invitation tokenisée avec TTL, révocation d’invitation, mutation de lot avec historique, anonymisation RGPD, accès par lien `/invite/:token`). S10 (procédures judiciaires) et S11 (registre de gouvernance) livrés backend + frontend. S06, S07, S09, S12 hors scope MVP.
 
@@ -181,7 +180,7 @@ Historique de propriété tracé avec dates de cession, invitation par lien toke
 
 ### EP-003 — Assemblée Générale
 
-**Statut :** en cours | **MVP :** oui | **Réf. PRD :** Fondations légales
+**MVP :** oui | **Réf. :** [PRD - Assemblée Générale.md](product/PRD%20-%20Assembl%C3%A9e%20G%C3%A9n%C3%A9rale.md) | [LEGAL.md](LEGAL.md) §3
 
 **État code actuel :** backend + frontend réels sur tout le cycle de vie (`draft → called → ongoing → closed`). Génération du projet de PV markdown server-side, upload du PV signé via flux pré-signé, traçabilité de la date de notification aux absents avec calcul du délai légal art. 42 loi 1965 (J+60). Calculs de majorité art. 24/25/25-1/26/26-1/unanimité couverts par tests canoniques. CRUD complet des résolutions (création, modification, suppression, réordonnancement) restreint au statut `draft`, patch de description en séance et passerelle art. 25-1/26-1 préservées (EP-003-S13).
 
@@ -219,7 +218,7 @@ Cycle de vie complet d'une AG, résolutions typées par majorité, vote par lot 
 
 ### EP-004 — Budget & Charges
 
-**Statut :** en cours | **MVP :** oui | **Réf. PRD :** Fondations légales
+**MVP :** oui | **Réf. :** [PRD - Budget et charges.md](product/PRD%20-%20Budget%20et%20charges.md) | [LEGAL.md](LEGAL.md) §4 | [ADR-009-accounting-immutability.md](adr/ADR-009-accounting-immutability.md) | [ADR-012-budget-line-concurrency.md](adr/ADR-012-budget-line-concurrency.md)
 
 **État code actuel :** backend réel sur les flux principaux (génération appels, snapshots, relevé individuel, garde d'équilibrage des clés, clôture conditionnelle fonds travaux) + frontend branché sur l'API réelle (S01-S04) avec carte dédiée de pilotage du fonds travaux et configuration du taux par exercice.
 
@@ -246,7 +245,7 @@ Budget prévisionnel par exercice, appels de fonds générés par tantièmes, fo
 
 ### EP-005 — Documents
 
-**Statut :** en cours | **MVP :** oui | **Réf. PRD :** Gestion courante
+**MVP :** oui | **Réf. :** [PRD - Documents.md](product/PRD%20-%20Documents.md) | [LEGAL.md](LEGAL.md) §1.2
 
 **État code actuel :** backend réel + frontend branché pour listing, upload pré-signé, confirmation, téléchargement et suppression ; pas encore de modèle documentaire dédié pour les documents fondateurs/version courante ni pour l'archivage réglementaire typé.
 
@@ -270,7 +269,7 @@ Upload direct S3 via pre-signed URL, contrôle d'accès par rôle, téléchargem
 
 ### EP-006 — Contrats fournisseurs
 
-**Statut :** terminée | **MVP :** oui | **Réf. PRD :** Gestion courante
+**MVP :** oui | **Réf. :** [PRD - Contrats fournisseurs.md](product/PRD%20-%20Contrats%20fournisseurs.md) | [LEGAL.md](LEGAL.md) §5.3
 
 **État code actuel :** backend + frontend réels sur CRUD, rappels, acquittement, résiliation, pièces justificatives liées au contrat et fiche contrat détaillée. Les filtres (statut/type/prestataire) sont côté client, comme sur toutes les autres pages — la migration serveur est tracée en T-005 (post-MVP). Liste et fiche contrat accessibles en lecture au Conseil syndical (art. 21 loi 1965), écriture Syndic seul.
 
@@ -290,7 +289,7 @@ Fiche contrat avec reconduction tacite et préavis configurables, rappels automa
 
 ### EP-007 — Tâches & Prestataires
 
-**Statut :** en cours | **MVP :** non | **Réf. PRD :** Gestion courante
+**MVP :** non | **Réf. :** [PRD - Tâches et prestataires.md](product/PRD%20-%20T%C3%A2ches%20et%20prestataires.md) | [LEGAL.md](LEGAL.md) §1.4 | [ADR-008-task-logbook-traceability.md](adr/ADR-008-task-logbook-traceability.md)
 
 **État code actuel :** backend réel (CRUD tâches + token prestataire + upload staging + pré-validation prestataire en transaction + documents manager via `task_document` + assignation prestataire référentiel ou nom libre sur `task.contractor_name`) + frontend branché (liste, créer, modifier, documents manager, token, page publique prestataire, autocomplete prestataire tolérant avec création optionnelle, clôture avec coût optionnel).
 
@@ -315,7 +314,7 @@ Tâches assignées en interne, lien tokenisé éphémère pour accès prestatair
 
 ### EP-008 — Sinistres
 
-**Statut :** terminée | **MVP :** oui | **Réf. PRD :** Gestion courante
+**MVP :** oui | **Réf. :** [PRD - Sinistres.md](product/PRD%20-%20Sinistres.md) | [LEGAL.md](LEGAL.md) §5.2
 
 **État code actuel :** backend réel (`claim_type`, `occurred_at`, `published_at`, `transmitted_at`, remboursement optionnel, calcul d'échéance légale, alertes dérivées, pièces jointes et nettoyage des liaisons documentaires à la suppression) + frontend branché sur API réelle (création, édition, transmission, clôture, suppression, alertes, rattachement documentaire).
 
@@ -336,7 +335,7 @@ Déclaration et suivi de sinistres (lot ou parties communes) avec documents asso
 
 ### EP-009 — Carnet d'entretien
 
-**Statut :** terminée (`S04` hors scope post-MVP) | **MVP :** oui | **Réf. PRD :** Gestion courante
+**MVP :** oui | **Réf. :** [PRD - Carnet d'entretien.md](product/PRD%20-%20Carnet%20d%27entretien.md) | [LEGAL.md](LEGAL.md) §1.4
 
 **État code actuel :** backend réel (list, get, create, update, delete + auto-feed depuis tâche avec liens de traçabilité souples + résumé réglementaire) + frontend branché (timeline, résumé réglementaire distinct, modale création, suppression, filtres calendaires, listings contrats assurance / maintenance actifs).
 
@@ -359,7 +358,7 @@ Historique des interventions alimenté manuellement ou automatiquement depuis un
 
 ### EP-010 — Consultations & Sondages
 
-**Statut :** terminée | **MVP :** oui | **Réf. PRD :** Participatif
+**MVP :** oui | **Réf. :** [PRD - Consultations et sondages.md](product/PRD%20-%20Consultations%20et%20sondages.md)
 
 **État code actuel :** backend réel (list, get, create en `draft`, édition brouillon, open, respond/upsert 1 réponse par utilisateur, results, close, delete, relance non-répondants) + frontend branché (liste open/brouillons/fermées, modale create/édition, modale respond, clôture, résultats, compteur et relance des non-répondants).
 
@@ -379,7 +378,7 @@ Consultations initiables par tout résident sans approbation préalable, résult
 
 ### EP-011 — Signalements
 
-**Statut :** terminée | **MVP :** oui | **Réf. PRD :** Participatif
+**MVP :** oui | **Réf. :** [PRD - Signalements.md](product/PRD%20-%20Signalements.md)
 
 **État code actuel :** backend réel (CRUD, documents associés, conversion en tâche avec priorité choisie, lien `report.task_id`, clôture automatique du signalement à la fermeture effective de la tâche liée) + frontend branché (liste, création, photos, mise à jour de statut, conversion en tâche).
 
@@ -397,7 +396,7 @@ Signalement par tout résident avec description et lot optionnel, suivi de statu
 
 ### EP-012 — Conformité & Reporting réglementaire
 
-**Statut :** en attente | **MVP :** non | **Réf. LEGAL :** §1.1, §1.3
+**MVP :** non | **Réf. :** [PRD - Conformité et reporting.md](product/PRD%20-%20Conformit%C3%A9%20et%20reporting.md) | [LEGAL.md](LEGAL.md) §1.1, §1.3
 
 Export des données de la copropriété au format RNC et génération de la fiche synthétique annuelle obligatoire.
 
@@ -415,7 +414,7 @@ Export des données de la copropriété au format RNC et génération de la fich
 
 ### EP-013 — Tenue d’AG
 
-**Statut :** en attente | **MVP :** non | **Réf. PRD :** Fonctionnalités avancées — extension EP-003
+**MVP :** non | **Réf. :** [PRD - Assemblée Générale.md](product/PRD%20-%20Assembl%C3%A9e%20G%C3%A9n%C3%A9rale.md) | [LEGAL.md](LEGAL.md) §3.2, §3.3, §3.4
 
 **État code actuel :** statut `ongoing` disponible ; transitions `POST /{id}/start` (`called` → `ongoing`) et `POST /{id}/close` (`ongoing` → `closed`) opérationnelles backend. Aucune vue frontend dédiée à la conduite de séance n'existe encore.
 
@@ -441,7 +440,7 @@ Le cycle de vie complet d'une AG est : `draft` → `called` → **`ongoing`** �
 
 ### EP-014 — Calendrier copropriété
 
-**Statut :** en attente | **MVP :** non | **Réf. PRD :** Fonctionnalités avancées
+**MVP :** non | **Réf. :** [PRD - Calendrier.md](product/PRD%20-%20Calendrier.md)
 
 Calendrier partagé centralisant AG, interventions et réunions avec liens contextuels vers les entités correspondantes, export iCal.
 
@@ -457,7 +456,7 @@ Calendrier partagé centralisant AG, interventions et réunions avec liens conte
 
 ### EP-015 — Référentiel prestataires
 
-**Statut :** en cours | **MVP :** non | **Réf. PRD :** Gestion courante
+**MVP :** non | **Réf. :** [PRD - Référentiel prestataires.md](product/PRD%20-%20R%C3%A9f%C3%A9rentiel%20prestataires.md)
 
 **État code actuel :** backend réel (CRUD + recherche par nom) + frontend branché (catalogue, création, édition, suppression, autocomplete dans TasksView, création optionnelle depuis la modale tâche).
 
@@ -476,7 +475,7 @@ Catalogue des prestataires de la résidence : nom, email, téléphone, domaine p
 
 ### EP-016 — Paiement en ligne
 
-**Statut :** en attente | **MVP :** non | **Réf. PRD :** Fonctionnalités avancées
+**MVP :** non | **Réf. :** [PRD - Paiement en ligne.md](product/PRD%20-%20Paiement%20en%20ligne.md) | [LEGAL.md](LEGAL.md) §4.3
 
 Paiement des appels de fonds via passerelle SEPA, reçu PDF automatique, versement sur compte séparé (art. 18 loi 1965).
 
@@ -486,7 +485,7 @@ Paiement des appels de fonds via passerelle SEPA, reçu PDF automatique, verseme
 
 ### EP-017 — Journal d’activité & Suivi de cycle de vie
 
-**Statut :** en attente | **MVP :** non | **Réf. PRD :** Gestion courante
+**MVP :** non | **Réf. :** [PRD - Journal d'activité.md](product/PRD%20-%20Journal%20d%27activit%C3%A9.md) | [LEGAL.md](LEGAL.md) §11 | [ADR-009-accounting-immutability.md](adr/ADR-009-accounting-immutability.md)
 
 **Arbitrage documentaire ouvert avec `EP-018` / ADR-009 :** le terme `audit_log` est réservé à la piste probante comptable et juridique (immutabilité, `UPDATE` / `DELETE`, diff ciblé, conservation 10 ans). Pour `EP-017`, le besoin porte au contraire sur une frise métier lisible, orientée cycle de vie et expérience utilisateur. La cible documentaire privilégiée est donc une **table `activity_log` polymorphique** (`entity_type` / `entity_id`) dédiée aux événements métier, tandis que `audit_log` reste sous la responsabilité de `EP-018`.
 
@@ -524,7 +523,7 @@ Vue unifiée du cycle de vie d’un signalement et/ou d’une tâche, de la cré
 
 ### EP-018 — Immutabilité comptable & auditabilité probante
 
-**Statut :** en cours | **MVP :** oui | **Réf. LEGAL :** §11 · **Réf. ADR :** ADR-009 · ADR-012
+**MVP :** oui | **Réf. :** [PRD - Budget et charges.md](product/PRD%20-%20Budget%20et%20charges.md) | [LEGAL.md](LEGAL.md) §11 | [ADR-009-accounting-immutability.md](adr/ADR-009-accounting-immutability.md) | [ADR-012-budget-line-concurrency.md](adr/ADR-012-budget-line-concurrency.md)
 
 **État code actuel :** S01 à S07 livrées. Le module `domain/immutability` porte les guards `is_mutable()` / `is_deletable()` pour `levy_call`, `task`, `claim`, `vote`, `resolution`, `maintenance_log`, `vendor_contract` et `budget`. Les Patterns A, B et C sont implémentés sur leurs entités respectives. Reste ouvert : le câblage exhaustif de `audit_log` sur l'ensemble des mutations comptables (porté par [EP-021-S03](specs/EP-021-S03-spec.md)), et le lien `resolution_id` sur `budget` (AC-BC-009-F, à trancher avec `EP-003`). L'arbitrage documentaire est le suivant : `audit_log` reste la piste probante comptable de `EP-018`, tandis que `EP-017` porte une frise métier distincte via `activity_log`.
 
@@ -544,7 +543,7 @@ Durcir les entités comptablement critiques pour empêcher toute modification r�
 
 ### EP-019 — Profil & préférences
 
-**Statut :** en cours | **MVP :** oui | **Réf. PRD :** Gestion courante
+**MVP :** oui | **Réf. :** [PRD - Profil et préférences.md](product/PRD%20-%20Profil%20et%20pr%C3%A9f%C3%A9rences.md) | [DDR-006-form-feedback-pattern.md](ddr/DDR-006-form-feedback-pattern.md)
 
 **État code actuel :** partiel ; la préférence d'apparence est déjà exposée et persistée côté frontend, le profil utilisateur dispose d'un espace dédié, mais la feature reste encore incomplète comme hub personnel structuré de compte, notifications et préférences. La fermeture automatique des modales après succès est à délai fixe (3 s, DDR-006) — pas encore configurable.
 
@@ -566,7 +565,7 @@ Feature simple self-service permettant à chaque utilisateur authentifié de gé
 
 ### EP-020 — Design system : consolidation tokens & wrappers Radix
 
-**Statut :** en cours | **MVP :** non | **Réf. PRD :** DESIGN.md
+**MVP :** non | **Réf. :** [PRD - Tâches et prestataires.md](product/PRD%20-%20T%C3%A2ches%20et%20prestataires.md) | [DESIGN.md](DESIGN.md)
 
 **État code actuel :** S01–S12 livrées (tokens OKLCH, `@theme inline`, wrappers Radix, suppression des CSS legacy). Restent les composants catalogués « 🔲 planifié » dans DESIGN.md §3 et absents du code : `CPageHeader`, `CTopbarBreadcrumb`, `CCardHeader`, `CDocumentList`, `CDataText` (S13–S17). Nota : `CFormGroup` et `CFormRow` existent déjà — DESIGN.md à rafraîchir.
 
@@ -596,7 +595,7 @@ Consolidation technique du design system : migration des tokens de couleur vers 
 
 ### EP-021 — Conformité différée : RGPD, courriers automatiques & audit log
 
-**Statut :** en attente | **MVP :** non | **Réf. PRD :** LEGAL.md §8, §4.7 ; ADR-009
+**MVP :** non | **Réf. :** [PRD - Conformité et reporting.md](product/PRD%20-%20Conformit%C3%A9%20et%20reporting.md) | [LEGAL.md](LEGAL.md) §8, §4.7 | [ADR-009-accounting-immutability.md](adr/ADR-009-accounting-immutability.md)
 
 **État code actuel :** la table `audit_log` existe (ADR-009) mais n'a aucun écrivain applicatif ; aucun export RGPD ni envoi de courrier n'est implémenté. Décision 2026-06-30 (Damien) : prioriser d'abord l'implémentation correcte de tous les évènements fonctionnels, puis traiter ces obligations transverses.
 
