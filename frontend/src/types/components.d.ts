@@ -41,6 +41,7 @@ declare module 'vue' {
     CFormFieldProxyFeedback: typeof import('./../components/atoms/CFormFieldProxyFeedback.vue')['default']
     CFormGroup: typeof import('./../components/molecules/CFormGroup.vue')['default']
     CFormInput: typeof import('./../components/atoms/CFormInput.vue')['default']
+    CFormMultiSelect: typeof import('./../components/atoms/CFormMultiSelect.vue')['default']
     CFormRow: typeof import('./../components/molecules/CFormRow.vue')['default']
     CFormSelect: typeof import('./../components/atoms/CFormSelect.vue')['default']
     CFormTextarea: typeof import('./../components/atoms/CFormTextarea.vue')['default']
