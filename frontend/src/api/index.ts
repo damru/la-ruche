@@ -306,29 +306,9 @@ export const documentsApi = {
 }
 
 // ── Contracts ─────────────────────────────────────────────────────
-export interface ContractListParams {
-  status?: string
-  /** Multiple values are sent as a comma-separated list (OR within the filter). */
-  contract_type?: string[]
-  /** Multiple values are sent as a comma-separated list (OR within the filter). */
-  vendor?: string[]
-}
-
 export const contractsApi = {
-  list: (params?: ContractListParams) =>
-    api.get<VendorContract[]>('/contracts', {
-      params: params
-        ? {
-            ...params,
-            contract_type: params.contract_type?.length ? params.contract_type.join(',') : undefined,
-            vendor: params.vendor?.length ? params.vendor.join(',') : undefined,
-          }
-        : undefined,
-    }),
-  vendors: () =>
-    api.get<string[]>('/contracts/vendors'),
-  types: () =>
-    api.get<string[]>('/contracts/types'),
+  list: () =>
+    api.get<VendorContract[]>('/contracts'),
   get: (id: string) =>
     api.get<VendorContract>(`/contracts/${id}`),
   create: (data: Partial<VendorContract>) =>

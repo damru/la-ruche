@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { useFormatters } from '@/composables/useFormatters'
@@ -61,8 +61,6 @@ const search = ref('')
 const selectedTypes = ref<string[]>([])
 const selectedVendors = ref<string[]>([])
 const viewMode = ref<'cards' | 'table'>('table')
-const typeOptions = ref<string[]>([])
-const vendorOptions = ref<string[]>([])
 const buildingName = ref('')
 const allContracts = ref<VendorContract[]>([])
 const allReminders = ref<ContractReminder[]>([])
@@ -75,48 +73,19 @@ const loadingContractDocuments = ref(false)
 
 const canManage = computed(() => hasAnyRole(['manager']))
 
-async function loadFilterOptions() {
-  const [vendorsResponse, typesResponse] = await Promise.all([
-    contractsApi.vendors(),
-    contractsApi.types(),
-  ])
-  vendorOptions.value = vendorsResponse.data
-  typeOptions.value = typesResponse.data
-}
-
-async function loadContracts() {
-  const response = await contractsApi.list({
-    contract_type: selectedTypes.value.length ? selectedTypes.value : undefined,
-    vendor: selectedVendors.value.length ? selectedVendors.value : undefined,
-  })
-  allContracts.value = response.data
-}
-
 async function loadData() {
-  const [building, remindersResponse] = await Promise.all([
+  const [building, contractsResponse, remindersResponse] = await Promise.all([
     useBuildingStore().fetch(),
+    contractsApi.list(),
     contractsApi.listAllReminders(),
   ])
 
   buildingName.value = building.name
+  allContracts.value = contractsResponse.data
   allReminders.value = remindersResponse.data
-  await loadContracts()
 }
 
 const { loading, error, reload } = usePageLoader(loadData)
-onMounted(() => {
-  reload()
-  loadFilterOptions()
-})
-
-// Server-side filters (type / vendor) — reload only the contract list, not
-// the whole page (building/reminders are filter-independent). The status tab
-// stays client-side so the tab counters always reflect the whole list.
-watch([selectedTypes, selectedVendors], () => {
-  loadContracts().catch((err: unknown) => {
-    error.value = toErrorMessage(err)
-  })
-})
 
 const contractsById = computed(() =>
   new Map(allContracts.value.map(contract => [contract.id, contract])),
@@ -227,6 +196,14 @@ const contracts = computed(() => {
       if (filter.value === 'active' && currentStatus !== 'active') return false
       if (filter.value === 'expired' && currentStatus === 'active') return false
 
+      if (selectedTypes.value.length > 0 && !selectedTypes.value.includes(contract.contract_type)) {
+        return false
+      }
+
+      if (selectedVendors.value.length > 0 && !selectedVendors.value.includes(contract.vendor_name)) {
+        return false
+      }
+
       if (!query) return true
 
       return [
@@ -243,13 +220,15 @@ const contracts = computed(() => {
 })
 
 const contractTypeOptions = computed(() =>
-  [...typeOptions.value]
+  [...new Set(allContracts.value.map(contract => contract.contract_type))]
     .map(value => ({ value, label: t(`contracts.types.${value}`) }))
     .sort((a, b) => a.label.localeCompare(b.label)),
 )
 
 const contractVendorOptions = computed(() =>
-  vendorOptions.value.map(vendor => ({ value: vendor, label: vendor })),
+  [...new Set(allContracts.value.map(contract => contract.vendor_name))]
+    .sort((a, b) => a.localeCompare(b))
+    .map(vendor => ({ value: vendor, label: vendor })),
 )
 
 const contractTableColumns = computed<Column<VendorContract>[]>(() => [

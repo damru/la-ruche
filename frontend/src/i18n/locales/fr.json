@@ -1722,9 +1722,6 @@
     "contractor": {
       "invalid_file_extension": "L'extension du fichier est invalide."
     },
-    "contracts": {
-      "invalid_filter": "Le filtre demandé est invalide."
-    },
     "contractors": {
       "name_required": "Le nom du prestataire est obligatoire."
     },

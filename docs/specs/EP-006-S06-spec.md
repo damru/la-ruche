@@ -4,9 +4,11 @@
 
 **Épic :** EP-006 — Contrats fournisseurs
 **Réf. PRD :** `docs/product/PRD - Contrats fournisseurs.md` US-CF-002
-**Statut : IMPLÉMENTÉ (backend + frontend)** — filtres type/prestataire côté backend (`GET /contracts?status=&contract_type=&vendor=`), route `GET /contracts/vendors`, rangée de filtres + bascule cartes/tableau dans la liste, fiche contrat `ContractDetailView` sur `/contracts/:id` (en-tête, chaîne d'avenants, documents liés, rappels).
+**Statut : IMPLÉMENTÉ (frontend)** — filtres statut/type/prestataire **côté client** (multi-select `CFormMultiSelect`, options dérivées de la liste chargée), bascule tableau/cartes, fiche contrat `ContractDetailView` sur `/contracts/:id` (en-tête, chaîne d'avenants, documents liés, rappels). Le backend expose `GET /contracts` sans filtre.
 
 **Décision §2 actée (2026-10-22, product owner), révisée 2026-10-23 (alignement UI /contractors) : tableau par défaut + bascule vers les cartes (`CDataTable`).** Le PRD US-CF-002 (AC-CF-002-B) est amendé en conséquence (Q-CF-004 tranchée).
+
+**Décision filtrage (2026-10-23, product owner) : filtrage côté client**, comme sur toutes les pages de l'application (volumétrie faible par résidence). La migration serveur de tous les filtres applicatifs est tracée en tâche technique post-MVP **T-005** (`docs/EPICS.md`).
 
 ---
 
@@ -19,9 +21,8 @@
 
 ## 2. Ce qui manque (périmètre)
 
-1. Filtres **type** et **prestataire** (selects), combinables avec statut et recherche.
-2. Filtrage **côté backend** (query params) au lieu du tout-client.
-3. Une **fiche contrat** (`ContractDetailView`, route dédiée) — aujourd'hui tout passe par des modales.
+1. Filtres **type** et **prestataire** (multi-selects), combinables avec statut et recherche — **côté client** (décision 2026-10-23, cf. T-005 pour la migration serveur).
+2. Une **fiche contrat** (`ContractDetailView`, route dédiée) — aujourd'hui tout passe par des modales.
 
 ### Décision de présentation — à trancher avec le PRD
 
@@ -52,26 +53,7 @@ Aucune migration. (Le « prestataire » est le champ libre `vendor_name` — pas
 
 ## 5. Backend Rust
 
-### 5.1 `db/contract.rs::list` — filtres
-
-Ajouter des paramètres optionnels : `status: Option<&str>`, `contract_type: Option<&str>`, `vendor_name: Option<&str>` (égalité exacte sur `vendor_name` — la liste des valeurs vient de `SELECT DISTINCT`). SQL : clauses `AND ($n::text IS NULL OR ...)`.
-
-Nouvelle fn `vendor_names(pool, building_id) -> Vec<String>` : `SELECT DISTINCT vendor_name ... ORDER BY vendor_name` (alimente le select frontend).
-
-### 5.2 `api/contracts.rs` + `api/mod.rs`
-
-```rust
-#[derive(Deserialize)]
-pub struct ListContractsQuery {
-    pub status: Option<String>,        // draft|active|terminated|expired
-    pub contract_type: Option<String>,
-    pub vendor: Option<String>,
-}
-```
-
-- `list` : `Query<ListContractsQuery>` passé tel quel au repo (zéro logique en handler). Valeurs invalides d'enum → laisser le cast SQL échouer proprement ou pré-valider avec `AppError::validation_code("errors.contracts.invalid_filter")` — retenu : pré-validation dans le repo.
-- Nouvelle route `GET /contracts/vendors` → `vendor_names` (rôles : mêmes que `list` — manager + board_member).
-- **Aucune nouvelle route détail nécessaire** : `GET /contracts/{id}` existe (sinon, l'ajouter sur le modèle de `get` du repo).
+**Aucun changement** (décision filtrage client, 2026-10-23). `GET /contracts` reste sans filtre ; `GET /contracts/{id}` existe déjà pour la fiche.
 
 ---
 
@@ -79,9 +61,9 @@ pub struct ListContractsQuery {
 
 ### 6.1 Filtres — `ContractsView.vue`
 
-- Conserver les onglets de statut ; ajouter une rangée de filtres : select **Type** (valeurs de l'enum `contract_type`, libellés FR existants) + select **Prestataire** (`GET /contracts/vendors`) + recherche existante.
-- Basculer la liste sur le filtrage **backend** : les changements d'onglet/filtre relancent `contractsApi.list({ status, contract_type, vendor })`. La recherche plein texte reste côté client (comportement actuel conservé).
-- Les compteurs d'onglets : conserver la dérivation actuelle sur la liste non filtrée par statut (un seul appel `list` sans `status` + filtres type/vendor, onglets filtrant côté client) — **option la plus simple, retenue** : le backend filtre type/vendor, le statut reste client comme aujourd'hui. `status` en query param reste disponible pour d'autres consommateurs.
+- Conserver les onglets de statut ; ajouter une rangée de filtres : multi-select **Type** (valeurs de l'enum `contract_type` présentes dans la liste, libellés FR existants) + multi-select **Prestataire** (noms distincts dérivés de la liste) + recherche existante.
+- Filtrage **côté client** (décision 2026-10-23) : les filtres type/prestataire s'appliquent dans le `computed` de la liste, comme le statut (onglets) et la recherche plein texte. Aucun rechargement réseau au changement de filtre — cohérent avec `/contractors` et le reste de l'app.
+- Les compteurs d'onglets dérivent de la liste complète, non filtrée.
 
 ### 6.2 Nouvelle vue `ContractDetailView.vue`
 
@@ -95,7 +77,7 @@ pub struct ListContractsQuery {
 
 ### 6.3 `frontend/src/api/index.ts`
 
-`contractsApi.list(params?)`, `contractsApi.vendors()`, `contractsApi.reminders(id)` (si section 4 retenue).
+`contractsApi.list()` (sans paramètre), `contractsApi.reminders(id)` (si section 4 retenue).
 
 ---
 
@@ -103,8 +85,8 @@ pub struct ListContractsQuery {
 
 | Cas | Règle |
 |---|---|
-| Filtres combinés (type + vendor + onglet + recherche) | Intersection ; état vide avec message dédié. |
-| `vendor` inexistant en query | Liste vide, `200`. |
+| Filtres combinés (type + prestataire + onglet + recherche) | Intersection côté client ; état vide avec message dédié. |
+| Type/prestataire absent de la liste | N'apparaît pas dans les options du filtre (options dérivées des données). |
 | Contrat d'un autre immeuble | `GET /contracts/{id}` → `404` (scoping `building_id` existant). |
 | Contrat `draft` (EP-018-S05) | Visible dans la fiche avec bandeau « brouillon — à activer » et bouton Activer. |
 | Prestataires en doublon typographique (`vendor_name` libre) | Assumé — champ libre, pas de normalisation dans cette story. |
@@ -114,22 +96,16 @@ pub struct ListContractsQuery {
 
 ## 8. Critères d'acceptation
 
-1. `GET /contracts?contract_type=X&vendor=Y` filtre côté serveur ; `GET /contracts/vendors` liste les prestataires distincts.
-2. La liste combine onglet statut + type + prestataire + recherche.
-3. Cliquer une carte ouvre `/contracts/:id` : en-tête complet, chaîne d'avenants, documents liés, rappels.
-4. Les actions (modifier/avenant/résilier/documents) fonctionnent depuis la fiche.
-5. L'écart « cartes vs vue tabulaire » est acté : PRD amendé ou toggle table implémenté (décision §2).
+1. La liste combine onglet statut + type + prestataire + recherche, **filtrage côté client** (décision 2026-10-23, T-005 pour la migration serveur).
+2. Cliquer une carte ou une ligne ouvre `/contracts/:id` : en-tête complet, chaîne d'avenants, documents liés, rappels.
+3. Les actions (modifier/avenant/résilier/documents) fonctionnent depuis la fiche.
+4. L'écart « cartes vs vue tabulaire » est acté : PRD amendé + toggle table implémenté (décision §2).
 
 ---
 
 ## 9. Plan de tests
 
-- **e2e backend** :
-  1. `GET /contracts?contract_type=...` → seuls les contrats du type.
-  2. `GET /contracts?vendor=...` → seuls ceux du prestataire.
-  3. Combinaison des deux → intersection.
-  4. `GET /contracts/vendors` → distincts, triés.
-  5. Filtre invalide → `400 errors.contracts.invalid_filter`.
+- **e2e backend** : non-régression S07 (lecture documents liés en `board_member` → 200, attach/detach → 403, acquittement rappel `board_member` → 403 / `manager` → 204) dans `backend/tests/contract_visibility_test.rs`.
 - **Frontend** : build + lint ; si vitest configuré, test de `ContractDetailView` (fetch au montage, sections rendues) ; sinon vérification manuelle.
 
 ---
@@ -137,8 +113,7 @@ pub struct ListContractsQuery {
 ## 10. Ordre d'implémentation
 
 1. **Trancher la décision §2 (cartes vs tabulaire) avec le product owner** ; amender le PRD le cas échéant.
-2. Backend : filtres `db/contract.rs::list`, `vendor_names`, (`reminders` par contrat si retenu), query params + route `GET /contracts/vendors` → `clippy`, e2e.
-3. Frontend api + types.
-4. `ContractsView.vue` : rangée de filtres, navigation carte → fiche.
-5. `ContractDetailView.vue` + route (cataloguer tout nouveau `C*` dans `docs/DESIGN.md` §3 avant usage).
-6. `npm run build` + `lint` ; `docs/PROGRESS.md`.
+2. Frontend api + types.
+3. `ContractsView.vue` : rangée de filtres (client), navigation carte → fiche.
+4. `ContractDetailView.vue` + route (cataloguer tout nouveau `C*` dans `docs/DESIGN.md` §3 avant usage).
+5. `npm run build` + `lint` ; `docs/PROGRESS.md`.

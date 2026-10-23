@@ -1,6 +1,6 @@
 use axum::{
     Json,
-    extract::{Path, Query, State},
+    extract::{Path, State},
     http::StatusCode,
 };
 use serde::Deserialize;
@@ -14,57 +14,12 @@ use crate::{
     errors::{AppError, AppResult, json_value},
 };
 
-fn parse_csv(raw: &Option<String>) -> Vec<String> {
-    raw.as_deref()
-        .map(|s| {
-            s.split(',')
-                .map(str::trim)
-                .filter(|v| !v.is_empty())
-                .map(str::to_string)
-                .collect()
-        })
-        .unwrap_or_default()
-}
-
-#[derive(Deserialize)]
-pub struct ListContractsQuery {
-    pub status: Option<String>,
-    /// Comma-separated list of contract types (e.g. `maintenance,insurance`).
-    pub contract_type: Option<String>,
-    /// Comma-separated list of vendor names (e.g. `ACME,Beta`).
-    pub vendor: Option<String>,
-}
-
 pub async fn list(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,
-    Query(query): Query<ListContractsQuery>,
 ) -> AppResult<Json<serde_json::Value>> {
     auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
-    let filter = db::contract::ListContractsFilter {
-        status: query.status,
-        contract_type: parse_csv(&query.contract_type),
-        vendor_name: parse_csv(&query.vendor),
-    };
-    json_value(db::contract::list(&state.pool, auth.building_id, &filter).await?)
-}
-
-pub async fn list_vendors(
-    auth: AuthUser,
-    State(state): State<Arc<AppState>>,
-) -> AppResult<Json<Vec<String>>> {
-    auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
-    Ok(Json(
-        db::contract::vendor_names(&state.pool, auth.building_id).await?,
-    ))
-}
-
-pub async fn list_types(
-    auth: AuthUser,
-    State(state): State<Arc<AppState>>,
-) -> AppResult<Json<Vec<String>>> {
-    auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
-    Ok(Json(db::contract::contract_types(&state.pool).await?))
+    json_value(db::contract::list(&state.pool, auth.building_id).await?)
 }
 
 pub async fn list_all_reminders(

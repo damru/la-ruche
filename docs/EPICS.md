@@ -272,7 +272,7 @@ Upload direct S3 via pre-signed URL, contrôle d'accès par rôle, téléchargem
 
 **Statut :** terminée | **MVP :** oui | **Réf. PRD :** Gestion courante
 
-**État code actuel :** backend + frontend réels sur CRUD, rappels, acquittement, résiliation, pièces justificatives liées au contrat, filtres serveur (statut/type/prestataire) et fiche contrat détaillée. Liste et fiche contrat accessibles en lecture au Conseil syndical (art. 21 loi 1965), écriture Syndic seul.
+**État code actuel :** backend + frontend réels sur CRUD, rappels, acquittement, résiliation, pièces justificatives liées au contrat et fiche contrat détaillée. Les filtres (statut/type/prestataire) sont côté client, comme sur toutes les autres pages — la migration serveur est tracée en T-005 (post-MVP). Liste et fiche contrat accessibles en lecture au Conseil syndical (art. 21 loi 1965), écriture Syndic seul.
 
 Fiche contrat avec reconduction tacite et préavis configurables, rappels automatiques calculés à la création/MAJ, acquittement manuel. Liste filtrable par statut (onglets), type et prestataire avec bascule cartes/tableau ; chaque contrat ouvre une fiche dédiée (en-tête, chaîne d'avenants, documents liés, rappels).
 
@@ -627,6 +627,7 @@ Obligations de conformité reportées après la livraison du MVP : export RGPD d
 | T-002-8 | Améliorer les formulaires dans modale: message de feedback mal placé, bouton `close` inaccessible, délai de fermeture automatique trop long etc. | en attente |
 | T-003 | Durcir le contrat d'interface entre backend et frontend - utilisation d'openapi ? | en attente |
 | T-004 | Etudier l'intérêt de la création d'un crate dédié aux AG | en attente |
+| T-005 | Migrer le filtrage applicatif côté serveur | **Tous** les filtres de **toutes** les pages passent du mode client au mode serveur (query params API + SQL) : contrats (statut/type/prestataire), signalements, tâches, AG, documents, carnet d'entretien, journal d'activité, etc. — y compris les filtres par onglets (« Tout », « Ouverts », « Fermés », « En cours », etc.). Contexte : cohérence produit retenue le 2026-10-23 (filtrage client uniforme, volumétrie faible par résidence — dizaines d'entités) ; cette tâche prépare le passage à l'échelle (pagination, multi-résidences). | en attente |
 
 ***
 

@@ -255,8 +255,6 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
         .route("/documents/{id}/versions", get(documents::versions))
         // ── Contracts ───────────────────────────────────────────
         .route("/contracts", get(contracts::list).post(contracts::create))
-        .route("/contracts/vendors", get(contracts::list_vendors))
-        .route("/contracts/types", get(contracts::list_types))
         .route("/contracts/reminders", get(contracts::list_all_reminders))
         .route(
             "/contracts/{id}",
