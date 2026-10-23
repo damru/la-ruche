@@ -34,8 +34,10 @@ const { formatDate, formatRelative } = useFormatters()
 const authStore = useAuthStore()
 const { confirm } = useConfirm()
 
-// Managers and board members can create/close consultations.
+// Managers and board members manage consultations (close, remind, delete others).
 const canManage = computed(() => authStore.hasAnyRole(['manager', 'board_member']))
+// Any authenticated user can create a consultation (EP-010: initiable par tout resident).
+const canCreate = computed(() => authStore.isAuthenticated)
 
 const buildingName = ref('')
 const allConsultations = ref<Consultation[]>([])
@@ -273,7 +275,7 @@ function openDeleteModal(c: Consultation) {
       </template>
       <template #right>
         <CBtn
-          v-if="canManage"
+          v-if="canCreate"
           variant="primary"
           size="sm"
           :icon="CIconPlus"
@@ -329,7 +331,7 @@ function openDeleteModal(c: Consultation) {
               #actions
             >
               <CBtn
-                v-if="canManage"
+                v-if="canCreate"
                 variant="primary"
                 :icon="CIconPlus"
                 :title="t('consultations.create')"

@@ -616,6 +616,42 @@ async fn manager_building_id(server: &TestServer) -> uuid::Uuid {
     .expect("uuid")
 }
 
+// Any authenticated user (here a plain co_owner) can create a consultation
+// (EP-010: initiable par tout r\u00e9sident, sans approbation pr\u00e9alable).
+#[tokio::test]
+async fn co_owner_can_create_consultation() {
+    let (server, pool) = consultation_test_server().await;
+    let building_id = manager_building_id(&server).await;
+    let (_id, jwt) = seed_user(&pool, building_id, &["co_owner"]).await;
+
+    let resident = user_server(&pool, &jwt).await;
+    let created = resident
+        .post("/api/v1/consultations")
+        .json(&consultation_payload())
+        .await;
+    assert_eq!(
+        created.status_code(),
+        StatusCode::CREATED,
+        "a co_owner must be able to create a consultation: {}",
+        created.text()
+    );
+    let id = created.json::<Value>()["id"]
+        .as_str()
+        .expect("id")
+        .to_string();
+
+    // The draft is visible to its creator in the list.
+    let list = resident.get("/api/v1/consultations").await;
+    let arr = list.json::<Value>()["consultations"]
+        .as_array()
+        .expect("array")
+        .clone();
+    assert!(
+        arr.iter().any(|c| c["id"] == id && c["status"] == "draft"),
+        "the creator must see their own draft"
+    );
+}
+
 // Draft lifecycle — creation: POST /consultations creates a draft, absent from the open list.
 #[tokio::test]
 async fn consultation_created_as_draft_not_in_open_list() {
