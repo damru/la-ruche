@@ -1,4 +1,4 @@
-// ── api/consultations.rs — Informal consultations (EP-010) ────
+// ── api/consultations.rs — Informal consultations ────
 //
 // LEGAL: These consultations are informal and have no decision-making
 // legal value under the law of 10 July 1965 (arts. 17 and 24).
@@ -73,13 +73,8 @@ pub async fn get(
     })))
 }
 
-/// Any authenticated user can create a consultation.
-/// It is created directly in 'open' state.
-pub async fn create(
-    auth: AuthUser,
-    State(state): State<Arc<AppState>>,
-    Json(input): Json<CreateConsultationInput>,
-) -> AppResult<(StatusCode, Json<serde_json::Value>)> {
+/// Shared payload validation for create and update.
+fn validate_input(input: &CreateConsultationInput) -> AppResult<()> {
     if input.title.trim().is_empty() {
         return Err(AppError::validation_code(
             "errors.consultations.title_required",
@@ -109,6 +104,17 @@ pub async fn create(
             ));
         }
     }
+    Ok(())
+}
+
+/// Any authenticated user can create a consultation.
+/// It is created in 'draft' state and opened explicitly.
+pub async fn create(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+    Json(input): Json<CreateConsultationInput>,
+) -> AppResult<(StatusCode, Json<serde_json::Value>)> {
+    validate_input(&input)?;
 
     let result = db::consultation::create(
         &state.pool,
@@ -125,16 +131,100 @@ pub async fn create(
     Ok((StatusCode::CREATED, json_value(result)?))
 }
 
-/// PUT /consultations/{id} — currently only used to open a draft consultation.
-/// Managers and board members can open any consultation; other roles can only open their own.
+/// PUT /consultations/{id} — edits a draft consultation.
+/// Managers and board members can edit any draft; the creator can edit their own.
 pub async fn update(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
+    Json(input): Json<CreateConsultationInput>,
 ) -> AppResult<StatusCode> {
-    auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
+    validate_input(&input)?;
+
+    let can_manage = auth.has_role(&Role::Manager) || auth.has_role(&Role::BoardMember);
+    if !can_manage {
+        let c = db::consultation::get_with_choices(&state.pool, id, auth.building_id, auth.user_id)
+            .await?
+            .ok_or(AppError::NotFound)?;
+        let created_by = c
+            .get("created_by")
+            .and_then(|v| v.as_str())
+            .and_then(|s| Uuid::parse_str(s).ok())
+            .ok_or(AppError::NotFound)?;
+        if created_by != auth.user_id {
+            return Err(AppError::Forbidden);
+        }
+    }
+
+    db::consultation::update_draft(
+        &state.pool,
+        id,
+        auth.building_id,
+        &input.title,
+        input.description.as_deref(),
+        &input.visible_to_roles,
+        input.closed_at,
+        &input.choices,
+    )
+    .await?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
+/// POST /consultations/{id}/open — opens a draft consultation (draft → open).
+/// Managers and board members can open any draft; the creator can open their own.
+pub async fn open(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+) -> AppResult<StatusCode> {
+    let can_manage = auth.has_role(&Role::Manager) || auth.has_role(&Role::BoardMember);
+    if !can_manage {
+        let c = db::consultation::get_with_choices(&state.pool, id, auth.building_id, auth.user_id)
+            .await?
+            .ok_or(AppError::NotFound)?;
+        let created_by = c
+            .get("created_by")
+            .and_then(|v| v.as_str())
+            .and_then(|s| Uuid::parse_str(s).ok())
+            .ok_or(AppError::NotFound)?;
+        if created_by != auth.user_id {
+            return Err(AppError::Forbidden);
+        }
+    }
+
     db::consultation::open(&state.pool, id, auth.building_id).await?;
     Ok(StatusCode::NO_CONTENT)
+}
+
+/// GET /consultations/{id}/non-respondents — manager | board_member.
+pub async fn non_respondents(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+) -> AppResult<Json<serde_json::Value>> {
+    auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
+    let users = db::consultation::non_respondents(&state.pool, id, auth.building_id).await?;
+    let count = users.len();
+    Ok(Json(serde_json::json!({
+        "count": count,
+        "users": users,
+    })))
+}
+
+/// POST /consultations/{id}/remind — records a reminder for non-respondents
+/// of an open consultation.
+pub async fn remind(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+) -> AppResult<Json<serde_json::Value>> {
+    auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
+    let recipient_count =
+        db::consultation::remind_non_respondents(&state.pool, id, auth.building_id, auth.user_id)
+            .await?;
+    Ok(Json(serde_json::json!({
+        "recipient_count": recipient_count,
+    })))
 }
 
 /// POST /consultations/{id}/respond — submit or update a response.
@@ -198,14 +288,29 @@ pub async fn results(
     })))
 }
 
-/// DELETE /consultations/{id} — managers only; only closed consultations can be deleted.
+/// DELETE /consultations/{id} — managers/board members, or the creator of a
+/// draft; only closed consultations and drafts can be deleted.
 /// Deletes the consultation and all related choices and responses.
 pub async fn delete(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
 ) -> AppResult<StatusCode> {
-    auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
+    let can_manage = auth.has_role(&Role::Manager) || auth.has_role(&Role::BoardMember);
+    if !can_manage {
+        // A non-manager may only delete their own draft.
+        let c = db::consultation::get_with_choices(&state.pool, id, auth.building_id, auth.user_id)
+            .await?
+            .ok_or(AppError::NotFound)?;
+        let created_by = c
+            .get("created_by")
+            .and_then(|v| v.as_str())
+            .and_then(|s| Uuid::parse_str(s).ok())
+            .ok_or(AppError::NotFound)?;
+        if created_by != auth.user_id || c.get("status").and_then(|v| v.as_str()) != Some("draft") {
+            return Err(AppError::Forbidden);
+        }
+    }
     db::consultation::delete(&state.pool, id, auth.building_id).await?;
     Ok(StatusCode::NO_CONTENT)
 }
@@ -219,4 +324,62 @@ pub async fn close(
     auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
     db::consultation::close(&state.pool, id, auth.building_id).await?;
     Ok(StatusCode::NO_CONTENT)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn input(title: &str, choices: &[&str], roles: &[&str]) -> CreateConsultationInput {
+        CreateConsultationInput {
+            title: title.to_string(),
+            description: None,
+            visible_to_roles: roles.iter().map(|r| r.to_string()).collect(),
+            closed_at: None,
+            choices: choices.iter().map(|c| c.to_string()).collect(),
+        }
+    }
+
+    #[test]
+    fn validate_input_accepts_valid_payload() {
+        assert!(validate_input(&input("Titre", &["A", "B"], &["co_owner"])).is_ok());
+    }
+
+    #[test]
+    fn validate_input_rejects_empty_title() {
+        let err = validate_input(&input("  ", &["A", "B"], &["co_owner"])).unwrap_err();
+        assert!(
+            matches!(err, AppError::Validation(m) if m == "errors.consultations.title_required")
+        );
+    }
+
+    #[test]
+    fn validate_input_rejects_less_than_two_choices() {
+        let err = validate_input(&input("Titre", &["A"], &["co_owner"])).unwrap_err();
+        assert!(matches!(err, AppError::Validation(m) if m == "errors.consultations.min_choices"));
+    }
+
+    #[test]
+    fn validate_input_rejects_blank_choice_label() {
+        let err = validate_input(&input("Titre", &["A", " "], &["co_owner"])).unwrap_err();
+        assert!(
+            matches!(err, AppError::Validation(m) if m == "errors.consultations.choice_label_required")
+        );
+    }
+
+    #[test]
+    fn validate_input_rejects_empty_visible_roles() {
+        let err = validate_input(&input("Titre", &["A", "B"], &[])).unwrap_err();
+        assert!(
+            matches!(err, AppError::Validation(m) if m == "errors.consultations.visible_roles_required")
+        );
+    }
+
+    #[test]
+    fn validate_input_rejects_invalid_role() {
+        let err = validate_input(&input("Titre", &["A", "B"], &["superadmin"])).unwrap_err();
+        assert!(
+            matches!(err, AppError::Validation(m) if m == "errors.consultations.invalid_visible_role")
+        );
+    }
 }
