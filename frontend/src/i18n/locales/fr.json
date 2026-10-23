@@ -78,6 +78,7 @@
     "phonePlaceholder": "06 00 00 00 00",
     "postalCode": "Code postal",
     "remove": "Retirer",
+    "remind": "Relancer",
     "required": "Champ obligatoire",
     "requiredAria": "obligatoire",
     "retry": "Réessayer",
@@ -931,7 +932,6 @@
     "deleteSuccess": "Document supprimé définitivement."
   },
   "consultations": {
-    "openCount": "{count} consultation ouverte | {count} consultations ouvertes",
     "openedAt": "Ouverte {date}",
     "closedAt": "Fermée le {date}",
     "responseCount": "{count} réponses",
@@ -944,7 +944,8 @@
     "filters": {
       "open": "Ouvertes",
       "closed": "Fermées",
-      "draft": "Brouillons"
+      "draft": "Brouillons",
+      "all": "Toutes"
     },
     "respond": "Répondre",
     "updateVote": "Mettre à jour mon vote",
@@ -996,12 +997,13 @@
     "confirmOpenMessage": "La consultation deviendra visible et votable par les participants. Elle ne sera plus modifiable.",
     "nonRespondents": "{count} participant n'a pas encore répondu | {count} participants n'ont pas encore répondu",
     "lastReminder": "Dernière relance : {date}",
-    "remind": "Relancer ({count})",
     "confirmRemindTitle": "Relancer les non-répondants",
     "confirmRemindMessage": "Une relance sera enregistrée pour {count} participant(s). L'envoi effectif (e-mail) n'est pas encore actif. | Une relance sera enregistrée pour {count} participants. L'envoi effectif (e-mail) n'est pas encore actif.",
     "edit": {
       "title": "Modifier le brouillon"
-    }
+    },
+    "noAll": "Aucune consultation",
+    "allCount": "{count} consultation | {count} consultations"
   },
   "reports": {
     "activeCount": "{count} signalement en cours | {count} signalements en cours",

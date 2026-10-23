@@ -39,7 +39,7 @@ const canManage = computed(() => authStore.hasAnyRole(['manager', 'board_member'
 
 const buildingName = ref('')
 const allConsultations = ref<Consultation[]>([])
-const statusFilter = ref<'draft' | 'open' | 'closed'>('open')
+const statusFilter = ref<'all' | 'draft' | 'open' | 'closed'>('all')
 const pageError = ref('')
 
 // ── Create / edit modal ──
@@ -156,9 +156,10 @@ watch(statusFilter, () => {
 })
 
 const consultations = computed(() =>
-  allConsultations.value.filter(c => c.status === statusFilter.value)
+  allConsultations.value.filter(c => statusFilter.value === 'all' || c.status === statusFilter.value)
     .slice().sort((left, right) => right.updated_at.localeCompare(left.updated_at)),
 )
+const allCount = computed(() => allConsultations.value.length)
 const openCount = computed(() => allConsultations.value.filter(c => c.status === 'open').length)
 const closedCount = computed(() => allConsultations.value.filter(c => c.status === 'closed').length)
 const myDrafts = computed(() =>
@@ -222,7 +223,7 @@ async function remindNonRespondents(c: Consultation) {
   const ok = await confirm({
     title: t('consultations.confirmRemindTitle'),
     message: t('consultations.confirmRemindMessage', { count }),
-    confirmLabel: t('consultations.remind', { count }),
+    confirmLabel: t('common.remind'),
     variant: 'primary',
   })
   if (!ok) return
@@ -298,7 +299,7 @@ function openDeleteModal(c: Consultation) {
             {{ t('nav.consultations') }}
           </CHeading>
           <CMetaItem variant="sub">
-            {{ t('consultations.openCount', { count: openCount }) }}
+            {{ t('consultations.allCount', { count: allCount }) }}
           </CMetaItem>
         </header>
 
@@ -313,6 +314,7 @@ function openDeleteModal(c: Consultation) {
           v-model="statusFilter"
           variant="filter"
           :tabs="[
+            { value: 'all', label: t('consultations.filters.all'), count: allCount },
             { value: 'open', label: t('consultations.filters.open'), count: openCount },
             ...(showDraftTab ? [{ value: 'draft', label: t('consultations.filters.draft'), count: draftCount }] : []),
             { value: 'closed', label: t('consultations.filters.closed'), count: closedCount },
@@ -320,7 +322,7 @@ function openDeleteModal(c: Consultation) {
         />
         <template v-if="!consultations.length">
           <CEmptyState
-            :title="statusFilter === 'draft' ? t('consultations.noDraft') : statusFilter === 'open' ? t('consultations.noOpen') : t('consultations.noClosed')"
+            :title="statusFilter === 'all' ? t('consultations.noAll') : statusFilter === 'draft' ? t('consultations.noDraft') : statusFilter === 'open' ? t('consultations.noOpen') : t('consultations.noClosed')"
             size="page"
           >
             <template 
@@ -460,30 +462,16 @@ function openDeleteModal(c: Consultation) {
                     : t('consultations.closedAt', { date: formatDate(c.closed_at!) }) }}
               </p>
 
-              <!-- Non-respondents + remind (open consultations, managers only) -->
-              <div
+              <!-- Non-respondents info (open consultations, managers only) -->
+              <p
                 v-if="c.status === 'open' && canManage"
-                class="remind-block"
+                class="body-xs response-count remind-info"
               >
-                <p class="body-xs response-count">
-                  {{ t('consultations.nonRespondents', { count: nonRespondentsCount[c.id] ?? 0 }) }}
-                </p>
-                <p
-                  v-if="c.last_reminder_at"
-                  class="body-xs footer-meta"
-                >
-                  {{ t('consultations.lastReminder', { date: formatRelative(c.last_reminder_at) }) }}
-                </p>
-                <CBtn
-                  variant="ghost"
-                  size="sm"
-                  :icon="CIconBell"
-                  :title="t('consultations.remind', { count: nonRespondentsCount[c.id] ?? 0 })"
-                  :disabled="(nonRespondentsCount[c.id] ?? 0) === 0"
-                  :loading="remindingId === c.id"
-                  @click="remindNonRespondents(c)"
-                />
-              </div>
+                {{ t('consultations.nonRespondents', { count: nonRespondentsCount[c.id] ?? 0 }) }}
+                <template v-if="c.last_reminder_at">
+                  · {{ t('consultations.lastReminder', { date: formatRelative(c.last_reminder_at) }) }}
+                </template>
+              </p>
 
               <!-- Draft actions: edit / open / delete -->
               <div
@@ -513,11 +501,20 @@ function openDeleteModal(c: Consultation) {
                 />
               </div>
   
-              <!-- Manager close action (open consultations) -->
+              <!-- Manager actions (open consultations): remind + close -->
               <div
                 v-if="c.status === 'open' && canManage"
                 class="card-actions"
               >
+                <CBtn
+                  variant="ghost"
+                  size="sm"
+                  :icon="CIconBell"
+                  :title="t('common.remind')"
+                  :disabled="(nonRespondentsCount[c.id] ?? 0) === 0"
+                  :loading="remindingId === c.id"
+                  @click="remindNonRespondents(c)"
+                />
                 <CBtn
                   variant="primary"
                   size="sm"
@@ -584,15 +581,7 @@ function openDeleteModal(c: Consultation) {
 .status-badge { margin-bottom: var(--space-2); }
 .footer-meta { font-size: var(--text-2xs); color: var(--color-on-surface-variant); margin-top: var(--space-3); }
 .card-actions { display: flex; gap: 6px; margin-top: var(--space-3); }
-.remind-block {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  margin-top: var(--space-2);
-  flex-wrap: wrap;
-}
-.remind-block .response-count { margin-top: 0; }
-.remind-block .footer-meta { margin-top: 0; flex: 1; }
+.remind-info { margin-top: var(--space-2); }
 .response-count { color: var(--color-on-surface-variant); margin-top: var(--space-1); }
 
 /* ── Choices + result bars (CSS grid) ─────────────────────────── */
