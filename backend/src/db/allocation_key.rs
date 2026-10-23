@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
 use serde::Serialize;
-use sqlx::PgPool;
+use sqlx::{PgPool, Postgres};
 use uuid::Uuid;
 
 use crate::db::audit::{self, NewAuditEntry};
@@ -323,6 +323,30 @@ pub async fn get_unit_general_share(
     .bind(unit_id)
     .bind(building_id)
     .fetch_optional(pool)
+    .await?)
+}
+
+/// Same lookup, executed on the caller's transaction (EP-013-S11): the share
+/// read participates in the `cast_vote` session-guard lock.
+pub(crate) async fn get_unit_general_share_in_tx(
+    tx: &mut sqlx::Transaction<'_, Postgres>,
+    unit_id: Uuid,
+    building_id: Uuid,
+) -> crate::errors::AppResult<Option<i32>> {
+    Ok(sqlx::query_scalar(
+        r#"SELECT uak.share_value
+                     FROM unit u
+                     JOIN unit_allocation_key uak
+                         ON uak.unit_id = u.id AND uak.valid_to IS NULL
+                     JOIN allocation_key ak
+                         ON ak.id = uak.key_id
+                        AND ak.key_type = 'general'
+                        AND ak.deleted_at IS NULL
+                     WHERE u.id = $1 AND u.building_id = $2 AND u.active = true"#,
+    )
+    .bind(unit_id)
+    .bind(building_id)
+    .fetch_optional(&mut **tx)
     .await?)
 }
 

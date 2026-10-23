@@ -31,6 +31,11 @@ pub enum Entity {
     /// legal act. Amended via `POST /budgets/{id}/rectificatif`
     /// (Pattern B, ADR-009, PRD Budget et charges §Immuabilité).
     Budget,
+    /// Session-bound writable records (votes, attendance): writable only while
+    /// the meeting is `ongoing`. Frozen forever once `closed` (LEGAL §11.1 —
+    /// votes are legally immutable), and not yet open in `draft`/`called`
+    /// (EP-013-S11).
+    MeetingSession,
 }
 
 /// Returns `true` when the entity may still be mutated.
@@ -54,6 +59,7 @@ pub fn is_mutable(entity: &Entity, status: &str) -> bool {
         Entity::MaintenanceLog => false,
         Entity::VendorContract => status == "draft",
         Entity::Budget => status == "draft",
+        Entity::MeetingSession => status == "ongoing",
     }
 }
 
@@ -161,6 +167,14 @@ mod tests {
         assert!(is_mutable(&Entity::Budget, "draft"));
         assert!(!is_mutable(&Entity::Budget, "approved"));
         assert!(!is_mutable(&Entity::Budget, "closed"));
+    }
+
+    #[test]
+    fn meeting_session_writable_only_in_ongoing() {
+        assert!(is_mutable(&Entity::MeetingSession, "ongoing"));
+        assert!(!is_mutable(&Entity::MeetingSession, "draft"));
+        assert!(!is_mutable(&Entity::MeetingSession, "called"));
+        assert!(!is_mutable(&Entity::MeetingSession, "closed"));
     }
 
     #[test]

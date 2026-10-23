@@ -5,7 +5,7 @@
 **Épic :** EP-013 — Procès-verbaux (intégrité de séance)
 **Réf. LEGAL :** §11.1 (les votes sont immuables une fois l'AG en cours/clôturée) · **Réf. PRD :** US-AG-* (déroulé de séance) · **Réf. ADR :** aucun
 
-**Statut actuel : NON IMPLÉMENTÉ (faille)** — seule l'UI restreint ; l'API accepte votes et présences quel que soit le statut du meeting.
+**Statut actuel : IMPLÉMENTÉ (backend + frontend)** — guard transactionnel `Entity::MeetingSession` dans `domain/immutability.rs`, appliqué dans `db/assembly.rs` (`cast_vote`, `save_attendance`) avec `SELECT … FOR UPDATE` ; erreur 400 `errors.meetings.not_ongoing` traduite côté frontend.
 
 ---
 
