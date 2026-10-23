@@ -11,7 +11,6 @@ import CBtn from '@/components/atoms/CBtn.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CCardActions from '@/components/molecules/CCardActions.vue'
 import CDataTable, { type Column } from '@/components/molecules/CDataTable.vue'
-import CFormSelect from '@/components/atoms/CFormSelect.vue'
 import CIconGrid from '@/components/atoms/CIconGrid.svg'
 import CIconList from '@/components/atoms/CIconList.svg'
 import CLinkedDocumentsModal from '@/components/organisms/CLinkedDocumentsModal.vue'
@@ -58,8 +57,8 @@ const router = useRouter()
 
 const filter = ref<'all' | 'active' | 'expired'>('all')
 const search = ref('')
-const typeFilter = ref('')
-const vendorFilter = ref('')
+const selectedTypes = ref<string[]>([])
+const selectedVendors = ref<string[]>([])
 const viewMode = ref<'cards' | 'table'>('cards')
 const typeOptions = ref<string[]>([])
 const vendorOptions = ref<string[]>([])
@@ -88,8 +87,8 @@ async function loadData() {
   const [building, contractsResponse, remindersResponse] = await Promise.all([
     useBuildingStore().fetch(),
     contractsApi.list({
-      contract_type: typeFilter.value || undefined,
-      vendor: vendorFilter.value || undefined,
+      contract_type: selectedTypes.value[0] || undefined,
+      vendor: selectedVendors.value[0] || undefined,
     }),
     contractsApi.listAllReminders(),
   ])
@@ -107,7 +106,7 @@ onMounted(() => {
 
 // Server-side filters (type / vendor) — the status tab stays client-side so
 // the tab counters always reflect the whole list.
-watch([typeFilter, vendorFilter], () => {
+watch([selectedTypes, selectedVendors], () => {
   reload()
 })
 
@@ -235,15 +234,23 @@ const contracts = computed(() => {
     .sort((left, right) => left.vendor_name.localeCompare(right.vendor_name))
 })
 
-const contractTypeOptions = computed(() => [
-  { value: '', label: t('contracts.filters.typeAll') },
-  ...typeOptions.value.map(type => ({ value: type, label: t(`contracts.types.${type}`) })),
-])
+const contractTypeChips = computed(() =>
+  [...typeOptions.value]
+    .map(value => ({ value, label: t(`contracts.types.${value}`) }))
+    .sort((a, b) => a.label.localeCompare(b.label)),
+)
 
-const contractVendorOptions = computed(() => [
-  { value: '', label: t('contracts.filters.vendorAll') },
-  ...vendorOptions.value.map(vendor => ({ value: vendor, label: vendor })),
-])
+function toggleType(type: string) {
+  const idx = selectedTypes.value.indexOf(type)
+  if (idx >= 0) selectedTypes.value.splice(idx, 1)
+  else selectedTypes.value.push(type)
+}
+
+function toggleVendor(vendor: string) {
+  const idx = selectedVendors.value.indexOf(vendor)
+  if (idx >= 0) selectedVendors.value.splice(idx, 1)
+  else selectedVendors.value.push(vendor)
+}
 
 const contractTableColumns = computed<Column<VendorContract>[]>(() => [
   { key: 'vendor_name', label: t('contracts.form.vendorName') },
@@ -458,54 +465,77 @@ async function activateContract(contract: VendorContract) {
           variant="filter"
           :tabs="contractTabsList"
         >
-          <CFormInput
-            v-model="search"
-            type="search"
-            :placeholder="t('contracts.searchPlaceholder')"
-          >
-            <template #prefix>
-              <CIconSearch />
-            </template>
-          </CFormInput>
+          <!-- Toolbar: search + view mode toggle -->
+          <div class="list-toolbar">
+            <CFormInput
+              v-model="search"
+              type="search"
+              :placeholder="t('contracts.searchPlaceholder')"
+              class="list-toolbar__search"
+            >
+              <template #prefix>
+                <CIconSearch class="icon-sm" />
+              </template>
+            </CFormInput>
+            <div
+              class="view-toggle"
+              role="group"
+              :aria-label="t('common.viewMode', 'Vue')"
+            >
+              <button
+                :class="['view-toggle__btn', { 'view-toggle__btn--active': viewMode === 'cards' }]"
+                :aria-pressed="viewMode === 'cards'"
+                :aria-label="t('contracts.filters.viewCards')"
+                @click="viewMode = 'cards'"
+              >
+                <CIconGrid class="icon-sm" />
+              </button>
+              <button
+                :class="['view-toggle__btn', { 'view-toggle__btn--active': viewMode === 'table' }]"
+                :aria-pressed="viewMode === 'table'"
+                :aria-label="t('contracts.filters.viewTable')"
+                @click="viewMode = 'table'"
+              >
+                <CIconList class="icon-sm" />
+              </button>
+            </div>
+          </div>
         </CTabs>
 
-        <div class="contracts-toolbar">
-          <CFormSelect
-            v-model="typeFilter"
-            :options="contractTypeOptions"
-            :aria-label="t('common.type')"
-            class="contracts-toolbar__select"
-          />
-          <CFormSelect
-            v-model="vendorFilter"
-            :options="contractVendorOptions"
-            :aria-label="t('contracts.form.vendorName')"
-            class="contracts-toolbar__select"
-          />
-          <div
-            class="view-toggle"
-            role="group"
-            :aria-label="t('common.filter')"
+        <!-- Type filter chips -->
+        <div
+          v-if="contractTypeChips.length > 0"
+          class="chip-filter"
+          role="group"
+          :aria-label="t('common.type')"
+        >
+          <button
+            v-for="opt in contractTypeChips"
+            :key="opt.value"
+            :class="['chip-filter__chip', { 'chip-filter__chip--active': selectedTypes.includes(opt.value) }]"
+            :aria-pressed="selectedTypes.includes(opt.value)"
+            @click="toggleType(opt.value)"
           >
-            <button
-              :class="['view-toggle__btn', { 'view-toggle__btn--active': viewMode === 'cards' }]"
-              :aria-pressed="viewMode === 'cards'"
-              :aria-label="t('contracts.filters.viewCards')"
-              :title="t('contracts.filters.viewCards')"
-              @click="viewMode = 'cards'"
-            >
-              <CIconGrid class="icon-sm" />
-            </button>
-            <button
-              :class="['view-toggle__btn', { 'view-toggle__btn--active': viewMode === 'table' }]"
-              :aria-pressed="viewMode === 'table'"
-              :aria-label="t('contracts.filters.viewTable')"
-              :title="t('contracts.filters.viewTable')"
-              @click="viewMode = 'table'"
-            >
-              <CIconList class="icon-sm" />
-            </button>
-          </div>
+            {{ opt.label }}
+          </button>
+        </div>
+
+        <!-- Vendor filter chips -->
+        <div
+          v-if="vendorOptions.length > 0"
+          class="chip-filter"
+          role="group"
+          :aria-label="t('contracts.form.vendorName')"
+        >
+          <button
+            v-for="vendor in vendorOptions"
+            :key="vendor"
+            :class="['chip-filter__chip', { 'chip-filter__chip--active': selectedVendors.includes(vendor) }]"
+            :aria-pressed="selectedVendors.includes(vendor)"
+            @click="toggleVendor(vendor)"
+          >
+            {{ vendor }}
+          </button>
         </div>
 
         <template
@@ -770,23 +800,84 @@ async function activateContract(contract: VendorContract) {
 
 .contracts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: var(--space-4); }
 
-.contracts-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-bottom: var(--space-4); }
-.contracts-toolbar__select { min-width: 200px; }
+.list-toolbar {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  margin-top: var(--space-3);
+}
 
-.view-toggle { display: inline-flex; margin-left: auto; border-radius: var(--radius-full); background: var(--color-surface-container-low); padding: 2px; }
+.list-toolbar__search {
+  flex: 1;
+}
+
+.view-toggle {
+  display: flex;
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
 .view-toggle__btn {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 28px;
+  width: 36px;
+  height: 36px;
+  background: var(--color-surface);
   border: none;
-  border-radius: var(--radius-full);
-  background: transparent;
-  color: var(--color-on-surface-variant);
   cursor: pointer;
+  color: var(--color-on-surface-variant);
+  transition: background 150ms ease-out, color 150ms ease-out;
 }
-.view-toggle__btn--active { background: var(--color-surface-container); color: var(--color-on-surface); }
+
+.view-toggle__btn + .view-toggle__btn {
+  border-left: 1px solid var(--color-outline-variant);
+}
+
+.view-toggle__btn:hover {
+  background: var(--color-surface-container-low);
+  color: var(--color-on-surface);
+}
+
+.view-toggle__btn--active {
+  background: var(--color-surface-container);
+  color: var(--color-on-surface);
+}
+
+.chip-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.chip-filter__chip {
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-outline-variant);
+  background: var(--color-surface);
+  color: var(--color-on-surface-variant);
+  font-size: var(--text-xs);
+  font-weight: var(--fw-medium);
+  cursor: pointer;
+  transition: background 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out;
+}
+
+.chip-filter__chip:hover {
+  background: var(--color-secondary-container);
+  color: var(--color-on-surface);
+}
+
+.chip-filter__chip--active {
+  background: var(--color-primary-container);
+  border-color: var(--color-primary);
+  color: var(--color-on-primary);
+}
 
 .contract-details { display: flex; flex-direction: column; gap: var(--space-1); }
 .detail-row { display: flex; justify-content: space-between; font-size: var(--text-sm); }

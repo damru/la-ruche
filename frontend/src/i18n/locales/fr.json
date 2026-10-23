@@ -750,8 +750,6 @@
     "filters": {
       "active": "Actifs",
       "expired": "Expirés / Résiliés",
-      "typeAll": "Tous les types",
-      "vendorAll": "Tous les prestataires",
       "viewCards": "Vue cartes",
       "viewTable": "Vue tableau",
       "reminderStatuses": {
