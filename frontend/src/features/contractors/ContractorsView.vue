@@ -29,6 +29,7 @@ import CIconSparkles from '@/components/atoms/CIconSparkles.svg'
 import CIconTrash from '@/components/atoms/CIconTrash.svg'
 import CIconUsers from '@/components/atoms/CIconUsers.svg'
 import CIconWrench from '@/components/atoms/CIconWrench.svg'
+import CIconX from '@/components/atoms/CIconX.svg'
 import CIconChevronRight from '@/components/atoms/CIconChevronRight.svg'
 import ContractorFormModal from '@/features/contractors/ContractorFormModal.vue'
 import DeleteContractorModal from '@/features/contractors/DeleteContractorModal.vue'
@@ -102,6 +103,12 @@ const domainOptions = computed(() =>
     .map(value => ({ value, label: t(`contractors.domains.${value}`) }))
     .sort((a, b) => a.label.localeCompare(b.label)),
 )
+
+const hasActiveFilters = computed(() => selectedDomains.value.length > 0)
+
+function clearFilters() {
+  selectedDomains.value = []
+}
 
 // ── Table columns (list view) ─────────────────────────────────────
 const contractorColumns = computed<Column<Contractor>[]>(() => [
@@ -239,6 +246,15 @@ function openDeleteModal(c: Contractor) {
             :options="domainOptions"
             :placeholder="t('contractors.domainsLabel')"
             :aria-label="t('contractors.domainsLabel')"
+          />
+          <CBtn
+            v-if="hasActiveFilters"
+            variant="ghost"
+            size="sm"
+            :icon="CIconX"
+            :title="t('common.clearFilters')"
+            :aria-label="t('common.clearFilters')"
+            @click="clearFilters"
           />
         </div>
 

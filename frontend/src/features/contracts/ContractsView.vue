@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { useFormatters } from '@/composables/useFormatters'
@@ -33,6 +33,7 @@ import CIconArchive from '@/components/atoms/CIconArchive.svg'
 import CIconCurrency from '@/components/atoms/CIconCurrency.svg'
 import CIconHistory from '@/components/atoms/CIconClock.svg'
 import CIconCheck from '@/components/atoms/CIconCheck.svg'
+import CIconX from '@/components/atoms/CIconX.svg'
 import { contractsApi, documentsApi } from '@/api'
 import { useBuildingStore } from '@/stores/building'
 import ContractFormModal from '@/features/contracts/ContractFormModal.vue'
@@ -86,6 +87,7 @@ async function loadData() {
 }
 
 const { loading, error, reload } = usePageLoader(loadData)
+onMounted(reload)
 
 const contractsById = computed(() =>
   new Map(allContracts.value.map(contract => [contract.id, contract])),
@@ -230,6 +232,15 @@ const contractVendorOptions = computed(() =>
     .sort((a, b) => a.localeCompare(b))
     .map(vendor => ({ value: vendor, label: vendor })),
 )
+
+const hasActiveFilters = computed(
+  () => selectedTypes.value.length > 0 || selectedVendors.value.length > 0,
+)
+
+function clearFilters() {
+  selectedTypes.value = []
+  selectedVendors.value = []
+}
 
 const contractTableColumns = computed<Column<VendorContract>[]>(() => [
   { key: 'vendor_name', label: t('contracts.form.vendorName') },
@@ -499,6 +510,15 @@ async function activateContract(contract: VendorContract) {
             :options="contractVendorOptions"
             :placeholder="t('contracts.form.vendorName')"
             :aria-label="t('contracts.form.vendorName')"
+          />
+          <CBtn
+            v-if="hasActiveFilters"
+            variant="ghost"
+            size="sm"
+            :icon="CIconX"
+            :title="t('common.clearFilters')"
+            :aria-label="t('common.clearFilters')"
+            @click="clearFilters"
           />
         </div>
 
