@@ -559,7 +559,7 @@ Le syndic doit produire l'état daté dans les **15 jours** suivant la demande d
 - La structure en 3 parties est obligatoire depuis le 25/12/2025 — EP-002-S06 doit être conçu selon cette structure.
 - Dépend de §4.3 (appels de fonds), §4.4 (fonds travaux), EP-003-S04 (résolutions travaux votées en AG), EP-002-S10 (procédures judiciaires).
 - Les informations relatives aux emprunts collectifs (art. 26-4, 26-7, 26-12) doivent être disponibles si la copropriété a souscrit un emprunt collectif.
-- **Écart constaté :** la rubrique « travaux votés non réalisés » n'est pas alimentée — le schéma ne relie pas `resolution` (votes AG) à `task` (réalisation des travaux). Limitation documentée dans `docs/specs/EP-002-S06-spec.md`. Nécessite une évolution de schéma (colonne de liaison résolution ↔ tâche) avant de pouvoir passer cette couverture à ✅.
+- **Écart constaté :** la rubrique « travaux votés non réalisés » n'est pas alimentée — le schéma ne relie pas `resolution` (votes AG) à `task` (réalisation des travaux). Limitation documentée dans `specs/EP-002-S06-spec.md`. Nécessite une évolution de schéma (colonne de liaison résolution ↔ tâche) avant de pouvoir passer cette couverture à ✅.
 
 ---
 
