@@ -263,6 +263,20 @@ pub async fn call(
     Ok(StatusCode::NO_CONTENT)
 }
 
+/// Deletes a draft meeting; non-draft / foreign / unknown -> 404.
+pub async fn delete(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+) -> AppResult<StatusCode> {
+    auth.require_role(&Role::Manager)?;
+    let deleted = crate::db::assembly::delete_meeting(&state.pool, id, auth.building_id).await?;
+    if !deleted {
+        return Err(AppError::NotFound);
+    }
+    Ok(StatusCode::NO_CONTENT)
+}
+
 /// Evaluates regulatory completeness per art. 7–13 décret 1967.
 pub async fn get_convocation_checklist(
     auth: AuthUser,

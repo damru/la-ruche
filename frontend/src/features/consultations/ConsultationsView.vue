@@ -3,6 +3,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useFormatters } from '@/composables/useFormatters'
 import { usePageLoader, toErrorMessage } from '@/composables/usePageLoader'
+import { useConfirm } from '@/composables/useConfirm'
 import { useAuthStore } from '@/stores/auth'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
@@ -19,6 +20,8 @@ import CTabs from '@/components/atoms/CTabs.vue'
 import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import CIconCheckCircle from '@/components/atoms/CIconCheckCircle.svg'
 import CIconTrash from '@/components/atoms/CIconTrash.svg'
+import CIconEdit from '@/components/atoms/CIconEdit.svg'
+import CIconBell from '@/components/atoms/CIconBell.svg'
 import CreateConsultationModal from './CreateConsultationModal.vue'
 import CloseConsultationModal from './CloseConsultationModal.vue'
 import DeleteConsultationModal from './DeleteConsultationModal.vue'
@@ -29,17 +32,27 @@ import type { Consultation } from '@/types/domain'
 const { t } = useI18n()
 const { formatDate, formatRelative } = useFormatters()
 const authStore = useAuthStore()
+const { confirm } = useConfirm()
 
-// Managers and board members can create/close consultations.
+// Managers and board members manage consultations (close, remind, delete others).
 const canManage = computed(() => authStore.hasAnyRole(['manager', 'board_member']))
+// Any authenticated user can create a consultation (EP-010: initiable par tout resident).
+const canCreate = computed(() => authStore.isAuthenticated)
 
 const buildingName = ref('')
 const allConsultations = ref<Consultation[]>([])
-const statusFilter = ref<'open' | 'closed'>('open')
+const statusFilter = ref<'all' | 'draft' | 'open' | 'closed'>('all')
 const pageError = ref('')
+
+// ── Create / edit modal ──
 
 // ── Create modal ───────────────────────────────────────────────────
 const showCreateModal = ref(false)
+const editingConsultation = ref<Consultation | null>(null)
+
+// ── Non-respondents: per-consultation count for open cards ──
+const nonRespondentsCount = ref<Record<string, number>>({})
+const remindingId = ref<string | null>(null)
 
 // ── Inline vote state (per consultation ID) ────────────────────────
 interface InlineVote {
@@ -102,6 +115,24 @@ async function loadData() {
   buildingName.value = building.name
   allConsultations.value = listRes.data.consultations ?? []
 
+  // Non-respondents counters for open consultations (managers only)
+  if (canManage.value) {
+    const counts: Record<string, number> = {}
+    await Promise.all(
+      allConsultations.value
+        .filter(c => c.status === 'open')
+        .map(async (c) => {
+          try {
+            const res = await consultationsApi.nonRespondents(c.id)
+            counts[c.id] = res.data.count
+          } catch {
+            counts[c.id] = 0
+          }
+        }),
+    )
+    nonRespondentsCount.value = counts
+  }
+
   // Re-initialize inline vote state for existing consultations
   for (const c of allConsultations.value) {
     inlineVotes.value[c.id] = {
@@ -127,12 +158,24 @@ watch(statusFilter, () => {
 })
 
 const consultations = computed(() =>
-  allConsultations.value.filter(c =>
-    statusFilter.value === 'open' ? c.status === 'open' : c.status === 'closed',
-  ).slice().sort((left, right) => right.updated_at.localeCompare(left.updated_at)),
+  allConsultations.value.filter(c => statusFilter.value === 'all' || c.status === statusFilter.value)
+    .slice().sort((left, right) => right.updated_at.localeCompare(left.updated_at)),
 )
+const allCount = computed(() => allConsultations.value.length)
 const openCount = computed(() => allConsultations.value.filter(c => c.status === 'open').length)
 const closedCount = computed(() => allConsultations.value.filter(c => c.status === 'closed').length)
+const myDrafts = computed(() =>
+  allConsultations.value.filter(c => c.status === 'draft' && c.created_by === authStore.user?.user_id),
+)
+const draftCount = computed(() =>
+  canManage.value ? allConsultations.value.filter(c => c.status === 'draft').length : myDrafts.value.length,
+)
+// The draft tab is shown to managers/board members or anyone owning at least one draft.
+const showDraftTab = computed(() => canManage.value || myDrafts.value.length > 0)
+// A draft is editable/openable/deletable by a manager or by its creator.
+function canManageDraft(c: Consultation): boolean {
+  return canManage.value || c.created_by === authStore.user?.user_id
+}
 const consultationTotalVotes = computed(() => {
   const map: Record<string, number> = {}
   for (const c of allConsultations.value) {
@@ -153,7 +196,48 @@ const legalCardLinks = computed(() => [
 ])
 
 function openCreateModal() {
+  editingConsultation.value = null
   showCreateModal.value = true
+}
+
+function openEditModal(c: Consultation) {
+  editingConsultation.value = c
+  showCreateModal.value = true
+}
+
+async function openDraft(c: Consultation) {
+  const ok = await confirm({
+    title: t('consultations.confirmOpenTitle'),
+    message: t('consultations.confirmOpenMessage'),
+    variant: 'primary',
+  })
+  if (!ok) return
+  try {
+    await consultationsApi.openDraft(c.id)
+    await reload()
+  } catch (err) {
+    pageError.value = toErrorMessage(err)
+  }
+}
+
+async function remindNonRespondents(c: Consultation) {
+  const count = nonRespondentsCount.value[c.id] ?? 0
+  const ok = await confirm({
+    title: t('consultations.confirmRemindTitle'),
+    message: t('consultations.confirmRemindMessage', { count }),
+    confirmLabel: t('common.remind'),
+    variant: 'primary',
+  })
+  if (!ok) return
+  remindingId.value = c.id
+  try {
+    await consultationsApi.remind(c.id)
+    await reload()
+  } catch (err) {
+    pageError.value = toErrorMessage(err)
+  } finally {
+    remindingId.value = null
+  }
 }
 
 async function submitVote(c: Consultation) {
@@ -191,7 +275,7 @@ function openDeleteModal(c: Consultation) {
       </template>
       <template #right>
         <CBtn
-          v-if="canManage"
+          v-if="canCreate"
           variant="primary"
           size="sm"
           :icon="CIconPlus"
@@ -217,7 +301,7 @@ function openDeleteModal(c: Consultation) {
             {{ t('nav.consultations') }}
           </CHeading>
           <CMetaItem variant="sub">
-            {{ t('consultations.openCount', { count: openCount }) }}
+            {{ t('consultations.allCount', { count: allCount }) }}
           </CMetaItem>
         </header>
 
@@ -232,20 +316,22 @@ function openDeleteModal(c: Consultation) {
           v-model="statusFilter"
           variant="filter"
           :tabs="[
+            { value: 'all', label: t('consultations.filters.all'), count: allCount },
             { value: 'open', label: t('consultations.filters.open'), count: openCount },
+            ...(showDraftTab ? [{ value: 'draft', label: t('consultations.filters.draft'), count: draftCount }] : []),
             { value: 'closed', label: t('consultations.filters.closed'), count: closedCount },
           ]"
         />
         <template v-if="!consultations.length">
           <CEmptyState
-            :title="statusFilter === 'open' ? t('consultations.noOpen') : t('consultations.noClosed')"
+            :title="statusFilter === 'all' ? t('consultations.noAll') : statusFilter === 'draft' ? t('consultations.noDraft') : statusFilter === 'open' ? t('consultations.noOpen') : t('consultations.noClosed')"
             size="page"
           >
             <template 
               #actions
             >
               <CBtn
-                v-if="canManage"
+                v-if="canCreate"
                 variant="primary"
                 :icon="CIconPlus"
                 :title="t('consultations.create')"
@@ -263,7 +349,7 @@ function openDeleteModal(c: Consultation) {
               :class="{ 'outline outline-1 outline-outline-variant': c.status === 'closed' }"
             >
               <CBadge
-                :variant="c.status === 'open' ? 'open' : 'closed'"
+                :variant="c.status === 'open' ? 'open' : c.status === 'draft' ? 'pending' : 'closed'"
                 class="status-badge"
                 dot
               >
@@ -290,7 +376,7 @@ function openDeleteModal(c: Consultation) {
                   :key="choice.id"
                   class="choice-row"
                 >
-                  <!-- Column 1: checkbox (open) or plain label (closed) -->
+                  <!-- Column 1: checkbox (open) or plain label (closed/draft) -->
                   <CFormCheckbox
                     v-if="c.status === 'open'"
                     v-model="getInline(c).selections"
@@ -371,16 +457,66 @@ function openDeleteModal(c: Consultation) {
   
               <!-- Date hint -->
               <p class="body-xs footer-meta">
-                {{ c.status === 'open'
-                  ? t('consultations.openedAt', { date: formatRelative(c.created_at) })
-                  : t('consultations.closedAt', { date: formatDate(c.closed_at!) }) }}
+                {{ c.status === 'draft'
+                  ? t('consultations.draftedAt', { date: formatRelative(c.updated_at) })
+                  : c.status === 'open'
+                    ? t('consultations.openedAt', { date: formatRelative(c.created_at) })
+                    : t('consultations.closedAt', { date: formatDate(c.closed_at!) }) }}
               </p>
+
+              <!-- Non-respondents info (open consultations, managers only) -->
+              <p
+                v-if="c.status === 'open' && canManage"
+                class="body-xs response-count remind-info"
+              >
+                {{ t('consultations.nonRespondents', { count: nonRespondentsCount[c.id] ?? 0 }) }}
+                <template v-if="c.last_reminder_at">
+                  · {{ t('consultations.lastReminder', { date: formatRelative(c.last_reminder_at) }) }}
+                </template>
+              </p>
+
+              <!-- Draft actions: edit / open / delete -->
+              <div
+                v-if="c.status === 'draft' && canManageDraft(c)"
+                class="card-actions"
+              >
+                <CBtn
+                  variant="ghost"
+                  size="sm"
+                  :icon="CIconEdit"
+                  :title="t('common.edit')"
+                  @click="openEditModal(c)"
+                />
+                <CBtn
+                  variant="primary"
+                  size="sm"
+                  :icon="CIconCheckCircle"
+                  :title="t('consultations.openAction')"
+                  @click="openDraft(c)"
+                />
+                <CBtn
+                  variant="danger"
+                  size="sm"
+                  :icon="CIconTrash"
+                  :title="t('common.delete')"
+                  @click="openDeleteModal(c)"
+                />
+              </div>
   
-              <!-- Manager close action (open consultations) -->
+              <!-- Manager actions (open consultations): remind + close -->
               <div
                 v-if="c.status === 'open' && canManage"
                 class="card-actions"
               >
+                <CBtn
+                  variant="ghost"
+                  size="sm"
+                  :icon="CIconBell"
+                  :title="t('common.remind')"
+                  :disabled="(nonRespondentsCount[c.id] ?? 0) === 0"
+                  :loading="remindingId === c.id"
+                  @click="remindNonRespondents(c)"
+                />
                 <CBtn
                   variant="primary"
                   size="sm"
@@ -420,7 +556,9 @@ function openDeleteModal(c: Consultation) {
 
     <CreateConsultationModal
       v-model:open="showCreateModal"
+      :consultation="editingConsultation"
       @created="reload"
+      @updated="reload"
     />
 
     <CloseConsultationModal
@@ -445,6 +583,7 @@ function openDeleteModal(c: Consultation) {
 .status-badge { margin-bottom: var(--space-2); }
 .footer-meta { font-size: var(--text-2xs); color: var(--color-on-surface-variant); margin-top: var(--space-3); }
 .card-actions { display: flex; gap: 6px; margin-top: var(--space-3); }
+.remind-info { margin-top: var(--space-2); }
 .response-count { color: var(--color-on-surface-variant); margin-top: var(--space-1); }
 
 /* ── Choices + result bars (CSS grid) ─────────────────────────── */

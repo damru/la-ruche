@@ -275,6 +275,89 @@ pub async fn update(
     Ok(row.map(Into::into))
 }
 
+/// Deletes a draft meeting and its children (votes, resolutions, attendance,
+/// documents) atomically. The `status = 'draft'` SQL filter yields no row for
+/// a non-draft, foreign or unknown meeting -> `Ok(false)` -> 404.
+pub async fn delete_meeting(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<bool> {
+    let mut tx = pool.begin().await?;
+
+    sqlx::query!(
+        r#"
+        DELETE FROM vote v
+        USING resolution r, general_meeting gm
+        WHERE v.resolution_id = r.id
+          AND r.meeting_id = $1
+          AND gm.id = r.meeting_id
+          AND gm.building_id = $2
+          AND gm.status = 'draft'
+        "#,
+        id,
+        building_id,
+    )
+    .execute(&mut *tx)
+    .await?;
+
+    sqlx::query!(
+        r#"
+        DELETE FROM resolution r
+        USING general_meeting gm
+        WHERE r.meeting_id = $1
+          AND gm.id = r.meeting_id
+          AND gm.building_id = $2
+          AND gm.status = 'draft'
+        "#,
+        id,
+        building_id,
+    )
+    .execute(&mut *tx)
+    .await?;
+
+    sqlx::query!(
+        r#"
+        DELETE FROM general_meeting_attendance a
+        USING general_meeting gm
+        WHERE a.meeting_id = $1
+          AND gm.id = a.meeting_id
+          AND gm.building_id = $2
+          AND gm.status = 'draft'
+        "#,
+        id,
+        building_id,
+    )
+    .execute(&mut *tx)
+    .await?;
+
+    sqlx::query!(
+        r#"
+        DELETE FROM general_meeting_document d
+        USING general_meeting gm
+        WHERE d.meeting_id = $1
+          AND gm.id = d.meeting_id
+          AND gm.building_id = $2
+          AND gm.status = 'draft'
+        "#,
+        id,
+        building_id,
+    )
+    .execute(&mut *tx)
+    .await?;
+
+    let deleted = sqlx::query!(
+        r#"
+        DELETE FROM general_meeting
+        WHERE id = $1 AND building_id = $2 AND status = 'draft'
+        "#,
+        id,
+        building_id,
+    )
+    .execute(&mut *tx)
+    .await?
+    .rows_affected();
+
+    tx.commit().await?;
+    Ok(deleted > 0)
+}
+
 pub async fn call(
     pool: &PgPool,
     id: Uuid,

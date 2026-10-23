@@ -4,7 +4,7 @@
 
 **Épic :** EP-010 — Consultations informelles
 **Réf. PRD :** US-CS-001b
-**État :** PARTIEL — l'infrastructure `draft` existe déjà en base et côté DB/API pour l'ouverture ; il manque la création en `draft`, l'édition du brouillon et toute l'UI.
+**État :** IMPLÉMENTÉ (backend + frontend) — création en `draft`, édition du brouillon, ouverture explicite (`draft → open`), garde-fou vote sur draft, suppression des brouillons, onglet Brouillons et modale d'édition. La notification des participants à l'ouverture reste différée (pas d'infrastructure de livraison).
 
 ---
 

@@ -137,7 +137,9 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
         .route("/meetings", get(assemblies::list).post(assemblies::create))
         .route(
             "/meetings/{id}",
-            get(assemblies::get).put(assemblies::update),
+            get(assemblies::get)
+                .put(assemblies::update)
+                .delete(assemblies::delete),
         )
         .route("/meetings/{id}/call", post(assemblies::call))
         .route(
@@ -370,6 +372,12 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
         .route("/consultations/{id}/respond", post(consultations::respond))
         .route("/consultations/{id}/results", get(consultations::results))
         .route("/consultations/{id}/close", post(consultations::close))
+        .route("/consultations/{id}/open", post(consultations::open))
+        .route(
+            "/consultations/{id}/non-respondents",
+            get(consultations::non_respondents),
+        )
+        .route("/consultations/{id}/remind", post(consultations::remind))
         // ── Judicial proceedings register ───────────────────────
         .route(
             "/judicial-proceedings",
