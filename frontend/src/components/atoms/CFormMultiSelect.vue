@@ -62,7 +62,7 @@ function handleBlur(event: FocusEvent) {
       v-bind="$attrs"
       :id="inputId"
       :disabled="props.disabled"
-      class="flex items-center justify-between w-full h-[var(--control-height)] px-3 rounded-xl
+      class="flex items-center justify-between w-auto min-w-[200px] max-w-full h-[var(--control-height)] px-3 rounded-xl
              bg-surface-container text-on-surface text-md outline-none cursor-pointer
              focus:ring-2 focus:ring-primary/30 focus:bg-surface-container-low
              data-[disabled]:opacity-50 data-[disabled]:cursor-not-allowed
@@ -89,7 +89,7 @@ function handleBlur(event: FocusEvent) {
       <PopoverContent
         align="start"
         :side-offset="4"
-        class="min-w-[var(--radix-popover-trigger-width)] max-h-80 rounded-xl
+        class="min-w-[var(--radix-popover-trigger-width)] max-w-[min(400px,calc(100vw-2rem))] max-h-80 rounded-xl
                bg-surface-container-lowest shadow-md outline-none z-overlay"
       >
         <ListboxRoot

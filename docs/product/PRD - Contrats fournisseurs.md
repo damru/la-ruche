@@ -186,7 +186,7 @@ draft ──(activation)──▶ active ──(résiliation)──▶ terminate
 **Critères d'acceptation :**
 
 - **AC-CF-002-A** : La liste DOIT être filtrable par statut (`draft`, `active`, `terminated`, `expired`), par type de contrat et par prestataire (nom exact).
-- **AC-CF-002-B** : La liste DOIT afficher, pour chaque contrat : fournisseur, objet, type, dates, statut et le prochain rappel actif non acquitté le cas échéant. Deux vues sont proposées au choix de l'utilisateur : **cartes** (vue par défaut) et **tableau** — la carte porte déjà l'ensemble des informations du tableau à l'échelle d'une copropriété (dizaines de contrats).
+- **AC-CF-002-B** : La liste DOIT afficher, pour chaque contrat : fournisseur, objet, type, dates, statut et le prochain rappel actif non acquitté le cas échéant. Deux vues sont proposées au choix de l'utilisateur : **tableau** (vue par défaut) et **cartes** — la carte porte déjà l'ensemble des informations du tableau à l'échelle d'une copropriété (dizaines de contrats).
 - **AC-CF-002-C** : Les contrats avec au moins un rappel actif non acquitté DOIVENT être mis en évidence visuellement dans la liste.
 - **AC-CF-002-D** : La vue détail DOIT afficher l'historique des avenants (chaîne `predecessor_id`) et la liste des pièces jointes rattachées. Chaque contrat de la liste DOIT donner un accès direct à sa vue détail.
 - **AC-CF-002-E** : La liste et la vue détail des contrats DOIVENT être accessibles en lecture au Syndic et au Conseil syndical (art. 21 de la loi du 10 juillet 1965). Toutes les actions de modification (création, édition, activation, avenant, résiliation, suppression, rattachement de documents, acquittement de rappel) restent réservées au Syndic.
@@ -313,7 +313,7 @@ draft ──(activation)──▶ active ──(résiliation)──▶ terminate
 | ~~Q-CF-001~~ | ~~Un contrat peut-il avoir plusieurs avenants successifs (chaîne `predecessor_id` de profondeur > 2) ?~~ | Damien | **Tranchée 2026-07-18 : oui, profondeur illimitée.** Cf. AC-CF-006-E. |
 | Q-CF-002 | Les rappels sont-ils déclenchés par le module de notification transverse ou par un job autonome dédié ? | Damien | Avant implémentation US-CF-003 |
 | Q-CF-003 | Le Conseil syndical doit-il pouvoir valider formellement le renouvellement ou la résiliation d'un contrat ? | Damien | Avant implémentation lot futur |
-| ~~Q-CF-004~~ | ~~La liste des contrats doit-elle être présentée en tableau ou en cartes ?~~ | Damien | **Tranchée 2026-10-22 (EP-006-S06) : cartes conservées par défaut + bascule tableau.** Cf. AC-CF-002-B. |
+| ~~Q-CF-004~~ | ~~La liste des contrats doit-elle être présentée en tableau ou en cartes ?~~ | Damien | **Tranchée 2026-10-22 (EP-006-S06), révisée 2026-10-23 (alignement UI /contractors) : tableau par défaut + bascule cartes.** Cf. AC-CF-002-B. |
 | ~~Q-CF-005~~ | ~~Les documents rattachés à un contrat sont-ils visibles du Conseil syndical ou réservés au Syndic ?~~ | Damien | **Tranchée 2026-10-22 (EP-006-S07) : lecture Syndic + Conseil syndical (art. 21 loi 1965), écriture Syndic seul.** Cf. AC-CF-007-D. |
 
 ---

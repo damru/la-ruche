@@ -60,7 +60,7 @@ const filter = ref<'all' | 'active' | 'expired'>('all')
 const search = ref('')
 const selectedTypes = ref<string[]>([])
 const selectedVendors = ref<string[]>([])
-const viewMode = ref<'cards' | 'table'>('cards')
+const viewMode = ref<'cards' | 'table'>('table')
 const typeOptions = ref<string[]>([])
 const vendorOptions = ref<string[]>([])
 const buildingName = ref('')
@@ -84,19 +84,23 @@ async function loadFilterOptions() {
   typeOptions.value = typesResponse.data
 }
 
+async function loadContracts() {
+  const response = await contractsApi.list({
+    contract_type: selectedTypes.value[0] || undefined,
+    vendor: selectedVendors.value[0] || undefined,
+  })
+  allContracts.value = response.data
+}
+
 async function loadData() {
-  const [building, contractsResponse, remindersResponse] = await Promise.all([
+  const [building, remindersResponse] = await Promise.all([
     useBuildingStore().fetch(),
-    contractsApi.list({
-      contract_type: selectedTypes.value[0] || undefined,
-      vendor: selectedVendors.value[0] || undefined,
-    }),
     contractsApi.listAllReminders(),
   ])
 
   buildingName.value = building.name
-  allContracts.value = contractsResponse.data
   allReminders.value = remindersResponse.data
+  await loadContracts()
 }
 
 const { loading, error, reload } = usePageLoader(loadData)
@@ -105,10 +109,13 @@ onMounted(() => {
   loadFilterOptions()
 })
 
-// Server-side filters (type / vendor) — the status tab stays client-side so
-// the tab counters always reflect the whole list.
+// Server-side filters (type / vendor) — reload only the contract list, not
+// the whole page (building/reminders are filter-independent). The status tab
+// stays client-side so the tab counters always reflect the whole list.
 watch([selectedTypes, selectedVendors], () => {
-  reload()
+  loadContracts().catch((err: unknown) => {
+    error.value = toErrorMessage(err)
+  })
 })
 
 const contractsById = computed(() =>
@@ -476,20 +483,20 @@ async function activateContract(contract: VendorContract) {
               :aria-label="t('common.viewMode', 'Vue')"
             >
               <button
-                :class="['view-toggle__btn', { 'view-toggle__btn--active': viewMode === 'cards' }]"
-                :aria-pressed="viewMode === 'cards'"
-                :aria-label="t('contracts.filters.viewCards')"
-                @click="viewMode = 'cards'"
-              >
-                <CIconGrid class="icon-sm" />
-              </button>
-              <button
                 :class="['view-toggle__btn', { 'view-toggle__btn--active': viewMode === 'table' }]"
                 :aria-pressed="viewMode === 'table'"
                 :aria-label="t('contracts.filters.viewTable')"
                 @click="viewMode = 'table'"
               >
                 <CIconList class="icon-sm" />
+              </button>
+              <button
+                :class="['view-toggle__btn', { 'view-toggle__btn--active': viewMode === 'cards' }]"
+                :aria-pressed="viewMode === 'cards'"
+                :aria-label="t('contracts.filters.viewCards')"
+                @click="viewMode = 'cards'"
+              >
+                <CIconGrid class="icon-sm" />
               </button>
             </div>
           </div>
@@ -506,7 +513,6 @@ async function activateContract(contract: VendorContract) {
             :options="contractTypeOptions"
             :placeholder="t('common.type')"
             :aria-label="t('common.type')"
-            class="contracts-toolbar__select"
           />
           <CFormMultiSelect
             v-if="contractVendorOptions.length > 0"
@@ -514,7 +520,6 @@ async function activateContract(contract: VendorContract) {
             :options="contractVendorOptions"
             :placeholder="t('contracts.form.vendorName')"
             :aria-label="t('contracts.form.vendorName')"
-            class="contracts-toolbar__select"
           />
         </div>
 
@@ -538,7 +543,7 @@ async function activateContract(contract: VendorContract) {
         </template>
 
         <CCard
-          v-else-if="viewMode === 'table'"
+          v-if="viewMode === 'table'"
           class="p-0!"
         >
           <CDataTable
@@ -573,7 +578,7 @@ async function activateContract(contract: VendorContract) {
         </CCard>
 
         <div
-          v-else
+          v-else-if="viewMode === 'cards'"
           class="contracts-grid"
         >
           <CCard
@@ -827,7 +832,6 @@ async function activateContract(contract: VendorContract) {
 }
 
 .contracts-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-bottom: var(--space-4); }
-.contracts-toolbar__select { min-width: 200px; }
 
 .contract-details { display: flex; flex-direction: column; gap: var(--space-1); }
 .detail-row { display: flex; justify-content: space-between; font-size: var(--text-sm); }

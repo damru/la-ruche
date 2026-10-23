@@ -239,7 +239,6 @@ function openDeleteModal(c: Contractor) {
             :options="domainOptions"
             :placeholder="t('contractors.domainsLabel')"
             :aria-label="t('contractors.domainsLabel')"
-            class="contractors-toolbar__select"
           />
         </div>
 
@@ -508,7 +507,6 @@ function openDeleteModal(c: Contractor) {
 
 /* ── Toolbar ─────────────────────────────────────────────────────────────── */
 .contractors-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-bottom: var(--space-4); }
-.contractors-toolbar__select { min-width: 200px; }
 
 /* ── Grid view ───────────────────────────────────────────────────── */
 .contractors-grid {
