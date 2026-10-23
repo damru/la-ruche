@@ -10,6 +10,7 @@ import CBtn from '@/components/atoms/CBtn.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CCardActions from '@/components/molecules/CCardActions.vue'
 import CDataTable, { type Column } from '@/components/molecules/CDataTable.vue'
+import CFormMultiSelect from '@/components/atoms/CFormMultiSelect.vue'
 import CEmptyState from '@/components/atoms/CEmptyState.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
@@ -28,6 +29,7 @@ import CIconSparkles from '@/components/atoms/CIconSparkles.svg'
 import CIconTrash from '@/components/atoms/CIconTrash.svg'
 import CIconUsers from '@/components/atoms/CIconUsers.svg'
 import CIconWrench from '@/components/atoms/CIconWrench.svg'
+import CIconX from '@/components/atoms/CIconX.svg'
 import CIconChevronRight from '@/components/atoms/CIconChevronRight.svg'
 import ContractorFormModal from '@/features/contractors/ContractorFormModal.vue'
 import DeleteContractorModal from '@/features/contractors/DeleteContractorModal.vue'
@@ -102,6 +104,12 @@ const domainOptions = computed(() =>
     .sort((a, b) => a.label.localeCompare(b.label)),
 )
 
+const hasActiveFilters = computed(() => selectedDomains.value.length > 0)
+
+function clearFilters() {
+  selectedDomains.value = []
+}
+
 // ── Table columns (list view) ─────────────────────────────────────
 const contractorColumns = computed<Column<Contractor>[]>(() => [
   { key: 'name', label: t('lastName') },
@@ -110,13 +118,6 @@ const contractorColumns = computed<Column<Contractor>[]>(() => [
   { key: 'phone', label: t('common.phone') },
   { key: 'actions', label: '', width: '1%' },
 ])
-
-// ── Domain filter toggle ──────────────────────────────────────────
-function toggleDomain(domain: string) {
-  const idx = selectedDomains.value.indexOf(domain)
-  if (idx >= 0) selectedDomains.value.splice(idx, 1)
-  else selectedDomains.value.push(domain)
-}
 
 // ── Filtered list ─────────────────────────────────────────────────
 const filtered = computed(() => {
@@ -238,21 +239,23 @@ function openDeleteModal(c: Contractor) {
           </div>
         </div>
 
-        <!-- Domain filter chips -->
-        <div
-          class="domain-filter"
-          role="group"
-          :aria-label="t('contractors.domainsLabel')"
-        >
-          <button
-            v-for="opt in domainOptions"
-            :key="opt.value"
-            :class="['domain-chip', { 'domain-chip--active': selectedDomains.includes(opt.value) }]"
-            :aria-pressed="selectedDomains.includes(opt.value)"
-            @click="toggleDomain(opt.value)"
-          >
-            {{ opt.label }}
-          </button>
+        <!-- Domain filter -->
+        <div class="contractors-toolbar">
+          <CFormMultiSelect
+            v-model="selectedDomains"
+            :options="domainOptions"
+            :placeholder="t('contractors.domainsLabel')"
+            :aria-label="t('contractors.domainsLabel')"
+          />
+          <CBtn
+            v-if="hasActiveFilters"
+            variant="ghost"
+            size="sm"
+            :icon="CIconX"
+            :title="t('common.clearFilters')"
+            :aria-label="t('common.clearFilters')"
+            @click="clearFilters"
+          />
         </div>
 
         <!-- Empty state -->
@@ -518,38 +521,8 @@ function openDeleteModal(c: Contractor) {
   color: var(--color-on-surface);
 }
 
-/* ── Domain filter chips ─────────────────────────────────────────── */
-.domain-filter {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-}
-
-.domain-chip {
-  display: inline-flex;
-  align-items: center;
-  height: 28px;
-  padding: 0 var(--space-3);
-  border-radius: var(--radius-full);
-  border: 1px solid var(--color-outline-variant);
-  background: var(--color-surface);
-  color: var(--color-on-surface-variant);
-  font-size: var(--text-xs);
-  font-weight: var(--fw-medium);
-  cursor: pointer;
-  transition: background 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out;
-}
-
-.domain-chip:hover {
-  background: var(--color-secondary-container);
-  color: var(--color-on-surface);
-}
-
-.domain-chip--active {
-  background: var(--color-primary-container);
-  border-color: var(--color-primary);
-  color: var(--color-on-primary);
-}
+/* ── Toolbar ─────────────────────────────────────────────────────────────── */
+.contractors-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-bottom: var(--space-4); }
 
 /* ── Grid view ───────────────────────────────────────────────────── */
 .contractors-grid {

@@ -272,9 +272,9 @@ Upload direct S3 via pre-signed URL, contrôle d'accès par rôle, téléchargem
 
 **Statut :** terminée | **MVP :** oui | **Réf. PRD :** Gestion courante
 
-**État code actuel :** backend + frontend réels sur CRUD, rappels, acquittement, résiliation et pièces justificatives liées au contrat.
+**État code actuel :** backend + frontend réels sur CRUD, rappels, acquittement, résiliation, pièces justificatives liées au contrat et fiche contrat détaillée. Les filtres (statut/type/prestataire) sont côté client, comme sur toutes les autres pages — la migration serveur est tracée en T-005 (post-MVP). Liste et fiche contrat accessibles en lecture au Conseil syndical (art. 21 loi 1965), écriture Syndic seul.
 
-Fiche contrat avec reconduction tacite et préavis configurables, rappels automatiques calculés à la création/MAJ, acquittement manuel.
+Fiche contrat avec reconduction tacite et préavis configurables, rappels automatiques calculés à la création/MAJ, acquittement manuel. Liste filtrable par statut (onglets), type et prestataire avec bascule cartes/tableau ; chaque contrat ouvre une fiche dédiée (en-tête, chaîne d'avenants, documents liés, rappels).
 
 **Stories :**
 
@@ -283,8 +283,8 @@ Fiche contrat avec reconduction tacite et préavis configurables, rappels automa
 * `EP-006-S03` ✅ — Calculer automatiquement les dates d'alerte : préavis entrant, reconduction imminente, expiration (LEGAL.md §5.3)
 * `EP-006-S04` ✅ — Acquitter manuellement une alerte ou enregistrer la résiliation d'un contrat
 * `EP-006-S05` ✅ — Suivre le contrat d'assurance multirisque immeuble (échéance, pièces, rappels) en tant qu'aide de gestion documentaire (LEGAL.md §5.2)
-* [EP-006-S06](specs/EP-006-S06-spec.md) — Lister et consulter les contrats fournisseurs avec filtres par statut (actif / résilié / expiré), prestataire et type d'objet ; vue tabulaire avec accès direct à la fiche contrat (PRD US-CF-002)
-* [EP-006-S07](specs/EP-006-S07-spec.md) — Rattacher des documents à un contrat fournisseur (contrat signé, avenants, attestations) via le module Documents (EP-005) avec visibilité réservée au Syndic (PRD US-CF-007)
+* [EP-006-S06](specs/EP-006-S06-spec.md) ✅ — Lister et consulter les contrats fournisseurs avec filtres par statut (actif / résilié / expiré), prestataire et type d'objet ; vue filtrable (tableau par défaut, bascule cartes) avec accès direct à la fiche contrat (PRD US-CF-002)
+* [EP-006-S07](specs/EP-006-S07-spec.md) ✅ — Rattacher des documents à un contrat fournisseur (contrat signé, avenants, attestations) via le module Documents (EP-005) — lecture Syndic + Conseil syndical (art. 21 loi 1965), gestion des rattachements réservée au Syndic (PRD US-CF-007)
 
 ***
 
@@ -627,6 +627,7 @@ Obligations de conformité reportées après la livraison du MVP : export RGPD d
 | T-002-8 | Améliorer les formulaires dans modale: message de feedback mal placé, bouton `close` inaccessible, délai de fermeture automatique trop long etc. | en attente |
 | T-003 | Durcir le contrat d'interface entre backend et frontend - utilisation d'openapi ? | en attente |
 | T-004 | Etudier l'intérêt de la création d'un crate dédié aux AG | en attente |
+| T-005 | Migrer le filtrage applicatif côté serveur | **Tous** les filtres de **toutes** les pages passent du mode client au mode serveur (query params API + SQL) : contrats (statut/type/prestataire), signalements, tâches, AG, documents, carnet d'entretien, journal d'activité, etc. — y compris les filtres par onglets (« Tout », « Ouverts », « Fermés », « En cours », etc.). Contexte : cohérence produit retenue le 2026-10-23 (filtrage client uniforme, volumétrie faible par résidence — dizaines d'entités) ; cette tâche prépare le passage à l'échelle (pagination, multi-résidences). | en attente |
 
 ***
 

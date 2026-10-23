@@ -48,7 +48,7 @@ const allGroups: NavGroup[] = [
     items: [
       { name: 'budget',      route: '/budget',      label: t('nav.budget'),      mobileLabel: t('nav.mobile.budget'),      roles: ['manager', 'board_member', 'co_owner'], mobileOrder: 11 },
       { name: 'my-charges',  route: '/my-charges',  label: t('nav.myCharges'),   mobileLabel: t('nav.myCharges'),           roles: ['co_owner'],                            mobileOrder: 3 },
-      { name: 'contracts',   route: '/contracts',   label: t('nav.contracts'),   mobileLabel: t('nav.contracts'),   roles: ['manager'],                             mobileOrder: 6 },
+      { name: 'contracts',   route: '/contracts',   label: t('nav.contracts'),   mobileLabel: t('nav.contracts'),   roles: ['manager', 'board_member'],             mobileOrder: 6 },
     ],
   },
   {

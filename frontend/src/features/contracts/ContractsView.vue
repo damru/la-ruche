@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
 import { useFormatters } from '@/composables/useFormatters'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CIconTile from '@/components/atoms/CIconTile.vue'
@@ -9,6 +10,10 @@ import CIconDroplet from '@/components/atoms/CIconDroplet.svg'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CCardActions from '@/components/molecules/CCardActions.vue'
+import CDataTable, { type Column } from '@/components/molecules/CDataTable.vue'
+import CFormMultiSelect from '@/components/atoms/CFormMultiSelect.vue'
+import CIconGrid from '@/components/atoms/CIconGrid.svg'
+import CIconList from '@/components/atoms/CIconList.svg'
 import CLinkedDocumentsModal from '@/components/organisms/CLinkedDocumentsModal.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
@@ -28,6 +33,7 @@ import CIconArchive from '@/components/atoms/CIconArchive.svg'
 import CIconCurrency from '@/components/atoms/CIconCurrency.svg'
 import CIconHistory from '@/components/atoms/CIconClock.svg'
 import CIconCheck from '@/components/atoms/CIconCheck.svg'
+import CIconX from '@/components/atoms/CIconX.svg'
 import { contractsApi, documentsApi } from '@/api'
 import { useBuildingStore } from '@/stores/building'
 import ContractFormModal from '@/features/contracts/ContractFormModal.vue'
@@ -36,6 +42,7 @@ import AmendmentChainModal from '@/features/contracts/AmendmentChainModal.vue'
 import CTabs, { type Tab } from '@/components/atoms/CTabs.vue'
 import { toErrorMessage, usePageLoader } from '@/composables/usePageLoader'
 import TerminateContractModal from '@/features/contracts/TerminateContractModal.vue'
+import { effectiveContractStatus } from '@/utils/contracts'
 import { useRole } from '@/composables/useRole'
 import type { ContractReminder, ContractStatus, ContractType, Document, VendorContract } from '@/types/domain'
 
@@ -48,9 +55,13 @@ interface ContractReminderView extends ContractReminder {
 const { t } = useI18n()
 const { formatCurrency, formatDate, daysUntil } = useFormatters()
 const { hasAnyRole } = useRole()
+const router = useRouter()
 
 const filter = ref<'all' | 'active' | 'expired'>('all')
 const search = ref('')
+const selectedTypes = ref<string[]>([])
+const selectedVendors = ref<string[]>([])
+const viewMode = ref<'cards' | 'table'>('table')
 const buildingName = ref('')
 const allContracts = ref<VendorContract[]>([])
 const allReminders = ref<ContractReminder[]>([])
@@ -120,21 +131,7 @@ const reminderViewsById = computed(() =>
   new Map(reminderViews.value.map(reminder => [reminder.id, reminder])),
 )
 
-function todayIso(): string {
-  const today = new Date()
-  const year = today.getFullYear()
-  const month = String(today.getMonth() + 1).padStart(2, '0')
-  const day = String(today.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
-}
-
-function effectiveStatus(contract: VendorContract): ContractStatus {
-  if (contract.status === 'draft') return 'draft'
-  if (contract.status === 'terminated') return 'terminated'
-  if (contract.status === 'expired') return 'expired'
-  if (contract.end_date && contract.end_date < todayIso()) return 'expired'
-  return 'active'
-}
+const effectiveStatus = effectiveContractStatus
 
 function reminderUrgency(dateStr: string): 'high' | 'medium' | 'low' {
   const d = daysUntil(dateStr)
@@ -201,6 +198,14 @@ const contracts = computed(() => {
       if (filter.value === 'active' && currentStatus !== 'active') return false
       if (filter.value === 'expired' && currentStatus === 'active') return false
 
+      if (selectedTypes.value.length > 0 && !selectedTypes.value.includes(contract.contract_type)) {
+        return false
+      }
+
+      if (selectedVendors.value.length > 0 && !selectedVendors.value.includes(contract.vendor_name)) {
+        return false
+      }
+
       if (!query) return true
 
       return [
@@ -215,6 +220,41 @@ const contracts = computed(() => {
     })
     .sort((left, right) => left.vendor_name.localeCompare(right.vendor_name))
 })
+
+const contractTypeOptions = computed(() =>
+  [...new Set(allContracts.value.map(contract => contract.contract_type))]
+    .map(value => ({ value, label: t(`contracts.types.${value}`) }))
+    .sort((a, b) => a.label.localeCompare(b.label)),
+)
+
+const contractVendorOptions = computed(() =>
+  [...new Set(allContracts.value.map(contract => contract.vendor_name))]
+    .sort((a, b) => a.localeCompare(b))
+    .map(vendor => ({ value: vendor, label: vendor })),
+)
+
+const hasActiveFilters = computed(
+  () => selectedTypes.value.length > 0 || selectedVendors.value.length > 0,
+)
+
+function clearFilters() {
+  selectedTypes.value = []
+  selectedVendors.value = []
+}
+
+const contractTableColumns = computed<Column<VendorContract>[]>(() => [
+  { key: 'vendor_name', label: t('contracts.form.vendorName') },
+  { key: 'subject', label: t('contracts.form.subject') },
+  { key: 'contract_type', label: t('common.type') },
+  { key: 'start_date', label: t('common.startDate') },
+  { key: 'end_date', label: t('common.endDate') },
+  { key: 'amount', label: t('common.amount'), align: 'right' },
+  { key: 'status', label: t('common.status') },
+])
+
+function openContractDetail(contract: VendorContract) {
+  router.push({ name: 'contract-detail', params: { id: contract.id } })
+}
 
 const contractCounts = computed(() =>
   allContracts.value.reduce(
@@ -394,7 +434,10 @@ async function activateContract(contract: VendorContract) {
           :title="t('contracts.upcomingReminders')"
           :rows="contractReminderRows"
         >
-          <template #actions="{ row }">
+          <template
+            v-if="canManage"
+            #actions="{ row }"
+          >
             <CBtn
               variant="negative"
               size="sm"
@@ -412,16 +455,72 @@ async function activateContract(contract: VendorContract) {
           variant="filter"
           :tabs="contractTabsList"
         >
-          <CFormInput
-            v-model="search"
-            type="search"
-            :placeholder="t('contracts.searchPlaceholder')"
-          >
-            <template #prefix>
-              <CIconSearch />
-            </template>
-          </CFormInput>
+          <!-- Toolbar: search + view mode toggle -->
+          <div class="list-toolbar">
+            <CFormInput
+              v-model="search"
+              type="search"
+              :placeholder="t('contracts.searchPlaceholder')"
+              class="list-toolbar__search"
+            >
+              <template #prefix>
+                <CIconSearch class="icon-sm" />
+              </template>
+            </CFormInput>
+            <div
+              class="view-toggle"
+              role="group"
+              :aria-label="t('common.viewMode', 'Vue')"
+            >
+              <button
+                :class="['view-toggle__btn', { 'view-toggle__btn--active': viewMode === 'table' }]"
+                :aria-pressed="viewMode === 'table'"
+                :aria-label="t('contracts.filters.viewTable')"
+                @click="viewMode = 'table'"
+              >
+                <CIconList class="icon-sm" />
+              </button>
+              <button
+                :class="['view-toggle__btn', { 'view-toggle__btn--active': viewMode === 'cards' }]"
+                :aria-pressed="viewMode === 'cards'"
+                :aria-label="t('contracts.filters.viewCards')"
+                @click="viewMode = 'cards'"
+              >
+                <CIconGrid class="icon-sm" />
+              </button>
+            </div>
+          </div>
         </CTabs>
+
+        <!-- Filters toolbar: multi-selects -->
+        <div
+          v-if="contractTypeOptions.length > 0 || contractVendorOptions.length > 0"
+          class="contracts-toolbar"
+        >
+          <CFormMultiSelect
+            v-if="contractTypeOptions.length > 0"
+            v-model="selectedTypes"
+            :options="contractTypeOptions"
+            :placeholder="t('common.type')"
+            :aria-label="t('common.type')"
+          />
+          <CFormMultiSelect
+            v-if="contractVendorOptions.length > 0"
+            v-model="selectedVendors"
+            :options="contractVendorOptions"
+            :placeholder="t('contracts.form.vendorName')"
+            :aria-label="t('contracts.form.vendorName')"
+          />
+          <CBtn
+            v-if="hasActiveFilters"
+            variant="ghost"
+            size="sm"
+            :icon="CIconX"
+            :title="t('common.clearFilters')"
+            :aria-label="t('common.clearFilters')"
+            @click="clearFilters"
+          />
+        </div>
 
         <template
           v-if="contracts.length === 0"
@@ -442,8 +541,43 @@ async function activateContract(contract: VendorContract) {
           </CEmptyState>
         </template>
 
+        <CCard
+          v-if="viewMode === 'table'"
+          class="p-0!"
+        >
+          <CDataTable
+            :columns="contractTableColumns"
+            :rows="contracts"
+            row-key="id"
+            @row-click="openContractDetail($event)"
+          >
+            <template #cell-contract_type="{ row }">
+              <CBadge variant="default">
+                {{ t(`contracts.types.${row.contract_type}`) }}
+              </CBadge>
+            </template>
+            <template #cell-start_date="{ row }">
+              {{ formatDate(row.start_date) }}
+            </template>
+            <template #cell-end_date="{ row }">
+              {{ formatDate(row.end_date) }}
+            </template>
+            <template #cell-amount="{ row }">
+              <span class="whitespace-nowrap">{{ formatCurrency(row.amount) }}</span>
+            </template>
+            <template #cell-status="{ row }">
+              <CBadge
+                :variant="statusVariant(effectiveStatus(row))"
+                dot
+              >
+                {{ t(`contracts.statuses.${effectiveStatus(row)}`) }}
+              </CBadge>
+            </template>
+          </CDataTable>
+        </CCard>
+
         <div
-          v-else
+          v-else-if="viewMode === 'cards'"
           class="contracts-grid"
         >
           <CCard
@@ -451,7 +585,9 @@ async function activateContract(contract: VendorContract) {
             :key="contract.id"
             :shadow="effectiveStatus(contract) === 'active'"
             gap="sm"
+            interactive
             :class="[{ 'outline outline-1 outline-outline-variant': effectiveStatus(contract) !== 'active' }]"
+            @click="openContractDetail(contract)"
           >
             <div class="flex items-center gap-3 min-w-0">
               <CIconTile :class="contractIconTone(contract)">
@@ -547,7 +683,7 @@ async function activateContract(contract: VendorContract) {
                 </button>
               </div>
 
-              <CCardActions>
+              <CCardActions v-if="canManage">
                 <CBtn
                   v-if="effectiveStatus(contract) === 'draft'"
                   variant="primary"
@@ -588,6 +724,16 @@ async function activateContract(contract: VendorContract) {
                   :icon="CIconArchive"
                   :title="t('contracts.terminate')"
                   @click="openTerminateModal(contract)"
+                />
+              </CCardActions>
+              <CCardActions v-else>
+                <CBtn
+                  v-if="contract.predecessor_id || effectiveStatus(contract) !== 'draft'"
+                  variant="ghost"
+                  size="sm"
+                  :icon="CIconHistory"
+                  :title="t('contracts.history')"
+                  @click="openChainModal(contract)"
                 />
               </CCardActions>
             </div>
@@ -637,6 +783,54 @@ async function activateContract(contract: VendorContract) {
 <style scoped>
 
 .contracts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: var(--space-4); }
+
+.list-toolbar {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  margin-top: var(--space-3);
+}
+
+.list-toolbar__search {
+  flex: 1;
+}
+
+.view-toggle {
+  display: flex;
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.view-toggle__btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: var(--color-surface);
+  border: none;
+  cursor: pointer;
+  color: var(--color-on-surface-variant);
+  transition: background 150ms ease-out, color 150ms ease-out;
+}
+
+.view-toggle__btn + .view-toggle__btn {
+  border-left: 1px solid var(--color-outline-variant);
+}
+
+.view-toggle__btn:hover {
+  background: var(--color-surface-container-low);
+  color: var(--color-on-surface);
+}
+
+.view-toggle__btn--active {
+  background: var(--color-surface-container);
+  color: var(--color-on-surface);
+}
+
+.contracts-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-bottom: var(--space-4); }
 
 .contract-details { display: flex; flex-direction: column; gap: var(--space-1); }
 .detail-row { display: flex; justify-content: space-between; font-size: var(--text-sm); }

@@ -183,6 +183,8 @@ Toute primitive Radix Vue est enveloppée dans un composant `C*` avant usage dan
 | `Dialog` | `CModal` | ✅ |
 | `DropdownMenu` | `CDropdownMenu` | ✅ |
 | `Select` | `CFormSelect` | ✅ |
+| `Listbox` | `CFormMultiSelect` | ✅ |
+| `Popover` | `CFormMultiSelect` | ✅ |
 | `Separator` | `CSeparator` | ✅ |
 | `Tooltip` | `CTooltip` | ✅ |
 
@@ -507,6 +509,7 @@ border-color: var(--color-outline-light);
 | `CFormFieldProxyFeedback` | `name`, `required`, `proxyType`, `proxyValue?`, `proxyChecked?`, `displayError?`, `errorId?`, `hint?`, `hintId?`, `showProxy?` | Atome interne de mutualisation pour les `CForm*` : rend l'input proxy caché (optionnel) pour la validité native du `<form>` et le bloc de feedback (`error`/`hint`) |
 | `CFormInput` | `type`, `label`, `error`, `hint`, `required` | Champ texte — variante `password` avec toggle de visibilité. Si `required`/contrainte native invalide, erreur affichée après premier `blur` (priorité à `error` externe) |
 | `CFormSelect` | `label`, `options`, `error`, `required` | Sélecteur — wrapper Radix `SelectRoot`. Erreur `required` affichée après `blur` + proxy natif caché pour la validité du `<form>` |
+| `CFormMultiSelect` | `options`, `placeholder` | Sélecteur multiple — wrapper Radix `PopoverRoot` + `ListboxRoot multiple`. Affiche les 2 premiers labels sélectionnés, puis « {count} sélectionnés » (`common.selectedCount`). Pas de proxy natif (pas de contrainte `required` native) |
 | `CFormTextarea` | `label`, `rows`, `error`, `required` | Zone de texte. Si `required`/contrainte native invalide, erreur affichée après premier `blur` (priorité à `error` externe) |
 
 #### Interactions
