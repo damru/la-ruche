@@ -251,6 +251,71 @@ async fn list_filters_by_type_and_vendor_and_status() {
 }
 
 #[tokio::test]
+async fn list_filters_cumulate_multiple_types_and_vendors() {
+    let ctx = setup().await;
+    let server = common::test_server().await;
+    let auth = format!("Bearer {}", ctx.manager_jwt);
+
+    // CSV with both types: maintenance + cleaning -> both contracts (OR within a filter).
+    let resp = server
+        .get("/api/v1/contracts?contract_type=maintenance,cleaning")
+        .add_header("Authorization", auth.clone())
+        .await;
+    assert_eq!(resp.status_code(), StatusCode::OK);
+    let names = vendor_names(&resp.json());
+    assert_eq!(
+        names,
+        vec!["ACME Nettoyage".to_string(), "Beta Jardins".to_string()]
+    );
+
+    // CSV with both vendors -> both contracts.
+    let resp = server
+        .get("/api/v1/contracts?vendor=ACME%20Nettoyage,Beta%20Jardins")
+        .add_header("Authorization", auth.clone())
+        .await;
+    assert_eq!(resp.status_code(), StatusCode::OK);
+    let names = vendor_names(&resp.json());
+    assert_eq!(
+        names,
+        vec!["ACME Nettoyage".to_string(), "Beta Jardins".to_string()]
+    );
+
+    // Multiple types AND multiple vendors: OR within each filter, AND across
+    // filters. maintenance|cleaning ∩ ACME|Beta -> both contracts.
+    let resp = server
+        .get("/api/v1/contracts?contract_type=maintenance,cleaning&vendor=ACME%20Nettoyage,Beta%20Jardins")
+        .add_header("Authorization", auth.clone())
+        .await;
+    assert_eq!(resp.status_code(), StatusCode::OK);
+    let names = vendor_names(&resp.json());
+    assert_eq!(
+        names,
+        vec!["ACME Nettoyage".to_string(), "Beta Jardins".to_string()]
+    );
+
+    // maintenance|cleaning ∩ ACME only -> ACME (maintenance) passes both,
+    // Beta (cleaning) is excluded by the vendor filter.
+    let resp = server
+        .get("/api/v1/contracts?contract_type=maintenance,cleaning&vendor=ACME%20Nettoyage")
+        .add_header("Authorization", auth.clone())
+        .await;
+    assert_eq!(resp.status_code(), StatusCode::OK);
+    let names = vendor_names(&resp.json());
+    assert_eq!(names, vec!["ACME Nettoyage".to_string()]);
+
+    // One valid + one invalid type in CSV -> 400.
+    let resp = server
+        .get("/api/v1/contracts?contract_type=maintenance,unknown")
+        .add_header("Authorization", auth.clone())
+        .await;
+    assert_eq!(resp.status_code(), StatusCode::BAD_REQUEST);
+    assert_eq!(
+        resp.json::<Value>()["message"],
+        "errors.contracts.invalid_filter"
+    );
+}
+
+#[tokio::test]
 async fn list_rejects_invalid_filter_values() {
     let ctx = setup().await;
     let server = common::test_server().await;

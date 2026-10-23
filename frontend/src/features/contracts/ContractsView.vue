@@ -86,8 +86,8 @@ async function loadFilterOptions() {
 
 async function loadContracts() {
   const response = await contractsApi.list({
-    contract_type: selectedTypes.value[0] || undefined,
-    vendor: selectedVendors.value[0] || undefined,
+    contract_type: selectedTypes.value.length ? selectedTypes.value : undefined,
+    vendor: selectedVendors.value.length ? selectedVendors.value : undefined,
   })
   allContracts.value = response.data
 }

@@ -47,11 +47,12 @@ pub struct CreateVendorContractInput {
 
 /// Optional server-side filters for the contract list.
 /// `status` uses the raw enum values: draft|active|terminated|expired.
+/// `contract_type` and `vendor_name` accept multiple values (cumulative OR).
 #[derive(Debug, Default, Clone)]
 pub struct ListContractsFilter {
     pub status: Option<String>,
-    pub contract_type: Option<String>,
-    pub vendor_name: Option<String>,
+    pub contract_type: Vec<String>,
+    pub vendor_name: Vec<String>,
 }
 
 #[derive(Debug, Clone, sqlx::FromRow)]
@@ -86,8 +87,10 @@ pub fn validate_list_filter(filter: &ListContractsFilter) -> AppResult<()> {
     {
         return Err(AppError::validation_code("errors.contracts.invalid_filter"));
     }
-    if let Some(contract_type) = &filter.contract_type
-        && !CONTRACT_TYPES.contains(&contract_type.as_str())
+    if filter
+        .contract_type
+        .iter()
+        .any(|t| !CONTRACT_TYPES.contains(&t.as_str()))
     {
         return Err(AppError::validation_code("errors.contracts.invalid_filter"));
     }
@@ -123,15 +126,15 @@ pub async fn list(
            LEFT JOIN document d ON d.id = cd.document_id AND d.deleted_at IS NULL
            WHERE vc.building_id = $1
              AND ($2::text IS NULL OR vc.status::text = $2)
-             AND ($3::text IS NULL OR vc.contract_type::text = $3)
-             AND ($4::text IS NULL OR vc.vendor_name = $4)
+             AND (cardinality($3::text[]) = 0 OR vc.contract_type::text = ANY($3))
+             AND (cardinality($4::text[]) = 0 OR vc.vendor_name = ANY($4))
            GROUP BY vc.id
            ORDER BY vc.vendor_name"#,
     )
     .bind(building_id)
     .bind(filter.status.as_deref())
-    .bind(filter.contract_type.as_deref())
-    .bind(filter.vendor_name.as_deref())
+    .bind(&filter.contract_type)
+    .bind(&filter.vendor_name)
     .fetch_all(pool)
     .await?)
 }
@@ -973,8 +976,8 @@ mod tests {
     fn validate_list_filter_accepts_known_values() {
         let filter = ListContractsFilter {
             status: Some("active".to_string()),
-            contract_type: Some("maintenance".to_string()),
-            vendor_name: Some("ACME".to_string()),
+            contract_type: vec!["maintenance".to_string(), "insurance".to_string()],
+            vendor_name: vec!["ACME".to_string()],
         };
         assert!(validate_list_filter(&filter).is_ok());
         assert!(validate_list_filter(&ListContractsFilter::default()).is_ok());
@@ -988,7 +991,7 @@ mod tests {
                 ..Default::default()
             },
             ListContractsFilter {
-                contract_type: Some("unknown".to_string()),
+                contract_type: vec!["maintenance".to_string(), "unknown".to_string()],
                 ..Default::default()
             },
         ] {
