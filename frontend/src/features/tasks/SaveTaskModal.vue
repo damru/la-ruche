@@ -16,7 +16,8 @@ import { useAutoClose } from '@/composables/useAutoClose'
 import { toErrorMessage } from '@/composables/usePageLoader'
 import { useFormatters } from '@/composables/useFormatters'
 import { extractFileExtension } from '@/utils/files'
-import type { Contractor, Document, Task, TaskPriority } from '@/types/domain'
+import type { Contractor, Document, Task, TaskPriority, TaskStatus } from '@/types/domain'
+import { ASSIGNABLE_TASK_STATUSES, DEFAULT_TASK_PRIORITY, MANAGER_ROLES, TASK_PRIORITIES, TASK_STATUS_IN_PROGRESS, TASK_STATUS_OPEN } from '@/utils/constants'
 
 const props = defineProps<{
   open: boolean
@@ -157,11 +158,11 @@ async function resolveContractorSelection() {
 const defaultForm = () => ({
   title: '',
   description: '',
-  priority: 'normal' as string,
+  priority: DEFAULT_TASK_PRIORITY,
 })
 
 const taskPriorityOptions = computed(() =>
-  (['low', 'normal', 'high', 'urgent'] as const).map(p => ({
+  TASK_PRIORITIES.map(p => ({
     value: p,
     label: t(`tasks.priorities.${p}`),
   })),
@@ -189,7 +190,7 @@ async function uploadDocument(taskId: string, file: File) {
     original_name: file.name,
     mime_type: mimeType,
     size_bytes: file.size,
-    visible_roles: ['manager', 'board_member'],
+    visible_roles: [...MANAGER_ROLES],
   })
   await tasksApi.attachDocument(taskId, document.data.id)
 }
@@ -291,7 +292,7 @@ watch(() => props.open, async (open) => {
       createSuggestedContractor.value = false
       contractorDraft.value = createDefaultContractorDraft()
       assignMode.value = 'contractor'
-    } else if (props.task.status === 'in_progress') {
+    } else if (props.task.status === TASK_STATUS_IN_PROGRESS) {
       selectedContractor.value = null
       contractorSearch.value = ''
       createSuggestedContractor.value = false
@@ -326,11 +327,11 @@ async function handleSubmit() {
     let taskId: string
 
     if (props.task) {
-      let statusPatch: string | undefined
+      let statusPatch: TaskStatus | undefined
       if (assignMode.value === 'self') {
-        statusPatch = 'in_progress'
+        statusPatch = TASK_STATUS_IN_PROGRESS
       } else if (assignMode.value === 'none') {
-        statusPatch = 'open'
+        statusPatch = TASK_STATUS_OPEN
       }
       await tasksApi.update(props.task.id, {
         title: taskForm.value.title,
@@ -502,7 +503,7 @@ async function handleSubmit() {
       </div>
       <!-- Assignment mode: radio (visible for new tasks, open tasks, and in_progress tasks) -->
       <div
-        v-if="!task || ['open', 'in_progress', 'awaiting_vendor', 'awaiting_validation'].includes(task.status)"
+        v-if="!task || (ASSIGNABLE_TASK_STATUSES as readonly string[]).includes(task.status)"
         class="flex flex-col gap-1"
       >
         <label class="text-sm font-medium text-on-surface-variant">{{ t('tasks.assignmentSection') }}</label>

@@ -13,6 +13,7 @@ import { unitsApi, allocationKeysApi } from '@/api'
 import { useFormFeedback } from '@/composables/useFormFeedback'
 import { useAutoClose } from '@/composables/useAutoClose'
 import type { Unit, UnitType } from '@/types/domain'
+import { DEFAULT_UNIT_TYPE, UNIT_TYPES } from '@/utils/constants'
 
 const props = defineProps<{
   open: boolean
@@ -43,13 +44,11 @@ const editingUnit = ref<{
   description: string
   general_shares: number | string
 }>({
-  unit_number: '', unit_type: 'apartment', block: '', staircase: '', floor: '', description: '', general_shares: 0,
+  unit_number: '', unit_type: DEFAULT_UNIT_TYPE, block: '', staircase: '', floor: '', description: '', general_shares: 0,
 })
 
-const unitTypes: UnitType[] = ['apartment', 'cellar', 'parking', 'commercial_unit', 'other']
-
 const unitTypeOptions = computed(() =>
-  unitTypes.map(ut => ({ value: ut, label: t(`units.types.${ut}`) })),
+  UNIT_TYPES.map(ut => ({ value: ut, label: t(`units.types.${ut}`) })),
 )
 
 watch(() => props.open, async (open) => {
@@ -74,7 +73,7 @@ watch(() => props.open, async (open) => {
       } catch { /* keep current value */ }
     }
   } else {
-    editingUnit.value = { unit_number: '', unit_type: 'apartment', block: '', staircase: '', floor: '', description: '', general_shares: 0 }
+    editingUnit.value = { unit_number: '', unit_type: DEFAULT_UNIT_TYPE, block: '', staircase: '', floor: '', description: '', general_shares: 0 }
   }
 })
 

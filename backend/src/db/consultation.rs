@@ -1,7 +1,19 @@
+use crate::domain::Role;
 use crate::errors::AppResult;
 use chrono::{DateTime, Utc};
 use sqlx::{PgPool, Row};
 use uuid::Uuid;
+
+/// Roles that can always see every consultation regardless of `visible_to_roles`
+/// (managers and board members manage the consultation lifecycle).
+const MANAGER_ROLES: &[Role] = &[Role::Manager, Role::BoardMember];
+
+/// `poll.status` values (PG enum `poll_status`).
+pub mod poll_status {
+    pub const DRAFT: &str = "draft";
+    pub const OPEN: &str = "open";
+    pub const CLOSED: &str = "closed";
+}
 
 /// List all consultations for a building, embedding choices (with live vote counts),
 /// total response count, and the current user's selected choice IDs.
@@ -59,12 +71,12 @@ pub async fn list(
            ) choices_agg ON true
            WHERE c.building_id = $1
              AND (
-                 c.status <> 'draft'
+                 c.status <> $3::text::poll_status
                  OR c.created_by = $2
                  OR EXISTS (
                      SELECT 1 FROM user_building ub
                      WHERE ub.user_id = $2 AND ub.building_id = c.building_id
-                       AND ub.roles && ARRAY['manager'::user_role, 'board_member'::user_role]
+                       AND ub.roles && $4::user_role[]
                        AND (ub.end_date IS NULL OR ub.end_date >= CURRENT_DATE)
                  )
              )
@@ -72,6 +84,8 @@ pub async fn list(
     )
     .bind(building_id)
     .bind(user_id)
+    .bind(poll_status::DRAFT)
+    .bind(MANAGER_ROLES)
     .fetch_all(pool)
     .await?;
 
@@ -193,7 +207,7 @@ pub async fn create(
     let id: Uuid = sqlx::query(
         r#"INSERT INTO consultation (building_id, created_by, title, description,
            visible_to_roles, status, closed_at)
-           VALUES ($1, $2, $3, $4, $5::user_role[], 'draft'::poll_status, $6) RETURNING id"#,
+           VALUES ($1, $2, $3, $4, $5::user_role[], $7::text::poll_status, $6) RETURNING id"#,
     )
     .bind(building_id)
     .bind(user_id)
@@ -201,6 +215,7 @@ pub async fn create(
     .bind(description)
     .bind(visible_to_roles)
     .bind(closed_at)
+    .bind(poll_status::DRAFT)
     .fetch_one(&mut *tx)
     .await?
     .try_get("id")?;
@@ -239,7 +254,7 @@ pub async fn update_draft(
     let result = sqlx::query(
         r#"UPDATE consultation
            SET title=$3, description=$4, visible_to_roles=$5::user_role[], closed_at=$6
-           WHERE id=$1 AND building_id=$2 AND status='draft'"#,
+           WHERE id=$1 AND building_id=$2 AND status=$7::text::poll_status"#,
     )
     .bind(id)
     .bind(building_id)
@@ -247,6 +262,7 @@ pub async fn update_draft(
     .bind(description)
     .bind(visible_to_roles)
     .bind(closed_at)
+    .bind(poll_status::DRAFT)
     .execute(&mut *tx)
     .await?;
     if result.rows_affected() == 0 {
@@ -292,7 +308,7 @@ pub async fn respond(
             .await?;
     match status.as_deref() {
         None => return Err(crate::errors::AppError::NotFound),
-        Some("open") => {}
+        Some(poll_status::OPEN) => {}
         _ => {
             return Err(crate::errors::AppError::bad_request_code(
                 "errors.consultations.not_open",
@@ -408,11 +424,13 @@ pub async fn results(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<se
 /// Closes an open consultation. Returns 404 if not found or already closed.
 pub async fn close(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()> {
     let result = sqlx::query(
-        "UPDATE consultation SET status='closed', closed_at=NOW(), updated_at=NOW()
-         WHERE id=$1 AND building_id=$2 AND status='open'",
+        "UPDATE consultation SET status=$3::text::poll_status, closed_at=NOW(), updated_at=NOW()
+         WHERE id=$1 AND building_id=$2 AND status=$4::text::poll_status",
     )
     .bind(id)
     .bind(building_id)
+    .bind(poll_status::CLOSED)
+    .bind(poll_status::OPEN)
     .execute(pool)
     .await?;
     if result.rows_affected() == 0 {
@@ -424,11 +442,13 @@ pub async fn close(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()> 
 /// Opens a draft consultation. Returns 404 if not found or not in draft state.
 pub async fn open(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()> {
     let result = sqlx::query(
-        "UPDATE consultation SET status='open', updated_at=NOW()
-         WHERE id=$1 AND building_id=$2 AND status='draft'",
+        "UPDATE consultation SET status=$3::text::poll_status, updated_at=NOW()
+         WHERE id=$1 AND building_id=$2 AND status=$4::text::poll_status",
     )
     .bind(id)
     .bind(building_id)
+    .bind(poll_status::OPEN)
+    .bind(poll_status::DRAFT)
     .execute(pool)
     .await?;
     if result.rows_affected() == 0 {
@@ -445,10 +465,12 @@ pub async fn delete(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()>
 
     // Verify the consultation exists and is closed or draft
     let row = sqlx::query(
-        "SELECT id FROM consultation WHERE id=$1 AND building_id=$2 AND status IN ('closed','draft')",
+        "SELECT id FROM consultation WHERE id=$1 AND building_id=$2 AND status IN ($3::text::poll_status,$4::text::poll_status)",
     )
     .bind(id)
     .bind(building_id)
+    .bind(poll_status::CLOSED)
+    .bind(poll_status::DRAFT)
     .fetch_optional(&mut *tx)
     .await?;
 
@@ -549,7 +571,7 @@ pub async fn remind_non_respondents(
     .await?;
     match status.as_deref() {
         None => return Err(crate::errors::AppError::NotFound),
-        Some("open") => {}
+        Some(poll_status::OPEN) => {}
         _ => {
             return Err(crate::errors::AppError::bad_request_code(
                 "errors.consultations.not_open",

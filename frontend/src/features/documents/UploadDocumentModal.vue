@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { DEFAULT_DOCUMENT_VISIBLE_ROLES, ROLES } from '@/utils/constants'
 import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useFormatters } from '@/composables/useFormatters'
@@ -28,13 +29,13 @@ const { schedule: scheduleClose, forceExpire: forceClose } = useAutoClose()
 
 const uploading = ref(false)
 const selectedFile = ref<File | null>(null)
-const selectedRoles = ref<string[]>(['manager', 'board_member', 'co_owner'])
+const selectedRoles = ref<string[]>([...DEFAULT_DOCUMENT_VISIBLE_ROLES])
 
 watch(() => props.open, (open) => {
   if (!open) { forceClose(); return }
   selectedFile.value = null
   feedback.reset()
-  selectedRoles.value = ['manager', 'board_member', 'co_owner']
+  selectedRoles.value = [...DEFAULT_DOCUMENT_VISIBLE_ROLES]
 })
 
 function onDropzoneFiles(files: File[]) {
@@ -100,7 +101,7 @@ async function uploadFile() {
         <label class="text-sm font-medium text-on-surface-variant">{{ t('documents.visiblePar') }}</label>
         <div class="flex flex-wrap gap-3">
           <CFormCheckbox
-            v-for="role in ['manager', 'board_member', 'co_owner', 'tenant']"
+            v-for="role in ROLES"
             :key="role"
             v-model="selectedRoles"
             :value="role"

@@ -16,6 +16,7 @@ import { useFormFeedback } from '@/composables/useFormFeedback'
 import { useAutoClose } from '@/composables/useAutoClose'
 import { toErrorMessage } from '@/composables/usePageLoader'
 import type { Document, Report } from '@/types/domain'
+import { DEFAULT_DOCUMENT_VISIBLE_ROLES } from '@/utils/constants'
 
 const props = defineProps<{
   open: boolean
@@ -95,7 +96,7 @@ async function uploadPhoto(reportId: string, file: File): Promise<void> {
     original_name: file.name,
     mime_type: mimeType,
     size_bytes: file.size,
-    visible_roles: ['manager', 'board_member', 'co_owner'],
+    visible_roles: [...DEFAULT_DOCUMENT_VISIBLE_ROLES],
   })
   await reportsApi.attachDocument(reportId, docRes.data.id)
 }

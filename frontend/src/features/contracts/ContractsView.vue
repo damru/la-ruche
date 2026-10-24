@@ -44,7 +44,8 @@ import { toErrorMessage, usePageLoader } from '@/composables/usePageLoader'
 import TerminateContractModal from '@/features/contracts/TerminateContractModal.vue'
 import { effectiveContractStatus } from '@/utils/contracts'
 import { useRole } from '@/composables/useRole'
-import type { ContractReminder, ContractStatus, ContractType, Document, VendorContract } from '@/types/domain'
+import type { Role, ContractReminder, ContractStatus, ContractType, Document, VendorContract } from '@/types/domain'
+import { ALL_FILTER, CONTRACT_STATUS_ACTIVE, CONTRACT_STATUS_DRAFT, CONTRACT_STATUS_EXPIRED, CONTRACT_STATUS_TERMINATED, REMINDER_URGENCY_HIGH_DAYS, REMINDER_URGENCY_MEDIUM_DAYS } from '@/utils/constants'
 
 interface ContractReminderView extends ContractReminder {
   targetDate: string
@@ -57,7 +58,8 @@ const { formatCurrency, formatDate, daysUntil } = useFormatters()
 const { hasAnyRole } = useRole()
 const router = useRouter()
 
-const filter = ref<'all' | 'active' | 'expired'>('all')
+type ContractFilter = typeof ALL_FILTER | 'active' | 'expired'
+const filter = ref<ContractFilter>(ALL_FILTER)
 const search = ref('')
 const selectedTypes = ref<string[]>([])
 const selectedVendors = ref<string[]>([])
@@ -72,7 +74,7 @@ const contractDocumentsTarget = ref<VendorContract | null>(null)
 const contractDocuments = ref<Document[]>([])
 const loadingContractDocuments = ref(false)
 
-const canManage = computed(() => hasAnyRole(['manager']))
+const canManage = computed(() => hasAnyRole(['manager' satisfies Role]))
 
 async function loadData() {
   const [building, contractsResponse, remindersResponse] = await Promise.all([
@@ -135,7 +137,7 @@ const effectiveStatus = effectiveContractStatus
 
 function reminderUrgency(dateStr: string): 'high' | 'medium' | 'low' {
   const d = daysUntil(dateStr)
-  return d <= 15 ? 'high' : d <= 45 ? 'medium' : 'low'
+  return d <= REMINDER_URGENCY_HIGH_DAYS ? 'high' : d <= REMINDER_URGENCY_MEDIUM_DAYS ? 'medium' : 'low'
 }
 
 function reminderTone(urgency: 'high' | 'medium' | 'low'): 'err' | 'warn' | 'muted' {
@@ -145,9 +147,9 @@ function reminderTone(urgency: 'high' | 'medium' | 'low'): 'err' | 'warn' | 'mut
 }
 
 function statusVariant(status: ContractStatus): 'open' | 'pending' | 'closed' | 'default' {
-  if (status === 'active') return 'open'
-  if (status === 'draft') return 'pending'
-  if (status === 'terminated' || status === 'expired') return 'closed'
+  if (status === CONTRACT_STATUS_ACTIVE) return 'open'
+  if (status === CONTRACT_STATUS_DRAFT) return 'pending'
+  if (status === CONTRACT_STATUS_TERMINATED || status === CONTRACT_STATUS_EXPIRED) return 'closed'
   return 'default'
 }
 
@@ -185,7 +187,7 @@ function contractTypeTone(type: ContractType) {
 }
 
 function contractIconTone(contract: VendorContract): string {
-  if (effectiveStatus(contract) !== 'active') return 'tone--disabled'
+  if (effectiveStatus(contract) !== CONTRACT_STATUS_ACTIVE) return 'tone--disabled'
   return contractTypeTone(contract.contract_type)
 }
 
@@ -195,8 +197,8 @@ const contracts = computed(() => {
   return [...allContracts.value]
     .filter((contract) => {
       const currentStatus = effectiveStatus(contract)
-      if (filter.value === 'active' && currentStatus !== 'active') return false
-      if (filter.value === 'expired' && currentStatus === 'active') return false
+      if (filter.value === 'active' && currentStatus !== CONTRACT_STATUS_ACTIVE) return false
+      if (filter.value === 'expired' && currentStatus === CONTRACT_STATUS_ACTIVE) return false
 
       if (selectedTypes.value.length > 0 && !selectedTypes.value.includes(contract.contract_type)) {
         return false
@@ -260,7 +262,7 @@ const contractCounts = computed(() =>
   allContracts.value.reduce(
     (counts, contract) => {
       counts.all += 1
-      if (effectiveStatus(contract) === 'active') {
+      if (effectiveStatus(contract) === CONTRACT_STATUS_ACTIVE) {
         counts.active += 1
       } else {
         counts.expired += 1
@@ -272,7 +274,7 @@ const contractCounts = computed(() =>
 )
 
 const contractTabs = computed(() => [
-  { key: 'all', label: t('common.allMasc'), count: contractCounts.value.all },
+  { key: ALL_FILTER, label: t('common.allMasc'), count: contractCounts.value.all },
   { key: 'active', label: t('contracts.filters.active'), count: contractCounts.value.active },
   { key: 'expired', label: t('contracts.filters.expired'), count: contractCounts.value.expired },
 ])
@@ -531,7 +533,7 @@ async function activateContract(contract: VendorContract) {
           >
             <template #actions>
               <CBtn
-                v-if="canManage && ['active', 'all'].includes(filter)"
+                v-if="canManage && ['active', ALL_FILTER].includes(filter)"
                 variant="primary"
                 :icon="CIconPlus"
                 :title="t('contracts.create')"
@@ -583,10 +585,10 @@ async function activateContract(contract: VendorContract) {
           <CCard
             v-for="contract in contracts"
             :key="contract.id"
-            :shadow="effectiveStatus(contract) === 'active'"
+            :shadow="effectiveStatus(contract) === CONTRACT_STATUS_ACTIVE"
             gap="sm"
             interactive
-            :class="[{ 'outline outline-1 outline-outline-variant': effectiveStatus(contract) !== 'active' }]"
+            :class="[{ 'outline outline-1 outline-outline-variant': effectiveStatus(contract) !== CONTRACT_STATUS_ACTIVE }]"
             @click="openContractDetail(contract)"
           >
             <div class="flex items-center gap-3 min-w-0">
@@ -685,7 +687,7 @@ async function activateContract(contract: VendorContract) {
 
               <CCardActions v-if="canManage">
                 <CBtn
-                  v-if="effectiveStatus(contract) === 'draft'"
+                  v-if="effectiveStatus(contract) === CONTRACT_STATUS_DRAFT"
                   variant="primary"
                   size="sm"
                   :icon="CIconCheck"
@@ -702,7 +704,7 @@ async function activateContract(contract: VendorContract) {
                   @click="openEditModal(contract)"
                 />
                 <CBtn
-                  v-if="effectiveStatus(contract) === 'active'"
+                  v-if="effectiveStatus(contract) === CONTRACT_STATUS_ACTIVE"
                   variant="ghost"
                   size="sm"
                   :icon="CIconEdit"
@@ -710,7 +712,7 @@ async function activateContract(contract: VendorContract) {
                   @click="openAmendModal(contract)"
                 />
                 <CBtn
-                  v-if="contract.predecessor_id || effectiveStatus(contract) !== 'draft'"
+                  v-if="contract.predecessor_id || effectiveStatus(contract) !== CONTRACT_STATUS_DRAFT"
                   variant="ghost"
                   size="sm"
                   :icon="CIconHistory"
@@ -718,7 +720,7 @@ async function activateContract(contract: VendorContract) {
                   @click="openChainModal(contract)"
                 />
                 <CBtn
-                  v-if="effectiveStatus(contract) === 'active'"
+                  v-if="effectiveStatus(contract) === CONTRACT_STATUS_ACTIVE"
                   variant="danger"
                   size="sm"
                   :icon="CIconArchive"
@@ -728,7 +730,7 @@ async function activateContract(contract: VendorContract) {
               </CCardActions>
               <CCardActions v-else>
                 <CBtn
-                  v-if="contract.predecessor_id || effectiveStatus(contract) !== 'draft'"
+                  v-if="contract.predecessor_id || effectiveStatus(contract) !== CONTRACT_STATUS_DRAFT"
                   variant="ghost"
                   size="sm"
                   :icon="CIconHistory"

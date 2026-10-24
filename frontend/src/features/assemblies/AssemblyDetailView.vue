@@ -11,11 +11,32 @@ import type {
   MeetingAttendance,
   MeetingAttendanceMode,
   MeetingDocument,
+  MeetingStatus,
   MeetingType,
   Resolution,
   VoteResult,
   VoteType,
 } from '@/types/domain'
+import {
+  MEETING_ATTENDANCE_MODE_ABSENT,
+  MEETING_ATTENDANCE_MODE_CORRESPONDENCE,
+  MEETING_ATTENDANCE_MODE_PRESENT,
+  MEETING_ATTENDANCE_MODE_PROXY,
+  MEETING_DOCUMENT_KIND_ATTACHMENT,
+  MEETING_DOCUMENT_KIND_NOTICE,
+  MEETING_STATUS_CALLED,
+  MEETING_STATUS_CLOSED,
+  MEETING_STATUS_DRAFT,
+  MEETING_STATUS_ONGOING,
+  RESOLUTION_EDITABLE_MEETING_STATUSES,
+  RESOLUTION_STATUS_PASSED,
+  RESOLUTION_STATUS_PENDING,
+  RESOLUTION_STATUS_REJECTED,
+  SESSION_ACTIVE_MEETING_STATUSES,
+  VOTE_TYPE_ABSOLUTE_MAJORITY,
+  VOTE_TYPE_DOUBLE_MAJORITY,
+  VOTE_TYPE_SIMPLE_MAJORITY,
+} from '@/utils/constants'
 import { documentsApi, meetingsApi } from '@/api'
 import { useBuildingStore } from '@/stores/building'
 import CIconBell from '@/components/atoms/CIconBell.svg'
@@ -123,16 +144,16 @@ const art24SourceResolution = ref<Resolution | null>(null)
 const showArt25Modal = ref(false)
 const art25SourceResolution = ref<Resolution | null>(null)
 
-const canManageResolutions = computed(() => auth.isManager && meeting.value?.status === 'draft')
-const canManageVotes = computed(() => auth.isManager && ['ongoing'].includes(meeting.value?.status ?? ''))
-const canEditResolution = computed(() => auth.isManager && ['draft', 'ongoing'].includes(meeting.value?.status ?? ''))
-const canEditAttendance = computed(() => auth.isManager && meeting.value?.status === 'ongoing')
+const canManageResolutions = computed(() => auth.isManager && meeting.value?.status === MEETING_STATUS_DRAFT)
+const canManageVotes = computed(() => auth.isManager && meeting.value?.status === MEETING_STATUS_ONGOING)
+const canEditResolution = computed(() => auth.isManager && (RESOLUTION_EDITABLE_MEETING_STATUSES as readonly MeetingStatus[]).includes(meeting.value?.status as MeetingStatus))
+const canEditAttendance = computed(() => auth.isManager && meeting.value?.status === MEETING_STATUS_ONGOING)
 const sortedAttendanceEntries = computed(() =>
   [...attendance.value.entries].sort((a, b) => parseInt(a.unit_number, 10) - parseInt(b.unit_number, 10))
 )
-const attendingUnits = computed(() => sortedAttendanceEntries.value.filter(e => e.mode !== 'absent'))
-const noticeDocuments = computed(() => documents.value.filter(document => document.kind === 'notice'))
-const attachmentDocuments = computed(() => documents.value.filter(document => document.kind === 'attachment'))
+const attendingUnits = computed(() => sortedAttendanceEntries.value.filter(e => e.mode !== MEETING_ATTENDANCE_MODE_ABSENT))
+const noticeDocuments = computed(() => documents.value.filter(document => document.kind === MEETING_DOCUMENT_KIND_NOTICE))
+const attachmentDocuments = computed(() => documents.value.filter(document => document.kind === MEETING_DOCUMENT_KIND_ATTACHMENT))
 const isMeetingPast = computed(() => {
   if (!meeting.value) return false
   return new Date(meeting.value.meeting_date).getTime() < Date.now()
@@ -140,10 +161,10 @@ const isMeetingPast = computed(() => {
 const topbarActionState = computed<'none' | 'draft' | 'called-waiting' | 'called-startable' | 'ongoing' | 'closed'>(() => {
   if (!auth.isManager || !meeting.value) return 'none'
 
-  if (meeting.value.status === 'draft') return 'draft'
-  if (meeting.value.status === 'closed') return 'closed'
-  if (meeting.value.status === 'ongoing') return 'ongoing'
-  if (meeting.value.status === 'called') {
+  if (meeting.value.status === MEETING_STATUS_DRAFT) return 'draft'
+  if (meeting.value.status === MEETING_STATUS_CLOSED) return 'closed'
+  if (meeting.value.status === MEETING_STATUS_ONGOING) return 'ongoing'
+  if (meeting.value.status === MEETING_STATUS_CALLED) {
     return isMeetingPast.value ? 'called-startable' : 'called-waiting'
   }
 
@@ -158,8 +179,8 @@ const hasSharesTotalMismatch = computed(() =>
 )
 const quorumReached = computed(() => attendance.value.present_units >= 1)
 const attendanceFillStyle = computed(() => ({ width: `${Math.min(attendancePct.value, 100)}%` }))
-const resolvedResolutionCount = computed(() => resolutions.value.filter(resolution => resolution.status !== 'pending').length)
-const pendingResolutionCount = computed(() => resolutions.value.filter(resolution => resolution.status === 'pending').length)
+const resolvedResolutionCount = computed(() => resolutions.value.filter(resolution => resolution.status !== RESOLUTION_STATUS_PENDING).length)
+const pendingResolutionCount = computed(() => resolutions.value.filter(resolution => resolution.status === RESOLUTION_STATUS_PENDING).length)
 const agendaItems = computed(() => {
   if (meeting.value?.agenda?.trim()) {
     return meeting.value.agenda
@@ -295,15 +316,15 @@ type BadgeVariant = 'open' | 'pending' | 'closed' | 'disabled' | 'valid' | 'err'
 type MeetingBannerState = 'draft' | 'called' | 'ongoing' | 'closed'
 
 function meetingStatusVariant(status: Meeting['status']): BadgeVariant {
-  if (status === 'called') return 'primary'
-  if (status === 'ongoing' || status === 'closed') return 'valid'
+  if (status === MEETING_STATUS_CALLED) return 'primary'
+  if (status === MEETING_STATUS_ONGOING || status === MEETING_STATUS_CLOSED) return 'valid'
   return 'disabled'
 }
 
 function meetingState(status: Meeting['status']): MeetingBannerState {
-  if (status === 'closed') return 'closed'
-  if (status === 'ongoing') return 'ongoing'
-  if (status === 'called') return 'called'
+  if (status === MEETING_STATUS_CLOSED) return 'closed'
+  if (status === MEETING_STATUS_ONGOING) return 'ongoing'
+  if (status === MEETING_STATUS_CALLED) return 'called'
   return 'draft'
 }
 
@@ -336,17 +357,17 @@ function meetingBannerSubtitle(status: Meeting['status']): string {
 }
 
 function hasFinalVoteResult(status: Resolution['status']): boolean {
-  return status === 'passed' || status === 'rejected'
+  return status === RESOLUTION_STATUS_PASSED || status === RESOLUTION_STATUS_REJECTED
 }
 
 function voteResultSubtitle(resolution: Resolution, result: VoteResult): string {
-  if (resolution.vote_type === 'simple_majority') {
+  if (resolution.vote_type === VOTE_TYPE_SIMPLE_MAJORITY) {
     return t(`meetings.vote.explanations.simple_majority.${result.passed ? 'passed' : 'rejected'}`, {
       threshold: result.threshold,
     })
   }
 
-  if (resolution.vote_type === 'absolute_majority') {
+  if (resolution.vote_type === VOTE_TYPE_ABSOLUTE_MAJORITY) {
     return t(`meetings.vote.explanations.absolute_majority.${result.passed ? 'passed' : 'rejected'}`, {
       threshold: result.threshold,
     })
@@ -368,8 +389,8 @@ function resolutionStatusLabel(status: Resolution['status']): string {
 }
 
 function resolutionStatusVariant(status: Resolution['status']): BadgeVariant {
-  if (status === 'passed') return 'valid'
-  if (status === 'rejected') return 'err'
+  if (status === RESOLUTION_STATUS_PASSED) return 'valid'
+  if (status === RESOLUTION_STATUS_REJECTED) return 'err'
   return 'disabled'
 }
 
@@ -380,14 +401,14 @@ function voteTypeLabel(voteType: VoteType): string {
 }
 
 function voteTypeVariant(voteType: VoteType): BadgeVariant {
-  if (voteType === 'simple_majority') return 'primary'
-  if (voteType === 'absolute_majority' || voteType === 'double_majority') return 'default'
+  if (voteType === VOTE_TYPE_SIMPLE_MAJORITY) return 'primary'
+  if (voteType === VOTE_TYPE_ABSOLUTE_MAJORITY || voteType === VOTE_TYPE_DOUBLE_MAJORITY) return 'default'
   return 'disabled'
 }
 
 function voteTypeClass(voteType: VoteType): string {
-  if (voteType === 'absolute_majority') return 'chip-art25'
-  if (voteType === 'double_majority') return 'chip-art26'
+  if (voteType === VOTE_TYPE_ABSOLUTE_MAJORITY) return 'chip-art25'
+  if (voteType === VOTE_TYPE_DOUBLE_MAJORITY) return 'chip-art26'
   return ''
 }
 
@@ -397,7 +418,7 @@ function votePct(value: number, total: number): number {
 }
 
 function showsAbstentionTallyPercent(voteType: VoteType): boolean {
-  return voteType !== 'simple_majority'
+  return voteType !== VOTE_TYPE_SIMPLE_MAJORITY
 }
 
 function attendanceModeLabel(mode: MeetingAttendanceMode): string {
@@ -405,9 +426,9 @@ function attendanceModeLabel(mode: MeetingAttendanceMode): string {
 }
 
 function attendanceModeVariant(mode: MeetingAttendanceMode): BadgeVariant {
-  if (mode === 'present') return 'valid'
-  if (mode === 'proxy') return 'pending'
-  if (mode === 'correspondence') return 'primary'
+  if (mode === MEETING_ATTENDANCE_MODE_PRESENT) return 'valid'
+  if (mode === MEETING_ATTENDANCE_MODE_PROXY) return 'pending'
+  if (mode === MEETING_ATTENDANCE_MODE_CORRESPONDENCE) return 'primary'
   return 'disabled'
 }
 
@@ -451,7 +472,7 @@ async function handleVoteSaved(payload: { resolutionId: string; result: VoteResu
   if (payload.finalized && payload.result) {
     resolutions.value = resolutions.value.map(r =>
       r.id === payload.resolutionId
-        ? { ...r, status: payload.result!.passed ? 'passed' : 'rejected' }
+        ? { ...r, status: payload.result!.passed ? RESOLUTION_STATUS_PASSED : RESOLUTION_STATUS_REJECTED }
         : r,
     )
   }
@@ -639,7 +660,7 @@ function openArt25Modal(resolution: Resolution) {
             <CBadge
               :variant="meetingStatusVariant(meeting.status)"
               dot
-              :pulse="meeting.status === 'called'"
+              :pulse="meeting.status === MEETING_STATUS_CALLED"
             >
               {{ meetingStatusLabel(meeting.status) }}
             </CBadge>
@@ -853,9 +874,9 @@ function openArt25Modal(resolution: Resolution) {
                 <div class="resolution-card__header">
                   <div
                     :class="['resolution-number',
-                             resolution.status === 'passed' ? 'tone--accent' 
+                             resolution.status === RESOLUTION_STATUS_PASSED ? 'tone--accent' 
                              : voteResults[resolution.id]?.eligible_for_second_vote != null ? 'tone--warn' 
-                               : resolution.status === 'rejected' ? 'tone--disabled' 
+                               : resolution.status === RESOLUTION_STATUS_REJECTED ? 'tone--disabled' 
                                  : '',
                     ]"
                   >
@@ -897,7 +918,7 @@ function openArt25Modal(resolution: Resolution) {
                     {{ t('meetings.vote.tally') }}
                   </p>
                   <p
-                    v-if="resolution.status === 'pending'"
+                    v-if="resolution.status === RESOLUTION_STATUS_PENDING"
                     class="text-2xs text-on-surface-variant"
                   >
                     {{ t('meetings.vote.inProgress') }}
@@ -1013,14 +1034,14 @@ function openArt25Modal(resolution: Resolution) {
                     @click="promptDeleteResolution(resolution)"
                   />
                   <CBtn
-                    v-if="voteResults[resolution.id]?.eligible_for_second_vote === 'art_25_1' && meeting?.status === 'ongoing'"
+                    v-if="voteResults[resolution.id]?.eligible_for_second_vote === 'art_25_1' && meeting?.status === MEETING_STATUS_ONGOING"
                     size="sm"
                     variant="ghost"
                     :title="t('meetings.createArt24')"
                     @click="openArt24Modal(resolution)"
                   />
                   <CBtn
-                    v-if="voteResults[resolution.id]?.eligible_for_second_vote === 'art_26_1' && meeting?.status === 'ongoing'"
+                    v-if="voteResults[resolution.id]?.eligible_for_second_vote === 'art_26_1' && meeting?.status === MEETING_STATUS_ONGOING"
                     size="sm"
                     variant="ghost"
                     :title="t('meetings.createArt25')"
@@ -1040,7 +1061,7 @@ function openArt25Modal(resolution: Resolution) {
 
           <aside class="side-column">
             <CCard
-              v-if="meeting && ['ongoing', 'closed'].includes(meeting.status)"
+              v-if="meeting && (SESSION_ACTIVE_MEETING_STATUSES as readonly MeetingStatus[]).includes(meeting.status)"
               class="session-roles-card"
             >
               <CHeading type="card">

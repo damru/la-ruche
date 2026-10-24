@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { DEFAULT_DOCUMENT_VISIBLE_ROLES } from '@/utils/constants'
 import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import CModal from '@/components/molecules/CModal.vue'
@@ -58,7 +59,7 @@ async function uploadPhoto(reportId: string, file: File): Promise<void> {
     original_name: file.name,
     mime_type: mimeType,
     size_bytes: file.size,
-    visible_roles: ['manager', 'board_member', 'co_owner'],
+    visible_roles: [...DEFAULT_DOCUMENT_VISIBLE_ROLES],
   })
   await reportsApi.attachDocument(reportId, docRes.data.id)
 }

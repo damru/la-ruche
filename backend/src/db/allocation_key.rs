@@ -3,7 +3,13 @@ use serde::Serialize;
 use sqlx::{PgPool, Postgres};
 use uuid::Uuid;
 
-use crate::db::audit::{self, NewAuditEntry};
+use crate::db::audit::{self, NewAuditEntry, entity_type};
+
+/// `allocation_key_type` values (PG enum `allocation_key_type`).
+pub mod key_type {
+    pub const GENERAL: &str = "general";
+    pub const SPECIAL: &str = "special";
+}
 
 #[derive(Debug, Serialize, sqlx::FromRow)]
 pub struct AllocationKeyRow {
@@ -84,7 +90,7 @@ pub async fn create(
         &mut *tx,
         NewAuditEntry {
             building_id,
-            entity_type: "allocation_key",
+            entity_type: entity_type::ALLOCATION_KEY,
             entity_id: row.id,
             operation: "allocation_key.created",
             changed_by: Some(user_id),
@@ -148,7 +154,7 @@ pub async fn update(
         &mut *tx,
         NewAuditEntry {
             building_id,
-            entity_type: "allocation_key",
+            entity_type: entity_type::ALLOCATION_KEY,
             entity_id: row.id,
             operation: "allocation_key.updated",
             changed_by: Some(user_id),
@@ -207,7 +213,7 @@ pub async fn delete(
         Some(key) => key,
     };
 
-    if key.key_type == "general" {
+    if key.key_type == key_type::GENERAL {
         return Err(crate::errors::AppError::conflict_code(
             "errors.allocation_keys.general_key_protected",
         ));
@@ -244,7 +250,7 @@ pub async fn delete(
         &mut *tx,
         NewAuditEntry {
             building_id,
-            entity_type: "allocation_key",
+            entity_type: entity_type::ALLOCATION_KEY,
             entity_id: id,
             operation: "allocation_key.deleted",
             changed_by: Some(user_id),
@@ -467,7 +473,7 @@ pub async fn set_share(
         &mut *tx,
         NewAuditEntry {
             building_id,
-            entity_type: "allocation_key",
+            entity_type: entity_type::ALLOCATION_KEY,
             entity_id: key_id,
             operation: "allocation_key.share_set",
             changed_by: Some(user_id),

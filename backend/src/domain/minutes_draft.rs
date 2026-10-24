@@ -22,6 +22,22 @@
 
 use chrono::{DateTime, Utc};
 
+/// `general_meeting_attendance.mode` values (PG enum `meeting_attendance_mode`).
+pub mod attendance_mode {
+    pub const PRESENT: &str = "present";
+    pub const PROXY: &str = "proxy";
+    pub const CORRESPONDENCE: &str = "correspondence";
+    pub const ABSENT: &str = "absent";
+}
+
+/// `vote.position` values (PG enum `vote_position`).
+pub mod vote_position {
+    pub const IN_FAVOR: &str = "in_favor";
+    pub const AGAINST: &str = "against";
+    pub const ABSTAIN: &str = "abstain";
+    pub const NON_VOTER: &str = "non_voter";
+}
+
 /// Full context for rendering the draft PV of a closed AG.
 #[derive(Debug, Clone)]
 pub struct MinutesContext {
@@ -157,7 +173,14 @@ pub fn render(ctx: &MinutesContext) -> String {
         let shares_present_and_represented: i32 = ctx
             .attendance
             .iter()
-            .filter(|a| a.mode == "present" || a.mode == "proxy" || a.mode == "correspondence")
+            .filter(|a| {
+                matches!(
+                    a.mode.as_str(),
+                    attendance_mode::PRESENT
+                        | attendance_mode::PROXY
+                        | attendance_mode::CORRESPONDENCE
+                )
+            })
             .map(|a| a.shares)
             .sum();
 
@@ -179,7 +202,12 @@ pub fn render(ctx: &MinutesContext) -> String {
             ));
         }
 
-        for mode in ["present", "proxy", "correspondence", "absent"] {
+        for mode in [
+            attendance_mode::PRESENT,
+            attendance_mode::PROXY,
+            attendance_mode::CORRESPONDENCE,
+            attendance_mode::ABSENT,
+        ] {
             let lines: Vec<&MinutesAttendanceLine> =
                 ctx.attendance.iter().filter(|a| a.mode == mode).collect();
             if lines.is_empty() {
@@ -187,7 +215,7 @@ pub fn render(ctx: &MinutesContext) -> String {
             }
             out.push_str(&format!("### {}\n\n", humanize_mode(mode)));
             for line in lines {
-                let rep_suffix = if line.mode == "proxy" {
+                let rep_suffix = if line.mode == attendance_mode::PROXY {
                     line.representative_name
                         .as_deref()
                         .map(|r| format!(" — représenté·e par {}", r))
@@ -252,17 +280,17 @@ pub fn render(ctx: &MinutesContext) -> String {
             let opposants: Vec<&MinutesVoteDetail> = r
                 .vote_details
                 .iter()
-                .filter(|v| v.position == "against")
+                .filter(|v| v.position == vote_position::AGAINST)
                 .collect();
             let abstentions_detail: Vec<&MinutesVoteDetail> = r
                 .vote_details
                 .iter()
-                .filter(|v| v.position == "abstain")
+                .filter(|v| v.position == vote_position::ABSTAIN)
                 .collect();
             let non_voters: Vec<&MinutesVoteDetail> = r
                 .vote_details
                 .iter()
-                .filter(|v| v.position == "non_voter")
+                .filter(|v| v.position == vote_position::NON_VOTER)
                 .collect();
             if !opposants.is_empty() {
                 out.push_str("- **Opposants :**\n");

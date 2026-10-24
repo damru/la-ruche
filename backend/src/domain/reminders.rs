@@ -2,6 +2,33 @@
 /// Pure logic -- no I/O.
 use chrono::{Days, Months, NaiveDate};
 
+/// Days before contract end_date to schedule the expiration reminder.
+const EXPIRATION_REMINDER_LEAD_DAYS: u64 = 30;
+/// Extra margin (in days) subtracted from the notice period for the
+/// termination reminder, so it fires before the legal notice deadline.
+const TERMINATION_REMINDER_MARGIN_DAYS: u64 = 15;
+/// Days before the next payment date to surface it as a visible reminder.
+pub const PAYMENT_REMINDER_LEAD_DAYS: u64 = 30;
+/// Days before a contract end to surface end-of-contract reminders.
+pub const CONTRACT_END_LEAD_DAYS: u64 = 90;
+/// Days before a payment due date to schedule the payment reminder.
+const PAYMENT_DUE_REMINDER_LEAD_DAYS: u64 = 7;
+/// Fallback contract duration (months) when no end_date is set, used to
+/// bound the payment reminder generation loop.
+const OPEN_ENDED_CONTRACT_MONTHS: u32 = 12;
+
+/// Months between two payment reminders for each `payment_frequency` value
+/// (PG enum `payment_frequency`).
+pub fn payment_frequency_to_months(frequency: &str) -> Option<u32> {
+    match frequency {
+        "monthly" => Some(1),
+        "quarterly" => Some(3),
+        "biannual" => Some(6),
+        "annual" => Some(12),
+        _ => None,
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ReminderKind {
     Renewal,
@@ -37,7 +64,7 @@ pub fn compute_reminders(
         && end_date > today
     {
         // Expiration reminder -- 30 days before end_date
-        if let Some(date) = end_date.checked_sub_days(Days::new(30)) {
+        if let Some(date) = end_date.checked_sub_days(Days::new(EXPIRATION_REMINDER_LEAD_DAYS)) {
             reminders.push(PendingReminder {
                 kind: ReminderKind::Expiration,
                 reminder_date: date.max(today),
@@ -47,8 +74,8 @@ pub fn compute_reminders(
         if contract.auto_renewal
             && let Some(notice) = contract.notice_days
         {
-            // Termination reminder = end_date - notice - 15-day margin
-            let margin = notice as u64 + 15;
+            // Termination reminder = end_date - notice - legal margin
+            let margin = notice as u64 + TERMINATION_REMINDER_MARGIN_DAYS;
             if let Some(date) = end_date.checked_sub_days(Days::new(margin))
                 && date > today
             {
@@ -72,14 +99,17 @@ pub fn compute_reminders(
 
     // Payment due reminders
     if let Some(freq_months) = contract.payment_frequency_months {
-        let effective_end = contract
-            .end_date
-            .unwrap_or_else(|| today.checked_add_months(Months::new(12)).unwrap_or(today));
+        let effective_end = contract.end_date.unwrap_or_else(|| {
+            today
+                .checked_add_months(Months::new(OPEN_ENDED_CONTRACT_MONTHS))
+                .unwrap_or(today)
+        });
 
         let mut next = contract.start_date;
         while next <= effective_end {
             if next > today
-                && let Some(reminder_date) = next.checked_sub_days(Days::new(7))
+                && let Some(reminder_date) =
+                    next.checked_sub_days(Days::new(PAYMENT_DUE_REMINDER_LEAD_DAYS))
                 && reminder_date > today
             {
                 reminders.push(PendingReminder {

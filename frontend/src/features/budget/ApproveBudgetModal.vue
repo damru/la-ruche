@@ -13,6 +13,7 @@ import { useAutoClose } from '@/composables/useAutoClose'
 import { useFormatters } from '@/composables/useFormatters'
 import { toErrorMessage } from '@/composables/usePageLoader'
 import type { Meeting } from '@/types/domain'
+import { MEETING_STATUS_CLOSED } from '@/utils/constants'
 
 const props = defineProps<{
   open: boolean
@@ -40,7 +41,7 @@ const form = reactive({ approval_meeting_id: '' })
 // choice that would be rejected.
 const meetingOptions = computed(() =>
   meetings.value
-    .filter(m => m.status === 'closed')
+    .filter(m => m.status === MEETING_STATUS_CLOSED)
     .map(m => ({ value: m.id, label: `${formatDate(m.meeting_date)} — ${t(`meetings.typeLabel.${m.meeting_type}`)}` })),
 )
 

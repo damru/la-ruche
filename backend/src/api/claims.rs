@@ -8,7 +8,7 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::{
-    db::{self, AppState},
+    db::{self, AppState, claim::CLAIM_STATUS_OPEN},
     domain::{AuthUser, Role},
     errors::{AppError, AppResult, json_value},
 };
@@ -55,7 +55,7 @@ pub async fn update(
     let imm_status = if existing.transmitted_at.is_some() {
         "transmitted"
     } else {
-        "open"
+        CLAIM_STATUS_OPEN
     };
     crate::domain::immutability::assert_mutable(
         &crate::domain::immutability::Entity::Claim,
@@ -80,7 +80,7 @@ pub async fn delete(
     let imm_status = if existing.transmitted_at.is_some() {
         "transmitted"
     } else {
-        "open"
+        CLAIM_STATUS_OPEN
     };
     crate::domain::immutability::assert_mutable(
         &crate::domain::immutability::Entity::Claim,

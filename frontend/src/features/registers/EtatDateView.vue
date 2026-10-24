@@ -17,6 +17,7 @@ import EtatDateSnapshotModal from '@/features/registers/EtatDateSnapshotModal.vu
 import { etatDateApi, unitsApi } from '@/api'
 import { useBuildingStore } from '@/stores/building'
 import type { EtatDateRequest, Unit } from '@/types/domain'
+import { ETAT_DATE_STATUS_GENERATED, ETAT_DATE_STATUS_REQUESTED, ETAT_DATE_STATUS_SENT } from '@/utils/constants'
 import { toErrorMessage } from '@/composables/usePageLoader'
 
 const { t } = useI18n()
@@ -48,14 +49,14 @@ function unitNumber(unitId: string): string {
 }
 
 function statusVariant(status: EtatDateRequest['status']): 'pending' | 'valid' | 'default' | 'err' {
-  if (status === 'requested') return 'pending'
-  if (status === 'generated') return 'valid'
-  if (status === 'sent') return 'default'
+  if (status === ETAT_DATE_STATUS_REQUESTED) return 'pending'
+  if (status === ETAT_DATE_STATUS_GENERATED) return 'valid'
+  if (status === ETAT_DATE_STATUS_SENT) return 'default'
   return 'err'
 }
 
 function isOverdue(request: EtatDateRequest): boolean {
-  return request.status === 'requested' && request.due_date < new Date().toISOString().slice(0, 10)
+  return request.status === ETAT_DATE_STATUS_REQUESTED && request.due_date < new Date().toISOString().slice(0, 10)
 }
 
 const columns = computed(() => [
@@ -184,11 +185,11 @@ function viewSnapshot(request: EtatDateRequest) {
             <template #cell-actions="{ row }">
               <div class="action-btns">
                 <CBtn
-                  v-if="row.status !== 'sent'"
+                  v-if="row.status !== ETAT_DATE_STATUS_SENT"
                   variant="ghost"
                   size="sm"
                   :loading="generatingId === row.id"
-                  :title="row.status === 'requested' ? t('budget.generate') : t('registers.etatDate.regenerate')"
+                  :title="row.status === ETAT_DATE_STATUS_REQUESTED ? t('budget.generate') : t('registers.etatDate.regenerate')"
                   @click="generate(row)"
                 />
                 <CBtn

@@ -5,6 +5,7 @@ import { useFormatters } from '@/composables/useFormatters'
 import { usePageLoader, toErrorMessage } from '@/composables/usePageLoader'
 import { useConfirm } from '@/composables/useConfirm'
 import { useAuthStore } from '@/stores/auth'
+import { usePermissions } from '@/composables/usePermissions'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CCard from '@/components/molecules/CCard.vue'
@@ -27,21 +28,23 @@ import CloseConsultationModal from './CloseConsultationModal.vue'
 import DeleteConsultationModal from './DeleteConsultationModal.vue'
 import { consultationsApi } from '@/api'
 import { useBuildingStore } from '@/stores/building'
-import type { Consultation } from '@/types/domain'
+import type { Consultation, PollStatus } from '@/types/domain'
+import { ALL_FILTER, POLL_STATUS_CLOSED, POLL_STATUS_DRAFT, POLL_STATUS_OPEN } from '@/utils/constants'
 
 const { t } = useI18n()
 const { formatDate, formatRelative } = useFormatters()
 const authStore = useAuthStore()
+const perms = usePermissions()
 const { confirm } = useConfirm()
 
 // Managers and board members manage consultations (close, remind, delete others).
-const canManage = computed(() => authStore.hasAnyRole(['manager', 'board_member']))
+const canManage = perms.canManageConsultation
 // Any authenticated user can create a consultation (EP-010: initiable par tout resident).
 const canCreate = computed(() => authStore.isAuthenticated)
 
 const buildingName = ref('')
 const allConsultations = ref<Consultation[]>([])
-const statusFilter = ref<'all' | 'draft' | 'open' | 'closed'>('all')
+const statusFilter = ref<typeof ALL_FILTER | PollStatus>(ALL_FILTER)
 const pageError = ref('')
 
 // ── Create / edit modal ──
@@ -91,7 +94,7 @@ function getTotalVotes(c: Consultation): number {
 
 function barWidth(c: Consultation, votes: number): number {
   // Only show filled bars if user has already voted OR consultation is closed
-  if (!(hasVoted(c) || c.status === 'closed')) return 0
+  if (!(hasVoted(c) || c.status === POLL_STATUS_CLOSED)) return 0
   const totalVotes = getTotalVotes(c)
   if (totalVotes === 0) return 0
   return Math.round(votes * 100 / totalVotes)
@@ -120,7 +123,7 @@ async function loadData() {
     const counts: Record<string, number> = {}
     await Promise.all(
       allConsultations.value
-        .filter(c => c.status === 'open')
+        .filter(c => c.status === POLL_STATUS_OPEN)
         .map(async (c) => {
           try {
             const res = await consultationsApi.nonRespondents(c.id)
@@ -158,17 +161,17 @@ watch(statusFilter, () => {
 })
 
 const consultations = computed(() =>
-  allConsultations.value.filter(c => statusFilter.value === 'all' || c.status === statusFilter.value)
+  allConsultations.value.filter(c => statusFilter.value === ALL_FILTER || c.status === statusFilter.value)
     .slice().sort((left, right) => right.updated_at.localeCompare(left.updated_at)),
 )
 const allCount = computed(() => allConsultations.value.length)
-const openCount = computed(() => allConsultations.value.filter(c => c.status === 'open').length)
-const closedCount = computed(() => allConsultations.value.filter(c => c.status === 'closed').length)
+const openCount = computed(() => allConsultations.value.filter(c => c.status === POLL_STATUS_OPEN).length)
+const closedCount = computed(() => allConsultations.value.filter(c => c.status === POLL_STATUS_CLOSED).length)
 const myDrafts = computed(() =>
-  allConsultations.value.filter(c => c.status === 'draft' && c.created_by === authStore.user?.user_id),
+  allConsultations.value.filter(c => c.status === POLL_STATUS_DRAFT && c.created_by === authStore.user?.user_id),
 )
 const draftCount = computed(() =>
-  canManage.value ? allConsultations.value.filter(c => c.status === 'draft').length : myDrafts.value.length,
+  canManage.value ? allConsultations.value.filter(c => c.status === POLL_STATUS_DRAFT).length : myDrafts.value.length,
 )
 // The draft tab is shown to managers/board members or anyone owning at least one draft.
 const showDraftTab = computed(() => canManage.value || myDrafts.value.length > 0)
@@ -316,15 +319,15 @@ function openDeleteModal(c: Consultation) {
           v-model="statusFilter"
           variant="filter"
           :tabs="[
-            { value: 'all', label: t('consultations.filters.all'), count: allCount },
-            { value: 'open', label: t('consultations.filters.open'), count: openCount },
-            ...(showDraftTab ? [{ value: 'draft', label: t('consultations.filters.draft'), count: draftCount }] : []),
-            { value: 'closed', label: t('consultations.filters.closed'), count: closedCount },
+            { value: ALL_FILTER, label: t('consultations.filters.all'), count: allCount },
+            { value: POLL_STATUS_OPEN, label: t('consultations.filters.open'), count: openCount },
+            ...(showDraftTab ? [{ value: POLL_STATUS_DRAFT, label: t('consultations.filters.draft'), count: draftCount }] : []),
+            { value: POLL_STATUS_CLOSED, label: t('consultations.filters.closed'), count: closedCount },
           ]"
         />
         <template v-if="!consultations.length">
           <CEmptyState
-            :title="statusFilter === 'all' ? t('consultations.noAll') : statusFilter === 'draft' ? t('consultations.noDraft') : statusFilter === 'open' ? t('consultations.noOpen') : t('consultations.noClosed')"
+            :title="statusFilter === ALL_FILTER ? t('consultations.noAll') : statusFilter === POLL_STATUS_DRAFT ? t('consultations.noDraft') : statusFilter === POLL_STATUS_OPEN ? t('consultations.noOpen') : t('consultations.noClosed')"
             size="page"
           >
             <template 
@@ -345,11 +348,11 @@ function openDeleteModal(c: Consultation) {
             <CCard
               v-for="c in consultations"
               :key="c.id"
-              :shadow="c.status !== 'closed'"
-              :class="{ 'outline outline-1 outline-outline-variant': c.status === 'closed' }"
+              :shadow="c.status !== POLL_STATUS_CLOSED"
+              :class="{ 'outline outline-1 outline-outline-variant': c.status === POLL_STATUS_CLOSED }"
             >
               <CBadge
-                :variant="c.status === 'open' ? 'open' : c.status === 'draft' ? 'pending' : 'closed'"
+                :variant="c.status === POLL_STATUS_OPEN ? 'open' : c.status === POLL_STATUS_DRAFT ? 'pending' : 'closed'"
                 class="status-badge"
                 dot
               >
@@ -378,7 +381,7 @@ function openDeleteModal(c: Consultation) {
                 >
                   <!-- Column 1: checkbox (open) or plain label (closed/draft) -->
                   <CFormCheckbox
-                    v-if="c.status === 'open'"
+                    v-if="c.status === POLL_STATUS_OPEN"
                     v-model="getInline(c).selections"
                     :value="choice.id"
                     :label="choice.label"
@@ -395,21 +398,21 @@ function openDeleteModal(c: Consultation) {
                   <div class="result-bar-bg">
                     <div
                       class="result-bar"
-                      :class="{ 'result-bar--dim': !hasVoted(c) && c.status === 'open' }"
+                      :class="{ 'result-bar--dim': !hasVoted(c) && c.status === POLL_STATUS_OPEN }"
                       :style="{ width: barWidth(c, choice.votes) + '%' }"
                     ></div>
                   </div>
   
                   <!-- Column 3: percentage -->
                   <span class="choice-percent font-mono text-xs text-end">
-                    {{ hasVoted(c) || c.status === 'closed' ? (() => { const total = getTotalVotes(c); return total > 0 ? Math.round(choice.votes * 100 / total) : 0 })() + '%' : '—' }}
+                    {{ hasVoted(c) || c.status === POLL_STATUS_CLOSED ? (() => { const total = getTotalVotes(c); return total > 0 ? Math.round(choice.votes * 100 / total) : 0 })() + '%' : '—' }}
                   </span>
                 </div>
               </div>
   
               <!-- Response count -->
               <p
-                v-if="hasVoted(c) || c.status === 'closed'"
+                v-if="hasVoted(c) || c.status === POLL_STATUS_CLOSED"
                 class="body-xs response-count"
               >
                 {{ t('consultations.responseCount', { count: c.total_responses }) }}
@@ -417,7 +420,7 @@ function openDeleteModal(c: Consultation) {
   
               <!-- Inline vote form: comment + submit appear when ≥1 choice selected AND not locked -->
               <div
-                v-if="c.status === 'open' && getInline(c).selections.length > 0 && !isVoteLocked(c)"
+                v-if="c.status === POLL_STATUS_OPEN && getInline(c).selections.length > 0 && !isVoteLocked(c)"
                 class="inline-vote-form"
               >
                 <CFormTextarea
@@ -444,7 +447,7 @@ function openDeleteModal(c: Consultation) {
   
               <!-- Locked state: show "Modifier" button when already voted -->
               <div
-                v-if="c.status === 'open' && isVoteLocked(c)"
+                v-if="c.status === POLL_STATUS_OPEN && isVoteLocked(c)"
                 class="vote-locked-actions"
               >
                 <CBtn
@@ -457,16 +460,16 @@ function openDeleteModal(c: Consultation) {
   
               <!-- Date hint -->
               <p class="body-xs footer-meta">
-                {{ c.status === 'draft'
+                {{ c.status === POLL_STATUS_DRAFT
                   ? t('consultations.draftedAt', { date: formatRelative(c.updated_at) })
-                  : c.status === 'open'
+                  : c.status === POLL_STATUS_OPEN
                     ? t('consultations.openedAt', { date: formatRelative(c.created_at) })
                     : t('consultations.closedAt', { date: formatDate(c.closed_at!) }) }}
               </p>
 
               <!-- Non-respondents info (open consultations, managers only) -->
               <p
-                v-if="c.status === 'open' && canManage"
+                v-if="c.status === POLL_STATUS_OPEN && canManage"
                 class="body-xs response-count remind-info"
               >
                 {{ t('consultations.nonRespondents', { count: nonRespondentsCount[c.id] ?? 0 }) }}
@@ -477,7 +480,7 @@ function openDeleteModal(c: Consultation) {
 
               <!-- Draft actions: edit / open / delete -->
               <div
-                v-if="c.status === 'draft' && canManageDraft(c)"
+                v-if="c.status === POLL_STATUS_DRAFT && canManageDraft(c)"
                 class="card-actions"
               >
                 <CBtn
@@ -505,7 +508,7 @@ function openDeleteModal(c: Consultation) {
   
               <!-- Manager actions (open consultations): remind + close -->
               <div
-                v-if="c.status === 'open' && canManage"
+                v-if="c.status === POLL_STATUS_OPEN && canManage"
                 class="card-actions"
               >
                 <CBtn
@@ -528,7 +531,7 @@ function openDeleteModal(c: Consultation) {
   
               <!-- Manager delete action (closed consultations) -->
               <div
-                v-if="c.status === 'closed' && canManage"
+                v-if="c.status === POLL_STATUS_CLOSED && canManage"
                 class="card-actions"
               >
                 <CBtn

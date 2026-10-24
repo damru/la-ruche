@@ -5,7 +5,8 @@ import { useI18n } from 'vue-i18n'
 import { useFormatters } from '@/composables/useFormatters'
 import { usePageLoader } from '@/composables/usePageLoader'
 import { useAuthStore } from '@/stores/auth'
-import type { Meeting, MeetingType } from '@/types/domain'
+import type { Meeting, MeetingStatus, MeetingType } from '@/types/domain'
+import { ALL_FILTER, MEETING_STATUS_CALLED, MEETING_STATUS_CLOSED, MEETING_STATUS_ONGOING, MEETING_TYPE_ANNUAL } from '@/utils/constants'
 import { meetingsApi } from '@/api'
 import { useBuildingStore } from '@/stores/building'
 import CBadge from '@/components/atoms/CBadge.vue'
@@ -28,7 +29,8 @@ const auth = useAuthStore()
 
 const buildingName = ref('')
 const allMeetings = ref<Meeting[]>([])
-const filter = ref<'all' | 'upcoming' | 'closed'>('all')
+type MeetingFilter = typeof ALL_FILTER | 'upcoming' | MeetingStatus
+const filter = ref<MeetingFilter>(ALL_FILTER)
 
 const canManage = computed(() => auth.isManager)
 
@@ -47,18 +49,18 @@ const { loading, error, reload } = usePageLoader(loadData)
 onMounted(reload)
 
 const meetings = computed(() => {
-  if (filter.value === 'upcoming') return allMeetings.value.filter(meeting => meeting.status !== 'closed')
-  if (filter.value === 'closed') return allMeetings.value.filter(meeting => meeting.status === 'closed')
+  if (filter.value === 'upcoming') return allMeetings.value.filter(meeting => meeting.status !== MEETING_STATUS_CLOSED)
+  if (filter.value === MEETING_STATUS_CLOSED) return allMeetings.value.filter(meeting => meeting.status === MEETING_STATUS_CLOSED)
   return allMeetings.value
 })
 
-const upcomingCount = computed(() => allMeetings.value.filter(meeting => meeting.status !== 'closed').length)
-const closedCount = computed(() => allMeetings.value.filter(meeting => meeting.status === 'closed').length)
+const upcomingCount = computed(() => allMeetings.value.filter(meeting => meeting.status !== MEETING_STATUS_CLOSED).length)
+const closedCount = computed(() => allMeetings.value.filter(meeting => meeting.status === MEETING_STATUS_CLOSED).length)
 
 const meetingTabs = computed<Tab[]>(() => [
-  { value: 'all', label: t('common.allFem'), count: allMeetings.value.length },
+  { value: ALL_FILTER, label: t('common.allFem'), count: allMeetings.value.length },
   { value: 'upcoming', label: t('meetings.filterUpcoming'), count: upcomingCount.value },
-  { value: 'closed', label: t('meetings.filterClosed'), count: closedCount.value },
+  { value: MEETING_STATUS_CLOSED, label: t('meetings.filterClosed'), count: closedCount.value },
 ])
 
 function typeLabel(type: MeetingType): string {
@@ -70,13 +72,13 @@ function statusLabel(status: Meeting['status']): string {
 }
 
 function statusBadgeVariant(status: Meeting['status']): 'primary' | 'valid' | 'disabled' {
-  if (status === 'called') return 'primary'
-  if (status === 'closed' || status === 'ongoing') return 'valid'
+  if (status === MEETING_STATUS_CALLED) return 'primary'
+  if (status === MEETING_STATUS_CLOSED || status === MEETING_STATUS_ONGOING) return 'valid'
   return 'disabled'
 }
 
 function meetingBadgeLabel(type: MeetingType): string {
-  return type === 'annual' ? t('meetings.typeLabel.annualShort') : t('meetings.typeLabel.extraordinaryShort')
+  return type === MEETING_TYPE_ANNUAL ? t('meetings.typeLabel.annualShort') : t('meetings.typeLabel.extraordinaryShort')
 }
 
 function openMeeting(meetingId: string) {
@@ -176,7 +178,7 @@ async function onMeetingCreated(meetingId: string) {
             @keydown.enter.prevent="openMeeting(meeting.id)"
             @keydown.space.prevent="openMeeting(meeting.id)"
           >
-            <div :class="['meeting-badge', { 'meeting-badge--closed': meeting.status === 'closed', 'meeting-badge--ongoing': meeting.status === 'ongoing', 'meeting-badge--draft': statusBadgeVariant(meeting.status) === 'disabled', 'meeting-badge--pulse': meeting.status === 'ongoing' }]">
+            <div :class="['meeting-badge', { 'meeting-badge--closed': meeting.status === MEETING_STATUS_CLOSED, 'meeting-badge--ongoing': meeting.status === MEETING_STATUS_ONGOING, 'meeting-badge--draft': statusBadgeVariant(meeting.status) === 'disabled', 'meeting-badge--pulse': meeting.status === MEETING_STATUS_ONGOING }]">
               <span class="meeting-badge__type">{{ meetingBadgeLabel(meeting.meeting_type) }}</span>
               <span class="meeting-badge__year">{{ new Date(meeting.meeting_date).getFullYear() }}</span>
             </div>
@@ -189,7 +191,7 @@ async function onMeetingCreated(meetingId: string) {
                   </CHeading>
                   <CBadge
                     :variant="statusBadgeVariant(meeting.status)"
-                    :pulse="meeting.status === 'called' || meeting.status === 'ongoing'"
+                    :pulse="meeting.status === MEETING_STATUS_CALLED || meeting.status === MEETING_STATUS_ONGOING"
                     class="text-xs"
                     dot
                   >
@@ -222,7 +224,7 @@ async function onMeetingCreated(meetingId: string) {
                   {{ t('meetings.statResolutions', meeting.resolution_count) }}
                 </span>
                 <span
-                  v-if="meeting.status === 'closed'"
+                  v-if="meeting.status === MEETING_STATUS_CLOSED"
                   class="meeting-card__res-passed tone--valid"
                 >
                   <span class="font-serif font-semibold text-xl">{{ meeting.passed_count }}</span>

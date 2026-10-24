@@ -10,7 +10,8 @@ import { meetingsApi } from '@/api'
 import { useFormFeedback } from '@/composables/useFormFeedback'
 import { useAutoClose } from '@/composables/useAutoClose'
 import { toErrorMessage } from '@/composables/usePageLoader'
-import type { MeetingAttendanceEntry, MeetingAttendanceMode, Resolution, VoteResult } from '@/types/domain'
+import type { MeetingAttendanceEntry, MeetingAttendanceMode, Resolution, VotePosition, VoteResult } from '@/types/domain'
+import { VOTE_POSITION_AGAINST, VOTE_POSITION_IN_FAVOR, VOTE_POSITIONS } from '@/utils/constants'
 
 type BadgeVariant = 'open' | 'pending' | 'closed' | 'disabled' | 'valid' | 'err' | 'primary' | 'default'
 
@@ -34,9 +35,7 @@ const unitVotes = ref<Record<string, string>>({})
 
 const votePositionOptions = computed(() => [
   { value: '', label: t('meetings.vote.notSet') },
-  { value: 'in_favor', label: t('meetings.vote.in_favor') },
-  { value: 'against', label: t('meetings.vote.against') },
-  { value: 'abstain', label: t('meetings.vote.abstain') },
+  ...VOTE_POSITIONS.slice(0, 3).map(p => ({ value: p, label: t(`meetings.vote.${p}`) })),
 ])
 
 function attendanceModeLabel(mode: MeetingAttendanceMode): string {
@@ -50,7 +49,7 @@ function attendanceModeVariant(mode: MeetingAttendanceMode): BadgeVariant {
   return 'disabled'
 }
 
-function fillAllVotes(position: 'in_favor' | 'against') {
+function fillAllVotes(position: Extract<VotePosition, 'in_favor' | 'against'>) {
   for (const entry of props.attendingUnits) {
     unitVotes.value[entry.unit_id] = position
   }
@@ -144,13 +143,13 @@ async function handleSubmit() {
           size="sm"
           variant="ghost"
           :title="t('meetings.vote.fillAllFor')"
-          @click="fillAllVotes('in_favor')"
+          @click="fillAllVotes(VOTE_POSITION_IN_FAVOR)"
         />
         <CBtn
           size="sm"
           variant="ghost"
           :title="t('meetings.vote.fillAllAgainst')"
-          @click="fillAllVotes('against')"
+          @click="fillAllVotes(VOTE_POSITION_AGAINST)"
         />
       </div>
       <table class="vote-table">

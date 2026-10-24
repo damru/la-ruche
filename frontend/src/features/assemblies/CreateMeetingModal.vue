@@ -4,7 +4,8 @@ import { useI18n } from 'vue-i18n'
 import { toErrorMessage } from '@/composables/usePageLoader'
 import { useFormFeedback } from '@/composables/useFormFeedback'
 import { useAutoClose } from '@/composables/useAutoClose'
-import type { MeetingType } from '@/types/domain'
+import type {} from '@/types/domain'
+import { DEFAULT_MEETING_TYPE } from '@/utils/constants'
 import { meetingsApi } from '@/api'
 import CModal from '@/components/molecules/CModal.vue'
 import CForm from '@/components/molecules/CForm.vue'
@@ -31,7 +32,7 @@ const saving = ref(false)
 
 function defaultForm() {
   return {
-    meeting_type: 'annual' as MeetingType,
+    meeting_type: DEFAULT_MEETING_TYPE,
     meeting_date: '',
     location: '',
   }

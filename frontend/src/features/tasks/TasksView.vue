@@ -32,7 +32,8 @@ import RevokeTokenModal from './RevokeTokenModal.vue'
 import ReopenTaskModal from './ReopenTaskModal.vue'
 import { contractorsApi, documentsApi, tasksApi, usersApi } from '@/api'
 import { useBuildingStore } from '@/stores/building'
-import type { Contractor, Document, Task, TaskStatus, User } from '@/types/domain'
+import type {Contractor, Document, Task, TaskStatus, User} from '@/types/domain'
+import { ALL_FILTER, TASK_PRIORITY_HIGH, TASK_PRIORITY_LOW, TASK_PRIORITY_NORMAL, TASK_PRIORITY_URGENT, TASK_STATUS_AWAITING_VALIDATION, TASK_STATUS_AWAITING_VENDOR, TASK_STATUS_CANCELLED, TASK_STATUS_CLOSED, TASK_STATUS_IN_PROGRESS, TASK_STATUS_OPEN } from '@/utils/constants'
 
 const { t } = useI18n()
 const { formatDate, formatRelative } = useFormatters()
@@ -43,7 +44,7 @@ const buildingName = ref('')
 const allTasks = ref<Task[]>([])
 const allContractors = ref<Contractor[]>([])
 const allUsers = ref<User[]>([])
-const statusFilter = ref<'all' | TaskStatus>('all')
+const statusFilter = ref<typeof ALL_FILTER | TaskStatus>(ALL_FILTER)
 const VENDOR_LINK_COPY_FEEDBACK_DELAY_MS = 1800
 
 // ── Modal trigger state ───────────────────────────────────────────
@@ -87,7 +88,7 @@ onMounted(reload)
 
 // ── Derived ───────────────────────────────────────────────────────
 const tasks = computed(() =>
-  (statusFilter.value === 'all'
+  (statusFilter.value === ALL_FILTER
     ? allTasks.value
     : allTasks.value.filter(t => t.status === statusFilter.value))
     .slice()
@@ -95,42 +96,41 @@ const tasks = computed(() =>
 )
 
 const counts = computed(() => ({
-  open: allTasks.value.filter(t => t.status === 'open').length,
-  in_progress: allTasks.value.filter(t => t.status === 'in_progress').length,
-  awaiting_vendor: allTasks.value.filter(t => t.status === 'awaiting_vendor').length,
-  awaiting_validation: allTasks.value.filter(t => t.status === 'awaiting_validation').length,
-  closed: allTasks.value.filter(t => t.status === 'closed').length,
-}))
+  open: allTasks.value.filter(t => t.status === TASK_STATUS_OPEN).length,
+  in_progress: allTasks.value.filter(t => t.status === TASK_STATUS_IN_PROGRESS).length,
+  awaiting_vendor: allTasks.value.filter(t => t.status === TASK_STATUS_AWAITING_VENDOR).length,
+  awaiting_validation: allTasks.value.filter(t => t.status === TASK_STATUS_AWAITING_VALIDATION).length,
+  closed: allTasks.value.filter(t => t.status === TASK_STATUS_CLOSED).length }))
 
 const activeCount = computed(() =>
-  allTasks.value.filter(t => t.status !== 'closed' && t.status !== 'cancelled').length,
+  allTasks.value.filter(t => t.status !== TASK_STATUS_CLOSED && t.status !== TASK_STATUS_CANCELLED).length,
 )
 
 // ── Helpers ───────────────────────────────────────────────────────
 function isTerminal(status: string): boolean {
-  return status === 'closed' || status === 'cancelled'
+  return status === TASK_STATUS_CLOSED || status === TASK_STATUS_CANCELLED
 }
 
 function statusVariant(s: string): 'valid' | 'open' | 'pending' | 'closed' | 'default' {
-  if (s === 'open') return 'valid'
-  if (s === 'in_progress') return 'open'
-  if (s === 'awaiting_vendor') return 'default'
-  if (s === 'awaiting_validation') return 'pending'
-  if (s === 'closed') return 'closed'
+  if (s === TASK_STATUS_OPEN) return 'valid'
+  if (s === TASK_STATUS_IN_PROGRESS) return 'open'
+  if (s === TASK_STATUS_AWAITING_VENDOR) return 'default'
+  if (s === TASK_STATUS_AWAITING_VALIDATION) return 'pending'
+  if (s === TASK_STATUS_CLOSED) return 'closed'
   return 'default'
 }
 
 function closeActionLabel(task: Task): string {
-  return task.status === 'awaiting_validation'
+  return task.status === TASK_STATUS_AWAITING_VALIDATION
     ? t('tasks.validateTask')
     : t('tasks.closeTask')
 }
 
 function priorityVariant(p: string): 'err' | 'pending' | 'primary' | 'valid' | 'default' {
-  if (p === 'urgent') return 'err'
-  if (p === 'high') return 'pending'
-  if (p === 'normal') return 'primary'
-  if (p === 'low') return 'valid'
+  if (p === TASK_PRIORITY_URGENT) return 'err'
+  if (p === TASK_PRIORITY_HIGH) return 'pending'
+  if (p === TASK_PRIORITY_NORMAL) return 'primary'
+  if (p === TASK_PRIORITY_LOW) return 'valid'
   return 'default'
 }
 
@@ -360,12 +360,12 @@ async function downloadTaskDocument(documentId: string) {
           v-model="statusFilter"
           variant="filter"
           :tabs="[
-            { value: 'all', label: t('common.allMasc'), count: allTasks.length },
-            { value: 'open', label: t('tasks.filters.open'), count: counts.open },
-            { value: 'in_progress', label: t('tasks.filters.in_progress'), count: counts.in_progress },
-            { value: 'awaiting_vendor', label: t('tasks.filters.awaiting_vendor'), count: counts.awaiting_vendor },
-            { value: 'awaiting_validation', label: t('tasks.filters.awaiting_validation'), count: counts.awaiting_validation },
-            { value: 'closed', label: t('tasks.filters.closed'), count: counts.closed },
+            { value: ALL_FILTER, label: t('common.allMasc'), count: allTasks.length },
+            { value: TASK_STATUS_OPEN, label: t('tasks.filters.open'), count: counts.open },
+            { value: TASK_STATUS_IN_PROGRESS, label: t('tasks.filters.in_progress'), count: counts.in_progress },
+            { value: TASK_STATUS_AWAITING_VENDOR, label: t('tasks.filters.awaiting_vendor'), count: counts.awaiting_vendor },
+            { value: TASK_STATUS_AWAITING_VALIDATION, label: t('tasks.filters.awaiting_validation'), count: counts.awaiting_validation },
+            { value: TASK_STATUS_CLOSED, label: t('tasks.filters.closed'), count: counts.closed },
           ]"
         />
 
@@ -526,7 +526,7 @@ async function downloadTaskDocument(documentId: string) {
                     @click.stop="openEditModal(task)"
                   />
                   <CBtn
-                    v-if="task.status === 'closed'"
+                    v-if="task.status === TASK_STATUS_CLOSED"
                     variant="primary"
                     size="sm"
                     :icon="CIconRefresh"
@@ -571,7 +571,7 @@ async function downloadTaskDocument(documentId: string) {
     <CloseTaskModal
       :open="!!closingTask"
       :task="closingTask"
-      @update:open="v => !v && (closingTask = null)"
+      @update:open="(v?: boolean) => !v && (closingTask = null)"
       @closed="onTaskClosed"
     />
 

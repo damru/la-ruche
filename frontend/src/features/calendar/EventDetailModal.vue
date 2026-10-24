@@ -13,7 +13,7 @@ import CBadge from '@/components/atoms/CBadge.vue'
 import CIconDownload from '@/components/atoms/CIconDownload.svg'
 import CIconTrash from '@/components/atoms/CIconTrash.svg'
 import { calendarEventsApi, documentsApi } from '@/api'
-import { useAuthStore } from '@/stores/auth'
+import { usePermissions } from '@/composables/usePermissions'
 import { useFormFeedback } from '@/composables/useFormFeedback'
 import { useAutoClose } from '@/composables/useAutoClose'
 import { useFormatters } from '@/composables/useFormatters'
@@ -33,7 +33,7 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 const { formatDate, formatFileSize } = useFormatters()
-const auth = useAuthStore()
+const perms = usePermissions()
 const feedback = useFormFeedback()
 const { schedule: scheduleClose, forceExpire: forceClose } = useAutoClose()
 
@@ -42,7 +42,7 @@ const deleting = ref(false)
 const event = ref<ManualCalendarEvent | null>(null)
 const documents = ref<Document[]>([])
 
-const canManage = auth.hasAnyRole(['manager', 'board_member'])
+const canManage = perms.canManageCalendar
 
 watch(() => props.open, async (open) => {
   if (!open) { forceClose(); return }

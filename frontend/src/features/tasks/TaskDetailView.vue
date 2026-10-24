@@ -22,6 +22,7 @@ import CIconWrench from '@/components/atoms/CIconWrench.svg'
 import { contractorsApi, maintenanceApi, tasksApi } from '@/api'
 import { useBuildingStore } from '@/stores/building'
 import type { Contractor, MaintenanceEntry, Task } from '@/types/domain'
+import { TASK_PRIORITY_HIGH, TASK_PRIORITY_LOW, TASK_PRIORITY_NORMAL, TASK_PRIORITY_URGENT, TASK_STATUS_AWAITING_VALIDATION, TASK_STATUS_AWAITING_VENDOR, TASK_STATUS_CLOSED, TASK_STATUS_IN_PROGRESS, TASK_STATUS_OPEN } from '@/utils/constants'
 
 const { t } = useI18n()
 const { formatDate, formatRelative, formatCurrency } = useFormatters()
@@ -62,19 +63,19 @@ onMounted(reload)
 
 // ── Helpers ───────────────────────────────────────────────────────
 function statusVariant(s: string): 'valid' | 'open' | 'pending' | 'closed' | 'default' {
-  if (s === 'open') return 'valid'
-  if (s === 'in_progress') return 'open'
-  if (s === 'awaiting_vendor') return 'default'
-  if (s === 'awaiting_validation') return 'pending'
-  if (s === 'closed') return 'closed'
+  if (s === TASK_STATUS_OPEN) return 'valid'
+  if (s === TASK_STATUS_IN_PROGRESS) return 'open'
+  if (s === TASK_STATUS_AWAITING_VENDOR) return 'default'
+  if (s === TASK_STATUS_AWAITING_VALIDATION) return 'pending'
+  if (s === TASK_STATUS_CLOSED) return 'closed'
   return 'default'
 }
 
 function priorityVariant(p: string): 'err' | 'pending' | 'primary' | 'valid' | 'default' {
-  if (p === 'urgent') return 'err'
-  if (p === 'high') return 'pending'
-  if (p === 'normal') return 'primary'
-  if (p === 'low') return 'valid'
+  if (p === TASK_PRIORITY_URGENT) return 'err'
+  if (p === TASK_PRIORITY_HIGH) return 'pending'
+  if (p === TASK_PRIORITY_NORMAL) return 'primary'
+  if (p === TASK_PRIORITY_LOW) return 'valid'
   return 'default'
 }
 
@@ -111,7 +112,7 @@ const timelineEvents = computed((): TimelineEvent[] => {
       icon: CIconWrench,
       variant: 'warning',
     })
-  } else if (t_.status === 'in_progress' || t_.assigned_to) {
+  } else if (t_.status === TASK_STATUS_IN_PROGRESS || t_.assigned_to) {
     events.push({
       key: 'assigned_self',
       label: t('tasks.lifecycle.assignedSelf'),
@@ -304,7 +305,7 @@ function dotClass(variant?: TimelineEvent['variant']): string {
 
         <!-- Reopening indicator for closed tasks -->
         <div
-          v-if="task.status === 'closed'"
+          v-if="task.status === TASK_STATUS_CLOSED"
           class="reopen-hint body-xs"
         >
           <CIconRefresh

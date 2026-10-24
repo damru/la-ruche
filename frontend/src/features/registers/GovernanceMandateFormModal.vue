@@ -13,8 +13,7 @@ import { useFormFeedback } from '@/composables/useFormFeedback'
 import { useAutoClose } from '@/composables/useAutoClose'
 import { toErrorMessage } from '@/composables/usePageLoader'
 import type { GovernanceMandate } from '@/types/domain'
-
-const ROLES = ['syndic', 'council_president', 'council_member'] as const
+import { DEFAULT_GOVERNANCE_ROLE, GOVERNANCE_ROLES } from '@/utils/constants'
 
 const props = defineProps<{
   open: boolean
@@ -32,7 +31,7 @@ const { schedule: scheduleClose, forceExpire: forceClose } = useAutoClose()
 const saving = ref(false)
 
 const defaultForm = () => ({
-  role: 'syndic' as string,
+  role: DEFAULT_GOVERNANCE_ROLE,
   holder_name: '',
   start_date: '',
   end_date: '',
@@ -43,7 +42,7 @@ const form = ref(defaultForm())
 const isEdit = computed(() => props.mandate !== null)
 
 const roleOptions = computed(() =>
-  ROLES.map(value => ({ value, label: t(`registers.governance.roles.${value}`) })),
+  GOVERNANCE_ROLES.map(value => ({ value, label: t(`registers.governance.roles.${value}`) })),
 )
 
 watch(() => props.open, (open) => {

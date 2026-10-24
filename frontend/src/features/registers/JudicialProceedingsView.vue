@@ -17,6 +17,7 @@ import CDeleteConfirmModal from '@/components/organisms/CDeleteConfirmModal.vue'
 import { judicialProceedingsApi } from '@/api'
 import { useBuildingStore } from '@/stores/building'
 import type { JudicialProceeding } from '@/types/domain'
+import { JUDICIAL_PROCEEDING_STATUS_CLOSED } from '@/utils/constants'
 
 const { t } = useI18n()
 const { formatDate } = useFormatters()
@@ -40,7 +41,7 @@ const { loading, error, reload } = usePageLoader(loadData)
 onMounted(reload)
 
 const ongoingCount = computed(
-  () => proceedings.value.filter(p => p.status !== 'closed').length,
+  () => proceedings.value.filter(p => p.status !== JUDICIAL_PROCEEDING_STATUS_CLOSED).length,
 )
 
 const columns = computed(() => [
@@ -53,7 +54,7 @@ const columns = computed(() => [
 ])
 
 function statusVariant(status: string): 'default' | 'warn' | 'valid' {
-  if (status === 'closed') return 'default'
+  if (status === JUDICIAL_PROCEEDING_STATUS_CLOSED) return 'default'
   if (status === 'suspended') return 'warn'
   return 'valid'
 }

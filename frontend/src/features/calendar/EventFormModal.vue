@@ -19,6 +19,7 @@ import { useAutoClose } from '@/composables/useAutoClose'
 import { toErrorMessage } from '@/composables/usePageLoader'
 import { extractFileExtension } from '@/utils/files'
 import type { CalendarEventCategory, ManualCalendarEvent } from '@/types/domain'
+import { CALENDAR_EVENT_CATEGORIES, DOCUMENT_ROLES } from '@/utils/constants'
 
 const props = defineProps<{
   open: boolean
@@ -49,7 +50,7 @@ const form = ref(defaultForm())
 
 const categoryOptions = computed(() => [
   { value: '', label: t('calendar.event.categoryNone') },
-  ...(['reunion', 'visite', 'permanence', 'autre'] as const).map(c => ({
+  ...CALENDAR_EVENT_CATEGORIES.map(c => ({
     value: c,
     label: t(`calendar.event.categories.${c}`),
   })),
@@ -86,7 +87,7 @@ async function attachSelectedDocuments(eventId: string) {
         original_name: file.name,
         mime_type: mimeType,
         size_bytes: file.size,
-        visible_roles: ['manager', 'board_member', 'co_owner', 'tenant'],
+        visible_roles: [...DOCUMENT_ROLES],
       })
       await calendarEventsApi.attachDocument(eventId, document.data.id)
     } catch {

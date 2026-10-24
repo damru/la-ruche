@@ -30,7 +30,8 @@ import EditRolesModal from './EditRolesModal.vue'
 import TransferOwnershipModal from './TransferOwnershipModal.vue'
 import { unitsApi, allocationKeysApi, usersApi } from '@/api'
 import { usePageLoader } from '@/composables/usePageLoader'
-import type { Unit, User, AllocationKey } from '@/types/domain'
+import type { Unit, UnitType, User, AllocationKey } from '@/types/domain'
+import { UNIT_TYPES } from '@/utils/constants'
 
 const { t } = useI18n()
 
@@ -91,14 +92,20 @@ async function loadData() {
 const { loading, error, reload } = usePageLoader(loadData)
 onMounted(reload)
 
+const UNIT_TYPE_ICONS: Record<UnitType, string> = {
+  apartment: '🏠',
+  cellar: '🗄️',
+  parking: '🚗',
+  commercial_unit: '🏪',
+  other: '📦',
+}
+
 function unitTypeIcon(type: string): string {
-  const icons: Record<string, string> = { apartment: '🏠', cellar: '🗄️', parking: '🚗', commercial_unit: '🏪', other: '📦' }
-  return icons[type] ?? '📦'
+  return UNIT_TYPE_ICONS[type as UnitType] ?? UNIT_TYPE_ICONS[UNIT_TYPES[UNIT_TYPES.length - 1]]
 }
 
 function unitTypeLabel(type: string): string {
-  const keys: Record<string, string> = { apartment: 'apartment', cellar: 'cellar', parking: 'parking', commercial_unit: 'commercial_unit', other: 'other' }
-  return keys[type] ? t(`units.types.${keys[type]}`) : type
+  return UNIT_TYPES.includes(type as UnitType) ? t(`units.types.${type}`) : type
 }
 
 function openCreateUnit() {
