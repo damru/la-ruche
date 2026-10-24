@@ -1,5 +1,7 @@
-// RBAC matrix — reports (conformité): manager + board_member manage;
-// all authenticated users may read.
+// RBAC matrix — reports (conformité / fiches de signalement).
+// Create is open to any authenticated user (resident-initiative pattern,
+// same as claims); update / update_status / delete / convert_to_task are
+// manager + board_member and return 204.
 
 mod common;
 
@@ -13,7 +15,11 @@ async fn create_report(server: &TestServer, auth: &str) -> String {
         .add_header("Authorization", auth)
         .json(&json!({ "title": "Fiche RNC 2026" }))
         .await;
-    assert!(created.status_code().is_success(), "setup create report");
+    assert_eq!(
+        created.status_code(),
+        StatusCode::CREATED,
+        "setup create report"
+    );
     created.json::<Value>()["id"]
         .as_str()
         .expect("id")
@@ -33,7 +39,14 @@ async fn board_member_can_manage_reports() {
         .add_header("Authorization", &auth)
         .json(&json!({ "title": "Fiche RNC 2026 (maj)" }))
         .await;
-    assert_eq!(updated.status_code(), StatusCode::OK);
+    assert_eq!(updated.status_code(), StatusCode::NO_CONTENT);
+
+    let status = server
+        .put(&format!("/api/v1/reports/{report_id}/status"))
+        .add_header("Authorization", &auth)
+        .json(&json!({ "status": "in_progress" }))
+        .await;
+    assert_eq!(status.status_code(), StatusCode::NO_CONTENT);
 
     let deleted = server
         .delete(&format!("/api/v1/reports/{report_id}"))
@@ -43,7 +56,7 @@ async fn board_member_can_manage_reports() {
 }
 
 #[tokio::test]
-async fn residents_cannot_manage_reports() {
+async fn residents_can_create_but_not_manage_reports() {
     let (ctx, _pool) = common::rbac_setup().await;
     let server = common::test_server().await;
     let mgr_auth = format!("Bearer {}", ctx.manager_jwt);
@@ -61,9 +74,9 @@ async fn residents_cannot_manage_reports() {
         let created = server
             .post("/api/v1/reports")
             .add_header("Authorization", &auth)
-            .json(&json!({ "title": "Interdit" }))
+            .json(&json!({ "title": "Fiche résident" }))
             .await;
-        assert_eq!(created.status_code(), StatusCode::FORBIDDEN);
+        assert_eq!(created.status_code(), StatusCode::CREATED);
 
         let updated = server
             .put(&format!("/api/v1/reports/{report_id}"))
