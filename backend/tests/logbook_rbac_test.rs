@@ -42,8 +42,8 @@ async fn board_member_can_create_but_not_mutate_entries() {
 
     let entry_id = create_entry(&server, &auth).await;
 
-    // Entries are frozen (EP-018-S07 Pattern C) — update/delete are 400 for
-    // everyone; the amendment path is the append-only correction.
+    // Update is frozen (EP-018-S07 Pattern C) → 400 for every allowed role;
+    // the amendment path is the append-only correction.
     let updated = server
         .put(&format!("/api/v1/logbook/{entry_id}"))
         .add_header("Authorization", &auth)
@@ -51,11 +51,13 @@ async fn board_member_can_create_but_not_mutate_entries() {
         .await;
     assert_eq!(updated.status_code(), StatusCode::BAD_REQUEST);
 
+    // Delete is manager-only: a board member hits the permission guard (403)
+    // before the immutability rule.
     let deleted = server
         .delete(&format!("/api/v1/logbook/{entry_id}"))
         .add_header("Authorization", &auth)
         .await;
-    assert_eq!(deleted.status_code(), StatusCode::BAD_REQUEST);
+    assert_eq!(deleted.status_code(), StatusCode::FORBIDDEN);
 
     let corrected = server
         .post(&format!("/api/v1/logbook/{entry_id}/correction"))
