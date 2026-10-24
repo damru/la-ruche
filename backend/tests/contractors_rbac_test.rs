@@ -54,7 +54,7 @@ async fn board_member_can_manage_contractors() {
 }
 
 #[tokio::test]
-async fn residents_cannot_access_contractors() {
+async fn residents_cannot_mutate_contractors() {
     let (ctx, _pool) = common::rbac_setup().await;
     let server = common::test_server().await;
     let mgr_auth = format!("Bearer {}", ctx.manager_jwt);
@@ -63,11 +63,14 @@ async fn residents_cannot_access_contractors() {
     for jwt in [&ctx.coowner_jwt, &ctx.tenant_jwt] {
         let auth = format!("Bearer {jwt}");
 
+        // Read is open to any authenticated user (handler comment: "all
+        // authenticated users"), matching the PRD Copropriétaire `R²`.
+        // The PRD gives Locataire `X` — pre-existing discrepancy, pinned here.
         let listed = server
             .get("/api/v1/contractors")
             .add_header("Authorization", &auth)
             .await;
-        assert_eq!(listed.status_code(), StatusCode::FORBIDDEN);
+        assert_eq!(listed.status_code(), StatusCode::OK);
 
         let created = server
             .post("/api/v1/contractors")
