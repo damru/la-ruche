@@ -1,5 +1,3 @@
-use crate::domain::{AuthUser, Role};
-
 //! Centralised permission checks — every `can<Action><Scope>` method lives here
 //! so that role-based access rules are defined in exactly one place.
 //!
@@ -11,6 +9,8 @@ use crate::domain::{AuthUser, Role};
 //!
 //! A user may hold several roles simultaneously (e.g. `[Manager, CoOwner]`);
 //! every check inspects **all** of the user's roles.
+
+use crate::domain::{AuthUser, Role};
 
 // ── General Meeting (AG) ──────────────────────────────────────────────────────
 
