@@ -657,3 +657,62 @@ async fn a_budget_of_another_building_is_not_reachable() {
         .await;
     assert_eq!(chain.status_code(), StatusCode::NOT_FOUND);
 }
+
+// ── RBAC matrix — budget ─────────────────────────────────────────────────────
+// Administration (create/update/close/approve/rectificatif) is manager-only;
+// everyone authenticated may view; board member may list levies and mark paid.
+
+#[tokio::test]
+async fn board_member_cannot_administer_budgets() {
+    let (ctx, _pool) = common::rbac_setup().await;
+    let server = common::test_server().await;
+    let auth = format!("Bearer {}", ctx.board_member_jwt);
+
+    let created = server
+        .post("/api/v1/budgets")
+        .add_header("Authorization", &auth)
+        .json(&json!({ "fiscal_year": 2026 }))
+        .await;
+    assert_eq!(created.status_code(), StatusCode::FORBIDDEN);
+
+    let listed = server
+        .get("/api/v1/budgets")
+        .add_header("Authorization", &auth)
+        .await;
+    assert_eq!(listed.status_code(), StatusCode::OK);
+}
+
+#[tokio::test]
+async fn residents_can_view_but_not_administer_budgets() {
+    let (ctx, _pool) = common::rbac_setup().await;
+    let server = common::test_server().await;
+
+    for jwt in [&ctx.coowner_jwt, &ctx.tenant_jwt] {
+        let auth = format!("Bearer {jwt}");
+        let listed = server
+            .get("/api/v1/budgets")
+            .add_header("Authorization", &auth)
+            .await;
+        assert_eq!(listed.status_code(), StatusCode::OK);
+
+        let created = server
+            .post("/api/v1/budgets")
+            .add_header("Authorization", &auth)
+            .json(&json!({ "fiscal_year": 2026 }))
+            .await;
+        assert_eq!(created.status_code(), StatusCode::FORBIDDEN);
+    }
+}
+
+#[tokio::test]
+async fn manager_can_create_budget() {
+    let (ctx, _pool) = common::rbac_setup().await;
+    let server = common::test_server().await;
+
+    let created = server
+        .post("/api/v1/budgets")
+        .add_header("Authorization", format!("Bearer {}", ctx.manager_jwt))
+        .json(&json!({ "fiscal_year": 2027 }))
+        .await;
+    assert_eq!(created.status_code(), StatusCode::CREATED);
+}

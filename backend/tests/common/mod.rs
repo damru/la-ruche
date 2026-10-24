@@ -265,3 +265,95 @@ pub fn bootstrap_payload() -> serde_json::Value {
         "shares_total": 1000
     })
 }
+
+// ── RBAC test helpers ────────────────────────────────────────────────────────
+
+/// Seeded users (one per role) sharing a dedicated building, with pre-built
+/// Bearer JWTs. Used by per-domain RBAC matrix tests.
+pub struct RbacCtx {
+    pub building_id: uuid::Uuid,
+    pub manager_id: uuid::Uuid,
+    pub manager_jwt: String,
+    pub board_member_jwt: String,
+    pub coowner_jwt: String,
+    pub tenant_jwt: String,
+}
+
+/// Inserts a user with the given role in the building and returns its id.
+pub async fn rbac_insert_user(
+    pool: &sqlx::PgPool,
+    cfg: &AppConfig,
+    building_id: uuid::Uuid,
+    role: laruche::domain::Role,
+) -> uuid::Uuid {
+    let user_id = uuid::Uuid::new_v4();
+    let email = format!("rbac-{}-{}@test.local", role, uuid::Uuid::new_v4());
+    let password_hash =
+        laruche::auth::password::hash_password("MotDePasse123!", &cfg.auth).expect("hash");
+    sqlx::query(
+        "INSERT INTO user_account (id, email, last_name, first_name, password_hash) \
+         VALUES ($1, $2, 'Rbac', 'User', $3)",
+    )
+    .bind(user_id)
+    .bind(&email)
+    .bind(&password_hash)
+    .execute(pool)
+    .await
+    .expect("user");
+    sqlx::query(
+        "INSERT INTO user_building (user_id, building_id, roles) \
+         VALUES ($1, $2, ARRAY[$3]::user_role[])",
+    )
+    .bind(user_id)
+    .bind(building_id)
+    .bind(role.to_string())
+    .execute(pool)
+    .await
+    .expect("role");
+    user_id
+}
+
+/// Creates a building plus one user per role (manager, board_member,
+/// co_owner, tenant) and returns JWTs for each.
+pub async fn rbac_setup() -> (RbacCtx, sqlx::PgPool) {
+    let (cfg, pool) = test_db().await;
+
+    let building_id = uuid::Uuid::new_v4();
+    sqlx::query(
+        "INSERT INTO building (id, name, address_line1, postal_code, city, shares_total) \
+         VALUES ($1, 'RbacTestBuilding', '1 rue Rbac', '75001', 'Paris', 1000)",
+    )
+    .bind(building_id)
+    .execute(&pool)
+    .await
+    .expect("building");
+
+    let manager_id =
+        rbac_insert_user(&pool, &cfg, building_id, laruche::domain::Role::Manager).await;
+    let board_member_id =
+        rbac_insert_user(&pool, &cfg, building_id, laruche::domain::Role::BoardMember).await;
+    let coowner_id =
+        rbac_insert_user(&pool, &cfg, building_id, laruche::domain::Role::CoOwner).await;
+    let tenant_id = rbac_insert_user(&pool, &cfg, building_id, laruche::domain::Role::Tenant).await;
+
+    let jwt = |user_id: uuid::Uuid, role: laruche::domain::Role| {
+        laruche::auth::jwt::generate_access_token(
+            user_id,
+            building_id,
+            vec![role],
+            &cfg.auth.jwt_secret,
+            cfg.auth.access_token_ttl_secs,
+        )
+        .expect("token")
+    };
+
+    let ctx = RbacCtx {
+        building_id,
+        manager_id,
+        manager_jwt: jwt(manager_id, laruche::domain::Role::Manager),
+        board_member_jwt: jwt(board_member_id, laruche::domain::Role::BoardMember),
+        coowner_jwt: jwt(coowner_id, laruche::domain::Role::CoOwner),
+        tenant_jwt: jwt(tenant_id, laruche::domain::Role::Tenant),
+    };
+    (ctx, pool)
+}
