@@ -277,7 +277,7 @@ pub async fn load_inputs(
     let procedure_rows = sqlx::query_as::<_, ProcedureRow>(
         r#"SELECT subject, proceeding_type::text AS proceeding_type, opened_at, jurisdiction
            FROM judicial_proceeding
-           WHERE building_id = $1 AND proceeding_status = $2::text::judicial_proceeding_status
+           WHERE building_id = $1 AND status = $2::text::judicial_proceeding_status
            ORDER BY opened_at DESC"#,
     )
     .bind(building_id)
