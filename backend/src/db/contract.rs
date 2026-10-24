@@ -684,7 +684,7 @@ pub async fn acknowledge_reminder(
     building_id: Uuid,
 ) -> AppResult<()> {
     sqlx::query(
-        r#"UPDATE contract_reminder cr SET status = $2::text::reminder_status, updated_at = NOW()
+        r#"UPDATE contract_reminder cr SET status = $4::text::reminder_status, updated_at = NOW()
            FROM vendor_contract vc
            WHERE cr.id = $1 AND cr.contract_id = $2 AND vc.id = cr.contract_id AND vc.building_id = $3"#,
     )
