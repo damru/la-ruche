@@ -1,7 +1,7 @@
 use chrono::{DateTime, NaiveDate, Utc};
 use serde::Serialize;
+use sqlx::PgPool;
 use sqlx::types::Decimal;
-use sqlx::{PgPool, Row};
 use std::collections::HashMap;
 use uuid::Uuid;
 

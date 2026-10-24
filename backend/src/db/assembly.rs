@@ -1308,7 +1308,7 @@ pub async fn create_resolution(
 ) -> AppResult<serde_json::Value> {
     // Agenda frozen at convocation, except the second-vote passerelle
     // (art. 25-1/26-1) which may still inscribe a resolution during the séance.
-    let exists = sqlx::query_scalar::<_, bool>(
+    let exists: bool = sqlx::query_scalar(
         "SELECT EXISTS(SELECT 1 FROM general_meeting WHERE id = $1 AND building_id = $2 AND status IN ($3::text::meeting_status,$4::text::meeting_status))",
     )
     .bind(meeting_id)
@@ -1316,8 +1316,7 @@ pub async fn create_resolution(
     .bind(meeting_status::DRAFT)
     .bind(meeting_status::ONGOING)
     .fetch_one(pool)
-    .await?
-    .unwrap_or(false);
+    .await?;
 
     if !exists {
         return Err(AppError::conflict_code(
