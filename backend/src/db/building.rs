@@ -1,6 +1,6 @@
 use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
+use sqlx::{PgPool, Row};
 use uuid::Uuid;
 
 #[derive(Debug, Serialize, sqlx::FromRow)]
@@ -80,7 +80,7 @@ pub async fn update(
 }
 
 pub async fn get_stats(pool: &PgPool, id: Uuid) -> crate::errors::AppResult<BuildingStats> {
-    let row = sqlx::query!(
+    let row = sqlx::query(
         r#"
         SELECT
             (SELECT COUNT(*) FROM unit WHERE building_id = $1 AND active = true) as nb_units,
@@ -97,19 +97,36 @@ pub async fn get_stats(pool: &PgPool, id: Uuid) -> crate::errors::AppResult<Buil
             AND wf.fiscal_year = EXTRACT(YEAR FROM NOW())::int
         WHERE b.id = $1
         "#,
-        id,
-        crate::domain::Role::Tenant.as_str()
     )
+    .bind(id)
+    .bind(crate::domain::Role::Tenant.as_str())
     .fetch_one(pool)
     .await?;
 
     Ok(BuildingStats {
-        nb_units: row.nb_units.unwrap_or(0),
-        nb_users: row.nb_users.unwrap_or(0),
-        nb_tenants: row.nb_tenants.unwrap_or(0),
-        shares_total: row.shares_total,
-        works_fund_available: row.works_fund_available.unwrap_or_default(),
-        works_fund_pct: row.works_fund_pct,
+        nb_units: row
+            .try_get::<Option<i64>, _>("nb_units")
+            .ok()
+            .flatten()
+            .unwrap_or(0),
+        nb_users: row
+            .try_get::<Option<i64>, _>("nb_users")
+            .ok()
+            .flatten()
+            .unwrap_or(0),
+        nb_tenants: row
+            .try_get::<Option<i64>, _>("nb_tenants")
+            .ok()
+            .flatten()
+            .unwrap_or(0),
+        shares_total: row.try_get("shares_total")?,
+        works_fund_available: row
+            .try_get::<sqlx::types::Decimal, _>("works_fund_available")
+            .unwrap_or_default(),
+        works_fund_pct: row
+            .try_get::<Option<i32>, _>("works_fund_pct")
+            .ok()
+            .flatten(),
     })
 }
 

@@ -419,11 +419,11 @@ pub async fn activate(
 
     // AC-CF-006-B: activating an amendment closes its predecessor atomically.
     if let Some(predecessor_id) = row.predecessor_id {
-        sqlx::query!(
+        sqlx::query(
             "UPDATE vendor_contract SET status = $2::text::contract_status, updated_at = NOW() WHERE id = $1",
-            predecessor_id,
-            contract_status::TERMINATED,
         )
+        .bind(predecessor_id)
+        .bind(contract_status::TERMINATED)
         .execute(&mut *tx)
         .await?;
 
@@ -441,11 +441,11 @@ pub async fn activate(
         )
         .await?;
 
-        sqlx::query!(
+        sqlx::query(
             "DELETE FROM contract_reminder WHERE contract_id = $1 AND status = $2::text::reminder_status",
-            predecessor_id,
-            reminder_status::PENDING,
         )
+        .bind(predecessor_id)
+        .bind(reminder_status::PENDING)
         .execute(&mut *tx)
         .await?;
     }
@@ -460,10 +460,9 @@ pub async fn activate(
     let today = chrono::Utc::now().date_naive();
     for reminder in compute_reminders(&spec, today) {
         let kind_str = reminder_kind_to_str(&reminder.kind);
-        sqlx::query!(
+        sqlx::query(
             "INSERT INTO contract_reminder (contract_id, reminder_type, reminder_date) VALUES ($1, $2::text::reminder_type, $3)",
-            row.id, kind_str, reminder.reminder_date
-        ).execute(&mut *tx).await?;
+        ).bind(row.id).bind(kind_str).bind(reminder.reminder_date).execute(&mut *tx).await?;
     }
 
     tx.commit().await?;
@@ -559,11 +558,11 @@ pub async fn update(
     .await?;
 
     if let Some(ref row) = row {
-        sqlx::query!(
+        sqlx::query(
             "DELETE FROM contract_reminder WHERE contract_id = $1 AND status = $2::text::reminder_status",
-            id,
-            reminder_status::PENDING,
         )
+        .bind(id)
+        .bind(reminder_status::PENDING)
         .execute(&mut *tx)
         .await?;
 
@@ -578,10 +577,9 @@ pub async fn update(
         let today = chrono::Utc::now().date_naive();
         for reminder in compute_reminders(&spec, today) {
             let kind_str = reminder_kind_to_str(&reminder.kind);
-            sqlx::query!(
+            sqlx::query(
                 "INSERT INTO contract_reminder (contract_id, reminder_type, reminder_date) VALUES ($1, $2::text::reminder_type, $3)",
-                id, kind_str, reminder.reminder_date
-            ).execute(&mut *tx).await?;
+            ).bind(id).bind(kind_str).bind(reminder.reminder_date).execute(&mut *tx).await?;
         }
     }
 
@@ -597,10 +595,9 @@ pub async fn update(
 }
 
 pub async fn terminate(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()> {
-    sqlx::query!(
+    sqlx::query(
         "UPDATE vendor_contract SET status = $3::text::contract_status, updated_at = NOW() WHERE id=$1 AND building_id=$2",
-        id, building_id, contract_status::TERMINATED
-    ).execute(pool).await?;
+    ).bind(id).bind(building_id).bind(contract_status::TERMINATED).execute(pool).await?;
     Ok(())
 }
 
@@ -686,12 +683,17 @@ pub async fn acknowledge_reminder(
     contract_id: Uuid,
     building_id: Uuid,
 ) -> AppResult<()> {
-    sqlx::query!(
+    sqlx::query(
         r#"UPDATE contract_reminder cr SET status = $2::text::reminder_status, updated_at = NOW()
            FROM vendor_contract vc
            WHERE cr.id = $1 AND cr.contract_id = $2 AND vc.id = cr.contract_id AND vc.building_id = $3"#,
-        reminder_id, contract_id, building_id, reminder_status::ACKNOWLEDGED
-    ).execute(pool).await?;
+    )
+    .bind(reminder_id)
+    .bind(contract_id)
+    .bind(building_id)
+    .bind(reminder_status::ACKNOWLEDGED)
+    .execute(pool)
+    .await?;
     Ok(())
 }
 

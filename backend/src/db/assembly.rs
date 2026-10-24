@@ -5,7 +5,7 @@ use chrono::{DateTime, Utc};
 ///   - No business logic here (quorums, calculations -> domain/)
 ///   - All queries verify building_id (tenant isolation)
 ///   - SQLx errors surface via ? -> AppError::Database via From
-use sqlx::PgPool;
+use sqlx::{PgPool, Row};
 use uuid::Uuid;
 
 use crate::{
@@ -24,6 +24,43 @@ use crate::{
     },
     errors::{AppError, AppResult},
 };
+
+/// `resolution.vote_type` values (PG enum `vote_type`).
+pub mod vote_type {
+    pub const SIMPLE_MAJORITY: &str = "simple_majority";
+    pub const ABSOLUTE_MAJORITY: &str = "absolute_majority";
+    pub const DOUBLE_MAJORITY: &str = "double_majority";
+    pub const UNANIMITY: &str = "unanimity";
+}
+
+/// `general_meeting.convocation_channel` values (PG enum `meeting_convocation_channel`).
+pub mod convocation_channel {
+    pub const LRAR: &str = "lrar";
+    pub const HAND_DELIVERY: &str = "hand_delivery";
+    pub const EMAIL: &str = "email";
+}
+
+/// `general_meeting_document.kind` values (PG enum `meeting_document_kind`).
+pub mod meeting_document_kind {
+    pub const NOTICE: &str = "notice";
+    pub const ATTACHMENT: &str = "attachment";
+    pub const VOTE_BY_MAIL_FORM: &str = "vote_by_mail_form";
+}
+
+/// `general_meeting_attendance.mode` values (PG enum `meeting_attendance_mode`).
+pub mod meeting_attendance_mode {
+    pub const PRESENT: &str = "present";
+    pub const PROXY: &str = "proxy";
+    pub const CORRESPONDENCE: &str = "correspondence";
+    pub const ABSENT: &str = "absent";
+}
+
+/// `vote.position` values (PG enum `vote_position`).
+pub mod vote_position {
+    pub const IN_FAVOR: &str = "in_favor";
+    pub const AGAINST: &str = "against";
+    pub const ABSTAIN: &str = "abstain";
+}
 
 /// Locks the meeting row and enforces the session guard: votes and attendance
 /// are writable only while the meeting is `ongoing`. Must run inside the
@@ -51,7 +88,7 @@ async fn lock_meeting_for_session(
     Ok(())
 }
 
-#[derive(Debug)]
+#[derive(Debug, sqlx::FromRow)]
 struct MeetingRow {
     id: Uuid,
     meeting_type: String,
@@ -84,7 +121,7 @@ impl From<MeetingRow> for MeetingResponse {
         MeetingResponse {
             id: row.id,
             meeting_type: match row.meeting_type.as_str() {
-                "extraordinary" => MeetingTypeDto::Extraordinary,
+                crate::db::calendar::meeting_type::EXTRAORDINARY => MeetingTypeDto::Extraordinary,
                 _ => MeetingTypeDto::Annual,
             },
             status: row.status,
@@ -114,42 +151,42 @@ impl From<MeetingRow> for MeetingResponse {
 
 fn convocation_channel_to_db(c: &ConvocationChannelDto) -> &'static str {
     match c {
-        ConvocationChannelDto::Lrar => "lrar",
-        ConvocationChannelDto::HandDelivery => "hand_delivery",
-        ConvocationChannelDto::Email => "email",
+        ConvocationChannelDto::Lrar => convocation_channel::LRAR,
+        ConvocationChannelDto::HandDelivery => convocation_channel::HAND_DELIVERY,
+        ConvocationChannelDto::Email => convocation_channel::EMAIL,
     }
 }
 
 fn meeting_document_kind_to_db(kind: &MeetingDocumentKindDto) -> &'static str {
     match kind {
-        MeetingDocumentKindDto::Notice => "notice",
-        MeetingDocumentKindDto::Attachment => "attachment",
-        MeetingDocumentKindDto::VoteByMailForm => "vote_by_mail_form",
+        MeetingDocumentKindDto::Notice => meeting_document_kind::NOTICE,
+        MeetingDocumentKindDto::Attachment => meeting_document_kind::ATTACHMENT,
+        MeetingDocumentKindDto::VoteByMailForm => meeting_document_kind::VOTE_BY_MAIL_FORM,
     }
 }
 
 fn meeting_document_kind_from_db(kind: &str) -> MeetingDocumentKindDto {
     match kind {
-        "attachment" => MeetingDocumentKindDto::Attachment,
-        "vote_by_mail_form" => MeetingDocumentKindDto::VoteByMailForm,
+        meeting_document_kind::ATTACHMENT => MeetingDocumentKindDto::Attachment,
+        meeting_document_kind::VOTE_BY_MAIL_FORM => MeetingDocumentKindDto::VoteByMailForm,
         _ => MeetingDocumentKindDto::Notice,
     }
 }
 
 fn meeting_attendance_mode_to_db(mode: &MeetingAttendanceModeDto) -> &'static str {
     match mode {
-        MeetingAttendanceModeDto::Present => "present",
-        MeetingAttendanceModeDto::Proxy => "proxy",
-        MeetingAttendanceModeDto::Correspondence => "correspondence",
-        MeetingAttendanceModeDto::Absent => "absent",
+        MeetingAttendanceModeDto::Present => meeting_attendance_mode::PRESENT,
+        MeetingAttendanceModeDto::Proxy => meeting_attendance_mode::PROXY,
+        MeetingAttendanceModeDto::Correspondence => meeting_attendance_mode::CORRESPONDENCE,
+        MeetingAttendanceModeDto::Absent => meeting_attendance_mode::ABSENT,
     }
 }
 
 fn meeting_attendance_mode_from_db(mode: &str) -> MeetingAttendanceModeDto {
     match mode {
-        "proxy" => MeetingAttendanceModeDto::Proxy,
-        "correspondence" => MeetingAttendanceModeDto::Correspondence,
-        "absent" => MeetingAttendanceModeDto::Absent,
+        meeting_attendance_mode::PROXY => MeetingAttendanceModeDto::Proxy,
+        meeting_attendance_mode::CORRESPONDENCE => MeetingAttendanceModeDto::Correspondence,
+        meeting_attendance_mode::ABSENT => MeetingAttendanceModeDto::Absent,
         _ => MeetingAttendanceModeDto::Present,
     }
 }
@@ -222,35 +259,34 @@ pub async fn create(
     input: CreateMeetingInput,
 ) -> AppResult<MeetingResponse> {
     let meeting_type = match input.meeting_type {
-        MeetingTypeDto::Annual => "annual",
-        MeetingTypeDto::Extraordinary => "extraordinary",
+        MeetingTypeDto::Annual => crate::db::calendar::meeting_type::ANNUAL,
+        MeetingTypeDto::Extraordinary => crate::db::calendar::meeting_type::EXTRAORDINARY,
     };
 
-    let row = sqlx::query_as!(
-        MeetingRow,
+    let row = sqlx::query_as::<_, MeetingRow>(
         r#"
         INSERT INTO general_meeting
             (building_id, meeting_type, meeting_date, location, agenda, created_by)
         VALUES ($1, $2::meeting_type, $3, $4, $5, $6)
-        RETURNING id, meeting_type::text as "meeting_type!", status::text as "status!",
+        RETURNING id, meeting_type::text as meeting_type, status::text as status,
                   notice_date, meeting_date, location, agenda, minutes_document_id, created_at,
                   president_name, president_user_id, secretary_name, secretary_user_id,
-                  scrutineers as "scrutineers!: serde_json::Value",
+                  scrutineers,
                   minutes_notified_at,
                   convocation_sent_at,
                   convocation_channel::text as convocation_channel,
                   minutes_president_signed_at,
                   minutes_secretary_signed_at,
-                  minutes_scrutineers_signed as "minutes_scrutineers_signed!: serde_json::Value",
-                  0::bigint AS "resolution_count!", 0::bigint AS "passed_count!"
+                  minutes_scrutineers_signed,
+                  0::bigint AS resolution_count, 0::bigint AS passed_count
         "#,
-        building_id,
-        meeting_type as _,
-        input.meeting_date,
-        input.location,
-        input.agenda,
-        created_by,
     )
+    .bind(building_id)
+    .bind(meeting_type)
+    .bind(input.meeting_date)
+    .bind(input.location)
+    .bind(input.agenda)
+    .bind(created_by)
     .fetch_one(pool)
     .await?;
 
@@ -264,12 +300,11 @@ pub async fn update(
     input: CreateMeetingInput,
 ) -> AppResult<Option<MeetingResponse>> {
     let meeting_type = match input.meeting_type {
-        MeetingTypeDto::Annual => "annual",
-        MeetingTypeDto::Extraordinary => "extraordinary",
+        MeetingTypeDto::Annual => crate::db::calendar::meeting_type::ANNUAL,
+        MeetingTypeDto::Extraordinary => crate::db::calendar::meeting_type::EXTRAORDINARY,
     };
 
-    let row = sqlx::query_as!(
-        MeetingRow,
+    let row = sqlx::query_as::<_, MeetingRow>(
         r#"
         UPDATE general_meeting
         SET meeting_type = $3::meeting_type,
@@ -280,26 +315,26 @@ pub async fn update(
         WHERE id = $1
           AND building_id = $2
           AND status = $7::text::meeting_status
-        RETURNING id, meeting_type::text as "meeting_type!", status::text as "status!",
+        RETURNING id, meeting_type::text as meeting_type, status::text as status,
                   notice_date, meeting_date, location, agenda, minutes_document_id, created_at,
                   president_name, president_user_id, secretary_name, secretary_user_id,
-                  scrutineers as "scrutineers!: serde_json::Value",
+                  scrutineers,
                   minutes_notified_at,
                   convocation_sent_at,
                   convocation_channel::text as convocation_channel,
                   minutes_president_signed_at,
                   minutes_secretary_signed_at,
-                  minutes_scrutineers_signed as "minutes_scrutineers_signed!: serde_json::Value",
-                  0::bigint AS "resolution_count!", 0::bigint AS "passed_count!"
+                  minutes_scrutineers_signed,
+                  0::bigint AS resolution_count, 0::bigint AS passed_count
         "#,
-        id,
-        building_id,
-        meeting_type as _,
-        input.meeting_date,
-        input.location,
-        input.agenda,
-        meeting_status::DRAFT,
     )
+    .bind(id)
+    .bind(building_id)
+    .bind(meeting_type)
+    .bind(input.meeting_date)
+    .bind(input.location)
+    .bind(input.agenda)
+    .bind(meeting_status::DRAFT)
     .fetch_optional(pool)
     .await?;
 
@@ -312,7 +347,7 @@ pub async fn update(
 pub async fn delete_meeting(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<bool> {
     let mut tx = pool.begin().await?;
 
-    sqlx::query!(
+    sqlx::query(
         r#"
         DELETE FROM vote v
         USING resolution r, general_meeting gm
@@ -322,14 +357,14 @@ pub async fn delete_meeting(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppRe
           AND gm.building_id = $2
           AND gm.status = $3::text::meeting_status
         "#,
-        id,
-        building_id,
-        meeting_status::DRAFT,
     )
+    .bind(id)
+    .bind(building_id)
+    .bind(meeting_status::DRAFT)
     .execute(&mut *tx)
     .await?;
 
-    sqlx::query!(
+    sqlx::query(
         r#"
         DELETE FROM resolution r
         USING general_meeting gm
@@ -338,14 +373,14 @@ pub async fn delete_meeting(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppRe
           AND gm.building_id = $2
           AND gm.status = $3::text::meeting_status
         "#,
-        id,
-        building_id,
-        meeting_status::DRAFT,
     )
+    .bind(id)
+    .bind(building_id)
+    .bind(meeting_status::DRAFT)
     .execute(&mut *tx)
     .await?;
 
-    sqlx::query!(
+    sqlx::query(
         r#"
         DELETE FROM general_meeting_attendance a
         USING general_meeting gm
@@ -354,14 +389,14 @@ pub async fn delete_meeting(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppRe
           AND gm.building_id = $2
           AND gm.status = $3::text::meeting_status
         "#,
-        id,
-        building_id,
-        meeting_status::DRAFT,
     )
+    .bind(id)
+    .bind(building_id)
+    .bind(meeting_status::DRAFT)
     .execute(&mut *tx)
     .await?;
 
-    sqlx::query!(
+    sqlx::query(
         r#"
         DELETE FROM general_meeting_document d
         USING general_meeting gm
@@ -370,22 +405,22 @@ pub async fn delete_meeting(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppRe
           AND gm.building_id = $2
           AND gm.status = $3::text::meeting_status
         "#,
-        id,
-        building_id,
-        meeting_status::DRAFT,
     )
+    .bind(id)
+    .bind(building_id)
+    .bind(meeting_status::DRAFT)
     .execute(&mut *tx)
     .await?;
 
-    let deleted = sqlx::query!(
+    let deleted = sqlx::query(
         r#"
         DELETE FROM general_meeting
         WHERE id = $1 AND building_id = $2 AND status = $3::text::meeting_status
         "#,
-        id,
-        building_id,
-        meeting_status::DRAFT,
     )
+    .bind(id)
+    .bind(building_id)
+    .bind(meeting_status::DRAFT)
     .execute(&mut *tx)
     .await?
     .rows_affected();
@@ -427,7 +462,7 @@ pub async fn call(
     let channel = convocation_channel_to_db(&input.channel);
     let sent_at = input.sent_at.unwrap_or_else(chrono::Utc::now);
 
-    let affected = sqlx::query!(
+    let affected = sqlx::query(
         r#"
         UPDATE general_meeting
         SET status = $5::text::meeting_status,
@@ -437,13 +472,13 @@ pub async fn call(
             updated_at = NOW()
         WHERE id = $1 AND building_id = $2 AND status = $6::text::meeting_status
         "#,
-        id,
-        building_id,
-        sent_at,
-        channel as _,
-        meeting_status::CALLED,
-        meeting_status::DRAFT,
     )
+    .bind(id)
+    .bind(building_id)
+    .bind(sent_at)
+    .bind(channel)
+    .bind(meeting_status::CALLED)
+    .bind(meeting_status::DRAFT)
     .execute(pool)
     .await?
     .rows_affected();
@@ -499,17 +534,17 @@ pub async fn load_convocation_checklist(
 }
 
 pub async fn close(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()> {
-    let affected = sqlx::query!(
+    let affected = sqlx::query(
         r#"
         UPDATE general_meeting
         SET status = $3::text::meeting_status, updated_at = NOW()
         WHERE id = $1 AND building_id = $2 AND status = $4::text::meeting_status
         "#,
-        id,
-        building_id,
-        meeting_status::CLOSED,
-        meeting_status::ONGOING,
     )
+    .bind(id)
+    .bind(building_id)
+    .bind(meeting_status::CLOSED)
+    .bind(meeting_status::ONGOING)
     .execute(pool)
     .await?
     .rows_affected();
@@ -543,7 +578,7 @@ pub async fn attach_signed_minutes(
         return Err(AppError::NotFound);
     }
 
-    let affected = sqlx::query!(
+    let affected = sqlx::query(
         r#"
         UPDATE general_meeting
         SET minutes_document_id = $3, updated_at = NOW()
@@ -552,11 +587,11 @@ pub async fn attach_signed_minutes(
           AND status = $4::text::meeting_status
           AND minutes_document_id IS NULL
         "#,
-        meeting_id,
-        building_id,
-        document_id,
-        meeting_status::CLOSED,
     )
+    .bind(meeting_id)
+    .bind(building_id)
+    .bind(document_id)
+    .bind(meeting_status::CLOSED)
     .execute(pool)
     .await?
     .rows_affected();
@@ -601,7 +636,7 @@ pub async fn sign_minutes(
         None
     };
 
-    let affected = sqlx::query!(
+    let affected = sqlx::query(
         r#"
         UPDATE general_meeting
         SET minutes_president_signed_at = COALESCE($3, minutes_president_signed_at),
@@ -613,13 +648,13 @@ pub async fn sign_minutes(
           AND status = $6::text::meeting_status
           AND minutes_document_id IS NOT NULL
         "#,
-        id,
-        building_id,
-        president_at,
-        secretary_at,
-        scrutineers_json,
-        meeting_status::CLOSED,
     )
+    .bind(id)
+    .bind(building_id)
+    .bind(president_at)
+    .bind(secretary_at)
+    .bind(scrutineers_json)
+    .bind(meeting_status::CLOSED)
     .execute(pool)
     .await?
     .rows_affected();
@@ -633,7 +668,7 @@ pub async fn sign_minutes(
 }
 
 pub async fn notify_minutes(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()> {
-    let affected = sqlx::query!(
+    let affected = sqlx::query(
         r#"
         UPDATE general_meeting
         SET minutes_notified_at = NOW(), updated_at = NOW()
@@ -642,10 +677,10 @@ pub async fn notify_minutes(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppRe
           AND status = $3::text::meeting_status
           AND minutes_document_id IS NOT NULL
         "#,
-        id,
-        building_id,
-        meeting_status::CLOSED,
     )
+    .bind(id)
+    .bind(building_id)
+    .bind(meeting_status::CLOSED)
     .execute(pool)
     .await?
     .rows_affected();
@@ -961,17 +996,17 @@ pub async fn attach_document(
         return Ok(false);
     }
 
-    sqlx::query!(
+    sqlx::query(
         r#"
         INSERT INTO general_meeting_document (meeting_id, document_id, kind)
         VALUES ($1, $2, $3::meeting_document_kind)
         ON CONFLICT (meeting_id, document_id) DO UPDATE
             SET kind = EXCLUDED.kind
         "#,
-        meeting_id,
-        document_id,
-        meeting_document_kind_to_db(&kind) as _,
     )
+    .bind(meeting_id)
+    .bind(document_id)
+    .bind(meeting_document_kind_to_db(&kind))
     .execute(pool)
     .await?;
 
@@ -1191,7 +1226,7 @@ pub async fn save_attendance(
 
     // List frozen: only update mode/representative_name for existing records.
     for entry in entries {
-        let updated = sqlx::query!(
+        let updated = sqlx::query(
             r#"
             UPDATE general_meeting_attendance
             SET mode = $3::meeting_attendance_mode,
@@ -1199,11 +1234,11 @@ pub async fn save_attendance(
                 updated_at = NOW()
             WHERE meeting_id = $1 AND unit_id = $2
             "#,
-            meeting_id,
-            entry.unit_id,
-            meeting_attendance_mode_to_db(&entry.mode) as _,
-            entry.representative_name,
         )
+        .bind(meeting_id)
+        .bind(entry.unit_id)
+        .bind(meeting_attendance_mode_to_db(&entry.mode))
+        .bind(entry.representative_name)
         .execute(&mut *tx)
         .await?
         .rows_affected();
@@ -1273,10 +1308,13 @@ pub async fn create_resolution(
 ) -> AppResult<serde_json::Value> {
     // Agenda frozen at convocation, except the second-vote passerelle
     // (art. 25-1/26-1) which may still inscribe a resolution during the séance.
-    let exists = sqlx::query_scalar!(
+    let exists = sqlx::query_scalar::<_, bool>(
         "SELECT EXISTS(SELECT 1 FROM general_meeting WHERE id = $1 AND building_id = $2 AND status IN ($3::text::meeting_status,$4::text::meeting_status))",
-        meeting_id, building_id, meeting_status::DRAFT, meeting_status::ONGOING
     )
+    .bind(meeting_id)
+    .bind(building_id)
+    .bind(meeting_status::DRAFT)
+    .bind(meeting_status::ONGOING)
     .fetch_one(pool)
     .await?
     .unwrap_or(false);
@@ -1287,27 +1325,27 @@ pub async fn create_resolution(
         ));
     }
 
-    let row = sqlx::query!(
+    let row = sqlx::query(
         r#"
         INSERT INTO resolution (meeting_id, number, title, description, vote_type)
         VALUES ($1, $2, $3, $4, $5::vote_type)
         RETURNING id, number, title, vote_type::text as vote_type, status::text as status
         "#,
-        meeting_id,
-        input.number,
-        input.title,
-        input.description,
-        input.vote_type as _,
     )
+    .bind(meeting_id)
+    .bind(input.number)
+    .bind(input.title)
+    .bind(input.description)
+    .bind(&input.vote_type)
     .fetch_one(pool)
     .await?;
 
     Ok(serde_json::json!({
-        "id": row.id,
-        "number": row.number,
-        "title": row.title,
-        "vote_type": row.vote_type,
-        "status": row.status,
+        "id": row.try_get::<Uuid, _>("id").unwrap_or_default(),
+        "number": row.try_get::<i32, _>("number").unwrap_or(0),
+        "title": row.try_get::<String, _>("title").unwrap_or_default(),
+        "vote_type": row.try_get::<String, _>("vote_type").unwrap_or_default(),
+        "status": row.try_get::<String, _>("status").unwrap_or_default(),
     }))
 }
 
@@ -1321,7 +1359,7 @@ pub async fn delete_resolution(
 ) -> AppResult<bool> {
     let mut tx = pool.begin().await?;
 
-    sqlx::query!(
+    sqlx::query(
         r#"
         DELETE FROM vote v
         USING resolution r, general_meeting gm
@@ -1332,15 +1370,15 @@ pub async fn delete_resolution(
           AND gm.building_id = $3
           AND gm.status = $4::text::meeting_status
         "#,
-        meeting_id,
-        resolution_id,
-        building_id,
-        meeting_status::DRAFT,
     )
+    .bind(meeting_id)
+    .bind(resolution_id)
+    .bind(building_id)
+    .bind(meeting_status::DRAFT)
     .execute(&mut *tx)
     .await?;
 
-    let deleted = sqlx::query!(
+    let deleted = sqlx::query(
         r#"
         DELETE FROM resolution r
         WHERE r.id = $2
@@ -1353,11 +1391,11 @@ pub async fn delete_resolution(
                 AND gm.status = $4::text::meeting_status
           )
         "#,
-        meeting_id,
-        resolution_id,
-        building_id,
-        meeting_status::DRAFT,
     )
+    .bind(meeting_id)
+    .bind(resolution_id)
+    .bind(building_id)
+    .bind(meeting_status::DRAFT)
     .execute(&mut *tx)
     .await?
     .rows_affected();
@@ -1444,7 +1482,7 @@ pub async fn update_resolution(
     building_id: Uuid,
     input: CreateResolutionInput,
 ) -> AppResult<Option<serde_json::Value>> {
-    let row = sqlx::query!(
+    let row = sqlx::query(
         r#"
         UPDATE resolution
         SET title = $3, description = $4, vote_type = $5::vote_type
@@ -1456,23 +1494,23 @@ pub async fn update_resolution(
         RETURNING resolution.id, resolution.number, resolution.title,
                   resolution.vote_type::text as vote_type, resolution.status::text as status
         "#,
-        resolution_id,
-        meeting_id,
-        input.title,
-        input.description,
-        input.vote_type as _,
-        building_id,
     )
+    .bind(resolution_id)
+    .bind(meeting_id)
+    .bind(input.title)
+    .bind(input.description)
+    .bind(&input.vote_type)
+    .bind(building_id)
     .fetch_optional(pool)
     .await?;
 
     Ok(row.map(|r| {
         serde_json::json!({
-            "id": r.id,
-            "number": r.number,
-            "title": r.title,
-            "vote_type": r.vote_type,
-            "status": r.status,
+            "id": r.try_get::<Uuid, _>("id").unwrap_or_default(),
+            "number": r.try_get::<i32, _>("number").unwrap_or(0),
+            "title": r.try_get::<String, _>("title").unwrap_or_default(),
+            "vote_type": r.try_get::<String, _>("vote_type").unwrap_or_default(),
+            "status": r.try_get::<String, _>("status").unwrap_or_default(),
         })
     }))
 }
@@ -1509,7 +1547,7 @@ pub async fn cast_vote(
     .await?
     .ok_or_else(|| AppError::bad_request_code("errors.meetings.unit_general_shares_missing"))?;
 
-    sqlx::query!(
+    sqlx::query(
         r#"
         INSERT INTO vote
             (resolution_id, user_id, unit_id, position, shares_represented, proxy_for)
@@ -1519,13 +1557,13 @@ pub async fn cast_vote(
                 user_id = EXCLUDED.user_id,
                 proxy_for = EXCLUDED.proxy_for
         "#,
-        resolution_id,
-        user_id,
-        input.unit_id,
-        input.position as _,
-        shares,
-        input.proxy_for,
     )
+    .bind(resolution_id)
+    .bind(user_id)
+    .bind(input.unit_id)
+    .bind(&input.position)
+    .bind(shares)
+    .bind(input.proxy_for)
     .execute(&mut *tx)
     .await?;
 
@@ -1568,25 +1606,28 @@ pub async fn get_tally(
     .fetch_all(pool)
     .await?;
 
-    let building = sqlx::query!(
+    let building_row = sqlx::query(
         r#"
         SELECT COUNT(DISTINCT ub.user_id)::int as total_owners,
                COUNT(DISTINCT v.user_id)::int as present_owners,
-               COUNT(DISTINCT v.user_id) FILTER (WHERE v.position = $3::vote_position)::int as "favorable_owners!"
+               COUNT(DISTINCT v.user_id) FILTER (WHERE v.position = $3::vote_position)::int as favorable_owners
         FROM building b
         JOIN unit u ON u.building_id = b.id AND u.active = true
         LEFT JOIN user_building ub ON ub.building_id = b.id
-            AND $5::user_role = ANY(ub.roles)
+            AND $4::user_role = ANY(ub.roles)
         LEFT JOIN vote v ON v.resolution_id = $1
         WHERE b.id = $2
         "#,
-        resolution_id,
-        building_id,
-        crate::domain::minutes_draft::vote_position::IN_FAVOR,
-        crate::domain::Role::CoOwner.as_str()
     )
+    .bind(resolution_id)
+    .bind(building_id)
+    .bind(crate::domain::minutes_draft::vote_position::IN_FAVOR)
+    .bind(crate::domain::Role::CoOwner.as_str())
     .fetch_one(pool)
     .await?;
+    let building_total_owners: Option<i64> = building_row.try_get("total_owners").ok();
+    let building_present_owners: Option<i64> = building_row.try_get("present_owners").ok();
+    let building_favorable_owners: i64 = building_row.try_get("favorable_owners").unwrap_or(0);
 
     let shares_total = get_meeting_total_shares(pool, meeting_id, building_id).await?;
 
@@ -1623,13 +1664,13 @@ pub async fn get_tally(
         } else {
             shares_present
         },
-        total_owners: building.total_owners.unwrap_or(0) as u32,
+        total_owners: building_total_owners.unwrap_or(0) as u32,
         present_owners: if attendance.present_units > 0 {
             attendance.present_units as u32
         } else {
-            building.present_owners.unwrap_or(0) as u32
+            building_present_owners.unwrap_or(0) as u32
         },
-        favorable_owners: building.favorable_owners as u32,
+        favorable_owners: building_favorable_owners as u32,
         for_votes,
         against_votes,
         abstentions,
@@ -1692,7 +1733,7 @@ pub async fn start(
     let scrutineers_json = serde_json::to_value(&input.scrutineers)
         .map_err(|_| AppError::validation_code("errors.meetings.session_roles_required"))?;
 
-    let affected = sqlx::query!(
+    let affected = sqlx::query(
         r#"
         UPDATE general_meeting
         SET status = $8::text::meeting_status,
@@ -1704,16 +1745,16 @@ pub async fn start(
             updated_at = NOW()
         WHERE id = $1 AND building_id = $2 AND status = $9::text::meeting_status
         "#,
-        id,
-        building_id,
-        input.president_name,
-        input.president_user_id,
-        input.secretary_name,
-        input.secretary_user_id,
-        scrutineers_json,
-        meeting_status::ONGOING,
-        meeting_status::CALLED,
     )
+    .bind(id)
+    .bind(building_id)
+    .bind(input.president_name)
+    .bind(input.president_user_id)
+    .bind(input.secretary_name)
+    .bind(input.secretary_user_id)
+    .bind(scrutineers_json)
+    .bind(meeting_status::ONGOING)
+    .bind(meeting_status::CALLED)
     .execute(&mut *tx)
     .await?
     .rows_affected();
@@ -1858,7 +1899,7 @@ pub async fn finalize_resolution(
         return Ok(false);
     }
 
-    sqlx::query!(
+    sqlx::query(
         r#"
         UPDATE resolution
         SET status = $1::resolution_status
@@ -1869,12 +1910,12 @@ pub async fn finalize_resolution(
           AND gm.building_id = $4
           AND gm.status = $5::text::meeting_status
         "#,
-        new_status as _,
-        resolution_id,
-        meeting_id,
-        building_id,
-        meeting_status::ONGOING,
     )
+    .bind(new_status)
+    .bind(resolution_id)
+    .bind(meeting_id)
+    .bind(building_id)
+    .bind(meeting_status::ONGOING)
     .execute(pool)
     .await?;
 
@@ -1888,7 +1929,7 @@ pub async fn patch_resolution_description(
     building_id: Uuid,
     description: Option<String>,
 ) -> AppResult<Option<serde_json::Value>> {
-    let row = sqlx::query!(
+    let row = sqlx::query(
         r#"
         UPDATE resolution
         SET description = $3
@@ -1903,23 +1944,23 @@ pub async fn patch_resolution_description(
                   resolution.vote_type::text as vote_type,
                   resolution.status::text as status
         "#,
-        resolution_id,
-        meeting_id,
-        description,
-        building_id,
-        meeting_status::ONGOING,
     )
+    .bind(resolution_id)
+    .bind(meeting_id)
+    .bind(description)
+    .bind(building_id)
+    .bind(meeting_status::ONGOING)
     .fetch_optional(pool)
     .await?;
 
     Ok(row.map(|r| {
         serde_json::json!({
-            "id": r.id,
-            "number": r.number,
-            "title": r.title,
-            "description": r.description,
-            "vote_type": r.vote_type,
-            "status": r.status,
+            "id": r.try_get::<Uuid, _>("id").unwrap_or_default(),
+            "number": r.try_get::<i32, _>("number").unwrap_or(0),
+            "title": r.try_get::<String, _>("title").unwrap_or_default(),
+            "description": r.try_get::<Option<String>, _>("description").ok().flatten(),
+            "vote_type": r.try_get::<String, _>("vote_type").unwrap_or_default(),
+            "status": r.try_get::<String, _>("status").unwrap_or_default(),
         })
     }))
 }

@@ -1,7 +1,7 @@
 use chrono::{DateTime, NaiveDate, Utc};
 use serde::Serialize;
-use sqlx::PgPool;
 use sqlx::types::Decimal;
+use sqlx::{PgPool, Row};
 use std::collections::HashMap;
 use uuid::Uuid;
 
@@ -444,14 +444,14 @@ pub async fn close(
     budget_id: Uuid,
     building_id: Uuid,
 ) -> crate::errors::AppResult<bool> {
-    let result = sqlx::query!(
+    let result = sqlx::query(
         r#"UPDATE budget
            SET status = $3::text::budget_status, updated_at = NOW()
            WHERE id = $1 AND building_id = $2 AND status != $3::text::budget_status"#,
-        budget_id,
-        building_id,
-        budget_status::CLOSED
     )
+    .bind(budget_id)
+    .bind(building_id)
+    .bind(budget_status::CLOSED)
     .execute(pool)
     .await?;
     Ok(result.rows_affected() > 0)
@@ -514,26 +514,25 @@ pub async fn create_rectificatif(
     .fetch_one(&mut *tx)
     .await?;
 
-    let rectificatif = sqlx::query_as!(
-        BudgetRow,
+    let rectificatif: BudgetRow = sqlx::query_as(
         r#"INSERT INTO budget (building_id, fiscal_year, status, parent_budget_id)
            VALUES ($1, $2, $4::text::budget_status, $3)
            RETURNING
            id,
            building_id,
            fiscal_year,
-           status::text as "status!",
+           status::text as status,
            approval_meeting_id,
            parent_budget_id,
-           0::numeric as "total_forecast!",
-           0::numeric as "total_actual!",
+           0::numeric as total_forecast,
+           0::numeric as total_actual,
            created_at,
            updated_at"#,
-        building_id,
-        original.fiscal_year,
-        original_budget_id,
-        budget_status::DRAFT
     )
+    .bind(building_id)
+    .bind(original.fiscal_year)
+    .bind(original_budget_id)
+    .bind(budget_status::DRAFT)
     .fetch_one(&mut *tx)
     .await
     .map_err(map_budget_constraint)?;
@@ -643,14 +642,14 @@ pub async fn approve(
     // non-deferrable unique index, so the two budgets must never be `approved`
     // at the same point in the transaction.
     if let Some(parent_id) = target.parent_budget_id {
-        sqlx::query!(
+        sqlx::query(
             r#"UPDATE budget
                SET status = $3::text::budget_status, updated_at = NOW()
                WHERE id = $1 AND building_id = $2"#,
-            parent_id,
-            building_id,
-            budget_status::CLOSED
         )
+        .bind(parent_id)
+        .bind(building_id)
+        .bind(budget_status::CLOSED)
         .execute(&mut *tx)
         .await?;
 
@@ -700,8 +699,7 @@ pub async fn approve(
         }
     }
 
-    let budget = sqlx::query_as!(
-        BudgetRow,
+    let budget: BudgetRow = sqlx::query_as(
         r#"UPDATE budget
            SET status = $4::text::budget_status,
                approval_meeting_id = $1,
@@ -709,19 +707,19 @@ pub async fn approve(
            WHERE id = $2 AND building_id = $3 AND status = $5::text::budget_status
            RETURNING
            id, building_id, fiscal_year,
-           status::text as "status!",
+           status::text as status,
            approval_meeting_id,
            parent_budget_id,
-           0::numeric as "total_forecast!",
-           0::numeric as "total_actual!",
+           0::numeric as total_forecast,
+           0::numeric as total_actual,
            created_at,
            updated_at"#,
-        approval_meeting_id,
-        budget_id,
-        building_id,
-        budget_status::APPROVED,
-        budget_status::DRAFT
     )
+    .bind(approval_meeting_id)
+    .bind(budget_id)
+    .bind(building_id)
+    .bind(budget_status::APPROVED)
+    .bind(budget_status::DRAFT)
     .fetch_one(&mut *tx)
     .await
     .map_err(map_budget_constraint)?;
