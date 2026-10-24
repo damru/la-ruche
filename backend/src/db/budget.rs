@@ -5,7 +5,22 @@ use sqlx::types::Decimal;
 use std::collections::HashMap;
 use uuid::Uuid;
 
-use crate::db::audit::{self, NewAuditEntry};
+use crate::db::audit::{self, NewAuditEntry, entity_type, operation};
+
+/// `budget_status` values (PG enum `budget_status`).
+pub mod budget_status {
+    pub const DRAFT: &str = "draft";
+    pub const APPROVED: &str = "approved";
+    pub const CLOSED: &str = "closed";
+}
+
+/// `levy_status` values (PG enum `levy_status`).
+pub mod levy_status {
+    pub const DRAFT: &str = "draft";
+    pub const ISSUED: &str = "issued";
+    pub const PAID: &str = "paid";
+    pub const OVERDUE: &str = "overdue";
+}
 
 #[derive(Debug, Serialize, sqlx::FromRow)]
 pub struct BudgetRow {
@@ -262,11 +277,12 @@ pub async fn get_by_fiscal_year(
             b.updated_at
            FROM budget b
            WHERE b.building_id = $1 AND b.fiscal_year = $2
-           ORDER BY (b.status = 'approved') DESC
+           ORDER BY (b.status = $3::text::budget_status) DESC
            LIMIT 1"#,
     )
     .bind(building_id)
     .bind(fiscal_year)
+    .bind(budget_status::APPROVED)
     .fetch_optional(pool)
     .await?)
 }
@@ -353,7 +369,7 @@ pub async fn ensure_budget_is_mutable(
     .await?
     .ok_or(crate::errors::AppError::NotFound)?;
 
-    if status == "closed" {
+    if status == budget_status::CLOSED {
         return Err(crate::errors::AppError::conflict_code(
             "errors.budget.exercise_closed",
         ));
@@ -430,10 +446,11 @@ pub async fn close(
 ) -> crate::errors::AppResult<bool> {
     let result = sqlx::query!(
         r#"UPDATE budget
-           SET status = 'closed', updated_at = NOW()
-           WHERE id = $1 AND building_id = $2 AND status != 'closed'"#,
+           SET status = $3::text::budget_status, updated_at = NOW()
+           WHERE id = $1 AND building_id = $2 AND status != $3::text::budget_status"#,
         budget_id,
-        building_id
+        building_id,
+        budget_status::CLOSED
     )
     .execute(pool)
     .await?;
@@ -480,7 +497,7 @@ pub async fn create_rectificatif(
     };
 
     // Only a budget voted in AG can be amended: a draft is simply edited.
-    if original.status != "approved" {
+    if original.status != budget_status::APPROVED {
         return Err(crate::errors::AppError::unprocessable_entity_code(
             "errors.budget.rectificatif_requires_approved",
         ));
@@ -500,7 +517,7 @@ pub async fn create_rectificatif(
     let rectificatif = sqlx::query_as!(
         BudgetRow,
         r#"INSERT INTO budget (building_id, fiscal_year, status, parent_budget_id)
-           VALUES ($1, $2, 'draft', $3)
+           VALUES ($1, $2, $4::text::budget_status, $3)
            RETURNING
            id,
            building_id,
@@ -514,7 +531,8 @@ pub async fn create_rectificatif(
            updated_at"#,
         building_id,
         original.fiscal_year,
-        original_budget_id
+        original_budget_id,
+        budget_status::DRAFT
     )
     .fetch_one(&mut *tx)
     .await
@@ -544,13 +562,13 @@ pub async fn create_rectificatif(
         &mut *tx,
         NewAuditEntry {
             building_id,
-            entity_type: "budget",
+            entity_type: entity_type::BUDGET,
             entity_id: rectificatif.id,
-            operation: "CREATE",
+            operation: operation::CREATE,
             changed_by: Some(user_id),
             old_values: None,
             new_values: Some(serde_json::json!({
-                "status": "draft",
+                "status": budget_status::DRAFT,
                 "parent_budget_id": original_budget_id,
                 "fiscal_year": original.fiscal_year,
                 "rectificatif_version": next_rectificatif_version,
@@ -596,7 +614,7 @@ pub async fn approve(
         )
     })?;
 
-    if meeting_status != "closed" {
+    if meeting_status != crate::domain::immutability::meeting_status::CLOSED {
         return Err(crate::errors::AppError::unprocessable_entity_code(
             "errors.budget.approval_meeting_not_closed",
         ));
@@ -615,7 +633,7 @@ pub async fn approve(
     .await?
     .ok_or(crate::errors::AppError::NotFound)?;
 
-    if target.status != "draft" {
+    if target.status != budget_status::DRAFT {
         return Err(crate::errors::AppError::conflict_code(
             "errors.budget.not_draft",
         ));
@@ -627,10 +645,11 @@ pub async fn approve(
     if let Some(parent_id) = target.parent_budget_id {
         sqlx::query!(
             r#"UPDATE budget
-               SET status = 'closed', updated_at = NOW()
+               SET status = $3::text::budget_status, updated_at = NOW()
                WHERE id = $1 AND building_id = $2"#,
             parent_id,
-            building_id
+            building_id,
+            budget_status::CLOSED
         )
         .execute(&mut *tx)
         .await?;
@@ -639,12 +658,12 @@ pub async fn approve(
             &mut *tx,
             NewAuditEntry {
                 building_id,
-                entity_type: "budget",
+                entity_type: entity_type::BUDGET,
                 entity_id: parent_id,
-                operation: "UPDATE",
+                operation: operation::UPDATE,
                 changed_by: Some(user_id),
-                old_values: Some(serde_json::json!({ "status": "approved" })),
-                new_values: Some(serde_json::json!({ "status": "closed" })),
+                old_values: Some(serde_json::json!({ "status": budget_status::APPROVED })),
+                new_values: Some(serde_json::json!({ "status": budget_status::CLOSED })),
             },
         )
         .await?;
@@ -669,9 +688,9 @@ pub async fn approve(
                 &mut *tx,
                 NewAuditEntry {
                     building_id,
-                    entity_type: "budget_line",
+                    entity_type: entity_type::BUDGET_LINE,
                     entity_id: line_id,
-                    operation: "UPDATE",
+                    operation: operation::UPDATE,
                     changed_by: Some(user_id),
                     old_values: Some(serde_json::json!({ "valid_to": null })),
                     new_values: Some(serde_json::json!({ "valid_to": "CURRENT_DATE" })),
@@ -684,10 +703,10 @@ pub async fn approve(
     let budget = sqlx::query_as!(
         BudgetRow,
         r#"UPDATE budget
-           SET status = 'approved',
+           SET status = $4::text::budget_status,
                approval_meeting_id = $1,
                updated_at = NOW()
-           WHERE id = $2 AND building_id = $3 AND status = 'draft'
+           WHERE id = $2 AND building_id = $3 AND status = $5::text::budget_status
            RETURNING
            id, building_id, fiscal_year,
            status::text as "status!",
@@ -699,7 +718,9 @@ pub async fn approve(
            updated_at"#,
         approval_meeting_id,
         budget_id,
-        building_id
+        building_id,
+        budget_status::APPROVED,
+        budget_status::DRAFT
     )
     .fetch_one(&mut *tx)
     .await
@@ -709,13 +730,13 @@ pub async fn approve(
         &mut *tx,
         NewAuditEntry {
             building_id,
-            entity_type: "budget",
+            entity_type: entity_type::BUDGET,
             entity_id: budget_id,
-            operation: "UPDATE",
+            operation: operation::UPDATE,
             changed_by: Some(user_id),
-            old_values: Some(serde_json::json!({ "status": "draft" })),
+            old_values: Some(serde_json::json!({ "status": budget_status::DRAFT })),
             new_values: Some(serde_json::json!({
-                "status": "approved",
+                "status": budget_status::APPROVED,
                 "approval_meeting_id": approval_meeting_id,
             })),
         },
@@ -889,9 +910,9 @@ pub async fn update_line(
         &mut *tx,
         NewAuditEntry {
             building_id,
-            entity_type: "budget_line",
+            entity_type: entity_type::BUDGET_LINE,
             entity_id: line_id,
-            operation: "UPDATE",
+            operation: operation::UPDATE,
             changed_by: Some(user_id),
             old_values: Some(serde_json::json!({
                 "label": before.label,
@@ -949,9 +970,9 @@ pub async fn delete_line(
         &mut *tx,
         NewAuditEntry {
             building_id,
-            entity_type: "budget_line",
+            entity_type: entity_type::BUDGET_LINE,
             entity_id: line_id,
-            operation: "DELETE",
+            operation: operation::DELETE,
             changed_by: Some(user_id),
             old_values: Some(serde_json::json!({
                 "label": before.label,
@@ -1134,9 +1155,9 @@ pub async fn list_levies(
                COALESCE(SUM(lcu.amount) FILTER (WHERE lcu.budget_line_id IS NULL), 0)::numeric     AS works_fund_amount,
                lc.status::text                 AS call_status,
                CASE
-                   WHEN bool_or(lcu.status::text = 'overdue') THEN 'overdue'
-                   WHEN bool_and(lcu.status::text = 'paid')   THEN 'paid'
-                   ELSE 'issued'
+                   WHEN bool_or(lcu.status::text = $6) THEN $6
+                   WHEN bool_and(lcu.status::text = $7) THEN $7
+                   ELSE $8
                END                              AS status,
                MAX(lcu.paid_at)                AS paid_at,
                uo.user_id                      AS owner_id,
@@ -1172,6 +1193,11 @@ pub async fn list_levies(
     .bind(budget_id)
     .bind(building_id)
     .bind(owner_id)
+    .bind(None::<String>)
+    .bind(None::<String>)
+    .bind(levy_status::OVERDUE)
+    .bind(levy_status::PAID)
+    .bind(levy_status::ISSUED)
     .fetch_all(pool)
     .await?;
 
@@ -1254,10 +1280,13 @@ pub async fn issue_levy_call(
         &status,
     )?;
 
-    sqlx::query("UPDATE levy_call SET status = 'issued', issued_at = NOW() WHERE id = $1")
-        .bind(levy_call_id)
-        .execute(pool)
-        .await?;
+    sqlx::query(
+        "UPDATE levy_call SET status = $2::text::levy_status, issued_at = NOW() WHERE id = $1",
+    )
+    .bind(levy_call_id)
+    .bind(levy_status::ISSUED)
+    .execute(pool)
+    .await?;
 
     Ok(())
 }
@@ -1271,18 +1300,19 @@ pub async fn mark_paid(
 ) -> crate::errors::AppResult<()> {
     sqlx::query(
         r#"UPDATE levy_call_unit lcu
-           SET status = 'paid', paid_at = NOW()
+           SET status = $4::text::levy_status, paid_at = NOW()
            FROM levy_call lc
            JOIN budget b ON b.id = lc.budget_id
            WHERE lcu.levy_call_id = $1
              AND lcu.unit_id = $2
              AND lcu.levy_call_id = lc.id
              AND b.building_id = $3
-             AND lcu.status != 'paid'"#,
+             AND lcu.status != $4::text::levy_status"#,
     )
     .bind(levy_call_id)
     .bind(unit_id)
     .bind(building_id)
+    .bind(levy_status::PAID)
     .execute(pool)
     .await?;
     Ok(())
@@ -1317,7 +1347,7 @@ pub async fn create_credit_note(
     .await?
     .ok_or(crate::errors::AppError::NotFound)?;
 
-    if source.status == "draft" {
+    if source.status == levy_status::DRAFT {
         return Err(crate::errors::AppError::validation_code(
             "errors.levy_call.credit_note_requires_issued",
         ));
@@ -1330,7 +1360,7 @@ pub async fn create_credit_note(
     let new_id: Uuid = sqlx::query_scalar(
         r#"INSERT INTO levy_call
                (budget_id, call_label, charge_amount, works_fund_amount, corrects_levy_call_id, status)
-           VALUES ($1, $2, $3, $4, $5, 'draft'::levy_status)
+           VALUES ($1, $2, $3, $4, $5, $6::text::levy_status)
            RETURNING id"#,
     )
     .bind(source.budget_id)
@@ -1338,6 +1368,7 @@ pub async fn create_credit_note(
     .bind(-source.charge_amount)
     .bind(-source.works_fund_amount)
     .bind(levy_call_id)
+    .bind(levy_status::DRAFT)
     .fetch_one(&mut *tx)
     .await?;
 

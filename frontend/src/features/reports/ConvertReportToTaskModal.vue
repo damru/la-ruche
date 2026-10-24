@@ -12,8 +12,9 @@ import { useFormFeedback } from '@/composables/useFormFeedback'
 import { useAutoClose } from '@/composables/useAutoClose'
 import { toErrorMessage } from '@/composables/usePageLoader'
 import type { Report, TaskPriority } from '@/types/domain'
+import { DEFAULT_TASK_PRIORITY, TASK_PRIORITIES } from '@/utils/constants'
 
-const DEFAULT_CONVERT_PRIORITY: TaskPriority = 'normal'
+const DEFAULT_CONVERT_PRIORITY = DEFAULT_TASK_PRIORITY
 
 const props = defineProps<{
   open: boolean
@@ -33,7 +34,7 @@ const converting = ref(false)
 const convertPriority = ref<TaskPriority>(DEFAULT_CONVERT_PRIORITY)
 
 const taskPriorityOptions = computed(() =>
-  (['low', 'normal', 'high', 'urgent'] as TaskPriority[]).map(priority => ({
+  TASK_PRIORITIES.map(priority => ({
     value: priority,
     label: t(`tasks.priorities.${priority}`),
   })),

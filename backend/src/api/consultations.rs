@@ -15,7 +15,7 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::{
-    db::{self, AppState},
+    db::{self, AppState, consultation::poll_status},
     domain::{AuthUser, Role},
     errors::{AppError, AppResult, json_value},
 };
@@ -24,8 +24,11 @@ use crate::{
 const INFORMAL_DISCLAIMER: &str =
     "Consultation informelle — aucune valeur décisionnelle légale (loi 10 juillet 1965).";
 
-/// Valid role strings accepted in visible_to_roles.
-const VALID_ROLES: &[&str] = &["manager", "board_member", "co_owner", "tenant"];
+/// Valid roles accepted in visible_to_roles — derived from the `Role` enum
+/// so the list can never drift from the PG `user_role` enum.
+fn is_valid_role(raw: &str) -> bool {
+    raw.parse::<Role>().is_ok()
+}
 
 #[derive(Deserialize)]
 pub struct CreateConsultationInput {
@@ -98,7 +101,7 @@ fn validate_input(input: &CreateConsultationInput) -> AppResult<()> {
         ));
     }
     for role in &input.visible_to_roles {
-        if !VALID_ROLES.contains(&role.as_str()) {
+        if !is_valid_role(role) {
             return Err(AppError::validation_code(
                 "errors.consultations.invalid_visible_role",
             ));
@@ -307,7 +310,9 @@ pub async fn delete(
             .and_then(|v| v.as_str())
             .and_then(|s| Uuid::parse_str(s).ok())
             .ok_or(AppError::NotFound)?;
-        if created_by != auth.user_id || c.get("status").and_then(|v| v.as_str()) != Some("draft") {
+        if created_by != auth.user_id
+            || c.get("status").and_then(|v| v.as_str()) != Some(poll_status::DRAFT)
+        {
             return Err(AppError::Forbidden);
         }
     }

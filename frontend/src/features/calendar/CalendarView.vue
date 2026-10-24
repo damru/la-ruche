@@ -31,6 +31,7 @@ import CalendarAgendaMode from './CalendarAgendaMode.vue'
 import EventFormModal from './EventFormModal.vue'
 import EventDetailModal from './EventDetailModal.vue'
 import type { CalendarEvent, ManualCalendarEvent } from '@/types/domain'
+import { MANAGER_ROLES } from '@/utils/constants'
 
 type Mode = 'month' | 'week' | 'agenda'
 
@@ -44,7 +45,7 @@ const anchor = ref(new Date())
 const events = ref<CalendarEvent[]>([])
 const buildingName = ref('')
 
-const canManage = auth.hasAnyRole(['manager', 'board_member'])
+const canManage = auth.hasAnyRole([...MANAGER_ROLES])
 
 const detailOpen = ref(false)
 const detailEventId = ref<string | null>(null)

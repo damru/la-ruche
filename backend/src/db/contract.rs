@@ -4,10 +4,45 @@ use sqlx::PgPool;
 use sqlx::types::Decimal;
 use uuid::Uuid;
 
-use crate::db::audit::{self, NewAuditEntry};
+use crate::db::audit::{self, NewAuditEntry, entity_type, operation};
 use crate::db::document::DocumentListRow;
 use crate::domain::reminders::{ContractReminderSpec, ReminderKind, compute_reminders};
 use crate::errors::{AppError, AppResult};
+
+/// `contract_type` values (PG enum `contract_type`).
+pub mod contract_type {
+    pub const MAINTENANCE: &str = "maintenance";
+    pub const INSURANCE: &str = "insurance";
+    pub const SERVICE: &str = "service";
+    pub const ENERGY: &str = "energy";
+    pub const WATER: &str = "water";
+    pub const CLEANING: &str = "cleaning";
+    pub const GREEN_SPACES: &str = "green_spaces";
+    pub const OTHER: &str = "other";
+}
+
+/// `payment_frequency` values (PG enum `payment_frequency`).
+pub mod payment_frequency {
+    pub const MONTHLY: &str = "monthly";
+    pub const QUARTERLY: &str = "quarterly";
+    pub const BIANNUAL: &str = "biannual";
+    pub const ANNUAL: &str = "annual";
+}
+
+/// `contract_status` values (PG enum `contract_status`).
+pub mod contract_status {
+    pub const DRAFT: &str = "draft";
+    pub const ACTIVE: &str = "active";
+    pub const TERMINATED: &str = "terminated";
+    pub const EXPIRED: &str = "expired";
+}
+
+/// `reminder_status` values (PG enum `reminder_status`).
+pub mod reminder_status {
+    pub const PENDING: &str = "pending";
+    pub const SENT: &str = "sent";
+    pub const ACKNOWLEDGED: &str = "acknowledged";
+}
 
 #[derive(Debug, Clone, Serialize, sqlx::FromRow)]
 pub struct VendorContractRow {
@@ -179,7 +214,7 @@ pub async fn create(
            (building_id, vendor_name, vendor_email, vendor_phone,
              subject, contract_type, start_date, end_date, amount, payment_frequency,
              auto_renewal, notice_days, status, created_by)
-           VALUES ($1,$2,$3,$4,$5,$6::text::contract_type,$7,$8,$9,$10::text::payment_frequency,$11,$12,'draft',$13)
+           VALUES ($1,$2,$3,$4,$5,$6::text::contract_type,$7,$8,$9,$10::text::payment_frequency,$11,$12,$14::text::contract_status,$13)
            RETURNING id, building_id, vendor_name, vendor_email, vendor_phone,
            subject, contract_type::text as contract_type, start_date, end_date, amount,
            payment_frequency::text as payment_frequency,
@@ -199,6 +234,7 @@ pub async fn create(
     .bind(input.auto_renewal)
     .bind(input.notice_days)
     .bind(user_id)
+    .bind(contract_status::DRAFT)
     .fetch_one(&mut *tx)
     .await?;
 
@@ -248,15 +284,16 @@ pub async fn create_amendment(
         None => return Ok(None),
     };
 
-    if predecessor.status != "active" {
+    if predecessor.status != contract_status::ACTIVE {
         return Err(AppError::validation_code("errors.contracts.not_amendable"));
     }
 
     // AC-CF-006-C: only one pending draft amendment per predecessor.
     let existing_draft = sqlx::query_scalar::<_, bool>(
-        "SELECT EXISTS(SELECT 1 FROM vendor_contract WHERE predecessor_id = $1 AND status = 'draft')",
+        "SELECT EXISTS(SELECT 1 FROM vendor_contract WHERE predecessor_id = $1 AND status = $2::text::contract_status)",
     )
     .bind(predecessor_id)
+    .bind(contract_status::DRAFT)
     .fetch_one(&mut *tx)
     .await?;
     if existing_draft {
@@ -272,7 +309,7 @@ pub async fn create_amendment(
             start_date, end_date, amount, payment_frequency, auto_renewal, notice_days,
             predecessor_id, status, created_by)
            VALUES ($1,$2,$3,$4,$5,$6::text::contract_type,$7,$8,$9,
-                   $10::text::payment_frequency,$11,$12,$13,'draft',$14)
+                   $10::text::payment_frequency,$11,$12,$13,$15::text::contract_status,$14)
            RETURNING id, building_id, vendor_name, vendor_email, vendor_phone,
            subject, contract_type::text AS contract_type, start_date, end_date, amount,
            payment_frequency::text AS payment_frequency, auto_renewal, notice_days,
@@ -292,6 +329,7 @@ pub async fn create_amendment(
     .bind(c.notice_days)
     .bind(predecessor_id)
     .bind(user_id)
+    .bind(contract_status::DRAFT)
     .fetch_one(&mut *tx)
     .await?;
 
@@ -299,13 +337,13 @@ pub async fn create_amendment(
         &mut *tx,
         NewAuditEntry {
             building_id,
-            entity_type: "vendor_contract",
+            entity_type: entity_type::VENDOR_CONTRACT,
             entity_id: row.id,
-            operation: "UPDATE",
+            operation: operation::UPDATE,
             changed_by: Some(user_id),
             old_values: None,
             new_values: Some(serde_json::json!({
-                "status": "draft",
+                "status": contract_status::DRAFT,
                 "predecessor_id": predecessor_id,
             })),
         },
@@ -346,14 +384,14 @@ pub async fn activate(
         Some(row) => row,
         None => return Ok(None),
     };
-    if current.status != "draft" {
+    if current.status != contract_status::DRAFT {
         return Err(AppError::validation_code(
             "errors.contracts.not_activatable",
         ));
     }
 
     let row = sqlx::query_as::<_, VendorContractRow>(
-        r#"UPDATE vendor_contract SET status = 'active', updated_at = NOW()
+        r#"UPDATE vendor_contract SET status = $2::text::contract_status, updated_at = NOW()
            WHERE id = $1
            RETURNING id, building_id, vendor_name, vendor_email, vendor_phone,
            subject, contract_type::text AS contract_type, start_date, end_date, amount,
@@ -361,6 +399,7 @@ pub async fn activate(
            status::text AS status, predecessor_id, created_at, 0::bigint AS document_count"#,
     )
     .bind(id)
+    .bind(contract_status::ACTIVE)
     .fetch_one(&mut *tx)
     .await?;
 
@@ -368,12 +407,12 @@ pub async fn activate(
         &mut *tx,
         NewAuditEntry {
             building_id,
-            entity_type: "vendor_contract",
+            entity_type: entity_type::VENDOR_CONTRACT,
             entity_id: row.id,
-            operation: "UPDATE",
+            operation: operation::UPDATE,
             changed_by: Some(user_id),
-            old_values: Some(serde_json::json!({ "status": "draft" })),
-            new_values: Some(serde_json::json!({ "status": "active" })),
+            old_values: Some(serde_json::json!({ "status": contract_status::DRAFT })),
+            new_values: Some(serde_json::json!({ "status": contract_status::ACTIVE })),
         },
     )
     .await?;
@@ -381,8 +420,9 @@ pub async fn activate(
     // AC-CF-006-B: activating an amendment closes its predecessor atomically.
     if let Some(predecessor_id) = row.predecessor_id {
         sqlx::query!(
-            "UPDATE vendor_contract SET status = 'terminated', updated_at = NOW() WHERE id = $1",
+            "UPDATE vendor_contract SET status = $2::text::contract_status, updated_at = NOW() WHERE id = $1",
             predecessor_id,
+            contract_status::TERMINATED,
         )
         .execute(&mut *tx)
         .await?;
@@ -391,19 +431,20 @@ pub async fn activate(
             &mut *tx,
             NewAuditEntry {
                 building_id,
-                entity_type: "vendor_contract",
+                entity_type: entity_type::VENDOR_CONTRACT,
                 entity_id: predecessor_id,
-                operation: "UPDATE",
+                operation: operation::UPDATE,
                 changed_by: Some(user_id),
-                old_values: Some(serde_json::json!({ "status": "active" })),
-                new_values: Some(serde_json::json!({ "status": "terminated" })),
+                old_values: Some(serde_json::json!({ "status": contract_status::ACTIVE })),
+                new_values: Some(serde_json::json!({ "status": contract_status::TERMINATED })),
             },
         )
         .await?;
 
         sqlx::query!(
-            "DELETE FROM contract_reminder WHERE contract_id = $1 AND status = 'pending'",
+            "DELETE FROM contract_reminder WHERE contract_id = $1 AND status = $2::text::reminder_status",
             predecessor_id,
+            reminder_status::PENDING,
         )
         .execute(&mut *tx)
         .await?;
@@ -519,8 +560,9 @@ pub async fn update(
 
     if let Some(ref row) = row {
         sqlx::query!(
-            "DELETE FROM contract_reminder WHERE contract_id = $1 AND status = 'pending'",
-            id
+            "DELETE FROM contract_reminder WHERE contract_id = $1 AND status = $2::text::reminder_status",
+            id,
+            reminder_status::PENDING,
         )
         .execute(&mut *tx)
         .await?;
@@ -556,8 +598,8 @@ pub async fn update(
 
 pub async fn terminate(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()> {
     sqlx::query!(
-        "UPDATE vendor_contract SET status = 'terminated', updated_at = NOW() WHERE id=$1 AND building_id=$2",
-        id, building_id
+        "UPDATE vendor_contract SET status = $3::text::contract_status, updated_at = NOW() WHERE id=$1 AND building_id=$2",
+        id, building_id, contract_status::TERMINATED
     ).execute(pool).await?;
     Ok(())
 }
@@ -645,10 +687,10 @@ pub async fn acknowledge_reminder(
     building_id: Uuid,
 ) -> AppResult<()> {
     sqlx::query!(
-        r#"UPDATE contract_reminder cr SET status = 'acknowledged', updated_at = NOW()
+        r#"UPDATE contract_reminder cr SET status = $2::text::reminder_status, updated_at = NOW()
            FROM vendor_contract vc
            WHERE cr.id = $1 AND cr.contract_id = $2 AND vc.id = cr.contract_id AND vc.building_id = $3"#,
-        reminder_id, contract_id, building_id
+        reminder_id, contract_id, building_id, reminder_status::ACKNOWLEDGED
     ).execute(pool).await?;
     Ok(())
 }
@@ -779,13 +821,7 @@ pub async fn detach_document(
 }
 
 fn frequency_to_months(p: Option<&str>) -> Option<u32> {
-    match p {
-        Some("monthly") => Some(1),
-        Some("quarterly") => Some(3),
-        Some("biannual") => Some(6),
-        Some("annual") => Some(12),
-        _ => None,
-    }
+    p.and_then(crate::domain::reminders::payment_frequency_to_months)
 }
 
 fn reminder_kind_to_str(kind: &ReminderKind) -> &'static str {
@@ -824,19 +860,25 @@ fn select_visible_contract_reminders(
     rows: Vec<ContractReminderCandidateRow>,
     today: NaiveDate,
 ) -> Vec<ContractReminderCandidateRow> {
-    let payment_threshold = today.checked_add_days(Days::new(30)).unwrap_or(today);
-    let contract_end_threshold = today.checked_add_days(Days::new(90)).unwrap_or(today);
+    let payment_threshold = today
+        .checked_add_days(Days::new(
+            crate::domain::reminders::PAYMENT_REMINDER_LEAD_DAYS,
+        ))
+        .unwrap_or(today);
+    let contract_end_threshold = today
+        .checked_add_days(Days::new(crate::domain::reminders::CONTRACT_END_LEAD_DAYS))
+        .unwrap_or(today);
     let mut selected_by_contract = std::collections::BTreeMap::<Uuid, SelectedReminderRows>::new();
 
     for row in rows {
-        if row.status != "pending" || !is_contract_reminder_visible(&row, today) {
+        if row.status != reminder_status::PENDING || !is_contract_reminder_visible(&row, today) {
             continue;
         }
 
         let target_date = reminder_target_date(&row);
         let selected = selected_by_contract.entry(row.contract_id).or_default();
 
-        if row.reminder_type == "payment_due" {
+        if row.reminder_type == reminder_kind_to_str(&ReminderKind::PaymentDue) {
             if target_date <= payment_threshold && selected.next_payment.is_none() {
                 selected.next_payment = Some(row);
             }
@@ -867,7 +909,7 @@ fn select_visible_contract_reminders(
 }
 
 fn is_contract_reminder_visible(row: &ContractReminderCandidateRow, today: NaiveDate) -> bool {
-    if row.contract_status != "active" {
+    if row.contract_status != contract_status::ACTIVE {
         return false;
     }
 
@@ -881,11 +923,16 @@ fn is_contract_reminder_visible(row: &ContractReminderCandidateRow, today: Naive
 }
 
 fn is_contract_end_reminder(reminder_type: &str) -> bool {
-    matches!(reminder_type, "renewal" | "expiration" | "termination")
+    matches!(
+        reminder_type,
+        t if t == reminder_kind_to_str(&ReminderKind::Renewal)
+            || t == reminder_kind_to_str(&ReminderKind::Expiration)
+            || t == reminder_kind_to_str(&ReminderKind::Termination)
+    )
 }
 
 fn reminder_target_date(row: &ContractReminderCandidateRow) -> NaiveDate {
-    if row.reminder_type == "payment_due" {
+    if row.reminder_type == reminder_kind_to_str(&ReminderKind::PaymentDue) {
         row.reminder_date
     } else {
         row.end_date.unwrap_or(row.reminder_date)

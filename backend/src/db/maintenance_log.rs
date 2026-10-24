@@ -5,6 +5,12 @@ use sqlx::types::Decimal;
 use sqlx::{Executor, PgPool, Postgres, Row};
 use uuid::Uuid;
 
+/// `maintenance_log.source` values (PG enum `log_source`).
+pub mod log_source {
+    pub const MANUAL: &str = "manual";
+    pub const AUTOMATIC: &str = "automatic";
+}
+
 /// Typed row for maintenance log entries.
 #[derive(Debug, Serialize)]
 pub struct MaintenanceLogRow {
@@ -92,7 +98,7 @@ pub async fn create(
         r#"INSERT INTO maintenance_log
            (building_id, created_by, title, description, intervention_date,
             cost, vendor_name, contract_id, task_id, source)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'manual'::log_source)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::text::log_source)
            RETURNING id, building_id, title, description, intervention_date, cost,
            vendor_name, contract_id, task_id, source::text AS source, created_at"#,
     )
@@ -105,6 +111,7 @@ pub async fn create(
     .bind(vendor_name)
     .bind(contract_id)
     .bind(task_id)
+    .bind(log_source::MANUAL)
     .fetch_one(pool)
     .await?;
     row_from_pg(&row).map_err(Into::into)
@@ -126,7 +133,7 @@ pub async fn update(
         r#"UPDATE maintenance_log
            SET title=$3, description=$4, intervention_date=$5, cost=$6,
                vendor_name=$7, contract_id=$8, updated_at=NOW()
-           WHERE id=$1 AND building_id=$2 AND source='manual'
+           WHERE id=$1 AND building_id=$2 AND source=$9::text::log_source
            RETURNING id, building_id, title, description, intervention_date, cost,
            vendor_name, contract_id, task_id, source::text AS source, created_at"#,
     )
@@ -138,6 +145,7 @@ pub async fn update(
     .bind(cost)
     .bind(vendor_name)
     .bind(contract_id)
+    .bind(log_source::MANUAL)
     .fetch_optional(pool)
     .await?;
     row.as_ref()
@@ -168,15 +176,17 @@ where
     let result = sqlx::query(
         r#"INSERT INTO maintenance_log
            (building_id, created_by, title, task_id, intervention_date, source, vendor_name, cost)
-           SELECT t.building_id, $3, t.title, t.id, CURRENT_DATE, 'automatic'::log_source,
+           SELECT t.building_id, $3, t.title, t.id, CURRENT_DATE, $4::text::log_source,
                   COALESCE(c.name, t.contractor_name) AS vendor_name, t.completion_cost
             FROM task t
             LEFT JOIN contractor c ON c.id = t.contractor_id
-            WHERE t.id = $1 AND t.building_id = $2 AND t.status = 'closed'::task_status"#,
+            WHERE t.id = $1 AND t.building_id = $2 AND t.status = $5::text::task_status"#,
     )
     .bind(task_id)
     .bind(building_id)
     .bind(user_id)
+    .bind(log_source::AUTOMATIC)
+    .bind(crate::db::task::status::CLOSED)
     .execute(executor)
     .await?;
 
@@ -209,7 +219,7 @@ pub async fn create_correction(
         r#"INSERT INTO maintenance_log
            (building_id, created_by, title, description, intervention_date,
             cost, vendor_name, contract_id, source, corrects_entry_id)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'manual'::log_source,$9)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$10::text::log_source,$9)
            RETURNING id, building_id, title, description, intervention_date, cost,
            vendor_name, contract_id, task_id, source::text AS source, created_at"#,
     )
@@ -222,6 +232,7 @@ pub async fn create_correction(
     .bind(vendor_name)
     .bind(contract_id)
     .bind(original.id)
+    .bind(log_source::MANUAL)
     .fetch_one(pool)
     .await?;
 

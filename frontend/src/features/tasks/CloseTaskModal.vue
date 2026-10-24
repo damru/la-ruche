@@ -10,6 +10,7 @@ import { useFormFeedback } from '@/composables/useFormFeedback'
 import { useAutoClose } from '@/composables/useAutoClose'
 import { toErrorMessage } from '@/composables/usePageLoader'
 import type { Task } from '@/types/domain'
+import { TASK_STATUS_AWAITING_VALIDATION, TASK_STATUS_CLOSED } from '@/utils/constants'
 
 const props = defineProps<{
   open: boolean
@@ -28,19 +29,19 @@ const closing = ref(false)
 const closeAmount = ref('')
 
 const modalTitle = computed(() =>
-  props.task?.status === 'awaiting_validation'
+  props.task?.status === TASK_STATUS_AWAITING_VALIDATION
     ? t('tasks.confirmCloseValidationTitle')
     : t('tasks.closeTask'),
 )
 
 const confirmButtonLabel = computed(() =>
-  props.task?.status === 'awaiting_validation'
+  props.task?.status === TASK_STATUS_AWAITING_VALIDATION
     ? t('tasks.validateTask')
     : t('tasks.closeTask'),
 )
 
 const bodyMessage = computed(() =>
-  props.task?.status === 'awaiting_validation'
+  props.task?.status === TASK_STATUS_AWAITING_VALIDATION
     ? t('tasks.confirmCloseValidationMessage', { title: props.task?.title ?? '' })
     : t('tasks.confirmCloseMessage', { title: props.task?.title ?? '' }),
 )
@@ -58,7 +59,7 @@ async function handleSubmit() {
   feedback.reset()
   try {
     await tasksApi.update(props.task.id, {
-      status: 'closed',
+      status: TASK_STATUS_CLOSED,
       completion_cost: closeAmount.value ? Number(closeAmount.value) : null,
     })
     feedback.setSuccess(t('tasks.lifecycle.closed'))
@@ -92,7 +93,7 @@ async function handleSubmit() {
         type="number"
         :min="0"
         :step="0.01"
-        :hint="task?.status === 'awaiting_validation' && task?.completion_cost != null
+        :hint="task?.status === TASK_STATUS_AWAITING_VALIDATION && task?.completion_cost != null
           ? t('tasks.completionCostVendorHint')
           : t('tasks.completionCostHint')"
         class="mt-4"

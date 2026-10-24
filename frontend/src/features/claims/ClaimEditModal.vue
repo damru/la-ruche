@@ -9,6 +9,7 @@ import { useAutoClose } from '@/composables/useAutoClose'
 import { useFormatters } from '@/composables/useFormatters'
 import { extractFileExtension } from '@/utils/files'
 import type { Claim, ClaimType, Document, Unit } from '@/types/domain'
+import { CLAIM_TYPES, CLAIM_TYPE_NATURAL_DISASTER, DEFAULT_CLAIM_TYPE, ROLES } from '@/utils/constants'
 
 const props = defineProps<{
   open: boolean
@@ -28,8 +29,6 @@ const { formatDate, formatFileSize } = useFormatters()
 const feedback = useFormFeedback()
 const documentActionFeedback = useFormFeedback()
 const { schedule: scheduleClose, forceExpire: forceClose } = useAutoClose()
-
-const CLAIM_TYPES: ClaimType[] = ['current', 'natural_disaster', 'theft']
 
 type ClaimEditorForm = {
   title: string
@@ -57,7 +56,7 @@ function defaultForm(): ClaimEditorForm {
   return {
     title: '',
     description: '',
-    claim_type: 'current',
+    claim_type: DEFAULT_CLAIM_TYPE,
     declared_at: new Date().toISOString().slice(0, 10),
     published_at: '',
     unit_id: '',
@@ -107,7 +106,7 @@ watch(() => props.open, async (open) => {
 })
 
 function normalizePublishedAt(claimType: ClaimType, publishedAt: string): string | null {
-  if (claimType !== 'natural_disaster') return null
+  if (claimType !== CLAIM_TYPE_NATURAL_DISASTER) return null
   return publishedAt || null
 }
 
@@ -194,7 +193,7 @@ async function uploadDocument(claimId: string, file: File): Promise<void> {
     original_name: file.name,
     mime_type: mimeType,
     size_bytes: file.size,
-    visible_roles: ['manager', 'board_member', 'co_owner', 'tenant'],
+    visible_roles: [...ROLES],
   })
   await claimsApi.attachDocument(claimId, documentResponse.data.id)
 }
@@ -292,7 +291,7 @@ async function handleSubmit() {
           required
         />
         <CFormInput
-          v-if="form.claim_type === 'natural_disaster'"
+          v-if="form.claim_type === CLAIM_TYPE_NATURAL_DISASTER"
           v-model="form.published_at"
           :label="t('claims.fields.publishedAt')"
           type="date"

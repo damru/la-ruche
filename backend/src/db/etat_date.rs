@@ -44,12 +44,12 @@ const LIST_QUERY: &str = concat!(
 
 const STORE_SNAPSHOT_QUERY: &str = concat!(
     "UPDATE etat_date_request edr SET",
-    " status = 'generated'::etat_date_status,",
+    " status = $5::text::etat_date_status,",
     " snapshot = $3,",
     " generated_at = NOW()",
     " FROM unit u",
     " WHERE edr.id = $1 AND u.id = edr.unit_id AND u.building_id = $2",
-    "   AND edr.status <> 'sent'::etat_date_status",
+    "   AND edr.status <> $4::text::etat_date_status",
     " RETURNING edr.id, edr.unit_id, edr.requested_at, edr.due_date, edr.requester_name,",
     " edr.status::text AS status, edr.snapshot, edr.generated_at, edr.created_by, edr.created_at",
 );
@@ -139,6 +139,8 @@ pub async fn store_snapshot(
         .bind(id)
         .bind(building_id)
         .bind(snapshot)
+        .bind(STATUS_SENT)
+        .bind(STATUS_GENERATED)
         .fetch_optional(pool)
         .await
         .map_err(Into::into)
@@ -190,13 +192,15 @@ pub async fn load_inputs(
            JOIN levy_call lc ON lc.id = lcu.levy_call_id
            JOIN budget b     ON b.id = lc.budget_id AND b.building_id = $2
            WHERE lcu.unit_id = $1
-             AND lc.status = 'issued'
-             AND lcu.status <> 'paid'
+             AND lc.status = $3::text::levy_status
+             AND lcu.status <> $4::text::levy_status
              AND lcu.budget_line_id IS NOT NULL
              AND lcu.amount > 0"#,
     )
     .bind(unit_id)
     .bind(building_id)
+    .bind(crate::db::budget::levy_status::ISSUED)
+    .bind(crate::db::budget::levy_status::PAID)
     .fetch_one(pool)
     .await?;
 
@@ -207,12 +211,13 @@ pub async fn load_inputs(
            JOIN levy_call lc ON lc.id = lcu.levy_call_id
            JOIN budget b     ON b.id = lc.budget_id AND b.building_id = $2
            WHERE lcu.unit_id = $1
-             AND lc.status = 'issued'
+             AND lc.status = $3::text::levy_status
              AND lcu.budget_line_id IS NOT NULL
              AND lcu.amount < 0"#,
     )
     .bind(unit_id)
     .bind(building_id)
+    .bind(crate::db::budget::levy_status::ISSUED)
     .fetch_one(pool)
     .await?;
 
@@ -247,13 +252,14 @@ pub async fn load_inputs(
            FROM levy_call_unit lcu
            JOIN levy_call lc ON lc.id = lcu.levy_call_id
            JOIN budget b     ON b.id = lc.budget_id AND b.building_id = $2
-           WHERE lcu.unit_id = $1 AND lc.status = 'issued'
+           WHERE lcu.unit_id = $1 AND lc.status = $3::text::levy_status
            GROUP BY b.fiscal_year
            ORDER BY b.fiscal_year DESC
            LIMIT 2"#,
     )
     .bind(unit_id)
     .bind(building_id)
+    .bind(crate::db::budget::levy_status::ISSUED)
     .fetch_all(pool)
     .await?;
 
@@ -271,10 +277,11 @@ pub async fn load_inputs(
     let procedure_rows = sqlx::query_as::<_, ProcedureRow>(
         r#"SELECT subject, proceeding_type::text AS proceeding_type, opened_at, jurisdiction
            FROM judicial_proceeding
-           WHERE building_id = $1 AND status <> 'closed'
+           WHERE building_id = $1 AND proceeding_status = $2::text::judicial_proceeding_status
            ORDER BY opened_at DESC"#,
     )
     .bind(building_id)
+    .bind(crate::db::judicial_proceeding::PROCEEDING_STATUS_ONGOING)
     .fetch_all(pool)
     .await?;
 
@@ -317,12 +324,14 @@ pub async fn load_pre_etat_date_extras(
            FROM levy_call_unit lcu
            JOIN levy_call lc ON lc.id = lcu.levy_call_id
            JOIN budget b     ON b.id = lc.budget_id AND b.building_id = $1
-           WHERE lc.status = 'issued'
-             AND lcu.status <> 'paid'
+           WHERE lc.status = $2::text::levy_status
+             AND lcu.status <> $3::text::levy_status
              AND lcu.budget_line_id IS NOT NULL
              AND lcu.amount > 0"#,
     )
     .bind(building_id)
+    .bind(crate::db::budget::levy_status::ISSUED)
+    .bind(crate::db::budget::levy_status::PAID)
     .fetch_one(pool)
     .await?;
 

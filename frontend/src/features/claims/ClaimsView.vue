@@ -34,6 +34,7 @@ import ClaimDeleteModal from './ClaimDeleteModal.vue'
 import { claimsApi, documentsApi, unitsApi, usersApi } from '@/api'
 import { useBuildingStore } from '@/stores/building'
 import type { Claim, ClaimStatus, ClaimType, Document, Unit, User } from '@/types/domain'
+import { ALL_FILTER, CLAIM_STATUS_CLOSED, CLAIM_STATUS_IN_PROGRESS, CLAIM_STATUS_OPEN, MANAGER_ROLES } from '@/utils/constants'
 
 const { t } = useI18n()
 const { formatCurrency, formatDate } = useFormatters()
@@ -43,8 +44,8 @@ const buildingName = ref('')
 const allClaims = ref<Claim[]>([])
 const allUnits = ref<Unit[]>([])
 const allUsers = ref<User[]>([])
-const filter = ref<'all' | ClaimStatus>('all')
-const canManage = computed(() => hasAnyRole(['manager', 'board_member']))
+const filter = ref<typeof ALL_FILTER | ClaimStatus>(ALL_FILTER)
+const canManage = computed(() => hasAnyRole([...MANAGER_ROLES]))
 
 const showCreateModal = ref(false)
 const claimToEdit = ref<Claim | null>(null)
@@ -81,7 +82,7 @@ const claimsById = computed(() =>
 )
 
 const claims = computed(() =>
-  (filter.value === 'all'
+  (filter.value === ALL_FILTER
     ? allClaims.value
     : allClaims.value.filter(claim => claim.status === filter.value))
     .slice()
@@ -89,16 +90,16 @@ const claims = computed(() =>
 )
 
 const activeClaimsCount = computed(() =>
-  allClaims.value.filter(claim => claim.status !== 'closed').length,
+  allClaims.value.filter(claim => claim.status !== CLAIM_STATUS_CLOSED).length,
 )
 
 const claimCounts = computed(() =>
   allClaims.value.reduce(
     (counts, claim) => {
       counts.all += 1
-      if (claim.status === 'open') counts.open += 1
-      else if (claim.status === 'in_progress') counts.in_progress += 1
-      else if (claim.status === 'closed') counts.closed += 1
+      if (claim.status === CLAIM_STATUS_OPEN) counts.open += 1
+      else if (claim.status === CLAIM_STATUS_IN_PROGRESS) counts.in_progress += 1
+      else if (claim.status === CLAIM_STATUS_CLOSED) counts.closed += 1
       return counts
     },
     { all: 0, open: 0, in_progress: 0, closed: 0 },
@@ -106,10 +107,10 @@ const claimCounts = computed(() =>
 )
 
 const claimTabs = computed(() => [
-  { key: 'all', label: t('common.allMasc'), count: claimCounts.value.all },
-  { key: 'open', label: t('claims.filters.open'), count: claimCounts.value.open },
-  { key: 'in_progress', label: t('claims.filters.inProgress'), count: claimCounts.value.in_progress },
-  { key: 'closed', label: t('claims.filters.closed'), count: claimCounts.value.closed },
+  { key: ALL_FILTER, label: t('common.allMasc'), count: claimCounts.value.all },
+  { key: CLAIM_STATUS_OPEN, label: t('claims.filters.open'), count: claimCounts.value.open },
+  { key: CLAIM_STATUS_IN_PROGRESS, label: t('claims.filters.inProgress'), count: claimCounts.value.in_progress },
+  { key: CLAIM_STATUS_CLOSED, label: t('claims.filters.closed'), count: claimCounts.value.closed },
 ])
 
 const claimTabsList = computed<Tab[]>(() =>
@@ -129,7 +130,7 @@ const legalCardLinks = computed(() => [
 
 const deadlineReminderClaims = computed(() =>
   allClaims.value
-    .filter(claim => !claim.transmitted_at && claim.status === 'open' && (claim.is_deadline_approaching || claim.is_deadline_missed || claim.days_remaining === 0))
+    .filter(claim => !claim.transmitted_at && claim.status === CLAIM_STATUS_OPEN && (claim.is_deadline_approaching || claim.is_deadline_missed || claim.days_remaining === 0))
     .slice()
     .sort((left, right) => left.legal_deadline_at.localeCompare(right.legal_deadline_at)),
 )
@@ -149,9 +150,9 @@ const claimReminderRows = computed(() =>
 )
 
 function statusVariant(status: ClaimStatus): 'open' | 'pending' | 'closed' | 'default' {
-  if (status === 'open') return 'pending'
-  if (status === 'in_progress') return 'open'
-  if (status === 'closed') return 'closed'
+  if (status === CLAIM_STATUS_OPEN) return 'pending'
+  if (status === CLAIM_STATUS_IN_PROGRESS) return 'open'
+  if (status === CLAIM_STATUS_CLOSED) return 'closed'
   return 'default'
 }
 
@@ -375,9 +376,9 @@ function handleDocumentCountChanged(claimId: string, delta: number) {
             <CCard
               v-for="claim in claims"
               :key="claim.id"
-              :shadow="claim.status !== 'closed'"
+              :shadow="claim.status !== CLAIM_STATUS_CLOSED"
               gap="sm"
-              :class="[{ 'outline outline-1 outline-outline-variant': claim.status === 'closed' }]"
+              :class="[{ 'outline outline-1 outline-outline-variant': claim.status === CLAIM_STATUS_CLOSED }]"
             >
               <div class="flex items-center gap-3 min-w-0">
                 <CIconTile
@@ -449,7 +450,7 @@ function handleDocumentCountChanged(claimId: string, delta: number) {
                       @click="openEditModal(claim)"
                     />
                     <CBtn
-                      v-if="claim.status === 'open'"
+                      v-if="claim.status === CLAIM_STATUS_OPEN"
                       variant="primary"
                       size="sm"
                       :icon="CIconUpload"
@@ -457,7 +458,7 @@ function handleDocumentCountChanged(claimId: string, delta: number) {
                       @click="openTransmitModal(claim)"
                     />
                     <CBtn
-                      v-else-if="claim.status === 'in_progress'"
+                      v-else-if="claim.status === CLAIM_STATUS_IN_PROGRESS"
                       variant="primary"
                       size="sm"
                       :icon="CIconCheckCircle"

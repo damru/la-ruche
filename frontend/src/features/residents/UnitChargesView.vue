@@ -28,6 +28,7 @@ import { usePageLoader } from '@/composables/usePageLoader'
 import { useAuthStore } from '@/stores/auth'
 import { useFormatters } from '@/composables/useFormatters'
 import type { UnitChargesResponse, UnitChargesLevy, UnitChargesLevyBreakdownItem, UnitOwnerRecord } from '@/types/domain'
+import { LEVY_STATUS_ISSUED, LEVY_STATUS_OVERDUE, LEVY_STATUS_PAID } from '@/utils/constants'
 
 interface ConsolidatedUnitChargeRow {
   id: string
@@ -141,9 +142,9 @@ const levyTableRows = computed<Record<string, unknown>[]>(
 )
 
 function statusVariant(status: UnitChargesLevy['status']): 'pending' | 'valid' | 'err' | 'default' {
-  if (status === 'issued') return 'pending'
-  if (status === 'paid') return 'valid'
-  if (status === 'overdue') return 'err'
+  if (status === LEVY_STATUS_ISSUED) return 'pending'
+  if (status === LEVY_STATUS_PAID) return 'valid'
+  if (status === LEVY_STATUS_OVERDUE) return 'err'
   return 'default'
 }
 
@@ -269,9 +270,9 @@ const showPreEtatDateModal = ref(false)
             <template #cell-status="{ row }">
               <CBadge
                 :variant="statusVariant(row.status as UnitChargesLevy['status'])"
-                :pulse="row.status === 'overdue'"
+                :pulse="row.status === LEVY_STATUS_OVERDUE"
                 dot
-                :ring="row.status === 'issued' || row.status === 'overdue'"
+                :ring="row.status === LEVY_STATUS_ISSUED || row.status === LEVY_STATUS_OVERDUE"
               >
                 {{ t(`budget.levyStatuses.${row.status}`) }}
               </CBadge>

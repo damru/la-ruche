@@ -45,7 +45,8 @@ import WorksFundModal from './WorksFundModal.vue'
 import { budgetApi, allocationKeysApi, buildingApi } from '@/api'
 import GenerateLeviesModal from './GenerateLeviesModal.vue'
 import BreakdownModal from './BreakdownModal.vue'
-import type { Budget, BudgetLine, LevyCall, WorksFund, AllocationKey, LevyStatus, BuildingStats, AccountingCode } from '@/types/domain'
+import type { Role, Budget, BudgetLine, LevyCall, WorksFund, AllocationKey, LevyStatus, BuildingStats, AccountingCode } from '@/types/domain'
+import { BUDGET_STATUS_APPROVED, BUDGET_STATUS_CLOSED, BUDGET_STATUS_DRAFT, LEVY_STATUS_ISSUED, LEVY_STATUS_OVERDUE, LEVY_STATUS_PAID, MANAGER_ROLES } from '@/utils/constants'
 import type { Column } from '@/components/molecules/CDataTable.vue'
 
 interface ConsolidatedLevyRow {
@@ -77,19 +78,19 @@ const { t } = useI18n()
 const { formatCurrency, formatDate } = useFormatters()
 const { hasAnyRole } = useRole()
 
-const canManage = computed(() => hasAnyRole(['manager']))
-const canViewLevies = computed(() => hasAnyRole(['manager', 'board_member']))
-const canEditSelectedBudget = computed(() => canManage.value && selectedBudget.value?.status !== 'closed')
+const canManage = computed(() => hasAnyRole(['manager' satisfies Role]))
+const canViewLevies = computed(() => hasAnyRole([...MANAGER_ROLES]))
+const canEditSelectedBudget = computed(() => canManage.value && selectedBudget.value?.status !== BUDGET_STATUS_CLOSED)
 // Pattern B (ADR-009): once voted in AG the budget is a legal act. Its lines are
 // frozen and amended through a rectificatif, never edited in place. Exercise-level
 // actions (clôture, fonds travaux, appels de fonds) stay available — they act on
 // an approved budget by design, which is why they keep using
 // `canEditSelectedBudget`.
-const canEditBudgetLines = computed(() => canManage.value && selectedBudget.value?.status === 'draft')
-const canApproveBudget = computed(() => canManage.value && selectedBudget.value?.status === 'draft')
-const canCreateRectificatif = computed(() => canManage.value && selectedBudget.value?.status === 'approved')
+const canEditBudgetLines = computed(() => canManage.value && selectedBudget.value?.status === BUDGET_STATUS_DRAFT)
+const canApproveBudget = computed(() => canManage.value && selectedBudget.value?.status === BUDGET_STATUS_DRAFT)
+const canCreateRectificatif = computed(() => canManage.value && selectedBudget.value?.status === BUDGET_STATUS_APPROVED)
 const selectedIsRectificatif = computed(() => !!selectedBudget.value?.parent_budget_id)
-const canMarkLeviesPaid = computed(() => hasAnyRole(['manager', 'board_member']))
+const canMarkLeviesPaid = computed(() => hasAnyRole([...MANAGER_ROLES]))
 const sharePercentageFormatter = new Intl.NumberFormat('fr-FR', {
   minimumFractionDigits: 1,
   maximumFractionDigits: 1,
@@ -147,9 +148,9 @@ const selectedBudget = computed(() =>
 )
 
 function aggregateLevyStatus(statuses: LevyStatus[]): LevyStatus {
-  if (statuses.includes('overdue')) return 'overdue'
-  if (statuses.every(status => status === 'paid')) return 'paid'
-  return 'issued'
+  if (statuses.includes(LEVY_STATUS_OVERDUE)) return LEVY_STATUS_OVERDUE
+  if (statuses.every(status => status === LEVY_STATUS_PAID)) return LEVY_STATUS_PAID
+  return LEVY_STATUS_ISSUED
 }
 
 const consolidatedLevies = computed<ConsolidatedLevyRow[]>(() => {
@@ -165,7 +166,7 @@ const consolidatedLevies = computed<ConsolidatedLevyRow[]>(() => {
       existing.amount += Number(levy.amount ?? 0)
       existing.statuses.push(levy.status)
       existing.levy_ids.push(levy.id)
-      if (levy.status !== 'paid') {
+      if (levy.status !== LEVY_STATUS_PAID) {
         existing.payable_unit_ids.push(levy.unit_id)
       }
       if (levy.paid_at) {
@@ -189,7 +190,7 @@ const consolidatedLevies = computed<ConsolidatedLevyRow[]>(() => {
       status: levy.status,
       levy_call_id: levy.id,
       levy_ids: [levy.id],
-      payable_unit_ids: levy.status === 'paid' ? [] : [levy.unit_id],
+      payable_unit_ids: levy.status === LEVY_STATUS_PAID ? [] : [levy.unit_id],
       statuses: [levy.status],
       paid_dates: levy.paid_at ? [levy.paid_at] : [],
       unit_number_set: new Set(levy.unit_number ? [levy.unit_number] : []),
@@ -221,7 +222,7 @@ const consolidatedLevies = computed<ConsolidatedLevyRow[]>(() => {
     )
 })
 
-const overdueLevies = computed(() => consolidatedLevies.value.filter(levy => levy.status === 'overdue'))
+const overdueLevies = computed(() => consolidatedLevies.value.filter(levy => levy.status === LEVY_STATUS_OVERDUE))
 const overdueTotal = computed(() => overdueLevies.value.reduce((sum, levy) => sum + levy.amount, 0))
 const levyTableRows = computed<Record<string, unknown>[]>(() => consolidatedLevies.value as unknown as Record<string, unknown>[])
 
@@ -262,7 +263,7 @@ const leviedUnitsCount = computed(() =>
   new Set(levies.value.map(levy => levy.unit_id)).size
 )
 const levyPaidCount = computed(() =>
-  consolidatedLevies.value.filter(levy => levy.status === 'paid').length
+  consolidatedLevies.value.filter(levy => levy.status === LEVY_STATUS_PAID).length
 )
 const totalLeviedAmount = computed(() =>
   consolidatedLevies.value.reduce((sum, levy) => sum + levy.amount, 0)
@@ -316,7 +317,7 @@ const generatePreviewTotal = computed(() =>
   generatePreviewChargeTotal.value + generatePreviewWorksFundTotal.value
 )
 const canGenerateLevies = computed(() =>
-  selectedBudget.value?.status !== 'closed'
+  selectedBudget.value?.status !== BUDGET_STATUS_CLOSED
   && generatePreviewTotal.value > 0
   && !hasUnbalancedAllocationKeys.value
   && worksFundRateCompliant.value
@@ -595,9 +596,9 @@ function lineVariant(line: BudgetLine): 'primary' | 'warning' | 'success' {
 }
 
 function levyStatusBadgeVariant(s: LevyStatus): 'valid' | 'pending' | 'err' | 'disabled' {
-  if (s === 'paid') return 'valid'
-  if (s === 'issued') return 'pending'
-  if (s === 'overdue') return 'err'
+  if (s === LEVY_STATUS_PAID) return 'valid'
+  if (s === LEVY_STATUS_ISSUED) return 'pending'
+  if (s === LEVY_STATUS_OVERDUE) return 'err'
   return 'disabled'
 }
 
@@ -707,7 +708,7 @@ function formatSharePercentage(value: number): string {
             </CMetaItem>
             <CSeparator />
             <CMetaItem variant="sub">
-              {{ selectedBudget.status === 'approved' ? t('budget.statuses.approvedAG') : t(`budget.statuses.${selectedBudget.status}`) }}
+              {{ selectedBudget.status === BUDGET_STATUS_APPROVED ? t('budget.statuses.approvedAG') : t(`budget.statuses.${selectedBudget.status}`) }}
             </CMetaItem>
           </CMetaLine>
         </div>
@@ -1123,7 +1124,7 @@ function formatSharePercentage(value: number): string {
             </template>
             <template #cell-amount="{ row }">
               <span
-                :class="{ 'text-error': row.status === 'overdue' }"
+                :class="{ 'text-error': row.status === LEVY_STATUS_OVERDUE }"
               >
                 {{ formatCurrency(Number(row.amount ?? 0)) }}
               </span>
@@ -1141,8 +1142,8 @@ function formatSharePercentage(value: number): string {
             <template #cell-status="{ row }">
               <CBadge
                 :variant="levyStatusBadgeVariant(row.status as LevyStatus)"
-                :pulse="row.status === 'overdue'"
-                :ring="row.status === 'issued' || row.status === 'overdue'"
+                :pulse="row.status === LEVY_STATUS_OVERDUE"
+                :ring="row.status === LEVY_STATUS_ISSUED || row.status === LEVY_STATUS_OVERDUE"
                 dot
               >
                 {{ t(`budget.levyStatuses.${row.status}`) }}
@@ -1150,7 +1151,7 @@ function formatSharePercentage(value: number): string {
             </template>
             <template #cell-actions="{ row }">
               <CBtn
-                v-if="canMarkLeviesPaid && row.status !== 'paid'"
+                v-if="canMarkLeviesPaid && row.status !== LEVY_STATUS_PAID"
                 variant="icon"
                 size="sm"
                 :icon="CIconCheckCircle"

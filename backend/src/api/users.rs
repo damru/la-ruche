@@ -17,6 +17,15 @@ use crate::{
     errors::{AppError, AppResult},
 };
 
+/// Default invite expiry in hours (AC-GP-002-A).
+const DEFAULT_INVITE_EXPIRY_HOURS: i64 = 72;
+
+/// Parses a role string from an API payload, rejecting unknown values.
+fn parse_role(raw: &str) -> AppResult<Role> {
+    raw.parse::<Role>()
+        .map_err(|_| AppError::validation_code("errors.users.invalid_role"))
+}
+
 // ── DTOs ──────────────────────────────────────────────────────────
 
 #[derive(Deserialize, Validate)]
@@ -140,13 +149,10 @@ pub async fn invite(
         .map_err(|_| AppError::validation_code("errors.users.invalid_invite_payload"))?;
 
     // Validate role
-    let role = input.role.as_str();
-    if !["manager", "board_member", "co_owner", "tenant"].contains(&role) {
-        return Err(AppError::validation_code("errors.users.invalid_role"));
-    }
+    let role = parse_role(&input.role)?;
 
     // Validate unit_id is required for tenant role (AC-GP-002-H)
-    if role == "tenant" && input.unit_id.is_none() {
+    if role == Role::Tenant && input.unit_id.is_none() {
         return Err(AppError::validation_code(
             "errors.users.tenant_requires_unit",
         ));
@@ -155,7 +161,10 @@ pub async fn invite(
     // Invalidate any prior pending invites for this email/building (AC-GP-002-G)
     db::user::revoke_pending_invites(&state.pool, &input.email, auth.building_id).await?;
 
-    let expiry_hours = input.expires_in_hours.unwrap_or(72) as i64;
+    let expiry_hours = input
+        .expires_in_hours
+        .map(i64::from)
+        .unwrap_or(DEFAULT_INVITE_EXPIRY_HOURS);
     let expires_at = Utc::now() + Duration::hours(expiry_hours);
 
     let (plain, hash, _) = token::generate_token(Duration::hours(expiry_hours));
@@ -165,7 +174,7 @@ pub async fn invite(
         &input.email,
         &hash,
         auth.building_id,
-        role,
+        role.as_str(),
         input.unit_id,
         expires_at,
     )
@@ -264,13 +273,11 @@ pub async fn update_roles(
 
     // Validate roles
     for role in &input.roles {
-        if !["manager", "board_member", "co_owner", "tenant"].contains(&role.as_str()) {
-            return Err(AppError::validation_code("errors.users.invalid_role"));
-        }
+        parse_role(role)?;
     }
 
     // Prevent removing manager role from self without replacement (AC-GP-006-D)
-    if id == auth.user_id && !input.roles.contains(&"manager".to_string()) {
+    if id == auth.user_id && !input.roles.iter().any(|r| r == Role::Manager.as_str()) {
         return Err(AppError::validation_code(
             "errors.users.cannot_remove_own_manager_role",
         ));
@@ -340,10 +347,7 @@ pub async fn create(
     owners::validate_resident_creation(&input.first_name, &input.last_name)
         .map_err(AppError::validation_code)?;
 
-    let role = input.role.as_str();
-    if !["manager", "board_member", "co_owner", "tenant"].contains(&role) {
-        return Err(AppError::validation_code("errors.users.invalid_role"));
-    }
+    let role = parse_role(&input.role)?;
 
     let email = input.email.as_deref().map(str::to_lowercase);
     let user_id = db::user::create_resident(
@@ -362,7 +366,7 @@ pub async fn create(
         }
     })?;
 
-    db::user::create_user_building(&state.pool, user_id, auth.building_id, role).await?;
+    db::user::create_user_building(&state.pool, user_id, auth.building_id, role.as_str()).await?;
 
     Ok((
         StatusCode::CREATED,
@@ -426,14 +430,14 @@ pub async fn send_invite(
     // Invalidate any prior pending invites for this user (AC-GP-002-G)
     db::user::revoke_pending_invites_by_user_id(&state.pool, id, auth.building_id).await?;
 
-    let expires_at = Utc::now() + Duration::hours(72);
-    let (plain, hash, _) = token::generate_token(Duration::hours(72));
+    let expires_at = Utc::now() + Duration::hours(DEFAULT_INVITE_EXPIRY_HOURS);
+    let (plain, hash, _) = token::generate_token(Duration::hours(DEFAULT_INVITE_EXPIRY_HOURS));
 
     let role = detail
         .roles
         .first()
         .map(|r| r.as_str())
-        .unwrap_or("co_owner");
+        .unwrap_or(Role::CoOwner.as_str());
 
     db::user::create_invite_for_existing_user(
         &state.pool,

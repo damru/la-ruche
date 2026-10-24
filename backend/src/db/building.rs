@@ -86,7 +86,7 @@ pub async fn get_stats(pool: &PgPool, id: Uuid) -> crate::errors::AppResult<Buil
             (SELECT COUNT(*) FROM unit WHERE building_id = $1 AND active = true) as nb_units,
             (SELECT COUNT(DISTINCT user_id) FROM user_building WHERE building_id = $1) as nb_users,
             (SELECT COUNT(DISTINCT ub.user_id) FROM user_building ub
-             WHERE ub.building_id = $1 AND 'tenant' = ANY(ub.roles::text[])) as nb_tenants,
+             WHERE ub.building_id = $1 AND $2::user_role = ANY(ub.roles)) as nb_tenants,
             b.shares_total,
             COALESCE(wf.available_amount, 0) as works_fund_available,
             CASE WHEN wf.levied_amount > 0
@@ -97,7 +97,8 @@ pub async fn get_stats(pool: &PgPool, id: Uuid) -> crate::errors::AppResult<Buil
             AND wf.fiscal_year = EXTRACT(YEAR FROM NOW())::int
         WHERE b.id = $1
         "#,
-        id
+        id,
+        crate::domain::Role::Tenant.as_str()
     )
     .fetch_one(pool)
     .await?;

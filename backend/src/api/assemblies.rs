@@ -18,7 +18,7 @@ use validator::Validate;
 use crate::{
     api::documents::DocumentListItem,
     db::AppState,
-    domain::{AuthUser, Role, vote::VoteRule},
+    domain::{AuthUser, Role, immutability::resolution_status, vote::VoteRule},
     errors::{AppError, AppResult},
 };
 
@@ -439,7 +439,11 @@ pub async fn finalize_resolution(
     let rule = parse_vote_rule(&resolution.vote_type)?;
     let result = tally.compute(&rule);
 
-    let new_status = if result.passed { "passed" } else { "rejected" };
+    let new_status = if result.passed {
+        resolution_status::PASSED
+    } else {
+        resolution_status::REJECTED
+    };
 
     let finalized = crate::db::assembly::finalize_resolution(
         &state.pool,

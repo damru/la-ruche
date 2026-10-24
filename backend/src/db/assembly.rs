@@ -17,6 +17,7 @@ use crate::{
         StartMeetingInput, VoteInput,
     },
     api::documents::DocumentListItem,
+    domain::immutability::meeting_status,
     domain::{
         immutability::{self, Entity},
         vote::VoteTally,
@@ -278,7 +279,7 @@ pub async fn update(
             updated_at = NOW()
         WHERE id = $1
           AND building_id = $2
-          AND status = 'draft'
+          AND status = $7::text::meeting_status
         RETURNING id, meeting_type::text as "meeting_type!", status::text as "status!",
                   notice_date, meeting_date, location, agenda, minutes_document_id, created_at,
                   president_name, president_user_id, secretary_name, secretary_user_id,
@@ -297,6 +298,7 @@ pub async fn update(
         input.meeting_date,
         input.location,
         input.agenda,
+        meeting_status::DRAFT,
     )
     .fetch_optional(pool)
     .await?;
@@ -318,10 +320,11 @@ pub async fn delete_meeting(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppRe
           AND r.meeting_id = $1
           AND gm.id = r.meeting_id
           AND gm.building_id = $2
-          AND gm.status = 'draft'
+          AND gm.status = $3::text::meeting_status
         "#,
         id,
         building_id,
+        meeting_status::DRAFT,
     )
     .execute(&mut *tx)
     .await?;
@@ -333,10 +336,11 @@ pub async fn delete_meeting(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppRe
         WHERE r.meeting_id = $1
           AND gm.id = r.meeting_id
           AND gm.building_id = $2
-          AND gm.status = 'draft'
+          AND gm.status = $3::text::meeting_status
         "#,
         id,
         building_id,
+        meeting_status::DRAFT,
     )
     .execute(&mut *tx)
     .await?;
@@ -348,10 +352,11 @@ pub async fn delete_meeting(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppRe
         WHERE a.meeting_id = $1
           AND gm.id = a.meeting_id
           AND gm.building_id = $2
-          AND gm.status = 'draft'
+          AND gm.status = $3::text::meeting_status
         "#,
         id,
         building_id,
+        meeting_status::DRAFT,
     )
     .execute(&mut *tx)
     .await?;
@@ -363,10 +368,11 @@ pub async fn delete_meeting(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppRe
         WHERE d.meeting_id = $1
           AND gm.id = d.meeting_id
           AND gm.building_id = $2
-          AND gm.status = 'draft'
+          AND gm.status = $3::text::meeting_status
         "#,
         id,
         building_id,
+        meeting_status::DRAFT,
     )
     .execute(&mut *tx)
     .await?;
@@ -374,10 +380,11 @@ pub async fn delete_meeting(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppRe
     let deleted = sqlx::query!(
         r#"
         DELETE FROM general_meeting
-        WHERE id = $1 AND building_id = $2 AND status = 'draft'
+        WHERE id = $1 AND building_id = $2 AND status = $3::text::meeting_status
         "#,
         id,
         building_id,
+        meeting_status::DRAFT,
     )
     .execute(&mut *tx)
     .await?
@@ -423,17 +430,19 @@ pub async fn call(
     let affected = sqlx::query!(
         r#"
         UPDATE general_meeting
-        SET status = 'called',
+        SET status = $5::text::meeting_status,
             notice_date = CURRENT_DATE,
             convocation_sent_at = $3,
             convocation_channel = $4::meeting_convocation_channel,
             updated_at = NOW()
-        WHERE id = $1 AND building_id = $2 AND status = 'draft'
+        WHERE id = $1 AND building_id = $2 AND status = $6::text::meeting_status
         "#,
         id,
         building_id,
         sent_at,
         channel as _,
+        meeting_status::CALLED,
+        meeting_status::DRAFT,
     )
     .execute(pool)
     .await?
@@ -493,11 +502,13 @@ pub async fn close(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()> 
     let affected = sqlx::query!(
         r#"
         UPDATE general_meeting
-        SET status = 'closed', updated_at = NOW()
-        WHERE id = $1 AND building_id = $2 AND status = 'ongoing'
+        SET status = $3::text::meeting_status, updated_at = NOW()
+        WHERE id = $1 AND building_id = $2 AND status = $4::text::meeting_status
         "#,
         id,
-        building_id
+        building_id,
+        meeting_status::CLOSED,
+        meeting_status::ONGOING,
     )
     .execute(pool)
     .await?
@@ -538,12 +549,13 @@ pub async fn attach_signed_minutes(
         SET minutes_document_id = $3, updated_at = NOW()
         WHERE id = $1
           AND building_id = $2
-          AND status = 'closed'
+          AND status = $4::text::meeting_status
           AND minutes_document_id IS NULL
         "#,
         meeting_id,
         building_id,
         document_id,
+        meeting_status::CLOSED,
     )
     .execute(pool)
     .await?
@@ -598,7 +610,7 @@ pub async fn sign_minutes(
             updated_at = NOW()
         WHERE id = $1
           AND building_id = $2
-          AND status = 'closed'
+          AND status = $6::text::meeting_status
           AND minutes_document_id IS NOT NULL
         "#,
         id,
@@ -606,6 +618,7 @@ pub async fn sign_minutes(
         president_at,
         secretary_at,
         scrutineers_json,
+        meeting_status::CLOSED,
     )
     .execute(pool)
     .await?
@@ -626,11 +639,12 @@ pub async fn notify_minutes(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppRe
         SET minutes_notified_at = NOW(), updated_at = NOW()
         WHERE id = $1
           AND building_id = $2
-          AND status = 'closed'
+          AND status = $3::text::meeting_status
           AND minutes_document_id IS NOT NULL
         "#,
         id,
         building_id,
+        meeting_status::CLOSED,
     )
     .execute(pool)
     .await?
@@ -685,7 +699,7 @@ pub async fn load_minutes_context(
     .await?
     .ok_or(AppError::NotFound)?;
 
-    if meeting.status != "closed" {
+    if meeting.status != meeting_status::CLOSED {
         return Err(AppError::conflict_code(
             "errors.meetings.not_in_closed_status",
         ));
@@ -1023,10 +1037,10 @@ pub async fn list_attendance(
     // ongoing/closed: drive from attendance table (list frozen, archived units included as-is).
     // others: drive from unit table (active only), and always resolve shares from
     // the current active general allocation key at query time.
-    let entries: Vec<MeetingAttendanceEntryResponse> = if status == "ongoing" || status == "closed"
-    {
-        sqlx::query!(
-            r#"
+    let entries: Vec<MeetingAttendanceEntryResponse> =
+        if status == meeting_status::ONGOING || status == meeting_status::CLOSED {
+            sqlx::query!(
+                r#"
             SELECT u.id as unit_id,
                    u.unit_number,
                    CASE WHEN ua.id IS NULL THEN NULL
@@ -1042,23 +1056,23 @@ pub async fn list_attendance(
             WHERE gma.meeting_id = $1
             ORDER BY u.unit_number
             "#,
-            meeting_id,
-        )
-        .fetch_all(pool)
-        .await?
-        .into_iter()
-        .map(|row| MeetingAttendanceEntryResponse {
-            unit_id: row.unit_id,
-            unit_number: row.unit_number,
-            owner_name: row.owner_name,
-            mode: meeting_attendance_mode_from_db(&row.mode),
-            representative_name: row.representative_name,
-            shares_represented: row.shares_represented,
-        })
-        .collect()
-    } else {
-        sqlx::query!(
-            r#"
+                meeting_id,
+            )
+            .fetch_all(pool)
+            .await?
+            .into_iter()
+            .map(|row| MeetingAttendanceEntryResponse {
+                unit_id: row.unit_id,
+                unit_number: row.unit_number,
+                owner_name: row.owner_name,
+                mode: meeting_attendance_mode_from_db(&row.mode),
+                representative_name: row.representative_name,
+                shares_represented: row.shares_represented,
+            })
+            .collect()
+        } else {
+            sqlx::query!(
+                r#"
             SELECT u.id as unit_id,
                    u.unit_number,
                    CASE WHEN ua.id IS NULL THEN NULL
@@ -1086,24 +1100,24 @@ pub async fn list_attendance(
               AND u.active = true
             ORDER BY u.unit_number
             "#,
-            meeting_id,
-            building_id,
-        )
-        .fetch_all(pool)
-        .await?
-        .into_iter()
-        .map(|row| MeetingAttendanceEntryResponse {
-            unit_id: row.unit_id,
-            unit_number: row.unit_number,
-            owner_name: row.owner_name,
-            mode: meeting_attendance_mode_from_db(&row.mode),
-            representative_name: row.representative_name,
-            shares_represented: row.shares_represented,
-        })
-        .collect()
-    };
+                meeting_id,
+                building_id,
+            )
+            .fetch_all(pool)
+            .await?
+            .into_iter()
+            .map(|row| MeetingAttendanceEntryResponse {
+                unit_id: row.unit_id,
+                unit_number: row.unit_number,
+                owner_name: row.owner_name,
+                mode: meeting_attendance_mode_from_db(&row.mode),
+                representative_name: row.representative_name,
+                shares_represented: row.shares_represented,
+            })
+            .collect()
+        };
 
-    let (shares_present, present_units): (i32, i32) = if status == "closed" {
+    let (shares_present, present_units): (i32, i32) = if status == meeting_status::CLOSED {
         let summary = sqlx::query!(
             r#"
             SELECT COALESCE(SUM(gma.shares_represented) FILTER (WHERE gma.mode != 'absent'), 0)::int as "shares_present!",
@@ -1260,8 +1274,8 @@ pub async fn create_resolution(
     // Agenda frozen at convocation, except the second-vote passerelle
     // (art. 25-1/26-1) which may still inscribe a resolution during the séance.
     let exists = sqlx::query_scalar!(
-        "SELECT EXISTS(SELECT 1 FROM general_meeting WHERE id = $1 AND building_id = $2 AND status IN ('draft','ongoing'))",
-        meeting_id, building_id
+        "SELECT EXISTS(SELECT 1 FROM general_meeting WHERE id = $1 AND building_id = $2 AND status IN ($3::text::meeting_status,$4::text::meeting_status))",
+        meeting_id, building_id, meeting_status::DRAFT, meeting_status::ONGOING
     )
     .fetch_one(pool)
     .await?
@@ -1316,11 +1330,12 @@ pub async fn delete_resolution(
           AND r.meeting_id = $1
           AND gm.id = r.meeting_id
           AND gm.building_id = $3
-          AND gm.status = 'draft'
+          AND gm.status = $4::text::meeting_status
         "#,
         meeting_id,
         resolution_id,
         building_id,
+        meeting_status::DRAFT,
     )
     .execute(&mut *tx)
     .await?;
@@ -1335,12 +1350,13 @@ pub async fn delete_resolution(
               FROM general_meeting gm
               WHERE gm.id = r.meeting_id
                 AND gm.building_id = $3
-                AND gm.status = 'draft'
+                AND gm.status = $4::text::meeting_status
           )
         "#,
         meeting_id,
         resolution_id,
         building_id,
+        meeting_status::DRAFT,
     )
     .execute(&mut *tx)
     .await?
@@ -1370,7 +1386,7 @@ pub async fn reorder_resolutions(
     .flatten()
     .ok_or(AppError::NotFound)?;
 
-    if status != "draft" {
+    if status != meeting_status::DRAFT {
         return Err(AppError::conflict_code(
             "errors.meetings.not_in_draft_status",
         ));
@@ -1556,16 +1572,18 @@ pub async fn get_tally(
         r#"
         SELECT COUNT(DISTINCT ub.user_id)::int as total_owners,
                COUNT(DISTINCT v.user_id)::int as present_owners,
-               COUNT(DISTINCT v.user_id) FILTER (WHERE v.position = 'in_favor')::int as "favorable_owners!"
+               COUNT(DISTINCT v.user_id) FILTER (WHERE v.position = $3::vote_position)::int as "favorable_owners!"
         FROM building b
         JOIN unit u ON u.building_id = b.id AND u.active = true
         LEFT JOIN user_building ub ON ub.building_id = b.id
-            AND 'co_owner' = ANY(ub.roles::text[])
+            AND $5::user_role = ANY(ub.roles)
         LEFT JOIN vote v ON v.resolution_id = $1
         WHERE b.id = $2
         "#,
         resolution_id,
-        building_id
+        building_id,
+        crate::domain::minutes_draft::vote_position::IN_FAVOR,
+        crate::domain::Role::CoOwner.as_str()
     )
     .fetch_one(pool)
     .await?;
@@ -1677,14 +1695,14 @@ pub async fn start(
     let affected = sqlx::query!(
         r#"
         UPDATE general_meeting
-        SET status = 'ongoing',
+        SET status = $8::text::meeting_status,
             president_name = $3,
             president_user_id = $4,
             secretary_name = $5,
             secretary_user_id = $6,
             scrutineers = $7::jsonb,
             updated_at = NOW()
-        WHERE id = $1 AND building_id = $2 AND status = 'called'
+        WHERE id = $1 AND building_id = $2 AND status = $9::text::meeting_status
         "#,
         id,
         building_id,
@@ -1693,6 +1711,8 @@ pub async fn start(
         input.secretary_name,
         input.secretary_user_id,
         scrutineers_json,
+        meeting_status::ONGOING,
+        meeting_status::CALLED,
     )
     .execute(&mut *tx)
     .await?
@@ -1773,7 +1793,7 @@ async fn get_meeting_total_shares(
     .flatten()
     .unwrap_or_default();
 
-    if status == "ongoing" || status == "closed" {
+    if status == meeting_status::ONGOING || status == meeting_status::CLOSED {
         sqlx::query_scalar!(
             r#"
             SELECT COALESCE(SUM(shares_represented), 0)::int as "total!"
@@ -1847,12 +1867,13 @@ pub async fn finalize_resolution(
           AND resolution.meeting_id = $3
           AND gm.id = resolution.meeting_id
           AND gm.building_id = $4
-          AND gm.status = 'ongoing'
+          AND gm.status = $5::text::meeting_status
         "#,
         new_status as _,
         resolution_id,
         meeting_id,
         building_id,
+        meeting_status::ONGOING,
     )
     .execute(pool)
     .await?;
@@ -1876,7 +1897,7 @@ pub async fn patch_resolution_description(
           AND resolution.meeting_id = $2
           AND gm.id = resolution.meeting_id
           AND gm.building_id = $4
-          AND gm.status = 'ongoing'
+          AND gm.status = $5::text::meeting_status
         RETURNING resolution.id, resolution.number, resolution.title,
                   resolution.description,
                   resolution.vote_type::text as vote_type,
@@ -1886,6 +1907,7 @@ pub async fn patch_resolution_description(
         meeting_id,
         description,
         building_id,
+        meeting_status::ONGOING,
     )
     .fetch_optional(pool)
     .await?;

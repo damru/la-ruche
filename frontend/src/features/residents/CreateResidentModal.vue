@@ -12,6 +12,8 @@ import { usersApi } from '@/api'
 import { useFormFeedback } from '@/composables/useFormFeedback'
 import { useAutoClose } from '@/composables/useAutoClose'
 import type { Unit } from '@/types/domain'
+import { ROLES } from '@/utils/constants'
+import type { Role } from '@/types/domain'
 
 const props = defineProps<{
   open: boolean
@@ -28,9 +30,8 @@ const feedback = useFormFeedback()
 const { schedule: scheduleClose, forceExpire: forceClose } = useAutoClose()
 const loading = ref(false)
 
-const form = reactive({ first_name: '', last_name: '', email: '', role: 'co_owner', unit_id: '' })
+const form = reactive({ first_name: '', last_name: '', email: '', role: 'co_owner' satisfies Role, unit_id: '' })
 
-const ROLES = ['manager', 'board_member', 'co_owner', 'tenant'] as const
 
 const roleOptions = computed(() =>
   ROLES.map(r => ({ value: r, label: t(`roles.${r}`) }))
@@ -40,7 +41,7 @@ const activeUnits = computed(() =>
   props.units.filter(u => u.active).map(u => ({ value: u.id, label: u.unit_number }))
 )
 
-const isTenant = computed(() => form.role === 'tenant')
+const isTenant = computed(() => form.role === 'tenant' satisfies Role)
 
 const isValid = computed(() =>
   !!form.first_name.trim() &&
@@ -60,7 +61,7 @@ watch(() => props.open, (open) => {
 })
 
 watch(() => form.role, (role) => {
-  if (role !== 'tenant') form.unit_id = ''
+  if (role !== 'tenant' satisfies Role) form.unit_id = ''
 })
 
 async function handleSubmit() {

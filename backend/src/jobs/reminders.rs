@@ -11,6 +11,9 @@ use tracing::{error, info};
 
 use crate::db::AppState;
 
+/// Maximum number of reminders processed per run (safety bound).
+const MAX_REMINDERS_PER_RUN: i64 = 100;
+
 pub async fn run(state: Arc<AppState>) {
     let mut ticker = interval(Duration::from_secs(3600));
     loop {
@@ -29,12 +32,14 @@ async fn process_reminders(state: &Arc<AppState>) -> anyhow::Result<()> {
                vc.building_id
         FROM contract_reminder cr
         JOIN vendor_contract vc ON vc.id = cr.contract_id
-        WHERE cr.status = 'pending'
+        WHERE cr.status = $2::text::reminder_status
           AND cr.reminder_date <= CURRENT_DATE
         ORDER BY cr.reminder_date
-        LIMIT 100
+        LIMIT $3
         "#
     )
+    .bind(crate::db::contract::reminder_status::PENDING)
+    .bind(MAX_REMINDERS_PER_RUN)
     .fetch_all(&state.pool)
     .await?;
 
@@ -55,8 +60,9 @@ async fn process_reminders(state: &Arc<AppState>) -> anyhow::Result<()> {
         );
 
         sqlx::query!(
-            "UPDATE contract_reminder SET status = 'sent', updated_at = NOW() WHERE id = $1",
-            reminder.id
+            "UPDATE contract_reminder SET status = $2::text::reminder_status, updated_at = NOW() WHERE id = $1",
+            reminder.id,
+            crate::db::contract::reminder_status::SENT
         )
         .execute(&state.pool)
         .await?;

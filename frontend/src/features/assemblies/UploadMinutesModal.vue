@@ -10,6 +10,7 @@ import { meetingsApi, documentsApi } from '@/api'
 import { useFormFeedback } from '@/composables/useFormFeedback'
 import { useAutoClose } from '@/composables/useAutoClose'
 import { toErrorMessage } from '@/composables/usePageLoader'
+import { DEFAULT_DOCUMENT_VISIBLE_ROLES } from '@/utils/constants'
 
 const props = defineProps<{
   open: boolean
@@ -48,7 +49,7 @@ async function handleSubmit() {
       original_name: file.name,
       mime_type: file.type || 'application/pdf',
       size_bytes: file.size,
-      visible_roles: ['manager', 'board_member', 'co_owner'],
+      visible_roles: [...DEFAULT_DOCUMENT_VISIBLE_ROLES],
     })
     await meetingsApi.attachMinutes(props.meetingId, confirmed.data.id)
     feedback.setSuccess(t('common.saved'))

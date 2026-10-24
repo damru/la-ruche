@@ -36,8 +36,9 @@ import DeleteContractorModal from '@/features/contractors/DeleteContractorModal.
 import { contractorsApi } from '@/api'
 import { useBuildingStore } from '@/stores/building'
 import type { Contractor } from '@/types/domain'
+import { CONTRACT_TYPES, MANAGER_ROLES } from '@/utils/constants'
 
-const DOMAINS_RAW = ['maintenance', 'insurance', 'service', 'energy', 'water', 'cleaning', 'green_spaces', 'other']
+const CONTRACTOR_DOMAINS = [...CONTRACT_TYPES]
 
 function domainIcon(domains: string[]) {
   const icons: Record<string, unknown> = {
@@ -81,7 +82,7 @@ const selectedDomains = ref<string[]>([])
 
 // ── Permissions ────────────────────────────────────────────────────
 const canEdit = computed(() =>
-  authStore.hasAnyRole(['manager', 'board_member']),
+  authStore.hasAnyRole([...MANAGER_ROLES]),
 )
 
 // ── Load data ─────────────────────────────────────────────────────
@@ -99,7 +100,7 @@ onMounted(reload)
 
 // ── Sorted domains list (alphabetical by translated label) ────────
 const domainOptions = computed(() =>
-  [...DOMAINS_RAW]
+  [...CONTRACTOR_DOMAINS]
     .map(value => ({ value, label: t(`contractors.domains.${value}`) }))
     .sort((a, b) => a.label.localeCompare(b.label)),
 )

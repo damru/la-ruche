@@ -19,6 +19,7 @@ import { useAutoClose } from '@/composables/useAutoClose'
 import { useFormatters } from '@/composables/useFormatters'
 import { toErrorMessage } from '@/composables/usePageLoader'
 import type { Document, ManualCalendarEvent } from '@/types/domain'
+import { MANAGER_ROLES } from '@/utils/constants'
 
 const props = defineProps<{
   open: boolean
@@ -42,7 +43,7 @@ const deleting = ref(false)
 const event = ref<ManualCalendarEvent | null>(null)
 const documents = ref<Document[]>([])
 
-const canManage = auth.hasAnyRole(['manager', 'board_member'])
+const canManage = auth.hasAnyRole([...MANAGER_ROLES])
 
 watch(() => props.open, async (open) => {
   if (!open) { forceClose(); return }

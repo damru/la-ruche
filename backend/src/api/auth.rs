@@ -13,6 +13,7 @@ use validator::Validate;
 
 use crate::{
     auth::{jwt, password, token},
+    db::user::token_type,
     db::{self, AppState},
     domain::Role,
     errors::{AppError, AppResult},
@@ -294,7 +295,7 @@ pub async fn reset_password_request(
         db::user::create_token(
             &state.pool,
             user.email.as_deref().unwrap_or(""),
-            "reset_password",
+            token_type::RESET_PASSWORD,
             &hash,
             None,
             None,
@@ -320,7 +321,7 @@ pub async fn reset_password_confirm(
         .map_err(|_| AppError::validation_code("errors.auth.invalid_reset_confirm_payload"))?;
 
     let token_hash = token::hash_token(&input.token);
-    let info = db::user::consume_token(&state.pool, &token_hash, "reset_password")
+    let info = db::user::consume_token(&state.pool, &token_hash, token_type::RESET_PASSWORD)
         .await?
         .ok_or(AppError::TokenInvalid)?;
 
@@ -393,7 +394,11 @@ pub async fn invite_accept(
 
     let email = &info.email;
     let building_id = info.building_id.ok_or(AppError::TokenInvalid)?;
-    let role = info.invited_role.as_deref().unwrap_or("co_owner");
+    let role = info
+        .invited_role
+        .as_deref()
+        .and_then(|r| r.parse::<Role>().ok())
+        .unwrap_or(Role::CoOwner);
 
     let hash = password::hash_password(&input.password, &state.cfg.auth)?;
 
@@ -447,7 +452,7 @@ pub async fn invite_accept(
     };
 
     // Add to building (ON CONFLICT DO NOTHING handles pre-registered users)
-    db::user::create_user_building(&state.pool, user_id, building_id, role).await?;
+    db::user::create_user_building(&state.pool, user_id, building_id, role.as_str()).await?;
 
     // If tenant invite with unit_id, create unit_owner record
     if let Some(unit_id) = info.unit_id {

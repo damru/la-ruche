@@ -29,6 +29,7 @@ import ReportPhotosModal from './ReportPhotosModal.vue'
 import { reportsApi, unitsApi } from '@/api'
 import { useBuildingStore } from '@/stores/building'
 import type { Report, ReportStatus, Unit } from '@/types/domain'
+import { ALL_FILTER, MANAGER_ROLES, REPORT_STATUS_CLOSED, REPORT_STATUS_IN_PROGRESS, REPORT_STATUS_OPEN } from '@/utils/constants'
 
 const { t } = useI18n()
 const { formatDate, formatRelative } = useFormatters()
@@ -39,10 +40,10 @@ const { hasAnyRole } = useRole()
 const buildingName = ref('')
 const allReports = ref<Report[]>([])
 const allUnits = ref<Unit[]>([])
-const statusFilter = ref<'all' | ReportStatus>('all')
+const statusFilter = ref<typeof ALL_FILTER | ReportStatus>(ALL_FILTER)
 
 // ── RBAC — only manager and board_member can act on reports ────────
-const canManage = computed(() => hasAnyRole(['manager', 'board_member']))
+const canManage = computed(() => hasAnyRole([...MANAGER_ROLES]))
 
 // ── Modal state ───────────────────────────────────────────────────
 const showCreateModal = ref(false)
@@ -80,7 +81,7 @@ onMounted(reload)
 
 // ── Derived ───────────────────────────────────────────────────────
 const reports = computed(() =>
-  (statusFilter.value === 'all'
+  (statusFilter.value === ALL_FILTER
     ? allReports.value
     : allReports.value.filter(r => r.status === statusFilter.value))
     .slice()
@@ -88,13 +89,12 @@ const reports = computed(() =>
 )
 
 const counts = computed(() => ({
-  open: allReports.value.filter(r => r.status === 'open').length,
-  in_progress: allReports.value.filter(r => r.status === 'in_progress').length,
-  closed: allReports.value.filter(r => r.status === 'closed').length,
-}))
+  open: allReports.value.filter(r => r.status === REPORT_STATUS_OPEN).length,
+  in_progress: allReports.value.filter(r => r.status === REPORT_STATUS_IN_PROGRESS).length,
+  closed: allReports.value.filter(r => r.status === REPORT_STATUS_CLOSED).length }))
 
 const activeCount = computed(() =>
-  allReports.value.filter(r => r.status !== 'closed').length,
+  allReports.value.filter(r => r.status !== REPORT_STATUS_CLOSED).length,
 )
 
 const unitsById = computed(() =>
@@ -105,15 +105,14 @@ const unitOptions = computed(() => [
   { value: '', label: t('reports.unitPlaceholder') },
   ...allUnits.value.map(u => ({
     value: u.id,
-    label: t('claims.unitLabel', { number: u.unit_number }),
-  })),
+    label: t('claims.unitLabel', { number: u.unit_number }) })),
 ])
 
 // ── Helpers ───────────────────────────────────────────────────────
 function statusVariant(s: string): 'valid' | 'open' | 'pending' | 'closed' | 'default' {
-  if (s === 'open') return 'pending'
-  if (s === 'in_progress') return 'open'
-  if (s === 'closed') return 'closed'
+  if (s === REPORT_STATUS_OPEN) return 'pending'
+  if (s === REPORT_STATUS_IN_PROGRESS) return 'open'
+  if (s === REPORT_STATUS_CLOSED) return 'closed'
   return 'default'
 }
 
@@ -176,10 +175,10 @@ function authorName(r: Report): string {
           v-model="statusFilter"
           variant="filter"
           :tabs="[
-            { value: 'all', label: t('common.allMasc'), count: allReports.length },
-            { value: 'open', label: t('reports.filters.open'), count: counts.open },
-            { value: 'in_progress', label: t('reports.filters.inProgress'), count: counts.in_progress },
-            { value: 'closed', label: t('reports.filters.closed'), count: counts.closed },
+            { value: ALL_FILTER, label: t('common.allMasc'), count: allReports.length },
+            { value: REPORT_STATUS_OPEN, label: t('reports.filters.open'), count: counts.open },
+            { value: REPORT_STATUS_IN_PROGRESS, label: t('reports.filters.inProgress'), count: counts.in_progress },
+            { value: REPORT_STATUS_CLOSED, label: t('reports.filters.closed'), count: counts.closed },
           ]"
         />
 
@@ -193,8 +192,8 @@ function authorName(r: Report): string {
             <CCard
               v-for="r in reports"
               :key="r.id"
-              :shadow="r.status !== 'closed'"
-              :class="['gap-y-4', { 'outline outline-1 outline-outline-variant': r.status === 'closed' }]"
+              :shadow="r.status !== REPORT_STATUS_CLOSED"
+              :class="['gap-y-4', { 'outline outline-1 outline-outline-variant': r.status === REPORT_STATUS_CLOSED }]"
             >
               <div class="flex items-center gap-3 min-w-0">
                 <CMetaLine 
@@ -265,7 +264,7 @@ function authorName(r: Report): string {
                 </CMetaLine>
   
                 <div
-                  v-if="r.status !== 'closed'"
+                  v-if="r.status !== REPORT_STATUS_CLOSED"
                   class="flex flex-wrap gap-x-2 gap-y-1"
                 >
                   <CBtn
@@ -295,7 +294,7 @@ function authorName(r: Report): string {
                       @click="router.push({ name: 'task-detail', params: { id: r.task_id } })"
                     />
                     <CBtn
-                      v-else-if="r.status !== 'closed'"
+                      v-else-if="r.status !== REPORT_STATUS_CLOSED"
                       variant="primary"
                       size="sm"
                       :icon="CIconCheckCircle"

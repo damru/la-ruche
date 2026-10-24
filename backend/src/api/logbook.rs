@@ -11,7 +11,10 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::{
-    db::{self, AppState},
+    db::{
+        self, AppState,
+        contract::{contract_status, contract_type},
+    },
     domain::{AuthUser, Role},
     errors::{AppError, AppResult, json_value},
 };
@@ -78,14 +81,21 @@ pub struct LogbookSummaryResponse {
 }
 
 fn is_contract_active(contract: &db::contract::VendorContractRow, today: NaiveDate) -> bool {
-    contract.status == "active" && contract.end_date.is_none_or(|date| date >= today)
+    contract.status == contract_status::ACTIVE && contract.end_date.is_none_or(|date| date >= today)
 }
 
+/// `contract_type` values classified as maintenance contracts for the logbook summary.
+const MAINTENANCE_CONTRACT_TYPES: &[&str] = &[
+    contract_type::MAINTENANCE,
+    contract_type::SERVICE,
+    contract_type::ENERGY,
+    contract_type::WATER,
+    contract_type::CLEANING,
+    contract_type::GREEN_SPACES,
+];
+
 fn is_maintenance_contract(contract_type: &str) -> bool {
-    matches!(
-        contract_type,
-        "maintenance" | "service" | "energy" | "water" | "cleaning" | "green_spaces"
-    )
+    MAINTENANCE_CONTRACT_TYPES.contains(&contract_type)
 }
 
 fn map_contract(contract: db::contract::VendorContractRow) -> LogbookContractInfo {
@@ -111,7 +121,7 @@ fn parse_manager_info(user: &serde_json::Value) -> AppResult<Option<LogbookManag
         })
         .unwrap_or_default();
 
-    if !roles.contains(&"manager") {
+    if !roles.contains(&Role::Manager.as_str()) {
         return Ok(None);
     }
 
@@ -172,7 +182,7 @@ pub async fn summary(
 
     let insurance_contracts = active_contracts
         .iter()
-        .filter(|contract| contract.contract_type == "insurance")
+        .filter(|contract| contract.contract_type == contract_type::INSURANCE)
         .cloned()
         .map(map_contract)
         .collect();

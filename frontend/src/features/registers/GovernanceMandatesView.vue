@@ -17,6 +17,7 @@ import CDeleteConfirmModal from '@/components/organisms/CDeleteConfirmModal.vue'
 import { governanceApi } from '@/api'
 import { useBuildingStore } from '@/stores/building'
 import type { GovernanceMandate } from '@/types/domain'
+import { GOVERNANCE_ROLE_COUNCIL_PRESIDENT, GOVERNANCE_ROLE_SYNDIC } from '@/utils/constants'
 
 const { t } = useI18n()
 const { formatDate } = useFormatters()
@@ -52,8 +53,8 @@ const columns = computed(() => [
 ])
 
 function roleVariant(role: string): 'valid' | 'accent' | 'default' {
-  if (role === 'syndic') return 'valid'
-  if (role === 'council_president') return 'accent'
+  if (role === GOVERNANCE_ROLE_SYNDIC) return 'valid'
+  if (role === GOVERNANCE_ROLE_COUNCIL_PRESIDENT) return 'accent'
   return 'default'
 }
 

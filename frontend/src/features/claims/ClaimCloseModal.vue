@@ -7,6 +7,7 @@ import { useFormFeedback } from '@/composables/useFormFeedback'
 import { useAutoClose } from '@/composables/useAutoClose'
 import { extractFileExtension } from '@/utils/files'
 import type { Claim } from '@/types/domain'
+import { ROLES , CLAIM_STATUS_CLOSED } from '@/utils/constants'
 
 const props = defineProps<{
   open: boolean
@@ -91,7 +92,7 @@ async function uploadDocument(claimId: string, file: File): Promise<void> {
     original_name: file.name,
     mime_type: mimeType,
     size_bytes: file.size,
-    visible_roles: ['manager', 'board_member', 'co_owner', 'tenant'],
+    visible_roles: [...ROLES],
   })
   await claimsApi.attachDocument(claimId, documentResponse.data.id)
 }
@@ -134,7 +135,7 @@ async function handleSubmit() {
     await claimsApi.update(
       props.claim.id,
       buildClaimUpdatePayload(props.claim, {
-        status: 'closed',
+        status: CLAIM_STATUS_CLOSED,
         transmitted_at: form.value.transmitted_at,
         reimbursement_date: form.value.reimbursement_date || null,
         reimbursement_amount: reimbursementAmount,

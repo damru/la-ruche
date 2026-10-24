@@ -13,7 +13,8 @@ import { meetingsApi } from '@/api'
 import { useFormFeedback } from '@/composables/useFormFeedback'
 import { useAutoClose } from '@/composables/useAutoClose'
 import { toErrorMessage } from '@/composables/usePageLoader'
-import type { Meeting, MeetingType } from '@/types/domain'
+import type {Meeting} from '@/types/domain'
+import { DEFAULT_MEETING_TYPE, MEETING_TYPES } from '@/utils/constants'
 
 const props = defineProps<{
   open: boolean
@@ -34,7 +35,7 @@ const agendaItems = ref<string[]>([''])
 
 function defaultForm() {
   return {
-    meeting_type: 'annual' as MeetingType,
+    meeting_type: DEFAULT_MEETING_TYPE,
     meeting_date: '',
     location: '',
   }
@@ -46,10 +47,9 @@ function toDateTimeLocal(value: string): string {
   return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16)
 }
 
-const meetingTypeOptions = computed(() => [
-  { value: 'annual', label: t('meetings.types.annual') },
-  { value: 'extraordinary', label: t('meetings.types.extraordinary') },
-])
+const meetingTypeOptions = computed(() =>
+  MEETING_TYPES.map(v => ({ value: v, label: t(`meetings.types.${v}`) })),
+)
 
 watch(() => props.open, (open) => {
   if (!open) { forceClose(); return }

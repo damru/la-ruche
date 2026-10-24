@@ -103,18 +103,41 @@ fn normalize_optional_text(value: Option<&str>) -> Option<String> {
     })
 }
 
+/// `task_status` values (PG enum `task_status`).
+pub mod status {
+    pub const OPEN: &str = "open";
+    pub const IN_PROGRESS: &str = "in_progress";
+    pub const AWAITING_VENDOR: &str = "awaiting_vendor";
+    pub const AWAITING_VALIDATION: &str = "awaiting_validation";
+    pub const CLOSED: &str = "closed";
+    pub const CANCELLED: &str = "cancelled";
+}
+
+/// `task_priority` values (PG enum `task_priority`).
+pub mod priority {
+    pub const LOW: &str = "low";
+    pub const NORMAL: &str = "normal";
+    pub const HIGH: &str = "high";
+    pub const URGENT: &str = "urgent";
+}
+
 /// Valid task status values for update requests.
 const VALID_STATUSES: &[&str] = &[
-    "open",
-    "in_progress",
-    "awaiting_vendor",
-    "awaiting_validation",
-    "closed",
-    "cancelled",
+    status::OPEN,
+    status::IN_PROGRESS,
+    status::AWAITING_VENDOR,
+    status::AWAITING_VALIDATION,
+    status::CLOSED,
+    status::CANCELLED,
 ];
 
-pub const DEFAULT_PRIORITY: &str = "normal";
-const VALID_PRIORITIES: &[&str] = &["low", "normal", "high", "urgent"];
+pub const DEFAULT_PRIORITY: &str = priority::NORMAL;
+const VALID_PRIORITIES: &[&str] = &[
+    priority::LOW,
+    priority::NORMAL,
+    priority::HIGH,
+    priority::URGENT,
+];
 
 pub fn validate_status(status: &str) -> bool {
     VALID_STATUSES.contains(&status)
@@ -254,7 +277,7 @@ pub async fn update_status(
     building_id: Uuid,
     status: &str,
 ) -> AppResult<()> {
-    let closed_at = if status == "closed" {
+    let closed_at = if status == status::CLOSED {
         Some(Utc::now())
     } else {
         None
@@ -287,13 +310,14 @@ pub async fn generate_token(
 
     let result = sqlx::query(
         "UPDATE task SET vendor_token = $3, token_expires_at = $4,
-         status = 'awaiting_vendor'::task_status, updated_at = NOW()
+         status = $5::text::task_status, updated_at = NOW()
          WHERE id = $1 AND building_id = $2",
     )
     .bind(id)
     .bind(building_id)
     .bind(token)
     .bind(expires_at)
+    .bind(status::AWAITING_VENDOR)
     .execute(pool)
     .await?;
 
@@ -430,14 +454,14 @@ pub async fn update_fields(
         Some(cost) => cost,
         None => current_completion_cost,
     };
-    let closed_at = if new_status == "closed" && current.closed_at.is_none() {
+    let closed_at = if new_status == status::CLOSED && current.closed_at.is_none() {
         Some(Utc::now())
-    } else if new_status != "closed" {
+    } else if new_status != status::CLOSED {
         None
     } else {
         current.closed_at
     };
-    let create_log_entry = current_status != "closed" && new_status == "closed";
+    let create_log_entry = current_status != status::CLOSED && new_status == status::CLOSED;
 
     let mut tx = pool.begin().await?;
     let result = sqlx::query(
@@ -489,12 +513,14 @@ pub async fn revoke_token(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResu
         "UPDATE task
          SET vendor_token = NULL,
              token_expires_at = NULL,
-             status = CASE WHEN status = 'awaiting_vendor' THEN 'open'::task_status ELSE status END,
+             status = CASE WHEN status = $3::text::task_status THEN $4::text::task_status ELSE status END,
              updated_at = NOW()
          WHERE id = $1 AND building_id = $2",
     )
     .bind(id)
     .bind(building_id)
+    .bind(status::AWAITING_VENDOR)
+    .bind(status::OPEN)
     .execute(pool)
     .await?;
     if result.rows_affected() == 0 {
@@ -527,9 +553,10 @@ pub async fn get_by_token(pool: &PgPool, token: Uuid) -> AppResult<Option<TaskRo
            EXISTS(SELECT 1 FROM maintenance_log WHERE task_id = t.id) AS is_in_logbook
            FROM task t
            WHERE t.vendor_token = $1 AND t.token_expires_at > NOW()
-           AND t.status != 'closed'"#,
+           AND t.status != $2::text::task_status"#,
     )
     .bind(token)
+    .bind(status::CLOSED)
     .fetch_optional(pool)
     .await?;
     row.as_ref()

@@ -8,12 +8,28 @@ use uuid::Uuid;
 
 use crate::errors::AppResult;
 
+/// `audit_log.entity_type` values (TEXT column).
+pub mod entity_type {
+    pub const BUDGET: &str = "budget";
+    pub const BUDGET_LINE: &str = "budget_line";
+    pub const VENDOR_CONTRACT: &str = "vendor_contract";
+    pub const DOCUMENT: &str = "document";
+    pub const ALLOCATION_KEY: &str = "allocation_key";
+}
+
+/// `audit_log.operation` values (TEXT column).
+pub mod operation {
+    pub const CREATE: &str = "CREATE";
+    pub const UPDATE: &str = "UPDATE";
+    pub const DELETE: &str = "DELETE";
+}
+
 #[derive(Debug)]
 pub struct NewAuditEntry<'a> {
     pub building_id: Uuid,
     pub entity_type: &'a str,
     pub entity_id: Uuid,
-    pub operation: &'a str, // "UPDATE" | "DELETE"
+    pub operation: &'a str,
     pub changed_by: Option<Uuid>,
     pub old_values: Option<Value>,
     pub new_values: Option<Value>,

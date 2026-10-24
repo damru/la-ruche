@@ -1,3 +1,4 @@
+import { BYTES_PER_KB, BYTES_PER_MB, MS_PER_DAY } from '@/utils/constants'
 // ── useFormatters — locale-aware formatting (fr-FR)
 // Uses native Intl — no external dependency (date-fns, dayjs…)
 
@@ -50,16 +51,16 @@ export function useFormatters() {
   }
 
   function formatFileSize(bytes: number): string {
-    if (bytes < 1024) return `${bytes} B`
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+    if (bytes < BYTES_PER_KB) return `${bytes} B`
+    if (bytes < BYTES_PER_MB) return `${(bytes / BYTES_PER_KB).toFixed(1)} KB`
+    return `${(bytes / BYTES_PER_MB).toFixed(1)} MB`
   }
 
   function daysUntil(dateStr: string): number {
     const target = new Date(dateStr)
     const now = new Date()
     const diff = target.getTime() - now.getTime()
-    return Math.ceil(diff / (1000 * 60 * 60 * 24))
+    return Math.ceil(diff / MS_PER_DAY)
   }
 
   function formatRelative(dateStr: string): string {

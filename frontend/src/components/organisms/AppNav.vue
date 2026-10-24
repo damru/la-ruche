@@ -9,6 +9,7 @@ import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useI18n } from 'vue-i18n'
 import type { Role } from '@/types/domain'
+import { DOCUMENT_ROLES, MANAGER_ROLES, VOTER_ROLES } from '@/utils/constants'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -38,7 +39,7 @@ const allGroups: NavGroup[] = [
   {
     label: t('nav.governance'),
     items: [
-      { name: 'assemblies',    route: '/meetings',      label: t('nav.meetings'),      mobileLabel: t('meetings.typeLabel.annualShort'),    roles: ['manager', 'board_member', 'co_owner'], mobileOrder: 10 },
+      { name: 'assemblies',    route: '/meetings',      label: t('nav.meetings'),      mobileLabel: t('meetings.typeLabel.annualShort'),    roles: [...VOTER_ROLES], mobileOrder: 10 },
       { name: 'consultations', route: '/consultations', label: t('nav.consultations'), mobileLabel: t('nav.mobile.consultations'), roles: [],                                      mobileOrder: 4 },
       { name: 'reports',       route: '/reports',       label: t('nav.reports'),       mobileLabel: t('nav.reports'),       roles: [],                                      mobileOrder: 2 },
     ],
@@ -46,31 +47,31 @@ const allGroups: NavGroup[] = [
   {
     label: t('nav.groups.finance'),
     items: [
-      { name: 'budget',      route: '/budget',      label: t('nav.budget'),      mobileLabel: t('nav.mobile.budget'),      roles: ['manager', 'board_member', 'co_owner'], mobileOrder: 11 },
-      { name: 'my-charges',  route: '/my-charges',  label: t('nav.myCharges'),   mobileLabel: t('nav.myCharges'),           roles: ['co_owner'],                            mobileOrder: 3 },
-      { name: 'contracts',   route: '/contracts',   label: t('nav.contracts'),   mobileLabel: t('nav.contracts'),   roles: ['manager', 'board_member'],             mobileOrder: 6 },
+      { name: 'budget',      route: '/budget',      label: t('nav.budget'),      mobileLabel: t('nav.mobile.budget'),      roles: [...VOTER_ROLES], mobileOrder: 11 },
+      { name: 'my-charges',  route: '/my-charges',  label: t('nav.myCharges'),   mobileLabel: t('nav.myCharges'),           roles: ['co_owner' satisfies Role],                            mobileOrder: 3 },
+      { name: 'contracts',   route: '/contracts',   label: t('nav.contracts'),   mobileLabel: t('nav.contracts'),   roles: [...MANAGER_ROLES],             mobileOrder: 6 },
     ],
   },
   {
     label: t('nav.groups.operations'),
     items: [
-      { name: 'tasks',        route: '/tasks',        label: t('nav.tasks'),        mobileLabel: t('nav.tasks'),        roles: ['manager', 'board_member'], mobileOrder: 4 },
+      { name: 'tasks',        route: '/tasks',        label: t('nav.tasks'),        mobileLabel: t('nav.tasks'),        roles: [...MANAGER_ROLES], mobileOrder: 4 },
       { name: 'contractors',  route: '/contractors',  label: t('contractors.title'),  mobileLabel: t('contractors.title'),  roles: [],                          mobileOrder: 3 },
-      { name: 'claims',       route: '/claims',       label: t('nav.claims'),       mobileLabel: t('nav.claims'),       roles: ['manager', 'board_member'], mobileOrder: 7 },
-      { name: 'maintenance', route: '/logbook',   label: t('nav.maintenance'), mobileLabel: t('nav.mobile.maintenance'), roles: ['manager', 'board_member'], mobileOrder: 8 },
-      { name: 'documents',   route: '/documents', label: t('common.documents'),   mobileLabel: t('nav.mobile.documents'),   roles: ['manager', 'board_member', 'co_owner', 'tenant'], mobileOrder: 5 },
+      { name: 'claims',       route: '/claims',       label: t('nav.claims'),       mobileLabel: t('nav.claims'),       roles: [...MANAGER_ROLES], mobileOrder: 7 },
+      { name: 'maintenance', route: '/logbook',   label: t('nav.maintenance'), mobileLabel: t('nav.mobile.maintenance'), roles: [...MANAGER_ROLES], mobileOrder: 8 },
+      { name: 'documents',   route: '/documents', label: t('common.documents'),   mobileLabel: t('nav.mobile.documents'),   roles: [...DOCUMENT_ROLES], mobileOrder: 5 },
     ],
   },
   {
     label: t('nav.groups.residence'),
     items: [
-      { name: 'residence-building', route: '/residence/building', label: t('common.informations'), roles: ['manager'] },
-      { name: 'residence-keys',     route: '/residence/keys',     label: t('allocationKeys.title'), roles: ['manager'] },
-      { name: 'registry',           route: '/registry',           label: t('nav.registry'),       roles: ['manager', 'board_member', 'co_owner'] },
-      { name: 'judicial-proceedings', route: '/judicial-proceedings', label: t('nav.judicialProceedings'), roles: ['manager', 'board_member', 'co_owner'] },
-      { name: 'governance',         route: '/governance',         label: t('nav.governance'),     roles: ['manager', 'board_member', 'co_owner'] },
-      { name: 'etat-date',          route: '/etat-date',          label: t('registers.etatDate.title'),       roles: ['manager'] },
-      { name: 'residents',          route: '/residents',          label: t('nav.residents'),      roles: ['manager'] },
+      { name: 'residence-building', route: '/residence/building', label: t('common.informations'), roles: ['manager' satisfies Role] },
+      { name: 'residence-keys',     route: '/residence/keys',     label: t('allocationKeys.title'), roles: ['manager' satisfies Role] },
+      { name: 'registry',           route: '/registry',           label: t('nav.registry'),       roles: [...VOTER_ROLES] },
+      { name: 'judicial-proceedings', route: '/judicial-proceedings', label: t('nav.judicialProceedings'), roles: [...VOTER_ROLES] },
+      { name: 'governance',         route: '/governance',         label: t('nav.governance'),     roles: [...VOTER_ROLES] },
+      { name: 'etat-date',          route: '/etat-date',          label: t('registers.etatDate.title'),       roles: ['manager' satisfies Role] },
+      { name: 'residents',          route: '/residents',          label: t('nav.residents'),      roles: ['manager' satisfies Role] },
     ],
   },
 ]

@@ -12,7 +12,8 @@ import { meetingsApi } from '@/api'
 import { useFormFeedback } from '@/composables/useFormFeedback'
 import { useAutoClose } from '@/composables/useAutoClose'
 import { toErrorMessage } from '@/composables/usePageLoader'
-import type { VoteType } from '@/types/domain'
+import type {} from '@/types/domain'
+import { VOTE_TYPES, VOTE_TYPE_SIMPLE_MAJORITY } from '@/utils/constants'
 
 const props = defineProps<{
   open: boolean
@@ -36,16 +37,13 @@ function defaultForm() {
     number: 1,
     title: '',
     description: '',
-    vote_type: 'simple_majority' as VoteType,
+    vote_type: VOTE_TYPE_SIMPLE_MAJORITY,
   }
 }
 
-const voteTypeOptions = computed(() => [
-  { value: 'simple_majority', label: t('meetings.vote.types.simple_majority') },
-  { value: 'absolute_majority', label: t('meetings.vote.types.absolute_majority') },
-  { value: 'double_majority', label: t('meetings.vote.types.double_majority') },
-  { value: 'unanimity', label: t('meetings.vote.types.unanimity') },
-])
+const voteTypeOptions = computed(() =>
+  VOTE_TYPES.map(v => ({ value: v, label: t(`meetings.vote.types.${v}`) })),
+)
 
 function setResolutionNumber(v: string) {
   form.value.number = parseInt(v, 10) || 1

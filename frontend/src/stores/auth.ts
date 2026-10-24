@@ -3,6 +3,7 @@ import { authApi, onboardingApi } from '@/api'
 import { tryRefreshSession } from '@/api/client'
 import { useBuildingStore } from './building'
 import type { AuthUser, Role } from '@/types/domain'
+import { MANAGER_ROLES, VOTER_ROLES } from '@/utils/constants'
 
 export const useAuthStore = defineStore('auth', () => {
   // ── State ──────────────────────────────────────────────────────
@@ -13,16 +14,16 @@ export const useAuthStore = defineStore('auth', () => {
   let sessionRestored = false
   // ── Roles ──────────────────────────────────────────────────────
   const isManager = computed(() =>
-    user.value?.roles.includes('manager') ?? false
+    user.value?.roles.includes('manager' satisfies Role) ?? false
   )
   const isBoardMember = computed(() =>
-    user.value?.roles.includes('board_member') ?? false
+    user.value?.roles.includes('board_member' satisfies Role) ?? false
   )
   const isCoOwner = computed(() =>
-    user.value?.roles.includes('co_owner') ?? false
+    user.value?.roles.includes('co_owner' satisfies Role) ?? false
   )
   const isTenant = computed(() =>
-    user.value?.roles.includes('tenant') ?? false
+    user.value?.roles.includes('tenant' satisfies Role) ?? false
   )
 
   function hasRole(role: Role): boolean {
@@ -34,14 +35,14 @@ export const useAuthStore = defineStore('auth', () => {
   }
   // ── Can vote at meetings (tenant = consultation only) ──────────
   const canVoteMeeting = computed(() =>
-    hasAnyRole(['manager', 'board_member', 'co_owner'])
+    hasAnyRole([...VOTER_ROLES])
   )
 
   // ── Can view meeting results (all roles, including tenant) ─────
   const canViewMeetingResults = computed(() => isAuthenticated.value)
   // ── Can view accounting ────────────────────────────────────────
   const canViewAccounting = computed(() =>
-    hasAnyRole(['manager', 'board_member'])
+    hasAnyRole([...MANAGER_ROLES])
   )
 
   // ── Actions ────────────────────────────────────────────────────

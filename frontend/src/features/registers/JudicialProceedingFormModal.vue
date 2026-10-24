@@ -13,9 +13,13 @@ import { useFormFeedback } from '@/composables/useFormFeedback'
 import { useAutoClose } from '@/composables/useAutoClose'
 import { toErrorMessage } from '@/composables/usePageLoader'
 import type { JudicialProceeding } from '@/types/domain'
-
-const TYPES = ['debt_recovery', 'works_dispute', 'liability', 'other'] as const
-const STATUSES = ['ongoing', 'suspended', 'closed'] as const
+import {
+  DEFAULT_JUDICIAL_PROCEEDING_STATUS,
+  DEFAULT_JUDICIAL_PROCEEDING_TYPE,
+  JUDICIAL_PROCEEDING_STATUSES,
+  JUDICIAL_PROCEEDING_STATUS_CLOSED,
+  JUDICIAL_PROCEEDING_TYPES,
+} from '@/utils/constants'
 
 const props = defineProps<{
   open: boolean
@@ -33,8 +37,8 @@ const { schedule: scheduleClose, forceExpire: forceClose } = useAutoClose()
 const saving = ref(false)
 
 const defaultForm = () => ({
-  proceeding_type: 'other' as string,
-  status: 'ongoing' as string,
+  proceeding_type: DEFAULT_JUDICIAL_PROCEEDING_TYPE,
+  status: DEFAULT_JUDICIAL_PROCEEDING_STATUS,
   subject: '',
   claimant: '',
   defendant: '',
@@ -47,13 +51,13 @@ const defaultForm = () => ({
 const form = ref(defaultForm())
 
 const isEdit = computed(() => props.proceeding !== null)
-const isClosed = computed(() => form.value.status === 'closed')
+const isClosed = computed(() => form.value.status === JUDICIAL_PROCEEDING_STATUS_CLOSED)
 
 const typeOptions = computed(() =>
-  TYPES.map(value => ({ value, label: t(`registers.judicial.types.${value}`) })),
+  JUDICIAL_PROCEEDING_TYPES.map(value => ({ value, label: t(`registers.judicial.types.${value}`) })),
 )
 const statusOptions = computed(() =>
-  STATUSES.map(value => ({ value, label: t(`registers.judicial.statuses.${value}`) })),
+  JUDICIAL_PROCEEDING_STATUSES.map(value => ({ value, label: t(`registers.judicial.statuses.${value}`) })),
 )
 
 watch(() => props.open, (open) => {
