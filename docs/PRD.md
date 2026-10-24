@@ -168,6 +168,56 @@ llm_directives:
 | Initier consultation | ✅ | ✅ | ✅ | ✅ |
 | Inviter résidents | ✅ | ❌ | ❌ | ❌ |
 
+### Référentiel des permissions implémentées
+
+> Source d'implémentation : backend `domain::permissions` (`backend/src/domain/permissions.rs`) et frontend `usePermissions` (`frontend/src/composables/usePermissions.ts`). Un utilisateur peut cumuler plusieurs rôles ; chaque contrôle inspecte **tous** ses rôles. Les matrices CRUD détaillées par feature se trouvent dans les PRD fonctionnels (`docs/product/`).
+
+| Domaine | Permission (backend) | Syndic | Conseil | Copropriétaire | Locataire |
+|---|---|---|---|---|---|
+| AG | `can_view_gm` | ✅ | ✅ | ✅ | ✅ |
+| AG | `can_vote_gm` | ❌ | ❌ | ✅ | ❌ |
+| AG | `can_record_gm_votes` (saisie des votes en séance) | ✅ | ✅ | ✅ | ❌ |
+| AG | `can_manage_gm` (cycle de vie, résolutions, PV, présence) | ✅ | ❌ | ❌ | ❌ |
+| Consultations | `can_view_consultation` | ✅ | ✅ | ✅ | ✅ |
+| Consultations | `can_vote_consultation` | ❌ | ❌ | ✅ | ✅ |
+| Consultations | `can_manage_consultation` (créer, ouvrir, clôturer, relancer) | ✅ | ✅ | ❌ | ❌ |
+| Consultations | `can_initiate_consultation` | ✅ | ✅ | ✅ | ✅ |
+| Budget | `can_view_budget` | ✅ | ✅ | ✅ | ✅ |
+| Budget | `can_manage_budget` (brouillons, appels de fonds) | ✅ | ✅ | ❌ | ❌ |
+| Budget | `can_administer_budget` (créer/clôturer/approuver) | ✅ | ❌ | ❌ | ❌ |
+| Tâches | `can_view_task` | ✅ | ✅ | ✅ | ✅ |
+| Tâches | `can_manage_task` | ✅ | ✅ | ❌ | ❌ |
+| Contrats | `can_view_contract` | ✅ | ✅ | ❌ | ❌ |
+| Contrats | `can_manage_contract` | ✅ | ✅ | ❌ | ❌ |
+| Contrats | `can_administer_contract` (résilier, administrer) | ✅ | ❌ | ❌ | ❌ |
+| Documents | `can_view_document` (filtré par `visible_to_roles`) | ✅ | ✅ | ✅ | ✅ |
+| Documents | `can_manage_document` | ✅ | ✅ | ❌ | ❌ |
+| Carnet d'entretien | `can_view_logbook` | ✅ | ✅ | ✅ | ✅ |
+| Carnet d'entretien | `can_manage_logbook` | ✅ | ✅ | ❌ | ❌ |
+| Conformité (fiches) | `can_view_report` | ✅ | ✅ | ✅ | ✅ |
+| Conformité (fiches) | `can_manage_report` | ✅ | ✅ | ❌ | ❌ |
+| Signalements | `can_view_claim` | ✅ | ✅ | ✅ | ✅ |
+| Signalements | `can_manage_claim` | ✅ | ✅ | ❌ | ❌ |
+| Lots | `can_view_unit` | ✅ | ✅ | ✅ | ✅ |
+| Lots | `can_manage_unit` | ✅ | ❌ | ❌ | ❌ |
+| Résidents | `can_view_users` | ✅ | ✅ | ❌ | ❌ |
+| Résidents | `can_manage_users` (invitations) | ✅ | ❌ | ❌ | ❌ |
+| Comptabilité / fonds travaux | `can_view_accounting` | ✅ | ✅ | ❌ | ❌ |
+| Comptabilité / fonds travaux | `can_manage_accounting` | ✅ | ❌ | ❌ | ❌ |
+| Calendrier | `can_view_calendar` | ✅ | ✅ | ✅ | ✅ |
+| Calendrier | `can_manage_calendar` (événements manuels) | ✅ | ✅ | ❌ | ❌ |
+| État daté | `can_view_etat_date` | ✅ | ✅ | ✅ | ✅ |
+| État daté | `can_manage_etat_date` | ✅ | ❌ | ❌ | ❌ |
+| Sinistres | `can_view_judicial` | ✅ | ✅ | ✅ | ✅ |
+| Sinistres | `can_manage_judicial` | ✅ | ❌ | ❌ | ❌ |
+| Gouvernance | `can_view_governance` | ✅ | ✅ | ✅ | ✅ |
+| Gouvernance | `can_manage_governance` | ✅ | ❌ | ❌ | ❌ |
+| Prestataires (espace vendor) | `can_manage_contractor` | ✅ | ✅ | ❌ | ❌ |
+
+> **Notes**
+> - `can_vote_gm` : seuls les copropriétaires votent en AG. La **saisie des votes pendant la séance** (`can_record_gm_votes`) est un flux distinct — le syndic saisit manuellement le vote de chaque lot présent dans le VoteModal.
+> - Les utilisateurs multi-rôles (ex. `[Syndic, Copropriétaire]`) cumulent les droits de leurs rôles.
+
 ---
 
 ## Contraintes légales (non interprétées — textes officiels)

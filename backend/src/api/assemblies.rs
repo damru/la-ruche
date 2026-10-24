@@ -395,7 +395,7 @@ pub async fn vote(
     Path((meeting_id, resolution_id)): Path<(Uuid, Uuid)>,
     Json(input): Json<VoteInput>,
 ) -> AppResult<StatusCode> {
-    if !permissions::can_vote_gm(&auth) {
+    if !permissions::can_record_gm_votes(&auth) {
         return Err(AppError::Forbidden);
     }
 

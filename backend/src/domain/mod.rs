@@ -65,13 +65,6 @@ impl std::fmt::Display for Role {
     }
 }
 
-impl Role {
-    // Permission checks have been moved to domain::permissions — use those
-    // free functions (can_vote_gm, can_view_gm, can_manage_consultation, …)
-    // instead of methods on Role. They operate on AuthUser and inspect all
-    // of the user's roles.
-}
-
 /// Authenticated user extracted from the JWT — injected into every protected handler
 #[derive(Debug, Clone)]
 pub struct AuthUser {

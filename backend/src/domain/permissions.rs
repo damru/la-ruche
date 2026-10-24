@@ -6,8 +6,8 @@ use crate::domain::{AuthUser, Role};
 /// Naming convention: `can_<action>_<scope>` where:
 /// - action  = view | manage | vote | initiate | administer
 /// - scope   = gm (general meeting) | consultation | budget | task | contract |
-///             document | accounting | logbook | report | claim | unit |
-///             user | building | calendar | etat_date | judicial | governance
+///   document | accounting | logbook | report | claim | unit |
+///   user | building | calendar | etat_date | judicial | governance
 ///
 /// A user may hold several roles simultaneously (e.g. `[Manager, CoOwner]`);
 /// every check inspects **all** of the user's roles.
@@ -23,6 +23,15 @@ pub fn can_view_gm(user: &AuthUser) -> bool {
 /// Managers and board members who are not also co-owners cannot vote.
 pub fn can_vote_gm(user: &AuthUser) -> bool {
     user.has_role(&Role::CoOwner)
+}
+
+/// Managers, board members and co-owners may record GM vote entries.
+/// During the session the manager (syndic) manually enters each unit's vote
+/// in the VoteModal; co-owners record their own vote directly.
+pub fn can_record_gm_votes(user: &AuthUser) -> bool {
+    user.has_role(&Role::Manager)
+        || user.has_role(&Role::BoardMember)
+        || user.has_role(&Role::CoOwner)
 }
 
 /// Only the manager may administer AG lifecycle (create, update, call, start,

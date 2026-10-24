@@ -22,6 +22,8 @@ interface Permissions {
   canViewGM: ComputedRef<boolean>
   /** Only co-owners (residents) may vote in a general meeting. */
   canVoteGM: ComputedRef<boolean>
+  /** Managers, board members and co-owners may record GM vote entries (session entry flow). */
+  canRecordGMVotes: ComputedRef<boolean>
   /** Only the manager may administer AG lifecycle. */
   canManageGM: ComputedRef<boolean>
 
@@ -111,6 +113,9 @@ export function usePermissions(): Permissions {
 
   const canViewGM = computed(() => isAuthenticated.value)
   const canVoteGM = computed(() => hasRole('co_owner'))
+  const canRecordGMVotes = computed(() =>
+    hasAnyRole(['manager', 'board_member', 'co_owner'])
+  )
   const canManageGM = computed(() => hasRole('manager'))
 
   // ── Consultation ──
@@ -225,6 +230,7 @@ export function usePermissions(): Permissions {
   return {
     canViewGM,
     canVoteGM,
+    canRecordGMVotes,
     canManageGM,
     canViewConsultation,
     canVoteConsultation,
