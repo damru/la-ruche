@@ -766,7 +766,9 @@ async fn open_transitions_draft_to_open_once() {
 // Draft lifecycle — respond guard: POST /respond on a draft → 400 errors.consultations.not_open.
 #[tokio::test]
 async fn respond_on_draft_is_rejected() {
-    let (server, _pool) = consultation_test_server().await;
+    let (server, pool) = consultation_test_server().await;
+    let building_id = manager_building_id(&server).await;
+    let (_co_owner_id, co_owner_jwt) = seed_user(&pool, building_id, &["co_owner"]).await;
 
     let created = server
         .post("/api/v1/consultations")
@@ -783,7 +785,9 @@ async fn respond_on_draft_is_rejected() {
         .expect("choice id")
         .to_string();
 
-    let resp = server
+    // Only co-owners/tenants may respond (managers get 403 before the status guard).
+    let voter = user_server(&pool, &co_owner_jwt).await;
+    let resp = voter
         .post(&format!("/api/v1/consultations/{id}/respond"))
         .json(&json!({ "choice_ids": [choice_id] }))
         .await;
@@ -1055,7 +1059,7 @@ async fn remind_without_non_respondents_is_rejected() {
     let (co_owner_id, co_owner_jwt) = seed_user(&pool, building_id, &["co_owner"]).await;
 
     let mut payload = consultation_payload();
-    payload["visible_to_roles"] = json!(["co_owner", "manager"]);
+    payload["visible_to_roles"] = json!(["co_owner"]);
     let created = server.post("/api/v1/consultations").json(&payload).await;
     let id = created.json::<Value>()["id"]
         .as_str()
@@ -1071,14 +1075,9 @@ async fn remind_without_non_respondents_is_rejected() {
         .expect("choice id")
         .to_string();
 
-    // Both eligible users (manager via cookie session, co_owner via JWT) respond.
+    // The only eligible respondent (co_owner) responds → zero non-respondents.
     let voter = user_server(&pool, &co_owner_jwt).await;
     let resp = voter
-        .post(&format!("/api/v1/consultations/{id}/respond"))
-        .json(&json!({ "choice_ids": [choice_id.clone()] }))
-        .await;
-    assert_eq!(resp.status_code(), StatusCode::NO_CONTENT);
-    let resp = server
         .post(&format!("/api/v1/consultations/{id}/respond"))
         .json(&json!({ "choice_ids": [choice_id] }))
         .await;
