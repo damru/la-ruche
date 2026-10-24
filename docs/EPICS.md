@@ -434,7 +434,7 @@ Le cycle de vie complet d'une AG est : `draft` → `called` → **`ongoing`** �
 * `EP-013-S08` ✅ — Générer et valider le projet de PV : après clôture de séance (`status = closed`), produire un projet de PV structuré (résolutions + résultats + présences + notes) et le soumettre à revue avant signature (LEGAL.md §3.4)
 * [EP-013-S09](specs/EP-013-S09-spec.md) — Signer et publier le PV : finaliser le PV avec signature numérique, l'attacher à l'AG et déclencher la traçabilité de notification aux absents (→ EP-003-S06)
 * `EP-013-S10` ✅ — Détecter et traiter l'article 26-1 : si une résolution `double_majority` est rejetée avec ≥ 1/2 des tantièmes totaux en faveur, proposer immédiatement une re-délibération à la majorité absolue (art. 25) dans la même séance ; tracer la résolution originale et sa re-délibération (LEGAL.md §3.3)
-* [EP-013-S11](specs/EP-013-S11-spec.md) — Garde backend de séance : refuser l'enregistrement des présences et des votes hors statut `ongoing` et figer toute mutation après `closed` — aujourd'hui seule l'UI restreint ces actions, le backend accepte un vote sur une AG `called` ou `closed` (LEGAL.md §11.1)
+* [EP-013-S11](specs/EP-013-S11-spec.md) ✅ — Garde backend de séance : refuser l'enregistrement des présences et des votes hors statut `ongoing` et figer toute mutation après `closed` (LEGAL.md §11.1)
 
 ***
 

@@ -17,9 +17,38 @@ use crate::{
         StartMeetingInput, VoteInput,
     },
     api::documents::DocumentListItem,
-    domain::vote::VoteTally,
+    domain::{
+        immutability::{self, Entity},
+        vote::VoteTally,
+    },
     errors::{AppError, AppResult},
 };
+
+/// Locks the meeting row and enforces the session guard: votes and attendance
+/// are writable only while the meeting is `ongoing`. Must run inside the
+/// caller's transaction so a concurrent `/close` cannot slip between the
+/// check and the write (`FOR UPDATE` serialises with the closing UPDATE).
+async fn lock_meeting_for_session(
+    tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
+    meeting_id: Uuid,
+    building_id: Uuid,
+) -> AppResult<()> {
+    let status = sqlx::query_scalar!(
+        "SELECT status::text FROM general_meeting WHERE id = $1 AND building_id = $2 FOR UPDATE",
+        meeting_id,
+        building_id,
+    )
+    .fetch_optional(&mut **tx)
+    .await?
+    .flatten()
+    .ok_or(AppError::NotFound)?;
+
+    if !immutability::is_mutable(&Entity::MeetingSession, &status) {
+        return Err(AppError::validation_code("errors.meetings.not_ongoing"));
+    }
+
+    Ok(())
+}
 
 #[derive(Debug)]
 struct MeetingRow {
@@ -1142,94 +1171,33 @@ pub async fn save_attendance(
 ) -> AppResult<()> {
     let mut tx = pool.begin().await?;
 
-    let status = sqlx::query_scalar!(
-        "SELECT status::text FROM general_meeting WHERE id = $1 AND building_id = $2",
-        meeting_id,
-        building_id,
-    )
-    .fetch_optional(&mut *tx)
-    .await?
-    .flatten()
-    .ok_or(AppError::NotFound)?;
+    // Session guard: attendance is writable only while `ongoing`.
+    // The row lock serialises against a concurrent `/close`.
+    lock_meeting_for_session(&mut tx, meeting_id, building_id).await?;
 
-    if status == "closed" {
-        return Err(AppError::conflict_code("errors.meetings.attendance_locked"));
-    }
-
-    if status == "ongoing" {
-        // List frozen: only update mode/representative_name for existing records.
-        for entry in entries {
-            let updated = sqlx::query!(
-                r#"
-                UPDATE general_meeting_attendance
-                SET mode = $3::meeting_attendance_mode,
-                    representative_name = $4,
-                    updated_at = NOW()
-                WHERE meeting_id = $1 AND unit_id = $2
-                "#,
-                meeting_id,
-                entry.unit_id,
-                meeting_attendance_mode_to_db(&entry.mode) as _,
-                entry.representative_name,
-            )
-            .execute(&mut *tx)
-            .await?
-            .rows_affected();
-
-            if updated == 0 {
-                return Err(AppError::bad_request_code(
-                    "errors.meetings.attendance_unit_not_in_meeting",
-                ));
-            }
-        }
-    } else {
-        // draft/called: full replace.
-        sqlx::query!(
-            "DELETE FROM general_meeting_attendance WHERE meeting_id = $1",
-            meeting_id
+    // List frozen: only update mode/representative_name for existing records.
+    for entry in entries {
+        let updated = sqlx::query!(
+            r#"
+            UPDATE general_meeting_attendance
+            SET mode = $3::meeting_attendance_mode,
+                representative_name = $4,
+                updated_at = NOW()
+            WHERE meeting_id = $1 AND unit_id = $2
+            "#,
+            meeting_id,
+            entry.unit_id,
+            meeting_attendance_mode_to_db(&entry.mode) as _,
+            entry.representative_name,
         )
         .execute(&mut *tx)
-        .await?;
+        .await?
+        .rows_affected();
 
-        for entry in entries {
-            let shares_represented = sqlx::query_scalar!(
-                r#"
-                SELECT uak.share_value
-                FROM unit u
-                JOIN unit_allocation_key uak
-                    ON uak.unit_id = u.id
-                   AND uak.valid_to IS NULL
-                JOIN allocation_key ak
-                    ON ak.id = uak.key_id
-                   AND ak.key_type = 'general'
-                   AND ak.deleted_at IS NULL
-                WHERE u.id = $1
-                  AND u.building_id = $2
-                  AND u.active = true
-                "#,
-                entry.unit_id,
-                building_id,
-            )
-            .fetch_optional(&mut *tx)
-            .await?
-            .ok_or_else(|| {
-                AppError::bad_request_code("errors.meetings.unit_general_shares_missing")
-            })?;
-
-            sqlx::query!(
-                r#"
-                INSERT INTO general_meeting_attendance
-                    (meeting_id, unit_id, mode, representative_name, shares_represented)
-                VALUES ($1, $2, $3::meeting_attendance_mode, $4, $5)
-                "#,
-                meeting_id,
-                entry.unit_id,
-                meeting_attendance_mode_to_db(&entry.mode) as _,
-                entry.representative_name,
-                shares_represented,
-            )
-            .execute(&mut *tx)
-            .await?;
+        if updated == 0 {
+            return Err(AppError::bad_request_code(
+                "errors.meetings.attendance_unit_not_in_meeting",
+            ));
         }
     }
 
@@ -1495,18 +1463,35 @@ pub async fn update_resolution(
 
 pub async fn cast_vote(
     pool: &PgPool,
-    _meeting_id: Uuid,
+    meeting_id: Uuid,
     resolution_id: Uuid,
     building_id: Uuid,
     user_id: Uuid,
     input: VoteInput,
 ) -> AppResult<()> {
-    let shares =
-        crate::db::allocation_key::get_unit_general_share(pool, input.unit_id, building_id)
-            .await?
-            .ok_or_else(|| {
-                AppError::bad_request_code("errors.meetings.unit_general_shares_missing")
-            })?;
+    // Session guard: votes are writable only while the meeting is `ongoing`,
+    // checked inside the write transaction (FOR UPDATE) so a concurrent
+    // `/close` cannot interleave.
+    let mut tx = pool.begin().await?;
+    lock_meeting_for_session(&mut tx, meeting_id, building_id).await?;
+
+    let resolution_meeting = sqlx::query_scalar!(
+        "SELECT meeting_id FROM resolution WHERE id = $1",
+        resolution_id,
+    )
+    .fetch_optional(&mut *tx)
+    .await?;
+    if resolution_meeting != Some(meeting_id) {
+        return Err(AppError::NotFound);
+    }
+
+    let shares = crate::db::allocation_key::get_unit_general_share_in_tx(
+        &mut tx,
+        input.unit_id,
+        building_id,
+    )
+    .await?
+    .ok_or_else(|| AppError::bad_request_code("errors.meetings.unit_general_shares_missing"))?;
 
     sqlx::query!(
         r#"
@@ -1525,9 +1510,10 @@ pub async fn cast_vote(
         shares,
         input.proxy_for,
     )
-    .execute(pool)
+    .execute(&mut *tx)
     .await?;
 
+    tx.commit().await?;
     Ok(())
 }
 

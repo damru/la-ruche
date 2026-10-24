@@ -1694,6 +1694,7 @@
       "notice_document_required": "La convocation ne peut pas être envoyée sans au moins un document de convocation joint.",
       "not_in_draft_status": "Cette assemblée n'est plus au statut brouillon.",
       "attendance_locked": "La feuille de présence ne peut plus être modifiée une fois l'assemblée tenue ou clôturée.",
+      "not_ongoing": "Les votes et la feuille de présence ne sont modifiables que pendant la séance (AG en cours).",
       "not_in_called_status": "Cette assemblée n'est pas au statut convoquée.",
       "not_in_ongoing_status": "Cette assemblée n'est pas en cours de séance.",
       "not_in_closed_status": "Cette assemblée n'est pas encore clôturée — projet de PV indisponible.",

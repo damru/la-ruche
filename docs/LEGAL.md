@@ -626,7 +626,7 @@ Le syndic représente le syndicat des copropriétaires en justice, tant en deman
 ## 11. Immutabilité des données comptables
 
 **Références :** Art. L123-22 Code de commerce (conservation 10 ans) · Art. 14-1 loi 1965 · Art. 17 loi 1965 · Décret 2001-477 · Code des assurances  
-**Couverture :** 🟡 partiellement couverte — EP-018-S01 à S07 livrées (Patterns A, B et C implémentés, guards en `domain/immutability`), ADR-009 · ADR-012 (cadrage). Reste : câblage exhaustif de `audit_log` sur toutes les mutations comptables (EP-021-S03), lien `resolution_id` sur `budget` (AC-BC-009-F).
+**Couverture :** 🟡 partiellement couverte — EP-018-S01 à S07 livrées (Patterns A, B et C implémentés, guards en `domain/immutability`), EP-013-S11 livrée (garde de séance : votes et présences écrivables uniquement en `ongoing`, figés après `closed`), ADR-009 · ADR-012 (cadrage). Reste : câblage exhaustif de `audit_log` sur toutes les mutations comptables (EP-021-S03), lien `resolution_id` sur `budget` (AC-BC-009-F).
 
 L'obligation de conservation comptable (art. L123-22 Code de commerce, 10 ans) et la valeur probatoire des actes produits en copropriété imposent que certaines données ne puissent pas être modifiées ou supprimées une fois qu'elles ont acquis une valeur juridique ou financière.
 

@@ -5,6 +5,14 @@
 
 use crate::errors::{AppError, AppResult};
 
+/// `general_meeting.status` values (PG enum `meeting_status`).
+pub mod meeting_status {
+    pub const DRAFT: &str = "draft";
+    pub const CALLED: &str = "called";
+    pub const ONGOING: &str = "ongoing";
+    pub const CLOSED: &str = "closed";
+}
+
 /// Pattern-A entities whose fields are frozen on a terminal state.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Entity {
@@ -31,6 +39,10 @@ pub enum Entity {
     /// legal act. Amended via `POST /budgets/{id}/rectificatif`
     /// (Pattern B, ADR-009, PRD Budget et charges §Immuabilité).
     Budget,
+    /// Session-bound writable records (votes, attendance): writable only while
+    /// the meeting is `ongoing`. Frozen forever once `closed` (LEGAL §11.1 —
+    /// votes are legally immutable), and not yet open in `draft`/`called`.
+    MeetingSession,
 }
 
 /// Returns `true` when the entity may still be mutated.
@@ -46,14 +58,15 @@ pub enum Entity {
 pub fn is_mutable(entity: &Entity, status: &str) -> bool {
     match entity {
         Entity::LevyCall => status == "draft",
-        Entity::Vote => !matches!(status, "ongoing" | "closed"),
+        Entity::Vote => !matches!(status, meeting_status::ONGOING | meeting_status::CLOSED),
         Entity::Resolution => status == "draft",
-        Entity::ResolutionVote => status == "ongoing",
+        Entity::ResolutionVote => status == meeting_status::ONGOING,
         Entity::Task => !matches!(status, "closed" | "cancelled"),
         Entity::Claim => status != "transmitted",
         Entity::MaintenanceLog => false,
         Entity::VendorContract => status == "draft",
         Entity::Budget => status == "draft",
+        Entity::MeetingSession => status == meeting_status::ONGOING,
     }
 }
 
@@ -161,6 +174,14 @@ mod tests {
         assert!(is_mutable(&Entity::Budget, "draft"));
         assert!(!is_mutable(&Entity::Budget, "approved"));
         assert!(!is_mutable(&Entity::Budget, "closed"));
+    }
+
+    #[test]
+    fn meeting_session_writable_only_in_ongoing() {
+        assert!(is_mutable(&Entity::MeetingSession, meeting_status::ONGOING));
+        assert!(!is_mutable(&Entity::MeetingSession, meeting_status::DRAFT));
+        assert!(!is_mutable(&Entity::MeetingSession, meeting_status::CALLED));
+        assert!(!is_mutable(&Entity::MeetingSession, meeting_status::CLOSED));
     }
 
     #[test]
