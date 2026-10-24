@@ -31,9 +31,9 @@ async fn board_member_can_manage_tasks() {
     let updated = server
         .put(&format!("/api/v1/tasks/{task_id}"))
         .add_header("Authorization", &auth)
-        .json(&json!({ "status": "done" }))
+        .json(&json!({ "status": "in_progress" }))
         .await;
-    assert_eq!(updated.status_code(), StatusCode::OK);
+    assert_eq!(updated.status_code(), StatusCode::NO_CONTENT);
 
     let deleted = server
         .delete(&format!("/api/v1/tasks/{task_id}"))
@@ -68,7 +68,7 @@ async fn residents_cannot_manage_tasks() {
         let updated = server
             .put(&format!("/api/v1/tasks/{task_id}"))
             .add_header("Authorization", &auth)
-            .json(&json!({ "status": "done" }))
+            .json(&json!({ "status": "in_progress" }))
             .await;
         assert_eq!(updated.status_code(), StatusCode::FORBIDDEN);
 
