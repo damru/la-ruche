@@ -34,16 +34,22 @@ import type {
 } from '@/types/domain'
 
 // ── Roles ──
+//
+// Permission checks live in composables/usePermissions.ts — do NOT add
+// role-list constants here for permission logic. Use `usePermissions().canVoteGM`
+// etc. instead.
+//
+// The constants below are for **data defaults** (e.g. `visible_roles` on document
+// upload) and **router/nav filtering**, not for inline permission checks.
 
 export const ROLES = ['manager', 'board_member', 'co_owner', 'tenant'] as const satisfies readonly Role[]
 
-/** Roles with full management access (syndic + conseil syndical). */
+/** Roles with management access (syndic + conseil syndical).
+ *  Used for router/nav filtering and as default `visible_roles` on documents
+ *  that only managers should see. */
 export const MANAGER_ROLES = ['manager', 'board_member'] as const satisfies readonly Role[]
 
-/** Roles that can vote at general meetings (tenant excluded — consultation only). */
-export const VOTER_ROLES = ['manager', 'board_member', 'co_owner'] as const satisfies readonly Role[]
-
-/** Roles that can see documents. */
+/** All roles that can see documents (i.e. every authenticated role). */
 export const DOCUMENT_ROLES = ['manager', 'board_member', 'co_owner', 'tenant'] as const satisfies readonly Role[]
 
 // ── Meetings ──

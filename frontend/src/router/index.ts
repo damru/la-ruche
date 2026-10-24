@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import type { Role } from '@/types/domain'
-import { DOCUMENT_ROLES, MANAGER_ROLES, VOTER_ROLES } from '@/utils/constants'
+import { DOCUMENT_ROLES, MANAGER_ROLES, ROLES } from '@/utils/constants'
 import i18n from '@/i18n'
 
 // ── Lazy imports ──────────────────────────────────────────────────
@@ -79,19 +79,19 @@ const routes: RouteRecordRaw[] = [
         path: 'meetings',
         name: 'assembly-list',
         component: AssemblyListView,
-        meta: { title: 'nav.meetings', roles: [...VOTER_ROLES] },
+        meta: { title: 'nav.meetings', roles: [...ROLES] },
       },
       {
         path: 'meetings/:id',
         name: 'assembly-detail',
         component: AssemblyDetailView,
-        meta: { title: 'nav.meetings', roles: [...VOTER_ROLES] },
+        meta: { title: 'nav.meetings', roles: [...ROLES] },
       },
       {
         path: 'budget',
         name: 'budget',
         component: BudgetView,
-        meta: { title: 'nav.budget', roles: [...VOTER_ROLES] },
+        meta: { title: 'nav.budget', roles: [...ROLES] },
       },
       {
         path: 'documents',
@@ -175,7 +175,7 @@ const routes: RouteRecordRaw[] = [
         path: 'residents/:id/charges',
         name: 'unit-charges',
         component: UnitChargesView,
-        meta: { title: 'page.unitCharges', roles: [...VOTER_ROLES] },
+        meta: { title: 'page.unitCharges', roles: [...ROLES] },
       },
       {
         path: 'my-charges',
@@ -187,19 +187,19 @@ const routes: RouteRecordRaw[] = [
         path: 'registry',
         name: 'registry',
         component: RegistryView,
-        meta: { title: 'nav.registry', roles: [...VOTER_ROLES] },
+        meta: { title: 'nav.registry', roles: [...ROLES] },
       },
       {
         path: 'judicial-proceedings',
         name: 'judicial-proceedings',
         component: JudicialProceedingsView,
-        meta: { title: 'nav.judicialProceedings', roles: [...VOTER_ROLES] },
+        meta: { title: 'nav.judicialProceedings', roles: [...ROLES] },
       },
       {
         path: 'governance',
         name: 'governance',
         component: GovernanceMandatesView,
-        meta: { title: 'nav.governance', roles: [...VOTER_ROLES] },
+        meta: { title: 'nav.governance', roles: [...ROLES] },
       },
       {
         path: 'etat-date',

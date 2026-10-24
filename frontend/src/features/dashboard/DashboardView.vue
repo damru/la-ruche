@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { BUDGET_STATUS_APPROVED, LEVY_STATUS_OVERDUE, LEVY_STATUS_PAID, MANAGER_ROLES, MEETING_STATUS_CLOSED, POLL_STATUS_OPEN, REMINDER_STATUS_PENDING, REMINDER_URGENCY_HIGH_DAYS, REMINDER_URGENCY_MEDIUM_DAYS, REPORT_STATUS_CLOSED, TASK_PRIORITIES, TASK_STATUS_CANCELLED, TASK_STATUS_CLOSED, TASK_STATUS_IN_PROGRESS, TASK_STATUS_OPEN, VOTER_ROLES } from '@/utils/constants'
+import { BUDGET_STATUS_APPROVED, LEVY_STATUS_OVERDUE, LEVY_STATUS_PAID, MEETING_STATUS_CLOSED, POLL_STATUS_OPEN, REMINDER_STATUS_PENDING, REMINDER_URGENCY_HIGH_DAYS, REMINDER_URGENCY_MEDIUM_DAYS, REPORT_STATUS_CLOSED, TASK_PRIORITIES, TASK_STATUS_CANCELLED, TASK_STATUS_CLOSED, TASK_STATUS_IN_PROGRESS, TASK_STATUS_OPEN } from '@/utils/constants'
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
+import { usePermissions } from '@/composables/usePermissions'
 import { useFormatters } from '@/composables/useFormatters'
 import { usePageLoader } from '@/composables/usePageLoader'
 import CKpiCard from '@/components/molecules/CKpiCard.vue'
@@ -31,11 +32,12 @@ const { formatCurrency, formatDate, formatRelative, daysUntil } = useFormatters(
 // ── Permissions (miroir des meta.roles du router) ───────────────────
 // Une carte / un KPI ne s'affiche que si sa page cible est accessible
 // à l'utilisateur courant — et les données ne sont chargées que si permises.
-const canViewBudget = computed(() => auth.hasAnyRole([...VOTER_ROLES]))
-const canViewMeetings = computed(() => auth.hasAnyRole([...VOTER_ROLES]))
-const canViewGovernance = computed(() => auth.hasAnyRole([...VOTER_ROLES]))
-const canViewTasks = computed(() => auth.hasAnyRole([...MANAGER_ROLES]))
-const canViewAccounting = computed(() => auth.hasAnyRole([...MANAGER_ROLES]))
+const perms = usePermissions()
+const canViewBudget = perms.canViewBudget
+const canViewMeetings = perms.canViewGM
+const canViewGovernance = perms.canViewGovernance
+const canViewTasks = perms.canViewTask
+const canViewAccounting = perms.canViewAccounting
 const canViewContracts = computed(() => auth.hasRole('manager'))
 const canViewResidents = computed(() => auth.hasRole('manager'))
 const canViewMyCharges = computed(() => auth.hasRole('co_owner'))

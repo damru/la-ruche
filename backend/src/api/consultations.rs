@@ -16,7 +16,7 @@ use uuid::Uuid;
 
 use crate::{
     db::{self, AppState, consultation::poll_status},
-    domain::{AuthUser, Role},
+    domain::{AuthUser, Role, permissions},
     errors::{AppError, AppResult, json_value},
 };
 
@@ -144,7 +144,7 @@ pub async fn update(
 ) -> AppResult<StatusCode> {
     validate_input(&input)?;
 
-    let can_manage = auth.has_role(&Role::Manager) || auth.has_role(&Role::BoardMember);
+    let can_manage = permissions::can_manage_consultation(&auth);
     if !can_manage {
         let c = db::consultation::get_with_choices(&state.pool, id, auth.building_id, auth.user_id)
             .await?
@@ -180,7 +180,7 @@ pub async fn open(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
 ) -> AppResult<StatusCode> {
-    let can_manage = auth.has_role(&Role::Manager) || auth.has_role(&Role::BoardMember);
+    let can_manage = permissions::can_manage_consultation(&auth);
     if !can_manage {
         let c = db::consultation::get_with_choices(&state.pool, id, auth.building_id, auth.user_id)
             .await?
@@ -205,7 +205,9 @@ pub async fn non_respondents(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
 ) -> AppResult<Json<serde_json::Value>> {
-    auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
+    if !permissions::can_manage_consultation(&auth) {
+        return Err(AppError::Forbidden);
+    }
     let users = db::consultation::non_respondents(&state.pool, id, auth.building_id).await?;
     let count = users.len();
     Ok(Json(serde_json::json!({
@@ -221,7 +223,9 @@ pub async fn remind(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
 ) -> AppResult<Json<serde_json::Value>> {
-    auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
+    if !permissions::can_manage_consultation(&auth) {
+        return Err(AppError::Forbidden);
+    }
     let recipient_count =
         db::consultation::remind_non_respondents(&state.pool, id, auth.building_id, auth.user_id)
             .await?;
@@ -242,6 +246,11 @@ pub async fn respond(
         return Err(AppError::validation_code(
             "errors.consultations.min_choices",
         ));
+    }
+
+    // Only co-owners and tenants may vote in a consultation.
+    if !permissions::can_vote_consultation(&auth) {
+        return Err(AppError::Forbidden);
     }
 
     // visible_to_roles check: fetch consultation and verify caller role is allowed
@@ -299,7 +308,7 @@ pub async fn delete(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
 ) -> AppResult<StatusCode> {
-    let can_manage = auth.has_role(&Role::Manager) || auth.has_role(&Role::BoardMember);
+    let can_manage = permissions::can_manage_consultation(&auth);
     if !can_manage {
         // A non-manager may only delete their own draft.
         let c = db::consultation::get_with_choices(&state.pool, id, auth.building_id, auth.user_id)
@@ -326,7 +335,9 @@ pub async fn close(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
 ) -> AppResult<StatusCode> {
-    auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
+    if !permissions::can_manage_consultation(&auth) {
+        return Err(AppError::Forbidden);
+    }
     db::consultation::close(&state.pool, id, auth.building_id).await?;
     Ok(StatusCode::NO_CONTENT)
 }

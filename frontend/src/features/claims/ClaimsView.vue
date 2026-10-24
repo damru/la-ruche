@@ -3,7 +3,6 @@ import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useFormatters } from '@/composables/useFormatters'
 import { usePageLoader } from '@/composables/usePageLoader'
-import { useRole } from '@/composables/useRole'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CLegalDescription from '@/components/atoms/CLegalDescription.vue'
@@ -34,18 +33,19 @@ import ClaimDeleteModal from './ClaimDeleteModal.vue'
 import { claimsApi, documentsApi, unitsApi, usersApi } from '@/api'
 import { useBuildingStore } from '@/stores/building'
 import type { Claim, ClaimStatus, ClaimType, Document, Unit, User } from '@/types/domain'
-import { ALL_FILTER, CLAIM_STATUS_CLOSED, CLAIM_STATUS_IN_PROGRESS, CLAIM_STATUS_OPEN, MANAGER_ROLES } from '@/utils/constants'
+import { ALL_FILTER, CLAIM_STATUS_CLOSED, CLAIM_STATUS_IN_PROGRESS, CLAIM_STATUS_OPEN } from '@/utils/constants'
+import { usePermissions } from '@/composables/usePermissions'
 
 const { t } = useI18n()
 const { formatCurrency, formatDate } = useFormatters()
-const { hasAnyRole } = useRole()
+const perms = usePermissions()
 
 const buildingName = ref('')
 const allClaims = ref<Claim[]>([])
 const allUnits = ref<Unit[]>([])
 const allUsers = ref<User[]>([])
 const filter = ref<typeof ALL_FILTER | ClaimStatus>(ALL_FILTER)
-const canManage = computed(() => hasAnyRole([...MANAGER_ROLES]))
+const canManage = perms.canManageClaim
 
 const showCreateModal = ref(false)
 const claimToEdit = ref<Claim | null>(null)

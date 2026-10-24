@@ -3,7 +3,7 @@ import { authApi, onboardingApi } from '@/api'
 import { tryRefreshSession } from '@/api/client'
 import { useBuildingStore } from './building'
 import type { AuthUser, Role } from '@/types/domain'
-import { MANAGER_ROLES, VOTER_ROLES } from '@/utils/constants'
+import { MANAGER_ROLES } from '@/utils/constants'
 
 export const useAuthStore = defineStore('auth', () => {
   // ── State ──────────────────────────────────────────────────────
@@ -33,10 +33,8 @@ export const useAuthStore = defineStore('auth', () => {
   function hasAnyRole(roles: Role[]): boolean {
     return roles.some(r => hasRole(r))
   }
-  // ── Can vote at meetings (tenant = consultation only) ──────────
-  const canVoteMeeting = computed(() =>
-    hasAnyRole([...VOTER_ROLES])
-  )
+  // ── Permission checks moved to composables/usePermissions.ts ──
+  // Use `usePermissions().canVoteGM`, `canViewGM`, `canViewAccounting`, etc.
 
   // ── Can view meeting results (all roles, including tenant) ─────
   const canViewMeetingResults = computed(() => isAuthenticated.value)
@@ -133,7 +131,6 @@ export const useAuthStore = defineStore('auth', () => {
     isBoardMember,
     isCoOwner,
     isTenant,
-    canVoteMeeting,
     canViewMeetingResults,
     canViewAccounting,
     hasRole,

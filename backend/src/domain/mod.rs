@@ -8,6 +8,7 @@ pub mod immutability;
 pub mod legal_documents;
 pub mod minutes_draft;
 pub mod owners;
+pub mod permissions;
 pub mod processor;
 pub mod reminders;
 pub mod retention;
@@ -65,25 +66,10 @@ impl std::fmt::Display for Role {
 }
 
 impl Role {
-    pub fn can_view_accounting(&self) -> bool {
-        matches!(self, Role::Manager | Role::BoardMember)
-    }
-
-    pub fn can_administer(&self) -> bool {
-        matches!(self, Role::Manager)
-    }
-
-    pub fn can_vote_gm(&self) -> bool {
-        matches!(self, Role::Manager | Role::BoardMember | Role::CoOwner)
-    }
-
-    pub fn can_view_gm(&self) -> bool {
-        true
-    }
-
-    pub fn can_initiate_consultation(&self) -> bool {
-        true
-    }
+    // Permission checks have been moved to domain::permissions — use those
+    // free functions (can_vote_gm, can_view_gm, can_manage_consultation, …)
+    // instead of methods on Role. They operate on AuthUser and inspect all
+    // of the user's roles.
 }
 
 /// Authenticated user extracted from the JWT — injected into every protected handler
@@ -166,45 +152,6 @@ mod tests {
     }
 
     #[test]
-    fn can_view_accounting_only_for_manager_and_board_member() {
-        assert!(Role::Manager.can_view_accounting());
-        assert!(Role::BoardMember.can_view_accounting());
-        assert!(!Role::CoOwner.can_view_accounting());
-        assert!(!Role::Tenant.can_view_accounting());
-    }
-
-    #[test]
-    fn can_administer_only_for_manager() {
-        assert!(Role::Manager.can_administer());
-        assert!(!Role::BoardMember.can_administer());
-        assert!(!Role::CoOwner.can_administer());
-        assert!(!Role::Tenant.can_administer());
-    }
-
-    #[test]
-    fn can_vote_gm_excludes_tenant() {
-        assert!(Role::Manager.can_vote_gm());
-        assert!(Role::BoardMember.can_vote_gm());
-        assert!(Role::CoOwner.can_vote_gm());
-        assert!(!Role::Tenant.can_vote_gm());
-    }
-
-    #[test]
-    fn can_view_gm_allowed_for_every_role() {
-        assert!(Role::Manager.can_view_gm());
-        assert!(Role::BoardMember.can_view_gm());
-        assert!(Role::CoOwner.can_view_gm());
-        assert!(Role::Tenant.can_view_gm());
-    }
-
-    #[test]
-    fn can_initiate_consultation_allowed_for_every_role() {
-        assert!(Role::Manager.can_initiate_consultation());
-        assert!(Role::BoardMember.can_initiate_consultation());
-        assert!(Role::CoOwner.can_initiate_consultation());
-        assert!(Role::Tenant.can_initiate_consultation());
-    }
-
     #[test]
     fn has_role_detects_presence_and_absence() {
         let user = user_with(vec![Role::CoOwner, Role::Tenant]);

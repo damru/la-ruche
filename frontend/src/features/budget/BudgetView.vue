@@ -3,7 +3,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useFormatters } from '@/composables/useFormatters'
 import { usePageLoader } from '@/composables/usePageLoader'
-import { useRole } from '@/composables/useRole'
+import { usePermissions } from '@/composables/usePermissions'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
@@ -45,8 +45,8 @@ import WorksFundModal from './WorksFundModal.vue'
 import { budgetApi, allocationKeysApi, buildingApi } from '@/api'
 import GenerateLeviesModal from './GenerateLeviesModal.vue'
 import BreakdownModal from './BreakdownModal.vue'
-import type { Role, Budget, BudgetLine, LevyCall, WorksFund, AllocationKey, LevyStatus, BuildingStats, AccountingCode } from '@/types/domain'
-import { BUDGET_STATUS_APPROVED, BUDGET_STATUS_CLOSED, BUDGET_STATUS_DRAFT, LEVY_STATUS_ISSUED, LEVY_STATUS_OVERDUE, LEVY_STATUS_PAID, MANAGER_ROLES } from '@/utils/constants'
+import type { Budget, BudgetLine, LevyCall, WorksFund, AllocationKey, LevyStatus, BuildingStats, AccountingCode } from '@/types/domain'
+import { BUDGET_STATUS_APPROVED, BUDGET_STATUS_CLOSED, BUDGET_STATUS_DRAFT, LEVY_STATUS_ISSUED, LEVY_STATUS_OVERDUE, LEVY_STATUS_PAID } from '@/utils/constants'
 import type { Column } from '@/components/molecules/CDataTable.vue'
 
 interface ConsolidatedLevyRow {
@@ -76,10 +76,10 @@ function asConsolidatedLevyRow(row: Record<string, unknown>): ConsolidatedLevyRo
 
 const { t } = useI18n()
 const { formatCurrency, formatDate } = useFormatters()
-const { hasAnyRole } = useRole()
+const perms = usePermissions()
 
-const canManage = computed(() => hasAnyRole(['manager' satisfies Role]))
-const canViewLevies = computed(() => hasAnyRole([...MANAGER_ROLES]))
+const canManage = perms.canAdministerBudget
+const canViewLevies = perms.canManageBudget
 const canEditSelectedBudget = computed(() => canManage.value && selectedBudget.value?.status !== BUDGET_STATUS_CLOSED)
 // Pattern B (ADR-009): once voted in AG the budget is a legal act. Its lines are
 // frozen and amended through a rectificatif, never edited in place. Exercise-level
@@ -90,7 +90,7 @@ const canEditBudgetLines = computed(() => canManage.value && selectedBudget.valu
 const canApproveBudget = computed(() => canManage.value && selectedBudget.value?.status === BUDGET_STATUS_DRAFT)
 const canCreateRectificatif = computed(() => canManage.value && selectedBudget.value?.status === BUDGET_STATUS_APPROVED)
 const selectedIsRectificatif = computed(() => !!selectedBudget.value?.parent_budget_id)
-const canMarkLeviesPaid = computed(() => hasAnyRole([...MANAGER_ROLES]))
+const canMarkLeviesPaid = perms.canManageBudget
 const sharePercentageFormatter = new Intl.NumberFormat('fr-FR', {
   minimumFractionDigits: 1,
   maximumFractionDigits: 1,

@@ -5,6 +5,7 @@ import { useFormatters } from '@/composables/useFormatters'
 import { usePageLoader, toErrorMessage } from '@/composables/usePageLoader'
 import { useConfirm } from '@/composables/useConfirm'
 import { useAuthStore } from '@/stores/auth'
+import { usePermissions } from '@/composables/usePermissions'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CCard from '@/components/molecules/CCard.vue'
@@ -28,15 +29,16 @@ import DeleteConsultationModal from './DeleteConsultationModal.vue'
 import { consultationsApi } from '@/api'
 import { useBuildingStore } from '@/stores/building'
 import type { Consultation, PollStatus } from '@/types/domain'
-import { ALL_FILTER, MANAGER_ROLES, POLL_STATUS_CLOSED, POLL_STATUS_DRAFT, POLL_STATUS_OPEN } from '@/utils/constants'
+import { ALL_FILTER, POLL_STATUS_CLOSED, POLL_STATUS_DRAFT, POLL_STATUS_OPEN } from '@/utils/constants'
 
 const { t } = useI18n()
 const { formatDate, formatRelative } = useFormatters()
 const authStore = useAuthStore()
+const perms = usePermissions()
 const { confirm } = useConfirm()
 
 // Managers and board members manage consultations (close, remind, delete others).
-const canManage = computed(() => authStore.hasAnyRole([...MANAGER_ROLES]))
+const canManage = perms.canManageConsultation
 // Any authenticated user can create a consultation (EP-010: initiable par tout resident).
 const canCreate = computed(() => authStore.isAuthenticated)
 

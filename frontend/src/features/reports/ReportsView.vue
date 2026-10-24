@@ -4,7 +4,6 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useFormatters } from '@/composables/useFormatters'
 import { usePageLoader } from '@/composables/usePageLoader'
-import { useRole } from '@/composables/useRole'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CCard from '@/components/molecules/CCard.vue'
@@ -29,12 +28,14 @@ import ReportPhotosModal from './ReportPhotosModal.vue'
 import { reportsApi, unitsApi } from '@/api'
 import { useBuildingStore } from '@/stores/building'
 import type { Report, ReportStatus, Unit } from '@/types/domain'
-import { ALL_FILTER, MANAGER_ROLES, REPORT_STATUS_CLOSED, REPORT_STATUS_IN_PROGRESS, REPORT_STATUS_OPEN } from '@/utils/constants'
+import { ALL_FILTER, REPORT_STATUS_CLOSED, REPORT_STATUS_IN_PROGRESS, REPORT_STATUS_OPEN } from '@/utils/constants'
+import { usePermissions } from '@/composables/usePermissions'
 
 const { t } = useI18n()
 const { formatDate, formatRelative } = useFormatters()
 const router = useRouter()
-const { hasAnyRole } = useRole()
+const perms = usePermissions()
+
 
 // ── State ─────────────────────────────────────────────────────────
 const buildingName = ref('')
@@ -43,7 +44,7 @@ const allUnits = ref<Unit[]>([])
 const statusFilter = ref<typeof ALL_FILTER | ReportStatus>(ALL_FILTER)
 
 // ── RBAC — only manager and board_member can act on reports ────────
-const canManage = computed(() => hasAnyRole([...MANAGER_ROLES]))
+const canManage = perms.canManageReport
 
 // ── Modal state ───────────────────────────────────────────────────
 const showCreateModal = ref(false)

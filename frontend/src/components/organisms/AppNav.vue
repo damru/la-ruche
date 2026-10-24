@@ -9,7 +9,7 @@ import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useI18n } from 'vue-i18n'
 import type { Role } from '@/types/domain'
-import { DOCUMENT_ROLES, MANAGER_ROLES, VOTER_ROLES } from '@/utils/constants'
+import { DOCUMENT_ROLES, MANAGER_ROLES, ROLES } from '@/utils/constants'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -39,7 +39,7 @@ const allGroups: NavGroup[] = [
   {
     label: t('nav.governance'),
     items: [
-      { name: 'assemblies',    route: '/meetings',      label: t('nav.meetings'),      mobileLabel: t('meetings.typeLabel.annualShort'),    roles: [...VOTER_ROLES], mobileOrder: 10 },
+      { name: 'assemblies',    route: '/meetings',      label: t('nav.meetings'),      mobileLabel: t('meetings.typeLabel.annualShort'),    roles: [...ROLES], mobileOrder: 10 },
       { name: 'consultations', route: '/consultations', label: t('nav.consultations'), mobileLabel: t('nav.mobile.consultations'), roles: [],                                      mobileOrder: 4 },
       { name: 'reports',       route: '/reports',       label: t('nav.reports'),       mobileLabel: t('nav.reports'),       roles: [],                                      mobileOrder: 2 },
     ],
@@ -47,7 +47,7 @@ const allGroups: NavGroup[] = [
   {
     label: t('nav.groups.finance'),
     items: [
-      { name: 'budget',      route: '/budget',      label: t('nav.budget'),      mobileLabel: t('nav.mobile.budget'),      roles: [...VOTER_ROLES], mobileOrder: 11 },
+      { name: 'budget',      route: '/budget',      label: t('nav.budget'),      mobileLabel: t('nav.mobile.budget'),      roles: [...ROLES], mobileOrder: 11 },
       { name: 'my-charges',  route: '/my-charges',  label: t('nav.myCharges'),   mobileLabel: t('nav.myCharges'),           roles: ['co_owner' satisfies Role],                            mobileOrder: 3 },
       { name: 'contracts',   route: '/contracts',   label: t('nav.contracts'),   mobileLabel: t('nav.contracts'),   roles: [...MANAGER_ROLES],             mobileOrder: 6 },
     ],
@@ -67,9 +67,9 @@ const allGroups: NavGroup[] = [
     items: [
       { name: 'residence-building', route: '/residence/building', label: t('common.informations'), roles: ['manager' satisfies Role] },
       { name: 'residence-keys',     route: '/residence/keys',     label: t('allocationKeys.title'), roles: ['manager' satisfies Role] },
-      { name: 'registry',           route: '/registry',           label: t('nav.registry'),       roles: [...VOTER_ROLES] },
-      { name: 'judicial-proceedings', route: '/judicial-proceedings', label: t('nav.judicialProceedings'), roles: [...VOTER_ROLES] },
-      { name: 'governance',         route: '/governance',         label: t('nav.governance'),     roles: [...VOTER_ROLES] },
+      { name: 'registry',           route: '/registry',           label: t('nav.registry'),       roles: [...ROLES] },
+      { name: 'judicial-proceedings', route: '/judicial-proceedings', label: t('nav.judicialProceedings'), roles: [...ROLES] },
+      { name: 'governance',         route: '/governance',         label: t('nav.governance'),     roles: [...ROLES] },
       { name: 'etat-date',          route: '/etat-date',          label: t('registers.etatDate.title'),       roles: ['manager' satisfies Role] },
       { name: 'residents',          route: '/residents',          label: t('nav.residents'),      roles: ['manager' satisfies Role] },
     ],
