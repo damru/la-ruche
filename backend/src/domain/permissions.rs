@@ -1,16 +1,16 @@
 use crate::domain::{AuthUser, Role};
 
-/// Centralised permission checks — every `can<Action><Scope>` method lives here
-/// so that role-based access rules are defined in exactly one place.
-///
-/// Naming convention: `can_<action>_<scope>` where:
-/// - action  = view | manage | vote | initiate | administer
-/// - scope   = gm (general meeting) | consultation | budget | task | contract |
-///   document | accounting | logbook | report | claim | unit |
-///   user | building | calendar | etat_date | judicial | governance
-///
-/// A user may hold several roles simultaneously (e.g. `[Manager, CoOwner]`);
-/// every check inspects **all** of the user's roles.
+//! Centralised permission checks — every `can<Action><Scope>` method lives here
+//! so that role-based access rules are defined in exactly one place.
+//!
+//! Naming convention: `can_<action>_<scope>` where:
+//! - action  = view | manage | vote | initiate | administer
+//! - scope   = gm (general meeting) | consultation | budget | task | contract |
+//!   document | accounting | logbook | report | claim | unit |
+//!   user | building | calendar | etat_date | judicial | governance
+//!
+//! A user may hold several roles simultaneously (e.g. `[Manager, CoOwner]`);
+//! every check inspects **all** of the user's roles.
 
 // ── General Meeting (AG) ──────────────────────────────────────────────────────
 
