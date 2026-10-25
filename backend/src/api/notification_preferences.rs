@@ -69,7 +69,7 @@ pub async fn update(
     Json(input): Json<UpdateNotificationPreferencesInput>,
 ) -> AppResult<Json<NotificationPreferencesResponse>> {
     // Validate before writing anything: unknown keys and mandatory events are rejected.
-    for (key, _) in &input.prefs {
+    for key in input.prefs.keys() {
         let event = notification_catalog::find(key).ok_or_else(|| {
             AppError::bad_request_code("errors.notification_preferences.unknown_event")
         })?;
@@ -80,11 +80,7 @@ pub async fn update(
         }
     }
 
-    let prefs: Vec<(String, bool)> = input
-        .prefs
-        .into_iter()
-        .map(|(key, enabled)| (key, enabled))
-        .collect();
+    let prefs: Vec<(String, bool)> = input.prefs.into_iter().collect();
     db::notification_preference::upsert(&state.pool, auth.user_id, &prefs).await?;
 
     // Re-read so the response reflects the persisted state (same shape as GET).
