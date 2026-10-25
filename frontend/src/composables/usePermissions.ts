@@ -179,9 +179,7 @@ export function usePermissions(): Permissions {
   // ── Claim ──
 
   const canViewClaim = computed(() => isAuthenticated.value)
-  const canManageClaim = computed(() =>
-    hasAnyRole(['manager', 'board_member'])
-  )
+  const canManageClaim = computed(() => hasRole('manager'))
 
   // ── Unit ──
 

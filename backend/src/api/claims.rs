@@ -48,7 +48,7 @@ pub async fn update(
     Path(id): Path<Uuid>,
     Json(mut input): Json<db::claim::UpdateClaimInput>,
 ) -> AppResult<Json<serde_json::Value>> {
-    auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
+    auth.require_role(&Role::Manager)?;
     let existing = db::claim::get(&state.pool, id, auth.building_id)
         .await?
         .ok_or(AppError::NotFound)?;
@@ -73,7 +73,7 @@ pub async fn delete(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
 ) -> AppResult<StatusCode> {
-    auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
+    auth.require_role(&Role::Manager)?;
     let existing = db::claim::get(&state.pool, id, auth.building_id)
         .await?
         .ok_or(AppError::NotFound)?;
@@ -129,7 +129,7 @@ pub async fn detach_document(
     State(state): State<Arc<AppState>>,
     Path((id, document_id)): Path<(Uuid, Uuid)>,
 ) -> AppResult<StatusCode> {
-    auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
+    auth.require_role(&Role::Manager)?;
     let detached =
         db::claim::detach_document(&state.pool, id, document_id, auth.building_id).await?;
     if !detached {

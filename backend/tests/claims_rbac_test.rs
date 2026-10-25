@@ -1,5 +1,6 @@
-// RBAC matrix — claims (signalements): any authenticated user may create and
-// read; update/delete are manager + board_member.
+// RBAC matrix — claims (sinistres): any authenticated user may create and
+// read; update/delete and document detach are manager-only (PRD Sinistres:
+// Conseil read-only).
 
 mod common;
 
@@ -72,13 +73,20 @@ async fn residents_can_create_but_not_update_claims() {
 }
 
 #[tokio::test]
-async fn board_member_can_update_and_delete_claims() {
+async fn board_member_is_read_only_on_claims() {
     let (ctx, _pool) = common::rbac_setup().await;
     let server = common::test_server().await;
     let mgr_auth = format!("Bearer {}", ctx.manager_jwt);
     let claim_id = create_claim(&server, &mgr_auth).await;
 
     let auth = format!("Bearer {}", ctx.board_member_jwt);
+
+    let listed = server
+        .get("/api/v1/claims")
+        .add_header("Authorization", &auth)
+        .await;
+    assert_eq!(listed.status_code(), StatusCode::OK);
+
     let updated = server
         .put(&format!("/api/v1/claims/{claim_id}"))
         .add_header("Authorization", &auth)
@@ -89,14 +97,19 @@ async fn board_member_can_update_and_delete_claims() {
             "status": "in_progress"
         }))
         .await;
-    assert_eq!(updated.status_code(), StatusCode::OK);
+    assert_eq!(
+        updated.status_code(),
+        StatusCode::FORBIDDEN,
+        "board_member update"
+    );
 
-    // NOTE: PRD Sinistres gives Conseil `R` only, but the handler
-    // (pre-existing) grants update/delete to Manager + BoardMember.
-    // This test pins the current implementation.
     let deleted = server
         .delete(&format!("/api/v1/claims/{claim_id}"))
         .add_header("Authorization", &auth)
         .await;
-    assert_eq!(deleted.status_code(), StatusCode::NO_CONTENT);
+    assert_eq!(
+        deleted.status_code(),
+        StatusCode::FORBIDDEN,
+        "board_member delete"
+    );
 }
