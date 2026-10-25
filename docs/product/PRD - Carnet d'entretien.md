@@ -77,12 +77,15 @@ Maintenir le **carnet d'entretien réglementaire** de la copropriété (décret 
 
 | Domaine | Syndic | Conseil | Copropriétaire | Locataire |
 |---|---|---|---|---|
-| En-tête réglementaire | `R` | `R` | `R` | `X` |
-| Entrées manuelles | `C / R` | `R` | `R` | `X` |
-| Entrées automatiques | `R` | `R` | `R` | `X` |
-| Export PDF | `R` | `R` | `R` | `X` |
+| En-tête réglementaire | `R` | `R` | `R` | `R` |
+| Entrées manuelles | `C / R` | `C / R` | `R` | `R` |
+| Correction d'entrée (append-only) | `C / R` | `C / R` | `R` | `R` |
+| Entrées automatiques | `R` | `R` | `R` | `R` |
+| Export PDF | `R` | `R` | `R` | `R` |
 
 > Le droit de consultation des copropriétaires sur le carnet d'entretien est fondé sur l'art. 18-I loi 1965 et le décret n° 2005-240.
+
+> **Immutabilité (EP-018-S07, Pattern C)** : une entrée validée n'est JAMAIS modifiée ni supprimée — `PUT` / `DELETE` sont refusés (`errors.immutability.frozen`), y compris pour le Syndic. La seule voie d'amendement est la **correction append-only** : une nouvelle entrée liée référence l'entrée d'origine (`corrects_entry_id`), qui reste lisible dans l'historique.
 
 ### Règles de sécurité
 

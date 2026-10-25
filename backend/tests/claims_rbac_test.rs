@@ -91,10 +91,9 @@ async fn board_member_can_update_and_delete_claims() {
         .await;
     assert_eq!(updated.status_code(), StatusCode::OK);
 
-    // NOTE: the PRD Signalements matrix gives Conseil `R` only, but the handler
-    // (pre-existing on main) grants update/delete to Manager + BoardMember.
-    // This test pins the current implementation; see the PR discussion for the
-    // spec-vs-code discrepancy.
+    // NOTE: PRD Sinistres gives Conseil `R` only, but the handler
+    // (pre-existing) grants update/delete to Manager + BoardMember.
+    // This test pins the current implementation.
     let deleted = server
         .delete(&format!("/api/v1/claims/{claim_id}"))
         .add_header("Authorization", &auth)

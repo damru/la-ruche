@@ -65,6 +65,8 @@ interface Permissions {
   // ── Report ──
   canViewReport: ComputedRef<boolean>
   canManageReport: ComputedRef<boolean>
+  /** Only the manager may change a report's status or convert it to a task. */
+  canAdministerReport: ComputedRef<boolean>
 
   // ── Claim ──
   canViewClaim: ComputedRef<boolean>
@@ -172,6 +174,7 @@ export function usePermissions(): Permissions {
   const canManageReport = computed(() =>
     hasAnyRole(['manager', 'board_member'])
   )
+  const canAdministerReport = computed(() => hasRole('manager'))
 
   // ── Claim ──
 
@@ -250,6 +253,7 @@ export function usePermissions(): Permissions {
     canManageLogbook,
     canViewReport,
     canManageReport,
+    canAdministerReport,
     canViewClaim,
     canManageClaim,
     canViewUnit,

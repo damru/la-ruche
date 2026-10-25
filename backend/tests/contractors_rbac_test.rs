@@ -63,9 +63,8 @@ async fn residents_cannot_mutate_contractors() {
     for jwt in [&ctx.coowner_jwt, &ctx.tenant_jwt] {
         let auth = format!("Bearer {jwt}");
 
-        // Read is open to any authenticated user (handler comment: "all
-        // authenticated users"), matching the PRD Copropriétaire `R²`.
-        // The PRD gives Locataire `X` — pre-existing discrepancy, pinned here.
+        // Read is open to any authenticated user — PRD Référentiel
+        // prestataires gives Copropriétaire and Locataire `R²`.
         let listed = server
             .get("/api/v1/contractors")
             .add_header("Authorization", &auth)

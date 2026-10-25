@@ -45,6 +45,7 @@ const statusFilter = ref<typeof ALL_FILTER | ReportStatus>(ALL_FILTER)
 
 // ── RBAC — only manager and board_member can act on reports ────────
 const canManage = perms.canManageReport
+const canAdminister = perms.canAdministerReport
 
 // ── Modal state ───────────────────────────────────────────────────
 const showCreateModal = ref(false)
@@ -265,7 +266,7 @@ function authorName(r: Report): string {
                 </CMetaLine>
   
                 <div
-                  v-if="r.status !== REPORT_STATUS_CLOSED"
+                  v-if="canAdminister && r.status !== REPORT_STATUS_CLOSED"
                   class="flex flex-wrap gap-x-2 gap-y-1"
                 >
                   <CBtn
@@ -295,7 +296,7 @@ function authorName(r: Report): string {
                       @click="router.push({ name: 'task-detail', params: { id: r.task_id } })"
                     />
                     <CBtn
-                      v-else-if="r.status !== REPORT_STATUS_CLOSED"
+                      v-else-if="canAdminister && r.status !== REPORT_STATUS_CLOSED"
                       variant="primary"
                       size="sm"
                       :icon="CIconCheckCircle"

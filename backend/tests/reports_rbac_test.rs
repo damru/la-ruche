@@ -1,7 +1,8 @@
-// RBAC matrix — reports (conformité / fiches de signalement).
-// Create is open to any authenticated user (resident-initiative pattern,
-// same as claims); update / update_status / delete / convert_to_task are
-// manager + board_member and return 204.
+// RBAC matrix — reports (signalements).
+// Create is open to any authenticated user (resident-initiative pattern);
+// update / delete are manager + board_member (204).
+// Status change and convert-to-task are Syndic-only (PRD Signalements
+// matrice CRUD: S² réservé au Syndic, Q-SIG-003).
 
 mod common;
 
@@ -46,7 +47,21 @@ async fn board_member_can_manage_reports() {
         .add_header("Authorization", &auth)
         .json(&json!({ "status": "in_progress" }))
         .await;
-    assert_eq!(status.status_code(), StatusCode::NO_CONTENT);
+    assert_eq!(
+        status.status_code(),
+        StatusCode::FORBIDDEN,
+        "board_member change status"
+    );
+
+    let converted = server
+        .post(&format!("/api/v1/reports/{report_id}/task"))
+        .add_header("Authorization", &auth)
+        .await;
+    assert_eq!(
+        converted.status_code(),
+        StatusCode::FORBIDDEN,
+        "board_member convert"
+    );
 
     let deleted = server
         .delete(&format!("/api/v1/reports/{report_id}"))

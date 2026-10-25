@@ -77,9 +77,13 @@ Permettre à **tout résident** (copropriétaire ou locataire) de **signaler un 
 
 | Domaine | Syndic | Conseil | Copropriétaire | Locataire |
 |---|---|---|---|---|
-| Signalements | `R / U / D¹` | `R` | `C / R¹` | `C / R¹` |
+| Signalements | `R / C / U / D¹ / S²` | `R / C / U¹ / D¹` | `C / R¹` | `C / R¹` |
 | Commentaires de suivi | `C / R` | `C / R` | `R` | `R` |
 | Pièces jointes | `C / R / D` | `R` | `C / R¹` | `C / R¹` |
+
+> ¹ Lecture et modification limitées aux signalements créés par le résident lui-même.
+> La liste des signalements pour le Syndic et le Conseil est globale (tous les signalements de la copropriété).
+> ² `S` = changement de statut (accusé réception, `in_progress`, `closed`, `converted`) et conversion en tâche — **réservés au Syndic**. Le Conseil peut créer, lire, mettre à jour et supprimer, mais ne change pas le statut d'un signalement et ne le convertit pas en tâche (Q-SIG-003).
 
 > ¹ Lecture et modification limitées aux signalements créés par le résident lui-même.
 > La liste des signalements pour le Syndic et le Conseil est globale (tous les signalements de la copropriété).
