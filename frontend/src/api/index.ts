@@ -10,6 +10,7 @@ import type {
   Document, UploadUrlResponse, DownloadUrlResponse,
   Building, Unit, UnitOwnerRecord, User, AllocationKey, UnitShare, AuditEntry,
   OnboardingStatus, RuntimeStatus, BootstrapInput, BootstrapResponse,
+  NotificationPreferencesResponse,
   LoginResponse, BuildingStats, RegistryResponse, UnitChargesResponse,
   Contractor, JudicialProceeding, GovernanceMandate, EtatDateRequest, PreEtatDate,
   EddReference, EddReferenceShareInput, EddCheckResponse,
@@ -65,6 +66,14 @@ export const authApi = {
     api.post('/auth/passkey/login/start', { email }),
   passkeyLoginFinish: (credential: unknown) =>
     api.post('/auth/passkey/login/finish', { credential }),
+}
+
+// ── Notification preferences (EP-019-S03) ───────────────────────────────────────────────
+export const notificationPreferencesApi = {
+  get: () =>
+    api.get<NotificationPreferencesResponse>('/me/notification-preferences'),
+  update: (prefs: Record<string, boolean>) =>
+    api.put<NotificationPreferencesResponse>('/me/notification-preferences', { prefs }),
 }
 
 // ── Building ──────────────────────────────────────────────────────

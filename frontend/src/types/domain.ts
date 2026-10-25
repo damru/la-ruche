@@ -482,6 +482,18 @@ export interface RuntimeStatus {
   demo_mode: boolean
 }
 
+// ── Notification preferences (EP-019-S03) ─────────────────────────────────────
+
+export interface NotificationPreferenceEvent {
+  key: string
+  mandatory: boolean
+  enabled: boolean
+}
+
+export interface NotificationPreferencesResponse {
+  events: NotificationPreferenceEvent[]
+}
+
 export interface BootstrapInput {
   email: string
   last_name: string

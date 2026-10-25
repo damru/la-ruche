@@ -13,6 +13,7 @@ import { useAutoClose } from '@/composables/useAutoClose'
 import { toErrorMessage } from '@/composables/usePageLoader'
 import type { Report, TaskPriority } from '@/types/domain'
 import { DEFAULT_TASK_PRIORITY, TASK_PRIORITIES } from '@/utils/constants'
+import { useUiStore } from '@/stores/ui'
 
 const DEFAULT_CONVERT_PRIORITY = DEFAULT_TASK_PRIORITY
 
@@ -27,6 +28,7 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+const ui = useUiStore()
 const router = useRouter()
 const feedback = useFormFeedback()
 const { schedule: scheduleClose, forceExpire: forceClose } = useAutoClose()
@@ -107,6 +109,7 @@ async function submit() {
           :title="t('reports.convertToTask')"
           :loading="converting"
           :closing="feedback.status.value === 'success'"
+          :closing-duration-ms="ui.autoCloseDelayMs"
           type="submit"
           form="report-convert"
         />

@@ -4,7 +4,7 @@
 
 **Épic :** EP-019 — Profil & préférences
 **Réf. PRD :** US-PP-005
-**État :** PARTIEL — un reset existe mais il est limité aux notifications et placé dans l'en-tête de l'onglet Notifications. Reste : reset global (les deux domaines), placement en bas de page, reset de l'apparence dans le store.
+**Statut : IMPLÉMENTÉ (frontend)** — bouton global unique « Réinitialiser mes préférences » en bas de la page Profil (visible quel que soit l'onglet), modale de confirmation listant les deux domaines, reset du thème vers `auto` et (EP-019-S09) du délai de fermeture des modales vers 3 s. L'ancien bouton de l'en-tête Notifications est supprimé.
 
 Story 100 % frontend — aucune migration, aucun changement backend. (Si EP-019-S03 est livrée avant, le reset des notifications pousse aussi les défauts au serveur via `resetNotifPrefs` — déjà couvert par la spec S03 §5.2 ; cette story n'ajoute rien côté API.)
 

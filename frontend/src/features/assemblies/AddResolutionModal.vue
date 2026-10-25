@@ -14,6 +14,7 @@ import { useAutoClose } from '@/composables/useAutoClose'
 import { toErrorMessage } from '@/composables/usePageLoader'
 import type {} from '@/types/domain'
 import { VOTE_TYPES, VOTE_TYPE_SIMPLE_MAJORITY } from '@/utils/constants'
+import { useUiStore } from '@/stores/ui'
 
 const props = defineProps<{
   open: boolean
@@ -27,6 +28,7 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+const ui = useUiStore()
 const feedback = useFormFeedback()
 const { schedule: scheduleClose, forceExpire: forceClose } = useAutoClose()
 const saving = ref(false)
@@ -130,6 +132,7 @@ async function handleSubmit() {
           :title="t('common.add')"
           :loading="saving"
           :closing="feedback.status.value === 'success'"
+          :closing-duration-ms="ui.autoCloseDelayMs"
         />
       </CFormActions>
     </template>

@@ -5,7 +5,7 @@
 **Épic :** EP-019 — Profil & préférences
 **Réf. PRD :** US-PP-008
 **Réf. design :** DDR-006 (fenêtre de succès + auto-close à 3 s fixe)
-**État :** PROPOSÉ — story backlog, pas encore d'implémentation.
+**Statut : IMPLÉMENTÉ (frontend)** — sélecteur 0–10 s dans l'onglet Apparence, persistance `localStorage` (`laruche-auto-close-delay`, défaut 3 s = absence de clé), application uniforme via `useAutoClose` + store UI, animation `closing` du bouton à durée dynamique (`--c-btn-closing-duration`), reset global vers 3 s (EP-019-S07).
 
 Story 100 % frontend — aucune migration, aucun changement backend. La persistance suit le précédent établi par le thème et les préférences de notifications : `localStorage` (déplacer côté serveur quand la persistance serveur des préférences sera en place, cf. écart connu EP-019-S03).
 

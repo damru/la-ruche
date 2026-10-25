@@ -10,6 +10,7 @@ import { useFormatters } from '@/composables/useFormatters'
 import { extractFileExtension } from '@/utils/files'
 import type { Claim, ClaimType, Document, Unit } from '@/types/domain'
 import { CLAIM_TYPES, CLAIM_TYPE_NATURAL_DISASTER, DEFAULT_CLAIM_TYPE, ROLES } from '@/utils/constants'
+import { useUiStore } from '@/stores/ui'
 
 const props = defineProps<{
   open: boolean
@@ -25,6 +26,7 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+const ui = useUiStore()
 const { formatDate, formatFileSize } = useFormatters()
 const feedback = useFormFeedback()
 const documentActionFeedback = useFormFeedback()
@@ -394,6 +396,7 @@ async function handleSubmit() {
           :title="t('common.save')"
           :loading="editingClaim || uploadingEditDocuments"
           :closing="feedback.status.value === 'success'"
+          :closing-duration-ms="ui.autoCloseDelayMs"
           type="submit"
           form="claim-edit"
         />

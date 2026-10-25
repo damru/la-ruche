@@ -4,7 +4,7 @@
 
 **Épic :** EP-019 — Profil & préférences
 **Réf. PRD :** US-PP-004
-**État :** PARTIEL — l'UI et le catalogue sont complets côté frontend, mais la persistance est **localStorage uniquement** (perdue en changeant d'appareil/navigateur). Cette spec couvre **uniquement** la persistance serveur. La note en code le prévoyait : `ui.ts` L12 « Move server-side when notifications ship ».
+**Statut : IMPLÉMENTÉ (backend + frontend)** — persistance serveur livrée : table `user_notification_preference`, catalogue canonique `domain::notification_catalog`, `GET/PUT /me/notification-preferences`, hydratation du store `ui.ts` avec localStorage en cache de repli et migration one-shot des anciennes valeurs locales.
 
 > **Rappel de périmètre :** aucune infra de livraison de notifications n'existe dans le repo. Ces préférences sont stockées pour le futur dispatcher ; elles n'ont aujourd'hui aucun effet d'envoi.
 

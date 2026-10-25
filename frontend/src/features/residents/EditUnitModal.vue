@@ -14,6 +14,7 @@ import { useFormFeedback } from '@/composables/useFormFeedback'
 import { useAutoClose } from '@/composables/useAutoClose'
 import type { Unit, UnitType } from '@/types/domain'
 import { DEFAULT_UNIT_TYPE, UNIT_TYPES } from '@/utils/constants'
+import { useUiStore } from '@/stores/ui'
 
 const props = defineProps<{
   open: boolean
@@ -30,6 +31,7 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+const ui = useUiStore()
 const unitFeedback = useFormFeedback()
 const savingUnit = ref(false)
 const { schedule: scheduleUnitClose, forceExpire: forceUnitClose } = useAutoClose()
@@ -199,6 +201,7 @@ async function saveUnit() {
           :title="t('common.save')"
           :loading="savingUnit"
           :closing="unitFeedback.status.value === 'success'"
+          :closing-duration-ms="ui.autoCloseDelayMs"
           :disabled="savingUnit"
         />
       </CFormActions>

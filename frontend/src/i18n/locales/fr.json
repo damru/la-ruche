@@ -1489,9 +1489,6 @@
       "title": "Préférences de notification",
       "subtitle": "Choisissez les événements pour lesquels vous souhaitez être alerté.",
       "mandatory": "Obligatoire",
-      "reset": "Réinitialiser mes préférences",
-      "resetConfirmTitle": "Réinitialiser les préférences ?",
-      "resetConfirmMessage": "Vos préférences de notification seront remises à leurs valeurs par défaut.",
       "events": {
         "ag_convocation": "Convocation à l'assemblée générale",
         "ag_convocationDesc": "Recevoir la convocation et l'ordre du jour de chaque AG.",
@@ -1567,6 +1564,15 @@
           "hint": "L'application suit automatiquement l'apparence de votre appareil."
         },
         "label": "Apparence"
+      },
+      "reset": "Réinitialiser mes préférences",
+      "resetConfirmTitle": "Réinitialiser toutes les préférences ?",
+      "resetConfirmMessage": "Les préférences de notifications et d'apparence (thème, fermeture automatique des modales) seront remises à leurs valeurs par défaut.",
+      "autoCloseDelay": {
+        "label": "Fermeture automatique des modales",
+        "hint": "Délai après une validation réussie avant la fermeture automatique de la modale.",
+        "immediate": "Immédiate (0 s)",
+        "seconds": "{count} s"
       }
     },
     "keys": {

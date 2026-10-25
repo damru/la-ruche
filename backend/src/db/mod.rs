@@ -16,6 +16,7 @@ pub mod etat_date;
 pub mod governance_mandate;
 pub mod judicial_proceeding;
 pub mod maintenance_log;
+pub mod notification_preference;
 pub mod report;
 pub mod task;
 pub mod unit;

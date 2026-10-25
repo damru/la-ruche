@@ -7,6 +7,7 @@ pub mod ics;
 pub mod immutability;
 pub mod legal_documents;
 pub mod minutes_draft;
+pub mod notification_catalog;
 pub mod owners;
 pub mod permissions;
 pub mod processor;

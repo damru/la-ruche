@@ -15,6 +15,7 @@ pub mod etat_date;
 pub mod governance;
 pub mod judicial_proceedings;
 pub mod logbook;
+pub mod notification_preferences;
 pub mod onboarding;
 pub mod reports;
 pub mod runtime;
@@ -73,6 +74,11 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
         )
         .route("/auth/invite/accept", post(auth::invite_accept))
         .route("/auth/invite/validate", get(auth::validate_invite))
+        // ── Notification preferences (account-level, EP-019-S03) ──
+        .route(
+            "/me/notification-preferences",
+            get(notification_preferences::get).put(notification_preferences::update),
+        )
         // ── Building ────────────────────────────────────────────
         .route("/building", get(building::get).put(building::update))
         .route("/building/stats", get(building::stats))

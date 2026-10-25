@@ -18,6 +18,7 @@ import { useFormatters } from '@/composables/useFormatters'
 import { extractFileExtension } from '@/utils/files'
 import type { Contractor, Document, Task, TaskPriority, TaskStatus } from '@/types/domain'
 import { ASSIGNABLE_TASK_STATUSES, DEFAULT_TASK_PRIORITY, MANAGER_ROLES, TASK_PRIORITIES, TASK_STATUS_IN_PROGRESS, TASK_STATUS_OPEN } from '@/utils/constants'
+import { useUiStore } from '@/stores/ui'
 
 const props = defineProps<{
   open: boolean
@@ -33,6 +34,7 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+const ui = useUiStore()
 const { formatDate, formatFileSize } = useFormatters()
 const feedback = useFormFeedback()
 const { schedule: scheduleClose, forceExpire: forceClose } = useAutoClose()
@@ -617,6 +619,7 @@ async function handleSubmit() {
           :title="t('common.save')"
           :loading="saving || uploadingDocuments"
           :closing="feedback.status.value === 'success'"
+          :closing-duration-ms="ui.autoCloseDelayMs"
           type="submit"
           form="task-form"
         />
