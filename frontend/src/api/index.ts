@@ -14,7 +14,7 @@ import type {
   LoginResponse, BuildingStats, RegistryResponse, UnitChargesResponse,
   Contractor, JudicialProceeding, GovernanceMandate, EtatDateRequest, PreEtatDate,
   EddReference, EddReferenceShareInput, EddCheckResponse,
-  CalendarEvent,
+  CalendarEvent, CalendarSource,
   ManualCalendarEvent, CalendarEventCategory,
 } from '@/types/domain'
 
@@ -560,8 +560,10 @@ export const adminApi = {
 
 // ── Calendar (EP-014-S01) ───────────────────────────────────────────
 export const calendarApi = {
-  events: (from: string, to: string) =>
-    api.get<CalendarEvent[]>('/calendar/events', { params: { from, to } }),
+  events: (from: string, to: string, types?: CalendarSource[]) =>
+    api.get<CalendarEvent[]>('/calendar/events', {
+      params: { from, to, types: types?.join(',') },
+    }),
   exportIcs: (from: string, to: string) =>
     api.get<Blob>('/calendar/export.ics', { params: { from, to }, responseType: 'blob' }),
 }

@@ -1114,7 +1114,13 @@
       "create": "Nouvel événement"
     },
     "previousPeriod": "Période précédente",
-    "nextPeriod": "Période suivante"
+    "nextPeriod": "Période suivante",
+    "filters": {
+      "label": "Filtrer par type d'événement",
+      "noneActive": "Aucun type sélectionné — réactivez au moins un filtre pour afficher les événements.",
+      "from": "Du",
+      "to": "Au"
+    }
   },
   "maintenance": {
     "editEntry": "Modifier l'entrée",
@@ -1772,6 +1778,10 @@
       "reimbursement_amount_positive": "Le montant remboursé doit être strictement positif.",
       "reimbursement_requires_status": "Les champs de remboursement nécessitent un statut explicite.",
       "reimbursement_only_for_closed": "Les champs de remboursement ne sont autorisés que pour les sinistres clôturés."
+    },
+    "calendar": {
+      "invalid_range": "La plage de dates est invalide.",
+      "invalid_type": "Le type d'événement demandé est invalide."
     }
   },
   "format": {

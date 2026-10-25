@@ -1,5 +1,7 @@
 // EP-014-S01: `GET /calendar/events` aggregated feed — role filtering,
 // range validation, out-of-range exclusion, building_id isolation.
+// EP-014-S02: `types` CSV filter — intersection with role visibility,
+// unknown type rejection, S01 non-regression.
 
 mod common;
 
@@ -265,6 +267,113 @@ async fn range_over_366_days_is_rejected() {
         res.json::<Value>()["message"],
         "errors.calendar.invalid_range"
     );
+}
+
+fn sources_of(events: &[Value]) -> Vec<&str> {
+    events
+        .iter()
+        .map(|e| e["source"].as_str().unwrap())
+        .collect()
+}
+
+#[tokio::test]
+async fn types_filter_keeps_only_requested_sources() {
+    let (server, pool, building_id) = calendar_test_server().await;
+    let mgr = manager_id(&pool, building_id).await;
+
+    seed_meeting(&pool, building_id, mgr, "2026-06-10T10:00:00Z").await;
+    seed_contract_reminder(&pool, building_id, mgr, "2026-06-05").await;
+    seed_closed_task(&pool, building_id, mgr, "2026-06-15T09:00:00Z").await;
+
+    let res = server
+        .get("/api/v1/calendar/events?from=2026-06-01&to=2026-06-30&types=meeting")
+        .await;
+    assert_eq!(res.status_code(), StatusCode::OK);
+    let events: Vec<Value> = res.json();
+    let sources = sources_of(&events);
+    assert!(!sources.is_empty());
+    assert!(sources.iter().all(|s| *s == "meeting"), "{sources:?}");
+}
+
+#[tokio::test]
+async fn types_filter_unions_requested_sources() {
+    let (server, pool, building_id) = calendar_test_server().await;
+    let mgr = manager_id(&pool, building_id).await;
+
+    seed_meeting(&pool, building_id, mgr, "2026-06-10T10:00:00Z").await;
+    seed_contract_reminder(&pool, building_id, mgr, "2026-06-05").await;
+    seed_closed_task(&pool, building_id, mgr, "2026-06-15T09:00:00Z").await;
+
+    let res = server
+        .get("/api/v1/calendar/events?from=2026-06-01&to=2026-06-30&types=meeting,contract")
+        .await;
+    assert_eq!(res.status_code(), StatusCode::OK);
+    let events: Vec<Value> = res.json();
+    let mut sources = sources_of(&events);
+    sources.sort_unstable();
+    sources.dedup();
+    assert_eq!(sources, vec!["contract", "meeting"]);
+}
+
+#[tokio::test]
+async fn types_filter_never_widens_role_visibility() {
+    let (_server, pool, building_id) = calendar_test_server().await;
+    let mgr = manager_id(&pool, building_id).await;
+    let cfg = common::test_config().await;
+
+    seed_contract_reminder(&pool, building_id, mgr, "2026-06-05").await;
+    seed_closed_task(&pool, building_id, mgr, "2026-06-15T09:00:00Z").await;
+
+    // A CoOwner explicitly requesting `contract` gets 200 + empty list.
+    let token = co_owner_token(building_id, &cfg);
+    let co_owner_server = common::test_server_with_pool(cfg, pool).await;
+    let res = co_owner_server
+        .get("/api/v1/calendar/events?from=2026-06-01&to=2026-06-30&types=contract")
+        .add_header("Authorization", format!("Bearer {token}"))
+        .await;
+    assert_eq!(res.status_code(), StatusCode::OK);
+    let events: Vec<Value> = res.json();
+    assert!(events.is_empty(), "expected empty list: {events:?}");
+}
+
+#[tokio::test]
+async fn unknown_type_is_rejected() {
+    let (server, _pool, _building_id) = calendar_test_server().await;
+
+    let res = server
+        .get("/api/v1/calendar/events?from=2026-06-01&to=2026-06-30&types=foo")
+        .await;
+    assert_eq!(res.status_code(), StatusCode::BAD_REQUEST);
+    assert_eq!(
+        res.json::<Value>()["message"],
+        "errors.calendar.invalid_type"
+    );
+}
+
+#[tokio::test]
+async fn empty_types_value_behaves_like_absent() {
+    let (server, pool, building_id) = calendar_test_server().await;
+    let mgr = manager_id(&pool, building_id).await;
+
+    seed_meeting(&pool, building_id, mgr, "2026-06-10T10:00:00Z").await;
+    seed_contract_reminder(&pool, building_id, mgr, "2026-06-05").await;
+
+    let with_empty = server
+        .get("/api/v1/calendar/events?from=2026-06-01&to=2026-06-30&types=")
+        .await;
+    assert_eq!(with_empty.status_code(), StatusCode::OK);
+    let without = server
+        .get("/api/v1/calendar/events?from=2026-06-01&to=2026-06-30")
+        .await;
+    assert_eq!(without.status_code(), StatusCode::OK);
+
+    let empty_events: Vec<Value> = with_empty.json();
+    let plain_events: Vec<Value> = without.json();
+    assert_eq!(
+        sources_of(&empty_events).len(),
+        sources_of(&plain_events).len()
+    );
+    assert!(!empty_events.is_empty());
 }
 
 #[tokio::test]

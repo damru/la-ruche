@@ -24,7 +24,7 @@ rules:
 > Ce document est le backlog officiel du projet.
 > Chaque feature est organisée en epic. Les stories sont ajoutées à la demande, au moment de l'implémentation.
 > Le MVP est l'ensemble des epics marquées **MVP : oui**.
-> Dernière mise à jour : 22 octobre 2026
+> Dernière mise à jour : 25 octobre 2026
 
 > **Lecture d'avancement (code actuel) :**
 > - **backend réel** = handlers + DB opérationnels
@@ -447,7 +447,7 @@ Calendrier partagé centralisant AG, interventions et réunions avec liens conte
 **Stories :**
 
 * [EP-014-S01](specs/EP-014-S01-spec.md) ✅ — Afficher la vue calendaire des événements de la copropriété (AG, interventions, réunions) dans les modes mensuel, hebdomadaire et liste avec lien contextuel vers les entités correspondantes (PRD US-CAL-001)
-* [EP-014-S02](specs/EP-014-S02-spec.md) — Filtrer les événements du calendrier par type (AG, tâche, sinistre, contrat, autre) et par période (PRD US-CAL-002)
+* [EP-014-S02](specs/EP-014-S02-spec.md) ✅ — Filtrer les événements du calendrier par type (AG, tâche, sinistre, contrat, autre) et par période (PRD US-CAL-002)
 * [EP-014-S03](specs/EP-014-S03-spec.md) ✅ — Créer, modifier et supprimer des événements manuels sur le calendrier (réunion informelle, rappel, rendez-vous) réservé au Syndic et au Conseil (PRD US-CAL-005)
 * [EP-014-S04](specs/EP-014-S04-spec.md) ✅ — Exporter le calendrier au format ICS pour intégration dans les agendas personnels (Google Calendar, Outlook, Apple Calendar) (PRD US-CAL-003)
 * [EP-014-S05](specs/EP-014-S05-spec.md) ✅ — Afficher une vue agenda (prochains 30 jours) depuis le tableau de bord avec les 5 prochains événements (PRD US-CAL-004)
