@@ -116,6 +116,7 @@ pub async fn attach_document(
     Path(id): Path<Uuid>,
     Json(input): Json<AttachDocumentInput>,
 ) -> AppResult<StatusCode> {
+    auth.require_role(&Role::Manager)?;
     let attached =
         db::claim::attach_document(&state.pool, id, input.document_id, auth.building_id).await?;
     if !attached {

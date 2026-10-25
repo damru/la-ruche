@@ -112,4 +112,15 @@ async fn board_member_is_read_only_on_claims() {
         StatusCode::FORBIDDEN,
         "board_member delete"
     );
+
+    let attached = server
+        .post(&format!("/api/v1/claims/{claim_id}/documents"))
+        .add_header("Authorization", &auth)
+        .json(&json!({ "document_id": uuid::Uuid::new_v4() }))
+        .await;
+    assert_eq!(
+        attached.status_code(),
+        StatusCode::FORBIDDEN,
+        "board_member attach"
+    );
 }
