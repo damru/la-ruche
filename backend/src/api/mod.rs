@@ -74,7 +74,7 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
         )
         .route("/auth/invite/accept", post(auth::invite_accept))
         .route("/auth/invite/validate", get(auth::validate_invite))
-        // ── Notification preferences (account-level, EP-019-S03) ──
+        // ── Notification preferences (account-level) ──
         .route(
             "/me/notification-preferences",
             get(notification_preferences::get).put(notification_preferences::update),

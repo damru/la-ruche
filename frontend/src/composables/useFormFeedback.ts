@@ -4,7 +4,7 @@ import { AUTO_CLOSE_DELAY_DEFAULT_SEC } from '@/stores/ui'
 export type FeedbackStatus = 'idle' | 'success' | 'error'
 
 // Default inline success-message clear delay (ms) — fixed, unrelated to the
-// modal auto-close delay (EP-019-S09 keeps this timer at its default).
+// modal auto-close delay (this timer keeps its default).
 export const SUCCESS_AUTO_CLEAR_MS = AUTO_CLOSE_DELAY_DEFAULT_SEC * 1000
 
 export function useFormFeedback() {

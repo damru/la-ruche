@@ -1,5 +1,5 @@
-//! Canonical notification event catalog — single source of truth (EP-019-S03,
-//! US-PP-004). Mirrored by the frontend, which keeps only display order + i18n.
+//! Canonical notification event catalog — single source of truth.
+//! Mirrored by the frontend, which keeps only display order + i18n.
 //!
 //! No notification delivery infrastructure exists yet: these preferences are
 //! stored for the future dispatcher and have no sending effect today.
@@ -103,7 +103,7 @@ mod tests {
     use super::*;
 
     /// Guards against catalog drift — breaks if the catalog no longer
-    /// matches the agreed 16 events / 3 mandatory contract (US-PP-004).
+    /// matches the agreed 16 events / 3 mandatory contract.
     #[test]
     fn catalog_has_16_events_and_3_mandatory() {
         assert_eq!(NOTIF_EVENTS.len(), 16);

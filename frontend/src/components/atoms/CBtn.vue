@@ -38,7 +38,7 @@ const props = withDefaults(defineProps<{
 const { t } = useI18n()
 const attrs = useAttrs()
 
-// Drives the closing fill animation duration (DDR-006, EP-019-S09).
+// Drives the closing fill animation duration (DDR-006).
 const closingStyle = computed(() =>
   props.closingDurationMs !== undefined
     ? { '--c-btn-closing-duration': `${props.closingDurationMs}ms` }
@@ -370,7 +370,7 @@ const shrinkClass: Record<Breakpoint, string> = {
 
 /* ── Closing progress fill (DDR-006) ──────────────────────────── */
 /* Fills the button background from left to right over the auto-close delay
-   (default 3 s, configurable via EP-019-S09) to communicate the auto-close
+   (default 3 s, configurable) to communicate the auto-close
    countdown after a successful action. */
 .c-btn--closing::before {
   content: '';

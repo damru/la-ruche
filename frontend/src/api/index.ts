@@ -68,7 +68,7 @@ export const authApi = {
     api.post('/auth/passkey/login/finish', { credential }),
 }
 
-// ── Notification preferences (EP-019-S03) ───────────────────────────────────────────────
+// ── Notification preferences ────────────────────────────────────────────────────────────
 export const notificationPreferencesApi = {
   get: () =>
     api.get<NotificationPreferencesResponse>('/me/notification-preferences'),

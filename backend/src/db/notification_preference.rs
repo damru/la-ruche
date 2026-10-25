@@ -1,4 +1,4 @@
-// ── db/notification_preference.rs — per-user notification overrides (EP-019-S03) ──
+// ── db/notification_preference.rs — per-user notification overrides ──
 
 use sqlx::{PgPool, Row};
 use uuid::Uuid;

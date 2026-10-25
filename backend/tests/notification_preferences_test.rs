@@ -1,4 +1,4 @@
-// GET/PUT /me/notification-preferences — server-side notification prefs (EP-019-S03, US-PP-004).
+// GET/PUT /me/notification-preferences — server-side notification prefs.
 
 mod common;
 

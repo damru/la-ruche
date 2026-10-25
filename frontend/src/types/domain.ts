@@ -482,7 +482,7 @@ export interface RuntimeStatus {
   demo_mode: boolean
 }
 
-// ── Notification preferences (EP-019-S03) ─────────────────────────────────────
+// ── Notification preferences ──────────────────────────────────────────────────
 
 export interface NotificationPreferenceEvent {
   key: string

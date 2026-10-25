@@ -1,4 +1,4 @@
-// ── api/notification_preferences.rs — GET/PUT /me/notification-preferences (EP-019-S03) ──
+// ── api/notification_preferences.rs — GET/PUT /me/notification-preferences ──
 
 use std::collections::HashMap;
 use std::sync::Arc;

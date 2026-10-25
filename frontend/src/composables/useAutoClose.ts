@@ -4,8 +4,8 @@ import { useUiStore } from '@/stores/ui'
  * DDR-006 — Auto-close timer management for modal success windows.
  *
  * `schedule(fn)` — starts the countdown; `fn` is called when it expires.
- *                  The default delay is the user preference (EP-019-S09,
- *                  0–10 s, default 3 s); 0 closes immediately without a
+ *                  The default delay is the user preference
+ *                  (0–10 s, default 3 s); 0 closes immediately without a
  *                  success window.
  * `forceExpire()` — cancels any pending timer and runs `fn` immediately.
  *                   No-op when no timer is running (safe to call unconditionally).
@@ -21,7 +21,7 @@ export function useAutoClose() {
   let _pendingFn: (() => void) | undefined
 
   function schedule(fn: () => void, delay = ui.autoCloseDelayMs): void {
-    // AC-PP-008-C: 0 = immediate close, no success window.
+    // 0 = immediate close, no success window.
     if (delay <= 0) {
       fn()
       return

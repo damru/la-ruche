@@ -112,7 +112,7 @@ const selectedThemeOption = computed(
 )
 
 // ── Notifications ─────────────────────────────────────────────────
-// Hydrate from the server when the tab is first opened (EP-019-S03);
+// Hydrate from the server when the tab is first opened;
 // localStorage remains the fallback cache on network error.
 watch(
   () => activeTab.value,
@@ -124,7 +124,7 @@ watch(
   { immediate: true },
 )
 
-// ── Auto-close delay selector (EP-019-S09) ────────────────────────────────────
+// ── Auto-close delay selector ─────────────────────────────────────────────────
 const autoCloseDelayOptions = computed(() =>
   Array.from(
     { length: AUTO_CLOSE_DELAY_MAX_SEC - AUTO_CLOSE_DELAY_MIN_SEC + 1 },
@@ -145,7 +145,7 @@ const selectedAutoCloseDelay = computed({
   set: (value: string) => ui.setAutoCloseDelay(Number(value)),
 })
 
-// ── Global preferences reset (US-PP-005) ──────────────────────────────────────
+// ── Global preferences reset ──────────────────────────────────────────────────
 async function resetAllPrefs() {
   const ok = await confirm({
     title: t('settings.preferences.resetConfirmTitle'),

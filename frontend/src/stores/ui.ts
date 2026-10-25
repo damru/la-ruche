@@ -9,8 +9,8 @@ const THEME_STORAGE_KEY = 'laruche-theme'
 
 // ── Notification preferences ────────────────────────────────────
 // ponytail: no notification dispatch exists yet, so prefs have no sending effect.
-// Values are persisted server-side (EP-019-S03); localStorage is only a fallback
-// cache for offline/network-error situations.
+// Values are persisted server-side; localStorage is only a fallback cache
+// for offline/network-error situations.
 const NOTIF_STORAGE_KEY = 'laruche-notif-prefs'
 const NOTIF_MIGRATED_KEY = 'laruche-notif-prefs-migrated'
 
@@ -75,7 +75,7 @@ function persistNotifPrefs(prefs: Record<string, boolean>) {
   localStorage.setItem(NOTIF_STORAGE_KEY, JSON.stringify(prefs))
 }
 
-// ── Modal auto-close delay (EP-019-S09) ───────────────────────────────────────
+// ── Modal auto-close delay ────────────────────────────────────────────────────
 const AUTO_CLOSE_DELAY_STORAGE_KEY = 'laruche-auto-close-delay'
 export const AUTO_CLOSE_DELAY_DEFAULT_SEC = 3
 export const AUTO_CLOSE_DELAY_MIN_SEC = 0
@@ -169,7 +169,7 @@ export const useUiStore = defineStore('ui', () => {
   }
 
   /**
-   * Hydrates notification preferences from the server (EP-019-S03).
+   * Hydrates notification preferences from the server.
    * On success, also refreshes the localStorage cache. One-shot migration:
    * local values differing from server defaults are pushed to the server
    * when no server override exists yet. On network error, falls back to the
@@ -253,7 +253,7 @@ export const useUiStore = defineStore('ui', () => {
     }
   }
 
-  // ── Global preferences reset (EP-019-S07) ─────────────────────────────────
+  // ── Global preferences reset ──────────────────────────────────────────────────
 
   /** Restores appearance defaults: theme preference back to 'auto'. */
   function resetAppearance() {
@@ -261,13 +261,13 @@ export const useUiStore = defineStore('ui', () => {
     setAutoCloseDelay(AUTO_CLOSE_DELAY_DEFAULT_SEC)
   }
 
-  /** Global reset (US-PP-005): notifications + appearance in one action. */
+  /** Global reset: notifications + appearance in one action. */
   async function resetAllPrefs() {
     await resetNotifPrefs()
     resetAppearance()
   }
 
-  // ── Modal auto-close delay (EP-019-S09) ───────────────────────────────────
+  // ── Modal auto-close delay ────────────────────────────────────────────────
   const autoCloseDelaySec = ref<number>(readAutoCloseDelay())
 
   function setAutoCloseDelay(seconds: number) {
