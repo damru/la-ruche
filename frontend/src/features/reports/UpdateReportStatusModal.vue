@@ -12,6 +12,7 @@ import { useAutoClose } from '@/composables/useAutoClose'
 import { toErrorMessage } from '@/composables/usePageLoader'
 import type { Report, ReportStatus } from '@/types/domain'
 import { REPORT_STATUSES, REPORT_STATUS_IN_PROGRESS } from '@/utils/constants'
+import { useUiStore } from '@/stores/ui'
 
 const props = defineProps<{
   open: boolean
@@ -24,6 +25,7 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+const ui = useUiStore()
 const feedback = useFormFeedback()
 const { schedule: scheduleClose, forceExpire: forceClose } = useAutoClose()
 const updating = ref(false)
@@ -93,6 +95,7 @@ async function submit() {
           :title="t('common.save')"
           :loading="updating"
           :closing="feedback.status.value === 'success'"
+          :closing-duration-ms="ui.autoCloseDelayMs"
           type="submit"
           form="report-update-status"
         />

@@ -1,9 +1,12 @@
-import { SUCCESS_AUTO_CLEAR_MS } from './useFormFeedback'
+import { useUiStore } from '@/stores/ui'
 
 /**
  * DDR-006 — Auto-close timer management for modal success windows.
  *
- * `schedule(fn)` — starts the 3 s countdown; `fn` is called when it expires.
+ * `schedule(fn)` — starts the countdown; `fn` is called when it expires.
+ *                  The default delay is the user preference
+ *                  (0–10 s, default 3 s); 0 closes immediately without a
+ *                  success window.
  * `forceExpire()` — cancels any pending timer and runs `fn` immediately.
  *                   No-op when no timer is running (safe to call unconditionally).
  *
@@ -12,10 +15,17 @@ import { SUCCESS_AUTO_CLEAR_MS } from './useFormFeedback'
  * both natural expiry and early (manual) close.
  */
 export function useAutoClose() {
+  const ui = useUiStore()
+
   let _timer: ReturnType<typeof setTimeout> | undefined
   let _pendingFn: (() => void) | undefined
 
-  function schedule(fn: () => void, delay = SUCCESS_AUTO_CLEAR_MS): void {
+  function schedule(fn: () => void, delay = ui.autoCloseDelayMs): void {
+    // 0 = immediate close, no success window.
+    if (delay <= 0) {
+      fn()
+      return
+    }
     // In practice, early-close guards in action functions ensure schedule() is
     // never called while a timer is already running, so the previous fn is not lost.
     _pendingFn = fn

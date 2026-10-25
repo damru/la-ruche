@@ -20,6 +20,7 @@ import { toErrorMessage } from '@/composables/usePageLoader'
 import { extractFileExtension } from '@/utils/files'
 import type { CalendarEventCategory, ManualCalendarEvent } from '@/types/domain'
 import { CALENDAR_EVENT_CATEGORIES, DOCUMENT_ROLES } from '@/utils/constants'
+import { useUiStore } from '@/stores/ui'
 
 const props = defineProps<{
   open: boolean
@@ -32,6 +33,7 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+const ui = useUiStore()
 const feedback = useFormFeedback()
 const { schedule: scheduleClose, forceExpire: forceClose } = useAutoClose()
 const saving = ref(false)
@@ -198,6 +200,7 @@ async function handleSubmit() {
           :title="t('common.save')"
           :loading="saving"
           :closing="feedback.status.value === 'success'"
+          :closing-duration-ms="ui.autoCloseDelayMs"
           type="submit"
           form="calendar-event-form"
         />

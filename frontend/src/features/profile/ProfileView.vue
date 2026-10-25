@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import CCard from '@/components/molecules/CCard.vue'
@@ -9,13 +9,14 @@ import CTopbar from '@/components/organisms/CTopbar.vue'
 import CHeading from '@/components/atoms/CHeading.vue'
 import CTabs from '@/components/atoms/CTabs.vue'
 import CToggle from '@/components/atoms/CToggle.vue'
+import CFormSelect from '@/components/atoms/CFormSelect.vue'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CIconClock from '@/components/atoms/CIconClock.svg'
 import CIconLogIn from '@/components/atoms/CIconLogIn.svg'
 import CIconMoon from '@/components/atoms/CIconMoon.svg'
 import CIconSun from '@/components/atoms/CIconSun.svg'
 import { useAuthStore } from '@/stores/auth'
-import { useUiStore, NOTIF_EVENTS } from '@/stores/ui'
+import { useUiStore, NOTIF_EVENTS, AUTO_CLOSE_DELAY_MIN_SEC, AUTO_CLOSE_DELAY_MAX_SEC } from '@/stores/ui'
 import { authApi } from '@/api'
 import { useBuildingStore } from '@/stores/building'
 import { useFormFeedback } from '@/composables/useFormFeedback'
@@ -111,14 +112,48 @@ const selectedThemeOption = computed(
 )
 
 // ── Notifications ─────────────────────────────────────────────────
-async function resetNotifPrefs() {
+// Hydrate from the server when the tab is first opened;
+// localStorage remains the fallback cache on network error.
+watch(
+  () => activeTab.value,
+  (tab) => {
+    if (tab === 'notifications') {
+      void ui.loadNotifPrefs()
+    }
+  },
+  { immediate: true },
+)
+
+// ── Auto-close delay selector ─────────────────────────────────────────────────
+const autoCloseDelayOptions = computed(() =>
+  Array.from(
+    { length: AUTO_CLOSE_DELAY_MAX_SEC - AUTO_CLOSE_DELAY_MIN_SEC + 1 },
+    (_, i) => {
+      const seconds = AUTO_CLOSE_DELAY_MIN_SEC + i
+      return {
+        value: seconds,
+        label: seconds === 0
+          ? t('settings.preferences.autoCloseDelay.immediate')
+          : t('settings.preferences.autoCloseDelay.seconds', { count: seconds }),
+      }
+    },
+  ),
+)
+
+const selectedAutoCloseDelay = computed({
+  get: () => String(ui.autoCloseDelaySec),
+  set: (value: string) => ui.setAutoCloseDelay(Number(value)),
+})
+
+// ── Global preferences reset ──────────────────────────────────────────────────
+async function resetAllPrefs() {
   const ok = await confirm({
-    title: t('settings.notifications.resetConfirmTitle'),
-    message: t('settings.notifications.resetConfirmMessage'),
+    title: t('settings.preferences.resetConfirmTitle'),
+    message: t('settings.preferences.resetConfirmMessage'),
     variant: 'primary',
   })
   if (ok) {
-    ui.resetNotifPrefs()
+    await ui.resetAllPrefs()
   }
 }
 
@@ -299,12 +334,6 @@ const showResetDataModal = ref(false)
                 {{ t('settings.notifications.subtitle') }}
               </p>
             </div>
-            <CBtn
-              variant="ghost"
-              size="sm"
-              :title="t('settings.notifications.reset')"
-              @click="resetNotifPrefs"
-            />
           </div>
           <div class="notif-list">
             <div
@@ -374,8 +403,27 @@ const showResetDataModal = ref(false)
           <p class="text-xs text-on-surface-variant theme-hint">
             {{ t(selectedThemeOption.hintKey) }}
           </p>
+
+          <div class="auto-close-setting">
+            <CFormSelect
+              v-model="selectedAutoCloseDelay"
+              :label="t('settings.preferences.autoCloseDelay.label')"
+              :hint="t('settings.preferences.autoCloseDelay.hint')"
+              :options="autoCloseDelayOptions"
+            />
+          </div>
         </CCard>
       </template>
+
+      <!-- ── Global reset (all tabs) ─────────────────────────────────────────── -->
+      <div class="mt-8 flex justify-center">
+        <CBtn
+          variant="ghost"
+          size="sm"
+          :title="t('settings.preferences.reset')"
+          @click="resetAllPrefs"
+        />
+      </div>
     </div>
   </div>
 
@@ -433,6 +481,11 @@ const showResetDataModal = ref(false)
 
 .theme-hint {
   margin-bottom: 0;
+}
+
+.auto-close-setting {
+  margin-top: var(--space-4);
+  max-width: 320px;
 }
 
 /* Access context */

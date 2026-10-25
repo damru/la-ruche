@@ -9,6 +9,7 @@ import { usersApi } from '@/api'
 import { useFormFeedback } from '@/composables/useFormFeedback'
 import { useAutoClose } from '@/composables/useAutoClose'
 import type { User } from '@/types/domain'
+import { useUiStore } from '@/stores/ui'
 
 const props = defineProps<{
   open: boolean
@@ -21,6 +22,7 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+const ui = useUiStore()
 const feedback = useFormFeedback()
 const { schedule: scheduleClose, forceExpire: forceClose } = useAutoClose()
 const loading = ref(false)
@@ -81,6 +83,7 @@ async function confirmArchive() {
           :title="t('residents.archiveUser')"
           :loading="loading"
           :closing="feedback.status.value === 'success'"
+          :closing-duration-ms="ui.autoCloseDelayMs"
           @click="confirmArchive"
         />
       </CFormActions>

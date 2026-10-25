@@ -11,6 +11,7 @@ import { useAutoClose } from '@/composables/useAutoClose'
 import { toErrorMessage } from '@/composables/usePageLoader'
 import type { Task } from '@/types/domain'
 import { TASK_STATUS_AWAITING_VALIDATION, TASK_STATUS_CLOSED } from '@/utils/constants'
+import { useUiStore } from '@/stores/ui'
 
 const props = defineProps<{
   open: boolean
@@ -23,6 +24,7 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+const ui = useUiStore()
 const feedback = useFormFeedback()
 const { schedule: scheduleClose, forceExpire: forceClose } = useAutoClose()
 const closing = ref(false)
@@ -114,6 +116,7 @@ async function handleSubmit() {
           :title="confirmButtonLabel"
           :loading="closing"
           :closing="feedback.status.value === 'success'"
+          :closing-duration-ms="ui.autoCloseDelayMs"
           type="submit"
           form="task-close"
         />

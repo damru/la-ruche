@@ -13,6 +13,7 @@ import { useFormFeedback } from '@/composables/useFormFeedback'
 import { useAutoClose } from '@/composables/useAutoClose'
 import type { ContractType, PaymentFrequency, VendorContract } from '@/types/domain'
 import { CONTRACT_TYPES, DEFAULT_CONTRACT_TYPE, PAYMENT_FREQUENCIES } from '@/utils/constants'
+import { useUiStore } from '@/stores/ui'
 
 // Amendment form state — mirrors the descriptive + frozen fields of a
 // contract. Pattern B (ADR-009): submitting creates a NEW draft contract
@@ -44,6 +45,7 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+const ui = useUiStore()
 const feedback = useFormFeedback()
 const { schedule: scheduleClose, forceExpire: forceClose } = useAutoClose()
 const saving = ref(false)
@@ -309,6 +311,7 @@ async function submitAmendment() {
           form="amend-contract-form"
           :loading="saving"
           :closing="feedback.status.value === 'success'"
+          :closing-duration-ms="ui.autoCloseDelayMs"
           :disabled="saving"
         />
       </CFormActions>

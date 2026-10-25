@@ -69,12 +69,12 @@ references:
 
 ---
 
-## Schéma DB — 40 tables
+## Schéma DB — 41 tables
 
 | Domaine | Tables |
 |---|---|
 | Copropriété | `building`, `unit`, `allocation_key`, `unit_allocation_key`, `edd_reference`, `edd_reference_share` |
-| Utilisateurs | `user_account`, `user_token`, `user_building`, `unit_owner` |
+| Utilisateurs | `user_account`, `user_token`, `user_building`, `unit_owner`, `user_notification_preference` |
 | AG | `general_meeting`, `general_meeting_document`, `general_meeting_attendance`, `resolution`, `vote` |
 | Budget | `budget`, `budget_line`, `levy_call`, `works_fund` — champ `category` sur `levy_call` **prévu** ; `budget.parent_budget_id` ; `budget_line.valid_from` / `valid_to` / `rectificatif_version` / `version` |
 | Documents | `document`, `document_event` |

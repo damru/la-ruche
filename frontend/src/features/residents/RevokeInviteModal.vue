@@ -8,6 +8,7 @@ import { usersApi } from '@/api'
 import { useFormFeedback } from '@/composables/useFormFeedback'
 import { useAutoClose } from '@/composables/useAutoClose'
 import type { User } from '@/types/domain'
+import { useUiStore } from '@/stores/ui'
 
 const props = defineProps<{
   open: boolean
@@ -20,6 +21,7 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+const ui = useUiStore()
 const revokeFeedback = useFormFeedback()
 const revokingInvite = ref(false)
 const { schedule: scheduleRevokeClose, forceExpire: forceRevokeClose } = useAutoClose()
@@ -72,6 +74,7 @@ async function confirmRevokeInvite() {
           :title="t('residents.confirmRevokeTitle')"
           :loading="revokingInvite"
           :closing="revokeFeedback.status.value === 'success'"
+          :closing-duration-ms="ui.autoCloseDelayMs"
           @click="confirmRevokeInvite"
         />
       </CFormActions>

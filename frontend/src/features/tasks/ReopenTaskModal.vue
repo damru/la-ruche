@@ -10,6 +10,7 @@ import { useAutoClose } from '@/composables/useAutoClose'
 import { toErrorMessage } from '@/composables/usePageLoader'
 import type { Task } from '@/types/domain'
 import { TASK_STATUS_OPEN } from '@/utils/constants'
+import { useUiStore } from '@/stores/ui'
 
 const props = defineProps<{
   open: boolean
@@ -22,6 +23,7 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+const ui = useUiStore()
 const feedback = useFormFeedback()
 const { schedule: scheduleClose, forceExpire: forceClose } = useAutoClose()
 const reopening = ref(false)
@@ -74,6 +76,7 @@ async function handleSubmit() {
           :title="t('tasks.reopenTask')"
           :loading="reopening"
           :closing="feedback.status.value === 'success'"
+          :closing-duration-ms="ui.autoCloseDelayMs"
           @click="handleSubmit"
         />
       </CFormActions>

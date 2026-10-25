@@ -20,6 +20,7 @@ import { useAutoClose } from '@/composables/useAutoClose'
 import type { ContractType, Document, PaymentFrequency, VendorContract } from '@/types/domain'
 import { CONTRACT_TYPES, DEFAULT_CONTRACT_TYPE, MANAGER_ROLES, PAYMENT_FREQUENCIES } from '@/utils/constants'
 import { extractFileExtension } from '@/utils/files'
+import { useUiStore } from '@/stores/ui'
 
 interface ContractFormState {
   vendor_name: string
@@ -46,6 +47,7 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+const ui = useUiStore()
 const { formatDate, formatFileSize } = useFormatters()
 const feedback = useFormFeedback()
 const saving = ref(false)
@@ -561,6 +563,7 @@ async function saveContract() {
           form="contract-form"
           :loading="saving || uploadingDocuments"
           :closing="feedback.status.value === 'success'"
+          :closing-duration-ms="ui.autoCloseDelayMs"
           :disabled="saving || uploadingDocuments"
         />
       </CFormActions>
@@ -605,6 +608,7 @@ async function saveContract() {
           :title="t('common.deleteLabel')"
           :loading="deletingContract"
           :closing="deleteContractFeedback.status.value === 'success'"
+          :closing-duration-ms="ui.autoCloseDelayMs"
           @click="deleteContract"
         />
       </CFormActions>

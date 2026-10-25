@@ -8,6 +8,7 @@ import { unitsApi } from '@/api'
 import { useFormFeedback } from '@/composables/useFormFeedback'
 import { useAutoClose } from '@/composables/useAutoClose'
 import type { Unit } from '@/types/domain'
+import { useUiStore } from '@/stores/ui'
 
 const props = defineProps<{
   open: boolean
@@ -20,6 +21,7 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+const ui = useUiStore()
 const archiveFeedback = useFormFeedback()
 const archivingUnit = ref(false)
 const { schedule: scheduleArchiveClose, forceExpire: forceArchiveClose } = useAutoClose()
@@ -72,6 +74,7 @@ async function confirmArchiveUnit() {
           :title="t('common.archiveLabel')"
           :loading="archivingUnit"
           :closing="archiveFeedback.status.value === 'success'"
+          :closing-duration-ms="ui.autoCloseDelayMs"
           @click="confirmArchiveUnit"
         />
       </CFormActions>

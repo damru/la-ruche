@@ -545,7 +545,7 @@ Durcir les entités comptablement critiques pour empêcher toute modification r�
 
 **MVP :** oui | **Réf. :** [PRD - Profil et préférences.md](product/PRD%20-%20Profil%20et%20pr%C3%A9f%C3%A9rences.md) | [DDR-006-form-feedback-pattern.md](ddr/DDR-006-form-feedback-pattern.md)
 
-**État code actuel :** partiel ; la préférence d'apparence est déjà exposée et persistée côté frontend, le profil utilisateur dispose d'un espace dédié, mais la feature reste encore incomplète comme hub personnel structuré de compte, notifications et préférences. La fermeture automatique des modales après succès est à délai fixe (3 s, DDR-006) — pas encore configurable.
+**État code actuel :** livré ; le profil utilisateur centralise compte, notifications (persistées serveur, EP-019-S03) et préférences d'apparence, avec réinitialisation globale (EP-019-S07) et délai de fermeture automatique des modales configurable (EP-019-S09).
 
 Feature simple self-service permettant à chaque utilisateur authentifié de gérer ses informations personnelles utiles au produit, ses préférences de notifications et sa préférence d'apparence depuis un écran unique à onglets.
 
@@ -553,13 +553,13 @@ Feature simple self-service permettant à chaque utilisateur authentifié de gé
 
 * `EP-019-S01` ✅ — Consulter son espace profil personnel avec rappel lisible du rôle et du contexte de compte
 * `EP-019-S02` ✅ — Modifier ses informations personnelles éditables : email (identifiant de connexion) et téléphone uniquement ; `full_name` est `prefilled` depuis EP-002 (non modifiable ici) (PRD US-PP-002)
-* [EP-019-S03](specs/EP-019-S03-spec.md) — Gérer ses préférences de notifications par événement (16 événements catalogués : 3 obligatoires toggle désactivé, 13 optionnels) (PRD US-PP-004) — UI livrée mais persistance localStorage uniquement ; reste la persistance serveur
+* [EP-019-S03](specs/EP-019-S03-spec.md) ✅ — Gérer ses préférences de notifications par événement (16 événements catalogués : 3 obligatoires toggle désactivé, 13 optionnels) (PRD US-PP-004) — persistance serveur livrée (`user_notification_preference`, `GET/PUT /me/notification-preferences`), localStorage en cache de repli + migration one-shot
 * `EP-019-S04` ✅ — Définir sa préférence d'apparence (`clair`, `sombre`, `automatique`) et l'appliquer immédiatement dans l'interface
 * `EP-019-S05` ✅ — Structurer l'écran en onglets `Compte`, `Notifications`, `Apparence` pour éviter la dispersion des réglages
 * `EP-019-S06` ✅ — Gérer la première visite : afficher les valeurs par défaut de manière lisible dès la première ouverture du profil ; s'assurer que l'état initial est compréhensible sans action préalable (PRD US-PP-003)
-* [EP-019-S07](specs/EP-019-S07-spec.md) — Réinitialiser ses préférences : bouton global unique en bas de page (couvre Notifications + Apparence), avec modale de confirmation avant exécution (PRD US-PP-005) — livré partiellement : reset Notifications seul, placé dans l'onglet ; reste le bouton global couvrant aussi l'Apparence
+* [EP-019-S07](specs/EP-019-S07-spec.md) ✅ — Réinitialiser ses préférences : bouton global unique en bas de page (couvre Notifications + Apparence + délai de fermeture des modales), avec modale de confirmation avant exécution (PRD US-PP-005)
 * `EP-019-S08` ✅ — Afficher le contexte utilisateur : rôle actif, résidence de rattachement et périmètre des droits depuis l'écran profil (PRD US-PP-007)
-* [EP-019-S09](specs/EP-019-S09-spec.md) 🆕 — Régler le délai de fermeture automatique des modales après succès (0 = immédiat à 10 s, défaut 3 s), dans le même esprit que la préférence d'apparence, persisté côté frontend (PRD US-PP-008) — la fermeture auto est aujourd'hui à délai fixe de 3 s (DDR-006)
+* [EP-019-S09](specs/EP-019-S09-spec.md) ✅ — Régler le délai de fermeture automatique des modales après succès (0 = immédiat à 10 s, défaut 3 s), dans le même esprit que la préférence d'apparence, persisté côté frontend (`laruche-auto-close-delay`) (PRD US-PP-008)
 
 ***
 

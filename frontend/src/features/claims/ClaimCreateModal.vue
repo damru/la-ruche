@@ -8,6 +8,7 @@ import { useAutoClose } from '@/composables/useAutoClose'
 import { extractFileExtension } from '@/utils/files'
 import type { ClaimType, Unit } from '@/types/domain'
 import { CLAIM_TYPES, CLAIM_TYPE_NATURAL_DISASTER, DEFAULT_CLAIM_TYPE, ROLES } from '@/utils/constants'
+import { useUiStore } from '@/stores/ui'
 
 const props = defineProps<{
   open: boolean
@@ -20,6 +21,7 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+const ui = useUiStore()
 const feedback = useFormFeedback()
 const { schedule: scheduleClose, forceExpire: forceClose } = useAutoClose()
 
@@ -227,6 +229,7 @@ async function handleSubmit() {
           :title="t('common.save')"
           :loading="saving || uploading"
           :closing="feedback.status.value === 'success'"
+          :closing-duration-ms="ui.autoCloseDelayMs"
           type="submit"
           form="claim-create"
         />

@@ -19,6 +19,7 @@ import { useAutoClose } from '@/composables/useAutoClose'
 import { useFormatters } from '@/composables/useFormatters'
 import { toErrorMessage } from '@/composables/usePageLoader'
 import type { Document, ManualCalendarEvent } from '@/types/domain'
+import { useUiStore } from '@/stores/ui'
 
 const props = defineProps<{
   open: boolean
@@ -32,6 +33,7 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+const ui = useUiStore()
 const { formatDate, formatFileSize } = useFormatters()
 const perms = usePermissions()
 const feedback = useFormFeedback()
@@ -160,6 +162,7 @@ async function confirmDelete() {
           :title="t('common.delete')"
           :loading="deleting"
           :closing="feedback.status.value === 'success'"
+          :closing-duration-ms="ui.autoCloseDelayMs"
           class="mr-auto"
           @click="confirmDelete"
         />

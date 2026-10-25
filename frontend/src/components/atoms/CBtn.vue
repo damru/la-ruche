@@ -15,6 +15,7 @@ const props = withDefaults(defineProps<{
   disabled?: boolean
   loading?: boolean
   closing?: boolean
+  closingDurationMs?: number
   type?: 'button' | 'submit' | 'reset'
   disableWhenFormInvalid?: boolean
   title?: string
@@ -26,6 +27,7 @@ const props = withDefaults(defineProps<{
   disabled: false,
   loading: false,
   closing: false,
+  closingDurationMs: undefined,
   type: 'button',
   disableWhenFormInvalid: undefined,
   title: undefined,
@@ -35,6 +37,13 @@ const props = withDefaults(defineProps<{
 
 const { t } = useI18n()
 const attrs = useAttrs()
+
+// Drives the closing fill animation duration (DDR-006).
+const closingStyle = computed(() =>
+  props.closingDurationMs !== undefined
+    ? { '--c-btn-closing-duration': `${props.closingDurationMs}ms` }
+    : undefined,
+)
 
 const MIN_LOADING_MS = 300
 const visualLoading = ref(props.loading)
@@ -164,6 +173,7 @@ const shrinkClass: Record<Breakpoint, string> = {
     :disabled="isDisabled"
     :type="type"
     :title="variant === 'icon' ? title : undefined"
+    :style="closingStyle"
     :class="[
       variantClass[variant], sizeClass[size],
       { 
@@ -359,8 +369,9 @@ const shrinkClass: Record<Breakpoint, string> = {
 }
 
 /* ── Closing progress fill (DDR-006) ──────────────────────────── */
-/* Fills the button background from left to right over SUCCESS_AUTO_CLEAR_MS (3 s)
-   to communicate the auto-close countdown after a successful action. */
+/* Fills the button background from left to right over the auto-close delay
+   (default 3 s, configurable) to communicate the auto-close
+   countdown after a successful action. */
 .c-btn--closing::before {
   content: '';
   position: absolute;
@@ -368,7 +379,7 @@ const shrinkClass: Record<Breakpoint, string> = {
   background: rgba(255, 255, 255, 0.25);
   transform-origin: left center;
   transform: scaleX(0);
-  animation: c-btn-fill 3s linear forwards;
+  animation: c-btn-fill var(--c-btn-closing-duration, 3s) linear forwards;
 }
 
 @keyframes c-btn-fill {

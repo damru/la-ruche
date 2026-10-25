@@ -14,6 +14,7 @@ import { useAutoClose } from '@/composables/useAutoClose'
 import { toErrorMessage } from '@/composables/usePageLoader'
 import type { GovernanceMandate } from '@/types/domain'
 import { DEFAULT_GOVERNANCE_ROLE, GOVERNANCE_ROLES } from '@/utils/constants'
+import { useUiStore } from '@/stores/ui'
 
 const props = defineProps<{
   open: boolean
@@ -26,6 +27,7 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+const ui = useUiStore()
 const feedback = useFormFeedback()
 const { schedule: scheduleClose, forceExpire: forceClose } = useAutoClose()
 const saving = ref(false)
@@ -160,6 +162,7 @@ async function save() {
           :title="t('common.save')"
           :loading="saving"
           :closing="feedback.status.value === 'success'"
+          :closing-duration-ms="ui.autoCloseDelayMs"
         />
       </CFormActions>
     </template>
