@@ -9,9 +9,18 @@ use sqlx::{PgPool, Row};
 use uuid::Uuid;
 
 use crate::{
-    domain::calendar::{CalendarEvent, CalendarSource, includes_legal_deadlines},
+    domain::{
+        calendar::{CalendarEvent, CalendarSource, includes_legal_deadlines},
+        immutability::meeting_status,
+    },
     errors::AppResult,
 };
+
+/// `meeting_type` values (PG enum `meeting_type`).
+pub mod meeting_type {
+    pub const ANNUAL: &str = "annual";
+    pub const EXTRAORDINARY: &str = "extraordinary";
+}
 
 async fn meeting_events(
     pool: &PgPool,
@@ -41,12 +50,12 @@ async fn meeting_events(
             let meeting_date: chrono::DateTime<chrono::Utc> = r.try_get("meeting_date")?;
             let title = format!(
                 "Assemblée générale {}{}",
-                if meeting_type == "extraordinary" {
+                if meeting_type == meeting_type::EXTRAORDINARY {
                     "extraordinaire"
                 } else {
                     "annuelle"
                 },
-                if status == "draft" {
+                if status == meeting_status::DRAFT {
                     " (brouillon)"
                 } else {
                     ""
@@ -79,10 +88,11 @@ async fn meeting_legal_deadline_events(
         SELECT id, meeting_date
         FROM general_meeting
         WHERE building_id = $1
-          AND status = 'closed'
+          AND status = $2::text::meeting_status
         "#,
     )
     .bind(building_id)
+    .bind(meeting_status::CLOSED)
     .fetch_all(pool)
     .await?;
 
@@ -134,13 +144,14 @@ async fn contract_reminder_events(
         FROM contract_reminder cr
         JOIN vendor_contract vc ON vc.id = cr.contract_id
         WHERE vc.building_id = $1
-          AND cr.status = 'pending'
+          AND cr.status = $4::text::reminder_status
           AND cr.reminder_date BETWEEN $2 AND $3
         "#,
     )
     .bind(building_id)
     .bind(from)
     .bind(to)
+    .bind(crate::db::contract::reminder_status::PENDING)
     .fetch_all(pool)
     .await?;
 

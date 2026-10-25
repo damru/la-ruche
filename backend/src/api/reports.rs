@@ -58,14 +58,14 @@ pub struct ConvertToTaskInput {
     pub priority: Option<String>,
 }
 
-/// Update report status. Only managers and board members can change status.
+/// Update report status. Only the manager (syndic) may change a report's status.
 pub async fn update_status(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
     Json(input): Json<UpdateStatusInput>,
 ) -> AppResult<StatusCode> {
-    auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
+    auth.require_role(&Role::Manager)?;
     if !db::report::validate_status(&input.status) {
         return Err(AppError::validation_code("errors.reports.invalid_status"));
     }
@@ -74,7 +74,7 @@ pub async fn update_status(
 }
 
 /// Convert a report into a task (EP-011-S03).
-/// Only managers and board members can convert a report.
+/// Only the manager (syndic) may convert a report into a task.
 /// Returns the newly created task id.
 pub async fn convert_to_task(
     auth: AuthUser,
@@ -82,7 +82,7 @@ pub async fn convert_to_task(
     Path(id): Path<Uuid>,
     input: Option<Json<ConvertToTaskInput>>,
 ) -> AppResult<Json<serde_json::Value>> {
-    auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
+    auth.require_role(&Role::Manager)?;
     let priority = input
         .and_then(|Json(body)| body.priority)
         .unwrap_or_else(|| db::task::DEFAULT_PRIORITY.to_string());

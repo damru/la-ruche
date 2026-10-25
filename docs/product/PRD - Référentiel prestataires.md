@@ -74,11 +74,11 @@ Centraliser l'**annuaire des prestataires** utilisés ou référencés par la co
 
 | Domaine | Syndic | Conseil | Copropriétaire | Locataire |
 |---|---|---|---|---|
-| Prestataires | `C / R / U / D¹` | `C / R / U / D¹` | `R²` | `X` |
+| Prestataires | `C / R / U / D¹` | `C / R / U / D¹` | `R²` | `R²` |
 | Attestations / certifications | `C / R / D¹` | `R` | `X` | `X` |
 
 > ¹ Suppression hard-delete autorisée uniquement si le prestataire n'est référencé dans aucune tâche (quel que soit son statut, y compris clôturée) ni contrat actif (sinon 422).
-> ² Copropriétaire : nom, spécialité, téléphone, email — sans accès aux documents ni aux conditions contractuelles.
+> ² Copropriétaire et Locataire : nom, spécialité, téléphone, email — sans accès aux documents ni aux conditions contractuelles.
 
 ### Règles de sécurité
 

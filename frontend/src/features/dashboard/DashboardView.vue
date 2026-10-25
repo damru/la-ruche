@@ -1,7 +1,9 @@
 <script setup lang="ts">
+import { BUDGET_STATUS_APPROVED, LEVY_STATUS_OVERDUE, LEVY_STATUS_PAID, MEETING_STATUS_CLOSED, POLL_STATUS_OPEN, REMINDER_STATUS_PENDING, REMINDER_URGENCY_HIGH_DAYS, REMINDER_URGENCY_MEDIUM_DAYS, REPORT_STATUS_CLOSED, TASK_PRIORITIES, TASK_STATUS_CANCELLED, TASK_STATUS_CLOSED, TASK_STATUS_IN_PROGRESS, TASK_STATUS_OPEN } from '@/utils/constants'
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
+import { usePermissions } from '@/composables/usePermissions'
 import { useFormatters } from '@/composables/useFormatters'
 import { usePageLoader } from '@/composables/usePageLoader'
 import CKpiCard from '@/components/molecules/CKpiCard.vue'
@@ -30,11 +32,12 @@ const { formatCurrency, formatDate, formatRelative, daysUntil } = useFormatters(
 // ── Permissions (miroir des meta.roles du router) ───────────────────
 // Une carte / un KPI ne s'affiche que si sa page cible est accessible
 // à l'utilisateur courant — et les données ne sont chargées que si permises.
-const canViewBudget = computed(() => auth.hasAnyRole(['manager', 'board_member', 'co_owner']))
-const canViewMeetings = computed(() => auth.hasAnyRole(['manager', 'board_member', 'co_owner']))
-const canViewGovernance = computed(() => auth.hasAnyRole(['manager', 'board_member', 'co_owner']))
-const canViewTasks = computed(() => auth.hasAnyRole(['manager', 'board_member']))
-const canViewAccounting = computed(() => auth.hasAnyRole(['manager', 'board_member']))
+const perms = usePermissions()
+const canViewBudget = perms.canViewBudget
+const canViewMeetings = perms.canViewGM
+const canViewGovernance = perms.canViewGovernance
+const canViewTasks = perms.canViewTask
+const canViewAccounting = perms.canViewAccounting
 const canViewContracts = computed(() => auth.hasRole('manager'))
 const canViewResidents = computed(() => auth.hasRole('manager'))
 const canViewMyCharges = computed(() => auth.hasRole('co_owner'))
@@ -102,7 +105,7 @@ async function loadData() {
   agendaEvents.value = valueOr(agendaRes, [])
 
   const budgets = valueOr(budgetsRes, [])
-  const budget = budgets.find(b => b.status === 'approved') ?? budgets[0] ?? null
+  const budget = budgets.find(b => b.status === BUDGET_STATUS_APPROVED) ?? budgets[0] ?? null
   currentBudget.value = budget
   if (budget) {
     const [linesRes, leviesRes, myLeviesRes] = await Promise.allSettled([
@@ -130,14 +133,14 @@ const contractsById = computed(() =>
 
 const reminders = computed(() =>
   rawReminders.value
-    .filter(r => r.status === 'pending')
+    .filter(r => r.status === REMINDER_STATUS_PENDING)
     .map(r => ({ ...r, contract: contractsById.value.get(r.contract_id) }))
     .sort((a, b) => new Date(a.reminder_date).getTime() - new Date(b.reminder_date).getTime())
     .slice(0, 4),
 )
 
 const consultations = computed(() =>
-  rawConsultations.value.filter(c => c.status === 'open'),
+  rawConsultations.value.filter(c => c.status === POLL_STATUS_OPEN),
 )
 
 // Active governance mandates — syndic first, then council president, then members.
@@ -158,11 +161,11 @@ function contactInitials(name: string): string {
     .join('')
 }
 
-const overdueLevies = computed(() => levies.value.filter(l => l.status === 'overdue'))
+const overdueLevies = computed(() => levies.value.filter(l => l.status === LEVY_STATUS_OVERDUE))
 
 // Appels de fonds individuels (copropriétaire)
-const myUnpaidLevies = computed(() => myLevies.value.filter(l => l.status !== 'paid'))
-const myOverdueLevies = computed(() => myLevies.value.filter(l => l.status === 'overdue'))
+const myUnpaidLevies = computed(() => myLevies.value.filter(l => l.status !== LEVY_STATUS_PAID))
+const myOverdueLevies = computed(() => myLevies.value.filter(l => l.status === LEVY_STATUS_OVERDUE))
 const myOverdueAmount = computed(() => myOverdueLevies.value.reduce((sum, l) => sum + Number(l.amount), 0))
 const myNextDueLevy = computed(() =>
   myUnpaidLevies.value
@@ -172,20 +175,20 @@ const myNextDueLevy = computed(() =>
 
 const nextMeeting = computed(() =>
   meetings.value
-    .filter(m => m.status !== 'closed')
+    .filter(m => m.status !== MEETING_STATUS_CLOSED)
     .sort((a, b) => new Date(a.meeting_date).getTime() - new Date(b.meeting_date).getTime())[0]
 )
 const priorityTasks = computed(() =>
   tasks.value
-    .filter(task => task.status !== 'closed' && task.status !== 'cancelled')
+    .filter(task => task.status !== TASK_STATUS_CLOSED && task.status !== TASK_STATUS_CANCELLED)
     .sort((a, b) => priorityOrder(b.priority) - priorityOrder(a.priority))
     .slice(0, 4)
 )
-const openReports = computed(() => reports.value.filter(s => s.status !== 'closed').slice(0, 3))
+const openReports = computed(() => reports.value.filter(s => s.status !== REPORT_STATUS_CLOSED).slice(0, 3))
 const overdueAmount = computed(() => overdueLevies.value.reduce((sum, l) => sum + Number(l.amount), 0))
 const collectionRate = computed(() => {
   if (!levies.value.length) return 100
-  const paid = levies.value.filter(l => l.status === 'paid').length
+  const paid = levies.value.filter(l => l.status === LEVY_STATUS_PAID).length
   return Math.round((paid / levies.value.length) * 100)
 })
 const totalForecast = computed(() => budgetLines.value.reduce((s, l) => s + Number(l.budgeted_amount), 0))
@@ -195,18 +198,18 @@ const budgetExecutionRate = computed(() =>
 )
 
 function priorityOrder(p: TaskPriority): number {
-  return { urgent: 4, high: 3, normal: 2, low: 1 }[p] ?? 0
+  return TASK_PRIORITIES.length - TASK_PRIORITIES.indexOf(p)
 }
 function statusBadgeVariant(s: string): 'open' | 'pending' | 'closed' | 'default' {
-  if (s === 'open') return 'pending'
-  if (s === 'in_progress') return 'open'
-  if (s === 'closed') return 'closed'
+  if (s === TASK_STATUS_OPEN) return 'pending'
+  if (s === TASK_STATUS_IN_PROGRESS) return 'open'
+  if (s === TASK_STATUS_CLOSED) return 'closed'
   return 'default'
 }
 function reminderUrgency(dateStr: string): 'high' | 'medium' | 'low' {
   const days = daysUntil(dateStr)
-  if (days <= 14) return 'high'
-  if (days <= 45) return 'medium'
+  if (days <= REMINDER_URGENCY_HIGH_DAYS) return 'high'
+  if (days <= REMINDER_URGENCY_MEDIUM_DAYS) return 'medium'
   return 'low'
 }
 const todayStr = computed(() =>
@@ -279,7 +282,7 @@ const todayStr = computed(() =>
               </div>
             </div>
             <div
-              v-if="nextMeeting && nextMeeting.status === 'closed'"
+              v-if="nextMeeting && nextMeeting.status === MEETING_STATUS_CLOSED"
               class="hero-alert tone--valid"
             >
               <CIconCheck aria-hidden="true" />
@@ -716,7 +719,7 @@ const todayStr = computed(() =>
                 </div>
                 <div class="res-stat">
                   <p class="res-stat-val">
-                    {{ levies.filter(l => l.status === 'paid').length }}
+                    {{ levies.filter(l => l.status === LEVY_STATUS_PAID).length }}
                   </p><p class="res-stat-label">
                     {{ t('dashboard.paidLabel') }}
                   </p>

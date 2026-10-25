@@ -14,6 +14,7 @@ use validator::Validate;
 use crate::{
     auth::{jwt, password, token},
     db::{self, AppState},
+    domain::Role,
     errors::{AppError, AppResult},
 };
 
@@ -183,19 +184,21 @@ pub async fn bootstrap(
 
     sqlx::query(
         "INSERT INTO user_building (user_id, building_id, roles) \
-         VALUES ($1, $2, ARRAY['manager']::user_role[])",
+         VALUES ($1, $2, ARRAY[$3::user_role])",
     )
     .bind(user_id)
     .bind(building_id)
+    .bind(Role::Manager.as_str())
     .execute(&mut *tx)
     .await?;
 
     // General allocation key created automatically (ADR-007 — non-deletable)
     sqlx::query(
         "INSERT INTO allocation_key (building_id, name, description, key_type) \
-         VALUES ($1, 'Charges Générales', 'Clé de répartition générale — non supprimable', 'general')",
+         VALUES ($1, 'Charges Générales', 'Clé de répartition générale — non supprimable', $2::text::allocation_key_type)",
     )
     .bind(building_id)
+    .bind(crate::db::allocation_key::key_type::GENERAL)
     .execute(&mut *tx)
     .await?;
 
@@ -211,7 +214,7 @@ pub async fn bootstrap(
     let access_token = jwt::generate_access_token(
         user_id,
         building_id,
-        vec![crate::domain::Role::Manager],
+        vec![Role::Manager],
         &state.cfg.auth.jwt_secret,
         state.cfg.auth.access_token_ttl_secs,
     )?;
@@ -234,7 +237,7 @@ pub async fn bootstrap(
     let body = Json(BootstrapResponse {
         user_id,
         building_id,
-        roles: vec!["manager".to_string()],
+        roles: vec![Role::Manager.to_string()],
         last_name: input.last_name.clone(),
         first_name: input.first_name.clone(),
     });

@@ -3,7 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { usePageLoader } from '@/composables/usePageLoader'
-import { useAuthStore } from '@/stores/auth'
+import { usePermissions } from '@/composables/usePermissions'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CIconTile from '@/components/atoms/CIconTile.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
@@ -36,8 +36,9 @@ import DeleteContractorModal from '@/features/contractors/DeleteContractorModal.
 import { contractorsApi } from '@/api'
 import { useBuildingStore } from '@/stores/building'
 import type { Contractor } from '@/types/domain'
+import { CONTRACT_TYPES } from '@/utils/constants'
 
-const DOMAINS_RAW = ['maintenance', 'insurance', 'service', 'energy', 'water', 'cleaning', 'green_spaces', 'other']
+const CONTRACTOR_DOMAINS = [...CONTRACT_TYPES]
 
 function domainIcon(domains: string[]) {
   const icons: Record<string, unknown> = {
@@ -70,7 +71,7 @@ function domainTone(domains: string[]): string {
 
 const { t } = useI18n()
 const router = useRouter()
-const authStore = useAuthStore()
+const perms = usePermissions()
 
 // ── State ─────────────────────────────────────────────────────────
 const buildingName = ref('')
@@ -81,7 +82,7 @@ const selectedDomains = ref<string[]>([])
 
 // ── Permissions ────────────────────────────────────────────────────
 const canEdit = computed(() =>
-  authStore.hasAnyRole(['manager', 'board_member']),
+  perms.canManageContractor,
 )
 
 // ── Load data ─────────────────────────────────────────────────────
@@ -99,7 +100,7 @@ onMounted(reload)
 
 // ── Sorted domains list (alphabetical by translated label) ────────
 const domainOptions = computed(() =>
-  [...DOMAINS_RAW]
+  [...CONTRACTOR_DOMAINS]
     .map(value => ({ value, label: t(`contractors.domains.${value}`) }))
     .sort((a, b) => a.label.localeCompare(b.label)),
 )

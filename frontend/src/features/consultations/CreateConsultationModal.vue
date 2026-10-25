@@ -14,6 +14,7 @@ import { useFormFeedback } from '@/composables/useFormFeedback'
 import { useAutoClose } from '@/composables/useAutoClose'
 import { toErrorMessage } from '@/composables/usePageLoader'
 import type { Consultation } from '@/types/domain'
+import { ROLES } from '@/utils/constants'
 
 const props = defineProps<{
   open: boolean
@@ -67,7 +68,7 @@ async function handleSubmit() {
     title: form.value.title,
     description: form.value.description || undefined,
     visible_to_roles: props.consultation?.visible_to_roles
-      ?? ['manager', 'board_member', 'co_owner', 'tenant'],
+      ?? [...ROLES],
     choices: form.value.choices.filter(c => c.trim()),
   }
   try {

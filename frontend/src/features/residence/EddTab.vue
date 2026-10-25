@@ -25,6 +25,7 @@ import { extractFileExtension } from '@/utils/files'
 import { usePageLoader, toErrorMessage } from '@/composables/usePageLoader'
 import { useFormFeedback } from '@/composables/useFormFeedback'
 import type { Unit, AllocationKey, EddReference, EddDiscrepancy, Document } from '@/types/domain'
+import { MANAGER_ROLES } from '@/utils/constants'
 
 const { t } = useI18n()
 
@@ -104,7 +105,7 @@ async function uploadEddDocument(file: File): Promise<string> {
     original_name: file.name,
     mime_type: mimeType,
     size_bytes: file.size,
-    visible_roles: ['manager', 'board_member'],
+    visible_roles: [...MANAGER_ROLES],
     category: 'edd',
   })
   return document.data.id

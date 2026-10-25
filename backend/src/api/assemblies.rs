@@ -18,7 +18,7 @@ use validator::Validate;
 use crate::{
     api::documents::DocumentListItem,
     db::AppState,
-    domain::{AuthUser, Role, vote::VoteRule},
+    domain::{AuthUser, Role, immutability::resolution_status, permissions, vote::VoteRule},
     errors::{AppError, AppResult},
 };
 
@@ -395,7 +395,9 @@ pub async fn vote(
     Path((meeting_id, resolution_id)): Path<(Uuid, Uuid)>,
     Json(input): Json<VoteInput>,
 ) -> AppResult<StatusCode> {
-    auth.require_any_role(&[Role::Manager, Role::BoardMember, Role::CoOwner])?;
+    if !permissions::can_record_gm_votes(&auth) {
+        return Err(AppError::Forbidden);
+    }
 
     crate::db::assembly::cast_vote(
         &state.pool,
@@ -439,7 +441,11 @@ pub async fn finalize_resolution(
     let rule = parse_vote_rule(&resolution.vote_type)?;
     let result = tally.compute(&rule);
 
-    let new_status = if result.passed { "passed" } else { "rejected" };
+    let new_status = if result.passed {
+        resolution_status::PASSED
+    } else {
+        resolution_status::REJECTED
+    };
 
     let finalized = crate::db::assembly::finalize_resolution(
         &state.pool,

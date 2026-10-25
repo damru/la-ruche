@@ -311,9 +311,9 @@ pub async fn create_version(
         &mut *tx,
         crate::db::audit::NewAuditEntry {
             building_id,
-            entity_type: "document",
+            entity_type: crate::db::audit::entity_type::DOCUMENT,
             entity_id: row.id,
-            operation: "UPDATE",
+            operation: crate::db::audit::operation::UPDATE,
             changed_by: Some(user_id),
             old_values: Some(serde_json::json!({ "id": supersedes_id })),
             new_values: Some(serde_json::json!({ "id": row.id, "reason": reason })),

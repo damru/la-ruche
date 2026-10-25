@@ -71,7 +71,7 @@ const LIST_ONGOING_QUERY: &str = concat!(
     "SELECT id, building_id, proceeding_type::text AS proceeding_type,",
     " status::text AS status, subject, claimant, defendant, jurisdiction,",
     " case_reference, opened_at, closed_at, outcome, created_by, created_at, updated_at",
-    " FROM judicial_proceeding WHERE building_id = $1 AND status <> 'closed'",
+    " FROM judicial_proceeding WHERE building_id = $1 AND status <> $2::text::judicial_proceeding_status",
     " ORDER BY opened_at DESC",
 );
 
@@ -142,6 +142,7 @@ fn validate_payload(
 pub async fn list(pool: &PgPool, building_id: Uuid) -> AppResult<Vec<JudicialProceedingRow>> {
     sqlx::query_as::<_, JudicialProceedingRow>(LIST_QUERY)
         .bind(building_id)
+        .bind(PROCEEDING_STATUS_CLOSED)
         .fetch_all(pool)
         .await
         .map_err(Into::into)

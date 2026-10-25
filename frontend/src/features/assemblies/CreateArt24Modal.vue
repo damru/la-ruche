@@ -9,6 +9,7 @@ import { useFormFeedback } from '@/composables/useFormFeedback'
 import { useAutoClose } from '@/composables/useAutoClose'
 import { toErrorMessage } from '@/composables/usePageLoader'
 import type { Resolution } from '@/types/domain'
+import { VOTE_TYPE_SIMPLE_MAJORITY } from '@/utils/constants'
 
 const props = defineProps<{
   open: boolean
@@ -41,7 +42,7 @@ async function handleConfirm() {
       number: props.nextNumber,
       title: `${props.resolution.title} (Art. 24)`,
       description: props.resolution.description,
-      vote_type: 'simple_majority',
+      vote_type: VOTE_TYPE_SIMPLE_MAJORITY,
     })
     feedback.setSuccess(t('common.saved'))
     scheduleClose(() => {

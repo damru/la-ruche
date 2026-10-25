@@ -26,11 +26,12 @@ import MaintenanceEntryModal from '@/features/maintenance/MaintenanceEntryModal.
 import DeleteMaintenanceEntryModal from '@/features/maintenance/DeleteMaintenanceEntryModal.vue'
 import { maintenanceApi } from '@/api'
 import type { LogbookContractSummary, LogbookSummary, MaintenanceEntry } from '@/types/domain'
+import { ALL_FILTER, CONTRACT_STATUS_ACTIVE, CONTRACT_STATUS_EXPIRED, CONTRACT_STATUS_TERMINATED } from '@/utils/constants'
 
 const { t } = useI18n()
 const { formatDate, formatCurrency } = useFormatters()
 
-type PeriodFilter = 'month' | 'quarter' | 'semester' | 'year' | 'all'
+type PeriodFilter = 'month' | 'quarter' | 'semester' | 'year' | typeof ALL_FILTER
 
 // ── State ─────────────────────────────────────────────────────────
 const buildingName = ref('')
@@ -48,7 +49,7 @@ function startOfDay(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate())
 }
 
-function startOfPeriod(date: Date, filter: Exclude<PeriodFilter, 'all'>): Date {
+function startOfPeriod(date: Date, filter: Exclude<PeriodFilter, typeof ALL_FILTER>): Date {
   const year = date.getFullYear()
   const month = date.getMonth()
 
@@ -58,7 +59,7 @@ function startOfPeriod(date: Date, filter: Exclude<PeriodFilter, 'all'>): Date {
   return new Date(year, 0, 1)
 }
 
-function endOfPeriod(date: Date, filter: Exclude<PeriodFilter, 'all'>): Date {
+function endOfPeriod(date: Date, filter: Exclude<PeriodFilter, typeof ALL_FILTER>): Date {
   const year = date.getFullYear()
   const month = date.getMonth()
 
@@ -68,7 +69,7 @@ function endOfPeriod(date: Date, filter: Exclude<PeriodFilter, 'all'>): Date {
   return new Date(year, 12, 0)
 }
 
-function shiftPeriod(date: Date, filter: Exclude<PeriodFilter, 'all'>, delta: number): Date {
+function shiftPeriod(date: Date, filter: Exclude<PeriodFilter, typeof ALL_FILTER>, delta: number): Date {
   if (filter === 'month') return new Date(date.getFullYear(), date.getMonth() + delta, 1)
   if (filter === 'quarter') return new Date(date.getFullYear(), date.getMonth() + delta * 3, 1)
   if (filter === 'semester') return new Date(date.getFullYear(), date.getMonth() + delta * 6, 1)
@@ -103,7 +104,7 @@ onMounted(reload)
 
 // ── Derived ───────────────────────────────────────────────────────
 const periodRange = computed(() => {
-  if (periodFilter.value === 'all') return null
+  if (periodFilter.value === ALL_FILTER) return null
 
   const start = startOfDay(periodAnchor.value)
   const today = startOfDay(new Date())
@@ -116,7 +117,7 @@ const periodRange = computed(() => {
 })
 
 const periodLabel = computed(() => {
-  if (periodFilter.value === 'all') return t('maintenance.period.all')
+  if (periodFilter.value === ALL_FILTER) return t('maintenance.period.all')
 
   const start = periodAnchor.value
   const today = new Date()
@@ -145,7 +146,7 @@ const periodLabel = computed(() => {
 })
 
 const canGoNext = computed(() => {
-  if (periodFilter.value === 'all') return false
+  if (periodFilter.value === ALL_FILTER) return false
   const currentStart = startOfPeriod(new Date(), periodFilter.value)
   return periodAnchor.value.getTime() < currentStart.getTime()
 })
@@ -199,18 +200,18 @@ const regulatoryLegalLinks = computed(() => [
 ])
 
 function contractStatusVariant(status: LogbookContractSummary['status']): 'open' | 'closed' | 'default' {
-  if (status === 'active') return 'open'
-  if (status === 'expired' || status === 'terminated') return 'closed'
+  if (status === CONTRACT_STATUS_ACTIVE) return 'open'
+  if (status === CONTRACT_STATUS_EXPIRED || status === CONTRACT_STATUS_TERMINATED) return 'closed'
   return 'default'
 }
 
 function goToPreviousPeriod() {
-  if (periodFilter.value === 'all') return
+  if (periodFilter.value === ALL_FILTER) return
   periodAnchor.value = shiftPeriod(periodAnchor.value, periodFilter.value, -1)
 }
 
 function goToNextPeriod() {
-  if (periodFilter.value === 'all' || !canGoNext.value) return
+  if (periodFilter.value === ALL_FILTER || !canGoNext.value) return
   periodAnchor.value = shiftPeriod(periodAnchor.value, periodFilter.value, 1)
 }
 
@@ -414,7 +415,7 @@ function openDeleteModal(entry: MaintenanceEntry) {
             <CTabs
               v-model="periodFilter"
               variant="filter"
-              :tabs="(['month', 'quarter', 'semester', 'year', 'all'] as const).map(f => ({ value: f, label: t(`maintenance.filters.${f}`) }))"
+              :tabs="(['month', 'quarter', 'semester', 'year', ALL_FILTER] as const).map(f => ({ value: f, label: t(`maintenance.filters.${f}`) }))"
             >
               <CFormInput
                 v-model="search"
@@ -433,7 +434,7 @@ function openDeleteModal(entry: MaintenanceEntry) {
                   size="sm"
                   :icon="CIconArrowLeft"
                   :title="t('calendar.previousPeriod')"
-                  :disabled="periodFilter === 'all'"
+                  :disabled="periodFilter === ALL_FILTER"
                   :aria-label="t('calendar.previousPeriod')"
                   @click="goToPreviousPeriod"
                 />

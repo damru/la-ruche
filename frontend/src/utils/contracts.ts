@@ -1,4 +1,5 @@
 import type { ContractStatus, VendorContract } from '@/types/domain'
+import { CONTRACT_STATUS_ACTIVE, CONTRACT_STATUS_DRAFT, CONTRACT_STATUS_EXPIRED, CONTRACT_STATUS_TERMINATED } from '@/utils/constants'
 
 function todayIso(): string {
   const today = new Date()
@@ -9,9 +10,9 @@ function todayIso(): string {
 }
 
 export function effectiveContractStatus(contract: VendorContract): ContractStatus {
-  if (contract.status === 'draft') return 'draft'
-  if (contract.status === 'terminated') return 'terminated'
-  if (contract.status === 'expired') return 'expired'
-  if (contract.end_date && contract.end_date < todayIso()) return 'expired'
-  return 'active'
+  if (contract.status === CONTRACT_STATUS_DRAFT) return CONTRACT_STATUS_DRAFT
+  if (contract.status === CONTRACT_STATUS_TERMINATED) return CONTRACT_STATUS_TERMINATED
+  if (contract.status === CONTRACT_STATUS_EXPIRED) return CONTRACT_STATUS_EXPIRED
+  if (contract.end_date && contract.end_date < todayIso()) return CONTRACT_STATUS_EXPIRED
+  return CONTRACT_STATUS_ACTIVE
 }

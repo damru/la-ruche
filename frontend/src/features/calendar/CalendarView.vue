@@ -9,7 +9,7 @@ import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { calendarApi } from '@/api'
 import { usePageLoader } from '@/composables/usePageLoader'
-import { useAuthStore } from '@/stores/auth'
+import { usePermissions } from '@/composables/usePermissions'
 import { useBuildingStore } from '@/stores/building'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
@@ -37,14 +37,14 @@ type Mode = 'month' | 'week' | 'agenda'
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
-const auth = useAuthStore()
+const perms = usePermissions()
 
 const mode = ref<Mode>('month')
 const anchor = ref(new Date())
 const events = ref<CalendarEvent[]>([])
 const buildingName = ref('')
 
-const canManage = auth.hasAnyRole(['manager', 'board_member'])
+const canManage = perms.canManageCalendar
 
 const detailOpen = ref(false)
 const detailEventId = ref<string | null>(null)

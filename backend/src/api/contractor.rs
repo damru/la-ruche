@@ -11,6 +11,7 @@ use uuid::Uuid;
 
 use crate::{
     db::{self, AppState},
+    domain::Role,
     errors::{AppError, AppResult},
 };
 
@@ -30,9 +31,10 @@ pub async fn get_task(
            FROM task t
            JOIN building b ON b.id = t.building_id
            JOIN user_account u ON u.id = t.created_by
-           WHERE t.vendor_token = $1 AND t.token_expires_at > NOW() AND t.status != 'closed'"#,
+           WHERE t.vendor_token = $1 AND t.token_expires_at > NOW() AND t.status != $2::text::task_status"#,
     )
     .bind(token)
+    .bind(crate::db::task::status::CLOSED)
     .fetch_optional(&state.pool)
     .await?
     .ok_or(AppError::NotFound)?;
@@ -175,7 +177,7 @@ pub async fn submit(
             &bucket,
             &doc_meta.mime_type,
             doc_meta.size_bytes,
-            &["manager".to_string(), "board_member".to_string()],
+            &[Role::Manager.to_string(), Role::BoardMember.to_string()],
         )
         .await?;
 
@@ -191,7 +193,7 @@ pub async fn submit(
     // Store the vendor's pre-validation and invalidate the token.
     sqlx::query(
         "UPDATE task
-         SET status = 'awaiting_validation'::task_status,
+         SET status = $4::text::task_status,
              vendor_token = NULL,
              token_expires_at = NULL,
              completion_cost = $3,
@@ -201,6 +203,7 @@ pub async fn submit(
     .bind(task.id)
     .bind(task.building_id)
     .bind(input.cost)
+    .bind(crate::db::task::status::AWAITING_VALIDATION)
     .execute(&mut *tx)
     .await?;
 

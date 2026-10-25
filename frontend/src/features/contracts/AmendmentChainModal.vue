@@ -8,6 +8,7 @@ import { contractsApi } from '@/api'
 import { useFormatters } from '@/composables/useFormatters'
 import { toErrorMessage } from '@/composables/usePageLoader'
 import type { ContractStatus, VendorContract } from '@/types/domain'
+import { CONTRACT_STATUS_ACTIVE, CONTRACT_STATUS_DRAFT, CONTRACT_STATUS_EXPIRED, CONTRACT_STATUS_TERMINATED } from '@/utils/constants'
 
 const props = defineProps<{
   open: boolean
@@ -28,9 +29,9 @@ const chain = ref<VendorContract[]>([])
 // Maps a contract status onto the CBadge status variant used across the
 // contracts feature (see ContractsView.statusVariant).
 function statusVariant(status: ContractStatus): 'open' | 'pending' | 'closed' | 'default' {
-  if (status === 'active') return 'open'
-  if (status === 'draft') return 'pending'
-  if (status === 'terminated' || status === 'expired') return 'closed'
+  if (status === CONTRACT_STATUS_ACTIVE) return 'open'
+  if (status === CONTRACT_STATUS_DRAFT) return 'pending'
+  if (status === CONTRACT_STATUS_TERMINATED || status === CONTRACT_STATUS_EXPIRED) return 'closed'
   return 'default'
 }
 

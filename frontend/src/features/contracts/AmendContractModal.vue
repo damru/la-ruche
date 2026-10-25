@@ -12,6 +12,7 @@ import { toErrorMessage } from '@/composables/usePageLoader'
 import { useFormFeedback } from '@/composables/useFormFeedback'
 import { useAutoClose } from '@/composables/useAutoClose'
 import type { ContractType, PaymentFrequency, VendorContract } from '@/types/domain'
+import { CONTRACT_TYPES, DEFAULT_CONTRACT_TYPE, PAYMENT_FREQUENCIES } from '@/utils/constants'
 
 // Amendment form state — mirrors the descriptive + frozen fields of a
 // contract. Pattern B (ADR-009): submitting creates a NEW draft contract
@@ -50,22 +51,12 @@ const fieldErrors = ref<Record<string, string>>({})
 
 const contractTypeOptions = computed(() =>
   [
-    { value: 'maintenance', label: t('contracts.types.maintenance') },
-    { value: 'insurance', label: t('contracts.types.insurance') },
-    { value: 'service', label: t('contracts.types.service') },
-    { value: 'energy', label: t('contracts.types.energy') },
-    { value: 'water', label: t('contracts.types.water') },
-    { value: 'cleaning', label: t('contracts.types.cleaning') },
-    { value: 'green_spaces', label: t('contracts.types.green_spaces') },
-    { value: 'other', label: t('contracts.types.other') },
+    ...CONTRACT_TYPES.map(v => ({ value: v, label: t(`contracts.types.${v}`) })),
   ].sort((left, right) => left.label.localeCompare(right.label, 'fr')),
 )
 
 const paymentFrequencyOptions = computed(() => [
-  { value: 'monthly', label: t('contracts.frequencies.monthly') },
-  { value: 'quarterly', label: t('contracts.frequencies.quarterly') },
-  { value: 'biannual', label: t('contracts.frequencies.biannual') },
-  { value: 'annual', label: t('contracts.frequencies.annual') },
+  ...PAYMENT_FREQUENCIES.map(v => ({ value: v, label: t(`contracts.frequencies.${v}`) })),
 ])
 
 const defaultFormState = (): AmendFormState => ({
@@ -73,7 +64,7 @@ const defaultFormState = (): AmendFormState => ({
   vendor_email: '',
   vendor_phone: '',
   subject: '',
-  contract_type: 'service',
+  contract_type: DEFAULT_CONTRACT_TYPE,
   start_date: '',
   end_date: '',
   amount: '',

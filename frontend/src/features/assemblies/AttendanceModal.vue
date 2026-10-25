@@ -12,6 +12,7 @@ import { useFormFeedback } from '@/composables/useFormFeedback'
 import { useAutoClose } from '@/composables/useAutoClose'
 import { toErrorMessage } from '@/composables/usePageLoader'
 import type { MeetingAttendanceEntry } from '@/types/domain'
+import { MEETING_ATTENDANCE_MODES } from '@/utils/constants'
 
 const props = defineProps<{
   open: boolean
@@ -30,12 +31,9 @@ const { schedule: scheduleClose, forceExpire: forceClose } = useAutoClose()
 const saving = ref(false)
 const draft = ref<MeetingAttendanceEntry[]>([])
 
-const attendanceModeOptions = computed(() => [
-  { value: 'present', label: t('meetings.attendanceModes.present') },
-  { value: 'proxy', label: t('meetings.attendanceModes.proxy') },
-  { value: 'correspondence', label: t('meetings.attendanceModes.correspondence') },
-  { value: 'absent', label: t('meetings.attendanceModes.absent') },
-])
+const attendanceModeOptions = computed(() =>
+  MEETING_ATTENDANCE_MODES.map(m => ({ value: m, label: t(`meetings.attendanceModes.${m}`) })),
+)
 
 watch(() => props.open, (open) => {
   if (!open) { forceClose(); return }

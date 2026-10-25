@@ -8,6 +8,7 @@ pub mod immutability;
 pub mod legal_documents;
 pub mod minutes_draft;
 pub mod owners;
+pub mod permissions;
 pub mod processor;
 pub mod reminders;
 pub mod retention;
@@ -18,7 +19,7 @@ use std::str::FromStr;
 use uuid::Uuid;
 
 /// User role — mirrors the PostgreSQL `user_role` enum
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, sqlx::Type)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, sqlx::Type)]
 #[sqlx(type_name = "user_role", rename_all = "snake_case")]
 pub enum Role {
     Manager,
@@ -27,50 +28,40 @@ pub enum Role {
     Tenant,
 }
 
+impl Role {
+    /// Every role variant, in declaration order (PG enum order).
+    pub const ALL: &'static [Role] = &[
+        Role::Manager,
+        Role::BoardMember,
+        Role::CoOwner,
+        Role::Tenant,
+    ];
+
+    /// Wire/DB representation (snake_case, matches the PG enum labels).
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Role::Manager => "manager",
+            Role::BoardMember => "board_member",
+            Role::CoOwner => "co_owner",
+            Role::Tenant => "tenant",
+        }
+    }
+}
+
 impl FromStr for Role {
     type Err = ();
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "manager" => Ok(Role::Manager),
-            "board_member" => Ok(Role::BoardMember),
-            "co_owner" => Ok(Role::CoOwner),
-            "tenant" => Ok(Role::Tenant),
-            _ => Err(()),
-        }
+        Role::ALL
+            .iter()
+            .find(|r| r.as_str() == s)
+            .copied()
+            .ok_or(())
     }
 }
 
 impl std::fmt::Display for Role {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let s = match self {
-            Role::Manager => "manager",
-            Role::BoardMember => "board_member",
-            Role::CoOwner => "co_owner",
-            Role::Tenant => "tenant",
-        };
-        f.write_str(s)
-    }
-}
-
-impl Role {
-    pub fn can_view_accounting(&self) -> bool {
-        matches!(self, Role::Manager | Role::BoardMember)
-    }
-
-    pub fn can_administer(&self) -> bool {
-        matches!(self, Role::Manager)
-    }
-
-    pub fn can_vote_gm(&self) -> bool {
-        matches!(self, Role::Manager | Role::BoardMember | Role::CoOwner)
-    }
-
-    pub fn can_view_gm(&self) -> bool {
-        true
-    }
-
-    pub fn can_initiate_consultation(&self) -> bool {
-        true
+        f.write_str(self.as_str())
     }
 }
 
@@ -154,45 +145,6 @@ mod tests {
     }
 
     #[test]
-    fn can_view_accounting_only_for_manager_and_board_member() {
-        assert!(Role::Manager.can_view_accounting());
-        assert!(Role::BoardMember.can_view_accounting());
-        assert!(!Role::CoOwner.can_view_accounting());
-        assert!(!Role::Tenant.can_view_accounting());
-    }
-
-    #[test]
-    fn can_administer_only_for_manager() {
-        assert!(Role::Manager.can_administer());
-        assert!(!Role::BoardMember.can_administer());
-        assert!(!Role::CoOwner.can_administer());
-        assert!(!Role::Tenant.can_administer());
-    }
-
-    #[test]
-    fn can_vote_gm_excludes_tenant() {
-        assert!(Role::Manager.can_vote_gm());
-        assert!(Role::BoardMember.can_vote_gm());
-        assert!(Role::CoOwner.can_vote_gm());
-        assert!(!Role::Tenant.can_vote_gm());
-    }
-
-    #[test]
-    fn can_view_gm_allowed_for_every_role() {
-        assert!(Role::Manager.can_view_gm());
-        assert!(Role::BoardMember.can_view_gm());
-        assert!(Role::CoOwner.can_view_gm());
-        assert!(Role::Tenant.can_view_gm());
-    }
-
-    #[test]
-    fn can_initiate_consultation_allowed_for_every_role() {
-        assert!(Role::Manager.can_initiate_consultation());
-        assert!(Role::BoardMember.can_initiate_consultation());
-        assert!(Role::CoOwner.can_initiate_consultation());
-        assert!(Role::Tenant.can_initiate_consultation());
-    }
-
     #[test]
     fn has_role_detects_presence_and_absence() {
         let user = user_with(vec![Role::CoOwner, Role::Tenant]);

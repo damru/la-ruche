@@ -3,6 +3,13 @@ use serde::Serialize;
 use sqlx::{PgPool, Row};
 use uuid::Uuid;
 
+/// `user_token.token_type` values (TEXT column, not a PG enum — see migration 0001).
+pub mod token_type {
+    pub const INVITATION: &str = "invitation";
+    pub const REFRESH: &str = "refresh";
+    pub const RESET_PASSWORD: &str = "reset_password";
+}
+
 #[derive(Debug, Serialize, sqlx::FromRow)]
 pub struct UserRow {
     pub id: Uuid,
@@ -55,7 +62,7 @@ pub async fn list(
                OR NOT EXISTS (
                  SELECT 1 FROM user_token ut
                  WHERE ut.user_id = u.id
-                   AND ut.token_type = 'invitation'
+                   AND ut.token_type = $2
                    AND ut.used_at IS NULL
                    AND ut.expires_at > NOW()
                )
@@ -63,6 +70,7 @@ pub async fn list(
            ORDER BY u.last_name NULLS LAST, u.first_name NULLS LAST"#,
     )
     .bind(building_id)
+    .bind(token_type::INVITATION)
     .fetch_all(pool)
     .await?;
 
@@ -226,22 +234,22 @@ pub async fn consume_token(
     token_hash: &str,
     token_type: &str,
 ) -> crate::errors::AppResult<Option<serde_json::Value>> {
-    let row = sqlx::query!(
+    let row = sqlx::query(
         r#"UPDATE user_token SET used_at = NOW()
            WHERE token_hash = $1 AND token_type = $2 AND used_at IS NULL AND expires_at > NOW()
            RETURNING id, email, building_id, invited_role::text as invited_role"#,
-        token_hash,
-        token_type
     )
+    .bind(token_hash)
+    .bind(token_type)
     .fetch_optional(pool)
     .await?;
 
     Ok(row.map(|r| {
         serde_json::json!({
-            "id": r.id,
-            "email": r.email,
-            "building_id": r.building_id,
-            "invited_role": r.invited_role,
+            "id": r.get::<Uuid, _>("id"),
+            "email": r.get::<String, _>("email"),
+            "building_id": r.get::<Option<Uuid>, _>("building_id"),
+            "invited_role": r.get::<Option<String>, _>("invited_role"),
         })
     }))
 }
@@ -254,15 +262,16 @@ pub async fn save_refresh_token(
     token_hash: &str,
     expires_at: DateTime<Utc>,
 ) -> crate::errors::AppResult<()> {
-    sqlx::query!(
+    sqlx::query(
         r#"INSERT INTO user_token (user_id, email, token_type, token_hash, building_id, expires_at)
-           VALUES ($1, $2, 'refresh', $3, $4, $5)"#,
-        user_id,
-        email,
-        token_hash,
-        building_id,
-        expires_at
+           VALUES ($1, $2, $3, $4, $5, $6)"#,
     )
+    .bind(user_id)
+    .bind(email)
+    .bind(token_type::REFRESH)
+    .bind(token_hash)
+    .bind(building_id)
+    .bind(expires_at)
     .execute(pool)
     .await?;
     Ok(())
@@ -280,10 +289,11 @@ pub async fn create_invite_token(
 ) -> crate::errors::AppResult<Uuid> {
     let id: Uuid = sqlx::query_scalar(
         r#"INSERT INTO user_token (email, token_type, token_hash, building_id, invited_role, unit_id, expires_at)
-           VALUES ($1, 'invitation', $2, $3, $4::user_role, $5, $6)
+           VALUES ($1, $2, $3, $4, $5::user_role, $6, $7)
            RETURNING id"#,
     )
     .bind(email)
+    .bind(token_type::INVITATION)
     .bind(token_hash)
     .bind(building_id)
     .bind(invited_role)
@@ -303,10 +313,11 @@ pub async fn revoke_pending_invites(
 ) -> crate::errors::AppResult<()> {
     sqlx::query(
         r#"UPDATE user_token SET used_at = NOW()
-           WHERE email = $1 AND building_id = $2 AND token_type = 'invitation' AND used_at IS NULL"#,
+           WHERE email = $1 AND building_id = $2 AND token_type = $3 AND used_at IS NULL"#,
     )
     .bind(email)
     .bind(building_id)
+    .bind(token_type::INVITATION)
     .execute(pool)
     .await?;
     Ok(())
@@ -334,9 +345,10 @@ pub async fn peek_invite_token(
                   ua.first_name, ua.last_name
            FROM user_token ut
            LEFT JOIN user_account ua ON ua.id = ut.user_id
-           WHERE ut.token_hash = $1 AND ut.token_type = 'invitation'"#,
+           WHERE ut.token_hash = $1 AND ut.token_type = $2"#,
     )
     .bind(token_hash)
+    .bind(token_type::INVITATION)
     .fetch_optional(pool)
     .await?;
 
@@ -367,10 +379,11 @@ pub async fn consume_invite_token(
 ) -> crate::errors::AppResult<Option<ConsumedInviteToken>> {
     let row = sqlx::query(
         r#"UPDATE user_token SET used_at = NOW()
-           WHERE token_hash = $1 AND token_type = 'invitation' AND used_at IS NULL AND expires_at > NOW()
+           WHERE token_hash = $1 AND token_type = $2 AND used_at IS NULL AND expires_at > NOW()
            RETURNING email, building_id, invited_role::text AS invited_role, unit_id, user_id"#,
     )
     .bind(token_hash)
+    .bind(token_type::INVITATION)
     .fetch_optional(pool)
     .await?;
 
@@ -500,12 +513,13 @@ pub async fn list_pending_invites(
            FROM user_token ut
            LEFT JOIN user_account ua ON ua.id = ut.user_id
            WHERE ut.building_id = $1
-             AND ut.token_type = 'invitation'
+             AND ut.token_type = $2
              AND ut.used_at IS NULL
              AND ut.expires_at > NOW()
            ORDER BY ut.expires_at DESC"#,
     )
     .bind(building_id)
+    .bind(token_type::INVITATION)
     .fetch_all(pool)
     .await?;
 
@@ -539,10 +553,11 @@ pub async fn revoke_invite_by_id(
 ) -> crate::errors::AppResult<bool> {
     let result = sqlx::query(
         r#"UPDATE user_token SET used_at = NOW()
-           WHERE id = $1 AND building_id = $2 AND token_type = 'invitation' AND used_at IS NULL"#,
+           WHERE id = $1 AND building_id = $2 AND token_type = $3 AND used_at IS NULL"#,
     )
     .bind(token_id)
     .bind(building_id)
+    .bind(token_type::INVITATION)
     .execute(pool)
     .await?;
     Ok(result.rows_affected() > 0)
@@ -568,9 +583,10 @@ pub async fn archive_user(
     // Also revoke all active non-refresh tokens for this user
     sqlx::query(
         r#"UPDATE user_token SET used_at = NOW()
-           WHERE user_id = $1 AND used_at IS NULL AND token_type != 'refresh'"#,
+           WHERE user_id = $1 AND used_at IS NULL AND token_type != $2"#,
     )
     .bind(user_id)
+    .bind(token_type::REFRESH)
     .execute(pool)
     .await?;
 
@@ -721,11 +737,12 @@ pub async fn create_invite_for_existing_user(
     let id: Uuid = sqlx::query_scalar(
         r#"INSERT INTO user_token
                (user_id, email, token_type, token_hash, building_id, invited_role, unit_id, expires_at)
-           VALUES ($1, $2, 'invitation', $3, $4, $5::user_role, $6, $7)
+           VALUES ($1, $2, $3, $4, $5, $6::user_role, $7, $8)
            RETURNING id"#,
     )
     .bind(user_id)
     .bind(email)
+    .bind(token_type::INVITATION)
     .bind(token_hash)
     .bind(building_id)
     .bind(invited_role)
@@ -744,10 +761,11 @@ pub async fn revoke_pending_invites_by_user_id(
 ) -> crate::errors::AppResult<()> {
     sqlx::query(
         r#"UPDATE user_token SET used_at = NOW()
-           WHERE user_id = $1 AND building_id = $2 AND token_type = 'invitation' AND used_at IS NULL"#,
+           WHERE user_id = $1 AND building_id = $2 AND token_type = $3 AND used_at IS NULL"#,
     )
     .bind(user_id)
     .bind(building_id)
+    .bind(token_type::INVITATION)
     .execute(pool)
     .await?;
     Ok(())
@@ -759,26 +777,36 @@ pub async fn rotate_refresh_token(
     new_hash: &str,
     expires_at: DateTime<Utc>,
 ) -> crate::errors::AppResult<Option<serde_json::Value>> {
-    let row = sqlx::query!(
+    let row = sqlx::query(
         r#"UPDATE user_token SET used_at = NOW()
-           WHERE token_hash = $1 AND token_type = 'refresh' AND used_at IS NULL AND expires_at > NOW()
+           WHERE token_hash = $1 AND token_type = $2 AND used_at IS NULL AND expires_at > NOW()
            RETURNING user_id, building_id, email"#,
-        old_hash
-    ).fetch_optional(pool).await?;
+    )
+    .bind(old_hash)
+    .bind(token_type::REFRESH)
+    .fetch_optional(pool)
+    .await?;
 
     if let Some(ref r) = row {
-        sqlx::query!(
+        sqlx::query(
             r#"INSERT INTO user_token (user_id, email, token_type, token_hash, building_id, expires_at)
-               VALUES ($1, $2, 'refresh', $3, $4, $5)"#,
-            r.user_id, r.email, new_hash, r.building_id, expires_at
-        ).execute(pool).await?;
+               VALUES ($1, $2, $3, $4, $5, $6)"#,
+        )
+        .bind(r.get::<Uuid, _>("user_id"))
+        .bind(r.get::<String, _>("email"))
+        .bind(token_type::REFRESH)
+        .bind(new_hash)
+        .bind(r.get::<Option<Uuid>, _>("building_id"))
+        .bind(expires_at)
+        .execute(pool)
+        .await?;
     }
 
     Ok(row.map(|r| {
         serde_json::json!({
-            "user_id": r.user_id,
-            "building_id": r.building_id,
-            "email": r.email,
+            "user_id": r.get::<Uuid, _>("user_id"),
+            "building_id": r.get::<Option<Uuid>, _>("building_id"),
+            "email": r.get::<String, _>("email"),
         })
     }))
 }

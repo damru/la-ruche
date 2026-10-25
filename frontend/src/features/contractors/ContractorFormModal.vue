@@ -13,8 +13,7 @@ import { useFormFeedback } from '@/composables/useFormFeedback'
 import { useAutoClose } from '@/composables/useAutoClose'
 import { toErrorMessage } from '@/composables/usePageLoader'
 import type { Contractor } from '@/types/domain'
-
-const DOMAINS_RAW = ['maintenance', 'insurance', 'service', 'energy', 'water', 'cleaning', 'green_spaces', 'other'] as const
+import { CONTRACT_TYPES } from '@/utils/constants'
 
 const props = defineProps<{
   open: boolean
@@ -41,7 +40,7 @@ const defaultForm = () => ({
 const form = ref(defaultForm())
 
 const domainOptions = computed(() =>
-  [...DOMAINS_RAW]
+  [...CONTRACT_TYPES]
     .map(value => ({ value, label: t(`contractors.domains.${value}`) }))
     .sort((a, b) => a.label.localeCompare(b.label)),
 )

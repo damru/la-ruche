@@ -6,6 +6,7 @@ import { toErrorMessage } from '@/composables/usePageLoader'
 import { useFormFeedback } from '@/composables/useFormFeedback'
 import { useAutoClose } from '@/composables/useAutoClose'
 import type { Claim } from '@/types/domain'
+import { CLAIM_STATUS_IN_PROGRESS } from '@/utils/constants'
 
 const props = defineProps<{
   open: boolean
@@ -83,7 +84,7 @@ async function handleSubmit() {
     await claimsApi.update(
       props.claim.id,
       buildClaimUpdatePayload(props.claim, {
-        status: 'in_progress',
+        status: CLAIM_STATUS_IN_PROGRESS,
         transmitted_at: form.value.transmitted_at,
       }),
     )

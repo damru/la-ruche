@@ -11,6 +11,7 @@ import { meetingsApi, documentsApi } from '@/api'
 import { useFormFeedback } from '@/composables/useFormFeedback'
 import { useAutoClose } from '@/composables/useAutoClose'
 import { toErrorMessage } from '@/composables/usePageLoader'
+import { DEFAULT_DOCUMENT_VISIBLE_ROLES, MEETING_DOCUMENT_KIND_NOTICE, MEETING_UPLOADABLE_DOCUMENT_KINDS } from '@/utils/constants'
 
 const props = defineProps<{
   open: boolean
@@ -28,18 +29,18 @@ const { schedule: scheduleClose, forceExpire: forceClose } = useAutoClose()
 const saving = ref(false)
 const form = ref(defaultForm())
 
+type UploadableKind = (typeof MEETING_UPLOADABLE_DOCUMENT_KINDS)[number]
+
 function defaultForm() {
   return {
-    kind: 'notice' as 'notice' | 'attachment',
+    kind: MEETING_DOCUMENT_KIND_NOTICE as UploadableKind,
     file: null as File | null,
   }
 }
 
-const documentKindOptions = computed(() => [
-  { value: 'notice', label: t('meetings.documents.notice') },
-  { value: 'attachment', label: t('meetings.documents.attachment') },
-  { value: 'vote_by_mail_form', label: t('meetings.documents.vote_by_mail_form') },
-])
+const documentKindOptions = computed(() =>
+  MEETING_UPLOADABLE_DOCUMENT_KINDS.map(k => ({ value: k, label: t(`meetings.documents.${k}`) })),
+)
 
 watch(() => props.open, (open) => {
   if (!open) { forceClose(); return }
@@ -62,7 +63,7 @@ async function handleSubmit() {
       original_name: file.name,
       mime_type: file.type || 'application/pdf',
       size_bytes: file.size,
-      visible_roles: ['manager', 'board_member', 'co_owner'],
+      visible_roles: [...DEFAULT_DOCUMENT_VISIBLE_ROLES],
     })
     await meetingsApi.attachDocument(props.meetingId, {
       document_id: confirmed.data.id,

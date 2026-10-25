@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import type { Role } from '@/types/domain'
+import { DOCUMENT_ROLES, MANAGER_ROLES, ROLES } from '@/utils/constants'
 import i18n from '@/i18n'
 
 // ── Lazy imports ──────────────────────────────────────────────────
@@ -78,37 +79,37 @@ const routes: RouteRecordRaw[] = [
         path: 'meetings',
         name: 'assembly-list',
         component: AssemblyListView,
-        meta: { title: 'nav.meetings', roles: ['manager', 'board_member', 'co_owner'] },
+        meta: { title: 'nav.meetings', roles: [...ROLES] },
       },
       {
         path: 'meetings/:id',
         name: 'assembly-detail',
         component: AssemblyDetailView,
-        meta: { title: 'nav.meetings', roles: ['manager', 'board_member', 'co_owner'] },
+        meta: { title: 'nav.meetings', roles: [...ROLES] },
       },
       {
         path: 'budget',
         name: 'budget',
         component: BudgetView,
-        meta: { title: 'nav.budget', roles: ['manager', 'board_member', 'co_owner'] },
+        meta: { title: 'nav.budget', roles: [...ROLES] },
       },
       {
         path: 'documents',
         name: 'documents',
         component: DocumentsView,
-        meta: { title: 'common.documents', roles: ['manager', 'board_member', 'co_owner', 'tenant'] },
+        meta: { title: 'common.documents', roles: [...DOCUMENT_ROLES] },
       },
       {
         path: 'tasks',
         name: 'tasks',
         component: TasksView,
-        meta: { title: 'nav.tasks', roles: ['manager', 'board_member'] },
+        meta: { title: 'nav.tasks', roles: [...MANAGER_ROLES] },
       },
       {
         path: 'tasks/:id',
         name: 'task-detail',
         component: TaskDetailView,
-        meta: { title: 'nav.tasks', roles: ['manager', 'board_member'] },
+        meta: { title: 'nav.tasks', roles: [...MANAGER_ROLES] },
       },
       {
         path: 'contractors',
@@ -126,31 +127,31 @@ const routes: RouteRecordRaw[] = [
         path: 'contracts',
         name: 'contracts',
         component: ContractsView,
-        meta: { title: 'nav.contracts', roles: ['manager', 'board_member'] },
+        meta: { title: 'nav.contracts', roles: [...MANAGER_ROLES] },
       },
       {
         path: 'contracts/:id',
         name: 'contract-detail',
         component: ContractDetailView,
-        meta: { title: 'page.contractDetail', roles: ['manager', 'board_member'] },
+        meta: { title: 'page.contractDetail', roles: [...MANAGER_ROLES] },
       },
       {
         path: 'claims',
         name: 'claims',
         component: ClaimsView,
-        meta: { title: 'nav.claims', roles: ['manager', 'board_member'] },
+        meta: { title: 'nav.claims', roles: [...MANAGER_ROLES] },
       },
       {
         path: 'logbook',
         name: 'maintenance',
         component: MaintenanceView,
-        meta: { title: 'nav.maintenance', roles: ['manager', 'board_member'] },
+        meta: { title: 'nav.maintenance', roles: [...MANAGER_ROLES] },
       },
       {
         path: 'calendar',
         name: 'calendar',
         component: CalendarView,
-        meta: { title: 'nav.calendar', roles: ['manager', 'board_member', 'co_owner', 'tenant'] },
+        meta: { title: 'nav.calendar', roles: [...DOCUMENT_ROLES] },
       },
       {
         path: 'consultations',
@@ -168,56 +169,56 @@ const routes: RouteRecordRaw[] = [
         path: 'residents',
         name: 'residents',
         component: ResidentsView,
-        meta: { title: 'nav.residents', roles: ['manager'] },
+        meta: { title: 'nav.residents', roles: ['manager' satisfies Role] },
       },
       {
         path: 'residents/:id/charges',
         name: 'unit-charges',
         component: UnitChargesView,
-        meta: { title: 'page.unitCharges', roles: ['manager', 'board_member', 'co_owner'] },
+        meta: { title: 'page.unitCharges', roles: [...ROLES] },
       },
       {
         path: 'my-charges',
         name: 'my-charges',
         component: MyChargesView,
-        meta: { title: 'nav.myCharges', roles: ['co_owner'] },
+        meta: { title: 'nav.myCharges', roles: ['co_owner' satisfies Role] },
       },
       {
         path: 'registry',
         name: 'registry',
         component: RegistryView,
-        meta: { title: 'nav.registry', roles: ['manager', 'board_member', 'co_owner'] },
+        meta: { title: 'nav.registry', roles: [...ROLES] },
       },
       {
         path: 'judicial-proceedings',
         name: 'judicial-proceedings',
         component: JudicialProceedingsView,
-        meta: { title: 'nav.judicialProceedings', roles: ['manager', 'board_member', 'co_owner'] },
+        meta: { title: 'nav.judicialProceedings', roles: [...ROLES] },
       },
       {
         path: 'governance',
         name: 'governance',
         component: GovernanceMandatesView,
-        meta: { title: 'nav.governance', roles: ['manager', 'board_member', 'co_owner'] },
+        meta: { title: 'nav.governance', roles: [...ROLES] },
       },
       {
         path: 'etat-date',
         name: 'etat-date',
         component: EtatDateView,
-        meta: { title: 'registers.etatDate.title', roles: ['manager'] },
+        meta: { title: 'registers.etatDate.title', roles: ['manager' satisfies Role] },
       },
       // ── Residence ───────────────────────────────────────────
       {
         path: 'residence/building',
         name: 'residence-building',
         component: BuildingView,
-        meta: { title: 'common.informations', roles: ['manager'] },
+        meta: { title: 'common.informations', roles: ['manager' satisfies Role] },
       },
       {
         path: 'residence/keys',
         name: 'residence-keys',
         component: AllocationKeysView,
-        meta: { title: 'allocationKeys.title', roles: ['manager'] },
+        meta: { title: 'allocationKeys.title', roles: ['manager' satisfies Role] },
       },
       // ── Profile ──────────────────────────────────────────────
       {

@@ -766,7 +766,9 @@ async fn open_transitions_draft_to_open_once() {
 // Draft lifecycle — respond guard: POST /respond on a draft → 400 errors.consultations.not_open.
 #[tokio::test]
 async fn respond_on_draft_is_rejected() {
-    let (server, _pool) = consultation_test_server().await;
+    let (server, pool) = consultation_test_server().await;
+    let building_id = manager_building_id(&server).await;
+    let (_co_owner_id, co_owner_jwt) = seed_user(&pool, building_id, &["co_owner"]).await;
 
     let created = server
         .post("/api/v1/consultations")
@@ -783,7 +785,9 @@ async fn respond_on_draft_is_rejected() {
         .expect("choice id")
         .to_string();
 
-    let resp = server
+    // Only co-owners/tenants may respond (managers get 403 before the status guard).
+    let voter = user_server(&pool, &co_owner_jwt).await;
+    let resp = voter
         .post(&format!("/api/v1/consultations/{id}/respond"))
         .json(&json!({ "choice_ids": [choice_id] }))
         .await;
@@ -1055,7 +1059,7 @@ async fn remind_without_non_respondents_is_rejected() {
     let (co_owner_id, co_owner_jwt) = seed_user(&pool, building_id, &["co_owner"]).await;
 
     let mut payload = consultation_payload();
-    payload["visible_to_roles"] = json!(["co_owner", "manager"]);
+    payload["visible_to_roles"] = json!(["co_owner"]);
     let created = server.post("/api/v1/consultations").json(&payload).await;
     let id = created.json::<Value>()["id"]
         .as_str()
@@ -1071,14 +1075,9 @@ async fn remind_without_non_respondents_is_rejected() {
         .expect("choice id")
         .to_string();
 
-    // Both eligible users (manager via cookie session, co_owner via JWT) respond.
+    // The only eligible respondent (co_owner) responds → zero non-respondents.
     let voter = user_server(&pool, &co_owner_jwt).await;
     let resp = voter
-        .post(&format!("/api/v1/consultations/{id}/respond"))
-        .json(&json!({ "choice_ids": [choice_id.clone()] }))
-        .await;
-    assert_eq!(resp.status_code(), StatusCode::NO_CONTENT);
-    let resp = server
         .post(&format!("/api/v1/consultations/{id}/respond"))
         .json(&json!({ "choice_ids": [choice_id] }))
         .await;
@@ -1124,4 +1123,135 @@ async fn resident_forbidden_on_reminder_endpoints() {
         .post(&format!("/api/v1/consultations/{id}/remind"))
         .await;
     assert_eq!(remind.status_code(), StatusCode::FORBIDDEN);
+}
+
+// ── RBAC matrix — consultations (vote / manage / create) ──────────────────────
+// Vote: co_owner/tenant only (managers and board members get 403).
+// Manage lifecycle (open/close/remind/non-respondents): manager + board_member.
+// Create: any authenticated resident.
+
+#[tokio::test]
+async fn rbac_manager_cannot_vote_in_consultation() {
+    let (server, pool) = consultation_test_server().await;
+    let building_id = manager_building_id(&server).await;
+    let (_co_id, co_jwt) = seed_user(&pool, building_id, &["co_owner"]).await;
+    let co_server = user_server(&pool, &co_jwt).await;
+
+    let mut payload = consultation_payload();
+    payload["visible_to_roles"] = json!(["manager", "board_member", "co_owner", "tenant"]);
+    let created = co_server.post("/api/v1/consultations").json(&payload).await;
+    assert_eq!(created.status_code(), StatusCode::CREATED);
+    let id = created.json::<Value>()["id"]
+        .as_str()
+        .expect("id")
+        .to_string();
+    server
+        .post(&format!("/api/v1/consultations/{id}/open"))
+        .await;
+
+    let got = server.get(&format!("/api/v1/consultations/{id}")).await;
+    let choice_id = got.json::<Value>()["consultation"]["choices"][0]["id"]
+        .as_str()
+        .expect("choice id")
+        .to_string();
+    let vote = json!({ "choice_ids": [choice_id] });
+
+    // The manager session gets 403 on respond (only residents vote).
+    let resp = server
+        .post(&format!("/api/v1/consultations/{id}/respond"))
+        .json(&vote)
+        .await;
+    assert_eq!(resp.status_code(), StatusCode::FORBIDDEN);
+
+    // The co_owner may vote.
+    let resp = co_server
+        .post(&format!("/api/v1/consultations/{id}/respond"))
+        .json(&vote)
+        .await;
+    assert_eq!(resp.status_code(), StatusCode::NO_CONTENT);
+}
+
+#[tokio::test]
+async fn rbac_board_member_can_manage_consultation_lifecycle() {
+    let (server, pool) = consultation_test_server().await;
+    let building_id = manager_building_id(&server).await;
+    let (_bm_id, bm_jwt) = seed_user(&pool, building_id, &["board_member"]).await;
+    let bm_server = user_server(&pool, &bm_jwt).await;
+
+    let created = server
+        .post("/api/v1/consultations")
+        .json(&consultation_payload())
+        .await;
+    let id = created.json::<Value>()["id"]
+        .as_str()
+        .expect("id")
+        .to_string();
+
+    let opened = bm_server
+        .post(&format!("/api/v1/consultations/{id}/open"))
+        .await;
+    assert_eq!(opened.status_code(), StatusCode::NO_CONTENT);
+
+    let closed = bm_server
+        .post(&format!("/api/v1/consultations/{id}/close"))
+        .await;
+    assert_eq!(closed.status_code(), StatusCode::NO_CONTENT);
+}
+
+#[tokio::test]
+async fn rbac_resident_cannot_manage_consultation_lifecycle() {
+    let (server, pool) = consultation_test_server().await;
+    let building_id = manager_building_id(&server).await;
+    let (_co_id, co_jwt) = seed_user(&pool, building_id, &["co_owner"]).await;
+    let co_server = user_server(&pool, &co_jwt).await;
+
+    let created = server
+        .post("/api/v1/consultations")
+        .json(&consultation_payload())
+        .await;
+    let id = created.json::<Value>()["id"]
+        .as_str()
+        .expect("id")
+        .to_string();
+
+    let opened = co_server
+        .post(&format!("/api/v1/consultations/{id}/open"))
+        .await;
+    assert_eq!(opened.status_code(), StatusCode::FORBIDDEN);
+
+    let closed = co_server
+        .post(&format!("/api/v1/consultations/{id}/close"))
+        .await;
+    assert_eq!(closed.status_code(), StatusCode::FORBIDDEN);
+}
+
+#[tokio::test]
+async fn rbac_tenant_can_vote_in_consultation() {
+    let (server, pool) = consultation_test_server().await;
+    let building_id = manager_building_id(&server).await;
+    let (_t_id, t_jwt) = seed_user(&pool, building_id, &["tenant"]).await;
+    let t_server = user_server(&pool, &t_jwt).await;
+
+    let mut payload = consultation_payload();
+    payload["visible_to_roles"] = json!(["tenant"]);
+    let created = server.post("/api/v1/consultations").json(&payload).await;
+    let id = created.json::<Value>()["id"]
+        .as_str()
+        .expect("id")
+        .to_string();
+    server
+        .post(&format!("/api/v1/consultations/{id}/open"))
+        .await;
+
+    let got = server.get(&format!("/api/v1/consultations/{id}")).await;
+    let choice_id = got.json::<Value>()["consultation"]["choices"][0]["id"]
+        .as_str()
+        .expect("choice id")
+        .to_string();
+
+    let resp = t_server
+        .post(&format!("/api/v1/consultations/{id}/respond"))
+        .json(&json!({ "choice_ids": [choice_id] }))
+        .await;
+    assert_eq!(resp.status_code(), StatusCode::NO_CONTENT);
 }

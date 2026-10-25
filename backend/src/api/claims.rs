@@ -8,7 +8,7 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::{
-    db::{self, AppState},
+    db::{self, AppState, claim::CLAIM_STATUS_OPEN},
     domain::{AuthUser, Role},
     errors::{AppError, AppResult, json_value},
 };
@@ -48,14 +48,14 @@ pub async fn update(
     Path(id): Path<Uuid>,
     Json(mut input): Json<db::claim::UpdateClaimInput>,
 ) -> AppResult<Json<serde_json::Value>> {
-    auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
+    auth.require_role(&Role::Manager)?;
     let existing = db::claim::get(&state.pool, id, auth.building_id)
         .await?
         .ok_or(AppError::NotFound)?;
     let imm_status = if existing.transmitted_at.is_some() {
         "transmitted"
     } else {
-        "open"
+        CLAIM_STATUS_OPEN
     };
     crate::domain::immutability::assert_mutable(
         &crate::domain::immutability::Entity::Claim,
@@ -73,14 +73,14 @@ pub async fn delete(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
 ) -> AppResult<StatusCode> {
-    auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
+    auth.require_role(&Role::Manager)?;
     let existing = db::claim::get(&state.pool, id, auth.building_id)
         .await?
         .ok_or(AppError::NotFound)?;
     let imm_status = if existing.transmitted_at.is_some() {
         "transmitted"
     } else {
-        "open"
+        CLAIM_STATUS_OPEN
     };
     crate::domain::immutability::assert_mutable(
         &crate::domain::immutability::Entity::Claim,
@@ -116,6 +116,7 @@ pub async fn attach_document(
     Path(id): Path<Uuid>,
     Json(input): Json<AttachDocumentInput>,
 ) -> AppResult<StatusCode> {
+    auth.require_role(&Role::Manager)?;
     let attached =
         db::claim::attach_document(&state.pool, id, input.document_id, auth.building_id).await?;
     if !attached {
@@ -129,7 +130,7 @@ pub async fn detach_document(
     State(state): State<Arc<AppState>>,
     Path((id, document_id)): Path<(Uuid, Uuid)>,
 ) -> AppResult<StatusCode> {
-    auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
+    auth.require_role(&Role::Manager)?;
     let detached =
         db::claim::detach_document(&state.pool, id, document_id, auth.building_id).await?;
     if !detached {

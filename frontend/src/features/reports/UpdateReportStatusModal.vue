@@ -11,8 +11,7 @@ import { useFormFeedback } from '@/composables/useFormFeedback'
 import { useAutoClose } from '@/composables/useAutoClose'
 import { toErrorMessage } from '@/composables/usePageLoader'
 import type { Report, ReportStatus } from '@/types/domain'
-
-const REPORT_STATUSES: ReportStatus[] = ['open', 'in_progress', 'closed']
+import { REPORT_STATUSES, REPORT_STATUS_IN_PROGRESS } from '@/utils/constants'
 
 const props = defineProps<{
   open: boolean
@@ -28,7 +27,7 @@ const { t } = useI18n()
 const feedback = useFormFeedback()
 const { schedule: scheduleClose, forceExpire: forceClose } = useAutoClose()
 const updating = ref(false)
-const statusForm = ref<ReportStatus>('in_progress')
+const statusForm = ref<ReportStatus>(REPORT_STATUS_IN_PROGRESS)
 
 const reportStatusOptions = computed(() =>
   REPORT_STATUSES.map(s => ({ value: s, label: t(`reports.statuses.${s}`) })),

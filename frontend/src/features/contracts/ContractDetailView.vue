@@ -38,7 +38,8 @@ import { useBuildingStore } from '@/stores/building'
 import ContractFormModal from '@/features/contracts/ContractFormModal.vue'
 import AmendContractModal from '@/features/contracts/AmendContractModal.vue'
 import TerminateContractModal from '@/features/contracts/TerminateContractModal.vue'
-import type { ContractReminder, ContractStatus, ContractType, Document, VendorContract } from '@/types/domain'
+import type { Role, ContractReminder, ContractStatus, ContractType, Document, VendorContract } from '@/types/domain'
+import { CONTRACT_STATUS_ACTIVE, CONTRACT_STATUS_DRAFT, CONTRACT_STATUS_EXPIRED, CONTRACT_STATUS_TERMINATED, REMINDER_STATUS_ACKNOWLEDGED, REMINDER_STATUS_PENDING } from '@/utils/constants'
 
 const { t } = useI18n()
 const { formatCurrency, formatDate, formatFileSize } = useFormatters()
@@ -58,7 +59,7 @@ const showFormModal = ref(false)
 const showAmendModal = ref(false)
 const showTerminateModal = ref(false)
 
-const canManage = computed(() => hasAnyRole(['manager']))
+const canManage = computed(() => hasAnyRole(['manager' satisfies Role]))
 
 async function loadData() {
   const id = contractId.value
@@ -80,7 +81,7 @@ const { loading, error, reload } = usePageLoader(loadData)
 onMounted(reload)
 
 const currentStatus = computed<ContractStatus>(() =>
-  contract.value ? effectiveContractStatus(contract.value) : 'draft',
+  contract.value ? effectiveContractStatus(contract.value) : CONTRACT_STATUS_DRAFT,
 )
 
 function chainLevel(item: VendorContract): 2 | 3 {
@@ -88,9 +89,9 @@ function chainLevel(item: VendorContract): 2 | 3 {
 }
 
 function statusVariant(status: ContractStatus): 'open' | 'pending' | 'closed' | 'default' {
-  if (status === 'active') return 'open'
-  if (status === 'draft') return 'pending'
-  if (status === 'terminated' || status === 'expired') return 'closed'
+  if (status === CONTRACT_STATUS_ACTIVE) return 'open'
+  if (status === CONTRACT_STATUS_DRAFT) return 'pending'
+  if (status === CONTRACT_STATUS_TERMINATED || status === CONTRACT_STATUS_EXPIRED) return 'closed'
   return 'default'
 }
 
@@ -133,7 +134,7 @@ function chainLabel(index: number): string {
 }
 
 function reminderStatusLabel(status: string): string {
-  if (status === 'pending') return t('common.pending')
+  if (status === REMINDER_STATUS_PENDING) return t('common.pending')
   return t(`contracts.filters.reminderStatuses.${status}`)
 }
 
@@ -197,7 +198,7 @@ async function activateContract() {
       <CPageLoader v-else-if="loading" />
       <template v-else-if="contract">
         <CAlert
-          v-if="currentStatus === 'draft'"
+          v-if="currentStatus === CONTRACT_STATUS_DRAFT"
           variant="warning"
           :title="t('contracts.draftBanner')"
         >
@@ -256,7 +257,7 @@ async function activateContract() {
                 @click="showFormModal = true"
               />
               <CBtn
-                v-if="currentStatus === 'active'"
+                v-if="currentStatus === CONTRACT_STATUS_ACTIVE"
                 variant="ghost"
                 size="sm"
                 :icon="CIconEdit"
@@ -264,7 +265,7 @@ async function activateContract() {
                 @click="showAmendModal = true"
               />
               <CBtn
-                v-if="currentStatus === 'active'"
+                v-if="currentStatus === CONTRACT_STATUS_ACTIVE"
                 variant="danger"
                 size="sm"
                 :icon="CIconArchive"
@@ -442,7 +443,7 @@ async function activateContract() {
             </CBadge>
             <span class="body-sm">{{ formatDate(reminder.reminder_date) }}</span>
             <CBadge
-              :variant="reminder.status === 'acknowledged' ? 'valid' : 'pending'"
+              :variant="reminder.status === REMINDER_STATUS_ACKNOWLEDGED ? 'valid' : 'pending'"
               dot
             >
               {{ reminderStatusLabel(reminder.status) }}

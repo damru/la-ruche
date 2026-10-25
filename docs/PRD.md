@@ -168,8 +168,6 @@ llm_directives:
 | Initier consultation | ✅ | ✅ | ✅ | ✅ |
 | Inviter résidents | ✅ | ❌ | ❌ | ❌ |
 
----
-
 ## Contraintes légales (non interprétées — textes officiels)
 
 - **Loi n°65-557 du 10/07/1965** — statut de la copropriété

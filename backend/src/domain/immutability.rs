@@ -13,6 +13,39 @@ pub mod meeting_status {
     pub const CLOSED: &str = "closed";
 }
 
+/// `task.status` values (PG enum `task_status`).
+pub mod task_status {
+    pub const CLOSED: &str = "closed";
+    pub const CANCELLED: &str = "cancelled";
+}
+
+/// `levy_call.status` values (PG enum `levy_status`).
+pub mod levy_status {
+    pub const DRAFT: &str = "draft";
+}
+
+/// `vendor_contract.status` values (PG enum `contract_status`).
+pub mod contract_status {
+    pub const DRAFT: &str = "draft";
+}
+
+/// `budget.status` values (PG enum `budget_status`).
+pub mod budget_status {
+    pub const DRAFT: &str = "draft";
+}
+
+/// Synthetic status passed for transmitted claims (no `claim_status` value
+/// corresponds — transmission is tracked by `transmitted_at IS NOT NULL`).
+pub const CLAIM_TRANSMITTED: &str = "transmitted";
+
+/// `resolution.status` values (PG enum `resolution_status`).
+pub mod resolution_status {
+    pub const PENDING: &str = "pending";
+    pub const PASSED: &str = "passed";
+    pub const REJECTED: &str = "rejected";
+    pub const WITHDRAWN: &str = "withdrawn";
+}
+
 /// Pattern-A entities whose fields are frozen on a terminal state.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Entity {
@@ -57,15 +90,15 @@ pub enum Entity {
 /// - `MaintenanceLog` → ignored; always frozen (EP-018-S07 Pattern C)
 pub fn is_mutable(entity: &Entity, status: &str) -> bool {
     match entity {
-        Entity::LevyCall => status == "draft",
+        Entity::LevyCall => status == levy_status::DRAFT,
         Entity::Vote => !matches!(status, meeting_status::ONGOING | meeting_status::CLOSED),
-        Entity::Resolution => status == "draft",
+        Entity::Resolution => status == meeting_status::DRAFT,
         Entity::ResolutionVote => status == meeting_status::ONGOING,
-        Entity::Task => !matches!(status, "closed" | "cancelled"),
-        Entity::Claim => status != "transmitted",
+        Entity::Task => !matches!(status, task_status::CLOSED | task_status::CANCELLED),
+        Entity::Claim => status != CLAIM_TRANSMITTED,
         Entity::MaintenanceLog => false,
-        Entity::VendorContract => status == "draft",
-        Entity::Budget => status == "draft",
+        Entity::VendorContract => status == contract_status::DRAFT,
+        Entity::Budget => status == budget_status::DRAFT,
         Entity::MeetingSession => status == meeting_status::ONGOING,
     }
 }

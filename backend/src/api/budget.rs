@@ -19,6 +19,8 @@ use crate::{
     errors::{AppError, AppResult},
 };
 
+use crate::db::budget::budget_status;
+
 /// Minimum legal annual works-fund contribution rate, as a percentage of the
 /// provisional budget (art. 14-2-1 loi 1965).
 ///
@@ -71,7 +73,7 @@ pub async fn list(
     } else {
         budgets
             .into_iter()
-            .filter(|b| b.status != "draft")
+            .filter(|b| b.status != budget_status::DRAFT)
             .collect()
     };
     Ok(Json(
@@ -87,7 +89,7 @@ pub async fn get(
     let b = db::budget::get(&state.pool, id, auth.building_id)
         .await?
         .ok_or(AppError::NotFound)?;
-    if b.status == "draft" && !can_see_draft(&auth) {
+    if b.status == budget_status::DRAFT && !can_see_draft(&auth) {
         return Err(AppError::NotFound);
     }
     Ok(Json(

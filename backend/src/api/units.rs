@@ -13,7 +13,7 @@ use uuid::Uuid;
 use validator::Validate;
 
 use crate::{
-    db::{self, AppState},
+    db::{self, AppState, budget::levy_status},
     domain::{AuthUser, Role, owners},
     errors::{AppError, AppResult},
 };
@@ -395,15 +395,15 @@ pub async fn charges(
                COALESCE(SUM(lcu.amount) FILTER (WHERE lcu.budget_line_id IS NOT NULL), 0) AS charge_amount,
                COALESCE(SUM(lcu.amount) FILTER (WHERE lcu.budget_line_id IS NULL), 0)     AS works_fund_amount,
                CASE
-                   WHEN bool_or(lcu.status::text = 'overdue') THEN 'overdue'
-                   WHEN bool_and(lcu.status::text = 'paid')   THEN 'paid'
-                   ELSE 'issued'
+                   WHEN bool_or(lcu.status::text = $4) THEN $4
+                   WHEN bool_and(lcu.status::text = $5) THEN $5
+                   ELSE $6
                END                                                           AS status,
                MAX(lcu.paid_at)                                              AS paid_at
            FROM levy_call lc
            JOIN budget b           ON b.id             = lc.budget_id AND b.building_id = $2
            JOIN levy_call_unit lcu ON lcu.levy_call_id = lc.id        AND lcu.unit_id   = $1
-           WHERE lc.status = 'issued'
+           WHERE lc.status = $7::text::levy_status
              AND ($3::date IS NULL OR COALESCE(lc.issued_at::date, lc.due_date) >= $3::date)
            GROUP BY lc.id, b.fiscal_year, lc.call_label, lc.due_date, lc.issued_at
            ORDER BY lc.due_date DESC"#,
@@ -411,6 +411,10 @@ pub async fn charges(
     .bind(id)
     .bind(auth.building_id)
     .bind(ownership_start_date)
+    .bind(levy_status::OVERDUE)
+    .bind(levy_status::PAID)
+    .bind(levy_status::ISSUED)
+    .bind(levy_status::ISSUED)
     .fetch_all(&state.pool)
     .await?;
 
@@ -431,13 +435,14 @@ pub async fn charges(
            LEFT JOIN budget_line bl  ON bl.id  = lcu.budget_line_id
            LEFT JOIN allocation_key ak ON ak.id = lcu.key_id
            WHERE lcu.unit_id = $1
-             AND lc.status = 'issued'
+             AND lc.status = $4::text::levy_status
              AND ($3::date IS NULL OR COALESCE(lc.issued_at::date, lc.due_date) >= $3::date)
            ORDER BY lcu.levy_call_id, bl.label NULLS LAST"#,
     )
     .bind(id)
     .bind(auth.building_id)
     .bind(ownership_start_date)
+    .bind(levy_status::ISSUED)
     .fetch_all(&state.pool)
     .await?;
 
@@ -468,7 +473,7 @@ pub async fn charges(
     let total_issued: rust_decimal::Decimal = rows.iter().map(|r| r.total_amount).sum();
     let total_paid: rust_decimal::Decimal = rows
         .iter()
-        .filter(|r| r.status == "paid")
+        .filter(|r| r.status == levy_status::PAID)
         .map(|r| r.total_amount)
         .sum();
     let balance = total_issued - total_paid;
