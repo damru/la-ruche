@@ -1,5 +1,7 @@
 //! Canonical notification event catalog — single source of truth.
-//! Mirrored by the frontend, which keeps only display order + i18n.
+//! Mirrored by the frontend at `frontend/src/stores/ui.ts` (`NOTIF_EVENTS`),
+//! which keeps only display order + i18n labels: keys, mandatory flags and
+//! defaults must stay identical on both sides.
 //!
 //! No notification delivery infrastructure exists yet: these preferences are
 //! stored for the future dispatcher and have no sending effect today.

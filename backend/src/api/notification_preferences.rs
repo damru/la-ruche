@@ -1,4 +1,4 @@
-// ── api/notification_preferences.rs — GET/PUT /me/notification-preferences ──
+// ── api/notification_preferences.rs — GET/PUT/DELETE /me/notification-preferences ──
 
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -59,6 +59,18 @@ pub async fn get(
     let overrides: HashMap<String, bool> = rows.into_iter().collect();
     Ok(Json(NotificationPreferencesResponse {
         events: merged_events(&overrides),
+    }))
+}
+
+/// DELETE /me/notification-preferences — drops all stored overrides, back to
+/// catalog defaults. Idempotent; response has the same shape as GET.
+pub async fn reset(
+    State(state): State<Arc<AppState>>,
+    auth: AuthUser,
+) -> AppResult<Json<NotificationPreferencesResponse>> {
+    db::notification_preference::delete_all(&state.pool, auth.user_id).await?;
+    Ok(Json(NotificationPreferencesResponse {
+        events: merged_events(&HashMap::new()),
     }))
 }
 

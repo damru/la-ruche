@@ -24,6 +24,10 @@ export interface NotifEvent {
 
 // Catalogue of notification events (order = display order).
 // Labels live under i18n `settings.notifications.events.<id>` / `<id>Desc`.
+// Mirrored from the backend canonical catalog
+// (`backend/src/domain/notification_catalog.rs`): keys, mandatory flags and
+// defaults must stay identical on both sides — the server remains the source
+// of truth for values, this list drives display order and i18n.
 export const NOTIF_EVENTS: NotifEvent[] = [
   { id: 'ag_convocation', mandatory: true, default: true },
   { id: 'levy_call_issued', mandatory: true, default: true },
@@ -238,15 +242,10 @@ export const useUiStore = defineStore('ui', () => {
     const defaults = defaultNotifPrefs()
     notifPrefs.value = defaults
     persistNotifPrefs(defaults)
-    // Push optional-event defaults to the server (multi-device coherence).
-    const prefs: Record<string, boolean> = {}
-    for (const event of NOTIF_EVENTS) {
-      if (!event.mandatory) {
-        prefs[event.id] = defaults[event.id]
-      }
-    }
+    // Drop all server overrides (multi-device coherence): absence of rows
+    // means catalog defaults, so no per-key PUT is needed.
     try {
-      const { data } = await notificationPreferencesApi.update(prefs)
+      const { data } = await notificationPreferencesApi.reset()
       applyNotifPrefs(data.events)
     } catch {
       // Network error → local reset stands (localStorage fallback).

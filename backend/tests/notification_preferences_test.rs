@@ -1,4 +1,4 @@
-// GET/PUT /me/notification-preferences — server-side notification prefs.
+// GET/PUT/DELETE /me/notification-preferences — server-side notification prefs.
 
 mod common;
 
@@ -236,6 +236,59 @@ async fn overrides_are_isolated_between_users() {
 }
 
 #[tokio::test]
+async fn delete_drops_overrides_back_to_defaults_and_is_idempotent() {
+    let (server, pool) = prefs_test_server().await;
+
+    // Set two overrides.
+    let resp = server
+        .put("/api/v1/me/notification-preferences")
+        .json(&json!({ "prefs": { "weekly_digest": true, "ag_minutes": false } }))
+        .await;
+    assert_eq!(resp.status_code(), StatusCode::OK);
+
+    // DELETE drops all overrides; response is the catalog defaults.
+    let resp = server.delete("/api/v1/me/notification-preferences").await;
+    assert_eq!(
+        resp.status_code(),
+        StatusCode::OK,
+        "delete failed: {}",
+        resp.text()
+    );
+    let body: Value = resp.json();
+    let events = body["events"].as_array().expect("events array");
+    assert_eq!(events.len(), 16);
+    let find = |key: &str| events.iter().find(|e| e["key"] == key).expect("event");
+    assert_eq!(find("weekly_digest")["enabled"], false);
+    assert_eq!(find("ag_minutes")["enabled"], true);
+
+    // Overrides are gone from the table.
+    let count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM user_notification_preference")
+        .fetch_one(&pool)
+        .await
+        .expect("count");
+    assert_eq!(count, 0);
+
+    // Idempotent: a second DELETE on an empty set succeeds.
+    let resp = server.delete("/api/v1/me/notification-preferences").await;
+    assert_eq!(
+        resp.status_code(),
+        StatusCode::OK,
+        "second delete: {}",
+        resp.text()
+    );
+
+    // GET confirms the defaults after the reset.
+    let resp = server.get("/api/v1/me/notification-preferences").await;
+    let body: Value = resp.json();
+    let events = body["events"].as_array().expect("events array");
+    let weekly = events
+        .iter()
+        .find(|e| e["key"] == "weekly_digest")
+        .expect("event");
+    assert_eq!(weekly["enabled"], false);
+}
+
+#[tokio::test]
 async fn unauthenticated_requests_are_rejected() {
     let server = common::isolated_test_server().await;
 
@@ -246,5 +299,8 @@ async fn unauthenticated_requests_are_rejected() {
         .put("/api/v1/me/notification-preferences")
         .json(&json!({ "prefs": { "weekly_digest": true } }))
         .await;
+    assert_eq!(resp.status_code(), StatusCode::UNAUTHORIZED);
+
+    let resp = server.delete("/api/v1/me/notification-preferences").await;
     assert_eq!(resp.status_code(), StatusCode::UNAUTHORIZED);
 }

@@ -4,7 +4,7 @@
 
 **Épic :** EP-019 — Profil & préférences
 **Réf. PRD :** US-PP-004
-**Statut : IMPLÉMENTÉ (backend + frontend)** — persistance serveur livrée : table `user_notification_preference`, catalogue canonique `domain::notification_catalog`, `GET/PUT /me/notification-preferences`, hydratation du store `ui.ts` avec localStorage en cache de repli et migration one-shot des anciennes valeurs locales.
+**Statut : IMPLÉMENTÉ (backend + frontend)** — persistance serveur livrée : table `user_notification_preference`, catalogue canonique `domain::notification_catalog`, `GET/PUT/DELETE /me/notification-preferences`, hydratation du store `ui.ts` avec localStorage en cache de repli et migration one-shot des anciennes valeurs locales.
 
 > **Rappel de périmètre :** aucune infra de livraison de notifications n'existe dans le repo. Ces préférences sont stockées pour le futur dispatcher ; elles n'ont aujourd'hui aucun effet d'envoi.
 
@@ -14,7 +14,7 @@
 
 - Les préférences de notifications d'un utilisateur sont stockées **côté serveur**, rattachées à son compte (elles valent pour tous ses immeubles — préférence de compte, pas d'immeuble).
 - Le **catalogue devient canonique côté backend** (une seule source de vérité) : 16 événements, dont 3 obligatoires non désactivables (`ag_convocation`, `levy_call_issued`, `account_security`).
-- `GET /me/notification-preferences` renvoie le catalogue fusionné avec les valeurs de l'utilisateur ; `PUT` remplace les valeurs des événements optionnels.
+- `GET /me/notification-preferences` renvoie le catalogue fusionné avec les valeurs de l'utilisateur ; `PUT` remplace les valeurs des événements optionnels ; `DELETE` supprime tous les overrides de l'utilisateur (retour aux défauts du catalogue, idempotent — utilisé par le reset global EP-019-S07).
 - Le store frontend s'hydrate depuis l'API ; localStorage devient un **cache de repli** (offline/erreur réseau) et les anciennes valeurs localStorage sont **migrées** vers le serveur à la première connexion.
 
 ## 2. État actuel du code (points d'ancrage)
@@ -80,6 +80,10 @@ pub async fn list(pool: &PgPool, user_id: Uuid) -> AppResult<Vec<(String, bool)>
 /// Upserts the given optional-event values in one transaction
 /// (INSERT ... ON CONFLICT (user_id, event_key) DO UPDATE).
 pub async fn upsert(pool: &PgPool, user_id: Uuid, prefs: &[(String, bool)]) -> AppResult<()>;
+
+/// Deletes all stored overrides for the user — back to catalog defaults.
+/// Idempotent: deleting an already-empty set of rows is a no-op.
+pub async fn delete_all(pool: &PgPool, user_id: Uuid) -> AppResult<()>;
 ```
 
 ### 4.3 `backend/src/api/` — handlers (nouveau module `notification_preferences.rs`)
@@ -88,12 +92,15 @@ pub async fn upsert(pool: &PgPool, user_id: Uuid, prefs: &[(String, bool)]) -> A
   `{"events": [{"key", "mandatory", "enabled"}]}` dans l'ordre du catalogue. `enabled` = `true` si mandatory, sinon override ou défaut.
 - **`PUT /me/notification-preferences`** : body `{"prefs": {"<event_key>": bool}}`.
   Validation (dans le handler, simple validation de payload) : clé inconnue → 400 `errors.notification_preferences.unknown_event` ; clé obligatoire → 400 `errors.notification_preferences.mandatory_event`. Puis `db::upsert`, réponse = même forme que le GET.
+- **`DELETE /me/notification-preferences`** : supprime tous les overrides stockés de l'utilisateur (`db::delete_all`), retour aux défauts du catalogue. Idempotent (supprimer un ensemble vide est un no-op). Réponse = même forme que le GET, servie depuis un `overrides` vide. Utilisé par le reset global (EP-019-S07) à la place d'un PUT verbeux de tous les défauts.
 - Routes dans `api/mod.rs` (routeur authentifié, à côté du bloc auth) :
 
 ```rust
 .route(
     "/me/notification-preferences",
-    get(notification_preferences::get).put(notification_preferences::update),
+    get(notification_preferences::get)
+        .put(notification_preferences::update)
+        .delete(notification_preferences::reset),
 )
 ```
 
@@ -108,6 +115,8 @@ export const notificationPreferencesApi = {
   get: () => api.get<{ events: { key: string; mandatory: boolean; enabled: boolean }[] }>('/me/notification-preferences'),
   update: (prefs: Record<string, boolean>) =>
     api.put<{ events: { key: string; mandatory: boolean; enabled: boolean }[] }>('/me/notification-preferences', { prefs }),
+  reset: () =>
+    api.delete<{ events: { key: string; mandatory: boolean; enabled: boolean }[] }>('/me/notification-preferences'),
 }
 ```
 
@@ -119,7 +128,7 @@ export const notificationPreferencesApi = {
   2. **Migration one-shot** : si localStorage contient des valeurs (`laruche-notif-prefs`) différant des valeurs serveur par défaut et qu'aucun override serveur n'existe encore, pousser les valeurs locales via `update` puis marquer la migration faite (clé `laruche-notif-prefs-migrated`).
   3. Échec réseau → repli sur `readNotifPrefs()` (comportement actuel), sans casser l'UI.
 - `setNotifPref(id, value)` : mise à jour optimiste locale + `notificationPreferencesApi.update({ [id]: value })` ; en cas d'échec, rollback + message d'erreur.
-- `resetNotifPrefs()` : remet les défauts localement **et** pousse les défauts optionnels via `update` (cohérence multi-appareils ; utilisé par EP-019-S07).
+- `resetNotifPrefs()` : remet les défauts localement **et** appelle `DELETE /me/notification-preferences` (suppression des overrides serveur → défauts du catalogue ; idempotent, cohérence multi-appareils ; utilisé par EP-019-S07).
 
 ### 5.3 `ProfileView.vue`
 
@@ -132,6 +141,7 @@ Inchangé visuellement ; appeler `ui.loadNotifPrefs()` à l'entrée de l'onglet 
 | Clé inconnue dans le PUT | 400 `errors.notification_preferences.unknown_event` (rien n'est écrit) |
 | Tentative de désactiver un événement obligatoire | 400 `errors.notification_preferences.mandatory_event` ; l'UI n'expose déjà pas le toggle |
 | Utilisateur sans aucune ligne stockée | GET renvoie les défauts du catalogue |
+| `DELETE` sur un utilisateur sans override | 200, aucun changement (idempotent) |
 | Offline / API en erreur | Repli localStorage, écritures locales conservées ; re-synchronisation non garantie (assumé, simple) |
 | Divergence catalogue front/back | Le front affiche l'intersection : événements du catalogue front dont la valeur vient du serveur ; clés serveur inconnues du front ignorées |
 | Suppression du compte | `ON DELETE CASCADE` |
@@ -152,6 +162,7 @@ E2e (`backend/tests/api_e2e_test.rs`) :
 2. `PUT {"prefs": {"weekly_digest": true}}` → 200 ; `GET` reflète l'override ; upsert idempotent (2ᵉ PUT identique).
 3. `PUT` clé inconnue → 400 `unknown_event` ; `PUT {"ag_convocation": false}` → 400 `mandatory_event`.
 4. Deux utilisateurs : overrides isolés.
+5. `DELETE` après des overrides → 200, table vide, GET renvoie les défauts ; second `DELETE` → 200 (idempotent) ; `DELETE` non authentifié → 401.
 
 Unitaire : `notification_catalog::find` + invariant « 16 entrées, 3 obligatoires » (test qui casse si le catalogue dérive).
 

@@ -44,3 +44,13 @@ pub async fn upsert(pool: &PgPool, user_id: Uuid, prefs: &[(String, bool)]) -> A
     tx.commit().await?;
     Ok(())
 }
+
+/// Deletes all stored overrides for the user — back to catalog defaults.
+/// Idempotent: deleting an already-empty set of rows is a no-op.
+pub async fn delete_all(pool: &PgPool, user_id: Uuid) -> AppResult<()> {
+    sqlx::query("DELETE FROM user_notification_preference WHERE user_id = $1")
+        .bind(user_id)
+        .execute(pool)
+        .await?;
+    Ok(())
+}

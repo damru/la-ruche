@@ -77,7 +77,9 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
         // ── Notification preferences (account-level) ──
         .route(
             "/me/notification-preferences",
-            get(notification_preferences::get).put(notification_preferences::update),
+            get(notification_preferences::get)
+                .put(notification_preferences::update)
+                .delete(notification_preferences::reset),
         )
         // ── Building ────────────────────────────────────────────
         .route("/building", get(building::get).put(building::update))

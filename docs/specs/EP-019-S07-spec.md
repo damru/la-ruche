@@ -6,7 +6,7 @@
 **Réf. PRD :** US-PP-005
 **Statut : IMPLÉMENTÉ (frontend)** — bouton global unique « Réinitialiser mes préférences » en bas de la page Profil (visible quel que soit l'onglet), modale de confirmation listant les deux domaines, reset du thème vers `auto` et (EP-019-S09) du délai de fermeture des modales vers 3 s. L'ancien bouton de l'en-tête Notifications est supprimé.
 
-Story 100 % frontend — aucune migration, aucun changement backend. (Si EP-019-S03 est livrée avant, le reset des notifications pousse aussi les défauts au serveur via `resetNotifPrefs` — déjà couvert par la spec S03 §5.2 ; cette story n'ajoute rien côté API.)
+Story 100 % frontend — aucune migration, aucun changement backend. (Si EP-019-S03 est livrée avant, le reset des notifications synchronise le serveur via `resetNotifPrefs` → `DELETE /me/notification-preferences` — déjà couvert par la spec S03 §4.3/§5.2 ; cette story n'ajoute rien côté API.)
 
 ---
 
@@ -106,7 +106,7 @@ Supprimer les clés devenues orphelines `settings.notifications.reset`, `resetCo
 | Reset du thème | `setThemePreference('auto')` supprime la clé `laruche-theme` (comportement existant L90-91) ; le `watch` réapplique immédiatement `data-theme` selon le système |
 | Événements de notification obligatoires | Non affectés (toujours on, `defaultNotifPrefs` les force à `true`) |
 | Visibilité du bouton | Présent quel que soit l'onglet actif (Compte, Notifications, Apparence…) |
-| EP-019-S03 livrée | `resetNotifPrefs` pousse les défauts au serveur ; en cas d'échec réseau, comportement de repli défini par S03 — rien à ajouter ici |
+| EP-019-S03 livrée | `resetNotifPrefs` appelle `DELETE /me/notification-preferences` (suppression des overrides serveur) ; en cas d'échec réseau, comportement de repli défini par S03 — rien à ajouter ici |
 
 ## 6. Critères d'acceptation
 

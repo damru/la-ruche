@@ -74,6 +74,8 @@ export const notificationPreferencesApi = {
     api.get<NotificationPreferencesResponse>('/me/notification-preferences'),
   update: (prefs: Record<string, boolean>) =>
     api.put<NotificationPreferencesResponse>('/me/notification-preferences', { prefs }),
+  reset: () =>
+    api.delete<NotificationPreferencesResponse>('/me/notification-preferences'),
 }
 
 // ── Building ──────────────────────────────────────────────────────
