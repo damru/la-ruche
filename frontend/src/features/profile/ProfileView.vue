@@ -14,6 +14,7 @@ import CBadge from '@/components/atoms/CBadge.vue'
 import CIconClock from '@/components/atoms/CIconClock.svg'
 import CIconLogIn from '@/components/atoms/CIconLogIn.svg'
 import CIconMoon from '@/components/atoms/CIconMoon.svg'
+import CIconRefresh from '@/components/atoms/CIconRefresh.svg'
 import CIconSun from '@/components/atoms/CIconSun.svg'
 import { useAuthStore } from '@/stores/auth'
 import { usePermissions } from '@/composables/usePermissions'
@@ -33,8 +34,12 @@ const ui = useUiStore()
 const { confirm } = useConfirm()
 
 // ── Tabs ──────────────────────────────────────────────────────────
-type ProfileTab = 'account' | 'notifications' | 'appearance'
+// "Notifications" and "Appearance" live under the common "Préférences" tab;
+// `prefsTab` holds the sub-tab selected inside it.
+type ProfileTab = 'account' | 'preferences'
+type PrefsTab = 'notifications' | 'appearance'
 const activeTab = ref<ProfileTab>('account')
+const prefsTab = ref<PrefsTab>('notifications')
 
 // ── Account form (email = login, phone) ───────────────────────────
 const saving = ref(false)
@@ -114,12 +119,12 @@ const selectedThemeOption = computed(
 )
 
 // ── Notifications ─────────────────────────────────────────────────
-// Hydrate from the server when the tab is first opened;
+// Hydrate from the server when the preferences tab is first opened;
 // localStorage remains the fallback cache on network error.
 watch(
-  () => activeTab.value,
-  (tab) => {
-    if (tab === 'notifications') {
+  () => [activeTab.value, prefsTab.value],
+  ([tab, subTab]) => {
+    if (tab === 'preferences' && subTab === 'notifications') {
       void ui.loadNotifPrefs()
     }
   },
@@ -208,12 +213,32 @@ const showResetDataModal = ref(false)
         </CHeading>
       </header>
 
-      <!-- Tabs -->
+      <!-- Tabs + global reset action -->
+      <div class="flex items-center justify-between gap-3">
+        <CTabs
+          v-model="activeTab"
+          variant="filter"
+          :tabs="[
+            { value: 'account', label: t('nav.myAccount') },
+            { value: 'preferences', label: t('settings.preferences.title') },
+          ]"
+          class="mb-0!"
+        />
+        <CBtn
+          variant="ghost"
+          size="sm"
+          :icon="CIconRefresh"
+          :title="t('settings.preferences.reset')"
+          @click="resetAllPrefs"
+        />
+      </div>
+
+      <!-- Preferences sub-tabs -->
       <CTabs
-        v-model="activeTab"
-        variant="tab"
+        v-if="activeTab === 'preferences'"
+        v-model="prefsTab"
+        variant="filter"
         :tabs="[
-          { value: 'account', label: t('nav.myAccount') },
           { value: 'notifications', label: t('settings.tabs.notifications') },
           { value: 'appearance', label: t('settings.preferences.theme.label') },
         ]"
@@ -325,7 +350,7 @@ const showResetDataModal = ref(false)
       </template>
 
       <!-- ── Notifications tab ───────────────────────────────── -->
-      <template v-if="activeTab === 'notifications'">
+      <template v-if="activeTab === 'preferences' && prefsTab === 'notifications'">
         <CCard>
           <div class="notif-header">
             <div class="notif-header__text">
@@ -369,7 +394,7 @@ const showResetDataModal = ref(false)
       </template>
 
       <!-- ── Appearance tab ──────────────────────────────────── -->
-      <template v-if="activeTab === 'appearance'">
+      <template v-if="activeTab === 'preferences' && prefsTab === 'appearance'">
         <CCard>
           <CHeading type="card">
             {{ t('settings.preferences.title') }}
@@ -416,16 +441,6 @@ const showResetDataModal = ref(false)
           </div>
         </CCard>
       </template>
-
-      <!-- ── Global reset (all tabs) ─────────────────────────────────────────── -->
-      <div class="mt-8 flex justify-center">
-        <CBtn
-          variant="ghost"
-          size="sm"
-          :title="t('settings.preferences.reset')"
-          @click="resetAllPrefs"
-        />
-      </div>
     </div>
   </div>
 

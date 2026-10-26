@@ -286,12 +286,24 @@ async function exportCalendar() {
           </CMetaLine>
         </header>
 
-        <CTabs
-          v-model="mode"
-          variant="filter"
-          :tabs="(['month', 'week', 'agenda'] as const).map(m => ({ value: m, label: t(`calendar.modes.${m}`) }))"
-          @update:model-value="onModeChange"
-        />
+        <div class="flex items-center justify-between gap-3">
+          <CTabs
+            v-model="mode"
+            variant="filter"
+            :tabs="(['month', 'week', 'agenda'] as const).map(m => ({ value: m, label: t(`calendar.modes.${m}`) }))"
+            class="mb-0!"
+            @update:model-value="onModeChange"
+          />
+          <CBtn
+            variant="ghost"
+            size="sm"
+            :icon="CIconDownload"
+            :title="t('calendar.export')"
+            :aria-label="t('calendar.export')"
+            :loading="exporting"
+            @click="exportCalendar"
+          />
+        </div>
 
         <CalendarFilterBar
           v-model="activeTypes"
@@ -349,15 +361,6 @@ async function exportCalendar() {
                 @change="applyListRange"
               />
             </div>
-            <CBtn
-              variant="ghost"
-              size="sm"
-              :icon="CIconDownload"
-              :title="t('calendar.export')"
-              :aria-label="t('calendar.export')"
-              :loading="exporting"
-              @click="exportCalendar"
-            />
           </div>
 
           <CalendarGrid
