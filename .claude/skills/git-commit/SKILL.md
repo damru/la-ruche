@@ -29,12 +29,11 @@ Create standardized, semantic git commits using the Conventional Commits specifi
 | `fix`      | Bug fix                        |
 | `docs`     | Documentation only             |
 | `style`    | Formatting/style (no logic)    |
-| `refactor` | Code refactor (no feature/fix) |
 | `perf`     | Performance improvement        |
 | `test`     | Add/update tests               |
 | `build`    | Build system/dependencies      |
 | `ci`       | CI/config changes              |
-| `chore`    | Maintenance/misc               |
+| `chore`    | Maintenance/refactor/misc      |
 | `revert`   | Revert commit                  |
 
 ## Breaking Changes
