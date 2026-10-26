@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useFormatters } from '@/composables/useFormatters'
 import { usePageLoader } from '@/composables/usePageLoader'
-import { useAuthStore } from '@/stores/auth'
+import { usePermissions } from '@/composables/usePermissions'
 import type { Meeting, MeetingStatus, MeetingType } from '@/types/domain'
 import { ALL_FILTER, MEETING_STATUS_CALLED, MEETING_STATUS_CLOSED, MEETING_STATUS_ONGOING, MEETING_TYPE_ANNUAL } from '@/utils/constants'
 import { meetingsApi } from '@/api'
@@ -25,14 +25,14 @@ import CreateMeetingModal from './CreateMeetingModal.vue'
 const router = useRouter()
 const { t } = useI18n()
 const { formatDate } = useFormatters()
-const auth = useAuthStore()
+const { canManageGM } = usePermissions()
 
 const buildingName = ref('')
 const allMeetings = ref<Meeting[]>([])
 type MeetingFilter = typeof ALL_FILTER | 'upcoming' | MeetingStatus
 const filter = ref<MeetingFilter>(ALL_FILTER)
 
-const canManage = computed(() => auth.isManager)
+const canManage = canManageGM
 
 const showCreateModal = ref(false)
 

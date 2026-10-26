@@ -9,7 +9,7 @@ import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useI18n } from 'vue-i18n'
 import type { Role } from '@/types/domain'
-import { DOCUMENT_ROLES, MANAGER_ROLES, ROLES } from '@/utils/constants'
+import { DOCUMENT_ROLES, MANAGER_ROLES, ROLE_CO_OWNER, ROLE_MANAGER, ROLES } from '@/utils/roles'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -48,7 +48,7 @@ const allGroups: NavGroup[] = [
     label: t('nav.groups.finance'),
     items: [
       { name: 'budget',      route: '/budget',      label: t('nav.budget'),      mobileLabel: t('nav.mobile.budget'),      roles: [...ROLES], mobileOrder: 11 },
-      { name: 'my-charges',  route: '/my-charges',  label: t('nav.myCharges'),   mobileLabel: t('nav.myCharges'),           roles: ['co_owner' satisfies Role],                            mobileOrder: 3 },
+      { name: 'my-charges',  route: '/my-charges',  label: t('nav.myCharges'),   mobileLabel: t('nav.myCharges'),           roles: [ROLE_CO_OWNER],                            mobileOrder: 3 },
       { name: 'contracts',   route: '/contracts',   label: t('nav.contracts'),   mobileLabel: t('nav.contracts'),   roles: [...MANAGER_ROLES],             mobileOrder: 6 },
     ],
   },
@@ -65,13 +65,13 @@ const allGroups: NavGroup[] = [
   {
     label: t('nav.groups.residence'),
     items: [
-      { name: 'residence-building', route: '/residence/building', label: t('common.informations'), roles: ['manager' satisfies Role] },
-      { name: 'residence-keys',     route: '/residence/keys',     label: t('allocationKeys.title'), roles: ['manager' satisfies Role] },
+      { name: 'residence-building', route: '/residence/building', label: t('common.informations'), roles: [ROLE_MANAGER] },
+      { name: 'residence-keys',     route: '/residence/keys',     label: t('allocationKeys.title'), roles: [ROLE_MANAGER] },
       { name: 'registry',           route: '/registry',           label: t('nav.registry'),       roles: [...ROLES] },
       { name: 'judicial-proceedings', route: '/judicial-proceedings', label: t('nav.judicialProceedings'), roles: [...ROLES] },
       { name: 'governance',         route: '/governance',         label: t('nav.governance'),     roles: [...ROLES] },
-      { name: 'etat-date',          route: '/etat-date',          label: t('registers.etatDate.title'),       roles: ['manager' satisfies Role] },
-      { name: 'residents',          route: '/residents',          label: t('nav.residents'),      roles: ['manager' satisfies Role] },
+      { name: 'etat-date',          route: '/etat-date',          label: t('registers.etatDate.title'),       roles: [ROLE_MANAGER] },
+      { name: 'residents',          route: '/residents',          label: t('nav.residents'),      roles: [ROLE_MANAGER] },
     ],
   },
 ]

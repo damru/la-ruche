@@ -14,7 +14,7 @@ import { useFormFeedback } from '@/composables/useFormFeedback'
 import { useAutoClose } from '@/composables/useAutoClose'
 import { toErrorMessage } from '@/composables/usePageLoader'
 import type { Consultation } from '@/types/domain'
-import { ROLES } from '@/utils/constants'
+import { ROLES } from '@/utils/roles'
 import { useUiStore } from '@/stores/ui'
 
 const props = defineProps<{

@@ -16,6 +16,7 @@ import CIconLogIn from '@/components/atoms/CIconLogIn.svg'
 import CIconMoon from '@/components/atoms/CIconMoon.svg'
 import CIconSun from '@/components/atoms/CIconSun.svg'
 import { useAuthStore } from '@/stores/auth'
+import { usePermissions } from '@/composables/usePermissions'
 import { useUiStore, NOTIF_EVENTS, AUTO_CLOSE_DELAY_MIN_SEC, AUTO_CLOSE_DELAY_MAX_SEC } from '@/stores/ui'
 import { authApi } from '@/api'
 import { useBuildingStore } from '@/stores/building'
@@ -27,6 +28,7 @@ import ResetDataModal from './ResetDataModal.vue'
 const { t } = useI18n()
 const router = useRouter()
 const auth = useAuthStore()
+const { canManageUsers } = usePermissions()
 const ui = useUiStore()
 const { confirm } = useConfirm()
 
@@ -297,7 +299,7 @@ const showResetDataModal = ref(false)
           </div>
         </CCard>
 
-        <CCard v-if="auth.isManager && ui.demoMode">
+        <CCard v-if="canManageUsers && ui.demoMode">
           <CHeading
             type="card"
             class="danger-title"

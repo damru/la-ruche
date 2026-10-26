@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import type { Role } from '@/types/domain'
-import { DOCUMENT_ROLES, MANAGER_ROLES, ROLES } from '@/utils/constants'
+import { DOCUMENT_ROLES, MANAGER_ROLES, ROLE_CO_OWNER, ROLE_MANAGER, ROLES } from '@/utils/roles'
 import i18n from '@/i18n'
 
 // ── Lazy imports ──────────────────────────────────────────────────
@@ -169,7 +169,7 @@ const routes: RouteRecordRaw[] = [
         path: 'residents',
         name: 'residents',
         component: ResidentsView,
-        meta: { title: 'nav.residents', roles: ['manager' satisfies Role] },
+        meta: { title: 'nav.residents', roles: [ROLE_MANAGER] },
       },
       {
         path: 'residents/:id/charges',
@@ -181,7 +181,7 @@ const routes: RouteRecordRaw[] = [
         path: 'my-charges',
         name: 'my-charges',
         component: MyChargesView,
-        meta: { title: 'nav.myCharges', roles: ['co_owner' satisfies Role] },
+        meta: { title: 'nav.myCharges', roles: [ROLE_CO_OWNER] },
       },
       {
         path: 'registry',
@@ -205,20 +205,20 @@ const routes: RouteRecordRaw[] = [
         path: 'etat-date',
         name: 'etat-date',
         component: EtatDateView,
-        meta: { title: 'registers.etatDate.title', roles: ['manager' satisfies Role] },
+        meta: { title: 'registers.etatDate.title', roles: [ROLE_MANAGER] },
       },
       // ── Residence ───────────────────────────────────────────
       {
         path: 'residence/building',
         name: 'residence-building',
         component: BuildingView,
-        meta: { title: 'common.informations', roles: ['manager' satisfies Role] },
+        meta: { title: 'common.informations', roles: [ROLE_MANAGER] },
       },
       {
         path: 'residence/keys',
         name: 'residence-keys',
         component: AllocationKeysView,
-        meta: { title: 'allocationKeys.title', roles: ['manager' satisfies Role] },
+        meta: { title: 'allocationKeys.title', roles: [ROLE_MANAGER] },
       },
       // ── Profile ──────────────────────────────────────────────
       {

@@ -5,7 +5,7 @@ import { useI18n } from 'vue-i18n'
 import { useFormatters } from '@/composables/useFormatters'
 import { usePageLoader, toErrorMessage } from '@/composables/usePageLoader'
 import { useFormFeedback } from '@/composables/useFormFeedback'
-import { useAuthStore } from '@/stores/auth'
+import { usePermissions } from '@/composables/usePermissions'
 import type {
   Meeting,
   MeetingAttendance,
@@ -68,7 +68,7 @@ const route = useRoute()
 const router = useRouter()
 const { t } = useI18n()
 const { formatDate } = useFormatters()
-const auth = useAuthStore()
+const { canManageGM } = usePermissions()
 
 const buildingName = ref('')
 const buildingSharesTotal = ref(0)
@@ -144,10 +144,10 @@ const art24SourceResolution = ref<Resolution | null>(null)
 const showArt25Modal = ref(false)
 const art25SourceResolution = ref<Resolution | null>(null)
 
-const canManageResolutions = computed(() => auth.isManager && meeting.value?.status === MEETING_STATUS_DRAFT)
-const canManageVotes = computed(() => auth.isManager && meeting.value?.status === MEETING_STATUS_ONGOING)
-const canEditResolution = computed(() => auth.isManager && (RESOLUTION_EDITABLE_MEETING_STATUSES as readonly MeetingStatus[]).includes(meeting.value?.status as MeetingStatus))
-const canEditAttendance = computed(() => auth.isManager && meeting.value?.status === MEETING_STATUS_ONGOING)
+const canManageResolutions = computed(() => canManageGM.value && meeting.value?.status === MEETING_STATUS_DRAFT)
+const canManageVotes = computed(() => canManageGM.value && meeting.value?.status === MEETING_STATUS_ONGOING)
+const canEditResolution = computed(() => canManageGM.value && (RESOLUTION_EDITABLE_MEETING_STATUSES as readonly MeetingStatus[]).includes(meeting.value?.status as MeetingStatus))
+const canEditAttendance = computed(() => canManageGM.value && meeting.value?.status === MEETING_STATUS_ONGOING)
 const sortedAttendanceEntries = computed(() =>
   [...attendance.value.entries].sort((a, b) => parseInt(a.unit_number, 10) - parseInt(b.unit_number, 10))
 )
@@ -159,7 +159,7 @@ const isMeetingPast = computed(() => {
   return new Date(meeting.value.meeting_date).getTime() < Date.now()
 })
 const topbarActionState = computed<'none' | 'draft' | 'called-waiting' | 'called-startable' | 'ongoing' | 'closed'>(() => {
-  if (!auth.isManager || !meeting.value) return 'none'
+  if (!canManageGM.value || !meeting.value) return 'none'
 
   if (meeting.value.status === MEETING_STATUS_DRAFT) return 'draft'
   if (meeting.value.status === MEETING_STATUS_CLOSED) return 'closed'
@@ -727,7 +727,7 @@ function openArt25Modal(resolution: Resolution) {
         </div>
 
         <CCard
-          v-if="meetingState(meeting.status) === 'closed' && auth.isManager"
+          v-if="meetingState(meeting.status) === 'closed' && canManageGM"
           class="minutes-card"
         >
           <div class="flex flex-col gap-3">
@@ -745,7 +745,7 @@ function openArt25Modal(resolution: Resolution) {
                   @click="openDocument(meeting.minutes_document_id!)"
                 />
                 <CBtn
-                  v-if="auth.isManager"
+                  v-if="canManageGM"
                   variant="ghost"
                   size="sm"
                   type="button"
@@ -774,7 +774,7 @@ function openArt25Modal(resolution: Resolution) {
                   {{ (meeting.minutes_scrutineers_signed ?? []).map(s => s.name).join(', ') }}
                 </span>
               </div>
-              <template v-if="auth.isManager">
+              <template v-if="canManageGM">
                 <CAlert
                   v-if="notificationDutyDeadline"
                   :variant="notificationDutyVariant"
@@ -805,7 +805,7 @@ function openArt25Modal(resolution: Resolution) {
                 {{ t('meetings.minutes.lead') }}
               </p>
               <div
-                v-if="auth.isManager"
+                v-if="canManageGM"
                 class="flex gap-2 flex-wrap"
               >
                 <CBtn
@@ -1134,7 +1134,7 @@ function openArt25Modal(resolution: Resolution) {
                   {{ t('meetings.callReady') }}
                 </p>
                 <template
-                  v-if="auth.isManager"
+                  v-if="canManageGM"
                   #actions
                 >
                   <CBtn
@@ -1175,7 +1175,7 @@ function openArt25Modal(resolution: Resolution) {
                     <div class="doc-row__actions">
                       <span class="doc-kind">{{ documentKindLabel(document.kind) }}</span>
                       <button
-                        v-if="auth.isManager"
+                        v-if="canManageGM"
                         class="doc-remove"
                         @click="promptDeleteDocument(document.id, document.original_name)"
                       >
@@ -1214,7 +1214,7 @@ function openArt25Modal(resolution: Resolution) {
                     <div class="doc-row__actions">
                       <span class="doc-kind">{{ documentKindLabel(document.kind) }}</span>
                       <button
-                        v-if="auth.isManager"
+                        v-if="canManageGM"
                         class="doc-remove"
                         @click="promptDeleteDocument(document.id, document.original_name)"
                       >

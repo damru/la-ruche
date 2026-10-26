@@ -11,8 +11,8 @@ import CCopyField from '@/components/molecules/CCopyField.vue'
 import { usersApi } from '@/api'
 import { useFormFeedback } from '@/composables/useFormFeedback'
 import { useAutoClose } from '@/composables/useAutoClose'
-import type { Role, Unit } from '@/types/domain'
-import { ROLES } from '@/utils/constants'
+import type { Unit } from '@/types/domain'
+import { ROLE_CO_OWNER, ROLE_TENANT, ROLES } from '@/utils/roles'
 
 const props = defineProps<{
   open: boolean
@@ -30,7 +30,7 @@ const { schedule: scheduleClose, forceExpire: forceClose } = useAutoClose()
 const loading = ref(false)
 const inviteLink = ref('')
 
-const form = reactive({ email: '', role: 'co_owner' satisfies Role, unit_id: '' })
+const form = reactive({ email: '', role: ROLE_CO_OWNER, unit_id: '' })
 
 const INVITE_ROLES = ROLES
 
@@ -42,7 +42,7 @@ const activeUnits = computed(() =>
   props.units.filter(u => u.active).map(u => ({ value: u.id, label: u.unit_number }))
 )
 
-const isTenant = computed(() => form.role === 'tenant' satisfies Role)
+const isTenant = computed(() => form.role === ROLE_TENANT)
 const isValid = computed(() =>
   !!form.email.trim() && !!form.role && (!isTenant.value || !!form.unit_id)
 )
@@ -50,14 +50,14 @@ const isValid = computed(() =>
 watch(() => props.open, (open) => {
   if (!open) { forceClose(); return }
   form.email = ''
-  form.role = 'co_owner'
+  form.role = ROLE_CO_OWNER
   form.unit_id = ''
   inviteLink.value = ''
   feedback.reset()
 })
 
 watch(() => form.role, (role) => {
-  if (role !== 'tenant' satisfies Role) form.unit_id = ''
+  if (role !== ROLE_TENANT) form.unit_id = ''
 })
 
 async function handleSubmit() {

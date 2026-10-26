@@ -14,7 +14,14 @@
 
 import { computed, type ComputedRef } from 'vue'
 import { useAuthStore } from '@/stores/auth'
-import type { Role } from '@/types/domain'
+import {
+  MANAGER_ROLES,
+  RESIDENT_ROLES,
+  ROLE_BOARD_MEMBER,
+  ROLE_CO_OWNER,
+  ROLE_MANAGER,
+} from '@/utils/roles'
+import type { CalendarSource, Role } from '@/types/domain'
 
 interface Permissions {
   // ── General Meeting (AG) ──
@@ -44,6 +51,8 @@ interface Permissions {
   canManageBudget: ComputedRef<boolean>
   /** Only the manager may create / update / close / approve budgets. */
   canAdministerBudget: ComputedRef<boolean>
+  /** Only co-owners may see their own levy calls (My charges). */
+  canViewMyCharges: ComputedRef<boolean>
 
   // ── Task ──
   canViewTask: ComputedRef<boolean>
@@ -87,6 +96,8 @@ interface Permissions {
   // ── Calendar ──
   canViewCalendar: ComputedRef<boolean>
   canManageCalendar: ComputedRef<boolean>
+  /** Whether the caller's role can see the given calendar event source (mirrors the backend `visible_sources` rule). */
+  canViewCalendarSource: (source: CalendarSource) => boolean
 
   // ── État daté ──
   canViewEtatDate: ComputedRef<boolean>
@@ -108,125 +119,109 @@ export function usePermissions(): Permissions {
   const auth = useAuthStore()
 
   const hasRole = (role: Role): boolean => auth.hasRole(role)
-  const hasAnyRole = (roles: Role[]): boolean => auth.hasAnyRole(roles)
+  const hasAnyRole = (roles: readonly Role[]): boolean => auth.hasAnyRole([...roles])
   const isAuthenticated = computed(() => auth.isAuthenticated)
 
   // ── General Meeting (AG) ──
 
   const canViewGM = computed(() => isAuthenticated.value)
-  const canVoteGM = computed(() => hasRole('co_owner'))
+  const canVoteGM = computed(() => hasRole(ROLE_CO_OWNER))
   const canRecordGMVotes = computed(() =>
-    hasAnyRole(['manager', 'board_member', 'co_owner'])
+    hasAnyRole([ROLE_MANAGER, ROLE_BOARD_MEMBER, ROLE_CO_OWNER]),
   )
-  const canManageGM = computed(() => hasRole('manager'))
+  const canManageGM = computed(() => hasRole(ROLE_MANAGER))
 
   // ── Consultation ──
 
   const canViewConsultation = computed(() => isAuthenticated.value)
-  const canVoteConsultation = computed(() => hasRole('co_owner') || hasRole('tenant'))
-  const canManageConsultation = computed(() =>
-    hasAnyRole(['manager', 'board_member'])
-  )
+  const canVoteConsultation = computed(() => hasAnyRole(RESIDENT_ROLES))
+  const canManageConsultation = computed(() => hasAnyRole(MANAGER_ROLES))
   const canInitiateConsultation = computed(() => isAuthenticated.value)
 
   // ── Budget ──
 
   const canViewBudget = computed(() => isAuthenticated.value)
-  const canManageBudget = computed(() =>
-    hasAnyRole(['manager', 'board_member'])
-  )
-  const canAdministerBudget = computed(() => hasRole('manager'))
+  const canManageBudget = computed(() => hasAnyRole(MANAGER_ROLES))
+  const canAdministerBudget = computed(() => hasRole(ROLE_MANAGER))
+  const canViewMyCharges = computed(() => hasRole(ROLE_CO_OWNER))
 
   // ── Task ──
 
   const canViewTask = computed(() => isAuthenticated.value)
-  const canManageTask = computed(() =>
-    hasAnyRole(['manager', 'board_member'])
-  )
+  const canManageTask = computed(() => hasAnyRole(MANAGER_ROLES))
 
   // ── Contract ──
 
-  const canViewContract = computed(() =>
-    hasAnyRole(['manager', 'board_member'])
-  )
-  const canManageContract = computed(() =>
-    hasAnyRole(['manager', 'board_member'])
-  )
-  const canAdministerContract = computed(() => hasRole('manager'))
+  const canViewContract = computed(() => hasAnyRole(MANAGER_ROLES))
+  const canManageContract = computed(() => hasAnyRole(MANAGER_ROLES))
+  const canAdministerContract = computed(() => hasRole(ROLE_MANAGER))
 
   // ── Document ──
 
   const canViewDocument = computed(() => isAuthenticated.value)
-  const canManageDocument = computed(() =>
-    hasAnyRole(['manager', 'board_member'])
-  )
+  const canManageDocument = computed(() => hasAnyRole(MANAGER_ROLES))
 
   // ── Logbook ──
 
   const canViewLogbook = computed(() => isAuthenticated.value)
-  const canManageLogbook = computed(() =>
-    hasAnyRole(['manager', 'board_member'])
-  )
+  const canManageLogbook = computed(() => hasAnyRole(MANAGER_ROLES))
 
   // ── Report ──
 
   const canViewReport = computed(() => isAuthenticated.value)
-  const canManageReport = computed(() =>
-    hasAnyRole(['manager', 'board_member'])
-  )
-  const canAdministerReport = computed(() => hasRole('manager'))
+  const canManageReport = computed(() => hasAnyRole(MANAGER_ROLES))
+  const canAdministerReport = computed(() => hasRole(ROLE_MANAGER))
 
   // ── Claim ──
 
   const canViewClaim = computed(() => isAuthenticated.value)
-  const canManageClaim = computed(() => hasRole('manager'))
+  const canManageClaim = computed(() => hasRole(ROLE_MANAGER))
 
   // ── Unit ──
 
   const canViewUnit = computed(() => isAuthenticated.value)
-  const canManageUnit = computed(() => hasRole('manager'))
+  const canManageUnit = computed(() => hasRole(ROLE_MANAGER))
 
   // ── User ──
 
-  const canViewUsers = computed(() =>
-    hasAnyRole(['manager', 'board_member'])
-  )
-  const canManageUsers = computed(() => hasRole('manager'))
+  const canViewUsers = computed(() => hasAnyRole(MANAGER_ROLES))
+  const canManageUsers = computed(() => hasRole(ROLE_MANAGER))
 
   // ── Accounting / Works fund ──
 
-  const canViewAccounting = computed(() =>
-    hasAnyRole(['manager', 'board_member'])
-  )
-  const canManageAccounting = computed(() => hasRole('manager'))
+  const canViewAccounting = computed(() => hasAnyRole(MANAGER_ROLES))
+  const canManageAccounting = computed(() => hasRole(ROLE_MANAGER))
 
   // ── Calendar ──
 
   const canViewCalendar = computed(() => isAuthenticated.value)
-  const canManageCalendar = computed(() =>
-    hasAnyRole(['manager', 'board_member'])
-  )
+  const canManageCalendar = computed(() => hasAnyRole(MANAGER_ROLES))
+  // Mirrors the backend `visible_sources` rule: Manager/BoardMember see every
+  // source; CoOwner/Tenant only see meetings and manual events.
+  const canViewCalendarSource = (source: CalendarSource): boolean =>
+    source === 'meeting' || source === 'manual'
+      ? isAuthenticated.value
+      : hasAnyRole(MANAGER_ROLES)
+
 
   // ── État daté ──
 
   const canViewEtatDate = computed(() => isAuthenticated.value)
-  const canManageEtatDate = computed(() => hasRole('manager'))
+  const canManageEtatDate = computed(() => hasRole(ROLE_MANAGER))
 
   // ── Judicial proceedings ──
 
   const canViewJudicial = computed(() => isAuthenticated.value)
-  const canManageJudicial = computed(() => hasRole('manager'))
+  const canManageJudicial = computed(() => hasRole(ROLE_MANAGER))
 
   // ── Governance ──
 
   const canViewGovernance = computed(() => isAuthenticated.value)
-  const canManageGovernance = computed(() => hasRole('manager'))
+  const canManageGovernance = computed(() => hasRole(ROLE_MANAGER))
 
   // ── Contractor (vendor-facing) ──
 
-  const canManageContractor = computed(() =>
-    hasAnyRole(['manager', 'board_member'])
-  )
+  const canManageContractor = computed(() => hasAnyRole(MANAGER_ROLES))
 
   return {
     canViewGM,
@@ -240,6 +235,7 @@ export function usePermissions(): Permissions {
     canViewBudget,
     canManageBudget,
     canAdministerBudget,
+    canViewMyCharges,
     canViewTask,
     canManageTask,
     canViewContract,
@@ -262,6 +258,7 @@ export function usePermissions(): Permissions {
     canManageAccounting,
     canViewCalendar,
     canManageCalendar,
+    canViewCalendarSource,
     canViewEtatDate,
     canManageEtatDate,
     canViewJudicial,

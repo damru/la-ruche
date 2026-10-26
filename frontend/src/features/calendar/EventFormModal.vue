@@ -19,7 +19,8 @@ import { useAutoClose } from '@/composables/useAutoClose'
 import { toErrorMessage } from '@/composables/usePageLoader'
 import { extractFileExtension } from '@/utils/files'
 import type { CalendarEventCategory, ManualCalendarEvent } from '@/types/domain'
-import { CALENDAR_EVENT_CATEGORIES, DOCUMENT_ROLES } from '@/utils/constants'
+import { CALENDAR_EVENT_CATEGORIES } from '@/utils/constants'
+import { DOCUMENT_ROLES } from '@/utils/roles'
 import { useUiStore } from '@/stores/ui'
 
 const props = defineProps<{

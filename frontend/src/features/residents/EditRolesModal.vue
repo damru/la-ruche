@@ -10,8 +10,7 @@ import { usersApi } from '@/api'
 import { useFormFeedback } from '@/composables/useFormFeedback'
 import { useAutoClose } from '@/composables/useAutoClose'
 import type { User } from '@/types/domain'
-import { ROLES } from '@/utils/constants'
-import type { Role } from '@/types/domain'
+import { ROLE_MANAGER, ROLES } from '@/utils/roles'
 import { useUiStore } from '@/stores/ui'
 
 type RoleKey = (typeof ROLES)[number]
@@ -36,7 +35,7 @@ const selected = ref<RoleKey[]>([])
 
 const isEditingSelf = computed(() => props.user?.id === auth.user?.user_id)
 const removingOwnManager = computed(
-  () => isEditingSelf.value && !selected.value.includes('manager' satisfies Role),
+  () => isEditingSelf.value && !selected.value.includes(ROLE_MANAGER),
 )
 
 watch(() => props.open, (open) => {
