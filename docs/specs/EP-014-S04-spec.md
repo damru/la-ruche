@@ -71,7 +71,7 @@ Défaut de plage si `from`/`to` absents : aujourd'hui → +365 jours (l'export �
 ## 4. Frontend
 
 - `frontend/src/api/index.ts` : `calendarApi.exportIcs(from, to, types?)` — `api.get(..., { responseType: 'blob' })`.
-- `CalendarView.vue` : bouton « Exporter (.ics) » dans la barre d'outils — télécharge le blob (URL objet + clic programmatique, pattern existant des téléchargements documents/rapports) avec la plage et les filtres **courants** de la vue.
+- `CalendarView.vue` : bouton « Exporter (.ics) » aligné à droite sur la ligne des onglets de filtres de mode (`Mois` · `Semaine` · `Agenda`) — télécharge le blob (URL objet + clic programmatique, pattern existant des téléchargements documents/rapports) avec la plage et les filtres **courants** de la vue.
 - Pas de nouveau composant catalogue (un simple `CBtn`).
 - i18n : `calendar.export`.
 

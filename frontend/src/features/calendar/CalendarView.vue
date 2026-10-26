@@ -286,12 +286,24 @@ async function exportCalendar() {
           </CMetaLine>
         </header>
 
-        <CTabs
-          v-model="mode"
-          variant="filter"
-          :tabs="(['month', 'week', 'agenda'] as const).map(m => ({ value: m, label: t(`calendar.modes.${m}`) }))"
-          @update:model-value="onModeChange"
-        />
+        <div class="flex items-center justify-between gap-3">
+          <CTabs
+            v-model="mode"
+            variant="filter"
+            :tabs="(['month', 'week', 'agenda'] as const).map(m => ({ value: m, label: t(`calendar.modes.${m}`) }))"
+            class="mb-0!"
+            @update:model-value="onModeChange"
+          />
+          <CBtn
+            variant="ghost"
+            size="sm"
+            :icon="CIconDownload"
+            :title="t('calendar.export')"
+            :aria-label="t('calendar.export')"
+            :loading="exporting"
+            @click="exportCalendar"
+          />
+        </div>
 
         <CalendarFilterBar
           v-model="activeTypes"
@@ -307,56 +319,45 @@ async function exportCalendar() {
           </template>
         </CEmptyState>
         <template v-else>
-          <div class="flex items-center justify-between gap-3">
-            <div
-              v-if="mode !== 'agenda'"
-              class="flex items-center gap-3"
-            >
-              <CBtn
-                variant="icon"
-                size="sm"
-                :icon="CIconArrowLeft"
-                :title="t('calendar.previousPeriod')"
-                :aria-label="t('calendar.previousPeriod')"
-                @click="shiftPeriod(-1)"
-              />
-              <span class="title-sm">{{ periodLabel }}</span>
-              <CBtn
-                variant="icon"
-                size="sm"
-                :icon="CIconArrowRight"
-                :title="t('calendar.nextPeriod')"
-                :aria-label="t('calendar.nextPeriod')"
-                @click="shiftPeriod(1)"
-              />
-            </div>
-            <div
-              v-else
-              class="flex items-center gap-2"
-            >
-              <CFormInput
-                v-model="listFrom"
-                type="date"
-                :label="t('calendar.filters.from')"
-                class="w-44"
-                @change="applyListRange"
-              />
-              <CFormInput
-                v-model="listTo"
-                type="date"
-                :label="t('calendar.filters.to')"
-                class="w-44"
-                @change="applyListRange"
-              />
-            </div>
+          <div
+            v-if="mode !== 'agenda'"
+            class="flex items-center gap-3"
+          >
             <CBtn
-              variant="ghost"
+              variant="icon"
               size="sm"
-              :icon="CIconDownload"
-              :title="t('calendar.export')"
-              :aria-label="t('calendar.export')"
-              :loading="exporting"
-              @click="exportCalendar"
+              :icon="CIconArrowLeft"
+              :title="t('calendar.previousPeriod')"
+              :aria-label="t('calendar.previousPeriod')"
+              @click="shiftPeriod(-1)"
+            />
+            <span class="title-sm">{{ periodLabel }}</span>
+            <CBtn
+              variant="icon"
+              size="sm"
+              :icon="CIconArrowRight"
+              :title="t('calendar.nextPeriod')"
+              :aria-label="t('calendar.nextPeriod')"
+              @click="shiftPeriod(1)"
+            />
+          </div>
+          <div
+            v-else
+            class="flex items-center gap-2"
+          >
+            <CFormInput
+              v-model="listFrom"
+              type="date"
+              :label="t('calendar.filters.from')"
+              class="w-44"
+              @change="applyListRange"
+            />
+            <CFormInput
+              v-model="listTo"
+              type="date"
+              :label="t('calendar.filters.to')"
+              class="w-44"
+              @change="applyListRange"
             />
           </div>
 

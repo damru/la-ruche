@@ -1,10 +1,10 @@
 # Spécification technique — EP-019-S07
 
-**Story :** Réinitialiser ses préférences : un **bouton global unique en bas de page** couvrant Notifications **et** Apparence, protégé par une modale de confirmation.
+**Story :** Réinitialiser ses préférences : un **bouton global unique sur la ligne des onglets de filtres** couvrant Notifications **et** Apparence, protégé par une modale de confirmation.
 
 **Épic :** EP-019 — Profil & préférences
 **Réf. PRD :** US-PP-005
-**Statut : IMPLÉMENTÉ (frontend)** — bouton global unique « Réinitialiser mes préférences » en bas de la page Profil (visible quel que soit l'onglet), modale de confirmation listant les deux domaines, reset du thème vers `auto` et (EP-019-S09) du délai de fermeture des modales vers 3 s. L'ancien bouton de l'en-tête Notifications est supprimé.
+**Statut : IMPLÉMENTÉ (frontend)** — bouton global unique « Réinitialiser mes préférences » (icône `CIconRefresh`) aligné à droite sur la ligne des onglets de filtres de la page Profil (visible quel que soit l'onglet), modale de confirmation listant les deux domaines, reset du thème vers `auto` et (EP-019-S09) du délai de fermeture des modales vers 3 s. L'ancien bouton de l'en-tête Notifications est supprimé.
 
 Story 100 % frontend — aucune migration, aucun changement backend. (Si EP-019-S03 est livrée avant, le reset des notifications synchronise le serveur via `resetNotifPrefs` → `DELETE /me/notification-preferences` — déjà couvert par la spec S03 §4.3/§5.2 ; cette story n'ajoute rien côté API.)
 
@@ -12,7 +12,7 @@ Story 100 % frontend — aucune migration, aucun changement backend. (Si EP-019-
 
 ## 1. Quoi (résumé fonctionnel)
 
-- Un **seul** bouton « Réinitialiser mes préférences », en **bas de la page Profil** (hors onglets, toujours visible quel que soit l'onglet actif — ou en pied de la zone d'onglets si la page ne rend que l'onglet actif ; voir §4.2).
+- Un **seul** bouton « Réinitialiser mes préférences », sur la **ligne des onglets de filtres** de la page Profil (accompagné d'une icône `CIconRefresh`, toujours visible quel que soit l'onglet actif ; voir §4.2).
 - Il réinitialise **d'un coup** :
   - **Notifications** : retour aux défauts du catalogue (obligatoires on, `weekly_digest`/`claim_resolved` off, le reste on) ;
   - **Apparence** : thème → `auto` (suivre le système).
@@ -71,21 +71,31 @@ async function resetAllPrefs() {
 }
 ```
 
-3. **Placement** : en bas du template de la page, après la zone d'onglets (dernier bloc avant la fermeture de `view-page`), un bloc discret et global :
+3. **Placement** : sur la ligne des onglets de filtres (`CTabs variant="filter"` : `Mon compte` · `Préférences`), le bouton est aligné à droite dans un conteneur `flex items-center justify-between gap-3` — toujours visible quel que soit l'onglet actif :
 
 ```html
-<!-- ── Global reset (all tabs) ─────────────────────────────── -->
-<div class="mt-8 flex justify-center">
+<!-- ── Tabs + global reset action ─────────────────────────────────────────── -->
+<div class="flex items-center justify-between gap-3">
+  <CTabs
+    v-model="activeTab"
+    variant="filter"
+    :tabs="[
+      { value: 'account', label: t('nav.myAccount') },
+      { value: 'preferences', label: t('settings.preferences.title') },
+    ]"
+    class="mb-0!"
+  />
   <CBtn
     variant="ghost"
     size="sm"
+    :icon="CIconRefresh"
     :title="t('settings.preferences.reset')"
     @click="resetAllPrefs"
   />
 </div>
 ```
 
-Contraintes repo : utilitaires Tailwind uniquement (pas de valeurs brutes), composant catalogue `CBtn` existant — aucun nouveau composant, donc pas d'entrée `docs/DESIGN.md §2`. Si le template actuel ne rend que le contenu de l'onglet actif, ce bloc est **hors** des `<template v-if="activeTab === …">` pour rester visible sur tous les onglets.
+Contraintes repo : utilitaires Tailwind uniquement (pas de valeurs brutes), composants catalogue `CTabs`/`CBtn` existants — aucun nouveau composant, donc pas d'entrée `docs/DESIGN.md §2`.
 
 ### 4.3 i18n
 
@@ -105,12 +115,12 @@ Supprimer les clés devenues orphelines `settings.notifications.reset`, `resetCo
 | Thème déjà `auto`, préférences déjà par défaut | Reset idempotent, pas d'erreur |
 | Reset du thème | `setThemePreference('auto')` supprime la clé `laruche-theme` (comportement existant L90-91) ; le `watch` réapplique immédiatement `data-theme` selon le système |
 | Événements de notification obligatoires | Non affectés (toujours on, `defaultNotifPrefs` les force à `true`) |
-| Visibilité du bouton | Présent quel que soit l'onglet actif (Compte, Notifications, Apparence…) |
+| Visibilité du bouton | Présent quel que soit l'onglet actif (Compte, Préférences…) |
 | EP-019-S03 livrée | `resetNotifPrefs` appelle `DELETE /me/notification-preferences` (suppression des overrides serveur) ; en cas d'échec réseau, comportement de repli défini par S03 — rien à ajouter ici |
 
 ## 6. Critères d'acceptation
 
-1. Un unique bouton de réinitialisation existe, en bas de la page Profil, visible depuis tous les onglets ; l'ancien bouton de l'en-tête Notifications a disparu.
+1. Un unique bouton de réinitialisation existe, sur la ligne des onglets de filtres de la page Profil (avec icône), visible depuis tous les onglets ; l'ancien bouton de l'en-tête Notifications a disparu.
 2. Après confirmation : tous les toggles de notifications reviennent à leurs défauts **et** le thème repasse en « auto ».
 3. L'annulation de la modale ne change rien.
 4. Le libellé de la modale mentionne explicitement les deux domaines (notifications + apparence).

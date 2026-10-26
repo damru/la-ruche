@@ -599,7 +599,7 @@ border-color: var(--color-outline-light);
   | Résidence | Bâtiment · Clés de répartition · Registre · Copropriétaires |
 
 - Bloc utilisateur en pied de sidebar → panel contextuel (Mon compte · Notifications · Déconnexion).
-- Changement de thème dans `Profil > Mon compte` uniquement (`Clair` / `Sombre` / `Auto`).
+- Changement de thème dans `Profil > Préférences > Apparence` uniquement (`Clair` / `Sombre` / `Auto`).
 - Délai de fermeture automatique des modales après succès, réglable dans le même onglet (`0` = immédiat à `10` s, défaut `3` s — DDR-006) ; l'animation de fermeture du bouton dure exactement le délai choisi.
 - `CTopbarBreadcrumb` : fluide (`min-width: 0`), libellés tronquent proprement.
 
@@ -777,8 +777,14 @@ Les rappels synthétiques partagés entre vues passent par `CReminderCard`. Ne p
 - Navigation `précédent / suivant` déplace d'une période complète.
 - Bloc réglementaire en tête : adresse immeuble + syndic en exercice.
 
+#### Vue Profil
+
+- Onglets de filtres en tête de page : `Mon compte` · `Préférences`. Le bouton global « Réinitialiser mes préférences » (`CBtn` ghost, icône `CIconRefresh`) est aligné à droite sur la même ligne que ces onglets.
+- L'onglet `Préférences` regroupe deux sous-onglets de filtres : `Notifications` · `Apparence` (thème + délai de fermeture automatique des modales).
+
 #### Vue Calendrier
 
+- Onglets de filtres en tête de page : `Mois` · `Semaine` · `Agenda`. Le bouton « Exporter (.ics) » (`CBtn` ghost, icône `CIconDownload`) est aligné à droite sur la même ligne que ces onglets.
 - **Barre de filtres** (`CalendarFilterBar`, feature-local) : rangée de chips toggle par type d'événement — `CBadge` avec la variante de couleur de la source (cohérence AC-CAL-001-B) ; chip actif pleine opacité, inactif `opacity-40`. Seuls les types visibles pour le rôle courant sont affichés.
 - **Persistance** : état des filtres en `localStorage` (clé par utilisateur), rechargé au montage — pas de préférence serveur.
 - **Mode liste** : deux champs `CFormInput type="date"` (`Du` / `Au`) remplacent la navigation période quand aucune plage libre n'est saisie.

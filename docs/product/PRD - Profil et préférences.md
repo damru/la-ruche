@@ -105,8 +105,8 @@ Aucun KPI prioritaire n'est retenu à ce stade. La feature est un socle de confo
 | Domaine | Entrée UX | Syndic | Conseil | Copropriétaire | Locataire |
 |---|---|---|---|---|---|
 | Profil personnel | Onglet `Compte` | `R¹/U¹` | `R¹/U¹` | `R¹/U¹` | `R¹/U¹` |
-| Notifications personnelles | Onglet `Notifications` | `R¹/U¹` | `R¹/U¹` | `R¹/U¹` | `R¹/U¹` |
-| Apparence | Onglet `Apparence` | `R¹/U¹` | `R¹/U¹` | `R¹/U¹` | `R¹/U¹` |
+| Notifications personnelles | Sous-onglet `Notifications` de l'onglet `Préférences` | `R¹/U¹` | `R¹/U¹` | `R¹/U¹` | `R¹/U¹` |
+| Apparence | Sous-onglet `Apparence` de l'onglet `Préférences` | `R¹/U¹` | `R¹/U¹` | `R¹/U¹` | `R¹/U¹` |
 | Contexte de compte | Résumé compte | `R¹` | `R¹` | `R¹` | `R¹` |
 
 > ¹ Restreint aux propres données de l'utilisateur authentifié — aucun accès cross-user.
@@ -159,7 +159,7 @@ Aucun KPI prioritaire n'est retenu à ce stade. La feature est un socle de confo
 
 | Priorité | Ref | Action | Attendu produit |
 |---|---|---|---|
-| Must | US-PP-001 | Consulter son profil | Vue à onglets (Compte, Notifications, Apparence) |
+| Must | US-PP-001 | Consulter son profil | Vue à onglets (Compte, Préférences) |
 | Must | US-PP-002 | Modifier ses informations personnelles | Champs éditables avec validation et confirmation |
 | Must | US-PP-003 | Gérer la première visite et les valeurs par défaut | État initial lisible, valeurs par défaut visibles |
 | Must | US-PP-004 | Gérer ses préférences de notifications | Activation/désactivation, distinction obligatoire/optionnel |
@@ -179,7 +179,7 @@ Aucun KPI prioritaire n'est retenu à ce stade. La feature est un socle de confo
 **Critères d'acceptation** :
 
 - **AC-PP-001-A** : Tout utilisateur authentifié DOIT pouvoir accéder à son espace personnel depuis la navigation principale.
-- **AC-PP-001-B** : L'espace DOIT être organisé en onglets : `Compte`, `Notifications`, `Apparence`.
+- **AC-PP-001-B** : L'espace DOIT être organisé en onglets : `Compte` et `Préférences` (ce dernier regroupant les sous-onglets `Notifications` et `Apparence`).
 - **AC-PP-001-C** : Les éléments non éditables DOIVENT être visuellement distingués des champs modifiables (voir DDR-004).
 - **AC-PP-001-D** : Une session expirée DOIT rediriger vers la page de connexion sans perte du chemin de navigation.
 
@@ -261,7 +261,7 @@ Aucun KPI prioritaire n'est retenu à ce stade. La feature est un socle de confo
 - **AC-PP-005-B** : La réinitialisation DOIT être confirmée explicitement via un modal avant exécution.
 - **AC-PP-005-C** : La réinitialisation NE DOIT PAS modifier les informations personnelles (nom, email, téléphone).
 - **AC-PP-005-D** : Une réinitialisation incomplète (erreur partielle) DOIT afficher un avertissement avec liste des éléments non réinitialisés.
-- **AC-PP-005-E** : Le bouton « Revenir aux valeurs par défaut » DOIT être positionné en bas de la page profil, après tous les onglets — une seule action globale couvrant Notifications et Apparence.
+- **AC-PP-005-E** : Le bouton « Réinitialiser mes préférences » DOIT être positionné sur la ligne des onglets de filtres de la page profil (accompagné d'une icône), toujours visible quel que soit l'onglet actif — une seule action globale couvrant Notifications et Apparence.
 
 #### US-PP-006 — Gérer sa préférence d'apparence
 
