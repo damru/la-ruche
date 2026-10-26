@@ -37,7 +37,7 @@ import CalendarFilterBar from './CalendarFilterBar.vue'
 import { CALENDAR_SOURCES } from './sources'
 import EventFormModal from './EventFormModal.vue'
 import EventDetailModal from './EventDetailModal.vue'
-import type { CalendarEvent, CalendarSource, ManualCalendarEvent, Role } from '@/types/domain'
+import type { CalendarEvent, CalendarSource, ManualCalendarEvent } from '@/types/domain'
 
 type Mode = 'month' | 'week' | 'agenda'
 
@@ -295,7 +295,6 @@ async function exportCalendar() {
 
         <CalendarFilterBar
           v-model="activeTypes"
-          :roles="(auth.user?.roles ?? []) as Role[]"
         />
 
         <CEmptyState

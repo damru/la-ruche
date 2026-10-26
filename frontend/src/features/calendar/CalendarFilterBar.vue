@@ -5,13 +5,12 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import CBadge from '@/components/atoms/CBadge.vue'
-import { DOCUMENT_ROLES, MANAGER_ROLES } from '@/utils/constants'
+import { usePermissions } from '@/composables/usePermissions'
 import { CALENDAR_SOURCES, SOURCE_BADGE_VARIANT } from './sources'
-import type { CalendarSource, Role } from '@/types/domain'
+import type { CalendarSource } from '@/types/domain'
 
 const props = defineProps<{
   modelValue: CalendarSource[]
-  roles: Role[]
 }>()
 
 const emit = defineEmits<{
@@ -20,20 +19,10 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 
-// A role only sees its own filters (mirrors the server-side
-// `visible_sources` rule: Manager/BoardMember see everything, others only
-// meetings + manual events).
-const VISIBLE_SOURCES: Record<CalendarSource, readonly Role[]> = {
-  meeting: DOCUMENT_ROLES,
-  contract: MANAGER_ROLES,
-  task: MANAGER_ROLES,
-  claim: MANAGER_ROLES,
-  maintenance: MANAGER_ROLES,
-  manual: DOCUMENT_ROLES,
-}
+const perms = usePermissions()
 
 const filters = computed(() =>
-  CALENDAR_SOURCES.filter(source => props.roles.some(role => (VISIBLE_SOURCES[source] as readonly Role[]).includes(role))),
+  CALENDAR_SOURCES.filter(source => perms.canViewCalendarSource(source)),
 )
 
 function isActive(source: CalendarSource): boolean {
