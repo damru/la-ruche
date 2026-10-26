@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { DEFAULT_DOCUMENT_VISIBLE_ROLES, ROLES } from '@/utils/constants'
+import { DEFAULT_DOCUMENT_VISIBLE_ROLES, ROLES } from '@/utils/roles'
 import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useFormatters } from '@/composables/useFormatters'

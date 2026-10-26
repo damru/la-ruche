@@ -25,7 +25,6 @@ import type {
   ReminderType,
   ReportStatus,
   ResolutionStatus,
-  Role,
   TaskPriority,
   TaskStatus,
   UnitType,
@@ -35,22 +34,8 @@ import type {
 
 // ── Roles ──
 //
-// Permission checks live in composables/usePermissions.ts — do NOT add
-// role-list constants here for permission logic. Use `usePermissions().canVoteGM`
-// etc. instead.
-//
-// The constants below are for **data defaults** (e.g. `visible_roles` on document
-// upload) and **router/nav filtering**, not for inline permission checks.
-
-export const ROLES = ['manager', 'board_member', 'co_owner', 'tenant'] as const satisfies readonly Role[]
-
-/** Roles with management access (syndic + conseil syndical).
- *  Used for router/nav filtering and as default `visible_roles` on documents
- *  that only managers should see. */
-export const MANAGER_ROLES = ['manager', 'board_member'] as const satisfies readonly Role[]
-
-/** All roles that can see documents (i.e. every authenticated role). */
-export const DOCUMENT_ROLES = ['manager', 'board_member', 'co_owner', 'tenant'] as const satisfies readonly Role[]
+// Role values and role groups live in `utils/roles.ts` — do NOT add role
+// constants here.
 
 // ── Meetings ──
 
@@ -150,9 +135,6 @@ export const REMINDER_STATUS_PENDING: ReminderStatus = 'pending'
 export const REMINDER_STATUS_SENT: ReminderStatus = 'sent'
 export const REMINDER_STATUS_ACKNOWLEDGED: ReminderStatus = 'acknowledged'
 export const PAYMENT_FREQUENCIES = ['monthly', 'quarterly', 'biannual', 'annual'] as const satisfies readonly PaymentFrequency[]
-
-/** Default roles that can see a document. */
-export const DEFAULT_DOCUMENT_VISIBLE_ROLES: Role[] = ['manager', 'board_member', 'co_owner']
 
 // ── Units ──
 

@@ -9,7 +9,8 @@ import { useAutoClose } from '@/composables/useAutoClose'
 import { useFormatters } from '@/composables/useFormatters'
 import { extractFileExtension } from '@/utils/files'
 import type { Claim, ClaimType, Document, Unit } from '@/types/domain'
-import { CLAIM_TYPES, CLAIM_TYPE_NATURAL_DISASTER, DEFAULT_CLAIM_TYPE, ROLES } from '@/utils/constants'
+import { CLAIM_TYPES, CLAIM_TYPE_NATURAL_DISASTER, DEFAULT_CLAIM_TYPE } from '@/utils/constants'
+import { ROLES } from '@/utils/roles'
 import { useUiStore } from '@/stores/ui'
 
 const props = defineProps<{

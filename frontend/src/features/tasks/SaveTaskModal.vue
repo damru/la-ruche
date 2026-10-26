@@ -17,7 +17,8 @@ import { toErrorMessage } from '@/composables/usePageLoader'
 import { useFormatters } from '@/composables/useFormatters'
 import { extractFileExtension } from '@/utils/files'
 import type { Contractor, Document, Task, TaskPriority, TaskStatus } from '@/types/domain'
-import { ASSIGNABLE_TASK_STATUSES, DEFAULT_TASK_PRIORITY, MANAGER_ROLES, TASK_PRIORITIES, TASK_STATUS_IN_PROGRESS, TASK_STATUS_OPEN } from '@/utils/constants'
+import { ASSIGNABLE_TASK_STATUSES, DEFAULT_TASK_PRIORITY, TASK_PRIORITIES, TASK_STATUS_IN_PROGRESS, TASK_STATUS_OPEN } from '@/utils/constants'
+import { MANAGER_ROLES } from '@/utils/roles'
 import { useUiStore } from '@/stores/ui'
 
 const props = defineProps<{

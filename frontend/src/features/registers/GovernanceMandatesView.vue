@@ -3,7 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { usePageLoader } from '@/composables/usePageLoader'
 import { useFormatters } from '@/composables/useFormatters'
-import { useAuthStore } from '@/stores/auth'
+import { usePermissions } from '@/composables/usePermissions'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import CHeading from '@/components/atoms/CHeading.vue'
 import CCard from '@/components/molecules/CCard.vue'
@@ -21,12 +21,12 @@ import { GOVERNANCE_ROLE_COUNCIL_PRESIDENT, GOVERNANCE_ROLE_SYNDIC } from '@/uti
 
 const { t } = useI18n()
 const { formatDate } = useFormatters()
-const authStore = useAuthStore()
+const { canManageGovernance } = usePermissions()
 
 const buildingName = ref('')
 const mandates = ref<GovernanceMandate[]>([])
 
-const canEdit = computed(() => authStore.isManager)
+const canEdit = canManageGovernance
 
 async function loadData() {
   const [building, listRes] = await Promise.all([

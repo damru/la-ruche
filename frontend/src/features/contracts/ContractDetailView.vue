@@ -4,7 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useFormatters } from '@/composables/useFormatters'
 import { toErrorMessage, usePageLoader } from '@/composables/usePageLoader'
-import { useRole } from '@/composables/useRole'
+import { usePermissions } from '@/composables/usePermissions'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CIconTile from '@/components/atoms/CIconTile.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
@@ -38,12 +38,12 @@ import { useBuildingStore } from '@/stores/building'
 import ContractFormModal from '@/features/contracts/ContractFormModal.vue'
 import AmendContractModal from '@/features/contracts/AmendContractModal.vue'
 import TerminateContractModal from '@/features/contracts/TerminateContractModal.vue'
-import type { Role, ContractReminder, ContractStatus, ContractType, Document, VendorContract } from '@/types/domain'
+import type { ContractReminder, ContractStatus, ContractType, Document, VendorContract } from '@/types/domain'
 import { CONTRACT_STATUS_ACTIVE, CONTRACT_STATUS_DRAFT, CONTRACT_STATUS_EXPIRED, CONTRACT_STATUS_TERMINATED, REMINDER_STATUS_ACKNOWLEDGED, REMINDER_STATUS_PENDING } from '@/utils/constants'
 
 const { t } = useI18n()
 const { formatCurrency, formatDate, formatFileSize } = useFormatters()
-const { hasAnyRole } = useRole()
+const { canAdministerContract } = usePermissions()
 const route = useRoute()
 const router = useRouter()
 
@@ -59,7 +59,7 @@ const showFormModal = ref(false)
 const showAmendModal = ref(false)
 const showTerminateModal = ref(false)
 
-const canManage = computed(() => hasAnyRole(['manager' satisfies Role]))
+const canManage = canAdministerContract
 
 async function loadData() {
   const id = contractId.value

@@ -3,7 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { usePageLoader } from '@/composables/usePageLoader'
 import { useFormatters } from '@/composables/useFormatters'
-import { useAuthStore } from '@/stores/auth'
+import { usePermissions } from '@/composables/usePermissions'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import CHeading from '@/components/atoms/CHeading.vue'
 import CCard from '@/components/molecules/CCard.vue'
@@ -21,12 +21,12 @@ import { JUDICIAL_PROCEEDING_STATUS_CLOSED } from '@/utils/constants'
 
 const { t } = useI18n()
 const { formatDate } = useFormatters()
-const authStore = useAuthStore()
+const { canManageJudicial } = usePermissions()
 
 const buildingName = ref('')
 const proceedings = ref<JudicialProceeding[]>([])
 
-const canEdit = computed(() => authStore.isManager)
+const canEdit = canManageJudicial
 
 async function loadData() {
   const [building, listRes] = await Promise.all([

@@ -11,7 +11,8 @@ import { meetingsApi, documentsApi } from '@/api'
 import { useFormFeedback } from '@/composables/useFormFeedback'
 import { useAutoClose } from '@/composables/useAutoClose'
 import { toErrorMessage } from '@/composables/usePageLoader'
-import { DEFAULT_DOCUMENT_VISIBLE_ROLES, MEETING_DOCUMENT_KIND_NOTICE, MEETING_UPLOADABLE_DOCUMENT_KINDS } from '@/utils/constants'
+import { MEETING_DOCUMENT_KIND_NOTICE, MEETING_UPLOADABLE_DOCUMENT_KINDS } from '@/utils/constants'
+import { DEFAULT_DOCUMENT_VISIBLE_ROLES } from '@/utils/roles'
 
 const props = defineProps<{
   open: boolean

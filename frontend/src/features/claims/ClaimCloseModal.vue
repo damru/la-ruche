@@ -7,7 +7,8 @@ import { useFormFeedback } from '@/composables/useFormFeedback'
 import { useAutoClose } from '@/composables/useAutoClose'
 import { extractFileExtension } from '@/utils/files'
 import type { Claim } from '@/types/domain'
-import { ROLES , CLAIM_STATUS_CLOSED } from '@/utils/constants'
+import { CLAIM_STATUS_CLOSED } from '@/utils/constants'
+import { ROLES } from '@/utils/roles'
 import { useUiStore } from '@/stores/ui'
 
 const props = defineProps<{

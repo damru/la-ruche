@@ -25,7 +25,7 @@ import { extractFileExtension } from '@/utils/files'
 import { usePageLoader, toErrorMessage } from '@/composables/usePageLoader'
 import { useFormFeedback } from '@/composables/useFormFeedback'
 import type { Unit, AllocationKey, EddReference, EddDiscrepancy, Document } from '@/types/domain'
-import { MANAGER_ROLES } from '@/utils/constants'
+import { MANAGER_ROLES } from '@/utils/roles'
 
 const { t } = useI18n()
 

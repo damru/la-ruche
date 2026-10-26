@@ -12,8 +12,7 @@ import { usersApi } from '@/api'
 import { useFormFeedback } from '@/composables/useFormFeedback'
 import { useAutoClose } from '@/composables/useAutoClose'
 import type { Unit } from '@/types/domain'
-import { ROLES } from '@/utils/constants'
-import type { Role } from '@/types/domain'
+import { ROLE_CO_OWNER, ROLE_TENANT, ROLES } from '@/utils/roles'
 import { useUiStore } from '@/stores/ui'
 
 const props = defineProps<{
@@ -32,7 +31,7 @@ const feedback = useFormFeedback()
 const { schedule: scheduleClose, forceExpire: forceClose } = useAutoClose()
 const loading = ref(false)
 
-const form = reactive({ first_name: '', last_name: '', email: '', role: 'co_owner' satisfies Role, unit_id: '' })
+const form = reactive({ first_name: '', last_name: '', email: '', role: ROLE_CO_OWNER, unit_id: '' })
 
 
 const roleOptions = computed(() =>
@@ -43,7 +42,7 @@ const activeUnits = computed(() =>
   props.units.filter(u => u.active).map(u => ({ value: u.id, label: u.unit_number }))
 )
 
-const isTenant = computed(() => form.role === 'tenant' satisfies Role)
+const isTenant = computed(() => form.role === ROLE_TENANT)
 
 const isValid = computed(() =>
   !!form.first_name.trim() &&
@@ -57,13 +56,13 @@ watch(() => props.open, (open) => {
   form.first_name = ''
   form.last_name = ''
   form.email = ''
-  form.role = 'co_owner'
+  form.role = ROLE_CO_OWNER
   form.unit_id = ''
   feedback.reset()
 })
 
 watch(() => form.role, (role) => {
-  if (role !== 'tenant' satisfies Role) form.unit_id = ''
+  if (role !== ROLE_TENANT) form.unit_id = ''
 })
 
 async function handleSubmit() {

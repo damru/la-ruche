@@ -38,9 +38,9 @@ const canViewMeetings = perms.canViewGM
 const canViewGovernance = perms.canViewGovernance
 const canViewTasks = perms.canViewTask
 const canViewAccounting = perms.canViewAccounting
-const canViewContracts = computed(() => auth.hasRole('manager'))
-const canViewResidents = computed(() => auth.hasRole('manager'))
-const canViewMyCharges = computed(() => auth.hasRole('co_owner'))
+const canViewContracts = perms.canViewContract
+const canViewResidents = perms.canViewUsers
+const canViewMyCharges = perms.canViewMyCharges
 
 // ── State ─────────────────────────────────────────────────────────
 const stats = ref<BuildingStats | null>(null)

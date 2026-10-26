@@ -3,7 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { usePageLoader } from '@/composables/usePageLoader'
 import { useFormatters } from '@/composables/useFormatters'
-import { useAuthStore } from '@/stores/auth'
+import { usePermissions } from '@/composables/usePermissions'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import CHeading from '@/components/atoms/CHeading.vue'
 import CCard from '@/components/molecules/CCard.vue'
@@ -22,13 +22,13 @@ import { toErrorMessage } from '@/composables/usePageLoader'
 
 const { t } = useI18n()
 const { formatDate } = useFormatters()
-const authStore = useAuthStore()
+const { canManageEtatDate } = usePermissions()
 
 const buildingName = ref('')
 const requests = ref<EtatDateRequest[]>([])
 const units = ref<Unit[]>([])
 
-const canEdit = computed(() => authStore.isManager)
+const canEdit = canManageEtatDate
 
 async function loadData() {
   const [building, listRes, unitsRes] = await Promise.all([

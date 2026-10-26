@@ -16,7 +16,7 @@ import { useFormFeedback } from '@/composables/useFormFeedback'
 import { useAutoClose } from '@/composables/useAutoClose'
 import { toErrorMessage } from '@/composables/usePageLoader'
 import type { Document, Report } from '@/types/domain'
-import { DEFAULT_DOCUMENT_VISIBLE_ROLES } from '@/utils/constants'
+import { DEFAULT_DOCUMENT_VISIBLE_ROLES } from '@/utils/roles'
 import { useUiStore } from '@/stores/ui'
 
 const props = defineProps<{

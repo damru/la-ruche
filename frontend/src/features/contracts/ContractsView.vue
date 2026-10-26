@@ -43,8 +43,8 @@ import CTabs, { type Tab } from '@/components/atoms/CTabs.vue'
 import { toErrorMessage, usePageLoader } from '@/composables/usePageLoader'
 import TerminateContractModal from '@/features/contracts/TerminateContractModal.vue'
 import { effectiveContractStatus } from '@/utils/contracts'
-import { useRole } from '@/composables/useRole'
-import type { Role, ContractReminder, ContractStatus, ContractType, Document, VendorContract } from '@/types/domain'
+import { usePermissions } from '@/composables/usePermissions'
+import type { ContractReminder, ContractStatus, ContractType, Document, VendorContract } from '@/types/domain'
 import { ALL_FILTER, CONTRACT_STATUS_ACTIVE, CONTRACT_STATUS_DRAFT, CONTRACT_STATUS_EXPIRED, CONTRACT_STATUS_TERMINATED, REMINDER_URGENCY_HIGH_DAYS, REMINDER_URGENCY_MEDIUM_DAYS } from '@/utils/constants'
 
 interface ContractReminderView extends ContractReminder {
@@ -55,7 +55,7 @@ interface ContractReminderView extends ContractReminder {
 
 const { t } = useI18n()
 const { formatCurrency, formatDate, daysUntil } = useFormatters()
-const { hasAnyRole } = useRole()
+const { canAdministerContract } = usePermissions()
 const router = useRouter()
 
 type ContractFilter = typeof ALL_FILTER | 'active' | 'expired'
@@ -74,7 +74,7 @@ const contractDocumentsTarget = ref<VendorContract | null>(null)
 const contractDocuments = ref<Document[]>([])
 const loadingContractDocuments = ref(false)
 
-const canManage = computed(() => hasAnyRole(['manager' satisfies Role]))
+const canManage = canAdministerContract
 
 async function loadData() {
   const [building, contractsResponse, remindersResponse] = await Promise.all([

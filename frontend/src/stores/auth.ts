@@ -3,7 +3,6 @@ import { authApi, onboardingApi } from '@/api'
 import { tryRefreshSession } from '@/api/client'
 import { useBuildingStore } from './building'
 import type { AuthUser, Role } from '@/types/domain'
-import { MANAGER_ROLES } from '@/utils/constants'
 
 export const useAuthStore = defineStore('auth', () => {
   // ── State ──────────────────────────────────────────────────────
@@ -12,20 +11,6 @@ export const useAuthStore = defineStore('auth', () => {
   const needsOnboarding = ref<boolean | null>(null)
   // Tracks whether restoreSession() has already been attempted this page load
   let sessionRestored = false
-  // ── Roles ──────────────────────────────────────────────────────
-  const isManager = computed(() =>
-    user.value?.roles.includes('manager' satisfies Role) ?? false
-  )
-  const isBoardMember = computed(() =>
-    user.value?.roles.includes('board_member' satisfies Role) ?? false
-  )
-  const isCoOwner = computed(() =>
-    user.value?.roles.includes('co_owner' satisfies Role) ?? false
-  )
-  const isTenant = computed(() =>
-    user.value?.roles.includes('tenant' satisfies Role) ?? false
-  )
-
   function hasRole(role: Role): boolean {
     return user.value?.roles.includes(role) ?? false
   }
@@ -33,15 +18,8 @@ export const useAuthStore = defineStore('auth', () => {
   function hasAnyRole(roles: Role[]): boolean {
     return roles.some(r => hasRole(r))
   }
-  // ── Permission checks moved to composables/usePermissions.ts ──
+  // ── Permission checks live in composables/usePermissions.ts ──
   // Use `usePermissions().canVoteGM`, `canViewGM`, `canViewAccounting`, etc.
-
-  // ── Can view meeting results (all roles, including tenant) ─────
-  const canViewMeetingResults = computed(() => isAuthenticated.value)
-  // ── Can view accounting ────────────────────────────────────────
-  const canViewAccounting = computed(() =>
-    hasAnyRole([...MANAGER_ROLES])
-  )
 
   // ── Actions ────────────────────────────────────────────────────
   async function login(email: string, password: string) {
@@ -127,12 +105,6 @@ export const useAuthStore = defineStore('auth', () => {
     user,
     isAuthenticated,
     needsOnboarding,
-    isManager,
-    isBoardMember,
-    isCoOwner,
-    isTenant,
-    canViewMeetingResults,
-    canViewAccounting,
     hasRole,
     hasAnyRole,
     login,

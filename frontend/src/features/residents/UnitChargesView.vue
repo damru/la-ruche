@@ -25,7 +25,7 @@ import CFormSelect from '@/components/atoms/CFormSelect.vue'
 import PreEtatDateModal from '@/features/registers/PreEtatDateModal.vue'
 import { unitsApi } from '@/api'
 import { usePageLoader } from '@/composables/usePageLoader'
-import { useAuthStore } from '@/stores/auth'
+import { usePermissions } from '@/composables/usePermissions'
 import { useFormatters } from '@/composables/useFormatters'
 import type { UnitChargesResponse, UnitChargesLevy, UnitChargesLevyBreakdownItem, UnitOwnerRecord } from '@/types/domain'
 import { LEVY_STATUS_ISSUED, LEVY_STATUS_OVERDUE, LEVY_STATUS_PAID } from '@/utils/constants'
@@ -45,15 +45,15 @@ interface ConsolidatedUnitChargeRow {
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
-const auth = useAuthStore()
+const { canViewUsers } = usePermissions()
 const { formatCurrency, formatDate } = useFormatters()
 
 // Co-owners go back to their personal charges list; managers go to residents
 const backRoute = computed(() =>
-  auth.isManager || auth.isBoardMember ? '/residents' : '/my-charges'
+  canViewUsers.value ? '/residents' : '/my-charges'
 )
 const backLabel = computed(() =>
-  auth.isManager || auth.isBoardMember ? t('nav.residents') : t('nav.myCharges')
+  canViewUsers.value ? t('nav.residents') : t('nav.myCharges')
 )
 
 const unitId = route.params.id as string
@@ -78,7 +78,7 @@ async function load() {
   const res = await unitsApi.charges(unitId)
   data.value = res.data
 
-  if (auth.isManager) {
+  if (canViewUsers.value) {
     try {
       const ownersRes = await unitsApi.owners(unitId)
       const seen = new Set<string>()
@@ -196,7 +196,7 @@ const showPreEtatDateModal = ref(false)
         </header>
 
         <div
-          v-if="auth.isManager"
+          v-if="canViewUsers"
           class="flex justify-end"
         >
           <CBtn
@@ -242,7 +242,7 @@ const showPreEtatDateModal = ref(false)
               {{ t('units.charges.history') }}
             </CHeading>
             <CFormSelect
-              v-if="auth.isManager && ownerFilterOptions.length > 1"
+              v-if="canViewUsers && ownerFilterOptions.length > 1"
               v-model="ownerFilterIdModel"
               :placeholder="t('budget.filterByOwner')"
               :options="[{ value: '', label: t('common.allMasc') }, ...ownerFilterOptions]"
