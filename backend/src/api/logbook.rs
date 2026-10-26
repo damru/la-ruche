@@ -426,6 +426,8 @@ pub async fn export_pdf(auth: AuthUser, State(state): State<Arc<AppState>>) -> A
     // Chronologie ascendante pour le document imprimé (la liste API est DESC).
     entry_lines.sort_by_key(|entry| entry.intervention_date);
 
+    let building_name_for_doc = building.name.clone();
+    let syndic_name_for_doc = syndic_name.clone();
     let data = crate::domain::logbook_pdf::LogbookPdfData {
         identity: crate::domain::pdf_template::DocumentIdentity {
             building_name: building.name,
@@ -445,8 +447,14 @@ pub async fn export_pdf(auth: AuthUser, State(state): State<Arc<AppState>>) -> A
             chronology_section: "Chronologie des interventions".to_string(),
             no_contracts: "Aucun contrat en cours.".to_string(),
             no_entries: "Aucune intervention enregistrée.".to_string(),
-            syndic_label: "Le syndic".to_string(),
             syndic_not_set: "Syndic non renseigné".to_string(),
+            place: building.city.clone(),
+            for_whom: match &syndic_name_for_doc {
+                Some(name) => format!("{name}, syndic de la {building_name_for_doc}"),
+                None => format!("le syndicat des copropriétaires de la {building_name_for_doc}"),
+            },
+            purpose: "Ce carnet d'entretien recense les contrats d'assurance et de maintenance en cours, ainsi que la chronologie des interventions réalisées sur les parties communes de l'immeuble.".to_string(),
+            validity_period: "Document établi à la date d'édition ; il annule et remplace toute édition antérieure.".to_string(),
             col_date: "Date".to_string(),
             col_intervention: "Intervention".to_string(),
             col_vendor: "Prestataire".to_string(),

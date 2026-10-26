@@ -2,10 +2,12 @@
 //!
 //! Renders the regulatory logbook — « Carnet d'entretien de l'immeuble »
 //! (décret n°2001-477, art. 1) — as a PDF using the shared document template
-//! (`domain/pdf_template.rs`): running header (app name + building identity),
-//! title block (title, syndic, edition date), active insurance contracts,
-//! active maintenance contracts, intervention chronology, signature block
-//! and page footer.
+//! (`domain/pdf_template.rs`): introduction (logo + « La Ruche » + tagline,
+//! title, identity of the copropriété, « Fait à …, le … » + « Pour le compte
+//! de … », explanatory paragraph), active insurance contracts, active
+//! maintenance contracts, intervention chronology, conclusion (« Fait à …,
+//! le … » filled, signé « La Ruche », période de validité légale) and a
+//! running footer on every page.
 //!
 //! Pure functions only — no I/O, no SQL. The API layer assembles the data and
 //! receives the finished PDF as in-memory bytes.
@@ -72,8 +74,18 @@ pub struct LogbookPdfLabels {
     pub chronology_section: String,
     pub no_contracts: String,
     pub no_entries: String,
-    pub syndic_label: String,
     pub syndic_not_set: String,
+    /// Place of issue for « Fait à {place}, le {date} » (introduction and
+    /// conclusion) — usually the city of the copropriété.
+    pub place: String,
+    /// « Pour le compte de {for_whom} » — the syndic of the copropriété.
+    pub for_whom: String,
+    /// Paragraph explaining the content of the document.
+    pub purpose: String,
+    /// Legal validity period rendered in the conclusion (the logbook is a
+    /// living document: no expiry — the period states it is valid as of the
+    /// edition date and supersedes previous editions).
+    pub validity_period: String,
     pub col_date: String,
     pub col_intervention: String,
     pub col_vendor: String,
@@ -89,11 +101,11 @@ pub struct LogbookPdfLabels {
 
 /// Renders the logbook as a PDF using the shared template.
 pub fn render_logbook(data: &LogbookPdfData) -> Result<Vec<u8>, String> {
-    let mut doc = tpl::new_document(tpl::font_family()?, &data.identity, &data.labels.doc_title);
+    let mut doc = tpl::new_document(tpl::font_family()?, data.edited_at, &data.labels.doc_title);
 
     let mut layout = LinearLayout::vertical();
 
-    // ── Title block ────────────────────────────────────────────────────────
+    // ── Introduction (première page uniquement) ────────────────────────────
     let syndic_value = match (&data.identity.syndic_name, &data.syndic_contact) {
         (Some(name), Some(contact)) => format!("{name} — {contact}"),
         (Some(name), None) => name.clone(),
@@ -110,14 +122,18 @@ pub fn render_logbook(data: &LogbookPdfData) -> Result<Vec<u8>, String> {
     if let Some(siret) = &data.identity.syndic_siret {
         meta.push(("SIRET".to_string(), siret.clone()));
     }
-    tpl::push_title_block(
+    tpl::push_intro(
         &mut layout,
-        &tpl::DocumentTitleBlock {
+        &tpl::DocumentIntro {
             title: data.labels.doc_title.clone(),
             subtitle: None,
             meta,
+            place: data.labels.place.clone(),
+            edited_at: data.edited_at,
+            for_whom: data.labels.for_whom.clone(),
+            purpose: Some(data.labels.purpose.clone()),
         },
-    );
+    )?;
 
     // ── Active insurance contracts ─────────────────────────────────────────
     push_contract_section(
@@ -144,9 +160,15 @@ pub fn render_logbook(data: &LogbookPdfData) -> Result<Vec<u8>, String> {
     layout.push(chronology_table(data));
     layout.push(elements::Break::new(1.0));
 
-    // ── Signature + footer ─────────────────────────────────────────────────
-    tpl::push_signature(&mut layout, &data.labels.syndic_label);
-    tpl::push_footer(&mut layout, data.edited_at);
+    // ── Conclusion (signature remplie, signée « La Ruche ») ────────────────
+    tpl::push_conclusion(
+        &mut layout,
+        &tpl::DocumentConclusion {
+            place: data.labels.place.clone(),
+            date: data.edited_at,
+            validity_period: Some(data.labels.validity_period.clone()),
+        },
+    );
 
     doc.push(layout);
     tpl::finish_document(doc)
@@ -342,10 +364,9 @@ fn header_cell(text: &str) -> elements::StyledElement<Paragraph> {
     )
 }
 
-/// Thin separator between contract blocks (same visual as the template rule).
-fn hairline() -> elements::StyledElement<Paragraph> {
-    Paragraph::new("_______________________________________________________________")
-        .styled(style::Style::new().with_font_size(6).with_color(tpl::RULE))
+/// Thin separator between contract blocks (same vector rule as the template).
+fn hairline() -> TableLayout {
+    tpl::hairline()
 }
 
 #[cfg(test)]
@@ -365,8 +386,11 @@ mod tests {
             chronology_section: "Chronologie des interventions".to_string(),
             no_contracts: "Aucun contrat en cours.".to_string(),
             no_entries: "Aucune intervention enregistrée.".to_string(),
-            syndic_label: "Le syndic".to_string(),
             syndic_not_set: "Syndic non renseigné".to_string(),
+            place: "Paris".to_string(),
+            for_whom: "Cabinet Dupont, syndic de la Résidence des Tilleuls".to_string(),
+            purpose: "Ce carnet d'entretien recense les contrats d'assurance et de maintenance en cours, ainsi que la chronologie des interventions réalisées sur les parties communes de l'immeuble.".to_string(),
+            validity_period: "Document établi à la date d'édition ; il annule et remplace toute édition antérieure.".to_string(),
             col_date: "Date".to_string(),
             col_intervention: "Intervention".to_string(),
             col_vendor: "Prestataire".to_string(),

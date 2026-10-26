@@ -15,11 +15,10 @@
 **Retenu : génération serveur via `genpdf` + template documentaire réutilisable.**
 
 - **Template commun** (`backend/src/domain/pdf_template.rs`) : identité visuelle unique pour tous les documents officiels —
-  - **En-tête récurrent (chaque page)** : nom « La Ruche » en couleur marque à gauche, identité immeuble (nom + adresse) à droite, filet de séparation.
-  - **Bloc titre** : titre du document centré en couleur marque, sous-titre optionnel, méta-lignes (Immeuble, Adresse, Syndic en exercice, SIRET…).
+  - **Introduction (1ʳᵉ page uniquement, « en-tête » au sens spec)** : bloc marque — **logo vectoriel** « ruche » (7 hexagones, dégradé #643fd5 → #7d5bf0, miroir de `CLogoMark.svg`) + nom « La Ruche » + **tagline** (« Gestion de copropriété participative, pour les syndics bénévoles et les conseils syndicaux »), titre du document centré en couleur marque, identité de la copro (Immeuble, Adresse, Syndic en exercice, SIRET…), ligne « **Fait à {lieu}, le {date}** » + « **Pour le compte de {syndic}** », **paragraphe explicatif** du contenu du document, espacement généreux — puis seulement le contenu. **Pas d'en-tête récurrente** : les pages 2+ commencent directement par le contenu.
   - **Salutation** optionnelle (documents de type courrier).
-  - **Signature artificielle** : « Le syndic » + « Fait à ___, le ___ » (pas d'image de signature).
-  - **Pied de page** : « Édité le {date} via La Ruche » (genpdf n'expose pas de « page X / Y » natif — pas de numérotation de page).
+  - **Conclusion** : **période de validité légale** optionnelle (quand le document en a une fondée légalement — ex. état daté : 3 mois), puis « Fait à {lieu}, le {date} » **rempli**, signé « **La Ruche** » (signature artificielle — l'app signe, pas d'image de signature).
+  - **Pied de page récurrent (toutes les pages)** : filet + **logo miniature** + tagline + « Édité le {date} via La Ruche », en petite police grise (décorateur de page custom, hauteur réservée). genpdf n'expose pas de « page X / Y » natif — pas de numérotation de page.
   - **Police** : Liberation Sans embarquée (`include_bytes!`), **palette** : `BRAND` #643fd5 (miroir de `--color-primary` du frontend), gris secondaire, encre.
 - Chaque document a son renderer dédié dans `domain/` qui assemble les données et s'appuie sur le template (pas de duplication de styles). Réutilisations prévues : compte rendu d'AG, lettre de relance, etc.
 - **Avantages** : PDF identique quel que soit le navigateur/OS de l'utilisateur, mise en page maîtrisée (A4, marges, tableaux paginés), réutilisable pour l'envoi automatique futur (e-mail), conforme à ADR-011 (génération serveur).
@@ -45,8 +44,8 @@ Aucune migration (S10 a ajouté la catégorie ; S09 ne touche pas au schéma).
 
 ## 4. Backend
 
-- **`domain/pdf_template.rs`** (pur, sans I/O ni SQL) : `DocumentIdentity`, `DocumentTitleBlock`, `new_document`, `push_title_block`, `push_salutation`, `section`, `body`, `muted`, `push_signature`, `push_footer`, `finish_document`, formatteurs `format_euro` / `optional_euro` / `format_date` / `format_date_long`. Tests unitaires inclus.
-- **`domain/logbook_pdf.rs`** (pur) : `render_logbook` — bloc titre (métas immeuble/adresse/syndic/SIRET), sections contrats d'assurance et de maintenance actifs (compteur + lignes objet/prestataire/période/montant), tableau chronologie (date, intervention, prestataire, catégorie, source, coût — cellules aérées, lignes paginées proprement), signature, pied de page. Les libellés sont passés par le caller (renderer agnostique de la langue).
+- **`domain/pdf_template.rs`** (pur, sans I/O ni SQL) : `DocumentIdentity`, `DocumentIntro` (titre, méta, lieu, date d'édition, « pour le compte de », paragraphe explicatif), `DocumentConclusion` (lieu/date remplis, période de validité légale optionnelle), `logo_element` (logo vectoriel « ruche », miroir de `CLogoMark.svg`), `new_document` (décorateur de page `FooterDecorator` : pied de page récurrent logo + tagline + « Édité le … via La Ruche » en petite police grise, **pas d'en-tête récurrente**), `push_intro`, `push_salutation`, `section`, `body`, `muted`, `push_conclusion` (« Fait à …, le … » rempli, signé « La Ruche »), `finish_document`, formatteurs `format_euro` / `optional_euro` / `format_date` / `format_date_long`. Tests unitaires inclus.
+- **`domain/logbook_pdf.rs`** (pur) : `render_logbook` — introduction (bloc marque logo + « La Ruche » + tagline, titre, métas immeuble/adresse/syndic/SIRET, « Fait à {ville}, le {date} » + « Pour le compte de {syndic} », paragraphe explicatif), sections contrats d'assurance et de maintenance actifs (compteur + lignes objet/prestataire/période/montant), tableau chronologie (date, intervention, prestataire, catégorie, source, coût — cellules aérées, lignes paginées proprement), conclusion (période de validité « Document établi à la date d'édition ; il annule et remplace toute édition antérieure », « Fait à {ville}, le {date} » rempli, signé « La Ruche »). Le pied de page récurrent est géré par le décorateur du template. Les libellés sont passés par le caller (renderer agnostique de la langue).
 - **`api/logbook.rs::export_pdf`** : `GET /logbook/export/pdf` — tout membre authentifié de l'immeuble (mêmes droits que le summary). Assemble l'identité (`building::get` + `governance_mandate::current_syndic_name` + contact du gestionnaire), les contrats actifs (`is_contract_active` / `is_maintenance_contract`), les entrées (`maintenance_log::list`, tri `intervention_date ASC`), puis rend via `render_logbook`. Réponse `application/pdf`, en-tête `Content-Disposition: attachment; filename="carnet-entretien.pdf"`.
 - **Note (hors périmètre)** : `domain/legal_documents.rs` (état daté / pré-état daté) duplique encore certains helpers (formatage, en-tête) — migration vers le template commun envisagée en suivi, sans toucher à un document probant dans ce ticket.
 
@@ -77,7 +76,7 @@ Aucun nouveau composant frontend : le template documentaire vit côté backend (
 
 ## 7. Critères d'acceptation
 
-1. Depuis la vue carnet, « Exporter le carnet (PDF) » télécharge un PDF complet (en-tête réglementaire, contrats actifs, chronologie, signature, pied de page).
+1. Depuis la vue carnet, « Exporter le carnet (PDF) » télécharge un PDF complet (introduction avec logo + « La Ruche » + tagline + identité copro + « Fait à …, le … » + « Pour le compte de … » + paragraphe explicatif, contrats actifs, chronologie, conclusion « Fait à …, le … » remplie signée « La Ruche » + période de validité, pied de page récurrent logo + tagline + « Édité le … via La Ruche »).
 2. Le PDF est identique quel que soit le navigateur (génération serveur, A4, tableaux paginés proprement).
 3. Le template (`domain/pdf_template.rs`) est réutilisable tel quel pour les prochains documents (CR d'AG, lettre de relance).
 4. Carnet vide et absence de contrats gérés sans erreur.
