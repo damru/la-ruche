@@ -777,6 +777,13 @@ Les rappels synthétiques partagés entre vues passent par `CReminderCard`. Ne p
 - Navigation `précédent / suivant` déplace d'une période complète.
 - Bloc réglementaire en tête : adresse immeuble + syndic en exercice.
 
+#### Vue Calendrier
+
+- **Barre de filtres** (`CalendarFilterBar`, feature-local) : rangée de chips toggle par type d'événement — `CBadge` avec la variante de couleur de la source (cohérence AC-CAL-001-B) ; chip actif pleine opacité, inactif `opacity-40`. Seuls les types visibles pour le rôle courant sont affichés.
+- **Persistance** : état des filtres en `localStorage` (clé par utilisateur), rechargé au montage — pas de préférence serveur.
+- **Mode liste** : deux champs `CFormInput type="date"` (`Du` / `Au`) remplacent la navigation période quand aucune plage libre n'est saisie.
+- **Tous filtres désactivés** : `CEmptyState compact` explicite « aucun type sélectionné » — aucun appel réseau.
+
 ---
 
 ## Appendice — DDR

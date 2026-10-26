@@ -7,7 +7,8 @@ import { useI18n } from 'vue-i18n'
 import CCard from '@/components/molecules/CCard.vue'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CEmptyState from '@/components/atoms/CEmptyState.vue'
-import type { CalendarEvent, CalendarSource } from '@/types/domain'
+import type { CalendarEvent } from '@/types/domain'
+import { SOURCE_BADGE_VARIANT } from './sources'
 
 const props = defineProps<{
   events: CalendarEvent[]
@@ -16,14 +17,6 @@ const props = defineProps<{
 const router = useRouter()
 const { t } = useI18n()
 
-const SOURCE_BADGE_VARIANT: Record<CalendarSource, 'primary' | 'accent' | 'warn' | 'err' | 'default' | 'valid'> = {
-  meeting: 'primary',
-  contract: 'warn',
-  task: 'valid',
-  claim: 'err',
-  maintenance: 'accent',
-  manual: 'default',
-}
 
 interface DayGroup {
   date: string

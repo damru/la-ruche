@@ -1,7 +1,9 @@
-// ── domain/calendar.rs — Calendrier copropriété (EP-014-S01) ─────────────
+// ── domain/calendar.rs — Calendrier copropriété ─────────────
 //
 // Pure types and role-visibility logic. Zero SQL — the DB layer
 // (`db::calendar`) is responsible for fetching rows per source.
+
+use std::str::FromStr;
 
 use chrono::{Days, NaiveDate, NaiveTime};
 use serde::Serialize;
@@ -26,6 +28,41 @@ pub enum CalendarSource {
     Manual,
 }
 
+impl CalendarSource {
+    /// Every source variant, in declaration order.
+    pub const ALL: &'static [CalendarSource] = &[
+        CalendarSource::Meeting,
+        CalendarSource::Contract,
+        CalendarSource::Task,
+        CalendarSource::Claim,
+        CalendarSource::Maintenance,
+        CalendarSource::Manual,
+    ];
+
+    /// Wire representation (snake_case), matches the serialized form.
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            CalendarSource::Meeting => "meeting",
+            CalendarSource::Contract => "contract",
+            CalendarSource::Task => "task",
+            CalendarSource::Claim => "claim",
+            CalendarSource::Maintenance => "maintenance",
+            CalendarSource::Manual => "manual",
+        }
+    }
+}
+
+impl FromStr for CalendarSource {
+    type Err = ();
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        CalendarSource::ALL
+            .iter()
+            .find(|src| src.as_str() == s)
+            .copied()
+            .ok_or(())
+    }
+}
+
 #[derive(Debug, Clone, Serialize)]
 pub struct CalendarEvent {
     /// Composite id, e.g. "meeting:{uuid}", "contract:{uuid}", ...
@@ -41,7 +78,7 @@ pub struct CalendarEvent {
     pub is_deadline: bool,
 }
 
-/// AC-CAL-001-C — role-based source visibility, pure and testable.
+/// Role-based source visibility, pure and testable.
 ///
 /// Manager/BoardMember see every source, including the legal deadlines
 /// (J+30 notification, J+60 contestation) derived from closed meetings.
@@ -62,6 +99,24 @@ pub fn visible_sources(roles: &[Role]) -> Vec<CalendarSource> {
         ]
     } else {
         vec![CalendarSource::Meeting, CalendarSource::Manual]
+    }
+}
+
+/// Requested type filter intersected with role visibility.
+/// Role visibility stays sovereign: a requested source the caller cannot see is
+/// silently dropped (200 with an empty list, never a visibility widening).
+/// `requested = None` is the identity (no filter).
+pub fn effective_sources(
+    roles: &[Role],
+    requested: Option<&[CalendarSource]>,
+) -> Vec<CalendarSource> {
+    let visible = visible_sources(roles);
+    match requested {
+        None => visible,
+        Some(requested) => visible
+            .into_iter()
+            .filter(|source| requested.contains(source))
+            .collect(),
     }
 }
 
@@ -141,6 +196,52 @@ mod tests {
     fn multiple_roles_grant_the_most_permissive_visibility() {
         let sources = visible_sources(&[Role::CoOwner, Role::BoardMember]);
         assert_eq!(sources.len(), 6);
+    }
+
+    #[test]
+    fn effective_sources_without_request_is_identity() {
+        let sources = effective_sources(&[Role::Manager], None);
+        assert_eq!(sources, visible_sources(&[Role::Manager]));
+    }
+
+    #[test]
+    fn effective_sources_intersects_requested_with_visibility() {
+        let sources = effective_sources(
+            &[Role::Manager],
+            Some(&[CalendarSource::Meeting, CalendarSource::Contract]),
+        );
+        assert_eq!(
+            sources,
+            vec![CalendarSource::Meeting, CalendarSource::Contract]
+        );
+    }
+
+    #[test]
+    fn effective_sources_never_widens_visibility() {
+        // A CoOwner asking for `contract` gets an empty list, not a 403.
+        let sources = effective_sources(&[Role::CoOwner], Some(&[CalendarSource::Contract]));
+        assert!(sources.is_empty());
+
+        let sources = effective_sources(
+            &[Role::CoOwner],
+            Some(&[CalendarSource::Meeting, CalendarSource::Task]),
+        );
+        assert_eq!(sources, vec![CalendarSource::Meeting]);
+    }
+
+    #[test]
+    fn effective_sources_empty_request_yields_empty() {
+        let sources = effective_sources(&[Role::Manager], Some(&[]));
+        assert!(sources.is_empty());
+    }
+
+    #[test]
+    fn calendar_source_from_str_roundtrip() {
+        for source in CalendarSource::ALL {
+            assert_eq!(CalendarSource::from_str(source.as_str()), Ok(*source));
+        }
+        assert_eq!(CalendarSource::from_str("foo"), Err(()));
+        assert_eq!(CalendarSource::from_str("Meeting"), Err(()));
     }
 
     #[test]

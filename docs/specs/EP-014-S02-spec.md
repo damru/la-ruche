@@ -1,5 +1,7 @@
 # Spécification technique — EP-014-S02
 
+**Statut actuel : IMPLÉMENTÉ (backend + frontend)**
+
 **Story :** Filtrer les événements du calendrier par type (AG, tâche, sinistre, contrat, autre) et par période.
 
 **Épic :** EP-014 — Calendrier copropriété

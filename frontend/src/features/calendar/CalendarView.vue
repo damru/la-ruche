@@ -1,8 +1,9 @@
 <script setup lang="ts">
-// CalendarView — EP-014-S01. Monthly / weekly / agenda toggle with period nav.
-// Visibility rules are enforced server-side (`/calendar/events` filters by
-// caller role); this view only renders whatever events come back.
-// EP-014-S03: manual event create/edit/delete (Manager/BoardMember only).
+// CalendarView — monthly / weekly / agenda toggle with period nav, type filter
+// bar (state persisted in localStorage), manual event create/edit/delete
+// (Manager/BoardMember only). Visibility rules are enforced server-side
+// (`/calendar/events` filters by caller role); this view only renders whatever
+// events come back.
 
 import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -10,17 +11,21 @@ import { useRoute, useRouter } from 'vue-router'
 import { calendarApi } from '@/api'
 import { usePageLoader } from '@/composables/usePageLoader'
 import { usePermissions } from '@/composables/usePermissions'
+import { useAuthStore } from '@/stores/auth'
 import { useBuildingStore } from '@/stores/building'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
+import CEmptyState from '@/components/atoms/CEmptyState.vue'
 import CEyebrow from '@/components/atoms/CEyebrow.vue'
 import CHeading from '@/components/atoms/CHeading.vue'
+import CFormInput from '@/components/atoms/CFormInput.vue'
 import CMetaLine from '@/components/molecules/CMetaLine.vue'
 import CMetaItem from '@/components/molecules/CMetaItem.vue'
 import CSeparator from '@/components/atoms/CSeparator.vue'
 import CTabs from '@/components/atoms/CTabs.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
+import CIconCalendar from '@/components/atoms/CIconCalendar.svg'
 import CIconChevronRight from '@/components/atoms/CIconChevronRight.svg'
 import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import CIconArrowLeft from '@/components/atoms/CIconArrowLeft.svg'
@@ -28,9 +33,11 @@ import CIconArrowRight from '@/components/atoms/CIconArrowRight.svg'
 import CIconDownload from '@/components/atoms/CIconDownload.svg'
 import CalendarGrid from './CalendarGrid.vue'
 import CalendarAgendaMode from './CalendarAgendaMode.vue'
+import CalendarFilterBar from './CalendarFilterBar.vue'
+import { CALENDAR_SOURCES } from './sources'
 import EventFormModal from './EventFormModal.vue'
 import EventDetailModal from './EventDetailModal.vue'
-import type { CalendarEvent, ManualCalendarEvent } from '@/types/domain'
+import type { CalendarEvent, CalendarSource, ManualCalendarEvent } from '@/types/domain'
 
 type Mode = 'month' | 'week' | 'agenda'
 
@@ -38,6 +45,7 @@ const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const perms = usePermissions()
+const auth = useAuthStore()
 
 const mode = ref<Mode>('month')
 const anchor = ref(new Date())
@@ -45,6 +53,47 @@ const events = ref<CalendarEvent[]>([])
 const buildingName = ref('')
 
 const canManage = perms.canManageCalendar
+
+// Filter state persisted per user in localStorage.
+// Corrupted/unavailable storage falls back to every type active.
+const activeTypes = ref<CalendarSource[]>(loadFilters())
+
+function storageKey(): string {
+  return `laruche.calendar.filters.${auth.user?.user_id ?? 'anonymous'}`
+}
+
+function loadFilters(): CalendarSource[] {
+  try {
+    const raw = localStorage.getItem(storageKey())
+    if (!raw) return [...CALENDAR_SOURCES]
+    const parsed: unknown = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return [...CALENDAR_SOURCES]
+    const valid = parsed.filter((s): s is CalendarSource => (CALENDAR_SOURCES as readonly string[]).includes(s as string))
+    return valid.length > 0 ? valid : [...CALENDAR_SOURCES]
+  } catch {
+    return [...CALENDAR_SOURCES]
+  }
+}
+
+watch(activeTypes, (types) => {
+  try {
+    localStorage.setItem(storageKey(), JSON.stringify(types))
+  } catch {
+    // Storage unavailable — filters just won't persist.
+  }
+  reload()
+}, { deep: true })
+
+// Agenda mode with free from/to dates.
+const listFrom = ref('')
+const listTo = ref('')
+
+function applyListRange() {
+  if (listFrom.value && listTo.value && listFrom.value <= listTo.value) {
+    anchor.value = new Date(`${listFrom.value}T00:00:00`)
+  }
+  reload()
+}
 
 const detailOpen = ref(false)
 const detailEventId = ref<string | null>(null)
@@ -71,10 +120,25 @@ function toIsoDate(date: Date): string {
 }
 
 async function loadData() {
-  const { from, to } = periodRange(anchor.value, mode.value)
+  // No active type: skip the network call, show an explicit state.
+  if (activeTypes.value.length === 0) {
+    if (!buildingName.value) {
+      buildingName.value = (await useBuildingStore().fetch()).name
+    }
+    events.value = []
+    return
+  }
+  let from: Date
+  let to: Date
+  if (mode.value === 'agenda' && listFrom.value && listTo.value && listFrom.value <= listTo.value) {
+    from = new Date(`${listFrom.value}T00:00:00`)
+    to = new Date(`${listTo.value}T00:00:00`)
+  } else {
+    ;({ from, to } = periodRange(anchor.value, mode.value))
+  }
   const [building, response] = await Promise.all([
     useBuildingStore().fetch(),
-    calendarApi.events(toIsoDate(from), toIsoDate(to)),
+    calendarApi.events(toIsoDate(from), toIsoDate(to), activeTypes.value),
   ])
   buildingName.value = building.name
   events.value = response.data
@@ -103,6 +167,11 @@ function shiftPeriod(delta: number) {
 }
 
 function onModeChange() {
+  if (mode.value === 'agenda' && !listFrom.value) {
+    const { from, to } = periodRange(anchor.value, mode.value)
+    listFrom.value = toIsoDate(from)
+    listTo.value = toIsoDate(to)
+  }
   reload()
 }
 
@@ -224,51 +293,85 @@ async function exportCalendar() {
           @update:model-value="onModeChange"
         />
 
-        <div class="flex items-center justify-between gap-3">
-          <div
-            v-if="mode !== 'agenda'"
-            class="flex items-center gap-3"
-          >
+        <CalendarFilterBar
+          v-model="activeTypes"
+        />
+
+        <CEmptyState
+          v-if="activeTypes.length === 0"
+          size="compact"
+          :title="t('calendar.filters.noneActive')"
+        >
+          <template #icon>
+            <CIconCalendar aria-hidden="true" />
+          </template>
+        </CEmptyState>
+        <template v-else>
+          <div class="flex items-center justify-between gap-3">
+            <div
+              v-if="mode !== 'agenda'"
+              class="flex items-center gap-3"
+            >
+              <CBtn
+                variant="icon"
+                size="sm"
+                :icon="CIconArrowLeft"
+                :title="t('calendar.previousPeriod')"
+                :aria-label="t('calendar.previousPeriod')"
+                @click="shiftPeriod(-1)"
+              />
+              <span class="title-sm">{{ periodLabel }}</span>
+              <CBtn
+                variant="icon"
+                size="sm"
+                :icon="CIconArrowRight"
+                :title="t('calendar.nextPeriod')"
+                :aria-label="t('calendar.nextPeriod')"
+                @click="shiftPeriod(1)"
+              />
+            </div>
+            <div
+              v-else
+              class="flex items-center gap-2"
+            >
+              <CFormInput
+                v-model="listFrom"
+                type="date"
+                :label="t('calendar.filters.from')"
+                class="w-44"
+                @change="applyListRange"
+              />
+              <CFormInput
+                v-model="listTo"
+                type="date"
+                :label="t('calendar.filters.to')"
+                class="w-44"
+                @change="applyListRange"
+              />
+            </div>
             <CBtn
-              variant="icon"
+              variant="ghost"
               size="sm"
-              :icon="CIconArrowLeft"
-              :title="t('calendar.previousPeriod')"
-              :aria-label="t('calendar.previousPeriod')"
-              @click="shiftPeriod(-1)"
-            />
-            <span class="title-sm">{{ periodLabel }}</span>
-            <CBtn
-              variant="icon"
-              size="sm"
-              :icon="CIconArrowRight"
-              :title="t('calendar.nextPeriod')"
-              :aria-label="t('calendar.nextPeriod')"
-              @click="shiftPeriod(1)"
+              :icon="CIconDownload"
+              :title="t('calendar.export')"
+              :aria-label="t('calendar.export')"
+              :loading="exporting"
+              @click="exportCalendar"
             />
           </div>
-          <CBtn
-            variant="ghost"
-            size="sm"
-            :icon="CIconDownload"
-            :title="t('calendar.export')"
-            :aria-label="t('calendar.export')"
-            :loading="exporting"
-            @click="exportCalendar"
-          />
-        </div>
 
-        <CalendarGrid
-          v-if="mode === 'month' || mode === 'week'"
-          :mode="mode"
-          :anchor="anchor"
-          :events="events"
-          @show-day="onShowDay"
-        />
-        <CalendarAgendaMode
-          v-else
-          :events="events"
-        />
+          <CalendarGrid
+            v-if="mode === 'month' || mode === 'week'"
+            :mode="mode"
+            :anchor="anchor"
+            :events="events"
+            @show-day="onShowDay"
+          />
+          <CalendarAgendaMode
+            v-else
+            :events="events"
+          />
+        </template>
       </template>
     </div>
 

@@ -146,7 +146,6 @@ mod tests {
     }
 
     #[test]
-    #[test]
     fn has_role_detects_presence_and_absence() {
         let user = user_with(vec![Role::CoOwner, Role::Tenant]);
         assert!(user.has_role(&Role::CoOwner));
