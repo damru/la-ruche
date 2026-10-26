@@ -557,7 +557,7 @@ Feature simple self-service permettant à chaque utilisateur authentifié de gé
 * `EP-019-S04` ✅ — Définir sa préférence d'apparence (`clair`, `sombre`, `automatique`) et l'appliquer immédiatement dans l'interface
 * `EP-019-S05` ✅ — Structurer l'écran en onglets `Compte` et `Préférences` (sous-onglets `Notifications`, `Apparence`) pour éviter la dispersion des réglages
 * `EP-019-S06` ✅ — Gérer la première visite : afficher les valeurs par défaut de manière lisible dès la première ouverture du profil ; s'assurer que l'état initial est compréhensible sans action préalable (PRD US-PP-003)
-* [EP-019-S07](specs/EP-019-S07-spec.md) ✅ — Réinitialiser ses préférences : bouton global unique avec icône sur la ligne des onglets de filtres (couvre Notifications + Apparence + délai de fermeture des modales), avec modale de confirmation avant exécution (PRD US-PP-005)
+* [EP-019-S07](specs/EP-019-S07-spec.md) ✅ — Réinitialiser ses préférences : bouton global unique avec icône sur la ligne des sous-onglets de préférences (couvre Notifications + Apparence + délai de fermeture des modales), avec modale de confirmation avant exécution (PRD US-PP-005)
 * `EP-019-S08` ✅ — Afficher le contexte utilisateur : rôle actif, résidence de rattachement et périmètre des droits depuis l'écran profil (PRD US-PP-007)
 * [EP-019-S09](specs/EP-019-S09-spec.md) ✅ — Régler le délai de fermeture automatique des modales après succès (0 = immédiat à 10 s, défaut 3 s), dans le même esprit que la préférence d'apparence, persisté côté frontend (`laruche-auto-close-delay`) (PRD US-PP-008)
 

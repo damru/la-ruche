@@ -261,7 +261,7 @@ Aucun KPI prioritaire n'est retenu à ce stade. La feature est un socle de confo
 - **AC-PP-005-B** : La réinitialisation DOIT être confirmée explicitement via un modal avant exécution.
 - **AC-PP-005-C** : La réinitialisation NE DOIT PAS modifier les informations personnelles (nom, email, téléphone).
 - **AC-PP-005-D** : Une réinitialisation incomplète (erreur partielle) DOIT afficher un avertissement avec liste des éléments non réinitialisés.
-- **AC-PP-005-E** : Le bouton « Réinitialiser mes préférences » DOIT être positionné sur la ligne des onglets de filtres de la page profil (accompagné d'une icône), toujours visible quel que soit l'onglet actif — une seule action globale couvrant Notifications et Apparence.
+- **AC-PP-005-E** : Le bouton « Réinitialiser mes préférences » DOIT être positionné sur la ligne des sous-onglets de préférences (`Notifications` · `Apparence`) de la page profil (accompagné d'une icône), visible depuis l'onglet `Préférences` uniquement — une seule action globale couvrant Notifications et Apparence.
 
 #### US-PP-006 — Gérer sa préférence d'apparence
 
