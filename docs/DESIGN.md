@@ -779,8 +779,8 @@ Les rappels synthétiques partagés entre vues passent par `CReminderCard`. Ne p
 
 #### Vue Profil
 
-- Onglets de filtres en tête de page : `Mon compte` · `Préférences`. Le bouton global « Réinitialiser mes préférences » (`CBtn` ghost, icône `CIconRefresh`) est aligné à droite sur la même ligne que ces onglets.
-- L'onglet `Préférences` regroupe deux sous-onglets de filtres : `Notifications` · `Apparence` (thème + délai de fermeture automatique des modales).
+- Onglets en tête de page (`CTabs variant="tab"`) : `Mon compte` · `Préférences`.
+- L'onglet `Préférences` regroupe deux sous-onglets de filtres : `Notifications` · `Apparence` (thème + délai de fermeture automatique des modales). Le bouton global « Réinitialiser mes préférences » (`CBtn` ghost, icône `CIconRefresh`) est aligné à droite sur la même ligne que ces sous-onglets.
 
 #### Vue Calendrier
 

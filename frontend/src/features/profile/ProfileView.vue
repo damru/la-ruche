@@ -213,14 +213,27 @@ const showResetDataModal = ref(false)
         </CHeading>
       </header>
 
-      <!-- Tabs + global reset action -->
-      <div class="flex items-center justify-between gap-3">
+      <!-- Tabs -->
+      <CTabs
+        v-model="activeTab"
+        variant="tab"
+        :tabs="[
+          { value: 'account', label: t('nav.myAccount') },
+          { value: 'preferences', label: t('settings.preferences.title') },
+        ]"
+      />
+
+      <!-- Preferences sub-tabs + global reset action -->
+      <div
+        v-if="activeTab === 'preferences'"
+        class="flex items-center justify-between gap-3 mb-4"
+      >
         <CTabs
-          v-model="activeTab"
+          v-model="prefsTab"
           variant="filter"
           :tabs="[
-            { value: 'account', label: t('nav.myAccount') },
-            { value: 'preferences', label: t('settings.preferences.title') },
+            { value: 'notifications', label: t('settings.tabs.notifications') },
+            { value: 'appearance', label: t('settings.preferences.theme.label') },
           ]"
           class="mb-0!"
         />
@@ -232,17 +245,6 @@ const showResetDataModal = ref(false)
           @click="resetAllPrefs"
         />
       </div>
-
-      <!-- Preferences sub-tabs -->
-      <CTabs
-        v-if="activeTab === 'preferences'"
-        v-model="prefsTab"
-        variant="filter"
-        :tabs="[
-          { value: 'notifications', label: t('settings.tabs.notifications') },
-          { value: 'appearance', label: t('settings.preferences.theme.label') },
-        ]"
-      />
 
       <!-- ── Account tab ─────────────────────────────────────── -->
       <template v-if="activeTab === 'account'">
