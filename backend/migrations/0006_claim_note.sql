@@ -1,4 +1,4 @@
--- EP-008-S07: append-only timestamped follow-up notes on claims (PRD US-SIN-004).
+-- Append-only timestamped follow-up notes on claims.
 -- No updated_at on purpose: rows are never updated nor deleted.
 CREATE TABLE claim_note (
     id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),

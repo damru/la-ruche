@@ -80,7 +80,7 @@ interface Permissions {
   // ── Claim ──
   canViewClaim: ComputedRef<boolean>
   canManageClaim: ComputedRef<boolean>
-  /** Managers and board members may view and add claim follow-up notes (S07). */
+  /** Managers and board members may view and add claim follow-up notes. */
   canManageClaimNotes: ComputedRef<boolean>
 
   // ── Unit ──

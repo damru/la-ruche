@@ -1,7 +1,4 @@
-// RBAC matrix — claims (sinistres): any authenticated user may create and
-// read; update/delete are manager-only. Document endpoints require
-// Manager | BoardMember (EP-008-S08 security fix). Notes require
-// Manager | BoardMember (EP-008-S07).
+// RBAC matrix — claims: any authenticated user may create and read;// update/delete are manager-only. Document endpoints require// Manager | BoardMember. Notes require Manager | BoardMember.
 
 mod common;
 
@@ -41,7 +38,7 @@ async fn declare_claim(server: &TestServer, auth: &str, claim_id: &str) {
     );
 }
 
-// ── S06: draft lifecycle ──────────────────────────────────────────
+// ── Draft lifecycle ────────────────────────────────────────────────
 
 #[tokio::test]
 async fn new_claim_is_created_as_draft() {
@@ -157,7 +154,7 @@ async fn declare_requires_manager_role() {
     }
 }
 
-// ── S07: claim notes ───────────────────────────────────────────────
+// ── Claim notes ───────────────────────────────────────────────────
 
 #[tokio::test]
 async fn manager_and_board_can_create_and_list_notes() {
@@ -231,7 +228,7 @@ async fn note_body_cannot_be_empty() {
     assert_eq!(created.status_code(), StatusCode::BAD_REQUEST);
 }
 
-// ── S08: document access control ───────────────────────────────────
+// ── Document access control ───────────────────────────────────────
 
 #[tokio::test]
 async fn residents_cannot_list_or_attach_claim_documents() {
