@@ -4,7 +4,7 @@
 
 **Épic :** EP-008 — Sinistres
 **Réf. PRD :** US-SIN-004 · **Réf. ADR :** ADR-009 (esprit piste probante — pas de nouvel ADR : table de jointure simple, aucun trade-off structurel)
-**État :** NON IMPLÉMENTÉ (aucune table, endpoint ni UI).
+**État :** IMPLÉMENTÉ (backend + frontend)
 
 ---
 

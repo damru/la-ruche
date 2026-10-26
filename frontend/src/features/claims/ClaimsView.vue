@@ -25,15 +25,17 @@ import CIconLockOpen from '@/components/atoms/CIconLockOpen.svg'
 import CIconShield from '@/components/atoms/CIconShield.svg'
 import CIconUpload from '@/components/atoms/CIconUpload.svg'
 import CIconPlus from '@/components/atoms/CIconPlus.svg'
+import CIconMessageSquare from '@/components/atoms/CIconMessageSquare.svg'
 import ClaimCreateModal from './ClaimCreateModal.vue'
 import ClaimEditModal from './ClaimEditModal.vue'
 import ClaimTransmitModal from './ClaimTransmitModal.vue'
 import ClaimCloseModal from './ClaimCloseModal.vue'
 import ClaimDeleteModal from './ClaimDeleteModal.vue'
+import ClaimDeclareModal from './ClaimDeclareModal.vue'
 import { claimsApi, documentsApi, unitsApi, usersApi } from '@/api'
 import { useBuildingStore } from '@/stores/building'
-import type { Claim, ClaimStatus, ClaimType, Document, Unit, User } from '@/types/domain'
-import { ALL_FILTER, CLAIM_STATUS_CLOSED, CLAIM_STATUS_IN_PROGRESS, CLAIM_STATUS_OPEN } from '@/utils/constants'
+import type { Claim, ClaimNote, ClaimStatus, ClaimType, Document, Unit, User } from '@/types/domain'
+import { ALL_FILTER, CLAIM_STATUS_CLOSED, CLAIM_STATUS_DRAFT, CLAIM_STATUS_IN_PROGRESS, CLAIM_STATUS_OPEN } from '@/utils/constants'
 import { usePermissions } from '@/composables/usePermissions'
 
 const { t } = useI18n()
@@ -46,6 +48,7 @@ const allUnits = ref<Unit[]>([])
 const allUsers = ref<User[]>([])
 const filter = ref<typeof ALL_FILTER | ClaimStatus>(ALL_FILTER)
 const canManage = perms.canManageClaim
+const canManageNotes = perms.canManageClaimNotes
 
 const showCreateModal = ref(false)
 const claimToEdit = ref<Claim | null>(null)
@@ -55,6 +58,12 @@ const claimToDelete = ref<Claim | null>(null)
 const claimDocumentsTarget = ref<Claim | null>(null)
 const claimDocuments = ref<Document[]>([])
 const loadingClaimDocuments = ref(false)
+const claimToDeclare = ref<Claim | null>(null)
+const expandedNotesClaimId = ref<string | null>(null)
+const notesByClaim = ref<Record<string, ClaimNote[]>>({})
+const loadingNotes = ref(false)
+const newNoteBody = ref('')
+const submittingNote = ref(false)
 
 async function loadData() {
   const [building, claimsResponse, unitsResponse, usersResponse] = await Promise.all([
@@ -90,24 +99,26 @@ const claims = computed(() =>
 )
 
 const activeClaimsCount = computed(() =>
-  allClaims.value.filter(claim => claim.status !== CLAIM_STATUS_CLOSED).length,
+  allClaims.value.filter(claim => claim.status !== CLAIM_STATUS_CLOSED && claim.status !== CLAIM_STATUS_DRAFT).length,
 )
 
 const claimCounts = computed(() =>
   allClaims.value.reduce(
     (counts, claim) => {
       counts.all += 1
-      if (claim.status === CLAIM_STATUS_OPEN) counts.open += 1
+      if (claim.status === CLAIM_STATUS_DRAFT) counts.draft += 1
+      else if (claim.status === CLAIM_STATUS_OPEN) counts.open += 1
       else if (claim.status === CLAIM_STATUS_IN_PROGRESS) counts.in_progress += 1
       else if (claim.status === CLAIM_STATUS_CLOSED) counts.closed += 1
       return counts
     },
-    { all: 0, open: 0, in_progress: 0, closed: 0 },
+    { all: 0, draft: 0, open: 0, in_progress: 0, closed: 0 },
   ),
 )
 
 const claimTabs = computed(() => [
   { key: ALL_FILTER, label: t('common.allMasc'), count: claimCounts.value.all },
+  { key: CLAIM_STATUS_DRAFT, label: t('claims.filters.draft'), count: claimCounts.value.draft },
   { key: CLAIM_STATUS_OPEN, label: t('claims.filters.open'), count: claimCounts.value.open },
   { key: CLAIM_STATUS_IN_PROGRESS, label: t('claims.filters.inProgress'), count: claimCounts.value.in_progress },
   { key: CLAIM_STATUS_CLOSED, label: t('claims.filters.closed'), count: claimCounts.value.closed },
@@ -130,9 +141,9 @@ const legalCardLinks = computed(() => [
 
 const deadlineReminderClaims = computed(() =>
   allClaims.value
-    .filter(claim => !claim.transmitted_at && claim.status === CLAIM_STATUS_OPEN && (claim.is_deadline_approaching || claim.is_deadline_missed || claim.days_remaining === 0))
+    .filter(claim => !claim.transmitted_at && claim.declared_at && claim.status === CLAIM_STATUS_OPEN && (claim.is_deadline_approaching || claim.is_deadline_missed || claim.days_remaining === 0))
     .slice()
-    .sort((left, right) => left.legal_deadline_at.localeCompare(right.legal_deadline_at)),
+    .sort((left, right) => (left.legal_deadline_at ?? "").localeCompare(right.legal_deadline_at ?? "")),
 )
 
 function claimReminderTone(claim: Claim): 'err' | 'warn' {
@@ -150,6 +161,7 @@ const claimReminderRows = computed(() =>
 )
 
 function statusVariant(status: ClaimStatus): 'open' | 'pending' | 'closed' | 'default' {
+  if (status === CLAIM_STATUS_DRAFT) return 'default'
   if (status === CLAIM_STATUS_OPEN) return 'pending'
   if (status === CLAIM_STATUS_IN_PROGRESS) return 'open'
   if (status === CLAIM_STATUS_CLOSED) return 'closed'
@@ -256,6 +268,45 @@ function openTransmitModal(claim: Claim) {
 
 function openCloseModal(claim: Claim) {
   claimToClose.value = claim
+}
+
+function openDeclareModal(claim: Claim) {
+  claimToDeclare.value = claim
+}
+
+async function toggleNotes(claim: Claim) {
+  if (expandedNotesClaimId.value === claim.id) {
+    expandedNotesClaimId.value = null
+    return
+  }
+  expandedNotesClaimId.value = claim.id
+  if (!notesByClaim.value[claim.id]) {
+    loadingNotes.value = true
+    try {
+      const response = await claimsApi.listNotes(claim.id)
+      notesByClaim.value[claim.id] = response.data
+    } catch {
+      expandedNotesClaimId.value = null
+    } finally {
+      loadingNotes.value = false
+    }
+  }
+}
+
+async function submitNote(claim: Claim) {
+  const body = newNoteBody.value.trim()
+  if (!body) return
+  submittingNote.value = true
+  try {
+    const response = await claimsApi.createNote(claim.id, { body })
+    if (!notesByClaim.value[claim.id]) notesByClaim.value[claim.id] = []
+    notesByClaim.value[claim.id].push(response.data)
+    newNoteBody.value = ''
+  } catch {
+    // error handled by interceptor
+  } finally {
+    submittingNote.value = false
+  }
 }
 
 async function openClaimDocuments(claim: Claim) {
@@ -442,6 +493,13 @@ function handleDocumentCountChanged(claimId: string, delta: number) {
                 <template v-if="canManage">
                   <CCardActions>
                     <CBtn
+                      v-if="claim.status === CLAIM_STATUS_DRAFT"
+                      variant="primary"
+                      size="sm"
+                      :title="t('claims.declare')"
+                      @click="openDeclareModal(claim)"
+                    />
+                    <CBtn
                       v-if="!claim.transmitted_at"
                       variant="ghost"
                       size="sm"
@@ -467,17 +525,31 @@ function handleDocumentCountChanged(claimId: string, delta: number) {
                     />
                   </CCardActions>
                 </template>
+                <div
+                  v-if="canManageNotes"
+                  class="flex items-center"
+                >
+                  <CBtn
+                    variant="ghost"
+                    size="sm"
+                    :icon="CIconMessageSquare"
+                    :title="t('claims.notesTitle')"
+                    
+                    @click="toggleNotes(claim)"
+                  />
+                </div>
                 <CCardNote>
                   <span class="inline-flex items-center gap-1 w-fit">
                     <CIconCalendar />
-                    {{ t('claims.declaredOn', { date: formatDate(claim.declared_at) }) }}
+                    <template v-if="claim.declared_at">{{ t('claims.declaredOn', { date: formatDate(claim.declared_at) }) }}</template>
+                    <template v-else>{{ t('claims.draftHint') }}</template>
                   </span>
                   <span class="inline-flex items-center gap-1 w-fit">
                     <CIconClock
                       
                       class="icon-xs"
                     />
-                    {{ t('claims.deadline.reference', { date: formatDate(claim.legal_deadline_at) }) }}
+                    <template v-if="claim.legal_deadline_at">{{ t('claims.deadline.reference', { date: formatDate(claim.legal_deadline_at) }) }}</template>
                   </span>
                   <span
                     v-if="claim.published_at"
@@ -499,6 +571,58 @@ function handleDocumentCountChanged(claimId: string, delta: number) {
                     {{ reimbursementLabel(claim) }}
                   </span>
                 </CCardNote>
+                <div
+                  v-if="expandedNotesClaimId === claim.id"
+                  class="flex flex-col gap-3 border-t border-outline-variant pt-3"
+                >
+                  <h4 class="text-sm font-semibold text-on-surface m-0">
+                    {{ t('claims.notesTitle') }}
+                  </h4>
+                  <CPageLoader v-if="loadingNotes" />
+                  <template v-else>
+                    <p
+                      v-if="!notesByClaim[claim.id]?.length"
+                      class="text-sm text-on-surface-variant m-0"
+                    >
+                      {{ t('claims.notesEmpty') }}
+                    </p>
+                    <ul
+                      v-else
+                      class="flex flex-col gap-2 m-0 p-0 list-none"
+                    >
+                      <li
+                        v-for="note in notesByClaim[claim.id]"
+                        :key="note.id"
+                        class="flex flex-col gap-0-5 text-sm"
+                      >
+                        <span class="text-xs text-on-surface-variant">
+                          {{ note.author_name }} · {{ formatDate(note.created_at, 'datetime') }}
+                        </span>
+                        <span class="text-on-surface whitespace-pre-wrap">{{ note.body }}</span>
+                      </li>
+                    </ul>
+                  </template>
+                  <div
+                    v-if="canManageNotes"
+                    class="flex flex-col gap-2"
+                  >
+                    <CFormTextarea
+                      v-model="newNoteBody"
+                      :placeholder="t('claims.notePlaceholder')"
+                      :rows="2"
+                    />
+                    <div class="flex justify-end">
+                      <CBtn
+                        variant="primary"
+                        size="sm"
+                        :loading="submittingNote"
+                        :disabled="!newNoteBody.trim()"
+                        :title="t('claims.noteAdd')"
+                        @click="submitNote(claim)"
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
             </CCard>
           </div>
@@ -551,6 +675,13 @@ function handleDocumentCountChanged(claimId: string, delta: number) {
       :claim="claimToDelete"
       @update:open="value => !value && (claimToDelete = null)"
       @deleted="reload"
+    />
+
+    <ClaimDeclareModal
+      :open="!!claimToDeclare"
+      :claim="claimToDeclare"
+      @update:open="value => !value && (claimToDeclare = null)"
+      @declared="reload"
     />
 
     <CLinkedDocumentsModal

@@ -4,7 +4,7 @@ import type {
   Meeting, MeetingAttendance, MeetingDocument, Resolution, VoteResult, UnitVote,
   Budget, BudgetLine, LevyCall, WorksFund, AccountingCode,
   VendorContract, ContractReminder,
-    Task, Claim, MaintenanceEntry,
+    Task, Claim, ClaimNote, MaintenanceEntry,
   LogbookSummary,
   Report, Consultation, ConsultationResults, VendorTask, VendorDocument,
   Document, UploadUrlResponse, DownloadUrlResponse,
@@ -443,18 +443,24 @@ export const claimsApi = {
     api.get<Claim[]>('/claims'),
   get: (id: string) =>
     api.get<Claim>(`/claims/${id}`),
-  create: (data: { title: string; description?: string; claim_type: string; declared_at: string; published_at?: string; unit_id?: string }) =>
+  create: (data: { title: string; description?: string; claim_type: string; published_at?: string; unit_id?: string }) =>
     api.post<Claim>('/claims', data),
-  update: (id: string, data: { title: string; description?: string | null; claim_type: string; declared_at: string; published_at?: string | null; status: string; unit_id?: string | null; transmitted_at?: string | null; reimbursement_date?: string | null; reimbursement_amount?: string | null }) =>
+  update: (id: string, data: { title: string; description?: string | null; claim_type: string; declared_at?: string | null; published_at?: string | null; status: string; unit_id?: string | null; transmitted_at?: string | null; reimbursement_date?: string | null; reimbursement_amount?: string | null }) =>
     api.put<Claim>(`/claims/${id}`, data),
   delete: (id: string) =>
     api.delete(`/claims/${id}`),
+  declare: (id: string, data?: { declared_at?: string }) =>
+    api.post<Claim>(`/claims/${id}/declare`, data),
   listDocuments: (id: string) =>
     api.get<Document[]>(`/claims/${id}/documents`),
   attachDocument: (id: string, document_id: string) =>
     api.post(`/claims/${id}/documents`, { document_id }),
   detachDocument: (id: string, document_id: string) =>
     api.delete(`/claims/${id}/documents/${document_id}`),
+  listNotes: (id: string) =>
+    api.get<ClaimNote[]>(`/claims/${id}/notes`),
+  createNote: (id: string, data: { body: string }) =>
+    api.post<ClaimNote>(`/claims/${id}/notes`, data),
 }
 
 // ── Maintenance Log ───────────────────────────────────────────────

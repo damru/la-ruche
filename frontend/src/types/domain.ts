@@ -20,7 +20,7 @@ export type TaskStatus = 'open' | 'in_progress' | 'awaiting_vendor' | 'awaiting_
 export type TaskPriority = 'low' | 'normal' | 'high' | 'urgent'
 
 export type ClaimType = 'current' | 'natural_disaster' | 'theft'
-export type ClaimStatus = 'open' | 'in_progress' | 'closed'
+export type ClaimStatus = 'draft' | 'open' | 'in_progress' | 'closed'
 export type ReportStatus = 'open' | 'in_progress' | 'closed'
 export type PollStatus = 'draft' | 'open' | 'closed'
 
@@ -353,14 +353,14 @@ export interface Claim {
   title: string
   description?: string
   claim_type: ClaimType
-  declared_at: string
+  declared_at?: string
   published_at?: string
   status: ClaimStatus
   unit_id?: string
   transmitted_at?: string
   reimbursement_date?: string
   reimbursement_amount?: number | string
-  legal_deadline_at: string
+  legal_deadline_at?: string
   days_remaining?: number
   is_deadline_approaching: boolean
   is_deadline_missed: boolean
@@ -368,6 +368,15 @@ export interface Claim {
   document_count: number
   created_at: string
   updated_at: string
+}
+
+export interface ClaimNote {
+  id: string
+  claim_id: string
+  author_id: string
+  author_name: string
+  body: string
+  created_at: string
 }
 
 export interface MaintenanceEntry {

@@ -80,6 +80,8 @@ interface Permissions {
   // ── Claim ──
   canViewClaim: ComputedRef<boolean>
   canManageClaim: ComputedRef<boolean>
+  /** Managers and board members may view and add claim follow-up notes. */
+  canManageClaimNotes: ComputedRef<boolean>
 
   // ── Unit ──
   canViewUnit: ComputedRef<boolean>
@@ -176,6 +178,7 @@ export function usePermissions(): Permissions {
 
   const canViewClaim = computed(() => isAuthenticated.value)
   const canManageClaim = computed(() => hasRole(ROLE_MANAGER))
+  const canManageClaimNotes = computed(() => hasAnyRole(MANAGER_ROLES))
 
   // ── Unit ──
 
@@ -250,6 +253,7 @@ export function usePermissions(): Permissions {
     canAdministerReport,
     canViewClaim,
     canManageClaim,
+    canManageClaimNotes,
     canViewUnit,
     canManageUnit,
     canViewUsers,

@@ -4,7 +4,7 @@
 
 **Épic :** EP-008 — Sinistres
 **Réf. PRD :** US-SIN-001b · **Réf. LEGAL :** délais de déclaration assurance (art. L113-2 C. assurances — 5 jours ouvrés) · **Réf. ADR :** ADR-009 (précédent split-migration enum)
-**État :** NON IMPLÉMENTÉ
+**État :** IMPLÉMENTÉ (backend + frontend)
 
 ---
 

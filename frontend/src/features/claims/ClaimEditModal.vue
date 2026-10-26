@@ -46,7 +46,7 @@ type ClaimUpdatePayload = {
   title: string
   description?: string | null
   claim_type: string
-  declared_at: string
+  declared_at?: string | null
   published_at?: string | null
   status: string
   unit_id?: string | null
@@ -71,7 +71,7 @@ function formFromClaim(claim: Claim): ClaimEditorForm {
     title: claim.title,
     description: claim.description ?? '',
     claim_type: claim.claim_type,
-    declared_at: claim.declared_at,
+    declared_at: claim.declared_at ?? "",
     published_at: claim.published_at ?? '',
     unit_id: claim.unit_id ?? '',
   }
@@ -118,7 +118,7 @@ function buildClaimUpdatePayload(claim: Claim, overrides: Partial<ClaimUpdatePay
     title: claim.title,
     description: claim.description ?? null,
     claim_type: claim.claim_type,
-    declared_at: claim.declared_at,
+    declared_at: claim.declared_at ?? "",
     published_at: claim.published_at ?? null,
     status: claim.status,
     unit_id: claim.unit_id ?? null,
@@ -231,7 +231,7 @@ async function handleSubmit() {
         title: form.value.title.trim(),
         description: form.value.description.trim() || null,
         claim_type: form.value.claim_type,
-        declared_at: form.value.declared_at,
+        declared_at: form.value.declared_at || null,
         published_at: normalizePublishedAt(form.value.claim_type, form.value.published_at),
         unit_id: form.value.unit_id || null,
       }),
