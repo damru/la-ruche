@@ -1051,11 +1051,14 @@
     "noAttachedPhotos": "Aucune photo jointe pour ce signalement.",
     "noPhotos": "Aucune photo disponible",
     "statuses": {
+      "draft": "Brouillon",
+      "draft": "Brouillon",
       "open": "Ouvert",
       "in_progress": "En cours",
       "closed": "Clos"
     },
     "filters": {
+      "draft": "Brouillons",
       "open": "Ouverts",
       "inProgress": "En cours",
       "closed": "Clos"
@@ -1192,6 +1195,27 @@
     "closeTitle": "Clore le sinistre",
     "transmit": "Transmettre",
     "close": "Clore",
+    "declare": "Déclarer",
+    "declareTitle": "Déclarer le sinistre",
+    "declareSuccess": "Sinistre déclaré",
+    "declaredAtField": "Date de déclaration",
+    "notesTitle": "Suivi",
+    "notesEmpty": "Aucune note de suivi.",
+    "notePlaceholder": "Ajouter une note de suivi…",
+    "noteAdd": "Ajouter une note",
+    "noteAdded": "Note ajoutée",
+    "draftHint": "Brouillon — visible du syndic seul",
+    "declare": "Déclarer",
+    "declareTitle": "Déclarer le sinistre",
+    "declareSuccess": "Sinistre déclaré",
+    "declareConfirm": "Confirmer la déclaration de ce sinistre ? Le délai légal de déclaration commencera à courir.",
+    "declaredAtField": "Date de déclaration",
+    "notesTitle": "Suivi",
+    "notesEmpty": "Aucune note de suivi.",
+    "notePlaceholder": "Ajouter une note de suivi…",
+    "noteAdd": "Ajouter une note",
+    "noteAdded": "Note ajoutée",
+    "draftHint": "Brouillon — visible du syndic seul",
     "openedAt": "Ouvert {date}",
     "declaredOn": "Déclaré le {date}",
     "publishedOn": "Arrêté publié le {date}",
@@ -1245,6 +1269,8 @@
       "reference": "Échéance légale : {date}"
     },
     "statuses": {
+      "draft": "Brouillon",
+      "draft": "Brouillon",
       "open": "Ouvert",
       "in_progress": "En cours",
       "closed": "Clos"
@@ -1256,6 +1282,7 @@
       "none": "Remboursement non renseigné"
     },
     "filters": {
+      "draft": "Brouillons",
       "open": "Ouverts",
       "inProgress": "En instruction",
       "closed": "Clos"
@@ -1777,7 +1804,10 @@
       "transmitted_before_reference_date": "La date de transmission ne peut pas être antérieure à la date légale de référence.",
       "reimbursement_amount_positive": "Le montant remboursé doit être strictement positif.",
       "reimbursement_requires_status": "Les champs de remboursement nécessitent un statut explicite.",
-      "reimbursement_only_for_closed": "Les champs de remboursement ne sont autorisés que pour les sinistres clôturés."
+      "reimbursement_only_for_closed": "Les champs de remboursement ne sont autorisés que pour les sinistres clôturés.",
+      "not_declarable": "Ce sinistre n'est plus au statut brouillon.",
+      "declared_at_in_future": "La date de déclaration ne peut pas être dans le futur.",
+      "note_body_empty": "Le contenu de la note ne peut pas être vide."
     },
     "calendar": {
       "invalid_range": "La plage de dates est invalide.",

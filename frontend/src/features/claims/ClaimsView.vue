@@ -33,7 +33,7 @@ import ClaimDeleteModal from './ClaimDeleteModal.vue'
 import { claimsApi, documentsApi, unitsApi, usersApi } from '@/api'
 import { useBuildingStore } from '@/stores/building'
 import type { Claim, ClaimStatus, ClaimType, Document, Unit, User } from '@/types/domain'
-import { ALL_FILTER, CLAIM_STATUS_CLOSED, CLAIM_STATUS_IN_PROGRESS, CLAIM_STATUS_OPEN } from '@/utils/constants'
+import { ALL_FILTER, CLAIM_STATUS_CLOSED, CLAIM_STATUS_DRAFT, CLAIM_STATUS_IN_PROGRESS, CLAIM_STATUS_OPEN } from '@/utils/constants'
 import { usePermissions } from '@/composables/usePermissions'
 
 const { t } = useI18n()
@@ -90,24 +90,26 @@ const claims = computed(() =>
 )
 
 const activeClaimsCount = computed(() =>
-  allClaims.value.filter(claim => claim.status !== CLAIM_STATUS_CLOSED).length,
+  allClaims.value.filter(claim => claim.status !== CLAIM_STATUS_CLOSED && claim.status !== CLAIM_STATUS_DRAFT).length,
 )
 
 const claimCounts = computed(() =>
   allClaims.value.reduce(
     (counts, claim) => {
       counts.all += 1
-      if (claim.status === CLAIM_STATUS_OPEN) counts.open += 1
+      if (claim.status === CLAIM_STATUS_DRAFT) counts.draft += 1
+      else if (claim.status === CLAIM_STATUS_OPEN) counts.open += 1
       else if (claim.status === CLAIM_STATUS_IN_PROGRESS) counts.in_progress += 1
       else if (claim.status === CLAIM_STATUS_CLOSED) counts.closed += 1
       return counts
     },
-    { all: 0, open: 0, in_progress: 0, closed: 0 },
+    { all: 0, draft: 0, open: 0, in_progress: 0, closed: 0 },
   ),
 )
 
 const claimTabs = computed(() => [
   { key: ALL_FILTER, label: t('common.allMasc'), count: claimCounts.value.all },
+  { key: CLAIM_STATUS_DRAFT, label: t('claims.filters.draft'), count: claimCounts.value.draft },
   { key: CLAIM_STATUS_OPEN, label: t('claims.filters.open'), count: claimCounts.value.open },
   { key: CLAIM_STATUS_IN_PROGRESS, label: t('claims.filters.inProgress'), count: claimCounts.value.in_progress },
   { key: CLAIM_STATUS_CLOSED, label: t('claims.filters.closed'), count: claimCounts.value.closed },
@@ -130,9 +132,9 @@ const legalCardLinks = computed(() => [
 
 const deadlineReminderClaims = computed(() =>
   allClaims.value
-    .filter(claim => !claim.transmitted_at && claim.status === CLAIM_STATUS_OPEN && (claim.is_deadline_approaching || claim.is_deadline_missed || claim.days_remaining === 0))
+    .filter(claim => !claim.transmitted_at && claim.declared_at && claim.status === CLAIM_STATUS_OPEN && (claim.is_deadline_approaching || claim.is_deadline_missed || claim.days_remaining === 0))
     .slice()
-    .sort((left, right) => left.legal_deadline_at.localeCompare(right.legal_deadline_at)),
+    .sort((left, right) => (left.legal_deadline_at ?? "").localeCompare(right.legal_deadline_at ?? "")),
 )
 
 function claimReminderTone(claim: Claim): 'err' | 'warn' {
@@ -150,6 +152,7 @@ const claimReminderRows = computed(() =>
 )
 
 function statusVariant(status: ClaimStatus): 'open' | 'pending' | 'closed' | 'default' {
+  if (status === CLAIM_STATUS_DRAFT) return 'default'
   if (status === CLAIM_STATUS_OPEN) return 'pending'
   if (status === CLAIM_STATUS_IN_PROGRESS) return 'open'
   if (status === CLAIM_STATUS_CLOSED) return 'closed'
@@ -256,6 +259,15 @@ function openTransmitModal(claim: Claim) {
 
 function openCloseModal(claim: Claim) {
   claimToClose.value = claim
+}
+
+async function handleDeclare(claim: Claim) {
+  try {
+    await claimsApi.declare(claim.id)
+    reload()
+  } catch {
+    // error handled by interceptor
+  }
 }
 
 async function openClaimDocuments(claim: Claim) {
@@ -442,6 +454,13 @@ function handleDocumentCountChanged(claimId: string, delta: number) {
                 <template v-if="canManage">
                   <CCardActions>
                     <CBtn
+                      v-if="claim.status === CLAIM_STATUS_DRAFT"
+                      variant="primary"
+                      size="sm"
+                      :title="t('claims.declare')"
+                      @click="handleDeclare(claim)"
+                    />
+                    <CBtn
                       v-if="!claim.transmitted_at"
                       variant="ghost"
                       size="sm"
@@ -470,14 +489,15 @@ function handleDocumentCountChanged(claimId: string, delta: number) {
                 <CCardNote>
                   <span class="inline-flex items-center gap-1 w-fit">
                     <CIconCalendar />
-                    {{ t('claims.declaredOn', { date: formatDate(claim.declared_at) }) }}
+                    <template v-if="claim.declared_at">{{ t('claims.declaredOn', { date: formatDate(claim.declared_at) }) }}</template>
+                    <template v-else>{{ t('claims.draftHint') }}</template>
                   </span>
                   <span class="inline-flex items-center gap-1 w-fit">
                     <CIconClock
                       
                       class="icon-xs"
                     />
-                    {{ t('claims.deadline.reference', { date: formatDate(claim.legal_deadline_at) }) }}
+                    <template v-if="claim.legal_deadline_at">{{ t('claims.deadline.reference', { date: formatDate(claim.legal_deadline_at) }) }}</template>
                   </span>
                   <span
                     v-if="claim.published_at"

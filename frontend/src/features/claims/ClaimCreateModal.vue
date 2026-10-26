@@ -30,21 +30,16 @@ type ClaimEditorForm = {
   title: string
   description: string
   claim_type: ClaimType
-  declared_at: string
   published_at: string
   unit_id: string
 }
 
-function todayIso(): string {
-  return new Date().toISOString().slice(0, 10)
-}
 
 function defaultForm(): ClaimEditorForm {
   return {
     title: '',
     description: '',
     claim_type: DEFAULT_CLAIM_TYPE,
-    declared_at: todayIso(),
     published_at: '',
     unit_id: '',
   }
@@ -122,7 +117,6 @@ async function handleSubmit() {
       title: form.value.title.trim(),
       description: form.value.description.trim() || undefined,
       claim_type: form.value.claim_type,
-      declared_at: form.value.declared_at,
       published_at: normalizePublishedAt(form.value.claim_type, form.value.published_at) ?? undefined,
       unit_id: form.value.unit_id || undefined,
     })
@@ -178,12 +172,6 @@ async function handleSubmit() {
       />
 
       <div class="form-row">
-        <CFormInput
-          v-model="form.declared_at"
-          :label="t('claims.fields.declaredAt')"
-          type="date"
-          required
-        />
         <CFormInput
           v-if="form.claim_type === CLAIM_TYPE_NATURAL_DISASTER"
           v-model="form.published_at"

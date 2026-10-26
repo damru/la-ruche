@@ -101,7 +101,8 @@ export const DEFAULT_TASK_PRIORITY: TaskPriority = TASK_PRIORITY_NORMAL
 
 // ── Claims & Reports ──
 
-export const CLAIM_STATUSES = ['open', 'in_progress', 'closed'] as const satisfies readonly ClaimStatus[]
+export const CLAIM_STATUSES = ['draft', 'open', 'in_progress', 'closed'] as const satisfies readonly ClaimStatus[]
+export const CLAIM_STATUS_DRAFT: ClaimStatus = 'draft'
 export const CLAIM_STATUS_OPEN: ClaimStatus = 'open'
 export const CLAIM_STATUS_IN_PROGRESS: ClaimStatus = 'in_progress'
 export const CLAIM_STATUS_CLOSED: ClaimStatus = 'closed'

@@ -14,14 +14,14 @@ pub struct ClaimRow {
     pub title: String,
     pub description: Option<String>,
     pub claim_type: String,
-    pub declared_at: NaiveDate,
+    pub declared_at: Option<NaiveDate>,
     pub published_at: Option<NaiveDate>,
     pub status: String,
     pub unit_id: Option<Uuid>,
     pub transmitted_at: Option<NaiveDate>,
     pub reimbursement_date: Option<NaiveDate>,
     pub reimbursement_amount: Option<Decimal>,
-    pub legal_deadline_at: NaiveDate,
+    pub legal_deadline_at: Option<NaiveDate>,
     pub days_remaining: Option<i64>,
     pub is_deadline_approaching: bool,
     pub is_deadline_missed: bool,
@@ -36,7 +36,6 @@ pub struct CreateClaimInput {
     pub title: String,
     pub description: Option<String>,
     pub claim_type: String,
-    pub declared_at: NaiveDate,
     pub published_at: Option<NaiveDate>,
     pub unit_id: Option<Uuid>,
 }
@@ -46,7 +45,7 @@ pub struct UpdateClaimInput {
     pub title: String,
     pub description: Option<String>,
     pub claim_type: String,
-    pub declared_at: NaiveDate,
+    pub declared_at: Option<NaiveDate>,
     pub published_at: Option<NaiveDate>,
     pub status: String,
     pub unit_id: Option<Uuid>,
@@ -63,23 +62,17 @@ enum FlexibleDecimalInput {
     Number(f64),
 }
 
-/// Accept both string and numeric JSON representations for reimbursement amounts.
-///
-/// The frontend can legitimately emit either shape depending on the control and serializer path,
-/// so the API keeps deserialization flexible while normalizing to `Decimal` before validation.
 fn deserialize_optional_decimal<'de, D>(deserializer: D) -> Result<Option<Decimal>, D::Error>
 where
     D: Deserializer<'de>,
 {
     let value = Option::<FlexibleDecimalInput>::deserialize(deserializer)?;
-
     value
         .map(|input| {
             let raw = match input {
                 FlexibleDecimalInput::String(value) => value,
                 FlexibleDecimalInput::Number(value) => value.to_string(),
             };
-
             Decimal::from_str(&raw).map_err(serde::de::Error::custom)
         })
         .transpose()
@@ -94,14 +87,20 @@ pub const VALID_CLAIM_TYPES: &[&str] = &[
     CLAIM_TYPE_THEFT,
 ];
 
+pub const CLAIM_STATUS_DRAFT: &str = "draft";
 pub const CLAIM_STATUS_OPEN: &str = "open";
 pub const CLAIM_STATUS_IN_PROGRESS: &str = "in_progress";
 pub const CLAIM_STATUS_CLOSED: &str = "closed";
 pub const VALID_STATUSES: &[&str] = &[
+    CLAIM_STATUS_DRAFT,
     CLAIM_STATUS_OPEN,
     CLAIM_STATUS_IN_PROGRESS,
     CLAIM_STATUS_CLOSED,
 ];
+
+pub fn can_declare(status: &str) -> bool {
+    status == CLAIM_STATUS_DRAFT
+}
 
 const LIST_QUERY: &str = concat!(
     "SELECT c.id, c.building_id, c.created_by, c.title, c.description,",
@@ -113,6 +112,7 @@ const LIST_QUERY: &str = concat!(
     "   WHERE cd.claim_id = c.id) AS document_count,",
     " c.created_at, c.updated_at",
     " FROM claim c WHERE c.building_id = $1",
+    " AND ($2 OR c.status <> 'draft')",
     " ORDER BY c.updated_at DESC",
 );
 
@@ -140,7 +140,7 @@ pub fn validate_payload(
     title: &str,
     claim_type: &str,
     status: Option<&str>,
-    declared_at: NaiveDate,
+    declared_at: Option<NaiveDate>,
     published_at: Option<NaiveDate>,
     transmitted_at: Option<NaiveDate>,
     reimbursement_date: Option<NaiveDate>,
@@ -149,17 +149,14 @@ pub fn validate_payload(
     if title.trim().is_empty() {
         return Err(AppError::validation_code("errors.claims.title_required"));
     }
-
     if !validate_claim_type(claim_type) {
         return Err(AppError::validation_code("errors.claims.invalid_type"));
     }
-
     if let Some(status) = status
         && !validate_status(status)
     {
         return Err(AppError::validation_code("errors.claims.invalid_status"));
     }
-
     if claim_type == CLAIM_TYPE_NATURAL_DISASTER {
         if published_at.is_none() {
             return Err(AppError::validation_code(
@@ -171,28 +168,23 @@ pub fn validate_payload(
             "errors.claims.published_at_only_for_natural_disaster",
         ));
     }
-
-    let reference_date = reference_date(claim_type, declared_at, published_at);
-    if let Some(transmitted_at) = transmitted_at
-        && transmitted_at < reference_date
+    if let (Some(declared), Some(transmitted)) = (declared_at, transmitted_at)
+        && transmitted < declared
     {
         return Err(AppError::validation_code(
             "errors.claims.transmitted_before_reference_date",
         ));
     }
-
     if reimbursement_amount.is_some_and(|amount| amount <= Decimal::ZERO) {
         return Err(AppError::validation_code(
             "errors.claims.reimbursement_amount_positive",
         ));
     }
-
     if status.is_none() && (reimbursement_date.is_some() || reimbursement_amount.is_some()) {
         return Err(AppError::validation_code(
             "errors.claims.reimbursement_requires_status",
         ));
     }
-
     if matches!(status, Some(CLAIM_STATUS_OPEN | CLAIM_STATUS_IN_PROGRESS))
         && (reimbursement_date.is_some() || reimbursement_amount.is_some())
     {
@@ -200,13 +192,10 @@ pub fn validate_payload(
             "errors.claims.reimbursement_only_for_closed",
         ));
     }
-
     Ok(())
 }
 
 fn add_business_days(mut date: NaiveDate, days: u32) -> NaiveDate {
-    // MVP legal approximation: weekends are excluded, but French public holidays are not
-    // modelled yet because the application has no holiday calendar service today.
     let mut remaining = days;
     while remaining > 0 {
         date = date
@@ -256,21 +245,31 @@ fn approaching_threshold_days(claim_type: &str) -> i64 {
 
 fn row_to_claim(row: &sqlx::postgres::PgRow) -> Result<ClaimRow, sqlx::Error> {
     let claim_type: String = row.try_get("claim_type")?;
-    let declared_at: NaiveDate = row.try_get("declared_at")?;
+    let declared_at: Option<NaiveDate> = row.try_get("declared_at")?;
     let published_at: Option<NaiveDate> = row.try_get("published_at")?;
     let transmitted_at: Option<NaiveDate> = row.try_get("transmitted_at")?;
     let reimbursement_date: Option<NaiveDate> = row.try_get("reimbursement_date")?;
     let reimbursement_amount: Option<Decimal> = row.try_get("reimbursement_amount")?;
-    let deadline = legal_deadline_at(&claim_type, declared_at, published_at);
     let today = Utc::now().date_naive();
 
-    let days_remaining =
-        transmitted_at.map_or_else(|| Some((deadline - today).num_days()), |_| None);
-    let is_transmitted_late = transmitted_at.is_some_and(|date| date > deadline);
-    let is_deadline_missed = transmitted_at.is_none() && today > deadline;
-    let is_deadline_approaching = transmitted_at.is_none()
-        && days_remaining
-            .is_some_and(|days| days >= 0 && days <= approaching_threshold_days(&claim_type));
+    let (
+        deadline,
+        days_remaining,
+        is_transmitted_late,
+        is_deadline_missed,
+        is_deadline_approaching,
+    ) = match declared_at {
+        Some(declared) => {
+            let deadline = legal_deadline_at(&claim_type, declared, published_at);
+            let days = transmitted_at.map_or_else(|| Some((deadline - today).num_days()), |_| None);
+            let late = transmitted_at.is_some_and(|date| date > deadline);
+            let missed = transmitted_at.is_none() && today > deadline;
+            let approaching = transmitted_at.is_none()
+                && days.is_some_and(|d| d >= 0 && d <= approaching_threshold_days(&claim_type));
+            (Some(deadline), days, late, missed, approaching)
+        }
+        None => (None, None, false, false, false),
+    };
 
     Ok(ClaimRow {
         id: row.try_get("id")?,
@@ -297,9 +296,14 @@ fn row_to_claim(row: &sqlx::postgres::PgRow) -> Result<ClaimRow, sqlx::Error> {
     })
 }
 
-pub async fn list(pool: &PgPool, building_id: Uuid) -> AppResult<Vec<ClaimRow>> {
+pub async fn list(
+    pool: &PgPool,
+    building_id: Uuid,
+    include_drafts: bool,
+) -> AppResult<Vec<ClaimRow>> {
     let rows = sqlx::query(LIST_QUERY)
         .bind(building_id)
+        .bind(include_drafts)
         .fetch_all(pool)
         .await?;
     rows.iter()
@@ -314,7 +318,6 @@ pub async fn get(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<Option
         .bind(building_id)
         .fetch_optional(pool)
         .await?;
-
     row.as_ref()
         .map(row_to_claim)
         .transpose()
@@ -331,7 +334,7 @@ pub async fn create(
         &input.title,
         &input.claim_type,
         None,
-        input.declared_at,
+        None,
         input.published_at,
         None,
         None,
@@ -340,15 +343,14 @@ pub async fn create(
 
     let row = sqlx::query(
         r#"INSERT INTO claim
-           (building_id, title, description, claim_type, declared_at, published_at, unit_id, created_by)
-           VALUES ($1, $2, $3, $4::text::claim_type, $5, $6, $7, $8)
+           (building_id, title, description, claim_type, published_at, unit_id, created_by)
+           VALUES ($1, $2, $3, $4::text::claim_type, $5, $6, $7)
            RETURNING id"#,
     )
     .bind(building_id)
     .bind(input.title.trim())
     .bind(input.description)
     .bind(input.claim_type)
-    .bind(input.declared_at)
     .bind(input.published_at)
     .bind(input.unit_id)
     .bind(user_id)
@@ -359,6 +361,53 @@ pub async fn create(
     get(pool, claim_id, building_id)
         .await?
         .ok_or_else(|| AppError::Internal(anyhow::anyhow!("created claim not found")))
+}
+
+pub async fn declare(
+    pool: &PgPool,
+    id: Uuid,
+    building_id: Uuid,
+    declared_at: Option<NaiveDate>,
+) -> AppResult<ClaimRow> {
+    let today = Utc::now().date_naive();
+    let effective_date = declared_at.unwrap_or(today);
+
+    if effective_date > today {
+        return Err(AppError::validation_code(
+            "errors.claims.declared_at_in_future",
+        ));
+    }
+
+    let row = sqlx::query(
+        "SELECT status::text AS status FROM claim WHERE id = $1 AND building_id = $2 FOR UPDATE",
+    )
+    .bind(id)
+    .bind(building_id)
+    .fetch_optional(pool)
+    .await?;
+
+    let Some(row) = row else {
+        return Err(AppError::NotFound);
+    };
+
+    let status: String = row.try_get("status")?;
+    if !can_declare(&status) {
+        return Err(AppError::validation_code("errors.claims.not_declarable"));
+    }
+
+    sqlx::query(
+        "UPDATE claim SET status = 'open', declared_at = $3, updated_at = NOW()
+         WHERE id = $1 AND building_id = $2",
+    )
+    .bind(id)
+    .bind(building_id)
+    .bind(effective_date)
+    .execute(pool)
+    .await?;
+
+    get(pool, id, building_id)
+        .await?
+        .ok_or_else(|| AppError::Internal(anyhow::anyhow!("declared claim not found")))
 }
 
 pub async fn update(
@@ -538,20 +587,26 @@ mod tests {
     use super::*;
 
     #[test]
+    fn can_declare_only_from_draft() {
+        assert!(can_declare(CLAIM_STATUS_DRAFT));
+        assert!(!can_declare(CLAIM_STATUS_OPEN));
+        assert!(!can_declare(CLAIM_STATUS_IN_PROGRESS));
+        assert!(!can_declare(CLAIM_STATUS_CLOSED));
+    }
+
+    #[test]
     fn rejects_reimbursement_before_closed_status() {
         let declared_at = NaiveDate::from_ymd_opt(2026, 5, 1).unwrap();
-
         let result = validate_payload(
             "Dégât des eaux",
             CLAIM_TYPE_CURRENT,
             Some(CLAIM_STATUS_IN_PROGRESS),
-            declared_at,
+            Some(declared_at),
             None,
             Some(declared_at),
             None,
             Some(Decimal::new(15000, 2)),
         );
-
         assert!(result.is_err());
     }
 
@@ -559,18 +614,31 @@ mod tests {
     fn accepts_closed_claim_with_optional_reimbursement() {
         let declared_at = NaiveDate::from_ymd_opt(2026, 5, 1).unwrap();
         let reimbursement_date = NaiveDate::from_ymd_opt(2026, 5, 20).unwrap();
-
         let result = validate_payload(
             "Vol cave",
             CLAIM_TYPE_THEFT,
             Some(CLAIM_STATUS_CLOSED),
-            declared_at,
+            Some(declared_at),
             None,
             Some(declared_at),
             Some(reimbursement_date),
             Some(Decimal::new(9500, 2)),
         );
+        assert!(result.is_ok());
+    }
 
+    #[test]
+    fn accepts_create_payload_without_declared_at() {
+        let result = validate_payload(
+            "Fuite hall B",
+            CLAIM_TYPE_CURRENT,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        );
         assert!(result.is_ok());
     }
 }

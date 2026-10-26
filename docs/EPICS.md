@@ -327,9 +327,9 @@ Déclaration et suivi de sinistres (lot ou parties communes) avec documents asso
 * `EP-008-S03` ✅ — Alerter automatiquement si le délai légal de déclaration approche (LEGAL.md §9)
 * `EP-008-S04` ✅ — Suivre le statut du sinistre avec actions contextuelles (`Modifier`, `Transmettre`, `Clore`, `Supprimer`) selon l'état courant
 * `EP-008-S05` ✅ — Tracer la date de transmission à l'assurance, le remboursement éventuel et contrôler le respect du délai légal selon le type de sinistre (LEGAL.md §9)
-* [EP-008-S06](specs/EP-008-S06-spec.md) — Formaliser la déclaration de sinistre : transition explicite `draft → declared` par le syndic, déclenchant le calcul du délai légal et les alertes associées ; un sinistre en `draft` n'est visible que du syndic (PRD US-SIN-001b)
-* [EP-008-S07](specs/EP-008-S07-spec.md) — Ajouter des notes de suivi à un sinistre : journal append-only horodaté (auteur + date + note) pendant toute la vie du sinistre, consultable par Syndic et Conseil (PRD US-SIN-004)
-* [EP-008-S08](specs/EP-008-S08-spec.md) — Rattacher des documents à un sinistre (PJ déclaration, photos, courrier assureur) via le module Documents (EP-005), avec accès restreint au Syndic (PRD US-SIN-006)
+* `EP-008-S06` ✅ — Formaliser la déclaration de sinistre : transition explicite `draft → declared` par le syndic, déclenchant le calcul du délai légal et les alertes associées ; un sinistre en `draft` n'est visible que du syndic (PRD US-SIN-001b)
+* `EP-008-S07` ✅ — Ajouter des notes de suivi à un sinistre : journal append-only horodaté (auteur + date + note) pendant toute la vie du sinistre, consultable par Syndic et Conseil (PRD US-SIN-004)
+* `EP-008-S08` ✅ — Rattacher des documents à un sinistre (PJ déclaration, photos, courrier assureur) via le module Documents (EP-005), avec accès restreint au Syndic (PRD US-SIN-006)
 
 ***
 

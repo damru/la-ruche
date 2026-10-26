@@ -4,7 +4,7 @@
 
 **Épic :** EP-008 — Sinistres
 **Réf. PRD :** US-SIN-006
-**État :** PARTIEL — **faille de sécurité** : correctif petit et prioritaire.
+**État :** IMPLÉMENTÉ (correctif sécurité appliqué)
 
 ---
 

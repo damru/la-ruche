@@ -328,6 +328,7 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
             "/claims/{id}",
             get(claims::get).put(claims::update).delete(claims::delete),
         )
+        .route("/claims/{id}/declare", post(claims::declare))
         .route(
             "/claims/{id}/documents",
             get(claims::list_documents).post(claims::attach_document),
@@ -335,6 +336,10 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
         .route(
             "/claims/{id}/documents/{doc_id}",
             delete(claims::detach_document),
+        )
+        .route(
+            "/claims/{id}/notes",
+            post(claims::create_note).get(claims::list_notes),
         )
         // ── Maintenance log ─────────────────────────────────────
         .route("/logbook", get(logbook::list).post(logbook::create))

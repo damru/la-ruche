@@ -48,7 +48,7 @@ function buildClaimUpdatePayload(claim: Claim, overrides: Partial<ClaimUpdatePay
     title: claim.title,
     description: claim.description ?? null,
     claim_type: claim.claim_type,
-    declared_at: claim.declared_at,
+    declared_at: claim.declared_at ?? "",
     published_at: claim.published_at ?? null,
     status: claim.status,
     unit_id: claim.unit_id ?? null,

@@ -7,6 +7,7 @@ pub mod building;
 pub mod calendar;
 pub mod calendar_event;
 pub mod claim;
+pub mod claim_note;
 pub mod consultation;
 pub mod contract;
 pub mod contractor;
