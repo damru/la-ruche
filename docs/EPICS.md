@@ -351,8 +351,8 @@ Historique des interventions alimenté manuellement ou automatiquement depuis un
 * `EP-009-S06` ✅ — En-tête réglementaire du carnet : afficher dans la vue carnet l'adresse de l'immeuble et l'identité du syndic en exercice (depuis EP-001-S01), conformément au décret n°2001-477 art. 1 (LEGAL.md §1.4)
 * `EP-009-S07` ✅ — Référencer dans le carnet les contrats d'assurance souscrits par le syndicat (multirisque et dommages-ouvrage) avec leurs dates d'échéance, en lien avec EP-006-S05 (LEGAL.md §1.4)
 * `EP-009-S08` ✅ — Lister dans le carnet les contrats d'entretien et de maintenance d'équipements communs en cours (ascenseur, chaufferie…) avec leurs dates d'échéance, en lien avec EP-006 (LEGAL.md §1.4)
-* [EP-009-S09](specs/EP-009-S09-spec.md) — Exporter le carnet d'entretien en PDF : document imprimable avec en-tête réglementaire, chronologie des interventions et listing des contrats actifs (PRD US-CE-004)
-* [EP-009-S10](specs/EP-009-S10-spec.md) — Filtrer les entrées du carnet par catégorie (travaux, contrat, sinistre), période et source (manuelle / automatique / prestataire) (PRD US-CE-005)
+* `EP-009-S09` ✅ — Exporter le carnet d'entretien en PDF : document imprimable avec en-tête réglementaire, chronologie des interventions et listing des contrats actifs (PRD US-CE-004)
+* `EP-009-S10` ✅ — Filtrer les entrées du carnet par catégorie (travaux, contrat, sinistre), période et source (manuelle / automatique / prestataire) (PRD US-CE-005)
 
 ***
 

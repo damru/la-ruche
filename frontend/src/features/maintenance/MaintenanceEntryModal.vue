@@ -1,14 +1,17 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import CModal from '@/components/molecules/CModal.vue'
 import CForm from '@/components/molecules/CForm.vue'
 import CFormInput from '@/components/atoms/CFormInput.vue'
+import CFormSelect from '@/components/atoms/CFormSelect.vue'
 import CFormTextarea from '@/components/atoms/CFormTextarea.vue'
 import CFormRow from '@/components/molecules/CFormRow.vue'
 import CFormActions from '@/components/molecules/CFormActions.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import { maintenanceApi } from '@/api'
+import { MAINTENANCE_CATEGORIES, DEFAULT_MAINTENANCE_CATEGORY } from '@/utils/constants'
+import type { MaintenanceCategory } from '@/types/domain'
 import { useFormFeedback } from '@/composables/useFormFeedback'
 import { useAutoClose } from '@/composables/useAutoClose'
 import { toErrorMessage } from '@/composables/usePageLoader'
@@ -35,7 +38,12 @@ const defaultForm = () => ({
   intervention_date: new Date().toISOString().slice(0, 10),
   cost: '',
   vendor_name: '',
+  category: DEFAULT_MAINTENANCE_CATEGORY as MaintenanceCategory,
 })
+
+const categoryOptions = computed(() =>
+  MAINTENANCE_CATEGORIES.map(value => ({ value, label: t(`maintenance.categories.${value}`) })),
+)
 const form = ref(defaultForm())
 
 watch(() => props.open, (open) => {
@@ -59,6 +67,7 @@ async function save() {
       intervention_date: form.value.intervention_date,
       cost: form.value.cost ? Number(form.value.cost) : undefined,
       vendor_name: form.value.vendor_name || undefined,
+      category: form.value.category,
     })
     feedback.setSuccess(t('common.saved'))
     emit('saved')
@@ -97,6 +106,11 @@ async function save() {
         :label="t('maintenance.fields.interventionDate')"
         type="date"
         required
+      />
+      <CFormSelect
+        v-model="form.category"
+        :label="t('maintenance.fields.category')"
+        :options="categoryOptions"
       />
       <CFormRow :cols="2">
         <CFormInput

@@ -379,6 +379,8 @@ export interface ClaimNote {
   created_at: string
 }
 
+export type MaintenanceCategory = 'travaux' | 'contrat' | 'sinistre' | 'autre'
+
 export interface MaintenanceEntry {
   id: string
   title: string
@@ -389,6 +391,7 @@ export interface MaintenanceEntry {
   contract_id?: string
   task_id?: string
   source: 'manual' | 'automatic'
+  category: MaintenanceCategory
   created_at: string
 }
 
@@ -397,7 +400,9 @@ export interface LogbookContractSummary {
   vendor_name: string
   subject: string
   contract_type: ContractType
+  start_date: string
   end_date?: string
+  amount?: number
   status: ContractStatus
 }
 

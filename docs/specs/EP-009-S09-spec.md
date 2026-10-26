@@ -4,7 +4,7 @@
 
 **Épic :** EP-009 — Carnet d'entretien
 **Réf. PRD :** US-CE-004 · **Réf. LEGAL :** carnet d'entretien obligatoire (loi SRU, décret n°2001-477)
-**État :** NON IMPLÉMENTÉ (aucun code PDF ; seules des chaînes de fixture de test dans `domain/processor.rs:52-54`).
+**État :** IMPLÉMENTÉ (backend + frontend) — vue d'impression `/logbook/print` + composant réutilisable `CDocumentHeader` (en-tête de document officiel : logo, nom de l'appli, adresse, syndic, date d'édition).
 
 ---
 

@@ -11,6 +11,34 @@ pub mod log_source {
     pub const AUTOMATIC: &str = "automatic";
 }
 
+/// `maintenance_log.category` values (PG enum `maintenance_category`, EP-009-S10).
+pub mod category {
+    pub const WORKS: &str = "travaux";
+    pub const CONTRACT: &str = "contrat";
+    pub const CLAIM: &str = "sinistre";
+    pub const OTHER: &str = "autre";
+}
+
+const VALID_CATEGORIES: &[&str] = &[
+    category::WORKS,
+    category::CONTRACT,
+    category::CLAIM,
+    category::OTHER,
+];
+
+/// Maps a raw string to its `maintenance_category` constant, `None` if invalid.
+pub fn category_from_str(value: &str) -> Option<&'static str> {
+    VALID_CATEGORIES
+        .iter()
+        .find(|candidate| **candidate == value)
+        .copied()
+}
+
+/// Validates a category value against the `maintenance_category` enum.
+pub fn validate_category(category: &str) -> bool {
+    category_from_str(category).is_some()
+}
+
 /// Typed row for maintenance log entries.
 #[derive(Debug, Serialize)]
 pub struct MaintenanceLogRow {
@@ -24,6 +52,7 @@ pub struct MaintenanceLogRow {
     pub contract_id: Option<Uuid>,
     pub task_id: Option<Uuid>,
     pub source: String,
+    pub category: String,
     pub created_at: DateTime<Utc>,
 }
 
@@ -39,6 +68,7 @@ fn row_from_pg(r: &sqlx::postgres::PgRow) -> Result<MaintenanceLogRow, sqlx::Err
         contract_id: r.try_get("contract_id")?,
         task_id: r.try_get("task_id")?,
         source: r.try_get("source")?,
+        category: r.try_get("category")?,
         created_at: r.try_get("created_at")?,
     })
 }
@@ -47,7 +77,7 @@ pub async fn list(pool: &PgPool, building_id: Uuid) -> AppResult<Vec<Maintenance
     let rows = sqlx::query(
         r#"SELECT id, building_id, title, description, intervention_date, cost,
            vendor_name, contract_id, task_id,
-           source::text AS source, created_at
+           source::text AS source, category::text AS category, created_at
            FROM maintenance_log WHERE building_id = $1
            ORDER BY intervention_date DESC, created_at DESC"#,
     )
@@ -68,7 +98,7 @@ pub async fn get(
     let row = sqlx::query(
         r#"SELECT id, building_id, title, description, intervention_date, cost,
            vendor_name, contract_id, task_id,
-           source::text AS source, created_at
+           source::text AS source, category::text AS category, created_at
            FROM maintenance_log WHERE id = $1 AND building_id = $2"#,
     )
     .bind(id)
@@ -93,14 +123,15 @@ pub async fn create(
     vendor_name: Option<&str>,
     contract_id: Option<Uuid>,
     task_id: Option<Uuid>,
+    category: &str,
 ) -> AppResult<MaintenanceLogRow> {
     let row = sqlx::query(
         r#"INSERT INTO maintenance_log
            (building_id, created_by, title, description, intervention_date,
-            cost, vendor_name, contract_id, task_id, source)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::text::log_source)
+            cost, vendor_name, contract_id, task_id, source, category)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::text::log_source,$11::text::maintenance_category)
            RETURNING id, building_id, title, description, intervention_date, cost,
-           vendor_name, contract_id, task_id, source::text AS source, created_at"#,
+           vendor_name, contract_id, task_id, source::text AS source, category::text AS category, created_at"#,
     )
     .bind(building_id)
     .bind(user_id)
@@ -112,6 +143,7 @@ pub async fn create(
     .bind(contract_id)
     .bind(task_id)
     .bind(log_source::MANUAL)
+    .bind(category)
     .fetch_one(pool)
     .await?;
     row_from_pg(&row).map_err(Into::into)
@@ -128,14 +160,15 @@ pub async fn update(
     cost: Option<Decimal>,
     vendor_name: Option<&str>,
     contract_id: Option<Uuid>,
+    category: &str,
 ) -> AppResult<Option<MaintenanceLogRow>> {
     let row = sqlx::query(
         r#"UPDATE maintenance_log
            SET title=$3, description=$4, intervention_date=$5, cost=$6,
-               vendor_name=$7, contract_id=$8, updated_at=NOW()
+               vendor_name=$7, contract_id=$8, category=$10::text::maintenance_category, updated_at=NOW()
            WHERE id=$1 AND building_id=$2 AND source=$9::text::log_source
            RETURNING id, building_id, title, description, intervention_date, cost,
-           vendor_name, contract_id, task_id, source::text AS source, created_at"#,
+           vendor_name, contract_id, task_id, source::text AS source, category::text AS category, created_at"#,
     )
     .bind(id)
     .bind(building_id)
@@ -146,6 +179,7 @@ pub async fn update(
     .bind(vendor_name)
     .bind(contract_id)
     .bind(log_source::MANUAL)
+    .bind(category)
     .fetch_optional(pool)
     .await?;
     row.as_ref()
@@ -175,9 +209,9 @@ where
 {
     let result = sqlx::query(
         r#"INSERT INTO maintenance_log
-           (building_id, created_by, title, task_id, intervention_date, source, vendor_name, cost)
+           (building_id, created_by, title, task_id, intervention_date, source, vendor_name, cost, category)
            SELECT t.building_id, $3, t.title, t.id, CURRENT_DATE, $4::text::log_source,
-                  COALESCE(c.name, t.contractor_name) AS vendor_name, t.completion_cost
+                  COALESCE(c.name, t.contractor_name) AS vendor_name, t.completion_cost, $6::text::maintenance_category
             FROM task t
             LEFT JOIN contractor c ON c.id = t.contractor_id
             WHERE t.id = $1 AND t.building_id = $2 AND t.status = $5::text::task_status"#,
@@ -187,6 +221,7 @@ where
     .bind(user_id)
     .bind(log_source::AUTOMATIC)
     .bind(crate::db::task::status::CLOSED)
+    .bind(category::WORKS)
     .execute(executor)
     .await?;
 
@@ -209,6 +244,7 @@ pub async fn create_correction(
     cost: Option<Decimal>,
     vendor_name: Option<&str>,
     contract_id: Option<Uuid>,
+    category: &str,
 ) -> AppResult<MaintenanceLogRow> {
     // Verify original exists and belongs to this building.
     let original = get(pool, original_id, building_id)
@@ -218,10 +254,10 @@ pub async fn create_correction(
     let row = sqlx::query(
         r#"INSERT INTO maintenance_log
            (building_id, created_by, title, description, intervention_date,
-            cost, vendor_name, contract_id, source, corrects_entry_id)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$10::text::log_source,$9)
+            cost, vendor_name, contract_id, source, corrects_entry_id, category)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$10::text::log_source,$9,$11::text::maintenance_category)
            RETURNING id, building_id, title, description, intervention_date, cost,
-           vendor_name, contract_id, task_id, source::text AS source, created_at"#,
+           vendor_name, contract_id, task_id, source::text AS source, category::text AS category, created_at"#,
     )
     .bind(building_id)
     .bind(user_id)
@@ -233,6 +269,7 @@ pub async fn create_correction(
     .bind(contract_id)
     .bind(original.id)
     .bind(log_source::MANUAL)
+    .bind(category)
     .fetch_one(pool)
     .await?;
 

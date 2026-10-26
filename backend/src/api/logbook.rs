@@ -31,6 +31,8 @@ pub struct CreateLogbookInput {
     pub contract_id: Option<Uuid>,
     /// Optional link to a task (manual association).
     pub task_id: Option<Uuid>,
+    /// Optional category (defaults to `autre`).
+    pub category: Option<String>,
 }
 
 /// Input for updating a manual logbook entry.
@@ -43,6 +45,8 @@ pub struct UpdateLogbookInput {
     pub vendor_name: Option<String>,
     /// Optional link to a vendor contract (EP-009-S05).
     pub contract_id: Option<Uuid>,
+    /// Optional category (defaults to `autre`).
+    pub category: Option<String>,
 }
 
 #[derive(Serialize)]
@@ -68,7 +72,9 @@ pub struct LogbookContractInfo {
     pub vendor_name: String,
     pub subject: String,
     pub contract_type: String,
+    pub start_date: NaiveDate,
     pub end_date: Option<NaiveDate>,
+    pub amount: Option<Decimal>,
     pub status: String,
 }
 
@@ -98,13 +104,26 @@ fn is_maintenance_contract(contract_type: &str) -> bool {
     MAINTENANCE_CONTRACT_TYPES.contains(&contract_type)
 }
 
+/// Resolves the requested category against the `maintenance_category` enum,
+/// defaulting to `autre`. Invalid values are rejected with a validation error
+/// instead of leaking a raw SQL cast error.
+fn resolve_category(category: Option<&str>) -> AppResult<&'static str> {
+    match category {
+        None => Ok(db::maintenance_log::category::OTHER),
+        Some(value) => db::maintenance_log::category_from_str(value)
+            .ok_or_else(|| AppError::validation_code("errors.maintenance.invalid_category")),
+    }
+}
+
 fn map_contract(contract: db::contract::VendorContractRow) -> LogbookContractInfo {
     LogbookContractInfo {
         id: contract.id,
         vendor_name: contract.vendor_name,
         subject: contract.subject,
         contract_type: contract.contract_type,
+        start_date: contract.start_date,
         end_date: contract.end_date,
+        amount: contract.amount,
         status: contract.status,
     }
 }
@@ -231,6 +250,7 @@ pub async fn create(
     if input.title.trim().is_empty() {
         return Err(AppError::validation_code("errors.logbook.title_required"));
     }
+    let category = resolve_category(input.category.as_deref())?;
 
     let entry = db::maintenance_log::create(
         &state.pool,
@@ -243,6 +263,7 @@ pub async fn create(
         input.vendor_name.as_deref(),
         input.contract_id,
         input.task_id,
+        category,
     )
     .await?;
 
@@ -268,6 +289,7 @@ pub async fn update(
     if input.title.trim().is_empty() {
         return Err(AppError::validation_code("errors.logbook.title_required"));
     }
+    let category = resolve_category(input.category.as_deref())?;
 
     let entry = db::maintenance_log::update(
         &state.pool,
@@ -279,6 +301,7 @@ pub async fn update(
         input.cost,
         input.vendor_name.as_deref(),
         input.contract_id,
+        category,
     )
     .await?
     .ok_or(AppError::NotFound)?;
@@ -313,6 +336,8 @@ pub struct CorrectionInput {
     pub cost: Option<Decimal>,
     pub vendor_name: Option<String>,
     pub contract_id: Option<Uuid>,
+    /// Optional category (defaults to `autre`).
+    pub category: Option<String>,
 }
 
 /// Creates a correction entry referencing an existing manual log entry (EP-018-S07 Pattern C).
@@ -327,6 +352,7 @@ pub async fn correction(
     if input.title.trim().is_empty() {
         return Err(AppError::validation_code("errors.logbook.title_required"));
     }
+    let category = resolve_category(input.category.as_deref())?;
 
     let entry = db::maintenance_log::create_correction(
         &state.pool,
@@ -339,6 +365,7 @@ pub async fn correction(
         input.cost,
         input.vendor_name.as_deref(),
         input.contract_id,
+        category,
     )
     .await?;
 

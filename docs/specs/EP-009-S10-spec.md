@@ -4,7 +4,7 @@
 
 **Épic :** EP-009 — Carnet d'entretien
 **Réf. PRD :** US-CE-005
-**État :** PARTIEL — cette spec ne couvre que l'écart restant.
+**État :** IMPLÉMENTÉ (backend + frontend) — colonne `maintenance_log.category` (migration 0007 + backfill), validation API, filtres catégorie + source cumulables côté client, badges catégorie.
 
 ---
 

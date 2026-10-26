@@ -22,11 +22,13 @@ import CIconArrowLeft from '@/components/atoms/CIconArrowLeft.svg'
 import CIconArrowRight from '@/components/atoms/CIconArrowRight.svg'
 import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import CIconTrash from '@/components/atoms/CIconTrash.svg'
+import CIconDownload from '@/components/atoms/CIconDownload.svg'
+import CFormSelect from '@/components/atoms/CFormSelect.vue'
 import MaintenanceEntryModal from '@/features/maintenance/MaintenanceEntryModal.vue'
 import DeleteMaintenanceEntryModal from '@/features/maintenance/DeleteMaintenanceEntryModal.vue'
 import { maintenanceApi } from '@/api'
-import type { LogbookContractSummary, LogbookSummary, MaintenanceEntry } from '@/types/domain'
-import { ALL_FILTER, CONTRACT_STATUS_ACTIVE, CONTRACT_STATUS_EXPIRED, CONTRACT_STATUS_TERMINATED } from '@/utils/constants'
+import type { LogbookContractSummary, LogbookSummary, MaintenanceCategory, MaintenanceEntry } from '@/types/domain'
+import { ALL_FILTER, CONTRACT_STATUS_ACTIVE, CONTRACT_STATUS_EXPIRED, CONTRACT_STATUS_TERMINATED, MAINTENANCE_CATEGORIES } from '@/utils/constants'
 
 const { t } = useI18n()
 const { formatDate, formatCurrency } = useFormatters()
@@ -40,6 +42,8 @@ const allEntries = ref<MaintenanceEntry[]>([])
 const search = ref('')
 const periodFilter = ref<PeriodFilter>('quarter')
 const periodAnchor = ref(startOfPeriod(new Date(), 'quarter'))
+const categoryFilter = ref<MaintenanceCategory | typeof ALL_FILTER>(ALL_FILTER)
+const sourceFilter = ref<MaintenanceEntry['source'] | typeof ALL_FILTER>(ALL_FILTER)
 
 // ── Entry form modal ───────────────────────────────────────────────
 const showEntryModal = ref(false)
@@ -151,13 +155,27 @@ const canGoNext = computed(() => {
   return periodAnchor.value.getTime() < currentStart.getTime()
 })
 
+const categoryOptions = computed(() => [
+  { value: ALL_FILTER, label: t('maintenance.filters.allCategories') },
+  ...MAINTENANCE_CATEGORIES.map(value => ({ value, label: t(`maintenance.categories.${value}`) })),
+])
+
+const sourceOptions = computed(() => [
+  { value: ALL_FILTER, label: t('maintenance.filters.allSources') },
+  { value: 'manual' as const, label: t('maintenance.sources.manual') },
+  { value: 'automatic' as const, label: t('maintenance.sources.automatic') },
+])
+
 const entries = computed(() => {
   const q = search.value.toLowerCase()
-  if (!q) return allEntries.value
-  return allEntries.value.filter(e =>
-    e.title.toLowerCase().includes(q) ||
-    (e.vendor_name ?? '').toLowerCase().includes(q),
-  )
+  return allEntries.value.filter(e => {
+    if (q && !e.title.toLowerCase().includes(q) && !(e.vendor_name ?? '').toLowerCase().includes(q)) {
+      return false
+    }
+    if (categoryFilter.value !== ALL_FILTER && e.category !== categoryFilter.value) return false
+    if (sourceFilter.value !== ALL_FILTER && e.source !== sourceFilter.value) return false
+    return true
+  })
 })
 
 const periodEntries = computed(() => {
@@ -199,6 +217,13 @@ const regulatoryLegalLinks = computed(() => [
   },
 ])
 
+function categoryVariant(category: MaintenanceCategory): 'primary' | 'accent' | 'warn' | 'default' {
+  if (category === 'travaux') return 'primary'
+  if (category === 'contrat') return 'accent'
+  if (category === 'sinistre') return 'warn'
+  return 'default'
+}
+
 function contractStatusVariant(status: LogbookContractSummary['status']): 'open' | 'closed' | 'default' {
   if (status === CONTRACT_STATUS_ACTIVE) return 'open'
   if (status === CONTRACT_STATUS_EXPIRED || status === CONTRACT_STATUS_TERMINATED) return 'closed'
@@ -220,6 +245,10 @@ function openCreateModal() {
   showEntryModal.value = true
 }
 
+function exportLogbook() {
+  window.open('/logbook/print', '_blank', 'noopener')
+}
+
 function openDeleteModal(entry: MaintenanceEntry) {
   entryToDelete.value = entry
 }
@@ -236,6 +265,14 @@ function openDeleteModal(entry: MaintenanceEntry) {
         </div>
       </template>
       <template #right>
+        <CBtn
+          variant="ghost"
+          size="sm"
+          :icon="CIconDownload"
+          :title="t('maintenance.exportLogbook')"
+          :aria-label="t('maintenance.exportLogbook')"
+          @click="exportLogbook"
+        />
         <CBtn
           variant="primary"
           size="sm"
@@ -412,21 +449,36 @@ function openDeleteModal(entry: MaintenanceEntry) {
           </aside>
 
           <div class="page-main">
-            <CTabs
-              v-model="periodFilter"
-              variant="filter"
-              :tabs="(['month', 'quarter', 'semester', 'year', ALL_FILTER] as const).map(f => ({ value: f, label: t(`maintenance.filters.${f}`) }))"
-            >
+            <div class="filter-bar">
+              <CTabs
+                v-model="periodFilter"
+                variant="filter"
+                class="mb-0! min-w-0 flex-1"
+                :tabs="(['month', 'quarter', 'semester', 'year', ALL_FILTER] as const).map(f => ({ value: f, label: t(`maintenance.filters.${f}`) }))"
+              />
               <CFormInput
                 v-model="search"
                 type="search"
+                class="w-56 shrink-0"
                 :placeholder="t('maintenance.searchPlaceholder')"
               >
                 <template #prefix>
                   <CIconSearch />
                 </template>
               </CFormInput>
-            </CTabs>
+              <CFormSelect
+                v-model="categoryFilter"
+                class="w-44 shrink-0"
+                :label="t('maintenance.filters.category')"
+                :options="categoryOptions"
+              />
+              <CFormSelect
+                v-model="sourceFilter"
+                class="w-44 shrink-0"
+                :label="t('maintenance.filters.source')"
+                :options="sourceOptions"
+              />
+            </div>
             <div class="flex flex-col gap-4">
               <div class="period-nav">
                 <CBtn
@@ -468,6 +520,12 @@ function openDeleteModal(entry: MaintenanceEntry) {
                           class="ml-2"
                         >
                           {{ entry.source === 'automatic' ? t('common.automatic') : t('common.manual') }}
+                        </CBadge>
+                        <CBadge
+                          :variant="categoryVariant(entry.category)"
+                          class="ml-2"
+                        >
+                          {{ t(`maintenance.categories.${entry.category}`) }}
                         </CBadge>
                       </div>
                       <div class="entry-header-right">
@@ -511,7 +569,9 @@ function openDeleteModal(entry: MaintenanceEntry) {
                   v-if="!periodEntries.length"
                   class="py-8 text-center text-md text-on-surface-variant"
                 >
-                  {{ t('maintenance.emptyPeriod') }}
+                  {{ search || categoryFilter !== ALL_FILTER || sourceFilter !== ALL_FILTER
+                    ? t('maintenance.emptyFiltered')
+                    : t('maintenance.emptyPeriod') }}
                 </div>
               </div>
             </div>
@@ -548,6 +608,14 @@ function openDeleteModal(entry: MaintenanceEntry) {
 
 <style scoped>
 .timeline { display: flex; flex-direction: column; gap: 0; }
+
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
 
 /* ── Page layout ─────────────────────────────────────── */
 .page-layout {

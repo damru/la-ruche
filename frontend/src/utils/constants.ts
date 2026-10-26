@@ -15,6 +15,7 @@ import type {
   JudicialProceedingStatus,
   JudicialProceedingType,
   LevyStatus,
+  MaintenanceCategory,
   MeetingAttendanceMode,
   MeetingDocumentKind,
   MeetingStatus,
@@ -136,6 +137,11 @@ export const REMINDER_STATUS_PENDING: ReminderStatus = 'pending'
 export const REMINDER_STATUS_SENT: ReminderStatus = 'sent'
 export const REMINDER_STATUS_ACKNOWLEDGED: ReminderStatus = 'acknowledged'
 export const PAYMENT_FREQUENCIES = ['monthly', 'quarterly', 'biannual', 'annual'] as const satisfies readonly PaymentFrequency[]
+
+// ── Maintenance logbook ──
+
+export const MAINTENANCE_CATEGORIES = ['travaux', 'contrat', 'sinistre', 'autre'] as const satisfies readonly MaintenanceCategory[]
+export const DEFAULT_MAINTENANCE_CATEGORY: MaintenanceCategory = 'autre'
 
 // ── Units ──
 

@@ -22,6 +22,7 @@ const ContractorsView         = () => import('@/features/contractors/Contractors
 const ContractorDetailView    = () => import('@/features/contractors/ContractorDetailView.vue')
 const ClaimsView              = () => import('@/features/claims/ClaimsView.vue')
 const MaintenanceView         = () => import('@/features/maintenance/MaintenanceView.vue')
+const MaintenancePrintView    = () => import('@/features/maintenance/MaintenancePrintView.vue')
 const CalendarView            = () => import('@/features/calendar/CalendarView.vue')
 const ConsultationsView       = () => import('@/features/consultations/ConsultationsView.vue')
 const ReportsView             = () => import('@/features/reports/ReportsView.vue')
@@ -145,6 +146,12 @@ const routes: RouteRecordRaw[] = [
         path: 'logbook',
         name: 'maintenance',
         component: MaintenanceView,
+        meta: { title: 'nav.maintenance', roles: [...MANAGER_ROLES] },
+      },
+      {
+        path: 'logbook/print',
+        name: 'maintenance-print',
+        component: MaintenancePrintView,
         meta: { title: 'nav.maintenance', roles: [...MANAGER_ROLES] },
       },
       {
