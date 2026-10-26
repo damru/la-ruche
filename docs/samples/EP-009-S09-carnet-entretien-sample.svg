@@ -1,0 +1,343 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="595" height="3368" viewBox="0 0 595 3368">
+<rect width="595" height="3368" fill="white"/>
+<text x="51.0" y="85.1" font-family="Liberation Sans, Arial, sans-serif" font-size="11.0" fill="rgb(99,64,214)">La Ruche</text>
+<text x="447.9" y="82.0" font-family="Liberation Sans, Arial, sans-serif" font-size="9.0" fill="rgb(0,0,0)">Résidence des Tilleuls</text>
+<text x="435.5" y="93.9" font-family="Liberation Sans, Arial, sans-serif" font-size="8.0" fill="rgb(107,115,128)">12 rue des Fleurs, 75011 Paris</text>
+<text x="51.0" y="105.7" font-family="Liberation Sans, Arial, sans-serif" font-size="6.0" fill="rgb(209,214,219)">_______________________________________________________________</text>
+<text x="174.2" y="137.7" font-family="Liberation Sans, Arial, sans-serif" font-size="16.0" fill="rgb(99,64,214)">Carnet d'entretien de l'immeuble</text>
+<text x="51.0" y="156.8" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Immeuble :</text>
+<text x="103.2" y="156.8" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(18,23,38)">Résidence des Tilleuls</text>
+<text x="51.0" y="171.7" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Adresse :</text>
+<text x="96.0" y="171.7" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(18,23,38)">12 rue des Fleurs, 75011 Paris</text>
+<text x="51.0" y="186.7" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Syndic en exercice :</text>
+<text x="143.2" y="186.7" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(18,23,38)">Cabinet Dupont — contact@cabinet-dupont.fr — 01 23 45 67 89</text>
+<text x="51.0" y="201.6" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">SIRET :</text>
+<text x="88.6" y="201.6" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(18,23,38)">123 456 789 00012</text>
+<text x="51.0" y="225.6" font-family="Liberation Sans, Arial, sans-serif" font-size="11.0" fill="rgb(99,64,214)">Contrats d'assurance en cours (1 contrat)</text>
+<text x="51.0" y="245.0" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">Multirisque immeuble</text>
+<text x="51.0" y="259.9" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">AXA France</text>
+<text x="433.0" y="245.0" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">01/01/2026 – 31/12/2026</text>
+<text x="497.0" y="259.9" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">2 450,00 €</text>
+<text x="51.0" y="268.7" font-family="Liberation Sans, Arial, sans-serif" font-size="6.0" fill="rgb(209,214,219)">_______________________________________________________________</text>
+<text x="51.0" y="297.4" font-family="Liberation Sans, Arial, sans-serif" font-size="11.0" fill="rgb(99,64,214)">Contrats d'entretien et de maintenance en cours (1 contrat)</text>
+<text x="51.0" y="316.7" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">Entretien ascenseur</text>
+<text x="51.0" y="331.7" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Schindler France · Maintenance</text>
+<text x="473.1" y="316.7" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">01/06/2025 – …</text>
+<text x="497.0" y="331.7" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">1 050,00 €</text>
+<text x="51.0" y="340.4" font-family="Liberation Sans, Arial, sans-serif" font-size="6.0" fill="rgb(209,214,219)">_______________________________________________________________</text>
+<text x="51.0" y="369.1" font-family="Liberation Sans, Arial, sans-serif" font-size="11.0" fill="rgb(99,64,214)">Chronologie des interventions</text>
+<text x="51.0" y="382.5" font-family="Liberation Sans, Arial, sans-serif" font-size="9.0" fill="rgb(107,115,128)">Date</text>
+<text x="121.5" y="382.5" font-family="Liberation Sans, Arial, sans-serif" font-size="9.0" fill="rgb(107,115,128)">Intervention</text>
+<text x="262.4" y="382.5" font-family="Liberation Sans, Arial, sans-serif" font-size="9.0" fill="rgb(107,115,128)">Prestataire</text>
+<text x="332.9" y="382.5" font-family="Liberation Sans, Arial, sans-serif" font-size="9.0" fill="rgb(107,115,128)">Catégorie</text>
+<text x="403.3" y="382.5" font-family="Liberation Sans, Arial, sans-serif" font-size="9.0" fill="rgb(107,115,128)">Source</text>
+<text x="523.8" y="382.5" font-family="Liberation Sans, Arial, sans-serif" font-size="9.0" fill="rgb(107,115,128)">Coût</text>
+<text x="51.0" y="397.5" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">01/01/2026</text>
+<text x="121.5" y="397.5" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">Intervention n°1 — contrôle</text>
+<text x="121.5" y="412.4" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">périodique</text>
+<text x="121.5" y="427.4" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Description détaillée de</text>
+<text x="121.5" y="442.3" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">l'intervention réalisée sur les</text>
+<text x="121.5" y="457.3" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">parties communes.</text>
+<text x="262.4" y="397.5" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Plomberie</text>
+<text x="262.4" y="412.4" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Duval</text>
+<text x="332.9" y="397.5" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">Travaux</text>
+<text x="403.3" y="397.5" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Saisie</text>
+<text x="403.3" y="412.4" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">manuelle</text>
+<text x="505.3" y="397.5" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">480,01 €</text>
+<text x="51.0" y="472.2" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">02/01/2026</text>
+<text x="121.5" y="472.2" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">Intervention n°2 — contrôle</text>
+<text x="121.5" y="487.2" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">périodique</text>
+<text x="121.5" y="502.1" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Description détaillée de</text>
+<text x="121.5" y="517.1" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">l'intervention réalisée sur les</text>
+<text x="121.5" y="532.0" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">parties communes.</text>
+<text x="262.4" y="472.2" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Plomberie</text>
+<text x="262.4" y="487.2" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Duval</text>
+<text x="332.9" y="472.2" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">Travaux</text>
+<text x="403.3" y="472.2" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Généré</text>
+<text x="505.3" y="472.2" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">480,02 €</text>
+<text x="51.0" y="547.0" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">03/01/2026</text>
+<text x="121.5" y="547.0" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">Intervention n°3 — contrôle</text>
+<text x="121.5" y="561.9" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">périodique</text>
+<text x="121.5" y="576.9" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Description détaillée de</text>
+<text x="121.5" y="591.8" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">l'intervention réalisée sur les</text>
+<text x="121.5" y="606.8" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">parties communes.</text>
+<text x="262.4" y="547.0" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Plomberie</text>
+<text x="262.4" y="561.9" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Duval</text>
+<text x="332.9" y="547.0" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">Travaux</text>
+<text x="403.3" y="547.0" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Saisie</text>
+<text x="403.3" y="561.9" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">manuelle</text>
+<text x="505.3" y="547.0" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">480,03 €</text>
+<text x="51.0" y="621.7" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">04/01/2026</text>
+<text x="121.5" y="621.7" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">Intervention n°4 — contrôle</text>
+<text x="121.5" y="636.7" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">périodique</text>
+<text x="121.5" y="651.6" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Description détaillée de</text>
+<text x="121.5" y="666.5" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">l'intervention réalisée sur les</text>
+<text x="121.5" y="681.5" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">parties communes.</text>
+<text x="262.4" y="621.7" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Plomberie</text>
+<text x="262.4" y="636.7" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Duval</text>
+<text x="332.9" y="621.7" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">Travaux</text>
+<text x="403.3" y="621.7" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Généré</text>
+<text x="505.3" y="621.7" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">480,04 €</text>
+<text x="51.0" y="696.4" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">05/01/2026</text>
+<text x="121.5" y="696.4" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">Intervention n°5 — contrôle</text>
+<text x="121.5" y="711.4" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">périodique</text>
+<text x="121.5" y="726.3" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Description détaillée de</text>
+<text x="121.5" y="741.3" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">l'intervention réalisée sur les</text>
+<text x="121.5" y="756.2" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">parties communes.</text>
+<text x="262.4" y="696.4" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Plomberie</text>
+<text x="262.4" y="711.4" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Duval</text>
+<text x="332.9" y="696.4" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">Travaux</text>
+<text x="403.3" y="696.4" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Saisie</text>
+<text x="403.3" y="711.4" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">manuelle</text>
+<text x="505.3" y="696.4" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">480,05 €</text>
+<text x="51.0" y="771.2" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">06/01/2026</text>
+<text x="121.5" y="771.2" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">Intervention n°6 — contrôle</text>
+<text x="262.4" y="771.2" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Plomberie</text>
+<text x="332.9" y="771.2" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">Travaux</text>
+<text x="403.3" y="771.2" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Généré</text>
+<text x="505.3" y="771.2" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">480,06 €</text>
+<line x1="0" y1="842" x2="595" y2="842" stroke="#ccc" stroke-width="1" stroke-dasharray="4 4"/>
+<text x="51.0" y="927.1" font-family="Liberation Sans, Arial, sans-serif" font-size="11.0" fill="rgb(99,64,214)">La Ruche</text>
+<text x="447.9" y="924.0" font-family="Liberation Sans, Arial, sans-serif" font-size="9.0" fill="rgb(0,0,0)">Résidence des Tilleuls</text>
+<text x="435.5" y="935.9" font-family="Liberation Sans, Arial, sans-serif" font-size="8.0" fill="rgb(107,115,128)">12 rue des Fleurs, 75011 Paris</text>
+<text x="51.0" y="947.7" font-family="Liberation Sans, Arial, sans-serif" font-size="6.0" fill="rgb(209,214,219)">_______________________________________________________________</text>
+<text x="121.5" y="970.4" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">périodique</text>
+<text x="121.5" y="985.3" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Description détaillée de</text>
+<text x="121.5" y="1000.3" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">l'intervention réalisée sur les</text>
+<text x="121.5" y="1015.2" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">parties communes.</text>
+<text x="262.4" y="970.4" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Duval</text>
+<text x="51.0" y="1030.2" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">07/01/2026</text>
+<text x="121.5" y="1030.2" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">Intervention n°7 — contrôle</text>
+<text x="121.5" y="1045.1" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">périodique</text>
+<text x="121.5" y="1060.1" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Description détaillée de</text>
+<text x="121.5" y="1075.0" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">l'intervention réalisée sur les</text>
+<text x="121.5" y="1090.0" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">parties communes.</text>
+<text x="262.4" y="1030.2" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Plomberie</text>
+<text x="262.4" y="1045.1" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Duval</text>
+<text x="332.9" y="1030.2" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">Travaux</text>
+<text x="403.3" y="1030.2" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Saisie</text>
+<text x="403.3" y="1045.1" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">manuelle</text>
+<text x="505.3" y="1030.2" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">480,07 €</text>
+<text x="51.0" y="1104.9" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">08/01/2026</text>
+<text x="121.5" y="1104.9" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">Intervention n°8 — contrôle</text>
+<text x="121.5" y="1119.9" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">périodique</text>
+<text x="121.5" y="1134.8" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Description détaillée de</text>
+<text x="121.5" y="1149.8" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">l'intervention réalisée sur les</text>
+<text x="121.5" y="1164.7" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">parties communes.</text>
+<text x="262.4" y="1104.9" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Plomberie</text>
+<text x="262.4" y="1119.9" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Duval</text>
+<text x="332.9" y="1104.9" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">Travaux</text>
+<text x="403.3" y="1104.9" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Généré</text>
+<text x="505.3" y="1104.9" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">480,08 €</text>
+<text x="51.0" y="1179.7" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">09/01/2026</text>
+<text x="121.5" y="1179.7" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">Intervention n°9 — contrôle</text>
+<text x="121.5" y="1194.6" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">périodique</text>
+<text x="121.5" y="1209.6" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Description détaillée de</text>
+<text x="121.5" y="1224.5" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">l'intervention réalisée sur les</text>
+<text x="121.5" y="1239.5" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">parties communes.</text>
+<text x="262.4" y="1179.7" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Plomberie</text>
+<text x="262.4" y="1194.6" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Duval</text>
+<text x="332.9" y="1179.7" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">Travaux</text>
+<text x="403.3" y="1179.7" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Saisie</text>
+<text x="403.3" y="1194.6" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">manuelle</text>
+<text x="505.3" y="1179.7" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">480,09 €</text>
+<text x="51.0" y="1254.4" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">10/01/2026</text>
+<text x="121.5" y="1254.4" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">Intervention n°10 — contrôle</text>
+<text x="121.5" y="1269.4" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">périodique</text>
+<text x="121.5" y="1284.3" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Description détaillée de</text>
+<text x="121.5" y="1299.3" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">l'intervention réalisée sur les</text>
+<text x="121.5" y="1314.2" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">parties communes.</text>
+<text x="262.4" y="1254.4" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Plomberie</text>
+<text x="262.4" y="1269.4" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Duval</text>
+<text x="332.9" y="1254.4" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">Travaux</text>
+<text x="403.3" y="1254.4" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Généré</text>
+<text x="505.3" y="1254.4" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">480,10 €</text>
+<text x="51.0" y="1329.2" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">11/01/2026</text>
+<text x="121.5" y="1329.2" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">Intervention n°11 — contrôle</text>
+<text x="121.5" y="1344.1" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">périodique</text>
+<text x="121.5" y="1359.1" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Description détaillée de</text>
+<text x="121.5" y="1374.0" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">l'intervention réalisée sur les</text>
+<text x="121.5" y="1389.0" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">parties communes.</text>
+<text x="262.4" y="1329.2" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Plomberie</text>
+<text x="262.4" y="1344.1" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Duval</text>
+<text x="332.9" y="1329.2" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">Travaux</text>
+<text x="403.3" y="1329.2" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Saisie</text>
+<text x="403.3" y="1344.1" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">manuelle</text>
+<text x="505.9" y="1329.2" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">480,11 €</text>
+<text x="51.0" y="1403.9" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">12/01/2026</text>
+<text x="121.5" y="1403.9" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">Intervention n°12 — contrôle</text>
+<text x="121.5" y="1418.9" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">périodique</text>
+<text x="121.5" y="1433.8" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Description détaillée de</text>
+<text x="121.5" y="1448.8" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">l'intervention réalisée sur les</text>
+<text x="121.5" y="1463.7" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">parties communes.</text>
+<text x="262.4" y="1403.9" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Plomberie</text>
+<text x="262.4" y="1418.9" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Duval</text>
+<text x="332.9" y="1403.9" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">Travaux</text>
+<text x="403.3" y="1403.9" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Généré</text>
+<text x="505.3" y="1403.9" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">480,12 €</text>
+<text x="51.0" y="1478.7" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">13/01/2026</text>
+<text x="121.5" y="1478.7" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">Intervention n°13 — contrôle</text>
+<text x="121.5" y="1493.6" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">périodique</text>
+<text x="121.5" y="1508.5" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Description détaillée de</text>
+<text x="121.5" y="1523.5" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">l'intervention réalisée sur les</text>
+<text x="121.5" y="1538.4" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">parties communes.</text>
+<text x="262.4" y="1478.7" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Plomberie</text>
+<text x="262.4" y="1493.6" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Duval</text>
+<text x="332.9" y="1478.7" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">Travaux</text>
+<text x="403.3" y="1478.7" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Saisie</text>
+<text x="403.3" y="1493.6" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">manuelle</text>
+<text x="505.3" y="1478.7" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">480,13 €</text>
+<text x="51.0" y="1553.4" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">14/01/2026</text>
+<text x="121.5" y="1553.4" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">Intervention n°14 — contrôle</text>
+<text x="121.5" y="1568.3" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">périodique</text>
+<text x="121.5" y="1583.3" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Description détaillée de</text>
+<text x="121.5" y="1598.2" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">l'intervention réalisée sur les</text>
+<text x="121.5" y="1613.2" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">parties communes.</text>
+<text x="262.4" y="1553.4" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Plomberie</text>
+<text x="262.4" y="1568.3" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Duval</text>
+<text x="332.9" y="1553.4" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">Travaux</text>
+<text x="403.3" y="1553.4" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Généré</text>
+<text x="505.3" y="1553.4" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">480,14 €</text>
+<line x1="0" y1="1684" x2="595" y2="1684" stroke="#ccc" stroke-width="1" stroke-dasharray="4 4"/>
+<text x="51.0" y="1769.1" font-family="Liberation Sans, Arial, sans-serif" font-size="11.0" fill="rgb(99,64,214)">La Ruche</text>
+<text x="447.9" y="1766.0" font-family="Liberation Sans, Arial, sans-serif" font-size="9.0" fill="rgb(0,0,0)">Résidence des Tilleuls</text>
+<text x="435.5" y="1777.9" font-family="Liberation Sans, Arial, sans-serif" font-size="8.0" fill="rgb(107,115,128)">12 rue des Fleurs, 75011 Paris</text>
+<text x="51.0" y="1789.7" font-family="Liberation Sans, Arial, sans-serif" font-size="6.0" fill="rgb(209,214,219)">_______________________________________________________________</text>
+<text x="51.0" y="1812.4" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">15/01/2026</text>
+<text x="121.5" y="1812.4" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">Intervention n°15 — contrôle</text>
+<text x="121.5" y="1827.3" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">périodique</text>
+<text x="121.5" y="1842.3" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Description détaillée de</text>
+<text x="121.5" y="1857.2" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">l'intervention réalisée sur les</text>
+<text x="121.5" y="1872.2" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">parties communes.</text>
+<text x="262.4" y="1812.4" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Plomberie</text>
+<text x="262.4" y="1827.3" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Duval</text>
+<text x="332.9" y="1812.4" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">Travaux</text>
+<text x="403.3" y="1812.4" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Saisie</text>
+<text x="403.3" y="1827.3" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">manuelle</text>
+<text x="505.3" y="1812.4" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">480,15 €</text>
+<text x="51.0" y="1887.1" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">16/01/2026</text>
+<text x="121.5" y="1887.1" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">Intervention n°16 — contrôle</text>
+<text x="121.5" y="1902.1" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">périodique</text>
+<text x="121.5" y="1917.0" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Description détaillée de</text>
+<text x="121.5" y="1932.0" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">l'intervention réalisée sur les</text>
+<text x="121.5" y="1946.9" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">parties communes.</text>
+<text x="262.4" y="1887.1" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Plomberie</text>
+<text x="262.4" y="1902.1" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Duval</text>
+<text x="332.9" y="1887.1" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">Travaux</text>
+<text x="403.3" y="1887.1" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Généré</text>
+<text x="505.3" y="1887.1" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">480,16 €</text>
+<text x="51.0" y="1961.9" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">17/01/2026</text>
+<text x="121.5" y="1961.9" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">Intervention n°17 — contrôle</text>
+<text x="121.5" y="1976.8" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">périodique</text>
+<text x="121.5" y="1991.8" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Description détaillée de</text>
+<text x="121.5" y="2006.7" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">l'intervention réalisée sur les</text>
+<text x="121.5" y="2021.7" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">parties communes.</text>
+<text x="262.4" y="1961.9" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Plomberie</text>
+<text x="262.4" y="1976.8" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Duval</text>
+<text x="332.9" y="1961.9" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">Travaux</text>
+<text x="403.3" y="1961.9" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Saisie</text>
+<text x="403.3" y="1976.8" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">manuelle</text>
+<text x="505.3" y="1961.9" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">480,17 €</text>
+<text x="51.0" y="2036.6" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">18/01/2026</text>
+<text x="121.5" y="2036.6" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">Intervention n°18 — contrôle</text>
+<text x="121.5" y="2051.6" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">périodique</text>
+<text x="121.5" y="2066.5" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Description détaillée de</text>
+<text x="121.5" y="2081.5" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">l'intervention réalisée sur les</text>
+<text x="121.5" y="2096.4" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">parties communes.</text>
+<text x="262.4" y="2036.6" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Plomberie</text>
+<text x="262.4" y="2051.6" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Duval</text>
+<text x="332.9" y="2036.6" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">Travaux</text>
+<text x="403.3" y="2036.6" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Généré</text>
+<text x="505.3" y="2036.6" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">480,18 €</text>
+<text x="51.0" y="2111.4" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">19/01/2026</text>
+<text x="121.5" y="2111.4" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">Intervention n°19 — contrôle</text>
+<text x="121.5" y="2126.3" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">périodique</text>
+<text x="121.5" y="2141.3" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Description détaillée de</text>
+<text x="121.5" y="2156.2" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">l'intervention réalisée sur les</text>
+<text x="121.5" y="2171.2" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">parties communes.</text>
+<text x="262.4" y="2111.4" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Plomberie</text>
+<text x="262.4" y="2126.3" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Duval</text>
+<text x="332.9" y="2111.4" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">Travaux</text>
+<text x="403.3" y="2111.4" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Saisie</text>
+<text x="403.3" y="2126.3" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">manuelle</text>
+<text x="505.3" y="2111.4" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">480,19 €</text>
+<text x="51.0" y="2186.1" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">20/01/2026</text>
+<text x="121.5" y="2186.1" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">Intervention n°20 — contrôle</text>
+<text x="121.5" y="2201.1" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">périodique</text>
+<text x="121.5" y="2216.0" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Description détaillée de</text>
+<text x="121.5" y="2231.0" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">l'intervention réalisée sur les</text>
+<text x="121.5" y="2245.9" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">parties communes.</text>
+<text x="262.4" y="2186.1" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Plomberie</text>
+<text x="262.4" y="2201.1" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Duval</text>
+<text x="332.9" y="2186.1" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">Travaux</text>
+<text x="403.3" y="2186.1" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Généré</text>
+<text x="505.3" y="2186.1" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">480,20 €</text>
+<text x="51.0" y="2260.9" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">21/01/2026</text>
+<text x="121.5" y="2260.9" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">Intervention n°21 — contrôle</text>
+<text x="121.5" y="2275.8" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">périodique</text>
+<text x="121.5" y="2290.8" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Description détaillée de</text>
+<text x="121.5" y="2305.7" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">l'intervention réalisée sur les</text>
+<text x="121.5" y="2320.7" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">parties communes.</text>
+<text x="262.4" y="2260.9" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Plomberie</text>
+<text x="262.4" y="2275.8" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Duval</text>
+<text x="332.9" y="2260.9" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">Travaux</text>
+<text x="403.3" y="2260.9" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Saisie</text>
+<text x="403.3" y="2275.8" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">manuelle</text>
+<text x="505.3" y="2260.9" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">480,21 €</text>
+<text x="51.0" y="2335.6" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">22/01/2026</text>
+<text x="121.5" y="2335.6" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">Intervention n°22 — contrôle</text>
+<text x="121.5" y="2350.5" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">périodique</text>
+<text x="121.5" y="2365.5" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Description détaillée de</text>
+<text x="121.5" y="2380.4" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">l'intervention réalisée sur les</text>
+<text x="121.5" y="2395.4" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">parties communes.</text>
+<text x="262.4" y="2335.6" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Plomberie</text>
+<text x="262.4" y="2350.5" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Duval</text>
+<text x="332.9" y="2335.6" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">Travaux</text>
+<text x="403.3" y="2335.6" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Généré</text>
+<text x="505.3" y="2335.6" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">480,22 €</text>
+<text x="51.0" y="2410.3" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">23/01/2026</text>
+<text x="121.5" y="2410.3" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">Intervention n°23 — contrôle</text>
+<text x="121.5" y="2425.3" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">périodique</text>
+<text x="121.5" y="2440.2" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Description détaillée de</text>
+<text x="121.5" y="2455.2" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">l'intervention réalisée sur les</text>
+<text x="262.4" y="2410.3" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Plomberie</text>
+<text x="262.4" y="2425.3" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Duval</text>
+<text x="332.9" y="2410.3" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">Travaux</text>
+<text x="403.3" y="2410.3" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Saisie</text>
+<text x="403.3" y="2425.3" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">manuelle</text>
+<text x="505.3" y="2410.3" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">480,23 €</text>
+<line x1="0" y1="2526" x2="595" y2="2526" stroke="#ccc" stroke-width="1" stroke-dasharray="4 4"/>
+<text x="51.0" y="2611.1" font-family="Liberation Sans, Arial, sans-serif" font-size="11.0" fill="rgb(99,64,214)">La Ruche</text>
+<text x="447.9" y="2608.0" font-family="Liberation Sans, Arial, sans-serif" font-size="9.0" fill="rgb(0,0,0)">Résidence des Tilleuls</text>
+<text x="435.5" y="2619.9" font-family="Liberation Sans, Arial, sans-serif" font-size="8.0" fill="rgb(107,115,128)">12 rue des Fleurs, 75011 Paris</text>
+<text x="51.0" y="2631.7" font-family="Liberation Sans, Arial, sans-serif" font-size="6.0" fill="rgb(209,214,219)">_______________________________________________________________</text>
+<text x="121.5" y="2654.4" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">parties communes.</text>
+<text x="51.0" y="2669.3" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">24/01/2026</text>
+<text x="121.5" y="2669.3" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">Intervention n°24 — contrôle</text>
+<text x="121.5" y="2684.3" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">périodique</text>
+<text x="121.5" y="2699.2" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Description détaillée de</text>
+<text x="121.5" y="2714.2" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">l'intervention réalisée sur les</text>
+<text x="121.5" y="2729.1" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">parties communes.</text>
+<text x="262.4" y="2669.3" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Plomberie</text>
+<text x="262.4" y="2684.3" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Duval</text>
+<text x="332.9" y="2669.3" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">Travaux</text>
+<text x="403.3" y="2669.3" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Généré</text>
+<text x="505.3" y="2669.3" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">480,24 €</text>
+<text x="51.0" y="2744.1" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">25/01/2026</text>
+<text x="121.5" y="2744.1" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">Intervention n°25 — contrôle</text>
+<text x="121.5" y="2759.0" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">périodique</text>
+<text x="121.5" y="2774.0" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Description détaillée de</text>
+<text x="121.5" y="2788.9" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">l'intervention réalisée sur les</text>
+<text x="121.5" y="2803.9" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">parties communes.</text>
+<text x="262.4" y="2744.1" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Plomberie</text>
+<text x="262.4" y="2759.0" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Duval</text>
+<text x="332.9" y="2744.1" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">Travaux</text>
+<text x="403.3" y="2744.1" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Saisie</text>
+<text x="403.3" y="2759.0" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">manuelle</text>
+<text x="505.3" y="2744.1" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">480,25 €</text>
+<text x="56.7" y="2854.4" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(0,0,0)">Le syndic</text>
+<text x="56.7" y="2914.2" font-family="Liberation Sans, Arial, sans-serif" font-size="10.0" fill="rgb(107,115,128)">Fait à ____________________, le ____________________</text>
+<text x="51.0" y="2928.6" font-family="Liberation Sans, Arial, sans-serif" font-size="6.0" fill="rgb(209,214,219)">_______________________________________________________________</text>
+<text x="51.0" y="2940.7" font-family="Liberation Sans, Arial, sans-serif" font-size="8.0" fill="rgb(107,115,128)">Édité le 16/06/2026 via La Ruche</text>
+</svg>
