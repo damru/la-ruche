@@ -153,19 +153,6 @@ Offrir une **vue calendaire unifiée** de tous les événements datés de la cop
 - **AC-CAL-003-B** : Les événements à échéance connue (rappels contrats, délais légaux sinistres, délai notification PV AG) DOIVENT inclure un composant `VALARM` avec alerte 24 h avant.
 - **AC-CAL-003-C** : Chaque événement exporté DOIT inclure un lien `URL` vers le module source (ou le détail `Event`) dans la description.
 
-#### US-CAL-006 — Consulter le détail d'un événement avant navigation
-
-**En tant que** utilisateur autorisé,
-**je veux** qu'une modale de description s'ouvre quand je sélectionne un événement du calendrier,
-**afin de** lire le détail de l'événement avant de décider d'aller vers la page cible.
-
-**Critères d'acceptation :**
-
-- **AC-CAL-006-A** : La sélection d'un événement dans la vue calendaire (modes mensuel, hebdomadaire et liste) DOIT ouvrir une modale de description au lieu de naviguer directement vers la page cible.
-- **AC-CAL-006-B** : La modale DOIT afficher : titre, date, type (badge coloré par source) et description de l'événement.
-- **AC-CAL-006-C** : La modale DOIT proposer un lien explicite vers la page cible (module source pour les événements agrégés, détail `Event` pour les événements manuels).
-- **AC-CAL-006-D** : La modale DOIT pouvoir être fermée sans navigation (bouton de fermeture, clic hors modale, touche Échap).
-
 #### US-CAL-005 — Créer / modifier / supprimer un événement manuel
 
 **En tant que** Syndic ou membre du Conseil,
@@ -179,6 +166,19 @@ Offrir une **vue calendaire unifiée** de tous les événements datés de la cop
 - **AC-CAL-005-C** : Des documents peuvent être joints — tout upload est enregistré dans la GED et lié via `event_document`.
 - **AC-CAL-005-D** : Les événements manuels sont visibles en lecture par tous les rôles.
 - **AC-CAL-005-E** : Syndic et Conseil peuvent modifier et supprimer tout `Event` de leur copropriété.
+
+#### US-CAL-006 — Consulter le détail d'un événement avant navigation
+
+**En tant que** utilisateur autorisé,
+**je veux** qu'une modale de description s'ouvre quand je sélectionne un événement du calendrier,
+**afin de** lire le détail de l'événement avant de décider d'aller vers la page cible.
+
+**Critères d'acceptation :**
+
+- **AC-CAL-006-A** : La sélection d'un événement dans la vue calendaire (modes mensuel, hebdomadaire et liste) DOIT ouvrir une modale de description au lieu de naviguer directement vers la page cible.
+- **AC-CAL-006-B** : La modale DOIT afficher : titre, date, type (badge coloré par source) et la description de l'événement **si disponible** (les événements agrégés n'en ont pas ; seuls les événements manuels peuvent en porter une).
+- **AC-CAL-006-C** : La modale DOIT proposer un lien explicite vers la page cible (module source pour les événements agrégés, détail `Event` pour les événements manuels).
+- **AC-CAL-006-D** : La modale DOIT pouvoir être fermée sans navigation (bouton de fermeture, clic hors modale, touche Échap).
 
 ---
 
