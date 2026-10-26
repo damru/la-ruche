@@ -319,48 +319,46 @@ async function exportCalendar() {
           </template>
         </CEmptyState>
         <template v-else>
-          <div class="flex items-center justify-between gap-3">
-            <div
-              v-if="mode !== 'agenda'"
-              class="flex items-center gap-3"
-            >
-              <CBtn
-                variant="icon"
-                size="sm"
-                :icon="CIconArrowLeft"
-                :title="t('calendar.previousPeriod')"
-                :aria-label="t('calendar.previousPeriod')"
-                @click="shiftPeriod(-1)"
-              />
-              <span class="title-sm">{{ periodLabel }}</span>
-              <CBtn
-                variant="icon"
-                size="sm"
-                :icon="CIconArrowRight"
-                :title="t('calendar.nextPeriod')"
-                :aria-label="t('calendar.nextPeriod')"
-                @click="shiftPeriod(1)"
-              />
-            </div>
-            <div
-              v-else
-              class="flex items-center gap-2"
-            >
-              <CFormInput
-                v-model="listFrom"
-                type="date"
-                :label="t('calendar.filters.from')"
-                class="w-44"
-                @change="applyListRange"
-              />
-              <CFormInput
-                v-model="listTo"
-                type="date"
-                :label="t('calendar.filters.to')"
-                class="w-44"
-                @change="applyListRange"
-              />
-            </div>
+          <div
+            v-if="mode !== 'agenda'"
+            class="flex items-center gap-3"
+          >
+            <CBtn
+              variant="icon"
+              size="sm"
+              :icon="CIconArrowLeft"
+              :title="t('calendar.previousPeriod')"
+              :aria-label="t('calendar.previousPeriod')"
+              @click="shiftPeriod(-1)"
+            />
+            <span class="title-sm">{{ periodLabel }}</span>
+            <CBtn
+              variant="icon"
+              size="sm"
+              :icon="CIconArrowRight"
+              :title="t('calendar.nextPeriod')"
+              :aria-label="t('calendar.nextPeriod')"
+              @click="shiftPeriod(1)"
+            />
+          </div>
+          <div
+            v-else
+            class="flex items-center gap-2"
+          >
+            <CFormInput
+              v-model="listFrom"
+              type="date"
+              :label="t('calendar.filters.from')"
+              class="w-44"
+              @change="applyListRange"
+            />
+            <CFormInput
+              v-model="listTo"
+              type="date"
+              :label="t('calendar.filters.to')"
+              class="w-44"
+              @change="applyListRange"
+            />
           </div>
 
           <CalendarGrid
