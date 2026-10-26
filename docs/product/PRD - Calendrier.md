@@ -1,9 +1,9 @@
 ---
 product: Calendrier copropriété
-version: 1.0.0
+version: 1.1.0
 owner: Damien
 status: validé
-last_updated: 2026-05-22
+last_updated: 2026-10-26
 references: []
 llm_directives:
   temperature: 0.2
@@ -114,6 +114,7 @@ Offrir une **vue calendaire unifiée** de tous les événements datés de la cop
 | Must | US-CAL-005 | Créer / modifier / supprimer un événement manuel | Entité `Event` avec catégorie optionnelle et documents joints |
 | Should | US-CAL-003 | Exporter en ICS | Import dans calendriers externes avec VALARM |
 | Could | US-CAL-004 | Vue agenda (prochains 30 j) | Liste linéaire des échéances entrantes |
+| Should | US-CAL-006 | Consulter le détail d'un événement avant navigation | Modale de description avec lien vers la page cible |
 
 ### User stories détaillées
 
@@ -151,6 +152,19 @@ Offrir une **vue calendaire unifiée** de tous les événements datés de la cop
 - **AC-CAL-003-A** : L'export DOIT respecter les filtres de rôle appliqués à la vue.
 - **AC-CAL-003-B** : Les événements à échéance connue (rappels contrats, délais légaux sinistres, délai notification PV AG) DOIVENT inclure un composant `VALARM` avec alerte 24 h avant.
 - **AC-CAL-003-C** : Chaque événement exporté DOIT inclure un lien `URL` vers le module source (ou le détail `Event`) dans la description.
+
+#### US-CAL-006 — Consulter le détail d'un événement avant navigation
+
+**En tant que** utilisateur autorisé,
+**je veux** qu'une modale de description s'ouvre quand je sélectionne un événement du calendrier,
+**afin de** lire le détail de l'événement avant de décider d'aller vers la page cible.
+
+**Critères d'acceptation :**
+
+- **AC-CAL-006-A** : La sélection d'un événement dans la vue calendaire (modes mensuel, hebdomadaire et liste) DOIT ouvrir une modale de description au lieu de naviguer directement vers la page cible.
+- **AC-CAL-006-B** : La modale DOIT afficher : titre, date, type (badge coloré par source) et description de l'événement.
+- **AC-CAL-006-C** : La modale DOIT proposer un lien explicite vers la page cible (module source pour les événements agrégés, détail `Event` pour les événements manuels).
+- **AC-CAL-006-D** : La modale DOIT pouvoir être fermée sans navigation (bouton de fermeture, clic hors modale, touche Échap).
 
 #### US-CAL-005 — Créer / modifier / supprimer un événement manuel
 
@@ -200,3 +214,4 @@ Toutes les questions ouvertes initiales (Q-CAL-001 à Q-CAL-003) ont été tranc
 | US-CAL-003 | Should | AC-CAL-003-A à C | Export ICS |
 | US-CAL-004 | Could | — | Vue agenda 30 j |
 | US-CAL-005 | Must | AC-CAL-005-A à E | Event (CRUD Syndic+Conseil / R Copro+Locataire) |
+| US-CAL-006 | Should | AC-CAL-006-A à D | Calendrier (R — agrégation) |

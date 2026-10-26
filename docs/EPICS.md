@@ -451,6 +451,7 @@ Calendrier partagé centralisant AG, interventions et réunions avec liens conte
 * [EP-014-S03](specs/EP-014-S03-spec.md) ✅ — Créer, modifier et supprimer des événements manuels sur le calendrier (réunion informelle, rappel, rendez-vous) réservé au Syndic et au Conseil (PRD US-CAL-005)
 * [EP-014-S04](specs/EP-014-S04-spec.md) ✅ — Exporter le calendrier au format ICS pour intégration dans les agendas personnels (Google Calendar, Outlook, Apple Calendar) (PRD US-CAL-003)
 * [EP-014-S05](specs/EP-014-S05-spec.md) ✅ — Afficher une vue agenda (prochains 30 jours) depuis le tableau de bord avec les 5 prochains événements (PRD US-CAL-004)
+* `EP-014-S06` — Afficher une modale de description à la sélection d'un événement du calendrier, avec un lien vers la page cible, avant toute navigation (PRD US-CAL-006)
 
 ***
 
