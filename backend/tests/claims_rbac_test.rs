@@ -29,6 +29,18 @@ async fn create_claim(server: &TestServer, auth: &str) -> String {
         .to_string()
 }
 
+async fn declare_claim(server: &TestServer, auth: &str, claim_id: &str) {
+    let declared = server
+        .post(&format!("/api/v1/claims/{claim_id}/declare"))
+        .add_header("Authorization", auth)
+        .await;
+    assert_eq!(
+        declared.status_code(),
+        StatusCode::OK,
+        "setup declare claim"
+    );
+}
+
 // ── S06: draft lifecycle ──────────────────────────────────────────
 
 #[tokio::test]
@@ -252,6 +264,7 @@ async fn board_member_can_access_claim_documents() {
     let server = common::test_server().await;
     let mgr_auth = format!("Bearer {}", ctx.manager_jwt);
     let claim_id = create_claim(&server, &mgr_auth).await;
+    declare_claim(&server, &mgr_auth, &claim_id).await;
 
     let bm_auth = format!("Bearer {}", ctx.board_member_jwt);
 
@@ -267,6 +280,38 @@ async fn board_member_can_access_claim_documents() {
         .json(&json!({ "document_id": uuid::Uuid::new_v4() }))
         .await;
     assert_eq!(attached.status_code(), StatusCode::NOT_FOUND);
+}
+
+#[tokio::test]
+async fn board_member_cannot_access_draft_claim_documents() {
+    let (ctx, _pool) = common::rbac_setup().await;
+    let server = common::test_server().await;
+    let mgr_auth = format!("Bearer {}", ctx.manager_jwt);
+    let claim_id = create_claim(&server, &mgr_auth).await;
+
+    let bm_auth = format!("Bearer {}", ctx.board_member_jwt);
+
+    let listed = server
+        .get(&format!("/api/v1/claims/{claim_id}/documents"))
+        .add_header("Authorization", &bm_auth)
+        .await;
+    assert_eq!(listed.status_code(), StatusCode::NOT_FOUND);
+
+    let attached = server
+        .post(&format!("/api/v1/claims/{claim_id}/documents"))
+        .add_header("Authorization", &bm_auth)
+        .json(&json!({ "document_id": uuid::Uuid::new_v4() }))
+        .await;
+    assert_eq!(attached.status_code(), StatusCode::NOT_FOUND);
+
+    let detached = server
+        .delete(&format!(
+            "/api/v1/claims/{claim_id}/documents/{}",
+            uuid::Uuid::new_v4()
+        ))
+        .add_header("Authorization", &bm_auth)
+        .await;
+    assert_eq!(detached.status_code(), StatusCode::NOT_FOUND);
 }
 
 // ── Existing RBAC: update/delete are manager-only ──────────────────
