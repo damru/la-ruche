@@ -1189,29 +1189,7 @@
       "autre": "Autre"
     },
     "emptyFiltered": "Aucune entrée ne correspond aux filtres sélectionnés.",
-    "exportLogbook": "Exporter le carnet",
-    "print": {
-      "title": "Carnet d'entretien de l'immeuble",
-      "editedOn": "Édité le {date} via La Ruche",
-      "printButton": "Imprimer / Exporter en PDF",
-      "backToLogbook": "Retour au carnet",
-      "insuranceSection": "Contrats d'assurance en cours",
-      "maintenanceSection": "Contrats d'entretien et de maintenance en cours",
-      "chronologySection": "Chronologie des interventions",
-      "noEntries": "Aucune intervention enregistrée.",
-      "noContracts": "Aucun contrat en cours.",
-      "table": {
-        "date": "Date",
-        "title": "Intervention",
-        "description": "Description",
-        "vendor": "Prestataire",
-        "cost": "Coût",
-        "source": "Source",
-        "category": "Catégorie"
-      },
-      "contractEndsOn": "Échéance : {date}",
-      "contractAmount": "Montant : {amount}"
-    }
+    "exportLogbook": "Exporter le carnet (PDF)"
   },
   "claims": {
     "create": "Déclarer un sinistre",

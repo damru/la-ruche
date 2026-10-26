@@ -24,7 +24,6 @@ declare module 'vue' {
     CCopyField: typeof import('./../components/molecules/CCopyField.vue')['default']
     CDataTable: typeof import('./../components/molecules/CDataTable.vue')['default']
     CDeleteConfirmModal: typeof import('./../components/organisms/CDeleteConfirmModal.vue')['default']
-    CDocumentHeader: typeof import('./../components/molecules/CDocumentHeader.vue')['default']
     CDocumentLinkActionModal: typeof import('./../components/organisms/CDocumentLinkActionModal.vue')['default']
     CDropdownMenu: typeof import('./../components/atoms/CDropdownMenu.vue')['default']
     CEmptyState: typeof import('./../components/atoms/CEmptyState.vue')['default']

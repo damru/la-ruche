@@ -2,7 +2,8 @@
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useFormatters } from '@/composables/useFormatters'
-import { usePageLoader } from '@/composables/usePageLoader'
+import { toErrorMessage, usePageLoader } from '@/composables/usePageLoader'
+import CAlert from '@/components/atoms/CAlert.vue'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CLegalDescription from '@/components/atoms/CLegalDescription.vue'
@@ -44,6 +45,8 @@ const periodFilter = ref<PeriodFilter>('quarter')
 const periodAnchor = ref(startOfPeriod(new Date(), 'quarter'))
 const categoryFilter = ref<MaintenanceCategory | typeof ALL_FILTER>(ALL_FILTER)
 const sourceFilter = ref<MaintenanceEntry['source'] | typeof ALL_FILTER>(ALL_FILTER)
+const exporting = ref(false)
+const exportError = ref('')
 
 // ── Entry form modal ───────────────────────────────────────────────
 const showEntryModal = ref(false)
@@ -245,8 +248,26 @@ function openCreateModal() {
   showEntryModal.value = true
 }
 
-function exportLogbook() {
-  window.open('/logbook/print', '_blank', 'noopener')
+// Downloads the logbook rendered server-side as a PDF (shared document template).
+async function exportLogbook() {
+  exporting.value = true
+  exportError.value = ''
+  try {
+    const response = await maintenanceApi.exportPdf()
+    const blob = new Blob([response.data], { type: 'application/pdf' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = 'carnet-entretien.pdf'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  } catch (err) {
+    exportError.value = toErrorMessage(err)
+  } finally {
+    exporting.value = false
+  }
 }
 
 function openDeleteModal(entry: MaintenanceEntry) {
@@ -269,6 +290,7 @@ function openDeleteModal(entry: MaintenanceEntry) {
           variant="ghost"
           size="sm"
           :icon="CIconDownload"
+          :loading="exporting"
           :title="t('maintenance.exportLogbook')"
           :aria-label="t('maintenance.exportLogbook')"
           @click="exportLogbook"
@@ -312,6 +334,12 @@ function openDeleteModal(entry: MaintenanceEntry) {
             </CMetaItem>
           </CMetaLine>
         </header>
+        <CAlert
+          v-if="exportError"
+          variant="error"
+        >
+          {{ exportError }}
+        </CAlert>
         <div class="page-layout">
           <aside
             v-if="logbookSummary"

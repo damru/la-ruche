@@ -4,97 +4,95 @@
 
 **Épic :** EP-009 — Carnet d'entretien
 **Réf. PRD :** US-CE-004 · **Réf. LEGAL :** carnet d'entretien obligatoire (loi SRU, décret n°2001-477)
-**État :** IMPLÉMENTÉ (backend + frontend) — vue d'impression `/logbook/print` + composant réutilisable `CDocumentHeader` (en-tête de document officiel : logo, nom de l'appli, adresse, syndic, date d'édition).
+**État :** IMPLÉMENTÉ (backend + frontend) — génération PDF **100 % serveur** via le template documentaire partagé `domain/pdf_template.rs` + renderer `domain/logbook_pdf.rs`, endpoint `GET /logbook/export/pdf`, téléchargement blob depuis la vue carnet.
 
 ---
 
-## 1. Décision de conception — HTML imprimable plutôt que PDF serveur
+## 1. Décision de conception — génération PDF côté serveur + template partagé
 
-**Retenu : vue HTML optimisée impression + impression navigateur (print-to-PDF).**
+**Changement de spec (remplace la décision initiale « HTML imprimable ») : pas de gestion du `@media print`. Toutes les générations de documents PDF passent par une génération backend, et tous les documents partagent le même template.**
 
-- Zéro nouvelle dépendance (pas de lib PDF Rust ni headless browser).
-- Le rendu réutilise les composants/styles du frontend ; la mise en page se règle en CSS `@media print`.
-- Le navigateur produit un PDF fidèle via « Imprimer → Enregistrer en PDF » — suffisant pour l'usage (remise du carnet à un acquéreur / au conseil).
+**Retenu : génération serveur via `genpdf` + template documentaire réutilisable.**
 
-**Alternative rejetée : génération PDF côté serveur** (printpdf/typst/wkhtmltopdf/headless Chromium) — dépendance lourde, duplication de la mise en page hors du design system, maintenance disproportionnée pour un document consulté ponctuellement. À reconsidérer seulement si un envoi automatique par e-mail du PDF devient une exigence.
+- **Template commun** (`backend/src/domain/pdf_template.rs`) : identité visuelle unique pour tous les documents officiels —
+  - **En-tête récurrent (chaque page)** : nom « La Ruche » en couleur marque à gauche, identité immeuble (nom + adresse) à droite, filet de séparation.
+  - **Bloc titre** : titre du document centré en couleur marque, sous-titre optionnel, méta-lignes (Immeuble, Adresse, Syndic en exercice, SIRET…).
+  - **Salutation** optionnelle (documents de type courrier).
+  - **Signature artificielle** : « Le syndic » + « Fait à ___, le ___ » (pas d'image de signature).
+  - **Pied de page** : « Édité le {date} via La Ruche » (genpdf n'expose pas de « page X / Y » natif — pas de numérotation de page).
+  - **Police** : Liberation Sans embarquée (`include_bytes!`), **palette** : `BRAND` #643fd5 (miroir de `--color-primary` du frontend), gris secondaire, encre.
+- Chaque document a son renderer dédié dans `domain/` qui assemble les données et s'appuie sur le template (pas de duplication de styles). Réutilisations prévues : compte rendu d'AG, lettre de relance, etc.
+- **Avantages** : PDF identique quel que soit le navigateur/OS de l'utilisateur, mise en page maîtrisée (A4, marges, tableaux paginés), réutilisable pour l'envoi automatique futur (e-mail), conforme à ADR-011 (génération serveur).
+- **Inconvénient accepté** : la mise en page PDF vit côté backend (et non dans le design system Tailwind) — c'est le template `pdf_template.rs` qui en tient lieu.
+
+**Décision initiale écartée :** vue HTML optimisée impression + `window.print()` — remplacée par le changement de spec ci-dessus (plus de `@media print` géré dans l'app).
 
 ## 2. État actuel du code
 
 | Élément | Emplacement | Constat |
 |---|---|---|
-| Routes carnet | `backend/src/api/mod.rs:296-304` | list / summary / get / put / delete / correction |
-| Endpoint summary (en-tête : adresse, syndic) | bloc carnet, `api/mod.rs:296-304` | **Existant — réutilisé tel quel** |
-| Client API carnet | `frontend/src/api/index.ts:400-413` (`maintenanceApi`) | Pas d'export |
-| Vue carnet | `frontend/src/features/maintenance/MaintenanceView.vue` | Point d'entrée du bouton « Exporter » |
-| Contrats actifs | `contractsApi` existant (`GET /contracts`) | Filtrer côté client `status == 'active'` + type assurance/maintenance |
+| Routes carnet | `backend/src/api/mod.rs` | list / summary / get / put / delete / correction + **`GET /logbook/export/pdf`** (S09) |
+| Template PDF partagé | `backend/src/domain/pdf_template.rs` | **Nouveau (S09)** — en-tête, titre, salutation, signature, pied de page, polices, palette, formatteurs FR |
+| Renderer carnet | `backend/src/domain/logbook_pdf.rs` | **Nouveau (S09)** — `render_logbook(&LogbookPdfData) -> Result<Vec<u8>, String>` |
+| Handler export | `api/logbook.rs::export_pdf` | **Nouveau (S09)** — assemble identité (building + mandat syndic + contact), contrats actifs, entrées, rend le PDF |
+| Client API carnet | `frontend/src/api/index.ts` (`maintenanceApi`) | **`exportPdf()`** (S09) — `GET /logbook/export/pdf`, réponse blob |
+| Vue carnet | `frontend/src/features/maintenance/MaintenanceView.vue` | Bouton « Exporter le carnet (PDF) » → téléchargement blob, état de chargement + `CAlert` en cas d'erreur |
+| Contrats actifs | `contractsApi` existant (`GET /contracts`) | Filtrés côté serveur dans `export_pdf` (`status == 'active'` + type assurance/maintenance) |
 
 ## 3. Modèle de données
 
-Aucune migration.
+Aucune migration (S10 a ajouté la catégorie ; S09 ne touche pas au schéma).
 
 ## 4. Backend
 
-**Aucun nouveau code requis** si les données suffisent via les endpoints existants :
-
-- en-tête réglementaire : endpoint summary (adresse de l'immeuble + identité du syndic)
-- chronologie : `GET` liste carnet (déjà exhaustive)
-- contrats actifs : `GET /contracts` (filtrage client par `status` et `contract_type` assurance/maintenance).
-
-Si le summary n'expose pas tous les champs d'en-tête réglementaires (adresse complète, nom du syndic), l'étendre — modification mineure de la couche db/api existante, pas de nouvelle route.
+- **`domain/pdf_template.rs`** (pur, sans I/O ni SQL) : `DocumentIdentity`, `DocumentTitleBlock`, `new_document`, `push_title_block`, `push_salutation`, `section`, `body`, `muted`, `push_signature`, `push_footer`, `finish_document`, formatteurs `format_euro` / `optional_euro` / `format_date` / `format_date_long`. Tests unitaires inclus.
+- **`domain/logbook_pdf.rs`** (pur) : `render_logbook` — bloc titre (métas immeuble/adresse/syndic/SIRET), sections contrats d'assurance et de maintenance actifs (compteur + lignes objet/prestataire/période/montant), tableau chronologie (date, intervention, prestataire, catégorie, source, coût — cellules aérées, lignes paginées proprement), signature, pied de page. Les libellés sont passés par le caller (renderer agnostique de la langue).
+- **`api/logbook.rs::export_pdf`** : `GET /logbook/export/pdf` — tout membre authentifié de l'immeuble (mêmes droits que le summary). Assemble l'identité (`building::get` + `governance_mandate::current_syndic_name` + contact du gestionnaire), les contrats actifs (`is_contract_active` / `is_maintenance_contract`), les entrées (`maintenance_log::list`, tri `intervention_date ASC`), puis rend via `render_logbook`. Réponse `application/pdf`, en-tête `Content-Disposition: attachment; filename="carnet-entretien.pdf"`.
+- **Note (hors périmètre)** : `domain/legal_documents.rs` (état daté / pré-état daté) duplique encore certains helpers (formatage, en-tête) — migration vers le template commun envisagée en suivi, sans toucher à un document probant dans ce ticket.
 
 ## 5. Frontend
 
-### 5.1 Nouvelle vue `frontend/src/features/maintenance/MaintenancePrintView.vue`
+### 5.1 `MaintenanceView.vue`
 
-Route dédiée (ex. `/maintenance/print`), accessible Manager/BoardMember (mêmes règles que la vue carnet). Contenu :
+Bouton « Exporter le carnet (PDF) » dans la topbar : appelle `maintenanceApi.exportPdf()`, télécharge le blob (`carnet-entretien.pdf`) via `URL.createObjectURL` + lien temporaire. État de chargement sur le bouton (`:loading`), `CAlert` sous le header en cas d'erreur (`toErrorMessage`).
 
-1. **En-tête réglementaire** : « Carnet d'entretien de l'immeuble » + adresse + syndic (données du summary) + date d'édition.
-2. **Contrats actifs** : deux blocs — assurance(s) en cours, contrats de maintenance en cours (prestataire, objet, dates, montant).
-3. **Chronologie** : tableau des interventions (date, titre, description, coût, prestataire, source) trié `intervention_date ASC`.
-4. Pied de page : mention « Édité le … via La Ruche ».
+### 5.2 `frontend/src/api/index.ts`
 
-Style : Tailwind + `@media print` (masquer navigation/boutons via classe `print:hidden`, `break-inside-avoid` sur les lignes, format A4). Pas de `<style>` bloc si les utilitaires suffisent — sinon tokens/utilitaires print de Tailwind v4 uniquement.
+`maintenanceApi.exportPdf: () => api.get<Blob>('/logbook/export/pdf', { responseType: 'blob' })` (pattern identique à `etatDateApi.exportPdf`).
 
-Bouton « Imprimer / Exporter en PDF » appelant `window.print()`.
+### 5.3 Catalogue
 
-### 5.2 `MaintenanceView.vue`
-
-Bouton « Exporter le carnet » ouvrant la route print (nouvel onglet `target="_blank"` acceptable).
-
-### 5.3 `frontend/src/api/index.ts`
-
-Aucun nouvel appel si les endpoints existants suffisent (summary + list + contracts). Ne rien ajouter à `maintenanceApi` (`:400-413`) tant que ce n'est pas nécessaire.
-
-### 5.4 Catalogue
-
-`MaintenancePrintView` est une vue, pas un composant catalogue ; si un composant d'en-tête imprimable réutilisable est extrait, l'ajouter à `docs/DESIGN.md §2` avant usage.
+Aucun nouveau composant frontend : le template documentaire vit côté backend (`domain/pdf_template.rs`). Règle DESIGN mise à jour : les documents PDF officiels sont générés serveur, jamais via `@media print`.
 
 ## 6. Cas limites
 
 | Cas | Règle |
 |---|---|
-| Carnet vide | La vue s'imprime quand même : en-tête + « Aucune intervention enregistrée » |
+| Carnet vide | Le PDF est généré quand même : en-tête + « Aucune intervention enregistrée » |
 | Aucun contrat actif | Bloc affiché avec mention « Aucun contrat en cours » (l'absence d'assurance est une information réglementaire en soi) |
-| Volumétrie importante | Tableau multi-pages ; `break-inside-avoid` par ligne, en-tête de tableau répété (`thead` imprimé par page nativement) |
-| Rôles | Mêmes guards que la vue carnet ; la route print ne contourne aucun contrôle d'accès API |
-| Montants | Affichage formaté FR (€, deux décimales) — les montants restent `Decimal` côté backend |
+| Volumétrie importante | Tableau multi-pages ; lignes non coupées au milieu (genpdf pagine les lignes), en-tête récurrent sur chaque page |
+| Syndic non renseigné | Méta « Syndic en exercice : Syndic non renseigné », signature « Le syndic » conservée |
+| Rôles | Même accès que le summary (tout membre authentifié de l'immeuble) ; aucune route frontend supprimée ne contourne de contrôle |
+| Montants | Formatés FR (€, deux décimales) depuis `Decimal` (jamais `f64`) — `format_euro` du template |
 
 ## 7. Critères d'acceptation
 
-1. Depuis la vue carnet, « Exporter le carnet » ouvre une page imprimable complète (en-tête réglementaire, contrats actifs, chronologie).
-2. `Ctrl+P` / bouton → PDF navigateur propre : A4, sans navigation, tableaux non coupés au milieu d'une ligne.
-3. Aucune nouvelle dépendance ajoutée (backend comme frontend).
+1. Depuis la vue carnet, « Exporter le carnet (PDF) » télécharge un PDF complet (en-tête réglementaire, contrats actifs, chronologie, signature, pied de page).
+2. Le PDF est identique quel que soit le navigateur (génération serveur, A4, tableaux paginés proprement).
+3. Le template (`domain/pdf_template.rs`) est réutilisable tel quel pour les prochains documents (CR d'AG, lettre de relance).
 4. Carnet vide et absence de contrats gérés sans erreur.
+5. Aucune dépendance `@media print` / `window.print` pour les documents PDF.
 
 ## 8. Plan de tests
 
-- **Backend** : aucun nouveau test si aucun endpoint modifié ; si le summary est étendu, test e2e des nouveaux champs.
-- **Frontend** : vérification manuelle du rendu print (Chrome + Firefox), carnet vide, carnet > 2 pages.
-- Lint/build : `npm --prefix frontend run build && npm --prefix frontend run lint`.
+- **Backend** : tests unitaires `pdf_template.rs` + `logbook_pdf.rs` (formatteurs, rendu valide `%PDF`, carnet vide, sans syndic) ; tests e2e `backend/tests/logbook_pdf_test.rs` (200 + `application/pdf` + magic bytes `%PDF` pour les 4 rôles, 401 non authentifié, reflet d'une entrée seedée, carnet vide) — à exécuter en CI avec Postgres.
+- **Frontend** : `npm run typecheck && npm run lint && npm run build`.
+- Vérification visuelle du rendu (échantillon généré hors repo).
 
 ## 9. Ordre d'implémentation
 
-1. Vérifier le contenu du summary ; l'étendre si un champ d'en-tête manque.
-2. `MaintenancePrintView.vue` + route + guards.
-3. Bouton d'export dans `MaintenanceView.vue`.
-4. Ajustements CSS print, tests manuels.
+1. Template partagé `domain/pdf_template.rs` + tests unitaires.
+2. Renderer `domain/logbook_pdf.rs` + tests unitaires.
+3. Handler `export_pdf` + route + tests e2e.
+4. Frontend : `maintenanceApi.exportPdf` + bouton de téléchargement dans `MaintenanceView.vue`.
+5. Docs (ARCHITECTURE, DESIGN, EPICS) + spec.

@@ -546,7 +546,6 @@ border-color: var(--color-outline-light);
 | `CLegalCard` | — | Carte de note légale (wraps `CLegalNotice`) |
 | `CLegalNotice` | `descriptions`, `links` | Bloc notices légales structurées |
 | `CListItem` | — | Ligne de liste générique |
-| `CDocumentHeader` | `title`, `subtitle?`, `meta[]` (`{ label, value }[]`), `issuedOn?` (`Date` | `string`) | ✅ En-tête de document officiel imprimable (EP-009-S09) — logo `CLogoMark` + nom « La Ruche » à gauche, titre du document centré, métas (adresse, syndic…) et date d'édition à droite. Rendu sobre, optimisé `@media print` (pas de couleur de fond, bordure basse de séparation). Réutilisé par les vues d'impression (carnet d'entretien, futurs compte rendu d'AG, lettre de relance…). |
 | `CMetaItem` | `variant`, `icon` | Ligne icône + contenu — variantes `footer` / `sub` |
 | `CMetaLine` | — | Rangée horizontale de `CMetaItem` avec `CSeparator` |
 | `CModal` | `open`, `title`, `saving?`, `feedback?` | Dialogue Radix `Dialog` — émettre `@submit` pour soumission. `CFormFeedback` obligatoire dans `#footer` (DDR-006). |
@@ -614,6 +613,12 @@ Sur mobile, les écrans publics (`/login`, `/onboarding`, invitation, reset) con
 - État d'erreur → `CPageError`. État de chargement → `CPageLoader`.
 - Les chargements secondaires non bloquants restent isolés.
 - Le backend renvoie des codes d'erreurs au formt i18n. Toutes les entrées doivent être sous `errors`.
+
+#### Documents PDF officiels
+
+- **Aucune génération PDF côté navigateur** (`@media print` interdit) : tout document PDF est généré côté serveur (`genpdf`) et téléchargé en blob.
+- L'identité visuelle des documents PDF est centralisée côté backend dans `domain/pdf_template.rs` (en-tête « La Ruche » + identité immeuble, bloc titre, salutation, signature artificielle, pied de page, polices Liberation Sans, palette marque #643fd5). Les renderers documentaires (`domain/logbook_pdf.rs`, …) s'y appuient ; ne pas dupliquer ces styles dans un renderer.
+- Le frontend se contente d'appeler l'endpoint PDF et de télécharger le blob (`maintenanceApi.exportPdf`, `etatDateApi.exportPdf`…), avec état de chargement sur le bouton et `CAlert` en cas d'erreur.
 
 #### Cartes de liste
 
