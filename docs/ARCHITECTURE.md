@@ -81,7 +81,7 @@ references:
 | Contrats | `vendor_contract`, `contract_document`, `contract_reminder` |
 | Prestataires | `contractor` |
 | Tâches | `task` (`contractor_id` FK → `contractor`, `contractor_name` texte libre, `vendor_token` ephemeral), `task_document`, `vendor_submission`, `vendor_submission_document` |
-| Sinistres | `claim`, `claim_document`, `claim_note` (EP-008-S07, append-only) |
+| Sinistres | `claim`, `claim_document`, `claim_note` |
 | Carnet | `maintenance_log`, `maintenance_log_document` |
 | Signalements | `report`, `report_document` — `report.task_id` FK informatif (EP-017, conversion signalement → tâche) |
 | Consultations | `consultation`, `consultation_choice`, `consultation_response`, `consultation_response_choice`, `consultation_reminder` |
