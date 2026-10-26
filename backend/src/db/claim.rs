@@ -432,13 +432,12 @@ pub async fn update(
            title = $3,
            description = $4,
            claim_type = $5::text::claim_type,
-           declared_at = $6,
-           published_at = $7,
-           status = $8::text::claim_status,
-           unit_id = $9,
-           transmitted_at = $10,
-           reimbursement_date = $11,
-           reimbursement_amount = $12,
+           published_at = $6,
+           status = $7::text::claim_status,
+           unit_id = $8,
+           transmitted_at = $9,
+           reimbursement_date = $10,
+           reimbursement_amount = $11,
            updated_at = NOW()
            WHERE id = $1 AND building_id = $2"#,
     )
@@ -447,7 +446,6 @@ pub async fn update(
     .bind(input.title.trim())
     .bind(input.description)
     .bind(input.claim_type)
-    .bind(input.declared_at)
     .bind(input.published_at)
     .bind(input.status)
     .bind(input.unit_id)

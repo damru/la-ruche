@@ -61,6 +61,22 @@ fn assert_claim_mutable(existing: &db::claim::ClaimRow) -> AppResult<()> {
     )
 }
 
+/// Fetches a claim and returns 404 if it's a draft and the user is not a Manager.
+async fn get_claim_for_document_op(
+    state: &AppState,
+    id: Uuid,
+    building_id: Uuid,
+    auth: &AuthUser,
+) -> AppResult<db::claim::ClaimRow> {
+    let claim = db::claim::get(&state.pool, id, building_id)
+        .await?
+        .ok_or(AppError::NotFound)?;
+    if claim.status == db::claim::CLAIM_STATUS_DRAFT && !auth.has_role(&Role::Manager) {
+        return Err(AppError::NotFound);
+    }
+    Ok(claim)
+}
+
 pub async fn update(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,
@@ -119,9 +135,7 @@ pub async fn list_documents(
     Path(id): Path<Uuid>,
 ) -> AppResult<Json<serde_json::Value>> {
     auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
-    db::claim::get(&state.pool, id, auth.building_id)
-        .await?
-        .ok_or(AppError::NotFound)?;
+    get_claim_for_document_op(&state, id, auth.building_id, &auth).await?;
     let documents = db::claim::list_documents(&state.pool, id, auth.building_id).await?;
     json_value(documents)
 }
@@ -138,6 +152,7 @@ pub async fn attach_document(
     Json(input): Json<AttachDocumentInput>,
 ) -> AppResult<StatusCode> {
     auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
+    get_claim_for_document_op(&state, id, auth.building_id, &auth).await?;
     let attached =
         db::claim::attach_document(&state.pool, id, input.document_id, auth.building_id).await?;
     if !attached {
@@ -152,6 +167,7 @@ pub async fn detach_document(
     Path((id, document_id)): Path<(Uuid, Uuid)>,
 ) -> AppResult<StatusCode> {
     auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
+    get_claim_for_document_op(&state, id, auth.building_id, &auth).await?;
     let detached =
         db::claim::detach_document(&state.pool, id, document_id, auth.building_id).await?;
     if !detached {

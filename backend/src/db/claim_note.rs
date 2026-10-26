@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
 use serde::Serialize;
-use sqlx::PgPool;
+use sqlx::{PgPool, Row};
 use uuid::Uuid;
 
 use crate::errors::{AppError, AppResult};
@@ -49,7 +49,6 @@ pub async fn create(
     .fetch_one(pool)
     .await?;
 
-    use sqlx::Row;
     let id: Uuid = row.try_get("id")?;
     let author_name: String =
         sqlx::query_scalar("SELECT first_name || ' ' || last_name FROM user_account WHERE id = $1")
@@ -96,18 +95,16 @@ pub async fn list(
     .fetch_all(pool)
     .await?;
 
-    use sqlx::Row;
-    let notes = rows
-        .into_iter()
-        .map(|row| ClaimNoteRow {
-            id: row.try_get("id").unwrap_or_default(),
-            claim_id: row.try_get("claim_id").unwrap_or_default(),
-            author_id: row.try_get("author_id").unwrap_or_default(),
-            author_name: row.try_get("author_name").unwrap_or_default(),
-            body: row.try_get("body").unwrap_or_default(),
-            created_at: row.try_get("created_at").unwrap_or_default(),
+    rows.into_iter()
+        .map(|row| {
+            Ok(ClaimNoteRow {
+                id: row.try_get("id")?,
+                claim_id: row.try_get("claim_id")?,
+                author_id: row.try_get("author_id")?,
+                author_name: row.try_get("author_name")?,
+                body: row.try_get("body")?,
+                created_at: row.try_get("created_at")?,
+            })
         })
-        .collect();
-
-    Ok(notes)
+        .collect()
 }

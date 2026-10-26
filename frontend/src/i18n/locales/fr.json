@@ -1051,14 +1051,11 @@
     "noAttachedPhotos": "Aucune photo jointe pour ce signalement.",
     "noPhotos": "Aucune photo disponible",
     "statuses": {
-      "draft": "Brouillon",
-      "draft": "Brouillon",
       "open": "Ouvert",
       "in_progress": "En cours",
       "closed": "Clos"
     },
     "filters": {
-      "draft": "Brouillons",
       "open": "Ouverts",
       "inProgress": "En cours",
       "closed": "Clos"
@@ -1194,17 +1191,6 @@
     "transmitTitle": "Transmettre à l'assurance",
     "closeTitle": "Clore le sinistre",
     "transmit": "Transmettre",
-    "close": "Clore",
-    "declare": "Déclarer",
-    "declareTitle": "Déclarer le sinistre",
-    "declareSuccess": "Sinistre déclaré",
-    "declaredAtField": "Date de déclaration",
-    "notesTitle": "Suivi",
-    "notesEmpty": "Aucune note de suivi.",
-    "notePlaceholder": "Ajouter une note de suivi…",
-    "noteAdd": "Ajouter une note",
-    "noteAdded": "Note ajoutée",
-    "draftHint": "Brouillon — visible du syndic seul",
     "declare": "Déclarer",
     "declareTitle": "Déclarer le sinistre",
     "declareSuccess": "Sinistre déclaré",
@@ -1214,7 +1200,6 @@
     "notesEmpty": "Aucune note de suivi.",
     "notePlaceholder": "Ajouter une note de suivi…",
     "noteAdd": "Ajouter une note",
-    "noteAdded": "Note ajoutée",
     "draftHint": "Brouillon — visible du syndic seul",
     "openedAt": "Ouvert {date}",
     "declaredOn": "Déclaré le {date}",
@@ -1269,7 +1254,6 @@
       "reference": "Échéance légale : {date}"
     },
     "statuses": {
-      "draft": "Brouillon",
       "draft": "Brouillon",
       "open": "Ouvert",
       "in_progress": "En cours",
