@@ -1,4 +1,4 @@
-// ── domain/calendar.rs — Calendrier copropriété (EP-014-S01) ─────────────
+// ── domain/calendar.rs — Calendrier copropriété ─────────────
 //
 // Pure types and role-visibility logic. Zero SQL — the DB layer
 // (`db::calendar`) is responsible for fetching rows per source.
@@ -78,7 +78,7 @@ pub struct CalendarEvent {
     pub is_deadline: bool,
 }
 
-/// AC-CAL-001-C — role-based source visibility, pure and testable.
+/// Role-based source visibility, pure and testable.
 ///
 /// Manager/BoardMember see every source, including the legal deadlines
 /// (J+30 notification, J+60 contestation) derived from closed meetings.
@@ -102,10 +102,10 @@ pub fn visible_sources(roles: &[Role]) -> Vec<CalendarSource> {
     }
 }
 
-/// AC-CAL-002-A — requested type filter intersected with role visibility.
+/// Requested type filter intersected with role visibility.
 /// Role visibility stays sovereign: a requested source the caller cannot see is
 /// silently dropped (200 with an empty list, never a visibility widening).
-/// `requested = None` is the identity (S01 behaviour unchanged).
+/// `requested = None` is the identity (no filter).
 pub fn effective_sources(
     roles: &[Role],
     requested: Option<&[CalendarSource]>,

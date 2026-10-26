@@ -1,12 +1,12 @@
 <script setup lang="ts">
-// CalendarFilterBar — EP-014-S02 (AC-CAL-002-A). Toggle chips per event type,
-// colored like the source badges (AC-CAL-001-B coherence). Only the sources
-// visible for the caller's role are offered.
+// CalendarFilterBar — toggle chips per event type, colored like the source
+// badges. Only the sources visible for the caller's role are offered.
 
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import CBadge from '@/components/atoms/CBadge.vue'
 import { DOCUMENT_ROLES, MANAGER_ROLES } from '@/utils/constants'
+import { CALENDAR_SOURCES, SOURCE_BADGE_VARIANT } from './sources'
 import type { CalendarSource, Role } from '@/types/domain'
 
 const props = defineProps<{
@@ -20,16 +20,7 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 
-const BADGE_VARIANT: Record<CalendarSource, 'primary' | 'accent' | 'warn' | 'err' | 'default' | 'valid'> = {
-  meeting: 'primary',
-  contract: 'warn',
-  task: 'valid',
-  claim: 'err',
-  maintenance: 'accent',
-  manual: 'default',
-}
-
-// AC-CAL-002-A — a role only sees its own filters (mirrors the server-side
+// A role only sees its own filters (mirrors the server-side
 // `visible_sources` rule: Manager/BoardMember see everything, others only
 // meetings + manual events).
 const VISIBLE_SOURCES: Record<CalendarSource, readonly Role[]> = {
@@ -41,10 +32,8 @@ const VISIBLE_SOURCES: Record<CalendarSource, readonly Role[]> = {
   manual: DOCUMENT_ROLES,
 }
 
-const FILTER_ORDER: readonly CalendarSource[] = ['meeting', 'contract', 'task', 'claim', 'maintenance', 'manual']
-
 const filters = computed(() =>
-  FILTER_ORDER.filter(source => props.roles.some(role => (VISIBLE_SOURCES[source] as readonly Role[]).includes(role))),
+  CALENDAR_SOURCES.filter(source => props.roles.some(role => (VISIBLE_SOURCES[source] as readonly Role[]).includes(role))),
 )
 
 function isActive(source: CalendarSource): boolean {
@@ -75,7 +64,7 @@ function toggle(source: CalendarSource) {
       :class="isActive(source) ? 'opacity-100' : 'opacity-40'"
       @click="toggle(source)"
     >
-      <CBadge :variant="BADGE_VARIANT[source]">
+      <CBadge :variant="SOURCE_BADGE_VARIANT[source]">
         {{ t(`calendar.sources.${source}`) }}
       </CBadge>
     </button>

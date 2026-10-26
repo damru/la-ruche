@@ -1,4 +1,4 @@
-// ── api/calendar.rs — Calendrier copropriété (EP-014-S01) ────────────────
+// ── api/calendar.rs — Calendrier copropriété ────────────────
 //
 // Handler with no business logic: validates the query range, resolves the
 // visible sources for the caller's roles, and delegates to `db::calendar`.
@@ -30,7 +30,7 @@ const ICS_PRODID: &str = "-//La Ruche//Calendrier//FR";
 pub struct EventsQuery {
     pub from: NaiveDate,
     pub to: NaiveDate,
-    /// Optional CSV filter (EP-014-S02): `types=meeting,contract,...`.
+    /// Optional CSV filter: `types=meeting,contract,...`.
     /// Absent or empty → every source visible for the caller's roles.
     pub types: Option<String>,
 }
@@ -54,8 +54,8 @@ fn parse_types(types: Option<&str>) -> AppResult<Option<Vec<CalendarSource>>> {
 /// GET /calendar/events?from=YYYY-MM-DD&to=YYYY-MM-DD&types=meeting,contract
 ///
 /// All authenticated roles can call this endpoint — filtering happens by
-/// visible sources (AC-CAL-001-C), not by a 403. The `types` filter is
-/// intersected with role visibility (AC-CAL-002-A): it can only narrow.
+/// visible sources, not by a 403. The `types` filter is intersected with
+/// role visibility: it can only narrow.
 pub async fn events(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,
@@ -88,7 +88,7 @@ pub struct ExportIcsQuery {
 
 /// GET /calendar/export.ics?from=YYYY-MM-DD&to=YYYY-MM-DD
 ///
-/// Same visibility pipeline as `events` (AC-CAL-003-A) serialized as ICS.
+/// Same visibility pipeline as `events` serialized as ICS.
 /// Defaults to today → +365 days when `from`/`to` are omitted (subscription
 /// export has no meaningful default scoped to the current screen).
 pub async fn export_ics(

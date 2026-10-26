@@ -8,7 +8,8 @@ import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import CBadge from '@/components/atoms/CBadge.vue'
-import type { CalendarEvent, CalendarSource } from '@/types/domain'
+import type { CalendarEvent } from '@/types/domain'
+import { SOURCE_BADGE_VARIANT } from './sources'
 
 const MAX_EVENTS_PER_CELL = 3
 
@@ -26,14 +27,6 @@ const emit = defineEmits<{
 const router = useRouter()
 const { t } = useI18n()
 
-const SOURCE_BADGE_VARIANT: Record<CalendarSource, 'primary' | 'accent' | 'warn' | 'err' | 'default' | 'valid'> = {
-  meeting: 'primary',
-  contract: 'warn',
-  task: 'valid',
-  claim: 'err',
-  maintenance: 'accent',
-  manual: 'default',
-}
 
 function toDateKey(date: Date): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`

@@ -1,9 +1,9 @@
 <script setup lang="ts">
-// CalendarView — EP-014-S01. Monthly / weekly / agenda toggle with period nav.
-// Visibility rules are enforced server-side (`/calendar/events` filters by
-// caller role); this view only renders whatever events come back.
-// EP-014-S02: type filter bar, state persisted in localStorage.
-// EP-014-S03: manual event create/edit/delete (Manager/BoardMember only).
+// CalendarView — monthly / weekly / agenda toggle with period nav, type filter
+// bar (state persisted in localStorage), manual event create/edit/delete
+// (Manager/BoardMember only). Visibility rules are enforced server-side
+// (`/calendar/events` filters by caller role); this view only renders whatever
+// events come back.
 
 import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -34,13 +34,12 @@ import CIconDownload from '@/components/atoms/CIconDownload.svg'
 import CalendarGrid from './CalendarGrid.vue'
 import CalendarAgendaMode from './CalendarAgendaMode.vue'
 import CalendarFilterBar from './CalendarFilterBar.vue'
+import { CALENDAR_SOURCES } from './sources'
 import EventFormModal from './EventFormModal.vue'
 import EventDetailModal from './EventDetailModal.vue'
 import type { CalendarEvent, CalendarSource, ManualCalendarEvent, Role } from '@/types/domain'
 
 type Mode = 'month' | 'week' | 'agenda'
-
-const ALL_SOURCES: readonly CalendarSource[] = ['meeting', 'contract', 'task', 'claim', 'maintenance', 'manual']
 
 const { t } = useI18n()
 const route = useRoute()
@@ -55,7 +54,7 @@ const buildingName = ref('')
 
 const canManage = perms.canManageCalendar
 
-// EP-014-S02 (AC-CAL-002-B) — filter state persisted per user in localStorage.
+// Filter state persisted per user in localStorage.
 // Corrupted/unavailable storage falls back to every type active.
 const activeTypes = ref<CalendarSource[]>(loadFilters())
 
@@ -66,13 +65,13 @@ function storageKey(): string {
 function loadFilters(): CalendarSource[] {
   try {
     const raw = localStorage.getItem(storageKey())
-    if (!raw) return [...ALL_SOURCES]
+    if (!raw) return [...CALENDAR_SOURCES]
     const parsed: unknown = JSON.parse(raw)
-    if (!Array.isArray(parsed)) return [...ALL_SOURCES]
-    const valid = parsed.filter((s): s is CalendarSource => (ALL_SOURCES as readonly string[]).includes(s as string))
-    return valid.length > 0 ? valid : [...ALL_SOURCES]
+    if (!Array.isArray(parsed)) return [...CALENDAR_SOURCES]
+    const valid = parsed.filter((s): s is CalendarSource => (CALENDAR_SOURCES as readonly string[]).includes(s as string))
+    return valid.length > 0 ? valid : [...CALENDAR_SOURCES]
   } catch {
-    return [...ALL_SOURCES]
+    return [...CALENDAR_SOURCES]
   }
 }
 
@@ -85,7 +84,7 @@ watch(activeTypes, (types) => {
   reload()
 }, { deep: true })
 
-// Agenda mode with free from/to dates (EP-014-S02 period filter).
+// Agenda mode with free from/to dates.
 const listFrom = ref('')
 const listTo = ref('')
 
@@ -121,7 +120,7 @@ function toIsoDate(date: Date): string {
 }
 
 async function loadData() {
-  // EP-014-S02 — no active type: skip the network call, show an explicit state.
+  // No active type: skip the network call, show an explicit state.
   if (activeTypes.value.length === 0) {
     if (!buildingName.value) {
       buildingName.value = (await useBuildingStore().fetch()).name
