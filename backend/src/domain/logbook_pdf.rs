@@ -1,13 +1,20 @@
 //! Logbook PDF rendering (EP-009-S09, spec change: server-side generation).
 //!
 //! Renders the regulatory logbook — « Carnet d'entretien de l'immeuble »
-//! (décret n°2001-477, art. 1) — as a PDF using the shared document template
-//! (`domain/pdf_template.rs`): introduction (logo + « La Ruche » + tagline,
-//! title, identity of the copropriété, « Fait à …, le … » + « Pour le compte
-//! de … », explanatory paragraph), active insurance contracts, active
-//! maintenance contracts, intervention chronology, conclusion (« Fait à …,
-//! le … » filled, signé « La Ruche », période de validité légale) and a
-//! running footer on every page.
+//! (décret n°2001-477, art. 1) — as a **letter + annex** PDF using the shared
+//! document template (`domain/pdf_template.rs`, layout v6, retour utilisateur
+//! PR 155) :
+//!
+//! - **Page 1 — lettre** : double en-tête (bloc marque « app web » + émetteur à
+//!   gauche, destinataire à droite, filet violet), objet en gras + référence,
+//!   salutation, paragraphes de description (dont l'annonce explicite de
+//!   l'annexe), formule de politesse, puis signature alignée à droite
+//!   (« Pour le syndic, », nom, qualité, « Fait à …, le … » rempli).
+//! - **Pages suivantes — annexe** : kicker « A N N E X E », titre du carnet en
+//!   couleur marque, identité de la copropriété, puis contrats d'assurance en
+//!   cours, contrats de maintenance en cours et chronologie des interventions
+//!   (le contenu tabulaire annoncé dans la lettre).
+//! - **Pied de page récurrent** sur chaque page (logo + tagline + édition).
 //!
 //! Pure functions only — no I/O, no SQL. The API layer assembles the data and
 //! receives the finished PDF as in-memory bytes.
@@ -69,23 +76,43 @@ pub struct LogbookPdfData {
 #[derive(Debug, Clone)]
 pub struct LogbookPdfLabels {
     pub doc_title: String,
+    // ── Page 1 : lettre ──────────────────────────────────────────────────
+    /// Issuer block heading on the left of the double header, e.g. « Le
+    /// syndic des copropriétaires ».
+    pub issuer_heading: String,
+    /// Issuer line when no syndic is recorded, e.g. « Syndic non renseigné ».
+    pub issuer_not_set: String,
+    /// Recipient block label on the right of the double header, e.g.
+    /// « Destinataire ».
+    pub recipient_label: String,
+    /// Bold letter subject line, e.g. « Carnet d'entretien de l'immeuble —
+    /// édition 2026 ».
+    pub objet: String,
+    /// Optional grey reference line under the objet, e.g. « Réf.
+    /// LR-CARNET-2026 · Édition du 27/10/2026 ».
+    pub reference: Option<String>,
+    /// Letter salutation, e.g. « Madame, Monsieur, ».
+    pub salutation: String,
+    /// Letter body paragraphs: description of the document, explicit
+    /// announcement of the annex, validity statement, availability sentence.
+    pub letter_paragraphs: Vec<String>,
+    /// Closing formula of the letter, e.g. « Je vous prie d'agréer… ».
+    pub closing_formula: String,
+    /// Signature block closing, e.g. « Pour le syndic, ».
+    pub signer_closing: String,
+    /// Signer role in small grey type, e.g. « Syndic en exercice — … ».
+    pub signer_role: Option<String>,
+    /// Place of issue for « Fait à {place}, le {date} » (signature) —
+    /// usually the city of the copropriété.
+    pub place: String,
+    // ── Annexe ────────────────────────────────────────────────────────────
+    /// Annex kicker rendered letter-spaced, e.g. « Annexe ».
+    pub annex_kicker: String,
     pub insurance_section: String,
     pub maintenance_section: String,
     pub chronology_section: String,
     pub no_contracts: String,
     pub no_entries: String,
-    pub syndic_not_set: String,
-    /// Place of issue for « Fait à {place}, le {date} » (introduction and
-    /// conclusion) — usually the city of the copropriété.
-    pub place: String,
-    /// « Pour le compte de {for_whom} » — the syndic of the copropriété.
-    pub for_whom: String,
-    /// Paragraph explaining the content of the document.
-    pub purpose: String,
-    /// Legal validity period rendered in the conclusion (the logbook is a
-    /// living document: no expiry — the period states it is valid as of the
-    /// edition date and supersedes previous editions).
-    pub validity_period: String,
     pub col_date: String,
     pub col_intervention: String,
     pub col_vendor: String,
@@ -99,41 +126,99 @@ pub struct LogbookPdfLabels {
     pub entries_count_other: String,
 }
 
-/// Renders the logbook as a PDF using the shared template.
+/// Renders the logbook as a **letter + annex** PDF using the shared template.
 pub fn render_logbook(data: &LogbookPdfData) -> Result<Vec<u8>, String> {
     let mut doc = tpl::new_document(tpl::font_family()?, data.edited_at, &data.labels.doc_title);
 
     let mut layout = LinearLayout::vertical();
 
-    // ── Introduction (première page uniquement) ────────────────────────────
-    let syndic_value = match (&data.identity.syndic_name, &data.syndic_contact) {
+    // Syndic line, shared by the issuer block and the annex meta.
+    let syndic_line = match (&data.identity.syndic_name, &data.syndic_contact) {
         (Some(name), Some(contact)) => format!("{name} — {contact}"),
         (Some(name), None) => name.clone(),
-        (None, _) => data.labels.syndic_not_set.clone(),
+        (None, _) => data.labels.issuer_not_set.clone(),
     };
-    let mut meta = vec![
-        ("Immeuble".to_string(), data.identity.building_name.clone()),
-        (
-            "Adresse".to_string(),
-            data.identity.building_address.clone(),
-        ),
-        ("Syndic en exercice".to_string(), syndic_value),
-    ];
+
+    // ── Page 1 : lettre ──────────────────────────────────────────────────
+    let mut issuer_lines = vec![data.labels.issuer_heading.clone(), syndic_line.clone()];
     if let Some(siret) = &data.identity.syndic_siret {
-        meta.push(("SIRET".to_string(), siret.clone()));
+        issuer_lines.push(format!("SIRET : {siret}"));
     }
-    tpl::push_intro(
+
+    tpl::push_letter_header(
         &mut layout,
-        &tpl::DocumentIntro {
-            title: data.labels.doc_title.clone(),
-            subtitle: None,
-            meta,
-            place: data.labels.place.clone(),
-            edited_at: data.edited_at,
-            for_whom: data.labels.for_whom.clone(),
-            purpose: Some(data.labels.purpose.clone()),
+        &tpl::DocumentHeader {
+            issuer_lines,
+            recipient: Some(tpl::DocumentRecipient {
+                label: data.labels.recipient_label.clone(),
+                lines: vec![
+                    data.identity.building_name.clone(),
+                    data.identity.building_address.clone(),
+                ],
+            }),
         },
     )?;
+
+    // Objet + référence, salutation, corps de la lettre (description du
+    // document + annonce de l'annexe), formule de politesse.
+    tpl::push_objet(&mut layout, &data.labels.objet, data.labels.reference.as_deref());
+    tpl::push_salutation(&mut layout, &data.labels.salutation);
+    for paragraph in &data.labels.letter_paragraphs {
+        layout.push(tpl::body(paragraph));
+        layout.push(elements::Break::new(0.5));
+    }
+    layout.push(tpl::body(&data.labels.closing_formula));
+
+    // Signature alignée à droite (« Pour le syndic, », nom, qualité, date).
+    // Sans syndic enregistré : signé « La Ruche », sans qualité.
+    let signer_role = match data.identity.syndic_name {
+        Some(_) => data.labels.signer_role.clone(),
+        None => None,
+    };
+    tpl::push_conclusion(
+        &mut layout,
+        &tpl::DocumentConclusion {
+            closing: data.labels.signer_closing.clone(),
+            signer_name: data
+                .identity
+                .syndic_name
+                .clone()
+                .unwrap_or_else(|| tpl::APP_NAME.to_string()),
+            signer_role,
+            place: data.labels.place.clone(),
+            date: data.edited_at,
+            validity_period: None,
+        },
+    );
+
+    // ── Saut de page : annexe ─────────────────────────────────────────────
+    layout.push(elements::PageBreak::new());
+
+    let mut annex_meta = vec![
+        ("Syndic en exercice".to_string(), syndic_line),
+        (
+            "Édition du".to_string(),
+            tpl::format_date(data.edited_at),
+        ),
+    ];
+    if let Some(siret) = &data.identity.syndic_siret {
+        annex_meta.insert(
+            1,
+            ("SIRET".to_string(), siret.clone()),
+        );
+    }
+    tpl::push_annex_header(
+        &mut layout,
+        &tpl::DocumentAnnexHeader {
+            kicker: data.labels.annex_kicker.clone(),
+            title: data.labels.doc_title.clone(),
+            subtitle: Some(format!(
+                "{} — {}",
+                data.identity.building_name, data.identity.building_address
+            )),
+            meta: annex_meta,
+        },
+    );
 
     // ── Active insurance contracts ─────────────────────────────────────────
     push_contract_section(
@@ -159,16 +244,6 @@ pub fn render_logbook(data: &LogbookPdfData) -> Result<Vec<u8>, String> {
     layout.push(tpl::section(&data.labels.chronology_section));
     layout.push(chronology_table(data));
     layout.push(elements::Break::new(1.0));
-
-    // ── Conclusion (signature remplie, signée « La Ruche ») ────────────────
-    tpl::push_conclusion(
-        &mut layout,
-        &tpl::DocumentConclusion {
-            place: data.labels.place.clone(),
-            date: data.edited_at,
-            validity_period: Some(data.labels.validity_period.clone()),
-        },
-    );
 
     doc.push(layout);
     tpl::finish_document(doc)
@@ -381,16 +456,29 @@ mod tests {
     fn labels() -> LogbookPdfLabels {
         LogbookPdfLabels {
             doc_title: "Carnet d'entretien de l'immeuble".to_string(),
+            issuer_heading: "Le syndic des copropriétaires".to_string(),
+            issuer_not_set: "Syndic non renseigné".to_string(),
+            recipient_label: "Destinataire".to_string(),
+            objet: "Carnet d'entretien de l'immeuble — édition 2026".to_string(),
+            reference: Some(
+                "Réf. LR-CARNET-2026 · Édition du 16/06/2026".to_string(),
+            ),
+            salutation: "Madame, Monsieur,".to_string(),
+            letter_paragraphs: vec![
+                "Conformément au décret n°2001-477, le syndic tient à jour le carnet d'entretien de l'immeuble. Vous trouverez en annexe du présent document l'édition du carnet : contrats d'assurance et de maintenance en cours, puis chronologie complète des interventions.".to_string(),
+                "Cette édition est établie à sa date d'émission et annule et remplace toute édition antérieure.".to_string(),
+                "Nous restons à votre disposition pour toute question relative au contenu de ce document.".to_string(),
+            ],
+            closing_formula: "Je vous prie d'agréer, Madame, Monsieur, l'expression de mes salutations distinguées.".to_string(),
+            signer_closing: "Pour le syndic,".to_string(),
+            signer_role: Some("Syndic en exercice — Résidence des Tilleuls".to_string()),
+            place: "Paris".to_string(),
+            annex_kicker: "Annexe".to_string(),
             insurance_section: "Contrats d'assurance en cours".to_string(),
             maintenance_section: "Contrats d'entretien et de maintenance en cours".to_string(),
             chronology_section: "Chronologie des interventions".to_string(),
             no_contracts: "Aucun contrat en cours.".to_string(),
             no_entries: "Aucune intervention enregistrée.".to_string(),
-            syndic_not_set: "Syndic non renseigné".to_string(),
-            place: "Paris".to_string(),
-            for_whom: "Cabinet Dupont, syndic de la Résidence des Tilleuls".to_string(),
-            purpose: "Ce carnet d'entretien recense les contrats d'assurance et de maintenance en cours, ainsi que la chronologie des interventions réalisées sur les parties communes de l'immeuble.".to_string(),
-            validity_period: "Document établi à la date d'édition ; il annule et remplace toute édition antérieure.".to_string(),
             col_date: "Date".to_string(),
             col_intervention: "Intervention".to_string(),
             col_vendor: "Prestataire".to_string(),
@@ -494,3 +582,4 @@ mod tests {
         assert!(bytes.starts_with(b"%PDF"));
     }
 }
+

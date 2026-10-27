@@ -427,7 +427,19 @@ pub async fn export_pdf(auth: AuthUser, State(state): State<Arc<AppState>>) -> A
     entry_lines.sort_by_key(|entry| entry.intervention_date);
 
     let building_name_for_doc = building.name.clone();
-    let syndic_name_for_doc = syndic_name.clone();
+    let year = today.format("%Y").to_string();
+    let edition_line = format!(
+        "Réf. LR-CARNET-{year} · Édition du {}",
+        crate::domain::pdf_template::format_date(today)
+    );
+    let letter_paragraphs = vec![
+        format!(
+            "Conformément au décret n°2001-477 (loi SRU), le syndic tient à jour le carnet d'entretien de l'immeuble. Vous trouverez en annexe du présent document l'édition du {} du carnet : contrats d'assurance et de maintenance en cours, puis chronologie complète des interventions.",
+            crate::domain::pdf_template::format_date_long(today)
+        ),
+        "Cette édition est établie à sa date d'émission et annule et remplace toute édition antérieure.".to_string(),
+        "Nous restons à votre disposition pour toute question relative au contenu de ce document.".to_string(),
+    ];
     let data = crate::domain::logbook_pdf::LogbookPdfData {
         identity: crate::domain::pdf_template::DocumentIdentity {
             building_name: building.name,
@@ -442,19 +454,23 @@ pub async fn export_pdf(auth: AuthUser, State(state): State<Arc<AppState>>) -> A
         entries: entry_lines,
         labels: crate::domain::logbook_pdf::LogbookPdfLabels {
             doc_title: "Carnet d'entretien de l'immeuble".to_string(),
+            issuer_heading: "Le syndic des copropriétaires".to_string(),
+            issuer_not_set: "Syndic non renseigné".to_string(),
+            recipient_label: "Destinataire".to_string(),
+            objet: format!("Carnet d'entretien de l'immeuble — édition {year}"),
+            reference: Some(edition_line),
+            salutation: "Madame, Monsieur,".to_string(),
+            letter_paragraphs,
+            closing_formula: "Je vous prie d'agréer, Madame, Monsieur, l'expression de mes salutations distinguées.".to_string(),
+            signer_closing: "Pour le syndic,".to_string(),
+            signer_role: Some(format!("Syndic en exercice — {building_name_for_doc}")),
+            place: building.city.clone(),
+            annex_kicker: "Annexe".to_string(),
             insurance_section: "Contrats d'assurance en cours".to_string(),
             maintenance_section: "Contrats d'entretien et de maintenance en cours".to_string(),
             chronology_section: "Chronologie des interventions".to_string(),
             no_contracts: "Aucun contrat en cours.".to_string(),
             no_entries: "Aucune intervention enregistrée.".to_string(),
-            syndic_not_set: "Syndic non renseigné".to_string(),
-            place: building.city.clone(),
-            for_whom: match &syndic_name_for_doc {
-                Some(name) => format!("{name}, syndic de la {building_name_for_doc}"),
-                None => format!("le syndicat des copropriétaires de la {building_name_for_doc}"),
-            },
-            purpose: "Ce carnet d'entretien recense les contrats d'assurance et de maintenance en cours, ainsi que la chronologie des interventions réalisées sur les parties communes de l'immeuble.".to_string(),
-            validity_period: "Document établi à la date d'édition ; il annule et remplace toute édition antérieure.".to_string(),
             col_date: "Date".to_string(),
             col_intervention: "Intervention".to_string(),
             col_vendor: "Prestataire".to_string(),
@@ -563,3 +579,4 @@ pub async fn correction(
 
     Ok((StatusCode::CREATED, json_value(entry)?))
 }
+

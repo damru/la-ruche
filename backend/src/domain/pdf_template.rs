@@ -3,21 +3,25 @@
 //!
 //! Every generated document — logbook export, état daté, pré-état daté, future
 //! AG minutes, reminder letters — is built from this module so that the layout
-//! is identical everywhere:
+//! is identical everywhere. Layout v6 (retour utilisateur PR 155, inspiré
+//! d'une attestation d'assurance professionnelle) :
 //!
-//! - **Introduction (first page only)** — the full application brand block:
-//!   logo + app name « La Ruche » + tagline, then the document title (centered,
-//!   brand color), the identity of the copropriété (building name, address,
-//!   syndic), the edition line « Fait à {place}, le {date} » + « Pour le compte
-//!   de {syndic} », and an optional explanatory paragraph describing the
-//!   document. Generous spacing, then the content starts.
-//! - **No running header** — pages 2+ start directly with the content (per
-//!   spec: « par en-tête je voulais dire introduction »).
-//! - **Salutation** — optional, for correspondence-style documents.
-//! - **Conclusion / signature block** — optional validity period when the
-//!   document has a legal one (e.g. état daté: valid 3 months), then
-//!   « Fait à {place}, le {date} » (filled) signed « La Ruche » (artificial
-//!   signature, no image).
+//! - **Double en-tête (première page uniquement)** — à gauche le bloc marque
+//!   complet « app web » : logo + « La Ruche » + tagline, puis l'émetteur du
+//!   document (lignes libres : syndic, contact, SIRET…) ; à droite le bloc
+//!   destinataire (label + lignes). Un filet violet sépare l'en-tête du corps.
+//! - **Corps de lettre classique** — objet en gras + ligne de référence
+//!   grise, salutation optionnelle (« Madame, Monsieur, »), paragraphes de
+//!   description, formule de politesse. Le contenu détaillé (tableaux) est
+//!   annoncé dans la lettre et rendu en annexe.
+//! - **Signature (fin de lettre)** — période de validité légale optionnelle,
+//!   puis bloc aligné à droite : « Pour {qualité} », espace, nom du signataire
+//!   en gras, qualité en gris, « Fait à {place}, le {date} » rempli (signature
+//!   artificielle, pas d'image).
+//! - **En-tête d'annexe** — kicker espacé (A N N E X E), titre en couleur
+//!   marque, sous-titre, méta-lignes, filet violet ; les tableaux suivent.
+//! - **No running header** — les pages suivantes commencent directement par
+//!   le contenu (spec : « par en-tête je voulais dire introduction »).
 //! - **Footer (every page)** — small grey type: logo + tagline on the left,
 //!   « Édité le {date} via La Ruche » on the right, under a hairline rule.
 //!   genpdf has no native « total pages » footer, so no page number.
@@ -99,33 +103,59 @@ pub struct DocumentIdentity {
     pub syndic_siret: Option<String>,
 }
 
-/// Introduction block rendered once, on the first page: brand block (logo +
-/// name + tagline), document title, copropriété identity, edition line and
-/// an optional explanatory paragraph. This is the « en-tête » of the document
-/// in the spec sense — it does NOT repeat on every page.
+/// Double header block rendered once, on the first page (Qivio-style
+/// « lettre » layout): the full application brand block « app web » (logo +
+/// « La Ruche » + tagline) with the issuer lines underneath, on the left; the
+/// optional recipient block on the right. A brand-colored rule closes the
+/// header. This is the « en-tête » of the document in the spec sense — it
+/// does NOT repeat on every page.
 #[derive(Debug, Clone)]
-pub struct DocumentIntro {
-    /// Document title, e.g. « Carnet d'entretien de l'immeuble ».
-    pub title: String,
-    /// Optional subtitle, e.g. the building name.
-    pub subtitle: Option<String>,
-    /// Meta lines rendered under the title (label: value), e.g. syndic, lot.
-    pub meta: Vec<(String, String)>,
-    /// Place of issue for the « Fait à {place}, le {date} » line.
-    pub place: String,
-    /// Edition date — also rendered in the page footer.
-    pub edited_at: NaiveDate,
-    /// « Pour le compte de {for_whom} » line, e.g. the syndic name.
-    pub for_whom: String,
-    /// Optional paragraph explaining the content of the document, rendered
-    /// between the edition line and the content.
-    pub purpose: Option<String>,
+pub struct DocumentHeader {
+    /// Issuer lines under the brand block (left column), e.g. « Le syndic des
+    /// copropriétaires », « Damien Rubio — contact », « SIRET : … ».
+    pub issuer_lines: Vec<String>,
+    /// Recipient block (right column), e.g. the copropriété.
+    pub recipient: Option<DocumentRecipient>,
 }
 
-/// Conclusion block rendered at the end of the document: optional legal
-/// validity period, then the filled « Fait à …, le … » line signed « La Ruche ».
+/// Recipient block rendered on the right of the double header.
+#[derive(Debug, Clone)]
+pub struct DocumentRecipient {
+    /// Small grey bold label, e.g. « Destinataire ».
+    pub label: String,
+    /// Recipient lines underneath, right-aligned.
+    pub lines: Vec<String>,
+}
+
+/// Annex header block opening the annex pages of a letter-style document:
+/// spaced kicker (« A N N E X E »), title in brand color, optional subtitle,
+/// meta lines and an optional reference, closed by a brand-colored rule.
+#[derive(Debug, Clone)]
+pub struct DocumentAnnexHeader {
+    /// Kicker rendered letter-spaced (e.g. « Annexe » → « A N N E X E »).
+    pub kicker: String,
+    /// Annex title, e.g. « Carnet d'entretien de l'immeuble ».
+    pub title: String,
+    /// Optional subtitle, e.g. the building name and address.
+    pub subtitle: Option<String>,
+    /// Meta lines rendered under the title (label: value), e.g. syndic,
+    /// édition.
+    pub meta: Vec<(String, String)>,
+}
+
+/// Conclusion block rendered at the end of the letter: optional legal
+/// validity period, then a right-aligned signature block — « Pour {qualité} »,
+/// signature space, signer name in bold, signer role in grey, and the filled
+/// « Fait à …, le … » line (artificial signature, no image).
 #[derive(Debug, Clone)]
 pub struct DocumentConclusion {
+    /// « Pour le syndic, »-style closing line of the signature block.
+    pub closing: String,
+    /// Signer name (bold). Falls back to `APP_NAME` when the document is not
+    /// signed by a named person.
+    pub signer_name: String,
+    /// Signer role in small grey type, e.g. « Syndic en exercice — … ».
+    pub signer_role: Option<String>,
     /// Place of signature (filled — « Fait à {place}, le {date} »).
     pub place: String,
     /// Signature date (filled).
@@ -178,8 +208,9 @@ pub fn logo_element(size_mm: f64) -> Result<elements::Image, String> {
 /// A4 document pre-configured with the shared template: embedded fonts,
 /// margins and a **running footer on every page** (logo + tagline + edition
 /// date, small grey type). There is intentionally **no running header** — the
-/// introduction is part of the body and appears on the first page only.
-/// The caller fills the body: `push_intro`, content, `push_conclusion`.
+/// double header is part of the body and appears on the first page only.
+/// The caller fills the body: `push_letter_header`, letter content, then the
+/// annexes opened by `push_annex_header`.
 pub fn new_document(
     family: FontFamily<FontData>,
     edited_at: NaiveDate,
@@ -264,15 +295,17 @@ impl PageDecorator for FooterDecorator {
     }
 }
 
-// ── Introduction (first page) ──────────────────────────────────────────────
+// ── Double header (first page) ─────────────────────────────────────────────
 
-/// Pushes the document introduction on the first page: brand block (logo +
-/// « La Ruche » + tagline), centered title + subtitle, meta lines, the
-/// « Fait à {place}, le {date} » + « Pour le compte de {for_whom} » lines,
-/// and an optional purpose paragraph — all with generous spacing, then the
-/// content begins.
-pub fn push_intro(layout: &mut LinearLayout, intro: &DocumentIntro) -> Result<(), String> {
-    // ── Brand block: logo + app name + tagline ──
+/// Pushes the double header on the first page: the application brand block
+/// « app web » (logo + « La Ruche » + tagline) with the issuer lines
+/// underneath, on the left; the recipient block right-aligned, on the right;
+/// then a brand-colored rule closing the header (Qivio-style letterhead).
+pub fn push_letter_header(
+    layout: &mut LinearLayout,
+    header: &DocumentHeader,
+) -> Result<(), String> {
+    // ── Left column: brand block + issuer lines ──
     let logo = logo_element(INTRO_LOGO_MM)?;
     let mut brand_text = LinearLayout::vertical();
     brand_text.push(
@@ -294,57 +327,125 @@ pub fn push_intro(layout: &mut LinearLayout, intro: &DocumentIntro) -> Result<()
         .element(brand_text)
         .push()
         .expect("brand row must carry exactly two cells");
-    layout.push(brand_row);
-    layout.push(elements::Break::new(1.5));
 
-    // ── Title + subtitle ──
-    layout.push(
-        Paragraph::new(&intro.title)
-            .aligned(Alignment::Center)
-            .styled(
+    let mut left = LinearLayout::vertical();
+    left.push(brand_row);
+    left.push(elements::Break::new(0.4));
+    for line in &header.issuer_lines {
+        left.push(
+            Paragraph::new(line).styled(
                 style::Style::new()
-                    .bold()
-                    .with_font_size(16)
-                    .with_color(BRAND),
+                    .with_font_size(9)
+                    .with_color(INK),
             ),
-    );
-    if let Some(subtitle) = &intro.subtitle {
-        layout.push(
-            Paragraph::new(subtitle)
-                .aligned(Alignment::Center)
-                .styled(style::Style::new().with_font_size(11).with_color(GREY)),
         );
     }
-    layout.push(elements::Break::new(0.8));
 
-    // ── Identity of the copropriété ──
-    for (label, value) in &intro.meta {
-        layout.push(meta_line(label, value));
+    // ── Right column: recipient block ──
+    let mut right = LinearLayout::vertical();
+    match &header.recipient {
+        Some(recipient) => {
+            right.push(
+                Paragraph::new(&recipient.label)
+                    .aligned(Alignment::Right)
+                    .styled(style::Style::new().bold().with_font_size(9).with_color(GREY)),
+            );
+            for line in &recipient.lines {
+                right.push(
+                    Paragraph::new(line)
+                        .aligned(Alignment::Right)
+                        .styled(style::Style::new().with_font_size(9).with_color(INK)),
+                );
+            }
+        }
+        // No recipient: keep the cell non-empty (correspondence documents
+        // addressed to the whole copropriété still show the header row).
+        None => right.push(Paragraph::new("")),
     }
-    layout.push(elements::Break::new(0.8));
 
-    // ── Edition line: « Fait à …, le … » + « Pour le compte de … » ──
-    layout.push(
-        Paragraph::new(format!(
-            "Fait à {}, le {}",
-            intro.place,
-            format_date_long(intro.edited_at)
-        ))
-        .styled(style::Style::new().with_color(INK)),
-    );
-    layout.push(
-        Paragraph::new(format!("Pour le compte de {}", intro.for_whom))
-            .styled(style::Style::new().with_color(INK)),
-    );
+    // ── Two-column header: issuer left, recipient right ──
+    let mut header_row = TableLayout::new(vec![6, 1, 4]);
+    header_row
+        .row()
+        .element(left)
+        .element(Paragraph::new(""))
+        .element(right)
+        .push()
+        .expect("header row must carry exactly three cells");
+    layout.push(header_row);
+    layout.push(elements::Break::new(0.5));
+    layout.push(brand_hairline());
     layout.push(elements::Break::new(1.0));
 
-    // ── Optional purpose paragraph ──
-    if let Some(purpose) = &intro.purpose {
-        layout.push(body(purpose));
-        layout.push(elements::Break::new(1.0));
-    }
-
     Ok(())
+}
+
+// ── Letter body (first page) ────────────────────────────────────────────────
+
+/// Pushes the letter subject block: « Objet : … »-style bold line with an
+/// optional grey reference line underneath (e.g. « Réf. LR-CARNET-2026 »).
+pub fn push_objet(layout: &mut LinearLayout, objet: &str, reference: Option<&str>) {
+    layout.push(
+        Paragraph::new(objet).styled(
+            style::Style::new()
+                .bold()
+                .with_font_size(12)
+                .with_color(INK),
+        ),
+    );
+    if let Some(reference) = reference {
+        layout.push(
+            Paragraph::new(reference).styled(style::Style::new().with_font_size(9).with_color(GREY)),
+        );
+    }
+    layout.push(elements::Break::new(1.2));
+}
+
+/// Pushes an optional salutation block (correspondence-style documents).
+pub fn push_salutation(layout: &mut LinearLayout, salutation: &str) {
+    layout.push(Paragraph::new(salutation));
+    layout.push(elements::Break::new(0.5));
+}
+
+// ── Annex header (annex pages) ─────────────────────────────────────────────
+
+/// Pushes the annex header opening an annex: spaced kicker (« A N N E X E »),
+/// title in brand color, optional subtitle, meta lines, then a brand-colored
+/// rule — followed by the tabular content of the annex.
+pub fn push_annex_header(layout: &mut LinearLayout, annex: &DocumentAnnexHeader) {
+    layout.push(
+        Paragraph::new(spaced_caps(&annex.kicker))
+            .styled(style::Style::new().bold().with_font_size(9).with_color(GREY)),
+    );
+    layout.push(
+        Paragraph::new(&annex.title).styled(
+            style::Style::new()
+                .bold()
+                .with_font_size(16)
+                .with_color(BRAND),
+        ),
+    );
+    if let Some(subtitle) = &annex.subtitle {
+        layout.push(
+            Paragraph::new(subtitle).styled(style::Style::new().with_font_size(11).with_color(GREY)),
+        );
+    }
+    layout.push(elements::Break::new(0.5));
+    for (label, value) in &annex.meta {
+        layout.push(meta_line(label, value));
+    }
+    layout.push(elements::Break::new(0.6));
+    layout.push(brand_hairline());
+    layout.push(elements::Break::new(1.0));
+}
+
+/// « Annexe » → « A N N E X E » (letter-spaced kicker).
+fn spaced_caps(text: &str) -> String {
+    text.chars()
+        .flat_map(|c| [c, ' '])
+        .collect::<String>()
+        .trim_end()
+        .to_string()
 }
 
 /// A `label : value` meta line (label in grey, value in ink).
@@ -353,12 +454,6 @@ fn meta_line(label: &str, value: &str) -> Paragraph {
     p.push_styled(format!("{label} : "), style::Style::new().with_color(GREY));
     p.push_styled(value.to_string(), style::Style::new().with_color(INK));
     p
-}
-
-/// Pushes an optional salutation block (correspondence-style documents).
-pub fn push_salutation(layout: &mut LinearLayout, salutation: &str) {
-    layout.push(Paragraph::new(salutation));
-    layout.push(elements::Break::new(0.5));
 }
 
 /// Section heading in brand color.
@@ -381,36 +476,62 @@ pub fn muted(text: &str) -> elements::StyledElement<Paragraph> {
     Paragraph::new(text).styled(style::Style::new().with_color(GREY))
 }
 
-// ── Conclusion (last block of the body) ────────────────────────────────────
+// ── Conclusion / signature (end of the letter) ──────────────────────────────
 
-/// Pushes the conclusion block: optional legal validity period, generous
-/// spacing, then the **filled** « Fait à {place}, le {date} » line signed
-/// « La Ruche » (artificial signature — the app signs, no signature image).
+/// Pushes the signature block at the end of the letter: optional legal
+/// validity period, generous spacing, then a **right-aligned** block —
+/// « Pour {qualité} », a signature space, the signer name in bold, the signer
+/// role in small grey type, and the **filled** « Fait à {place}, le {date} »
+/// line (artificial signature — no signature image).
 pub fn push_conclusion(layout: &mut LinearLayout, conclusion: &DocumentConclusion) {
     if let Some(validity) = &conclusion.validity_period {
         layout.push(elements::Break::new(0.5));
         layout.push(muted(validity));
     }
-    layout.push(elements::Break::new(1.5));
-    let signed = format!(
-        "Fait à {}, le {}",
-        conclusion.place,
-        format_date_long(conclusion.date)
+    layout.push(elements::Break::new(2.0));
+
+    let mut sig = LinearLayout::vertical();
+    sig.push(
+        Paragraph::new(&conclusion.closing)
+            .aligned(Alignment::Right)
+            .styled(style::Style::new().with_color(INK)),
     );
-    layout.push(
-        LinearLayout::vertical()
-            .element(Paragraph::new(&signed).styled(style::Style::new().with_color(INK)))
-            .element(elements::Break::new(2.5))
-            .element(
-                Paragraph::new(APP_NAME).styled(
-                    style::Style::new()
-                        .bold()
-                        .with_font_size(11)
-                        .with_color(BRAND),
-                ),
-            )
-            .padded(2),
+    sig.push(elements::Break::new(4.0));
+    sig.push(
+        Paragraph::new(&conclusion.signer_name)
+            .aligned(Alignment::Right)
+            .styled(
+                style::Style::new()
+                    .bold()
+                    .with_font_size(11)
+                    .with_color(INK),
+            ),
     );
+    if let Some(role) = &conclusion.signer_role {
+        sig.push(
+            Paragraph::new(role)
+                .aligned(Alignment::Right)
+                .styled(style::Style::new().with_font_size(9).with_color(GREY)),
+        );
+    }
+    sig.push(
+        Paragraph::new(format!(
+            "Fait à {}, le {}",
+            conclusion.place,
+            format_date_long(conclusion.date)
+        ))
+        .aligned(Alignment::Right)
+        .styled(style::Style::new().with_color(INK)),
+    );
+
+    // Right-align the whole block: empty spacer column on the left.
+    let mut row = TableLayout::new(vec![6, 4]);
+    row.row()
+        .element(Paragraph::new(""))
+        .element(sig)
+        .push()
+        .expect("signature row must carry exactly two cells");
+    layout.push(row);
 }
 
 /// Renders the document to bytes.
@@ -485,22 +606,34 @@ pub fn format_date_long(date: NaiveDate) -> String {
 // ── Internal layout primitives ─────────────────────────────────────────────
 
 /// Thin horizontal rule in `RULE` grey — a real vector line drawn with a
-/// `LineRule` cell decorator (no underscore characters).
+/// `RuleLine` cell decorator (no underscore characters).
 pub fn hairline() -> TableLayout {
+    rule(RULE)
+}
+
+/// Brand-colored horizontal rule closing the double header and the annex
+/// header (violet accent of the shared document template).
+pub fn brand_hairline() -> TableLayout {
+    rule(BRAND)
+}
+
+/// One-row table whose single cell carries a bottom border in `color`.
+fn rule(color: Color) -> TableLayout {
     let mut table = TableLayout::new(vec![1]);
-    table.set_cell_decorator(LineRule);
+    table.set_cell_decorator(RuleLine(color));
     table
         .row()
         .element(Paragraph::new(" ").styled(style::Style::new().with_font_size(1)))
         .push()
-        .expect("hairline row must carry exactly one cell");
+        .expect("rule row must carry exactly one cell");
     table
 }
 
-/// Cell decorator drawing a thin bottom border in `RULE` grey under the cell.
-struct LineRule;
+/// Cell decorator drawing a thin bottom border in the given color under the
+/// cell.
+struct RuleLine(Color);
 
-impl elements::CellDecorator for LineRule {
+impl elements::CellDecorator for RuleLine {
     fn decorate_cell(
         &mut self,
         _column: usize,
@@ -511,7 +644,7 @@ impl elements::CellDecorator for LineRule {
     ) {
         let size = area.size();
         let mut rule_style = style;
-        rule_style.set_color(RULE);
+        rule_style.set_color(self.0);
         area.draw_line(
             vec![
                 Position::new(0, size.height),
@@ -533,20 +666,32 @@ mod tests {
         NaiveDate::from_ymd_opt(y, m, d).unwrap()
     }
 
-    fn intro() -> DocumentIntro {
-        DocumentIntro {
-            title: "Document de test".to_string(),
-            subtitle: Some("Résidence des Tilleuls".to_string()),
-            meta: vec![
-                ("Syndic".to_string(), "Cabinet Dupont".to_string()),
-                ("Lot".to_string(), "A-12".to_string()),
+    fn header() -> DocumentHeader {
+        DocumentHeader {
+            issuer_lines: vec![
+                "Le syndic des copropriétaires".to_string(),
+                "Cabinet Dupont — contact@cabinet-dupont.fr".to_string(),
+                "SIRET : 123 456 789 00012".to_string(),
             ],
-            place: "Paris".to_string(),
-            edited_at: date(2026, 6, 16),
-            for_whom: "Cabinet Dupont, syndic de la Résidence des Tilleuls".to_string(),
-            purpose: Some(
-                "Ce document présente le contenu de test du template partagé.".to_string(),
-            ),
+            recipient: Some(DocumentRecipient {
+                label: "Destinataire".to_string(),
+                lines: vec![
+                    "Résidence des Tilleuls".to_string(),
+                    "12 rue des Fleurs, 75011 Paris".to_string(),
+                ],
+            }),
+        }
+    }
+
+    fn annex_header() -> DocumentAnnexHeader {
+        DocumentAnnexHeader {
+            kicker: "Annexe".to_string(),
+            title: "Carnet d'entretien de l'immeuble".to_string(),
+            subtitle: Some("Résidence des Tilleuls — 12 rue des Fleurs, 75011 Paris".to_string()),
+            meta: vec![
+                ("Syndic en exercice".to_string(), "Cabinet Dupont".to_string()),
+                ("Édition du".to_string(), "16/06/2026".to_string()),
+            ],
         }
     }
 
@@ -581,6 +726,12 @@ mod tests {
     }
 
     #[test]
+    fn spaced_caps_inserts_a_space_between_every_character() {
+        assert_eq!(spaced_caps("Annexe"), "A N N E X E");
+        assert_eq!(spaced_caps("A"), "A");
+    }
+
+    #[test]
     fn document_with_template_produces_valid_pdf() {
         let mut doc = new_document(
             font_family().expect("fonts"),
@@ -588,7 +739,12 @@ mod tests {
             "Test document",
         );
         let mut layout = LinearLayout::vertical();
-        push_intro(&mut layout, &intro()).expect("intro");
+        push_letter_header(&mut layout, &header()).expect("letter header");
+        push_objet(
+            &mut layout,
+            "Carnet d'entretien de l'immeuble — édition 2026",
+            Some("Réf. LR-CARNET-2026 · Édition du 16/06/2026"),
+        );
         push_salutation(&mut layout, "Madame, Monsieur,");
         layout.push(section("1. Première section"));
         layout.push(body("Corps du document de test."));
@@ -596,11 +752,18 @@ mod tests {
         push_conclusion(
             &mut layout,
             &DocumentConclusion {
+                closing: "Pour le syndic,".to_string(),
+                signer_name: "Cabinet Dupont".to_string(),
+                signer_role: Some("Syndic en exercice".to_string()),
                 place: "Paris".to_string(),
                 date: date(2026, 6, 16),
                 validity_period: Some("Document valable 3 mois.".to_string()),
             },
         );
+        layout.push(elements::PageBreak::new());
+        push_annex_header(&mut layout, &annex_header());
+        layout.push(section("2. Annexe"));
+        layout.push(body("Contenu de l'annexe."));
         doc.push(layout);
 
         let bytes = finish_document(doc).expect("render");
@@ -608,3 +771,4 @@ mod tests {
         assert!(!bytes.is_empty());
     }
 }
+
