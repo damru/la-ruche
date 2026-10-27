@@ -31,7 +31,7 @@
 
 use chrono::{Datelike, NaiveDate};
 use genpdf::{
-    Alignment, Context, Document, Element, Margins, Mm, PageDecorator, Position,
+    Alignment, Context, Document, Element, Margins, Mm, PageDecorator, Position, Rotation, Scale,
     SimplePageDecorator,
     elements::{self, LinearLayout, Paragraph, TableLayout},
     error,
@@ -146,117 +146,22 @@ pub fn font_family() -> Result<FontFamily<FontData>, String> {
     })
 }
 
-/// Builds the app logo as a **vector** element (7 hexagons in the brand
-/// gradient), mirroring `frontend/src/components/atoms/CLogoMark.svg`.
-/// Rendered at `size_mm` millimeters. Vector keeps the PDF small and crisp
-/// at any zoom — and needs no `image` crate (only genpdf's `draw_line`).
-pub fn logo_element(size_mm: f64) -> LogoElement {
-    LogoElement { size_mm }
-}
+/// Rasterised app logo (7 hexagones « ruche », dégradé `#643fd5` → `#7d5bf0`),
+/// generated from `frontend/src/components/atoms/CLogoMark.svg` and embedded at
+/// compile time so the PDF is self-contained (ADR-011). RGB, no alpha channel
+/// (printpdf does not support transparency — the logo is drawn on white).
+const LOGO_PNG: &[u8] = include_bytes!("../../assets/images/logo-la-ruche.png");
 
-/// Vector logo element: 7 hexagons forming the « ruche », in the brand
-/// gradient `#643fd5` → `#7d5bf0`, drawn with genpdf's `Area::draw_line`.
-pub struct LogoElement {
-    size_mm: f64,
-}
+/// Natural size of the embedded logo in mm at 300 dpi (640 px → 54.04 mm).
+const LOGO_NATURAL_MM: f64 = 640.0 * 25.4 / 300.0;
 
-/// Hexagone centers in the 80×80 viewBox of `CLogoMark.svg`.
-const LOGO_HEXES: [(f64, f64); 7] = [
-    (51.5, 40.0),
-    (51.5, 17.48),
-    (71.0, 28.74),
-    (71.0, 51.26),
-    (51.5, 62.52),
-    (32.0, 51.26),
-    (32.0, 28.74),
-];
-
-/// Hexagone vertices (pointy-top) in the 80×80 viewBox, relative to center.
-/// From CLogoMark.svg: half-width 11.5, half-height 9.96, with the top/bottom
-/// points slightly inset (45.75/34.25 vs 51.5/28.5).
-const HEX_VERTS: [(f64, f64); 6] = [
-    (0.0, -9.96),
-    (5.75, -4.98),
-    (5.75, 4.98),
-    (0.0, 9.96),
-    (-5.75, 4.98),
-    (-5.75, -4.98),
-];
-
-/// Brand gradient endpoints in the 80×80 viewBox (userSpaceOnUse).
-const GRAD_FROM: (f64, f64) = (9.0, 7.52);
-const GRAD_TO: (f64, f64) = (71.0, 72.48);
-const GRAD_C1: (u8, u8, u8) = (100, 63, 213); // #643fd5
-const GRAD_C2: (u8, u8, u8) = (125, 91, 240); // #7d5bf0
-
-fn lerp_color(t: f64) -> Color {
-    let t = t.clamp(0.0, 1.0);
-    let r = (GRAD_C1.0 as f64 + (GRAD_C2.0 as f64 - GRAD_C1.0 as f64) * t) as u8;
-    let g = (GRAD_C1.1 as f64 + (GRAD_C2.1 as f64 - GRAD_C1.1 as f64) * t) as u8;
-    let b = (GRAD_C1.2 as f64 + (GRAD_C2.2 as f64 - GRAD_C1.2 as f64) * t) as u8;
-    Color::Rgb(r, g, b)
-}
-
-impl Element for LogoElement {
-    fn render(
-        &mut self,
-        _context: &Context,
-        area: Area<'_>,
-        _style: style::Style,
-    ) -> Result<genpdf::RenderResult, error::Error> {
-        // Map the 80×80 viewBox onto a size_mm × size_mm square at the area
-        // origin. PDF y grows upward, the viewBox y grows downward — flip y.
-        let k = self.size_mm / 80.0;
-        let to_area =
-            |vx: f64, vy: f64| -> Position { Position::new(mm(vx * k), mm((80.0 - vy) * k)) };
-
-        // Draw each hexagon as a filled polygon approximation: since genpdf
-        // only strokes lines, we fill by drawing many horizontal spans between
-        // the left and right edges of the hexagon for each scanline.
-        for (cx, cy) in LOGO_HEXES {
-            // Vertices in viewBox coordinates.
-            let verts: Vec<(f64, f64)> = HEX_VERTS
-                .iter()
-                .map(|(dx, dy)| (cx + dx, cy + dy))
-                .collect();
-            let min_y = verts.iter().map(|v| v.1).fold(f64::INFINITY, f64::min);
-            let max_y = verts.iter().map(|v| v.1).fold(f64::NEG_INFINITY, f64::max);
-
-            // Scanline fill: for each viewBox-y row inside the hexagon, find
-            // the intersections with the edges and stroke a horizontal line.
-            let steps = 24; // scanlines per hexagon (enough at 16 mm)
-            for i in 0..steps {
-                let vy = min_y + (max_y - min_y) * (i as f64 + 0.5) / steps as f64;
-                let mut xs: Vec<f64> = Vec::new();
-                for w in 0..6 {
-                    let (x1, y1) = verts[w];
-                    let (x2, y2) = verts[(w + 1) % 6];
-                    if (y1 <= vy && vy < y2) || (y2 <= vy && vy < y1) {
-                        let t = (vy - y1) / (y2 - y1);
-                        xs.push(x1 + t * (x2 - x1));
-                    }
-                }
-                xs.sort_by(|a, b| a.partial_cmp(b).unwrap());
-                for pair in xs.chunks_exact(2) {
-                    // Gradient color at the scanline midpoint.
-                    let mid_vx = (pair[0] + pair[1]) / 2.0;
-                    let (gx1, gy1) = GRAD_FROM;
-                    let (gx2, gy2) = GRAD_TO;
-                    let (dx, dy) = (gx2 - gx1, gy2 - gy1);
-                    let t = ((mid_vx - gx1) * dx + (vy - gy1) * dy) / (dx * dx + dy * dy);
-                    area.draw_line(
-                        vec![to_area(pair[0], vy), to_area(pair[1], vy)],
-                        style::Style::new().with_color(lerp_color(t)),
-                    );
-                }
-            }
-        }
-
-        Ok(genpdf::RenderResult {
-            size: genpdf::Size::new(mm(self.size_mm), mm(self.size_mm)),
-            has_more: false,
-        })
-    }
+/// Builds the app logo as a genpdf image element rendered at `size_mm`
+/// millimeters, decoded from the embedded PNG (`include_bytes!`).
+pub fn logo_element(size_mm: f64) -> Result<elements::Image, String> {
+    let dynamic = image::load_from_memory(LOGO_PNG).map_err(|e| e.to_string())?;
+    let img = elements::Image::from_dynamic_image(dynamic).map_err(|e| e.to_string())?;
+    let scale = size_mm / LOGO_NATURAL_MM;
+    Ok(img.with_scale(Scale::new(scale, scale)))
 }
 
 // ── Document construction ──────────────────────────────────────────────────
@@ -317,15 +222,17 @@ impl PageDecorator for FooterDecorator {
             style::Style::new().with_color(RULE),
         );
 
-        // Logo at the bottom-left of the footer area (vector hexagons).
-        let mut logo = logo_element(FOOTER_LOGO_MM);
-        let logo_area = {
-            let mut a = page.clone();
-            a.set_size(genpdf::Size::new(mm(FOOTER_LOGO_MM), mm(FOOTER_LOGO_MM)));
-            a.add_offset(Position::new(0, footer_top));
-            a
-        };
-        let _ = logo.render(context, logo_area, style::Style::default());
+        // Logo at the bottom-left of the footer area (embedded PNG).
+        if let Ok(dynamic) = image::load_from_memory(LOGO_PNG) {
+            let scale = FOOTER_LOGO_MM / LOGO_NATURAL_MM;
+            page.add_image(
+                &dynamic,
+                Position::new(0, footer_top + mm(FOOTER_LOGO_MM)),
+                Scale::new(scale, scale),
+                Rotation::default(),
+                None,
+            );
+        }
 
         // Tagline + edition line, small grey type, next to the logo.
         let text_x = mm(FOOTER_LOGO_MM + 3.0);
@@ -357,7 +264,7 @@ impl PageDecorator for FooterDecorator {
 /// content begins.
 pub fn push_intro(layout: &mut LinearLayout, intro: &DocumentIntro) -> Result<(), String> {
     // ── Brand block: logo + app name + tagline ──
-    let logo = logo_element(INTRO_LOGO_MM);
+    let logo = logo_element(INTRO_LOGO_MM)?;
     let mut brand_text = LinearLayout::vertical();
     brand_text.push(
         Paragraph::new(APP_NAME).styled(
@@ -660,8 +567,8 @@ mod tests {
     }
 
     #[test]
-    fn logo_element_builds() {
-        let _ = logo_element(16.0);
+    fn logo_decodes() {
+        logo_element(16.0).expect("embedded logo must decode");
     }
 
     #[test]
