@@ -1,10 +1,10 @@
 # Spécification technique — EP-009-S09
 
-**Story :** Export PDF du carnet d'entretien (en-tête réglementaire, chronologie des interventions, contrats d'assurance et de maintenance actifs).
+**Story :** Export PDF du carnet d'entretien (lettre de transmission + annexe réglementaire : chronologie des interventions, contrats d'assurance et de maintenance actifs).
 
 **Épic :** EP-009 — Carnet d'entretien
 **Réf. PRD :** US-CE-004 · **Réf. LEGAL :** carnet d'entretien obligatoire (loi SRU, décret n°2001-477)
-**État :** IMPLÉMENTÉ (backend + frontend) — génération PDF **100 % serveur** via le template documentaire partagé `domain/pdf_template.rs` + renderer `domain/logbook_pdf.rs`, endpoint `GET /logbook/export/pdf`, téléchargement blob depuis la vue carnet.
+**État :** IMPLÉMENTÉ (backend + frontend) — génération PDF **100 % serveur** via le template documentaire partagé `domain/pdf_template.rs` (layout v6 « lettre + annexe », retour utilisateur PR 155 inspiré d'une attestation d'assurance professionnelle) + renderer `domain/logbook_pdf.rs`, endpoint `GET /logbook/export/pdf`, téléchargement blob depuis la vue carnet.
 
 ---
 
@@ -12,16 +12,17 @@
 
 **Changement de spec (remplace la décision initiale « HTML imprimable ») : pas de gestion du `@media print`. Toutes les générations de documents PDF passent par une génération backend, et tous les documents partagent le même template.**
 
-**Retenu : génération serveur via `genpdf` + template documentaire réutilisable.**
+**Retenu : génération serveur via `genpdf` + template documentaire réutilisable, layout v6 « lettre + annexe ».**
 
 - **Template commun** (`backend/src/domain/pdf_template.rs`) : identité visuelle unique pour tous les documents officiels —
-  - **Introduction (1ʳᵉ page uniquement, « en-tête » au sens spec)** : bloc marque — **logo image embarquée** (`backend/assets/images/logo-la-ruche.png`, rasterisé depuis `frontend/src/components/atoms/CLogoMark.svg`, 7 hexagones dégradé #643fd5 → #7d5bf0, `include_bytes!`) + nom « La Ruche » + **tagline** (« Gestion de copropriété participative, pour les syndics bénévoles et les conseils syndicaux »), titre du document centré en couleur marque, identité de la copro (Immeuble, Adresse, Syndic en exercice, SIRET…), ligne « **Fait à {lieu}, le {date}** » + « **Pour le compte de {syndic}** », **paragraphe explicatif** du contenu du document, espacement généreux — puis seulement le contenu. **Pas d'en-tête récurrente** : les pages 2+ commencent directement par le contenu.
-  - **Salutation** optionnelle (documents de type courrier).
-  - **Conclusion** : **période de validité légale** optionnelle (quand le document en a une fondée légalement — ex. état daté : 3 mois), puis « Fait à {lieu}, le {date} » **rempli**, signé « **La Ruche** » (signature artificielle — l'app signe, pas d'image de signature).
+  - **Double en-tête (1ʳᵉ page uniquement, « en-tête » au sens spec)** : à gauche, le bloc marque « app web » — **logo image embarquée** (`backend/assets/images/logo-la-ruche.png`, rasterisé depuis `frontend/src/components/atoms/CLogoMark.svg`, 7 hexagones dégradé #643fd5 → #7d5bf0, `include_bytes!`) + nom « La Ruche » + **tagline**, puis l'**émetteur** (lignes libres : « Le syndic des copropriétaires », syndic + contact, SIRET) ; à droite, le bloc **destinataire** (label gris gras + lignes alignées à droite — la copropriété). Le tout est fermé par un **filet violet** (couleur marque). **Pas d'en-tête récurrent** : les pages suivantes commencent directement par le contenu.
+  - **Corps de lettre classique** : **objet en gras** (taille 12) + ligne de **référence** grise (ex. « Réf. LR-CARNET-2026 · Édition du 27/10/2026 »), **salutation** optionnelle (« Madame, Monsieur, »), paragraphes de description du document (dont **l'annonce explicite de l'annexe**), formule de politesse. Le contenu détaillé (tableaux) vit en annexe.
+  - **Signature (fin de lettre)** : période de validité légale optionnelle (quand le document en a une fondée légalement — ex. état daté : 3 mois), puis bloc **aligné à droite** — « Pour le syndic, », espace de signature, **nom du signataire en gras** (le syndic en exercice ; repli « La Ruche »), **qualité** en petit gris (« Syndic en exercice — {immeuble} »), « **Fait à {lieu}, le {date}** » rempli (signature artificielle — pas d'image de signature).
+  - **En-tête d'annexe** : kicker espacé (« A N N E X E »), titre du document en couleur marque, sous-titre (immeuble + adresse), méta-lignes (syndic, SIRET, édition), filet violet — puis le contenu tabulaire de l'annexe.
   - **Pied de page récurrent (toutes les pages)** : filet + **logo miniature** (même image embarquée) + tagline + « Édité le {date} via La Ruche », en petite police grise (décorateur de page custom, hauteur réservée). genpdf n'expose pas de « page X / Y » natif — pas de numérotation de page.
-  - **Police** : Tinos embarquée (`include_bytes!`, serif métrique Times New Roman, sous-ensemble `pyftsubset` ASCII + Latin-1 + ponctuation typographique ~32 ko/fichier × 4 styles regular/bold/italic/bold-italic), **palette** : `BRAND` #643fd5 (miroir de `--color-primary` du frontend), gris secondaire, encre. **Poids** : logo PNG RGB (~5 ko, FlateDecode ~4,6 ko/occurrence en release), polices ~130 ko embarquées au total (4 FontFile Tinos distincts) → PDF complet ~225 ko pour 3 pages.
+  - **Police** : Tinos embarquée (`include_bytes!`, serif métrique Times New Roman, sous-ensemble `pyftsubset` ASCII + Latin-1 + ponctuation typographique ~32 ko/fichier × 4 styles regular/bold/italic/bold-italic), **palette** : `BRAND` #643fd5 (miroir de `--color-primary` du frontend), gris secondaire, encre.
 - Chaque document a son renderer dédié dans `domain/` qui assemble les données et s'appuie sur le template (pas de duplication de styles). Réutilisations prévues : compte rendu d'AG, lettre de relance, etc.
-- **Avantages** : PDF identique quel que soit le navigateur/OS de l'utilisateur, mise en page maîtrisée (A4, marges, tableaux paginés), réutilisable pour l'envoi automatique futur (e-mail), conforme à ADR-011 (génération serveur).
+- **Avantages** : PDF identique quel que soit le navigateur/OS de l'utilisateur, mise en page maîtrisée (A4, marges, tableaux paginés), réutilisable pour l'envoi automatique futur (e-mail), conforme à ADR-011 (génération serveur), forme épistolaire lisible : le lecteur voit d'abord qui émet, à qui, pourquoi — le détail réglementaire suit en annexe.
 - **Inconvénient accepté** : la mise en page PDF vit côté backend (et non dans le design system Tailwind) — c'est le template `pdf_template.rs` qui en tient lieu.
 
 **Décision initiale écartée :** vue HTML optimisée impression + `window.print()` — remplacée par le changement de spec ci-dessus (plus de `@media print` géré dans l'app).
@@ -31,9 +32,9 @@
 | Élément | Emplacement | Constat |
 |---|---|---|
 | Routes carnet | `backend/src/api/mod.rs` | list / summary / get / put / delete / correction + **`GET /logbook/export/pdf`** (S09) |
-| Template PDF partagé | `backend/src/domain/pdf_template.rs` | **Nouveau (S09)** — en-tête, titre, salutation, signature, pied de page, polices, palette, formatteurs FR |
-| Renderer carnet | `backend/src/domain/logbook_pdf.rs` | **Nouveau (S09)** — `render_logbook(&LogbookPdfData) -> Result<Vec<u8>, String>` |
-| Handler export | `api/logbook.rs::export_pdf` | **Nouveau (S09)** — assemble identité (building + mandat syndic + contact), contrats actifs, entrées, rend le PDF |
+| Template PDF partagé | `backend/src/domain/pdf_template.rs` | **Nouveau (S09)** — double en-tête, objet, salutation, signature nommée, en-tête d'annexe, pied de page, polices, palette, formatteurs FR |
+| Renderer carnet | `backend/src/domain/logbook_pdf.rs` | **Nouveau (S09)** — `render_logbook(&LogbookPdfData) -> Result<Vec<u8>, String>` (lettre + annexe) |
+| Handler export | `api/logbook.rs::export_pdf` | **Nouveau (S09)** — assemble identité (building + mandat syndic + contact), contrats actifs, entrées, libellés de la lettre, rend le PDF |
 | Client API carnet | `frontend/src/api/index.ts` (`maintenanceApi`) | **`exportPdf()`** (S09) — `GET /logbook/export/pdf`, réponse blob |
 | Vue carnet | `frontend/src/features/maintenance/MaintenanceView.vue` | Bouton « Exporter le carnet (PDF) » → téléchargement blob, état de chargement + `CAlert` en cas d'erreur |
 | Contrats actifs | `contractsApi` existant (`GET /contracts`) | Filtrés côté serveur dans `export_pdf` (`status == 'active'` + type assurance/maintenance) |
@@ -44,9 +45,9 @@ Aucune migration (S10 a ajouté la catégorie ; S09 ne touche pas au schéma).
 
 ## 4. Backend
 
-- **`domain/pdf_template.rs`** (pur, sans I/O ni SQL) : `DocumentIdentity`, `DocumentIntro` (titre, méta, lieu, date d'édition, « pour le compte de », paragraphe explicatif), `DocumentConclusion` (lieu/date remplis, période de validité légale optionnelle), `logo_element` (logo image embarquée `assets/images/logo-la-ruche.png`, rasterisé depuis `CLogoMark.svg`), `new_document` (décorateur de page `FooterDecorator` : pied de page récurrent logo + tagline + « Édité le … via La Ruche » en petite police grise, **pas d'en-tête récurrente**), `push_intro`, `push_salutation`, `section`, `body`, `muted`, `push_conclusion` (« Fait à …, le … » rempli, signé « La Ruche »), `finish_document`, formatteurs `format_euro` / `optional_euro` / `format_date` / `format_date_long`. Tests unitaires inclus.
-- **`domain/logbook_pdf.rs`** (pur) : `render_logbook` — introduction (bloc marque logo + « La Ruche » + tagline, titre, métas immeuble/adresse/syndic/SIRET, « Fait à {ville}, le {date} » + « Pour le compte de {syndic} », paragraphe explicatif), sections contrats d'assurance et de maintenance actifs (compteur + lignes objet/prestataire/période/montant), tableau chronologie (date, intervention, prestataire, catégorie, source, coût — cellules aérées, lignes paginées proprement), conclusion (période de validité « Document établi à la date d'édition ; il annule et remplace toute édition antérieure », « Fait à {ville}, le {date} » rempli, signé « La Ruche »). Le pied de page récurrent est géré par le décorateur du template. Les libellés sont passés par le caller (renderer agnostique de la langue).
-- **`api/logbook.rs::export_pdf`** : `GET /logbook/export/pdf` — tout membre authentifié de l'immeuble (mêmes droits que le summary). Assemble l'identité (`building::get` + `governance_mandate::current_syndic_name` + contact du gestionnaire), les contrats actifs (`is_contract_active` / `is_maintenance_contract`), les entrées (`maintenance_log::list`, tri `intervention_date ASC`), puis rend via `render_logbook`. Réponse `application/pdf`, en-tête `Content-Disposition: attachment; filename="carnet-entretien.pdf"`.
+- **`domain/pdf_template.rs`** (pur, sans I/O ni SQL) : `DocumentIdentity`, `DocumentHeader` (double en-tête : `issuer_lines` à gauche sous le bloc marque, `DocumentRecipient` optionnel à droite), `DocumentAnnexHeader` (kicker, titre, sous-titre, méta), `DocumentConclusion` (closing « Pour le syndic, », `signer_name`, `signer_role`, lieu/date remplis, période de validité légale optionnelle), `logo_element` (logo image embarquée `assets/images/logo-la-ruche.png`, rasterisé depuis `CLogoMark.svg`), `new_document` (décorateur de page `FooterDecorator` : pied de page récurrent logo + tagline + « Édité le … via La Ruche » en petite police grise, **pas d'en-tête récurrent**), `push_letter_header` (bloc marque + émetteur + destinataire + filet violet), `push_objet` (objet gras + référence grise), `push_salutation`, `push_annex_header` (kicker espacé + titre marque + méta + filet violet), `section`, `body`, `muted`, `push_conclusion` (bloc signature aligné à droite : closing, espace, nom en gras, qualité, « Fait à …, le … » rempli), `brand_hairline` / `hairline` (filets vectoriels gris et couleur marque), `finish_document`, formatteurs `format_euro` / `optional_euro` / `format_date` / `format_date_long`. Tests unitaires inclus.
+- **`domain/logbook_pdf.rs`** (pur) : `render_logbook` assemble — **page 1, la lettre** : double en-tête (bloc marque + émetteur syndic/SIRET à gauche, destinataire copropriété à droite), objet + référence, salutation, paragraphes de description (annonce de l'annexe, valeur de l'édition, disponibilité), formule de politesse, signature alignée à droite (nom du syndic, qualité, « Fait à {ville}, le {date} ») ; **page 2+, l'annexe** : en-tête d'annexe (kicker « A N N E X E », titre, identité), sections contrats d'assurance et de maintenance actifs (compteur + lignes objet/prestataire/période/montant), tableau chronologie (date, intervention, prestataire, catégorie, source, coût — cellules aérées, lignes paginées proprement). Pas de signature en annexe : la lettre porte la forme juridique. Le pied de page récurrent est géré par le décorateur du template. Les libellés (dont les paragraphes de la lettre) sont passés par le caller (renderer agnostique de la langue).
+- **`api/logbook.rs::export_pdf`** : `GET /logbook/export/pdf` — tout membre authentifié de l'immeuble (mêmes droits que le summary). Assemble l'identité (`building::get` + `governance_mandate::current_syndic_name` + contact du gestionnaire), les contrats actifs (`is_contract_active` / `is_maintenance_contract`), les entrées (`maintenance_log::list`, tri `intervention_date ASC`), les libellés FR de la lettre (objet « édition {année} », référence « Réf. LR-CARNET-{année} · Édition du {date} », paragraphes avec annonce de l'annexe, formule de politesse), puis rend via `render_logbook`. Réponse `application/pdf`, en-tête `Content-Disposition: attachment; filename="carnet-entretien.pdf"`.
 - **Note (hors périmètre)** : `domain/legal_documents.rs` (état daté / pré-état daté) duplique encore certains helpers (formatage, en-tête) — migration vers le template commun envisagée en suivi, sans toucher à un document probant dans ce ticket.
 
 ## 5. Frontend
@@ -67,16 +68,16 @@ Aucun nouveau composant frontend : le template documentaire vit côté backend (
 
 | Cas | Règle |
 |---|---|
-| Carnet vide | Le PDF est généré quand même : en-tête + « Aucune intervention enregistrée » |
+| Carnet vide | Le PDF est généré quand même : lettre complète + annexe « Aucune intervention enregistrée » |
 | Aucun contrat actif | Bloc affiché avec mention « Aucun contrat en cours » (l'absence d'assurance est une information réglementaire en soi) |
-| Volumétrie importante | Tableau multi-pages ; lignes non coupées au milieu (genpdf pagine les lignes), en-tête récurrent sur chaque page |
-| Syndic non renseigné | Méta « Syndic en exercice : Syndic non renseigné », signature « Le syndic » conservée |
+| Volumétrie importante | Tableau multi-pages en annexe ; lignes non coupées au milieu (genpdf pagine les lignes), pied de page récurrent sur chaque page |
+| Syndic non renseigné | Bloc émetteur « Syndic non renseigné », signature « La Ruche » sans qualité |
 | Rôles | Même accès que le summary (tout membre authentifié de l'immeuble) ; aucune route frontend supprimée ne contourne de contrôle |
 | Montants | Formatés FR (€, deux décimales) depuis `Decimal` (jamais `f64`) — `format_euro` du template |
 
 ## 7. Critères d'acceptation
 
-1. Depuis la vue carnet, « Exporter le carnet (PDF) » télécharge un PDF complet (introduction avec logo + « La Ruche » + tagline + identité copro + « Fait à …, le … » + « Pour le compte de … » + paragraphe explicatif, contrats actifs, chronologie, conclusion « Fait à …, le … » remplie signée « La Ruche » + période de validité, pied de page récurrent logo + tagline + « Édité le … via La Ruche »).
+1. Depuis la vue carnet, « Exporter le carnet (PDF) » télécharge un PDF complet : **page 1 = lettre** (double en-tête bloc marque + émetteur / destinataire, objet en gras + référence, salutation, paragraphes avec annonce de l'annexe, formule de politesse, signature nommée alignée à droite avec « Fait à …, le … » rempli), **pages suivantes = annexe** (kicker « A N N E X E », titre, identité, contrats actifs, chronologie), **pied de page récurrent** (logo + tagline + « Édité le … via La Ruche »).
 2. Le PDF est identique quel que soit le navigateur (génération serveur, A4, tableaux paginés proprement).
 3. Le template (`domain/pdf_template.rs`) est réutilisable tel quel pour les prochains documents (CR d'AG, lettre de relance).
 4. Carnet vide et absence de contrats gérés sans erreur.
@@ -84,14 +85,14 @@ Aucun nouveau composant frontend : le template documentaire vit côté backend (
 
 ## 8. Plan de tests
 
-- **Backend** : tests unitaires `pdf_template.rs` + `logbook_pdf.rs` (formatteurs, rendu valide `%PDF`, carnet vide, sans syndic) ; tests e2e `backend/tests/logbook_pdf_test.rs` (200 + `application/pdf` + magic bytes `%PDF` pour les 4 rôles, 401 non authentifié, reflet d'une entrée seedée, carnet vide) — à exécuter en CI avec Postgres.
+- **Backend** : tests unitaires `pdf_template.rs` + `logbook_pdf.rs` (formatteurs, `spaced_caps`, rendu valide `%PDF` avec double en-tête + lettre + annexe, carnet vide, sans syndic) ; tests e2e `backend/tests/logbook_pdf_test.rs` (200 + `application/pdf` + magic bytes `%PDF` pour les 4 rôles, 401 non authentifié, reflet d'une entrée seedée, carnet vide) — à exécuter en CI avec Postgres.
 - **Frontend** : `npm run typecheck && npm run lint && npm run build`.
-- Vérification visuelle du rendu (échantillon généré hors repo).
+- Vérification visuelle du rendu (échantillon `docs/samples/EP-009-S09-carnet-entretien-sample.svg`).
 
 ## 9. Ordre d'implémentation
 
-1. Template partagé `domain/pdf_template.rs` + tests unitaires.
-2. Renderer `domain/logbook_pdf.rs` + tests unitaires.
+1. Template partagé `domain/pdf_template.rs` (double en-tête, lettre, signature, annexe) + tests unitaires.
+2. Renderer `domain/logbook_pdf.rs` (lettre + annexe) + tests unitaires.
 3. Handler `export_pdf` + route + tests e2e.
 4. Frontend : `maintenanceApi.exportPdf` + bouton de téléchargement dans `MaintenanceView.vue`.
 5. Docs (ARCHITECTURE, DESIGN, EPICS) + spec.
