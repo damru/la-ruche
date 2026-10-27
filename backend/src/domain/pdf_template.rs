@@ -52,6 +52,9 @@ pub const INK: Color = Color::Rgb(17, 24, 39);
 /// Hairline rule grey.
 pub const RULE: Color = Color::Rgb(209, 213, 219);
 
+// Liberation Sans sous-ensemble (pyftsubset) : ASCII + Latin-1 + ponctuation
+// typographique (tirets, apostrophes, ellipsis, €). ~40 ko par fichier au lieu
+// de ~410 ko — les documents FR n'utilisent aucun glyphe hors de ce périmètre.
 const FONT_REGULAR: &[u8] = include_bytes!("../../assets/fonts/LiberationSans-Regular.ttf");
 const FONT_BOLD: &[u8] = include_bytes!("../../assets/fonts/LiberationSans-Bold.ttf");
 
@@ -149,7 +152,9 @@ pub fn font_family() -> Result<FontFamily<FontData>, String> {
 /// Rasterised app logo (7 hexagones « ruche », dégradé `#643fd5` → `#7d5bf0`),
 /// generated from `frontend/src/components/atoms/CLogoMark.svg` and embedded at
 /// compile time so the PDF is self-contained (ADR-011). RGB, no alpha channel
-/// (printpdf does not support transparency — the logo is drawn on white).
+/// (printpdf ne supporte pas la transparence — le logo est dessiné sur blanc).
+/// Encodé en PNG RGB optimisé (~5 ko) ; en release, printpdf compresse le flux
+/// image en FlateDecode (~4,6 ko par occurrence embarquée).
 const LOGO_PNG: &[u8] = include_bytes!("../../assets/images/logo-la-ruche.png");
 
 /// Natural size of the embedded logo in mm at 300 dpi (640 px → 54.04 mm).
