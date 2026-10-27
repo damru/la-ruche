@@ -21,9 +21,10 @@
 //! - **Footer (every page)** — small grey type: logo + tagline on the left,
 //!   « Édité le {date} via La Ruche » on the right, under a hairline rule.
 //!   genpdf has no native « total pages » footer, so no page number.
-//! - **Typography & palette** — Liberation Sans (embedded at compile time),
-//!   brand color `#643fd5` mirrored from `frontend/src/styles/tokens.css`
-//!   (`--color-primary` light theme), grey `#6b7280` for secondary text.
+//! - **Typography & palette** — Tinos (serif, metric-compatible Times New
+//!   Roman) embedded at compile time, brand color `#643fd5` mirrored from
+//!   `frontend/src/styles/tokens.css` (`--color-primary` light theme),
+//!   grey `#6b7280` for secondary text.
 //!
 //! Pure functions only — no I/O, no SQL. Callers assemble the data and hand it
 //! here; they receive the finished PDF as in-memory bytes (see
@@ -52,11 +53,15 @@ pub const INK: Color = Color::Rgb(17, 24, 39);
 /// Hairline rule grey.
 pub const RULE: Color = Color::Rgb(209, 213, 219);
 
-// Liberation Sans sous-ensemble (pyftsubset) : ASCII + Latin-1 + ponctuation
-// typographique (tirets, apostrophes, ellipsis, €). ~40 ko par fichier au lieu
-// de ~410 ko — les documents FR n'utilisent aucun glyphe hors de ce périmètre.
-const FONT_REGULAR: &[u8] = include_bytes!("../../assets/fonts/LiberationSans-Regular.ttf");
-const FONT_BOLD: &[u8] = include_bytes!("../../assets/fonts/LiberationSans-Bold.ttf");
+// Tinos (serif, métrique Times New Roman) sous-ensemble (pyftsubset) :
+// ASCII + Latin-1 + ponctuation typographique (tirets, apostrophes, ellipsis,
+// €). ~32 ko par fichier — les documents FR n'utilisent aucun glyphe hors de
+// ce périmètre. Police serif choisie pour le rendu « document officiel »
+// (EP-009-S09). Liberation Sans reste embarquée pour `legal_documents.rs`.
+const FONT_REGULAR: &[u8] = include_bytes!("../../assets/fonts/Tinos-Regular.ttf");
+const FONT_BOLD: &[u8] = include_bytes!("../../assets/fonts/Tinos-Bold.ttf");
+const FONT_ITALIC: &[u8] = include_bytes!("../../assets/fonts/Tinos-Italic.ttf");
+const FONT_BOLD_ITALIC: &[u8] = include_bytes!("../../assets/fonts/Tinos-BoldItalic.ttf");
 
 /// App name rendered next to the logo in the introduction and in the footer.
 pub const APP_NAME: &str = "La Ruche";
@@ -136,16 +141,15 @@ pub type Salutation = String;
 
 // ── Public helpers shared by document renderers ────────────────────────────
 
-/// Loads and parses the embedded font family. Propagates the only realistic
-/// failure (corrupted compile-time font asset) as a string to the caller.
+/// Loads and parses the embedded font family (Tinos serif — Times New Roman
+/// metric-compatible). Propagates the only realistic failure (corrupted
+/// compile-time font asset) as a string to the caller.
 pub fn font_family() -> Result<FontFamily<FontData>, String> {
-    let regular = FontData::new(FONT_REGULAR.to_vec(), None).map_err(|e| e.to_string())?;
-    let bold = FontData::new(FONT_BOLD.to_vec(), None).map_err(|e| e.to_string())?;
     Ok(FontFamily {
-        regular: regular.clone(),
-        bold: bold.clone(),
-        italic: regular.clone(),
-        bold_italic: bold,
+        regular: FontData::new(FONT_REGULAR.to_vec(), None).map_err(|e| e.to_string())?,
+        bold: FontData::new(FONT_BOLD.to_vec(), None).map_err(|e| e.to_string())?,
+        italic: FontData::new(FONT_ITALIC.to_vec(), None).map_err(|e| e.to_string())?,
+        bold_italic: FontData::new(FONT_BOLD_ITALIC.to_vec(), None).map_err(|e| e.to_string())?,
     })
 }
 

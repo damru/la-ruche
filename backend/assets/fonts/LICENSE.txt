@@ -8,3 +8,17 @@ to render regulatory PDF documents (état daté, pré-état daté) deterministic
 without any system font dependency.
 
 Full license text: https://openfontlicense.org/open-font-license-official-text/
+
+---
+
+Tinos — Regular, Bold, Italic, Bold Italic
+
+Copyright © The Tinos Project Authors (https://github.com/googlefonts/tinos)
+Licensed under the SIL Open Font License, Version 1.1.
+
+Tinos is a serif typeface metric-compatible with Times New Roman (the
+"Times" substitute of the Croscore font family). It is used for the body
+text of official generated PDF documents (EP-009-S09 template), giving them
+the typographic appearance of a formal administrative document.
+
+Full license text: https://openfontlicense.org/open-font-license-official-text/
