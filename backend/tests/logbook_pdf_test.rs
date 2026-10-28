@@ -46,7 +46,10 @@ async fn members_can_export_logbook_as_pdf() {
             "application/pdf",
             "role {jwt}"
         );
-        let disposition = response.header("content-disposition");
+        let disposition = response
+            .header("content-disposition")
+            .to_str()
+            .expect("content-disposition header must be ASCII");
         assert!(
             disposition.contains("attachment"),
             "role {jwt}: {disposition}"
