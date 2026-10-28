@@ -12,7 +12,7 @@ rules:
   - Ce fichier fait foi pour toute décision d'architecture backend.
   - Toute nouvelle table, handler, module domain/ ou store frontend doit être reflété ici.
   - Les noms de tables, colonnes et types Rust utilisent exclusivement les identifiants anglais du code.
-  - Le tableau « Schéma DB » est un listing des noms de tables par domaine — pas un descriptif (pas de détails de colonnes, pas de références epic/story dans ce tableau).
+  - Le tableau « Schéma DB » est un listing des noms de tables par domaine — pas un descriptif (pas de détails de colonnes).
   - Les entités marquées "prévu, non encore implémenté" ne doivent pas être codées sans ADR ou Epic associé.
   - Les invariants listés dans "Schéma DB" ont valeur de contrat : toute modification nécessite une mise à jour synchrone de ce document.
 references:
