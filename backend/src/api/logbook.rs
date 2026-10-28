@@ -382,6 +382,18 @@ pub async fn export_pdf(auth: AuthUser, State(state): State<Arc<AppState>>) -> A
         })
         .next();
 
+    // Destinataire du document : l'utilisateur qui a demandé la génération
+    // (retour utilisateur PR 155 v7.1) — nom, rôle, puis l'immeuble concerné.
+    let requester = db::user::find_by_id(&state.pool, auth.user_id)
+        .await?
+        .ok_or(AppError::NotFound)?;
+    let requester_full_name = format!("{} {}", requester.first_name, requester.last_name);
+    let recipient_lines = vec![
+        format!("{requester_full_name} — {}", requester_role_label(auth.roles.first())),
+        building.name.clone(),
+        address.clone(),
+    ];
+
     let contracts = db::contract::list(&state.pool, auth.building_id).await?;
     let active_contracts = contracts
         .into_iter()
@@ -429,7 +441,7 @@ pub async fn export_pdf(auth: AuthUser, State(state): State<Arc<AppState>>) -> A
     let building_name_for_doc = building.name.clone();
     let year = today.format("%Y").to_string();
     let edition_line = format!(
-        "Réf. LR-CARNET-{year} · Édition du {}",
+        "Réf. LR-CARNET-{year} · Édition du {} — destinataire : {requester_full_name}",
         crate::domain::pdf_template::format_date(today)
     );
     let letter_paragraphs = vec![
@@ -449,6 +461,7 @@ pub async fn export_pdf(auth: AuthUser, State(state): State<Arc<AppState>>) -> A
         },
         edited_at: today,
         syndic_contact,
+        recipient_lines,
         insurance_contracts,
         maintenance_contracts,
         entries: entry_lines,
@@ -499,6 +512,17 @@ pub async fn export_pdf(auth: AuthUser, State(state): State<Arc<AppState>>) -> A
             .unwrap_or(HeaderValue::from_static("attachment")),
     );
     Ok(response)
+}
+
+/// FR label for the requester's role (destinataire du document, v7.1).
+fn requester_role_label(role: Option<&Role>) -> &'static str {
+    match role {
+        Some(Role::Manager) => "Syndic",
+        Some(Role::BoardMember) => "Membre du conseil syndical",
+        Some(Role::CoOwner) => "Copropriétaire",
+        Some(Role::Tenant) => "Locataire",
+        None => "Membre",
+    }
 }
 
 /// FR label for a `contract_type` enum value.

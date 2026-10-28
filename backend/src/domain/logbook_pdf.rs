@@ -2,14 +2,15 @@
 //!
 //! Renders the regulatory logbook — « Carnet d'entretien de l'immeuble »
 //! (décret n°2001-477, art. 1) — as a **letter + annex** PDF using the shared
-//! document template (`domain/pdf_template.rs`, layout v6, retour utilisateur
+//! document template (`domain/pdf_template.rs`, layout v7.1, retour utilisateur
 //! PR 155) :
 //!
-//! - **Page 1 — lettre** : double en-tête (bloc marque « app web » + émetteur à
-//!   gauche, destinataire à droite, filet violet), objet en gras + référence,
-//!   salutation, paragraphes de description (dont l'annonce explicite de
-//!   l'annexe), formule de politesse, puis signature alignée à droite
-//!   (« Pour le syndic, », nom, qualité, « Fait à …, le … » rempli).
+//! - **Page 1 — lettre** : bloc marque « app web » (logo + « La Ruche » en
+//!   Fraunces + « Gestion participative » en DM Sans), émetteur à gauche et
+//!   destinataire à droite alignés sur la même ligne, filet violet, objet en
+//!   gras + référence, salutation, paragraphes **justifiés** (dont l'annonce
+//!   explicite de l'annexe), formule de politesse, puis signature alignée à
+//!   droite (« Pour le syndic, », nom, qualité, « Fait à …, le … » rempli).
 //! - **Pages suivantes — annexe** : kicker « A N N E X E », titre du carnet en
 //!   couleur marque, identité de la copropriété, puis contrats d'assurance en
 //!   cours, contrats de maintenance en cours et chronologie des interventions
@@ -63,6 +64,9 @@ pub struct LogbookPdfData {
     pub edited_at: NaiveDate,
     /// Syndic contact line under the identity (name + email/phone), if any.
     pub syndic_contact: Option<String>,
+    /// Recipient lines (right block of the double header): the user who
+    /// requested the document — name + role, then building name and address.
+    pub recipient_lines: Vec<String>,
     pub insurance_contracts: Vec<LogbookContractLine>,
     pub maintenance_contracts: Vec<LogbookContractLine>,
     /// Chronology, expected sorted ascending by `intervention_date`.
@@ -128,7 +132,7 @@ pub struct LogbookPdfLabels {
 
 /// Renders the logbook as a **letter + annex** PDF using the shared template.
 pub fn render_logbook(data: &LogbookPdfData) -> Result<Vec<u8>, String> {
-    let mut doc = tpl::new_document(tpl::font_family()?, data.edited_at, &data.labels.doc_title);
+    let (mut doc, fonts) = tpl::new_document(data.edited_at, &data.labels.doc_title)?;
 
     let mut layout = LinearLayout::vertical();
 
@@ -147,27 +151,25 @@ pub fn render_logbook(data: &LogbookPdfData) -> Result<Vec<u8>, String> {
 
     tpl::push_letter_header(
         &mut layout,
+        &fonts,
         &tpl::DocumentHeader {
             issuer_lines,
             recipient: Some(tpl::DocumentRecipient {
                 label: data.labels.recipient_label.clone(),
-                lines: vec![
-                    data.identity.building_name.clone(),
-                    data.identity.building_address.clone(),
-                ],
+                lines: data.recipient_lines.clone(),
             }),
         },
     )?;
 
-    // Objet + référence, salutation, corps de la lettre (description du
-    // document + annonce de l'annexe), formule de politesse.
+    // Objet + référence, salutation, corps de la lettre justifié (description
+    // du document + annonce de l'annexe), formule de politesse.
     tpl::push_objet(&mut layout, &data.labels.objet, data.labels.reference.as_deref());
     tpl::push_salutation(&mut layout, &data.labels.salutation);
     for paragraph in &data.labels.letter_paragraphs {
-        layout.push(tpl::body(paragraph));
+        layout.push(tpl::justified_body(paragraph));
         layout.push(elements::Break::new(0.5));
     }
-    layout.push(tpl::body(&data.labels.closing_formula));
+    layout.push(tpl::justified_body(&data.labels.closing_formula));
 
     // Signature alignée à droite (« Pour le syndic, », nom, qualité, date).
     // Sans syndic enregistré : signé « La Ruche », sans qualité.
@@ -530,6 +532,11 @@ mod tests {
             identity: identity(),
             edited_at: date(2026, 6, 16),
             syndic_contact: Some("contact@cabinet-dupont.fr".to_string()),
+            recipient_lines: vec![
+                "Marie Dupont — Copropriétaire".to_string(),
+                "Résidence des Tilleuls".to_string(),
+                "12 rue des Fleurs, 75011 Paris".to_string(),
+            ],
             insurance_contracts: vec![contract()],
             maintenance_contracts: vec![],
             entries: vec![
@@ -551,6 +558,11 @@ mod tests {
             identity: identity(),
             edited_at: date(2026, 6, 16),
             syndic_contact: None,
+            recipient_lines: vec![
+                "Marie Dupont — Copropriétaire".to_string(),
+                "Résidence des Tilleuls".to_string(),
+                "12 rue des Fleurs, 75011 Paris".to_string(),
+            ],
             insurance_contracts: vec![],
             maintenance_contracts: vec![],
             entries: vec![],
@@ -572,6 +584,11 @@ mod tests {
             },
             edited_at: date(2026, 6, 16),
             syndic_contact: None,
+            recipient_lines: vec![
+                "Marie Dupont — Copropriétaire".to_string(),
+                "Résidence des Tilleuls".to_string(),
+                "12 rue des Fleurs, 75011 Paris".to_string(),
+            ],
             insurance_contracts: vec![],
             maintenance_contracts: vec![],
             entries: vec![entry("Révision chaudière", 5)],
