@@ -163,7 +163,11 @@ pub fn render_logbook(data: &LogbookPdfData) -> Result<Vec<u8>, String> {
 
     // Objet + référence, salutation, corps de la lettre justifié (description
     // du document + annonce de l'annexe), formule de politesse.
-    tpl::push_objet(&mut layout, &data.labels.objet, data.labels.reference.as_deref());
+    tpl::push_objet(
+        &mut layout,
+        &data.labels.objet,
+        data.labels.reference.as_deref(),
+    );
     tpl::push_salutation(&mut layout, &data.labels.salutation);
     for paragraph in &data.labels.letter_paragraphs {
         layout.push(tpl::justified_body(paragraph));
@@ -198,16 +202,10 @@ pub fn render_logbook(data: &LogbookPdfData) -> Result<Vec<u8>, String> {
 
     let mut annex_meta = vec![
         ("Syndic en exercice".to_string(), syndic_line),
-        (
-            "Édition du".to_string(),
-            tpl::format_date(data.edited_at),
-        ),
+        ("Édition du".to_string(), tpl::format_date(data.edited_at)),
     ];
     if let Some(siret) = &data.identity.syndic_siret {
-        annex_meta.insert(
-            1,
-            ("SIRET".to_string(), siret.clone()),
-        );
+        annex_meta.insert(1, ("SIRET".to_string(), siret.clone()));
     }
     tpl::push_annex_header(
         &mut layout,
@@ -599,4 +597,3 @@ mod tests {
         assert!(bytes.starts_with(b"%PDF"));
     }
 }
-

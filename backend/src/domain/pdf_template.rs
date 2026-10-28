@@ -202,8 +202,7 @@ pub fn font_family() -> Result<FontFamily<FontData>, String> {
 /// `regular` slot — this keeps the PDF at two extra embedded fonts (~120 ko)
 /// instead of eight. Never combine these slots with `.bold()`/`.italic()`.
 fn builtin_slot(data: &[u8]) -> Result<FontData, String> {
-    FontData::new(data.to_vec(), Some(printpdf::BuiltinFont::Helvetica))
-        .map_err(|e| e.to_string())
+    FontData::new(data.to_vec(), Some(printpdf::BuiltinFont::Helvetica)).map_err(|e| e.to_string())
 }
 
 /// Brand family: Fraunces Bold embedded on the regular slot — the app name is
@@ -434,7 +433,12 @@ pub fn push_letter_header(
             recipient.push(
                 Paragraph::new(&recipient_block.label)
                     .aligned(Alignment::Right)
-                    .styled(style::Style::new().bold().with_font_size(9).with_color(GREY)),
+                    .styled(
+                        style::Style::new()
+                            .bold()
+                            .with_font_size(9)
+                            .with_color(GREY),
+                    ),
             );
             for (index, line) in recipient_block.lines.iter().enumerate() {
                 let color = if index == 0 { INK } else { GREY };
@@ -490,7 +494,8 @@ pub fn push_objet(layout: &mut LinearLayout, objet: &str, reference: Option<&str
     );
     if let Some(reference) = reference {
         layout.push(
-            Paragraph::new(reference).styled(style::Style::new().with_font_size(9).with_color(GREY)),
+            Paragraph::new(reference)
+                .styled(style::Style::new().with_font_size(9).with_color(GREY)),
         );
     }
     layout.push(elements::Break::new(1.2));
@@ -624,8 +629,12 @@ pub fn justified_body(text: &str) -> elements::StyledElement<JustifiedParagraph>
 /// rule — followed by the tabular content of the annex.
 pub fn push_annex_header(layout: &mut LinearLayout, annex: &DocumentAnnexHeader) {
     layout.push(
-        Paragraph::new(spaced_caps(&annex.kicker))
-            .styled(style::Style::new().bold().with_font_size(9).with_color(GREY)),
+        Paragraph::new(spaced_caps(&annex.kicker)).styled(
+            style::Style::new()
+                .bold()
+                .with_font_size(9)
+                .with_color(GREY),
+        ),
     );
     layout.push(
         Paragraph::new(&annex.title).styled(
@@ -637,7 +646,8 @@ pub fn push_annex_header(layout: &mut LinearLayout, annex: &DocumentAnnexHeader)
     );
     if let Some(subtitle) = &annex.subtitle {
         layout.push(
-            Paragraph::new(subtitle).styled(style::Style::new().with_font_size(11).with_color(GREY)),
+            Paragraph::new(subtitle)
+                .styled(style::Style::new().with_font_size(11).with_color(GREY)),
         );
     }
     layout.push(elements::Break::new(0.5));
@@ -900,7 +910,10 @@ mod tests {
             title: "Carnet d'entretien de l'immeuble".to_string(),
             subtitle: Some("Résidence des Tilleuls — 12 rue des Fleurs, 75011 Paris".to_string()),
             meta: vec![
-                ("Syndic en exercice".to_string(), "Cabinet Dupont".to_string()),
+                (
+                    "Syndic en exercice".to_string(),
+                    "Cabinet Dupont".to_string(),
+                ),
                 ("Édition du".to_string(), "16/06/2026".to_string()),
             ],
         }
@@ -944,8 +957,7 @@ mod tests {
 
     #[test]
     fn document_with_template_produces_valid_pdf() {
-        let (mut doc, fonts) =
-            new_document(date(2026, 6, 16), "Test document").expect("document");
+        let (mut doc, fonts) = new_document(date(2026, 6, 16), "Test document").expect("document");
         let mut layout = LinearLayout::vertical();
         push_letter_header(&mut layout, &fonts, &header()).expect("letter header");
         push_objet(

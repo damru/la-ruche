@@ -389,7 +389,10 @@ pub async fn export_pdf(auth: AuthUser, State(state): State<Arc<AppState>>) -> A
         .ok_or(AppError::NotFound)?;
     let requester_full_name = format!("{} {}", requester.first_name, requester.last_name);
     let recipient_lines = vec![
-        format!("{requester_full_name} — {}", requester_role_label(auth.roles.first())),
+        format!(
+            "{requester_full_name} — {}",
+            requester_role_label(auth.roles.first())
+        ),
         building.name.clone(),
         address.clone(),
     ];
@@ -603,4 +606,3 @@ pub async fn correction(
 
     Ok((StatusCode::CREATED, json_value(entry)?))
 }
-
