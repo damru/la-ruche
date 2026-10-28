@@ -78,8 +78,10 @@ async fn invalid_category_is_rejected_with_400() {
     )
     .await;
     assert_eq!(rejected.status_code(), StatusCode::BAD_REQUEST);
+    // The error body is `{error, message}` (errors.rs ErrorBody) — structured
+    // validation codes travel in `message`, there is no `code` key.
     assert_eq!(
-        rejected.json::<Value>()["code"],
+        rejected.json::<Value>()["message"],
         "errors.maintenance.invalid_category"
     );
 }
