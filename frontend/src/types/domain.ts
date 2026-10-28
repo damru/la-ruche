@@ -379,7 +379,7 @@ export interface ClaimNote {
   created_at: string
 }
 
-export type MaintenanceCategory = 'travaux' | 'contrat' | 'sinistre' | 'autre'
+export type MaintenanceCategory = 'works' | 'contract' | 'claim' | 'other'
 
 export interface MaintenanceEntry {
   id: string

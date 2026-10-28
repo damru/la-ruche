@@ -1,4 +1,4 @@
-// ── api/logbook.rs — Carnet d'entretien ─────────────────
+// ── api/logbook.rs — Logbook (maintenance log) ─────────────────
 use axum::{
     Json,
     extract::{Path, State},
@@ -106,7 +106,7 @@ fn is_maintenance_contract(contract_type: &str) -> bool {
 }
 
 /// Resolves the requested category against the `maintenance_category` enum,
-/// defaulting to `autre`. Invalid values are rejected with a validation error
+/// defaulting to `other`. Invalid values are rejected with a validation error
 /// instead of leaking a raw SQL cast error.
 fn resolve_category(category: Option<&str>) -> AppResult<&'static str> {
     match category {
@@ -168,20 +168,28 @@ fn parse_manager_info(user: &serde_json::Value) -> AppResult<Option<LogbookManag
     }))
 }
 
-/// All authenticated users can list the maintenance log.
+/// Managers, board members and co-owners can list the maintenance log.
+/// Tenants are excluded (see `permissions::can_view_logbook`).
 pub async fn list(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,
 ) -> AppResult<Json<serde_json::Value>> {
+    if !permissions::can_view_logbook(&auth) {
+        return Err(AppError::Forbidden);
+    }
     let rows = db::maintenance_log::list(&state.pool, auth.building_id).await?;
     json_value(rows)
 }
 
-/// All authenticated users can access the regulatory summary of the logbook.
+/// Managers, board members and co-owners can access the regulatory summary
+/// of the logbook. Tenants are excluded (see `permissions::can_view_logbook`).
 pub async fn summary(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,
 ) -> AppResult<Json<LogbookSummaryResponse>> {
+    if !permissions::can_view_logbook(&auth) {
+        return Err(AppError::Forbidden);
+    }
     let building = db::building::get(&state.pool, auth.building_id)
         .await?
         .ok_or(AppError::NotFound)?;
@@ -227,12 +235,16 @@ pub async fn summary(
     }))
 }
 
-/// All authenticated users can view a single log entry.
+/// Managers, board members and co-owners can view a single log entry.
+/// Tenants are excluded (see `permissions::can_view_logbook`).
 pub async fn get(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
 ) -> AppResult<Json<serde_json::Value>> {
+    if !permissions::can_view_logbook(&auth) {
+        return Err(AppError::Forbidden);
+    }
     let entry = db::maintenance_log::get(&state.pool, id, auth.building_id)
         .await?
         .ok_or(AppError::NotFound)?;
@@ -386,8 +398,8 @@ pub async fn export_pdf(auth: AuthUser, State(state): State<Arc<AppState>>) -> A
         })
         .next();
 
-    // Destinataire du document : l'utilisateur qui a demandé la génération
-    // (retour utilisateur PR 155 v7.1) — nom, rôle, puis l'immeuble concerné.
+    // Document recipient: the user who requested the generation
+    // (user feedback PR 155 v7.1) — name, role, then the relevant building.
     let requester = db::user::find_by_id(&state.pool, auth.user_id)
         .await?
         .ok_or(AppError::NotFound)?;
@@ -442,7 +454,7 @@ pub async fn export_pdf(auth: AuthUser, State(state): State<Arc<AppState>>) -> A
             cost: row.cost,
         })
         .collect::<Vec<_>>();
-    // Chronologie ascendante pour le document imprimé (la liste API est DESC).
+    // Ascending chronology for the printed document (the API list is DESC).
     entry_lines.sort_by_key(|entry| entry.intervention_date);
 
     let building_name_for_doc = building.name.clone();

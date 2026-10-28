@@ -120,9 +120,13 @@ pub fn can_manage_document(user: &AuthUser) -> bool {
 
 // ── Logbook ───────────────────────────────────────────────────────────────────
 
-/// Anyone authenticated may view the logbook (list, summary, get).
+/// Managers, board members and co-owners may view the logbook (list, summary,
+/// get, export). Tenants are excluded — the logbook is a regulatory record
+/// reserved for owners and management (art. 18-I loi 1965).
 pub fn can_view_logbook(user: &AuthUser) -> bool {
-    !user.roles.is_empty()
+    user.has_role(&Role::Manager)
+        || user.has_role(&Role::BoardMember)
+        || user.has_role(&Role::CoOwner)
 }
 
 pub fn can_manage_logbook(user: &AuthUser) -> bool {
@@ -320,5 +324,29 @@ mod tests {
         assert!(can_manage_document(&user_with(&[Role::Manager])));
         assert!(can_manage_document(&user_with(&[Role::BoardMember])));
         assert!(!can_manage_document(&user_with(&[Role::CoOwner])));
+    }
+
+    // ── Logbook ──
+
+    #[test]
+    fn can_view_logbook_excludes_tenant() {
+        assert!(can_view_logbook(&user_with(&[Role::Manager])));
+        assert!(can_view_logbook(&user_with(&[Role::BoardMember])));
+        assert!(can_view_logbook(&user_with(&[Role::CoOwner])));
+        assert!(!can_view_logbook(&user_with(&[Role::Tenant])));
+    }
+
+    #[test]
+    fn can_view_logbook_multi_role_tenant_plus_co_owner() {
+        // A user who is both tenant and co-owner can view (co-owner role wins).
+        assert!(can_view_logbook(&user_with(&[Role::Tenant, Role::CoOwner])));
+    }
+
+    #[test]
+    fn can_manage_logbook_manager_and_board_member() {
+        assert!(can_manage_logbook(&user_with(&[Role::Manager])));
+        assert!(can_manage_logbook(&user_with(&[Role::BoardMember])));
+        assert!(!can_manage_logbook(&user_with(&[Role::CoOwner])));
+        assert!(!can_manage_logbook(&user_with(&[Role::Tenant])));
     }
 }

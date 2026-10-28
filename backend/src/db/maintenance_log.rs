@@ -13,10 +13,10 @@ pub mod log_source {
 
 /// `maintenance_log.category` values (PG enum `maintenance_category`).
 pub mod category {
-    pub const WORKS: &str = "travaux";
-    pub const CONTRACT: &str = "contrat";
-    pub const CLAIM: &str = "sinistre";
-    pub const OTHER: &str = "autre";
+    pub const WORKS: &str = "works";
+    pub const CONTRACT: &str = "contract";
+    pub const CLAIM: &str = "claim";
+    pub const OTHER: &str = "other";
 }
 
 const VALID_CATEGORIES: &[&str] = &[

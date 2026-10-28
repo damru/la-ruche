@@ -1183,10 +1183,10 @@
     "deleteEntry": "Supprimer l'entrée",
     "addEntry": "Ajouter une entrée",
     "categories": {
-      "travaux": "Travaux",
-      "contrat": "Contrat",
-      "sinistre": "Sinistre",
-      "autre": "Autre"
+      "works": "Travaux",
+      "contract": "Contrat",
+      "claim": "Sinistre",
+      "other": "Autre"
     },
     "emptyFiltered": "Aucune entrée ne correspond aux filtres sélectionnés.",
     "exportLogbook": "Exporter le carnet (PDF)"

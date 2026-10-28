@@ -68,6 +68,7 @@ interface Permissions {
   canManageDocument: ComputedRef<boolean>
 
   // ── Logbook ──
+  /** Managers, board members and co-owners may view the logbook. Tenants are excluded. */
   canViewLogbook: ComputedRef<boolean>
   canManageLogbook: ComputedRef<boolean>
 
@@ -165,7 +166,10 @@ export function usePermissions(): Permissions {
 
   // ── Logbook ──
 
-  const canViewLogbook = computed(() => isAuthenticated.value)
+  /** Managers, board members and co-owners may view the logbook. Tenants are excluded. */
+  const canViewLogbook = computed(() =>
+    hasAnyRole([ROLE_MANAGER, ROLE_BOARD_MEMBER, ROLE_CO_OWNER]),
+  )
   const canManageLogbook = computed(() => hasAnyRole(MANAGER_ROLES))
 
   // ── Report ──

@@ -1,8 +1,9 @@
 // EP-009-S09 — logbook PDF export (server-side, shared document template).
 // AC: GET /logbook/export/pdf returns an `application/pdf` attachment built
-// from the shared template (header, contrats actifs, chronologie, signature,
-// footer). Access matches the logbook summary: any authenticated building
-// member (the logbook is a regulatory record every member may consult).
+// from the shared template (header, active contracts, chronology, signature,
+// footer). Access matches the logbook summary: managers, board members and
+// co-owners (the logbook is a regulatory record reserved for owners — tenants
+// are excluded).
 // Requires a PostgreSQL test database. Run with: cargo test --test logbook_pdf_test
 
 mod common;
@@ -18,7 +19,7 @@ async fn create_entry(server: &TestServer, auth: &str) {
         .json(&json!({
             "title": "Révision annuelle chaudière",
             "intervention_date": "2026-01-15",
-            "category": "contrat"
+            "category": "contract"
         }))
         .await;
     assert_eq!(created.status_code(), StatusCode::CREATED, "setup entry");
@@ -29,12 +30,7 @@ async fn members_can_export_logbook_as_pdf() {
     let (ctx, _pool) = common::rbac_setup().await;
     let server = common::test_server().await;
 
-    for jwt in [
-        &ctx.manager_jwt,
-        &ctx.board_member_jwt,
-        &ctx.coowner_jwt,
-        &ctx.tenant_jwt,
-    ] {
+    for jwt in [&ctx.manager_jwt, &ctx.board_member_jwt, &ctx.coowner_jwt] {
         let auth = format!("Bearer {jwt}");
         let response = server
             .get("/api/v1/logbook/export/pdf")
@@ -63,6 +59,19 @@ async fn members_can_export_logbook_as_pdf() {
         assert!(bytes.starts_with(b"%PDF"), "role {jwt}: not a PDF");
         assert!(!bytes.is_empty(), "role {jwt}: empty body");
     }
+}
+
+#[tokio::test]
+async fn tenant_cannot_export_logbook_as_pdf() {
+    let (ctx, _pool) = common::rbac_setup().await;
+    let server = common::test_server().await;
+    let auth = format!("Bearer {}", ctx.tenant_jwt);
+
+    let response = server
+        .get("/api/v1/logbook/export/pdf")
+        .add_header("Authorization", &auth)
+        .await;
+    assert_eq!(response.status_code(), StatusCode::FORBIDDEN);
 }
 
 #[tokio::test]
@@ -95,9 +104,9 @@ async fn export_pdf_requires_authentication() {
 
 #[tokio::test]
 async fn export_pdf_on_empty_logbook_still_renders() {
-    // Spec EP-009-S09 §6: carnet vide + aucun contrat → le document s'imprime
-    // quand même (en-tête + mentions « Aucun contrat en cours » / « Aucune
-    // intervention enregistrée »).
+    // Spec EP-009-S09 §6: empty logbook + no contracts → the document still
+    // renders (header + « Aucun contrat en cours » / « Aucune intervention
+    // enregistrée »).
     let (ctx, _pool) = common::rbac_setup().await;
     let server = common::test_server().await;
     let auth = format!("Bearer {}", ctx.manager_jwt);

@@ -3,31 +3,31 @@
 //!
 //! Every generated document — logbook export, état daté, pré-état daté, future
 //! AG minutes, reminder letters — is built from this module so that the layout
-//! is identical everywhere. Layout v7.1 (retour utilisateur PR 155) :
+//! is identical everywhere. Layout v7.1 (user feedback PR 155) :
 //!
-//! - **Bloc marque « app web » (première page)** — logo (même PNG que la barre
-//!   latérale de l'app), « La Ruche » en Fraunces Bold (la police display du
-//!   web, `--font-display`) en `--on-surface`, tagline « Gestion participative »
-//!   (i18n `auth.brandEyebrow`) en DM Sans en `--on-surface-variant`.
-//! - **Double en-tête aligné** — deux lignes sur la même grille : le bloc marque
-//!   sur la première, puis l'émetteur (gauche) et le destinataire (droite) qui
-//!   commencent sur la même ligne. Filet violet sous l'en-tête.
-//! - **Corps de lettre justifié** — genpdf 0.2 n'a pas de justification native
-//!   : un élément custom `JustifiedParagraph` étire toutes les lignes sauf la
-//!   dernière du paragraphe sur toute la largeur utile.
-//! - **Signature (fin de lettre)** — bloc aligné à droite : « Pour {qualité} »,
-//!   espace, nom du signataire en gras, qualité en gris, « Fait à {place}, le
-//!   {date} » rempli.
-//! - **En-tête d'annexe** — kicker espacé (A N N E X E), titre en couleur
-//!   marque, sous-titre, méta-lignes, filet violet ; les tableaux suivent.
-//! - **Footer (chaque page)** — mini logo + « Gestion participative — La
-//!   Ruche » (DM Sans) à gauche, « Édité le {date} via La Ruche » aligné à
-//!   droite, sous un filet gris. Le décorateur applique aussi les marges de
-//!   page et réserve la zone de pied de page.
+//! - **Brand block « app web » (first page)** — logo (same PNG as the app's
+//!   sidebar), « La Ruche » in Fraunces Bold (the web display font,
+//!   `--font-display`) in `--on-surface`, tagline « Gestion participative »
+//!   (i18n `auth.brandEyebrow`) in DM Sans in `--on-surface-variant`.
+//! - **Aligned double header** — two lines on the same grid: the brand block
+//!   on the first, then the issuer (left) and the recipient (right) starting
+//!   on the same line. Purple hairline under the header.
+//! - **Justified letter body** — genpdf 0.2 has no native justification:
+//!   a custom `JustifiedParagraph` element stretches every line except the
+//!   last of the paragraph over the full usable width.
+//! - **Signature (end of letter)** — right-aligned block: « Pour {qualité} »,
+//!   space, signer name in bold, role in grey, « Fait à {place}, le
+//!   {date} » filled in.
+//! - **Annex header** — spaced kicker (A N N E X E), title in brand color,
+//!   subtitle, meta lines, purple hairline; tables follow.
+//! - **Footer (every page)** — mini logo + « Gestion participative — La
+//!   Ruche » (DM Sans) on the left, « Édité le {date} via La Ruche » right-aligned,
+//!   under a grey hairline. The decorator also applies page margins and reserves
+//!   the footer zone.
 //! - **Typography & palette** — Tinos (serif, metric-compatible Times New
-//!   Roman) pour le corps, Fraunces Bold / DM Sans Regular pour la marque
-//!   (embarquées, un seul slot chacune), brand color `#643fd5` (`--color-primary`
-//!   light theme), couleurs web `#191c1d` (on-surface) et `#42474e`
+//!   Roman) for the body, Fraunces Bold / DM Sans Regular for the brand
+//!   (embedded, one slot each), brand color `#643fd5` (`--color-primary`
+//!   light theme), web colors `#191c1d` (on-surface) and `#42474e`
 //!   (on-surface-variant).
 //!
 //! Pure functions only — no I/O, no SQL. Callers assemble the data and hand it
@@ -63,11 +63,11 @@ pub const ON_SURFACE: Color = Color::Rgb(25, 28, 29);
 /// Web `--on-surface-variant` (`#42474e`) — tagline in the brand block.
 pub const ON_SURFACE_VARIANT: Color = Color::Rgb(66, 71, 78);
 
-// Tinos (serif, métrique Times New Roman) sous-ensemble (pyftsubset) :
-// ASCII + Latin-1 + ponctuation typographique (tirets, apostrophes, ellipsis,
-// €). ~32 ko par fichier — les documents FR n'utilisent aucun glyphe hors de
-// ce périmètre. Police serif choisie pour le rendu « document officiel »
-// Liberation Sans reste embarquée pour `legal_documents.rs`.
+// Tinos (serif, Times New Roman metric-compatible) subset (pyftsubset):
+// ASCII + Latin-1 + typographic punctuation (dashes, apostrophes, ellipsis,
+// €). ~32 ko per file — FR documents use no glyph outside this scope.
+// Serif font chosen for the « official document » rendering.
+// Liberation Sans remains embedded for `legal_documents.rs`.
 const FONT_REGULAR: &[u8] = include_bytes!("../../assets/fonts/Tinos-Regular.ttf");
 const FONT_BOLD: &[u8] = include_bytes!("../../assets/fonts/Tinos-Bold.ttf");
 const FONT_ITALIC: &[u8] = include_bytes!("../../assets/fonts/Tinos-Italic.ttf");
@@ -238,13 +238,13 @@ pub struct BrandFonts {
 
 // ── Logo ───────────────────────────────────────────────────────────────────
 
-/// Rasterised app logo (7 hexagones « ruche », dégradé `#643fd5` → `#7d5bf0`),
+/// Rasterised app logo (7 hexagons « hive », gradient `#643fd5` → `#7d5bf0`),
 /// generated from `frontend/src/components/atoms/CLogoMark.svg` and embedded at
 /// compile time so the PDF is self-contained (ADR-011). RGB, no alpha channel
-/// (printpdf ne supporte pas la transparence — le logo est dessiné sur blanc).
-/// Encodé en PNG RGB optimisé (~5 ko) ; en release, printpdf compresse le flux
-/// image en FlateDecode (~4,6 ko par occurrence embarquée). C'est exactement le
-/// logo de la barre latérale de l'app web.
+/// (printpdf does not support transparency — the logo is drawn on white).
+/// Encoded as optimized RGB PNG (~5 ko); in release, printpdf compresses the
+/// image stream with FlateDecode (~4.6 ko per embedded occurrence). This is
+/// exactly the logo of the app web sidebar.
 const LOGO_PNG: &[u8] = include_bytes!("../../assets/images/logo-la-ruche.png");
 
 /// Natural size of the embedded logo in mm at 300 dpi (640 px → 54.04 mm).
@@ -372,9 +372,9 @@ impl PageDecorator for FooterDecorator {
 // ── Double header (first page) ─────────────────────────────────────────────
 
 /// Pushes the double header on the first page, over two rows of the same
-/// grid: the application brand block « app web » (logo + « La Ruche » en
-/// Fraunces + « Gestion participative » en DM Sans — mêmes polices et couleurs
-/// que la barre latérale de l'app) on its own row, then the issuer block
+/// grid: the application brand block « app web » (logo + « La Ruche » in
+/// Fraunces + « Gestion participative » in DM Sans — same fonts and colors
+/// as the app sidebar) on its own row, then the issuer block
 /// (left) and the recipient block (right) starting on the same line; a
 /// brand-colored rule closes the header.
 pub fn push_letter_header(
@@ -1000,9 +1000,9 @@ mod tests {
 
     #[test]
     fn justified_paragraph_paginates_a_long_paragraph() {
-        // Un paragraphe justifié plus long qu'une page doit se paginer
-        // proprement (has_more → re-render avec les mots restants) et produire
-        // un PDF valide.
+        // A justified paragraph longer than one page must paginate cleanly
+        // (has_more → re-render with the remaining words) and produce a valid
+        // PDF.
         let (mut doc, _fonts) = new_document(date(2026, 6, 16), "Justification").expect("document");
         let mut layout = LinearLayout::vertical();
         let words: Vec<String> = (0..400).map(|i| format!("mot{i}")).collect();
@@ -1011,6 +1011,6 @@ mod tests {
 
         let bytes = finish_document(doc).expect("render");
         assert!(bytes.starts_with(b"%PDF"));
-        assert!(bytes.len() > 10_000); // plusieurs pages de texte justifié
+        assert!(bytes.len() > 10_000); // multiple pages of justified text
     }
 }

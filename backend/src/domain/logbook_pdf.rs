@@ -2,20 +2,20 @@
 //!
 //! Renders the regulatory logbook — « Carnet d'entretien de l'immeuble »
 //! (décret n°2001-477, art. 1) — as a **letter + annex** PDF using the shared
-//! document template (`domain/pdf_template.rs`, layout v7.1, retour utilisateur
+//! document template (`domain/pdf_template.rs`, layout v7.1, user feedback
 //! PR 155) :
 //!
-//! - **Page 1 — lettre** : bloc marque « app web » (logo + « La Ruche » en
-//!   Fraunces + « Gestion participative » en DM Sans), émetteur à gauche et
-//!   destinataire à droite alignés sur la même ligne, filet violet, objet en
-//!   gras + référence, salutation, paragraphes **justifiés** (dont l'annonce
-//!   explicite de l'annexe), formule de politesse, puis signature alignée à
-//!   droite (« Pour le syndic, », nom, qualité, « Fait à …, le … » rempli).
-//! - **Pages suivantes — annexe** : kicker « A N N E X E », titre du carnet en
-//!   couleur marque, identité de la copropriété, puis contrats d'assurance en
-//!   cours, contrats de maintenance en cours et chronologie des interventions
-//!   (le contenu tabulaire annoncé dans la lettre).
-//! - **Pied de page récurrent** sur chaque page (logo + tagline + édition).
+//! - **Page 1 — letter** : brand block « app web » (logo + « La Ruche » in
+//!   Fraunces + « Gestion participative » in DM Sans), issuer on the left and
+//!   recipient on the right aligned on the same line, purple hairline, bold
+//!   subject + reference, salutation, **justified** paragraphs (including the
+//!   explicit annex announcement), closing formula, then right-aligned
+//!   signature (« Pour le syndic, », name, role, « Fait à …, le … » filled in).
+//! - **Following pages — annex** : kicker « A N N E X E », logbook title in
+//!   brand color, co-ownership identity, then active insurance contracts,
+//!   active maintenance contracts and the intervention chronology (the
+//!   tabular content announced in the letter).
+//! - **Recurring footer** on every page (logo + tagline + edition date).
 //!
 //! Pure functions only — no I/O, no SQL. The API layer assembles the data and
 //! receives the finished PDF as in-memory bytes.
@@ -80,7 +80,7 @@ pub struct LogbookPdfData {
 #[derive(Debug, Clone)]
 pub struct LogbookPdfLabels {
     pub doc_title: String,
-    // ── Page 1 : lettre ──────────────────────────────────────────────────
+    // ── Page 1 : letter ──────────────────────────────────────────────────
     /// Issuer block heading on the left of the double header, e.g. « Le
     /// syndic des copropriétaires ».
     pub issuer_heading: String,
@@ -109,7 +109,7 @@ pub struct LogbookPdfLabels {
     /// Place of issue for « Fait à {place}, le {date} » (signature) —
     /// usually the city of the copropriété.
     pub place: String,
-    // ── Annexe ────────────────────────────────────────────────────────────
+    // ── Annex ────────────────────────────────────────────────────────────
     /// Annex kicker rendered letter-spaced, e.g. « Annexe ».
     pub annex_kicker: String,
     pub insurance_section: String,
@@ -143,7 +143,7 @@ pub fn render_logbook(data: &LogbookPdfData) -> Result<Vec<u8>, String> {
         (None, _) => data.labels.issuer_not_set.clone(),
     };
 
-    // ── Page 1 : lettre ──────────────────────────────────────────────────
+    // ── Page 1 : letter ──────────────────────────────────────────────────
     let mut issuer_lines = vec![data.labels.issuer_heading.clone(), syndic_line.clone()];
     if let Some(siret) = &data.identity.syndic_siret {
         issuer_lines.push(format!("SIRET : {siret}"));
@@ -161,8 +161,8 @@ pub fn render_logbook(data: &LogbookPdfData) -> Result<Vec<u8>, String> {
         },
     )?;
 
-    // Objet + référence, salutation, corps de la lettre justifié (description
-    // du document + annonce de l'annexe), formule de politesse.
+    // Subject + reference, salutation, justified letter body (document
+    // description + annex announcement), closing formula.
     tpl::push_objet(
         &mut layout,
         &data.labels.objet,
@@ -175,8 +175,8 @@ pub fn render_logbook(data: &LogbookPdfData) -> Result<Vec<u8>, String> {
     }
     layout.push(tpl::justified_body(&data.labels.closing_formula));
 
-    // Signature alignée à droite (« Pour le syndic, », nom, qualité, date).
-    // Sans syndic enregistré : signé « La Ruche », sans qualité.
+    // Right-aligned signature (« Pour le syndic, », name, role, date).
+    // Without a recorded syndic: signed « La Ruche », without a role.
     let signer_role = match data.identity.syndic_name {
         Some(_) => data.labels.signer_role.clone(),
         None => None,
@@ -197,7 +197,7 @@ pub fn render_logbook(data: &LogbookPdfData) -> Result<Vec<u8>, String> {
         },
     );
 
-    // ── Saut de page : annexe ─────────────────────────────────────────────
+    // ── Page break : annex ─────────────────────────────────────────────
     layout.push(elements::PageBreak::new());
 
     let mut annex_meta = vec![
@@ -550,7 +550,7 @@ mod tests {
 
     #[test]
     fn render_empty_logbook_produces_valid_pdf() {
-        // Carnet vide + aucun contrat : le document s'imprime quand même
+        // Empty logbook + no contracts: the document still renders
         // (spec §6).
         let data = LogbookPdfData {
             identity: identity(),

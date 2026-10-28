@@ -140,9 +140,10 @@ cargo sqlx prepare                 # regenerate .sqlx/ (offline mode)
 
 ## Language
 
-- **Code + comments** → English only.
+- **Code + comments** → English only. This applies to all literal values (enum values, constants, string literals), variable names, function names, and all comments (inline, doc, module-level). No French in code — not even in comments or string literals.
 - **No epic/story/ticket references in code comments** (no `EP-XXX-SYY`, no story IDs) — those belong in `docs/EPICS.md`, specs, and commit messages only.
 - **Docs** (PRD, DESIGN, ARCHITECTURE, ADR, DDR) → French. Code identifiers stay English inside docs.
+- **User-facing strings** (i18n labels, PDF content, error messages shown to users) → French, via i18n keys or dedicated label functions. Never hardcode French display text in code logic.
 
 ---
 

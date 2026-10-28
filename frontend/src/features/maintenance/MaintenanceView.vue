@@ -221,9 +221,9 @@ const regulatoryLegalLinks = computed(() => [
 ])
 
 function categoryVariant(category: MaintenanceCategory): 'primary' | 'accent' | 'warn' | 'default' {
-  if (category === 'travaux') return 'primary'
-  if (category === 'contrat') return 'accent'
-  if (category === 'sinistre') return 'warn'
+  if (category === 'works') return 'primary'
+  if (category === 'contract') return 'accent'
+  if (category === 'claim') return 'warn'
   return 'default'
 }
 

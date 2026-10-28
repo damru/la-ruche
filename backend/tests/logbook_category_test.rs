@@ -1,8 +1,8 @@
 // EP-009-S10 — logbook category (PRD US-CE-005).
 // 1. POST with an explicit category is echoed back on GET.
-// 2. POST without a category defaults to `autre`.
+// 2. POST without a category defaults to `other`.
 // 3. An invalid category is rejected with 400 (no raw SQL cast error leak).
-// 4. Closing a task generates a logbook entry with category `travaux`.
+// 4. Closing a task generates a logbook entry with category `works`.
 
 mod common;
 
@@ -19,7 +19,7 @@ async fn create_entry(server: &TestServer, auth: &str, payload: Value) -> axum_t
 }
 
 #[tokio::test]
-async fn category_is_echoed_and_defaults_to_autre() {
+async fn category_is_echoed_and_defaults_to_other() {
     let (ctx, _pool) = common::rbac_setup().await;
     let server = common::test_server().await;
     let auth = format!("Bearer {}", ctx.manager_jwt);
@@ -31,13 +31,13 @@ async fn category_is_echoed_and_defaults_to_autre() {
         json!({
             "title": "Remplacement chaudière",
             "intervention_date": "2026-02-10",
-            "category": "contrat"
+            "category": "contract"
         }),
     )
     .await;
     assert_eq!(created.status_code(), StatusCode::CREATED);
     let body = created.json::<Value>();
-    assert_eq!(body["category"], "contrat");
+    assert_eq!(body["category"], "contract");
     let entry_id = body["id"].as_str().expect("id").to_string();
 
     let fetched = server
@@ -45,9 +45,9 @@ async fn category_is_echoed_and_defaults_to_autre() {
         .add_header("Authorization", &auth)
         .await;
     assert_eq!(fetched.status_code(), StatusCode::OK);
-    assert_eq!(fetched.json::<Value>()["category"], "contrat");
+    assert_eq!(fetched.json::<Value>()["category"], "contract");
 
-    // No category → defaults to `autre`.
+    // No category → defaults to `other`.
     let defaulted = create_entry(
         &server,
         &auth,
@@ -58,7 +58,7 @@ async fn category_is_echoed_and_defaults_to_autre() {
     )
     .await;
     assert_eq!(defaulted.status_code(), StatusCode::CREATED);
-    assert_eq!(defaulted.json::<Value>()["category"], "autre");
+    assert_eq!(defaulted.json::<Value>()["category"], "other");
 }
 
 #[tokio::test]
@@ -87,7 +87,7 @@ async fn invalid_category_is_rejected_with_400() {
 }
 
 #[tokio::test]
-async fn task_closure_generates_travaux_category_entry() {
+async fn task_closure_generates_works_category_entry() {
     let (ctx, _pool) = common::rbac_setup().await;
     let server = common::test_server().await;
     let auth = format!("Bearer {}", ctx.manager_jwt);
@@ -123,5 +123,5 @@ async fn task_closure_generates_travaux_category_entry() {
         .find(|entry| entry["task_id"] == task_id)
         .expect("logbook entry generated from closed task");
     assert_eq!(entry["source"], "automatic");
-    assert_eq!(entry["category"], "travaux");
+    assert_eq!(entry["category"], "works");
 }

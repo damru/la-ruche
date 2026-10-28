@@ -145,7 +145,7 @@ const routes: RouteRecordRaw[] = [
         path: 'logbook',
         name: 'maintenance',
         component: MaintenanceView,
-        meta: { title: 'nav.maintenance', roles: [...MANAGER_ROLES] },
+        meta: { title: 'nav.maintenance', roles: [...MANAGER_ROLES, ROLE_CO_OWNER] },
       },
       {
         path: 'calendar',

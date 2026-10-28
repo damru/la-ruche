@@ -140,8 +140,8 @@ export const PAYMENT_FREQUENCIES = ['monthly', 'quarterly', 'biannual', 'annual'
 
 // ── Maintenance logbook ──
 
-export const MAINTENANCE_CATEGORIES = ['travaux', 'contrat', 'sinistre', 'autre'] as const satisfies readonly MaintenanceCategory[]
-export const DEFAULT_MAINTENANCE_CATEGORY: MaintenanceCategory = 'autre'
+export const MAINTENANCE_CATEGORIES = ['works', 'contract', 'claim', 'other'] as const satisfies readonly MaintenanceCategory[]
+export const DEFAULT_MAINTENANCE_CATEGORY: MaintenanceCategory = 'other'
 
 // ── Units ──
 
