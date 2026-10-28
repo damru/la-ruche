@@ -1,57 +1,60 @@
+
+<!-- Echantillon schematic v7.1 : polices Fraunces / DM Sans non embarquees.
+     Les TTF sont dans backend/assets/fonts ; ouvrez ce SVG avec ces polices
+     installees pour un rendu typographique fidele du PDF genere. -->
+
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 560" font-family="Tinos, 'Times New Roman', serif">
   <defs>
-    <g id="logo">
-      <path d="M0,-11 L9.5,-5.5 L9.5,5.5 L0,11 L-9.5,5.5 L-9.5,-5.5 Z" fill="#f0ebfd" stroke="#643fd5" stroke-width="1.6"/>
-      <path d="M0,-5 L4.3,-2.5 L4.3,2.5 L0,5 L-4.3,2.5 L-4.3,-2.5 Z" fill="none" stroke="#643fd5" stroke-width="1.4"/>
-    </g>
+    <style>
+      </style>
   </defs>
 
   <rect x="0" y="0" width="680" height="560" fill="#faf9fc"/>
-  <text x="20" y="24" font-size="15" fill="#111827" font-weight="bold">EP-009-S09 — Carnet d'entretien : échantillon du rendu « lettre + annexe » (template documentaire v6)</text>
+  <text x="20" y="24" font-size="15" fill="#111827" font-weight="bold">EP-009-S09 — Carnet d’entretien : échantillon du rendu « lettre + annexe » (template documentaire v7.1)</text>
 
   <!-- ══════════════ PAGE 1 : LETTRE ══════════════ -->
   <g transform="translate(20,44)">
     <rect x="0" y="0" width="300" height="424" rx="3" fill="#ffffff" stroke="#d1d5db"/>
     <rect x="0" y="0" width="300" height="4" fill="#643fd5"/>
 
-    <!-- Double en-tête : bloc marque style App web à gauche, destinataire à droite -->
-    <use href="#logo" x="30" y="36"/>
-    <g font-family="Inter, 'Liberation Sans', Arial, sans-serif">
-      <text x="46" y="34" font-size="13" fill="#643fd5" font-weight="bold">La Ruche</text>
-      <text x="46" y="43" font-size="5.2" fill="#6b7280">Gestion de copropriété participative,</text>
-      <text x="46" y="50" font-size="5.2" fill="#6b7280">pour les syndics bénévoles et conseils syndicaux.</text>
+    <!-- Bloc marque : logo web inline + Fraunces + DM Sans -->
+    <g transform="translate(24,16) scale(0.3448)">
+      <polygon fill="#704de2" points="51.5,40 45.75,49.96 34.25,49.96 28.5,40 34.25,30.04 45.75,30.04"/>
+      <polygon fill="#6c48de" points="51.5,17.48 45.75,27.44 34.25,27.44 28.5,17.48 34.25,7.52 45.75,7.52"/>
+      <polygon fill="#724fe4" points="71,28.74 65.25,38.7 53.75,38.7 48,28.74 53.75,18.78 65.25,18.78"/>
+      <polygon fill="#7754e9" points="71,51.26 65.25,61.22 53.75,61.22 48,51.26 53.75,41.3 65.25,41.3"/>
+      <polygon fill="#7552e7" points="51.5,62.52 45.75,72.48 34.25,72.48 28.5,62.52 34.25,52.56 45.75,52.56"/>
+      <polygon fill="#6f4be1" points="32,51.26 26.25,61.22 14.75,61.22 9,51.26 14.75,41.3 26.25,41.3"/>
+      <polygon fill="#6a46dc" points="32,28.74 26.25,38.7 14.75,38.7 9,28.74 14.75,18.78 26.25,18.78"/>
     </g>
-    <text x="28" y="70" font-size="5.6" fill="#111827" font-weight="bold">Le syndic des copropriétaires</text>
-    <text x="28" y="78" font-size="5.6" fill="#6b7280">Damien Rubio — 12 rue des Acacias</text>
-    <text x="28" y="86" font-size="5.6" fill="#6b7280">44000 Nantes</text>
-    <text x="28" y="94" font-size="5.6" fill="#6b7280">SIRET : 812 345 678 00025</text>
-    <text x="272" y="58" font-size="5.6" fill="#6b7280" text-anchor="end" font-weight="bold">Destinataire</text>
-    <text x="272" y="68" font-size="5.6" fill="#111827" text-anchor="end">Copropriété Les Tilleuls</text>
-    <text x="272" y="76" font-size="5.6" fill="#6b7280" text-anchor="end">41 rue Alain Barbe Torte</text>
-    <text x="272" y="84" font-size="5.6" fill="#6b7280" text-anchor="end">44200 Nantes</text>
+    <text x="58" y="30" font-size="12.2" fill="#191c1d" font-weight="bold" font-family="FrauncesLR, Fraunces, Georgia, serif">La Ruche</text>
+    <text x="58" y="41" font-size="8.5" fill="#42474e" font-family="DMSansLR, 'DM Sans', system-ui, sans-serif">Gestion participative</text>
+
+    <!-- Double en-tête : émetteur et destinataire alignés sur la même ligne -->
+    <text x="24" y="72" font-size="5.6" fill="#111827" font-weight="bold">Le syndic des copropriétaires</text>
+    <text x="24" y="80" font-size="5.6" fill="#6b7280">Damien Rubio — 12 rue des Acacias</text>
+    <text x="24" y="88" font-size="5.6" fill="#6b7280">44000 Nantes</text>
+    <text x="24" y="96" font-size="5.6" fill="#6b7280">SIRET : 812 345 678 00025</text>
+    <text x="276" y="72" font-size="5.6" fill="#6b7280" text-anchor="end" font-weight="bold">Destinataire</text>
+    <text x="276" y="80" font-size="5.6" fill="#111827" text-anchor="end">Marie Dupont — Copropriétaire</text>
+    <text x="276" y="88" font-size="5.6" fill="#6b7280" text-anchor="end">Lot 12 — 41 rue Alain Barbe Torte</text>
+    <text x="276" y="96" font-size="5.6" fill="#6b7280" text-anchor="end">44200 Nantes</text>
     <line x1="24" y1="104" x2="276" y2="104" stroke="#643fd5" stroke-width="1.2"/>
 
-    <!-- Corps de lettre classique -->
-    <text x="24" y="122" font-size="6.4" fill="#111827" font-weight="bold">Objet : Carnet d'entretien de l'immeuble — édition 2026</text>
-    <text x="24" y="132" font-size="5.6" fill="#6b7280">Réf. LR-CARNET-2026-102</text>
+    <!-- Corps de lettre — justifié -->
+    <text x="24" y="122" font-size="6.4" fill="#111827" font-weight="bold">Objet : Carnet d&#39;entretien de l&#39;immeuble — édition 2026</text>
+    <text x="24" y="132" font-size="5.6" fill="#6b7280">Réf. LR-CARNET-2026-102 — destinataire : Marie Dupont (demandeuse)</text>
 
     <text x="24" y="152" font-size="6" fill="#111827">Madame, Monsieur,</text>
 
-    <text x="24" y="170" font-size="6" fill="#111827">Conformément au décret n°2001-477 et à l'article 1er de la loi SRU, le</text>
-    <text x="24" y="179" font-size="6" fill="#111827">syndic tient à jour le carnet d'entretien de l'immeuble. Vous trouverez</text>
-    <text x="24" y="188" font-size="6" fill="#111827">ci-joint, en annexe du présent document, l'édition du carnet au 27</text>
-    <text x="24" y="197" font-size="6" fill="#111827">octobre 2026 : contrats d'assurance et de maintenance en cours,</text>
-    <text x="24" y="206" font-size="6" fill="#111827">puis chronologie complète des interventions.</text>
-
-    <text x="24" y="226" font-size="6" fill="#111827">Cette édition est valable à sa date d'émission et remplace toute</text>
-    <text x="24" y="235" font-size="6" fill="#111827">édition antérieure. Elle peut être consultée par tout copropriétaire</text>
-    <text x="24" y="244" font-size="6" fill="#111827">sur simple demande auprès du syndic.</text>
-
-    <text x="24" y="264" font-size="6" fill="#111827">Nous restons à votre disposition pour toute question relative au</text>
-    <text x="24" y="273" font-size="6" fill="#111827">contenu de ce document.</text>
-
-    <text x="24" y="293" font-size="6" fill="#111827">Je vous prie d'agréer, Madame, Monsieur, l'expression de mes</text>
-    <text x="24" y="302" font-size="6" fill="#111827">salutations distinguées.</text>
+    <text x="24" y="170" font-size="6" fill="#111827" textLength="252" lengthAdjust="spacing">Conformément au décret n°2001-477 et à l&#39;article 1er de la loi SRU, le syndic tient à jour le carnet</text>
+    <text x="24" y="179" font-size="6" fill="#111827" textLength="252" lengthAdjust="spacing">d&#39;entretien de l&#39;immeuble. Vous trouverez ci-joint, en annexe du présent document, l&#39;édition du</text>
+    <text x="24" y="188" font-size="6" fill="#111827" textLength="252" lengthAdjust="spacing">carnet au 27 octobre 2026 : contrats d&#39;assurance et de maintenance en cours, puis chronologie</text>
+    <text x="24" y="197" font-size="6" fill="#111827">complète des interventions.</text>
+    <text x="24" y="216" font-size="6" fill="#111827" textLength="252" lengthAdjust="spacing">Cette édition est valable à sa date d&#39;émission et remplace toute édition antérieure. Elle peut être</text>
+    <text x="24" y="225" font-size="6" fill="#111827">consultée par tout copropriétaire sur simple demande auprès du syndic.</text>
+    <text x="24" y="252" font-size="6" fill="#111827">Nous restons à votre disposition pour toute question relative au contenu de ce document.</text>
+    <text x="24" y="276" font-size="6" fill="#111827">Je vous prie d&#39;agréer, Madame, Monsieur, l&#39;expression de mes salutations distinguées.</text>
 
     <!-- Signature alignée à droite -->
     <text x="276" y="330" font-size="6.2" fill="#111827" text-anchor="end">Pour le syndic,</text>
@@ -61,15 +64,24 @@
 
     <!-- Footer -->
     <line x1="24" y1="400" x2="276" y2="400" stroke="#d1d5db"/>
-    <text x="24" y="410" font-size="4.8" fill="#6b7280" font-style="italic">La Ruche — gestion de copropriété participative. Document généré le 27/10/2026 via La Ruche.</text>
+    <g transform="translate(24,403.6) scale(0.1077)">
+      <polygon fill="#704de2" points="51.5,40 45.75,49.96 34.25,49.96 28.5,40 34.25,30.04 45.75,30.04"/>
+      <polygon fill="#6c48de" points="51.5,17.48 45.75,27.44 34.25,27.44 28.5,17.48 34.25,7.52 45.75,7.52"/>
+      <polygon fill="#724fe4" points="71,28.74 65.25,38.7 53.75,38.7 48,28.74 53.75,18.78 65.25,18.78"/>
+      <polygon fill="#7754e9" points="71,51.26 65.25,61.22 53.75,61.22 48,51.26 53.75,41.3 65.25,41.3"/>
+      <polygon fill="#7552e7" points="51.5,62.52 45.75,72.48 34.25,72.48 28.5,62.52 34.25,52.56 45.75,52.56"/>
+      <polygon fill="#6f4be1" points="32,51.26 26.25,61.22 14.75,61.22 9,51.26 14.75,41.3 26.25,41.3"/>
+      <polygon fill="#6a46dc" points="32,28.74 26.25,38.7 14.75,38.7 9,28.74 14.75,18.78 26.25,18.78"/>
+    </g>
+    <text x="36" y="410" font-size="4.8" fill="#6b7280">Gestion participative — La Ruche</text>
+    <text x="276" y="410" font-size="4.8" fill="#6b7280" text-anchor="end">Édité le 27/10/2026 via La Ruche</text>
     <rect x="0" y="420" width="300" height="4" fill="#643fd5"/>
   </g>
   <g transform="translate(20,486)">
     <text x="0" y="0" font-size="8.5" fill="#111827" font-weight="bold">Page 1 — Lettre</text>
-    <text x="0" y="12" font-size="6.4" fill="#6b7280">Double en-tête B : bloc marque (logo + titre + tagline, police UI de l'app web,</text>
-    <text x="0" y="21" font-size="6.4" fill="#6b7280">sans-serif) + émetteur à gauche, destinataire à droite. Corps épistolaire Tinos :</text>
-    <text x="0" y="30" font-size="6.4" fill="#6b7280">objet en gras + référence, description du document, annonce de l'annexe,</text>
-    <text x="0" y="39" font-size="6.4" fill="#6b7280">formule de politesse, signature nommée à droite, « Fait à … le … ».</text>
+    <text x="0" y="12" font-size="6.4" fill="#6b7280">Bloc marque web (logo inline + Fraunces Bold #191c1d + DM Sans « Gestion</text>
+    <text x="0" y="21" font-size="6.4" fill="#6b7280">participative »). Émetteur et Destinataire alignés sur la même ligne. Corps</text>
+    <text x="0" y="30" font-size="6.4" fill="#6b7280">justifié. Destinataire = l&#39;utilisateur qui a demandé le document.</text>
   </g>
 
   <!-- ══════════════ PAGE 2 : ANNEXE ══════════════ -->
@@ -78,14 +90,13 @@
     <rect x="0" y="0" width="300" height="4" fill="#643fd5"/>
 
     <text x="24" y="30" font-size="5.8" fill="#6b7280" letter-spacing="2">ANNEXE</text>
-    <text x="24" y="48" font-size="12" fill="#643fd5" font-weight="bold">Carnet d'entretien de l'immeuble</text>
+    <text x="24" y="48" font-size="12" fill="#643fd5" font-weight="bold">Carnet d&#39;entretien de l&#39;immeuble</text>
     <text x="24" y="60" font-size="6.2" fill="#111827">Résidence Les Tilleuls — 41 rue Alain Barbe Torte, 44200 Nantes</text>
     <text x="24" y="70" font-size="5.6" fill="#6b7280">Édition du 27/10/2026 · Annexe visée dans la lettre du 27 octobre 2026</text>
     <line x1="24" y1="80" x2="276" y2="80" stroke="#643fd5" stroke-width="1.2"/>
 
-    <!-- Section : contrats -->
     <rect x="24" y="92" width="2.5" height="10" fill="#643fd5"/>
-    <text x="32" y="101" font-size="6.4" fill="#643fd5" font-weight="bold">Contrats d'assurance en cours — 2</text>
+    <text x="32" y="101" font-size="6.4" fill="#643fd5" font-weight="bold">Contrats d&#39;assurance en cours — 2</text>
     <line x1="24" y1="108" x2="276" y2="108" stroke="#e5e7eb"/>
     <text x="24" y="118" font-size="5.4" fill="#111827">Multirisques immeuble · CMAM · du 03/09/2025 au 01/09/2027 · 840,00 €</text>
     <text x="24" y="127" font-size="5.4" fill="#111827">RC syndic · MutPro · du 01/01/2026 au 31/12/2026 · 210,00 €</text>
@@ -93,9 +104,8 @@
     <rect x="24" y="140" width="2.5" height="10" fill="#643fd5"/>
     <text x="32" y="149" font-size="6.4" fill="#643fd5" font-weight="bold">Contrats de maintenance en cours — 1</text>
     <line x1="24" y1="156" x2="276" y2="156" stroke="#e5e7eb"/>
-    <text x="24" y="166" font-size="5.4" fill="#111827">Entretien chaudière · Chauff'Elec · depuis 01/01/2024 · 320,00 €/an</text>
+    <text x="24" y="166" font-size="5.4" fill="#111827">Entretien chaudière · Chauff&#39;Elec · depuis 01/01/2024 · 320,00 €/an</text>
 
-    <!-- Section : chronologie (tableau) -->
     <rect x="24" y="182" width="2.5" height="10" fill="#643fd5"/>
     <text x="32" y="191" font-size="6.4" fill="#643fd5" font-weight="bold">Chronologie des interventions — 3</text>
 
@@ -118,7 +128,7 @@
 
     <text x="27" y="238" font-size="4.9" fill="#111827">02/06/2026</text>
     <text x="58" y="238" font-size="4.9" fill="#111827">Entretien annuel chaudière</text>
-    <text x="140" y="238" font-size="4.9" fill="#111827">Chauff'Elec</text>
+    <text x="140" y="238" font-size="4.9" fill="#111827">Chauff&#39;Elec</text>
     <text x="186" y="238" font-size="4.9" fill="#111827">Contrat</text>
     <text x="222" y="238" font-size="4.9" fill="#111827">Automatique</text>
     <text x="252" y="238" font-size="4.9" fill="#111827">320,00 €</text>
@@ -132,26 +142,32 @@
     <text x="252" y="254" font-size="4.9" fill="#111827">—</text>
     <line x1="24" y1="260" x2="276" y2="260" stroke="#e5e7eb"/>
 
-    <!-- pagination implication -->
     <text x="24" y="282" font-size="5.4" fill="#6b7280" font-style="italic">(La chronologie continue et se pagine : chaque page suivante reprend</text>
-    <text x="24" y="290" font-size="5.4" fill="#6b7280" font-style="italic">le titre d'annexe réduit + le pied de page récurrent, pas la lettre.)</text>
+    <text x="24" y="290" font-size="5.4" fill="#6b7280" font-style="italic">le titre d&#39;annexe réduit + le pied de page récurrent, pas la lettre.)</text>
 
     <!-- Footer -->
     <line x1="24" y1="400" x2="276" y2="400" stroke="#d1d5db"/>
-    <use href="#logo" x="26" y="408"/>
-    <text x="36" y="410" font-size="4.8" fill="#6b7280">La Ruche — carnet d'entretien · annexe</text>
+    <g transform="translate(24,403.6) scale(0.1077)">
+      <polygon fill="#704de2" points="51.5,40 45.75,49.96 34.25,49.96 28.5,40 34.25,30.04 45.75,30.04"/>
+      <polygon fill="#6c48de" points="51.5,17.48 45.75,27.44 34.25,27.44 28.5,17.48 34.25,7.52 45.75,7.52"/>
+      <polygon fill="#724fe4" points="71,28.74 65.25,38.7 53.75,38.7 48,28.74 53.75,18.78 65.25,18.78"/>
+      <polygon fill="#7754e9" points="71,51.26 65.25,61.22 53.75,61.22 48,51.26 53.75,41.3 65.25,41.3"/>
+      <polygon fill="#7552e7" points="51.5,62.52 45.75,72.48 34.25,72.48 28.5,62.52 34.25,52.56 45.75,52.56"/>
+      <polygon fill="#6f4be1" points="32,51.26 26.25,61.22 14.75,61.22 9,51.26 14.75,41.3 26.25,41.3"/>
+      <polygon fill="#6a46dc" points="32,28.74 26.25,38.7 14.75,38.7 9,28.74 14.75,18.78 26.25,18.78"/>
+    </g>
+    <text x="36" y="410" font-size="4.8" fill="#6b7280">Gestion participative — La Ruche</text>
     <text x="276" y="410" font-size="4.8" fill="#6b7280" text-anchor="end">Édité le 27/10/2026 via La Ruche</text>
     <rect x="0" y="420" width="300" height="4" fill="#643fd5"/>
   </g>
   <g transform="translate(360,486)">
     <text x="0" y="0" font-size="8.5" fill="#111827" font-weight="bold">Page 2 — Annexe (le contenu du carnet)</text>
-    <text x="0" y="12" font-size="6.4" fill="#6b7280">Sections « contrats » puis chronologie tabulaire (mêmes données que</text>
-    <text x="0" y="21" font-size="6.4" fill="#6b7280">l'export actuel), annoncées dans la lettre. Pas de signature en annexe,</text>
-    <text x="0" y="30" font-size="6.4" fill="#6b7280">footer récurrent seul ; la lettre porte la forme juridique et la signature.</text>
+    <text x="0" y="12" font-size="6.4" fill="#6b7280">Sections « contrats » puis chronologie tabulaire, annoncées dans la</text>
+    <text x="0" y="21" font-size="6.4" fill="#6b7280">lettre. Footer avec mini logo web inline sur chaque page.</text>
   </g>
 
   <!-- légende -->
   <g transform="translate(20,546)">
-    <text x="0" y="0" font-size="6.4" fill="#6b7280">Structure inspirée de l'attestation Qivio : page 1 = en-tête + corps + signature ; le tableau détaillé est annoncé puis reporté en annexe (page 2+). Double en-tête modèle B avec identité de marque « app web ».</text>
+    <text x="0" y="0" font-size="6.4" fill="#6b7280">Échantillon v7.1 du rendu serveur : logo web exact (dégradé figé par alvéole, identique au PNG backend), « La Ruche » en Fraunces Bold et « Gestion participative » en DM Sans, en-têtes émetteur/destinataire alignés sur la même ligne, corps de lettre justifié, destinataire = l’utilisateur qui a demandé le document. Implémentation genpdf : justification via élément custom (0.2.0 ne la supporte pas nativement), polices embarquées via include_bytes.</text>
   </g>
 </svg>
