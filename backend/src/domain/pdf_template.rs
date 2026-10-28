@@ -3,44 +3,46 @@
 //!
 //! Every generated document — logbook export, état daté, pré-état daté, future
 //! AG minutes, reminder letters — is built from this module so that the layout
-//! is identical everywhere. Layout v6 (retour utilisateur PR 155, inspiré
-//! d'une attestation d'assurance professionnelle) :
+//! is identical everywhere. Layout v7.1 (retour utilisateur PR 155) :
 //!
-//! - **Double en-tête (première page uniquement)** — à gauche le bloc marque
-//!   complet « app web » : logo + « La Ruche » + tagline, puis l'émetteur du
-//!   document (lignes libres : syndic, contact, SIRET…) ; à droite le bloc
-//!   destinataire (label + lignes). Un filet violet sépare l'en-tête du corps.
-//! - **Corps de lettre classique** — objet en gras + ligne de référence
-//!   grise, salutation optionnelle (« Madame, Monsieur, »), paragraphes de
-//!   description, formule de politesse. Le contenu détaillé (tableaux) est
-//!   annoncé dans la lettre et rendu en annexe.
-//! - **Signature (fin de lettre)** — période de validité légale optionnelle,
-//!   puis bloc aligné à droite : « Pour {qualité} », espace, nom du signataire
-//!   en gras, qualité en gris, « Fait à {place}, le {date} » rempli (signature
-//!   artificielle, pas d'image).
+//! - **Bloc marque « app web » (première page)** — logo (même PNG que la barre
+//!   latérale de l'app), « La Ruche » en Fraunces Bold (la police display du
+//!   web, `--font-display`) en `--on-surface`, tagline « Gestion participative »
+//!   (i18n `auth.brandEyebrow`) en DM Sans en `--on-surface-variant`.
+//! - **Double en-tête aligné** — deux lignes sur la même grille : le bloc marque
+//!   sur la première, puis l'émetteur (gauche) et le destinataire (droite) qui
+//!   commencent sur la même ligne. Filet violet sous l'en-tête.
+//! - **Corps de lettre justifié** — genpdf 0.2 n'a pas de justification native
+//!   : un élément custom `JustifiedParagraph` étire toutes les lignes sauf la
+//!   dernière du paragraphe sur toute la largeur utile.
+//! - **Signature (fin de lettre)** — bloc aligné à droite : « Pour {qualité} »,
+//!   espace, nom du signataire en gras, qualité en gris, « Fait à {place}, le
+//!   {date} » rempli.
 //! - **En-tête d'annexe** — kicker espacé (A N N E X E), titre en couleur
 //!   marque, sous-titre, méta-lignes, filet violet ; les tableaux suivent.
-//! - **No running header** — les pages suivantes commencent directement par
-//!   le contenu (spec : « par en-tête je voulais dire introduction »).
-//! - **Footer (every page)** — small grey type: logo + tagline on the left,
-//!   « Édité le {date} via La Ruche » on the right, under a hairline rule.
-//!   genpdf has no native « total pages » footer, so no page number.
+//! - **Footer (chaque page)** — mini logo + « Gestion participative — La
+//!   Ruche » (DM Sans) à gauche, « Édité le {date} via La Ruche » aligné à
+//!   droite, sous un filet gris. Le décorateur applique aussi les marges de
+//!   page et réserve la zone de pied de page.
 //! - **Typography & palette** — Tinos (serif, metric-compatible Times New
-//!   Roman) embedded at compile time, brand color `#643fd5` mirrored from
-//!   `frontend/src/styles/tokens.css` (`--color-primary` light theme),
-//!   grey `#6b7280` for secondary text.
+//!   Roman) pour le corps, Fraunces Bold / DM Sans Regular pour la marque
+//!   (embarquées, un seul slot chacune), brand color `#643fd5` (`--color-primary`
+//!   light theme), couleurs web `#191c1d` (on-surface) et `#42474e`
+//!   (on-surface-variant).
 //!
 //! Pure functions only — no I/O, no SQL. Callers assemble the data and hand it
 //! here; they receive the finished PDF as in-memory bytes (see
 //! `domain/legal_documents.rs` for the established pattern, ADR-011).
 
+use std::collections::VecDeque;
+
 use chrono::{Datelike, NaiveDate};
 use genpdf::{
-    Alignment, Context, Document, Element, Margins, Mm, PageDecorator, Position, Rotation, Scale,
-    SimplePageDecorator,
+    Alignment, Context, Document, Element, Margins, Mm, PageDecorator, Position, RenderResult,
+    Rotation, Scale, Size,
     elements::{self, LinearLayout, Paragraph, TableLayout},
     error,
-    fonts::{FontData, FontFamily},
+    fonts::{self, FontData, FontFamily},
     render::Area,
     style::{self, Color},
 };
@@ -56,6 +58,10 @@ pub const GREY: Color = Color::Rgb(107, 114, 128);
 pub const INK: Color = Color::Rgb(17, 24, 39);
 /// Hairline rule grey.
 pub const RULE: Color = Color::Rgb(209, 213, 219);
+/// Web `--on-surface` (`#191c1d`) — app name in the brand block.
+pub const ON_SURFACE: Color = Color::Rgb(25, 28, 29);
+/// Web `--on-surface-variant` (`#42474e`) — tagline in the brand block.
+pub const ON_SURFACE_VARIANT: Color = Color::Rgb(66, 71, 78);
 
 // Tinos (serif, métrique Times New Roman) sous-ensemble (pyftsubset) :
 // ASCII + Latin-1 + ponctuation typographique (tirets, apostrophes, ellipsis,
@@ -67,12 +73,18 @@ const FONT_BOLD: &[u8] = include_bytes!("../../assets/fonts/Tinos-Bold.ttf");
 const FONT_ITALIC: &[u8] = include_bytes!("../../assets/fonts/Tinos-Italic.ttf");
 const FONT_BOLD_ITALIC: &[u8] = include_bytes!("../../assets/fonts/Tinos-BoldItalic.ttf");
 
-/// App name rendered next to the logo in the introduction and in the footer.
+/// Fraunces Bold — web display font (`--font-display`), renders the app name
+/// « La Ruche » of the brand block. Latin subset from fonts.gstatic.com (~70 ko).
+const FONT_BRAND: &[u8] = include_bytes!("../../assets/fonts/Fraunces-Bold.ttf");
+/// DM Sans Regular — web UI font, renders the tagline « Gestion participative »
+/// (brand block and page footer). Latin subset from fonts.gstatic.com (~47 ko).
+const FONT_UI: &[u8] = include_bytes!("../../assets/fonts/DMSans-Regular.ttf");
+
+/// App name rendered next to the logo in the brand block and in the footer.
 pub const APP_NAME: &str = "La Ruche";
-/// Tagline describing the application, rendered under the app name (brand
-/// block) and in the page footer.
-pub const APP_TAGLINE: &str =
-    "Gestion de copropriété participative, pour les syndics bénévoles et les conseils syndicaux.";
+/// Tagline rendered under the app name (brand block) and in the page footer —
+/// the web sidebar eyebrow (i18n `auth.brandEyebrow`).
+pub const APP_TAGLINE: &str = "Gestion participative";
 
 /// Vertical margin kept at the top of every page (no running header, just
 /// breathing room). The footer decorator reserves space at the bottom.
@@ -81,7 +93,7 @@ const PAGE_TOP_MARGIN_MM: f64 = 18.0;
 const PAGE_SIDE_MARGIN_MM: f64 = 18.0;
 /// Height reserved at the bottom of every page for the running footer.
 const FOOTER_HEIGHT_MM: f64 = 14.0;
-/// Size (in mm) at which the logo is rendered in the introduction block.
+/// Size (in mm) at which the logo is rendered in the brand block.
 const INTRO_LOGO_MM: f64 = 16.0;
 /// Size (in mm) at which the logo is rendered in the page footer.
 const FOOTER_LOGO_MM: f64 = 5.0;
@@ -103,18 +115,18 @@ pub struct DocumentIdentity {
     pub syndic_siret: Option<String>,
 }
 
-/// Double header block rendered once, on the first page (Qivio-style
-/// « lettre » layout): the full application brand block « app web » (logo +
-/// « La Ruche » + tagline) with the issuer lines underneath, on the left; the
-/// optional recipient block on the right. A brand-colored rule closes the
-/// header. This is the « en-tête » of the document in the spec sense — it
-/// does NOT repeat on every page.
+/// Double header block rendered once, on the first page: the full application
+/// brand block « app web » (logo + « La Ruche » + tagline) on its own row, then
+/// the issuer lines (left) and the optional recipient block (right) aligned on
+/// the same row. A brand-colored rule closes the header. This is the « en-tête »
+/// of the document in the spec sense — it does NOT repeat on every page.
 #[derive(Debug, Clone)]
 pub struct DocumentHeader {
     /// Issuer lines under the brand block (left column), e.g. « Le syndic des
-    /// copropriétaires », « Damien Rubio — contact », « SIRET : … ».
+    /// copropriétaires », « Damien Rubio — contact », « SIRET : … ». The first
+    /// line is rendered bold, the others in grey.
     pub issuer_lines: Vec<String>,
-    /// Recipient block (right column), e.g. the copropriété.
+    /// Recipient block (right column) — the user who requested the document.
     pub recipient: Option<DocumentRecipient>,
 }
 
@@ -123,7 +135,8 @@ pub struct DocumentHeader {
 pub struct DocumentRecipient {
     /// Small grey bold label, e.g. « Destinataire ».
     pub label: String,
-    /// Recipient lines underneath, right-aligned.
+    /// Recipient lines underneath, right-aligned. The first line is rendered
+    /// in ink, the others in grey.
     pub lines: Vec<String>,
 }
 
@@ -169,11 +182,11 @@ pub struct DocumentConclusion {
 /// A line of correspondence-style salutation, e.g. « Madame, Monsieur, ».
 pub type Salutation = String;
 
-// ── Public helpers shared by document renderers ────────────────────────────
+// ── Fonts ──────────────────────────────────────────────────────────────────
 
-/// Loads and parses the embedded font family (Tinos serif — Times New Roman
-/// metric-compatible). Propagates the only realistic failure (corrupted
-/// compile-time font asset) as a string to the caller.
+/// Loads and parses the embedded Tinos family (serif — Times New Roman
+/// metric-compatible), the default document font. Propagates the only
+/// realistic failure (corrupted compile-time font asset) as a string.
 pub fn font_family() -> Result<FontFamily<FontData>, String> {
     Ok(FontFamily {
         regular: FontData::new(FONT_REGULAR.to_vec(), None).map_err(|e| e.to_string())?,
@@ -183,12 +196,56 @@ pub fn font_family() -> Result<FontFamily<FontData>, String> {
     })
 }
 
+/// Replacement slot that is never rendered: glyph metrics are parsed from the
+/// embedded face, but the PDF maps the slot onto builtin Helvetica instead of
+/// embedding a second copy. The brand and UI families only ever use their
+/// `regular` slot — this keeps the PDF at two extra embedded fonts (~120 ko)
+/// instead of eight. Never combine these slots with `.bold()`/`.italic()`.
+fn builtin_slot(data: &[u8]) -> Result<FontData, String> {
+    FontData::new(data.to_vec(), Some(printpdf::BuiltinFont::Helvetica))
+        .map_err(|e| e.to_string())
+}
+
+/// Brand family: Fraunces Bold embedded on the regular slot — the app name is
+/// never bolded through the style system (the weight is in the face itself).
+pub fn brand_font_family() -> Result<FontFamily<FontData>, String> {
+    Ok(FontFamily {
+        regular: FontData::new(FONT_BRAND.to_vec(), None).map_err(|e| e.to_string())?,
+        bold: builtin_slot(FONT_BRAND)?,
+        italic: builtin_slot(FONT_BRAND)?,
+        bold_italic: builtin_slot(FONT_BRAND)?,
+    })
+}
+
+/// UI family: DM Sans Regular embedded on the regular slot (tagline, footer).
+pub fn ui_font_family() -> Result<FontFamily<FontData>, String> {
+    Ok(FontFamily {
+        regular: FontData::new(FONT_UI.to_vec(), None).map_err(|e| e.to_string())?,
+        bold: builtin_slot(FONT_UI)?,
+        italic: builtin_slot(FONT_UI)?,
+        bold_italic: builtin_slot(FONT_UI)?,
+    })
+}
+
+/// Brand and UI font families registered in the document's font cache, ready
+/// for `Style::with_font_family` (fonts already resolved by that cache).
+#[derive(Clone, Copy)]
+pub struct BrandFonts {
+    /// Fraunces Bold — app name « La Ruche ».
+    pub brand: fonts::FontFamily<fonts::Font>,
+    /// DM Sans Regular — tagline « Gestion participative ».
+    pub ui: fonts::FontFamily<fonts::Font>,
+}
+
+// ── Logo ───────────────────────────────────────────────────────────────────
+
 /// Rasterised app logo (7 hexagones « ruche », dégradé `#643fd5` → `#7d5bf0`),
 /// generated from `frontend/src/components/atoms/CLogoMark.svg` and embedded at
 /// compile time so the PDF is self-contained (ADR-011). RGB, no alpha channel
 /// (printpdf ne supporte pas la transparence — le logo est dessiné sur blanc).
 /// Encodé en PNG RGB optimisé (~5 ko) ; en release, printpdf compresse le flux
-/// image en FlateDecode (~4,6 ko par occurrence embarquée).
+/// image en FlateDecode (~4,6 ko par occurrence embarquée). C'est exactement le
+/// logo de la barre latérale de l'app web.
 const LOGO_PNG: &[u8] = include_bytes!("../../assets/images/logo-la-ruche.png");
 
 /// Natural size of the embedded logo in mm at 300 dpi (640 px → 54.04 mm).
@@ -205,41 +262,47 @@ pub fn logo_element(size_mm: f64) -> Result<elements::Image, String> {
 
 // ── Document construction ──────────────────────────────────────────────────
 
-/// A4 document pre-configured with the shared template: embedded fonts,
-/// margins and a **running footer on every page** (logo + tagline + edition
-/// date, small grey type). There is intentionally **no running header** — the
-/// double header is part of the body and appears on the first page only.
-/// The caller fills the body: `push_letter_header`, letter content, then the
-/// annexes opened by `push_annex_header`.
+/// A4 document pre-configured with the shared template: embedded fonts, a
+/// running footer on every page (logo + tagline + edition date) and page
+/// margins. There is intentionally **no running header** — the double header
+/// is part of the body and appears on the first page only.
+///
+/// Returns the document together with the registered [`BrandFonts`] used by
+/// the caller to render the brand block. The caller fills the body:
+/// `push_letter_header`, letter content, then the annexes opened by
+/// `push_annex_header`.
 pub fn new_document(
-    family: FontFamily<FontData>,
     edited_at: NaiveDate,
     pdf_title: &str,
-) -> Document {
-    let mut doc = Document::new(family);
+) -> Result<(Document, BrandFonts), String> {
+    let mut doc = Document::new(font_family()?);
     doc.set_minimal_conformance();
     doc.set_font_size(10);
     doc.set_line_spacing(1.3);
     doc.set_title(pdf_title);
 
-    let mut decorator = SimplePageDecorator::new();
-    decorator.set_margins(Margins::vh(PAGE_TOP_MARGIN_MM, PAGE_SIDE_MARGIN_MM));
-    doc.set_page_decorator(FooterDecorator::new(edited_at));
+    let brand = doc.add_font_family(brand_font_family()?);
+    let ui = doc.add_font_family(ui_font_family()?);
 
-    doc
+    doc.set_page_decorator(FooterDecorator::new(edited_at, ui));
+    Ok((doc, BrandFonts { brand, ui }))
 }
 
-/// Page decorator that draws the running footer at the bottom of every page:
-/// hairline rule, then logo + tagline on the left and « Édité le {date} via
-/// La Ruche » on the right, in small grey type. It also reserves the footer
-/// height so the body content never overlaps it.
+/// Page decorator that draws the running footer at the bottom of every page
+/// (hairline rule, mini logo + « Gestion participative — La Ruche » on the
+/// left, « Édité le {date} via La Ruche » right-aligned) and prepares the body
+/// area: page margins plus the reserved footer height, so the content never
+/// overlaps the footer. The template deliberately does not use
+/// `SimplePageDecorator` — this decorator owns the margins itself.
 struct FooterDecorator {
     edited_at: NaiveDate,
+    /// DM Sans family used for the footer tagline.
+    ui: fonts::FontFamily<fonts::Font>,
 }
 
 impl FooterDecorator {
-    fn new(edited_at: NaiveDate) -> Self {
-        FooterDecorator { edited_at }
+    fn new(edited_at: NaiveDate, ui: fonts::FontFamily<fonts::Font>) -> Self {
+        FooterDecorator { edited_at, ui }
     }
 }
 
@@ -255,69 +318,90 @@ impl PageDecorator for FooterDecorator {
         let page_height = page.size().height;
         let footer_top = page_height - mm(FOOTER_HEIGHT_MM);
 
-        // Hairline rule across the content width, 4 mm above the footer text.
+        // Hairline rule across the content width, above the footer text.
         let rule_y = footer_top + mm(4.0);
         page.draw_line(
             vec![Position::new(0, rule_y), Position::new(page_width, rule_y)],
             style::Style::new().with_color(RULE),
         );
 
-        // Logo at the bottom-left of the footer area (embedded PNG).
+        // Mini logo at the bottom-left of the footer area (embedded PNG).
         if let Ok(dynamic) = image::load_from_memory(LOGO_PNG) {
             let scale = FOOTER_LOGO_MM / LOGO_NATURAL_MM;
             page.add_image(
                 &dynamic,
-                Position::new(0, footer_top + mm(FOOTER_LOGO_MM)),
+                Position::new(0, footer_top + mm(2.0)),
                 Scale::new(scale, scale),
                 Rotation::default(),
                 None,
             );
         }
 
-        // Tagline + edition line, small grey type, next to the logo.
+        // Left: tagline + app name in DM Sans, small grey type.
         let text_x = mm(FOOTER_LOGO_MM + 3.0);
+        let text_y = footer_top + mm(3.5);
+        let tagline_style = style::Style::new()
+            .with_font_family(self.ui)
+            .with_font_size(7)
+            .with_color(GREY);
         let _ = page.print_str(
             &context.font_cache,
-            Position::new(text_x, footer_top + mm(3.5)),
-            style::Style::new().with_font_size(7).with_color(GREY),
+            Position::new(text_x, text_y),
+            tagline_style,
             format!("{APP_TAGLINE} — {APP_NAME}"),
         );
+
+        // Right: edition line, right-aligned against the content width.
+        let edition = format!("Édité le {} via {APP_NAME}", format_date(self.edited_at));
+        let edition_style = style::Style::new().with_font_size(7).with_color(GREY);
+        let edition_width = edition_style.str_width(&context.font_cache, &edition);
         let _ = page.print_str(
             &context.font_cache,
-            Position::new(text_x, footer_top + mm(7.0)),
-            style::Style::new().with_font_size(7).with_color(GREY),
-            format!("Édité le {} via {APP_NAME}", format_date(self.edited_at)),
+            Position::new(page_width - edition_width, text_y),
+            edition_style,
+            edition,
         );
 
-        // Reserve the footer height so the body never overlaps it.
-        area.set_height(footer_top);
+        // Prepare the body area: page margins, then cap the height above the
+        // footer zone so the content never overlaps it.
+        area.add_margins(Margins::vh(PAGE_TOP_MARGIN_MM, PAGE_SIDE_MARGIN_MM));
+        area.set_height(footer_top - mm(PAGE_TOP_MARGIN_MM));
         Ok(area)
     }
 }
 
 // ── Double header (first page) ─────────────────────────────────────────────
 
-/// Pushes the double header on the first page: the application brand block
-/// « app web » (logo + « La Ruche » + tagline) with the issuer lines
-/// underneath, on the left; the recipient block right-aligned, on the right;
-/// then a brand-colored rule closing the header (Qivio-style letterhead).
+/// Pushes the double header on the first page, over two rows of the same
+/// grid: the application brand block « app web » (logo + « La Ruche » en
+/// Fraunces + « Gestion participative » en DM Sans — mêmes polices et couleurs
+/// que la barre latérale de l'app) on its own row, then the issuer block
+/// (left) and the recipient block (right) starting on the same line; a
+/// brand-colored rule closes the header.
 pub fn push_letter_header(
     layout: &mut LinearLayout,
+    fonts: &BrandFonts,
     header: &DocumentHeader,
 ) -> Result<(), String> {
-    // ── Left column: brand block + issuer lines ──
+    // ── Brand block: logo + name (Fraunces Bold, on-surface) + tagline
+    //    (DM Sans, on-surface-variant) — identical to the web sidebar. ──
     let logo = logo_element(INTRO_LOGO_MM)?;
     let mut brand_text = LinearLayout::vertical();
     brand_text.push(
         Paragraph::new(APP_NAME).styled(
             style::Style::new()
-                .bold()
+                .with_font_family(fonts.brand)
                 .with_font_size(20)
-                .with_color(BRAND),
+                .with_color(ON_SURFACE),
         ),
     );
     brand_text.push(
-        Paragraph::new(APP_TAGLINE).styled(style::Style::new().with_font_size(8).with_color(GREY)),
+        Paragraph::new(APP_TAGLINE).styled(
+            style::Style::new()
+                .with_font_family(fonts.ui)
+                .with_font_size(14)
+                .with_color(ON_SURFACE_VARIANT),
+        ),
     );
 
     let mut brand_row = TableLayout::new(vec![1, 6]);
@@ -328,50 +412,61 @@ pub fn push_letter_header(
         .push()
         .expect("brand row must carry exactly two cells");
 
-    let mut left = LinearLayout::vertical();
-    left.push(brand_row);
-    left.push(elements::Break::new(0.4));
-    for line in &header.issuer_lines {
-        left.push(
-            Paragraph::new(line).styled(
-                style::Style::new()
-                    .with_font_size(9)
-                    .with_color(INK),
-            ),
-        );
+    // ── Issuer block (left): heading bold, contact lines grey. ──
+    let mut issuer = LinearLayout::vertical();
+    if header.issuer_lines.is_empty() {
+        issuer.push(Paragraph::new(""));
+    }
+    for (index, line) in header.issuer_lines.iter().enumerate() {
+        let line_style = if index == 0 {
+            style::Style::new().bold().with_font_size(9).with_color(INK)
+        } else {
+            style::Style::new().with_font_size(9).with_color(GREY)
+        };
+        issuer.push(Paragraph::new(line).styled(line_style));
     }
 
-    // ── Right column: recipient block ──
-    let mut right = LinearLayout::vertical();
+    // ── Recipient block (right): bold grey label, first line (the requester)
+    //    in ink, following lines in grey — all right-aligned. ──
+    let mut recipient = LinearLayout::vertical();
     match &header.recipient {
-        Some(recipient) => {
-            right.push(
-                Paragraph::new(&recipient.label)
+        Some(recipient_block) => {
+            recipient.push(
+                Paragraph::new(&recipient_block.label)
                     .aligned(Alignment::Right)
                     .styled(style::Style::new().bold().with_font_size(9).with_color(GREY)),
             );
-            for line in &recipient.lines {
-                right.push(
+            for (index, line) in recipient_block.lines.iter().enumerate() {
+                let color = if index == 0 { INK } else { GREY };
+                recipient.push(
                     Paragraph::new(line)
                         .aligned(Alignment::Right)
-                        .styled(style::Style::new().with_font_size(9).with_color(INK)),
+                        .styled(style::Style::new().with_font_size(9).with_color(color)),
                 );
             }
         }
         // No recipient: keep the cell non-empty (correspondence documents
         // addressed to the whole copropriété still show the header row).
-        None => right.push(Paragraph::new("")),
+        None => recipient.push(Paragraph::new("")),
     }
 
-    // ── Two-column header: issuer left, recipient right ──
+    // ── Two-row header grid: the brand block alone on the first row, issuer
+    //    and recipient aligned on the same second row. ──
     let mut header_row = TableLayout::new(vec![6, 1, 4]);
     header_row
         .row()
-        .element(left)
+        .element(brand_row)
         .element(Paragraph::new(""))
-        .element(right)
+        .element(Paragraph::new(""))
         .push()
-        .expect("header row must carry exactly three cells");
+        .expect("brand header row must carry exactly three cells");
+    header_row
+        .row()
+        .element(issuer)
+        .element(Paragraph::new(""))
+        .element(recipient)
+        .push()
+        .expect("issuer/recipient row must carry exactly three cells");
     layout.push(header_row);
     layout.push(elements::Break::new(0.5));
     layout.push(brand_hairline());
@@ -405,6 +500,121 @@ pub fn push_objet(layout: &mut LinearLayout, objet: &str, reference: Option<&str
 pub fn push_salutation(layout: &mut LinearLayout, salutation: &str) {
     layout.push(Paragraph::new(salutation));
     layout.push(elements::Break::new(0.5));
+}
+
+// ── Justified letter body ───────────────────────────────────────────────────
+
+/// Letter body paragraph with justified text: every line except the last of
+/// the paragraph is stretched over the full available width. genpdf 0.2 has no
+/// native justification, so this custom element wraps words greedily (like
+/// `Paragraph`), measures the leftover space and spreads it evenly across the
+/// inter-word gaps.
+pub struct JustifiedParagraph {
+    words: VecDeque<String>,
+}
+
+impl JustifiedParagraph {
+    /// Creates a justified paragraph from the given text.
+    pub fn new(text: &str) -> JustifiedParagraph {
+        JustifiedParagraph {
+            words: text
+                .split(' ')
+                .filter(|word| !word.is_empty())
+                .map(ToString::to_string)
+                .collect(),
+        }
+    }
+}
+
+impl Element for JustifiedParagraph {
+    fn render(
+        &mut self,
+        context: &Context,
+        mut area: Area<'_>,
+        style: Style,
+    ) -> Result<RenderResult, error::Error> {
+        let mut result = RenderResult::default();
+        let font_cache = &context.font_cache;
+        let height = style.line_height(font_cache);
+        let space_width = style.str_width(font_cache, " ");
+        let area_width = area.size().width;
+
+        while !self.words.is_empty() {
+            // Greedy line: peek the words that fit (nothing is consumed until
+            // the line is rendered — an interrupted page must find the same
+            // words at the front of the queue on the next call).
+            let mut widths: Vec<Mm> = Vec::new();
+            let mut natural = Mm::default();
+            for word in self.words.iter() {
+                let width = style.str_width(font_cache, word);
+                if widths.is_empty() {
+                    // First word: always taken, even if it alone overflows
+                    // (same behaviour as genpdf's unhyphenated `Paragraph`).
+                    widths.push(width);
+                    natural += width;
+                    continue;
+                }
+                if natural + space_width + width > area_width {
+                    break;
+                }
+                widths.push(width);
+                natural += space_width + width;
+            }
+
+            let count = widths.len();
+            let is_last_line = count == self.words.len();
+            // Justified inter-word gap: the slack is spread evenly across the
+            // gaps of every line except the last of the paragraph (and lines
+            // with a single word, which have no gap to stretch).
+            let gap = if !is_last_line && count > 1 {
+                let visible = widths.iter().fold(Mm::default(), |acc, w| acc + *w);
+                let slack = area_width - visible;
+                let even = slack * (1.0 / (count as f64 - 1.0));
+                even.max(space_width)
+            } else {
+                space_width
+            };
+
+            // Render: one text section per word, at its justified position.
+            let mut cursor = Mm::default();
+            let mut printed = 0usize;
+            let mut fits = true;
+            for (index, word) in self.words.iter().take(count).enumerate() {
+                let position = Position::new(cursor, Mm::default());
+                if let Some(mut section) = area.text_section(font_cache, position, style) {
+                    section.print_str(word, style)?;
+                } else {
+                    fits = false;
+                    break;
+                }
+                cursor += widths[index];
+                if index + 1 < count {
+                    cursor += gap;
+                }
+                printed += 1;
+            }
+
+            // Consume only what was actually printed; if the line did not fit
+            // the page, hand control back with `has_more` set.
+            for _ in 0..printed {
+                self.words.pop_front();
+            }
+            if !fits {
+                result.has_more = true;
+                break;
+            }
+
+            result.size = result.size.stack_vertical(Size::new(cursor, height));
+            area.add_offset(Position::new(Mm::default(), height));
+        }
+
+        Ok(result)
+    }
+}
+
+/// Justified body paragraph in ink color — the letter body of the document.
+pub fn justified_body(text: &str) -> elements::StyledElement<JustifiedParagraph> {
+    JustifiedParagraph::new(text).styled(style::Style::new().with_color(INK))
 }
 
 // ── Annex header (annex pages) ─────────────────────────────────────────────
@@ -466,7 +676,7 @@ pub fn section(text: &str) -> elements::StyledElement<Paragraph> {
     )
 }
 
-/// Body paragraph in ink color.
+/// Body paragraph in ink color (left-aligned — annex content and tables).
 pub fn body(text: &str) -> elements::StyledElement<Paragraph> {
     Paragraph::new(text).styled(style::Style::new().with_color(INK))
 }
@@ -676,6 +886,7 @@ mod tests {
             recipient: Some(DocumentRecipient {
                 label: "Destinataire".to_string(),
                 lines: vec![
+                    "Marie Dupont — Copropriétaire".to_string(),
                     "Résidence des Tilleuls".to_string(),
                     "12 rue des Fleurs, 75011 Paris".to_string(),
                 ],
@@ -733,19 +944,22 @@ mod tests {
 
     #[test]
     fn document_with_template_produces_valid_pdf() {
-        let mut doc = new_document(
-            font_family().expect("fonts"),
-            date(2026, 6, 16),
-            "Test document",
-        );
+        let (mut doc, fonts) =
+            new_document(date(2026, 6, 16), "Test document").expect("document");
         let mut layout = LinearLayout::vertical();
-        push_letter_header(&mut layout, &header()).expect("letter header");
+        push_letter_header(&mut layout, &fonts, &header()).expect("letter header");
         push_objet(
             &mut layout,
             "Carnet d'entretien de l'immeuble — édition 2026",
             Some("Réf. LR-CARNET-2026 · Édition du 16/06/2026"),
         );
         push_salutation(&mut layout, "Madame, Monsieur,");
+        layout.push(justified_body(
+            "Conformément au décret n°2001-477, le syndic tient à jour le carnet d'entretien \
+             de l'immeuble. Vous trouverez en annexe du présent document l'édition du carnet : \
+             contrats d'assurance et de maintenance en cours, puis chronologie complète des \
+             interventions.",
+        ));
         layout.push(section("1. Première section"));
         layout.push(body("Corps du document de test."));
         layout.push(muted("Aucune donnée disponible."));
@@ -770,5 +984,20 @@ mod tests {
         assert!(bytes.starts_with(b"%PDF"));
         assert!(!bytes.is_empty());
     }
-}
 
+    #[test]
+    fn justified_paragraph_paginates_a_long_paragraph() {
+        // Un paragraphe justifié plus long qu'une page doit se paginer
+        // proprement (has_more → re-render avec les mots restants) et produire
+        // un PDF valide.
+        let (mut doc, _fonts) = new_document(date(2026, 6, 16), "Justification").expect("document");
+        let mut layout = LinearLayout::vertical();
+        let words: Vec<String> = (0..400).map(|i| format!("mot{i}")).collect();
+        layout.push(justified_body(&words.join(" ")));
+        doc.push(layout);
+
+        let bytes = finish_document(doc).expect("render");
+        assert!(bytes.starts_with(b"%PDF"));
+        assert!(bytes.len() > 10_000); // plusieurs pages de texte justifié
+    }
+}
