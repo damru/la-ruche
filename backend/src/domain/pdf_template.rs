@@ -531,7 +531,7 @@ impl Element for JustifiedParagraph {
         &mut self,
         context: &Context,
         mut area: Area<'_>,
-        style: Style,
+        style: style::Style,
     ) -> Result<RenderResult, error::Error> {
         let mut result = RenderResult::default();
         let font_cache = &context.font_cache;
