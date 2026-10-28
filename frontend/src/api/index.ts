@@ -477,7 +477,7 @@ export const maintenanceApi = {
     api.put<MaintenanceEntry>(`/logbook/${id}`, data),
   delete: (id: string) =>
     api.delete(`/logbook/${id}`),
-  // PDF export (EP-009-S09) — server-side rendering, binary response as blob.
+  // PDF export — server-side rendering, binary response as blob.
   exportPdf: () =>
     api.get<Blob>('/logbook/export/pdf', { responseType: 'blob' }),
 }

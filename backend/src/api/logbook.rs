@@ -1,4 +1,4 @@
-// ── api/logbook.rs — Carnet d'entretien (EP-009) ─────────────────
+// ── api/logbook.rs — Carnet d'entretien ─────────────────
 use axum::{
     Json,
     extract::{Path, State},
@@ -16,7 +16,7 @@ use crate::{
         self, AppState,
         contract::{contract_status, contract_type},
     },
-    domain::{AuthUser, Role},
+    domain::{AuthUser, Role, permissions},
     errors::{AppError, AppResult, json_value},
 };
 
@@ -28,11 +28,11 @@ pub struct CreateLogbookInput {
     pub intervention_date: NaiveDate,
     pub cost: Option<Decimal>,
     pub vendor_name: Option<String>,
-    /// Optional link to a vendor contract (EP-009-S05).
+    /// Optional link to a vendor contract.
     pub contract_id: Option<Uuid>,
     /// Optional link to a task (manual association).
     pub task_id: Option<Uuid>,
-    /// Optional category (defaults to `autre`).
+    /// Optional category (defaults to `other`).
     pub category: Option<String>,
 }
 
@@ -44,9 +44,9 @@ pub struct UpdateLogbookInput {
     pub intervention_date: NaiveDate,
     pub cost: Option<Decimal>,
     pub vendor_name: Option<String>,
-    /// Optional link to a vendor contract (EP-009-S05).
+    /// Optional link to a vendor contract.
     pub contract_id: Option<Uuid>,
-    /// Optional category (defaults to `autre`).
+    /// Optional category (defaults to `other`).
     pub category: Option<String>,
 }
 
@@ -329,10 +329,14 @@ pub async fn delete(
 }
 
 /// GET /logbook/export/pdf — renders the regulatory logbook (décret n°2001-477,
-/// art. 1) as a PDF using the shared document template (EP-009-S09).
-/// Access matches `summary` (any authenticated building member): the logbook is
-/// a regulatory record every member may consult.
+/// art. 1) as a PDF using the shared document template.
+/// Access matches `summary`: any authenticated building member (see
+/// `permissions::can_view_logbook`) — the logbook is a regulatory record
+/// every member may consult. The check is explicit for traceability.
 pub async fn export_pdf(auth: AuthUser, State(state): State<Arc<AppState>>) -> AppResult<Response> {
+    if !permissions::can_view_logbook(&auth) {
+        return Err(AppError::Forbidden);
+    }
     let building = db::building::get(&state.pool, auth.building_id)
         .await?
         .ok_or(AppError::NotFound)?;
@@ -571,7 +575,7 @@ pub struct CorrectionInput {
     pub cost: Option<Decimal>,
     pub vendor_name: Option<String>,
     pub contract_id: Option<Uuid>,
-    /// Optional category (defaults to `autre`).
+    /// Optional category (defaults to `other`).
     pub category: Option<String>,
 }
 

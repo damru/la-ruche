@@ -1,4 +1,4 @@
-//! Shared PDF document template (EP-009-S09 spec change: all document PDFs are
+//! Shared PDF document template (spec change: all document PDFs are
 //! generated server-side and share this template).
 //!
 //! Every generated document — logbook export, état daté, pré-état daté, future
@@ -67,7 +67,7 @@ pub const ON_SURFACE_VARIANT: Color = Color::Rgb(66, 71, 78);
 // ASCII + Latin-1 + ponctuation typographique (tirets, apostrophes, ellipsis,
 // €). ~32 ko par fichier — les documents FR n'utilisent aucun glyphe hors de
 // ce périmètre. Police serif choisie pour le rendu « document officiel »
-// (EP-009-S09). Liberation Sans reste embarquée pour `legal_documents.rs`.
+// Liberation Sans reste embarquée pour `legal_documents.rs`.
 const FONT_REGULAR: &[u8] = include_bytes!("../../assets/fonts/Tinos-Regular.ttf");
 const FONT_BOLD: &[u8] = include_bytes!("../../assets/fonts/Tinos-Bold.ttf");
 const FONT_ITALIC: &[u8] = include_bytes!("../../assets/fonts/Tinos-Italic.ttf");

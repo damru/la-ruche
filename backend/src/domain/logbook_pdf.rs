@@ -1,4 +1,4 @@
-//! Logbook PDF rendering (EP-009-S09, spec change: server-side generation).
+//! Logbook PDF rendering (spec change: server-side generation).
 //!
 //! Renders the regulatory logbook — « Carnet d'entretien de l'immeuble »
 //! (décret n°2001-477, art. 1) — as a **letter + annex** PDF using the shared
@@ -551,7 +551,7 @@ mod tests {
     #[test]
     fn render_empty_logbook_produces_valid_pdf() {
         // Carnet vide + aucun contrat : le document s'imprime quand même
-        // (spec EP-009-S09 §6).
+        // (spec §6).
         let data = LogbookPdfData {
             identity: identity(),
             edited_at: date(2026, 6, 16),

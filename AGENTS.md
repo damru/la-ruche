@@ -141,6 +141,7 @@ cargo sqlx prepare                 # regenerate .sqlx/ (offline mode)
 ## Language
 
 - **Code + comments** → English only.
+- **No epic/story/ticket references in code comments** (no `EP-XXX-SYY`, no story IDs) — those belong in `docs/EPICS.md`, specs, and commit messages only.
 - **Docs** (PRD, DESIGN, ARCHITECTURE, ADR, DDR) → French. Code identifiers stay English inside docs.
 
 ---

@@ -12,6 +12,7 @@ rules:
   - Ce fichier fait foi pour toute décision d'architecture backend.
   - Toute nouvelle table, handler, module domain/ ou store frontend doit être reflété ici.
   - Les noms de tables, colonnes et types Rust utilisent exclusivement les identifiants anglais du code.
+  - Le tableau « Schéma DB » est un listing des noms de tables par domaine — pas un descriptif (pas de détails de colonnes, pas de références epic/story dans ce tableau).
   - Les entités marquées "prévu, non encore implémenté" ne doivent pas être codées sans ADR ou Epic associé.
   - Les invariants listés dans "Schéma DB" ont valeur de contrat : toute modification nécessite une mise à jour synchrone de ce document.
 references:
@@ -76,19 +77,19 @@ references:
 | Copropriété | `building`, `unit`, `allocation_key`, `unit_allocation_key`, `edd_reference`, `edd_reference_share` |
 | Utilisateurs | `user_account`, `user_token`, `user_building`, `unit_owner`, `user_notification_preference` |
 | AG | `general_meeting`, `general_meeting_document`, `general_meeting_attendance`, `resolution`, `vote` |
-| Budget | `budget`, `budget_line`, `levy_call`, `works_fund` — champ `category` sur `levy_call` **prévu** ; `budget.parent_budget_id` ; `budget_line.valid_from` / `valid_to` / `rectificatif_version` / `version` |
+| Budget | `budget`, `budget_line`, `levy_call`, `works_fund` |
 | Documents | `document`, `document_event` |
 | Contrats | `vendor_contract`, `contract_document`, `contract_reminder` |
 | Prestataires | `contractor` |
-| Tâches | `task` (`contractor_id` FK → `contractor`, `contractor_name` texte libre, `vendor_token` ephemeral), `task_document`, `vendor_submission`, `vendor_submission_document` |
+| Tâches | `task`, `task_document`, `vendor_submission`, `vendor_submission_document` |
 | Sinistres | `claim`, `claim_document`, `claim_note` |
-| Carnet | `maintenance_log` (champ `category` enum `maintenance_category` : `travaux` / `contrat` / `sinistre` / `autre`, défaut `autre` — EP-009-S10), `maintenance_log_document` |
-| Signalements | `report`, `report_document` — `report.task_id` FK informatif (EP-017, conversion signalement → tâche) |
+| Carnet | `maintenance_log`, `maintenance_log_document` |
+| Signalements | `report`, `report_document` |
 | Consultations | `consultation`, `consultation_choice`, `consultation_response`, `consultation_response_choice`, `consultation_reminder` |
-| Calendrier | `calendar_event`, `calendar_event_document` — événements manuels (réunion informelle, rappel, rendez-vous), EP-014-S03 |
-| Registres | `judicial_proceeding` (procédures judiciaires en cours/clôturées — EP-002-S10), `governance_mandate` (registre des mandats syndic/conseil syndical — EP-002-S11) |
-| État daté | `etat_date_request` (suivi de la demande + snapshot JSONB du document généré — EP-002-S06) |
-| Audit comptable | `audit_log` — journal probant append-only (ADR-009) ; champs : `entity_type`, `entity_id`, `operation`, `changed_by`, `old_values`/`new_values` JSONB (champs modifiés seulement). Aucun UPDATE/DELETE applicatif. `activity_log` (timeline UX EP-017) reste une cible backlog. |
+| Calendrier | `calendar_event`, `calendar_event_document` |
+| Registres | `judicial_proceeding`, `governance_mandate` |
+| État daté | `etat_date_request` |
+| Audit comptable | `audit_log` |
 
 Conventions : UUID v4, TIMESTAMPTZ, soft delete via `active`/`status`, `updated_at` via triggers, JSONB pour OCR futur.
 

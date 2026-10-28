@@ -11,7 +11,7 @@ pub mod log_source {
     pub const AUTOMATIC: &str = "automatic";
 }
 
-/// `maintenance_log.category` values (PG enum `maintenance_category`, EP-009-S10).
+/// `maintenance_log.category` values (PG enum `maintenance_category`).
 pub mod category {
     pub const WORKS: &str = "travaux";
     pub const CONTRACT: &str = "contrat";
