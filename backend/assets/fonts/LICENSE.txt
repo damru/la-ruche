@@ -22,3 +22,30 @@ text of official generated PDF documents (EP-009-S09 template), giving them
 the typographic appearance of a formal administrative document.
 
 Full license text: https://openfontlicense.org/open-font-license-official-text/
+
+---
+
+Fraunces — Bold
+
+Copyright © 2020 The Fraunces Project Authors (https://github.com/undercasetype/Fraunces)
+Licensed under the SIL Open Font License, Version 1.1.
+
+Fraunces is the display typeface of the web app brand wordmark (« La Ruche »).
+Fraunces-Bold.ttf is embedded into the compiled binary at build time and renders
+the brand block of the EP-009-S09 PDF template header, matching the app's
+typography exactly.
+
+Full license text: https://openfontlicense.org/open-font-license-official-text/
+
+---
+
+DM Sans — Regular
+
+Copyright © 2014 The DM Sans Project Authors (https://github.com/googlefonts/dm-fonts)
+Licensed under the SIL Open Font License, Version 1.1.
+
+DM Sans is the UI typeface of the web app. DMSans-Regular.ttf is embedded into
+the compiled binary at build time and renders the header tagline
+(« Gestion participative ») and the page footers of the EP-009-S09 PDF template.
+
+Full license text: https://openfontlicense.org/open-font-license-official-text/

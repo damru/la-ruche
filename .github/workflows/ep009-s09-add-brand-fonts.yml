@@ -1,0 +1,45 @@
+name: EP-009-S09 add brand fonts
+
+# One-shot : la connecteur d'API GitHub disponible ne pousse pas de fichiers
+# binaires propres (encodage UTF-8 systematique). Ce workflow sert de route
+# d'approvisionnement ponctuelle : il telecharge les deux polices marque
+# (memes versions upstream que celles utilisees par le web, verifiees par
+# sha256), les commite en binaire, puis se supprime. L'etat final du depot
+# est identique a un ajout manuel des .ttf.
+
+on:
+  push:
+    branches:
+      - vibe/ep009-s09-s10-229617
+
+permissions:
+  contents: write
+
+jobs:
+  add-fonts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Add Fraunces-Bold.ttf + DMSans-Regular.ttf, then self-remove
+        run: |
+          set -euo pipefail
+          if [ -f backend/assets/fonts/Fraunces-Bold.ttf ] && [ -f backend/assets/fonts/DMSans-Regular.ttf ]; then
+            echo "Fonts already present, nothing to do."
+            exit 0
+          fi
+          curl -sL "https://gwfh.mranftl.com/api/fonts/fraunces?download=zip&subsets=latin&variants=700&formats=ttf" -o /tmp/fr.zip
+          curl -sL "https://gwfh.mranftl.com/api/fonts/dm-sans?download=zip&subsets=latin&variants=regular&formats=ttf" -o /tmp/dm.zip
+          mkdir -p /tmp/fr /tmp/dm
+          unzip -o -j /tmp/fr.zip -d /tmp/fr
+          unzip -o -j /tmp/dm.zip -d /tmp/dm
+          mv /tmp/fr/*.ttf backend/assets/fonts/Fraunces-Bold.ttf
+          mv /tmp/dm/*.ttf backend/assets/fonts/DMSans-Regular.ttf
+          echo "41a1adb1d5a78fd276d278239cbc8d5bf26232ec0047fda2a6f1df3a3ab76635  backend/assets/fonts/Fraunces-Bold.ttf" | sha256sum -c
+          echo "75fab8393d951f566ad990897aeeb78e68b16f6e5cf096caed4d78fc52a86f75  backend/assets/fonts/DMSans-Regular.ttf" | sha256sum -c
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add backend/assets/fonts/Fraunces-Bold.ttf backend/assets/fonts/DMSans-Regular.ttf
+          git rm -q .github/workflows/ep009-s09-add-brand-fonts.yml
+          git commit -m "chore(maintenance): EP-009-S09 — polices Fraunces-Bold + DMSans-Regular (binaires, versions web verifiees sha256) [skip ci]"
+          git push
