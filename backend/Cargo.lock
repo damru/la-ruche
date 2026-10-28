@@ -2745,6 +2745,7 @@ dependencies = [
  "image",
  "jsonwebtoken",
  "postgresql_embedded",
+ "printpdf",
  "rstest",
  "rust_decimal",
  "serde",
