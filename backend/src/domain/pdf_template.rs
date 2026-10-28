@@ -659,9 +659,10 @@ pub fn push_annex_header(layout: &mut LinearLayout, annex: &DocumentAnnexHeader)
     layout.push(elements::Break::new(1.0));
 }
 
-/// « Annexe » → « A N N E X E » (letter-spaced kicker).
+/// « Annexe » → « A N N E X E » (uppercased, letter-spaced kicker).
 fn spaced_caps(text: &str) -> String {
-    text.chars()
+    text.to_uppercase()
+        .chars()
         .flat_map(|c| [c, ' '])
         .collect::<String>()
         .trim_end()
