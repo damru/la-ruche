@@ -90,9 +90,9 @@ sha2 = "0.11.0"
 hex = "0.4.3"
 
 # ── Génération PDF réglementaire (ADR-011) ────────────────────────
-genpdf = { version = "0.2", features = ["images"] } # feature `images` : logo embarqué dans les documents (EP-009-S09)
-image = "0.23" # décodage du logo PNG embarqué (EP-009-S09)
-printpdf = { version = "0.3", default-features = false } # BuiltinFont : slots de repli des familles Fraunces/DM Sans (EP-009-S09 v7.1)
+typst = "0.15" # moteur de composition embarqué (ADR-011, option A retenue)
+typst-pdf = "0.15" # export PDF du document compilé
+typst-layout = "0.15" # PagedDocument : sortie de la compilation
 
 [dev-dependencies]
 axum-test = "21.0.0"                      # tests d'intégration handlers

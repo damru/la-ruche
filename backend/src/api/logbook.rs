@@ -355,19 +355,16 @@ pub async fn export_pdf(auth: AuthUser, State(state): State<Arc<AppState>>) -> A
     let syndic_name =
         db::governance_mandate::current_syndic_name(&state.pool, auth.building_id).await?;
 
-    let mut address = building.address_line1.clone();
-    if let Some(line2) = building
+    let street_address = match building
         .address_line2
         .as_deref()
         .filter(|s| !s.trim().is_empty())
     {
-        address.push_str(", ");
-        address.push_str(line2);
-    }
-    address.push_str(", ");
-    address.push_str(&building.postal_code);
-    address.push(' ');
-    address.push_str(&building.city);
+        Some(line2) => format!("{}, {}", building.address_line1, line2),
+        None => building.address_line1.clone(),
+    };
+    let postal_city = format!("{} {}", building.postal_code, building.city);
+    let address = format!("{street_address}, {postal_city}");
 
     // Syndic contact: current manager user (email/phone) if any.
     let users = db::user::list(&state.pool, auth.building_id).await?;
@@ -393,24 +390,24 @@ pub async fn export_pdf(auth: AuthUser, State(state): State<Arc<AppState>>) -> A
                 .flatten()
                 .filter_map(serde_json::Value::as_str)
                 .collect::<Vec<_>>()
-                .join(" — ");
+                .join(" - ");
             (!contact.is_empty()).then_some(contact)
         })
         .next();
 
     // Document recipient: the user who requested the generation
-    // (user feedback PR 155 v7.1) — name, role, then the relevant building.
+    // (user feedback PR 155 v7.1) — name, then the relevant building
+    // (name, street address, postal city). The recipient's role is not
+    // relevant on a regulatory document.
     let requester = db::user::find_by_id(&state.pool, auth.user_id)
         .await?
         .ok_or(AppError::NotFound)?;
     let requester_full_name = format!("{} {}", requester.first_name, requester.last_name);
     let recipient_lines = vec![
-        format!(
-            "{requester_full_name} — {}",
-            requester_role_label(auth.roles.first())
-        ),
+        requester_full_name.clone(),
         building.name.clone(),
-        address.clone(),
+        street_address.clone(),
+        postal_city.clone(),
     ];
 
     let contracts = db::contract::list(&state.pool, auth.building_id).await?;
@@ -460,7 +457,7 @@ pub async fn export_pdf(auth: AuthUser, State(state): State<Arc<AppState>>) -> A
     let building_name_for_doc = building.name.clone();
     let year = today.format("%Y").to_string();
     let edition_line = format!(
-        "Réf. LR-CARNET-{year} · Édition du {} — destinataire : {requester_full_name}",
+        "Réf. LR-CARNET-{year} · Édition du {} - destinataire : {requester_full_name}",
         crate::domain::pdf_template::format_date(today)
     );
     let letter_paragraphs = vec![
@@ -475,6 +472,8 @@ pub async fn export_pdf(auth: AuthUser, State(state): State<Arc<AppState>>) -> A
         identity: crate::domain::pdf_template::DocumentIdentity {
             building_name: building.name,
             building_address: address,
+            building_street_address: street_address,
+            building_postal_city: postal_city,
             syndic_name,
             syndic_siret: building.manager_siret,
         },
@@ -489,13 +488,13 @@ pub async fn export_pdf(auth: AuthUser, State(state): State<Arc<AppState>>) -> A
             issuer_heading: "Le syndic des copropriétaires".to_string(),
             issuer_not_set: "Syndic non renseigné".to_string(),
             recipient_label: "Destinataire".to_string(),
-            objet: format!("Carnet d'entretien de l'immeuble — édition {year}"),
+            objet: format!("Carnet d'entretien de l'immeuble - édition {year}"),
             reference: Some(edition_line),
             salutation: "Madame, Monsieur,".to_string(),
             letter_paragraphs,
             closing_formula: "Je vous prie d'agréer, Madame, Monsieur, l'expression de mes salutations distinguées.".to_string(),
-            signer_closing: "Pour le syndic,".to_string(),
-            signer_role: Some(format!("Syndic en exercice — {building_name_for_doc}")),
+            signer_closing: "Pour le syndic".to_string(),
+            signer_role: Some(format!("Syndic en exercice - {building_name_for_doc}")),
             place: building.city.clone(),
             annex_kicker: "Annexe".to_string(),
             insurance_section: "Contrats d'assurance en cours".to_string(),
@@ -509,10 +508,6 @@ pub async fn export_pdf(auth: AuthUser, State(state): State<Arc<AppState>>) -> A
             col_category: "Catégorie".to_string(),
             col_source: "Source".to_string(),
             col_cost: "Coût".to_string(),
-            count_one: "1 contrat".to_string(),
-            count_other: "{count} contrats".to_string(),
-            entries_count_one: "1 intervention".to_string(),
-            entries_count_other: "{count} interventions".to_string(),
         },
     };
 
@@ -531,17 +526,6 @@ pub async fn export_pdf(auth: AuthUser, State(state): State<Arc<AppState>>) -> A
             .unwrap_or(HeaderValue::from_static("attachment")),
     );
     Ok(response)
-}
-
-/// FR label for the requester's role (destinataire du document, v7.1).
-fn requester_role_label(role: Option<&Role>) -> &'static str {
-    match role {
-        Some(Role::Manager) => "Syndic",
-        Some(Role::BoardMember) => "Membre du conseil syndical",
-        Some(Role::CoOwner) => "Copropriétaire",
-        Some(Role::Tenant) => "Locataire",
-        None => "Membre",
-    }
 }
 
 /// FR label for a `contract_type` enum value.

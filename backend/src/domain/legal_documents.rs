@@ -2,35 +2,29 @@
 //!
 //! Pure functions only — no I/O, no SQL. Callers load and assemble the data
 //! (domain + db), hand it here together with a document header, and receive
-//! the finished PDF as in-memory bytes. Fonts are embedded at compile time so
-//! the rendering is self-contained (no system font dependency, matching the
-//! `debian:trixie-slim` runtime image).
+//! the finished PDF as in-memory bytes. The documents are composed by the
+//! shared typst engine (`domain/pdf_template.rs`, templates in
+//! `domain/typst/`): Liberation Sans, centered bold title, no brand block and
+//! no running footer (visual unchanged from the previous engine). Fonts are
+//! embedded at compile time so the rendering is self-contained (no system
+//! font dependency, matching the `debian:trixie-slim` runtime image).
 //!
 //! The PDF is a *rendering* of the frozen JSONB snapshot, not the probative
-//! record itself (the snapshot is). `genpdf`/`printpdf` embed a random document
-//! id and the current creation date, so the byte output is not deterministic
+//! record itself (the snapshot is). The typst PDF export embeds a document id
+//! and the current creation date, so the byte output is not deterministic
 //! across runs — this is acceptable for a presentation document and does not
 //! affect the état daté's probative value.
-//!
-//! Crate choice: ADR-011 names `typst` (default) / `genpdf` (fallback "si
-//! l'intégration de typst s'avère trop lourde"). `genpdf` is used here: it is a
-//! direct Rust API (no markup language) and far lighter than embedding the full
-//! `typst` typesetting engine (which also requires a custom `World`
-//! font-resolution implementation).
 
 use chrono::NaiveDate;
-use genpdf::{
-    Alignment, Document, Element, Margins, SimplePageDecorator,
-    elements::{self, LinearLayout, Paragraph, TableLayout},
-    fonts::{FontData, FontFamily},
-    style,
-};
 use rust_decimal::Decimal;
+use serde::Serialize;
 
 use crate::domain::etat_date::{EtatDate, PreEtatDate};
+use crate::domain::pdf_template::{format_date, format_euro};
 
-const FONT_REGULAR: &[u8] = include_bytes!("../../assets/fonts/LiberationSans-Regular.ttf");
-const FONT_BOLD: &[u8] = include_bytes!("../../assets/fonts/LiberationSans-Bold.ttf");
+/// Document templates (concatenated after the shared base by the engine).
+const ETAT_DATE_TEMPLATE: &str = include_str!("typst/etat_date.typ");
+const PRE_ETAT_DATE_TEMPLATE: &str = include_str!("typst/pre_etat_date.typ");
 
 /// Header common to both regulatory documents: the residence identity, the
 /// syndic, the lot, and the relevant dates. Assembled by the API layer from
@@ -53,122 +47,79 @@ pub struct LegalDocumentHeader {
     pub edited_at: Option<NaiveDate>,
 }
 
-/// Loads and parses the embedded font family. Propagates the only realistic
-/// failure (corrupted compile-time font asset) as a string to the caller.
-fn font_family() -> Result<FontFamily<FontData>, String> {
-    let regular = FontData::new(FONT_REGULAR.to_vec(), None).map_err(|e| e.to_string())?;
-    let bold = FontData::new(FONT_BOLD.to_vec(), None).map_err(|e| e.to_string())?;
-    Ok(FontFamily {
-        regular: regular.clone(),
-        bold: bold.clone(),
-        italic: regular.clone(),
-        bold_italic: bold,
-    })
+// ── Payloads (typst data boundary: pre-formatted strings only) ─────────────
+
+/// One `label | amount` row of a regulatory table.
+#[derive(Serialize)]
+struct LignePayload {
+    label: String,
+    amount: String,
 }
 
-/// A4 document with the default font and margins already configured.
-fn document(family: FontFamily<FontData>) -> Document {
-    let mut doc = Document::new(family);
-    doc.set_minimal_conformance();
-    doc.set_font_size(10);
-    doc.set_line_spacing(1.3);
-
-    let mut decorator = SimplePageDecorator::new();
-    decorator.set_margins(Margins::all(18));
-    doc.set_page_decorator(decorator);
-    doc
+/// One row of the quote-part annexe (état daté).
+#[derive(Serialize)]
+struct ExercicePayload {
+    year: String,
+    charges: String,
+    travaux: String,
+    total: String,
 }
 
-fn bold(size: u8) -> style::Style {
-    style::Style::new().bold().with_font_size(size)
+#[derive(Serialize)]
+struct EtatDatePayload {
+    title: String,
+    /// Residence + syndic + lot + request lines, pre-formatted.
+    header_lines: Vec<String>,
+    part1: Vec<LignePayload>,
+    part2: Vec<LignePayload>,
+    part3: Vec<LignePayload>,
+    exercices: Vec<ExercicePayload>,
+    /// Pre-formatted procedure lines (« subject — date (jurisdiction) »).
+    procedures: Vec<String>,
+    travaux: Vec<String>,
+    emprunts: String,
 }
 
-fn title(text: &str) -> elements::StyledElement<Paragraph> {
-    Paragraph::new(text)
-        .aligned(Alignment::Center)
-        .styled(bold(16))
+#[derive(Serialize)]
+struct PreEtatDatePayload {
+    title: String,
+    /// Residence + syndic + lot lines, pre-formatted.
+    header_lines: Vec<String>,
+    /// « Édité le : jj/mm/aaaa », when the edition date is known.
+    edited_at: Option<String>,
+    charges: Vec<LignePayload>,
+    dues: Vec<LignePayload>,
+    fund: Vec<LignePayload>,
+    procedures_count: usize,
+    emprunts: String,
 }
 
-fn section(text: &str) -> elements::StyledElement<Paragraph> {
-    Paragraph::new(text).styled(bold(11))
-}
+// ── Assembly ───────────────────────────────────────────────────────────────
 
-fn label(text: &str) -> Paragraph {
-    Paragraph::new(text)
-}
-
-fn amount_right(text: &str) -> Paragraph {
-    Paragraph::new(text).aligned(Alignment::Right)
-}
-
-/// Adds a two-column `label | amount` row. Infallible: the row always carries
-/// exactly two cells for a two-column layout, so a column mismatch would be a
-/// programmer error, not a runtime condition.
-fn push_amount_row(table: &mut TableLayout, label_text: &str, amount: &str) {
-    table
-        .row()
-        .element(label(label_text))
-        .element(amount_right(amount))
-        .push()
-        .expect("two-column amount row must carry exactly two cells");
-}
-
-/// Builds a two-column `label | amount` table from line items.
-fn amount_table(lines: &[crate::domain::etat_date::LigneMontant]) -> TableLayout {
-    let mut table = TableLayout::new(vec![5, 1]);
-    for line in lines {
-        push_amount_row(&mut table, &line.label, &format_euro(line.amount));
-    }
-    table
-}
-
-/// Pushes the residence + syndic header block onto the layout.
-fn push_header(layout: &mut LinearLayout, header: &LegalDocumentHeader) {
-    layout.push(Paragraph::new(format!(
-        "Syndicat des copropriétaires : {}",
-        header.building_name
-    )));
-    layout.push(Paragraph::new(format!(
-        "Adresse : {}",
-        header.building_address
-    )));
+/// Residence + syndic + lot header lines, shared by both documents.
+fn base_header_lines(header: &LegalDocumentHeader) -> Vec<String> {
     let syndic_line = match (&header.syndic_name, &header.syndic_siret) {
         (Some(name), Some(siret)) => format!("Syndic : {name} — SIRET {siret}"),
         (Some(name), None) => format!("Syndic : {name}"),
         (None, Some(siret)) => format!("Syndic : SIRET {siret}"),
         (None, None) => "Syndic : non renseigné".to_string(),
     };
-    layout.push(Paragraph::new(syndic_line));
-    layout.push(Paragraph::new(format!("Lot : {}", header.unit_number)));
-    layout.push(elements::Break::new(0.5));
+    vec![
+        format!("Syndicat des copropriétaires : {}", header.building_name),
+        format!("Adresse : {}", header.building_address),
+        syndic_line,
+        format!("Lot : {}", header.unit_number),
+    ]
 }
 
-/// Pushes the two signature blocks ("Le syndic" / "Le notaire ou l'acquéreur")
-/// that make the document signable as an official record.
-fn push_signatures(layout: &mut LinearLayout) {
-    layout.push(elements::Break::new(1.0));
-
-    let mut table = TableLayout::new(vec![1, 1]);
-    let place = "Fait à ____________________, le ____________________".to_string();
-    table
-        .row()
-        .element(
-            LinearLayout::vertical()
-                .element(label("Le syndic"))
-                .element(elements::Break::new(3))
-                .element(label(&place))
-                .padded(2),
-        )
-        .element(
-            LinearLayout::vertical()
-                .element(label("Le notaire / l'acquéreur"))
-                .element(elements::Break::new(3))
-                .element(label(&place))
-                .padded(2),
-        )
-        .push()
-        .expect("two-column signature row must carry exactly two cells");
-    layout.push(table);
+fn ligne_payloads(lines: &[crate::domain::etat_date::LigneMontant]) -> Vec<LignePayload> {
+    lines
+        .iter()
+        .map(|line| LignePayload {
+            label: line.label.clone(),
+            amount: format_euro(line.amount),
+        })
+        .collect()
 }
 
 /// Renders the état daté (EP-002-S06) as a PDF from its frozen snapshot.
@@ -176,92 +127,57 @@ pub fn render_etat_date(
     header: &LegalDocumentHeader,
     snapshot: &EtatDate,
 ) -> Result<Vec<u8>, String> {
-    let mut doc = document(font_family()?);
-    doc.set_title("État daté");
-
-    let mut layout = LinearLayout::vertical();
-    layout.push(title("État daté"));
-    layout.push(elements::Break::new(0.5));
-    push_header(&mut layout, header);
-
+    let mut header_lines = base_header_lines(header);
     if let Some(requester) = &header.requester_name {
-        layout.push(Paragraph::new(format!("Demande de : {requester}")));
+        header_lines.push(format!("Demande de : {requester}"));
     }
     if let Some(date) = header.requested_at {
-        layout.push(Paragraph::new(format!(
-            "Date de la demande : {}",
-            format_date(date)
-        )));
+        header_lines.push(format!("Date de la demande : {}", format_date(date)));
     }
     if let Some(date) = header.due_date {
-        layout.push(Paragraph::new(format!(
-            "Échéance légale (J+15) : {}",
-            format_date(date)
-        )));
+        header_lines.push(format!("Échéance légale (J+15) : {}", format_date(date)));
     }
     if let Some(date) = header.generated_at {
-        layout.push(Paragraph::new(format!(
-            "Date de génération : {}",
-            format_date(date)
-        )));
+        header_lines.push(format!("Date de génération : {}", format_date(date)));
     }
-    layout.push(elements::Break::new(0.5));
 
-    layout.push(section("1. Sommes dues par le cédant"));
-    layout.push(amount_table(&snapshot.partie1_sommes_dues_par_cedant));
-    layout.push(elements::Break::new(0.5));
-
-    layout.push(section("2. Sommes dont le syndicat est débiteur"));
-    layout.push(amount_table(&snapshot.partie2_sommes_dues_par_syndicat));
-    layout.push(elements::Break::new(0.5));
-
-    layout.push(section("3. Sommes incombant à l'acquéreur"));
-    layout.push(amount_table(&snapshot.partie3_sommes_incombant_acquereur));
-    layout.push(elements::Break::new(0.5));
-
-    layout.push(section("Annexe — quote-part sur les 2 derniers exercices"));
-    layout.push(exercice_table(&snapshot.annexe_quote_part));
-    layout.push(elements::Break::new(0.5));
-
-    layout.push(section("Procédures judiciaires en cours"));
-    if snapshot.procedures.is_empty() {
-        layout.push(Paragraph::new("Néant"));
-    } else {
-        for proc in &snapshot.procedures {
-            let jurisdiction = proc
-                .jurisdiction
-                .as_deref()
-                .map(|j| format!(" ({j})"))
-                .unwrap_or_default();
-            layout.push(Paragraph::new(format!(
-                "{} — {}{}",
-                proc.subject,
-                format_date(proc.opened_at),
-                jurisdiction
-            )));
-        }
-    }
-    layout.push(elements::Break::new(0.5));
-
-    layout.push(section("Travaux votés non réalisés"));
-    if snapshot.travaux_votes_non_realises.is_empty() {
-        layout.push(Paragraph::new("Néant"));
-    } else {
-        for t in &snapshot.travaux_votes_non_realises {
-            layout.push(Paragraph::new(t));
-        }
-    }
-    layout.push(elements::Break::new(0.5));
-
-    layout.push(section("Emprunts collectifs"));
-    layout.push(Paragraph::new(&snapshot.emprunts_collectifs));
-
-    push_signatures(&mut layout);
-    doc.push(layout);
-
-    let mut out = Vec::new();
-    doc.render(&mut out).map_err(|e| e.to_string())?;
-    Ok(out)
+    let payload = EtatDatePayload {
+        title: "État daté".to_string(),
+        header_lines,
+        part1: ligne_payloads(&snapshot.partie1_sommes_dues_par_cedant),
+        part2: ligne_payloads(&snapshot.partie2_sommes_dues_par_syndicat),
+        part3: ligne_payloads(&snapshot.partie3_sommes_incombant_acquereur),
+        exercices: snapshot
+            .annexe_quote_part
+            .iter()
+            .map(|ex| ExercicePayload {
+                year: ex.fiscal_year.to_string(),
+                charges: format_euro(ex.charge_amount),
+                travaux: format_euro(ex.works_fund_amount),
+                total: format_euro(ex.total_amount),
+            })
+            .collect(),
+        procedures: snapshot
+            .procedures
+            .iter()
+            .map(|proc| {
+                let jurisdiction = proc
+                    .jurisdiction
+                    .as_deref()
+                    .map(|j| format!(" ({j})"))
+                    .unwrap_or_default();
+                format!(
+                    "{} — {}{}",
+                    proc.subject,
+                    format_date(proc.opened_at),
+                    jurisdiction
+                )
+            })
+            .collect(),
+        travaux: snapshot.travaux_votes_non_realises.clone(),
+        emprunts: snapshot.emprunts_collectifs.clone(),
+    };
+    crate::domain::pdf_template::compile_template(ETAT_DATE_TEMPLATE, &payload)
 }
 
 /// Renders the pré-état daté (EP-002-S07, art. L721-2 CCH) as a PDF.
@@ -269,149 +185,58 @@ pub fn render_pre_etat_date(
     header: &LegalDocumentHeader,
     data: &PreEtatDate,
 ) -> Result<Vec<u8>, String> {
-    let mut doc = document(font_family()?);
-    doc.set_title("Pré-état daté");
-
-    let mut layout = LinearLayout::vertical();
-    layout.push(title("Pré-état daté"));
-    layout.push(elements::Break::new(0.5));
-    push_header(&mut layout, header);
-
-    if let Some(date) = header.edited_at {
-        layout.push(Paragraph::new(format!("Édité le : {}", format_date(date))));
-    }
-    layout.push(elements::Break::new(0.5));
-
-    layout.push(section(
-        "Charges courantes (budget prévisionnel et hors budget)",
-    ));
-    let mut charges = TableLayout::new(vec![5, 1]);
-    push_amount_row(
-        &mut charges,
-        "Charges budget prévisionnel — exercice N-1",
-        &optional_euro(data.charges_courantes_n1),
-    );
-    push_amount_row(
-        &mut charges,
-        "Charges budget prévisionnel — exercice N-2",
-        &optional_euro(data.charges_courantes_n2),
-    );
-    push_amount_row(
-        &mut charges,
-        "Charges hors budget — exercice N-1",
-        &optional_euro(data.charges_hors_budget_n1),
-    );
-    push_amount_row(
-        &mut charges,
-        "Charges hors budget — exercice N-2",
-        &optional_euro(data.charges_hors_budget_n2),
-    );
-    layout.push(charges);
-    layout.push(elements::Break::new(0.5));
-
-    layout.push(section("Sommes dues au syndicat"));
-    let mut dues = TableLayout::new(vec![5, 1]);
-    push_amount_row(
-        &mut dues,
-        "Sommes dues par le cédant",
-        &format_euro(data.sommes_dues_par_cedant),
-    );
-    push_amount_row(
-        &mut dues,
-        "État global des impayés du syndicat",
-        &format_euro(data.impayes_globaux_syndicat),
-    );
-    push_amount_row(
-        &mut dues,
-        "Dette fournisseurs",
-        &optional_euro(data.dette_fournisseurs),
-    );
-    layout.push(dues);
-    layout.push(elements::Break::new(0.5));
-
-    layout.push(section("Fonds travaux"));
-    let mut fund = TableLayout::new(vec![5, 1]);
-    push_amount_row(
-        &mut fund,
-        "Quote-part du lot",
-        &format_euro(data.fonds_travaux_quote_part),
-    );
-    push_amount_row(
-        &mut fund,
-        "Dernière cotisation",
-        &format_euro(data.fonds_travaux_derniere_cotisation),
-    );
-    layout.push(fund);
-    layout.push(elements::Break::new(0.5));
-
-    layout.push(section("Procédures judiciaires en cours"));
-    layout.push(Paragraph::new(if data.procedures_en_cours == 0 {
-        "Néant".to_string()
-    } else {
-        data.procedures_en_cours.to_string()
-    }));
-    layout.push(elements::Break::new(0.5));
-
-    layout.push(section("Emprunts collectifs"));
-    layout.push(Paragraph::new(&data.emprunts_collectifs));
-
-    push_signatures(&mut layout);
-    doc.push(layout);
-
-    let mut out = Vec::new();
-    doc.render(&mut out).map_err(|e| e.to_string())?;
-    Ok(out)
-}
-
-/// Renders the quote-part annexe (état daté) as a four-column table.
-fn exercice_table(exercices: &[crate::domain::etat_date::ExerciceQuotePart]) -> TableLayout {
-    let mut table = TableLayout::new(vec![1, 2, 2, 2]);
-    table
-        .row()
-        .element(label("Exercice").styled(style::Effect::Bold))
-        .element(label("Charges").styled(style::Effect::Bold))
-        .element(label("Fonds travaux").styled(style::Effect::Bold))
-        .element(amount_right("Total").styled(style::Effect::Bold))
-        .push()
-        .expect("four-column header row must carry exactly four cells");
-
-    for ex in exercices {
-        table
-            .row()
-            .element(label(&ex.fiscal_year.to_string()))
-            .element(amount_right(&format_euro(ex.charge_amount)))
-            .element(amount_right(&format_euro(ex.works_fund_amount)))
-            .element(amount_right(&format_euro(ex.total_amount)))
-            .push()
-            .expect("four-column data row must carry exactly four cells");
-    }
-    table
-}
-
-/// `Decimal` → French-formatted euro string (e.g. `1 500,00 €`). Amounts are
-/// always rendered from `Decimal`, never `f64` (ADR-011).
-fn format_euro(value: Decimal) -> String {
-    let rounded = value.round_dp(2);
-    let raw = rounded.to_string();
-    let (sign, rest) = match raw.strip_prefix('-') {
-        Some(rest) => ("-", rest),
-        None => ("", raw.as_str()),
+    let payload = PreEtatDatePayload {
+        title: "Pré-état daté".to_string(),
+        header_lines: base_header_lines(header),
+        edited_at: header
+            .edited_at
+            .map(|date| format!("Édité le : {}", format_date(date))),
+        charges: vec![
+            LignePayload {
+                label: "Charges budget prévisionnel — exercice N-1".to_string(),
+                amount: optional_euro(data.charges_courantes_n1),
+            },
+            LignePayload {
+                label: "Charges budget prévisionnel — exercice N-2".to_string(),
+                amount: optional_euro(data.charges_courantes_n2),
+            },
+            LignePayload {
+                label: "Charges hors budget — exercice N-1".to_string(),
+                amount: optional_euro(data.charges_hors_budget_n1),
+            },
+            LignePayload {
+                label: "Charges hors budget — exercice N-2".to_string(),
+                amount: optional_euro(data.charges_hors_budget_n2),
+            },
+        ],
+        dues: vec![
+            LignePayload {
+                label: "Sommes dues par le cédant".to_string(),
+                amount: format_euro(data.sommes_dues_par_cedant),
+            },
+            LignePayload {
+                label: "État global des impayés du syndicat".to_string(),
+                amount: format_euro(data.impayes_globaux_syndicat),
+            },
+            LignePayload {
+                label: "Dette fournisseurs".to_string(),
+                amount: optional_euro(data.dette_fournisseurs),
+            },
+        ],
+        fund: vec![
+            LignePayload {
+                label: "Quote-part du lot".to_string(),
+                amount: format_euro(data.fonds_travaux_quote_part),
+            },
+            LignePayload {
+                label: "Dernière cotisation".to_string(),
+                amount: format_euro(data.fonds_travaux_derniere_cotisation),
+            },
+        ],
+        procedures_count: data.procedures_en_cours,
+        emprunts: data.emprunts_collectifs.clone(),
     };
-    let (int_part, frac_part) = match rest.split_once('.') {
-        Some((i, f)) => (i, format!("{f:0<2}")),
-        None => (rest, "00".to_string()),
-    };
-
-    let mut grouped = String::new();
-    let digits: Vec<char> = int_part.chars().collect();
-    for (idx, c) in digits.iter().enumerate() {
-        if idx > 0 && (digits.len() - idx).is_multiple_of(3) {
-            grouped.push(' ');
-        }
-        grouped.push(*c);
-    }
-
-    format!("{sign}{grouped},{frac_part} €")
+    crate::domain::pdf_template::compile_template(PRE_ETAT_DATE_TEMPLATE, &payload)
 }
 
 /// `Option<Decimal>` → either the formatted amount or « Non disponible ».
@@ -419,11 +244,6 @@ fn optional_euro(value: Option<Decimal>) -> String {
     value
         .map(format_euro)
         .unwrap_or_else(|| "Non disponible".to_string())
-}
-
-/// `NaiveDate` → `jj/mm/aaaa`.
-fn format_date(date: NaiveDate) -> String {
-    date.format("%d/%m/%Y").to_string()
 }
 
 #[cfg(test)]
