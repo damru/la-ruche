@@ -117,6 +117,13 @@ page v7.1 (justification du texte, pied de page récurrent avec logo, tableaux
   payload JSON sérialisé servi au template (`json("/payload.json")`). Tout le
   formatage FR (montants, dates, compteurs) reste en Rust ; les templates ne
   consomment que des chaînes pré-formatées, donc aucun échappement de balisage.
+  `base.typ` porte aussi le **cadre de lettre commun** (bloc marque, double
+  en-tête émetteur/destinataire, objet, salutation, formule de politesse,
+  signature, pied de page) : un template par document ne porte plus que les
+  paragraphes de la lettre et les annexes. L'interligne par défaut y est fixé
+  à 1,5 ; les blocs de type adresse et les signatures gardent un interligne
+  compact, de sorte que les documents réglementaires (état daté / pré-état
+  daté) restent visuellement inchangés.
 - **Données** : montants toujours depuis `Decimal`, jamais `f64` (inchangé).
 - **Conséquences build** : `genpdf`, `printpdf` et `image` (direct) sont retirés
   du `Cargo.toml` ; le moteur typst est embarqué (temps de compilation et

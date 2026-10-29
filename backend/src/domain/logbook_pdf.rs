@@ -126,7 +126,8 @@ pub struct LogbookPdfLabels {
 }
 
 /// Document template for the logbook (concatenated after the shared base by
-/// the engine).
+/// the engine). The shared letter frame lives in the base; this template only
+/// carries the annex (contract sections + chronology).
 const LOGBOOK_TEMPLATE: &str = include_str!("typst/logbook.typ");
 
 /// Renders the logbook as a **letter + annex** PDF using the shared template.

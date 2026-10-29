@@ -12,9 +12,15 @@
 //!   first page (logo + « La Ruche » in Fraunces + tagline in DM Sans), aligned
 //!   double header (issuer left / recipient right), justified letter body,
 //!   right-aligned signature, annex header with spaced kicker, and a centered
-//!   running footer (mini logo + edition line + legal disclaimer) on every
-//!   page. The regulatory documents (état daté / pré-état daté) opt out of the
-//!   brand block and the footer.
+//!   running footer (edition line + legal disclaimer) on every page. The
+//!   regulatory documents (état daté / pré-état daté) opt out of the brand
+//!   block and the footer.
+//! - **Shared letter frame** — everything common to letter documents (brand
+//!   block, double header, objet, salutation, closing formula, signature,
+//!   footer) is defined once in `typst/base.typ` and reused by every letter
+//!   template; only the letter paragraphs and the annexes vary per document.
+//!   Default line spacing is interligne 1,5; address-style blocks (issuer,
+//!   recipient, annex meta, signatures) keep a compact leading.
 //! - **Typography & palette** — Tinos (serif, metric-compatible Times New
 //!   Roman) for the letter body, Fraunces Bold / DM Sans for the brand,
 //!   Liberation Sans for the regulatory documents (all embedded, no system
@@ -62,8 +68,46 @@ const FONT_SANS_BOLD: &[u8] = include_bytes!("../../assets/fonts/LiberationSans-
 const LOGO_PNG: &[u8] = include_bytes!("../../assets/images/logo-la-ruche.png");
 
 /// Shared base prepended to every document template (page setup, palette,
-/// payload declaration, regulatory helpers).
+/// payload declaration, default interligne 1,5, regulatory helpers and the
+/// shared letter frame).
 const BASE_TEMPLATE: &str = include_str!("typst/base.typ");
+
+// ── Embedded document templates (production fallback) ──────────────────────
+//
+// In production the binary is self-contained: templates are compiled in via
+// `include_str!`. In development, set `LARUCHE_TEMPLATES_DIR` to the absolute
+// path of `backend/src/domain/typst/` and templates are re-read from disk on
+// every call — no rebuild needed for a margin tweak.
+
+const EMBEDDED_TEMPLATES: &[(&str, &str)] = &[
+    ("logbook", include_str!("typst/logbook.typ")),
+    ("etat_date", include_str!("typst/etat_date.typ")),
+    ("pre_etat_date", include_str!("typst/pre_etat_date.typ")),
+];
+
+/// Loads the shared base and a named document template.
+///
+/// When the `LARUCHE_TEMPLATES_DIR` environment variable is set, both files
+/// are read from disk on every call (dev hot-reload). Otherwise the embedded
+/// `include_str!` copies are used (production).
+fn load_templates(template_name: &str) -> Result<(String, String), String> {
+    if let Ok(dir) = std::env::var("LARUCHE_TEMPLATES_DIR") {
+        let base_path = format!("{dir}/base.typ");
+        let doc_path = format!("{dir}/{template_name}.typ");
+        let base = std::fs::read_to_string(&base_path)
+            .map_err(|e| format!("cannot read {base_path}: {e}"))?;
+        let doc = std::fs::read_to_string(&doc_path)
+            .map_err(|e| format!("cannot read {doc_path}: {e}"))?;
+        Ok((base, doc))
+    } else {
+        let doc = EMBEDDED_TEMPLATES
+            .iter()
+            .find(|(name, _)| *name == template_name)
+            .map(|(_, src)| *src)
+            .ok_or_else(|| format!("unknown template: {template_name}"))?;
+        Ok((BASE_TEMPLATE.to_string(), doc.to_string()))
+    }
+}
 
 static FONTS: LazyLock<Vec<Font>> = LazyLock::new(|| {
     [
@@ -158,14 +202,20 @@ impl World for DocWorld {
 
 // ── Compilation ────────────────────────────────────────────────────────────
 
-/// Compiles a document template (concatenated after the shared base) with the
-/// given payload and returns the PDF bytes. Template errors are reported with
-/// their line number in the assembled source.
+/// Compiles a named document template (concatenated after the shared base)
+/// with the given payload and returns the PDF bytes. Template errors are
+/// reported with their line number in the assembled source.
+///
+/// The template name selects which `.typ` file to load (e.g. `"logbook"`,
+/// `"etat_date"`, `"pre_etat_date"`). Templates are read from
+/// `LARUCHE_TEMPLATES_DIR` when set (dev), or embedded via `include_str!`
+/// (production).
 pub(crate) fn compile_template(
-    document_template: &str,
+    template_name: &str,
     payload: &impl Serialize,
 ) -> Result<Vec<u8>, String> {
-    let source_text = format!("{BASE_TEMPLATE}\n{document_template}");
+    let (base, document_template) = load_templates(template_name)?;
+    let source_text = format!("{base}\n{document_template}");
     let payload = serde_json::to_string(payload).map_err(|e| e.to_string())?;
     let id = FileId::new(RootedPath::new(
         VirtualRoot::Project,

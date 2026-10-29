@@ -1,5 +1,9 @@
 // ── Carnet d'entretien de l'immeuble — letter + annex ──
 // Expects the logbook payload (see domain/logbook_pdf.rs).
+// The shared letter frame (brand block, double header, objet, salutation,
+// closing formula, signature, running footer) is defined once in base.typ
+// and reused by every letter document — only the letter paragraphs (via the
+// payload) and the annex below are specific to the logbook.
 // Layout rule: in grid/table/stack bodies, a run of inline content merges
 // into a single cell/line — cells and stacked lines are always passed as
 // explicit positional arguments or block-wrapped children.
@@ -37,100 +41,20 @@
   #v(2mm)
 ]
 
-// ── Running footer (every page, centered) ──
-// Line 1: logo + edition note. Line 2: regulatory disclaimer, italic.
-#set page(footer: align(center)[
-  #set par(spacing: 0pt)
-  #rect(width: 100%, height: 0.4pt, fill: rule)
-  #v(1.5mm)
-  #grid(
-    columns: (auto, auto),
-    column-gutter: 1.5mm,
-    align: center,
-    image("/logo.png", width: 5mm),
-    text(font: "DM Sans 9pt", size: 7pt, fill: grey)[#payload.app_name, gestion de copropriété participative. Document généré le #payload.edited_at via #payload.app_name.],
-  )
-  #v(1mm)
-  #text(size: 7pt, style: "italic", fill: grey)[Le syndic reste responsable de la conformité légale de sa copropriété.]
-])
+#set page(footer: align(center)[#letter-footer()])
 
-// ── Brand block (first page): logo left, name + tagline right ──
-#grid(
-  columns: (auto, 1fr),
-  column-gutter: 4mm,
-  align: left + top,
-  image("/logo.png", width: 16mm),
-  block(height: 16mm)[
-    #text(font: "Fraunces", size: 20pt, fill: on-surface)[#payload.app_name]
-    #v(1fr)
-    #text(font: "DM Sans 9pt", size: 8pt, fill: on-surface-variant)[Gestion de copropriété participative, pour les syndics bénévoles et conseils syndicaux.]
-  ],
-)
-#v(4mm)
-
-// ── Double header : issuer (left) / recipient (right) ──
-#grid(
-  columns: (1fr, auto),
-  column-gutter: 6mm,
-  align: left + top,
-  [
-    #text(size: 9pt, fill: ink)[#payload.issuer_heading]
-    #for line in payload.issuer_lines [
-      #linebreak()
-      #text(size: 9pt, fill: grey)[#line]
-    ]
-  ],
-  [
-    #align(right)[
-      #text(size: 9pt, weight: "bold", fill: ink)[#payload.recipient_label]
-      #linebreak()
-      #text(size: 9pt, fill: ink)[#payload.recipient_lines.first()]
-      #for line in payload.recipient_lines.slice(1) [
-        #linebreak()
-        #text(size: 9pt, fill: grey)[#line]
-      ]
-    ]
-  ],
-)
-#v(2mm)
-#line(length: 100%, stroke: (paint: brand, thickness: 0.8pt))
-#v(4mm)
-
-// ── Letter ──
-#text(size: 12pt)[#strong[Objet : ]#payload.objet]
-#v(0.5mm)
-#if payload.reference != none [
-  #text(size: 9pt, fill: grey)[#payload.reference]
-]
-#v(3mm)
-#payload.salutation
-#v(1.5mm)
-#for paragraph in payload.letter_paragraphs [
-  #paragraph
-  #v(1.5mm)
-]
-#payload.closing_formula
-#v(4mm)
-
-// ── Signature (right-aligned) ──
-#align(right)[
-  #strong[#payload.signer_closing]
-  #linebreak()
-  #payload.signer_name
-  #if payload.signer_role != none [
-    #linebreak()
-    #text(fill: grey)[#payload.signer_role]
-  ]
-  #v(2em)
-  #payload.place_date
-  #linebreak()
-  #payload.app_name
-]
+// ── Letter — frame helpers shared via base.typ ──
+#brand-block()
+#letter-header()
+#letter-opening()
+#letter-paragraphs()
+#letter-closing()
 
 // ── Annex ──
 #pagebreak()
 #block[
   #set par(spacing: 0pt)
+  #set par(leading: 0.3em)
   #text(tracking: 2pt, size: 9pt, weight: "bold", fill: grey)[#payload.annex_kicker]
   #v(1.5mm)
   #text(size: 16pt, weight: "bold", fill: brand)[#payload.annex_title]
