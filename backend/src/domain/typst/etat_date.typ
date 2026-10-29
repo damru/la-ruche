@@ -1,11 +1,16 @@
 // ── État daté — regulatory document ──
-// Liberation Sans, no brand block / footer (visual unchanged from the
-// previous engine). Expects the état daté payload (domain/legal_documents.rs).
+// Uses the shared letter frame from base.typ (brand block, double header,
+// running footer) like the logbook; the regulatory content (amount tables,
+// signature blocks) follows. Liberation Sans for the body.
+// Expects the état daté payload (domain/legal_documents.rs).
 // Layout rule: stacked lines are block-wrapped children (a run of inline
 // content would merge into a single line).
 
+#set page(footer: align(center)[#letter-footer()])
+#brand-block()
+#letter-header()
+
 #set text(font: "Liberation Sans")
-#set page(margin: (x: 18mm, y: 18mm))
 #set par(justify: false)
 
 #align(center)[#text(size: 16pt, weight: "bold")[État daté]]

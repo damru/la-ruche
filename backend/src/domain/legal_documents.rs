@@ -64,6 +64,14 @@ struct ExercicePayload {
 #[derive(Serialize)]
 struct EtatDatePayload {
     title: String,
+    app_name: &'static str,
+    /// Edition date, `jj/mm/aaaa` (running footer).
+    edited_at: String,
+    // Double header (shared letter frame from base.typ)
+    issuer_heading: String,
+    issuer_lines: Vec<String>,
+    recipient_label: String,
+    recipient_lines: Vec<String>,
     /// Residence + syndic + lot + request lines, pre-formatted.
     header_lines: Vec<String>,
     part1: Vec<LignePayload>,
@@ -137,8 +145,40 @@ pub fn render_etat_date(
         header_lines.push(format!("Date de génération : {}", format_date(date)));
     }
 
+    let issuer_lines = {
+        let mut lines = vec![
+            header.building_name.clone(),
+            header.building_address.clone(),
+        ];
+        if let Some(name) = &header.syndic_name {
+            lines.push(name.clone());
+        }
+        if let Some(siret) = &header.syndic_siret {
+            lines.push(format!("SIRET {siret}"));
+        }
+        lines
+    };
+    let recipient_lines = {
+        let mut lines = Vec::new();
+        if let Some(name) = &header.requester_name {
+            lines.push(name.clone());
+        }
+        lines.push(format!("Lot n° {}", header.unit_number));
+        lines
+    };
+    let edited_at = header
+        .generated_at
+        .map(format_date)
+        .unwrap_or_else(|| format_date(chrono::Utc::now().naive_utc().date()));
+
     let payload = EtatDatePayload {
         title: "État daté".to_string(),
+        app_name: crate::domain::pdf_template::APP_NAME,
+        edited_at,
+        issuer_heading: "Le syndic des copropriétaires".to_string(),
+        issuer_lines,
+        recipient_label: "Destinataire".to_string(),
+        recipient_lines,
         header_lines,
         part1: ligne_payloads(&snapshot.partie1_sommes_dues_par_cedant),
         part2: ligne_payloads(&snapshot.partie2_sommes_dues_par_syndicat),
