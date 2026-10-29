@@ -614,6 +614,12 @@ Sur mobile, les écrans publics (`/login`, `/onboarding`, invitation, reset) con
 - Les chargements secondaires non bloquants restent isolés.
 - Le backend renvoie des codes d'erreurs au formt i18n. Toutes les entrées doivent être sous `errors`.
 
+#### Documents PDF officiels
+
+- **Aucune génération PDF côté navigateur** (`@media print` interdit) : tout document PDF est généré côté serveur (`genpdf`) et téléchargé en blob.
+- L'identité visuelle des documents PDF est centralisée côté backend dans `domain/pdf_template.rs` : **introduction** (1ʳᵉ page — logo image embarquée `assets/images/logo-la-ruche.png` (rasterisé depuis `CLogoMark.svg`) + « La Ruche » + tagline, titre centré, identité copro, « Fait à …, le … » + « Pour le compte de … », paragraphe explicatif), **pas d'en-tête récurrente**, **conclusion** (période de validité légale optionnelle, « Fait à …, le … » rempli, signé « La Ruche »), **pied de page récurrent** (logo miniature + tagline + « Édité le … via La Ruche », petite police grise), police Tinos serif (métrique Times New Roman, sous-ensemble `pyftsubset` Latin-1 + ponctuation, ~32 ko/fichier × 4 styles), logo PNG RGB compressé en FlateDecode en release, palette marque #643fd5. Les renderers documentaires (`domain/logbook_pdf.rs`, …) s'y appuient ; ne pas dupliquer ces styles dans un renderer.
+- Le frontend se contente d'appeler l'endpoint PDF et de télécharger le blob (`maintenanceApi.exportPdf`, `etatDateApi.exportPdf`…), avec état de chargement sur le bouton et `CAlert` en cas d'erreur.
+
 #### Cartes de liste
 
 `CCard` est un conteneur générique (background, border-radius, padding, flux). Chaque entité de liste est une `CCard`. La mise en liste est de la responsabilité de la vue :

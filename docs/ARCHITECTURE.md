@@ -12,6 +12,7 @@ rules:
   - Ce fichier fait foi pour toute décision d'architecture backend.
   - Toute nouvelle table, handler, module domain/ ou store frontend doit être reflété ici.
   - Les noms de tables, colonnes et types Rust utilisent exclusivement les identifiants anglais du code.
+  - Le tableau « Schéma DB » est un listing des noms de tables par domaine — pas un descriptif (pas de détails de colonnes).
   - Les entités marquées "prévu, non encore implémenté" ne doivent pas être codées sans ADR ou Epic associé.
   - Les invariants listés dans "Schéma DB" ont valeur de contrat : toute modification nécessite une mise à jour synchrone de ce document.
 references:
@@ -76,19 +77,19 @@ references:
 | Copropriété | `building`, `unit`, `allocation_key`, `unit_allocation_key`, `edd_reference`, `edd_reference_share` |
 | Utilisateurs | `user_account`, `user_token`, `user_building`, `unit_owner`, `user_notification_preference` |
 | AG | `general_meeting`, `general_meeting_document`, `general_meeting_attendance`, `resolution`, `vote` |
-| Budget | `budget`, `budget_line`, `levy_call`, `works_fund` — champ `category` sur `levy_call` **prévu** ; `budget.parent_budget_id` ; `budget_line.valid_from` / `valid_to` / `rectificatif_version` / `version` |
+| Budget | `budget`, `budget_line`, `levy_call`, `works_fund` |
 | Documents | `document`, `document_event` |
 | Contrats | `vendor_contract`, `contract_document`, `contract_reminder` |
 | Prestataires | `contractor` |
-| Tâches | `task` (`contractor_id` FK → `contractor`, `contractor_name` texte libre, `vendor_token` ephemeral), `task_document`, `vendor_submission`, `vendor_submission_document` |
+| Tâches | `task`, `task_document`, `vendor_submission`, `vendor_submission_document` |
 | Sinistres | `claim`, `claim_document`, `claim_note` |
 | Carnet | `maintenance_log`, `maintenance_log_document` |
-| Signalements | `report`, `report_document` — `report.task_id` FK informatif (EP-017, conversion signalement → tâche) |
+| Signalements | `report`, `report_document` |
 | Consultations | `consultation`, `consultation_choice`, `consultation_response`, `consultation_response_choice`, `consultation_reminder` |
-| Calendrier | `calendar_event`, `calendar_event_document` — événements manuels (réunion informelle, rappel, rendez-vous), EP-014-S03 |
-| Registres | `judicial_proceeding` (procédures judiciaires en cours/clôturées — EP-002-S10), `governance_mandate` (registre des mandats syndic/conseil syndical — EP-002-S11) |
-| État daté | `etat_date_request` (suivi de la demande + snapshot JSONB du document généré — EP-002-S06) |
-| Audit comptable | `audit_log` — journal probant append-only (ADR-009) ; champs : `entity_type`, `entity_id`, `operation`, `changed_by`, `old_values`/`new_values` JSONB (champs modifiés seulement). Aucun UPDATE/DELETE applicatif. `activity_log` (timeline UX EP-017) reste une cible backlog. |
+| Calendrier | `calendar_event`, `calendar_event_document` |
+| Registres | `judicial_proceeding`, `governance_mandate` |
+| État daté | `etat_date_request` |
+| Audit comptable | `audit_log` |
 
 Conventions : UUID v4, TIMESTAMPTZ, soft delete via `active`/`status`, `updated_at` via triggers, JSONB pour OCR futur.
 
@@ -101,6 +102,7 @@ Invariants techniques implémentés :
 - Les documents de tâche sont répartis entre `task_document` (gestionnaires) et `vendor_submission_document` (soumissions prestataire) ; les endpoints manager `GET/POST/DELETE /tasks/{id}/documents` et `document_count` agrègent ces deux sources.
 - `claim_document` suit le même modèle d'association documentaire que `report_document`, avec nettoyage des liens lors des suppressions d'entité.
 - `maintenance_log.task_id` et `maintenance_log.contract_id` restent des liens de traçabilité souples, sans cascade destructive depuis les tâches ou contrats.
+- `maintenance_log.category` (EP-009-S10, US-CE-005) type chaque entrée du carnet : `travaux` / `contrat` / `sinistre` / `autre` (défaut `autre`). Saisie manuelle par le syndic ; les entrées générées automatiquement à la clôture d'une tâche portent `travaux`. Le filtrage par catégorie reste côté client (volumétrie d'une copropriété) ; bascule vers des query params serveur au-delà de ~1 000 entrées.
 - `budget.parent_budget_id` (`UUID REFERENCES budget(id)`, nullable) lie un budget rectificatif au budget qu'il modifie ; un budget racine a `parent_budget_id IS NULL`.
 - `document.category` (`document_category` : `reglement_copropriete` / `edd` / `pv_ag` / `comptabilite` / `appel_fonds` / `budget` / `contrat` / `diagnostic` / `sinistre` / `tache` / `libre` / `signalement` / `carnet_entretien` / `prestataire` / `autre`, défaut `autre`) type l'ensemble des documents de l'immeuble (PRD Documents §4, EP-005-S06/S07). Les documents fondateurs (`reglement_copropriete`, `edd`) restent seuls soumis aux règles de conservation permanente ; `diagnostic` couvre les diagnostics techniques réglementaires (DTG, DPE collectif — LEGAL §6.2-6.3, PPT hors périmètre logiciel) et `pv_ag` couvre les procès-verbaux d'assemblée générale, dont la conservation est sans limitation de durée (LEGAL §3.4). `document.supersedes_id` (`UUID REFERENCES document(id)`, nullable, unique) chaîne une nouvelle version à celle qu'elle remplace ; `document.is_current` (`BOOLEAN`, défaut `TRUE`) marque la version en vigueur. Un index partiel garantit au plus une version courante par `(building_id, category)` pour les catégories fondatrices. Le hard delete d'un document fondateur reste refusé (`is_document_deletable`).
 - `document.deleted_at`/`deleted_by`/`deletion_reason` (EP-005-S08, PRD US-DOC-004) : la suppression d'un document devient un soft-delete — la ligne et l'objet S3 sont conservés, seule la lecture filtre `deleted_at IS NULL`. La purge physique différée est portée par le job EP-005-S09, hors périmètre ici. Les cascades de suppression (contrat, tâche, sinistre, rapport → `delete_orphaned_tx`) appliquent le même soft-delete aux documents orphelins au lieu de les détruire.
@@ -130,6 +132,12 @@ Invariants techniques implémentés :
 - `governance_mandate` (EP-002-S11) tient le registre des mandats (`syndic` / `council_president` / `council_member`) avec `end_date >= start_date`. Invariant **syndic actif unique** : deux mandats `syndic` du même immeuble ne peuvent se chevaucher dans le temps (mandats ouverts = `infinity`), garanti à la fois par un index partiel unique DB (`uniq_active_syndic_per_building`) et par un contrôle de chevauchement applicatif sur création/mise à jour ; écriture réservée au gestionnaire.
 - `etat_date_request` (EP-002-S06) suit la demande d'état daté d'un lot : `requested_at`/`due_date` (J+15, calculé en domaine), `status` (`requested` / `generated` / `sent` / `cancelled`), `snapshot` JSONB figeant le document (3 parties réglementaires + annexes) au moment de la génération — valeur probante, les données vivantes continuant d'évoluer ensuite. Régénération autorisée tant que `status != 'sent'`. Assemblage des données (charges/fonds travaux EP-004, procédures `judicial_proceeding` EP-002-S10) en lecture pure, aucune duplication SQL ; l'assemblage est partagé avec le pré-état daté (EP-002-S07).
 - Génération PDF réglementaire (ADR-011) : `GET /etat-date-requests/{id}/pdf` rend le snapshot figé et `GET /units/{id}/pre-etat-date/pdf` le pré-état daté en PDF, côté serveur (`domain/legal_documents.rs`, crate `genpdf`, polices Liberation Sans embarquées via `include_bytes!`). Le PDF est un **rendu** du snapshot (qui reste la valeur probante) ; il n'est pas persisté en GED (S07 diffère l'archivage, cf. `specs/EP-002-S07-spec.md`).
+- Template documentaire PDF partagé (EP-009-S09, changement de spec) : **toute génération de document PDF est côté serveur** (`genpdf`) — aucune dépendance au `@media print` navigateur. Le module `domain/pdf_template.rs` centralise l'identité visuelle commune à tous les documents officiels :
+  - **Introduction (1ʳᵉ page uniquement)** : bloc marque — **logo image** (`assets/images/logo-la-ruche.png`, rasterisé depuis `frontend/src/components/atoms/CLogoMark.svg`, embarqué via `include_bytes!`, 7 hexagones dégradé #643fd5 → #7d5bf0) + nom « La Ruche » + tagline, titre du document centré en couleur marque, identité de la copro (immeuble, adresse, syndic, SIRET), ligne « Fait à {lieu}, le {date} » + « Pour le compte de {syndic} », paragraphe explicatif du contenu, espacement généreux. **Pas d'en-tête récurrente** (pages 2+ commencent directement par le contenu).
+  - **Conclusion** : période de validité légale optionnelle (quand le document en a une fondée légalement), puis « Fait à {lieu}, le {date} » **rempli**, signé « La Ruche » (signature artificielle, pas d'image).
+  - **Pied de page récurrent (toutes les pages)** : filet + **logo miniature** (même image embarquée) + tagline + « Édité le {date} via La Ruche », en petite police grise (décorateur de page custom `FooterDecorator`, hauteur réservée pour ne pas chevaucher le contenu).
+  - **Police** Tinos embarquée (serif métrique Times New Roman, sous-ensemble `pyftsubset` : ASCII + Latin-1 + ponctuation typographique, ~32 ko/fichier × 4 styles regular/bold/italic/bold-italic), **palette** `BRAND` #643fd5, gris, encre. Le logo PNG RGB (~5 ko) est embarqué compressé en FlateDecode par occurrence en release (~4,6 ko) ; en debug les flux ne sont pas compressés par printpdf (comportement attendu, le build prod est en release).
+  Chaque document a son propre renderer dans `domain/` (ex. `domain/logbook_pdf.rs` pour `GET /logbook/export/pdf`, carnet d'entretien) qui assemble les données et s'appuie sur ce template. Les futurs documents (compte rendu d'AG, lettre de relance…) réutiliseront ce template. NB : `domain/legal_documents.rs` (état daté) possède encore ses propres helpers (formatage, en-tête) — migration vers le template commun envisagée en suivi, hors périmètre de ce ticket pour ne pas toucher à un document probant.
 
 Arbitrage documentaire : le nom `audit_log` est réservé à la traçabilité probante d'ADR-009 (mutations comptables, diff ciblé, conservation longue, valeur de preuve). Les besoins de timeline UX et de suivi de cycle de vie de `report` / `task` relèveront d'un flux séparé `activity_log`, afin d'éviter de mélanger journal juridique append-only et événements métier orientés interface.
 

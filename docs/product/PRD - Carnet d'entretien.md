@@ -77,11 +77,11 @@ Maintenir le **carnet d'entretien réglementaire** de la copropriété (décret 
 
 | Domaine | Syndic | Conseil | Copropriétaire | Locataire |
 |---|---|---|---|---|
-| En-tête réglementaire | `R` | `R` | `R` | `R` |
-| Entrées manuelles | `C / R` | `C / R` | `R` | `R` |
-| Correction d'entrée (append-only) | `C / R` | `C / R` | `R` | `R` |
-| Entrées automatiques | `R` | `R` | `R` | `R` |
-| Export PDF | `R` | `R` | `R` | `R` |
+| En-tête réglementaire | `R` | `R` | `R` | — |
+| Entrées manuelles | `C / R` | `C / R` | `R` | — |
+| Correction d'entrée (append-only) | `C / R` | `C / R` | `R` | — |
+| Entrées automatiques | `R` | `R` | `R` | — |
+| Export PDF | `R` | `R` | `R` | — |
 
 > Le droit de consultation des copropriétaires sur le carnet d'entretien est fondé sur l'art. 18-I loi 1965 et le décret n° 2005-240.
 
@@ -91,6 +91,7 @@ Maintenir le **carnet d'entretien réglementaire** de la copropriété (décret 
 
 - Les montants (contractuels, de remboursement, entrées manuelles) sont visibles par le Syndic et le Conseil — ils DOIVENT être masqués pour les copropriétaires, dans les vues et dans les exports PDF.
 - Filtrage systématique par `building_id`.
+- Les locataires n'ont aucun accès au carnet d'entretien (ni lecture, ni export) — le carnet est un registre réglementaire réservé aux copropriétaires et à la gestion.
 
 ---
 

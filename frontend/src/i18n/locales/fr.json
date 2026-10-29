@@ -1139,14 +1139,19 @@
     "fields": {
       "interventionDate": "Date d'intervention",
       "cost": "Coût (€)",
-      "contractId": "Contrat associé"
+      "contractId": "Contrat associé",
+      "category": "Catégorie"
     },
     "filters": {
       "month": "Mois",
       "quarter": "Trimestre",
       "semester": "Semestre",
       "year": "Année",
-      "all": "Tout"
+      "all": "Tout",
+      "category": "Catégorie",
+      "source": "Source",
+      "allCategories": "Toutes les catégories",
+      "allSources": "Toutes les sources"
     },
     "period": {
       "current": "Période",
@@ -1176,7 +1181,15 @@
       }
     },
     "deleteEntry": "Supprimer l'entrée",
-    "addEntry": "Ajouter une entrée"
+    "addEntry": "Ajouter une entrée",
+    "categories": {
+      "works": "Travaux",
+      "contract": "Contrat",
+      "claim": "Sinistre",
+      "other": "Autre"
+    },
+    "emptyFiltered": "Aucune entrée ne correspond aux filtres sélectionnés.",
+    "exportLogbook": "Exporter le carnet (PDF)"
   },
   "claims": {
     "create": "Déclarer un sinistre",
@@ -1796,6 +1809,9 @@
     "calendar": {
       "invalid_range": "La plage de dates est invalide.",
       "invalid_type": "Le type d'événement demandé est invalide."
+    },
+    "maintenance": {
+      "invalid_category": "Catégorie invalide."
     }
   },
   "format": {

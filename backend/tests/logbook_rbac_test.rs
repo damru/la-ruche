@@ -1,8 +1,8 @@
 // RBAC matrix — maintenance logbook. Since EP-018-S07 (Pattern C, append-only),
 // manual entries are immutable: PUT/DELETE return 400 errors.immutability.frozen
 // for every role — the only amendment path is POST /correction (append-only).
-// Permission layer: create + correction are manager + board_member; residents
-// read-only.
+// Permission layer: create + correction are manager + board_member; co-owners
+// read-only; tenants have no access.
 
 mod common;
 
@@ -71,38 +71,64 @@ async fn board_member_can_create_but_not_mutate_entries() {
 }
 
 #[tokio::test]
-async fn residents_can_read_but_not_write_logbook() {
+async fn coowner_can_read_but_not_write_logbook() {
     let (ctx, _pool) = common::rbac_setup().await;
     let server = common::test_server().await;
     let mgr_auth = format!("Bearer {}", ctx.manager_jwt);
     let entry_id = create_entry(&server, &mgr_auth).await;
 
-    for jwt in [&ctx.coowner_jwt, &ctx.tenant_jwt] {
-        let auth = format!("Bearer {jwt}");
+    let auth = format!("Bearer {}", ctx.coowner_jwt);
 
-        let listed = server
-            .get("/api/v1/logbook")
-            .add_header("Authorization", &auth)
-            .await;
-        assert_eq!(listed.status_code(), StatusCode::OK);
+    let listed = server
+        .get("/api/v1/logbook")
+        .add_header("Authorization", &auth)
+        .await;
+    assert_eq!(listed.status_code(), StatusCode::OK);
 
-        let created = server
-            .post("/api/v1/logbook")
-            .add_header("Authorization", &auth)
-            .json(&entry_payload())
-            .await;
-        assert_eq!(created.status_code(), StatusCode::FORBIDDEN);
+    let created = server
+        .post("/api/v1/logbook")
+        .add_header("Authorization", &auth)
+        .json(&entry_payload())
+        .await;
+    assert_eq!(created.status_code(), StatusCode::FORBIDDEN);
 
-        let corrected = server
-            .post(&format!("/api/v1/logbook/{entry_id}/correction"))
-            .add_header("Authorization", &auth)
-            .json(&json!({
-                "title": "Interdit",
-                "intervention_date": "2026-01-16"
-            }))
-            .await;
-        assert_eq!(corrected.status_code(), StatusCode::FORBIDDEN);
-    }
+    let corrected = server
+        .post(&format!("/api/v1/logbook/{entry_id}/correction"))
+        .add_header("Authorization", &auth)
+        .json(&json!({
+            "title": "Interdit",
+            "intervention_date": "2026-01-16"
+        }))
+        .await;
+    assert_eq!(corrected.status_code(), StatusCode::FORBIDDEN);
+}
+
+#[tokio::test]
+async fn tenant_cannot_access_logbook() {
+    let (ctx, _pool) = common::rbac_setup().await;
+    let server = common::test_server().await;
+    let auth = format!("Bearer {}", ctx.tenant_jwt);
+
+    // Tenants are excluded from all logbook read operations.
+    let listed = server
+        .get("/api/v1/logbook")
+        .add_header("Authorization", &auth)
+        .await;
+    assert_eq!(listed.status_code(), StatusCode::FORBIDDEN);
+
+    let summary = server
+        .get("/api/v1/logbook/summary")
+        .add_header("Authorization", &auth)
+        .await;
+    assert_eq!(summary.status_code(), StatusCode::FORBIDDEN);
+
+    // Write operations are also forbidden (already covered by require_any_role).
+    let created = server
+        .post("/api/v1/logbook")
+        .add_header("Authorization", &auth)
+        .json(&entry_payload())
+        .await;
+    assert_eq!(created.status_code(), StatusCode::FORBIDDEN);
 }
 
 #[tokio::test]

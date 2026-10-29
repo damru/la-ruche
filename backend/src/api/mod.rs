@@ -344,6 +344,7 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
         // ── Maintenance log ─────────────────────────────────────
         .route("/logbook", get(logbook::list).post(logbook::create))
         .route("/logbook/summary", get(logbook::summary))
+        .route("/logbook/export/pdf", get(logbook::export_pdf))
         .route(
             "/logbook/{id}",
             get(logbook::get)
