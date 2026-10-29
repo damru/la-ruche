@@ -12,6 +12,8 @@ import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CIconPlus from '@/components/atoms/CIconPlus.svg'
+import CIconRefresh from '@/components/atoms/CIconRefresh.svg'
+import CIconEye from '@/components/atoms/CIconEye.svg'
 import EtatDateRequestFormModal from '@/features/registers/EtatDateRequestFormModal.vue'
 import EtatDateSnapshotModal from '@/features/registers/EtatDateSnapshotModal.vue'
 import { etatDateApi, unitsApi } from '@/api'
@@ -186,17 +188,19 @@ function viewSnapshot(request: EtatDateRequest) {
               <div class="action-btns">
                 <CBtn
                   v-if="row.status !== ETAT_DATE_STATUS_SENT"
-                  variant="ghost"
-                  size="sm"
+                  variant="icon"
+                  :icon="CIconRefresh"
                   :loading="generatingId === row.id"
                   :title="row.status === ETAT_DATE_STATUS_REQUESTED ? t('budget.generate') : t('registers.etatDate.regenerate')"
+                  :aria-label="row.status === ETAT_DATE_STATUS_REQUESTED ? t('budget.generate') : t('registers.etatDate.regenerate')"
                   @click="generate(row)"
                 />
                 <CBtn
                   v-if="row.snapshot"
-                  variant="ghost"
-                  size="sm"
+                  variant="icon"
+                  :icon="CIconEye"
                   :title="t('registers.etatDate.view')"
+                  :aria-label="t('registers.etatDate.view')"
                   @click="viewSnapshot(row)"
                 />
               </div>
