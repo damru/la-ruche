@@ -56,7 +56,7 @@ async function downloadPdf() {
     @update:open="emit('update:open', $event)"
   >
     <template v-if="props.request?.snapshot">
-      <div class="etat-date-print flex flex-col gap-4">
+      <div class="flex flex-col gap-4">
         <p class="data-sm">
           {{ t('registers.etatDate.generatedAt') }} {{ formatDate(props.request.generated_at ?? '') }}
         </p>

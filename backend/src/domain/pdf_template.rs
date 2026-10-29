@@ -13,8 +13,8 @@
 //!   double header (issuer left / recipient right), justified letter body,
 //!   right-aligned signature, annex header with spaced kicker, and a centered
 //!   running footer (edition line + legal disclaimer) on every page. The
-//!   regulatory documents (état daté / pré-état daté) opt out of the brand
-//!   block and the footer.
+//!   état daté reuses this full frame; the pré-état daté opts out of the
+//!   brand block and the footer (regulatory visual).
 //! - **Shared letter frame** — everything common to letter documents (brand
 //!   block, double header, objet, salutation, closing formula, signature,
 //!   footer) is defined once in `typst/base.typ` and reused by every letter

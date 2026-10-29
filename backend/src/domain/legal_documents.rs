@@ -4,10 +4,12 @@
 //! (domain + db), hand it here together with a document header, and receive
 //! the finished PDF as in-memory bytes. The documents are composed by the
 //! shared typst engine (`domain/pdf_template.rs`, templates in
-//! `domain/typst/`): Liberation Sans, centered bold title, no brand block and
-//! no running footer (visual unchanged from the previous engine). Fonts are
-//! embedded at compile time so the rendering is self-contained (no system
-//! font dependency, matching the `debian:trixie-slim` runtime image).
+//! `domain/typst/`): Liberation Sans for the regulatory body. The état daté
+//! uses the full shared letter frame (brand block, double header, running
+//! footer) from `base.typ`; the pré-état daté keeps the plain regulatory
+//! visual (no brand block, no footer). Fonts are embedded at compile time so
+//! the rendering is self-contained (no system font dependency, matching the
+//! `debian:trixie-slim` runtime image).
 //!
 //! The PDF is a *rendering* of the frozen JSONB snapshot, not the probative
 //! record itself (the snapshot is). The typst PDF export embeds a document id
