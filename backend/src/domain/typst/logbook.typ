@@ -13,7 +13,7 @@
 // below) or a muted empty state.
 #let contract-section(section) = [
   #text(size: 11pt, weight: "bold", fill: brand)[#section.heading]
-  #v(1mm)
+  #linebreak()
   #if section.contracts.len() == 0 [
     #text(fill: grey)[#section.empty_text]
   ] else [
@@ -27,13 +27,12 @@
         columns: (3fr, 2fr),
         stroke: none,
         inset: 0pt,
-        row-gutter: 0.15em,
+        row-gutter: .85em,
         [#text(weight: "bold")[#contract.subject]],
         [#align(right)[#text(fill: grey)[#contract.period]]],
         [#text(fill: grey)[#contract.vendor_type]],
         ..amount-cell,
       )
-      #v(0.5mm)
       #line(length: 100%, stroke: (paint: rule, thickness: 0.4pt))
       #v(1.5mm)
     ]
@@ -54,13 +53,13 @@
 #pagebreak()
 #block[
   #set par(spacing: 0pt)
-  #set par(leading: 0.3em)
+  #set par(leading: 0.5em)
   #text(tracking: 2pt, size: 9pt, weight: "bold", fill: grey)[#payload.annex_kicker]
-  #v(1.5mm)
+  #v(5mm)
   #text(size: 16pt, weight: "bold", fill: brand)[#payload.annex_title]
-  #v(1.5mm)
+  #v(5mm)
   #text(size: 11pt, fill: grey)[#payload.annex_subtitle]
-  #v(1.5mm)
+  #v(5mm)
   #for (i, m) in payload.annex_meta.enumerate() [
     #let (label, value) = m
     #if i > 0 [ #linebreak() ]

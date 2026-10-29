@@ -22,10 +22,6 @@ use serde::Serialize;
 use crate::domain::etat_date::{EtatDate, PreEtatDate};
 use crate::domain::pdf_template::{format_date, format_euro};
 
-/// Document templates (concatenated after the shared base by the engine).
-const ETAT_DATE_TEMPLATE: &str = include_str!("typst/etat_date.typ");
-const PRE_ETAT_DATE_TEMPLATE: &str = include_str!("typst/pre_etat_date.typ");
-
 /// Header common to both regulatory documents: the residence identity, the
 /// syndic, the lot, and the relevant dates. Assembled by the API layer from
 /// `building`, `unit`, `governance_mandate` and the request row.
@@ -177,7 +173,7 @@ pub fn render_etat_date(
         travaux: snapshot.travaux_votes_non_realises.clone(),
         emprunts: snapshot.emprunts_collectifs.clone(),
     };
-    crate::domain::pdf_template::compile_template(ETAT_DATE_TEMPLATE, &payload)
+    crate::domain::pdf_template::compile_template("etat_date", &payload)
 }
 
 /// Renders the pré-état daté (EP-002-S07, art. L721-2 CCH) as a PDF.
@@ -236,7 +232,7 @@ pub fn render_pre_etat_date(
         procedures_count: data.procedures_en_cours,
         emprunts: data.emprunts_collectifs.clone(),
     };
-    crate::domain::pdf_template::compile_template(PRE_ETAT_DATE_TEMPLATE, &payload)
+    crate::domain::pdf_template::compile_template("pre_etat_date", &payload)
 }
 
 /// `Option<Decimal>` → either the formatted amount or « Non disponible ».

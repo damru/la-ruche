@@ -42,7 +42,7 @@
 #let signature-blocks() = [
   // Compact leading: the fill-in line wraps to two lines, and the
   // regulatory documents keep their previous engine's visual.
-  #set par(leading: 0.3em)
+  #set par(leading: 0.5em)
   #table(
     columns: (1fr, 1fr),
     stroke: none,
@@ -72,12 +72,14 @@
   #grid(
     columns: (auto, 1fr),
     column-gutter: 4mm,
-    align: left + top,
-    image("/logo.png", width: 16mm),
-    block(height: 16mm)[
+    align: (left + horizon),
+    image("/logo.png", width: 18mm),
+    block(height: 18mm)[
       #text(font: "Fraunces", size: 20pt, fill: on-surface)[#payload.app_name]
-      #v(1fr)
-      #text(font: "DM Sans 9pt", size: 8pt, fill: on-surface-variant)[Gestion de copropriété participative, pour les syndics bénévoles et conseils syndicaux.]
+      #linebreak()
+      #text(font: "DM Sans 9pt", size: 8pt, fill: on-surface-variant)[Gestion de copropriété participative]
+      #linebreak()
+      #text(font: "DM Sans 9pt", size: 8pt, fill: on-surface-variant)[pour les syndics bénévoles et conseils syndicaux]
     ],
   )
   #v(4mm)
@@ -90,7 +92,7 @@
     column-gutter: 6mm,
     align: left + top,
     [
-      #set par(leading: 0.3em)
+      #set par(leading: 0.5em)
       #text(size: 9pt, fill: ink)[#payload.issuer_heading]
       #for line in payload.issuer_lines [
         #linebreak()
@@ -98,7 +100,7 @@
       ]
     ],
     [
-      #set par(leading: 0.3em)
+      #set par(leading: 0.5em)
       #align(right)[
         #text(size: 9pt, weight: "bold", fill: ink)[#payload.recipient_label]
         #linebreak()
@@ -137,7 +139,7 @@
 
 // Closing formula + right-aligned signature.
 #let letter-closing() = [
-  #set par(leading: 0.3em)
+  #set par(leading: 0.5em)
   #payload.closing_formula
   #v(4mm)
   #align(right)[

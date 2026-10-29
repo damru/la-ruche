@@ -125,14 +125,11 @@ pub struct LogbookPdfLabels {
     pub col_cost: String,
 }
 
-/// Document template for the logbook (concatenated after the shared base by
-/// the engine). The shared letter frame lives in the base; this template only
-/// carries the annex (contract sections + chronology).
-const LOGBOOK_TEMPLATE: &str = include_str!("typst/logbook.typ");
-
-/// Renders the logbook as a **letter + annex** PDF using the shared template.
+/// Renders the logbook as a **letter + annex** PDF using the shared template
+/// engine. The template (`logbook.typ`) is loaded by the engine — from
+/// `LARUCHE_TEMPLATES_DIR` in dev, embedded in production.
 pub fn render_logbook(data: &LogbookPdfData) -> Result<Vec<u8>, String> {
-    tpl::compile_template(LOGBOOK_TEMPLATE, &build_payload(data))
+    tpl::compile_template("logbook", &build_payload(data))
 }
 
 // ── Payload (typst data boundary: pre-formatted strings only) ─────────────

@@ -83,6 +83,8 @@ const EMBEDDED_TEMPLATES: &[(&str, &str)] = &[
     ("logbook", include_str!("typst/logbook.typ")),
     ("etat_date", include_str!("typst/etat_date.typ")),
     ("pre_etat_date", include_str!("typst/pre_etat_date.typ")),
+    #[cfg(test)]
+    ("test", "#payload.title — #payload.name"),
 ];
 
 /// Loads the shared base and a named document template.
@@ -380,7 +382,7 @@ mod tests {
             title: "Test".to_string(),
             name: "#1 $test <b> \"quotes\" @home".to_string(),
         };
-        let bytes = compile_template("Hello #payload.name", &payload).expect("compile");
+        let bytes = compile_template("test", &payload).expect("compile");
         assert!(bytes.starts_with(b"%PDF"));
         assert!(!bytes.is_empty());
     }
@@ -391,8 +393,7 @@ mod tests {
             title: "Test".to_string(),
             name: "x".to_string(),
         };
-        let err = compile_template("#payload.missing_field", &payload)
-            .expect_err("unknown field must fail");
+        let err = compile_template("etat_date", &payload).expect_err("missing fields must fail");
         assert!(err.contains("line"), "error should carry a line: {err}");
     }
 }
