@@ -780,6 +780,7 @@ Les rappels synthétiques partagés entre vues passent par `CReminderCard`. Ne p
 #### Vue Carnet d'entretien
 
 - Filtres calendaires : `Mois` · `Trimestre` (défaut) · `Semestre` · `Année` · `Tout`.
+- Barre de filtres en trois rangées : onglets période (`CTabs variant="filter"`), recherche plein champ, selects catégorie/source sur une rangée dédiée (même style que la vue Contrats).
 - Navigation `précédent / suivant` déplace d'une période complète.
 - Bloc réglementaire en tête : adresse immeuble + syndic en exercice.
 
