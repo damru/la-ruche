@@ -172,7 +172,61 @@ fn task_row_from_query(r: &sqlx::postgres::PgRow) -> Result<TaskRow, sqlx::Error
     })
 }
 
-pub async fn list(pool: &PgPool, building_id: Uuid) -> AppResult<Vec<TaskRow>> {
+/// Optional server-side filters for the task list. `None` means "no filter".
+#[derive(Debug, Default)]
+pub struct TaskListFilters {
+    pub status: Option<String>,
+    pub priority: Option<String>,
+    pub assigned_to: Option<Uuid>,
+    pub contractor_id: Option<Uuid>,
+    pub q: Option<String>,
+    pub limit: i64,
+    pub offset: i64,
+}
+
+/// Escapes ILIKE metacharacters so a user-provided search term is matched literally.
+fn escape_ilike(term: &str) -> String {
+    term.replace('\\', "\\\\")
+        .replace('%', "\\%")
+        .replace('_', "\\_")
+}
+
+/// Per-status task counts for a building (tab counters), ignoring other filters.
+pub async fn status_counts(pool: &PgPool, building_id: Uuid) -> AppResult<Vec<(String, i64)>> {
+    let rows = sqlx::query(
+        "SELECT t.status::text AS status, COUNT(*) AS count
+           FROM task t
+           WHERE t.building_id = $1
+           GROUP BY t.status::text",
+    )
+    .bind(building_id)
+    .fetch_all(pool)
+    .await?;
+    use sqlx::Row;
+    rows.iter()
+        .map(|row| {
+            Ok((
+                row.try_get::<String, _>("status")?,
+                row.try_get::<i64, _>("count")?,
+            ))
+        })
+        .collect::<Result<Vec<_>, sqlx::Error>>()
+        .map_err(Into::into)
+}
+
+/// Lists tasks for a building with optional filters and pagination.
+/// Returns the page of rows plus the total number of matching rows.
+pub async fn list(
+    pool: &PgPool,
+    building_id: Uuid,
+    filters: &TaskListFilters,
+) -> AppResult<(Vec<TaskRow>, i64)> {
+    let search = filters
+        .q
+        .as_deref()
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+        .map(escape_ilike);
     let rows = sqlx::query(
         r#"SELECT t.id, t.building_id, t.title, t.description,
            t.status::text AS status, t.priority::text AS priority,
@@ -192,17 +246,40 @@ pub async fn list(pool: &PgPool, building_id: Uuid) -> AppResult<Vec<TaskRow>> {
               ) AS task_documents
               JOIN document d ON d.id = task_documents.document_id AND d.deleted_at IS NULL
             ) AS document_count,
-           EXISTS(SELECT 1 FROM maintenance_log WHERE task_id = t.id) AS is_in_logbook
-           FROM task t WHERE t.building_id = $1
-           ORDER BY t.updated_at DESC"#,
+           EXISTS(SELECT 1 FROM maintenance_log WHERE task_id = t.id) AS is_in_logbook,
+           COUNT(*) OVER () AS total_count
+           FROM task t
+           WHERE t.building_id = $1
+             AND ($2::text IS NULL OR t.status::text = $2)
+             AND ($3::text IS NULL OR t.priority::text = $3)
+             AND ($4::uuid IS NULL OR t.assigned_to = $4)
+             AND ($5::uuid IS NULL OR t.contractor_id = $5)
+             AND ($6::text IS NULL OR t.title ILIKE '%' || $6 || '%' ESCAPE '\' OR t.description ILIKE '%' || $6 || '%' ESCAPE '\')
+           ORDER BY t.updated_at DESC
+           LIMIT $7 OFFSET $8"#,
     )
     .bind(building_id)
+    .bind(filters.status.as_deref())
+    .bind(filters.priority.as_deref())
+    .bind(filters.assigned_to)
+    .bind(filters.contractor_id)
+    .bind(search.as_deref())
+    .bind(filters.limit)
+    .bind(filters.offset)
     .fetch_all(pool)
     .await?;
-    rows.iter()
+    let total = rows
+        .first()
+        .and_then(|row| {
+            use sqlx::Row;
+            row.try_get::<i64, _>("total_count").ok()
+        })
+        .unwrap_or(0);
+    let items = rows
+        .iter()
         .map(task_row_from_query)
-        .collect::<Result<Vec<_>, _>>()
-        .map_err(Into::into)
+        .collect::<Result<Vec<_>, _>>()?;
+    Ok((items, total))
 }
 
 pub async fn get(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<Option<TaskRow>> {

@@ -122,7 +122,7 @@ async function save() {
         />
         <CFormInput
           v-model="form.vendor_name"
-          :label="t('contracts.form.vendorName')"
+          :label="t('common.contractor')"
         />
       </CFormRow>
     </CForm>

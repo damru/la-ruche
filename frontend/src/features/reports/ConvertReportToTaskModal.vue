@@ -90,7 +90,7 @@ async function submit() {
     >
       <CFormSelect
         v-model="convertPriority"
-        :label="t('tasks.priorityLabel')"
+        :label="t('common.priority')"
         :options="taskPriorityOptions"
       />
     </CForm>

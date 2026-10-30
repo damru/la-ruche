@@ -245,7 +245,7 @@ function clearFilters() {
 }
 
 const contractTableColumns = computed<Column<VendorContract>[]>(() => [
-  { key: 'vendor_name', label: t('contracts.form.vendorName') },
+  { key: 'vendor_name', label: t('common.contractor') },
   { key: 'subject', label: t('contracts.form.subject') },
   { key: 'contract_type', label: t('common.type') },
   { key: 'start_date', label: t('common.startDate') },
@@ -510,8 +510,8 @@ async function activateContract(contract: VendorContract) {
             v-if="contractVendorOptions.length > 0"
             v-model="selectedVendors"
             :options="contractVendorOptions"
-            :placeholder="t('contracts.form.vendorName')"
-            :aria-label="t('contracts.form.vendorName')"
+            :placeholder="t('common.contractor')"
+            :aria-label="t('common.contractor')"
           />
           <CBtn
             v-if="hasActiveFilters"

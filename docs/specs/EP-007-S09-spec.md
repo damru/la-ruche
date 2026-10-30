@@ -4,7 +4,7 @@
 
 **Épic :** EP-007 — Travaux & prestataires
 **Réf. PRD :** US-TP-003
-**État :** PARTIEL — cette spec ne couvre que l'écart restant.
+**État :** IMPLÉMENTÉ (backend + frontend) — filtres serveur `status`/`priority`/`assigned_to`/`contractor_id`/`q`, pagination `limit`/`offset` avec `total`, recherche ILIKE échappée, UI filtres + recherche debouncée + « Charger plus ».
 
 ---
 

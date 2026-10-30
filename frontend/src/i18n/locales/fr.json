@@ -103,7 +103,11 @@
     "upload": "Déposer un fichier",
     "uploadInProgress": "Envoi en cours…",
     "visibility": "Visibilité",
-    "yes": "Oui"
+    "yes": "Oui",
+    "priority": "Priorité",
+    "assignee": "Assigné à",
+    "contractor": "Prestataire",
+    "loadMore": "Charger plus"
   },
   "page": {
     "onboarding": "Bienvenue",
@@ -778,8 +782,7 @@
       "amountInvalid": "Saisissez un montant strictement positif.",
       "frequencyRequired": "Renseignez une périodicité si un montant est saisi.",
       "noticeRequired": "Renseignez un préavis valide pour une reconduction tacite.",
-      "saveError": "Impossible d'enregistrer le contrat.",
-      "vendorName": "Prestataire"
+      "saveError": "Impossible d'enregistrer le contrat."
     },
     "frequencies": {
       "monthly": "Mensuel",
@@ -836,7 +839,6 @@
     "header": {
       "activeSummary": "{count} tâche active | {count} tâches actives"
     },
-    "priorityLabel": "Priorité",
     "vendorToken": "Lien prestataire",
     "vendorTokenActive": "Lien actif — expire le {date}",
     "vendorTokenUrl": "URL du lien",
@@ -852,11 +854,10 @@
     "filters": {
       "open": "Ouvertes",
       "in_progress": "En cours",
-      "awaiting_vendor": "Prestataire",
       "awaiting_validation": "À valider",
-      "vendor": "Prestataire",
       "closed": "Terminées"
     },
+    "emptyFiltered": "Aucune tâche ne correspond aux filtres actuels.",
     "priorities": {
       "low": "Basse",
       "normal": "Normale",
@@ -1785,7 +1786,8 @@
     "tasks": {
       "title_required": "Le titre de la tâche est obligatoire.",
       "invalid_status": "Le statut de la tâche est invalide.",
-      "invalid_priority": "La priorité de la tâche est invalide."
+      "invalid_priority": "La priorité de la tâche est invalide.",
+      "invalid_filter": "Le filtre appliqué est invalide."
     },
     "units": {
       "invalid_payload": "Les informations du lot sont invalides.",
