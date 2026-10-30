@@ -478,7 +478,7 @@ async function handleVoteSaved(payload: { resolutionId: string; result: VoteResu
         : r,
     )
   }
-  if (meeting.value) {
+  if (meeting.value && !isTenantOnly.value) {
     const attendanceRes = await meetingsApi.attendance(meeting.value.id)
     attendance.value = attendanceRes.data
   }
