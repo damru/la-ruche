@@ -20,6 +20,7 @@ import {
   ROLE_BOARD_MEMBER,
   ROLE_CO_OWNER,
   ROLE_MANAGER,
+  ROLE_TENANT,
 } from '@/utils/roles'
 import type { CalendarSource, Role } from '@/types/domain'
 
@@ -27,6 +28,8 @@ interface Permissions {
   // ── General Meeting (AG) ──
   /** Anyone authenticated may view AG data. */
   canViewGM: ComputedRef<boolean>
+  /** Tenant-only users see closed meetings (results + published minutes); co-owners see everything. */
+  isTenantOnly: ComputedRef<boolean>
   /** Only co-owners (residents) may vote in a general meeting. */
   canVoteGM: ComputedRef<boolean>
   /** Managers, board members and co-owners may record GM vote entries (session entry flow). */
@@ -130,6 +133,7 @@ export function usePermissions(): Permissions {
   // ── General Meeting (AG) ──
 
   const canViewGM = computed(() => isAuthenticated.value)
+  const isTenantOnly = computed(() => hasRole(ROLE_TENANT) && !hasRole(ROLE_CO_OWNER))
   const canVoteGM = computed(() => hasRole(ROLE_CO_OWNER))
   const canRecordGMVotes = computed(() =>
     hasAnyRole([ROLE_MANAGER, ROLE_BOARD_MEMBER, ROLE_CO_OWNER]),
@@ -235,6 +239,7 @@ export function usePermissions(): Permissions {
 
   return {
     canViewGM,
+    isTenantOnly,
     canVoteGM,
     canRecordGMVotes,
     canManageGM,

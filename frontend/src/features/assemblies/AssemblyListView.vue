@@ -25,7 +25,7 @@ import CreateMeetingModal from './CreateMeetingModal.vue'
 const router = useRouter()
 const { t } = useI18n()
 const { formatDate } = useFormatters()
-const { canManageGM } = usePermissions()
+const { canManageGM, isTenantOnly } = usePermissions()
 
 const buildingName = ref('')
 const allMeetings = ref<Meeting[]>([])
@@ -49,6 +49,7 @@ const { loading, error, reload } = usePageLoader(loadData)
 onMounted(reload)
 
 const meetings = computed(() => {
+  if (isTenantOnly.value) return allMeetings.value.filter(meeting => meeting.status === MEETING_STATUS_CLOSED)
   if (filter.value === 'upcoming') return allMeetings.value.filter(meeting => meeting.status !== MEETING_STATUS_CLOSED)
   if (filter.value === MEETING_STATUS_CLOSED) return allMeetings.value.filter(meeting => meeting.status === MEETING_STATUS_CLOSED)
   return allMeetings.value
@@ -57,11 +58,16 @@ const meetings = computed(() => {
 const upcomingCount = computed(() => allMeetings.value.filter(meeting => meeting.status !== MEETING_STATUS_CLOSED).length)
 const closedCount = computed(() => allMeetings.value.filter(meeting => meeting.status === MEETING_STATUS_CLOSED).length)
 
-const meetingTabs = computed<Tab[]>(() => [
-  { value: ALL_FILTER, label: t('common.allFem'), count: allMeetings.value.length },
-  { value: 'upcoming', label: t('meetings.filterUpcoming'), count: upcomingCount.value },
-  { value: MEETING_STATUS_CLOSED, label: t('meetings.filterClosed'), count: closedCount.value },
-])
+const meetingTabs = computed<Tab[]>(() => {
+  if (isTenantOnly.value) {
+    return [{ value: MEETING_STATUS_CLOSED, label: t('meetings.filterClosed'), count: closedCount.value }]
+  }
+  return [
+    { value: ALL_FILTER, label: t('common.allFem'), count: allMeetings.value.length },
+    { value: 'upcoming', label: t('meetings.filterUpcoming'), count: upcomingCount.value },
+    { value: MEETING_STATUS_CLOSED, label: t('meetings.filterClosed'), count: closedCount.value },
+  ]
+})
 
 function typeLabel(type: MeetingType): string {
   return t(`meetings.typeLabel.${type}`)

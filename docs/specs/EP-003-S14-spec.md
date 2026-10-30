@@ -5,7 +5,7 @@
 **Épic :** EP-003 — Assemblées générales
 **Réf. LEGAL :** locataire = résultats et PV publié uniquement · **Réf. DESIGN :** `docs/DESIGN.md` §4.2 · **Réf. PRD :** US-AG-* (consultation) · **Réf. ADR :** aucun
 
-**Statut actuel : PARTIEL.**
+**Statut actuel : IMPLÉMENTÉ (backend + frontend).**
 
 ---
 

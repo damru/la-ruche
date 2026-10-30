@@ -68,7 +68,7 @@ const route = useRoute()
 const router = useRouter()
 const { t } = useI18n()
 const { formatDate } = useFormatters()
-const { canManageGM } = usePermissions()
+const { canManageGM, isTenantOnly } = usePermissions()
 
 const buildingName = ref('')
 const buildingSharesTotal = ref(0)
@@ -271,7 +271,9 @@ async function loadData() {
     meetingsApi.get(meetingId),
     meetingsApi.listResolutions(meetingId),
     meetingsApi.listDocuments(meetingId),
-    meetingsApi.attendance(meetingId),
+    isTenantOnly.value
+      ? Promise.resolve({ data: { entries: [], total_shares: 0, shares_present: 0, present_units: 0 } })
+      : meetingsApi.attendance(meetingId),
   ])
 
   buildingName.value = building.name
@@ -1243,7 +1245,10 @@ function openArt25Modal(resolution: Resolution) {
               </CAlert>
             </CCard>
 
-            <CCard class="">
+            <CCard
+              v-if="!isTenantOnly"
+              class=""
+            >
               <CSectionHeader>
                 <CHeading type="card">
                   {{ t('meetings.presenceQuorum') }}
