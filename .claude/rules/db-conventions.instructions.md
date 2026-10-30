@@ -11,3 +11,5 @@ applyTo: 'backend/migrations/**,backend/src/**'
 - Every mutable table has an `updated_at` trigger; the application never sets `updated_at` manually.
 - Single migration baseline: `backend/migrations/0001_init.sql` (squashed). Any schema evolution is a new incremental migration, never a baseline edit.
 - Any new table must reflect its invariants in `docs/ARCHITECTURE.md` and respect the ADRs in force (e.g. ADR-006/007/012 depending on the domain).
+- When a SQL literal becomes a bound parameter, renumber **all** placeholders contiguously (`$1..$N`): compile-checked queries (`sqlx::query!`) fail on a numbering gap, and runtime queries bind silently out of order — both are bugs introduced by partial renumbering.
+- A heuristic backfill must document, in the migration comment, the values it can **never** assign and why (e.g. no linking column for a category) — the next reader must not go looking for the missing line.

@@ -21,6 +21,11 @@ between the PRD (the what) and the code (the how), for a given epic.
   divergence, flag it explicitly instead of hiding it.
 - Describe the real data model (columns, types, constraints of
   `backend/migrations/0001_init.sql`), not an idealized one.
+- Before freezing an acceptance criterion, verify its feasibility against
+  the real schema (existing columns, enums, aggregates): an AC that demands a
+  field or a state the schema does not expose must be reformulated, or its gap
+  explicitly traced (amendment to the PRD or a note in the spec). Never leave
+  an uncoverable AC looking satisfied.
 - Every section must be concrete and verifiable: real route, component,
   table and field names.
 
