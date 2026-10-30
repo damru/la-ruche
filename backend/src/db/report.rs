@@ -463,16 +463,12 @@ pub async fn add_comment(
     .fetch_one(pool)
     .await?;
 
-    let author_first_name: String =
-        sqlx::query_scalar("SELECT first_name FROM user_account WHERE id = $1")
-            .bind(author_id)
-            .fetch_one(pool)
-            .await?;
-    let author_last_name: String =
-        sqlx::query_scalar("SELECT last_name FROM user_account WHERE id = $1")
-            .bind(author_id)
-            .fetch_one(pool)
-            .await?;
+    let author_row = sqlx::query("SELECT first_name, last_name FROM user_account WHERE id = $1")
+        .bind(author_id)
+        .fetch_one(pool)
+        .await?;
+    let author_first_name: String = author_row.try_get("first_name")?;
+    let author_last_name: String = author_row.try_get("last_name")?;
 
     Ok(ReportCommentRow {
         id: row.try_get("id")?,
