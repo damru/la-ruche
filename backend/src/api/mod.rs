@@ -364,6 +364,10 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
         .route("/reports/{id}/status", put(reports::update_status))
         .route("/reports/{id}/task", post(reports::convert_to_task))
         .route(
+            "/reports/{id}/comments",
+            get(reports::list_comments).post(reports::add_comment),
+        )
+        .route(
             "/reports/{id}/documents",
             get(reports::list_documents).post(reports::attach_document),
         )

@@ -175,3 +175,50 @@ pub async fn detach_document(
     }
     Ok(StatusCode::NO_CONTENT)
 }
+
+// ── Follow-up comments ────────────────────────────────────────────────────────
+
+#[derive(Deserialize)]
+pub struct AddCommentInput {
+    pub body: String,
+}
+
+/// POST /reports/{id}/comments — manager | board_member.
+/// Append-only follow-up comment visible to the reporter.
+pub async fn add_comment(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+    Json(input): Json<AddCommentInput>,
+) -> AppResult<(StatusCode, Json<serde_json::Value>)> {
+    auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
+    if input.body.trim().is_empty() {
+        return Err(AppError::validation_code(
+            "errors.reports.comment_body_required",
+        ));
+    }
+    let comment =
+        db::report::add_comment(&state.pool, id, auth.building_id, auth.user_id, &input.body)
+            .await?;
+    Ok((StatusCode::CREATED, json_value(comment)?))
+}
+
+/// GET /reports/{id}/comments — manager | board_member | the report's author.
+pub async fn list_comments(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+) -> AppResult<Json<serde_json::Value>> {
+    let report = db::report::get(&state.pool, id, auth.building_id)
+        .await?
+        .ok_or(AppError::NotFound)?;
+    let can_read = [Role::Manager, Role::BoardMember]
+        .iter()
+        .any(|r| auth.has_role(r))
+        || report.author_id == auth.user_id;
+    if !can_read {
+        return Err(AppError::Forbidden);
+    }
+    let comments = db::report::list_comments(&state.pool, id, auth.building_id).await?;
+    json_value(comments)
+}

@@ -6,7 +6,7 @@ import type {
   VendorContract, ContractReminder,
     Task, TaskListFilters, TaskListResponse, Claim, ClaimNote, MaintenanceEntry,
   LogbookSummary,
-  Report, Consultation, ConsultationResults, VendorTask, VendorDocument,
+  Report, ReportComment, Consultation, ConsultationResults, VendorTask, VendorDocument,
   Document, UploadUrlResponse, DownloadUrlResponse,
   Building, Unit, UnitOwnerRecord, User, AllocationKey, UnitShare, AuditEntry,
   OnboardingStatus, RuntimeStatus, BootstrapInput, BootstrapResponse,
@@ -506,6 +506,10 @@ export const reportsApi = {
     api.post(`/reports/${id}/documents`, { document_id }),
   detachDocument: (id: string, document_id: string) =>
     api.delete(`/reports/${id}/documents/${document_id}`),
+  listComments: (id: string) =>
+    api.get<ReportComment[]>(`/reports/${id}/comments`),
+  addComment: (id: string, body: string) =>
+    api.post<ReportComment>(`/reports/${id}/comments`, { body }),
 }
 
 // ── Consultations ─────────────────────────────────────────────────

@@ -77,6 +77,8 @@ interface Permissions {
   canManageReport: ComputedRef<boolean>
   /** Only the manager may change a report's status or convert it to a task. */
   canAdministerReport: ComputedRef<boolean>
+  /** Managers and board members may post follow-up comments on a report. */
+  canCommentReport: ComputedRef<boolean>
 
   // ── Claim ──
   canViewClaim: ComputedRef<boolean>
@@ -177,6 +179,7 @@ export function usePermissions(): Permissions {
   const canViewReport = computed(() => isAuthenticated.value)
   const canManageReport = computed(() => hasAnyRole(MANAGER_ROLES))
   const canAdministerReport = computed(() => hasRole(ROLE_MANAGER))
+  const canCommentReport = computed(() => hasAnyRole(MANAGER_ROLES))
 
   // ── Claim ──
 
@@ -255,6 +258,7 @@ export function usePermissions(): Permissions {
     canViewReport,
     canManageReport,
     canAdministerReport,
+    canCommentReport,
     canViewClaim,
     canManageClaim,
     canManageClaimNotes,

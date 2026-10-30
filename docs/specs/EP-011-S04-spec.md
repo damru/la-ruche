@@ -4,7 +4,7 @@
 
 **Épic :** EP-011 — Signalements
 **Réf. PRD :** US-SIG-006
-**État :** NON IMPLÉMENTÉ.
+**État :** IMPLÉMENTÉ (backend + frontend).
 
 
 ---
@@ -138,6 +138,8 @@ Section **« Suivi »** sur la fiche signalement :
 - Logique dans `<script setup>` (règle frontend : rien dans le template). Pas de nouveau composant catalogue si la section reste inline dans la vue existante ; si un composant dédié `ReportCommentList.vue` est extrait, l'ajouter à `docs/DESIGN.md §2` avant usage.
 
 ## 6. Cas limites
+
+> **Choix produit acté (visibilité)** : la lecture des commentaires est restreinte au **déclarant du signalement** et aux gestionnaires (manager/board_member) — un résident tiers reçoit 403. Ce choix est plus protecteur que la matrice CRUD du PRD (qui dit `R` pour tous les résidents) ; il est retenu pour des raisons RGPD (les commentaires peuvent contenir des détails sur un lot/habitation) et doit être explicitement reconduit si la matrice évolue.
 
 | Cas | Règle |
 |---|---|

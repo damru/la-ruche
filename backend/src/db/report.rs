@@ -416,3 +416,104 @@ pub async fn detach_document(
 
     Ok(result.rows_affected() > 0)
 }
+
+// ── Follow-up comments ────────────────────────────────────────────────────────
+
+/// Comment row enriched with author name (JOIN user_account).
+/// Append-only: never updated nor deleted (cascade on report delete only).
+#[derive(Debug, Serialize)]
+pub struct ReportCommentRow {
+    pub id: Uuid,
+    pub report_id: Uuid,
+    pub author_id: Uuid,
+    pub author_first_name: String,
+    pub author_last_name: String,
+    pub body: String,
+    pub created_at: DateTime<Utc>,
+}
+
+/// Inserts a comment after verifying the report belongs to the building.
+/// Returns NotFound if the report doesn't exist in this building.
+pub async fn add_comment(
+    pool: &PgPool,
+    report_id: Uuid,
+    building_id: Uuid,
+    author_id: Uuid,
+    body: &str,
+) -> AppResult<ReportCommentRow> {
+    let exists: bool = sqlx::query_scalar(
+        "SELECT EXISTS(SELECT 1 FROM report WHERE id = $1 AND building_id = $2)",
+    )
+    .bind(report_id)
+    .bind(building_id)
+    .fetch_one(pool)
+    .await?;
+    if !exists {
+        return Err(AppError::NotFound);
+    }
+
+    let row = sqlx::query(
+        r#"INSERT INTO report_comment (report_id, author_id, body)
+           VALUES ($1, $2, $3)
+           RETURNING id, report_id, author_id, body, created_at"#,
+    )
+    .bind(report_id)
+    .bind(author_id)
+    .bind(body.trim())
+    .fetch_one(pool)
+    .await?;
+
+    let author_row = sqlx::query("SELECT first_name, last_name FROM user_account WHERE id = $1")
+        .bind(author_id)
+        .fetch_one(pool)
+        .await?;
+    let author_first_name: String = author_row.try_get("first_name")?;
+    let author_last_name: String = author_row.try_get("last_name")?;
+
+    Ok(ReportCommentRow {
+        id: row.try_get("id")?,
+        report_id: row.try_get("report_id")?,
+        author_id: row.try_get("author_id")?,
+        author_first_name,
+        author_last_name,
+        body: row.try_get("body")?,
+        created_at: row.try_get("created_at")?,
+    })
+}
+
+/// Lists comments chronologically (oldest first), scoped to the building via the
+/// report join (a report of another building yields an empty list).
+pub async fn list_comments(
+    pool: &PgPool,
+    report_id: Uuid,
+    building_id: Uuid,
+) -> AppResult<Vec<ReportCommentRow>> {
+    let rows = sqlx::query(
+        r#"SELECT c.id, c.report_id, c.author_id,
+                  u.first_name AS author_first_name, u.last_name AS author_last_name,
+                  c.body, c.created_at
+           FROM report_comment c
+           JOIN user_account u ON u.id = c.author_id
+           JOIN report r ON r.id = c.report_id AND r.building_id = $2
+           WHERE c.report_id = $1
+           ORDER BY c.created_at ASC"#,
+    )
+    .bind(report_id)
+    .bind(building_id)
+    .fetch_all(pool)
+    .await?;
+
+    rows.into_iter()
+        .map(|row| {
+            Ok(ReportCommentRow {
+                id: row.try_get("id")?,
+                report_id: row.try_get("report_id")?,
+                author_id: row.try_get("author_id")?,
+                author_first_name: row.try_get("author_first_name")?,
+                author_last_name: row.try_get("author_last_name")?,
+                body: row.try_get("body")?,
+                created_at: row.try_get("created_at")?,
+            })
+        })
+        .collect()
+}
