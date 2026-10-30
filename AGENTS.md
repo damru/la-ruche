@@ -116,11 +116,24 @@ Before opening a PR, and before every push to an open PR branch, the relevant ch
 
 ---
 
+## Build Prerequisites (system toolchain)
+
+The commands below assume the following are installed — nothing in the repo installs them for you:
+
+- **Rust stable** (edition 2024) with components `rustfmt` and `clippy` — CI uses `dtolnay/rust-toolchain@stable`.
+- **Node.js 26 + npm** for the frontend (`node:26-alpine` in the Dockerfile; CI frontend job pins Node 25).
+- **`pkg-config` and OpenSSL development headers** (`libssl-dev` on Debian/Ubuntu). `openssl-sys` (pulled in by `reqwest`/`native-tls` and by the `postgresql_embedded` dev-dependency) fails to build without them. On a system where only the runtime libs exist (`libssl.so.3`, no `libssl.so` symlink / no headers), set `OPENSSL_DIR`, `OPENSSL_LIB_DIR`, `OPENSSL_INCLUDE_DIR` explicitly for `cargo build`.
+- **PostgreSQL 16+** for anything touching the DB. CI runs a `postgres:18-alpine` service (`laruche_test` / `laruche` / `laruche`). Without `DATABASE_URL`, integration tests fall back to `postgresql_embedded`, which downloads PostgreSQL binaries on first run.
+- **sqlx-cli** (`cargo install sqlx-cli --no-default-features --features postgres --locked`, CI pins 0.8.6) — required for `cargo sqlx prepare`.
+- **Docker + docker compose** for local dev (`make setup` starts `postgres` + `rustfs`).
+
+**SQLx offline gotcha:** `backend/.sqlx/` is git-ignored and generated only in CI. Locally, `cargo build` / `cargo test` with the compile-time macros (`sqlx::query!`) therefore needs a live `DATABASE_URL` pointing at a migrated database (run `docker compose up -d postgres && cargo sqlx migrate run` first), otherwise every macro fails with "set `DATABASE_URL` to use query macros online". `SQLX_OFFLINE=true` (CI/Docker) only works once `.sqlx/` has been generated against a real database.
+
 ## Commands
 
 ```bash
 # Backend
-cargo build                        # compile
+cargo build                        # compile (needs DATABASE_URL unless .sqlx/ exists)
 cargo test --lib --tests           # run tests
 cargo clippy -- -D warnings        # lint (must pass clean)
 cargo fmt --check                  # format check
@@ -133,7 +146,7 @@ npm --prefix frontend run lint     # lint
 # DB (local dev)
 docker compose up -d postgres      # start postgres
 cargo sqlx migrate run             # apply migrations
-cargo sqlx prepare                 # regenerate .sqlx/ (offline mode)
+cargo sqlx prepare                 # regenerate .sqlx/ (needs DATABASE_URL, not SQLX_OFFLINE)
 ```
 
 ---
