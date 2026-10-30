@@ -448,7 +448,7 @@ async function downloadTaskDocument(documentId: string) {
             { value: ALL_FILTER, label: t('common.allMasc'), count: counts.all ?? 0 },
             { value: TASK_STATUS_OPEN, label: t('tasks.filters.open'), count: counts.open ?? 0 },
             { value: TASK_STATUS_IN_PROGRESS, label: t('tasks.filters.in_progress'), count: counts.in_progress ?? 0 },
-            { value: TASK_STATUS_AWAITING_VENDOR, label: t('tasks.filters.awaiting_vendor'), count: counts.awaiting_vendor ?? 0 },
+            { value: TASK_STATUS_AWAITING_VENDOR, label: t('common.contractor'), count: counts.awaiting_vendor ?? 0 },
             { value: TASK_STATUS_AWAITING_VALIDATION, label: t('tasks.filters.awaiting_validation'), count: counts.awaiting_validation ?? 0 },
             { value: TASK_STATUS_CLOSED, label: t('tasks.filters.closed'), count: counts.closed ?? 0 },
           ]"

@@ -413,7 +413,7 @@ async function handleSubmit() {
       />
       <CFormSelect
         v-model="taskForm.priority"
-        :label="t('tasks.priorityLabel')"
+        :label="t('common.priority')"
         :options="taskPriorityOptions"
       />
       <div
