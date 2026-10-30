@@ -481,34 +481,25 @@ pub async fn add_comment(
     })
 }
 
-/// Lists comments chronologically (oldest first).
-/// Returns NotFound if the report doesn't exist in this building.
+/// Lists comments chronologically (oldest first), scoped to the building via the
+/// report join (a report of another building yields an empty list).
 pub async fn list_comments(
     pool: &PgPool,
     report_id: Uuid,
     building_id: Uuid,
 ) -> AppResult<Vec<ReportCommentRow>> {
-    let exists: bool = sqlx::query_scalar(
-        "SELECT EXISTS(SELECT 1 FROM report WHERE id = $1 AND building_id = $2)",
-    )
-    .bind(report_id)
-    .bind(building_id)
-    .fetch_one(pool)
-    .await?;
-    if !exists {
-        return Err(AppError::NotFound);
-    }
-
     let rows = sqlx::query(
         r#"SELECT c.id, c.report_id, c.author_id,
                   u.first_name AS author_first_name, u.last_name AS author_last_name,
                   c.body, c.created_at
            FROM report_comment c
            JOIN user_account u ON u.id = c.author_id
+           JOIN report r ON r.id = c.report_id AND r.building_id = $2
            WHERE c.report_id = $1
            ORDER BY c.created_at ASC"#,
     )
     .bind(report_id)
+    .bind(building_id)
     .fetch_all(pool)
     .await?;
 

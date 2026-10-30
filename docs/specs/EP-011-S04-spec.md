@@ -139,6 +139,8 @@ Section **« Suivi »** sur la fiche signalement :
 
 ## 6. Cas limites
 
+> **Choix produit acté (visibilité)** : la lecture des commentaires est restreinte au **déclarant du signalement** et aux gestionnaires (manager/board_member) — un résident tiers reçoit 403. Ce choix est plus protecteur que la matrice CRUD du PRD (qui dit `R` pour tous les résidents) ; il est retenu pour des raisons RGPD (les commentaires peuvent contenir des détails sur un lot/habitation) et doit être explicitement reconduit si la matrice évolue.
+
 | Cas | Règle |
 |---|---|
 | Corps vide / espaces | 400 `errors.reports.comment_body_required` |
