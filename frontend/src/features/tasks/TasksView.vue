@@ -113,27 +113,19 @@ async function loadData() {
   allUsers.value = usersRes.data
   buildingName.value = building.name
   allContractors.value = contractorsRes.data
-  await fetchTasks(0)
-  const statusValues = [
-    null,
-    TASK_STATUS_OPEN,
-    TASK_STATUS_IN_PROGRESS,
-    TASK_STATUS_AWAITING_VENDOR,
-    TASK_STATUS_AWAITING_VALIDATION,
-    TASK_STATUS_CLOSED,
-  ]
-  const countResults = await Promise.all(
-    statusValues.map(status =>
-      tasksApi.list(status ? { status, limit: 1 } : { limit: 1 }),
-    ),
-  )
+  const [tasksPage, countersRes] = await Promise.all([
+    fetchTasks(0),
+    tasksApi.statusCounters(),
+  ])
+  void tasksPage
+  const counters = new Map(countersRes.data.map(c => [c.status, c.count]))
   counts.value = {
-    all: countResults[0].data.total,
-    open: countResults[1].data.total,
-    in_progress: countResults[2].data.total,
-    awaiting_vendor: countResults[3].data.total,
-    awaiting_validation: countResults[4].data.total,
-    closed: countResults[5].data.total,
+    all: countersRes.data.reduce((sum, c) => sum + c.count, 0),
+    open: counters.get(TASK_STATUS_OPEN) ?? 0,
+    in_progress: counters.get(TASK_STATUS_IN_PROGRESS) ?? 0,
+    awaiting_vendor: counters.get(TASK_STATUS_AWAITING_VENDOR) ?? 0,
+    awaiting_validation: counters.get(TASK_STATUS_AWAITING_VALIDATION) ?? 0,
+    closed: counters.get(TASK_STATUS_CLOSED) ?? 0,
   }
 }
 

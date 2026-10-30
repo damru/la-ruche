@@ -354,6 +354,8 @@ export const contractsApi = {
 export const tasksApi = {
   list: (filters?: TaskListFilters) =>
     api.get<TaskListResponse>('/tasks', { params: filters }),
+  statusCounters: () =>
+    api.get<Array<{ status: string; count: number }>>('/tasks/status-counters'),
   get: (id: string) =>
     api.get<Task>(`/tasks/${id}`),
   create: (data: { title: string; description?: string; priority?: string; contract_id?: string; contractor_id?: string | null; contractor_name?: string | null; assigned_to?: string }) =>

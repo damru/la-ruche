@@ -68,6 +68,20 @@ pub async fn list(
     json_value(serde_json::json!({ "items": items, "total": total }))
 }
 
+/// Per-status task counts for the filter tabs. Ignores the other filters on purpose.
+pub async fn status_counters(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+) -> AppResult<Json<serde_json::Value>> {
+    let counts = db::task::status_counts(&state.pool, auth.building_id).await?;
+    json_value(
+        counts
+            .into_iter()
+            .map(|(status, count)| serde_json::json!({ "status": status, "count": count }))
+            .collect::<Vec<_>>(),
+    )
+}
+
 pub async fn get(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,

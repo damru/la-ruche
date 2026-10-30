@@ -291,6 +291,7 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
         )
         // ── Tasks ───────────────────────────────────────────────
         .route("/tasks", get(tasks::list).post(tasks::create))
+        .route("/tasks/status-counters", get(tasks::status_counters))
         .route(
             "/tasks/{id}",
             get(tasks::get)

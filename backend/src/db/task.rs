@@ -191,6 +191,29 @@ fn escape_ilike(term: &str) -> String {
         .replace('_', "\\_")
 }
 
+/// Per-status task counts for a building (tab counters), ignoring other filters.
+pub async fn status_counts(pool: &PgPool, building_id: Uuid) -> AppResult<Vec<(String, i64)>> {
+    let rows = sqlx::query(
+        "SELECT t.status::text AS status, COUNT(*) AS count
+           FROM task t
+           WHERE t.building_id = $1
+           GROUP BY t.status::text",
+    )
+    .bind(building_id)
+    .fetch_all(pool)
+    .await?;
+    use sqlx::Row;
+    rows.iter()
+        .map(|row| {
+            Ok((
+                row.try_get::<String, _>("status")?,
+                row.try_get::<i64, _>("count")?,
+            ))
+        })
+        .collect::<Result<Vec<_>, sqlx::Error>>()
+        .map_err(Into::into)
+}
+
 /// Lists tasks for a building with optional filters and pagination.
 /// Returns the page of rows plus the total number of matching rows.
 pub async fn list(

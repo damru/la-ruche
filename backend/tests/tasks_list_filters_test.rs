@@ -183,3 +183,41 @@ async fn invalid_status_or_priority_returns_400() {
     let (status, _) = list(&server, &auth, "priority=bogus").await;
     assert_eq!(status, StatusCode::BAD_REQUEST);
 }
+
+#[tokio::test]
+async fn status_counters_returns_grouped_counts() {
+    let (ctx, _pool) = common::rbac_setup().await;
+    let server = common::test_server().await;
+    let auth = format!("Bearer {}", ctx.manager_jwt);
+
+    create_task(&server, &auth, json!({ "title": "A" })).await;
+    create_task(&server, &auth, json!({ "title": "B" })).await;
+    let third = create_task(&server, &auth, json!({ "title": "C" })).await;
+    let updated = server
+        .put(&format!("/api/v1/tasks/{third}"))
+        .add_header("Authorization", &auth)
+        .json(&json!({ "status": "in_progress" }))
+        .await;
+    assert_eq!(updated.status_code(), StatusCode::NO_CONTENT);
+
+    let resp = server
+        .get("/api/v1/tasks/status-counters")
+        .add_header("Authorization", &auth)
+        .await;
+    assert_eq!(resp.status_code(), StatusCode::OK);
+    let body = resp.json::<Value>();
+    let counts: std::collections::HashMap<&str, i64> = body
+        .as_array()
+        .expect("array")
+        .iter()
+        .map(|entry| {
+            (
+                entry["status"].as_str().expect("status"),
+                entry["count"].as_i64().expect("count"),
+            )
+        })
+        .collect();
+    assert_eq!(counts.get("open"), Some(&2));
+    assert_eq!(counts.get("in_progress"), Some(&1));
+    assert_eq!(counts.values().sum::<i64>(), 3);
+}
