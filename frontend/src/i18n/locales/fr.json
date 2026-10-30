@@ -857,6 +857,15 @@
       "vendor": "Prestataire",
       "closed": "Terminées"
     },
+    "searchPlaceholder": "Rechercher une tâche…",
+    "priority": "Priorité",
+    "assignee": "Assigné à",
+    "contractor": "Prestataire",
+    "allPriorities": "Toutes priorités",
+    "allAssignees": "Tous",
+    "allContractors": "Tous prestataires",
+    "loadMore": "Charger plus",
+    "emptyFiltered": "Aucune tâche ne correspond aux filtres actuels.",
     "priorities": {
       "low": "Basse",
       "normal": "Normale",
@@ -1785,7 +1794,8 @@
     "tasks": {
       "title_required": "Le titre de la tâche est obligatoire.",
       "invalid_status": "Le statut de la tâche est invalide.",
-      "invalid_priority": "La priorité de la tâche est invalide."
+      "invalid_priority": "La priorité de la tâche est invalide.",
+      "invalid_filter": "Le filtre appliqué est invalide."
     },
     "units": {
       "invalid_payload": "Les informations du lot sont invalides.",

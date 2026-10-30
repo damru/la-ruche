@@ -43,13 +43,11 @@ async function loadData() {
   const [building, contractorRes, tasksRes] = await Promise.all([
     useBuildingStore().fetch(),
     contractorsApi.get(contractorId.value),
-    tasksApi.list(),
+    tasksApi.list({ contractor_id: contractorId.value }),
   ])
   buildingName.value = building.name
   contractor.value = contractorRes.data
-  assignedTasks.value = tasksRes.data.filter(
-    t => t.contractor_id === contractorId.value,
-  )
+  assignedTasks.value = tasksRes.data.items
 }
 
 const { loading, error, reload } = usePageLoader(loadData)

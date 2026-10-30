@@ -82,7 +82,7 @@ async function loadData() {
       buildingApi.stats(),
       canViewBudget.value ? budgetApi.list() : skip<Budget[]>([]),
       canViewMeetings.value ? meetingsApi.list() : skip<Meeting[]>([]),
-      canViewTasks.value ? tasksApi.list() : skip<Task[]>([]),
+      canViewTasks.value ? tasksApi.list().then(res => ({ data: res.data.items })) : skip<Task[]>([]),
       reportsApi.list(),
       canViewContracts.value ? contractsApi.list() : skip<VendorContract[]>([]),
       canViewContracts.value ? contractsApi.listAllReminders() : skip<ContractReminder[]>([]),

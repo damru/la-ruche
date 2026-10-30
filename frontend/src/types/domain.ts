@@ -347,6 +347,21 @@ export interface Task {
   is_in_logbook?: boolean
 }
 
+export interface TaskListFilters {
+  status?: string
+  priority?: string
+  assigned_to?: string
+  contractor_id?: string
+  q?: string
+  limit?: number
+  offset?: number
+}
+
+export interface TaskListResponse {
+  items: Task[]
+  total: number
+}
+
 export interface Claim {
   id: string
   created_by: string

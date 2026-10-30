@@ -1,6 +1,6 @@
 use axum::{
     Json,
-    extract::{Path, State},
+    extract::{Path, Query, State},
     http::StatusCode,
 };
 use serde::Deserialize;
@@ -20,13 +20,52 @@ fn vendor_url(cfg: &AppSettings, token: Uuid) -> String {
     format!("{}/vendor/{}", cfg.public_url, token)
 }
 
+const DEFAULT_LIST_LIMIT: i64 = 50;
+const MAX_LIST_LIMIT: i64 = 200;
+
+#[derive(Debug, Deserialize)]
+pub struct ListTasksQuery {
+    pub status: Option<String>,
+    pub priority: Option<String>,
+    pub assigned_to: Option<Uuid>,
+    pub contractor_id: Option<Uuid>,
+    pub q: Option<String>,
+    pub limit: Option<i64>,
+    pub offset: Option<i64>,
+}
+
 pub async fn list(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,
+    Query(query): Query<ListTasksQuery>,
 ) -> AppResult<Json<serde_json::Value>> {
-    let rows = db::task::list(&state.pool, auth.building_id).await?;
+    if let Some(ref status) = query.status
+        && !db::task::validate_status(status)
+    {
+        return Err(AppError::validation_code("errors.tasks.invalid_filter"));
+    }
+    if let Some(ref priority) = query.priority
+        && !db::task::validate_priority(priority)
+    {
+        return Err(AppError::validation_code("errors.tasks.invalid_filter"));
+    }
+    let limit = query
+        .limit
+        .unwrap_or(DEFAULT_LIST_LIMIT)
+        .clamp(1, MAX_LIST_LIMIT);
+    let offset = query.offset.unwrap_or(0).max(0);
+    let filters = db::task::TaskListFilters {
+        status: query.status,
+        priority: query.priority,
+        assigned_to: query.assigned_to,
+        contractor_id: query.contractor_id,
+        q: query.q,
+        limit,
+        offset,
+    };
+    let (rows, total) = db::task::list(&state.pool, auth.building_id, &filters).await?;
     let items: Vec<db::task::TaskListItem> = rows.into_iter().map(Into::into).collect();
-    json_value(items)
+    json_value(serde_json::json!({ "items": items, "total": total }))
 }
 
 pub async fn get(

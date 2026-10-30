@@ -4,7 +4,7 @@ import type {
   Meeting, MeetingAttendance, MeetingDocument, Resolution, VoteResult, UnitVote,
   Budget, BudgetLine, LevyCall, WorksFund, AccountingCode,
   VendorContract, ContractReminder,
-    Task, Claim, ClaimNote, MaintenanceEntry,
+    Task, TaskListFilters, TaskListResponse, Claim, ClaimNote, MaintenanceEntry,
   LogbookSummary,
   Report, Consultation, ConsultationResults, VendorTask, VendorDocument,
   Document, UploadUrlResponse, DownloadUrlResponse,
@@ -352,8 +352,8 @@ export const contractsApi = {
 
 // ── Tasks ─────────────────────────────────────────────────────────
 export const tasksApi = {
-  list: () =>
-    api.get<Task[]>('/tasks'),
+  list: (filters?: TaskListFilters) =>
+    api.get<TaskListResponse>('/tasks', { params: filters }),
   get: (id: string) =>
     api.get<Task>(`/tasks/${id}`),
   create: (data: { title: string; description?: string; priority?: string; contract_id?: string; contractor_id?: string | null; contractor_name?: string | null; assigned_to?: string }) =>

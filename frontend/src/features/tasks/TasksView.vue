@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useFormatters } from '@/composables/useFormatters'
@@ -7,6 +7,8 @@ import { usePageLoader, toErrorMessage } from '@/composables/usePageLoader'
 import CAlert from '@/components/atoms/CAlert.vue'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
+import CFormInput from '@/components/atoms/CFormInput.vue'
+import CFormSelect from '@/components/atoms/CFormSelect.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CCardActions from '@/components/molecules/CCardActions.vue'
 import CMetaLine from '@/components/molecules/CMetaLine.vue'
@@ -18,6 +20,7 @@ import CTopbar from '@/components/organisms/CTopbar.vue'
 import CHeading from '@/components/atoms/CHeading.vue'
 import CTabs from '@/components/atoms/CTabs.vue'
 import CIconPlus from '@/components/atoms/CIconPlus.svg'
+import CIconSearch from '@/components/atoms/CIconSearch.svg'
 import CIconLink from '@/components/atoms/CIconLink.svg'
 import CIconEye from '@/components/atoms/CIconEye.svg'
 import CIconX from '@/components/atoms/CIconX.svg'
@@ -32,7 +35,7 @@ import RevokeTokenModal from './RevokeTokenModal.vue'
 import ReopenTaskModal from './ReopenTaskModal.vue'
 import { contractorsApi, documentsApi, tasksApi, usersApi } from '@/api'
 import { useBuildingStore } from '@/stores/building'
-import type {Contractor, Document, Task, TaskStatus, User} from '@/types/domain'
+import type {Contractor, Document, Task, TaskListFilters, TaskStatus, User} from '@/types/domain'
 import { ALL_FILTER, TASK_PRIORITY_HIGH, TASK_PRIORITY_LOW, TASK_PRIORITY_NORMAL, TASK_PRIORITY_URGENT, TASK_STATUS_AWAITING_VALIDATION, TASK_STATUS_AWAITING_VENDOR, TASK_STATUS_CANCELLED, TASK_STATUS_CLOSED, TASK_STATUS_IN_PROGRESS, TASK_STATUS_OPEN } from '@/utils/constants'
 
 const { t } = useI18n()
@@ -41,10 +44,18 @@ const router = useRouter()
 
 // ── State ─────────────────────────────────────────────────────────
 const buildingName = ref('')
-const allTasks = ref<Task[]>([])
+const tasks = ref<Task[]>([])
+const totalTasks = ref(0)
 const allContractors = ref<Contractor[]>([])
 const allUsers = ref<User[]>([])
 const statusFilter = ref<typeof ALL_FILTER | TaskStatus>(ALL_FILTER)
+const priorityFilter = ref<string>(ALL_FILTER)
+const assigneeFilter = ref<string>(ALL_FILTER)
+const contractorFilter = ref<string>(ALL_FILTER)
+const searchQuery = ref('')
+const loadingMore = ref(false)
+const PAGE_SIZE = 50
+const SEARCH_DEBOUNCE_MS = 300
 const VENDOR_LINK_COPY_FEEDBACK_DELAY_MS = 1800
 
 // ── Modal trigger state ───────────────────────────────────────────
@@ -70,41 +81,123 @@ const usersById = computed(() =>
 )
 
 // ── Load data ─────────────────────────────────────────────────────
+function currentFilters(offset: number): TaskListFilters {
+  const filters: TaskListFilters = { limit: PAGE_SIZE, offset }
+  if (statusFilter.value !== ALL_FILTER) filters.status = statusFilter.value
+  if (priorityFilter.value !== ALL_FILTER) filters.priority = priorityFilter.value
+  if (assigneeFilter.value !== ALL_FILTER) filters.assigned_to = assigneeFilter.value
+  if (contractorFilter.value !== ALL_FILTER) filters.contractor_id = contractorFilter.value
+  const q = searchQuery.value.trim()
+  if (q) filters.q = q
+  return filters
+}
+
+async function fetchTasks(offset: number) {
+  const res = await tasksApi.list(currentFilters(offset))
+  if (offset === 0) {
+    tasks.value = res.data.items
+  } else {
+    tasks.value.push(...res.data.items)
+  }
+  totalTasks.value = res.data.total
+}
+
+const counts = ref<Record<string, number>>({})
+
 async function loadData() {
-  const [usersRes, building, tasksRes, contractorsRes] = await Promise.all([
+  const [usersRes, building, contractorsRes] = await Promise.all([
     usersApi.list(),
     useBuildingStore().fetch(),
-    tasksApi.list(),
     contractorsApi.list(),
   ])
   allUsers.value = usersRes.data
   buildingName.value = building.name
-  allTasks.value = tasksRes.data
   allContractors.value = contractorsRes.data
+  await fetchTasks(0)
+  const statusValues = [
+    null,
+    TASK_STATUS_OPEN,
+    TASK_STATUS_IN_PROGRESS,
+    TASK_STATUS_AWAITING_VENDOR,
+    TASK_STATUS_AWAITING_VALIDATION,
+    TASK_STATUS_CLOSED,
+  ]
+  const countResults = await Promise.all(
+    statusValues.map(status =>
+      tasksApi.list(status ? { status, limit: 1 } : { limit: 1 }),
+    ),
+  )
+  counts.value = {
+    all: countResults[0].data.total,
+    open: countResults[1].data.total,
+    in_progress: countResults[2].data.total,
+    awaiting_vendor: countResults[3].data.total,
+    awaiting_validation: countResults[4].data.total,
+    closed: countResults[5].data.total,
+  }
 }
 
 const { loading, error, reload } = usePageLoader(loadData)
 onMounted(reload)
 
+watch([statusFilter, priorityFilter, assigneeFilter, contractorFilter], () => reload())
+
+let searchTimer: number | undefined
+watch(searchQuery, () => {
+  window.clearTimeout(searchTimer)
+  searchTimer = window.setTimeout(() => reload(), SEARCH_DEBOUNCE_MS)
+})
+
+async function loadMore() {
+  loadingMore.value = true
+  try {
+    await fetchTasks(tasks.value.length)
+  } finally {
+    loadingMore.value = false
+  }
+}
+
 // ── Derived ───────────────────────────────────────────────────────
-const tasks = computed(() =>
-  (statusFilter.value === ALL_FILTER
-    ? allTasks.value
-    : allTasks.value.filter(t => t.status === statusFilter.value))
-    .slice()
-    .sort((left, right) => right.updated_at.localeCompare(left.updated_at)),
+const hasActiveFilters = computed(() =>
+  statusFilter.value !== ALL_FILTER ||
+  priorityFilter.value !== ALL_FILTER ||
+  assigneeFilter.value !== ALL_FILTER ||
+  contractorFilter.value !== ALL_FILTER ||
+  searchQuery.value.trim() !== '',
 )
 
-const counts = computed(() => ({
-  open: allTasks.value.filter(t => t.status === TASK_STATUS_OPEN).length,
-  in_progress: allTasks.value.filter(t => t.status === TASK_STATUS_IN_PROGRESS).length,
-  awaiting_vendor: allTasks.value.filter(t => t.status === TASK_STATUS_AWAITING_VENDOR).length,
-  awaiting_validation: allTasks.value.filter(t => t.status === TASK_STATUS_AWAITING_VALIDATION).length,
-  closed: allTasks.value.filter(t => t.status === TASK_STATUS_CLOSED).length }))
+const hasMore = computed(() => tasks.value.length < totalTasks.value)
 
 const activeCount = computed(() =>
-  allTasks.value.filter(t => t.status !== TASK_STATUS_CLOSED && t.status !== TASK_STATUS_CANCELLED).length,
+  (counts.value.open ?? 0) +
+  (counts.value.in_progress ?? 0) +
+  (counts.value.awaiting_vendor ?? 0) +
+  (counts.value.awaiting_validation ?? 0),
 )
+
+const priorityOptions = computed(() => [
+  { value: ALL_FILTER, label: t('tasks.allPriorities') },
+  { value: TASK_PRIORITY_LOW, label: t(`tasks.priorities.${TASK_PRIORITY_LOW}`) },
+  { value: TASK_PRIORITY_NORMAL, label: t(`tasks.priorities.${TASK_PRIORITY_NORMAL}`) },
+  { value: TASK_PRIORITY_HIGH, label: t(`tasks.priorities.${TASK_PRIORITY_HIGH}`) },
+  { value: TASK_PRIORITY_URGENT, label: t(`tasks.priorities.${TASK_PRIORITY_URGENT}`) },
+])
+
+const assigneeOptions = computed(() => [
+  { value: ALL_FILTER, label: t('tasks.allAssignees') },
+  ...allUsers.value.map(user => ({
+    value: user.id,
+    label: `${user.first_name} ${user.last_name}`,
+  })),
+])
+
+const contractorOptions = computed(() => [
+  { value: ALL_FILTER, label: t('tasks.allContractors') },
+  ...allContractors.value.map(contractor => ({
+    value: contractor.id,
+    label: contractor.name,
+  })),
+])
 
 // ── Helpers ───────────────────────────────────────────────────────
 function isTerminal(status: string): boolean {
@@ -216,7 +309,7 @@ function onDocumentDetached(taskId: string, documentId: string) {
 }
 
 function updateTaskDocumentCount(taskId: string, delta: number) {
-  const task = allTasks.value.find(currentTask => currentTask.id === taskId)
+  const task = tasks.value.find(currentTask => currentTask.id === taskId)
   if (task) {
     task.document_count = Math.max(0, task.document_count + delta)
   }
@@ -360,19 +453,47 @@ async function downloadTaskDocument(documentId: string) {
           v-model="statusFilter"
           variant="filter"
           :tabs="[
-            { value: ALL_FILTER, label: t('common.allMasc'), count: allTasks.length },
-            { value: TASK_STATUS_OPEN, label: t('tasks.filters.open'), count: counts.open },
-            { value: TASK_STATUS_IN_PROGRESS, label: t('tasks.filters.in_progress'), count: counts.in_progress },
-            { value: TASK_STATUS_AWAITING_VENDOR, label: t('tasks.filters.awaiting_vendor'), count: counts.awaiting_vendor },
-            { value: TASK_STATUS_AWAITING_VALIDATION, label: t('tasks.filters.awaiting_validation'), count: counts.awaiting_validation },
-            { value: TASK_STATUS_CLOSED, label: t('tasks.filters.closed'), count: counts.closed },
+            { value: ALL_FILTER, label: t('common.allMasc'), count: counts.all ?? 0 },
+            { value: TASK_STATUS_OPEN, label: t('tasks.filters.open'), count: counts.open ?? 0 },
+            { value: TASK_STATUS_IN_PROGRESS, label: t('tasks.filters.in_progress'), count: counts.in_progress ?? 0 },
+            { value: TASK_STATUS_AWAITING_VENDOR, label: t('tasks.filters.awaiting_vendor'), count: counts.awaiting_vendor ?? 0 },
+            { value: TASK_STATUS_AWAITING_VALIDATION, label: t('tasks.filters.awaiting_validation'), count: counts.awaiting_validation ?? 0 },
+            { value: TASK_STATUS_CLOSED, label: t('tasks.filters.closed'), count: counts.closed ?? 0 },
           ]"
         />
 
+        <div class="flex flex-wrap items-end gap-3">
+          <CFormInput
+            v-model="searchQuery"
+            type="search"
+            class="min-w-56 flex-1"
+            :placeholder="t('tasks.searchPlaceholder')"
+          >
+            <template #prefix>
+              <CIconSearch />
+            </template>
+          </CFormInput>
+          <CFormSelect
+            v-model="priorityFilter"
+            :label="t('tasks.priority')"
+            :options="priorityOptions"
+          />
+          <CFormSelect
+            v-model="assigneeFilter"
+            :label="t('tasks.assignee')"
+            :options="assigneeOptions"
+          />
+          <CFormSelect
+            v-model="contractorFilter"
+            :label="t('tasks.contractor')"
+            :options="contractorOptions"
+          />
+        </div>
+
         <template v-if="tasks.length === 0">
           <CEmptyState
-            :title="t('tasks.emptyState')"
-          />  
+            :title="hasActiveFilters ? t('tasks.emptyFiltered') : t('tasks.emptyState')"
+          />
         </template>
         <template v-else>
           <div class="flex flex-col gap-3">
@@ -546,6 +667,18 @@ async function downloadTaskDocument(documentId: string) {
                 </CCardActions>
               </div>
             </CCard>
+          </div>
+          <div
+            v-if="hasMore"
+            class="flex justify-center"
+          >
+            <CBtn
+              variant="ghost"
+              :loading="loadingMore"
+              @click="loadMore"
+            >
+              {{ t('tasks.loadMore') }}
+            </CBtn>
           </div>
         </template>
       </template>
