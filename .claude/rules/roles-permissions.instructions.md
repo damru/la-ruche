@@ -21,3 +21,9 @@ applyTo: 'backend/src/**,frontend/src/**'
 
 - Role values come from constants only: frontend `utils/roles.ts` (`ROLE_MANAGER`, `MANAGER_ROLES`, …), backend `domain::Role` enum. Never write the string literals `'manager'` / `'board_member'` / `'co_owner'` / `'tenant'` outside the constant definitions, mock data, and badge variant unions.
 - New role groups go in `utils/roles.ts` (frontend) — do not redefine them in composables or components.
+
+## Handler access checks (mandatory)
+
+- Every handler must have an **explicit role check** (via `domain/permissions.rs` or `require_*`) **or** a comment documenting the intent "any authenticated user" (typically: a resource readable by all building members). A handler with neither is an RBAC bug, not a style choice.
+- Before changing the access rule of an endpoint, trace its **frontend callers**: a button gated on permission X calling an endpoint that becomes stricter is a functional regression (systematic 403 on an existing flow).
+- A permission remapping can silently change behavior: `hasRole('manager')` → `canViewX` (manager + board_member) **widens** visibility. When a PR claims "no functional change", verify each remapped permission line by line against the pre-PR semantics.

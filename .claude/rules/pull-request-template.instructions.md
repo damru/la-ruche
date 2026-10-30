@@ -12,3 +12,5 @@ applyTo: '**'
 - The description must list: what changed, why, doc impact (foundational docs updated or untouched with justification), and testing evidence.
 - Ship criteria checkboxes must be ticked honestly — if a check could not be run locally, leave it unticked and state why inline.
 - If the PR changes schema, API contracts, or the design system, link the corresponding ADR/DDR and doc sections.
+- A PR must not accumulate transverse refactoring unrelated to its spec (RBAC, constants, component churn across the app). Extract it into a dedicated PR — reverting the story must never take the refactoring down with it.
+- A failing CI test must be adjudicated, never silenced: either the test encodes the right rule (fix the code), or the code is right (fix the test **and document the divergence with the PRD** in the PR description or a NOTE in the test).
