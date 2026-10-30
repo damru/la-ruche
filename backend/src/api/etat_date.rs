@@ -212,6 +212,31 @@ async fn build_header(
     // a known data-model coupling: a syndic change must also update manager_siret
     // (documented in ADR-011 amendment).
     let syndic_name = db::governance_mandate::current_syndic_name(pool, building_id).await?;
+    // Extra context for the questionnaire annex (all pre-existing queries):
+    // current owner of the lot, syndic mandate start, last/next general
+    // meeting, last works-fund levy of the building.
+    let owner_name = db::unit::list_owners(pool, unit_id, building_id)
+        .await?
+        .into_iter()
+        .find(|o| o.end_date.is_none())
+        .map(|o| o.display_name);
+    let syndic_mandate_start = db::governance_mandate::list(pool, building_id)
+        .await?
+        .into_iter()
+        .find(|m| m.role == db::governance_mandate::ROLE_SYNDIC && m.end_date.is_none())
+        .map(|m| m.start_date);
+    let now = chrono::Utc::now().date_naive();
+    let meetings = db::assembly::list(pool, building_id).await?;
+    let ag_dates: Vec<chrono::NaiveDate> = meetings
+        .iter()
+        .map(|m| m.meeting_date.date_naive())
+        .collect();
+    let last_ag_date = ag_dates.iter().copied().filter(|d| *d <= now).max();
+    let next_ag_date = ag_dates.iter().copied().filter(|d| *d > now).min();
+    let fonds_travaux_derniere_cotisation =
+        db::etat_date::load_pre_etat_date_extras(pool, building_id)
+            .await?
+            .fonds_travaux_derniere_cotisation;
 
     let mut address = building.address_line1.clone();
     if let Some(line2) = building
@@ -238,6 +263,12 @@ async fn build_header(
         due_date: None,
         generated_at: None,
         edited_at: None,
+        owner_name,
+        bylaws_date: building.bylaws_date,
+        syndic_mandate_start,
+        last_ag_date,
+        next_ag_date,
+        fonds_travaux_derniere_cotisation: Some(fonds_travaux_derniere_cotisation),
     })
 }
 

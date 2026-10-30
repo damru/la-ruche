@@ -24,10 +24,6 @@ use serde::Serialize;
 use crate::domain::etat_date::{EtatDate, PreEtatDate};
 use crate::domain::pdf_template::{format_date, format_euro};
 
-/// Pre-filled questionnaire syndic annexed to the état daté (14 pages,
-/// embedded at compile time — self-contained binary).
-const QUESTIONNAIRE_PDF: &[u8] = include_bytes!("../../assets/QUESTIONNAIRE-SYNDIC-ETAT-DATE.pdf");
-
 /// Header common to both regulatory documents: the residence identity, the
 /// syndic, the lot, and the relevant dates. Assembled by the API layer from
 /// `building`, `unit`, `governance_mandate` and the request row.
@@ -47,6 +43,18 @@ pub struct LegalDocumentHeader {
     pub generated_at: Option<NaiveDate>,
     /// Edition date (pré-état daté only).
     pub edited_at: Option<NaiveDate>,
+    /// Current owner (cédant) display name — questionnaire annex page 1.
+    pub owner_name: Option<String>,
+    /// Bylaws date (`building.bylaws_date`) — questionnaire A2.
+    pub bylaws_date: Option<NaiveDate>,
+    /// Start date of the active syndic mandate — questionnaire A4.
+    pub syndic_mandate_start: Option<NaiveDate>,
+    /// Date of the last held general meeting — questionnaire A3.
+    pub last_ag_date: Option<NaiveDate>,
+    /// Date of the next scheduled general meeting — questionnaire A3.
+    pub next_ag_date: Option<NaiveDate>,
+    /// Last works-fund levy paid by the lot — questionnaire annex page 5.
+    pub fonds_travaux_derniere_cotisation: Option<Decimal>,
 }
 
 // ── Payloads (typst data boundary: pre-formatted strings only) ─────────────
@@ -118,6 +126,172 @@ struct PreEtatDatePayload {
     emprunts: String,
 }
 
+/// One quote-part row of the questionnaire annex (N-1 / N-2).
+#[derive(Serialize)]
+struct QuotePartPayload {
+    year: String,
+    /// Called amount (appelée) — pre-filled from the snapshot.
+    appelee: String,
+    /// Actually paid amount (réelle) — not modeled, left as an anchor.
+    reelle: Option<String>,
+}
+
+/// One row of the "travaux votés" tables (pages 6 and 10 of the CSN form).
+/// Only `nature` is known today (snapshot); the rest are anchors.
+#[derive(Serialize)]
+struct TravauxRowPayload {
+    date: Option<String>,
+    nature: String,
+    etat: Option<String>,
+    financier: Option<String>,
+    quote_part: Option<String>,
+    appele: Option<String>,
+    restant: Option<String>,
+    exigibilite: Option<String>,
+}
+
+/// Payload of the `questionnaire.typ` annex. Every fillable field of the CSN
+/// form is an anchor: pre-filled when the app knows the value, `None`/empty
+/// (blank line or unchecked box) when the syndic must complete it by hand.
+#[derive(Serialize)]
+struct QuestionnairePayload {
+    title: String,
+    app_name: &'static str,
+    edited_at: String,
+    // ── Page 1 : informations des parties ──
+    acquereur: Option<String>,
+    date_demande: String,
+    office_notarial: String,
+    reference_dossier: Option<String>,
+    dossier_clerc: Option<String>,
+    delivre_par: String,
+    syndicat_unique: bool,
+    contact_syndic: Option<String>,
+    date_delivrance: String,
+    immeuble_nom: String,
+    immeuble_adresse: String,
+    cedant_nom: Option<String>,
+    cedant_adresse: Option<String>,
+    lots: String,
+    mutation_onereuse: Option<bool>,
+    date_mutation_envisagee: Option<String>,
+    // ── 1ère partie : sommes dues par le cédant ──
+    part1: Vec<LignePayload>,
+    part1_emprunts_tiers: Vec<LignePayload>,
+    total_part1: String,
+    // ── 2ème partie : sommes dont le syndicat est débiteur ──
+    part2: Vec<LignePayload>,
+    total_part2: String,
+    remb_solution1: Option<bool>,
+    remb_solution2: Option<bool>,
+    remb_montant: Option<String>,
+    // ── 3ème partie : sommes incombant à l'acquéreur ──
+    part3: Vec<LignePayload>,
+    /// label = date d'exigibilité, amount = montant (3 lignes, à remplir).
+    part3_provisions_budget: Vec<LignePayload>,
+    part3_provisions_hors_budget: Vec<LignePayload>,
+    total_part3: String,
+    // ── Annexe à la 3ème partie ──
+    actualisation_date: String,
+    qp_budget: Vec<QuotePartPayload>,
+    qp_hors_budget: Vec<QuotePartPayload>,
+    procedures_oui: bool,
+    procedures: Vec<String>,
+    procedures_etat: Option<String>,
+    fonds_travaux_existe: bool,
+    fonds_travaux_quote_part: String,
+    fonds_travaux_derniere_cotisation: Option<String>,
+    // ── Événements après délivrance ──
+    nouvelle_ag: Option<bool>,
+    travaux_post: Vec<TravauxRowPayload>,
+    commentaires_travaux: Option<String>,
+    // ── Sommes exigibles / certificat art. 20 ──
+    date_signature: Option<String>,
+    sommes_exigibles: Vec<LignePayload>,
+    montant_lots_mutation: String,
+    lots_non_vises: Option<String>,
+    total_sommes_exigibles: String,
+    certificat_art20_joint: Option<bool>,
+    copro_a_jour: bool,
+    somme_debitrice: String,
+    date_certificat: Option<String>,
+    // ── A1 assurances ──
+    assur_multirisque: Option<bool>,
+    assur_reconstruction: Option<bool>,
+    assur_valeur_neuf: Option<bool>,
+    assur_capital_limite: Option<String>,
+    assur_autres_risques: Option<String>,
+    assur_police_numero: Option<String>,
+    assur_police_date: Option<String>,
+    assur_courtier: Option<String>,
+    assur_compagnie: Option<String>,
+    assur_do_origine: Option<bool>,
+    assur_do_travaux: Option<bool>,
+    // ── A2 règlement de copropriété / A3 AG / A4 syndic ──
+    reglement_date: Option<String>,
+    reglement_modifie: Option<bool>,
+    reglement_sru: Option<bool>,
+    derniere_ag: Option<String>,
+    prochaine_ag: Option<String>,
+    syndic_designation_date: Option<String>,
+    syndic_pro: Option<bool>,
+    // ── A5 à A12 ──
+    aful: Option<bool>,
+    aful_detail: Option<String>,
+    travaux_commentaires: Option<String>,
+    patrimoine: Option<bool>,
+    patrimoine_detail: Option<String>,
+    contrats_revenus: Option<bool>,
+    contrats_revenus_detail: Option<String>,
+    emprunt_existe: Option<bool>,
+    emprunt_objet: Option<String>,
+    emprunt_organisme: Option<String>,
+    emprunt_reference: Option<String>,
+    emprunt_capital_restant: Option<String>,
+    emprunt_exigible_mutation: Option<bool>,
+    emprunts_collectifs: String,
+    admin_provisoire: Option<bool>,
+    mandataire_ad_hoc: Option<bool>,
+    priorite_stationnement_vote: Option<bool>,
+    priorite_stationnement_clause: Option<bool>,
+    surelevation_vote: Option<bool>,
+    surelevation_clause: Option<bool>,
+    immatriculation: Option<bool>,
+    immatriculation_numero: Option<String>,
+    // ── B dossier technique et environnemental (toutes ancres) ──
+    date_construction: Option<String>,
+    carnet_entretien: Option<bool>,
+    type_igh: Option<bool>,
+    amiante_soumis: Option<bool>,
+    amiante_absence: Option<bool>,
+    amiante_dta: Option<bool>,
+    plomb_avant_1949: Option<bool>,
+    termites_recherche: Option<bool>,
+    mesures_urgence: Option<bool>,
+    risques_sanitaires: Option<bool>,
+    risques_sanitaires_traites: Option<bool>,
+    dpe_concerne: Option<bool>,
+    dpe_ou_audit: Option<String>,
+    plan_travaux_energie: Option<bool>,
+    cpe: Option<bool>,
+    ascenseur_existe: Option<bool>,
+    ascenseur_avant_2000: Option<bool>,
+    ascenseur_controle: Option<bool>,
+    ascenseur_normes_2010: Option<bool>,
+    ascenseur_normes_2013: Option<bool>,
+    ascenseur_normes_2018: Option<bool>,
+    piscine_existe: Option<bool>,
+    piscine_securite: Option<bool>,
+    arrete_peril: Option<bool>,
+    insalubrite: Option<bool>,
+    injonction_travaux: Option<bool>,
+    interdiction_habiter: Option<bool>,
+    monument_historique: Option<bool>,
+    ravalement: Option<bool>,
+    opah: Option<bool>,
+    icpe: Option<String>,
+}
+
 // ── Assembly ───────────────────────────────────────────────────────────────
 
 /// Residence + syndic + lot header lines, shared by both documents.
@@ -144,6 +318,333 @@ fn ligne_payloads(lines: &[crate::domain::etat_date::LigneMontant]) -> Vec<Ligne
             amount: format_euro(line.amount),
         })
         .collect()
+}
+
+/// Pre-formatted procedure lines (« subject — date (jurisdiction) »), shared
+/// by the état daté body and the questionnaire annex.
+fn procedure_lines(snapshot: &EtatDate) -> Vec<String> {
+    snapshot
+        .procedures
+        .iter()
+        .map(|proc| {
+            let jurisdiction = proc
+                .jurisdiction
+                .as_deref()
+                .map(|j| format!(" ({j})"))
+                .unwrap_or_default();
+            format!(
+                "{} — {}{}",
+                proc.subject,
+                format_date(proc.opened_at),
+                jurisdiction
+            )
+        })
+        .collect()
+}
+
+/// Builds the payload of the questionnaire annex (CSN form) from the document
+/// header and the frozen état daté snapshot. Fields the app knows are
+/// pre-filled; everything else stays `None` (blank anchor in the template,
+/// to be completed by hand by the syndic).
+fn questionnaire_payload(
+    header: &LegalDocumentHeader,
+    snapshot: &EtatDate,
+    edited_at: &str,
+) -> QuestionnairePayload {
+    let generated = header
+        .generated_at
+        .unwrap_or_else(|| chrono::Utc::now().naive_utc().date());
+    let total_part1: Decimal = snapshot
+        .partie1_sommes_dues_par_cedant
+        .iter()
+        .map(|l| l.amount)
+        .sum();
+    let total_part2: Decimal = snapshot
+        .partie2_sommes_dues_par_syndicat
+        .iter()
+        .map(|l| l.amount)
+        .sum();
+    let total_part3: Decimal = snapshot
+        .partie3_sommes_incombant_acquereur
+        .iter()
+        .map(|l| l.amount)
+        .sum();
+    let arrears = snapshot
+        .partie1_sommes_dues_par_cedant
+        .iter()
+        .find(|l| l.label.contains("arriérés"))
+        .map(|l| l.amount);
+    let avances = snapshot
+        .partie2_sommes_dues_par_syndicat
+        .first()
+        .map(|l| l.amount);
+    let fonds_travaux_qp = snapshot
+        .partie3_sommes_incombant_acquereur
+        .iter()
+        .find(|l| l.label.contains("fonds travaux"))
+        .map(|l| l.amount);
+    let provisions_a_venir = snapshot
+        .partie3_sommes_incombant_acquereur
+        .iter()
+        .find(|l| l.label.contains("Provisions à venir"))
+        .map(|l| l.amount);
+    let fonds_annuel = snapshot
+        .annexe_quote_part
+        .first()
+        .map(|e| e.works_fund_amount);
+
+    let ligne = |label: &str, amount: Option<Decimal>| LignePayload {
+        label: label.to_string(),
+        amount: amount.map(format_euro).unwrap_or_default(),
+    };
+
+    let part1 = vec![
+        ligne(
+            "1- Provisions exigibles — dans le budget prévisionnel (D. art. 5. 1° a)",
+            None,
+        ),
+        ligne(
+            "- dans les dépenses hors budget prévisionnel (D. art. 5. 1° b)",
+            None,
+        ),
+        ligne(
+            "2- Charges impayées sur les exercices antérieurs (D. art. 5. 1° c)",
+            arrears,
+        ),
+        ligne(
+            "3- Sommes devenues exigibles du fait de la vente (art. 33 loi 65-557, D. art. 5. 1° d)",
+            None,
+        ),
+        ligne(
+            "4- Avances exigibles (D. art. 5. 1° e) — réserve (D. art. 35. 1°)",
+            None,
+        ),
+        ligne(
+            "- avances nommées provisions (L. art. 18 al. 15, D. art. 35. 4° et 5°)",
+            None,
+        ),
+        ligne(
+            "- avances représentant un emprunt (D. art. 45-1 al. 4)",
+            None,
+        ),
+        ligne("5- Cotisations annuelles au fonds de travaux", fonds_annuel),
+        ligne(
+            "6- Autres sommes exigibles du fait de la vente — prêt (quote-part exigible)",
+            None,
+        ),
+        ligne("- autres causes (condamnations, etc.)", None),
+        ligne("7- Frais de délivrance de l'état daté", None),
+    ];
+    let part1_emprunts_tiers = vec![ligne(
+        "Emprunts par certains copropriétaires dont la gestion est assurée par le syndic",
+        None,
+    )];
+    let part2 = vec![
+        ligne("A/ Avances perçues — réserve (D. art. 35. 1°)", None),
+        ligne("- avances nommées provisions (D. art. 35. 4° et 5°)", None),
+        ligne(
+            "- emprunt du syndicat auprès des copropriétaires (D. art. 45-1 al. 4)",
+            None,
+        ),
+        ligne(
+            "B/ Provisions encaissées rendues exigibles par déchéance du terme (art. 19-2 loi 65-557)",
+            avances,
+        ),
+        ligne(
+            "C/ Solde créditeur de l'exercice antérieur non imputé",
+            None,
+        ),
+    ];
+    let part3 = vec![
+        ligne("1- Reconstitution des avances — réserve", None),
+        ligne("- avances nommées provisions", None),
+        ligne("- emprunt (D. art. 45-1 al. 4)", None),
+        ligne(
+            "2- Provisions non encore exigibles — budget prévisionnel (D. art. 5. 3° b)",
+            provisions_a_venir,
+        ),
+        ligne(
+            "- dépenses hors budget prévisionnel (D. art. 5. 3° c)",
+            None,
+        ),
+        ligne(
+            "Quote-part du lot sur le fonds de travaux (D. art. 5. 3° a)",
+            fonds_travaux_qp,
+        ),
+    ];
+
+    let montant_mutation = total_part1 - total_part2;
+    let a_jour = total_part1.is_zero();
+
+    QuestionnairePayload {
+        title: "Questionnaire syndic — état daté".to_string(),
+        app_name: crate::domain::pdf_template::APP_NAME,
+        edited_at: edited_at.to_string(),
+        acquereur: None,
+        date_demande: header.requested_at.map(format_date).unwrap_or_default(),
+        office_notarial: header.requester_name.clone().unwrap_or_default(),
+        reference_dossier: None,
+        dossier_clerc: None,
+        delivre_par: header
+            .syndic_name
+            .clone()
+            .unwrap_or_else(|| crate::domain::pdf_template::APP_NAME.to_string()),
+        syndicat_unique: true,
+        contact_syndic: None,
+        date_delivrance: format_date(generated),
+        immeuble_nom: header.building_name.clone(),
+        immeuble_adresse: header.building_address.clone(),
+        cedant_nom: header.owner_name.clone(),
+        cedant_adresse: None,
+        lots: header.unit_number.clone(),
+        mutation_onereuse: None,
+        date_mutation_envisagee: None,
+        part1,
+        part1_emprunts_tiers,
+        total_part1: format_euro(total_part1),
+        part2,
+        total_part2: format_euro(total_part2),
+        remb_solution1: None,
+        remb_solution2: None,
+        remb_montant: avances.map(format_euro),
+        part3,
+        part3_provisions_budget: Vec::new(),
+        part3_provisions_hors_budget: Vec::new(),
+        total_part3: format_euro(total_part3),
+        actualisation_date: edited_at.to_string(),
+        qp_budget: snapshot
+            .annexe_quote_part
+            .iter()
+            .map(|ex| QuotePartPayload {
+                year: ex.fiscal_year.to_string(),
+                appelee: format_euro(ex.charge_amount),
+                reelle: None,
+            })
+            .collect(),
+        qp_hors_budget: snapshot
+            .annexe_quote_part
+            .iter()
+            .map(|ex| QuotePartPayload {
+                year: ex.fiscal_year.to_string(),
+                appelee: format_euro(ex.works_fund_amount),
+                reelle: None,
+            })
+            .collect(),
+        procedures_oui: !snapshot.procedures.is_empty(),
+        procedures: procedure_lines(snapshot),
+        procedures_etat: None,
+        fonds_travaux_existe: fonds_travaux_qp.is_some_and(|a| !a.is_zero())
+            || fonds_annuel.is_some_and(|a| !a.is_zero()),
+        fonds_travaux_quote_part: fonds_travaux_qp.map(format_euro).unwrap_or_default(),
+        fonds_travaux_derniere_cotisation: header
+            .fonds_travaux_derniere_cotisation
+            .map(format_euro),
+        nouvelle_ag: None,
+        travaux_post: snapshot
+            .travaux_votes_non_realises
+            .iter()
+            .map(|nature| TravauxRowPayload {
+                date: None,
+                nature: nature.clone(),
+                etat: None,
+                financier: None,
+                quote_part: None,
+                appele: None,
+                restant: None,
+                exigibilite: None,
+            })
+            .collect(),
+        commentaires_travaux: None,
+        date_signature: None,
+        sommes_exigibles: vec![
+            ligne(
+                "1- Montant concernant les lots objets de la mutation (total A+B de la 1ère partie, sous déduction du total B+C de la 2ème partie)",
+                Some(montant_mutation),
+            ),
+            ligne(
+                "2- Montant concernant les lots non visés par la mutation (lots n°)",
+                None,
+            ),
+        ],
+        montant_lots_mutation: format_euro(montant_mutation),
+        lots_non_vises: None,
+        total_sommes_exigibles: format_euro(montant_mutation),
+        certificat_art20_joint: None,
+        copro_a_jour: a_jour,
+        somme_debitrice: format_euro(total_part1),
+        date_certificat: None,
+        assur_multirisque: None,
+        assur_reconstruction: None,
+        assur_valeur_neuf: None,
+        assur_capital_limite: None,
+        assur_autres_risques: None,
+        assur_police_numero: None,
+        assur_police_date: None,
+        assur_courtier: None,
+        assur_compagnie: None,
+        assur_do_origine: None,
+        assur_do_travaux: None,
+        reglement_date: header.bylaws_date.map(format_date),
+        reglement_modifie: None,
+        reglement_sru: None,
+        derniere_ag: header.last_ag_date.map(format_date),
+        prochaine_ag: header.next_ag_date.map(format_date),
+        syndic_designation_date: header.syndic_mandate_start.map(format_date),
+        syndic_pro: None,
+        aful: None,
+        aful_detail: None,
+        travaux_commentaires: None,
+        patrimoine: None,
+        patrimoine_detail: None,
+        contrats_revenus: None,
+        contrats_revenus_detail: None,
+        emprunt_existe: Some(!snapshot.emprunts_collectifs.contains("néant")),
+        emprunt_objet: None,
+        emprunt_organisme: None,
+        emprunt_reference: None,
+        emprunt_capital_restant: None,
+        emprunt_exigible_mutation: None,
+        emprunts_collectifs: snapshot.emprunts_collectifs.clone(),
+        admin_provisoire: None,
+        mandataire_ad_hoc: None,
+        priorite_stationnement_vote: None,
+        priorite_stationnement_clause: None,
+        surelevation_vote: None,
+        surelevation_clause: None,
+        immatriculation: None,
+        immatriculation_numero: None,
+        date_construction: None,
+        carnet_entretien: None,
+        type_igh: None,
+        amiante_soumis: None,
+        amiante_absence: None,
+        amiante_dta: None,
+        plomb_avant_1949: None,
+        termites_recherche: None,
+        mesures_urgence: None,
+        risques_sanitaires: None,
+        risques_sanitaires_traites: None,
+        dpe_concerne: None,
+        dpe_ou_audit: None,
+        plan_travaux_energie: None,
+        cpe: None,
+        ascenseur_existe: None,
+        ascenseur_avant_2000: None,
+        ascenseur_controle: None,
+        ascenseur_normes_2010: None,
+        ascenseur_normes_2013: None,
+        ascenseur_normes_2018: None,
+        piscine_existe: None,
+        piscine_securite: None,
+        arrete_peril: None,
+        insalubrite: None,
+        injonction_travaux: None,
+        interdiction_habiter: None,
+        monument_historique: None,
+        ravalement: None,
+        opah: None,
+        icpe: None,
+    }
 }
 
 /// Renders the état daté (EP-002-S06) as a PDF from its frozen snapshot.
@@ -235,7 +736,7 @@ pub fn render_etat_date(
     let payload = EtatDatePayload {
         title: "État daté".to_string(),
         app_name: crate::domain::pdf_template::APP_NAME,
-        edited_at,
+        edited_at: edited_at.clone(),
         issuer_heading: "Le syndic des copropriétaires".to_string(),
         issuer_lines,
         recipient_label: "Destinataire".to_string(),
@@ -271,29 +772,18 @@ pub fn render_etat_date(
                 total: format_euro(ex.total_amount),
             })
             .collect(),
-        procedures: snapshot
-            .procedures
-            .iter()
-            .map(|proc| {
-                let jurisdiction = proc
-                    .jurisdiction
-                    .as_deref()
-                    .map(|j| format!(" ({j})"))
-                    .unwrap_or_default();
-                format!(
-                    "{} — {}{}",
-                    proc.subject,
-                    format_date(proc.opened_at),
-                    jurisdiction
-                )
-            })
-            .collect(),
+        procedures: procedure_lines(snapshot),
         travaux: snapshot.travaux_votes_non_realises.clone(),
         emprunts: snapshot.emprunts_collectifs.clone(),
     };
-    let mut pdf = crate::domain::pdf_template::compile_template("etat_date", &payload)?;
-    append_pdf_annex(&mut pdf, QUESTIONNAIRE_PDF)?;
-    Ok(pdf)
+    let pdf = crate::domain::pdf_template::compile_template("etat_date", &payload)?;
+    let annex = crate::domain::pdf_template::compile_template(
+        "questionnaire",
+        &questionnaire_payload(header, snapshot, &edited_at),
+    )?;
+    let mut merged = pdf;
+    append_pdf_annex(&mut merged, &annex)?;
+    Ok(merged)
 }
 
 /// Appends the pages of `annex` to the end of `pdf` (lopdf 0.14 merge).
@@ -498,6 +988,12 @@ mod tests {
             due_date: Some(date(2026, 6, 16)),
             generated_at: Some(date(2026, 6, 2)),
             edited_at: Some(date(2026, 6, 2)),
+            owner_name: Some("Mme Loisel".to_string()),
+            bylaws_date: Some(date(1987, 3, 12)),
+            syndic_mandate_start: Some(date(2024, 6, 1)),
+            last_ag_date: Some(date(2026, 5, 20)),
+            next_ag_date: Some(date(2026, 11, 18)),
+            fonds_travaux_derniere_cotisation: Some(Decimal::new(50000, 2)),
         }
     }
 
@@ -557,15 +1053,52 @@ mod tests {
     #[test]
     fn render_etat_date_appends_questionnaire_annex() {
         let snapshot = crate::domain::etat_date::assemble(inputs(Decimal::new(150000, 2)));
-        let bytes = render_etat_date(&header(), &snapshot).expect("render");
-        // The merged document must parse and contain the 14 questionnaire
-        // pages in addition to the typst-rendered letter + regulatory pages.
-        let doc = lopdf::Document::load_from(std::io::Cursor::new(&bytes)).expect("parse");
-        let annex_pages = lopdf::Document::load_from(std::io::Cursor::new(QUESTIONNAIRE_PDF))
-            .expect("annex")
+        let h = header();
+        // The merged document must parse and contain the typst-rendered
+        // questionnaire pages in addition to the état daté body alone.
+        let body = crate::domain::pdf_template::compile_template(
+            "etat_date",
+            &EtatDatePayload {
+                title: "État daté".to_string(),
+                app_name: crate::domain::pdf_template::APP_NAME,
+                edited_at: "02/06/2026".to_string(),
+                issuer_heading: "Le syndic des copropriétaires".to_string(),
+                issuer_lines: vec![],
+                recipient_label: "Destinataire".to_string(),
+                recipient_lines: vec!["Lot n° A-12".to_string()],
+                objet: "État daté — Lot n° A-12".to_string(),
+                reference: None,
+                salutation: "Madame, Monsieur,".to_string(),
+                letter_paragraphs: vec![],
+                closing_formula: "Je vous prie d'agréer, Madame, Monsieur, l'expression de mes salutations distinguées.".to_string(),
+                signer_closing: "Pour le syndic".to_string(),
+                signer_name: "Cabinet Dupont".to_string(),
+                signer_role: None,
+                place_date: "Fait le 2 juin 2026".to_string(),
+                annex_kicker: "ANNEXE".to_string(),
+                annex_title: "Questionnaire syndic — état daté".to_string(),
+                annex_subtitle: "Lot n° A-12".to_string(),
+                header_lines: vec![],
+                part1: vec![],
+                part2: vec![],
+                part3: vec![],
+                exercices: vec![],
+                procedures: vec![],
+                travaux: vec![],
+                emprunts: String::new(),
+            },
+        )
+        .expect("body compile");
+        let merged = render_etat_date(&h, &snapshot).expect("render");
+        let body_pages = lopdf::Document::load_from(std::io::Cursor::new(&body))
+            .expect("body parse")
             .get_pages()
             .len();
-        assert!(doc.get_pages().len() > annex_pages);
+        let merged_pages = lopdf::Document::load_from(std::io::Cursor::new(&merged))
+            .expect("merged parse")
+            .get_pages()
+            .len();
+        assert!(merged_pages > body_pages);
     }
 
     #[test]

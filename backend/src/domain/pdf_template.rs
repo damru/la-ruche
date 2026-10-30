@@ -83,6 +83,7 @@ const EMBEDDED_TEMPLATES: &[(&str, &str)] = &[
     ("logbook", include_str!("typst/logbook.typ")),
     ("etat_date", include_str!("typst/etat_date.typ")),
     ("pre_etat_date", include_str!("typst/pre_etat_date.typ")),
+    ("questionnaire", include_str!("typst/questionnaire.typ")),
     #[cfg(test)]
     ("test", "#payload.title — #payload.name"),
 ];
