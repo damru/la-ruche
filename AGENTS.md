@@ -116,11 +116,49 @@ Before opening a PR, and before every push to an open PR branch, the relevant ch
 
 ---
 
+## Build Prerequisites (system toolchain)
+
+Nothing in the repo installs these — set them up once:
+
+```bash
+# Rust stable + rustfmt + clippy (edition 2024)
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal
+rustup default stable && rustup component add rustfmt clippy
+
+# Node.js 26 + npm (frontend; CI pins 25, Dockerfile uses node:26-alpine)
+nvm install 26 && nvm use 26        # or any Node 26 install
+
+# pkg-config + OpenSSL dev headers (openssl-sys fails to build without them)
+sudo apt-get install -y pkg-config libssl-dev
+# Runtime libs only (libssl.so.3, no headers)? Point cargo at them:
+export OPENSSL_DIR=/usr OPENSSL_LIB_DIR=/usr/lib/x86_64-linux-gnu OPENSSL_INCLUDE_DIR=/usr/include
+
+# PostgreSQL 16+ (CI: postgres:18-alpine, db/user/pass = laruche_test/laruche/laruche)
+docker compose up -d postgres        # recommended (see make setup)
+# or: sudo apt-get install -y postgresql-16
+
+# sqlx-cli 0.8.6 (version pinned in CI)
+cargo install sqlx-cli --version 0.8.6 --no-default-features --features postgres --locked
+
+# Docker + compose plugin (make setup starts postgres + rustfs)
+# follow https://docs.docker.com/engine/install/ then: sudo apt-get install -y docker-compose-plugin
+```
+
+Then point the backend at a migrated DB and generate the SQLx offline cache:
+
+```bash
+export DATABASE_URL=postgres://laruche:laruche@localhost:5432/laruche_test
+cargo sqlx migrate run
+cargo sqlx prepare                   # writes backend/.sqlx/
+```
+
+**SQLx offline gotcha:** `backend/.sqlx/` is git-ignored and generated only in CI, so local `cargo build` / `cargo test` with `sqlx::query!` macros need a live migrated `DATABASE_URL` (or a pre-generated `.sqlx/` + `SQLX_OFFLINE=true`). Without either, every macro fails with "set `DATABASE_URL` to use query macros online". Without `DATABASE_URL`, integration tests fall back to `postgresql_embedded`, which downloads PostgreSQL binaries on first run.
+
 ## Commands
 
 ```bash
 # Backend
-cargo build                        # compile
+cargo build                        # compile (needs DATABASE_URL unless .sqlx/ exists)
 cargo test --lib --tests           # run tests
 cargo clippy -- -D warnings        # lint (must pass clean)
 cargo fmt --check                  # format check
@@ -133,7 +171,7 @@ npm --prefix frontend run lint     # lint
 # DB (local dev)
 docker compose up -d postgres      # start postgres
 cargo sqlx migrate run             # apply migrations
-cargo sqlx prepare                 # regenerate .sqlx/ (offline mode)
+cargo sqlx prepare                 # regenerate .sqlx/ (needs DATABASE_URL, not SQLX_OFFLINE)
 ```
 
 ---
