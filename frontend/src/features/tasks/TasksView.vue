@@ -168,7 +168,7 @@ const activeCount = computed(() =>
 )
 
 const priorityOptions = computed(() => [
-  { value: ALL_FILTER, label: t('tasks.allPriorities') },
+  { value: ALL_FILTER, label: t('common.allFem') + ' ' + t('common.priority').toLowerCase() + 's' },
   { value: TASK_PRIORITY_LOW, label: t(`tasks.priorities.${TASK_PRIORITY_LOW}`) },
   { value: TASK_PRIORITY_NORMAL, label: t(`tasks.priorities.${TASK_PRIORITY_NORMAL}`) },
   { value: TASK_PRIORITY_HIGH, label: t(`tasks.priorities.${TASK_PRIORITY_HIGH}`) },
@@ -176,7 +176,7 @@ const priorityOptions = computed(() => [
 ])
 
 const assigneeOptions = computed(() => [
-  { value: ALL_FILTER, label: t('tasks.allAssignees') },
+  { value: ALL_FILTER, label: t('common.allMasc') },
   ...allUsers.value.map(user => ({
     value: user.id,
     label: `${user.first_name} ${user.last_name}`,
@@ -184,7 +184,7 @@ const assigneeOptions = computed(() => [
 ])
 
 const contractorOptions = computed(() => [
-  { value: ALL_FILTER, label: t('tasks.allContractors') },
+  { value: ALL_FILTER, label: t('common.allMasc') + ' ' + t('common.contractor').toLowerCase() + 's' },
   ...allContractors.value.map(contractor => ({
     value: contractor.id,
     label: contractor.name,
@@ -459,7 +459,7 @@ async function downloadTaskDocument(documentId: string) {
             v-model="searchQuery"
             type="search"
             class="min-w-56 flex-1"
-            :placeholder="t('tasks.searchPlaceholder')"
+            :placeholder="`${t('common.search')} ${t('nav.tasks').toLowerCase()}…`"
           >
             <template #prefix>
               <CIconSearch />
@@ -467,17 +467,17 @@ async function downloadTaskDocument(documentId: string) {
           </CFormInput>
           <CFormSelect
             v-model="priorityFilter"
-            :label="t('tasks.priority')"
+            :label="t('common.priority')"
             :options="priorityOptions"
           />
           <CFormSelect
             v-model="assigneeFilter"
-            :label="t('tasks.assignee')"
+            :label="t('common.assignee')"
             :options="assigneeOptions"
           />
           <CFormSelect
             v-model="contractorFilter"
-            :label="t('tasks.contractor')"
+            :label="t('common.contractor')"
             :options="contractorOptions"
           />
         </div>
@@ -669,7 +669,7 @@ async function downloadTaskDocument(documentId: string) {
               :loading="loadingMore"
               @click="loadMore"
             >
-              {{ t('tasks.loadMore') }}
+              {{ t('common.loadMore') }}
             </CBtn>
           </div>
         </template>

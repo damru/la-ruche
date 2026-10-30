@@ -103,7 +103,11 @@
     "upload": "Déposer un fichier",
     "uploadInProgress": "Envoi en cours…",
     "visibility": "Visibilité",
-    "yes": "Oui"
+    "yes": "Oui",
+    "priority": "Priorité",
+    "assignee": "Assigné à",
+    "contractor": "Prestataire",
+    "loadMore": "Charger plus"
   },
   "page": {
     "onboarding": "Bienvenue",
@@ -857,14 +861,6 @@
       "vendor": "Prestataire",
       "closed": "Terminées"
     },
-    "searchPlaceholder": "Rechercher une tâche…",
-    "priority": "Priorité",
-    "assignee": "Assigné à",
-    "contractor": "Prestataire",
-    "allPriorities": "Toutes priorités",
-    "allAssignees": "Tous",
-    "allContractors": "Tous prestataires",
-    "loadMore": "Charger plus",
     "emptyFiltered": "Aucune tâche ne correspond aux filtres actuels.",
     "priorities": {
       "low": "Basse",
