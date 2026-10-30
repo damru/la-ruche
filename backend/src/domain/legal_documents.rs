@@ -24,6 +24,10 @@ use serde::Serialize;
 use crate::domain::etat_date::{EtatDate, PreEtatDate};
 use crate::domain::pdf_template::{format_date, format_euro};
 
+/// Pre-filled questionnaire syndic annexed to the état daté (14 pages,
+/// embedded at compile time — self-contained binary).
+const QUESTIONNAIRE_PDF: &[u8] = include_bytes!("../../assets/QUESTIONNAIRE-SYNDIC-ETAT-DATE.pdf");
+
 /// Header common to both regulatory documents: the residence identity, the
 /// syndic, the lot, and the relevant dates. Assembled by the API layer from
 /// `building`, `unit`, `governance_mandate` and the request row.
@@ -74,6 +78,20 @@ struct EtatDatePayload {
     issuer_lines: Vec<String>,
     recipient_label: String,
     recipient_lines: Vec<String>,
+    // Letter body (shared letter frame from base.typ)
+    objet: String,
+    reference: Option<String>,
+    salutation: String,
+    letter_paragraphs: Vec<String>,
+    closing_formula: String,
+    signer_closing: String,
+    signer_name: String,
+    signer_role: Option<String>,
+    place_date: String,
+    /// Annex announcement (questionnaire syndic pré-rempli).
+    annex_kicker: String,
+    annex_title: String,
+    annex_subtitle: String,
     /// Residence + syndic + lot + request lines, pre-formatted.
     header_lines: Vec<String>,
     part1: Vec<LignePayload>,
@@ -173,6 +191,47 @@ pub fn render_etat_date(
         .map(format_date)
         .unwrap_or_else(|| format_date(chrono::Utc::now().naive_utc().date()));
 
+    // ── Letter body (same frame as the logbook) ──
+    let objet = format!("État daté — Lot n° {}", header.unit_number);
+    let reference = header.requested_at.map(|d| {
+        format!(
+            "Demande du {} · Échéance légale (J+15) : {}",
+            format_date(d),
+            format_date(header.due_date.unwrap_or(d))
+        )
+    });
+    let letter_paragraphs = vec![
+        format!(
+            "Conformément à l'article 46 de la loi n° 65-557 du 10 juillet 1965 et au décret n° 67-223 du 17 mars 1967, le syndic de la copropriété « {} » vous communique, à votre demande, l'état daté du lot n° {} au {}.",
+            header.building_name,
+            header.unit_number,
+            format_date(
+                header
+                    .generated_at
+                    .unwrap_or_else(|| chrono::Utc::now().naive_utc().date())
+            )
+        ),
+        "Ce document, établi à la date de génération indiquée ci-dessus, détaille en première partie les sommes pouvant rester dues par le copropriétaire cédant, en deuxième partie les sommes dont le syndicat pourrait être débiteur envers le cédant, et en troisième partie les sommes incombant au nouveau copropriétaire. L'annexe présente la quote-part du lot sur les deux derniers exercices, les procédures judiciaires en cours, les travaux votés non réalisés et les emprunts collectifs.".to_string(),
+        "Vous trouverez en annexe de la présente le questionnaire syndic pré-rempli, complété à partir des informations tenues par le syndicat.".to_string(),
+    ];
+    let signer_name = header
+        .syndic_name
+        .clone()
+        .unwrap_or_else(|| crate::domain::pdf_template::APP_NAME.to_string());
+    let place_date = format!(
+        "Fait le {}",
+        crate::domain::pdf_template::format_date_long(
+            header
+                .generated_at
+                .unwrap_or_else(|| chrono::Utc::now().naive_utc().date())
+        )
+    );
+
+    let annex_subtitle = format!(
+        "Lot n° {} — {} — généré le {}",
+        header.unit_number, header.building_name, edited_at
+    );
+
     let payload = EtatDatePayload {
         title: "État daté".to_string(),
         app_name: crate::domain::pdf_template::APP_NAME,
@@ -181,6 +240,23 @@ pub fn render_etat_date(
         issuer_lines,
         recipient_label: "Destinataire".to_string(),
         recipient_lines,
+        objet,
+        reference,
+        salutation: "Madame, Monsieur,".to_string(),
+        letter_paragraphs,
+        closing_formula:
+            "Je vous prie d'agréer, Madame, Monsieur, l'expression de mes salutations distinguées."
+                .to_string(),
+        signer_closing: "Pour le syndic".to_string(),
+        signer_name,
+        signer_role: header
+            .syndic_name
+            .as_ref()
+            .map(|_| format!("Syndic de la copropriété « {} »", header.building_name)),
+        place_date,
+        annex_kicker: "Annexe".to_uppercase(),
+        annex_title: "Questionnaire syndic — état daté".to_string(),
+        annex_subtitle,
         header_lines,
         part1: ligne_payloads(&snapshot.partie1_sommes_dues_par_cedant),
         part2: ligne_payloads(&snapshot.partie2_sommes_dues_par_syndicat),
@@ -215,7 +291,124 @@ pub fn render_etat_date(
         travaux: snapshot.travaux_votes_non_realises.clone(),
         emprunts: snapshot.emprunts_collectifs.clone(),
     };
-    crate::domain::pdf_template::compile_template("etat_date", &payload)
+    let mut pdf = crate::domain::pdf_template::compile_template("etat_date", &payload)?;
+    append_pdf_annex(&mut pdf, QUESTIONNAIRE_PDF)?;
+    Ok(pdf)
+}
+
+/// Appends the pages of `annex` to the end of `pdf` (lopdf 0.14 merge).
+/// Used to attach the pre-filled questionnaire as an annex of the état daté.
+///
+/// Both PDFs are loaded, the annex objects are copied into the base document
+/// with remapped object IDs, all references are rewritten, and the annex
+/// page IDs are appended to the base page tree.
+fn append_pdf_annex(pdf: &mut Vec<u8>, annex: &[u8]) -> Result<(), String> {
+    use lopdf::{Object, ObjectId};
+    use std::collections::BTreeMap;
+
+    fn load(bytes: &[u8]) -> Result<lopdf::Document, String> {
+        lopdf::Document::load_from(std::io::Cursor::new(bytes)).map_err(|e| e.to_string())
+    }
+
+    fn remap(obj: &mut Object, map: &BTreeMap<ObjectId, ObjectId>) {
+        match obj {
+            Object::Reference(id) => {
+                if let Some(&new_id) = map.get(id) {
+                    *obj = Object::Reference(new_id);
+                }
+            }
+            Object::Array(arr) => {
+                for item in arr.iter_mut() {
+                    remap(item, map);
+                }
+            }
+            Object::Dictionary(dict) => {
+                for (_, val) in dict.iter_mut() {
+                    remap(val, map);
+                }
+            }
+            Object::Stream(stream) => {
+                for (_, val) in stream.dict.iter_mut() {
+                    remap(val, map);
+                }
+            }
+            _ => {}
+        }
+    }
+
+    let mut base = load(pdf)?;
+    let annex_doc = load(annex)?;
+
+    // Copy every annex object into the base document under a fresh ID range.
+    let offset = base.max_id + 1;
+    let mut id_map: BTreeMap<ObjectId, ObjectId> = BTreeMap::new();
+    for (&(num, generation), obj) in &annex_doc.objects {
+        let new_id: ObjectId = (offset + num, generation);
+        id_map.insert((num, generation), new_id);
+        base.objects.insert(new_id, obj.clone());
+    }
+    base.max_id = offset + annex_doc.max_id;
+
+    // Rewrite all references inside the copied objects.
+    let copied: Vec<ObjectId> = id_map.values().copied().collect();
+    for new_id in copied {
+        if let Some(obj) = base.objects.get_mut(&new_id) {
+            remap(obj, &id_map);
+        }
+    }
+
+    // Append the annex pages to the base page tree.
+    let annex_pages: Vec<ObjectId> = annex_doc
+        .get_pages()
+        .values()
+        .filter_map(|old_id| id_map.get(old_id).copied())
+        .collect();
+
+    let catalog_id = base
+        .trailer
+        .get("Root")
+        .and_then(|o| o.as_reference())
+        .ok_or("base PDF has no catalog")?;
+    let catalog = base
+        .objects
+        .get_mut(&catalog_id)
+        .and_then(|o| o.as_dict_mut())
+        .ok_or("base catalog is not a dictionary")?;
+    let pages_id = catalog
+        .get("Pages")
+        .and_then(|o| o.as_reference())
+        .ok_or("base catalog has no /Pages")?;
+    let pages_dict = base
+        .objects
+        .get_mut(&pages_id)
+        .and_then(|o| o.as_dict_mut())
+        .ok_or("base /Pages is not a dictionary")?;
+    {
+        let kids = pages_dict
+            .get_mut("Kids")
+            .and_then(|o| o.as_array_mut())
+            .ok_or("base /Pages has no /Kids array")?;
+        for page_id in &annex_pages {
+            kids.push(Object::Reference(*page_id));
+        }
+    }
+    let count = pages_dict
+        .get("Count")
+        .and_then(|o| o.as_i64())
+        .unwrap_or(0)
+        + annex_pages.len() as i64;
+    pages_dict.set("Count", Object::Integer(count));
+    // Point each annex page's /Parent at the base page tree.
+    for page_id in &annex_pages {
+        if let Some(page) = base.objects.get_mut(page_id).and_then(|o| o.as_dict_mut()) {
+            page.set("Parent", Object::Reference(pages_id));
+        }
+    }
+
+    let mut out = Vec::new();
+    base.save_to(&mut out).map_err(|e| e.to_string())?;
+    *pdf = out;
+    Ok(())
 }
 
 /// Renders the pré-état daté (EP-002-S07, art. L721-2 CCH) as a PDF.
@@ -359,6 +552,20 @@ mod tests {
         let bytes = render_etat_date(&header(), &snapshot).expect("render");
         assert!(bytes.starts_with(b"%PDF"));
         assert!(!bytes.is_empty());
+    }
+
+    #[test]
+    fn render_etat_date_appends_questionnaire_annex() {
+        let snapshot = crate::domain::etat_date::assemble(inputs(Decimal::new(150000, 2)));
+        let bytes = render_etat_date(&header(), &snapshot).expect("render");
+        // The merged document must parse and contain the 14 questionnaire
+        // pages in addition to the typst-rendered letter + regulatory pages.
+        let doc = lopdf::Document::load_from(std::io::Cursor::new(&bytes)).expect("parse");
+        let annex_pages = lopdf::Document::load_from(std::io::Cursor::new(QUESTIONNAIRE_PDF))
+            .expect("annex")
+            .get_pages()
+            .len();
+        assert!(doc.get_pages().len() > annex_pages);
     }
 
     #[test]

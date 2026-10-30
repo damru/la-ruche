@@ -93,6 +93,7 @@ hex = "0.4.3"
 typst = "0.15" # moteur de composition embarqué (ADR-011, option A retenue)
 typst-pdf = "0.15" # export PDF du document compilé
 typst-layout = "0.15" # PagedDocument : sortie de la compilation
+lopdf = "0.14" # fusion de PDF (annexe questionnaire état daté)
 
 [dev-dependencies]
 axum-test = "21.0.0"                      # tests d'intégration handlers

@@ -1,15 +1,23 @@
-// ── État daté — regulatory document ──
+// ── État daté — regulatory document with letter body + annex ──
 // Uses the shared letter frame from base.typ (brand block, double header,
-// running footer) like the logbook; the regulatory content (amount tables,
-// signature blocks) follows. Liberation Sans for the body.
+// letter opening/paragraphs/closing, running footer) like the logbook.
+// The regulatory content (amount tables, signature blocks) follows the
+// letter; a page break leads to the annex announcement (the pre-filled
+// questionnaire PDF is appended at the Rust level, not rendered by typst).
+// Liberation Sans for the regulatory body.
 // Expects the état daté payload (domain/legal_documents.rs).
-// Layout rule: stacked lines are block-wrapped children (a run of inline
-// content would merge into a single line).
 
 #set page(footer: align(center)[#letter-footer()])
+
+// ── Letter — frame helpers shared via base.typ ──
 #brand-block()
 #letter-header()
+#letter-opening()
+#letter-paragraphs()
+#letter-closing()
 
+// ── Regulatory content ──
+#pagebreak()
 #set text(font: "Liberation Sans")
 #set par(justify: false)
 
@@ -82,3 +90,19 @@
 #v(4mm)
 
 #signature-blocks()
+
+// ── Annex announcement page (questionnaire PDF appended by the engine) ──
+#pagebreak()
+#block[
+  #set par(spacing: 0pt)
+  #set par(leading: 0.5em)
+  #text(tracking: 2pt, size: 9pt, weight: "bold", fill: grey)[#payload.annex_kicker]
+  #v(5mm)
+  #text(size: 16pt, weight: "bold", fill: brand)[#payload.annex_title]
+  #v(5mm)
+  #text(size: 11pt, fill: grey)[#payload.annex_subtitle]
+]
+#v(2mm)
+#line(length: 100%, stroke: (paint: brand, thickness: 0.8pt))
+#v(4mm)
+#text(fill: grey)[Les pages suivantes contiennent le questionnaire syndic pré-rempli.]
