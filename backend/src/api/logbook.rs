@@ -396,7 +396,7 @@ pub async fn export_pdf(auth: AuthUser, State(state): State<Arc<AppState>>) -> A
         .next();
 
     // Document recipient: the user who requested the generation
-    // (user feedback PR 155 v7.1) — name, then the relevant building
+    // — name, then the relevant building
     // (name, street address, postal city). The recipient's role is not
     // relevant on a regulatory document.
     let requester = db::user::find_by_id(&state.pool, auth.user_id)

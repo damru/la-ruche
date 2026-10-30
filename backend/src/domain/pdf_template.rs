@@ -8,7 +8,7 @@
 //! data crosses the boundary as JSON strings, so no markup escaping is ever
 //! needed (typst strings are inert).
 //!
-//! - **Layout v7.1 (user feedback PR 155)** — brand block « app web » on the
+//! - **Layout v7.1** — brand block « app web » on the
 //!   first page (logo + « La Ruche » in Fraunces + tagline in DM Sans), aligned
 //!   double header (issuer left / recipient right), justified letter body,
 //!   right-aligned signature, annex header with spaced kicker, and a centered
