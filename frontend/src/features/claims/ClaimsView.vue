@@ -520,7 +520,7 @@ function handleDocumentCountChanged(claimId: string, delta: number) {
                       variant="primary"
                       size="sm"
                       :icon="CIconCheckCircle"
-                      :title="t('claims.close')"
+                      :title="t('claims.closeTitle')"
                       @click="openCloseModal(claim)"
                     />
                   </CCardActions>

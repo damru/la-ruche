@@ -1,23 +1,27 @@
 # Spécification technique — EP-002-S07
 
-**Story :** Générer le pré-état daté pour signature du compromis de vente (synthèse financière de la copropriété) (LEGAL.md §7.2)
+**Story :** Générer le pré-état daté pour signature du compromis de vente (synthèse financière + dossier documentaire de la copropriété) (LEGAL.md §7.2)
 
 **Épic :** EP-002 — Copropriétaires & lots
-**Réf. LEGAL :** §7.2, art. L721-2 CCH · **ADR :** aucun requis
+**Réf. LEGAL :** §7.2 — art. L721-2 II CCH (LEGIARTI000031110561) + art. 54 IV loi ALUR n°2014-366 : documents annexés (règlement de copropriété, EDD, fiche synthétique, carnet d'entretien, DTG), charges payées par le vendeur sur les 2 derniers exercices, état des impayés, dettes fournisseurs, part du fonds travaux rattachée au lot principal, **PV des AG des trois dernières années**, actualisation à l'AG d'approbation des comptes précédant la promesse · **ADR :** aucun requis
 **Dépendance forte :** **EP-002-S06** (état daté) — le pré-état daté réutilise le même assemblage de données (module `domain/etat_date.rs`). Implémenter S06 d'abord ; cette spec ne couvre que le delta.
 
-**Statut initial :** NON IMPLÉMENTÉ — rien n'existe.
+**Statut actuel :** ⚠️ IMPLÉMENTÉ (backend + frontend) avec limitations — synthèse financière L721-2 générée à la demande ; limitations : dette fournisseurs et travaux votés non réalisés non alimentés (mêmes limitations que S06) ; le **dossier documentaire annexé** (règlement, EDD, fiche synthétique, carnet d'entretien, DTG, PV des 3 dernières AG) n'est pas assemblé automatiquement → EP-002-S21.
 
 ---
 
 ## 1. Quoi (résumé fonctionnel)
 
-Avant la signature du compromis, le vendeur (ou son notaire) doit fournir à l'acquéreur les informations financières de l'art. L721-2 CCH : montants des charges courantes du budget prévisionnel et hors budget payés par le cédant sur les **2 derniers exercices**, sommes dues au syndicat, état global des impayés et de la dette fournisseurs, montant du **fonds travaux** (quote-part du lot et dernière cotisation).
+Avant la signature du compromis, le vendeur (ou son notaire) remet à l'acquéreur le **pré-état daté** (art. L721-2 II CCH, art. 54 IV loi ALUR) :
+
+- **Synthèse financière** : montants des charges courantes du budget prévisionnel et hors budget payés par le cédant sur les **2 derniers exercices comptables**, sommes dues au syndicat, état global des impayés, **dettes envers les prestataires (fournisseurs)**, montant du **fonds de travaux** (part rattachée au lot principal + dernière cotisation versée), nombre/état des procédures en cours ;
+- **Dossier documentaire annexé** (assemblé en un seul PDF, cf. **EP-002-S21**) : copie du **règlement de copropriété** et de l'**EDD**, **fiche synthétique** de copropriété, **carnet d'entretien**, **DTG**, **PV des assemblées générales des trois dernières années** (la loi exige 3 ans, pas 2) ;
+- les informations financières sont **à jour des informations soumises à l'AG annuelle d'approbation des comptes précédant la signature de la promesse de vente** (art. L721-2 II dernier alinéa).
 
 Contrairement à l'état daté (S06) :
-- document **plus léger**, purement informatif, sans structure 3 parties ;
-- **pas de délai légal de 15 jours** ni de suivi d'échéance ;
-- généré **à la demande, sans workflow** : pas de statut, pas de table de suivi — génération directe avec snapshot optionnel non requis (le document est reproductible à tout moment).
+- document **non obligatoire**, purement informatif, sans structure 3 parties, et **peut être rédigé directement par le vendeur** (le syndic professionnel peut toutefois facturer des frais annexes) ;
+- **pas de délai légal chiffré** ni de suivi d'échéance (art. 5 décret 67-223 ne s'applique pas ici) ;
+- généré **à la demande, sans workflow**, le plus automatisé possible : pas de statut, pas de table de suivi — génération directe à partir des données vivantes (le document est reproductible à tout moment).
 
 ## 2. État actuel du code (points d'ancrage)
 
@@ -53,6 +57,9 @@ pub(crate) struct PreEtatDate {
     pub fonds_travaux_quote_part: Decimal,
     pub fonds_travaux_derniere_cotisation: Decimal,
     pub procedures_en_cours: usize,
+    // Dossier documentaire L721-2 (assemblé en PDF par EP-002-S21) :
+    // règlement de copropriété, EDD, fiche synthétique, carnet d'entretien,
+    // DTG, PV des AG des trois dernières années — référencés par document_id (EP-005).
 }
 ```
 
@@ -84,9 +91,9 @@ Aucun nouveau repo : réutiliser les fonctions de chargement introduites par S06
 
 ## 7. Critères d'acceptation
 
-1. `GET /units/{id}/pre-etat-date` retourne la synthèse L721-2 : charges 2 exercices, sommes dues, impayés globaux, fonds travaux (quote-part + dernière cotisation), nombre de procédures en cours.
+1. `GET /units/{id}/pre-etat-date` retourne la synthèse L721-2 : charges 2 exercices, sommes dues, impayés globaux, dette fournisseurs, fonds travaux (quote-part lot principal + dernière cotisation), procédures en cours.
 2. Montants en `Decimal` ; rubriques indisponibles explicitement marquées, jamais omises silencieusement.
-3. Vue imprimable accessible depuis la fiche lot.
+3. PDF généré côté serveur (template EP-009-S09) : synthèse financière + dossier documentaire L721-2 annexé (EP-002-S21).
 4. Aucune table ni migration ajoutée ; aucun impact sur le workflow S06.
 
 ## 8. Plan de tests

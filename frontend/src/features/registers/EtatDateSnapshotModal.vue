@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import CModal from '@/components/molecules/CModal.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
+import CIconDownload from '@/components/atoms/CIconDownload.svg'
 import { useFormatters } from '@/composables/useFormatters'
 import { etatDateApi } from '@/api'
 import { toErrorMessage } from '@/composables/usePageLoader'
@@ -22,10 +23,6 @@ const { formatCurrency, formatDate } = useFormatters()
 
 const downloading = ref(false)
 const downloadError = ref('')
-
-function print() {
-  window.print()
-}
 
 // Downloads the frozen snapshot rendered server-side as a PDF (ADR-011).
 async function downloadPdf() {
@@ -59,7 +56,7 @@ async function downloadPdf() {
     @update:open="emit('update:open', $event)"
   >
     <template v-if="props.request?.snapshot">
-      <div class="etat-date-print flex flex-col gap-4">
+      <div class="flex flex-col gap-4">
         <p class="data-sm">
           {{ t('registers.etatDate.generatedAt') }} {{ formatDate(props.request.generated_at ?? '') }}
         </p>
@@ -172,29 +169,14 @@ async function downloadPdf() {
     </template>
     <template #footer>
       <CBtn
-        variant="ghost"
-        :title="t('common.close')"
-        @click="emit('update:open', false)"
-      />
-      <CBtn
-        variant="ghost"
-        :title="t('registers.etatDate.print')"
-        @click="print"
-      />
-      <CBtn
         variant="primary"
+        :icon="CIconDownload"
         :loading="downloading"
         :title="t('registers.etatDate.downloadPdf')"
+        :aria-label="t('registers.etatDate.downloadPdf')"
         @click="downloadPdf"
       />
     </template>
   </CModal>
 </template>
 
-<style scoped>
-@media print {
-  .etat-date-print {
-    color: black;
-  }
-}
-</style>

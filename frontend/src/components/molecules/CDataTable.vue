@@ -10,7 +10,7 @@ export interface Column<T> {
 </script>
 
 <script setup lang="ts" generic="T extends Record<string, unknown>">
-import { ref, computed, useSlots } from 'vue'
+import { ref, computed, useSlots, getCurrentInstance } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
@@ -38,6 +38,12 @@ const emit = defineEmits<{
 
 const sortKey = ref<string | null>(null)
 const sortDir = ref<'asc' | 'desc'>('asc')
+
+// Rows are clickable (pointer cursor) when the parent listens to @row-click.
+const hasRowClick = computed(() => {
+  const props = getCurrentInstance()?.vnode.props
+  return !!(props && (props.onRowClick || props['onRowClickOnce']))
+})
 
 function handleSort(col: Column<T>) {
   if (!col.sortable) return
@@ -121,6 +127,7 @@ function getCellValue(row: T, key: string): unknown {
           v-else
           :key="String(getCellValue(row, String(rowKey)))"
           :striped="striped ? '' : undefined"
+          :class="{ 'c-table__row--clickable': hasRowClick }"
           @click="emit('rowClick', row)"
         >
           <td
@@ -198,6 +205,7 @@ tr {
 tr:hover td { 
   background: var(--color-surface-container-low); 
 }
+.c-table__row--clickable { cursor: pointer; }
 tr[striped]:nth-child(even) td {
   background: var(--tone-bg, var(--color-surface-container));
 }

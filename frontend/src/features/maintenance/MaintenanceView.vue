@@ -477,32 +477,37 @@ function openDeleteModal(entry: MaintenanceEntry) {
           </aside>
 
           <div class="page-main">
-            <div class="filter-bar">
-              <CTabs
-                v-model="periodFilter"
-                variant="filter"
-                class="mb-0! min-w-0 flex-1"
-                :tabs="(['month', 'quarter', 'semester', 'year', ALL_FILTER] as const).map(f => ({ value: f, label: t(`maintenance.filters.${f}`) }))"
-              />
-              <CFormInput
-                v-model="search"
-                type="search"
-                class="w-56 shrink-0"
-                :placeholder="t('maintenance.searchPlaceholder')"
-              >
-                <template #prefix>
-                  <CIconSearch />
-                </template>
-              </CFormInput>
+            <CTabs
+              v-model="periodFilter"
+              variant="filter"
+              :tabs="(['month', 'quarter', 'semester', 'year', ALL_FILTER] as const).map(f => ({ value: f, label: t(`maintenance.filters.${f}`) }))"
+            >
+              <!-- Toolbar: search (full width) -->
+              <div class="flex items-center gap-3">
+                <CFormInput
+                  v-model="search"
+                  type="search"
+                  class="flex-1"
+                  :placeholder="t('maintenance.searchPlaceholder')"
+                >
+                  <template #prefix>
+                    <CIconSearch />
+                  </template>
+                </CFormInput>
+              </div>
+            </CTabs>
+
+            <!-- Filters toolbar: category + source selects (same style as /contracts) -->
+            <div class="flex flex-wrap items-center gap-2 mb-4">
               <CFormSelect
                 v-model="categoryFilter"
-                class="w-44 shrink-0"
+                class="min-w-[200px] max-w-full"
                 :label="t('maintenance.filters.category')"
                 :options="categoryOptions"
               />
               <CFormSelect
                 v-model="sourceFilter"
-                class="w-44 shrink-0"
+                class="min-w-[200px] max-w-full"
                 :label="t('maintenance.filters.source')"
                 :options="sourceOptions"
               />
@@ -636,14 +641,6 @@ function openDeleteModal(entry: MaintenanceEntry) {
 
 <style scoped>
 .timeline { display: flex; flex-direction: column; gap: 0; }
-
-.filter-bar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-3);
-  margin-bottom: var(--space-4);
-}
 
 /* ── Page layout ─────────────────────────────────────── */
 .page-layout {

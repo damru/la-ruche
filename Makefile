@@ -21,7 +21,7 @@ help: ## Show this help
 dev: ## Start the dev environment (postgres + S3 storage + backend hot-reload)
 	docker compose up -d postgres rustfs
 	$(MAKE) -j1 sqlx-prepare
-	cd backend && RUST_LOG=$(LOG_LEVEL) bacon watch
+	cd backend && RUST_LOG=$(LOG_LEVEL) LARUCHE_TEMPLATES_DIR=$(CURDIR)/backend/src/domain/typst bacon watch
 
 dev-frontend: ## Start the Vue 3 frontend in dev mode
 	cd frontend && npm run dev

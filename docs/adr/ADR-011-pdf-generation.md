@@ -94,3 +94,39 @@ Source de vérité des champs d'en-tête : le nom du syndic provient du mandat a
 tandis que le SIRET provient de `building.manager_siret`. La table `governance_mandate`
 ne porte pas de colonne SIRET : ce découplage est une limitation connue du modèle de
 données — un changement de syndic doit aussi mettre à jour `manager_siret`.
+
+---
+
+## Amendement (2026-10-28) — Migration genpdf → typst
+
+Le repli `genpdf` est abandonné au profit du crate initialement retenu par
+défaut : **`typst`** (moteur de composition embarqué, export PDF via
+`typst-pdf`). L'implémentation `genpdf` a montré ses limites sur la mise en
+page v7.1 (justification du texte, pied de page récurrent avec logo, tableaux
+à en-tête répété) : tout y est faisable mais au prix d'éléments Rust custom
+(`JustifiedParagraph`, `FooterDecorator`, décorateurs de cellule), alors que
+`typst` les offre nativement en déclaratif.
+
+- **Moteur** : `typst` 0.15 compilé in-process via une implémentation `World`
+  maison (`backend/src/domain/pdf_template.rs`) ; polices embarquées
+  (`include_bytes!`, Tinos / Fraunces / DM Sans / Liberation Sans), logo PNG
+  servi au moteur via le monde virtuel (`/logo.png`).
+- **Templates** : `.typ` embarqués dans `backend/src/domain/typst/`
+  (`base.typ` partagé + un template par document : `logbook.typ`,
+  `etat_date.typ`, `pre_etat_date.typ`), concaténés et compilés avec un
+  payload JSON sérialisé servi au template (`json("/payload.json")`). Tout le
+  formatage FR (montants, dates, compteurs) reste en Rust ; les templates ne
+  consomment que des chaînes pré-formatées, donc aucun échappement de balisage.
+  `base.typ` porte aussi le **cadre de lettre commun** (bloc marque, double
+  en-tête émetteur/destinataire, objet, salutation, formule de politesse,
+  signature, pied de page) : un template par document ne porte plus que les
+  paragraphes de la lettre et les annexes. L'interligne par défaut y est fixé
+  à 1,5 ; les blocs de type adresse et les signatures gardent un interligne
+  compact, de sorte que les documents réglementaires (état daté / pré-état
+  daté) restent visuellement inchangés.
+- **Données** : montants toujours depuis `Decimal`, jamais `f64` (inchangé).
+- **Conséquences build** : `genpdf`, `printpdf` et `image` (direct) sont retirés
+  du `Cargo.toml` ; le moteur typst est embarqué (temps de compilation et
+  taille de binaire en hausse, aucune dépendance système ajoutée — Debian slim
+  inchangée). Le rendu reste non déterministe au niveau octet (métadonnées
+  PDF) : la valeur probante reste l'instantané JSONB (inchangé).
