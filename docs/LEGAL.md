@@ -239,7 +239,7 @@ Les tantièmes sont attachés au **lot**, pas au propriétaire. Une mutation (ve
 
 **Implications :**
 - À la mutation, le nouveau propriétaire hérite des mêmes tantièmes.
-- Le syndic doit produire un **état daté** dans les 15 jours suivant la demande (loi ALUR), incluant : sommes dues par le lot, fonds travaux, procédures en cours.
+- Le syndic doit produire un **état daté** avant l'établissement de l'acte, à la demande du notaire ou du cédant (art. 5 décret 67-223 — aucun délai chiffré, cf. §7.1), incluant : sommes dues par le lot, fonds travaux, procédures en cours.
 
 ---
 
@@ -543,20 +543,25 @@ Obligatoire lors de la mise en copropriété d'un immeuble de > 10 ans, et facul
 
 ### 7.1 État daté
 
-**Référence :** Art. 5 décret 1967 (LEGIARTI000053191253 v7.0, en vigueur 25/12/2025), complété ALUR 2014  
-**Couverture :** ⚠️ partielle — EP-002-S06 ⚠️ (travaux votés non réalisés non alimentée, cf. limitation ci-dessous) ; EP-002-S07 (pré-état daté) ⚠️ (mêmes limitations).
+**Références :** Art. 5 et 5-1 décret 1967 (LEGIARTI000053191253 v7.0, en vigueur 25/12/2025) · Art. 20 loi 1965 (avis de mutation, opposition, certificat) modifié par art. 55 loi ALUR n°2014-366 (art. 20-II : désignation de l'acquéreur) · Art. 6 décret 1967 (notification par le notaire) · Art. 10-1 b) loi 1965 + décret n°2020-153 du 21/02/2020 (en vigueur 01/06/2020) : plafond des frais d'état daté à **380 € TTC**, à la charge du seul copropriétaire concerné (mutation à titre onéreux) · Art. 33 loi 1965 (sommes devenues exigibles du fait de la vente) · Art. 45-1 décret 1967 (avances remboursables)  
+**Couverture :** ⚠️ partielle — EP-002-S06 ⚠️ (travaux votés non réalisés non alimentée, cf. limitation ci-dessous) ; EP-002-S20 (certificat art. 20) 🔲 ; EP-002-S22 (frais plafonnés 380 € TTC) 🔲 ; EP-002-S24 (formulaire pré-rempli au format La Ruche, layout v7.1) 🔲 ; EP-002-S07 (pré-état daté) ⚠️ (mêmes limitations).
 
-Le syndic doit produire l'état daté dans les **15 jours** suivant la demande du notaire. Depuis le 25/12/2025 (v7.0), l'état daté est structuré en **trois parties obligatoires** :
+**Délai — correction juridique :** l'art. 5 du décret 67-223 n'impose **aucun délai chiffré** : le syndic adresse l'état daté au notaire « avant l'établissement de l'acte », à la demande du notaire **ou** du copropriétaire cédant. Les délais de **15 jours** sont ceux de l'**art. 20-I loi 1965** (avis de mutation par le notaire dans les 15 jours du transfert de propriété ; opposition du syndic dans les 15 jours de la réception de l'avis, par acte extrajudiciaire) et le versement au syndicat intervient dans les **3 mois**. Le « délai de 15 jours » souvent cité pour l'état daté lui-même est une confusion (le délai de 10 jours est le droit de rétractation art. L271-1 CCH). En pratique, l'Application conserve une **échéance interne conservatoire J+15** (EP-002-S06), mais la contrainte légale est « avant l'acte authentique ».
 
-1. **Première partie** — Sommes pouvant rester dues par le copropriétaire cédant : provisions exigibles (budget prévisionnel + hors budget), charges impayées exercices antérieurs, avances exigibles, montant restant dû sur emprunt collectif (art. 26-4 loi 1965), montant versé par la caution en cas de défaillance (art. 26-7 et 26-12 loi 1965).
-2. **Deuxième partie** — Sommes dont le syndicat pourrait être débiteur envers le cédant : avances (art. 45-1) et provisions rendues exigibles par déchéance du terme (art. 19-2) sur exercices postérieurs.
-3. **Troisième partie** — Sommes incombant au nouveau copropriétaire : reconstitution des avances (art. 45-1), provisions non encore exigibles (budget prévisionnel + hors budget). En annexe : quote-part afférente au lot dans le budget prévisionnel et les dépenses hors budget sur les deux exercices précédents. Mention des procédures en cours dans lesquelles le syndicat est partie.
+Depuis le 25/12/2025 (v7.0), l'état daté est structuré en **trois parties obligatoires** :
 
-> « Le syndic [...] adresse au notaire chargé de recevoir l'acte [...] un état daté comportant trois parties. [...] Il mentionne, s'il y a lieu, l'objet et l'état des procédures en cours dans lesquelles le syndicat est partie. »
+1. **Première partie** — Sommes pouvant rester dues par le copropriétaire cédant : provisions exigibles (budget prévisionnel + hors budget), charges impayées exercices antérieurs, sommes devenues exigibles du fait de la vente (art. 33 loi 1965), avances exigibles, cotisations au fonds de travaux, montant restant dû sur emprunt collectif (art. 26-4 loi 1965), montant versé par la caution en cas de défaillance (art. 26-7 et 26-12 loi 1965), **frais de délivrance de l'état daté plafonnés à 380 € TTC** (art. 10-1 b loi 1965, décret n°2020-153).
+2. **Deuxième partie** — Sommes dont le syndicat pourrait être débiteur envers le cédant : avances perçues (art. 45-1 décret 1967, remboursables — modalités de remboursement à préciser : solution 1 acquéreur rembourse directement le vendeur / solution 2 acquéreur verse au syndic) et provisions rendues exigibles par déchéance du terme (art. 19-2) sur exercices postérieurs, solde créditeur de l'exercice antérieur.
+3. **Troisième partie** — Sommes incombant au nouveau copropriétaire : reconstitution des avances (art. 45-1), provisions non encore exigibles (budget prévisionnel + hors budget). **En annexe à la troisième partie** : quote-part afférente au lot dans le budget prévisionnel et dans le total des dépenses hors budget prévisionnel pour les **deux exercices précédents** (art. 5, 3° décret 1967). Mention des procédures en cours dans lesquelles le syndicat est partie (objet + état).
+
+> « Le syndic, avant l'établissement de l'un des actes mentionnés à l'article 4, adresse au notaire chargé de recevoir l'acte, à la demande de ce dernier ou à celle du copropriétaire qui transfère tout ou partie de ses droits sur le lot ou les lots objets d'une même mutation, un état daté comportant trois parties. [...] Il mentionne, s'il y a lieu, l'objet et l'état des procédures en cours dans lesquelles le syndicat est partie. »
 > — Art. 5, Décret n°67-223, LEGIARTI000053191253 v7.0, en vigueur 25/12/2025
 
+**Certificat de l'article 20 (joint à l'état daté) :** si le cédant est à jour, le syndic délivre un certificat attestant qu'il est « libre de toute obligation à l'égard du syndicat », **valable un mois** ; le notaire est alors dispensé de l'avis de mutation et adresse la notification de l'art. 6 du décret 1967. À défaut, le notaire adresse l'avis de mutation (art. 20-I) par LRAR dans les 15 jours du transfert ; le syndic forme opposition dans les 15 jours (art. 5-1 décret 1967 : l'opposition énonce précisément les créances, avec les quatre masses — année courante et deux dernières années échues, deux années antérieures, créances garanties par hypothèque légale, autres créances) ; le versement au syndicat intervient dans les 3 mois.
+
 **Implications :**
-- La structure en 3 parties est obligatoire depuis le 25/12/2025 — EP-002-S06 doit être conçu selon cette structure.
+- La structure en 3 parties + annexe quote-part 2 exercices est obligatoire depuis le 25/12/2025 — EP-002-S06 doit être conçu selon cette structure.
+- L'état daté peut être demandé par le **notaire ou le cédant** ; il est remis avant l'acte authentique, pour information de l'acquéreur.
 - Dépend de §4.3 (appels de fonds), §4.4 (fonds travaux), EP-003-S04 (résolutions travaux votées en AG), EP-002-S10 (procédures judiciaires).
 - Les informations relatives aux emprunts collectifs (art. 26-4, 26-7, 26-12) doivent être disponibles si la copropriété a souscrit un emprunt collectif.
 - **Écart constaté :** la rubrique « travaux votés non réalisés » n'est pas alimentée — le schéma ne relie pas `resolution` (votes AG) à `task` (réalisation des travaux). Limitation documentée dans `specs/EP-002-S06-spec.md`. Nécessite une évolution de schéma (colonne de liaison résolution ↔ tâche) avant de pouvoir passer cette couverture à ✅.
@@ -565,10 +570,16 @@ Le syndic doit produire l'état daté dans les **15 jours** suivant la demande d
 
 ### 7.2 Pré-état daté
 
-**Référence :** Art. L721-2 Code de la construction (loi ALUR)  
-**Couverture :** ⚠️ partielle — EP-002-S07 (dette fournisseurs et travaux votés non réalisés non alimentés, cf. limitation §7.1)
+**Références :** Art. L721-2 CCH (LEGIARTI000031110561), introduit par art. 54 IV loi ALUR n°2014-366 du 24/03/2014  
+**Couverture :** ⚠️ partielle — EP-002-S07 (dette fournisseurs et travaux votés non réalisés non alimentés, cf. limitation §7.1) ; EP-002-S21 (dossier documentaire L721-2) 🔲.
 
-Document synthétique fourni au promettant-acheteur avant la signature du compromis. Contient les données financières clés de la copropriété.
+Document **non obligatoire** (mais d'usage constant) remis au promettant-acheteur **avant la signature du compromis/promesse de vente**. Il peut être rédigé directement par le **vendeur** ; s'il est établi par le syndic professionnel, celui-ci peut facturer des frais annexes (non plafonnés comme l'état daté).
+
+Contenu (art. L721-2 II CCH + art. 54 IV loi ALUR) :
+- **Documents annexés :** copie du règlement de copropriété et de l'état descriptif de division (EDD), fiche synthétique de copropriété (§1.3), carnet d'entretien (§6), diagnostic technique global (DTG, §6.3) ;
+- **Informations financières :** montant des charges courantes du budget prévisionnel et des charges hors budget prévisionnel **payées par le vendeur au cours des deux derniers exercices comptables** ; état des impayés de charges ; **dettes envers les prestataires** (fournisseurs) ; montant de la **part du fonds de travaux** (art. 14-2-1 loi 1965) rattachée au lot principal vendu et de la dernière cotisation versée ;
+- **Procès-verbaux des assemblées générales des trois dernières années** (et non deux — le formulaire CSN « deux dernières années » est une coquille du formulaire, la loi exige les PV des AG des **trois dernières années**), sauf si le vendeur n'a pas pu les obtenir auprès du syndic ;
+- les informations financières sont **à jour des informations soumises à l'AG annuelle chargée d'approuver les comptes précédant la signature de la promesse de vente** (art. L721-2 II dernier alinéa).
 
 ---
 
@@ -763,8 +774,8 @@ L'`audit_log` est en **append-only** : aucune ligne ne peut être modifiée ou s
 | 6.1 | Plan pluriannuel de travaux (PPT) | Loi Climat 2021 | ❌ | EP-009-S04 |
 | 6.2 | DPE collectif | Loi Climat 2021 | 🔲 | EP-005 |
 | 6.3 | Diagnostic technique global (DTG) | ALUR art. L731-1 | 🔲 | EP-005 |
-| 7.1 | État daté (15 jours) — 3 parties obligatoires dont emprunts collectifs (v7.0 déc. 2025) | Décret 1967 art. 5 (LEGIARTI000053191253 v7.0, 25/12/2025) | ⚠️ | EP-002-S06 (travaux votés non réalisés non alimentée) |
-| 7.2 | Pré-état daté | ALUR art. L721-2 | ⚠️ | EP-002-S07 (dette fournisseurs et travaux votés non alimentés) |
+| 7.1 | État daté — 3 parties + annexe quote-part 2 exercices (v7.0 déc. 2025), adressé au notaire avant l'acte (pas de délai chiffré) ; certificat art. 20 (validité 1 mois) ; frais plafonnés 380 € TTC | Décret 1967 art. 5 + 5-1 (LEGIARTI000053191253 v7.0, 25/12/2025) · Art. 20 + 10-1 b) loi 1965 · Art. 6 décret 1967 · Décret n°2020-153 (380 € TTC) | ⚠️ | EP-002-S06 (travaux votés non réalisés non alimentée), EP-002-S20 🔲, EP-002-S22 🔲 |
+| 7.2 | Pré-état daté — synthèse financière L721-2 + dossier documentaire (règlement, EDD, fiche synthétique, carnet, DTG, PV 3 dernières AG) | Art. L721-2 CCH (LEGIARTI000031110561) · Art. 54 IV loi ALUR n°2014-366 | ⚠️ | EP-002-S07 (dette fournisseurs et travaux votés non alimentés), EP-002-S21 🔲 |
 | 8 | RGPD + anonymisation | RGPD 2016/679 | ⚠️ | EP-002-S05, EP-002-S09 |
 | 9 | Sinistres (délais déclaration) | Code des assurances | ✅ | EP-008 |
 | 10 | Représentation en justice + procédures en cours | Art. 18-I loi 1965 | ⚠️ | EP-002-S10 ✅, EP-002-S06 ⚠️ |

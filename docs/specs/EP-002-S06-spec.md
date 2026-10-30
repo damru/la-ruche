@@ -1,25 +1,27 @@
 # Spécification technique — EP-002-S06
 
-**Story :** Générer l'état daté d'un lot à la demande (charges courantes, arriérés, fonds travaux, travaux votés non réalisés, procédures en cours) dans un délai de 15 jours (LEGAL.md §7.1)
+**Story :** Générer l'état daté d'un lot à la demande du notaire ou du cédant (charges courantes, arriérés, fonds travaux, travaux votés non réalisés, procédures en cours), à remettre avant l'acte authentique (LEGAL.md §7.1)
 
 **Épic :** EP-002 — Copropriétaires & lots
-**Réf. LEGAL :** §7.1 — structure en **3 parties obligatoire** depuis le 25/12/2025 (art. 5 décret 1967 v7.0) · **ADR :** aucun requis a priori (assemblage en lecture + table de suivi simple)
+**Réf. LEGAL :** §7.1 — art. 5 + 5-1 décret 67-223 v7.0 (25/12/2025) : structure en **3 parties obligatoires** + annexe quote-part 2 exercices, adressée au notaire **avant l'établissement de l'acte** (aucun délai légal chiffré — les 15 jours sont ceux de l'art. 20-I : avis de mutation et opposition) · art. 20 loi 1965 + art. 20-II ALUR (certificat art. 20, validité 1 mois) · art. 6 décret 1967 (notification notaire) · art. 10-1 b) loi 1965 + décret n°2020-153 : frais d'état daté plafonnés **380 € TTC** à la charge du cédant · art. 33 loi 1965 · art. 45-1 décret 1967 (avances remboursables, modalités solution 1/2) · **ADR :** aucun requis a priori (assemblage en lecture + table de suivi simple)
 **Stories liées :** EP-004 ✅ (appels/charges), EP-004-S03 ✅ (fonds travaux), EP-002-S10/registre des procédures ✅, EP-002-S17 ✅ (mutation de lot), EP-002-S07 (pré-état daté, réutilise l'assemblage)
 
-**Statut initial :** NON IMPLÉMENTÉ — aucun concept `etat_date` dans le code.
+**Statut actuel :** ⚠️ IMPLÉMENTÉ (backend + frontend) avec limitations actées — génération PDF serveur (template EP-009-S09) : lettre + état daté 3 parties (`etat_date.typ`) + formulaire pré-rempli en annexe (`questionnaire.typ`, à refondre au format La Ruche via EP-002-S24, dont certificat art. 20) ; limitations : travaux votés non réalisés non alimentés (suivi t_5adbc63d), emprunts collectifs rendus « néant — non gérés », rubrique 7 frais de délivrance non facturée (EP-002-S22). Améliorations de format actées : voir §1 (références art. 20, art. 10-1 b + décret 2020-153, art. 33, art. 45-1, annexe art. 5 3°).
 
 ---
 
 ## 1. Quoi (résumé fonctionnel)
 
-Lors d'une vente, le notaire demande au syndic un **état daté** du lot cédé ; le syndic a **15 jours** pour le produire. Le document suit la structure réglementaire :
+Lors d'une vente, le notaire **ou le copropriétaire cédant** demande au syndic un **état daté** du lot cédé (art. 5 décret 67-223 : adressé au notaire avant l'établissement de l'acte — aucun délai légal chiffré ; l'Application garde une échéance interne conservatoire J+15). Le document suit la structure réglementaire :
 
-- **Partie 1** — sommes dues par le **cédant** au syndicat (provisions exigibles, arriérés, avances).
-- **Partie 2** — sommes dont le **syndicat est débiteur** envers le cédant (avances, provisions sur charges non exigibles).
-- **Partie 3** — sommes incombant à l'**acquéreur** (reconstitution d'avances, provisions à venir).
-- **Annexes** — quote-part du lot sur les **2 derniers exercices**, état des **procédures en cours** (registre EP-002-S10), travaux votés non réalisés.
+- **Partie 1** — sommes dues par le **cédant** au syndicat : provisions exigibles (budget + hors budget), charges impayées des exercices antérieurs, sommes devenues exigibles du fait de la vente (art. 33 loi 1965), avances exigibles (réserve, provisions spéciales, emprunt syndicat art. 45-1 al. 4), cotisations annuelles au fonds de travaux, autres sommes exigibles (quote-part de prêt, condamnations), **frais de délivrance de l'état daté plafonnés à 380 € TTC** (art. 10-1 b loi 1965, décret n°2020-153) ; et à des tiers (emprunts de copropriétaires gérés par le syndic).
+- **Partie 2** — sommes dont le **syndicat est débiteur** envers le cédant : avances perçues (art. 45-1, remboursables — **modalités de remboursement à cocher** : solution 1 l'acquéreur rembourse directement le vendeur / solution 2 l'acquéreur verse au syndic), provisions rendues exigibles par déchéance du terme (art. 19-2), solde créditeur de l'exercice antérieur.
+- **Partie 3** — sommes incombant à l'**acquéreur** : reconstitution des avances, provisions non encore exigibles (budget + hors budget, avec dates d'exigibilité).
+- **Annexe à la 3ᵉ partie** (art. 5, 3° décret 1967) — quote-part du lot dans le budget prévisionnel et les dépenses hors budget sur les **2 exercices précédents** (appelée vs réelle), état des **procédures en cours** (registre EP-002-S10, art. L721-2 2° d), existence du fonds de travaux (part rattachée au lot principal + dernière cotisation), travaux votés non réalisés, événements postérieurs à la délivrance du questionnaire avant-contrat (nouvelle AG, nouveaux travaux votés).
+- **Certificat de l'article 20** (art. 20 loi 1965 + 20-II ALUR, joint à l'état daté, validité **1 mois**) : si le cédant est à jour, certificat « libre de toute obligation » (le notaire est dispensé d'avis de mutation et adresse la notification art. 6 décret 1967) ; sinon mention du solde débiteur + avis de mutation (15 jours) et opposition du syndic (15 jours, art. 5-1 décret 1967). Génération automatique : cf. **EP-002-S20**.
+- **Formulaire état daté pré-rempli** (contenu du modèle CSN `backend/assets/QUESTIONNAIRE-SYNDIC-ETAT-DATE.pdf` : informations des parties, 3 parties, annexe actualisation, événements postérieurs, sommes exigibles pour le certificat art. 20, renseignements complémentaires A1–A12 et B1–B10) — rendu actuellement par le clone CSN `questionnaire.typ`, **à refondre au format La Ruche (layout v7.1) via EP-002-S24**.
 
-La story couvre : (a) le **suivi de la demande** (date de réception, échéance J+15, statut), (b) la **génération à la demande** d'un état daté structuré (JSON + vue imprimable).
+La story couvre : (a) le **suivi de la demande** (date de réception, échéance interne J+15, statut), (b) la **génération à la demande, la plus automatisée possible**, d'un état daté structuré (JSON + PDF serveur via template partagé EP-009-S09) : lettre de transmission + état daté 3 parties + questionnaire CSN pré-rempli en annexe.
 
 **Limitation actée :** les emprunts collectifs ne sont pas modélisés dans l'application → la rubrique correspondante est rendue avec la mention explicite « néant — emprunts collectifs non gérés », section vide mais présente.
 
@@ -64,7 +66,7 @@ Le `snapshot` JSONB fige le document au moment de la génération (valeur proban
 
 ### 4.1 Domain (`backend/src/domain/etat_date.rs`, nouveau)
 
-- `compute_due_date(requested_at) -> Date` : J+15.
+- `compute_due_date(requested_at) -> Date` : échéance interne conservatoire J+15 (le délai légal est « avant l'établissement de l'acte », art. 5 décret 67-223 — cf. LEGAL.md §7.1).
 - `assemble(inputs) -> EtatDate` : fonction pure recevant les données déjà chargées (soldes du lot, appels, fonds travaux, travaux votés, procédures) et produisant la structure 3 parties + annexes. `Decimal` pour tous les montants. Zéro SQL.
 - Structure de sortie : `EtatDate { partie1: Vec<LigneMontant>, partie2: ..., partie3: ..., annexe_quote_part: [Exercice; 2], procedures: Vec<ProcedureSummary>, travaux_votes_non_realises: Vec<...>, emprunts_collectifs: SectionNeant }`.
 - Cette fonction d'assemblage est **partagée avec EP-002-S07** (pré-état daté) — la concevoir comme la source unique.
@@ -75,7 +77,7 @@ Le `snapshot` JSONB fige le document au moment de la génération (valeur proban
 
 ### 4.3 API (`backend/src/api/etat_date.rs`, nouveau ; routes dans `backend/src/api/mod.rs`)
 
-- `POST /units/{id}/etat-date-requests` — enregistre la demande (manager). Validation dates → `AppError::validation_code("errors.etat_date.invalid_request_date")`.
+- `POST /units/{id}/etat-date-requests` — enregistre la demande (manager ; demandeur = notaire ou cédant, art. 5 décret 67-223). Le formulaire prévoit aussi la désignation de l'acquéreur (art. 20-II loi 1965, ALUR), l'office notarial, la référence dossier et la date envisagée de la mutation. Validation dates → `AppError::validation_code("errors.etat_date.invalid_request_date")`.
 - `GET /etat-date-requests` — liste avec échéances (tri par `due_date`, badge dépassement).
 - `POST /etat-date-requests/{id}/generate` — charge les sources, appelle `domain::etat_date::assemble`, fige le `snapshot`. Regénération autorisée tant que non `sent` ; sinon `AppError::validation_code("errors.etat_date.already_sent")`.
 - `GET /etat-date-requests/{id}` — retourne le snapshot (ou 409 `errors.etat_date.not_generated`).
@@ -91,6 +93,9 @@ Handlers sans logique métier ; le calcul J+15 et l'assemblage vivent en domain.
 
 ## 6. Cas limites
 
+- Cédant à jour de toutes ses obligations → certificat art. 20 « libre de toute obligation » (validité 1 mois), pas de solde débiteur.
+- Frais de délivrance (rubrique 7, partie 1) : toujours affiché, plafonné à **380 € TTC** (art. 10-1 b loi 1965, décret n°2020-153) — cf. EP-002-S22 pour la facturation.
+- Modalités de remboursement des avances (art. 45-1 décret 1967) : solution 1 ou 2 cochée, jamais les deux ; montant global renseigné.
 - Lot sans arriéré ni avance → parties rendues avec lignes à zéro, jamais omises (structure réglementaire fixe).
 - Moins de 2 exercices d'historique → annexe quote-part limitée aux exercices existants, avec mention.
 - Aucune procédure en cours → section « néant ».
