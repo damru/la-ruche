@@ -386,7 +386,7 @@ Consultations initiables par tout résident sans approbation préalable, résult
 
 **MVP :** oui | **Réf. :** [PRD - Signalements.md](product/PRD%20-%20Signalements.md)
 
-**État code actuel :** backend réel (CRUD, documents associés, conversion en tâche avec priorité choisie, lien `report.task_id`, clôture automatique du signalement à la fermeture effective de la tâche liée) + frontend branché (liste, création, photos, mise à jour de statut, conversion en tâche).
+**État code actuel :** backend réel (CRUD, documents associés, conversion en tâche avec priorité choisie, lien `report.task_id`, clôture automatique du signalement à la fermeture effective de la tâche liée, commentaires de suivi append-only) + frontend branché (liste, création, photos, mise à jour de statut, conversion en tâche, section « Suivi »).
 
 Signalement par tout résident avec description et lot optionnel, suivi de statut par le syndic, conversion possible en tâche.
 
@@ -395,7 +395,7 @@ Signalement par tout résident avec description et lot optionnel, suivi de statu
 * `EP-011-S01` ✅ — Créer un signalement (titre, description, lot concerné)
 * `EP-011-S02` ✅ — Suivre et mettre à jour le statut (reçu → en cours → clos) — manager/conseil syndical
 * `EP-011-S03` ✅ — Convertir un signalement en tâche — crée une tâche avec titre/description + priorité choisie depuis le signalement, passe automatiquement le signalement en `in_progress`, puis le clôture quand la tâche liée est effectivement fermée
-* [EP-011-S04](specs/EP-011-S04-spec.md) — Ajouter un commentaire de suivi à un signalement : le Syndic et le Conseil syndical peuvent poster des commentaires horodatés visibles du déclarant, pour communiquer sur l'avancement (PRD US-SIG-006)
+* [EP-011-S04](specs/EP-011-S04-spec.md) ✅ — Ajouter un commentaire de suivi à un signalement : le Syndic et le Conseil syndical peuvent poster des commentaires horodatés visibles du déclarant, pour communiquer sur l'avancement (PRD US-SIG-006)
 * [EP-011-S05](specs/EP-011-S05-spec.md) — Gérer l'anonymat du déclarant : le résident choisit à la création du signalement de rester anonyme ; son identité n'est jamais exposée aux autres résidents ni au Syndic dans la vue liste (PRD US-SIG-007)
 
 ***

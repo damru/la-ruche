@@ -429,6 +429,16 @@ export interface Report {
   updated_at: string
 }
 
+export interface ReportComment {
+  id: string
+  report_id: string
+  author_id: string
+  author_first_name: string
+  author_last_name: string
+  body: string
+  created_at: string
+}
+
 export interface Consultation {
   id: string
   title: string

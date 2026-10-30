@@ -84,7 +84,7 @@ references:
 | Tâches | `task`, `task_document`, `vendor_submission`, `vendor_submission_document` |
 | Sinistres | `claim`, `claim_document`, `claim_note` |
 | Carnet | `maintenance_log`, `maintenance_log_document` |
-| Signalements | `report`, `report_document` |
+| Signalements | `report`, `report_document`, `report_comment` |
 | Consultations | `consultation`, `consultation_choice`, `consultation_response`, `consultation_response_choice`, `consultation_reminder` |
 | Calendrier | `calendar_event`, `calendar_event_document` |
 | Registres | `judicial_proceeding`, `governance_mandate` |
@@ -99,6 +99,7 @@ Tout upload de fichier depuis n'importe quel module de l'application **crée sys
 Invariants techniques implémentés :
 
 - `report.task_id` porte le lien informatif entre signalement et tâche ; cette relation reste non destructive et réutilisable par les workflows applicatifs.
+- `report_comment` (EP-011-S04, US-SIG-006) : commentaires de suivi append-only sur un signalement (pas d'`updated_at`, pas de soft-delete, `ON DELETE CASCADE` depuis `report`) ; l'écriture est réservée manager/board_member, la lecture est ouverte au déclarant du signalement.
 - Les documents de tâche sont répartis entre `task_document` (gestionnaires) et `vendor_submission_document` (soumissions prestataire) ; les endpoints manager `GET/POST/DELETE /tasks/{id}/documents` et `document_count` agrègent ces deux sources.
 - `claim_document` suit le même modèle d'association documentaire que `report_document`, avec nettoyage des liens lors des suppressions d'entité.
 - `maintenance_log.task_id` et `maintenance_log.contract_id` restent des liens de traçabilité souples, sans cascade destructive depuis les tâches ou contrats.

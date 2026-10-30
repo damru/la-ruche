@@ -4,7 +4,7 @@
 
 **Épic :** EP-011 — Signalements
 **Réf. PRD :** US-SIG-006
-**État :** NON IMPLÉMENTÉ.
+**État :** IMPLÉMENTÉ (backend + frontend).
 
 
 ---

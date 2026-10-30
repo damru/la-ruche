@@ -17,8 +17,10 @@ import CHeading from '@/components/atoms/CHeading.vue'
 import CTabs from '@/components/atoms/CTabs.vue'
 import CIconCheckCircle from '@/components/atoms/CIconCheckCircle.svg'
 import CIconEdit from '@/components/atoms/CIconEdit.svg'
+import CIconMessageSquare from '@/components/atoms/CIconMessageSquare.svg'
 import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import CIconRefresh from '@/components/atoms/CIconRefresh.svg'
+import CFormTextarea from '@/components/atoms/CFormTextarea.vue'
 import CreateReportModal from './CreateReportModal.vue'
 import UpdateReportStatusModal from './UpdateReportStatusModal.vue'
 import ConvertReportToTaskModal from './ConvertReportToTaskModal.vue'
@@ -26,8 +28,9 @@ import EditReportModal from './EditReportModal.vue'
 import DeleteReportModal from './DeleteReportModal.vue'
 import ReportPhotosModal from './ReportPhotosModal.vue'
 import { reportsApi, unitsApi } from '@/api'
+import { useAuthStore } from '@/stores/auth'
 import { useBuildingStore } from '@/stores/building'
-import type { Report, ReportStatus, Unit } from '@/types/domain'
+import type { Report, ReportComment, ReportStatus, Unit } from '@/types/domain'
 import { ALL_FILTER, REPORT_STATUS_CLOSED, REPORT_STATUS_IN_PROGRESS, REPORT_STATUS_OPEN } from '@/utils/constants'
 import { usePermissions } from '@/composables/usePermissions'
 
@@ -46,6 +49,8 @@ const statusFilter = ref<typeof ALL_FILTER | ReportStatus>(ALL_FILTER)
 // ── RBAC — only manager and board_member can act on reports ────────
 const canManage = perms.canManageReport
 const canAdminister = perms.canAdministerReport
+const canComment = perms.canCommentReport
+const authStore = useAuthStore()
 
 // ── Modal state ───────────────────────────────────────────────────
 const showCreateModal = ref(false)
@@ -54,6 +59,13 @@ const reportToConvert = ref<Report | null>(null)
 const reportToEdit = ref<Report | null>(null)
 const reportToDelete = ref<Report | null>(null)
 const reportPhotoGalleryTarget = ref<Report | null>(null)
+
+// ── Follow-up comments ────────────────────────────────────────────────────────
+const expandedCommentsReportId = ref<string | null>(null)
+const commentsByReport = ref<Record<string, ReportComment[]>>({})
+const loadingComments = ref(false)
+const newCommentBody = ref('')
+const submittingComment = ref(false)
 
 function openCreateModal() { showCreateModal.value = true }
 function openStatusModal(report: Report) { reportToUpdate.value = report }
@@ -126,6 +138,45 @@ function unitLabel(unitId?: string): string {
 
 function authorName(r: Report): string {
   return `${r.author_first_name} ${r.author_last_name}`
+}
+
+function canReadComments(r: Report): boolean {
+  return canComment.value || r.author_id === authStore.user?.user_id
+}
+
+async function toggleComments(r: Report) {
+  if (expandedCommentsReportId.value === r.id) {
+    expandedCommentsReportId.value = null
+    return
+  }
+  expandedCommentsReportId.value = r.id
+  if (!commentsByReport.value[r.id]) {
+    loadingComments.value = true
+    try {
+      const response = await reportsApi.listComments(r.id)
+      commentsByReport.value[r.id] = response.data
+    } catch {
+      expandedCommentsReportId.value = null
+    } finally {
+      loadingComments.value = false
+    }
+  }
+}
+
+async function submitComment(r: Report) {
+  const body = newCommentBody.value.trim()
+  if (!body) return
+  submittingComment.value = true
+  try {
+    const response = await reportsApi.addComment(r.id, body)
+    if (!commentsByReport.value[r.id]) commentsByReport.value[r.id] = []
+    commentsByReport.value[r.id].push(response.data)
+    newCommentBody.value = ''
+  } catch {
+    // error handled by interceptor
+  } finally {
+    submittingComment.value = false
+  }
 }
 </script>
 
@@ -278,6 +329,19 @@ function authorName(r: Report): string {
                   />
                 </div>
   
+                <div
+                  v-if="canReadComments(r)"
+                  class="flex items-center"
+                >
+                  <CBtn
+                    variant="ghost"
+                    size="sm"
+                    :icon="CIconMessageSquare"
+                    :title="t('reports.commentsTitle')"
+                    @click="toggleComments(r)"
+                  />
+                </div>
+
                 <template v-if="canManage">
                   <CCardActions>
                     <CBtn
@@ -305,6 +369,59 @@ function authorName(r: Report): string {
                     />
                   </CCardActions>
                 </template>
+
+                <div
+                  v-if="expandedCommentsReportId === r.id"
+                  class="flex flex-col gap-3 border-t border-outline-variant pt-3"
+                >
+                  <h4 class="text-sm font-semibold text-on-surface m-0">
+                    {{ t('reports.commentsTitle') }}
+                  </h4>
+                  <CPageLoader v-if="loadingComments" />
+                  <template v-else>
+                    <p
+                      v-if="!commentsByReport[r.id]?.length"
+                      class="text-sm text-on-surface-variant m-0"
+                    >
+                      {{ t('reports.commentsEmpty') }}
+                    </p>
+                    <ul
+                      v-else
+                      class="flex flex-col gap-2 m-0 p-0 list-none"
+                    >
+                      <li
+                        v-for="c in commentsByReport[r.id]"
+                        :key="c.id"
+                        class="flex flex-col gap-0-5 text-sm"
+                      >
+                        <span class="text-xs text-on-surface-variant">
+                          {{ c.author_first_name }} {{ c.author_last_name }} · {{ formatDate(c.created_at, 'datetime') }}
+                        </span>
+                        <span class="text-on-surface whitespace-pre-wrap">{{ c.body }}</span>
+                      </li>
+                    </ul>
+                  </template>
+                  <div
+                    v-if="canComment"
+                    class="flex flex-col gap-2"
+                  >
+                    <CFormTextarea
+                      v-model="newCommentBody"
+                      :placeholder="t('reports.commentPlaceholder')"
+                      :rows="2"
+                    />
+                    <div class="flex justify-end">
+                      <CBtn
+                        variant="primary"
+                        size="sm"
+                        :loading="submittingComment"
+                        :disabled="!newCommentBody.trim()"
+                        :title="t('reports.commentAdd')"
+                        @click="submitComment(r)"
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
             </CCard>
           </div>

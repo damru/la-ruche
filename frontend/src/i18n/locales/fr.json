@@ -1062,7 +1062,11 @@
     },
     "create": "Nouveau signalement",
     "convertToTask": "Convertir en tâche",
-    "linkedPhotosCount": "{count} photo | {count} photos"
+    "linkedPhotosCount": "{count} photo | {count} photos",
+    "commentsTitle": "Suivi",
+    "commentsEmpty": "Aucun commentaire de suivi.",
+    "commentPlaceholder": "Ajouter un commentaire de suivi…",
+    "commentAdd": "Commenter"
   },
   "calendar": {
     "count": "{count} événement | {count} événements",
@@ -1780,7 +1784,8 @@
       "title_required": "Le titre du signalement est obligatoire.",
       "invalid_status": "Le statut du signalement est invalide.",
       "invalid_priority": "La priorité de la tâche générée est invalide.",
-      "already_converted_to_task": "Ce signalement a déjà été converti en tâche."
+      "already_converted_to_task": "Ce signalement a déjà été converti en tâche.",
+      "comment_body_required": "Le contenu du commentaire ne peut pas être vide."
     },
     "tasks": {
       "title_required": "Le titre de la tâche est obligatoire.",
