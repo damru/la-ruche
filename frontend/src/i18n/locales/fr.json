@@ -871,7 +871,11 @@
     "confirmRevokeToken": "Révoquer ce lien empêchera le prestataire d'accéder à la tâche. Cette action est irréversible.",
     "confirmStatusChange": "Confirmer le changement de statut vers \"{status}\" ?",
     "confirmDeleteMessage": "La tâche « {title} » sera supprimée définitivement. Cette action est irréversible.",
-    "confirmDeleteLogbookMessage": "La tâche « {title} » est déjà historisée dans le carnet d'entretien. La suppression de la tâche conservera les entrées existantes du carnet mais supprimera le lien de traçabilité.",
+    "confirmDeleteLogbookMessage": "La tâche « {title} » est déjà historisée dans le carnet d'entretien et ne peut pas être supprimée.",
+    "deleteBlockedSubmissionsMessage": "La tâche « {title} » possède une soumission prestataire et ne peut pas être supprimée.",
+    "deleteBlockedHint": "Utilisez « Annuler la tâche » pour la clôturer sans supprimer les données.",
+    "confirmCancelMessage": "La tâche « {title} » sera annulée : elle restera visible avec le statut « Annulée » et ses documents seront conservés.",
+    "cancelSuccess": "Tâche annulée",
     "documentHint": "Glisser-déposer ou cliquer pour joindre les pièces de la tâche",
     "documentUploadError": "La tâche a été enregistrée mais certains documents n'ont pas pu être rattachés",
     "documentsLoadError": "Impossible de charger les documents de la tâche.",
@@ -917,6 +921,7 @@
     "create": "Nouvelle tâche",
     "closeTask": "Terminer la tâche",
     "deleteTask": "Supprimer la tâche",
+    "cancelTask": "Annuler la tâche",
     "reopenTask": "Ré-ouvrir la tâche",
     "updateStatus": "Changer le statut",
     "tokenExpires": "Expire le {date}",
@@ -1792,7 +1797,9 @@
       "title_required": "Le titre de la tâche est obligatoire.",
       "invalid_status": "Le statut de la tâche est invalide.",
       "invalid_priority": "La priorité de la tâche est invalide.",
-      "invalid_filter": "Le filtre appliqué est invalide."
+      "invalid_filter": "Le filtre appliqué est invalide.",
+      "has_submissions": "La tâche possède une soumission prestataire et ne peut pas être supprimée.",
+      "has_logbook_entry": "La tâche est historisée dans le carnet d'entretien et ne peut pas être supprimée."
     },
     "units": {
       "invalid_payload": "Les informations du lot sont invalides.",

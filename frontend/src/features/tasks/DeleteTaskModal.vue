@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import CModal from '@/components/molecules/CModal.vue'
 import CFormActions from '@/components/molecules/CFormActions.vue'
@@ -10,6 +10,7 @@ import { useAutoClose } from '@/composables/useAutoClose'
 import { toErrorMessage } from '@/composables/usePageLoader'
 import type { Task } from '@/types/domain'
 import { useUiStore } from '@/stores/ui'
+import { usePermissions } from '@/composables/usePermissions'
 
 const props = defineProps<{
   open: boolean
@@ -19,10 +20,16 @@ const props = defineProps<{
 const emit = defineEmits<{
   'update:open': [value: boolean]
   'deleted': []
+  'cancel-requested': [task: Task]
 }>()
+
+const deleteBlocked = computed(
+  () => Boolean(props.task?.is_in_logbook || props.task?.has_vendor_submission),
+)
 
 const { t } = useI18n()
 const ui = useUiStore()
+const { canAdministerTask } = usePermissions()
 const feedback = useFormFeedback()
 const { schedule: scheduleClose, forceExpire: forceClose } = useAutoClose()
 const deleting = ref(false)
@@ -61,8 +68,16 @@ async function handleSubmit() {
       {{
         task?.is_in_logbook
           ? t('tasks.confirmDeleteLogbookMessage', { title: task?.title ?? '' })
-          : t('tasks.confirmDeleteMessage', { title: task?.title ?? '' })
+          : task?.has_vendor_submission
+            ? t('tasks.deleteBlockedSubmissionsMessage', { title: task?.title ?? '' })
+            : t('tasks.confirmDeleteMessage', { title: task?.title ?? '' })
       }}
+    </p>
+    <p
+      v-if="deleteBlocked"
+      class="body-sm"
+    >
+      {{ t('tasks.deleteBlockedHint') }}
     </p>
     <template #footer>
       <CFormActions
@@ -75,12 +90,19 @@ async function handleSubmit() {
           @click="$emit('update:open', false)"
         />
         <CBtn
+          v-if="!deleteBlocked"
           variant="danger"
           :title="t('common.deleteLabel')"
           :loading="deleting"
           :closing="feedback.status.value === 'success'"
           :closing-duration-ms="ui.autoCloseDelayMs"
           @click="handleSubmit"
+        />
+        <CBtn
+          v-else-if="canAdministerTask"
+          variant="primary"
+          :title="t('tasks.cancelTask')"
+          @click="task && $emit('cancel-requested', task)"
         />
       </CFormActions>
     </template>

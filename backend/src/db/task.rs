@@ -29,6 +29,8 @@ pub struct TaskRow {
     pub document_count: i64,
     /// True when at least one maintenance_log entry references this task.
     pub is_in_logbook: bool,
+    /// True when at least one vendor submission references this task.
+    pub has_vendor_submission: bool,
 }
 
 /// Safe DTO for list/get API responses.
@@ -55,6 +57,8 @@ pub struct TaskListItem {
     pub document_count: i64,
     /// True when at least one maintenance_log entry references this task.
     pub is_in_logbook: bool,
+    /// True when at least one vendor submission references this task.
+    pub has_vendor_submission: bool,
 }
 
 impl From<TaskRow> for TaskListItem {
@@ -79,6 +83,7 @@ impl From<TaskRow> for TaskListItem {
             updated_at: r.updated_at,
             document_count: r.document_count,
             is_in_logbook: r.is_in_logbook,
+            has_vendor_submission: r.has_vendor_submission,
         }
     }
 }
@@ -169,6 +174,7 @@ fn task_row_from_query(r: &sqlx::postgres::PgRow) -> Result<TaskRow, sqlx::Error
         updated_at: r.try_get("updated_at")?,
         document_count: r.try_get("document_count")?,
         is_in_logbook: r.try_get("is_in_logbook")?,
+        has_vendor_submission: r.try_get("has_vendor_submission")?,
     })
 }
 
@@ -247,6 +253,7 @@ pub async fn list(
               JOIN document d ON d.id = task_documents.document_id AND d.deleted_at IS NULL
             ) AS document_count,
            EXISTS(SELECT 1 FROM maintenance_log WHERE task_id = t.id) AS is_in_logbook,
+           EXISTS(SELECT 1 FROM vendor_submission WHERE task_id = t.id) AS has_vendor_submission,
            COUNT(*) OVER () AS total_count
            FROM task t
            WHERE t.building_id = $1
@@ -302,7 +309,8 @@ pub async fn get(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<Option
               ) AS task_documents
               JOIN document d ON d.id = task_documents.document_id AND d.deleted_at IS NULL
             ) AS document_count,
-           EXISTS(SELECT 1 FROM maintenance_log WHERE task_id = t.id) AS is_in_logbook
+           EXISTS(SELECT 1 FROM maintenance_log WHERE task_id = t.id) AS is_in_logbook,
+           EXISTS(SELECT 1 FROM vendor_submission WHERE task_id = t.id) AS has_vendor_submission
            FROM task t WHERE t.id = $1 AND t.building_id = $2"#,
     )
     .bind(id)
@@ -331,7 +339,8 @@ pub async fn create(
            contract_id, contractor_id, contractor_name, assigned_to, created_by, vendor_token,
            token_expires_at, closed_at, completion_cost, created_at, updated_at,
            0::bigint AS document_count,
-           FALSE AS is_in_logbook"#,
+           FALSE AS is_in_logbook,
+           FALSE AS has_vendor_submission"#,
     )
     .bind(building_id)
     .bind(&input.title)
@@ -426,45 +435,44 @@ pub async fn get_vendor_token(
 }
 
 /// Deletes a task; documents that become orphaned are soft-deleted.
+/// Hard delete is refused when a vendor submission or a maintenance-log entry
+/// references the task (both are evidentiary records, ADR-009).
 pub async fn delete(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()> {
     let mut tx = pool.begin().await?;
+
+    let has_submissions = sqlx::query_scalar::<_, bool>(
+        "SELECT EXISTS(SELECT 1 FROM vendor_submission WHERE task_id = $1)",
+    )
+    .bind(id)
+    .fetch_one(&mut *tx)
+    .await?;
+    if has_submissions {
+        return Err(crate::errors::AppError::validation_code(
+            "errors.tasks.has_submissions",
+        ));
+    }
+
+    let in_logbook = sqlx::query_scalar::<_, bool>(
+        "SELECT EXISTS(SELECT 1 FROM maintenance_log WHERE task_id = $1)",
+    )
+    .bind(id)
+    .fetch_one(&mut *tx)
+    .await?;
+    if in_logbook {
+        return Err(crate::errors::AppError::validation_code(
+            "errors.tasks.has_logbook_entry",
+        ));
+    }
 
     let linked_document_ids = sqlx::query_scalar::<_, Uuid>(
         r#"
         SELECT document_id
-        FROM (
-            SELECT td.document_id
-            FROM task_document td
-            WHERE td.task_id = $1
-            UNION
-            SELECT vsd.document_id
-            FROM vendor_submission_document vsd
-            JOIN vendor_submission vs ON vs.id = vsd.submission_id
-            JOIN task t ON t.id = vs.task_id
-            WHERE t.id = $1 AND t.building_id = $2
-        ) AS linked_documents
+        FROM task_document td
+        WHERE td.task_id = $1
         "#,
     )
     .bind(id)
-    .bind(building_id)
     .fetch_all(&mut *tx)
-    .await?;
-
-    sqlx::query(
-        r#"
-        DELETE FROM vendor_submission
-        WHERE task_id = $1
-          AND EXISTS (
-              SELECT 1
-              FROM task t
-              WHERE t.id = $1
-                AND t.building_id = $2
-          )
-        "#,
-    )
-    .bind(id)
-    .bind(building_id)
-    .execute(&mut *tx)
     .await?;
 
     let result = sqlx::query("DELETE FROM task WHERE id = $1 AND building_id = $2")
@@ -478,6 +486,43 @@ pub async fn delete(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()>
 
     crate::db::document::delete_orphaned_tx(&mut tx, &linked_document_ids, building_id).await?;
     tx.commit().await?;
+    Ok(())
+}
+
+/// Cancels a task without deleting anything: documents, submissions and the
+/// vendor token are kept. Any non-terminal status (`open`, `in_progress`,
+/// `awaiting_vendor`, `awaiting_validation`) can be cancelled; the row is
+/// locked inside the transaction to keep the check race-free.
+pub async fn cancel(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()> {
+    let mut tx = pool.begin().await?;
+    // FOR UPDATE serialises the status check with the write, so two concurrent
+    // cancels cannot both succeed.
+    sqlx::query_scalar::<_, String>(
+        "SELECT status::text FROM task WHERE id = $1 AND building_id = $2 FOR UPDATE",
+    )
+    .bind(id)
+    .bind(building_id)
+    .fetch_optional(&mut *tx)
+    .await?
+    .ok_or(crate::errors::AppError::NotFound)?;
+    let result = sqlx::query(
+        "UPDATE task SET status = $3::text::task_status, updated_at = NOW()
+         WHERE id = $1 AND building_id = $2
+           AND status NOT IN ($4::text::task_status, $5::text::task_status)",
+    )
+    .bind(id)
+    .bind(building_id)
+    .bind(status::CANCELLED)
+    .bind(status::CLOSED)
+    .bind(status::CANCELLED)
+    .execute(&mut *tx)
+    .await?;
+    tx.commit().await?;
+    if result.rows_affected() == 0 {
+        return Err(crate::errors::AppError::validation_code(
+            "errors.immutability.frozen",
+        ));
+    }
     Ok(())
 }
 
@@ -627,13 +672,15 @@ pub async fn get_by_token(pool: &PgPool, token: Uuid) -> AppResult<Option<TaskRo
               ) AS task_documents
               JOIN document d ON d.id = task_documents.document_id AND d.deleted_at IS NULL
             ) AS document_count,
-           EXISTS(SELECT 1 FROM maintenance_log WHERE task_id = t.id) AS is_in_logbook
+           EXISTS(SELECT 1 FROM maintenance_log WHERE task_id = t.id) AS is_in_logbook,
+           EXISTS(SELECT 1 FROM vendor_submission WHERE task_id = t.id) AS has_vendor_submission
            FROM task t
            WHERE t.vendor_token = $1 AND t.token_expires_at > NOW()
-           AND t.status != $2::text::task_status"#,
+           AND t.status NOT IN ($2::text::task_status, $3::text::task_status)"#,
     )
     .bind(token)
     .bind(status::CLOSED)
+    .bind(status::CANCELLED)
     .fetch_optional(pool)
     .await?;
     row.as_ref()

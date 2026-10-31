@@ -4,7 +4,9 @@
 
 **Épic :** EP-007 — Travaux & prestataires
 **Réf. PRD :** US-TP-016 · **Réf. ADR :** ADR-009 (piste probante) · **Réf. LEGAL :** conservation des actes
-**État :** PARTIEL — cette spec ne couvre que l'écart restant.
+**État :** IMPLÉMENTÉ (backend + frontend)
+
+> **AC-016-D (entrée timeline immuable avec motif) :** non livrée ici — la table `activity_log` n'existe pas encore ; cette entrée sera produite par EP-017-S02 (`task.status_changed` / événement d'annulation) quand l'epic EP-017 sera livré.
 
 ---
 
