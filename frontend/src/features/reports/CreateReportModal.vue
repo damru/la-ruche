@@ -141,7 +141,7 @@ async function submit() {
           v-model="form.is_anonymous"
           :label="t('reports.anonymousLabel')"
         />
-        <p class="text-xs text-on-surface-variant m-0">
+        <p class="field-hint">
           {{ t('reports.anonymousHint') }}
         </p>
       </div>
