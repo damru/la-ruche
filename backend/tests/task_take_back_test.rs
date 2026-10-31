@@ -81,9 +81,11 @@ async fn take_back_from_quote_received_keeps_documents() {
 
     // Attach a document as manager via the API, then check it survives take-back.
     let doc_id: String = sqlx::query_scalar(
-        "INSERT INTO document (id, building_id, category, original_name, storage_path, bucket, mime_type, size_bytes, visible_to_roles, uploaded_by)
-         VALUES (gen_random_uuid(), $1, 'autre', 'devis.pdf', 'k/devis.pdf', 'bucket', 'application/pdf', 10, ARRAY['manager','board_member','co_owner','tenant']::user_role[], $2)
-         RETURNING id::text",
+        r#"INSERT INTO document (building_id, uploaded_by, original_name, storage_path,
+           bucket, mime_type, size_bytes, visible_to_roles, category)
+           VALUES ($1, $2, 'devis.pdf', 'k/devis.pdf', 'bucket', 'application/pdf', 10,
+                   ARRAY['manager','board_member','co_owner','tenant']::user_role[], 'autre')
+           RETURNING id::text"#,
     )
     .bind(ctx.building_id)
     .bind(ctx.manager_id)
@@ -119,7 +121,12 @@ async fn take_back_refused_outside_quote_phase() {
     let server = common::test_server().await;
     let auth = format!("Bearer {}", ctx.manager_jwt);
 
-    for status in ["open", "in_progress", "awaiting_vendor", "awaiting_validation"] {
+    for status in [
+        "open",
+        "in_progress",
+        "awaiting_vendor",
+        "awaiting_validation",
+    ] {
         let task_id = create_task(&server, &auth, &format!("Statut {status}")).await;
         set_status(&pool, &task_id, status).await;
         let resp = server
