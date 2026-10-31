@@ -45,6 +45,8 @@ export const MEETING_STATUS_DRAFT: MeetingStatus = 'draft'
 export const MEETING_STATUS_CALLED: MeetingStatus = 'called'
 export const MEETING_STATUS_ONGOING: MeetingStatus = 'ongoing'
 export const MEETING_STATUS_CLOSED: MeetingStatus = 'closed'
+/** UI-only filter value (not a meeting status): every non-closed meeting. */
+export const MEETING_STATUS_UPCOMING = 'upcoming' as const
 export const MEETING_TYPES = ['annual', 'extraordinary'] as const satisfies readonly MeetingType[]
 export const MEETING_TYPE_ANNUAL: MeetingType = 'annual'
 export const MEETING_TYPE_EXTRAORDINARY: MeetingType = 'extraordinary'

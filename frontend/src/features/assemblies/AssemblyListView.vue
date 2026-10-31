@@ -6,7 +6,7 @@ import { useFormatters } from '@/composables/useFormatters'
 import { usePageLoader } from '@/composables/usePageLoader'
 import { usePermissions } from '@/composables/usePermissions'
 import type { Meeting, MeetingStatus, MeetingType } from '@/types/domain'
-import { ALL_FILTER, MEETING_STATUS_CALLED, MEETING_STATUS_CLOSED, MEETING_STATUS_ONGOING, MEETING_TYPE_ANNUAL } from '@/utils/constants'
+import { ALL_FILTER, MEETING_STATUS_CALLED, MEETING_STATUS_CLOSED, MEETING_STATUS_ONGOING, MEETING_STATUS_UPCOMING, MEETING_TYPE_ANNUAL } from '@/utils/constants'
 import { meetingsApi } from '@/api'
 import { useBuildingStore } from '@/stores/building'
 import CBadge from '@/components/atoms/CBadge.vue'
@@ -25,11 +25,11 @@ import CreateMeetingModal from './CreateMeetingModal.vue'
 const router = useRouter()
 const { t } = useI18n()
 const { formatDate } = useFormatters()
-const { canManageGM } = usePermissions()
+const { canManageGM, isTenantOnly } = usePermissions()
 
 const buildingName = ref('')
 const allMeetings = ref<Meeting[]>([])
-type MeetingFilter = typeof ALL_FILTER | 'upcoming' | MeetingStatus
+type MeetingFilter = typeof ALL_FILTER | typeof MEETING_STATUS_UPCOMING | MeetingStatus
 const filter = ref<MeetingFilter>(ALL_FILTER)
 
 const canManage = canManageGM
@@ -49,7 +49,8 @@ const { loading, error, reload } = usePageLoader(loadData)
 onMounted(reload)
 
 const meetings = computed(() => {
-  if (filter.value === 'upcoming') return allMeetings.value.filter(meeting => meeting.status !== MEETING_STATUS_CLOSED)
+  if (isTenantOnly.value) return allMeetings.value.filter(meeting => meeting.status === MEETING_STATUS_CLOSED)
+  if (filter.value === MEETING_STATUS_UPCOMING) return allMeetings.value.filter(meeting => meeting.status !== MEETING_STATUS_CLOSED)
   if (filter.value === MEETING_STATUS_CLOSED) return allMeetings.value.filter(meeting => meeting.status === MEETING_STATUS_CLOSED)
   return allMeetings.value
 })
@@ -57,11 +58,16 @@ const meetings = computed(() => {
 const upcomingCount = computed(() => allMeetings.value.filter(meeting => meeting.status !== MEETING_STATUS_CLOSED).length)
 const closedCount = computed(() => allMeetings.value.filter(meeting => meeting.status === MEETING_STATUS_CLOSED).length)
 
-const meetingTabs = computed<Tab[]>(() => [
-  { value: ALL_FILTER, label: t('common.allFem'), count: allMeetings.value.length },
-  { value: 'upcoming', label: t('meetings.filterUpcoming'), count: upcomingCount.value },
-  { value: MEETING_STATUS_CLOSED, label: t('meetings.filterClosed'), count: closedCount.value },
-])
+const meetingTabs = computed<Tab[]>(() => {
+  if (isTenantOnly.value) {
+    return [{ value: MEETING_STATUS_CLOSED, label: t('meetings.filterClosed'), count: closedCount.value }]
+  }
+  return [
+    { value: ALL_FILTER, label: t('common.allFem'), count: allMeetings.value.length },
+    { value: MEETING_STATUS_UPCOMING, label: t('meetings.filterUpcoming'), count: upcomingCount.value },
+    { value: MEETING_STATUS_CLOSED, label: t('meetings.filterClosed'), count: closedCount.value },
+  ]
+})
 
 function typeLabel(type: MeetingType): string {
   return t(`meetings.typeLabel.${type}`)

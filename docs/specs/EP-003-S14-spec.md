@@ -5,7 +5,7 @@
 **Épic :** EP-003 — Assemblées générales
 **Réf. LEGAL :** locataire = résultats et PV publié uniquement · **Réf. DESIGN :** `docs/DESIGN.md` §4.2 · **Réf. PRD :** US-AG-* (consultation) · **Réf. ADR :** aucun
 
-**Statut actuel : PARTIEL.**
+**Statut actuel : IMPLÉMENTÉ (backend + frontend).**
 
 ---
 
@@ -52,7 +52,7 @@ pub(crate) fn meeting_visible_to(role: &Role, meeting_status: &str) -> bool {
 
 ### 4.3 Erreurs
 
-Pas de nouveau code i18n : l'invisibilité se matérialise en 404 (pattern existant), pas en 403 (ne pas révéler l'existence du dossier).
+Pas de nouveau code i18n : le refus de lecture locataire se matérialise en **403** (règle repo `roles-permissions.instructions.md` : un refus d'accès ne se masque jamais en 404 pour un utilisateur authentifié de la même copropriété ; l'isolation `building_id` reste stricte et renvoie 404).
 
 ## 5. Frontend
 
@@ -67,7 +67,7 @@ Pas de nouveau code i18n : l'invisibilité se matérialise en 404 (pattern exist
 
 | Cas | Règle |
 |---|---|
-| Tenant GET un meeting `draft`/`called`/`ongoing` | 404. |
+| Tenant GET un meeting `draft`/`called`/`ongoing` | 403 (règle repo : pas de masquage 404). |
 | Tenant liste les AG | Seules les `closed` apparaissent. |
 | Tenant GET la feuille de présence | 403 (rôle non autorisé sur l'endpoint). |
 | Tenant GET le brouillon de PV | 403 (manager-only inchangé). |

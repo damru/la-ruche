@@ -153,6 +153,8 @@ Le moteur DOIT implémenter les règles suivantes **sans raccourci** :
 | Notification PV | `C/R/U/D¹` | `R` | `R¹` | `R¹` |
 
 > ¹ Périmètre restreint à la copropriété de résidence de l'utilisateur. Pour `Persona-Copro` sur votes : ses propres votes uniquement.
+>
+> Pour `Persona-Locataire` (US-AG-014) : lecture restreinte aux AG **clôturées** (résultats + documents publiés, dont PV) ; la feuille de présence, le quorum et la checklist de convocation restent réservés au Syndic, au Conseil et aux copropriétaires.
 
 ### Règles de sécurité
 

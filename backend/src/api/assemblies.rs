@@ -18,7 +18,10 @@ use validator::Validate;
 use crate::{
     api::documents::DocumentListItem,
     db::AppState,
-    domain::{AuthUser, Role, immutability::resolution_status, permissions, vote::VoteRule},
+    domain::{
+        AuthUser, Role, immutability::resolution_status, meeting_visibility, permissions,
+        vote::VoteRule,
+    },
     errors::{AppError, AppResult},
 };
 
@@ -205,7 +208,8 @@ pub async fn list(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,
 ) -> AppResult<Json<Vec<MeetingResponse>>> {
-    let meetings = crate::db::assembly::list(&state.pool, auth.building_id).await?;
+    let mut meetings = crate::db::assembly::list(&state.pool, auth.building_id).await?;
+    meetings.retain(|m| meeting_visibility::meeting_visible_to(&auth.roles, &m.status));
     Ok(Json(meetings))
 }
 
@@ -232,7 +236,19 @@ pub async fn get(
     let meeting = crate::db::assembly::get(&state.pool, id, auth.building_id)
         .await?
         .ok_or(AppError::NotFound)?;
+    guard_meeting_read(&auth, &meeting.status)?;
     Ok(Json(meeting))
+}
+
+/// Tenants may only read `closed` meetings; other roles read everything.
+/// Denied reads surface as 403 per the repo rule (access denial is never
+/// masked as 404 for an authenticated user of the same building).
+fn guard_meeting_read(auth: &AuthUser, status: &str) -> AppResult<()> {
+    if meeting_visibility::meeting_visible_to(&auth.roles, status) {
+        Ok(())
+    } else {
+        Err(AppError::Forbidden)
+    }
 }
 
 pub async fn update(
@@ -283,6 +299,11 @@ pub async fn get_convocation_checklist(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
 ) -> AppResult<Json<crate::domain::convocation_checklist::ConvocationChecklist>> {
+    auth.require_any_role(&[Role::Manager, Role::BoardMember, Role::CoOwner])?;
+    let status = crate::db::assembly::get_meeting_status(&state.pool, id, auth.building_id)
+        .await?
+        .ok_or(AppError::NotFound)?;
+    guard_meeting_read(&auth, &status)?;
     let checklist =
         crate::db::assembly::load_convocation_checklist(&state.pool, id, auth.building_id).await?;
     Ok(Json(checklist))
@@ -303,6 +324,10 @@ pub async fn list_resolutions(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
 ) -> AppResult<Json<serde_json::Value>> {
+    let status = crate::db::assembly::get_meeting_status(&state.pool, id, auth.building_id)
+        .await?
+        .ok_or(AppError::NotFound)?;
+    guard_meeting_read(&auth, &status)?;
     let resolutions =
         crate::db::assembly::list_resolutions(&state.pool, id, auth.building_id).await?;
     Ok(Json(resolutions))
@@ -417,6 +442,10 @@ pub async fn results(
     State(state): State<Arc<AppState>>,
     Path((meeting_id, resolution_id)): Path<(Uuid, Uuid)>,
 ) -> AppResult<Json<serde_json::Value>> {
+    let status = crate::db::assembly::get_meeting_status(&state.pool, meeting_id, auth.building_id)
+        .await?
+        .ok_or(AppError::NotFound)?;
+    guard_meeting_read(&auth, &status)?;
     let (resolution, tally) =
         crate::db::assembly::get_tally(&state.pool, meeting_id, resolution_id, auth.building_id)
             .await?;
@@ -476,6 +505,10 @@ pub async fn list_documents(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
 ) -> AppResult<Json<Vec<MeetingDocumentResponse>>> {
+    let status = crate::db::assembly::get_meeting_status(&state.pool, id, auth.building_id)
+        .await?
+        .ok_or(AppError::NotFound)?;
+    guard_meeting_read(&auth, &status)?;
     let roles: Vec<String> = auth.roles.iter().map(ToString::to_string).collect();
     let documents =
         crate::db::assembly::list_documents(&state.pool, id, auth.building_id, &roles).await?;
@@ -523,6 +556,7 @@ pub async fn list_attendance(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
 ) -> AppResult<Json<MeetingAttendanceResponse>> {
+    auth.require_any_role(&[Role::Manager, Role::BoardMember, Role::CoOwner])?;
     let attendance =
         crate::db::assembly::list_attendance(&state.pool, id, auth.building_id).await?;
     Ok(Json(attendance))
@@ -550,6 +584,11 @@ pub async fn list_votes(
     State(state): State<Arc<AppState>>,
     Path((meeting_id, resolution_id)): Path<(Uuid, Uuid)>,
 ) -> AppResult<Json<Vec<UnitVoteResponse>>> {
+    auth.require_any_role(&[Role::Manager, Role::BoardMember, Role::CoOwner])?;
+    let status = crate::db::assembly::get_meeting_status(&state.pool, meeting_id, auth.building_id)
+        .await?
+        .ok_or(AppError::NotFound)?;
+    guard_meeting_read(&auth, &status)?;
     let votes =
         crate::db::assembly::list_votes(&state.pool, meeting_id, resolution_id, auth.building_id)
             .await?;
