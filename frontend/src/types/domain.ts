@@ -345,6 +345,8 @@ export interface Task {
   document_count: number
   /** True when at least one maintenance_log entry references this task. */
   is_in_logbook?: boolean
+  /** True when at least one vendor submission references this task. */
+  has_vendor_submission?: boolean
 }
 
 export interface TaskListFilters {
