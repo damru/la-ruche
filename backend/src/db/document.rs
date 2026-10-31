@@ -209,6 +209,19 @@ pub async fn get(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<Option
     .await?)
 }
 
+/// Whether a non-deleted document exists in the building, regardless of
+/// `visible_to_roles` — used to distinguish 404 (unknown) from 403 (exists
+/// but not visible to the caller's roles) on the download endpoint.
+pub async fn exists(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<bool> {
+    Ok(sqlx::query_scalar::<_, bool>(
+        "SELECT EXISTS(SELECT 1 FROM document WHERE id = $1 AND building_id = $2 AND deleted_at IS NULL)",
+    )
+    .bind(id)
+    .bind(building_id)
+    .fetch_one(pool)
+    .await?)
+}
+
 /// Same as `get`, but restricted to documents visible to at least one of the
 /// caller's roles (`visible_to_roles && roles`) — the exact visibility rule
 /// applied by `list` and by every per-entity document listing. Used by the

@@ -213,11 +213,12 @@ async fn default_disposition_stays_attachment_for_pdf() {
 }
 
 #[tokio::test]
-async fn role_without_visibility_gets_404_for_inline_and_download() {
+async fn role_without_visibility_gets_403_for_inline_and_download() {
     let (_pool, _building_id, manager_jwt, tenant_jwt) = seed_building_and_users().await;
     let server = common::test_server().await;
 
-    // Visible to managers only — the tenant must be refused on both variants.
+    // Visible to managers only — the tenant must be refused on both variants
+    // (403, not 404: the document exists, access denial is not masked).
     let doc_id = upload_document(
         &server,
         &manager_jwt,
@@ -234,7 +235,7 @@ async fn role_without_visibility_gets_404_for_inline_and_download() {
             .await;
         assert_eq!(
             resp.status_code(),
-            StatusCode::NOT_FOUND,
+            StatusCode::FORBIDDEN,
             "tenant must get the same refusal for download and inline ({suffix})"
         );
     }

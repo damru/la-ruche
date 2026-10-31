@@ -310,9 +310,16 @@ pub async fn get_download_url(
     Query(query): Query<DownloadUrlQuery>,
 ) -> AppResult<Json<serde_json::Value>> {
     let roles: Vec<String> = auth.roles.iter().map(ToString::to_string).collect();
-    let doc = db::document::get_visible(&state.pool, id, auth.building_id, &roles)
-        .await?
-        .ok_or(AppError::NotFound)?;
+    let doc = match db::document::get_visible(&state.pool, id, auth.building_id, &roles).await? {
+        Some(doc) => doc,
+        // 404 for an unknown document, 403 for a document the caller's
+        // roles cannot see — access denial is never masked as 404 for an
+        // authenticated user of the same building.
+        None if db::document::exists(&state.pool, id, auth.building_id).await? => {
+            return Err(AppError::Forbidden);
+        }
+        None => return Err(AppError::NotFound),
+    };
 
     let inline = query.disposition.as_deref() == Some("inline")
         && doc.mime_type.eq_ignore_ascii_case("application/pdf");
