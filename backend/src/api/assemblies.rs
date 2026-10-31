@@ -209,9 +209,7 @@ pub async fn list(
     State(state): State<Arc<AppState>>,
 ) -> AppResult<Json<Vec<MeetingResponse>>> {
     let mut meetings = crate::db::assembly::list(&state.pool, auth.building_id).await?;
-    if auth.has_role(&Role::Tenant) && !auth.has_role(&Role::CoOwner) {
-        meetings.retain(|m| meeting_visibility::tenant_may_read(&m.status));
-    }
+    meetings.retain(|m| meeting_visibility::meeting_visible_to(&auth.roles, &m.status));
     Ok(Json(meetings))
 }
 
@@ -243,15 +241,14 @@ pub async fn get(
 }
 
 /// Tenants may only read `closed` meetings; other roles read everything.
-/// Denied reads surface as 404 so the dossier's existence is not revealed.
+/// Denied reads surface as 403 per the repo rule (access denial is never
+/// masked as 404 for an authenticated user of the same building).
 fn guard_meeting_read(auth: &AuthUser, status: &str) -> AppResult<()> {
-    if auth.has_role(&Role::Tenant)
-        && !auth.has_role(&Role::CoOwner)
-        && !meeting_visibility::tenant_may_read(status)
-    {
-        return Err(AppError::NotFound);
+    if meeting_visibility::meeting_visible_to(&auth.roles, status) {
+        Ok(())
+    } else {
+        Err(AppError::Forbidden)
     }
-    Ok(())
 }
 
 pub async fn update(

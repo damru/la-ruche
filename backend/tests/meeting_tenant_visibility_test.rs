@@ -4,7 +4,7 @@
 // are unaffected.
 //
 // AC1: tenant GET /meetings -> only `closed` meetings.
-// AC2: tenant GET /meetings/{id} on `called` -> 404, on `closed` -> 200.
+// AC2: tenant GET /meetings/{id} on `called` -> 403, on `closed` -> 200.
 // AC3: tenant GET resolutions / results / documents on `closed` -> 200.
 // AC4: tenant GET attendance / votes / convocation-checklist -> 403.
 // AC5: co_owner still sees a `called` meeting (non-regression).
@@ -182,12 +182,12 @@ async fn tenant_read_visibility_on_meetings() {
     assert!(ids.contains(&closed_meeting.to_string().as_str()));
     assert!(!ids.contains(&called_meeting.to_string().as_str()));
 
-    // AC2: tenant get on called -> 404, on closed -> 200.
+    // AC2: tenant get on called -> 403, on closed -> 200.
     let resp = server
         .get(&format!("/api/v1/meetings/{called_meeting}"))
         .add_header("Authorization", &tenant_auth)
         .await;
-    assert_eq!(resp.status_code(), StatusCode::NOT_FOUND);
+    assert_eq!(resp.status_code(), StatusCode::FORBIDDEN);
     let resp = server
         .get(&format!("/api/v1/meetings/{closed_meeting}"))
         .add_header("Authorization", &tenant_auth)
@@ -207,12 +207,12 @@ async fn tenant_read_visibility_on_meetings() {
         assert_eq!(resp.status_code(), StatusCode::OK, "GET {path}");
     }
 
-    // tenant cannot read resolutions of a non-closed meeting (404).
+    // tenant cannot read resolutions of a non-closed meeting (403).
     let resp = server
         .get(&format!("/api/v1/meetings/{called_meeting}/resolutions"))
         .add_header("Authorization", &tenant_auth)
         .await;
-    assert_eq!(resp.status_code(), StatusCode::NOT_FOUND);
+    assert_eq!(resp.status_code(), StatusCode::FORBIDDEN);
 
     // AC4: tenant -> 403 on attendance, votes, convocation checklist.
     for path in [
