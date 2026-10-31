@@ -37,10 +37,12 @@ import RevokeTokenModal from './RevokeTokenModal.vue'
 import ReopenTaskModal from './ReopenTaskModal.vue'
 import { contractorsApi, documentsApi, tasksApi, usersApi } from '@/api'
 import { useBuildingStore } from '@/stores/building'
+import { usePermissions } from '@/composables/usePermissions'
 import type {Contractor, Document, Task, TaskListFilters, TaskStatus, User} from '@/types/domain'
 import { ALL_FILTER, TASK_PRIORITY_HIGH, TASK_PRIORITY_LOW, TASK_PRIORITY_NORMAL, TASK_PRIORITY_URGENT, TASK_STATUS_AWAITING_VALIDATION, TASK_STATUS_AWAITING_VENDOR, TASK_STATUS_CANCELLED, TASK_STATUS_CLOSED, TASK_STATUS_IN_PROGRESS, TASK_STATUS_OPEN } from '@/utils/constants'
 
 const { t } = useI18n()
+const { canAdministerTask } = usePermissions()
 const { formatDate, formatRelative } = useFormatters()
 const router = useRouter()
 
@@ -674,7 +676,7 @@ async function downloadTaskDocument(documentId: string) {
                     @click.stop="openCloseModal(task)"
                   />
                   <CBtn
-                    v-if="!isTerminal(task.status)"
+                    v-if="canAdministerTask && !isTerminal(task.status)"
                     variant="ghost"
                     size="sm"
                     :icon="CIconBan"

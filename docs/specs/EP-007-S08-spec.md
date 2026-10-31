@@ -6,6 +6,8 @@
 **Réf. PRD :** US-TP-016 · **Réf. ADR :** ADR-009 (piste probante) · **Réf. LEGAL :** conservation des actes
 **État :** IMPLÉMENTÉ (backend + frontend)
 
+> **AC-016-D (entrée timeline immuable avec motif) :** non livrée ici — la table `activity_log` n'existe pas encore ; cette entrée sera produite par EP-017-S02 (`task.status_changed` / événement d'annulation) quand l'epic EP-017 sera livré.
+
 ---
 
 ## 1. État actuel du code (écart)

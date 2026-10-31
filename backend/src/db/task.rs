@@ -490,8 +490,9 @@ pub async fn delete(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()>
 }
 
 /// Cancels a task without deleting anything: documents, submissions and the
-/// vendor token are kept. Refuses `closed`/`cancelled` tasks; the row is
-/// locked inside the transaction to keep the check race-free.
+/// vendor token are kept. Only `open` and `in_progress` tasks can be
+/// cancelled; the row is locked inside the transaction to keep the check
+/// race-free.
 pub async fn cancel(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()> {
     let mut tx = pool.begin().await?;
     // FOR UPDATE serialises the status check with the write, so two concurrent
@@ -507,13 +508,13 @@ pub async fn cancel(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()>
     let result = sqlx::query(
         "UPDATE task SET status = $3::text::task_status, updated_at = NOW()
          WHERE id = $1 AND building_id = $2
-           AND status NOT IN ($4::text::task_status, $5::text::task_status)",
+           AND status IN ($4::text::task_status, $5::text::task_status)",
     )
     .bind(id)
     .bind(building_id)
     .bind(status::CANCELLED)
-    .bind(status::CLOSED)
-    .bind(status::CANCELLED)
+    .bind(status::OPEN)
+    .bind(status::IN_PROGRESS)
     .execute(&mut *tx)
     .await?;
     tx.commit().await?;

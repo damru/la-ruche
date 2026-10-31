@@ -60,6 +60,7 @@ interface Permissions {
   // ── Task ──
   canViewTask: ComputedRef<boolean>
   canManageTask: ComputedRef<boolean>
+  canAdministerTask: ComputedRef<boolean>
 
   // ── Contract ──
   canViewContract: ComputedRef<boolean>
@@ -158,6 +159,7 @@ export function usePermissions(): Permissions {
 
   const canViewTask = computed(() => isAuthenticated.value)
   const canManageTask = computed(() => hasAnyRole(MANAGER_ROLES))
+  const canAdministerTask = computed(() => hasRole(ROLE_MANAGER))
 
   // ── Contract ──
 
@@ -253,6 +255,7 @@ export function usePermissions(): Permissions {
     canViewMyCharges,
     canViewTask,
     canManageTask,
+    canAdministerTask,
     canViewContract,
     canManageContract,
     canAdministerContract,

@@ -481,8 +481,8 @@ Chaque clôture constitue un **cycle de résolution** historisé : `completion_c
 
 **Critères d'acceptation**
 
-- **AC-016-A** : La suppression DOIT être refusée si la tâche a alimenté le carnet d'entretien — code `errors.tasks.has_maintenance_log`.
-- **AC-016-B** : La suppression DOIT être refusée si la tâche a reçu une soumission prestataire — code `errors.tasks.has_contractor_submission`.
+- **AC-016-A** : La suppression DOIT être refusée si la tâche a alimenté le carnet d'entretien — code `errors.tasks.has_logbook_entry`.
+- **AC-016-B** : La suppression DOIT être refusée si la tâche a reçu une soumission prestataire — code `errors.tasks.has_submissions`.
 - **AC-016-C** : L'annulation (transition vers `cancelled`) DOIT être possible depuis `open` et `in_progress` uniquement.
 - **AC-016-D** : L'annulation DOIT créer une entrée timeline immuable avec le motif.
 

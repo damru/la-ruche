@@ -185,6 +185,30 @@ async fn cancel_refused_on_closed_task() {
 }
 
 #[tokio::test]
+async fn cancel_refused_from_awaiting_vendor_status() {
+    let (ctx, _pool) = common::rbac_setup().await;
+    let server = common::test_server().await;
+    let auth = format!("Bearer {}", ctx.manager_jwt);
+    let task_id = create_task(&server, &auth, "Chez le prestataire").await;
+
+    let token_resp = server
+        .post(&format!("/api/v1/tasks/{task_id}/vendor-token"))
+        .add_header("Authorization", &auth)
+        .await;
+    assert!(token_resp.status_code().is_success());
+
+    let resp = server
+        .post(&format!("/api/v1/tasks/{task_id}/cancel"))
+        .add_header("Authorization", &auth)
+        .await;
+    assert_eq!(resp.status_code(), StatusCode::BAD_REQUEST);
+    assert_eq!(
+        resp.json::<Value>()["message"],
+        "errors.tasks.cannot_cancel_status"
+    );
+}
+
+#[tokio::test]
 async fn cancel_is_manager_only() {
     let (ctx, _pool) = common::rbac_setup().await;
     let server = common::test_server().await;
@@ -215,6 +239,13 @@ async fn vendor_token_rejected_on_cancelled_task() {
         .as_str()
         .expect("token")
         .to_string();
+
+    // revoke resets awaiting_vendor -> open, then cancel is allowed again
+    let revoked = server
+        .delete(&format!("/api/v1/tasks/{task_id}/vendor-token"))
+        .add_header("Authorization", &auth)
+        .await;
+    assert_eq!(revoked.status_code(), StatusCode::NO_CONTENT);
 
     let cancelled = server
         .post(&format!("/api/v1/tasks/{task_id}/cancel"))

@@ -10,6 +10,7 @@ import { useAutoClose } from '@/composables/useAutoClose'
 import { toErrorMessage } from '@/composables/usePageLoader'
 import type { Task } from '@/types/domain'
 import { useUiStore } from '@/stores/ui'
+import { usePermissions } from '@/composables/usePermissions'
 
 const props = defineProps<{
   open: boolean
@@ -28,6 +29,7 @@ const deleteBlocked = computed(
 
 const { t } = useI18n()
 const ui = useUiStore()
+const { canAdministerTask } = usePermissions()
 const feedback = useFormFeedback()
 const { schedule: scheduleClose, forceExpire: forceClose } = useAutoClose()
 const deleting = ref(false)
@@ -97,7 +99,7 @@ async function handleSubmit() {
           @click="handleSubmit"
         />
         <CBtn
-          v-else
+          v-else-if="canAdministerTask"
           variant="primary"
           :title="t('tasks.cancelTask')"
           @click="task && $emit('cancel-requested', task)"
