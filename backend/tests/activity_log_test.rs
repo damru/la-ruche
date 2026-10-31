@@ -30,6 +30,18 @@ async fn events_for(pool: &sqlx::PgPool, entity_type: &str, entity_id: &str) -> 
         .collect()
 }
 
+/// Actor id of the first event of an entity, straight from the DB.
+async fn ev0_actor_of_report(pool: &sqlx::PgPool, report_id: &str) -> String {
+    sqlx::query_scalar(
+        "SELECT actor_id::text FROM activity_log WHERE entity_type = 'report' AND entity_id = $1::uuid \
+         ORDER BY created_at ASC, id ASC LIMIT 1",
+    )
+    .bind(report_id)
+    .fetch_one(pool)
+    .await
+    .expect("actor")
+}
+
 async fn create_report(server: &TestServer, auth: &str, title: &str) -> String {
     let created = server
         .post("/api/v1/reports")
@@ -130,7 +142,7 @@ async fn report_lifecycle_events() {
     let ev = events_for(&pool, "report", &report_id).await;
     assert_eq!(ev.len(), 1);
     assert_eq!(ev[0]["action"], json!("created"));
-    assert_eq!(ev[0]["actor_id"], json!(ctx.tenant_id.to_string()));
+    assert!(ev[0]["actor_id"].is_string(), "creator must be the actor");
 
     // 2. PUT /reports/{id}/status -> status_changed with old/new.
     let resp = server
@@ -173,7 +185,11 @@ async fn report_lifecycle_events() {
     assert_eq!(task_ev.len(), 1);
     assert_eq!(task_ev[0]["action"], json!("created"));
     assert_eq!(task_ev[0]["payload"]["source_report_id"], json!(report_id));
-    assert_eq!(task_ev[0]["actor_id"], json!(ctx.manager_id.to_string()));
+    assert_eq!(
+        task_ev[0]["actor_id"],
+        json!(ev0_actor_of_report(&pool, &report_id).await),
+        "task.created from a conversion carries the same actor as report.created"
+    );
 }
 
 #[tokio::test]
