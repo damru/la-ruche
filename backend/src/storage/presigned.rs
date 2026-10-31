@@ -53,8 +53,8 @@ impl StorageClient {
         Ok(UploadUrl { url, key, bucket })
     }
 
-    /// Generates a pre-signed URL for download (GET).
-    /// Called on each download request — never stored.
+    /// Generates a pre-signed URL for download (GET), forcing the
+    /// `attachment` disposition. Called on each download request — never stored.
     pub async fn presigned_download_url(
         &self,
         bucket: &str,
@@ -62,11 +62,40 @@ impl StorageClient {
         filename: &str,
         ttl_secs: u64,
     ) -> AppResult<String> {
+        let disposition = format!("attachment; filename=\"{}\"", sanitize_filename(filename));
+        self.presigned_get_url(bucket, key, &disposition, ttl_secs)
+            .await
+    }
+
+    /// Generates a pre-signed URL for in-app rendering (GET) of a PDF,
+    /// with the `inline` disposition and an RFC 5987-encoded filename.
+    /// Same bucket, same short TTL, same access path as
+    /// `presigned_download_url` — only the disposition differs.
+    pub async fn presigned_inline_url(
+        &self,
+        bucket: &str,
+        key: &str,
+        filename: &str,
+        ttl_secs: u64,
+    ) -> AppResult<String> {
+        let disposition = format!(
+            "inline; filename=\"{}\"; filename*=UTF-8''{}",
+            sanitize_filename(filename),
+            encode_rfc5987(filename)
+        );
+        self.presigned_get_url(bucket, key, &disposition, ttl_secs)
+            .await
+    }
+
+    async fn presigned_get_url(
+        &self,
+        bucket: &str,
+        key: &str,
+        disposition: &str,
+        ttl_secs: u64,
+    ) -> AppResult<String> {
         let presigning_cfg = PresigningConfig::expires_in(Duration::from_secs(ttl_secs))
             .map_err(|e| AppError::Storage(e.to_string()))?;
-
-        // Content-Disposition to force download with original filename
-        let disposition = format!("attachment; filename=\"{}\"", sanitize_filename(filename));
 
         let url = self
             .presign_client
@@ -178,4 +207,61 @@ fn sanitize_filename(name: &str) -> String {
             }
         })
         .collect()
+}
+
+/// Percent-encodes a filename for the RFC 5987 `filename*` parameter
+/// (UTF-8 attribute-value): keeps `attr-char`, encodes everything else.
+fn encode_rfc5987(name: &str) -> String {
+    name.bytes()
+        .map(|b| {
+            if b.is_ascii_alphanumeric()
+                || matches!(
+                    b,
+                    b'!' | b'#'
+                        | b'$'
+                        | b'&'
+                        | b'+'
+                        | b'-'
+                        | b'.'
+                        | b'^'
+                        | b'_'
+                        | b'`'
+                        | b'|'
+                        | b'~'
+                )
+            {
+                (b as char).to_string()
+            } else {
+                format!("%{b:02X}")
+            }
+        })
+        .collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{encode_rfc5987, sanitize_filename};
+
+    #[test]
+    fn rfc5987_keeps_attr_chars() {
+        assert_eq!(encode_rfc5987("PV_AG_2026-01.pdf"), "PV_AG_2026-01.pdf");
+    }
+
+    #[test]
+    fn rfc5987_encodes_spaces_and_accents() {
+        assert_eq!(
+            encode_rfc5987("PV AG été.pdf"),
+            "PV%20AG%20%C3%A9t%C3%A9.pdf"
+        );
+    }
+
+    #[test]
+    fn rfc5987_encodes_semicolon_and_quote() {
+        assert_eq!(encode_rfc5987("a;b\"c.pdf"), "a%3Bb%22c.pdf");
+    }
+
+    #[test]
+    fn sanitize_replaces_dangerous_chars() {
+        assert_eq!(sanitize_filename("a\"b\\c;d.pdf"), "a_b_c_d.pdf");
+    }
 }

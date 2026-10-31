@@ -2,6 +2,8 @@
 
 **Story :** Visualiser les documents PDF générés (PV d'AG, relances d'appels de fonds, tout courrier réglementaire envoyé par voie postale et/ou électronique en pièce jointe) directement dans l'Application sans téléchargement préalable, dans le respect des droits d'accès par rôle.
 
+**Statut : IMPLÉMENTÉ (backend + frontend)** — variante `?disposition=inline` de la route de téléchargement (Content-Disposition `inline` + `filename*` RFC 5987, PDF uniquement, mêmes gardes `visible_to_roles` que la liste) et molécule `CDocumentViewer` branchée sur la fiche AG (PV signé + pièces de convocation/annexes PDF), bouton Télécharger toujours disponible en repli.
+
 **Épic :** EP-005 — Documents
 **Réf. PRD :** US-DOC-003 (consultation des documents)
 **Réf. LEGAL :** §3.4 (PV d'AG), §4.7 (relances / mise en demeure)
