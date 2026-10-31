@@ -37,7 +37,10 @@ async fn create_report(server: &TestServer, auth: &str, title: &str) -> String {
         .json(&json!({ "title": title }))
         .await;
     assert_eq!(created.status_code(), StatusCode::CREATED);
-    created.json::<Value>()["id"].as_str().expect("id").to_string()
+    created.json::<Value>()["id"]
+        .as_str()
+        .expect("id")
+        .to_string()
 }
 
 async fn create_task(server: &TestServer, auth: &str, title: &str) -> String {
@@ -47,7 +50,10 @@ async fn create_task(server: &TestServer, auth: &str, title: &str) -> String {
         .json(&json!({ "title": title }))
         .await;
     assert!(created.status_code().is_success());
-    created.json::<Value>()["id"].as_str().expect("id").to_string()
+    created.json::<Value>()["id"]
+        .as_str()
+        .expect("id")
+        .to_string()
 }
 
 #[tokio::test]
@@ -68,19 +74,21 @@ async fn insert_and_list_for_entity_are_ordered_and_transactional() {
     .await
     .expect("insert in tx");
     tx.rollback().await.expect("rollback");
-    let count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM activity_log WHERE entity_id = $1",
-    )
-    .bind(entity_id)
-    .fetch_one(&pool)
-    .await
-    .expect("count");
+    let count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM activity_log WHERE entity_id = $1")
+        .bind(entity_id)
+        .fetch_one(&pool)
+        .await
+        .expect("count");
     assert_eq!(count, 0, "rolled-back insert must not persist");
 
     // Three events (one anonymous actor, one with payload) via the pool.
     for (action, actor, payload) in [
         ("created", None, None),
-        ("status_changed", None, Some(json!({ "old_status": "open", "new_status": "in_progress" }))),
+        (
+            "status_changed",
+            None,
+            Some(json!({ "old_status": "open", "new_status": "in_progress" })),
+        ),
         ("closed", None, None),
     ] {
         laruche::db::activity_log::insert(
@@ -94,10 +102,13 @@ async fn insert_and_list_for_entity_are_ordered_and_transactional() {
         .await
         .expect("insert");
     }
-    let rows =
-        laruche::db::activity_log::list_for_entity(&pool, laruche::db::activity_log::ENTITY_TASK, entity_id)
-            .await
-            .expect("list");
+    let rows = laruche::db::activity_log::list_for_entity(
+        &pool,
+        laruche::db::activity_log::ENTITY_TASK,
+        entity_id,
+    )
+    .await
+    .expect("list");
     let actions: Vec<&str> = rows.iter().map(|r| r.action.as_str()).collect();
     assert_eq!(actions, vec!["created", "status_changed", "closed"]);
     assert_eq!(rows[0].actor_id, None);
@@ -148,7 +159,10 @@ async fn report_lifecycle_events() {
         .add_header("Authorization", &manager)
         .await;
     assert_eq!(resp.status_code(), StatusCode::OK);
-    let task_id = resp.json::<Value>()["task_id"].as_str().expect("task_id").to_string();
+    let task_id = resp.json::<Value>()["task_id"]
+        .as_str()
+        .expect("task_id")
+        .to_string();
 
     let report_ev = events_for(&pool, "report", &report_id).await;
     assert_eq!(report_ev.len(), 3);
@@ -169,7 +183,10 @@ async fn task_mutation_events_and_closed_transition() {
     let manager = format!("Bearer {}", ctx.manager_jwt);
 
     let task_id = create_task(&server, &manager, "Refaire la peinture").await;
-    assert_eq!(events_for(&pool, "task", &task_id).await[0]["action"], json!("created"));
+    assert_eq!(
+        events_for(&pool, "task", &task_id).await[0]["action"],
+        json!("created")
+    );
 
     // 4. PUT /tasks/{id} changing status + contractor -> two distinct events.
     let resp = server
@@ -201,7 +218,10 @@ async fn task_mutation_events_and_closed_transition() {
         .await;
     let ev = events_for(&pool, "task", &task_id).await;
     assert_eq!(ev.last().unwrap()["action"], json!("closed"));
-    assert_eq!(ev.last().unwrap()["payload"]["old_status"], json!("in_progress"));
+    assert_eq!(
+        ev.last().unwrap()["payload"]["old_status"],
+        json!("in_progress")
+    );
 }
 
 #[tokio::test]
@@ -222,13 +242,21 @@ async fn vendor_token_and_submission_events() {
     let token = body["token"].as_str().expect("token").to_string();
 
     let ev = events_for(&pool, "task", &task_id).await;
-    let link = ev.iter().find(|e| e["action"] == json!("vendor_link_generated")).expect("link event");
+    let link = ev
+        .iter()
+        .find(|e| e["action"] == json!("vendor_link_generated"))
+        .expect("link event");
     assert!(link["payload"]["expires_at"].is_string());
     assert!(
-        !serde_json::to_string(&link["payload"]).unwrap().contains(&token),
+        !serde_json::to_string(&link["payload"])
+            .unwrap()
+            .contains(&token),
         "raw vendor token must never appear in the payload"
     );
-    let status = ev.iter().find(|e| e["action"] == json!("status_changed")).expect("status event");
+    let status = ev
+        .iter()
+        .find(|e| e["action"] == json!("status_changed"))
+        .expect("status event");
     assert_eq!(status["payload"]["new_status"], json!("awaiting_vendor"));
 
     // 7. POST /api/v1/vendor/{token}/submission -> vendor_submission_received, actor NULL.
@@ -258,7 +286,10 @@ async fn timeline_endpoints_return_the_same_merged_chain() {
         .post(&format!("/api/v1/reports/{report_id}/task"))
         .add_header("Authorization", &manager)
         .await;
-    let task_id = resp.json::<Value>()["task_id"].as_str().expect("task_id").to_string();
+    let task_id = resp.json::<Value>()["task_id"]
+        .as_str()
+        .expect("task_id")
+        .to_string();
     server
         .put(&format!("/api/v1/tasks/{task_id}"))
         .add_header("Authorization", &manager)
@@ -278,7 +309,10 @@ async fn timeline_endpoints_return_the_same_merged_chain() {
     assert_eq!(from_task.status_code(), StatusCode::OK);
     let a = from_report.json::<Vec<Value>>();
     let b = from_task.json::<Vec<Value>>();
-    assert_eq!(a, b, "both maillons of the chain must return the same timeline");
+    assert_eq!(
+        a, b,
+        "both maillons of the chain must return the same timeline"
+    );
     let actions: Vec<&str> = a.iter().map(|e| e["action"].as_str().unwrap()).collect();
     assert_eq!(
         actions,
