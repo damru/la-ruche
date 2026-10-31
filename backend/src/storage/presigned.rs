@@ -210,32 +210,23 @@ fn sanitize_filename(name: &str) -> String {
 }
 
 /// Percent-encodes a filename for the RFC 5987 `filename*` parameter
-/// (UTF-8 attribute-value): keeps `attr-char`, encodes everything else.
+/// (UTF-8 attribute-value): keeps RFC 5987 `attr-char`, encodes everything else.
+const RFC5987_ATTR_CHAR: &percent_encoding::AsciiSet = &percent_encoding::NON_ALPHANUMERIC
+    .remove(b'!')
+    .remove(b'#')
+    .remove(b'$')
+    .remove(b'&')
+    .remove(b'+')
+    .remove(b'-')
+    .remove(b'.')
+    .remove(b'^')
+    .remove(b'_')
+    .remove(b'`')
+    .remove(b'|')
+    .remove(b'~');
+
 fn encode_rfc5987(name: &str) -> String {
-    name.bytes()
-        .map(|b| {
-            if b.is_ascii_alphanumeric()
-                || matches!(
-                    b,
-                    b'!' | b'#'
-                        | b'$'
-                        | b'&'
-                        | b'+'
-                        | b'-'
-                        | b'.'
-                        | b'^'
-                        | b'_'
-                        | b'`'
-                        | b'|'
-                        | b'~'
-                )
-            {
-                (b as char).to_string()
-            } else {
-                format!("%{b:02X}")
-            }
-        })
-        .collect()
+    percent_encoding::utf8_percent_encode(name, RFC5987_ATTR_CHAR).to_string()
 }
 
 #[cfg(test)]
