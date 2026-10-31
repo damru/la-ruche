@@ -433,9 +433,11 @@ export interface LogbookSummary {
 export interface Report {
   id: string
   unit_id?: string
-  author_id: string
-  author_first_name: string
-  author_last_name: string
+  author_id: string | null
+  author_first_name: string | null
+  author_last_name: string | null
+  is_anonymous: boolean
+  is_author: boolean
   title: string
   description?: string
   status: ReportStatus

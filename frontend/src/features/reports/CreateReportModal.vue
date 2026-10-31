@@ -7,6 +7,7 @@ import CForm from '@/components/molecules/CForm.vue'
 import CFormInput from '@/components/atoms/CFormInput.vue'
 import CFormTextarea from '@/components/atoms/CFormTextarea.vue'
 import CFormSelect from '@/components/atoms/CFormSelect.vue'
+import CFormCheckbox from '@/components/atoms/CFormCheckbox.vue'
 import CFormActions from '@/components/molecules/CFormActions.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import { documentsApi, reportsApi } from '@/api'
@@ -32,12 +33,12 @@ const { schedule: scheduleClose, forceExpire: forceClose } = useAutoClose()
 const saving = ref(false)
 const uploadingPhotos = ref(false)
 
-const form = ref({ title: '', description: '', unit_id: '' })
+const form = ref({ title: '', description: '', unit_id: '', is_anonymous: false })
 const selectedPhotos = ref<File[]>([])
 
 watch(() => props.open, (open) => {
   if (open) {
-    form.value = { title: '', description: '', unit_id: '' }
+    form.value = { title: '', description: '', unit_id: '', is_anonymous: false }
     selectedPhotos.value = []
     feedback.reset()
   } else {
@@ -76,6 +77,7 @@ async function submit() {
       title: form.value.title.trim(),
       description: form.value.description.trim() || undefined,
       unit_id: form.value.unit_id || undefined,
+      is_anonymous: form.value.is_anonymous,
     })
     const reportId = reportRes.data.id
     if (selectedPhotos.value.length) {
@@ -134,6 +136,15 @@ async function submit() {
         :label="t('claims.fields.unit')"
         :options="unitOptions"
       />
+      <div class="flex flex-col gap-1">
+        <CFormCheckbox
+          v-model="form.is_anonymous"
+          :label="t('reports.anonymousLabel')"
+        />
+        <p class="text-xs text-on-surface-variant m-0">
+          {{ t('reports.anonymousHint') }}
+        </p>
+      </div>
 
       <div class="flex flex-col gap-1">
         <label class="text-sm font-medium text-on-surface-variant">{{ t('reports.photos') }}</label>

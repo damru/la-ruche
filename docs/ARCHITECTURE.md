@@ -100,6 +100,7 @@ Invariants techniques implémentés :
 
 - `report.task_id` porte le lien informatif entre signalement et tâche ; cette relation reste non destructive et réutilisable par les workflows applicatifs.
 - `report_comment` (EP-011-S04, US-SIG-006) : commentaires de suivi append-only sur un signalement (pas d'`updated_at`, pas de soft-delete, `ON DELETE CASCADE` depuis `report`) ; l'écriture est réservée manager/board_member, la lecture est ouverte au déclarant du signalement.
+- `report.is_anonymous` (EP-011-S05, US-SIG-007) : anonymat optionnel du déclarant choisi à la création (`BOOLEAN NOT NULL DEFAULT FALSE`, jamais modifié ensuite). `author_id` reste `NOT NULL` en base (traçabilité, droits du déclarant) ; le masquage de l'identité est une règle de sérialisation API (`domain::report_privacy`) appliquée à toutes les sorties `report`, pour tout rôle y compris manager, sauf pour le déclarant lui-même qui reçoit `is_author: true`.
 - Les documents de tâche sont répartis entre `task_document` (gestionnaires) et `vendor_submission_document` (soumissions prestataire) ; les endpoints manager `GET/POST/DELETE /tasks/{id}/documents` et `document_count` agrègent ces deux sources.
 - `claim_document` suit le même modèle d'association documentaire que `report_document`, avec nettoyage des liens lors des suppressions d'entité.
 - `maintenance_log.task_id` et `maintenance_log.contract_id` restent des liens de traçabilité souples, sans cascade destructive depuis les tâches ou contrats.

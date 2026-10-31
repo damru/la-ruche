@@ -492,7 +492,7 @@ export const reportsApi = {
     api.get<Report[]>('/reports'),
   get: (id: string) =>
     api.get<Report>(`/reports/${id}`),
-  create: (data: { title: string; description?: string; unit_id?: string }) =>
+  create: (data: { title: string; description?: string; unit_id?: string; is_anonymous?: boolean }) =>
     api.post<Report>('/reports', data),
   update: (id: string, data: { title: string; description: string | null; unit_id: string | null }) =>
     api.put(`/reports/${id}`, data),
