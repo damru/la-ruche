@@ -9,13 +9,7 @@ use axum_test::TestServer;
 use serde_json::{Value, json};
 use uuid::Uuid;
 
-async fn seed_building_and_users() -> (
-    laruche::config::AppConfig,
-    sqlx::PgPool,
-    Uuid,
-    String,
-    String,
-) {
+async fn seed_building_and_users() -> (sqlx::PgPool, Uuid, String, String) {
     let (cfg, pool) = common::test_db().await;
 
     let building_id = Uuid::new_v4();
@@ -31,19 +25,20 @@ async fn seed_building_and_users() -> (
     let manager_id = insert_user(&pool, &cfg, building_id, laruche::domain::Role::Manager).await;
     let tenant_id = insert_user(&pool, &cfg, building_id, laruche::domain::Role::Tenant).await;
 
+    let jwt_secret = cfg.auth.jwt_secret.clone();
+    let ttl = cfg.auth.access_token_ttl_secs;
     let jwt = |user_id: Uuid, role: laruche::domain::Role| {
         laruche::auth::jwt::generate_access_token(
             user_id,
             building_id,
             vec![role],
-            &cfg.auth.jwt_secret,
-            cfg.auth.access_token_ttl_secs,
+            &jwt_secret,
+            ttl,
         )
         .expect("token")
     };
 
     (
-        cfg,
         pool,
         building_id,
         jwt(manager_id, laruche::domain::Role::Manager),
@@ -133,8 +128,7 @@ fn urlencoding_decode(value: &str) -> String {
 
 #[tokio::test]
 async fn pdf_inline_disposition_for_authorized_role() {
-    let (cfg, pool, _building_id, manager_jwt, _tenant_jwt) = seed_building_and_users().await;
-    let _ = (&cfg, &pool);
+    let (_pool, _building_id, manager_jwt, _tenant_jwt) = seed_building_and_users().await;
     let server = common::test_server().await;
 
     let doc_id = upload_document(
@@ -168,7 +162,7 @@ async fn pdf_inline_disposition_for_authorized_role() {
 
 #[tokio::test]
 async fn non_pdf_falls_back_to_attachment_even_with_inline() {
-    let (_cfg, _pool, _building_id, manager_jwt, _tenant_jwt) = seed_building_and_users().await;
+    let (_pool, _building_id, manager_jwt, _tenant_jwt) = seed_building_and_users().await;
     let server = common::test_server().await;
 
     let doc_id = upload_document(
@@ -197,7 +191,7 @@ async fn non_pdf_falls_back_to_attachment_even_with_inline() {
 
 #[tokio::test]
 async fn default_disposition_stays_attachment_for_pdf() {
-    let (_cfg, _pool, _building_id, manager_jwt, _tenant_jwt) = seed_building_and_users().await;
+    let (_pool, _building_id, manager_jwt, _tenant_jwt) = seed_building_and_users().await;
     let server = common::test_server().await;
 
     let doc_id = upload_document(
@@ -220,7 +214,7 @@ async fn default_disposition_stays_attachment_for_pdf() {
 
 #[tokio::test]
 async fn role_without_visibility_gets_404_for_inline_and_download() {
-    let (_cfg, _pool, _building_id, manager_jwt, tenant_jwt) = seed_building_and_users().await;
+    let (_pool, _building_id, manager_jwt, tenant_jwt) = seed_building_and_users().await;
     let server = common::test_server().await;
 
     // Visible to managers only — the tenant must be refused on both variants.
@@ -257,7 +251,7 @@ async fn role_without_visibility_gets_404_for_inline_and_download() {
 
 #[tokio::test]
 async fn unknown_document_returns_404() {
-    let (_cfg, _pool, _building_id, manager_jwt, _tenant_jwt) = seed_building_and_users().await;
+    let (_pool, _building_id, manager_jwt, _tenant_jwt) = seed_building_and_users().await;
     let server = common::test_server().await;
 
     let resp = server
