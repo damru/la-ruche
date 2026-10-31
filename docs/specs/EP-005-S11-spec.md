@@ -4,6 +4,8 @@
 
 **Statut : IMPLÉMENTÉ (backend + frontend)** — variante `?disposition=inline` de la route de téléchargement (Content-Disposition `inline` + `filename*` RFC 5987, PDF uniquement, mêmes gardes `visible_to_roles` que la liste) et molécule `CDocumentViewer` branchée sur la fiche AG (PV signé + pièces de convocation/annexes PDF), bouton Télécharger toujours disponible en repli.
 
+**Choix acté (revue PR) :** le refus d'accès par rôle sur la route de téléchargement retourne **403** (document existant hors `visible_to_roles`), pas 404 — conforme à la règle repo « 403 over 404 » et à AC-DOC-003-C ; le 404 reste réservé au document inexistant/supprimé (AC-DOC-002-C). La généralisation aux autres listes de documents (relances EP-004-S11, états datés EP-002-S06/S07) reste portée par `CDocumentList` (EP-020-S16) — hors périmètre de cette livraison, la fiche AG étant la priorité 1 de la spec §5.
+
 **Épic :** EP-005 — Documents
 **Réf. PRD :** US-DOC-003 (consultation des documents)
 **Réf. LEGAL :** §3.4 (PV d'AG), §4.7 (relances / mise en demeure)
