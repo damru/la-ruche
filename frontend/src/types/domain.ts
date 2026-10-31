@@ -16,7 +16,7 @@ export type VotePosition = 'in_favor' | 'against' | 'abstain' | 'non_voter'
 export type BudgetStatus = 'draft' | 'approved' | 'closed'
 export type LevyStatus = 'issued' | 'paid' | 'overdue'
 
-export type TaskStatus = 'open' | 'in_progress' | 'awaiting_vendor' | 'awaiting_validation' | 'closed' | 'cancelled'
+export type TaskStatus = 'open' | 'in_progress' | 'awaiting_quote' | 'quote_received' | 'awaiting_vendor' | 'awaiting_validation' | 'closed' | 'cancelled'
 export type TaskPriority = 'low' | 'normal' | 'high' | 'urgent'
 
 export type ClaimType = 'current' | 'natural_disaster' | 'theft'

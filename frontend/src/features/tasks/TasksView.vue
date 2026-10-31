@@ -38,11 +38,13 @@ import ReopenTaskModal from './ReopenTaskModal.vue'
 import { contractorsApi, documentsApi, tasksApi, usersApi } from '@/api'
 import { useBuildingStore } from '@/stores/building'
 import { usePermissions } from '@/composables/usePermissions'
+import { useConfirm } from '@/composables/useConfirm'
 import type {Contractor, Document, Task, TaskListFilters, TaskStatus, User} from '@/types/domain'
-import { ALL_FILTER, TASK_PRIORITY_HIGH, TASK_PRIORITY_LOW, TASK_PRIORITY_NORMAL, TASK_PRIORITY_URGENT, TASK_STATUS_AWAITING_VALIDATION, TASK_STATUS_AWAITING_VENDOR, TASK_STATUS_CANCELLED, TASK_STATUS_CLOSED, TASK_STATUS_IN_PROGRESS, TASK_STATUS_OPEN } from '@/utils/constants'
+import { ALL_FILTER, TAKE_BACK_TASK_STATUSES, TASK_PRIORITY_HIGH, TASK_PRIORITY_LOW, TASK_PRIORITY_NORMAL, TASK_PRIORITY_URGENT, TASK_STATUS_AWAITING_QUOTE, TASK_STATUS_AWAITING_VALIDATION, TASK_STATUS_AWAITING_VENDOR, TASK_STATUS_CANCELLED, TASK_STATUS_CLOSED, TASK_STATUS_IN_PROGRESS, TASK_STATUS_OPEN, TASK_STATUS_QUOTE_RECEIVED } from '@/utils/constants'
 
 const { t } = useI18n()
 const { canAdministerTask } = usePermissions()
+const { confirm } = useConfirm()
 const { formatDate, formatRelative } = useFormatters()
 const router = useRouter()
 
@@ -129,6 +131,8 @@ async function loadData() {
     all: countersRes.data.reduce((sum, c) => sum + c.count, 0),
     open: counters.get(TASK_STATUS_OPEN) ?? 0,
     in_progress: counters.get(TASK_STATUS_IN_PROGRESS) ?? 0,
+    awaiting_quote: counters.get(TASK_STATUS_AWAITING_QUOTE) ?? 0,
+    quote_received: counters.get(TASK_STATUS_QUOTE_RECEIVED) ?? 0,
     awaiting_vendor: counters.get(TASK_STATUS_AWAITING_VENDOR) ?? 0,
     awaiting_validation: counters.get(TASK_STATUS_AWAITING_VALIDATION) ?? 0,
     closed: counters.get(TASK_STATUS_CLOSED) ?? 0,
@@ -169,6 +173,8 @@ const hasMore = computed(() => tasks.value.length < totalTasks.value)
 const activeCount = computed(() =>
   (counts.value.open ?? 0) +
   (counts.value.in_progress ?? 0) +
+  (counts.value.awaiting_quote ?? 0) +
+  (counts.value.quote_received ?? 0) +
   (counts.value.awaiting_vendor ?? 0) +
   (counts.value.awaiting_validation ?? 0),
 )
@@ -205,10 +211,15 @@ function isTerminal(status: string): boolean {
 function statusVariant(s: string): 'valid' | 'open' | 'pending' | 'closed' | 'default' {
   if (s === TASK_STATUS_OPEN) return 'valid'
   if (s === TASK_STATUS_IN_PROGRESS) return 'open'
+  if (s === TASK_STATUS_AWAITING_QUOTE || s === TASK_STATUS_QUOTE_RECEIVED) return 'pending'
   if (s === TASK_STATUS_AWAITING_VENDOR) return 'default'
   if (s === TASK_STATUS_AWAITING_VALIDATION) return 'pending'
   if (s === TASK_STATUS_CLOSED) return 'closed'
   return 'default'
+}
+
+function isInQuotePhase(status: string): boolean {
+  return (TAKE_BACK_TASK_STATUSES as readonly string[]).includes(status)
 }
 
 function closeActionLabel(task: Task): string {
@@ -299,6 +310,29 @@ function onTaskCancelled() {
   reload()
 }
 
+const takingBack = ref<string | null>(null)
+
+async function takeBack(task: Task) {
+  const ok = await confirm({
+    title: t('tasks.takeBackTask'),
+    message: t('tasks.confirmTakeBackMessage', { title: task.title }),
+    confirmLabel: t('tasks.takeBackTask'),
+    variant: 'primary',
+  })
+  if (!ok) return
+  takingBack.value = task.id
+  pageError.value = ''
+  try {
+    await tasksApi.takeBack(task.id)
+    successMessage.value = t('tasks.takeBackSuccess')
+    await reload()
+  } catch (err) {
+    pageError.value = toErrorMessage(err)
+  } finally {
+    takingBack.value = null
+  }
+}
+
 function onTaskClosed() {
   reload()
 }
@@ -330,6 +364,7 @@ function updateTaskDocumentCount(taskId: string, delta: number) {
 const generatingToken = ref<string | null>(null)
 const vendorLinks = ref<Record<string, { url: string; expires_at: string }>>({})
 const pageError = ref('')
+const successMessage = ref('')
 const copiedVendorLinkTaskId = ref<string | null>(null)
 
 async function generateToken(task: Task) {
@@ -458,6 +493,14 @@ async function downloadTaskDocument(documentId: string) {
         >
           {{ pageError }}
         </CAlert>
+        <CAlert
+          v-if="successMessage"
+          variant="success"
+          dismissible
+          @dismiss="successMessage = ''"
+        >
+          {{ successMessage }}
+        </CAlert>
 
         <!-- Filtres -->
         <CTabs
@@ -467,6 +510,8 @@ async function downloadTaskDocument(documentId: string) {
             { value: ALL_FILTER, label: t('common.allMasc'), count: counts.all ?? 0 },
             { value: TASK_STATUS_OPEN, label: t('tasks.filters.open'), count: counts.open ?? 0 },
             { value: TASK_STATUS_IN_PROGRESS, label: t('tasks.filters.in_progress'), count: counts.in_progress ?? 0 },
+            { value: TASK_STATUS_AWAITING_QUOTE, label: t('tasks.filters.awaiting_quote'), count: counts.awaiting_quote ?? 0 },
+            { value: TASK_STATUS_QUOTE_RECEIVED, label: t('tasks.filters.quote_received'), count: counts.quote_received ?? 0 },
             { value: TASK_STATUS_AWAITING_VENDOR, label: t('common.contractor'), count: counts.awaiting_vendor ?? 0 },
             { value: TASK_STATUS_AWAITING_VALIDATION, label: t('tasks.filters.awaiting_validation'), count: counts.awaiting_validation ?? 0 },
             { value: TASK_STATUS_CLOSED, label: t('tasks.filters.closed'), count: counts.closed ?? 0 },
@@ -674,6 +719,16 @@ async function downloadTaskDocument(documentId: string) {
                     :title="closeActionLabel(task)"
                     :aria-label="closeActionLabel(task)"
                     @click.stop="openCloseModal(task)"
+                  />
+                  <CBtn
+                    v-if="canAdministerTask && isInQuotePhase(task.status)"
+                    variant="ghost"
+                    size="sm"
+                    :icon="CIconRefresh"
+                    :title="t('tasks.takeBackTask')"
+                    :aria-label="t('tasks.takeBackTask')"
+                    :disabled="takingBack === task.id"
+                    @click.stop="takeBack(task)"
                   />
                   <CBtn
                     v-if="canAdministerTask && !isTerminal(task.status)"
