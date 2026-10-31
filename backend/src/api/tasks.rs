@@ -267,14 +267,6 @@ pub async fn cancel(
         &crate::domain::immutability::Entity::Task,
         &task.status,
     )?;
-    if !matches!(
-        task.status.as_str(),
-        db::task::status::OPEN | db::task::status::IN_PROGRESS
-    ) {
-        return Err(AppError::validation_code(
-            "errors.tasks.cannot_cancel_status",
-        ));
-    }
     db::task::cancel(&state.pool, id, auth.building_id).await?;
     Ok(StatusCode::NO_CONTENT)
 }
