@@ -144,18 +144,10 @@ pub async fn submit(
     // Use a DB transaction so that partial failures don't leave inconsistent state
     let mut tx = state.pool.begin().await?;
 
-    // Create submission record
-    let submission_id = {
-        use sqlx::Row;
-        let row = sqlx::query(
-            "INSERT INTO vendor_submission (task_id, comment) VALUES ($1, $2) RETURNING id",
-        )
-        .bind(task.id)
-        .bind(&input.comment)
-        .fetch_one(&mut *tx)
-        .await?;
-        row.try_get::<Uuid, _>("id")?
-    };
+    // Create submission record (also emits the lifecycle event, actor = NULL:
+    // the vendor flow is a public token, no authenticated session)
+    let submission_id =
+        db::task::create_submission(&mut *tx, task.id, input.comment.clone()).await?;
 
     // Move each file from staging to the building's final bucket and create document records
     for doc_meta in &input.documents {

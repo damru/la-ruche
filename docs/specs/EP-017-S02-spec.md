@@ -2,6 +2,8 @@
 
 **Story :** Backend : émettre les événements auditables aux points de mutation clés de `report` et `task`, avec `payload` JSONB ancien/nouveau quand pertinent.
 
+**État :** IMPLÉMENTÉ (backend)
+
 **Épic :** EP-017 — Journal d'activité & Suivi de cycle de vie
 **Réf. PRD :** Gestion courante (US-JA-*) · **Réf. EPICS :** table des actions auditables, `docs/EPICS.md` L490-505
 **Stories liées :** EP-017-S01 (table + repo `db/activity_log.rs`, prérequis), EP-017-S03 (lecture), EP-017-S06 (visibilité par rôle — ne change rien à l'émission)

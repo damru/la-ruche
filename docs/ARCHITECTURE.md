@@ -57,7 +57,7 @@ references:
 | Clé générale système | `key_type` enum + soft delete sur `allocation_key` | ADR-007 |
 | Traçabilité tâches ↔ carnet | Lien informatif `task_id` + multiples clôtures + `completion_cost` courant sur `task` | ADR-008 |
 | Immutabilité comptable + audit log | Guards de domaine + `audit_log` append-only réservé à la preuve comptable/juridique + `valid_from`/`valid_to` sur `budget_line` + `predecessor_id` sur `vendor_contract` | ADR-009 |
-| Timeline métier tâches/signalements | `activity_log` polymorphique distinct de `audit_log` pour la frise UX — **prévu, non encore implémenté** | EP-017 / EP-018 |
+| Timeline métier tâches/signalements | `activity_log` polymorphique (`entity_type`/`entity_id`) distinct de `audit_log` pour la frise UX — append-only applicatif, scoping immeuble via l'entité référencée | EP-017 / EP-018 |
 | Logs | tracing + tracing-subscriber (JSON) | — |
 | Config | dotenvy + config crate (LA_RUCHE__*) ; `LA_RUCHE__APP__DEMO_MODE=true` rejoue `backend/seeds/demo.sql` au démarrage | — |
 | Frontend | Vue 3 + Vite + TypeScript + Tailwind CSS v4 (couche utilitaire) | DDR-003 |
@@ -70,7 +70,7 @@ references:
 
 ---
 
-## Schéma DB — 41 tables
+## Schéma DB — 42 tables
 
 | Domaine | Tables |
 |---|---|
@@ -90,6 +90,7 @@ references:
 | Registres | `judicial_proceeding`, `governance_mandate` |
 | État daté | `etat_date_request` |
 | Audit comptable | `audit_log` |
+| Journal d'activité | `activity_log` |
 
 Conventions : UUID v4, TIMESTAMPTZ, soft delete via `active`/`status`, `updated_at` via triggers, JSONB pour OCR futur.
 
@@ -99,6 +100,7 @@ Tout upload de fichier depuis n'importe quel module de l'application **crée sys
 Invariants techniques implémentés :
 
 - `report.task_id` porte le lien informatif entre signalement et tâche ; cette relation reste non destructive et réutilisable par les workflows applicatifs.
+- `activity_log` (EP-017) : journal métier polymorphique (`entity_type` = `report` | `task`, `entity_id`, `action`, `actor_id` nullable, `payload` JSONB, `created_at`) alimentant les timelines de cycle de vie, lu via `GET /tasks/{id}/timeline` et `GET /reports/{id}/timeline` (chaîne report ↔ tâche fusionnée, tri SQL `created_at ASC, id ASC`). Append-only applicatif : aucune fonction repo d'update/delete. Frontière avec `audit_log` : `activity_log` est la frise UX, `audit_log` la piste probante comptable. Rétro-remplissage à la création de la table limité aux transitions reconstruisibles (`maintenance_log` source `automatic` → `task.closed`, `vendor_submission` → `task.vendor_submission_received`) ; le reste de l'historique est irrécupérable.
 - `report_comment` (EP-011-S04, US-SIG-006) : commentaires de suivi append-only sur un signalement (pas d'`updated_at`, pas de soft-delete, `ON DELETE CASCADE` depuis `report`) ; l'écriture est réservée manager/board_member, la lecture est ouverte au déclarant du signalement.
 - Les documents de tâche sont répartis entre `task_document` (gestionnaires) et `vendor_submission_document` (soumissions prestataire) ; les endpoints manager `GET/POST/DELETE /tasks/{id}/documents` et `document_count` agrègent ces deux sources.
 - `claim_document` suit le même modèle d'association documentaire que `report_document`, avec nettoyage des liens lors des suppressions d'entité.
@@ -140,7 +142,7 @@ Invariants techniques implémentés :
   - **Police** Tinos embarquée (serif métrique Times New Roman, sous-ensemble `pyftsubset` : ASCII + Latin-1 + ponctuation typographique, ~32 ko/fichier × 4 styles regular/bold/italic/bold-italic), **palette** `BRAND` #643fd5, gris, encre. Le logo PNG RGB (~5 ko) est servi au moteur via le monde virtuel et embarqué compressé par occurrence dans le PDF.
   Chaque document a son propre renderer dans `domain/` (ex. `domain/logbook_pdf.rs` pour `GET /logbook/export/pdf`, carnet d'entretien) qui assemble les données, les formate (montants, dates) et s'appuie sur son template `.typ`. Les futurs documents (compte rendu d'AG, lettre de relance…) réutiliseront ce moteur. `domain/legal_documents.rs` (état daté / pré-état daté) passe aussi par le moteur typst : l'état daté réutilise le cadre lettre complet de `base.typ` (bloc marque, double en-tête, pied de page), le pré-état daté garde la mise en page réglementaire sans bloc marque ni pied de page (Liberation Sans). L'état daté embarque en annexe le **questionnaire syndic** (formulaire CSN) rendu par le template `questionnaire.typ` — chaque champ remplissable est une ancre du payload (pré-rempli quand l'app connaît la valeur, ligne vide / case non cochée sinon) — fusionné au PDF principal via `lopdf` (`append_pdf_annex`).
 
-Arbitrage documentaire : le nom `audit_log` est réservé à la traçabilité probante d'ADR-009 (mutations comptables, diff ciblé, conservation longue, valeur de preuve). Les besoins de timeline UX et de suivi de cycle de vie de `report` / `task` relèveront d'un flux séparé `activity_log`, afin d'éviter de mélanger journal juridique append-only et événements métier orientés interface.
+Arbitrage documentaire : le nom `audit_log` est réservé à la traçabilité probante d'ADR-009 (mutations comptables, diff ciblé, conservation longue, valeur de preuve). Les besoins de timeline UX et de suivi de cycle de vie de `report` / `task` relèvent du flux séparé `activity_log` (table polymorphique ci-dessus), afin d'éviter de mélanger journal juridique append-only et événements métier orientés interface.
 
 Les règles produit détaillées de navigation, d'apparence et de workflows métier restent normatives dans `PRD.md`, `DESIGN.md` et les ADR/DDR concernés ; ce document n'en conserve qu'un résumé d'architecture.
 

@@ -35,6 +35,20 @@ pub async fn get(
     json_value(row)
 }
 
+/// GET /reports/{id}/timeline — merged report↔task chain, chronological ascending.
+/// Same access rule as `reports::get` (any authenticated role of the building).
+pub async fn timeline(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+) -> AppResult<Json<Vec<db::activity_log::TimelineEventRow>>> {
+    let row = db::report::get(&state.pool, id, auth.building_id)
+        .await?
+        .ok_or(AppError::NotFound)?;
+    let events = db::activity_log::list_for_chain(&state.pool, Some(id), row.task_id).await?;
+    Ok(Json(events))
+}
+
 /// Create a new report. Any authenticated user (all roles) can open a report.
 pub async fn create(
     auth: AuthUser,
@@ -69,7 +83,14 @@ pub async fn update_status(
     if !db::report::validate_status(&input.status) {
         return Err(AppError::validation_code("errors.reports.invalid_status"));
     }
-    db::report::update_status(&state.pool, id, auth.building_id, &input.status).await?;
+    db::report::update_status(
+        &state.pool,
+        id,
+        auth.building_id,
+        &input.status,
+        Some(auth.user_id),
+    )
+    .await?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -153,8 +174,14 @@ pub async fn attach_document(
     Path(id): Path<Uuid>,
     Json(input): Json<AttachDocumentInput>,
 ) -> AppResult<StatusCode> {
-    let attached =
-        db::report::attach_document(&state.pool, id, input.document_id, auth.building_id).await?;
+    let attached = db::report::attach_document(
+        &state.pool,
+        id,
+        input.document_id,
+        auth.building_id,
+        Some(auth.user_id),
+    )
+    .await?;
     if !attached {
         return Err(AppError::NotFound);
     }
