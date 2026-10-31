@@ -4,7 +4,7 @@
 
 **Épic :** EP-007 — Travaux & prestataires
 **Réf. PRD :** US-TP-013 · **Réf. ADR :** ADR-009 (données closes immuables)
-**État :** PARTIEL / **CASSÉ** — la réouverture actuelle échoue systématiquement.
+**Statut actuel :** ✅ IMPLÉMENTÉ (backend + frontend) — endpoint dédié `POST /tasks/{id}/reopen` (Manager), la modale appelle la route dédiée au lieu du `PUT` générique gelé.
 
 ---
 

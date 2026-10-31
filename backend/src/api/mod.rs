@@ -299,6 +299,7 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
                 .delete(tasks::delete_task),
         )
         .route("/tasks/{id}/cancel", post(tasks::cancel))
+        .route("/tasks/{id}/reopen", post(tasks::reopen))
         .route(
             "/tasks/{id}/documents",
             get(tasks::list_documents).post(tasks::attach_document),

@@ -119,6 +119,13 @@ pub fn assert_mutable(entity: &Entity, status: &str) -> AppResult<()> {
     }
 }
 
+/// Reopening a task is the one sanctioned exit from the frozen terminal states
+/// (PRD US-TP-013): `closed` and `cancelled` tasks can go back to `in_progress`
+/// via a dedicated endpoint, bypassing the generic mutation guard.
+pub fn can_reopen_task(status: &str) -> bool {
+    matches!(status, task_status::CLOSED | task_status::CANCELLED)
+}
+
 /// Founding documents (règlement de copropriété, EDD) are permanent legal
 /// acts (LEGAL §1.2): hard delete is forbidden, replacement only via a new
 /// version (`supersedes_id` chain).
@@ -241,6 +248,16 @@ mod tests {
     #[test]
     fn assert_mutable_ok_when_mutable() {
         assert!(assert_mutable(&Entity::Task, "open").is_ok());
+    }
+
+    #[test]
+    fn task_reopenable_only_from_terminal_states() {
+        assert!(can_reopen_task("closed"));
+        assert!(can_reopen_task("cancelled"));
+        assert!(!can_reopen_task("open"));
+        assert!(!can_reopen_task("in_progress"));
+        assert!(!can_reopen_task("awaiting_vendor"));
+        assert!(!can_reopen_task("awaiting_validation"));
     }
 
     #[test]

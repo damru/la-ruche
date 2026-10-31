@@ -9,7 +9,6 @@ import { useFormFeedback } from '@/composables/useFormFeedback'
 import { useAutoClose } from '@/composables/useAutoClose'
 import { toErrorMessage } from '@/composables/usePageLoader'
 import type { Task } from '@/types/domain'
-import { TASK_STATUS_OPEN } from '@/utils/constants'
 import { useUiStore } from '@/stores/ui'
 
 const props = defineProps<{
@@ -39,7 +38,7 @@ async function handleSubmit() {
   reopening.value = true
   feedback.reset()
   try {
-    await tasksApi.update(props.task.id, { status: TASK_STATUS_OPEN })
+    await tasksApi.reopen(props.task.id)
     feedback.setSuccess(t('tasks.reopenSuccess'))
     emit('reopened')
     scheduleClose(() => { emit('update:open', false) })
