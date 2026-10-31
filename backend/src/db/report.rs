@@ -302,7 +302,7 @@ pub async fn convert_to_task(
     Ok(task_id)
 }
 
-pub async fn close_linked_to_task<'e, E>(
+pub async fn close_linked_to_task<E>(
     executor: E,
     task_id: Uuid,
     building_id: Uuid,
