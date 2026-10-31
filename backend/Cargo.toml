@@ -63,6 +63,7 @@ jsonwebtoken = { version = "11.0.0", features = ["rust_crypto"] }
 # ── Auth : Passkeys (WebAuthn) ────────────────────────────────
 webauthn-rs = { version = "0.5.4", features = ["danger-allow-state-serialisation"] }
 url = "2.5.8"
+percent-encoding = "2.3.2"
 
 # ── Stockage S3 ───────────────────────────────────────────────
 aws-config = { version = "1.8.15", features = ["behavior-version-latest"] }

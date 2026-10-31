@@ -1,7 +1,7 @@
 use axum::{
     Json,
     body::Bytes,
-    extract::{Path, State},
+    extract::{Path, Query, State},
     http::{HeaderMap, StatusCode},
 };
 use serde::{Deserialize, Serialize};
@@ -290,26 +290,61 @@ pub async fn versions(
     ))
 }
 
+#[derive(Deserialize)]
+pub struct DownloadUrlQuery {
+    /// `inline` renders the PDF in-app; any other value keeps the
+    /// `attachment` download behavior.
+    pub disposition: Option<String>,
+}
+
 /// GET /api/v1/documents/:id/download-url
-/// Generates a pre-signed GET URL — never store on client side
+/// Generates a pre-signed GET URL — never store on client side.
+/// `?disposition=inline` returns the same URL with an `inline`
+/// Content-Disposition, for PDFs only; any other document type falls back
+/// to `attachment`. Access is checked against `visible_to_roles`, exactly
+/// like the document list.
 pub async fn get_download_url(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
+    Query(query): Query<DownloadUrlQuery>,
 ) -> AppResult<Json<serde_json::Value>> {
-    let doc = db::document::get(&state.pool, id, auth.building_id)
-        .await?
-        .ok_or(AppError::NotFound)?;
+    let roles: Vec<String> = auth.roles.iter().map(ToString::to_string).collect();
+    let doc = match db::document::get_visible(&state.pool, id, auth.building_id, &roles).await? {
+        Some(doc) => doc,
+        // 404 for an unknown document, 403 for a document the caller's
+        // roles cannot see — access denial is never masked as 404 for an
+        // authenticated user of the same building.
+        None if db::document::exists(&state.pool, id, auth.building_id).await? => {
+            return Err(AppError::Forbidden);
+        }
+        None => return Err(AppError::NotFound),
+    };
 
-    let url = state
-        .storage
-        .presigned_download_url(
-            &doc.bucket,
-            &doc.storage_path,
-            &doc.original_name,
-            state.cfg.s3.presigned_ttl_secs,
-        )
-        .await?;
+    let inline = query.disposition.as_deref() == Some("inline")
+        && doc.mime_type.eq_ignore_ascii_case("application/pdf");
+
+    let url = if inline {
+        state
+            .storage
+            .presigned_inline_url(
+                &doc.bucket,
+                &doc.storage_path,
+                &doc.original_name,
+                state.cfg.s3.presigned_ttl_secs,
+            )
+            .await?
+    } else {
+        state
+            .storage
+            .presigned_download_url(
+                &doc.bucket,
+                &doc.storage_path,
+                &doc.original_name,
+                state.cfg.s3.presigned_ttl_secs,
+            )
+            .await?
+    };
 
     Ok(Json(serde_json::json!({ "url": url })))
 }
