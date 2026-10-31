@@ -976,7 +976,7 @@ pub async fn detach_document(
 
 /// Records a vendor submission. Public-token flow: no authenticated actor.
 /// Generic over the executor so the event lands in the caller's transaction.
-pub async fn create_submission<'e, E>(
+pub async fn create_submission<E>(
     executor: E,
     task_id: Uuid,
     comment: Option<String>,
