@@ -126,7 +126,11 @@ async fn take_back_refused_outside_quote_phase() {
             .post(&format!("/api/v1/tasks/{task_id}/take-back"))
             .add_header("Authorization", &auth)
             .await;
-        assert_eq!(resp.status_code(), StatusCode::BAD_REQUEST, "status {status}");
+        assert_eq!(
+            resp.status_code(),
+            StatusCode::BAD_REQUEST,
+            "status {status}"
+        );
         assert_eq!(
             resp.json::<Value>()["message"],
             "errors.tasks.not_in_quote_phase"
