@@ -254,6 +254,23 @@ pub async fn delete_task(
     Ok(StatusCode::NO_CONTENT)
 }
 
+pub async fn cancel(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+) -> AppResult<StatusCode> {
+    auth.require_role(&Role::Manager)?;
+    let task = db::task::get(&state.pool, id, auth.building_id)
+        .await?
+        .ok_or(AppError::NotFound)?;
+    crate::domain::immutability::assert_mutable(
+        &crate::domain::immutability::Entity::Task,
+        &task.status,
+    )?;
+    db::task::cancel(&state.pool, id, auth.building_id).await?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
 pub async fn get_vendor_token_url(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,

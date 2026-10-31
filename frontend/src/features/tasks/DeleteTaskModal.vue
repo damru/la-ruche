@@ -19,6 +19,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   'update:open': [value: boolean]
   'deleted': []
+  'cancel-requested': [task: Task]
 }>()
 
 const { t } = useI18n()
@@ -64,6 +65,12 @@ async function handleSubmit() {
           : t('tasks.confirmDeleteMessage', { title: task?.title ?? '' })
       }}
     </p>
+    <p
+      v-if="task?.is_in_logbook"
+      class="body-sm"
+    >
+      {{ t('tasks.deleteBlockedHint') }}
+    </p>
     <template #footer>
       <CFormActions
         :status="feedback.status.value"
@@ -75,12 +82,19 @@ async function handleSubmit() {
           @click="$emit('update:open', false)"
         />
         <CBtn
+          v-if="!task?.is_in_logbook"
           variant="danger"
           :title="t('common.deleteLabel')"
           :loading="deleting"
           :closing="feedback.status.value === 'success'"
           :closing-duration-ms="ui.autoCloseDelayMs"
           @click="handleSubmit"
+        />
+        <CBtn
+          v-else
+          variant="primary"
+          :title="t('tasks.cancelTask')"
+          @click="$emit('cancel-requested', task)"
         />
       </CFormActions>
     </template>

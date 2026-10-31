@@ -31,10 +31,11 @@ pub async fn get_task(
            FROM task t
            JOIN building b ON b.id = t.building_id
            JOIN user_account u ON u.id = t.created_by
-           WHERE t.vendor_token = $1 AND t.token_expires_at > NOW() AND t.status != $2::text::task_status"#,
+           WHERE t.vendor_token = $1 AND t.token_expires_at > NOW() AND t.status NOT IN ($2::text::task_status, $3::text::task_status)"#,
     )
     .bind(token)
     .bind(crate::db::task::status::CLOSED)
+    .bind(crate::db::task::status::CANCELLED)
     .fetch_optional(&state.pool)
     .await?
     .ok_or(AppError::NotFound)?;

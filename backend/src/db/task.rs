@@ -426,45 +426,44 @@ pub async fn get_vendor_token(
 }
 
 /// Deletes a task; documents that become orphaned are soft-deleted.
+/// Hard delete is refused when a vendor submission or a maintenance-log entry
+/// references the task (both are evidentiary records, ADR-009).
 pub async fn delete(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()> {
     let mut tx = pool.begin().await?;
+
+    let has_submissions = sqlx::query_scalar::<_, bool>(
+        "SELECT EXISTS(SELECT 1 FROM vendor_submission WHERE task_id = $1)",
+    )
+    .bind(id)
+    .fetch_one(&mut *tx)
+    .await?;
+    if has_submissions {
+        return Err(crate::errors::AppError::validation_code(
+            "errors.tasks.has_submissions",
+        ));
+    }
+
+    let in_logbook = sqlx::query_scalar::<_, bool>(
+        "SELECT EXISTS(SELECT 1 FROM maintenance_log WHERE task_id = $1)",
+    )
+    .bind(id)
+    .fetch_one(&mut *tx)
+    .await?;
+    if in_logbook {
+        return Err(crate::errors::AppError::validation_code(
+            "errors.tasks.has_logbook_entry",
+        ));
+    }
 
     let linked_document_ids = sqlx::query_scalar::<_, Uuid>(
         r#"
         SELECT document_id
-        FROM (
-            SELECT td.document_id
-            FROM task_document td
-            WHERE td.task_id = $1
-            UNION
-            SELECT vsd.document_id
-            FROM vendor_submission_document vsd
-            JOIN vendor_submission vs ON vs.id = vsd.submission_id
-            JOIN task t ON t.id = vs.task_id
-            WHERE t.id = $1 AND t.building_id = $2
-        ) AS linked_documents
+        FROM task_document td
+        WHERE td.task_id = $1
         "#,
     )
     .bind(id)
-    .bind(building_id)
     .fetch_all(&mut *tx)
-    .await?;
-
-    sqlx::query(
-        r#"
-        DELETE FROM vendor_submission
-        WHERE task_id = $1
-          AND EXISTS (
-              SELECT 1
-              FROM task t
-              WHERE t.id = $1
-                AND t.building_id = $2
-          )
-        "#,
-    )
-    .bind(id)
-    .bind(building_id)
-    .execute(&mut *tx)
     .await?;
 
     let result = sqlx::query("DELETE FROM task WHERE id = $1 AND building_id = $2")
@@ -477,6 +476,43 @@ pub async fn delete(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()>
     }
 
     crate::db::document::delete_orphaned_tx(&mut tx, &linked_document_ids, building_id).await?;
+    tx.commit().await?;
+    Ok(())
+}
+
+/// Cancels a task without deleting anything: documents, submissions and the
+/// vendor token are kept. Refuses `closed`/`cancelled` tasks; the row is
+/// locked inside the transaction to keep the check race-free.
+pub async fn cancel(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()> {
+    let mut tx = pool.begin().await?;
+    let result = sqlx::query(
+        "UPDATE task SET status = $3::text::task_status, updated_at = NOW()
+         WHERE id = $1 AND building_id = $2
+           AND status NOT IN ($4::text::task_status, $5::text::task_status)",
+    )
+    .bind(id)
+    .bind(building_id)
+    .bind(status::CANCELLED)
+    .bind(status::CLOSED)
+    .bind(status::CANCELLED)
+    .execute(&mut *tx)
+    .await?;
+    if result.rows_affected() == 0 {
+        let exists = sqlx::query_scalar::<_, bool>(
+            "SELECT EXISTS(SELECT 1 FROM task WHERE id = $1 AND building_id = $2)",
+        )
+        .bind(id)
+        .bind(building_id)
+        .fetch_one(&mut *tx)
+        .await?;
+        tx.commit().await?;
+        if exists {
+            return Err(crate::errors::AppError::validation_code(
+                "errors.immutability.frozen",
+            ));
+        }
+        return Err(crate::errors::AppError::NotFound);
+    }
     tx.commit().await?;
     Ok(())
 }
@@ -630,10 +666,11 @@ pub async fn get_by_token(pool: &PgPool, token: Uuid) -> AppResult<Option<TaskRo
            EXISTS(SELECT 1 FROM maintenance_log WHERE task_id = t.id) AS is_in_logbook
            FROM task t
            WHERE t.vendor_token = $1 AND t.token_expires_at > NOW()
-           AND t.status != $2::text::task_status"#,
+           AND t.status NOT IN ($2::text::task_status, $3::text::task_status)"#,
     )
     .bind(token)
     .bind(status::CLOSED)
+    .bind(status::CANCELLED)
     .fetch_optional(pool)
     .await?;
     row.as_ref()

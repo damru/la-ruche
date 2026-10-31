@@ -24,6 +24,7 @@ import CIconSearch from '@/components/atoms/CIconSearch.svg'
 import CIconLink from '@/components/atoms/CIconLink.svg'
 import CIconEye from '@/components/atoms/CIconEye.svg'
 import CIconX from '@/components/atoms/CIconX.svg'
+import CIconBan from '@/components/atoms/CIconBan.svg'
 import CIconCopy from '@/components/atoms/CIconCopy.svg'
 import CIconEdit from '@/components/atoms/CIconEdit.svg'
 import CIconRefresh from '@/components/atoms/CIconRefresh.svg'
@@ -31,6 +32,7 @@ import CIconCheckCircle from '@/components/atoms/CIconCheckCircle.svg'
 import SaveTaskModal from './SaveTaskModal.vue'
 import CloseTaskModal from './CloseTaskModal.vue'
 import DeleteTaskModal from './DeleteTaskModal.vue'
+import CancelTaskModal from './CancelTaskModal.vue'
 import RevokeTokenModal from './RevokeTokenModal.vue'
 import ReopenTaskModal from './ReopenTaskModal.vue'
 import { contractorsApi, documentsApi, tasksApi, usersApi } from '@/api'
@@ -66,6 +68,8 @@ const closingTask = ref<Task | null>(null)
 
 const showDeleteModal = ref(false)
 const taskToDelete = ref<Task | null>(null)
+
+const cancellingTask = ref<Task | null>(null)
 
 const revokingTask = ref<Task | null>(null)
 
@@ -266,6 +270,10 @@ function openDeleteModal(task: Task) {
   showDeleteModal.value = true
 }
 
+function openCancelModal(task: Task) {
+  cancellingTask.value = task
+}
+
 // ── Modal event handlers ──────────────────────────────────────────
 function onTaskSaved() {
   reload()
@@ -277,6 +285,15 @@ function onTaskDeleteRequest(task: Task) {
 
 function onTaskDeleted() {
   showDeleteModal.value = false
+  reload()
+}
+
+function onDeleteCancelRequested(task: Task) {
+  showDeleteModal.value = false
+  cancellingTask.value = task
+}
+
+function onTaskCancelled() {
   reload()
 }
 
@@ -656,6 +673,15 @@ async function downloadTaskDocument(documentId: string) {
                     :aria-label="closeActionLabel(task)"
                     @click.stop="openCloseModal(task)"
                   />
+                  <CBtn
+                    v-if="!isTerminal(task.status)"
+                    variant="ghost"
+                    size="sm"
+                    :icon="CIconBan"
+                    :title="t('tasks.cancelTask')"
+                    :aria-label="t('tasks.cancelTask')"
+                    @click.stop="openCancelModal(task)"
+                  />
                 </CCardActions>
               </div>
             </CCard>
@@ -712,6 +738,14 @@ async function downloadTaskDocument(documentId: string) {
       :task="taskToDelete"
       @update:open="showDeleteModal = $event"
       @deleted="onTaskDeleted"
+      @cancel-requested="onDeleteCancelRequested"
+    />
+
+    <CancelTaskModal
+      :open="!!cancellingTask"
+      :task="cancellingTask"
+      @update:open="v => !v && (cancellingTask = null)"
+      @cancelled="onTaskCancelled"
     />
 
     <CLinkedDocumentsModal

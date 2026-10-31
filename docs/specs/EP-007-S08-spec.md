@@ -4,7 +4,7 @@
 
 **Épic :** EP-007 — Travaux & prestataires
 **Réf. PRD :** US-TP-016 · **Réf. ADR :** ADR-009 (piste probante) · **Réf. LEGAL :** conservation des actes
-**État :** PARTIEL — cette spec ne couvre que l'écart restant.
+**État :** IMPLÉMENTÉ (backend + frontend)
 
 ---
 

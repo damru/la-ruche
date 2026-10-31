@@ -364,6 +364,8 @@ export const tasksApi = {
     api.put<Task>(`/tasks/${id}`, data),
   delete: (id: string) =>
     api.delete(`/tasks/${id}`),
+  cancel: (id: string) =>
+    api.post(`/tasks/${id}/cancel`),
   listDocuments: (id: string) =>
     api.get<Document[]>(`/tasks/${id}/documents`),
   attachDocument: (id: string, document_id: string) =>

@@ -50,6 +50,7 @@ declare module 'vue' {
     CIconArchive: typeof import('./../components/atoms/CIconArchive.svg')['default']
     CIconArrowLeft: typeof import('./../components/atoms/CIconArrowLeft.svg')['default']
     CIconArrowRight: typeof import('./../components/atoms/CIconArrowRight.svg')['default']
+    CIconBan: typeof import('./../components/atoms/CIconBan.svg')['default']
     CIconBell: typeof import('./../components/atoms/CIconBell.svg')['default']
     CIconBolt: typeof import('./../components/atoms/CIconBolt.svg')['default']
     CIconBook: typeof import('./../components/atoms/CIconBook.svg')['default']
