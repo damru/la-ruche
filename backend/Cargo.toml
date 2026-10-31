@@ -61,7 +61,7 @@ argon2 = "0.6.0"
 jsonwebtoken = { version = "11.0.0", features = ["rust_crypto"] }
 
 # ── Auth : Passkeys (WebAuthn) ────────────────────────────────
-webauthn-rs = { version = "0.5.4", features = ["danger-allow-state-serialisation"] }
+webauthn-rs = { version = "0.6.0", features = ["danger-allow-state-serialisation"] }
 url = "2.5.8"
 
 # ── Stockage S3 ───────────────────────────────────────────────
@@ -93,7 +93,7 @@ hex = "0.4.3"
 typst = "0.15" # moteur de composition embarqué (ADR-011, option A retenue)
 typst-pdf = "0.15" # export PDF du document compilé
 typst-layout = "0.15" # PagedDocument : sortie de la compilation
-lopdf = "0.14" # fusion de PDF (annexe questionnaire état daté)
+lopdf = "0.46" # fusion de PDF (annexe questionnaire état daté)
 
 [dev-dependencies]
 axum-test = "21.0.0"                      # tests d'intégration handlers
