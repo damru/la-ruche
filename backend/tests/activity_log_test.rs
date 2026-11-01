@@ -200,10 +200,27 @@ async fn task_mutation_events_and_closed_transition() {
     assert_eq!(resp.status_code(), StatusCode::NO_CONTENT);
     let ev = events_for(&pool, "task", &task_id).await;
     assert_eq!(ev.len(), 3);
-    assert_eq!(ev[1]["action"], json!("status_changed"));
-    assert_eq!(ev[1]["payload"]["new_status"], json!("in_progress"));
-    assert_eq!(ev[2]["action"], json!("contractor_assigned"));
-    assert_eq!(ev[2]["payload"]["contractor_name"], json!("Plomberie Pro"));
+    // status_changed and contractor_assigned land in the same tx (same NOW()):
+    // their relative order follows the id tie-break, so assert as a set.
+    let mut pair: Vec<&str> = ev[1..3]
+        .iter()
+        .map(|e| e["action"].as_str().unwrap())
+        .collect();
+    pair.sort_unstable();
+    assert_eq!(pair, vec!["contractor_assigned", "status_changed"]);
+    let status_ev = ev
+        .iter()
+        .find(|e| e["action"] == json!("status_changed"))
+        .expect("status event");
+    assert_eq!(status_ev["payload"]["new_status"], json!("in_progress"));
+    let contractor_ev = ev
+        .iter()
+        .find(|e| e["action"] == json!("contractor_assigned"))
+        .expect("contractor event");
+    assert_eq!(
+        contractor_ev["payload"]["contractor_name"],
+        json!("Plomberie Pro")
+    );
 
     // Same body again -> no new event (no-op diff).
     server
