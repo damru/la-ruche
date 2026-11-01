@@ -311,3 +311,159 @@ async fn deleting_a_report_cascades_its_comments() {
         .await;
     assert_eq!(listed.status_code(), StatusCode::NOT_FOUND);
 }
+
+// ── Optional reporter anonymity (EP-011-S05, US-SIG-007) ──────────────────
+// Anonymous report: author identity is masked in every API response for every
+// role (including manager), except for the reporter themself (is_author=true).
+// The flag is immutable after creation; convert-to-task never leaks it.
+
+async fn create_anonymous_report(server: &TestServer, auth: &str) -> String {
+    let created = server
+        .post("/api/v1/reports")
+        .add_header("Authorization", auth)
+        .json(&json!({ "title": "Signalement anonyme", "is_anonymous": true }))
+        .await;
+    assert_eq!(
+        created.status_code(),
+        StatusCode::CREATED,
+        "setup create anonymous report"
+    );
+    created.json::<Value>()["id"]
+        .as_str()
+        .expect("id")
+        .to_string()
+}
+
+#[tokio::test]
+async fn anonymous_report_creator_sees_own_identity() {
+    let (ctx, _pool) = common::rbac_setup().await;
+    let server = common::test_server().await;
+    let auth = format!("Bearer {}", ctx.coowner_jwt);
+
+    let created = server
+        .post("/api/v1/reports")
+        .add_header("Authorization", &auth)
+        .json(&json!({ "title": "Anonyme", "is_anonymous": true }))
+        .await;
+    assert_eq!(created.status_code(), StatusCode::CREATED);
+    let body = created.json::<Value>();
+    assert_eq!(body["is_anonymous"], json!(true));
+    assert_eq!(body["is_author"], json!(true));
+    assert!(body["author_id"].is_string(), "reporter sees own author_id");
+    assert!(body["author_first_name"].is_string());
+}
+
+#[tokio::test]
+async fn anonymous_report_masked_for_manager_in_list_and_get() {
+    let (ctx, _pool) = common::rbac_setup().await;
+    let server = common::test_server().await;
+    let reporter_auth = format!("Bearer {}", ctx.coowner_jwt);
+    let manager_auth = format!("Bearer {}", ctx.manager_jwt);
+    let report_id = create_anonymous_report(&server, &reporter_auth).await;
+
+    for auth in [&manager_auth, &format!("Bearer {}", ctx.tenant_jwt)] {
+        let listed = server
+            .get("/api/v1/reports")
+            .add_header("Authorization", auth)
+            .await;
+        assert_eq!(listed.status_code(), StatusCode::OK);
+        let items = listed.json::<Value>();
+        let item = items
+            .as_array()
+            .expect("array")
+            .iter()
+            .find(|r| r["id"].as_str() == Some(&report_id))
+            .expect("report in list");
+        assert_eq!(item["author_id"], Value::Null, "list masks author_id");
+        assert_eq!(item["author_first_name"], Value::Null);
+        assert_eq!(item["author_last_name"], Value::Null);
+        assert_eq!(item["is_anonymous"], json!(true));
+        assert_eq!(item["is_author"], json!(false));
+
+        let got = server
+            .get(&format!("/api/v1/reports/{report_id}"))
+            .add_header("Authorization", auth)
+            .await;
+        assert_eq!(got.status_code(), StatusCode::OK);
+        let body = got.json::<Value>();
+        assert_eq!(body["author_id"], Value::Null, "get masks author_id");
+        assert_eq!(body["author_first_name"], Value::Null);
+        assert_eq!(body["is_author"], json!(false));
+    }
+}
+
+#[tokio::test]
+async fn anonymous_reporter_still_recognized_after_manager_update() {
+    let (ctx, _pool) = common::rbac_setup().await;
+    let server = common::test_server().await;
+    let reporter_auth = format!("Bearer {}", ctx.coowner_jwt);
+    let manager_auth = format!("Bearer {}", ctx.manager_jwt);
+    let report_id = create_anonymous_report(&server, &reporter_auth).await;
+
+    let updated = server
+        .put(&format!("/api/v1/reports/{report_id}"))
+        .add_header("Authorization", &manager_auth)
+        .json(&json!({ "title": "Titre maj" }))
+        .await;
+    assert_eq!(updated.status_code(), StatusCode::NO_CONTENT);
+
+    let got = server
+        .get(&format!("/api/v1/reports/{report_id}"))
+        .add_header("Authorization", &reporter_auth)
+        .await;
+    assert_eq!(got.status_code(), StatusCode::OK);
+    let body = got.json::<Value>();
+    assert_eq!(body["is_author"], json!(true), "reporter still recognized");
+    assert!(body["author_id"].is_string(), "reporter sees own id on get");
+}
+
+#[tokio::test]
+async fn non_anonymous_report_keeps_author_visible() {
+    let (ctx, _pool) = common::rbac_setup().await;
+    let server = common::test_server().await;
+    let reporter_auth = format!("Bearer {}", ctx.coowner_jwt);
+    let manager_auth = format!("Bearer {}", ctx.manager_jwt);
+    let report_id = create_report(&server, &reporter_auth).await;
+
+    let got = server
+        .get(&format!("/api/v1/reports/{report_id}"))
+        .add_header("Authorization", &manager_auth)
+        .await;
+    assert_eq!(got.status_code(), StatusCode::OK);
+    let body = got.json::<Value>();
+    assert_eq!(body["is_anonymous"], json!(false));
+    assert_eq!(body["is_author"], json!(false));
+    assert!(body["author_id"].is_string(), "non-anonymous unchanged");
+    assert!(body["author_first_name"].is_string());
+}
+
+#[tokio::test]
+async fn convert_anonymous_report_to_task_does_not_leak_author() {
+    let (ctx, pool) = common::rbac_setup().await;
+    let server = common::test_server().await;
+    let reporter_auth = format!("Bearer {}", ctx.coowner_jwt);
+    let manager_auth = format!("Bearer {}", ctx.manager_jwt);
+    let report_id = create_anonymous_report(&server, &reporter_auth).await;
+
+    let converted = server
+        .post(&format!("/api/v1/reports/{report_id}/task"))
+        .add_header("Authorization", &manager_auth)
+        .await;
+    assert_eq!(converted.status_code(), StatusCode::OK);
+    let task_id = converted.json::<Value>()["task_id"]
+        .as_str()
+        .expect("task_id")
+        .to_string();
+
+    let task: (String, Option<String>) =
+        sqlx::query_as("SELECT title, description FROM task WHERE id = $1")
+            .bind(uuid::Uuid::parse_str(&task_id).unwrap())
+            .fetch_one(&pool)
+            .await
+            .expect("task row");
+    assert_eq!(task.0, "Signalement anonyme");
+    assert!(
+        !task.1.unwrap_or_default().contains("coowner"),
+        "task description must not carry reporter identity"
+    );
+}
