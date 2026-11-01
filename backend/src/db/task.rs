@@ -528,7 +528,7 @@ pub async fn cancel(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()>
 
 /// Reopens a frozen terminal task (`closed` / `cancelled`) back to `in_progress`
 /// (PRD US-TP-013). The row is locked inside the transaction so two concurrent
-/// reopens cannot both succeed; the second one gets `errors.tasks.not_reopenable`.
+/// reopens cannot both succeed; the second one gets `errors.tasks.invalid_transition`.
 ///
 /// Completion fields are reset to NULL: the logbook entry created at closing
 /// time stays intact as the evidentiary record (ADR-009), and a later
@@ -557,7 +557,7 @@ pub async fn reopen(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<Opt
     let current = task_row_from_query(&row)?;
     if !crate::domain::immutability::can_reopen_task(&current.status) {
         return Err(crate::errors::AppError::validation_code(
-            "errors.tasks.not_reopenable",
+            "errors.tasks.invalid_transition",
         ));
     }
     let updated = sqlx::query(

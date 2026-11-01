@@ -107,7 +107,7 @@ async fn reopen_rejected_on_non_frozen_task() {
     assert_eq!(resp.status_code(), StatusCode::BAD_REQUEST);
     assert_eq!(
         resp.json::<Value>()["message"],
-        "errors.tasks.not_reopenable"
+        "errors.tasks.invalid_transition"
     );
 }
 

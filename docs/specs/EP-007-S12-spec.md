@@ -6,6 +6,8 @@
 **Réf. PRD :** US-TP-013 · **Réf. ADR :** ADR-009 (données closes immuables)
 **Statut actuel :** ✅ IMPLÉMENTÉ (backend + frontend) — endpoint dédié `POST /tasks/{id}/reopen` (Manager), la modale appelle la route dédiée au lieu du `PUT` générique gelé.
 
+> **AC-013-D (entrée timeline immuable acteur + motif) :** non livrée ici — la table `activity_log` n'existe pas encore ; cette entrée sera produite par EP-017-S02 (`task.status_changed` au reopen) quand l'epic EP-017 sera livré.
+
 ---
 
 ## 1. État actuel du code (bug)
@@ -50,7 +52,7 @@ Le gel générique (`immutability.rs:44`) reste inchangé — le reopen ne passe
 
 Nouvelle fonction `reopen(pool, id, building_id) -> AppResult<Option<TaskRow>>` :
 
-1. `SELECT … FOR UPDATE` ; `can_reopen(status)` sinon `AppError::validation_code("errors.tasks.not_reopenable")`.
+1. `SELECT … FOR UPDATE` ; `can_reopen(status)` sinon `AppError::validation_code("errors.tasks.invalid_transition")`.
 2. `UPDATE task SET status = 'in_progress', completion_cost = NULL, closed_at = NULL, updated_at = NOW()` (adapter la liste aux colonnes de complétion réelles).
 3. **Ne touche pas** `maintenance_log` : l'entrée créée à la clôture d'origine reste (décision §2). Une re-clôture ultérieure créera une nouvelle entrée (comportement existant `:443`, insert inconditionnel `maintenance_log.rs:159-187`) — c'est voulu : deux interventions distinctes, deux lignes de carnet.
 
@@ -58,7 +60,7 @@ Nouvelle fonction `reopen(pool, id, building_id) -> AppResult<Option<TaskRow>>` 
 
 Handler `reopen` (rôle `Manager`), zéro logique. Route `api/mod.rs` : `.route("/tasks/{id}/reopen", post(tasks::reopen))`.
 
-Réponses : `200` tâche `in_progress` · `400 errors.tasks.not_reopenable` (statut non gelé) · `403` · `404`.
+Réponses : `200` tâche `in_progress` · `400 errors.tasks.invalid_transition` (statut non gelé) · `403` · `404`.
 
 Le handler `update` (`:148-154`) reste inchangé — il continue de refuser toute mutation d'une tâche gelée.
 
@@ -73,7 +75,7 @@ Le handler `update` (`:148-154`) reste inchangé — il continue de refuser tout
 
 | Cas | Règle |
 |---|---|
-| Reopen sur tâche `open`/`in_progress`/`awaiting_*` | `400 errors.tasks.not_reopenable` |
+| Reopen sur tâche `open`/`in_progress`/`awaiting_*` | `400 errors.tasks.invalid_transition` |
 | Reopen sur `cancelled` | Autorisé → `in_progress` |
 | Reopen puis re-clôture | Nouvelle entrée carnet créée ; l'ancienne subsiste (2 lignes = 2 interventions) |
 | Champs de complétion | Remis à `NULL` au reopen (décision §2, trade-off flaggé) |
@@ -85,7 +87,7 @@ Le handler `update` (`:148-154`) reste inchangé — il continue de refuser tout
 1. `POST /tasks/{id}/reopen` sur tâche `closed` ou `cancelled` → `200`, `status == "in_progress"`, champs de complétion nulls.
 2. L'entrée `maintenance_log` d'origine est inchangée après reopen.
 3. Re-clôture après reopen → deuxième entrée carnet.
-4. Reopen sur tâche non gelée → `400 errors.tasks.not_reopenable`.
+4. Reopen sur tâche non gelée → `400 errors.tasks.invalid_transition`.
 5. La modale frontend réussit (fin du `errors.immutability.frozen` systématique).
 
 ## 8. Plan de tests

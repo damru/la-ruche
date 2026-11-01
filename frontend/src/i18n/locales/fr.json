@@ -1800,7 +1800,7 @@
       "invalid_filter": "Le filtre appliqué est invalide.",
       "has_submissions": "La tâche possède une soumission prestataire et ne peut pas être supprimée.",
       "has_logbook_entry": "La tâche est historisée dans le carnet d'entretien et ne peut pas être supprimée.",
-      "not_reopenable": "Seules les tâches clôturées ou annulées peuvent être ré-ouvertes."
+      "invalid_transition": "Seules les tâches clôturées ou annulées peuvent être ré-ouvertes."
     },
     "units": {
       "invalid_payload": "Les informations du lot sont invalides.",
