@@ -134,7 +134,7 @@ Aucun changement (refactoring backend pur). Les UI d'EP-021-S03 et EP-017-S04/S0
 
 ## 8. Plan de tests
 
-- E2E : rejouer les scénarios EP-021-S03 §8 sur les sites migrés ; échec simulé du sink audit → mutation absente ; échec activity post-commit → mutation présente + warn. ; échec activity simulé in-tx (savepoint) → mutation et ligne carnet présentes, ligne activity absente.
+- E2E : rejouer les scénarios EP-021-S03 §8 sur les sites migrés ; échec simulé du sink audit → mutation absente ; échec activity post-commit → mutation présente + warn ; échec activity simulé in-tx (savepoint) → mutation et ligne carnet présentes, ligne activity absente.
 - Unitaires : table de routage (couples attendus → sinks), produit cartésien exhaustif, helper `diff` (ajout/modif/suppression), `redact`, refus des événements strict-routés via `emit_after_commit`.
 - Compilation : tentative d'appel direct `db::audit::insert` hors module → échec du build.
 
