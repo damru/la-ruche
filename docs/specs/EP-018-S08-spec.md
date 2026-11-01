@@ -13,9 +13,9 @@
 
 | Élément | Emplacement |
 |---|---|
-| Table `audit_log` append-only | migration `0029_audit_log.sql` |
+| Table `audit_log` append-only | migration `0001_init.sql:966` |
 | `db::audit::insert` (générique sur `Executor`, utilisable en tx) + `list_by_entity` | `backend/src/db/audit.rs` |
-| 5 sites audit câblés | `db/budget.rs:642/727`, `db/contract.rs:297/366/389` |
+| 14 sites audit câblés | 14 appels `audit::insert` sur `db/allocation_key.rs`, `db/budget.rs`, `db/contract.rs`, `db/document.rs` |
 | Diff ciblé before/after (Pattern C) | `domain/immutability` |
 | `activity_log` | pas encore créée (EP-017-S01) |
 | Alimentation carnet à la clôture de tâche | logique directe dans le flux de clôture (EP-009-S03) |
@@ -90,9 +90,9 @@ journal::emit_after_commit(exec, event).await  // post-commit, best-effort — r
 
 ### 4.4 Sinks phase 1 et verrouillage
 
-- `AuditSink` encapsule `db::audit::insert` ; `ActivitySink` encapsule `db::activity::insert` (créée par EP-017-S02).
-- Les 5 sites audit existants migrent vers `journal::emit` — lignes produites byte-identiques.
-- `db::audit::insert` / `db::activity::insert` deviennent réservées au module journal (visibilité privée ou déplacement) : le compilateur garantit le point d'appel unique.
+- `AuditSink` encapsule `db::audit::insert` ; `ActivitySink` encapsule `db::activity_log::insert` (créée par EP-017-S02, PR #171).
+- Les 14 sites audit existants migrent vers `journal::emit` — lignes produites byte-identiques.
+- `db::audit::insert` / `db::activity_log::insert` deviennent réservées au module journal (visibilité privée ou déplacement) : le compilateur garantit le point d'appel unique.
 
 ### 4.5 Sink carnet (phase 2, follow-up dédié)
 
@@ -124,8 +124,8 @@ Aucun changement (refactoring backend pur). Les UI d'EP-021-S03 et EP-017-S04/S0
 
 ## 7. Critères d'acceptation
 
-1. Les 5 sites audit migrés produisent des lignes byte-identiques (comparaison e2e avant/après).
-2. `db::audit::insert` / `db::activity::insert` inutilisables hors `domain/journal` (erreur de compilation).
+1. Les 14 sites audit migrés produisent des lignes byte-identiques (comparaison e2e avant/après).
+2. `db::audit::insert` / `db::activity_log::insert` inutilisables hors `domain/journal` (erreur de compilation).
 3. `emit_after_commit` refuse tout événement routé vers un sink strict.
 4. Un `MemorySink` de test s'enregistre et reçoit les événements sans modifier les sites d'émission — preuve d'extensibilité (futur `event_log`).
 5. Le test du produit cartésien (`EntityType × Action`) passe : tout couple est routé ou explicitement `NotAudited`.
@@ -141,7 +141,7 @@ Aucun changement (refactoring backend pur). Les UI d'EP-021-S03 et EP-017-S04/S0
 ## 9. Ordre d'implémentation
 
 1. Catalogue `EntityType`/`Action` + `Event` + table de routage + dispatcher + `MemorySink` (tests).
-2. `AuditSink` + migration des 5 sites + verrouillage visibilité (commit unique).
+2. `AuditSink` + migration des 14 sites + verrouillage visibilité (commit unique).
 3. `ActivitySink` branché dès EP-017-S02 — le dispatcher devient son unique point d'écriture ; EP-021-S03 câble ses nouveaux sites via `emit` uniquement.
 4. `MaintenanceSink` en phase 2 (follow-up dédié).
 5. `docs/ARCHITECTURE.md` (section journal) + `docs/PROGRESS.md`.

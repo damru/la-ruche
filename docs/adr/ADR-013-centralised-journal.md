@@ -44,7 +44,7 @@ Une future table `event_log` « tous événements » — si le besoin apparaît 
 
 ### §5 — Invariants ADR-009 préservés
 
-L'audit reste dans la transaction de la mutation (rollback = disparition de la trace), append-only, conservation 10 ans, `user_id` maintenu après anonymisation. Un événement dont le routage inclut un sink strict n'est émissible que via `emit(tx)` ; `emit_after_commit` le refuse. Le verrouillage est garanti par la visibilité : `db::audit::insert` et `db::activity::insert` deviennent inaccessibles hors de `domain/journal`.
+L'audit reste dans la transaction de la mutation (rollback = disparition de la trace), append-only, conservation 10 ans, `user_id` maintenu après anonymisation. Un événement dont le routage inclut un sink strict n'est émissible que via `emit(tx)` ; `emit_after_commit` le refuse. Le verrouillage est garanti par la visibilité : `db::audit::insert` et `db::activity_log::insert` deviennent inaccessibles hors de `domain/journal`.
 
 ## Alternatives rejetées
 

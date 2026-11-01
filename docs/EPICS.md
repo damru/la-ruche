@@ -545,7 +545,7 @@ Durcir les entités comptablement critiques pour empêcher toute modification r�
 * ✅ [EP-018-S05](specs/EP-018-S05-spec.md) — Appliquer le Pattern B sur `vendor_contract` : ajouter `predecessor_id`, remplacer `Modifier` par `Créer un avenant` sur les champs gelés, clôturer l'ancien contrat à l'activation de l'avenant et exposer la chaîne d'avenants
 * ✅ [EP-018-S06](specs/EP-018-S06-spec.md) — Appliquer le Pattern B sur `budget` / `budget_line` : ajouter `parent_budget_id`, remplacer l'unicité annuelle par une contrainte compatible rectificatifs, versionner `budget_line` via `valid_from` / `valid_to` et créer le workflow de budget rectificatif
 * ✅ `EP-018-S07` — Appliquer le Pattern C sur les corrections comptables : avoirs sur `levy_call`, corrections append-only sur `maintenance_log` manuel, et journalisation des opérations `UPDATE` / `DELETE` financières avec diff ciblé (`old_values` / `new_values`)
-* [EP-018-S08](specs/EP-018-S08-spec.md) — Centraliser la capture des événements applicatifs dans un module ${BT}domain/journal${BT} : catalogue typé de tous les événements (probants, cycle de vie, réglementaires), dispatcher vers des sinks (${BT}audit_log${BT} transactionnel, ${BT}activity_log${BT} best-effort, carnet d'entretien en phase 2) ; les trois journaux deviennent des projections du flux, un futur ${BT}event_log${BT} global serait un sink de plus — aucun changement de schéma ni de comportement (ADR-013)
+* [EP-018-S08](specs/EP-018-S08-spec.md) — Centraliser la capture des événements applicatifs (ADR-013) : les journaux probant, cycle de vie et carnet d'entretien deviennent des projections d'un flux unique — aucun changement de schéma ni de comportement
 
 ***
 
