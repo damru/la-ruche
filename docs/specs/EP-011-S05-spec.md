@@ -6,6 +6,8 @@
 **Réf. PRD :** US-SIG-007
 **État :** IMPLÉMENTÉ (backend + frontend).
 
+> **Note de divergence PRD tracée :** la ligne US-SIG-007 du PRD Signalements disait initialement « visible Syndic uniquement » ; le choix retenu (et livré) est plus protecteur : masquage pour **tous les rôles y compris le Syndic**, seul le déclarant se reconnaît via `is_author` (identité conservée en base pour traçabilité/gestion des abus). Le PRD a été amendé en ce sens dans la même PR.
+
 ---
 
 ## 1. Quoi (résumé fonctionnel)

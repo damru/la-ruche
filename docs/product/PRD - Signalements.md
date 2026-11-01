@@ -45,8 +45,7 @@ Permettre à **tout résident** (copropriétaire ou locataire) de **signaler un 
 
 ### Anonymat
 
-- Si le déclarant active l'option d'anonymat, `reporter_id` est masqué dans toutes les vues et réponses API destinées aux autres résidents et au Conseil.
-- Le Syndic DOIT toujours voir l'identité du déclarant (même en mode anonyme) pour éviter les abus.
+- Si le déclarant active l'option d'anonymat, `reporter_id` est masqué dans toutes les vues et réponses API pour **tous les rôles, y compris le Syndic** ; seul le déclarant se reconnaît (indicateur « vous »). L'identité reste conservée côté serveur pour la traçabilité et la gestion des abus (décision de conception tracée dans la spec de la story).
 
 ### Conversion en tâche
 
@@ -90,7 +89,7 @@ Permettre à **tout résident** (copropriétaire ou locataire) de **signaler un 
 
 ### Règles de sécurité
 
-- En mode anonyme, `reporter_id` n'est jamais exposé aux résidents ni au Conseil — uniquement au Syndic.
+- En mode anonyme, `reporter_id` n'est jamais exposé à personne (résidents, Conseil, Syndic) — seul le déclarant se reconnaît.
 - Un résident ne peut pas voir les signalements d'un autre résident (sauf les siens).
 - Filtrage systématique par `building_id`.
 
@@ -130,7 +129,7 @@ open ──(accusé de réception)──▶ acknowledged ──(en cours)──�
 | Must | US-SIG-004 | Clôturer un signalement | Résolu ou classé sans suite avec commentaire |
 | Should | US-SIG-005 | Convertir en tâche | Créer une tâche liée depuis le signalement |
 | Should | US-SIG-006 | Ajouter un commentaire de suivi | Syndic et Conseil commentent ; résidents voient |
-| Must | US-SIG-007 | Anonymat du déclarant | Option par signalement, visible Syndic uniquement |
+| Must | US-SIG-007 | Anonymat du déclarant | Option par signalement, identité masquée pour tous les rôles y compris le Syndic ; seul le déclarant se reconnaît |
 
 ### User stories détaillées
 
@@ -203,7 +202,7 @@ open ──(accusé de réception)──▶ acknowledged ──(en cours)──�
 | ID | Catégorie | Exigence | Seuil |
 |---|---|---|---|
 | NFR-Notif-001 | Notification | Alerte signalement urgent | Syndic notifié dans les 5 min |
-| NFR-Sec-001 | Anonymat | reporter_id masqué (mode anonyme) | 0 fuite vers résidents |
+| NFR-Sec-001 | Anonymat | reporter_id masqué (mode anonyme) | 0 fuite vers quiconque, y compris le Syndic |
 
 ---
 
