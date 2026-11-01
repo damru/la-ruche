@@ -138,9 +138,19 @@ pub async fn create(
 
     // Step 2: fetch the enriched row (JOINs user_account + document_count subquery)
     // reusing the same query used by the GET endpoint.
-    get(pool, id, building_id)
+    let row = get(pool, id, building_id)
         .await?
-        .ok_or_else(|| AppError::Internal(anyhow::anyhow!("created report not found")))
+        .ok_or_else(|| AppError::Internal(anyhow::anyhow!("created report not found")))?;
+    crate::db::activity_log::emit_best_effort(
+        pool,
+        crate::db::activity_log::ENTITY_REPORT,
+        id,
+        crate::db::activity_log::actions::CREATED,
+        Some(author_id),
+        None,
+    )
+    .await;
+    Ok(row)
 }
 
 pub async fn update_status(
@@ -148,7 +158,18 @@ pub async fn update_status(
     id: Uuid,
     building_id: Uuid,
     status: &str,
+    actor_id: Option<Uuid>,
 ) -> AppResult<()> {
+    let old_status: Option<String> =
+        sqlx::query_scalar("SELECT status::text FROM report WHERE id = $1 AND building_id = $2")
+            .bind(id)
+            .bind(building_id)
+            .fetch_optional(pool)
+            .await?;
+    let old_status = match old_status {
+        None => return Err(AppError::NotFound),
+        Some(s) => s,
+    };
     let result = sqlx::query(
         "UPDATE report SET status = $3::text::report_status, updated_at = NOW() WHERE id = $1 AND building_id = $2",
     )
@@ -160,7 +181,32 @@ pub async fn update_status(
     if result.rows_affected() == 0 {
         return Err(AppError::NotFound);
     }
+    if old_status != status {
+        crate::db::activity_log::emit_best_effort(
+            pool,
+            crate::db::activity_log::ENTITY_REPORT,
+            id,
+            crate::db::activity_log::actions::STATUS_CHANGED,
+            actor_id,
+            Some(serde_json::json!({ "old_status": old_status, "new_status": status })),
+        )
+        .await;
+    }
     Ok(())
+}
+
+/// Reverse of `report.task_id`: the report converted into the given task, if any.
+pub async fn find_by_task_id(
+    pool: &PgPool,
+    task_id: Uuid,
+    building_id: Uuid,
+) -> AppResult<Option<Uuid>> {
+    let id = sqlx::query_scalar("SELECT id FROM report WHERE task_id = $1 AND building_id = $2")
+        .bind(task_id)
+        .bind(building_id)
+        .fetch_optional(pool)
+        .await?;
+    Ok(id)
 }
 
 /// Converts a report into a task (EP-011-S03).
@@ -231,20 +277,52 @@ pub async fn convert_to_task(
     .execute(&mut *tx)
     .await?;
 
+    // Step 5: lifecycle events, atomically with the conversion.
+    crate::db::activity_log::insert(
+        &mut *tx,
+        crate::db::activity_log::ENTITY_REPORT,
+        report_id,
+        crate::db::activity_log::actions::CONVERTED_TO_TASK,
+        Some(created_by),
+        Some(serde_json::json!({ "task_id": task_id })),
+    )
+    .await?;
+    crate::db::activity_log::insert(
+        &mut *tx,
+        crate::db::activity_log::ENTITY_TASK,
+        task_id,
+        crate::db::activity_log::actions::CREATED,
+        Some(created_by),
+        Some(serde_json::json!({ "source_report_id": report_id })),
+    )
+    .await?;
+
     tx.commit().await?;
 
     Ok(task_id)
 }
 
-pub async fn close_linked_to_task<'e, E>(
+pub async fn close_linked_to_task<E>(
     executor: E,
     task_id: Uuid,
     building_id: Uuid,
+    actor_id: Option<Uuid>,
 ) -> AppResult<()>
 where
-    E: sqlx::Executor<'e, Database = sqlx::Postgres>,
+    E: std::ops::DerefMut<Target = sqlx::postgres::PgConnection>,
 {
-    sqlx::query(
+    let mut executor = executor;
+    let old: Option<(Uuid, String)> = sqlx::query_as(
+        "SELECT id, status::text FROM report \
+         WHERE task_id = $1 AND building_id = $2 AND status != $3::text::report_status",
+    )
+    .bind(task_id)
+    .bind(building_id)
+    .bind(STATUS_CLOSED)
+    .fetch_optional(&mut *executor)
+    .await?;
+
+    let result = sqlx::query(
         "UPDATE report
          SET status = $3::text::report_status, updated_at = NOW()
          WHERE task_id = $1 AND building_id = $2 AND status != $3::text::report_status",
@@ -252,8 +330,22 @@ where
     .bind(task_id)
     .bind(building_id)
     .bind(STATUS_CLOSED)
-    .execute(executor)
+    .execute(&mut *executor)
     .await?;
+
+    if result.rows_affected() > 0
+        && let Some((report_id, old_status)) = old
+    {
+        crate::db::activity_log::insert(
+            &mut *executor,
+            crate::db::activity_log::ENTITY_REPORT,
+            report_id,
+            crate::db::activity_log::actions::STATUS_CHANGED,
+            actor_id,
+            Some(serde_json::json!({ "old_status": old_status, "new_status": STATUS_CLOSED })),
+        )
+        .await?;
+    }
     Ok(())
 }
 
@@ -363,23 +455,23 @@ pub async fn attach_document(
     report_id: Uuid,
     document_id: Uuid,
     building_id: Uuid,
+    actor_id: Option<Uuid>,
 ) -> AppResult<bool> {
-    let pair_exists: bool = sqlx::query_scalar(
-        r#"SELECT EXISTS(
-               SELECT 1 FROM report r, document d
-               WHERE r.id = $1 AND r.building_id = $3
-                 AND d.id = $2 AND d.building_id = $3
-           )"#,
+    let pair = sqlx::query_as::<_, (String,)>(
+        r#"SELECT d.original_name
+           FROM report r, document d
+           WHERE r.id = $1 AND r.building_id = $3
+             AND d.id = $2 AND d.building_id = $3"#,
     )
     .bind(report_id)
     .bind(document_id)
     .bind(building_id)
-    .fetch_one(pool)
+    .fetch_optional(pool)
     .await?;
 
-    if !pair_exists {
+    let Some((file_name,)) = pair else {
         return Ok(false);
-    }
+    };
 
     sqlx::query(
         "INSERT INTO report_document (report_id, document_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
@@ -388,6 +480,16 @@ pub async fn attach_document(
     .bind(document_id)
     .execute(pool)
     .await?;
+
+    crate::db::activity_log::emit_best_effort(
+        pool,
+        crate::db::activity_log::ENTITY_REPORT,
+        report_id,
+        crate::db::activity_log::actions::PHOTO_ADDED,
+        actor_id,
+        Some(serde_json::json!({ "document_id": document_id, "file_name": file_name })),
+    )
+    .await;
 
     Ok(true)
 }

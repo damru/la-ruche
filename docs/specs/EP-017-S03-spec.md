@@ -2,6 +2,8 @@
 
 **Story :** Backend : matérialiser la conversion signalement → tâche (`linked_task_id`) et exposer `GET /tasks/{id}/timeline` + `GET /reports/{id}/timeline` remontant la chaîne complète.
 
+**État :** IMPLÉMENTÉ (backend + client API frontend)
+
 **Épic :** EP-017 — Journal d'activité & Suivi de cycle de vie
 **Réf. PRD :** Gestion courante (US-JA-*, US-TP-015) · **Réf. EPICS :** `docs/EPICS.md` EP-017-S03 (L511)
 **Stories liées :** EP-017-S01/S02 (table + événements, prérequis), EP-017-S04/S05 (consommateurs frontend), EP-017-S06 (filtrage par rôle — branché sur les handlers créés ici)
