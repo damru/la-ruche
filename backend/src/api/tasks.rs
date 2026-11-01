@@ -271,6 +271,21 @@ pub async fn cancel(
     Ok(StatusCode::NO_CONTENT)
 }
 
+/// Reopens a `closed` or `cancelled` task back to `in_progress` (PRD US-TP-013).
+/// This is the sanctioned exit from the ADR-009 frozen states: it bypasses
+/// `assert_mutable` on purpose, with its own domain rule.
+pub async fn reopen(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+) -> AppResult<Json<serde_json::Value>> {
+    auth.require_role(&Role::Manager)?;
+    let task = db::task::reopen(&state.pool, id, auth.building_id)
+        .await?
+        .ok_or(AppError::NotFound)?;
+    json_value(db::task::TaskListItem::from(task))
+}
+
 pub async fn get_vendor_token_url(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,

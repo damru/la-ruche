@@ -658,7 +658,7 @@ async function downloadTaskDocument(documentId: string) {
                     @click.stop="openEditModal(task)"
                   />
                   <CBtn
-                    v-if="task.status === TASK_STATUS_CLOSED"
+                    v-if="isTerminal(task.status)"
                     variant="primary"
                     size="sm"
                     :icon="CIconRefresh"
