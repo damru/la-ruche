@@ -114,6 +114,8 @@ pub mod status {
     pub const IN_PROGRESS: &str = "in_progress";
     pub const AWAITING_VENDOR: &str = "awaiting_vendor";
     pub const AWAITING_VALIDATION: &str = "awaiting_validation";
+    pub const AWAITING_QUOTE: &str = "awaiting_quote";
+    pub const QUOTE_RECEIVED: &str = "quote_received";
     pub const CLOSED: &str = "closed";
     pub const CANCELLED: &str = "cancelled";
 }
@@ -132,6 +134,8 @@ const VALID_STATUSES: &[&str] = &[
     status::IN_PROGRESS,
     status::AWAITING_VENDOR,
     status::AWAITING_VALIDATION,
+    status::AWAITING_QUOTE,
+    status::QUOTE_RECEIVED,
     status::CLOSED,
     status::CANCELLED,
 ];
@@ -788,6 +792,56 @@ pub async fn update_fields(
         crate::db::report::close_linked_to_task(&mut *tx, id, building_id, Some(actor_user_id))
             .await?;
     }
+    tx.commit().await?;
+    Ok(())
+}
+
+/// Takes a task back from a quote-phase status (`awaiting_quote` /
+/// `quote_received`) to `in_progress`, keeping the vendor token and the
+/// attached documents. Returns 404 if the task doesn't exist, or a
+/// validation error when the task is not in a quote-phase status. The row
+/// is locked with FOR UPDATE so the status check and the write are race-free.
+pub async fn take_back(
+    pool: &PgPool,
+    id: Uuid,
+    building_id: Uuid,
+    actor_id: Option<Uuid>,
+) -> AppResult<()> {
+    let mut tx = pool.begin().await?;
+    let old_status = sqlx::query_scalar::<_, String>(
+        "SELECT status::text FROM task WHERE id = $1 AND building_id = $2 FOR UPDATE",
+    )
+    .bind(id)
+    .bind(building_id)
+    .fetch_optional(&mut *tx)
+    .await?
+    .ok_or(crate::errors::AppError::NotFound)?;
+    if old_status != status::AWAITING_QUOTE && old_status != status::QUOTE_RECEIVED {
+        return Err(crate::errors::AppError::validation_code(
+            "errors.tasks.not_in_quote_phase",
+        ));
+    }
+    let result = sqlx::query(
+        "UPDATE task SET status = $3::text::task_status, updated_at = NOW() \
+         WHERE id = $1 AND building_id = $2",
+    )
+    .bind(id)
+    .bind(building_id)
+    .bind(status::IN_PROGRESS)
+    .execute(&mut *tx)
+    .await?;
+    if result.rows_affected() == 0 {
+        return Err(crate::errors::AppError::NotFound);
+    }
+    crate::db::activity_log::insert(
+        &mut *tx,
+        crate::db::activity_log::ENTITY_TASK,
+        id,
+        crate::db::activity_log::actions::STATUS_CHANGED,
+        actor_id,
+        Some(serde_json::json!({ "old_status": old_status, "new_status": status::IN_PROGRESS })),
+    )
+    .await?;
     tx.commit().await?;
     Ok(())
 }

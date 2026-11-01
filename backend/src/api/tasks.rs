@@ -295,6 +295,29 @@ pub async fn cancel(
     Ok(StatusCode::NO_CONTENT)
 }
 
+/// POST /tasks/{id}/take-back — manager takes a task back from the quote
+/// phase (`awaiting_quote` / `quote_received`) to `in_progress`, keeping the
+/// vendor token and attached documents. Returns the updated task.
+pub async fn take_back(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+) -> AppResult<Json<serde_json::Value>> {
+    auth.require_role(&Role::Manager)?;
+    let task = db::task::get(&state.pool, id, auth.building_id)
+        .await?
+        .ok_or(AppError::NotFound)?;
+    crate::domain::immutability::assert_mutable(
+        &crate::domain::immutability::Entity::Task,
+        &task.status,
+    )?;
+    db::task::take_back(&state.pool, id, auth.building_id, Some(auth.user_id)).await?;
+    let updated = db::task::get(&state.pool, id, auth.building_id)
+        .await?
+        .ok_or(AppError::NotFound)?;
+    json_value(db::task::TaskListItem::from(updated))
+}
+
 pub async fn get_vendor_token_url(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,

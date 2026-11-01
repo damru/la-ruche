@@ -278,6 +278,42 @@ async fn vendor_token_and_submission_events() {
 }
 
 #[tokio::test]
+async fn take_back_from_quote_phase_emits_status_changed() {
+    let (ctx, pool) = common::rbac_setup().await;
+    let server = common::test_server().await;
+    let manager = format!("Bearer {}", ctx.manager_jwt);
+
+    let task_id = create_task(&server, &manager, "Devis toiture").await;
+    sqlx::query("UPDATE task SET status = 'awaiting_quote'::task_status WHERE id = $1::uuid")
+        .bind(&task_id)
+        .execute(&pool)
+        .await
+        .expect("set quote phase");
+
+    let resp = server
+        .post(&format!("/api/v1/tasks/{task_id}/take-back"))
+        .add_header("Authorization", &manager)
+        .await;
+    assert_eq!(resp.status_code(), StatusCode::OK);
+    assert_eq!(resp.json::<Value>()["status"], json!("in_progress"));
+
+    let ev = events_for(&pool, "task", &task_id).await;
+    assert_eq!(ev.len(), 2);
+    assert_eq!(ev[1]["action"], json!("status_changed"));
+    assert_eq!(ev[1]["payload"]["old_status"], json!("awaiting_quote"));
+    assert_eq!(ev[1]["payload"]["new_status"], json!("in_progress"));
+    assert!(ev[1]["actor_id"].is_string());
+
+    // Take-back is refused outside the quote phase.
+    let resp = server
+        .post(&format!("/api/v1/tasks/{task_id}/take-back"))
+        .add_header("Authorization", &manager)
+        .await;
+    assert_eq!(resp.status_code(), StatusCode::BAD_REQUEST);
+    assert_eq!(events_for(&pool, "task", &task_id).await.len(), 2);
+}
+
+#[tokio::test]
 async fn timeline_endpoints_return_the_same_merged_chain() {
     let (ctx, _pool) = common::rbac_setup().await;
     let server = common::test_server().await;

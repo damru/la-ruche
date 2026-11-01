@@ -4,7 +4,9 @@
 
 **Épic :** EP-007 — Travaux & prestataires
 **Réf. PRD :** US-TP-012 · **Réf. LEGAL :** — · **Réf. ADR :** —
-**État :** NON IMPLÉMENTÉ
+**État :** NON IMPLÉMENTÉ (branche `vibe/ep-007-s07-take-back-quote-phase-f79b58`, PR #169)
+
+> **AC-012-D (entrée timeline immuable avec acteur + cause) :** la table `activity_log` existe désormais (EP-017-S02, PR #171) : le take-back émettra un événement `status_changed` (`old_status` → `in_progress`) avec l'acteur. Cette note de délégation est retirée dès que #171 est mergée.
 
 ---
 
