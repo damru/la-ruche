@@ -85,6 +85,8 @@ journal::emit_after_commit(exec, event).await  // post-commit, best-effort — r
 
 - Un événement dont le routage inclut un sink strict (audit, maintenance) n'est émissible que via `emit(tx)` ; `emit_after_commit` le refuse (erreur explicite), jamais de best-effort sur une preuve.
 - `emit_after_commit` (événements lenient uniquement) : échec loggé (warn), mutation non annulée, pas de retry.
+- Fan-out multi-sinks : la table de routage renvoie une liste ordonnée de sinks ; le dispatcher les exécute séquentiellement dans la même transaction, un seul point d'appel côté site émetteur.
+- Au sein de `emit(tx)`, chaque sink lenient s'exécute sous `SAVEPOINT` : en cas d'échec, `ROLLBACK TO SAVEPOINT` + warn, puis poursuite — l'invariant best-effort tient aussi en transaction. Un sink strict échoué annule toute la transaction : toutes les projections disparaissent, tout ou rien.
 
 ### 4.4 Sinks phase 1 et verrouillage
 
@@ -113,6 +115,7 @@ Aucun changement (refactoring backend pur). Les UI d'EP-021-S03 et EP-017-S04/S0
 | Rollback de la mutation | Lignes audit et activity (in-tx) disparaissent ; aucune ligne orpheline. |
 | Échec insert audit (sink strict) | Mutation annulée — invariant ADR-009 inchangé. |
 | Échec insert activity post-commit | Warn loggé, mutation conservée, pas de retry. |
+| Échec d'un sink lenient en transaction | Rollback au savepoint, warn ; mutation et autres projections (carnet) conservées. |
 | Couple (entité, action) non déclaré | Erreur au test d'exhaustivité — jamais ignoré en silence. |
 | Événement routé vers un sink strict via `emit_after_commit` | Refusé (erreur explicite). |
 | Événement multi-journaux (ex. `Task + Closed`) | Un seul emit, plusieurs sinks, un seul point d'appel. |
@@ -131,7 +134,7 @@ Aucun changement (refactoring backend pur). Les UI d'EP-021-S03 et EP-017-S04/S0
 
 ## 8. Plan de tests
 
-- E2E : rejouer les scénarios EP-021-S03 §8 sur les sites migrés ; échec simulé du sink audit → mutation absente ; échec activity post-commit → mutation présente + warn.
+- E2E : rejouer les scénarios EP-021-S03 §8 sur les sites migrés ; échec simulé du sink audit → mutation absente ; échec activity post-commit → mutation présente + warn. ; échec activity simulé in-tx (savepoint) → mutation et ligne carnet présentes, ligne activity absente.
 - Unitaires : table de routage (couples attendus → sinks), produit cartésien exhaustif, helper `diff` (ajout/modif/suppression), `redact`, refus des événements strict-routés via `emit_after_commit`.
 - Compilation : tentative d'appel direct `db::audit::insert` hors module → échec du build.
 
