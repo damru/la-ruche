@@ -526,6 +526,61 @@ pub async fn cancel(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()>
     Ok(())
 }
 
+/// Reopens a frozen terminal task (`closed` / `cancelled`) back to `in_progress`
+/// (PRD US-TP-013). The row is locked inside the transaction so two concurrent
+/// reopens cannot both succeed; the second one gets `errors.tasks.invalid_transition`.
+///
+/// Completion fields are reset to NULL: the logbook entry created at closing
+/// time stays intact as the evidentiary record (ADR-009), and a later
+/// re-closing creates a new logbook entry instead of double-counting the cost.
+pub async fn reopen(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<Option<TaskRow>> {
+    let mut tx = pool.begin().await?;
+    let row = sqlx::query(
+        r#"SELECT t.id, t.building_id, t.title, t.description,
+           t.status::text AS status, t.priority::text AS priority,
+           t.contract_id, t.contractor_id, t.contractor_name, t.assigned_to, t.created_by, t.vendor_token,
+           t.token_expires_at, t.closed_at, t.completion_cost, t.created_at, t.updated_at,
+           0::bigint AS document_count,
+           EXISTS(SELECT 1 FROM maintenance_log WHERE task_id = t.id) AS is_in_logbook,
+           EXISTS(SELECT 1 FROM vendor_submission WHERE task_id = t.id) AS has_vendor_submission
+           FROM task t
+           WHERE t.id = $1 AND t.building_id = $2
+           FOR UPDATE"#,
+    )
+    .bind(id)
+    .bind(building_id)
+    .fetch_optional(&mut *tx)
+    .await?;
+    let Some(row) = row else {
+        return Ok(None);
+    };
+    let current = task_row_from_query(&row)?;
+    if !crate::domain::immutability::can_reopen_task(&current.status) {
+        return Err(crate::errors::AppError::validation_code(
+            "errors.tasks.invalid_transition",
+        ));
+    }
+    let updated = sqlx::query(
+        r#"UPDATE task
+           SET status = $3::text::task_status, closed_at = NULL, completion_cost = NULL, updated_at = NOW()
+           WHERE id = $1 AND building_id = $2
+           RETURNING id, building_id, title, description,
+           status::text AS status, priority::text AS priority,
+           contract_id, contractor_id, contractor_name, assigned_to, created_by, vendor_token,
+           token_expires_at, closed_at, completion_cost, created_at, updated_at,
+           0::bigint AS document_count,
+           EXISTS(SELECT 1 FROM maintenance_log WHERE task_id = id) AS is_in_logbook,
+           EXISTS(SELECT 1 FROM vendor_submission WHERE task_id = id) AS has_vendor_submission"#,
+    )
+    .bind(id)
+    .bind(building_id)
+    .bind(status::IN_PROGRESS)
+    .fetch_one(&mut *tx)
+    .await?;
+    tx.commit().await?;
+    Ok(Some(task_row_from_query(&updated)?))
+}
+
 /// Updates mutable task fields. `None` values leave the existing field unchanged.
 /// `completion_cost_update` uses patch semantics:
 /// - `None` keeps the current value
