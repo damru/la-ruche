@@ -114,6 +114,8 @@ pub mod status {
     pub const IN_PROGRESS: &str = "in_progress";
     pub const AWAITING_VENDOR: &str = "awaiting_vendor";
     pub const AWAITING_VALIDATION: &str = "awaiting_validation";
+    pub const AWAITING_QUOTE: &str = "awaiting_quote";
+    pub const QUOTE_RECEIVED: &str = "quote_received";
     pub const CLOSED: &str = "closed";
     pub const CANCELLED: &str = "cancelled";
 }
@@ -132,6 +134,8 @@ const VALID_STATUSES: &[&str] = &[
     status::IN_PROGRESS,
     status::AWAITING_VENDOR,
     status::AWAITING_VALIDATION,
+    status::AWAITING_QUOTE,
+    status::QUOTE_RECEIVED,
     status::CLOSED,
     status::CANCELLED,
 ];
@@ -353,7 +357,17 @@ pub async fn create(
     .bind(user_id)
     .fetch_one(pool)
     .await?;
-    task_row_from_query(&row).map_err(Into::into)
+    let row: TaskRow = task_row_from_query(&row)?;
+    crate::db::activity_log::emit_best_effort(
+        pool,
+        crate::db::activity_log::ENTITY_TASK,
+        row.id,
+        crate::db::activity_log::actions::CREATED,
+        Some(user_id),
+        None,
+    )
+    .await;
+    Ok(row)
 }
 
 /// Returns an error if the task was not found (0 rows affected).
@@ -362,7 +376,18 @@ pub async fn update_status(
     id: Uuid,
     building_id: Uuid,
     status: &str,
+    actor_id: Option<Uuid>,
 ) -> AppResult<()> {
+    let old_status: Option<String> =
+        sqlx::query_scalar("SELECT status::text FROM task WHERE id = $1 AND building_id = $2")
+            .bind(id)
+            .bind(building_id)
+            .fetch_optional(pool)
+            .await?;
+    let old_status = match old_status {
+        None => return Err(crate::errors::AppError::NotFound),
+        Some(s) => s,
+    };
     let closed_at = if status == status::CLOSED {
         Some(Utc::now())
     } else {
@@ -381,6 +406,28 @@ pub async fn update_status(
     if result.rows_affected() == 0 {
         return Err(crate::errors::AppError::NotFound);
     }
+    if old_status != status {
+        let (action, payload) = if status == status::CLOSED {
+            (
+                crate::db::activity_log::actions::CLOSED,
+                serde_json::json!({ "old_status": old_status }),
+            )
+        } else {
+            (
+                crate::db::activity_log::actions::STATUS_CHANGED,
+                serde_json::json!({ "old_status": old_status, "new_status": status }),
+            )
+        };
+        crate::db::activity_log::emit_best_effort(
+            pool,
+            crate::db::activity_log::ENTITY_TASK,
+            id,
+            action,
+            actor_id,
+            Some(payload),
+        )
+        .await;
+    }
     Ok(())
 }
 
@@ -390,9 +437,21 @@ pub async fn generate_token(
     id: Uuid,
     building_id: Uuid,
     ttl_days: u64,
+    actor_id: Option<Uuid>,
 ) -> AppResult<(Uuid, DateTime<Utc>)> {
     let token = Uuid::new_v4();
     let expires_at = Utc::now() + chrono::Duration::days(ttl_days as i64);
+
+    let old_status: Option<String> =
+        sqlx::query_scalar("SELECT status::text FROM task WHERE id = $1 AND building_id = $2")
+            .bind(id)
+            .bind(building_id)
+            .fetch_optional(pool)
+            .await?;
+    let old_status = match old_status {
+        None => return Err(crate::errors::AppError::NotFound),
+        Some(s) => s,
+    };
 
     let result = sqlx::query(
         "UPDATE task SET vendor_token = $3, token_expires_at = $4,
@@ -409,6 +468,29 @@ pub async fn generate_token(
 
     if result.rows_affected() == 0 {
         return Err(crate::errors::AppError::NotFound);
+    }
+    // The raw token is a capability secret: it must never land in the payload.
+    crate::db::activity_log::emit_best_effort(
+        pool,
+        crate::db::activity_log::ENTITY_TASK,
+        id,
+        crate::db::activity_log::actions::VENDOR_LINK_GENERATED,
+        actor_id,
+        Some(serde_json::json!({ "expires_at": expires_at })),
+    )
+    .await;
+    if old_status != status::AWAITING_VENDOR {
+        crate::db::activity_log::emit_best_effort(
+            pool,
+            crate::db::activity_log::ENTITY_TASK,
+            id,
+            crate::db::activity_log::actions::STATUS_CHANGED,
+            actor_id,
+            Some(
+                serde_json::json!({ "old_status": old_status, "new_status": status::AWAITING_VENDOR }),
+            ),
+        )
+        .await;
     }
     Ok((token, expires_at))
 }
@@ -493,11 +575,16 @@ pub async fn delete(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()>
 /// vendor token are kept. Any non-terminal status (`open`, `in_progress`,
 /// `awaiting_vendor`, `awaiting_validation`) can be cancelled; the row is
 /// locked inside the transaction to keep the check race-free.
-pub async fn cancel(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()> {
+pub async fn cancel(
+    pool: &PgPool,
+    id: Uuid,
+    building_id: Uuid,
+    actor_id: Option<Uuid>,
+) -> AppResult<()> {
     let mut tx = pool.begin().await?;
     // FOR UPDATE serialises the status check with the write, so two concurrent
     // cancels cannot both succeed.
-    sqlx::query_scalar::<_, String>(
+    let old_status = sqlx::query_scalar::<_, String>(
         "SELECT status::text FROM task WHERE id = $1 AND building_id = $2 FOR UPDATE",
     )
     .bind(id)
@@ -517,12 +604,21 @@ pub async fn cancel(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()>
     .bind(status::CANCELLED)
     .execute(&mut *tx)
     .await?;
-    tx.commit().await?;
     if result.rows_affected() == 0 {
         return Err(crate::errors::AppError::validation_code(
             "errors.immutability.frozen",
         ));
     }
+    crate::db::activity_log::insert(
+        &mut *tx,
+        crate::db::activity_log::ENTITY_TASK,
+        id,
+        crate::db::activity_log::actions::STATUS_CHANGED,
+        actor_id,
+        Some(serde_json::json!({ "old_status": old_status, "new_status": status::CANCELLED })),
+    )
+    .await?;
+    tx.commit().await?;
     Ok(())
 }
 
@@ -539,6 +635,7 @@ pub async fn update_fields(
     description: Option<Option<&str>>,
     priority: Option<&str>,
     status: Option<&str>,
+    assigned_to: Option<Option<Uuid>>,
     contractor_id: Option<Option<Uuid>>,
     contractor_name: Option<Option<&str>>,
     completion_cost_update: Option<Option<Decimal>>,
@@ -564,6 +661,10 @@ pub async fn update_fields(
     let new_status = status
         .map(ToOwned::to_owned)
         .unwrap_or_else(|| current.status.clone());
+    let new_assigned_to = match assigned_to {
+        Some(a) => a,
+        None => current.assigned_to,
+    };
     let new_contractor_id = match contractor_id {
         Some(c) => c,
         None => current.contractor_id,
@@ -590,10 +691,11 @@ pub async fn update_fields(
         "UPDATE task SET title = $3, description = $4,
           priority = $5::text::task_priority,
           status = $6::text::task_status,
-          contractor_id = $7,
-          contractor_name = $8,
-          closed_at = $9,
-          completion_cost = $10,
+          assigned_to = $7,
+          contractor_id = $8,
+          contractor_name = $9,
+          closed_at = $10,
+          completion_cost = $11,
           updated_at = NOW()
           WHERE id = $1 AND building_id = $2",
     )
@@ -603,6 +705,7 @@ pub async fn update_fields(
     .bind(&new_description)
     .bind(&new_priority)
     .bind(&new_status)
+    .bind(new_assigned_to)
     .bind(new_contractor_id)
     .bind(&new_contractor_name)
     .bind(closed_at)
@@ -613,6 +716,71 @@ pub async fn update_fields(
     if result.rows_affected() == 0 {
         return Err(crate::errors::AppError::NotFound);
     }
+    if current_status != new_status {
+        let (action, payload) = if new_status == status::CLOSED {
+            (
+                crate::db::activity_log::actions::CLOSED,
+                serde_json::json!({ "old_status": current_status }),
+            )
+        } else {
+            (
+                crate::db::activity_log::actions::STATUS_CHANGED,
+                serde_json::json!({ "old_status": current_status, "new_status": new_status }),
+            )
+        };
+        crate::db::activity_log::insert(
+            &mut *tx,
+            crate::db::activity_log::ENTITY_TASK,
+            id,
+            action,
+            Some(actor_user_id),
+            Some(payload),
+        )
+        .await?;
+    }
+    if current.assigned_to != new_assigned_to {
+        crate::db::activity_log::insert(
+            &mut *tx,
+            crate::db::activity_log::ENTITY_TASK,
+            id,
+            crate::db::activity_log::actions::ASSIGNEE_CHANGED,
+            Some(actor_user_id),
+            Some(serde_json::json!({
+                "old_assignee_id": current.assigned_to,
+                "new_assignee_id": new_assigned_to,
+            })),
+        )
+        .await?;
+    }
+    if current.contractor_id != new_contractor_id || current.contractor_name != new_contractor_name
+    {
+        let contractor_name = match &new_contractor_name {
+            Some(name) => Some(name.clone()),
+            None => match new_contractor_id {
+                Some(cid) => {
+                    sqlx::query_scalar::<_, Option<String>>(
+                        "SELECT name FROM contractor WHERE id = $1",
+                    )
+                    .bind(cid)
+                    .fetch_one(&mut *tx)
+                    .await?
+                }
+                None => None,
+            },
+        };
+        crate::db::activity_log::insert(
+            &mut *tx,
+            crate::db::activity_log::ENTITY_TASK,
+            id,
+            crate::db::activity_log::actions::CONTRACTOR_ASSIGNED,
+            Some(actor_user_id),
+            Some(serde_json::json!({
+                "contractor_id": new_contractor_id,
+                "contractor_name": contractor_name,
+            })),
+        )
+        .await?;
+    }
     if create_log_entry {
         crate::db::maintenance_log::create_automatic_from_task(
             &mut *tx,
@@ -621,8 +789,59 @@ pub async fn update_fields(
             actor_user_id,
         )
         .await?;
-        crate::db::report::close_linked_to_task(&mut *tx, id, building_id).await?;
+        crate::db::report::close_linked_to_task(&mut *tx, id, building_id, Some(actor_user_id))
+            .await?;
     }
+    tx.commit().await?;
+    Ok(())
+}
+
+/// Takes a task back from a quote-phase status (`awaiting_quote` /
+/// `quote_received`) to `in_progress`, keeping the vendor token and the
+/// attached documents. Returns 404 if the task doesn't exist, or a
+/// validation error when the task is not in a quote-phase status. The row
+/// is locked with FOR UPDATE so the status check and the write are race-free.
+pub async fn take_back(
+    pool: &PgPool,
+    id: Uuid,
+    building_id: Uuid,
+    actor_id: Option<Uuid>,
+) -> AppResult<()> {
+    let mut tx = pool.begin().await?;
+    let old_status = sqlx::query_scalar::<_, String>(
+        "SELECT status::text FROM task WHERE id = $1 AND building_id = $2 FOR UPDATE",
+    )
+    .bind(id)
+    .bind(building_id)
+    .fetch_optional(&mut *tx)
+    .await?
+    .ok_or(crate::errors::AppError::NotFound)?;
+    if old_status != status::AWAITING_QUOTE && old_status != status::QUOTE_RECEIVED {
+        return Err(crate::errors::AppError::validation_code(
+            "errors.tasks.not_in_quote_phase",
+        ));
+    }
+    let result = sqlx::query(
+        "UPDATE task SET status = $3::text::task_status, updated_at = NOW() \
+         WHERE id = $1 AND building_id = $2",
+    )
+    .bind(id)
+    .bind(building_id)
+    .bind(status::IN_PROGRESS)
+    .execute(&mut *tx)
+    .await?;
+    if result.rows_affected() == 0 {
+        return Err(crate::errors::AppError::NotFound);
+    }
+    crate::db::activity_log::insert(
+        &mut *tx,
+        crate::db::activity_log::ENTITY_TASK,
+        id,
+        crate::db::activity_log::actions::STATUS_CHANGED,
+        actor_id,
+        Some(serde_json::json!({ "old_status": old_status, "new_status": status::IN_PROGRESS })),
+    )
+    .await?;
     tx.commit().await?;
     Ok(())
 }
@@ -737,31 +956,27 @@ pub async fn attach_document(
     task_id: Uuid,
     document_id: Uuid,
     building_id: Uuid,
+    actor_id: Option<Uuid>,
 ) -> AppResult<bool> {
-    let pair_exists = sqlx::query_scalar::<_, bool>(
+    let file_name = sqlx::query_scalar::<_, Option<String>>(
         r#"
-        SELECT EXISTS(
-            SELECT 1
-            FROM task t
-            WHERE t.id = $1
-              AND t.building_id = $3
-        ) AND EXISTS(
-            SELECT 1
-            FROM document d
-            WHERE d.id = $2
-              AND d.building_id = $3
-        )
+        SELECT d.original_name
+        FROM task t, document d
+        WHERE t.id = $1
+          AND t.building_id = $3
+          AND d.id = $2
+          AND d.building_id = $3
         "#,
     )
     .bind(task_id)
     .bind(document_id)
     .bind(building_id)
-    .fetch_one(pool)
+    .fetch_optional(pool)
     .await?;
 
-    if !pair_exists {
+    let Some(file_name) = file_name else {
         return Ok(false);
-    }
+    };
 
     sqlx::query(
         r#"
@@ -774,6 +989,16 @@ pub async fn attach_document(
     .bind(document_id)
     .execute(pool)
     .await?;
+
+    crate::db::activity_log::emit_best_effort(
+        pool,
+        crate::db::activity_log::ENTITY_TASK,
+        task_id,
+        crate::db::activity_log::actions::DOCUMENT_UPLOADED,
+        actor_id,
+        Some(serde_json::json!({ "document_id": document_id, "file_name": file_name })),
+    )
+    .await;
 
     Ok(true)
 }
@@ -803,20 +1028,36 @@ pub async fn detach_document(
     Ok(result.rows_affected() > 0)
 }
 
-pub async fn create_submission(
-    pool: &PgPool,
+/// Records a vendor submission. Public-token flow: no authenticated actor.
+/// Generic over the executor so the event lands in the caller's transaction.
+pub async fn create_submission<E>(
+    executor: E,
     task_id: Uuid,
     comment: Option<String>,
-) -> AppResult<Uuid> {
+) -> AppResult<Uuid>
+where
+    E: std::ops::DerefMut<Target = sqlx::postgres::PgConnection>,
+{
+    let mut executor = executor;
     use sqlx::Row;
     let row = sqlx::query(
         "INSERT INTO vendor_submission (task_id, comment) VALUES ($1, $2) RETURNING id",
     )
     .bind(task_id)
     .bind(comment)
-    .fetch_one(pool)
+    .fetch_one(&mut *executor)
     .await?;
-    Ok(row.try_get("id")?)
+    let submission_id: Uuid = row.try_get("id")?;
+    crate::db::activity_log::insert(
+        &mut *executor,
+        crate::db::activity_log::ENTITY_TASK,
+        task_id,
+        crate::db::activity_log::actions::VENDOR_SUBMISSION_RECEIVED,
+        None,
+        Some(serde_json::json!({ "submission_id": submission_id })),
+    )
+    .await?;
+    Ok(submission_id)
 }
 
 pub async fn attach_submission_document(

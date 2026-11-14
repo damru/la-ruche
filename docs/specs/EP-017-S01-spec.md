@@ -2,6 +2,8 @@
 
 **Story :** Migration : créer la table `activity_log` polymorphique + repository d'insertion/lecture, socle des cinq stories suivantes de l'épic.
 
+**État :** IMPLÉMENTÉ (backend)
+
 **Épic :** EP-017 — Journal d'activité & Suivi de cycle de vie
 **Réf. PRD :** Gestion courante (US-JA-* / US-TP-015) · **Réf. EPICS :** `docs/EPICS.md` §EP-017 (schéma prescriptif, L509)
 **Stories liées :** EP-017-S02 (émission des événements — consomme le repo créé ici), EP-017-S03 (endpoints timeline — consomme la lecture), EP-018-S01 (arbitrage `audit_log` / `activity_log`)
