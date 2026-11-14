@@ -25,6 +25,7 @@ declare module 'vue' {
     CDataTable: typeof import('./../components/molecules/CDataTable.vue')['default']
     CDeleteConfirmModal: typeof import('./../components/organisms/CDeleteConfirmModal.vue')['default']
     CDocumentLinkActionModal: typeof import('./../components/organisms/CDocumentLinkActionModal.vue')['default']
+    CDocumentViewer: typeof import('./../components/molecules/CDocumentViewer.vue')['default']
     CDropdownMenu: typeof import('./../components/atoms/CDropdownMenu.vue')['default']
     CEmptyState: typeof import('./../components/atoms/CEmptyState.vue')['default']
     CEyebrow: typeof import('./../components/atoms/CEyebrow.vue')['default']

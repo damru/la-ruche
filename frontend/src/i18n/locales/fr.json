@@ -367,6 +367,7 @@
       "download_draft": "Télécharger le projet de PV",
       "signed_attached": "PV signé attaché",
       "download_signed": "Télécharger le PV signé",
+      "view_signed": "Voir le PV signé",
       "modal_lead": "Sélectionnez le fichier PDF ou Markdown du PV signé à archiver dans l'AG.",
       "mark_notified": "Marquer le PV notifié aux absents",
       "notified_at": "Notifié aux absents le {date}",
@@ -952,7 +953,12 @@
     "referenceClaim": "Sinistre : {title}",
     "unlinkOnly": "Supprimer le lien seulement",
     "unlinkAndDelete": "Supprimer le lien et le document",
-    "deleteSuccess": "Document supprimé définitivement."
+    "deleteSuccess": "Document supprimé définitivement.",
+    "viewer": {
+      "title": "Aperçu du document",
+      "loadError": "Aperçu indisponible",
+      "fallback": "Ce document ne peut pas être affiché directement. Utilisez le bouton Télécharger."
+    }
   },
   "consultations": {
     "openedAt": "Ouverte {date}",

@@ -44,9 +44,11 @@ import CIconCheck from '@/components/atoms/CIconCheck.svg'
 import CIconClock from '@/components/atoms/CIconClock.svg'
 import CIconDownload from '@/components/atoms/CIconDownload.svg'
 import CIconEdit from '@/components/atoms/CIconEdit.svg'
+import CIconEye from '@/components/atoms/CIconEye.svg'
 import CIconLock from '@/components/atoms/CIconLock.svg'
 import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import CIconUpload from '@/components/atoms/CIconUpload.svg'
+import CDocumentViewer from '@/components/molecules/CDocumentViewer.vue'
 import VoteModal from './VoteModal.vue'
 import StartMeetingModal from './StartMeetingModal.vue'
 import CloseMeetingModal from './CloseMeetingModal.vue'
@@ -495,6 +497,23 @@ async function openDocument(documentId: string) {
   window.open(response.data.url, '_blank', 'noopener')
 }
 
+const viewerDocumentId = ref<string | null>(null)
+const viewerDocumentName = ref<string | undefined>(undefined)
+const showViewer = ref(false)
+
+function viewDocument(documentId: string, name?: string) {
+  viewerDocumentId.value = documentId
+  viewerDocumentName.value = name
+  showViewer.value = true
+}
+
+function isPdf(document: { mime_type?: string; original_name: string }): boolean {
+  return (
+    document.mime_type === 'application/pdf' ||
+    document.original_name.toLowerCase().endsWith('.pdf')
+  )
+}
+
 function openStartMeetingModal() {
   showStartMeetingModal.value = true
 }
@@ -717,15 +736,27 @@ function openArt25Modal(resolution: Resolution) {
               </p>
             </div>
           </div>
-          <CBtn
+          <div
             v-if="meetingState(meeting.status) === 'closed' && meeting.minutes_document_id"
-            variant="ghost"
-            size="sm"
-            type="button"
-            :icon="CIconDownload"
-            :title="t('meetings.minutes.download_signed')"
-            @click="openDocument(meeting.minutes_document_id!)"
-          />
+            class="flex items-center gap-1"
+          >
+            <CBtn
+              variant="ghost"
+              size="sm"
+              type="button"
+              :icon="CIconEye"
+              :title="t('meetings.minutes.view_signed')"
+              @click="viewDocument(meeting.minutes_document_id!, t('meetings.minutes.title'))"
+            />
+            <CBtn
+              variant="ghost"
+              size="sm"
+              type="button"
+              :icon="CIconDownload"
+              :title="t('meetings.minutes.download_signed')"
+              @click="openDocument(meeting.minutes_document_id!)"
+            />
+          </div>
         </div>
 
         <CCard
@@ -738,6 +769,14 @@ function openArt25Modal(resolution: Resolution) {
               <div class="flex items-center gap-2 flex-wrap">
                 <CIconLock class="text-on-surface-variant icon-sm" />
                 <span class="text-sm">{{ t('meetings.minutes.signed_attached') }}</span>
+                <CBtn
+                  variant="ghost"
+                  size="sm"
+                  type="button"
+                  :icon="CIconEye"
+                  :title="t('meetings.minutes.view_signed')"
+                  @click="viewDocument(meeting.minutes_document_id!, t('meetings.minutes.title'))"
+                />
                 <CBtn
                   variant="ghost"
                   size="sm"
@@ -1170,12 +1209,27 @@ function openArt25Modal(resolution: Resolution) {
                   >
                     <button
                       class="doc-link"
-                      @click="openDocument(document.id)"
+                      @click="isPdf(document) ? viewDocument(document.id, document.original_name) : openDocument(document.id)"
                     >
                       {{ document.original_name }}
                     </button>
                     <div class="doc-row__actions">
                       <span class="doc-kind">{{ documentKindLabel(document.kind) }}</span>
+                      <CBtn
+                        v-if="isPdf(document)"
+                        variant="icon"
+                        size="sm"
+                        :icon="CIconEye"
+                        :title="t('common.see')"
+                        @click="viewDocument(document.id, document.original_name)"
+                      />
+                      <CBtn
+                        variant="icon"
+                        size="sm"
+                        :icon="CIconDownload"
+                        :title="t('common.download')"
+                        @click="openDocument(document.id)"
+                      />
                       <button
                         v-if="canManageGM"
                         class="doc-remove"
@@ -1209,12 +1263,27 @@ function openArt25Modal(resolution: Resolution) {
                   >
                     <button
                       class="doc-link"
-                      @click="openDocument(document.id)"
+                      @click="isPdf(document) ? viewDocument(document.id, document.original_name) : openDocument(document.id)"
                     >
                       {{ document.original_name }}
                     </button>
                     <div class="doc-row__actions">
                       <span class="doc-kind">{{ documentKindLabel(document.kind) }}</span>
+                      <CBtn
+                        v-if="isPdf(document)"
+                        variant="icon"
+                        size="sm"
+                        :icon="CIconEye"
+                        :title="t('common.see')"
+                        @click="viewDocument(document.id, document.original_name)"
+                      />
+                      <CBtn
+                        variant="icon"
+                        size="sm"
+                        :icon="CIconDownload"
+                        :title="t('common.download')"
+                        @click="openDocument(document.id)"
+                      />
                       <button
                         v-if="canManageGM"
                         class="doc-remove"
@@ -1232,16 +1301,27 @@ function openArt25Modal(resolution: Resolution) {
                 :variant="meeting.minutes_document_id ? 'success' : 'warning'"
                 :title="meeting.minutes_document_id ? t('meetings.documents.minutesReady') : t('meetings.documents.minutesPending')"
               >
-                <CBtn
+                <div
                   v-if="meeting.minutes_document_id"
-                  variant="ghost"
-                  size="sm"
-                  type="button"
-                  class="self-center"
-                  :icon="CIconDownload"
-                  :title="t('meetings.minutes.download_signed')"
-                  @click="openDocument(meeting.minutes_document_id!)"
-                />
+                  class="flex items-center gap-1 self-center"
+                >
+                  <CBtn
+                    variant="ghost"
+                    size="sm"
+                    type="button"
+                    :icon="CIconEye"
+                    :title="t('meetings.minutes.view_signed')"
+                    @click="viewDocument(meeting.minutes_document_id!, t('meetings.minutes.title'))"
+                  />
+                  <CBtn
+                    variant="ghost"
+                    size="sm"
+                    type="button"
+                    :icon="CIconDownload"
+                    :title="t('meetings.minutes.download_signed')"
+                    @click="openDocument(meeting.minutes_document_id!)"
+                  />
+                </div>
               </CAlert>
             </CCard>
 
@@ -1471,6 +1551,12 @@ function openArt25Modal(resolution: Resolution) {
       v-model:open="showMinutesModal"
       :meeting-id="meeting?.id ?? ''"
       @saved="reload"
+    />
+
+    <CDocumentViewer
+      v-model:open="showViewer"
+      :document-id="viewerDocumentId"
+      :document-name="viewerDocumentName"
     />
 
     <StartMeetingModal
