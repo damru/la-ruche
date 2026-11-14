@@ -22,7 +22,7 @@ import CIconWrench from '@/components/atoms/CIconWrench.svg'
 import { contractorsApi, maintenanceApi, tasksApi } from '@/api'
 import { useBuildingStore } from '@/stores/building'
 import type { Contractor, MaintenanceEntry, Task } from '@/types/domain'
-import { TASK_PRIORITY_HIGH, TASK_PRIORITY_LOW, TASK_PRIORITY_NORMAL, TASK_PRIORITY_URGENT, TASK_STATUS_AWAITING_VALIDATION, TASK_STATUS_AWAITING_VENDOR, TASK_STATUS_CLOSED, TASK_STATUS_IN_PROGRESS, TASK_STATUS_OPEN } from '@/utils/constants'
+import { TASK_PRIORITY_HIGH, TASK_PRIORITY_LOW, TASK_PRIORITY_NORMAL, TASK_PRIORITY_URGENT, TASK_STATUS_AWAITING_QUOTE, TASK_STATUS_AWAITING_VALIDATION, TASK_STATUS_AWAITING_VENDOR, TASK_STATUS_CLOSED, TASK_STATUS_IN_PROGRESS, TASK_STATUS_OPEN, TASK_STATUS_QUOTE_RECEIVED } from '@/utils/constants'
 
 const { t } = useI18n()
 const { formatDate, formatRelative, formatCurrency } = useFormatters()
@@ -65,6 +65,7 @@ onMounted(reload)
 function statusVariant(s: string): 'valid' | 'open' | 'pending' | 'closed' | 'default' {
   if (s === TASK_STATUS_OPEN) return 'valid'
   if (s === TASK_STATUS_IN_PROGRESS) return 'open'
+  if (s === TASK_STATUS_AWAITING_QUOTE || s === TASK_STATUS_QUOTE_RECEIVED) return 'pending'
   if (s === TASK_STATUS_AWAITING_VENDOR) return 'default'
   if (s === TASK_STATUS_AWAITING_VALIDATION) return 'pending'
   if (s === TASK_STATUS_CLOSED) return 'closed'

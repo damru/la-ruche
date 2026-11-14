@@ -4,7 +4,9 @@
 
 **Épic :** EP-007 — Travaux & prestataires
 **Réf. PRD :** US-TP-012 · **Réf. LEGAL :** — · **Réf. ADR :** —
-**État :** NON IMPLÉMENTÉ
+**État :** IMPLÉMENTÉ (backend + frontend)
+
+> **AC-012-D (entrée timeline immuable avec acteur + cause) :** non livrée ici — la table `activity_log` n'existe pas encore ; cette entrée sera produite par EP-017-S02 (`task.status_changed`) quand l'epic EP-017 sera livré (même délégation que AC-016-D dans EP-007-S08).
 
 ---
 

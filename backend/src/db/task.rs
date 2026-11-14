@@ -112,6 +112,8 @@ fn normalize_optional_text(value: Option<&str>) -> Option<String> {
 pub mod status {
     pub const OPEN: &str = "open";
     pub const IN_PROGRESS: &str = "in_progress";
+    pub const AWAITING_QUOTE: &str = "awaiting_quote";
+    pub const QUOTE_RECEIVED: &str = "quote_received";
     pub const AWAITING_VENDOR: &str = "awaiting_vendor";
     pub const AWAITING_VALIDATION: &str = "awaiting_validation";
     pub const CLOSED: &str = "closed";
@@ -130,6 +132,8 @@ pub mod priority {
 const VALID_STATUSES: &[&str] = &[
     status::OPEN,
     status::IN_PROGRESS,
+    status::AWAITING_QUOTE,
+    status::QUOTE_RECEIVED,
     status::AWAITING_VENDOR,
     status::AWAITING_VALIDATION,
     status::CLOSED,
@@ -622,6 +626,45 @@ pub async fn update_fields(
         )
         .await?;
         crate::db::report::close_linked_to_task(&mut *tx, id, building_id).await?;
+    }
+    tx.commit().await?;
+    Ok(())
+}
+
+/// PRD US-TP-012 (EP-007-S07): takes a task back from the quote phase
+/// (`awaiting_quote` / `quote_received`) to `in_progress`. Unlike
+/// `revoke_token`, the vendor token, its expiry and the attached documents
+/// are left untouched. Returns 404 if the task doesn't exist, or a validation
+/// error when the task is not in the quote phase. The row is locked with
+/// FOR UPDATE so the status check and the write are race-free.
+pub async fn take_back(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()> {
+    let mut tx = pool.begin().await?;
+    // FOR UPDATE serialises the status check with the write, so two concurrent
+    // take-backs cannot both succeed.
+    let status = sqlx::query_scalar::<_, String>(
+        "SELECT status::text FROM task WHERE id = $1 AND building_id = $2 FOR UPDATE",
+    )
+    .bind(id)
+    .bind(building_id)
+    .fetch_optional(&mut *tx)
+    .await?
+    .ok_or(crate::errors::AppError::NotFound)?;
+    if !crate::domain::immutability::can_take_back(&status) {
+        return Err(crate::errors::AppError::validation_code(
+            "errors.tasks.not_in_quote_phase",
+        ));
+    }
+    let result = sqlx::query(
+        "UPDATE task SET status = $3::text::task_status, updated_at = NOW()
+         WHERE id = $1 AND building_id = $2",
+    )
+    .bind(id)
+    .bind(building_id)
+    .bind(status::IN_PROGRESS)
+    .execute(&mut *tx)
+    .await?;
+    if result.rows_affected() == 0 {
+        return Err(crate::errors::AppError::NotFound);
     }
     tx.commit().await?;
     Ok(())

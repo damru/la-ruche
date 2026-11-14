@@ -15,8 +15,19 @@ pub mod meeting_status {
 
 /// `task.status` values (PG enum `task_status`).
 pub mod task_status {
+    pub const AWAITING_QUOTE: &str = "awaiting_quote";
+    pub const QUOTE_RECEIVED: &str = "quote_received";
     pub const CLOSED: &str = "closed";
     pub const CANCELLED: &str = "cancelled";
+}
+
+/// PRD US-TP-012 (EP-007-S07): a task in quote phase can be taken back by the
+/// manager, returning to `in_progress` without revoking the vendor token.
+pub(crate) fn can_take_back(status: &str) -> bool {
+    matches!(
+        status,
+        task_status::AWAITING_QUOTE | task_status::QUOTE_RECEIVED
+    )
 }
 
 /// `levy_call.status` values (PG enum `levy_status`).
@@ -178,6 +189,20 @@ mod tests {
         assert!(!is_mutable(&Entity::Task, "cancelled"));
         assert!(is_mutable(&Entity::Task, "open"));
         assert!(is_mutable(&Entity::Task, "in_progress"));
+        assert!(is_mutable(&Entity::Task, "awaiting_quote"));
+        assert!(is_mutable(&Entity::Task, "quote_received"));
+    }
+
+    #[test]
+    fn take_back_allowed_only_in_quote_phase() {
+        assert!(can_take_back("awaiting_quote"));
+        assert!(can_take_back("quote_received"));
+        assert!(!can_take_back("open"));
+        assert!(!can_take_back("in_progress"));
+        assert!(!can_take_back("awaiting_vendor"));
+        assert!(!can_take_back("awaiting_validation"));
+        assert!(!can_take_back("closed"));
+        assert!(!can_take_back("cancelled"));
     }
 
     #[test]
