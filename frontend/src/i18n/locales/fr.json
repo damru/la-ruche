@@ -1072,7 +1072,11 @@
     "commentsTitle": "Suivi",
     "commentsEmpty": "Aucun commentaire de suivi.",
     "commentPlaceholder": "Ajouter un commentaire de suivi…",
-    "commentAdd": "Commenter"
+    "commentAdd": "Commenter",
+    "anonymousLabel": "Signaler anonymement",
+    "anonymousHint": "Votre identité ne sera visible de personne, y compris du syndic. Le signalement reste rattaché à votre compte à des fins de modération.",
+    "authorAnonymous": "Anonyme",
+    "authorAnonymousYou": "Anonyme (vous)"
   },
   "calendar": {
     "count": "{count} événement | {count} événements",
