@@ -19,6 +19,18 @@ Socle de tests end-to-end du frontend. Phase 0 : login par rôle + parcours socl
    npx playwright install chromium
    ```
 
+⚠️ **ARM64 / Raspberry Pi** : `npx playwright install` ne fournit pas de
+chromium complet ARM64 — seul `chromium-headless-shell` est disponible
+(suffisant pour ces tests non visuels). Les runs complets multi-navigateurs
+restent sur la CI x86.
+
+## Notes CI
+
+- Le job `e2e-frontend` ne lance **pas rustfs** : S3 est inerte en Phase 0
+  (tests lecture seule). À ajouter avant les tests mutateurs de Phase 2.
+- Les traces uploadées on-failure peuvent contenir les cookies httpOnly —
+  jetons dédiés e2e (JWT_SECRET, DB éphémère), inexploitables hors du run.
+
 ## Lancer
 
 ```

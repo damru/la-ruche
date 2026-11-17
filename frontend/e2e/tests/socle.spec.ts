@@ -24,7 +24,7 @@ test.describe('Socle E2E — login par rôle', () => {
       // Titre réel : `${t('nav.dashboard')} — La Ruche` (router/index.ts afterEach).
       await expect(page).toHaveURL(/\/dashboard/)
       await expect(page).toHaveTitle(/Tableau de bord — La Ruche/)
-      await expect(page.locator('body')).not.toContainText('CPageError')
+      await expect(page.locator('.c-page-error')).toHaveCount(0)
 
       // Logout depuis /profile → retour au login.
       // CBtn (variant ghost) rend le title "Se déconnecter" en texte du bouton.

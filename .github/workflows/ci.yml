@@ -214,6 +214,11 @@ jobs:
       LA_RUCHE__AUTH__ARGON2_MEMORY_KB: "65536"
       LA_RUCHE__AUTH__ARGON2_ITERATIONS: "3"
       LA_RUCHE__S3__ENDPOINT_URL: "http://localhost:9000"
+      # S3 INERTE en Phase 0 (lecture seule) : aucun service rustfs dans ce job,
+      # StorageClient::new ne se connecte pas au démarrage. AVANT les tests
+      # mutateurs (Phase 2), ajouter un service rustfs ici (miroir
+      # docker-compose : image rustfs/rustfs, port 9000) sinon erreurs
+      # opaques "connection refused" enfouies dans des 500.
       LA_RUCHE__S3__PUBLIC_URL: "http://localhost:9000"
       LA_RUCHE__S3__REGION: "us-east-1"
       LA_RUCHE__S3__ACCESS_KEY_ID: "s3admin"
@@ -293,7 +298,7 @@ jobs:
 
       - name: Upload traces on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-traces
           path: frontend/test-results/
