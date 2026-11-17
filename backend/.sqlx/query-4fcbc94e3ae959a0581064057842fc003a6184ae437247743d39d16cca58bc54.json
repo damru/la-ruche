@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        DELETE FROM general_meeting_document gmd\n        USING general_meeting gm\n        WHERE gmd.meeting_id = $1\n          AND gmd.document_id = $2\n          AND gm.id = gmd.meeting_id\n          AND gm.building_id = $3\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "4fcbc94e3ae959a0581064057842fc003a6184ae437247743d39d16cca58bc54"
+}

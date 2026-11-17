@@ -1,0 +1,91 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT uo.id, uo.unit_id, uo.user_id,\n               COALESCE(uo.anonymized_name, u.first_name || ' ' || u.last_name, 'Unknown owner') as display_name,\n               uo.start_date, uo.end_date,\n               (uo.anonymized_at IS NOT NULL) as anonymized\n        FROM unit_owner uo\n        JOIN unit u2 ON u2.id = uo.unit_id AND u2.building_id = $2\n        LEFT JOIN user_account u ON u.id = uo.user_id\n        WHERE uo.unit_id = $1\n        ORDER BY uo.start_date DESC\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "unit_owner",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "unit_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "unit_owner",
+            "name": "unit_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "user_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "unit_owner",
+            "name": "user_id"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "display_name",
+        "type_info": "Text",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 4,
+        "name": "start_date",
+        "type_info": "Date",
+        "origin": {
+          "Table": {
+            "table": "unit_owner",
+            "name": "start_date"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "end_date",
+        "type_info": "Date",
+        "origin": {
+          "Table": {
+            "table": "unit_owner",
+            "name": "end_date"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "anonymized",
+        "type_info": "Bool",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      null,
+      false,
+      true,
+      null
+    ]
+  },
+  "hash": "40bb36def58d493e613b1f6534123e782677d330a5cb147a2624c33f637ce19b"
+}

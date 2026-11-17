@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE unit_owner SET end_date = $1 WHERE unit_id = $2 AND end_date IS NULL",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Date",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "42366145ac0db463bbfae1e355cb5f1f727901f6657a720dcc190d77b7244bea"
+}

@@ -1,0 +1,35 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT building_id, roles::text[] as roles FROM user_building WHERE user_id = $1 LIMIT 1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "building_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "user_building",
+            "name": "building_id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "roles",
+        "type_info": "TextArray",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      null
+    ]
+  },
+  "hash": "1907cc20961370fd99001ed56812fb1ba0b6b551fc0d9d9d717d5ed248d6eddc"
+}

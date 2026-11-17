@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO budget_line\n               (budget_id, label, key_id, budgeted_amount,\n                account_code, valid_from, valid_to, rectificatif_version)\n           SELECT $1, label, key_id, budgeted_amount,\n                  account_code, CURRENT_DATE, NULL, $2\n           FROM budget_line\n           WHERE budget_id = $3 AND valid_to IS NULL",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Int4",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "ddbefc05da26fd7bd68c035312a248ee94bb77aaf13e677d6215361b80f78203"
+}

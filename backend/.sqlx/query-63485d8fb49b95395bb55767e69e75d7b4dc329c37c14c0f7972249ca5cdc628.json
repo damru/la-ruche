@@ -1,0 +1,31 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT\n                COALESCE(\n                    SUM(COALESCE(uak.share_value, 0))\n                    FILTER (WHERE COALESCE(gma.mode::text, 'absent') != 'absent'),\n                    0\n                )::int as \"shares_present!\",\n                COUNT(*)\n                FILTER (WHERE COALESCE(gma.mode::text, 'absent') != 'absent')::int as \"present_units!\"\n            FROM unit u\n            LEFT JOIN general_meeting_attendance gma\n                ON gma.unit_id = u.id AND gma.meeting_id = $1\n            LEFT JOIN unit_allocation_key uak\n                ON uak.unit_id = u.id\n               AND uak.valid_to IS NULL\n               AND EXISTS (\n                   SELECT 1\n                   FROM allocation_key ak\n                   WHERE ak.id = uak.key_id\n                     AND ak.key_type = 'general'\n                     AND ak.deleted_at IS NULL\n               )\n            WHERE u.building_id = $2\n              AND u.active = true\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "shares_present!",
+        "type_info": "Int4",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 1,
+        "name": "present_units!",
+        "type_info": "Int4",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      null,
+      null
+    ]
+  },
+  "hash": "63485d8fb49b95395bb55767e69e75d7b4dc329c37c14c0f7972249ca5cdc628"
+}

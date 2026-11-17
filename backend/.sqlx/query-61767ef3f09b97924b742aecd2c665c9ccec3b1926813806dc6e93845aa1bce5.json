@@ -1,0 +1,25 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT COUNT(DISTINCT v.unit_id) as \"count!\"\n        FROM vote v\n        JOIN resolution r ON r.id = v.resolution_id\n        JOIN general_meeting gm ON gm.id = r.meeting_id\n        WHERE v.resolution_id = $1\n          AND r.meeting_id = $2\n          AND gm.building_id = $3\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "count!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "61767ef3f09b97924b742aecd2c665c9ccec3b1926813806dc6e93845aa1bce5"
+}
