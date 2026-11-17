@@ -1,0 +1,35 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE user_building SET roles = $3::user_role[], updated_at = NOW()\n           WHERE user_id = $1 AND building_id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        {
+          "Custom": {
+            "name": "user_role[]",
+            "kind": {
+              "Array": {
+                "Custom": {
+                  "name": "user_role",
+                  "kind": {
+                    "Enum": [
+                      "manager",
+                      "board_member",
+                      "co_owner",
+                      "tenant"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "75569b81bbc833408d8abef84b9cf6f9c2dcead18949bbe976c11cc5e236dd78"
+}

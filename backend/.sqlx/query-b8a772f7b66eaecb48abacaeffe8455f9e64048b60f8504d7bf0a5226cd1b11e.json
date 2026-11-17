@@ -1,0 +1,148 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT id, name, address_line1, address_line2, postal_code, city, manager_siret,\n           shares_total, bylaws_date, created_at, updated_at\n           FROM building WHERE id = $1 AND active = true",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "building",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "building",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "address_line1",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "building",
+            "name": "address_line1"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "address_line2",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "building",
+            "name": "address_line2"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "postal_code",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "building",
+            "name": "postal_code"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "city",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "building",
+            "name": "city"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "manager_siret",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "building",
+            "name": "manager_siret"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "shares_total",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "building",
+            "name": "shares_total"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "bylaws_date",
+        "type_info": "Date",
+        "origin": {
+          "Table": {
+            "table": "building",
+            "name": "bylaws_date"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "created_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "building",
+            "name": "created_at"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "updated_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "building",
+            "name": "updated_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      true,
+      false,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "b8a772f7b66eaecb48abacaeffe8455f9e64048b60f8504d7bf0a5226cd1b11e"
+}

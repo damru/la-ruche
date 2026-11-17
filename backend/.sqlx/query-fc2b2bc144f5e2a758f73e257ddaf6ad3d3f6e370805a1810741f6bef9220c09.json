@@ -1,0 +1,35 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT position::text as \"position!\", shares_represented\n        FROM vote WHERE resolution_id = $1\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "position!",
+        "type_info": "Text",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 1,
+        "name": "shares_represented",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "vote",
+            "name": "shares_represented"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      null,
+      false
+    ]
+  },
+  "hash": "fc2b2bc144f5e2a758f73e257ddaf6ad3d3f6e370805a1810741f6bef9220c09"
+}

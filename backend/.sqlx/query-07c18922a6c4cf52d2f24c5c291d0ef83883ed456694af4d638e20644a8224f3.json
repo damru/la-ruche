@@ -1,0 +1,45 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO user_token (email, token_type, token_hash, building_id, invited_role, expires_at)\n           VALUES ($1, $2, $3, $4, $5::user_role, $6)\n           RETURNING id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "user_token",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Text",
+        "Uuid",
+        {
+          "Custom": {
+            "name": "user_role",
+            "kind": {
+              "Enum": [
+                "manager",
+                "board_member",
+                "co_owner",
+                "tenant"
+              ]
+            }
+          }
+        },
+        "Timestamptz"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "07c18922a6c4cf52d2f24c5c291d0ef83883ed456694af4d638e20644a8224f3"
+}

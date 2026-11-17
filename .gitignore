@@ -1,6 +1,5 @@
 # Rust
 backend/.env
-backend/.sqlx/
 backend/target/
 backend/**/*.rs.bk
 
@@ -8,6 +7,9 @@ backend/**/*.rs.bk
 frontend/node_modules/
 frontend/dist/
 frontend/.env.local
+frontend/e2e/.auth/
+frontend/test-results/
+frontend/playwright-report/
 docs/review-screenshots/*.png
 
 # IDE

@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE resolution r\n        SET number = t.ord::int\n        FROM unnest($2::uuid[]) WITH ORDINALITY AS t(id, ord)\n        WHERE r.meeting_id = $1\n          AND r.id = t.id\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "UuidArray"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "c0407d896c5c8acc151ba4771236bd8c9c79d25696b3f75b5d49ba5b84a52f21"
+}

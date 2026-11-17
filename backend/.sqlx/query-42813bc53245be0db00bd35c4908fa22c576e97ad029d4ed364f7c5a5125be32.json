@@ -1,0 +1,199 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT gm.meeting_type::text as \"meeting_type!\",\n               gm.status::text as \"status!\",\n               gm.meeting_date,\n               gm.location,\n               gm.agenda,\n               gm.president_name,\n               gm.secretary_name,\n               gm.scrutineers as \"scrutineers!: serde_json::Value\",\n               gm.minutes_president_signed_at,\n               gm.minutes_secretary_signed_at,\n               gm.minutes_scrutineers_signed as \"minutes_scrutineers_signed!: serde_json::Value\",\n               b.name as building_name,\n               b.address_line1,\n               b.postal_code,\n               b.city,\n               b.shares_total\n        FROM general_meeting gm\n        JOIN building b ON b.id = gm.building_id\n        WHERE gm.id = $1 AND gm.building_id = $2\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "meeting_type!",
+        "type_info": "Text",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 1,
+        "name": "status!",
+        "type_info": "Text",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 2,
+        "name": "meeting_date",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "general_meeting",
+            "name": "meeting_date"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "location",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "general_meeting",
+            "name": "location"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "agenda",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "general_meeting",
+            "name": "agenda"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "president_name",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "general_meeting",
+            "name": "president_name"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "secretary_name",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "general_meeting",
+            "name": "secretary_name"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "scrutineers!: serde_json::Value",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "general_meeting",
+            "name": "scrutineers"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "minutes_president_signed_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "general_meeting",
+            "name": "minutes_president_signed_at"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "minutes_secretary_signed_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "general_meeting",
+            "name": "minutes_secretary_signed_at"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "minutes_scrutineers_signed!: serde_json::Value",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "general_meeting",
+            "name": "minutes_scrutineers_signed"
+          }
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "building_name",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "building",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "ordinal": 12,
+        "name": "address_line1",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "building",
+            "name": "address_line1"
+          }
+        }
+      },
+      {
+        "ordinal": 13,
+        "name": "postal_code",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "building",
+            "name": "postal_code"
+          }
+        }
+      },
+      {
+        "ordinal": 14,
+        "name": "city",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "building",
+            "name": "city"
+          }
+        }
+      },
+      {
+        "ordinal": 15,
+        "name": "shares_total",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "building",
+            "name": "shares_total"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      null,
+      null,
+      false,
+      true,
+      true,
+      true,
+      true,
+      false,
+      true,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "42813bc53245be0db00bd35c4908fa22c576e97ad029d4ed364f7c5a5125be32"
+}

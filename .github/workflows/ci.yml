@@ -174,6 +174,136 @@ jobs:
       - name: Build
         run: npm run build
 
+  # ── E2E frontend (Playwright) ───────────────────────────────────
+  e2e-frontend:
+    name: Frontend — E2E Playwright
+    # runs-on: ${{ github.actor == github.repository_owner && 'medium' || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest
+    needs: [test-backend, test-frontend]
+    defaults:
+      run:
+        working-directory: ./frontend
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_DB: laruche
+          POSTGRES_USER: laruche
+          POSTGRES_PASSWORD: laruche
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      # Env complet du backend (AppConfig sans défauts serde — cf. backend/src/config.rs).
+      LA_RUCHE__DB__URL: postgres://laruche:laruche@localhost:5432/laruche
+      LA_RUCHE__DB__MAX_CONNECTIONS: "5"
+      LA_RUCHE__APP__DEMO_MODE: "true"
+      LA_RUCHE__APP__HOST: "0.0.0.0"
+      LA_RUCHE__APP__PORT: "8080"
+      LA_RUCHE__APP__PUBLIC_URL: "http://localhost"
+      LA_RUCHE__APP__NAME: "La Ruche CI"
+      LA_RUCHE__AUTH__JWT_SECRET: "e2e-only-secret-not-used-in-production-0123456789abcdef"
+      LA_RUCHE__AUTH__ACCESS_TOKEN_TTL_SECS: "900"
+      LA_RUCHE__AUTH__REFRESH_TOKEN_TTL_DAYS: "30"
+      LA_RUCHE__AUTH__INVITATION_TTL_DAYS: "7"
+      LA_RUCHE__AUTH__RESET_TOKEN_TTL_SECS: "3600"
+      LA_RUCHE__AUTH__VENDOR_TOKEN_TTL_DAYS: "30"
+      LA_RUCHE__AUTH__ARGON2_MEMORY_KB: "65536"
+      LA_RUCHE__AUTH__ARGON2_ITERATIONS: "3"
+      LA_RUCHE__S3__ENDPOINT_URL: "http://localhost:9000"
+      # S3 INERTE en Phase 0 (lecture seule) : aucun service rustfs dans ce job,
+      # StorageClient::new ne se connecte pas au démarrage. AVANT les tests
+      # mutateurs (Phase 2), ajouter un service rustfs ici (miroir
+      # docker-compose : image rustfs/rustfs, port 9000) sinon erreurs
+      # opaques "connection refused" enfouies dans des 500.
+      LA_RUCHE__S3__PUBLIC_URL: "http://localhost:9000"
+      LA_RUCHE__S3__REGION: "us-east-1"
+      LA_RUCHE__S3__ACCESS_KEY_ID: "s3admin"
+      LA_RUCHE__S3__SECRET_ACCESS_KEY: "s3admin"
+      LA_RUCHE__S3__BUCKET_PREFIX: "laruche-ci"
+      LA_RUCHE__S3__STAGING_BUCKET: "laruche-staging"
+      LA_RUCHE__S3__PRESIGNED_TTL_SECS: "900"
+      LA_RUCHE__S3__CLEANUP_ENABLED: "false"
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Free disk space (CI runner)
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup /usr/local/lib/android
+          docker system prune -af || true
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: backend-ci
+          workspaces: |
+            backend -> target
+          cache-all-crates: true
+          cache-workspace-crates: true
+
+      - name: Download SQLx offline files
+        uses: actions/download-artifact@v8
+        with:
+          name: ${{ env.SQLX_ARTIFACT_NAME }}
+          path: backend/.sqlx/
+
+      - name: Build backend (release, SQLx offline)
+        working-directory: ./backend
+        env:
+          SQLX_OFFLINE: true
+        run: cargo build --release
+
+      - name: Start backend (migrations + seed demo au démarrage)
+        working-directory: ./backend
+        run: |
+          nohup ./target/release/laruche > /tmp/laruche-e2e.log 2>&1 &
+          echo $! > /tmp/laruche-e2e.pid
+
+      - name: Wait for backend
+        run: |
+          for i in $(seq 1 30); do
+            # 401 attendu (non authentifié) = backend en écoute et routage OK.
+            code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/api/v1/auth/me || true)
+            if [ "$code" = "401" ] || [ "$code" = "200" ]; then
+              echo "Backend ready (HTTP $code)"; exit 0
+            fi
+            sleep 2
+          done
+          echo "--- journal backend ---"; tail -50 /tmp/laruche-e2e.log
+          exit 1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 25
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci --prefer-offline
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run E2E tests
+        env:
+          CI: "true"
+        run: npx playwright test
+
+      - name: Upload traces on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-traces
+          path: frontend/test-results/
+          retention-days: 7
+
   # ── Docker build + push ────────────────────────────────────────
   docker:
     name: Docker — build + push

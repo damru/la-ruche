@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        INSERT INTO general_meeting_attendance\n            (meeting_id, unit_id, mode, shares_represented)\n        SELECT $1, u.id, 'absent'::meeting_attendance_mode, uak.share_value\n        FROM unit u\n        JOIN unit_allocation_key uak ON uak.unit_id = u.id AND uak.valid_to IS NULL\n        JOIN allocation_key ak ON ak.id = uak.key_id\n            AND ak.key_type = 'general'\n            AND ak.deleted_at IS NULL\n        WHERE u.building_id = $2\n          AND u.active = true\n          AND NOT EXISTS (\n              SELECT 1 FROM general_meeting_attendance\n              WHERE meeting_id = $1 AND unit_id = u.id\n          )\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "0e5f2e12966d7946a82424703806870291472c4084d06a51eac2b72a9942a803"
+}
