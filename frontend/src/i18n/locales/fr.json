@@ -107,7 +107,9 @@
     "priority": "Priorité",
     "assignee": "Assigné à",
     "contractor": "Prestataire",
-    "loadMore": "Charger plus"
+    "loadMore": "Charger plus",
+    "viewList": "Vue liste",
+    "viewGrid": "Vue grille"
   },
   "page": {
     "onboarding": "Bienvenue",
@@ -759,8 +761,6 @@
     "filters": {
       "active": "Actifs",
       "expired": "Expirés / Résiliés",
-      "viewCards": "Vue cartes",
-      "viewTable": "Vue tableau",
       "reminderStatuses": {
         "sent": "Envoyé",
         "acknowledged": "Acquitté"
@@ -1894,9 +1894,7 @@
       "green_spaces": "Espaces verts",
       "other": "Autre"
     },
-    "title": "Prestataires",
-    "viewList": "Vue liste",
-    "viewGrid": "Vue grille"
+    "title": "Prestataires"
   },
   "allocationKeys": {
     "header": {
