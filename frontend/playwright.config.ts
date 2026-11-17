@@ -8,12 +8,22 @@ import { defineConfig, devices } from '@playwright/test'
  * (postgres + rustfs + backend, DEMO_MODE=true → seed demo.sql).
  */
 export default defineConfig({
-  testDir: './e2e/tests',
+  testDir: './e2e',
+  testMatch: '**/*.spec.ts',
   fullyParallel: true,
   // Phase 0 : le socle n'a pas besoin de retries ; 1 retry en CI uniquement.
   retries: process.env.CI ? 1 : 0,
   workers: process.env.CI ? 2 : 4,
   reporter: process.env.CI ? [['html', { open: 'never' }], ['list']] : [['list']],
+
+  // Vite est démarré par Playwright (local : réutilise une instance existante).
+  // Prérequis : backend + postgres + rustfs en amont (`make setup && make dev`).
+  webServer: {
+    command: 'npm run dev',
+    url: 'http://localhost:5173',
+    reuseExistingServer: !process.env.CI,
+    timeout: 60_000,
+  },
 
   use: {
     baseURL: 'http://localhost:5173',
@@ -30,9 +40,13 @@ export default defineConfig({
     timeout: 15_000,
   },
 
+  // Timeout par test : le parcours login→dashboard→profile→logout charge
+  // ~20 requêtes API ; en parallèle sur Pi il dépasse 30 s.
+  timeout: 60_000,
+
   projects: [
     // Setup : connexion par rôle via l'API (cookies httpOnly) → storageState.
-    { name: 'setup', testMatch: /auth\.setup\.ts/ },
+    { name: 'setup', testMatch: '**/auth.setup.ts' },
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },

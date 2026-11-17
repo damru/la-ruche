@@ -9,6 +9,8 @@ Socle de tests end-to-end du frontend. Phase 0 : login par rôle + parcours socl
    make setup          # .env (DEMO_MODE=true, etc.)
    make dev            # postgres + rustfs + backend (migrations + seed auto)
    ```
+   (`make dev` ne lance PAS Vite — Playwright démarre Vite lui-même via
+   `webServer`. Pour un Vite persistant à côté : `make dev-frontend`.)
    Ou docker compose. Le backend seed la base au démarrage si `DEMO_MODE=true`
    et base vide (`backend/seeds/demo.sql`, comptes de `docs/DEV_ACCOUNTS.md`,
    mot de passe `Demo1234!`).

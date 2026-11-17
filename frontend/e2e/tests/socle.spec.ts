@@ -21,8 +21,9 @@ test.describe('Socle E2E — login par rôle', () => {
       await page.locator('button[type="submit"]').click()
 
       // Redirection vers le dashboard, page rendue.
+      // Titre réel : `${t('nav.dashboard')} — La Ruche` (router/index.ts afterEach).
       await expect(page).toHaveURL(/\/dashboard/)
-      await expect(page).toHaveTitle(/.+/) // meta.title i18n posé
+      await expect(page).toHaveTitle(/Tableau de bord — La Ruche/)
       await expect(page.locator('body')).not.toContainText('CPageError')
 
       // Logout depuis /profile → retour au login.
@@ -32,6 +33,17 @@ test.describe('Socle E2E — login par rôle', () => {
       await expect(page).toHaveURL(/\/login/, { timeout: 15_000 })
     })
   }
+
+  test('session restaurée sans login UI : storageState manager → dashboard', async ({ auth }) => {
+    // Valide le mécanisme auth par rôle : le contexte storageState donne
+    // accès direct au dashboard, sans passer par le formulaire de login.
+    const { page, close } = await auth('manager')
+    await page.goto('/dashboard')
+    await expect(page).toHaveURL(/\/dashboard/)
+    await expect(page).toHaveTitle(/Tableau de bord — La Ruche/)
+    await expect(page.locator('body')).not.toContainText('CPageError')
+    await close()
+  })
 
   test('échec de login : mauvais mot de passe → erreur, pas de redirection', async ({ page }) => {
     await page.goto('/login')

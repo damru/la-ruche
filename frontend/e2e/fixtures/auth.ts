@@ -7,12 +7,17 @@ import type { AuthRole } from './accounts'
  *
  * Usage :
  *   test('...', async ({ auth }) => {
- *     const { page } = await auth('manager')
+ *     const { page, close } = await auth('manager')
  *     await page.goto('/dashboard')
+ *     ...
+ *     await close()
  *   })
  */
 type AuthFixtures = {
-  auth: (role: AuthRole) => Promise<{ page: import('@playwright/test').Page }>
+  auth: (role: AuthRole) => Promise<{
+    page: import('@playwright/test').Page
+    close: () => Promise<void>
+  }>
 }
 
 export const test = base.extend<AuthFixtures>({
@@ -22,7 +27,7 @@ export const test = base.extend<AuthFixtures>({
         storageState: `e2e/.auth/${role}.json`,
       })
       const page = await ctx.newPage()
-      return { page }
+      return { page, close: () => ctx.close() }
     }
     await use(open)
   },

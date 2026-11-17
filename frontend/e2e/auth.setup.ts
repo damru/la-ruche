@@ -2,6 +2,7 @@ import { test as setup, expect } from '@playwright/test'
 import { ACCOUNTS, DEV_PASSWORD, type AuthRole } from './fixtures/accounts'
 import fs from 'node:fs'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 /**
  * Setup d'authentification : login par API pour chaque rôle.
@@ -15,7 +16,7 @@ import path from 'node:path'
  * (PUBLIC_URL ne commence pas par https) — les cookies sont acceptables.
  */
 
-const stateDir = path.join(__dirname, '.auth')
+const stateDir = path.join(path.dirname(fileURLToPath(import.meta.url)), '.auth')
 
 for (const role of Object.keys(ACCOUNTS) as AuthRole[]) {
   setup(`authentifié en tant que ${role}`, async ({ request }) => {

@@ -197,17 +197,31 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     env:
-      LA_RUCHE__DB__URL: postgres://laruche:laruche@localhost:5432/laruche
+      # Env complet du backend (AppConfig sans défauts serde — cf. backend/src/config.rs).
+      LA_RUCHE__DB__URL: postgres://laruche:***@localhost:5432/laruche
+      LA_RUCHE__DB__MAX_CONNECTIONS: "5"
       LA_RUCHE__APP__DEMO_MODE: "true"
       LA_RUCHE__APP__HOST: "0.0.0.0"
       LA_RUCHE__APP__PORT: "8080"
       LA_RUCHE__APP__PUBLIC_URL: "http://localhost"
+      LA_RUCHE__APP__NAME: "La Ruche CI"
       LA_RUCHE__AUTH__JWT_SECRET: "e2e-only-secret-not-used-in-production-0123456789abcdef"
+      LA_RUCHE__AUTH__ACCESS_TOKEN_TTL_SECS: "900"
+      LA_RUCHE__AUTH__REFRESH_TOKEN_TTL_DAYS: "30"
+      LA_RUCHE__AUTH__INVITATION_TTL_DAYS: "7"
+      LA_RUCHE__AUTH__RESET_TOKEN_TTL_SECS: "3600"
+      LA_RUCHE__AUTH__VENDOR_TOKEN_TTL_DAYS: "30"
+      LA_RUCHE__AUTH__ARGON2_MEMORY_KB: "65536"
+      LA_RUCHE__AUTH__ARGON2_ITERATIONS: "3"
       LA_RUCHE__S3__ENDPOINT_URL: "http://localhost:9000"
       LA_RUCHE__S3__PUBLIC_URL: "http://localhost:9000"
+      LA_RUCHE__S3__REGION: "us-east-1"
       LA_RUCHE__S3__ACCESS_KEY_ID: "s3admin"
       LA_RUCHE__S3__SECRET_ACCESS_KEY: "s3admin"
+      LA_RUCHE__S3__BUCKET_PREFIX: "laruche-ci"
       LA_RUCHE__S3__STAGING_BUCKET: "laruche-staging"
+      LA_RUCHE__S3__PRESIGNED_TTL_SECS: "900"
+      LA_RUCHE__S3__CLEANUP_ENABLED: "false"
     steps:
       - uses: actions/checkout@v7
 
@@ -239,6 +253,25 @@ jobs:
         env:
           SQLX_OFFLINE: true
         run: cargo build --release
+
+      - name: Start backend (migrations + seed demo au démarrage)
+        run: |
+          cd backend
+          nohup ./target/release/laruche > /tmp/laruche-e2e.log 2>&1 &
+          echo $! > /tmp/laruche-e2e.pid
+
+      - name: Wait for backend
+        run: |
+          for i in $(seq 1 30); do
+            # 401 attendu (non authentifié) = backend en écoute et routage OK.
+            code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/api/v1/auth/me || true)
+            if [ "$code" = "401" ] || [ "$code" = "200" ]; then
+              echo "Backend ready (HTTP $code)"; exit 0
+            fi
+            sleep 2
+          done
+          echo "--- journal backend ---"; tail -50 /tmp/laruche-e2e.log
+          exit 1
 
       - name: Setup Node.js
         uses: actions/setup-node@v7

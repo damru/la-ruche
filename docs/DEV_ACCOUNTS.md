@@ -1,7 +1,7 @@
 # Comptes de développement — La Ruche
 
 > ⚠️ **Données de seed uniquement** — ne jamais utiliser en production.  
-> Fichier source : `backend/seeds/seed_dev.sql`
+> Fichier source : `backend/seeds/demo.sql`
 
 **Mot de passe commun à tous les comptes : `Demo1234!`**
 
