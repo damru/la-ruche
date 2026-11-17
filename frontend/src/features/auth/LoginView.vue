@@ -351,7 +351,8 @@ async function handleResetRequest() {
   border: none;
   cursor: pointer;
   padding: 0;
-  min-height: unset;
+  /* Cible tactile WCAG 2.5.8 AA (≥ 24 px) — le padding garde le style lien. */
+  min-height: 24px;
   min-width: unset;
   font-family: var(--font-body);
   font-weight: 500;

@@ -17,6 +17,8 @@
   --color-success:               oklch(0.523 0.1347 144.17);
   --color-success-container:     oklch(0.957 0.0210 147.64);
   --color-warning:               oklch(0.631 0.1970 40.25);
+  /* Texte AA sur surface claire (--color-warning pur = ~2.8:1, WCAG 1.4.3). */
+  --color-warning-fg:            oklch(0.48 0.1500 45.00);
   --color-warning-container:     oklch(0.979 0.0310 92.94);
   --color-role-manager-bg:       oklch(0.916 0.0365 303.11);
   --color-role-manager-fg:       oklch(0.242 0.1404 286.09);
@@ -149,6 +151,7 @@
   --color-success:               oklch(0.766 0.1179 145.30);
   --color-success-container:     oklch(0.381 0.0909 146.40);
   --color-warning:               oklch(0.829 0.1452 73.54);
+  --color-warning-fg:            oklch(0.829 0.1452 73.54);
   --color-warning-container:     oklch(0.348 0.0719 80.56);
   --color-role-manager-bg:       oklch(0.401 0.0340 298.59);
   --color-role-manager-fg:       oklch(0.916 0.0365 303.11);

@@ -826,7 +826,7 @@ const todayStr = computed(() =>
 .reminder-sub   { font-size: var(--text-2xs); color: var(--color-on-surface-variant); margin-top: 1px; }
 .reminder-date { font-family: var(--font-mono); font-size: var(--text-2xs); font-weight: var(--fw-medium); flex-shrink: 0; }
 .reminder-date--high   { color: var(--color-error); }
-.reminder-date--medium { color: var(--color-warning); }
+.reminder-date--medium { color: var(--color-warning-fg); }
 .reminder-date--low    { color: var(--color-on-surface-variant); }
 
 /* ── Signals ──────────────────────────────────────────────────────── */

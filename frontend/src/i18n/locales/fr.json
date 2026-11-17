@@ -1894,7 +1894,9 @@
       "green_spaces": "Espaces verts",
       "other": "Autre"
     },
-    "title": "Prestataires"
+    "title": "Prestataires",
+    "viewList": "Vue liste",
+    "viewGrid": "Vue grille"
   },
   "allocationKeys": {
     "header": {

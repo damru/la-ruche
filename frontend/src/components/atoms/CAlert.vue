@@ -60,7 +60,10 @@ function dismiss() {
           class="icon-md"
           aria-hidden="true"
         />
-        <div class="flex flex-col">
+        <div class="flex flex-col text-on-surface">
+          <!-- Corps de texte en on-surface : --tone-fg (warning) passe sous
+               4.5:1 sur les containers clairs (WCAG 1.4.3). L'icône et le fond
+               toné suffisent à la signalétique. -->
           <p
             v-if="title"
             class="text-md font-semibold"
