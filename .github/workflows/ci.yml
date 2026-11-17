@@ -198,7 +198,7 @@ jobs:
           --health-retries 5
     env:
       # Env complet du backend (AppConfig sans défauts serde — cf. backend/src/config.rs).
-      LA_RUCHE__DB__URL: postgres://laruche:***@localhost:5432/laruche
+      LA_RUCHE__DB__URL: postgres://laruche:laruche@localhost:5432/laruche
       LA_RUCHE__DB__MAX_CONNECTIONS: "5"
       LA_RUCHE__APP__DEMO_MODE: "true"
       LA_RUCHE__APP__HOST: "0.0.0.0"
