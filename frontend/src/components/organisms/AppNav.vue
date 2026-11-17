@@ -379,8 +379,7 @@ watch(() => route.path, closeDrawer)
   font-weight: var(--fw-medium, 500);
   letter-spacing: 0.07em;
   text-transform: uppercase;
-  color: var(--color-on-surface);
-  opacity: 0.85;
+  color: var(--color-on-surface-variant);
   padding: 14px var(--space-3) var(--space-1);
 }
 
@@ -587,7 +586,6 @@ watch(() => route.path, closeDrawer)
   text-transform: uppercase;
   color: var(--color-on-surface-variant);
   padding: 14px var(--space-3) var(--space-1);
-  opacity: 0.6;
 }
 
 .c-nav-drawer__item {
