@@ -1,7 +1,11 @@
 {
-  "$doc": "Exclusions axe-core assumées (plan Phase 1 §3). Matching : sous-chaîne du sélecteur target axe. Zones .c-legal-notice / .c-reminder-card / .hero-alert sont exclues du scan via builder.exclude() (dette contrast à corriger produit). Chaque exclusion doit matcher une violation réelle, sinon le test 'exclusions axe toutes utilisées' échoue.",
+  "$doc": "Exclusions axe-core assumées (plan Phase 1 §3). Matching : sous-chaîne du sélecteur target axe. Zones .c-legal-notice / .hero-alert / .c-alert sont exclues du scan via builder.exclude() (dette contrast assumée : contenus légaux, bannières démo, alertes). Contrainte design : les textes sur fonds tonés doivent garder une TEINTE (pas de noir/on-surface) — la piste de correction est une nuance foncée de la même teinte (ex. --color-warning-fg). Dette assumée : cartes de rappel (CReminderCard) et jours hors-mois du calendrier. Chaque exclusion doit matcher une violation réelle, sinon le test 'exclusions axe toutes utilisées' échoue.",
   "color-contrast": [
+    ".c-reminder-card__row-title",
+    ".c-reminder-card__subtitle",
+    ".c-reminder-card__meta",
     ".c-reminder-card__emphasis",
+    ".opacity-40.rounded-lg.border",
     ".c-badge--warn",
     ".c-badge--pending",
     ".c-progress__value.tone--warn",

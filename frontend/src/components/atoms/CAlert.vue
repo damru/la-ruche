@@ -60,7 +60,7 @@ function dismiss() {
           class="icon-md"
           aria-hidden="true"
         />
-        <div class="flex flex-col text-on-surface">
+        <div class="flex flex-col">
           <p
             v-if="title"
             class="text-md font-semibold"

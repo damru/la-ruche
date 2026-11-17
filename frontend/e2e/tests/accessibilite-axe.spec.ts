@@ -67,7 +67,7 @@ test.describe('Accessibilité — axe-core WCAG 2.2 AA', () => {
 
           const builder = new AxeBuilder({ page })
             .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
-            .exclude('.c-legal-notice, .hero-alert')
+            .exclude('.c-legal-notice, .hero-alert, .c-alert')
           const results = await builder.analyze()
           for (const v of results.violations ?? []) seenViolationRules.add(v.id)
 

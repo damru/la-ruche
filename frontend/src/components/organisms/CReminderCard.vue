@@ -34,7 +34,7 @@ defineProps<{
         :class="[row.tone ? `tone--${row.tone}` : null]"
       >
         <CIconBell class="icon-md shrink-0" />
-        <div class="flex flex-col flex-1 text-on-surface">
+        <div class="flex flex-col flex-1">
           <span class="c-reminder-card__row-title">{{ row.title }}</span>
           <span
             v-if="row.subtitle"
@@ -47,7 +47,7 @@ defineProps<{
         >
           <span
             v-if="row.meta"
-            class="c-reminder-card__meta text-on-surface"
+            class="c-reminder-card__meta"
           >{{ row.meta }}</span>
           <span
             v-if="row.emphasis"

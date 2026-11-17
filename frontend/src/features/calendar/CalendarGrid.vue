@@ -121,7 +121,7 @@ const weekdayLabels = computed(() => [
         :key="toDateKey(day)"
         class="flex flex-col gap-1 rounded-lg border border-outline-variant p-2 min-h-24"
         :class="[
-          mode === 'month' && !isCurrentMonth(day) ? 'bg-surface-container-low' : '',
+          mode === 'month' && !isCurrentMonth(day) ? 'opacity-40' : '',
           isToday(day) ? 'border-primary bg-primary-container/40' : '',
         ]"
       >
