@@ -35,9 +35,6 @@ defineProps<{
       >
         <CIconBell class="icon-md shrink-0" />
         <div class="flex flex-col flex-1 text-on-surface">
-          <!-- Texte du row en on-surface : le tone--warn colorerait tout le
-               texte en warning (sous 4.5:1 sur container clair, WCAG 1.4.3).
-               Seule l'emphasis garde le ton. -->
           <span class="c-reminder-card__row-title">{{ row.title }}</span>
           <span
             v-if="row.subtitle"

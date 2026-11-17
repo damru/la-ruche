@@ -249,7 +249,6 @@ watch(() => route.path, closeDrawer)
       class="c-bottom-nav__item c-bottom-nav__item--profile"
       :class="{ 'c-bottom-nav__item--active': route.path.startsWith('/profile') }"
     >
-      <!-- Nom accessible dérivé du texte visible (WCAG 2.5.3). -->
       <div
         class="c-bottom-nav__avatar"
         aria-hidden="true"
@@ -380,7 +379,6 @@ watch(() => route.path, closeDrawer)
   font-weight: var(--fw-medium, 500);
   letter-spacing: 0.07em;
   text-transform: uppercase;
-  /* Contraste AA sur les 2 thèmes (10px = small text, ≥ 4.5:1). */
   color: var(--color-on-surface);
   opacity: 0.85;
   padding: 14px var(--space-3) var(--space-1);
@@ -554,7 +552,6 @@ watch(() => route.path, closeDrawer)
   padding-bottom: var(--nav-safe-area-bottom, 0px);
   transform: translateY(100%);
   transition: transform var(--transition-base), visibility var(--transition-base);
-  /* Caché du tab order + de l'access tree quand fermé (aria-hidden-focus). */
   visibility: hidden;
   max-height: 82vh;
   overflow-y: auto;
