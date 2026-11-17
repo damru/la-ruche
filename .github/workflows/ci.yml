@@ -255,8 +255,8 @@ jobs:
         run: cargo build --release
 
       - name: Start backend (migrations + seed demo au démarrage)
+        working-directory: ./backend
         run: |
-          cd backend
           nohup ./target/release/laruche > /tmp/laruche-e2e.log 2>&1 &
           echo $! > /tmp/laruche-e2e.pid
 
