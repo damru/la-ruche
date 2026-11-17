@@ -764,7 +764,7 @@ const todayStr = computed(() =>
 .hero-alert svg { width: var(--icon-sm); height: var(--icon-sm); flex-shrink: 0; }
 .hero-alert > div { min-width: 0; }
 .hero-alert div strong { font-weight: var(--fw-semibold); display: block; }
-.hero-alert div span  { font-size: var(--text-2xs); opacity: 0.85; }
+.hero-alert div span  { font-size: var(--text-2xs); }
 
 /* ── KPI ──────────────────────────────────────────────────────────── */
 /* auto-fit : le nombre de KPI visibles dépend des rôles — les pistes
