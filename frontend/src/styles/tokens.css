@@ -17,9 +17,6 @@
   --color-success:               oklch(0.523 0.1347 144.17);
   --color-success-container:     oklch(0.957 0.0210 147.64);
   --color-warning:               oklch(0.631 0.1970 40.25);
-  /* Variantes fg AA (même teinte, assombrie) pour texte sur container clair.
-     Contrainte design : pas de noir/on-surface — les textes tonés gardent
-     leur teinte (WCAG 1.4.3). */
   --color-warning-fg:            oklch(0.48 0.1500 45.00);
   --color-error-fg:              oklch(0.42 0.1700 27.70);
   --color-success-fg:            oklch(0.45 0.1300 144.17);
