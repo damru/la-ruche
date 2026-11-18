@@ -53,6 +53,13 @@ export default defineConfig({
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
       dependencies: ['setup'],
+      testIgnore: '**/tests/reseau/**',
+    },
+    {
+      // DDR-005 : états réseau via interception, sans backend ni postgres.
+      name: 'mock',
+      use: { ...devices['Desktop Chrome'] },
+      testMatch: '**/tests/reseau/**',
     },
   ],
 })
