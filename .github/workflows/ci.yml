@@ -59,7 +59,7 @@ jobs:
             backend -> target
 
       - name: Cache sqlx-cli binary
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.cargo/bin/sqlx
           key: sqlx-cli-${{ runner.os }}-${{ env.SQLX_CLI_VERSION }}
@@ -156,7 +156,7 @@ jobs:
             backend -> target
 
       - name: Cache sqlx-cli binary
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.cargo/bin/sqlx
           key: sqlx-cli-${{ runner.os }}-${{ env.SQLX_CLI_VERSION }}
