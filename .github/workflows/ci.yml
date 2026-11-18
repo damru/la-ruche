@@ -109,11 +109,6 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - name: Free disk space (CI runner)
-        run: |
-          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup /usr/local/lib/android
-          docker system prune -af || true
-          df -h
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -202,10 +197,6 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - name: Free disk space (CI runner)
-        run: |
-          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup /usr/local/lib/android
-          docker system prune -af || true
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -270,7 +261,7 @@ jobs:
     name: Frontend — E2E Playwright
     # runs-on: ${{ github.actor == github.repository_owner && 'medium' || 'ubuntu-latest' }}
     runs-on: ubuntu-latest
-    needs: [test-backend, build-backend, test-frontend]
+    needs: [build-backend, test-frontend]
     defaults:
       run:
         working-directory: ./frontend
@@ -321,10 +312,6 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - name: Free disk space (CI runner)
-        run: |
-          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup /usr/local/lib/android
-          docker system prune -af || true
 
       - name: Download backend binary
         uses: actions/download-artifact@v8
