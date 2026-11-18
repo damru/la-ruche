@@ -28,12 +28,20 @@ function fulfillJson(route: Route, status: number, body: unknown): Promise<void>
 
 async function mockApi(page: Page): Promise<void> {
   await page.route('**/api/v1/**', route => fulfillJson(route, 200, []))
+  // Endpoints d'objet attendus au boot : le catch-all `[]` casse le montage.
+  await page.route('**/api/v1/runtime', route => fulfillJson(route, 200, { demo_mode: true }))
+  await page.route('**/api/v1/building', route => fulfillJson(route, 200, {}))
+  await page.route('**/api/v1/onboarding/status', route => fulfillJson(route, 200, { needs_onboarding: false }))
   await page.route('**/api/v1/auth/me', route => fulfillJson(route, 200, FAKE_USER))
   await page.route('**/api/v1/tasks**', route => fulfillJson(route, 200, TASK_LIST))
+  // Dernier enregistré = prioritaire : les compteurs ne doivent PAS recevoir
+  // TaskListResponse ({items,total}) sinon `.map` explose côté vue.
+  await page.route('**/api/v1/tasks/status-counters', route => fulfillJson(route, 200, []))
 }
 
 function failTasks(page: Page, status: number | 'abort'): void {
-  page.route('**/api/v1/tasks**', async route => {
+  // `tasks?*` ne matche pas /tasks/status-counters (déjà mocké à part).
+  page.route('**/api/v1/tasks?*', async route => {
     if (status === 'abort') await route.abort('connectionreset')
     else await fulfillJson(route, status, { error: 'boom' })
   })
@@ -51,7 +59,7 @@ test.describe('DDR-005 états réseau — /tasks', () => {
   test('retry après 500 → contenu rendu', async ({ page }) => {
     await mockApi(page)
     let calls = 0
-    page.route('**/api/v1/tasks**', async route => {
+    page.route('**/api/v1/tasks?*', async route => {
       calls += 1
       if (calls <= 1) await fulfillJson(route, 500, { error: 'boom' })
       else await fulfillJson(route, 200, TASK_LIST)
@@ -66,7 +74,7 @@ test.describe('DDR-005 états réseau — /tasks', () => {
 
   test('réponse lente → état de loading visible', async ({ page }) => {
     await mockApi(page)
-    page.route('**/api/v1/tasks**', async route => {
+    page.route('**/api/v1/tasks?*', async route => {
       await new Promise(r => setTimeout(r, 2_000))
       await fulfillJson(route, 200, TASK_LIST)
     })
