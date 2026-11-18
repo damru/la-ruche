@@ -168,7 +168,9 @@ jobs:
           LA_RUCHE__AUTH__VENDOR_TOKEN_TTL_DAYS: "30"
           LA_RUCHE__AUTH__ARGON2_MEMORY_KB: "65536"
           LA_RUCHE__AUTH__ARGON2_ITERATIONS: "3"
-          SQLX_OFFLINE: true
+          # false : les tests contiennent des macros query! non couvertes par .sqlx
+          # (prepare ne scanne pas les fichiers de test) — validation live sur la base de test.
+          SQLX_OFFLINE: false
         # A single Cargo invocation reuses the compiled test profile once for unit and integration suites.
         run: cargo test --lib --tests
 
