@@ -58,6 +58,12 @@ jobs:
           workspaces: |
             backend -> target
 
+      - name: Cache sqlx-cli binary
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/bin/sqlx
+          key: sqlx-cli-${{ runner.os }}-${{ env.SQLX_CLI_VERSION }}
+
       - name: Install sqlx-cli
         run: |
           # rust-cache restores cargo-installed binaries when available; only install on a cold cache.
@@ -148,6 +154,12 @@ jobs:
           shared-key: backend-ci
           workspaces: |
             backend -> target
+
+      - name: Cache sqlx-cli binary
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/bin/sqlx
+          key: sqlx-cli-${{ runner.os }}-${{ env.SQLX_CLI_VERSION }}
 
       - name: Install sqlx-cli
         run: |
