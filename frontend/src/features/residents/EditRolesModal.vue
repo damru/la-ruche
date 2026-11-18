@@ -141,7 +141,7 @@ async function handleSave() {
 }
 
 .warning-text {
-  color: var(--color-warning);
+  color: var(--color-warning-fg);
   margin-top: var(--space-2);
 }
 </style>

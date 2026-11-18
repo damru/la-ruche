@@ -226,6 +226,7 @@ function openDeleteModal(c: Contractor) {
             <button
               :class="['view-toggle__btn', { 'view-toggle__btn--active': viewMode === 'list' }]"
               :aria-pressed="viewMode === 'list'"
+              :aria-label="t('common.viewList')"
               @click="viewMode = 'list'"
             >
               <CIconList class="icon-sm" />
@@ -233,6 +234,7 @@ function openDeleteModal(c: Contractor) {
             <button
               :class="['view-toggle__btn', { 'view-toggle__btn--active': viewMode === 'grid' }]"
               :aria-pressed="viewMode === 'grid'"
+              :aria-label="t('common.viewGrid')"
               @click="viewMode = 'grid'"
             >
               <CIconGrid class="icon-sm" />

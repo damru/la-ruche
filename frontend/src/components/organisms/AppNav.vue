@@ -219,7 +219,7 @@ watch(() => route.path, closeDrawer)
       class="c-bottom-nav__item"
       :class="{ 'c-bottom-nav__item--active': isActive(item) }"
       :aria-current="isActive(item) ? 'page' : undefined"
-      :aria-label="item.label"
+      :aria-label="item.mobileLabel ?? item.label"
     >
       <div class="c-bottom-nav__icon-wrap">
         <slot :name="`icon-${item.name}`">
@@ -248,7 +248,6 @@ watch(() => route.path, closeDrawer)
       to="/profile"
       class="c-bottom-nav__item c-bottom-nav__item--profile"
       :class="{ 'c-bottom-nav__item--active': route.path.startsWith('/profile') }"
-      :aria-label="auth.user?.first_name || t('nav.account')"
     >
       <div
         class="c-bottom-nav__avatar"
@@ -382,7 +381,6 @@ watch(() => route.path, closeDrawer)
   text-transform: uppercase;
   color: var(--color-on-surface-variant);
   padding: 14px var(--space-3) var(--space-1);
-  opacity: 0.6;
 }
 
 .c-sidebar__item {
@@ -552,12 +550,13 @@ watch(() => route.path, closeDrawer)
   border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
   padding-bottom: var(--nav-safe-area-bottom, 0px);
   transform: translateY(100%);
-  transition: transform var(--transition-base);
+  transition: transform var(--transition-base), visibility var(--transition-base);
+  visibility: hidden;
   max-height: 82vh;
   overflow-y: auto;
 }
 
-.c-nav-drawer--open { transform: translateY(0); }
+.c-nav-drawer--open { transform: translateY(0); visibility: visible; }
 
 .c-nav-drawer__handle-area {
   display: flex;
@@ -587,7 +586,6 @@ watch(() => route.path, closeDrawer)
   text-transform: uppercase;
   color: var(--color-on-surface-variant);
   padding: 14px var(--space-3) var(--space-1);
-  opacity: 0.6;
 }
 
 .c-nav-drawer__item {
