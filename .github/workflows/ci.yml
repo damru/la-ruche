@@ -133,6 +133,19 @@ jobs:
           workspaces: |
             backend -> target
 
+      - name: Install sqlx-cli
+        run: |
+          # rust-cache restores cargo-installed binaries when available; only install on a cold cache.
+          if ! command -v sqlx >/dev/null 2>&1; then
+            echo "Installing sqlx-cli (not restored from cache)"
+            cargo install sqlx-cli --version ${{ env.SQLX_CLI_VERSION }} --no-default-features --features postgres --locked
+          fi
+
+      - name: Run migrations (schéma requis pour l'expansion des macros query! des tests)
+        env:
+          DATABASE_URL: postgres://laruche:laruche@localhost:5432/laruche_test
+        run: sqlx migrate run
+
       - name: Check formatting
         env:
           SQLX_OFFLINE: true
