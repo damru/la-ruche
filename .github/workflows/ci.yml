@@ -51,12 +51,6 @@ jobs:
         with:
           components: rustfmt, clippy
 
-      - name: Download SQLx offline files
-        uses: actions/download-artifact@v8
-        with:
-          name: ${{ env.SQLX_ARTIFACT_NAME }}
-          path: backend/.sqlx/
-
       - name: Cache Cargo
         uses: Swatinem/rust-cache@v2
         with:
@@ -83,8 +77,9 @@ jobs:
         run: cargo fmt --check
 
       - name: Clippy
+        # live : .sqlx ne couvre pas ce job (généré par build-backend), la base de test est déjà migrée
         env:
-          SQLX_OFFLINE: true
+          DATABASE_URL: postgres://laruche:laruche@localhost:5432/laruche_test
         run: cargo clippy -- -D warnings
 
       - name: Tests backend (lib + intégration)
