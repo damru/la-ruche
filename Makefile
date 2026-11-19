@@ -98,7 +98,7 @@ clean: ## Clean build artifacts
 	cd frontend && rm -rf dist node_modules
 
 install-tools: ## Install development tools
-	cargo install sqlx-cli --no-default-features --features postgres --locked
+	cargo install sqlx-cli --version 0.8.6 --no-default-features --features postgres --locked
 	cargo install bacon --locked
 	cd frontend && npm ci
 	cd frontend && npx playwright install chromium
