@@ -1,25 +1,22 @@
 import { defineConfig, devices } from '@playwright/test'
 
 /**
- * La Ruche — E2E (Phase 0 : socle).
+ * La Ruche — E2E (Phase 0: socle).
  *
- * Le webServer démarre Vite (port 5173) dont le proxy /api pointe vers le
- * backend de dev (:8080). Prérequis local : `make setup && make dev`
- * (postgres + rustfs + backend, DEMO_MODE=true → seed demo.sql).
+ * The webServer starts Vite (port 5173) whose /api proxy points to the
+ * dev backend (:8080). Local prerequisite: `make setup && make dev`
+ * (postgres + rustfs + backend, DEMO_MODE=true -> demo.sql seed).
  */
 export default defineConfig({
   testDir: './e2e',
   testMatch: '**/*.spec.ts',
   fullyParallel: true,
-  // Phase 0 : le socle n'a pas besoin de retries ; 1 retry en CI uniquement.
   retries: process.env.CI ? 1 : 0,
-  // Pi 4 Go : 4 workers chromium + Vite dépassent la RAM (OOM → crash Vite
-  // en cours de run, ERR_CONNECTION_REFUSED en cascade). 2 workers local.
+  // 4 GB Pi: 4 chromium workers + Vite exceed RAM (OOM -> mid-run Vite
+  // crash, cascading ERR_CONNECTION_REFUSED). 2 workers local.
   workers: process.env.CI ? 2 : 2,
   reporter: process.env.CI ? [['html', { open: 'never' }], ['list']] : [['list']],
 
-  // Vite est démarré par Playwright (local : réutilise une instance existante).
-  // Prérequis : backend + postgres + rustfs en amont (`make setup && make dev`).
   webServer: {
     command: 'npm run dev',
     url: 'http://localhost:5173',
@@ -29,7 +26,6 @@ export default defineConfig({
 
   use: {
     baseURL: 'http://localhost:5173',
-    // Hiérarchie de timeouts : action (10s) > API_TIMEOUT_MS du client axios (5s).
     actionTimeout: 10_000,
     navigationTimeout: 15_000,
     trace: 'retain-on-failure',
@@ -37,22 +33,28 @@ export default defineConfig({
   },
 
   expect: {
-    // Le parcours login→dashboard charge ~16 requêtes API au montage ;
-    // sur Raspberry Pi il dépasse 5 s. Marges adaptées au matériel.
+    // The login->dashboard flow loads ~16 API calls on mount;
+    // on a Raspberry Pi it exceeds 5 s. Marges sized for the hardware.
     timeout: 15_000,
   },
 
-  // Timeout par test : le parcours login→dashboard→profile→logout charge
-  // ~20 requêtes API ; en parallèle sur Pi il dépasse 30 s.
+  // Per-test timeout: the login->dashboard->profile->logout flow loads
+  // ~20 API calls; in parallel on a Pi it exceeds 30 s.
   timeout: 60_000,
 
   projects: [
-    // Setup : connexion par rôle via l'API (cookies httpOnly) → storageState.
     { name: 'setup', testMatch: '**/auth.setup.ts' },
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
       dependencies: ['setup'],
+      testIgnore: '**/tests/reseau/**',
+    },
+    {
+      // DDR-005: network states via interception, no backend, no postgres.
+      name: 'mock',
+      use: { ...devices['Desktop Chrome'] },
+      testMatch: '**/tests/reseau/**',
     },
   ],
 })

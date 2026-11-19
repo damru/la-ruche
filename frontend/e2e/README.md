@@ -1,6 +1,7 @@
 # E2E — La Ruche (Playwright)
 
-Socle de tests end-to-end du frontend. Phase 0 : login par rôle + parcours socle.
+Socle de tests end-to-end du frontend : login par rôle, parcours socle,
+actions utilisateur (Phase 2), états réseau (DDR-005), garde-fous (DDR-006).
 
 ## Prérequis
 
@@ -23,6 +24,47 @@ Socle de tests end-to-end du frontend. Phase 0 : login par rôle + parcours socl
 chromium complet ARM64 — seul `chromium-headless-shell` est disponible
 (suffisant pour ces tests non visuels). Les runs complets multi-navigateurs
 restent sur la CI x86.
+
+## Projets
+
+| Projet | Périmètre | Backend requis |
+|---|---|---|
+| `setup` | Login par rôle via l'API → `e2e/.auth/<role>.json` | oui |
+| `chromium` | Socle (routes × rôles, axe), actions utilisateur, garde-fous | oui |
+| `mock` | DDR-005 — états réseau par interception `page.route` | non |
+
+`chromium` ignore `tests/reseau/**` ; `mock` ne matche que lui :
+`--project=mock` ne démarre que Vite.
+
+## Conventions Phase 2 (actions)
+
+### Données
+- Entités de test créées **via l'API** avec le request context de la page
+  (`e2e/data/api.ts` : apiGet/apiPost/apiPut/apiDelete) — les cookies httpOnly
+  du storageState portent le rôle, les permissions réelles du backend
+  s'appliquent. Aucune entité n'est créée par l'UI en setup.
+- Identifiants uniques par run et worker : `e2eName(testInfo, prefix)` →
+  `e2e-w<worker>-<runid>-<prefix>`. Aucune dépendance d'ordre entre tests.
+- Ne pas compter sur des données seedées fixes pour les assertions de contenu.
+
+### Effets UI (DDR-006)
+- Feedback inline via `CFormActions` (`e2e/helpers-feedback.ts` :
+  `expectFeedback` valid/err, `expectNoFeedback`, `expectSubmitPending`,
+  `expectSubmitClosing`, `expectAutoClose`). Le feedback s'auto-efface après
+  3 s : les assertions se posent immédiatement après la soumission.
+- `CBtn` de type submit est désactivé automatiquement quand le formulaire est
+  invalide (`disableWhenFormInvalid` par défaut) — spinner ≠ disabled.
+- Le garde-fou statique `tests/archi/ddr006-garde-fou.spec.ts` interdit tout
+  `CFormFeedback` utilisé hors de `CFormActions`.
+
+### Pièges connus
+- La fixture `auth(rôle)` crée son **propre contexte/page** : `page.route` et
+  `page.on` doivent viser la page du helper (`page_o.page`), pas la fixture
+  `page` du test — sinon ni interception ni écoute réseau.
+- `hasText` = sous-chaîne : utiliser `cardByTitleExact` pour distinguer `X` de
+  `X v2`.
+- Les modales se rendent dans `.c-modal__content` ; la topbar est un
+  `div.c-topbar` (pas un `header`).
 
 ## Notes CI
 
@@ -56,5 +98,5 @@ e2e/
   d'injection localStorage.
 - Le seed est ignoré si la base contient déjà des comptes ; re-seed via
   `POST /api/v1/admin/reset-demo` (efface les données de dev manuel).
-- Phase 0 = lecture seule + login. Les tests mutateurs arrivent en Phase 2
-  (création via API, reset encadré).
+- Phase 0 = lecture seule + login. Phase 2 ajoute les tests mutateurs (création
+  via API, reset encadré) et les garde-fous archi.

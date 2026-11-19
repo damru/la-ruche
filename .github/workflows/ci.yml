@@ -61,8 +61,11 @@ jobs:
       - name: Cache sqlx-cli binary
         uses: actions/cache@v6
         with:
-          path: ~/.cargo/bin/sqlx
-          key: sqlx-cli-${{ runner.os }}-${{ env.SQLX_CLI_VERSION }}
+          # `cargo sqlx prepare` résout le binaire `cargo-sqlx`, distinct de `sqlx`.
+          path: |
+            ~/.cargo/bin/sqlx
+            ~/.cargo/bin/cargo-sqlx
+          key: sqlx-cli-${{ runner.os }}-${{ env.SQLX_CLI_VERSION }}-v2
 
       - name: Install sqlx-cli
         run: |
@@ -158,8 +161,11 @@ jobs:
       - name: Cache sqlx-cli binary
         uses: actions/cache@v6
         with:
-          path: ~/.cargo/bin/sqlx
-          key: sqlx-cli-${{ runner.os }}-${{ env.SQLX_CLI_VERSION }}
+          # `cargo sqlx prepare` résout le binaire `cargo-sqlx`, distinct de `sqlx`.
+          path: |
+            ~/.cargo/bin/sqlx
+            ~/.cargo/bin/cargo-sqlx
+          key: sqlx-cli-${{ runner.os }}-${{ env.SQLX_CLI_VERSION }}-v2
 
       - name: Install sqlx-cli
         run: |

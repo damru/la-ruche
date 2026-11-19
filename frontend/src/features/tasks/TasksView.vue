@@ -119,19 +119,23 @@ async function loadData() {
   allUsers.value = usersRes.data
   buildingName.value = building.name
   allContractors.value = contractorsRes.data
-  const [tasksPage, countersRes] = await Promise.all([
-    fetchTasks(0),
-    tasksApi.statusCounters(),
-  ])
+  const tasksPage = await fetchTasks(0)
   void tasksPage
-  const counters = new Map(countersRes.data.map(c => [c.status, c.count]))
-  counts.value = {
-    all: countersRes.data.reduce((sum, c) => sum + c.count, 0),
-    open: counters.get(TASK_STATUS_OPEN) ?? 0,
-    in_progress: counters.get(TASK_STATUS_IN_PROGRESS) ?? 0,
-    awaiting_vendor: counters.get(TASK_STATUS_AWAITING_VENDOR) ?? 0,
-    awaiting_validation: counters.get(TASK_STATUS_AWAITING_VALIDATION) ?? 0,
-    closed: counters.get(TASK_STATUS_CLOSED) ?? 0,
+  // Les compteurs ne sont pas critiques : leur échec ne doit pas masquer la
+  // liste (contrat DDR-005 — appel non critique en échec → page fonctionnelle).
+  try {
+    const countersRes = await tasksApi.statusCounters()
+    const counters = new Map(countersRes.data.map(c => [c.status, c.count]))
+    counts.value = {
+      all: countersRes.data.reduce((sum, c) => sum + c.count, 0),
+      open: counters.get(TASK_STATUS_OPEN) ?? 0,
+      in_progress: counters.get(TASK_STATUS_IN_PROGRESS) ?? 0,
+      awaiting_vendor: counters.get(TASK_STATUS_AWAITING_VENDOR) ?? 0,
+      awaiting_validation: counters.get(TASK_STATUS_AWAITING_VALIDATION) ?? 0,
+      closed: counters.get(TASK_STATUS_CLOSED) ?? 0,
+    }
+  } catch {
+    counts.value = {}
   }
 }
 
