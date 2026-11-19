@@ -1,13 +1,13 @@
 import { test, expect, type Page, type Route } from '@playwright/test'
 
 /**
- * DDR-005 — les 6 états réseau, par interception `page.route()`.
+ * DDR-005 — the 6 network states, via `page.route()` interception.
  *
- * Projet `mock` : aucune base, aucun backend. Seule l'app Vite tourne.
- * Un catch-all `200 []` intercepte tout `/api/v1/**` (les stores appellent
- * users/contractors/counters au montage) ; chaque test surcharge ensuite
- * l'endpoint qu'il teste — Playwright donne la priorité au dernier
- * handler enregistré.
+ * `mock` project: no database, no backend. Only the Vite app runs.
+ * A catch-all `200 []` intercepts every `/api/v1/**` (stores call
+ * users/contractors/counters on mount); each test then overrides the
+ * endpoint it targets — Playwright gives priority to the last
+ * registered handler.
  */
 
 const FAKE_USER = {
@@ -43,8 +43,8 @@ function failTasks(page: Page, status: number | 'abort'): void {
   })
 }
 
-test.describe('DDR-005 états réseau — /tasks', () => {
-  test('500 au montage → CPageError remplace le contenu', async ({ page }) => {
+test.describe('DDR-005 network states — /tasks', () => {
+  test('500 on mount -> CPageError replaces the content', async ({ page }) => {
     await mockApi(page)
     failTasks(page, 500)
     await page.goto('/tasks')
@@ -52,7 +52,7 @@ test.describe('DDR-005 états réseau — /tasks', () => {
     await expect(page.locator('.task-card')).toHaveCount(0)
   })
 
-  test('retry après 500 → contenu rendu', async ({ page }) => {
+  test('retry after 500 -> content rendered', async ({ page }) => {
     await mockApi(page)
     let calls = 0
     page.route('**/api/v1/tasks?*', async route => {
@@ -68,7 +68,7 @@ test.describe('DDR-005 états réseau — /tasks', () => {
     await expect(page.locator('.c-empty-state').first()).toBeVisible()
   })
 
-  test('réponse lente → état de loading visible', async ({ page }) => {
+  test('slow response -> loading state visible', async ({ page }) => {
     await mockApi(page)
     page.route('**/api/v1/tasks?*', async route => {
       await new Promise(r => setTimeout(r, 2_000))
@@ -79,20 +79,20 @@ test.describe('DDR-005 états réseau — /tasks', () => {
     await expect(page.locator('.c-empty-state').first()).toBeVisible({ timeout: 10_000 })
   })
 
-  test('liste vide (200 []) → état empty dédié', async ({ page }) => {
+  test('empty list (200 []) -> dedicated empty state', async ({ page }) => {
     await mockApi(page)
     await page.goto('/tasks')
     await expect(page.locator('.c-empty-state').first()).toBeVisible()
   })
 
-  test('timeout réseau (abort) → même contrat que 500', async ({ page }) => {
+  test('network timeout (abort) -> same contract as 500', async ({ page }) => {
     await mockApi(page)
     failTasks(page, 'abort')
     await page.goto('/tasks')
     await expect(page.locator('.c-page-error')).toBeVisible()
   })
 
-  test('appel non critique en échec → page fonctionnelle', async ({ page }) => {
+  test('non-critical call failing -> page still functional', async ({ page }) => {
     await mockApi(page)
     await page.route('**/api/v1/tasks/status-counters', route => fulfillJson(route, 500, { error: 'boom' }))
     await page.goto('/tasks')

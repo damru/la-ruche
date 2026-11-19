@@ -4,8 +4,8 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 /**
- * Garde-fou DDR-006 : CFormFeedback ne s'utilise jamais directement dans
- * une vue (scan statique des .vue de src/). Violation = fix produit.
+ * DDR-006 guard: CFormFeedback is never used directly in a view (static
+ * scan of src/ .vue files). Violation = product fix.
  */
 
 const SRC = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../src')

@@ -1,9 +1,9 @@
 import type { APIResponse, Page, TestInfo } from '@playwright/test'
 
 /**
- * Client API e2e : passe par le request context de la page (même origine,
- * le proxy Vite /api → backend :8080). Les cookies httpOnly du storageState
- * authentifient chaque appel — le rôle du test pilote ses permissions.
+ * E2E API client: goes through the page request context (same origin, the
+ * Vite /api proxy -> backend :8080). The storageState httpOnly cookies
+ * authenticate every call — the test role drives its permissions.
  */
 
 let e2eSeq = 0
@@ -42,8 +42,8 @@ export async function resetDemoData(page: Page): Promise<void> {
 }
 
 /**
- * Nom unique pour une entité créée par un test : préfixe worker + run,
- * contre les collisions d'unicité quand fullyParallel partage la base.
+ * Unique name for an entity created by a test: worker + run prefix, against
+ * uniqueness collisions when fullyParallel shares the database.
  */
 export function e2eName(testInfo: TestInfo, base: string): string {
   const seq = (e2eSeq = (e2eSeq + 1) % 1_000_000).toString(36).padStart(3, '0')

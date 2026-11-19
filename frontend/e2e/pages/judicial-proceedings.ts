@@ -2,8 +2,8 @@ import { type Locator, type Page } from '@playwright/test'
 import { apiDelete, apiPost } from '../data/api'
 
 /**
- * Page Object — registre des procédures judiciaires.
- * Route : /judicial-proceedings (canEdit : manager/board_member).
+ * Page Object — judicial proceedings register.
+ * Route: /judicial-proceedings (canEdit: manager/board_member).
  */
 
 export class JudicialProceedingsPage {

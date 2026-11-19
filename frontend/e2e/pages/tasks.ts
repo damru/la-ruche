@@ -2,8 +2,8 @@ import { type Locator, type Page } from '@playwright/test'
 import { apiDelete, apiPost } from '../data/api'
 
 /**
- * Page Object — Tasks (liste + modale création/édition).
- * Expose des intentions ; aucun sélecteur brut hors de ce fichier.
+ * Page Object — Tasks (list + create/edit modal).
+ * Exposes intents; no raw selectors outside this file.
  */
 
 export class TasksPage {

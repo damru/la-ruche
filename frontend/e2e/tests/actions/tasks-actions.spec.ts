@@ -4,16 +4,16 @@ import { TasksPage } from '../../pages/tasks'
 import { apiPost, e2eName } from '../../data/api'
 
 /**
- * Actions tâches — validation client, échec serveur, succès avec effets
- * (feedback, bouton closing, auto-close DDR-006, liste rafraîchie),
- * modification.
+ * Task actions — client validation, server failure, success with effects
+ * (feedback, closing button, DDR-006 auto-close, refreshed list),
+ * edit.
  *
- * Entités créées par API (data/api.ts), nom unique par worker. Le seul
- * `page.route` sert à simuler l'échec serveur — scope minimal, endpoint
- * concerné uniquement.
+ * Entities created via API (data/api.ts), unique name per worker. The only
+ * `page.route` simulates the server failure — minimal scope, target
+ * endpoint only.
  */
 
-test.describe('actions tâches', () => {
+test.describe('task actions', () => {
   let tasks: TasksPage
 
   test.beforeEach(async ({ auth }, testInfo) => {
@@ -26,7 +26,7 @@ test.describe('actions tâches', () => {
     await tasks.page.context().close()
   })
 
-  test('validation client : titre vide → bouton disabled, aucune requête', async () => {
+  test('client validation: empty title -> disabled button, no request', async () => {
     await tasks.goto()
     await tasks.openCreateModal()
 
@@ -41,7 +41,7 @@ test.describe('actions tâches', () => {
     expect(postEmitted).toBe(false)
   })
 
-  test('échec serveur : feedback tone--err, modale maintenue ouverte', async () => {
+  test('server failure: tone--err feedback, modal kept open', async () => {
     await tasks.goto()
     await tasks.openCreateModal()
     await tasks.fillTitle('e2e-w-erreur-serveur')
@@ -59,8 +59,8 @@ test.describe('actions tâches', () => {
     await expect(tasks.modal).toBeVisible()
   })
 
-  test('succès : feedback valid, bouton closing, auto-close, liste rafraîchie', async () => {
-    const title = e2eName(test.info(), 'création tâche')
+  test('success: valid feedback, closing button, auto-close, refreshed list', async () => {
+    const title = e2eName(test.info(), 'created task')
     await tasks.goto()
     await tasks.openCreateModal()
     await tasks.fillTitle(title)
@@ -77,10 +77,10 @@ test.describe('actions tâches', () => {
     await expect(tasks.cardByTitle(title)).toBeVisible()
   })
 
-  test('bouton disabled pendant la requête en cours', async ({ page }) => {
+  test('button disabled while the request is in flight', async ({ page }) => {
     await tasks.goto()
     await tasks.openCreateModal()
-    await tasks.fillTitle(e2eName(test.info(), 'tâche lente'))
+    await tasks.fillTitle(e2eName(test.info(), 'slow task'))
 
     await page.route('**/api/v1/tasks', async route => {
       await new Promise(r => setTimeout(r, 1_500))
@@ -97,8 +97,8 @@ test.describe('actions tâches', () => {
     await expectAutoClose(tasks.modal)
   })
 
-  test('modification par API : liste rafraîchie au nouveau titre', async () => {
-    const title = e2eName(test.info(), 'tâche à modifier')
+  test('edit via API: list refreshed with the new title', async () => {
+    const title = e2eName(test.info(), 'task to edit')
     const created = await apiPost<{ id: string }>(tasks.page, '/tasks', { title })
 
     const newTitle = `${title} v2`

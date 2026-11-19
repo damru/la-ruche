@@ -1,10 +1,10 @@
 import { expect, type Locator } from '@playwright/test'
 
 /**
- * Effets UI des formulaires (DDR-006) : feedback, pending, closing,
- * auto-close. Sans assert de position ni d'animation — la position est
- * garantie par CFormActions (garde-fou ddr006). Le feedback s'auto-efface
- * après 3 s : les asserts doivent suivre la soumission immédiatement.
+ * Form UI effects (DDR-006): feedback, pending, closing, auto-close.
+ * No position or animation asserts — position is guaranteed by CFormActions
+ * (ddr006 guard). Feedback auto-clears after 3 s: asserts must follow the
+ * submission immediately.
  */
 
 const FEEDBACK = '.form-feedback'

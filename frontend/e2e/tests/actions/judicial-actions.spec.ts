@@ -4,11 +4,11 @@ import { JudicialProceedingsPage } from '../../pages/judicial-proceedings'
 import { e2eName } from '../../data/api'
 
 /**
- * Actions registre judiciaire — succès (feedback, closing, auto-close,
- * table rafraîchie) et échec serveur (feedback tone--err).
+ * Judicial register actions — success (feedback, closing, auto-close,
+ * refreshed table) and server failure (tone--err feedback).
  */
 
-test.describe('actions registre judiciaire', () => {
+test.describe('judicial register actions', () => {
   let page_o: JudicialProceedingsPage
 
   test.beforeEach(async ({ auth }, testInfo) => {
@@ -21,8 +21,8 @@ test.describe('actions registre judiciaire', () => {
     await page_o.page.context().close()
   })
 
-  test('création : succès, bouton closing, auto-close, ligne dans la table', async () => {
-    const subject = e2eName(test.info(), 'procédure créée')
+  test('create: success, closing button, auto-close, table row', async () => {
+    const subject = e2eName(test.info(), 'created proceeding')
     await page_o.goto()
     await page_o.openCreateModal()
     await page_o.fill({
@@ -43,11 +43,11 @@ test.describe('actions registre judiciaire', () => {
     await expect(page_o.rowBySubject(subject)).toBeVisible()
   })
 
-  test('échec serveur : feedback tone--err, modale maintenue ouverte', async () => {
+  test('server failure: tone--err feedback, modal kept open', async () => {
     await page_o.goto()
     await page_o.openCreateModal()
     await page_o.fill({
-      subject: 'e2e-errsrv-uniq-42',
+      subject: 'e2e-server-failure-42',
       claimant: 'A',
       defendant: 'B',
       openedAt: '2026-01-15',
