@@ -21,7 +21,7 @@ test.describe('actions registre judiciaire', () => {
     await page_o.page.context().close()
   })
 
-  test('création : succès, bouton closing, auto-close, ligne dans la table', async ({ }, testInfo) => {
+  test('création : succès, bouton closing, auto-close, ligne dans la table', async (_, testInfo) => {
     const subject = e2eName(testInfo, 'procédure créée')
     await page_o.goto()
     await page_o.openCreateModal()

@@ -59,7 +59,7 @@ test.describe('actions tâches', () => {
     await expect(tasks.modal).toBeVisible()
   })
 
-  test('succès : feedback valid, bouton closing, auto-close, liste rafraîchie', async ({ }, testInfo) => {
+  test('succès : feedback valid, bouton closing, auto-close, liste rafraîchie', async (_, testInfo) => {
     const title = e2eName(testInfo, 'création tâche')
     await tasks.goto()
     await tasks.openCreateModal()
@@ -97,7 +97,7 @@ test.describe('actions tâches', () => {
     await expectAutoClose(tasks.modal)
   })
 
-  test('modification par API : liste rafraîchie au nouveau titre', async ({ }, testInfo) => {
+  test('modification par API : liste rafraîchie au nouveau titre', async (_, testInfo) => {
     const title = e2eName(testInfo, 'tâche à modifier')
     const created = await apiPost<{ id: string }>(tasks.page, '/tasks', { title })
 
