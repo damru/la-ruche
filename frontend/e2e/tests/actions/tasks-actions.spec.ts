@@ -59,8 +59,8 @@ test.describe('actions tâches', () => {
     await expect(tasks.modal).toBeVisible()
   })
 
-  test('succès : feedback valid, bouton closing, auto-close, liste rafraîchie', async (_, testInfo) => {
-    const title = e2eName(testInfo, 'création tâche')
+  test('succès : feedback valid, bouton closing, auto-close, liste rafraîchie', async () => {
+    const title = e2eName(test.info(), 'création tâche')
     await tasks.goto()
     await tasks.openCreateModal()
     await tasks.fillTitle(title)
@@ -77,10 +77,10 @@ test.describe('actions tâches', () => {
     await expect(tasks.cardByTitle(title)).toBeVisible()
   })
 
-  test('bouton disabled pendant la requête en cours', async ({ page }, testInfo) => {
+  test('bouton disabled pendant la requête en cours', async ({ page }) => {
     await tasks.goto()
     await tasks.openCreateModal()
-    await tasks.fillTitle(e2eName(testInfo, 'tâche lente'))
+    await tasks.fillTitle(e2eName(test.info(), 'tâche lente'))
 
     await page.route('**/api/v1/tasks', async route => {
       await new Promise(r => setTimeout(r, 1_500))
@@ -97,8 +97,8 @@ test.describe('actions tâches', () => {
     await expectAutoClose(tasks.modal)
   })
 
-  test('modification par API : liste rafraîchie au nouveau titre', async (_, testInfo) => {
-    const title = e2eName(testInfo, 'tâche à modifier')
+  test('modification par API : liste rafraîchie au nouveau titre', async () => {
+    const title = e2eName(test.info(), 'tâche à modifier')
     const created = await apiPost<{ id: string }>(tasks.page, '/tasks', { title })
 
     const newTitle = `${title} v2`
