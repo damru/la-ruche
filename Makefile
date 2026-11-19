@@ -101,6 +101,7 @@ install-tools: ## Install development tools
 	cargo install sqlx-cli --no-default-features --features postgres --locked
 	cargo install bacon --locked
 	cd frontend && npm ci
+	cd frontend && npx playwright install chromium
 
 setup-hooks: ## Install git hooks (pre-commit: cargo fmt + clippy)
 	git config core.hooksPath .githooks

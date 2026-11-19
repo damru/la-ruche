@@ -33,6 +33,10 @@ make dev          # backend hot-reload
 make dev-frontend # frontend Vite (autre terminal)
 ```
 
+Tests e2e frontend (Playwright) : voir [frontend/e2e/README.md](frontend/e2e/README.md)
+— `install-tools` installe les navigateurs ; l'exécution requiert la stack de
+dev (`make setup && make dev`) sauf pour le projet `mock` (`--project=mock`).
+
 ***
 
 ## Structure du projet
