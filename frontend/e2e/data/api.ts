@@ -6,6 +6,8 @@ import type { APIResponse, Page, TestInfo } from '@playwright/test'
  * authentifient chaque appel — le rôle du test pilote ses permissions.
  */
 
+let e2eSeq = 0
+
 async function unwrap<T>(res: APIResponse): Promise<T> {
   if (!res.ok()) {
     const body = await res.text().catch(() => '')
@@ -44,6 +46,9 @@ export async function resetDemoData(page: Page): Promise<void> {
  * contre les collisions d'unicité quand fullyParallel partage la base.
  */
 export function e2eName(testInfo: TestInfo, base: string): string {
+  // Compteur monotone : deux appels dans la même ms produiraient la même
+  // base36 et entreraient en collision d'unicité.
+  const seq = (e2eSeq = (e2eSeq + 1) % 1_000_000).toString(36).padStart(3, '0')
   const run = Date.now().toString(36)
-  return `e2e-w${testInfo.workerIndex}-${run}-${base}`
+  return `e2e-w${testInfo.workerIndex}-${run}${seq}-${base}`
 }
