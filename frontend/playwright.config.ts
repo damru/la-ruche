@@ -11,15 +11,12 @@ export default defineConfig({
   testDir: './e2e',
   testMatch: '**/*.spec.ts',
   fullyParallel: true,
-  // Phase 0 : le socle n'a pas besoin de retries ; 1 retry en CI uniquement.
   retries: process.env.CI ? 1 : 0,
   // Pi 4 Go : 4 workers chromium + Vite dépassent la RAM (OOM → crash Vite
   // en cours de run, ERR_CONNECTION_REFUSED en cascade). 2 workers local.
   workers: process.env.CI ? 2 : 2,
   reporter: process.env.CI ? [['html', { open: 'never' }], ['list']] : [['list']],
 
-  // Vite est démarré par Playwright (local : réutilise une instance existante).
-  // Prérequis : backend + postgres + rustfs en amont (`make setup && make dev`).
   webServer: {
     command: 'npm run dev',
     url: 'http://localhost:5173',
@@ -29,7 +26,6 @@ export default defineConfig({
 
   use: {
     baseURL: 'http://localhost:5173',
-    // Hiérarchie de timeouts : action (10s) > API_TIMEOUT_MS du client axios (5s).
     actionTimeout: 10_000,
     navigationTimeout: 15_000,
     trace: 'retain-on-failure',
@@ -47,7 +43,6 @@ export default defineConfig({
   timeout: 60_000,
 
   projects: [
-    // Setup : connexion par rôle via l'API (cookies httpOnly) → storageState.
     { name: 'setup', testMatch: '**/auth.setup.ts' },
     {
       name: 'chromium',

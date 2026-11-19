@@ -28,19 +28,15 @@ function fulfillJson(route: Route, status: number, body: unknown): Promise<void>
 
 async function mockApi(page: Page): Promise<void> {
   await page.route('**/api/v1/**', route => fulfillJson(route, 200, []))
-  // Endpoints d'objet attendus au boot : le catch-all `[]` casse le montage.
   await page.route('**/api/v1/runtime', route => fulfillJson(route, 200, { demo_mode: true }))
   await page.route('**/api/v1/building', route => fulfillJson(route, 200, {}))
   await page.route('**/api/v1/onboarding/status', route => fulfillJson(route, 200, { needs_onboarding: false }))
   await page.route('**/api/v1/auth/me', route => fulfillJson(route, 200, FAKE_USER))
   await page.route('**/api/v1/tasks**', route => fulfillJson(route, 200, TASK_LIST))
-  // Dernier enregistré = prioritaire : les compteurs ne doivent PAS recevoir
-  // TaskListResponse ({items,total}) sinon `.map` explose côté vue.
   await page.route('**/api/v1/tasks/status-counters', route => fulfillJson(route, 200, []))
 }
 
 function failTasks(page: Page, status: number | 'abort'): void {
-  // `tasks?*` ne matche pas /tasks/status-counters (déjà mocké à part).
   page.route('**/api/v1/tasks?*', async route => {
     if (status === 'abort') await route.abort('connectionreset')
     else await fulfillJson(route, status, { error: 'boom' })

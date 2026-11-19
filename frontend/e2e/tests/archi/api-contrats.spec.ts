@@ -5,10 +5,9 @@ import type { APIRequestContext, Page } from '@playwright/test'
 import { apiGet, apiPost, apiPut, apiDelete, e2eName } from '../../data/api'
 
 /**
- * Contrats du client API e2e (e2e/data/api.ts) — gaps relevés par le rapport
- * code-review-graph. `page.route` n'intercepte pas le request context de la
- * page (canal API séparé) : un serveur HTTP de test local sert les réponses
- * et la page d'un contexte dédié porte le request context testé.
+ * Contrats du client API e2e (e2e/data/api.ts).
+ * `page.route` n'intercepte pas le request context de la page (canal API
+ * séparé) : un serveur HTTP de test local sert les réponses.
  */
 
 let server: Server

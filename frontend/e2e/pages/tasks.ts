@@ -48,7 +48,6 @@ export class TasksPage {
     return this.page.locator('.task-card', { has: this.page.locator('h3', { hasText: title }) })
   }
 
-  /** Correspondance exacte du titre (hasText = sous-chaîne, inadapté aux préfixes e2e communs). */
   cardByTitleExact(title: string): Locator {
     const escaped = title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
     return this.page.locator('.task-card', {
@@ -56,7 +55,6 @@ export class TasksPage {
     })
   }
 
-  /** Crée une tâche par API (setup de données, jamais l'UI). */
   async createViaApi(title: string, description?: string): Promise<{ id: string; title: string }> {
     return apiPost(this.page, '/tasks', { title, description })
   }

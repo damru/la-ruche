@@ -4,12 +4,8 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 /**
- * DDR-006 garde-fou d'architecture : `CFormFeedback` ne s'utilise jamais
- * directement dans une vue — il passe par `CFormActions` (position
- * garantie) ou par `CForm` (qui délègue à `CFormActions`).
- *
- * Test statique : scan des `.vue` de src/. Échec = violation à corriger
- * dans le produit, jamais à exclure.
+ * Garde-fou DDR-006 : CFormFeedback ne s'utilise jamais directement dans
+ * une vue (scan statique des .vue de src/). Violation = fix produit.
  */
 
 const SRC = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../src')
