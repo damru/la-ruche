@@ -43,8 +43,8 @@ restent sur la CI x86.
   (`e2e/data/api.ts` : apiGet/apiPost/apiPut/apiDelete) — les cookies httpOnly
   du storageState portent le rôle, les permissions réelles du backend
   s'appliquent. Aucune entité n'est créée par l'UI en setup.
-- Identifiants uniques par run et worker : `e2eName(testInfo, prefix)` →
-  `e2e-w<worker>-<runid>-<prefix>`. Aucune dépendance d'ordre entre tests.
+- Identifiants uniques par run et worker : `e2eName(testInfo, base)` →
+  `e2e-w<worker>-<runid>-<base>`. Aucune dépendance d'ordre entre tests.
 - Ne pas compter sur des données seedées fixes pour les assertions de contenu.
 
 ### Effets UI (DDR-006)

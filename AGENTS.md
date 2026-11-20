@@ -226,7 +226,7 @@ Follow these steps **in order** for any new feature or significant change:
 6. Catalogue lookup (mandatory, before frontend work): grep `docs/DESIGN.md §3` and `frontend/src/components/` for any UI/UX pattern named in the spec. Record in the spec or PR which `C*` component(s) are reused, or justify why none fits (candidate for catalogue addition per the Frontend rule above).
 7. Implement frontend changes.
 8. Add E2E coverage (before the PR — a feature without it is not delivered):
-   - New or changed **route** → add it to `frontend/e2e/data/access-matrix.ts` with its allowed roles; the smoke (routes × rôles), axe and visual-capture suites derive from the matrix automatically.
+   - New or changed **route** → add it to `frontend/e2e/data/access-matrix.ts` with its allowed roles; the smoke (routes × rôles) and visual-capture suites derive from the matrix automatically (axe covers the routes accessible to the manager account).
    - New or changed **interactive behaviour** (form, action, network state) → add specs under `frontend/e2e/tests/` following `frontend/e2e/README.md` (test data via API, feedback helpers, `.claude/rules/e2e-testing.instructions.md`).
    - New **catalogue component** → covered through the pages using it (no standalone component tests); make sure at least one captured page exercises it.
    - Run locally: `npx playwright test` (see `frontend/e2e/README.md` prerequisites).
