@@ -191,15 +191,12 @@ jobs:
         run: npx playwright test --project=visual
 
       - name: Discard captures below the noise threshold
-        # Residual antialiasing jitter (measured: 45 px at delta <= 32/255)
-        # still differs byte-to-byte between CI runs. Keep a capture only if
-        # its significant pixel change (channel delta > 32) exceeds 64 px —
+        # Residual rendering jitter (pixelmatch-measured: 81-562 px, visually
+        # invisible) still differs byte-to-byte between CI runs. Keep a
+        # capture only if its pixelmatch mismatch (AA-aware) exceeds 1000 px —
         # real content changes sit far above that.
-        working-directory: .
-        run: |
-          python3 -m venv /tmp/visual-venv
-          /tmp/visual-venv/bin/pip install -q pillow
-          /tmp/visual-venv/bin/python3 frontend/e2e/scripts/discard-noise.py
+        working-directory: ./frontend
+        run: node e2e/scripts/discard-noise.mjs
 
       - name: Commit & push changed captures
         # continue-on-error: a push race (new commit landed mid-capture) or a
