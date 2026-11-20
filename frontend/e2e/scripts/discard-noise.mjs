@@ -22,11 +22,12 @@ const changed = execSync('git status --porcelain -- frontend/e2e/visual', {
 
 let kept = 0
 for (const line of changed) {
-  const path = line.slice(3).trim()
+  const path = line.slice(3).trim() // repo-root relative
+  const local = path.replace(/^frontend\//, '') // relative to this script's cwd (frontend/)
   let mismatch
   try {
     const head = PNG.sync.read(execSync(`git show HEAD:${path}`, { cwd: '..', encoding: 'buffer' }))
-    const now = PNG.sync.read(readFileSync(path))
+    const now = PNG.sync.read(readFileSync(local))
     mismatch =
       head.width === now.width && head.height === now.height
         ? pixelmatch(head.data, now.data, null, now.width, now.height, { threshold: 0.1 })
