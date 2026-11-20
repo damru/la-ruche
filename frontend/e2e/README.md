@@ -43,8 +43,8 @@ restent sur la CI x86.
   (`e2e/data/api.ts` : apiGet/apiPost/apiPut/apiDelete) — les cookies httpOnly
   du storageState portent le rôle, les permissions réelles du backend
   s'appliquent. Aucune entité n'est créée par l'UI en setup.
-- Identifiants uniques par run et worker : `e2eName(testInfo, prefix)` →
-  `e2e-w<worker>-<runid>-<prefix>`. Aucune dépendance d'ordre entre tests.
+- Identifiants uniques par run et worker : `e2eName(testInfo, base)` →
+  `e2e-w<worker>-<runid>-<base>`. Aucune dépendance d'ordre entre tests.
 - Ne pas compter sur des données seedées fixes pour les assertions de contenu.
 
 ### Effets UI (DDR-006)
@@ -65,6 +65,20 @@ restent sur la CI x86.
   `X v2`.
 - Les modales se rendent dans `.c-modal__content` ; la topbar est un
   `div.c-topbar` (pas un `header`).
+
+## Captures visuelles (Phase 3)
+
+- Projet `visual` : capture des pages stables du layout principal →
+  `e2e/visual/<page>--<1440|375>--<light|dark>.png`, committées dans le repo.
+- **À générer uniquement par le job CI `visual-preview`** (x86) : sur chaque
+  PR touchant `frontend/**`, il recapture et committe les changements →
+  l'avant/après s'affiche nativement dans l'onglet Files Changed de la PR
+  (vue Swipe). Ne jamais lancer `--project=visual` en local (ARM64 : rendu
+  différent, PNGs inexploitables comme références).
+- Déterminisme : horloge figée (`page.clock.install`) + thème forcé via
+  localStorage + `reducedMotion` — tout élément qui rend une date relative,
+  un compteur ou un ID aléatoire doit être figé, sinon churn visuel fantôme.
+- Règles complètes : `.claude/rules/visual-regression.instructions.md`.
 
 ## Notes CI
 

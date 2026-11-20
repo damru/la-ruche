@@ -27,7 +27,9 @@ export default ts.config(
 
   // ── Project-specific overrides ────────────────────────────────────
   {
-    files: ['**/*.{ts,tsx,vue}'],
+    // mjs: e2e CI scripts run under Node — module resolution is the
+    // runtime's job, same rationale as the TS entry below.
+    files: ['**/*.{ts,tsx,vue,mjs}'],
     rules: {
       // TypeScript handles symbol resolution for browser globals and DOM types.
       'no-undef': 'off',

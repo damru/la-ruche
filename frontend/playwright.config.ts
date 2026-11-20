@@ -48,13 +48,28 @@ export default defineConfig({
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
       dependencies: ['setup'],
-      testIgnore: '**/tests/reseau/**',
+      testIgnore: ['**/tests/reseau/**', '**/tests/visual/**'],
     },
     {
       // DDR-005: network states via interception, no backend, no postgres.
       name: 'mock',
       use: { ...devices['Desktop Chrome'] },
       testMatch: '**/tests/reseau/**',
+    },
+    {
+      // Phase 3: visual preview captures — repo-committed PNGs, CI x86 only.
+      // Subpixel text positioning renders identical glyphs with different AA
+      // depending on fractional layout state — the classic source of
+      // screenshot flakiness. Disable it (and LCD text) for stable pixels.
+      name: 'visual',
+      use: {
+        ...devices['Desktop Chrome'],
+        launchOptions: {
+          args: ['--disable-font-subpixel-positioning', '--disable-lcd-text'],
+        },
+      },
+      dependencies: ['setup'],
+      testMatch: '**/tests/visual/**',
     },
   ],
 })
