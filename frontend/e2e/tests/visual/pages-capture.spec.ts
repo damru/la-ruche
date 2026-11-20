@@ -13,8 +13,10 @@ import { APP_ROUTES, allowedAccounts } from '../../data/access-matrix'
  *
  * Determinism:
  * - Fixed clock (`page.clock.install`) — relative times ("in 2 months") and
- *   current-month headers are stable across runs; demo seed dates are
- *   absolute so no backend change is needed.
+ *   current-month headers are stable across runs. The CI workflow anchors
+ *   the demo seed's NOW()/CURRENT_DATE to THE SAME instant (see
+ *   visual-preview.yml "Pre-seed demo database") — the seed is time-relative,
+ *   so anchoring only the browser clock would still churn every re-seed.
  * - `reducedMotion: 'reduce'` + theme forced via localStorage before app
  *   boot (`laruche-theme`, cf. index.html anti-flash script).
  * - Representative account only: first allowed account per route (manager
