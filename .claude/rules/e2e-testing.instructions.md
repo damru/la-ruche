@@ -11,7 +11,7 @@ writing or reviewing any e2e test. Non-negotiables:
 - **Test data via API, never via UI or fixed seeds**: create entities with the
   page's request context (`e2e/data/api.ts`: apiGet/apiPost/apiPut/apiDelete);
   storageState cookies carry the role, real backend permissions apply. Unique
-  names per run+worker via `e2eName(testInfo, prefix)`. No cross-test order
+  names per run+worker via `e2eName(testInfo, base)`. No cross-test order
   dependencies; never assert on fixed seeded content.
 - **Auth**: use the `auth(role)` fixture (`e2e/fixtures/auth.ts`) — login happens
   once in `auth.setup.ts` (API → storageState), never inside a test.

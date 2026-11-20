@@ -16,6 +16,8 @@ on:
     paths:
       - 'frontend/**'
       - '.github/workflows/visual-preview.yml'
+    # Known limitation: a backend-only PR (seed dates, API shape) does not
+    # refresh the references here — they update on the next frontend PR.
 
 concurrency:
   group: "visual-preview-${{ github.ref }}"
@@ -31,6 +33,7 @@ env:
 jobs:
   capture:
     name: Captures — pages x viewports x themes
+    if: github.event.pull_request.head.repo.fork != true
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -51,7 +54,7 @@ jobs:
     env:
       # Backend env (AppConfig has no serde defaults — cf. backend/src/config.rs).
       # S3 is read-only for capture pages; no rustfs service needed.
-      LA_RUCHE__DB__URL: postgres://laruche:***@localhost:5432/laruche
+      LA_RUCHE__DB__URL: postgres://laruche:laruche@localhost:5432/laruche
       LA_RUCHE__DB__MAX_CONNECTIONS: "5"
       LA_RUCHE__APP__DEMO_MODE: "true"
       LA_RUCHE__APP__HOST: "0.0.0.0"
@@ -76,7 +79,13 @@ jobs:
       LA_RUCHE__S3__PRESIGNED_TTL_SECS: "900"
       LA_RUCHE__S3__CLEANUP_ENABLED: "false"
     steps:
+      # Same-repo PRs only: we must push to the PR branch, impossible for
+      # forks with GITHUB_TOKEN (mechanism disabled there, cf. plan).
       - uses: actions/checkout@v7
+        with:
+          # pull_request checks out the merge ref detached by default — a
+          # bare `git push` would fail on a detached HEAD.
+          ref: ${{ github.head_ref }}
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -107,13 +116,13 @@ jobs:
       - name: Run migrations
         working-directory: ./backend
         env:
-          DATABASE_URL: postgres://laruche:***@localhost:5432/laruche
+          DATABASE_URL: postgres://laruche:laruche@localhost:5432/laruche
         run: sqlx migrate run
 
       - name: Generate SQLx offline files
         working-directory: ./backend
         env:
-          DATABASE_URL: postgres://laruche:***@localhost:5432/laruche
+          DATABASE_URL: postgres://laruche:laruche@localhost:5432/laruche
         run: cargo sqlx prepare
 
       - name: Build backend (release, SQLx offline)
@@ -175,5 +184,5 @@ jobs:
             echo "No visual changes — nothing to commit"
           else
             git commit -m "chore(visual): regenerate captures"
-            git push
+            git push origin "HEAD:${{ github.head_ref }}"
           fi
