@@ -139,18 +139,17 @@ jobs:
       - name: Pre-seed demo database (anchor NOW()/CURRENT_DATE)
         # The demo seed is relative to now(): re-seeding per run would change
         # every displayed date/time between runs (churny bot commits). Anchor
-        # NOW()/CURRENT_DATE to a fixed instant instead; the backend then
-        # skips its own seed (DB non-empty).
-        # ANCHOR_TS MUST match FIXED_NOW in
-        # frontend/e2e/tests/visual/pages-capture.spec.ts.
+        # NOW()/CURRENT_DATE to the capture clock — read from
+        # frontend/e2e/helpers-visual.ts (FIXED_NOW_ISO), the single source
+        # of truth; the backend then skips its own seed (DB non-empty).
         working-directory: ./backend
         env:
           PGPASSWORD: laruche
-          ANCHOR_TS: '2026-01-15 09:00:00+00'
-          ANCHOR_DATE: '2026-01-15'
         run: |
+          ANCHOR_TS=$(sed -n "s/^export const FIXED_NOW_ISO = '\\([^']*\\)'/\\1/p" ../frontend/e2e/helpers-visual.ts)
+          test -n "$ANCHOR_TS" || { echo "FIXED_NOW_ISO not found in helpers-visual.ts"; exit 1; }
           sed -e "s/NOW()/'${ANCHOR_TS}'::timestamptz/g" \
-              -e "s/CURRENT_DATE/'${ANCHOR_DATE}'::date/g" \
+              -e "s/CURRENT_DATE/'${ANCHOR_TS%% *}'::date/g" \
               seeds/demo.sql \
             | psql -h localhost -U laruche -d laruche -v ON_ERROR_STOP=1 -qf -
 
