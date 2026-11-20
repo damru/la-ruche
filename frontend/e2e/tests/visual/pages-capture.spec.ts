@@ -75,6 +75,17 @@ for (const route of APP_ROUTES) {
                   }),
             ),
           )
+        })
+        // Kill every animation/transition at the compositor level:
+        // reducedMotion only affects CSS that responds to the media query —
+        // pulsing badges, marquees and similar keep animating with a random
+        // phase at capture time. animation: none freezes them at their
+        // base state deterministically.
+        await page.addStyleTag({
+          content:
+            '*, *::before, *::after { animation: none !important; transition: none !important; caret-color: transparent !important; }',
+        })
+        await page.evaluate(async () => {
           await new Promise<void>((res) =>
             requestAnimationFrame(() => requestAnimationFrame(() => res())),
           )
