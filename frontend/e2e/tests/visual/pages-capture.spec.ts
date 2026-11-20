@@ -56,6 +56,28 @@ for (const route of APP_ROUTES) {
         await page.goto(route.path)
         await page.waitForLoadState('networkidle')
 
+        // networkidle is not enough on fast CI runners: fonts may still be
+        // swapping in and <img> elements (S3-backed, 404 on CI) reach their
+        // final loaded/error state at unpredictable times — capturing mid
+        // swap makes the PNG unstable run to run. Settle everything to its
+        // terminal state first.
+        await page.evaluate(async () => {
+          await document.fonts.ready
+          await Promise.all(
+            Array.from(document.images).map((img) =>
+              img.complete
+                ? Promise.resolve()
+                : new Promise<void>((res) => {
+                    img.onload = () => res()
+                    img.onerror = () => res()
+                  }),
+            ),
+          )
+          await new Promise<void>((res) =>
+            requestAnimationFrame(() => requestAnimationFrame(() => res())),
+          )
+        })
+
         // Sanity guard: a page that failed to render must fail the capture.
         await expect(page.locator('.view-header').first()).toBeVisible()
         await expect(page.locator('.c-page-error')).toHaveCount(0)

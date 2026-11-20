@@ -31,9 +31,29 @@ env:
   SQLX_CLI_VERSION: 0.8.6
 
 jobs:
+  guard:
+    name: Skip bot commits (anti-loop)
+    runs-on: ubuntu-latest
+    outputs:
+      skip: ${{ steps.check.outputs.skip }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.head_ref }}
+      - id: check
+        run: |
+          author=$(git log -1 --format='%an')
+          if [ "$author" = "github-actions[bot]" ]; then
+            echo "Head commit authored by the visual bot — skip to break the run chain"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
   capture:
     name: Captures — pages x viewports x themes
-    if: github.event.pull_request.head.repo.fork != true
+    needs: guard
+    if: needs.guard.outputs.skip != 'true' && github.event.pull_request.head.repo.fork != true
     runs-on: ubuntu-latest
     defaults:
       run:
