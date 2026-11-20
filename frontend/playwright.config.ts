@@ -58,8 +58,16 @@ export default defineConfig({
     },
     {
       // Phase 3: visual preview captures — repo-committed PNGs, CI x86 only.
+      // Subpixel text positioning renders identical glyphs with different AA
+      // depending on fractional layout state — the classic source of
+      // screenshot flakiness. Disable it (and LCD text) for stable pixels.
       name: 'visual',
-      use: { ...devices['Desktop Chrome'] },
+      use: {
+        ...devices['Desktop Chrome'],
+        launchOptions: {
+          args: ['--disable-font-subpixel-positioning', '--disable-lcd-text'],
+        },
+      },
       dependencies: ['setup'],
       testMatch: '**/tests/visual/**',
     },
