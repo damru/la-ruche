@@ -30,7 +30,7 @@ jobs:
       CARGO_INCREMENTAL: "0"
     services:
       postgres:
-        image: postgres:18-alpine
+        image: postgres:19-alpine
         env:
           POSTGRES_DB: laruche_test
           POSTGRES_USER: laruche
@@ -133,7 +133,7 @@ jobs:
       CARGO_INCREMENTAL: "0"
     services:
       postgres:
-        image: postgres:18-alpine
+        image: postgres:19-alpine
         env:
           POSTGRES_DB: laruche_test
           POSTGRES_USER: laruche
@@ -249,7 +249,7 @@ jobs:
         working-directory: ./frontend
     services:
       postgres:
-        image: postgres:18-alpine
+        image: postgres:19-alpine
         env:
           POSTGRES_DB: laruche
           POSTGRES_USER: laruche
