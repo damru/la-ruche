@@ -66,6 +66,20 @@ restent sur la CI x86.
 - Les modales se rendent dans `.c-modal__content` ; la topbar est un
   `div.c-topbar` (pas un `header`).
 
+## Captures visuelles (Phase 3)
+
+- Projet `visual` : capture des pages stables du layout principal →
+  `e2e/visual/<page>--<1440|375>--<light|dark>.png`, committées dans le repo.
+- **À générer uniquement par le job CI `visual-preview`** (x86) : sur chaque
+  PR touchant `frontend/**`, il recapture et committe les changements →
+  l'avant/après s'affiche nativement dans l'onglet Files Changed de la PR
+  (vue Swipe). Ne jamais lancer `--project=visual` en local (ARM64 : rendu
+  différent, PNGs inexploitables comme références).
+- Déterminisme : horloge figée (`page.clock.install`) + thème forcé via
+  localStorage + `reducedMotion` — tout élément qui rend une date relative,
+  un compteur ou un ID aléatoire doit être figé, sinon churn visuel fantôme.
+- Règles complètes : `.claude/rules/visual-regression.instructions.md`.
+
 ## Notes CI
 
 - Le job `e2e-frontend` ne lance **pas rustfs** : S3 est inerte en Phase 0

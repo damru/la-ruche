@@ -8,6 +8,9 @@ frontend/node_modules/
 frontend/dist/
 frontend/.env.local
 frontend/e2e/.auth/
+# Visual captures: generated ONLY by the visual-preview CI job (x86),
+# force-added there (git add -f). Local (ARM64) runs must never commit them.
+frontend/e2e/visual/
 frontend/test-results/
 frontend/playwright-report/
 docs/review-screenshots/*.png

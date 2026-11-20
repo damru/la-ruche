@@ -1,0 +1,71 @@
+import { test, expect } from '@playwright/test'
+import { APP_ROUTES, allowedAccounts } from '../../data/access-matrix'
+
+/**
+ * Phase 3 — Visual preview captures (repo-committed baselines).
+ *
+ * NOT an assertion suite: each test screenshots one stable layout page and
+ * writes it to `e2e/visual/` with a deterministic filename. The CI job
+ * (`visual-preview`) runs this project on PRs touching frontend/** and
+ * commits changed PNGs to the branch, so image diffs appear natively in the
+ * PR Files Changed tab (GitHub Swipe view). Screenshots are NEVER generated
+ * locally (Pi ARM64 renders fonts/GPU differently) — CI x86 only.
+ *
+ * Determinism:
+ * - Fixed clock (`page.clock.install`) — relative times ("in 2 months") and
+ *   current-month headers are stable across runs; demo seed dates are
+ *   absolute so no backend change is needed.
+ * - `reducedMotion: 'reduce'` + theme forced via localStorage before app
+ *   boot (`laruche-theme`, cf. index.html anti-flash script).
+ * - Representative account only: first allowed account per route (manager
+ *   for most routes) — role × page coverage is the smoke suite's job.
+ */
+
+const FIXED_NOW = new Date('2026-01-15T09:00:00Z')
+
+const VIEWPORTS = [
+  { name: '1440', width: 1440, height: 900 },
+  { name: '375', width: 375, height: 812 },
+] as const
+
+const THEMES = ['light', 'dark'] as const
+
+function slugify(path: string): string {
+  return path.replace(/[^a-z0-9]+/gi, '-').replace(/(^-|-$)/g, '')
+}
+
+for (const route of APP_ROUTES) {
+  const role = allowedAccounts(route.roles)[0]
+  const slug = slugify(route.path)
+
+  for (const viewport of VIEWPORTS) {
+    for (const theme of THEMES) {
+      test(`capture ${slug} -- ${viewport.name} -- ${theme}`, async ({ browser }) => {
+        const context = await browser.newContext({
+          storageState: `e2e/.auth/${role}.json`,
+          viewport: { width: viewport.width, height: viewport.height },
+          colorScheme: theme,
+          reducedMotion: 'reduce',
+        })
+        const page = await context.newPage()
+
+        await page.clock.install({ time: FIXED_NOW })
+        // Set before app boot so the anti-flash script (index.html) picks it up.
+        await page.addInitScript((t) => window.localStorage.setItem('laruche-theme', t), theme)
+
+        await page.goto(route.path)
+        await page.waitForLoadState('networkidle')
+
+        // Sanity guard: a page that failed to render must fail the capture.
+        await expect(page.locator('.view-header').first()).toBeVisible()
+        await expect(page.locator('.c-page-error')).toHaveCount(0)
+
+        await page.screenshot({
+          path: `e2e/visual/${slug}--${viewport.name}--${theme}.png`,
+        })
+
+        await context.close()
+      })
+    }
+  }
+}
