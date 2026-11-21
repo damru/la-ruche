@@ -158,7 +158,9 @@ jobs:
   build-backend:
     name: Backend — build release
     needs: [changes]
-    if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend_app == 'true'
+    # ci_workflow: a capture-logic change must be able to recapture, which
+    # needs the artifact — the binary cache makes this a cheap no-op build.
+    if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend_app == 'true' || needs.changes.outputs.ci_workflow == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
