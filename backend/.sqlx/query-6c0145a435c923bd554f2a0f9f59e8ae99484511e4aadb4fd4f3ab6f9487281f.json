@@ -1,0 +1,74 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT id, building_id, document_id, event_type, payload\n           FROM document_event\n           WHERE processed_at IS NULL\n           ORDER BY created_at\n           LIMIT 100",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "document_event",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "building_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "document_event",
+            "name": "building_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "document_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "document_event",
+            "name": "document_id"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "event_type",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "document_event",
+            "name": "event_type"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "payload",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "document_event",
+            "name": "payload"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "6c0145a435c923bd554f2a0f9f59e8ae99484511e4aadb4fd4f3ab6f9487281f"
+}

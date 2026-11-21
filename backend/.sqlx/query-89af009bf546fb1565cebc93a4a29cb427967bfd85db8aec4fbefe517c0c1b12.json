@@ -1,0 +1,54 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT u.unit_number,\n                   COALESCE(ua.first_name || ' ' || ua.last_name, '—') as \"owner_name!\",\n                   v.position::text as \"position!\",\n                   v.shares_represented as \"shares!\"\n            FROM vote v\n            JOIN unit u ON u.id = v.unit_id\n            LEFT JOIN unit_owner uo ON uo.unit_id = u.id AND uo.end_date IS NULL\n            LEFT JOIN user_account ua ON ua.id = uo.user_id\n            WHERE v.resolution_id = $1\n              AND v.position::text != 'in_favor'\n            ORDER BY u.unit_number\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "unit_number",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "unit",
+            "name": "unit_number"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "owner_name!",
+        "type_info": "Text",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 2,
+        "name": "position!",
+        "type_info": "Text",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 3,
+        "name": "shares!",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "vote",
+            "name": "shares_represented"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      null,
+      null,
+      false
+    ]
+  },
+  "hash": "89af009bf546fb1565cebc93a4a29cb427967bfd85db8aec4fbefe517c0c1b12"
+}

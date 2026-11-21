@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT COALESCE(SUM(uak.share_value), 0)::int as \"total!\"\n        FROM unit_allocation_key uak\n        JOIN unit u ON u.id = uak.unit_id\n        JOIN allocation_key ak ON ak.id = uak.key_id\n        WHERE u.building_id = $1\n          AND u.active = true\n          AND uak.valid_to IS NULL\n          AND ak.key_type = 'general'\n          AND ak.deleted_at IS NULL\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "total!",
+        "type_info": "Int4",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "43f1a4200be564eaf0729c9e68d8372b48d16651f05bc76c8afe4ece4611e64b"
+}

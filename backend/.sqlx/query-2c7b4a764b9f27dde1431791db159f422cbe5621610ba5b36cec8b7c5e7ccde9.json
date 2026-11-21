@@ -1,0 +1,74 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT u.id as unit_id,\n                   u.unit_number,\n                   CASE WHEN ua.id IS NULL THEN NULL\n                        ELSE ua.first_name || ' ' || ua.last_name\n                   END as owner_name,\n                   COALESCE(gma.mode::text, 'absent') as \"mode!\",\n                   gma.representative_name,\n                   COALESCE(uak.share_value, 0) as \"shares_represented!\"\n            FROM unit u\n            LEFT JOIN unit_owner uo ON uo.unit_id = u.id AND uo.end_date IS NULL\n            LEFT JOIN user_account ua ON ua.id = uo.user_id\n            LEFT JOIN general_meeting_attendance gma\n                ON gma.unit_id = u.id AND gma.meeting_id = $1\n            LEFT JOIN unit_allocation_key uak\n                ON uak.unit_id = u.id\n               AND uak.valid_to IS NULL\n               AND EXISTS (\n                   SELECT 1\n                   FROM allocation_key ak\n                   WHERE ak.id = uak.key_id\n                     AND ak.key_type = 'general'\n                     AND ak.deleted_at IS NULL\n               )\n            WHERE u.building_id = $2\n              AND u.active = true\n            ORDER BY u.unit_number\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "unit_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "unit",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "unit_number",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "unit",
+            "name": "unit_number"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "owner_name",
+        "type_info": "Text",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 3,
+        "name": "mode!",
+        "type_info": "Text",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 4,
+        "name": "representative_name",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "general_meeting_attendance",
+            "name": "representative_name"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "shares_represented!",
+        "type_info": "Int4",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      null,
+      null,
+      true,
+      null
+    ]
+  },
+  "hash": "2c7b4a764b9f27dde1431791db159f422cbe5621610ba5b36cec8b7c5e7ccde9"
+}

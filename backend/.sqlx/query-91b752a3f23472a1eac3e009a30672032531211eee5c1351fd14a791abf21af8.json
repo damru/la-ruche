@@ -1,0 +1,37 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT v.unit_id, v.position::text as \"position!\"\n        FROM vote v\n        JOIN resolution r ON r.id = v.resolution_id\n        JOIN general_meeting gm ON gm.id = r.meeting_id\n        WHERE v.resolution_id = $1\n          AND r.meeting_id = $2\n          AND gm.building_id = $3\n        ORDER BY v.unit_id\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "unit_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "vote",
+            "name": "unit_id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "position!",
+        "type_info": "Text",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      null
+    ]
+  },
+  "hash": "91b752a3f23472a1eac3e009a30672032531211eee5c1351fd14a791abf21af8"
+}

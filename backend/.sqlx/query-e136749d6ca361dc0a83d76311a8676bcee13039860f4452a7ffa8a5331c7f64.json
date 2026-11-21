@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO document_event (building_id, document_id, event_type, actor_id, payload)\n           VALUES ($1, $2, 'uploaded', $3, $4)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Uuid",
+        "Jsonb"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "e136749d6ca361dc0a83d76311a8676bcee13039860f4452a7ffa8a5331c7f64"
+}

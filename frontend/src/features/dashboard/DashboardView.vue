@@ -764,7 +764,7 @@ const todayStr = computed(() =>
 .hero-alert svg { width: var(--icon-sm); height: var(--icon-sm); flex-shrink: 0; }
 .hero-alert > div { min-width: 0; }
 .hero-alert div strong { font-weight: var(--fw-semibold); display: block; }
-.hero-alert div span  { font-size: var(--text-2xs); opacity: 0.85; }
+.hero-alert div span  { font-size: var(--text-2xs); }
 
 /* ── KPI ──────────────────────────────────────────────────────────── */
 /* auto-fit : le nombre de KPI visibles dépend des rôles — les pistes
@@ -826,7 +826,7 @@ const todayStr = computed(() =>
 .reminder-sub   { font-size: var(--text-2xs); color: var(--color-on-surface-variant); margin-top: 1px; }
 .reminder-date { font-family: var(--font-mono); font-size: var(--text-2xs); font-weight: var(--fw-medium); flex-shrink: 0; }
 .reminder-date--high   { color: var(--color-error); }
-.reminder-date--medium { color: var(--color-warning); }
+.reminder-date--medium { color: var(--color-warning-fg); }
 .reminder-date--low    { color: var(--color-on-surface-variant); }
 
 /* ── Signals ──────────────────────────────────────────────────────── */
