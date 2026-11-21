@@ -31,7 +31,7 @@ jobs:
       ci_workflow: ${{ steps.filter.outputs.ci_workflow }}
     steps:
       - uses: actions/checkout@v7
-      - uses: dorny/paths-filter@v3
+      - uses: dorny/paths-filter@v4
         id: filter
         # A negation rule compiled alone inverts (matches everything outside
         # the excluded tree); 'every' turns it into a real AND-NOT.
