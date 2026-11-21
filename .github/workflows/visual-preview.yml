@@ -129,12 +129,7 @@ jobs:
         uses: actions/cache@v6
         with:
           path: backend/target/release/laruche
-          # Binary keyed on backend sources: a frontend-only PR (the common
-          # case) restores it and skips compilation entirely. Source mtimes
-          # cannot be trusted for cargo freshness (fresh checkout = fresh
-          # mtimes = the `laruche` crate recompiles every run), so the final
-          # artifact is shared instead.
-          key: laruche-bin-${{ runner.os }}-${{ hashFiles('backend/src/**', 'backend/Cargo.toml', 'backend/Cargo.lock', 'backend/build.rs', 'backend/.cargo/*') }}
+          key: laruche-bin-${{ runner.os }}-${{ hashFiles('backend/src/**', 'backend/migrations/**', 'backend/seeds/**', 'backend/assets/**', 'backend/Cargo.toml', 'backend/Cargo.lock', 'NOTICE') }}
 
       - name: Generate SQLx offline files
         if: steps.backend-bin.outputs.cache-hit != 'true'
@@ -149,9 +144,6 @@ jobs:
         env:
           SQLX_OFFLINE: true
         run: cargo build --release
-
-      - name: Make backend executable
-        run: chmod +x backend/target/release/laruche
 
       - name: Pre-seed demo database (anchor NOW()/CURRENT_DATE)
         # The demo seed is relative to now(): re-seeding per run would change
