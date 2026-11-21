@@ -52,7 +52,9 @@ jobs:
   test-backend:
     name: Backend — fmt + clippy + tests
     needs: [changes]
-    if: needs.changes.outputs.backend == 'true'
+    # ci_workflow: a CI change must be validated in full, not silently broken
+    # until the next backend/frontend change touches its jobs again.
+    if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.ci_workflow == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -255,7 +257,7 @@ jobs:
   test-frontend:
     name: Frontend — typecheck + lint
     needs: [changes]
-    if: needs.changes.outputs.frontend_app == 'true'
+    if: needs.changes.outputs.frontend_app == 'true' || needs.changes.outputs.ci_workflow == 'true'
     # runs-on: ${{ github.actor == github.repository_owner && 'medium' || 'ubuntu-latest' }}
     runs-on: ubuntu-latest
     defaults:
@@ -288,7 +290,7 @@ jobs:
   e2e-frontend:
     name: Frontend — E2E Playwright
     needs: [changes, build-backend, test-frontend]
-    if: always() && !failure() && !cancelled() && (needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend_app == 'true')
+    if: always() && !failure() && !cancelled() && (needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend_app == 'true' || needs.changes.outputs.ci_workflow == 'true')
     # runs-on: ${{ github.actor == github.repository_owner && 'medium' || 'ubuntu-latest' }}
     runs-on: ubuntu-latest
     defaults:
@@ -407,7 +409,9 @@ jobs:
   docker:
     name: Docker — build + push
     needs: [changes, test-backend, test-frontend, build-backend]
-    if: always() && !failure() && !cancelled() && (needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend_app == 'true')
+    # Not path-gated: the image wraps both apps, so it is rebuilt for every
+    # run (skipped only when another job already failed or was cancelled).
+    if: always() && !failure() && !cancelled()
     # runs-on: ${{ github.actor == github.repository_owner && 'large' || 'ubuntu-latest' }}
     runs-on: ubuntu-latest
     steps:
