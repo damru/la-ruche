@@ -154,10 +154,6 @@ jobs:
       - name: Cache Cargo
         uses: Swatinem/rust-cache@v2
         with:
-          # Release profile. Kept separate from test-backend's debug cache:
-          # rust-cache restores by shared-key prefix across jobs, so a single
-          # key made every job restore whichever profile ran last and
-          # recompile its deps (~4 min on the visual-preview job).
           shared-key: backend-release
           workspaces: |
             backend -> target
