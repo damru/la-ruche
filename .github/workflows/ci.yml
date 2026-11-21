@@ -470,7 +470,11 @@ jobs:
     # that push re-triggers this workflow (PR diff is cumulative, so a
     # workflow-level path filter cannot filter it) — skip it here. The
     # actor-keyed concurrency group keeps this from cancelling human runs.
-    needs: [changes, build-backend]
+    # Needs EVERYTHING: a bot commit moves the PR head, and a no-op green
+    # run on the new head would mask any failed check of the previous head
+    # (skipped required checks count as success) — so the captures push
+    # only happens when the whole run is green.
+    needs: [changes, test-backend, test-frontend, build-backend, e2e-frontend, docker]
     if: always() && !failure() && !cancelled() && github.event_name == 'pull_request' && needs.changes.outputs.visual == 'true' && github.actor != 'github-actions[bot]'
     permissions:
       contents: write
