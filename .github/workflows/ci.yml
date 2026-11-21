@@ -185,10 +185,21 @@ jobs:
           DATABASE_URL: postgres://laruche:laruche@localhost:5432/laruche_test
         run: cargo sqlx prepare
 
+      - name: Cache backend release binary
+        id: backend-bin
+        uses: actions/cache@v6
+        with:
+          path: backend/target/release/laruche
+          key: laruche-bin-${{ runner.os }}-${{ hashFiles('backend/src/**', 'backend/Cargo.toml', 'backend/Cargo.lock', 'backend/build.rs', 'backend/.cargo/*') }}
+
       - name: Build backend (release, SQLx offline)
+        if: steps.backend-bin.outputs.cache-hit != 'true'
         env:
           SQLX_OFFLINE: true
         run: cargo build --release
+
+      - name: Make backend executable
+        run: chmod +x backend/target/release/laruche
 
       - name: Upload SQLx offline files
         uses: actions/upload-artifact@v7
