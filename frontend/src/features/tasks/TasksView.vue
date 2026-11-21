@@ -141,7 +141,6 @@ async function loadData() {
   } catch {
     counts.value = {}
   }
-  }
 }
 
 const { loading, error, reload } = usePageLoader(loadData)
