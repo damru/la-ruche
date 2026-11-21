@@ -33,9 +33,8 @@ jobs:
       - uses: actions/checkout@v7
       - uses: dorny/paths-filter@v3
         id: filter
-        # every: a negation rule compiled alone inverts (matches everything
-        # outside the excluded tree) — with 'some' that would make any file
-        # match frontend. 'every' turns the negation into a real AND-NOT.
+        # A negation rule compiled alone inverts (matches everything outside
+        # the excluded tree); 'every' turns it into a real AND-NOT.
         with:
           predicate-quantifier: every
           filters: |
@@ -52,8 +51,6 @@ jobs:
   test-backend:
     name: Backend — fmt + clippy + tests
     needs: [changes]
-    # ci_workflow: a CI change must be validated in full, not silently broken
-    # until the next backend/frontend change touches its jobs again.
     if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.ci_workflow == 'true'
     runs-on: ubuntu-latest
     defaults:
@@ -160,8 +157,6 @@ jobs:
   build-backend:
     name: Backend — build release
     needs: [changes]
-    # ci_workflow: a capture-logic change must be able to recapture, which
-    # needs the artifact — the binary cache makes this a cheap no-op build.
     if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend_app == 'true' || needs.changes.outputs.ci_workflow == 'true'
     runs-on: ubuntu-latest
     defaults:
@@ -409,8 +404,6 @@ jobs:
   docker:
     name: Docker — build + push
     needs: [changes, test-backend, test-frontend, build-backend]
-    # Not path-gated: the image wraps both apps, so it is rebuilt for every
-    # run (skipped only when another job already failed or was cancelled).
     if: always() && !failure() && !cancelled()
     # runs-on: ${{ github.actor == github.repository_owner && 'large' || 'ubuntu-latest' }}
     runs-on: ubuntu-latest
@@ -476,14 +469,11 @@ jobs:
   # ── Captures visuelles (ex-visual-preview.yml) ─────────────────
   captures:
     name: Captures — pages x viewports x themes
-    # Anti-loop: the captures job pushes PNG commits as github-actions[bot];
-    # that push re-triggers this workflow (PR diff is cumulative, so a
-    # workflow-level path filter cannot filter it) — skip it here. The
-    # actor-keyed concurrency group keeps this from cancelling human runs.
-    # Runs in parallel with the rest of CI; its final step defers the commit
-    # until every other job completed and pushes only if all are green — a
-    # bot commit moves the PR head and would otherwise mask failed checks of
-    # the previous head (skipped required checks count as success).
+    # The captures job pushes PNG commits as github-actions[bot]: that push
+    # re-triggers this workflow (PR diff is cumulative — no workflow-level
+    # path filter can stop it) and would mask failed checks of the previous
+    # head. Two guards: actor-keyed concurrency group, actor != bot here,
+    # and the final step pushes only after every other job is green.
     needs: [changes, build-backend]
     if: github.event_name == 'pull_request' && (needs.changes.outputs.frontend_app == 'true' || needs.changes.outputs.ci_workflow == 'true') && needs.build-backend.result == 'success' && github.actor != 'github-actions[bot]'
     permissions:
@@ -631,12 +621,6 @@ jobs:
         working-directory: ./frontend
         run: node e2e/scripts/discard-noise.mjs
       - name: Commit & push changed captures
-        # Deferred push: wait for every other job of the run, then push only
-        # if all are green. A bot commit moves the PR head and a green no-op
-        # run on the new head would mask failed checks of the previous head
-        # (skipped required checks count as success for GitHub).
-        # continue-on-error stays: a push race (new commit landed mid-capture)
-        # must not turn the run red — the next synchronize event recaptures.
         continue-on-error: true
         working-directory: .
         env:
