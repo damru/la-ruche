@@ -1,0 +1,24 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT COUNT(*) as \"count!\"\n        FROM general_meeting_attendance gma\n        JOIN general_meeting gm ON gm.id = gma.meeting_id\n        WHERE gma.meeting_id = $1\n          AND gm.building_id = $2\n          AND gma.mode != 'absent'\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "count!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "72698f0d036099fd3c343a77888326825e0da0fc73278b56c355d0dfcb114b9a"
+}

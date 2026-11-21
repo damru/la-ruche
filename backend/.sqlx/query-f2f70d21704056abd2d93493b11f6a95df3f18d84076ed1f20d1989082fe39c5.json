@@ -1,0 +1,81 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT meeting_date,\n               agenda,\n               convocation_sent_at,\n               convocation_channel::text as convocation_channel,\n               (SELECT COUNT(*)::int FROM general_meeting_document\n                WHERE meeting_id = $1 AND kind = 'notice')             as \"notice_count!\",\n               (SELECT COUNT(*)::int FROM resolution\n                WHERE meeting_id = $1)                                  as \"resolution_count!\",\n               (SELECT COUNT(*)::int FROM general_meeting_document\n                WHERE meeting_id = $1 AND kind = 'vote_by_mail_form')  as \"vote_by_mail_form_count!\"\n        FROM general_meeting\n        WHERE id = $1 AND building_id = $2\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "meeting_date",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "general_meeting",
+            "name": "meeting_date"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "agenda",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "general_meeting",
+            "name": "agenda"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "convocation_sent_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "general_meeting",
+            "name": "convocation_sent_at"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "convocation_channel",
+        "type_info": "Text",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 4,
+        "name": "notice_count!",
+        "type_info": "Int4",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 5,
+        "name": "resolution_count!",
+        "type_info": "Int4",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 6,
+        "name": "vote_by_mail_form_count!",
+        "type_info": "Int4",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      true,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "f2f70d21704056abd2d93493b11f6a95df3f18d84076ed1f20d1989082fe39c5"
+}

@@ -351,7 +351,7 @@ async function handleResetRequest() {
   border: none;
   cursor: pointer;
   padding: 0;
-  min-height: unset;
+  min-height: 24px;
   min-width: unset;
   font-family: var(--font-body);
   font-weight: 500;
