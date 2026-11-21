@@ -88,9 +88,11 @@ export const LEVY_STATUS_OVERDUE: LevyStatus = 'overdue'
 
 // ── Tasks ──
 
-export const TASK_STATUSES = ['open', 'in_progress', 'awaiting_vendor', 'awaiting_validation', 'closed', 'cancelled'] as const satisfies readonly TaskStatus[]
+export const TASK_STATUSES = ['open', 'in_progress', 'awaiting_quote', 'quote_received', 'awaiting_vendor', 'awaiting_validation', 'closed', 'cancelled'] as const satisfies readonly TaskStatus[]
 export const TASK_STATUS_OPEN: TaskStatus = 'open'
 export const TASK_STATUS_IN_PROGRESS: TaskStatus = 'in_progress'
+export const TASK_STATUS_AWAITING_QUOTE: TaskStatus = 'awaiting_quote'
+export const TASK_STATUS_QUOTE_RECEIVED: TaskStatus = 'quote_received'
 export const TASK_STATUS_AWAITING_VENDOR: TaskStatus = 'awaiting_vendor'
 export const TASK_STATUS_AWAITING_VALIDATION: TaskStatus = 'awaiting_validation'
 export const TASK_STATUS_CLOSED: TaskStatus = 'closed'
@@ -202,7 +204,9 @@ export const RESOLUTION_EDITABLE_MEETING_STATUSES = ['draft', 'ongoing'] as cons
 /** Meeting statuses where the session (votes, attendance) is recorded. */
 export const SESSION_ACTIVE_MEETING_STATUSES = ['ongoing', 'closed'] as const satisfies readonly MeetingStatus[]
 /** Task statuses that still allow assignment changes. */
-export const ASSIGNABLE_TASK_STATUSES = ['open', 'in_progress', 'awaiting_vendor', 'awaiting_validation'] as const satisfies readonly TaskStatus[]
+export const ASSIGNABLE_TASK_STATUSES = ['open', 'in_progress', 'awaiting_quote', 'quote_received', 'awaiting_vendor', 'awaiting_validation'] as const satisfies readonly TaskStatus[]
+/** Quote-phase statuses from which a manager can take the task back (EP-007-S07). */
+export const TAKE_BACK_TASK_STATUSES = ['awaiting_quote', 'quote_received'] as const satisfies readonly TaskStatus[]
 
 // ── File formatting ──
 
