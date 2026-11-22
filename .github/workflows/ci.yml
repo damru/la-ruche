@@ -431,9 +431,9 @@ jobs:
   docker:
     name: Docker — build + push
     needs: [changes, test-backend, test-frontend, build-backend]
-    # Docker image only feeds on backend or frontend changes; ci.yml-only or
-    # captures-only pushes never change the image.
-    if: always() && !failure() && !cancelled() && (needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend_app == 'true') && needs.changes.outputs.captures_only != 'true'
+    # Docker image only feeds on backend or frontend changes; captures-only
+    # pushes never change the image.
+    if: always() && !failure() && !cancelled() && (needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend_app == 'true' || needs.changes.outputs.ci_workflow == 'true') && needs.changes.outputs.captures_only != 'true'
     # runs-on: ${{ github.actor == github.repository_owner && 'large' || 'ubuntu-latest' }}
     runs-on: ubuntu-latest
     steps:
