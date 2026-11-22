@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 export interface Tab {
   value: string
@@ -17,6 +17,36 @@ const props = defineProps<{
 const isFilter = computed(() => props.variant === 'filter')
 
 const containerClass = computed(() => (isFilter.value ? 'tabs--filter filter-scrollbar' : 'tabs--tab'))
+
+const containerEl = ref<HTMLElement | null>(null)
+const fadeLeft = ref(false)
+const fadeRight = ref(false)
+
+/**
+ * scrollWidth can exceed scrollLeft + clientWidth by subpixel rounding,
+ * hence the 1px epsilon before declaring an overflow side.
+ */
+function updateFades(): void {
+  const el = containerEl.value
+  if (!el) return
+  fadeLeft.value = el.scrollLeft > 1
+  fadeRight.value = el.scrollLeft + el.clientWidth < el.scrollWidth - 1
+}
+
+let observer: ResizeObserver | undefined
+onMounted(() => {
+  if (!isFilter.value) return
+  updateFades()
+  observer = new ResizeObserver(updateFades)
+  if (containerEl.value) observer.observe(containerEl.value)
+})
+onBeforeUnmount(() => observer?.disconnect())
+watch(
+  () => props.tabs,
+  () => {
+    if (isFilter.value) nextTick(updateFades)
+  },
+)
 
 const tabClass = (isActive: boolean) => ({
   'tabs__button': true,
@@ -36,7 +66,18 @@ const countClass = (isActive: boolean) => ({
 
 <template>
   <div>
-    <div :class="['tabs', containerClass]">
+    <div
+      ref="containerEl"
+      :class="[
+        'tabs',
+        containerClass,
+        {
+          'tabs--fade-left': isFilter && fadeLeft,
+          'tabs--fade-right': isFilter && fadeRight,
+        },
+      ]"
+      @scroll.passive="updateFades"
+    >
       <button
         v-for="tab in props.tabs"
         :key="tab.value"
@@ -144,6 +185,18 @@ const countClass = (isActive: boolean) => ({
   background: var(--color-primary);
   color: var(--color-on-primary);
   font-size: var(--text-2xs);
+}
+
+.tabs--fade-left {
+  mask-image: linear-gradient(to right, transparent, black 24px);
+}
+
+.tabs--fade-right {
+  mask-image: linear-gradient(to right, black calc(100% - 24px), transparent);
+}
+
+.tabs--fade-left.tabs--fade-right {
+  mask-image: linear-gradient(to right, transparent, black 24px, black calc(100% - 24px), transparent);
 }
 
 .filter-scrollbar {

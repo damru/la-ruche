@@ -616,8 +616,8 @@ ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================
 -- 10. TASKS
--- One fixture per task status: open, in_progress, awaiting_vendor,
--- awaiting_validation, closed, cancelled.
+-- One fixture per task status: open, in_progress, awaiting_quote,
+-- quote_received, awaiting_vendor, awaiting_validation, closed, cancelled.
 -- ============================================================
 INSERT INTO task (
     id,
@@ -745,6 +745,42 @@ VALUES
         NULL,
         NOW() - INTERVAL '18 days',
         NOW() - INTERVAL '8 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000607',
+        '00000000-0000-0000-0000-000000000001',
+        'Fix intercom door release on the entrance panel',
+        'The door release button sticks; the contractor was contacted and must send its quote.',
+        'awaiting_quote',
+        'normal',
+        '00000000-0000-0000-0000-000000000201',
+        '00000000-0000-0000-0000-000000000202',
+        '00000000-0000-0000-0000-000000000503',
+        NULL,
+        '00000000-0000-0000-0000-000000009607',
+        NOW() + INTERVAL '5 days',
+        NULL,
+        NULL,
+        NOW() - INTERVAL '6 days',
+        NOW() - INTERVAL '3 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000608',
+        '00000000-0000-0000-0000-000000000001',
+        'Repaint stairwell B walls after water damage',
+        'The contractor sent its quote for the repaint; the board must decide before scheduling.',
+        'quote_received',
+        'high',
+        '00000000-0000-0000-0000-000000000202',
+        '00000000-0000-0000-0000-000000000201',
+        '00000000-0000-0000-0000-000000000502',
+        NULL,
+        '00000000-0000-0000-0000-000000009608',
+        NOW() + INTERVAL '4 days',
+        NULL,
+        NULL,
+        NOW() - INTERVAL '12 days',
+        NOW() - INTERVAL '9 hours'
     )
 ON CONFLICT (id) DO NOTHING;
 
