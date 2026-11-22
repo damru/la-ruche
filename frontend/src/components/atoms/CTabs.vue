@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 export interface Tab {
   value: string
@@ -17,6 +17,36 @@ const props = defineProps<{
 const isFilter = computed(() => props.variant === 'filter')
 
 const containerClass = computed(() => (isFilter.value ? 'tabs--filter filter-scrollbar' : 'tabs--tab'))
+
+const containerEl = ref<HTMLElement | null>(null)
+const fadeLeft = ref(false)
+const fadeRight = ref(false)
+
+/**
+ * scrollWidth can exceed scrollLeft + clientWidth by subpixel rounding,
+ * hence the 1px epsilon before declaring an overflow side.
+ */
+function updateFades(): void {
+  const el = containerEl.value
+  if (!el) return
+  fadeLeft.value = el.scrollLeft > 1
+  fadeRight.value = el.scrollLeft + el.clientWidth < el.scrollWidth - 1
+}
+
+let observer: ResizeObserver | undefined
+onMounted(() => {
+  if (!isFilter.value) return
+  updateFades()
+  observer = new ResizeObserver(updateFades)
+  if (containerEl.value) observer.observe(containerEl.value)
+})
+onBeforeUnmount(() => observer?.disconnect())
+watch(
+  () => props.tabs,
+  () => {
+    if (isFilter.value) nextTick(updateFades)
+  },
+)
 
 const tabClass = (isActive: boolean) => ({
   'tabs__button': true,
@@ -36,20 +66,39 @@ const countClass = (isActive: boolean) => ({
 
 <template>
   <div>
-    <div :class="['tabs', containerClass]">
-      <button
-        v-for="tab in props.tabs"
-        :key="tab.value"
-        type="button"
-        :class="tabClass(model === tab.value)"
-        @click="model = tab.value"
+    <div class="tabs__outer">
+      <div
+        ref="containerEl"
+        :class="[
+          'tabs',
+          containerClass,
+          {
+            'tabs--fade-left': isFilter && fadeLeft,
+            'tabs--fade-right': isFilter && fadeRight,
+          },
+        ]"
+        @scroll.passive="updateFades"
       >
-        {{ tab.label }}
-        <span
-          v-if="tab.count !== undefined"
-          :class="countClass(model === tab.value)"
-        >{{ tab.count }}</span>
-      </button>
+        <button
+          v-for="tab in props.tabs"
+          :key="tab.value"
+          type="button"
+          :class="tabClass(model === tab.value)"
+          @click="model = tab.value"
+        >
+          {{ tab.label }}
+          <span
+            v-if="tab.count !== undefined"
+            :class="countClass(model === tab.value)"
+          >{{ tab.count }}</span>
+        </button>
+      </div>
+      <span v-if="isFilter && fadeRight" class="tabs__hint tabs__hint--right" aria-hidden="true">
+        <CIconChevronRight />
+      </span>
+      <span v-if="isFilter && fadeLeft" class="tabs__hint tabs__hint--left" aria-hidden="true">
+        <CIconChevronRight />
+      </span>
     </div>
     <slot></slot>
   </div>
@@ -144,6 +193,56 @@ const countClass = (isActive: boolean) => ({
   background: var(--color-primary);
   color: var(--color-on-primary);
   font-size: var(--text-2xs);
+}
+
+.tabs__outer {
+  position: relative;
+}
+
+.tabs__hint {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--icon-lg);
+  height: var(--icon-lg);
+  border-radius: var(--radius-full);
+  background: var(--color-surface-container-lowest);
+  color: var(--color-on-surface-variant);
+  box-shadow: var(--shadow-md);
+  pointer-events: none;
+  z-index: var(--z-raised);
+}
+
+.tabs__hint svg {
+  width: var(--icon-sm);
+  height: var(--icon-sm);
+}
+
+.tabs__hint--right {
+  right: var(--space-2);
+}
+
+.tabs__hint--left {
+  left: var(--space-2);
+}
+
+.tabs__hint--left svg {
+  transform: rotate(180deg);
+}
+
+.tabs--fade-left {
+  mask-image: linear-gradient(to right, transparent, black 24px);
+}
+
+.tabs--fade-right {
+  mask-image: linear-gradient(to right, black calc(100% - 24px), transparent);
+}
+
+.tabs--fade-left.tabs--fade-right {
+  mask-image: linear-gradient(to right, transparent, black 24px, black calc(100% - 24px), transparent);
 }
 
 .filter-scrollbar {

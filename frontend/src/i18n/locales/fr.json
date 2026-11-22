@@ -849,13 +849,17 @@
       "awaiting_vendor": "En attente prestataire",
       "awaiting_validation": "À valider",
       "closed": "Terminée",
-      "cancelled": "Annulée"
+      "cancelled": "Annulée",
+      "awaiting_quote": "Devis demandé",
+      "quote_received": "Devis reçu"
     },
     "filters": {
       "open": "Ouvertes",
       "in_progress": "En cours",
       "awaiting_validation": "À valider",
-      "closed": "Terminées"
+      "closed": "Terminées",
+      "awaiting_quote": "Devis demandé",
+      "quote_received": "Devis reçu"
     },
     "emptyFiltered": "Aucune tâche ne correspond aux filtres actuels.",
     "priorities": {
@@ -929,7 +933,10 @@
     "emptyState": "Aucune tâche dans cette catégorie.",
     "contractorLabel": "Prestataire assigné",
     "attachedDocuments": "Documents déjà joints",
-    "completionCostLabel": "Coût de l'intervention (€)"
+    "completionCostLabel": "Coût de l'intervention (€)",
+    "takeBackTask": "Reprendre en main",
+    "takeBackSuccess": "Tâche reprise en main",
+    "confirmTakeBackMessage": "La tâche « {title} » repasse en « En cours ». Le lien prestataire et les documents joints sont conservés."
   },
   "documents": {
     "upload": "Déposer un document",
@@ -1799,7 +1806,8 @@
       "invalid_priority": "La priorité de la tâche est invalide.",
       "invalid_filter": "Le filtre appliqué est invalide.",
       "has_submissions": "La tâche possède une soumission prestataire et ne peut pas être supprimée.",
-      "has_logbook_entry": "La tâche est historisée dans le carnet d'entretien et ne peut pas être supprimée."
+      "has_logbook_entry": "La tâche est historisée dans le carnet d'entretien et ne peut pas être supprimée.",
+      "not_in_quote_phase": "La tâche n'est pas en phase de devis et ne peut pas être reprise en main."
     },
     "units": {
       "invalid_payload": "Les informations du lot sont invalides.",
