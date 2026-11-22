@@ -76,7 +76,7 @@ jobs:
   test-backend:
     name: Backend — fmt + clippy + tests
     needs: [changes]
-    if: (needs.changes.outputs.backend == 'true' || needs.changes.outputs.ci_workflow == 'true') && !(github.actor == 'github-actions[bot]' && needs.changes.outputs.captures_only == 'true')
+    if: (needs.changes.outputs.backend == 'true' || needs.changes.outputs.ci_workflow == 'true') && needs.changes.outputs.captures_only != 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -182,7 +182,9 @@ jobs:
   build-backend:
     name: Backend — build release
     needs: [changes]
-    if: (needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend_app == 'true' || needs.changes.outputs.ci_workflow == 'true') && !(github.actor == 'github-actions[bot]' && needs.changes.outputs.captures_only == 'true')
+    # Runs on a human captures-only push too: it produces the backend binary
+    # artifact the captures job downloads to regenerate deleted captures.
+    if: (needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend_app == 'true' || needs.changes.outputs.ci_workflow == 'true' || (needs.changes.outputs.captures_only == 'true' && github.actor != 'github-actions[bot]'))
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -277,7 +279,7 @@ jobs:
   test-frontend:
     name: Frontend — typecheck + lint
     needs: [changes]
-    if: (needs.changes.outputs.frontend_app == 'true' || needs.changes.outputs.ci_workflow == 'true') && !(github.actor == 'github-actions[bot]' && needs.changes.outputs.captures_only == 'true')
+    if: (needs.changes.outputs.frontend_app == 'true' || needs.changes.outputs.ci_workflow == 'true') && needs.changes.outputs.captures_only != 'true'
     # runs-on: ${{ github.actor == github.repository_owner && 'medium' || 'ubuntu-latest' }}
     runs-on: ubuntu-latest
     defaults:
@@ -310,7 +312,7 @@ jobs:
   e2e-frontend:
     name: Frontend — E2E Playwright
     needs: [changes, build-backend, test-frontend]
-    if: always() && !failure() && !cancelled() && (needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend_app == 'true' || needs.changes.outputs.ci_workflow == 'true') && !(github.actor == 'github-actions[bot]' && needs.changes.outputs.captures_only == 'true')
+    if: always() && !failure() && !cancelled() && (needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend_app == 'true' || needs.changes.outputs.ci_workflow == 'true') && needs.changes.outputs.captures_only != 'true'
     # runs-on: ${{ github.actor == github.repository_owner && 'medium' || 'ubuntu-latest' }}
     runs-on: ubuntu-latest
     defaults:
@@ -429,7 +431,9 @@ jobs:
   docker:
     name: Docker — build + push
     needs: [changes, test-backend, test-frontend, build-backend]
-    if: always() && !failure() && !cancelled() && !(github.actor == 'github-actions[bot]' && needs.changes.outputs.captures_only == 'true')
+    # Docker image only feeds on backend or frontend changes; ci.yml-only or
+    # captures-only pushes never change the image.
+    if: always() && !failure() && !cancelled() && (needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend_app == 'true') && needs.changes.outputs.captures_only != 'true'
     # runs-on: ${{ github.actor == github.repository_owner && 'large' || 'ubuntu-latest' }}
     runs-on: ubuntu-latest
     steps:
@@ -500,7 +504,9 @@ jobs:
     # head. Two guards: actor-keyed concurrency group, actor != bot here,
     # and the final step pushes only after every other job is green.
     needs: [changes, build-backend]
-    if: github.event_name == 'pull_request' && (needs.changes.outputs.frontend_app == 'true' || needs.changes.outputs.ci_workflow == 'true') && needs.build-backend.result == 'success' && github.actor != 'github-actions[bot]'
+    # captures_only: a human deleting/breaking a capture gets a regeneration
+    # run; the bot's own pushes are excluded (it IS the regenerator).
+    if: github.event_name == 'pull_request' && (needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend_app == 'true' || needs.changes.outputs.ci_workflow == 'true' || needs.changes.outputs.captures_only == 'true') && needs.build-backend.result == 'success' && github.actor != 'github-actions[bot]'
     permissions:
       contents: write
       actions: read
