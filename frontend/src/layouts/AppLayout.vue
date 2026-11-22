@@ -143,7 +143,10 @@ onUnmounted(() => {
   .app-layout__row {
     flex-direction: column;
   }
+  /* main avant la bottom nav dans le flux : la position naturelle de la
+     nav (sticky bottom) devient la fin de page, sinon elle reste en haut. */
   .app-layout__main {
+    order: 2;
     padding-bottom: calc(var(--nav-bottom-height) + var(--space-5) + var(--nav-safe-area-bottom));
   }
 }

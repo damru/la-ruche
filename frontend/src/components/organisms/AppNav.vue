@@ -452,13 +452,14 @@ watch(() => route.path, closeDrawer)
 /* ── Bottom nav ───────────────────────────────────────────────── */
 .c-bottom-nav {
   display: none;
-  position: fixed;
+  /* sticky (et non fixed) : même rendu à l'écran, mais position naturelle
+     en bas de page — les captures fullPage ne dupliquent pas l'élément. */
+  position: sticky;
   bottom: 0;
-  left: 0;
-  right: 0;
   background: var(--color-surface-container-lowest);
   border-top: 1px solid rgba(194, 199, 207, 0.2);
   padding-bottom: var(--nav-safe-area-bottom);
+  order: 3;
   z-index: var(--z-nav);
   box-shadow: 0 -4px 20px rgba(25, 28, 29, 0.06);
 }
