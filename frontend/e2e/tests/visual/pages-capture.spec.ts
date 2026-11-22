@@ -46,7 +46,7 @@ for (const route of APP_ROUTES) {
         await expect(page.locator('.view-header').first()).toBeVisible()
         await expect(page.locator('.c-page-error')).toHaveCount(0)
 
-        await page.addStyleTag({ content: '.c-bottom-nav { position: static !important; }' })
+        await page.addStyleTag({ content: '.c-bottom-nav { position: static !important; order: 3; }' })
 
         await page.screenshot({
           path: `e2e/visual/${slug}--${viewport.name}--${theme}.png`,
