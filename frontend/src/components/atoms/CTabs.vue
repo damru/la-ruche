@@ -66,31 +66,39 @@ const countClass = (isActive: boolean) => ({
 
 <template>
   <div>
-    <div
-      ref="containerEl"
-      :class="[
-        'tabs',
-        containerClass,
-        {
-          'tabs--fade-left': isFilter && fadeLeft,
-          'tabs--fade-right': isFilter && fadeRight,
-        },
-      ]"
-      @scroll.passive="updateFades"
-    >
-      <button
-        v-for="tab in props.tabs"
-        :key="tab.value"
-        type="button"
-        :class="tabClass(model === tab.value)"
-        @click="model = tab.value"
+    <div class="tabs__outer">
+      <div
+        ref="containerEl"
+        :class="[
+          'tabs',
+          containerClass,
+          {
+            'tabs--fade-left': isFilter && fadeLeft,
+            'tabs--fade-right': isFilter && fadeRight,
+          },
+        ]"
+        @scroll.passive="updateFades"
       >
-        {{ tab.label }}
-        <span
-          v-if="tab.count !== undefined"
-          :class="countClass(model === tab.value)"
-        >{{ tab.count }}</span>
-      </button>
+        <button
+          v-for="tab in props.tabs"
+          :key="tab.value"
+          type="button"
+          :class="tabClass(model === tab.value)"
+          @click="model = tab.value"
+        >
+          {{ tab.label }}
+          <span
+            v-if="tab.count !== undefined"
+            :class="countClass(model === tab.value)"
+          >{{ tab.count }}</span>
+        </button>
+      </div>
+      <span v-if="isFilter && fadeRight" class="tabs__hint tabs__hint--right" aria-hidden="true">
+        <CIconChevronRight />
+      </span>
+      <span v-if="isFilter && fadeLeft" class="tabs__hint tabs__hint--left" aria-hidden="true">
+        <CIconChevronRight />
+      </span>
     </div>
     <slot></slot>
   </div>
@@ -185,6 +193,44 @@ const countClass = (isActive: boolean) => ({
   background: var(--color-primary);
   color: var(--color-on-primary);
   font-size: var(--text-2xs);
+}
+
+.tabs__outer {
+  position: relative;
+}
+
+.tabs__hint {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--icon-lg);
+  height: var(--icon-lg);
+  border-radius: var(--radius-full);
+  background: var(--color-surface-container-lowest);
+  color: var(--color-on-surface-variant);
+  box-shadow: var(--shadow-md);
+  pointer-events: none;
+  z-index: var(--z-raised);
+}
+
+.tabs__hint svg {
+  width: var(--icon-sm);
+  height: var(--icon-sm);
+}
+
+.tabs__hint--right {
+  right: var(--space-2);
+}
+
+.tabs__hint--left {
+  left: var(--space-2);
+}
+
+.tabs__hint--left svg {
+  transform: rotate(180deg);
 }
 
 .tabs--fade-left {
