@@ -12,3 +12,4 @@ applyTo: 'frontend/e2e/visual/**'
 - Captures run on CI x86 ONLY — never run the `visual` Playwright project locally (ARM64 rendering differs; local PNGs would poison the baselines).
 - Determinism is non-negotiable: fixed clock and forced theme live in the capture spec; if a page starts rendering relative dates, counters or random IDs, freeze them rather than accepting churny diffs.
 - Unchanged page → identical PNG → no diff in the PR. If an unrelated PR shows visual churn, hunt the determinism leak first, not the screenshot.
+- The capture pipeline discards diffs below a 1000 px pixelmatch noise floor (rendering jitter measures 81-562 px). A deliberate SMALL change (edge affordance, badge tint) falls below it too — list the capture in `frontend/e2e/visual/force-keep.txt` to keep it; do not lower the global threshold (it would churn the noisiest pages on every run).
