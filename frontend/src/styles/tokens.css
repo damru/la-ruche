@@ -67,9 +67,9 @@
   --radius-full: 9999px;
 
   /* ── Typographie ─────────────────────────────────────────────── */
-  --font-display: 'Fraunces', Georgia, serif;
-  --font-body:    'DM Sans', system-ui, sans-serif;
-  --font-mono:    'JetBrains Mono', ui-monospace, monospace;
+  --font-display: 'Fraunces Variable', Georgia, serif;
+  --font-body:    'DM Sans Variable', system-ui, sans-serif;
+  --font-mono:    'JetBrains Mono Variable', ui-monospace, monospace;
   /* Font weights — semantic scale
      regular  400 : body text, secondary descriptions
      medium   500 : form labels, buttons, nav items, UI controls
