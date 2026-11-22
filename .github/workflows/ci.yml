@@ -29,8 +29,33 @@ jobs:
       frontend_all: ${{ steps.filter.outputs.frontend_all }}
       frontend_app: ${{ steps.filter.outputs.frontend_app }}
       ci_workflow: ${{ steps.filter.outputs.ci_workflow }}
+      captures_only: ${{ steps.captures-only.outputs.captures_only }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          # On pull_request this is the branch tip, NOT refs/pull/N/merge
+          # (whose ^1 is the base — diffing it would measure the whole
+          # cumulative PR, the trap this detection exists to avoid).
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          # HEAD^ must exist for the captures-only detection below.
+          fetch-depth: 2
+      - name: Detect captures-only head commit
+        id: captures-only
+        # The captures job pushes PNG commits as github-actions[bot] only
+        # after every other job is green. Skip CI only when BOTH hold: the
+        # pusher is the bot AND the head commit touches nothing outside
+        # frontend/e2e/visual/ — a compromised or buggy workflow pushing
+        # code as the bot still gets a full CI run.
+        run: |
+          if ! git rev-parse HEAD^ >/dev/null 2>&1; then
+            echo "captures_only=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ -z "$(git diff --name-only HEAD^ HEAD -- ':!frontend/e2e/visual/')" ]; then
+            echo "captures_only=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "captures_only=false" >> "$GITHUB_OUTPUT"
+          fi
       - uses: dorny/paths-filter@v4
         id: filter
         # A negation rule compiled alone inverts (matches everything outside
@@ -51,7 +76,7 @@ jobs:
   test-backend:
     name: Backend — fmt + clippy + tests
     needs: [changes]
-    if: (needs.changes.outputs.backend == 'true' || needs.changes.outputs.ci_workflow == 'true') && github.actor != 'github-actions[bot]'
+    if: (needs.changes.outputs.backend == 'true' || needs.changes.outputs.ci_workflow == 'true') && !(github.actor == 'github-actions[bot]' && needs.changes.outputs.captures_only == 'true')
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -157,7 +182,7 @@ jobs:
   build-backend:
     name: Backend — build release
     needs: [changes]
-    if: (needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend_app == 'true' || needs.changes.outputs.ci_workflow == 'true') && github.actor != 'github-actions[bot]'
+    if: (needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend_app == 'true' || needs.changes.outputs.ci_workflow == 'true') && !(github.actor == 'github-actions[bot]' && needs.changes.outputs.captures_only == 'true')
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -252,7 +277,7 @@ jobs:
   test-frontend:
     name: Frontend — typecheck + lint
     needs: [changes]
-    if: (needs.changes.outputs.frontend_app == 'true' || needs.changes.outputs.ci_workflow == 'true') && github.actor != 'github-actions[bot]'
+    if: (needs.changes.outputs.frontend_app == 'true' || needs.changes.outputs.ci_workflow == 'true') && !(github.actor == 'github-actions[bot]' && needs.changes.outputs.captures_only == 'true')
     # runs-on: ${{ github.actor == github.repository_owner && 'medium' || 'ubuntu-latest' }}
     runs-on: ubuntu-latest
     defaults:
@@ -285,7 +310,7 @@ jobs:
   e2e-frontend:
     name: Frontend — E2E Playwright
     needs: [changes, build-backend, test-frontend]
-    if: always() && !failure() && !cancelled() && (needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend_app == 'true' || needs.changes.outputs.ci_workflow == 'true') && github.actor != 'github-actions[bot]'
+    if: always() && !failure() && !cancelled() && (needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend_app == 'true' || needs.changes.outputs.ci_workflow == 'true') && !(github.actor == 'github-actions[bot]' && needs.changes.outputs.captures_only == 'true')
     # runs-on: ${{ github.actor == github.repository_owner && 'medium' || 'ubuntu-latest' }}
     runs-on: ubuntu-latest
     defaults:
@@ -404,7 +429,7 @@ jobs:
   docker:
     name: Docker — build + push
     needs: [changes, test-backend, test-frontend, build-backend]
-    if: always() && !failure() && !cancelled() && github.actor != 'github-actions[bot]'
+    if: always() && !failure() && !cancelled() && !(github.actor == 'github-actions[bot]' && needs.changes.outputs.captures_only == 'true')
     # runs-on: ${{ github.actor == github.repository_owner && 'large' || 'ubuntu-latest' }}
     runs-on: ubuntu-latest
     steps:
