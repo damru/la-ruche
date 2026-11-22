@@ -1,13 +1,14 @@
 // Discard captures whose change vs HEAD is sub-visual noise.
-// Rendering jitter between identical CI runs measures 81-562 px with
-// pixelmatch's AA detection (visually invisible); 1000 px absorbs it with
-// ~2x margin while real content changes sit far above. Pages with no
-// baseline at HEAD (new) are always kept. Run from frontend/ after the
-// capture step. Requires: pixelmatch + pngjs (devDependencies).
+// Rendering jitter between identical CI runs, MEASURED on CI x86 after the
+// determinism fixes (clock anchor, settle, font flags, CSS animation kill):
+// 0-233 px with pixelmatch's AA detection. 500 px keeps ~2x margin; the
+// older 81-562 range predated those fixes. Pages with no baseline at HEAD
+// (new) are always kept. Run from frontend/ after the capture step.
+// Requires: pixelmatch + pngjs (devDependencies).
 //
-// Deliberate small changes (a 24px affordance, a badge tint) produce real
-// diffs BELOW that floor — signal and jitter ranges overlap, no global
-// threshold can separate them. Such captures are listed in
+// Deliberate small changes (a 24px affordance) can still produce real diffs
+// BELOW the worst-page jitter (the scroll chevron measures ~140 px vs 233 px
+// jitter) — no threshold separates them. Such captures are listed in
 // e2e/visual/force-keep.txt (one frontend/-relative path per line, '#'
 // comments allowed) and are kept regardless of their mismatch. Entries can
 // stay after merge: subsequent runs compare against the updated baseline,
@@ -19,7 +20,7 @@ import { createRequire } from 'node:module'
 import { PNG } from 'pngjs'
 
 const pixelmatch = createRequire(import.meta.url)('pixelmatch').default
-const NOISE_PX = 1000
+const NOISE_PX = 500
 
 function loadForceKeep() {
   try {
