@@ -33,6 +33,12 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
+          # On pull_request this is the branch tip, NOT refs/pull/N/merge:
+          # HEAD^ must be the previous branch commit for the captures-only
+          # detection below (the merge ref's ^1 is the base, which would
+          # diff the whole cumulative PR — the very trap this guards
+          # against).
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           # HEAD^ must exist for the captures-only detection below.
           fetch-depth: 2
       - name: Detect captures-only head commit
