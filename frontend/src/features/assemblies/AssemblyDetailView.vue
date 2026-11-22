@@ -1148,11 +1148,7 @@ function openArt25Modal(resolution: Resolution) {
                   :description="t('meetings.agenda.emptyHint')"
                 />
               </template>
-              <CFlexGroup
-                tag="ol"
-                class="agenda-list"
-                direction="column"
-              >
+              <ol class="agenda-list">
                 <li
                   v-for="(item, index) in agendaItems"
                   :key="`${index}-${item}`"
@@ -1161,7 +1157,7 @@ function openArt25Modal(resolution: Resolution) {
                   <span class="agenda-item__n">{{ index + 1 }}.</span>
                   <span class="agenda-item__text">{{ item }}</span>
                 </li>
-              </CFlexGroup>
+              </ol>
             </CCard>
 
             <CCard>
@@ -1937,6 +1933,9 @@ function openArt25Modal(resolution: Resolution) {
   margin: 0;
   padding: 0;
   list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
 }
 
 .agenda-item {
