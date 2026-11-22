@@ -184,7 +184,9 @@ jobs:
     needs: [changes]
     # Runs on a human captures-only push too: it produces the backend binary
     # artifact the captures job downloads to regenerate deleted captures.
-    if: (needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend_app == 'true' || needs.changes.outputs.ci_workflow == 'true' || (needs.changes.outputs.captures_only == 'true' && github.actor != 'github-actions[bot]'))
+    # Skipped on a BOT captures-only push (nothing consumes the artifact —
+    # the captures job skips on bot pushes).
+    if: ((needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend_app == 'true' || needs.changes.outputs.ci_workflow == 'true') && !(github.actor == 'github-actions[bot]' && needs.changes.outputs.captures_only == 'true')) || (needs.changes.outputs.captures_only == 'true' && github.actor != 'github-actions[bot]')
     runs-on: ubuntu-latest
     defaults:
       run:
