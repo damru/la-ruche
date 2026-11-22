@@ -452,8 +452,6 @@ watch(() => route.path, closeDrawer)
 /* ── Bottom nav ───────────────────────────────────────────────── */
 .c-bottom-nav {
   display: none;
-  /* sticky (et non fixed) : même rendu à l'écran, mais position naturelle
-     en bas de page — les captures fullPage ne dupliquent pas l'élément. */
   position: sticky;
   bottom: 0;
   background: var(--color-surface-container-lowest);
