@@ -1,0 +1,4 @@
+# Captures kept even below the noise threshold (see discard-noise.mjs).
+# Scroll-affordance chevron on the tasks filter bar — sub-noise by design.
+e2e/visual/tasks--375--light.png
+e2e/visual/tasks--375--dark.png
