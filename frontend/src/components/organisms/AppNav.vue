@@ -32,46 +32,46 @@ interface NavGroup {
 const allGroups: NavGroup[] = [
   {
     items: [
-      { name: 'dashboard', route: '/dashboard', label: t('nav.dashboard'), mobileLabel: t('nav.mobile.dashboard'), roles: [], mobileOrder: 1 },
-      { name: 'calendar', route: '/calendar', label: t('nav.calendar'), mobileLabel: t('calendar.modes.agenda'), roles: [], mobileOrder: 9 },
+      { name: 'dashboard', route: '/dashboard', label: t('nav.dashboard'), mobileLabel: t('nav.mobile.dashboard'),  roles: [], mobileOrder: 1 },
+      { name: 'calendar',  route: '/calendar',  label: t('nav.calendar'),  mobileLabel: t('calendar.modes.agenda'), roles: [], mobileOrder: 9 },
     ],
   },
   {
     label: t('nav.governance'),
     items: [
-      { name: 'assemblies',    route: '/meetings',      label: t('nav.meetings'),      mobileLabel: t('meetings.typeLabel.annualShort'),    roles: [...ROLES], mobileOrder: 10 },
-      { name: 'consultations', route: '/consultations', label: t('nav.consultations'), mobileLabel: t('nav.mobile.consultations'), roles: [],                                      mobileOrder: 4 },
-      { name: 'reports',       route: '/reports',       label: t('nav.reports'),       mobileLabel: t('nav.reports'),       roles: [],                                      mobileOrder: 2 },
+      { name: 'assemblies',    route: '/meetings',      label: t('nav.meetings'),      mobileLabel: t('meetings.typeLabel.annualShort'), roles: [...ROLES], mobileOrder: 10 },
+      { name: 'consultations', route: '/consultations', label: t('nav.consultations'), mobileLabel: t('nav.mobile.consultations'),       roles: [],         mobileOrder: 4 },
+      { name: 'reports',       route: '/reports',       label: t('nav.reports'),       mobileLabel: t('nav.reports'),                    roles: [],         mobileOrder: 2 },
     ],
   },
   {
     label: t('nav.groups.finance'),
     items: [
-      { name: 'budget',      route: '/budget',      label: t('nav.budget'),      mobileLabel: t('nav.mobile.budget'),      roles: [...ROLES], mobileOrder: 11 },
-      { name: 'my-charges',  route: '/my-charges',  label: t('nav.myCharges'),   mobileLabel: t('nav.myCharges'),           roles: [ROLE_CO_OWNER],                            mobileOrder: 3 },
-      { name: 'contracts',   route: '/contracts',   label: t('nav.contracts'),   mobileLabel: t('nav.contracts'),   roles: [...MANAGER_ROLES],             mobileOrder: 6 },
+      { name: 'budget',     route: '/budget',     label: t('nav.budget'),    mobileLabel: t('nav.mobile.budget'), roles: [...ROLES],         mobileOrder: 11 },
+      { name: 'my-charges', route: '/my-charges', label: t('nav.myCharges'), mobileLabel: t('nav.myCharges'),     roles: [ROLE_CO_OWNER],    mobileOrder: 3 },
+      { name: 'contracts',  route: '/contracts',  label: t('nav.contracts'), mobileLabel: t('nav.contracts'),     roles: [...MANAGER_ROLES], mobileOrder: 6 },
     ],
   },
   {
     label: t('nav.groups.operations'),
     items: [
-      { name: 'tasks',        route: '/tasks',        label: t('nav.tasks'),        mobileLabel: t('nav.tasks'),        roles: [...MANAGER_ROLES], mobileOrder: 4 },
-      { name: 'contractors',  route: '/contractors',  label: t('contractors.title'),  mobileLabel: t('contractors.title'),  roles: [],                          mobileOrder: 3 },
-      { name: 'claims',       route: '/claims',       label: t('nav.claims'),       mobileLabel: t('nav.claims'),       roles: [...MANAGER_ROLES], mobileOrder: 7 },
-      { name: 'maintenance', route: '/logbook',   label: t('nav.maintenance'), mobileLabel: t('nav.mobile.maintenance'), roles: [...MANAGER_ROLES, ROLE_CO_OWNER], mobileOrder: 8 },
-      { name: 'documents',   route: '/documents', label: t('common.documents'),   mobileLabel: t('nav.mobile.documents'),   roles: [...DOCUMENT_ROLES], mobileOrder: 5 },
+      { name: 'tasks',       route: '/tasks',       label: t('nav.tasks'),         mobileLabel: t('nav.tasks'),              roles: [...MANAGER_ROLES],  mobileOrder: 4 },
+      { name: 'contractors', route: '/contractors', label: t('contractors.title'), mobileLabel: t('contractors.title'),      roles: [],                  mobileOrder: 3 },
+      { name: 'claims',      route: '/claims',      label: t('nav.claims'),        mobileLabel: t('nav.claims'),             roles: [...MANAGER_ROLES],  mobileOrder: 7 },
+      { name: 'maintenance', route: '/logbook',     label: t('nav.maintenance'),   mobileLabel: t('nav.mobile.maintenance'), roles: [...MANAGER_ROLES, ROLE_CO_OWNER], mobileOrder: 8 },
+      { name: 'documents',   route: '/documents',   label: t('common.documents'),  mobileLabel: t('nav.mobile.documents'),   roles: [...DOCUMENT_ROLES], mobileOrder: 5 },
     ],
   },
   {
     label: t('nav.groups.residence'),
     items: [
-      { name: 'residence-building', route: '/residence/building', label: t('common.informations'), roles: [ROLE_MANAGER] },
-      { name: 'residence-keys',     route: '/residence/keys',     label: t('allocationKeys.title'), roles: [ROLE_MANAGER] },
-      { name: 'registry',           route: '/registry',           label: t('nav.registry'),       roles: [...ROLES] },
-      { name: 'judicial-proceedings', route: '/judicial-proceedings', label: t('nav.judicialProceedings'), roles: [...ROLES] },
-      { name: 'governance',         route: '/governance',         label: t('nav.governance'),     roles: [...ROLES] },
-      { name: 'etat-date',          route: '/etat-date',          label: t('registers.etatDate.title'),       roles: [ROLE_MANAGER] },
-      { name: 'residents',          route: '/residents',          label: t('nav.residents'),      roles: [ROLE_MANAGER] },
+      { name: 'residence-building',   route: '/residence/building',   label: t('common.informations'),      roles: [ROLE_MANAGER] },
+      { name: 'residence-keys',       route: '/residence/keys',       label: t('allocationKeys.title'),     roles: [ROLE_MANAGER] },
+      { name: 'registry',             route: '/registry',             label: t('nav.registry'),             roles: [...ROLES] },
+      { name: 'judicial-proceedings', route: '/judicial-proceedings', label: t('nav.judicialProceedings'),  roles: [...ROLES] },
+      { name: 'governance',           route: '/governance',           label: t('nav.governance'),           roles: [...ROLES] },
+      { name: 'etat-date',            route: '/etat-date',            label: t('registers.etatDate.title'), roles: [ROLE_MANAGER] },
+      { name: 'residents',            route: '/residents',            label: t('nav.residents'),            roles: [ROLE_MANAGER] },
     ],
   },
 ]

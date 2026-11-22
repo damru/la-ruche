@@ -1,7 +1,11 @@
-// Discard captures whose change vs HEAD is sub-visual noise.
-// Rendering jitter between identical CI runs measures 81-562 px with
-// pixelmatch's AA detection (visually invisible); 1000 px absorbs it with
-// ~2x margin while real content changes sit far above. Pages with no
+// Discard captures whose change vs HEAD is INVISIBLE to pixelmatch.
+// Policy (user, 2026-11-22): prefer a false positive in review over a
+// missed real change — the floor only filters byte-level PNG noise where
+// pixelmatch counts 0 differing pixels. Rendering jitter is 0 since fonts
+// are self-hosted (fontsource in the bundle); the Google-Fonts CDN used to
+// serve variable-font instances that differed between runs, producing
+// 8-616 px deterministic-looking diffs on text-heavy pages. Re-measure via
+// the `noise (N px)` lines of the discard step's log. Pages with no
 // baseline at HEAD (new) are always kept. Run from frontend/ after the
 // capture step. Requires: pixelmatch + pngjs (devDependencies).
 
@@ -11,7 +15,7 @@ import { createRequire } from 'node:module'
 import { PNG } from 'pngjs'
 
 const pixelmatch = createRequire(import.meta.url)('pixelmatch').default
-const NOISE_PX = 1000
+const NOISE_PX = 1
 
 const changed = execSync('git status --porcelain -- frontend/e2e/visual', {
   cwd: '..',
