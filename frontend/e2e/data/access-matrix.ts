@@ -15,7 +15,7 @@ const MGR_ONLY: AuthRole[] = ['manager']
 
 export type MatrixEntry = {
   path: string
-  titleKey: string
+  titleKey?: string
   roles: AuthRole[]
   deniedBehavior?: 'route403' | 'pageError'
   toleratedApi403?: Record<string, AuthRole[]>
@@ -24,6 +24,7 @@ export type MatrixEntry = {
 export const APP_ROUTES: MatrixEntry[] = [
   { path: '/dashboard',              titleKey: 'nav.dashboard',                 roles: ALL, toleratedApi403: { '/api/v1/budgets/00000000-0000-0000-0000-000000000421/levies': ['coOwner', 'tenant'] } },
   { path: '/meetings',               titleKey: 'nav.meetings',                  roles: ALL },
+  { path: '/meetings/00000000-0000-0000-0000-000000000853', roles: ALL },
   { path: '/budget',                 titleKey: 'nav.budget',                    roles: ALL },
   { path: '/documents',              titleKey: 'common.documents',              roles: ALL },
   { path: '/tasks',                  titleKey: 'nav.tasks',                     roles: MANAGER },

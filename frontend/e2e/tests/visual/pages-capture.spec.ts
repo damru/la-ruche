@@ -57,3 +57,42 @@ for (const route of APP_ROUTES) {
     }
   }
 }
+
+const MEETING_DETAIL = '/meetings/00000000-0000-0000-0000-000000000853'
+const MEETING_PDF_STORAGE = /\/meetings\/853\/pv-ag-2026-10-08\.pdf/
+const MEETING_PDF_NAME = 'pv-ag-2026-10-08.pdf'
+const MINIMAL_PDF = '%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF'
+
+for (const viewport of VIEWPORTS) {
+  for (const theme of THEMES) {
+    test(`capture meetings-853-viewer -- ${viewport.name} -- ${theme}`, async ({ browser }) => {
+      const context = await browser.newContext({
+        storageState: 'e2e/.auth/manager.json',
+        viewport: { width: viewport.width, height: viewport.height },
+        colorScheme: theme,
+        reducedMotion: 'reduce',
+      })
+      const page = await context.newPage()
+
+      await page.clock.install({ time: FIXED_NOW })
+      await page.addInitScript((t) => window.localStorage.setItem('laruche-theme', t), theme)
+      await page.route(MEETING_PDF_STORAGE, (route) =>
+        route.fulfill({ status: 200, contentType: 'application/pdf', body: MINIMAL_PDF }),
+      )
+
+      await page.goto(MEETING_DETAIL)
+      await page.waitForLoadState('networkidle')
+      await settlePage(page)
+
+      await page.getByText(MEETING_PDF_NAME).first().click()
+      const modal = page.locator('.c-modal__content')
+      await expect(modal).toBeVisible()
+      await expect(modal.locator('iframe')).toBeVisible()
+
+      await modal.screenshot({
+        path: `e2e/visual/meetings-853-viewer--${viewport.name}--${theme}.png`,
+      })
+      await context.close()
+    })
+  }
+}

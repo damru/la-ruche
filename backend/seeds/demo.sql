@@ -1782,6 +1782,49 @@ ON CONFLICT (id) DO NOTHING;
     ON CONFLICT DO NOTHING;
 
 -- ============================================================
+-- Documents (EP-005-S11 — inline PDF viewer)
+-- ============================================================
+INSERT INTO document (
+    id,
+    building_id,
+    original_name,
+    storage_path,
+    bucket,
+    mime_type,
+    size_bytes,
+    visible_to_roles,
+    category,
+    extraction_status,
+    created_at
+)
+VALUES (
+    '00000000-0000-0000-0000-000000000861',
+    '00000000-0000-0000-0000-000000000001',
+    'pv-ag-2026-10-08.pdf',
+    'meetings/853/pv-ag-2026-10-08.pdf',
+    'laruche-demo',
+    'application/pdf',
+    1210,
+    '{manager,board_member,co_owner,tenant}',
+    'pv_ag',
+    'pending',
+    NOW() - INTERVAL '60 days'
+)
+ON CONFLICT DO NOTHING;
+
+INSERT INTO general_meeting_document (
+    meeting_id,
+    document_id,
+    kind
+)
+VALUES (
+    '00000000-0000-0000-0000-000000000853',
+    '00000000-0000-0000-0000-000000000861',
+    'attachment'
+)
+ON CONFLICT DO NOTHING;
+
+-- ============================================================
 -- SUMMARY
 -- ============================================================
 -- Role          | Email                              | Units owned
@@ -1806,5 +1849,6 @@ ON CONFLICT (id) DO NOTHING;
 -- Assemblies    | 4 fixtures                         | draft (empty), called (multi-line agenda + pending resolutions), closed (multi-line agenda + mixed attendance + votes, incl. art. 25 and art. 26 cases), ongoing (extraordinary — art. 24 ✓/✗, art. 25 ✓/✗ with art. 25-1 eligible case)
 -- Consultations | 2 fixtures                         | open, closed (+ choices & responses)
 -- Mandates      | 3 fixtures                         | syndic, council_president, council_member (ouverts)
+-- Documents     | 1 fixture                          | PDF pv_ag attache a l'AG close 853 (viewer inline EP-005-S11)
 --
 -- Password (all accounts): Demo1234!
