@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM allocation_key WHERE id = $1 AND building_id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "6e22ce487e96d4edced80ef608ef0cca761587b281d6b654ad524136329a16f7"
+}

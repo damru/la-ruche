@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT meeting_id FROM resolution WHERE id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "meeting_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "resolution",
+            "name": "meeting_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "3086bccb5773e19475a61a01b0d1f8539f0fdb3e2a700b2ed9ee7b309665d881"
+}

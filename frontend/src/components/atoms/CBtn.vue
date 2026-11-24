@@ -172,7 +172,8 @@ const shrinkClass: Record<Breakpoint, string> = {
     ref="buttonRef"
     :disabled="isDisabled"
     :type="type"
-    :title="variant === 'icon' ? title : undefined"
+    :title="title"
+    :aria-label="!$slots.default && title ? title : undefined"
     :style="closingStyle"
     :class="[
       variantClass[variant], sizeClass[size],

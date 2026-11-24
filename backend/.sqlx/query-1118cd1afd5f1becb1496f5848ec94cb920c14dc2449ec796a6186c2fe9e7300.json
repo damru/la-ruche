@@ -1,0 +1,30 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT COALESCE(SUM(shares_represented) FILTER (WHERE mode != 'absent'), 0)::int as \"shares_present!\",\n               COUNT(*) FILTER (WHERE mode != 'absent')::int as \"present_units!\"\n        FROM general_meeting_attendance\n        WHERE meeting_id = $1\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "shares_present!",
+        "type_info": "Int4",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 1,
+        "name": "present_units!",
+        "type_info": "Int4",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      null,
+      null
+    ]
+  },
+  "hash": "1118cd1afd5f1becb1496f5848ec94cb920c14dc2449ec796a6186c2fe9e7300"
+}

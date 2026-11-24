@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE resolution SET number = -number WHERE meeting_id = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "91272313f1bcc0508bd364d60659db3af4b869223bd9c56d0f8f01c10bd23351"
+}

@@ -820,8 +820,7 @@ function openArt25Modal(resolution: Resolution) {
                 />
               </div>
             </template>
-            <CFormFeedback
-              v-if="minutesFeedback.status.value !== 'idle'"
+            <CFormActions
               :status="minutesFeedback.status.value"
               :message="minutesFeedback.message.value"
             />
@@ -851,8 +850,7 @@ function openArt25Modal(resolution: Resolution) {
               </template>
             </CSectionHeader>
 
-            <CFormFeedback
-              v-if="reorderFeedback.status.value !== 'idle'"
+            <CFormActions
               :status="reorderFeedback.status.value"
               :message="reorderFeedback.message.value"
             />

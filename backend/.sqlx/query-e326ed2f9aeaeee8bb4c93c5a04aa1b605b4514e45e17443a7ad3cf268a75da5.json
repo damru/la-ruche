@@ -1,0 +1,131 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT id, building_id, unit_number, unit_type::text as \"unit_type!\",\n           block, staircase, floor, description, active, created_at\n           FROM unit WHERE building_id = $1 AND active = true ORDER BY unit_number",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "unit",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "building_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "unit",
+            "name": "building_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "unit_number",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "unit",
+            "name": "unit_number"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "unit_type!",
+        "type_info": "Text",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 4,
+        "name": "block",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "unit",
+            "name": "block"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "staircase",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "unit",
+            "name": "staircase"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "floor",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "unit",
+            "name": "floor"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "description",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "unit",
+            "name": "description"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "active",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "unit",
+            "name": "active"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "created_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "unit",
+            "name": "created_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      null,
+      true,
+      true,
+      true,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "e326ed2f9aeaeee8bb4c93c5a04aa1b605b4514e45e17443a7ad3cf268a75da5"
+}
