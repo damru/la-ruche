@@ -9,7 +9,7 @@ use uuid::Uuid;
 
 use crate::{
     db::{self, AppState},
-    domain::{AuthUser, Role},
+    domain::{AuthUser, Role, report_privacy},
     errors::{AppError, AppResult, json_value},
 };
 
@@ -20,7 +20,9 @@ pub async fn list(
     State(state): State<Arc<AppState>>,
 ) -> AppResult<Json<serde_json::Value>> {
     let rows = db::report::list(&state.pool, auth.building_id).await?;
-    json_value(rows)
+    let mut value = json_value(rows)?.0;
+    report_privacy::mask_report_list(&mut value, auth.user_id);
+    Ok(Json(value))
 }
 
 /// Get a single report by id.
@@ -32,7 +34,9 @@ pub async fn get(
     let row = db::report::get(&state.pool, id, auth.building_id)
         .await?
         .ok_or(AppError::NotFound)?;
-    json_value(row)
+    let mut value = json_value(row)?.0;
+    report_privacy::mask_report_author(&mut value, auth.user_id);
+    Ok(Json(value))
 }
 
 /// Create a new report. Any authenticated user (all roles) can open a report.
@@ -45,7 +49,9 @@ pub async fn create(
         return Err(AppError::validation_code("errors.reports.title_required"));
     }
     let row = db::report::create(&state.pool, auth.building_id, auth.user_id, input).await?;
-    Ok((StatusCode::CREATED, json_value(row)?))
+    let mut value = json_value(row)?.0;
+    report_privacy::mask_report_author(&mut value, auth.user_id);
+    Ok((StatusCode::CREATED, Json(value)))
 }
 
 #[derive(Deserialize)]
