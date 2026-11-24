@@ -10,7 +10,7 @@
 --   • 3 contracts : all contract statuses covered
 --   • 4 contractors
 --   • 6 tasks     : all task statuses covered
---   • 3 reports   : all report statuses covered
+--   • 4 reports   : all report statuses covered + one anonymous
 --   • 3 claims    : all claim statuses covered
 --   • 4 assemblies: draft, called, closed, ongoing
 --   • 2 consults  : open + closed with seeded choices/responses
@@ -786,7 +786,8 @@ ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================
 -- 11. REPORTS
--- One fixture per report status: open, in_progress, closed.
+-- One fixture per report status: open, in_progress, closed —
+-- plus one anonymous report covering the masked-identity state.
 -- ============================================================
 INSERT INTO report (
     id,
@@ -797,6 +798,7 @@ INSERT INTO report (
     description,
     status,
     task_id,
+    is_anonymous,
     created_at,
     updated_at
 )
@@ -810,6 +812,7 @@ VALUES
         'The entrance light turns on too late at night and leaves the hall dark for several seconds.',
         'open',
         NULL,
+        FALSE,
         NOW() - INTERVAL '4 days',
         NOW() - INTERVAL '4 days'
     ),
@@ -822,6 +825,7 @@ VALUES
         'The issue was converted into a task and is being handled by the plumbing contractor.',
         'in_progress',
         '00000000-0000-0000-0000-000000000602',
+        FALSE,
         NOW() - INTERVAL '11 days',
         NOW() - INTERVAL '1 day'
     ),
@@ -834,8 +838,22 @@ VALUES
         'The leak was reported after a storm and is now resolved after the roofing intervention.',
         'closed',
         '00000000-0000-0000-0000-000000000605',
+        FALSE,
         NOW() - INTERVAL '27 days',
         NOW() - INTERVAL '5 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000704',
+        '00000000-0000-0000-0000-000000000001',
+        NULL,
+        '00000000-0000-0000-0000-000000000209',
+        'Water leak under the common room sink',
+        'The tap drips constantly; the cabinet floor is soaked. Reported anonymously.',
+        'open',
+        NULL,
+        TRUE,
+        NOW() - INTERVAL '2 days',
+        NOW() - INTERVAL '2 days'
     )
 ON CONFLICT (id) DO NOTHING;
 
@@ -1801,7 +1819,7 @@ ON CONFLICT (id) DO NOTHING;
 -- Reminders     | 4 fixtures                         | pending, sent, acknowledged
 -- Contractors   | 4 referential entries              | maintenance, water, service, other
 -- Tasks         | 6 fixtures                         | open, in_progress, awaiting_vendor, awaiting_validation, closed, cancelled
--- Reports       | 3 fixtures                         | open, in_progress, closed
+-- Reports       | 4 fixtures                         | open, in_progress, closed + one anonymous (masked identity)
 -- Claims        | 3 fixtures                         | open, in_progress, closed
 -- Assemblies    | 4 fixtures                         | draft (empty), called (multi-line agenda + pending resolutions), closed (multi-line agenda + mixed attendance + votes, incl. art. 25 and art. 26 cases), ongoing (extraordinary — art. 24 ✓/✗, art. 25 ✓/✗ with art. 25-1 eligible case)
 -- Consultations | 2 fixtures                         | open, closed (+ choices & responses)
