@@ -87,7 +87,9 @@ export const AUTO_CLOSE_DELAY_MAX_SEC = 10
 
 function readAutoCloseDelay(): number {
   if (typeof window === 'undefined') return AUTO_CLOSE_DELAY_DEFAULT_SEC
-  const raw = Number(localStorage.getItem(AUTO_CLOSE_DELAY_STORAGE_KEY))
+  const stored = localStorage.getItem(AUTO_CLOSE_DELAY_STORAGE_KEY)
+  if (stored === null) return AUTO_CLOSE_DELAY_DEFAULT_SEC
+  const raw = Number(stored)
   if (!Number.isInteger(raw) || raw < AUTO_CLOSE_DELAY_MIN_SEC || raw > AUTO_CLOSE_DELAY_MAX_SEC) {
     return AUTO_CLOSE_DELAY_DEFAULT_SEC
   }

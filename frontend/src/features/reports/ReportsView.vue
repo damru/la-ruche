@@ -28,7 +28,6 @@ import EditReportModal from './EditReportModal.vue'
 import DeleteReportModal from './DeleteReportModal.vue'
 import ReportPhotosModal from './ReportPhotosModal.vue'
 import { reportsApi, unitsApi } from '@/api'
-import { useAuthStore } from '@/stores/auth'
 import { useBuildingStore } from '@/stores/building'
 import type { Report, ReportComment, ReportStatus, Unit } from '@/types/domain'
 import { ALL_FILTER, REPORT_STATUS_CLOSED, REPORT_STATUS_IN_PROGRESS, REPORT_STATUS_OPEN } from '@/utils/constants'
@@ -50,7 +49,6 @@ const statusFilter = ref<typeof ALL_FILTER | ReportStatus>(ALL_FILTER)
 const canManage = perms.canManageReport
 const canAdminister = perms.canAdministerReport
 const canComment = perms.canCommentReport
-const authStore = useAuthStore()
 
 // ── Modal state ───────────────────────────────────────────────────
 const showCreateModal = ref(false)
@@ -136,12 +134,15 @@ function unitLabel(unitId?: string): string {
   return u ? t('claims.unitLabel', { number: u.unit_number }) : '—'
 }
 
-function authorName(r: Report): string {
-  return `${r.author_first_name} ${r.author_last_name}`
+function authorLabel(r: Report): string {
+  if (r.is_anonymous) {
+    return r.is_author ? t('reports.authorAnonymousYou') : t('reports.authorAnonymous')
+  }
+  return `${r.author_first_name ?? ''} ${r.author_last_name ?? ''}`.trim()
 }
 
 function canReadComments(r: Report): boolean {
-  return canComment.value || r.author_id === authStore.user?.user_id
+  return canComment.value || r.is_author
 }
 
 async function toggleComments(r: Report) {
@@ -300,7 +301,7 @@ async function submitComment(r: Report) {
                     <template #icon>
                       <CIconUser />
                     </template>
-                    {{ authorName(r) }}
+                    {{ authorLabel(r) }}
                   </CMetaItem>
                   <CMetaItem>
                     <template #icon>

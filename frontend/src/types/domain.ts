@@ -16,7 +16,7 @@ export type VotePosition = 'in_favor' | 'against' | 'abstain' | 'non_voter'
 export type BudgetStatus = 'draft' | 'approved' | 'closed'
 export type LevyStatus = 'issued' | 'paid' | 'overdue'
 
-export type TaskStatus = 'open' | 'in_progress' | 'awaiting_vendor' | 'awaiting_validation' | 'closed' | 'cancelled'
+export type TaskStatus = 'open' | 'in_progress' | 'awaiting_quote' | 'quote_received' | 'awaiting_vendor' | 'awaiting_validation' | 'closed' | 'cancelled'
 export type TaskPriority = 'low' | 'normal' | 'high' | 'urgent'
 
 export type ClaimType = 'current' | 'natural_disaster' | 'theft'
@@ -456,9 +456,11 @@ export interface LogbookSummary {
 export interface Report {
   id: string
   unit_id?: string
-  author_id: string
-  author_first_name: string
-  author_last_name: string
+  author_id: string | null
+  author_first_name: string | null
+  author_last_name: string | null
+  is_anonymous: boolean
+  is_author: boolean
   title: string
   description?: string
   status: ReportStatus

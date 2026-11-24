@@ -7,30 +7,86 @@ on:
     branches: [main]
 
 concurrency:
-  group: "${{ github.workflow }}-${{ github.ref }}"
+  # The captures job pushes PNG commits as github-actions[bot]; that push
+  # re-triggers this workflow. Keying the group on the actor class keeps the
+  # bot run out of the human run's group, so it can never cancel it.
+  group: "ci-${{ github.ref }}-${{ github.actor == 'github-actions[bot]' && 'bot' || 'human' }}"
   cancel-in-progress: true
 
 env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
   SQLX_ARTIFACT_NAME: sqlx-offline-metadata
+  BACKEND_BIN_ARTIFACT_NAME: laruche-backend-bin
   SQLX_CLI_VERSION: 0.8.6
 
 jobs:
-  # ── Tests backend + SQLx metadata ───────────────────────────
+  changes:
+    name: Détection des chemins modifiés
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend_all: ${{ steps.filter.outputs.frontend_all }}
+      frontend_app: ${{ steps.filter.outputs.frontend_app }}
+      ci_workflow: ${{ steps.filter.outputs.ci_workflow }}
+      captures_only: ${{ steps.captures-only.outputs.captures_only }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # On pull_request this is the branch tip, NOT refs/pull/N/merge
+          # (whose ^1 is the base — diffing it would measure the whole
+          # cumulative PR, the trap this detection exists to avoid).
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          # HEAD^ must exist for the captures-only detection below.
+          fetch-depth: 2
+      - name: Detect captures-only head commit
+        id: captures-only
+        # The captures job pushes PNG commits as github-actions[bot] only
+        # after every other job is green. Skip CI only when BOTH hold: the
+        # pusher is the bot AND the head commit touches nothing outside
+        # frontend/e2e/visual/ — a compromised or buggy workflow pushing
+        # code as the bot still gets a full CI run.
+        run: |
+          if ! git rev-parse HEAD^ >/dev/null 2>&1; then
+            echo "captures_only=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ -z "$(git diff --name-only HEAD^ HEAD -- ':!frontend/e2e/visual/')" ]; then
+            echo "captures_only=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "captures_only=false" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: dorny/paths-filter@v4
+        id: filter
+        # A negation rule compiled alone inverts (matches everything outside
+        # the excluded tree); 'every' turns it into a real AND-NOT.
+        with:
+          predicate-quantifier: every
+          filters: |
+            backend:
+              - 'backend/**'
+            frontend_all:
+              - 'frontend/**'
+            frontend_app:
+              - 'frontend/**'
+              - '!frontend/e2e/visual/**'
+            ci_workflow:
+              - '.github/workflows/ci.yml'
+  # ── Backend : fmt + clippy + tests (profil test) ───────────────
   test-backend:
-    name: Backend — SQLx + test + lint
-    # runs-on: ${{ github.actor == github.repository_owner && 'large' || 'ubuntu-latest' }}
+    name: Backend — fmt + clippy + tests
+    needs: [changes]
+    if: (needs.changes.outputs.backend == 'true' || needs.changes.outputs.ci_workflow == 'true') && needs.changes.outputs.captures_only != 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./backend
     env:
-      RUSTC_WRAPPER: sccache
-      SCCACHE_GHA_ENABLED: "true"
+      # L'incrémental gonfle target/ (cache rust) sans bénéficier au CI mono-run.
+      CARGO_INCREMENTAL: "0"
     services:
       postgres:
-        image: postgres:18-alpine
+        image: postgres:19-alpine
         env:
           POSTGRES_DB: laruche_test
           POSTGRES_USER: laruche
@@ -45,11 +101,6 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - name: Free disk space (CI runner)
-        run: |
-          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup /usr/local/lib/android
-          docker system prune -af || true
-          df -h
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -59,19 +110,18 @@ jobs:
       - name: Cache Cargo
         uses: Swatinem/rust-cache@v2
         with:
-          # Share all backend Cargo artifacts across workflow runs, including test-only crates and cargo-installed tools.
-          # rust-cache prunes stale build artifacts older than one week before saving the cache archive.
           shared-key: backend-ci
           workspaces: |
             backend -> target
-          cache-all-crates: true
-          cache-workspace-crates: true
 
-      - name: Install sccache
-        uses: mozilla-actions/sccache-action@v0.0.11
-
-      - name: Reset sccache stats
-        run: sccache --zero-stats
+      - name: Cache sqlx-cli binary
+        uses: actions/cache@v6
+        with:
+          # `cargo sqlx prepare` résout le binaire `cargo-sqlx`, distinct de `sqlx`.
+          path: |
+            ~/.cargo/bin/sqlx
+            ~/.cargo/bin/cargo-sqlx
+          key: sqlx-cli-${{ runner.os }}-${{ env.SQLX_CLI_VERSION }}-v2
 
       - name: Install sqlx-cli
         run: |
@@ -81,15 +131,10 @@ jobs:
             cargo install sqlx-cli --version ${{ env.SQLX_CLI_VERSION }} --no-default-features --features postgres --locked
           fi
 
-      - name: Run migrations
+      - name: Run migrations (schéma requis pour l'expansion des macros query! des tests)
         env:
           DATABASE_URL: postgres://laruche:laruche@localhost:5432/laruche_test
         run: sqlx migrate run
-
-      - name: Generate SQLx offline files
-        env:
-          DATABASE_URL: postgres://laruche:laruche@localhost:5432/laruche_test
-        run: cargo sqlx prepare
 
       - name: Check formatting
         env:
@@ -97,8 +142,9 @@ jobs:
         run: cargo fmt --check
 
       - name: Clippy
+        # live : .sqlx ne couvre pas ce job (généré par build-backend), la base de test est déjà migrée
         env:
-          SQLX_OFFLINE: true
+          DATABASE_URL: postgres://laruche:laruche@localhost:5432/laruche_test
         run: cargo clippy -- -D warnings
 
       - name: Tests backend (lib + intégration)
@@ -126,9 +172,93 @@ jobs:
           LA_RUCHE__AUTH__VENDOR_TOKEN_TTL_DAYS: "30"
           LA_RUCHE__AUTH__ARGON2_MEMORY_KB: "65536"
           LA_RUCHE__AUTH__ARGON2_ITERATIONS: "3"
+          # false : les tests contiennent des macros query! non couvertes par .sqlx
+          # (prepare ne scanne pas les fichiers de test) — validation live sur la base de test.
           SQLX_OFFLINE: false
         # A single Cargo invocation reuses the compiled test profile once for unit and integration suites.
         run: cargo test --lib --tests
+
+  # ── Backend : build release + métadonnées SQLx (parallèle aux tests) ──
+  build-backend:
+    name: Backend — build release
+    needs: [changes]
+    # Runs on a human captures-only push too: it produces the backend binary
+    # artifact the captures job downloads to regenerate deleted captures.
+    # Skipped on a BOT captures-only push (nothing consumes the artifact —
+    # the captures job skips on bot pushes).
+    if: ((needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend_app == 'true' || needs.changes.outputs.ci_workflow == 'true') && !(github.actor == 'github-actions[bot]' && needs.changes.outputs.captures_only == 'true')) || (needs.changes.outputs.captures_only == 'true' && github.actor != 'github-actions[bot]')
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
+    env:
+      CARGO_INCREMENTAL: "0"
+    services:
+      postgres:
+        image: postgres:19-alpine
+        env:
+          POSTGRES_DB: laruche_test
+          POSTGRES_USER: laruche
+          POSTGRES_PASSWORD: laruche
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: backend-release
+          workspaces: |
+            backend -> target
+
+      - name: Cache sqlx-cli binary
+        uses: actions/cache@v6
+        with:
+          # `cargo sqlx prepare` résout le binaire `cargo-sqlx`, distinct de `sqlx`.
+          path: |
+            ~/.cargo/bin/sqlx
+            ~/.cargo/bin/cargo-sqlx
+          key: sqlx-cli-${{ runner.os }}-${{ env.SQLX_CLI_VERSION }}-v2
+
+      - name: Install sqlx-cli
+        run: |
+          # rust-cache restores cargo-installed binaries when available; only install on a cold cache.
+          if ! command -v sqlx >/dev/null 2>&1; then
+            echo "Installing sqlx-cli (not restored from cache)"
+            cargo install sqlx-cli --version ${{ env.SQLX_CLI_VERSION }} --no-default-features --features postgres --locked
+          fi
+
+      - name: Run migrations
+        env:
+          DATABASE_URL: postgres://laruche:laruche@localhost:5432/laruche_test
+        run: sqlx migrate run
+
+      - name: Generate SQLx offline files
+        env:
+          DATABASE_URL: postgres://laruche:laruche@localhost:5432/laruche_test
+        run: cargo sqlx prepare
+
+      - name: Cache backend release binary
+        id: backend-bin
+        uses: actions/cache@v6
+        with:
+          path: backend/target/release/laruche
+          key: laruche-bin-${{ runner.os }}-${{ hashFiles('backend/src/**', 'backend/migrations/**', 'backend/seeds/**', 'backend/assets/**', 'backend/Cargo.toml', 'backend/Cargo.lock', 'NOTICE') }}
+
+      - name: Build backend (release, SQLx offline)
+        if: steps.backend-bin.outputs.cache-hit != 'true'
+        env:
+          SQLX_OFFLINE: true
+        run: cargo build --release
 
       - name: Upload SQLx offline files
         uses: actions/upload-artifact@v7
@@ -139,15 +269,21 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
-      - name: Show sccache stats
-        if: success() || failure()
-        run: sccache --show-stats
+      - name: Upload backend binary
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ env.BACKEND_BIN_ARTIFACT_NAME }}
+          path: backend/target/release/laruche
+          if-no-files-found: error
+          retention-days: 1
 
   # ── Tests frontend ─────────────────────────────────────────────
   test-frontend:
     name: Frontend — typecheck + lint
+    needs: [changes]
+    if: (needs.changes.outputs.frontend_app == 'true' || needs.changes.outputs.ci_workflow == 'true') && needs.changes.outputs.captures_only != 'true'
     # runs-on: ${{ github.actor == github.repository_owner && 'medium' || 'ubuntu-latest' }}
-    runs-on: ubuntu-latest 
+    runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./frontend
@@ -174,12 +310,134 @@ jobs:
       - name: Build
         run: npm run build
 
+  # ── E2E frontend (Playwright) ───────────────────────────────────
+  e2e-frontend:
+    name: Frontend — E2E Playwright
+    needs: [changes, build-backend, test-frontend]
+    if: always() && !failure() && !cancelled() && (needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend_app == 'true' || needs.changes.outputs.ci_workflow == 'true') && needs.changes.outputs.captures_only != 'true'
+    # runs-on: ${{ github.actor == github.repository_owner && 'medium' || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./frontend
+    services:
+      postgres:
+        image: postgres:19-alpine
+        env:
+          POSTGRES_DB: laruche
+          POSTGRES_USER: laruche
+          POSTGRES_PASSWORD: laruche
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      # Env complet du backend (AppConfig sans défauts serde — cf. backend/src/config.rs).
+      LA_RUCHE__DB__URL: postgres://laruche:laruche@localhost:5432/laruche
+      LA_RUCHE__DB__MAX_CONNECTIONS: "5"
+      LA_RUCHE__APP__DEMO_MODE: "true"
+      LA_RUCHE__APP__HOST: "0.0.0.0"
+      LA_RUCHE__APP__PORT: "8080"
+      LA_RUCHE__APP__PUBLIC_URL: "http://localhost"
+      LA_RUCHE__APP__NAME: "La Ruche CI"
+      LA_RUCHE__AUTH__JWT_SECRET: "e2e-only-secret-not-used-in-production-0123456789abcdef"
+      LA_RUCHE__AUTH__ACCESS_TOKEN_TTL_SECS: "900"
+      LA_RUCHE__AUTH__REFRESH_TOKEN_TTL_DAYS: "30"
+      LA_RUCHE__AUTH__INVITATION_TTL_DAYS: "7"
+      LA_RUCHE__AUTH__RESET_TOKEN_TTL_SECS: "3600"
+      LA_RUCHE__AUTH__VENDOR_TOKEN_TTL_DAYS: "30"
+      LA_RUCHE__AUTH__ARGON2_MEMORY_KB: "65536"
+      LA_RUCHE__AUTH__ARGON2_ITERATIONS: "3"
+      LA_RUCHE__S3__ENDPOINT_URL: "http://localhost:9000"
+      # S3 INERTE en Phase 0 (lecture seule) : aucun service rustfs dans ce job,
+      # StorageClient::new ne se connecte pas au démarrage. AVANT les tests
+      # mutateurs (Phase 2), ajouter un service rustfs ici (miroir
+      # docker-compose : image rustfs/rustfs, port 9000) sinon erreurs
+      # opaques "connection refused" enfouies dans des 500.
+      LA_RUCHE__S3__PUBLIC_URL: "http://localhost:9000"
+      LA_RUCHE__S3__REGION: "us-east-1"
+      LA_RUCHE__S3__ACCESS_KEY_ID: "s3admin"
+      LA_RUCHE__S3__SECRET_ACCESS_KEY: "s3admin"
+      LA_RUCHE__S3__BUCKET_PREFIX: "laruche-ci"
+      LA_RUCHE__S3__STAGING_BUCKET: "laruche-staging"
+      LA_RUCHE__S3__PRESIGNED_TTL_SECS: "900"
+      LA_RUCHE__S3__CLEANUP_ENABLED: "false"
+    steps:
+      - uses: actions/checkout@v7
+
+
+      - name: Download backend binary
+        uses: actions/download-artifact@v8
+        with:
+          name: ${{ env.BACKEND_BIN_ARTIFACT_NAME }}
+          path: backend/target/release
+
+      - name: Make backend executable
+        working-directory: .
+        run: chmod +x backend/target/release/laruche
+
+      - name: Start backend (migrations + seed demo au démarrage)
+        working-directory: ./backend
+        run: |
+          nohup ./target/release/laruche > /tmp/laruche-e2e.log 2>&1 &
+          echo $! > /tmp/laruche-e2e.pid
+
+      - name: Wait for backend
+        run: |
+          for i in $(seq 1 30); do
+            # 401 attendu (non authentifié) = backend en écoute et routage OK.
+            code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/api/v1/auth/me || true)
+            if [ "$code" = "401" ] || [ "$code" = "200" ]; then
+              echo "Backend ready (HTTP $code)"; exit 0
+            fi
+            sleep 2
+          done
+          echo "--- journal backend ---"; tail -50 /tmp/laruche-e2e.log
+          exit 1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 25
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci --prefer-offline
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('frontend/package-lock.json') }}
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run E2E tests
+        env:
+          CI: "true"
+        run: npx playwright test
+
+      - name: Upload traces on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-traces
+          path: frontend/test-results/
+          retention-days: 7
+
   # ── Docker build + push ────────────────────────────────────────
   docker:
     name: Docker — build + push
+    needs: [changes, test-backend, test-frontend, build-backend]
+    # Docker image only feeds on backend or frontend changes; captures-only
+    # pushes never change the image.
+    if: always() && !failure() && !cancelled() && (needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend_app == 'true' || needs.changes.outputs.ci_workflow == 'true') && needs.changes.outputs.captures_only != 'true'
     # runs-on: ${{ github.actor == github.repository_owner && 'large' || 'ubuntu-latest' }}
-    runs-on: ubuntu-latest 
-    needs: [test-backend, test-frontend]
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
 
@@ -238,3 +496,192 @@ jobs:
           build-args: |
             CARGO_PROFILE=release
             SQLX_OFFLINE=true
+
+  # ── Captures visuelles (ex-visual-preview.yml) ─────────────────
+  captures:
+    name: Captures — pages x viewports x themes
+    # The captures job pushes PNG commits as github-actions[bot]: that push
+    # re-triggers this workflow (PR diff is cumulative — no workflow-level
+    # path filter can stop it) and would mask failed checks of the previous
+    # head. Two guards: actor-keyed concurrency group, actor != bot here,
+    # and the final step pushes only after every other job is green.
+    needs: [changes, build-backend]
+    # captures_only: a human deleting/breaking a capture gets a regeneration
+    # run; the bot's own pushes are excluded (it IS the regenerator).
+    if: github.event_name == 'pull_request' && (needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend_app == 'true' || needs.changes.outputs.ci_workflow == 'true' || needs.changes.outputs.captures_only == 'true') && needs.build-backend.result == 'success' && github.actor != 'github-actions[bot]'
+    permissions:
+      contents: write
+      actions: read
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./frontend
+    services:
+      postgres:
+        image: postgres:19-alpine
+        env:
+          POSTGRES_DB: laruche
+          POSTGRES_USER: laruche
+          POSTGRES_PASSWORD: laruche
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      # Backend env (AppConfig has no serde defaults — cf. backend/src/config.rs).
+      # S3 is read-only for capture pages; no rustfs service needed.
+      LA_RUCHE__DB__URL: postgres://laruche:laruche@localhost:5432/laruche
+      LA_RUCHE__DB__MAX_CONNECTIONS: "5"
+      LA_RUCHE__APP__DEMO_MODE: "true"
+      LA_RUCHE__APP__HOST: "0.0.0.0"
+      LA_RUCHE__APP__PORT: "8080"
+      LA_RUCHE__APP__PUBLIC_URL: "http://localhost"
+      LA_RUCHE__APP__NAME: "La Ruche CI"
+      LA_RUCHE__AUTH__JWT_SECRET: "e2e-only-secret-not-used-in-production-0123456789abcdef"
+      LA_RUCHE__AUTH__ACCESS_TOKEN_TTL_SECS: "900"
+      LA_RUCHE__AUTH__REFRESH_TOKEN_TTL_DAYS: "30"
+      LA_RUCHE__AUTH__INVITATION_TTL_DAYS: "7"
+      LA_RUCHE__AUTH__RESET_TOKEN_TTL_SECS: "3600"
+      LA_RUCHE__AUTH__VENDOR_TOKEN_TTL_DAYS: "30"
+      LA_RUCHE__AUTH__ARGON2_MEMORY_KB: "65536"
+      LA_RUCHE__AUTH__ARGON2_ITERATIONS: "3"
+      LA_RUCHE__S3__ENDPOINT_URL: "http://localhost:9000"
+      LA_RUCHE__S3__PUBLIC_URL: "http://localhost:9000"
+      LA_RUCHE__S3__REGION: "us-east-1"
+      LA_RUCHE__S3__ACCESS_KEY_ID: "s3admin"
+      LA_RUCHE__S3__SECRET_ACCESS_KEY: "s3admin"
+      LA_RUCHE__S3__BUCKET_PREFIX: "laruche-ci"
+      LA_RUCHE__S3__STAGING_BUCKET: "laruche-staging"
+      LA_RUCHE__S3__PRESIGNED_TTL_SECS: "900"
+      LA_RUCHE__S3__CLEANUP_ENABLED: "false"
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.head_ref }}
+
+      - name: Download backend binary
+        uses: actions/download-artifact@v8
+        with:
+          name: ${{ env.BACKEND_BIN_ARTIFACT_NAME }}
+          path: backend/target/release
+
+      - name: Make backend executable
+        working-directory: .
+        run: chmod +x backend/target/release/laruche
+
+      - name: Cache sqlx-cli binary
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.cargo/bin/sqlx
+            ~/.cargo/bin/cargo-sqlx
+          key: sqlx-cli-${{ runner.os }}-${{ env.SQLX_CLI_VERSION }}-v2
+      - name: Install sqlx-cli
+        working-directory: ./backend
+        run: |
+          if ! command -v sqlx >/dev/null 2>&1; then
+            echo "Installing sqlx-cli (not restored from cache)"
+            cargo install sqlx-cli --version ${{ env.SQLX_CLI_VERSION }} --no-default-features --features postgres --locked
+          fi
+      - name: Run migrations
+        working-directory: ./backend
+        env:
+          DATABASE_URL: postgres://laruche:laruche@localhost:5432/laruche
+        run: sqlx migrate run
+      - name: Pre-seed demo database (anchor NOW()/CURRENT_DATE)
+        # The demo seed is relative to now(): re-seeding per run would change
+        # every displayed date/time between runs (churny bot commits). Anchor
+        # NOW()/CURRENT_DATE to the capture clock — read from
+        # frontend/e2e/helpers-visual.ts (FIXED_NOW_ISO), the single source
+        # of truth; the backend then skips its own seed (DB non-empty).
+        working-directory: ./backend
+        env:
+          PGPASSWORD: laruche
+        run: |
+          ANCHOR_TS=$(sed -n "s/^export const FIXED_NOW_ISO = '\\([^']*\\)'/\\1/p" ../frontend/e2e/helpers-visual.ts)
+          test -n "$ANCHOR_TS" || { echo "FIXED_NOW_ISO not found in helpers-visual.ts"; exit 1; }
+          sed -e "s/NOW()/'${ANCHOR_TS}'::timestamptz/g" \
+              -e "s/CURRENT_DATE/'${ANCHOR_TS%% *}'::date/g" \
+              seeds/demo.sql \
+            | psql -h localhost -U laruche -d laruche -v ON_ERROR_STOP=1 -qf -
+      - name: Start backend (migrations + seed demo at boot)
+        working-directory: ./backend
+        run: |
+          nohup ./target/release/laruche > /tmp/laruche-visual.log 2>&1 &
+          echo $! > /tmp/laruche-visual.pid
+      - name: Wait for backend
+        run: |
+          for i in $(seq 1 30); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/api/v1/auth/me || true)
+            if [ "$code" = "401" ] || [ "$code" = "200" ]; then
+              echo "Backend ready (HTTP $code)"; exit 0
+            fi
+            sleep 2
+          done
+          echo "--- backend log ---"; tail -50 /tmp/laruche-visual.log
+          exit 1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 25
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci --prefer-offline
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('frontend/package-lock.json') }}
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Capture pages
+        env:
+          CI: "true"
+        run: npx playwright test --project=visual
+      - name: Discard captures below the noise threshold
+        # Residual rendering jitter (pixelmatch-measured: 81-562 px, visually
+        # invisible) still differs byte-to-byte between CI runs. Keep a
+        # capture only if its pixelmatch mismatch (AA-aware) exceeds 1000 px —
+        # real content changes sit far above that.
+        working-directory: ./frontend
+        run: node e2e/scripts/discard-noise.mjs
+      - name: Commit & push changed captures
+        continue-on-error: true
+        working-directory: .
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          REPO="${{ github.repository }}"
+          RUN="${{ github.run_id }}"
+          wait_ok=false
+          for i in $(seq 1 90); do
+            pending=$(gh api "repos/$REPO/actions/runs/$RUN/jobs" \
+              --jq '[.jobs[] | select(.name | startswith("Captures") | not) | select(.status != "completed")] | length')
+            if [ "$pending" = "0" ]; then wait_ok=true; break; fi
+            sleep 30
+          done
+          failed=$(gh api "repos/$REPO/actions/runs/$RUN/jobs" \
+            --jq '[.jobs[] | select(.name | startswith("Captures") | not) | select(.conclusion == "failure" or .conclusion == "cancelled")] | length')
+          if [ "$wait_ok" != "true" ] || [ "$failed" != "0" ]; then
+            echo "wait_ok=$wait_ok failed=$failed — captures not committed"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # -f: e2e/visual/ is git-ignored so local (ARM64) runs never commit
+          # captures; only this x86 job force-adds them.
+          git add -f frontend/e2e/visual
+          if git diff --cached --quiet; then
+            echo "No visual changes — nothing to commit"
+          else
+            git commit -m "chore(visual): regenerate captures"
+            git push origin "HEAD:${{ github.head_ref }}"
+          fi

@@ -477,7 +477,7 @@ async function activateContract(contract: VendorContract) {
               <button
                 :class="['view-toggle__btn', { 'view-toggle__btn--active': viewMode === 'table' }]"
                 :aria-pressed="viewMode === 'table'"
-                :aria-label="t('contracts.filters.viewTable')"
+                :aria-label="t('common.viewList')"
                 @click="viewMode = 'table'"
               >
                 <CIconList class="icon-sm" />
@@ -485,7 +485,7 @@ async function activateContract(contract: VendorContract) {
               <button
                 :class="['view-toggle__btn', { 'view-toggle__btn--active': viewMode === 'cards' }]"
                 :aria-pressed="viewMode === 'cards'"
-                :aria-label="t('contracts.filters.viewCards')"
+                :aria-label="t('common.viewGrid')"
                 @click="viewMode = 'cards'"
               >
                 <CIconGrid class="icon-sm" />

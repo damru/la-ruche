@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE user_building SET end_date = CURRENT_DATE WHERE user_id = $1 AND building_id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "0f8db7b990a27e861b1f67ec7e168ce6b02ed7f42d6edad41c07ea85c03c0de1"
+}

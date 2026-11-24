@@ -885,7 +885,7 @@ function formatSharePercentage(value: number): string {
               <span>{{ t('budget.worksFundProgressLabel', { pct: worksFundProgressPct }) }}</span>
               <span
                 class="text-end font-medium"
-                style="color: var(--color-warning)"
+                style="color: var(--color-warning-fg)"
               >
                 {{ t('budget.worksFundRemainingToCall', { amount: formatCurrency(worksFundRemainingToCall) }) }}
               </span>

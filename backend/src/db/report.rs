@@ -15,6 +15,7 @@ pub struct ReportRow {
     pub author_id: Uuid,
     pub author_first_name: String,
     pub author_last_name: String,
+    pub is_anonymous: bool,
     pub title: String,
     pub description: Option<String>,
     pub status: String,
@@ -28,6 +29,7 @@ pub struct ReportRow {
 const LIST_QUERY: &str = concat!(
     "SELECT r.id, r.building_id, r.unit_id, r.author_id,",
     " u.first_name AS author_first_name, u.last_name AS author_last_name,",
+    " r.is_anonymous,",
     " r.title, r.description, r.status::text AS status,",
     " r.task_id, t.status::text AS task_status,",
     " (SELECT COUNT(*) FROM report_document rd",
@@ -43,6 +45,7 @@ const LIST_QUERY: &str = concat!(
 const GET_QUERY: &str = concat!(
     "SELECT r.id, r.building_id, r.unit_id, r.author_id,",
     " u.first_name AS author_first_name, u.last_name AS author_last_name,",
+    " r.is_anonymous,",
     " r.title, r.description, r.status::text AS status,",
     " r.task_id, t.status::text AS task_status,",
     " (SELECT COUNT(*) FROM report_document rd",
@@ -63,6 +66,7 @@ fn row_to_report(r: &sqlx::postgres::PgRow) -> Result<ReportRow, sqlx::Error> {
         author_id: r.try_get("author_id")?,
         author_first_name: r.try_get("author_first_name")?,
         author_last_name: r.try_get("author_last_name")?,
+        is_anonymous: r.try_get("is_anonymous")?,
         title: r.try_get("title")?,
         description: r.try_get("description")?,
         status: r.try_get("status")?,
@@ -111,6 +115,8 @@ pub struct CreateReportInput {
     pub title: String,
     pub description: Option<String>,
     pub unit_id: Option<Uuid>,
+    #[serde(default)]
+    pub is_anonymous: bool,
 }
 
 pub async fn create(
@@ -124,14 +130,15 @@ pub async fn create(
     // committed while the subsequent enriched SELECT fails, which would save the
     // report in the DB but return a "Database error" to the caller.
     let row = sqlx::query(
-        "INSERT INTO report (building_id, author_id, title, description, unit_id) \
-         VALUES ($1, $2, $3, $4, $5) RETURNING id",
+        "INSERT INTO report (building_id, author_id, title, description, unit_id, is_anonymous) \
+         VALUES ($1, $2, $3, $4, $5, $6) RETURNING id",
     )
     .bind(building_id)
     .bind(author_id)
     .bind(&input.title)
     .bind(&input.description)
     .bind(input.unit_id)
+    .bind(input.is_anonymous)
     .fetch_one(pool)
     .await?;
     let id: Uuid = row.try_get("id")?;

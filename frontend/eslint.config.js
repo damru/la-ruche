@@ -27,7 +27,7 @@ export default ts.config(
 
   // ── Project-specific overrides ────────────────────────────────────
   {
-    files: ['**/*.{ts,tsx,vue}'],
+    files: ['**/*.{ts,tsx,vue,mjs}'],
     rules: {
       // TypeScript handles symbol resolution for browser globals and DOM types.
       'no-undef': 'off',

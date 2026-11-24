@@ -366,6 +366,8 @@ export const tasksApi = {
     api.delete(`/tasks/${id}`),
   cancel: (id: string) =>
     api.post(`/tasks/${id}/cancel`),
+  takeBack: (id: string) =>
+    api.post<Task>(`/tasks/${id}/take-back`),
   listDocuments: (id: string) =>
     api.get<Document[]>(`/tasks/${id}/documents`),
   attachDocument: (id: string, document_id: string) =>
@@ -494,7 +496,7 @@ export const reportsApi = {
     api.get<Report[]>('/reports'),
   get: (id: string) =>
     api.get<Report>(`/reports/${id}`),
-  create: (data: { title: string; description?: string; unit_id?: string }) =>
+  create: (data: { title: string; description?: string; unit_id?: string; is_anonymous?: boolean }) =>
     api.post<Report>('/reports', data),
   update: (id: string, data: { title: string; description: string | null; unit_id: string | null }) =>
     api.put(`/reports/${id}`, data),

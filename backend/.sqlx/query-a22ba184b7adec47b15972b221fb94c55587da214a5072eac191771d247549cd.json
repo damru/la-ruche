@@ -1,0 +1,78 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT u.id as unit_id,\n                   u.unit_number,\n                   CASE WHEN ua.id IS NULL THEN NULL\n                        ELSE ua.first_name || ' ' || ua.last_name\n                   END as owner_name,\n                   gma.mode::text as \"mode!\",\n                   gma.representative_name,\n                   gma.shares_represented as \"shares_represented!\"\n            FROM general_meeting_attendance gma\n            JOIN unit u ON u.id = gma.unit_id\n            LEFT JOIN unit_owner uo ON uo.unit_id = u.id AND uo.end_date IS NULL\n            LEFT JOIN user_account ua ON ua.id = uo.user_id\n            WHERE gma.meeting_id = $1\n            ORDER BY u.unit_number\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "unit_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "unit",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "unit_number",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "unit",
+            "name": "unit_number"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "owner_name",
+        "type_info": "Text",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 3,
+        "name": "mode!",
+        "type_info": "Text",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 4,
+        "name": "representative_name",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "general_meeting_attendance",
+            "name": "representative_name"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "shares_represented!",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "general_meeting_attendance",
+            "name": "shares_represented"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      null,
+      null,
+      true,
+      false
+    ]
+  },
+  "hash": "a22ba184b7adec47b15972b221fb94c55587da214a5072eac191771d247549cd"
+}

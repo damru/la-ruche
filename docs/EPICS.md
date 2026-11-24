@@ -309,7 +309,7 @@ Tâches assignées en interne, lien tokenisé éphémère pour accès prestatair
 * `EP-007-S04` ✅ — Valider et archiver les documents déposés par le prestataire (bucket final) puis passer la tâche en pré-validation (`awaiting_validation`) avec commentaire et coût optionnel
 * `EP-007-S05` ✅ — Clôturer une tâche avec coût optionnel et l'alimenter automatiquement au carnet d'entretien (→ EP-009-S03), y compris après réouverture ; inclut `vendor_name` du prestataire assigné
 * `EP-007-S06` ✅ — Assigner un prestataire du référentiel (EP-015) à une tâche via autocomplete, avec suggestion de création optionnelle si aucune correspondance n'existe et conservation d'un nom libre sur la tâche si aucun prestataire n'est créé
-* [EP-007-S07](specs/EP-007-S07-spec.md) — Reprendre en main une tâche depuis une phase devis (`awaiting_quote` ou `quote_received`) : retour à `in_progress` sans annuler les documents reçus, sans révocation automatique du lien prestataire, avec événement `status_changed` dans `activity_log` (AC-012-D, PRD US-TP-012)
+* [EP-007-S07](specs/EP-007-S07-spec.md) ✅ — Reprendre en main une tâche depuis une phase devis (`awaiting_quote` ou `quote_received`) : retour à `in_progress` sans annuler les documents reçus, sans révocation automatique du lien prestataire, avec événement `status_changed` dans `activity_log` (PRD US-TP-012)
 * [EP-007-S08](specs/EP-007-S08-spec.md) ✅ — Supprimer ou annuler une tâche : suppression bloquée si une entrée carnet d'entretien ou une soumission prestataire y est rattachée ; annulation disponible comme alternative sans destruction des données (PRD US-TP-016, ADR-009)
 * [EP-007-S09](specs/EP-007-S09-spec.md) ✅ — Consulter, filtrer et rechercher les tâches : liste paginée avec filtres par statut, priorité, assignataire et prestataire, recherche par titre (PRD US-TP-003)
 * [EP-007-S10](specs/EP-007-S10-spec.md) — Gérer les documents rattachés à une tâche côté gestionnaire : ajout append-only après clôture, suppression bloquée si la tâche est clôturée ; indépendant du flux prestataire (PRD US-TP-005)
@@ -386,7 +386,7 @@ Consultations initiables par tout résident sans approbation préalable, résult
 
 **MVP :** oui | **Réf. :** [PRD - Signalements.md](product/PRD%20-%20Signalements.md)
 
-**État code actuel :** backend réel (CRUD, documents associés, conversion en tâche avec priorité choisie, lien `report.task_id`, clôture automatique du signalement à la fermeture effective de la tâche liée, commentaires de suivi append-only) + frontend branché (liste, création, photos, mise à jour de statut, conversion en tâche, section « Suivi »).
+**État code actuel :** backend réel (CRUD, documents associés, conversion en tâche avec priorité choisie, lien `report.task_id`, clôture automatique du signalement à la fermeture effective de la tâche liée, commentaires de suivi append-only) + frontend branché (liste, création, photos, mise à jour de statut, conversion en tâche, section « Suivi »), anonymat optionnel du déclarant à la création (masquage de l'identité dans toutes les réponses API sauf pour le déclarant lui-même).
 
 Signalement par tout résident avec description et lot optionnel, suivi de statut par le syndic, conversion possible en tâche.
 
@@ -396,7 +396,7 @@ Signalement par tout résident avec description et lot optionnel, suivi de statu
 * `EP-011-S02` ✅ — Suivre et mettre à jour le statut (reçu → en cours → clos) — manager/conseil syndical
 * `EP-011-S03` ✅ — Convertir un signalement en tâche — crée une tâche avec titre/description + priorité choisie depuis le signalement, passe automatiquement le signalement en `in_progress`, puis le clôture quand la tâche liée est effectivement fermée
 * [EP-011-S04](specs/EP-011-S04-spec.md) ✅ — Ajouter un commentaire de suivi à un signalement : le Syndic et le Conseil syndical peuvent poster des commentaires horodatés visibles du déclarant, pour communiquer sur l'avancement (PRD US-SIG-006)
-* [EP-011-S05](specs/EP-011-S05-spec.md) — Gérer l'anonymat du déclarant : le résident choisit à la création du signalement de rester anonyme ; son identité n'est jamais exposée aux autres résidents ni au Syndic dans la vue liste (PRD US-SIG-007)
+* [EP-011-S05](specs/EP-011-S05-spec.md) ✅ — Gérer l'anonymat du déclarant : le résident choisit à la création du signalement de rester anonyme ; son identité n'est jamais exposée aux autres résidents ni au Syndic dans la vue liste (PRD US-SIG-007)
 
 ***
 
@@ -545,6 +545,7 @@ Durcir les entités comptablement critiques pour empêcher toute modification r�
 * ✅ [EP-018-S05](specs/EP-018-S05-spec.md) — Appliquer le Pattern B sur `vendor_contract` : ajouter `predecessor_id`, remplacer `Modifier` par `Créer un avenant` sur les champs gelés, clôturer l'ancien contrat à l'activation de l'avenant et exposer la chaîne d'avenants
 * ✅ [EP-018-S06](specs/EP-018-S06-spec.md) — Appliquer le Pattern B sur `budget` / `budget_line` : ajouter `parent_budget_id`, remplacer l'unicité annuelle par une contrainte compatible rectificatifs, versionner `budget_line` via `valid_from` / `valid_to` et créer le workflow de budget rectificatif
 * ✅ `EP-018-S07` — Appliquer le Pattern C sur les corrections comptables : avoirs sur `levy_call`, corrections append-only sur `maintenance_log` manuel, et journalisation des opérations `UPDATE` / `DELETE` financières avec diff ciblé (`old_values` / `new_values`)
+* [EP-018-S08](specs/EP-018-S08-spec.md) — Centraliser la capture des événements applicatifs (ADR-013) : les journaux probant, cycle de vie et carnet d'entretien deviennent des projections d'un flux unique — aucun changement de schéma ni de comportement
 
 ***
 
@@ -597,6 +598,7 @@ Consolidation technique du design system : migration des tokens de couleur vers 
 * [EP-020-S15](specs/EP-020-S15-spec.md) — Implémenter `CCardHeader` (molecule) : en-tête de carte d'entité (`withIcon?`, slots `#icon`, `#chips`) conforme à l'ossature commune des cartes de liste (DESIGN.md §3.2, §4.1 — 🔲 planifié)
 * [EP-020-S16](specs/EP-020-S16-spec.md) — Implémenter `CDocumentList` (molecule) : liste de documents avec téléchargement/retrait (`documents`, `readonly?`, `emit('remove', doc)`) mutualisant le markup dupliqué des vues contrats/sinistres/tâches (DESIGN.md §3.2 — 🔲 planifié)
 * [EP-020-S17](specs/EP-020-S17-spec.md) — Implémenter `CDataText` (atom) : texte tabulaire JetBrains Mono (`size` sm|md|lg, `font-mono font-medium lining-nums tabular-nums`) remplaçant les spans mono ad hoc (DESIGN.md §3.1 — 🔲 planifié)
+* `EP-020-S18` — Passage mobile : densité et débordements. Détails issus de la revue design de la PR #169 : boutons d'action d'en-tête en icône seule sur mobile (global) ; tableaux trop larges sans indicateur de scroll horizontal (documents et toutes les vues à tableau) ; hero trop grands en mobile 1-ligne (dashboard, registre copro, charges) ; pill « dans le délai légal » en overflow (sinistres) ; lignes de tableau gouvernance trop hautes. Critères : aucune overflow horizontal à 375 px, densité mobile conforme DESIGN.md (🔲 planifié)
 
 ***
 

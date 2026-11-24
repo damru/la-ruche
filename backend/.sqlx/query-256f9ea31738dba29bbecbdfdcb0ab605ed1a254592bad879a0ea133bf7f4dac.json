@@ -1,0 +1,25 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT EXISTS(\n            SELECT 1\n            FROM general_meeting gm\n            JOIN document d ON d.id = $2\n            WHERE gm.id = $1\n              AND gm.building_id = $3\n              AND d.building_id = $3\n        )\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "exists",
+        "type_info": "Bool",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "256f9ea31738dba29bbecbdfdcb0ab605ed1a254592bad879a0ea133bf7f4dac"
+}

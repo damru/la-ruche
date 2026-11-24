@@ -1,0 +1,256 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT id, meeting_type::text as \"meeting_type!\", status::text as \"status!\",\n               notice_date, meeting_date, location, agenda, minutes_document_id, created_at,\n               president_name, president_user_id, secretary_name, secretary_user_id,\n               scrutineers as \"scrutineers!: serde_json::Value\",\n               minutes_notified_at,\n               convocation_sent_at,\n               convocation_channel::text as convocation_channel,\n               minutes_president_signed_at,\n               minutes_secretary_signed_at,\n               minutes_scrutineers_signed as \"minutes_scrutineers_signed!: serde_json::Value\",\n               0::bigint AS \"resolution_count!\", 0::bigint AS \"passed_count!\"\n        FROM general_meeting\n        WHERE id = $1 AND building_id = $2\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "general_meeting",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "meeting_type!",
+        "type_info": "Text",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 2,
+        "name": "status!",
+        "type_info": "Text",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 3,
+        "name": "notice_date",
+        "type_info": "Date",
+        "origin": {
+          "Table": {
+            "table": "general_meeting",
+            "name": "notice_date"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "meeting_date",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "general_meeting",
+            "name": "meeting_date"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "location",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "general_meeting",
+            "name": "location"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "agenda",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "general_meeting",
+            "name": "agenda"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "minutes_document_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "general_meeting",
+            "name": "minutes_document_id"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "created_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "general_meeting",
+            "name": "created_at"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "president_name",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "general_meeting",
+            "name": "president_name"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "president_user_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "general_meeting",
+            "name": "president_user_id"
+          }
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "secretary_name",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "general_meeting",
+            "name": "secretary_name"
+          }
+        }
+      },
+      {
+        "ordinal": 12,
+        "name": "secretary_user_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "general_meeting",
+            "name": "secretary_user_id"
+          }
+        }
+      },
+      {
+        "ordinal": 13,
+        "name": "scrutineers!: serde_json::Value",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "general_meeting",
+            "name": "scrutineers"
+          }
+        }
+      },
+      {
+        "ordinal": 14,
+        "name": "minutes_notified_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "general_meeting",
+            "name": "minutes_notified_at"
+          }
+        }
+      },
+      {
+        "ordinal": 15,
+        "name": "convocation_sent_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "general_meeting",
+            "name": "convocation_sent_at"
+          }
+        }
+      },
+      {
+        "ordinal": 16,
+        "name": "convocation_channel",
+        "type_info": "Text",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 17,
+        "name": "minutes_president_signed_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "general_meeting",
+            "name": "minutes_president_signed_at"
+          }
+        }
+      },
+      {
+        "ordinal": 18,
+        "name": "minutes_secretary_signed_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "general_meeting",
+            "name": "minutes_secretary_signed_at"
+          }
+        }
+      },
+      {
+        "ordinal": 19,
+        "name": "minutes_scrutineers_signed!: serde_json::Value",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "general_meeting",
+            "name": "minutes_scrutineers_signed"
+          }
+        }
+      },
+      {
+        "ordinal": 20,
+        "name": "resolution_count!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 21,
+        "name": "passed_count!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      null,
+      null,
+      true,
+      false,
+      true,
+      true,
+      true,
+      false,
+      true,
+      true,
+      true,
+      true,
+      false,
+      true,
+      true,
+      null,
+      true,
+      true,
+      false,
+      null,
+      null
+    ]
+  },
+  "hash": "d42367688468826f412795c30a307c9719cbe54017d2ccea08d38edbd349e5d9"
+}
