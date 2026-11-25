@@ -1,7 +1,3 @@
-// Activity log (lifecycle timeline) — EP-017 S01/S02/S03.
-// Emission of events at every report/task mutation, then read through the
-// merged /timeline endpoints; events are also checked directly in the DB.
-
 mod common;
 
 use axum::http::StatusCode;
@@ -81,7 +77,6 @@ async fn insert_and_list_for_entity_are_ordered_and_transactional() {
         .expect("count");
     assert_eq!(count, 0, "rolled-back insert must not persist");
 
-    // Three events (one anonymous actor, one with payload) via the pool.
     for (action, actor, payload) in [
         ("created", None, None),
         (
@@ -125,14 +120,12 @@ async fn report_lifecycle_events() {
     let tenant = format!("Bearer {}", ctx.tenant_jwt);
     let manager = format!("Bearer {}", ctx.manager_jwt);
 
-    // 1. POST /reports -> report.created with the creator as actor.
     let report_id = create_report(&server, &tenant, "Fuite en cuisine").await;
     let ev = events_for(&pool, "report", &report_id).await;
     assert_eq!(ev.len(), 1);
     assert_eq!(ev[0]["action"], json!("created"));
     assert!(ev[0]["actor_id"].is_string(), "creator must be the actor");
 
-    // 2. PUT /reports/{id}/status -> status_changed with old/new.
     let resp = server
         .put(&format!("/api/v1/reports/{report_id}/status"))
         .add_header("Authorization", &manager)
@@ -145,7 +138,6 @@ async fn report_lifecycle_events() {
     assert_eq!(ev[1]["payload"]["old_status"], json!("open"));
     assert_eq!(ev[1]["payload"]["new_status"], json!("in_progress"));
 
-    // No-op status: no new event.
     server
         .put(&format!("/api/v1/reports/{report_id}/status"))
         .add_header("Authorization", &manager)
@@ -153,7 +145,6 @@ async fn report_lifecycle_events() {
         .await;
     assert_eq!(events_for(&pool, "report", &report_id).await.len(), 2);
 
-    // 3. POST /reports/{id}/task -> converted_to_task + task.created, atomically.
     let resp = server
         .post(&format!("/api/v1/reports/{report_id}/task"))
         .add_header("Authorization", &manager)
@@ -191,7 +182,6 @@ async fn task_mutation_events_and_closed_transition() {
         json!("created")
     );
 
-    // 4. PUT /tasks/{id} changing status + contractor -> two distinct events.
     let resp = server
         .put(&format!("/api/v1/tasks/{task_id}"))
         .add_header("Authorization", &manager)
@@ -222,7 +212,6 @@ async fn task_mutation_events_and_closed_transition() {
         json!("Plomberie Pro")
     );
 
-    // Same body again -> no new event (no-op diff).
     server
         .put(&format!("/api/v1/tasks/{task_id}"))
         .add_header("Authorization", &manager)
@@ -230,7 +219,6 @@ async fn task_mutation_events_and_closed_transition() {
         .await;
     assert_eq!(events_for(&pool, "task", &task_id).await.len(), 3);
 
-    // 5. Transition to closed -> `closed` event (not status_changed).
     server
         .put(&format!("/api/v1/tasks/{task_id}"))
         .add_header("Authorization", &manager)
@@ -252,7 +240,6 @@ async fn vendor_token_and_submission_events() {
 
     let task_id = create_task(&server, &manager, "Intervention chauffe-eau").await;
 
-    // 6. POST /tasks/{id}/vendor-token -> vendor_link_generated (no raw token) + status_changed.
     let resp = server
         .post(&format!("/api/v1/tasks/{task_id}/vendor-token"))
         .add_header("Authorization", &manager)
@@ -279,7 +266,6 @@ async fn vendor_token_and_submission_events() {
         .expect("status event");
     assert_eq!(status["payload"]["new_status"], json!("awaiting_vendor"));
 
-    // 7. POST /api/v1/vendor/{token}/submission -> vendor_submission_received, actor NULL.
     let resp = server
         .post(&format!("/api/v1/vendor/{token}/submission"))
         .json(&json!({ "comment": "Devis ci-joint", "documents": [] }))
@@ -321,7 +307,6 @@ async fn take_back_from_quote_phase_emits_status_changed() {
     assert_eq!(ev[1]["payload"]["new_status"], json!("in_progress"));
     assert!(ev[1]["actor_id"].is_string());
 
-    // Take-back is refused outside the quote phase.
     let resp = server
         .post(&format!("/api/v1/tasks/{task_id}/take-back"))
         .add_header("Authorization", &manager)
@@ -352,7 +337,6 @@ async fn timeline_endpoints_return_the_same_merged_chain() {
         .json(&json!({ "status": "in_progress" }))
         .await;
 
-    // 1. Both endpoints return the same ordered chain.
     let from_report = server
         .get(&format!("/api/v1/reports/{report_id}/timeline"))
         .add_header("Authorization", &tenant)
@@ -378,10 +362,8 @@ async fn timeline_endpoints_return_the_same_merged_chain() {
     let mut middle: Vec<&str> = actions[1..3].to_vec();
     middle.sort_unstable();
     assert_eq!(middle, vec!["converted_to_task", "created"]);
-    // actor_name resolved for known actors.
     assert!(a[0]["actor_name"].is_string());
 
-    // 2. Task without source report: timeline = task events only.
     let lone = create_task(&server, &manager, "Tâche isolée").await;
     let resp = server
         .get(&format!("/api/v1/tasks/{lone}/timeline"))
@@ -391,7 +373,6 @@ async fn timeline_endpoints_return_the_same_merged_chain() {
     assert_eq!(events.len(), 1);
     assert_eq!(events[0]["action"], json!("created"));
 
-    // 3. Report not converted: timeline = report events only.
     let plain = create_report(&server, &tenant, "Ampoule couloir").await;
     let resp = server
         .get(&format!("/api/v1/reports/{plain}/timeline"))
@@ -401,7 +382,6 @@ async fn timeline_endpoints_return_the_same_merged_chain() {
     assert_eq!(events.len(), 1);
     assert_eq!(events[0]["entity_type"], json!("report"));
 
-    // 4. Cross-building and unknown entity -> 404.
     let other_building = uuid::Uuid::new_v4();
     let (_cfg, pool) = common::test_db().await;
     sqlx::query(
@@ -416,7 +396,7 @@ async fn timeline_endpoints_return_the_same_merged_chain() {
         .get(&format!("/api/v1/tasks/{task_id}/timeline"))
         .add_header("Authorization", &format!("Bearer {}", ctx.manager_jwt))
         .await;
-    assert_eq!(resp.status_code(), StatusCode::OK); // same building still OK
+    assert_eq!(resp.status_code(), StatusCode::OK);
     let unknown = uuid::Uuid::new_v4();
     let resp = server
         .get(&format!("/api/v1/tasks/{unknown}/timeline"))

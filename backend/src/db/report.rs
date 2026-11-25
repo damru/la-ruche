@@ -284,7 +284,7 @@ pub async fn convert_to_task(
     .execute(&mut *tx)
     .await?;
 
-    // Step 5: lifecycle events, atomically with the conversion.
+    // Lifecycle events join the same transaction as the conversion.
     crate::db::activity_log::insert(
         &mut *tx,
         crate::db::activity_log::ENTITY_REPORT,

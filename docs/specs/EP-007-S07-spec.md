@@ -6,8 +6,6 @@
 **Réf. PRD :** US-TP-012 · **Réf. LEGAL :** — · **Réf. ADR :** —
 **État :** IMPLÉMENTÉ (backend + frontend)
 
-> **AC-012-D (entrée timeline immuable avec acteur + cause) :** livrée par EP-017-S02 (PR #171) : le take-back émet un événement `status_changed` (`old_status` → `in_progress`) avec l'acteur, dans la même transaction que la mutation.
-
 ---
 
 ## 1. Analyse préalable — statuts devis inexistants
