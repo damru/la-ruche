@@ -116,8 +116,6 @@ pub mod status {
     pub const QUOTE_RECEIVED: &str = "quote_received";
     pub const AWAITING_VENDOR: &str = "awaiting_vendor";
     pub const AWAITING_VALIDATION: &str = "awaiting_validation";
-    pub const AWAITING_QUOTE: &str = "awaiting_quote";
-    pub const QUOTE_RECEIVED: &str = "quote_received";
     pub const CLOSED: &str = "closed";
     pub const CANCELLED: &str = "cancelled";
 }
