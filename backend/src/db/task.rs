@@ -136,8 +136,6 @@ const VALID_STATUSES: &[&str] = &[
     status::QUOTE_RECEIVED,
     status::AWAITING_VENDOR,
     status::AWAITING_VALIDATION,
-    status::AWAITING_QUOTE,
-    status::QUOTE_RECEIVED,
     status::CLOSED,
     status::CANCELLED,
 ];

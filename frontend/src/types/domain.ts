@@ -23,6 +23,8 @@ export type ClaimType = 'current' | 'natural_disaster' | 'theft'
 export type ClaimStatus = 'draft' | 'open' | 'in_progress' | 'closed'
 export type ReportStatus = 'open' | 'in_progress' | 'closed'
 
+// Mirrors the closed vocabulary of backend `db::activity_log::actions::*`;
+// both sides must move together.
 export type ActivityAction =
   | 'created'
   | 'status_changed'
@@ -40,7 +42,7 @@ export interface TimelineEvent {
   entity_type: 'report' | 'task'
   entity_id: string
   action: ActivityAction
-  actor_id?: string
+  actor_id: string | null
   actor_name?: string | null
   payload?: Record<string, unknown> | null
   created_at: string
