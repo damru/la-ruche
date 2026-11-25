@@ -40,17 +40,23 @@ pub async fn get(
 }
 
 /// GET /reports/{id}/timeline — merged report↔task chain, chronological ascending.
-/// Same access rule as `reports::get` (any authenticated role of the building).
+/// Access is building-scoped only, like `reports::get`: any authenticated role
+/// of the building may read it. Reporter-authored events of an anonymous report
+/// are masked by `report_privacy::mask_timeline`.
 pub async fn timeline(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
-) -> AppResult<Json<Vec<db::activity_log::TimelineEventRow>>> {
+) -> AppResult<Json<serde_json::Value>> {
     let row = db::report::get(&state.pool, id, auth.building_id)
         .await?
         .ok_or(AppError::NotFound)?;
-    let events = db::activity_log::list_for_chain(&state.pool, Some(id), row.task_id).await?;
-    Ok(Json(events))
+    let events =
+        db::activity_log::list_for_chain(&state.pool, auth.building_id, Some(id), row.task_id)
+            .await?;
+    let mut value = json_value(events)?.0;
+    report_privacy::mask_timeline(&mut value, row.author_id, row.is_anonymous, auth.user_id);
+    Ok(Json(value))
 }
 
 /// Create a new report. Any authenticated user (all roles) can open a report.

@@ -1,3 +1,4 @@
+use crate::db::activity_log::{self, ENTITY_TASK, actions};
 use crate::errors::AppResult;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -358,11 +359,12 @@ pub async fn create(
     .fetch_one(pool)
     .await?;
     let row: TaskRow = task_row_from_query(&row)?;
-    crate::db::activity_log::emit_best_effort(
+    activity_log::emit_best_effort(
         pool,
-        crate::db::activity_log::ENTITY_TASK,
+        building_id,
+        ENTITY_TASK,
         row.id,
-        crate::db::activity_log::actions::CREATED,
+        actions::CREATED,
         Some(user_id),
         None,
     )
@@ -407,24 +409,14 @@ pub async fn update_status(
         return Err(crate::errors::AppError::NotFound);
     }
     if old_status != status {
-        let (action, payload) = if status == status::CLOSED {
-            (
-                crate::db::activity_log::actions::CLOSED,
-                serde_json::json!({ "old_status": old_status }),
-            )
-        } else {
-            (
-                crate::db::activity_log::actions::STATUS_CHANGED,
-                serde_json::json!({ "old_status": old_status, "new_status": status }),
-            )
-        };
-        crate::db::activity_log::emit_best_effort(
+        activity_log::emit_status_change_best_effort(
             pool,
-            crate::db::activity_log::ENTITY_TASK,
+            building_id,
+            ENTITY_TASK,
             id,
-            action,
+            &old_status,
+            status,
             actor_id,
-            Some(payload),
         )
         .await;
     }
@@ -470,25 +462,25 @@ pub async fn generate_token(
         return Err(crate::errors::AppError::NotFound);
     }
     // The raw token is a capability secret: it must never land in the payload.
-    crate::db::activity_log::emit_best_effort(
+    activity_log::emit_best_effort(
         pool,
-        crate::db::activity_log::ENTITY_TASK,
+        building_id,
+        ENTITY_TASK,
         id,
-        crate::db::activity_log::actions::VENDOR_LINK_GENERATED,
+        actions::VENDOR_LINK_GENERATED,
         actor_id,
         Some(serde_json::json!({ "expires_at": expires_at })),
     )
     .await;
     if old_status != status::AWAITING_VENDOR {
-        crate::db::activity_log::emit_best_effort(
+        activity_log::emit_status_change_best_effort(
             pool,
-            crate::db::activity_log::ENTITY_TASK,
+            building_id,
+            ENTITY_TASK,
             id,
-            crate::db::activity_log::actions::STATUS_CHANGED,
+            &old_status,
+            status::AWAITING_VENDOR,
             actor_id,
-            Some(
-                serde_json::json!({ "old_status": old_status, "new_status": status::AWAITING_VENDOR }),
-            ),
         )
         .await;
     }
@@ -609,17 +601,64 @@ pub async fn cancel(
             "errors.immutability.frozen",
         ));
     }
-    crate::db::activity_log::insert(
+    activity_log::emit_status_change(
         &mut *tx,
-        crate::db::activity_log::ENTITY_TASK,
+        building_id,
+        ENTITY_TASK,
         id,
-        crate::db::activity_log::actions::STATUS_CHANGED,
+        &old_status,
+        status::CANCELLED,
         actor_id,
-        Some(serde_json::json!({ "old_status": old_status, "new_status": status::CANCELLED })),
     )
     .await?;
     tx.commit().await?;
     Ok(())
+}
+
+async fn emit_assignee_changed(
+    tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
+    building_id: Uuid,
+    task_id: Uuid,
+    old_assignee: Option<Uuid>,
+    new_assignee: Option<Uuid>,
+    actor_id: Option<Uuid>,
+) -> AppResult<()> {
+    activity_log::insert(
+        &mut **tx,
+        building_id,
+        ENTITY_TASK,
+        task_id,
+        actions::ASSIGNEE_CHANGED,
+        actor_id,
+        Some(serde_json::json!({
+            "old_assignee_id": old_assignee,
+            "new_assignee_id": new_assignee,
+        })),
+    )
+    .await
+}
+
+async fn emit_contractor_assigned(
+    tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
+    building_id: Uuid,
+    task_id: Uuid,
+    contractor_id: Option<Uuid>,
+    contractor_name: Option<String>,
+    actor_id: Option<Uuid>,
+) -> AppResult<()> {
+    activity_log::insert(
+        &mut **tx,
+        building_id,
+        ENTITY_TASK,
+        task_id,
+        actions::CONTRACTOR_ASSIGNED,
+        actor_id,
+        Some(serde_json::json!({
+            "contractor_id": contractor_id,
+            "contractor_name": contractor_name,
+        })),
+    )
+    .await
 }
 
 /// Updates mutable task fields. `None` values leave the existing field unchanged.
@@ -717,38 +756,25 @@ pub async fn update_fields(
         return Err(crate::errors::AppError::NotFound);
     }
     if current_status != new_status {
-        let (action, payload) = if new_status == status::CLOSED {
-            (
-                crate::db::activity_log::actions::CLOSED,
-                serde_json::json!({ "old_status": current_status }),
-            )
-        } else {
-            (
-                crate::db::activity_log::actions::STATUS_CHANGED,
-                serde_json::json!({ "old_status": current_status, "new_status": new_status }),
-            )
-        };
-        crate::db::activity_log::insert(
+        activity_log::emit_status_change(
             &mut *tx,
-            crate::db::activity_log::ENTITY_TASK,
+            building_id,
+            ENTITY_TASK,
             id,
-            action,
+            &current_status,
+            &new_status,
             Some(actor_user_id),
-            Some(payload),
         )
         .await?;
     }
     if current.assigned_to != new_assigned_to {
-        crate::db::activity_log::insert(
-            &mut *tx,
-            crate::db::activity_log::ENTITY_TASK,
+        emit_assignee_changed(
+            &mut tx,
+            building_id,
             id,
-            crate::db::activity_log::actions::ASSIGNEE_CHANGED,
+            current.assigned_to,
+            new_assigned_to,
             Some(actor_user_id),
-            Some(serde_json::json!({
-                "old_assignee_id": current.assigned_to,
-                "new_assignee_id": new_assigned_to,
-            })),
         )
         .await?;
     }
@@ -768,16 +794,13 @@ pub async fn update_fields(
                 None => None,
             },
         };
-        crate::db::activity_log::insert(
-            &mut *tx,
-            crate::db::activity_log::ENTITY_TASK,
+        emit_contractor_assigned(
+            &mut tx,
+            building_id,
             id,
-            crate::db::activity_log::actions::CONTRACTOR_ASSIGNED,
+            new_contractor_id,
+            contractor_name,
             Some(actor_user_id),
-            Some(serde_json::json!({
-                "contractor_id": new_contractor_id,
-                "contractor_name": contractor_name,
-            })),
         )
         .await?;
     }
@@ -789,7 +812,7 @@ pub async fn update_fields(
             actor_user_id,
         )
         .await?;
-        crate::db::report::close_linked_to_task(&mut *tx, id, building_id, Some(actor_user_id))
+        crate::db::report::close_linked_to_task(&mut tx, id, building_id, Some(actor_user_id))
             .await?;
     }
     tx.commit().await?;
@@ -837,13 +860,14 @@ pub async fn take_back(
     if result.rows_affected() == 0 {
         return Err(crate::errors::AppError::NotFound);
     }
-    crate::db::activity_log::insert(
+    activity_log::emit_status_change(
         &mut *tx,
-        crate::db::activity_log::ENTITY_TASK,
+        building_id,
+        ENTITY_TASK,
         id,
-        crate::db::activity_log::actions::STATUS_CHANGED,
+        &old_status,
+        status::IN_PROGRESS,
         actor_id,
-        Some(serde_json::json!({ "old_status": old_status, "new_status": status::IN_PROGRESS })),
     )
     .await?;
     tx.commit().await?;
@@ -962,49 +986,15 @@ pub async fn attach_document(
     building_id: Uuid,
     actor_id: Option<Uuid>,
 ) -> AppResult<bool> {
-    let file_name = sqlx::query_scalar::<_, Option<String>>(
-        r#"
-        SELECT d.original_name
-        FROM task t, document d
-        WHERE t.id = $1
-          AND t.building_id = $3
-          AND d.id = $2
-          AND d.building_id = $3
-        "#,
-    )
-    .bind(task_id)
-    .bind(document_id)
-    .bind(building_id)
-    .fetch_optional(pool)
-    .await?;
-
-    let Some(file_name) = file_name else {
-        return Ok(false);
-    };
-
-    sqlx::query(
-        r#"
-        INSERT INTO task_document (task_id, document_id)
-        VALUES ($1, $2)
-        ON CONFLICT (task_id, document_id) DO NOTHING
-        "#,
-    )
-    .bind(task_id)
-    .bind(document_id)
-    .execute(pool)
-    .await?;
-
-    crate::db::activity_log::emit_best_effort(
+    crate::db::document::link_to_entity(
         pool,
-        crate::db::activity_log::ENTITY_TASK,
+        ENTITY_TASK,
         task_id,
-        crate::db::activity_log::actions::DOCUMENT_UPLOADED,
+        building_id,
+        document_id,
         actor_id,
-        Some(serde_json::json!({ "document_id": document_id, "file_name": file_name })),
     )
-    .await;
-
-    Ok(true)
+    .await
 }
 
 pub async fn detach_document(
@@ -1034,29 +1024,27 @@ pub async fn detach_document(
 
 /// Records a vendor submission. Public-token flow: no authenticated actor.
 /// Generic over the executor so the event lands in the caller's transaction.
-pub async fn create_submission<E>(
-    executor: E,
+pub async fn create_submission(
+    conn: &mut sqlx::PgConnection,
+    building_id: Uuid,
     task_id: Uuid,
     comment: Option<String>,
-) -> AppResult<Uuid>
-where
-    E: std::ops::DerefMut<Target = sqlx::postgres::PgConnection>,
-{
-    let mut executor = executor;
+) -> AppResult<Uuid> {
     use sqlx::Row;
     let row = sqlx::query(
         "INSERT INTO vendor_submission (task_id, comment) VALUES ($1, $2) RETURNING id",
     )
     .bind(task_id)
     .bind(comment)
-    .fetch_one(&mut *executor)
+    .fetch_one(&mut *conn)
     .await?;
     let submission_id: Uuid = row.try_get("id")?;
-    crate::db::activity_log::insert(
-        &mut *executor,
-        crate::db::activity_log::ENTITY_TASK,
+    activity_log::insert(
+        &mut *conn,
+        building_id,
+        ENTITY_TASK,
         task_id,
-        crate::db::activity_log::actions::VENDOR_SUBMISSION_RECEIVED,
+        actions::VENDOR_SUBMISSION_RECEIVED,
         None,
         Some(serde_json::json!({ "submission_id": submission_id })),
     )

@@ -147,7 +147,8 @@ pub async fn submit(
     // Create submission record (also emits the lifecycle event, actor = NULL:
     // the vendor flow is a public token, no authenticated session)
     let submission_id =
-        db::task::create_submission(&mut *tx, task.id, input.comment.clone()).await?;
+        db::task::create_submission(&mut tx, task.building_id, task.id, input.comment.clone())
+            .await?;
 
     // Move each file from staging to the building's final bucket and create document records
     for doc_meta in &input.documents {

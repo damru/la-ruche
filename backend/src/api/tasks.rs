@@ -94,18 +94,35 @@ pub async fn get(
 }
 
 /// GET /tasks/{id}/timeline — merged report↔task chain, chronological ascending.
-/// Same access rule as `tasks::get` (manager/board_member via frontend routing).
+/// Access is building-scoped only, like `tasks::get`: any authenticated role of
+/// the building may read it. Reporter-authored events inherited from an
+/// anonymous source report are masked by `report_privacy::mask_timeline`.
 pub async fn timeline(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
-) -> AppResult<Json<Vec<db::activity_log::TimelineEventRow>>> {
+) -> AppResult<Json<serde_json::Value>> {
     db::task::get(&state.pool, id, auth.building_id)
         .await?
         .ok_or(AppError::NotFound)?;
-    let report_id = db::report::find_by_task_id(&state.pool, id, auth.building_id).await?;
-    let events = db::activity_log::list_for_chain(&state.pool, report_id, Some(id)).await?;
-    Ok(Json(events))
+    let report = db::report::find_by_task_id(&state.pool, id, auth.building_id).await?;
+    let events = db::activity_log::list_for_chain(
+        &state.pool,
+        auth.building_id,
+        report.as_ref().map(|r| r.id),
+        Some(id),
+    )
+    .await?;
+    let mut value = json_value(events)?.0;
+    if let Some(report) = report {
+        crate::domain::report_privacy::mask_timeline(
+            &mut value,
+            report.author_id,
+            report.is_anonymous,
+            auth.user_id,
+        );
+    }
+    Ok(Json(value))
 }
 
 pub async fn list_documents(

@@ -39,6 +39,7 @@ export type ActivityAction =
 
 export interface TimelineEvent {
   id: string
+  building_id: string
   entity_type: 'report' | 'task'
   entity_id: string
   action: ActivityAction

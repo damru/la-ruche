@@ -56,11 +56,20 @@ async fn create_task(server: &TestServer, auth: &str, title: &str) -> String {
 async fn insert_and_list_for_entity_are_ordered_and_transactional() {
     let (_cfg, pool) = common::test_db().await;
     let entity_id = uuid::Uuid::new_v4();
+    let building_id: uuid::Uuid = sqlx::query_scalar(
+        "INSERT INTO building (id, name, address_line1, postal_code, city, shares_total) \
+         VALUES ($1, 'Activity Log Test', '1 rue du Test', '75001', 'Paris', 1000) RETURNING id",
+    )
+    .bind(uuid::Uuid::new_v4())
+    .fetch_one(&pool)
+    .await
+    .expect("building");
 
     // Insert inside a rolled-back transaction: nothing must persist.
     let mut tx = pool.begin().await.expect("begin");
     laruche::db::activity_log::insert(
         &mut *tx,
+        building_id,
         laruche::db::activity_log::ENTITY_TASK,
         entity_id,
         laruche::db::activity_log::actions::CREATED,
@@ -88,6 +97,7 @@ async fn insert_and_list_for_entity_are_ordered_and_transactional() {
     ] {
         laruche::db::activity_log::insert(
             &pool,
+            building_id,
             laruche::db::activity_log::ENTITY_TASK,
             entity_id,
             action,
@@ -99,6 +109,7 @@ async fn insert_and_list_for_entity_are_ordered_and_transactional() {
     }
     let rows = laruche::db::activity_log::list_for_entity(
         &pool,
+        building_id,
         laruche::db::activity_log::ENTITY_TASK,
         entity_id,
     )
@@ -408,4 +419,63 @@ async fn timeline_endpoints_return_the_same_merged_chain() {
         .add_header("Authorization", &manager)
         .await;
     assert_eq!(resp.status_code(), StatusCode::NOT_FOUND);
+}
+
+#[tokio::test]
+async fn anonymous_report_timeline_masks_reporter_identity() {
+    let (ctx, _pool) = common::rbac_setup().await;
+    let server = common::test_server().await;
+    let author = format!("Bearer {}", ctx.tenant_jwt);
+    let other = format!("Bearer {}", ctx.coowner_jwt);
+    let manager = format!("Bearer {}", ctx.manager_jwt);
+
+    let created = server
+        .post("/api/v1/reports")
+        .add_header("Authorization", &author)
+        .json(&json!({ "title": "Anonyme", "is_anonymous": true }))
+        .await;
+    assert_eq!(created.status_code(), StatusCode::CREATED);
+    let report_id = created.json::<Value>()["id"]
+        .as_str()
+        .expect("id")
+        .to_string();
+
+    let as_other = server
+        .get(&format!("/api/v1/reports/{report_id}/timeline"))
+        .add_header("Authorization", &other)
+        .await;
+    assert_eq!(as_other.status_code(), StatusCode::OK);
+    let events = as_other.json::<Vec<Value>>();
+    let created_event = events
+        .iter()
+        .find(|e| e["action"] == json!("created"))
+        .expect("created event");
+    assert_eq!(created_event["actor_id"], Value::Null);
+    assert_eq!(created_event["actor_name"], Value::Null);
+
+    let as_manager = server
+        .get(&format!("/api/v1/reports/{report_id}/timeline"))
+        .add_header("Authorization", &manager)
+        .await;
+    let events = as_manager.json::<Vec<Value>>();
+    assert!(
+        events
+            .iter()
+            .all(|e| e["actor_name"].is_null() || e["action"] != json!("created"))
+    );
+
+    let as_author = server
+        .get(&format!("/api/v1/reports/{report_id}/timeline"))
+        .add_header("Authorization", &author)
+        .await;
+    let events = as_author.json::<Vec<Value>>();
+    let created_event = events
+        .iter()
+        .find(|e| e["action"] == json!("created"))
+        .expect("created event");
+    assert!(
+        created_event["actor_id"].is_string(),
+        "reporter sees themself"
+    );
+    assert!(created_event["actor_name"].is_string());
 }
