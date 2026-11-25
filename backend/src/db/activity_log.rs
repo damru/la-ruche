@@ -39,7 +39,6 @@ pub struct ActivityLogRow {
     pub created_at: DateTime<Utc>,
 }
 
-/// One timeline event with the actor's display name resolved.
 #[derive(Debug, Serialize, sqlx::FromRow)]
 pub struct TimelineEventRow {
     pub id: Uuid,

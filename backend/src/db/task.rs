@@ -434,12 +434,14 @@ pub async fn generate_token(
     let token = Uuid::new_v4();
     let expires_at = Utc::now() + chrono::Duration::days(ttl_days as i64);
 
-    let old_status: Option<String> =
-        sqlx::query_scalar("SELECT status::text FROM task WHERE id = $1 AND building_id = $2")
-            .bind(id)
-            .bind(building_id)
-            .fetch_optional(pool)
-            .await?;
+    let mut tx = pool.begin().await?;
+    let old_status: Option<String> = sqlx::query_scalar(
+        "SELECT status::text FROM task WHERE id = $1 AND building_id = $2 FOR UPDATE",
+    )
+    .bind(id)
+    .bind(building_id)
+    .fetch_optional(&mut *tx)
+    .await?;
     let old_status = match old_status {
         None => return Err(crate::errors::AppError::NotFound),
         Some(s) => s,
@@ -455,15 +457,15 @@ pub async fn generate_token(
     .bind(token)
     .bind(expires_at)
     .bind(status::AWAITING_VENDOR)
-    .execute(pool)
+    .execute(&mut *tx)
     .await?;
 
     if result.rows_affected() == 0 {
         return Err(crate::errors::AppError::NotFound);
     }
     // The raw token is a capability secret: it must never land in the payload.
-    activity_log::emit_best_effort(
-        pool,
+    activity_log::insert(
+        &mut *tx,
         building_id,
         ENTITY_TASK,
         id,
@@ -471,10 +473,10 @@ pub async fn generate_token(
         actor_id,
         Some(serde_json::json!({ "expires_at": expires_at })),
     )
-    .await;
+    .await?;
     if old_status != status::AWAITING_VENDOR {
-        activity_log::emit_status_change_best_effort(
-            pool,
+        activity_log::emit_status_change(
+            &mut *tx,
             building_id,
             ENTITY_TASK,
             id,
@@ -482,8 +484,9 @@ pub async fn generate_token(
             status::AWAITING_VENDOR,
             actor_id,
         )
-        .await;
+        .await?;
     }
+    tx.commit().await?;
     Ok((token, expires_at))
 }
 
