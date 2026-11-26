@@ -553,6 +553,7 @@ border-color: var(--color-outline-light);
 | `CPageLoader` | — | Indicateur de chargement |
 | `CSectionHeader` | — | ✅ En-tête de section — `flex items-start justify-between gap-3`. Slot default (zone titre : heading + meta). Slot `#actions` pour les boutons droite. Remplace `.section-head` / `.card-head`. |
 | `CSectionLink` | `to` | ✅ Lien « voir tout » d'en-tête de section — `RouterLink` + chevron. À utiliser dans le slot `#actions` de `CSectionHeader`. |
+| `CTimelineList` | `events` (`TimelineEvent[]`) | ✅ Frise d'événements de cycle de vie (EP-017) — pastille par action (`created`, `status_changed`, `closed`, …), libellé i18n (`timeline.actions.*`), acteur (`actor_name`, « Prestataire externe » si vendeur), détail issu du `payload` (transition de statut, nom de fichier, expiration du lien), badge « Signalement » pour les événements `entity_type === 'report'`, lien vers la tâche créée sur `converted_to_task`. Action inconnue → pastille neutre + libellé générique. |
 | `CTopbarBreadcrumb` | `crumbs[]` | 🔲 planifié (EP-020-S14) — Fil d'Ariane topbar |
 
 ---

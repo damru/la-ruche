@@ -4,6 +4,7 @@
 
 **Épic :** EP-017 — Journal d'activité & Suivi de cycle de vie
 **Réf. PRD :** Gestion courante (US-JA-*) · **Réf. EPICS :** `docs/EPICS.md` EP-017-S05 (L513)
+**État :** IMPLÉMENTÉ (frontend)
 **Stories liées :** EP-017-S03 (`reportsApi.timeline` + champ `task_id`, prérequis), EP-017-S04 (composant partagé `TimelineEventList.vue`, prérequis), EP-017-S06 (filtrage des actions sensibles côté backend — les résidents ne verront jamais `assignee_changed`/`vendor_link_generated`)
 
 ---

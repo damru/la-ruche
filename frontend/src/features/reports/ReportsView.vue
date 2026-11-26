@@ -32,11 +32,13 @@ import { useBuildingStore } from '@/stores/building'
 import type { Report, ReportComment, ReportStatus, Unit } from '@/types/domain'
 import { ALL_FILTER, REPORT_STATUS_CLOSED, REPORT_STATUS_IN_PROGRESS, REPORT_STATUS_OPEN } from '@/utils/constants'
 import { usePermissions } from '@/composables/usePermissions'
+import { useReportLabels } from '@/composables/useReportLabels'
 
 const { t } = useI18n()
 const { formatDate, formatRelative } = useFormatters()
 const router = useRouter()
 const perms = usePermissions()
+const { authorLabel, statusVariant } = useReportLabels()
 
 
 // ── State ─────────────────────────────────────────────────────────
@@ -121,24 +123,10 @@ const unitOptions = computed(() => [
 ])
 
 // ── Helpers ───────────────────────────────────────────────────────
-function statusVariant(s: string): 'valid' | 'open' | 'pending' | 'closed' | 'default' {
-  if (s === REPORT_STATUS_OPEN) return 'pending'
-  if (s === REPORT_STATUS_IN_PROGRESS) return 'open'
-  if (s === REPORT_STATUS_CLOSED) return 'closed'
-  return 'default'
-}
-
 function unitLabel(unitId?: string): string {
   if (!unitId) return t('claims.commonAreas')
   const u = unitsById.value.get(unitId)
   return u ? t('claims.unitLabel', { number: u.unit_number }) : '—'
-}
-
-function authorLabel(r: Report): string {
-  if (r.is_anonymous) {
-    return r.is_author ? t('reports.authorAnonymousYou') : t('reports.authorAnonymous')
-  }
-  return `${r.author_first_name ?? ''} ${r.author_last_name ?? ''}`.trim()
 }
 
 function canReadComments(r: Report): boolean {
@@ -274,9 +262,12 @@ async function submitComment(r: Report) {
                 <CFlexGroup
                   direction="row"
                 >
-                  <h3 class="text-lg font-semibold text-on-surface m-0 leading-snug min-w-0">
+                  <RouterLink
+                    :to="{ name: 'report-detail', params: { id: r.id } }"
+                    class="text-lg font-semibold text-on-surface m-0 leading-snug min-w-0 hover:underline"
+                  >
                     {{ r.title }}
-                  </h3>
+                  </RouterLink>
                   
                   <CMetaItem
                     v-if="r.document_count > 0"

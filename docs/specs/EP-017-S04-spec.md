@@ -4,6 +4,7 @@
 
 **Épic :** EP-017 — Journal d'activité & Suivi de cycle de vie
 **Réf. PRD :** Gestion courante (US-TP-015) · **Réf. EPICS :** `docs/EPICS.md` EP-017-S04 (L512)
+**État :** IMPLÉMENTÉ (frontend)
 **Stories liées :** EP-017-S03 (endpoint + `tasksApi.timeline`, prérequis), EP-017-S05 (pendant côté signalements — mêmes composants de rendu), EP-017-S06 (le backend filtre déjà les actions sensibles ; aucune logique de rôle à dupliquer ici)
 
 ---

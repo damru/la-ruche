@@ -11,7 +11,7 @@ use uuid::Uuid;
 use crate::{
     config::AppSettings,
     db::{self, AppState},
-    domain::{AuthUser, Role},
+    domain::{AuthUser, Role, activity_visibility},
     errors::{AppError, AppResult, json_value},
 };
 
@@ -113,6 +113,10 @@ pub async fn timeline(
         Some(id),
     )
     .await?;
+    let events: Vec<_> = events
+        .into_iter()
+        .filter(|e| activity_visibility::can_view_action(&auth.roles, &e.action))
+        .collect();
     let mut value = json_value(events)?.0;
     if let Some(report) = report {
         crate::domain::report_privacy::mask_timeline(

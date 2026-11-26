@@ -1050,6 +1050,7 @@
     "confirmDeleteMessage": "Le signalement « {title} » sera supprimé définitivement.",
     "deleteSuccess": "Signalement supprimé",
     "viewTask": "Voir la tâche",
+    "convertedTitle": "Converti en tâche",
     "empty": "Aucun signalement pour le moment.",
     "createdAt": "Signalé {date}",
     "photos": "Photos",
@@ -1691,6 +1692,40 @@
       },
       "archivedUnit": "Lot archivé",
       "newReference": "Nouvelle référence EDD"
+    }
+  },
+  "timeline": {
+    "title": "Suivi du cycle de vie",
+    "empty": "Aucun événement enregistré pour cet élément.",
+    "error": "Impossible de charger l'historique.",
+    "retry": "Réessayer",
+    "reportBadge": "Signalement",
+    "actorExternalVendor": "Prestataire externe",
+    "conversionLink": "Ouvrir la tâche",
+    "entities": {
+      "report": "signalement",
+      "task": "tâche"
+    },
+    "actions": {
+      "created": {
+        "report": "Signalement créé",
+        "task": "Tâche créée"
+      },
+      "status_changed": "Statut modifié",
+      "photo_added": "Photo ajoutée",
+      "converted_to_task": "Converti en tâche",
+      "assignee_changed": "Assignataire modifié",
+      "contractor_assigned": "Prestataire assigné",
+      "vendor_link_generated": "Lien prestataire généré",
+      "document_uploaded": "Document joint",
+      "vendor_submission_received": "Intervention prestataire reçue",
+      "closed": "Clôturé",
+      "unknown": "Événement : {action}"
+    },
+    "detail": {
+      "fromReport": "issue du signalement",
+      "expires": "Expire le {date}",
+      "statusTransition": "{old} → {new}"
     }
   },
   "errors": {

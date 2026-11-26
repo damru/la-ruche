@@ -9,7 +9,7 @@ use uuid::Uuid;
 
 use crate::{
     db::{self, AppState},
-    domain::{AuthUser, Role, report_privacy},
+    domain::{AuthUser, Role, activity_visibility, report_privacy},
     errors::{AppError, AppResult, json_value},
 };
 
@@ -54,6 +54,10 @@ pub async fn timeline(
     let events =
         db::activity_log::list_for_chain(&state.pool, auth.building_id, Some(id), row.task_id)
             .await?;
+    let events: Vec<_> = events
+        .into_iter()
+        .filter(|e| activity_visibility::can_view_action(&auth.roles, &e.action))
+        .collect();
     let mut value = json_value(events)?.0;
     report_privacy::mask_timeline(&mut value, row.author_id, row.is_anonymous, auth.user_id);
     Ok(Json(value))

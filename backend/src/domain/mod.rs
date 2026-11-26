@@ -1,3 +1,4 @@
+pub mod activity_visibility;
 pub mod calendar;
 pub mod charges;
 pub mod convocation_checklist;

@@ -4,6 +4,7 @@
 
 **Épic :** EP-017 — Journal d'activité & Suivi de cycle de vie
 **Réf. PRD :** Gestion courante (US-JA-*) · **Réf. EPICS :** `docs/EPICS.md` EP-017-S06 (L514)
+**État :** IMPLÉMENTÉ (backend)
 **Stories liées :** EP-017-S02 (vocabulaire des actions), EP-017-S03 (handlers timeline — points de branchement du filtre), EP-017-S05 (seule vue exposée aux résidents)
 
 ---
