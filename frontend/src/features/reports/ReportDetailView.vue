@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useFormatters } from '@/composables/useFormatters'
 import { usePageLoader } from '@/composables/usePageLoader'
+import { useTimelineFeed } from '@/composables/useTimelineFeed'
 import { usePermissions } from '@/composables/usePermissions'
 import { useReportLabels } from '@/composables/useReportLabels'
 import CBadge from '@/components/atoms/CBadge.vue'
@@ -13,8 +14,7 @@ import CHeading from '@/components/atoms/CHeading.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CMetaItem from '@/components/molecules/CMetaItem.vue'
 import CMetaLine from '@/components/molecules/CMetaLine.vue'
-import CTimelineList from '@/components/molecules/CTimelineList.vue'
-import CEmptyState from '@/components/atoms/CEmptyState.vue'
+import CTimelineSection from '@/components/molecules/CTimelineSection.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
@@ -22,11 +22,10 @@ import CIconArrowLeft from '@/components/atoms/CIconArrowLeft.svg'
 import CIconCalendar from '@/components/atoms/CIconCalendar.svg'
 import CIconChevronRight from '@/components/atoms/CIconChevronRight.svg'
 import CIconFile from '@/components/atoms/CIconFile.svg'
-import CIconRefresh from '@/components/atoms/CIconRefresh.svg'
 import CIconUser from '@/components/atoms/CIconUser.svg'
 import { reportsApi, unitsApi } from '@/api'
 import { useBuildingStore } from '@/stores/building'
-import type { Document, Report, TimelineEvent, Unit } from '@/types/domain'
+import type { Document, Report, Unit } from '@/types/domain'
 
 const { t } = useI18n()
 const { formatDate } = useFormatters()
@@ -41,9 +40,12 @@ const report = ref<Report | null>(null)
 const unitsById = ref(new Map<string, Unit>())
 const documents = ref<Document[]>([])
 
-const timeline = ref<TimelineEvent[]>([])
-const timelineLoading = ref(false)
-const timelineError = ref<string | null>(null)
+const {
+  events: timeline,
+  loading: timelineLoading,
+  error: timelineError,
+  reload: reloadTimeline,
+} = useTimelineFeed(async () => (await reportsApi.timeline(reportId.value)).data)
 
 const canLinkTask = computed(() => perms.canManageTask.value)
 
@@ -60,18 +62,6 @@ async function loadData() {
   documents.value = documentsRes.data
 }
 
-async function loadTimeline() {
-  timelineLoading.value = true
-  timelineError.value = null
-  try {
-    timeline.value = (await reportsApi.timeline(reportId.value)).data
-  } catch {
-    timelineError.value = t('timeline.error')
-  } finally {
-    timelineLoading.value = false
-  }
-}
-
 const { loading, error, reload } = usePageLoader(async () => {
   try {
     await loadData()
@@ -85,13 +75,13 @@ const { loading, error, reload } = usePageLoader(async () => {
 })
 onMounted(() => {
   reload()
-  loadTimeline()
+  reloadTimeline()
 })
 
 watch(() => route.params.id, id => {
   reportId.value = id as string
   reload()
-  loadTimeline()
+  reloadTimeline()
 })
 
 </script>
@@ -226,32 +216,12 @@ watch(() => route.params.id, id => {
           {{ t('timeline.title') }}
         </h2>
 
-        <CPageLoader v-if="timelineLoading" />
-        <CCard
-          v-else-if="timelineError"
-          :level="3"
-          class="flex flex-col items-start gap-3"
-        >
-          <p class="text-sm text-on-surface-variant m-0">
-            {{ timelineError }}
-          </p>
-          <CBtn
-            variant="ghost"
-            size="sm"
-            :icon="CIconRefresh"
-            :title="t('timeline.retry')"
-            @click="loadTimeline"
-          />
-        </CCard>
-        <CEmptyState
-          v-else-if="!timeline.length"
-          :title="t('timeline.empty')"
-          size="compact"
-        />
-        <CTimelineList
-          v-else
+        <CTimelineSection
           :events="timeline"
+          :loading="timelineLoading"
+          :error="timelineError"
           :link-tasks="canLinkTask"
+          @retry="reloadTimeline"
         />
       </template>
     </div>

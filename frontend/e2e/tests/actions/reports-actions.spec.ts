@@ -2,7 +2,7 @@ import { test, expect } from '../../fixtures/auth'
 import { apiPost, e2eName } from '../../data/api'
 
 /**
- * Report detail (EP-017-S05): the lifecycle timeline comes from the API, the
+ * Report detail: the lifecycle timeline comes from the API, the
  * conversion card links to the task only for roles that can open tasks/:id.
  * The chain is built through the API (report → convert) so assertions never
  * depend on seeded content.

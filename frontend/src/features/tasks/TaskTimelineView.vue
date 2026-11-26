@@ -4,12 +4,12 @@ import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useFormatters } from '@/composables/useFormatters'
 import { usePageLoader } from '@/composables/usePageLoader'
+import { useTimelineFeed } from '@/composables/useTimelineFeed'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CEyebrow from '@/components/atoms/CEyebrow.vue'
 import CCard from '@/components/molecules/CCard.vue'
-import CTimelineList from '@/components/molecules/CTimelineList.vue'
-import CEmptyState from '@/components/atoms/CEmptyState.vue'
+import CTimelineSection from '@/components/molecules/CTimelineSection.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
@@ -19,7 +19,7 @@ import CIconChevronRight from '@/components/atoms/CIconChevronRight.svg'
 import CIconRefresh from '@/components/atoms/CIconRefresh.svg'
 import { contractorsApi, maintenanceApi, tasksApi } from '@/api'
 import { useBuildingStore } from '@/stores/building'
-import type { Contractor, MaintenanceEntry, Task, TimelineEvent } from '@/types/domain'
+import type { Contractor, MaintenanceEntry, Task } from '@/types/domain'
 import { TASK_PRIORITY_HIGH, TASK_PRIORITY_LOW, TASK_PRIORITY_NORMAL, TASK_PRIORITY_URGENT, TASK_STATUS_AWAITING_QUOTE, TASK_STATUS_AWAITING_VALIDATION, TASK_STATUS_AWAITING_VENDOR, TASK_STATUS_CLOSED, TASK_STATUS_IN_PROGRESS, TASK_STATUS_OPEN, TASK_STATUS_QUOTE_RECEIVED } from '@/utils/constants'
 
 const { t } = useI18n()
@@ -33,9 +33,12 @@ const task = ref<Task | null>(null)
 const contractor = ref<Contractor | null>(null)
 const interventions = ref<MaintenanceEntry[]>([])
 
-const timeline = ref<TimelineEvent[]>([])
-const timelineLoading = ref(false)
-const timelineError = ref<string | null>(null)
+const {
+  events: timeline,
+  loading: timelineLoading,
+  error: timelineError,
+  reload: reloadTimeline,
+} = useTimelineFeed(async () => (await tasksApi.timeline(taskId.value)).data)
 
 async function loadData() {
   const [building, taskRes, entriesRes] = await Promise.all([
@@ -58,28 +61,16 @@ async function loadData() {
     .sort((left, right) => left.intervention_date.localeCompare(right.intervention_date))
 }
 
-async function loadTimeline() {
-  timelineLoading.value = true
-  timelineError.value = null
-  try {
-    timeline.value = (await tasksApi.timeline(taskId.value)).data
-  } catch {
-    timelineError.value = t('timeline.error')
-  } finally {
-    timelineLoading.value = false
-  }
-}
-
 const { loading, error, reload } = usePageLoader(loadData)
 onMounted(() => {
   reload()
-  loadTimeline()
+  reloadTimeline()
 })
 
 watch(() => route.params.id, id => {
   taskId.value = id as string
   reload()
-  loadTimeline()
+  reloadTimeline()
 })
 
 function statusVariant(s: string): 'valid' | 'open' | 'pending' | 'closed' | 'default' {
@@ -185,32 +176,12 @@ function priorityVariant(p: string): 'err' | 'pending' | 'primary' | 'valid' | '
           {{ t('tasks.lifecycle.title') }}
         </h2>
 
-        <CPageLoader v-if="timelineLoading" />
-        <CCard
-          v-else-if="timelineError"
-          :level="3"
-          class="flex flex-col items-start gap-3"
-        >
-          <p class="text-sm text-on-surface-variant m-0">
-            {{ timelineError }}
-          </p>
-          <CBtn
-            variant="ghost"
-            size="sm"
-            :icon="CIconRefresh"
-            :title="t('timeline.retry')"
-            @click="loadTimeline"
-          />
-        </CCard>
-        <CEmptyState
-          v-else-if="!timeline.length"
-          :title="t('timeline.empty')"
-          size="compact"
-        />
-        <CTimelineList
-          v-else
+        <CTimelineSection
           :events="timeline"
+          :loading="timelineLoading"
+          :error="timelineError"
           :current-task-id="taskId"
+          @retry="reloadTimeline"
         />
 
         <section
