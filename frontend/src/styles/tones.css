@@ -74,7 +74,6 @@
   --tone-fg: var(--color-role-tenant-fg);
 }
 
-/* Iris deliberately reuses the manager palette — one violet accent, one source. */
 .tone--iris {
   --tone-bg: var(--color-role-manager-bg);
   --tone-fg: var(--color-role-manager-fg);
