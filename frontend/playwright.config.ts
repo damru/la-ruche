@@ -70,6 +70,22 @@ export default defineConfig({
       },
       dependencies: ['setup'],
       testMatch: '**/tests/visual/**',
+      testIgnore: ['**/pages-capture-empty.spec.ts'],
+    },
+    {
+      // Empty-state pass: runs after the seeded captures, on a truncated
+      // database (accounts and building survive). Serial + one worker so the
+      // reset never races a capture.
+      name: 'visual-empty',
+      use: {
+        ...devices['Desktop Chrome'],
+        launchOptions: {
+          args: ['--disable-font-subpixel-positioning', '--disable-lcd-text'],
+        },
+      },
+      dependencies: ['setup'],
+      testMatch: '**/pages-capture-empty.spec.ts',
+      workers: 1,
     },
   ],
 })

@@ -646,6 +646,11 @@ jobs:
         env:
           CI: "true"
         run: npx playwright test --project=visual
+
+      - name: Capture empty states
+        env:
+          CI: "true"
+        run: npx playwright test --project=visual-empty
       - name: Discard captures below the noise threshold
         # Residual rendering jitter (pixelmatch-measured: 81-562 px, visually
         # invisible) still differs byte-to-byte between CI runs. Keep a
