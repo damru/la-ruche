@@ -54,12 +54,11 @@ for (const route of APP_ROUTES) {
         })
 
         for (const tab of route.captureTabs ?? []) {
-          await page.getByRole('button', { name: tab, exact: true }).click()
+          await page.getByRole('button', { name: tab.label, exact: true }).click()
           await page.waitForLoadState('networkidle')
           await settlePage(page)
-          const tabSlug = slugify(tab)
           await page.screenshot({
-            path: `e2e/visual/${slug}--tab-${tabSlug}--${viewport.name}--${theme}.png`,
+            path: `e2e/visual/${slug}--tab-${tab.slug}--${viewport.name}--${theme}.png`,
             fullPage: true,
           })
         }

@@ -20,8 +20,8 @@ export type MatrixEntry = {
   deniedBehavior?: 'route403' | 'pageError'
   /** Also capture the alternate display mode (grid/cards) of this page. */
   captureGrid?: boolean
-  /** Also capture these tabs (their visible label) once activated. */
-  captureTabs?: string[]
+  /** Also capture these tabs (visible label + file slug) once activated. */
+  captureTabs?: Array<{ label: string; slug: string }>
   toleratedApi403?: Record<string, AuthRole[]>
 }
 
@@ -49,7 +49,7 @@ export const APP_ROUTES: MatrixEntry[] = [
   { path: '/etat-date',              titleKey: 'registers.etatDate.title',      roles: MGR_ONLY },
   { path: '/residence/building',     titleKey: 'common.informations',           roles: MGR_ONLY },
   { path: '/residence/keys',         titleKey: 'allocationKeys.title',          roles: MGR_ONLY },
-  { path: '/profile',                titleKey: 'nav.account',                   roles: ALL, captureTabs: ['Préférences'] },
+  { path: '/profile',                titleKey: 'nav.account',                   roles: ALL, captureTabs: [{ label: 'Préférences', slug: 'preferences' }] },
 ]
 
 export const SEEDED_UNIT_ID = '00000000-0000-0000-0000-000000000102'
