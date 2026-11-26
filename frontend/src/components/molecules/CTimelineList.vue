@@ -18,7 +18,8 @@ const props = withDefaults(defineProps<{
   events: TimelineEvent[]
   linkTasks?: boolean
   currentTaskId?: string
-}>(), { linkTasks: true, currentTaskId: undefined })
+  currentReportId?: string
+}>(), { linkTasks: true, currentTaskId: undefined, currentReportId: undefined })
 
 const { t, te } = useI18n()
 const { formatDate } = useFormatters()
@@ -92,14 +93,44 @@ function actorLabel(event: TimelineEvent): string | null {
   return null
 }
 
+interface ConversionLink {
+  name: 'task-detail' | 'report-detail'
+  params: { id: string }
+  label: string
+}
+
+function conversionLink(event: TimelineEvent): ConversionLink | null {
+  if (event.action !== 'converted_to_task') return null
+  if (props.currentTaskId) {
+    return {
+      name: 'report-detail',
+      params: { id: event.entity_id },
+      label: t('timeline.reportLink'),
+    }
+  }
+  const taskId = event.payload?.task_id
+  if (!props.linkTasks || typeof taskId !== 'string') return null
+  return {
+    name: 'task-detail',
+    params: { id: taskId },
+    label: t('timeline.conversionLink'),
+  }
+}
+
 const rows = computed(() =>
-  [...props.events].reverse().map(event => ({
-    event,
-    style: styleFor(event.action),
-    label: label(event),
-    detail: payloadText(event),
-    actor: actorLabel(event),
-  })))
+  props.events
+    .filter(event => !(event.entity_type === 'task'
+      && event.action === 'created'
+      && event.payload?.source_report_id))
+    .reverse()
+    .map(event => ({
+      event,
+      style: styleFor(event.action),
+      label: label(event),
+      detail: payloadText(event),
+      actor: actorLabel(event),
+      link: conversionLink(event),
+    })))
 </script>
 
 <template>
@@ -156,14 +187,11 @@ const rows = computed(() =>
               {{ formatDate(row.event.created_at, 'datetime') }}
             </span>
             <RouterLink
-              v-if="props.linkTasks
-                && row.event.action === 'converted_to_task'
-                && typeof row.event.payload?.task_id === 'string'
-                && row.event.payload.task_id !== props.currentTaskId"
-              :to="{ name: 'task-detail', params: { id: row.event.payload.task_id } }"
+              v-if="row.link"
+              :to="row.link"
               class="text-xs font-medium text-primary hover:underline"
             >
-              {{ t('timeline.conversionLink') }}
+              {{ row.link.label }}
             </RouterLink>
           </div>
         </div>

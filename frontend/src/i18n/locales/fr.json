@@ -1701,6 +1701,7 @@
     "reportBadge": "Signalement",
     "actorExternalVendor": "Prestataire externe",
     "conversionLink": "Ouvrir la tâche",
+    "reportLink": "Ouvrir le signalement",
     "actions": {
       "created": {
         "report": "Signalement créé",

@@ -56,7 +56,7 @@ Composant de rendu **partagé avec EP-017-S05**, catalogué dans `docs/DESIGN.md
 | `created` (task) | « Tâche créée » | « issue du signalement » si `source_report_id` |
 | `status_changed` | « Statut modifié » | `old_status → new_status` (libellés statuts existants) |
 | `photo_added` | « Photo ajoutée » | `file_name` |
-| `converted_to_task` | « Converti en tâche » | lien `tasks/:task_id` |
+| `converted_to_task` | « Converti en tâche » | lien vers la tâche (`tasks/:task_id`) depuis un signalement, vers le signalement source (`reports/:id`) depuis une tâche |
 | `assignee_changed` | « Assignataire modifié » | — (ids résolus non exigés en v1) |
 | `contractor_assigned` | « Prestataire assigné » | `contractor_name` |
 | `vendor_link_generated` | « Lien prestataire généré » | expiration |
@@ -64,7 +64,9 @@ Composant de rendu **partagé avec EP-017-S05**, catalogué dans `docs/DESIGN.md
 | `vendor_submission_received` | « Intervention prestataire reçue » | — |
 | `closed` | « Clôturé(e) » | — |
 
-- L'événement `converted_to_task` porte un fond tonal (`bg-primary-container`) : c'est la charnière entre les deux entités, qui remplace l'ancien encart dédié de la fiche signalement. Les événements `entity_type === 'report'` sont visuellement distingués (pastille secondaire + mention « Signalement ») : la frise couvre la chaîne complète depuis le signalement source.
+- **Dédoublonnage de la conversion** : la conversion produit deux événements (`report.converted_to_task` + `task.created` avec `source_report_id`) ; la frise n'en rend qu'**un** — l'événement `task.created` porteur d'un `source_report_id` est masqué à l'affichage (la donnée reste en base, l'API n'est pas modifiée).
+- **Liens symétriques de conversion** : depuis la fiche signalement, l'étape « Converti en tâche » mène à la tâche (« Ouvrir la tâche », rôles manager/board) ; depuis la fiche tâche, la même étape mène au **signalement source** (« Ouvrir le signalement »). Plus de lien vers la page courante.
+- L'événement `converted_to_task` porte une carte teintée (`.tone--primary`) : c'est la charnière entre les deux entités, qui remplace l'ancien encart dédié de la fiche signalement. Les événements `entity_type === 'report'` sont visuellement distingués (pastille secondaire + mention « Signalement ») : la frise couvre la chaîne complète depuis le signalement source.
 - Action inconnue (évolution future du vocabulaire) : rendu générique avec l'`action` brute — pas de crash.
 
 ### 5.4 Contraintes de style

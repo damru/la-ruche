@@ -14,7 +14,8 @@ withDefaults(defineProps<{
   error: boolean
   linkTasks?: boolean
   currentTaskId?: string
-}>(), { linkTasks: true, currentTaskId: undefined })
+  currentReportId?: string
+}>(), { linkTasks: true, currentTaskId: undefined, currentReportId: undefined })
 
 defineEmits<{ retry: [] }>()
 
@@ -49,5 +50,6 @@ const { t } = useI18n()
     :events="events"
     :link-tasks="linkTasks"
     :current-task-id="currentTaskId"
+    :current-report-id="currentReportId"
   />
 </template>

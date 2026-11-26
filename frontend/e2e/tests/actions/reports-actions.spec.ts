@@ -19,7 +19,8 @@ test.describe('report detail timeline', () => {
     await resident.page.goto(`/reports/${report.id}`)
     await expect(resident.page.getByRole('heading', { name: title })).toBeVisible()
     await expect(resident.page.getByText('Signalement créé')).toBeVisible()
-    await expect(resident.page.getByText('Converti en tâche').first()).toBeVisible()
+    await expect(resident.page.getByText('Converti en tâche')).toHaveCount(1)
+    await expect(resident.page.getByText('Tâche créée')).toHaveCount(0)
     await expect(resident.page.getByRole('link', { name: 'Ouvrir la tâche' })).toHaveCount(0)
 
     await manager.close()
@@ -36,8 +37,10 @@ test.describe('report detail timeline', () => {
     await manager.page.getByRole('link', { name: 'Ouvrir la tâche' }).click()
     await expect(manager.page).toHaveURL(new RegExp(`/tasks/${converted.task_id}$`))
     await expect(manager.page.getByRole('heading', { name: title })).toBeVisible()
-    await expect(manager.page.getByText('Tâche créée')).toBeVisible()
-    await expect(manager.page.getByRole('link', { name: 'Ouvrir la tâche' })).toHaveCount(0)
+    const backLink = manager.page.getByRole('link', { name: 'Ouvrir le signalement' })
+    await expect(backLink).toHaveCount(1)
+    await backLink.click()
+    await expect(manager.page).toHaveURL(new RegExp(`/reports/${report.id}$`))
 
     await manager.close()
   })

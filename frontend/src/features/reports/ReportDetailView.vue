@@ -201,6 +201,7 @@ watch(() => route.params.id, id => {
           :loading="timelineLoading"
           :error="timelineError"
           :link-tasks="canLinkTask"
+          :current-report-id="reportId"
           @retry="reloadTimeline"
         />
       </template>
