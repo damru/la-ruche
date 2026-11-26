@@ -99,6 +99,7 @@ ARG FRONTEND_DIR=frontend-artifacts
 
 COPY ${FRONTEND_DIR}/dist /usr/share/caddy
 COPY ${PREBUILT_DIR}/laruche ./laruche
+RUN ldd ./laruche > /tmp/ldd.txt 2>&1; cat /tmp/ldd.txt; ! grep -q "not found" /tmp/ldd.txt
 COPY backend/migrations ./migrations
 COPY backend/seeds ./seeds
 

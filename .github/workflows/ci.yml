@@ -507,7 +507,6 @@ jobs:
         with:
           context: .
           target: runtime-prebuilt
-          load: ${{ github.event_name == 'pull_request' }}
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -517,12 +516,6 @@ jobs:
             type=gha,scope=docker-main
             type=gha,scope=docker-develop
           cache-to: ${{ steps.cache.outputs.to }}
-
-      - name: Smoke the loaded image
-        if: github.event_name == 'pull_request'
-        run: |
-          docker run --rm --entrypoint sh '${{ steps.build.outputs.imageid }}' \
-            -c 'ldd /app/laruche | grep -q "not found" && exit 1 || true'
 
   # ── Captures visuelles (ex-visual-preview.yml) ─────────────────
   captures:
