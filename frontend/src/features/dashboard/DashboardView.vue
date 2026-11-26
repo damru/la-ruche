@@ -796,7 +796,7 @@ const todayStr = computed(() =>
 .contact-list { display: flex; flex-direction: column; gap: var(--space-1); }
 .contact-item { display: flex; align-items: center; gap: 10px; padding: 8px var(--space-3); border-radius: var(--radius-xl); transition: background var(--transition-fast); }
 .contact-item:hover { background: var(--color-surface-container-low); }
-.contact-avatar { width: 32px; height: 32px; min-width: 32px; border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: var(--gradient-primary); color: white; font-size: var(--text-2xs); font-weight: var(--fw-semibold); letter-spacing: 0.02em; }
+.contact-avatar { width: 32px; height: 32px; min-width: 32px; border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: var(--gradient-primary); color: var(--color-on-primary); font-size: var(--text-2xs); font-weight: var(--fw-semibold); letter-spacing: 0.02em; }
 .contact-body { flex: 1; min-width: 0; }
 .contact-name { font-size: var(--text-xs); font-weight: var(--fw-medium); color: var(--color-on-surface); }
 .contact-role  { font-size: var(--text-2xs); color: var(--color-on-surface-variant); margin-top: 1px; }

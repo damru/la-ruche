@@ -1274,6 +1274,6 @@ function formatSharePercentage(value: number): string {
   gap: var(--space-1);
   padding: var(--space-3);
   border-radius: var(--radius-xl);
-  background: color-mix(in srgb, var(--color-warning) var(--color-tint), transparent);
+  background: color-mix(in oklch, var(--color-warning) var(--color-tint), transparent);
 }
 </style>

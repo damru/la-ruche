@@ -409,8 +409,8 @@ function voteTypeVariant(voteType: VoteType): BadgeVariant {
 }
 
 function voteTypeClass(voteType: VoteType): string {
-  if (voteType === VOTE_TYPE_ABSOLUTE_MAJORITY) return 'chip-art25'
-  if (voteType === VOTE_TYPE_DOUBLE_MAJORITY) return 'chip-art26'
+  if (voteType === VOTE_TYPE_ABSOLUTE_MAJORITY) return 'tone--iris'
+  if (voteType === VOTE_TYPE_DOUBLE_MAJORITY) return 'tone--apricot'
   return ''
 }
 
@@ -1522,7 +1522,7 @@ function openArt25Modal(resolution: Resolution) {
 }
 
 .status-banner--called .status-banner__icon {
-  background: color-mix(in srgb, var(--color-primary) var(--color-tint), transparent);
+  background: color-mix(in oklch, var(--color-primary) var(--color-tint), transparent);
   color: var(--color-primary);
 }
 
@@ -1532,7 +1532,7 @@ function openArt25Modal(resolution: Resolution) {
 }
 
 .status-banner--closed .status-banner__icon {
-  background: color-mix(in srgb, var(--color-success) var(--color-tint), transparent);
+  background: color-mix(in oklch, var(--color-success) var(--color-tint), transparent);
   color: var(--color-success);
 }
 
@@ -1542,7 +1542,7 @@ function openArt25Modal(resolution: Resolution) {
 }
 
 .status-banner--ongoing .status-banner__icon {
-  background: color-mix(in srgb, var(--color-primary) var(--color-tint), transparent);
+  background: color-mix(in oklch, var(--color-primary) var(--color-tint), transparent);
   color: var(--color-primary);
 }
 
@@ -1552,7 +1552,7 @@ function openArt25Modal(resolution: Resolution) {
 }
 
 .status-banner--draft .status-banner__icon {
-  background: color-mix(in srgb, var(--color-outline) 24%, transparent);
+  background: color-mix(in oklch, var(--color-outline) 24%, transparent);
   color: var(--color-on-surface-variant);
 }
 
@@ -1784,7 +1784,7 @@ function openArt25Modal(resolution: Resolution) {
 .presence-track {
   height: 10px;
   border-radius: var(--radius-full);
-  background: color-mix(in srgb, var(--color-outline) 45%, transparent);
+  background: color-mix(in oklch, var(--color-outline) 45%, transparent);
   overflow: hidden;
 }
 
@@ -1872,16 +1872,6 @@ function openArt25Modal(resolution: Resolution) {
   font-size: var(--text-sm);
   color: var(--color-on-surface);
   line-height: 1.4;
-}
-
-.chip-art25 {
-  --tone-bg: #e8def8;
-  --tone-fg: #21005d;
-}
-
-.chip-art26 {
-  --tone-bg: #fce8d5;
-  --tone-fg: #7a3600;
 }
 
 @media (max-width: 960px) {
