@@ -577,3 +577,80 @@ pub async fn purge(pool: &PgPool, id: Uuid) -> AppResult<()> {
 
     Ok(())
 }
+
+/// Links a document to a report or task and emits the matching lifecycle
+/// event (best-effort: the link itself must succeed). Returns false when the
+/// entity or the document is not in the building.
+pub async fn link_to_entity(
+    pool: &PgPool,
+    entity_type: &str,
+    entity_id: Uuid,
+    building_id: Uuid,
+    document_id: Uuid,
+    actor_id: Option<Uuid>,
+) -> AppResult<bool> {
+    use crate::db::activity_log::{self, ENTITY_REPORT, ENTITY_TASK, actions};
+
+    let file_name = match entity_type {
+        ENTITY_REPORT => {
+            sqlx::query_scalar::<_, String>(
+                r#"SELECT d.original_name
+                   FROM report r, document d
+                   WHERE r.id = $1 AND r.building_id = $3
+                     AND d.id = $2 AND d.building_id = $3"#,
+            )
+            .bind(entity_id)
+            .bind(document_id)
+            .bind(building_id)
+            .fetch_optional(pool)
+            .await?
+        }
+        ENTITY_TASK => {
+            sqlx::query_scalar::<_, String>(
+                r#"SELECT d.original_name
+                   FROM task t, document d
+                   WHERE t.id = $1 AND t.building_id = $3
+                     AND d.id = $2 AND d.building_id = $3"#,
+            )
+            .bind(entity_id)
+            .bind(document_id)
+            .bind(building_id)
+            .fetch_optional(pool)
+            .await?
+        }
+        _ => return Ok(false),
+    };
+    let Some(file_name) = file_name else {
+        return Ok(false);
+    };
+
+    let (insert_sql, action) = match entity_type {
+        ENTITY_REPORT => (
+            "INSERT INTO report_document (report_id, document_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
+            actions::PHOTO_ADDED,
+        ),
+        ENTITY_TASK => (
+            "INSERT INTO task_document (task_id, document_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
+            actions::DOCUMENT_UPLOADED,
+        ),
+        _ => unreachable!(),
+    };
+    sqlx::query(insert_sql)
+        .bind(entity_id)
+        .bind(document_id)
+        .execute(pool)
+        .await?;
+
+    activity_log::emit_best_effort(
+        pool,
+        building_id,
+        entity_type,
+        entity_id,
+        action,
+        actor_id,
+        Some(serde_json::json!({ "document_id": document_id, "file_name": file_name })),
+    )
+    .await;
+
+    Ok(true)
+}

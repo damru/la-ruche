@@ -22,6 +22,31 @@ pub(crate) fn mask_report_author(report: &mut Value, viewer_id: Uuid) {
     }
 }
 
+/// Masks reporter-authored timeline events of an anonymous report for every
+/// viewer but the reporter: events whose actor is the report author (created,
+/// photo_added, ...) lose `actor_id` and `actor_name`. Manager actions on the
+/// same chain stay attributable.
+pub(crate) fn mask_timeline(
+    timeline: &mut Value,
+    author_id: Uuid,
+    is_anonymous: bool,
+    viewer_id: Uuid,
+) {
+    if !is_anonymous || author_id == viewer_id {
+        return;
+    }
+    let Some(events) = timeline.as_array_mut() else {
+        return;
+    };
+    let author = Value::String(author_id.to_string());
+    for event in events {
+        if event.get("actor_id") == Some(&author) {
+            event["actor_id"] = Value::Null;
+            event["actor_name"] = Value::Null;
+        }
+    }
+}
+
 /// Applies [`mask_report_author`] to every element of a JSON array of reports.
 pub(crate) fn mask_report_list(reports: &mut Value, viewer_id: Uuid) {
     if let Some(items) = reports.as_array_mut() {

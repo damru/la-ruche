@@ -1,3 +1,4 @@
+use crate::db::activity_log::{self, ENTITY_TASK, actions};
 use crate::errors::AppResult;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -357,7 +358,18 @@ pub async fn create(
     .bind(user_id)
     .fetch_one(pool)
     .await?;
-    task_row_from_query(&row).map_err(Into::into)
+    let row: TaskRow = task_row_from_query(&row)?;
+    activity_log::emit_best_effort(
+        pool,
+        building_id,
+        ENTITY_TASK,
+        row.id,
+        actions::CREATED,
+        Some(user_id),
+        None,
+    )
+    .await;
+    Ok(row)
 }
 
 /// Returns an error if the task was not found (0 rows affected).
@@ -366,7 +378,18 @@ pub async fn update_status(
     id: Uuid,
     building_id: Uuid,
     status: &str,
+    actor_id: Option<Uuid>,
 ) -> AppResult<()> {
+    let old_status: Option<String> =
+        sqlx::query_scalar("SELECT status::text FROM task WHERE id = $1 AND building_id = $2")
+            .bind(id)
+            .bind(building_id)
+            .fetch_optional(pool)
+            .await?;
+    let old_status = match old_status {
+        None => return Err(crate::errors::AppError::NotFound),
+        Some(s) => s,
+    };
     let closed_at = if status == status::CLOSED {
         Some(Utc::now())
     } else {
@@ -385,6 +408,18 @@ pub async fn update_status(
     if result.rows_affected() == 0 {
         return Err(crate::errors::AppError::NotFound);
     }
+    if old_status != status {
+        activity_log::emit_status_change_best_effort(
+            pool,
+            building_id,
+            ENTITY_TASK,
+            id,
+            &old_status,
+            status,
+            actor_id,
+        )
+        .await;
+    }
     Ok(())
 }
 
@@ -394,9 +429,23 @@ pub async fn generate_token(
     id: Uuid,
     building_id: Uuid,
     ttl_days: u64,
+    actor_id: Option<Uuid>,
 ) -> AppResult<(Uuid, DateTime<Utc>)> {
     let token = Uuid::new_v4();
     let expires_at = Utc::now() + chrono::Duration::days(ttl_days as i64);
+
+    let mut tx = pool.begin().await?;
+    let old_status: Option<String> = sqlx::query_scalar(
+        "SELECT status::text FROM task WHERE id = $1 AND building_id = $2 FOR UPDATE",
+    )
+    .bind(id)
+    .bind(building_id)
+    .fetch_optional(&mut *tx)
+    .await?;
+    let old_status = match old_status {
+        None => return Err(crate::errors::AppError::NotFound),
+        Some(s) => s,
+    };
 
     let result = sqlx::query(
         "UPDATE task SET vendor_token = $3, token_expires_at = $4,
@@ -408,12 +457,36 @@ pub async fn generate_token(
     .bind(token)
     .bind(expires_at)
     .bind(status::AWAITING_VENDOR)
-    .execute(pool)
+    .execute(&mut *tx)
     .await?;
 
     if result.rows_affected() == 0 {
         return Err(crate::errors::AppError::NotFound);
     }
+    // The raw token is a capability secret: it must never land in the payload.
+    activity_log::insert(
+        &mut *tx,
+        building_id,
+        ENTITY_TASK,
+        id,
+        actions::VENDOR_LINK_GENERATED,
+        actor_id,
+        Some(serde_json::json!({ "expires_at": expires_at })),
+    )
+    .await?;
+    if old_status != status::AWAITING_VENDOR {
+        activity_log::emit_status_change(
+            &mut *tx,
+            building_id,
+            ENTITY_TASK,
+            id,
+            &old_status,
+            status::AWAITING_VENDOR,
+            actor_id,
+        )
+        .await?;
+    }
+    tx.commit().await?;
     Ok((token, expires_at))
 }
 
@@ -497,11 +570,16 @@ pub async fn delete(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()>
 /// vendor token are kept. Any non-terminal status (`open`, `in_progress`,
 /// `awaiting_vendor`, `awaiting_validation`) can be cancelled; the row is
 /// locked inside the transaction to keep the check race-free.
-pub async fn cancel(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()> {
+pub async fn cancel(
+    pool: &PgPool,
+    id: Uuid,
+    building_id: Uuid,
+    actor_id: Option<Uuid>,
+) -> AppResult<()> {
     let mut tx = pool.begin().await?;
     // FOR UPDATE serialises the status check with the write, so two concurrent
     // cancels cannot both succeed.
-    sqlx::query_scalar::<_, String>(
+    let old_status = sqlx::query_scalar::<_, String>(
         "SELECT status::text FROM task WHERE id = $1 AND building_id = $2 FOR UPDATE",
     )
     .bind(id)
@@ -521,13 +599,69 @@ pub async fn cancel(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()>
     .bind(status::CANCELLED)
     .execute(&mut *tx)
     .await?;
-    tx.commit().await?;
     if result.rows_affected() == 0 {
         return Err(crate::errors::AppError::validation_code(
             "errors.immutability.frozen",
         ));
     }
+    activity_log::emit_status_change(
+        &mut *tx,
+        building_id,
+        ENTITY_TASK,
+        id,
+        &old_status,
+        status::CANCELLED,
+        actor_id,
+    )
+    .await?;
+    tx.commit().await?;
     Ok(())
+}
+
+async fn emit_assignee_changed(
+    tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
+    building_id: Uuid,
+    task_id: Uuid,
+    old_assignee: Option<Uuid>,
+    new_assignee: Option<Uuid>,
+    actor_id: Option<Uuid>,
+) -> AppResult<()> {
+    activity_log::insert(
+        &mut **tx,
+        building_id,
+        ENTITY_TASK,
+        task_id,
+        actions::ASSIGNEE_CHANGED,
+        actor_id,
+        Some(serde_json::json!({
+            "old_assignee_id": old_assignee,
+            "new_assignee_id": new_assignee,
+        })),
+    )
+    .await
+}
+
+async fn emit_contractor_assigned(
+    tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
+    building_id: Uuid,
+    task_id: Uuid,
+    contractor_id: Option<Uuid>,
+    contractor_name: Option<String>,
+    actor_id: Option<Uuid>,
+) -> AppResult<()> {
+    activity_log::insert(
+        &mut **tx,
+        building_id,
+        ENTITY_TASK,
+        task_id,
+        actions::CONTRACTOR_ASSIGNED,
+        actor_id,
+        Some(serde_json::json!({
+            "contractor_id": contractor_id,
+            "contractor_name": contractor_name,
+        })),
+    )
+    .await
 }
 
 /// Updates mutable task fields. `None` values leave the existing field unchanged.
@@ -543,6 +677,7 @@ pub async fn update_fields(
     description: Option<Option<&str>>,
     priority: Option<&str>,
     status: Option<&str>,
+    assigned_to: Option<Option<Uuid>>,
     contractor_id: Option<Option<Uuid>>,
     contractor_name: Option<Option<&str>>,
     completion_cost_update: Option<Option<Decimal>>,
@@ -568,6 +703,10 @@ pub async fn update_fields(
     let new_status = status
         .map(ToOwned::to_owned)
         .unwrap_or_else(|| current.status.clone());
+    let new_assigned_to = match assigned_to {
+        Some(a) => a,
+        None => current.assigned_to,
+    };
     let new_contractor_id = match contractor_id {
         Some(c) => c,
         None => current.contractor_id,
@@ -594,10 +733,11 @@ pub async fn update_fields(
         "UPDATE task SET title = $3, description = $4,
           priority = $5::text::task_priority,
           status = $6::text::task_status,
-          contractor_id = $7,
-          contractor_name = $8,
-          closed_at = $9,
-          completion_cost = $10,
+          assigned_to = $7,
+          contractor_id = $8,
+          contractor_name = $9,
+          closed_at = $10,
+          completion_cost = $11,
           updated_at = NOW()
           WHERE id = $1 AND building_id = $2",
     )
@@ -607,6 +747,7 @@ pub async fn update_fields(
     .bind(&new_description)
     .bind(&new_priority)
     .bind(&new_status)
+    .bind(new_assigned_to)
     .bind(new_contractor_id)
     .bind(&new_contractor_name)
     .bind(closed_at)
@@ -617,6 +758,55 @@ pub async fn update_fields(
     if result.rows_affected() == 0 {
         return Err(crate::errors::AppError::NotFound);
     }
+    if current_status != new_status {
+        activity_log::emit_status_change(
+            &mut *tx,
+            building_id,
+            ENTITY_TASK,
+            id,
+            &current_status,
+            &new_status,
+            Some(actor_user_id),
+        )
+        .await?;
+    }
+    if current.assigned_to != new_assigned_to {
+        emit_assignee_changed(
+            &mut tx,
+            building_id,
+            id,
+            current.assigned_to,
+            new_assigned_to,
+            Some(actor_user_id),
+        )
+        .await?;
+    }
+    if current.contractor_id != new_contractor_id || current.contractor_name != new_contractor_name
+    {
+        let contractor_name = match &new_contractor_name {
+            Some(name) => Some(name.clone()),
+            None => match new_contractor_id {
+                Some(cid) => {
+                    sqlx::query_scalar::<_, Option<String>>(
+                        "SELECT name FROM contractor WHERE id = $1",
+                    )
+                    .bind(cid)
+                    .fetch_one(&mut *tx)
+                    .await?
+                }
+                None => None,
+            },
+        };
+        emit_contractor_assigned(
+            &mut tx,
+            building_id,
+            id,
+            new_contractor_id,
+            contractor_name,
+            Some(actor_user_id),
+        )
+        .await?;
+    }
     if create_log_entry {
         crate::db::maintenance_log::create_automatic_from_task(
             &mut *tx,
@@ -625,23 +815,30 @@ pub async fn update_fields(
             actor_user_id,
         )
         .await?;
-        crate::db::report::close_linked_to_task(&mut *tx, id, building_id).await?;
+        crate::db::report::close_linked_to_task(&mut tx, id, building_id, Some(actor_user_id))
+            .await?;
     }
     tx.commit().await?;
     Ok(())
 }
 
-/// PRD US-TP-012 (EP-007-S07): takes a task back from the quote phase
-/// (`awaiting_quote` / `quote_received`) to `in_progress`. Unlike
-/// `revoke_token`, the vendor token, its expiry and the attached documents
-/// are left untouched. Returns 404 if the task doesn't exist, or a validation
-/// error when the task is not in the quote phase. The row is locked with
-/// FOR UPDATE so the status check and the write are race-free.
-pub async fn take_back(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<()> {
+/// Takes a task back from the quote phase (`awaiting_quote` /
+/// `quote_received`) to `in_progress`. Unlike `revoke_token`, the vendor
+/// token, its expiry and the attached documents are left untouched. Returns
+/// 404 if the task doesn't exist, or a validation error when the task is not
+/// in the quote phase. The row is locked with FOR UPDATE so the status check
+/// and the write are race-free. Emits an `activity_log` `status_changed`
+/// event in the same transaction.
+pub async fn take_back(
+    pool: &PgPool,
+    id: Uuid,
+    building_id: Uuid,
+    actor_id: Option<Uuid>,
+) -> AppResult<()> {
     let mut tx = pool.begin().await?;
     // FOR UPDATE serialises the status check with the write, so two concurrent
     // take-backs cannot both succeed.
-    let status = sqlx::query_scalar::<_, String>(
+    let old_status = sqlx::query_scalar::<_, String>(
         "SELECT status::text FROM task WHERE id = $1 AND building_id = $2 FOR UPDATE",
     )
     .bind(id)
@@ -649,7 +846,7 @@ pub async fn take_back(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<
     .fetch_optional(&mut *tx)
     .await?
     .ok_or(crate::errors::AppError::NotFound)?;
-    if !crate::domain::immutability::can_take_back(&status) {
+    if !crate::domain::immutability::can_take_back(&old_status) {
         return Err(crate::errors::AppError::validation_code(
             "errors.tasks.not_in_quote_phase",
         ));
@@ -666,6 +863,16 @@ pub async fn take_back(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<
     if result.rows_affected() == 0 {
         return Err(crate::errors::AppError::NotFound);
     }
+    activity_log::emit_status_change(
+        &mut *tx,
+        building_id,
+        ENTITY_TASK,
+        id,
+        &old_status,
+        status::IN_PROGRESS,
+        actor_id,
+    )
+    .await?;
     tx.commit().await?;
     Ok(())
 }
@@ -780,45 +987,17 @@ pub async fn attach_document(
     task_id: Uuid,
     document_id: Uuid,
     building_id: Uuid,
+    actor_id: Option<Uuid>,
 ) -> AppResult<bool> {
-    let pair_exists = sqlx::query_scalar::<_, bool>(
-        r#"
-        SELECT EXISTS(
-            SELECT 1
-            FROM task t
-            WHERE t.id = $1
-              AND t.building_id = $3
-        ) AND EXISTS(
-            SELECT 1
-            FROM document d
-            WHERE d.id = $2
-              AND d.building_id = $3
-        )
-        "#,
+    crate::db::document::link_to_entity(
+        pool,
+        ENTITY_TASK,
+        task_id,
+        building_id,
+        document_id,
+        actor_id,
     )
-    .bind(task_id)
-    .bind(document_id)
-    .bind(building_id)
-    .fetch_one(pool)
-    .await?;
-
-    if !pair_exists {
-        return Ok(false);
-    }
-
-    sqlx::query(
-        r#"
-        INSERT INTO task_document (task_id, document_id)
-        VALUES ($1, $2)
-        ON CONFLICT (task_id, document_id) DO NOTHING
-        "#,
-    )
-    .bind(task_id)
-    .bind(document_id)
-    .execute(pool)
-    .await?;
-
-    Ok(true)
+    .await
 }
 
 pub async fn detach_document(
@@ -846,8 +1025,11 @@ pub async fn detach_document(
     Ok(result.rows_affected() > 0)
 }
 
+/// Records a vendor submission. Public-token flow: no authenticated actor.
+/// Generic over the executor so the event lands in the caller's transaction.
 pub async fn create_submission(
-    pool: &PgPool,
+    conn: &mut sqlx::PgConnection,
+    building_id: Uuid,
     task_id: Uuid,
     comment: Option<String>,
 ) -> AppResult<Uuid> {
@@ -857,9 +1039,20 @@ pub async fn create_submission(
     )
     .bind(task_id)
     .bind(comment)
-    .fetch_one(pool)
+    .fetch_one(&mut *conn)
     .await?;
-    Ok(row.try_get("id")?)
+    let submission_id: Uuid = row.try_get("id")?;
+    activity_log::insert(
+        &mut *conn,
+        building_id,
+        ENTITY_TASK,
+        task_id,
+        actions::VENDOR_SUBMISSION_RECEIVED,
+        None,
+        Some(serde_json::json!({ "submission_id": submission_id })),
+    )
+    .await?;
+    Ok(submission_id)
 }
 
 pub async fn attach_submission_document(

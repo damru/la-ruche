@@ -93,6 +93,38 @@ pub async fn get(
     json_value(db::task::TaskListItem::from(t))
 }
 
+/// GET /tasks/{id}/timeline — merged report↔task chain, chronological ascending.
+/// Access is building-scoped only, like `tasks::get`: any authenticated role of
+/// the building may read it. Reporter-authored events inherited from an
+/// anonymous source report are masked by `report_privacy::mask_timeline`.
+pub async fn timeline(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+) -> AppResult<Json<serde_json::Value>> {
+    db::task::get(&state.pool, id, auth.building_id)
+        .await?
+        .ok_or(AppError::NotFound)?;
+    let report = db::report::find_by_task_id(&state.pool, id, auth.building_id).await?;
+    let events = db::activity_log::list_for_chain(
+        &state.pool,
+        auth.building_id,
+        report.as_ref().map(|r| r.id),
+        Some(id),
+    )
+    .await?;
+    let mut value = json_value(events)?.0;
+    if let Some(report) = report {
+        crate::domain::report_privacy::mask_timeline(
+            &mut value,
+            report.author_id,
+            report.is_anonymous,
+            auth.user_id,
+        );
+    }
+    Ok(Json(value))
+}
+
 pub async fn list_documents(
     auth: AuthUser,
     State(state): State<Arc<AppState>>,
@@ -118,8 +150,14 @@ pub async fn attach_document(
     Json(input): Json<AttachDocumentInput>,
 ) -> AppResult<StatusCode> {
     auth.require_any_role(&[Role::Manager, Role::BoardMember])?;
-    let attached =
-        db::task::attach_document(&state.pool, id, input.document_id, auth.building_id).await?;
+    let attached = db::task::attach_document(
+        &state.pool,
+        id,
+        input.document_id,
+        auth.building_id,
+        Some(auth.user_id),
+    )
+    .await?;
     if !attached {
         return Err(AppError::NotFound);
     }
@@ -184,6 +222,8 @@ pub struct UpdateTaskInput {
     pub description: Option<Option<String>>,
     pub priority: Option<String>,
     #[serde(default, deserialize_with = "double_option::deserialize")]
+    pub assigned_to: Option<Option<Uuid>>,
+    #[serde(default, deserialize_with = "double_option::deserialize")]
     pub contractor_id: Option<Option<Uuid>>,
     #[serde(default, deserialize_with = "double_option::deserialize")]
     pub contractor_name: Option<Option<String>>,
@@ -228,6 +268,7 @@ pub async fn update(
         input.description.as_ref().map(|d| d.as_deref()),
         input.priority.as_deref(),
         input.status.as_deref(),
+        input.assigned_to,
         input.contractor_id,
         input.contractor_name.as_ref().map(|value| value.as_deref()),
         input.completion_cost,
@@ -267,8 +308,31 @@ pub async fn cancel(
         &crate::domain::immutability::Entity::Task,
         &task.status,
     )?;
-    db::task::cancel(&state.pool, id, auth.building_id).await?;
+    db::task::cancel(&state.pool, id, auth.building_id, Some(auth.user_id)).await?;
     Ok(StatusCode::NO_CONTENT)
+}
+
+/// POST /tasks/{id}/take-back — manager takes a task back from the quote
+/// phase (`awaiting_quote` / `quote_received`) to `in_progress`, keeping the
+/// vendor token and attached documents. Returns the updated task.
+pub async fn take_back(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+) -> AppResult<Json<serde_json::Value>> {
+    auth.require_role(&Role::Manager)?;
+    let task = db::task::get(&state.pool, id, auth.building_id)
+        .await?
+        .ok_or(AppError::NotFound)?;
+    crate::domain::immutability::assert_mutable(
+        &crate::domain::immutability::Entity::Task,
+        &task.status,
+    )?;
+    db::task::take_back(&state.pool, id, auth.building_id, Some(auth.user_id)).await?;
+    let updated = db::task::get(&state.pool, id, auth.building_id)
+        .await?
+        .ok_or(AppError::NotFound)?;
+    json_value(db::task::TaskListItem::from(updated))
 }
 
 pub async fn get_vendor_token_url(
@@ -300,6 +364,7 @@ pub async fn generate_token(
         id,
         auth.building_id,
         state.cfg.auth.vendor_token_ttl_days,
+        Some(auth.user_id),
     )
     .await?;
     let url = vendor_url(&state.cfg.app, token);
@@ -316,27 +381,4 @@ pub async fn revoke_token(
     auth.require_role(&Role::Manager)?;
     db::task::revoke_token(&state.pool, id, auth.building_id).await?;
     Ok(StatusCode::NO_CONTENT)
-}
-
-/// PRD US-TP-012 (EP-007-S07): takes a task back from the quote phase
-/// (`awaiting_quote` / `quote_received`) to `in_progress`, keeping the vendor
-/// token and the attached documents. Returns the updated task.
-pub async fn take_back(
-    auth: AuthUser,
-    State(state): State<Arc<AppState>>,
-    Path(id): Path<Uuid>,
-) -> AppResult<Json<serde_json::Value>> {
-    auth.require_role(&Role::Manager)?;
-    let task = db::task::get(&state.pool, id, auth.building_id)
-        .await?
-        .ok_or(AppError::NotFound)?;
-    crate::domain::immutability::assert_mutable(
-        &crate::domain::immutability::Entity::Task,
-        &task.status,
-    )?;
-    db::task::take_back(&state.pool, id, auth.building_id).await?;
-    let updated = db::task::get(&state.pool, id, auth.building_id)
-        .await?
-        .ok_or(AppError::NotFound)?;
-    json_value(db::task::TaskListItem::from(updated))
 }

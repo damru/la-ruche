@@ -11,6 +11,8 @@
 --   • 4 contractors
 --   • 6 tasks     : all task statuses covered
 --   • 4 reports   : all report statuses covered + one anonymous
+--   • 18 activity_log events : report/task lifecycle feed (created, status_changed,
+--     converted_to_task, assignee/contractor/vendor-link events, closed, cancelled)
 --   • 3 claims    : all claim statuses covered
 --   • 4 assemblies: draft, called, closed, ongoing
 --   • 2 consults  : open + closed with seeded choices/responses
@@ -39,6 +41,7 @@ TRUNCATE TABLE
     levy_call_unit, levy_call_line, levy_call, budget_line, budget, works_fund,
     consultation_response_choice, consultation_response, consultation_choice, consultation,
     contractor,
+    activity_log,
     unit_allocation_key,
     allocation_key,
     unit_owner,
@@ -858,7 +861,54 @@ VALUES
 ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================
--- 12. CLAIMS
+-- 12. ACTIVITY LOG
+-- Illustrative lifecycle feed matching the seeded reports/tasks:
+-- each chain reconstructs the transitions that led to the
+-- current status of its entity (payload shapes mirror the
+-- repository emission code).
+-- ============================================================
+INSERT INTO activity_log (id, building_id, entity_type, entity_id, action, actor_id, payload, created_at)
+VALUES
+    -- Report 701 (open): created, untouched since.
+    ('00000000-0000-0000-0000-000000000801', '00000000-0000-0000-0000-000000000001', 'report', '00000000-0000-0000-0000-000000000701', 'created', '00000000-0000-0000-0000-000000000209', NULL, NOW() - INTERVAL '4 days'),
+    -- Report 702 (in_progress) -> task 602: created then converted.
+    ('00000000-0000-0000-0000-000000000802', '00000000-0000-0000-0000-000000000001', 'report', '00000000-0000-0000-0000-000000000702', 'created', '00000000-0000-0000-0000-000000000205', NULL, NOW() - INTERVAL '11 days'),
+    ('00000000-0000-0000-0000-000000000803', '00000000-0000-0000-0000-000000000001', 'report', '00000000-0000-0000-0000-000000000702', 'converted_to_task', '00000000-0000-0000-0000-000000000201', '{"task_id": "00000000-0000-0000-0000-000000000602"}', NOW() - INTERVAL '10 days'),
+    -- Report 703 (closed) -> task 605: created, converted, closed with the task.
+    ('00000000-0000-0000-0000-000000000804', '00000000-0000-0000-0000-000000000001', 'report', '00000000-0000-0000-0000-000000000703', 'created', '00000000-0000-0000-0000-000000000204', NULL, NOW() - INTERVAL '27 days'),
+    ('00000000-0000-0000-0000-000000000805', '00000000-0000-0000-0000-000000000001', 'report', '00000000-0000-0000-0000-000000000703', 'converted_to_task', '00000000-0000-0000-0000-000000000201', '{"task_id": "00000000-0000-0000-0000-000000000605"}', NOW() - INTERVAL '25 days'),
+    ('00000000-0000-0000-0000-000000000806', '00000000-0000-0000-0000-000000000001', 'report', '00000000-0000-0000-0000-000000000703', 'status_changed', '00000000-0000-0000-0000-000000000201', '{"old_status": "open", "new_status": "closed"}', NOW() - INTERVAL '5 days'),
+    -- Report 704 (open, anonymous): created by the reporter, nothing else.
+    ('00000000-0000-0000-0000-000000000807', '00000000-0000-0000-0000-000000000001', 'report', '00000000-0000-0000-0000-000000000704', 'created', '00000000-0000-0000-0000-000000000209', NULL, NOW() - INTERVAL '2 days'),
+    -- Task 601 (open): created, assignee picked.
+    ('00000000-0000-0000-0000-000000000808', '00000000-0000-0000-0000-000000000001', 'task', '00000000-0000-0000-0000-000000000601', 'created', '00000000-0000-0000-0000-000000000201', NULL, NOW() - INTERVAL '14 days'),
+    ('00000000-0000-0000-0000-000000000809', '00000000-0000-0000-0000-000000000001', 'task', '00000000-0000-0000-0000-000000000601', 'assignee_changed', '00000000-0000-0000-0000-000000000201', '{"old_assignee_id": null, "new_assignee_id": "00000000-0000-0000-0000-000000000202"}', NOW() - INTERVAL '13 days'),
+    -- Task 602 (in_progress): contractor called in, work started.
+    ('00000000-0000-0000-0000-000000000810', '00000000-0000-0000-0000-000000000001', 'task', '00000000-0000-0000-0000-000000000602', 'created', '00000000-0000-0000-0000-000000000202', NULL, NOW() - INTERVAL '10 days'),
+    ('00000000-0000-0000-0000-000000000811', '00000000-0000-0000-0000-000000000001', 'task', '00000000-0000-0000-0000-000000000602', 'contractor_assigned', '00000000-0000-0000-0000-000000000201', '{"contractor_id": "00000000-0000-0000-0000-000000000502", "contractor_name": "Hydro Services Lyon"}', NOW() - INTERVAL '9 days'),
+    ('00000000-0000-0000-0000-000000000812', '00000000-0000-0000-0000-000000000001', 'task', '00000000-0000-0000-0000-000000000602', 'status_changed', '00000000-0000-0000-0000-000000000201', '{"old_status": "open", "new_status": "in_progress"}', NOW() - INTERVAL '1 day'),
+    -- Task 603 (awaiting_vendor): vendor link generated, no raw token in payload.
+    ('00000000-0000-0000-0000-000000000813', '00000000-0000-0000-0000-000000000001', 'task', '00000000-0000-0000-0000-000000000603', 'created', '00000000-0000-0000-0000-000000000201', NULL, NOW() - INTERVAL '7 days'),
+    ('00000000-0000-0000-0000-000000000814', '00000000-0000-0000-0000-000000000001', 'task', '00000000-0000-0000-0000-000000000603', 'contractor_assigned', '00000000-0000-0000-0000-000000000201', '{"contractor_id": "00000000-0000-0000-0000-000000000503", "contractor_name": "Serrurerie du Parc"}', NOW() - INTERVAL '6 days'),
+    ('00000000-0000-0000-0000-000000000815', '00000000-0000-0000-0000-000000000001', 'task', '00000000-0000-0000-0000-000000000603', 'vendor_link_generated', '00000000-0000-0000-0000-000000000201', jsonb_build_object('expires_at', NOW() + INTERVAL '5 days'), NOW() - INTERVAL '6 hours'),
+    ('00000000-0000-0000-0000-000000000816', '00000000-0000-0000-0000-000000000001', 'task', '00000000-0000-0000-0000-000000000603', 'status_changed', '00000000-0000-0000-0000-000000000201', '{"old_status": "open", "new_status": "awaiting_vendor"}', NOW() - INTERVAL '6 hours'),
+    -- Task 604 (awaiting_validation): work done by the assignee.
+    ('00000000-0000-0000-0000-000000000817', '00000000-0000-0000-0000-000000000001', 'task', '00000000-0000-0000-0000-000000000604', 'created', '00000000-0000-0000-0000-000000000202', NULL, NOW() - INTERVAL '9 days'),
+    ('00000000-0000-0000-0000-000000000818', '00000000-0000-0000-0000-000000000001', 'task', '00000000-0000-0000-0000-000000000604', 'status_changed', '00000000-0000-0000-0000-000000000202', '{"old_status": "open", "new_status": "in_progress"}', NOW() - INTERVAL '8 days'),
+    ('00000000-0000-0000-0000-000000000819', '00000000-0000-0000-0000-000000000001', 'task', '00000000-0000-0000-0000-000000000604', 'status_changed', '00000000-0000-0000-0000-000000000201', '{"old_status": "in_progress", "new_status": "awaiting_validation"}', NOW() - INTERVAL '12 hours'),
+    -- Task 605 (closed): vendor submitted, manager closed it (closes report 703 too).
+    ('00000000-0000-0000-0000-000000000820', '00000000-0000-0000-0000-000000000001', 'task', '00000000-0000-0000-0000-000000000605', 'created', '00000000-0000-0000-0000-000000000201', NULL, NOW() - INTERVAL '25 days'),
+    ('00000000-0000-0000-0000-000000000821', '00000000-0000-0000-0000-000000000001', 'task', '00000000-0000-0000-0000-000000000605', 'contractor_assigned', '00000000-0000-0000-0000-000000000201', '{"contractor_id": "00000000-0000-0000-0000-000000000504", "contractor_name": "Toitures Lyonnaises"}', NOW() - INTERVAL '24 days'),
+    ('00000000-0000-0000-0000-000000000822', '00000000-0000-0000-0000-000000000001', 'task', '00000000-0000-0000-0000-000000000605', 'status_changed', '00000000-0000-0000-0000-000000000201', '{"old_status": "open", "new_status": "in_progress"}', NOW() - INTERVAL '20 days'),
+    ('00000000-0000-0000-0000-000000000823', '00000000-0000-0000-0000-000000000001', 'task', '00000000-0000-0000-0000-000000000605', 'status_changed', NULL, '{"old_status": "in_progress", "new_status": "awaiting_validation"}', NOW() - INTERVAL '6 days'),
+    ('00000000-0000-0000-0000-000000000824', '00000000-0000-0000-0000-000000000001', 'task', '00000000-0000-0000-0000-000000000605', 'closed', '00000000-0000-0000-0000-000000000202', '{"old_status": "awaiting_validation"}', NOW() - INTERVAL '5 days'),
+    -- Task 606 (cancelled): requested then abandoned.
+    ('00000000-0000-0000-0000-000000000825', '00000000-0000-0000-0000-000000000001', 'task', '00000000-0000-0000-0000-000000000606', 'created', '00000000-0000-0000-0000-000000000201', NULL, NOW() - INTERVAL '12 days'),
+    ('00000000-0000-0000-0000-000000000826', '00000000-0000-0000-0000-000000000001', 'task', '00000000-0000-0000-0000-000000000606', 'status_changed', '00000000-0000-0000-0000-000000000201', '{"old_status": "open", "new_status": "cancelled"}', NOW() - INTERVAL '9 hours')
+ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================
+-- 13. CLAIMS
 -- One fixture per claim status: open, in_progress, closed.
 -- ============================================================
 INSERT INTO claim (
@@ -933,7 +983,7 @@ VALUES
 ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================
--- 13. ASSEMBLIES (GENERAL MEETINGS)
+-- 14. ASSEMBLIES (GENERAL MEETINGS)
 -- - annual draft: created, not convoked, no agenda, no resolutions
 -- - extraordinary called: convoked with multi-line agenda and resolutions, no votes yet
 -- - annual closed: convoked, closed, with multi-line agenda, attendance and votes
@@ -1820,6 +1870,7 @@ ON CONFLICT (id) DO NOTHING;
 -- Contractors   | 4 referential entries              | maintenance, water, service, other
 -- Tasks         | 6 fixtures                         | open, in_progress, awaiting_vendor, awaiting_validation, closed, cancelled
 -- Reports       | 4 fixtures                         | open, in_progress, closed + one anonymous (masked identity)
+-- Activity log  | 26 fixtures                        | report/task lifecycle feed (created, status_changed, converted_to_task, assignee/contractor/vendor-link, closed, cancelled)
 -- Claims        | 3 fixtures                         | open, in_progress, closed
 -- Assemblies    | 4 fixtures                         | draft (empty), called (multi-line agenda + pending resolutions), closed (multi-line agenda + mixed attendance + votes, incl. art. 25 and art. 26 cases), ongoing (extraordinary — art. 24 ✓/✗, art. 25 ✓/✗ with art. 25-1 eligible case)
 -- Consultations | 2 fixtures                         | open, closed (+ choices & responses)

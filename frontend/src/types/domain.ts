@@ -22,6 +22,32 @@ export type TaskPriority = 'low' | 'normal' | 'high' | 'urgent'
 export type ClaimType = 'current' | 'natural_disaster' | 'theft'
 export type ClaimStatus = 'draft' | 'open' | 'in_progress' | 'closed'
 export type ReportStatus = 'open' | 'in_progress' | 'closed'
+
+// Mirrors the closed vocabulary of backend `db::activity_log::actions::*`;
+// both sides must move together.
+export type ActivityAction =
+  | 'created'
+  | 'status_changed'
+  | 'photo_added'
+  | 'converted_to_task'
+  | 'assignee_changed'
+  | 'contractor_assigned'
+  | 'vendor_link_generated'
+  | 'document_uploaded'
+  | 'vendor_submission_received'
+  | 'closed'
+
+export interface TimelineEvent {
+  id: string
+  building_id: string
+  entity_type: 'report' | 'task'
+  entity_id: string
+  action: ActivityAction
+  actor_id: string | null
+  actor_name?: string | null
+  payload?: Record<string, unknown> | null
+  created_at: string
+}
 export type PollStatus = 'draft' | 'open' | 'closed'
 
 export type ContractType =
