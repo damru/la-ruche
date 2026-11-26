@@ -74,17 +74,14 @@
   --tone-fg: var(--color-role-tenant-fg);
 }
 
+/* Iris deliberately reuses the manager palette — one violet accent, one source. */
 .tone--iris {
-  --tone-bg: oklch(0.916 0.0365 303.11);
-  --tone-fg: oklch(0.242 0.1404 286.09);
+  --tone-bg: var(--color-role-manager-bg);
+  --tone-fg: var(--color-role-manager-fg);
 }
 .tone--apricot {
   --tone-bg: oklch(0.942 0.0334 65.96);
   --tone-fg: oklch(0.418 0.1105 49.96);
-}
-[data-theme="dark"] .tone--iris {
-  --tone-bg: oklch(0.401 0.0340 298.59);
-  --tone-fg: oklch(0.916 0.0365 303.11);
 }
 [data-theme="dark"] .tone--apricot {
   --tone-bg: oklch(0.414 0.1000 48.00);

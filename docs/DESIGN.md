@@ -290,11 +290,13 @@ Trois polices, trois rôles. Chargées depuis Google Fonts.
 
 Source : `frontend/src/styles/tokens.css`. Les valeurs Dark sont dans `[data-theme="dark"]`.
 
-> **Espace colorimétrique :** toute couleur est exprimée en `oklch` (tokens, `color-mix(in oklch, …)`, tones). Les littéraux sRGB/hex sont interdits hors `styles/tokens.css`, les deux composants verrouillés (`CMockBanner`, `AuthBrandPanel`) et les exceptions documentées (data-URI du check de case, `@media print`). Mélanger un token et un alpha se fait par `color-mix(in oklch, var(--color-x) n%, transparent)` dans la classe consommatrice — jamais via un token dérivé déclaré une seule fois dans `:root`.
+> **Espace colorimétrique :** toute couleur est exprimée en `oklch` (tokens, `color-mix(in oklch, …)`, tones). Les littéraux sRGB/hex sont interdits hors `styles/tokens.css`, les composants verrouillés (`CMockBanner`, `AuthBrandPanel`, voile de progression de `CBtn` — blanc obligatoire sur un fond saturé dans les deux thèmes) et les exceptions documentées (data-URI du check de case, `@media print`). Mélanger un token et un alpha se fait par `color-mix(in oklch, var(--color-x) n%, transparent)` dans la classe consommatrice — jamais via un token dérivé déclaré une seule fois dans `:root`.
 
 | Token | Light | Dark |
 |---|---|---|
 | `--color-primary` | `oklch(0.503 0.2154 287.24)` | `oklch(0.811 0.1013 293.57)` |
+| `--color-on-success` | `oklch(1.000 0.0000 0.00)` | `color-mix(in oklch, var(--color-success), black 70%)` |
+| `--color-scrim` | `oklch(0.224 0.0049 219.69 / 0.4)` | `oklch(0.000 0.0000 0.00 / 0.6)` |
 | `--color-primary-container` | `oklch(0.587 0.2131 288.56)` | `oklch(0.434 0.2006 283.98)` |
 | `--color-on-primary` | `oklch(1.000 0.0000 0.00)` | `oklch(0.302 0.1811 281.25)` |
 | `--color-secondary` | `oklch(0.491 0.0313 271.42)` | `oklch(0.824 0.0354 276.63)` |
@@ -306,7 +308,8 @@ Source : `frontend/src/styles/tokens.css`. Les valeurs Dark sont dans `[data-the
 | `--color-success-container` | `oklch(0.957 0.0210 147.64)` | `oklch(0.381 0.0909 146.40)` |
 | `--color-warning` | `oklch(0.631 0.1970 40.25)` | `oklch(0.829 0.1452 73.54)` |
 | `--color-warning-container` | `oklch(0.979 0.0310 92.94)` | `oklch(0.348 0.0719 80.56)` |
-| `--gradient-primary` | `linear-gradient(135deg, oklch(0.503 0.2154 287.24), oklch(0.587 0.2131 288.56))` (light) · `linear-gradient(135deg, oklch(0.587 0.2131 288.56), oklch(0.811 0.1013 293.57))` (dark) | — |
+| `--gradient-primary` | `linear-gradient(135deg, oklch(0.503 0.2154 287.24), oklch(0.587 0.2131 288.56))` | `linear-gradient(135deg, oklch(0.587 0.2131 288.56), oklch(0.811 0.1013 293.57))` |
+| `--gradient-brand` | `linear-gradient(160deg, oklch(0.413 0.1755 286.61), oklch(0.503 0.2154 287.24) 60%, oklch(0.606 0.2189 292.72))` | idem (thème verrouillé) |
 | `--gradient-success` | dérivé de `--color-success` (foncé → base) | auto |
 | `--gradient-error` | dérivé de `--color-error` (foncé → base) | auto |
 | `--gradient-warning` | dérivé de `--color-warning` (foncé → base) | auto |
@@ -366,8 +369,6 @@ Source : `frontend/src/styles/tokens.css`. Les valeurs Dark sont dans `[data-the
 | `--shadow-md`    | `0 8px 32px oklch(0.224 0.0049 219.69 / .07), 0 2px 8px oklch(0.224 0.0049 219.69 / .04)` |
 | `--shadow-lg`    | `0 16px 48px oklch(0.224 0.0049 219.69 / .10), 0 4px 16px oklch(0.224 0.0049 219.69 / .06)` |
 | `--shadow-glass` | `0 20px 60px oklch(0.224 0.0049 219.69 / .14), 0 4px 16px oklch(0.224 0.0049 219.69 / .08)` |
-| `--color-scrim`  | `oklch(0.224 0.0049 219.69 / .4)` (light) · `oklch(0.000 0.0000 0.00 / .6)` (dark) — voile modal/drawer |
-| `--gradient-brand` | `linear-gradient(160deg, oklch(0.413 0.1755 286.61), oklch(0.503 0.2154 287.24) 60%, oklch(0.606 0.2189 292.72))` — panneau auth, thème verrouillé |
 
 **Ombres de focus et d'interaction** — utilisées par les composants `CForm*` :
 
@@ -415,8 +416,8 @@ color:      var(--tone-fg, <fallback>);
 | `.tone--disabled`     | `--color-surface-container-highest` | `--color-on-surface-variant` |
 | `.tone--err`          | `--color-error-container`           | `--color-error` |
 | `.tone--info`         | `--color-secondary-container`       | `--color-on-secondary-container` |
-| `.tone--iris`         | `oklch(0.916 0.0365 303.11)` (dark : `0.401 0.0340 298.59`) | `oklch(0.242 0.1404 286.09)` (dark : `0.916 0.0365 303.11`) |
-| `.tone--apricot`      | `oklch(0.942 0.0334 65.96)` (dark : `0.414 0.1000 48.00`) | `oklch(0.418 0.1105 49.96)` (dark : `0.942 0.0334 65.96`) |
+| `.tone--iris`         | `--color-role-manager-bg`           | `--color-role-manager-fg` |
+| `.tone--apricot`      | `oklch(0.942 0.0334 65.96)` | `oklch(0.418 0.1105 49.96)` |
 | `.tone--manager`      | `--color-role-manager-bg`           | `--color-role-manager-fg` |
 | `.tone--muted`        | `--color-surface-container`         | `--color-on-surface-variant` |
 | `.tone--primary`      | `color-mix(primary 10%)`            | `--color-on-surface` |
@@ -425,6 +426,7 @@ color:      var(--tone-fg, <fallback>);
 | `.tone--warn`         | `--color-warning-container`         | `--color-warning` |
 
 > Une vue ne doit jamais redéclarer localement une classe `.tone--*` dans son CSS scoped.
+> `.tone--apricot` a une déclinaison dark (`oklch(0.414 0.1000 48.00)` / `oklch(0.942 0.0334 65.96)`) ; `.tone--iris` suit la palette manager, donc son dark vient des tokens de rôle.
 
 ---
 

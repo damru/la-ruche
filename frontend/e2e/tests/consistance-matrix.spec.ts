@@ -106,3 +106,28 @@ test.describe('Cohérence des couleurs de titres', () => {
     await close()
   })
 })
+
+test.describe('Cohérence du voile de modale', () => {
+  test('l’overlay des modales consomme le token de scrim', async ({ auth }) => {
+    const { page, close } = await auth('manager')
+    await page.goto('/reports')
+    await page.getByRole('button', { name: 'Nouveau signalement' }).click()
+    await page.waitForSelector('.c-modal__overlay')
+
+    const colours = await page.evaluate(() => {
+      const overlay = document.querySelector('.c-modal__overlay') as HTMLElement
+      const probe = document.createElement('div')
+      probe.style.background = 'var(--color-scrim)'
+      document.body.append(probe)
+      const out = {
+        overlay: getComputedStyle(overlay).backgroundColor,
+        scrim: getComputedStyle(probe).backgroundColor,
+      }
+      probe.remove()
+      return out
+    })
+
+    expect(colours.overlay, 'le voile doit être le token scrim, pas une couleur en dur').toBe(colours.scrim)
+    await close()
+  })
+})

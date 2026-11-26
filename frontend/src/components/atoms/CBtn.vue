@@ -377,6 +377,8 @@ const shrinkClass: Record<Breakpoint, string> = {
   content: '';
   position: absolute;
   inset: 0;
+  /* Locked white: the progress veil must stay white over a saturated
+     success fill in both themes (on-primary would turn violet in dark). */
   background: oklch(1.000 0.0000 0.00 / 0.25);
   transform-origin: left center;
   transform: scaleX(0);

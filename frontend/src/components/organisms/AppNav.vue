@@ -460,7 +460,7 @@ watch(() => route.path, closeDrawer)
   border-top: 1px solid color-mix(in oklch, var(--color-outline-variant) 20%, transparent);
   padding-bottom: var(--nav-safe-area-bottom);
   z-index: var(--z-nav);
-  box-shadow: 0 -4px 20px color-mix(in oklch, var(--color-on-surface) 6%, transparent);
+  box-shadow: 0 -4px 20px color-mix(in oklch, var(--color-scrim) 15%, transparent);
 }
 
 @media (max-width: 1024px) { .c-bottom-nav { display: flex; } }

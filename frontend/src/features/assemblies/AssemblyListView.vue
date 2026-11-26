@@ -293,6 +293,7 @@ async function onMeetingCreated(meetingId: string) {
 .meeting-badge--closed,
 .meeting-badge--ongoing {
   background: var(--gradient-success);
+  color: var(--color-on-success);
 }
 
 .meeting-badge--pulse {
