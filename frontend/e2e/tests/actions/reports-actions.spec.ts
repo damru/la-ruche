@@ -38,7 +38,7 @@ test.describe('report detail timeline', () => {
     await expect(manager.page).toHaveURL(new RegExp(`/tasks/${converted.task_id}$`))
     await expect(manager.page.getByRole('heading', { name: title })).toBeVisible()
     await expect(manager.page.getByText('Tâche créée')).toBeVisible()
-    await expect(manager.page.getByRole('link', { name: 'Ouvrir la tâche' })).toHaveCount(1)
+    await expect(manager.page.getByRole('link', { name: 'Ouvrir la tâche' })).toHaveCount(0)
 
     await manager.close()
   })

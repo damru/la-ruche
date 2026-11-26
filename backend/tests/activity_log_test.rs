@@ -525,6 +525,18 @@ async fn sensitive_actions_are_filtered_for_residents() {
             .any(|e| e["action"] == json!("status_changed"))
     );
 
+    let resident_task_events = server
+        .get(&format!("/api/v1/tasks/{task_id}/timeline"))
+        .add_header("Authorization", &tenant)
+        .await
+        .json::<Vec<Value>>();
+    assert!(
+        resident_task_events
+            .iter()
+            .all(|e| !sensitive.contains(&e["action"].as_str().unwrap_or_default())),
+        "the task timeline is open to every authenticated role and must filter too"
+    );
+
     let manager_events = server
         .get(&format!("/api/v1/reports/{report_id}/timeline"))
         .add_header("Authorization", &manager)

@@ -42,11 +42,11 @@ Aucun changement — consommateur de EP-017-S03.
 
 Au montage (avec le fetch existant de la tâche) : `tasksApi.timeline(route.params.id)` → `ref<TimelineEvent[]>`. États : chargement (squelette), erreur (message + réessayer), vide (`200 []` — message « Aucun événement enregistré », cas des tâches antérieures à EP-017, cf. S03 §6).
 
-### 5.3 Nouveau composant `TimelineEventList.vue` (`frontend/src/features/tasks/` ou catalogue si promu)
+### 5.3 Nouveau composant `CTimelineList.vue` (catalogue `frontend/src/components/molecules/`)
 
-Composant de rendu **partagé avec EP-017-S05** (à cataloguer dans `docs/DESIGN.md` §2 avant usage) :
+Composant de rendu **partagé avec EP-017-S05**, catalogué dans `docs/DESIGN.md §3.2` :
 
-- Props : `events: TimelineEvent[]`.
+- Props : `events: TimelineEvent[]`, `linkTasks?: boolean` (défaut `true` — masqué pour les rôles sans accès aux tâches), `currentTaskId?: string` (supprime le lien de conversion vers la page courante).
 - Rendu vertical chronologique : pastille (variant par action), libellé i18n, horodatage formaté, acteur (`actor_name` ou « Prestataire externe » quand null sur les événements vendeur), détail issu du `payload`.
 - Mapping action → libellé/pastille (clés i18n `timeline.actions.*`, fichiers `frontend/src/locales/`) :
 
@@ -69,7 +69,7 @@ Composant de rendu **partagé avec EP-017-S05** (à cataloguer dans `docs/DESIGN
 
 ### 5.4 Contraintes de style
 
-Règles AGENTS.md : pas de valeurs brutes (`px`/hex) — utilitaires Tailwind/tokens ; pas de bloc `<style>` dans la feature view ; pas d'import `radix-vue` direct (wrappers `C*`). Le CSS timeline existant de `TaskDetailView` (classes `timeline-dot--*`) est repris/adapté dans `TimelineEventList.vue` en respectant ces règles.
+Règles AGENTS.md : pas de valeurs brutes (`px`/hex) — utilitaires Tailwind/tokens ; pas de bloc `<style>` dans la feature view ; pas d'import `radix-vue` direct (wrappers `C*`). Le CSS timeline existant de `TaskDetailView` (classes `timeline-dot--*`) est remplacé par des utilitaires Tailwind dans `CTimelineList.vue` en respectant ces règles.
 
 ## 6. Cas limites
 
@@ -86,7 +86,7 @@ Règles AGENTS.md : pas de valeurs brutes (`px`/hex) — utilitaires Tailwind/to
 2. La timeline affichée provient exclusivement de `GET /tasks/{id}/timeline` (aucune étape reconstruite côté client, plus d'étape « non datée »).
 3. Une tâche issue d'un signalement affiche les événements du signalement en tête de frise, avec distinction visuelle.
 4. Toutes les actions du tableau §5.3 ont un libellé i18n (fr) ; action inconnue → rendu générique.
-5. `npm --prefix frontend run build` et `run lint` passent ; `TimelineEventList` catalogué dans `docs/DESIGN.md` §2.
+5. `npm --prefix frontend run build` et `run lint` passent ; `CTimelineList` catalogué dans `docs/DESIGN.md` §3.2.
 
 ## 8. Plan de tests
 
@@ -99,7 +99,7 @@ Si `vitest` est disponible, un test de `TimelineEventList` (mapping action → l
 
 ## 9. Ordre d'implémentation
 
-1. `TimelineEventList.vue` + entrée `docs/DESIGN.md` §2 + clés i18n.
+1. `CTimelineList.vue` + entrée `docs/DESIGN.md` §3.2 + clés i18n.
 2. `git mv TaskDetailView.vue TaskTimelineView.vue`, purge du computed L81-175, branchement `tasksApi.timeline`.
 3. `router/index.ts` (import/composant).
 4. `npm --prefix frontend run build && run lint`, vérification manuelle §8.

@@ -38,7 +38,7 @@ const { t } = useI18n()
 const { formatDate, formatRelative } = useFormatters()
 const router = useRouter()
 const perms = usePermissions()
-const { authorLabel, statusVariant } = useReportLabels()
+const { authorLabel, statusVariant, indexUnits, unitLabel } = useReportLabels()
 
 
 // ── State ─────────────────────────────────────────────────────────
@@ -111,9 +111,7 @@ const activeCount = computed(() =>
   allReports.value.filter(r => r.status !== REPORT_STATUS_CLOSED).length,
 )
 
-const unitsById = computed(() =>
-  new Map(allUnits.value.map(u => [u.id, u])),
-)
+const unitsById = computed(() => indexUnits(allUnits.value))
 
 const unitOptions = computed(() => [
   { value: '', label: t('reports.unitPlaceholder') },
@@ -123,12 +121,6 @@ const unitOptions = computed(() => [
 ])
 
 // ── Helpers ───────────────────────────────────────────────────────
-function unitLabel(unitId?: string): string {
-  if (!unitId) return t('claims.commonAreas')
-  const u = unitsById.value.get(unitId)
-  return u ? t('claims.unitLabel', { number: u.unit_number }) : '—'
-}
-
 function canReadComments(r: Report): boolean {
   return canComment.value || r.is_author
 }
@@ -262,12 +254,14 @@ async function submitComment(r: Report) {
                 <CFlexGroup
                   direction="row"
                 >
-                  <RouterLink
-                    :to="{ name: 'report-detail', params: { id: r.id } }"
-                    class="text-lg font-semibold text-on-surface m-0 leading-snug min-w-0 hover:underline"
-                  >
-                    {{ r.title }}
-                  </RouterLink>
+                  <h3 class="text-lg font-semibold text-on-surface m-0 leading-snug min-w-0">
+                    <RouterLink
+                      :to="{ name: 'report-detail', params: { id: r.id } }"
+                      class="hover:underline"
+                    >
+                      {{ r.title }}
+                    </RouterLink>
+                  </h3>
                   
                   <CMetaItem
                     v-if="r.document_count > 0"
@@ -298,7 +292,7 @@ async function submitComment(r: Report) {
                     <template #icon>
                       <CIconHome />
                     </template>
-                    {{ unitLabel(r.unit_id) }}
+                    {{ unitLabel(r.unit_id, unitsById) }}
                   </CMetaItem>
                   <CMetaItem>
                     <template #icon>

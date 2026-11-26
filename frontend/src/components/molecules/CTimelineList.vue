@@ -14,7 +14,11 @@ import CIconUser from '@/components/atoms/CIconUser.svg'
 import CIconWrench from '@/components/atoms/CIconWrench.svg'
 import type { TimelineEvent } from '@/types/domain'
 
-const props = withDefaults(defineProps<{ events: TimelineEvent[]; linkTasks?: boolean }>(), { linkTasks: true })
+const props = withDefaults(defineProps<{
+  events: TimelineEvent[]
+  linkTasks?: boolean
+  currentTaskId?: string
+}>(), { linkTasks: true, currentTaskId: undefined })
 
 const { t } = useI18n()
 const { formatDate } = useFormatters()
@@ -153,7 +157,10 @@ const rows = computed(() =>
               {{ formatDate(row.event.created_at, 'datetime') }}
             </span>
             <RouterLink
-              v-if="props.linkTasks && row.event.action === 'converted_to_task' && typeof row.event.payload?.task_id === 'string'"
+              v-if="props.linkTasks
+                && row.event.action === 'converted_to_task'
+                && typeof row.event.payload?.task_id === 'string'
+                && row.event.payload.task_id !== props.currentTaskId"
               :to="{ name: 'task-detail', params: { id: row.event.payload.task_id } }"
               class="text-xs font-medium text-primary hover:underline"
             >

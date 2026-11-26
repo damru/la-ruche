@@ -882,6 +882,7 @@
     "cancelSuccess": "Tâche annulée",
     "documentHint": "Glisser-déposer ou cliquer pour joindre les pièces de la tâche",
     "documentUploadError": "La tâche a été enregistrée mais certains documents n'ont pas pu être rattachés",
+    "interventions": "Interventions du carnet",
     "documentsLoadError": "Impossible de charger les documents de la tâche.",
     "documentsDetachError": "Impossible de retirer ce document de la tâche.",
     "documentsDetachTitle": "Retirer la pièce de la tâche",
@@ -1702,10 +1703,6 @@
     "reportBadge": "Signalement",
     "actorExternalVendor": "Prestataire externe",
     "conversionLink": "Ouvrir la tâche",
-    "entities": {
-      "report": "signalement",
-      "task": "tâche"
-    },
     "actions": {
       "created": {
         "report": "Signalement créé",

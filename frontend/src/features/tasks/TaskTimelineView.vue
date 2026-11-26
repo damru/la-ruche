@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useFormatters } from '@/composables/useFormatters'
@@ -17,29 +17,31 @@ import CHeading from '@/components/atoms/CHeading.vue'
 import CIconArrowLeft from '@/components/atoms/CIconArrowLeft.svg'
 import CIconChevronRight from '@/components/atoms/CIconChevronRight.svg'
 import CIconRefresh from '@/components/atoms/CIconRefresh.svg'
-import { contractorsApi, tasksApi } from '@/api'
+import { contractorsApi, maintenanceApi, tasksApi } from '@/api'
 import { useBuildingStore } from '@/stores/building'
-import type { Contractor, Task, TimelineEvent } from '@/types/domain'
+import type { Contractor, MaintenanceEntry, Task, TimelineEvent } from '@/types/domain'
 import { TASK_PRIORITY_HIGH, TASK_PRIORITY_LOW, TASK_PRIORITY_NORMAL, TASK_PRIORITY_URGENT, TASK_STATUS_AWAITING_QUOTE, TASK_STATUS_AWAITING_VALIDATION, TASK_STATUS_AWAITING_VENDOR, TASK_STATUS_CLOSED, TASK_STATUS_IN_PROGRESS, TASK_STATUS_OPEN, TASK_STATUS_QUOTE_RECEIVED } from '@/utils/constants'
 
 const { t } = useI18n()
-const { formatDate, formatRelative } = useFormatters()
+const { formatDate, formatRelative, formatCurrency } = useFormatters()
 const route = useRoute()
 const router = useRouter()
 
-const taskId = route.params.id as string
+const taskId = ref(route.params.id as string)
 const buildingName = ref('')
 const task = ref<Task | null>(null)
 const contractor = ref<Contractor | null>(null)
+const interventions = ref<MaintenanceEntry[]>([])
 
 const timeline = ref<TimelineEvent[]>([])
 const timelineLoading = ref(false)
 const timelineError = ref<string | null>(null)
 
 async function loadData() {
-  const [building, taskRes] = await Promise.all([
+  const [building, taskRes, entriesRes] = await Promise.all([
     useBuildingStore().fetch(),
-    tasksApi.get(taskId),
+    tasksApi.get(taskId.value),
+    maintenanceApi.list(),
   ])
   buildingName.value = building.name
   task.value = taskRes.data
@@ -50,13 +52,17 @@ async function loadData() {
   } else {
     contractor.value = null
   }
+
+  interventions.value = entriesRes.data
+    .filter(entry => entry.task_id === taskId.value)
+    .sort((left, right) => left.intervention_date.localeCompare(right.intervention_date))
 }
 
 async function loadTimeline() {
   timelineLoading.value = true
   timelineError.value = null
   try {
-    timeline.value = (await tasksApi.timeline(taskId)).data
+    timeline.value = (await tasksApi.timeline(taskId.value)).data
   } catch {
     timelineError.value = t('timeline.error')
   } finally {
@@ -66,6 +72,12 @@ async function loadTimeline() {
 
 const { loading, error, reload } = usePageLoader(loadData)
 onMounted(() => {
+  reload()
+  loadTimeline()
+})
+
+watch(() => route.params.id, id => {
+  taskId.value = id as string
   reload()
   loadTimeline()
 })
@@ -198,7 +210,46 @@ function priorityVariant(p: string): 'err' | 'pending' | 'primary' | 'valid' | '
         <CTimelineList
           v-else
           :events="timeline"
+          :current-task-id="taskId"
         />
+
+        <section
+          v-if="interventions.length"
+          class="mt-6"
+        >
+          <h2 class="text-xl font-semibold text-on-surface-variant mt-0 mb-4">
+            {{ t('tasks.interventions') }}
+          </h2>
+          <div class="flex flex-col gap-2">
+            <CCard
+              v-for="entry in interventions"
+              :key="entry.id"
+              :level="3"
+            >
+              <div class="flex items-start justify-between gap-3">
+                <div class="flex flex-col gap-1 min-w-0">
+                  <span class="text-sm font-medium text-on-surface">{{ entry.title }}</span>
+                  <span
+                    v-if="entry.vendor_name || entry.cost != null"
+                    class="text-xs text-on-surface-variant"
+                  >
+                    <span v-if="entry.vendor_name">🔧 {{ entry.vendor_name }}</span>
+                    <span v-if="entry.cost != null"> · {{ formatCurrency(entry.cost) }}</span>
+                  </span>
+                  <span
+                    v-if="entry.description"
+                    class="text-xs text-on-surface-variant"
+                  >
+                    {{ entry.description }}
+                  </span>
+                </div>
+                <span class="text-xs text-on-surface-variant whitespace-nowrap">
+                  {{ formatDate(entry.intervention_date) }}
+                </span>
+              </div>
+            </CCard>
+          </div>
+        </section>
 
         <div
           v-if="task.status === TASK_STATUS_CLOSED"

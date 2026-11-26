@@ -44,9 +44,9 @@ use crate::domain::Role;
 /// visible to any role that can read the underlying entity.
 const SENSITIVE_ACTIONS: &[&str] = &[actions::ASSIGNEE_CHANGED, actions::VENDOR_LINK_GENERATED];
 
-pub(crate) fn can_view_action(role: &Role, action: &str) -> bool {
+pub(crate) fn can_view_action(roles: &[Role], action: &str) -> bool {
     if SENSITIVE_ACTIONS.contains(&action) {
-        matches!(role, Role::Manager | Role::BoardMember)
+        roles.iter().any(|r| matches!(r, Role::Manager | Role::BoardMember))
     } else {
         true
     }
@@ -56,17 +56,16 @@ pub(crate) fn can_view_action(role: &Role, action: &str) -> bool {
 Décisions :
 - **Liste sensible fermée et centralisée** (constante unique) — toute évolution du vocabulaire (S02) qui introduit une action sensible se fait ici, en un point.
 - Filtrage **en mémoire** après `list_for_chain`, pas en SQL : la liste est courte (timeline d'une entité), et garder la règle en `domain/` la rend testable unitairement et indépendante du repo. Pas de paramètre `role` dans `db/activity_log.rs`.
-- Un rôle inconnu/futur est traité comme non privilégié (le `matches!` est une allow-list).
+- La signature prend `&[Role]` (et non `&Role`) : `AuthUser` porte un `Vec<Role>` et un membre du conseil syndical est souvent aussi co-propriétaire — l'accès est accordé si **l'un** des rôles du compte est privilégié. Un rôle inconnu/futur est traité comme non privilégié (allow-list).
 
 ### 4.2 Branchement dans les handlers timeline (S03)
 
 Dans `tasks::timeline` et `reports::timeline`, après la lecture :
 
 ```rust
-let role = auth.role()?; // accès au Role de l'AuthUser, pattern existant
 let events: Vec<_> = events
     .into_iter()
-    .filter(|e| domain::activity_visibility::can_view_action(&role, &e.action))
+    .filter(|e| activity_visibility::can_view_action(&auth.roles, &e.action))
     .collect();
 ```
 
@@ -74,7 +73,7 @@ Aucune autre logique dans les handlers. Les événements filtrés sont **omis** 
 
 ### 4.3 Rappel du niveau « accès à l'entité »
 
-La première moitié de la règle EPICS (« visibles par tous les rôles ayant accès à l'entité ») est déjà garantie par S03 : chaque handler charge l'entité par `id + building_id` (404 sinon) et hérite des guards de rôle de l'endpoint de lecture correspondant. S06 n'ajoute que la granularité **par action**.
+La première moitié de la règle EPICS (« visibles par tous les rôles ayant accès à l'entité ») tient au scoping `id + building_id` (404 sinon), pas à un guard de rôle : `reports::timeline` suit `reports::get` (tout rôle authentifié de l'immeuble), et **`tasks::timeline` n'a aucun guard de rôle** — `tasks::get` non plus, aucun layer de rôle n'existe sur ces routes. Le filtre S06 sur `/tasks/{id}/timeline` ferme donc une exposition réelle pour les rôles non privilégiés ; il est testé sur les deux endpoints.
 
 ## 5. Frontend
 
@@ -104,14 +103,14 @@ Aucun changement : S04 (vue réservée manager/board_member — jamais filtrée 
 ```rust
 #[test]
 fn sensitive_actions_restricted_to_managers() {
-    for role in [Role::CoOwner, Role::Tenant] {
-        assert!(!can_view_action(&role, actions::ASSIGNEE_CHANGED));
-        assert!(!can_view_action(&role, actions::VENDOR_LINK_GENERATED));
-        assert!(can_view_action(&role, actions::STATUS_CHANGED));
+    for roles in [vec![Role::CoOwner], vec![Role::Tenant]] {
+        assert!(!can_view_action(&roles, actions::ASSIGNEE_CHANGED));
+        assert!(!can_view_action(&roles, actions::VENDOR_LINK_GENERATED));
+        assert!(can_view_action(&roles, actions::STATUS_CHANGED));
     }
-    for role in [Role::Manager, Role::BoardMember] {
-        assert!(can_view_action(&role, actions::ASSIGNEE_CHANGED));
-        assert!(can_view_action(&role, actions::VENDOR_LINK_GENERATED));
+    for roles in [vec![Role::Manager], vec![Role::BoardMember]] {
+        assert!(can_view_action(&roles, actions::ASSIGNEE_CHANGED));
+        assert!(can_view_action(&roles, actions::VENDOR_LINK_GENERATED));
     }
 }
 ```

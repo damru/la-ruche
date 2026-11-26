@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useFormatters } from '@/composables/useFormatters'
@@ -21,23 +21,25 @@ import CTopbar from '@/components/organisms/CTopbar.vue'
 import CIconArrowLeft from '@/components/atoms/CIconArrowLeft.svg'
 import CIconCalendar from '@/components/atoms/CIconCalendar.svg'
 import CIconChevronRight from '@/components/atoms/CIconChevronRight.svg'
+import CIconFile from '@/components/atoms/CIconFile.svg'
 import CIconRefresh from '@/components/atoms/CIconRefresh.svg'
 import CIconUser from '@/components/atoms/CIconUser.svg'
 import { reportsApi, unitsApi } from '@/api'
 import { useBuildingStore } from '@/stores/building'
-import type { Report, TimelineEvent, Unit } from '@/types/domain'
+import type { Document, Report, TimelineEvent, Unit } from '@/types/domain'
 
 const { t } = useI18n()
 const { formatDate } = useFormatters()
-const { authorLabel, statusVariant } = useReportLabels()
+const { authorLabel, statusVariant, indexUnits, unitLabel } = useReportLabels()
 const perms = usePermissions()
 const route = useRoute()
 const router = useRouter()
 
-const reportId = route.params.id as string
+const reportId = ref(route.params.id as string)
 const buildingName = ref('')
 const report = ref<Report | null>(null)
 const unitsById = ref(new Map<string, Unit>())
+const documents = ref<Document[]>([])
 
 const timeline = ref<TimelineEvent[]>([])
 const timelineLoading = ref(false)
@@ -46,21 +48,23 @@ const timelineError = ref<string | null>(null)
 const canLinkTask = computed(() => perms.canManageTask.value)
 
 async function loadData() {
-  const [building, reportRes, unitsRes] = await Promise.all([
+  const [building, reportRes, unitsRes, documentsRes] = await Promise.all([
     useBuildingStore().fetch(),
-    reportsApi.get(reportId),
+    reportsApi.get(reportId.value),
     unitsApi.list(),
+    reportsApi.listDocuments(reportId.value),
   ])
   buildingName.value = building.name
   report.value = reportRes.data
-  unitsById.value = new Map(unitsRes.data.map(unit => [unit.id, unit]))
+  unitsById.value = indexUnits(unitsRes.data)
+  documents.value = documentsRes.data
 }
 
 async function loadTimeline() {
   timelineLoading.value = true
   timelineError.value = null
   try {
-    timeline.value = (await reportsApi.timeline(reportId)).data
+    timeline.value = (await reportsApi.timeline(reportId.value)).data
   } catch {
     timelineError.value = t('timeline.error')
   } finally {
@@ -84,11 +88,12 @@ onMounted(() => {
   loadTimeline()
 })
 
-function unitLabel(unitId?: string): string {
-  if (!unitId) return t('claims.commonAreas')
-  const unit = unitsById.value.get(unitId)
-  return unit ? t('claims.unitLabel', { number: unit.unit_number }) : '—'
-}
+watch(() => route.params.id, id => {
+  reportId.value = id as string
+  reload()
+  loadTimeline()
+})
+
 </script>
 
 <template>
@@ -163,7 +168,7 @@ function unitLabel(unitId?: string): string {
               {{ formatDate(report.created_at) }}
             </CMetaItem>
             <CMetaItem>
-              {{ unitLabel(report.unit_id) }}
+              {{ unitLabel(report.unit_id, unitsById) }}
             </CMetaItem>
           </CMetaLine>
         </header>
@@ -190,6 +195,32 @@ function unitLabel(unitId?: string): string {
             {{ t('reports.viewTask') }}
           </RouterLink>
         </CCard>
+
+        <section
+          v-if="documents.length"
+          class="mt-6"
+        >
+          <h2 class="text-xl font-semibold text-on-surface-variant mt-0 mb-4">
+            {{ t('reports.photos') }}
+          </h2>
+          <div class="flex flex-col gap-2">
+            <CCard
+              v-for="document in documents"
+              :key="document.id"
+              :level="3"
+            >
+              <div class="flex items-center justify-between gap-3">
+                <span class="flex items-center gap-2 text-sm text-on-surface min-w-0">
+                  <CIconFile class="size-4 shrink-0" />
+                  <span class="truncate">{{ document.original_name }}</span>
+                </span>
+                <span class="text-xs text-on-surface-variant whitespace-nowrap">
+                  {{ formatDate(document.created_at) }}
+                </span>
+              </div>
+            </CCard>
+          </div>
+        </section>
 
         <h2 class="text-xl font-semibold text-on-surface-variant mt-0 mb-4">
           {{ t('timeline.title') }}
