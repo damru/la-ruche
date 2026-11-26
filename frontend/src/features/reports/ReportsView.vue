@@ -260,7 +260,7 @@ async function submitComment(r: Report) {
                   <h3 class="text-lg font-semibold text-on-surface m-0 leading-snug min-w-0">
                     <RouterLink
                       :to="{ name: 'report-detail', params: { id: r.id } }"
-                      class="hover:underline"
+                      class="text-on-surface! hover:underline"
                     >
                       {{ r.title }}
                     </RouterLink>
