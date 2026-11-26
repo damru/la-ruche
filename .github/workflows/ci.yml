@@ -18,6 +18,7 @@ env:
   RUST_BACKTRACE: 1
   SQLX_ARTIFACT_NAME: sqlx-offline-metadata
   BACKEND_BIN_ARTIFACT_NAME: laruche-backend-bin
+  FRONTEND_DIST_ARTIFACT_NAME: laruche-frontend-dist
   SQLX_CLI_VERSION: 0.8.6
 
 jobs:
@@ -307,6 +308,17 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Build bundle
+        run: npm run build
+
+      - name: Upload frontend bundle
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ env.FRONTEND_DIST_ARTIFACT_NAME }}
+          path: frontend/dist
+          if-no-files-found: error
+          retention-days: 1
+
       - name: Build
         run: npm run build
 
@@ -449,6 +461,12 @@ jobs:
         with:
           name: ${{ env.BACKEND_BIN_ARTIFACT_NAME }}
           path: docker-artifacts/
+
+      - name: Download frontend bundle
+        uses: actions/download-artifact@v8
+        with:
+          name: ${{ env.FRONTEND_DIST_ARTIFACT_NAME }}
+          path: frontend-artifacts/dist
 
       - name: Make backend binary executable
         run: chmod +x docker-artifacts/laruche

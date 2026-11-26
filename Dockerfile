@@ -70,9 +70,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Licences & notices
 COPY NOTICE ./NOTICE
 
-# Copy frontend static bundle
-COPY --from=frontend-builder /build/dist /usr/share/caddy
-
 # Copy Caddy configuration
 COPY docker/Caddyfile /etc/caddy/Caddyfile
 
@@ -90,15 +87,17 @@ HEALTHCHECK --interval=10s --timeout=3s --start-period=20s --retries=5 \
 ENTRYPOINT ["/entrypoint.sh"]
 
 # ---------------------------------------------------------------------------
-# Stage 4: Prebuilt image — no Rust toolchain: CI copies the release binary
-# built once by the backend job (same commit), so the image job never
-# recompiles ~400 crates on a cold cache.
+# Stage 4: Prebuilt image — no Rust toolchain and no Node toolchain: CI copies
+# the release binary and the frontend bundle built once by the backend and
+# frontend jobs (same commit), whatever the BuildKit cache state.
 # ---------------------------------------------------------------------------
 FROM runtime-base AS runtime-prebuilt
 
 # Directory is produced by the workflow (artifact download), never committed.
 ARG PREBUILT_DIR=docker-artifacts
+ARG FRONTEND_DIR=frontend-artifacts
 
+COPY ${FRONTEND_DIR}/dist /usr/share/caddy
 COPY ${PREBUILT_DIR}/laruche ./laruche
 COPY backend/migrations ./migrations
 COPY backend/seeds ./seeds
@@ -111,6 +110,7 @@ FROM runtime-base AS runtime
 # ARG must be re-declared in the new stage to be accessible
 ARG CARGO_PROFILE=debug
 
+COPY --from=frontend-builder /build/dist /usr/share/caddy
 COPY --from=backend-builder /build/target/${CARGO_PROFILE}/laruche ./laruche
 COPY --from=backend-builder /build/migrations ./migrations
 COPY --from=backend-builder /build/seeds ./seeds
