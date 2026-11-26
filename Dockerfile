@@ -12,7 +12,7 @@ COPY frontend/ ./
 RUN npm run build
 
 # ---------------------------------------------------------------------------
-# Stage 2: Build Rust backend
+# Stage 2: Build Rust backend (only used by the `runtime` target)
 # ---------------------------------------------------------------------------
 FROM rust:1.100.0-slim AS backend-builder
 
@@ -54,9 +54,9 @@ RUN if [ "$CARGO_PROFILE" = "release" ]; then \
 	fi
 
 # ---------------------------------------------------------------------------
-# Stage 3: Final image — Debian slim + Caddy + backend binary
+# Stage 3: Runtime base — Debian slim + Caddy, shared by both targets
 # ---------------------------------------------------------------------------
-FROM debian:trixie-slim AS runtime
+FROM debian:trixie-slim AS runtime-base
 
 WORKDIR /app
 
@@ -64,6 +64,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 	ca-certificates \
 	caddy \
 	wget \
+	libssl3 \
 	&& rm -rf /var/lib/apt/lists/*
 
 # Licences & notices
@@ -71,13 +72,6 @@ COPY NOTICE ./NOTICE
 
 # Copy frontend static bundle
 COPY --from=frontend-builder /build/dist /usr/share/caddy
-
-# Copy backend binary and SQL migrations
-# ARG must be re-declared in the new stage to be accessible
-ARG CARGO_PROFILE=debug
-COPY --from=backend-builder /build/target/${CARGO_PROFILE}/laruche ./laruche
-COPY --from=backend-builder /build/migrations ./migrations
-COPY --from=backend-builder /build/seeds ./seeds
 
 # Copy Caddy configuration
 COPY docker/Caddyfile /etc/caddy/Caddyfile
@@ -94,3 +88,29 @@ HEALTHCHECK --interval=10s --timeout=3s --start-period=20s --retries=5 \
 	CMD wget -qO- http://127.0.0.1:8080/notice >/dev/null || exit 1
 
 ENTRYPOINT ["/entrypoint.sh"]
+
+# ---------------------------------------------------------------------------
+# Stage 4: Prebuilt image — no Rust toolchain: CI copies the release binary
+# built once by the backend job (same commit), so the image job never
+# recompiles ~400 crates on a cold cache.
+# ---------------------------------------------------------------------------
+FROM runtime-base AS runtime-prebuilt
+
+# Directory is produced by the workflow (artifact download), never committed.
+ARG PREBUILT_DIR=docker-artifacts
+
+COPY ${PREBUILT_DIR}/laruche ./laruche
+COPY backend/migrations ./migrations
+COPY backend/seeds ./seeds
+
+# ---------------------------------------------------------------------------
+# Stage 5: From-source image (default target: local `docker build`, releases)
+# ---------------------------------------------------------------------------
+FROM runtime-base AS runtime
+
+# ARG must be re-declared in the new stage to be accessible
+ARG CARGO_PROFILE=debug
+
+COPY --from=backend-builder /build/target/${CARGO_PROFILE}/laruche ./laruche
+COPY --from=backend-builder /build/migrations ./migrations
+COPY --from=backend-builder /build/seeds ./seeds

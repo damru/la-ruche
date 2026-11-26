@@ -441,11 +441,17 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - name: Download SQLx offline files
+      # The release binary is built once by build-backend (rust-cache warm);
+      # the image copies it instead of recompiling ~400 crates on a cold
+      # BuildKit cache (measured 53 min before this step existed).
+      - name: Download backend binary
         uses: actions/download-artifact@v8
         with:
-          name: ${{ env.SQLX_ARTIFACT_NAME }}
-          path: backend/.sqlx/
+          name: ${{ env.BACKEND_BIN_ARTIFACT_NAME }}
+          path: docker-artifacts/
+
+      - name: Make backend binary executable
+        run: chmod +x docker-artifacts/laruche
 
       - name: Docker meta
         id: meta
@@ -481,9 +487,13 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build and push
+        id: build
         uses: docker/build-push-action@v7
         with:
           context: .
+          # No Rust toolchain in this target: the binary comes from build-backend.
+          target: runtime-prebuilt
+          load: ${{ github.event_name == 'pull_request' }}
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -493,9 +503,14 @@ jobs:
             type=gha,scope=docker-main
             type=gha,scope=docker-develop
           cache-to: ${{ steps.cache.outputs.to }}
-          build-args: |
-            CARGO_PROFILE=release
-            SQLX_OFFLINE=true
+
+      # Guard the artifact contract: a binary built on ubuntu-latest must run
+      # on the Debian runtime (glibc forward-compatible, libssl3 present).
+      - name: Smoke the loaded image
+        if: github.event_name == 'pull_request'
+        run: |
+          docker run --rm --entrypoint sh '${{ steps.build.outputs.imageid }}' \
+            -c 'ldd /app/laruche | grep -q "not found" && exit 1 || true'
 
   # ── Captures visuelles (ex-visual-preview.yml) ─────────────────
   captures:
