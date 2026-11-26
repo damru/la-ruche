@@ -69,3 +69,40 @@ test.describe('Cohérence matrice d’accès ↔ routeur', () => {
     ).toEqual([])
   })
 })
+
+test.describe('Cohérence des couleurs de titres', () => {
+  test('aucun titre cliquable ne prend la couleur des liens, sur toutes les pages', async ({ auth }) => {
+    test.setTimeout(120_000)
+    const { page, close } = await auth('manager')
+    await page.goto('/dashboard')
+    await expect(page.locator('main')).toBeVisible()
+
+    const linkColour = await page.evaluate(() => {
+      const probe = document.createElement('span')
+      probe.className = 'text-primary'
+      document.body.append(probe)
+      const colour = getComputedStyle(probe).color
+      probe.remove()
+      return colour
+    })
+
+    const offenders: string[] = []
+    for (const route of APP_ROUTES.filter(r => r.roles.includes('manager'))) {
+      await page.goto(route.path)
+      await page.waitForSelector('main', { timeout: 15_000 })
+      const hits = await page.evaluate((primary: string) => {
+        const out: string[] = []
+        document.querySelectorAll('main h1 a, main h2 a, main h3 a, main h4 a').forEach(anchor => {
+          if (getComputedStyle(anchor).color === primary) {
+            out.push((anchor.textContent ?? '').trim().replace(/\s+/g, ' ').slice(0, 40))
+          }
+        })
+        return out
+      }, linkColour)
+      if (hits.length) offenders.push(`${route.path} → ${hits.join(' | ')}`)
+    }
+
+    expect(offenders, 'titres cliquables rendus avec la couleur de lien').toEqual([])
+    await close()
+  })
+})

@@ -882,6 +882,7 @@
     "cancelSuccess": "Tâche annulée",
     "documentHint": "Glisser-déposer ou cliquer pour joindre les pièces de la tâche",
     "documentUploadError": "La tâche a été enregistrée mais certains documents n'ont pas pu être rattachés",
+    "interventions": "Interventions du carnet",
     "documentsLoadError": "Impossible de charger les documents de la tâche.",
     "documentsDetachError": "Impossible de retirer ce document de la tâche.",
     "documentsDetachTitle": "Retirer la pièce de la tâche",
@@ -914,7 +915,6 @@
     "assignSelf": "Prendre en charge (moi)",
     "assignContractor": "Assigner un prestataire",
     "lifecycle": {
-      "assignedSelf": "Prise en charge",
       "vendorLink": "Lien prestataire actif",
       "closedNote": "Cette tâche peut être ré-ouverte depuis la liste des tâches.",
       "title": "Historique de la tâche",
@@ -1691,6 +1691,37 @@
       },
       "archivedUnit": "Lot archivé",
       "newReference": "Nouvelle référence EDD"
+    }
+  },
+  "timeline": {
+    "title": "Suivi du cycle de vie",
+    "empty": "Aucun événement enregistré pour cet élément.",
+    "error": "Impossible de charger l'historique.",
+    "retry": "Réessayer",
+    "reportBadge": "Signalement",
+    "actorExternalVendor": "Prestataire externe",
+    "conversionLink": "Ouvrir la tâche",
+    "reportLink": "Ouvrir le signalement",
+    "actions": {
+      "created": {
+        "report": "Signalement créé",
+        "task": "Tâche créée"
+      },
+      "status_changed": "Statut modifié",
+      "photo_added": "Photo ajoutée",
+      "converted_to_task": "Converti en tâche",
+      "assignee_changed": "Assignataire modifié",
+      "contractor_assigned": "Prestataire assigné",
+      "vendor_link_generated": "Lien prestataire généré",
+      "document_uploaded": "Document joint",
+      "vendor_submission_received": "Intervention prestataire reçue",
+      "closed": "Clôturé",
+      "unknown": "Événement : {action}"
+    },
+    "detail": {
+      "fromReport": "issue du signalement",
+      "expires": "Expire le {date}",
+      "statusTransition": "{old} → {new}"
     }
   },
   "errors": {

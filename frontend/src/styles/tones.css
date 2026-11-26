@@ -15,6 +15,11 @@
   --tone-bg: var(--color-secondary-container);
   --tone-fg: var(--color-primary);
 }
+.tone--primary {
+  --tone-bg: color-mix(in oklch, var(--color-primary) 10%, transparent);
+  --tone-fg: var(--color-on-surface);
+}
+
 .tone--info {
   --tone-bg: var(--color-secondary-container);
   --tone-fg: var(--color-on-secondary-container);

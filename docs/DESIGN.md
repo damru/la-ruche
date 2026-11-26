@@ -415,6 +415,7 @@ color:      var(--tone-fg, <fallback>);
 | `.tone--info`         | `--color-secondary-container`       | `--color-on-secondary-container` |
 | `.tone--manager`      | `--color-role-manager-bg`           | `--color-role-manager-fg` |
 | `.tone--muted`        | `--color-surface-container`         | `--color-on-surface-variant` |
+| `.tone--primary`      | `color-mix(primary 10%)`            | `--color-on-surface` |
 | `.tone--tenant`       | `--color-role-tenant-bg`            | `--color-role-tenant-fg` |
 | `.tone--valid`        | `--color-success-container`         | `--color-success` |
 | `.tone--warn`         | `--color-warning-container`         | `--color-warning` |
@@ -436,6 +437,7 @@ Tokens de mélange pour bordures et overlays légers. Valeur adaptée au thème 
 | Token | Valeur | Usage |
 |---|---|---|
 | `--color-outline-light` | `color-mix(in srgb, var(--color-outline) var(--tint), transparent)` | Séparateurs discrets dans les tableaux |
+| `--color-primary-tint` | `color-mix(in oklch, var(--color-primary) 10%, transparent)` | Tokens dérivés résolus à leur élément déclarant (`:root`) — light-only ; pour un fond tonal theme-correct, composer le `color-mix` dans la classe consommatrice (cf. `.tone--primary`) |
 
 ```css
 /* Exemple d'utilisation dans CDataTable */
@@ -553,6 +555,8 @@ border-color: var(--color-outline-light);
 | `CPageLoader` | — | Indicateur de chargement |
 | `CSectionHeader` | — | ✅ En-tête de section — `flex items-start justify-between gap-3`. Slot default (zone titre : heading + meta). Slot `#actions` pour les boutons droite. Remplace `.section-head` / `.card-head`. |
 | `CSectionLink` | `to` | ✅ Lien « voir tout » d'en-tête de section — `RouterLink` + chevron. À utiliser dans le slot `#actions` de `CSectionHeader`. |
+| `CTimelineSection` | `events`, `loading`, `error`, `linkTasks?`, `currentTaskId?` | ✅ Section de frise complète — états chargement / erreur (bouton réessayer, `emit('retry')`) / vide + `CTimelineList`. Évite de dupliquer la machine à états dans chaque vue détail. |
+| `CTimelineList` | `events` (`TimelineEvent[]`), `linkTasks?` (défaut `true`), `currentTaskId?`, `currentReportId?` | ✅ Frise d'événements de cycle de vie (EP-017) — pastille par action (`created`, `status_changed`, `closed`, …), ordre antéchronologique (plus récent en premier), carte teintée `.tone--primary` (fond `--color-primary-tint`, AA light/dark) + bordure `primary/30` et anneau `ring-primary/20` sur la pastille pour l'étape `converted_to_task`, libellé i18n (`timeline.actions.*`), acteur (`actor_name`, « Prestataire externe » si vendeur), détail issu du `payload` (transition de statut, nom de fichier, expiration du lien), badge « Signalement » pour les événements `entity_type === 'report'`, lien vers la tâche créée sur `converted_to_task`. Action inconnue → pastille neutre + libellé générique. `linkTasks: false` masque le lien de conversion pour les rôles sans accès aux tâches ; `currentTaskId` fait pointer l'étape de conversion vers le **signalement source** (et inversement depuis `currentReportId` vers la tâche) ; le doublon `task.created` d'une conversion n'est pas rendu. |
 | `CTopbarBreadcrumb` | `crumbs[]` | 🔲 planifié (EP-020-S14) — Fil d'Ariane topbar |
 
 ---

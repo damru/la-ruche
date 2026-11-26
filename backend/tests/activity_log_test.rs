@@ -479,3 +479,84 @@ async fn anonymous_report_timeline_masks_reporter_identity() {
     );
     assert!(created_event["actor_name"].is_string());
 }
+
+#[tokio::test]
+async fn sensitive_actions_are_filtered_for_residents() {
+    let (ctx, _pool) = common::rbac_setup().await;
+    let server = common::test_server().await;
+    let tenant = format!("Bearer {}", ctx.tenant_jwt);
+    let manager = format!("Bearer {}", ctx.manager_jwt);
+    let board = format!("Bearer {}", ctx.board_member_jwt);
+
+    let report_id = create_report(&server, &tenant, "Fuite filtrée").await;
+    let converted = server
+        .post(&format!("/api/v1/reports/{report_id}/task"))
+        .add_header("Authorization", &manager)
+        .await;
+    let task_id = converted.json::<Value>()["task_id"]
+        .as_str()
+        .expect("task_id")
+        .to_string();
+    server
+        .put(&format!("/api/v1/tasks/{task_id}"))
+        .add_header("Authorization", &manager)
+        .json(&json!({ "assigned_to": ctx.manager_id }))
+        .await;
+    server
+        .post(&format!("/api/v1/tasks/{task_id}/vendor-token"))
+        .add_header("Authorization", &manager)
+        .await;
+
+    let sensitive = ["assignee_changed", "vendor_link_generated"];
+    let resident_events = server
+        .get(&format!("/api/v1/reports/{report_id}/timeline"))
+        .add_header("Authorization", &tenant)
+        .await
+        .json::<Vec<Value>>();
+    assert!(
+        resident_events
+            .iter()
+            .all(|e| !sensitive.contains(&e["action"].as_str().unwrap_or_default())),
+        "residents must never see sensitive actions: {resident_events:?}"
+    );
+    assert!(
+        resident_events
+            .iter()
+            .any(|e| e["action"] == json!("status_changed"))
+    );
+
+    let resident_task_events = server
+        .get(&format!("/api/v1/tasks/{task_id}/timeline"))
+        .add_header("Authorization", &tenant)
+        .await
+        .json::<Vec<Value>>();
+    assert!(
+        resident_task_events
+            .iter()
+            .all(|e| !sensitive.contains(&e["action"].as_str().unwrap_or_default())),
+        "the task timeline is open to every authenticated role and must filter too"
+    );
+
+    let manager_events = server
+        .get(&format!("/api/v1/reports/{report_id}/timeline"))
+        .add_header("Authorization", &manager)
+        .await
+        .json::<Vec<Value>>();
+    let board_events = server
+        .get(&format!("/api/v1/reports/{report_id}/timeline"))
+        .add_header("Authorization", &board)
+        .await
+        .json::<Vec<Value>>();
+    assert!(
+        manager_events
+            .iter()
+            .any(|e| e["action"] == json!("assignee_changed"))
+    );
+    assert!(
+        manager_events
+            .iter()
+            .any(|e| e["action"] == json!("vendor_link_generated"))
+    );
+    assert_eq!(manager_events.len(), resident_events.len() + 2);
+    assert_eq!(board_events, manager_events);
+}

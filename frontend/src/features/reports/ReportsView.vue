@@ -32,11 +32,16 @@ import { useBuildingStore } from '@/stores/building'
 import type { Report, ReportComment, ReportStatus, Unit } from '@/types/domain'
 import { ALL_FILTER, REPORT_STATUS_CLOSED, REPORT_STATUS_IN_PROGRESS, REPORT_STATUS_OPEN } from '@/utils/constants'
 import { usePermissions } from '@/composables/usePermissions'
+import { useReportLabels } from '@/composables/useReportLabels'
+import { reportStatusVariant } from '@/composables/useStatusLabels'
+import { useUnitLabels } from '@/composables/useUnitLabels'
 
 const { t } = useI18n()
 const { formatDate, formatRelative } = useFormatters()
 const router = useRouter()
 const perms = usePermissions()
+const { authorLabel } = useReportLabels()
+const { indexUnits, unitLabel } = useUnitLabels()
 
 
 // ── State ─────────────────────────────────────────────────────────
@@ -109,9 +114,7 @@ const activeCount = computed(() =>
   allReports.value.filter(r => r.status !== REPORT_STATUS_CLOSED).length,
 )
 
-const unitsById = computed(() =>
-  new Map(allUnits.value.map(u => [u.id, u])),
-)
+const unitsById = computed(() => indexUnits(allUnits.value))
 
 const unitOptions = computed(() => [
   { value: '', label: t('reports.unitPlaceholder') },
@@ -121,26 +124,6 @@ const unitOptions = computed(() => [
 ])
 
 // ── Helpers ───────────────────────────────────────────────────────
-function statusVariant(s: string): 'valid' | 'open' | 'pending' | 'closed' | 'default' {
-  if (s === REPORT_STATUS_OPEN) return 'pending'
-  if (s === REPORT_STATUS_IN_PROGRESS) return 'open'
-  if (s === REPORT_STATUS_CLOSED) return 'closed'
-  return 'default'
-}
-
-function unitLabel(unitId?: string): string {
-  if (!unitId) return t('claims.commonAreas')
-  const u = unitsById.value.get(unitId)
-  return u ? t('claims.unitLabel', { number: u.unit_number }) : '—'
-}
-
-function authorLabel(r: Report): string {
-  if (r.is_anonymous) {
-    return r.is_author ? t('reports.authorAnonymousYou') : t('reports.authorAnonymous')
-  }
-  return `${r.author_first_name ?? ''} ${r.author_last_name ?? ''}`.trim()
-}
-
 function canReadComments(r: Report): boolean {
   return canComment.value || r.is_author
 }
@@ -254,7 +237,7 @@ async function submitComment(r: Report) {
                   class="[&_svg]:icon-sm text-xs"
                 >
                   <CBadge
-                    :variant="statusVariant(r.status)"
+                    :variant="reportStatusVariant(r.status)"
                     dot
                   >
                     {{ t(`reports.statuses.${r.status}`) }}
@@ -275,7 +258,12 @@ async function submitComment(r: Report) {
                   direction="row"
                 >
                   <h3 class="text-lg font-semibold text-on-surface m-0 leading-snug min-w-0">
-                    {{ r.title }}
+                    <RouterLink
+                      :to="{ name: 'report-detail', params: { id: r.id } }"
+                      class="text-on-surface! hover:underline"
+                    >
+                      {{ r.title }}
+                    </RouterLink>
                   </h3>
                   
                   <CMetaItem
@@ -307,7 +295,7 @@ async function submitComment(r: Report) {
                     <template #icon>
                       <CIconHome />
                     </template>
-                    {{ unitLabel(r.unit_id) }}
+                    {{ unitLabel(r.unit_id, unitsById) }}
                   </CMetaItem>
                   <CMetaItem>
                     <template #icon>
