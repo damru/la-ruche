@@ -18,9 +18,7 @@ export type MatrixEntry = {
   titleKey: string
   roles: AuthRole[]
   deniedBehavior?: 'route403' | 'pageError'
-  /** Also capture the alternate display mode (grid/cards) of this page. */
   captureGrid?: boolean
-  /** Also capture these tabs (visible label + file slug) once activated. */
   captureTabs?: Array<{ label: string; slug: string }>
   toleratedApi403?: Record<string, AuthRole[]>
 }
