@@ -254,8 +254,6 @@ jobs:
         uses: actions/cache@v6
         with:
           path: backend/target/release/laruche
-          # The runner's glibc is part of the key: a binary built on a newer
-          # image cannot run in the Debian runtime image.
           key: laruche-bin-${{ runner.os }}-glibc239-${{ hashFiles('backend/src/**', 'backend/migrations/**', 'backend/seeds/**', 'backend/assets/**', 'backend/Cargo.toml', 'backend/Cargo.lock', 'NOTICE') }}
 
       - name: Build backend (release, SQLx offline)
