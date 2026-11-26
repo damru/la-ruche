@@ -69,3 +69,32 @@ test.describe('Cohérence matrice d’accès ↔ routeur', () => {
     ).toEqual([])
   })
 })
+
+test.describe('Cohérence des couleurs de titres', () => {
+  test('un titre cliquable garde la couleur de titre, pas celle des liens', async ({ auth }) => {
+    const { page, close } = await auth('coOwner')
+    await page.goto('/reports')
+    await expect(page.locator('main h3 a').first()).toBeVisible()
+
+    const colors = await page.evaluate(() => {
+      const link = document.querySelector('main h3 a') as HTMLElement
+      const headingProbe = document.createElement('span')
+      headingProbe.className = 'text-on-surface'
+      const linkProbe = document.createElement('span')
+      linkProbe.className = 'text-primary'
+      document.body.append(headingProbe, linkProbe)
+      const out = {
+        link: getComputedStyle(link).color,
+        heading: getComputedStyle(headingProbe).color,
+        primary: getComputedStyle(linkProbe).color,
+      }
+      headingProbe.remove()
+      linkProbe.remove()
+      return out
+    })
+
+    expect(colors.link, 'le titre doit reprendre la couleur de titre').toBe(colors.heading)
+    expect(colors.link, 'un titre ne doit pas prendre la couleur de lien').not.toBe(colors.primary)
+    await close()
+  })
+})
