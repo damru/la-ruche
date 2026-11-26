@@ -33,12 +33,15 @@ import type { Report, ReportComment, ReportStatus, Unit } from '@/types/domain'
 import { ALL_FILTER, REPORT_STATUS_CLOSED, REPORT_STATUS_IN_PROGRESS, REPORT_STATUS_OPEN } from '@/utils/constants'
 import { usePermissions } from '@/composables/usePermissions'
 import { useReportLabels } from '@/composables/useReportLabels'
+import { reportStatusVariant } from '@/composables/useStatusLabels'
+import { useUnitLabels } from '@/composables/useUnitLabels'
 
 const { t } = useI18n()
 const { formatDate, formatRelative } = useFormatters()
 const router = useRouter()
 const perms = usePermissions()
-const { authorLabel, statusVariant, indexUnits, unitLabel } = useReportLabels()
+const { authorLabel } = useReportLabels()
+const { indexUnits, unitLabel } = useUnitLabels()
 
 
 // ── State ─────────────────────────────────────────────────────────
@@ -234,7 +237,7 @@ async function submitComment(r: Report) {
                   class="[&_svg]:icon-sm text-xs"
                 >
                   <CBadge
-                    :variant="statusVariant(r.status)"
+                    :variant="reportStatusVariant(r.status)"
                     dot
                   >
                     {{ t(`reports.statuses.${r.status}`) }}

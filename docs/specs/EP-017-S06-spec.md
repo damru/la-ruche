@@ -56,20 +56,19 @@ pub(crate) fn can_view_action(roles: &[Role], action: &str) -> bool {
 Décisions :
 - **Liste sensible fermée et centralisée** (constante unique) — toute évolution du vocabulaire (S02) qui introduit une action sensible se fait ici, en un point.
 - Filtrage **en mémoire** après `list_for_chain`, pas en SQL : la liste est courte (timeline d'une entité), et garder la règle en `domain/` la rend testable unitairement et indépendante du repo. Pas de paramètre `role` dans `db/activity_log.rs`.
-- La signature prend `&[Role]` (et non `&Role`) : `AuthUser` porte un `Vec<Role>` et un membre du conseil syndical est souvent aussi co-propriétaire — l'accès est accordé si **l'un** des rôles du compte est privilégié. Un rôle inconnu/futur est traité comme non privilégié (allow-list).
+- Une classification **explicite et exhaustive** (`NON_SENSITIVE_ACTIONS`) est testée contre le catalogue `actions::ALL` : ajouter une action sans la classer fait échouer les tests (politique fail-open rendue explicite, esprit ADR-013). La signature prend `&[Role]` (et non `&Role`) : `AuthUser` porte un `Vec<Role>` et un membre du conseil syndical est souvent aussi co-propriétaire — l'accès est accordé si **l'un** des rôles du compte est privilégié. Un rôle inconnu/futur est traité comme non privilégié (allow-list).
 
 ### 4.2 Branchement dans les handlers timeline (S03)
 
 Dans `tasks::timeline` et `reports::timeline`, après la lecture :
 
 ```rust
-let events: Vec<_> = events
-    .into_iter()
-    .filter(|e| activity_visibility::can_view_action(&auth.roles, &e.action))
-    .collect();
+let mut value = json_value(events)?.0;
+activity_visibility::filter_events(&mut value, &auth.roles);
+report_privacy::mask_timeline(&mut value, …); // ordre : filtrer puis masquer
 ```
 
-Aucune autre logique dans les handlers. Les événements filtrés sont **omis** (pas de placeholder « événement masqué ») : la frise résident reste cohérente, les transitions de statut suffisent à la lisibilité.
+`filter_events` (symétrique de `mask_timeline`) porte la règle **et** l'ordre filtrer-puis-masquer en un seul endroit : aucune projection future ne peut en appliquer la moitié. Aucune autre logique dans les handlers. Les événements filtrés sont **omis** (pas de placeholder « événement masqué ») : la frise résident reste cohérente, les transitions de statut suffisent à la lisibilité.
 
 ### 4.3 Rappel du niveau « accès à l'entité »
 

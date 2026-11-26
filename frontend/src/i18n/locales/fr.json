@@ -915,7 +915,6 @@
     "assignSelf": "Prendre en charge (moi)",
     "assignContractor": "Assigner un prestataire",
     "lifecycle": {
-      "assignedSelf": "Prise en charge",
       "vendorLink": "Lien prestataire actif",
       "closedNote": "Cette tâche peut être ré-ouverte depuis la liste des tâches.",
       "title": "Historique de la tâche",

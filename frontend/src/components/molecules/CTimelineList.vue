@@ -12,7 +12,7 @@ import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import CIconRefresh from '@/components/atoms/CIconRefresh.svg'
 import CIconUser from '@/components/atoms/CIconUser.svg'
 import CIconWrench from '@/components/atoms/CIconWrench.svg'
-import type { TimelineEvent } from '@/types/domain'
+import type { ActivityAction, TimelineEvent } from '@/types/domain'
 
 const props = withDefaults(defineProps<{
   events: TimelineEvent[]
@@ -20,7 +20,7 @@ const props = withDefaults(defineProps<{
   currentTaskId?: string
 }>(), { linkTasks: true, currentTaskId: undefined })
 
-const { t } = useI18n()
+const { t, te } = useI18n()
 const { formatDate } = useFormatters()
 
 interface ActionStyle {
@@ -28,7 +28,7 @@ interface ActionStyle {
   dot: string
 }
 
-const ACTION_STYLES: Record<string, ActionStyle> = {
+const ACTION_STYLES: Record<ActivityAction, ActionStyle> = {
   created: { icon: CIconPlus, dot: 'bg-primary' },
   status_changed: { icon: CIconRefresh, dot: 'bg-on-surface-variant' },
   photo_added: { icon: CIconFile, dot: 'bg-on-surface-variant' },
@@ -44,7 +44,7 @@ const ACTION_STYLES: Record<string, ActionStyle> = {
 const FALLBACK_STYLE: ActionStyle = { icon: CIconDot, dot: 'bg-outline' }
 
 function styleFor(action: string): ActionStyle {
-  return ACTION_STYLES[action] ?? FALLBACK_STYLE
+  return ACTION_STYLES[action as ActivityAction] ?? FALLBACK_STYLE
 }
 
 function label(event: TimelineEvent): string {
@@ -52,8 +52,7 @@ function label(event: TimelineEvent): string {
     return t(`timeline.actions.created.${event.entity_type}`)
   }
   const key = `timeline.actions.${event.action}`
-  const translated = t(key)
-  return translated === key ? t('timeline.actions.unknown', { action: event.action }) : translated
+  return te(key) ? t(key) : t('timeline.actions.unknown', { action: event.action })
 }
 
 function statusLabel(entityType: string, status: unknown): string {

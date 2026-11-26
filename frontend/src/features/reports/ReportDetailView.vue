@@ -7,6 +7,8 @@ import { usePageLoader } from '@/composables/usePageLoader'
 import { useTimelineFeed } from '@/composables/useTimelineFeed'
 import { usePermissions } from '@/composables/usePermissions'
 import { useReportLabels } from '@/composables/useReportLabels'
+import { reportStatusVariant } from '@/composables/useStatusLabels'
+import { useUnitLabels } from '@/composables/useUnitLabels'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CEyebrow from '@/components/atoms/CEyebrow.vue'
@@ -29,7 +31,8 @@ import type { Document, Report, Unit } from '@/types/domain'
 
 const { t } = useI18n()
 const { formatDate } = useFormatters()
-const { authorLabel, statusVariant, indexUnits, unitLabel } = useReportLabels()
+const { authorLabel } = useReportLabels()
+const { indexUnits, unitLabel } = useUnitLabels()
 const perms = usePermissions()
 const route = useRoute()
 const router = useRouter()
@@ -125,7 +128,7 @@ watch(() => route.params.id, id => {
         <header class="view-header">
           <CEyebrow>
             <CBadge
-              :variant="statusVariant(report.status)"
+              :variant="reportStatusVariant(report.status)"
               dot
             >
               {{ t(`reports.statuses.${report.status}`) }}

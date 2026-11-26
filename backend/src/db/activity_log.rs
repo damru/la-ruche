@@ -25,6 +25,20 @@ pub mod actions {
     pub const DOCUMENT_UPLOADED: &str = "document_uploaded";
     pub const VENDOR_SUBMISSION_RECEIVED: &str = "vendor_submission_received";
     pub const CLOSED: &str = "closed";
+
+    /// Every action of the closed vocabulary, for classification tests.
+    pub const ALL: &[&str] = &[
+        CREATED,
+        STATUS_CHANGED,
+        PHOTO_ADDED,
+        CONVERTED_TO_TASK,
+        ASSIGNEE_CHANGED,
+        CONTRACTOR_ASSIGNED,
+        VENDOR_LINK_GENERATED,
+        DOCUMENT_UPLOADED,
+        VENDOR_SUBMISSION_RECEIVED,
+        CLOSED,
+    ];
 }
 
 #[derive(Debug, sqlx::FromRow, Serialize)]

@@ -15,7 +15,7 @@ const AssemblyDetailView      = () => import('@/features/assemblies/AssemblyDeta
 const BudgetView              = () => import('@/features/budget/BudgetView.vue')
 const DocumentsView           = () => import('@/features/documents/DocumentsView.vue')
 const TasksView               = () => import('@/features/tasks/TasksView.vue')
-const TaskTimelineView          = () => import('@/features/tasks/TaskTimelineView.vue')
+const TaskTimelineView         = () => import('@/features/tasks/TaskTimelineView.vue')
 const ContractsView           = () => import('@/features/contracts/ContractsView.vue')
 const ContractDetailView      = () => import('@/features/contracts/ContractDetailView.vue')
 const ContractorsView         = () => import('@/features/contractors/ContractorsView.vue')
