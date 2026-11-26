@@ -1113,6 +1113,7 @@ function openArt25Modal(resolution: Resolution) {
                 tag="ol"
                 class="agenda-list"
                 direction="column"
+                role="list"
               >
                 <li
                   v-for="(item, index) in agendaItems"
