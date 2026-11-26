@@ -16,6 +16,9 @@
 --   • 3 claims    : all claim statuses covered
 --   • 4 assemblies: draft, called, closed, ongoing
 --   • 2 consults  : open + closed with seeded choices/responses
+--   • 7 documents : founding categories + role visibility
+--   • 3 proceedings: ongoing, suspended, closed
+--   • 3 état daté : requested, generated, sent
 --   • 3 mandates : syndic + conseil syndical (président, membre)
 --
 -- All accounts share the same password: Demo1234!
@@ -37,6 +40,9 @@ TRUNCATE TABLE
     task,
     contract_document, contract_reminder, vendor_contract,
     claim_document, claim,
+    etat_date_request,
+    judicial_proceeding,
+    document,
     vote, resolution, general_meeting,
     levy_call_unit, levy_call_line, levy_call, budget_line, budget, works_fund,
     consultation_response_choice, consultation_response, consultation_choice, consultation,
@@ -1849,6 +1855,257 @@ ON CONFLICT (id) DO NOTHING;
         ('00000000-0000-0000-0000-000000000936', '00000000-0000-0000-0000-000000000923')
     ON CONFLICT DO NOTHING;
 
+
+-- ============================================================
+-- 15. DOCUMENTS
+-- One fixture per founding category and visibility level; files are
+-- metadata-only (no S3 object behind them in the demo instance).
+-- ============================================================
+INSERT INTO document (
+    id,
+    building_id,
+    original_name,
+    storage_path,
+    bucket,
+    mime_type,
+    size_bytes,
+    visible_to_roles,
+    uploaded_by,
+    category,
+    is_current,
+    created_at
+)
+VALUES
+    (
+        '00000000-0000-0000-0000-000000000901',
+        '00000000-0000-0000-0000-000000000001',
+        'reglement-copropriete-les-cerisiers.pdf',
+        '00000000-0000-0000-0000-000000000901.pdf',
+        'laruche-00000000000000000000000000000001',
+        'application/pdf',
+        2450000,
+        ARRAY['manager', 'board_member', 'co_owner', 'tenant']::user_role[],
+        '00000000-0000-0000-0000-000000000201',
+        'reglement_copropriete',
+        TRUE,
+        NOW() - INTERVAL '400 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000902',
+        '00000000-0000-0000-0000-000000000001',
+        'etat-descriptif-de-division.pdf',
+        '00000000-0000-0000-0000-000000000902.pdf',
+        'laruche-00000000000000000000000000000001',
+        'application/pdf',
+        1820000,
+        ARRAY['manager', 'board_member']::user_role[],
+        '00000000-0000-0000-0000-000000000201',
+        'edd',
+        TRUE,
+        NOW() - INTERVAL '380 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000903',
+        '00000000-0000-0000-0000-000000000001',
+        'pv-ag-annuelle-2025.pdf',
+        '00000000-0000-0000-0000-000000000903.pdf',
+        'laruche-00000000000000000000000000000001',
+        'application/pdf',
+        640000,
+        ARRAY['manager', 'board_member', 'co_owner', 'tenant']::user_role[],
+        '00000000-0000-0000-0000-000000000201',
+        'pv_ag',
+        TRUE,
+        NOW() - INTERVAL '340 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000904',
+        '00000000-0000-0000-0000-000000000001',
+        'budget-previsionnel-2026.pdf',
+        '00000000-0000-0000-0000-000000000904.pdf',
+        'laruche-00000000000000000000000000000001',
+        'application/pdf',
+        410000,
+        ARRAY['manager', 'board_member', 'co_owner']::user_role[],
+        '00000000-0000-0000-0000-000000000202',
+        'budget',
+        TRUE,
+        NOW() - INTERVAL '120 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000905',
+        '00000000-0000-0000-0000-000000000001',
+        'contrat-entretien-ascenseur-alpha.pdf',
+        '00000000-0000-0000-0000-000000000905.pdf',
+        'laruche-00000000000000000000000000000001',
+        'application/pdf',
+        320000,
+        ARRAY['manager', 'board_member']::user_role[],
+        '00000000-0000-0000-0000-000000000201',
+        'contrat',
+        TRUE,
+        NOW() - INTERVAL '95 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000906',
+        '00000000-0000-0000-0000-000000000001',
+        'diagnostic-amiante-parties-communes.pdf',
+        '00000000-0000-0000-0000-000000000906.pdf',
+        'laruche-00000000000000000000000000000001',
+        'application/pdf',
+        980000,
+        ARRAY['manager', 'board_member', 'co_owner', 'tenant']::user_role[],
+        '00000000-0000-0000-0000-000000000201',
+        'diagnostic',
+        TRUE,
+        NOW() - INTERVAL '60 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000907',
+        '00000000-0000-0000-0000-000000000001',
+        'facture-toitures-lyonnaises-mars.pdf',
+        '00000000-0000-0000-0000-000000000907.pdf',
+        'laruche-00000000000000000000000000000001',
+        'application/pdf',
+        185000,
+        ARRAY['manager', 'board_member']::user_role[],
+        '00000000-0000-0000-0000-000000000201',
+        'comptabilite',
+        TRUE,
+        NOW() - INTERVAL '18 days'
+    )
+ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================
+-- 16. JUDICIAL PROCEEDINGS
+-- One fixture per status: ongoing, suspended, closed.
+-- ============================================================
+INSERT INTO judicial_proceeding (
+    id,
+    building_id,
+    proceeding_type,
+    status,
+    subject,
+    claimant,
+    defendant,
+    jurisdiction,
+    case_reference,
+    opened_at,
+    closed_at,
+    outcome,
+    created_by,
+    created_at,
+    updated_at
+)
+VALUES
+    (
+        '00000000-0000-0000-0000-000000000911',
+        '00000000-0000-0000-0000-000000000001',
+        'debt_recovery',
+        'ongoing',
+        'Unpaid levy calls — lots 6 and 7 (2024-2025)',
+        'Syndicat des copropriétaires Les Cerisiers',
+        'M. et Mme Girard',
+        'Tribunal judiciaire de Lyon',
+        'RG 25/00412',
+        CURRENT_DATE - 120,
+        NULL,
+        NULL,
+        '00000000-0000-0000-0000-000000000201',
+        NOW() - INTERVAL '120 days',
+        NOW() - INTERVAL '4 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000912',
+        '00000000-0000-0000-0000-000000000001',
+        'works_dispute',
+        'suspended',
+        'Roofing works — disputed completion and water ingress',
+        'Syndicat des copropriétaires Les Cerisiers',
+        'Toitures Lyonnaises SAS',
+        'Tribunal judiciaire de Lyon',
+        'RG 24/01977',
+        CURRENT_DATE - 260,
+        NULL,
+        NULL,
+        '00000000-0000-0000-0000-000000000201',
+        NOW() - INTERVAL '260 days',
+        NOW() - INTERVAL '30 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000913',
+        '00000000-0000-0000-0000-000000000001',
+        'liability',
+        'closed',
+        'Water damage following a riser leak — neighbour liability',
+        'Mme Lefebvre (lot 2)',
+        'Syndicat des copropriétaires Les Cerisiers',
+        'Tribunal judiciaire de Lyon',
+        'RG 24/00631',
+        CURRENT_DATE - 400,
+        CURRENT_DATE - 30,
+        'Settled amicably before the hearing; claim withdrawn, insurer covered the repairs.',
+        '00000000-0000-0000-0000-000000000201',
+        NOW() - INTERVAL '400 days',
+        NOW() - INTERVAL '30 days'
+    )
+ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================
+-- 17. ÉTAT DATÉ REQUESTS
+-- One fixture per status: requested, generated, sent.
+-- ============================================================
+INSERT INTO etat_date_request (
+    id,
+    unit_id,
+    requested_at,
+    due_date,
+    requester_name,
+    status,
+    snapshot,
+    generated_at,
+    created_by,
+    created_at
+)
+VALUES
+    (
+        '00000000-0000-0000-0000-000000000921',
+        '00000000-0000-0000-0000-000000000101',
+        CURRENT_DATE - 3,
+        CURRENT_DATE + 12,
+        'Me Claire Dupont — Étude notariale Lyon 6e',
+        'requested',
+        NULL,
+        NULL,
+        '00000000-0000-0000-0000-000000000201',
+        NOW() - INTERVAL '3 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000922',
+        '00000000-0000-0000-0000-000000000102',
+        CURRENT_DATE - 20,
+        CURRENT_DATE - 5,
+        'Me Paul Bernard — Notaire, Villeurbanne',
+        'generated',
+        '{"unit_number": "2", "shares_total": 900, "building": "Résidence Les Cerisiers", "source": "demo"}'::jsonb,
+        NOW() - INTERVAL '6 days',
+        '00000000-0000-0000-0000-000000000201',
+        NOW() - INTERVAL '20 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000923',
+        '00000000-0000-0000-0000-000000000103',
+        CURRENT_DATE - 45,
+        CURRENT_DATE - 30,
+        'Me Claire Dupont — Étude notariale Lyon 6e',
+        'sent',
+        '{"unit_number": "3", "shares_total": 950, "building": "Résidence Les Cerisiers", "source": "demo"}'::jsonb,
+        NOW() - INTERVAL '35 days',
+        '00000000-0000-0000-0000-000000000201',
+        NOW() - INTERVAL '45 days'
+    )
+ON CONFLICT (id) DO NOTHING;
+
 -- ============================================================
 -- SUMMARY
 -- ============================================================
@@ -1874,6 +2131,9 @@ ON CONFLICT (id) DO NOTHING;
 -- Claims        | 3 fixtures                         | open, in_progress, closed
 -- Assemblies    | 4 fixtures                         | draft (empty), called (multi-line agenda + pending resolutions), closed (multi-line agenda + mixed attendance + votes, incl. art. 25 and art. 26 cases), ongoing (extraordinary — art. 24 ✓/✗, art. 25 ✓/✗ with art. 25-1 eligible case)
 -- Consultations | 2 fixtures                         | open, closed (+ choices & responses)
+-- Documents     | 7 fixtures                         | one per founding category + visibility level
+-- Judicial      | 3 fixtures                         | ongoing, suspended, closed
+-- État daté     | 3 fixtures                         | requested, generated, sent
 -- Mandates      | 3 fixtures                         | syndic, council_president, council_member (ouverts)
 --
 -- Password (all accounts): Demo1234!
