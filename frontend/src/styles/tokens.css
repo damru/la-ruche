@@ -142,6 +142,7 @@
 [data-theme="dark"] {
   --color-primary:               oklch(0.811 0.1013 293.57);
   --color-primary-container:     oklch(0.434 0.2006 283.98);
+  --color-primary-tint:          color-mix(in oklch, var(--color-primary) 10%, transparent);
   --color-on-primary:            oklch(0.302 0.1811 281.25);
   --color-secondary:             oklch(0.824 0.0354 276.63);
   --color-secondary-container:   oklch(0.396 0.0331 271.15);
