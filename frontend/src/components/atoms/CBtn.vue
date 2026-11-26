@@ -377,7 +377,7 @@ const shrinkClass: Record<Breakpoint, string> = {
   content: '';
   position: absolute;
   inset: 0;
-  background: rgba(255, 255, 255, 0.25);
+  background: oklch(1.000 0.0000 0.00 / 0.25);
   transform-origin: left center;
   transform: scaleX(0);
   animation: c-btn-fill var(--c-btn-closing-duration, 3s) linear forwards;

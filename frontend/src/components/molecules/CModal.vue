@@ -102,16 +102,12 @@ function handleOpenChange(open: boolean) {
 .c-modal__overlay {
   position: fixed;
   inset: 0;
-  background: rgba(25, 28, 29, 0.4);
+  background: var(--color-scrim);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
   -moz-backdrop-filter: blur(4px);
   z-index: calc(var(--z-overlay) + var(--c-modal-stack, 0));
   animation: c-overlay-in 0.2s ease;
-}
-
-[data-theme="dark"] .c-modal__overlay {
-  background: rgba(0, 0, 0, 0.6);
 }
 
 .c-modal__content {
@@ -123,11 +119,11 @@ function handleOpenChange(open: boolean) {
   padding: var(--space-6);
 
   /* Glassmorphism */
-  background: rgba(255, 255, 255, 0.85);
+  background: color-mix(in oklch, var(--color-surface-container-lowest) 85%, transparent);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   -moz-backdrop-filter: blur(20px);
-  border: 1px solid rgba(194, 199, 207, 0.3);
+  border: 1px solid color-mix(in oklch, var(--color-outline-variant) 30%, transparent);
   box-shadow: var(--shadow-glass);
   border-radius: var(--radius-2xl);
   overflow: clip;
@@ -142,8 +138,7 @@ function handleOpenChange(open: boolean) {
 }
 
 [data-theme="dark"] .c-modal__content {
-  background: rgba(28, 30, 38, 0.9);
-  border-color: rgba(67, 71, 79, 0.5);
+  background: color-mix(in oklch, var(--color-surface-container-low) 90%, transparent);
 }
 
 .c-modal__content--sm { width: min(340px, 90vw); }

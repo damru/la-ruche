@@ -351,11 +351,11 @@ function updateField(field: keyof AddressValue, value: string) {
 
 .c-addr__input:focus {
   background: var(--color-surface-container-low);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 35%, transparent);
+  box-shadow: var(--shadow-primary-ring);
 }
 
 .c-addr__input--error {
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-error) 35%, transparent);
+  box-shadow: var(--shadow-error-ring);
 }
 
 .c-addr__input:disabled { opacity: 0.5; cursor: not-allowed; }

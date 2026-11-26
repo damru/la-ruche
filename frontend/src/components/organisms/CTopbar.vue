@@ -20,15 +20,11 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
-  background: rgba(248, 249, 250, 0.88);
+  background: color-mix(in oklch, var(--color-surface) 88%, transparent);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  box-shadow: 0 10px 24px rgba(25, 28, 29, 0.05);
+  box-shadow: var(--shadow-md);
   transition: background var(--transition-base);
-}
-
-[data-theme="dark"] .c-topbar {
-  background: rgba(17, 19, 24, 0.88);
 }
 
 .c-topbar__left {
