@@ -18,8 +18,8 @@ env:
   RUST_BACKTRACE: 1
   SQLX_ARTIFACT_NAME: sqlx-offline-metadata
   BACKEND_BIN_ARTIFACT_NAME: laruche-backend-bin
-  FRONTEND_DIST_ARTIFACT_NAME: laruche-frontend-dist
   SQLX_CLI_VERSION: 0.8.6
+  BUILD_CACHE_IMAGE: ${{ vars.DOCKERHUB_USERNAME }}/${{ vars.DOCKERHUB_PROJECT }}:buildcache
 
 jobs:
   changes:
@@ -188,8 +188,7 @@ jobs:
     # Skipped on a BOT captures-only push (nothing consumes the artifact —
     # the captures job skips on bot pushes).
     if: ((needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend_app == 'true' || needs.changes.outputs.ci_workflow == 'true') && !(github.actor == 'github-actions[bot]' && needs.changes.outputs.captures_only == 'true')) || (needs.changes.outputs.captures_only == 'true' && github.actor != 'github-actions[bot]')
-    # glibc 2.39 < the runtime image's 2.41: the artifact must run in debian:trixie.
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./backend
@@ -218,7 +217,7 @@ jobs:
       - name: Cache Cargo
         uses: Swatinem/rust-cache@v2
         with:
-          shared-key: backend-release-2404
+          shared-key: backend-release
           workspaces: |
             backend -> target
 
@@ -254,7 +253,7 @@ jobs:
         uses: actions/cache@v6
         with:
           path: backend/target/release/laruche
-          key: laruche-bin-${{ runner.os }}-glibc239-${{ hashFiles('backend/src/**', 'backend/migrations/**', 'backend/seeds/**', 'backend/assets/**', 'backend/Cargo.toml', 'backend/Cargo.lock', 'NOTICE') }}
+          key: laruche-bin-${{ runner.os }}-${{ hashFiles('backend/src/**', 'backend/migrations/**', 'backend/seeds/**', 'backend/assets/**', 'backend/Cargo.toml', 'backend/Cargo.lock', 'NOTICE') }}
 
       - name: Build backend (release, SQLx offline)
         if: steps.backend-bin.outputs.cache-hit != 'true'
@@ -308,17 +307,6 @@ jobs:
 
       - name: Lint
         run: npm run lint
-
-      - name: Build bundle
-        run: npm run build
-
-      - name: Upload frontend bundle
-        uses: actions/upload-artifact@v7
-        with:
-          name: ${{ env.FRONTEND_DIST_ARTIFACT_NAME }}
-          path: frontend/dist
-          if-no-files-found: error
-          retention-days: 1
 
       - name: Build
         run: npm run build
@@ -454,20 +442,11 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - name: Download backend binary
+      - name: Download SQLx offline files
         uses: actions/download-artifact@v8
         with:
-          name: ${{ env.BACKEND_BIN_ARTIFACT_NAME }}
-          path: docker-artifacts/
-
-      - name: Download frontend bundle
-        uses: actions/download-artifact@v8
-        with:
-          name: ${{ env.FRONTEND_DIST_ARTIFACT_NAME }}
-          path: frontend-artifacts/dist
-
-      - name: Make backend binary executable
-        run: chmod +x docker-artifacts/laruche
+          name: ${{ env.SQLX_ARTIFACT_NAME }}
+          path: backend/.sqlx/
 
       - name: Docker meta
         id: meta
@@ -484,18 +463,21 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
-      # Cache export only on branch pushes: per-PR scopes are never read again
-      # and waste the 10 GB GHA budget. Empty output on PRs disables cache-to.
+      # Registry cache: dedicated storage, no GHA budget, shared by every PR
+      # (no branch scoping). Written on branch pushes only.
       - name: Resolve cache-to
         id: cache
         run: |
           if [ "${{ github.event_name }}" != "pull_request" ]; then
-            echo "to=type=gha,mode=max,scope=docker-${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+            {
+              echo "to<<EOF"
+              echo "type=registry,ref=${{ env.BUILD_CACHE_IMAGE }},mode=max"
+              echo "type=gha,mode=max,scope=docker-${{ github.ref_name }}"
+              echo "EOF"
+            } >> "$GITHUB_OUTPUT"
           fi
 
-      # Login and push only on branch pushes; PRs build without pushing to Docker Hub.
       - name: Login to Docker Hub
-        if: github.event_name != 'pull_request'
         uses: docker/login-action@v4
         with:
           registry: docker.io
@@ -503,20 +485,21 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build and push
-        id: build
         uses: docker/build-push-action@v7
         with:
           context: .
-          target: runtime-prebuilt
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          # PRs read the main/develop caches instead of a cold ephemeral per-PR scope.
           cache-from: |
+            type=registry,ref=${{ env.BUILD_CACHE_IMAGE }}
             type=gha,scope=docker-${{ github.ref_name }}
             type=gha,scope=docker-main
             type=gha,scope=docker-develop
           cache-to: ${{ steps.cache.outputs.to }}
+          build-args: |
+            CARGO_PROFILE=release
+            SQLX_OFFLINE=true
 
   # ── Captures visuelles (ex-visual-preview.yml) ─────────────────
   captures:
@@ -667,11 +650,6 @@ jobs:
         env:
           CI: "true"
         run: npx playwright test --project=visual
-
-      - name: Capture empty states
-        env:
-          CI: "true"
-        run: npx playwright test --project=visual-empty
       - name: Discard captures below the noise threshold
         # Residual rendering jitter (pixelmatch-measured: 81-562 px, visually
         # invisible) still differs byte-to-byte between CI runs. Keep a

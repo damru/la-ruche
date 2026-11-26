@@ -12,7 +12,7 @@ COPY frontend/ ./
 RUN npm run build
 
 # ---------------------------------------------------------------------------
-# Stage 2: Build Rust backend (only used by the `runtime` target)
+# Stage 2: Build Rust backend
 # ---------------------------------------------------------------------------
 FROM rust:1.100.0-slim AS backend-builder
 
@@ -29,7 +29,9 @@ RUN apt-get update && apt-get install -y \
 # Cache dependencies by copying manifests first
 COPY backend/Cargo.toml backend/Cargo.lock* ./
 COPY NOTICE /NOTICE
-RUN mkdir src && echo "fn main() {}" > src/main.rs && \
+RUN --mount=type=cache,target=/usr/local/cargo/registry \
+	--mount=type=cache,target=/usr/local/cargo/git \
+	mkdir src && echo "fn main() {}" > src/main.rs && \
 	if [ "$CARGO_PROFILE" = "release" ]; then \
 		cargo build --release 2>/dev/null || true; \
 	else \
@@ -47,16 +49,18 @@ COPY backend/assets ./assets
 COPY backend/.sqlx ./.sqlx
 
 ENV SQLX_OFFLINE=true
-RUN if [ "$CARGO_PROFILE" = "release" ]; then \
+RUN --mount=type=cache,target=/usr/local/cargo/registry \
+	--mount=type=cache,target=/usr/local/cargo/git \
+	if [ "$CARGO_PROFILE" = "release" ]; then \
 		cargo build --release; \
 	else \
 		cargo build; \
 	fi
 
 # ---------------------------------------------------------------------------
-# Stage 3: Runtime base — Debian slim + Caddy, shared by both targets
+# Stage 3: Final image — Debian slim + Caddy + backend binary
 # ---------------------------------------------------------------------------
-FROM debian:trixie-slim AS runtime-base
+FROM debian:trixie-slim AS runtime
 
 WORKDIR /app
 
@@ -64,11 +68,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 	ca-certificates \
 	caddy \
 	wget \
-	libssl3 \
 	&& rm -rf /var/lib/apt/lists/*
 
 # Licences & notices
 COPY NOTICE ./NOTICE
+
+# Copy frontend static bundle
+COPY --from=frontend-builder /build/dist /usr/share/caddy
+
+# Copy backend binary and SQL migrations
+# ARG must be re-declared in the new stage to be accessible
+ARG CARGO_PROFILE=debug
+COPY --from=backend-builder /build/target/${CARGO_PROFILE}/laruche ./laruche
+COPY --from=backend-builder /build/migrations ./migrations
+COPY --from=backend-builder /build/seeds ./seeds
 
 # Copy Caddy configuration
 COPY docker/Caddyfile /etc/caddy/Caddyfile
@@ -85,33 +98,3 @@ HEALTHCHECK --interval=10s --timeout=3s --start-period=20s --retries=5 \
 	CMD wget -qO- http://127.0.0.1:8080/notice >/dev/null || exit 1
 
 ENTRYPOINT ["/entrypoint.sh"]
-
-# ---------------------------------------------------------------------------
-# Stage 4: Prebuilt image — no Rust toolchain and no Node toolchain: CI copies
-# the release binary and the frontend bundle built once by the backend and
-# frontend jobs (same commit), whatever the BuildKit cache state.
-# ---------------------------------------------------------------------------
-FROM runtime-base AS runtime-prebuilt
-
-# Directory is produced by the workflow (artifact download), never committed.
-ARG PREBUILT_DIR=docker-artifacts
-ARG FRONTEND_DIR=frontend-artifacts
-
-COPY ${FRONTEND_DIR}/dist /usr/share/caddy
-COPY ${PREBUILT_DIR}/laruche ./laruche
-RUN ldd ./laruche > /tmp/ldd.txt 2>&1; cat /tmp/ldd.txt; ! grep -q "not found" /tmp/ldd.txt
-COPY backend/migrations ./migrations
-COPY backend/seeds ./seeds
-
-# ---------------------------------------------------------------------------
-# Stage 5: From-source image (default target: local `docker build`, releases)
-# ---------------------------------------------------------------------------
-FROM runtime-base AS runtime
-
-# ARG must be re-declared in the new stage to be accessible
-ARG CARGO_PROFILE=debug
-
-COPY --from=frontend-builder /build/dist /usr/share/caddy
-COPY --from=backend-builder /build/target/${CARGO_PROFILE}/laruche ./laruche
-COPY --from=backend-builder /build/migrations ./migrations
-COPY --from=backend-builder /build/seeds ./seeds
