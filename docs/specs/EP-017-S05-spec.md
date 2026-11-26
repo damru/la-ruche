@@ -40,7 +40,7 @@ Aucun changement — consommateur de EP-017-S03 (endpoint) et EP-017-S06 (filtra
 - Chargement au montage : `reportsApi.get(id)` (fiche) + `reportsApi.timeline(id)` (frise), en parallèle. 404 → redirection liste avec toast, pattern des autres vues détail du repo.
 - Sections :
   1. **Fiche statique** : titre, description, badge statut (réutiliser les variantes de `ReportsView`), auteur, date de création, documents/photos attachés (`reportsApi.listDocuments` si exposé, sinon les données de `get`).
-  2. **Lien conversion** : si `report.task_id` renseigné, encart « Converti en tâche » avec badge `task_status` et `RouterLink` vers `tasks/:task_id`. Le lien n'est rendu **que** si le rôle courant peut voir la route cible (manager/board_member — lire le rôle depuis le store auth existant) ; pour un résident, l'encart affiche la mention et le statut de la tâche **sans lien**.
+  2. **Lien conversion** : plus d'encart dédié (arbitrage produit : l'information doit rester discrète). La conversion se lit dans la frise, à l'étape `converted_to_task` mise en valeur (fond tonal) ; le lien « Ouvrir la tâche » y est rendu **uniquement** si le rôle courant peut voir la route cible (`usePermissions.canManageTask`), absent pour un résident et pour la page de la tâche cible elle-même (`currentTaskId`).
   3. **Timeline** : `<TimelineEventList :events="events" />` (composant partagé EP-017-S04) — affiche la chaîne complète renvoyée par l'endpoint (événements signalement **et** tâche), la distinction visuelle par `entity_type` étant déjà gérée par le composant.
 - Contraintes de style AGENTS.md : Tailwind/tokens uniquement, pas de `<style>`, wrappers `C*` — identiques à EP-017-S04 §5.4.
 

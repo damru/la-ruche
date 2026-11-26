@@ -47,7 +47,7 @@ Au montage (avec le fetch existant de la tâche) : `tasksApi.timeline(route.para
 Composant de rendu **partagé avec EP-017-S05**, catalogué dans `docs/DESIGN.md §3.2` :
 
 - Props : `events: TimelineEvent[]`, `linkTasks?: boolean` (défaut `true` — masqué pour les rôles sans accès aux tâches), `currentTaskId?: string` (supprime le lien de conversion vers la page courante).
-- Rendu vertical chronologique : pastille (variant par action), libellé i18n, horodatage formaté, acteur (`actor_name` ou « Prestataire externe » quand null sur les événements vendeur), détail issu du `payload`.
+- Rendu vertical **antéchronologique** (l'événement le plus récent en premier, imposé produit) : pastille (variant par action), libellé i18n, horodatage formaté, acteur (`actor_name` ou « Prestataire externe » quand null sur les événements vendeur), détail issu du `payload`.
 - Mapping action → libellé/pastille (clés i18n `timeline.actions.*`, fichiers `frontend/src/locales/`) :
 
 | `action` | Libellé (fr) | Détail depuis `payload` |
@@ -64,7 +64,7 @@ Composant de rendu **partagé avec EP-017-S05**, catalogué dans `docs/DESIGN.md
 | `vendor_submission_received` | « Intervention prestataire reçue » | — |
 | `closed` | « Clôturé(e) » | — |
 
-- Les événements `entity_type === 'report'` sont visuellement distingués (pastille secondaire + mention « Signalement ») : la frise couvre la chaîne complète depuis le signalement source.
+- L'événement `converted_to_task` porte un fond tonal (`bg-primary-container`) : c'est la charnière entre les deux entités, qui remplace l'ancien encart dédié de la fiche signalement. Les événements `entity_type === 'report'` sont visuellement distingués (pastille secondaire + mention « Signalement ») : la frise couvre la chaîne complète depuis le signalement source.
 - Action inconnue (évolution future du vocabulaire) : rendu générique avec l'`action` brute — pas de crash.
 
 ### 5.4 Contraintes de style

@@ -166,29 +166,6 @@ watch(() => route.params.id, id => {
           </CMetaLine>
         </header>
 
-        <CCard
-          v-if="report.task_id"
-          :level="3"
-          class="flex flex-wrap items-center justify-between gap-3"
-        >
-          <div class="flex flex-wrap items-center gap-2">
-            <span class="text-sm font-medium text-on-surface">{{ t('reports.convertedTitle') }}</span>
-            <CBadge
-              v-if="report.task_status"
-              variant="open"
-            >
-              {{ t(`tasks.statuses.${report.task_status}`) }}
-            </CBadge>
-          </div>
-          <RouterLink
-            v-if="canLinkTask && report.task_status"
-            :to="{ name: 'task-detail', params: { id: report.task_id } }"
-            class="text-sm font-medium text-primary hover:underline"
-          >
-            {{ t('reports.viewTask') }}
-          </RouterLink>
-        </CCard>
-
         <section
           v-if="documents.length"
           class="mt-6"

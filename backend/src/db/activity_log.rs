@@ -13,8 +13,18 @@ use crate::errors::AppResult;
 pub const ENTITY_REPORT: &str = "report";
 pub const ENTITY_TASK: &str = "task";
 
+pub struct ActionDef {
+    pub name: &'static str,
+    pub sensitive: bool,
+}
+
 /// Closed vocabulary of `activity_log.action` values (TEXT column).
 pub mod actions {
+    pub struct ActionDef {
+        pub name: &'static str,
+        pub sensitive: bool,
+    }
+
     pub const CREATED: &str = "created";
     pub const STATUS_CHANGED: &str = "status_changed";
     pub const PHOTO_ADDED: &str = "photo_added";
@@ -26,19 +36,55 @@ pub mod actions {
     pub const VENDOR_SUBMISSION_RECEIVED: &str = "vendor_submission_received";
     pub const CLOSED: &str = "closed";
 
-    /// Every action of the closed vocabulary, for classification tests.
-    pub const ALL: &[&str] = &[
-        CREATED,
-        STATUS_CHANGED,
-        PHOTO_ADDED,
-        CONVERTED_TO_TASK,
-        ASSIGNEE_CHANGED,
-        CONTRACTOR_ASSIGNED,
-        VENDOR_LINK_GENERATED,
-        DOCUMENT_UPLOADED,
-        VENDOR_SUBMISSION_RECEIVED,
-        CLOSED,
+    /// Every action of the closed vocabulary. The `sensitive` flag is the
+    /// single source of the visibility rule: an action added here must be
+    /// classified in the same literal.
+    pub const ALL: &[ActionDef] = &[
+        ActionDef {
+            name: CREATED,
+            sensitive: false,
+        },
+        ActionDef {
+            name: STATUS_CHANGED,
+            sensitive: false,
+        },
+        ActionDef {
+            name: PHOTO_ADDED,
+            sensitive: false,
+        },
+        ActionDef {
+            name: CONVERTED_TO_TASK,
+            sensitive: false,
+        },
+        ActionDef {
+            name: ASSIGNEE_CHANGED,
+            sensitive: true,
+        },
+        ActionDef {
+            name: CONTRACTOR_ASSIGNED,
+            sensitive: false,
+        },
+        ActionDef {
+            name: VENDOR_LINK_GENERATED,
+            sensitive: true,
+        },
+        ActionDef {
+            name: DOCUMENT_UPLOADED,
+            sensitive: false,
+        },
+        ActionDef {
+            name: VENDOR_SUBMISSION_RECEIVED,
+            sensitive: false,
+        },
+        ActionDef {
+            name: CLOSED,
+            sensitive: false,
+        },
     ];
+
+    pub fn is_sensitive(action: &str) -> bool {
+        ALL.iter().any(|def| def.name == action && def.sensitive)
+    }
 }
 
 #[derive(Debug, sqlx::FromRow, Serialize)]

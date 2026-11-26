@@ -4,25 +4,9 @@ use crate::domain::Role;
 /// Sensitive lifecycle actions are reserved for manager / board_member
 /// ("conseil syndical"). Anything else is visible to every role that can read
 /// the underlying entity; new vocabulary is visible by default.
-const SENSITIVE_ACTIONS: &[&str] = &[actions::ASSIGNEE_CHANGED, actions::VENDOR_LINK_GENERATED];
-
-/// Explicit classification of the rest of the vocabulary: adding an action to
-/// `activity_log::actions::ALL` without listing it here fails the tests, so a
-/// sensitive action can never be left visible by omission.
-const NON_SENSITIVE_ACTIONS: &[&str] = &[
-    actions::CREATED,
-    actions::STATUS_CHANGED,
-    actions::PHOTO_ADDED,
-    actions::CONVERTED_TO_TASK,
-    actions::CONTRACTOR_ASSIGNED,
-    actions::DOCUMENT_UPLOADED,
-    actions::VENDOR_SUBMISSION_RECEIVED,
-    actions::CLOSED,
-];
-
 /// Allow-list: an unknown or future role is treated as unprivileged.
 pub(crate) fn can_view_action(roles: &[Role], action: &str) -> bool {
-    if SENSITIVE_ACTIONS.contains(&action) {
+    if actions::is_sensitive(action) {
         roles
             .iter()
             .any(|r| matches!(r, Role::Manager | Role::BoardMember))
@@ -52,18 +36,21 @@ mod tests {
     use super::*;
 
     #[test]
-    fn every_action_is_classified() {
-        for action in actions::ALL {
-            let classified =
-                SENSITIVE_ACTIONS.contains(action) || NON_SENSITIVE_ACTIONS.contains(action);
-            assert!(
-                classified,
-                "unclassified action {action}: decide sensitive or not in activity_visibility"
-            );
-        }
-        for action in SENSITIVE_ACTIONS {
-            assert!(!NON_SENSITIVE_ACTIONS.contains(action));
-        }
+    fn action_catalogue_is_sane() {
+        let mut names: Vec<&str> = actions::ALL.iter().map(|def| def.name).collect();
+        names.sort_unstable();
+        names.dedup();
+        assert_eq!(names.len(), actions::ALL.len(), "duplicate action name");
+        let sensitive: Vec<&str> = actions::ALL
+            .iter()
+            .filter(|def| def.sensitive)
+            .map(|def| def.name)
+            .collect();
+        assert_eq!(
+            sensitive,
+            vec![actions::ASSIGNEE_CHANGED, actions::VENDOR_LINK_GENERATED]
+        );
+        assert!(!actions::is_sensitive("some_future_action"));
     }
 
     #[test]

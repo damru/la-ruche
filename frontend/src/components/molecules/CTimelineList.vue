@@ -93,7 +93,7 @@ function actorLabel(event: TimelineEvent): string | null {
 }
 
 const rows = computed(() =>
-  props.events.map(event => ({
+  [...props.events].reverse().map(event => ({
     event,
     style: styleFor(event.action),
     label: label(event),
@@ -124,7 +124,7 @@ const rows = computed(() =>
 
       <CCard
         :level="3"
-        class="flex-1 mb-3"
+        :class="['flex-1 mb-3', { 'bg-primary-container': row.event.action === 'converted_to_task' }]"
       >
         <div class="flex items-start justify-between gap-3">
           <div class="flex flex-col gap-1 min-w-0">

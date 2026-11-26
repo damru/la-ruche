@@ -1050,7 +1050,6 @@
     "confirmDeleteMessage": "Le signalement « {title} » sera supprimé définitivement.",
     "deleteSuccess": "Signalement supprimé",
     "viewTask": "Voir la tâche",
-    "convertedTitle": "Converti en tâche",
     "empty": "Aucun signalement pour le moment.",
     "createdAt": "Signalé {date}",
     "photos": "Photos",
