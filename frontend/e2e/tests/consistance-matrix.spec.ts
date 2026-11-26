@@ -71,30 +71,38 @@ test.describe('Cohérence matrice d’accès ↔ routeur', () => {
 })
 
 test.describe('Cohérence des couleurs de titres', () => {
-  test('un titre cliquable garde la couleur de titre, pas celle des liens', async ({ auth }) => {
-    const { page, close } = await auth('coOwner')
-    await page.goto('/reports')
-    await expect(page.locator('main h3 a').first()).toBeVisible()
+  test('aucun titre cliquable ne prend la couleur des liens, sur toutes les pages', async ({ auth }) => {
+    test.setTimeout(120_000)
+    const { page, close } = await auth('manager')
+    await page.goto('/dashboard')
+    await expect(page.locator('main')).toBeVisible()
 
-    const colors = await page.evaluate(() => {
-      const link = document.querySelector('main h3 a') as HTMLElement
-      const headingProbe = document.createElement('span')
-      headingProbe.className = 'text-on-surface'
-      const linkProbe = document.createElement('span')
-      linkProbe.className = 'text-primary'
-      document.body.append(headingProbe, linkProbe)
-      const out = {
-        link: getComputedStyle(link).color,
-        heading: getComputedStyle(headingProbe).color,
-        primary: getComputedStyle(linkProbe).color,
-      }
-      headingProbe.remove()
-      linkProbe.remove()
-      return out
+    const linkColour = await page.evaluate(() => {
+      const probe = document.createElement('span')
+      probe.className = 'text-primary'
+      document.body.append(probe)
+      const colour = getComputedStyle(probe).color
+      probe.remove()
+      return colour
     })
 
-    expect(colors.link, 'le titre doit reprendre la couleur de titre').toBe(colors.heading)
-    expect(colors.link, 'un titre ne doit pas prendre la couleur de lien').not.toBe(colors.primary)
+    const offenders: string[] = []
+    for (const route of APP_ROUTES.filter(r => r.roles.includes('manager'))) {
+      await page.goto(route.path)
+      await page.waitForSelector('main', { timeout: 15_000 })
+      const hits = await page.evaluate((primary: string) => {
+        const out: string[] = []
+        document.querySelectorAll('main h1 a, main h2 a, main h3 a, main h4 a').forEach(anchor => {
+          if (getComputedStyle(anchor).color === primary) {
+            out.push((anchor.textContent ?? '').trim().replace(/\s+/g, ' ').slice(0, 40))
+          }
+        })
+        return out
+      }, linkColour)
+      if (hits.length) offenders.push(`${route.path} → ${hits.join(' | ')}`)
+    }
+
+    expect(offenders, 'titres cliquables rendus avec la couleur de lien').toEqual([])
     await close()
   })
 })
