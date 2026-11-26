@@ -24,7 +24,7 @@ export type MatrixEntry = {
 export const APP_ROUTES: MatrixEntry[] = [
   { path: '/dashboard',              titleKey: 'nav.dashboard',                 roles: ALL, toleratedApi403: { '/api/v1/budgets/00000000-0000-0000-0000-000000000421/levies': ['coOwner', 'tenant'] } },
   { path: '/meetings',               titleKey: 'nav.meetings',                  roles: ALL },
-  { path: '/meetings/00000000-0000-0000-0000-000000000870', titleKey: 'nav.meetings', roles: ALL },
+  { path: '/meetings/00000000-0000-0000-0000-000000000855', titleKey: 'nav.meetings', roles: [...MANAGER, 'coOwner'] },
   { path: '/budget',                 titleKey: 'nav.budget',                    roles: ALL },
   { path: '/documents',              titleKey: 'common.documents',              roles: ALL },
   { path: '/tasks',                  titleKey: 'nav.tasks',                     roles: MANAGER },
