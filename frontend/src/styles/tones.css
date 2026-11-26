@@ -15,6 +15,11 @@
   --tone-bg: var(--color-secondary-container);
   --tone-fg: var(--color-primary);
 }
+.tone--primary {
+  --tone-bg: var(--color-primary-tint);
+  --tone-fg: var(--color-on-surface);
+}
+
 .tone--info {
   --tone-bg: var(--color-secondary-container);
   --tone-fg: var(--color-on-secondary-container);

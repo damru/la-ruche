@@ -110,7 +110,7 @@ const rows = computed(() =>
       class="flex gap-3"
     >
       <div class="flex flex-col items-center shrink-0">
-        <div :class="['size-8 rounded-full grid place-items-center text-on-primary z-10 mt-1', row.style.dot]">
+        <div :class="['size-8 rounded-full grid place-items-center text-on-primary z-10 mt-1', row.style.dot, { 'ring-2 ring-primary/20': row.event.action === 'converted_to_task' }]">
           <component
             :is="row.style.icon"
             class="size-4"
@@ -124,7 +124,7 @@ const rows = computed(() =>
 
       <CCard
         :level="3"
-        :class="['flex-1 mb-3', { 'bg-primary-container': row.event.action === 'converted_to_task' }]"
+        :class="['flex-1 mb-3', { 'tone--primary border border-primary/30': row.event.action === 'converted_to_task' }]"
       >
         <div class="flex items-start justify-between gap-3">
           <div class="flex flex-col gap-1 min-w-0">
