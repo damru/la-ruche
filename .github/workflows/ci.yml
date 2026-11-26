@@ -18,6 +18,7 @@ env:
   RUST_BACKTRACE: 1
   SQLX_ARTIFACT_NAME: sqlx-offline-metadata
   BACKEND_BIN_ARTIFACT_NAME: laruche-backend-bin
+  FRONTEND_DIST_ARTIFACT_NAME: laruche-frontend-dist
   SQLX_CLI_VERSION: 0.8.6
 
 jobs:
@@ -187,7 +188,8 @@ jobs:
     # Skipped on a BOT captures-only push (nothing consumes the artifact —
     # the captures job skips on bot pushes).
     if: ((needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend_app == 'true' || needs.changes.outputs.ci_workflow == 'true') && !(github.actor == 'github-actions[bot]' && needs.changes.outputs.captures_only == 'true')) || (needs.changes.outputs.captures_only == 'true' && github.actor != 'github-actions[bot]')
-    runs-on: ubuntu-latest
+    # glibc 2.39 < the runtime image's 2.41: the artifact must run in debian:trixie.
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: ./backend
@@ -216,7 +218,7 @@ jobs:
       - name: Cache Cargo
         uses: Swatinem/rust-cache@v2
         with:
-          shared-key: backend-release
+          shared-key: backend-release-2404
           workspaces: |
             backend -> target
 
@@ -252,7 +254,7 @@ jobs:
         uses: actions/cache@v6
         with:
           path: backend/target/release/laruche
-          key: laruche-bin-${{ runner.os }}-${{ hashFiles('backend/src/**', 'backend/migrations/**', 'backend/seeds/**', 'backend/assets/**', 'backend/Cargo.toml', 'backend/Cargo.lock', 'NOTICE') }}
+          key: laruche-bin-${{ runner.os }}-glibc239-${{ hashFiles('backend/src/**', 'backend/migrations/**', 'backend/seeds/**', 'backend/assets/**', 'backend/Cargo.toml', 'backend/Cargo.lock', 'NOTICE') }}
 
       - name: Build backend (release, SQLx offline)
         if: steps.backend-bin.outputs.cache-hit != 'true'
@@ -306,6 +308,17 @@ jobs:
 
       - name: Lint
         run: npm run lint
+
+      - name: Build bundle
+        run: npm run build
+
+      - name: Upload frontend bundle
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ env.FRONTEND_DIST_ARTIFACT_NAME }}
+          path: frontend/dist
+          if-no-files-found: error
+          retention-days: 1
 
       - name: Build
         run: npm run build
@@ -441,11 +454,20 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - name: Download SQLx offline files
+      - name: Download backend binary
         uses: actions/download-artifact@v8
         with:
-          name: ${{ env.SQLX_ARTIFACT_NAME }}
-          path: backend/.sqlx/
+          name: ${{ env.BACKEND_BIN_ARTIFACT_NAME }}
+          path: docker-artifacts/
+
+      - name: Download frontend bundle
+        uses: actions/download-artifact@v8
+        with:
+          name: ${{ env.FRONTEND_DIST_ARTIFACT_NAME }}
+          path: frontend-artifacts/dist
+
+      - name: Make backend binary executable
+        run: chmod +x docker-artifacts/laruche
 
       - name: Docker meta
         id: meta
@@ -481,9 +503,11 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build and push
+        id: build
         uses: docker/build-push-action@v7
         with:
           context: .
+          target: runtime-prebuilt
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -493,9 +517,6 @@ jobs:
             type=gha,scope=docker-main
             type=gha,scope=docker-develop
           cache-to: ${{ steps.cache.outputs.to }}
-          build-args: |
-            CARGO_PROFILE=release
-            SQLX_OFFLINE=true
 
   # ── Captures visuelles (ex-visual-preview.yml) ─────────────────
   captures:
