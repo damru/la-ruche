@@ -16,7 +16,9 @@
   --tone-fg: var(--color-primary);
 }
 .tone--primary {
-  --tone-bg: var(--color-primary-tint);
+  /* color-mix resolved on this element, so the tint follows the themed
+     --color-primary (a :root-declared tint would stay light-only) */
+  --tone-bg: color-mix(in oklch, var(--color-primary) 10%, transparent);
   --tone-fg: var(--color-on-surface);
 }
 

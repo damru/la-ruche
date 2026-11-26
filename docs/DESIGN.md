@@ -415,7 +415,7 @@ color:      var(--tone-fg, <fallback>);
 | `.tone--info`         | `--color-secondary-container`       | `--color-on-secondary-container` |
 | `.tone--manager`      | `--color-role-manager-bg`           | `--color-role-manager-fg` |
 | `.tone--muted`        | `--color-surface-container`         | `--color-on-surface-variant` |
-| `.tone--primary`      | `--color-primary-tint`              | `--color-on-surface` |
+| `.tone--primary`      | `color-mix(primary 10%)`            | `--color-on-surface` |
 | `.tone--tenant`       | `--color-role-tenant-bg`            | `--color-role-tenant-fg` |
 | `.tone--valid`        | `--color-success-container`         | `--color-success` |
 | `.tone--warn`         | `--color-warning-container`         | `--color-warning` |
@@ -437,7 +437,7 @@ Tokens de mélange pour bordures et overlays légers. Valeur adaptée au thème 
 | Token | Valeur | Usage |
 |---|---|---|
 | `--color-outline-light` | `color-mix(in srgb, var(--color-outline) var(--tint), transparent)` | Séparateurs discrets dans les tableaux |
-| `--color-primary-tint` | `color-mix(in oklch, var(--color-primary) 10%, transparent)` | Fond tonal doux (`.tone--primary`, glows) — redéclaré dans `[data-theme="dark"]` pour suivre le `--color-primary` du thème |
+| `--color-primary-tint` | `color-mix(in oklch, var(--color-primary) 10%, transparent)` | Tokens dérivés résolus à leur élément déclarant (`:root`) — light-only ; pour un fond tonal theme-correct, composer le `color-mix` dans la classe consommatrice (cf. `.tone--primary`) |
 
 ```css
 /* Exemple d'utilisation dans CDataTable */
