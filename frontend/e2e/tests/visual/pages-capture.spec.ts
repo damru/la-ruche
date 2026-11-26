@@ -54,7 +54,7 @@ for (const route of APP_ROUTES) {
         })
 
         for (const tab of route.captureTabs ?? []) {
-          await page.getByRole('tab', { name: tab }).click()
+          await page.getByRole('button', { name: tab, exact: true }).click()
           await page.waitForLoadState('networkidle')
           await settlePage(page)
           const tabSlug = slugify(tab)
