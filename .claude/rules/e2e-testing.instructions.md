@@ -29,5 +29,17 @@ writing or reviewing any e2e test. Non-negotiables:
 - **Determinism**: any UI element rendering a relative date, counter or random
   ID must be frozen (cf. `tests/visual/pages-capture.spec.ts` for the clock
   pattern) — flaky-by-time tests are bugs.
+- **No new suite for a new check**: add the case to an existing spec — static
+  repository guards go into `tests/archi/ddr006-garde-fou.spec.ts` (whatever
+  their topic), cross-page consistency checks into
+  `tests/consistance-matrix.spec.ts`, entity behaviour into the entity's spec.
+  A new `.spec.ts` file must introduce a new entity or a new mechanism, never a
+  single new case.
+- **CSS regressions: assert computed styles, never class attributes.** Classes
+  can be correct and still lose the cascade — unlayered `base.css` rules (e.g.
+  `a { color: … }`) beat every Tailwind utility, so a heading link renders in
+  the link colour while every class assertion and axe AA check passes. Pattern:
+  read a probe element's `getComputedStyle(el).color` for the expected token,
+  then compare it with the real element's computed colour on each matrix route.
 - Visual captures (`tests/visual/**`) have their own rule:
   `visual-regression.instructions.md`.
