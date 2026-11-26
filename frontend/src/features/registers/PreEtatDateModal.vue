@@ -225,7 +225,7 @@ async function downloadPdf() {
 <style scoped>
 @media print {
   .pre-etat-date-print {
-    color: black;
+    color: oklch(0.000 0.0000 0.00);
   }
 }
 </style>

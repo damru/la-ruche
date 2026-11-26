@@ -290,21 +290,26 @@ Trois polices, trois rôles. Chargées depuis Google Fonts.
 
 Source : `frontend/src/styles/tokens.css`. Les valeurs Dark sont dans `[data-theme="dark"]`.
 
+> **Espace colorimétrique :** toute couleur est exprimée en `oklch` (tokens, `color-mix(in oklch, …)`, tones). Les littéraux sRGB/hex sont interdits hors `styles/tokens.css`, les composants verrouillés (`CMockBanner`, `AuthBrandPanel`, voile de progression de `CBtn` — blanc obligatoire sur un fond saturé dans les deux thèmes) et les exceptions documentées (data-URI du check de case, `@media print`). Mélanger un token et un alpha se fait par `color-mix(in oklch, var(--color-x) n%, transparent)` dans la classe consommatrice — jamais via un token dérivé déclaré une seule fois dans `:root`.
+
 | Token | Light | Dark |
 |---|---|---|
-| `--color-primary` | `#643fd5` | `#c4b5fd` |
-| `--color-primary-container` | `#7d5bf0` | `#4c2fb8` |
-| `--color-on-primary` | `#ffffff` | `#2a0084` |
-| `--color-secondary` | `#5a6073` | `#bfc4dd` |
-| `--color-secondary-container` | `#dde1f9` | `#404659` |
-| `--color-on-secondary-container` | `#1a1d2e` | `#dde1f9` |
-| `--color-error` | `#ba1a1a` | `#ffb4ab` |
-| `--color-error-container` | `#ffdad6` | `#93000a` |
-| `--color-success` | `#2e7d32` | `#81c784` |
-| `--color-success-container` | `#e8f5e9` | `#1b4f23` |
-| `--color-warning` | `#e65100` | `#ffb74d` |
-| `--color-warning-container` | `#fff8e1` | `#4d3500` |
-| `--gradient-primary` | `linear-gradient(135deg, #643fd5, #7d5bf0)` | — |
+| `--color-primary` | `oklch(0.503 0.2154 287.24)` | `oklch(0.811 0.1013 293.57)` |
+| `--color-on-success` | `oklch(1.000 0.0000 0.00)` | `color-mix(in oklch, var(--color-success), black 70%)` |
+| `--color-scrim` | `oklch(0.224 0.0049 219.69 / 0.4)` | `oklch(0.000 0.0000 0.00 / 0.6)` |
+| `--color-primary-container` | `oklch(0.587 0.2131 288.56)` | `oklch(0.434 0.2006 283.98)` |
+| `--color-on-primary` | `oklch(1.000 0.0000 0.00)` | `oklch(0.302 0.1811 281.25)` |
+| `--color-secondary` | `oklch(0.491 0.0313 271.42)` | `oklch(0.824 0.0354 276.63)` |
+| `--color-secondary-container` | `oklch(0.914 0.0329 278.20)` | `oklch(0.396 0.0331 271.15)` |
+| `--color-on-secondary-container` | `oklch(0.236 0.0330 275.89)` | `oklch(0.914 0.0329 278.20)` |
+| `--color-error` | `oklch(0.506 0.1927 27.70)` | `oklch(0.838 0.0891 26.76)` |
+| `--color-error-container` | `oklch(0.918 0.0418 25.23)` | `oklch(0.417 0.1702 27.38)` |
+| `--color-success` | `oklch(0.523 0.1347 144.17)` | `oklch(0.766 0.1179 145.30)` |
+| `--color-success-container` | `oklch(0.957 0.0210 147.64)` | `oklch(0.381 0.0909 146.40)` |
+| `--color-warning` | `oklch(0.631 0.1970 40.25)` | `oklch(0.829 0.1452 73.54)` |
+| `--color-warning-container` | `oklch(0.979 0.0310 92.94)` | `oklch(0.348 0.0719 80.56)` |
+| `--gradient-primary` | `linear-gradient(135deg, oklch(0.503 0.2154 287.24), oklch(0.587 0.2131 288.56))` | `linear-gradient(135deg, oklch(0.587 0.2131 288.56), oklch(0.811 0.1013 293.57))` |
+| `--gradient-brand` | `linear-gradient(160deg, oklch(0.413 0.1755 286.61), oklch(0.503 0.2154 287.24) 60%, oklch(0.606 0.2189 292.72))` | idem (thème verrouillé) |
 | `--gradient-success` | dérivé de `--color-success` (foncé → base) | auto |
 | `--gradient-error` | dérivé de `--color-error` (foncé → base) | auto |
 | `--gradient-warning` | dérivé de `--color-warning` (foncé → base) | auto |
@@ -314,27 +319,25 @@ Source : `frontend/src/styles/tokens.css`. Les valeurs Dark sont dans `[data-the
 
 | Token | Light | Dark |
 |---|---|---|
-| `--color-surface` | `#f8f9fa` | `#111318` |
-| `--color-surface-container-lowest` | `#ffffff` | `#0c0e13` |
-| `--color-surface-container-low` | `#f3f4f5` | `#191c21` |
-| `--color-surface-container` | `#edeff0` | `#1e2026` |
-| `--color-surface-container-high` | `#e7e9ea` | `#28292f` |
-| `--color-surface-container-highest` | `#e1e3e4` | `#33353b` |
-| `--color-on-surface` | `#191c1d` | `#e2e3e8` |
-| `--color-on-surface-variant` | `#42474e` | `#c3c6cf` |
-| `--color-outline` | `#74777f` | `#8e9099` |
-| `--color-outline-variant` | `#c2c7cf` | `#43474f` |
+| `--color-surface` | `oklch(0.982 0.0017 247.84)` | `oklch(0.187 0.0107 268.11)` |
+| `--color-surface-container-lowest` | `oklch(1.000 0.0000 0.00)` | `oklch(0.164 0.0111 268.01)` |
+| `--color-surface-container-low` | `oklch(0.967 0.0017 247.84)` | `oklch(0.225 0.0107 260.68)` |
+| `--color-surface-container` | `oklch(0.951 0.0025 228.79)` | `oklch(0.244 0.0118 270.90)` |
+| `--color-surface-container-high` | `oklch(0.933 0.0025 228.79)` | `oklch(0.282 0.0110 278.15)` |
+| `--color-surface-container-highest` | `oklch(0.915 0.0026 228.79)` | `oklch(0.329 0.0109 271.07)` |
+| `--color-on-surface` | `oklch(0.224 0.0049 219.69)` | `oklch(0.917 0.0068 277.16)` |
+| `--color-on-surface-variant` | `oklch(0.396 0.0135 256.76)` | `oklch(0.827 0.0130 271.26)` |
+| `--color-outline` | `oklch(0.569 0.0128 269.45)` | `oklch(0.655 0.0135 275.99)` |
+| `--color-outline-variant` | `oklch(0.828 0.0125 259.82)` | `oklch(0.397 0.0145 264.40)` |
 
 **Rôles** :
 
-> Migration OKLCH réalisée (EP-020-S01 et EP-020-S02) — `tokens.css` est en OKLCH ; les valeurs hex de ce tableau sont les équivalents historiques indicatifs.
-
 | Token (`-bg` / `-fg`) | Background light | Foreground light | Background dark | Foreground dark |
 |---|---|---|---|---|
-| `--color-role-manager-*` | `#e8def8` | `#21005d` | `#3d2277` | `#e8def8` |
-| `--color-role-board-*` | `#d2e4fb` | `#001d36` | `#0d2b47` | `#d2e4fb` |
-| `--color-role-co-owner-*` | `#cef5e5` | `#00391d` | `#0d3321` | `#cef5e5` |
-| `--color-role-tenant-*` | `#fcecd1` | `#3a2000` | `#3d2800` | `#fcecd1` |
+| `--color-role-manager-*` | `oklch(0.916 0.0365 303.11)` | `oklch(0.242 0.1404 286.09)` | `oklch(0.401 0.0340 298.59)` | `oklch(0.916 0.0365 303.11)` |
+| `--color-role-board-*` | `oklch(0.913 0.0369 254.57)` | `oklch(0.225 0.0601 247.68)` | `oklch(0.317 0.0856 248.05)` | `oklch(0.913 0.0369 254.57)` |
+| `--color-role-co-owner-*` | `oklch(0.938 0.0457 168.57)` | `oklch(0.303 0.0747 155.07)` | `oklch(0.385 0.0963 154.41)` | `oklch(0.938 0.0457 168.57)` |
+| `--color-role-tenant-*` | `oklch(0.949 0.0395 80.90)` | `oklch(0.272 0.0601 67.02)` | `oklch(0.355 0.0789 66.30)` | `oklch(0.949 0.0395 80.90)` |
 
 ---
 
@@ -362,10 +365,10 @@ Source : `frontend/src/styles/tokens.css`. Les valeurs Dark sont dans `[data-the
 
 | Token | Valeur |
 |---|---|
-| `--shadow-sm`    | `0 2px 8px rgba(25,28,29,.04)` |
-| `--shadow-md`    | `0 8px 32px rgba(25,28,29,.07), 0 2px 8px rgba(25,28,29,.04)` |
-| `--shadow-lg`    | `0 16px 48px rgba(25,28,29,.10), 0 4px 16px rgba(25,28,29,.06)` |
-| `--shadow-glass` | `0 20px 60px rgba(25,28,29,.14), 0 4px 16px rgba(25,28,29,.08)` |
+| `--shadow-sm`    | `0 2px 8px oklch(0.224 0.0049 219.69 / .04)` |
+| `--shadow-md`    | `0 8px 32px oklch(0.224 0.0049 219.69 / .07), 0 2px 8px oklch(0.224 0.0049 219.69 / .04)` |
+| `--shadow-lg`    | `0 16px 48px oklch(0.224 0.0049 219.69 / .10), 0 4px 16px oklch(0.224 0.0049 219.69 / .06)` |
+| `--shadow-glass` | `0 20px 60px oklch(0.224 0.0049 219.69 / .14), 0 4px 16px oklch(0.224 0.0049 219.69 / .08)` |
 
 **Ombres de focus et d'interaction** — utilisées par les composants `CForm*` :
 
@@ -376,7 +379,7 @@ Source : `frontend/src/styles/tokens.css`. Les valeurs Dark sont dans `[data-the
 | `--shadow-primary-lift` | Élévation hover d'un bouton primaire |
 | `--shadow-primary-lift-hover` | Élévation pressed/active d'un bouton primaire |
 
-> **Surface des modales :** `background: var(--color-surface-container-lowest)` + `box-shadow: var(--shadow-glass)`. Le glassmorphisme (`.c-modal--frosted` : `rgba(255,255,255,.85)` + `backdrop-filter: blur(20px)`) est un modificateur opt-in réservé aux surfaces qui l'exigent explicitement — jamais la surface par défaut.
+> **Surface des modales :** `background: var(--color-surface-container-lowest)` + `box-shadow: var(--shadow-glass)`. Le glassmorphisme (`.c-modal--frosted` : `color-mix(in oklch, var(--color-surface-container-lowest) 85%, transparent)` + `backdrop-filter: blur(20px)`) est un modificateur opt-in réservé aux surfaces qui l'exigent explicitement — jamais la surface par défaut.
 
 ---
 
@@ -413,6 +416,8 @@ color:      var(--tone-fg, <fallback>);
 | `.tone--disabled`     | `--color-surface-container-highest` | `--color-on-surface-variant` |
 | `.tone--err`          | `--color-error-container`           | `--color-error` |
 | `.tone--info`         | `--color-secondary-container`       | `--color-on-secondary-container` |
+| `.tone--iris`         | `--color-role-manager-bg`           | `--color-role-manager-fg` |
+| `.tone--apricot`      | `oklch(0.942 0.0334 65.96)` | `oklch(0.418 0.1105 49.96)` |
 | `.tone--manager`      | `--color-role-manager-bg`           | `--color-role-manager-fg` |
 | `.tone--muted`        | `--color-surface-container`         | `--color-on-surface-variant` |
 | `.tone--primary`      | `color-mix(primary 10%)`            | `--color-on-surface` |
@@ -421,6 +426,7 @@ color:      var(--tone-fg, <fallback>);
 | `.tone--warn`         | `--color-warning-container`         | `--color-warning` |
 
 > Une vue ne doit jamais redéclarer localement une classe `.tone--*` dans son CSS scoped.
+> `.tone--apricot` a une déclinaison dark (`oklch(0.414 0.1000 48.00)` / `oklch(0.942 0.0334 65.96)`) ; `.tone--iris` suit la palette manager, donc son dark vient des tokens de rôle.
 
 ---
 

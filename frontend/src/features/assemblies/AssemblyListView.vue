@@ -287,12 +287,13 @@ async function onMeetingCreated(meetingId: string) {
   gap: var(--space-1);
   padding: var(--space-4);
   background: var(--gradient-primary);
-  color: white;
+  color: var(--color-on-primary);
 }
 
 .meeting-badge--closed,
 .meeting-badge--ongoing {
   background: var(--gradient-success);
+  color: var(--color-on-success);
 }
 
 .meeting-badge--pulse {
@@ -307,7 +308,7 @@ async function onMeetingCreated(meetingId: string) {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: white;
+  background: var(--color-on-primary);
   animation: pulse-dot 1.8s ease-in-out infinite;
 }
 
@@ -320,8 +321,8 @@ async function onMeetingCreated(meetingId: string) {
   background:
     repeating-linear-gradient(
       -45deg,
-      rgba(255, 255, 255, 0.18) 0px,
-      rgba(255, 255, 255, 0.18) 10px,
+      color-mix(in oklch, var(--color-on-primary) 18%, transparent) 0px,
+      color-mix(in oklch, var(--color-on-primary) 18%, transparent) 10px,
       transparent 10px,
       transparent 20px
     ),

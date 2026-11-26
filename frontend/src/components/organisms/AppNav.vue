@@ -437,7 +437,7 @@ watch(() => route.path, closeDrawer)
   height: 32px;
   border-radius: var(--radius-full);
   background: var(--gradient-primary);
-  color: #fff;
+  color: var(--color-on-primary);
   font-family: var(--font-display);
   font-size: 12px;
   font-weight: 700;
@@ -457,10 +457,10 @@ watch(() => route.path, closeDrawer)
   left: 0;
   right: 0;
   background: var(--color-surface-container-lowest);
-  border-top: 1px solid rgba(194, 199, 207, 0.2);
+  border-top: 1px solid color-mix(in oklch, var(--color-outline-variant) 20%, transparent);
   padding-bottom: var(--nav-safe-area-bottom);
   z-index: var(--z-nav);
-  box-shadow: 0 -4px 20px rgba(25, 28, 29, 0.06);
+  box-shadow: 0 -4px 20px color-mix(in oklch, var(--color-scrim) 15%, transparent);
 }
 
 @media (max-width: 1024px) { .c-bottom-nav { display: flex; } }
@@ -509,7 +509,7 @@ watch(() => route.path, closeDrawer)
 /* Profile avatar item */
 .c-bottom-nav__item--profile {
   background: var(--color-surface-container-lowest);
-  border-left: 1px solid rgba(194, 199, 207, 0.15);
+  border-left: 1px solid color-mix(in oklch, var(--color-outline-variant) 15%, transparent);
 }
 
 .c-bottom-nav__avatar {
@@ -517,7 +517,7 @@ watch(() => route.path, closeDrawer)
   height: 28px;
   border-radius: var(--radius-full);
   background: var(--gradient-primary);
-  color: #fff;
+  color: var(--color-on-primary);
   font-family: var(--font-display);
   font-size: 11px;
   font-weight: 700;
@@ -536,7 +536,7 @@ watch(() => route.path, closeDrawer)
 .c-nav-drawer-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: var(--color-scrim);
   z-index: calc(var(--z-nav) + 1);
 }
 
