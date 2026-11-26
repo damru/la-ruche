@@ -18,6 +18,8 @@ export type MatrixEntry = {
   titleKey: string
   roles: AuthRole[]
   deniedBehavior?: 'route403' | 'pageError'
+  /** Also capture the alternate display mode (grid/cards) of this page. */
+  captureGrid?: boolean
   toleratedApi403?: Record<string, AuthRole[]>
 }
 
@@ -28,8 +30,8 @@ export const APP_ROUTES: MatrixEntry[] = [
   { path: '/documents',              titleKey: 'common.documents',              roles: ALL },
   { path: '/tasks',                  titleKey: 'nav.tasks',                     roles: MANAGER },
   { path: '/tasks/00000000-0000-0000-0000-000000000602', titleKey: 'nav.tasks', roles: MANAGER },
-  { path: '/contractors',            titleKey: 'contractors.title',             roles: ALL },
-  { path: '/contracts',              titleKey: 'nav.contracts',                 roles: MANAGER },
+  { path: '/contractors',            titleKey: 'contractors.title',             roles: ALL, captureGrid: true },
+  { path: '/contracts',              titleKey: 'nav.contracts',                 roles: MANAGER, captureGrid: true },
   { path: '/claims',                 titleKey: 'nav.claims',                    roles: MANAGER },
   { path: '/logbook',                titleKey: 'nav.maintenance',               roles: [...MANAGER, 'coOwner'] },
   { path: '/calendar',               titleKey: 'nav.calendar',                  roles: ALL },
