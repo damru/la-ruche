@@ -188,7 +188,8 @@ jobs:
     # Skipped on a BOT captures-only push (nothing consumes the artifact —
     # the captures job skips on bot pushes).
     if: ((needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend_app == 'true' || needs.changes.outputs.ci_workflow == 'true') && !(github.actor == 'github-actions[bot]' && needs.changes.outputs.captures_only == 'true')) || (needs.changes.outputs.captures_only == 'true' && github.actor != 'github-actions[bot]')
-    runs-on: ubuntu-latest
+    # glibc 2.39 < the runtime image's 2.41: the artifact must run in debian:trixie.
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: ./backend
