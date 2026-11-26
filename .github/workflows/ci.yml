@@ -218,7 +218,7 @@ jobs:
       - name: Cache Cargo
         uses: Swatinem/rust-cache@v2
         with:
-          shared-key: backend-release
+          shared-key: backend-release-2404
           workspaces: |
             backend -> target
 
