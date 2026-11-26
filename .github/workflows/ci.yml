@@ -453,9 +453,6 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      # The release binary is built once by build-backend (rust-cache warm);
-      # the image copies it instead of recompiling ~400 crates on a cold
-      # BuildKit cache (measured 53 min before this step existed).
       - name: Download backend binary
         uses: actions/download-artifact@v8
         with:
@@ -509,7 +506,6 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           context: .
-          # No Rust toolchain in this target: the binary comes from build-backend.
           target: runtime-prebuilt
           load: ${{ github.event_name == 'pull_request' }}
           push: ${{ github.event_name != 'pull_request' }}
@@ -522,8 +518,6 @@ jobs:
             type=gha,scope=docker-develop
           cache-to: ${{ steps.cache.outputs.to }}
 
-      # Guard the artifact contract: a binary built on ubuntu-latest must run
-      # on the Debian runtime (glibc forward-compatible, libssl3 present).
       - name: Smoke the loaded image
         if: github.event_name == 'pull_request'
         run: |
