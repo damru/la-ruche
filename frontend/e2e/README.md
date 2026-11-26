@@ -70,6 +70,11 @@ restent sur la CI x86.
 
 - Projet `visual` : capture des pages stables du layout principal →
   `e2e/visual/<page>--<1440|375>--<light|dark>.png`, committées dans le repo.
+  Les pages à double affichage (liste/grille — `captureGrid` dans
+  `data/access-matrix.ts`) produisent en plus
+  `<page>--grid--<1440|375>--<light|dark>.png` (bascule cliquée avant la
+  seconde capture). Les pages à onglets (`captureTabs`, libellé + slug explicite) produisent
+  `<page>--tab-<onglet>--<1440|375>--<light|dark>.png` par onglet listé.
 - **À générer uniquement par le job CI `visual-preview`** (x86) : sur chaque
   PR touchant `frontend/**`, il recapture et committe les changements →
   l'avant/après s'affiche nativement dans l'onglet Files Changed de la PR

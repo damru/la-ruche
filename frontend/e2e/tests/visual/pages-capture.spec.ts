@@ -52,6 +52,27 @@ for (const route of APP_ROUTES) {
           path: `e2e/visual/${slug}--${viewport.name}--${theme}.png`,
           fullPage: true,
         })
+
+        for (const tab of route.captureTabs ?? []) {
+          await page.getByRole('button', { name: tab.label, exact: true }).click()
+          await page.waitForLoadState('networkidle')
+          await settlePage(page)
+          await page.screenshot({
+            path: `e2e/visual/${slug}--tab-${tab.slug}--${viewport.name}--${theme}.png`,
+            fullPage: true,
+          })
+        }
+
+        if (route.captureGrid) {
+          const gridToggle = page.getByRole('button', { name: 'Vue grille' })
+          await gridToggle.click()
+          await page.waitForLoadState('networkidle')
+          await settlePage(page)
+          await page.screenshot({
+            path: `e2e/visual/${slug}--grid--${viewport.name}--${theme}.png`,
+            fullPage: true,
+          })
+        }
         await context.close()
       })
     }

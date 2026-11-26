@@ -18,6 +18,8 @@ export type MatrixEntry = {
   titleKey: string
   roles: AuthRole[]
   deniedBehavior?: 'route403' | 'pageError'
+  captureGrid?: boolean
+  captureTabs?: Array<{ label: string; slug: string }>
   toleratedApi403?: Record<string, AuthRole[]>
 }
 
@@ -29,8 +31,8 @@ export const APP_ROUTES: MatrixEntry[] = [
   { path: '/documents',              titleKey: 'common.documents',              roles: ALL },
   { path: '/tasks',                  titleKey: 'nav.tasks',                     roles: MANAGER },
   { path: '/tasks/00000000-0000-0000-0000-000000000602', titleKey: 'nav.tasks', roles: MANAGER },
-  { path: '/contractors',            titleKey: 'contractors.title',             roles: ALL },
-  { path: '/contracts',              titleKey: 'nav.contracts',                 roles: MANAGER },
+  { path: '/contractors',            titleKey: 'contractors.title',             roles: ALL, captureGrid: true },
+  { path: '/contracts',              titleKey: 'nav.contracts',                 roles: MANAGER, captureGrid: true },
   { path: '/claims',                 titleKey: 'nav.claims',                    roles: MANAGER },
   { path: '/logbook',                titleKey: 'nav.maintenance',               roles: [...MANAGER, 'coOwner'] },
   { path: '/calendar',               titleKey: 'nav.calendar',                  roles: ALL },
@@ -46,7 +48,7 @@ export const APP_ROUTES: MatrixEntry[] = [
   { path: '/etat-date',              titleKey: 'registers.etatDate.title',      roles: MGR_ONLY },
   { path: '/residence/building',     titleKey: 'common.informations',           roles: MGR_ONLY },
   { path: '/residence/keys',         titleKey: 'allocationKeys.title',          roles: MGR_ONLY },
-  { path: '/profile',                titleKey: 'nav.account',                   roles: ALL },
+  { path: '/profile',                titleKey: 'nav.account',                   roles: ALL, captureTabs: [{ label: 'Préférences', slug: 'preferences' }] },
 ]
 
 export const SEEDED_UNIT_ID = '00000000-0000-0000-0000-000000000102'
