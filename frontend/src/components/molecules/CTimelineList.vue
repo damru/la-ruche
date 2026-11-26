@@ -188,7 +188,7 @@ const rows = computed(() =>
             </span>
             <RouterLink
               v-if="row.link"
-              :to="row.link"
+              :to="{ name: row.link.name, params: row.link.params }"
               class="text-xs font-medium text-primary hover:underline"
             >
               {{ row.link.label }}
