@@ -73,7 +73,8 @@ restent sur la CI x86.
   Les pages à double affichage (liste/grille — `captureGrid` dans
   `data/access-matrix.ts`) produisent en plus
   `<page>--grid--<1440|375>--<light|dark>.png` (bascule cliquée avant la
-  seconde capture).
+  seconde capture). Les pages à onglets (`captureTabs`) produisent
+  `<page>--tab-<onglet>--<1440|375>--<light|dark>.png` par onglet listé.
 - **À générer uniquement par le job CI `visual-preview`** (x86) : sur chaque
   PR touchant `frontend/**`, il recapture et committe les changements →
   l'avant/après s'affiche nativement dans l'onglet Files Changed de la PR

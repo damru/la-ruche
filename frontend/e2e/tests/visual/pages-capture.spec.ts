@@ -53,6 +53,17 @@ for (const route of APP_ROUTES) {
           fullPage: true,
         })
 
+        for (const tab of route.captureTabs ?? []) {
+          await page.getByRole('tab', { name: tab }).click()
+          await page.waitForLoadState('networkidle')
+          await settlePage(page)
+          const tabSlug = slugify(tab)
+          await page.screenshot({
+            path: `e2e/visual/${slug}--tab-${tabSlug}--${viewport.name}--${theme}.png`,
+            fullPage: true,
+          })
+        }
+
         if (route.captureGrid) {
           const gridToggle = page.getByRole('button', { name: 'Vue grille' })
           await gridToggle.click()
