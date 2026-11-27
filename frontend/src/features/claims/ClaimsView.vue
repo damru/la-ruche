@@ -16,7 +16,6 @@ import CCardActions from '@/components/molecules/CCardActions.vue'
 import CCardNote from '@/components/molecules/CCardNote.vue'
 import CReminderCard from '@/components/organisms/CReminderCard.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
-import CHeading from '@/components/atoms/CHeading.vue'
 import CTabs, { type Tab } from '@/components/atoms/CTabs.vue'
 import CIconCheckCircle from '@/components/atoms/CIconCheckCircle.svg'
 import CIconEdit from '@/components/atoms/CIconEdit.svg'
@@ -26,6 +25,7 @@ import CIconShield from '@/components/atoms/CIconShield.svg'
 import CIconUpload from '@/components/atoms/CIconUpload.svg'
 import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import CIconMessageSquare from '@/components/atoms/CIconMessageSquare.svg'
+import CPageHeader from '@/components/molecules/CPageHeader.vue'
 import ClaimCreateModal from './ClaimCreateModal.vue'
 import ClaimEditModal from './ClaimEditModal.vue'
 import ClaimTransmitModal from './ClaimTransmitModal.vue'
@@ -374,13 +374,10 @@ function handleDocumentCountChanged(claimId: string, delta: number) {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
-        <header class="view-header">
-          <CEyebrow>
-            {{ t('page.eyebrows.claims') }}
-          </CEyebrow>
-          <CHeading type="header">
-            {{ t('nav.claims') }}
-          </CHeading>
+        <CPageHeader
+          :eyebrow="t('page.eyebrows.claims')"
+          :title="t('nav.claims')"
+        >
           <CMetaItem variant="sub">
             {{ t('claims.activeCount', { count: activeClaimsCount }) }}
           </CMetaItem>
@@ -389,7 +386,7 @@ function handleDocumentCountChanged(claimId: string, delta: number) {
             style="color:var(--color-on-surface-variant)"
           >
           </p>
-        </header>
+        </CPageHeader>
 
         <CReminderCard
           v-if="claimReminderRows.length > 0"

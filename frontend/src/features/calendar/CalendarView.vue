@@ -17,8 +17,6 @@ import CTopbar from '@/components/organisms/CTopbar.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CEmptyState from '@/components/atoms/CEmptyState.vue'
-import CEyebrow from '@/components/atoms/CEyebrow.vue'
-import CHeading from '@/components/atoms/CHeading.vue'
 import CFormInput from '@/components/atoms/CFormInput.vue'
 import CMetaLine from '@/components/molecules/CMetaLine.vue'
 import CMetaItem from '@/components/molecules/CMetaItem.vue'
@@ -31,6 +29,7 @@ import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import CIconArrowLeft from '@/components/atoms/CIconArrowLeft.svg'
 import CIconArrowRight from '@/components/atoms/CIconArrowRight.svg'
 import CIconDownload from '@/components/atoms/CIconDownload.svg'
+import CPageHeader from '@/components/molecules/CPageHeader.vue'
 import CalendarGrid from './CalendarGrid.vue'
 import CalendarAgendaMode from './CalendarAgendaMode.vue'
 import CalendarFilterBar from './CalendarFilterBar.vue'
@@ -268,13 +267,10 @@ async function exportCalendar() {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
-        <header class="view-header">
-          <CEyebrow>
-            {{ t('common.overview') }}
-          </CEyebrow>
-          <CHeading type="header">
-            {{ t('nav.calendar') }}
-          </CHeading>
+        <CPageHeader
+          :eyebrow="t('common.overview')"
+          :title="t('nav.calendar')"
+        >
           <CMetaLine>
             <CMetaItem variant="sub">
               {{ periodLabel }}
@@ -284,7 +280,7 @@ async function exportCalendar() {
               {{ t('calendar.count', events.length) }}
             </CMetaItem>
           </CMetaLine>
-        </header>
+        </CPageHeader>
 
         <div class="flex items-center justify-between gap-3">
           <CTabs

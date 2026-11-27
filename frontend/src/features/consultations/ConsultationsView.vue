@@ -23,6 +23,7 @@ import CIconCheckCircle from '@/components/atoms/CIconCheckCircle.svg'
 import CIconTrash from '@/components/atoms/CIconTrash.svg'
 import CIconEdit from '@/components/atoms/CIconEdit.svg'
 import CIconBell from '@/components/atoms/CIconBell.svg'
+import CPageHeader from '@/components/molecules/CPageHeader.vue'
 import CreateConsultationModal from './CreateConsultationModal.vue'
 import CloseConsultationModal from './CloseConsultationModal.vue'
 import DeleteConsultationModal from './DeleteConsultationModal.vue'
@@ -296,17 +297,11 @@ function openDeleteModal(c: Consultation) {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
-        <header class="view-header">
-          <CEyebrow>
-            {{ t('page.eyebrows.consultations') }}
-          </CEyebrow>
-          <CHeading type="header">
-            {{ t('nav.consultations') }}
-          </CHeading>
-          <CMetaItem variant="sub">
-            {{ t('consultations.allCount', { count: allCount }) }}
-          </CMetaItem>
-        </header>
+        <CPageHeader
+          :eyebrow="t('page.eyebrows.consultations')"
+          :title="t('nav.consultations')"
+          :meta="t('consultations.allCount', { count: allCount })"
+        />
 
         <CAlert
           v-if="pageError"

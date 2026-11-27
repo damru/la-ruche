@@ -47,6 +47,7 @@ import CIconEdit from '@/components/atoms/CIconEdit.svg'
 import CIconLock from '@/components/atoms/CIconLock.svg'
 import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import CIconUpload from '@/components/atoms/CIconUpload.svg'
+import CPageHeader from '@/components/molecules/CPageHeader.vue'
 import VoteModal from './VoteModal.vue'
 import StartMeetingModal from './StartMeetingModal.vue'
 import CloseMeetingModal from './CloseMeetingModal.vue'
@@ -657,8 +658,8 @@ function openArt25Modal(resolution: Resolution) {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else-if="meeting">
-        <header class="view-header">
-          <CEyebrow>
+        <CPageHeader>
+          <template #eyebrow>
             <CBadge
               :variant="meetingStatusVariant(meeting.status)"
               dot
@@ -667,12 +668,12 @@ function openArt25Modal(resolution: Resolution) {
               {{ meetingStatusLabel(meeting.status) }}
             </CBadge>
             <span>{{ t('page.eyebrows.assemblyDetail') }}</span>
-          </CEyebrow>
-
-          <CHeading type="header">
-            {{ typeLabel(meeting.meeting_type) }} {{ new Date(meeting.meeting_date).getFullYear() }}
-          </CHeading>
-
+          </template>
+          <template #title>
+            <CHeading type="header">
+              {{ typeLabel(meeting.meeting_type) }} {{ new Date(meeting.meeting_date).getFullYear() }}
+            </CHeading>
+          </template>
           <CMetaLine>
             <CMetaItem variant="sub">
               <template #icon>
@@ -698,7 +699,7 @@ function openArt25Modal(resolution: Resolution) {
               {{ t('meetings.calledAt', { date: meeting.notice_date ? formatDate(meeting.notice_date) : '—' }) }}
             </CMetaItem>
           </CMetaLine>
-        </header>
+        </CPageHeader>
 
         <div :class="['status-banner', `status-banner--${meetingState(meeting.status)}`]">
           <div class="status-banner__left">

@@ -6,12 +6,12 @@ import CBtn from '@/components/atoms/CBtn.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
-import CHeading from '@/components/atoms/CHeading.vue'
 import CTabs from '@/components/atoms/CTabs.vue'
 import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import CIconEdit from '@/components/atoms/CIconEdit.svg'
 import CIconTrash from '@/components/atoms/CIconTrash.svg'
 import CIconClock from '@/components/atoms/CIconClock.svg'
+import CPageHeader from '@/components/molecules/CPageHeader.vue'
 import { allocationKeysApi } from '@/api'
 import { usePageLoader } from '@/composables/usePageLoader'
 import KeyFormModal from '@/features/residence/KeyFormModal.vue'
@@ -143,17 +143,11 @@ onMounted(reload)
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
-        <header class="view-header">
-          <CEyebrow>
-            {{ t('page.eyebrows.allocationKeys') }}
-          </CEyebrow>
-          <CHeading type="header">
-            {{ t('allocationKeys.title') }}
-          </CHeading>
-          <CMetaItem variant="sub">
-            {{ t('allocationKeys.header.totalCount', { count: keys.length }) }}
-          </CMetaItem>
-        </header>
+        <CPageHeader
+          :eyebrow="t('page.eyebrows.allocationKeys')"
+          :title="t('allocationKeys.title')"
+          :meta="t('allocationKeys.header.totalCount', { count: keys.length })"
+        />
 
         <CTabs
           v-model="activeTab"

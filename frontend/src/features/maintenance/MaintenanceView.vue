@@ -17,7 +17,6 @@ import CSectionHeader from '@/components/molecules/CSectionHeader.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
-import CHeading from '@/components/atoms/CHeading.vue'
 import CTabs from '@/components/atoms/CTabs.vue'
 import CIconArrowLeft from '@/components/atoms/CIconArrowLeft.svg'
 import CIconArrowRight from '@/components/atoms/CIconArrowRight.svg'
@@ -25,6 +24,7 @@ import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import CIconTrash from '@/components/atoms/CIconTrash.svg'
 import CIconDownload from '@/components/atoms/CIconDownload.svg'
 import CFormSelect from '@/components/atoms/CFormSelect.vue'
+import CPageHeader from '@/components/molecules/CPageHeader.vue'
 import MaintenanceEntryModal from '@/features/maintenance/MaintenanceEntryModal.vue'
 import DeleteMaintenanceEntryModal from '@/features/maintenance/DeleteMaintenanceEntryModal.vue'
 import { maintenanceApi } from '@/api'
@@ -313,13 +313,10 @@ function openDeleteModal(entry: MaintenanceEntry) {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
-        <header class="view-header">
-          <CEyebrow>
-            {{ t('page.eyebrows.maintenance') }}
-          </CEyebrow>
-          <CHeading type="header">
-            {{ t('nav.maintenance') }}
-          </CHeading>
+        <CPageHeader
+          :eyebrow="t('page.eyebrows.maintenance')"
+          :title="t('nav.maintenance')"
+        >
           <CMetaLine>
             <CMetaItem variant="sub">
               {{ periodLabel }}
@@ -333,7 +330,7 @@ function openDeleteModal(entry: MaintenanceEntry) {
               {{ t('maintenance.header.totalCost', { amount: formatCurrency(totalCost) }) }}
             </CMetaItem>
           </CMetaLine>
-        </header>
+        </CPageHeader>
         <CAlert
           v-if="exportError"
           variant="error"

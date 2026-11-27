@@ -13,7 +13,6 @@ import CMetaItem from '@/components/molecules/CMetaItem.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
-import CHeading from '@/components/atoms/CHeading.vue'
 import CTabs from '@/components/atoms/CTabs.vue'
 import CIconCheckCircle from '@/components/atoms/CIconCheckCircle.svg'
 import CIconEdit from '@/components/atoms/CIconEdit.svg'
@@ -21,6 +20,7 @@ import CIconMessageSquare from '@/components/atoms/CIconMessageSquare.svg'
 import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import CIconRefresh from '@/components/atoms/CIconRefresh.svg'
 import CFormTextarea from '@/components/atoms/CFormTextarea.vue'
+import CPageHeader from '@/components/molecules/CPageHeader.vue'
 import CreateReportModal from './CreateReportModal.vue'
 import UpdateReportStatusModal from './UpdateReportStatusModal.vue'
 import ConvertReportToTaskModal from './ConvertReportToTaskModal.vue'
@@ -193,20 +193,17 @@ async function submitComment(r: Report) {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
-        <header class="view-header">
-          <CEyebrow>
-            {{ t('page.eyebrows.reports') }}
-          </CEyebrow>
-          <CHeading type="header">
-            {{ t('nav.reports') }}
-          </CHeading>
+        <CPageHeader
+          :eyebrow="t('page.eyebrows.reports')"
+          :title="t('nav.reports')"
+        >
           <p
             class="body-md"
             style="color:var(--color-on-surface-variant)"
           >
             {{ t('reports.activeCount', activeCount) }}
           </p>
-        </header>
+        </CPageHeader>
 
         <CTabs
           v-model="statusFilter"

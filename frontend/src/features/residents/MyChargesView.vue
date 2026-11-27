@@ -9,11 +9,10 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import CCard from '@/components/molecules/CCard.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
-import CHeading from '@/components/atoms/CHeading.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
-import CEyebrow from '@/components/atoms/CEyebrow.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
+import CPageHeader from '@/components/molecules/CPageHeader.vue'
 import { unitsApi } from '@/api'
 import { usePageLoader } from '@/composables/usePageLoader'
 import type { Unit } from '@/types/domain'
@@ -55,14 +54,10 @@ onMounted(reload)
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
-        <header class="view-header">
-          <CEyebrow>
-            {{ t('page.eyebrows.myCharges') }}
-          </CEyebrow>
-          <CHeading type="header">
-            {{ t('nav.myCharges') }}
-          </CHeading>
-        </header>
+        <CPageHeader
+          :eyebrow="t('page.eyebrows.myCharges')"
+          :title="t('nav.myCharges')"
+        />
 
         <!-- Multi-unit selection (co-owner with several units) -->
         <div

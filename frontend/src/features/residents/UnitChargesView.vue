@@ -13,7 +13,6 @@ import CMetaLine from '@/components/molecules/CMetaLine.vue'
 import CMetaItem from '@/components/molecules/CMetaItem.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
-import CEyebrow from '@/components/atoms/CEyebrow.vue'
 import CLegalCard from '@/components/molecules/CLegalCard.vue'
 import CLegalNotice from '@/components/molecules/CLegalNotice.vue'
 import CLegalDescription from '@/components/atoms/CLegalDescription.vue'
@@ -22,6 +21,7 @@ import type { Column } from '@/components/molecules/CDataTable.vue'
 import CIconChevronRight from '@/components/atoms/CIconChevronRight.svg'
 import CIconWarn from '@/components/atoms/CIconWarn.svg'
 import CFormSelect from '@/components/atoms/CFormSelect.vue'
+import CPageHeader from '@/components/molecules/CPageHeader.vue'
 import PreEtatDateModal from '@/features/registers/PreEtatDateModal.vue'
 import { unitsApi } from '@/api'
 import { usePageLoader } from '@/composables/usePageLoader'
@@ -177,13 +177,10 @@ const showPreEtatDateModal = ref(false)
       />
       <CPageLoader v-else-if="loading" />
       <template v-else-if="data">
-        <header class="view-header">
-          <CEyebrow>
-            {{ t('page.eyebrows.unitCharges') }}
-          </CEyebrow>
-          <CHeading type="header">
-            {{ t('units.charges.title') }}
-          </CHeading>
+        <CPageHeader
+          :eyebrow="t('page.eyebrows.unitCharges')"
+          :title="t('units.charges.title')"
+        >
           <CMetaLine>
             <CMetaItem variant="sub">
               {{ t('common.lot') }} {{ data.unit.unit_number }} 
@@ -193,7 +190,7 @@ const showPreEtatDateModal = ref(false)
               {{ t(`units.types.${data.unit.unit_type}`) }}
             </CMetaItem>
           </CMetaLine>
-        </header>
+        </CPageHeader>
 
         <div
           v-if="canViewUsers"

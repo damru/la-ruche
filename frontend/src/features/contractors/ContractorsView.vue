@@ -15,7 +15,6 @@ import CEmptyState from '@/components/atoms/CEmptyState.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
-import CHeading from '@/components/atoms/CHeading.vue'
 import CIconBolt from '@/components/atoms/CIconBolt.svg'
 import CIconDroplet from '@/components/atoms/CIconDroplet.svg'
 import CIconEdit from '@/components/atoms/CIconEdit.svg'
@@ -31,6 +30,7 @@ import CIconUsers from '@/components/atoms/CIconUsers.svg'
 import CIconWrench from '@/components/atoms/CIconWrench.svg'
 import CIconX from '@/components/atoms/CIconX.svg'
 import CIconChevronRight from '@/components/atoms/CIconChevronRight.svg'
+import CPageHeader from '@/components/molecules/CPageHeader.vue'
 import ContractorFormModal from '@/features/contractors/ContractorFormModal.vue'
 import DeleteContractorModal from '@/features/contractors/DeleteContractorModal.vue'
 import { contractorsApi } from '@/api'
@@ -196,15 +196,11 @@ function openDeleteModal(c: Contractor) {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
-        <header class="view-header">
-          <CEyebrow>{{ t('page.eyebrows.contractors') }}</CEyebrow>
-          <CHeading type="header">
-            {{ t('contractors.title') }}
-          </CHeading>
-          <CMetaItem variant="sub">
-            {{ t('contractors.summary', { count: allContractors.length }) }}
-          </CMetaItem>
-        </header>
+        <CPageHeader
+          :eyebrow="t('page.eyebrows.contractors')"
+          :title="t('contractors.title')"
+          :meta="t('contractors.summary', { count: allContractors.length })"
+        />
 
         <!-- Toolbar: search + view mode toggle -->
         <div class="list-toolbar">

@@ -17,7 +17,6 @@ import CLinkedDocumentsModal from '@/components/organisms/CLinkedDocumentsModal.
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
-import CHeading from '@/components/atoms/CHeading.vue'
 import CTabs from '@/components/atoms/CTabs.vue'
 import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import CIconSearch from '@/components/atoms/CIconSearch.svg'
@@ -29,6 +28,7 @@ import CIconCopy from '@/components/atoms/CIconCopy.svg'
 import CIconEdit from '@/components/atoms/CIconEdit.svg'
 import CIconRefresh from '@/components/atoms/CIconRefresh.svg'
 import CIconCheckCircle from '@/components/atoms/CIconCheckCircle.svg'
+import CPageHeader from '@/components/molecules/CPageHeader.vue'
 import SaveTaskModal from './SaveTaskModal.vue'
 import CloseTaskModal from './CloseTaskModal.vue'
 import DeleteTaskModal from './DeleteTaskModal.vue'
@@ -462,17 +462,11 @@ async function downloadTaskDocument(documentId: string) {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
-        <header class="view-header">
-          <CEyebrow>
-            {{ t('page.eyebrows.tasks') }}
-          </CEyebrow>
-          <CHeading type="header">
-            {{ t('nav.tasks') }}
-          </CHeading>
-          <CMetaItem variant="sub">
-            {{ t('tasks.header.activeSummary', { count: activeCount }) }}
-          </CMetaItem>
-        </header>
+        <CPageHeader
+          :eyebrow="t('page.eyebrows.tasks')"
+          :title="t('nav.tasks')"
+          :meta="t('tasks.header.activeSummary', { count: activeCount })"
+        />
 
         <CAlert
           v-if="pageError"

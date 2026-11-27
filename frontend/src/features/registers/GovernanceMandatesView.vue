@@ -5,7 +5,6 @@ import { usePageLoader } from '@/composables/usePageLoader'
 import { useFormatters } from '@/composables/useFormatters'
 import { usePermissions } from '@/composables/usePermissions'
 import CTopbar from '@/components/organisms/CTopbar.vue'
-import CHeading from '@/components/atoms/CHeading.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
@@ -14,6 +13,7 @@ import CIconEdit from '@/components/atoms/CIconEdit.svg'
 import CIconTrash from '@/components/atoms/CIconTrash.svg'
 import GovernanceMandateFormModal from '@/features/registers/GovernanceMandateFormModal.vue'
 import CDeleteConfirmModal from '@/components/organisms/CDeleteConfirmModal.vue'
+import CPageHeader from '@/components/molecules/CPageHeader.vue'
 import { governanceApi } from '@/api'
 import { useBuildingStore } from '@/stores/building'
 import type { GovernanceMandate } from '@/types/domain'
@@ -110,15 +110,11 @@ function openDelete(m: GovernanceMandate) {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
-        <header class="view-header">
-          <CEyebrow>{{ t('registers.eyebrow') }}</CEyebrow>
-          <CHeading type="header">
-            {{ t('registers.governance.title') }}
-          </CHeading>
-          <CMetaItem variant="sub">
-            {{ t('registers.governance.summary', { count: mandates.length, active: activeCount }) }}
-          </CMetaItem>
-        </header>
+        <CPageHeader
+          :eyebrow="t('registers.eyebrow')"
+          :title="t('registers.governance.title')"
+          :meta="t('registers.governance.summary', { count: mandates.length, active: activeCount })"
+        />
 
         <CEmptyState
           v-if="mandates.length === 0"

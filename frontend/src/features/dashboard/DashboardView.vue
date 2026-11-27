@@ -15,6 +15,7 @@ import CTopbar from '@/components/organisms/CTopbar.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CIconPlus from '@/components/atoms/CIconPlus.svg'
+import CPageHeader from '@/components/molecules/CPageHeader.vue'
 import DashboardAgendaCard from './DashboardAgendaCard.vue'
 import {
   buildingApi, budgetApi, calendarApi, consultationsApi, contractsApi,
@@ -242,13 +243,10 @@ const todayStr = computed(() =>
       <template v-else>
         <!-- Hero -->
         <div class="dashboard-hero">
-          <header class="view-header">
-            <CEyebrow>
-              {{ t('page.eyebrows.dashboard') }}
-            </CEyebrow>
-            <CHeading type="header">
-              {{ stats?.name }}
-            </CHeading>
+          <CPageHeader
+            :eyebrow="t('page.eyebrows.dashboard')"
+            :title="stats?.name"
+          >
             <CMetaLine>
               <CMetaItem variant="sub">
                 {{ t('residents.header.unitsCount', stats?.nb_lots ?? 0) }}
@@ -258,7 +256,7 @@ const todayStr = computed(() =>
                 {{ t('budget.fiscalYear', { year: new Date().getFullYear() }) }}
               </CMetaItem>
             </CMetaLine>
-          </header>
+          </CPageHeader>
           <div class="hero-alerts">
             <div
               v-if="canViewAccounting && overdueLevies.length"

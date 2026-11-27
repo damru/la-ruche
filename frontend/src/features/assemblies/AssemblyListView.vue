@@ -20,6 +20,7 @@ import CTopbar from '@/components/organisms/CTopbar.vue'
 import CTabs, { type Tab } from '@/components/atoms/CTabs.vue'
 import CHeading from '@/components/atoms/CHeading.vue'
 import CIconPlus from '@/components/atoms/CIconPlus.svg'
+import CPageHeader from '@/components/molecules/CPageHeader.vue'
 import CreateMeetingModal from './CreateMeetingModal.vue'
 
 const router = useRouter()
@@ -132,13 +133,10 @@ async function onMeetingCreated(meetingId: string) {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
-        <header class="view-header">
-          <CEyebrow>
-            {{ t('page.eyebrows.assemblies') }}
-          </CEyebrow>
-          <CHeading type="header">
-            {{ t('nav.meetings') }}
-          </CHeading>
+        <CPageHeader
+          :eyebrow="t('page.eyebrows.assemblies')"
+          :title="t('nav.meetings')"
+        >
           <CMetaLine>
             <CMetaItem variant="sub">
               {{ buildingName }}
@@ -148,7 +146,7 @@ async function onMeetingCreated(meetingId: string) {
               {{ t('meetings.count', allMeetings.length) }}
             </CMetaItem>
           </CMetaLine>
-        </header>
+        </CPageHeader>
 
         <CTabs
           v-model="filter"

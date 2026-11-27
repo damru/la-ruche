@@ -15,7 +15,6 @@ import CTabs, { type Tab } from '@/components/atoms/CTabs.vue'
 import CHeading from '@/components/atoms/CHeading.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CBadge from '@/components/atoms/CBadge.vue'
-import CEyebrow from '@/components/atoms/CEyebrow.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CKpiCard from '@/components/molecules/CKpiCard.vue'
 import CMetaItem from '@/components/molecules/CMetaItem.vue'
@@ -48,6 +47,7 @@ import BreakdownModal from './BreakdownModal.vue'
 import type { Budget, BudgetLine, LevyCall, WorksFund, AllocationKey, LevyStatus, BuildingStats, AccountingCode } from '@/types/domain'
 import { BUDGET_STATUS_APPROVED, BUDGET_STATUS_CLOSED, BUDGET_STATUS_DRAFT, LEVY_STATUS_ISSUED, LEVY_STATUS_OVERDUE, LEVY_STATUS_PAID } from '@/utils/constants'
 import type { Column } from '@/components/molecules/CDataTable.vue'
+import CPageHeader from '@/components/molecules/CPageHeader.vue'
 
 interface ConsolidatedLevyRow {
   id: string
@@ -659,12 +659,10 @@ function formatSharePercentage(value: number): string {
       <template
         v-else-if="budgets.length === 0"
       >
-        <div class="view-header">
-          <CEyebrow>{{ t('page.eyebrows.budget') }}</CEyebrow>
-          <CHeading type="header">
-            {{ t('nav.budget') }}
-          </CHeading>
-        </div>
+        <CPageHeader
+          :eyebrow="t('page.eyebrows.budget')"
+          :title="t('nav.budget')"
+        />
         <CEmptyState
           :title="t('budget.noExercice')"
           :description="t('budget.noExerciceHint')"
@@ -683,8 +681,10 @@ function formatSharePercentage(value: number): string {
       </template>
 
       <template v-else>
-        <div class="view-header">
-          <CEyebrow>
+        <CPageHeader
+          :title="selectedBudget ? t('budget.fiscalYear', { year: selectedBudget.fiscal_year }) : t('nav.budget')"
+        >
+          <template #eyebrow>
             <CBadge
               v-if="canEditSelectedBudget"
               :variant="worksFundRateCompliant && worksFundTargetMet && !hasUnbalancedAllocationKeys ? 'valid' : 'pending'"
@@ -696,10 +696,7 @@ function formatSharePercentage(value: number): string {
                 : t('common.actionRequired') }}
             </CBadge>
             {{ t('page.eyebrows.budget') }}
-          </CEyebrow>
-          <CHeading type="header">
-            {{ selectedBudget ? t('budget.fiscalYear', { year: selectedBudget.fiscal_year }) : t('nav.budget') }}
-          </CHeading>
+          </template>
           <CMetaLine
             v-if="selectedBudget"
           >
@@ -711,7 +708,7 @@ function formatSharePercentage(value: number): string {
               {{ selectedBudget.status === BUDGET_STATUS_APPROVED ? t('budget.statuses.approvedAG') : t(`budget.statuses.${selectedBudget.status}`) }}
             </CMetaItem>
           </CMetaLine>
-        </div>
+        </CPageHeader>
 
         <div class="flex items-center gap-2">
           <CTabs

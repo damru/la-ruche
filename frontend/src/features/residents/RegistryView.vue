@@ -6,9 +6,9 @@ import CCard from '@/components/molecules/CCard.vue'
 import CLegalNotice from '@/components/molecules/CLegalNotice.vue'
 import CLegalCard from '@/components/molecules/CLegalCard.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
-import CHeading from '@/components/atoms/CHeading.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
+import CPageHeader from '@/components/molecules/CPageHeader.vue'
 import { buildingApi } from '@/api'
 import { usePageLoader } from '@/composables/usePageLoader'
 import type { RegistryResponse, RegistryKey } from '@/types/domain'
@@ -109,19 +109,16 @@ const registryColumns = computed(() => {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else-if="data">
-        <header class="view-header">
-          <CEyebrow>
-            {{ t('page.eyebrows.registry') }}
-          </CEyebrow>
-          <CHeading type="header">
-            {{ t('registry.title') }}
-          </CHeading>
+        <CPageHeader
+          :eyebrow="t('page.eyebrows.registry')"
+          :title="t('registry.title')"
+        >
           <CMetaLine>
             <CMetaItem variant="sub">
               {{ data.building.address_line1 }}, {{ data.building.postal_code }} {{ data.building.city }}
             </CMetaItem>
           </CMetaLine>
-        </header>
+        </CPageHeader>
         
         <div class="grid gap-4 xs:grid-cols-3">
           <CKpiCard

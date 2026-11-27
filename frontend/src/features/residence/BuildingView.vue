@@ -12,6 +12,7 @@ import CTopbar from '@/components/organisms/CTopbar.vue'
 import CHeading from '@/components/atoms/CHeading.vue'
 import CIconBook from '@/components/atoms/CIconBook.svg'
 import CIconDownload from '@/components/atoms/CIconDownload.svg'
+import CPageHeader from '@/components/molecules/CPageHeader.vue'
 import { buildingApi } from '@/api'
 import { useBuildingStore } from '@/stores/building'
 import { usePageLoader } from '@/composables/usePageLoader'
@@ -71,20 +72,17 @@ onMounted(reload)
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
-        <header class="view-header">
-          <CEyebrow>
-            {{ t('page.eyebrows.building') }}
-          </CEyebrow>
-          <CHeading type="header">
-            {{ t('common.informations') }}
-          </CHeading>
+        <CPageHeader
+          :eyebrow="t('page.eyebrows.building')"
+          :title="t('common.informations')"
+        >
           <p
             class="body-md"
             style="color:var(--color-on-surface-variant)"
           >
             {{ t('settings.building.subtitle') }}
           </p>
-        </header>
+        </CPageHeader>
 
         <CCard>
           <CHeading

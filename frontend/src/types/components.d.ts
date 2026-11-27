@@ -124,6 +124,7 @@ declare module 'vue' {
     CMockBanner: typeof import('./../components/atoms/CMockBanner.vue')['default']
     CModal: typeof import('./../components/molecules/CModal.vue')['default']
     CPageError: typeof import('./../components/organisms/CPageError.vue')['default']
+    CPageHeader: typeof import('./../components/molecules/CPageHeader.vue')['default']
     CPageLoader: typeof import('./../components/molecules/CPageLoader.vue')['default']
     CProgressBar: typeof import('./../components/atoms/CProgressBar.vue')['default']
     CReminderCard: typeof import('./../components/organisms/CReminderCard.vue')['default']

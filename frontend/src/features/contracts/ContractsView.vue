@@ -19,7 +19,6 @@ import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CReminderCard from '@/components/organisms/CReminderCard.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
-import CHeading from '@/components/atoms/CHeading.vue'
 import CIconFile from '@/components/atoms/CIconFile.svg'
 import CIconLeaf from '@/components/atoms/CIconLeaf.svg'
 import CIconLayers from '@/components/atoms/CIconLayers.svg'
@@ -40,6 +39,7 @@ import ContractFormModal from '@/features/contracts/ContractFormModal.vue'
 import AmendContractModal from '@/features/contracts/AmendContractModal.vue'
 import AmendmentChainModal from '@/features/contracts/AmendmentChainModal.vue'
 import CTabs, { type Tab } from '@/components/atoms/CTabs.vue'
+import CPageHeader from '@/components/molecules/CPageHeader.vue'
 import { toErrorMessage, usePageLoader } from '@/composables/usePageLoader'
 import TerminateContractModal from '@/features/contracts/TerminateContractModal.vue'
 import { effectiveContractStatus } from '@/utils/contracts'
@@ -419,17 +419,11 @@ async function activateContract(contract: VendorContract) {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
-        <header class="view-header">
-          <CEyebrow>
-            {{ t('page.eyebrows.contracts') }}
-          </CEyebrow>
-          <CHeading type="header">
-            {{ t('contracts.title') }}
-          </CHeading>
-          <CMetaItem variant="sub">
-            {{ t('contracts.count', { count: allContracts.length }) }}
-          </CMetaItem>
-        </header>
+        <CPageHeader
+          :eyebrow="t('page.eyebrows.contracts')"
+          :title="t('contracts.title')"
+          :meta="t('contracts.count', { count: allContracts.length })"
+        />
 
         <CReminderCard
           v-if="contractReminderRows.length > 0"

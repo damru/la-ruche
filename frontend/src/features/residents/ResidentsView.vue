@@ -7,7 +7,6 @@ import CBtn from '@/components/atoms/CBtn.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
-import CHeading from '@/components/atoms/CHeading.vue'
 import CTabs from '@/components/atoms/CTabs.vue'
 import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import CIconCurrency from '@/components/atoms/CIconCurrency.svg'
@@ -18,6 +17,7 @@ import CIconTrash from '@/components/atoms/CIconTrash.svg'
 import CIconRefresh from '@/components/atoms/CIconRefresh.svg'
 import CIconArrowRight from '@/components/atoms/CIconArrowRight.svg'
 import CIconShield from '@/components/atoms/CIconShield.svg'
+import CPageHeader from '@/components/molecules/CPageHeader.vue'
 import InviteUserModal from './InviteUserModal.vue'
 import CreateResidentModal from './CreateResidentModal.vue'
 import SendInviteModal from './SendInviteModal.vue'
@@ -220,7 +220,8 @@ const unitToTransfer = ref<Unit | null>(null)
 function openTransferModal(unit: Unit) {
   unitToTransfer.value = unit
   showTransferModal.value = true
-}</script>
+}
+</script>
 
 <template>
   <div class="view-page">
@@ -262,13 +263,10 @@ function openTransferModal(unit: Unit) {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
-        <header class="view-header">
-          <CEyebrow>
-            {{ t('page.eyebrows.residents') }}
-          </CEyebrow>
-          <CHeading type="header">
-            {{ t('residents.title') }}
-          </CHeading>
+        <CPageHeader
+          :eyebrow="t('page.eyebrows.residents')"
+          :title="t('residents.title')"
+        >
           <CMetaLine>
             <CMetaItem variant="sub">
               {{ t('residents.header.unitsCount', { count: allUnits.length }) }}
@@ -278,7 +276,7 @@ function openTransferModal(unit: Unit) {
               {{ t('residents.header.usersCount', { count: allUsers.length }) }}
             </CMetaItem>
           </CMetaLine>
-        </header>
+        </CPageHeader>
 
         <CTabs
           v-model="activeTab"
