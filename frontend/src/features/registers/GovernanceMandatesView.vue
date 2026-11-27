@@ -174,6 +174,7 @@ function openDelete(m: GovernanceMandate) {
               <div class="action-btns">
                 <CBtn
                   variant="icon"
+                  size="sm"
                   :icon="CIconEdit"
                   :title="t('common.edit')"
                   :aria-label="t('common.edit')"
@@ -181,6 +182,7 @@ function openDelete(m: GovernanceMandate) {
                 />
                 <CBtn
                   variant="icon"
+                  size="sm"
                   :icon="CIconTrash"
                   class="tone--err"
                   :title="t('common.delete')"

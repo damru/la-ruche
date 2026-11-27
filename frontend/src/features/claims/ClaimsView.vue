@@ -457,6 +457,8 @@ function handleDocumentCountChanged(claimId: string, delta: number) {
                   <CBadge
                     :variant="deadlineVariant(claim)"
                     :dot="deadlineVariant(claim) !== 'default'"
+                    class="max-w-full truncate"
+                    :title="deadlineLabel(claim)"
                   >
                     {{ deadlineLabel(claim) }}
                   </CBadge>

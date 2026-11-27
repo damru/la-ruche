@@ -17,7 +17,7 @@ const tagMap: Record<HeadingType, string> = {
 }
 
 const sizeClass: Record<HeadingType, string> = {
-  header: 'text-2xl',
+  header: 'text-2xl max-sm:text-xl',
   section: 'text-xl',
   card: 'text-lg',
 }

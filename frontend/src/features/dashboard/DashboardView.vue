@@ -758,6 +758,7 @@ const todayStr = computed(() =>
 /* ── Hero ─────────────────────────────────────────────────────────── */
 .dashboard-hero { display: grid; grid-template-columns: 1fr auto; gap: var(--space-6); align-items: end; }
 @media (max-width: 900px) { .dashboard-hero { grid-template-columns: 1fr; } }
+@media (max-width: 640px) { .dashboard-hero { gap: var(--space-4); } .hero-alert { min-width: 0; } }
 
 .hero-alerts { display: flex; flex-direction: column; gap: var(--space-2); align-items: flex-end; }
 @media (max-width: 900px) { .hero-alerts { align-items: stretch; } .hero-alert { min-width: 0; } }
