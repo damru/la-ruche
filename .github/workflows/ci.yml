@@ -711,8 +711,10 @@ jobs:
           done
           failed=$(gh api "repos/$REPO/actions/runs/$RUN/jobs" \
             --jq '[.jobs[] | select(.name | startswith("Captures") | not) | select(.conclusion == "failure" or .conclusion == "cancelled")] | length')
-          if [ "$wait_ok" != "true" ] || [ "$failed" != "0" ]; then
-            echo "wait_ok=$wait_ok failed=$failed — captures not committed"
+          docker_not_ok=$(gh api "repos/$REPO/actions/runs/$RUN/jobs" \
+            --jq '[.jobs[] | select(.name | startswith("Docker")) | select(.conclusion != "success" and .conclusion != "skipped")] | length')
+          if [ "$wait_ok" != "true" ] || [ "$failed" != "0" ] || [ "$docker_not_ok" != "0" ]; then
+            echo "wait_ok=$wait_ok failed=$failed docker_not_ok=$docker_not_ok — captures not committed"
             exit 0
           fi
           git config user.name "github-actions[bot]"
