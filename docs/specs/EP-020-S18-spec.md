@@ -38,9 +38,9 @@ Conséquence : appliquer la règle = passer `shrink="sm"` sur les boutons de car
 |---|---|
 | Règle des actions — cartes et en-têtes | ✅ 41 boutons (`shrink="sm"`) sur `ContractsView`, `ContractDetailView`, `ClaimsView`, `TasksView`, `AssemblyDetailView`, `ConsultationsView`, `ContractorsView`, `ReportsView`, `ReportDetailView`, `MaintenanceView`, `DocumentsView`, `AllocationKeysView`, `EtatDateView`, `GovernanceMandatesView`, `JudicialProceedingsView`, `BuildingView`, `BudgetView`, `ResidentsView`, `ProfileView` |
 | Débordement des tableaux | ✅ `table-scroll` |
-| Héros trop hauts en mobile (`DashboardView`, `RegistryView`, `MyChargesView`, `UnitChargesView`) | ⏳ à traiter |
-| Pill « délai légal » en débordement (`ClaimsView`) | ⏳ à traiter — les chips d'en-tête de carte passent en `flex-wrap` via `CCardHeader`, le badge lui-même garde `nowrap` |
-| Lignes de tableau gouvernance trop hautes | ⏳ à traiter |
+| Héros trop hauts en mobile | ✅ titre de page à 20 px sous 640 px (`CHeading`), héro dashboard `gap` `--space-4`, alerte sans `min-width` |
+| Pill « délai légal » en débordement (`ClaimsView`) | ✅ `max-w-full truncate` + `title` portant la phrase complète |
+| Lignes de tableau gouvernance trop hautes | ✅ boutons d'action en `size="sm"` (36 px au lieu de 44 px) |
 | Boucle de contrôle 375 px sur toutes les captures | ⏳ à traiter |
 
 ## 4. Critères d'acceptation
