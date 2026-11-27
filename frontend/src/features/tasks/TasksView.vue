@@ -10,6 +10,7 @@ import CBtn from '@/components/atoms/CBtn.vue'
 import CFormInput from '@/components/atoms/CFormInput.vue'
 import CFormSelect from '@/components/atoms/CFormSelect.vue'
 import CCard from '@/components/molecules/CCard.vue'
+import CCardHeader from '@/components/molecules/CCardHeader.vue'
 import CCardActions from '@/components/molecules/CCardActions.vue'
 import CMetaLine from '@/components/molecules/CMetaLine.vue'
 import CMetaItem from '@/components/molecules/CMetaItem.vue'
@@ -548,11 +549,11 @@ async function downloadTaskDocument(documentId: string) {
               @keydown.enter.prevent="openTaskDetail(task.id)"
               @keydown.space.prevent="openTaskDetail(task.id)"
             >
-              <div class="flex items-center gap-3 min-w-0">
-                <h3 class="text-lg font-semibold text-on-surface m-0 leading-snug min-w-0">
+              <CCardHeader>
+                <h3 class="text-lg font-semibold text-on-surface m-0 leading-snug">
                   {{ task.title }}
                 </h3>
-                <CMetaLine class="flex-1 justify-end text-xs">
+                <template #chips>
                   <CBadge :variant="isTerminal(task.status) ? 'disabled' : taskPriorityVariant(task.priority)">
                     {{ t(`tasks.priorities.${task.priority}`) }}
                   </CBadge>
@@ -562,8 +563,8 @@ async function downloadTaskDocument(documentId: string) {
                   >
                     {{ t(`tasks.statuses.${task.status}`) }}
                   </CBadge>
-                </CMetaLine>
-              </div>
+                </template>
+              </CCardHeader>
   
               <div class="flex flex-col gap-3">
                 <p

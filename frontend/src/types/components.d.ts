@@ -19,6 +19,7 @@ declare module 'vue' {
     CBtn: typeof import('./../components/atoms/CBtn.vue')['default']
     CCard: typeof import('./../components/molecules/CCard.vue')['default']
     CCardActions: typeof import('./../components/molecules/CCardActions.vue')['default']
+    CCardHeader: typeof import('./../components/molecules/CCardHeader.vue')['default']
     CCardNote: typeof import('./../components/molecules/CCardNote.vue')['default']
     CConfirmDialog: typeof import('./../components/organisms/CConfirmDialog.vue')['default']
     CCopyField: typeof import('./../components/molecules/CCopyField.vue')['default']

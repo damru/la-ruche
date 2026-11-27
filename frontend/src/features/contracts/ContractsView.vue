@@ -9,6 +9,7 @@ import CIconBolt from '@/components/atoms/CIconBolt.svg'
 import CIconDroplet from '@/components/atoms/CIconDroplet.svg'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CCard from '@/components/molecules/CCard.vue'
+import CCardHeader from '@/components/molecules/CCardHeader.vue'
 import CCardActions from '@/components/molecules/CCardActions.vue'
 import CDataTable, { type Column } from '@/components/molecules/CDataTable.vue'
 import CFormMultiSelect from '@/components/atoms/CFormMultiSelect.vue'
@@ -587,17 +588,19 @@ async function activateContract(contract: VendorContract) {
             :class="[{ 'outline outline-1 outline-outline-variant': effectiveStatus(contract) !== CONTRACT_STATUS_ACTIVE }]"
             @click="openContractDetail(contract)"
           >
-            <div class="flex items-center gap-3 min-w-0">
-              <CIconTile :class="contractIconTone(contract)">
-                <component
-                  :is="contractTypeIcon(contract.contract_type)"
-                  aria-hidden="true"
-                />
-              </CIconTile>
-              <h3 class="text-lg font-semibold text-on-surface m-0 leading-snug min-w-0">
+            <CCardHeader with-icon>
+              <template #icon>
+                <CIconTile :class="contractIconTone(contract)">
+                  <component
+                    :is="contractTypeIcon(contract.contract_type)"
+                    aria-hidden="true"
+                  />
+                </CIconTile>
+              </template>
+              <h3 class="text-lg font-semibold text-on-surface m-0 leading-snug">
                 {{ contract.vendor_name }}
               </h3>
-              <div class="flex flex-wrap gap-x-2 gap-y-1">
+              <template #chips>
                 <CBadge variant="default">
                   {{ t(`contracts.types.${contract.contract_type}`) }}
                 </CBadge>
@@ -607,8 +610,8 @@ async function activateContract(contract: VendorContract) {
                 >
                   {{ t(`contracts.statuses.${effectiveStatus(contract)}`) }}
                 </CBadge>
-              </div>
-            </div>
+              </template>
+            </CCardHeader>
             <div class="flex flex-col gap-3">
               <p class="body-xs">
                 {{ contract.subject }}

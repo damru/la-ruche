@@ -14,6 +14,7 @@ import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CCardActions from '@/components/molecules/CCardActions.vue'
 import CCardNote from '@/components/molecules/CCardNote.vue'
+import CCardHeader from '@/components/molecules/CCardHeader.vue'
 import CReminderCard from '@/components/organisms/CReminderCard.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import CTabs, { type Tab } from '@/components/atoms/CTabs.vue'
@@ -430,16 +431,19 @@ function handleDocumentCountChanged(claimId: string, delta: number) {
               gap="sm"
               :class="[{ 'outline outline-1 outline-outline-variant': claim.status === CLAIM_STATUS_CLOSED }]"
             >
-              <div class="flex items-center gap-3 min-w-0">
-                <CIconTile
-                  :class="typeTone(claim.claim_type)"
-                >
-                  <component
-                    :is="typeIcon(claim.claim_type)"
-                    aria-hidden="true"
-                  />
-                </CIconTile>
-                <CMetaLine class="text-xs justify-end justify-self-end">
+              <CCardHeader with-icon>
+                <template #icon>
+                  <CIconTile :class="typeTone(claim.claim_type)">
+                    <component
+                      :is="typeIcon(claim.claim_type)"
+                      aria-hidden="true"
+                    />
+                  </CIconTile>
+                </template>
+                <h3 class="text-lg font-semibold text-on-surface m-0 leading-snug">
+                  {{ claim.title }}
+                </h3>
+                <template #chips>
                   <CBadge
                     :variant="statusVariant(claim.status)"
                     dot
@@ -455,15 +459,10 @@ function handleDocumentCountChanged(claimId: string, delta: number) {
                   >
                     {{ deadlineLabel(claim) }}
                   </CBadge>
-                </CMetaLine>
-              </div>
+                </template>
+              </CCardHeader>
               <div class="flex flex-col gap-3">
-                <CFlexGroup
-                  direction="row"
-                >
-                  <h3 class="text-lg font-semibold text-on-surface m-0 leading-snug min-w-0">
-                    {{ claim.title }}
-                  </h3>
+                <CFlexGroup direction="row">
                   <CMetaItem
                     variant="sub"
                   >
