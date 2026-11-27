@@ -33,6 +33,7 @@ const { t } = useI18n()
         v-if="crumb.to"
         :to="crumb.to"
         :class="['truncate min-w-0', index === crumbs.length - 1 ? 'shrink-[1]' : 'shrink-[8]']"
+        :aria-current="index === crumbs.length - 1 ? 'page' : undefined"
       >
         {{ crumb.label }}
       </RouterLink>

@@ -93,18 +93,10 @@ const countClass = (isActive: boolean) => ({
           >{{ tab.count }}</span>
         </button>
       </div>
-      <span
-        v-if="isFilter && fadeRight"
-        class="tabs__hint tabs__hint--right"
-        aria-hidden="true"
-      >
+      <span v-if="isFilter && fadeRight" class="tabs__hint tabs__hint--right" aria-hidden="true">
         <CIconChevronRight />
       </span>
-      <span
-        v-if="isFilter && fadeLeft"
-        class="tabs__hint tabs__hint--left"
-        aria-hidden="true"
-      >
+      <span v-if="isFilter && fadeLeft" class="tabs__hint tabs__hint--left" aria-hidden="true">
         <CIconChevronRight />
       </span>
     </div>

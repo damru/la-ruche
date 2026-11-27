@@ -52,7 +52,7 @@ const { formatDate, formatFileSize } = useFormatters()
           size="sm"
           :icon="CIconDownload"
           :title="t('common.download')"
-          :aria-label="`${t('common.download')} ${document.original_name}`"
+          :aria-label="t('common.downloadFile', { name: document.original_name })"
           @click="emit('download', document)"
         />
         <CBtn
@@ -61,7 +61,7 @@ const { formatDate, formatFileSize } = useFormatters()
           size="sm"
           :icon="CIconTrash"
           :title="removeTitle ?? t('common.remove')"
-          :aria-label="`${removeTitle ?? t('common.remove')} ${document.original_name}`"
+          :aria-label="t('common.removeFile', { name: document.original_name })"
           :loading="loadingDocId === document.id"
           @click="emit('remove', document)"
         />

@@ -14,6 +14,8 @@
     "automatic": "Automatique",
     "back": "Retour",
     "breadcrumb": "Fil d’Ariane",
+    "downloadFile": "Télécharger {name}",
+    "removeFile": "Retirer {name}",
     "cancel": "Annuler",
     "city": "Ville",
     "clear": "Effacer",

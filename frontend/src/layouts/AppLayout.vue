@@ -37,71 +37,71 @@ onUnmounted(() => {
 
     <div class="app-layout__row">
       <AppNav>
-        <!-- Icônes SVG par nom de route — passées en slots nommés -->
-        <template #icon-dashboard>
-          <CIconHome />
-        </template>
-        <template #icon-calendar>
-          <CIconCalendar />
-        </template>
-        <template #icon-assemblies>
-          <CIconAgora />
-        </template>
-        <template #icon-budget>
-          <CIconCurrency />
-        </template>
-        <template #icon-documents>
-          <CIconFolder />
-        </template>
-        <template #icon-tasks>
-          <CIconWrench />
-        </template>
-        <template #icon-contractors>
-          <CIconHardHat />
-        </template>
-        <template #icon-contracts>
-          <CIconContract />
-        </template>
-        <template #icon-claims>
-          <CIconWarn />
-        </template>
-        <template #icon-maintenance>
-          <CIconBook />
-        </template>
-        <template #icon-consultations>
-          <CIconMessageSquare />
-        </template>
-        <template #icon-reports>
-          <CIconInfo />
-        </template>
-        <template #icon-residents>
-          <CIconUserPlus />
-        </template>
-        <template #icon-registry>
-          <CIconRegistry />
-        </template>
-        <template #icon-judicial-proceedings>
-          <CIconScale />
-        </template>
-        <template #icon-governance>
-          <CIconShield />
-        </template>
-        <template #icon-etat-date>
-          <CIconEtatDate />
-        </template>
-        <template #icon-residence-building>
-          <CIconSettings />
-        </template>
-        <template #icon-residence-keys>
-          <CIconLayers />
-        </template>
-        <template #icon-residence-edd>
-          <CIconScale />
-        </template>
-        <template #icon-my-charges>
-          <CIconReceipt />
-        </template>
-      </AppNav>
+      <!-- Icônes SVG par nom de route — passées en slots nommés -->
+      <template #icon-dashboard>
+        <CIconHome />
+      </template>
+      <template #icon-calendar>
+        <CIconCalendar />
+      </template>
+      <template #icon-assemblies>
+        <CIconAgora />
+      </template>
+      <template #icon-budget>
+        <CIconCurrency />
+      </template>
+      <template #icon-documents>
+        <CIconFolder />
+      </template>
+      <template #icon-tasks>
+        <CIconWrench />
+      </template>
+      <template #icon-contractors>
+        <CIconHardHat />
+      </template>
+      <template #icon-contracts>
+        <CIconContract />
+      </template>
+      <template #icon-claims>
+        <CIconWarn />
+      </template>
+      <template #icon-maintenance>
+        <CIconBook />
+      </template>
+      <template #icon-consultations>
+        <CIconMessageSquare />
+      </template>
+      <template #icon-reports>
+        <CIconInfo />
+      </template>
+      <template #icon-residents>
+        <CIconUserPlus />
+      </template>
+      <template #icon-registry>
+        <CIconRegistry />
+      </template>
+      <template #icon-judicial-proceedings>
+        <CIconScale />
+      </template>
+      <template #icon-governance>
+        <CIconShield />
+      </template>
+      <template #icon-etat-date>
+        <CIconEtatDate />
+      </template>
+      <template #icon-residence-building>
+        <CIconSettings />
+      </template>
+      <template #icon-residence-keys>
+        <CIconLayers />
+      </template>
+      <template #icon-residence-edd>
+        <CIconScale />
+      </template>
+      <template #icon-my-charges>
+        <CIconReceipt />
+      </template>
+    </AppNav>
 
       <!-- Zone de contenu -->
       <main class="app-layout__main">

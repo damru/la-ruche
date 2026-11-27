@@ -557,7 +557,7 @@ border-color: var(--color-outline-light);
 | `CMetaItem` | `variant`, `icon` | Ligne icône + contenu — variantes `footer` / `sub` |
 | `CMetaLine` | — | Rangée horizontale de `CMetaItem` avec `CSeparator` |
 | `CModal` | `open`, `title`, `saving?`, `feedback?` | Dialogue Radix `Dialog` — émettre `@submit` pour soumission. `CFormFeedback` obligatoire dans `#footer` (DDR-006). |
-| `CPageHeader` | `eyebrow?`, `title?`, `meta?`, `icon?`, `frozenLabel?` | ✅ — En-tête de vue — slots `#eyebrow` (eyebrow avec badges), `#title` (titre composé), `#actions` (boutons à droite), défaut (description, méta libre) |
+| `CPageHeader` | `eyebrow?`, `title?`, `meta?` | ✅ — En-tête de vue — slots `#eyebrow` (eyebrow avec badges), `#title` (titre composé), `#actions` (boutons à droite), défaut (description, méta libre) |
 | `CPageLoader` | — | Indicateur de chargement |
 | `CSectionHeader` | — | ✅ En-tête de section — `flex items-start justify-between gap-3`. Slot default (zone titre : heading + meta). Slot `#actions` pour les boutons droite. Remplace `.section-head` / `.card-head`. |
 | `CSectionLink` | `to` | ✅ Lien « voir tout » d'en-tête de section — `RouterLink` + chevron. À utiliser dans le slot `#actions` de `CSectionHeader`. |
