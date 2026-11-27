@@ -431,13 +431,12 @@ jobs:
           retention-days: 7
 
   # ── Docker build + push ────────────────────────────────────────
-  docker:
-    name: Docker — build + push
-    needs: [changes, test-backend, test-frontend, build-backend]
-    # Docker image only feeds on backend or frontend changes; captures-only
-    # pushes never change the image.
+  docker-build:
+    name: Docker — build (validation)
+    needs: [changes, build-backend]
+    # Runs in parallel with the test jobs; the image only ships from
+    # docker-push once every test job is green.
     if: always() && !failure() && !cancelled() && (needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend_app == 'true' || needs.changes.outputs.ci_workflow == 'true') && needs.changes.outputs.captures_only != 'true'
-    # runs-on: ${{ github.actor == github.repository_owner && 'large' || 'ubuntu-latest' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -447,18 +446,6 @@ jobs:
         with:
           name: ${{ env.SQLX_ARTIFACT_NAME }}
           path: backend/.sqlx/
-
-      - name: Docker meta
-        id: meta
-        uses: docker/metadata-action@v6
-        with:
-          images: ${{ vars.DOCKERHUB_USERNAME }}/${{ vars.DOCKERHUB_PROJECT }}
-          tags: |
-            type=ref,event=branch
-            type=ref,event=branch,suffix=.{{date 'YYYYMMDDHHmmss'}}
-            type=schedule,pattern=nightly
-            type=schedule,pattern={{date 'YYYYMMDD'}}
-            type=sha
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
@@ -484,11 +471,62 @@ jobs:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push
+      - name: Build
         uses: docker/build-push-action@v7
         with:
           context: .
-          push: ${{ github.event_name != 'pull_request' }}
+          push: false
+          cache-from: |
+            type=registry,ref=${{ env.BUILD_CACHE_IMAGE }}
+            type=gha,scope=docker-${{ github.ref_name }}
+            type=gha,scope=docker-main
+            type=gha,scope=docker-develop
+          cache-to: ${{ steps.cache.outputs.to }}
+          build-args: |
+            CARGO_PROFILE=release
+            SQLX_OFFLINE=true
+
+  docker-push:
+    name: Docker — build + push
+    needs: [changes, docker-build, test-backend, test-frontend, e2e-frontend]
+    if: always() && !failure() && !cancelled() && github.event_name != 'pull_request' && needs.docker-build.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Download SQLx offline files
+        uses: actions/download-artifact@v8
+        with:
+          name: ${{ env.SQLX_ARTIFACT_NAME }}
+          path: backend/.sqlx/
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ vars.DOCKERHUB_USERNAME }}/${{ vars.DOCKERHUB_PROJECT }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=branch,suffix=.{{date 'YYYYMMDDHHmmss'}}
+            type=schedule,pattern=nightly
+            type=schedule,pattern={{date 'YYYYMMDD'}}
+            type=sha
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v4
+        with:
+          registry: docker.io
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Push from the build cache
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: |
@@ -496,7 +534,6 @@ jobs:
             type=gha,scope=docker-${{ github.ref_name }}
             type=gha,scope=docker-main
             type=gha,scope=docker-develop
-          cache-to: ${{ steps.cache.outputs.to }}
           build-args: |
             CARGO_PROFILE=release
             SQLX_OFFLINE=true
