@@ -2,11 +2,11 @@
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import CIconTrash from '@/components/atoms/CIconTrash.svg'
+import CDocumentList from '@/components/molecules/CDocumentList.vue'
 import { claimsApi, documentsApi } from '@/api'
 import { toErrorMessage } from '@/composables/usePageLoader'
 import { useFormFeedback } from '@/composables/useFormFeedback'
 import { useAutoClose } from '@/composables/useAutoClose'
-import { useFormatters } from '@/composables/useFormatters'
 import { extractFileExtension } from '@/utils/files'
 import type { Claim, ClaimType, Document, Unit } from '@/types/domain'
 import { CLAIM_TYPES, CLAIM_TYPE_NATURAL_DISASTER, DEFAULT_CLAIM_TYPE } from '@/utils/constants'
@@ -28,7 +28,6 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 const ui = useUiStore()
-const { formatDate, formatFileSize } = useFormatters()
 const feedback = useFormFeedback()
 const documentActionFeedback = useFormFeedback()
 const { schedule: scheduleClose, forceExpire: forceClose } = useAutoClose()
@@ -333,43 +332,14 @@ async function handleSubmit() {
           >
             {{ t('claims.noAttachedDocuments') }}
           </div>
-          <div
+          <CDocumentList
             v-else
-            class="claim-documents-list"
-          >
-            <div
-              v-for="document in editDocuments"
-              :key="document.id"
-              class="claim-documents-row"
-            >
-              <div class="claim-documents-meta">
-                <div class="claim-documents-name">
-                  <CIconFile class="icon-sm" />
-                  <span>{{ document.original_name }}</span>
-                </div>
-                <div class="claim-documents-details">
-                  <span>{{ formatFileSize(document.size_bytes) }}</span>
-                  <span>·</span>
-                  <span>{{ formatDate(document.created_at) }}</span>
-                </div>
-              </div>
-              <div class="claim-documents-actions">
-                <CBtn
-                  variant="ghost"
-                  size="sm"
-                  :title="t('common.download')"
-                  @click="downloadClaimDocument(document.id)"
-                />
-                <CBtn
-                  variant="danger"
-                  size="sm"
-                  :title="t('claims.detachDocument')"
-                  :loading="detachingDocumentId === document.id"
-                  @click="openDocumentActionModal(document)"
-                />
-              </div>
-            </div>
-          </div>
+            :documents="editDocuments"
+            :remove-title="t('claims.detachDocument')"
+            :loading-doc-id="detachingDocumentId"
+            @download="doc => downloadClaimDocument(doc.id)"
+            @remove="openDocumentActionModal"
+          />
         </div>
       </div>
     </CForm>
@@ -437,69 +407,4 @@ async function handleSubmit() {
   }
 }
 
-.claim-documents-section {
-  margin-top: var(--space-3);
-}
-
-.claim-documents-section__hint {
-  margin-bottom: var(--space-2);
-}
-
-.claim-documents-empty {
-  padding: var(--space-3);
-  border-radius: var(--radius-lg);
-  background: var(--color-surface-container-low);
-  color: var(--color-on-surface-variant);
-}
-
-.claim-documents-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.claim-documents-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-3);
-  border-radius: var(--radius-lg);
-  background: var(--color-surface-container-low);
-}
-
-.claim-documents-meta {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
-
-.claim-documents-name {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  min-width: 0;
-  font-weight: var(--fw-medium);
-}
-
-.claim-documents-name span {
-  overflow: clip;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.claim-documents-details {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  color: var(--color-on-surface-variant);
-  font-size: var(--text-xs);
-}
-
-.claim-documents-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-}
 </style>

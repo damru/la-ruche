@@ -541,7 +541,7 @@ border-color: var(--color-outline-light);
 | `CCardNote` | `note` | Encart d'information secondaire dans une `CCard` |
 | `CCopyField` | `value`, `label?`, `hint?`, `copyTitle?`, `copiedTitle?` | ✅ Champ lecture seule + bouton copier (presse-papiers). Gère son propre état « copié ». Remplace les blocs `invite-link-box`. |
 | `CDataTable` | `columns`, `rows` | Tableau de données |
-| `CDocumentList` | `documents`, `readonly?` | 🔲 planifié (EP-020-S16) — Liste documents avec download/retrait — `emit('remove', doc)` au parent |
+| `CDocumentList` | `documents`, `readonly?`, `loadingDocId?`, `removeTitle?` | ✅ — Liste documents avec téléchargement/retrait — `emit('download', doc)` et `emit('remove', doc)` au parent, qui garde l'appel API et la modale de retrait |
 | `CEmptyState` | `icon`, `title`, `description?`, `size?` (`page` \| `compact`) | ✅ État vide — slot `#actions`. `page` = centré + `py-8`, `compact` = plus petit pour les sections. |
 | `CFileDropzone` | `files` (v-model:files `File[]`), `hint?`, `removeLabel?`, `multiple?`, `accept?` | ✅ Zone de dépôt + sélection de fichiers locaux avant envoi. Prévisualisation par puces (nom + retrait) par défaut ; slot `#preview="{ files, remove }"` pour un rendu custom (ex. vignettes images). À distinguer de `CFormDropzone` (upload direct serveur). |
 | `CForm` | `status?`, `message?` | Formulaire structuré (`<form>`) — flex-col gap-4 + slot `#actions` → `CFormActions`. `@submit` émis sur soumission. Remplace `<form>` brut dans les vues. |
