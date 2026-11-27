@@ -233,6 +233,18 @@ function deadlineLabel(claim: Claim): string {
   return t('claims.deadline.reference', { date: formatDate(claim.legal_deadline_at) })
 }
 
+function deadlineShortLabel(claim: Claim): string {
+  if (claim.transmitted_at) {
+    return t(claim.is_transmitted_late ? 'claims.deadline.shortLate' : 'claims.deadline.shortOnTime')
+  }
+  if (claim.is_deadline_missed) return t('claims.deadline.shortMissed')
+  if (claim.days_remaining === 0) return t('claims.deadline.shortToday')
+  if (typeof claim.days_remaining === 'number') {
+    return t('claims.deadline.shortRemaining', { days: claim.days_remaining })
+  }
+  return t('claims.deadline.reference', { date: formatDate(claim.legal_deadline_at) })
+}
+
 function reimbursementLabel(claim: Claim): string {
   if (claim.reimbursement_amount != null && claim.reimbursement_date) {
     return t('claims.reimbursement.dateAndAmount', {
@@ -457,10 +469,10 @@ function handleDocumentCountChanged(claimId: string, delta: number) {
                   <CBadge
                     :variant="deadlineVariant(claim)"
                     :dot="deadlineVariant(claim) !== 'default'"
-                    class="max-w-full truncate"
+                    truncate
                     :title="deadlineLabel(claim)"
                   >
-                    {{ deadlineLabel(claim) }}
+                    {{ deadlineShortLabel(claim) }}
                   </CBadge>
                 </template>
               </CCardHeader>

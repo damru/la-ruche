@@ -7,7 +7,7 @@ withDefaults(defineProps<{
 </script>
 
 <template>
-  <div class="flex items-center gap-3 min-w-0">
+  <div class="flex flex-wrap items-center gap-3 min-w-0">
     <div
       v-if="withIcon"
       class="shrink-0"
@@ -19,7 +19,7 @@ withDefaults(defineProps<{
     </div>
     <div
       v-if="$slots.chips"
-      class="flex flex-wrap justify-end gap-x-2 gap-y-1"
+      class="flex flex-wrap justify-end gap-x-2 gap-y-1 min-w-0 ml-auto"
     >
       <slot name="chips"></slot>
     </div>
