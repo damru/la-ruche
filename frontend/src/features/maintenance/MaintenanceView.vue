@@ -296,6 +296,7 @@ function openDeleteModal(entry: MaintenanceEntry) {
           :loading="exporting"
           :title="t('maintenance.exportLogbook')"
           :aria-label="t('maintenance.exportLogbook')"
+          shrink="sm"
           @click="exportLogbook"
         />
         <CBtn
@@ -303,6 +304,7 @@ function openDeleteModal(entry: MaintenanceEntry) {
           size="sm"
           :icon="CIconPlus"
           :title="t('maintenance.addEntry')"
+          shrink="sm"
           @click="openCreateModal"
         />
       </template>

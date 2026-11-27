@@ -179,6 +179,7 @@ async function activateContract() {
           size="sm"
           :icon="CIconArrowLeft"
           :title="t('common.back')"
+          shrink="sm"
           @click="router.push({ name: 'contracts' })"
         />
       </template>
@@ -249,6 +250,7 @@ async function activateContract() {
                 size="sm"
                 :icon="CIconEdit"
                 :title="t('common.edit')"
+                shrink="sm"
                 @click="showFormModal = true"
               />
               <CBtn
@@ -257,6 +259,7 @@ async function activateContract() {
                 size="sm"
                 :icon="CIconEdit"
                 :title="t('contracts.amend')"
+                shrink="sm"
                 @click="showAmendModal = true"
               />
               <CBtn
@@ -265,6 +268,7 @@ async function activateContract() {
                 size="sm"
                 :icon="CIconArchive"
                 :title="t('contracts.terminate')"
+                shrink="sm"
                 @click="showTerminateModal = true"
               />
             </CCardActions>

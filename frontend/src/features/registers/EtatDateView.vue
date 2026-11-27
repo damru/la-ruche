@@ -114,6 +114,7 @@ function viewSnapshot(request: EtatDateRequest) {
           size="sm"
           :icon="CIconPlus"
           :title="t('registers.etatDate.new')"
+          shrink="sm"
           @click="showRequestModal = true"
         />
       </template>

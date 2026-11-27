@@ -364,6 +364,7 @@ function handleDocumentCountChanged(claimId: string, delta: number) {
           size="sm"
           :icon="CIconPlus"
           :title="t('claims.create')"
+          shrink="sm"
           @click="openCreateModal"
         />
       </template>
@@ -503,6 +504,7 @@ function handleDocumentCountChanged(claimId: string, delta: number) {
                       size="sm"
                       :icon="CIconEdit"
                       :title="t('common.edit')"
+                      shrink="sm"
                       @click="openEditModal(claim)"
                     />
                     <CBtn
@@ -511,6 +513,7 @@ function handleDocumentCountChanged(claimId: string, delta: number) {
                       size="sm"
                       :icon="CIconUpload"
                       :title="t('claims.transmit')"
+                      shrink="sm"
                       @click="openTransmitModal(claim)"
                     />
                     <CBtn
@@ -519,6 +522,7 @@ function handleDocumentCountChanged(claimId: string, delta: number) {
                       size="sm"
                       :icon="CIconCheckCircle"
                       :title="t('claims.closeTitle')"
+                      shrink="sm"
                       @click="openCloseModal(claim)"
                     />
                   </CCardActions>

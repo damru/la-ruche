@@ -110,6 +110,7 @@ function onDocumentDeleted(id: string) {
           size="sm"
           :icon="CIconPlus"
           :title="t('documents.import')"
+          shrink="sm"
           @click="showUpload = true"
         />
       </template>

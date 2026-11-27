@@ -106,6 +106,7 @@ watch(() => route.params.id, id => {
           size="sm"
           :icon="CIconArrowLeft"
           :title="t('common.back')"
+          shrink="sm"
           @click="router.push({ name: 'reports' })"
         />
       </template>

@@ -605,6 +605,7 @@ function openArt25Modal(resolution: Resolution) {
             size="sm"
             :icon="CIconBell"
             :title="t('meetings.call')"
+            shrink="sm"
             @click="showConvocationModal = true"
           />
         </template>

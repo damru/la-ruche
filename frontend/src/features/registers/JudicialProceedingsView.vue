@@ -100,6 +100,7 @@ function openDelete(p: JudicialProceeding) {
           size="sm"
           :icon="CIconPlus"
           :title="t('registers.judicial.new')"
+          shrink="sm"
           @click="openCreate"
         />
       </template>

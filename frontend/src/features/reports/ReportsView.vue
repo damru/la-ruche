@@ -182,6 +182,7 @@ async function submitComment(r: Report) {
           size="sm"
           :icon="CIconPlus"
           :title="t('reports.create')"
+          shrink="sm"
           @click="openCreateModal"
         />
       </template>
@@ -337,6 +338,7 @@ async function submitComment(r: Report) {
                       size="sm"
                       :icon="CIconEdit"
                       :title="t('common.edit')"
+                      shrink="sm"
                       @click="openEditModal(r)"
                     />
                     <CBtn
@@ -345,6 +347,7 @@ async function submitComment(r: Report) {
                       size="sm"
                       :icon="CIconCheckCircle"
                       :title="t('reports.viewTask')"
+                      shrink="sm"
                       @click="router.push({ name: 'task-detail', params: { id: r.task_id } })"
                     />
                     <CBtn
@@ -353,6 +356,7 @@ async function submitComment(r: Report) {
                       size="sm"
                       :icon="CIconCheckCircle"
                       :title="t('reports.convertToTask')"
+                      shrink="sm"
                       @click="openConvertModal(r)"
                     />
                   </CCardActions>

@@ -693,6 +693,7 @@ async function activateContract(contract: VendorContract) {
                   :title="t('contracts.activate')"
                   :loading="activatingId === contract.id"
                   :disabled="activatingId === contract.id"
+                  shrink="sm"
                   @click="activateContract(contract)"
                 />
                 <CBtn
@@ -700,6 +701,7 @@ async function activateContract(contract: VendorContract) {
                   size="sm"
                   :icon="CIconEdit"
                   :title="t('common.edit')"
+                  shrink="sm"
                   @click="openEditModal(contract)"
                 />
                 <CBtn
@@ -708,6 +710,7 @@ async function activateContract(contract: VendorContract) {
                   size="sm"
                   :icon="CIconEdit"
                   :title="t('contracts.amend')"
+                  shrink="sm"
                   @click="openAmendModal(contract)"
                 />
                 <CBtn
@@ -716,6 +719,7 @@ async function activateContract(contract: VendorContract) {
                   size="sm"
                   :icon="CIconHistory"
                   :title="t('contracts.history')"
+                  shrink="sm"
                   @click="openChainModal(contract)"
                 />
                 <CBtn
@@ -724,6 +728,7 @@ async function activateContract(contract: VendorContract) {
                   size="sm"
                   :icon="CIconArchive"
                   :title="t('contracts.terminate')"
+                  shrink="sm"
                   @click="openTerminateModal(contract)"
                 />
               </CCardActions>
@@ -734,6 +739,7 @@ async function activateContract(contract: VendorContract) {
                   size="sm"
                   :icon="CIconHistory"
                   :title="t('contracts.history')"
+                  shrink="sm"
                   @click="openChainModal(contract)"
                 />
               </CCardActions>

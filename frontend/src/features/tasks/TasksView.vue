@@ -452,6 +452,7 @@ async function downloadTaskDocument(documentId: string) {
           size="sm"
           :icon="CIconPlus"
           :title="t('tasks.create')"
+          shrink="sm"
           @click="openCreateModal"
         />
       </template>
@@ -684,6 +685,7 @@ async function downloadTaskDocument(documentId: string) {
                     :icon="CIconEdit"
                     :title="t('common.edit')"
                     :aria-label="t('tasks.editTask')"
+                    shrink="sm"
                     @click.stop="openEditModal(task)"
                   />
                   <CBtn
@@ -693,6 +695,7 @@ async function downloadTaskDocument(documentId: string) {
                     :icon="CIconRefresh"
                     :title="t('tasks.reopenTask')"
                     :aria-label="t('tasks.reopenTask')"
+                    shrink="sm"
                     @click.stop="openReopenModal(task)"
                   />
                   <CBtn
@@ -702,6 +705,7 @@ async function downloadTaskDocument(documentId: string) {
                     :icon="CIconCheckCircle"
                     :title="closeActionLabel(task)"
                     :aria-label="closeActionLabel(task)"
+                    shrink="sm"
                     @click.stop="openCloseModal(task)"
                   />
                   <CBtn
@@ -712,6 +716,7 @@ async function downloadTaskDocument(documentId: string) {
                     :title="t('tasks.takeBackTask')"
                     :aria-label="t('tasks.takeBackTask')"
                     :disabled="takingBack === task.id"
+                    shrink="sm"
                     @click.stop="takeBack(task)"
                   />
                   <CBtn
@@ -721,6 +726,7 @@ async function downloadTaskDocument(documentId: string) {
                     :icon="CIconBan"
                     :title="t('tasks.cancelTask')"
                     :aria-label="t('tasks.cancelTask')"
+                    shrink="sm"
                     @click.stop="openCancelModal(task)"
                   />
                 </CCardActions>

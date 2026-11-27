@@ -287,6 +287,7 @@ function openDeleteModal(c: Consultation) {
           size="sm"
           :icon="CIconPlus"
           :title="t('consultations.create')"
+          shrink="sm"
           @click="openCreateModal"
         />
       </template>

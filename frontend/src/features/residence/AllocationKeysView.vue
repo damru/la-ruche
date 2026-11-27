@@ -125,6 +125,7 @@ onMounted(reload)
           size="sm"
           :icon="CIconPlus"
           :title="t('settings.keys.newKey')"
+          shrink="sm"
           @click="openCreateModal"
         />
         <CBtn
@@ -132,6 +133,7 @@ onMounted(reload)
           size="sm"
           :icon="CIconPlus"
           :title="t('settings.edd.newReference')"
+          shrink="sm"
           @click="openEddForm"
         />
       </template>

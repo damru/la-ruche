@@ -202,6 +202,7 @@ const showResetDataModal = ref(false)
           :title="t('nav.logout')"
           :loading="loggingOut"
           :disabled="loggingOut"
+          shrink="sm"
           @click="logout"
         />
       </template>

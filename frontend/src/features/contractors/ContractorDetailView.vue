@@ -119,6 +119,7 @@ function priorityVariant(p: string): 'err' | 'pending' | 'primary' | 'valid' | '
           size="sm"
           :icon="CIconArrowLeft"
           :title="t('common.back')"
+          shrink="sm"
           @click="router.push({ name: 'contractors' })"
         />
       </template>

@@ -99,6 +99,7 @@ function openDelete(m: GovernanceMandate) {
           size="sm"
           :icon="CIconPlus"
           :title="t('registers.governance.new')"
+          shrink="sm"
           @click="openCreate"
         />
       </template>

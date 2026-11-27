@@ -184,6 +184,7 @@ function openDeleteModal(c: Contractor) {
           size="sm"
           :icon="CIconPlus"
           :title="t('contractors.newContractor')"
+          shrink="sm"
           @click="openCreate"
         />
       </template>
@@ -441,6 +442,7 @@ function openDeleteModal(c: Contractor) {
                   :icon="CIconEdit"
                   :title="t('common.edit')"
                   :aria-label="`${t('common.edit')} ${c.name}`"
+                  shrink="sm"
                   @click.stop="openEdit(c)"
                 />
                 <CBtn
@@ -449,6 +451,7 @@ function openDeleteModal(c: Contractor) {
                   :title="t('common.delete')"
                   :aria-label="`${t('common.delete')} ${c.name}`"
                   class="tone--err"
+                  shrink="sm"
                   @click.stop="openDeleteModal(c)"
                 />
               </CCardActions>

@@ -63,7 +63,7 @@ function getCellValue(row: T, key: string): unknown {
 </script>
 
 <template>
-  <div class="overflow-auto bg-surface-container-lowest">
+  <div class="overflow-auto table-scroll bg-surface-container-lowest">
     <table
       role="table"
     >
