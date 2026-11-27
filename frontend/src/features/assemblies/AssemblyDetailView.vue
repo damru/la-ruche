@@ -44,11 +44,9 @@ import CIconCheck from '@/components/atoms/CIconCheck.svg'
 import CIconClock from '@/components/atoms/CIconClock.svg'
 import CIconDownload from '@/components/atoms/CIconDownload.svg'
 import CIconEdit from '@/components/atoms/CIconEdit.svg'
-import CIconEye from '@/components/atoms/CIconEye.svg'
 import CIconLock from '@/components/atoms/CIconLock.svg'
 import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import CIconUpload from '@/components/atoms/CIconUpload.svg'
-import CDocumentViewer from '@/components/molecules/CDocumentViewer.vue'
 import VoteModal from './VoteModal.vue'
 import StartMeetingModal from './StartMeetingModal.vue'
 import CloseMeetingModal from './CloseMeetingModal.vue'
@@ -411,8 +409,8 @@ function voteTypeVariant(voteType: VoteType): BadgeVariant {
 }
 
 function voteTypeClass(voteType: VoteType): string {
-  if (voteType === VOTE_TYPE_ABSOLUTE_MAJORITY) return 'chip-art25'
-  if (voteType === VOTE_TYPE_DOUBLE_MAJORITY) return 'chip-art26'
+  if (voteType === VOTE_TYPE_ABSOLUTE_MAJORITY) return 'tone--iris'
+  if (voteType === VOTE_TYPE_DOUBLE_MAJORITY) return 'tone--apricot'
   return ''
 }
 
@@ -495,23 +493,6 @@ function promptDeleteDocument(documentId: string, name: string) {
 async function openDocument(documentId: string) {
   const response = await documentsApi.getDownloadUrl(documentId)
   window.open(response.data.url, '_blank', 'noopener')
-}
-
-const viewerDocumentId = ref<string | null>(null)
-const viewerDocumentName = ref<string | undefined>(undefined)
-const showViewer = ref(false)
-
-function viewDocument(documentId: string, name?: string) {
-  viewerDocumentId.value = documentId
-  viewerDocumentName.value = name
-  showViewer.value = true
-}
-
-function isPdf(document: { mime_type?: string; original_name: string }): boolean {
-  return (
-    document.mime_type === 'application/pdf' ||
-    document.original_name.toLowerCase().endsWith('.pdf')
-  )
 }
 
 function openStartMeetingModal() {
@@ -736,27 +717,15 @@ function openArt25Modal(resolution: Resolution) {
               </p>
             </div>
           </div>
-          <div
+          <CBtn
             v-if="meetingState(meeting.status) === 'closed' && meeting.minutes_document_id"
-            class="flex items-center gap-1"
-          >
-            <CBtn
-              variant="ghost"
-              size="sm"
-              type="button"
-              :icon="CIconEye"
-              :title="t('meetings.minutes.view_signed')"
-              @click="viewDocument(meeting.minutes_document_id!, t('meetings.minutes.title'))"
-            />
-            <CBtn
-              variant="ghost"
-              size="sm"
-              type="button"
-              :icon="CIconDownload"
-              :title="t('meetings.minutes.download_signed')"
-              @click="openDocument(meeting.minutes_document_id!)"
-            />
-          </div>
+            variant="ghost"
+            size="sm"
+            type="button"
+            :icon="CIconDownload"
+            :title="t('meetings.minutes.download_signed')"
+            @click="openDocument(meeting.minutes_document_id!)"
+          />
         </div>
 
         <CCard
@@ -769,14 +738,6 @@ function openArt25Modal(resolution: Resolution) {
               <div class="flex items-center gap-2 flex-wrap">
                 <CIconLock class="text-on-surface-variant icon-sm" />
                 <span class="text-sm">{{ t('meetings.minutes.signed_attached') }}</span>
-                <CBtn
-                  variant="ghost"
-                  size="sm"
-                  type="button"
-                  :icon="CIconEye"
-                  :title="t('meetings.minutes.view_signed')"
-                  @click="viewDocument(meeting.minutes_document_id!, t('meetings.minutes.title'))"
-                />
                 <CBtn
                   variant="ghost"
                   size="sm"
@@ -1148,7 +1109,12 @@ function openArt25Modal(resolution: Resolution) {
                   :description="t('meetings.agenda.emptyHint')"
                 />
               </template>
-              <ol class="agenda-list">
+              <CFlexGroup
+                tag="ol"
+                class="agenda-list"
+                direction="column"
+                role="list"
+              >
                 <li
                   v-for="(item, index) in agendaItems"
                   :key="`${index}-${item}`"
@@ -1157,7 +1123,7 @@ function openArt25Modal(resolution: Resolution) {
                   <span class="agenda-item__n">{{ index + 1 }}.</span>
                   <span class="agenda-item__text">{{ item }}</span>
                 </li>
-              </ol>
+              </CFlexGroup>
             </CCard>
 
             <CCard>
@@ -1203,27 +1169,12 @@ function openArt25Modal(resolution: Resolution) {
                   >
                     <button
                       class="doc-link"
-                      @click="isPdf(document) ? viewDocument(document.id, document.original_name) : openDocument(document.id)"
+                      @click="openDocument(document.id)"
                     >
                       {{ document.original_name }}
                     </button>
                     <div class="doc-row__actions">
                       <span class="doc-kind">{{ documentKindLabel(document.kind) }}</span>
-                      <CBtn
-                        v-if="isPdf(document)"
-                        variant="icon"
-                        size="sm"
-                        :icon="CIconEye"
-                        :title="t('common.see')"
-                        @click="viewDocument(document.id, document.original_name)"
-                      />
-                      <CBtn
-                        variant="icon"
-                        size="sm"
-                        :icon="CIconDownload"
-                        :title="t('common.download')"
-                        @click="openDocument(document.id)"
-                      />
                       <button
                         v-if="canManageGM"
                         class="doc-remove"
@@ -1257,27 +1208,12 @@ function openArt25Modal(resolution: Resolution) {
                   >
                     <button
                       class="doc-link"
-                      @click="isPdf(document) ? viewDocument(document.id, document.original_name) : openDocument(document.id)"
+                      @click="openDocument(document.id)"
                     >
                       {{ document.original_name }}
                     </button>
                     <div class="doc-row__actions">
                       <span class="doc-kind">{{ documentKindLabel(document.kind) }}</span>
-                      <CBtn
-                        v-if="isPdf(document)"
-                        variant="icon"
-                        size="sm"
-                        :icon="CIconEye"
-                        :title="t('common.see')"
-                        @click="viewDocument(document.id, document.original_name)"
-                      />
-                      <CBtn
-                        variant="icon"
-                        size="sm"
-                        :icon="CIconDownload"
-                        :title="t('common.download')"
-                        @click="openDocument(document.id)"
-                      />
                       <button
                         v-if="canManageGM"
                         class="doc-remove"
@@ -1295,27 +1231,16 @@ function openArt25Modal(resolution: Resolution) {
                 :variant="meeting.minutes_document_id ? 'success' : 'warning'"
                 :title="meeting.minutes_document_id ? t('meetings.documents.minutesReady') : t('meetings.documents.minutesPending')"
               >
-                <div
+                <CBtn
                   v-if="meeting.minutes_document_id"
-                  class="flex items-center gap-1 self-center"
-                >
-                  <CBtn
-                    variant="ghost"
-                    size="sm"
-                    type="button"
-                    :icon="CIconEye"
-                    :title="t('meetings.minutes.view_signed')"
-                    @click="viewDocument(meeting.minutes_document_id!, t('meetings.minutes.title'))"
-                  />
-                  <CBtn
-                    variant="ghost"
-                    size="sm"
-                    type="button"
-                    :icon="CIconDownload"
-                    :title="t('meetings.minutes.download_signed')"
-                    @click="openDocument(meeting.minutes_document_id!)"
-                  />
-                </div>
+                  variant="ghost"
+                  size="sm"
+                  type="button"
+                  class="self-center"
+                  :icon="CIconDownload"
+                  :title="t('meetings.minutes.download_signed')"
+                  @click="openDocument(meeting.minutes_document_id!)"
+                />
               </CAlert>
             </CCard>
 
@@ -1547,12 +1472,6 @@ function openArt25Modal(resolution: Resolution) {
       @saved="reload"
     />
 
-    <CDocumentViewer
-      v-model:open="showViewer"
-      :document-id="viewerDocumentId"
-      :document-name="viewerDocumentName"
-    />
-
     <StartMeetingModal
       :open="showStartMeetingModal"
       :meeting-id="meeting?.id ?? ''"
@@ -1604,7 +1523,7 @@ function openArt25Modal(resolution: Resolution) {
 }
 
 .status-banner--called .status-banner__icon {
-  background: color-mix(in srgb, var(--color-primary) var(--color-tint), transparent);
+  background: color-mix(in oklch, var(--color-primary) var(--color-tint), transparent);
   color: var(--color-primary);
 }
 
@@ -1614,7 +1533,7 @@ function openArt25Modal(resolution: Resolution) {
 }
 
 .status-banner--closed .status-banner__icon {
-  background: color-mix(in srgb, var(--color-success) var(--color-tint), transparent);
+  background: color-mix(in oklch, var(--color-success) var(--color-tint), transparent);
   color: var(--color-success);
 }
 
@@ -1624,7 +1543,7 @@ function openArt25Modal(resolution: Resolution) {
 }
 
 .status-banner--ongoing .status-banner__icon {
-  background: color-mix(in srgb, var(--color-primary) var(--color-tint), transparent);
+  background: color-mix(in oklch, var(--color-primary) var(--color-tint), transparent);
   color: var(--color-primary);
 }
 
@@ -1634,7 +1553,7 @@ function openArt25Modal(resolution: Resolution) {
 }
 
 .status-banner--draft .status-banner__icon {
-  background: color-mix(in srgb, var(--color-outline) 24%, transparent);
+  background: color-mix(in oklch, var(--color-outline) 24%, transparent);
   color: var(--color-on-surface-variant);
 }
 
@@ -1866,7 +1785,7 @@ function openArt25Modal(resolution: Resolution) {
 .presence-track {
   height: 10px;
   border-radius: var(--radius-full);
-  background: color-mix(in srgb, var(--color-outline) 45%, transparent);
+  background: color-mix(in oklch, var(--color-outline) 45%, transparent);
   overflow: hidden;
 }
 
@@ -1933,9 +1852,6 @@ function openArt25Modal(resolution: Resolution) {
   margin: 0;
   padding: 0;
   list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
 }
 
 .agenda-item {
@@ -1957,16 +1873,6 @@ function openArt25Modal(resolution: Resolution) {
   font-size: var(--text-sm);
   color: var(--color-on-surface);
   line-height: 1.4;
-}
-
-.chip-art25 {
-  --tone-bg: #e8def8;
-  --tone-fg: #21005d;
-}
-
-.chip-art26 {
-  --tone-bg: #fce8d5;
-  --tone-fg: #7a3600;
 }
 
 @media (max-width: 960px) {

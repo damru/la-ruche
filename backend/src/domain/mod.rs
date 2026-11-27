@@ -1,3 +1,4 @@
+pub mod activity_visibility;
 pub mod calendar;
 pub mod charges;
 pub mod convocation_checklist;
@@ -15,6 +16,7 @@ pub mod pdf_template;
 pub mod permissions;
 pub mod processor;
 pub mod reminders;
+pub mod report_privacy;
 pub mod retention;
 pub mod vote;
 

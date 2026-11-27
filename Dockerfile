@@ -29,7 +29,9 @@ RUN apt-get update && apt-get install -y \
 # Cache dependencies by copying manifests first
 COPY backend/Cargo.toml backend/Cargo.lock* ./
 COPY NOTICE /NOTICE
-RUN mkdir src && echo "fn main() {}" > src/main.rs && \
+RUN --mount=type=cache,target=/usr/local/cargo/registry \
+	--mount=type=cache,target=/usr/local/cargo/git \
+	mkdir src && echo "fn main() {}" > src/main.rs && \
 	if [ "$CARGO_PROFILE" = "release" ]; then \
 		cargo build --release 2>/dev/null || true; \
 	else \
@@ -47,7 +49,9 @@ COPY backend/assets ./assets
 COPY backend/.sqlx ./.sqlx
 
 ENV SQLX_OFFLINE=true
-RUN if [ "$CARGO_PROFILE" = "release" ]; then \
+RUN --mount=type=cache,target=/usr/local/cargo/registry \
+	--mount=type=cache,target=/usr/local/cargo/git \
+	if [ "$CARGO_PROFILE" = "release" ]; then \
 		cargo build --release; \
 	else \
 		cargo build; \

@@ -309,7 +309,7 @@ Tâches assignées en interne, lien tokenisé éphémère pour accès prestatair
 * `EP-007-S04` ✅ — Valider et archiver les documents déposés par le prestataire (bucket final) puis passer la tâche en pré-validation (`awaiting_validation`) avec commentaire et coût optionnel
 * `EP-007-S05` ✅ — Clôturer une tâche avec coût optionnel et l'alimenter automatiquement au carnet d'entretien (→ EP-009-S03), y compris après réouverture ; inclut `vendor_name` du prestataire assigné
 * `EP-007-S06` ✅ — Assigner un prestataire du référentiel (EP-015) à une tâche via autocomplete, avec suggestion de création optionnelle si aucune correspondance n'existe et conservation d'un nom libre sur la tâche si aucun prestataire n'est créé
-* [EP-007-S07](specs/EP-007-S07-spec.md) ✅ — Reprendre en main une tâche depuis une phase devis (`awaiting_quote` ou `quote_received`) : retour à `in_progress` sans annuler les documents reçus, sans révocation automatique du lien prestataire (PRD US-TP-012)
+* [EP-007-S07](specs/EP-007-S07-spec.md) ✅ — Reprendre en main une tâche depuis une phase devis (`awaiting_quote` ou `quote_received`) : retour à `in_progress` sans annuler les documents reçus, sans révocation automatique du lien prestataire, avec événement `status_changed` dans `activity_log` (PRD US-TP-012)
 * [EP-007-S08](specs/EP-007-S08-spec.md) ✅ — Supprimer ou annuler une tâche : suppression bloquée si une entrée carnet d'entretien ou une soumission prestataire y est rattachée ; annulation disponible comme alternative sans destruction des données (PRD US-TP-016, ADR-009)
 * [EP-007-S09](specs/EP-007-S09-spec.md) ✅ — Consulter, filtrer et rechercher les tâches : liste paginée avec filtres par statut, priorité, assignataire et prestataire, recherche par titre (PRD US-TP-003)
 * [EP-007-S10](specs/EP-007-S10-spec.md) — Gérer les documents rattachés à une tâche côté gestionnaire : ajout append-only après clôture, suppression bloquée si la tâche est clôturée ; indépendant du flux prestataire (PRD US-TP-005)
@@ -386,7 +386,7 @@ Consultations initiables par tout résident sans approbation préalable, résult
 
 **MVP :** oui | **Réf. :** [PRD - Signalements.md](product/PRD%20-%20Signalements.md)
 
-**État code actuel :** backend réel (CRUD, documents associés, conversion en tâche avec priorité choisie, lien `report.task_id`, clôture automatique du signalement à la fermeture effective de la tâche liée, commentaires de suivi append-only) + frontend branché (liste, création, photos, mise à jour de statut, conversion en tâche, section « Suivi »).
+**État code actuel :** backend réel (CRUD, documents associés, conversion en tâche avec priorité choisie, lien `report.task_id`, clôture automatique du signalement à la fermeture effective de la tâche liée, commentaires de suivi append-only) + frontend branché (liste, création, photos, mise à jour de statut, conversion en tâche, section « Suivi »), anonymat optionnel du déclarant à la création (masquage de l'identité dans toutes les réponses API sauf pour le déclarant lui-même).
 
 Signalement par tout résident avec description et lot optionnel, suivi de statut par le syndic, conversion possible en tâche.
 
@@ -396,7 +396,7 @@ Signalement par tout résident avec description et lot optionnel, suivi de statu
 * `EP-011-S02` ✅ — Suivre et mettre à jour le statut (reçu → en cours → clos) — manager/conseil syndical
 * `EP-011-S03` ✅ — Convertir un signalement en tâche — crée une tâche avec titre/description + priorité choisie depuis le signalement, passe automatiquement le signalement en `in_progress`, puis le clôture quand la tâche liée est effectivement fermée
 * [EP-011-S04](specs/EP-011-S04-spec.md) ✅ — Ajouter un commentaire de suivi à un signalement : le Syndic et le Conseil syndical peuvent poster des commentaires horodatés visibles du déclarant, pour communiquer sur l'avancement (PRD US-SIG-006)
-* [EP-011-S05](specs/EP-011-S05-spec.md) — Gérer l'anonymat du déclarant : le résident choisit à la création du signalement de rester anonyme ; son identité n'est jamais exposée aux autres résidents ni au Syndic dans la vue liste (PRD US-SIG-007)
+* [EP-011-S05](specs/EP-011-S05-spec.md) ✅ — Gérer l'anonymat du déclarant : le résident choisit à la création du signalement de rester anonyme ; son identité n'est jamais exposée aux autres résidents ni au Syndic dans la vue liste (PRD US-SIG-007)
 
 ***
 
@@ -519,12 +519,12 @@ Vue unifiée du cycle de vie d’un signalement et/ou d’une tâche, de la cré
 
 **Stories :**
 
-* [EP-017-S01](specs/EP-017-S01-spec.md) — Migration : créer la table `activity_log` polymorphique (`entity_type TEXT NOT NULL`, `entity_id UUID NOT NULL`, `action TEXT NOT NULL`, `actor_id UUID REFERENCES user_account(id)`, `payload JSONB`, `created_at TIMESTAMPTZ DEFAULT NOW()`) + index `(entity_type, entity_id, created_at DESC)`
-* [EP-017-S02](specs/EP-017-S02-spec.md) — Backend : émettre des événements auditables aux points clés de mutation : création, changement de statut, changement d’assignataire, attribution prestataire référentiel, génération lien vendeur, soumission vendeur, clôture (tâche) ; création, changement de statut, ajout photo, conversion (signalement). Chaque événement contient un `payload` JSONB avec ancien/nouveau valeur quand pertinent.
-* [EP-017-S03](specs/EP-017-S03-spec.md) — Backend : ajouter `linked_task_id UUID REFERENCES task(id)` sur `report` pour matérialiser la conversion signalement → tâche ; endpoint `GET /tasks/:id/timeline` remontant la chaîne jusqu’au signalement source si applicable ; endpoint `GET /reports/:id/timeline` symmétrique.
-* [EP-017-S04](specs/EP-017-S04-spec.md) — Frontend : vue `TaskTimelineView` (remplace `TaskDetailView`) : données statiques de la tâche (titre, statut, priorité, assignataire, prestataire) + timeline chronologique des événements depuis le signalement source (si applicable) jusqu’à la clôture.
-* [EP-017-S05](specs/EP-017-S05-spec.md) — Frontend : vue `ReportDetailView` : afficher les événements auditables du signalement + lien contextuel vers la tâche créée si conversion effective.
-* [EP-017-S06](specs/EP-017-S06-spec.md) — Accessibilité : événements visibles par tous les rôles ayant accès à l’entité ; actions sensibles (`assignee_changed`, `vendor_link_generated`) réservées aux rôles manager/conseil syndical.
+* ✅ [EP-017-S01](specs/EP-017-S01-spec.md) — Migration : créer la table `activity_log` polymorphique (`entity_type TEXT NOT NULL`, `entity_id UUID NOT NULL`, `action TEXT NOT NULL`, `actor_id UUID REFERENCES user_account(id)`, `payload JSONB`, `created_at TIMESTAMPTZ DEFAULT NOW()`) + index `(entity_type, entity_id, created_at DESC)` ; rétro-remplissage des seules transitions reconstruisibles (`maintenance_log` automatique → `closed`, `vendor_submission` → `vendor_submission_received`)
+* ✅ [EP-017-S02](specs/EP-017-S02-spec.md) — Backend : émettre des événements auditables aux points clés de mutation : création, changement de statut, changement d’assignataire, attribution prestataire référentiel, génération lien vendeur, soumission vendeur, clôture (tâche) ; création, changement de statut, ajout photo, conversion (signalement). Chaque événement contient un `payload` JSONB avec ancien/nouveau valeur quand pertinent.
+* ✅ [EP-017-S03](specs/EP-017-S03-spec.md) — Backend : matérialiser la conversion signalement → tâche via la colonne existante `report.task_id` (pas de colonne `linked_task_id` ajoutée) ; endpoint `GET /tasks/:id/timeline` remontant la chaîne jusqu’au signalement source si applicable ; endpoint `GET /reports/:id/timeline` symmétrique.
+* ✅ [EP-017-S04](specs/EP-017-S04-spec.md) — Frontend : vue `TaskTimelineView` (remplace `TaskDetailView`) : données statiques de la tâche (titre, statut, priorité, assignataire, prestataire) + timeline chronologique des événements depuis le signalement source (si applicable) jusqu’à la clôture.
+* ✅ [EP-017-S05](specs/EP-017-S05-spec.md) — Frontend : vue `ReportDetailView` : afficher les événements auditables du signalement + lien contextuel vers la tâche créée si conversion effective.
+* ✅ [EP-017-S06](specs/EP-017-S06-spec.md) — Accessibilité : événements visibles par tous les rôles ayant accès à l’entité ; actions sensibles (`assignee_changed`, `vendor_link_generated`) réservées aux rôles manager/conseil syndical.
 
 ***
 
@@ -598,7 +598,7 @@ Consolidation technique du design system : migration des tokens de couleur vers 
 * [EP-020-S15](specs/EP-020-S15-spec.md) — Implémenter `CCardHeader` (molecule) : en-tête de carte d'entité (`withIcon?`, slots `#icon`, `#chips`) conforme à l'ossature commune des cartes de liste (DESIGN.md §3.2, §4.1 — 🔲 planifié)
 * [EP-020-S16](specs/EP-020-S16-spec.md) — Implémenter `CDocumentList` (molecule) : liste de documents avec téléchargement/retrait (`documents`, `readonly?`, `emit('remove', doc)`) mutualisant le markup dupliqué des vues contrats/sinistres/tâches (DESIGN.md §3.2 — 🔲 planifié)
 * [EP-020-S17](specs/EP-020-S17-spec.md) — Implémenter `CDataText` (atom) : texte tabulaire JetBrains Mono (`size` sm|md|lg, `font-mono font-medium lining-nums tabular-nums`) remplaçant les spans mono ad hoc (DESIGN.md §3.1 — 🔲 planifié)
-* `EP-020-S18` — Passage mobile : densité et débordements. Détails issus de la revue design de la PR #169 : boutons d'action d'en-tête en icône seule sur mobile (global) ; tableaux trop larges sans indicateur de scroll horizontal (documents et toutes les vues à tableau) ; hero trop grands en mobile 1-ligne (dashboard, registre copro, charges) ; pill « dans le délai légal » en overflow (sinistres) ; lignes de tableau gouvernance trop hautes. Critères : aucune overflow horizontal à 375 px, densité mobile conforme DESIGN.md (🔲 planifié)
+* `EP-020-S18` — Passage mobile : densité et débordements. Détails issus de la revue design de la PR #169 : tableaux trop larges sans indicateur de scroll horizontal (documents et toutes les vues à tableau) ; hero trop grands en mobile 1-ligne (dashboard, registre copro, charges) ; pill « dans le délai légal » en overflow (sinistres) ; lignes de tableau gouvernance trop hautes. **Règle des actions** (ajoutée à la revue du 26/11) : les boutons d'action des **cartes** (mode liste comme grille) et des **en-têtes de vue** s'affichent **icône + libellé en affichage normal** et **icône seule en mobile** ; les actions de **tableau** restent **icône seule en permanence**. Critères : aucune overflow horizontal à 375 px, densité mobile conforme DESIGN.md, règle icône/libellé vérifiée sur les captures 1440 et 375 des vues à cartes, en-têtes et tableaux (🔲 planifié)
 
 ***
 

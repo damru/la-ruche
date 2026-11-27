@@ -314,6 +314,7 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
                 .post(tasks::generate_token)
                 .delete(tasks::revoke_token),
         )
+        .route("/tasks/{id}/timeline", get(tasks::timeline))
         // ── Contractors referential ─────────────────────────────
         .route(
             "/contractors",
@@ -377,6 +378,7 @@ pub fn router(state: Arc<AppState>, _webauthn: Webauthn) -> Router {
             "/reports/{id}/documents/{doc_id}",
             delete(reports::detach_document),
         )
+        .route("/reports/{id}/timeline", get(reports::timeline))
         // ── Consultations ────────────────────────────────────────
         .route(
             "/consultations",

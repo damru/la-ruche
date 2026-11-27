@@ -45,57 +45,57 @@ const message = computed(() => (
 .mock-banner--mock {
   background: repeating-linear-gradient(
     -45deg,
-    #7c3aed18 0px,
-    #7c3aed18 10px,
+    oklch(0.541 0.2466 293.01 / 0.09) 0px,
+    oklch(0.541 0.2466 293.01 / 0.09) 10px,
     transparent 10px,
     transparent 20px
   ),
-  linear-gradient(135deg, #7c3aed14, #a855f714);
-  border: 1.5px solid #7c3aed40;
+  linear-gradient(135deg, oklch(0.541 0.2466 293.01 / 0.08), oklch(0.627 0.2325 303.90 / 0.08));
+  border: 1.5px solid oklch(0.541 0.2466 293.01 / 0.25);
   border-radius: var(--radius-xl);
-  color: #5b21b6;
+  color: oklch(0.432 0.2106 292.76);
 }
 
 .mock-banner--demo {
   background:
     repeating-linear-gradient(
       -45deg,
-      rgba(184, 115, 51, 0.10) 0px,
-      rgba(184, 115, 51, 0.10) 10px,
+      oklch(0.618 0.1171 60.40 / 0.1) 0px,
+      oklch(0.618 0.1171 60.40 / 0.1) 10px,
       transparent 10px,
       transparent 20px
     ),
-    linear-gradient(135deg, rgba(250, 204, 21, 0.18), rgba(249, 115, 22, 0.18));
-  border: 1px solid rgba(180, 83, 9, 0.28);
+    linear-gradient(135deg, oklch(0.861 0.1731 91.94 / 0.18), oklch(0.705 0.1867 47.60 / 0.18));
+  border: 1px solid oklch(0.555 0.1455 49.00 / 0.28);
   border-radius: var(--radius-xl);
-  color: #92400e;
+  color: oklch(0.473 0.1247 46.20);
 }
 
 [data-theme="dark"] .mock-banner--mock {
   background: repeating-linear-gradient(
     -45deg,
-    #a78bfa18 0px,
-    #a78bfa18 10px,
+    oklch(0.709 0.1592 293.54 / 0.09) 0px,
+    oklch(0.709 0.1592 293.54 / 0.09) 10px,
     transparent 10px,
     transparent 20px
   ),
-  linear-gradient(135deg, #7c3aed20, #a855f720);
-  border-color: #7c3aed50;
-  color: #c4b5fd;
+  linear-gradient(135deg, oklch(0.541 0.2466 293.01 / 0.12), oklch(0.627 0.2325 303.90 / 0.12));
+  border-color: oklch(0.541 0.2466 293.01 / 0.31);
+  color: var(--color-primary);
 }
 
 [data-theme="dark"] .mock-banner--demo {
   background:
     repeating-linear-gradient(
       -45deg,
-      rgba(251, 191, 36, 0.10) 0px,
-      rgba(251, 191, 36, 0.10) 10px,
+      oklch(0.837 0.1644 84.43 / 0.1) 0px,
+      oklch(0.837 0.1644 84.43 / 0.1) 10px,
       transparent 10px,
       transparent 20px
     ),
-    linear-gradient(135deg, rgba(120, 53, 15, 0.34), rgba(154, 52, 18, 0.34));
-  border-color: rgba(245, 158, 11, 0.35);
-  color: #fcd34d;
+    linear-gradient(135deg, oklch(0.414 0.1054 45.90 / 0.34), oklch(0.470 0.1430 37.30 / 0.34));
+  border-color: oklch(0.769 0.1647 70.08 / 0.35);
+  color: oklch(0.879 0.1534 91.61);
 }
 
 .mock-banner svg {

@@ -9,7 +9,7 @@ use uuid::Uuid;
 
 use crate::{
     db::{self, AppState},
-    domain::{AuthUser, Role},
+    domain::{AuthUser, Role, activity_visibility, report_privacy},
     errors::{AppError, AppResult, json_value},
 };
 
@@ -20,7 +20,9 @@ pub async fn list(
     State(state): State<Arc<AppState>>,
 ) -> AppResult<Json<serde_json::Value>> {
     let rows = db::report::list(&state.pool, auth.building_id).await?;
-    json_value(rows)
+    let mut value = json_value(rows)?.0;
+    report_privacy::mask_report_list(&mut value, auth.user_id);
+    Ok(Json(value))
 }
 
 /// Get a single report by id.
@@ -32,7 +34,30 @@ pub async fn get(
     let row = db::report::get(&state.pool, id, auth.building_id)
         .await?
         .ok_or(AppError::NotFound)?;
-    json_value(row)
+    let mut value = json_value(row)?.0;
+    report_privacy::mask_report_author(&mut value, auth.user_id);
+    Ok(Json(value))
+}
+
+/// GET /reports/{id}/timeline — merged report↔task chain, chronological ascending.
+/// Access is building-scoped only, like `reports::get`: any authenticated role
+/// of the building may read it. Reporter-authored events of an anonymous report
+/// are masked by `report_privacy::mask_timeline`.
+pub async fn timeline(
+    auth: AuthUser,
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<Uuid>,
+) -> AppResult<Json<serde_json::Value>> {
+    let row = db::report::get(&state.pool, id, auth.building_id)
+        .await?
+        .ok_or(AppError::NotFound)?;
+    let events =
+        db::activity_log::list_for_chain(&state.pool, auth.building_id, Some(id), row.task_id)
+            .await?;
+    let mut value = json_value(events)?.0;
+    activity_visibility::filter_events(&mut value, &auth.roles);
+    report_privacy::mask_timeline(&mut value, row.author_id, row.is_anonymous, auth.user_id);
+    Ok(Json(value))
 }
 
 /// Create a new report. Any authenticated user (all roles) can open a report.
@@ -45,7 +70,9 @@ pub async fn create(
         return Err(AppError::validation_code("errors.reports.title_required"));
     }
     let row = db::report::create(&state.pool, auth.building_id, auth.user_id, input).await?;
-    Ok((StatusCode::CREATED, json_value(row)?))
+    let mut value = json_value(row)?.0;
+    report_privacy::mask_report_author(&mut value, auth.user_id);
+    Ok((StatusCode::CREATED, Json(value)))
 }
 
 #[derive(Deserialize)]
@@ -69,7 +96,14 @@ pub async fn update_status(
     if !db::report::validate_status(&input.status) {
         return Err(AppError::validation_code("errors.reports.invalid_status"));
     }
-    db::report::update_status(&state.pool, id, auth.building_id, &input.status).await?;
+    db::report::update_status(
+        &state.pool,
+        id,
+        auth.building_id,
+        &input.status,
+        Some(auth.user_id),
+    )
+    .await?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -153,8 +187,14 @@ pub async fn attach_document(
     Path(id): Path<Uuid>,
     Json(input): Json<AttachDocumentInput>,
 ) -> AppResult<StatusCode> {
-    let attached =
-        db::report::attach_document(&state.pool, id, input.document_id, auth.building_id).await?;
+    let attached = db::report::attach_document(
+        &state.pool,
+        id,
+        input.document_id,
+        auth.building_id,
+        Some(auth.user_id),
+    )
+    .await?;
     if !attached {
         return Err(AppError::NotFound);
     }

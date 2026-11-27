@@ -15,36 +15,41 @@ const MGR_ONLY: AuthRole[] = ['manager']
 
 export type MatrixEntry = {
   path: string
-  titleKey?: string
+  titleKey: string
   roles: AuthRole[]
   deniedBehavior?: 'route403' | 'pageError'
+  captureGrid?: boolean
+  captureEmpty?: boolean
+  captureTabs?: Array<{ label: string; slug: string }>
   toleratedApi403?: Record<string, AuthRole[]>
 }
 
 export const APP_ROUTES: MatrixEntry[] = [
   { path: '/dashboard',              titleKey: 'nav.dashboard',                 roles: ALL, toleratedApi403: { '/api/v1/budgets/00000000-0000-0000-0000-000000000421/levies': ['coOwner', 'tenant'] } },
-  { path: '/meetings',               titleKey: 'nav.meetings',                  roles: ALL },
-  { path: '/meetings/00000000-0000-0000-0000-000000000853', roles: ALL },
-  { path: '/budget',                 titleKey: 'nav.budget',                    roles: ALL },
-  { path: '/documents',              titleKey: 'common.documents',              roles: ALL },
-  { path: '/tasks',                  titleKey: 'nav.tasks',                     roles: MANAGER },
-  { path: '/contractors',            titleKey: 'contractors.title',             roles: ALL },
-  { path: '/contracts',              titleKey: 'nav.contracts',                 roles: MANAGER },
-  { path: '/claims',                 titleKey: 'nav.claims',                    roles: MANAGER },
-  { path: '/logbook',                titleKey: 'nav.maintenance',               roles: [...MANAGER, 'coOwner'] },
+  { path: '/meetings',               titleKey: 'nav.meetings',                  roles: ALL, captureEmpty: true },
+  { path: '/meetings/00000000-0000-0000-0000-000000000853', titleKey: 'nav.meetings', roles: ALL },
+  { path: '/budget',                 titleKey: 'nav.budget',                    roles: ALL, captureEmpty: true },
+  { path: '/documents',              titleKey: 'common.documents',              roles: ALL, captureEmpty: true },
+  { path: '/tasks',                  titleKey: 'nav.tasks',                     roles: MANAGER, captureEmpty: true },
+  { path: '/tasks/00000000-0000-0000-0000-000000000602', titleKey: 'nav.tasks', roles: MANAGER },
+  { path: '/contractors',            titleKey: 'contractors.title',             roles: ALL, captureGrid: true, captureEmpty: true },
+  { path: '/contracts',              titleKey: 'nav.contracts',                 roles: MANAGER, captureGrid: true, captureEmpty: true },
+  { path: '/claims',                 titleKey: 'nav.claims',                    roles: MANAGER, captureEmpty: true },
+  { path: '/logbook',                titleKey: 'nav.maintenance',               roles: [...MANAGER, 'coOwner'], captureEmpty: true },
   { path: '/calendar',               titleKey: 'nav.calendar',                  roles: ALL },
-  { path: '/consultations',          titleKey: 'nav.consultations',             roles: ALL },
-  { path: '/reports',                titleKey: 'nav.reports',                   roles: ALL },
+  { path: '/consultations',          titleKey: 'nav.consultations',             roles: ALL, captureEmpty: true },
+  { path: '/reports',                titleKey: 'nav.reports',                   roles: ALL, captureEmpty: true },
+  { path: '/reports/00000000-0000-0000-0000-000000000703', titleKey: 'nav.reports', roles: ALL },
   { path: '/residents',              titleKey: 'nav.residents',                 roles: MGR_ONLY },
   { path: '/residents/00000000-0000-0000-0000-000000000102/charges', titleKey: 'units.charges.title', roles: MANAGER, deniedBehavior: 'pageError' },
   { path: '/my-charges',             titleKey: 'nav.myCharges',                 roles: OWNER_ONLY },
   { path: '/registry',               titleKey: 'nav.registry',                  roles: ALL },
-  { path: '/judicial-proceedings',   titleKey: 'nav.judicialProceedings',       roles: ALL },
+  { path: '/judicial-proceedings',   titleKey: 'nav.judicialProceedings',       roles: ALL, captureEmpty: true },
   { path: '/governance',             titleKey: 'nav.governance',                roles: ALL },
-  { path: '/etat-date',              titleKey: 'registers.etatDate.title',      roles: MGR_ONLY },
+  { path: '/etat-date',              titleKey: 'registers.etatDate.title',      roles: MGR_ONLY, captureEmpty: true },
   { path: '/residence/building',     titleKey: 'common.informations',           roles: MGR_ONLY },
   { path: '/residence/keys',         titleKey: 'allocationKeys.title',          roles: MGR_ONLY },
-  { path: '/profile',                titleKey: 'nav.account',                   roles: ALL },
+  { path: '/profile',                titleKey: 'nav.account',                   roles: ALL, captureTabs: [{ label: 'Préférences', slug: 'preferences' }] },
 ]
 
 export const SEEDED_UNIT_ID = '00000000-0000-0000-0000-000000000102'

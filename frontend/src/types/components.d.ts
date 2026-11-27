@@ -133,6 +133,8 @@ declare module 'vue' {
     CSeparator: typeof import('./../components/atoms/CSeparator.vue')['default']
     CStatusBanner: typeof import('./../components/organisms/CStatusBanner.vue')['default']
     CTabs: typeof import('./../components/atoms/CTabs.vue')['default']
+    CTimelineList: typeof import('./../components/molecules/CTimelineList.vue')['default']
+    CTimelineSection: typeof import('./../components/molecules/CTimelineSection.vue')['default']
     CToggle: typeof import('./../components/atoms/CToggle.vue')['default']
     CTooltip: typeof import('./../components/atoms/CTooltip.vue')['default']
     CTopbar: typeof import('./../components/organisms/CTopbar.vue')['default']

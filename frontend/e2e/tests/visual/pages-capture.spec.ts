@@ -52,6 +52,27 @@ for (const route of APP_ROUTES) {
           path: `e2e/visual/${slug}--${viewport.name}--${theme}.png`,
           fullPage: true,
         })
+
+        for (const tab of route.captureTabs ?? []) {
+          await page.getByRole('button', { name: tab.label, exact: true }).click()
+          await page.waitForLoadState('networkidle')
+          await settlePage(page)
+          await page.screenshot({
+            path: `e2e/visual/${slug}--tab-${tab.slug}--${viewport.name}--${theme}.png`,
+            fullPage: true,
+          })
+        }
+
+        if (route.captureGrid) {
+          const gridToggle = page.getByRole('button', { name: 'Vue grille' })
+          await gridToggle.click()
+          await page.waitForLoadState('networkidle')
+          await settlePage(page)
+          await page.screenshot({
+            path: `e2e/visual/${slug}--grid--${viewport.name}--${theme}.png`,
+            fullPage: true,
+          })
+        }
         await context.close()
       })
     }
@@ -59,8 +80,8 @@ for (const route of APP_ROUTES) {
 }
 
 const MEETING_DETAIL = '/meetings/00000000-0000-0000-0000-000000000853'
-const MEETING_PDF_STORAGE = /\/meetings\/853\/pv-ag-2026-10-08\.pdf/
-const MEETING_PDF_NAME = 'pv-ag-2026-10-08.pdf'
+const MEETING_PDF_STORAGE = /\/00000000-0000-0000-0000-000000000903\.pdf/
+const MEETING_PDF_NAME = 'pv-ag-annuelle-2025.pdf'
 const MINIMAL_PDF = '%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF'
 
 for (const viewport of VIEWPORTS) {

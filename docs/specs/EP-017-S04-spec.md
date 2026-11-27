@@ -4,6 +4,7 @@
 
 **Épic :** EP-017 — Journal d'activité & Suivi de cycle de vie
 **Réf. PRD :** Gestion courante (US-TP-015) · **Réf. EPICS :** `docs/EPICS.md` EP-017-S04 (L512)
+**État :** IMPLÉMENTÉ (frontend)
 **Stories liées :** EP-017-S03 (endpoint + `tasksApi.timeline`, prérequis), EP-017-S05 (pendant côté signalements — mêmes composants de rendu), EP-017-S06 (le backend filtre déjà les actions sensibles ; aucune logique de rôle à dupliquer ici)
 
 ---
@@ -41,12 +42,12 @@ Aucun changement — consommateur de EP-017-S03.
 
 Au montage (avec le fetch existant de la tâche) : `tasksApi.timeline(route.params.id)` → `ref<TimelineEvent[]>`. États : chargement (squelette), erreur (message + réessayer), vide (`200 []` — message « Aucun événement enregistré », cas des tâches antérieures à EP-017, cf. S03 §6).
 
-### 5.3 Nouveau composant `TimelineEventList.vue` (`frontend/src/features/tasks/` ou catalogue si promu)
+### 5.3 Nouveau composant `CTimelineList.vue` (catalogue `frontend/src/components/molecules/`)
 
-Composant de rendu **partagé avec EP-017-S05** (à cataloguer dans `docs/DESIGN.md` §2 avant usage) :
+Composant de rendu **partagé avec EP-017-S05**, catalogué dans `docs/DESIGN.md §3.2` :
 
-- Props : `events: TimelineEvent[]`.
-- Rendu vertical chronologique : pastille (variant par action), libellé i18n, horodatage formaté, acteur (`actor_name` ou « Prestataire externe » quand null sur les événements vendeur), détail issu du `payload`.
+- Props : `events: TimelineEvent[]`, `linkTasks?: boolean` (défaut `true` — masqué pour les rôles sans accès aux tâches), `currentTaskId?: string` (supprime le lien de conversion vers la page courante).
+- Rendu vertical **antéchronologique** (l'événement le plus récent en premier, imposé produit) : pastille (variant par action), libellé i18n, horodatage formaté, acteur (`actor_name` ou « Prestataire externe » quand null sur les événements vendeur), détail issu du `payload`.
 - Mapping action → libellé/pastille (clés i18n `timeline.actions.*`, fichiers `frontend/src/locales/`) :
 
 | `action` | Libellé (fr) | Détail depuis `payload` |
@@ -55,7 +56,7 @@ Composant de rendu **partagé avec EP-017-S05** (à cataloguer dans `docs/DESIGN
 | `created` (task) | « Tâche créée » | « issue du signalement » si `source_report_id` |
 | `status_changed` | « Statut modifié » | `old_status → new_status` (libellés statuts existants) |
 | `photo_added` | « Photo ajoutée » | `file_name` |
-| `converted_to_task` | « Converti en tâche » | lien `tasks/:task_id` |
+| `converted_to_task` | « Converti en tâche » | lien vers la tâche (`tasks/:task_id`) depuis un signalement, vers le signalement source (`reports/:id`) depuis une tâche |
 | `assignee_changed` | « Assignataire modifié » | — (ids résolus non exigés en v1) |
 | `contractor_assigned` | « Prestataire assigné » | `contractor_name` |
 | `vendor_link_generated` | « Lien prestataire généré » | expiration |
@@ -63,12 +64,14 @@ Composant de rendu **partagé avec EP-017-S05** (à cataloguer dans `docs/DESIGN
 | `vendor_submission_received` | « Intervention prestataire reçue » | — |
 | `closed` | « Clôturé(e) » | — |
 
-- Les événements `entity_type === 'report'` sont visuellement distingués (pastille secondaire + mention « Signalement ») : la frise couvre la chaîne complète depuis le signalement source.
+- **Dédoublonnage de la conversion** : la conversion produit deux événements (`report.converted_to_task` + `task.created` avec `source_report_id`) ; la frise n'en rend qu'**un** — l'événement `task.created` porteur d'un `source_report_id` est masqué à l'affichage (la donnée reste en base, l'API n'est pas modifiée).
+- **Liens symétriques de conversion** : depuis la fiche signalement, l'étape « Converti en tâche » mène à la tâche (« Ouvrir la tâche », rôles manager/board) ; depuis la fiche tâche, la même étape mène au **signalement source** (« Ouvrir le signalement »). Plus de lien vers la page courante.
+- L'événement `converted_to_task` porte une carte teintée (`.tone--primary`) : c'est la charnière entre les deux entités, qui remplace l'ancien encart dédié de la fiche signalement. Les événements `entity_type === 'report'` sont visuellement distingués (pastille secondaire + mention « Signalement ») : la frise couvre la chaîne complète depuis le signalement source.
 - Action inconnue (évolution future du vocabulaire) : rendu générique avec l'`action` brute — pas de crash.
 
 ### 5.4 Contraintes de style
 
-Règles AGENTS.md : pas de valeurs brutes (`px`/hex) — utilitaires Tailwind/tokens ; pas de bloc `<style>` dans la feature view ; pas d'import `radix-vue` direct (wrappers `C*`). Le CSS timeline existant de `TaskDetailView` (classes `timeline-dot--*`) est repris/adapté dans `TimelineEventList.vue` en respectant ces règles.
+Règles AGENTS.md : pas de valeurs brutes (`px`/hex) — utilitaires Tailwind/tokens ; pas de bloc `<style>` dans la feature view ; pas d'import `radix-vue` direct (wrappers `C*`). Le CSS timeline existant de `TaskDetailView` (classes `timeline-dot--*`) est remplacé par des utilitaires Tailwind dans `CTimelineList.vue` en respectant ces règles.
 
 ## 6. Cas limites
 
@@ -85,7 +88,7 @@ Règles AGENTS.md : pas de valeurs brutes (`px`/hex) — utilitaires Tailwind/to
 2. La timeline affichée provient exclusivement de `GET /tasks/{id}/timeline` (aucune étape reconstruite côté client, plus d'étape « non datée »).
 3. Une tâche issue d'un signalement affiche les événements du signalement en tête de frise, avec distinction visuelle.
 4. Toutes les actions du tableau §5.3 ont un libellé i18n (fr) ; action inconnue → rendu générique.
-5. `npm --prefix frontend run build` et `run lint` passent ; `TimelineEventList` catalogué dans `docs/DESIGN.md` §2.
+5. `npm --prefix frontend run build` et `run lint` passent ; `CTimelineList` catalogué dans `docs/DESIGN.md` §3.2.
 
 ## 8. Plan de tests
 
@@ -98,7 +101,7 @@ Si `vitest` est disponible, un test de `TimelineEventList` (mapping action → l
 
 ## 9. Ordre d'implémentation
 
-1. `TimelineEventList.vue` + entrée `docs/DESIGN.md` §2 + clés i18n.
+1. `CTimelineList.vue` + entrée `docs/DESIGN.md` §3.2 + clés i18n.
 2. `git mv TaskDetailView.vue TaskTimelineView.vue`, purge du computed L81-175, branchement `tasksApi.timeline`.
 3. `router/index.ts` (import/composant).
 4. `npm --prefix frontend run build && run lint`, vérification manuelle §8.

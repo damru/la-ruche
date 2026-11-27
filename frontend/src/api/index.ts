@@ -6,7 +6,7 @@ import type {
   VendorContract, ContractReminder,
     Task, TaskListFilters, TaskListResponse, Claim, ClaimNote, MaintenanceEntry,
   LogbookSummary,
-  Report, ReportComment, Consultation, ConsultationResults, VendorTask, VendorDocument,
+  Report, ReportComment, TimelineEvent, Consultation, ConsultationResults, VendorTask, VendorDocument,
   Document, UploadUrlResponse, DownloadUrlResponse,
   Building, Unit, UnitOwnerRecord, User, AllocationKey, UnitShare, AuditEntry,
   OnboardingStatus, RuntimeStatus, BootstrapInput, BootstrapResponse,
@@ -382,6 +382,8 @@ export const tasksApi = {
     api.get<{ url: string; expires_at: string }>(`/tasks/${id}/vendor-token`),
   revokeToken: (id: string) =>
     api.delete(`/tasks/${id}/vendor-token`),
+  timeline: (id: string) =>
+    api.get<TimelineEvent[]>(`/tasks/${id}/timeline`),
 }
 
 // ── Contractors referential ───────────────────────────────────────
@@ -496,7 +498,7 @@ export const reportsApi = {
     api.get<Report[]>('/reports'),
   get: (id: string) =>
     api.get<Report>(`/reports/${id}`),
-  create: (data: { title: string; description?: string; unit_id?: string }) =>
+  create: (data: { title: string; description?: string; unit_id?: string; is_anonymous?: boolean }) =>
     api.post<Report>('/reports', data),
   update: (id: string, data: { title: string; description: string | null; unit_id: string | null }) =>
     api.put(`/reports/${id}`, data),
@@ -516,6 +518,8 @@ export const reportsApi = {
     api.get<ReportComment[]>(`/reports/${id}/comments`),
   addComment: (id: string, body: string) =>
     api.post<ReportComment>(`/reports/${id}/comments`, { body }),
+  timeline: (id: string) =>
+    api.get<TimelineEvent[]>(`/reports/${id}/timeline`),
 }
 
 // ── Consultations ─────────────────────────────────────────────────

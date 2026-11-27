@@ -1,3 +1,4 @@
+use crate::db::activity_log::{self, ENTITY_REPORT, ENTITY_TASK, actions};
 use crate::errors::{AppError, AppResult};
 use chrono::{DateTime, Utc};
 use serde::Serialize;
@@ -15,6 +16,7 @@ pub struct ReportRow {
     pub author_id: Uuid,
     pub author_first_name: String,
     pub author_last_name: String,
+    pub is_anonymous: bool,
     pub title: String,
     pub description: Option<String>,
     pub status: String,
@@ -28,6 +30,7 @@ pub struct ReportRow {
 const LIST_QUERY: &str = concat!(
     "SELECT r.id, r.building_id, r.unit_id, r.author_id,",
     " u.first_name AS author_first_name, u.last_name AS author_last_name,",
+    " r.is_anonymous,",
     " r.title, r.description, r.status::text AS status,",
     " r.task_id, t.status::text AS task_status,",
     " (SELECT COUNT(*) FROM report_document rd",
@@ -40,19 +43,29 @@ const LIST_QUERY: &str = concat!(
     " WHERE r.building_id = $1 ORDER BY r.updated_at DESC",
 );
 
-const GET_QUERY: &str = concat!(
-    "SELECT r.id, r.building_id, r.unit_id, r.author_id,",
-    " u.first_name AS author_first_name, u.last_name AS author_last_name,",
-    " r.title, r.description, r.status::text AS status,",
-    " r.task_id, t.status::text AS task_status,",
-    " (SELECT COUNT(*) FROM report_document rd",
-    "   JOIN document d ON d.id = rd.document_id AND d.deleted_at IS NULL",
-    "   WHERE rd.report_id = r.id) AS document_count,",
-    " r.created_at, r.updated_at",
-    " FROM report r",
-    " JOIN user_account u ON u.id = r.author_id",
-    " LEFT JOIN task t ON t.id = r.task_id AND t.building_id = r.building_id",
-    " WHERE r.id = $1 AND r.building_id = $2",
+macro_rules! report_select {
+    () => {
+        concat!(
+            "SELECT r.id, r.building_id, r.unit_id, r.author_id,",
+            " u.first_name AS author_first_name, u.last_name AS author_last_name,",
+            " r.is_anonymous,",
+            " r.title, r.description, r.status::text AS status,",
+            " r.task_id, t.status::text AS task_status,",
+            " (SELECT COUNT(*) FROM report_document rd",
+            "   JOIN document d ON d.id = rd.document_id AND d.deleted_at IS NULL",
+            "   WHERE rd.report_id = r.id) AS document_count,",
+            " r.created_at, r.updated_at",
+            " FROM report r",
+            " JOIN user_account u ON u.id = r.author_id",
+            " LEFT JOIN task t ON t.id = r.task_id AND t.building_id = r.building_id",
+        )
+    };
+}
+
+const GET_QUERY: &str = concat!(report_select!(), " WHERE r.id = $1 AND r.building_id = $2");
+const BY_TASK_QUERY: &str = concat!(
+    report_select!(),
+    " WHERE r.task_id = $1 AND r.building_id = $2"
 );
 
 fn row_to_report(r: &sqlx::postgres::PgRow) -> Result<ReportRow, sqlx::Error> {
@@ -63,6 +76,7 @@ fn row_to_report(r: &sqlx::postgres::PgRow) -> Result<ReportRow, sqlx::Error> {
         author_id: r.try_get("author_id")?,
         author_first_name: r.try_get("author_first_name")?,
         author_last_name: r.try_get("author_last_name")?,
+        is_anonymous: r.try_get("is_anonymous")?,
         title: r.try_get("title")?,
         description: r.try_get("description")?,
         status: r.try_get("status")?,
@@ -111,6 +125,8 @@ pub struct CreateReportInput {
     pub title: String,
     pub description: Option<String>,
     pub unit_id: Option<Uuid>,
+    #[serde(default)]
+    pub is_anonymous: bool,
 }
 
 pub async fn create(
@@ -124,23 +140,35 @@ pub async fn create(
     // committed while the subsequent enriched SELECT fails, which would save the
     // report in the DB but return a "Database error" to the caller.
     let row = sqlx::query(
-        "INSERT INTO report (building_id, author_id, title, description, unit_id) \
-         VALUES ($1, $2, $3, $4, $5) RETURNING id",
+        "INSERT INTO report (building_id, author_id, title, description, unit_id, is_anonymous) \
+         VALUES ($1, $2, $3, $4, $5, $6) RETURNING id",
     )
     .bind(building_id)
     .bind(author_id)
     .bind(&input.title)
     .bind(&input.description)
     .bind(input.unit_id)
+    .bind(input.is_anonymous)
     .fetch_one(pool)
     .await?;
     let id: Uuid = row.try_get("id")?;
 
     // Step 2: fetch the enriched row (JOINs user_account + document_count subquery)
     // reusing the same query used by the GET endpoint.
-    get(pool, id, building_id)
+    let row = get(pool, id, building_id)
         .await?
-        .ok_or_else(|| AppError::Internal(anyhow::anyhow!("created report not found")))
+        .ok_or_else(|| AppError::Internal(anyhow::anyhow!("created report not found")))?;
+    activity_log::emit_best_effort(
+        pool,
+        building_id,
+        ENTITY_REPORT,
+        id,
+        actions::CREATED,
+        Some(author_id),
+        None,
+    )
+    .await;
+    Ok(row)
 }
 
 pub async fn update_status(
@@ -148,7 +176,18 @@ pub async fn update_status(
     id: Uuid,
     building_id: Uuid,
     status: &str,
+    actor_id: Option<Uuid>,
 ) -> AppResult<()> {
+    let old_status: Option<String> =
+        sqlx::query_scalar("SELECT status::text FROM report WHERE id = $1 AND building_id = $2")
+            .bind(id)
+            .bind(building_id)
+            .fetch_optional(pool)
+            .await?;
+    let old_status = match old_status {
+        None => return Err(AppError::NotFound),
+        Some(s) => s,
+    };
     let result = sqlx::query(
         "UPDATE report SET status = $3::text::report_status, updated_at = NOW() WHERE id = $1 AND building_id = $2",
     )
@@ -160,7 +199,35 @@ pub async fn update_status(
     if result.rows_affected() == 0 {
         return Err(AppError::NotFound);
     }
+    if old_status != status {
+        activity_log::emit_status_change_best_effort(
+            pool,
+            building_id,
+            ENTITY_REPORT,
+            id,
+            &old_status,
+            status,
+            actor_id,
+        )
+        .await;
+    }
     Ok(())
+}
+
+pub async fn find_by_task_id(
+    pool: &PgPool,
+    task_id: Uuid,
+    building_id: Uuid,
+) -> AppResult<Option<ReportRow>> {
+    let row = sqlx::query(BY_TASK_QUERY)
+        .bind(task_id)
+        .bind(building_id)
+        .fetch_optional(pool)
+        .await?;
+    row.as_ref()
+        .map(row_to_report)
+        .transpose()
+        .map_err(Into::into)
 }
 
 /// Converts a report into a task (EP-011-S03).
@@ -231,20 +298,50 @@ pub async fn convert_to_task(
     .execute(&mut *tx)
     .await?;
 
+    // Lifecycle events join the same transaction as the conversion.
+    activity_log::insert(
+        &mut *tx,
+        building_id,
+        ENTITY_REPORT,
+        report_id,
+        actions::CONVERTED_TO_TASK,
+        Some(created_by),
+        Some(serde_json::json!({ "task_id": task_id })),
+    )
+    .await?;
+    activity_log::insert(
+        &mut *tx,
+        building_id,
+        ENTITY_TASK,
+        task_id,
+        actions::CREATED,
+        Some(created_by),
+        Some(serde_json::json!({ "source_report_id": report_id })),
+    )
+    .await?;
+
     tx.commit().await?;
 
     Ok(task_id)
 }
 
-pub async fn close_linked_to_task<'e, E>(
-    executor: E,
+pub async fn close_linked_to_task(
+    conn: &mut sqlx::PgConnection,
     task_id: Uuid,
     building_id: Uuid,
-) -> AppResult<()>
-where
-    E: sqlx::Executor<'e, Database = sqlx::Postgres>,
-{
-    sqlx::query(
+    actor_id: Option<Uuid>,
+) -> AppResult<()> {
+    let old: Option<(Uuid, String)> = sqlx::query_as(
+        "SELECT id, status::text FROM report \
+         WHERE task_id = $1 AND building_id = $2 AND status != $3::text::report_status",
+    )
+    .bind(task_id)
+    .bind(building_id)
+    .bind(STATUS_CLOSED)
+    .fetch_optional(&mut *conn)
+    .await?;
+
+    let result = sqlx::query(
         "UPDATE report
          SET status = $3::text::report_status, updated_at = NOW()
          WHERE task_id = $1 AND building_id = $2 AND status != $3::text::report_status",
@@ -252,8 +349,23 @@ where
     .bind(task_id)
     .bind(building_id)
     .bind(STATUS_CLOSED)
-    .execute(executor)
+    .execute(&mut *conn)
     .await?;
+
+    if result.rows_affected() > 0
+        && let Some((report_id, old_status)) = old
+    {
+        activity_log::emit_status_change(
+            &mut *conn,
+            building_id,
+            ENTITY_REPORT,
+            report_id,
+            &old_status,
+            STATUS_CLOSED,
+            actor_id,
+        )
+        .await?;
+    }
     Ok(())
 }
 
@@ -363,33 +475,17 @@ pub async fn attach_document(
     report_id: Uuid,
     document_id: Uuid,
     building_id: Uuid,
+    actor_id: Option<Uuid>,
 ) -> AppResult<bool> {
-    let pair_exists: bool = sqlx::query_scalar(
-        r#"SELECT EXISTS(
-               SELECT 1 FROM report r, document d
-               WHERE r.id = $1 AND r.building_id = $3
-                 AND d.id = $2 AND d.building_id = $3
-           )"#,
+    crate::db::document::link_to_entity(
+        pool,
+        ENTITY_REPORT,
+        report_id,
+        building_id,
+        document_id,
+        actor_id,
     )
-    .bind(report_id)
-    .bind(document_id)
-    .bind(building_id)
-    .fetch_one(pool)
-    .await?;
-
-    if !pair_exists {
-        return Ok(false);
-    }
-
-    sqlx::query(
-        "INSERT INTO report_document (report_id, document_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
-    )
-    .bind(report_id)
-    .bind(document_id)
-    .execute(pool)
-    .await?;
-
-    Ok(true)
+    .await
 }
 
 /// Detach a document from a report.

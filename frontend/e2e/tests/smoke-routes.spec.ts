@@ -14,10 +14,9 @@ test.describe('Smoke — routes autorisées par rôle', () => {
 
         await page.waitForLoadState('networkidle')
 
+        const expected = frText(route.titleKey)
         await expect(page.locator('.view-header').first()).toBeVisible()
-        if (route.titleKey) {
-          await expect(page.getByText(frText(route.titleKey)).first()).toBeVisible()
-        }
+        await expect(page.getByText(expected).first()).toBeVisible()
 
         await expect(page.locator('.c-page-error')).toHaveCount(0)
 

@@ -88,7 +88,7 @@ withDefaults(defineProps<{
 
 <style scoped>
 .auth-brand {
-  background: linear-gradient(160deg, #4a2fa3 0%, #643fd5 60%, #8b5cf6 100%);
+  background: var(--gradient-brand);
   display: flex;
   flex-direction: column;
   padding: var(--space-10) var(--space-8);
@@ -127,7 +127,7 @@ withDefaults(defineProps<{
   font-family: var(--font-display);
   font-size: 20px;
   font-weight: 600;
-  color: #fff;
+  color: oklch(1.000 0.0000 0.00);
   letter-spacing: -0.01em;
 }
 
@@ -137,7 +137,7 @@ withDefaults(defineProps<{
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.65);
+  color: oklch(1.000 0.0000 0.00 / 0.65);
   margin-bottom: var(--space-2);
 }
 
@@ -145,7 +145,7 @@ withDefaults(defineProps<{
   font-family: var(--font-display);
   font-size: clamp(26px, 2.8vw, 42px);
   font-weight: 700;
-  color: #fff;
+  color: oklch(1.000 0.0000 0.00);
   line-height: 1.1;
   letter-spacing: -0.03em;
   margin-bottom: var(--space-3);
@@ -153,7 +153,7 @@ withDefaults(defineProps<{
 
 .auth-brand__sub {
   font-size: var(--text-md);
-  color: rgba(255, 255, 255, 0.78);
+  color: oklch(1.000 0.0000 0.00 / 0.78);
   line-height: 1.6;
 }
 
@@ -168,20 +168,20 @@ withDefaults(defineProps<{
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  color: rgba(255, 255, 255, 0.6);
+  color: oklch(1.000 0.0000 0.00 / 0.6);
   font-size: 13.5px;
   font-weight: 500;
   transition: color var(--transition-fast);
 }
-.auth-brand__step--active { color: #fff; }
-.auth-brand__step--done   { color: rgba(255, 255, 255, 0.85); }
+.auth-brand__step--active { color: oklch(1.000 0.0000 0.00); }
+.auth-brand__step--done   { color: oklch(1.000 0.0000 0.00 / 0.85); }
 .auth-brand__step--future { opacity: 0.35; }
 
 .auth-brand__step-num {
   width: 26px;
   height: 26px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.2);
+  background: oklch(1.000 0.0000 0.00 / 0.2);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -190,18 +190,18 @@ withDefaults(defineProps<{
   flex-shrink: 0;
   transition: background var(--transition-fast);
 }
-.auth-brand__step--active .auth-brand__step-num { background: rgba(255, 255, 255, 0.35); }
+.auth-brand__step--active .auth-brand__step-num { background: oklch(1.000 0.0000 0.00 / 0.35); }
 .auth-brand__step--done   .auth-brand__step-num {
-  background: rgba(255, 255, 255, 0.9);
-  color: #643fd5;
+  background: oklch(1.000 0.0000 0.00 / 0.9);
+  color: oklch(0.503 0.2154 287.24);
 }
 .auth-brand__step-num svg { width: 13px; height: 13px; }
 
 /* ── Footer ───────────────────────────────────────────────────── */
 .auth-brand__spacer { flex: 1; }
 .auth-brand__footer { /* bottom pin via spacer */ }
-.auth-brand__legal { font-size: 11px; color: rgba(255, 255, 255, 0.5); }
-.auth-brand__legal a { color: rgba(255, 255, 255, 0.75); text-decoration: underline; }
+.auth-brand__legal { font-size: 11px; color: oklch(1.000 0.0000 0.00 / 0.5); }
+.auth-brand__legal a { color: oklch(1.000 0.0000 0.00 / 0.75); text-decoration: underline; }
 
 @media (max-width: 899px) {
   .auth-brand {

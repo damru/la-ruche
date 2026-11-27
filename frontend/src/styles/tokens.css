@@ -14,6 +14,7 @@
   --color-error:                 oklch(0.506 0.1927 27.70);
   --color-error-container:       oklch(0.918 0.0418 25.23);
   --color-on-error:              oklch(1.000 0.0000 0.00);
+  --color-on-success:            oklch(1.000 0.0000 0.00);
   --color-success:               oklch(0.523 0.1347 144.17);
   --color-success-container:     oklch(0.957 0.0210 147.64);
   --color-warning:               oklch(0.631 0.1970 40.25);
@@ -48,10 +49,14 @@
 
   /* ── Gradient signature ──────────────────────────────────────── */
   --gradient-primary: linear-gradient(135deg, oklch(0.503 0.2154 287.24), oklch(0.587 0.2131 288.56));
+  --gradient-brand:   linear-gradient(160deg, oklch(0.413 0.1755 286.61) 0%, oklch(0.503 0.2154 287.24) 60%, oklch(0.606 0.2189 292.72) 100%);
   /* Status gradients — derived from semantic colors (auto theme-aware via var()) */
   --gradient-success: linear-gradient(135deg, color-mix(in oklch, var(--color-success), black 18%), var(--color-success));
   --gradient-error:   linear-gradient(135deg, color-mix(in oklch, var(--color-error), black 12%), var(--color-error));
   --gradient-warning: linear-gradient(135deg, color-mix(in oklch, var(--color-warning), black 8%), var(--color-warning));
+
+  /* ── Voiles ──────────────────────────────────────────────────── */
+  --color-scrim:                 oklch(0.224 0.0049 219.69 / 0.4);
 
   /* ── Ombres ──────────────────────────────────────────────────── */
   --shadow-sm:  0 2px 8px oklch(0.224 0.0049 219.69 / 0.04);
@@ -178,6 +183,9 @@
   --color-outline-variant:            oklch(0.397 0.0145 264.40);
 
   --gradient-primary: linear-gradient(135deg, oklch(0.587 0.2131 288.56), oklch(0.811 0.1013 293.57));
+
+  --color-scrim:                 oklch(0.000 0.0000 0.00 / 0.6);
+  --color-on-success:            color-mix(in oklch, var(--color-success), black 70%);
 
   --shadow-sm:  0 2px 8px oklch(0.000 0.0000 0.00 / 0.16);
   --shadow-md:  0 8px 32px oklch(0.000 0.0000 0.00 / 0.22), 0 2px 8px oklch(0.000 0.0000 0.00 / 0.16);

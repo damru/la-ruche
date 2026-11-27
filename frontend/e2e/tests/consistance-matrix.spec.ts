@@ -69,3 +69,93 @@ test.describe('Cohérence matrice d’accès ↔ routeur', () => {
     ).toEqual([])
   })
 })
+
+test.describe('Cohérence des couleurs de titres', () => {
+  test('aucun titre cliquable ne prend la couleur des liens, sur toutes les pages', async ({ auth }) => {
+    test.setTimeout(120_000)
+    const { page, close } = await auth('manager')
+    await page.goto('/dashboard')
+    await expect(page.locator('main')).toBeVisible()
+
+    const linkColour = await page.evaluate(() => {
+      const probe = document.createElement('span')
+      probe.className = 'text-primary'
+      document.body.append(probe)
+      const colour = getComputedStyle(probe).color
+      probe.remove()
+      return colour
+    })
+
+    const offenders: string[] = []
+    for (const route of APP_ROUTES.filter(r => r.roles.includes('manager'))) {
+      await page.goto(route.path)
+      await page.waitForSelector('main', { timeout: 15_000 })
+      const hits = await page.evaluate((primary: string) => {
+        const out: string[] = []
+        document.querySelectorAll('main h1 a, main h2 a, main h3 a, main h4 a').forEach(anchor => {
+          if (getComputedStyle(anchor).color === primary) {
+            out.push((anchor.textContent ?? '').trim().replace(/\s+/g, ' ').slice(0, 40))
+          }
+        })
+        return out
+      }, linkColour)
+      if (hits.length) offenders.push(`${route.path} → ${hits.join(' | ')}`)
+    }
+
+    expect(offenders, 'titres cliquables rendus avec la couleur de lien').toEqual([])
+    await close()
+  })
+})
+
+test.describe('Cohérence du voile de modale', () => {
+  test('l’overlay des modales consomme le token de scrim', async ({ auth }) => {
+    const { page, close } = await auth('manager')
+    await page.goto('/reports')
+    await page.getByRole('button', { name: 'Nouveau signalement' }).click()
+    await page.waitForSelector('.c-modal__overlay')
+
+    const colours = await page.evaluate(() => {
+      const overlay = document.querySelector('.c-modal__overlay') as HTMLElement
+      const probe = document.createElement('div')
+      probe.style.background = 'var(--color-scrim)'
+      document.body.append(probe)
+      const out = {
+        overlay: getComputedStyle(overlay).backgroundColor,
+        scrim: getComputedStyle(probe).backgroundColor,
+      }
+      probe.remove()
+      return out
+    })
+
+    expect(colours.overlay, 'le voile doit être le token scrim, pas une couleur en dur').toBe(colours.scrim)
+    await close()
+  })
+})
+
+test.describe('Cohérence des tones de chips', () => {
+  test('les chips art. 25/26 prennent leur teinte de catalogue', async ({ auth }) => {
+    const { page, close } = await auth('manager')
+    await page.goto('/meetings/00000000-0000-0000-0000-000000000855')
+    await page.waitForSelector('.tone--iris, .tone--apricot', { timeout: 15_000 })
+
+    const chips = await page.evaluate(() => {
+      const read = (selector: string) => {
+        const el = document.querySelector(selector) as HTMLElement | null
+        if (!el) return null
+        const probe = document.createElement('div')
+        probe.className = selector.slice(1).split(',')[0] + ' toned'
+        document.body.append(probe)
+        const bg = getComputedStyle(probe).backgroundColor
+        probe.remove()
+        return { rendered: getComputedStyle(el).backgroundColor, token: bg }
+      }
+      return { iris: read('.tone--iris'), apricot: read('.tone--apricot') }
+    })
+
+    for (const [tone, chip] of Object.entries(chips)) {
+      expect(chip, `chip ${tone} absent`).not.toBeNull()
+      expect(chip!.rendered, `chip ${tone} : la teinte du catalogue doit peindre le fond`).toBe(chip!.token)
+    }
+    await close()
+  })
+})

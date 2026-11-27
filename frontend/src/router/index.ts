@@ -15,7 +15,7 @@ const AssemblyDetailView      = () => import('@/features/assemblies/AssemblyDeta
 const BudgetView              = () => import('@/features/budget/BudgetView.vue')
 const DocumentsView           = () => import('@/features/documents/DocumentsView.vue')
 const TasksView               = () => import('@/features/tasks/TasksView.vue')
-const TaskDetailView          = () => import('@/features/tasks/TaskDetailView.vue')
+const TaskTimelineView         = () => import('@/features/tasks/TaskTimelineView.vue')
 const ContractsView           = () => import('@/features/contracts/ContractsView.vue')
 const ContractDetailView      = () => import('@/features/contracts/ContractDetailView.vue')
 const ContractorsView         = () => import('@/features/contractors/ContractorsView.vue')
@@ -25,6 +25,7 @@ const MaintenanceView         = () => import('@/features/maintenance/Maintenance
 const CalendarView            = () => import('@/features/calendar/CalendarView.vue')
 const ConsultationsView       = () => import('@/features/consultations/ConsultationsView.vue')
 const ReportsView             = () => import('@/features/reports/ReportsView.vue')
+const ReportDetailView        = () => import('@/features/reports/ReportDetailView.vue')
 const ResidentsView           = () => import('@/features/residents/ResidentsView.vue')
 const RegistryView            = () => import('@/features/residents/RegistryView.vue')
 const JudicialProceedingsView = () => import('@/features/registers/JudicialProceedingsView.vue')
@@ -108,7 +109,7 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'tasks/:id',
         name: 'task-detail',
-        component: TaskDetailView,
+        component: TaskTimelineView,
         meta: { title: 'nav.tasks', roles: [...MANAGER_ROLES] },
       },
       {
@@ -163,6 +164,12 @@ const routes: RouteRecordRaw[] = [
         path: 'reports',
         name: 'reports',
         component: ReportsView,
+        meta: { title: 'nav.reports', roles: [] },
+      },
+      {
+        path: 'reports/:id',
+        name: 'report-detail',
+        component: ReportDetailView,
         meta: { title: 'nav.reports', roles: [] },
       },
       {

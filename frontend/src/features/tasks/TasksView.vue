@@ -38,6 +38,7 @@ import ReopenTaskModal from './ReopenTaskModal.vue'
 import { contractorsApi, documentsApi, tasksApi, usersApi } from '@/api'
 import { useBuildingStore } from '@/stores/building'
 import { usePermissions } from '@/composables/usePermissions'
+import { taskPriorityVariant, taskStatusVariant } from '@/composables/useStatusLabels'
 import { useConfirm } from '@/composables/useConfirm'
 import type {Contractor, Document, Task, TaskListFilters, TaskStatus, User} from '@/types/domain'
 import { ALL_FILTER, TAKE_BACK_TASK_STATUSES, TASK_PRIORITY_HIGH, TASK_PRIORITY_LOW, TASK_PRIORITY_NORMAL, TASK_PRIORITY_URGENT, TASK_STATUS_AWAITING_QUOTE, TASK_STATUS_AWAITING_VALIDATION, TASK_STATUS_AWAITING_VENDOR, TASK_STATUS_CANCELLED, TASK_STATUS_CLOSED, TASK_STATUS_IN_PROGRESS, TASK_STATUS_OPEN, TASK_STATUS_QUOTE_RECEIVED } from '@/utils/constants'
@@ -212,16 +213,6 @@ function isTerminal(status: string): boolean {
   return status === TASK_STATUS_CLOSED || status === TASK_STATUS_CANCELLED
 }
 
-function statusVariant(s: string): 'valid' | 'open' | 'pending' | 'closed' | 'default' {
-  if (s === TASK_STATUS_OPEN) return 'valid'
-  if (s === TASK_STATUS_IN_PROGRESS) return 'open'
-  if (s === TASK_STATUS_AWAITING_QUOTE || s === TASK_STATUS_QUOTE_RECEIVED) return 'pending'
-  if (s === TASK_STATUS_AWAITING_VENDOR) return 'default'
-  if (s === TASK_STATUS_AWAITING_VALIDATION) return 'pending'
-  if (s === TASK_STATUS_CLOSED) return 'closed'
-  return 'default'
-}
-
 function isInQuotePhase(status: string): boolean {
   return (TAKE_BACK_TASK_STATUSES as readonly string[]).includes(status)
 }
@@ -230,14 +221,6 @@ function closeActionLabel(task: Task): string {
   return task.status === TASK_STATUS_AWAITING_VALIDATION
     ? t('tasks.validateTask')
     : t('tasks.closeTask')
-}
-
-function priorityVariant(p: string): 'err' | 'pending' | 'primary' | 'valid' | 'default' {
-  if (p === TASK_PRIORITY_URGENT) return 'err'
-  if (p === TASK_PRIORITY_HIGH) return 'pending'
-  if (p === TASK_PRIORITY_NORMAL) return 'primary'
-  if (p === TASK_PRIORITY_LOW) return 'valid'
-  return 'default'
 }
 
 function contractorDisplayName(task: Task): string | undefined {
@@ -574,11 +557,11 @@ async function downloadTaskDocument(documentId: string) {
                   {{ task.title }}
                 </h3>
                 <CMetaLine class="flex-1 justify-end text-xs">
-                  <CBadge :variant="isTerminal(task.status) ? 'disabled' : priorityVariant(task.priority)">
+                  <CBadge :variant="isTerminal(task.status) ? 'disabled' : taskPriorityVariant(task.priority)">
                     {{ t(`tasks.priorities.${task.priority}`) }}
                   </CBadge>
                   <CBadge
-                    :variant="isTerminal(task.status) ? 'disabled' : statusVariant(task.status)"
+                    :variant="isTerminal(task.status) ? 'disabled' : taskStatusVariant(task.status)"
                     dot
                   >
                     {{ t(`tasks.statuses.${task.status}`) }}

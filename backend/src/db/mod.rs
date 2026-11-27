@@ -1,4 +1,5 @@
 pub mod accounting_code;
+pub mod activity_log;
 pub mod allocation_key;
 pub mod assembly;
 pub mod audit;

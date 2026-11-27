@@ -10,10 +10,15 @@
 --   • 3 contracts : all contract statuses covered
 --   • 4 contractors
 --   • 6 tasks     : all task statuses covered
---   • 3 reports   : all report statuses covered
+--   • 4 reports   : all report statuses covered + one anonymous
+--   • 18 activity_log events : report/task lifecycle feed (created, status_changed,
+--     converted_to_task, assignee/contractor/vendor-link events, closed, cancelled)
 --   • 3 claims    : all claim statuses covered
 --   • 4 assemblies: draft, called, closed, ongoing
 --   • 2 consults  : open + closed with seeded choices/responses
+--   • 7 documents : founding categories + role visibility
+--   • 3 proceedings: ongoing, suspended, closed
+--   • 3 état daté : requested, generated, sent
 --   • 3 mandates : syndic + conseil syndical (président, membre)
 --
 -- All accounts share the same password: Demo1234!
@@ -35,10 +40,14 @@ TRUNCATE TABLE
     task,
     contract_document, contract_reminder, vendor_contract,
     claim_document, claim,
+    etat_date_request,
+    judicial_proceeding,
+    document,
     vote, resolution, general_meeting,
     levy_call_unit, levy_call_line, levy_call, budget_line, budget, works_fund,
     consultation_response_choice, consultation_response, consultation_choice, consultation,
     contractor,
+    activity_log,
     unit_allocation_key,
     allocation_key,
     unit_owner,
@@ -786,7 +795,8 @@ ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================
 -- 11. REPORTS
--- One fixture per report status: open, in_progress, closed.
+-- One fixture per report status: open, in_progress, closed —
+-- plus one anonymous report covering the masked-identity state.
 -- ============================================================
 INSERT INTO report (
     id,
@@ -797,6 +807,7 @@ INSERT INTO report (
     description,
     status,
     task_id,
+    is_anonymous,
     created_at,
     updated_at
 )
@@ -810,6 +821,7 @@ VALUES
         'The entrance light turns on too late at night and leaves the hall dark for several seconds.',
         'open',
         NULL,
+        FALSE,
         NOW() - INTERVAL '4 days',
         NOW() - INTERVAL '4 days'
     ),
@@ -822,6 +834,7 @@ VALUES
         'The issue was converted into a task and is being handled by the plumbing contractor.',
         'in_progress',
         '00000000-0000-0000-0000-000000000602',
+        FALSE,
         NOW() - INTERVAL '11 days',
         NOW() - INTERVAL '1 day'
     ),
@@ -834,13 +847,74 @@ VALUES
         'The leak was reported after a storm and is now resolved after the roofing intervention.',
         'closed',
         '00000000-0000-0000-0000-000000000605',
+        FALSE,
         NOW() - INTERVAL '27 days',
         NOW() - INTERVAL '5 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000704',
+        '00000000-0000-0000-0000-000000000001',
+        NULL,
+        '00000000-0000-0000-0000-000000000209',
+        'Water leak under the common room sink',
+        'The tap drips constantly; the cabinet floor is soaked. Reported anonymously.',
+        'open',
+        NULL,
+        TRUE,
+        NOW() - INTERVAL '2 days',
+        NOW() - INTERVAL '2 days'
     )
 ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================
--- 12. CLAIMS
+-- 12. ACTIVITY LOG
+-- Illustrative lifecycle feed matching the seeded reports/tasks:
+-- each chain reconstructs the transitions that led to the
+-- current status of its entity (payload shapes mirror the
+-- repository emission code).
+-- ============================================================
+INSERT INTO activity_log (id, building_id, entity_type, entity_id, action, actor_id, payload, created_at)
+VALUES
+    -- Report 701 (open): created, untouched since.
+    ('00000000-0000-0000-0000-000000000801', '00000000-0000-0000-0000-000000000001', 'report', '00000000-0000-0000-0000-000000000701', 'created', '00000000-0000-0000-0000-000000000209', NULL, NOW() - INTERVAL '4 days'),
+    -- Report 702 (in_progress) -> task 602: created then converted.
+    ('00000000-0000-0000-0000-000000000802', '00000000-0000-0000-0000-000000000001', 'report', '00000000-0000-0000-0000-000000000702', 'created', '00000000-0000-0000-0000-000000000205', NULL, NOW() - INTERVAL '11 days'),
+    ('00000000-0000-0000-0000-000000000803', '00000000-0000-0000-0000-000000000001', 'report', '00000000-0000-0000-0000-000000000702', 'converted_to_task', '00000000-0000-0000-0000-000000000201', '{"task_id": "00000000-0000-0000-0000-000000000602"}', NOW() - INTERVAL '10 days'),
+    -- Report 703 (closed) -> task 605: created, converted, closed with the task.
+    ('00000000-0000-0000-0000-000000000804', '00000000-0000-0000-0000-000000000001', 'report', '00000000-0000-0000-0000-000000000703', 'created', '00000000-0000-0000-0000-000000000204', NULL, NOW() - INTERVAL '27 days'),
+    ('00000000-0000-0000-0000-000000000805', '00000000-0000-0000-0000-000000000001', 'report', '00000000-0000-0000-0000-000000000703', 'converted_to_task', '00000000-0000-0000-0000-000000000201', '{"task_id": "00000000-0000-0000-0000-000000000605"}', NOW() - INTERVAL '25 days'),
+    ('00000000-0000-0000-0000-000000000806', '00000000-0000-0000-0000-000000000001', 'report', '00000000-0000-0000-0000-000000000703', 'status_changed', '00000000-0000-0000-0000-000000000201', '{"old_status": "open", "new_status": "closed"}', NOW() - INTERVAL '5 days'),
+    -- Report 704 (open, anonymous): created by the reporter, nothing else.
+    ('00000000-0000-0000-0000-000000000807', '00000000-0000-0000-0000-000000000001', 'report', '00000000-0000-0000-0000-000000000704', 'created', '00000000-0000-0000-0000-000000000209', NULL, NOW() - INTERVAL '2 days'),
+    -- Task 601 (open): created, assignee picked.
+    ('00000000-0000-0000-0000-000000000808', '00000000-0000-0000-0000-000000000001', 'task', '00000000-0000-0000-0000-000000000601', 'created', '00000000-0000-0000-0000-000000000201', NULL, NOW() - INTERVAL '14 days'),
+    ('00000000-0000-0000-0000-000000000809', '00000000-0000-0000-0000-000000000001', 'task', '00000000-0000-0000-0000-000000000601', 'assignee_changed', '00000000-0000-0000-0000-000000000201', '{"old_assignee_id": null, "new_assignee_id": "00000000-0000-0000-0000-000000000202"}', NOW() - INTERVAL '13 days'),
+    -- Task 602 (in_progress): contractor called in, work started.
+    ('00000000-0000-0000-0000-000000000810', '00000000-0000-0000-0000-000000000001', 'task', '00000000-0000-0000-0000-000000000602', 'created', '00000000-0000-0000-0000-000000000202', NULL, NOW() - INTERVAL '10 days'),
+    ('00000000-0000-0000-0000-000000000811', '00000000-0000-0000-0000-000000000001', 'task', '00000000-0000-0000-0000-000000000602', 'contractor_assigned', '00000000-0000-0000-0000-000000000201', '{"contractor_id": "00000000-0000-0000-0000-000000000502", "contractor_name": "Hydro Services Lyon"}', NOW() - INTERVAL '9 days'),
+    ('00000000-0000-0000-0000-000000000812', '00000000-0000-0000-0000-000000000001', 'task', '00000000-0000-0000-0000-000000000602', 'status_changed', '00000000-0000-0000-0000-000000000201', '{"old_status": "open", "new_status": "in_progress"}', NOW() - INTERVAL '1 day'),
+    -- Task 603 (awaiting_vendor): vendor link generated, no raw token in payload.
+    ('00000000-0000-0000-0000-000000000813', '00000000-0000-0000-0000-000000000001', 'task', '00000000-0000-0000-0000-000000000603', 'created', '00000000-0000-0000-0000-000000000201', NULL, NOW() - INTERVAL '7 days'),
+    ('00000000-0000-0000-0000-000000000814', '00000000-0000-0000-0000-000000000001', 'task', '00000000-0000-0000-0000-000000000603', 'contractor_assigned', '00000000-0000-0000-0000-000000000201', '{"contractor_id": "00000000-0000-0000-0000-000000000503", "contractor_name": "Serrurerie du Parc"}', NOW() - INTERVAL '6 days'),
+    ('00000000-0000-0000-0000-000000000815', '00000000-0000-0000-0000-000000000001', 'task', '00000000-0000-0000-0000-000000000603', 'vendor_link_generated', '00000000-0000-0000-0000-000000000201', jsonb_build_object('expires_at', NOW() + INTERVAL '5 days'), NOW() - INTERVAL '6 hours'),
+    ('00000000-0000-0000-0000-000000000816', '00000000-0000-0000-0000-000000000001', 'task', '00000000-0000-0000-0000-000000000603', 'status_changed', '00000000-0000-0000-0000-000000000201', '{"old_status": "open", "new_status": "awaiting_vendor"}', NOW() - INTERVAL '6 hours'),
+    -- Task 604 (awaiting_validation): work done by the assignee.
+    ('00000000-0000-0000-0000-000000000817', '00000000-0000-0000-0000-000000000001', 'task', '00000000-0000-0000-0000-000000000604', 'created', '00000000-0000-0000-0000-000000000202', NULL, NOW() - INTERVAL '9 days'),
+    ('00000000-0000-0000-0000-000000000818', '00000000-0000-0000-0000-000000000001', 'task', '00000000-0000-0000-0000-000000000604', 'status_changed', '00000000-0000-0000-0000-000000000202', '{"old_status": "open", "new_status": "in_progress"}', NOW() - INTERVAL '8 days'),
+    ('00000000-0000-0000-0000-000000000819', '00000000-0000-0000-0000-000000000001', 'task', '00000000-0000-0000-0000-000000000604', 'status_changed', '00000000-0000-0000-0000-000000000201', '{"old_status": "in_progress", "new_status": "awaiting_validation"}', NOW() - INTERVAL '12 hours'),
+    -- Task 605 (closed): vendor submitted, manager closed it (closes report 703 too).
+    ('00000000-0000-0000-0000-000000000820', '00000000-0000-0000-0000-000000000001', 'task', '00000000-0000-0000-0000-000000000605', 'created', '00000000-0000-0000-0000-000000000201', NULL, NOW() - INTERVAL '25 days'),
+    ('00000000-0000-0000-0000-000000000821', '00000000-0000-0000-0000-000000000001', 'task', '00000000-0000-0000-0000-000000000605', 'contractor_assigned', '00000000-0000-0000-0000-000000000201', '{"contractor_id": "00000000-0000-0000-0000-000000000504", "contractor_name": "Toitures Lyonnaises"}', NOW() - INTERVAL '24 days'),
+    ('00000000-0000-0000-0000-000000000822', '00000000-0000-0000-0000-000000000001', 'task', '00000000-0000-0000-0000-000000000605', 'status_changed', '00000000-0000-0000-0000-000000000201', '{"old_status": "open", "new_status": "in_progress"}', NOW() - INTERVAL '20 days'),
+    ('00000000-0000-0000-0000-000000000823', '00000000-0000-0000-0000-000000000001', 'task', '00000000-0000-0000-0000-000000000605', 'status_changed', NULL, '{"old_status": "in_progress", "new_status": "awaiting_validation"}', NOW() - INTERVAL '6 days'),
+    ('00000000-0000-0000-0000-000000000824', '00000000-0000-0000-0000-000000000001', 'task', '00000000-0000-0000-0000-000000000605', 'closed', '00000000-0000-0000-0000-000000000202', '{"old_status": "awaiting_validation"}', NOW() - INTERVAL '5 days'),
+    -- Task 606 (cancelled): requested then abandoned.
+    ('00000000-0000-0000-0000-000000000825', '00000000-0000-0000-0000-000000000001', 'task', '00000000-0000-0000-0000-000000000606', 'created', '00000000-0000-0000-0000-000000000201', NULL, NOW() - INTERVAL '12 days'),
+    ('00000000-0000-0000-0000-000000000826', '00000000-0000-0000-0000-000000000001', 'task', '00000000-0000-0000-0000-000000000606', 'status_changed', '00000000-0000-0000-0000-000000000201', '{"old_status": "open", "new_status": "cancelled"}', NOW() - INTERVAL '9 hours')
+ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================
+-- 13. CLAIMS
 -- One fixture per claim status: open, in_progress, closed.
 -- ============================================================
 INSERT INTO claim (
@@ -915,7 +989,7 @@ VALUES
 ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================
--- 13. ASSEMBLIES (GENERAL MEETINGS)
+-- 14. ASSEMBLIES (GENERAL MEETINGS)
 -- - annual draft: created, not convoked, no agenda, no resolutions
 -- - extraordinary called: convoked with multi-line agenda and resolutions, no votes yet
 -- - annual closed: convoked, closed, with multi-line agenda, attendance and votes
@@ -1781,8 +1855,11 @@ ON CONFLICT (id) DO NOTHING;
         ('00000000-0000-0000-0000-000000000936', '00000000-0000-0000-0000-000000000923')
     ON CONFLICT DO NOTHING;
 
+
 -- ============================================================
--- Documents (EP-005-S11 — inline PDF viewer)
+-- 15. DOCUMENTS
+-- One fixture per founding category and visibility level; files are
+-- metadata-only (no S3 object behind them in the demo instance).
 -- ============================================================
 INSERT INTO document (
     id,
@@ -1793,25 +1870,245 @@ INSERT INTO document (
     mime_type,
     size_bytes,
     visible_to_roles,
+    uploaded_by,
     category,
-    extraction_status,
+    is_current,
     created_at
 )
-VALUES (
-    '00000000-0000-0000-0000-000000000861',
-    '00000000-0000-0000-0000-000000000001',
-    'pv-ag-2026-10-08.pdf',
-    'meetings/853/pv-ag-2026-10-08.pdf',
-    'laruche-demo',
-    'application/pdf',
-    1210,
-    '{manager,board_member,co_owner,tenant}',
-    'pv_ag',
-    'pending',
-    NOW() - INTERVAL '60 days'
-)
-ON CONFLICT DO NOTHING;
+VALUES
+    (
+        '00000000-0000-0000-0000-000000000901',
+        '00000000-0000-0000-0000-000000000001',
+        'reglement-copropriete-les-cerisiers.pdf',
+        '00000000-0000-0000-0000-000000000901.pdf',
+        'laruche-00000000000000000000000000000001',
+        'application/pdf',
+        2450000,
+        ARRAY['manager', 'board_member', 'co_owner', 'tenant']::user_role[],
+        '00000000-0000-0000-0000-000000000201',
+        'reglement_copropriete',
+        TRUE,
+        NOW() - INTERVAL '400 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000902',
+        '00000000-0000-0000-0000-000000000001',
+        'etat-descriptif-de-division.pdf',
+        '00000000-0000-0000-0000-000000000902.pdf',
+        'laruche-00000000000000000000000000000001',
+        'application/pdf',
+        1820000,
+        ARRAY['manager', 'board_member']::user_role[],
+        '00000000-0000-0000-0000-000000000201',
+        'edd',
+        TRUE,
+        NOW() - INTERVAL '380 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000903',
+        '00000000-0000-0000-0000-000000000001',
+        'pv-ag-annuelle-2025.pdf',
+        '00000000-0000-0000-0000-000000000903.pdf',
+        'laruche-00000000000000000000000000000001',
+        'application/pdf',
+        640000,
+        ARRAY['manager', 'board_member', 'co_owner', 'tenant']::user_role[],
+        '00000000-0000-0000-0000-000000000201',
+        'pv_ag',
+        TRUE,
+        NOW() - INTERVAL '340 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000904',
+        '00000000-0000-0000-0000-000000000001',
+        'budget-previsionnel-2026.pdf',
+        '00000000-0000-0000-0000-000000000904.pdf',
+        'laruche-00000000000000000000000000000001',
+        'application/pdf',
+        410000,
+        ARRAY['manager', 'board_member', 'co_owner']::user_role[],
+        '00000000-0000-0000-0000-000000000202',
+        'budget',
+        TRUE,
+        NOW() - INTERVAL '120 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000905',
+        '00000000-0000-0000-0000-000000000001',
+        'contrat-entretien-ascenseur-alpha.pdf',
+        '00000000-0000-0000-0000-000000000905.pdf',
+        'laruche-00000000000000000000000000000001',
+        'application/pdf',
+        320000,
+        ARRAY['manager', 'board_member']::user_role[],
+        '00000000-0000-0000-0000-000000000201',
+        'contrat',
+        TRUE,
+        NOW() - INTERVAL '95 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000906',
+        '00000000-0000-0000-0000-000000000001',
+        'diagnostic-amiante-parties-communes.pdf',
+        '00000000-0000-0000-0000-000000000906.pdf',
+        'laruche-00000000000000000000000000000001',
+        'application/pdf',
+        980000,
+        ARRAY['manager', 'board_member', 'co_owner', 'tenant']::user_role[],
+        '00000000-0000-0000-0000-000000000201',
+        'diagnostic',
+        TRUE,
+        NOW() - INTERVAL '60 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000907',
+        '00000000-0000-0000-0000-000000000001',
+        'facture-toitures-lyonnaises-mars.pdf',
+        '00000000-0000-0000-0000-000000000907.pdf',
+        'laruche-00000000000000000000000000000001',
+        'application/pdf',
+        185000,
+        ARRAY['manager', 'board_member']::user_role[],
+        '00000000-0000-0000-0000-000000000201',
+        'comptabilite',
+        TRUE,
+        NOW() - INTERVAL '18 days'
+    )
+ON CONFLICT (id) DO NOTHING;
 
+-- ============================================================
+-- 16. JUDICIAL PROCEEDINGS
+-- One fixture per status: ongoing, suspended, closed.
+-- ============================================================
+INSERT INTO judicial_proceeding (
+    id,
+    building_id,
+    proceeding_type,
+    status,
+    subject,
+    claimant,
+    defendant,
+    jurisdiction,
+    case_reference,
+    opened_at,
+    closed_at,
+    outcome,
+    created_by,
+    created_at,
+    updated_at
+)
+VALUES
+    (
+        '00000000-0000-0000-0000-000000000911',
+        '00000000-0000-0000-0000-000000000001',
+        'debt_recovery',
+        'ongoing',
+        'Unpaid levy calls — lots 6 and 7 (2024-2025)',
+        'Syndicat des copropriétaires Les Cerisiers',
+        'M. et Mme Girard',
+        'Tribunal judiciaire de Lyon',
+        'RG 25/00412',
+        CURRENT_DATE - 120,
+        NULL,
+        NULL,
+        '00000000-0000-0000-0000-000000000201',
+        NOW() - INTERVAL '120 days',
+        NOW() - INTERVAL '4 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000912',
+        '00000000-0000-0000-0000-000000000001',
+        'works_dispute',
+        'suspended',
+        'Roofing works — disputed completion and water ingress',
+        'Syndicat des copropriétaires Les Cerisiers',
+        'Toitures Lyonnaises SAS',
+        'Tribunal judiciaire de Lyon',
+        'RG 24/01977',
+        CURRENT_DATE - 260,
+        NULL,
+        NULL,
+        '00000000-0000-0000-0000-000000000201',
+        NOW() - INTERVAL '260 days',
+        NOW() - INTERVAL '30 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000913',
+        '00000000-0000-0000-0000-000000000001',
+        'liability',
+        'closed',
+        'Water damage following a riser leak — neighbour liability',
+        'Mme Lefebvre (lot 2)',
+        'Syndicat des copropriétaires Les Cerisiers',
+        'Tribunal judiciaire de Lyon',
+        'RG 24/00631',
+        CURRENT_DATE - 400,
+        CURRENT_DATE - 30,
+        'Settled amicably before the hearing; claim withdrawn, insurer covered the repairs.',
+        '00000000-0000-0000-0000-000000000201',
+        NOW() - INTERVAL '400 days',
+        NOW() - INTERVAL '30 days'
+    )
+ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================
+-- 17. ÉTAT DATÉ REQUESTS
+-- One fixture per status: requested, generated, sent.
+-- ============================================================
+INSERT INTO etat_date_request (
+    id,
+    unit_id,
+    requested_at,
+    due_date,
+    requester_name,
+    status,
+    snapshot,
+    generated_at,
+    created_by,
+    created_at
+)
+VALUES
+    (
+        '00000000-0000-0000-0000-000000000921',
+        '00000000-0000-0000-0000-000000000101',
+        CURRENT_DATE - 3,
+        CURRENT_DATE + 12,
+        'Me Claire Dupont — Étude notariale Lyon 6e',
+        'requested',
+        NULL,
+        NULL,
+        '00000000-0000-0000-0000-000000000201',
+        NOW() - INTERVAL '3 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000922',
+        '00000000-0000-0000-0000-000000000102',
+        CURRENT_DATE - 20,
+        CURRENT_DATE - 5,
+        'Me Paul Bernard — Notaire, Villeurbanne',
+        'generated',
+        '{"unit_number": "2", "shares_total": 900, "building": "Résidence Les Cerisiers", "source": "demo"}'::jsonb,
+        NOW() - INTERVAL '6 days',
+        '00000000-0000-0000-0000-000000000201',
+        NOW() - INTERVAL '20 days'
+    ),
+    (
+        '00000000-0000-0000-0000-000000000923',
+        '00000000-0000-0000-0000-000000000103',
+        CURRENT_DATE - 45,
+        CURRENT_DATE - 30,
+        'Me Claire Dupont — Étude notariale Lyon 6e',
+        'sent',
+        '{"unit_number": "3", "shares_total": 950, "building": "Résidence Les Cerisiers", "source": "demo"}'::jsonb,
+        NOW() - INTERVAL '35 days',
+        '00000000-0000-0000-0000-000000000201',
+        NOW() - INTERVAL '45 days'
+    )
+ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================
+-- Meeting document link (EP-005-S11)
+-- ============================================================
 INSERT INTO general_meeting_document (
     meeting_id,
     document_id,
@@ -1819,7 +2116,7 @@ INSERT INTO general_meeting_document (
 )
 VALUES (
     '00000000-0000-0000-0000-000000000853',
-    '00000000-0000-0000-0000-000000000861',
+    '00000000-0000-0000-0000-000000000903',
     'attachment'
 )
 ON CONFLICT DO NOTHING;
@@ -1844,11 +2141,14 @@ ON CONFLICT DO NOTHING;
 -- Reminders     | 4 fixtures                         | pending, sent, acknowledged
 -- Contractors   | 4 referential entries              | maintenance, water, service, other
 -- Tasks         | 6 fixtures                         | open, in_progress, awaiting_vendor, awaiting_validation, closed, cancelled
--- Reports       | 3 fixtures                         | open, in_progress, closed
+-- Reports       | 4 fixtures                         | open, in_progress, closed + one anonymous (masked identity)
+-- Activity log  | 26 fixtures                        | report/task lifecycle feed (created, status_changed, converted_to_task, assignee/contractor/vendor-link, closed, cancelled)
 -- Claims        | 3 fixtures                         | open, in_progress, closed
 -- Assemblies    | 4 fixtures                         | draft (empty), called (multi-line agenda + pending resolutions), closed (multi-line agenda + mixed attendance + votes, incl. art. 25 and art. 26 cases), ongoing (extraordinary — art. 24 ✓/✗, art. 25 ✓/✗ with art. 25-1 eligible case)
 -- Consultations | 2 fixtures                         | open, closed (+ choices & responses)
+-- Documents     | 7 fixtures                         | one per founding category + visibility level
+-- Judicial      | 3 fixtures                         | ongoing, suspended, closed
+-- État daté     | 3 fixtures                         | requested, generated, sent
 -- Mandates      | 3 fixtures                         | syndic, council_president, council_member (ouverts)
--- Documents     | 1 fixture                          | PDF pv_ag attache a l'AG close 853 (viewer inline EP-005-S11)
 --
 -- Password (all accounts): Demo1234!

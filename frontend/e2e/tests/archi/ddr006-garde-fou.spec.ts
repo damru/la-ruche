@@ -41,3 +41,28 @@ test('CFormFeedback est bien encapsulé dans CFormActions', () => {
   const actions = path.join(SRC, 'components/molecules/CFormActions.vue')
   expect(fs.readFileSync(actions, 'utf8')).toContain('<CFormFeedback')
 })
+
+/**
+ * base.css paints every anchor with the link colour outside any layer, so a
+ * heading link only keeps the heading colour with an explicit text utility.
+ * Contrast tests cannot catch it (the link colour passes AA).
+ */
+test('un lien dans un titre porte une couleur de texte explicite', () => {
+  const offenders: string[] = []
+  for (const file of listVueFiles(SRC)) {
+    const rel = path.relative(SRC, file)
+    const source = fs.readFileSync(file, 'utf8')
+    if (!source.includes('RouterLink') && !source.includes('<a')) continue
+    for (const heading of source.matchAll(/<h[1-6]\b[\s\S]*?<\/h[1-6]>/g)) {
+      for (const tag of heading[0].matchAll(/<(RouterLink|a)\b[^>]*>/g)) {
+        const classAttr = tag[0].match(/(?::?class)="([^"]*)"/)
+        const hasColour = classAttr ? /\b!?text-[a-z-]+\b/.test(classAttr[1]) : false
+        if (!hasColour) {
+          const line = source.slice(0, heading.index).split('\n').length
+          offenders.push(`${rel}:${line} — ${tag[0].replace(/\s+/g, ' ').slice(0, 80)}`)
+        }
+      }
+    }
+  }
+  expect(offenders, `liens de titre sans couleur explicite :\n${offenders.join('\n')}`).toEqual([])
+})
