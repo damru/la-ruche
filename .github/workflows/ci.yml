@@ -18,8 +18,8 @@ env:
   RUST_BACKTRACE: 1
   SQLX_ARTIFACT_NAME: sqlx-offline-metadata
   BACKEND_BIN_ARTIFACT_NAME: laruche-backend-bin
-  FRONTEND_DIST_ARTIFACT_NAME: laruche-frontend-dist
   SQLX_CLI_VERSION: 0.8.6
+  BUILD_CACHE_IMAGE: ${{ vars.DOCKERHUB_USERNAME }}/${{ vars.DOCKERHUB_PROJECT }}:buildcache
 
 jobs:
   changes:
@@ -188,8 +188,7 @@ jobs:
     # Skipped on a BOT captures-only push (nothing consumes the artifact —
     # the captures job skips on bot pushes).
     if: ((needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend_app == 'true' || needs.changes.outputs.ci_workflow == 'true') && !(github.actor == 'github-actions[bot]' && needs.changes.outputs.captures_only == 'true')) || (needs.changes.outputs.captures_only == 'true' && github.actor != 'github-actions[bot]')
-    # glibc 2.39 < the runtime image's 2.41: the artifact must run in debian:trixie.
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./backend
@@ -218,7 +217,7 @@ jobs:
       - name: Cache Cargo
         uses: Swatinem/rust-cache@v2
         with:
-          shared-key: backend-release-2404
+          shared-key: backend-release
           workspaces: |
             backend -> target
 
@@ -254,7 +253,7 @@ jobs:
         uses: actions/cache@v6
         with:
           path: backend/target/release/laruche
-          key: laruche-bin-${{ runner.os }}-glibc239-${{ hashFiles('backend/src/**', 'backend/migrations/**', 'backend/seeds/**', 'backend/assets/**', 'backend/Cargo.toml', 'backend/Cargo.lock', 'NOTICE') }}
+          key: laruche-bin-${{ runner.os }}-${{ hashFiles('backend/src/**', 'backend/migrations/**', 'backend/seeds/**', 'backend/assets/**', 'backend/Cargo.toml', 'backend/Cargo.lock', 'NOTICE') }}
 
       - name: Build backend (release, SQLx offline)
         if: steps.backend-bin.outputs.cache-hit != 'true'
@@ -308,17 +307,6 @@ jobs:
 
       - name: Lint
         run: npm run lint
-
-      - name: Build bundle
-        run: npm run build
-
-      - name: Upload frontend bundle
-        uses: actions/upload-artifact@v7
-        with:
-          name: ${{ env.FRONTEND_DIST_ARTIFACT_NAME }}
-          path: frontend/dist
-          if-no-files-found: error
-          retention-days: 1
 
       - name: Build
         run: npm run build
@@ -443,31 +431,77 @@ jobs:
           retention-days: 7
 
   # ── Docker build + push ────────────────────────────────────────
-  docker:
-    name: Docker — build + push
-    needs: [changes, test-backend, test-frontend, build-backend]
-    # Docker image only feeds on backend or frontend changes; captures-only
-    # pushes never change the image.
+  docker-build:
+    name: Docker — build
+    needs: [changes, build-backend]
+    # Runs in parallel with the test jobs; the image only ships from
+    # docker-push once every test job is green.
     if: always() && !failure() && !cancelled() && (needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend_app == 'true' || needs.changes.outputs.ci_workflow == 'true') && needs.changes.outputs.captures_only != 'true'
-    # runs-on: ${{ github.actor == github.repository_owner && 'large' || 'ubuntu-latest' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
 
-      - name: Download backend binary
+      - name: Download SQLx offline files
         uses: actions/download-artifact@v8
         with:
-          name: ${{ env.BACKEND_BIN_ARTIFACT_NAME }}
-          path: docker-artifacts/
+          name: ${{ env.SQLX_ARTIFACT_NAME }}
+          path: backend/.sqlx/
 
-      - name: Download frontend bundle
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      # Registry cache: dedicated storage, no GHA budget, shared by every PR
+      # (no branch scoping), and the handoff to the publish job — exported on
+      # every event. The GHA cache stays on branch pushes only (10 GB budget).
+      - name: Resolve cache-to
+        id: cache
+        run: |
+          {
+            echo "to<<EOF"
+            echo "type=registry,ref=${{ env.BUILD_CACHE_IMAGE }},mode=max"
+            if [ "${{ github.event_name }}" != "pull_request" ]; then
+              echo "type=gha,mode=max,scope=docker-${{ github.ref_name }}"
+            fi
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v4
+        with:
+          registry: docker.io
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: false
+          cache-from: |
+            type=registry,ref=${{ env.BUILD_CACHE_IMAGE }}
+            type=gha,scope=docker-${{ github.ref_name }}
+            type=gha,scope=docker-main
+            type=gha,scope=docker-develop
+          cache-to: ${{ steps.cache.outputs.to }}
+          build-args: |
+            CARGO_PROFILE=release
+            SQLX_OFFLINE=true
+
+  docker-push:
+    name: Docker — publish
+    needs: [changes, docker-build, test-backend, test-frontend, e2e-frontend]
+    # Published only once every test job is green; skipped jobs (path filters)
+    # do not block it.
+    if: always() && !failure() && !cancelled() && needs.docker-build.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Download SQLx offline files
         uses: actions/download-artifact@v8
         with:
-          name: ${{ env.FRONTEND_DIST_ARTIFACT_NAME }}
-          path: frontend-artifacts/dist
-
-      - name: Make backend binary executable
-        run: chmod +x docker-artifacts/laruche
+          name: ${{ env.SQLX_ARTIFACT_NAME }}
+          path: backend/.sqlx/
 
       - name: Docker meta
         id: meta
@@ -477,6 +511,7 @@ jobs:
           tags: |
             type=ref,event=branch
             type=ref,event=branch,suffix=.{{date 'YYYYMMDDHHmmss'}}
+            type=ref,event=pr
             type=schedule,pattern=nightly
             type=schedule,pattern={{date 'YYYYMMDD'}}
             type=sha
@@ -484,39 +519,28 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
-      # Cache export only on branch pushes: per-PR scopes are never read again
-      # and waste the 10 GB GHA budget. Empty output on PRs disables cache-to.
-      - name: Resolve cache-to
-        id: cache
-        run: |
-          if [ "${{ github.event_name }}" != "pull_request" ]; then
-            echo "to=type=gha,mode=max,scope=docker-${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
-          fi
-
-      # Login and push only on branch pushes; PRs build without pushing to Docker Hub.
       - name: Login to Docker Hub
-        if: github.event_name != 'pull_request'
         uses: docker/login-action@v4
         with:
           registry: docker.io
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push
-        id: build
+      - name: Push from the build cache
         uses: docker/build-push-action@v7
         with:
           context: .
-          target: runtime-prebuilt
-          push: ${{ github.event_name != 'pull_request' }}
+          push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          # PRs read the main/develop caches instead of a cold ephemeral per-PR scope.
           cache-from: |
+            type=registry,ref=${{ env.BUILD_CACHE_IMAGE }}
             type=gha,scope=docker-${{ github.ref_name }}
             type=gha,scope=docker-main
             type=gha,scope=docker-develop
-          cache-to: ${{ steps.cache.outputs.to }}
+          build-args: |
+            CARGO_PROFILE=release
+            SQLX_OFFLINE=true
 
   # ── Captures visuelles (ex-visual-preview.yml) ─────────────────
   captures:
