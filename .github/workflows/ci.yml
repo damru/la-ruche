@@ -451,18 +451,19 @@ jobs:
         uses: docker/setup-buildx-action@v4
 
       # Registry cache: dedicated storage, no GHA budget, shared by every PR
-      # (no branch scoping). Written on branch pushes only.
+      # (no branch scoping), and the handoff to the publish job — exported on
+      # every event. The GHA cache stays on branch pushes only (10 GB budget).
       - name: Resolve cache-to
         id: cache
         run: |
-          if [ "${{ github.event_name }}" != "pull_request" ]; then
-            {
-              echo "to<<EOF"
-              echo "type=registry,ref=${{ env.BUILD_CACHE_IMAGE }},mode=max"
+          {
+            echo "to<<EOF"
+            echo "type=registry,ref=${{ env.BUILD_CACHE_IMAGE }},mode=max"
+            if [ "${{ github.event_name }}" != "pull_request" ]; then
               echo "type=gha,mode=max,scope=docker-${{ github.ref_name }}"
-              echo "EOF"
-            } >> "$GITHUB_OUTPUT"
-          fi
+            fi
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Login to Docker Hub
         uses: docker/login-action@v4
