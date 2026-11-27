@@ -537,7 +537,7 @@ border-color: var(--color-outline-light);
 |---|---|---|
 | `CCard` | `level?` (`1`\|`2`\|`3`\|`4`, défaut `2`), `shadow?`, `gap?` (`none` \| `sm` \| `md`) | Conteneur générique — définit background, border-radius, padding et flux interne. `level` couple padding et radius : 1 = padding lg + radius 3xl (carte racine), 2 = padding md + radius 2xl (défaut), 3 = padding sm + radius xl (carte imbriquée), 4 = padding xs + radius lg (carte innermost). `gap` : `sm` = 12px, `md` = 16px (défaut), `none` = 0. Pour les listes avec séparateurs : `CFlexGroup`. Ossature d'une carte d'entité : `CCardHeader` › titre › description › `CMetaLine` › `CCardActions` › `CCardNote`. |
 | `CCardActions` | — | ✅ Zone d'actions d'une carte — `flex flex-wrap gap-x-2 gap-y-1`. |
-| `CCardHeader` | `withIcon?` | 🔲 planifié (EP-020-S15) — En-tête de carte — slots `#icon`, `#chips` |
+| `CCardHeader` | `withIcon?` | ✅ — En-tête de carte d'entité — slots `#icon`, `#chips` (chips de statut/type toujours visibles, wrap autorisé) |
 | `CCardNote` | `note` | Encart d'information secondaire dans une `CCard` |
 | `CCopyField` | `value`, `label?`, `hint?`, `copyTitle?`, `copiedTitle?` | ✅ Champ lecture seule + bouton copier (presse-papiers). Gère son propre état « copié ». Remplace les blocs `invite-link-box`. |
 | `CDataTable` | `columns`, `rows` | Tableau de données |
