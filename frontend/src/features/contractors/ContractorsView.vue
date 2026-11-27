@@ -441,7 +441,7 @@ function openDeleteModal(c: Contractor) {
               </div>
               <CCardActions v-if="canEdit">
                 <CBtn
-                  variant="icon"
+                  variant="ghost"
                   :icon="CIconEdit"
                   :title="t('common.edit')"
                   :aria-label="`${t('common.edit')} ${c.name}`"
@@ -449,11 +449,10 @@ function openDeleteModal(c: Contractor) {
                   @click.stop="openEdit(c)"
                 />
                 <CBtn
-                  variant="icon"
+                  variant="danger"
                   :icon="CIconTrash"
                   :title="t('common.delete')"
                   :aria-label="`${t('common.delete')} ${c.name}`"
-                  class="tone--err"
                   shrink="sm"
                   @click.stop="openDeleteModal(c)"
                 />
