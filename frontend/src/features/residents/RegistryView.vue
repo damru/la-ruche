@@ -9,6 +9,7 @@ import CTopbar from '@/components/organisms/CTopbar.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CPageHeader from '@/components/molecules/CPageHeader.vue'
+import CTopbarBreadcrumb from '@/components/molecules/CTopbarBreadcrumb.vue'
 import { buildingApi } from '@/api'
 import { usePageLoader } from '@/composables/usePageLoader'
 import type { RegistryResponse, RegistryKey } from '@/types/domain'
@@ -93,11 +94,12 @@ const registryColumns = computed(() => {
   <div class="view-page">
     <CTopbar>
       <template #left>
-        <div class="topbar-breadcrumb">
-          {{ data?.building.name ?? '...' }}
-          <CIconChevronRight />
-          <span>{{ t('registry.title') }}</span>
-        </div>
+        <CTopbarBreadcrumb
+          :crumbs="[
+            { label: data?.building.name ?? '...' },
+            { label: t('registry.title') },
+          ]"
+        />
       </template>
     </CTopbar>
 

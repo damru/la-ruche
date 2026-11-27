@@ -17,6 +17,7 @@ import CIconMoon from '@/components/atoms/CIconMoon.svg'
 import CIconRefresh from '@/components/atoms/CIconRefresh.svg'
 import CIconSun from '@/components/atoms/CIconSun.svg'
 import CPageHeader from '@/components/molecules/CPageHeader.vue'
+import CTopbarBreadcrumb from '@/components/molecules/CTopbarBreadcrumb.vue'
 import { useAuthStore } from '@/stores/auth'
 import { usePermissions } from '@/composables/usePermissions'
 import { useUiStore, NOTIF_EVENTS, AUTO_CLOSE_DELAY_MIN_SEC, AUTO_CLOSE_DELAY_MAX_SEC } from '@/stores/ui'
@@ -187,9 +188,11 @@ const showResetDataModal = ref(false)
   <div class="view-page">
     <CTopbar>
       <template #left>
-        <div class="topbar-breadcrumb">
-          <span>{{ t('nav.account') }}</span>
-        </div>
+        <CTopbarBreadcrumb
+          :crumbs="[
+            { label: t('nav.account') },
+          ]"
+        />
       </template>
       <template #right>
         <CBtn

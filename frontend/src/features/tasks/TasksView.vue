@@ -29,6 +29,7 @@ import CIconEdit from '@/components/atoms/CIconEdit.svg'
 import CIconRefresh from '@/components/atoms/CIconRefresh.svg'
 import CIconCheckCircle from '@/components/atoms/CIconCheckCircle.svg'
 import CPageHeader from '@/components/molecules/CPageHeader.vue'
+import CTopbarBreadcrumb from '@/components/molecules/CTopbarBreadcrumb.vue'
 import SaveTaskModal from './SaveTaskModal.vue'
 import CloseTaskModal from './CloseTaskModal.vue'
 import DeleteTaskModal from './DeleteTaskModal.vue'
@@ -437,11 +438,12 @@ async function downloadTaskDocument(documentId: string) {
   <div class="view-page">
     <CTopbar>
       <template #left>
-        <div class="topbar-breadcrumb">
-          {{ buildingName }}
-          <CIconChevronRight />
-          <span>{{ t('nav.tasks') }}</span>
-        </div>
+        <CTopbarBreadcrumb
+          :crumbs="[
+            { label: buildingName || '…' },
+            { label: t('nav.tasks') },
+          ]"
+        />
       </template>
       <template #right>
         <CBtn

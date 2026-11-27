@@ -12,6 +12,7 @@ import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import CIconTrash from '@/components/atoms/CIconTrash.svg'
 import CIconDownload from '@/components/atoms/CIconDownload.svg'
 import CPageHeader from '@/components/molecules/CPageHeader.vue'
+import CTopbarBreadcrumb from '@/components/molecules/CTopbarBreadcrumb.vue'
 import { documentsApi } from '@/api'
 import { useBuildingStore } from '@/stores/building'
 import { usePageLoader } from '@/composables/usePageLoader'
@@ -96,11 +97,12 @@ function onDocumentDeleted(id: string) {
   <div class="view-page">
     <CTopbar>
       <template #left>
-        <div class="topbar-breadcrumb">
-          {{ buildingName || '...' }}
-          <CIconChevronRight />
-          <span>{{ t('common.documents') }}</span>
-        </div>
+        <CTopbarBreadcrumb
+          :crumbs="[
+            { label: buildingName || '…' },
+            { label: t('common.documents') },
+          ]"
+        />
       </template>
       <template #right>
         <CBtn

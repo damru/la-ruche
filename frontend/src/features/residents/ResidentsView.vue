@@ -18,6 +18,7 @@ import CIconRefresh from '@/components/atoms/CIconRefresh.svg'
 import CIconArrowRight from '@/components/atoms/CIconArrowRight.svg'
 import CIconShield from '@/components/atoms/CIconShield.svg'
 import CPageHeader from '@/components/molecules/CPageHeader.vue'
+import CTopbarBreadcrumb from '@/components/molecules/CTopbarBreadcrumb.vue'
 import InviteUserModal from './InviteUserModal.vue'
 import CreateResidentModal from './CreateResidentModal.vue'
 import SendInviteModal from './SendInviteModal.vue'
@@ -227,11 +228,12 @@ function openTransferModal(unit: Unit) {
   <div class="view-page">
     <CTopbar>
       <template #left>
-        <div class="topbar-breadcrumb">
-          {{ t('nav.residents') }}
-          <CIconChevronRight />
-          <span>{{ t('residents.title') }}</span>
-        </div>
+        <CTopbarBreadcrumb
+          :crumbs="[
+            { label: t('nav.residents') },
+            { label: t('residents.title') },
+          ]"
+        />
       </template>
       <template #right>
         <div class="flex gap-2">

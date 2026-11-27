@@ -26,6 +26,7 @@ import CIconUpload from '@/components/atoms/CIconUpload.svg'
 import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import CIconMessageSquare from '@/components/atoms/CIconMessageSquare.svg'
 import CPageHeader from '@/components/molecules/CPageHeader.vue'
+import CTopbarBreadcrumb from '@/components/molecules/CTopbarBreadcrumb.vue'
 import ClaimCreateModal from './ClaimCreateModal.vue'
 import ClaimEditModal from './ClaimEditModal.vue'
 import ClaimTransmitModal from './ClaimTransmitModal.vue'
@@ -349,11 +350,12 @@ function handleDocumentCountChanged(claimId: string, delta: number) {
   <div class="view-page">
     <CTopbar>
       <template #left>
-        <div class="topbar-breadcrumb">
-          {{ buildingName || '…' }}
-          <CIconChevronRight />
-          <span>{{ t('nav.claims') }}</span>
-        </div>
+        <CTopbarBreadcrumb
+          :crumbs="[
+            { label: buildingName || '…' },
+            { label: t('nav.claims') },
+          ]"
+        />
       </template>
       <template #right>
         <CBtn

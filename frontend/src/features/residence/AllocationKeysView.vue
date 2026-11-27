@@ -12,6 +12,7 @@ import CIconEdit from '@/components/atoms/CIconEdit.svg'
 import CIconTrash from '@/components/atoms/CIconTrash.svg'
 import CIconClock from '@/components/atoms/CIconClock.svg'
 import CPageHeader from '@/components/molecules/CPageHeader.vue'
+import CTopbarBreadcrumb from '@/components/molecules/CTopbarBreadcrumb.vue'
 import { allocationKeysApi } from '@/api'
 import { usePageLoader } from '@/composables/usePageLoader'
 import KeyFormModal from '@/features/residence/KeyFormModal.vue'
@@ -111,11 +112,12 @@ onMounted(reload)
   <div class="view-page">
     <CTopbar>
       <template #left>
-        <div class="topbar-breadcrumb">
-          <span>{{ t('nav.groups.residence') }}</span>
-          <CIconChevronRight />
-          <span>{{ t('allocationKeys.title') }}</span>
-        </div>
+        <CTopbarBreadcrumb
+          :crumbs="[
+            { label: t('nav.groups.residence') },
+            { label: t('allocationKeys.title') },
+          ]"
+        />
       </template>
       <template #right>
         <CBtn

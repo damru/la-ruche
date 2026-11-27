@@ -20,10 +20,10 @@ import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import CIconArrowLeft from '@/components/atoms/CIconArrowLeft.svg'
 import CIconCalendar from '@/components/atoms/CIconCalendar.svg'
-import CIconChevronRight from '@/components/atoms/CIconChevronRight.svg'
 import CIconFile from '@/components/atoms/CIconFile.svg'
 import CIconUser from '@/components/atoms/CIconUser.svg'
 import CPageHeader from '@/components/molecules/CPageHeader.vue'
+import CTopbarBreadcrumb from '@/components/molecules/CTopbarBreadcrumb.vue'
 import { reportsApi, unitsApi } from '@/api'
 import { useBuildingStore } from '@/stores/building'
 import type { Document, Report, Unit } from '@/types/domain'
@@ -92,18 +92,13 @@ watch(() => route.params.id, id => {
   <div class="view-page">
     <CTopbar>
       <template #left>
-        <div class="topbar-breadcrumb">
-          {{ buildingName }}
-          <CIconChevronRight />
-          <RouterLink
-            :to="{ name: 'reports' }"
-            class="topbar-breadcrumb-link"
-          >
-            {{ t('nav.reports') }}
-          </RouterLink>
-          <CIconChevronRight />
-          <span>{{ report?.title ?? '…' }}</span>
-        </div>
+        <CTopbarBreadcrumb
+          :crumbs="[
+            { label: buildingName || '…' },
+            { label: t('nav.reports'), to: { name: 'reports' } },
+            { label: report?.title ?? '…' },
+          ]"
+        />
       </template>
       <template #right>
         <CBtn

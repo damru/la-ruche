@@ -24,6 +24,7 @@ import CIconTrash from '@/components/atoms/CIconTrash.svg'
 import CIconEdit from '@/components/atoms/CIconEdit.svg'
 import CIconBell from '@/components/atoms/CIconBell.svg'
 import CPageHeader from '@/components/molecules/CPageHeader.vue'
+import CTopbarBreadcrumb from '@/components/molecules/CTopbarBreadcrumb.vue'
 import CreateConsultationModal from './CreateConsultationModal.vue'
 import CloseConsultationModal from './CloseConsultationModal.vue'
 import DeleteConsultationModal from './DeleteConsultationModal.vue'
@@ -271,11 +272,12 @@ function openDeleteModal(c: Consultation) {
   <div class="view-page">
     <CTopbar>
       <template #left>
-        <div class="topbar-breadcrumb">
-          {{ buildingName }}
-          <CIconChevronRight />
-          <span>{{ t('nav.consultations') }}</span>
-        </div>
+        <CTopbarBreadcrumb
+          :crumbs="[
+            { label: buildingName || '…' },
+            { label: t('nav.consultations') },
+          ]"
+        />
       </template>
       <template #right>
         <CBtn

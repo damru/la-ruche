@@ -14,9 +14,9 @@ import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import CIconArrowLeft from '@/components/atoms/CIconArrowLeft.svg'
-import CIconChevronRight from '@/components/atoms/CIconChevronRight.svg'
 import CIconRefresh from '@/components/atoms/CIconRefresh.svg'
 import CPageHeader from '@/components/molecules/CPageHeader.vue'
+import CTopbarBreadcrumb from '@/components/molecules/CTopbarBreadcrumb.vue'
 import { contractorsApi, maintenanceApi, tasksApi } from '@/api'
 import { useBuildingStore } from '@/stores/building'
 import type { Contractor, MaintenanceEntry, Task } from '@/types/domain'
@@ -79,18 +79,13 @@ watch(() => route.params.id, id => {
   <div class="view-page">
     <CTopbar>
       <template #left>
-        <div class="topbar-breadcrumb">
-          {{ buildingName }}
-          <CIconChevronRight />
-          <RouterLink
-            :to="{ name: 'tasks' }"
-            class="topbar-breadcrumb-link"
-          >
-            {{ t('nav.tasks') }}
-          </RouterLink>
-          <CIconChevronRight />
-          <span>{{ task?.title ?? '…' }}</span>
-        </div>
+        <CTopbarBreadcrumb
+          :crumbs="[
+            { label: buildingName || '…' },
+            { label: t('nav.tasks'), to: { name: 'tasks' } },
+            { label: task?.title ?? '…' },
+          ]"
+        />
       </template>
       <template #right>
         <CBtn

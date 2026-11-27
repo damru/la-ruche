@@ -24,12 +24,12 @@ import CSeparator from '@/components/atoms/CSeparator.vue'
 import CTabs from '@/components/atoms/CTabs.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CIconCalendar from '@/components/atoms/CIconCalendar.svg'
-import CIconChevronRight from '@/components/atoms/CIconChevronRight.svg'
 import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import CIconArrowLeft from '@/components/atoms/CIconArrowLeft.svg'
 import CIconArrowRight from '@/components/atoms/CIconArrowRight.svg'
 import CIconDownload from '@/components/atoms/CIconDownload.svg'
 import CPageHeader from '@/components/molecules/CPageHeader.vue'
+import CTopbarBreadcrumb from '@/components/molecules/CTopbarBreadcrumb.vue'
 import CalendarGrid from './CalendarGrid.vue'
 import CalendarAgendaMode from './CalendarAgendaMode.vue'
 import CalendarFilterBar from './CalendarFilterBar.vue'
@@ -240,11 +240,12 @@ async function exportCalendar() {
   <div class="view-page">
     <CTopbar>
       <template #left>
-        <div class="topbar-breadcrumb">
-          {{ buildingName || '...' }}
-          <CIconChevronRight aria-hidden="true" />
-          <span>{{ t('nav.calendar') }}</span>
-        </div>
+        <CTopbarBreadcrumb
+          :crumbs="[
+            { label: buildingName || '…' },
+            { label: t('nav.calendar') },
+          ]"
+        />
       </template>
       <template #right>
         <CBtn

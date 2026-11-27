@@ -21,6 +21,7 @@ import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import CIconRefresh from '@/components/atoms/CIconRefresh.svg'
 import CFormTextarea from '@/components/atoms/CFormTextarea.vue'
 import CPageHeader from '@/components/molecules/CPageHeader.vue'
+import CTopbarBreadcrumb from '@/components/molecules/CTopbarBreadcrumb.vue'
 import CreateReportModal from './CreateReportModal.vue'
 import UpdateReportStatusModal from './UpdateReportStatusModal.vue'
 import ConvertReportToTaskModal from './ConvertReportToTaskModal.vue'
@@ -168,11 +169,12 @@ async function submitComment(r: Report) {
   <div class="view-page">
     <CTopbar>
       <template #left>
-        <div class="topbar-breadcrumb">
-          {{ buildingName }}
-          <CIconChevronRight />
-          <span>{{ t('nav.reports') }}</span>
-        </div>
+        <CTopbarBreadcrumb
+          :crumbs="[
+            { label: buildingName || '…' },
+            { label: t('nav.reports') },
+          ]"
+        />
       </template>
       <template #right>
         <CBtn

@@ -29,8 +29,8 @@ import CIconTrash from '@/components/atoms/CIconTrash.svg'
 import CIconUsers from '@/components/atoms/CIconUsers.svg'
 import CIconWrench from '@/components/atoms/CIconWrench.svg'
 import CIconX from '@/components/atoms/CIconX.svg'
-import CIconChevronRight from '@/components/atoms/CIconChevronRight.svg'
 import CPageHeader from '@/components/molecules/CPageHeader.vue'
+import CTopbarBreadcrumb from '@/components/molecules/CTopbarBreadcrumb.vue'
 import ContractorFormModal from '@/features/contractors/ContractorFormModal.vue'
 import DeleteContractorModal from '@/features/contractors/DeleteContractorModal.vue'
 import { contractorsApi } from '@/api'
@@ -170,11 +170,12 @@ function openDeleteModal(c: Contractor) {
   <div class="view-page">
     <CTopbar>
       <template #left>
-        <div class="topbar-breadcrumb">
-          {{ buildingName }}
-          <CIconChevronRight class="icon-xs" />
-          <span>{{ t('contractors.title') }}</span>
-        </div>
+        <CTopbarBreadcrumb
+          :crumbs="[
+            { label: buildingName || '…' },
+            { label: t('contractors.title') },
+          ]"
+        />
       </template>
       <template #right>
         <CBtn

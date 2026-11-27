@@ -21,6 +21,7 @@ import CTabs, { type Tab } from '@/components/atoms/CTabs.vue'
 import CHeading from '@/components/atoms/CHeading.vue'
 import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import CPageHeader from '@/components/molecules/CPageHeader.vue'
+import CTopbarBreadcrumb from '@/components/molecules/CTopbarBreadcrumb.vue'
 import CreateMeetingModal from './CreateMeetingModal.vue'
 
 const router = useRouter()
@@ -106,11 +107,12 @@ async function onMeetingCreated(meetingId: string) {
   <div class="view-page">
     <CTopbar>
       <template #left>
-        <div class="topbar-breadcrumb">
-          {{ buildingName || '...' }}
-          <CIconChevronRight />
-          <span>{{ t('nav.meetings') }}</span>
-        </div>
+        <CTopbarBreadcrumb
+          :crumbs="[
+            { label: buildingName || '…' },
+            { label: t('nav.meetings') },
+          ]"
+        />
       </template>
       <template #right>
         <CBtn

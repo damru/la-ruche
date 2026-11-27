@@ -25,6 +25,7 @@ import CIconTrash from '@/components/atoms/CIconTrash.svg'
 import CIconDownload from '@/components/atoms/CIconDownload.svg'
 import CFormSelect from '@/components/atoms/CFormSelect.vue'
 import CPageHeader from '@/components/molecules/CPageHeader.vue'
+import CTopbarBreadcrumb from '@/components/molecules/CTopbarBreadcrumb.vue'
 import MaintenanceEntryModal from '@/features/maintenance/MaintenanceEntryModal.vue'
 import DeleteMaintenanceEntryModal from '@/features/maintenance/DeleteMaintenanceEntryModal.vue'
 import { maintenanceApi } from '@/api'
@@ -279,11 +280,12 @@ function openDeleteModal(entry: MaintenanceEntry) {
   <div class="view-page">
     <CTopbar>
       <template #left>
-        <div class="topbar-breadcrumb">
-          {{ buildingName }}
-          <CIconChevronRight />
-          <span>{{ t('nav.maintenance') }}</span>
-        </div>
+        <CTopbarBreadcrumb
+          :crumbs="[
+            { label: buildingName || '…' },
+            { label: t('nav.maintenance') },
+          ]"
+        />
       </template>
       <template #right>
         <CBtn

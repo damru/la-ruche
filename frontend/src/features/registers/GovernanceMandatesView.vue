@@ -14,6 +14,7 @@ import CIconTrash from '@/components/atoms/CIconTrash.svg'
 import GovernanceMandateFormModal from '@/features/registers/GovernanceMandateFormModal.vue'
 import CDeleteConfirmModal from '@/components/organisms/CDeleteConfirmModal.vue'
 import CPageHeader from '@/components/molecules/CPageHeader.vue'
+import CTopbarBreadcrumb from '@/components/molecules/CTopbarBreadcrumb.vue'
 import { governanceApi } from '@/api'
 import { useBuildingStore } from '@/stores/building'
 import type { GovernanceMandate } from '@/types/domain'
@@ -84,11 +85,12 @@ function openDelete(m: GovernanceMandate) {
   <div class="view-page">
     <CTopbar>
       <template #left>
-        <div class="topbar-breadcrumb">
-          {{ buildingName }}
-          <CIconChevronRight class="icon-xs" />
-          <span>{{ t('registers.governance.title') }}</span>
-        </div>
+        <CTopbarBreadcrumb
+          :crumbs="[
+            { label: buildingName || '…' },
+            { label: t('registers.governance.title') },
+          ]"
+        />
       </template>
       <template #right>
         <CBtn

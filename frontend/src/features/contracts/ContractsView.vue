@@ -40,6 +40,7 @@ import AmendContractModal from '@/features/contracts/AmendContractModal.vue'
 import AmendmentChainModal from '@/features/contracts/AmendmentChainModal.vue'
 import CTabs, { type Tab } from '@/components/atoms/CTabs.vue'
 import CPageHeader from '@/components/molecules/CPageHeader.vue'
+import CTopbarBreadcrumb from '@/components/molecules/CTopbarBreadcrumb.vue'
 import { toErrorMessage, usePageLoader } from '@/composables/usePageLoader'
 import TerminateContractModal from '@/features/contracts/TerminateContractModal.vue'
 import { effectiveContractStatus } from '@/utils/contracts'
@@ -392,11 +393,12 @@ async function activateContract(contract: VendorContract) {
   <div class="view-page">
     <CTopbar>
       <template #left>
-        <div class="topbar-breadcrumb">
-          {{ buildingName || '...' }}
-          <CIconChevronRight />
-          <span>{{ t('contracts.title') }}</span>
-        </div>
+        <CTopbarBreadcrumb
+          :crumbs="[
+            { label: buildingName || '…' },
+            { label: t('contracts.title') },
+          ]"
+        />
       </template>
       <template #right>
         <CBtn

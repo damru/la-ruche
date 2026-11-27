@@ -14,6 +14,7 @@ import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import CIconRefresh from '@/components/atoms/CIconRefresh.svg'
 import CIconEye from '@/components/atoms/CIconEye.svg'
 import CPageHeader from '@/components/molecules/CPageHeader.vue'
+import CTopbarBreadcrumb from '@/components/molecules/CTopbarBreadcrumb.vue'
 import EtatDateRequestFormModal from '@/features/registers/EtatDateRequestFormModal.vue'
 import EtatDateSnapshotModal from '@/features/registers/EtatDateSnapshotModal.vue'
 import { etatDateApi, unitsApi } from '@/api'
@@ -99,11 +100,12 @@ function viewSnapshot(request: EtatDateRequest) {
   <div class="view-page">
     <CTopbar>
       <template #left>
-        <div class="topbar-breadcrumb">
-          {{ buildingName }}
-          <CIconChevronRight class="icon-xs" />
-          <span>{{ t('registers.etatDate.title') }}</span>
-        </div>
+        <CTopbarBreadcrumb
+          :crumbs="[
+            { label: buildingName || '…' },
+            { label: t('registers.etatDate.title') },
+          ]"
+        />
       </template>
       <template #right>
         <CBtn

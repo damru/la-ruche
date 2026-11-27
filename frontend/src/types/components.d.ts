@@ -138,6 +138,7 @@ declare module 'vue' {
     CToggle: typeof import('./../components/atoms/CToggle.vue')['default']
     CTooltip: typeof import('./../components/atoms/CTooltip.vue')['default']
     CTopbar: typeof import('./../components/organisms/CTopbar.vue')['default']
+    CTopbarBreadcrumb: typeof import('./../components/molecules/CTopbarBreadcrumb.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
   }

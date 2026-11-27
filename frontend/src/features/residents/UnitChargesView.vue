@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import CCard from '@/components/molecules/CCard.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import CHeading from '@/components/atoms/CHeading.vue'
@@ -18,10 +18,10 @@ import CLegalNotice from '@/components/molecules/CLegalNotice.vue'
 import CLegalDescription from '@/components/atoms/CLegalDescription.vue'
 import CKpiCard from '@/components/molecules/CKpiCard.vue'
 import type { Column } from '@/components/molecules/CDataTable.vue'
-import CIconChevronRight from '@/components/atoms/CIconChevronRight.svg'
 import CIconWarn from '@/components/atoms/CIconWarn.svg'
 import CFormSelect from '@/components/atoms/CFormSelect.vue'
 import CPageHeader from '@/components/molecules/CPageHeader.vue'
+import CTopbarBreadcrumb from '@/components/molecules/CTopbarBreadcrumb.vue'
 import PreEtatDateModal from '@/features/registers/PreEtatDateModal.vue'
 import { unitsApi } from '@/api'
 import { usePageLoader } from '@/composables/usePageLoader'
@@ -44,7 +44,6 @@ interface ConsolidatedUnitChargeRow {
 
 const { t } = useI18n()
 const route = useRoute()
-const router = useRouter()
 const { canViewUsers } = usePermissions()
 const { formatCurrency, formatDate } = useFormatters()
 
@@ -156,16 +155,13 @@ const showPreEtatDateModal = ref(false)
   <div class="view-page">
     <CTopbar>
       <template #left>
-        <div class="topbar-breadcrumb">
-          <span
-            class="cursor-pointer"
-            @click="router.push(backRoute)"
-          >{{ backLabel }}</span>
-          <CIconChevronRight />
-          <span>{{ data?.unit.unit_number ?? '…' }}</span>
-          <CIconChevronRight />
-          <span>{{ t('units.charges.title') }}</span>
-        </div>
+        <CTopbarBreadcrumb
+          :crumbs="[
+            { label: backLabel, to: backRoute },
+            { label: data?.unit.unit_number ?? '…' },
+            { label: t('units.charges.title') },
+          ]"
+        />
       </template>
     </CTopbar>
 

@@ -14,6 +14,7 @@ import CIconTrash from '@/components/atoms/CIconTrash.svg'
 import JudicialProceedingFormModal from '@/features/registers/JudicialProceedingFormModal.vue'
 import CDeleteConfirmModal from '@/components/organisms/CDeleteConfirmModal.vue'
 import CPageHeader from '@/components/molecules/CPageHeader.vue'
+import CTopbarBreadcrumb from '@/components/molecules/CTopbarBreadcrumb.vue'
 import { judicialProceedingsApi } from '@/api'
 import { useBuildingStore } from '@/stores/building'
 import type { JudicialProceeding } from '@/types/domain'
@@ -85,11 +86,12 @@ function openDelete(p: JudicialProceeding) {
   <div class="view-page">
     <CTopbar>
       <template #left>
-        <div class="topbar-breadcrumb">
-          {{ buildingName }}
-          <CIconChevronRight class="icon-xs" />
-          <span>{{ t('registers.judicial.title') }}</span>
-        </div>
+        <CTopbarBreadcrumb
+          :crumbs="[
+            { label: buildingName || '…' },
+            { label: t('registers.judicial.title') },
+          ]"
+        />
       </template>
       <template #right>
         <CBtn

@@ -48,6 +48,7 @@ import CIconLock from '@/components/atoms/CIconLock.svg'
 import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import CIconUpload from '@/components/atoms/CIconUpload.svg'
 import CPageHeader from '@/components/molecules/CPageHeader.vue'
+import CTopbarBreadcrumb from '@/components/molecules/CTopbarBreadcrumb.vue'
 import VoteModal from './VoteModal.vue'
 import StartMeetingModal from './StartMeetingModal.vue'
 import CloseMeetingModal from './CloseMeetingModal.vue'
@@ -573,18 +574,13 @@ function openArt25Modal(resolution: Resolution) {
   <div class="view-page">
     <CTopbar>
       <template #left>
-        <div class="topbar-breadcrumb">
-          <span>{{ buildingName || '...' }}</span>
-          <CIconChevronRight class="icon-xs" />
-          <RouterLink
-            :to="{ name: 'assembly-list' }"
-            class="topbar-breadcrumb-link"
-          >
-            {{ t('nav.meetings') }}
-          </RouterLink>
-          <CIconChevronRight class="icon-xs" />
-          <span>{{ meeting ? `${typeLabel(meeting.meeting_type)} ${new Date(meeting.meeting_date).getFullYear()}` : '…' }}</span>
-        </div>
+        <CTopbarBreadcrumb
+          :crumbs="[
+            { label: buildingName || '…' },
+            { label: t('nav.meetings'), to: { name: 'assembly-list' } },
+            { label: meeting ? `${typeLabel(meeting.meeting_type)} ${new Date(meeting.meeting_date).getFullYear()}` : '…' },
+          ]"
+        />
       </template>
       <template #right>
         <template v-if="topbarActionState === 'draft'">

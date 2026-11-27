@@ -13,6 +13,7 @@ import CBtn from '@/components/atoms/CBtn.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CPageHeader from '@/components/molecules/CPageHeader.vue'
+import CTopbarBreadcrumb from '@/components/molecules/CTopbarBreadcrumb.vue'
 import { unitsApi } from '@/api'
 import { usePageLoader } from '@/composables/usePageLoader'
 import type { Unit } from '@/types/domain'
@@ -40,9 +41,11 @@ onMounted(reload)
   <div class="view-page">
     <CTopbar>
       <template #left>
-        <div class="topbar-breadcrumb">
-          <span>{{ t('nav.myCharges') }}</span>
-        </div>
+        <CTopbarBreadcrumb
+          :crumbs="[
+            { label: t('nav.myCharges') },
+          ]"
+        />
       </template>
     </CTopbar>
 

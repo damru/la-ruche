@@ -35,7 +35,6 @@ import CIconTrash from '@/components/atoms/CIconTrash.svg'
 import CIconMegaphone from '@/components/atoms/CIconMegaphone.svg'
 import CIconPieChart from '@/components/atoms/CIconPieChart.svg'
 import CIconLock from '@/components/atoms/CIconLock.svg'
-import CIconChevronRight from '@/components/atoms/CIconChevronRight.svg'
 import CreateBudgetModal from './CreateBudgetModal.vue'
 import CloseExerciseModal from './CloseExerciseModal.vue'
 import ApproveBudgetModal from './ApproveBudgetModal.vue'
@@ -48,6 +47,7 @@ import type { Budget, BudgetLine, LevyCall, WorksFund, AllocationKey, LevyStatus
 import { BUDGET_STATUS_APPROVED, BUDGET_STATUS_CLOSED, BUDGET_STATUS_DRAFT, LEVY_STATUS_ISSUED, LEVY_STATUS_OVERDUE, LEVY_STATUS_PAID } from '@/utils/constants'
 import type { Column } from '@/components/molecules/CDataTable.vue'
 import CPageHeader from '@/components/molecules/CPageHeader.vue'
+import CTopbarBreadcrumb from '@/components/molecules/CTopbarBreadcrumb.vue'
 
 interface ConsolidatedLevyRow {
   id: string
@@ -611,11 +611,12 @@ function formatSharePercentage(value: number): string {
   <div class="view-page">
     <CTopbar>
       <template #left>
-        <div class="topbar-breadcrumb">
-          {{ buildingName }}
-          <CIconChevronRight aria-hidden="true" />
-          <span>{{ t('nav.budget') }}</span>
-        </div>
+        <CTopbarBreadcrumb
+          :crumbs="[
+            { label: buildingName || '…' },
+            { label: t('nav.budget') },
+          ]"
+        />
       </template>
       <template #right>
         <CBtn

@@ -13,6 +13,7 @@ import CHeading from '@/components/atoms/CHeading.vue'
 import CIconBook from '@/components/atoms/CIconBook.svg'
 import CIconDownload from '@/components/atoms/CIconDownload.svg'
 import CPageHeader from '@/components/molecules/CPageHeader.vue'
+import CTopbarBreadcrumb from '@/components/molecules/CTopbarBreadcrumb.vue'
 import { buildingApi } from '@/api'
 import { useBuildingStore } from '@/stores/building'
 import { usePageLoader } from '@/composables/usePageLoader'
@@ -54,13 +55,13 @@ onMounted(reload)
   <div class="view-page">
     <CTopbar>
       <template #left>
-        <div class="topbar-breadcrumb">
-          {{ form.name ?? '...' }}
-          <CIconChevronRight />
-          <span>{{ t('nav.groups.residence') }}</span>
-          <CIconChevronRight />
-          <span>{{ t('common.informations') }}</span>
-        </div>
+        <CTopbarBreadcrumb
+          :crumbs="[
+            { label: form.name ?? '...' },
+            { label: t('nav.groups.residence') },
+            { label: t('common.informations') },
+          ]"
+        />
       </template>
     </CTopbar>
 
