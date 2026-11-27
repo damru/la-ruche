@@ -25,6 +25,7 @@ import CIconEdit from '@/components/atoms/CIconEdit.svg'
 import CIconBell from '@/components/atoms/CIconBell.svg'
 import CPageHeader from '@/components/molecules/CPageHeader.vue'
 import CTopbarBreadcrumb from '@/components/molecules/CTopbarBreadcrumb.vue'
+import CDataText from '@/components/atoms/CDataText.vue'
 import CreateConsultationModal from './CreateConsultationModal.vue'
 import CloseConsultationModal from './CloseConsultationModal.vue'
 import DeleteConsultationModal from './DeleteConsultationModal.vue'
@@ -401,9 +402,12 @@ function openDeleteModal(c: Consultation) {
                   </div>
   
                   <!-- Column 3: percentage -->
-                  <span class="choice-percent font-mono text-xs text-end">
+                  <CDataText
+                    class="choice-percent text-end"
+                    size="sm"
+                  >
                     {{ hasVoted(c) || c.status === POLL_STATUS_CLOSED ? (() => { const total = getTotalVotes(c); return total > 0 ? Math.round(choice.votes * 100 / total) : 0 })() + '%' : '—' }}
-                  </span>
+                  </CDataText>
                 </div>
               </div>
   

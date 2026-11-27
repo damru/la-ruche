@@ -7,6 +7,7 @@ import CDataTable from '@/components/molecules/CDataTable.vue'
 import { useFormatters } from '@/composables/useFormatters'
 import type { UnitChargesLevy, UnitChargesLevyBreakdownItem } from '@/types/domain'
 import type { Column } from '@/components/molecules/CDataTable.vue'
+import CDataText from '@/components/atoms/CDataText.vue'
 
 interface ConsolidatedUnitChargeRow {
   id: string
@@ -84,9 +85,12 @@ const breakdownTotal = computed(() =>
     </CDataTable>
     <div class="flex items-center justify-between font-semibold text-sm mt-1">
       <strong>{{ t('common.total') }}</strong>
-      <p class="justify-end font-mono">
+      <CDataText
+        as="div"
+        class="justify-end"
+      >
         {{ formatCurrency(breakdownTotal) }}
-      </p>
+      </CDataText>
     </div>
     <template #footer>
       <CBtn

@@ -6,6 +6,7 @@ import CFormSelect from '@/components/atoms/CFormSelect.vue'
 import CFormActions from '@/components/molecules/CFormActions.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CBadge from '@/components/atoms/CBadge.vue'
+import CDataText from '@/components/atoms/CDataText.vue'
 import { meetingsApi } from '@/api'
 import { useFormFeedback } from '@/composables/useFormFeedback'
 import { useAutoClose } from '@/composables/useAutoClose'
@@ -166,8 +167,10 @@ async function handleSubmit() {
             v-for="entry in attendingUnits"
             :key="entry.unit_id"
           >
-            <td class="font-mono">
-              {{ entry.unit_number }}
+            <td>
+              <CDataText>
+                {{ entry.unit_number }}
+              </CDataText>
             </td>
             <td>
               {{ entry.owner_name || '—' }}

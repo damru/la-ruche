@@ -23,6 +23,7 @@ declare module 'vue' {
     CConfirmDialog: typeof import('./../components/organisms/CConfirmDialog.vue')['default']
     CCopyField: typeof import('./../components/molecules/CCopyField.vue')['default']
     CDataTable: typeof import('./../components/molecules/CDataTable.vue')['default']
+    CDataText: typeof import('./../components/atoms/CDataText.vue')['default']
     CDeleteConfirmModal: typeof import('./../components/organisms/CDeleteConfirmModal.vue')['default']
     CDocumentLinkActionModal: typeof import('./../components/organisms/CDocumentLinkActionModal.vue')['default']
     CDocumentList: typeof import('./../components/molecules/CDocumentList.vue')['default']

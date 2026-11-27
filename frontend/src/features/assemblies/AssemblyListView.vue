@@ -337,7 +337,6 @@ async function onMeetingCreated(meetingId: string) {
 }
 
 .meeting-badge__year {
-  font-family: var(--font-mono);
   font-size: var(--text-lg);
   font-weight: var(--fw-bold);
 }

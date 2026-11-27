@@ -49,6 +49,7 @@ import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import CIconUpload from '@/components/atoms/CIconUpload.svg'
 import CPageHeader from '@/components/molecules/CPageHeader.vue'
 import CTopbarBreadcrumb from '@/components/molecules/CTopbarBreadcrumb.vue'
+import CDataText from '@/components/atoms/CDataText.vue'
 import VoteModal from './VoteModal.vue'
 import StartMeetingModal from './StartMeetingModal.vue'
 import CloseMeetingModal from './CloseMeetingModal.vue'
@@ -929,8 +930,12 @@ function openArt25Modal(resolution: Resolution) {
                           :style="{ width: `${votePct(voteResults[resolution.id].for_votes, voteResults[resolution.id].shares_counted)}%` }"
                         ></div>
                       </div>
-                      <span class="tally-pct">{{ votePct(voteResults[resolution.id].for_votes, voteResults[resolution.id].shares_counted) }}%</span>
-                      <span class="tally-shares">{{ t('units.sharesAmount', { amount: voteResults[resolution.id].for_votes }) }}</span>
+                      <CDataText class="tally-pct">
+                        {{ votePct(voteResults[resolution.id].for_votes, voteResults[resolution.id].shares_counted) }}%
+                      </CDataText>
+                      <CDataText class="tally-shares">
+                        {{ t('units.sharesAmount', { amount: voteResults[resolution.id].for_votes }) }}
+                      </CDataText>
                     </div>
                     <div class="tally-row">
                       <span class="tally-label">{{ t('meetings.vote.against') }}</span>
@@ -940,8 +945,12 @@ function openArt25Modal(resolution: Resolution) {
                           :style="{ width: `${votePct(voteResults[resolution.id].against_votes, voteResults[resolution.id].shares_counted)}%` }"
                         ></div>
                       </div>
-                      <span class="tally-pct">{{ votePct(voteResults[resolution.id].against_votes, voteResults[resolution.id].shares_counted) }}%</span>
-                      <span class="tally-shares">{{ t('units.sharesAmount', { amount: voteResults[resolution.id].against_votes }) }}</span>
+                      <CDataText class="tally-pct">
+                        {{ votePct(voteResults[resolution.id].against_votes, voteResults[resolution.id].shares_counted) }}%
+                      </CDataText>
+                      <CDataText class="tally-shares">
+                        {{ t('units.sharesAmount', { amount: voteResults[resolution.id].against_votes }) }}
+                      </CDataText>
                     </div>
                     <div class="tally-row">
                       <span class="tally-label">{{ t('meetings.vote.abstain') }}</span>
@@ -954,7 +963,9 @@ function openArt25Modal(resolution: Resolution) {
                       <span
                         class="tally-pct"
                       >{{ showsAbstentionTallyPercent(resolution.vote_type) ? votePct(voteResults[resolution.id].abstentions, voteResults[resolution.id].shares_counted) + '%' : '-' }}</span>
-                      <span class="tally-shares">{{ t('units.sharesAmount', { amount: voteResults[resolution.id].abstentions }) }}</span>
+                      <CDataText class="tally-shares">
+                        {{ t('units.sharesAmount', { amount: voteResults[resolution.id].abstentions }) }}
+                      </CDataText>
                     </div>
                   </div>
                   <CAlert
@@ -966,7 +977,9 @@ function openArt25Modal(resolution: Resolution) {
                       {{ voteResultSubtitle(resolution, voteResults[resolution.id]) }}
                     </p>
                     <template #side>
-                      <span class="font-mono font-medium self-center">{{ voteResults[resolution.id].for_votes }} / {{ voteResults[resolution.id].shares_counted }}</span>
+                      <CDataText class="self-center">
+                        {{ voteResults[resolution.id].for_votes }} / {{ voteResults[resolution.id].shares_counted }}
+                      </CDataText>
                     </template>
                   </CAlert>
                   <CAlert
@@ -1117,7 +1130,9 @@ function openArt25Modal(resolution: Resolution) {
                   :key="`${index}-${item}`"
                   class="agenda-item"
                 >
-                  <span class="agenda-item__n">{{ index + 1 }}.</span>
+                  <CDataText class="agenda-item__n">
+                    {{ index + 1 }}.
+                  </CDataText>
                   <span class="agenda-item__text">{{ item }}</span>
                 </li>
               </CFlexGroup>
@@ -1322,7 +1337,12 @@ function openArt25Modal(resolution: Resolution) {
                     </div>
                   </div>
                   <div class="participant-row__meta">
-                    <small class="attendance-shares">{{ t('units.sharesAmount', { amount: entry.shares_represented }) }}</small>
+                    <CDataText
+                      class="attendance-shares"
+                      size="sm"
+                    >
+                      {{ t('units.sharesAmount', { amount: entry.shares_represented }) }}
+                    </CDataText>
                     <CBadge :variant="attendanceModeVariant(entry.mode)">
                       {{ attendanceModeLabel(entry.mode) }}
                     </CBadge>
@@ -1685,13 +1705,11 @@ function openArt25Modal(resolution: Resolution) {
 
 .tally-pct {
   text-align: right;
-  font-family: var(--font-mono);
   font-size: var(--text-xs);
 }
 
 .tally-shares {
   text-align: right;
-  font-family: var(--font-mono);
   color: var(--color-on-surface-variant);
   font-size: var(--text-xs);
 }
@@ -1841,7 +1859,6 @@ function openArt25Modal(resolution: Resolution) {
 }
 
 .attendance-shares {
-  font-family: var(--font-mono);
   color: var(--color-on-surface-variant);
 }
 
@@ -1860,7 +1877,6 @@ function openArt25Modal(resolution: Resolution) {
   width: var(--space-5);
   flex-shrink: 0;
   padding-top: 1px;
-  font-family: var(--font-mono);
   font-size: var(--text-xs);
   font-weight: var(--fw-medium);
   color: var(--color-primary);

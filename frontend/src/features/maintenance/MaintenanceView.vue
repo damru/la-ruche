@@ -26,6 +26,7 @@ import CIconDownload from '@/components/atoms/CIconDownload.svg'
 import CFormSelect from '@/components/atoms/CFormSelect.vue'
 import CPageHeader from '@/components/molecules/CPageHeader.vue'
 import CTopbarBreadcrumb from '@/components/molecules/CTopbarBreadcrumb.vue'
+import CDataText from '@/components/atoms/CDataText.vue'
 import MaintenanceEntryModal from '@/features/maintenance/MaintenanceEntryModal.vue'
 import DeleteMaintenanceEntryModal from '@/features/maintenance/DeleteMaintenanceEntryModal.vue'
 import { maintenanceApi } from '@/api'
@@ -589,10 +590,12 @@ function openDeleteModal(entry: MaintenanceEntry) {
                         />
                         {{ entry.vendor_name }}
                       </span>
-                      <span
+                      <CDataText
                         v-if="entry.cost != null"
                         class="cost"
-                      >{{ formatCurrency(entry.cost) }}</span>
+                      >
+                        {{ formatCurrency(entry.cost) }}
+                      </CDataText>
                     </div>
                   </CCard>
                 </div>
@@ -762,7 +765,6 @@ function openDeleteModal(entry: MaintenanceEntry) {
 .vendor { color: var(--color-on-surface-variant); display: flex; align-items: center; margin-right: auto; }
 .cost {
   margin-left: auto;
-  font-family: var(--font-mono);
   font-weight: var(--fw-semibold);
   color: var(--color-on-surface);
   font-variant-numeric: tabular-nums;
