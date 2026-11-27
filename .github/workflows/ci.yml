@@ -489,7 +489,9 @@ jobs:
   docker-push:
     name: Docker — publish
     needs: [changes, docker-build, test-backend, test-frontend, e2e-frontend]
-    if: always() && !failure() && !cancelled() && github.event_name != 'pull_request' && needs.docker-build.result == 'success'
+    # Published only once every test job is green; skipped jobs (path filters)
+    # do not block it.
+    if: always() && !failure() && !cancelled() && needs.docker-build.result == 'success'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -508,6 +510,7 @@ jobs:
           tags: |
             type=ref,event=branch
             type=ref,event=branch,suffix=.{{date 'YYYYMMDDHHmmss'}}
+            type=ref,event=pr
             type=schedule,pattern=nightly
             type=schedule,pattern={{date 'YYYYMMDD'}}
             type=sha
