@@ -546,10 +546,10 @@ jobs:
     # path filter can stop it) and would mask failed checks of the previous
     # head. Two guards: actor-keyed concurrency group, actor != bot here,
     # and the final step pushes only after every other job is green.
-    needs: [changes, build-backend, docker-build]
+    needs: [changes, build-backend]
     # captures_only: a human deleting/breaking a capture gets a regeneration
     # run; the bot's own pushes are excluded (it IS the regenerator).
-    if: github.event_name == 'pull_request' && (needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend_app == 'true' || needs.changes.outputs.ci_workflow == 'true' || needs.changes.outputs.captures_only == 'true') && needs.build-backend.result == 'success' && (needs.docker-build.result == 'success' || needs.changes.outputs.captures_only == 'true') && github.actor != 'github-actions[bot]'
+    if: github.event_name == 'pull_request' && (needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend_app == 'true' || needs.changes.outputs.ci_workflow == 'true' || needs.changes.outputs.captures_only == 'true') && needs.build-backend.result == 'success' && github.actor != 'github-actions[bot]'
     permissions:
       contents: write
       actions: read
