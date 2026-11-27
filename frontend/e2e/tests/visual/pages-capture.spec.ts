@@ -43,7 +43,7 @@ for (const route of APP_ROUTES) {
         await settlePage(page)
 
         // Sanity guard: a page that failed to render must fail the capture.
-        await expect(page.locator('.view-header').first()).toBeVisible()
+        await expect(page.locator('.c-page-header').first()).toBeVisible()
         await expect(page.locator('.c-page-error')).toHaveCount(0)
 
         await page.addStyleTag({ content: '.c-bottom-nav { position: static !important; order: 3; }' })

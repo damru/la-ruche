@@ -15,7 +15,7 @@ withDefaults(defineProps<{
 </script>
 
 <template>
-  <header class="flex items-start justify-between gap-3 min-w-0">
+  <header class="c-page-header flex items-start justify-between gap-3 min-w-0">
     <div class="flex flex-col items-start gap-2 min-w-0">
       <slot name="eyebrow">
         <CEyebrow v-if="eyebrow">
