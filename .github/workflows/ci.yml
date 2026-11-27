@@ -432,7 +432,7 @@ jobs:
 
   # ── Docker build + push ────────────────────────────────────────
   docker-build:
-    name: Docker — build (validation)
+    name: Docker — build + push
     needs: [changes, build-backend]
     # Runs in parallel with the test jobs; the image only ships from
     # docker-push once every test job is green.
@@ -487,7 +487,7 @@ jobs:
             SQLX_OFFLINE=true
 
   docker-push:
-    name: Docker — build + push
+    name: Docker — publish
     needs: [changes, docker-build, test-backend, test-frontend, e2e-frontend]
     if: always() && !failure() && !cancelled() && github.event_name != 'pull_request' && needs.docker-build.result == 'success'
     runs-on: ubuntu-latest
