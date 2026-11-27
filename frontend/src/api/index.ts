@@ -299,8 +299,10 @@ export const documentsApi = {
     api.post<UploadUrlResponse>('/documents/upload-url', { extension, content_type, size_bytes }),
   confirmUpload: (data: { key: string; bucket: string; original_name: string; mime_type: string; size_bytes: number; visible_roles: string[]; category?: string; supersedes_id?: string }) =>
     api.post<Document>('/documents', data),
-  getDownloadUrl: (id: string) =>
-    api.get<DownloadUrlResponse>(`/documents/${id}/download-url`),
+  getDownloadUrl: (id: string, disposition?: 'inline') =>
+    api.get<DownloadUrlResponse>(
+      `/documents/${id}/download-url${disposition ? `?disposition=${disposition}` : ''}`,
+    ),
   delete: (id: string) =>
     api.delete(`/documents/${id}`),
   uploadToS3: async (file: File, signedUrl: string, contentType?: string): Promise<void> => {

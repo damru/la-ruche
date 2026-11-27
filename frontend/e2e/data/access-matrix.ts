@@ -19,6 +19,7 @@ export type MatrixEntry = {
   roles: AuthRole[]
   deniedBehavior?: 'route403' | 'pageError'
   captureGrid?: boolean
+  captureEmpty?: boolean
   captureTabs?: Array<{ label: string; slug: string }>
   toleratedApi403?: Record<string, AuthRole[]>
 }

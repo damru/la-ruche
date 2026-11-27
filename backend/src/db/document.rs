@@ -209,6 +209,49 @@ pub async fn get(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<Option
     .await?)
 }
 
+/// Whether a non-deleted document exists in the building, regardless of
+/// `visible_to_roles` — used to distinguish 404 (unknown) from 403 (exists
+/// but not visible to the caller's roles) on the download endpoint.
+pub async fn exists(pool: &PgPool, id: Uuid, building_id: Uuid) -> AppResult<bool> {
+    Ok(sqlx::query_scalar::<_, bool>(
+        "SELECT EXISTS(SELECT 1 FROM document WHERE id = $1 AND building_id = $2 AND deleted_at IS NULL)",
+    )
+    .bind(id)
+    .bind(building_id)
+    .fetch_one(pool)
+    .await?)
+}
+
+/// Same as `get`, but restricted to documents visible to at least one of the
+/// caller's roles (`visible_to_roles && roles`) — the exact visibility rule
+/// applied by `list` and by every per-entity document listing. Used by the
+/// download endpoint so that an unauthorized user gets the same refusal for
+/// download and inline rendering.
+pub async fn get_visible(
+    pool: &PgPool,
+    id: Uuid,
+    building_id: Uuid,
+    roles: &[String],
+) -> AppResult<Option<DocumentRow>> {
+    Ok(sqlx::query_as::<_, DocumentRow>(
+        r#"SELECT id, building_id, original_name, storage_path, bucket,
+           mime_type, size_bytes, uploaded_by,
+           extraction_status::text AS extraction_status,
+           visible_to_roles::text[] AS visible_roles,
+           category::text AS category, supersedes_id, is_current,
+           replacement_reason, deleted_at,
+           created_at
+           FROM document
+           WHERE id = $1 AND building_id = $2 AND deleted_at IS NULL
+             AND visible_to_roles::text[] && $3"#,
+    )
+    .bind(id)
+    .bind(building_id)
+    .bind(roles)
+    .fetch_optional(pool)
+    .await?)
+}
+
 /// Publishes a new version of a founding document, chained to the one it
 /// replaces. Fails if the predecessor is not the current version, or if the
 /// category doesn't match (EP-005-S06, LEGAL §1.2).
