@@ -432,7 +432,7 @@ jobs:
 
   # ── Docker build + push ────────────────────────────────────────
   docker-build:
-    name: Docker — build + push
+    name: Docker — build
     needs: [changes, build-backend]
     # Runs in parallel with the test jobs; the image only ships from
     # docker-push once every test job is green.
