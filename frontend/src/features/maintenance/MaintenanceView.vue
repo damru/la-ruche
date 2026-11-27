@@ -9,6 +9,7 @@ import CBtn from '@/components/atoms/CBtn.vue'
 import CLegalDescription from '@/components/atoms/CLegalDescription.vue'
 import CSeparator from '@/components/atoms/CSeparator.vue'
 import CCard from '@/components/molecules/CCard.vue'
+import CCardHeader from '@/components/molecules/CCardHeader.vue'
 import CLegalNotice from '@/components/molecules/CLegalNotice.vue'
 import CLegalCard from '@/components/molecules/CLegalCard.vue'
 import CMetaLine from '@/components/molecules/CMetaLine.vue'
@@ -547,23 +548,17 @@ function openDeleteModal(entry: MaintenanceEntry) {
                     :class="entry.source === 'automatic' ? 'timeline-dot--auto' : ''"
                   ></div>
                   <CCard class="timeline-card">
-                    <div class="entry-header">
-                      <div>
-                        <span class="title-sm">{{ entry.title }}</span>
+                    <CCardHeader>
+                      <span class="title-sm">{{ entry.title }}</span>
+                      <template #chips>
                         <CBadge
                           :variant="entry.source === 'automatic' ? 'primary' : 'default'"
-                          class="ml-2"
                         >
                           {{ entry.source === 'automatic' ? t('common.automatic') : t('common.manual') }}
                         </CBadge>
-                        <CBadge
-                          :variant="categoryVariant(entry.category)"
-                          class="ml-2"
-                        >
+                        <CBadge :variant="categoryVariant(entry.category)">
                           {{ t(`maintenance.categories.${entry.category}`) }}
                         </CBadge>
-                      </div>
-                      <div class="entry-header-right">
                         <span class="entry-date">{{ formatDate(entry.intervention_date) }}</span>
                         <CBtn
                           v-if="entry.source !== 'automatic'"
@@ -574,8 +569,8 @@ function openDeleteModal(entry: MaintenanceEntry) {
                           :aria-label="t('maintenance.deleteEntry')"
                           @click="openDeleteModal(entry)"
                         />
-                      </div>
-                    </div>
+                      </template>
+                    </CCardHeader>
                     <p
                       v-if="entry.description"
                       class="body-xs entry-desc"

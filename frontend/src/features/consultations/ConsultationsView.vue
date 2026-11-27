@@ -350,20 +350,22 @@ function openDeleteModal(c: Consultation) {
               :shadow="c.status !== POLL_STATUS_CLOSED"
               :class="{ 'outline outline-1 outline-outline-variant': c.status === POLL_STATUS_CLOSED }"
             >
-              <CBadge
-                :variant="c.status === POLL_STATUS_OPEN ? 'open' : c.status === POLL_STATUS_DRAFT ? 'pending' : 'closed'"
-                class="status-badge"
-                dot
-              >
-                {{ t(`consultations.statuses.${c.status}`) }}
-              </CBadge>
-  
-              <CHeading 
-                type="card"
-                variant="title"
-              >
-                {{ c.title }}
-              </CHeading>
+              <CCardHeader>
+                <CHeading
+                  type="card"
+                  variant="title"
+                >
+                  {{ c.title }}
+                </CHeading>
+                <template #chips>
+                  <CBadge
+                    :variant="c.status === POLL_STATUS_OPEN ? 'open' : c.status === POLL_STATUS_DRAFT ? 'pending' : 'closed'"
+                    dot
+                  >
+                    {{ t(`consultations.statuses.${c.status}`) }}
+                  </CBadge>
+                </template>
+              </CCardHeader>
   
               <p
                 v-if="c.description"

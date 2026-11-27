@@ -7,6 +7,7 @@ import { usePageLoader } from '@/composables/usePageLoader'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CCard from '@/components/molecules/CCard.vue'
+import CCardHeader from '@/components/molecules/CCardHeader.vue'
 import CCardActions from '@/components/molecules/CCardActions.vue'
 import CMetaLine from '@/components/molecules/CMetaLine.vue'
 import CMetaItem from '@/components/molecules/CMetaItem.vue'
@@ -232,40 +233,35 @@ async function submitComment(r: Report) {
               :shadow="r.status !== REPORT_STATUS_CLOSED"
               :class="['gap-y-4', { 'outline outline-1 outline-outline-variant': r.status === REPORT_STATUS_CLOSED }]"
             >
-              <div class="flex items-center gap-3 min-w-0">
-                <CMetaLine 
-                  class="[&_svg]:icon-sm text-xs"
-                >
+              <CCardHeader>
+                <h3 class="text-lg font-semibold text-on-surface m-0 leading-snug">
+                  <RouterLink
+                    :to="{ name: 'report-detail', params: { id: r.id } }"
+                    class="text-on-surface! hover:underline"
+                  >
+                    {{ r.title }}
+                  </RouterLink>
+                </h3>
+                <template #chips>
                   <CBadge
                     :variant="reportStatusVariant(r.status)"
                     dot
                   >
                     {{ t(`reports.statuses.${r.status}`) }}
                   </CBadge>
-                  <CMetaItem
-                    variant="sub" 
-                  >
+                  <CMetaItem variant="sub">
                     <template #icon>
                       <CIconClock />
                     </template>
                     {{ formatRelative(r.updated_at) }}
                   </CMetaItem>
-                </CMetaLine>
-              </div>
+                </template>
+              </CCardHeader>
   
               <div class="flex flex-col gap-3">
                 <CFlexGroup
                   direction="row"
                 >
-                  <h3 class="text-lg font-semibold text-on-surface m-0 leading-snug min-w-0">
-                    <RouterLink
-                      :to="{ name: 'report-detail', params: { id: r.id } }"
-                      class="text-on-surface! hover:underline"
-                    >
-                      {{ r.title }}
-                    </RouterLink>
-                  </h3>
-                  
                   <CMetaItem
                     v-if="r.document_count > 0"
                     variant="sub"

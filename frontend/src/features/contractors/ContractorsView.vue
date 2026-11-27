@@ -8,6 +8,7 @@ import CBadge from '@/components/atoms/CBadge.vue'
 import CIconTile from '@/components/atoms/CIconTile.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CCard from '@/components/molecules/CCard.vue'
+import CCardHeader from '@/components/molecules/CCardHeader.vue'
 import CCardActions from '@/components/molecules/CCardActions.vue'
 import CDataTable, { type Column } from '@/components/molecules/CDataTable.vue'
 import CFormMultiSelect from '@/components/atoms/CFormMultiSelect.vue'
@@ -383,35 +384,37 @@ function openDeleteModal(c: Contractor) {
             tabindex="-1"
             @click="openContractorDetail(c.id)"
           >
-            <div class="flex items-center gap-3 min-w-0">
-              <CIconTile :class="domainTone(c.domains)">
-                <component
-                  :is="domainIcon(c.domains)"
-                  aria-hidden="true"
-                />
-              </CIconTile>
+            <CCardHeader with-icon>
+              <template #icon>
+                <CIconTile :class="domainTone(c.domains)">
+                  <component
+                    :is="domainIcon(c.domains)"
+                    aria-hidden="true"
+                  />
+                </CIconTile>
+              </template>
               <button
-                class="flex-1 min-w-0 overflow-hidden text-ellipsis bg-transparent border-none p-0 text-base font-semibold text-on-surface text-left cursor-pointer leading-snug hover:text-primary focus-visible:text-primary focus-visible:outline-none"
+                class="block w-full min-w-0 overflow-hidden text-ellipsis bg-transparent border-none p-0 text-base font-semibold text-on-surface text-left cursor-pointer leading-snug hover:text-primary focus-visible:text-primary focus-visible:outline-none"
                 @click.stop="openContractorDetail(c.id)"
               >
                 {{ c.name }}
               </button>
-            </div>
-            <div class="flex flex-wrap gap-x-2 gap-y-1">
-              <CBadge
-                v-for="d in c.domains.slice(0, 2)"
-                :key="d"
-                variant="default"
-              >
-                {{ t(`contractors.domains.${d}`, d) }}
-              </CBadge>
-              <CBadge
-                v-if="c.domains.length > 2"
-                variant="default"
-              >
-                +{{ c.domains.length - 2 }}
-              </CBadge>
-            </div>
+              <template #chips>
+                <CBadge
+                  v-for="d in c.domains.slice(0, 2)"
+                  :key="d"
+                  variant="default"
+                >
+                  {{ t(`contractors.domains.${d}`, d) }}
+                </CBadge>
+                <CBadge
+                  v-if="c.domains.length > 2"
+                  variant="default"
+                >
+                  +{{ c.domains.length - 2 }}
+                </CBadge>
+              </template>
+            </CCardHeader>
             <div class="flex flex-col gap-3">
               <p
                 v-if="c.notes"
