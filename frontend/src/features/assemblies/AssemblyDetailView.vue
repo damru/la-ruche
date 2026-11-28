@@ -1340,7 +1340,7 @@ function openArt25Modal(resolution: Resolution) {
                   <div class="participant-row__meta">
                     <CDataText
                       class="attendance-shares"
-                      size="sm"
+                      size="xs"
                     >
                       {{ t('units.sharesAmount', { amount: entry.shares_represented }) }}
                     </CDataText>

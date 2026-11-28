@@ -407,7 +407,7 @@ function openDeleteModal(c: Consultation) {
                   <!-- Column 3: percentage -->
                   <CDataText
                     class="choice-percent text-end"
-                    size="sm"
+                    size="xs"
                   >
                     {{ hasVoted(c) || c.status === POLL_STATUS_CLOSED ? (() => { const total = getTotalVotes(c); return total > 0 ? Math.round(choice.votes * 100 / total) : 0 })() + '%' : '—' }}
                   </CDataText>

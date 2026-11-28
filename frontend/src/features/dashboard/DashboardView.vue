@@ -424,7 +424,7 @@ const todayStr = computed(() =>
                     <div class="budget-prog-meta">
                       <CDataText
                         class="budget-prog-amounts"
-                        size="sm"
+                        size="2xs"
                       >
                         {{ formatCurrency(line.actual_amount ?? 0) }} / {{ formatCurrency(line.budgeted_amount) }}
                       </CDataText>
@@ -629,7 +629,7 @@ const todayStr = computed(() =>
                   </div>
                   <CDataText
                     class="reminder-date"
-                    size="sm"
+                    size="2xs"
                     :class="`reminder-date--${reminderUrgency(reminder.reminder_date)}`"
                   >
                     {{ formatDate(reminder.reminder_date) }}

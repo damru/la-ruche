@@ -1,19 +1,21 @@
 <script setup lang="ts">
-type DataTextSize = 'sm' | 'md' | 'lg'
+type DataTextSize = '2xs' | 'xs' | 'sm' | 'md' | 'lg'
 type DataTextTag = 'span' | 'strong' | 'div'
 
 withDefaults(defineProps<{
   size?: DataTextSize
   as?: DataTextTag
 }>(), {
-  size: 'md',
+  size: 'sm',
   as: 'span',
 })
 
 const sizeClass: Record<DataTextSize, string> = {
-  sm: 'text-xs',
-  md: 'text-sm',
-  lg: 'text-base',
+  '2xs': 'text-2xs',
+  xs: 'text-xs',
+  sm: 'text-sm',
+  md: 'text-md',
+  lg: 'text-lg',
 }
 </script>
 
