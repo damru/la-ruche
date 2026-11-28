@@ -394,11 +394,6 @@ function handleDocumentCountChanged(claimId: string, delta: number) {
           <CMetaItem variant="sub">
             {{ t('claims.activeCount', { count: activeClaimsCount }) }}
           </CMetaItem>
-          <p
-            class="body-md"
-            style="color:var(--color-on-surface-variant)"
-          >
-          </p>
         </CPageHeader>
 
         <CReminderCard
