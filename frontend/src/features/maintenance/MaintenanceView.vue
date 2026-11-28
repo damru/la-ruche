@@ -762,9 +762,7 @@ function openDeleteModal(entry: MaintenanceEntry) {
 .vendor { color: var(--color-on-surface-variant); display: flex; align-items: center; margin-right: auto; }
 .cost {
   margin-left: auto;
-  font-weight: var(--fw-semibold);
   color: var(--color-on-surface);
-  font-variant-numeric: tabular-nums;
 }
 
 .period-nav {
