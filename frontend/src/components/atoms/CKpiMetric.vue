@@ -49,7 +49,7 @@ withDefaults(defineProps<{
 
 .c-kpi-metric__data {
   font-family: var(--font-display);
-  font-size: 28px;
+  font-size: var(--text-2xl);
   font-weight: var(--fw-bold);
   font-variation-settings: 'opsz' 72;
   letter-spacing: -0.03em;
@@ -60,6 +60,12 @@ withDefaults(defineProps<{
 .c-kpi-metric__subtitle {
   font-size: var(--text-xs);
   color: var(--color-on-surface-variant);
+}
+
+@media (max-width: 640px) {
+  .c-kpi-metric__data {
+    font-size: var(--text-xl);
+  }
 }
 
 .c-kpi-metric__delta {
