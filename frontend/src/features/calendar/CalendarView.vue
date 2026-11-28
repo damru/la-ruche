@@ -46,7 +46,8 @@ const router = useRouter()
 const perms = usePermissions()
 const auth = useAuthStore()
 
-const mode = ref<Mode>('month')
+// Mobile opens on the agenda: a month grid is unreadable at 375px
+const mode = ref<Mode>(window.matchMedia('(max-width: 640px)').matches ? 'agenda' : 'month')
 const anchor = ref(new Date())
 const events = ref<CalendarEvent[]>([])
 const buildingName = ref('')

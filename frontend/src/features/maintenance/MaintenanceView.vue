@@ -770,6 +770,27 @@ function openDeleteModal(entry: MaintenanceEntry) {
   align-self: center;
   align-items: center;
   gap: var(--space-2);
+  min-width: 0;
+}
+
+.period-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .period-nav {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .period-label {
+    order: -1;
+    width: 100%;
+    text-align: center;
+  }
 }
 
 .period-label {

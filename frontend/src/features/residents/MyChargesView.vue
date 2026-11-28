@@ -65,7 +65,7 @@ onMounted(reload)
         <!-- Multi-unit selection (co-owner with several units) -->
         <div
           v-if="ownedUnits.length > 1"
-          class="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-4"
+          class="unit-grid"
         >
           <CCard
             v-for="unit in ownedUnits"
@@ -107,6 +107,22 @@ onMounted(reload)
 
 <style scoped>
 /* cards-grid is global — defined in styles/tables.css */
+
+.unit-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--space-4);
+}
+
+@media (max-width: 640px) {
+  .unit-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: var(--space-3);
+  }
+
+  .unit-card__number { font-size: var(--text-sm); }
+  .unit-card__type { font-size: var(--text-2xs); }
+}
 
 .unit-card {
   cursor: pointer;

@@ -22,7 +22,11 @@ const sizeClass: Record<DataTextSize, string> = {
 <template>
   <component
     :is="as"
-    :class="['font-mono font-medium lining-nums tabular-nums', sizeClass[size]]"
+    :class="[
+      'font-mono lining-nums tabular-nums',
+      as === 'strong' ? 'font-semibold' : 'font-medium',
+      sizeClass[size],
+    ]"
   >
     <slot></slot>
   </component>

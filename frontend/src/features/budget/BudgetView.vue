@@ -858,7 +858,10 @@ function formatSharePercentage(value: number): string {
           <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
             <div class="wf-metric">
               <span class="text-xs">{{ t('budget.worksFundTarget') }}</span>
-              <CDataText as="strong">
+              <CDataText
+                as="strong"
+                size="lg"
+              >
                 {{ formatCurrency(worksFundContributionTarget) }}
               </CDataText>
             </div>
@@ -868,13 +871,19 @@ function formatSharePercentage(value: number): string {
             </div>
             <div class="wf-metric">
               <span class="text-xs">{{ t('budget.worksFundCalled') }}</span>
-              <CDataText as="strong">
+              <CDataText
+                as="strong"
+                size="lg"
+              >
                 {{ formatCurrency(worksFundCalledAmount) }}
               </CDataText>
             </div>
             <div class="wf-metric">
               <span class="text-xs">{{ t('budget.worksFundAvailable') }}</span>
-              <CDataText as="strong">
+              <CDataText
+                as="strong"
+                size="lg"
+              >
                 {{ formatCurrency(worksFundAvailableAmount) }}
               </CDataText>
             </div>
@@ -945,7 +954,10 @@ function formatSharePercentage(value: number): string {
               </div>
             </div>
             <div class="text-right">
-              <CDataText as="div">
+              <CDataText
+                as="strong"
+                size="md"
+              >
                 {{ formatCurrency(levy.amount) }}
               </CDataText>
               <CMetaItem variant="sub">

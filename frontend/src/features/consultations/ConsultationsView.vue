@@ -338,6 +338,8 @@ function openDeleteModal(c: Consultation) {
                 variant="primary"
                 :icon="CIconPlus"
                 :title="t('consultations.create')"
+                shrink="sm"
+              
                 @click="openCreateModal"
               />
             </template>
@@ -497,6 +499,8 @@ function openDeleteModal(c: Consultation) {
                   size="sm"
                   :icon="CIconEdit"
                   :title="t('common.edit')"
+                  shrink="sm"
+                
                   @click="openEditModal(c)"
                 />
                 <CBtn
@@ -504,6 +508,8 @@ function openDeleteModal(c: Consultation) {
                   size="sm"
                   :icon="CIconCheckCircle"
                   :title="t('consultations.openAction')"
+                  shrink="sm"
+                
                   @click="openDraft(c)"
                 />
                 <CBtn
@@ -511,6 +517,8 @@ function openDeleteModal(c: Consultation) {
                   size="sm"
                   :icon="CIconTrash"
                   :title="t('common.delete')"
+                  shrink="sm"
+                
                   @click="openDeleteModal(c)"
                 />
               </div>
@@ -534,6 +542,8 @@ function openDeleteModal(c: Consultation) {
                   size="sm"
                   :icon="CIconCheckCircle"
                   :title="t('consultations.close')"
+                  shrink="sm"
+                
                   @click="openCloseModal(c)"
                 />
               </div>
@@ -548,6 +558,8 @@ function openDeleteModal(c: Consultation) {
                   size="sm"
                   :icon="CIconTrash"
                   :title="t('common.delete')"
+                  shrink="sm"
+                
                   @click="openDeleteModal(c)"
                 />
               </div>

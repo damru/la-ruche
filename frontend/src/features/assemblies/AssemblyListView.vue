@@ -198,7 +198,7 @@ async function onMeetingCreated(meetingId: string) {
                   <CBadge
                     :variant="statusBadgeVariant(meeting.status)"
                     :pulse="meeting.status === MEETING_STATUS_CALLED || meeting.status === MEETING_STATUS_ONGOING"
-                    class="text-xs"
+                    :class="['text-xs', meeting.status === MEETING_STATUS_CALLED || meeting.status === MEETING_STATUS_ONGOING ? 'meeting-live' : '']"
                     dot
                   >
                     {{ statusLabel(meeting.status) }}
@@ -370,4 +370,8 @@ async function onMeetingCreated(meetingId: string) {
 
 }
 
+.meeting-live :deep(.c-badge__dot) {
+  background: var(--color-dot-live);
+  opacity: 1;
+}
 </style>

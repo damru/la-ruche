@@ -93,8 +93,6 @@ const effectivePulse = computed(() =>
 /* Blinking dot — controlled by the pulse prop */
 .c-badge--pulse .c-badge__dot {
   animation: badge-pulse 2.8s ease-in-out infinite;
-  background: var(--color-on-surface);
-  opacity: 1;
 }
 
 @media (prefers-reduced-motion: reduce) {
