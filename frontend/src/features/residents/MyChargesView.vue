@@ -65,7 +65,7 @@ onMounted(reload)
         <!-- Multi-unit selection (co-owner with several units) -->
         <div
           v-if="ownedUnits.length > 1"
-          class="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-4"
+          class="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-4"
         >
           <CCard
             v-for="unit in ownedUnits"

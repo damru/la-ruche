@@ -83,7 +83,6 @@ watch(() => route.params.id, id => {
           :crumbs="[
             { label: buildingName || '…' },
             { label: t('nav.tasks'), to: { name: 'tasks' } },
-            { label: task?.title ?? '…' },
           ]"
         />
       </template>

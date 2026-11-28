@@ -11,7 +11,9 @@ import CTabs from '@/components/atoms/CTabs.vue'
 import CToggle from '@/components/atoms/CToggle.vue'
 import CFormSelect from '@/components/atoms/CFormSelect.vue'
 import CBadge from '@/components/atoms/CBadge.vue'
+import CIconCheck from '@/components/atoms/CIconCheck.svg'
 import CIconClock from '@/components/atoms/CIconClock.svg'
+import CIconLock from '@/components/atoms/CIconLock.svg'
 import CIconLogIn from '@/components/atoms/CIconLogIn.svg'
 import CIconMoon from '@/components/atoms/CIconMoon.svg'
 import CIconRefresh from '@/components/atoms/CIconRefresh.svg'
@@ -287,14 +289,18 @@ const showResetDataModal = ref(false)
               <CBtn
                 variant="primary"
                 type="submit"
+                :icon="CIconCheck"
                 :title="t('settings.account.update')"
                 :loading="saving"
                 :disabled="saving"
+                shrink="sm"
               />
               <CBtn
                 variant="ghost"
+                :icon="CIconLock"
                 :title="t('settings.account.changePassword')"
                 disabled
+                shrink="sm"
               />
             </template>
           </CForm>

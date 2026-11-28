@@ -17,11 +17,11 @@ withDefaults(defineProps<{
 <template>
   <header class="c-page-header flex items-start justify-between gap-3 min-w-0">
     <div class="flex flex-col items-start gap-2 min-w-0">
-      <slot name="eyebrow">
-        <CEyebrow v-if="eyebrow">
+      <CEyebrow v-if="eyebrow || $slots.eyebrow">
+        <slot name="eyebrow">
           {{ eyebrow }}
-        </CEyebrow>
-      </slot>
+        </slot>
+      </CEyebrow>
       <slot name="title">
         <CHeading
           v-if="title"

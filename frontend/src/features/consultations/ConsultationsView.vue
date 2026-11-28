@@ -19,6 +19,7 @@ import CTopbar from '@/components/organisms/CTopbar.vue'
 import CHeading from '@/components/atoms/CHeading.vue'
 import CTabs from '@/components/atoms/CTabs.vue'
 import CIconPlus from '@/components/atoms/CIconPlus.svg'
+import CIconCheck from '@/components/atoms/CIconCheck.svg'
 import CIconCheckCircle from '@/components/atoms/CIconCheckCircle.svg'
 import CIconTrash from '@/components/atoms/CIconTrash.svg'
 import CIconEdit from '@/components/atoms/CIconEdit.svg'
@@ -442,8 +443,10 @@ function openDeleteModal(c: Consultation) {
                   <CBtn
                     variant="primary"
                     size="sm"
+                    :icon="CIconCheck"
                     :title="hasVoted(c) ? t('consultations.updateVote') : t('consultations.respondModal.submit')"
                     :loading="getInline(c).submitting"
+                    shrink="sm"
                     @click="submitVote(c)"
                   />
                 </div>
@@ -457,7 +460,9 @@ function openDeleteModal(c: Consultation) {
                 <CBtn
                   variant="ghost"
                   size="sm"
+                  :icon="CIconEdit"
                   :title="t('consultations.modifyVote')"
+                  shrink="sm"
                   @click="unlockVote(c)"
                 />
               </div>

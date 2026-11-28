@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import CLegalDescription from '@/components/atoms/CLegalDescription.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
+import CIconCheck from '@/components/atoms/CIconCheck.svg'
 import CLegalNotice from '@/components/molecules/CLegalNotice.vue'
 import CLegalCard from '@/components/molecules/CLegalCard.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
@@ -134,9 +135,11 @@ onMounted(reload)
               <CBtn
                 variant="primary"
                 type="submit"
+                :icon="CIconCheck"
                 :title="t('settings.saveChanges')"
                 :loading="saving"
                 :disabled="saving"
+                shrink="sm"
               />
             </template>
           </CForm>
