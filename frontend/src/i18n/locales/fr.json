@@ -1288,11 +1288,6 @@
       "missed": "Délai dépassé depuis le {date}",
       "transmittedOnTime": "Transmis le {date} (dans le délai légal)",
       "transmittedLate": "Transmis le {date} (hors délai légal)",
-      "shortOnTime": "Dans le délai",
-      "shortLate": "Hors délai",
-      "shortRemaining": "{days} j restants",
-      "shortToday": "Échéance aujourd’hui",
-      "shortMissed": "Délai dépassé",
       "reference": "Échéance légale : {date}"
     },
     "statuses": {

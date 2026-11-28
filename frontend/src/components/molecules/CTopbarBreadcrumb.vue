@@ -8,11 +8,18 @@ export interface Crumb {
   to?: RouteLocationRaw
 }
 
-defineProps<{
+const props = defineProps<{
   crumbs: Crumb[]
 }>()
 
 const { t } = useI18n()
+
+const crumbKey = (crumb: Crumb) => (crumb.to ? JSON.stringify(crumb.to) : crumb.label)
+
+const crumbClass = (index: number) => [
+  'truncate min-w-0',
+  index === props.crumbs.length - 1 ? 'shrink-[1]' : 'shrink-[8]',
+]
 </script>
 
 <template>
@@ -22,7 +29,7 @@ const { t } = useI18n()
   >
     <template
       v-for="(crumb, index) in crumbs"
-      :key="index"
+      :key="crumbKey(crumb)"
     >
       <CIconChevronRight
         v-if="index > 0"
@@ -32,14 +39,14 @@ const { t } = useI18n()
       <RouterLink
         v-if="crumb.to"
         :to="crumb.to"
-        :class="['truncate min-w-0', index === crumbs.length - 1 ? 'shrink-[1]' : 'shrink-[8]']"
+        :class="crumbClass(index)"
         :aria-current="index === crumbs.length - 1 ? 'page' : undefined"
       >
         {{ crumb.label }}
       </RouterLink>
       <span
         v-else
-        :class="['truncate min-w-0', index === crumbs.length - 1 ? 'shrink-[1]' : 'shrink-[8]']"
+        :class="crumbClass(index)"
         :aria-current="index === crumbs.length - 1 ? 'page' : undefined"
       >
         {{ crumb.label }}

@@ -9,11 +9,9 @@ import type { Document } from '@/types/domain'
 
 withDefaults(defineProps<{
   documents: Document[]
-  readonly?: boolean
   loadingDocId?: string | null
   removeTitle?: string
 }>(), {
-  readonly: false,
   loadingDocId: null,
   removeTitle: undefined,
 })
@@ -56,7 +54,6 @@ const { formatDate, formatFileSize } = useFormatters()
           @click="emit('download', document)"
         />
         <CBtn
-          v-if="!readonly"
           variant="danger"
           size="sm"
           :icon="CIconTrash"
