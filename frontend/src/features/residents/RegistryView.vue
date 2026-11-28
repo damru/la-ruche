@@ -122,7 +122,7 @@ const registryColumns = computed(() => {
           </CMetaLine>
         </CPageHeader>
         
-        <div class="grid gap-4 xs:grid-cols-3">
+        <div class="grid grid-cols-2 gap-3 xs:grid-cols-3 xs:gap-4">
           <CKpiCard
             class="items-center text-center"
             :subtitle="t('registry.lots')"

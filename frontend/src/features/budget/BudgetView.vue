@@ -768,7 +768,7 @@ function formatSharePercentage(value: number): string {
           </div>
         </template>
 
-        <div class="grid gap-4 xs:grid-cols-2 xl:grid-cols-4">
+        <div class="grid grid-cols-2 gap-3 xs:grid-cols-2 xs:gap-4 xl:grid-cols-4">
           <CKpiCard
             :label="t('budget.budgetForecastLabel')"
             :value="formatCurrency(selectedTotalForecast)"

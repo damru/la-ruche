@@ -210,7 +210,7 @@ const showPreEtatDateModal = ref(false)
         </CBadge>
 
         <!-- Summary KPIs -->
-        <div class="flex flex-wrap gap-4">
+        <div class="grid grid-cols-2 gap-3 xs:gap-4">
           <CKpiCard
             :label="t('units.charges.totalIssued')"
             :value="formatCurrency(data.total_issued)"

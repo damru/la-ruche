@@ -27,7 +27,7 @@ withDefaults(defineProps<{
 <template>
   <CCard
     padding="md"
-    class="min-w-40!"
+    class="min-w-0! sm:min-w-40!"
     :class="emphasize ? `tone--${tone}` : ''"
   >
     <div 
@@ -90,5 +90,18 @@ withDefaults(defineProps<{
 .c-kpi__icon :deep(svg) {
   width: var(--icon-md);
   height: var(--icon-md);
+}
+
+@media (max-width: 640px) {
+  .c-kpi__header { margin-bottom: var(--space-2); }
+  .c-kpi__label { font-size: var(--text-2xs); }
+  .c-kpi__icon {
+    width: calc(var(--icon-md) * 1.5);
+    height: calc(var(--icon-md) * 1.5);
+  }
+  .c-kpi__icon :deep(svg) {
+    width: var(--icon-sm);
+    height: var(--icon-sm);
+  }
 }
 </style>

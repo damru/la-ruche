@@ -779,6 +779,7 @@ const todayStr = computed(() =>
    vides se replient au lieu de laisser des colonnes mortes. */
 .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--space-4); }
 @media (max-width: 1100px) { .kpi-grid { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); } }
+@media (max-width: 640px) { .kpi-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--space-3); } }
 
 .kpi-prog { height: 3px; border-radius: var(--radius-full); background: var(--color-surface-container-high); overflow: hidden; margin-top: var(--space-3); }
 .kpi-prog__fill { height: 100%; border-radius: var(--radius-full); transition: width 0.8s cubic-bezier(0.34, 1.3, 0.64, 1); }
