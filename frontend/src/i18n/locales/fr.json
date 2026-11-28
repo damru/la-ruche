@@ -1288,6 +1288,8 @@
       "missed": "Délai dépassé depuis le {date}",
       "transmittedOnTime": "Transmis le {date} (dans le délai légal)",
       "transmittedLate": "Transmis le {date} (hors délai légal)",
+      "transmittedOnDate": "Transmis le {date}",
+      "transmittedLateDate": "Transmis hors délai le {date}",
       "reference": "Échéance légale : {date}"
     },
     "statuses": {

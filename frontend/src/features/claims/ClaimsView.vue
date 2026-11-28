@@ -202,6 +202,15 @@ function deadlineVariant(claim: Claim): 'valid' | 'pending' | 'err' | 'default' 
   return 'default'
 }
 
+function deadlineChipLabel(claim: Claim): string {
+  if (claim.transmitted_at) {
+    return t(claim.is_transmitted_late ? 'claims.deadline.transmittedLateDate' : 'claims.deadline.transmittedOnDate', {
+      date: formatDate(claim.transmitted_at),
+    })
+  }
+  return deadlineLabel(claim)
+}
+
 function deadlineLabel(claim: Claim): string {
   if (claim.transmitted_at) {
     return t(
@@ -460,7 +469,7 @@ function handleDocumentCountChanged(claimId: string, delta: number) {
                     truncate
                     :title="deadlineLabel(claim)"
                   >
-                    {{ deadlineLabel(claim) }}
+                    {{ deadlineChipLabel(claim) }}
                   </CBadge>
                 </template>
               </CCardHeader>
