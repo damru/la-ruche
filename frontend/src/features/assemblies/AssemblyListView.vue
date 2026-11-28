@@ -308,7 +308,7 @@ async function onMeetingCreated(meetingId: string) {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: var(--color-on-primary);
+  background: var(--color-dot-live);
   animation: pulse-dot 1.8s ease-in-out infinite;
 }
 

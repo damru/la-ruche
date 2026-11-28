@@ -533,6 +533,7 @@ function openDeleteModal(c: Consultation) {
                   size="sm"
                   :icon="CIconBell"
                   :title="t('common.remind')"
+                  shrink="sm"
                   :disabled="(nonRespondentsCount[c.id] ?? 0) === 0"
                   :loading="remindingId === c.id"
                   @click="remindNonRespondents(c)"

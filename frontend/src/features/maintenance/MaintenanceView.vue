@@ -784,13 +784,11 @@ function openDeleteModal(entry: MaintenanceEntry) {
 
 @media (max-width: 640px) {
   .period-nav {
-    flex-wrap: wrap;
     justify-content: center;
   }
 
   .period-label {
-    order: -1;
-    width: 100%;
+    flex: 1;
     text-align: center;
   }
 }
