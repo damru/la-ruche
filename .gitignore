@@ -4,7 +4,7 @@ backend/target/
 backend/**/*.rs.bk
 
 # Frontend
-frontend/node_modules/
+frontend/node_modules
 frontend/dist/
 frontend/.env.local
 frontend/e2e/.auth/

@@ -9,6 +9,7 @@ import CIconBolt from '@/components/atoms/CIconBolt.svg'
 import CIconDroplet from '@/components/atoms/CIconDroplet.svg'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CCard from '@/components/molecules/CCard.vue'
+import CCardHeader from '@/components/molecules/CCardHeader.vue'
 import CCardActions from '@/components/molecules/CCardActions.vue'
 import CDataTable, { type Column } from '@/components/molecules/CDataTable.vue'
 import CFormMultiSelect from '@/components/atoms/CFormMultiSelect.vue'
@@ -19,7 +20,6 @@ import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CReminderCard from '@/components/organisms/CReminderCard.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
-import CHeading from '@/components/atoms/CHeading.vue'
 import CIconFile from '@/components/atoms/CIconFile.svg'
 import CIconLeaf from '@/components/atoms/CIconLeaf.svg'
 import CIconLayers from '@/components/atoms/CIconLayers.svg'
@@ -40,6 +40,8 @@ import ContractFormModal from '@/features/contracts/ContractFormModal.vue'
 import AmendContractModal from '@/features/contracts/AmendContractModal.vue'
 import AmendmentChainModal from '@/features/contracts/AmendmentChainModal.vue'
 import CTabs, { type Tab } from '@/components/atoms/CTabs.vue'
+import CPageHeader from '@/components/molecules/CPageHeader.vue'
+import CTopbarBreadcrumb from '@/components/molecules/CTopbarBreadcrumb.vue'
 import { toErrorMessage, usePageLoader } from '@/composables/usePageLoader'
 import TerminateContractModal from '@/features/contracts/TerminateContractModal.vue'
 import { effectiveContractStatus } from '@/utils/contracts'
@@ -392,11 +394,12 @@ async function activateContract(contract: VendorContract) {
   <div class="view-page">
     <CTopbar>
       <template #left>
-        <div class="topbar-breadcrumb">
-          {{ buildingName || '...' }}
-          <CIconChevronRight />
-          <span>{{ t('contracts.title') }}</span>
-        </div>
+        <CTopbarBreadcrumb
+          :crumbs="[
+            { label: buildingName || '…' },
+            { label: t('contracts.title') },
+          ]"
+        />
       </template>
       <template #right>
         <CBtn
@@ -419,17 +422,11 @@ async function activateContract(contract: VendorContract) {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
-        <header class="view-header">
-          <CEyebrow>
-            {{ t('page.eyebrows.contracts') }}
-          </CEyebrow>
-          <CHeading type="header">
-            {{ t('contracts.title') }}
-          </CHeading>
-          <CMetaItem variant="sub">
-            {{ t('contracts.count', { count: allContracts.length }) }}
-          </CMetaItem>
-        </header>
+        <CPageHeader
+          :eyebrow="t('page.eyebrows.contracts')"
+          :title="t('contracts.title')"
+          :meta="t('contracts.count', { count: allContracts.length })"
+        />
 
         <CReminderCard
           v-if="contractReminderRows.length > 0"
@@ -591,17 +588,19 @@ async function activateContract(contract: VendorContract) {
             :class="[{ 'outline outline-1 outline-outline-variant': effectiveStatus(contract) !== CONTRACT_STATUS_ACTIVE }]"
             @click="openContractDetail(contract)"
           >
-            <div class="flex items-center gap-3 min-w-0">
-              <CIconTile :class="contractIconTone(contract)">
-                <component
-                  :is="contractTypeIcon(contract.contract_type)"
-                  aria-hidden="true"
-                />
-              </CIconTile>
-              <h3 class="text-lg font-semibold text-on-surface m-0 leading-snug min-w-0">
+            <CCardHeader with-icon>
+              <template #icon>
+                <CIconTile :class="contractIconTone(contract)">
+                  <component
+                    :is="contractTypeIcon(contract.contract_type)"
+                    aria-hidden="true"
+                  />
+                </CIconTile>
+              </template>
+              <h3 class="text-lg font-semibold text-on-surface m-0 leading-snug">
                 {{ contract.vendor_name }}
               </h3>
-              <div class="flex flex-wrap gap-x-2 gap-y-1">
+              <template #chips>
                 <CBadge variant="default">
                   {{ t(`contracts.types.${contract.contract_type}`) }}
                 </CBadge>
@@ -611,8 +610,8 @@ async function activateContract(contract: VendorContract) {
                 >
                   {{ t(`contracts.statuses.${effectiveStatus(contract)}`) }}
                 </CBadge>
-              </div>
-            </div>
+              </template>
+            </CCardHeader>
             <div class="flex flex-col gap-3">
               <p class="body-xs">
                 {{ contract.subject }}
@@ -694,6 +693,7 @@ async function activateContract(contract: VendorContract) {
                   :title="t('contracts.activate')"
                   :loading="activatingId === contract.id"
                   :disabled="activatingId === contract.id"
+                  shrink="sm"
                   @click="activateContract(contract)"
                 />
                 <CBtn
@@ -701,6 +701,7 @@ async function activateContract(contract: VendorContract) {
                   size="sm"
                   :icon="CIconEdit"
                   :title="t('common.edit')"
+                  shrink="sm"
                   @click="openEditModal(contract)"
                 />
                 <CBtn
@@ -709,6 +710,7 @@ async function activateContract(contract: VendorContract) {
                   size="sm"
                   :icon="CIconEdit"
                   :title="t('contracts.amend')"
+                  shrink="sm"
                   @click="openAmendModal(contract)"
                 />
                 <CBtn
@@ -717,6 +719,7 @@ async function activateContract(contract: VendorContract) {
                   size="sm"
                   :icon="CIconHistory"
                   :title="t('contracts.history')"
+                  shrink="sm"
                   @click="openChainModal(contract)"
                 />
                 <CBtn
@@ -725,6 +728,7 @@ async function activateContract(contract: VendorContract) {
                   size="sm"
                   :icon="CIconArchive"
                   :title="t('contracts.terminate')"
+                  shrink="sm"
                   @click="openTerminateModal(contract)"
                 />
               </CCardActions>
@@ -735,6 +739,7 @@ async function activateContract(contract: VendorContract) {
                   size="sm"
                   :icon="CIconHistory"
                   :title="t('contracts.history')"
+                  shrink="sm"
                   @click="openChainModal(contract)"
                 />
               </CCardActions>

@@ -3,8 +3,6 @@ import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CFormActions from '@/components/molecules/CFormActions.vue'
-import CIconDownload from '@/components/atoms/CIconDownload.svg'
-import CIconFile from '@/components/atoms/CIconFile.svg'
 import CIconTrash from '@/components/atoms/CIconTrash.svg'
 import CFormCheckbox from '@/components/atoms/CFormCheckbox.vue'
 import CFormInput from '@/components/atoms/CFormInput.vue'
@@ -12,8 +10,8 @@ import CFormSelect from '@/components/atoms/CFormSelect.vue'
 import CModal from '@/components/molecules/CModal.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CDocumentLinkActionModal from '@/components/organisms/CDocumentLinkActionModal.vue'
+import CDocumentList from '@/components/molecules/CDocumentList.vue'
 import { contractsApi, documentsApi } from '@/api'
-import { useFormatters } from '@/composables/useFormatters'
 import { toErrorMessage } from '@/composables/usePageLoader'
 import { useFormFeedback } from '@/composables/useFormFeedback'
 import { useAutoClose } from '@/composables/useAutoClose'
@@ -49,7 +47,6 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 const ui = useUiStore()
-const { formatDate, formatFileSize } = useFormatters()
 const feedback = useFormFeedback()
 const saving = ref(false)
 const fieldErrors = ref<Record<string, string>>({})
@@ -495,46 +492,13 @@ async function saveContract() {
           >
             {{ t('contracts.documents.empty') }}
           </div>
-          <div
+          <CDocumentList
             v-else
-            class="contract-form__documents-list"
-          >
-            <div
-              v-for="document in existingDocuments"
-              :key="document.id"
-              class="contract-form__documents-row"
-            >
-              <div class="contract-form__documents-meta">
-                <div class="contract-form__documents-name">
-                  <CIconFile
-                    class="icon-sm"
-                  />
-                  <span>{{ document.original_name }}</span>
-                </div>
-                <div class="contract-form__documents-details">
-                  <span>{{ formatFileSize(document.size_bytes) }}</span>
-                  <span>·</span>
-                  <span>{{ formatDate(document.created_at) }}</span>
-                </div>
-              </div>
-              <div class="contract-form__documents-actions">
-                <CBtn
-                  variant="ghost"
-                  size="sm"
-                  :icon="CIconDownload"
-                  :title="t('common.download')"
-                  @click="downloadDocument(document.id)"
-                />
-                <CBtn
-                  variant="danger"
-                  size="sm"
-                  :icon="CIconTrash"
-                  :title="t('contracts.documents.detach')"
-                  @click="openDocumentActionModal(document)"
-                />
-              </div>
-            </div>
-          </div>
+            :documents="existingDocuments"
+            :remove-title="t('contracts.documents.detach')"
+            @download="doc => downloadDocument(doc.id)"
+            @remove="openDocumentActionModal"
+          />
         </div>
       </div>
     </CForm>
@@ -645,80 +609,6 @@ async function saveContract() {
 
 .contract-form__checkbox {
   font-weight: var(--fw-medium);
-}
-
-.contract-form__documents {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-
-.contract-form__existing-documents {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.contract-form__documents-hint {
-  margin: 0;
-}
-
-.contract-form__documents-empty {
-  padding: var(--space-3);
-  border-radius: var(--radius-lg);
-  background: var(--color-surface-container-low);
-  color: var(--color-on-surface-variant);
-}
-
-.contract-form__documents-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.contract-form__documents-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-3);
-  border-radius: var(--radius-lg);
-  background: var(--color-surface-container-low);
-}
-
-.contract-form__documents-meta {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
-
-.contract-form__documents-name {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  font-weight: var(--fw-medium);
-  min-width: 0;
-}
-
-.contract-form__documents-name span {
-  overflow: clip;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.contract-form__documents-details {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  color: var(--color-on-surface-variant);
-  font-size: var(--text-xs);
-}
-
-.contract-form__documents-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
 }
 
 @media (max-width: 720px) {

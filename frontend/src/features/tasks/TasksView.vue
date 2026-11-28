@@ -10,6 +10,7 @@ import CBtn from '@/components/atoms/CBtn.vue'
 import CFormInput from '@/components/atoms/CFormInput.vue'
 import CFormSelect from '@/components/atoms/CFormSelect.vue'
 import CCard from '@/components/molecules/CCard.vue'
+import CCardHeader from '@/components/molecules/CCardHeader.vue'
 import CCardActions from '@/components/molecules/CCardActions.vue'
 import CMetaLine from '@/components/molecules/CMetaLine.vue'
 import CMetaItem from '@/components/molecules/CMetaItem.vue'
@@ -17,7 +18,6 @@ import CLinkedDocumentsModal from '@/components/organisms/CLinkedDocumentsModal.
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
-import CHeading from '@/components/atoms/CHeading.vue'
 import CTabs from '@/components/atoms/CTabs.vue'
 import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import CIconSearch from '@/components/atoms/CIconSearch.svg'
@@ -29,6 +29,8 @@ import CIconCopy from '@/components/atoms/CIconCopy.svg'
 import CIconEdit from '@/components/atoms/CIconEdit.svg'
 import CIconRefresh from '@/components/atoms/CIconRefresh.svg'
 import CIconCheckCircle from '@/components/atoms/CIconCheckCircle.svg'
+import CPageHeader from '@/components/molecules/CPageHeader.vue'
+import CTopbarBreadcrumb from '@/components/molecules/CTopbarBreadcrumb.vue'
 import SaveTaskModal from './SaveTaskModal.vue'
 import CloseTaskModal from './CloseTaskModal.vue'
 import DeleteTaskModal from './DeleteTaskModal.vue'
@@ -437,11 +439,12 @@ async function downloadTaskDocument(documentId: string) {
   <div class="view-page">
     <CTopbar>
       <template #left>
-        <div class="topbar-breadcrumb">
-          {{ buildingName }}
-          <CIconChevronRight />
-          <span>{{ t('nav.tasks') }}</span>
-        </div>
+        <CTopbarBreadcrumb
+          :crumbs="[
+            { label: buildingName || '…' },
+            { label: t('nav.tasks') },
+          ]"
+        />
       </template>
       <template #right>
         <CBtn
@@ -449,6 +452,7 @@ async function downloadTaskDocument(documentId: string) {
           size="sm"
           :icon="CIconPlus"
           :title="t('tasks.create')"
+          shrink="sm"
           @click="openCreateModal"
         />
       </template>
@@ -462,17 +466,11 @@ async function downloadTaskDocument(documentId: string) {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
-        <header class="view-header">
-          <CEyebrow>
-            {{ t('page.eyebrows.tasks') }}
-          </CEyebrow>
-          <CHeading type="header">
-            {{ t('nav.tasks') }}
-          </CHeading>
-          <CMetaItem variant="sub">
-            {{ t('tasks.header.activeSummary', { count: activeCount }) }}
-          </CMetaItem>
-        </header>
+        <CPageHeader
+          :eyebrow="t('page.eyebrows.tasks')"
+          :title="t('nav.tasks')"
+          :meta="t('tasks.header.activeSummary', { count: activeCount })"
+        />
 
         <CAlert
           v-if="pageError"
@@ -552,11 +550,11 @@ async function downloadTaskDocument(documentId: string) {
               @keydown.enter.prevent="openTaskDetail(task.id)"
               @keydown.space.prevent="openTaskDetail(task.id)"
             >
-              <div class="flex items-center gap-3 min-w-0">
-                <h3 class="text-lg font-semibold text-on-surface m-0 leading-snug min-w-0">
+              <CCardHeader>
+                <h3 class="text-lg font-semibold text-on-surface m-0 leading-snug">
                   {{ task.title }}
                 </h3>
-                <CMetaLine class="flex-1 justify-end text-xs">
+                <template #chips>
                   <CBadge :variant="isTerminal(task.status) ? 'disabled' : taskPriorityVariant(task.priority)">
                     {{ t(`tasks.priorities.${task.priority}`) }}
                   </CBadge>
@@ -566,8 +564,8 @@ async function downloadTaskDocument(documentId: string) {
                   >
                     {{ t(`tasks.statuses.${task.status}`) }}
                   </CBadge>
-                </CMetaLine>
-              </div>
+                </template>
+              </CCardHeader>
   
               <div class="flex flex-col gap-3">
                 <p
@@ -687,6 +685,7 @@ async function downloadTaskDocument(documentId: string) {
                     :icon="CIconEdit"
                     :title="t('common.edit')"
                     :aria-label="t('tasks.editTask')"
+                    shrink="sm"
                     @click.stop="openEditModal(task)"
                   />
                   <CBtn
@@ -696,6 +695,7 @@ async function downloadTaskDocument(documentId: string) {
                     :icon="CIconRefresh"
                     :title="t('tasks.reopenTask')"
                     :aria-label="t('tasks.reopenTask')"
+                    shrink="sm"
                     @click.stop="openReopenModal(task)"
                   />
                   <CBtn
@@ -705,6 +705,7 @@ async function downloadTaskDocument(documentId: string) {
                     :icon="CIconCheckCircle"
                     :title="closeActionLabel(task)"
                     :aria-label="closeActionLabel(task)"
+                    shrink="sm"
                     @click.stop="openCloseModal(task)"
                   />
                   <CBtn
@@ -715,6 +716,7 @@ async function downloadTaskDocument(documentId: string) {
                     :title="t('tasks.takeBackTask')"
                     :aria-label="t('tasks.takeBackTask')"
                     :disabled="takingBack === task.id"
+                    shrink="sm"
                     @click.stop="takeBack(task)"
                   />
                   <CBtn
@@ -724,6 +726,7 @@ async function downloadTaskDocument(documentId: string) {
                     :icon="CIconBan"
                     :title="t('tasks.cancelTask')"
                     :aria-label="t('tasks.cancelTask')"
+                    shrink="sm"
                     @click.stop="openCancelModal(task)"
                   />
                 </CCardActions>

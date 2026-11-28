@@ -15,7 +15,6 @@ import CTopbar from '@/components/organisms/CTopbar.vue'
 import CHeading from '@/components/atoms/CHeading.vue'
 import CIconArrowLeft from '@/components/atoms/CIconArrowLeft.svg'
 import CIconBolt from '@/components/atoms/CIconBolt.svg'
-import CIconChevronRight from '@/components/atoms/CIconChevronRight.svg'
 import CIconDroplet from '@/components/atoms/CIconDroplet.svg'
 import CIconLayers from '@/components/atoms/CIconLayers.svg'
 import CIconLeaf from '@/components/atoms/CIconLeaf.svg'
@@ -23,6 +22,7 @@ import CIconSettings from '@/components/atoms/CIconSettings.svg'
 import CIconShield from '@/components/atoms/CIconShield.svg'
 import CIconSparkles from '@/components/atoms/CIconSparkles.svg'
 import CIconWrench from '@/components/atoms/CIconWrench.svg'
+import CTopbarBreadcrumb from '@/components/molecules/CTopbarBreadcrumb.vue'
 import { contractorsApi, tasksApi } from '@/api'
 import { useBuildingStore } from '@/stores/building'
 import type {Contractor, Task} from '@/types/domain'
@@ -105,18 +105,13 @@ function priorityVariant(p: string): 'err' | 'pending' | 'primary' | 'valid' | '
   <div class="view-page">
     <CTopbar>
       <template #left>
-        <div class="topbar-breadcrumb">
-          {{ buildingName }}
-          <CIconChevronRight />
-          <RouterLink
-            :to="{ name: 'contractors' }"
-            class="topbar-breadcrumb-link"
-          >
-            {{ t('contractors.title') }}
-          </RouterLink>
-          <CIconChevronRight />
-          <span>{{ contractor?.name ?? '…' }}</span>
-        </div>
+        <CTopbarBreadcrumb
+          :crumbs="[
+            { label: buildingName || '…' },
+            { label: t('contractors.title'), to: { name: 'contractors' } },
+            { label: contractor?.name ?? '…' },
+          ]"
+        />
       </template>
       <template #right>
         <CBtn
@@ -124,6 +119,7 @@ function priorityVariant(p: string): 'err' | 'pending' | 'primary' | 'valid' | '
           size="sm"
           :icon="CIconArrowLeft"
           :title="t('common.back')"
+          shrink="sm"
           @click="router.push({ name: 'contractors' })"
         />
       </template>

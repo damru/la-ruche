@@ -20,6 +20,8 @@ import CTopbar from '@/components/organisms/CTopbar.vue'
 import CTabs, { type Tab } from '@/components/atoms/CTabs.vue'
 import CHeading from '@/components/atoms/CHeading.vue'
 import CIconPlus from '@/components/atoms/CIconPlus.svg'
+import CPageHeader from '@/components/molecules/CPageHeader.vue'
+import CTopbarBreadcrumb from '@/components/molecules/CTopbarBreadcrumb.vue'
 import CreateMeetingModal from './CreateMeetingModal.vue'
 
 const router = useRouter()
@@ -105,11 +107,12 @@ async function onMeetingCreated(meetingId: string) {
   <div class="view-page">
     <CTopbar>
       <template #left>
-        <div class="topbar-breadcrumb">
-          {{ buildingName || '...' }}
-          <CIconChevronRight />
-          <span>{{ t('nav.meetings') }}</span>
-        </div>
+        <CTopbarBreadcrumb
+          :crumbs="[
+            { label: buildingName || '…' },
+            { label: t('nav.meetings') },
+          ]"
+        />
       </template>
       <template #right>
         <CBtn
@@ -132,13 +135,10 @@ async function onMeetingCreated(meetingId: string) {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
-        <header class="view-header">
-          <CEyebrow>
-            {{ t('page.eyebrows.assemblies') }}
-          </CEyebrow>
-          <CHeading type="header">
-            {{ t('nav.meetings') }}
-          </CHeading>
+        <CPageHeader
+          :eyebrow="t('page.eyebrows.assemblies')"
+          :title="t('nav.meetings')"
+        >
           <CMetaLine>
             <CMetaItem variant="sub">
               {{ buildingName }}
@@ -148,7 +148,7 @@ async function onMeetingCreated(meetingId: string) {
               {{ t('meetings.count', allMeetings.length) }}
             </CMetaItem>
           </CMetaLine>
-        </header>
+        </CPageHeader>
 
         <CTabs
           v-model="filter"
@@ -198,7 +198,7 @@ async function onMeetingCreated(meetingId: string) {
                   <CBadge
                     :variant="statusBadgeVariant(meeting.status)"
                     :pulse="meeting.status === MEETING_STATUS_CALLED || meeting.status === MEETING_STATUS_ONGOING"
-                    class="text-xs"
+                    :class="['text-xs', meeting.status === MEETING_STATUS_CALLED || meeting.status === MEETING_STATUS_ONGOING ? 'meeting-live' : '']"
                     dot
                   >
                     {{ statusLabel(meeting.status) }}
@@ -308,7 +308,7 @@ async function onMeetingCreated(meetingId: string) {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: var(--color-on-primary);
+  background: var(--color-dot-live);
   animation: pulse-dot 1.8s ease-in-out infinite;
 }
 
@@ -370,4 +370,8 @@ async function onMeetingCreated(meetingId: string) {
 
 }
 
+.meeting-live :deep(.c-badge__dot) {
+  background: var(--color-dot-live);
+  opacity: 1;
+}
 </style>

@@ -8,13 +8,12 @@ import CFormActions from '@/components/molecules/CFormActions.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CDocumentLinkActionModal from '@/components/organisms/CDocumentLinkActionModal.vue'
-import CIconDownload from '@/components/atoms/CIconDownload.svg'
 import CIconTrash from '@/components/atoms/CIconTrash.svg'
+import CDocumentList from '@/components/molecules/CDocumentList.vue'
 import { contractorsApi, documentsApi, tasksApi } from '@/api'
 import { useFormFeedback } from '@/composables/useFormFeedback'
 import { useAutoClose } from '@/composables/useAutoClose'
 import { toErrorMessage } from '@/composables/usePageLoader'
-import { useFormatters } from '@/composables/useFormatters'
 import { extractFileExtension } from '@/utils/files'
 import type { Contractor, Document, Task, TaskPriority, TaskStatus } from '@/types/domain'
 import { ASSIGNABLE_TASK_STATUSES, DEFAULT_TASK_PRIORITY, TASK_PRIORITIES, TASK_STATUS_IN_PROGRESS, TASK_STATUS_OPEN } from '@/utils/constants'
@@ -36,7 +35,6 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 const ui = useUiStore()
-const { formatDate, formatFileSize } = useFormatters()
 const feedback = useFormFeedback()
 const { schedule: scheduleClose, forceExpire: forceClose } = useAutoClose()
 const saving = ref(false)
@@ -461,47 +459,14 @@ async function handleSubmit() {
           >
             {{ t('tasks.noAttachedDocuments') }}
           </div>
-          <div
+          <CDocumentList
             v-else
-            class="task-existing-documents__list"
-          >
-            <div
-              v-for="document in existingDocuments"
-              :key="document.id"
-              class="task-existing-documents__row"
-            >
-              <div class="task-existing-documents__meta">
-                <div class="task-existing-documents__name">
-                  <CIconFile
-                    class="icon-sm"
-                  />
-                  <span>{{ document.original_name }}</span>
-                </div>
-                <div class="task-existing-documents__details">
-                  <span>{{ formatFileSize(document.size_bytes) }}</span>
-                  <span>·</span>
-                  <span>{{ formatDate(document.created_at) }}</span>
-                </div>
-              </div>
-              <div class="task-existing-documents__actions">
-                <CBtn
-                  variant="ghost"
-                  size="sm"
-                  :icon="CIconDownload"
-                  :title="t('common.download')"
-                  @click="downloadDocument(document.id)"
-                />
-                <CBtn
-                  variant="danger"
-                  size="sm"
-                  :icon="CIconTrash"
-                  :title="t('tasks.detachDocument')"
-                  :loading="documentActionLoading && pendingDocument?.id === document.id"
-                  @click="openDocumentActionModal(document)"
-                />
-              </div>
-            </div>
-          </div>
+            :documents="existingDocuments"
+            :remove-title="t('tasks.detachDocument')"
+            :loading-doc-id="pendingDocument?.id ?? null"
+            @download="doc => downloadDocument(doc.id)"
+            @remove="openDocumentActionModal"
+          />
         </div>
       </div>
       <!-- Assignment mode: radio (visible for new tasks, open tasks, and in_progress tasks) -->
@@ -706,63 +671,4 @@ async function handleSubmit() {
   background: var(--color-surface-container-lowest);
 }
 
-.task-existing-documents__list {
-  margin-top: var(--space-3);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.task-existing-documents__row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-xl);
-  background: var(--color-surface-container-low);
-}
-
-.task-existing-documents {
-  margin-top: var(--space-3);
-}
-
-.task-existing-documents__meta {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
-
-.task-existing-documents__name {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  min-width: 0;
-}
-
-.task-existing-documents__name span {
-  overflow: clip;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.task-existing-documents__details {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  color: var(--color-on-surface-variant);
-  font-size: var(--text-xs);
-}
-
-.task-existing-documents__actions {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.task-existing-documents__empty {
-  margin-top: var(--space-2);
-  color: var(--color-on-surface-variant);
-}
 </style>

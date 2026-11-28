@@ -8,6 +8,7 @@ import CBadge from '@/components/atoms/CBadge.vue'
 import CIconTile from '@/components/atoms/CIconTile.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CCard from '@/components/molecules/CCard.vue'
+import CCardHeader from '@/components/molecules/CCardHeader.vue'
 import CCardActions from '@/components/molecules/CCardActions.vue'
 import CDataTable, { type Column } from '@/components/molecules/CDataTable.vue'
 import CFormMultiSelect from '@/components/atoms/CFormMultiSelect.vue'
@@ -15,7 +16,6 @@ import CEmptyState from '@/components/atoms/CEmptyState.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
-import CHeading from '@/components/atoms/CHeading.vue'
 import CIconBolt from '@/components/atoms/CIconBolt.svg'
 import CIconDroplet from '@/components/atoms/CIconDroplet.svg'
 import CIconEdit from '@/components/atoms/CIconEdit.svg'
@@ -30,7 +30,8 @@ import CIconTrash from '@/components/atoms/CIconTrash.svg'
 import CIconUsers from '@/components/atoms/CIconUsers.svg'
 import CIconWrench from '@/components/atoms/CIconWrench.svg'
 import CIconX from '@/components/atoms/CIconX.svg'
-import CIconChevronRight from '@/components/atoms/CIconChevronRight.svg'
+import CPageHeader from '@/components/molecules/CPageHeader.vue'
+import CTopbarBreadcrumb from '@/components/molecules/CTopbarBreadcrumb.vue'
 import ContractorFormModal from '@/features/contractors/ContractorFormModal.vue'
 import DeleteContractorModal from '@/features/contractors/DeleteContractorModal.vue'
 import { contractorsApi } from '@/api'
@@ -170,11 +171,12 @@ function openDeleteModal(c: Contractor) {
   <div class="view-page">
     <CTopbar>
       <template #left>
-        <div class="topbar-breadcrumb">
-          {{ buildingName }}
-          <CIconChevronRight class="icon-xs" />
-          <span>{{ t('contractors.title') }}</span>
-        </div>
+        <CTopbarBreadcrumb
+          :crumbs="[
+            { label: buildingName || '…' },
+            { label: t('contractors.title') },
+          ]"
+        />
       </template>
       <template #right>
         <CBtn
@@ -183,6 +185,7 @@ function openDeleteModal(c: Contractor) {
           size="sm"
           :icon="CIconPlus"
           :title="t('contractors.newContractor')"
+          shrink="sm"
           @click="openCreate"
         />
       </template>
@@ -196,15 +199,11 @@ function openDeleteModal(c: Contractor) {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
-        <header class="view-header">
-          <CEyebrow>{{ t('page.eyebrows.contractors') }}</CEyebrow>
-          <CHeading type="header">
-            {{ t('contractors.title') }}
-          </CHeading>
-          <CMetaItem variant="sub">
-            {{ t('contractors.summary', { count: allContractors.length }) }}
-          </CMetaItem>
-        </header>
+        <CPageHeader
+          :eyebrow="t('page.eyebrows.contractors')"
+          :title="t('contractors.title')"
+          :meta="t('contractors.summary', { count: allContractors.length })"
+        />
 
         <!-- Toolbar: search + view mode toggle -->
         <div class="list-toolbar">
@@ -385,35 +384,37 @@ function openDeleteModal(c: Contractor) {
             tabindex="-1"
             @click="openContractorDetail(c.id)"
           >
-            <div class="flex items-center gap-3 min-w-0">
-              <CIconTile :class="domainTone(c.domains)">
-                <component
-                  :is="domainIcon(c.domains)"
-                  aria-hidden="true"
-                />
-              </CIconTile>
+            <CCardHeader with-icon>
+              <template #icon>
+                <CIconTile :class="domainTone(c.domains)">
+                  <component
+                    :is="domainIcon(c.domains)"
+                    aria-hidden="true"
+                  />
+                </CIconTile>
+              </template>
               <button
-                class="flex-1 min-w-0 overflow-hidden text-ellipsis bg-transparent border-none p-0 text-base font-semibold text-on-surface text-left cursor-pointer leading-snug hover:text-primary focus-visible:text-primary focus-visible:outline-none"
+                class="block w-full min-w-0 overflow-hidden text-ellipsis bg-transparent border-none p-0 text-base font-semibold text-on-surface text-left cursor-pointer leading-snug hover:text-primary focus-visible:text-primary focus-visible:outline-none"
                 @click.stop="openContractorDetail(c.id)"
               >
                 {{ c.name }}
               </button>
-            </div>
-            <div class="flex flex-wrap gap-x-2 gap-y-1">
-              <CBadge
-                v-for="d in c.domains.slice(0, 2)"
-                :key="d"
-                variant="default"
-              >
-                {{ t(`contractors.domains.${d}`, d) }}
-              </CBadge>
-              <CBadge
-                v-if="c.domains.length > 2"
-                variant="default"
-              >
-                +{{ c.domains.length - 2 }}
-              </CBadge>
-            </div>
+              <template #chips>
+                <CBadge
+                  v-for="d in c.domains.slice(0, 2)"
+                  :key="d"
+                  variant="default"
+                >
+                  {{ t(`contractors.domains.${d}`, d) }}
+                </CBadge>
+                <CBadge
+                  v-if="c.domains.length > 2"
+                  variant="default"
+                >
+                  +{{ c.domains.length - 2 }}
+                </CBadge>
+              </template>
+            </CCardHeader>
             <div class="flex flex-col gap-3">
               <p
                 v-if="c.notes"
@@ -440,18 +441,19 @@ function openDeleteModal(c: Contractor) {
               </div>
               <CCardActions v-if="canEdit">
                 <CBtn
-                  variant="icon"
+                  variant="ghost"
                   :icon="CIconEdit"
                   :title="t('common.edit')"
                   :aria-label="`${t('common.edit')} ${c.name}`"
+                  shrink="sm"
                   @click.stop="openEdit(c)"
                 />
                 <CBtn
-                  variant="icon"
+                  variant="danger"
                   :icon="CIconTrash"
                   :title="t('common.delete')"
                   :aria-label="`${t('common.delete')} ${c.name}`"
-                  class="tone--err"
+                  shrink="sm"
                   @click.stop="openDeleteModal(c)"
                 />
               </CCardActions>

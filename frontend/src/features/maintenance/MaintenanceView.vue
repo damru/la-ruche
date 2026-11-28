@@ -9,6 +9,7 @@ import CBtn from '@/components/atoms/CBtn.vue'
 import CLegalDescription from '@/components/atoms/CLegalDescription.vue'
 import CSeparator from '@/components/atoms/CSeparator.vue'
 import CCard from '@/components/molecules/CCard.vue'
+import CCardHeader from '@/components/molecules/CCardHeader.vue'
 import CLegalNotice from '@/components/molecules/CLegalNotice.vue'
 import CLegalCard from '@/components/molecules/CLegalCard.vue'
 import CMetaLine from '@/components/molecules/CMetaLine.vue'
@@ -17,7 +18,6 @@ import CSectionHeader from '@/components/molecules/CSectionHeader.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
-import CHeading from '@/components/atoms/CHeading.vue'
 import CTabs from '@/components/atoms/CTabs.vue'
 import CIconArrowLeft from '@/components/atoms/CIconArrowLeft.svg'
 import CIconArrowRight from '@/components/atoms/CIconArrowRight.svg'
@@ -25,6 +25,9 @@ import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import CIconTrash from '@/components/atoms/CIconTrash.svg'
 import CIconDownload from '@/components/atoms/CIconDownload.svg'
 import CFormSelect from '@/components/atoms/CFormSelect.vue'
+import CPageHeader from '@/components/molecules/CPageHeader.vue'
+import CTopbarBreadcrumb from '@/components/molecules/CTopbarBreadcrumb.vue'
+import CDataText from '@/components/atoms/CDataText.vue'
 import MaintenanceEntryModal from '@/features/maintenance/MaintenanceEntryModal.vue'
 import DeleteMaintenanceEntryModal from '@/features/maintenance/DeleteMaintenanceEntryModal.vue'
 import { maintenanceApi } from '@/api'
@@ -279,11 +282,12 @@ function openDeleteModal(entry: MaintenanceEntry) {
   <div class="view-page">
     <CTopbar>
       <template #left>
-        <div class="topbar-breadcrumb">
-          {{ buildingName }}
-          <CIconChevronRight />
-          <span>{{ t('nav.maintenance') }}</span>
-        </div>
+        <CTopbarBreadcrumb
+          :crumbs="[
+            { label: buildingName || '…' },
+            { label: t('nav.maintenance') },
+          ]"
+        />
       </template>
       <template #right>
         <CBtn
@@ -293,6 +297,7 @@ function openDeleteModal(entry: MaintenanceEntry) {
           :loading="exporting"
           :title="t('maintenance.exportLogbook')"
           :aria-label="t('maintenance.exportLogbook')"
+          shrink="sm"
           @click="exportLogbook"
         />
         <CBtn
@@ -300,6 +305,7 @@ function openDeleteModal(entry: MaintenanceEntry) {
           size="sm"
           :icon="CIconPlus"
           :title="t('maintenance.addEntry')"
+          shrink="sm"
           @click="openCreateModal"
         />
       </template>
@@ -313,13 +319,10 @@ function openDeleteModal(entry: MaintenanceEntry) {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
-        <header class="view-header">
-          <CEyebrow>
-            {{ t('page.eyebrows.maintenance') }}
-          </CEyebrow>
-          <CHeading type="header">
-            {{ t('nav.maintenance') }}
-          </CHeading>
+        <CPageHeader
+          :eyebrow="t('page.eyebrows.maintenance')"
+          :title="t('nav.maintenance')"
+        >
           <CMetaLine>
             <CMetaItem variant="sub">
               {{ periodLabel }}
@@ -333,7 +336,7 @@ function openDeleteModal(entry: MaintenanceEntry) {
               {{ t('maintenance.header.totalCost', { amount: formatCurrency(totalCost) }) }}
             </CMetaItem>
           </CMetaLine>
-        </header>
+        </CPageHeader>
         <CAlert
           v-if="exportError"
           variant="error"
@@ -519,6 +522,7 @@ function openDeleteModal(entry: MaintenanceEntry) {
                   size="sm"
                   :icon="CIconArrowLeft"
                   :title="t('calendar.previousPeriod')"
+                  shrink="sm"
                   :disabled="periodFilter === ALL_FILTER"
                   :aria-label="t('calendar.previousPeriod')"
                   @click="goToPreviousPeriod"
@@ -529,6 +533,7 @@ function openDeleteModal(entry: MaintenanceEntry) {
                   size="sm"
                   :icon="CIconArrowRight"
                   :title="t('calendar.nextPeriod')"
+                  shrink="sm"
                   :disabled="!canGoNext"
                   :aria-label="t('calendar.nextPeriod')"
                   @click="goToNextPeriod"
@@ -545,23 +550,17 @@ function openDeleteModal(entry: MaintenanceEntry) {
                     :class="entry.source === 'automatic' ? 'timeline-dot--auto' : ''"
                   ></div>
                   <CCard class="timeline-card">
-                    <div class="entry-header">
-                      <div>
-                        <span class="title-sm">{{ entry.title }}</span>
+                    <CCardHeader>
+                      <span class="title-sm">{{ entry.title }}</span>
+                      <template #chips>
                         <CBadge
                           :variant="entry.source === 'automatic' ? 'primary' : 'default'"
-                          class="ml-2"
                         >
                           {{ entry.source === 'automatic' ? t('common.automatic') : t('common.manual') }}
                         </CBadge>
-                        <CBadge
-                          :variant="categoryVariant(entry.category)"
-                          class="ml-2"
-                        >
+                        <CBadge :variant="categoryVariant(entry.category)">
                           {{ t(`maintenance.categories.${entry.category}`) }}
                         </CBadge>
-                      </div>
-                      <div class="entry-header-right">
                         <span class="entry-date">{{ formatDate(entry.intervention_date) }}</span>
                         <CBtn
                           v-if="entry.source !== 'automatic'"
@@ -572,8 +571,8 @@ function openDeleteModal(entry: MaintenanceEntry) {
                           :aria-label="t('maintenance.deleteEntry')"
                           @click="openDeleteModal(entry)"
                         />
-                      </div>
-                    </div>
+                      </template>
+                    </CCardHeader>
                     <p
                       v-if="entry.description"
                       class="body-xs entry-desc"
@@ -590,10 +589,12 @@ function openDeleteModal(entry: MaintenanceEntry) {
                         />
                         {{ entry.vendor_name }}
                       </span>
-                      <span
+                      <CDataText
                         v-if="entry.cost != null"
                         class="cost"
-                      >{{ formatCurrency(entry.cost) }}</span>
+                      >
+                        {{ formatCurrency(entry.cost) }}
+                      </CDataText>
                     </div>
                   </CCard>
                 </div>
@@ -763,10 +764,7 @@ function openDeleteModal(entry: MaintenanceEntry) {
 .vendor { color: var(--color-on-surface-variant); display: flex; align-items: center; margin-right: auto; }
 .cost {
   margin-left: auto;
-  font-family: var(--font-mono);
-  font-weight: var(--fw-semibold);
   color: var(--color-on-surface);
-  font-variant-numeric: tabular-nums;
 }
 
 .period-nav {
@@ -774,6 +772,25 @@ function openDeleteModal(entry: MaintenanceEntry) {
   align-self: center;
   align-items: center;
   gap: var(--space-2);
+  min-width: 0;
+}
+
+.period-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .period-nav {
+    justify-content: center;
+  }
+
+  .period-label {
+    flex: 1;
+    text-align: center;
+  }
 }
 
 .period-label {

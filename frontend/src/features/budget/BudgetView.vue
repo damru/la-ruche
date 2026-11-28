@@ -15,7 +15,6 @@ import CTabs, { type Tab } from '@/components/atoms/CTabs.vue'
 import CHeading from '@/components/atoms/CHeading.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CBadge from '@/components/atoms/CBadge.vue'
-import CEyebrow from '@/components/atoms/CEyebrow.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CKpiCard from '@/components/molecules/CKpiCard.vue'
 import CMetaItem from '@/components/molecules/CMetaItem.vue'
@@ -36,7 +35,6 @@ import CIconTrash from '@/components/atoms/CIconTrash.svg'
 import CIconMegaphone from '@/components/atoms/CIconMegaphone.svg'
 import CIconPieChart from '@/components/atoms/CIconPieChart.svg'
 import CIconLock from '@/components/atoms/CIconLock.svg'
-import CIconChevronRight from '@/components/atoms/CIconChevronRight.svg'
 import CreateBudgetModal from './CreateBudgetModal.vue'
 import CloseExerciseModal from './CloseExerciseModal.vue'
 import ApproveBudgetModal from './ApproveBudgetModal.vue'
@@ -48,6 +46,9 @@ import BreakdownModal from './BreakdownModal.vue'
 import type { Budget, BudgetLine, LevyCall, WorksFund, AllocationKey, LevyStatus, BuildingStats, AccountingCode } from '@/types/domain'
 import { BUDGET_STATUS_APPROVED, BUDGET_STATUS_CLOSED, BUDGET_STATUS_DRAFT, LEVY_STATUS_ISSUED, LEVY_STATUS_OVERDUE, LEVY_STATUS_PAID } from '@/utils/constants'
 import type { Column } from '@/components/molecules/CDataTable.vue'
+import CPageHeader from '@/components/molecules/CPageHeader.vue'
+import CTopbarBreadcrumb from '@/components/molecules/CTopbarBreadcrumb.vue'
+import CDataText from '@/components/atoms/CDataText.vue'
 
 interface ConsolidatedLevyRow {
   id: string
@@ -611,11 +612,12 @@ function formatSharePercentage(value: number): string {
   <div class="view-page">
     <CTopbar>
       <template #left>
-        <div class="topbar-breadcrumb">
-          {{ buildingName }}
-          <CIconChevronRight aria-hidden="true" />
-          <span>{{ t('nav.budget') }}</span>
-        </div>
+        <CTopbarBreadcrumb
+          :crumbs="[
+            { label: buildingName || '…' },
+            { label: t('nav.budget') },
+          ]"
+        />
       </template>
       <template #right>
         <CBtn
@@ -659,12 +661,10 @@ function formatSharePercentage(value: number): string {
       <template
         v-else-if="budgets.length === 0"
       >
-        <div class="view-header">
-          <CEyebrow>{{ t('page.eyebrows.budget') }}</CEyebrow>
-          <CHeading type="header">
-            {{ t('nav.budget') }}
-          </CHeading>
-        </div>
+        <CPageHeader
+          :eyebrow="t('page.eyebrows.budget')"
+          :title="t('nav.budget')"
+        />
         <CEmptyState
           :title="t('budget.noExercice')"
           :description="t('budget.noExerciceHint')"
@@ -683,8 +683,10 @@ function formatSharePercentage(value: number): string {
       </template>
 
       <template v-else>
-        <div class="view-header">
-          <CEyebrow>
+        <CPageHeader
+          :title="selectedBudget ? t('budget.fiscalYear', { year: selectedBudget.fiscal_year }) : t('nav.budget')"
+        >
+          <template #eyebrow>
             <CBadge
               v-if="canEditSelectedBudget"
               :variant="worksFundRateCompliant && worksFundTargetMet && !hasUnbalancedAllocationKeys ? 'valid' : 'pending'"
@@ -696,10 +698,7 @@ function formatSharePercentage(value: number): string {
                 : t('common.actionRequired') }}
             </CBadge>
             {{ t('page.eyebrows.budget') }}
-          </CEyebrow>
-          <CHeading type="header">
-            {{ selectedBudget ? t('budget.fiscalYear', { year: selectedBudget.fiscal_year }) : t('nav.budget') }}
-          </CHeading>
+          </template>
           <CMetaLine
             v-if="selectedBudget"
           >
@@ -711,7 +710,7 @@ function formatSharePercentage(value: number): string {
               {{ selectedBudget.status === BUDGET_STATUS_APPROVED ? t('budget.statuses.approvedAG') : t(`budget.statuses.${selectedBudget.status}`) }}
             </CMetaItem>
           </CMetaLine>
-        </div>
+        </CPageHeader>
 
         <div class="flex items-center gap-2">
           <CTabs
@@ -769,7 +768,7 @@ function formatSharePercentage(value: number): string {
           </div>
         </template>
 
-        <div class="grid gap-4 xs:grid-cols-2 xl:grid-cols-4">
+        <div class="grid grid-cols-2 gap-3 xs:grid-cols-2 xs:gap-4 xl:grid-cols-4">
           <CKpiCard
             :label="t('budget.budgetForecastLabel')"
             :value="formatCurrency(selectedTotalForecast)"
@@ -859,7 +858,12 @@ function formatSharePercentage(value: number): string {
           <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
             <div class="wf-metric">
               <span class="text-xs">{{ t('budget.worksFundTarget') }}</span>
-              <strong class="font-mono">{{ formatCurrency(worksFundContributionTarget) }}</strong>
+              <CDataText
+                as="strong"
+                size="lg"
+              >
+                {{ formatCurrency(worksFundContributionTarget) }}
+              </CDataText>
             </div>
             <div class="wf-metric">
               <span class="text-xs">{{ t('budget.worksFundRate') }}</span>
@@ -867,11 +871,21 @@ function formatSharePercentage(value: number): string {
             </div>
             <div class="wf-metric">
               <span class="text-xs">{{ t('budget.worksFundCalled') }}</span>
-              <strong class="font-mono">{{ formatCurrency(worksFundCalledAmount) }}</strong>
+              <CDataText
+                as="strong"
+                size="lg"
+              >
+                {{ formatCurrency(worksFundCalledAmount) }}
+              </CDataText>
             </div>
             <div class="wf-metric">
               <span class="text-xs">{{ t('budget.worksFundAvailable') }}</span>
-              <strong class="font-mono">{{ formatCurrency(worksFundAvailableAmount) }}</strong>
+              <CDataText
+                as="strong"
+                size="lg"
+              >
+                {{ formatCurrency(worksFundAvailableAmount) }}
+              </CDataText>
             </div>
           </div>
 
@@ -940,9 +954,12 @@ function formatSharePercentage(value: number): string {
               </div>
             </div>
             <div class="text-right">
-              <div class="font-mono font-medium">
+              <CDataText
+                as="strong"
+                size="md"
+              >
                 {{ formatCurrency(levy.amount) }}
-              </div>
+              </CDataText>
               <CMetaItem variant="sub">
                 {{ levy.due_date ? formatDate(levy.due_date) : '—' }}
               </CMetaItem>
@@ -997,7 +1014,7 @@ function formatSharePercentage(value: number): string {
                 class="flex flex-col gap-0.5"
               >
                 <span class="text-xs text-on-surface-variant">{{ kt.keyName }}</span>
-                <span class="font-mono font-medium text-sm">{{ formatCurrency(kt.total) }}</span>
+                <CDataText>{{ formatCurrency(kt.total) }}</CDataText>
               </div>
             </div>
             <div
@@ -1010,7 +1027,7 @@ function formatSharePercentage(value: number): string {
                 class="flex flex-col gap-0.5"
               >
                 <span class="text-xs text-on-surface-variant">{{ t('budget.byAccountCategory') }} — {{ ct.category }}</span>
-                <span class="font-mono font-medium text-sm">{{ formatCurrency(ct.total) }}</span>
+                <CDataText>{{ formatCurrency(ct.total) }}</CDataText>
               </div>
             </div>
           </template>
@@ -1052,8 +1069,14 @@ function formatSharePercentage(value: number): string {
                 :show-value="true"
               />
               <div class="flex justify-between mt-1 text-2xs text-on-surface-variant">
-                <span>{{ t('budget.realizedLabel') }} : <b class="text-on-surface font-medium font-mono">{{ formatCurrency(line.actual_amount ?? 0) }}</b></span>
-                <span>{{ t('budget.plannedLabel') }} : <b class="text-on-surface font-medium font-mono">{{ formatCurrency(line.budgeted_amount) }}</b></span>
+                <span>{{ t('budget.realizedLabel') }} : <CDataText
+                  as="strong"
+                  class="text-on-surface"
+                >{{ formatCurrency(line.actual_amount ?? 0) }}</CDataText></span>
+                <span>{{ t('budget.plannedLabel') }} : <CDataText
+                  as="strong"
+                  class="text-on-surface"
+                >{{ formatCurrency(line.budgeted_amount) }}</CDataText></span>
               </div>
             </div>
           </CFlexGroup>
@@ -1062,9 +1085,9 @@ function formatSharePercentage(value: number): string {
             class="flex justify-between border-t border-outline-variant font-semibold text-sm text-on-surface pt-4"
           >
             <span>{{ t('common.total') }}</span>
-            <span class="font-mono">
+            <CDataText>
               {{ formatCurrency(selectedTotalActual) }} / {{ formatCurrency(selectedTotalForecast) }}
-            </span>
+            </CDataText>
           </div>
         </CCard>
       
@@ -1165,9 +1188,9 @@ function formatSharePercentage(value: number): string {
           </CDataTable>
           <div class="flex justify-between items-center text-sm font-semibold text-on-surface">
             <span>{{ t('common.total') }}</span>
-            <span class="font-mono">
+            <CDataText>
               {{ formatCurrency(totalLeviedAmount) }}
-            </span>
+            </CDataText>
           </div>
         </CCard>
 

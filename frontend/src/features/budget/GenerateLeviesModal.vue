@@ -12,6 +12,7 @@ import CFormActions from '@/components/molecules/CFormActions.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CCardNote from '@/components/molecules/CCardNote.vue'
 import CIconMegaphone from '@/components/atoms/CIconMegaphone.svg'
+import CDataText from '@/components/atoms/CDataText.vue'
 import { budgetApi } from '@/api'
 import { toErrorMessage } from '@/composables/usePageLoader'
 
@@ -126,11 +127,15 @@ async function handleSubmit() {
         </div>
         <div class="flex flex-col gap-1">
           <span class="text-2xs opacity-80">{{ t('budget.worksFundCalled') }}</span>
-          <strong class="font-mono tabular-nums">{{ formatCurrency(alreadyCalledDisplayAmount) }}</strong>
+          <CDataText as="strong">
+            {{ formatCurrency(alreadyCalledDisplayAmount) }}
+          </CDataText>
         </div>
         <div class="flex flex-col gap-1">
           <span class="text-2xs opacity-80">{{ t('budget.generateSummaryRemainingLabel') }}</span>
-          <strong class="font-mono tabular-nums">{{ formatCurrency(generatePreviewTotal) }}</strong>
+          <CDataText as="strong">
+            {{ formatCurrency(generatePreviewTotal) }}
+          </CDataText>
         </div>
       </div>
       <p v-if="generatePreviewTotal === 0">

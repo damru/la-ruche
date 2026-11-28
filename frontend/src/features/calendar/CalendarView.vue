@@ -17,8 +17,6 @@ import CTopbar from '@/components/organisms/CTopbar.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CEmptyState from '@/components/atoms/CEmptyState.vue'
-import CEyebrow from '@/components/atoms/CEyebrow.vue'
-import CHeading from '@/components/atoms/CHeading.vue'
 import CFormInput from '@/components/atoms/CFormInput.vue'
 import CMetaLine from '@/components/molecules/CMetaLine.vue'
 import CMetaItem from '@/components/molecules/CMetaItem.vue'
@@ -26,11 +24,12 @@ import CSeparator from '@/components/atoms/CSeparator.vue'
 import CTabs from '@/components/atoms/CTabs.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CIconCalendar from '@/components/atoms/CIconCalendar.svg'
-import CIconChevronRight from '@/components/atoms/CIconChevronRight.svg'
 import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import CIconArrowLeft from '@/components/atoms/CIconArrowLeft.svg'
 import CIconArrowRight from '@/components/atoms/CIconArrowRight.svg'
 import CIconDownload from '@/components/atoms/CIconDownload.svg'
+import CPageHeader from '@/components/molecules/CPageHeader.vue'
+import CTopbarBreadcrumb from '@/components/molecules/CTopbarBreadcrumb.vue'
 import CalendarGrid from './CalendarGrid.vue'
 import CalendarAgendaMode from './CalendarAgendaMode.vue'
 import CalendarFilterBar from './CalendarFilterBar.vue'
@@ -47,7 +46,8 @@ const router = useRouter()
 const perms = usePermissions()
 const auth = useAuthStore()
 
-const mode = ref<Mode>('month')
+// Mobile opens on the agenda: a month grid is unreadable at 375px
+const mode = ref<Mode>(window.matchMedia('(max-width: 640px)').matches ? 'agenda' : 'month')
 const anchor = ref(new Date())
 const events = ref<CalendarEvent[]>([])
 const buildingName = ref('')
@@ -241,11 +241,12 @@ async function exportCalendar() {
   <div class="view-page">
     <CTopbar>
       <template #left>
-        <div class="topbar-breadcrumb">
-          {{ buildingName || '...' }}
-          <CIconChevronRight aria-hidden="true" />
-          <span>{{ t('nav.calendar') }}</span>
-        </div>
+        <CTopbarBreadcrumb
+          :crumbs="[
+            { label: buildingName || '…' },
+            { label: t('nav.calendar') },
+          ]"
+        />
       </template>
       <template #right>
         <CBtn
@@ -268,13 +269,10 @@ async function exportCalendar() {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
-        <header class="view-header">
-          <CEyebrow>
-            {{ t('common.overview') }}
-          </CEyebrow>
-          <CHeading type="header">
-            {{ t('nav.calendar') }}
-          </CHeading>
+        <CPageHeader
+          :eyebrow="t('common.overview')"
+          :title="t('nav.calendar')"
+        >
           <CMetaLine>
             <CMetaItem variant="sub">
               {{ periodLabel }}
@@ -284,7 +282,7 @@ async function exportCalendar() {
               {{ t('calendar.count', events.length) }}
             </CMetaItem>
           </CMetaLine>
-        </header>
+        </CPageHeader>
 
         <div class="flex items-center justify-between gap-3">
           <CTabs

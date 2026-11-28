@@ -5,7 +5,6 @@ import { usePageLoader } from '@/composables/usePageLoader'
 import { useFormatters } from '@/composables/useFormatters'
 import { usePermissions } from '@/composables/usePermissions'
 import CTopbar from '@/components/organisms/CTopbar.vue'
-import CHeading from '@/components/atoms/CHeading.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
@@ -14,6 +13,8 @@ import CIconEdit from '@/components/atoms/CIconEdit.svg'
 import CIconTrash from '@/components/atoms/CIconTrash.svg'
 import JudicialProceedingFormModal from '@/features/registers/JudicialProceedingFormModal.vue'
 import CDeleteConfirmModal from '@/components/organisms/CDeleteConfirmModal.vue'
+import CPageHeader from '@/components/molecules/CPageHeader.vue'
+import CTopbarBreadcrumb from '@/components/molecules/CTopbarBreadcrumb.vue'
 import { judicialProceedingsApi } from '@/api'
 import { useBuildingStore } from '@/stores/building'
 import type { JudicialProceeding } from '@/types/domain'
@@ -85,11 +86,12 @@ function openDelete(p: JudicialProceeding) {
   <div class="view-page">
     <CTopbar>
       <template #left>
-        <div class="topbar-breadcrumb">
-          {{ buildingName }}
-          <CIconChevronRight class="icon-xs" />
-          <span>{{ t('registers.judicial.title') }}</span>
-        </div>
+        <CTopbarBreadcrumb
+          :crumbs="[
+            { label: buildingName || '…' },
+            { label: t('registers.judicial.title') },
+          ]"
+        />
       </template>
       <template #right>
         <CBtn
@@ -98,6 +100,7 @@ function openDelete(p: JudicialProceeding) {
           size="sm"
           :icon="CIconPlus"
           :title="t('registers.judicial.new')"
+          shrink="sm"
           @click="openCreate"
         />
       </template>
@@ -111,15 +114,11 @@ function openDelete(p: JudicialProceeding) {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
-        <header class="view-header">
-          <CEyebrow>{{ t('registers.eyebrow') }}</CEyebrow>
-          <CHeading type="header">
-            {{ t('registers.judicial.title') }}
-          </CHeading>
-          <CMetaItem variant="sub">
-            {{ t('registers.judicial.summary', { count: proceedings.length, ongoing: ongoingCount }) }}
-          </CMetaItem>
-        </header>
+        <CPageHeader
+          :eyebrow="t('registers.eyebrow')"
+          :title="t('registers.judicial.title')"
+          :meta="t('registers.judicial.summary', { count: proceedings.length, ongoing: ongoingCount })"
+        />
 
         <CEmptyState
           v-if="proceedings.length === 0"

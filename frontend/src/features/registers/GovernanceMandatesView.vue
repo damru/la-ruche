@@ -5,7 +5,6 @@ import { usePageLoader } from '@/composables/usePageLoader'
 import { useFormatters } from '@/composables/useFormatters'
 import { usePermissions } from '@/composables/usePermissions'
 import CTopbar from '@/components/organisms/CTopbar.vue'
-import CHeading from '@/components/atoms/CHeading.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
@@ -14,6 +13,8 @@ import CIconEdit from '@/components/atoms/CIconEdit.svg'
 import CIconTrash from '@/components/atoms/CIconTrash.svg'
 import GovernanceMandateFormModal from '@/features/registers/GovernanceMandateFormModal.vue'
 import CDeleteConfirmModal from '@/components/organisms/CDeleteConfirmModal.vue'
+import CPageHeader from '@/components/molecules/CPageHeader.vue'
+import CTopbarBreadcrumb from '@/components/molecules/CTopbarBreadcrumb.vue'
 import { governanceApi } from '@/api'
 import { useBuildingStore } from '@/stores/building'
 import type { GovernanceMandate } from '@/types/domain'
@@ -84,11 +85,12 @@ function openDelete(m: GovernanceMandate) {
   <div class="view-page">
     <CTopbar>
       <template #left>
-        <div class="topbar-breadcrumb">
-          {{ buildingName }}
-          <CIconChevronRight class="icon-xs" />
-          <span>{{ t('registers.governance.title') }}</span>
-        </div>
+        <CTopbarBreadcrumb
+          :crumbs="[
+            { label: buildingName || '…' },
+            { label: t('registers.governance.title') },
+          ]"
+        />
       </template>
       <template #right>
         <CBtn
@@ -97,6 +99,7 @@ function openDelete(m: GovernanceMandate) {
           size="sm"
           :icon="CIconPlus"
           :title="t('registers.governance.new')"
+          shrink="sm"
           @click="openCreate"
         />
       </template>
@@ -110,15 +113,11 @@ function openDelete(m: GovernanceMandate) {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
-        <header class="view-header">
-          <CEyebrow>{{ t('registers.eyebrow') }}</CEyebrow>
-          <CHeading type="header">
-            {{ t('registers.governance.title') }}
-          </CHeading>
-          <CMetaItem variant="sub">
-            {{ t('registers.governance.summary', { count: mandates.length, active: activeCount }) }}
-          </CMetaItem>
-        </header>
+        <CPageHeader
+          :eyebrow="t('registers.eyebrow')"
+          :title="t('registers.governance.title')"
+          :meta="t('registers.governance.summary', { count: mandates.length, active: activeCount })"
+        />
 
         <CEmptyState
           v-if="mandates.length === 0"
@@ -175,6 +174,7 @@ function openDelete(m: GovernanceMandate) {
               <div class="action-btns">
                 <CBtn
                   variant="icon"
+                  size="sm"
                   :icon="CIconEdit"
                   :title="t('common.edit')"
                   :aria-label="t('common.edit')"
@@ -182,6 +182,7 @@ function openDelete(m: GovernanceMandate) {
                 />
                 <CBtn
                   variant="icon"
+                  size="sm"
                   :icon="CIconTrash"
                   class="tone--err"
                   :title="t('common.delete')"

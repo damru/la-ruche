@@ -11,8 +11,6 @@ import { reportStatusVariant } from '@/composables/useStatusLabels'
 import { useUnitLabels } from '@/composables/useUnitLabels'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
-import CEyebrow from '@/components/atoms/CEyebrow.vue'
-import CHeading from '@/components/atoms/CHeading.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CMetaItem from '@/components/molecules/CMetaItem.vue'
 import CMetaLine from '@/components/molecules/CMetaLine.vue'
@@ -22,9 +20,10 @@ import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import CIconArrowLeft from '@/components/atoms/CIconArrowLeft.svg'
 import CIconCalendar from '@/components/atoms/CIconCalendar.svg'
-import CIconChevronRight from '@/components/atoms/CIconChevronRight.svg'
 import CIconFile from '@/components/atoms/CIconFile.svg'
 import CIconUser from '@/components/atoms/CIconUser.svg'
+import CPageHeader from '@/components/molecules/CPageHeader.vue'
+import CTopbarBreadcrumb from '@/components/molecules/CTopbarBreadcrumb.vue'
 import { reportsApi, unitsApi } from '@/api'
 import { useBuildingStore } from '@/stores/building'
 import type { Document, Report, Unit } from '@/types/domain'
@@ -93,18 +92,12 @@ watch(() => route.params.id, id => {
   <div class="view-page">
     <CTopbar>
       <template #left>
-        <div class="topbar-breadcrumb">
-          {{ buildingName }}
-          <CIconChevronRight />
-          <RouterLink
-            :to="{ name: 'reports' }"
-            class="topbar-breadcrumb-link"
-          >
-            {{ t('nav.reports') }}
-          </RouterLink>
-          <CIconChevronRight />
-          <span>{{ report?.title ?? '…' }}</span>
-        </div>
+        <CTopbarBreadcrumb
+          :crumbs="[
+            { label: buildingName || '…' },
+            { label: t('nav.reports'), to: { name: 'reports' } },
+          ]"
+        />
       </template>
       <template #right>
         <CBtn
@@ -112,6 +105,7 @@ watch(() => route.params.id, id => {
           size="sm"
           :icon="CIconArrowLeft"
           :title="t('common.back')"
+          shrink="sm"
           @click="router.push({ name: 'reports' })"
         />
       </template>
@@ -125,8 +119,10 @@ watch(() => route.params.id, id => {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else-if="report">
-        <header class="view-header">
-          <CEyebrow>
+        <CPageHeader
+          :title="report.title"
+        >
+          <template #eyebrow>
             <CBadge
               :variant="reportStatusVariant(report.status)"
               dot
@@ -134,13 +130,7 @@ watch(() => route.params.id, id => {
               {{ t(`reports.statuses.${report.status}`) }}
             </CBadge>
             {{ t('page.eyebrows.reports') }}
-          </CEyebrow>
-          <CHeading
-            type="header"
-            class="m-0"
-          >
-            {{ report.title }}
-          </CHeading>
+          </template>
           <p
             v-if="report.description"
             class="body-md text-on-surface-variant m-0"
@@ -164,7 +154,7 @@ watch(() => route.params.id, id => {
               {{ unitLabel(report.unit_id, unitsById) }}
             </CMetaItem>
           </CMetaLine>
-        </header>
+        </CPageHeader>
 
         <section
           v-if="documents.length"

@@ -14,9 +14,9 @@ import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CCardActions from '@/components/molecules/CCardActions.vue'
 import CCardNote from '@/components/molecules/CCardNote.vue'
+import CCardHeader from '@/components/molecules/CCardHeader.vue'
 import CReminderCard from '@/components/organisms/CReminderCard.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
-import CHeading from '@/components/atoms/CHeading.vue'
 import CTabs, { type Tab } from '@/components/atoms/CTabs.vue'
 import CIconCheckCircle from '@/components/atoms/CIconCheckCircle.svg'
 import CIconEdit from '@/components/atoms/CIconEdit.svg'
@@ -26,6 +26,8 @@ import CIconShield from '@/components/atoms/CIconShield.svg'
 import CIconUpload from '@/components/atoms/CIconUpload.svg'
 import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import CIconMessageSquare from '@/components/atoms/CIconMessageSquare.svg'
+import CPageHeader from '@/components/molecules/CPageHeader.vue'
+import CTopbarBreadcrumb from '@/components/molecules/CTopbarBreadcrumb.vue'
 import ClaimCreateModal from './ClaimCreateModal.vue'
 import ClaimEditModal from './ClaimEditModal.vue'
 import ClaimTransmitModal from './ClaimTransmitModal.vue'
@@ -200,6 +202,15 @@ function deadlineVariant(claim: Claim): 'valid' | 'pending' | 'err' | 'default' 
   return 'default'
 }
 
+function deadlineChipLabel(claim: Claim): string {
+  if (claim.transmitted_at) {
+    return t(claim.is_transmitted_late ? 'claims.deadline.transmittedLateDate' : 'claims.deadline.transmittedOnDate', {
+      date: formatDate(claim.transmitted_at),
+    })
+  }
+  return deadlineLabel(claim)
+}
+
 function deadlineLabel(claim: Claim): string {
   if (claim.transmitted_at) {
     return t(
@@ -349,11 +360,12 @@ function handleDocumentCountChanged(claimId: string, delta: number) {
   <div class="view-page">
     <CTopbar>
       <template #left>
-        <div class="topbar-breadcrumb">
-          {{ buildingName || '…' }}
-          <CIconChevronRight />
-          <span>{{ t('nav.claims') }}</span>
-        </div>
+        <CTopbarBreadcrumb
+          :crumbs="[
+            { label: buildingName || '…' },
+            { label: t('nav.claims') },
+          ]"
+        />
       </template>
       <template #right>
         <CBtn
@@ -361,6 +373,7 @@ function handleDocumentCountChanged(claimId: string, delta: number) {
           size="sm"
           :icon="CIconPlus"
           :title="t('claims.create')"
+          shrink="sm"
           @click="openCreateModal"
         />
       </template>
@@ -374,22 +387,14 @@ function handleDocumentCountChanged(claimId: string, delta: number) {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
-        <header class="view-header">
-          <CEyebrow>
-            {{ t('page.eyebrows.claims') }}
-          </CEyebrow>
-          <CHeading type="header">
-            {{ t('nav.claims') }}
-          </CHeading>
+        <CPageHeader
+          :eyebrow="t('page.eyebrows.claims')"
+          :title="t('nav.claims')"
+        >
           <CMetaItem variant="sub">
             {{ t('claims.activeCount', { count: activeClaimsCount }) }}
           </CMetaItem>
-          <p
-            class="body-md"
-            style="color:var(--color-on-surface-variant)"
-          >
-          </p>
-        </header>
+        </CPageHeader>
 
         <CReminderCard
           v-if="claimReminderRows.length > 0"
@@ -431,16 +436,19 @@ function handleDocumentCountChanged(claimId: string, delta: number) {
               gap="sm"
               :class="[{ 'outline outline-1 outline-outline-variant': claim.status === CLAIM_STATUS_CLOSED }]"
             >
-              <div class="flex items-center gap-3 min-w-0">
-                <CIconTile
-                  :class="typeTone(claim.claim_type)"
-                >
-                  <component
-                    :is="typeIcon(claim.claim_type)"
-                    aria-hidden="true"
-                  />
-                </CIconTile>
-                <CMetaLine class="text-xs justify-end justify-self-end">
+              <CCardHeader with-icon>
+                <template #icon>
+                  <CIconTile :class="typeTone(claim.claim_type)">
+                    <component
+                      :is="typeIcon(claim.claim_type)"
+                      aria-hidden="true"
+                    />
+                  </CIconTile>
+                </template>
+                <h3 class="text-lg font-semibold text-on-surface m-0 leading-snug">
+                  {{ claim.title }}
+                </h3>
+                <template #chips>
                   <CBadge
                     :variant="statusVariant(claim.status)"
                     dot
@@ -453,18 +461,15 @@ function handleDocumentCountChanged(claimId: string, delta: number) {
                   <CBadge
                     :variant="deadlineVariant(claim)"
                     :dot="deadlineVariant(claim) !== 'default'"
+                    truncate
+                    :title="deadlineLabel(claim)"
                   >
-                    {{ deadlineLabel(claim) }}
+                    {{ deadlineChipLabel(claim) }}
                   </CBadge>
-                </CMetaLine>
-              </div>
+                </template>
+              </CCardHeader>
               <div class="flex flex-col gap-3">
-                <CFlexGroup
-                  direction="row"
-                >
-                  <h3 class="text-lg font-semibold text-on-surface m-0 leading-snug min-w-0">
-                    {{ claim.title }}
-                  </h3>
+                <CFlexGroup direction="row">
                   <CMetaItem
                     variant="sub"
                   >
@@ -505,6 +510,7 @@ function handleDocumentCountChanged(claimId: string, delta: number) {
                       size="sm"
                       :icon="CIconEdit"
                       :title="t('common.edit')"
+                      shrink="sm"
                       @click="openEditModal(claim)"
                     />
                     <CBtn
@@ -513,6 +519,7 @@ function handleDocumentCountChanged(claimId: string, delta: number) {
                       size="sm"
                       :icon="CIconUpload"
                       :title="t('claims.transmit')"
+                      shrink="sm"
                       @click="openTransmitModal(claim)"
                     />
                     <CBtn
@@ -521,6 +528,7 @@ function handleDocumentCountChanged(claimId: string, delta: number) {
                       size="sm"
                       :icon="CIconCheckCircle"
                       :title="t('claims.closeTitle')"
+                      shrink="sm"
                       @click="openCloseModal(claim)"
                     />
                   </CCardActions>

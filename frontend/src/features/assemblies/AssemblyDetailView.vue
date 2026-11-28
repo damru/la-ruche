@@ -47,6 +47,9 @@ import CIconEdit from '@/components/atoms/CIconEdit.svg'
 import CIconLock from '@/components/atoms/CIconLock.svg'
 import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import CIconUpload from '@/components/atoms/CIconUpload.svg'
+import CPageHeader from '@/components/molecules/CPageHeader.vue'
+import CTopbarBreadcrumb from '@/components/molecules/CTopbarBreadcrumb.vue'
+import CDataText from '@/components/atoms/CDataText.vue'
 import VoteModal from './VoteModal.vue'
 import StartMeetingModal from './StartMeetingModal.vue'
 import CloseMeetingModal from './CloseMeetingModal.vue'
@@ -572,18 +575,13 @@ function openArt25Modal(resolution: Resolution) {
   <div class="view-page">
     <CTopbar>
       <template #left>
-        <div class="topbar-breadcrumb">
-          <span>{{ buildingName || '...' }}</span>
-          <CIconChevronRight class="icon-xs" />
-          <RouterLink
-            :to="{ name: 'assembly-list' }"
-            class="topbar-breadcrumb-link"
-          >
-            {{ t('nav.meetings') }}
-          </RouterLink>
-          <CIconChevronRight class="icon-xs" />
-          <span>{{ meeting ? `${typeLabel(meeting.meeting_type)} ${new Date(meeting.meeting_date).getFullYear()}` : '…' }}</span>
-        </div>
+        <CTopbarBreadcrumb
+          :crumbs="[
+            { label: buildingName || '…' },
+            { label: t('nav.meetings'), to: { name: 'assembly-list' } },
+            { label: meeting ? `${typeLabel(meeting.meeting_type)} ${new Date(meeting.meeting_date).getFullYear()}` : '…' },
+          ]"
+        />
       </template>
       <template #right>
         <template v-if="topbarActionState === 'draft'">
@@ -607,6 +605,7 @@ function openArt25Modal(resolution: Resolution) {
             size="sm"
             :icon="CIconBell"
             :title="t('meetings.call')"
+            shrink="sm"
             @click="showConvocationModal = true"
           />
         </template>
@@ -657,8 +656,8 @@ function openArt25Modal(resolution: Resolution) {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else-if="meeting">
-        <header class="view-header">
-          <CEyebrow>
+        <CPageHeader>
+          <template #eyebrow>
             <CBadge
               :variant="meetingStatusVariant(meeting.status)"
               dot
@@ -667,12 +666,12 @@ function openArt25Modal(resolution: Resolution) {
               {{ meetingStatusLabel(meeting.status) }}
             </CBadge>
             <span>{{ t('page.eyebrows.assemblyDetail') }}</span>
-          </CEyebrow>
-
-          <CHeading type="header">
-            {{ typeLabel(meeting.meeting_type) }} {{ new Date(meeting.meeting_date).getFullYear() }}
-          </CHeading>
-
+          </template>
+          <template #title>
+            <CHeading type="header">
+              {{ typeLabel(meeting.meeting_type) }} {{ new Date(meeting.meeting_date).getFullYear() }}
+            </CHeading>
+          </template>
           <CMetaLine>
             <CMetaItem variant="sub">
               <template #icon>
@@ -698,7 +697,7 @@ function openArt25Modal(resolution: Resolution) {
               {{ t('meetings.calledAt', { date: meeting.notice_date ? formatDate(meeting.notice_date) : '—' }) }}
             </CMetaItem>
           </CMetaLine>
-        </header>
+        </CPageHeader>
 
         <div :class="['status-banner', `status-banner--${meetingState(meeting.status)}`]">
           <div class="status-banner__left">
@@ -932,8 +931,12 @@ function openArt25Modal(resolution: Resolution) {
                           :style="{ width: `${votePct(voteResults[resolution.id].for_votes, voteResults[resolution.id].shares_counted)}%` }"
                         ></div>
                       </div>
-                      <span class="tally-pct">{{ votePct(voteResults[resolution.id].for_votes, voteResults[resolution.id].shares_counted) }}%</span>
-                      <span class="tally-shares">{{ t('units.sharesAmount', { amount: voteResults[resolution.id].for_votes }) }}</span>
+                      <CDataText class="tally-pct">
+                        {{ votePct(voteResults[resolution.id].for_votes, voteResults[resolution.id].shares_counted) }}%
+                      </CDataText>
+                      <CDataText class="tally-shares">
+                        {{ t('units.sharesAmount', { amount: voteResults[resolution.id].for_votes }) }}
+                      </CDataText>
                     </div>
                     <div class="tally-row">
                       <span class="tally-label">{{ t('meetings.vote.against') }}</span>
@@ -943,8 +946,12 @@ function openArt25Modal(resolution: Resolution) {
                           :style="{ width: `${votePct(voteResults[resolution.id].against_votes, voteResults[resolution.id].shares_counted)}%` }"
                         ></div>
                       </div>
-                      <span class="tally-pct">{{ votePct(voteResults[resolution.id].against_votes, voteResults[resolution.id].shares_counted) }}%</span>
-                      <span class="tally-shares">{{ t('units.sharesAmount', { amount: voteResults[resolution.id].against_votes }) }}</span>
+                      <CDataText class="tally-pct">
+                        {{ votePct(voteResults[resolution.id].against_votes, voteResults[resolution.id].shares_counted) }}%
+                      </CDataText>
+                      <CDataText class="tally-shares">
+                        {{ t('units.sharesAmount', { amount: voteResults[resolution.id].against_votes }) }}
+                      </CDataText>
                     </div>
                     <div class="tally-row">
                       <span class="tally-label">{{ t('meetings.vote.abstain') }}</span>
@@ -957,7 +964,9 @@ function openArt25Modal(resolution: Resolution) {
                       <span
                         class="tally-pct"
                       >{{ showsAbstentionTallyPercent(resolution.vote_type) ? votePct(voteResults[resolution.id].abstentions, voteResults[resolution.id].shares_counted) + '%' : '-' }}</span>
-                      <span class="tally-shares">{{ t('units.sharesAmount', { amount: voteResults[resolution.id].abstentions }) }}</span>
+                      <CDataText class="tally-shares">
+                        {{ t('units.sharesAmount', { amount: voteResults[resolution.id].abstentions }) }}
+                      </CDataText>
                     </div>
                   </div>
                   <CAlert
@@ -969,7 +978,9 @@ function openArt25Modal(resolution: Resolution) {
                       {{ voteResultSubtitle(resolution, voteResults[resolution.id]) }}
                     </p>
                     <template #side>
-                      <span class="font-mono font-medium self-center">{{ voteResults[resolution.id].for_votes }} / {{ voteResults[resolution.id].shares_counted }}</span>
+                      <CDataText class="self-center">
+                        {{ voteResults[resolution.id].for_votes }} / {{ voteResults[resolution.id].shares_counted }}
+                      </CDataText>
                     </template>
                   </CAlert>
                   <CAlert
@@ -1120,7 +1131,9 @@ function openArt25Modal(resolution: Resolution) {
                   :key="`${index}-${item}`"
                   class="agenda-item"
                 >
-                  <span class="agenda-item__n">{{ index + 1 }}.</span>
+                  <CDataText class="agenda-item__n">
+                    {{ index + 1 }}.
+                  </CDataText>
                   <span class="agenda-item__text">{{ item }}</span>
                 </li>
               </CFlexGroup>
@@ -1325,7 +1338,12 @@ function openArt25Modal(resolution: Resolution) {
                     </div>
                   </div>
                   <div class="participant-row__meta">
-                    <small class="attendance-shares">{{ t('units.sharesAmount', { amount: entry.shares_represented }) }}</small>
+                    <CDataText
+                      class="attendance-shares"
+                      size="xs"
+                    >
+                      {{ t('units.sharesAmount', { amount: entry.shares_represented }) }}
+                    </CDataText>
                     <CBadge :variant="attendanceModeVariant(entry.mode)">
                       {{ attendanceModeLabel(entry.mode) }}
                     </CBadge>
@@ -1688,13 +1706,11 @@ function openArt25Modal(resolution: Resolution) {
 
 .tally-pct {
   text-align: right;
-  font-family: var(--font-mono);
   font-size: var(--text-xs);
 }
 
 .tally-shares {
   text-align: right;
-  font-family: var(--font-mono);
   color: var(--color-on-surface-variant);
   font-size: var(--text-xs);
 }
@@ -1844,7 +1860,6 @@ function openArt25Modal(resolution: Resolution) {
 }
 
 .attendance-shares {
-  font-family: var(--font-mono);
   color: var(--color-on-surface-variant);
 }
 
@@ -1863,7 +1878,6 @@ function openArt25Modal(resolution: Resolution) {
   width: var(--space-5);
   flex-shrink: 0;
   padding-top: 1px;
-  font-family: var(--font-mono);
   font-size: var(--text-xs);
   font-weight: var(--fw-medium);
   color: var(--color-primary);

@@ -5,7 +5,6 @@ import { usePageLoader } from '@/composables/usePageLoader'
 import { useFormatters } from '@/composables/useFormatters'
 import { usePermissions } from '@/composables/usePermissions'
 import CTopbar from '@/components/organisms/CTopbar.vue'
-import CHeading from '@/components/atoms/CHeading.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
@@ -14,6 +13,8 @@ import CBtn from '@/components/atoms/CBtn.vue'
 import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import CIconRefresh from '@/components/atoms/CIconRefresh.svg'
 import CIconEye from '@/components/atoms/CIconEye.svg'
+import CPageHeader from '@/components/molecules/CPageHeader.vue'
+import CTopbarBreadcrumb from '@/components/molecules/CTopbarBreadcrumb.vue'
 import EtatDateRequestFormModal from '@/features/registers/EtatDateRequestFormModal.vue'
 import EtatDateSnapshotModal from '@/features/registers/EtatDateSnapshotModal.vue'
 import { etatDateApi, unitsApi } from '@/api'
@@ -99,11 +100,12 @@ function viewSnapshot(request: EtatDateRequest) {
   <div class="view-page">
     <CTopbar>
       <template #left>
-        <div class="topbar-breadcrumb">
-          {{ buildingName }}
-          <CIconChevronRight class="icon-xs" />
-          <span>{{ t('registers.etatDate.title') }}</span>
-        </div>
+        <CTopbarBreadcrumb
+          :crumbs="[
+            { label: buildingName || '…' },
+            { label: t('registers.etatDate.title') },
+          ]"
+        />
       </template>
       <template #right>
         <CBtn
@@ -112,6 +114,7 @@ function viewSnapshot(request: EtatDateRequest) {
           size="sm"
           :icon="CIconPlus"
           :title="t('registers.etatDate.new')"
+          shrink="sm"
           @click="showRequestModal = true"
         />
       </template>
@@ -125,15 +128,11 @@ function viewSnapshot(request: EtatDateRequest) {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
-        <header class="view-header">
-          <CEyebrow>{{ t('registers.eyebrow') }}</CEyebrow>
-          <CHeading type="header">
-            {{ t('registers.etatDate.title') }}
-          </CHeading>
-          <CMetaItem variant="sub">
-            {{ t('registers.etatDate.summary', { count: requests.length }) }}
-          </CMetaItem>
-        </header>
+        <CPageHeader
+          :eyebrow="t('registers.eyebrow')"
+          :title="t('registers.etatDate.title')"
+          :meta="t('registers.etatDate.summary', { count: requests.length })"
+        />
 
         <p
           v-if="generateError"

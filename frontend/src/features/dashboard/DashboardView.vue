@@ -15,6 +15,8 @@ import CTopbar from '@/components/organisms/CTopbar.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CIconPlus from '@/components/atoms/CIconPlus.svg'
+import CPageHeader from '@/components/molecules/CPageHeader.vue'
+import CDataText from '@/components/atoms/CDataText.vue'
 import DashboardAgendaCard from './DashboardAgendaCard.vue'
 import {
   buildingApi, budgetApi, calendarApi, consultationsApi, contractsApi,
@@ -242,13 +244,10 @@ const todayStr = computed(() =>
       <template v-else>
         <!-- Hero -->
         <div class="dashboard-hero">
-          <header class="view-header">
-            <CEyebrow>
-              {{ t('page.eyebrows.dashboard') }}
-            </CEyebrow>
-            <CHeading type="header">
-              {{ stats?.name }}
-            </CHeading>
+          <CPageHeader
+            :eyebrow="t('page.eyebrows.dashboard')"
+            :title="stats?.name"
+          >
             <CMetaLine>
               <CMetaItem variant="sub">
                 {{ t('residents.header.unitsCount', stats?.nb_lots ?? 0) }}
@@ -258,7 +257,7 @@ const todayStr = computed(() =>
                 {{ t('budget.fiscalYear', { year: new Date().getFullYear() }) }}
               </CMetaItem>
             </CMetaLine>
-          </header>
+          </CPageHeader>
           <div class="hero-alerts">
             <div
               v-if="canViewAccounting && overdueLevies.length"
@@ -423,7 +422,12 @@ const todayStr = computed(() =>
                   <div class="budget-prog-header">
                     <span class="budget-prog-label">{{ line.label }}</span>
                     <div class="budget-prog-meta">
-                      <span class="budget-prog-amounts">{{ formatCurrency(line.actual_amount ?? 0) }} / {{ formatCurrency(line.budgeted_amount) }}</span>
+                      <CDataText
+                        class="budget-prog-amounts"
+                        size="2xs"
+                      >
+                        {{ formatCurrency(line.actual_amount ?? 0) }} / {{ formatCurrency(line.budgeted_amount) }}
+                      </CDataText>
                       <span
                         class="budget-prog-pct"
                         :class="Number(line.actual_amount ?? 0) > Number(line.budgeted_amount) ? 'pct--over' : 'pct--normal'"
@@ -440,7 +444,9 @@ const todayStr = computed(() =>
                 </div>
                 <div class="budget-total-row">
                   <span>{{ t('dashboard.totalRealized') }}</span>
-                  <span class="budget-total-val">{{ formatCurrency(totalActual) }} / {{ formatCurrency(totalForecast) }}</span>
+                  <CDataText class="budget-total-val">
+                    {{ formatCurrency(totalActual) }} / {{ formatCurrency(totalForecast) }}
+                  </CDataText>
                 </div>
               </div>
             </CCard>
@@ -621,12 +627,13 @@ const todayStr = computed(() =>
                       {{ t(`contracts.reminderTypes.${reminder.reminder_type}`) }}
                     </p>
                   </div>
-                  <span
+                  <CDataText
                     class="reminder-date"
+                    size="2xs"
                     :class="`reminder-date--${reminderUrgency(reminder.reminder_date)}`"
                   >
                     {{ formatDate(reminder.reminder_date) }}
-                  </span>
+                  </CDataText>
                 </div>
                 <div
                   v-if="!reminders?.length"
@@ -751,6 +758,7 @@ const todayStr = computed(() =>
 /* ── Hero ─────────────────────────────────────────────────────────── */
 .dashboard-hero { display: grid; grid-template-columns: 1fr auto; gap: var(--space-6); align-items: end; }
 @media (max-width: 900px) { .dashboard-hero { grid-template-columns: 1fr; } }
+@media (max-width: 640px) { .dashboard-hero { gap: var(--space-4); } .hero-alert { min-width: 0; } }
 
 .hero-alerts { display: flex; flex-direction: column; gap: var(--space-2); align-items: flex-end; }
 @media (max-width: 900px) { .hero-alerts { align-items: stretch; } .hero-alert { min-width: 0; } }
@@ -771,6 +779,7 @@ const todayStr = computed(() =>
    vides se replient au lieu de laisser des colonnes mortes. */
 .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--space-4); }
 @media (max-width: 1100px) { .kpi-grid { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); } }
+@media (max-width: 640px) { .kpi-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--space-3); } }
 
 .kpi-prog { height: 3px; border-radius: var(--radius-full); background: var(--color-surface-container-high); overflow: hidden; margin-top: var(--space-3); }
 .kpi-prog__fill { height: 100%; border-radius: var(--radius-full); transition: width 0.8s cubic-bezier(0.34, 1.3, 0.64, 1); }
@@ -824,7 +833,7 @@ const todayStr = computed(() =>
 .reminder-body { flex: 1; min-width: 0; }
 .reminder-title { font-size: var(--text-xs); font-weight: var(--fw-medium); color: var(--color-on-surface); }
 .reminder-sub   { font-size: var(--text-2xs); color: var(--color-on-surface-variant); margin-top: 1px; }
-.reminder-date { font-family: var(--font-mono); font-size: var(--text-2xs); font-weight: var(--fw-medium); flex-shrink: 0; }
+.reminder-date { flex-shrink: 0; }
 .reminder-date--high   { color: var(--color-error); }
 .reminder-date--medium { color: var(--color-warning-fg); }
 .reminder-date--low    { color: var(--color-on-surface-variant); }
@@ -841,12 +850,12 @@ const todayStr = computed(() =>
 .budget-prog-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-1); }
 .budget-prog-label { font-size: var(--text-sm); font-weight: var(--fw-medium); color: var(--color-on-surface); }
 .budget-prog-meta { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-.budget-prog-amounts { font-family: var(--font-mono); font-size: var(--text-2xs); color: var(--color-on-surface-variant); }
+.budget-prog-amounts { color: var(--color-on-surface-variant); }
 .budget-prog-pct { font-size: var(--text-xs); font-weight: var(--fw-semibold); min-width: 36px; text-align: right; }
 .pct--normal { color: var(--color-primary); }
 .pct--over   { color: var(--color-error); }
 .budget-total-row { display: flex; justify-content: space-between; align-items: center; padding: var(--space-3) var(--space-4); background: var(--color-surface-container-low); border-radius: var(--radius-xl); font-size: var(--text-sm); font-weight: var(--fw-medium); color: var(--color-on-surface); }
-.budget-total-val { font-family: var(--font-mono); font-size: var(--text-sm); font-weight: var(--fw-medium); }
+.budget-total-val { font-size: var(--text-sm); font-weight: var(--fw-medium); }
 
 /* ── Residents ────────────────────────────────────────────────────── */
 .residents-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-3); }

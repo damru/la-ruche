@@ -8,10 +8,11 @@ import CBtn from '@/components/atoms/CBtn.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
-import CHeading from '@/components/atoms/CHeading.vue'
 import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import CIconTrash from '@/components/atoms/CIconTrash.svg'
 import CIconDownload from '@/components/atoms/CIconDownload.svg'
+import CPageHeader from '@/components/molecules/CPageHeader.vue'
+import CTopbarBreadcrumb from '@/components/molecules/CTopbarBreadcrumb.vue'
 import { documentsApi } from '@/api'
 import { useBuildingStore } from '@/stores/building'
 import { usePageLoader } from '@/composables/usePageLoader'
@@ -96,11 +97,12 @@ function onDocumentDeleted(id: string) {
   <div class="view-page">
     <CTopbar>
       <template #left>
-        <div class="topbar-breadcrumb">
-          {{ buildingName || '...' }}
-          <CIconChevronRight />
-          <span>{{ t('common.documents') }}</span>
-        </div>
+        <CTopbarBreadcrumb
+          :crumbs="[
+            { label: buildingName || '…' },
+            { label: t('common.documents') },
+          ]"
+        />
       </template>
       <template #right>
         <CBtn
@@ -108,6 +110,7 @@ function onDocumentDeleted(id: string) {
           size="sm"
           :icon="CIconPlus"
           :title="t('documents.import')"
+          shrink="sm"
           @click="showUpload = true"
         />
       </template>
@@ -121,20 +124,17 @@ function onDocumentDeleted(id: string) {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
-        <header class="view-header">
-          <CEyebrow>
-            {{ t('page.eyebrows.documents') }}
-          </CEyebrow>
-          <CHeading type="header">
-            {{ t('common.documents') }}
-          </CHeading>
+        <CPageHeader
+          :eyebrow="t('page.eyebrows.documents')"
+          :title="t('common.documents')"
+        >
           <p
             class="body-md"
             style="color:var(--color-on-surface-variant)"
           >
             {{ t('common.documentsCount', { count: allDocuments.length }) }}
           </p>
-        </header>
+        </CPageHeader>
 
         <CFormInput
           v-model="search"

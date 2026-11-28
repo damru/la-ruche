@@ -50,7 +50,7 @@ for (const route of EMPTY_ROUTES) {
         await page.waitForLoadState('networkidle')
         await settlePage(page)
 
-        await expect(page.locator('.view-header').first()).toBeVisible()
+        await expect(page.locator('.c-page-header').first()).toBeVisible()
         await expect(page.locator('.c-page-error')).toHaveCount(0)
 
         await page.addStyleTag({ content: '.c-bottom-nav { position: static !important; order: 3; }' })

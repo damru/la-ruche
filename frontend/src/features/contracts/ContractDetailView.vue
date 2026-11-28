@@ -19,7 +19,6 @@ import CTopbar from '@/components/organisms/CTopbar.vue'
 import CHeading from '@/components/atoms/CHeading.vue'
 import CIconArrowLeft from '@/components/atoms/CIconArrowLeft.svg'
 import CIconBolt from '@/components/atoms/CIconBolt.svg'
-import CIconChevronRight from '@/components/atoms/CIconChevronRight.svg'
 import CIconDownload from '@/components/atoms/CIconDownload.svg'
 import CIconDroplet from '@/components/atoms/CIconDroplet.svg'
 import CIconFile from '@/components/atoms/CIconFile.svg'
@@ -32,6 +31,7 @@ import CIconWrench from '@/components/atoms/CIconWrench.svg'
 import CIconCheck from '@/components/atoms/CIconCheck.svg'
 import CIconEdit from '@/components/atoms/CIconEdit.svg'
 import CIconArchive from '@/components/atoms/CIconArchive.svg'
+import CTopbarBreadcrumb from '@/components/molecules/CTopbarBreadcrumb.vue'
 import { contractsApi, documentsApi } from '@/api'
 import { effectiveContractStatus } from '@/utils/contracts'
 import { useBuildingStore } from '@/stores/building'
@@ -165,18 +165,13 @@ async function activateContract() {
   <div class="view-page">
     <CTopbar>
       <template #left>
-        <div class="topbar-breadcrumb">
-          {{ buildingName || '...' }}
-          <CIconChevronRight />
-          <RouterLink
-            :to="{ name: 'contracts' }"
-            class="topbar-breadcrumb-link"
-          >
-            {{ t('contracts.title') }}
-          </RouterLink>
-          <CIconChevronRight />
-          <span>{{ contract?.vendor_name ?? '…' }}</span>
-        </div>
+        <CTopbarBreadcrumb
+          :crumbs="[
+            { label: buildingName || '…' },
+            { label: t('contracts.title'), to: { name: 'contracts' } },
+            { label: contract?.vendor_name ?? '…' },
+          ]"
+        />
       </template>
       <template #right>
         <CBtn
@@ -184,6 +179,7 @@ async function activateContract() {
           size="sm"
           :icon="CIconArrowLeft"
           :title="t('common.back')"
+          shrink="sm"
           @click="router.push({ name: 'contracts' })"
         />
       </template>
@@ -254,6 +250,7 @@ async function activateContract() {
                 size="sm"
                 :icon="CIconEdit"
                 :title="t('common.edit')"
+                shrink="sm"
                 @click="showFormModal = true"
               />
               <CBtn
@@ -262,6 +259,7 @@ async function activateContract() {
                 size="sm"
                 :icon="CIconEdit"
                 :title="t('contracts.amend')"
+                shrink="sm"
                 @click="showAmendModal = true"
               />
               <CBtn
@@ -270,6 +268,7 @@ async function activateContract() {
                 size="sm"
                 :icon="CIconArchive"
                 :title="t('contracts.terminate')"
+                shrink="sm"
                 @click="showTerminateModal = true"
               />
             </CCardActions>

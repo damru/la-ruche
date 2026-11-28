@@ -7,13 +7,13 @@ import { usePageLoader } from '@/composables/usePageLoader'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
 import CCard from '@/components/molecules/CCard.vue'
+import CCardHeader from '@/components/molecules/CCardHeader.vue'
 import CCardActions from '@/components/molecules/CCardActions.vue'
 import CMetaLine from '@/components/molecules/CMetaLine.vue'
 import CMetaItem from '@/components/molecules/CMetaItem.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
-import CHeading from '@/components/atoms/CHeading.vue'
 import CTabs from '@/components/atoms/CTabs.vue'
 import CIconCheckCircle from '@/components/atoms/CIconCheckCircle.svg'
 import CIconEdit from '@/components/atoms/CIconEdit.svg'
@@ -21,6 +21,8 @@ import CIconMessageSquare from '@/components/atoms/CIconMessageSquare.svg'
 import CIconPlus from '@/components/atoms/CIconPlus.svg'
 import CIconRefresh from '@/components/atoms/CIconRefresh.svg'
 import CFormTextarea from '@/components/atoms/CFormTextarea.vue'
+import CPageHeader from '@/components/molecules/CPageHeader.vue'
+import CTopbarBreadcrumb from '@/components/molecules/CTopbarBreadcrumb.vue'
 import CreateReportModal from './CreateReportModal.vue'
 import UpdateReportStatusModal from './UpdateReportStatusModal.vue'
 import ConvertReportToTaskModal from './ConvertReportToTaskModal.vue'
@@ -168,11 +170,12 @@ async function submitComment(r: Report) {
   <div class="view-page">
     <CTopbar>
       <template #left>
-        <div class="topbar-breadcrumb">
-          {{ buildingName }}
-          <CIconChevronRight />
-          <span>{{ t('nav.reports') }}</span>
-        </div>
+        <CTopbarBreadcrumb
+          :crumbs="[
+            { label: buildingName || '…' },
+            { label: t('nav.reports') },
+          ]"
+        />
       </template>
       <template #right>
         <CBtn
@@ -180,6 +183,7 @@ async function submitComment(r: Report) {
           size="sm"
           :icon="CIconPlus"
           :title="t('reports.create')"
+          shrink="sm"
           @click="openCreateModal"
         />
       </template>
@@ -193,20 +197,17 @@ async function submitComment(r: Report) {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
-        <header class="view-header">
-          <CEyebrow>
-            {{ t('page.eyebrows.reports') }}
-          </CEyebrow>
-          <CHeading type="header">
-            {{ t('nav.reports') }}
-          </CHeading>
+        <CPageHeader
+          :eyebrow="t('page.eyebrows.reports')"
+          :title="t('nav.reports')"
+        >
           <p
             class="body-md"
             style="color:var(--color-on-surface-variant)"
           >
             {{ t('reports.activeCount', activeCount) }}
           </p>
-        </header>
+        </CPageHeader>
 
         <CTabs
           v-model="statusFilter"
@@ -232,40 +233,35 @@ async function submitComment(r: Report) {
               :shadow="r.status !== REPORT_STATUS_CLOSED"
               :class="['gap-y-4', { 'outline outline-1 outline-outline-variant': r.status === REPORT_STATUS_CLOSED }]"
             >
-              <div class="flex items-center gap-3 min-w-0">
-                <CMetaLine 
-                  class="[&_svg]:icon-sm text-xs"
-                >
+              <CCardHeader>
+                <h3 class="text-lg font-semibold text-on-surface m-0 leading-snug">
+                  <RouterLink
+                    :to="{ name: 'report-detail', params: { id: r.id } }"
+                    class="text-on-surface! hover:underline"
+                  >
+                    {{ r.title }}
+                  </RouterLink>
+                </h3>
+                <template #chips>
                   <CBadge
                     :variant="reportStatusVariant(r.status)"
                     dot
                   >
                     {{ t(`reports.statuses.${r.status}`) }}
                   </CBadge>
-                  <CMetaItem
-                    variant="sub" 
-                  >
+                  <CMetaItem variant="sub">
                     <template #icon>
                       <CIconClock />
                     </template>
                     {{ formatRelative(r.updated_at) }}
                   </CMetaItem>
-                </CMetaLine>
-              </div>
+                </template>
+              </CCardHeader>
   
               <div class="flex flex-col gap-3">
                 <CFlexGroup
                   direction="row"
                 >
-                  <h3 class="text-lg font-semibold text-on-surface m-0 leading-snug min-w-0">
-                    <RouterLink
-                      :to="{ name: 'report-detail', params: { id: r.id } }"
-                      class="text-on-surface! hover:underline"
-                    >
-                      {{ r.title }}
-                    </RouterLink>
-                  </h3>
-                  
                   <CMetaItem
                     v-if="r.document_count > 0"
                     variant="sub"
@@ -338,6 +334,7 @@ async function submitComment(r: Report) {
                       size="sm"
                       :icon="CIconEdit"
                       :title="t('common.edit')"
+                      shrink="sm"
                       @click="openEditModal(r)"
                     />
                     <CBtn
@@ -346,6 +343,7 @@ async function submitComment(r: Report) {
                       size="sm"
                       :icon="CIconCheckCircle"
                       :title="t('reports.viewTask')"
+                      shrink="sm"
                       @click="router.push({ name: 'task-detail', params: { id: r.task_id } })"
                     />
                     <CBtn
@@ -354,6 +352,7 @@ async function submitComment(r: Report) {
                       size="sm"
                       :icon="CIconCheckCircle"
                       :title="t('reports.convertToTask')"
+                      shrink="sm"
                       @click="openConvertModal(r)"
                     />
                   </CCardActions>

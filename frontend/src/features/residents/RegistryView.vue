@@ -6,9 +6,10 @@ import CCard from '@/components/molecules/CCard.vue'
 import CLegalNotice from '@/components/molecules/CLegalNotice.vue'
 import CLegalCard from '@/components/molecules/CLegalCard.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
-import CHeading from '@/components/atoms/CHeading.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
+import CPageHeader from '@/components/molecules/CPageHeader.vue'
+import CTopbarBreadcrumb from '@/components/molecules/CTopbarBreadcrumb.vue'
 import { buildingApi } from '@/api'
 import { usePageLoader } from '@/composables/usePageLoader'
 import type { RegistryResponse, RegistryKey } from '@/types/domain'
@@ -93,11 +94,12 @@ const registryColumns = computed(() => {
   <div class="view-page">
     <CTopbar>
       <template #left>
-        <div class="topbar-breadcrumb">
-          {{ data?.building.name ?? '...' }}
-          <CIconChevronRight />
-          <span>{{ t('registry.title') }}</span>
-        </div>
+        <CTopbarBreadcrumb
+          :crumbs="[
+            { label: data?.building.name ?? '...' },
+            { label: t('registry.title') },
+          ]"
+        />
       </template>
     </CTopbar>
 
@@ -109,21 +111,18 @@ const registryColumns = computed(() => {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else-if="data">
-        <header class="view-header">
-          <CEyebrow>
-            {{ t('page.eyebrows.registry') }}
-          </CEyebrow>
-          <CHeading type="header">
-            {{ t('registry.title') }}
-          </CHeading>
+        <CPageHeader
+          :eyebrow="t('page.eyebrows.registry')"
+          :title="t('registry.title')"
+        >
           <CMetaLine>
             <CMetaItem variant="sub">
               {{ data.building.address_line1 }}, {{ data.building.postal_code }} {{ data.building.city }}
             </CMetaItem>
           </CMetaLine>
-        </header>
+        </CPageHeader>
         
-        <div class="grid gap-4 xs:grid-cols-3">
+        <div class="grid grid-cols-2 gap-3 xs:grid-cols-3 xs:gap-4">
           <CKpiCard
             class="items-center text-center"
             :subtitle="t('registry.lots')"

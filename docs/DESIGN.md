@@ -493,7 +493,7 @@ border-color: var(--color-outline-light);
 | `CAlert` | `variant` (`error` \| `warning` \| `info` \| `success`), `title` | Bandeau d'alerte contextuelle — consomme `.tone--err/warn/info/valid` |
 | `CAvatar` | `name` (`string \| null \| undefined`), `size?` (`sm` \| `md` \| `lg`, défaut `md`) | Avatar initiales — hue oklch dérivé du nom par hash djb2, adapté au thème via `[data-theme="dark"]`. `sm`=28px, `md`=36px, `lg`=42px. 1 mot→2 premiers chars, multi-mots→initiales premier+dernier. |
 | `CBadge` | `variant`, `truncate` | Chip de statut ou de catégorie — consomme `.tone--*`. `truncate` contraint un libellé long dans la largeur du parent (ellipsis, badge texte sans `dot`) |
-| `CDataText` | `size` (`sm` \| `md` \| `lg`) | 🔲 planifié (EP-020-S17) — Texte tabulaire JetBrains Mono — `font-mono font-medium lining-nums tabular-nums` |
+| `CDataText` | `size` (`sm` \| `md` \| `lg`), `as` (`span` \| `strong` \| `div`) | ✅ — Texte tabulaire JetBrains Mono — `font-mono font-medium lining-nums tabular-nums`. **La graisse et les chiffres tabulaires appartiennent au composant** : un parent ne les surcharge pas. Échelle de `size` = **les pas de l'échelle typographique du design system**, un pour un : `2xs` 11 px, `xs` 12 px, `sm` 13 px (défaut), `md` 14 px, `lg` 16 px — les mêmes noms que les tokens `--text-*`, donc aucun décalage à retenir |
 | `CEyebrow` | — | Libellé eyebrow — `font-body text-2xs font-medium uppercase tracking-[0.06em]`. Rendu en `<div>`. |
 | `CHeading` | `type` (`header` \| `section` \| `card`), `variant` (`heading` \| `title`) | ✅ Titre Fraunces semibold. `header` = `text-2xl` h1, `section` = `text-xl` h2 (défaut), `card` = `text-lg` h3. Variante `title` = `font-body font-semibold`. |
 | `CIconTile` | `size` (`sm` \| `md` \| `lg`) | Tuile icône avec fond tonal — consomme `.tone--*`. `sm` = 32px, `md` = 40px (défaut), `lg` = 56px. `border-radius` ajusté par taille. Slot défaut pour l'icône SVG — icône dimensionnée via `:deep(svg)`. |
@@ -537,11 +537,11 @@ border-color: var(--color-outline-light);
 |---|---|---|
 | `CCard` | `level?` (`1`\|`2`\|`3`\|`4`, défaut `2`), `shadow?`, `gap?` (`none` \| `sm` \| `md`) | Conteneur générique — définit background, border-radius, padding et flux interne. `level` couple padding et radius : 1 = padding lg + radius 3xl (carte racine), 2 = padding md + radius 2xl (défaut), 3 = padding sm + radius xl (carte imbriquée), 4 = padding xs + radius lg (carte innermost). `gap` : `sm` = 12px, `md` = 16px (défaut), `none` = 0. Pour les listes avec séparateurs : `CFlexGroup`. Ossature d'une carte d'entité : `CCardHeader` › titre › description › `CMetaLine` › `CCardActions` › `CCardNote`. |
 | `CCardActions` | — | ✅ Zone d'actions d'une carte — `flex flex-wrap gap-x-2 gap-y-1`. |
-| `CCardHeader` | `withIcon?` | 🔲 planifié (EP-020-S15) — En-tête de carte — slots `#icon`, `#chips` |
+| `CCardHeader` | `withIcon?` | ✅ — En-tête de carte d'entité — slots `#icon`, `#chips` (chips de statut/type toujours visibles, wrap autorisé) |
 | `CCardNote` | `note` | Encart d'information secondaire dans une `CCard` |
 | `CCopyField` | `value`, `label?`, `hint?`, `copyTitle?`, `copiedTitle?` | ✅ Champ lecture seule + bouton copier (presse-papiers). Gère son propre état « copié ». Remplace les blocs `invite-link-box`. |
 | `CDataTable` | `columns`, `rows` | Tableau de données |
-| `CDocumentList` | `documents`, `readonly?` | 🔲 planifié (EP-020-S16) — Liste documents avec download/retrait — `emit('remove', doc)` au parent |
+| `CDocumentList` | `documents`, `readonly?`, `loadingDocId?`, `removeTitle?` | ✅ — Liste documents avec téléchargement/retrait — `emit('download', doc)` et `emit('remove', doc)` au parent, qui garde l'appel API et la modale de retrait |
 | `CEmptyState` | `icon`, `title`, `description?`, `size?` (`page` \| `compact`) | ✅ État vide — slot `#actions`. `page` = centré + `py-8`, `compact` = plus petit pour les sections. |
 | `CFileDropzone` | `files` (v-model:files `File[]`), `hint?`, `removeLabel?`, `multiple?`, `accept?` | ✅ Zone de dépôt + sélection de fichiers locaux avant envoi. Prévisualisation par puces (nom + retrait) par défaut ; slot `#preview="{ files, remove }"` pour un rendu custom (ex. vignettes images). À distinguer de `CFormDropzone` (upload direct serveur). |
 | `CForm` | `status?`, `message?` | Formulaire structuré (`<form>`) — flex-col gap-4 + slot `#actions` → `CFormActions`. `@submit` émis sur soumission. Remplace `<form>` brut dans les vues. |
@@ -557,13 +557,13 @@ border-color: var(--color-outline-light);
 | `CMetaItem` | `variant`, `icon` | Ligne icône + contenu — variantes `footer` / `sub` |
 | `CMetaLine` | — | Rangée horizontale de `CMetaItem` avec `CSeparator` |
 | `CModal` | `open`, `title`, `saving?`, `feedback?` | Dialogue Radix `Dialog` — émettre `@submit` pour soumission. `CFormFeedback` obligatoire dans `#footer` (DDR-006). |
-| `CPageHeader` | `eyebrow?`, `title`, `meta?`, `icon?`, `frozenLabel?` | 🔲 planifié (EP-020-S13) — En-tête de vue — slot `#actions` |
+| `CPageHeader` | `eyebrow?`, `title?`, `meta?` | ✅ — En-tête de vue — slots `#eyebrow` (eyebrow avec badges), `#title` (titre composé), `#actions` (boutons à droite), défaut (description, méta libre) |
 | `CPageLoader` | — | Indicateur de chargement |
 | `CSectionHeader` | — | ✅ En-tête de section — `flex items-start justify-between gap-3`. Slot default (zone titre : heading + meta). Slot `#actions` pour les boutons droite. Remplace `.section-head` / `.card-head`. |
 | `CSectionLink` | `to` | ✅ Lien « voir tout » d'en-tête de section — `RouterLink` + chevron. À utiliser dans le slot `#actions` de `CSectionHeader`. |
 | `CTimelineSection` | `events`, `loading`, `error`, `linkTasks?`, `currentTaskId?` | ✅ Section de frise complète — états chargement / erreur (bouton réessayer, `emit('retry')`) / vide + `CTimelineList`. Évite de dupliquer la machine à états dans chaque vue détail. |
 | `CTimelineList` | `events` (`TimelineEvent[]`), `linkTasks?` (défaut `true`), `currentTaskId?`, `currentReportId?` | ✅ Frise d'événements de cycle de vie (EP-017) — pastille par action (`created`, `status_changed`, `closed`, …), ordre antéchronologique (plus récent en premier), carte teintée `.tone--primary` (fond `--color-primary-tint`, AA light/dark) + bordure `primary/30` et anneau `ring-primary/20` sur la pastille pour l'étape `converted_to_task`, libellé i18n (`timeline.actions.*`), acteur (`actor_name`, « Prestataire externe » si vendeur), détail issu du `payload` (transition de statut, nom de fichier, expiration du lien), badge « Signalement » pour les événements `entity_type === 'report'`, lien vers la tâche créée sur `converted_to_task`. Action inconnue → pastille neutre + libellé générique. `linkTasks: false` masque le lien de conversion pour les rôles sans accès aux tâches ; `currentTaskId` fait pointer l'étape de conversion vers le **signalement source** (et inversement depuis `currentReportId` vers la tâche) ; le doublon `task.created` d'une conversion n'est pas rendu. |
-| `CTopbarBreadcrumb` | `crumbs[]` | 🔲 planifié (EP-020-S14) — Fil d'Ariane topbar |
+| `CTopbarBreadcrumb` | `crumbs[]` (`{ label, to? }`) | ✅ — Fil d'Ariane topbar — `nav` + `aria-current` sur le dernier crumb, troncature : les crumbs intermédiaires cèdent la place en premier |
 
 ---
 

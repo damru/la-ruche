@@ -9,11 +9,11 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import CCard from '@/components/molecules/CCard.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
-import CHeading from '@/components/atoms/CHeading.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
-import CEyebrow from '@/components/atoms/CEyebrow.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
+import CPageHeader from '@/components/molecules/CPageHeader.vue'
+import CTopbarBreadcrumb from '@/components/molecules/CTopbarBreadcrumb.vue'
 import { unitsApi } from '@/api'
 import { usePageLoader } from '@/composables/usePageLoader'
 import type { Unit } from '@/types/domain'
@@ -41,9 +41,11 @@ onMounted(reload)
   <div class="view-page">
     <CTopbar>
       <template #left>
-        <div class="topbar-breadcrumb">
-          <span>{{ t('nav.myCharges') }}</span>
-        </div>
+        <CTopbarBreadcrumb
+          :crumbs="[
+            { label: t('nav.myCharges') },
+          ]"
+        />
       </template>
     </CTopbar>
 
@@ -55,19 +57,15 @@ onMounted(reload)
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
-        <header class="view-header">
-          <CEyebrow>
-            {{ t('page.eyebrows.myCharges') }}
-          </CEyebrow>
-          <CHeading type="header">
-            {{ t('nav.myCharges') }}
-          </CHeading>
-        </header>
+        <CPageHeader
+          :eyebrow="t('page.eyebrows.myCharges')"
+          :title="t('nav.myCharges')"
+        />
 
         <!-- Multi-unit selection (co-owner with several units) -->
         <div
           v-if="ownedUnits.length > 1"
-          class="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-4"
+          class="unit-grid"
         >
           <CCard
             v-for="unit in ownedUnits"
@@ -109,6 +107,22 @@ onMounted(reload)
 
 <style scoped>
 /* cards-grid is global — defined in styles/tables.css */
+
+.unit-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--space-4);
+}
+
+@media (max-width: 640px) {
+  .unit-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: var(--space-3);
+  }
+
+  .unit-card__number { font-size: var(--text-sm); }
+  .unit-card__type { font-size: var(--text-2xs); }
+}
 
 .unit-card {
   cursor: pointer;

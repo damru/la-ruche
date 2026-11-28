@@ -11,11 +11,15 @@ import CTabs from '@/components/atoms/CTabs.vue'
 import CToggle from '@/components/atoms/CToggle.vue'
 import CFormSelect from '@/components/atoms/CFormSelect.vue'
 import CBadge from '@/components/atoms/CBadge.vue'
+import CIconCheck from '@/components/atoms/CIconCheck.svg'
 import CIconClock from '@/components/atoms/CIconClock.svg'
+import CIconLock from '@/components/atoms/CIconLock.svg'
 import CIconLogIn from '@/components/atoms/CIconLogIn.svg'
 import CIconMoon from '@/components/atoms/CIconMoon.svg'
 import CIconRefresh from '@/components/atoms/CIconRefresh.svg'
 import CIconSun from '@/components/atoms/CIconSun.svg'
+import CPageHeader from '@/components/molecules/CPageHeader.vue'
+import CTopbarBreadcrumb from '@/components/molecules/CTopbarBreadcrumb.vue'
 import { useAuthStore } from '@/stores/auth'
 import { usePermissions } from '@/composables/usePermissions'
 import { useUiStore, NOTIF_EVENTS, AUTO_CLOSE_DELAY_MIN_SEC, AUTO_CLOSE_DELAY_MAX_SEC } from '@/stores/ui'
@@ -186,9 +190,11 @@ const showResetDataModal = ref(false)
   <div class="view-page">
     <CTopbar>
       <template #left>
-        <div class="topbar-breadcrumb">
-          <span>{{ t('nav.account') }}</span>
-        </div>
+        <CTopbarBreadcrumb
+          :crumbs="[
+            { label: t('nav.account') },
+          ]"
+        />
       </template>
       <template #right>
         <CBtn
@@ -198,20 +204,17 @@ const showResetDataModal = ref(false)
           :title="t('nav.logout')"
           :loading="loggingOut"
           :disabled="loggingOut"
+          shrink="sm"
           @click="logout"
         />
       </template>
     </CTopbar>
 
     <div class="view-container">
-      <header class="view-header">
-        <CEyebrow>
-          {{ t('page.eyebrows.profile') }}
-        </CEyebrow>
-        <CHeading type="header">
-          {{ t('nav.account') }}
-        </CHeading>
-      </header>
+      <CPageHeader
+        :eyebrow="t('page.eyebrows.profile')"
+        :title="t('nav.account')"
+      />
 
       <!-- Tabs -->
       <CTabs
@@ -286,14 +289,18 @@ const showResetDataModal = ref(false)
               <CBtn
                 variant="primary"
                 type="submit"
+                :icon="CIconCheck"
                 :title="t('settings.account.update')"
                 :loading="saving"
                 :disabled="saving"
+                shrink="sm"
               />
               <CBtn
                 variant="ghost"
+                :icon="CIconLock"
                 :title="t('settings.account.changePassword')"
                 disabled
+                shrink="sm"
               />
             </template>
           </CForm>

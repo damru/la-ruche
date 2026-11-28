@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import CCard from '@/components/molecules/CCard.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
 import CHeading from '@/components/atoms/CHeading.vue'
@@ -13,15 +13,15 @@ import CMetaLine from '@/components/molecules/CMetaLine.vue'
 import CMetaItem from '@/components/molecules/CMetaItem.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
-import CEyebrow from '@/components/atoms/CEyebrow.vue'
 import CLegalCard from '@/components/molecules/CLegalCard.vue'
 import CLegalNotice from '@/components/molecules/CLegalNotice.vue'
 import CLegalDescription from '@/components/atoms/CLegalDescription.vue'
 import CKpiCard from '@/components/molecules/CKpiCard.vue'
 import type { Column } from '@/components/molecules/CDataTable.vue'
-import CIconChevronRight from '@/components/atoms/CIconChevronRight.svg'
 import CIconWarn from '@/components/atoms/CIconWarn.svg'
 import CFormSelect from '@/components/atoms/CFormSelect.vue'
+import CPageHeader from '@/components/molecules/CPageHeader.vue'
+import CTopbarBreadcrumb from '@/components/molecules/CTopbarBreadcrumb.vue'
 import PreEtatDateModal from '@/features/registers/PreEtatDateModal.vue'
 import { unitsApi } from '@/api'
 import { usePageLoader } from '@/composables/usePageLoader'
@@ -44,7 +44,6 @@ interface ConsolidatedUnitChargeRow {
 
 const { t } = useI18n()
 const route = useRoute()
-const router = useRouter()
 const { canViewUsers } = usePermissions()
 const { formatCurrency, formatDate } = useFormatters()
 
@@ -156,16 +155,13 @@ const showPreEtatDateModal = ref(false)
   <div class="view-page">
     <CTopbar>
       <template #left>
-        <div class="topbar-breadcrumb">
-          <span
-            class="cursor-pointer"
-            @click="router.push(backRoute)"
-          >{{ backLabel }}</span>
-          <CIconChevronRight />
-          <span>{{ data?.unit.unit_number ?? '…' }}</span>
-          <CIconChevronRight />
-          <span>{{ t('units.charges.title') }}</span>
-        </div>
+        <CTopbarBreadcrumb
+          :crumbs="[
+            { label: backLabel, to: backRoute },
+            { label: data?.unit.unit_number ?? '…' },
+            { label: t('units.charges.title') },
+          ]"
+        />
       </template>
     </CTopbar>
 
@@ -177,13 +173,10 @@ const showPreEtatDateModal = ref(false)
       />
       <CPageLoader v-else-if="loading" />
       <template v-else-if="data">
-        <header class="view-header">
-          <CEyebrow>
-            {{ t('page.eyebrows.unitCharges') }}
-          </CEyebrow>
-          <CHeading type="header">
-            {{ t('units.charges.title') }}
-          </CHeading>
+        <CPageHeader
+          :eyebrow="t('page.eyebrows.unitCharges')"
+          :title="t('units.charges.title')"
+        >
           <CMetaLine>
             <CMetaItem variant="sub">
               {{ t('common.lot') }} {{ data.unit.unit_number }} 
@@ -193,7 +186,7 @@ const showPreEtatDateModal = ref(false)
               {{ t(`units.types.${data.unit.unit_type}`) }}
             </CMetaItem>
           </CMetaLine>
-        </header>
+        </CPageHeader>
 
         <div
           v-if="canViewUsers"
@@ -217,7 +210,7 @@ const showPreEtatDateModal = ref(false)
         </CBadge>
 
         <!-- Summary KPIs -->
-        <div class="flex flex-wrap gap-4">
+        <div class="grid grid-cols-2 gap-3 xs:grid-cols-3 xs:gap-4">
           <CKpiCard
             :label="t('units.charges.totalIssued')"
             :value="formatCurrency(data.total_issued)"

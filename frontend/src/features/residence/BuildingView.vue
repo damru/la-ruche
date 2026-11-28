@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import CLegalDescription from '@/components/atoms/CLegalDescription.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
+import CIconCheck from '@/components/atoms/CIconCheck.svg'
 import CLegalNotice from '@/components/molecules/CLegalNotice.vue'
 import CLegalCard from '@/components/molecules/CLegalCard.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
@@ -12,6 +13,8 @@ import CTopbar from '@/components/organisms/CTopbar.vue'
 import CHeading from '@/components/atoms/CHeading.vue'
 import CIconBook from '@/components/atoms/CIconBook.svg'
 import CIconDownload from '@/components/atoms/CIconDownload.svg'
+import CPageHeader from '@/components/molecules/CPageHeader.vue'
+import CTopbarBreadcrumb from '@/components/molecules/CTopbarBreadcrumb.vue'
 import { buildingApi } from '@/api'
 import { useBuildingStore } from '@/stores/building'
 import { usePageLoader } from '@/composables/usePageLoader'
@@ -53,13 +56,13 @@ onMounted(reload)
   <div class="view-page">
     <CTopbar>
       <template #left>
-        <div class="topbar-breadcrumb">
-          {{ form.name ?? '...' }}
-          <CIconChevronRight />
-          <span>{{ t('nav.groups.residence') }}</span>
-          <CIconChevronRight />
-          <span>{{ t('common.informations') }}</span>
-        </div>
+        <CTopbarBreadcrumb
+          :crumbs="[
+            { label: form.name ?? '...' },
+            { label: t('nav.groups.residence') },
+            { label: t('common.informations') },
+          ]"
+        />
       </template>
     </CTopbar>
 
@@ -71,20 +74,17 @@ onMounted(reload)
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
-        <header class="view-header">
-          <CEyebrow>
-            {{ t('page.eyebrows.building') }}
-          </CEyebrow>
-          <CHeading type="header">
-            {{ t('common.informations') }}
-          </CHeading>
+        <CPageHeader
+          :eyebrow="t('page.eyebrows.building')"
+          :title="t('common.informations')"
+        >
           <p
             class="body-md"
             style="color:var(--color-on-surface-variant)"
           >
             {{ t('settings.building.subtitle') }}
           </p>
-        </header>
+        </CPageHeader>
 
         <CCard>
           <CHeading
@@ -135,9 +135,11 @@ onMounted(reload)
               <CBtn
                 variant="primary"
                 type="submit"
+                :icon="CIconCheck"
                 :title="t('settings.saveChanges')"
                 :loading="saving"
                 :disabled="saving"
+                shrink="sm"
               />
             </template>
           </CForm>

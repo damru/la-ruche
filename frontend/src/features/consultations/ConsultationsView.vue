@@ -19,10 +19,14 @@ import CTopbar from '@/components/organisms/CTopbar.vue'
 import CHeading from '@/components/atoms/CHeading.vue'
 import CTabs from '@/components/atoms/CTabs.vue'
 import CIconPlus from '@/components/atoms/CIconPlus.svg'
+import CIconCheck from '@/components/atoms/CIconCheck.svg'
 import CIconCheckCircle from '@/components/atoms/CIconCheckCircle.svg'
 import CIconTrash from '@/components/atoms/CIconTrash.svg'
 import CIconEdit from '@/components/atoms/CIconEdit.svg'
 import CIconBell from '@/components/atoms/CIconBell.svg'
+import CPageHeader from '@/components/molecules/CPageHeader.vue'
+import CTopbarBreadcrumb from '@/components/molecules/CTopbarBreadcrumb.vue'
+import CDataText from '@/components/atoms/CDataText.vue'
 import CreateConsultationModal from './CreateConsultationModal.vue'
 import CloseConsultationModal from './CloseConsultationModal.vue'
 import DeleteConsultationModal from './DeleteConsultationModal.vue'
@@ -270,11 +274,12 @@ function openDeleteModal(c: Consultation) {
   <div class="view-page">
     <CTopbar>
       <template #left>
-        <div class="topbar-breadcrumb">
-          {{ buildingName }}
-          <CIconChevronRight />
-          <span>{{ t('nav.consultations') }}</span>
-        </div>
+        <CTopbarBreadcrumb
+          :crumbs="[
+            { label: buildingName || '…' },
+            { label: t('nav.consultations') },
+          ]"
+        />
       </template>
       <template #right>
         <CBtn
@@ -283,6 +288,7 @@ function openDeleteModal(c: Consultation) {
           size="sm"
           :icon="CIconPlus"
           :title="t('consultations.create')"
+          shrink="sm"
           @click="openCreateModal"
         />
       </template>
@@ -296,17 +302,11 @@ function openDeleteModal(c: Consultation) {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else>
-        <header class="view-header">
-          <CEyebrow>
-            {{ t('page.eyebrows.consultations') }}
-          </CEyebrow>
-          <CHeading type="header">
-            {{ t('nav.consultations') }}
-          </CHeading>
-          <CMetaItem variant="sub">
-            {{ t('consultations.allCount', { count: allCount }) }}
-          </CMetaItem>
-        </header>
+        <CPageHeader
+          :eyebrow="t('page.eyebrows.consultations')"
+          :title="t('nav.consultations')"
+          :meta="t('consultations.allCount', { count: allCount })"
+        />
 
         <CAlert
           v-if="pageError"
@@ -338,6 +338,8 @@ function openDeleteModal(c: Consultation) {
                 variant="primary"
                 :icon="CIconPlus"
                 :title="t('consultations.create')"
+                shrink="sm"
+              
                 @click="openCreateModal"
               />
             </template>
@@ -351,20 +353,22 @@ function openDeleteModal(c: Consultation) {
               :shadow="c.status !== POLL_STATUS_CLOSED"
               :class="{ 'outline outline-1 outline-outline-variant': c.status === POLL_STATUS_CLOSED }"
             >
-              <CBadge
-                :variant="c.status === POLL_STATUS_OPEN ? 'open' : c.status === POLL_STATUS_DRAFT ? 'pending' : 'closed'"
-                class="status-badge"
-                dot
-              >
-                {{ t(`consultations.statuses.${c.status}`) }}
-              </CBadge>
-  
-              <CHeading 
-                type="card"
-                variant="title"
-              >
-                {{ c.title }}
-              </CHeading>
+              <CCardHeader>
+                <CHeading
+                  type="card"
+                  variant="title"
+                >
+                  {{ c.title }}
+                </CHeading>
+                <template #chips>
+                  <CBadge
+                    :variant="c.status === POLL_STATUS_OPEN ? 'open' : c.status === POLL_STATUS_DRAFT ? 'pending' : 'closed'"
+                    dot
+                  >
+                    {{ t(`consultations.statuses.${c.status}`) }}
+                  </CBadge>
+                </template>
+              </CCardHeader>
   
               <p
                 v-if="c.description"
@@ -404,9 +408,12 @@ function openDeleteModal(c: Consultation) {
                   </div>
   
                   <!-- Column 3: percentage -->
-                  <span class="choice-percent font-mono text-xs text-end">
+                  <CDataText
+                    class="choice-percent text-end"
+                    size="xs"
+                  >
                     {{ hasVoted(c) || c.status === POLL_STATUS_CLOSED ? (() => { const total = getTotalVotes(c); return total > 0 ? Math.round(choice.votes * 100 / total) : 0 })() + '%' : '—' }}
-                  </span>
+                  </CDataText>
                 </div>
               </div>
   
@@ -438,8 +445,10 @@ function openDeleteModal(c: Consultation) {
                   <CBtn
                     variant="primary"
                     size="sm"
+                    :icon="CIconCheck"
                     :title="hasVoted(c) ? t('consultations.updateVote') : t('consultations.respondModal.submit')"
                     :loading="getInline(c).submitting"
+                    shrink="sm"
                     @click="submitVote(c)"
                   />
                 </div>
@@ -453,7 +462,9 @@ function openDeleteModal(c: Consultation) {
                 <CBtn
                   variant="ghost"
                   size="sm"
+                  :icon="CIconEdit"
                   :title="t('consultations.modifyVote')"
+                  shrink="sm"
                   @click="unlockVote(c)"
                 />
               </div>
@@ -488,6 +499,8 @@ function openDeleteModal(c: Consultation) {
                   size="sm"
                   :icon="CIconEdit"
                   :title="t('common.edit')"
+                  shrink="sm"
+                
                   @click="openEditModal(c)"
                 />
                 <CBtn
@@ -495,6 +508,8 @@ function openDeleteModal(c: Consultation) {
                   size="sm"
                   :icon="CIconCheckCircle"
                   :title="t('consultations.openAction')"
+                  shrink="sm"
+                
                   @click="openDraft(c)"
                 />
                 <CBtn
@@ -502,6 +517,8 @@ function openDeleteModal(c: Consultation) {
                   size="sm"
                   :icon="CIconTrash"
                   :title="t('common.delete')"
+                  shrink="sm"
+                
                   @click="openDeleteModal(c)"
                 />
               </div>
@@ -516,6 +533,7 @@ function openDeleteModal(c: Consultation) {
                   size="sm"
                   :icon="CIconBell"
                   :title="t('common.remind')"
+                  shrink="sm"
                   :disabled="(nonRespondentsCount[c.id] ?? 0) === 0"
                   :loading="remindingId === c.id"
                   @click="remindNonRespondents(c)"
@@ -525,6 +543,8 @@ function openDeleteModal(c: Consultation) {
                   size="sm"
                   :icon="CIconCheckCircle"
                   :title="t('consultations.close')"
+                  shrink="sm"
+                
                   @click="openCloseModal(c)"
                 />
               </div>
@@ -539,6 +559,8 @@ function openDeleteModal(c: Consultation) {
                   size="sm"
                   :icon="CIconTrash"
                   :title="t('common.delete')"
+                  shrink="sm"
+                
                   @click="openDeleteModal(c)"
                 />
               </div>

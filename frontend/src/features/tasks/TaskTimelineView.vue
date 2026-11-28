@@ -8,16 +8,15 @@ import { useTimelineFeed } from '@/composables/useTimelineFeed'
 import { taskPriorityVariant, taskStatusVariant } from '@/composables/useStatusLabels'
 import CBadge from '@/components/atoms/CBadge.vue'
 import CBtn from '@/components/atoms/CBtn.vue'
-import CEyebrow from '@/components/atoms/CEyebrow.vue'
 import CCard from '@/components/molecules/CCard.vue'
 import CTimelineSection from '@/components/molecules/CTimelineSection.vue'
 import CPageError from '@/components/organisms/CPageError.vue'
 import CPageLoader from '@/components/molecules/CPageLoader.vue'
 import CTopbar from '@/components/organisms/CTopbar.vue'
-import CHeading from '@/components/atoms/CHeading.vue'
 import CIconArrowLeft from '@/components/atoms/CIconArrowLeft.svg'
-import CIconChevronRight from '@/components/atoms/CIconChevronRight.svg'
 import CIconRefresh from '@/components/atoms/CIconRefresh.svg'
+import CPageHeader from '@/components/molecules/CPageHeader.vue'
+import CTopbarBreadcrumb from '@/components/molecules/CTopbarBreadcrumb.vue'
 import { contractorsApi, maintenanceApi, tasksApi } from '@/api'
 import { useBuildingStore } from '@/stores/building'
 import type { Contractor, MaintenanceEntry, Task } from '@/types/domain'
@@ -80,18 +79,12 @@ watch(() => route.params.id, id => {
   <div class="view-page">
     <CTopbar>
       <template #left>
-        <div class="topbar-breadcrumb">
-          {{ buildingName }}
-          <CIconChevronRight />
-          <RouterLink
-            :to="{ name: 'tasks' }"
-            class="topbar-breadcrumb-link"
-          >
-            {{ t('nav.tasks') }}
-          </RouterLink>
-          <CIconChevronRight />
-          <span>{{ task?.title ?? '…' }}</span>
-        </div>
+        <CTopbarBreadcrumb
+          :crumbs="[
+            { label: buildingName || '…' },
+            { label: t('nav.tasks'), to: { name: 'tasks' } },
+          ]"
+        />
       </template>
       <template #right>
         <CBtn
@@ -99,6 +92,7 @@ watch(() => route.params.id, id => {
           size="sm"
           :icon="CIconArrowLeft"
           :title="t('common.back')"
+          shrink="sm"
           @click="router.push({ name: 'tasks' })"
         />
       </template>
@@ -112,8 +106,10 @@ watch(() => route.params.id, id => {
       />
       <CPageLoader v-else-if="loading" />
       <template v-else-if="task">
-        <header class="view-header">
-          <CEyebrow>
+        <CPageHeader
+          :title="task.title"
+        >
+          <template #eyebrow>
             <CBadge :variant="taskPriorityVariant(task.priority)">
               {{ t(`tasks.priorities.${task.priority}`) }}
             </CBadge>
@@ -124,13 +120,7 @@ watch(() => route.params.id, id => {
               {{ t(`tasks.statuses.${task.status}`) }}
             </CBadge>
             {{ t('tasks.lifecycle.title') }}
-          </CEyebrow>
-          <CHeading
-            type="header"
-            class="m-0"
-          >
-            {{ task.title }}
-          </CHeading>
+          </template>
           <p
             v-if="task.description"
             class="body-md text-on-surface-variant m-0"
@@ -154,7 +144,7 @@ watch(() => route.params.id, id => {
               >🔧 {{ task.contractor_name }}</span>
             </span>
           </div>
-        </header>
+        </CPageHeader>
 
         <h2 class="text-xl font-semibold text-on-surface-variant mt-0 mb-4">
           {{ t('tasks.lifecycle.title') }}
